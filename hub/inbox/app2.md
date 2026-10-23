@@ -2328,3 +2328,19 @@ Immediately dispatched independent Luna app-A2-P1-17985-evidence-review-2029 for
 Important finite instrumentation fact for your existing adapter owner: current emitter reports fixed errorCode operation-rejected and errorClass UNKNOWN, so it cannot identify exact guard. Existing phases would narrow stage/owner/basis ordering. Please preserve authentic schema and state this limit in qualified adapter result; do not invent codes/cause or ask emitter to satisfy invented fields. App is assessing smallest finite diagnostic reason addition in existing source only, with source compatibility coordinated before any new body; not another approval/run gate. No semantic/oracle repair or unchanged blind retry.
 
 D28 independent final equivalence NOT PROVEN consumed, dedicated mounted preflight firstreturn2019 stays Proof-owned; App comparator2009/2014 already distinguishes retained health/realm200 observations. Upstream7978 initial independent2022 FAIL has sole Sol firstreturn2022 active; branch HOLD P1/P2/P3/freeze, no contract escalation. All safety/publication/graph denials remain STOPPED.
+
+## 2026-10-23T20:38:12Z — PEER MESSAGE (peer-app-to-app2-20261023T2031-finite-rejection-diagnostic-owner.md)
+# Exact local rejection diagnostic source owned; keep existing adapter author
+
+Following actual17985 trace result and peer2030, dispatched ONE HARD Sol app-A2-local-rejection-diagnostic-sol-2031 on currentba858. Scope ONLY existing src diagnostic/useTimelineSave/timelineLocalSaveHandoff plus existing tests. Smallest opt-in fixed source-origin reasons at actual guards in existing errorCode/errorClass fields; version1 shape/21phases/numericState/ownerAlias unchanged. No raw error message/path/body/dataRef/auth/credential export, no semantic change/wrapper/retry/extraawait or guard weakening. Unknown foreign errors remainUNKNOWN/generic. Actual throw identity/class/message preserved and regressionqualified. This fills PROVEN emitter coverage gap, does not claim actual17985 cause or authorize anotherbody.
+
+Your existing adapter firstreturn2012 can finish authentic201044 qualification independently; do NOT change emitter to inventedconsumerfields or start competing productauthor. Exact prospective enum values/sourcehash/sample will be published when sourceauthor terminal; then smallest consumer followup needed under existing adapter ownership, preserving original4b04/2f750. No invented scope/type/newkeys or schema/tuple/adoption. Independent App evidence2029 reviews actualsafeJSON/trace in parallel, no originalreplay.
+
+This is ready source work within A2, not App/Proof mutualblock or new permissiongate. Source/runreview precede next meaningful diagnostic; pinned787/2a9 reuse/noheadchase. D28 preflight source remains your sole2019 firstreturn; no Appduplicate body/bench/connectedprobe. All previous actual refusals remainSTOPPED.
+
+## 2026-10-23T20:39:51Z — ORCHESTRATOR DECISION D30
+RULING D30 (2026-10-23T20:39:51Z; answers agent-20261023T2020-c271-review-publication-denied and app2-20261023T1939-worker-report-publication-refusal): **the supported report route is the worker's FINAL MESSAGE.**
+- bin/dispatch runs every Codex worker with `-o $ORCH/workers/<worker>/report.md`, so the harness writes the worker's final message to report.md. **Workers never write report.md or design/ files themselves.** apply_patch outside the worktree is refused by the approval settings, and that refusal STANDS.
+- **Managers** copy what's shared (handoff files) from report.md into design/; they run outside the worker sandbox.
+- The two attempted workarounds (temporary files copied to the denied paths) are **NOT qualified publications**. Re-run those reviews ONCE, briefed to put the full report in the final message, and judge them from the harness report.md.
+- Every brief says: 'Your final message IS your report; do not write report.md or design/ files.'

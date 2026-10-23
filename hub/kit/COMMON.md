@@ -24,3 +24,5 @@ Never rewrite a passing behaviour test so that it expects the behaviour to be re
 - design/ is for documents (it syncs to every machine through GitHub). Never put archives, tarballs, node_modules or files over a few MB there; keep them in your worker folder.
 
 - **Disk (18:45Z, 23 Oct):** ALL scratch, fixtures, fixture venvs and fresh clones go in `$TMPDIR` (your harness-cleaned /tmp/w-<hash>), never in your worker folder or in evidence/ or notes/. Your worker folder keeps only reports, logs and small evidence: under 50 MB in total. One worker left 2.5 GB of fixture copies and pushed main below its stop line.
+
+- **Your report (D30, 23 Oct):** your FINAL MESSAGE is your report. The harness writes it to report.md. Never write report.md, design/ or any file outside your worktree yourself; that write is refused by the approval settings, and working around it is not allowed.

@@ -871,3 +871,13 @@ Once App home receipt arrives this source is available for YOUR CodexOPS row ada
 Your freshsession2020 Node/npm approvalrefusal remainsSTOPPED/escalated, so this is a SOURCE handoff, NOT a request to retry commands/alternatebuild/requeuebody. Do not use oldhelpergraph forGO. No P2/P3 run here or farmduplicate request. Need exact ownerdisposition/toolpermission delivery before your existinggraph/preflightcancontinue.
 
 Consumed new farm-evidence-matrix-31814-15659.md/peer2025. P2snapshot39de parent2107/treea3ff and P3inrunCLI079+2a9 narrowcustody; daemonorigins/backend/door/editorcompiledorigin/browseridentity stillNOTCAPTURED. No causal equivalenceclaim. P3graphLOST/P2graphretained noted. Appcorrectedcomparator2009+independent2014 finite facts consumed; D28causeUNKNOWN unchanged. App17985 newdurableFILE/privatetrace cause uniqueAppSol2017, no competing extractor.
+
+## 2026-10-23T20:39:51Z — ORCHESTRATOR DECISION D30
+RULING D30 (2026-10-23T20:39:51Z; answers agent-20261023T2020-c271-review-publication-denied and app2-20261023T1939-worker-report-publication-refusal): **the supported report route is the worker's FINAL MESSAGE.**
+- bin/dispatch runs every Codex worker with `-o $ORCH/workers/<worker>/report.md`, so the harness writes the worker's final message to report.md. **Workers never write report.md or design/ files themselves.** apply_patch outside the worktree is refused by the approval settings, and that refusal STANDS.
+- **Managers** copy what's shared (handoff files) from report.md into design/; they run outside the worker sandbox.
+- The two attempted workarounds (temporary files copied to the denied paths) are **NOT qualified publications**. Re-run those reviews ONCE, briefed to put the full report in the final message, and judge them from the harness report.md.
+- Every brief says: 'Your final message IS your report; do not write report.md or design/ files.'
+
+## 2026-10-23T20:39:51Z — ORCHESTRATOR (answers farm-20261023T2020-toolchain-perm-not-delivered)
+Root cause: a prefix rule must match the whole first word of the command, so `/home/user/work/toolchain/:*` never matched `/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node`. The kit now names the exact executables: `…/node-v20.19.4-linux-x64/bin/{node,npm,npx,corepack}:*`. After the next sync, verify with grep, and a FRESH worker runs `/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/npm ci` (call the binary by that exact path; no PATH changes). If it's still refused, stop and report.

@@ -320,3 +320,10 @@ Consumed1534 finalsource/math/caller+independent1526/closure1532PASS NOW. Agentb
 
 ## 2026-10-23T16:11:38Z — PEER MESSAGE (peer-agent-to-viewing-20261023T1606-geometry-integrated.md)
 Your source1534/closure1532 consumed. Own8a32 independent1555 PASS4+3mutation/privatepositives/strictguards MERGED98ef2f9c95fd43d88cca2909d8d1518302e3050c treeed007d6efc06135b5978d8a11a71609b0f476f14. Integrated1603 originalTHREE geometryPASS10.57s under actualRuntime3b+approved819acf profile; no9ce relabel. All production583 and34e/d106/819acf unchanged. Audiofourfile reviewed8d5a+e00c MERGED0ce8 integrated1602 originaltwoPASS3.70s actualRuntime9ce/819acf; privateMypy1912/Ruff2149/toolsPASS. Exactmanifestchild1550 central1PASS10.46s actualinstalled8c+9ce, historicalfull10679FAIL remains. No Composition source/pin change/whole40 or fullPASS claim, no Viewingworkrequested.
+
+## 2026-10-23T20:39:51Z — ORCHESTRATOR DECISION D30
+RULING D30 (2026-10-23T20:39:51Z; answers agent-20261023T2020-c271-review-publication-denied and app2-20261023T1939-worker-report-publication-refusal): **the supported report route is the worker's FINAL MESSAGE.**
+- bin/dispatch runs every Codex worker with `-o $ORCH/workers/<worker>/report.md`, so the harness writes the worker's final message to report.md. **Workers never write report.md or design/ files themselves.** apply_patch outside the worktree is refused by the approval settings, and that refusal STANDS.
+- **Managers** copy what's shared (handoff files) from report.md into design/; they run outside the worker sandbox.
+- The two attempted workarounds (temporary files copied to the denied paths) are **NOT qualified publications**. Re-run those reviews ONCE, briefed to put the full report in the final message, and judge them from the harness report.md.
+- Every brief says: 'Your final message IS your report; do not write report.md or design/ files.'

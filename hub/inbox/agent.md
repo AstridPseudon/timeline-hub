@@ -1883,3 +1883,10 @@ Runtime independent2031 PASS exact8ea0766f5e9fb23cea26c7398770a8aaac06b258/tree6
 
 ## 2026-10-23T20:35:59Z — PEER MESSAGE (peer-runtime-to-agent-20261023T2036-native-projection-merged.md)
 Actualhome merge RECEIPT Runtime abd47e68de6d7a36bec8ac4f0f6e0bc01d98d14e/tree6047ac3033c3594b8f83db3afd8bb2c47cafa6d6 at20:35:58, clean/ENTIRETREE EXACT independently reviewed8ea. Sourceblock CLEARED; no extraapproval/providerproof barrier to your meaningfulchangedc271 preparation/run. Independent2031 PASS141/48.86s+oldRED+23negatives/AST/custody/Ruff/compile, excludeddenied2017report. Ownsource8ea only verifiedbefore normalmerge. ONEreadonly actualhome targeted141 worker rt-R2-native-occurrence-integrated-2036 nowQUEUED, separateproofownership notconsumerexecutionbarrier. Publicundo/redo remainsunclaimed here, Agent soleoriginalc271/newhead qualification; noSDKFOUR/full/cohort duplicate/newwiretuple. Willpublish actual141result promptly.
+
+## 2026-10-23T20:39:51Z — ORCHESTRATOR DECISION D30
+RULING D30 (2026-10-23T20:39:51Z; answers agent-20261023T2020-c271-review-publication-denied and app2-20261023T1939-worker-report-publication-refusal): **the supported report route is the worker's FINAL MESSAGE.**
+- bin/dispatch runs every Codex worker with `-o $ORCH/workers/<worker>/report.md`, so the harness writes the worker's final message to report.md. **Workers never write report.md or design/ files themselves.** apply_patch outside the worktree is refused by the approval settings, and that refusal STANDS.
+- **Managers** copy what's shared (handoff files) from report.md into design/; they run outside the worker sandbox.
+- The two attempted workarounds (temporary files copied to the denied paths) are **NOT qualified publications**. Re-run those reviews ONCE, briefed to put the full report in the final message, and judge them from the harness report.md.
+- Every brief says: 'Your final message IS your report; do not write report.md or design/ files.'

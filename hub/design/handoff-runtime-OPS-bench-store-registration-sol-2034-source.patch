@@ -1,0 +1,317 @@
+--- a/bin/bench_store.py
++++ b/bin/bench_store.py
+@@ -110,6 +110,9 @@
+ 
+ 
+ class Store:
++    # Exact historical registration identities; these confer no bench ownership.
++    UNREGISTER = {'agent-remotion-ap2-p1-f611-1346': {'suite_sha256': '069cd64dc4847f7a7d7bf610b14006b8ec96279c2ea225ab988297acef258419', 'env_sha256': '551fa8ffae56d106fe1d01f10742ddac1942cdf75968c10fd2742f7eb8d83c8b'}, 'agent-remotion-ap2-current-8c355-1402': {'suite_sha256': '63c5b4cac8328159e5d1fa5ba77d6a1ac91464daa2554e9305036d142c36f8f4', 'env_sha256': 'bbb1400511a1a33f14d40b55aee3debcad73101dfd7e0dfe819fc1f43861f904'}, 'agent-remotion-ap2-current-8c-cfa-1415': {'suite_sha256': '7eba6079da5112131adff3d555e016ce3c973382b02c9c5edb03cd9ff2b2d54b', 'env_sha256': 'c9c463cf9bb9427b33db24a5eb54e6bd78b567a423876acf8bc152621c7c8dcc'}, 'agent-remotion-ap2-current-583-cfa-1451': {'suite_sha256': '77059b54efacc2cc1d1f1554e5a04435a53b7d25190cce01196e07b63d74699f', 'env_sha256': 'e28d3585802f86aca412390329d2624e019e80dc26f3511ad8d07a80cd1bc8ce'}, 'agent-remotion-ap2-current-583-9ce-1513': {'suite_sha256': 'b1da04d14309c99811b8ad390f03582ec695e52a1c93ece72b63473898d89057', 'env_sha256': 'fe77f26fe4455ae95a3d8567736d98bef8138dbe693608c66e0c6a554ded4f84'}, 'agent-remotion-ap2-current-98ef-259-1608': {'suite_sha256': '97cfb270715064560f53389cc8ab0275cc93adf5162db144e10ec699d5a0a606', 'env_sha256': 'cbf4f2e2667ccbecc31eaf04965dac11535045bb2eed5660ecf17d03bc0c6e65'}, 'agent-remotion-ap2-current-bac-d9e-1643': {'suite_sha256': '699b9c9685ff792a2597c7e8c82e04a426249c7998c8f819bc45514a3bd9c6ba', 'env_sha256': '8aa4514c482ff410d6174b8dfc93c067003a1e3f626deb35ed83e33adc2c988d'}}
++
+     # Fixed reserve; adapters cannot bypass retention or reserve via caller flags.
+     REPORT_LIMIT = 1024 * 1024
+     RESERVE_BYTES = 8 * 1024 * 1024 * 1024
+@@ -118,6 +121,10 @@
+     def initialize(cls, root, tests_dir):
+         root, tests_dir = physical(root), physical(tests_dir)
+         check(not root.exists(), 'existing roots are never adopted')
++        fresh_tests = not tests_dir.exists()
++        if fresh_tests:
++            tests_dir.mkdir(mode=0o700)
++            atomic(tests_dir / 'suites.conf', '')
+         root.mkdir(mode=0o700)
+         for name in ('entries', 'locks', 'staging'):
+             (root / name).mkdir(mode=0o700)
+@@ -127,7 +134,15 @@
+                  'root': str(root), 'tests': str(tests_dir), 'mutex': inode(root / 'mutex'),
+                  'directories': {str(p): inode(p) for p in (root, tests_dir, root / 'entries', root / 'locks', root / 'staging')}}
+         atomic(root / 'owner.json', canonical(owner))
+-        atomic(root / 'index.json', canonical({'version': 1, 'seq': 0, 'entries': {}, 'registrations': {}, 'retired': [], 'retired_suites': []}))
++        index = {'version': 1, 'seq': 0, 'entries': {}, 'registrations': {}, 'retired': [], 'retired_suites': []}
++        # Only a directory created here has known pre-birth caller custody.
++        if fresh_tests:
++            lock = root / 'locks' / 'registration-cutover'
++            fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_NOFOLLOW, 0o600)
++            os.close(fd)
++            sync_dir(lock.parent)
++            index['registration_cutover'] = inode(lock)
++        atomic(root / 'index.json', canonical(index))
+         return cls(root, tests_dir)
+ 
+     def __init__(self, root, tests_dir):
+@@ -180,7 +195,9 @@
+         return index
+ 
+     def _validate_index(self, index, live):
+-        check(set(index) == {'version', 'seq', 'entries', 'registrations', 'retired', 'retired_suites'} and index['version'] == 1, 'index schema')
++        check(set(index) - {'registration_cutover'} == {'version', 'seq', 'entries', 'registrations', 'retired', 'retired_suites'} and index['version'] == 1, 'index schema')
++        if 'registration_cutover' in index:
++            check(index['registration_cutover'] == inode(self.root / 'locks' / 'registration-cutover'), 'registration cutover inode changed')
+         check(isinstance(index['seq'], int) and isinstance(index['entries'], dict) and isinstance(index['registrations'], dict) and isinstance(index['retired'], list), 'index types')
+         for eid, entry in index['entries'].items():
+             self._validate_entry(eid, entry, live)
+@@ -466,9 +483,16 @@
+ 
+     def _roll(self, journal, forward):
+         self._verify_pending_reports(journal)
+-        self._apply_projection(journal['projections'], forward)
++        snapshot = None
++        if journal['kind'] == 'unregistration':
++            check(forward, 'unregistration only rolls forward')
++            snapshot = self._apply_unregistration(journal['projections'])
++        else:
++            self._apply_projection(journal['projections'], forward)
+         atomic(self.root / 'index.json', canonical(journal['after'] if forward else journal['before']))
+         self._checkpoint('index')
++        if snapshot is not None:
++            check(self._registration_snapshot() == snapshot, 'registration raced before completion')
+         if journal['kind'] == 'eviction':
+             for eid in journal['victims']:
+                 entry = journal['before']['entries'][eid]
+@@ -481,6 +505,9 @@
+ 
+     def _validate_transition(self, journal):
+         before, after = journal['before'], journal['after']
++        if journal['kind'] == 'unregistration':
++            self._validate_unregistration(journal)
++            return
+         for eid in set(before['entries']) & set(after['entries']):
+             check(before['entries'][eid] == after['entries'][eid], 'journal rewrites owned entry')
+         for name in set(before['registrations']) & set(after['registrations']):
+@@ -524,7 +551,7 @@
+                 return
+             journal = json.loads(read(self.journal))
+             check(set(journal) == {'version', 'owner', 'kind', 'before', 'after', 'projections', 'victims', 'new'} and journal['version'] == 1 and journal['owner'] == self.owner['id'], 'journal ownership/schema')
+-            check(journal['kind'] in ('eviction', 'creation'), 'journal kind')
++            check(journal['kind'] in ('eviction', 'creation', 'unregistration'), 'journal kind')
+             self._validate_index(journal['before'], False)
+             self._validate_index(journal['after'], False)
+             self._validate_transition(journal)
+@@ -532,7 +559,7 @@
+             check(current in (journal['before'], journal['after']), 'pending index changed')
+             if journal['kind'] == 'eviction':
+                 check(journal['new'] is None and set(journal['victims']) == set(journal['before']['entries']) - set(journal['after']['entries']), 'journal eviction authority')
+-            else:
++            elif journal['kind'] == 'creation':
+                 check(not journal['victims'], 'creation cannot evict')
+                 if journal['new']:
+                     e = journal['new']
+@@ -541,13 +568,15 @@
+                     check(new_id not in journal['before']['entries'] and journal['after']['entries'].get(new_id, e) == e, 'creation deletion authority')
+             held = []
+             try:
+-                if journal['kind'] == 'eviction':
++                if journal['kind'] == 'unregistration':
++                    held.append(self._registration_lock(journal['before'], True))
++                elif journal['kind'] == 'eviction':
+                     for eid in journal['victims']:
+                         held.append(self._lock(eid, journal['before']['entries'][eid], True))
+                 elif journal['new']:
+                     e = journal['new']
+                     held.append(self._lock(self._entry_id(e['component'], e['key']), e, True))
+-                self._roll(journal, journal['kind'] == 'eviction')
++                self._roll(journal, journal['kind'] != 'creation')
+             finally:
+                 for fd in held:
+                     os.close(fd)
+@@ -651,6 +680,139 @@
+                         raise Refused(f'creation failed: {error}; recovery remains pending: {rollback_error}') from error
+                 raise
+ 
++    def _registration_lock(self, index, exclusive=False):
++        check('registration_cutover' in index,
++              'legacy cutover unknown: no pre-birth caller custody; owner supervisor boundary required')
++        path = self.root / 'locks' / 'registration-cutover'
++        fd = os.open(path, os.O_RDWR | os.O_NOFOLLOW)
++        try:
++            info = os.fstat(fd)
++            check(stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid()
++                  and info.st_nlink == 1 and not info.st_mode & 0o022
++                  and [info.st_dev, info.st_ino] == inode(path) == index['registration_cutover'],
++                  'registration lease inode changed/foreign')
++            fcntl.flock(fd, (fcntl.LOCK_EX | fcntl.LOCK_NB) if exclusive else fcntl.LOCK_SH)
++            os.set_inheritable(fd, True)
++            return fd
++        except BaseException:
++            os.close(fd)
++            raise
++
++    @contextlib.contextmanager
++    def prelease_suite(self, repo, suite):
++        # Called before suite/env use; supervisor inherits custody through descendants.
++        fd = None
++        try:
++            with self.mutex():
++                index = self._load()
++                if repo == 'agent' and suite in {name + '-nodes' for name in self.UNREGISTER}:
++                    check(suite[:-6] not in index['retired'], 'registration was unregistered')
++                    fd = self._registration_lock(index)
++            yield [] if fd is None else [fd]
++        finally:
++            if fd is not None:
++                os.close(fd)
++
++    def _unregister_projections(self, before, suites, envs):
++        check(set(envs) == set(self.UNREGISTER), 'exact seven registration names required')
++        check(not set(envs) & (set(before['registrations']) | set(before['retired'])),
++              'managed or already retired registration protected')
++        rows = suites.splitlines(keepends=True)
++        targets = []
++        for name, expected in self.UNREGISTER.items():
++            pair = ['agent', name + '-nodes']
++            matches = [row for row in rows if row.split(None, 2)[:2] == pair]
++            check(len(matches) == 1 and digest(matches[0]) == expected['suite_sha256'],
++                  'suite absent, ambiguous or changed: ' + name)
++            check(isinstance(envs[name], str) and digest(envs[name]) == expected['env_sha256'],
++                  'env absent or changed: ' + name)
++            targets.append(matches[0])
++        outside = ''.join(row for row in rows if row not in targets)
++        check(not any(name in outside for name in envs), 'outside suite reference protected')
++        return {'suites.conf': [suites, outside],
++                **{name + '.env': [envs[name], None] for name in sorted(envs)}}
++
++    def _validate_unregistration(self, journal):
++        before, after = journal['before'], journal['after']
++        check(journal['new'] is None and journal['victims'] == sorted(self.UNREGISTER),
++              'unregistration has no payload authority')
++        check('registration_cutover' in before, 'legacy cutover unknown in journal')
++        projections = journal['projections']
++        check(set(projections) == {'suites.conf', *(name + '.env' for name in self.UNREGISTER)},
++              'unregistration projection names')
++        expected = self._unregister_projections(before, projections['suites.conf'][0],
++                                              {name: projections[name + '.env'][0] for name in self.UNREGISTER})
++        check(projections == expected, 'unregistration projection authority/hash mismatch')
++        desired = json.loads(canonical(before))
++        desired['retired'].extend(sorted(self.UNREGISTER))
++        for name in sorted(self.UNREGISTER):
++            pair = ['agent', name + '-nodes']
++            if pair not in desired['retired_suites']:
++                desired['retired_suites'].append(pair)
++        check(after == desired, 'unregistration index authority')
++
++    def _registration_snapshot(self):
++        check(self.tests.stat().st_uid == os.getuid() and not self.tests.stat().st_mode & 0o022,
++              'unsafe registration directory')
++        return {p.name: (inode(p), read(p)) for p in self.tests.iterdir()
++                if p.name == 'suites.conf' or p.name.endswith('.env')}
++
++    def _apply_unregistration(self, projections):
++        snapshot = self._registration_snapshot()
++        for name, values in projections.items():
++            check(snapshot.get(name, (None, None))[1] in values, 'projection changed while pending')
++        for name, (_, value) in snapshot.items():
++            if name != 'suites.conf' and name not in projections:
++                check(not any(target in value for target in self.UNREGISTER),
++                      'outside env reference protected: ' + name)
++        for name, values in projections.items():
++            self._checkpoint('unregistration:publish:' + name)
++            check(self._registration_snapshot() == snapshot, 'registration raced during publication')
++            self._apply_projection({name: values}, True)
++            current = self._registration_snapshot()
++            check(current.get(name, (None, None))[1] == values[1], 'publication changed')
++            check({k: v for k, v in current.items() if k != name}
++                  == {k: v for k, v in snapshot.items() if k != name}, 'outside registration raced')
++            snapshot = current
++        return snapshot
++
++    def unregister(self, request):
++        check(isinstance(request, dict) and set(request) == {'names', 'suites_sha256'},
++              'unregistration request schema')
++        check(request['names'] == self.UNREGISTER, 'exact original seven identities required')
++        with self.mutex():
++            before = self._load()
++            self._verify_projection(before)
++            fd = self._registration_lock(before, True)
++            try:
++                snapshot = self._registration_snapshot()
++                suites = snapshot['suites.conf'][1]
++                check(digest(suites) == request['suites_sha256'], 'stale suite baseline')
++                envs = {name: snapshot.get(name + '.env', (None, None))[1] for name in self.UNREGISTER}
++                projections = self._unregister_projections(before, suites, envs)
++                for name, (_, value) in snapshot.items():
++                    if name != 'suites.conf' and name not in projections:
++                        check(not any(target in value for target in self.UNREGISTER),
++                              'outside env reference protected: ' + name)
++                after = json.loads(canonical(before))
++                after['retired'].extend(sorted(self.UNREGISTER))
++                for name in sorted(self.UNREGISTER):
++                    pair = ['agent', name + '-nodes']
++                    if pair not in after['retired_suites']:
++                        after['retired_suites'].append(pair)
++                journal = {'version': 1, 'owner': self.owner['id'], 'kind': 'unregistration',
++                           'before': before, 'after': after, 'projections': projections,
++                           'victims': sorted(self.UNREGISTER), 'new': None}
++                self._validate_unregistration(journal)
++                self._checkpoint('unregistration:validated')
++                check(self._registration_snapshot() == snapshot, 'registration raced before journal')
++                self._save_journal(journal)
++                self._checkpoint('unregistration:journal')
++                check(self._registration_snapshot() == snapshot, 'registration raced after journal')
++                self._roll(journal, True)
++            finally:
++                os.close(fd)
++
+     def registered(self, name):
+         self._name(name)
+         with self.mutex():
+@@ -721,6 +883,8 @@
+     parser.add_argument('--tests-dir', required=True)
+     commands = parser.add_subparsers(dest='action', required=True)
+     commands.add_parser('recover')
++    unregister = commands.add_parser('unregister')
++    unregister.add_argument('--request', required=True)
+     key = commands.add_parser('key')
+     key.add_argument('component', choices=['child', 'runtime'])
+     key.add_argument('--identity', required=True)
+@@ -736,6 +900,9 @@
+         if args.action == 'recover':
+             store.recover()
+             return 0
++        if args.action == 'unregister':
++            store.unregister(json.loads(read(Path(args.request))))
++            return 0
+         argv = args.command[1:] if args.command[:1] == ['--'] else args.command
+         check(bool(argv), 'command required')
+         return store.run(args.name, argv)
+--- a/bin/test-run
++++ b/bin/test-run
+@@ -59,18 +59,19 @@
+                 return fields[2] if len(fields) == 3 else ''
+         return None
+ 
+-    # The existing shell awk rebuilds fields; core binds the original row bytes.
+-    raw = current_command()
+-    if raw is None or ' '.join(raw.split()) != command:
+-        raise ValueError('suite registration disappeared or changed before lease')
+-    names = store.names_for_suite(repo, suite, raw)
+-    if not names and current_command() != raw:
+-        # An evicted managed row must not fall through as an unmanaged suite.
+-        raise ValueError('suite registration disappeared before lease')
+-    with store.acquire(names) as entries:
+-        if current_command() != raw:
+-            raise ValueError('suite registration disappeared or changed during lease acquisition')
+-        yield entries, [entry['lease_fd'] for entry in entries]
++    with store.prelease_suite(repo, suite) as registration_fds:
++        # The existing shell awk rebuilds fields; core binds the original row bytes.
++        raw = current_command()
++        if raw is None or ' '.join(raw.split()) != command:
++            raise ValueError('suite registration disappeared or changed before lease')
++        names = store.names_for_suite(repo, suite, raw)
++        if not names and current_command() != raw:
++            # An evicted managed row must not fall through as an unmanaged suite.
++            raise ValueError('suite registration disappeared before lease')
++        with store.acquire(names) as entries:
++            if current_command() != raw:
++                raise ValueError('suite registration disappeared or changed during lease acquisition')
++            yield entries, registration_fds + [entry['lease_fd'] for entry in entries]
+ 
+ 
+ def supervise(store, repo, suite, command, argv, cancelled, parent, tests_dir):
+@@ -94,7 +95,7 @@
+     with suite_lease(store, repo, suite, command, tests_dir) as (entries, fds):
+         if stopping or cancelled.exists() or os.getppid() != parent:
+             return 130
+-        if not entries:
++        if not fds:
+             # Existing unregistered suites retain their direct-child semantics.
+             result = subprocess.call(argv)
+             return result if result >= 0 else 128 - result

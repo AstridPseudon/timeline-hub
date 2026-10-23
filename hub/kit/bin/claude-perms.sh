@@ -12,7 +12,7 @@ CLAUDE_PERMS=(--allowedTools Read Edit Write Glob Grep
   "Bash(git:*)" "Bash(ls:*)" "Bash(cat:*)" "Bash(grep:*)" "Bash(rg:*)" "Bash(head:*)" "Bash(tail:*)" "Bash(wc:*)" "Bash(find:*)"
   "Bash(sed:*)" "Bash(awk:*)" "Bash(diff:*)" "Bash(sort:*)" "Bash(uniq:*)" "Bash(cut:*)" "Bash(date:*)" "Bash(sleep:*)" "Bash(jq:*)"
   "Bash(ln:*)" "Bash(tar:*)" "Bash(npm ci:*)" "Bash(npm install:*)" "Bash(npx:*)" "Bash(ruff:*)" "Bash(pyright:*)"
-  "Bash(/home/user/work/venv-:*)" "Bash(/home/user/work/runtimes/:*)" "Bash(/home/user/work/toolchain/:*)"
+  "Bash(/home/user/work/venv-:*)" "Bash(/home/user/work/runtimes/:*)" "Bash(/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node:*)" "Bash(/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/npm:*)" "Bash(/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/npx:*)" "Bash(/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/corepack:*)"
   "Bash(mkdir:*)" "Bash(cp:*)" "Bash(mv:*)" "Bash(echo:*)" "Bash(test:*)" "Bash(stat:*)" "Bash(du:*)" "Bash(df:*)" "Bash(touch:*)" "Bash(pwd)"
   --disallowedTools "Bash(git push:*)" "Bash(git * push *)" "Bash(git commit:*)" "Bash(git * commit *)"
   "Bash(git reset:*)" "Bash(git * reset *)" "Bash(git merge:*)" "Bash(git * merge *)"
