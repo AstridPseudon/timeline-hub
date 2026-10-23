@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-23T07:44:48Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 6m -->
-# viewing board, 2026-10-23T07:38:46Z
+<!-- viewing | 2026-10-23T07:46:01Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# viewing board, 2026-10-23T07:45:58Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | canonical schema inventory | Luna high | H0 | merged | vw-V1-schema-inventory-fix; review2 | Independent PASS four copies, SHA/cmp/generators/manifest; inventory only | 6c4d9342189b69d488b41f609b64aa2918eda955 |
@@ -28,6 +28,8 @@
 | V4-undo | equal-text anchor undo positives | orchestrator D14 | deferred relational timing | gated:D14-deferred | ruling04:40 | EXACT two originals unchanged/unskipped/visibly failing known v2 regressions; guarded intervening_write. Never54PASS | originals retained |
 | V4-recipe | optional duplicate recipe deletion | Luna historical | H9 cut | cut:H9 | no worker | Original recipes and original clip.anchor assertions retained. Do not reopen | originals retained |
 
+| DB-composition-dry | fresh-clone squash/build/pin verification | Luna high | orchestrator07:40; source635f/live upstream | doing | vw-DB-composition-dry-0746 | Dispatching delivery dry-run; live upstream probe pending worker --net; no PASS claimed | source635f / upstream snapshot67b8 |
+
 V1 metadata and V3 shared artifact scopes are DONE on their recorded integrated proofs. V3 is immutable archive819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234,73451 bytes,80 members, source635f; one artifact does not prove rendering parity or H3 GO. V4App DONE; all already-merged V4 work stays. Whole V4Agent NOT DONE and residual repairs CUT at H9.
 
 Current decision: INBOX06:43 H9 CUT consumed06:47. Stop NEW V4 work and original54 repair/proof dispatches; farm final reports original suite AS IS. Only the D16 single adaptation already in progress may finish review under explicit exception. Its first return15d static checks passed, behavior not run while provider source gap known; independent0649 is READONLY. Failed2f altered baseline and MUST NOT merge; 15d has not passed behavior and has NO merge request. Any future eligible merge requires actual targeted PASS, independent no-weakening PASS, fresh target-integration test-only import and own-commit-only log; no new repair cycle under the cut.
@@ -36,7 +38,7 @@ Resolved: Agent and Runtime — both stale V1 donor requests now have actual hub
 Blockers: farm — final full suites/journeys are farm/test-service owned; report V4 suite AS IS including unchanged/unskipped known failures. No Viewing duplicate full/native14/browser/heavy run. No inferred52/54 PASS.
 Blockers: lead/orchestrator — old recycle Permission denied for agt-pin-b70b9d56 and app-pin-d00a6613/app-pin-0d432391 remains PARKED; no retry/chmod/chown/alternate deletion. Escalation viewing-20261023T002713Z-recycle-b70-permission-refusal.md retained. No new refusal.
 
-Next ready: none. All Viewing workers terminal. Support final integration on request; farm final original V4 suite AS IS. No residual repair/review/proof dispatch and no actionable product merge request. Both Agent and Runtime stale V1 donor requests are closed SUPERSEDED in the actual hub results.
+Next ready: DB-composition-dry dispatched immediately on new orchestrator07:40 request. Prior V1/V3/V4 workers terminal. Support final integration on request; farm final original V4 suite AS IS. No residual repair/review/proof dispatch and no actionable product merge request. Both Agent and Runtime stale V1 donor requests are closed SUPERSEDED in the actual hub results.
 
 Evidence: design/handoff-vw-V4-D16-window-0637-REPORT.md + first.log (failed bound-anchor replacement1FAIL/53deselected/1.53s); handoff-vw-V4-D16-window-review-0642-REPORT.md (independent no-weakening FAIL and path-origin warning); handoff-vw-V4-D16-window-first-return-0647-REPORT.md (original legacy restored/static PASS/behavior PENDING). D16 unavailable positive disposition handoff-vw-V4-D16-rebase-disposition-0637-REPORT.md independently reviewed handoff-vw-V4-D16-rebase-review-0641-REPORT.md. These prose reports are flat design files, not product merges. Peer-viewing-to-agent-20261023T0647-D16-first-return-and-disposition.md has H9 override WITHDRAWING new provider repair request.
 
@@ -46,4 +48,6 @@ Operational pass 2026-10-23T07:38:46Z: restart07:37, first pass complete. PLAN r
 
 Header MERGE-ONLY App07:20 remains: Proof owns all App product authoring failovers0725 and reviews; App owns merges. Runtime actual board confirms pairedhead5077995 MERGED App890/tree20c8; no H3 GO inferred. Proof P1 actual2949 FAIL2 retains source/oracle diagnosis/review0727; later13080 was CACHE HIT. Agent originalten publiccommand repair0731, corrected full4249/classifier0724 and delivery are owner work; no Viewing duplicate HTTP/full/native14/browser/journey. Runtime R5 reviewed739 remains gated:A3 only. No new Viewing dispatch or actionable product merge. Free16136228864 bytes above15GB floor, so no cleanup work; parked recycle permission refusal remains stopped, with no retry or workaround. No new refusal, product/test/generated/pin edits or manager git commit/merge/rebase/reset.
 
-Next pass around07:48: re-read new INBOX/header/workers and owner boards, act on concrete final-integration requests, preserve H9 cut and proof limits. Farm/delegated final reports original V4 AS IS, unchanged/unskipped known failures included; no arithmetic51/52/54 PASS claim.
+NEW07:44 consumed orchestrator07:40 DB-composition-dry request. One Luna worker dispatched, no V4 reopening. Manager live ls-remote failed localproxy36363; worker --net route must qualify live upstream or report limitation.
+
+Next pass around07:54: re-read new INBOX/header/workers and owner boards, act on concrete final-integration requests, preserve H9 cut and proof limits. Farm/delegated final reports original V4 AS IS, unchanged/unskipped known failures included; no arithmetic51/52/54 PASS claim.
