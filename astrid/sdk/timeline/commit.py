@@ -718,6 +718,10 @@ def _check_reservations(port, plan, current, rejected, base):
         reserved.update(_reservation_refs(state))
         for record in records:
             items = record['created']
+            if record['command']['op'] == 'occurrence.place-shared':
+                from .native_occurrence_shared import reopen_shared_source
+
+                reopen_shared_source(state.bundle, record['command']['select'])
             if (not isinstance(items, list) or any(not valid(item) for item in items)
                     or not isinstance(record['command'], Mapping)
                     or record['command'].get('created') != [item['ref'] for item in items]):

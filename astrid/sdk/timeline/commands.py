@@ -48,6 +48,8 @@ def operations():
         parent_swap_media,
         swap_media,
     )
+    from .native_occurrence_shared import PARAMETERS as SHARED_PARAMETERS
+    from .native_occurrence_shared import occurrence_place_shared
     from .native_parent_media_commands import add_media as parent_add_media
     from .native_parent_media_commands import assembled_target
     from .native_placement_commands import (
@@ -80,6 +82,8 @@ def operations():
             'occurrence.duplicate': Operation(_SCHEMA['$defs']['OccurrenceDuplicateArgs'], occurrence_duplicate,
                                               OCCURRENCE_INTENT, True),
             'occurrence.fork': Operation(FORK_PARAMETERS, occurrence_fork, OCCURRENCE_INTENT, True),
+            'occurrence.place-shared': Operation(SHARED_PARAMETERS, occurrence_place_shared,
+                                                OCCURRENCE_INTENT, True),
             'clip.delete': Operation(_SCHEMA['$defs']['ClipDeleteArgs'], delete, {}, True),
             'occurrence.add-media': Operation(_SCHEMA['$defs']['OccurrenceAddMediaArgs'], add_media, MEDIA_INTENT, True),
             'occurrence.swap-media': Operation(_SCHEMA['$defs']['OccurrenceSwapMediaArgs'], swap_media, MEDIA_INTENT, True),
@@ -244,6 +248,9 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
             ctx.record['command']['intent'] = {}
             ctx.record['command']['resolved'] = []
         else:
+            from .native_occurrence_shared import prepare_shared_inverse
+
+            prepare_shared_inverse(ctx, inverse_records)
             apply_inverse(ctx, inverse_records, intervening_records, staged_records=records)
             ctx.record['command']['intent'] = {}
             ctx.record['command']['resolved'] = []
