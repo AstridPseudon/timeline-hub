@@ -1,0 +1,256 @@
+{
+  "classification": "single authorized lossless diagnostic invocation; timed out with durable partial capture",
+  "durable_packet": {
+    "bytes": 1105098,
+    "duplicate_records": 28,
+    "event_count": 105,
+    "export_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-redo-diagnostic-1602-6bb399e99e86ca41b78cd1a584f7fe06a6540f542eca6d3ddb2abd769452882d.packet.jsonl",
+    "first_sequence": 1,
+    "kind_counts": {
+      "guard.astrid.sdk.timeline.commands": 44,
+      "provider.commit": 3,
+      "provider.port.accept": 2,
+      "provider.port.head": 16,
+      "provider.port.history": 2,
+      "provider.port.history_entry": 4,
+      "provider.port.revision_closure": 31,
+      "transport.commit_timeline": 3
+    },
+    "last_sequence": 105,
+    "observed_fields": {
+      "base_publication_id": 316,
+      "base_revision_id": 316,
+      "bindings": 56,
+      "dependencies": 348,
+      "effects": 45,
+      "path": 2418,
+      "provider_version": 37,
+      "receipt": 17,
+      "records": 17,
+      "ref": 2497,
+      "request": 9,
+      "request_hash": 20,
+      "stage": 105
+    },
+    "payload_records": 77,
+    "phase_counts": {
+      "None": 28,
+      "forward": 65,
+      "genesis-name": 12
+    },
+    "sensitive_key_scan": {
+      "clean": true,
+      "matching_keys": []
+    },
+    "sha256": "6bb399e99e86ca41b78cd1a584f7fe06a6540f542eca6d3ddb2abd769452882d",
+    "stage_counts": {
+      "precall": 54,
+      "return": 51
+    },
+    "transport_requests": [
+      {
+        "idempotency_key": "inverse-name",
+        "phase": "genesis-name",
+        "request_keys": [
+          "api_version",
+          "base_publication_id",
+          "base_revision_id",
+          "commands",
+          "dry_run",
+          "label",
+          "merge",
+          "project_id",
+          "source",
+          "steps",
+          "timeline_id"
+        ],
+        "sequence": 1,
+        "stage": "precall"
+      },
+      {
+        "idempotency_key": "inverse-name",
+        "phase": "genesis-name",
+        "request_keys": [
+          "api_version",
+          "base_publication_id",
+          "base_revision_id",
+          "commands",
+          "dry_run",
+          "label",
+          "merge",
+          "project_id",
+          "source",
+          "steps",
+          "timeline_id"
+        ],
+        "sequence": 12,
+        "stage": "return"
+      },
+      {
+        "idempotency_key": "inverse-cut",
+        "phase": "forward",
+        "request_keys": [
+          "api_version",
+          "base_publication_id",
+          "base_revision_id",
+          "commands",
+          "dry_run",
+          "label",
+          "merge",
+          "project_id",
+          "reads",
+          "source",
+          "steps",
+          "timeline_id"
+        ],
+        "sequence": 13,
+        "stage": "precall"
+      }
+    ],
+    "unavailable_after_timeout": [
+      "final error/exception",
+      "theirs",
+      "SQL no-write snapshot",
+      "module origins final report",
+      "final history/stage aggregate",
+      "preview reply",
+      "redo verdict"
+    ],
+    "worker_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-G5-redo-diagnostic-1602/evidence/g5-redo-events.jsonl"
+  },
+  "execution": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONPATH=/home/user/work/wt/agt-G5-redo-diagnostic-1602:/home/user/work/runtime:/home/user/work/runtime/packages/python timeout 30s /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-redo-capture-1552-lossless.py --agent-root /home/user/work/wt/agt-G5-redo-diagnostic-1602 --runtime-root /home/user/work/runtime --net --tmpdir /tmp/w-8f6f57c513 --out /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-G5-redo-diagnostic-1602/evidence",
+    "exit_code": 124,
+    "final_artifact_written": false,
+    "redo_verdict_available": false,
+    "retry_count": 0,
+    "stderr": "",
+    "stdout": "",
+    "timed_out": true,
+    "timeout_seconds": 30
+  },
+  "interpretation": "The packet proves durable pre-call and return observations through sequence 105, including genesis-name and forward inverse-cut request data. It does not prove redo reached guard/preview/accept or identify an implementation owner. Do not infer a behavioral/authentication cause from timeout.",
+  "preflight": {
+    "agent": {
+      "clean": true,
+      "expected_head": "91ac58a9fc6f1f752be16c0e4b8a1bf17095acee",
+      "head": "91ac58a9fc6f1f752be16c0e4b8a1bf17095acee",
+      "root": "/home/user/work/wt/agt-G5-redo-diagnostic-1602"
+    },
+    "checks": [
+      {
+        "name": "agent_head",
+        "pass": true
+      },
+      {
+        "name": "agent_clean",
+        "pass": true
+      },
+      {
+        "name": "runtime_head",
+        "pass": true
+      },
+      {
+        "name": "runtime_clean",
+        "pass": true
+      },
+      {
+        "name": "lossless_script_hash",
+        "pass": true
+      },
+      {
+        "name": "reproducer_hash",
+        "pass": true
+      },
+      {
+        "name": "body_hash",
+        "pass": true
+      },
+      {
+        "name": "body_bytes",
+        "pass": true
+      },
+      {
+        "name": "tmpdir_real",
+        "pass": true
+      },
+      {
+        "name": "venv",
+        "pass": true
+      }
+    ],
+    "output": {
+      "evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-G5-redo-diagnostic-1602/evidence",
+      "preexisting": false
+    },
+    "pass": true,
+    "prior_failure": {
+      "artifact_sha256": "88662e8547e37d0c16d8e6c302aa2bdb358b9dc3463d5b3f52184b20c4b554be",
+      "source_sha256": "153be3ff0db9e473bde9289e9964ea7900e8666713073677a8d4251c42c91740"
+    },
+    "qualified_venv": {
+      "executable": true,
+      "exists": true,
+      "python": "/home/user/work/venv-agent/bin/python"
+    },
+    "runtime": {
+      "clean": true,
+      "expected_head": "9ce4242bc01f100bab9efc51032a73985cefb2b2",
+      "head": "9ce4242bc01f100bab9efc51032a73985cefb2b2",
+      "root": "/home/user/work/runtime"
+    },
+    "sources": {
+      "lossless_script": {
+        "expected_sha256": "2188e04aeafd32e088f59438bac8efd56ff4a7cd67d80c8b8635a6c7010fb3d3",
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-redo-capture-1552-lossless.py",
+        "sha256": "2188e04aeafd32e088f59438bac8efd56ff4a7cd67d80c8b8635a6c7010fb3d3"
+      },
+      "preserved_reproducer": {
+        "expected_sha256": "153be3ff0db9e473bde9289e9964ea7900e8666713073677a8d4251c42c91740",
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-redo-reproducer-1534-7e4b.py",
+        "sha256": "153be3ff0db9e473bde9289e9964ea7900e8666713073677a8d4251c42c91740"
+      },
+      "target_body": {
+        "body_bytes": 6798,
+        "body_sha256": "c2711a2d10765828694ee1906d75bdf62a91ed6ac0bbef8e4cb0d823e48ec30d",
+        "expected_body_bytes": 6798,
+        "expected_body_sha256": "c2711a2d10765828694ee1906d75bdf62a91ed6ac0bbef8e4cb0d823e48ec30d",
+        "path": "/home/user/work/wt/agt-G5-redo-diagnostic-1602/tests/sdk/test_timeline_restructure_guarded_runtime.py",
+        "sha256": "d7dc8942c49b4c464535280b8849520adfba4b67d4dc0560a5b68203abf7983b"
+      }
+    },
+    "task": "agt-G5-redo-diagnostic-1602",
+    "tmpdir": {
+      "is_directory": true,
+      "not_output_dir": true,
+      "pointer": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-G5-redo-diagnostic-1602/tmpdir",
+      "real": "/tmp/w-8f6f57c513"
+    }
+  },
+  "safety": {
+    "no_git_write": true,
+    "no_guard_change": true,
+    "no_product_tests": true,
+    "no_retry": true,
+    "no_source_edits": true
+  },
+  "source": {
+    "agent_head": "91ac58a9fc6f1f752be16c0e4b8a1bf17095acee",
+    "agent_root": "/home/user/work/wt/agt-G5-redo-diagnostic-1602",
+    "lossless_script": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-redo-capture-1552-lossless.py",
+      "sha256": "2188e04aeafd32e088f59438bac8efd56ff4a7cd67d80c8b8635a6c7010fb3d3"
+    },
+    "preserved_reproducer": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-redo-reproducer-1534-7e4b.py",
+      "sha256": "153be3ff0db9e473bde9289e9964ea7900e8666713073677a8d4251c42c91740"
+    },
+    "prior_1548_failure_artifact_sha256": "88662e8547e37d0c16d8e6c302aa2bdb358b9dc3463d5b3f52184b20c4b554be",
+    "runtime_head": "9ce4242bc01f100bab9efc51032a73985cefb2b2",
+    "runtime_root": "/home/user/work/runtime",
+    "target_body_bytes": 6798,
+    "target_body_sha256": "c2711a2d10765828694ee1906d75bdf62a91ed6ac0bbef8e4cb0d823e48ec30d"
+  },
+  "task": "agt-G5-redo-diagnostic-1602",
+  "verdict": "FAIL: timeout exit 124 before final diagnostic artifact; redo verdict unavailable"
+}
