@@ -1,11 +1,13 @@
-"""P4 acceptance vectors against the mounted G3 emitter and R1 provider."""
+"""Bounded P4 API/engine vectors through the mounted G3 emitter."""
 from __future__ import annotations
 
+import copy
 import json
 from typing import Any
 
 from astrid.sdk import timeline
 from astrid.sdk.timeline.commit import _digest, bundle_from_document
+from astrid.sdk.timeline.emitter import emit_document_commands
 from tests.sdk.test_timeline_commit_provider_document import document_fixture
 from tests.sdk.test_timeline_sync import connected as connected_fixture  # noqa: F401
 
@@ -29,7 +31,8 @@ def _joined_bundle(generated: Any) -> dict[str, Any]:
     document["parent_revision"]["revision_id"] = "r0"
     parent = document["parent_revision"]["payload"]
     # The original P4 edit is parent-only. Keep a complete Runtime document,
-    # but remove the fixture's unrelated child closure so the provider result
+    # but remove the fixture's unrelated child closure so the fake transport's
+    # real command-engine result
     # can be read back without adding an unrelated child edit.
     parent["occurrences"] = []
     document["shot_revisions"] = []
@@ -38,6 +41,7 @@ def _joined_bundle(generated: Any) -> dict[str, Any]:
     document["dependency_manifest"]["internal_timelines"] = []
     for clips in (parent["clips"], parent["config"]["clips"]):
         clip = next(row for row in clips if row["id"] == "clip-a")
+        clip["at"] = 0
         clip.setdefault("app", {}).setdefault("org.example", {})["p4_note"] = {}
     document["parent_revision"]["content_digest"] = _digest(parent)
     bundle = bundle_from_document(document)
@@ -52,36 +56,10 @@ def _open_joined(connection):
     return timeline.open("p", "t", client=client, outbox_path=path), generated
 
 
-def _note_command(note_id: str, value: str) -> dict[str, Any]:
-    return {
-        "schema_version": 1,
-        "op": "doc.patch",
-        "version": "1",
-        "select": None,
-        "args": {
-            "changes": [
-                {
-                    "op": "set",
-                    "ref": "parent",
-                    "path": [
-                        "clips",
-                        "id:clip-a",
-                        "app",
-                        "org.example",
-                        "p4_note",
-                        note_id,
-                    ],
-                    "before": {"state": "absent"},
-                    "value": value,
-                }
-            ]
-        },
-    }
-
-
-def test_p4_single_edit_uses_python_facade_g3_and_r1_provider(connected_fixture):  # noqa: F811
+def test_p4_single_edit_uses_python_facade_g3_and_real_engine_fake_transport(connected_fixture):  # noqa: F811
     tl, generated = _open_joined(connected_fixture)
     before = tl.bundle["parent"]["clips"][0]["at"]
+    assert before == 0
     for clips in (tl.bundle["parent"]["clips"], tl.bundle["parent"]["config"]["clips"]):
         next(row for row in clips if row["id"] == "clip-a")["at"] = 5
 
@@ -90,7 +68,9 @@ def test_p4_single_edit_uses_python_facade_g3_and_r1_provider(connected_fixture)
     assert result["data"]["status"] == "accepted"
     canonical = result["data"]["canonical_document"]
     clip = next(row for row in canonical["parent_revision"]["payload"]["clips"] if row["id"] == "clip-a")
+    mirrored = next(row for row in canonical["parent_revision"]["payload"]["config"]["clips"] if row["id"] == "clip-a")
     assert clip["at"] == 5
+    assert mirrored["at"] == 5
     assert len(generated.calls) == 1
     body = json.loads(generated.calls[0][0])
     assert body["label"] == "Move clip"
@@ -103,12 +83,19 @@ def test_p4_single_edit_uses_python_facade_g3_and_r1_provider(connected_fixture)
     assert body["steps"][0]["patch"] == [change]
 
 
-def test_p4_ten_notes_are_one_python_commit_with_ten_provider_steps(connected_fixture):  # noqa: F811
+def test_p4_ten_notes_are_one_python_commit_with_ten_fake_transport_steps(connected_fixture):  # noqa: F811
     tl, generated = _open_joined(connected_fixture)
     for index, value in enumerate(NOTES, 1):
         note_id = f"note-{index:02d}"
+        before = copy.deepcopy(tl.bundle)
+        after = copy.deepcopy(tl.bundle)
+        for clips in (after["parent"]["clips"], after["parent"]["config"]["clips"]):
+            clip = next(row for row in clips if row["id"] == "clip-a")
+            clip["app"]["org.example"]["p4_note"][note_id] = value
+        commands = emit_document_commands(before, after)
+        assert len(commands) == 1
         tl.command(
-            _note_command(note_id, value),
+            commands[0],
             label=f"Add {note_id}",
             intent="add an independently undoable review note",
             tags=["review", note_id],
@@ -124,6 +111,12 @@ def test_p4_ten_notes_are_one_python_commit_with_ten_provider_steps(connected_fi
     assert body["merge"] == "fields"
     assert body["reads"] == []
     assert len(body["commands"]) == len(body["steps"]) == 10
+    assert [step["id"] for step in body["steps"]] == [f"step-{index}" for index in range(1, 11)]
+    assert [step["label"] for step in body["steps"]] == [f"Add note-{index:02d}" for index in range(1, 11)]
+    assert all(step["intent"] == "add an independently undoable review note" for step in body["steps"])
+    assert [step["tags"] for step in body["steps"]] == [
+        ["review", f"note-{index:02d}"] for index in range(1, 11)
+    ]
     assert [step["command_ordinals"] for step in body["steps"]] == [[index] for index in range(10)]
     assert [step["patch"][0]["path"][-1] for step in body["steps"]] == [
         f"note-{index:02d}" for index in range(1, 11)
@@ -132,9 +125,11 @@ def test_p4_ten_notes_are_one_python_commit_with_ten_provider_steps(connected_fi
 
     canonical = result["data"]["canonical_document"]
     clip = next(row for row in canonical["parent_revision"]["payload"]["clips"] if row["id"] == "clip-a")
+    mirrored = next(row for row in canonical["parent_revision"]["payload"]["config"]["clips"] if row["id"] == "clip-a")
     notes = clip["app"]["org.example"]["p4_note"]
     assert notes == {f"note-{index:02d}": value for index, value in enumerate(NOTES, 1)}
-    assert clip["at"] == 1
+    assert clip["at"] == 0
+    assert mirrored["at"] == 0
     assert clip["asset"] == "picture"
     assert clip["track"] == "picture"
     assert result["receipt"]["command_kind"] == "timeline.commit"
