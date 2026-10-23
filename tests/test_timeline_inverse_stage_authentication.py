@@ -870,3 +870,61 @@ def test_actual_leaf_inverse_forgery_is_refused(retained_leaf_inverse, mutation)
         validate(**inputs)
     assert error.value.failure["details"]["reason"] == "invalid_records"
     assert inputs == before
+
+
+@pytest.fixture
+def retained_native_order_packet():
+    import json
+    from pathlib import Path
+
+    return json.loads((Path(__file__).parent / "fixtures" / "timeline_inverse_native_order_1416.json").read_bytes())
+
+
+def test_retained_native_order_packet_authenticates_against_physical_closure(retained_native_order_packet):
+    from runtime_protocol.timeline_commit_auth import validate
+
+    inputs = retained_native_order_packet["actual_input"]
+    validate(request=inputs["context"]["request"], prepared=copy.deepcopy(inputs["prepared"]),
+             source=copy.deepcopy(inputs["source"]), base=copy.deepcopy(inputs["previous"]),
+             history=copy.deepcopy(inputs["history"]))
+
+
+@pytest.mark.parametrize("mutation", [
+    "wrong-pin", "effect", "history", "owner", "payload", "order", "membership",
+    "ordinal", "source", "digest",
+])
+def test_retained_native_order_packet_rejects_coordinated_forgery(retained_native_order_packet, mutation):
+    from runtime_protocol.timeline_commit import CommitRejected
+    from runtime_protocol.timeline_commit_auth import validate
+
+    inputs = copy.deepcopy(retained_native_order_packet["actual_input"])
+    prepared = inputs["prepared"]
+    record = prepared["records"]["commands"][0]
+    stage = next(binding for binding in record["bindings"] if binding["key"] == "inverse.stage")
+    effect_binding = next(binding for binding in record["bindings"]
+                          if binding.get("key") == "commit.effect" and binding.get("effect_ordinal") == 0)
+    if mutation == "wrong-pin":
+        prepared["records"]["steps"][0]["patch"][2]["value"]["occurrences"][0]["shot_revision_id"] = "foreign-pin"
+    elif mutation == "effect":
+        prepared["records"]["steps"][0]["patch"][2]["value"]["opaque"] = {"forged": True}
+    elif mutation == "history":
+        prepared["records"]["undo_of"] = ["foreign-publication"]
+    elif mutation == "owner":
+        effect_binding["owners"] = ["occurrence:foreign/shot"]
+    elif mutation == "payload":
+        record["writes"][3]["before"]["value"][0]["shot_id"] = "foreign-shot"
+    elif mutation == "order":
+        record["writes"][3], record["writes"][4] = record["writes"][4], record["writes"][3]
+    elif mutation == "membership":
+        record["writes"].pop(0)
+    elif mutation == "ordinal":
+        stage["boundary"]["command_ordinals"] = [1]
+    elif mutation == "source":
+        stage["boundary"]["publication_id"] = "foreign-publication"
+    else:
+        effect_binding["content_digest"] = "sha256:" + "0" * 64
+
+    with pytest.raises(CommitRejected) as error:
+        validate(request=inputs["context"]["request"], prepared=prepared,
+                 source=inputs["source"], base=inputs["previous"], history=inputs["history"])
+    assert error.value.failure["details"]["reason"] == "invalid_records"
