@@ -498,10 +498,13 @@ class TimelineCommitStore:
             if entry["revision_id"] != revision_id:
                 reject("dependency_unavailable", "source publication and revision pins disagree")
             document = self.revision_closure(project_id, timeline_id, revision_id)
-            parent = document.get("parent_revision")
-            if not isinstance(parent, dict) or parent.get("content_digest") != content_digest:
-                reject("dependency_unavailable", "source revision content digest disagrees")
-            return document
+            if document is None:
+                reject("dependency_unavailable", "source revision closure is missing")
+            else:
+                parent = document.get("parent_revision")
+                if not isinstance(parent, dict) or parent.get("content_digest") != content_digest:
+                    reject("dependency_unavailable", "source revision content digest disagrees")
+                return document
 
     def _verify_inputs(self, document):
         for pin in document["dependency_manifest"]["documents"]:
