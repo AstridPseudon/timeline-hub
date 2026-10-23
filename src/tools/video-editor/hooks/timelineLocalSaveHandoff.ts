@@ -220,7 +220,12 @@ export function createTimelineLocalSaveHandoff(options: {
           };
           // recalcActionEnd/getClipTimelineDuration consult these selected fields.
           // Serializing copied rows/tracks is not a read of their entire contents.
-          const timingReads = (item: Record<string, unknown>) => ['id', 'track', 'at', 'clipType', 'hold', 'from', 'to', 'speed', 'asset']
+          const holdLike = (item: Record<string, unknown>) => item.clipType === 'hold' || typeof item.hold === 'number';
+          const validTrim = (item: Record<string, unknown>) => typeof item.from === 'number' && Number.isFinite(item.from)
+            && typeof item.to === 'number' && Number.isFinite(item.to) && item.to > item.from;
+          const timingReads = (item: Record<string, unknown>) => (gestureBasis.kind === 'move'
+            ? ['id', 'track', 'at', 'clipType', 'hold', 'speed', ...(!holdLike(item) ? ['from', 'to', ...(!validTrim(item) ? ['asset'] : [])] : [])]
+            : ['id', 'track', 'at', 'clipType', 'hold', 'from', 'to', 'speed', 'asset'])
             .map((key) => read(item, key, ['config', 'clips', `id:${item.id}`]));
           reads = timingReads(clip);
           reads.push(readPath(config, ['output', 'fps'], ['config']));
@@ -229,13 +234,16 @@ export function createTimelineLocalSaveHandoff(options: {
             reads.push(read(config, 'theme', ['config']), readPath(config, ['theme_overrides', 'visual', 'canvas', 'fps'], ['config']));
           }
           const assetRead = (item: Record<string, unknown>) => {
+            // Move timing consults registry duration only when load repairs an
+            // invalid media trim. File names and other asset metadata are copied.
+            if (gestureBasis.kind === 'move' && (holdLike(item) || validTrim(item))) return;
             if (typeof item.asset !== 'string') return;
             if (!object(parent.registry)) refuse('gesture registry read has no authored registry');
             // Runtime/provider normalize parent/registry to config/registry and
             // resolve that path to the top-level raw registry when no mirror exists.
             if (Object.prototype.hasOwnProperty.call(config, 'registry')
               && (!object(config.registry) || !same(config.registry, parent.registry))) refuse('contradictory parent registry mirror');
-            reads!.push(readPath(parent.registry, ['assets', item.asset], ['config', 'registry']));
+            reads!.push(readPath(parent.registry, ['assets', item.asset, ...(gestureBasis.kind === 'move' ? ['duration'] : [])], ['config', 'registry']));
           };
           assetRead(clip);
           if (gestureBasis.kind === 'split') {

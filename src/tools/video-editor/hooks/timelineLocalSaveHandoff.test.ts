@@ -56,6 +56,43 @@ async function environment(children = false, raw = false, rawIds = ['authored'],
 }
 
 describe('upstream local document handoff', () => {
+  it.each(['timing', 'routing', 'selection'] as const)('refuses a move carrier from a changed %s basis without replacing original guards', async (change) => {
+    const env = await environment(false, true, ['authored', 'sibling']);
+    const basis = structuredClone({ kind: 'move' as const, clipId: 'authored', trackId: 'V1',
+      config: env.source.config, registry: env.source.registry });
+    const next = structuredClone(env.source);
+    next.config.clips[0].at = 5;
+    await env.handoff.capture(next, basis);
+    const [original] = await env.outboxes.list(env.scope);
+    const changed = structuredClone(next);
+    if (change === 'timing') changed.config.clips[0].hold = 4;
+    if (change === 'routing') changed.config.clips[1].track = 'A1';
+    if (change === 'selection') changed.config.pinnedShotGroups = [{ shotId: 'group', trackId: 'V1', clipIds: ['authored', 'sibling'] }];
+    const staleBasis = { ...basis, config: changed.config };
+    const after = structuredClone(next);
+    after.config.clips[0].at = 7;
+    await expect(env.handoff.capture(after, staleBasis)).rejects.toThrow('gesture read basis differs');
+    expect((await env.outboxes.list(env.scope))[0].intents).toEqual(original.intents);
+    expect(env.session.getDocument()).toEqual(original.intents[0].payload.after);
+    expect(env.send).not.toHaveBeenCalled();
+    await env.session.dispose();
+  });
+
+  it('does not guard copied registry metadata or unused trims for a hold move', async () => {
+    const env = await environment(false, true, ['authored'], undefined,
+      { key: 'media', registry: { assets: { media: { file: 'media.mp4', duration: 8 } } } });
+    const next = structuredClone(env.source);
+    next.config.clips[0].at = 5;
+    await env.handoff.capture(next, structuredClone({ kind: 'move', clipId: 'authored', trackId: 'V1',
+      config: env.source.config, registry: env.source.registry }));
+    const [stored] = await env.outboxes.list(env.scope);
+    const intent = stored.intents[0].payload.documentIntent as { reads: { path: string[] }[] };
+    expect(intent.reads.some((read) => read.path.includes('registry') || ['asset', 'from', 'to'].includes(read.path.at(-1)!))).toBe(false);
+    expect(intent.reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:authored', 'hold'],
+      state: { state: 'present', value: 2 } });
+    await env.session.dispose();
+  });
+
   it('persists original parent move reads and sends the exact dependent request after lost ACK and restart', async () => {
     contractFixture.digest = CURRENT_V2_DIGEST;
     const env = await environment(false, true, ['authored', 'sibling']);
