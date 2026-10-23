@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-23T06:42:07Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 0m -->
-# viewing board, 2026-10-23T06:41:25Z
+<!-- viewing | 2026-10-23T06:43:19Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 0m -->
+# viewing board, 2026-10-23T06:43:17Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | canonical schema inventory | Luna high | H0 | merged | vw-V1-schema-inventory-fix; review2 | Independent PASS four copies, SHA/cmp/generators/manifest; inventory only | 6c4d9342189b69d488b41f609b64aa2918eda955 |
@@ -20,7 +20,7 @@
 | V4-anchor-legacy | D12 timing boundary repairs | Agent Sol; independent Sol/Luna | actual3e proof | merged | boundedb42; audit0612; four-review0630 | BoundedguardPASS + actual3e FOUR independentlyPASS resolves2seederrors. New/modified/removedtarget/owner negatives retained; positivelegacyrebase separateD16 | b42b7d72a;3e4261e96 |
 | V4-current-four | actual integrated4 setup/status | Luna high | actual3e integratedproof | merged | vw-V4-current-four-0626; four-review-0630 | Actual3e FIRST4PASS50deselected4.29s; Ruff/vendor15/manifest/diff/clean PASS. Independent0630 4PASS50deselected/Ruff/diff/normal15/caller. DONE FOURscope only, readonlyactualtree/nocode merge needed | 3e4261e96/treefbaebb60 |
 | V4-current-rebase | D16 unsupported legacy positive | Luna author; independent Luna | D16 disposition independentreview | review | D16-rebase-disposition0637; D16-rebase-review0641 | Author: earlierrefusalcannotpreservepositivechoice/merged/restart/secondmove/reads. Currentunboundlegacybehavior deliverydeferred underD16; originalUNCHANGED/UNSKIPPED/visibleONEFAIL. Independentreviewqueued | originalhome3e;706MUSTNOTmerge |
-| V4-D16-window | earlier-refusal expectation adaptation | Luna high | D16 approved06:22 | doing | vw-V4-D16-window-0637 | Onefunctiononly; alloriginalassertionsmapped/retained + exactreferencepath; independentno-weakeningreviewnext. Deliverybehaviorchange required | base3e4261e96 |
+| V4-D16-window | earlier-refusal adaptation/error path | Luna author; independent Luna | no-weakeningreview + AgentR3 path | review | D16-window0637; D16-window-review0642 | Author2f FIRST1FAIL53deselected1.53s atdetails.path[]; strictpathretained. Reviewaudits addedacceptedanchorvsoriginalcapture-only +everyassertion/pathorigin. No merge | 2f332a036/base3e |
 | V4-undo | two equal-text anchor undo positives | orchestrator D14 | deferred relational timing | gated:D14-deferred | D14 04:40 applied | UNCHANGED/UNSKIPPED/VISIBLY FAILING known v2 regressions; safe intervening_write; C0 unchanged/no guard drop. Never54PASS | original tests retained |
 | V4-recipe | optional duplicate recipe cut | Luna high | cut locally | todo | CUT; no worker expected | Earlier deletion reversed original clip.anchor assertion; both recipes/assertions restored unchanged. Do not reopen optional cut | retained originals |
 | V4-app | PropertiesPanel helper dedup | Luna high | integrated proof | merged | vw-V4-app-review-resume; integrated0057 | DONE scoped:actual794/treeeb59, a476ancestor; independent70 and integrated70/ESLint/strict-islands/diff/caller PASS | 794d365ae03725453c3359d21c791b1ffe7ccee9 |

@@ -1,0 +1,30 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___ test_stale_anchor_refuses_when_intervening_window_excludes_selected_word ___
+
+recipe = namespace(service=<runtime_protocol.service.RuntimeService object at 0x7f6fe94fa8d0>, root=PosixPath('/tmp/w-df0d17d35...t=<function retained.<locals>.restart at 0x7f6fe8e86660>, create=<function retained.<locals>.create at 0x7f6fe8e86700>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6fe95e68d0>
+
+    def test_stale_anchor_refuses_when_intervening_window_excludes_selected_word(recipe, monkeypatch):
+        from runtime_protocol.errors import RuntimeErrorBase
+    
+        case = recipe
+        selected = pick(case, 1)
+        anchored = case.submit(case.request([selected]), "anchor-before-window")
+        head = case.head()
+        before = bundle(case)
+        with pytest.raises(RuntimeErrorBase, match="outside the half-open source window") as error:
+            case.submit(case.request([window_command(monkeypatch, 4, 6)]), "window-orphans-anchor")
+        assert error.value.details["reason"] == "invalid_anchor"
+        assert error.value.details["status"] == "invalid"
+>       assert error.value.details["path"] == [
+            "parent", "clips", "id:card", "app", "astrid", "word_anchors", "on"]
+E       AssertionError: assert [] == ['parent', 'c...anchors', ...]
+E         
+E         Right contains 7 more items, first extra item: 'parent'
+E         Use -v to get more diff
+
+tests/editing_conformance/test_native_word_anchor.py:533: AssertionError
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_native_word_anchor.py::test_stale_anchor_refuses_when_intervening_window_excludes_selected_word
+1 failed, 53 deselected in 1.53s
