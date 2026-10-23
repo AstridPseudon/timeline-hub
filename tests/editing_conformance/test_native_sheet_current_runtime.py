@@ -20,10 +20,7 @@ from astrid.sdk.timeline._track_commands import capture_track_set
 from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
-from astrid.sdk.timeline.document_diff import (
-    DocumentDiffError,
-    document_diff_to_commands,
-)
+from astrid.sdk.timeline.emitter import DocumentPatchError, emit_document_commands
 from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
 from astrid.sdk.timeline_checkout import Checkout
 from astrid.sdk.timeline_editing import add_track
@@ -247,8 +244,8 @@ def seed_shared_occurrence_parent(runtime, *, prepare=None, identity_scope=None)
     return document, receipt
 
 
-def seed_document_diff_parent(runtime):
-    """Seed real App-shaped rows with the native document-diff scalar carriers."""
+def seed_emitter_parent(runtime):
+    """Seed real App-shaped rows exercised by the current document emitter."""
     def prepare(parent, shots, internals):
         parent_rows = parent['payload']['clips']
         for rows in (parent_rows, parent['payload']['config']['clips']):
@@ -259,14 +256,14 @@ def seed_document_diff_parent(runtime):
         child.pop('asset', None)
 
     return seed_shared_occurrence_parent(
-        runtime, prepare=prepare, identity_scope=f'document-diff-{runtime.project}',
+        runtime, prepare=prepare, identity_scope=f'emitter-{runtime.project}',
     )
 
 
-def test_http_document_diff_null_presence_and_track_roundtrip_is_authenticated(runtime):
-    _document, setup = seed_document_diff_parent(runtime)
+def test_http_emitter_null_presence_and_track_roundtrip_is_authenticated(runtime):
+    _document, setup = seed_emitter_parent(runtime)
     runtime.restart()
-    session = runtime.session(name='document-diff')
+    session = runtime.session(name='emitter')
     loaded = session.client.timelines.open_bundle(runtime.project, 'film')
     assert loaded.ok
     before = loaded.data['bundle']
@@ -283,8 +280,8 @@ def test_http_document_diff_null_presence_and_track_roundtrip_is_authenticated(r
     child(unsupported)['params']['null'] = None
     head_before_refusal = copy.deepcopy(runtime.history()['head'])
     calls_before_refusal = len(runtime.calls)
-    with pytest.raises(DocumentDiffError, match='undeclared params'):
-        document_diff_to_commands(unsupported, before)
+    with pytest.raises(DocumentPatchError, match='source-bound|managed|closure'):
+        emit_document_commands(before, unsupported)
     assert runtime.history()['head'] == head_before_refusal
     assert len(runtime.calls) == calls_before_refusal
 
@@ -296,25 +293,39 @@ def test_http_document_diff_null_presence_and_track_roundtrip_is_authenticated(r
     edited_child['params'] = {}
     candidate['parent']['config']['tracks'][0]['label'] = 'Renamed'
 
-    native = document_diff_to_commands(candidate, before)
-    assert [command['op'] for command in native['commands']] == [
-        'track.set', 'clip.set', 'clip.set-params', 'clip.set',
+    commands = emit_document_commands(before, candidate)
+    target_shot = next(row for row in before['placements']
+                       if row['occurrence_id'] == 'f2-occurrence')['shot_id']
+    internal_ref = 'internal-revision:' + before['source_mapping']['shots'][target_shot][
+        'internal_timeline_revision_id']
+    assert [command['op'] for command in commands] == ['doc.patch', 'doc.patch']
+    assert [change for command in commands for change in command['args']['changes']] == [
+        {'op': 'set', 'ref': 'parent', 'path': ['config', 'tracks', 'id:V1', 'label'],
+         'before': {'state': 'absent'}, 'value': 'Renamed'},
+        {'op': 'remove', 'ref': 'parent', 'path': ['clips', 'id:f2-app-clip', 'hold'],
+         'before': {'state': 'present', 'value': 3}},
+        {'op': 'remove', 'ref': internal_ref,
+         'path': ['clips', 'id:f2-agent-clip', 'hold'],
+         'before': {'state': 'present', 'value': 3}},
+        {'op': 'remove', 'ref': internal_ref,
+         'path': ['clips', 'id:f2-agent-clip', 'params', 'text'],
+         'before': {'state': 'present', 'value': 'hello'}},
     ]
     # Accepted responses carry commands; the recorder is published by history.
-    expected_records = execute(before, native['commands']).records
-    result = session.commit_many(native['commands'], idempotency_key='document-diff-roundtrip')
-    assert result['data']['commands'] == native['commands']
+    expected_records = execute(before, commands).records
+    result = session.commit_many(commands, idempotency_key='emitter-roundtrip')
+    assert result['data']['commands'] == commands
     body = json.loads(runtime.calls[-1][0])
-    assert body['commands'] == native['commands']
+    assert body['commands'] == commands
     assert body['source'] == {'via': 'python'}
 
-    # ``open_bundle`` and the native diff result are intentionally detached.
+    # ``open_bundle`` and the emitter result are intentionally detached.
     # The accepted setup document is the exact original base/publication and
     # carries the private compilation context required by the pure projector.
     original_document = setup['data']['canonical_document']
     original = bundle_from_document(original_document)
     assert persisted_bundle(original) == persisted_bundle(before)
-    expected_input = copy.deepcopy(native['bundle'])
+    expected_input = execute(before, commands, commit_request={}).bundle
     expected_input['source_mapping']['_runtime_document'] = copy.deepcopy(
         original['source_mapping']['_runtime_document'])
     expected_document = document_from_bundle(expected_input)
