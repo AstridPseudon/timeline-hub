@@ -137,6 +137,31 @@ const buildDataFromSerializedConfig = (
   );
 };
 
+/**
+ * Config mutations are edits of `current.resolvedConfig`, whose clip `label`s are the derived display names.
+ * A clip whose label is still exactly that derived name, with no stored label behind it, was not named by the
+ * edit: drop it so it is not saved as if a user set it. A label the edit changed, or one already stored, stays.
+ */
+const withoutDerivedLabels = (
+  current: TimelineData,
+  resolvedConfig: TimelineData['resolvedConfig'],
+): TimelineData['resolvedConfig'] => ({
+  ...resolvedConfig,
+  clips: resolvedConfig.clips.map((clip) => {
+    const meta = current.meta[clip.id];
+    if (!meta || meta.label !== undefined || clip.label === undefined || clip.label !== meta.displayName) return clip;
+    const { label: _derived, ...rest } = clip;
+    return rest;
+  }),
+});
+
+/** The one way an edited `resolvedConfig` becomes the config that is saved. */
+export const serializeResolvedConfigForSave = (
+  current: TimelineData,
+  resolvedConfig: TimelineData['resolvedConfig'],
+  pinnedShotGroups: TimelineData['config']['pinnedShotGroups'],
+): TimelineData['config'] => serializeForDisk(withoutDerivedLabels(current, resolvedConfig), pinnedShotGroups);
+
 export const previewTimelineMutation = (
   current: TimelineData,
   mutation: TimelineEditMutation,
@@ -206,7 +231,8 @@ export const previewTimelineMutation = (
 
     const nextData = buildDataFromSerializedConfig(
       current,
-      serializeForDisk(
+      serializeResolvedConfigForSave(
+        current,
         mutation.resolvedConfig,
         mutation.pinnedShotGroupsOverride ?? current.config.pinnedShotGroups,
       ),

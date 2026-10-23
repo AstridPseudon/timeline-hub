@@ -19,7 +19,7 @@ import {
 import { TimelineEventBus } from '@/tools/video-editor/hooks/useTimelineEventBus.ts';
 import { buildTrackClipOrder } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import { migrateToFlatTracks } from '@/tools/video-editor/lib/migrate.ts';
-import { serializeForDisk } from '@/tools/video-editor/lib/serialize.ts';
+import { serializeResolvedConfigForSave } from '@/tools/video-editor/lib/timeline-mutation-engine.ts';
 import { getConfigSignature } from '@/tools/video-editor/lib/config-utils.ts';
 import { buildDataFromCurrentRegistry } from '@/tools/video-editor/lib/timeline-save-utils.ts';
 import { buildAssetReferenceMap, getAssetMediaId, getAssetResolutionToken, getAssetSourceForLocalEdit } from '@/tools/video-editor/lib/asset-registry.ts';
@@ -523,7 +523,8 @@ export function useTimelineCommit({
       preserveUploadingClips(
         current,
         buildDataFromCurrentRegistry(
-          serializeForDisk(
+          serializeResolvedConfigForSave(
+            current,
             mutation.resolvedConfig,
             mutation.pinnedShotGroupsOverride ?? current.config.pinnedShotGroups,
           ),

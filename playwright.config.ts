@@ -88,6 +88,8 @@ const LOCAL_JOURNEY_SPECS = /tests[\\/]e2e[\\/]local[\\/].*\.spec\.ts$/;
 // These two specs set their own desktop viewport and drive the pointer editor, so the device projects would only
 // repeat the desktop run; chromium-desktop runs them.
 const DESKTOP_ONLY_SPECS = /(?:production-widget-scope|video-editor-instance-lifecycle)\.spec\.ts$/;
+// iPhone Safari (WebKit) runs only the public site specs; the editor specs stay on Chromium.
+const PUBLIC_SITE_SPECS = /(?:public-astrid[\w-]*|home-load)\.spec\.ts$/;
 const defaultProjectIgnores = [
   TIMELINE_DEVICE_SPECS,
   EXTENSION_HARNESS_SETUP_SPEC,
@@ -175,6 +177,14 @@ export default defineConfig({
       testIgnore: [...defaultProjectIgnores, DESKTOP_ONLY_SPECS],
       dependencies: extensionHarnessDependencies,
       use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium' },
+    },
+    {
+      // Real iPhone Safari engine for the public site. The device profile is WebKit as shipped; the top-level
+      // `launchOptions` are Chromium-only args, so this project launches WebKit with none. It needs no editor
+      // harness, so it has no setup dependency (CI job `playwright-webkit-mobile`).
+      name: 'webkit-mobile',
+      testMatch: PUBLIC_SITE_SPECS,
+      use: { ...devices['iPhone 13'], launchOptions: {} },
     },
     ...(includeTimelineDevices
       ? [{

@@ -44,7 +44,10 @@ export interface ClipMeta {
   asset?: string;
   track: string;
   clipType?: ClipType;
+  /** Persisted only when a user or agent set it (see `assembleTimelineData`); never the derived display name. */
   label?: string;
+  /** Derived, never persisted: what the clip is called on screen (explicit label, else asset name, else "Image 2"). */
+  displayName?: string;
   from?: number;
   to?: number;
   speed?: number;
@@ -469,9 +472,22 @@ export const assembleTimelineData = ({
     label: displayNames.get(clip.id),
   }));
   const rowData = configToRows(canonicalConfig);
-  for (const [clipId, label] of displayNames) {
+  // The derived name is a view, kept in `displayName` so that saving rows never writes it back as `label`
+  // (a saved `label` reads as user-set and would stick after the asset changes). `meta.label` keeps only a
+  // label the derivation actually used and that is not just the name the clip would get anyway; this also
+  // heals timelines saved before this rule (a label equal to the current derived name is treated as unset,
+  // as are junk labels such as the asset id).
+  const naturalNames = deriveTimelineClipDisplayNames(
+    canonicalResolvedConfig.clips.map(({ label: _label, ...clip }) => clip),
+    canonicalResolvedConfig.registry,
+    canonicalResolvedConfig.tracks,
+  );
+  for (const [clipId, displayName] of displayNames) {
     const clipMeta = rowData.meta[clipId];
-    if (clipMeta) rowData.meta[clipId] = { ...clipMeta, label };
+    if (!clipMeta) continue;
+    const stored = clipMeta.label?.trim();
+    const isExplicit = stored !== undefined && stored === displayName && stored !== naturalNames.get(clipId);
+    rowData.meta[clipId] = { ...clipMeta, label: isExplicit ? clipMeta.label : undefined, displayName };
   }
 
   return {
