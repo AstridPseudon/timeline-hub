@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-23T17:33:15Z | dispatcher heartbeat 13s | live 3 (sol 0, luna 3, other 0) | busy30 13 | status age 1m -->
-# agent board, 2026-10-23T17:32:00Z
+<!-- agent | 2026-10-23T17:35:04Z | dispatcher heartbeat 1s | live 2 (sol 0, luna 2, other 0) | busy30 13 | status age 0m -->
+# agent board, 2026-10-23T17:35:04Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2-ops-health | stale dispatcher/false orphan diagnosis | Luna readonly; host lead | dispatcher heartbeat09:06 | merged | agt-U2-ops-health-0912 FINAL | Readonly diagnosis+lead0943 confirms hung pip09:07-09:42; one PID terminated; FIFO resumed, no hostrestart. False sandbox orphan diagnosis confirmed; no productchange | ops-only |
@@ -114,6 +114,8 @@
 | R2-legacy-restore | authenticated legacy declaration baseline | HARD Sol; independent Luna | sourcebackedSDKcause1658 | review | agt-R2-legacy-review-1727 QUEUED | Authord1d final27REALprovider/store+80neighborsPASS, exactbase2RED,1912/2149/tools; source-boundhistoricalbaseline onlyexactrestoredvalues/referencebasis, no newauthored/forged/invalidatedwaiver. Independent1727 dispatchedimmediately | d1d41c405 unmerged |
 | A4-provider-map | existing Python witnesses for App retirements | Luna readonly; independentnext | App1722/1726 peer | doing | agt-A4-provider-map-1732 QUEUED | Map EXACT parentAfterAnchor/trackReorder/transcriptAssociate cases to registeredPythonprovider/canonicalfixture/refusals; honestcovered/uncovered. App1725 ownsAppcuts; no newops/testauthoring or duplicatebody | evidencepending |
 
+| R1-transcript-input | immutable pre-execution transcript input | HARD Sol R1 core | Runtime1728 losslesspacket47ac; currentd9e | doing | agt-R1-transcript-input-sol-1735 QUEUED | New originalNone-True failsHEADd9e beforeRuntimea00ematcher; Agentprehydration addsdocmanifest/recomputesimmutableparentpin. OneAgentowner confirmscapture/sourceboundarythenfixesstrictly; Runtimepincheckretained, no sourceidentityretarget | pending |
+
 Resolved: D20 actual8c+859 original9PASS; held-image f611+859fourPASS/audit1326. D17 actuald1fa+3b joined323PASS. P4three originalintegratedlegsDONE. U2b/current34e/d106/819acf retained. D14/D23/H9 exact positives unchanged/unskipped/visibly failing; no V4 repair or fullPASS claim.
 Blockers: Runtime — producersequential/nested CLEAREDd9e2/currentpair9PASS. SDKauthenticfixture CLEAREDindependent1640PASS; archive2915 presentFLATdesign/hub, Agentoriginalfour unique1649 startsNOW. No Runtimeapproval/sourcewait remains, no guardwaiver/newtuple.
 Blockers: Proof/App/Runtime — latestoriginalP1 22122 FINALFAIL2/510s on4c4/98ef/259: rawApporacle nowpasses, lostACK/restart recoveryretryPOST894-5 and refusedcase1POST943 ownedApp/Proof. Prior16398FAIL2/415s retains629/583/9ce scope. NewGate5fullseed20942 FAILbeforeBODY invalid_records uniqueauthenticatedsequentialbinding; uniqueRuntimeSol1709 ownsdiagnosis/fix. P1NO-GO/A4G5gated; P4DONE, no duplicateAgentHTTP/browser/fullbody.
@@ -142,3 +144,5 @@ Checkpoint 2026-10-23T17:26:51Z: legacySol1704 FINALPASS27+80/causal2RED/quality
 Checkpoint 2026-10-23T17:28:59Z: actualstorage1725 FINAL130PASS12.87s/quality/tools consumed; boundedsource rowmerged+qualified, no publicredo/fullclaim. CurrentG5draftport1725 and authenticatedlegacyindependent1727 LIVE, no ready taskwaiting.
 
 Checkpoint 2026-10-23T17:32:00Z: currentG5bda author184PASS/47pathdonor+protectedsource mapping consumed, independent1732queued. NEWApppeer1722/1726 becamecriticalA4-provider-maprow+readonlyLuna1732 immediately; exactApp4c4commitavailablelocally, no checkout/provisionwait or competingAppauthor. Legacy1727 independentstillLIVE. P1mergegateunchanged.
+
+Checkpoint 2026-10-23T17:35:04Z: NEWRuntimepeer1728 immutabletranscriptcapture request becamecriticalR1row+Sol1735immediately. Exact208011B47acpacket normalhubavailable; no extraapprovalwait. Scopecommit.pyhydration/_commit_patch originalinput, legacyd1dfinalvalidationcallsite protected/disjoint; inverseuntouched. Runtimea00ematcher remainsRuntimeindependentreview1728, no competingauthauthor/body.
