@@ -1,0 +1,476 @@
+{
+  "all_original_assertion_lines": [
+    97,
+    98,
+    99,
+    100,
+    101,
+    103,
+    104,
+    105,
+    107,
+    108,
+    111,
+    112,
+    114,
+    124,
+    126,
+    127,
+    128,
+    129,
+    130,
+    131
+  ],
+  "captures": [
+    {
+      "credential_clean": true,
+      "dry_run": true,
+      "has_prevalidation_capture": true,
+      "index": 0,
+      "kind": "original9",
+      "label": "Two nudges",
+      "method": null,
+      "no_write": null,
+      "sha256": "a7a54a0127b5727787433c982011691a9417f14c8262b7fa1c52cd2727731110",
+      "status": null,
+      "would_status": null
+    },
+    {
+      "credential_clean": true,
+      "dry_run": true,
+      "has_prevalidation_capture": true,
+      "index": 1,
+      "kind": "original9",
+      "label": "Two nudges",
+      "method": "preview",
+      "no_write": true,
+      "sha256": "e1ac8af415e3c246e4d6c61555d03cfd3856540ccd7f1580d53bd091792044a5",
+      "status": "preview",
+      "would_status": "accepted"
+    },
+    {
+      "credential_clean": true,
+      "dry_run": false,
+      "has_prevalidation_capture": true,
+      "index": 2,
+      "kind": "original9",
+      "label": "Two nudges",
+      "method": null,
+      "no_write": null,
+      "sha256": "73b9aabe4afdbd32094f11863c9ac4aa7feb6578d56e90d3372926a136fcfe7d",
+      "status": null,
+      "would_status": null
+    },
+    {
+      "credential_clean": true,
+      "dry_run": false,
+      "has_prevalidation_capture": true,
+      "index": 3,
+      "kind": "original9",
+      "label": "Two nudges",
+      "method": "accept",
+      "no_write": false,
+      "sha256": "ae6257d8cc5dbd212f2ec122168cbfa32cdf1b9adf05979b4da4a63ae18e1bd6",
+      "status": "accepted",
+      "would_status": null
+    },
+    {
+      "credential_clean": true,
+      "dry_run": true,
+      "has_prevalidation_capture": true,
+      "index": 4,
+      "kind": "original9",
+      "label": "Two nudges",
+      "method": null,
+      "no_write": null,
+      "sha256": "7966a24fabe6a5ddc2ddf28f79b19f9013804c2045a5b98bfd91617c892cab7d",
+      "status": null,
+      "would_status": null
+    },
+    {
+      "credential_clean": true,
+      "dry_run": true,
+      "has_prevalidation_capture": true,
+      "index": 5,
+      "kind": "original9",
+      "label": "Two nudges",
+      "method": "preview",
+      "no_write": true,
+      "sha256": "e50b23fc1a2dec8b50fea016341e06aeeaaa39d5e59dfbad3cba76b05f999c36",
+      "status": "preview",
+      "would_status": "accepted"
+    },
+    {
+      "credential_clean": true,
+      "dry_run": false,
+      "has_prevalidation_capture": true,
+      "index": 6,
+      "kind": "original9",
+      "label": "Two nudges",
+      "method": null,
+      "no_write": null,
+      "sha256": "3bfc982c2e40e5eb60f47702a5362567454cb610c524c3a0edc71b08b55b9280",
+      "status": null,
+      "would_status": null
+    },
+    {
+      "credential_clean": true,
+      "dry_run": false,
+      "has_prevalidation_capture": true,
+      "index": 7,
+      "kind": "original9",
+      "label": "Two nudges",
+      "method": "accept",
+      "no_write": false,
+      "sha256": "3925f6ad7675932ab980f6137d15f3da70085bc55ed0c00b0ed4cd7bf59fad6f",
+      "status": "accepted",
+      "would_status": null
+    },
+    {
+      "credential_clean": null,
+      "dry_run": false,
+      "has_prevalidation_capture": false,
+      "index": 8,
+      "kind": "original9",
+      "label": "Peer",
+      "method": "accept",
+      "no_write": false,
+      "sha256": "16f4326a613c29fb81ea35a1ca1efe2a4dd2b882c2c450cd680623ab001a98de",
+      "status": "accepted",
+      "would_status": null
+    },
+    {
+      "credential_clean": true,
+      "dry_run": true,
+      "has_prevalidation_capture": true,
+      "index": 9,
+      "kind": "original9",
+      "label": "Two nudges",
+      "method": null,
+      "no_write": null,
+      "sha256": "01c435b2be7cd01ab390337e75bfa69da41fe52be35279e3badad2a8d5eb37ae",
+      "status": null,
+      "would_status": null
+    },
+    {
+      "credential_clean": true,
+      "dry_run": true,
+      "has_prevalidation_capture": true,
+      "index": 10,
+      "kind": "original9",
+      "label": "Two nudges",
+      "method": "preview",
+      "no_write": true,
+      "sha256": "3c94b28be49f78646c3f5e8351349c1d8439c68dbdb6cd02d9db64f08f1ee26c",
+      "status": "preview",
+      "would_status": "merged"
+    },
+    {
+      "credential_clean": true,
+      "dry_run": false,
+      "has_prevalidation_capture": true,
+      "index": 11,
+      "kind": "original9",
+      "label": "Two nudges",
+      "method": null,
+      "no_write": null,
+      "sha256": "ad4fa8c408696df43a788479efb61ab135b140c48387f8d2a7a471604a65a4d4",
+      "status": null,
+      "would_status": null
+    },
+    {
+      "credential_clean": true,
+      "dry_run": false,
+      "has_prevalidation_capture": true,
+      "index": 12,
+      "kind": "original9",
+      "label": "Two nudges",
+      "method": "accept",
+      "no_write": false,
+      "sha256": "74ce8f378e3430e8c2ab43a5021983def890853876d651859dfdb290189279a9",
+      "status": "merged",
+      "would_status": null
+    },
+    {
+      "credential_clean": null,
+      "dry_run": false,
+      "has_prevalidation_capture": false,
+      "index": 13,
+      "kind": "original9",
+      "label": "Peer",
+      "method": "accept",
+      "no_write": false,
+      "sha256": "2dad30425b7f288b50a1ca02142a00641dbad0ca2702347d29e5e7e90f258398",
+      "status": "accepted",
+      "would_status": null
+    },
+    {
+      "credential_clean": true,
+      "dry_run": true,
+      "has_prevalidation_capture": true,
+      "index": 14,
+      "kind": "original9",
+      "label": "Two nudges",
+      "method": null,
+      "no_write": null,
+      "sha256": "318eead86afc8768b47cad06efeba2a32361fc56e30d5e12dad869db4c41f442",
+      "status": null,
+      "would_status": null
+    },
+    {
+      "credential_clean": true,
+      "dry_run": true,
+      "has_prevalidation_capture": true,
+      "index": 15,
+      "kind": "original9",
+      "label": "Two nudges",
+      "method": "preview",
+      "no_write": true,
+      "sha256": "e8a8ea0ac2c47782d057792f75ab528ad7f7f80a634cdfc7da84344fa5ca6297",
+      "status": "preview",
+      "would_status": "merged"
+    },
+    {
+      "credential_clean": true,
+      "dry_run": false,
+      "has_prevalidation_capture": true,
+      "index": 16,
+      "kind": "original9",
+      "label": "Two nudges",
+      "method": null,
+      "no_write": null,
+      "sha256": "de94dddb1602f2745560d0ebb9a989f2166f33a9ccc778631f14c37646f944b6",
+      "status": null,
+      "would_status": null
+    },
+    {
+      "credential_clean": true,
+      "dry_run": false,
+      "has_prevalidation_capture": true,
+      "index": 17,
+      "kind": "original9",
+      "label": "Two nudges",
+      "method": "accept",
+      "no_write": false,
+      "sha256": "9056de9c930fa111b4699beba317153f63aef723546253fefe1ef79263a05359",
+      "status": "merged",
+      "would_status": null
+    },
+    {
+      "credential_clean": null,
+      "dry_run": false,
+      "has_prevalidation_capture": false,
+      "index": 18,
+      "kind": "original9",
+      "label": "Peer",
+      "method": "accept",
+      "no_write": false,
+      "sha256": "547533c849382a2e3067c5a2b41c1a5fc87b897cd8cb8d767719905a387a783a",
+      "status": "accepted",
+      "would_status": null
+    },
+    {
+      "credential_clean": null,
+      "dry_run": false,
+      "has_prevalidation_capture": false,
+      "index": 19,
+      "kind": "original9",
+      "label": "Peer",
+      "method": "accept",
+      "no_write": false,
+      "sha256": "a6949aa470e33c177750ce332d263686b5140ffa46a52c8ee9200a2aa1a77864",
+      "status": "accepted",
+      "would_status": null
+    }
+  ],
+  "negatives": [
+    {
+      "assertions": [
+        {
+          "line": 173,
+          "source": "assert error.value.code == 'conflict'",
+          "status": "not reconstructable from retained observer captures"
+        },
+        {
+          "line": 174,
+          "source": "assert error.value.details['reason'] == {\n        'field': 'value_conflict', 'consulted': 'value_conflict', 'membership': 'selection_changed',\n        'source': 'outside_closure', 'continuation': 'history_unavailable',\n    }[damage]",
+          "status": "not reconstructable from retained observer captures"
+        },
+        {
+          "line": 178,
+          "source": "assert document('t') == landed",
+          "status": "not reconstructable from retained observer captures"
+        },
+        {
+          "line": 179,
+          "source": "assert dump(tmp_path) == before",
+          "status": "not reconstructable from retained observer captures"
+        }
+      ],
+      "damage": "field",
+      "status": "UNVERIFIED; no completed per-node pytest report or refusal/no-write state retained"
+    },
+    {
+      "assertions": [
+        {
+          "line": 173,
+          "source": "assert error.value.code == 'conflict'",
+          "status": "not reconstructable from retained observer captures"
+        },
+        {
+          "line": 174,
+          "source": "assert error.value.details['reason'] == {\n        'field': 'value_conflict', 'consulted': 'value_conflict', 'membership': 'selection_changed',\n        'source': 'outside_closure', 'continuation': 'history_unavailable',\n    }[damage]",
+          "status": "not reconstructable from retained observer captures"
+        },
+        {
+          "line": 178,
+          "source": "assert document('t') == landed",
+          "status": "not reconstructable from retained observer captures"
+        },
+        {
+          "line": 179,
+          "source": "assert dump(tmp_path) == before",
+          "status": "not reconstructable from retained observer captures"
+        }
+      ],
+      "damage": "consulted",
+      "status": "UNVERIFIED; no completed per-node pytest report or refusal/no-write state retained"
+    },
+    {
+      "assertions": [
+        {
+          "line": 173,
+          "source": "assert error.value.code == 'conflict'",
+          "status": "not reconstructable from retained observer captures"
+        },
+        {
+          "line": 174,
+          "source": "assert error.value.details['reason'] == {\n        'field': 'value_conflict', 'consulted': 'value_conflict', 'membership': 'selection_changed',\n        'source': 'outside_closure', 'continuation': 'history_unavailable',\n    }[damage]",
+          "status": "not reconstructable from retained observer captures"
+        },
+        {
+          "line": 178,
+          "source": "assert document('t') == landed",
+          "status": "not reconstructable from retained observer captures"
+        },
+        {
+          "line": 179,
+          "source": "assert dump(tmp_path) == before",
+          "status": "not reconstructable from retained observer captures"
+        }
+      ],
+      "damage": "membership",
+      "status": "UNVERIFIED; no completed per-node pytest report or refusal/no-write state retained"
+    },
+    {
+      "assertions": [
+        {
+          "line": 173,
+          "source": "assert error.value.code == 'conflict'",
+          "status": "not reconstructable from retained observer captures"
+        },
+        {
+          "line": 174,
+          "source": "assert error.value.details['reason'] == {\n        'field': 'value_conflict', 'consulted': 'value_conflict', 'membership': 'selection_changed',\n        'source': 'outside_closure', 'continuation': 'history_unavailable',\n    }[damage]",
+          "status": "not reconstructable from retained observer captures"
+        },
+        {
+          "line": 178,
+          "source": "assert document('t') == landed",
+          "status": "not reconstructable from retained observer captures"
+        },
+        {
+          "line": 179,
+          "source": "assert dump(tmp_path) == before",
+          "status": "not reconstructable from retained observer captures"
+        }
+      ],
+      "damage": "source",
+      "status": "UNVERIFIED; no completed per-node pytest report or refusal/no-write state retained"
+    },
+    {
+      "assertions": [
+        {
+          "line": 173,
+          "source": "assert error.value.code == 'conflict'",
+          "status": "not reconstructable from retained observer captures"
+        },
+        {
+          "line": 174,
+          "source": "assert error.value.details['reason'] == {\n        'field': 'value_conflict', 'consulted': 'value_conflict', 'membership': 'selection_changed',\n        'source': 'outside_closure', 'continuation': 'history_unavailable',\n    }[damage]",
+          "status": "not reconstructable from retained observer captures"
+        },
+        {
+          "line": 178,
+          "source": "assert document('t') == landed",
+          "status": "not reconstructable from retained observer captures"
+        },
+        {
+          "line": 179,
+          "source": "assert dump(tmp_path) == before",
+          "status": "not reconstructable from retained observer captures"
+        }
+      ],
+      "damage": "continuation",
+      "status": "UNVERIFIED; no completed per-node pytest report or refusal/no-write state retained"
+    }
+  ],
+  "positive_cases": [
+    {
+      "capture": 3,
+      "declared": false,
+      "missing_original_values": [
+        "raw dump(tmp_path) lists before/after preview",
+        "actual document(t) post-preview and post-accept values",
+        "actual post-accept history DomainResult and page",
+        "actual final idempotent replay reply",
+        "actual history after final replay",
+        "original pytest longrepr"
+      ],
+      "moved": false,
+      "preview_capture": 1
+    },
+    {
+      "capture": 7,
+      "declared": true,
+      "missing_original_values": [
+        "raw dump(tmp_path) lists before/after preview",
+        "actual document(t) post-preview and post-accept values",
+        "actual post-accept history DomainResult and page",
+        "actual final idempotent replay reply",
+        "actual history after final replay",
+        "original pytest longrepr"
+      ],
+      "moved": false,
+      "preview_capture": 5
+    },
+    {
+      "capture": 12,
+      "declared": false,
+      "missing_original_values": [
+        "raw dump(tmp_path) lists before/after preview",
+        "actual document(t) post-preview and post-accept values",
+        "actual post-accept history DomainResult and page",
+        "actual final idempotent replay reply",
+        "actual history after final replay",
+        "original pytest longrepr"
+      ],
+      "moved": true,
+      "preview_capture": 10
+    },
+    {
+      "capture": 17,
+      "declared": true,
+      "missing_original_values": [
+        "raw dump(tmp_path) lists before/after preview",
+        "actual document(t) post-preview and post-accept values",
+        "actual post-accept history DomainResult and page",
+        "actual final idempotent replay reply",
+        "actual history after final replay",
+        "original pytest longrepr"
+      ],
+      "moved": true,
+      "preview_capture": 15
+    }
+  ]
+}

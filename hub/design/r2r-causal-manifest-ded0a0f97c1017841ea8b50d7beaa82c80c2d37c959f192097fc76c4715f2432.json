@@ -1,0 +1,166 @@
+{
+  "captures_lossless": 20,
+  "credential_scan": "PASS",
+  "entries": [
+    {
+      "bytes": 513008,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-00-a7a54a0127b5727787433c982011691a9417f14c8262b7fa1c52cd2727731110.json",
+      "label": "capture-00",
+      "sha256": "a7a54a0127b5727787433c982011691a9417f14c8262b7fa1c52cd2727731110"
+    },
+    {
+      "bytes": 553925,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-01-e1ac8af415e3c246e4d6c61555d03cfd3856540ccd7f1580d53bd091792044a5.json",
+      "label": "capture-01",
+      "sha256": "e1ac8af415e3c246e4d6c61555d03cfd3856540ccd7f1580d53bd091792044a5"
+    },
+    {
+      "bytes": 513019,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-02-73b9aabe4afdbd32094f11863c9ac4aa7feb6578d56e90d3372926a136fcfe7d.json",
+      "label": "capture-02",
+      "sha256": "73b9aabe4afdbd32094f11863c9ac4aa7feb6578d56e90d3372926a136fcfe7d"
+    },
+    {
+      "bytes": 598097,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-03-ae6257d8cc5dbd212f2ec122168cbfa32cdf1b9adf05979b4da4a63ae18e1bd6.json",
+      "label": "capture-03",
+      "sha256": "ae6257d8cc5dbd212f2ec122168cbfa32cdf1b9adf05979b4da4a63ae18e1bd6"
+    },
+    {
+      "bytes": 571142,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-04-7966a24fabe6a5ddc2ddf28f79b19f9013804c2045a5b98bfd91617c892cab7d.json",
+      "label": "capture-04",
+      "sha256": "7966a24fabe6a5ddc2ddf28f79b19f9013804c2045a5b98bfd91617c892cab7d"
+    },
+    {
+      "bytes": 616601,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-05-e50b23fc1a2dec8b50fea016341e06aeeaaa39d5e59dfbad3cba76b05f999c36.json",
+      "label": "capture-05",
+      "sha256": "e50b23fc1a2dec8b50fea016341e06aeeaaa39d5e59dfbad3cba76b05f999c36"
+    },
+    {
+      "bytes": 571153,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-06-3bfc982c2e40e5eb60f47702a5362567454cb610c524c3a0edc71b08b55b9280.json",
+      "label": "capture-06",
+      "sha256": "3bfc982c2e40e5eb60f47702a5362567454cb610c524c3a0edc71b08b55b9280"
+    },
+    {
+      "bytes": 665605,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-07-3925f6ad7675932ab980f6137d15f3da70085bc55ed0c00b0ed4cd7bf59fad6f.json",
+      "label": "capture-07",
+      "sha256": "3925f6ad7675932ab980f6137d15f3da70085bc55ed0c00b0ed4cd7bf59fad6f"
+    },
+    {
+      "bytes": 177329,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-08-16f4326a613c29fb81ea35a1ca1efe2a4dd2b882c2c450cd680623ab001a98de.json",
+      "label": "capture-08",
+      "sha256": "16f4326a613c29fb81ea35a1ca1efe2a4dd2b882c2c450cd680623ab001a98de"
+    },
+    {
+      "bytes": 600045,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-09-01c435b2be7cd01ab390337e75bfa69da41fe52be35279e3badad2a8d5eb37ae.json",
+      "label": "capture-09",
+      "sha256": "01c435b2be7cd01ab390337e75bfa69da41fe52be35279e3badad2a8d5eb37ae"
+    },
+    {
+      "bytes": 641443,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-10-3c94b28be49f78646c3f5e8351349c1d8439c68dbdb6cd02d9db64f08f1ee26c.json",
+      "label": "capture-10",
+      "sha256": "3c94b28be49f78646c3f5e8351349c1d8439c68dbdb6cd02d9db64f08f1ee26c"
+    },
+    {
+      "bytes": 600056,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-11-ad4fa8c408696df43a788479efb61ab135b140c48387f8d2a7a471604a65a4d4.json",
+      "label": "capture-11",
+      "sha256": "ad4fa8c408696df43a788479efb61ab135b140c48387f8d2a7a471604a65a4d4"
+    },
+    {
+      "bytes": 686488,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-12-74ce8f378e3430e8c2ab43a5021983def890853876d651859dfdb290189279a9.json",
+      "label": "capture-12",
+      "sha256": "74ce8f378e3430e8c2ab43a5021983def890853876d651859dfdb290189279a9"
+    },
+    {
+      "bytes": 177329,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-13-2dad30425b7f288b50a1ca02142a00641dbad0ca2702347d29e5e7e90f258398.json",
+      "label": "capture-13",
+      "sha256": "2dad30425b7f288b50a1ca02142a00641dbad0ca2702347d29e5e7e90f258398"
+    },
+    {
+      "bytes": 661721,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-14-318eead86afc8768b47cad06efeba2a32361fc56e30d5e12dad869db4c41f442.json",
+      "label": "capture-14",
+      "sha256": "318eead86afc8768b47cad06efeba2a32361fc56e30d5e12dad869db4c41f442"
+    },
+    {
+      "bytes": 707661,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-15-e8a8ea0ac2c47782d057792f75ab528ad7f7f80a634cdfc7da84344fa5ca6297.json",
+      "label": "capture-15",
+      "sha256": "e8a8ea0ac2c47782d057792f75ab528ad7f7f80a634cdfc7da84344fa5ca6297"
+    },
+    {
+      "bytes": 661732,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-16-de94dddb1602f2745560d0ebb9a989f2166f33a9ccc778631f14c37646f944b6.json",
+      "label": "capture-16",
+      "sha256": "de94dddb1602f2745560d0ebb9a989f2166f33a9ccc778631f14c37646f944b6"
+    },
+    {
+      "bytes": 757538,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-17-9056de9c930fa111b4699beba317153f63aef723546253fefe1ef79263a05359.json",
+      "label": "capture-17",
+      "sha256": "9056de9c930fa111b4699beba317153f63aef723546253fefe1ef79263a05359"
+    },
+    {
+      "bytes": 176225,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-18-547533c849382a2e3067c5a2b41c1a5fc87b897cd8cb8d767719905a387a783a.json",
+      "label": "capture-18",
+      "sha256": "547533c849382a2e3067c5a2b41c1a5fc87b897cd8cb8d767719905a387a783a"
+    },
+    {
+      "bytes": 178411,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-capture-19-a6949aa470e33c177750ce332d263686b5140ffa46a52c8ee9200a2aa1a77864.json",
+      "label": "capture-19",
+      "sha256": "a6949aa470e33c177750ce332d263686b5140ffa46a52c8ee9200a2aa1a77864"
+    },
+    {
+      "bytes": 3435117,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-source-and-logs-69e234f2b938bd5fc83d48e8afad970dfa522e80e626be58639002942c03bcbd.json",
+      "label": "source-and-logs",
+      "sha256": "69e234f2b938bd5fc83d48e8afad970dfa522e80e626be58639002942c03bcbd"
+    },
+    {
+      "bytes": 911655,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-offline-comparisons-1498b6beafd1f033e0d1884d2d28992d6fffe6e907c0292fe1b20fcec626c76b.json",
+      "label": "offline-comparisons",
+      "sha256": "1498b6beafd1f033e0d1884d2d28992d6fffe6e907c0292fe1b20fcec626c76b"
+    },
+    {
+      "bytes": 116138,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-reproducer-and-adapter-sources-5522b56c6b910932ffe79695109c12272cddf578eb4cb6a112eaa4cab9f0f53e.json",
+      "label": "reproducer-and-adapter-sources",
+      "sha256": "5522b56c6b910932ffe79695109c12272cddf578eb4cb6a112eaa4cab9f0f53e"
+    },
+    {
+      "bytes": 14888,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-assertion-and-capture-inventory-44712bd6aa44c9bf208e544424563cd735deb1cb1f083258a4b849a0d87462c5.json",
+      "label": "assertion-and-capture-inventory",
+      "sha256": "44712bd6aa44c9bf208e544424563cd735deb1cb1f083258a4b849a0d87462c5"
+    },
+    {
+      "bytes": 538,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-credential-scan-e5b311278922ad21487cab9b59ebee6c04ba956186016e38727cbdefc7713f93.json",
+      "label": "credential-scan",
+      "sha256": "e5b311278922ad21487cab9b59ebee6c04ba956186016e38727cbdefc7713f93"
+    },
+    {
+      "bytes": 1563,
+      "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/r2r-causal-preservation-checks-efb6487afa0b8f68e76d3c345bb5e46536cac2dc37e107d545cdb9930f9e8208.json",
+      "label": "preservation-checks",
+      "sha256": "efb6487afa0b8f68e76d3c345bb5e46536cac2dc37e107d545cdb9930f9e8208"
+    }
+  ],
+  "file_count": 26,
+  "format": "flat immutable JSON packet",
+  "runtime_source_modified": false,
+  "worker": "rt-R2r-sequential-causal-resume-1534"
+}
