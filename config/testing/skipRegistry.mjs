@@ -47,8 +47,13 @@ export const SKIP_REGISTRY = {
     skipWhen: "process.platform !== 'darwin' || !existsSync('/usr/bin/lockf')",
     reason: 'the broker-election reaping case exercises macOS /usr/bin/lockf',
     applies: macosLockfMissing,
-    ci: [],
-    manual: 'no CI job runs on macOS, and no job runs scripts/release tests; run `npm run test:extension-ship-verifier` on a Mac',
+    ci: ['release-tooling-macos'],
+  },
+  'macos-release-process-containment': {
+    skipWhen: "process.platform !== 'darwin' || !existsSync('/usr/bin/lockf')",
+    reason: 'the release tooling (scripts/release bounded-command broker, and the git calls of astrid-release-provenance that go through it) is built and pinned for macOS: it needs lockf and BSD ps eww; its Linux branches have never run',
+    applies: macosLockfMissing,
+    ci: ['release-tooling-macos'],
   },
   'symlink-creation-permitted': {
     skipWhen: 'a probe symlink in a temp dir fails with EPERM/EACCES (no symlink privilege in this environment); any other error fails the test',

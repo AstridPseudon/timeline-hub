@@ -29,6 +29,8 @@ function run(source, options = {}) {
   return runBoundedCommand(NODE, ['-e', source], { ...BASE, ...options });
 }
 
+// The broker and process-scope containment run on macOS (lockf, ps eww); see `macos-release-process-containment`.
+// The cases that need no broker still run everywhere.
 describe('runBoundedCommand', () => {
   it('keeps an unavailable broker owner scan fail-closed instead of deleting artifacts', () => {
     assert.deepEqual(inspectBrokerOwner(null, 42, 1_700_000_000), {
@@ -98,7 +100,7 @@ describe('runBoundedCommand', () => {
     assert.equal(PROCESS_SCOPE_CLEANUP_ALLOWANCE_MS, 111_250);
   });
 
-  it('returns spawnSync-shaped success output and immutable invocation details', () => {
+  it('returns spawnSync-shaped success output and immutable invocation details', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const args = ['-e', "process.stdout.write('hello'); process.stderr.write('warn')"];
     const result = runBoundedCommand(NODE, args, { ...BASE, label: 'greeting' });
     args[1] = 'mutated after invocation';
@@ -132,7 +134,7 @@ describe('runBoundedCommand', () => {
     assert.deepEqual(JSON.parse(output), { zombieCount: 0 });
   });
 
-  it('throws structured diagnostics for a nonzero exit', () => {
+  it('throws structured diagnostics for a nonzero exit', { skip: declaredSkip('macos-release-process-containment') }, () => {
     assert.throws(
       () => run("process.stdout.write('token=secret'); process.stderr.write('bad'); process.exit(7)", {
         label: 'nonzero-check',
@@ -149,7 +151,7 @@ describe('runBoundedCommand', () => {
     );
   });
 
-  it('redacts environment values by default', () => {
+  it('redacts environment values by default', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const secret = `bounded-output-secret-${process.pid}-${Date.now()}`;
     const result = run('process.stdout.write(process.env.BOUNDED_OUTPUT_SECRET)', {
       env: { PATH: process.env.PATH ?? '', BOUNDED_OUTPUT_SECRET: secret },
@@ -158,7 +160,7 @@ describe('runBoundedCommand', () => {
     assert.equal(result.stdout, '[REDACTED]');
   });
 
-  it('parses JSON before redaction, preserving CI booleans and freezing the payload', () => {
+  it('parses JSON before redaction, preserving CI booleans and freezing the payload', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const runtimeRoot = `/var/folders/bounded-json-${process.pid}`;
     const result = run(
       'process.stdout.write(JSON.stringify({ ci: process.env.CI === "true", enabled: false, nested: { ok: true } }))',
@@ -174,7 +176,7 @@ describe('runBoundedCommand', () => {
     assert.doesNotMatch(result.stdout, /bounded-json-/);
   });
 
-  it('preserves absolute env-root paths and npm-like boolean/scrub shape in memory', () => {
+  it('preserves absolute env-root paths and npm-like boolean/scrub shape in memory', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const runtimeRoot = `/var/folders/npm-like-${process.pid}`;
     const result = run(
       'process.stdout.write(JSON.stringify({ name: "pkg", extraneous: false, resolved: `${process.env.TMPDIR}/node_modules/pkg`, dependencies: { dep: { dev: false } } }))',
@@ -197,7 +199,7 @@ describe('runBoundedCommand', () => {
     assert.doesNotMatch(result.stdout, new RegExp(runtimeRoot.replaceAll('/', '\\/')));
   });
 
-  it('fails closed on malformed structured JSON without leaking a secret', () => {
+  it('fails closed on malformed structured JSON without leaking a secret', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const secret = `malformed-structured-secret-${process.pid}`;
     const result = run(
       `process.stdout.write('not-json:${secret}'); process.stderr.write('stderr:${secret}')`,
@@ -216,7 +218,7 @@ describe('runBoundedCommand', () => {
     assert.doesNotMatch(result.error?.message ?? '', new RegExp(secret));
   });
 
-  it('preserves boolean JSON when environment redaction is explicitly disabled', () => {
+  it('preserves boolean JSON when environment redaction is explicitly disabled', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const secret = 'explicit-structured-secret';
     const result = run('process.stdout.write(JSON.stringify({overridden: false, enabled: true, secret: process.env.BOUNDED_JSON_SECRET}))', {
       env: {
@@ -245,7 +247,7 @@ describe('runBoundedCommand', () => {
     );
   });
 
-  it('distinguishes a child signal from a timeout, including SIGTERM/SIGKILL-like signals', () => {
+  it('distinguishes a child signal from a timeout, including SIGTERM/SIGKILL-like signals', { skip: declaredSkip('macos-release-process-containment') }, () => {
     for (const signal of ['SIGTERM', 'SIGKILL']) {
       const result = run(`process.kill(process.pid, '${signal}')`, { allowFailure: true });
       assert.equal(result.ok, false);
@@ -255,7 +257,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('reports spawn errors separately from child failures', () => {
+  it('reports spawn errors separately from child failures', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const result = runBoundedCommand('/definitely/not/a/real/command', [], { ...BASE, allowFailure: true });
     assert.equal(result.ok, false);
     assert.equal(result.failureType, 'spawn-error');
@@ -263,7 +265,7 @@ describe('runBoundedCommand', () => {
     assert.match(result.error?.code ?? '', /ENOENT|EACCES/);
   });
 
-  it('caps captured output and fails closed without retaining the full stream', () => {
+  it('caps captured output and fails closed without retaining the full stream', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const result = run("process.stdout.write('x'.repeat(100_000))", {
       maxBuffer: 256,
       structuredOutput: 'json',
@@ -276,7 +278,7 @@ describe('runBoundedCommand', () => {
     assert.equal(result.payload, undefined);
   });
 
-  it('times out and kills the child without leaving a marker behind', () => {
+  it('times out and kills the child without leaving a marker behind', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const root = mkdtempSync(resolve(tmpdir(), 'bounded-command-'));
     const marker = resolve(root, 'orphan-marker');
     try {
@@ -296,7 +298,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('forwards SIGTERM as the first timeout signal and reports SIGKILL only after escalation', () => {
+  it('forwards SIGTERM as the first timeout signal and reports SIGKILL only after escalation', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const termResult = run(
       "process.on('SIGTERM', () => process.exit(0)); process.stdout.write('ready'); setInterval(() => {}, 1_000)",
       { timeoutMs: 50, killSignal: 'SIGTERM', allowFailure: true },
@@ -316,7 +318,7 @@ describe('runBoundedCommand', () => {
     assert.equal(killResult.signal, 'SIGKILL');
   });
 
-  it('cleans a detached unref descendant after the scoped leader exits first', async () => {
+  it('cleans a detached unref descendant after the scoped leader exits first', { skip: declaredSkip('macos-release-process-containment') }, async () => {
     const root = mkdtempSync(resolve(tmpdir(), 'bounded-command-exited-leader-'));
     const marker = resolve(root, 'exited-leader-marker');
     try {
@@ -337,7 +339,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('rescans the scope when a descendant spawns during TERM', async () => {
+  it('rescans the scope when a descendant spawns during TERM', { skip: declaredSkip('macos-release-process-containment') }, async () => {
     const root = mkdtempSync(resolve(tmpdir(), 'bounded-command-term-spawn-'));
     const marker = resolve(root, 'term-spawn-marker');
     try {
@@ -357,7 +359,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('keeps twenty concurrent scoped cleanups isolated from an unrelated process', async () => {
+  it('keeps twenty concurrent scoped cleanups isolated from an unrelated process', { skip: declaredSkip('macos-release-process-containment') }, async () => {
     const root = mkdtempSync(resolve(tmpdir(), 'bounded-command-parallel-scope-'));
     const unrelated = spawn(NODE, ['-e', 'setInterval(() => {}, 1_000)'], { detached: true, stdio: 'ignore' });
     unrelated.unref();
@@ -399,7 +401,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('preserves outer scope ownership across a nested bounded command', async () => {
+  it('preserves outer scope ownership across a nested bounded command', { skip: declaredSkip('macos-release-process-containment') }, async () => {
     const root = mkdtempSync(resolve(tmpdir(), 'bounded-command-nested-scope-'));
     const ready = resolve(root, 'inner-ready');
     const marker = resolve(root, 'nested-orphan-marker');
@@ -430,7 +432,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('keeps invocation and environment secrets out of helper process listings', () => {
+  it('keeps invocation and environment secrets out of helper process listings', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const secret = `bounded-secret-${process.pid}-${Date.now()}`;
     const source = [
       "const { execFileSync } = require('node:child_process');",
@@ -457,7 +459,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('fails closed and locally drains the scope when the shared broker is killed', async () => {
+  it('fails closed and locally drains the scope when the shared broker is killed', { skip: declaredSkip('macos-release-process-containment') }, async () => {
     const root = mkdtempSync(resolve(tmpdir(), 'bounded-command-broker-death-'));
     const ready = resolve(root, 'target-ready');
     const marker = resolve(root, 'broker-death-orphan');
@@ -516,7 +518,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('recovers corrupt stale broker lock, readiness, and socket artifacts', () => {
+  it('recovers corrupt stale broker lock, readiness, and socket artifacts', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const moduleUrl = new URL('./bounded-command.mjs', import.meta.url).href;
     const session = 'a'.repeat(32);
     const childSource = [
@@ -544,7 +546,7 @@ describe('runBoundedCommand', () => {
     assert.deepEqual(JSON.parse(output), { failureType: 'success', stdout: 'recovered' });
   });
 
-  it('survives lock-guardian death and restarts after broker death', async () => {
+  it('survives lock-guardian death and restarts after broker death', { skip: declaredSkip('macos-release-process-containment') }, async () => {
     const initial = run("process.stdout.write('initial')", { allowFailure: true });
     assert.equal(initial.failureType, 'success');
     const ownedBrokerPattern = new RegExp(
@@ -584,7 +586,7 @@ describe('runBoundedCommand', () => {
     assert.notEqual(Number(brokerRow()?.[1]), brokerPid, 'broker death did not elect a replacement');
   });
 
-  it('serializes concurrent recovery of a corrupt/dead broker lock', () => {
+  it('serializes concurrent recovery of a corrupt/dead broker lock', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const moduleUrl = new URL('./bounded-command.mjs', import.meta.url).href;
     const session = 'b'.repeat(32);
     const childSource = [
@@ -659,7 +661,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('drains the owned scope when the direct wrapper is killed', async () => {
+  it('drains the owned scope when the direct wrapper is killed', { skip: declaredSkip('macos-release-process-containment') }, async () => {
     const root = mkdtempSync(resolve(tmpdir(), 'bounded-command-wrapper-death-'));
     const ready = resolve(root, 'target-ready');
     const marker = resolve(root, 'wrapper-death-orphan');
@@ -704,7 +706,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('kills the complete owned scope when the synchronous parent is SIGKILLed', async () => {
+  it('kills the complete owned scope when the synchronous parent is SIGKILLed', { skip: declaredSkip('macos-release-process-containment') }, async () => {
     const root = mkdtempSync(resolve(tmpdir(), 'bounded-command-parent-death-'));
     const ready = resolve(root, 'target-ready');
     const marker = resolve(root, 'parent-death-orphan');
@@ -746,7 +748,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('kills a detached and unref grandchild before it can leave an orphan marker', async () => {
+  it('kills a detached and unref grandchild before it can leave an orphan marker', { skip: declaredSkip('macos-release-process-containment') }, async () => {
     const root = mkdtempSync(resolve(tmpdir(), 'bounded-command-grandchild-'));
     const marker = resolve(root, 'detached-grandchild-marker');
     try {

@@ -114,7 +114,7 @@ describe('local RC readiness preflight', () => {
       execFileSync('git', ['-C', fixture, 'add', 'fixture.txt']);
       execFileSync('git', ['-C', fixture, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.test', 'commit', '-qm', 'fixture']);
       const candidate = execFileSync('git', ['-C', fixture, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
-      execFileSync('git', ['-C', fixture, 'tag', '-a', 'rc-test', '-m', 'rc-test', candidate]);
+      execFileSync('git', ['-C', fixture, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.test', 'tag', '-a', 'rc-test', '-m', 'rc-test', candidate]);
       const detail = checkTagState(
         { ...manifest, status: 'frozen', app: { ...manifest.app, releaseTag: 'rc-test' } },
         { candidate: { appCommit: candidate } },

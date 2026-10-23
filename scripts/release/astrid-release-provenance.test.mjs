@@ -14,6 +14,7 @@ import {
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { describe, it } from 'node:test';
+import { declaredSkip } from '../quality/declared-skip.mjs';
 
 import {
   RELEASE_LEDGER_PATH,
@@ -132,7 +133,7 @@ function withRepo(options, callback) {
   }
 }
 
-describe('Astrid release candidate provenance', () => {
+describe('Astrid release candidate provenance', { skip: declaredSkip('macos-release-process-containment') }, () => {
   it('rejects hidden index flags that can conceal modified worktree bytes', () => {
     withCandidateRepo(({ repoRoot }) => {
       assert.doesNotThrow(() => assertCleanReleaseCheckout(repoRoot, 'fixture'));
