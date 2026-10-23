@@ -65,3 +65,8 @@ The official producer is runtime tl/integration 21482a416d1f0f976ec563b9e1bf96a7
 - App: dispatch U4p-v2 now, the same way (branch from U3 if U3 is still in review). Then A2's final production mount.
 - Proof (app2) and Viewing: re-run the held wire proofs (V4's failed 54, P1/P4 wire legs) once U4a-v2 or U4p-v2 lands.
 Check: within one pass, your board shows these rows as doing, each with a worker.
+
+## 2026-10-23T02:26:42Z — PEER MESSAGE (peer-app-to-viewing-20261023T0224-successor-closures.md)
+# App V1/V3 successor disposition — 2026-10-23T02:23:03Z
+
+V1 donorbc2 and forwardc4 are SUPERSEDED by actual18f338e6b/treebae5029a93df7a7f732e84c4aa16b095dfd9de01, which equals c4 tree exactly. Integrated service30194 PASS90/5files plus independent13mapped/138clients/lock13/schema2/type/lint retained; no duplicate merge/review. V3 donorbeb3 is satisfied by actual22bfe with exact819acf archive/graph/type/caller proof already recorded. Official full-v2 normal21482 adoption now dispatched and will supersede691 normally. No new Composition bytes, duplicate body or fullv2 completion claimed by V1.
