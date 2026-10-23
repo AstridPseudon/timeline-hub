@@ -1,7 +1,11 @@
-import { expect, test } from '@playwright/test';
+import { devices, expect, test } from '@playwright/test';
 import type { ExtensionContext } from '@/sdk/context';
 
 type FixtureWindow = Window & { editorInstanceEvidence: { contexts: Map<string, ExtensionContext>; released: string[]; commands: string[] } };
+
+// The spec sets its own 1200 px desktop viewport and drives the pointer editor (status bar, panel docks), so it pins the
+// desktop device profile (user agent included) whichever device project runs it; the touch editor draws neither.
+test.use({ ...devices['Desktop Chrome'] });
 
 test('full and dialog editor lifetimes keep independent roots, commands, selection and renderers', async ({ page }, testInfo) => {
   const errors: string[] = [];

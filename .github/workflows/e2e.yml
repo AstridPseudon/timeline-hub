@@ -64,6 +64,18 @@ jobs:
         with: { node-version: "20.19.0", cache: npm }
       - run: npm ci --legacy-peer-deps
       - run: npx playwright install --with-deps chrome
+      # The H.264 export specs read frames with ffmpeg/ffprobe and compare pixels with ImageMagick 7's `magick`
+      # driver (Ubuntu ships 6, which has no `magick`), so the pinned upstream AppImage is installed.
+      - name: Install ffmpeg and ImageMagick 7
+        run: |
+          sudo apt-get install -y --no-install-recommends ffmpeg
+          curl -fsSL -o magick.AppImage https://github.com/ImageMagick/ImageMagick/releases/download/7.1.1-47/ImageMagick-82572af-gcc-x86_64.AppImage
+          echo "dcdd2e135dd5f0701d992ccbbf744f51624441b5bc8eedcabe21516996e210ab  magick.AppImage" | sha256sum -c -
+          chmod +x magick.AppImage
+          sudo mv magick.AppImage /opt/magick.AppImage
+          printf '#!/bin/sh\nexec /opt/magick.AppImage --appimage-extract-and-run "$@"\n' | sudo tee /usr/local/bin/magick > /dev/null
+          sudo chmod +x /usr/local/bin/magick
+          magick -version
       - run: npm run test:e2e:chrome-export
       - uses: actions/upload-artifact@v4
         if: always()

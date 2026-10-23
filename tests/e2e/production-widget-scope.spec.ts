@@ -1,4 +1,4 @@
-import {expect,test,type Page} from '@playwright/test';
+import {devices,expect,test,type Page} from '@playwright/test';
 import {writeFile} from 'node:fs/promises';
 
 type AssetEntry = {file?:string;media_id?:string;type?:string;duration?:number;generationId?:string};
@@ -16,6 +16,9 @@ interface ProductionWidgetEvidence {
 }
 type EvidenceWindow = Window & {productionWidgetEvidence:ProductionWidgetEvidence};
 const diagnostic = new WeakMap<Page,{errors:string[];console:Array<{level:string;text:string}>}>();
+// The spec sets its own 1440 px desktop viewport and drives the pointer editor and Widgets, so it pins the desktop
+// device profile (user agent included) whichever device project runs it.
+test.use({...devices['Desktop Chrome']});
 test.beforeEach(async({page})=>{
  const logs={errors:[] as string[],console:[] as Array<{level:string;text:string}>};diagnostic.set(page,logs);
  page.on('pageerror',e=>logs.errors.push(e.message));page.on('console',e=>{if(['error','warning'].includes(e.type()))logs.console.push({level:e.type(),text:e.text()});});
