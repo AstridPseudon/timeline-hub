@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-23T15:15:46Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 3m -->
+<!-- app2 | 2026-10-23T15:17:40Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 1m -->
 # app2 board, 2026-10-23T15:12Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -24,7 +24,7 @@
 
 
 Blockers: Proof — P1 RESULT: NO-GO pending the original current-head chain. Prior18220 FAIL2 retained; reviewed public seed2d7 and common10ff both HOME629. A4/G5 gated:P1 until original mounted current-head PASS plus independent no-weakening PASS.
-Blockers: D21 — sole fresh Remotion agent-remotion-ap2-current-583-9ce-1513 QUEUED normally with exact Agent583/Runtime9ce checkout custody and explicit remotion-env-nodes template. Child583/9ce1503 actualSUCCESS92pins/imports/CLI/freeze/readonly. Sole Luna OPS1513 dispatched to refresh ONLY existing3rows and execute static3prefix/9refusal controls; no source/body changes. Manager owns ONE originalP1 --no-cache immediately on READY, then P3 and P2exact8 serialized.
+Blockers: D21 — sole fresh Remotion agent-remotion-ap2-current-583-9ce-1513 QUEUED normally with exact Agent583/Runtime9ce checkout custody and explicit remotion-env-nodes template. Child583/9ce1503 actualSUCCESS92pins/imports/CLI/freeze/readonly. Sole Luna OPS1513 FINALPASS static3prefix/9refusal controls, outside3rows unchanged; no source/body changes. ONE originalP1 --no-cache QUEUED15:15: ap2-P1-P2-P3-current9ce-OPS-1513-ap2-P1-chain-h6-1023151555-16398. P3 and P2exact8 follow serialized.
 Blockers: P2/P3 — common10ff source independent1444 SOURCEPASS/Home629; actual full durable seed/rawfixture/receipt/canonical/history qualification remains pending existing report-all preflights. No guard or fixture weakening, no duplicated body.
 Blockers: Farm — D19/D22 inputs unavailable and prior permission refusals stay STOPPED. Existing1425/1437 handback authorizes Proof ONE local exact8 where dispatcher artifacts exist; no Farm duplicate or denied provisioning retry.
 Current tuple: App6294895141ffe0e92a83c61ba0541249a41243eb/tree03714e15af54da54865c1d732b2ea03900731fe1; Agent58316fd6e0ce8a1fb3b2b3826ec71906d29080de/tree00c04a48841d95f5bf95dc604758767d2b065227; Runtime9ce4242bc01f100bab9efc51032a73985cefb2b2/tree92ab1f5f739ffdfedf7b25fbd2a7b46ae42c5d1a. Runtime24348 PASS320/76.19s, Agent1438 PASS10/2.57s. Actual current heads rechecked this pass. Frozen34e/schema35c2/d106/819acf unchanged, no adoption. Prior OPS1456/child1451/Remotion1451 scoped629/583/cfa only.
@@ -32,4 +32,6 @@ Resolved: LEAD15:08 relaying orchestrator15:12 explicitly RESUMES P1/P2/P3: 15GB
 Resolved: all own source packets remain merged as rows above. P4 DONE original single28012/ten11615/rerun17739, no repeats. A3/R5 DONE; D14/D23 originals remain unchanged/unskipped/visibly failing and delivery-deferred. App full3925 PASS18819 remains exact12ef historical scope.
 Environment: 14713585664 bytes available at15:10Z, above8GB heavy-start threshold. No further cleanup attempted. Existing exact pins/immutablebenches/private819acf graph/rawreports protected. Historical Farm/MONITOR refusals remain stopped; no workaround.
 Ownership: Proof sole existing P1/P2/P3 original bodies. App owns new product rows per1041. Luna OPS1513 queued; no duplicate author/review/build/provision. Normal dispatcher handles Remotion build. No manager product/test/generated/pin or Git mutation.
-Next ready: matching Remotion actualSUCCESS + OPS1513 staticREADY -> queue ONE originalP1 --no-cache; then P3 and P2exact8. Inspect exact start/end current heads and preserve all original success/refusal/ack/undo assertions before GO.
+Next ready: observe sole originalP1 test16398 queued15:15 --no-cache; then P3 and P2exact8. Inspect exact start/end current heads and preserve all original success/refusal/ack/undo assertions before GO.
+
+Checkpoint15:15: OPS1513 terminalPASS static3prefix+9negative controls, both exact dispatcher artifacts actualSUCCESS. ONE original current-tuple P1 no-cache queued16398; no duplicate requests. Original bodies and reviewed public/common seed repairs unchanged. P1NO-GO/A4G5gated pending actual evidence.
