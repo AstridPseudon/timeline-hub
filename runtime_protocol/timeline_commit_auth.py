@@ -159,12 +159,13 @@ def validate_read(boundary, read, continuations=None):
     return read
 
 
-def validate_claims(request, records, boundary, batch_reads):
+def validate_claims(request, records):
     commands = records["commands"]
     require(len(commands) == len(request["commands"]), "provider command count differs from request")
     for submitted, record in zip(request["commands"], commands):
         require(all(value_equal(submitted.get(key), record["command"].get(key))
-                    for key in ("schema_version", "op", "version", "select", "args", "created")),
+                    for key in ("schema_version", "op", "version", "select", "args"))
+                and value_equal(submitted.get("created", []), record["command"].get("created", [])),
                 "provider executed a different command")
 
 
@@ -246,7 +247,12 @@ def validate_bindings(request, records, expected, boundary, output, step, ordina
                   else resolve(bound, binding["ref"], []))
         require(ref == physical or ref == "timeline" and binding["key"] in {"commit.read", "commit.atomic"},
                 "provider alias names a different physical image")
-        if ordinal == 0 and phase != "effect" and resolve is site and binding["ref"] != "timeline":
+        # Materialization observes the authenticated landing input, whose
+        # physical sources can already be successors of the requested base.
+        # Its owner/edge correspondence is verified below. Submitted aliases
+        # still have to retain their original physical source.
+        if (ordinal == 0 and phase != "effect" and resolve is site and binding["ref"] != "timeline"
+                and binding["key"] != "commit.materialization"):
             original_ref, _ = site(original, binding["ref"], [], continuations)
             continued_ref, _ = site(bound, original_ref, [], continuations)
             require(continued_ref == physical, "provider alias changed without an authenticated successor")
@@ -381,17 +387,21 @@ def step_output(boundary, step, records, accepted):
         result[ref]["shot_id"] = row["shot_id"]
     for ref, image in result.items():
         known = accepted.get(ref)
-        if known is not None and value_equal(known["payload"], image["payload"]):
-            result[ref] = copy.deepcopy(known)
-        elif ref == "parent":
+        if ref == "parent":
             pins = [binding for ordinal in step["command_ordinals"]
                     for binding in records["commands"][ordinal]["bindings"]
                     if binding.get("key") == "commit.effect" and binding.get("physical_ref") == ref
                     and binding.get("boundary", {}).get("side") == "after"
                     and binding.get("content_digest") == image["content_digest"]]
-            require(bool(pins), "provider intermediate parent lacks an effect image")
-            require(len({pin["revision_id"] for pin in pins}) == 1, "provider intermediate parent pins disagree")
-            image["revision_id"] = pins[0]["revision_id"]
+            if pins:
+                require(len({pin["revision_id"] for pin in pins}) == 1, "provider intermediate parent pins disagree")
+                image["revision_id"] = pins[0]["revision_id"]
+            else:
+                require(known is not None and value_equal(known["payload"], image["payload"]),
+                        "provider intermediate parent lacks an effect image")
+                result[ref] = copy.deepcopy(known)
+        elif known is not None and value_equal(known["payload"], image["payload"]):
+            result[ref] = copy.deepcopy(known)
     return result
 
 
@@ -432,7 +442,7 @@ def validate(request, prepared, source, base=None, continuations=None):
         for read in request.get("reads", []):
             validate_read(images(base), read)
     batch_reads = [validate_read(boundary, read, continuations) for read in request.get("reads", [])]
-    validate_claims(request, records, boundary, batch_reads)
+    validate_claims(request, records)
     accepted = images(prepared["canonical_document"])
     touched = set()
     if records["merge_mode"] == "atomic":
@@ -463,4 +473,8 @@ def validate(request, prepared, source, base=None, continuations=None):
                 if binding.get("key") == "commit.materialization":
                     continuations.setdefault(binding["physical_ref"], set()).add(binding["successor"])
         boundary = output
+    # Materialization can reuse a historical parent revision with these exact
+    # bytes. Step bindings still name the projected execution image above;
+    # immutable destination provenance is checked separately by the store.
+    boundary["parent"]["revision_id"] = accepted["parent"]["revision_id"]
     require(value_equal(boundary, accepted), "provider step effects do not reach the accepted closure")

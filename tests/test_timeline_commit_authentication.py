@@ -82,6 +82,53 @@ def test_valid_record_accepts_and_retry_or_preview_preserves_authoritative_steps
         assert page["items"][-1]["steps"] == result["data"]["steps"]
 
 
+@pytest.mark.parametrize("forged_allocation", [False, True])
+def test_provider_command_normalizes_empty_allocation_claims_only(service, forged_allocation):
+    def mutate(value):
+        value["records"]["commands"][0]["command"]["created"] = ["parent/clip:forged"] if forged_allocation else []
+    provider(service, mutate)
+    submitted = body(service)
+    before = rows(service)
+    if forged_allocation:
+        with pytest.raises(RuntimeErrorBase) as error:
+            commit(service, submitted)
+        assert error.value.details is not None and error.value.details["reason"] == "invalid_records"
+        assert rows(service) == before
+    else:
+        result = commit(service, submitted)
+        assert result["data"]["status"] == "accepted"
+        assert commit(service, submitted) == result
+
+
+@pytest.mark.parametrize("bad_pin", [None, "digest", "disagreement"])
+def test_final_parent_reuse_keeps_the_exact_projected_effect_boundary(service, bad_pin):
+    def mutate(value):
+        record = value["records"]["commands"][0]
+        binding = {key: copy.deepcopy(record["bindings"][0][key]) for key in (
+            "ref", "physical_ref", "policy", "dependencies", "boundary", "path")}
+        parent = value["canonical_document"]["parent_revision"]
+        binding.update(key="commit.effect", revision_id="projected-parent", content_digest=parent["content_digest"],
+                       effect_ordinal=0, step_id="note")
+        binding["boundary"].update(phase="effect", side="after")
+        if bad_pin == "digest":
+            binding["content_digest"] = "sha256:" + "0" * 64
+        record["bindings"].append(binding)
+        if bad_pin == "disagreement":
+            record["bindings"].append({**copy.deepcopy(binding), "revision_id": "foreign-parent"})
+    provider(service, mutate)
+    submitted = body(service)
+    before = rows(service)
+    if bad_pin:
+        with pytest.raises(RuntimeErrorBase) as error:
+            commit(service, submitted)
+        assert error.value.details is not None and error.value.details["reason"] == "invalid_records"
+        assert rows(service) == before
+    else:
+        result = commit(service, submitted)
+        assert result["data"]["status"] == "accepted"
+        assert commit(service, submitted) == result
+
+
 @pytest.mark.parametrize("mutation", [
     "empty_patch", "different_command", "foreign_alias", "foreign_base", "foreign_publication",
     "foreign_head", "foreign_step", "foreign_ordinal", "foreign_phase", "different_path",
@@ -383,3 +430,104 @@ def test_created_child_is_a_valid_later_step_read_boundary(service, foreign_alia
         result = commit(service, submitted)
         assert result["data"]["steps"][1]["dependencies"][0]["ref"] == "shot-revision:shot-new-r1"
         assert commit(service, submitted) == result
+
+
+@pytest.mark.parametrize("forged_successor", [False, True])
+def test_rebased_child_bindings_follow_only_authenticated_owner_edges(tmp_path, forged_successor):
+    runtime, project, _ = load_baseline_fixture(tmp_path, variant="single")
+    try:
+        commits, _ = runtime._timeline_commits()
+        base = commits.install_verified_baseline(project, "main", authorize=lambda: None)
+        original = commits.revision_closure(project, "main", base["revision_id"])
+        occurrence_id = original["parent_revision"]["payload"]["occurrences"][0]["occurrence_id"]
+        shot_id = original["parent_revision"]["payload"]["occurrences"][0]["shot_revision_id"]
+        original_shot = next(row for row in original["shot_revisions"] if row["revision_id"] == shot_id)
+        original_ref = "internal-revision:" + original_shot["internal_timeline_revision_id"]
+
+        def execute(context, port):
+            request = context["request"]
+            head = port.head()
+            source = port.revision_closure(head["revision_id"])
+            document = copy.deepcopy(source)
+            occurrence = next(row for row in document["parent_revision"]["payload"]["occurrences"]
+                              if row["occurrence_id"] == occurrence_id)
+            shot = next(row for row in document["shot_revisions"] if row["revision_id"] == occurrence["shot_revision_id"])
+            internal = next(row for row in document["internal_timeline_revisions"]
+                            if row["revision_id"] == shot["internal_timeline_revision_id"])
+            old_shot, old_internal = copy.deepcopy((shot, internal))
+            call = request["commands"][0]
+            claim = call["args"]["changes"][0]
+            internal["payload"][claim["path"][0]] = copy.deepcopy(claim["value"])
+            internal.update(revision_id="internal-" + context["idempotency_key"], content_digest=digest(internal["payload"]))
+            shot["payload"]["internal_timeline_revision_id"] = internal["revision_id"]
+            shot.update(revision_id="shot-" + context["idempotency_key"],
+                        internal_timeline_revision_id=internal["revision_id"], content_digest=digest(shot["payload"]))
+            occurrence["shot_revision_id"] = shot["revision_id"]
+            parent = document["parent_revision"]
+            parent.update(revision_id="parent-" + context["idempotency_key"], content_digest=digest(parent["payload"]))
+            for family, before, after in (("shots", old_shot, shot), ("internal_timelines", old_internal, internal)):
+                pin = next(row for row in document["dependency_manifest"][family] if row["revision_id"] == before["revision_id"])
+                pin.update({key: after[key] for key in pin})
+            old_s, new_s = "shot-revision:" + old_shot["revision_id"], "shot-revision:" + shot["revision_id"]
+            old_i, new_i = "internal-revision:" + old_internal["revision_id"], "internal-revision:" + internal["revision_id"]
+            effects = [
+                {"op": "set", "ref": new_i, "path": [], "before": {"state": "absent"}, "value": internal["payload"]},
+                {"op": "set", "ref": new_s, "path": [], "before": {"state": "absent"}, "value": shot["payload"]},
+                {"op": "set", "ref": "parent", "path": ["occurrences"],
+                 "before": {"state": "present", "value": source["parent_revision"]["payload"]["occurrences"]},
+                 "value": parent["payload"]["occurrences"]},
+                {"op": "remove", "ref": old_s, "path": [], "before": {"state": "present", "value": old_shot["payload"]}},
+                {"op": "remove", "ref": old_i, "path": [], "before": {"state": "present", "value": old_internal["payload"]}},
+            ]
+            boundary = {"base_revision_id": request["base_revision_id"], "base_publication_id": request["base_publication_id"],
+                        "evaluated_head": head, "command_ordinal": 0, "step_id": "edit", "phase": "input"}
+            binding = {"key": "doc.patch:0", "ref": claim["ref"], "physical_ref": old_i,
+                       "revision_id": old_internal["revision_id"], "content_digest": old_internal["content_digest"],
+                       "policy": "fixed", "dependencies": [], "boundary": {**boundary, "change_ordinal": 0},
+                       "path": claim["path"], "change": {**claim, "ref": old_i}, "write_range": [0, 1]}
+            bindings = [binding]
+            for before, after, edge_before, edge_after, image in (
+                    (old_s, new_s, old_i, new_i, old_shot), (old_i, new_i, old_s, new_s, old_internal)):
+                bindings.append({"key": "commit.materialization", "ref": before, "physical_ref": before,
+                    "revision_id": image["revision_id"], "content_digest": image["content_digest"],
+                    "policy": "fixed", "dependencies": [], "boundary": boundary,
+                    "owner": "occurrence:foreign/shot" if forged_successor and request["label"] == "second" else "occurrence:" + occurrence_id + "/shot",
+                    "successor": after, "edge_before": edge_before, "edge_after": edge_after})
+            record = {"ordinal": 0, "command": call, "bindings": bindings,
+                      "writes": [{"ref": old_i, "path": claim["path"], "before": claim["before"],
+                                  "after": {"state": "present", "value": claim["value"]}}],
+                      "reads": [], "selections": [], "created": [], "dependencies": [], "derived_writes": []}
+            value = {"expected_head": head, "canonical_document": document, "document_digest": digest(document),
+                     "records": {"schema_version": 1, "commands": [record], "undo_of": [], "restored_from": None,
+                                 "label": request["label"], "merge_mode": "fields", "steps": [{
+                                     "id": "edit", "label": request["label"], "intent": "", "tags": [],
+                                     "command_ordinals": [0], "patch": effects, "dependencies": []}]},
+                     "id_map": {}, "semantic_events": [], "provider_version": "prepared-auth-1", "compiler_version": "fixture-1"}
+            return port.accept(value)
+
+        runtime.register_timeline_commit_provider(port_tests.PreparedProvider(execute))
+        first = None
+        for label, field, value in (("first", "meta", {"note": "first"}), ("second", "registry", {"assets": {}})):
+            initial = next(row for row in original["internal_timeline_revisions"] if "internal-revision:" + row["revision_id"] == original_ref)
+            change = {"op": "set", "ref": original_ref, "path": [field], "value": value,
+                      "before": {"state": "present", "value": initial["payload"][field]} if field in initial["payload"] else {"state": "absent"}}
+            submitted = {"api_version": 1, "project_id": project, "timeline_id": "main",
+                "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"],
+                "label": label, "merge": "fields", "reads": [], "commands": [{
+                    "schema_version": 1, "op": "doc.patch", "version": "1", "select": None, "args": {"changes": [change]}}]}
+            def publish(submitted=submitted, label=label):
+                return runtime.commit_timeline(project, "main", submitted, idempotency_key=label, publisher="editor",
+                                               invocation_path=route_path(project, "main"), authorize=lambda: None)
+            if label == "second" and forged_successor:
+                before = rows(runtime)
+                with pytest.raises(RuntimeErrorBase) as error:
+                    publish()
+                assert error.value.details is not None and error.value.details["reason"] == "invalid_records"
+                assert rows(runtime) == before
+            else:
+                result = publish()
+                assert result["data"]["status"] == ("accepted" if first is None else "merged")
+                assert publish() == result
+                first = result
+    finally:
+        runtime.close()
