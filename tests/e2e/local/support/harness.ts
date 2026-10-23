@@ -782,17 +782,19 @@ if case['fixture'] == 'three-products':
     expected_occurrence = {'occurrence_id': 'f2-occurrence', 'shot_id': 'f2-shot',
         'placement': {'start_ms': 0}, 'source_offset': 0, 'duration_ms': 12000, 'speed': 1,
         'track': 'S1', 'transform': {}, 'gain': 1, 'mute': False, 'provenance': {}}
+    occurrence = document_from_bundle(bundle)['parent_revision']['payload']['occurrences'][0]
+    # Author occurrence fields through guarded paths, retaining provider-owned edges.
+    add({'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None, 'args': {'changes': [
+        {'op': 'set', 'ref': 'parent', 'path': ['occurrences', 'occurrence_id:f2-occurrence', key],
+         'before': {'state': 'present', 'value': copy.deepcopy(occurrence[key])} if key in occurrence else {'state': 'absent'},
+         'value': copy.deepcopy(value)}
+        for key, value in expected_occurrence.items() if key not in ('occurrence_id', 'shot_id')
+    ]}})
     before = copy.deepcopy(bundle)
     after = copy.deepcopy(bundle)
     after['parent'] = copy.deepcopy(expected_parent)
     after['shots']['f2-shot']['payload'] = copy.deepcopy(expected_shot)
     after['shots']['f2-shot']['internal_timeline'] = copy.deepcopy(expected_internal)
-    # Project the provider's occurrence edges for payload-only emission.
-    occurrences = document_from_bundle(before)['parent_revision']['payload']['occurrences']
-    before['parent']['occurrences'] = copy.deepcopy(occurrences)
-    after['parent']['occurrences'] = copy.deepcopy(occurrences)
-    occurrence = after['parent']['occurrences'][0]
-    occurrence.update(copy.deepcopy(expected_occurrence))
     patches = emit_document_commands(before, after)
     if patches:
         bundle = execute(before, patches, verified_media=verified).bundle
