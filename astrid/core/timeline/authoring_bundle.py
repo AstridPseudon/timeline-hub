@@ -922,6 +922,49 @@ def _collect_media(value: Any) -> set[str]:
     return result
 
 
+class _CopiedShot(dict[str, Any]):
+    """Native copy provenance, kept outside the authored JSON representation."""
+
+    def __init__(self, shot: Mapping[str, Any], source: dict[str, Any]) -> None:
+        super().__init__(shot)
+        self.source = source
+
+
+def _copied_shot_baseline(
+    root: Mapping[str, Any], shot: _CopiedShot, identity: str,
+) -> tuple[dict[str, Any], Mapping[str, Any]]:
+    from astrid.sdk.timeline.commit import _verify_document
+
+    binding = shot.source
+    document = root["source_mapping"].get("_runtime_document")
+    _verify_document(document)
+    parent = document["parent_revision"]
+    if (document["project_id"] != root["project_id"]
+            or document["timeline_id"] != root["timeline_id"]
+            or root["base_parent"] != {key: parent[key] for key in ("revision_id", "content_digest")}):
+        raise AuthoringBundleError("copied shot source closure changed")
+    occurrences = parent["payload"]["occurrences"]
+    source = next((row for row in occurrences
+                   if row["occurrence_id"] == binding.get("source_occurrence_id")), None)
+    if (source is None or binding != {
+            "source_occurrence_id": source["occurrence_id"],
+            "source_shot_id": source["shot_id"],
+            "source_revision_id": source["shot_revision_id"],
+            "occurrence_id": binding.get("occurrence_id"), "shot_id": identity}
+            or not any(row.get("occurrence_id") == binding["occurrence_id"]
+                       and row.get("shot_id") == identity for row in root["placements"])):
+        raise AuthoringBundleError("copied shot source binding changed")
+    source_shot = next(row for row in document["shot_revisions"]
+                       if row["revision_id"] == source["shot_revision_id"])
+    source_internal = next(row for row in document["internal_timeline_revisions"]
+                           if row["revision_id"] == source_shot["internal_timeline_revision_id"])
+    baseline, _ = _copy_shot_for_placement(
+        source_shot["payload"], project_id=root["project_id"], timeline_id=root["timeline_id"],
+        occurrence_id=binding["occurrence_id"], authoring_shot_id=identity,
+        source_shot_id=source["shot_id"])
+    return baseline, source_internal["payload"]
+
+
 def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompilation:
     """Compile a complete working copy into one deterministic CAS publication.
 
@@ -1007,9 +1050,13 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
             f"candidate.source_mapping.shots[{authoring_shot_id!r}]",
         )
         created = authoring_shot_id in created_shots
+        if isinstance(shot, _CopiedShot) and not created:
+            raise AuthoringBundleError("copied shot requires a recorded creation")
+        copied_baseline = (_copied_shot_baseline(root, shot, authoring_shot_id)
+                           if isinstance(shot, _CopiedShot) else None)
         source_shot_id = None if created else _string(source.get("shot_id"), "source shot_id")
         base_shot = _mapping(
-            {} if created else shot.get("base_payload"),
+            copied_baseline[0] if copied_baseline else {} if created else shot.get("base_payload"),
             f"candidate.shots[{authoring_shot_id!r}].base_payload",
         )
         if "meta" in base_shot:
@@ -1026,7 +1073,7 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
                 path=f"candidate.shots[{authoring_shot_id!r}].payload.meta",
             )
         base_internal = _mapping(
-            {} if created else shot.get("base_internal_timeline"),
+            copied_baseline[1] if copied_baseline else {} if created else shot.get("base_internal_timeline"),
             f"candidate.shots[{authoring_shot_id!r}].base_internal_timeline",
         )
         _validate_timeline_payload_meta(
