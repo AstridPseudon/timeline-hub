@@ -165,14 +165,20 @@ def _assert_step_patch(step: dict[str, Any], note: dict[str, Any]) -> None:
     assert step["command_ordinals"] == [note["ordinal"]]
     assert len(step["patch"]) == 1
     change = step["patch"][0]
+    # Authoritative effects use the parent's canonical mirror path; submitted
+    # operands below retain the emitter's logical clips path.
+    physical_path = ["config", *NOTE_PATH_PREFIX, note["id"]]
     assert change == {
         "op": "set",
         "ref": "parent",
-        "path": [*NOTE_PATH_PREFIX, note["id"]],
+        "path": physical_path,
         "before": {"state": "absent"},
         "value": note["text"],
     }
-    assert step.get("dependencies")
+    assert step["dependencies"] == [{
+        "kind": "field", "ref": "parent", "path": physical_path,
+        "state": {"state": "absent"},
+    }]
 
 
 def _run_cli(runtime: Any, capsys: Any, *args: str) -> tuple[int, dict[str, Any]]:
@@ -369,6 +375,7 @@ def test_http_ten_note_commit_per_step_inverse_and_redo(runtime, tmp_path, capsy
     assert data["commands"] == [record["command"] for record in expected_plan.records]
     for submitted, record in zip(request["commands"], expected_plan.records):
         assert {key: record["command"][key] for key in submitted} == submitted
+    assert data["steps"] == expected_plan.steps
     assert len(data["steps"]) == 10
     for step, note in zip(data["steps"], _notes()):
         _assert_step_patch(step, note)
