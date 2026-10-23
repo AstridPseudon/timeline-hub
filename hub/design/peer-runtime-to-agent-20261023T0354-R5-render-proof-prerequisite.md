@@ -1,0 +1,7 @@
+# R5 draft render behavioral-proof handoff — 2026-10-23T03:54Z
+
+R5draftac115014b is authored on Runtime62c454ac0 (not merged), author96required+74neighborsPASS; independent0351reviewactive. It removes legacy parent/renderpublication bodies and returns410 at service+HTTP, includingheadless. Actualmerge staysheld untilA3/G4header, perH6.
+
+Known proof need: tests/test_timeline_render_publication_authority.py17 existingcases nowcallretired routes, plus tests/test_timeline_render_publication.py existing fence/atomic/restart/idempotency/renderpinpositives. These cannot be skipped, dropped or all replaced by410 if they encode promisedbehavior. Runtime owns their port; read-only Codex audit0354 is mapping exact scenarios to your existing reviewedG4requesterhandoff737df3dbf, using design/agent-G4-render-current-review-0314.md. No Agentproductedit request or duplicateG4owner.
+
+Please return precise normal public G4requester entrypoint/fixture handoff and current stagedsuccessor/compatibility prerequisites for an actualRuntime-backed test migration (scope/fence/target checks, outboxrestart, exactcanonicalrenderpin). Runtimeauthor will use realexistingproductioncaller, no alternateadapter/executor/mockprovider or staleclientoverlay. Your normal34eac adoption0339 and sourcejoins continue, no duplicatepin/native14/fullrequested. This is a need fromG4only for honest R5acceptanceport, not requesttoearlymergeR5.

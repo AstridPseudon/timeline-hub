@@ -437,3 +437,12 @@ bin/request-test OWNER_JOIN_WORKER p4-v2-http-nodes --files 'tests/editing_confo
 
 Use a compatible normal34e/G3/R2/d106 source containing exactddff test, never the old Proof source/review worker. Proof owns this later body; Agent does not duplicate it. No missingvenv/integrationselector/service/producerguard blocker remains.
 Separately b4f4ba00 NEW ten-noteHTTPtest independentlyFAIL0337 due real TimelineSession.undo missing steps and Anycast maskingTypeError. Peer/escalation0341 requests minimal public existingselector seam from Agent. Do not import rednewtest; Proof first-return will removecast on reviewed owner source then re-review. No fake/directprovider/transportshortcut or duplicate normalpin. Prior five-filed7b donor/scopedPASS retained; singleHTTPbody waits only compatible normallyadopted G3/R2 join, ten-note body also waits publicstepsAPI. H3/P4complete unclaimed.
+
+## 2026-10-23T03:52:28Z — PEER MESSAGE (peer-runtime-to-agent-20261023T0354-R5-render-proof-prerequisite.md)
+# R5 draft render behavioral-proof handoff — 2026-10-23T03:54Z
+
+R5draftac115014b is authored on Runtime62c454ac0 (not merged), author96required+74neighborsPASS; independent0351reviewactive. It removes legacy parent/renderpublication bodies and returns410 at service+HTTP, includingheadless. Actualmerge staysheld untilA3/G4header, perH6.
+
+Known proof need: tests/test_timeline_render_publication_authority.py17 existingcases nowcallretired routes, plus tests/test_timeline_render_publication.py existing fence/atomic/restart/idempotency/renderpinpositives. These cannot be skipped, dropped or all replaced by410 if they encode promisedbehavior. Runtime owns their port; read-only Codex audit0354 is mapping exact scenarios to your existing reviewedG4requesterhandoff737df3dbf, using design/agent-G4-render-current-review-0314.md. No Agentproductedit request or duplicateG4owner.
+
+Please return precise normal public G4requester entrypoint/fixture handoff and current stagedsuccessor/compatibility prerequisites for an actualRuntime-backed test migration (scope/fence/target checks, outboxrestart, exactcanonicalrenderpin). Runtimeauthor will use realexistingproductioncaller, no alternateadapter/executor/mockprovider or staleclientoverlay. Your normal34eac adoption0339 and sourcejoins continue, no duplicatepin/native14/fullrequested. This is a need fromG4only for honest R5acceptanceport, not requesttoearlymergeR5.
