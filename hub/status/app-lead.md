@@ -1,1 +1,1 @@
-2026-10-23T02:08Z procs OK uptime 178m (monitor armed); workers 0 running at check (manager mid-round, A2-trim review + U4p-v2 preflight on board); ready-undispatched 0 (A2 raw-trim-clear fix dispatched/in review); disk 16G; issues none
+2026-10-23T02:38Z procs OK uptime 208m (monitor armed); worker A2-production-v2-mount-r4 running; U4p-v2 dispatched+reviewed (FAIL: Runtime 21482 client guards reject valid merged replies; Runtime repair rt-R2r-client-guards-0233 active; pin staged); A2-trim merged; ready-undispatched 0; disk 16G; issues none (waiting Runtime successor)
