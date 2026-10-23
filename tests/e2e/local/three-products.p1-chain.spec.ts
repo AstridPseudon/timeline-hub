@@ -116,10 +116,27 @@ function observe(page: Page) {
 }
 
 async function openChain(page: Page, harness: DirectHarness, seed: ChainSeed) {
-  await page.goto(`${harness.origin}${APP_ENTRY_ROUTE}?localProject=${encodeURIComponent(seed.projectSlug)}&localTimeline=${encodeURIComponent(seed.timelineId)}`);
-  await expectConnected(page);
-  await expect(firstTrackName(page)).toBeVisible();
-  await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).some((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
+  const runtimeRequests: string[] = [];
+  const pageErrors: string[] = [];
+  const consoleErrors: string[] = [];
+  page.on('response', (response) => {
+    const url = new URL(response.url());
+    if (!RUNTIME_PATHS.some((prefix) => url.pathname.startsWith(prefix))) return;
+    boundedPush(runtimeRequests, `${response.request().method()} ${url.pathname} ${response.status()}`);
+  });
+  page.on('pageerror', (error) => boundedPush(pageErrors, redactDiagnostic(error.message)));
+  page.on('console', (message) => {
+    if (message.type() === 'error') boundedPush(consoleErrors, redactDiagnostic(message.text()));
+  });
+  try {
+    await page.goto(`${harness.origin}${APP_ENTRY_ROUTE}?localProject=${encodeURIComponent(seed.projectSlug)}&localTimeline=${encodeURIComponent(seed.timelineId)}`);
+    await expectConnected(page);
+    await expect(firstTrackName(page)).toBeVisible();
+    await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).some((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
+  } catch (error) {
+    await openChainDiagnostics(page, seed.timelineId, runtimeRequests, pageErrors, consoleErrors);
+    throw error;
+  }
 }
 
 async function setPlayhead(page: Page, seconds: number) {
@@ -160,6 +177,89 @@ async function trimSourceWindow(page: Page, clipId: string, value: string) {
 
 async function forward(route: Route, response: any, body: any) {
   await route.fulfill({ status: response.status(), headers: response.headers(), body: JSON.stringify(body) });
+}
+
+const DIAGNOSTIC_LIMIT = 40;
+const RUNTIME_PATHS = ['/api/runtime/', '/runtime-config/'];
+
+function boundedPush<T>(items: T[], item: T) {
+  if (items.length < DIAGNOSTIC_LIMIT) items.push(item);
+}
+
+function redactDiagnostic(value: string) {
+  return value
+    .replace(/https?:\/\/[^\s"'<>]+/gi, (raw) => {
+      try {
+        const url = new URL(raw);
+        return `${url.origin}${url.pathname}`;
+      } catch {
+        return '[REDACTED_URL]';
+      }
+    })
+    .replace(/([/?][^\s"'<>?]*)\?[^\s"'<>]*/g, '$1[QUERY_REDACTED]')
+    .replace(/\bBearer\s+[^\s,;]+/gi, 'Bearer [REDACTED]')
+    .replace(/\b(authorization|cookie|set-cookie|token|secret|password|credential|api[_-]?key)\b\s*[:=]\s*[^\s,;]+/gi, '$1=[REDACTED]')
+    .replace(/\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g, '[REDACTED_JWT]')
+    .slice(0, 500);
+}
+
+function safeOutboxRequest(request: { method: string; path: string; key: string }) {
+  return {
+    method: request.method,
+    path: request.path.split(/[?#]/, 1)[0],
+    key: request.key,
+  };
+}
+
+function summarizeOutboxes(records: any[]) {
+  return records.map((record) => ({
+    ownerId: record.ownerId,
+    generation: record.generation,
+    intentIds: record.intents.map((intent: any) => ({ id: intent.id, basis: intent.basis, readyBase: intent.readyBase,
+      hasConflict: intent.conflict !== undefined })),
+    pending: record.pending ? { intentId: record.pending.intentId, request: safeOutboxRequest(record.pending.request),
+      outcome: record.pending.outcome?.kind ?? null } : null,
+    accepted: record.accepted ? { intentId: record.accepted.intentId, head: record.accepted.head } : null,
+  }));
+}
+
+async function visibleDiagnosticText(locator: { isVisible(): Promise<boolean>; innerText(): Promise<string> }) {
+  try {
+    return (await locator.isVisible()) ? redactDiagnostic((await locator.innerText()).trim()) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function openChainDiagnostics(page: Page, timelineId: string, runtimeRequests: string[], pageErrors: string[], consoleErrors: string[]) {
+  let outboxes: unknown;
+  try {
+    outboxes = summarizeOutboxes(await commandOutboxes(page, timelineId));
+  } catch (error) {
+    outboxes = { readError: redactDiagnostic(String(error)) };
+  }
+  const selectedTimeline = page.getByRole('combobox', { name: 'Select timeline' }).first();
+  const connection = page.getByTestId('runtime-connection-status');
+  const runtimePanel = page.getByTestId('runtime-not-connected');
+  const recovery = page.getByTestId('timeline-command-recovery');
+  const timelineError = page.locator('[data-video-editor-timeline-error="true"]');
+  const alerts = await page.locator('[role="alert"]:visible').allTextContents().catch(() => []);
+  const connectionState = await connection.getAttribute('data-state').catch(() => null);
+  console.log(`[P1 openChain diagnostics] ${JSON.stringify({
+    timelineId,
+    outboxes,
+    ui: {
+      selectedTimeline: await visibleDiagnosticText(selectedTimeline),
+      connection: { state: connectionState, text: await visibleDiagnosticText(connection) },
+      runtimePanel: await visibleDiagnosticText(runtimePanel),
+      recovery: await visibleDiagnosticText(recovery),
+      timelineError: await visibleDiagnosticText(timelineError),
+      alerts: alerts.slice(0, 10).map(redactDiagnostic),
+    },
+    runtimeRequests,
+    pageErrors,
+    consoleErrors,
+  })}`);
 }
 
 // Source proof only: execution is NOT READY until A2 supplies its existing authoritative
