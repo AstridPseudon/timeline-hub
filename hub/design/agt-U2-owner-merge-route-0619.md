@@ -82,3 +82,29 @@ operations-only brief.
 The route repair should be re-published through that existing controlled kit
 mechanism, followed by live/kit hash and daemon-swap verification, before
 this task can PASS.
+
+## Current-live operations verification (2026-10-23T06:49:29Z)
+
+**PASS.** The controlled cycle has now applied the exact three-line deletion.
+The live Agent operations source
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/hub-sync`
+and published kit working file
+`/home/user/timeline-hub/hub/kit/bin/hub-sync` are byte-identical at SHA-256
+`784bf45b40b3a08dcd61fed0cb5065b19a0d6c4eecf7ae6c30a37eedd03df04f`.
+
+Read-only checks:
+
+- `bash -n` passed for both hub-sync copies and both hub-syncd copies.
+- `hub-syncd` calls the exact `$ORCH/bin/hub-sync "$1"` live path and retains
+  the normal validated `$ORCH/bin/hub-sync.next` syntax-check/swap path.
+- No live or kit `hub-sync.next` is staged.
+- Isolated static/stub checks passed for `ap2-example` and `agt-example`:
+  `owner_offer=1`, fetch/seen/result routing retained,
+  `explicit_request_merge=1`, `automatic_ap2_merge=0`,
+  `pending_write_token=0`, and no ordinary-request selector.
+- No hub-sync execution, network, daemon stop, manual installation,
+  publication, push, product/wire change, or Git-internal mutation occurred.
+
+The v2 request/reply scope and prior product qualification remain as recorded
+above; this was an operations-only verification and did not repeat broad
+product tests.
