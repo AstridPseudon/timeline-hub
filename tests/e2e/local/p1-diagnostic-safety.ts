@@ -1,3 +1,5 @@
+import { writeFile } from 'node:fs/promises';
+
 const REDACTED = '[REDACTED]';
 
 export const DIAGNOSTIC_MAX_BYTES = 16 * 1024;
@@ -7,6 +9,10 @@ export const DIAGNOSTIC_MAX_ARRAY_ITEMS = 40;
 export const DIAGNOSTIC_MAX_STRING = 500;
 const DIAGNOSTIC_MAX_INPUT_STRING = 4 * 1024;
 const DIAGNOSTIC_PRIORITY_MAX_ITEMS = 4;
+
+export const DIAGNOSTIC_READ_TIMEOUT_MS = 150;
+export const DIAGNOSTIC_ARTIFACT_TIMEOUT_MS = 500;
+export const DIAGNOSTIC_COLLECTION_TIMEOUT_MS = 1_000;
 
 const SENSITIVE_KEY = /^(?:body|principal|authorization|cookie|set-cookie|x-api-key|api[_-]?key|apikey|access[_-]?token|refresh[_-]?token|id[_-]?token|token|secret|password|credential|client[_-]?secret|private[_-]?key|session)$/i;
 const SENSITIVE_ASSIGNMENT = /(["']?)([A-Za-z0-9_-]*(?:body|principal|authorization|cookie|set-cookie|x-api-key|api[_-]?key|apikey|access[_-]?token|refresh[_-]?token|id[_-]?token|token|secret|password|credential|client[_-]?secret|private[_-]?key|session)[A-Za-z0-9_-]*)\1(\s*[:=]\s*)(?:"(?:\\.|[^"\\])*"?|'(?:\\.|[^'\\])*'?|\{[\s\S]*|\[[\s\S]*|[^\s,;}\]]+)/gi;
@@ -57,7 +63,8 @@ const DIAGNOSTIC_CONTAINERS = new Set([
   'commitReplies', 'currentWireHeads', 'readonlyReplies', 'head', 'replyHead', 'beforeHead',
   'splitHead', 'agentHead', 'runtimeHistoryHead', 'acceptedHead', 'reads', 'items',
   'outbox', 'outboxes', 'summary', 'records', 'owners', 'pending', 'request', 'outcome',
-  'sourceWindow', 'before', 'after', 'sourceIn', 'selectedClip', 'identity',
+  'sourceWindow', 'before', 'after', 'sourceIn', 'selectedClip', 'identity', 'tuple', 'available',
+  'unknowns', 'losses', 'failureContext', 'wireHeads', 'requestProjections', 'keyProjection', 'bodyProjection', 'recovery', 'transport', 'captureData',
   'ui', 'errors', 'errorSignals', 'page', 'console', 'requestFailures', 'runtimeResponses',
 ]);
 const DIAGNOSTIC_PRIMITIVES = new Set([
@@ -73,7 +80,8 @@ const DIAGNOSTIC_PRIMITIVES = new Set([
   'connectionState', 'runtimePanelVisible', 'recoveryVisible', 'recoveryMessage',
   'timelineErrorVisible', 'timelineErrorMessage', 'alertCount', 'type', 'signal', 'message',
   'error', 'count', 'summarized', 'truncated', 'outboxReadFailed', 'selectedTimelineMatchesExpectedId',
-  'known', 'capture', 'diagnostic', 'sourceAsset',
+  'known', 'capture', 'captureData', 'mountedDataRef', 'mountedObservations', 'callbackPatch', 'diagnostic',
+  'schemaVersion', 'expectedStatus', 'capturedAt', 'durationMs', 'cappedConsole', 'captureResolution', 'sourceAsset', 'present', 'bytes', 'sameAsPrevious', 'sameAsIndex',
 ]);
 
 function diagnosticPrimitive(value: unknown): unknown {
@@ -114,6 +122,36 @@ export function diagnosticStructure(value: unknown, depth = 0): unknown {
     }
   }
   return result;
+}
+
+function diagnosticArtifactStructure(value: unknown, ancestors = new WeakSet<object>()): unknown {
+  if (!value || typeof value !== 'object') return diagnosticPrimitive(value);
+  try {
+    if (ancestors.has(value)) return 'UNKNOWN';
+    ancestors.add(value);
+    if (Array.isArray(value)) {
+      return value.slice(0, DIAGNOSTIC_MAX_ARRAY_ITEMS).map((item) => diagnosticArtifactStructure(item, ancestors));
+    }
+    const result: Record<string, unknown> = {};
+    for (const key of [...DIAGNOSTIC_CONTAINERS, ...DIAGNOSTIC_PRIMITIVES]) {
+      try {
+        if (!Object.prototype.hasOwnProperty.call(value, key)) continue;
+        const field = (value as Record<string, unknown>)[key];
+        result[key] = key === 'sourceAsset' ? 'UNKNOWN'
+          : DIAGNOSTIC_HEAD_FIELDS.has(key) ? diagnosticHeadFields(field)
+          : DIAGNOSTIC_CONTAINERS.has(key) ? diagnosticArtifactStructure(field, ancestors)
+          : Array.isArray(field) && ['path', 'intentLengths', 'pendingIntentLengths', 'outcomeKinds', 'known'].includes(key)
+            ? field.slice(0, DIAGNOSTIC_MAX_ARRAY_ITEMS).map(diagnosticPrimitive) : diagnosticPrimitive(field);
+      } catch {
+        result[key] = 'UNKNOWN';
+      }
+    }
+    return result;
+  } catch {
+    return 'UNKNOWN';
+  } finally {
+    ancestors.delete(value);
+  }
 }
 
 export function diagnosticListener<Args extends unknown[]>(callback: (...args: Args) => unknown): (...args: Args) => Promise<void> | void {
@@ -364,6 +402,66 @@ export function formatPriorityDiagnostic(label: string, value: unknown): string 
   const candidate = prefix + body;
   if (new TextEncoder().encode(candidate).length <= DIAGNOSTIC_MAX_BYTES) return candidate;
   return `${prefix}{"diagnostic":"priority_over_budget"}`;
+}
+
+export function formatDiagnosticArtifact(value: unknown): string {
+  let safeValue: unknown = { diagnostic: 'artifact_unavailable' };
+  try {
+    safeValue = diagnosticArtifactStructure(value);
+  } catch {
+    // Artifact formatting is best effort and must never affect the assertion under test.
+  }
+  try {
+    return `${JSON.stringify(safeValue, null, 2) ?? '{"diagnostic":"artifact_unavailable"}'}\n`;
+  } catch {
+    return '{"diagnostic":"artifact_unavailable"}\n';
+  }
+}
+
+export type DiagnosticArtifactTestInfo = {
+  outputPath(...pathSegments: string[]): string;
+  attach(name: string, options: { path: string; contentType: string }): Promise<void>;
+};
+
+export async function withDiagnosticDeadline<T>(
+  operation: () => T | PromiseLike<T>,
+  fallback: T,
+  timeoutMs: number,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      Promise.resolve().then(operation).catch(() => fallback),
+      new Promise<T>((resolve) => {
+        timer = setTimeout(() => resolve(fallback), Math.max(0, timeoutMs));
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+export function boundedDiagnosticRead<T>(
+  operation: () => T | PromiseLike<T>,
+  fallback: T,
+  deadline: number,
+  timeoutMs = DIAGNOSTIC_READ_TIMEOUT_MS,
+): Promise<T> {
+  const remaining = deadline - Date.now();
+  if (remaining <= 0) return Promise.resolve(fallback);
+  return withDiagnosticDeadline(operation, fallback, Math.min(timeoutMs, remaining));
+}
+
+export async function writeDiagnosticArtifact(testInfo: DiagnosticArtifactTestInfo, value: unknown): Promise<boolean> {
+  try {
+    const artifactPath = testInfo.outputPath('p1-diagnostic.json');
+    await writeFile(artifactPath, formatDiagnosticArtifact(value), 'utf8');
+    await testInfo.attach('p1-diagnostic', { path: artifactPath, contentType: 'application/json' });
+    return true;
+  } catch {
+    // A failed artifact write must not replace the original test failure.
+    return false;
+  }
 }
 
 export function logDiagnostic(label: string, value: unknown, logger?: DiagnosticLogger): void {
