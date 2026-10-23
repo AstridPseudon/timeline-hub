@@ -110,6 +110,126 @@ export function formatDiagnostic(label: string, value: unknown): string {
 
 export type DiagnosticLogger = (message: string) => void;
 
+function priorityRecord(value: unknown, keys: readonly string[]): unknown {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return redactDiagnosticValue(value);
+  const result: Record<string, unknown> = {};
+  const record = value as Record<string, unknown>;
+  for (const key of keys) {
+    try {
+      if (Object.prototype.hasOwnProperty.call(record, key)) result[key] = redactDiagnosticValue(record[key]);
+    } catch {
+      result[key] = '[UNREADABLE]';
+    }
+  }
+  return result;
+}
+
+function priorityList(value: unknown): unknown {
+  if (!Array.isArray(value)) return redactDiagnosticValue(value);
+  const items = value.slice(0, DIAGNOSTIC_MAX_ARRAY_ITEMS).map((item) => {
+    try {
+      return redactDiagnosticValue(item);
+    } catch {
+      return '[UNREADABLE]';
+    }
+  });
+  return { count: value.length, items, summarized: true, truncated: value.length > DIAGNOSTIC_MAX_ARRAY_ITEMS };
+}
+
+function priorityReads(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return { count: value.length, summarized: true, truncated: value.length > DIAGNOSTIC_MAX_ARRAY_ITEMS };
+  }
+  return redactDiagnosticValue(value);
+}
+
+function priorityBasis(value: unknown): unknown {
+  if (!Array.isArray(value)) return redactDiagnosticValue(value);
+  const items = value.slice(0, DIAGNOSTIC_MAX_ARRAY_ITEMS).map((item) => {
+    const safeRecord = priorityRecord(item, ['index', 'key', 'baseRevisionId', 'basePublicationId', 'merge']);
+    if (!safeRecord || typeof safeRecord !== 'object' || Array.isArray(safeRecord)) return safeRecord;
+    const record = safeRecord as Record<string, unknown>;
+    try {
+      if (item && typeof item === 'object' && Object.prototype.hasOwnProperty.call(item, 'reads')) {
+        record.reads = priorityReads((item as Record<string, unknown>).reads);
+      }
+    } catch {
+      record.reads = '[UNREADABLE]';
+    }
+    return record;
+  });
+  return { count: value.length, items, summarized: true, truncated: value.length > DIAGNOSTIC_MAX_ARRAY_ITEMS };
+}
+
+function priorityValue(value: unknown): unknown {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const record = value as Record<string, unknown>;
+  const result: Record<string, unknown> = {};
+  let recognized = false;
+  const read = (key: string, transform: (field: unknown) => unknown = redactDiagnosticValue) => {
+    try {
+      if (!Object.prototype.hasOwnProperty.call(record, key)) return;
+      recognized = true;
+      result[key] = transform(record[key]);
+    } catch {
+      recognized = true;
+      result[key] = '[UNREADABLE]';
+    }
+  };
+  read('case', (field) => priorityRecord(field, [
+    'projectId', 'projectSlug', 'timelineId', 'sourceId', 'originalClipId', 'rightId', 'expectedPostCount', 'observedPostCount',
+  ]));
+  read('basis', priorityBasis);
+  read('displayedHead', (field) => priorityRecord(field, [
+    'revisionId', 'publicationId', 'providerProjectId', 'providerTimelineId', 'commitReplies', 'readonlyReplies', 'runtimeHistoryHead', 'historyReadFailed',
+  ]));
+  read('outbox', (field) => priorityRecord(field, ['readFailed', 'summary']));
+  read('ui', (field) => priorityRecord(field, [
+    'connectionState', 'runtimePanelVisible', 'recoveryVisible', 'recoveryMessage', 'timelineErrorVisible', 'timelineErrorMessage', 'alertCount',
+  ]));
+  read('errors', (field) => priorityRecord(field, ['page', 'console', 'requestFailures']));
+
+  if (!recognized) return null;
+  if ('displayedHead' in result && result.displayedHead && typeof result.displayedHead === 'object') {
+    const displayedHead = result.displayedHead as Record<string, unknown>;
+    for (const key of ['commitReplies', 'readonlyReplies']) {
+      if (Array.isArray(displayedHead[key])) displayedHead[key] = priorityList(displayedHead[key]);
+    }
+  }
+  if ('outbox' in result && result.outbox && typeof result.outbox === 'object') {
+    const outbox = result.outbox as Record<string, unknown>;
+    if ('summary' in outbox) outbox.summary = priorityRecord(outbox.summary, [
+      'ownerCount', 'intentLengths', 'pendingIntentLengths', 'outcomeKinds', 'hasIdleOwner', 'hasPending', 'hasIntents', 'hasConflict',
+    ]);
+  }
+  if ('errors' in result && result.errors && typeof result.errors === 'object') {
+    const errors = result.errors as Record<string, unknown>;
+    for (const key of ['page', 'console', 'requestFailures']) {
+      if (key in errors) errors[key] = priorityList(errors[key]);
+    }
+  }
+  return result;
+}
+
+export function formatPriorityDiagnostic(label: string, value: unknown): string {
+  const prefix = `[${redactDiagnosticText(label)}] `;
+  let safeValue: unknown = { diagnostic: 'priority_over_budget' };
+  try {
+    safeValue = priorityValue(value) ?? { diagnostic: 'priority_over_budget' };
+  } catch {
+    // Priority state is best effort and must never affect the assertion.
+  }
+  let body = '{"diagnostic":"priority_unavailable"}';
+  try {
+    body = JSON.stringify(safeValue) ?? 'null';
+  } catch {
+    // Keep the fallback free of the original value.
+  }
+  const candidate = prefix + body;
+  if (new TextEncoder().encode(candidate).length <= DIAGNOSTIC_MAX_BYTES) return candidate;
+  return `${prefix}{"diagnostic":"priority_over_budget"}`;
+}
+
 export function logDiagnostic(label: string, value: unknown, logger?: DiagnosticLogger): void {
   let message = '[P1 diagnostic unavailable]';
   try {
@@ -122,6 +242,24 @@ export function logDiagnostic(label: string, value: unknown, logger?: Diagnostic
   } catch {
     try {
       if (!logger) console.log('[P1 diagnostic unavailable]');
+    } catch {
+      // The final stdout fallback is also best effort.
+    }
+  }
+}
+
+export function logPriorityDiagnostic(label: string, value: unknown, logger?: DiagnosticLogger): void {
+  let message = '[P1 priority diagnostic unavailable]';
+  try {
+    message = formatPriorityDiagnostic(label, value);
+  } catch {
+    // Formatting is best effort and must never affect the assertion under test.
+  }
+  try {
+    (logger ?? ((line: string) => console.log(line)))(message);
+  } catch {
+    try {
+      if (!logger) console.log('[P1 priority diagnostic unavailable]');
     } catch {
       // The final stdout fallback is also best effort.
     }
