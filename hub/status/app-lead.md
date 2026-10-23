@@ -1,1 +1,1 @@
-2026-10-23T01:42Z procs OK uptime 153m (monitor armed); workers 1 (U3-A2-integrated-proof-r1); ready-undispatched: A2 raw-trim-clear fix (app2 esc 01:37Z) being checked; disk 16G; issues none
+2026-10-23T02:08Z procs OK uptime 178m (monitor armed); workers 0 running at check (manager mid-round, A2-trim review + U4p-v2 preflight on board); ready-undispatched 0 (A2 raw-trim-clear fix dispatched/in review); disk 16G; issues none
