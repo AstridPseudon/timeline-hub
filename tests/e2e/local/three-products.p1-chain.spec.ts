@@ -752,26 +752,45 @@ test('P1 split -> trim new clip: a real Agent move refuses the stale trim and th
   }
   await expect.poll(() => !!heldTrim, CEILING).toBe(true);
   const trim = traffic.posts[1];
-  assertV2Request(trim, harness, seed);
-  expect(trim.raw).toBeTruthy();
-  expect(trim.key).toBeTruthy();
-  expect(trim.body).toMatchObject({ base_revision_id: split.response.data.accepted_revision_id,
-    base_publication_id: split.response.receipt.receipt_id, merge: 'fields',
-    reads: expect.arrayContaining([
-      { kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${rightId}`, 'at'], state: { state: 'present', value: SPLIT_AT } },
-      { kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${rightId}`, 'from'], state: { state: 'present', value: originalClip.from } },
-    ]) });
-  agent = await astrid.commitCaptured(harness.seed.projectId, seed.timelineId, pin(split.response), { kind: 'move', clipId: rightId, on: 3 }, 'p1-agent-conflict');
-  expect(agent.data.status).toBe('accepted');
-  expect(agent.data.rebased_onto).toBeNull();
-  const agentParent = parentOf(agent);
-  // Preserve the exact split baseline for fields the native move did not intend to change.
-  expect(agentParent.clips[0]).toEqual(splitDocument.clips[0]);
-  expect(agentParent.clips[1]).toMatchObject({ id: rightId, at: 3, from: originalClip.from, to: originalClip.to, hold: originalClip.to - SPLIT_AT });
-  expect(agentParent.clips[1].app).toEqual({ ...splitDocument.clips[1].app,
-    astrid: { fixed_start: true, for: originalClip.to - SPLIT_AT } });
-  const trimWire = await heldTrim!.fetch({ maxRetries: 0 });
-  await forward(heldTrim!, trimWire, await trimWire.json());
+  let agentParent: any;
+  let originalError: unknown;
+  let releaseError: unknown;
+  try {
+    assertV2Request(trim, harness, seed);
+    expect(trim.raw).toBeTruthy();
+    expect(trim.key).toBeTruthy();
+    expect(trim.body).toMatchObject({ base_revision_id: split.response.data.accepted_revision_id,
+      base_publication_id: split.response.receipt.receipt_id, merge: 'fields',
+      reads: expect.arrayContaining([
+        { kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${rightId}`, 'at'], state: { state: 'present', value: SPLIT_AT } },
+        { kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${rightId}`, 'from'], state: { state: 'present', value: originalClip.from } },
+      ]) });
+    agent = await astrid.commitCaptured(harness.seed.projectId, seed.timelineId, pin(split.response), { kind: 'move', clipId: rightId, on: 3 }, 'p1-agent-conflict');
+    expect(agent.data.status).toBe('accepted');
+    expect(agent.data.rebased_onto).toBeNull();
+    agentParent = parentOf(agent);
+    // Preserve the exact split baseline for fields the native move did not intend to change.
+    expect(agentParent.clips[0]).toEqual(splitDocument.clips[0]);
+    expect(agentParent.clips[1]).toMatchObject({ id: rightId, at: 3, from: originalClip.from, to: originalClip.to, hold: originalClip.to - SPLIT_AT });
+    expect(agentParent.clips[1].app).toEqual({ ...splitDocument.clips[1].app,
+      astrid: { fixed_start: true, for: originalClip.to - SPLIT_AT } });
+  } catch (error) {
+    originalError = error;
+    throw error;
+  } finally {
+    const route = heldTrim;
+    heldTrim = undefined;
+    if (route) {
+      try {
+        const trimWire = await route.fetch({ maxRetries: 0 });
+        await forward(route, trimWire, await trimWire.json());
+      } catch (cleanupFailure) {
+        await route.abort('failed').catch(() => {});
+        if (originalError === undefined) releaseError = cleanupFailure;
+      }
+    }
+  }
+  if (releaseError !== undefined) throw releaseError;
   await expect.poll(() => traffic.posts[1].status, CEILING).not.toBeUndefined();
   expect(traffic.posts[1].status).toBe(409);
   expect(traffic.posts[1].response.details).toMatchObject({ status: 'conflict', reason: 'value_conflict',
