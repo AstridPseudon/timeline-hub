@@ -114,12 +114,12 @@ def _complete_v2_metadata(context, port, document, expected_head, records):
     patches = _step_patches(source, document)
     requested_steps = request.get("steps")
     if requested_steps:
+        if len(requested_steps) != 1:
+            raise ValueError("PreparedProvider fixture supports one v2 step only")
         steps = [copy.deepcopy(step) for step in requested_steps]
-        # This fixture has one provider execution boundary; retain requested
-        # step identities while attaching its complete authenticated effects.
+        # This fixture has one provider execution boundary; retain the requested
+        # step identity while attaching its complete authenticated effects.
         steps[0]["patch"] = patches
-        for step in steps[1:]:
-            step["patch"] = []
     else:
         steps = [{"id": "edit", "label": request.get("label", "Timeline edit"),
                   "intent": request["commands"][0]["op"], "tags": [],
@@ -739,3 +739,23 @@ def test_existing_head_installs_only_verified_original_baseline_before_requests(
         assert rows(service) == before
     finally:
         service.close()
+
+
+def test_prepared_fixture_refuses_unsupported_multi_step_requests():
+    request = {"commands": [{"op": "first"}, {"op": "second"}], "steps": [
+        {"id": "first", "label": "First", "intent": "first", "tags": [],
+         "command_ordinals": [0], "patch": [], "reads": []},
+        {"id": "second", "label": "Second", "intent": "second", "tags": [],
+         "command_ordinals": [1], "patch": [], "reads": []},
+    ]}
+    context = {"request": request}
+    document = {"parent_revision": {"payload": {}}, "shot_revisions": [],
+                "internal_timeline_revisions": []}
+
+    class ClosurePort:
+        def revision_closure(self, revision_id):
+            assert revision_id == "base"
+            return copy.deepcopy(document)
+
+    with pytest.raises(ValueError, match="supports one v2 step only"):
+        _complete_v2_metadata(context, ClosurePort(), document, {"revision_id": "base"}, {})
