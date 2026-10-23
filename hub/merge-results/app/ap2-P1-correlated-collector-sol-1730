@@ -1,1 +1,1 @@
-REFUSED CONFLICT merging tl/ap2-P1-correlated-collector-sol-1730 into app — aborted; dispatch a worker to rebase tl/ap2-P1-correlated-collector-sol-1730 onto tl/integration
+SUPERSEDED SUPERSEDED by 2107e1870e51c650d59315f4cc1ab6af338f198c (own10390 reviewed1741 merged via conflict-resolution95eb independently1758 PASS; exact3sourceblobs and originalowner/body/key/restart assertions retained)
