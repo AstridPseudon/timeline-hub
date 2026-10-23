@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-23T04:46:01Z | dispatcher heartbeat 8s | live 7 (sol 2, luna 5, other 0) | busy30 17 | status age 0m -->
-# agent board, 2026-10-23T04:45:00Z
+<!-- agent | 2026-10-23T04:48:35Z | dispatcher heartbeat 11s | live 5 (sol 2, luna 3, other 0) | busy30 16 | status age 1m -->
+# agent board, 2026-10-23T04:47:17Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2 | upstream and quality | Luna/Sol; Luna review | — | merged | agt-U2-media-repair; ratchet-review | Integrated184 + manifest/lock PASS; baseline2151/1915 | 3f1ceaed1;649ba6481 |
@@ -15,7 +15,7 @@
 | G2 | open/commit bounded rerun | Sol; Luna review | R1,U2,34e | doing | agt-G234-home-correction-0442 | Review0401 FAIL live create_empty; actualccc unqualified; current-preserving correction active | approved5f0;home9729 |
 | G3 | emitter/CLI/sheet | Sol; Luna review | G2 | doing | agt-G234-home-correction-0442 | Correct actualhome to approved5f0 with publicfacade and retainedV2; no stale ancestry approval | 5f0fb2ed |
 | G4-writers | narration/update-element | Sol join; Luna review | G2 | doing | agt-G234-home-correction-0442 | Reviewed f303 source retained in current-preserving assembled correction | f303→5f0 |
-| G4-media | live create_empty/parent-media | Luna; independent Luna | G2 | review | agt-G4-create-empty-review-0442 | Author14direct+1live PASS on f677; original redo3 failures separate; independent review active | f677e9bab |
+| G4-media | live create_empty/parent-media | Luna; independent Luna | G2 | review | agt-G4-create-empty-review-0442 | Independent0442 PASS14direct+1live,24vendor/artifact,2149/1914; original redo3 separatelyaudit0446. Current assembly active | f677e9bab |
 | G4-render | requester render publication | Luna; Sol join | G2 | doing | agt-G234-home-correction-0442 | Independent0416 PASS actualRemoteTasks.create1+13; group independent0421 PASS25; current join active | 33fc3879;e045b37f |
 | G2-step-undo | public selected-step undo | Luna; Luna review | G2,R2 | review | agt-P4-final-six-join-0442 | Independent facade0416 PASS107+2; exact2-file246f current port; final six-test assembly active | 9fbb84ac;246f925 |
 | P4-owner | exact six tests/current facade | Luna; independent review next | G2,G3,R2 | doing | agt-P4-final-six-join-0442 | Five exact0018 files+sixth5ee8; no HTTP bodies; Proof owns execution after final review | 246f925+c4c test |
