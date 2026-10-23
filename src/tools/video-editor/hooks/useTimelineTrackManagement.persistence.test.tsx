@@ -4,7 +4,10 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB, resetFakeIndexedDB } from 'fake-indexeddb';
-import { ApiError } from '@/integrations/runtime/generated.ts';
+import { type Transport } from '@/integrations/runtime/generated.ts';
+import { AstridRuntimeClient } from '@/integrations/runtime/client.ts';
+import { RUNTIME_SCHEMA_DIGEST } from '@/integrations/runtime/contract-metadata.ts';
+import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
 import type { CanonicalDocument, CommitRequest } from '@/integrations/runtime/timeline-commit-types.ts';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import type { DataProvider, TimelineCommandBasis, TimelineCommitResult, TimelineHeadRevision } from '@/tools/video-editor/data/DataProvider.ts';
@@ -75,8 +78,8 @@ function makeCanonicalDocument(config: TimelineConfig, revisionId = 'r0'): Canon
   return document;
 }
 
-function makeBasis(config: TimelineConfig): TimelineCommandBasis {
-  return { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: makeCanonicalDocument(config) };
+function makeBasis(config: TimelineConfig, revisionId = 'r0', publicationId = 'p0'): TimelineCommandBasis {
+  return { head: { revisionId, publicationId }, canonicalDocument: makeCanonicalDocument(config, revisionId) };
 }
 
 function acceptedResult(request: CommitRequest, before: TimelineCommandBasis): TimelineCommitResult {
@@ -118,37 +121,66 @@ type MountedHarness = {
   send: ReturnType<typeof vi.fn<NonNullable<DataProvider['commitTimeline']>>>;
   basis: TimelineCommandBasis;
   data: TimelineData;
+  transportCalls: Array<{ method: string; path: string; headers: Record<string, string>; rawBody?: string; body?: unknown }>;
 };
 
 async function mountHarness(outcome: 'accepted' | 'refused') : Promise<MountedHarness> {
   const config = authoredConfig();
   const basis = makeBasis(config);
   let latest = basis;
-  const send = vi.fn<NonNullable<DataProvider['commitTimeline']>>().mockImplementation(async (request, key) => {
-    if (outcome === 'refused') {
-      throw new ApiError(409, 'selection_changed', 'Track order changed at the Runtime head', 'request-track', {
-        status: 'conflict', reason: 'selection_changed',
-        base: { revision_id: 'r0', publication_id: 'p0' },
-        current: { revision_id: 'remote-r1', publication_id: 'remote-p1' },
-        conflicts: [], code: 'selection_changed', path: ['parent', 'config', 'tracks'],
-        hint: 'Reload the timeline and retry the reorder.', suggested_command: 'show timeline',
-      });
+  const transportCalls: MountedHarness['transportCalls'] = [];
+  const json = (value: unknown): Uint8Array => new TextEncoder().encode(JSON.stringify(value));
+  const transport: Transport = async (method, path, headers, body) => {
+    const rawBody = body ? new TextDecoder().decode(body as Uint8Array) : undefined;
+    transportCalls.push({ method, path, headers, ...(rawBody === undefined ? {} : { rawBody, body: JSON.parse(rawBody) }) });
+    if (path === '/v1/health') {
+      return { status: 200, headers: {}, body: json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST,
+        runtime_epoch: 1, runtime_session_id: 'session-track', runtime_instance_id: 'instance-track' }) };
     }
-    const result = acceptedResult(request, basis);
-    result.receipt.idempotency_key = key;
-    latest = { head: result.accepted, canonicalDocument: result.canonicalDocument, graph: result.graph };
-    return result;
-  });
-  const provider: DataProvider = {
-    persistenceEnabled: true,
-    loadTimeline: vi.fn(async () => ({ config, configVersion: 1, head: initialHead })),
-    loadAssetRegistry: vi.fn(async () => ({ assets: {} })),
-    loadTimelineCommandBasis: vi.fn(async () => latest),
-    getRecoverableIdentity: vi.fn(async () => ({ realmId: scope.realmId, actorId: scope.actorId, projectId: scope.projectId, timelineId: scope.timelineId })),
-    commitTimeline: send,
-    resolveAssetUrl: vi.fn(async (file: string) => file),
-    getTimelineDraftRecoveryMetadata: () => ({ recoveryKey: scope.timelineId, draftIdentity: `mounted-track-${outcome}` }),
+    if (path === '/v1/handshake') {
+      return { status: 200, headers: {}, body: json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST,
+        session_id: 'session-track', actor_id: scope.actorId, realm_id: scope.realmId,
+        scopes: ['handshake', 'projects:read', 'projects:write', 'objects:read', 'objects:write', 'tasks:read', 'tasks:write'],
+        capabilities: ['execution_binding.targeted.v1'] }) };
+    }
+    if (path === '/v1/realm') {
+      return { status: 200, headers: {}, body: json({ realm_id: scope.realmId, display_name: 'track fixture', version: 1, created_at: '2026-10-19T00:00:00Z' }) };
+    }
+    if (method === 'POST' && path === `/v1/projects/${scope.projectId}/timelines/${scope.timelineId}/commit`) {
+      if (outcome === 'refused') {
+        const remoteConfig = authoredConfig();
+        remoteConfig.tracks = [remoteConfig.tracks![0], remoteConfig.tracks![2], remoteConfig.tracks![1]];
+        latest = makeBasis(remoteConfig, 'remote-r2', 'remote-p2');
+        return { status: 409, headers: {}, body: json({
+          code: 'selection_changed', message: 'Track order changed at the Runtime head', request_id: 'request-track',
+          details: {
+            status: 'conflict', reason: 'selection_changed',
+            base: { revision_id: 'r0', publication_id: 'p0' },
+            current: { revision_id: 'remote-r2', publication_id: 'remote-p2' },
+            conflicts: [], code: 'selection_changed', path: ['parent', 'config', 'tracks'],
+            hint: 'Reload the timeline and retry the reorder.', suggested_command: 'show timeline',
+          },
+        }) };
+      }
+      const request = JSON.parse(rawBody!) as CommitRequest;
+      const result = acceptedResult(request, basis);
+      result.receipt.idempotency_key = headers['Idempotency-Key']!;
+      result.receipt.request_hash = fixtureDigest({ operation: 'commitTimeline', path,
+        publisher: result.response.data.publisher, request }).slice(7);
+      result.receipt.result = result.response.data;
+      latest = { head: result.accepted, canonicalDocument: result.canonicalDocument, graph: result.graph };
+      return { status: 200, headers: {}, body: json(result.response) };
+    }
+    throw new Error(`Unexpected Runtime request: ${method} ${path}`);
   };
+  const runtimeClient = new AstridRuntimeClient({ baseUrl: 'http://runtime.test', token: 'runtime-token', transport });
+  const provider = new RuntimeDataProvider({ projectId: scope.projectId, runtimeClient });
+  vi.spyOn(provider, 'loadTimelineCommandBasis').mockImplementation(async () => structuredClone(latest));
+  const actualCommit = provider.commitTimeline.bind(provider);
+  const send = vi.fn<NonNullable<DataProvider['commitTimeline']>>().mockImplementation(
+    (request, key) => actualCommit(request, key),
+  );
+  provider.commitTimeline = send;
   const data = await buildTimelineData(config, { assets: {} }, provider.resolveAssetUrl, 1, undefined, initialHead);
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   const store = createTimelineStore();
@@ -178,7 +210,7 @@ async function mountHarness(outcome: 'accepted' | 'refused') : Promise<MountedHa
   }, { wrapper });
   await waitFor(() => expect(hook.result.current.save.localSaveState?.ownerId).toBeTruthy());
   await waitFor(() => expect(hook.result.current.save.localSaveState?.status).toBe('saved'));
-  return { hook, provider, send, basis, data };
+  return { hook, provider, send, basis, data, transportCalls };
 }
 
 async function settlePromises() {
@@ -235,6 +267,40 @@ describe('mounted track reorder persistence through A2', () => {
         command_ordinals: [0], patch: [change],
       }]);
 
+      const commitCalls = mounted.transportCalls.filter((call) => call.path.endsWith('/commit'));
+      expect(commitCalls).toHaveLength(1);
+      const [wire] = commitCalls;
+      expect(wire.method).toBe('POST');
+      expect(wire.path).toBe(`/v1/projects/${scope.projectId}/timelines/${scope.timelineId}/commit`);
+      expect(wire.headers).toMatchObject({
+        Accept: 'application/json', Authorization: 'Bearer runtime-token',
+        'Content-Type': 'application/json', 'Idempotency-Key': key,
+      });
+      expect(wire.rawBody).toBe(JSON.stringify(request));
+      expect(wire.body).toEqual(request);
+
+      const accepted = await mounted.send.mock.results[0]!.value as TimelineCommitResult;
+      expect(accepted.response.data).toMatchObject({
+        status: 'accepted',
+        base_revision_id: 'r0', base_publication_id: 'p0',
+        previous_revision_id: 'r0', previous_publication_id: 'p0',
+        accepted_revision_id: 'r1', rebased_onto: null,
+        document_digest: fixtureDigest(accepted.canonicalDocument),
+        commands: request.commands, merge_mode: 'atomic', steps: request.steps,
+        label: 'Edit timeline', source: { via: 'app' },
+      });
+      expect(accepted.response.data.canonical_document).toEqual(accepted.canonicalDocument);
+      expect(accepted.response.data.canonical_document.parent_revision).toMatchObject({
+        revision_id: 'r1', content_digest: fixtureDigest(accepted.canonicalDocument.parent_revision.payload),
+      });
+      expect(accepted.receipt).toMatchObject({
+        receipt_id: 'p1', command_kind: 'timeline.commit', idempotency_key: key,
+        project_id: scope.projectId, project_seq: [1, 1], event_ids: ['event-p1'],
+        request_hash: fixtureDigest({ operation: 'commitTimeline', path: wire.path,
+          publisher: accepted.response.data.publisher, request }).slice(7),
+      });
+      expect(accepted.receipt.result).toEqual(accepted.response.data);
+
       expect(mounted.hook.result.current.save.dataRef.current?.head).toMatchObject({ headRevisionId: 'r1', headPublicationId: 'p1' });
       expect(mounted.hook.result.current.save.dataRef.current?.config.tracks?.map((track) => track.id)).toEqual(reorderedTrackOrder);
       expect(mounted.hook.result.current.save.dataRef.current?.config.app).toEqual(authoredConfig().app);
@@ -260,24 +326,47 @@ describe('mounted track reorder persistence through A2', () => {
     }
   });
 
-  it('retains the durable intent and rolls the mounted UI back on a structured refusal', async () => {
+  it('retains the durable intent and revalidates the mounted UI on a structured refusal', async () => {
     const mounted = await mountHarness('refused');
     try {
       act(() => mounted.hook.result.current.tracks.handleMoveTrack('overlay', 'picture'));
       await waitFor(() => expect(mounted.send).toHaveBeenCalledTimes(1), { timeout: 3000 });
       await waitFor(() => expect(mounted.hook.result.current.save.localSaveState?.status).toBe('conflict'));
+      await waitFor(() => expect(mounted.hook.result.current.save.dataRef.current?.head)
+        .toMatchObject({ headRevisionId: 'remote-r2', headPublicationId: 'remote-p2' }));
 
       expect(mounted.hook.result.current.save.saveStatus).toBe('error');
       expect(mounted.hook.result.current.save.localSaveState?.error).toMatchObject({
         kind: 'conflict', code: 'selection_changed',
         message: expect.stringContaining('selection_changed'),
-        details: expect.objectContaining({ path: ['parent', 'config', 'tracks'], hint: 'Reload the timeline and retry the reorder.' }),
+        details: {
+          status: 'conflict', reason: 'selection_changed',
+          base: { revision_id: 'r0', publication_id: 'p0' },
+          current: { revision_id: 'remote-r2', publication_id: 'remote-p2' },
+          conflicts: [], code: 'selection_changed', path: ['parent', 'config', 'tracks'],
+          hint: 'Reload the timeline and retry the reorder.', suggested_command: 'show timeline',
+        },
       });
-      expect(mounted.hook.result.current.save.dataRef.current?.head).toMatchObject({ headRevisionId: 'r0', headPublicationId: 'p0' });
-      expect(mounted.hook.result.current.save.dataRef.current?.config.tracks?.map((track) => track.id)).toEqual(trackOrder);
+      expect(mounted.hook.result.current.save.localSaveState?.error?.details).not.toHaveProperty('head');
+      const refusal = await mounted.send.mock.results[0]!.value.catch((error: unknown) => error);
+      expect(refusal).toMatchObject({ status: 409, code: 'selection_changed' });
+      expect(refusal).not.toHaveProperty('receipt');
+      expect(mounted.hook.result.current.save.dataRef.current?.config.tracks?.map((track) => track.id))
+        .toEqual(['picture', 'overlay', 'audio']);
       expect(mounted.hook.result.current.save.dataRef.current?.config.app).toEqual(authoredConfig().app);
       expect(mounted.hook.result.current.save.dataRef.current?.config.clips?.[0]?.app)
         .toEqual({ opaque: { keep: null, false: false, zero: 0 } });
+
+      const commitCalls = mounted.transportCalls.filter((call) => call.path.endsWith('/commit'));
+      expect(commitCalls).toHaveLength(1);
+      const [wire] = commitCalls;
+      expect(wire.method).toBe('POST');
+      expect(wire.path).toBe(`/v1/projects/${scope.projectId}/timelines/${scope.timelineId}/commit`);
+      expect(wire.headers).toMatchObject({
+        Accept: 'application/json', Authorization: 'Bearer runtime-token',
+        'Content-Type': 'application/json', 'Idempotency-Key': expect.stringMatching(/^[0-9a-f-]{36}$/),
+      });
+      expect(wire.body).toMatchObject({ base_revision_id: 'r0', base_publication_id: 'p0', merge: 'atomic' });
 
       const [stored] = await createCommitOutbox().list(scope);
       expect(stored.intents).toHaveLength(1);
