@@ -21,6 +21,8 @@ import { loadTourLiveScene, TOUR_SCENE_SOURCE_FROM } from './tourSceneSource.ts'
 import { EDITOR_TOUR_MEDIA } from '../tourMedia.ts';
 import { TOUR_CLIP_IDS } from './tourStages.ts';
 
+vi.mock('./useTourMediaWarmup.ts', () => ({ useTourMediaWarmup: vi.fn() }));
+
 const fakeLiveScene = { kind: 'fake-live-scene' };
 const harness = vi.hoisted(() => ({
   warmups: [] as Array<{ sourceTime: number; onReady?: (info: unknown) => void }>,

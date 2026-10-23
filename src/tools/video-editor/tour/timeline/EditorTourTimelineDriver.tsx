@@ -13,6 +13,7 @@ import {
 } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { requestCenterTimelineClip } from '@/tools/video-editor/lib/timeline-viewport-events.ts';
 import { editorTourSelector, editorTourTrackSelector } from '@/tools/video-editor/tour/anchors.ts';
+import { useTourMediaWarmup } from './useTourMediaWarmup.ts';
 import { EDITOR_TOUR_MEDIA } from '../tourMedia.ts';
 import { loadTourLiveScene, TOUR_SCENE_SOURCE_FROM } from './tourSceneSource.ts';
 import { createEditorTourStagePatch, createEditorTourStageRemovalPatch, tourStageFocusClipId, tourTrackOrder, TOUR_ANCHORS, TOUR_CLIP_IDS } from './tourStages.ts';
@@ -86,6 +87,7 @@ function SceneWarmup({ liveScene, onWarm }: { liveScene: Record<string, unknown>
  * Reports `ready.timeline` per beat.
  */
 export function EditorTourTimelineDriver() {
+  useTourMediaWarmup();
   const runId = useEditorTour((state) => state.runId);
   const act = useEditorTour((state) => state.act);
   const beat = useEditorTour((state) => state.beat);
