@@ -1,0 +1,180 @@
+#!/bin/bash
+# make-runtime NAME AGENT_SHA [LOCK_SHA256] — host dispatcher only.
+# Build in private staging; never modify an existing runtime or toolchain.
+set -Eeuo pipefail
+
+O=${RUNTIME_ORCH_ROOT:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch}
+A=${RUNTIME_AGENT_CHECKOUT:-/home/user/work/agent}
+W=${RUNTIME_WORK_ROOT:-/home/user/work}
+NODE_BIN=${RUNTIME_NODE_BIN:-}
+NODE_VERSION=20.19.4
+NPM_VERSION=10.8.2
+# Authoritative hub/kit/bin/provision-agent-machine pins, not discovered over HTTP.
+NODE_SHA=7a488a09e2fc02fbd1bc4ae084bea8a589314f741c182fc02c5f3f07c79a29d4
+SUMS_SHA=f8537bd20c8fdc951a20a4278e380e03e58e0a1689eaaa5c170b221435f3a22e
+N=${1:-}; S=${2:-}; L=${3:-}
+[[ "$N" =~ ^agent-remotion-[0-9a-z][0-9a-z-]*$ ]] || { echo 'REFUSED: invalid immutable runtime name' >&2; exit 2; }
+[[ "$S" =~ ^[0-9a-f]{40}$ ]] || { echo 'REFUSED: exact 40-character Agent commit required' >&2; exit 2; }
+[[ -z "$L" || "$L" =~ ^[0-9a-f]{64}$ ]] || { echo 'REFUSED: invalid lock SHA-256' >&2; exit 2; }
+D=$W/runtimes/$N
+if [ -e "$D" ] || [ -L "$D" ]; then
+  echo "REFUSED: exists: $D (immutable; pick a fresh name)" >&2
+  exit 2
+fi
+
+missing=()
+for cmd in git tar xz sha256sum cut grep find mkdir chmod df awk sed date timeout curl python3 uname mktemp env bash cat; do
+  command -v "$cmd" >/dev/null 2>&1 || missing+=("command:$cmd")
+done
+for dir in "$W" "$W/runtimes" "$A" "$O/tests"; do
+  [ -d "$dir" ] || missing+=("directory:$dir")
+done
+for dir in "$W/runtimes" "$O/tests"; do
+  [ -w "$dir" ] || missing+=("writable:$dir")
+done
+[ -r "$O/tests/agent-remotion-0012.env" ] || missing+=("template:$O/tests/agent-remotion-0012.env")
+[ -r "$O/tests/suites.conf" ] && [ -w "$O/tests/suites.conf" ] || missing+=("read-write:$O/tests/suites.conf")
+if ! grep -q '^agent remotion-0012-nodes ' "$O/tests/suites.conf" 2>/dev/null; then
+  missing+=("suite-template:agent/remotion-0012-nodes")
+fi
+[ ! -e "$O/tests/$N.env" ] && [ ! -L "$O/tests/$N.env" ] || missing+=("existing-env:$N")
+if grep -q "^agent $N-nodes " "$O/tests/suites.conf" 2>/dev/null; then
+  missing+=("existing-suite:$N-nodes")
+fi
+[[ "$(uname -s 2>/dev/null || true)/$(uname -m 2>/dev/null || true)" = Linux/x86_64 ]] || missing+=("platform:requires-Linux/x86_64")
+python3 -c 'import ctypes; ctypes.CDLL(None, use_errno=True).renameat2' 2>/dev/null || missing+=("atomic-publish:libc.renameat2")
+git -C "$A" rev-parse --is-inside-work-tree >/dev/null 2>&1 || missing+=("agent-checkout:$A")
+git -C "$A" cat-file -e "$S^{commit}" 2>/dev/null || missing+=("agent-commit:$S")
+for file in package.json package-lock.json; do
+  git -C "$A" cat-file -e "$S:remotion/$file" 2>/dev/null || missing+=("agent-file:remotion/$file")
+done
+LOCK_SHA=$(git -C "$A" show "$S:remotion/package-lock.json" 2>/dev/null | sha256sum | cut -d' ' -f1) || LOCK_SHA=
+PACKAGE_SHA=$(git -C "$A" show "$S:remotion/package.json" 2>/dev/null | sha256sum | cut -d' ' -f1) || PACKAGE_SHA=
+[ -z "$L" ] || [ "$LOCK_SHA" = "$L" ] || missing+=("lock-sha256:expected=$L,actual=$LOCK_SHA")
+git -C "$A" show "$S:remotion/package.json" 2>/dev/null | python3 -c '
+import json,sys
+p=json.load(sys.stdin)
+assert p["engines"] == {"node":"=20.19.4", "npm":"=10.8.2"}, p.get("engines")
+' 2>/dev/null || missing+=("agent-engines:requires-exact-Node20.19.4/npm10.8.2")
+FREE=$(df -P -B1 "$W" 2>/dev/null | awk 'NR==2 {print $4}') || FREE=
+[[ "$FREE" =~ ^[0-9]+$ ]] && [ "$FREE" -ge 2147483648 ] || missing+=("disk:requires-2147483648-free-bytes,actual=${FREE:-unknown}")
+verify_node() {
+  [ -x "$1/node" ] && [ -x "$1/npm" ] &&
+    [ "$(timeout -k 2s 10s "$1/node" --version 2>/dev/null)" = "v$NODE_VERSION" ] &&
+    [ "$(PATH="$1:$PATH" timeout -k 2s 10s "$1/npm" --version 2>/dev/null)" = "$NPM_VERSION" ]
+}
+if [ -n "$NODE_BIN" ]; then
+  verify_node "$NODE_BIN" || missing+=("selected-toolchain:requires-Node$NODE_VERSION/npm$NPM_VERSION:$NODE_BIN")
+else
+  for candidate in "$W/toolchain/node-v$NODE_VERSION-linux-x64/bin" "/opt/node-v$NODE_VERSION-linux-x64/bin" "/opt/node$NODE_VERSION/bin"; do
+    if verify_node "$candidate"; then NODE_BIN=$candidate; break; fi
+  done
+fi
+if [ "${#missing[@]}" -ne 0 ]; then
+  printf 'PREFLIGHT FAILED name=%s agent=%s free_bytes=%s\n' "$N" "$S" "${FREE:-unknown}" >&2
+  printf 'missing_prerequisite=%s\n' "${missing[@]}" >&2
+  exit 2
+fi
+# Bound the entire host job, including child processes. The inherited marker is
+# only for this self-exec; callers use the unchanged three-argument API.
+if [ "${RUNTIME_BUILDER_BOUNDED:-}" != 1 ]; then
+  exec timeout --signal=TERM --kill-after=10s 840s env RUNTIME_BUILDER_BOUNDED=1 bash "$0" "$@"
+fi
+T=$(mktemp -d "$D.partial.XXXXXXXX")
+stage=staging
+fail() {
+  local rc=$?
+  trap - ERR TERM INT
+  printf 'status=failed\nstage=%s\nagent_sha=%s\nlock_sha256=%s\npartial=%s\n' "$stage" "$S" "$LOCK_SHA" "$T" > "$T/.provision-failure" 2>/dev/null || true
+  echo "FAILED stage=$stage; partial retained: $T" >&2
+  [ "$rc" -ne 0 ] || rc=1
+  exit "$rc"
+}
+trap fail ERR TERM INT
+download() {
+  timeout -k 5s 150s curl --fail --silent --show-error --location \
+    --proto '=https' --proto-redir '=https' --connect-timeout 10 --max-time 60 \
+    --retry 1 --retry-delay 2 --retry-max-time 125 --output "$2" "$1"
+}
+if [ -z "$NODE_BIN" ]; then
+  stage=node-download
+  mkdir "$T/.toolchain"
+  ARCHIVE=node-v$NODE_VERSION-linux-x64.tar.xz
+  BASE=https://nodejs.org/dist/v$NODE_VERSION
+  download "$BASE/SHASUMS256.txt" "$T/.toolchain/SHASUMS256.txt"
+  [ "$(sha256sum "$T/.toolchain/SHASUMS256.txt" | cut -d' ' -f1)" = "$SUMS_SHA" ]
+  grep -Fx "$NODE_SHA  $ARCHIVE" "$T/.toolchain/SHASUMS256.txt" >/dev/null
+  download "$BASE/$ARCHIVE" "$T/.toolchain/$ARCHIVE"
+  stage=node-checksum
+  [ "$(sha256sum "$T/.toolchain/$ARCHIVE" | cut -d' ' -f1)" = "$NODE_SHA" ]
+  stage=node-extract
+  tar -xJf "$T/.toolchain/$ARCHIVE" -C "$T/.toolchain" --no-same-owner
+  NODE_BIN=$T/.toolchain/node-v$NODE_VERSION-linux-x64/bin
+  [ "$(timeout -k 2s 10s "$NODE_BIN/node" --version)" = "v$NODE_VERSION" ]
+  # If an official distribution's bundled npm differs, use its supported CLI
+  # to install the exact release into this build's private prefix, never global.
+  if [ "$(PATH="$NODE_BIN:$PATH" timeout -k 2s 10s "$NODE_BIN/npm" --version)" != "$NPM_VERSION" ]; then
+    stage=npm-acquire
+    PATH="$NODE_BIN:$PATH" npm_config_cache="$T/.npm-cache" npm_config_engine_strict=true \
+      timeout -k 10s 120s "$NODE_BIN/npm" install --prefix "$T/.npm-exact" \
+      --registry=https://registry.npmjs.org --no-audit --no-fund --ignore-scripts \
+      --fetch-retries=1 --fetch-timeout=30000 "npm@$NPM_VERSION"
+    NPM_CLI=$T/.npm-exact/node_modules/npm/bin/npm-cli.js
+    NPM_BIN=$T/.npm-exact/node_modules/.bin
+  fi
+fi
+NPM_CLI=${NPM_CLI:-$NODE_BIN/../lib/node_modules/npm/bin/npm-cli.js}
+stage=exact-toolchain
+[ "$(timeout -k 2s 10s "$NODE_BIN/node" --version)" = "v$NODE_VERSION" ]
+[ "$(PATH="$NODE_BIN:$PATH" timeout -k 2s 10s "$NODE_BIN/node" "$NPM_CLI" --version)" = "$NPM_VERSION" ]
+stage=archive
+git -C "$A" archive "$S" remotion | tar -x -C "$T" --strip-components=1
+check_sources() {
+  [ "$(sha256sum "$T/package-lock.json" | cut -d' ' -f1)" = "$LOCK_SHA" ] &&
+    [ "$(sha256sum "$T/package.json" | cut -d' ' -f1)" = "$PACKAGE_SHA" ]
+}
+check_sources
+stage=npm-ci
+( cd "$T" && PATH="${NPM_BIN:-$NODE_BIN}:$NODE_BIN:$PATH" npm_config_cache="$T/.npm-cache" npm_config_engine_strict=true \
+  timeout -k 10s 600s "$NODE_BIN/node" "$NPM_CLI" ci --no-audit --no-fund --loglevel=error \
+  --fetch-retries=1 --fetch-timeout=30000 )
+stage=verify-installed
+check_sources
+( cd "$T" && "$NODE_BIN/node" -e '
+const fs = require("fs");
+const lock = JSON.parse(fs.readFileSync("package-lock.json"));
+for (const name of ["remotion", "@banodoco/timeline-composition"]) {
+  const key = "node_modules/" + name;
+  const actual = JSON.parse(fs.readFileSync(key + "/package.json")).version;
+  if (!lock.packages[key] || actual !== lock.packages[key].version) throw Error(name + " differs from lock");
+  console.log(name + "=" + actual);
+}
+' ) > "$T/.astrid-installed-module-origins"
+printf '%s\n' "$S" > "$T/.astrid-agent-source-commit"
+printf '%s\n' "$LOCK_SHA" > "$T/.astrid-package-lock-sha256"
+printf 'v%s\n' "$NODE_VERSION" > "$T/.astrid-node-version"
+printf '%s\n' "$NPM_VERSION" > "$T/.astrid-npm-version"
+stage=prepare-registration
+sed "s#agent-remotion-0012#$N#g" "$O/tests/agent-remotion-0012.env" > "$T/.runtime-env"
+grep '^agent remotion-0012-nodes ' "$O/tests/suites.conf" | sed "s#remotion-0012-nodes#$N-nodes#; s#agent-remotion-0012#$N#g" > "$T/.runtime-suite"
+stage=read-only
+find "$T" -type f -exec chmod a-w {} +
+stage=immutable-publish
+# Linux RENAME_NOREPLACE is atomic and refuses even an empty raced destination.
+python3 - "$T" "$D" <<'PY'
+import ctypes, os, sys
+libc = ctypes.CDLL(None, use_errno=True)
+if libc.renameat2(-100, os.fsencode(sys.argv[1]), -100, os.fsencode(sys.argv[2]), 1):
+    error = ctypes.get_errno()
+    raise OSError(error, os.strerror(error), sys.argv[2])
+PY
+trap - ERR TERM INT
+# Registration never overwrites an existing env. A post-publish registration
+# failure is reported explicitly; the immutable runtime is retained.
+if ! ( set -o noclobber; cat "$D/.runtime-env" > "$O/tests/$N.env" ); then
+  echo "FAILED registration; immutable runtime retained: $D" >&2; exit 1
+fi
+if ! cat "$D/.runtime-suite" >> "$O/tests/suites.conf"; then
+  echo "FAILED suite registration; immutable runtime retained: $D" >&2; exit 1
+fi
+echo "created $D from agent $S (lock $LOCK_SHA, node v$NODE_VERSION/npm $NPM_VERSION); env tests/$N.env; suite $N-nodes"
