@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 import subprocess
 import tarfile
 from copy import deepcopy
@@ -314,5 +313,15 @@ def test_render_pin_gives_element_clips_the_clip_look():
     # 0.0.7 added the ClipLook on element clips (composition 6bd784d); the intended change is already in this tree's pin.
     package = json.loads((REPO / 'remotion/package.json').read_text(encoding='utf-8'))
     pin = package['dependencies']['@banodoco/timeline-composition']
-    version = tuple(int(part) for part in re.search(r'(?:tags/v|timeline-composition-)(\d+)\.(\d+)\.(\d+)(?:\.tar\.gz|\.tgz)$', pin).groups())
+    lock = json.loads((REPO / 'remotion/package-lock.json').read_text(encoding='utf-8'))
+    adopted = lock['packages']['node_modules/@banodoco/timeline-composition']
+    assert adopted['resolved'] == pin
+    artifact = REPO / 'remotion' / adopted['resolved'].removeprefix('file:')
+    with tarfile.open(artifact) as archive:
+        manifest_file = archive.extractfile('package/package.json')
+        assert manifest_file is not None
+        manifest = json.load(manifest_file)
+    assert manifest['name'] == '@banodoco/timeline-composition'
+    assert manifest['version'] == adopted['version']
+    version = tuple(int(part) for part in manifest['version'].split('.'))
     assert version >= (0, 0, 7)
