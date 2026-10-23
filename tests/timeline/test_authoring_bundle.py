@@ -280,6 +280,44 @@ def test_authored_meta_is_preserved_without_phantom_media_dependencies():
     }
 
 
+def test_component_params_meta_media_is_discovered_but_authored_meta_is_opaque():
+    parent, shots, timelines = _closure(shared=False)
+    authored_meta = {"org.example.notes": {"media_id": PHANTOM, "note": "keep"}}
+    for payload in (parent["payload"], parent["payload"]["config"], timelines[0]["payload"]):
+        payload["meta"] = copy.deepcopy(authored_meta)
+        for collection in ("tracks", "clips", "occurrences"):
+            for row in payload.get(collection, []):
+                row["meta"] = copy.deepcopy(authored_meta)
+        for asset in payload.get("registry", {}).get("assets", {}).values():
+            asset["meta"] = copy.deepcopy(authored_meta)
+    shots[0]["payload"]["meta"] = copy.deepcopy(authored_meta)
+    for revision in (parent, *shots, *timelines):
+        revision["content_digest"] = _digest(revision["payload"])
+    original_closure = copy.deepcopy((parent, shots, timelines))
+
+    candidate = open_authoring_bundle(
+        parent, shot_revisions=shots, internal_timeline_revisions=timelines
+    )
+    shot = next(iter(candidate["shots"].values()))
+    shot["internal_timeline"]["clips"][0]["params"] = {"meta": {"media_id": NEW}}
+    original_candidate = copy.deepcopy(candidate)
+    publication = compile_authoring_candidate(candidate).publication
+    inventory = authoring_media_inventory(candidate)
+
+    assert {row["media_id"] for row in publication["dependency_manifest"]["media"]} == {
+        OLD, AUDIO, NEW,
+    }
+    assert {row["media_id"] for row in inventory["media"]} == {OLD, AUDIO, NEW}
+    assert publication["parent_composition"] == {
+        **candidate["parent"], "occurrences": publication["parent_composition"]["occurrences"],
+    }
+    assert publication["parent_composition"]["occurrences"][0]["meta"] == authored_meta
+    assert publication["shot_revisions"][0]["payload"]["meta"] == authored_meta
+    assert publication["internal_timeline_revisions"][0]["payload"] == shot["internal_timeline"]
+    assert candidate == original_candidate
+    assert (parent, shots, timelines) == original_closure
+
+
 def test_authoring_open_and_compile_validate_parent_and_shot_payload_meta():
     parent, shots, timelines = _closure(shared=False)
     parent["payload"]["meta"] = {"org.example.notes": None}

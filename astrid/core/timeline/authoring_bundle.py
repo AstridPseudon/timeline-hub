@@ -807,12 +807,39 @@ def _internal_media_set(
     return result
 
 
+def _without_meta(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {key: child for key, child in value.items() if key != "meta"}
+    return value
+
+
+def _timeline_media_view(value: Any, *, include_parent_locations: bool = False) -> Any:
+    """Hide only authored meta seams in a discovery copy, leaving params intact."""
+    if not isinstance(value, Mapping):
+        return value
+    result = _without_meta(value)
+    for collection in ("tracks", "clips"):
+        rows = value.get(collection)
+        if isinstance(rows, list):
+            result[collection] = [_without_meta(row) for row in rows]
+    registry = value.get("registry")
+    if isinstance(registry, Mapping) and isinstance(registry.get("assets"), Mapping):
+        result["registry"] = {
+            **registry,
+            "assets": {key: _without_meta(asset) for key, asset in registry["assets"].items()},
+        }
+    if include_parent_locations:
+        if isinstance(value.get("config"), Mapping):
+            result["config"] = _timeline_media_view(value["config"])
+        if isinstance(value.get("occurrences"), list):
+            result["occurrences"] = [_without_meta(row) for row in value["occurrences"]]
+    return result
+
+
 def _collect_media(value: Any) -> set[str]:
     result: set[str] = set()
     if isinstance(value, Mapping):
         for key, child in value.items():
-            if key == "meta":
-                continue
             if (
                 key in {"media_id", "object_id"}
                 and isinstance(child, str)
@@ -1139,18 +1166,18 @@ def compile_authoring_candidate(candidate: Mapping[str, Any]) -> CandidateCompil
         "authoring-parent-revision", project_id, timeline_id, expected_head, final_parent
     )
     media = sorted(
-        _collect_media(final_parent)
+        _collect_media(_timeline_media_view(final_parent, include_parent_locations=True))
         | {
             digest
             for shot_id, row in shots.items()
             if shot_id in referenced_shot_ids
-            for digest in _collect_media(row.get("payload"))
+            for digest in _collect_media(_without_meta(row.get("payload")))
         }
         | {
             digest
             for shot_id, row in shots.items()
             if shot_id in referenced_shot_ids
-            for digest in _collect_media(row.get("internal_timeline"))
+            for digest in _collect_media(_timeline_media_view(row.get("internal_timeline")))
         }
     )
     shot_manifest = [
@@ -1373,8 +1400,6 @@ def authoring_media_inventory(candidate: Mapping[str, Any]) -> dict[str, Any]:
         if isinstance(value, Mapping):
             for key, child in value.items():
                 child_path = f"{path}.{key}" if path else str(key)
-                if key == "meta":
-                    continue
                 if key == "registry":
                     continue
                 if key in {"media_id", "object_id"} and isinstance(child, str):
@@ -1395,20 +1420,26 @@ def authoring_media_inventory(candidate: Mapping[str, Any]) -> dict[str, Any]:
                             unresolved.append({"path": child_path, "selector": child, "error": str(exc)})
                 else:
                     walk(child, child_path, registry)
+        elif isinstance(value, list):
+            for index, child in enumerate(value):
+                walk(child, f"{path}[{index}]", registry)
 
     parent = root.get("parent", {})
     parent_registry = parent.get("registry", {}) if isinstance(parent, Mapping) else {}
-    walk(parent, "parent", parent_registry if isinstance(parent_registry, Mapping) else None)
+    walk(
+        _timeline_media_view(parent, include_parent_locations=True), "parent",
+        parent_registry if isinstance(parent_registry, Mapping) else None,
+    )
     for index, placement in enumerate(_sequence(root.get("placements", []), "candidate.placements")):
-        walk(placement, f"placements[{index}]")
+        walk(_without_meta(placement), f"placements[{index}]")
     for shot_id, shot in _mapping(root.get("shots"), "candidate.shots").items():
         if not isinstance(shot, Mapping):
             continue
         payload = shot.get("payload", {})
-        walk(payload, f"shots[{shot_id!r}].payload")
+        walk(_without_meta(payload), f"shots[{shot_id!r}].payload")
         internal = shot.get("internal_timeline", {})
         registry = internal.get("registry", {}) if isinstance(internal, Mapping) else {}
-        walk(internal, f"shots[{shot_id!r}].internal_timeline", registry if isinstance(registry, Mapping) else None)
+        walk(_timeline_media_view(internal), f"shots[{shot_id!r}].internal_timeline", registry if isinstance(registry, Mapping) else None)
         assets = registry.get("assets", {}) if isinstance(registry, Mapping) else {}
         if isinstance(assets, Mapping):
             for asset_key, metadata in assets.items():
