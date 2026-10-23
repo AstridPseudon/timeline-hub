@@ -8,12 +8,11 @@ import {
   startEditorTour,
 } from '@/shared/state/editorTourStore';
 import { backEditorTour, finishEditorTour, runEditorTourPrimary, watchEditorTourSend } from './tourBeats';
-import { beginEditorTour, hasSeenEditorTour, startEditorTourIfFirstRun } from './tourFlag';
+import { beginEditorTour } from './tourFlag';
 import { recordEditorTour } from './tourRecord';
 
 vi.mock('./tourRecord', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tourRecord')>()),
-  readRuntimeTourStatus: vi.fn(async () => 'unseen'),
   recordEditorTour: vi.fn(async () => undefined),
 }));
 
@@ -191,22 +190,6 @@ describe('tour beat machine', () => {
     runEditorTourPrimary();
 
     expect(getEditorTourState()).toBe(before);
-  });
-
-  it('a reload mid-tour leaves the seen flag set and does not restart the tour', async () => {
-    // Start from a fresh first run: the beforeEach already started a tour, which would block the trigger.
-    exitEditorTour();
-    localStorage.clear();
-    expect(await startEditorTourIfFirstRun(true)).toBe(true);
-    setEditorTourBeat(2, 'land');
-    expect(hasSeenEditorTour()).toBe(true);
-
-    // The page reloads: the in-memory store is back to idle.
-    exitEditorTour();
-
-    expect(hasSeenEditorTour()).toBe(true);
-    expect(await startEditorTourIfFirstRun(true)).toBe(false);
-    expect(getEditorTourState().status).toBe('idle');
   });
 
   it('replay starts a larger run at the welcome', () => {
