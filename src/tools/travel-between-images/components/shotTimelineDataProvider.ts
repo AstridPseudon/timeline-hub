@@ -689,7 +689,7 @@ async function projectMediaSelection(
   if (typeof generationId !== 'string' || typeof variantId !== 'string') {
     throw new Error('Shared popup media requires the Runtime selection identity for the chosen asset');
   }
-  const reader = provider.getProjectMediaSelection;
+  const reader = provider.getProjectMediaSelection?.bind(provider);
   if (!reader) throw new Error('Shared popup media requires the existing Runtime selection reader');
   const query = { asset, generation_id: generationId, variant_id: variantId };
   const selected = reader.length >= 2

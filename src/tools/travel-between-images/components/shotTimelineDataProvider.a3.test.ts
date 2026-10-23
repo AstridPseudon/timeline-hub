@@ -4,6 +4,8 @@ import { createFakeIndexedDB } from 'fake-indexeddb';
 import fixture from '@/tools/video-editor/data/shotComposition.fixture.json';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import { ApiError } from '@/integrations/runtime/generated.ts';
+import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
+import { json, runtimeFixture } from '@/test/fakeWorkspaceRuntime.ts';
 import { createShotCompositionAdapter } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import { projectCanonicalComposition } from '@/tools/video-editor/data/shotCompositionProjection.ts';
 import type { DataProvider, TimelineCommandBasis, TimelineCommitResult } from '@/tools/video-editor/data/DataProvider.ts';
@@ -95,8 +97,8 @@ function harness(before = canonicalDocument()) {
       getProjectMediaSelection?: (query: MediaSelectionQuery) => Promise<MediaSelection>;
     };
   const published = vi.fn();
-  const mount = () => createShotTimelineDataProvider(config, composition, occurrence.occurrenceId,
-    adapter, published, undefined, 0, undefined, transport);
+  const mount = (timelineDataProvider: DataProvider = transport) => createShotTimelineDataProvider(config, composition, occurrence.occurrenceId,
+    adapter, published, undefined, 0, undefined, timelineDataProvider);
   const records = () => outboxes.list(scope);
   const add = () => {
     const { app: _app, ...base } = config.clips[0];
@@ -132,6 +134,66 @@ function savedDocument(record: OutboxRecord): CanonicalDocument {
 }
 
 describe('shot popup A3 save ingress', () => {
+  it.each(['add', 'swap'] as const)('preserves the real Runtime provider receiver for shared media %s', async (kind) => {
+    const before = canonicalDocument();
+    const occurrences = before.parent_revision.payload.occurrences as Array<Record<string, unknown>>;
+    occurrences.push({ ...occurrences[0], occurrence_id: 'occ-sibling' });
+    const h = harness(before);
+    const originalAsset = h.config.clips[0].asset;
+    const replacementAsset = 'popup-shared-replacement';
+    h.config.registry[originalAsset] = { ...h.config.registry[originalAsset], generationId: 'generation-old', variantId: 'variant-old' };
+    h.config.registry[replacementAsset] = { file: replacementAsset, type: 'image', generationId: 'generation-new', variantId: 'variant-new' };
+    const runtime = runtimeFixture({ projectId: scope.projectId, timelineId: scope.timelineId });
+    const selections: MediaSelectionQuery[] = [];
+    const runtimeProvider = new RuntimeDataProvider({
+      projectId: scope.projectId,
+      transport: async (method, path, headers, body) => {
+        const url = new URL(path, 'http://runtime.test');
+        if (method === 'GET' && url.pathname === `/v1/projects/${scope.projectId}/media-selection`) {
+          const query = Object.fromEntries(url.searchParams) as MediaSelectionQuery;
+          selections.push(query);
+          return { status: 200, headers: {}, body: json({ ...query,
+            object_id: `sha256:${'1'.repeat(64)}`, catalog_digest: `sha256:${'2'.repeat(64)}` }) };
+        }
+        return runtime.transport(method, path, headers, body);
+      },
+    });
+    // Keep the canonical basis/replies controlled; leave the media method and
+    // its authenticated Runtime client intact so an unbound call fails here.
+    vi.spyOn(runtimeProvider, 'loadTimelineCommandBasis').mockImplementation(h.load);
+    vi.spyOn(runtimeProvider, 'getRecoverableIdentity').mockResolvedValue(scope);
+    vi.spyOn(runtimeProvider, 'commitTimeline').mockImplementation(h.send);
+    let captured!: OutboxRecord;
+    h.send.mockImplementation(async (request, key) => {
+      [captured] = await h.records();
+      expect(JSON.parse(captured.pending!.request.body)).toEqual(request);
+      expect(captured.pending!.request.key).toBe(key);
+      return JSON.parse(JSON.stringify(h.reply(request, key, savedDocument(captured))));
+    });
+    const provider = h.mount(runtimeProvider);
+    const next = kind === 'add' ? h.add()
+      : { ...h.config, clips: h.config.clips.map((clip, index) => index === 0
+        ? { ...clip, asset: replacementAsset } : clip) };
+    try {
+      await expect(provider.saveTimeline('popup-timeline', next, 1)).resolves.toBe(2);
+      expect(selections).toContainEqual({ asset: kind === 'add' ? originalAsset : replacementAsset,
+        generation_id: kind === 'add' ? 'generation-old' : 'generation-new',
+        variant_id: kind === 'add' ? 'variant-old' : 'variant-new' });
+      expect(runtime.requests.map(({ path }) => path)).toContain('/v1/handshake');
+      expect(h.send).toHaveBeenCalledTimes(1);
+      const [request] = h.send.mock.calls[0];
+      expect(request.commands.map(({ op }) => op)).toEqual([
+        'occurrence.fork', kind === 'add' ? 'occurrence.add-media' : 'occurrence.swap-media',
+      ]);
+      expect(request.commands[0].select).toBe('occurrence:occ-3');
+      expect(captured.intents[0].payload).toMatchObject({ commands: request.commands });
+      expect(provider.getTimelineDraftRecoveryMetadata()).toMatchObject({ baseHeadRevisionId: 'rev-a3-accepted' });
+      expect(h.oldPublish).not.toHaveBeenCalled();
+    } finally {
+      await provider.dispose();
+    }
+  });
+
   it.each(['add', 'swap'] as const)('forks a shared occurrence before the existing media %s command in one durable request', async (kind) => {
     const before = canonicalDocument();
     const parent = before.parent_revision.payload;
