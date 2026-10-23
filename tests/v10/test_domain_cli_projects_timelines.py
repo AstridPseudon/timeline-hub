@@ -1391,7 +1391,9 @@ def test_timeline_editing_guidance_consumes_its_json(
         monkeypatch.setattr(cli, "_edit_checkout", lambda parsed: Checkout.load(path))
         monkeypatch.setattr("astrid.packs.timeline.cli_sweep.auto_sweep_after_edit", lambda *a, **kw: 0)
         args = (["--file", str(path)] if mode == "file" else [timeline_ref, "--project", project_ref])
-        parsed = cli.build_parser(None).parse_args(["edit", *args, "--clip", "inside", "--set", "x=90"])
+        # --set uses canvas pixels; am-sprite stores x on its six-pixel grid.
+        # Match the checkout branch's stored x=90 with 540 canvas pixels.
+        parsed = cli.build_parser(None).parse_args(["edit", *args, "--clip", "inside", "--set", "x=540"])
         assert parsed.handler(parsed) == 0
         output = capsys.readouterr().out
         lines = output.splitlines()
