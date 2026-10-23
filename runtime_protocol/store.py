@@ -664,6 +664,7 @@ class RealmStore:
         store.conn = None
         store._admission_active = False
         store._last_idempotency_prune = time.monotonic()
+        store._idempotency_prune_clocks = {None: store._last_idempotency_prune}
         store.admission_timeout = REALM_ADMISSION_TIMEOUT_SECONDS
         parent_fd = -1
         published = False
@@ -767,6 +768,7 @@ class RealmStore:
         self.conn = None
         self._admission_active = False
         self._last_idempotency_prune = time.monotonic()
+        self._idempotency_prune_clocks = {None: self._last_idempotency_prune}
         try:
             # Serialize the complete admission transition without creating a
             # persistent marker in the realm. This closes the gap between
@@ -868,24 +870,34 @@ class RealmStore:
         # mutation while preserving the single commit boundary.
         if self.conn.in_transaction:
             savepoint = f"runtime_nested_{id(self)}_{threading.get_ident()}"
+            pending = getattr(self, "_idempotency_prune_pending", None)
+            previous = pending.copy() if pending is not None else {}
             self.conn.execute(f"SAVEPOINT {savepoint}")
             try:
                 yield
-            except Exception:
+                self.conn.execute(f"RELEASE SAVEPOINT {savepoint}")
+            except BaseException:
+                if pending is not None:
+                    pending.clear()
+                    pending.update(previous)
                 self.conn.execute(f"ROLLBACK TO SAVEPOINT {savepoint}")
                 self.conn.execute(f"RELEASE SAVEPOINT {savepoint}")
                 raise
-            else:
-                self.conn.execute(f"RELEASE SAVEPOINT {savepoint}")
             return
         self.conn.execute("BEGIN IMMEDIATE")
+        self._idempotency_prune_pending = {}
         try:
             yield
-        except Exception:
+            self.conn.commit()
+        except BaseException:
             self.conn.rollback()
             raise
         else:
-            self.conn.commit()
+            if self._idempotency_prune_pending:
+                self._idempotency_prune_clocks.update(self._idempotency_prune_pending)
+                self._last_idempotency_prune = max(self._idempotency_prune_pending.values())
+        finally:
+            self._idempotency_prune_pending = None
 
     def _acquire_owner(self):
         if not self.root.exists() or not self.root.is_dir() or self.root.is_symlink():
@@ -3406,7 +3418,15 @@ class RealmStore:
         # their retry horizon. SQLite reuses freed overflow pages on later
         # writes; offline compaction returns those pages to the filesystem.
         clock = time.monotonic()
-        if clock - getattr(self, "_last_idempotency_prune", 0) >= 15 * 60:
+        scope = project_id if command_kind == "timeline.commit" and project_id != "unscoped" else None
+        clocks = self._idempotency_prune_clocks
+        pending = getattr(self, "_idempotency_prune_pending", None)
+        # A global sweep covers every owner; one owner's sweep covers only it.
+        last_prune = min(self._last_idempotency_prune, max(clocks.get(scope, 0), clocks[None]))
+        if pending:
+            last_prune = max(last_prune, pending.get(scope, 0), pending.get(None, 0))
+        prune_complete = False
+        if clock - last_prune >= 15 * 60:
             cutoff = (datetime.now(timezone.utc) - timedelta(seconds=IDEMPOTENCY_RESULT_WINDOW_SECONDS)).isoformat(timespec="milliseconds")
             ownership_sql, ownership_params = (
                 _scoped_expirable_result_sql(project_id)
@@ -3427,8 +3447,7 @@ class RealmStore:
                       if old["command_kind"] == "parent_composition.publish"
                       else expired_command_result(old["result_json"])), old["rowid"]),
                 )
-            if len(rows) < 100:
-                self._last_idempotency_prune = clock
+            prune_complete = len(rows) < 100
         project_seq = self._allocate_project_seq(project_id)
         txn_id = "txn-" + new_id()
         timestamp = created_at or now()
@@ -3444,6 +3463,14 @@ class RealmStore:
                 canonical_json([str(event_id) for event_id in event_ids]),
             ),
         )
+        if prune_complete:
+            # A savepoint release is not a commit. Publish maintenance clocks
+            # only with the outer transaction, just like the compacted bodies.
+            if pending is not None:
+                pending[scope] = clock
+            elif self.conn is not None and not self.conn.in_transaction:
+                clocks[scope] = clock
+                self._last_idempotency_prune = clock
         return txn_id
 
     @staticmethod
