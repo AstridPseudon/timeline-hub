@@ -1563,11 +1563,6 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
     accepted = images(prepared["canonical_document"])
     touched = set()
     manifest = copy.deepcopy(source["dependency_manifest"])
-    if records["merge_mode"] == "atomic":
-        for record in records["commands"]:
-            for capture in [*record["writes"], *record["reads"], *record["derived_writes"]]:
-                touched.add(native_site(boundary, capture["ref"], capture["path"])[0])
-            touched.update(binding["physical_ref"] for binding in record["bindings"] if "physical_ref" in binding)
     for step in records["steps"]:
         command_inputs = {step["command_ordinals"][0]: boundary}
         input_manifest = copy.deepcopy(manifest)
@@ -1600,6 +1595,13 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
                 command_inputs[ordinal], records["commands"][ordinal], records["commands"][next_ordinal],
                 accepted=accepted, identity_scope=(source["project_id"], source["timeline_id"]),
                 manifest=command_manifests[ordinal])
+        if records["merge_mode"] == "atomic":
+            for ordinal in step["command_ordinals"]:
+                record = records["commands"][ordinal]
+                command_boundary = command_inputs[ordinal]
+                for capture in [*record["writes"], *record["reads"], *record["derived_writes"]]:
+                    touched.add(native_site(command_boundary, capture["ref"], capture["path"])[0])
+                touched.update(binding["physical_ref"] for binding in record["bindings"] if "physical_ref" in binding)
         validate_step(request, records, step, boundary, batch_reads, continuations, command_inputs)
         for ref in touched:
             require(covers(step["dependencies"], {"kind": "scope", "ref": ref, "path": []}),

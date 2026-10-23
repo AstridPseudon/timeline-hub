@@ -962,6 +962,71 @@ def test_created_child_public_acceptance_and_strict_refusals(created_child_publi
 
 
 @pytest.mark.integration
+@pytest.mark.parametrize(("merge_mode", "separate_steps"), [
+    ("fields", False), ("fields", True), ("atomic", False), ("atomic", True),
+])
+def test_created_child_public_sequential_birth_aliases_accept_fields_and_atomic(
+        created_child_public, merge_mode, separate_steps):
+    runtime, project, _source, submitted, _held, document, publish = created_child_public
+    submitted = copy.deepcopy(submitted)
+    submitted["merge"] = merge_mode
+    if separate_steps:
+        template = submitted["steps"][0]
+        submitted["steps"] = [
+            {**template, "id": f"child-{ordinal}", "command_ordinals": [ordinal], "patch": [], "reads": []}
+            for ordinal in range(len(submitted["commands"]))
+        ]
+
+    result = publish(submitted, "atomic-child")
+
+    assert result["data"]["status"] == "accepted"
+    assert document() == result["data"]["canonical_document"]
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("separate_steps", [False, True])
+@pytest.mark.parametrize("mutation", ["foreign-source", "ambiguous-birth"])
+def test_created_child_public_atomic_keeps_birth_tamper_refusals(
+        created_child_public, monkeypatch, separate_steps, mutation):
+    from runtime_protocol.timeline_commit_port import RequestCommitPort
+
+    runtime, project, source, submitted, _held, document, publish = created_child_public
+    submitted = copy.deepcopy(submitted)
+    submitted["merge"] = "atomic"
+    if separate_steps:
+        template = submitted["steps"][0]
+        submitted["steps"] = [
+            {**template, "id": f"child-{ordinal}", "command_ordinals": [ordinal], "patch": [], "reads": []}
+            for ordinal in range(len(submitted["commands"]))
+        ]
+    before_db = tuple(runtime.store.conn.iterdump())
+    before_history = runtime.list_timeline_commits(project, "film", authorize=lambda: None)
+    accept = RequestCommitPort.accept
+
+    def checked_accept(port, prepared):
+        value = copy.deepcopy(prepared)
+        records = value["records"]["commands"]
+        if mutation == "foreign-source":
+            media = next(binding for binding in records[2]["bindings"] if binding["key"] == "media.track")
+            media["ref"] = "occurrence:foreign/track:picture"
+        else:
+            shot = copy.deepcopy(value["canonical_document"]["shot_revisions"][0])
+            shot["revision_id"] = "ambiguous-shot"
+            value["canonical_document"]["shot_revisions"].append(shot)
+        validate_commit_value(value, "PreparedCommit")
+        return accept(port, value)
+
+    monkeypatch.setattr(RequestCommitPort, "accept", checked_accept)
+    with pytest.raises(RuntimeErrorBase) as error:
+        publish(submitted, f"atomic-child-{mutation}-{separate_steps}")
+    expected_reason = "identity_collision" if mutation == "ambiguous-birth" else "invalid_records"
+    assert error.value.details is not None and error.value.details["reason"] == expected_reason
+    assert tuple(runtime.store.conn.iterdump()) == before_db
+    assert runtime.list_timeline_commits(project, "film", authorize=lambda: None) == before_history
+    assert document() == source
+
+
+@pytest.mark.integration
 @pytest.mark.parametrize("created_child_public", [True], indirect=True)
 def test_created_child_promotion_keeps_prior_parent_media_and_mirror_writes(created_child_public):
     runtime, project, _source, submitted, held, document, publish = created_child_public
