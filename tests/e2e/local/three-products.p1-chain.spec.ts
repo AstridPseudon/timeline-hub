@@ -5,7 +5,7 @@ import type { CommitRequest } from '../../../src/integrations/runtime/timeline-c
 import { APP_ENTRY_ROUTE, commandOutboxes, expectConnected, firstTrackName, test as appTest } from './support/app.ts';
 import { ASTRID_PYTHON, AstridCli } from './support/astrid.ts';
 import { harnessUnavailableReason, type DirectHarness } from './support/harness.ts';
-import { logDiagnostic, redactDiagnosticText, redactDiagnosticValue } from './p1-diagnostic-safety.ts';
+import { logDiagnostic, logPriorityDiagnostic, redactDiagnosticText, redactDiagnosticValue } from './p1-diagnostic-safety.ts';
 
 const CEILING = { timeout: 90_000 };
 const COMMITS = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
@@ -630,9 +630,11 @@ async function captureSecondCaseFailureDiagnostics({
 }) {
   try {
     let outboxes: unknown = null;
+    let outboxRecords: any[] | null = null;
     let outboxReadFailed = false;
     try {
-      outboxes = summarizeFailureOutboxes(await commandOutboxes(page, seed.timelineId));
+      outboxRecords = await commandOutboxes(page, seed.timelineId);
+      outboxes = summarizeFailureOutboxes(outboxRecords);
     } catch {
       outboxReadFailed = true;
     }
@@ -669,6 +671,63 @@ async function captureSecondCaseFailureDiagnostics({
       reply: redactDiagnosticValue(post.response),
       replyHead: diagnosticHead(post.response),
     }));
+    const basis = traffic.posts.slice(0, DIAGNOSTIC_LIMIT).map((post, index) => ({
+      index,
+      key: post.key,
+      baseRevisionId: (post.body as any).base_revision_id ?? null,
+      basePublicationId: (post.body as any).base_publication_id ?? null,
+      merge: (post.body as any).merge ?? null,
+      reads: redactDiagnosticValue((post.body as any).reads),
+    }));
+    const priorityBasis = traffic.posts.slice(0, DIAGNOSTIC_LIMIT).map((post, index) => ({
+      index,
+      key: post.key,
+      baseRevisionId: (post.body as any).base_revision_id ?? null,
+      basePublicationId: (post.body as any).base_publication_id ?? null,
+      merge: (post.body as any).merge ?? null,
+      reads: (post.body as any).reads,
+    }));
+    const priorityDisplayedHead = {
+      providerProjectId,
+      providerTimelineId,
+      commitReplies: commitTraffic.map(({ index, replyHead }) => ({ index, head: replyHead })),
+      readonlyReplies: readonlyTraffic.map(({ route, status, displayedHead: head }) => ({ route, status, head })),
+      runtimeHistoryHead: diagnosticHead(runtimeHistory?.head),
+      historyReadFailed,
+    };
+    const ui = {
+      connectionState: diagnosticConnectionState(connectionState ?? panelState),
+      runtimePanelVisible: await visibleDiagnostic(runtimePanel),
+      recoveryVisible: await visibleDiagnostic(recovery),
+      recoveryMessage: await diagnosticVisibleText(recovery),
+      timelineErrorVisible: await visibleDiagnostic(timelineError),
+      timelineErrorMessage: await diagnosticVisibleText(timelineError),
+      alertCount: await page.locator('[role="alert"]:visible').count().catch(() => 0),
+    };
+    const errors = {
+      page: signals.pageErrors.slice(0, 4),
+      console: signals.consoleErrors.slice(0, 4),
+      requestFailures: signals.requestFailures.slice(0, 4),
+    };
+    // Keep causal state ahead of the verbose readonly packet. The latter can contain a
+    // large response and is intentionally retained below as failure evidence.
+    logPriorityDiagnostic('P1 second-case priority diagnostics', {
+      case: {
+        projectId: harness.seed.projectId,
+        projectSlug: seed.projectSlug,
+        timelineId: seed.timelineId,
+        sourceId: seed.sourceId,
+        originalClipId: originalClip.id,
+        rightId,
+        expectedPostCount: 2,
+        observedPostCount: traffic.posts.length,
+      },
+      basis: priorityBasis,
+      displayedHead: priorityDisplayedHead,
+      outbox: { readFailed: outboxReadFailed, summary: outboxRecords === null ? null : summarizeOutboxes(outboxRecords) },
+      ui,
+      errors,
+    });
     logDiagnostic('P1 second-case failure diagnostics', {
       case: {
         title: 'P1 split -> trim new clip: a real Agent move refuses the stale trim and the App rolls back with a message',
@@ -689,14 +748,7 @@ async function captureSecondCaseFailureDiagnostics({
         sourceAsset: originalClip.asset,
       },
       traffic: { commits: commitTraffic, readonly: readonlyTraffic },
-      basis: traffic.posts.slice(0, DIAGNOSTIC_LIMIT).map((post, index) => ({
-        index,
-        key: post.key,
-        baseRevisionId: (post.body as any).base_revision_id ?? null,
-        basePublicationId: (post.body as any).base_publication_id ?? null,
-        merge: (post.body as any).merge ?? null,
-        reads: redactDiagnosticValue((post.body as any).reads),
-      })),
+      basis,
       displayedHead: {
         providerProjectId,
         providerTimelineId,
