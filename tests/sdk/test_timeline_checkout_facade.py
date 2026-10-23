@@ -32,7 +32,7 @@ PRE_SPLIT_MODULE_NAMES = ['BASE_KEYS', 'SHOT_BASE_PREFIX', 'DERIVED_PREFIX', 'ED
  '_stage_step', '_write_step', '_discard_half_written', '_read_step', '_redo_dir', '_journaled',
  'LOCK_WAIT_ENV', 'LOCK_WAIT_SECONDS', '_lock_wait', '_lock_holder', '_file_lock', '_acquire_lock',
  '_is_draft', '_history_dir', 'draft_path', 'resolve_ids', 'find_draft', 'current_draft', 'set_current_draft',
- 'fetch_bundle', '_units', 'three_way', 'publish_bundle', 'import_media', 'mo', 'intent', 'bundle_fps',
+ 'fetch_bundle', '_units', 'import_media', 'mo', 'intent', 'bundle_fps',
  'clip_duration', 'occurrences_from_bundle', 'picture_cuts']
 
 # W2: _music_seam is gone (the bed is cut film-wide by _cut_beds, keep_end); it was private, with no caller left.

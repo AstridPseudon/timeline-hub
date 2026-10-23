@@ -58,6 +58,8 @@ def operations():
         placement_move,
         placement_unplace,
     )
+    from .native_restructure import PARAMETERS as RESTRUCTURE_PARAMETERS
+    from .native_restructure import restructure
     from .native_shot_pool_commands import POOL_INTENT, shot_pool
     from .native_text_binding import TEXT_INTENT, text_binding_set
     from .native_timeline_duplicate import PARAMETERS as DUPLICATE_PARAMETERS
@@ -67,6 +69,7 @@ def operations():
     return {'doc.patch': Operation(_SCHEMA['$defs']['DocPatchArgs'], patch, {}),
             'text-binding.set': Operation(_SCHEMA['$defs']['TextBindingSetArgs'], text_binding_set, TEXT_INTENT, True),
             'timeline.duplicate': Operation(DUPLICATE_PARAMETERS, duplicate, {}),
+            'timeline.restructure': Operation(RESTRUCTURE_PARAMETERS, restructure, {}),
             'timeline.init': Operation(_SCHEMA['$defs']['TimelineInitArgs'], initialize, {}),
             'clip.anchor': Operation(_SCHEMA['$defs']['ClipAnchorArgs'], declare, {'anchor': 'follow'}, True),
             'occurrence.create': Operation(_SCHEMA['$defs']['OccurrenceCreateArgs'], occurrence_create,

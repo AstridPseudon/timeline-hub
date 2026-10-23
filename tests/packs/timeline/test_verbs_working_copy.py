@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import json
 import re
+import shlex
 
 import pytest
 
@@ -11,6 +12,9 @@ from astrid.packs.timeline import cli
 from astrid.sdk import timeline_checkout as tc
 from astrid.sdk.timeline_checkout import Checkout, TimelineEditError
 from astrid.sdk.timeline_duplicate import copy_content, id_map
+from tests.sdk.test_timeline_normal_publish import (
+    restructure_runtime as _restructure_runtime_fixture,  # noqa: F401
+)
 
 FPS = 30
 
@@ -109,7 +113,7 @@ def test_each_verb_parses_to_its_handler(argv, name):
 def test_the_freeze_command_list_is_all_registered():
     names = {spec.name for spec in cli.COMMANDS}
     freeze = ("create list show replace-parent-media archive recover history log diff visualize lint inspect render "
-              "checkout edit apply lines find undo redo words status check publish discard duplicate").split()
+              "checkout edit apply lines find undo redo words status check discard duplicate").split()
     assert set(freeze) <= names
 
 
@@ -179,10 +183,20 @@ def test_draft_flow_checkout_edit_status_discard(tmp_path, monkeypatch, capsys):
     assert _run("checkout", "t", "--project", "P") == 0
     out = capsys.readouterr().out.splitlines()
     assert out[0].startswith('working copy "main" of t · from published rev-0 · ')
-    assert "next:" in out and any(line.strip().startswith("publish  timelines status t --project P") for line in out)
+    draft_path = tc.draft_path('p', 't', 'main')
+    commit_command = (
+        'python3 -m astrid.packs.rendering.docs.scripts.timeline_document commit '
+        f'--file {shlex.quote(str(draft_path))} --idempotency-key timeline-edit-1'
+    )
+    assert "next:" in out and f"  commit   {commit_command}" in out
 
     assert _run("status", "t", "--project", "P", "--text") == 0
-    assert capsys.readouterr().out.startswith('WORKING COPY "main" · 0 clips changed')
+    status = capsys.readouterr().out
+    assert status.startswith('WORKING COPY "main" · 0 clips changed')
+    assert status.splitlines()[-1] == (
+        'next: timelines show t --project P --as sheet   ·   '
+        'timelines edit t --project P --clip c22.rocket --on viral'
+    )
 
     assert _run("edit", "t", "--project", "P", "--clip", "R", "--at-word", "viral") == 0
     out = capsys.readouterr().out
@@ -192,6 +206,7 @@ def test_draft_flow_checkout_edit_status_discard(tmp_path, monkeypatch, capsys):
     status = capsys.readouterr().out
     assert status.startswith('WORKING COPY "main" · 1 clip changed vs published rev-0')
     assert "a-rocket" in status
+    assert status.splitlines()[-1] == f'next: {commit_command}'
 
     assert _run("discard", "t", "--project", "P") == 0
     assert "1 clip changed, dropped" in capsys.readouterr().out
@@ -488,7 +503,7 @@ def test_fresh_checkout_after_discard_is_not_stale(tmp_path, monkeypatch, capsys
 @pytest.mark.parametrize("argv", [
     ["checkout", "t", "--project", "P"],
     ["status", "t", "--project", "P"],
-    ["publish", "t", "--project", "P", "-m", "x"],
+    ["edit", "t", "--project", "P", "--clip", "R", "--nudge-frames", "3"],
 ])
 def test_a_refusal_from_the_head_lookup_is_one_plain_line(tmp_path, monkeypatch, capsys, argv):
     from astrid.sdk.timeline import store
@@ -518,30 +533,40 @@ def test_short_revision_strips_every_known_prefix():
     assert short_revision(None) == ""
 
 
-@pytest.mark.parametrize("head, who", [
-    (EDITOR_HEAD, "the editor published 5fb2249e after your checkout (rev-0)"),
-    ("authoring-parent-revision-38cecaa5" + "f" * 24, "someone published 38cecaa5 after your checkout (rev-0)"),
-])
-def test_publish_conflict_names_the_writer_and_offers_discard_first(monkeypatch, head, who):
-    from astrid.sdk.timeline import store
+def test_normal_commit_conflict_keeps_head_and_has_no_force_overwrite(
+        _restructure_runtime_fixture, tmp_path, capsys):  # noqa: F811
+    """The normal CLI refuses a stale sheet without a force-overwrite route."""
+    from astrid.packs.timeline import cli
+    from tests.sdk.test_timeline_sheet_native import edit_cell
 
-    class _Timelines:
-        def open_composition(self, *_args, **_kwargs):
-            return type("Shown", (), {"ok": True, "error": None,
-                                      "data": {"summary": {"head_revision_id": head}}})()
+    env = _restructure_runtime_fixture
+    parser = cli.build_parser(env.client)
 
-    class _Client:
-        timelines = _Timelines()
+    def run(*args):
+        parsed = parser.parse_args([*args, "--project", env.project])
+        return parsed.handler(parsed)
 
-    monkeypatch.setattr(store, "fetch_bundle", lambda *_args, **_kwargs: copy.deepcopy(bundle()))
-    monkeypatch.setattr(store, "three_way", lambda _base, _head, candidate, force: (candidate, ["p/a-rocket (clip) moved 1.8s"]))
+    assert run("show", "t", "--as", "sheet", "--native") == 0
+    sheet = capsys.readouterr().out
+    edited = edit_cell(sheet, "occurrence:occ-film/clip:p1", "1")
+    peer = parser.parse_args(["edit", "t", "--project", env.project,
+                              "--clip", "occurrence:occ-film/clip:p1", "--on", "1"])
+    assert peer.handler(peer) == 0
+    capsys.readouterr()
+    before_document = copy.deepcopy(env.document())
+    before_history = copy.deepcopy(env.client.timelines.history(env.project, "t", limit=200).data)
 
-    with pytest.raises(TimelineEditError) as refused:
-        store.publish_bundle(copy.deepcopy(bundle()), "key", client=_Client())
-    message = str(refused.value)
+    # The normal CLI's apply route reads the retained export, then refuses its
+    # stale base; it never offers a force overwrite or writes a new history row.
+    edited_path = tmp_path / "stale.sheet"
+    edited_path.write_text(edited)
+    apply_args = parser.parse_args(["apply", "t", str(edited_path), "--project", env.project, "--json"])
+    assert apply_args.handler(apply_args) == 1
+    assert "conflict" in capsys.readouterr().out.lower()
 
-    assert message.splitlines()[0].startswith(f"not published: {who}, and you both changed:")
-    assert "next: timelines discard t --project p, then timelines checkout t --project p --fresh, and re-apply your edit." in message
-    assert "  publish --force overwrites the newer published version." in message
-    assert "to overwrite theirs" not in message
-    assert "astrid.e\n" not in message and "astrid.e " not in message
+    assert env.document() == before_document
+    assert env.client.timelines.history(env.project, "t", limit=200).data == before_history
+
+    with pytest.raises(SystemExit) as force:
+        parser.parse_args(["apply", "t", str(edited_path), "--project", env.project, "--force"])
+    assert force.value.code == 2

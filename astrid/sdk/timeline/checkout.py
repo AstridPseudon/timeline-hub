@@ -53,6 +53,8 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         self._kept: list[str] = []
         self._outside: list[str] = []
         self._journal: list[tuple[str, str | None]] = []  # (label, the document before that edit), one per edit
+        self._helper_calls: list[dict[str, Any]] = []
+        self._local_scalar_edits: list[tuple[str, str]] = []
         self._edit_depth = 0
         self._open_edit: Any = None  # the Edit of the tl.edit now open (nested edits join it)
         self._orphan_reason = "its line was removed"
@@ -142,7 +144,7 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         text = path.read_text(encoding="utf-8")
         raw = json.loads(text)
         tl = cls({}, path=path)
-        tl.bundle = tl._absorb(raw)
+        tl.bundle = _absorb_draft(tl, raw)
         tl.fps = bundle_fps(tl.bundle) or 30.0
         tl._disk = text
         return tl
@@ -180,13 +182,17 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
 
     def _save_locked(self, target: Path, *, force: bool, record: bool = True) -> Path:
         _store._reconcile_restore(target)
+        original_bundle = self.bundle
         self.merged = []
         if self._disk is not None and self.path and Path(self.path) == target and target.is_file():
             now = target.read_text(encoding="utf-8")
             if now != self._disk:
                 self._merge_writer(target, now, force=force)
         self.notes.extend(self._sync_film_length())  # the film's length follows its content, before it is written
-        text = _serialize(self._annotated())
+        document = self._annotated()
+        if "source_mapping" in self.bundle:
+            document["source_mapping"] = copy.deepcopy(self.bundle["source_mapping"])
+        text = _serialize(document)
         staged: list[tuple[Path, Path]] = []  # undo steps: written under a temp name now, committed after the file
         clear_redo = False
         journaled_step: tuple[str, str, str] | None = None  # (label, previous text, step file name) of the step staged now
@@ -206,8 +212,14 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
                 journaled_step = (_joined_label(journal), previous, staged[-1][1].name)
                 clear_redo = True
         tmp = target.with_name(f".{target.name}.{os.getpid()}.tmp")
-        tmp.write_text(text, encoding="utf-8")
-        os.replace(tmp, target)  # a reader never sees half a file
+        try:
+            tmp.write_text(text, encoding="utf-8")
+            os.replace(tmp, target)  # a reader never sees half a file
+        except OSError:
+            # A failed replacement must leave the original pending scalar
+            # capture usable for retry, rather than turning the merge into intent.
+            self.bundle, self._mcache, self.merged = original_bundle, None, []
+            raise
         # A step is committed only now that the file it describes is in place. A crash before this point leaves a
         # temp step (ignored, and cleared by the next save), never a step whose state is the file on disk: that
         # would make the next undo a silent no-op.
@@ -221,6 +233,7 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
 
             shutil.rmtree(_store._redo_dir(target), ignore_errors=True)  # a new edit ends the redo chain
         self._journal = []
+        self._local_scalar_edits = []
         self.path = target
         self._disk = text
         if journaled_step is not None:  # the journal: one record per undo step (the file and the step are committed now)
@@ -229,9 +242,11 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
                 clips, cuts = _clip_changes(before_text, text)
                 _journal.record_working_copy(target, owner=self, kind="save", outcome="changed", label=label,
                                              before=_journal.digest(before_text), after=_journal.digest(text),
-                                             clips=tuple(clips), cuts=tuple(cuts), undo_step=undo_step)
+                                             clips=tuple(clips), cuts=tuple(cuts), undo_step=undo_step,
+                                             calls=tuple(self._helper_calls))
             except Exception as exc:  # noqa: BLE001 - the save is committed; only its journal record is missing
                 _journal.note_failure(self, exc)
+        self._helper_calls = []
         return target
 
     def _merge_writer(self, target: Path, now: str, *, force: bool) -> None:
@@ -239,10 +254,16 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         import datetime as _dt
 
         mine = Checkout({}, path=target)
-        base = mine._absorb(json.loads(self._disk or "{}"))
-        theirs = mine._absorb(json.loads(now))
+        base = _absorb_draft(mine, json.loads(self._disk or "{}"))
+        theirs = _absorb_draft(mine, json.loads(now))
         when = _dt.datetime.fromtimestamp(target.stat().st_mtime).strftime("%H:%M:%S")
-        merged, conflicts = _store.three_way(base, theirs, self.bundle, force=force, whole=True)
+        snapshots = self._local_scalar_edits
+        from ._command_state import equal
+
+        bounded = bool(snapshots) and equal(json.loads(snapshots[0][0]), base) and all(
+            left[1] == right[0] for left, right in zip(snapshots, snapshots[1:])
+        ) and snapshots[-1][1] == _store._snapshot(self)
+        merged, conflicts = _merge_local_draft(base, theirs, self.bundle, force=force, bounded=bounded)
         if conflicts and not force:
             raise TimelineEditError(
                 f"not saved: this working copy was saved by another writer at {when}, after you opened it, and you "
@@ -313,6 +334,7 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
                     if folder.exists():
                         shutil.rmtree(folder)
         self._journal = []
+        self._local_scalar_edits = []
         self.__dict__.pop("_exported", None)
 
     def _restore_draft(self, steps: int, *, redo: bool) -> list[str]:
@@ -375,6 +397,7 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
             raise TimelineEditError("only a saved working copy can reload")
         fresh = Checkout._load_locked(path)
         self.bundle, self._mcache, self._journal, self._disk = fresh.bundle, None, [], fresh._disk
+        self._local_scalar_edits = []
 
     @contextlib.contextmanager
     def step(self, label: str):
@@ -626,6 +649,121 @@ def _pending_sheet(tl, target):
         return native, session, text
 
 
+def _absorb_draft(checkout, raw):
+    # Immutable closure images are provenance, including their private keys.
+    # The ordinary editable-document reader strips derived keys recursively.
+    source = copy.deepcopy(raw.get("source_mapping"))
+    bundle = checkout._absorb(raw)
+    if source is not None:
+        bundle["source_mapping"] = source
+    return bundle
+
+
+def _merge_local_draft(base, head, draft, *, force, bounded):
+    """Replay local payload patches without publishing or manufacturing closure pins.
+
+    Captured clip scalar edits guard the complete item, not just the changed leaf.
+    Other transforms guard their whole payload, since a diff cannot capture reads.
+    Provenance and membership must still describe the same detached checkout.
+    """
+    from ._command_state import CommandError, State, equal, present
+    from ._doc_patch import apply_change, identities, managed_edges, validate_payload, value_at
+    from ._recording import guard
+    from .emitter import _diff, _outside, _payload_for_emit, emit_document_commands
+
+    outside = [_outside(bundle) for bundle in (base, head, draft)]
+    for value in outside:
+        value.pop("placements", None)
+    edges = [managed_edges("parent", {"occurrences": bundle["placements"]}) for bundle in (base, head, draft)]
+    if not all(equal(outside[0], value) for value in outside[1:]) or not all(
+            equal(edges[0], value) for value in edges[1:]):
+        raise TimelineEditError("not saved: another writer or this draft changed closure membership or provenance; reopen it")
+    if "source_mapping" in base:
+        # Older local files retain native owner provenance without a canonical
+        # Runtime image. Check those owners without inventing a physical closure.
+        states = [State(bundle) for bundle in (base, head, draft)]
+        for row in base["placements"]:
+            owner = "occurrence:" + row["occurrence_id"] + "/shot"
+            expected = present(states[0].entity(owner)["shot_id"])
+            for state in states[1:]:
+                guard(state, owner, ["shot_id"], expected)
+        if "_runtime_document" in base["source_mapping"]:
+            # Full images also use the emitter's physical ownership/alias checks.
+            emit_document_commands(base, {**draft, "placements": base["placements"]})
+            emit_document_commands(base, {**head, "placements": base["placements"]})
+
+    merged, conflicts = copy.deepcopy(head), []
+    roots = [("parent", base["parent"], head["parent"], draft["parent"], merged, "parent")]
+    roots.append(("parent", {"occurrences": base["placements"]}, {"occurrences": head["placements"]},
+                  {"occurrences": draft["placements"]}, merged, "placements"))
+    for local, shot in base["shots"].items():
+        for field, kind in (("payload", "shot:"), ("internal_timeline", "internal:")):
+            roots.append((kind + local, shot[field], head["shots"][local][field],
+                          draft["shots"][local][field], merged["shots"][local], field))
+    for ref, old, theirs, ours, destination, field in roots:
+        for payload in (old, theirs, ours):
+            validate_payload(ref, payload)
+        changes = []
+        _diff(_payload_for_emit(ref, old), _payload_for_emit(ref, ours), ref, (), changes)
+        if not changes:
+            continue
+        # Only bounded clip scalar helpers can merge independently within a
+        # payload. Uncaptured edits and structural changes retain scope guards.
+        paths = [change["path"] for change in changes]
+        clip_paths = all(len(path) >= 3 and path[0] == "clips" and path[1].startswith("id:")
+                         and path[2] in ("at", "from", "to", "hold", "params") for path in paths)
+        scopes = list(dict.fromkeys(tuple(path[:2]) for path in paths)) if bounded and clip_paths else [()]
+        if scopes != [()]:
+            if identities(old["clips"], "id", ref=ref, path=["clips"]) != identities(
+                    theirs.get("clips"), "id", ref=ref, path=["clips"]):
+                raise TimelineEditError("not saved: another writer changed clip membership or order; reopen it")
+            if ref != "parent" and not equal(base["parent"], head["parent"]):
+                conflicts.append("parent/settings")
+                if not force:
+                    continue
+            if ref.startswith("internal:"):
+                rows = [[{key: value for key, value in row.items() if key != "duration_ms"}
+                         for row in bundle["placements"] if row["shot_id"] == ref[len("internal:"):]]
+                        for bundle in (base, head)]
+                if not equal(*rows):
+                    conflicts.append(ref + "/placement")
+                    if not force:
+                        continue
+            settings = []
+            for payload in (old, theirs):
+                settings.append(copy.deepcopy(_payload_for_emit(ref, payload)))
+                settings[-1].pop("clips", None)
+            if not equal(*settings):
+                conflicts.append(ref + "/settings")
+                if not force:
+                    continue
+        landed = copy.deepcopy(theirs)
+        for scope in scopes:
+            before = value_at(old, ref, scope)
+            current = value_at(theirs, ref, scope)
+            desired = value_at(ours, ref, scope)
+            if equal(current, desired):
+                continue
+            if not equal(before, current):
+                conflicts.append("/".join((ref, *scope)))
+                if not force:
+                    continue
+            # Emit against the exact landing operand. Even explicit local force
+            # goes through the normal previous-value checks, at this scope only.
+            pending = []
+            if scope:
+                _diff(current["value"], desired["value"], ref, scope, pending)
+            else:
+                _diff(_payload_for_emit(ref, theirs), _payload_for_emit(ref, ours), ref, (), pending)
+            try:
+                for change in pending:
+                    landed, _ = apply_change(landed, change)
+            except CommandError as exc:
+                raise TimelineEditError(f"not saved: another writer's draft cannot replay {ref}: {exc}") from exc
+        destination[field] = landed["occurrences"] if field == "placements" else landed
+    return merged, conflicts
+
+
 def _clip_changes(before_text: str, after_text: str) -> tuple[list[str], list[str]]:
     """The clip ids whose clip data differs between two saved texts (added, removed or edited), and their cut ids."""
     def clips_of(text: str) -> dict[str, Any]:
@@ -664,9 +802,29 @@ def _joined_label(journal: list[tuple[str, str | None]]) -> str:
 
 
 # every edit is one undo step (the outermost call; what it calls inside is part of it)
+def _capture_local_scalar(function):
+    from functools import wraps
+
+    @wraps(function)
+    def captured(clip, *args, **kwargs):
+        tl = clip._tl
+        if tl._edit_depth:
+            return function(clip, *args, **kwargs)
+        before = _store._snapshot(tl)
+        result = function(clip, *args, **kwargs)
+        after = _store._snapshot(tl)
+        if before != after:
+            tl._local_scalar_edits.append((before, after))
+        return result
+
+    return captured
+
+
 for _name in ("on", "until", "enter_at", "nudge", "hold_for", "set_duration", "extend", "end_at", "set", "set_track", "clear_asset",
               "swap_asset", "set_beats", "keyframe_at", "remove", "remove_layer", "keep", "set_look", "tag", "move_to_cut"):
     setattr(Clip, _name, _store._journaled(getattr(Clip, _name), "clip"))
+for _name in ("nudge", "set"):
+    setattr(Clip, _name, _capture_local_scalar(getattr(Clip, _name)))
 for _name in ("add", "ripple_delete", "close_gap", "insert_time", "insert_line", "remove_line", "apply_script",
               "fill_slot", "fill_standins", "declare_gaps", "adopt", "add_cut", "set_cut_note"):
     setattr(Checkout, _name, _store._journaled(getattr(Checkout, _name), "checkout"))
