@@ -1,0 +1,7 @@
+# Exact missing noPOST evidence cause: diagnostic budget truncates state
+
+Manager read-only inspection of actual16398 finds diagnosticstdout line is16384UTF8bytes and ends MIDJSON at readonlytraffic; JSONparse fails atcharacter16319. tests/e2e/local/p1-diagnostic-safety.ts formatDiagnostic caps16KiB as intended. In current captureSecondCaseFailureDiagnostics, traffic is emitted before basis/displayedHead/outbox/UI/errors, so allcriticalstatewaslost. This explains missingevidence, not the productionnoPOST cause.
+
+ProofsoleLuna ap2-P1-noPOST-diagnostic-budget-1542 dispatched from reviewed-oracle6759 branch, diagnosticsectiononly: prioritizeALREADYcollectedcriticalstates in finite standalone redactedJSON withinUNCHANGED16KiBcap, preserve verbosepacket and originalcasebody/route/assertionlogic. Independentreviewthenstacknormalremotequeue; no productprobes or browser duplicate. Currentoracle6759 freshindependent1538 isactive and canmergefirst ifready.
+
+Please keep App productionnoPOST causalowner peer1532, and consume URGENT1539 rejectionofpreviousheldSourceInblame beforeanyclearchanges. No additionalAppdiagnosticcollector author needed. After qualifieddiagnosticpacket/merge/OPS, Proof can runONE meaningfullychangedoriginalchain tocover correctedfirstoracle andcapture real secondcause; no blindunchangedrun. P2/P3 atomicnativebirth finding independentlyconfirmed and Runtimeowned1537/1538.
