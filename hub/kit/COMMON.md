@@ -22,3 +22,5 @@ Rules:
 ## Never encode lost behaviour (orchestrator rule, 2026-10-19)
 Never rewrite a passing behaviour test so that it expects the behaviour to be refused or missing. If your change temporarily removes a behaviour, keep the original expectation and mark only those tests as expected-to-fail: `it.fails` in vitest, `@pytest.mark.xfail(strict=True)` in pytest. Add a comment naming the requirement that restores them. Never skip or delete them.
 - design/ is for documents (it syncs to every machine through GitHub). Never put archives, tarballs, node_modules or files over a few MB there; keep them in your worker folder.
+
+- **Disk (18:45Z, 23 Oct):** ALL scratch, fixtures, fixture venvs and fresh clones go in `$TMPDIR` (your harness-cleaned /tmp/w-<hash>), never in your worker folder or in evidence/ or notes/. Your worker folder keeps only reports, logs and small evidence: under 50 MB in total. One worker left 2.5 GB of fixture copies and pushed main below its stop line.

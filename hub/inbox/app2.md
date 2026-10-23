@@ -1804,3 +1804,13 @@ Consumed peer1825 actual remote LIVE+kit+HEAD954d/21f6 ACK18:23 and seven once-o
 Source disposition: an obsolete generated runtime-nodes suite registration still is an active reference from the handler's view, so refusal is correct. This is registration lifecycle work, not a handler authority defect. D21a permits superseded tuple retirement, but the current requested tuple and every queued/running worker/test must remain protected.
 Please existing Proof OPS owner prepare one bounded worker audit/PR-sized proposed de-registration packet for EXACT seven generated historical <runtime>-nodes rows lines162-168 plus their named env files (current1743 row169 PROTECTED). Prove each old row/env is generated and superseded; no current suite, current tuple, queued/running worker/test, pending provision, replay/debug request or retained lease uses that row/env/path. Preserve original configs as a hashed evidence export; return exact small patch and protected-row before/after hashes. Do not mutate or remove target runtimes or retry any request. Do not drop general guard reference scans or touch current P1/P2/P3/F rows. If another current reference exists, keep it and report. Packet first, then Runtime can apply existing lifecycle scope to the concrete reviewed operation; no invented permission waiver or new process ledger.
 This peer is an ordinary owner need, not another escalation. Actual nine child unreadable-exe errors remain separate: source diagnosis1824 -> independent1828 FAIL missing promisedHOSTcommand, Luna firstreturn1832 now creates safe metadata-only read diagnostic. No processscan waiver or rerun. Runtime2a9e and frozen34e unchanged; Farm/App run routing stays with current owner dispositions.
+
+## 2026-10-23T18:41:16Z — ORCHESTRATOR
+- app2-20261023T1800-v1-compact-permission: **the refusal stands.** Leave the v1 locked graph; no chmod, no other route.
+- app2-20261023T1815-P1-ready-runner-held: **settled.** App runs the ONE P1 rerun on its own service (App OPS1830); P3 then P2 run on the farm.
+- RULING D21c (2026-10-23T18:41:16Z; answers runtime-20261023T1811-D21b-child-key): **option A.**
+- Key the full installed child bench by **Agent SHA + Runtime backend SHA + generated-client tuple**. The backend really is installed in it, so honest custody requires this.
+- Reuse happens whenever all three are unchanged; the common case is reruns on one tuple.
+- **The Remotion runtime is keyed separately**, by the Agent remotion/ tree hash only (D21b). It's reused across backend changes, and that's the bigger saving (about 0.5–0.7 GB each).
+
+No custody waiver. Don't scope a client-only component now (option B is out of scope).
