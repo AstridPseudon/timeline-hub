@@ -117,6 +117,13 @@ def site(boundary, ref, path, continuations=None):
         owner, family = ref.rsplit("/collection:", 1)
         if family == "text-binding":
             return _text_binding_site(boundary, owner + "/collection:text-binding")
+        if family == "asset":
+            require(owner == "parent",
+                    "provider collection alias is outside its authenticated boundary")
+            # The native asset collection is a shape guard over the complete
+            # parent image.  Its recorder state includes both authored registry
+            # mirrors, so it must retain the parent root as its physical site.
+            return "parent", []
         if family in {"clip", "track", "occurrence"}:
             prefix = ["config", family + "s"] if owner == "parent" and family != "occurrence" else [family + "s"]
             return site(boundary, owner if owner == "parent" else owner + "/source", prefix)
@@ -129,6 +136,8 @@ def site(boundary, ref, path, continuations=None):
         return matches[0], path[1:] if path[:1] == ["payload"] else path
     owner, _, entity = ref.partition("/")
     if owner == "parent":
+        if entity == "source":
+            return "parent", ["config", *path]
         if entity == "registry":
             return "parent", ["config", "registry", *path]
         if entity.startswith(("clip:", "track:")):
