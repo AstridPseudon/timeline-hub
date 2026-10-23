@@ -1890,7 +1890,9 @@ class RealmStore:
                                             details={"expected": params[key], "actual": actual})
             commits = TimelineCommitStore(self, validate_prepared=lambda value: validate_commit_value(value, "PreparedCommit"))
             try:
-                entry = commits.history_entry(project_id, row["id"], historical["publication_id"])
+                entry = commits.history_entry(
+                    project_id, row["id"], historical["publication_id"], allow_archived=True,
+                )
             except (CommitRejected, RuntimeErrorBase, KeyError, TypeError, ValueError):
                 revision_mismatch("publication_id")
             if entry["revision_id"] != historical["revision_id"]:
@@ -1932,7 +1934,9 @@ class RealmStore:
                     revision_integrity(pin["media_id"])
                 verify_media(pin["media_id"])
             try:
-                retained = commits.revision_closure(project_id, row["id"], historical["revision_id"])
+                retained = commits.revision_closure(
+                    project_id, row["id"], historical["revision_id"], allow_archived=True,
+                )
                 if (retained["parent_revision"]["content_digest"] != historical["content_digest"]
                         or (accepted_document is not None and retained != accepted_document)):
                     revision_integrity(historical["revision_id"])

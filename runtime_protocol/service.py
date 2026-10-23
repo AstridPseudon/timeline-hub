@@ -2461,7 +2461,10 @@ class RuntimeService:
         def require_active():
             check()
             with self.store._mutex:
-                row = self.store.conn.execute(
+                connection = self.store.conn
+                if connection is None:
+                    raise RuntimeError("runtime store is not open")
+                row = connection.execute(
                     "SELECT 1 FROM timelines WHERE id=? AND project_id=? AND archived_at IS NULL",
                     (timeline_id, project_id),
                 ).fetchone()

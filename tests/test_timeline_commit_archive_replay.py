@@ -1,15 +1,23 @@
 """Archived exact commit replay keeps authorization and rejects new writes."""
 from __future__ import annotations
 
+import copy
+import hashlib
 import io
 import json
 from types import SimpleNamespace
+from typing import Any
 
 import pytest
 import test_timeline_commit_authentication as auth_tests
 import test_timeline_commit_port as port_tests
 
-from runtime_protocol.errors import ForbiddenError, NotFoundError, RuntimeErrorBase
+from runtime_protocol.errors import (
+    ConflictError,
+    ForbiddenError,
+    NotFoundError,
+    RuntimeErrorBase,
+)
 from runtime_protocol.server import RuntimeHandler
 from runtime_protocol.timeline_commit_port import route_path
 
@@ -28,6 +36,18 @@ def _snapshot(service):
     return list(service.store.conn.iterdump())
 
 
+def _render_state(service):
+    return (
+        _snapshot(service),
+        {
+            str(path.relative_to(service.store.root)): path.read_bytes()
+            for directory in (service.store.cas_root, service.store.staging_root)
+            for path in directory.rglob("*")
+            if path.is_file()
+        },
+    )
+
+
 def _commit(service, body, *, key, publisher="editor", authorize=lambda: None):
     return service.commit_timeline(
         service.test_project,
@@ -38,6 +58,34 @@ def _commit(service, body, *, key, publisher="editor", authorize=lambda: None):
         invocation_path=route_path(service.test_project, "main"),
         authorize=authorize,
     )
+
+
+def _render_request(service, accepted, *, key):
+    digest = "sha256:" + hashlib.sha256(b"rendering.render").hexdigest()
+    service.register_capability({"capability_id": "rendering.render", "definition_digest": digest})
+    service.register_executor({"executor_id": "render-worker", "capabilities": ["rendering.render"]})
+    parent = accepted["data"]["canonical_document"]["parent_revision"]
+    return {
+        "project": service.test_project,
+        "capability_id": "rendering.render",
+        "capability_digest": digest,
+        "input_object_ids": [],
+        "idempotency_key": key,
+        "spec": {
+            "family": "render",
+            "params": {
+                "timeline_ref": "main",
+                "selector": "rendering.remotion",
+                "canonical_revision": {
+                    "project_id": service.test_project,
+                    "timeline_id": "main",
+                    "revision_id": accepted["data"]["accepted_revision_id"],
+                    "publication_id": accepted["receipt"]["receipt_id"],
+                    "content_digest": parent["content_digest"],
+                },
+            },
+        },
+    }
 
 
 def test_exact_complete_replay_after_archive_is_immutable_and_provider_free(service):
@@ -110,11 +158,47 @@ def test_archived_changed_identity_cannot_replay_or_write(service, change):
     with pytest.raises(RuntimeErrorBase) as error:
         _commit(service, changed, key="archive-identity", publisher=publisher)
 
+    assert error.value.details is not None
     assert error.value.details["reason"] == "idempotency_mismatch"
     assert _snapshot(service) == before
 
 
+def test_archived_historical_render_replay_returns_original_admission(service):
+    accepted = _commit(service, port_tests.request(service), key="archive-render-commit")
+    request = _render_request(service, accepted, key="archive-render")
+    first = service.create_task(request)
+
+    _archive(service)
+    before = _render_state(service)
+    replay = service.create_task(copy.deepcopy(request))
+
+    assert replay == first
+    assert _render_state(service) == before
+
+
+@pytest.mark.parametrize("field", ["publication_id", "content_digest"])
+def test_archived_historical_render_forgery_refuses_without_writes(service, field):
+    accepted = _commit(service, port_tests.request(service), key="archive-forgery-commit")
+    request = _render_request(service, accepted, key="archive-forgery")
+    service.create_task(request)
+    _archive(service)
+    forged = copy.deepcopy(request)
+    forged["spec"]["params"]["canonical_revision"][field] = (
+        "unpublished" if field == "publication_id" else "sha256:" + "0" * 64
+    )
+    before = _render_state(service)
+
+    with pytest.raises(ConflictError):
+        service.create_task(forged)
+
+    assert _render_state(service) == before
+
+
 class AuthHandler(RuntimeHandler):
+    actor: str
+    allowed_scopes: set[str]
+    identity_calls: list[str]
+
     def _identity(self, scope):
         self.identity_calls.append(scope)
         if scope not in self.allowed_scopes:
@@ -126,7 +210,7 @@ class AuthHandler(RuntimeHandler):
 
 
 def _http_handler(service, body, *, actor="editor", scopes=("projects:write",)):
-    handler = object.__new__(AuthHandler)
+    handler: Any = object.__new__(AuthHandler)
     handler.server = SimpleNamespace(runtime=service)
     handler.command = "POST"
     handler.path = f"/v1/projects/{service.test_project}/timelines/main/commit"
@@ -160,6 +244,7 @@ def test_http_bearer_scope_and_actor_binding_survive_archived_replay(service):
     changed_actor = _http_handler(service, submitted, actor="other-actor")
     with pytest.raises(RuntimeErrorBase) as error:
         changed_actor._route()
+    assert error.value.details is not None
     assert error.value.details["reason"] == "idempotency_mismatch"
     assert _snapshot(service) == before
 
