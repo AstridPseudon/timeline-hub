@@ -2,6 +2,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TimelineRenderer as TimelineRendererImplementation } from '@/tools/video-editor/compositions/TimelineRenderer';
+import { continuousEffects } from '@/tools/video-editor/effects/index.tsx';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types';
 import type { ClipRendererProps } from '@/tools/video-editor/clip-types/ClipTypeRegistry';
 import type { ComponentProps, FC, PropsWithChildren } from 'react';
@@ -186,7 +187,7 @@ vi.mock('@/tools/video-editor/compositions/LocalFontFaces.tsx', () => ({
 vi.mock('@/tools/video-editor/compositions/VisualClip', () => ({
   VisualClipSequence: (props: Record<string, unknown>) => {
     visualClipMock(props);
-    return <div data-testid="visual-clip-sequence" />;
+    return <div data-testid="visual-clip-sequence" data-clip-id={(props.clip as { id: string }).id} />;
   },
 }));
 
@@ -389,6 +390,74 @@ beforeEach(() => {
   mockShaderRegistryGet.mockReset();
   mockShaderRegistryHas.mockReset();
   astridElementComponentMock.mockReset();
+});
+
+describe('TimelineRenderer track lifetime', () => {
+  it('keeps an existing effect around lower tracks only when an ordinary top track is added', () => {
+    continuousEffects['test-track-lifetime'] = ({ children }) => <div data-testid="track-lifetime-effect">{children}</div>;
+    try {
+      const config: ResolvedTimelineConfig = {
+        ...buildConfig(),
+        tracks: [{ id: 'frames', kind: 'visual' }, { id: 'world', kind: 'visual' }],
+        clips: [
+          { id: 'world-clip', clipType: 'media', track: 'world', at: 0, from: 0, to: 14 },
+          { id: 'town-frame', clipType: 'hold', track: 'frames', at: 13, hold: 1 },
+          { id: 'effect', clipType: 'effect-layer', track: 'frames', at: 0, hold: 14, continuous: { type: 'test-track-lifetime' } },
+        ],
+      };
+      currentFrame = 390;
+      const view = render(<TimelineRenderer config={config} />);
+      const effect = screen.getByTestId('track-lifetime-effect');
+      const world = view.container.querySelector('[data-clip-id="world-clip"]');
+      const still = view.container.querySelector('[data-clip-id="town-frame"]');
+      expect(effect).toContainElement(world as HTMLElement);
+      expect(effect).not.toContainElement(still as HTMLElement);
+      view.rerender(<TimelineRenderer config={{ ...config,
+        tracks: [{ id: 'video', kind: 'visual' }, ...config.tracks!],
+        clips: [...config.clips, { id: 'h3-video', clipType: 'media', track: 'video', at: 0, from: 0, to: 14 }],
+      }} />);
+      expect(screen.getByTestId('track-lifetime-effect')).toBe(effect);
+      expect(view.container.querySelector('[data-clip-id="world-clip"]')).toBe(world);
+      expect(view.container.querySelector('[data-clip-id="town-frame"]')).toBe(still);
+      expect(effect).not.toContainElement(view.container.querySelector('[data-clip-id="h3-video"]'));
+      expect([...view.container.querySelectorAll('[data-testid="visual-clip-sequence"]')].map(node => node.getAttribute('data-clip-id')))
+        .toEqual(['world-clip', 'town-frame', 'h3-video']);
+    } finally {
+      delete continuousEffects['test-track-lifetime'];
+    }
+  });
+
+  it('keeps already-painted lower tracks mounted when a new top track arrives or leaves', () => {
+    const stage2: ResolvedTimelineConfig = {
+      ...buildConfig(),
+      tracks: [{ id: 'frames', kind: 'visual' }, { id: 'world', kind: 'visual' }],
+      clips: [
+        { id: 'world-clip', clipType: 'media', track: 'world', at: 0, from: 0, to: 14 },
+        { id: 'town-frame', clipType: 'hold', track: 'frames', at: 13, hold: 1 },
+      ],
+    };
+    currentFrame = 390;
+    const view = render(<TimelineRenderer config={stage2} />);
+    const world = view.container.querySelector('[data-clip-id="world-clip"]');
+    const still = view.container.querySelector('[data-clip-id="town-frame"]');
+    expect(world).not.toBeNull();
+    expect(still).not.toBeNull();
+    const stage3: ResolvedTimelineConfig = {
+      ...stage2,
+      tracks: [{ id: 'video', kind: 'visual' }, ...stage2.tracks!],
+      clips: [...stage2.clips, { id: 'h3-video', clipType: 'media', track: 'video', at: 0, from: 0, to: 14 }],
+    };
+    view.rerender(<TimelineRenderer config={stage3} />);
+    // Keeping node identity means image/iframe/decoder state survives the new row's commit,
+    // before the tour's async frame-readiness logic has had any opportunity to run.
+    expect(view.container.querySelector('[data-clip-id="town-frame"]')).toBe(still);
+    expect(view.container.querySelector('[data-clip-id="world-clip"]')).toBe(world);
+    expect([...view.container.querySelectorAll('[data-testid="visual-clip-sequence"]')].map(node => node.getAttribute('data-clip-id')))
+      .toEqual(['world-clip', 'town-frame', 'h3-video']);
+    view.rerender(<TimelineRenderer config={stage2} />);
+    expect(view.container.querySelector('[data-clip-id="town-frame"]')).toBe(still);
+    expect(view.container.querySelector('[data-clip-id="world-clip"]')).toBe(world);
+  });
 });
 
 describe('TimelineRenderer registered sequences', () => {

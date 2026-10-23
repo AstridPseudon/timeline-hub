@@ -12,7 +12,9 @@ import {
   useTimelineOpsFromStore,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { requestCenterTimelineClip } from '@/tools/video-editor/lib/timeline-viewport-events.ts';
-import { editorTourTrackSelector } from '@/tools/video-editor/tour/anchors.ts';
+import { editorTourSelector, editorTourTrackSelector } from '@/tools/video-editor/tour/anchors.ts';
+import { useTourMediaWarmup } from './useTourMediaWarmup.ts';
+import { EDITOR_TOUR_MEDIA } from '../tourMedia.ts';
 import { loadTourLiveScene, TOUR_SCENE_SOURCE_FROM } from './tourSceneSource.ts';
 import { createEditorTourStagePatch, createEditorTourStageRemovalPatch, tourStageFocusClipId, tourTrackOrder, TOUR_ANCHORS, TOUR_CLIP_IDS } from './tourStages.ts';
 
@@ -35,6 +37,24 @@ function nextFrame(): Promise<void> {
 async function waitFor(check: () => boolean, timeoutMs: number, isCancelled: () => boolean): Promise<void> {
   const deadline = performance.now() + timeoutMs;
   while (!isCancelled() && !check() && performance.now() < deadline) await nextFrame();
+}
+
+/** A timeline row may mount before the paused player's debounced composition and decoder. */
+async function waitForTourVideoFrame(frame: number | undefined, isCancelled: () => boolean): Promise<boolean> {
+  const expectedSrc = new URL(EDITOR_TOUR_MEDIA.video.url, document.baseURI).href;
+  while (!isCancelled()) {
+    const preview = document.querySelector(editorTourSelector('preview'));
+    const ready = [...(preview?.querySelectorAll<HTMLElement>('[data-preview-decoded-frame="true"]') ?? [])].some((element) => {
+      const src = element.dataset.previewMediaSrc;
+      return src && new URL(src, document.baseURI).href === expectedSrc
+        && (frame === undefined || element.dataset.previewPresentedFrame === String(frame));
+    });
+    if (ready) return true;
+    // No timeout fallthrough: playing an unready composition exposes the world underneath.
+    // The decoder owns load errors/retry. Back, Skip and leaving the tour cancel this wait.
+    await nextFrame();
+  }
+  return false;
 }
 
 /**
@@ -67,6 +87,7 @@ function SceneWarmup({ liveScene, onWarm }: { liveScene: Record<string, unknown>
  * Reports `ready.timeline` per beat.
  */
 export function EditorTourTimelineDriver() {
+  useTourMediaWarmup();
   const runId = useEditorTour((state) => state.runId);
   const act = useEditorTour((state) => state.act);
   const beat = useEditorTour((state) => state.beat);
@@ -134,6 +155,7 @@ export function EditorTourTimelineDriver() {
   useEffect(() => {
     if (!loaded || appliedStage !== stage) return;
     let cancelled = false;
+    const skippedAtStart = getEditorTourState().skipAnimation;
     const isCancelled = () => {
       const current = getEditorTourState();
       return cancelled || current.status !== 'running' || current.runId !== runId || current.act !== act || current.beat !== beat;
@@ -168,6 +190,17 @@ export function EditorTourTimelineDriver() {
         } else {
           const focusClipId = tourStageFocusClipId(stage);
           if (focusClipId) requestCenterTimelineClip(focusClipId);
+          if (act === 3) {
+            const videoWaitCancelled = () => isCancelled() || getEditorTourState().skipAnimation !== skippedAtStart;
+            // Keep the last reference frame underneath while H3 mounts and draws at the current
+            // playhead. Only then seek the new composition, whose canvas retains its last picture.
+            if (await waitForTourVideoFrame(undefined, videoWaitCancelled) && !videoWaitCancelled()) {
+              previewRef.current?.seek(0);
+              if (await waitForTourVideoFrame(0, videoWaitCancelled) && !videoWaitCancelled()) previewRef.current?.play();
+            }
+            if (!isCancelled()) markEditorTourReady('timeline');
+            return;
+          }
           previewRef.current?.seek(0);
           // Wait for the first painted world frame before playing the flight.
           if (act === 1 && !instant) {
