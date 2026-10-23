@@ -1,12 +1,12 @@
-<!-- app | 2026-10-23T00:07:45Z | dispatcher heartbeat 1s | live 3 (sol 1, luna 2, other 0) | busy30 10 | status age 3m -->
-# app board, 2026-10-23T00:04:13Z
+<!-- app | 2026-10-23T00:10:19Z | dispatcher heartbeat 3s | live 4 (sol 1, luna 3, other 0) | busy30 9 | status age 1m -->
+# app board, 2026-10-23T00:09:28Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3a | Upstream deletions, docs/config/supabase | Luna high | — | doing | app-U3-live-compose | Sol verified vendor is exact live upstream; composition with U3b must qualify Supabase imports. Other four fixes independently PASS | a66702d9b donor |
 | U3b | Upstream editor; retain outbox/transport/client | Luna high | — | merged | app-U3b-eof-fix | Independent PASS: target23, tsc/lint/diff-check. Integrated overall proof pending composition/farm | f9d5d0cdd merge / 369d882ca source |
 | U3c | QUICK harness plus retained journeys | Luna high | — | merged | app-U3c-quick-adapter-fix | Independent PASS retained; source merged, integrated browser/QUICK proof pending farm (not done) | 1c62edf19 merge / 0ba5378cc source |
-| U3 | True live upstream merge and Agent re-vendor | Luna high | U3a/U3b/U3c; merged U2 | doing | app-U3-live-compose | Live GitHub ref verified equal to origin/main; sanctioned merge-forward started, Codex resolves full conflicts and reviewed slice joins | upstream 7c17cc9d9 |
-| U4p | Adopt regenerated U1 client/schema | Luna high | U1, U3 | todo | — | U1 merged27f0306b9; exact producer checkout requested. Await composed U3 | — |
+| U3 | True live upstream merge and Agent re-vendor | Luna high | U3a/U3b/U3c; merged U2 | review | app-U3-live-review; app-U3-agent-revendor | True upstream parent verified; author251+30+7 tests/lint/discovery PASS, three V3 export type errors. Independent review and normal Agent re-vendor active | 064dca1e0 source / upstream7c17cc9d9 |
+| U4p | Adopt regenerated U1 client/schema | Luna high | U1, U3 | doing | app-U4p-u1-client | Normal U1 producer27f adoption started on composed064dca1e0 branch under header early-start rule; no generated DTO widening | — |
 | A2 | Save funnel and dependent local-document chain | Sol high | C0 APPROVED, U3b merged | doing | app-A2-document-patch-intent | Inactive session slice independently PASS279/tsc/lint and merged05dabd460. Pure local guarded-proposal encoder dispatched; production funnel/replies await official v2 join, A2 not done | 05dabd460 session merge / e739d880e source |
 | A3 | Popup/placement/element/registerAsset via A2 | Luna high | A2 | todo | — | — | — |
 | A4 | Delete executor/capture ports/adapter/goldens | Luna high | A2, A3, H3 go | todo | — | No deletion before H3 go/no-go | — |
