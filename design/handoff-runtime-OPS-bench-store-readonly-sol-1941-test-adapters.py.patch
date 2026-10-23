@@ -1,0 +1,151 @@
+--- test-adapters.py
++++ test-adapters.py
+@@ -2,6 +2,7 @@
+ All source/tool/installer stand-ins are explicit, tiny TMPDIR files. No Git
+ repository, copied venv, network, real installer, test service or daemon runs.
+ """
++import contextlib
+ import hashlib
+ import importlib.util
+ import json
+@@ -15,7 +16,7 @@
+ 
+ HERE = Path(__file__).resolve().parent
+ PREFIX = Path(__file__).name.removesuffix('test-adapters.py')
+-ORCH = HERE.parent
++ORCH = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+ ROOT = Path(tempfile.mkdtemp(prefix='creator-fixture-', dir=os.environ['TMPDIR']))
+ assert ROOT.resolve().is_relative_to(Path(os.environ['TMPDIR']).resolve())
+ O, W, A, R = [ROOT / name for name in ('orch', 'work', 'agent', 'runtime')]
+@@ -29,9 +30,9 @@
+         path.chmod(0o755)
+ 
+ # Exactly approved legacy bytes, copied read-only into this private fixture.
+-rows = (ORCH / 'tests/suites.conf').read_text().splitlines()
++rows = (HERE / (PREFIX + 'input-suites.conf')).read_text().splitlines()
+ row = next(line for line in rows if line.split()[:2] == ['agent', 'remotion-env-nodes'])
+-envtext = (ORCH / 'tests/agent-remotion.env').read_text()
++envtext = (HERE / (PREFIX + 'input-agent-remotion.env')).read_text()
+ assert hashlib.sha256(row.encode()).hexdigest() == 'ffdb0b13c65f106d7b818208343feb3f438dfc943f4af57c5f612ddcf73dc036'
+ assert hashlib.sha256(envtext.encode()).hexdigest() == 'e53a69a465e05976dcf7a781f420b1c7def64a13691f7a5f387f6a0609a6da02'
+ write(O / 'tests/suites.conf', row + '\nagent child-base env PATH=/usr/bin:/bin /home/user/work/venv-agent-child-old/bin/python -c pass\n')
+@@ -89,7 +90,7 @@
+   (target/'bin'/name).write_text('#!/bin/bash\\nexit 0\\n');(target/'bin'/name).chmod(0o755)
+  sys.exit()
+ site=root/'lib/python3.13/site-packages';site.mkdir(parents=True,exist_ok=True)
+-if args and args[0]=='-I': args=args[1:]
++while args and args[0] in ('-B', '-I'): args=args[1:]
+ if args[:2]==['-m','pip']:
+  if args[2]=='freeze':
+   for dist in md.distributions(path=[str(site)]):
+@@ -132,7 +133,7 @@
+ for tool in ('curl','npm','pip'):
+     write(ROOT/'tools'/tool,'#!/bin/bash\necho UNEXPECTED-NETWORK-OR-INSTALLER >&2\nexit 99\n',True)
+ 
+-raw=(ORCH/'bin/dispatcher-daemon').read_text()
++raw=(HERE / (PREFIX + 'input-dispatcher-daemon')).read_text()
+ branches=[next(line.strip() for line in raw.splitlines() if "'^"+kind+" '" in line) for kind in ('CHILDVENV','RUNTIME')]
+ context=next(line for line in raw.splitlines() if line.startswith('O=')).replace(str(ORCH),str(O))
+ write(ROOT/'dispatch', '#!/bin/bash\n'+context+'\nf=$1\nif false; then :\n'+'\n'.join(branches)+'\nelse exit 42; fi\nprintf "%s\\n" "$out"\nexit "$rc"\n',True)
+@@ -156,6 +157,20 @@
+     (ROOT/('call-'+str(count)+'.log')).write_text(result.stdout+result.stderr)
+     count+=1
+     assert (result.returncode==0)==success,(args,result)
++    if success:
++        if kind == 'CHILDVENV':
++            assert 'status=passed' in result.stdout
++            assert 'requested_name='+args[0] in result.stdout
++            assert 'agent='+args[1] in result.stdout and 'runtime='+db['backend'] in result.stdout
++            report=Path(re.search(r'provision_report=(\S+)',result.stdout).group(1))
++            expected=re.search(r'provision_report_sha256=([0-9a-f]{64})',result.stdout).group(1)
++            assert report == O/'tests/provision'/(args[0]+'.txt')
++            assert hashlib.sha256(report.read_bytes()).hexdigest() == expected
++            assert report.read_bytes().count(b'status=passed\n') == 1
++        else:
++            assert 'requested_name='+args[0] in result.stdout
++            assert 'requested_agent_sha='+args[1] in result.stdout
++            assert 'requested_runtime_sha='+args[5] in result.stdout
+     print('PASS actual requester/dispatcher/maker',kind,args[0],'rc='+str(result.returncode),flush=True)
+     return result
+ 
+@@ -190,9 +205,19 @@
+     print('PASS builder smoke real_installers=0 network=0 fixture='+str(ROOT))
+     sys.exit(0)
+ 
+-helper = HERE / 'handoff-runtime-OPS-bench-store-core-resume-1854-bench_store.py'
++helper = HERE / 'handoff-runtime-OPS-bench-store-readonly-sol-1941-bench_store.py'
+ assert helper.is_file(), 'core source not published yet'
+ shutil.copyfile(helper, O / 'bin/bench_store.py')
++# Extra lifecycle controls use only the existing core fault-injection seam.
++with (O / 'bin/bench_store.py').open('a') as output:
++    output.write("\ndef fixture_checkpoint(self, point):\n"
++                 "    target = os.environ.get('FIXTURE_FAIL_POINT')\n"
++                 "    flag = Path(os.environ['TMPDIR']) / 'fault-fired'\n"
++                 "    if point == target and not flag.exists():\n"
++                 "        flag.write_text(point)\n"
++                 "        if os.environ.get('FIXTURE_CRASH') == '1': raise SystemExit(77)\n"
++                 "        raise RuntimeError('forced lifecycle failure: ' + point)\n"
++                 "Store._checkpoint = fixture_checkpoint\n")
+ sys.dont_write_bytecode = True
+ spec = importlib.util.spec_from_file_location('bench_store', helper)
+ core = importlib.util.module_from_spec(spec)
+@@ -282,6 +307,59 @@
+     assert (O/'tests/suites.conf').read_bytes()==before
+ print('PASS build and registration failures preserve exact prior suites')
+ print('PASS caller integration normal/env-i; tree-only runtime reuse; child exact-key reuse')
++@contextlib.contextmanager
++def all_entries_leased():
++    fds=[]
++    try:
++        with store.mutex():
++            for eid,entry in store._load()['entries'].items():
++                fds.append(store._lock(eid,entry))
++        yield
++    finally:
++        for fd in fds: os.close(fd)
++
++# Three distinct runtime trees each reuse their own exact content key.
++for number in (3,4):
++    db['tree']=str(number)*40
++    db['agent']=str(number+2)*40
++    write(ROOT/'db.json',json.dumps(db))
++    before_events=len(events())
++    created=request('RUNTIME',runtime_args('agent-remotion-tree'+str(number)),minimal=True)
++    reused=request('RUNTIME',runtime_args('agent-remotion-tree'+str(number)+'reuse'))
++    assert 'status=created' in created.stdout and 'status=reused' in reused.stdout
++    assert len(events())==before_events+1
++print('PASS three runtime tree keys: original plus two new trees, each verified reuse')
++# Actual queued callers fail after each lifecycle boundary, preserving public bytes.
++for kind in ('CHILDVENV','RUNTIME'):
++    for number,point in enumerate(('creation:stage','creation:build','creation:publish','creation:seal','projection:suites.conf')):
++        db['backend']=format(number+10,'040x')
++        db['tree']=format(number+20,'040x')
++        write(ROOT/'db.json',json.dumps(db))
++        name=('venv-agent-child-' if kind=='CHILDVENV' else 'agent-remotion-')+'fault'+str(number)
++        args=[name,db['agent'],'child-base','agent-remotion-tree4'] if kind=='CHILDVENV' else runtime_args(name)
++        with all_entries_leased():
++            baseline=(W/'bench-store/index.json').read_bytes()
++            suites=(O/'tests/suites.conf').read_bytes()
++            reports={p.name:p.read_bytes() for p in (O/'tests/provision').iterdir()}
++            base_env['FIXTURE_FAIL_POINT']=point
++            # A crash after sealing must remain pending until explicit recovery.
++            if point=='creation:seal': base_env['FIXTURE_CRASH']='1'
++            request(kind,args,success=False,minimal=True)
++            flag=ROOT/'fault-fired'
++            assert flag.read_text()==point
++            flag.unlink()
++            base_env.pop('FIXTURE_FAIL_POINT')
++            base_env.pop('FIXTURE_CRASH',None)
++            if point=='creation:seal':
++                assert store.journal.exists()
++                store.recover()
++            assert not store.journal.exists()
++            assert (W/'bench-store/index.json').read_bytes()==baseline
++            assert (O/'tests/suites.conf').read_bytes()==suites
++            assert {p.name:p.read_bytes() for p in (O/'tests/provision').iterdir()}==reports
++            assert list((W/'bench-store/staging').iterdir())==[]
++            assert len(list((W/'bench-store/entries').iterdir()))==len(store._load()['entries'])
++        print('PASS queued failure/recovery',kind,point,flush=True)
+ size=sum(p.lstat().st_blocks*512 for p in ROOT.rglob('*'))
+ assert size<20*1024*1024,size
+ print('PASS footprint allocated='+str(size)+' real_installers=0 network=0 fixture='+str(ROOT))

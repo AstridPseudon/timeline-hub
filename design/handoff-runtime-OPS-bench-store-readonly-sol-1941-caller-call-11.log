@@ -1,0 +1,3 @@
+template:remotion-env-nodes:env identity changed
+PREFLIGHT FAILED name=agent-remotion-template agent=dddddddddddddddddddddddddddddddddddddddd
+missing_prerequisite=registration:template-or-exact-source-identity

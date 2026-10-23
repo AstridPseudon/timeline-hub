@@ -1,0 +1,2 @@
+2026-10-23T19:50:57Z child-venv source agent=dddddddddddddddddddddddddddddddddddddddd runtime=eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee requirements=requirements/proof.lock lock_sha256=5e457f5a2181499514106befd3b9fab8f9c2566b53a9e83e65f836b0c5fe81ca
+REFUSED: bench store: retained child source/client marker mismatch: .astrid-runtime-source-commit

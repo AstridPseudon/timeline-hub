@@ -1,0 +1,3 @@
+registration_template=remotion-env-nodes identity=validated
+PREFLIGHT FAILED name=agent-remotion-toolchain agent=dddddddddddddddddddddddddddddddddddddddd
+missing_prerequisite=selected-toolchain:requires-Node20.19.4/npm10.8.2

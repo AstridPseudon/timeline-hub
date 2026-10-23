@@ -1,0 +1,42 @@
+2026-10-23T19:51:04Z child-venv source agent=dddddddddddddddddddddddddddddddddddddddd runtime=ffffffffffffffffffffffffffffffffffffffff requirements=requirements/proof.lock lock_sha256=5e457f5a2181499514106befd3b9fab8f9c2566b53a9e83e65f836b0c5fe81ca
+2026-10-23T19:51:04Z child-venv stage=venv start budget=600s
+2026-10-23T19:51:04Z child-venv stage=venv complete
+2026-10-23T19:51:04Z child-venv stage=bootstrap-pip start budget=600s
+2026-10-23T19:51:04Z child-venv stage=bootstrap-pip complete
+2026-10-23T19:51:04Z child-venv stage=requirements start budget=600s
+2026-10-23T19:51:04Z child-venv stage=requirements complete
+2026-10-23T19:51:04Z child-venv stage=filter-requirements start budget=600s
+2026-10-23T19:51:04Z child-venv stage=filter-requirements complete
+2026-10-23T19:51:04Z child-venv stage=pinned-requirements start budget=600s
+2026-10-23T19:51:05Z child-venv stage=pinned-requirements complete
+2026-10-23T19:51:05Z child-venv stage=source-directories start budget=600s
+2026-10-23T19:51:05Z child-venv stage=source-directories complete
+2026-10-23T19:51:05Z child-venv stage=archive-agent start budget=600s
+2026-10-23T19:51:05Z child-venv stage=archive-agent complete
+2026-10-23T19:51:05Z child-venv stage=archive-runtime start budget=600s
+2026-10-23T19:51:05Z child-venv stage=archive-runtime complete
+2026-10-23T19:51:05Z child-venv stage=install-agent start budget=600s
+2026-10-23T19:51:05Z child-venv stage=install-agent complete
+2026-10-23T19:51:05Z child-venv stage=install-runtime start budget=600s
+2026-10-23T19:51:05Z child-venv stage=install-runtime complete
+2026-10-23T19:51:05Z child-venv stage=import-provenance start budget=600s
+2026-10-23T19:51:05Z child-venv stage=import-provenance complete
+2026-10-23T19:51:05Z child-venv stage=runtime-cli start budget=600s
+2026-10-23T19:51:05Z child-venv stage=runtime-cli complete
+2026-10-23T19:51:05Z child-venv stage=markers start budget=600s
+2026-10-23T19:51:05Z child-venv stage=markers complete
+2026-10-23T19:51:05Z child-venv stage=distribution-provenance start budget=600s
+2026-10-23T19:51:05Z child-venv stage=distribution-provenance complete
+2026-10-23T19:51:05Z child-venv stage=freeze start budget=120s
+2026-10-23T19:51:05Z child-venv stage=freeze complete
+2026-10-23T19:51:05Z child-venv stage=freeze-identity start budget=600s
+2026-10-23T19:51:05Z child-venv stage=freeze-identity complete
+2026-10-23T19:51:05Z child-venv stage=shebang-relocation start budget=600s
+2026-10-23T19:51:05Z child-venv stage=shebang-relocation complete
+2026-10-23T19:51:05Z child-venv stage=origin-relocation start budget=600s
+2026-10-23T19:51:05Z child-venv stage=origin-relocation complete
+2026-10-23T19:51:06Z child-venv stage=path-metadata-relocation start budget=600s
+2026-10-23T19:51:06Z child-venv stage=path-metadata-relocation complete
+2026-10-23T19:51:06Z child-venv stage=readonly-source start budget=600s
+2026-10-23T19:51:06Z child-venv stage=readonly-source complete
+created /tmp/w-76ff35a4d0/creator-fixture-2a6b2xen/work/bench-store/entries/child-c3debf98c631acc1d8a1fcbb69d45b963ee4063b8eefbd0c76e868baa771051d agent=dddddddddddddddddddddddddddddddddddddddd runtime=ffffffffffffffffffffffffffffffffffffffff remotion=agent-remotion-three registration=existing key=c3debf98c631acc1d8a1fcbb69d45b963ee4063b8eefbd0c76e868baa771051d requested_name=venv-agent-child-backend actual_agent=dddddddddddddddddddddddddddddddddddddddd actual_runtime=ffffffffffffffffffffffffffffffffffffffff provision_report=/tmp/w-76ff35a4d0/creator-fixture-2a6b2xen/orch/tests/provision/venv-agent-child-backend.txt provision_report_sha256=0deb48ca5912bac80669fe5bbd3733c5d6490faa1eb43dc94d0423f1ed46283f status=passed

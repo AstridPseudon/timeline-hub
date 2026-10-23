@@ -1,0 +1,2 @@
+registration_template=remotion-env-nodes identity=validated
+REFUSED: bench store: forced lifecycle failure: creation:build
