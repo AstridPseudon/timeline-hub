@@ -165,3 +165,44 @@ def read_assembly_proposal(session, task_id, attempt_id):
         return proposal
     except (KeyError, TypeError, ValueError, UnicodeError) as exc:
         raise TimelineEditError('settled assembly proposal is unavailable or changed') from exc
+
+
+def commit_assembly(session, proposal, *, idempotency_key, label, steps=None,
+                    merge="fields", reads=None, group_id=None, dry_run=False):
+    """Commit the exact settled proposal under its original requesting actor.
+
+    Requeueing a completed batch deliberately retains its original base and body:
+    Runtime can replay acceptance after a lost render-admission acknowledgement.
+    """
+    from .producer import build_producer_batch
+
+    # Runtime authenticates producer.guard, including the original managed output.
+    # Do not reread mutable task/output lifecycle before replaying an accepted key.
+    batch = build_producer_batch(proposal)
+    if (batch['project_id'], batch['timeline_id']) != (session.project_id, session.timeline_id):
+        raise TimelineEditError('proposal belongs to a different project or timeline')
+    if not isinstance(label, str) or not label.strip() or merge not in ('fields', 'atomic'):
+        raise TimelineEditError('assembly commit requires a label and fields or atomic merge')
+    if steps is None:
+        steps = [{'id': 'assembly', 'label': label, 'intent': batch['rationale'],
+                  'tags': [], 'command_ordinals': list(range(len(batch['commands']))),
+                  'patch': []}]
+    options = {'label': label, 'steps': copy.deepcopy(steps), 'merge': merge}
+    if reads is not None:
+        options['reads'] = copy.deepcopy(reads)
+    if group_id is not None:
+        options['group_id'] = group_id
+    base = {'revision_id': batch['base_revision_id'],
+            'publication_id': batch['base_publication_id']}
+    with session.outbox.locked():
+        state = session._state()
+        if state['pending'] or state['flight'] is not None:
+            if (not equal(state['pending'], batch['commands']) or state['base'] != base
+                    or not equal(state.get('commit_options'), options)
+                    or state.get('rationale') != batch['rationale']):
+                raise TimelineEditError('retry the original assembly commit before another publication')
+        else:
+            state.update(base=base, pending=batch['commands'], rationale=batch['rationale'],
+                         commit_options=options)
+            session.outbox.write(state)
+    return session.flush(idempotency_key=idempotency_key, dry_run=dry_run)

@@ -1107,9 +1107,8 @@ class RuntimeCommitService:
                                   intervening_records=[] if undo_of else _records(
                                       entries, CommitRejected, base, current), closures=closures,
                                   verified_media=verified_media, realm_id=context['realm_id'],
-                                  resolve_inputs=resolve_inputs, verified_producer=verified_producer)
-                        plan.steps = copy.deepcopy(original.steps)
-                        plan.label, plan.merge_mode = original.label, original.merge_mode
+                                  resolve_inputs=resolve_inputs, verified_producer=verified_producer,
+                                  commit_request=request, evaluated_head=current)
                 for record in plan.records:
                     if record['command']['op'] == 'timeline.inverse' and undo_steps is not None:
                         record['command']['args']['steps'] = copy.deepcopy(undo_steps)
