@@ -1155,10 +1155,12 @@ class RuntimeCommitService:
                         plan.bundle['source_mapping'].get('pinned_documents', []))
                 validate_final_candidate(
                     validation_bundle,
-                    baseline=bundle if current == base else head_bundle,
+                    baseline=(closures[restored_from['revision_id']] if restored_from is not None
+                              else bundle if current == base else head_bundle),
                     schema_inputs=schema_inputs,
                     realm_id=context.get('realm_id'),
-                    source_bundles=inverse_sources,
+                    source_bundles=[*inverse_sources, *closures.values()],
+                    restoration_records=plan.records if inverse_records or restore else (),
                 )
                 document = document_from_bundle(plan.bundle, source_bundles=inverse_sources,
                                                 inverse_records=inverse_records)
