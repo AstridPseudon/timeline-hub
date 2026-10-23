@@ -16,25 +16,52 @@ from tests.sdk.test_timeline_sync import initial_bundle
 
 
 def _install_history(generated):
-    """Expose the existing fake's accepted responses through the public history shape."""
+    """Expose accepted fake responses through the authenticated public history shape."""
+    bootstrap = copy.deepcopy(generated.head)
+    generated.bundles[bootstrap["revision_id"]]["base_parent"]["publication_id"] = bootstrap["publication_id"]
+
     def list_timeline_commits(project, timeline, *, cursor=None, limit):
         assert (project, timeline) == ("p", "t")
         items = [{
-            "publication_id": "pub0", "revision_id": "r0", "previous": None,
-            "receipt": {"receipt_id": "pub0"}, "intent": "bootstrap", "records": None,
-            "provider_version": "astrid-v1", "compiler_version": "m1", "publisher": "actor",
+            "publication_id": bootstrap["publication_id"], "revision_id": bootstrap["revision_id"],
+            "previous": None, "receipt": {"receipt_id": bootstrap["publication_id"]},
+            "intent": "bootstrap", "records": None,
+            "provider_version": None, "compiler_version": None, "publisher": None,
         }]
         for _raw, response in generated.accepted.values():
             data, receipt = response["data"], response["receipt"]
+            body = next(json.loads(raw) for raw, key in generated.calls
+                        if key == receipt["idempotency_key"])
+            label = data.get("label", body.get("label", "Timeline edit"))
+            steps = copy.deepcopy(data.get("steps", body.get("steps", [])))
+            merge_mode = data.get("merge_mode", body.get("merge", "fields"))
+            records = generated.records[receipt["receipt_id"]]
+            generated.bundles[data["accepted_revision_id"]]["base_parent"].update(
+                revision_id=data["accepted_revision_id"], publication_id=receipt["receipt_id"])
+            if not isinstance(records, dict):
+                records = {"commands": copy.deepcopy(records)}
+            else:
+                records = copy.deepcopy(records)
+            records.setdefault("commands", copy.deepcopy(generated.records[receipt["receipt_id"]]))
+            records.update(label=copy.deepcopy(label), steps=copy.deepcopy(steps), merge_mode=merge_mode)
+            command = body.get("commands", [{}])[0]
+            if command.get("op") == "timeline.inverse":
+                records.setdefault("undo_of", copy.deepcopy(command.get("args", {}).get("publications", [])))
+                if "steps" in command.get("args", {}):
+                    records.setdefault("undo_steps", copy.deepcopy(command["args"]["steps"]))
+            history_data = copy.deepcopy(data)
+            history_data.update(label=copy.deepcopy(label), steps=copy.deepcopy(steps), merge_mode=merge_mode)
+            history_receipt = copy.deepcopy(receipt)
+            history_receipt["result"] = copy.deepcopy(history_data)
             items.append({
-                "publication_id": receipt["receipt_id"], "revision_id": data["accepted_revision_id"],
+                "publication_id": receipt["receipt_id"], "revision_id": history_data["accepted_revision_id"],
                 "previous": {"revision_id": data["previous_revision_id"],
                              "publication_id": data["previous_publication_id"]},
-                "receipt": receipt, "intent": "recorded",
-                "records": {"commands": copy.deepcopy(generated.records[receipt["receipt_id"]])},
-                "provider_version": data["provider_version"], "compiler_version": data["compiler_version"],
-                "publisher": data["publisher"], "source": data.get("source"),
-                "label": data.get("label"),
+                "receipt": history_receipt, "intent": "recorded", "records": records,
+                "provider_version": history_data["provider_version"],
+                "compiler_version": history_data["compiler_version"],
+                "publisher": history_data["publisher"], "source": history_data.get("source"),
+                "label": label, "steps": copy.deepcopy(steps), "merge_mode": merge_mode,
             })
         return {"head": copy.deepcopy(generated.head), "items": items, "next_cursor": None}
 

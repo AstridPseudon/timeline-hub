@@ -521,26 +521,40 @@ def test_short_revision_strips_every_known_prefix():
     assert short_revision(None) == ""
 
 
-def test_normal_commit_conflict_keeps_head_and_has_no_force_overwrite(_restructure_runtime_fixture):  # noqa: F811
-    """A reused working copy uses the normal guarded commit and never overwrites a peer head."""
-    from astrid.sdk.timeline import open as open_timeline
-    from astrid.sdk.workspace_client import WorkspaceClientError
+def test_normal_commit_conflict_keeps_head_and_has_no_force_overwrite(
+        _restructure_runtime_fixture, tmp_path, capsys):  # noqa: F811
+    """The normal CLI refuses a stale sheet without a force-overwrite route."""
+    from astrid.packs.timeline import cli
+    from tests.sdk.test_timeline_sheet_native import edit_cell
 
     env = _restructure_runtime_fixture
-    checkout = Checkout.open(env.project, "t", client=env.client)
-    checkout.clip("p1").data["opaque"] = {"local": True}
-    peer = open_timeline(env.project, "t", client=env.client)
-    peer.clip("p2").data["opaque"] = {"peer": True}
-    peer.commit("Peer edit", idempotency_key="peer-edit")
+    parser = cli.build_parser(env.client)
+
+    def run(*args):
+        parsed = parser.parse_args([*args, "--project", env.project])
+        return parsed.handler(parsed)
+
+    assert run("show", "t", "--as", "sheet", "--native") == 0
+    sheet = capsys.readouterr().out
+    edited = edit_cell(sheet, "occurrence:occ-film/clip:p1", "1")
+    peer = parser.parse_args(["edit", "t", "--project", env.project,
+                              "--clip", "occurrence:occ-film/clip:p1", "--on", "1"])
+    assert peer.handler(peer) == 0
+    capsys.readouterr()
     before_document = copy.deepcopy(env.document())
     before_history = copy.deepcopy(env.client.timelines.history(env.project, "t", limit=200).data)
 
-    with pytest.raises((TimelineEditError, WorkspaceClientError)) as refused:
-        checkout.publish("Local edit", client=env.client, idempotency_key="local-edit")
-    assert "conflict" in str(refused.value).lower() or "changed" in str(refused.value).lower()
+    # The normal CLI's apply route reads the retained export, then refuses its
+    # stale base; it never offers a force overwrite or writes a new history row.
+    edited_path = tmp_path / "stale.sheet"
+    edited_path.write_text(edited)
+    apply_args = parser.parse_args(["apply", "t", str(edited_path), "--project", env.project, "--json"])
+    assert apply_args.handler(apply_args) == 1
+    assert "conflict" in capsys.readouterr().out.lower()
+
     assert env.document() == before_document
     assert env.client.timelines.history(env.project, "t", limit=200).data == before_history
 
-    with pytest.raises(TimelineEditError, match="force is unavailable"):
-        checkout.publish("Local edit", client=env.client, force=True)
-    assert env.document() == before_document
+    with pytest.raises(SystemExit) as force:
+        parser.parse_args(["apply", "t", str(edited_path), "--project", env.project, "--force"])
+    assert force.value.code == 2
