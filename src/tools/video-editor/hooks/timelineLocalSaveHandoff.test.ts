@@ -1,17 +1,31 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB } from 'fake-indexeddb';
-import { acceptedCommit } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
+import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import { createCommitOutbox, toOutboxJson } from '../commands/commitOutbox.ts';
 import { createLocalSaveSession } from '../commands/localSaveSession.ts';
-import { createDefaultTimelineConfig } from '../lib/defaults.ts';
+import { createDefaultTimelineConfig, withDefaultTimelineOutput } from '../lib/defaults.ts';
+import { buildTimelineData } from '../lib/timeline-data.ts';
+import type { TimelineConfig } from '../types/index.ts';
 import { createTimelineLocalSaveHandoff, type TimelineSaveSource } from './timelineLocalSaveHandoff.ts';
 
-async function environment(children = false) {
+async function environment(children = false, raw = false, rawIds = ['authored']) {
   const head = { projectId: 'project-commit', timelineId: 'timeline-commit', headRevisionId: 'r0', headPublicationId: 'p0' };
-  const source: TimelineSaveSource = { config: createDefaultTimelineConfig(), registry: { assets: {} }, head };
+  let source: TimelineSaveSource = { config: createDefaultTimelineConfig(), registry: { assets: {} }, head };
   const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' }, { children }).data.canonical_document;
   const { output: _derived, ...config } = source.config;
   document.parent_revision.payload = { ...document.parent_revision.payload, config, clips: [], registry: source.registry };
+  if (raw) {
+    const authored = { ...config, output: { resolution: null, file: null, opaque: { keep: null } }, pinnedShotGroups: null,
+      ...Object.fromEntries([['__proto__', { keep: null }], ['constructor', null]]),
+      opaque: { keep: [null, false] }, clips: rawIds.map((id, index) => ({ id, track: 'V1', at: index * 2, hold: 2, clipType: null,
+        opaque: { keep: null } })) };
+    document.parent_revision.payload.config = authored;
+    document.parent_revision.payload.clips = structuredClone(authored.clips);
+    const data = await buildTimelineData({ ...authored,
+      ...withDefaultTimelineOutput(authored as unknown as TimelineConfig) } as unknown as TimelineConfig, source.registry);
+    source = { config: data.config, registry: data.registry, head };
+  }
+  document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
   const initial = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
   const scope = { realmId: 'realm', actorId: 'actor', projectId: head.projectId, timelineId: head.timelineId };
   const outboxes = createCommitOutbox({ indexedDB: createFakeIndexedDB(), exclusiveLock: async (_key, work) => work() });
@@ -25,6 +39,67 @@ async function environment(children = false) {
 }
 
 describe('upstream local document handoff', () => {
+  it('keeps raw nulls, absence and opaque own keys through a real upstream projection and dependent edits', async () => {
+    const env = await environment(false, true);
+    const raw = structuredClone(env.initial.canonicalDocument);
+    expect(env.source.config.output.resolution).toBe('1280x720');
+    expect(env.source.config.pinnedShotGroups).toBeUndefined();
+    expect(env.source.config.clips[0].clipType).toBe('hold');
+    await env.handoff.capture(structuredClone(env.source));
+    expect(env.session.getDocument()).toEqual(raw);
+    expect((await env.outboxes.list(env.scope))[0].intents).toHaveLength(0);
+    const moved = structuredClone(env.source);
+    moved.config.clips[0].at = 1;
+    await env.handoff.capture(moved);
+    const trimmed = structuredClone(moved);
+    trimmed.config.clips = [{ id: 'authored', track: 'V1', at: 1, hold: 1 }];
+    await env.handoff.capture(trimmed);
+    const expected = structuredClone(raw);
+    for (const clips of [expected.parent_revision.payload.clips,
+      (expected.parent_revision.payload.config as Record<string, unknown>).clips] as Record<string, unknown>[][]) {
+      clips[0].at = 1;
+      clips[0].hold = 1;
+    }
+    expect(env.session.getDocument()).toEqual(expected);
+    const [owner] = await env.outboxes.list(env.scope);
+    expect(owner.intents).toHaveLength(2);
+    expect(owner.intents[1].basis).toEqual({ after: owner.intents[0].id });
+    expect(owner.intents[1].payload).toMatchObject({ documentIntent: { changes: [
+      { op: 'set', ref: 'parent', path: ['clips', 'id:authored', 'hold'], before: { state: 'present', value: 2 }, value: 1 },
+    ] } });
+    expect(owner.intents[1].payload).not.toHaveProperty('documentIntent.reads');
+    const rebuilt = structuredClone(env.source);
+    rebuilt.config.clips[0].at = 1;
+    rebuilt.config.clips[0].hold = 1;
+    await env.handoff.capture(rebuilt);
+    expect(env.session.getDocument()).toEqual(expected);
+    expect((await env.outboxes.list(env.scope))[0].intents).toHaveLength(2);
+    await env.session.dispose();
+  });
+
+  it('refuses an ambiguous display container clear without changing the raw document or its dependent chain', async () => {
+    const env = await environment(false, true);
+    const next = structuredClone(env.source);
+    next.config.output.resolution = undefined as unknown as string;
+    await expect(env.handoff.capture(next)).rejects.toThrow('explicit clear is unavailable');
+    expect(env.session.getDocument()).toEqual(env.initial.canonicalDocument);
+    expect((await env.outboxes.list(env.scope))[0].intents).toHaveLength(0);
+    const valid = structuredClone(env.source);
+    valid.config.clips[0].hold = 3;
+    await env.handoff.capture(valid);
+    expect((await env.outboxes.list(env.scope))[0].intents).toHaveLength(1);
+    await env.session.dispose();
+  });
+
+  it('refuses repaired display identities rather than using them to identify authored clips', async () => {
+    const env = await environment(false, true, ['authored-dup-1', 'authored-dup-2']);
+    expect(env.source.config.clips[0].id).toBe('authored');
+    await expect(env.handoff.capture(env.source)).rejects.toThrow('authored clips identity changed in projection');
+    expect(env.session.getDocument()).toEqual(env.initial.canonicalDocument);
+    expect((await env.outboxes.list(env.scope))[0].intents).toHaveLength(0);
+    await env.session.dispose();
+  });
+
   it('maps authored source items and registry while preserving opaque parent data and omitting derived output', async () => {
     const env = await environment();
     const next: TimelineSaveSource = structuredClone(env.source);

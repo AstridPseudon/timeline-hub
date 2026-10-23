@@ -22,6 +22,7 @@ import type { DataProvider, TimelineHeadRevision } from '@/tools/video-editor/da
 import type { TimelineDraftRecord } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import { canonicalJsonStringify, parseTimelineBundle, type TimelineBundleEnvelope } from '@/tools/video-editor/data/typed/timelineBundle.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import { readTimelineOriginalSaveBasis, type TimelineOriginalSaveBasis } from './timelineLocalSaveHandoff.ts';
 export { shouldAcceptPolledData } from '@/tools/video-editor/lib/timeline-save-utils.ts';
 export type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
 
@@ -68,6 +69,39 @@ export function useTimelineSave(
     initialData,
     resolveAssetUrl,
   });
+  const [originalLocalSaveBasis, setOriginalLocalSaveBasis] = useState<
+    { status: 'ready'; value: TimelineOriginalSaveBasis } | { status: 'unavailable'; reason: string } | { status: 'loading' } | null
+  >(null);
+  const originalHeadKey = canonicalJsonStringify(commit.data?.head ?? null);
+  useEffect(() => {
+    const original = commit.dataRef.current;
+    if (!provider.loadTimelineCommandBasis || !original?.head) {
+      setOriginalLocalSaveBasis(null);
+      return;
+    }
+    let cancelled = false;
+    const editSeq = commit.editSeqRef.current;
+    if (editSeq !== savedSeqRef.current || original.editProjection?.kind === 'local') {
+      setOriginalLocalSaveBasis({ status: 'unavailable', reason: 'Original verified read must precede local edits' });
+      return;
+    }
+    setOriginalLocalSaveBasis({ status: 'loading' });
+    void readTimelineOriginalSaveBasis(provider, timelineId, {
+      config: original.config, registry: original.registry, head: original.head,
+      ...(original.sourceItemsBySchemaRef !== undefined ? { bundle: {
+        schema_version: 1, itemsBySchemaRef: persistedTranscriptItems(original.sourceItemsBySchemaRef),
+        ...(original.transcriptReferences ? { transcriptReferences: original.transcriptReferences } : {}),
+      } } : {}),
+    }).then((value) => {
+      if (cancelled) return;
+      setOriginalLocalSaveBasis(commit.editSeqRef.current === editSeq
+        ? { status: 'ready', value }
+        : { status: 'unavailable', reason: 'Local edits preceded completion of the original verified read' });
+    }).catch((error: unknown) => {
+      if (!cancelled) setOriginalLocalSaveBasis({ status: 'unavailable', reason: error instanceof Error ? error.message : String(error) });
+    });
+    return () => { cancelled = true; };
+  }, [provider, timelineId, originalHeadKey, commit.dataRef, commit.editSeqRef]);
   const persistence = useTimelinePersistence({
     store,
     provider,
@@ -376,6 +410,8 @@ export function useTimelineSave(
     ownsRegistryMutation, canRollbackRegistryMutation, rollbackRegistryMutation]);
 
   return {
+    // Staged original-read assembly; session/outbox activation awaits the official v2 transport.
+    originalLocalSaveBasis,
     data: commit.data,
     dataRef: commit.dataRef,
     isConflictExhausted: persistence.isConflictExhausted,
