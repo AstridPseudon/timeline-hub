@@ -206,8 +206,17 @@ def test_identical_retry_after_restart_and_head_advance(realm):
 
 def test_modern_labels_steps_effects_reads_and_actor_roundtrip_after_restart(realm):
     service, commits, project, head, root = realm
+    seed_context = context(service, project, head, "modern-seed")
+    seed = prepared(commits, seed_context, revision="modern-seed")
+    payload = seed["canonical_document"]["parent_revision"]["payload"]
+    payload["config"]["clips"] = copy.deepcopy(payload["clips"])
+    seed["canonical_document"]["parent_revision"]["content_digest"] = digest(payload)
+    seed["document_digest"] = digest(seed["canonical_document"])
+    accept(commits, seed_context, seed)
+    head = commits.head(project, "main")
     ctx = context(service, project, head, "modern")
     request = ctx["request"]
+    request["commands"][0]["args"]["on"] = 3
     effect = {"op": "set", "ref": "parent", "path": ["clips", "id:clip", "at"],
               "before": {"state": "present", "value": 2}, "value": 3}
     reads = [{"kind": "field", "ref": "parent", "path": ["clips", "id:clip", "at"],
@@ -223,23 +232,28 @@ def test_modern_labels_steps_effects_reads_and_actor_roundtrip_after_restart(rea
     ctx["invocation"]["body"] = copy.deepcopy(request)
     ctx["request_hash"] = request_identity(ctx)
     value = prepared(commits, ctx, revision="modern-parent", on=3)
+    payload = value["canonical_document"]["parent_revision"]["payload"]
+    payload["config"]["clips"] = copy.deepcopy(payload["clips"])
+    value["canonical_document"]["parent_revision"]["content_digest"] = digest(payload)
+    value["document_digest"] = digest(value["canonical_document"])
     value["records"]["commands"][0]["command"]["args"]["on"] = 3
     value["records"]["commands"][0]["writes"] = [{"ref": "parent/clip:clip", "path": ["at"],
         "before": {"state": "present", "value": 2}, "after": {"state": "present", "value": 3}}]
     value["records"]["commands"][0]["bindings"] = [{
         "key": "doc.patch:0", "ref": "parent", "physical_ref": "parent",
-        "revision_id": value["canonical_document"]["parent_revision"]["revision_id"],
-        "content_digest": value["canonical_document"]["parent_revision"]["content_digest"],
+        "revision_id": seed["canonical_document"]["parent_revision"]["revision_id"],
+        "content_digest": seed["canonical_document"]["parent_revision"]["content_digest"],
         "boundary": {"base_revision_id": request["base_revision_id"],
                      "base_publication_id": request["base_publication_id"],
                      "evaluated_head": head, "step_id": "opening",
-                     "command_ordinal": 0, "phase": "input"},
+                     "command_ordinal": 0, "change_ordinal": 0, "phase": "input"},
         "policy": "fixed", "dependencies": [], "path": ["config", "clips", "id:clip", "at"],
         "change": effect, "write_range": [0, 1], "command_ordinal": 0,
         "change_ordinal": 0, "phase": "input",
     }]
     value["records"].update(label=request["label"], merge_mode="fields")
-    value["records"]["steps"] = [{**request["steps"][0], "patch": [effect], "dependencies": reads}]
+    dependencies = [{**read, "path": ["config", *read["path"]]} for read in reads]
+    value["records"]["steps"] = [{**request["steps"][0], "patch": [effect], "dependencies": dependencies}]
 
     spoofed = copy.deepcopy(value)
     spoofed["records"]["commands"][0]["bindings"][0]["content_digest"] = "sha256:" + "0" * 64
@@ -447,14 +461,20 @@ def test_failure_between_projection_steps_rolls_back_and_restart_retry_publishes
         restarted.close()
 
 
-def test_preview_is_validated_and_reserves_nothing(realm):
+@pytest.mark.parametrize("intervening", [False, True])
+def test_preview_is_validated_and_reserves_nothing(realm, intervening):
     service, commits, project, head, _ = realm
+    if intervening:
+        intervening_ctx = context(service, project, head, "intervening")
+        accept(commits, intervening_ctx, prepared(commits, intervening_ctx, revision="intervening"))
     ctx = context(service, project, head, dry_run=True)
-    value = prepared(commits, ctx)
+    evaluated_head = commits.head(project, "main")
+    value = prepared(commits, ctx, expected=evaluated_head)
     before = counts(service)
     preview = commits.preview(ctx, value, authorize=lambda: None)
     assert preview["receipt"] is None
-    assert preview["data"]["evaluated_head"] == head
+    assert preview["data"]["would_status"] == ("merged" if intervening else "accepted")
+    assert preview["data"]["evaluated_head"] == evaluated_head
     assert preview["data"]["commands"] == [r["command"] for r in value["records"]["commands"]]
     with pytest.raises(CommitRejected) as error:
         accept(commits, ctx, value)

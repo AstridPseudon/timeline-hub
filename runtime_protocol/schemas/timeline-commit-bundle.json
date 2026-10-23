@@ -2363,6 +2363,22 @@
               "minItems": 1,
               "type": "array",
               "uniqueItems": true
+            },
+            "steps": {
+              "additionalProperties": {
+                "items": {
+                  "$ref": "#/$defs/ID"
+                },
+                "minItems": 1,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "description": "When present, select nonempty unique step IDs for every target publication; omitted selects the whole target commits.",
+              "minProperties": 1,
+              "propertyNames": {
+                "$ref": "#/$defs/ID"
+              },
+              "type": "object"
             }
           },
           "required": [
@@ -4416,10 +4432,17 @@
                 "$ref": "#/$defs/AcceptedStep"
               },
               "type": "array"
+            },
+            "would_status": {
+              "enum": [
+                "accepted",
+                "merged"
+              ]
             }
           },
           "required": [
             "status",
+            "would_status",
             "base_revision_id",
             "base_publication_id",
             "evaluated_head",
