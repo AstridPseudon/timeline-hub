@@ -1,6 +1,7 @@
 """Check out, validate, or publish a detached timeline JSON document."""
 
 import argparse
+import copy
 import hashlib
 import json
 import shlex
@@ -15,7 +16,10 @@ from astrid.sdk.authoring_bundle import (
     plan_authoring_media,
 )
 from astrid.sdk.autobootstrap import ensure_runtime
+from astrid.sdk.timeline._command_state import CommandError
+from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.emitter import DocumentPatchError, emit_document_commands
+from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_swap_media
 from astrid.sdk.timeline.store import fetch_bundle
 from astrid.sdk.timeline.sync import TimelineSession
 from astrid.sdk.workspace_client import WorkspaceClient, resolve_runtime_connection
@@ -71,6 +75,33 @@ def resolve_media_rebinds(transport, project_id, candidate, base):
                 if value not in verified:
                     verified.append(value)
     return selections, verified
+
+
+def emit_document_publish_commands(base, candidate, media_selections, verified_media):
+    """Capture verified media swaps before emitting the remaining document patches."""
+    working = copy.deepcopy(base)
+    commands = []
+    for (owner, alias), pair in media_selections.items():
+        occurrence_id = owner.removeprefix("occurrence:")
+        placement = next(
+            row for row in working["placements"] if row["occurrence_id"] == occurrence_id
+        )
+        clips = working["shots"][placement["shot_id"]]["internal_timeline"]["clips"]
+        target = next(row for row in clips if row.get("asset") == alias)
+        select = f"{owner}/clip:{target['id']}"
+        try:
+            command = capture_occurrence_swap_media(
+                working, select, pair["old"], pair["new"], verified_media=verified_media
+            )
+            working = execute(working, [command], verified_media=verified_media).bundle
+        except (CommandError, KeyError, StopIteration, TypeError) as exc:
+            raise DocumentPatchError(
+                f"{owner}/asset:{alias} native same-alias media rebind is held: {exc}"
+            ) from exc
+        commands.append(command)
+    if working != candidate:
+        commands.extend(emit_document_commands(working, candidate))
+    return commands
 
 
 def dump(path, value):
@@ -234,16 +265,14 @@ def main():
             )
         else:
             base = session._bundle(session_state)
-        try:
-            emit_document_commands(base, plan["candidate"])
-        except DocumentPatchError as exc:
-            raise RuntimeError(f"document publish is held: {exc}") from exc
         imported = import_authoring_media(plan, transport)
-        _media_selections, verified_media = resolve_media_rebinds(
+        media_selections, verified_media = resolve_media_rebinds(
             transport, candidate["project_id"], imported["candidate"], base
         )
         try:
-            native = {"commands": emit_document_commands(base, imported["candidate"])}
+            native = {"commands": emit_document_publish_commands(
+                base, imported["candidate"], media_selections, verified_media
+            )}
         except DocumentPatchError as exc:
             raise RuntimeError(f"document publish is held: {exc}") from exc
     # Save the durable rewrite separately; preserve the editable source file for
@@ -290,6 +319,7 @@ def main():
         publication = session.commit_many(
             native["commands"], idempotency_key=args.idempotency_key, via="script",
             verified_media=verified_media, label="Publish document",
+            merge="atomic",
             base={"revision_id": candidate["base_parent"]["revision_id"],
                   "publication_id": base_publication_id},
         )

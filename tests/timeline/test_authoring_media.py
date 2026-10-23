@@ -313,6 +313,52 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
     assert len(stale_workspace.calls) == 1
 
 
+def test_document_publish_captures_verified_media_before_document_patches():
+    script = Path(__file__).parents[2] / "astrid/packs/rendering/docs/scripts/timeline_document.py"
+    spec = importlib.util.spec_from_file_location("timeline_document_media_capture_test", script)
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+
+    base = bundle()
+    base["placements"][0].update(source_offset=0, speed=1)
+    base["base_placements"]["occ-1"].update(source_offset=0, speed=1)
+    shot = next(iter(base["shots"].values()))
+    entry = shot["internal_timeline"]["registry"]["assets"]["old-picture"]
+    entry.update(generationId="generation-old", variantId="variant-old")
+    old = {
+        "asset": "old-picture", "generation_id": "generation-old",
+        "variant_id": "variant-old", "object_id": OLD,
+        "catalog_digest": "sha256:" + "a" * 64,
+    }
+    new = {
+        "asset": "old-picture", "generation_id": "generation-new",
+        "variant_id": "variant-new", "object_id": "sha256:" + "2" * 64,
+        "catalog_digest": "sha256:" + "b" * 64,
+    }
+    verified = [
+        {"selection": old, "media_type": "image/png", "size": 10},
+        {"selection": new, "media_type": "image/png", "size": 10},
+    ]
+    owner = "occurrence:occ-1"
+    clip = next(row for row in shot["internal_timeline"]["clips"] if row.get("asset") == "old-picture")
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_swap_media
+
+    captured = capture_occurrence_swap_media(
+        base, owner + "/clip:" + clip["id"], old, new, verified_media=verified
+    )
+    candidate = execute(base, [captured], verified_media=verified).bundle
+    commands = helper.emit_document_publish_commands(
+        base, candidate, {(owner, "old-picture"): {"old": old, "new": new}}, verified
+    )
+
+    assert [command["op"] for command in commands] == ["occurrence.swap-media"]
+    assert commands[0]["args"]["old_media"] == old
+    assert commands[0]["args"]["media"] == new
+    assert commands[0]["bindings"]["media.target"] == owner + "/clip:" + clip["id"]
+    assert commands[0]["reads"]
+
+
 @pytest.mark.integration  # a real Runtime from a second checkout
 def test_real_runtime_import_and_parent_publication_roundtrip(tmp_path):
     from runtime_protocol import service as service_module
