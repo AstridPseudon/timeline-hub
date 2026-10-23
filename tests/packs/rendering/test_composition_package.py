@@ -17,8 +17,9 @@ from scripts import gen_effect_registry
 
 ROOT = Path(__file__).resolve().parents[3]
 REMOTION = ROOT / "remotion"
-SHA256 = "21fde4d2a5d62a83f97a85d4b8d9f9d3f707a6489c07eb421c6331eccf893e6e"
-INTEGRITY = "sha512-Bgf9lHdk3CJCTsA3Jbd5WW9UYCHEZQTF3VFM1YO6dimZ+q8bQ8cX6CZ4FCfClBNgg10DQ1bozGMqFCpkGNXvvw=="
+ARTIFACT = "banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz"
+SHA256 = "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234"
+INTEGRITY = "sha512-Ajl7lyCbJqbbOpHKEr2xlhFw85hWyirlTU1Dq63BNNUdHYfqgzLXljmudP359uKH6yBxSBMPTDoHLxgiDt65oQ=="
 REQUIRED_EXPORTS = (".", "./evaluation", "./theme-api", "./registries", "./effects.generated",
                     "./animations.generated", "./transitions.generated", "./registry.generated")
 
@@ -29,19 +30,19 @@ def _stage_locked_package(project: Path) -> tuple[Path, dict]:
     cli.write_text("// CLI")
     package = project / "node_modules/@banodoco/timeline-composition"
     package.parent.mkdir(parents=True)
-    with tarfile.open(REMOTION / "artifacts/banodoco-timeline-composition-0.0.14.tgz") as archive:
+    with tarfile.open(REMOTION / "artifacts" / ARTIFACT) as archive:
         archive.extractall(project)
     (project / "package").rename(package)
     return package, json.loads((package / "package.json").read_text())
 
 
 def test_locked_release_is_built_and_requires_no_separate_schema_or_theme(tmp_path):
-    artifact = REMOTION / "artifacts/banodoco-timeline-composition-0.0.14.tgz"
+    artifact = REMOTION / "artifacts" / ARTIFACT
     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
     lock = json.loads((REMOTION / "package-lock.json").read_text())
     package = lock["packages"]["node_modules/@banodoco/timeline-composition"]
     assert package["version"] == "0.0.14"
-    assert package["resolved"] == "file:artifacts/banodoco-timeline-composition-0.0.14.tgz"
+    assert package["resolved"] == f"file:artifacts/{ARTIFACT}"
     assert package["integrity"] == INTEGRITY
     with tarfile.open(artifact) as archive:
         manifest_file = archive.extractfile("package/package.json")
@@ -73,12 +74,18 @@ def test_locked_release_is_built_and_requires_no_separate_schema_or_theme(tmp_pa
     assert remotion_runtime.remotion_install_problem(package.parents[2]) is None
 
 
-def test_public13_evaluation_admits_valid_source_and_rejects_four_forged_sources(tmp_path):
+def test_public_evaluation_admits_valid_source_and_rejects_four_forged_sources(tmp_path):
     project = tmp_path / "api"
     _stage_locked_package(project)
     script = r'''
 import assert from 'node:assert/strict';
-import {AudioEnvelopeError, encodedEnvelopeSource} from '@banodoco/timeline-composition/evaluation';
+import {AudioEnvelopeError, clipOpacity, computeMediaTrim, encodedEnvelopeSource,
+  getSanitizedPlaybackRate} from '@banodoco/timeline-composition/evaluation';
+
+assert.deepEqual(computeMediaTrim({from: 0.5, to: 1}, 30), {trimBefore: 15, trimAfter: 30});
+assert.equal(getSanitizedPlaybackRate(1.5), 1.5);
+assert.equal(getSanitizedPlaybackRate(0), 1);
+assert.equal(clipOpacity({hold: 1, opacity: 0.5}, 0, 30), 0.5);
 
 const envelope = {keyframes: [{at: 0, value: 1}, {at: 1, value: 1}]};
 const prepared = {
