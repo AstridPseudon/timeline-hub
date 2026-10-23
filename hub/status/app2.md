@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-23T03:52:07Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 2m -->
-# app2 board, 2026-10-23T03:50:01Z
+<!-- app2 | 2026-10-23T03:53:30Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 0m -->
+# app2 board, 2026-10-23T03:53:22Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | P1 | Real corpus + mounted split/trim/Agent/lostACK/restart | Luna; Sol repair | production fields-merge seam + compatible consumers | blocked:app+agent | ap2-P1-fixture-review-0343 | R1 integrated42PASS; encoder14PASS on195/tree991c. Actual mixed chain UNEXECUTED | corpus52e9→3da84905; vectors14424→53684; encoder19500aa36 |
@@ -7,7 +7,7 @@
 | P1-anchor | Four original legacy timing positives | Luna audit | Agent V2 implementing resolved D12 | blocked:agent | audit0202 PASS; Agent0329 active | No authentic omitted binding. Original fixtures unchanged; re-credit after four positives+create/modify/invalidate negatives pass | no Proof changes |
 | P1-chain-source | Current-base exact original chain test | Sol after Luna FAIL; Luna review | App production authoritative reads/intent | blocked:app | ap2-P1-fixture-review-0343 | BOUNDED fidelity PASS, execution NOT READY.2collection/tsc/lint/diff PASS; no body. Strict merged expected retained | 3ad0e69404 on integrated9eda |
 | P2 | three-products gesture tour | Luna | A2,A3 | blocked:app | farm-readiness-final-review PASS | Reviewed handoff; actual commits/network+Runtime history/fields/reload/undo UNEXECUTED | — |
-| P3 | Original Gate-5 new path, local H6 service | Luna high | A2 9eda + R2 cedc MERGED | doing | ap2-P3-gate5-h6-0348 | H6 READY direction applied; existing-runner source adaptation + exact single service execution dispatched. No body credit yet | base9eda |
+| P3 | Original Gate-5 new path, local H6 service | Luna high | A2 9eda + R2 cedc MERGED | doing | ap2-P3-gate5-h6-0348 | Single local service ap2-P3-gate5-h6-0348-ap2-P3-gate5-h6-0348-1023035250-19140 RUNNING; no result/credit yet | base9eda |
 | P4 | CLI/Python/sheet;10notes/stepundo/conflict/rerun | Luna | normal34e+G2/G3/R2 | blocked:agent | owner five-file0314 PASS | 15 fake/detached controls + exact1HTTPcollection/donor bytes PASS. Actual Runtime/CLI/history lifecycle open | owner d7b8e1206 |
 | P4-HTTP | Original CLI/sheet clip:a0→5/show/history | Luna | compatible normal34e owner join | blocked:agent | source0242 PASS; service0343 PASS | One node SOURCE only; actualHTTP bodyUNEXECUTED. Existing suite now exact34e | ddff imported TEST-ONLY in d7b8 |
 | P4-ten-note-HTTP-source | Ten notes one commit/per-step inverse/redo | Luna | actual public steps undo API | blocked:agent | ap2-P4-ten-note-wire-review-0337 FAIL | Actual TimelineSession.undo lacks steps; Anycast masks TypeError. No redmerge/body; Agent request0341; Proof first-return on owner source | b4f4ba00e |
