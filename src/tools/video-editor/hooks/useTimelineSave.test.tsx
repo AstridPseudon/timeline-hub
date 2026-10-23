@@ -9,6 +9,7 @@ import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
 import { json, runtimeFixture } from '@/test/fakeWorkspaceRuntime.ts';
 import type { HistoryEntry, HistoryPage, CommitRequest } from '@/integrations/runtime/timeline-commit-types.ts';
 import { useTimelineSave } from './useTimelineSave';
+import type { UsePollSyncQueries } from './usePollSync';
 import { useClipEditing } from './useClipEditing';
 import { VideoEditorRuntimeProvider } from '../contexts/VideoEditorRuntimeContext';
 import { createTimelineStore } from './timelineStore';
@@ -78,6 +79,7 @@ interface SetupResult {
     unmount: () => void;
   };
   saveTimeline: ReturnType<typeof vi.fn>;
+  poll: (data: TimelineData) => void;
   toast: { error: ReturnType<typeof vi.fn>; success: ReturnType<typeof vi.fn> };
 }
 
@@ -96,7 +98,7 @@ function setup(
     ...(original ? { loadTimelineCommandBasis: original.loadBasis } : {}),
     ...original?.capabilities,
   };
-  const queries = {
+  const queries: UsePollSyncQueries = {
     timelineQuery: { data: undefined, isLoading: false },
     assetRegistryQuery: { data: undefined },
   };
@@ -133,7 +135,10 @@ function setup(
     },
     { wrapper },
   );
-  return { hook, saveTimeline, toast };
+  return { hook, saveTimeline, toast, poll(data) {
+    queries.timelineQuery.data = data;
+    hook.rerender();
+  } };
 }
 
 async function flush() {
@@ -164,6 +169,175 @@ describe('useTimelineSave — recovered draft durability', () => {
     vi.clearAllTimers();
     vi.useRealTimers();
   });
+
+  it.each(['before poll adoption', 'during original read', 'after owner ready'] as const)(
+    'traces split ACK -> Agent head -> inspector Source In at %s', async (boundary) => {
+      const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
+      const locks = new Set<string>();
+      Object.defineProperty(navigator, 'locks', { configurable: true, value: {
+        request: async (name: string, _options: unknown, work: (lock: object | null) => Promise<unknown>) => {
+          if (locks.has(name)) return work(null);
+          locks.add(name);
+          try { return await work({}); } finally { locks.delete(name); }
+        },
+      } });
+      const scope = { realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-1' };
+      const head = { projectId: scope.projectId, timelineId: scope.timelineId, headRevisionId: 'r0', headPublicationId: 'p0' };
+      const config = createDefaultTimelineConfig();
+      config.clips = [{ id: 'p1-chain-source', at: 0, track: 'V1', clipType: 'media', asset: 'p1-video', from: 0, to: 8, speed: 1, hold: 8,
+        app: { opaque: { keep: null, ordered: [false, 0, ''] }, astrid: { for: 8 }, 'org.example': { clear: null } } }];
+      const registry = { assets: { 'p1-video': { file: 'p1-video.mp4', type: 'video/mp4', duration: 8 } } };
+      const reply = (value: typeof config, revision: string, publication: string, baseRevision: string, basePublication: string) => {
+        const response = acceptedCommit({ revision_id: revision, publication_id: publication },
+          { revision_id: baseRevision, publication_id: basePublication }, { timelineId: scope.timelineId });
+        const document = response.data.canonical_document;
+        document.parent_revision.payload = { config: JSON.parse(JSON.stringify(value)), clips: JSON.parse(JSON.stringify(value.clips)), registry, occurrences: [] };
+        document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
+        response.data.document_digest = fixtureDigest(document);
+        return { response, accepted: { revisionId: revision, publicationId: publication },
+          canonicalDocument: document, graph: {}, receipt: response.receipt };
+      };
+      const initial = reply(config, 'r0', 'p0', 'r0', 'p0');
+      let latest = { head: initial.accepted, canonicalDocument: initial.canonicalDocument };
+      let finishRead: (() => void) | undefined;
+      const loadBasis = vi.fn(async () => latest);
+      const send = vi.fn<NonNullable<DataProvider['commitTimeline']>>();
+      let acknowledge!: (value: Awaited<ReturnType<NonNullable<DataProvider['commitTimeline']>>>) => void;
+      send.mockImplementationOnce(() => new Promise((resolve) => { acknowledge = resolve; }));
+      const data = await buildTimelineData(config, registry, undefined, 1, undefined, head);
+      const harness = setup(async () => { throw new Error('Legacy save must not be called'); }, undefined, {
+        data, loadBasis, capabilities: { commitTimeline: send,
+          getRecoverableIdentity: vi.fn(async () => ({ actorId: scope.actorId, realmId: scope.realmId })) },
+      });
+      const editing = renderHook(() => useClipEditing({
+        dataRef: harness.hook.result.current.dataRef,
+        resolvedConfig: harness.hook.result.current.dataRef.current?.resolvedConfig ?? null,
+        selectedClipId: harness.hook.result.current.selectedClipId,
+        selectedTrack: null, currentTime: 2, selectClip: vi.fn(), setSelectedTrackId: vi.fn(),
+        applyEdit: harness.hook.result.current.applyEdit,
+      }));
+      try {
+        await vi.waitFor(() => expect(harness.hook.result.current.localSaveState?.ownerId).toBeTruthy());
+        await settleInitialRecoveryCheck();
+        expect(harness.hook.result.current.originalLocalSaveBasis).toMatchObject({ status: 'ready', value: { initial: latest } });
+        await act(async () => { editing.result.current.handleSplitClipAtTime('p1-chain-source', 2); });
+        await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+        await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(1));
+        const rightId = harness.hook.result.current.selectedClipId!;
+        expect(rightId).not.toBe(config.clips[0].id);
+        const splitConfig = structuredClone(harness.hook.result.current.dataRef.current!.config);
+        const split = reply(splitConfig, 'r1', 'p1', 'r0', 'p0');
+        latest = { head: split.accepted, canonicalDocument: split.canonicalDocument };
+        await act(async () => { acknowledge(split); });
+        await vi.waitFor(() => expect(harness.hook.result.current.localSaveState).toMatchObject({ status: 'saved' }));
+        expect(harness.hook.result.current.dataRef.current?.head?.headRevisionId).toBe('r1');
+        const oldOwner = harness.hook.result.current.localSaveState!.ownerId;
+        const [acceptedOwner] = await createCommitOutbox().list(scope);
+        expect(acceptedOwner.intents).toHaveLength(0);
+
+        // Exact native-move output established by P1's real Agent run; no local executor.
+        const agentConfig = structuredClone(splitConfig);
+        const right = agentConfig.clips.find((clip) => clip.id === rightId)!;
+        Object.assign(right, { at: 3, app: { ...right.app, astrid: { fixed_start: true, for: 6 } } });
+        const agent = reply(agentConfig, 'ra', 'pa', 'r1', 'p1');
+        latest = { head: agent.accepted, canonicalDocument: agent.canonicalDocument };
+        const agentData = await buildTimelineData(agentConfig, registry, undefined, 2, undefined,
+          { ...head, headRevisionId: 'ra', headPublicationId: 'pa' });
+        expect(agentData.config.clips).toEqual(agentConfig.clips);
+        expect(agent.canonicalDocument.parent_revision.payload.clips).toEqual(agentConfig.clips);
+        if (boundary === 'during original read') loadBasis.mockImplementationOnce(() => new Promise((resolve) => {
+          finishRead = () => resolve(latest);
+        }));
+        act(() => harness.poll(agentData));
+        if (boundary === 'before poll adoption') {
+          expect(harness.hook.result.current.dataRef.current?.head?.headRevisionId).toBe('r1');
+          expect(harness.hook.result.current.localSaveState?.ownerId).toBe(oldOwner);
+        }
+        if (boundary !== 'before poll adoption') {
+          await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+          expect(harness.hook.result.current.dataRef.current?.head?.headRevisionId).toBe('ra');
+          if (boundary === 'during original read') {
+            expect(finishRead).toBeTypeOf('function');
+            expect(harness.hook.result.current.originalLocalSaveBasis).toEqual({ status: 'loading' });
+          } else {
+            await vi.waitFor(() => expect(harness.hook.result.current.localSaveState?.ownerId).not.toBe(oldOwner));
+            expect(harness.hook.result.current.originalLocalSaveBasis).toMatchObject({ status: 'ready', value: { initial: latest } });
+          }
+        }
+        const capture = vi.spyOn(harness.hook.result.current.localDocumentSave!, 'capture');
+        editing.rerender();
+        const displayed = structuredClone(harness.hook.result.current.dataRef.current!);
+        expect(displayed.config.clips.find((clip) => clip.id === rightId)).toMatchObject({ from: 0, to: 8, hold: 6, speed: 1 });
+        await act(async () => { editing.result.current.handleSelectedClipChange({ from: 3 }); });
+        expect(capture).toHaveBeenCalledTimes(1);
+        expect(capture.mock.calls[0][1]).toMatchObject({ kind: 'trim', clipId: rightId, patch: { from: 3 },
+          config: displayed.config, registry: displayed.registry });
+        expect(harness.hook.result.current.dataRef.current?.config.clips.find((clip) => clip.id === rightId))
+          .toEqual({ ...displayed.config.clips.find((clip) => clip.id === rightId), from: 3 });
+        if (boundary === 'during original read') {
+          await act(async () => { finishRead!(); });
+          await expect(capture.mock.results[0].value).rejects.toThrow('Local edits preceded the original verified read');
+          await act(async () => {
+            await expect(harness.hook.result.current.flushPendingSave()).rejects.toThrow('Local edits preceded the original verified read');
+          });
+          expect(harness.hook.result.current.originalLocalSaveBasis).toMatchObject({ status: 'unavailable', reason: expect.stringContaining('Local edits preceded completion') });
+          expect(harness.hook.result.current.localSaveState).toMatchObject({ status: 'error', error: {
+            message: 'Local edits preceded the original verified read; draft retained' } });
+          expect((await createCommitOutbox().list(scope)).every((owner) => !owner.intents.length && !owner.pending)).toBe(true);
+          expect(send).toHaveBeenCalledTimes(1);
+          expect((await loadTimelineDraft(scope.timelineId))?.draft.config.clips.find((clip) => clip.id === rightId)?.from).toBe(3);
+        } else {
+          await capture.mock.results[0].value;
+          const owners = await createCommitOutbox().list(scope);
+          const owner = owners.find((value) => value.intents.length)!;
+          expect(owner.ownerId).toBe(boundary === 'before poll adoption' ? oldOwner : harness.hook.result.current.localSaveState?.ownerId);
+          const intent = owner.intents[0];
+          expect(intent.basis).toEqual(boundary === 'before poll adoption'
+            ? { after: acceptedOwner.accepted!.intentId } : { head: agent.accepted });
+          const patch = (intent.payload as unknown as { documentIntent: { changes: unknown[]; reads: unknown[]; step: { id: string } } }).documentIntent;
+          expect(patch.changes).toEqual([{ op: 'set', ref: 'parent', path: ['clips', `id:${rightId}`, 'from'],
+            before: { state: 'present', value: 0 }, value: 3 }]);
+          expect(intent.payload).toMatchObject({ after: { parent_revision: { payload: {
+            config: { clips: expect.arrayContaining([expect.objectContaining({ id: rightId, from: 3, hold: 6 })]) },
+            clips: expect.arrayContaining([expect.objectContaining({ id: rightId, from: 3, hold: 6 })]),
+          } } } });
+          expect(patch.reads).toEqual(expect.arrayContaining([{ kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${rightId}`, 'at'],
+            state: { state: 'present', value: boundary === 'before poll adoption' ? 2 : 3 } },
+          { kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${rightId}`, 'from'], state: { state: 'present', value: 0 } }]));
+          let finishSend!: () => void;
+          send.mockImplementationOnce(() => new Promise((resolve, reject) => {
+            finishSend = () => boundary === 'before poll adoption'
+              ? reject(new ApiError(409, 'conflict', 'Agent changed the captured timing read', '', { status: 'conflict', reason: 'dependency_changed' }))
+              : resolve(reply(harness.hook.result.current.dataRef.current!.config, 'r2', 'p2', 'ra', 'pa'));
+          }));
+          await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+          await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(2));
+          const [request, key] = send.mock.calls[1];
+          expect(request).toMatchObject({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
+            base_revision_id: boundary === 'before poll adoption' ? 'r1' : 'ra',
+            base_publication_id: boundary === 'before poll adoption' ? 'p1' : 'pa', merge: 'fields', dry_run: false,
+            source: { via: 'app' }, label: 'Edit timeline', commands: [{ op: 'doc.patch', args: { changes: patch.changes } }],
+            reads: patch.reads, steps: [{ id: patch.step.id, command_ordinals: [0], patch: patch.changes }] });
+          const pending = (await createCommitOutbox().list(scope)).find((value) => value.ownerId === owner.ownerId)!;
+          expect(pending.pending?.request.key).toBe(key);
+          expect(pending.pending?.request.body).toBe(JSON.stringify(request));
+          expect(pending.intents[0]).toEqual(intent);
+          await act(async () => { finishSend(); });
+          await vi.waitFor(() => expect(harness.hook.result.current.localSaveState?.status)
+            .toBe(boundary === 'before poll adoption' ? 'conflict' : 'saved'));
+          expect(harness.hook.result.current.dataRef.current?.config.clips.find((clip) => clip.id === rightId))
+            .toEqual({ ...right, from: boundary === 'before poll adoption' ? 0 : 3 });
+        }
+        expect(harness.saveTimeline).not.toHaveBeenCalled();
+      } finally {
+        finishRead?.();
+        editing.unmount();
+        harness.hook.unmount();
+        await vi.waitFor(() => expect(locks.size).toBe(0));
+        if (descriptor) Object.defineProperty(navigator, 'locks', descriptor);
+        else Reflect.deleteProperty(navigator, 'locks');
+      }
+    });
 
   it('persists an inspector trim of the locally split new ID while its split is awaiting acceptance', async () => {
     const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
