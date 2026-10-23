@@ -5,6 +5,7 @@ import type { CommitRequest } from '../../../src/integrations/runtime/timeline-c
 import { APP_ENTRY_ROUTE, commandOutboxes, expectConnected, firstTrackName, test as appTest } from './support/app.ts';
 import { ASTRID_PYTHON, AstridCli } from './support/astrid.ts';
 import { harnessUnavailableReason, PRODUCT_ACTOR, type DirectHarness } from './support/harness.ts';
+<<<<<<< HEAD
 import {
   diagnosticObservedVisibility,
   diagnosticListener,
@@ -12,6 +13,9 @@ import {
   logPriorityDiagnostic,
   redactDiagnosticText,
 } from './p1-diagnostic-safety.ts';
+=======
+import { logDiagnostic, logPriorityDiagnostic, redactDiagnosticText, redactDiagnosticValue } from './p1-diagnostic-safety.ts';
+>>>>>>> hub/tl/integration
 
 const CEILING = { timeout: 90_000 };
 const COMMITS = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
