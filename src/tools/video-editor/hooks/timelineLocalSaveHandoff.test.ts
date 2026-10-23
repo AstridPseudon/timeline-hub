@@ -5,7 +5,7 @@ import { createCommitOutbox, toOutboxJson } from '../commands/commitOutbox.ts';
 import { createLocalSaveSession } from '../commands/localSaveSession.ts';
 import { createDefaultTimelineConfig, withDefaultTimelineOutput } from '../lib/defaults.ts';
 import { buildTimelineData } from '../lib/timeline-data.ts';
-import type { TimelineConfig } from '../types/index.ts';
+import type { AssetRegistry, TimelineConfig } from '../types/index.ts';
 import { createTimelineLocalSaveHandoff, type TimelineSaveSource } from './timelineLocalSaveHandoff.ts';
 
 const contractFixture = vi.hoisted(() => ({ digest: 'sha256:unsupported-test-fixture' }));
@@ -18,9 +18,9 @@ vi.mock('@/integrations/runtime/generated-contract-metadata.ts', async (importOr
 
 afterEach(() => { contractFixture.digest = 'sha256:unsupported-test-fixture'; });
 
-async function environment(children = false, raw = false, rawIds = ['authored'], rawApp?: Record<string, unknown>) {
+async function environment(children = false, raw = false, rawIds = ['authored'], rawApp?: Record<string, unknown>, asset?: { key: string; registry: AssetRegistry; mirror?: boolean | Record<string, unknown>; rawRegistry?: Record<string, unknown> }) {
   const head = { projectId: 'project-commit', timelineId: 'timeline-commit', headRevisionId: 'r0', headPublicationId: 'p0' };
-  let source: TimelineSaveSource = { config: createDefaultTimelineConfig(), registry: { assets: {} }, head };
+  let source: TimelineSaveSource = { config: createDefaultTimelineConfig(), registry: asset?.registry ?? { assets: {} }, head };
   const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' }, { children }).data.canonical_document;
   const { output: _derived, ...config } = source.config;
   document.parent_revision.payload = { ...document.parent_revision.payload, config, clips: [], registry: source.registry };
@@ -28,12 +28,17 @@ async function environment(children = false, raw = false, rawIds = ['authored'],
     const authored = { ...config, output: { resolution: null, file: null, opaque: { keep: null } }, pinnedShotGroups: null,
       ...Object.fromEntries([['__proto__', { keep: null }], ['constructor', null]]),
       opaque: { keep: [null, false] }, clips: rawIds.map((id, index) => ({ id, track: 'V1', at: index * 2, hold: 2, clipType: null,
-        opaque: { keep: null }, ...(rawApp ? { app: rawApp } : {}) })) };
+        opaque: { keep: null }, ...(rawApp ? { app: rawApp } : {}), ...(asset ? { asset: asset.key } : {}) })) };
     document.parent_revision.payload.config = authored;
+    if (asset?.mirror) document.parent_revision.payload.config.registry = structuredClone(asset.mirror === true ? source.registry : asset.mirror);
     document.parent_revision.payload.clips = structuredClone(authored.clips);
     const data = await buildTimelineData({ ...authored,
       ...withDefaultTimelineOutput(authored as unknown as TimelineConfig) } as unknown as TimelineConfig, source.registry);
     source = { config: data.config, registry: data.registry, head };
+    if (asset?.rawRegistry) {
+      document.parent_revision.payload.registry = asset.rawRegistry;
+      if (asset.mirror) document.parent_revision.payload.config.registry = structuredClone(asset.rawRegistry);
+    }
   }
   document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
   const initial = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
@@ -49,6 +54,89 @@ async function environment(children = false, raw = false, rawIds = ['authored'],
 }
 
 describe('upstream local document handoff', () => {
+  it('binds declared timing reads to the original input, preserves raw nulls, and refuses a stale gesture basis', async () => {
+    const env = await environment(false, true);
+    const original = structuredClone({ kind: 'trim' as const, clipId: 'authored', patch: { hold: 3 }, config: env.source.config, registry: env.source.registry });
+    const next = structuredClone(env.source);
+    next.config.clips[0].hold = 3;
+    await env.handoff.capture(next, original);
+    const [stored] = await env.outboxes.list(env.scope);
+    const intent = stored.intents[0].payload.documentIntent as Record<string, unknown>;
+    expect(intent.merge).toBe('fields');
+    expect(intent.step).toMatchObject({ intent: 'Trim authored: {"hold":3}' });
+    expect(intent.reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'output', 'fps'],
+      state: { state: 'absent' } });
+    expect(intent.reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:authored', 'clipType'],
+      state: { state: 'present', value: null } });
+    expect(intent.reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:authored', 'asset'],
+      state: { state: 'absent' } });
+    expect(intent.reads).not.toContainEqual(expect.objectContaining({ kind: 'scope' }));
+    expect(intent.reads).not.toContainEqual(expect.objectContaining({ path: ['config', 'pinnedShotGroups'] }));
+    const stale = structuredClone(next);
+    stale.config.clips[0].hold = 4;
+    const document = env.session.getDocument();
+    await expect(env.handoff.capture(stale, original)).rejects.toThrow('gesture read basis differs');
+    expect(env.session.getDocument()).toEqual(document);
+    expect((await env.outboxes.list(env.scope))[0].intents).toHaveLength(1);
+    await env.session.dispose();
+  });
+
+  it.each(['absent', 'null'] as const)('guards the raw %s assets ancestor instead of inventing a selected entry', async (layout) => {
+    const rawRegistry = layout === 'null' ? { assets: null } : {};
+    const env = await environment(false, true, ['authored'], undefined,
+      { key: 'missing', registry: { assets: {} }, rawRegistry });
+    const original = structuredClone({ kind: 'trim' as const, clipId: 'authored', patch: { hold: 1 },
+      config: env.source.config, registry: env.source.registry });
+    const next = structuredClone(env.source);
+    next.config.clips[0].hold = 1;
+    await env.handoff.capture(next, original);
+    const [stored] = await env.outboxes.list(env.scope);
+    expect(stored.intents[0].payload).toMatchObject({ documentIntent: { reads: expect.arrayContaining([
+      { kind: 'field', ref: 'parent', path: ['config', 'registry', 'assets'],
+        state: layout === 'null' ? { state: 'present', value: null } : { state: 'absent' } },
+    ]) } });
+    expect(env.session.getDocument()).toMatchObject({ parent_revision: { payload: { registry: rawRegistry } } });
+    await env.session.dispose();
+  });
+
+  it('refuses a contradictory registry mirror before claiming normalized asset reads', async () => {
+    const env = await environment(false, true, ['authored'], undefined,
+      { key: 'media', registry: { assets: { media: { file: 'media.mp4' } } }, mirror: { assets: {} } });
+    const next = structuredClone(env.source);
+    next.config.clips[0].hold = 1;
+    await expect(env.handoff.capture(next, { kind: 'trim', clipId: 'authored', patch: { hold: 1 },
+      config: env.source.config, registry: env.source.registry })).rejects.toThrow('contradictory parent registry mirror');
+    expect(env.session.getDocument()).toEqual(env.initial.canonicalDocument);
+    expect(env.send).not.toHaveBeenCalled();
+    await env.session.dispose();
+  });
+
+  it.each(['top-level', 'mirror', 'absent'] as const)('guards the exact selected registry entry at the normalized path: %s', async (layout) => {
+    const media = { file: 'media.mp4', type: 'video/mp4', duration: 8, opaque: { keep: [null, false] }, optional: null };
+    const registry = { assets: { ...(layout === 'absent' ? {} : { media }),
+      unused: { file: 'other.mp4', type: 'video/mp4' } } };
+    const env = await environment(false, true, ['authored', 'OTHERCLIP'], undefined,
+      { key: 'media', registry, mirror: layout === 'mirror' });
+    const original = structuredClone({ kind: 'trim' as const, clipId: 'authored', patch: { hold: 1 },
+      config: env.source.config, registry: env.source.registry });
+    const next = structuredClone(env.source);
+    next.config.clips[0].hold = 1;
+    await env.handoff.capture(next, original);
+    const [stored] = await env.outboxes.list(env.scope);
+    const intent = stored.intents[0].payload.documentIntent as { reads: { kind: string; path: string[] }[] };
+    expect(intent.reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'registry', 'assets', 'media'],
+      state: layout === 'absent' ? { state: 'absent' } : { state: 'present', value: media } });
+    expect(intent.reads.every((read) => read.kind === 'field')).toBe(true);
+    expect(intent.reads.some((read) => read.path.includes('id:OTHERCLIP') || read.path.includes('unused') || read.path.includes('tracks'))).toBe(false);
+    expect(intent.reads.some((read) => read.path.length <= 2 && read.path.at(-1) === 'clips')).toBe(false);
+    expect(env.session.getDocument()).toMatchObject({ parent_revision: { payload: {
+      config: { output: { resolution: null, file: null, opaque: { keep: null } }, pinnedShotGroups: null }, registry,
+    } } });
+    expect(intent.reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:authored', 'speed'],
+      state: { state: 'absent' } });
+    await env.session.dispose();
+  });
+
   it('chains exact trim intent removals without clearing omitted opaque fields or restoring them on a partial edit', async () => {
     const env = await environment(false, true, ['authored'], {
       astrid: { for: 19, until: null, opaque: [null, false] }, 'org.example': { clear: null },
@@ -211,6 +299,7 @@ describe('upstream local document handoff', () => {
       steps: [{ intent: 'Save local editor changes', command_ordinals: [0] }],
     });
     expect(request.steps?.[0].patch).toEqual(request.commands[0].args.changes);
+    expect(request).not.toHaveProperty('reads');
     expect(env.receipt).not.toHaveBeenCalled();
     await env.session.dispose();
   });

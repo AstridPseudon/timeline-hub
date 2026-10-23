@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB } from 'fake-indexeddb';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
+import { WorkspaceClient, type Transport } from '@/integrations/runtime/generated.ts';
 import type { CommitRequest } from '@/integrations/runtime/timeline-commit-types.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
 import { createCommitOutbox, toOutboxJson } from './commitOutbox.ts';
@@ -28,6 +29,11 @@ describe('official full-v2 local document transport', () => {
     const step = { id: 'split-step', label: 'Split', intent: 'Split the authored clip', tags: ['editing'], reads };
     const roots = [{ ref: 'parent' as const, revisionId: 'r0', contentDigest: before.parent_revision.content_digest }];
     const send = vi.fn<(request: CommitRequest, key: string) => Promise<TimelineCommitResult>>();
+    const sent: Parameters<Transport>[] = [];
+    const client = new WorkspaceClient('http://runtime.test', 'token', async (...args) => {
+      sent.push(args);
+      throw new Error('Lost acknowledgement');
+    });
     const visible: unknown[] = [];
     const mount = () => createLocalSaveSession({ scope, initial, document: toOutboxJson(before), outboxes, send,
       loadLatest: async () => initial, changed: () => {}, prepareDisplay: async (basis, draft) => ({
@@ -37,13 +43,22 @@ describe('official full-v2 local document transport', () => {
     await first.appendDocument({ before, after: split, roots, label: 'Split', step, merge: 'fields', reads });
     await first.appendDocument({ before: split, after: trimmed, roots, label: 'Trim',
       step: { id: 'trim-step', label: 'Trim', intent: 'Trim the new clip', tags: [] } });
-    send.mockRejectedValueOnce(new Error('Lost acknowledgement'));
+    send.mockImplementationOnce(async (request, key) => {
+      await client.commitTimeline(scope.projectId, scope.timelineId, request, key);
+      throw new Error('Transport must lose the acknowledgement');
+    });
     await expect(first.flush()).rejects.toThrow('unacknowledged');
     const [stored] = await outboxes.list(scope);
     const exact = stored.pending!.request;
     const request = JSON.parse(exact.body);
     expect(request).toMatchObject({ label: 'Split', merge: 'fields', reads, dry_run: false,
       steps: [{ ...step, command_ordinals: [0], patch: request.commands[0].args.changes }] });
+    expect(request.commands[0]).toEqual({ schema_version: 1, op: 'doc.patch', version: '1', select: null,
+      created: ['parent/clip:right'], args: { changes: request.steps[0].patch } });
+    expect(send.mock.calls[0][0]).toEqual(request);
+    expect(sent[0].slice(0, 2)).toEqual(['POST', exact.path]);
+    expect(sent[0][2]['Idempotency-Key']).toBe(exact.key);
+    expect(new TextDecoder().decode(sent[0][3])).toBe(exact.body);
     expect(stored.intents[0].payload).toMatchObject({ documentIntent: { created: ['parent/clip:right'] } });
     const suffix = structuredClone(stored.intents[1].payload);
     await first.dispose();
@@ -60,13 +75,18 @@ describe('official full-v2 local document transport', () => {
     };
     send.mockImplementationOnce(async (retry, key) => {
       expect(JSON.stringify(retry)).toBe(exact.body);
+      expect(retry.commands[0].created).toEqual(['parent/clip:right']);
       expect(key).toBe(exact.key);
+      await expect(client.commitTimeline(scope.projectId, scope.timelineId, retry, key)).rejects.toThrow('Lost acknowledgement');
+      expect(sent[1]).toEqual(sent[0]);
       return reply(split, 'r1', 'p1');
     }).mockImplementationOnce(async (dependent) => {
       expect(visible.at(-1)).toMatchObject({ parent_revision: { revision_id: 'r1', payload: {
         clips: split.parent_revision.payload.clips, opaque: { keep: null, agent: true },
       } } });
       expect(recovered.getDocument()).toMatchObject({ parent_revision: { revision_id: 'r1' } });
+      expect(dependent).not.toHaveProperty('reads');
+      expect(dependent.commands[0].created).toEqual([]);
       expect(dependent).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1', merge: 'atomic',
         commands: [{ args: { changes: [{ op: 'set', ref: 'parent', path: ['clips', 'id:right', 'hold'],
           before: { state: 'present', value: 2 }, value: 1 }] } }] });

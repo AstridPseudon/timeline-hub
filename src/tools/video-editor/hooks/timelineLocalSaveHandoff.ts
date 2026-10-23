@@ -15,9 +15,18 @@ export interface TimelineSaveSource {
   head?: TimelineHeadRevision;
 }
 
+/** The split/inspector caller snapshots its input before authoring the local transform. */
+export type TimelineGestureReadBasis = {
+  config: TimelineConfig;
+  registry: AssetRegistry;
+  clipId: string;
+} & ({ kind: 'split'; timeSeconds: number } | {
+  kind: 'trim'; patch: Partial<Pick<TimelineConfig['clips'][number], 'from' | 'to' | 'hold' | 'speed'>>;
+});
+
 /** Assembly supplies the ORIGINAL verified read, not loadTimelineCommandBasis at save time. */
 export interface TimelineLocalSaveHandoff {
-  capture(source: TimelineSaveSource): Promise<void>;
+  capture(source: TimelineSaveSource, gestureBasis?: TimelineGestureReadBasis): Promise<void>;
   flush(): Promise<TimelineSaveReceipt>;
 }
 
@@ -107,6 +116,7 @@ export function createTimelineLocalSaveHandoff(options: {
 }): TimelineLocalSaveHandoff {
   let initial = structuredClone(options.initial);
   let source = structuredClone(options.source);
+  let authoringSource = structuredClone(options.source);
   let document = structuredClone(options.initial.canonicalDocument);
   let sourceChecked = false;
   function changes(raw: unknown, previous: unknown, next: unknown, path: string[]): unknown {
@@ -160,7 +170,7 @@ export function createTimelineLocalSaveHandoff(options: {
     return authoredJson(next);
   }
   return {
-    capture(input) {
+    capture(input, gestureBasis) {
       try {
         const next = structuredClone(input);
         checkHead(initial, source);
@@ -184,15 +194,72 @@ export function createTimelineLocalSaveHandoff(options: {
           if (!same(parent[key], (parent.config as Record<string, unknown>)[key])) refuse(`contradictory parent ${key} mirror`);
           payload[key] = (payload.config as Record<string, OutboxJson>)[key];
         }
+        let reads: OutboxJson[] | undefined;
+        if (gestureBasis) {
+          if (!['split', 'trim'].includes(gestureBasis.kind)
+            || !same(authoredJson(gestureBasis.config), authoredJson(authoringSource.config))
+            || !same(authoredJson(gestureBasis.registry), authoredJson(authoringSource.registry))) {
+            refuse('gesture read basis differs from the original local authoring input');
+          }
+          const config = parent.config as Record<string, unknown>;
+          const clips = config.clips;
+          if (!Array.isArray(clips)) refuse('gesture clip read has no authored collection');
+          const selected = clips.filter((clip) => object(clip) && clip.id === gestureBasis.clipId);
+          if (selected.length !== 1) refuse('gesture selected clip has no unique authored binding');
+          const clip = selected[0] as Record<string, unknown>;
+          const read = (value: Record<string, unknown>, key: string, path: string[]): OutboxJson => ({
+            kind: 'field', ref: 'parent', path: [...path, key],
+            state: Object.prototype.hasOwnProperty.call(value, key)
+              ? { state: 'present', value: authoredJson(value[key]) } : { state: 'absent' },
+          });
+          // Read the nearest missing/null ancestor as such, rather than inventing
+          // a leaf under it. Raw defaults stay absent, null and opaque verbatim.
+          const readPath = (value: Record<string, unknown>, keys: string[], path: string[]): OutboxJson => {
+            const [key, ...rest] = keys;
+            return rest.length && object(value[key]) ? readPath(value[key], rest, [...path, key]) : read(value, key, path);
+          };
+          // recalcActionEnd/getClipTimelineDuration consult these selected fields.
+          // Serializing copied rows/tracks is not a read of their entire contents.
+          reads = ['id', 'track', 'at', 'clipType', 'hold', 'from', 'to', 'speed', 'asset']
+            .map((key) => read(clip, key, ['config', 'clips', `id:${gestureBasis.clipId}`]));
+          reads.push(readPath(config, ['output', 'fps'], ['config']));
+          if (!object(config.output) || config.output.fps == null) {
+            // withDefaultTimelineOutput falls back to the selected theme canvas.
+            reads.push(read(config, 'theme', ['config']), readPath(config, ['theme_overrides', 'visual', 'canvas', 'fps'], ['config']));
+          }
+          if (typeof clip.asset === 'string') {
+            if (!object(parent.registry)) refuse('gesture registry read has no authored registry');
+            // Runtime/provider normalize parent/registry to config/registry and
+            // resolve that path to the top-level raw registry when no mirror exists.
+            if (Object.prototype.hasOwnProperty.call(config, 'registry')
+              && (!object(config.registry) || !same(config.registry, parent.registry))) refuse('contradictory parent registry mirror');
+            reads.push(readPath(parent.registry, ['assets', clip.asset], ['config', 'registry']));
+          }
+          if (gestureBasis.kind === 'split') {
+            if (!Number.isFinite(gestureBasis.timeSeconds)) refuse('split time is unavailable');
+            // splitClipAtPlayhead uses order for insertion and every ID for allocation;
+            // its pinned-group check reads this id-less list, not neighbor contents.
+            const order = clips.map((item) => item.id as string);
+            reads.push({ kind: 'collection', ref: 'parent', path: ['config', 'clips'], members: [...order].sort(), order },
+              read(config, 'pinnedShotGroups', ['config']));
+          } else if (!Object.keys(gestureBasis.patch).length
+            || Object.keys(gestureBasis.patch).some((key) => !['from', 'to', 'hold', 'speed'].includes(key))) {
+            refuse('trim operands are unavailable');
+          }
+        }
         // The encoder supplies guards and created IDs; these bytes are never a wire DTO.
         const pending = options.session.appendDocument({ before, after,
           roots: [{ ref: 'parent', revisionId: before.parent_revision.revision_id, contentDigest: before.parent_revision.content_digest }],
-          label: 'Edit timeline', step: { id: crypto.randomUUID(), label: 'Edit timeline', intent: 'Save local editor changes', tags: [] } });
+          ...(reads === undefined ? {} : { reads, merge: 'fields' as const }),
+          label: 'Edit timeline', step: { id: crypto.randomUUID(), label: 'Edit timeline', intent: gestureBasis ? (gestureBasis.kind === 'split'
+            ? `Split ${gestureBasis.clipId} at ${gestureBasis.timeSeconds}`
+            : `Trim ${gestureBasis.clipId}: ${canonicalJsonStringify(gestureBasis.patch)}`) : 'Save local editor changes', tags: [] } });
         source = { ...next,
           config: changes(source.config, source.config, next.config, ['config']) as TimelineConfig,
           registry: changes(source.registry, source.registry, next.registry, ['registry']) as AssetRegistry,
           ...(next.bundle === undefined && source.bundle !== undefined ? { bundle: source.bundle } : {}),
         };
+        authoringSource = structuredClone(next);
         document = structuredClone(after);
         return pending;
       } catch (error) {
@@ -210,6 +277,7 @@ export function createTimelineLocalSaveHandoff(options: {
           || !same(adopted.source.head, head)) refuse('canonical assembly did not adopt the accepted head');
         initial = structuredClone(basis);
         source = structuredClone(adopted.source);
+        authoringSource = structuredClone(adopted.source);
         document = structuredClone(basis.canonicalDocument);
         sourceChecked = false;
         return adopted.receipt;
