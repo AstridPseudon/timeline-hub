@@ -14,10 +14,17 @@ def restructure(ctx, command):
 
     bundle = ctx.state.bundle
     document = bundle.get('source_mapping', {}).get('_runtime_document')
+    pin = bundle['base_parent']
+    # The public pair loader retains publication provenance; Runtime checks
+    # that pair against the request/history. The immutable image pins content.
     if (document is None or document['project_id'] != bundle['project_id']
             or document['timeline_id'] != bundle['timeline_id']
+            or set(pin) not in ({'revision_id', 'content_digest'},
+                                {'revision_id', 'content_digest', 'publication_id'})
+            or ('publication_id' in pin and (not isinstance(pin['publication_id'], str)
+                                            or not pin['publication_id'].strip()))
             or {key: document['parent_revision'][key] for key in ('revision_id', 'content_digest')}
-            != bundle['base_parent']):
+            != {key: pin[key] for key in ('revision_id', 'content_digest')}):
         raise CommandError('restructure requires the authenticated current closure',
                            kind='history_unavailable')
     if command['select'] != 'parent':

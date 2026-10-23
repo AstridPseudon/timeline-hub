@@ -287,6 +287,286 @@ def test_fixture_reader_authorizes_exact_pair_and_refuses_wrong_scope_without_wr
     assert tuple(env.service.store.conn.iterdump()) == before_store
 
 
+def test_fixture_native_restructure_accepts_only_known_exact_pin_fields(
+    restructure_inverse_runtime,
+):
+    from astrid.sdk.timeline._command_state import CommandError
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.commit import bundle_from_document
+
+    env = restructure_inverse_runtime
+    head = env.client.timelines.history(env.project, "t", limit=1).data["head"]
+    opened = env.client.timelines.open_bundle(env.project, "t", **head)
+    assert opened.ok, opened.as_dict()
+    bundle = opened.data["bundle"]
+    original = copy.deepcopy(bundle)
+    stored = tuple(env.service.store.conn.iterdump())
+    history = copy.deepcopy(env.client.timelines.history(env.project, "t", limit=200).data)
+    command = {"schema_version": 1, "op": "timeline.restructure", "version": "1",
+               "select": "parent", "args": {}}
+    legacy = bundle_from_document(bundle["source_mapping"]["_runtime_document"])
+    assert set(legacy["base_parent"]) == {"revision_id", "content_digest"}
+    assert set(bundle["base_parent"]) == {"revision_id", "content_digest", "publication_id"}
+    prepared = execute(bundle, [command])
+    assert prepared.records == execute(legacy, [command]).records
+    assert prepared.bundle["base_parent"] == original["base_parent"]
+    assert prepared.bundle["source_mapping"] == original["source_mapping"]
+
+    for damage in ("revision", "digest", "project", "timeline", "unknown", "publication", "closure"):
+        damaged = copy.deepcopy(bundle)
+        if damage == "revision":
+            damaged["base_parent"]["revision_id"] = "wrong-revision"
+        elif damage == "digest":
+            damaged["base_parent"]["content_digest"] = "sha256:" + "0" * 64
+        elif damage in {"project", "timeline"}:
+            damaged[damage + "_id"] = "wrong-scope"
+        elif damage == "unknown":
+            damaged["base_parent"]["other_publication_id"] = head["publication_id"]
+        elif damage == "publication":
+            damaged["base_parent"]["publication_id"] = None
+        else:
+            damaged["source_mapping"]["_runtime_document"]["parent_revision"]["content_digest"] = (
+                "sha256:" + "0" * 64
+            )
+        with pytest.raises(CommandError) as refused:
+            execute(damaged, [command])
+        assert refused.value.kind == "history_unavailable", damage
+    assert bundle == original
+    assert env.client.timelines.history(env.project, "t", limit=200).data == history
+    assert tuple(env.service.store.conn.iterdump()) == stored
+
+
+def test_fixture_public_restructure_preview_forward_and_exact_retry(
+    restructure_inverse_runtime, tmp_path, monkeypatch
+):
+    import runtime_protocol
+
+    from astrid.sdk.timeline import native_restructure
+    from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.timeline_restructure import assert_equivalent
+
+    env = restructure_inverse_runtime
+    source = timeline.open(env.project, "t", client=env.client, outbox_path=tmp_path / "name.json")
+    source.bundle["shots"][source._shot_ids()[0]]["payload"]["name"] = "02 TWO"
+    named = source.commit("Name source chapter", idempotency_key="inverse-name")
+    before = copy.deepcopy(env.document())
+    history_before = copy.deepcopy(env.client.timelines.history(env.project, "t", limit=200).data)
+    env.calls.clear()
+    env.replies.clear()
+    native_inputs = []
+    public_reads = []
+    public_open = env.client.timelines.open_bundle
+
+    def open_bundle(project, ref, *, revision_id=None, publication_id=None):
+        result = public_open(project, ref, revision_id=revision_id, publication_id=publication_id)
+        public_reads.append({"project": project, "timeline": ref, "revision_id": revision_id,
+                             "publication_id": publication_id, "result": result.as_dict()})
+        return result
+
+    def observe(frame, event, arg):
+        if frame.f_code is native_restructure.restructure.__code__ and event == "call":
+            caller = frame.f_back.f_locals
+            native_inputs.append(copy.deepcopy({
+                "bundle": frame.f_locals["ctx"].state.bundle,
+                "request": caller.get("commit_request"),
+                "evaluated_head": caller.get("evaluated_head"),
+            }))
+        return None
+
+    lost = False
+
+    def send(project, ref, body, *, idempotency_key):
+        nonlocal lost
+        if not lost:
+            preview_body = {**copy.deepcopy(body), "dry_run": True,
+                            "rationale": "Preview the chapter cut", "group_id": "chapter-cut"}
+            stored = tuple(env.service.store.conn.iterdump())
+            preview = env.send(project, ref, preview_body, idempotency_key="pin-preview")
+            assert preview["receipt"] is None
+            assert preview["data"]["status"] == "preview"
+            assert preview["data"]["would_status"] == "accepted"
+            assert preview["data"]["evaluated_head"] == history_before["head"]
+            assert env.document() == before
+            assert env.client.timelines.history(env.project, "t", limit=200).data == history_before
+            assert tuple(env.service.store.conn.iterdump()) == stored
+        result = env.send(project, ref, body, idempotency_key=idempotency_key)
+        if not lost:
+            lost = True
+            raise WorkspaceClientError(503, "unavailable", "lost restructure ACK")
+        return result
+
+    def no_narration_media(**_kwargs):
+        raise TimelineEditError("qualification keeps the restructure as one publication")
+
+    monkeypatch.setattr(env.client.timelines, "open_bundle", open_bundle)
+    monkeypatch.setattr(env.generated, "commit_timeline", send)
+    monkeypatch.setattr(env.client.media, "import_bytes", no_narration_media)
+    previous_trace = sys.gettrace()
+    try:
+        sys.settrace(observe)
+        checkout = Checkout.open(env.project, "t", client=env.client)
+        with pytest.raises(WorkspaceClientError, match="lost restructure ACK"):
+            checkout.publish("Restructure", restructure=True, client=env.client,
+                             idempotency_key="inverse-cut")
+        after = copy.deepcopy(env.document())
+        history_after = copy.deepcopy(env.client.timelines.history(env.project, "t", limit=200).data)
+        cut = Checkout.open(env.project, "t", client=env.client).publish(
+            "Restructure", restructure=True, client=env.client, idempotency_key="inverse-cut"
+        )
+    finally:
+        sys.settrace(previous_trace)
+        capture = {"before": before, "after": env.document(), "named": named,
+                   "history_before": history_before,
+                   "history_after": env.client.timelines.history(env.project, "t", limit=200).data,
+                   "calls": env.calls, "replies": env.replies, "native_inputs": native_inputs,
+                   "public_reads": public_reads, "reader_calls": env.reader_calls,
+                   "origins": {"native": native_restructure.__file__, "test": __file__,
+                               "runtime": runtime_protocol.__file__}}
+        (tmp_path / "public-forward.json").write_text(json.dumps(capture, sort_keys=True))
+        print(f"Full public forward capture: {tmp_path / 'public-forward.json'}")
+    assert len(env.calls) == len(env.replies) == 3
+    assert env.calls[1] == env.calls[2]
+    assert env.replies[1] == env.replies[2]
+    request, key = env.calls[1]
+    assert key == "inverse-cut"
+    assert request == {"api_version": 1, "project_id": env.project, "timeline_id": "t",
+                       "base_revision_id": history_before["head"]["revision_id"],
+                       "base_publication_id": history_before["head"]["publication_id"],
+                       "commands": request["commands"], "label": "Restructure", "steps": request["steps"],
+                       "merge": "atomic", "reads": [{"kind": "scope", "ref": "timeline", "path": []}],
+                       "dry_run": False, "source": {"via": "python"}}
+    assert request["commands"][-1]["op"] == "timeline.restructure"
+    assert request["commands"][-1]["select"] == "parent"
+    assert request["commands"][-1]["args"] == {}
+    assert request["steps"] == [{"id": f"restructure-{i}", "label": "Restructure",
+        "intent": "Store chapters as shots", "tags": ["restructure"], "command_ordinals": [i],
+        "patch": copy.deepcopy(call["args"]["changes"]) if call["op"] == "doc.patch" else []}
+        for i, call in enumerate(request["commands"])]
+    accepted = env.replies[1]
+    assert accepted["data"]["status"] == "accepted"
+    assert accepted["data"]["canonical_document"] == after
+    assert accepted["data"]["document_digest"] == env.replies[0]["data"]["document_digest"]
+    assert env.replies[0]["data"]["canonical_document"] == after
+    assert accepted["data"]["commands"] == request["commands"]
+    assert accepted["data"]["merge_mode"] == "atomic"
+    assert cut["receipt"] == accepted["receipt"] and cut["narration_error"]
+    assert len(history_after["items"]) == len(history_before["items"]) + 1
+    entry = next(row for row in history_after["items"]
+                 if row["publication_id"] == accepted["receipt"]["receipt_id"])
+    assert entry["receipt"] == accepted["receipt"]
+    assert entry["previous"] == history_before["head"]
+    assert {field: entry[field] for field in ("label", "source", "reads")} == {
+        field: request[field] for field in ("label", "source", "reads")
+    }
+    assert entry["steps"] == entry["records"]["steps"] == accepted["data"]["steps"]
+    assert entry["records"]["undo_of"] == [] and entry["records"]["undo_steps"] is None
+    assert entry["records"]["steps"][0]["dependencies"][0] == request["reads"][0]
+    assert entry["records"]["steps"][0]["patch"]
+    assert [record["command"] for record in entry["records"]["commands"]] == request["commands"]
+    assert entry["records"]["commands"][0]["bindings"]
+    assert entry["records"]["commands"][0]["writes"]
+    assert_equivalent(checkout.bundle, bundle_from_document(after))
+    assert len(after["shot_revisions"]) == len(after["internal_timeline_revisions"]) == 3
+    assert after["parent_revision"]["payload"]["opaque"] == before["parent_revision"]["payload"]["opaque"]
+    assert env.document() == after
+    assert env.client.timelines.history(env.project, "t", limit=200).data == history_after
+    assert any(row["request"] is None and "publication_id" in row["bundle"]["base_parent"]
+               for row in native_inputs)
+    assert any(row["request"] == request and row["evaluated_head"] == history_before["head"]
+               for row in native_inputs)
+
+
+def test_fixture_restructure_request_authority_and_same_byte_stale_refuse_without_writes(
+    restructure_inverse_runtime, tmp_path
+):
+    from runtime_protocol.errors import RuntimeErrorBase
+
+    from astrid.sdk.timeline.commands import execute
+
+    env = restructure_inverse_runtime
+    history = env.client.timelines.history(env.project, "t", limit=200).data
+    head = history["head"]
+    prior = next(row for row in history["items"] if row["publication_id"] != head["publication_id"])
+    opened = env.client.timelines.open_bundle(env.project, "t", **head)
+    assert opened.ok, opened.as_dict()
+    command = execute(opened.data["bundle"], [{"schema_version": 1, "op": "timeline.restructure",
+        "version": "1", "select": "parent", "args": {}}]).commands[0]
+    body = {"api_version": 1, "project_id": env.project, "timeline_id": "t",
+        "base_revision_id": head["revision_id"], "base_publication_id": head["publication_id"],
+        "commands": [command], "label": "Restructure", "merge": "atomic",
+        "reads": [{"kind": "scope", "ref": "timeline", "path": []}],
+        "steps": [{"id": "cut", "label": "Restructure", "intent": "Store chapters as shots",
+            "tags": ["restructure"], "command_ordinals": [0], "patch": [], "reads": []}],
+        "source": {"via": "python"}, "rationale": "Preserve the film", "group_id": "chapter-cut",
+        "dry_run": False}
+    before = copy.deepcopy(env.document())
+    for damage in ("revision", "publication", "scope", "digest", "unknown"):
+        request = copy.deepcopy(body)
+        if damage == "revision":
+            request["base_revision_id"] = prior["revision_id"]
+        elif damage == "publication":
+            request["base_publication_id"] = prior["publication_id"]
+        elif damage == "scope":
+            request["timeline_id"] = "wrong-scope"
+        elif damage == "digest":
+            read = next(read for read in request["commands"][0]["reads"] if read["ref"] == "timeline")
+            read["state"]["value"]["content_digest"] = "sha256:" + "0" * 64
+        else:
+            request["commands"][0]["args"]["source_document"] = before
+        stored = tuple(env.service.store.conn.iterdump())
+        with pytest.raises(RuntimeErrorBase):
+            env.send(env.project, "t", request, idempotency_key="pin-bad-" + damage)
+        assert env.document() == before
+        assert env.client.timelines.history(env.project, "t", limit=200).data == history
+        assert tuple(env.service.store.conn.iterdump()) == stored
+
+    current = timeline.open(env.project, "t", client=env.client, outbox_path=tmp_path / "aba.json")
+    current.bundle["parent"]["opaque"]["concurrent"] = True
+    current.commit("Intervening content", idempotency_key="pin-aba-b")
+    del current.bundle["parent"]["opaque"]["concurrent"]
+    restored = current.commit("Restore original bytes", idempotency_key="pin-aba-a")
+    assert restored["data"]["canonical_document"] == before
+    stale_history = copy.deepcopy(env.client.timelines.history(env.project, "t", limit=200).data)
+    assert stale_history["head"]["publication_id"] != head["publication_id"]
+    stored = tuple(env.service.store.conn.iterdump())
+    with pytest.raises(RuntimeErrorBase):
+        env.send(env.project, "t", body, idempotency_key="pin-stale-same-bytes")
+    assert env.document() == before
+    assert env.client.timelines.history(env.project, "t", limit=200).data == stale_history
+    assert tuple(env.service.store.conn.iterdump()) == stored
+
+
+def test_fixture_restructure_refuses_forged_current_closure_without_writes(
+    restructure_inverse_runtime, monkeypatch
+):
+    env = restructure_inverse_runtime
+    head = env.client.timelines.history(env.project, "t", limit=1).data["head"]
+    history = copy.deepcopy(env.client.timelines.history(env.project, "t", limit=200).data)
+    document = copy.deepcopy(env.document())
+    stored = tuple(env.service.store.conn.iterdump())
+    calls = copy.deepcopy(env.calls)
+    checkout = Checkout.open(env.project, "t", client=env.client)
+    read_parent = env.generated.get_project_parent_composition_revision
+
+    def forged_parent(project, ref, revision):
+        parent = copy.deepcopy(read_parent(project, ref, revision))
+        assert revision == head["revision_id"]
+        parent["payload"]["opaque"]["forged"] = True
+        return parent
+
+    with monkeypatch.context() as damaged:
+        damaged.setattr(env.generated, "get_project_parent_composition_revision", forged_parent)
+        refused = env.client.timelines.open_bundle(env.project, "t", **head)
+        assert not refused.ok and refused.error.code == "protocol_error"
+        with pytest.raises(TimelineEditError, match="parent_revision.content_digest does not match the pinned payload"):
+            checkout.publish("Restructure", restructure=True, client=env.client,
+                             idempotency_key="pin-forged-current")
+    assert env.calls == calls
+    assert env.document() == document
+    assert env.client.timelines.history(env.project, "t", limit=200).data == history
+    assert tuple(env.service.store.conn.iterdump()) == stored
+
+
 def test_restructure_whole_inverse_redo_and_intervening_overlap_refusal(
     restructure_inverse_runtime, tmp_path, monkeypatch
 ):  # noqa: F811
