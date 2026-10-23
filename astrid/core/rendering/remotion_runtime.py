@@ -117,6 +117,19 @@ class RemotionValidationError(RuntimeError):
     """Validation failed; uncertain original child handles remain attached."""
 
 
+@contextmanager
+def remotion_render_lock() -> Iterator[None]:
+    """Expose the renderer lock through the server-owned runtime boundary."""
+
+    from astrid.packs.rendering.rendering.renderers.remotion import lock
+
+    if lock.remotion_render_lock_held():
+        yield
+        return
+    with lock.remotion_render_lock():
+        yield
+
+
 def _validation_timing(phase: str):
     """Bounded diagnostic metadata; no launch paths, arguments or environment."""
     def decorate(operation):
