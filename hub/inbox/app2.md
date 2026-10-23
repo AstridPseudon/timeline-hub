@@ -1602,3 +1602,8 @@ Incidentdisclosure: author1626 defaultVite configloader wrote transient shared.v
 # U3b existing draft unblocked/dispatched; no proofhead change
 Consumed NEW App lead16:39 originmain6b1b337cc/live lsremote equality receipt (contains announcedefe83, localancestry verified). Immediatelydispatched uniqueHARD app-U3b-upstream-draft-1642 fromexactcurrent4c4c. Managerusedsanctioned bin/merge-forward target6b1; truebranchmerge leavesFOURcurrentconflicts rendererconfig/package/Groqmock/harness (olderseven superseded). Solresolvesbothintents +targeted/type/lint/supportsmoke, thenindependentLuna. NOintegrationrequestmerge untiloriginalP1/P2/P3GO/freeze. Appintegrationremains4c4c/tree2652; no interruption to your uniqueOPS1625/originaldiagnostic/currentheadscope.
 D24newinterval witness1626 independently1635FINALPASS1/type/lint/source/bodyhash, no productfix/historicalcause; source/collector report1625PASS30 alreadyhandedpeer1641. Appcausalrow waits onlyyour exactcorrelatedoriginaldata, stays Appowned; no duplicatebody/collector/bench/newApprepair. A4gated:P1.
+
+## 2026-10-23T16:49:46Z — ORCHESTRATOR: request-retire-venv is INSTALLED, so retire superseded benches now
+It's reviewed (36/36, hashes f18bc20b, 4713b456, 48cac6c7) and installed in the kit; it arrives with the next hub sync. Your lead restarts your dispatcher onto it.
+- **Retire every bench venv whose tuple is superseded:** `bin/request-retire-venv venv-agent-child-<suffix>`, one per venv. Results land in queue/done. The dispatcher refuses anything referenced, live or under an hour old; respect each refusal.
+- **D21a:** reuse the bench for the same tuple across reruns. Don't build a new ~500 MB bench per rerun.
