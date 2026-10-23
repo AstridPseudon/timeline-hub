@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T05:00:05Z | dispatcher heartbeat 2s | live 3 (sol 2, luna 1, other 0) | busy30 15 | status age 0m -->
+<!-- agent | 2026-10-23T05:01:38Z | dispatcher heartbeat 3s | live 4 (sol 2, luna 2, other 0) | busy30 16 | status age 0m -->
 # agent board, 2026-10-23T04:57:48Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -25,7 +25,7 @@
 | G4-real-admit | actual supported task method | Luna; independent Luna | G2 | review | agt-G234-home-correction-0442 | Independent0416 PASS realdaemon1+original13/2149/1915/normalmanifest. Flat handback0445 sent | 33fc3879 |
 | G4-group | optional sealed group forwarding | Luna; independent Luna | G4 | review | agt-G234-home-correction-0442 | Independent0421 PASS25/2149/1915; no new DTO/pin, assembled with admit fix | e045b37f |
 | G5 | delete superseded paths | Luna | G3,G4,P1 GO | gated:P1 | — | H3 NO-GO; no G5 deletion work started | — |
-| P4-merge-audit | correct unintended product ancestry | Sol; Luna review next | actualccc | doing | agt-P4-ccc-ancestry-audit-0452; Solcorrection0442 | Explicit independent Luna29path audit perorchestrator04:40. NO MORE integration merges until audit/revert PASS | ccc521b78 UNQUALIFIED |
+| P4-merge-audit | correct unintended product ancestry | Sol; Luna review next | actualccc | doing | agt-P4-audit-minimal-revert-0502 | Independent0452 FAIL29pathmap:unreviewedmeta/assertion removals/publicfacadegap/report. Minimalcurrentf95revert active, no broadG4merge | ccc521b78 UNQUALIFIED |
 | R1-legacy-replay | authenticated landing step metadata | Luna | R1,G2 | doing | agt-R1-legacy-replay-review-0453 | IndependentPASS2+28+127/ratchets/normalcopies; actualnode blockedV2FPSscope0458, sourceawaitscurrentport afteraudithold | c79398561 |
 | V4-fixture-status | canonical created/C0 status corrections | Viewing Luna; independent Luna | C0 | merged | vw-V4-C0-status-adaptation | Reviewed5292 scopedPASS4+fixture38ePASS1; homef95 merged. Overall54 remains open; no arithmetic/full replay credit | 5292b388a;f95f1e169 |
 | R2-derived-undo | two deferred anchor undo positives | orchestrator D14 | deferred relational timing | gated:D14-deferred | Viewing owns original failing evidence | D14 retain tests unchanged/unskipped/visibly failing; no C0 change/guard exception/54PASS claim | ruling04:40 |
@@ -36,7 +36,7 @@
 | G4-assembly-auth | Runtime native assembly alias authentication | Runtime Luna author/review | actual parent/source and asset aliases | blocked:runtime | rt-R2r-assembly-alias-review-0445 | Runtimeboardchecked:0ed draft/auth68PASS, reviewactive; no new clienttuple; Runtime owns changed-source116 testport | 0ed3e846 draft |
 | V2-elementref | preserve legacy text reference under D12 | Sol after repeated Luna FAIL | actualG234livefinding | doing | agt-V2-legacy-elementref-fix-0500 | Existing media textbinding wronglytreatedselectedelement; no fixture/guardwaiver; realcreate/render2nodes aftermeaningfulfix | base9cf0fde2 |
 Resolved: runtime — Normal frozen strict34e adoption DONEf894/all15/d106; executionad823 compatible. Runtime P5 independent strict14+fresh crash24 PASS on62c454/f894; no duplicate qualification.
-Blockers: agent — MERGE HOLD per late-consumed orchestrator04:40: actual f95 contains UNQUALIFIEDccc P4 ancestry; only audit/revert merges until independent auditPASS. Reviewed5292 mergedf95 before consuming this late inbox hold. Sol current-preserving correction0442 active; G234 and wholehome acceptance unclaimed until independent review and integrated proof.
+Blockers: agent — MERGE HOLD per late-consumed orchestrator04:40: actual f95 contains UNQUALIFIEDccc P4 ancestry; only audit/revert merges until independent auditPASS. Reviewed5292 mergedf95 before consuming this late inbox hold. Sol minimalcurrentf95revert0502 active; broad9cf staged+V2fix0500 separate. G234/wholehome unqualified until sourcepreservation/review/integratedproof.
 Blockers: orchestrator — A3 same-owner carrier/frozen tuple exception AND V2legacyFPSparity scope owed; independent designproposal0445/0455 and audit0453 delivered. Escalations same-owner-carrier0445 and legacy-fps-parity0458 written. R2 undo2 scope RESOLVED byD14 deferred (no guards/tests changed).
 Blockers: proof/app — H3 NO-GO; P1 actual mounted split→trim-new-ID→Agent edit→lostACK→restart chain unproved. G5 stays gated:P1. Proof owns P4 HTTP after reviewed staged callable source.
 Blockers: farm — H6/H9/full/tour/journey farm/test-service owned; no Agent heavy duplicates; header farm down, Proof owns P1/P3 service bodies.
