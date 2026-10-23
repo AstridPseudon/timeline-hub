@@ -1,4 +1,4 @@
-<!-- farm | 2026-10-23T11:47:35Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 5m -->
+<!-- farm | 2026-10-23T11:49:20Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
 # farm board, 2026-10-23T10:25Z (disk 21 GB free, above the 15 GB floor)
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -9,7 +9,7 @@
 | F-comp-full | Composition full suite | test service | none | DONE: PASS | test service | composition-full-1023100726-4261 | n/a |
 | F-EXACT8 | agent heavy-journey failures (2 sigterm, 6 quick_run) | n/a | n/a | Agent owns it (peer 09:19Z), id agent-targeted-1023091523-8962. No farm copy | none | Agent's id pending | n/a |
 | F-H6/H9 | integrated suites + P2 tour + P3 journey | test service | P1 GO, A2-undo, A2-move-reads | P3 and P1 bodies are owned by Proof's service (no farm duplicate). The full P2 tour is NOT ready (Proof peer 10:54Z: popup caller, authentic Agent image and a Sol repair are pending). Proof will request the heavy tour from the farm with exact selectors once the reviewed integrated source is ready. No competing P1/P3/tour body now | none | none | n/a |
-| F-final | final run + delivery-build dry run | test service | all lanes | todo | none | none | n/a |
+| F-final | final full-suite run + FINAL DELIVERY BUILD (runs on the farm, orchestrator 11:41Z; fresh clones in the worker tmpdir, never in evidence/ or notes/; bin/delivery-build and bin/build-delivery exist) | test service | all lanes, upstream freeze | todo: planned, waiting on the final integrated SHAs | none | none | n/a |
 
 Blockers:
 - P1 is NO-GO (App/Proof peers): no mounted A2 chain selector, so no honest P2/P3 or chain run can be requested. Owner: App/Proof.
