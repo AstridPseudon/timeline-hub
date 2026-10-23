@@ -238,4 +238,9 @@ def test_closed_union_operation_inventory_is_exactly_the_supported_cohort():
     actual = [item['if']['properties']['op']['const']
               for item in _SCHEMA['$defs']['EditCommand']['allOf']]
     assert len(actual) == len(set(actual)) == 30
-    assert set(actual) == expected == set(operations()) | {'timeline.inverse', 'timeline.restore'}
+    # D15 intentionally keeps occurrence.fork as a provider-only semantic
+    # operation; it is not a new frozen wire-schema tuple.
+    assert set(operations()) - set(actual) == {'occurrence.fork'}
+    assert set(actual) == expected == (
+        set(operations()) - {'occurrence.fork'} | {'timeline.inverse', 'timeline.restore'}
+    )

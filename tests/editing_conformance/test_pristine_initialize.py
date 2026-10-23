@@ -148,10 +148,16 @@ def test_additional_timeline_names_and_app_empty_name_are_preserved():
 def test_complete_s2_schema_is_retained_additively():
     schema = json.loads((Path(__file__).parents[2] /
                          'astrid/core/timeline/schema/edit-command.schema.json').read_text())
-    from tests.sdk.test_timeline_current_union_schema import without_text
+    from tests.sdk.test_timeline_current_union_schema import (
+        without_doc_patch,
+        without_inverse_steps,
+        without_text,
+    )
 
-    assert len(schema['$defs']) == 55
-    schema = without_text(schema)
+    # The frozen S2 slice is retained inside the current schema, which also
+    # carries the approved doc.patch and per-step inverse additions.
+    assert len(schema['$defs']) == 58
+    schema = without_inverse_steps(without_doc_patch(without_text(schema)))
     for name in ('AssembledTargetArgs', 'ClipAddMediaArgs', 'WordAnchor', 'ClipAnchorArgs',
                  'OccurrenceCreateArgs'):
         del schema['$defs'][name]
