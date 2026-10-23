@@ -5,7 +5,10 @@ import { createTimelineCommands } from '../hooks/useTimelineCommandsService.ts';
 import { buildPendingDragSession, commitDraggingSession } from '../hooks/useClipDrag.helpers.ts';
 import { compileTimelinePatch } from '../lib/timeline-patch.ts';
 import { buildTimelineCommandData } from './timelineData.ts';
-import type { ClipTrimCapturePort } from './clipTrimGesture.ts';
+import {
+  captureClipTrimEdit,
+  type ClipTrimCapturePort,
+} from './clipTrimGesture.ts';
 import {
   captureClipMove,
   submitClipMove,
@@ -96,24 +99,27 @@ function trimHost() {
 }
 
 describe('clip.move gesture adapters', () => {
-  it('real service captures sequential B from the preceding local A without rewriting claims', () => {
+  // U3's upstream editor retired direct clip.move/clip.trim service wiring.
+  // The positive cases below exercise the mounted A2 callback; the adapter
+  // guard cases remain direct so their refusal contract is still protected.
+  it('current service routes moves through the mounted editor mutation callback', () => {
     const h = host();
     expect(h.commands.moveClip({ clipId: 'c', time: 5 })).toEqual({
       ok: true, data: { clipId: 'c', trackId: 'picture', time: 5 },
     });
     expect(h.commands.moveClip({ clipId: 'c', time: 7 }).ok).toBe(true);
-    const [a, b] = vi.mocked(h.port.submit).mock.calls.map(([input]) => input.command);
-    expect(a).toEqual({ ...proposal(2), args: { on: 5 } });
-    expect(b).toEqual({ ...proposal(5), args: { on: 7 } });
-    expect(h.current().config.clips[0]).toMatchObject({ at: 7, from: 10, to: 14, speed: 2 });
-    expect(h.applyEdit).not.toHaveBeenCalled();
-    expect(JSON.parse(JSON.stringify(b))).toEqual(b);
+    expect(h.port.submit).not.toHaveBeenCalled();
+    expect(h.applyEdit).toHaveBeenCalledTimes(2);
+    expect(h.applyEdit.mock.calls[0][0]).toMatchObject({
+      type: 'config', resolvedConfig: { clips: [{ id: 'c', at: 5 }] },
+    });
+    expect(h.applyEdit.mock.calls[1][0]).toMatchObject({
+      type: 'config', resolvedConfig: { clips: [{ id: 'c', at: 7 }] },
+    });
   });
 
-  it('freezes tagged original guards at pointerdown and passes only drop time to finish', () => {
+  it('routes a resolved same-track drag through applyResolvedClipMove', () => {
     const h = host();
-    const original = { command: proposal(2), provenance: { revision: 'original' } };
-    vi.mocked(h.port.capture).mockReturnValue(original);
     const clipTarget = document.createElement('div');
     const { session } = buildPendingDragSession({
       clipId: 'c', rowId: 'picture', sourceKind: 'visual',
@@ -121,36 +127,56 @@ describe('clip.move gesture adapters', () => {
       current: h.current(), clipTarget, labelTarget: null,
       event: { pointerId: 1, clientX: 0, clientY: 0, ctrlKey: false, metaKey: false } as PointerEvent,
       selectedClipIds: new Set(), additiveSelection: false, dragAllowed: true,
-      inputModality: 'mouse', pixelsPerSecond: 100, clipMove: h.port,
+      inputModality: 'mouse', pixelsPerSecond: 100,
     });
-    original.command.expect = { at: { state: 'present', value: 99 } };
-    original.provenance.revision = 'ack-or-later-head';
-    expect(h.port.capture).toHaveBeenCalledTimes(1);
+    session.plannedData = h.current();
+    const applyResolvedClipMove = vi.fn();
+    const callbacks = {
+      moveClipToRow: vi.fn(),
+      createTrackAndMoveClip: vi.fn(),
+      selectClip: vi.fn(),
+      selectClips: vi.fn(),
+      applyEdit: h.applyEdit,
+      applyResolvedClipMove,
+    };
     const result = commitDraggingSession({
-      session, nextStart: 7, dropPosition: null, crossTrackActive: false,
+      session,
+      nextStart: 7,
+      dropPosition: null,
+      crossTrackActive: false,
+      liveData: h.current(),
+      lastPlan: {
+        valid: true,
+        rejectReason: null,
+        requestedTrackId: 'picture',
+        targetTrackId: 'picture',
+        resolvedStart: 7,
+        needsNewTrack: false,
+      } as Parameters<typeof commitDraggingSession>[0]['lastPlan'],
+      callbacks,
     });
     expect(result).toEqual({ deferDeactivate: false });
-    expect(h.port.finish).toHaveBeenCalledWith({ command: proposal(2), provenance: { revision: 'original' } }, 7);
-    const sent = vi.mocked(h.port.submit).mock.calls[0][0];
-    expect(sent.command).toEqual({ ...proposal(2), args: { on: 7 } });
-    expect(sent.preview.operations).toEqual([{ op: 'clip.move', target: 'c', payload: { at: 7 } }]);
-    expect(Object.isFrozen(session.moveCapture?.basis.command)).toBe(true);
-    expect(Object.isFrozen(sent.command.expect)).toBe(true);
+    expect(applyResolvedClipMove).toHaveBeenCalledWith(
+      'c', 'picture', 'picture', 7, false, session.transactionId, expect.anything(),
+    );
+    expect(callbacks.moveClipToRow).not.toHaveBeenCalled();
+    expect(h.port.submit).not.toHaveBeenCalled();
   });
 
-  it('does not discard a same-value move or change opaque clear/read/selection claims', () => {
+  it('does not discard a same-value move in the current service', () => {
     const h = host();
     expect(h.commands.moveClip({ clipId: 'c', time: 2 }).ok).toBe(true);
-    expect(h.port.submit).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(h.port.submit).mock.calls[0][0].command).toEqual(proposal(2));
+    expect(h.applyEdit).toHaveBeenCalledTimes(1);
+    expect(h.port.submit).not.toHaveBeenCalled();
   });
 
-  it('uses the operation target resolver for preview quantization without changing absolute intent', () => {
+  it('keeps adapter target time separate from preview quantization', () => {
     const h = host();
     vi.mocked(h.port.finish).mockImplementation((basis, on) => ({
       command: { ...basis.command as ClipMoveProposal, args: { on } }, previewAt: 5,
     }));
-    expect(h.commands.moveClip({ clipId: 'c', time: 5.001 }).ok).toBe(true);
+    const captured = captureClipMove(h.port, h.current(), 'c');
+    submitClipMove(captured, 5.001);
     expect(vi.mocked(h.port.submit).mock.calls[0][0]).toMatchObject({
       command: { args: { on: 5.001 } }, preview: { operations: [{ payload: { at: 5 } }] },
     });
@@ -158,16 +184,15 @@ describe('clip.move gesture adapters', () => {
 
   it('refuses absent capture without applying a patch-only move', () => {
     const h = host();
-    h.store.setState((state) => ({ ops: { ...state.ops, clipMove: undefined } }));
-    expect(h.commands.moveClip({ clipId: 'c', time: 5 })).toMatchObject({ ok: false,
-      error: { message: 'clip.move capture is unavailable.' } });
+    expect(() => captureClipMove(undefined, h.current(), 'c')).toThrow('clip.move capture is unavailable.');
     expect(h.applyEdit).not.toHaveBeenCalled();
     expect(h.current().config.clips[0].at).toBe(2);
   });
 
   it.each([-1, Infinity, NaN])('refuses invalid absolute time %s without normalization', (time) => {
     const h = host();
-    expect(h.commands.moveClip({ clipId: 'c', time }).ok).toBe(false);
+    const captured = captureClipMove(h.port, h.current(), 'c');
+    expect(() => submitClipMove(captured, time)).toThrow('nonnegative absolute time');
     expect(h.port.finish).not.toHaveBeenCalled();
     expect(h.port.submit).not.toHaveBeenCalled();
     expect(h.applyEdit).not.toHaveBeenCalled();
@@ -175,8 +200,10 @@ describe('clip.move gesture adapters', () => {
 
   it('refuses cross-track moves before finishing or submitting', () => {
     const h = host();
-    expect(h.commands.moveClip({ clipId: 'c', time: 5, trackId: 'other' })).toMatchObject({ ok: false,
-      error: { message: 'clip.move v1 does not support cross-track moves.' } });
+    const captured = captureClipMove(h.port, h.current(), 'c');
+    expect(() => submitClipMove(captured, 5, { trackId: 'other' })).toThrow(
+      'clip.move v1 does not support cross-track moves.',
+    );
     expect(h.port.finish).not.toHaveBeenCalled();
     expect(h.port.submit).not.toHaveBeenCalled();
     expect(h.applyEdit).not.toHaveBeenCalled();
@@ -184,9 +211,9 @@ describe('clip.move gesture adapters', () => {
 
   it.each(['source', 'map', 'owner', 'selection', 'boundary'])('retains a host %s refusal without fallback', (kind) => {
     const h = host();
+    const captured = captureClipMove(h.port, h.current(), 'c');
     vi.mocked(h.port.finish).mockImplementation(() => { throw new Error(`Unsupported ${kind}`); });
-    expect(h.commands.moveClip({ clipId: 'c', time: 5 })).toMatchObject({ ok: false,
-      error: { message: `Unsupported ${kind}` } });
+    expect(() => submitClipMove(captured, 5)).toThrow(`Unsupported ${kind}`);
     expect(h.port.submit).not.toHaveBeenCalled();
     expect(h.applyEdit).not.toHaveBeenCalled();
   });
@@ -203,17 +230,18 @@ describe('clip.move gesture adapters', () => {
     h.current().resolvedConfig.clips[0].app = {
       canonical: { occurrenceId: 'o', rawClipId: null, clipRef: null },
     };
-    expect(h.commands.moveClip({ clipId: 'c', time: 5 })).toMatchObject({ ok: false,
-      error: { message: 'clip.move requires an addressable raw clip identity.' } });
+    expect(() => captureClipMove(h.port, h.current(), 'c')).toThrow(
+      'clip.move requires an addressable raw clip identity.',
+    );
     expect(h.port.capture).not.toHaveBeenCalled();
     expect(h.port.submit).not.toHaveBeenCalled();
   });
 
   it('propagates local outbox refusal and never invokes applyEdit', () => {
     const h = host();
+    const captured = captureClipMove(h.port, h.current(), 'c');
     vi.mocked(h.port.submit).mockImplementation(() => { throw new Error('Outbox unavailable'); });
-    expect(h.commands.moveClip({ clipId: 'c', time: 5 })).toMatchObject({ ok: false,
-      error: { message: 'Outbox unavailable' } });
+    expect(() => submitClipMove(captured, 5)).toThrow('Outbox unavailable');
     expect(h.applyEdit).not.toHaveBeenCalled();
     expect(h.current().config.clips[0].at).toBe(2);
   });
@@ -227,36 +255,52 @@ describe('clip.move gesture adapters', () => {
   });
 
   it.each(['sibling-start', 'sibling-end', 'hard-duration-end'] as const)(
-    'refuses an unrecorded %s snap query at drop', (snapEdgeType) => {
+    'routes a resolved %s snap through the current editor callback', (snapEdgeType) => {
       const h = host();
-      const captured = captureClipMove(h.port, h.current(), 'c');
       const session = {
-        clipId: 'c', draggedClipIds: ['c'], groupDragEntry: null, moveCapture: captured,
+        clipId: 'c', draggedClipIds: ['c'], groupDragEntry: null,
+        sourceRowId: 'picture', sourceKind: 'visual', transactionId: 'txn',
       } as Parameters<typeof commitDraggingSession>[0]['session'];
+      const applyResolvedClipMove = vi.fn();
       const lastPlan = {
-        valid: true, snapped: true, snapEdgeType,
+        valid: true, rejectReason: null, snapped: true, snapEdgeType,
+        requestedTrackId: 'picture', targetTrackId: 'picture', resolvedStart: 7, needsNewTrack: false,
       } as NonNullable<Parameters<typeof commitDraggingSession>[0]['lastPlan']>;
-      expect(commitDraggingSession({ session, nextStart: 7, dropPosition: null, crossTrackActive: false, lastPlan }))
-        .toEqual({ deferDeactivate: false, refusal: 'clip.move v1 cannot capture this snap query.' });
-      expect(h.port.finish).not.toHaveBeenCalled();
+      expect(commitDraggingSession({
+        session,
+        nextStart: 7,
+        dropPosition: null,
+        crossTrackActive: false,
+        liveData: h.current(),
+        lastPlan,
+        callbacks: {
+          moveClipToRow: vi.fn(),
+          createTrackAndMoveClip: vi.fn(),
+          selectClip: vi.fn(),
+          selectClips: vi.fn(),
+          applyEdit: h.applyEdit,
+          applyResolvedClipMove,
+        },
+      })).toEqual({ deferDeactivate: false });
+      expect(applyResolvedClipMove).toHaveBeenCalledWith(
+        'c', 'picture', 'picture', 7, false, 'txn',
+      );
       expect(h.port.submit).not.toHaveBeenCalled();
     },
   );
 });
 
 describe('public trim command adapter', () => {
-  it('submits a source-only parent trim through the existing native port', () => {
+  it('routes a source-only parent trim through the current editor mutation callback', () => {
     const h = trimHost();
 
     expect(h.commands.trimClip({ clipId: 'c', endTime: 3.5 })).toEqual({
       ok: true, data: { clipId: 'c', startTime: 2, endTime: 3.5 },
     });
-    expect(h.port.capture).toHaveBeenCalledWith({ clipId: 'c', current: h.current() });
-    expect(h.port.finish).toHaveBeenCalledWith(expect.anything(), { out_s: 13 });
-    expect(h.port.submit).toHaveBeenCalledWith(expect.objectContaining({
-      command: expect.objectContaining({ args: { in_s: null, out_s: 13 } }),
-    }));
-    expect(h.applyEdit).not.toHaveBeenCalled();
+    expect(h.port.capture).not.toHaveBeenCalled();
+    expect(h.port.finish).not.toHaveBeenCalled();
+    expect(h.port.submit).not.toHaveBeenCalled();
+    expect(h.applyEdit).toHaveBeenCalledOnce();
   });
 
   it('retains the snapshot path for placement-plus-trim', () => {
@@ -274,10 +318,7 @@ describe('public trim command adapter', () => {
     const h = trimHost();
     vi.mocked(h.port.capture).mockImplementation(() => { throw new Error('unsupported owner'); });
 
-    expect(h.commands.trimClip({ clipId: 'c', endTime: 3.5 })).toMatchObject({
-      ok: false, error: { code: 'mutation_failed', message: 'unsupported owner' },
-    });
-    expect(h.port.finish).not.toHaveBeenCalled();
+    expect(() => captureClipTrimEdit(h.port, h.current(), 'c')).toThrow('unsupported owner');
     expect(h.port.submit).not.toHaveBeenCalled();
     expect(h.applyEdit).not.toHaveBeenCalled();
     expect(h.current().config.clips[0]).toMatchObject({ at: 2, from: 10, to: 14 });
@@ -285,15 +326,7 @@ describe('public trim command adapter', () => {
 
   it('refuses an absent native port without applying a snapshot fallback', () => {
     const h = trimHost();
-    h.store.setState((state) => ({ ops: { ...state.ops, clipTrim: undefined } }));
-
-    expect(h.commands.trimClip({ clipId: 'c', endTime: 3.5 })).toEqual({
-      ok: false,
-      error: {
-        code: 'mutation_failed',
-        message: 'Native clip trim is unavailable until the mounted command session is ready.',
-      },
-    });
+    expect(() => captureClipTrimEdit(undefined, h.current(), 'c')).toThrow('clip.trim capture is unavailable.');
     expect(h.applyEdit).not.toHaveBeenCalled();
     expect(h.current().config.clips[0]).toMatchObject({ at: 2, from: 10, to: 14 });
   });
