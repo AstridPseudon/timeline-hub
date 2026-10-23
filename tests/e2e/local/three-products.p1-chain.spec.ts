@@ -11,6 +11,14 @@ import {
   logDiagnostic,
   logPriorityDiagnostic,
   redactDiagnosticText,
+  boundedDiagnosticRead,
+  DIAGNOSTIC_ARTIFACT_TIMEOUT_MS,
+  DIAGNOSTIC_COLLECTION_TIMEOUT_MS,
+  DIAGNOSTIC_READ_TIMEOUT_MS,
+  MOUNTED_DIAGNOSTIC_MAX_RECORDS,
+  mountedDiagnosticInitScript,
+  withDiagnosticDeadline,
+  writeDiagnosticArtifact,
 } from './p1-diagnostic-safety.ts';
 
 const CEILING = { timeout: 90_000 };
@@ -35,6 +43,14 @@ type DiagnosticWireHead = {
   head: { revisionId: string; publicationId: string | null } | null;
   replyReadFailed: boolean;
 };
+type DiagnosticRequestProjection = {
+  index: number;
+  method: string;
+  route: string;
+  status: number | null;
+  bodyProjection: { present: boolean; bytes: number; sameAsPrevious: boolean | null };
+  keyProjection: { present: boolean; bytes: number; sameAsPrevious: boolean | null };
+};
 type DiagnosticSourceWindow = {
   rightId: string;
   sourceIn: {
@@ -54,6 +70,8 @@ type P1DiagnosticTrace = {
   consoleErrors: Array<{ type: string; signal: DiagnosticErrorSignal; message: string; location: unknown }>;
   requestFailures: Array<{ method: string; route: string; error: string | null }>;
   wireHeads: DiagnosticWireHead[];
+  requestProjections: DiagnosticRequestProjection[];
+  failureContext?: unknown;
   projectId?: string;
   timelineId?: string;
   sourceWindow?: { before: DiagnosticSourceWindow; after: DiagnosticSourceWindow };
@@ -71,9 +89,17 @@ test.beforeAll(() => {
   const reason = harnessUnavailableReason();
   if (reason) throw new Error(`P1 chain cannot run: ${reason}`);
 });
-test.beforeEach(async ({ page }) => {
-  const trace: P1DiagnosticTrace = { pageErrors: [], consoleErrors: [], requestFailures: [], wireHeads: [] };
+test.beforeEach(async ({ page }, testInfo) => {
+  const trace: P1DiagnosticTrace = { pageErrors: [], consoleErrors: [], requestFailures: [], wireHeads: [], requestProjections: [] };
   diagnosticTraces.set(page, trace);
+  const buffer = testInfo?.title?.includes('real Agent move') ? 'case2' : 'case1';
+  const addInitScript = (page as Page & { addInitScript?: (script: { content: string }) => Promise<void> }).addInitScript;
+  if (typeof addInitScript === 'function') {
+    await addInitScript.call(page, { content: mountedDiagnosticInitScript({
+      buffer,
+      maxRecords: MOUNTED_DIAGNOSTIC_MAX_RECORDS,
+    }) });
+  }
   page.on('pageerror', diagnosticListener((error) => boundedPush(trace.pageErrors, redactDiagnosticText(error.message))));
   page.on('console', diagnosticListener((message) => {
     const text = message.text();
@@ -365,7 +391,29 @@ function observe(page: Page, captureReadonlyTraffic = false) {
     if (!captureReadonlyTraffic && request.method() !== 'POST') return;
     const path = new URL(request.url()).pathname;
     if (request.method() === 'POST') {
-      if (COMMITS.test(path)) posts.push({ body: JSON.parse(request.postData() ?? '{}'), raw: request.postData() ?? '', key: request.headers()['idempotency-key'] });
+      if (COMMITS.test(path)) {
+        const raw = request.postData() ?? '';
+        const key = request.headers()['idempotency-key'];
+        const previous = posts.at(-1);
+        const trace = diagnosticTraces.get(page);
+        posts.push({ body: JSON.parse(raw || '{}'), raw, key });
+        if (trace) boundedPush(trace.requestProjections, {
+          index: posts.length - 1,
+          method: request.method(),
+          route: diagnosticRoute(path) ?? '/unknown',
+          status: null,
+          bodyProjection: {
+            present: raw.length > 0,
+            bytes: new TextEncoder().encode(raw).length,
+            sameAsPrevious: previous ? previous.raw === raw : null,
+          },
+          keyProjection: {
+            present: typeof key === 'string' && key.length > 0,
+            bytes: typeof key === 'string' ? new TextEncoder().encode(key).length : 0,
+            sameAsPrevious: previous ? previous.key === key : null,
+          },
+        });
+      }
       if (LEGACY_WRITES.test(path)) legacy.push(path);
     }
     const route = captureReadonlyTraffic ? diagnosticRoute(path) : undefined;
@@ -380,6 +428,11 @@ function observe(page: Page, captureReadonlyTraffic = false) {
     const post = [...posts].reverse().find((candidate) => candidate.key === response.request().headers()['idempotency-key']);
     if (!post) return;
     post.status = response.status();
+    const trace = diagnosticTraces.get(page);
+    const projection = trace?.requestProjections.find((item) => item.keyProjection.present
+      && item.keyProjection.bytes === new TextEncoder().encode(post.key).length
+      && posts[item.index] === post);
+    if (projection) projection.status = response.status();
     void response.json().then((body) => { post.response = body; }).catch(() => {});
   }));
   page.on('response', diagnosticListener((response) => {
@@ -878,6 +931,81 @@ async function captureSecondCaseFailureDiagnostics({
       console: signals.consoleErrors.slice(0, 4),
       requestFailures: signals.requestFailures.slice(0, 4),
     };
+    const trace = typeof diagnosticTraces === 'undefined' ? undefined : diagnosticTraces.get(page);
+    const artifactCommits = traffic.posts.slice(0, DIAGNOSTIC_LIMIT).map((post, index) => ({
+      index,
+      status: post.status ?? null,
+      replyHead: diagnosticHead(post.response),
+      bodyProjection: { present: post.raw.length > 0, bytes: post.raw.length, sameAsPrevious: index > 0 ? post.raw === traffic.posts[index - 1].raw : null },
+      keyProjection: { present: post.key.length > 0, bytes: post.key.length, sameAsPrevious: index > 0 ? post.key === traffic.posts[index - 1].key : null },
+    }));
+    const artifactBasisRecords = traffic.posts.slice(0, DIAGNOSTIC_LIMIT).map((post, index) => ({
+      index,
+      baseRevisionId: (post.body as any).base_revision_id ?? null,
+      basePublicationId: (post.body as any).base_publication_id ?? null,
+      merge: (post.body as any).merge ?? null,
+      reads: summarizeBasisReads((post.body as any).reads),
+      bodyProjection: { present: post.raw.length > 0, bytes: post.raw.length, sameAsPrevious: index > 0 ? post.raw === traffic.posts[index - 1].raw : null },
+      keyProjection: { present: post.key.length > 0, bytes: post.key.length, sameAsPrevious: index > 0 ? post.key === traffic.posts[index - 1].key : null },
+    }));
+    const artifactOwners = outboxRecords === null ? 'UNKNOWN' : outboxRecords.slice(0, DIAGNOSTIC_LIMIT).map((record) => {
+      const request = record.pending?.request;
+      const body = request?.body;
+      const key = request?.key;
+      return {
+        ownerId: typeof record.ownerId === 'string' ? record.ownerId : 'UNKNOWN',
+        generation: typeof record.generation === 'number' ? record.generation : 'UNKNOWN',
+        intentCount: Array.isArray(record.intents) ? record.intents.length : 'UNKNOWN',
+        pending: record.pending ? {
+          intentId: typeof record.pending.intentId === 'string' ? record.pending.intentId : 'UNKNOWN',
+          request: request ? {
+            method: typeof request.method === 'string' ? request.method : 'UNKNOWN',
+            path: typeof request.path === 'string' ? request.path.split(/[?#]/, 1)[0] || 'UNKNOWN' : 'UNKNOWN',
+            bodyProjection: { present: body !== undefined && body !== null, bytes: typeof body === 'string' ? body.length : 0, sameAsPrevious: null },
+            keyProjection: { present: typeof key === 'string' && key.length > 0, bytes: typeof key === 'string' ? key.length : 0, sameAsPrevious: null },
+          } : 'UNKNOWN',
+          outcome: record.pending.outcome ? {
+            kind: typeof record.pending.outcome.kind === 'string' ? record.pending.outcome.kind : 'UNKNOWN',
+            status: typeof record.pending.outcome.status === 'number' ? record.pending.outcome.status : 'UNKNOWN',
+            reason: typeof record.pending.outcome.reason === 'string' ? record.pending.outcome.reason : 'UNKNOWN',
+          } : 'UNKNOWN',
+        } : null,
+        acceptedHead: diagnosticHead(record.accepted?.head) ?? 'UNKNOWN',
+      };
+    });
+    if (trace) trace.failureContext = {
+      phase: 'after-source-in-before-original-post-count-wait',
+      case: {
+        title: 'P1 split -> trim new clip: a real Agent move refuses the stale trim and the App rolls back with a message',
+        projectId: harness.seed.projectId,
+        projectSlug: seed.projectSlug,
+        timelineId: seed.timelineId,
+        sourceId: seed.sourceId,
+        originalClipId: originalClip.id,
+        rightId,
+        expectedPostCount: 2,
+        observedPostCount: traffic.posts.length,
+      },
+      sourceIdentities: {
+        beforeHead: diagnosticHead({ head: before.head }) ?? 'UNKNOWN',
+        splitHead: diagnosticHead(split.response),
+        agentHead: diagnosticHead(agent),
+        sourceAsset: 'UNKNOWN',
+      },
+      traffic: { commits: artifactCommits, readonly: readonlyTraffic },
+      basis: artifactBasisRecords,
+      displayedHead: {
+        providerProjectId,
+        providerTimelineId,
+        commitReplies: artifactCommits.map((item) => ({ index: item.index, head: item.replyHead })),
+        readonlyReplies: readonlyTraffic.map(({ route, status, displayedHead: head }) => ({ route, status, head })),
+        runtimeHistoryHead: diagnosticHead({ head: runtimeHistory?.head }) ?? 'UNKNOWN',
+        historyReadFailed,
+      },
+      outbox: { readFailed: outboxReadFailed, owners: artifactOwners },
+      ui,
+      errors,
+    };
     // Keep causal state ahead of the bounded structural traffic summaries.
     logPriorityDiagnostic('P1 second-case priority diagnostics', {
       case: {
@@ -968,6 +1096,85 @@ function summarizePriorityOutboxes(records: any[]): unknown[] {
   }));
 }
 
+function diagnosticByteLength(value: unknown): number {
+  return typeof value === 'string' ? new TextEncoder().encode(value).length : 0;
+}
+
+function artifactWireHeads(wireHeads: DiagnosticWireHead[]): unknown[] {
+  return wireHeads.map(({ key: _key, ...wire }) => ({
+    ...wire,
+    keyProjection: { present: typeof _key === 'string' && _key.length > 0, bytes: diagnosticByteLength(_key) },
+  }));
+}
+
+function artifactCommitTraffic(posts: CommitPost[]): unknown[] {
+  return posts.slice(0, DIAGNOSTIC_LIMIT).map((post, index) => ({
+    index,
+    status: post.status ?? null,
+    replyHead: diagnosticHead(post.response),
+    bodyProjection: {
+      present: post.raw.length > 0,
+      bytes: diagnosticByteLength(post.raw),
+      sameAsPrevious: index > 0 ? post.raw === posts[index - 1].raw : null,
+    },
+    keyProjection: {
+      present: post.key.length > 0,
+      bytes: diagnosticByteLength(post.key),
+      sameAsPrevious: index > 0 ? post.key === posts[index - 1].key : null,
+    },
+  }));
+}
+
+function artifactBasis(posts: CommitPost[]): unknown[] {
+  return posts.slice(0, DIAGNOSTIC_LIMIT).map((post, index) => ({
+    index,
+    baseRevisionId: (post.body as any).base_revision_id ?? null,
+    basePublicationId: (post.body as any).base_publication_id ?? null,
+    merge: (post.body as any).merge ?? null,
+    reads: summarizeBasisReads((post.body as any).reads),
+    bodyProjection: {
+      present: post.raw.length > 0,
+      bytes: diagnosticByteLength(post.raw),
+      sameAsPrevious: index > 0 ? post.raw === posts[index - 1].raw : null,
+    },
+    keyProjection: {
+      present: post.key.length > 0,
+      bytes: diagnosticByteLength(post.key),
+      sameAsPrevious: index > 0 ? post.key === posts[index - 1].key : null,
+    },
+  }));
+}
+
+function artifactOutboxOwners(records: any[] | null): unknown {
+  if (records === null) return 'UNKNOWN';
+  return records.slice(0, DIAGNOSTIC_LIMIT).map((record) => {
+    const request = record.pending?.request;
+    const body = request?.body;
+    const key = request?.key;
+    return {
+      ownerId: typeof record.ownerId === 'string' ? record.ownerId : 'UNKNOWN',
+      generation: typeof record.generation === 'number' ? record.generation : 'UNKNOWN',
+      intentCount: Array.isArray(record.intents) ? record.intents.length : 'UNKNOWN',
+      pending: record.pending ? {
+        intentId: typeof record.pending.intentId === 'string' ? record.pending.intentId : 'UNKNOWN',
+        request: request ? {
+          method: typeof request.method === 'string' ? request.method : 'UNKNOWN',
+          path: typeof request.path === 'string' ? request.path.split(/[?#]/, 1)[0] || 'UNKNOWN' : 'UNKNOWN',
+          bodyProjection: { present: body !== undefined && body !== null, bytes: diagnosticByteLength(body), sameAsPrevious: null },
+          keyProjection: { present: typeof key === 'string' && key.length > 0, bytes: diagnosticByteLength(key), sameAsPrevious: null },
+        } : 'UNKNOWN',
+        outcome: record.pending.outcome ? {
+          kind: typeof record.pending.outcome.kind === 'string' ? record.pending.outcome.kind : 'UNKNOWN',
+          status: typeof record.pending.outcome.status === 'number' ? record.pending.outcome.status : 'UNKNOWN',
+          reason: typeof record.pending.outcome.reason === 'string' ? record.pending.outcome.reason : 'UNKNOWN',
+        } : 'UNKNOWN',
+      } : null,
+      rejected: record.pending?.outcome?.kind === 'rejected',
+      acceptedHead: diagnosticHead(record.accepted?.head) ?? 'UNKNOWN',
+    };
+  });
+}
+
 async function diagnosticVisibleState(locator: any): Promise<boolean | 'UNKNOWN'> {
   try { return await locator.isVisible(); } catch { return 'UNKNOWN'; }
 }
@@ -986,28 +1193,171 @@ async function diagnosticAttribute(locator: any, name: string): Promise<string> 
 
 async function captureFailureContinuation(page: Page, testInfo: any) {
   const trace = diagnosticTraces.get(page);
-  const provider = page.getByTestId('video-editor-provider');
-  const connection = page.getByTestId('runtime-connection-status');
-  const runtimePanel = page.getByTestId('runtime-not-connected');
-  const recovery = page.getByTestId('timeline-command-recovery');
-  const timelineError = page.locator('[data-video-editor-timeline-error="true"]');
-  const providerTimelineId = await diagnosticAttribute(provider, 'data-timeline-id');
-  const providerProjectId = await diagnosticAttribute(provider, 'data-project-id');
+  const caseTitle = testInfo.title;
+  const earlyProjectId = trace?.projectId ?? 'UNKNOWN';
+  const earlyTimelineId = trace?.timelineId ?? 'UNKNOWN';
+  const earlyRightId = trace?.sourceWindow?.after.rightId ?? 'UNKNOWN';
+
+  // Persist the in-memory failure identity and the already-bounded mounted seam
+  // before touching IndexedDB, the DOM, or any browser evaluation. Later reads
+  // remain strictly best effort.
+  // The later collector is strictly best effort; this file is the durable minimum
+  // when a page has closed or one of its reads never settles.
+  await withDiagnosticDeadline(() => writeDiagnosticArtifact(testInfo, {
+    schemaVersion: 1,
+    title: caseTitle,
+    status: testInfo.status,
+    expectedStatus: testInfo.expectedStatus,
+    capturedAt: new Date().toISOString(),
+    durationMs: testInfo.duration,
+    phase: 'afterEach_failure_early_return',
+    case: { title: caseTitle, expectedPostCount: 2, observedPostCount: trace?.wireHeads.length ?? 'UNKNOWN' },
+    tuple: { projectId: earlyProjectId, timelineId: earlyTimelineId, sourceId: 'UNKNOWN', rightId: earlyRightId },
+    available: {
+      wireHeads: trace ? artifactWireHeads(trace.wireHeads) : 'UNKNOWN',
+      requestProjections: trace?.requestProjections ?? 'UNKNOWN',
+      sourceWindow: trace?.sourceWindow ?? 'UNKNOWN',
+    },
+    mountedObservations: 'UNKNOWN',
+    captureData: 'UNKNOWN',
+    unknowns: { mountedDataRef: 'UNKNOWN', callbackPatch: 'UNKNOWN', captureResolution: 'UNKNOWN' },
+    losses: { cappedConsole: true, mountedObservations: 'UNKNOWN', callbackPatch: 'UNKNOWN', captureResolution: 'UNKNOWN' },
+  }), false, DIAGNOSTIC_ARTIFACT_TIMEOUT_MS);
+
+  const earlyMountedObservations = await withDiagnosticDeadline(() => page.evaluate((_timelineId) => {
+    try {
+      const snapshot = (window as Window & { __timelineSaveDiagnosticsSnapshot?: () => unknown }).__timelineSaveDiagnosticsSnapshot;
+      return typeof snapshot === 'function' ? snapshot() : 'UNKNOWN';
+    } catch {
+      return 'UNKNOWN';
+    }
+  }, earlyTimelineId), 'UNKNOWN', DIAGNOSTIC_READ_TIMEOUT_MS);
+  if (earlyMountedObservations !== 'UNKNOWN') {
+    await withDiagnosticDeadline(() => writeDiagnosticArtifact(testInfo, {
+      schemaVersion: 1,
+      title: caseTitle,
+      status: testInfo.status,
+      expectedStatus: testInfo.expectedStatus,
+      capturedAt: new Date().toISOString(),
+      durationMs: testInfo.duration,
+      phase: 'afterEach_failure_early_return',
+      case: { title: caseTitle, expectedPostCount: 2, observedPostCount: trace?.wireHeads.length ?? 'UNKNOWN' },
+      tuple: { projectId: earlyProjectId, timelineId: earlyTimelineId, sourceId: 'UNKNOWN', rightId: earlyRightId },
+      available: {
+        wireHeads: trace ? artifactWireHeads(trace.wireHeads) : 'UNKNOWN',
+        requestProjections: trace?.requestProjections ?? 'UNKNOWN',
+        sourceWindow: trace?.sourceWindow ?? 'UNKNOWN',
+        mountedObservations: earlyMountedObservations,
+      },
+      mountedObservations: earlyMountedObservations,
+      captureData: 'UNKNOWN',
+      unknowns: { mountedDataRef: 'UNKNOWN', callbackPatch: 'UNKNOWN', captureResolution: 'UNKNOWN' },
+      losses: { cappedConsole: true, mountedObservations: false, callbackPatch: 'UNKNOWN', captureResolution: 'UNKNOWN' },
+    }), false, DIAGNOSTIC_ARTIFACT_TIMEOUT_MS);
+  }
+
+  const collectionDeadline = Date.now() + DIAGNOSTIC_COLLECTION_TIMEOUT_MS;
+  const read = <T>(operation: () => T | PromiseLike<T>, fallback: T) => (
+    boundedDiagnosticRead(operation, fallback, collectionDeadline)
+  );
+  const getLocator = <T>(factory: () => T): T | null => {
+    try { return factory(); } catch { return null; }
+  };
+  const provider = getLocator(() => page.getByTestId('video-editor-provider'));
+  const connection = getLocator(() => page.getByTestId('runtime-connection-status'));
+  const runtimePanel = getLocator(() => page.getByTestId('runtime-not-connected'));
+  const recovery = getLocator(() => page.getByTestId('timeline-command-recovery'));
+  const timelineError = getLocator(() => page.locator('[data-video-editor-timeline-error="true"]'));
+  const providerTimelineId = await read(() => diagnosticAttribute(provider, 'data-timeline-id'), 'UNKNOWN');
+  const providerProjectId = await read(() => diagnosticAttribute(provider, 'data-project-id'), 'UNKNOWN');
   const timelineId = providerTimelineId !== 'UNKNOWN' ? providerTimelineId : trace?.timelineId ?? 'UNKNOWN';
+  const mountedObservations = await read(() => page.evaluate((_timelineId) => {
+    try {
+      const snapshot = (window as Window & { __timelineSaveDiagnosticsSnapshot?: () => unknown }).__timelineSaveDiagnosticsSnapshot;
+      return typeof snapshot === 'function' ? snapshot() : 'UNKNOWN';
+    } catch {
+      return 'UNKNOWN';
+    }
+  }, timelineId), 'UNKNOWN');
   let outboxRecords: any[] | null = null;
   let outboxReadFailed = false;
   try {
     if (timelineId === 'UNKNOWN') throw new Error('timeline id unavailable');
-    outboxRecords = await commandOutboxes(page, timelineId);
+    outboxRecords = await read(() => commandOutboxes(page, timelineId), null);
+    if (outboxRecords === null) throw new Error('outbox read unavailable');
   } catch {
     outboxReadFailed = true;
   }
-  const connectionState = await diagnosticAttribute(connection, 'data-state');
-  const panelState = await diagnosticAttribute(runtimePanel, 'data-state');
+  const connectionState = await read(() => diagnosticAttribute(connection, 'data-state'), 'UNKNOWN');
+  const panelState = await read(() => diagnosticAttribute(runtimePanel, 'data-state'), 'UNKNOWN');
   const wireHeads = trace?.wireHeads ?? [];
+  const safeWireHeads = artifactWireHeads(wireHeads);
+  const projectId = providerProjectId !== 'UNKNOWN' ? providerProjectId : trace?.projectId ?? 'UNKNOWN';
+  const timelineTupleId = timelineId;
+  const ui = {
+    connectionState: diagnosticConnectionState(connectionState !== 'UNKNOWN' ? connectionState : panelState),
+    runtimePanelVisible: await read(() => diagnosticVisibleState(runtimePanel), 'UNKNOWN'),
+    recoveryVisible: await read(() => diagnosticVisibleState(recovery), 'UNKNOWN'),
+    recoveryMessage: await read(() => diagnosticVisibleTextState(recovery), 'UNKNOWN'),
+    timelineErrorVisible: await read(() => diagnosticVisibleState(timelineError), 'UNKNOWN'),
+    timelineErrorMessage: await read(() => diagnosticVisibleTextState(timelineError), 'UNKNOWN'),
+    alertCount: await read(() => page.locator('[role="alert"]:visible').count(), 'UNKNOWN'),
+  };
+  const errors = {
+    page: trace?.pageErrors ?? 'UNKNOWN',
+    console: trace?.consoleErrors ?? 'UNKNOWN',
+    requestFailures: trace?.requestFailures ?? 'UNKNOWN',
+  };
+  await boundedDiagnosticRead(() => writeDiagnosticArtifact(testInfo, {
+    schemaVersion: 1,
+    title: caseTitle,
+    status: testInfo.status,
+    expectedStatus: testInfo.expectedStatus,
+    capturedAt: new Date().toISOString(),
+    durationMs: testInfo.duration,
+    phase: 'afterEach_failure_continuation',
+    case: {
+      title: caseTitle,
+      expectedPostCount: 2,
+      observedPostCount: wireHeads.length,
+    },
+    tuple: {
+      projectId,
+      timelineId: timelineTupleId,
+      sourceId: 'UNKNOWN',
+      rightId: trace?.sourceWindow?.after.rightId ?? 'UNKNOWN',
+    },
+    available: {
+      wireHeads: safeWireHeads,
+      requestProjections: trace?.requestProjections ?? 'UNKNOWN',
+      failureContext: trace?.failureContext ?? 'UNKNOWN',
+      sourceWindow: trace?.sourceWindow ?? 'UNKNOWN',
+      outbox: {
+        readFailed: outboxReadFailed,
+        summary: outboxRecords === null ? 'UNKNOWN' : summarizeOutboxes(outboxRecords),
+        owners: artifactOutboxOwners(outboxRecords),
+      },
+      mountedObservations,
+      recovery: ui,
+      errors,
+    },
+    mountedObservations,
+    captureData: 'UNKNOWN',
+    unknowns: {
+      mountedDataRef: 'UNKNOWN',
+      callbackPatch: 'UNKNOWN',
+      captureResolution: 'UNKNOWN',
+    },
+    losses: {
+      cappedConsole: true,
+      mountedObservations: 'UNKNOWN',
+      callbackPatch: 'UNKNOWN',
+      captureResolution: 'UNKNOWN',
+    },
+  }), false, Date.now() + DIAGNOSTIC_ARTIFACT_TIMEOUT_MS, DIAGNOSTIC_ARTIFACT_TIMEOUT_MS);
   logPriorityDiagnostic(`P1 failure continuation ${testInfo.title}`, {
     case: {
-      projectId: providerProjectId !== 'UNKNOWN' ? providerProjectId : trace?.projectId ?? 'UNKNOWN',
+      projectId,
       timelineId,
       rightId: trace?.sourceWindow?.after.rightId ?? 'UNKNOWN',
       observedPostCount: wireHeads.length,
@@ -1023,20 +1373,8 @@ async function captureFailureContinuation(page: Page, testInfo: any) {
       owners: outboxRecords === null ? 'UNKNOWN' : summarizePriorityOutboxes(outboxRecords),
     },
     sourceWindow: trace?.sourceWindow ?? 'UNKNOWN',
-    ui: {
-      connectionState: diagnosticConnectionState(connectionState !== 'UNKNOWN' ? connectionState : panelState),
-      runtimePanelVisible: await diagnosticVisibleState(runtimePanel),
-      recoveryVisible: await diagnosticVisibleState(recovery),
-      recoveryMessage: await diagnosticVisibleTextState(recovery),
-      timelineErrorVisible: await diagnosticVisibleState(timelineError),
-      timelineErrorMessage: await diagnosticVisibleTextState(timelineError),
-      alertCount: await page.locator('[role="alert"]:visible').count().catch(() => 'UNKNOWN'),
-    },
-    errors: {
-      page: trace?.pageErrors ?? 'UNKNOWN',
-      console: trace?.consoleErrors ?? 'UNKNOWN',
-      requestFailures: trace?.requestFailures ?? 'UNKNOWN',
-    },
+    ui,
+    errors,
   });
 }
 

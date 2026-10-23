@@ -1,3 +1,5 @@
+import { writeFile } from 'node:fs/promises';
+
 const REDACTED = '[REDACTED]';
 
 export const DIAGNOSTIC_MAX_BYTES = 16 * 1024;
@@ -7,6 +9,265 @@ export const DIAGNOSTIC_MAX_ARRAY_ITEMS = 40;
 export const DIAGNOSTIC_MAX_STRING = 500;
 const DIAGNOSTIC_MAX_INPUT_STRING = 4 * 1024;
 const DIAGNOSTIC_PRIORITY_MAX_ITEMS = 4;
+
+export const DIAGNOSTIC_READ_TIMEOUT_MS = 150;
+export const DIAGNOSTIC_ARTIFACT_TIMEOUT_MS = 500;
+export const DIAGNOSTIC_COLLECTION_TIMEOUT_MS = 1_000;
+
+export const MOUNTED_DIAGNOSTIC_EVENT = 'timeline:save-diagnostic';
+export const MOUNTED_DIAGNOSTIC_MAX_RECORDS = 32;
+
+export const MOUNTED_DIAGNOSTIC_PHASES = [
+  'schedule', 'capture-called', 'capture-resolved', 'capture-rejected', 'owner-init', 'owner-closed',
+  'owner-retired', 'lifecycle-cancel', 'basis-read', 'basis-ready', 'basis-unavailable', 'basis-error',
+  'identity-read', 'session-created', 'session-recovered', 'session-changed', 'adoption-start',
+  'adoption-complete', 'adopted-read', 'handoff-ready', 'owner-error',
+] as const;
+
+const MOUNTED_DIAGNOSTIC_PHASE_SET = new Set<string>(MOUNTED_DIAGNOSTIC_PHASES);
+const MOUNTED_DIAGNOSTIC_FIELDS = [
+  'version', 'sequence', 'time', 'phase', 'projectId', 'timelineId', 'clipId', 'ownerAlias', 'generation',
+  'sessionPresent', 'closed', 'current', 'identityPresent', 'scopeMatched', 'mountedHead', 'originalHead',
+  'basisStatus', 'gestureKind', 'patch', 'mountedClip', 'sourceClip', 'gestureClip', 'originalClip', 'status',
+  'ownerPresent', 'recoverableOwnerCount', 'intentsPendingCount', 'errorStage', 'errorCode', 'errorClass',
+] as const;
+const MOUNTED_DIAGNOSTIC_NUMERIC_FIELDS = ['from', 'to', 'at', 'hold', 'speed'] as const;
+const MOUNTED_DIAGNOSTIC_STATES = ['present', 'absent', 'null', 'UNKNOWN'] as const;
+const UNKNOWN = 'UNKNOWN' as const;
+
+export type MountedDiagnosticSnapshot = {
+  status: 'observed' | 'UNKNOWN';
+  buffer: string;
+  records: unknown[];
+  accepted: number;
+  rejected: number;
+  overflow: number;
+  listenerErrors: number;
+};
+
+type MountedDiagnosticProjection = { accepted: true; record: Record<string, unknown> } | { accepted: false };
+
+function mountedOwnData(value: object, key: string): { present: boolean; value?: unknown } {
+  try {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (!descriptor || !('value' in descriptor)) return { present: false };
+    return { present: true, value: descriptor.value };
+  } catch {
+    return { present: false };
+  }
+}
+
+function mountedSafeId(value: unknown): string | null | 'UNKNOWN' {
+  if (value === null) return null;
+  if (typeof value !== 'string' || value.length < 1 || value.length > 160) return UNKNOWN;
+  if (!/^[a-zA-Z0-9_.:-]+$/.test(value) || /^[a-z][a-z\d+.-]*:\/\//i.test(value)) return UNKNOWN;
+  return value;
+}
+
+function mountedSafeScalar(value: unknown): string | null | 'UNKNOWN' {
+  return value === null ? null : typeof value === 'string' && value.length <= 200 ? redactDiagnosticText(value) : UNKNOWN;
+}
+
+function mountedSafeNumber(value: unknown, integer = false): number | 'UNKNOWN' {
+  return typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 1_000_000_000
+    && (!integer || Number.isInteger(value)) ? value : UNKNOWN;
+}
+
+function mountedSafeNonNegativeInteger(value: unknown, maximum = 1_000_000_000): number | 'UNKNOWN' {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= maximum ? value : UNKNOWN;
+}
+
+function mountedSafeBoolean(value: unknown): boolean | 'UNKNOWN' {
+  return typeof value === 'boolean' ? value : UNKNOWN;
+}
+
+function mountedErrorStage(value: unknown): string {
+  return value === 'capture' || value === 'basis-read' || value === 'owner-init' ? value : UNKNOWN;
+}
+
+function mountedErrorCode(value: unknown): string {
+  return value === 'operation-rejected' ? value : UNKNOWN;
+}
+
+function mountedHead(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return { revisionId: UNKNOWN, publicationId: UNKNOWN };
+  const source = value as object;
+  const revisionId = mountedOwnData(source, 'revisionId');
+  const publicationId = mountedOwnData(source, 'publicationId');
+  return {
+    revisionId: revisionId.present ? mountedSafeId(revisionId.value) : UNKNOWN,
+    publicationId: publicationId.present ? mountedSafeId(publicationId.value) : UNKNOWN,
+  };
+}
+
+function mountedNumberField(value: object, field: typeof MOUNTED_DIAGNOSTIC_NUMERIC_FIELDS[number]): { value: unknown; state: typeof MOUNTED_DIAGNOSTIC_STATES[number] } {
+  const raw = mountedOwnData(value, field);
+  const state = mountedOwnData(value, `${field}State`);
+  const explicitState = typeof state.value === 'string' && (MOUNTED_DIAGNOSTIC_STATES as readonly string[]).includes(state.value)
+    ? state.value as typeof MOUNTED_DIAGNOSTIC_STATES[number] : undefined;
+  if (explicitState === 'null') return { value: null, state: 'null' };
+  if (explicitState === 'absent') return { value: UNKNOWN, state: 'absent' };
+  if (explicitState === 'UNKNOWN') return { value: UNKNOWN, state: 'UNKNOWN' };
+  if (explicitState === 'present') {
+    const number = mountedSafeNumber(raw.value);
+    return number === UNKNOWN ? { value: UNKNOWN, state: 'UNKNOWN' } : { value: number, state: 'present' };
+  }
+  if (!raw.present) return { value: UNKNOWN, state: 'absent' };
+  if (raw.value === null) return { value: null, state: 'null' };
+  const number = mountedSafeNumber(raw.value);
+  return number === UNKNOWN ? { value: UNKNOWN, state: 'UNKNOWN' } : { value: number, state: 'present' };
+}
+
+function mountedNumericRecord(value: unknown): Record<string, unknown> {
+  const source = value && typeof value === 'object' && !Array.isArray(value) ? value as object : null;
+  const result: Record<string, unknown> = {};
+  for (const field of MOUNTED_DIAGNOSTIC_NUMERIC_FIELDS) {
+    const projected = source ? mountedNumberField(source, field) : { value: UNKNOWN, state: 'UNKNOWN' as const };
+    result[field] = projected.value;
+    result[`${field}State`] = projected.state;
+  }
+  return result;
+}
+
+function mountedRecordField(detail: object, key: typeof MOUNTED_DIAGNOSTIC_FIELDS[number]): unknown {
+  const field = mountedOwnData(detail, key);
+  if (key === 'version') return 1;
+  if (key === 'phase') return field.present && typeof field.value === 'string' && MOUNTED_DIAGNOSTIC_PHASE_SET.has(field.value) ? field.value : UNKNOWN;
+  if (key === 'projectId' || key === 'timelineId' || key === 'clipId') return field.present ? mountedSafeId(field.value) : UNKNOWN;
+  if (key === 'mountedHead' || key === 'originalHead') return mountedHead(field.present ? field.value : undefined);
+  if (key === 'patch' || key === 'mountedClip' || key === 'sourceClip' || key === 'gestureClip' || key === 'originalClip') {
+    return mountedNumericRecord(field.present ? field.value : undefined);
+  }
+  if (key === 'intentsPendingCount' || key === 'errorClass') return UNKNOWN;
+  if (key === 'sequence' || key === 'time' || key === 'generation' || key === 'ownerAlias' || key === 'recoverableOwnerCount' || key === 'intentsPendingCount') {
+    if (key === 'time') return mountedSafeNumber(field.present ? field.value : undefined);
+    if (key === 'recoverableOwnerCount') return mountedSafeNonNegativeInteger(field.present ? field.value : undefined, 10_000);
+    return mountedSafeNonNegativeInteger(field.present ? field.value : undefined);
+  }
+  if (key === 'sessionPresent' || key === 'closed' || key === 'current' || key === 'identityPresent' || key === 'scopeMatched' || key === 'ownerPresent') {
+    return mountedSafeBoolean(field.present ? field.value : undefined);
+  }
+  if (key === 'errorStage') return field.present ? mountedErrorStage(field.value) : UNKNOWN;
+  if (key === 'errorCode') return field.present ? mountedErrorCode(field.value) : UNKNOWN;
+  return field.present ? mountedSafeScalar(field.value) : UNKNOWN;
+}
+
+export function projectMountedDiagnosticDetail(detail: unknown): MountedDiagnosticProjection {
+  if (!detail || typeof detail !== 'object' || Array.isArray(detail)) return { accepted: false };
+  const version = mountedOwnData(detail, 'version');
+  const phase = mountedOwnData(detail, 'phase');
+  if (version.value !== 1 || !phase.present || typeof phase.value !== 'string' || !MOUNTED_DIAGNOSTIC_PHASE_SET.has(phase.value)) {
+    return { accepted: false };
+  }
+  const record: Record<string, unknown> = {};
+  for (const key of MOUNTED_DIAGNOSTIC_FIELDS) record[key] = mountedRecordField(detail, key);
+  return { accepted: true, record };
+}
+
+/** Source for page.addInitScript; it intentionally has no imports or closures. */
+export function mountedDiagnosticInitScript(options: { buffer: string; maxRecords: number }) {
+  const source = (config: { buffer: string; maxRecords: number }) => {
+    const win = window as unknown as Window & Record<string, unknown>;
+    if (win.__timelineSaveDiagnosticsEnabled !== true) win.__timelineSaveDiagnosticsEnabled = true;
+    const own = (value: object, key: string) => {
+      try {
+        const descriptor = Object.getOwnPropertyDescriptor(value, key);
+        return descriptor && 'value' in descriptor ? { present: true, value: descriptor.value } : { present: false };
+      } catch { return { present: false }; }
+    };
+    const phases = new Set(['schedule', 'capture-called', 'capture-resolved', 'capture-rejected', 'owner-init', 'owner-closed', 'owner-retired', 'lifecycle-cancel', 'basis-read', 'basis-ready', 'basis-unavailable', 'basis-error', 'identity-read', 'session-created', 'session-recovered', 'session-changed', 'adoption-start', 'adoption-complete', 'adopted-read', 'handoff-ready', 'owner-error']);
+    const numericFields = ['from', 'to', 'at', 'hold', 'speed'];
+    const states = new Set(['present', 'absent', 'null', 'UNKNOWN']);
+    const fields = ['version', 'sequence', 'time', 'phase', 'projectId', 'timelineId', 'clipId', 'ownerAlias', 'generation', 'sessionPresent', 'closed', 'current', 'identityPresent', 'scopeMatched', 'mountedHead', 'originalHead', 'basisStatus', 'gestureKind', 'patch', 'mountedClip', 'sourceClip', 'gestureClip', 'originalClip', 'status', 'ownerPresent', 'recoverableOwnerCount', 'intentsPendingCount', 'errorStage', 'errorCode', 'errorClass'];
+    const unknown = 'UNKNOWN';
+    const id = (value: unknown) => value === null ? null : typeof value === 'string' && value.length > 0 && value.length <= 160 && /^[a-zA-Z0-9_.:-]+$/.test(value) && !/^[a-z][a-z\d+.-]*:\/\//i.test(value) ? value : unknown;
+    const number = (value: unknown, integer = false) => typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 1_000_000_000 && (!integer || Number.isInteger(value)) ? value : unknown;
+    const nonNegative = (value: unknown, maximum = 1_000_000_000) => typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= maximum ? value : unknown;
+    const boolean = (value: unknown) => typeof value === 'boolean' ? value : unknown;
+    const scalar = (value: unknown) => value === null ? null : typeof value === 'string' && value.length <= 200 ? value : unknown;
+    const head = (value: unknown) => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return { revisionId: unknown, publicationId: unknown };
+      const source = value as object;
+      const revision = own(source, 'revisionId'); const publication = own(source, 'publicationId');
+      return { revisionId: revision.present ? id(revision.value) : unknown, publicationId: publication.present ? id(publication.value) : unknown };
+    };
+    const numericRecord = (value: unknown) => {
+      const source = value && typeof value === 'object' && !Array.isArray(value) ? value as object : null;
+      const result: Record<string, unknown> = {};
+      for (const field of numericFields) {
+        const raw = source ? own(source, field) : { present: false, value: undefined };
+        const explicit = source ? own(source, `${field}State`) : { present: false, value: undefined };
+        const explicitState = typeof explicit.value === 'string' && states.has(explicit.value) ? explicit.value : undefined;
+        let state = 'UNKNOWN'; let resultValue: unknown = unknown;
+        if (explicitState === 'null') { state = 'null'; resultValue = null; }
+        else if (explicitState === 'absent') state = 'absent';
+        else if (explicitState === 'present') { resultValue = number(raw.value); state = resultValue === unknown ? 'UNKNOWN' : 'present'; }
+        else if (explicitState === 'UNKNOWN') state = 'UNKNOWN';
+        else if (!raw.present) state = 'absent';
+        else if (raw.value === null) { state = 'null'; resultValue = null; }
+        else { resultValue = number(raw.value); state = resultValue === unknown ? 'UNKNOWN' : 'present'; }
+        result[field] = resultValue; result[`${field}State`] = state;
+      }
+      return result;
+    };
+    const project = (detail: object) => {
+      const version = own(detail, 'version'); const phase = own(detail, 'phase');
+      if (version.value !== 1 || !phase.present || typeof phase.value !== 'string' || !phases.has(phase.value)) return null;
+      const result: Record<string, unknown> = {};
+      for (const key of fields) {
+        const field = own(detail, key); const value = field.value;
+        if (key === 'version') result[key] = 1;
+        else if (key === 'phase') result[key] = phase.value;
+        else if (key === 'projectId' || key === 'timelineId' || key === 'clipId') result[key] = field.present ? id(value) : unknown;
+        else if (key === 'mountedHead' || key === 'originalHead') result[key] = head(field.present ? value : undefined);
+        else if (key === 'patch' || key === 'mountedClip' || key === 'sourceClip' || key === 'gestureClip' || key === 'originalClip') result[key] = numericRecord(field.present ? value : undefined);
+        else if (key === 'intentsPendingCount' || key === 'errorClass') result[key] = unknown;
+        else if (key === 'sequence' || key === 'generation' || key === 'ownerAlias') result[key] = nonNegative(field.present ? value : undefined);
+        else if (key === 'recoverableOwnerCount') result[key] = nonNegative(field.present ? value : undefined, 10000);
+        else if (key === 'time') result[key] = number(field.present ? value : undefined);
+        else if (key === 'sessionPresent' || key === 'closed' || key === 'current' || key === 'identityPresent' || key === 'scopeMatched' || key === 'ownerPresent') result[key] = boolean(field.present ? value : undefined);
+        else if (key === 'errorStage') result[key] = field.present && (value === 'capture' || value === 'basis-read' || value === 'owner-init') ? value : unknown;
+        else if (key === 'errorCode') result[key] = field.present && value === 'operation-rejected' ? value : unknown;
+        else result[key] = field.present ? scalar(value) : unknown;
+      }
+      return result;
+    };
+    const state = { records: [] as unknown[], accepted: 0, rejected: 0, overflow: 0, listenerErrors: 0 };
+    const snapshot = () => ({ status: state.records.length > 0 ? 'observed' : 'UNKNOWN', buffer: config.buffer, records: state.records.slice(), accepted: state.accepted, rejected: state.rejected, overflow: state.overflow, listenerErrors: state.listenerErrors });
+    const snapshotName = '__timelineSaveDiagnosticsSnapshot';
+    win[snapshotName] = snapshot;
+    try {
+      window.addEventListener('timeline:save-diagnostic', (event: Event) => {
+        try {
+          const detail = own(event, 'detail');
+          let detailValue = detail.value;
+          if (!detail.present && typeof CustomEvent !== 'undefined' && event instanceof CustomEvent) {
+            try { detailValue = event.detail; } catch { detailValue = undefined; }
+          }
+          if (detailValue === undefined || !detailValue || typeof detailValue !== 'object' || Array.isArray(detailValue)) { state.rejected += 1; return; }
+          const record = project(detailValue as object);
+          if (!record) { state.rejected += 1; return; }
+          if (state.records.length >= config.maxRecords) { state.records.shift(); state.overflow += 1; }
+          state.records.push(record); state.accepted += 1;
+        } catch { state.listenerErrors += 1; }
+      });
+    } catch { state.listenerErrors += 1; }
+  };
+  const serialized = source.toString()
+    .replaceAll('__name(', '')
+    .replaceAll(',"own")', '')
+    .replaceAll(',"safeText")', '')
+    .replaceAll(',"project")', '')
+    .replaceAll(',"snapshot")', '')
+    .replaceAll(',"id")', '')
+    .replaceAll(',"number")', '')
+    .replaceAll(',"boolean")', '')
+    .replaceAll(',"scalar")', '')
+    .replaceAll(',"head")', '')
+    .replaceAll(',"numericRecord")', '')
+    .replaceAll(',"nonNegative")', '');
+  return `(${serialized})(${JSON.stringify(options)});`;
+}
 
 const SENSITIVE_KEY = /^(?:body|principal|authorization|cookie|set-cookie|x-api-key|api[_-]?key|apikey|access[_-]?token|refresh[_-]?token|id[_-]?token|token|secret|password|credential|client[_-]?secret|private[_-]?key|session)$/i;
 const SENSITIVE_ASSIGNMENT = /(["']?)([A-Za-z0-9_-]*(?:body|principal|authorization|cookie|set-cookie|x-api-key|api[_-]?key|apikey|access[_-]?token|refresh[_-]?token|id[_-]?token|token|secret|password|credential|client[_-]?secret|private[_-]?key|session)[A-Za-z0-9_-]*)\1(\s*[:=]\s*)(?:"(?:\\.|[^"\\])*"?|'(?:\\.|[^'\\])*'?|\{[\s\S]*|\[[\s\S]*|[^\s,;}\]]+)/gi;
@@ -57,8 +318,12 @@ const DIAGNOSTIC_CONTAINERS = new Set([
   'commitReplies', 'currentWireHeads', 'readonlyReplies', 'head', 'replyHead', 'beforeHead',
   'splitHead', 'agentHead', 'runtimeHistoryHead', 'acceptedHead', 'reads', 'items',
   'outbox', 'outboxes', 'summary', 'records', 'owners', 'pending', 'request', 'outcome',
-  'sourceWindow', 'before', 'after', 'sourceIn', 'selectedClip', 'identity',
+  'sourceWindow', 'before', 'after', 'sourceIn', 'selectedClip', 'identity', 'tuple', 'available',
+  'unknowns', 'losses', 'failureContext', 'wireHeads', 'requestProjections', 'keyProjection', 'bodyProjection', 'recovery', 'transport', 'captureData',
   'ui', 'errors', 'errorSignals', 'page', 'console', 'requestFailures', 'runtimeResponses',
+  'mountedObservations', 'mounted', 'originalBasis', 'basis', 'mountedHead', 'originalHead', 'headPair',
+  'scopedOwner', 'adoption', 'error', 'capture', 'records', 'unknown', 'patch', 'mountedClip', 'sourceClip',
+  'gestureClip', 'originalClip',
 ]);
 const DIAGNOSTIC_PRIMITIVES = new Set([
   'title', 'phase', 'projectId', 'projectSlug', 'timelineId', 'sourceId', 'originalClipId', 'rightId',
@@ -73,7 +338,12 @@ const DIAGNOSTIC_PRIMITIVES = new Set([
   'connectionState', 'runtimePanelVisible', 'recoveryVisible', 'recoveryMessage',
   'timelineErrorVisible', 'timelineErrorMessage', 'alertCount', 'type', 'signal', 'message',
   'error', 'count', 'summarized', 'truncated', 'outboxReadFailed', 'selectedTimelineMatchesExpectedId',
-  'known', 'capture', 'diagnostic', 'sourceAsset',
+  'known', 'capture', 'captureData', 'mountedDataRef', 'callbackPatch', 'diagnostic', 'buffer', 'accepted', 'overflow', 'listenerErrors',
+  'version', 'scope', 'sequence', 'time', 'ownerAlias', 'sessionState', 'start', 'resolve', 'reject', 'code', 'class', 'stage',
+  'from', 'to', 'at', 'hold', 'speed', 'fromState', 'toState', 'atState', 'holdState', 'speedState',
+  'generation', 'sessionPresent', 'closed', 'current', 'identityPresent', 'scopeMatched', 'basisStatus', 'gestureKind',
+  'status', 'ownerPresent', 'recoverableOwnerCount', 'intentsPendingCount', 'errorStage', 'errorCode', 'errorClass',
+  'schemaVersion', 'expectedStatus', 'capturedAt', 'durationMs', 'cappedConsole', 'captureResolution', 'sourceAsset', 'present', 'bytes', 'sameAsPrevious', 'sameAsIndex',
 ]);
 
 function diagnosticPrimitive(value: unknown): unknown {
@@ -114,6 +384,36 @@ export function diagnosticStructure(value: unknown, depth = 0): unknown {
     }
   }
   return result;
+}
+
+function diagnosticArtifactStructure(value: unknown, ancestors = new WeakSet<object>()): unknown {
+  if (!value || typeof value !== 'object') return diagnosticPrimitive(value);
+  try {
+    if (ancestors.has(value)) return 'UNKNOWN';
+    ancestors.add(value);
+    if (Array.isArray(value)) {
+      return value.slice(0, DIAGNOSTIC_MAX_ARRAY_ITEMS).map((item) => diagnosticArtifactStructure(item, ancestors));
+    }
+    const result: Record<string, unknown> = {};
+    for (const key of [...DIAGNOSTIC_CONTAINERS, ...DIAGNOSTIC_PRIMITIVES]) {
+      try {
+        if (!Object.prototype.hasOwnProperty.call(value, key)) continue;
+        const field = (value as Record<string, unknown>)[key];
+        result[key] = key === 'sourceAsset' ? 'UNKNOWN'
+          : DIAGNOSTIC_HEAD_FIELDS.has(key) ? diagnosticHeadFields(field)
+          : DIAGNOSTIC_CONTAINERS.has(key) ? diagnosticArtifactStructure(field, ancestors)
+          : Array.isArray(field) && ['path', 'intentLengths', 'pendingIntentLengths', 'outcomeKinds', 'known'].includes(key)
+            ? field.slice(0, DIAGNOSTIC_MAX_ARRAY_ITEMS).map(diagnosticPrimitive) : diagnosticPrimitive(field);
+      } catch {
+        result[key] = 'UNKNOWN';
+      }
+    }
+    return result;
+  } catch {
+    return 'UNKNOWN';
+  } finally {
+    ancestors.delete(value);
+  }
 }
 
 export function diagnosticListener<Args extends unknown[]>(callback: (...args: Args) => unknown): (...args: Args) => Promise<void> | void {
@@ -364,6 +664,66 @@ export function formatPriorityDiagnostic(label: string, value: unknown): string 
   const candidate = prefix + body;
   if (new TextEncoder().encode(candidate).length <= DIAGNOSTIC_MAX_BYTES) return candidate;
   return `${prefix}{"diagnostic":"priority_over_budget"}`;
+}
+
+export function formatDiagnosticArtifact(value: unknown): string {
+  let safeValue: unknown = { diagnostic: 'artifact_unavailable' };
+  try {
+    safeValue = diagnosticArtifactStructure(value);
+  } catch {
+    // Artifact formatting is best effort and must never affect the assertion under test.
+  }
+  try {
+    return `${JSON.stringify(safeValue, null, 2) ?? '{"diagnostic":"artifact_unavailable"}'}\n`;
+  } catch {
+    return '{"diagnostic":"artifact_unavailable"}\n';
+  }
+}
+
+export type DiagnosticArtifactTestInfo = {
+  outputPath(...pathSegments: string[]): string;
+  attach(name: string, options: { path: string; contentType: string }): Promise<void>;
+};
+
+export async function withDiagnosticDeadline<T>(
+  operation: () => T | PromiseLike<T>,
+  fallback: T,
+  timeoutMs: number,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      Promise.resolve().then(operation).catch(() => fallback),
+      new Promise<T>((resolve) => {
+        timer = setTimeout(() => resolve(fallback), Math.max(0, timeoutMs));
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+export function boundedDiagnosticRead<T>(
+  operation: () => T | PromiseLike<T>,
+  fallback: T,
+  deadline: number,
+  timeoutMs = DIAGNOSTIC_READ_TIMEOUT_MS,
+): Promise<T> {
+  const remaining = deadline - Date.now();
+  if (remaining <= 0) return Promise.resolve(fallback);
+  return withDiagnosticDeadline(operation, fallback, Math.min(timeoutMs, remaining));
+}
+
+export async function writeDiagnosticArtifact(testInfo: DiagnosticArtifactTestInfo, value: unknown): Promise<boolean> {
+  try {
+    const artifactPath = testInfo.outputPath('p1-diagnostic.json');
+    await writeFile(artifactPath, formatDiagnosticArtifact(value), 'utf8');
+    await testInfo.attach('p1-diagnostic', { path: artifactPath, contentType: 'application/json' });
+    return true;
+  } catch {
+    // A failed artifact write must not replace the original test failure.
+    return false;
+  }
 }
 
 export function logDiagnostic(label: string, value: unknown, logger?: DiagnosticLogger): void {

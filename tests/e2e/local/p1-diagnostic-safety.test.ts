@@ -1,17 +1,29 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { createRequire } from 'node:module';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 import {
+  boundedDiagnosticRead,
+  DIAGNOSTIC_COLLECTION_TIMEOUT_MS,
   DIAGNOSTIC_MAX_BYTES,
   diagnosticListener,
   diagnosticObservedVisibility,
   formatDiagnostic,
+  formatDiagnosticArtifact,
   formatPriorityDiagnostic,
+  MOUNTED_DIAGNOSTIC_EVENT,
+  MOUNTED_DIAGNOSTIC_MAX_RECORDS,
+  MOUNTED_DIAGNOSTIC_PHASES,
+  mountedDiagnosticInitScript,
+  projectMountedDiagnosticDetail,
   logDiagnostic,
   logPriorityDiagnostic,
   redactDiagnosticText,
+  writeDiagnosticArtifact,
 } from './p1-diagnostic-safety.ts';
 
 test('P1 diagnostics redact quoted credential fields before formatting', () => {
@@ -30,6 +42,118 @@ test('P1 diagnostics redact quoted credential fields before formatting', () => {
   assert.equal(output.includes('quoted-cookie'), false);
   assert.equal(output.includes('quoted-token'), false);
   assert.equal(redactDiagnosticText('{"authorization":{"value":"nested-secret"}}').includes('nested-secret'), false);
+});
+
+test('P1 mounted seam projection accepts the exact App record and nested observations', () => {
+  const hostile = {
+    version: 1,
+    sequence: 4,
+    time: 12.5,
+    phase: 'capture-called',
+    projectId: 'project-safe',
+    timelineId: 'timeline-safe',
+    clipId: 'clip-safe',
+    ownerAlias: 1,
+    generation: 0,
+    sessionPresent: true,
+    closed: false,
+    current: 'current',
+    identityPresent: false,
+    scopeMatched: true,
+    mountedHead: { revisionId: 'mounted-revision', publicationId: 'mounted-publication' },
+    originalHead: { revisionId: 'original-revision', publicationId: null },
+    basisStatus: 'ready',
+    gestureKind: 'trim',
+    patch: { from: 0, fromState: 'present', to: null, toState: 'null', speed: 1, speedState: 'present' },
+    mountedClip: { from: 0, fromState: 'present' },
+    sourceClip: { from: 0, fromState: 'present', to: 3, toState: 'present' },
+    gestureClip: { at: 0, atState: 'present' },
+    originalClip: { hold: 3, holdState: 'present' },
+    status: 'accepted',
+    ownerPresent: true,
+    recoverableOwnerCount: 1,
+    intentsPendingCount: 0,
+    errorStage: 'UNKNOWN',
+    errorCode: 'UNKNOWN',
+    token: 'must-not-enter',
+    body: 'must-not-enter',
+    get errorClass() { throw new Error('hostile getter'); },
+  };
+  const result = projectMountedDiagnosticDetail(hostile);
+  assert.equal(result.accepted, true);
+  if (!result.accepted) return;
+  assert.equal(result.record.phase, 'capture-called');
+  assert.deepEqual(result.record.mountedHead, { revisionId: 'mounted-revision', publicationId: 'mounted-publication' });
+  assert.deepEqual(result.record.originalHead, { revisionId: 'original-revision', publicationId: null });
+  assert.deepEqual(result.record.patch, { from: 0, fromState: 'present', to: null, toState: 'null', at: 'UNKNOWN', atState: 'absent', hold: 'UNKNOWN', holdState: 'absent', speed: 1, speedState: 'present' });
+  assert.deepEqual(result.record.sourceClip, { from: 0, fromState: 'present', to: 3, toState: 'present', at: 'UNKNOWN', atState: 'absent', hold: 'UNKNOWN', holdState: 'absent', speed: 'UNKNOWN', speedState: 'absent' });
+  assert.equal(result.record.intentsPendingCount, 'UNKNOWN');
+  assert.equal(result.record.errorClass, 'UNKNOWN');
+  assert.equal('token' in result.record, false);
+  assert.equal('body' in result.record, false);
+  const artifact = JSON.parse(formatDiagnosticArtifact({ mountedObservations: {
+    status: 'observed', buffer: 'case1',
+    records: [result.record], accepted: 1, rejected: 0, overflow: 0, listenerErrors: 0,
+  } }));
+  assert.equal(artifact.mountedObservations.records[0].sourceClip.to, 3);
+  assert.equal(JSON.stringify(artifact).includes('must-not-enter'), false);
+});
+
+test('P1 mounted seam accepts every published phase and rejects unknown metadata', () => {
+  for (const phase of MOUNTED_DIAGNOSTIC_PHASES) {
+    assert.equal(projectMountedDiagnosticDetail({ version: 1, phase }).accepted, true, phase);
+  }
+  assert.equal(projectMountedDiagnosticDetail({ version: 2, phase: 'schedule' }).accepted, false);
+  assert.equal(projectMountedDiagnosticDetail({ version: 1, phase: 'evil.phase' }).accepted, false);
+  const missing = projectMountedDiagnosticDetail({ version: 1, phase: 'schedule' });
+  assert.equal(missing.accepted, true);
+  if (missing.accepted) {
+    assert.equal(missing.record.projectId, 'UNKNOWN');
+    assert.deepEqual(missing.record.mountedHead, { revisionId: 'UNKNOWN', publicationId: 'UNKNOWN' });
+    assert.equal((missing.record.patch as Record<string, unknown>).fromState, 'UNKNOWN');
+    assert.equal(missing.record.intentsPendingCount, 'UNKNOWN');
+    assert.equal(missing.record.errorClass, 'UNKNOWN');
+  }
+
+  const listeners = new Map<string, (event: unknown) => void>();
+  const window = {
+    __timelineSaveDiagnosticsEnabled: false,
+    addEventListener: (name: string, listener: (event: unknown) => void) => { listeners.set(name, listener); },
+  } as Record<string, unknown>;
+  runInNewContext(mountedDiagnosticInitScript({
+    buffer: 'case1',
+    maxRecords: MOUNTED_DIAGNOSTIC_MAX_RECORDS,
+  }), { window, Object, Set, Number, JSON });
+  const snapshot = window.__timelineSaveDiagnosticsSnapshot as () => Record<string, unknown>;
+  assert.equal(window.__timelineSaveDiagnosticsEnabled, true);
+  assert.equal(snapshot().status, 'UNKNOWN');
+  assert.equal(Array.isArray(snapshot().records), true);
+});
+
+test('P1 mounted seam listener is bounded and disposable under hostile events', () => {
+  const listeners = new Map<string, (event: unknown) => void>();
+  const window = {
+    __timelineSaveDiagnosticsEnabled: false,
+    addEventListener: (name: string, listener: (event: unknown) => void) => { listeners.set(name, listener); },
+  } as Record<string, unknown>;
+  runInNewContext(mountedDiagnosticInitScript({
+    buffer: 'case2',
+    maxRecords: 2,
+  }), { window, Object, Set, Number, JSON });
+  const listener = listeners.get(MOUNTED_DIAGNOSTIC_EVENT);
+  assert.ok(listener);
+  listener!({ detail: { version: 1, phase: 'schedule', sequence: 1, status: 'accepted', token: 'secret' } });
+  listener!({ detail: { version: 1, phase: 'schedule', sequence: 2, status: 'merged' } });
+  listener!({ detail: { version: 1, phase: 'schedule', sequence: 3, status: 'rejected' } });
+  listener!({ detail: new Proxy({}, { get() { throw new Error('detail getter'); } }) });
+  const snapshot = (window.__timelineSaveDiagnosticsSnapshot as () => Record<string, any>)();
+  assert.equal(snapshot.buffer, 'case2');
+  assert.equal(snapshot.accepted, 3);
+  assert.equal(snapshot.rejected, 1);
+  assert.equal(snapshot.overflow, 1);
+  assert.equal(snapshot.listenerErrors, 0);
+  assert.equal(snapshot.records.length, 2);
+  assert.equal(JSON.stringify(snapshot.records).includes('secret'), false);
 });
 
 test('P1 diagnostics bound breadth, depth, arrays, strings, and bytes', () => {
@@ -113,6 +237,302 @@ test('P1 priority diagnostics keep an oversized value finite, redacted, and pars
   assert.ok(new TextEncoder().encode(output).length <= DIAGNOSTIC_MAX_BYTES);
   assert.deepEqual(JSON.parse(body), { diagnostic: 'priority_over_budget' });
   assert.equal(output.includes('should-not-leak'), false);
+});
+
+test('P1 diagnostic artifacts retain uncapped safe files and exact correlation unknowns', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'p1-diagnostic-artifact-'));
+  const artifactPath = join(directory, 'p1-diagnostic.json');
+  const attachments: Array<{ name: string; path: string; contentType: string }> = [];
+  const testInfo = {
+    outputPath: () => artifactPath,
+    attach: async (name: string, options: { path: string; contentType: string }) => { attachments.push({ name, ...options }); },
+  };
+  const payload = {
+    schemaVersion: 1,
+    title: 'P1 exact case title',
+    status: 'failed',
+    expectedStatus: 'passed',
+    capturedAt: '2026-10-23T19:12:00.000Z',
+    phase: 'afterEach_failure_continuation',
+    tuple: { projectId: 'project-safe', timelineId: 'timeline-safe', sourceId: 'UNKNOWN', rightId: 'right-safe' },
+    mountedObservations: 'UNKNOWN',
+    available: {
+      wireHeads: [{ method: 'POST', route: '/api/runtime/v1/projects/:project/timelines/:timeline/commit', status: 200,
+        head: { revisionId: 'revision-safe', publicationId: 'publication-safe' }, keyProjection: { present: true, bytes: 36 } }],
+      requestProjections: Array.from({ length: 40 }, (_, index) => ({
+        index, method: 'POST', route: '/api/runtime/v1/projects/:project/timelines/:timeline/commit', status: 200,
+        bodyProjection: { present: true, bytes: 700, sameAsPrevious: index > 0 },
+        keyProjection: { present: true, bytes: 36, sameAsPrevious: index > 0 },
+        message: `available-${index} ${'x'.repeat(500)}`,
+      })),
+      errors: { console: [{ message: '{"nested":{"token":"nested-token-secret","cookie":"nested-cookie-secret"}}' }] },
+    },
+    captureData: 'UNKNOWN',
+    unknowns: { mountedDataRef: 'UNKNOWN', callbackPatch: 'UNKNOWN', captureResolution: 'UNKNOWN' },
+    losses: { cappedConsole: true, mountedObservations: 'UNKNOWN' },
+  };
+  let deepAvailable: Record<string, unknown> = { message: 'deep-safe-end' };
+  for (let index = 0; index < 12; index += 1) deepAvailable = { available: deepAvailable };
+  (payload.available as Record<string, unknown>).available = deepAvailable;
+
+  const fileWritten = await writeDiagnosticArtifact(testInfo, payload);
+  assert.equal(fileWritten, true);
+  const contents = readFileSync(artifactPath, 'utf8');
+  assert.ok(new TextEncoder().encode(contents).length > DIAGNOSTIC_MAX_BYTES);
+  const parsed = JSON.parse(contents) as Record<string, any>;
+  assert.equal(parsed.title, payload.title);
+  assert.equal(parsed.status, payload.status);
+  assert.equal(parsed.tuple.timelineId, payload.tuple.timelineId);
+  assert.equal(parsed.mountedObservations, 'UNKNOWN');
+  assert.equal(contents.includes('deep-safe-end'), true);
+  assert.equal(contents.includes('[REDACTED_DEPTH]'), false);
+  assert.equal(parsed.available.requestProjections.at(-1).message.startsWith('available-39 '), true);
+  assert.equal(parsed.available.requestProjections.at(-1).message.endsWith('[TRUNCATED]'), true);
+  assert.equal(contents.includes('nested-token-secret'), false);
+  assert.equal(contents.includes('nested-cookie-secret'), false);
+  assert.equal(attachments[0].name, 'p1-diagnostic');
+  assert.equal(attachments[0].path, artifactPath);
+  assert.equal(attachments[0].contentType, 'application/json');
+
+  const capped = formatPriorityDiagnostic('capped console', payload.available);
+  assert.ok(new TextEncoder().encode(capped).length <= DIAGNOSTIC_MAX_BYTES);
+  assert.doesNotThrow(() => JSON.parse(capped.slice(capped.indexOf('] ') + 2)));
+});
+
+test('P1 diagnostic artifact write failure is disposable and cannot replace a test failure', async () => {
+  const testInfo = {
+    outputPath: () => { throw new Error('output unavailable'); },
+    attach: async () => { throw new Error('attach unavailable'); },
+  };
+  assert.equal(await writeDiagnosticArtifact(testInfo, { title: 'safe', status: 'failed' }), false);
+  const original = new Error('original test failure');
+  assert.throws(() => { throw original; }, (error) => error === original);
+});
+
+test('P1 failure artifacts return before unresolved collection and retain the early file', async () => {
+  const source = readFileSync(new URL('./three-products.p1-chain.spec.ts', import.meta.url), 'utf8');
+  const captureStart = source.indexOf('async function captureFailureContinuation');
+  const earlyWrite = source.indexOf('writeDiagnosticArtifact(testInfo', captureStart);
+  const outboxRead = source.indexOf('commandOutboxes(page, timelineId)', captureStart);
+  assert.ok(captureStart >= 0 && earlyWrite >= 0 && earlyWrite < outboxRead);
+  assert.ok(source.includes('boundedDiagnosticRead(operation, fallback, collectionDeadline)'));
+
+  const directory = mkdtempSync(join(tmpdir(), 'p1-diagnostic-early-'));
+  const artifactPath = join(directory, 'p1-diagnostic.json');
+  const testInfo = {
+    outputPath: () => artifactPath,
+    attach: async () => {},
+  };
+  const title = 'P1 never-resolving collection';
+  assert.equal(await writeDiagnosticArtifact(testInfo, {
+    schemaVersion: 1, title, status: 'failed', expectedStatus: 'passed',
+    phase: 'afterEach_failure_early_return',
+    tuple: { projectId: 'project-safe', timelineId: 'timeline-safe', sourceId: 'UNKNOWN', rightId: 'UNKNOWN' },
+    sourceWindow: 'UNKNOWN', mountedObservations: 'UNKNOWN',
+  }), true);
+
+  const started = Date.now();
+  const outbox = await boundedDiagnosticRead(() => new Promise<never>(() => {}), 'UNKNOWN', Date.now() + 25, 25);
+  const dom = await boundedDiagnosticRead(() => { throw new Error('page closed'); }, 'UNKNOWN', Date.now() + 25, 25);
+  assert.equal(outbox, 'UNKNOWN');
+  assert.equal(dom, 'UNKNOWN');
+  assert.ok(Date.now() - started < DIAGNOSTIC_COLLECTION_TIMEOUT_MS);
+  const parsed = JSON.parse(readFileSync(artifactPath, 'utf8')) as Record<string, unknown>;
+  assert.equal(parsed.title, title);
+  assert.equal(parsed.phase, 'afterEach_failure_early_return');
+});
+
+test('P1 registered failure hook retains the real outbox caller artifact and original assertion', { timeout: 20_000 }, async () => {
+  const requireBuiltin = createRequire(import.meta.url);
+  const transpile = (source: string) => ts.transpileModule(source, {
+    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, esModuleInterop: true },
+  }).outputText;
+  const sources = new Map([
+    ['./support/app.ts', transpile(readFileSync(new URL('./support/app.ts', import.meta.url), 'utf8'))],
+    ['./p1-diagnostic-safety.ts', transpile(readFileSync(new URL('./p1-diagnostic-safety.ts', import.meta.url), 'utf8'))],
+    ['./three-products.p1-chain.spec.ts', transpile(readFileSync(new URL('./three-products.p1-chain.spec.ts', import.meta.url), 'utf8'))],
+  ]);
+
+  // Execute whole, unchanged modules. Only fixture registration and the browser
+  // boundary are controlled; no caller, outbox reader, formatter or writer mirror.
+  for (const scenario of ['unresolved', 'throwing', 'closed', 'output-path', 'write', 'attach', 'attach-unresolved'] as const) {
+    const directory = mkdtempSync(join(tmpdir(), `p1-real-caller-${scenario}-`));
+    const artifactPath = join(directory, 'p1-diagnostic.json');
+    const hooks = new Map<string, (...args: any[]) => Promise<void>>();
+    const titles: string[] = [];
+    const events = new Map<string, (...args: any[]) => unknown>();
+    const lines: string[] = [];
+    const reads: string[] = [];
+    const attachments: string[] = [];
+    const observationFailures: unknown[] = [];
+    const observe = (check: () => void) => {
+      try { check(); } catch (error) { observationFailures.push(error); }
+    };
+    const transportFails = scenario === 'output-path' || scenario === 'write';
+    const never = () => new Promise<never>(() => {});
+    const original = new assert.AssertionError({ message: `original P1 assertion: ${scenario}` });
+    const testInfo = {
+      title: '', status: 'failed', expectedStatus: 'passed', duration: 90_000,
+      error: original, errors: [original],
+      outputPath: (...segments: string[]) => {
+        observe(() => assert.deepEqual(segments, ['p1-diagnostic.json']));
+        if (scenario === 'output-path') throw new Error('output path unavailable');
+        return scenario === 'write' ? directory : artifactPath;
+      },
+      attach: async (name: string, options: { path: string; contentType: string }) => {
+        observe(() => {
+          assert.equal(name, 'p1-diagnostic');
+          assert.equal(options.path, artifactPath);
+          assert.equal(options.contentType, 'application/json');
+          attachments.push(JSON.parse(readFileSync(options.path, 'utf8')).phase);
+        });
+        if (scenario === 'attach') throw new Error('attachment unavailable');
+        if (scenario === 'attach-unresolved') await never();
+      },
+    };
+    const assertFile = (early = false) => {
+      const contents = readFileSync(artifactPath, 'utf8');
+      const packet = JSON.parse(contents);
+      assert.ok(Buffer.byteLength(contents) > DIAGNOSTIC_MAX_BYTES);
+      assert.equal(packet.title, testInfo.title);
+      assert.equal(packet.status, 'failed');
+      assert.equal(packet.expectedStatus, 'passed');
+      assert.equal(packet.tuple.projectId, 'project-safe');
+      assert.equal(packet.tuple.timelineId, 'timeline-safe');
+      assert.equal(packet.tuple.sourceId, 'UNKNOWN');
+      assert.equal(packet.mountedObservations, 'UNKNOWN');
+      assert.equal(packet.captureData, 'UNKNOWN');
+      assert.equal(packet.unknowns.mountedDataRef, 'UNKNOWN');
+      assert.equal(packet.unknowns.callbackPatch, 'UNKNOWN');
+      assert.equal(packet.unknowns.captureResolution, 'UNKNOWN');
+      assert.equal(packet.available.wireHeads.length, 40);
+      assert.equal(packet.available.wireHeads.at(-1).head.revisionId, `revision-39-${'r'.repeat(140)}`);
+      assert.ok(contents.indexOf(`revision-39-${'r'.repeat(140)}`) > DIAGNOSTIC_MAX_BYTES);
+      assert.equal(contents.includes('raw-idempotency-secret'), false);
+      assert.equal(contents.includes('wire-body-secret'), false);
+      assert.equal(contents.includes('wire-token-secret'), false);
+      if (early) assert.equal(packet.phase, 'afterEach_failure_early_return');
+      return packet;
+    };
+    const readBoundary = (name: string) => {
+      // Observe the actual file at the first DOM access and inside the real
+      // commandOutboxes evaluate callback, before their promises can settle.
+      if (!transportFails) observe(() => { assertFile(true); });
+      reads.push(name);
+      if (scenario === 'unresolved') return never();
+      throw new Error(scenario === 'closed' ? 'Target page, context or browser has been closed' : `${name} read failed`);
+    };
+    const locator = {
+      getAttribute: () => readBoundary('DOM attribute'),
+      isVisible: () => readBoundary('DOM visibility'),
+      innerText: () => readBoundary('DOM text'),
+      count: () => readBoundary('DOM count'),
+    };
+    const page = {
+      on: (event: string, listener: (...args: any[]) => unknown) => { events.set(event, listener); },
+      getByTestId: () => {
+        if (scenario === 'closed') readBoundary('closed locator');
+        return locator;
+      },
+      locator: () => {
+        if (scenario === 'closed') readBoundary('closed locator');
+        return locator;
+      },
+      evaluate: async (operation: (id: string) => Promise<string>, id: string) => {
+        observe(() => assert.equal(id, 'timeline-safe'));
+        reads.push('commandOutboxes evaluate');
+        if (scenario === 'closed') return readBoundary('closed evaluate');
+        // This invokes support/app.ts's real IndexedDB callback, not a substitute
+        // outbox implementation or a page.evaluate result stub.
+        return operation(id);
+      },
+    };
+    const register = Object.assign((title: string) => { titles.push(title); }, {
+      extend: () => register,
+      beforeAll: () => {},
+      beforeEach: (hook: (...args: any[]) => Promise<void>) => { hooks.set('beforeEach', hook); },
+      afterEach: (hook: (...args: any[]) => Promise<void>) => { hooks.set('afterEach', hook); },
+    });
+    const modules = new Map<string, { exports: any }>();
+    const load = (name: string): any => {
+      if (name.startsWith('node:')) return requireBuiltin(name);
+      if (name === '@playwright/test') return { test: register };
+      // Prerequisites and journey bodies are registered, never executed here.
+      if (['./support/astrid.ts', './support/harness.ts', './harness.ts'].includes(name)) return {};
+      const cached = modules.get(name);
+      if (cached) return cached.exports;
+      const source = sources.get(name);
+      assert.ok(source, `unexpected module: ${name}`);
+      const module = { exports: {} };
+      modules.set(name, module);
+      runInNewContext(source, {
+        exports: module.exports, module, require: load, process, URL, TextEncoder, TextDecoder,
+        setTimeout, clearTimeout,
+        console: { log: (line: string) => { lines.push(line); } },
+        indexedDB: { databases: () => readBoundary('indexedDB.databases') },
+      }, { filename: name });
+      return module.exports;
+    };
+    load('./three-products.p1-chain.spec.ts');
+    assert.equal(titles.length, 2);
+    assert.equal(hooks.size, 2);
+    testInfo.title = titles[0];
+    await hooks.get('beforeEach')!({ page });
+    for (let index = 0; index < 40; index += 1) {
+      events.get('response')!({
+        url: () => 'http://localhost/api/runtime/v1/projects/project-safe/timelines/timeline-safe/commit',
+        request: () => ({ method: () => 'POST', headers: () => ({ 'idempotency-key': 'raw-idempotency-secret' }) }),
+        status: () => 200,
+        json: async () => ({
+          head: { revision_id: `revision-${index}-${'r'.repeat(140)}`, publication_id: `publication-${index}-${'p'.repeat(140)}` },
+          body: 'wire-body-secret', token: 'wire-token-secret',
+        }),
+      });
+    }
+    await new Promise((resolve) => setImmediate(resolve));
+    // Matching expected status must still bypass failure collection entirely.
+    await hooks.get('afterEach')!({ page }, { ...testInfo, status: 'passed' });
+    assert.equal(reads.length, 0);
+    assert.equal(attachments.length, 0);
+    let watchdog: ReturnType<typeof setTimeout> | undefined;
+    const started = Date.now();
+    try {
+      await assert.rejects(async () => {
+        try { throw original; } finally {
+          await Promise.race([
+            hooks.get('afterEach')!({ page }, testInfo),
+            new Promise<never>((_resolve, reject) => {
+              watchdog = setTimeout(() => reject(new Error(`failure hook exceeded bound: ${scenario}`)), 2_500);
+            }),
+          ]);
+        }
+      }, (error) => error === original);
+    } finally {
+      if (watchdog !== undefined) clearTimeout(watchdog);
+    }
+    assert.ok(Date.now() - started < 2_500, scenario);
+    assert.strictEqual(testInfo.error, original);
+    assert.strictEqual(testInfo.errors[0], original);
+    assert.ok(reads.includes('commandOutboxes evaluate'), scenario);
+    assert.ok(reads.some((name) => /DOM|closed locator/.test(name)), scenario);
+    if (scenario !== 'closed') assert.ok(reads.includes('indexedDB.databases'), scenario);
+    if (!transportFails) {
+      const packet = assertFile();
+      assert.equal(attachments[0], 'afterEach_failure_early_return');
+      if (packet.phase === 'afterEach_failure_continuation') {
+        assert.equal(packet.available.outbox.readFailed, true);
+        assert.equal(packet.available.outbox.owners, 'UNKNOWN');
+      } else {
+        assert.equal(packet.phase, 'afterEach_failure_early_return');
+      }
+    } else {
+      assert.equal(attachments.length, 0);
+    }
+    assert.ok(lines.length > 0);
+    // Production intentionally catches diagnostic failures; boundary assertions
+    // must therefore be checked outside that catch path too.
+    assert.deepEqual(observationFailures, [], scenario);
+  }
 });
 
 test('P1 failure continuation keeps the realistic causal core under the byte budget', () => {

@@ -283,6 +283,10 @@ async function preparePopupSeed(harness: DirectHarness): Promise<PopupSeed> {
     op: 'doc.patch',
     version: '1',
     select: null,
+    created: [
+      `occurrence:${seed.occurrenceId}/asset:${oldMedia.asset}`,
+      `occurrence:${sharedOccurrenceId}/asset:${oldMedia.asset}`,
+    ],
     args: { changes },
   }, 'P2 popup authored media', changes));
   return {

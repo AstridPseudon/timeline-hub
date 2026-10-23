@@ -35,7 +35,7 @@ import { canonicalJsonStringify, type TimelineBundleEnvelope } from '@/tools/vid
 import type { AssetRegistry, TimelineConfig } from '@/tools/video-editor/types/index.ts';
 import type { CommitDataOptions, ScheduleSaveFn } from '@/tools/video-editor/hooks/useTimelineCommit.ts';
 import { generateUUID } from '@/shared/lib/taskCreation/ids.ts';
-import { isTimelineDiagnosticsEnabled } from '@/tools/video-editor/lib/timeline-diagnostics.ts';
+import { emitTimelineSaveDiagnostic, isTimelineDiagnosticsEnabled } from '@/tools/video-editor/lib/timeline-diagnostics.ts';
 import type { TimelineGestureReadBasis, TimelineLocalSaveHandoff } from './timelineLocalSaveHandoff.ts';
 
 export type SaveStatus = 'saved' | 'saving' | 'dirty' | 'retrying' | 'error';
@@ -105,6 +105,8 @@ interface UseTimelinePersistenceOptions {
   onCanonicalReloadStart?: () => void;
   /** Original verified assembly and its durable local-document session. */
   localDocumentSave?: TimelineLocalSaveHandoff;
+  /** Actual hook owner, inspected only by the opt-in diagnostic projection. */
+  diagnosticOwner?: { generation: number; closed: boolean; session?: unknown };
 }
 
 export type TimelineSaveTarget = Readonly<{ session: object; timelineId: string; targetSeq: number; generation: number }>;
@@ -252,6 +254,7 @@ export function useTimelinePersistence({
   interactionStateRef,
   onCanonicalReloadStart,
   localDocumentSave,
+  diagnosticOwner,
 }: UseTimelinePersistenceOptions): UseTimelinePersistenceResult {
   const fallbackHeadRevisionRef = useRef(dataRef.current?.head);
   const headRevisionRef = suppliedHeadRevisionRef ?? fallbackHeadRevisionRef;
@@ -1029,6 +1032,11 @@ export function useTimelinePersistence({
   }, [configVersionRef, headRevisionRef, provider, session, timelineId]);
 
   const scheduleSave = useCallback<ScheduleSaveFn>((nextData, options) => {
+    emitTimelineSaveDiagnostic('schedule', () => ({ timelineId, owner: diagnosticOwner ?? session.identity,
+      mounted: getDataRef().current, source: nextData, gesture: options?.gestureBasis,
+      clipId: options?.gestureBasis?.clipId ?? selectedClipIdRef.current,
+      generation: diagnosticOwner?.generation ?? session.generation, closed: diagnosticOwner?.closed,
+      sessionPresent: diagnosticOwner ? Boolean(diagnosticOwner.session) : undefined }));
     // Recovery is an explicit CAS decision. Do not replace the recovered
     // record with a new-session edit before the user chooses Retry or Discard;
     // keep the edit in memory and resume it after that decision. The previous
