@@ -56,20 +56,30 @@
         "assets": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/OpenMap"
+            "$ref": "#/$defs/AssetRecord"
           }
         },
         "layout": {
           "$ref": "#/$defs/OpenMap"
         },
         "registry": {
-          "$ref": "#/$defs/OpenMap"
+          "type": "object",
+          "properties": {
+            "assets": {
+              "type": "object",
+              "additionalProperties": { "$ref": "#/$defs/AssetRecord" }
+            }
+          },
+          "additionalProperties": true
         },
         "output": {
           "$ref": "#/$defs/RawOutput"
         },
         "playback": {
           "$ref": "#/$defs/OpenMap"
+        },
+        "meta": {
+          "$ref": "timeline-config.schema.json#/definitions/Meta"
         }
       }
     },
@@ -94,6 +104,9 @@
             { "$ref": "timeline-config.schema.json#/properties/tracks/items/properties/volume" },
             { "type": "null" }
           ]
+        },
+        "meta": {
+          "$ref": "timeline-config.schema.json#/definitions/Meta"
         }
       }
     },
@@ -115,6 +128,9 @@
           "items": {
             "$ref": "#/$defs/OpenMap"
           }
+        },
+        "meta": {
+          "$ref": "timeline-config.schema.json#/definitions/Meta"
         }
       }
     },
@@ -161,6 +177,12 @@
           "type": "object",
           "description": "Runtime-managed media registry carried by the publication envelope; Runtime-specific and outside the canonical TimelineConfig owned by @banodoco/timeline-schema.",
           "x-astrid-runtime-schema-owner": "astrid-runtime#ManagedMediaRegistry",
+          "properties": {
+            "assets": {
+              "type": "object",
+              "additionalProperties": { "$ref": "#/$defs/AssetRecord" }
+            }
+          },
           "additionalProperties": true
         },
         "clips": {
@@ -168,7 +190,8 @@
           "description": "Raw authored ordinary clips; Agent owns command, timing and reference validation.",
           "items": { "$ref": "#/$defs/RawClip" }
         },
-        "occurrences": { "type": "array", "items": { "$ref": "#/$defs/Occurrence" } }
+        "occurrences": { "type": "array", "items": { "$ref": "#/$defs/Occurrence" } },
+        "meta": { "$ref": "timeline-config.schema.json#/definitions/Meta" }
       }
     },
     "Occurrence": {
@@ -187,7 +210,8 @@
         "transform": { "type": "object", "additionalProperties": true },
         "gain": { "type": "number" },
         "mute": { "type": "boolean" },
-        "provenance": { "$ref": "#/$defs/OpenMap" }
+        "provenance": { "$ref": "#/$defs/OpenMap" },
+        "meta": { "$ref": "timeline-config.schema.json#/definitions/Meta" }
       }
     },
     "ShotRevisionInput": {
@@ -241,6 +265,9 @@
           "type": "string",
           "minLength": 1,
           "description": "Immutable link to the child timeline revision."
+        },
+        "meta": {
+          "$ref": "timeline-config.schema.json#/definitions/Meta"
         }
       }
     },
@@ -255,7 +282,15 @@
         "role": { "type": "string", "minLength": 1 },
         "type": { "type": "string", "minLength": 1 },
         "media_kind": { "type": "string", "minLength": 1 },
-        "scope": { "$ref": "#/$defs/OpenMap" }
+        "scope": { "$ref": "#/$defs/OpenMap" },
+        "meta": { "$ref": "timeline-config.schema.json#/definitions/Meta" }
+      }
+    },
+    "AssetRecord": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "meta": { "$ref": "timeline-config.schema.json#/definitions/Meta" }
       }
     },
     "OpenBinding": {
