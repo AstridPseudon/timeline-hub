@@ -821,7 +821,7 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
   expect(mergedDocument.clips[1].app.opaque).toEqual(originalClip.app.opaque);
   expect(mergedDocument.clips[1].app['org.example']).toEqual(originalClip.app['org.example']);
   expect(mergedDocument.clips[1].app['org.example']).toHaveProperty('clear', null);
-  expect(mergedDocument.clips[1].app).not.toHaveProperty('astrid');
+  expect(mergedDocument.clips[1].app).toEqual(originalClip.app);
   expect(mergedDocument.registry).toEqual(splitDocument.registry);
   expect(mergedDocument.occurrences).toEqual(splitDocument.occurrences);
   expect(acceptedTrim.data.canonical_document.shot_revisions).toEqual(split.response.data.canonical_document.shot_revisions);
