@@ -331,6 +331,8 @@ def test_prepared_checkpoint_cannot_publish_after_cancel_or_stale_fence(requeste
 
 
 def test_prepared_checkpoint_resumes_on_retried_attempt_after_runtime_restart(requester, monkeypatch):
+    import copy
+
     from astrid.sdk.workspace_client import WorkspaceClientError
 
     world = requester
@@ -355,10 +357,11 @@ def test_prepared_checkpoint_resumes_on_retried_attempt_after_runtime_restart(re
     assert world.session._state()["base"] == original_base
     transport = world.client._remote._transport
     original = transport.commit_timeline
-    accepted = []
+    raw_first = []
 
     def commit_then_lose_ack(*args, **kwargs):
-        accepted.append(original(*args, **kwargs))
+        response = original(*args, **kwargs)
+        raw_first.append(copy.deepcopy(response))
         raise WorkspaceClientError(503, "unavailable", "lost commit acknowledgement", {})
 
     monkeypatch.setattr(transport, "commit_timeline", commit_then_lose_ack)
@@ -368,9 +371,44 @@ def test_prepared_checkpoint_resumes_on_retried_attempt_after_runtime_restart(re
     assert flight["key"] == "publish"
     _restart(world)
     assert world.session._state()["flight"] == flight
+    retry_transport = world.client._remote._transport
+    retry_original = retry_transport.commit_timeline
+    raw_retry = []
+
+    def record_retry(*args, **kwargs):
+        response = retry_original(*args, **kwargs)
+        raw_retry.append(copy.deepcopy(response))
+        return response
+
+    monkeypatch.setattr(retry_transport, "commit_timeline", record_retry)
     result = _publish(world)
-    assert result["data"] == accepted[0]["data"]
-    assert result["receipt"] == accepted[0]["receipt"]
+    assert len(raw_first) == len(raw_retry) == 1
+    first_raw, retry_raw = raw_first[0], raw_retry[0]
+    assert retry_raw == first_raw
+    assert retry_raw["data"] == first_raw["data"]
+    assert retry_raw["receipt"] == first_raw["receipt"]
+    public_data = {
+        **retry_raw["data"],
+        "accepted_publication_id": retry_raw["receipt"]["receipt_id"],
+        "show_command": (
+            f"astrid timelines show main --project {world.project} --published --revision-id "
+            f"{retry_raw['data']['accepted_revision_id']}"
+        ),
+    }
+    assert set(result) == {"ok", "data", "error", "receipt", "idempotency_key", "render", "render_task_id"}
+    assert result["ok"] is True
+    assert result["error"] is None
+    assert result["idempotency_key"] == "publish"
+    assert result["data"] == public_data
+    assert result["receipt"] == retry_raw["receipt"]
+    render = world.service.task(result["render_task_id"])["task"]
+    assert render["spec"]["spec"]["params"]["canonical_revision"] == {
+        "project_id": world.project,
+        "timeline_id": "main",
+        "revision_id": result["data"]["accepted_revision_id"],
+        "publication_id": result["receipt"]["receipt_id"],
+        "content_digest": result["data"]["canonical_document"]["parent_revision"]["content_digest"],
+    }
     assert _publish(world) == result
     assert world.service.store.conn.execute(
         "SELECT COUNT(*) FROM timeline_commit_history WHERE publication_id=?", (result["receipt"]["receipt_id"],),
