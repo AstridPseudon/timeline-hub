@@ -32,6 +32,9 @@ const runtime = vi.hoisted(() => ({
   version: 1,
   config: null as unknown,
   registry: { assets: {} } as unknown,
+  occurrences: [] as Array<Record<string, unknown>>,
+  shotRevisions: [] as Array<Record<string, unknown>>,
+  internalTimelineRevisions: [] as Array<Record<string, unknown>>,
   publishes: [] as string[],
   commits: [] as Array<{ body: unknown; key: string }>,
   /** Runs once, before the next publish is checked: simulates a sibling publish. */
@@ -44,21 +47,55 @@ function canonicalDocument() {
     project_id: PROJECT,
     timeline_id: TIMELINE,
     parent_revision: { revision_id: runtime.head, content_digest: 'parent-digest', payload: {
-      config: structuredClone(runtime.config), registry: structuredClone(runtime.registry), occurrences: [{
-        occurrence_id: 'occurrence-1', shot_id: 'shot-child', shot_revision_id: 'shot-r1', revision_id: 'occurrence-r1',
-      }],
+      config: structuredClone(runtime.config), registry: structuredClone(runtime.registry),
+      occurrences: structuredClone(runtime.occurrences),
       opaque: { nested: [null, false] },
     } },
-    shot_revisions: [{ shot_id: 'shot-child', revision_id: 'shot-r1', internal_timeline_revision_id: 'internal-r1',
-      content_digest: 'shot-digest', payload: { items: [] } }],
-    internal_timeline_revisions: [{ timeline_id: 'child-timeline', revision_id: 'internal-r1',
-      content_digest: 'internal-digest', payload: { items: [] } }],
+    shot_revisions: structuredClone(runtime.shotRevisions),
+    internal_timeline_revisions: structuredClone(runtime.internalTimelineRevisions),
     dependency_manifest: {
-      shots: [{ shot_id: 'shot-child', revision_id: 'shot-r1', internal_timeline_revision_id: 'internal-r1', content_digest: 'shot-digest' }],
-      internal_timelines: [{ timeline_id: 'child-timeline', revision_id: 'internal-r1', content_digest: 'internal-digest' }],
+      shots: runtime.shotRevisions.map((shot) => ({ shot_id: shot.shot_id, revision_id: shot.revision_id,
+        internal_timeline_revision_id: shot.internal_timeline_revision_id, content_digest: shot.content_digest })),
+      internal_timelines: runtime.internalTimelineRevisions.map((internal) => ({ timeline_id: internal.timeline_id,
+        revision_id: internal.revision_id, content_digest: internal.content_digest })),
       media: [], documents: [],
     },
   };
+}
+
+function applyOccurrenceFork(document: any, command: any) {
+  const occurrenceId = command.select.slice('occurrence:'.length);
+  const occurrence = document.parent_revision.payload.occurrences.find((row: any) => row.occurrence_id === occurrenceId);
+  const sourceShot = document.shot_revisions.find((shot: any) => shot.revision_id === occurrence.shot_revision_id);
+  const sourceInternal = document.internal_timeline_revisions.find((internal: any) =>
+    internal.revision_id === sourceShot.internal_timeline_revision_id);
+  const shotId = command.args.shot_id;
+  const shotRevision = structuredClone(sourceShot);
+  shotRevision.shot_id = shotId;
+  shotRevision.revision_id = `${shotId}-revision`;
+  shotRevision.content_digest = `${shotId}-digest`;
+  shotRevision.internal_timeline_revision_id = `${shotId}-internal-revision`;
+  const internalRevision = structuredClone(sourceInternal);
+  internalRevision.revision_id = shotRevision.internal_timeline_revision_id;
+  internalRevision.content_digest = `${shotId}-internal-digest`;
+  occurrence.shot_id = shotId;
+  occurrence.shot_revision_id = shotRevision.revision_id;
+  document.shot_revisions.push(shotRevision);
+  document.internal_timeline_revisions.push(internalRevision);
+  const referencedShots = new Set(document.parent_revision.payload.occurrences.map((row: any) => row.shot_revision_id));
+  const retainedShots = document.shot_revisions.filter((shot: any) => referencedShots.has(shot.revision_id));
+  const referencedInternals = new Set(retainedShots.map((shot: any) => shot.internal_timeline_revision_id));
+  document.shot_revisions = retainedShots;
+  document.internal_timeline_revisions = document.internal_timeline_revisions.filter((internal: any) =>
+    referencedInternals.has(internal.revision_id));
+  document.dependency_manifest.shots = document.dependency_manifest.shots.filter((pin: any) =>
+    referencedShots.has(pin.revision_id));
+  document.dependency_manifest.internal_timelines = document.dependency_manifest.internal_timelines.filter((pin: any) =>
+    referencedInternals.has(pin.revision_id));
+  document.dependency_manifest.shots.push({ shot_id: shotRevision.shot_id, revision_id: shotRevision.revision_id,
+    internal_timeline_revision_id: shotRevision.internal_timeline_revision_id, content_digest: shotRevision.content_digest });
+  document.dependency_manifest.internal_timelines.push({ timeline_id: internalRevision.timeline_id,
+    revision_id: internalRevision.revision_id, content_digest: internalRevision.content_digest });
 }
 
 function container(root: any, path: string[]): { owner: any; key: string } {
@@ -122,10 +159,14 @@ vi.mock('@/integrations/runtime/dataProvider', () => ({
       }
       const document = canonicalDocument();
       const nextHead = `rev-${runtime.publishes.length + 2}`;
-      applyChanges(document, request.commands[0].args.changes);
+      if (request.commands[0].op === 'occurrence.fork') applyOccurrenceFork(document, request.commands[0]);
+      else applyChanges(document, request.commands[0].args.changes);
       document.parent_revision.revision_id = nextHead;
       runtime.config = structuredClone(document.parent_revision.payload.config);
       runtime.registry = structuredClone(document.parent_revision.payload.registry);
+      runtime.occurrences = structuredClone(document.parent_revision.payload.occurrences);
+      runtime.shotRevisions = structuredClone(document.shot_revisions);
+      runtime.internalTimelineRevisions = structuredClone(document.internal_timeline_revisions);
       runtime.version += 1;
       runtime.head = nextHead;
       runtime.publishes.push(runtime.head);
@@ -167,6 +208,13 @@ describe('placementService: CAS round-trips over workspace.v1', () => {
     runtime.version = 1;
     runtime.config = createDefaultTimelineConfig();
     runtime.registry = { assets: {} };
+    runtime.occurrences = [{
+      occurrence_id: 'occurrence-1', shot_id: 'shot-child', shot_revision_id: 'shot-r1', revision_id: 'occurrence-r1',
+    }];
+    runtime.shotRevisions = [{ shot_id: 'shot-child', revision_id: 'shot-r1', internal_timeline_revision_id: 'internal-r1',
+      content_digest: 'shot-digest', payload: { items: [] } }];
+    runtime.internalTimelineRevisions = [{ timeline_id: 'child-timeline', revision_id: 'internal-r1',
+      content_digest: 'internal-digest', payload: { items: [] } }];
     runtime.publishes = [];
     runtime.commits = [];
     runtime.beforePublish = null;
@@ -201,6 +249,33 @@ describe('placementService: CAS round-trips over workspace.v1', () => {
       ownerRef: 'occurrence:shot-child',
       shotId: 'shot-fork',
     })).toThrow('uniquely bound canonical occurrence');
+  });
+
+  it('uses the explicit occurrence owner in the production placement caller', async () => {
+    const router = createFakeRuntimeRouter();
+    installRuntime(router);
+    const generationId = firstSeededGenerationId(router);
+    const sibling = { occurrence_id: 'occurrence-2', shot_id: 'shot-child', shot_revision_id: 'shot-r1', revision_id: 'occurrence-r2' };
+    runtime.occurrences.push(sibling);
+
+    const placed = await placeGeneration({
+      projectSlug: PROJECT,
+      shotId: 'shot-fork',
+      generationId,
+      ownerRef: 'occurrence:occurrence-1',
+    });
+
+    expect(placed.shotId).toBe('shot-fork');
+    expect(runtime.commits).toHaveLength(2);
+    expect(runtime.commits[0]?.body).toMatchObject({
+      commands: [{ op: 'occurrence.fork', select: 'occurrence:occurrence-1', args: { shot_id: 'shot-fork' },
+        intent: { ownership: 'occurrence' }, created: ['shot:shot-fork'] }],
+    });
+    expect(runtime.commits[1]?.body.commands[0].op).toBe('doc.patch');
+    expect(runtime.occurrences).toEqual([{
+      occurrence_id: 'occurrence-1', shot_id: 'shot-fork', shot_revision_id: 'shot-fork-revision', revision_id: 'occurrence-r1',
+    }, sibling]);
+    expect(runtime.shotRevisions.map((shot) => shot.revision_id)).toEqual(['shot-r1', 'shot-fork-revision']);
   });
 
   it('keeps every raw root at the provider boundary across placement, frame update, pooling and removal', async () => {

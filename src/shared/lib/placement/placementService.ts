@@ -367,6 +367,8 @@ export interface PlaceGenerationRequest {
   projectSlug: string;
   shotId: string;
   generationId: string;
+  /** Explicit canonical occurrence owner; its child is forked before placement when supplied. */
+  ownerRef?: OccurrenceForkRequest['ownerRef'];
   /** `undefined` → auto-position; `null` → pooled; number → explicit frame. */
   timelineFrame?: number | null;
 }
@@ -454,6 +456,9 @@ export async function placeGeneration(request: PlaceGenerationRequest): Promise<
   }
 
   const target = await resolveLegacyPlacementTarget(request.projectSlug);
+  if (request.ownerRef) {
+    await forkOccurrence({ ...target, ownerRef: request.ownerRef, shotId: request.shotId });
+  }
   return (await mutateTimelineDocument(target, (document) =>
     placeGenerationInDocument(document, {
       shotId: request.shotId,
