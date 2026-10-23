@@ -200,7 +200,7 @@ def _nested_mirrors(record, step, nested):
 
 
 def _nested_mirror_partition(record, step, nested):
-    """Partition compiler mirrors by their accepted canonical effect images."""
+    """Match leaf observations to native ranges; retain structural order history."""
     from ._doc_patch import replace_at, value_at
 
     writes = record.get('derived_writes', [])
@@ -208,8 +208,13 @@ def _nested_mirror_partition(record, step, nested):
            or type(write.get('cause')) is not int or write['cause'] != record['ordinal']
            for write in writes):
         raise CommandError('nested inverse derived attribution differs from history', kind='history_unavailable')
-    if any(write['ref'] == 'parent' and write['path'] in (['clips'], ['config', 'clips'])
-           for write in record['writes']):
+    aggregate = any(write['ref'] == 'parent' and write['path'] in (['clips'], ['config', 'clips'])
+                    for write in record['writes'])
+    leaves = [write for write in record['writes'] if write['ref'].startswith('parent/clip:')]
+    # Structural inverses also observe order restoration between native writes.
+    # Property-only stages have no such reorder and can be matched write by write,
+    # including empty-effect stages and repeated complete compiler images.
+    if aggregate or (writes and leaves and all(write['path'] for write in leaves)):
         return _native_mirror_partition(record, step, nested)
     if not writes:
         return [([], None) for _ in nested]
@@ -290,7 +295,7 @@ def inverse_stages(records):
                             or binding['dependencies'] != []
                             or boundary['publication_id'] not in record['command']['args']['publications']
                             or start != cursor or not start < end <= len(record['writes'])
-                            or first != effect_cursor or not first < last <= len(step['patch'])):
+                            or first != effect_cursor or not first <= last <= len(step['patch'])):
                         raise CommandError('nested inverse ranges differ from accepted history',
                                            kind='history_unavailable')
                     cursor, effect_cursor = end, last
