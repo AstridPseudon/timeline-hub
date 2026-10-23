@@ -1,1 +1,1 @@
-2026-10-22T23:39:07Z hub-syncd/dispatcher/manager alive (up 32m); 4 workers running (R1,U2-proof,R2-review,G2-forward-U2); ready-undispatched none; U2 merged 3f1ceae; disk 16G; no issues
+2026-10-23T00:11:53Z daemons+manager alive (up 65m); 1 worker running (G3 repair), others in review; ready-undispatched none; merges worker-branch only; disk 16G; issue: R2r stopped by auto safety review (rm -f) - manager holding, no bypass
