@@ -170,7 +170,7 @@ def site(boundary, ref, path, continuations=None):
     require(False, "provider alias is outside its authenticated boundary")
 
 
-def location(payload, path):
+def location(payload, path, *, absent_items=False):
     node = payload
     for index, token in enumerate(path):
         if isinstance(node, list):
@@ -185,6 +185,8 @@ def location(payload, path):
                 continue
             key, separator, identity = token.partition(":")
             matches = [row for row in node if isinstance(row, dict) and row.get(key) == identity]
+            if absent_items and separator and not matches:
+                return {"state": "absent"}
             require(separator and len(matches) == 1, "provider observation has an ambiguous item path")
             node = matches[0]
         elif isinstance(node, dict) and token in node:
@@ -340,7 +342,8 @@ def validate_step(request, records, step, boundary, batch_reads, continuations):
                        if "change" in binding), "provider effects omit a submitted assertion")
 
 
-def validate_bindings(request, records, expected, boundary, output, step, ordinal, continuations, original, step_input):
+def validate_bindings(request, records, expected, boundary, output, step, ordinal, continuations, original,
+                      step_input, effect_boundaries=None):
     record = records["commands"][ordinal]
     for binding in record["bindings"]:
         if "physical_ref" not in binding:
@@ -364,7 +367,12 @@ def validate_bindings(request, records, expected, boundary, output, step, ordina
             require(step["patch"][index]["ref"] == binding["physical_ref"]
                     and step["patch"][index]["path"] == binding.get("path"),
                     "provider effect binding differs from the recorded effect")
-            bound = step_input if side == "before" else output
+            if effect_boundaries is not None:
+                require(index in effect_boundaries,
+                        "provider effect binding is outside an authenticated inverse stage")
+                bound = effect_boundaries[index][0 if side == "before" else 1]
+            else:
+                bound = step_input if side == "before" else output
         elif binding["key"] == "commit.materialization":
             bound = step_input
         for key in ("command_ordinal", "step_id", "phase", "change_ordinal"):
@@ -695,6 +703,233 @@ def step_output(boundary, step, records, accepted, original=None):
     return result
 
 
+def _inverse_stage_write_site(boundary, write):
+    """Resolve a staged inverse write, including a root entering the closure."""
+    ref, path = write["ref"], write["path"]
+    # Native root captures name physical fields. The two parent mirrors can
+    # differ between their separately recorded writes within a stage.
+    if ref in boundary:
+        return ref, path
+    if (not path and ref.startswith(("shot-revision:", "internal-revision:"))
+            and ref not in boundary):
+        return ref, path
+    return native_site(boundary, ref, path)
+
+
+def _inverse_stage_state(boundary, ref, path):
+    if ref not in boundary:
+        return {"state": "absent"}
+    return location(boundary[ref]["payload"], stored_path(boundary[ref]["payload"], ref, path),
+                    absent_items=True)
+
+
+def _inverse_stage_history(records, history):
+    """Return the authenticated source stages named by an inverse record."""
+    publications = records.get("undo_of")
+    require(isinstance(publications, list) and publications and
+            all(isinstance(publication, str) and publication for publication in publications)
+            and len(set(publications)) == len(publications),
+            "inverse stage history targets are malformed")
+    require(isinstance(history, dict), "inverse stage history is unavailable")
+    require(set(history) == set(publications), "inverse stage history includes non-source publications")
+    selected = records.get("undo_steps")
+    if selected is not None:
+        require(isinstance(selected, dict) and set(selected) == set(publications),
+                "inverse stage selection does not cover its history targets")
+
+    expected = []
+    for publication in reversed(publications):
+        entry = history.get(publication)
+        require(isinstance(entry, dict) and entry.get("publication_id") == publication
+                and entry.get("intent") == "recorded"
+                and isinstance(entry.get("receipt"), dict)
+                and entry["receipt"].get("receipt_id") == publication,
+                "inverse stage source publication is not authenticated")
+        source_records = entry.get("records")
+        require(isinstance(source_records, dict)
+                and isinstance(source_records.get("commands"), list)
+                and isinstance(source_records.get("steps"), list)
+                and source_records["commands"],
+                "inverse stage source command history is unavailable")
+        assert isinstance(source_records, dict)
+        commands = source_records["commands"]
+        require([record.get("ordinal") for record in commands] == list(range(len(commands))),
+                "inverse stage source command ordinals are unavailable")
+        source_steps = source_records["steps"]
+        assert isinstance(commands, list) and isinstance(source_steps, list)
+        step_by_id = {source_step.get("id"): source_step for source_step in source_steps}
+        require(len(step_by_id) == len(source_steps) and all(isinstance(identity, str) and identity
+                                                            for identity in step_by_id),
+                "inverse stage source steps are malformed")
+        requested = (list(step_by_id) if selected is None else selected.get(publication))
+        require(isinstance(requested, list) and requested and
+                all(isinstance(identity, str) and identity in step_by_id for identity in requested)
+                and len(set(requested)) == len(requested),
+                "inverse stage selected source steps are unavailable")
+        for source_step in reversed(source_steps):
+            if source_step["id"] not in requested:
+                continue
+            ordinals = source_step.get("command_ordinals")
+            require(isinstance(ordinals, list) and ordinals
+                    and ordinals == list(range(ordinals[0], ordinals[0] + len(ordinals)))
+                    and all(type(ordinal) is int and 0 <= ordinal < len(commands) for ordinal in ordinals),
+                    "inverse stage source step command boundary is malformed")
+            source_commands = [commands[ordinal] for ordinal in ordinals]
+            native_sites = [(write["ref"], write["path"]) for command in reversed(source_commands)
+                            for write in reversed([*command.get("writes", []),
+                                *(write for write in command.get("derived_writes", [])
+                                  if write.get("ref", "").startswith("parent/clip:")
+                                  and write.get("path") in (["at"], ["hold"]))])]
+            expected.append({"publication_id": publication, "step_id": source_step["id"],
+                             "command_ordinals": ordinals, "native_sites": native_sites})
+    return expected
+
+
+def _inverse_stage_ranges(step, records, history=None):
+    """Validate the recorder's stage partition without trusting its images."""
+    stages = []
+    stage_records = []
+    for ordinal in step["command_ordinals"]:
+        record = records["commands"][ordinal]
+        for binding in record["bindings"]:
+            if binding.get("key") == "inverse.stage":
+                stages.append(binding)
+                stage_records.append(record)
+    if not stages:
+        return None
+
+    expected = _inverse_stage_history(records, history)
+    require(len(stages) == len(expected),
+            "inverse stage provenance does not match authenticated history")
+
+    require(all(records["commands"][ordinal]["command"]["op"] == "timeline.inverse"
+                for ordinal in step["command_ordinals"]),
+            "inverse stage provenance is attached to a non-inverse command")
+    final_ordinal = step["command_ordinals"][-1]
+    require(all(record["ordinal"] == final_ordinal for record in stage_records),
+            "inverse stage provenance is attached to the wrong command")
+    record = records["commands"][final_ordinal]
+    previous_native_end = 0
+    previous_effect_end = 0
+    result = []
+    for binding, source_stage in zip(stages, expected):
+        boundary = binding.get("boundary")
+        require(isinstance(boundary, dict), "inverse stage boundary is absent or malformed")
+        step_id = boundary.get("step_id")
+        command_ordinals = boundary.get("command_ordinals")
+        require(binding.get("ref") == "parent" and binding.get("policy") == "fixed"
+                and binding.get("dependencies") == []
+                and boundary.get("publication_id") == source_stage["publication_id"]
+                and step_id == source_stage["step_id"]
+                and command_ordinals == source_stage["command_ordinals"],
+                "inverse stage provenance differs from authenticated source history")
+        require(isinstance(step_id, str) and step_id
+                and isinstance(command_ordinals, list) and command_ordinals
+                and all(type(item) is int and item >= 0 for item in command_ordinals)
+                and len(set(command_ordinals)) == len(command_ordinals)
+                and command_ordinals == sorted(command_ordinals),
+                "inverse stage command provenance is malformed")
+        native_range = boundary.get("native_write_range")
+        effect_range = boundary.get("effect_range")
+        require(isinstance(native_range, list) and len(native_range) == 2
+                and all(type(item) is int for item in native_range),
+                "inverse stage native range is malformed")
+        require(isinstance(effect_range, list) and len(effect_range) == 2
+                and all(type(item) is int for item in effect_range),
+                "inverse stage effect range is malformed")
+        native_start, native_end = native_range
+        effect_start, effect_end = effect_range
+        require(native_end - native_start == len(source_stage["native_sites"])
+                and native_start == previous_native_end and native_start < native_end <= len(record["writes"]),
+                "inverse stage native ranges are missing, reordered, or overlapping")
+        require(effect_start == previous_effect_end and effect_start < effect_end <= len(step["patch"]),
+                "inverse stage effect ranges are missing, reordered, or overlapping")
+        native_sites = [(write["ref"], write["path"]) for write in record["writes"][native_start:native_end]]
+        effect_sites = [(effect["ref"], effect["path"]) for effect in step["patch"][effect_start:effect_end]]
+        # A recorder may observe the exact canonical stage effects directly or
+        # retain the source's finer native captures in reverse execution order.
+        # Neither representation permits extra sites or mere ancestor overlap.
+        require(native_sites == source_stage["native_sites"] or native_sites == effect_sites,
+                "inverse stage native write membership differs from its authenticated stage")
+        previous_native_end, previous_effect_end = native_end, effect_end
+        result.append({"binding": binding, "record": record, "native_range": native_range,
+                       "effect_range": effect_range})
+    require(previous_native_end == len(record["writes"])
+            and previous_effect_end == len(step["patch"]),
+            "inverse stage ranges do not cover the authenticated inverse")
+    return result
+
+
+def _inverse_stage_boundaries(boundary, output, step, records, accepted, original, history=None):
+    stages = _inverse_stage_ranges(step, records, history)
+    if stages is None:
+        return None
+    current = boundary
+    effect_boundaries = {}
+    effect_bindings = [binding for ordinal in step["command_ordinals"]
+                       for binding in records["commands"][ordinal]["bindings"]
+                       if binding.get("key") == "commit.effect"]
+    for stage in stages:
+        effect_start, effect_end = stage["effect_range"]
+        stage_before = current
+        stage_step = {**step, "patch": step["patch"][effect_start:effect_end]}
+        stage_after = step_output(stage_before, stage_step, records, accepted, original=stage_before)
+        native_start, native_end = stage["native_range"]
+        writes = stage["record"]["writes"][native_start:native_end]
+        native_image = copy.deepcopy(stage_before)
+        # Native captures observe each preceding write (including empty ancestor
+        # removals); canonical effects describe the complete stage transition.
+        for write in writes:
+            ref, path = _inverse_stage_write_site(native_image, write)
+            require(value_equal(_inverse_stage_state(native_image, ref, path), write["before"]),
+                    "inverse stage write differs from its sequential input")
+            if not path and ref not in native_image:
+                require(ref in stage_after and value_equal(
+                    {"state": "present", "value": stage_after[ref]["payload"]}, write["after"]),
+                    "inverse stage root differs from its authenticated effect image")
+                native_image[ref] = copy.deepcopy(stage_after[ref])
+            elif not path and write["after"]["state"] == "absent":
+                native_image.pop(ref)
+            else:
+                payload = native_image[ref]["payload"]
+                observed_path = stored_path(payload, ref, path)
+                native_image[ref]["payload"] = project_observation(payload, observed_path, write["after"])
+                if ref == "parent" and write["ref"].startswith(("parent/clip:", "parent/asset:")):
+                    projected = native_image[ref]["payload"]
+                    for mirror in (("clips",) if write["ref"].startswith("parent/clip:") else ("registry",)):
+                        if mirror in projected and mirror in projected.get("config", {}):
+                            projected[mirror] = copy.deepcopy(projected["config"][mirror])
+        require(value_equal({ref: image["payload"] for ref, image in native_image.items()},
+                            {ref: image["payload"] for ref, image in stage_after.items()}),
+                "inverse stage native writes do not cover its authenticated effect image")
+        for write in writes:
+            before_ref, before_path = _inverse_stage_write_site(native_image, write)
+            after_ref, after_path = _inverse_stage_write_site(stage_after, write)
+            require(before_ref == after_ref and before_path == after_path
+                    and value_equal(_inverse_stage_state(native_image, before_ref, before_path),
+                                    _inverse_stage_state(stage_after, after_ref, after_path)),
+                    "inverse stage writes differ from its authenticated effect image")
+        for index in range(effect_start, effect_end):
+            effect = step["patch"][index]
+            for side, image in (("before", stage_before), ("after", stage_after)):
+                if (effect["ref"] in image or (not effect["path"]
+                        and effect["ref"].startswith(("shot-revision:", "internal-revision:")))):
+                    physical = effect["ref"]
+                else:
+                    physical, _ = site(image, effect["ref"], effect["path"])
+                expected = [binding for binding in effect_bindings
+                            if binding.get("effect_ordinal") == index
+                            and binding.get("boundary", {}).get("side") == side
+                            and binding.get("physical_ref") == physical]
+                if physical in image:
+                    require(len(expected) == 1,
+                            "provider inverse effect bindings do not cover its stage image")
+            effect_boundaries[index] = (stage_before, stage_after)
+        current = stage_after
+    require(value_equal(current, output), "inverse stage images do not reach the authenticated output")
+    return effect_boundaries
+
+
 def command_output(boundary, record, following):
     """Project full recorder observations needed by a subsequent input binding."""
     result = copy.deepcopy(boundary)
@@ -722,7 +957,7 @@ def command_output(boundary, record, following):
     return result
 
 
-def validate(request, prepared, source, base=None, continuations=None):
+def validate(request, prepared, source, base=None, continuations=None, history=None):
     """Check request/record correspondence at authenticated immutable boundaries."""
     records = prepared["records"]
     continuations = copy.deepcopy(continuations or {})
@@ -746,6 +981,7 @@ def validate(request, prepared, source, base=None, continuations=None):
             require(covers(step["dependencies"], {"kind": "scope", "ref": ref, "path": []}),
                     "provider atomic dependency union omits a touched scope")
         output = step_output(boundary, step, records, accepted, original)
+        effect_boundaries = _inverse_stage_boundaries(boundary, output, step, records, accepted, original, history)
         command_input = boundary
         for ordinal in step["command_ordinals"]:
             record = records["commands"][ordinal]
@@ -755,7 +991,7 @@ def validate(request, prepared, source, base=None, continuations=None):
                 require(indices == list(range(len(record["command"]["args"]["changes"]))),
                         "provider patch bindings do not cover its ordered changes")
             validate_bindings(request, records, prepared["expected_head"], command_input, output, step, ordinal,
-                              continuations, original, boundary)
+                              continuations, original, boundary, effect_boundaries)
             if ordinal != step["command_ordinals"][-1]:
                 command_input = command_output(command_input, record, records["commands"][ordinal + 1])
         for ordinal in step["command_ordinals"]:
