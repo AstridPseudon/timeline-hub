@@ -8,7 +8,7 @@ import json
 import pytest
 
 from astrid.sdk import timeline_intent as intent
-from astrid.sdk.timeline_checkout import Checkout, TimelineEditError, describe_changes, three_way
+from astrid.sdk.timeline_checkout import Checkout, TimelineEditError, describe_changes
 
 FPS = 30
 
@@ -282,18 +282,29 @@ def test_save_load_round_trip_shows_both_clocks_and_honours_timeline_edits(tmp_p
     assert "_index" not in again.document() and '"_timeline"' not in json.dumps(again.document())
 
 
-def test_three_way_merges_disjoint_edits_and_refuses_overlapping_ones():
-    base = bundle()
-    ours, theirs = copy.deepcopy(base), copy.deepcopy(base)
-    Checkout(ours).clip("R").nudge(0.5)
-    Checkout(theirs).clip("b-type").set(text="LIVE!")
-    merged, conflicts = three_way(base, theirs, ours)
-    assert not conflicts
-    m = Checkout(merged)
-    assert m.clip("R").start == pytest.approx(1.5) and m.clip("b-type").params["text"] == "LIVE!"
-    Checkout(theirs).clip("R").nudge(-0.5)
-    _merged, conflicts = three_way(base, theirs, ours)
-    assert conflicts and "a-rocket" in conflicts[0]
+def test_three_way_merges_disjoint_edits_and_refuses_overlapping_ones(tmp_path):
+    path = tmp_path / "main.json"
+    Checkout(bundle()).save(path, quiet=True)
+    ours, theirs = Checkout.load(path), Checkout.load(path)
+    ours.clip("R").nudge(0.5)
+    theirs.clip("b-type").set(text="LIVE!")
+    ours.save(quiet=True)
+    theirs.save(quiet=True)
+    merged = Checkout.load(path)
+    assert merged.clip("R").start == pytest.approx(1.5) and merged.clip("b-type").params["text"] == "LIVE!"
+
+    conflict_path = tmp_path / "conflict.json"
+    Checkout(bundle()).save(conflict_path, quiet=True)
+    ours, theirs = Checkout.load(conflict_path), Checkout.load(conflict_path)
+    ours.clip("R").nudge(0.5)
+    theirs.clip("b-type").set(text="LIVE!")
+    theirs.clip("R").nudge(-0.5)
+    theirs.save(quiet=True)
+    with pytest.raises(TimelineEditError, match="another writer"):
+        ours.save(quiet=True)
+    assert Checkout.load(conflict_path).clip("R").start == pytest.approx(0.5)
+    ours.save(force=True, quiet=True)
+    assert Checkout.load(conflict_path).clip("R").start == pytest.approx(1.5)
 
 
 def test_add_overlay_on_a_word_in_a_corner():
