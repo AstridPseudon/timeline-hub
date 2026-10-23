@@ -1,5 +1,5 @@
-<!-- app | 2026-10-23T00:21:06Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 0m -->
-# app board, 2026-10-23T00:20:38Z
+<!-- app | 2026-10-23T00:22:38Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 1m -->
+# app board, 2026-10-23T00:21:43Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3a | Upstream deletions/config joins | Luna/Sol high | — | blocked:orchestrator | app-U3-live-compose; app-U3-live-review | Composed source review FAIL: retired edge trees resurrected, vendor mismatch, whitespace57, restored-test lint10. First composed repair not dispatched because round safety-stopped | a66702d9b donor / 064dca1e0 source |
@@ -20,4 +20,4 @@ Sources: exact U1producer /home/user/work/wt/rt-pin-27f0306b at27f0306b94d136d25
 Upstream: GitHub supported canonical banodoco/astrid-app ref equals7c17cc9d9; true parent recorded in064dca1e0. Recheck live tip at final U3 merge.
 Disk: rechecked 2026-10-23T00:18:52Z: 17 GB free (>15 GB). Sweep/compact completed; manager recycled2 finished v1 App worktrees and overlapping cleanup recycled14 finished v1 source/pin trees, branches/reports retained. Shared deps untouched by cleanup.
 Next ready: After explicit safety disposition, review completed A2 encoder, return composed U3 once with concrete findings, then land reviewed U4p/vendor after U3 PASS/merge. Continue A2 production mount only through supported generated v2 contract. Existing unrelated vendor review finished scoped PASS; parent type errors remain. Safety disposition is still absent at this restart; no new dispatch, merge, product edit or alternate inspection performed. All current App workers are terminal.
-Restart check: 2026-10-23T00:20:38Z: PLAN, common rules, header, current INBOX and worker state checked. No later disposition of the 00:16:06Z automatic safety rejection was found. Existing stopped-worker evidence and escalation remain current. No new dispatch, merge, product edit or alternate attribution inspection performed; App workers are terminal. Resume requires disposition of the recorded refusal under the owner stop rule.
+Restart check: 2026-10-23T00:21:43Z: PLAN v2.1, current common rules, header, INBOX, recorded escalation and App U3/A2 worker state checked. The 00:16:06Z automatic safety refusal remains unresolved; no later disposition was found. All checked App workers are terminal. Disk has 17 GB available. No new dispatch, merge, product edit or alternate attribution inspection performed. Resume requires disposition of the recorded refusal under the owner stop rule.
