@@ -8,7 +8,7 @@ import { REPO_ROOT, RUNTIME_CHECKOUT } from './harness.ts';
 
 export const EXPECTED_RUNTIME_PRODUCER = 'astrid-runtime';
 export const EXPECTED_RUNTIME_MANIFEST = 'contract/artifacts.json';
-export const EXPECTED_RUNTIME_PRODUCER_VERSION = 'sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac';
+export const EXPECTED_RUNTIME_PRODUCER_VERSION = 'sha256:d5f98db3213e91d96d4a7f5b184e17bf5268357b37dc06eaa5b568c4b788a572';
 export const EXPECTED_PUBLIC_COMPOSITION_PACKAGE = {
   name: '@banodoco/timeline-composition',
   version: '0.0.13',
@@ -71,14 +71,14 @@ export function assertPublicTrimCompositionPackage(value: unknown): Record<strin
 
 const EXACT_AGENT_COMMIT = '6efc81500a0e0688c2bb41e736503f0fc3e04abb';
 const EXACT_AGENT_TREE = '2ed2b8a12b5b3391ca221ba6ff05390f71a73556';
-const EXACT_RUNTIME_COMMIT = '95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c';
-const EXACT_RUNTIME_TREE = 'd3a290b407fa61e6ab2d476f50c068073f70df00';
+const EXACT_RUNTIME_COMMIT = '34eac0041b0891e9011966b39bcbd26053fde5bc';
+const EXACT_RUNTIME_TREE = '9853574865f25e08284e82ffb26c0bdecaa16a30';
 const EXACT_VENDOR_AGENT_COMMIT = '091aa23ec83ea05ffd3b0115a640230d51c8c429';
 const EXACT_VENDOR_AGENT_TREE = 'e3ae90fe482ba6cad6c3f94069127faf76ebceb6';
-const EXACT_RUNTIME_SCHEMA_DIGEST = 'sha256:7d4afa05962b8cd61643213fc79cdde41e16046c4e2a777bd299b48af0f31816';
+const EXACT_RUNTIME_SCHEMA_DIGEST = 'sha256:35c2d9c5e0b51ab8d8b7a4f4dbafbdfcb13d232d7bd22fff21cf73e250398d4c';
 const EXACT_PUBLIC_COMPOSITION_SHA256 = '9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738';
 const IMMUTABLE_AGENT_CHECKOUT = '/home/user/work/wt/agt-pin-6efc8150';
-const IMMUTABLE_RUNTIME_CHECKOUT = '/home/user/work/wt/rt-pin-95bd3c5f';
+const IMMUTABLE_RUNTIME_CHECKOUT = '/home/user/work/wt/rt-pin-34eac004';
 
 function git(checkout: string, ...args: string[]) {
   return execFileSync('git', ['-C', checkout, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
@@ -117,7 +117,7 @@ export function verifyPublicTrimSourceTuple() {
   assert.deepEqual(Object.keys(artifacts).sort(), ['artifacts', 'producer', 'version']);
   assert.equal(artifacts.producer, EXPECTED_RUNTIME_PRODUCER);
   assert.equal(artifacts.version, EXPECTED_RUNTIME_PRODUCER_VERSION);
-  assert.equal(Object.keys(artifacts.artifacts).length, 76);
+  assert.equal(Object.keys(artifacts.artifacts).length, 78);
   assert.ok(Object.values(artifacts.artifacts).every((digest) => typeof digest === 'string' && /^sha256:[0-9a-f]{64}$/.test(digest)));
   assert.deepEqual(artifacts, JSON.parse(git(RUNTIME_CHECKOUT, 'show', `${EXACT_RUNTIME_COMMIT}:contract/artifacts.json`)));
   const archive = path.join(REPO_ROOT, 'vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz');

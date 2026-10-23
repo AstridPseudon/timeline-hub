@@ -6,12 +6,26 @@ import test from 'node:test';
 import { assertPublicTrimCompositionPackage, assertPublicTrimRuntimeLock } from './public-trim-preflight.ts';
 
 const lock = JSON.parse(readFileSync(new URL('../../../../runtime.lock.json', import.meta.url), 'utf8')) as Record<string, unknown>;
-const sourceCommit = '95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c';
+const sourceCommit = '34eac0041b0891e9011966b39bcbd26053fde5bc';
+const historicalSourceCommit = '95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c';
+const historicalProducerVersion = 'sha256:54205b3ecb55038e416b31af936c9af26afa30dc1b05da16157ee4d861fe05ac';
 const archive = fileURLToPath(new URL('../../../../vendor/artifacts/banodoco-timeline-composition-0.0.13.tgz', import.meta.url));
 const archivePackage = JSON.parse(execFileSync('tar', ['-xOzf', archive, 'package/package.json'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })) as Record<string, unknown>;
 
-test('public Trim preflight accepts the full normal Runtime lock', () => {
+test('public Trim preflight accepts the full frozen34e normal Runtime lock', () => {
   assert.doesNotThrow(() => assertPublicTrimRuntimeLock(lock, sourceCommit));
+});
+
+test('public Trim preflight rejects the former historical95bd tuple as normal', () => {
+  assert.throws(() => assertPublicTrimRuntimeLock({ ...lock, producer_version: historicalProducerVersion, source_commit: historicalSourceCommit }, sourceCommit));
+});
+
+test('public Trim preflight rejects a wrong producer', () => {
+  assert.throws(() => assertPublicTrimRuntimeLock({ ...lock, producer: 'forged-runtime' }, sourceCommit));
+});
+
+test('public Trim preflight rejects a wrong producer version', () => {
+  assert.throws(() => assertPublicTrimRuntimeLock({ ...lock, producer_version: 'sha256:' + '0'.repeat(64) }, sourceCommit));
 });
 
 test('public Trim preflight rejects a wrong source commit', () => {
