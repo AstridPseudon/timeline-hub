@@ -19,6 +19,13 @@ import {
 
 const LAST_ACT = 3;
 
+// A browser-only host owns its handoff instead of writing Runtime tour records.
+let browserTourFinish: (() => void) | null = null;
+export function registerBrowserTourFinish(finish: () => void): () => void {
+  browserTourFinish = finish;
+  return () => { if (browserTourFinish === finish) browserTourFinish = null; };
+}
+
 /** Whether the parts that present the current beat have finished animating. */
 export function isEditorTourBeatReady({ beat, ready }: EditorTourState): boolean {
   switch (beat) {
@@ -89,6 +96,13 @@ export function backEditorTour(): void {
 export function finishEditorTour(): void {
   const { status, act, beat } = getEditorTourState();
   if (status !== 'running') return;
+  const handoff = browserTourFinish;
+  // Persist the next phase before subscribers unmount the tour.
+  if (handoff) {
+    handoff();
+    exitEditorTour();
+    return;
+  }
   exitEditorTour();
   void recordEditorTour(buildEditorTourRecord(beat === 'finale' || beat === 'feedback' ? 'completed' : 'skipped', act, beat));
   focusRealComposer();

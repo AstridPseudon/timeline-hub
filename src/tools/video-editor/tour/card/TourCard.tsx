@@ -50,7 +50,7 @@ export function TourCard({ act, beat, onPrimary, onBack, onSkip }: TourCardProps
       <section
         aria-label={beat === 'welcome' ? SCRIPT.welcome.title : beat === 'finale' ? SCRIPT.finale.title : beat === 'feedback' ? SCRIPT.feedback.title : `Tour, step ${act} of ${ACT_COUNT}`}
         className={cn(
-          'editor-tour-rise rounded-xl border border-border bg-card text-card-foreground shadow-xl',
+          'editor-tour-rise max-w-[calc(100vw-24px)] max-h-[calc(100dvh-24px)] overflow-y-auto rounded-xl border border-border bg-card text-card-foreground shadow-xl',
           beat === 'welcome' && 'w-[400px] p-6',
           beat === 'land' && 'w-[380px] p-5',
           beat === 'finale' && 'w-[480px] p-6',

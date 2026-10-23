@@ -55,6 +55,17 @@ const ALL_SCREENS: ReadonlyArray<[string, () => RuntimeConnectionValue]> = [
 ];
 
 describe('RuntimeConnectionPanel', () => {
+  it('explains first-run local work in the existing connection card without duplicate controls', () => {
+    const connect = vi.fn();
+    render(<RuntimeConnectionPanel firstRun connection={connectionFor({ status: 'connecting' }, { awaitingConnect: true, connect })} />);
+    expect(screen.getAllByRole('heading')).toHaveLength(1);
+    expect(screen.getByRole('heading', { name: 'Connect your machine' })).toBeInTheDocument();
+    expect(screen.getByText(/own GPU or connected providers/)).toBeInTheDocument();
+    expect(screen.getAllByRole('button')).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
+    expect(connect).toHaveBeenCalledOnce();
+  });
+
   it.each(ALL_SCREENS)('%s: speaks of Astrid and never names a Runtime, workspace, port or command', (_name, connection) => {
     panel(connection());
     expect(shownText()).toContain('Astrid');
