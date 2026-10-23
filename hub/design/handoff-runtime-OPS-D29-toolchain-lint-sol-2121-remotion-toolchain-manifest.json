@@ -1,0 +1,61 @@
+{
+  "task": "OPS-D29-toolchain-lint-sol-2121",
+  "repo": "runtime",
+  "artifact_branch": "tl/rt-OPS-D29-toolchain-lint-sol-2121",
+  "base": {
+    "branch": "tl/rt-OPS-D29-runtime-toolchain-carrier-2057",
+    "commit": "abd47e68de6d7a36bec8ac4f0f6e0bc01d98d14e"
+  },
+  "artifact": {
+    "path": "ops-handoff/remotion-toolchain.patch",
+    "bytes": 5653,
+    "sha256": "01c26c4b0b102c83d9159c166eeb0fa3f851e62132f7fc0dd4c228190763d4dd",
+    "targets": [
+      {
+        "path": "bin/make-runtime",
+        "baseline_sha256": "99cca067330fd87e1f8c475045ab8282e944b2455e25d44d4c6072e77e9e4e28",
+        "baseline_bytes": 26508,
+        "result_sha256": "873ddcfa636b3ae9e285613a6fb65c643e21ac749e00197d582e0c820dd70149",
+        "result_bytes": 28041
+      },
+      {
+        "path": "bin/request-runtime",
+        "baseline_sha256": "f13a1d073699712ccfb05e8463ad97ff69dc210a2617f2c9e0140a242591f7b1",
+        "baseline_bytes": 1899,
+        "result_sha256": "471fd470efeae102140b96b4f97db857e0d6d79b0839afa10a1a00e911b33b5f",
+        "result_bytes": 2735
+      }
+    ]
+  },
+  "preserved_peer_inputs": {
+    "bin/dispatcher-daemon": {
+      "sha256": "f18bc20b23010dc47a6891d4ef7a357da5991a620b83b5cdc67e0c8741892c15",
+      "bytes": 3868
+    }
+  },
+  "production_request_command": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-runtime agent-remotion-app-p3-079-2a9-2110 079580ca46af77e0292d49dc34386b25c8391f99 f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18 /home/user/work/wt/agt-pin-079580ca /home/user/work/wt/rt-pin-2a9e347f 2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d remotion-env-nodes /home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin",
+  "validation": {
+    "patch_apply": "patch --batch --fuzz=0; cmp both targets PASS",
+    "shape": "actual requester -> unchanged dispatcher RUNTIME word split -> actual maker preflight",
+    "fixture": {
+      "script": "ops-handoff/test-node-carrier.py",
+      "bytes": 8709,
+      "sha256": "0159a9d70ae81fecd9c4d836fe8c9e7f4bf91bbeee81b862c6960f77e9d1366a",
+      "result": "PASS cases=14 explicit=2 legacy=3 wrong-version/npm/path/missing/symlink/unsafe/extra/ambiguous=9 store=0 build=0",
+      "limits": "bounded mocks only; no actual Node path, receipt, build or Store; queue/daemon are private finite fixture copies; no network"
+    }
+  },
+  "installed_toolchain_observation": {
+    "expected_node_bin": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin",
+    "result": "UNVERIFIED: expected Node/npm files absent in this sandbox",
+    "node_sha256": null,
+    "node_bytes": null,
+    "npm_sha256": null,
+    "npm_bytes": null
+  },
+  "preserved": [
+    "request-runtime 2/3/7 and make-runtime 2/3/6/7 shapes",
+    "strict source/client/tree/lock/template/immutable/flock/reuse/disk guards",
+    "all bytes outside the two carrier hunks"
+  ]
+}

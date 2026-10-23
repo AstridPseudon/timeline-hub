@@ -1,0 +1,94 @@
+--- a/bin/make-runtime
++++ b/bin/make-runtime
+@@ -1,9 +1,11 @@
+ #!/bin/bash
+ # make-runtime NAME AGENT_SHA [LOCK_SHA256] — host dispatcher only.
+ # Queued exact-source form (also accepted by the unchanged request-runtime):
+-# NAME AGENT_SHA LOCK_SHA256 AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA [TEMPLATE_SUITE]
++# NAME AGENT_SHA LOCK_SHA256 AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA [TEMPLATE_SUITE [NODE_BIN]]
+ # Supply the entire group, full SHAs and absolute paths without shell metacharacters.
+ # Positional identities cannot be combined with inherited identity/template inputs.
++# The optional eighth positional field is the exact pre-approved Node bin directory;
++# it is carried in the request payload, never inherited by the daemon.
+ # Templates: MAIN agent-remotion-0013-nodes (default), or remotion-env-nodes;
+ # both require the existing approved row/env hashes below. Other hosts must supply
+ # authentic template facts for review; a retired or fabricated row is refused.
+@@ -46,7 +48,25 @@
+       echo 'REFUSED: unapproved registration template' >&2; exit 2;
+     }
+     ;;
+-  *) echo 'REFUSED: expected NAME AGENT_SHA [LOCK_SHA256] or NAME AGENT_SHA LOCK_SHA256 AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA [TEMPLATE_SUITE]' >&2; exit 2 ;;
++  8)
++    for key in RUNTIME_AGENT_CHECKOUT RUNTIME_RUNTIME_CHECKOUT RUNTIME_RUNTIME_SHA RUNTIME_TEMPLATE_SUITE RUNTIME_NODE_BIN; do
++      if [[ -v "$key" ]]; then
++        echo "REFUSED: ambiguous positional and inherited source/toolchain: $key" >&2; exit 2
++      fi
++    done
++    [[ "$L" =~ ^[0-9a-f]{64}$ ]] || { echo 'REFUSED: positional sources require lock SHA-256' >&2; exit 2; }
++    A=$4; R=$5; RS=$6; SUITE=$7; NODE_BIN=$8
++    for path in "$A" "$R" "$NODE_BIN"; do
++      [[ "$path" = /* && "$path" =~ ^/[a-zA-Z0-9._/-]+$ && "/$path/" != */../* && "/$path/" != */./* && "$path" != */ ]] || {
++        echo 'REFUSED: source/toolchain path must be a safe absolute path' >&2; exit 2;
++      }
++    done
++    [[ "$RS" =~ ^[0-9a-f]{40}$ ]] || { echo 'REFUSED: exact 40-character Runtime commit required' >&2; exit 2; }
++    [[ "$SUITE" = agent-remotion-0013-nodes || "$SUITE" = remotion-env-nodes ]] || {
++      echo 'REFUSED: unapproved registration template' >&2; exit 2;
++    }
++    ;;
++  *) echo 'REFUSED: expected NAME AGENT_SHA [LOCK_SHA256] or NAME AGENT_SHA LOCK_SHA256 AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA [TEMPLATE_SUITE [NODE_BIN]]' >&2; exit 2 ;;
+ esac
+ [[ -n "$A" ]] || { echo 'REFUSED: Agent checkout is required' >&2; exit 2; }
+ [[ "$N" =~ ^agent-remotion-[0-9a-z][0-9a-z-]*$ ]] || { echo 'REFUSED: invalid immutable runtime name' >&2; exit 2; }
+@@ -57,6 +77,11 @@
+     echo 'REFUSED: root must be a safe absolute path' >&2; exit 2;
+   }
+ done
++if [ -n "$NODE_BIN" ]; then
++  [[ "$NODE_BIN" = /* && "$NODE_BIN" =~ ^/[a-zA-Z0-9._/-]+$ && "/$NODE_BIN/" != */../* && "/$NODE_BIN/" != */./* && "$NODE_BIN" != */ ]] || {
++    echo 'REFUSED: selected toolchain must be a safe absolute path' >&2; exit 2;
++  }
++fi
+ D=$W/runtimes/$N
+ if [ -e "$D" ] || [ -L "$D" ]; then
+   echo "REFUSED: exists: $D (immutable; pick a fresh name)" >&2
+@@ -317,6 +342,7 @@
+     [ "$(PATH="$1:$PATH" timeout -k 2s 10s "$1/npm" --version 2>/dev/null)" = "$NPM_VERSION" ]
+ }
+ if [ -n "$NODE_BIN" ]; then
++  [[ -d "$NODE_BIN" && ! -L "$NODE_BIN" ]] || missing+=("selected-toolchain:physical-directory-required:$NODE_BIN")
+   verify_node "$NODE_BIN" || missing+=("selected-toolchain:requires-Node$NODE_VERSION/npm$NPM_VERSION:$NODE_BIN")
+ else
+   for candidate in "$W/toolchain/node-v$NODE_VERSION-linux-x64/bin" "/opt/node-v$NODE_VERSION-linux-x64/bin" "/opt/node$NODE_VERSION/bin"; do
+--- a/bin/request-runtime
++++ b/bin/request-runtime
+@@ -12,8 +12,8 @@
+   echo 'REFUSED: pending queue is unavailable' >&2; exit 2;
+ }
+ case $# in
+-  2|3|7) ;;
+-  *) echo "usage: request-runtime NAME AGENT_SHA [LOCK_SHA256] [AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA TEMPLATE_SUITE]" >&2; exit 2 ;;
++  2|3|7|8) ;;
++  *) echo "usage: request-runtime NAME AGENT_SHA [LOCK_SHA256] [AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA TEMPLATE_SUITE [NODE_BIN]]" >&2; exit 2 ;;
+ esac
+ [[ "$1" =~ ^agent-remotion-[0-9a-z][0-9a-z-]*$ && "$2" =~ ^[0-9a-f]{40}$ ]] || { echo 'REFUSED: invalid runtime name or Agent SHA' >&2; exit 2; }
+ if [ "$#" -ge 3 ]; then [[ "$3" =~ ^[0-9a-f]{64}$ ]] || { echo 'REFUSED: invalid lock SHA-256' >&2; exit 2; }; fi
+@@ -22,5 +22,18 @@
+   [[ "$6" =~ ^[0-9a-f]{40}$ ]] || { echo 'REFUSED: invalid Runtime SHA' >&2; exit 2; }
+   [[ "$7" = agent-remotion-0013-nodes || "$7" = remotion-env-nodes ]] || { echo 'REFUSED: unapproved registration template' >&2; exit 2; }
+ fi
++if [ "$#" = 8 ]; then
++  for key in RUNTIME_AGENT_CHECKOUT RUNTIME_RUNTIME_CHECKOUT RUNTIME_RUNTIME_SHA RUNTIME_TEMPLATE_SUITE RUNTIME_NODE_BIN; do
++    if [[ -v "$key" ]]; then
++      echo "REFUSED: ambiguous positional and inherited source/toolchain: $key" >&2; exit 2
++    fi
++  done
++  for path in "$4" "$5" "$8"; do [[ "$path" = /* && "$path" != *[!a-zA-Z0-9_./-]* && "/$path/" != */../* && "/$path/" != */./* && "$path" != */ ]] || {
++    echo 'REFUSED: unsafe source/toolchain path' >&2; exit 2;
++  }; done
++  [[ "$3" =~ ^[0-9a-f]{64}$ ]] || { echo 'REFUSED: invalid lock SHA-256' >&2; exit 2; }
++  [[ "$6" =~ ^[0-9a-f]{40}$ ]] || { echo 'REFUSED: invalid Runtime SHA' >&2; exit 2; }
++  [[ "$7" = agent-remotion-0013-nodes || "$7" = remotion-env-nodes ]] || { echo 'REFUSED: unapproved registration template' >&2; exit 2; }
++fi
+ { printf 'RUNTIME'; printf ' %s' "$@"; printf '\n'; } > "$O/queue/pending/runtime-$1"
+ echo "runtime $1 queued; maker will return reuse or build receipt in $O/queue/done/runtime-$1"
