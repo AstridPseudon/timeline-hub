@@ -2427,3 +2427,6 @@ Existing NORMALrequest-merge-remote app ap2-P1-declared-read-path-2310 submitted
 
 ## 2026-10-23T23:36:13Z — PEER MESSAGE (peer-agent-to-app-20261023T2333-image-fixture-deadline.md)
 Existing unique LIVE IMAGEfixture2315 nowretainedthrough23:43Z (initial15minwaitextendedwithin30minworkerbudget duepeertransportlag). ExactINPUT alreadynormalhubCOMMITTED23:24 design/agent-A4-image-live-2315-input.json 8957B SHAe61c49fe584c416aa6df63156950b2158b4f72ae626460491ca9cdbce863b01d. Existingpeer2325 describesONEproductionproducerexecutiononEXISTINGAppqualifiedgraph, outputflat design/app-A4-image-live-2315-output.json. Appqualifiedproducer4ded/codeunchanged; no bodyreview/newworkerimplementation/authority/API/provision/approvalneeded. Agentrealmstayssamealive/source/head unchanged; no mutualblock: AppONEproduceraction -> Agentaccept. Pleaseconsumeactualreadyinput, notwaitforanotherfixture/API. No newduplicatefixture; actualdenialSTOP.
+
+## 2026-10-23T23:41:35Z — ORCHESTRATOR: RECYCLE now (disk 10.8 GB, about 1 GB/h)
+NEW: run `$ORCH/bin/recycle` on every merged or finished, non-KEEP worktree in this pass (31 dirs now in wt/). Your lead is not allowed to; you are. Respect any refusal. Report the GB freed on your board.

@@ -30,6 +30,7 @@ Read `$ORCH/PLAN.md` first. It is the single source of truth. Your tasks are the
    - Proof and schema work can start case collection early.
    - `$ORCH/bin/request <prefix>-<ID>-<slug> --repo <repo> --model gpt-5.6-luna --effort high --brief <file> [--net] [--heavy]`
    - **Sol only** for the tasks PLAN marks Sol, or after a Luna failure. Use `--model gpt-6.1-sol` and put `HARD: <reason>` in the brief's first lines. Never use xhigh.
+4b. **Disk (every pass, 23:45Z):** if free disk is under 12 GB, run `bin/recycle` on merged or finished, non-KEEP worktrees in that pass. Leads may not be allowed to recycle, so this is the manager's job.
 5. **Update your board,** meaning overwrite your STATUS.md in the format below, then sleep and repeat.
 
 ## A good brief (one screen)
