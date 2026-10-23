@@ -1,4 +1,4 @@
-<!-- farm | 2026-10-23T10:22:09Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 9m -->
+<!-- farm | 2026-10-23T10:23:43Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 10m -->
 # farm board, 2026-10-23 (round start; disk 21 GB free, above the 15 GB floor)
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
