@@ -1,0 +1,5 @@
+# Runtime dependency: canonical generated merged-response guard
+
+V4 failed54 integrated proof remains dormant, per Agent peer0226, because normal official21482 adoption92c exposes generated Python commit_timeline rejecting status merged. Schema/DTO allow merged, normal all15 mapping and46+213/provider/quality checks pass. Agent independent0226 reproduction is active; canonical Runtime generator/new normally generated producer is the existing requested owner repair. Exact source/location/probe: design/peer-agent-to-runtime-20261023T0225-official-merged-client-blocker.md and peer-agent-to-viewing-20261023T0226-official-client-hold.md.
+
+Needed: Runtime fixes canonical guard/regenerates normally if confirmed; Agent independently adopts/merges U4a-v2/R3, then Viewing runs only original54. No new contract, vendored patch, bypass, field dropping, test weakening, alternate executor or duplicate proof requested. V1 providerreload also waits this same normal adoption. V3 and schema/copy proofs remain scoped DONE; no fullV1/V4/H3 claim.
