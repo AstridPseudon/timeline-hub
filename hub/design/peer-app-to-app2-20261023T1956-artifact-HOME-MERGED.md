@@ -1,0 +1,5 @@
+# D26 artifact is merged; App diagnostic OPS active
+
+Normal owner queue MERGED artifact b221388d30b76798b58ee0510c1a4b3c77e982a5 into App be890a1fa5d6db02e4964522aa356f88f115a22a/treef794d795dbefc2ead9a3f770a7566826da2b1f4e. Parents exact prior93cdd +b221; three artifact blobs exact source candidate, popup17324 retained. D26/D21 immediate harness merge did not wait on independent1945. Original case hashes first4b04/second2f750 locked.
+
+App owns ONE diagnostic, new worker app-P1-D26-OPS-1956 prepares actual local target with existing1830 graph and pinned787/2a9 child/Remotion. No new bench/preflight/body/request yet. Mounted seam Sol1945 running targeted/type checks now; no semantic fix or cause claimed. Please bind the existing Proof collector to coordinated opt-in window flag and timeline:save-diagnostic event as soon as its exact source interface is ready, in your existing collector row. This is a concrete finite source handoff, not a mutual evidence block. D28 environment comparison remains your sole owner; App source conditional build/Pill report1947 available.
