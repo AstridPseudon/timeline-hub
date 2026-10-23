@@ -283,6 +283,13 @@ function assertHistoryEntry(page: HistoryPage, post: CommitPost, result: CommitA
   }
 }
 
+function assertUndoHistoryEntry(page: HistoryPage, undo: CommitPost, target: CommitPost): void {
+  const entry = page.items.find((candidate) => candidate.publication_id === undo.key);
+  expect(entry, 'Undo is recorded in /commits').toBeTruthy();
+  expect(entry!.records?.undo_of).toEqual([target.key]);
+  expect(entry!.records?.undo_steps).toBeNull();
+}
+
 function assertNoLegacy(wire: Wire): void {
   expect(wire.legacy, 'mounted edits do not write old routes').toEqual([]);
 }
@@ -346,11 +353,24 @@ async function dropFileIn(scope: Locator, file: { name: string; type: string; by
   }, { ...file, clientX, clientY });
 }
 
-async function assertReload(page: Page, revisionId: string): Promise<void> {
+async function assertReload(
+  page: Page,
+  harness: DirectHarness,
+  seed: ThreeProductsSeed,
+  revisionId: string,
+  expected: CanonicalDocument,
+  assertMounted: () => Promise<void>,
+): Promise<void> {
   await page.reload();
   await expect(page.locator('[data-testid="runtime-connection-status"]')).toHaveAttribute('data-state', 'connected');
   await expect(page.getByRole('textbox', { name: 'Track name' }).first()).toBeVisible();
   await expect(page.getByTestId('preview-revision-label').filter({ hasText: `Committed ${revisionId}` }).first()).toBeVisible(CEILING);
+  const current = await history(harness, seed);
+  expect(current.head.revision_id).toBe(revisionId);
+  const reread = await canonicalAt(harness, seed, current.head.revision_id);
+  assertClosure(reread, harness, seed);
+  expect(reread).toEqual(expected);
+  await assertMounted();
 }
 
 test('P2 mounted element edit: real catalog apply, exact params patch, reload and guarded Undo', async ({ page, harness, seed3 }) => {
@@ -410,7 +430,11 @@ test('P2 mounted element edit: real catalog apply, exact params patch, reload an
   expect((clip(paramsDocument, addedId!).params as JsonObject).bob).toBe(12);
   const paramsHistory = await history(harness, seed3);
   assertHistoryEntry(paramsHistory, paramsCommit, paramsResult);
-  await assertReload(page, paramsResult.data.accepted_revision_id);
+  await assertReload(page, harness, seed3, paramsResult.data.accepted_revision_id, paramsDocument, async () => {
+    await page.locator(`.clip-action[data-clip-id="${addedId}"]`).first().click();
+    await expect(page.getByTestId('astrid-element-params')).toBeVisible();
+    await expect(page.getByRole('spinbutton').first()).toHaveValue('12');
+  });
 
   const undo = await commitFromGesture(page, wire, async () => {
     await page.getByRole('button', { name: 'Undo', exact: true }).click();
@@ -420,9 +444,13 @@ test('P2 mounted element edit: real catalog apply, exact params patch, reload an
   const undoneParams = assertAcceptedReply(undo, { revision_id: paramsResult.data.accepted_revision_id, publication_id: paramsCommit.key });
   expect(undoneParams.data.canonical_document.parent_revision.payload).toEqual(paramsBase.parent_revision.payload);
   assertNoLegacy(wire);
-  const inverseHistory = await history(harness, seed3);
-  const inverseEntry = inverseHistory.items.find((entry) => entry.publication_id === undo.key);
-  expect(inverseEntry?.records?.undo_of).toEqual([paramsCommit.key]);
+  assertUndoHistoryEntry(await history(harness, seed3), undo, paramsCommit);
+  const restoredBob = (clip(paramsBase, addedId!).params as JsonObject).bob;
+  await assertReload(page, harness, seed3, undoneParams.data.accepted_revision_id, paramsBase, async () => {
+    await page.locator(`.clip-action[data-clip-id="${addedId}"]`).first().click();
+    await expect(page.getByTestId('astrid-element-params')).toBeVisible();
+    await expect(page.getByRole('spinbutton').first()).toHaveValue(String(restoredBob));
+  });
 
   const undoApply = await commitFromGesture(page, wire, async () => {
     await page.getByRole('button', { name: 'Undo', exact: true }).click();
@@ -430,6 +458,10 @@ test('P2 mounted element edit: real catalog apply, exact params patch, reload an
   const undoneApply = assertAcceptedReply(undoApply, { revision_id: undoneParams.data.accepted_revision_id, publication_id: undo.key });
   expect(undoneApply.data.canonical_document.parent_revision.payload).toEqual(original.parent_revision.payload);
   assertNoLegacy(wire);
+  assertUndoHistoryEntry(await history(harness, seed3), undoApply, apply);
+  await assertReload(page, harness, seed3, undoneApply.data.accepted_revision_id, original, async () => {
+    await expect(page.locator(`.clip-action[data-clip-id="${addedId}"]`)).toHaveCount(0);
+  });
 });
 
 test('P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo', async ({ page, harness, seed3 }) => {
@@ -471,13 +503,20 @@ test('P2 mounted registerAsset save: real file drop, exact media/registry fields
   const committed = await history(harness, seed3);
   assertHistoryEntry(committed, post, result);
   assertNoLegacy(wire);
-  await assertReload(page, result.data.accepted_revision_id);
+  await assertReload(page, harness, seed3, result.data.accepted_revision_id, after, async () => {
+    await expect(page.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toBeVisible();
+  });
   const undo = await commitFromGesture(page, wire, async () => { await page.getByRole('button', { name: 'Undo', exact: true }).click(); });
   assertRequestV2(undo, { revision_id: result.data.accepted_revision_id, publication_id: post.key });
   expect(undo.body.commands[0]).toEqual({ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [post.key] } });
   const undone = assertAcceptedReply(undo, { revision_id: result.data.accepted_revision_id, publication_id: post.key });
   expect(undone.data.canonical_document.parent_revision.payload).toEqual(original.parent_revision.payload);
   assertNoLegacy(wire);
+  assertUndoHistoryEntry(await history(harness, seed3), undo, post);
+  await assertReload(page, harness, seed3, undone.data.accepted_revision_id, original, async () => {
+    await expect(page.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toHaveCount(0);
+    await expect(page.locator(`.clip-action[data-clip-id="${seed3.appClipId}"]`).first()).toBeVisible();
+  });
 });
 
 test('P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo', async ({ page, harness, seed3 }) => {
@@ -520,7 +559,10 @@ test('P2 mounted automatic child placement: embedded shot file gesture, occurren
   expect(childRegistry[row.asset as string]).toMatchObject({ media_id: harness.seed.image.objectId, content_sha256: harness.seed.image.digest, type: harness.seed.image.mediaType });
   assertHistoryEntry(await history(harness, seed3), post, result);
   assertNoLegacy(wire);
-  await assertReload(page, result.data.accepted_revision_id);
+  await assertReload(page, harness, seed3, result.data.accepted_revision_id, after, async () => {
+    const reloadedDialog = await openEmbeddedCanonicalShot(page, seed3.occurrenceId, 'F2 agent shot');
+    await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toBeVisible();
+  });
   const undo = await commitFromGesture(page, wire, async () => { await page.getByRole('button', { name: 'Undo', exact: true }).click(); });
   assertRequestV2(undo, { revision_id: result.data.accepted_revision_id, publication_id: post.key });
   expect(undo.body.commands[0]).toEqual({ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [post.key] } });
@@ -529,5 +571,10 @@ test('P2 mounted automatic child placement: embedded shot file gesture, occurren
   expect(undone.data.canonical_document.shot_revisions).toEqual(original.shot_revisions);
   expect(undone.data.canonical_document.internal_timeline_revisions).toEqual(original.internal_timeline_revisions);
   assertNoLegacy(wire);
+  assertUndoHistoryEntry(await history(harness, seed3), undo, post);
+  await assertReload(page, harness, seed3, undone.data.accepted_revision_id, original, async () => {
+    const reloadedDialog = await openEmbeddedCanonicalShot(page, seed3.occurrenceId, 'F2 agent shot');
+    await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toHaveCount(0);
+  });
 });
 
