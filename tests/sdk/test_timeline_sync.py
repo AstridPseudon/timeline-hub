@@ -13,7 +13,7 @@ from runtime_protocol import platform
 
 from astrid.core.receipts.canonical import canonical_json
 from astrid.core.timeline.authoring_bundle import compile_authoring_candidate, open_authoring_bundle
-from astrid.sdk.contracts import DomainResult
+from astrid.sdk.contracts import DomainResult, ErrorObject
 from astrid.sdk.remote import RemoteTimelines
 from astrid.sdk.timeline import store
 from astrid.sdk.timeline._common import TimelineEditError
@@ -44,6 +44,7 @@ class Generated:
         self.bundles = {"r0": initial_bundle()}
         self.head = {"revision_id": "r0", "publication_id": "pub0"}
         self.calls, self.accepted, self.records = [], {}, {}
+        self.publications = {"r0": "pub0"}
         self.lose_ack = False
         self.refusal = None
 
@@ -114,6 +115,7 @@ class Generated:
         response = {"data": data, "receipt": receipt}
         self.bundles[revision] = plan.bundle
         self.records[publication] = plan.records
+        self.publications[revision] = publication
         self.head = {"revision_id": revision, "publication_id": publication}
         self.accepted[idempotency_key] = (raw, copy.deepcopy(response))
         if self.lose_ack:
@@ -135,13 +137,21 @@ class Client:
         self.projects = SimpleNamespace(current=lambda: DomainResult.success({"project": {"id": "p"}}))
         self.generated = generated
         self.reads = []
+        self.bundle_reads = []
 
     def open_composition(self, project, timeline):
         return DomainResult.success({"native_inspection": {"project_id": "p", "timeline_id": "t"},
                                      "summary": {"head_revision_id": self.generated.head["revision_id"]}})
 
-    def open_bundle(self, project, timeline, *, revision_id):
+    def open_bundle(self, project, timeline, *, revision_id, publication_id=None):
         self.reads.append(revision_id)
+        self.bundle_reads.append((revision_id, publication_id))
+        if publication_id is not None and self.generated.publications.get(revision_id) != publication_id:
+            return DomainResult.failure(ErrorObject(
+                "conflict", "revision/publication pair is not available", {
+                    "revision_id": revision_id, "publication_id": publication_id,
+                },
+            ))
         return DomainResult.success({"bundle": copy.deepcopy(self.generated.bundles[revision_id])})
 
 
@@ -158,6 +168,29 @@ def connected(tmp_path, monkeypatch):
 def open_session(connected):
     client, _, path = connected
     return TimelineSession.open("project-slug", "timeline-slug", client=client, outbox_path=path)
+
+
+def test_clean_bundle_hydration_authenticates_exact_pair_without_pending_commands(connected):
+    client, _, _ = connected
+    session = open_session(connected)
+
+    assert session._state()["pending"] == []
+    assert session._bundle(session._state()) == initial_bundle()
+    assert client.bundle_reads == [("r0", "pub0")]
+
+
+def test_clean_bundle_hydration_refuses_wrong_publication_for_revision(connected):
+    client, generated, path = connected
+    session = open_session(connected)
+    with session.outbox.locked():
+        state = session._state()
+        state["base"]["publication_id"] = "wrong-publication"
+        session.outbox.write(state)
+
+    with pytest.raises(TimelineEditError, match="could not open"):
+        session._bundle(session._state())
+    assert client.bundle_reads == [("r0", "wrong-publication")]
+    assert generated.calls == [] and json.loads(path.read_bytes())["pending"] == []
 
 
 def test_outbox_unlocks_when_locked_body_raises(tmp_path, monkeypatch):
@@ -261,6 +294,7 @@ def test_lost_ack_reload_retries_exact_request_before_sending_suffix(connected, 
     # An independent peer changes the head after the ambiguous request.
     generated.bundles["peer"] = copy.deepcopy(generated.bundles["r1"])
     generated.head = {"revision_id": "peer", "publication_id": "peer-publication"}
+    generated.publications["peer"] = "peer-publication"
     session.flush()
     after = json.loads(path.read_bytes())
     assert generated.calls[0] == generated.calls[1]
@@ -340,6 +374,7 @@ def test_semantic_conflict_is_retained_but_transport_failure_stays_ambiguous(con
     peer = execute(initial_bundle(), [capture_move(initial_bundle(), "parent/clip:a", 3)])
     generated.bundles["peer"] = peer.bundle
     generated.head = {"revision_id": "peer", "publication_id": "peer-publication"}
+    generated.publications["peer"] = "peer-publication"
     with pytest.raises(CommitConflict):
         session.flush()
     state = json.loads(path.read_bytes())
@@ -414,6 +449,7 @@ def test_new_clean_session_captures_current_published_state(connected):
         capture_move(generated.bundles["r1"], "parent/clip:b", 3),
     ]).bundle
     generated.head = {"revision_id": "peer", "publication_id": "peer-publication"}
+    generated.publications["peer"] = "peer-publication"
     command = open_session(connected).queue_move("parent/clip:b", 7)
     assert command == capture_move(generated.bundles["peer"], "parent/clip:b", 7)
 
@@ -650,6 +686,7 @@ def test_dependent_suffix_conflict_preserves_original_guards_and_identity(connec
     peer["parent"]["clips"][0]["hold" if change == "read" else "id"] = 2 if change == "read" else "replacement"
     generated.bundles["peer"] = peer
     generated.head = {"revision_id": "peer", "publication_id": "peer-publication"}
+    generated.publications["peer"] = "peer-publication"
     with pytest.raises(CommitConflict):
         open_session(connected).flush(idempotency_key="b")
     state = json.loads(path.read_bytes())

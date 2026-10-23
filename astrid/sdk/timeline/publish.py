@@ -97,13 +97,15 @@ class _PublishMixin:
         overwrites their change, explicitly. Nothing is ever overwritten silently.
         """
         self.notes.extend(self._sync_film_length())  # the film's length follows its content, before the check
-        report = self.check()
+        # Publication is guarded by the structural/core validator only.  The
+        # full check may import the renderer and evaluate visual diagnostics,
+        # neither of which is part of the writer's safety decision.
+        report = self._check_core()
         if not report.valid:
             raise TimelineEditError("not publishing: " + "; ".join(report.problems or ["the candidate is invalid"]))
         key = idempotency_key or f"edit-{re.sub(r'[^a-z0-9]+', '-', message.lower())[:40].strip('-') or 'timeline'}-{uuid.uuid4().hex[:8]}"
         stored = self.stored_document(restructure=restructure)  # chapters as shots only for a film that opted in
-        chapter_film = len(stored.get("placements") or []) > 1
-        if restructure or self.edits().get("changes") or not (chapter_film or self.narration_changes()):
+        if restructure or self.edits().get("changes") or not self.narration_changes():
             receipt = _store.publish_bundle(stored, key, client=client, force=force)
         else:  # only the narration binding is behind (a retry after it failed): pin it, nothing else to publish
             receipt = {"old_head": self.base_revision, "new_head": self.base_revision, "structure": "unchanged"}
