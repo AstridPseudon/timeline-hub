@@ -1,10 +1,10 @@
-<!-- agent | 2026-10-23T10:34:07Z | dispatcher heartbeat 11s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 1m -->
-# agent board, 2026-10-23T10:32:00Z
+<!-- agent | 2026-10-23T10:35:57Z | dispatcher heartbeat 14s | live 2 (sol 1, luna 1, other 0) | busy30 14 | status age 0m -->
+# agent board, 2026-10-23T10:35:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2-ops-health | stale dispatcher/false orphan diagnosis | Luna readonly; host lead | dispatcher heartbeat09:06 | merged | agt-U2-ops-health-0912 FINAL | Readonly diagnosis+lead0943 confirms hung pip09:07-09:42; one PID terminated; FIFO resumed, no hostrestart. False sandbox orphan diagnosis confirmed; no productchange | ops-only |
 | U2 | upstream and quality | Luna/Sol; Luna review | — | merged | agt-U2-media-repair; ratchet-review | Integrated184 + manifest/lock PASS; baseline2151/1915 | 3f1ceaed1;649ba6481 |
-| U2b | upstream no-invisible-skips policy | Luna firstreturn; Luna review | independent1019 FAIL | doing | agt-U2b-return-1026 QUEUED | Review55policy/type1912/Ruff2149/freeze/liveancestry PASS; rejects deadviewercollection/stale_publishroute/3pyc/2EOF. Bounded authorreturn nowowns all4findings; no merge | 55c1 HELD |
+| U2b | upstream no-invisible-skips policy | Luna; finalindependentLuna | authorreturn6c3 | review | agt-U2b-final-review-1034 QUEUED | Returnfixes3pyc/deadviewer/EOF/stalepublish, author55+2/static/freeze/liveancestryPASS. Fourmissingretiredinventorydocfailures and requesterlease-equivalence requirecausalreview; no merge | 55c1+6c3 HELD |
 | U4a | U1 client/schema | Luna | U1,U2 | merged | agt-U4a-integrated-proof | Independent138+60; integrated150 +15 mappings/manifest PASS | 3cc21e71b |
 | U4a-v2 | frozen strict-envelope client | Luna; independent Luna | frozen34e | merged | agt-U4a-envelope-review-0353; integrated0355 | Actual home f894 EXACT reviewed723b tree:46Agent+48Runtime; integrated all15/vendor/artifact/4positive2negative PASS.2151/1915. Runtime/Viewing notified0357. | 723b94bb; mergef894c3c9 |
 | R1 | physical doc.patch guards | Sol; Luna review | C0,U2 | merged | agt-R1-current-review-0039; integrated0047 | Independent353+25; integrated115 +ratchets PASS. P1 mounted chain separate. | b7a32c523;mergee5c260c83 |
@@ -80,7 +80,7 @@
 | F-agent-collection | missing scopes import stops full collection | Luna author/review | env0713 collection finding | merged | agt-F-collection-review-0719 PASS | Mergedd24 treefcc EXACT reviewedea782; independent6body+collection/2149/1912/toolsPASS, all6functions/assertions retained. Integratedfull4249nowrunning | ea782225d;d24da4af0 |
 | P4-public-command | hydrate public command canonical closure | Sol author; independent Luna | Proof0723/0727 | merged | agt-G2-public-review-0744; integrated0751 FINALPASS | Actuale49 EXACT reviewed68d tree6ba777; author+independent151PASS; integrated30PASS8.32s/exactAgent+Runtimea5d origins.2149/1912/vendor/diff retained. Public portable/private exact-pair hydration preserved. Proof handback0753; no HTTPclaim | 68d54e15a;e49a6e76b |
 | F-legacy-clean-port | exclude inherited report artifacts | Luna | ae3 source; independent0916 | merged | agt-F-legacy-clean-port-0937 FINAL | Owna964 EXACTae3 generic_hostblob/no reports/onefile; independent0916 product9/qualityPASS reused EXACTbytes. MERGEDef851, actualoriginalproof1000queued | pending |
-| F-installed-runtime-child | durable actual installed packages | Luna independent | privatef1012/9564261 | review | agt-F-installed-final-review-1021 | Source/origin/profile/164pins/182RECORD/fixtureseam reviewedPASS; service26224 1PASS1ERROR21.24s, D09 runtime startupoverride refusal STOPPED separately | 9564261cf |
+| F-installed-runtime-child | durable installedpackages + fixtureinputs | Luna; independentLunaPASS | source9564261 | merging | agt-F-installed-return-1012 normalMERGEqueued | Independent1021 SOURCEPASS17/Ruff2149/type1912/tools/origins/164pins/182RECORD; exactONEowncommit/ONEfixturefile. InstallerFalsePASS; D09refusal action remainsSTOPPED separately | 9564261cf |
 | F-joined-final-proof | five F repairs on joined integrated head | Luna readonly | reviewed ef851 merges | merged | agt-F-joined-final-proof-1000 FINAL PASS | Exact ef851/treeb11eee: central24668 PASS25/16.46s, collection25; provider10/writer12/hydration2/legacy1. Ruff2149/type1912/vendor/artifact/diff PASS. D17 duplicate excluded explicitly | ef851b22c |
 
 
