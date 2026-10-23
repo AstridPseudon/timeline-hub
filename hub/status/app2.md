@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-23T03:10:50Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 1m -->
-# app2 board, 2026-10-23T03:09:51Z
+<!-- app2 | 2026-10-23T03:12:08Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 0m -->
+# app2 board, 2026-10-23T03:11:26Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | P1 | Real corpus + App split/trim/Agent/lostACK/restart | Luna high; prior Sol repair | mounted A2 + normal official v2 consumers | blocked:app+agent | P1 source seam reviewed0242/corrected0247; actual chain pending | R1 corpus42PASS cf315/treeb4ee=same e5; encoder14PASS/service28614 on integrated195/tree991c. Actual mixed chain UNEXECUTED | proof52e9 merged3da84905; vectors14424 merged53684; encoder19500aa36 |
@@ -33,3 +33,5 @@ Current03:07: App independent mount4394 FAIL identifies real canonical suffix ad
 
 Blockers: runtime+agent — New normal780 consumer7d356 independent0258 FAIL NEGATIVEPROBE discrepancy: accepts partialreceipt/missingpreviewwould_status despite Runtime124/TS62 claims. Exact origin/envelope peer0304 already Agent-owned; no duplicate Proof probe or repair. Producer780 fullpositive readiness retained scoped; actual P4 wire waits owner disposition + valid normal adoption. G3correctedcurrentecea source review0304 active.
 Current03:09: P1 firstreturnd054 static2/tsc/lintPASS, independent0309 dispatched immediately. P4 local suite0305 complete, independent0307 active; no HTTP body or newlauncher. All work PR-sized, original assertions intact.
+
+Resolved local service03:11: p4-v2-http-nodes independentlyPASS0307 on current config, exact780/treea285 and real venv verified. Later command: bin/request-test OWNER_JOIN_WORKER p4-v2-http-nodes --files tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py::test_cli_sheet_v2_runtime_preserves_document_and_reads_back. Use actual joined compatible worker, not recycled ddff author/review. No missingvenv or integrationdeselection blocker remains; body still waits canonical client disposition/normalconsumer+G3/R2 join.
