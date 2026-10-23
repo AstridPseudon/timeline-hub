@@ -166,4 +166,167 @@ describe('A2 controlled mounted split -> accepted -> immediate Source In', () =>
       else Reflect.deleteProperty(navigator, 'locks');
     }
   });
+
+  it('captures the accepted split, settles a loaded head, then sends Source In', async () => {
+    const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
+    const locks = new Set<string>();
+    Object.defineProperty(navigator, 'locks', { configurable: true, value: {
+      request: async (name: string, _options: unknown, work: (lock: object | null) => Promise<unknown>) => {
+        if (locks.has(name)) return work(null);
+        locks.add(name);
+        try { return await work({}); } finally { locks.delete(name); }
+      },
+    } });
+    const config = makeConfig();
+    const initialReply = reply(config, 'r0', 'p0', 'r0', 'p0');
+    const initial = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: initialReply.canonicalDocument };
+    const data = await buildTimelineData(config, registry, undefined, 1, undefined, head);
+    const send = vi.fn<NonNullable<DataProvider['commitTimeline']>>();
+    let acknowledge!: (value: Awaited<ReturnType<NonNullable<DataProvider['commitTimeline']>>>) => void;
+    let trimResult!: ReturnType<typeof reply>;
+    send.mockImplementationOnce(() => new Promise((resolve) => { acknowledge = resolve; }));
+    const loadLatest = vi.fn(async () => initial);
+    const provider: DataProvider = {
+      persistenceEnabled: true, loadTimeline: vi.fn(), loadAssetRegistry: vi.fn(),
+      saveTimeline: vi.fn(async () => { throw new Error('legacy writer called'); }),
+      resolveAssetUrl: vi.fn(async (file: string) => file), loadTimelineCommandBasis: loadLatest,
+      commitTimeline: send, getRecoverableIdentity: vi.fn(async () => ({ actorId: scope.actorId, realmId: scope.realmId })),
+      saveTimelineAtHead: vi.fn(async () => ({ configVersion: 2,
+        head: { ...head, headRevisionId: 'r1', headPublicationId: 'p1' } })),
+    };
+    let queries: UsePollSyncQueries = {
+      timelineQuery: { data: undefined, isLoading: false }, assetRegistryQuery: { data: undefined },
+    };
+    const interactionStateRef: InteractionStateRef = { current: createInteractionState() };
+    const store = createTimelineStore();
+    const runtime = { provider, project: { projectId: scope.projectId }, timelineId: scope.timelineId,
+      assetResolver: { resolveAssetUrl: vi.fn(async (file: string) => file) }, shots: { shots: undefined, isLoading: false, error: null,
+        refetchShots: vi.fn() } } as unknown as VideoEditorRuntimeContextValue;
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+    const wrapper = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={queryClient}>
+      <VideoEditorRuntimeProvider value={runtime}>{children}</VideoEditorRuntimeProvider>
+    </QueryClientProvider>;
+    const harness = renderHook(() => useTimelineSave(queries, provider, interactionStateRef, store, data), { wrapper });
+    const editing = renderHook(() => useClipEditing({ dataRef: harness.result.current.dataRef,
+      resolvedConfig: harness.result.current.dataRef.current?.resolvedConfig ?? null,
+      selectedClipId: harness.result.current.selectedClipId, selectedTrack: null, currentTime: 2,
+      selectClip: vi.fn(), setSelectedTrackId: vi.fn(), applyEdit: harness.result.current.applyEdit }));
+    try {
+      await vi.waitFor(() => expect(harness.result.current.localSaveState?.ownerId).toBeTruthy());
+      await settle();
+      await act(async () => { editing.result.current.handleSplitClipAtTime('p1-chain-source', 2); });
+      await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+      await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(1));
+      const splitConfig = structuredClone(harness.result.current.dataRef.current!.config);
+      const rightId = harness.result.current.selectedClipId!;
+      expect(rightId).not.toBe('p1-chain-source');
+      const splitRequest = structuredClone(send.mock.calls[0][0]);
+      const splitResult = reply(splitConfig, 'r1', 'p1', 'r0', 'p0');
+      expect(splitResult.response).toMatchObject({
+        data: {
+          status: 'accepted', base_revision_id: 'r0', base_publication_id: 'p0',
+          previous_revision_id: 'r0', previous_publication_id: 'p0', accepted_revision_id: 'r1', rebased_onto: null,
+          canonical_document: { project_id: scope.projectId, timeline_id: scope.timelineId,
+            parent_revision: { revision_id: 'r1', content_digest: expect.stringMatching(/^sha256:/), payload: expect.any(Object) },
+            dependency_manifest: { shots: expect.any(Array), internal_timelines: expect.any(Array), media: expect.any(Array), documents: expect.any(Array) } },
+          document_digest: expect.stringMatching(/^sha256:/), commands: expect.any(Array), id_map: {},
+          provider_version: expect.any(String), compiler_version: expect.any(String), publisher: expect.any(String),
+        },
+        receipt: { receipt_id: 'p1', command_kind: 'timeline.commit', idempotency_key: expect.any(String),
+          request_hash: expect.any(String), project_id: scope.projectId, project_seq: expect.any(Array),
+          event_ids: expect.any(Array), result: expect.any(Object), created_at: expect.any(String) },
+      });
+      expect(splitRequest).toMatchObject({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
+        base_revision_id: 'r0', base_publication_id: 'p0', label: 'Edit timeline', merge: 'fields', dry_run: false,
+        source: { via: 'app' }, commands: [{ schema_version: 1, op: 'doc.patch', version: '1', select: null,
+          created: [`parent/clip:${rightId}`], args: { changes: expect.any(Array) } }],
+        steps: [{ id: expect.any(String), label: 'Edit timeline', intent: 'Split p1-chain-source at 2', tags: [],
+          command_ordinals: [0], patch: expect.any(Array) }], reads: expect.any(Array) });
+      await act(async () => { acknowledge(splitResult); await settle(); });
+      await vi.waitFor(() => expect(harness.result.current.localSaveState).toMatchObject({ status: 'saved' }));
+      expect(harness.result.current.dataRef.current?.head?.headRevisionId).toBe('r1');
+      const splitOwnerId = harness.result.current.localSaveState!.ownerId;
+
+      const loadedReply = reply(splitConfig, 'r2', 'p2', 'r1', 'p1');
+      const loadedBasis = { head: { revisionId: 'r2', publicationId: 'p2' }, canonicalDocument: loadedReply.canonicalDocument };
+      loadLatest.mockResolvedValue(loadedBasis);
+      const loaded = await loadLatest(scope.timelineId);
+      const loadedConfig = loaded.canonicalDocument.parent_revision.payload.config as ReturnType<typeof makeConfig>;
+      const loadedData = await buildTimelineData(loadedConfig, registry, undefined, 2, undefined,
+        { projectId: scope.projectId, timelineId: scope.timelineId, headRevisionId: 'r2', headPublicationId: 'p2' });
+      queries = { timelineQuery: { data: loadedData, isLoading: false }, assetRegistryQuery: { data: undefined } };
+      harness.rerender();
+      await settle();
+      await act(async () => { await vi.advanceTimersByTimeAsync(0); await Promise.resolve(); });
+      await vi.waitFor(() => expect(harness.result.current.dataRef.current?.configVersion).toBe(2));
+      await vi.waitFor(() => expect(harness.result.current.dataRef.current?.head).toMatchObject({ headRevisionId: 'r2', headPublicationId: 'p2' }));
+      await vi.waitFor(() => expect(loadLatest.mock.calls.length).toBeGreaterThan(1));
+      await vi.waitFor(() => expect(harness.result.current.localSaveState?.ownerId).not.toBe(splitOwnerId));
+      await settle();
+      expect(harness.result.current.localSaveState).toMatchObject({ status: 'saved' });
+
+      editing.rerender();
+      await act(async () => { editing.result.current.handleSelectedClipChange({ from: 3 }); });
+      await settle();
+      const ownersBeforeTransport = await createCommitOutbox().list(scope);
+      const ownerBeforeTransport = ownersBeforeTransport.find((owner) => owner.intents.length === 1);
+      expect(ownerBeforeTransport).toBeDefined();
+      expect(ownerBeforeTransport!.intents[0].basis).toEqual({ head: { revisionId: 'r2', publicationId: 'p2' } });
+      expect(ownerBeforeTransport!.intents[0].payload).toMatchObject({ documentIntent: {
+        changes: [{ op: 'set', ref: 'parent', path: ['clips', `id:${rightId}`, 'from'],
+          before: { state: 'present', value: 0 }, value: 3 }],
+      } });
+      expect(ownerBeforeTransport!.intents[0].payload).toMatchObject({ after: { parent_revision: { payload: {
+        config: { clips: expect.arrayContaining([expect.objectContaining({ id: rightId, from: 3 })]) },
+      } } } });
+      const rightBefore = harness.result.current.dataRef.current!.config.clips.find((clip) => clip.id === rightId)!;
+      expect(rightBefore.app).toEqual({ opaque: { keep: null }, astrid: { for: 8 }, 'org.example': { clear: null } });
+
+      send.mockImplementationOnce(async () => {
+        trimResult = reply(harness.result.current.dataRef.current!.config, 'r3', 'p3', 'r2', 'p2');
+        return trimResult;
+      });
+      await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+      await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(2));
+      const trimRequest = send.mock.calls[1][0];
+      expect(send.mock.calls[0][1]).toEqual(expect.any(String));
+      expect(send.mock.calls[1][1]).toEqual(expect.any(String));
+      expect(send.mock.calls[1][1]).not.toBe(send.mock.calls[0][1]);
+      expect(trimRequest).toMatchObject({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
+        base_revision_id: 'r2', base_publication_id: 'p2', label: 'Edit timeline', merge: 'fields', dry_run: false,
+        source: { via: 'app' }, commands: [{ schema_version: 1, op: 'doc.patch', version: '1', select: null,
+          created: [], args: { changes: [{ op: 'set', ref: 'parent', path: ['clips', `id:${rightId}`, 'from'],
+            before: { state: 'present', value: 0 }, value: 3 }] } }],
+        steps: [{ id: expect.any(String), label: 'Edit timeline', intent: `Trim ${rightId}: {"from":3}`, tags: [],
+          command_ordinals: [0], patch: expect.any(Array) }],
+        reads: expect.arrayContaining([{ kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${rightId}`, 'from'],
+          state: { state: 'present', value: 0 } }]) });
+      expect(trimRequest.steps?.[0].patch).toEqual(trimRequest.commands[0].args.changes);
+      expect(trimResult.response).toMatchObject({ data: { status: 'accepted', base_revision_id: 'r2', base_publication_id: 'p2',
+        previous_revision_id: 'r2', previous_publication_id: 'p2', accepted_revision_id: 'r3', rebased_onto: null,
+        canonical_document: { parent_revision: { revision_id: 'r3', content_digest: expect.stringMatching(/^sha256:/) } },
+        document_digest: expect.stringMatching(/^sha256:/) }, receipt: { receipt_id: 'p3', result: expect.any(Object) } });
+      expect(harness.result.current.dataRef.current?.head?.headRevisionId).toBe('r3');
+      const finalRight = harness.result.current.dataRef.current!.config.clips.find((clip) => clip.id === rightId)!;
+      expect(finalRight).toMatchObject({ id: rightId, from: 3 });
+      expect(finalRight.app).toEqual({ opaque: { keep: null }, astrid: { for: 8 }, 'org.example': { clear: null } });
+      const outboxAfter = await createCommitOutbox().list(scope);
+      expect(outboxAfter.find((owner) => owner.ownerId === ownerBeforeTransport!.ownerId)?.intents).toHaveLength(0);
+      console.log(JSON.stringify({
+        controlled: 'PASS', schedule: 'accepted split -> loaded-head poll settle -> Source In',
+        mountedCaller: 'useTimelineSave/useClipEditing.handleSelectedClipChange', rightId,
+        poll: { loadedHead: 'r2/p2', configVersion: 2, ownerReplaced: splitOwnerId !== ownerBeforeTransport!.ownerId,
+          ownerStatusBeforeSourceIn: harness.result.current.localSaveState },
+        splitRequest, trimRequest, idempotencyKeys: [send.mock.calls[0][1], send.mock.calls[1][1]],
+        ownerId: ownerBeforeTransport!.ownerId, outboxBeforeTransport: { intentCount: 1, predecessor: ownerBeforeTransport!.intents[0].basis },
+        outboxAfterTransport: { intentCount: outboxAfter.find((owner) => owner.ownerId === ownerBeforeTransport!.ownerId)?.intents.length ?? -1 },
+        rawApp: finalRight.app,
+      }, null, 2));
+    } finally {
+      editing.unmount();
+      harness.unmount();
+      if (descriptor) Object.defineProperty(navigator, 'locks', descriptor);
+      else Reflect.deleteProperty(navigator, 'locks');
+    }
+  });
 });
