@@ -147,7 +147,7 @@ def test_source_cpu_profile_roots_remain_source_bound(monkeypatch):
     assert helper._selected_execution_roots(selected) == (helper.RUNTIME_ROOT, helper.ASTRID_ROOT)
 
 
-@pytest.mark.integration
+@pytest.mark.workstation  # needs a non-editable installed Astrid product tree in the interpreter's site-packages
 def test_installed_cpu_origins_are_real_and_reject_mixed_source():
     import sys
     from astrid.sdk.host_bootstrap import _installed_execution_origins, PackHostBootstrapError
@@ -160,7 +160,7 @@ def test_installed_cpu_origins_are_real_and_reject_mixed_source():
         _installed_execution_origins(helper.ASTRID_ROOT, sys.executable)
 
 
-@pytest.mark.integration
+@pytest.mark.workstation  # needs an owner-written H3 candidate source manifest (ASTRID_H3_CANDIDATE_MANIFEST) and a non-editable installed Astrid product tree
 def test_installed_cpu_actions_retain_candidate_content_pins(tmp_path):
     from tests.helpers import h3_cpu_runtime as helper
 
@@ -174,7 +174,7 @@ def test_installed_cpu_actions_retain_candidate_content_pins(tmp_path):
         helper._verify_installed_candidate_actions(drift)
 
 
-@pytest.mark.integration
+@pytest.mark.workstation  # needs a non-editable installed Astrid in site-packages and the host-provisioned ASTRID_REMOTION_PROJECT_DIR
 def test_installed_cpu_renderer_uses_real_provisioned_outputs():
     from astrid.packs.rendering.rendering.renderers.remotion import run
     from tests.helpers import h3_cpu_runtime as helper
@@ -189,19 +189,35 @@ def test_installed_cpu_renderer_uses_real_provisioned_outputs():
     assert not (project / run._REGISTRY_STATE_PATH).exists()
 
 
-@pytest.mark.integration
-def test_installed_cpu_parent_vibe_origin_and_exact_restoration():
+
+def _attested_parent_clone(tmp_path, monkeypatch):
+    """The detached pinned VibeComfy clone the helper itself builds, with the parent import state cleared.
+
+    The parent process imports VibeComfy from the selected checkout; the attested clone is a second,
+    separate root, so the parent's modules are removed here (the runtime under test restores them).
+    """
     import sys
     from tests.helpers import h3_cpu_runtime as helper
 
-    checkout = Path(os.environ["ASTRID_H3_ATTESTED_PARENT_IMPORT_CHECKOUT"])
+    monkeypatch.setattr(helper, "_HOST_EXECUTION_PROFILE", "installed")
+    checkout = helper._prepare_clean_vibecomfy_checkout(tmp_path)
     prior_path = tuple(sys.path)
     prior_modules = {name: module for name, module in sys.modules.items()
                      if name == "vibecomfy" or name.startswith("vibecomfy.")}
+    for name in prior_modules:
+        del sys.modules[name]
     runtime = helper.H3CpuRuntime.__new__(helper.H3CpuRuntime)
     runtime._prior_sys_path = prior_path
     runtime._prior_vibecomfy_modules = prior_modules
     runtime._prior_environment = {}
+    return helper, checkout, runtime, prior_path, prior_modules
+
+
+@pytest.mark.integration
+def test_installed_cpu_parent_vibe_origin_and_exact_restoration(tmp_path, monkeypatch):
+    import sys
+
+    helper, checkout, runtime, prior_path, prior_modules = _attested_parent_clone(tmp_path, monkeypatch)
     try:
         helper._expose_owned_vibecomfy_checkout(checkout)
         import vibecomfy.runtime.session as session
@@ -216,18 +232,10 @@ def test_installed_cpu_parent_vibe_origin_and_exact_restoration():
 
 
 @pytest.mark.integration
-def test_installed_cpu_parent_vibe_rejects_foreign_origin_and_alias(tmp_path):
+def test_installed_cpu_parent_vibe_rejects_foreign_origin_and_alias(tmp_path, monkeypatch):
     import sys
-    from tests.helpers import h3_cpu_runtime as helper
 
-    checkout = Path(os.environ["ASTRID_H3_ATTESTED_PARENT_IMPORT_CHECKOUT"])
-    before = tuple(sys.path)
-    prior_modules = {name: module for name, module in sys.modules.items()
-                     if name == "vibecomfy" or name.startswith("vibecomfy.")}
-    runtime = helper.H3CpuRuntime.__new__(helper.H3CpuRuntime)
-    runtime._prior_sys_path = before
-    runtime._prior_vibecomfy_modules = prior_modules
-    runtime._prior_environment = {}
+    helper, checkout, runtime, before, prior_modules = _attested_parent_clone(tmp_path, monkeypatch)
     try:
         helper._expose_owned_vibecomfy_checkout(checkout)
         selected_path = tuple(sys.path)
@@ -238,9 +246,12 @@ def test_installed_cpu_parent_vibe_rejects_foreign_origin_and_alias(tmp_path):
         runtime._restore_parent_state()
     alias = tmp_path / "vibe-alias"
     alias.symlink_to(checkout, target_is_directory=True)
-    with pytest.raises(RuntimeError, match="unavailable or aliased"):
-        helper._expose_owned_vibecomfy_checkout(alias)
-    assert tuple(sys.path) == before
+    try:
+        with pytest.raises(RuntimeError, match="unavailable or aliased"):
+            helper._expose_owned_vibecomfy_checkout(alias)
+        assert tuple(sys.path) == before
+    finally:
+        runtime._restore_parent_state()
 
 
 def _boundary_blockers() -> list[str]:
@@ -272,18 +283,15 @@ def _boundary_blockers() -> list[str]:
 def test_public_cpu_boundary_preflight_does_not_require_a_prior_qualification_receipt(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    checkout = Path(__file__).resolve().parents[3]
-    receiving_root = checkout.parents[1]
     profile = tmp_path / "synthetic-t9-template.json"
     profile.write_text(json.dumps({"profile_template": "test-only"}), encoding="utf-8")
-    monkeypatch.setenv("ASTRID_VIBECOMFY_CHECKOUT", str(receiving_root / "repos" / "vibecomfy"))
     monkeypatch.setenv("ASTRID_H3_T9_READINESS_PROFILE", str(profile))
     monkeypatch.delenv("ASTRID_H3_CHARACTER_SWAP_CPU_QUALIFICATION_RECEIPT", raising=False)
 
     assert _boundary_blockers() == []
 
 
-@pytest.mark.integration
+@pytest.mark.workstation  # needs the shared public_workspace.py fixture held outside this repo under receiving/coordination/evidence/B/
 def test_h3_public_workspace_helper_pin_matches_current_shared_fixture() -> None:
     from tests.helpers import h3_cpu_runtime
 
@@ -435,7 +443,7 @@ def test_h3_synthetic_readiness_profile_uses_digest_bound_model_root(tmp_path: P
     assert binding.qualification_identity is None
 
 
-@pytest.mark.integration  # needs the Runtime and VibeComfy checkouts and the approved T9 readiness profile
+@pytest.mark.workstation  # needs the approved T9 readiness profile written by the h3-transform-pack Otto run, plus the candidate manifest
 def test_character_swap_public_managed_cpu_boundary(tmp_path: Path) -> None:
     blockers = _boundary_blockers()
     if blockers:
@@ -1434,7 +1442,7 @@ def test_cpu_public_parent_carries_attested_vibe_imports_to_real_runner(
     runtime.owner = Owner()
     runtime.project_id = "fixture-project"
     runtime.cpu_model_boundary = "test-only"
-    runtime.vibecomfy_root = Path(os.environ["ASTRID_H3_ATTESTED_PARENT_IMPORT_CHECKOUT"])
+    runtime.vibecomfy_root = runtime_module.VIBECOMFY_SOURCE_ROOT
     assert (runtime.vibecomfy_root / "vibecomfy/__init__.py").is_file()
     monkeypatch.setattr(runtime_module, "_HOST_EXECUTION_PROFILE", "installed")
     monkeypatch.setenv("PYTHONPATH", "/tmp/stale-parent-import")

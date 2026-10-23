@@ -33,6 +33,7 @@ from astrid.core.rendering.contracts import AudioOwnership, RenderRequest, SCHEM
 from astrid.core.rendering.registry import load_default_registries
 from astrid.core.rendering.service import RenderService
 from astrid.sdk.rendering import support
+from tests.helpers.remotion_validation import issue_remotion_launch_validation, remotion_install_problems
 from tests.packs.rendering._helpers import _execution_env, _source_video
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -454,8 +455,7 @@ def _combined_timeline(tmp_path: Path) -> Path:
 
 @pytest.mark.integration
 @pytest.mark.timeout(900)
-@pytest.mark.usefixtures("remotion_launch_validation")
-def test_hyperframes_remotion_combined_render(tmp_path: Path) -> None:
+def test_hyperframes_remotion_combined_render(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """hyperframes.planner collates HyperFrames + Remotion via FFmpeg concat.
 
     The mixed timeline's text window and trailing silent-media window render
@@ -489,8 +489,15 @@ def test_hyperframes_remotion_combined_render(tmp_path: Path) -> None:
     )
     timeline = _combined_timeline(tmp_path)
     output = tmp_path / "combined.mp4"
+    problems = remotion_install_problems()
+    if problems:
+        pytest.fail("the combined render needs the provisioned Remotion install: " + "; ".join(problems), pytrace=False)
+    # RenderService exposes the extra pack root to its renderer children as ASTRID_PACKS_PATH, and Remotion's
+    # launch validation covers that variable; name the root before issuing the validation so the two agree.
+    monkeypatch.setenv("ASTRID_PACKS_PATH", str(PACK_ROOT.resolve()))
     try:
         with _execution_env():
+            issue_remotion_launch_validation(tmp_path, monkeypatch)
             published = RenderService(extra_pack_roots=(str(PACK_ROOT),)).render(
                 RenderRequest(
                     schema_version=SCHEMA_VERSION,

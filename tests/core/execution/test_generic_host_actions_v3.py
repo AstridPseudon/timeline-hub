@@ -205,7 +205,10 @@ def _sdk_cpu_session_fixture(tmp_path, monkeypatch):
     daemon, child = 1900001, 1900002
     birth, child_birth = "fixture-daemon-birth", "fixture-child-birth"
     url, token = "http://127.0.0.1:18188", "fixture-launch-token"
-    revision, content = "a" * 40, "sha256:" + hashlib.sha256(b"unit source fixture").hexdigest()
+    # The attested revision must be the one the selected VibeComfy checkout is pinned to
+    # (ASTRID_VIBECOMFY_CHECKOUT is set in CI), so use the product's pin rather than a made-up one.
+    from astrid.core.generation.vibecomfy_dependency import VIBECOMFY_ENGINE_REVISION
+    revision, content = VIBECOMFY_ENGINE_REVISION, "sha256:" + hashlib.sha256(b"unit source fixture").hexdigest()
     config = json.dumps({"output_directory": str(output)}, sort_keys=True).encode()
     marker = {"pid": daemon, "comfy_pid": child, "process_start_identity": birth,
               "comfy_process_start_identity": child_birth, "url": url, "launch_token": token}
@@ -686,6 +689,10 @@ import importlib.util,json,os,sys
 from pathlib import Path
 from types import ModuleType
 source,case,foreign,checkout,product_roots=sys.argv[1:]
+# A production installed interpreter has no VibeComfy of its own. Remove any this test interpreter
+# carries (an editable install is a .pth path entry or a meta-path finder) so only the attested root can resolve.
+sys.path[:]=[p for p in sys.path if not (Path(p)/'vibecomfy'/'__init__.py').is_file()]
+sys.meta_path[:]=[f for f in sys.meta_path if 'vibecomfy' not in getattr(f,'__module__','')]
 # Ordinary source tests bind their known product roots explicitly. Qualified
 # installed tests supply no roots, retaining the interpreter's true -I origins.
 sys.path.extend(json.loads(product_roots))

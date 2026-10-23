@@ -1357,7 +1357,12 @@ def _install_host_vibecomfy_import_root() -> Path | None:
                 raise HostError("installed host has a conflicting cached VibeComfy origin")
     existing = importlib.util.find_spec("vibecomfy")
     expected = package / "__init__.py"
-    if existing is not None and (not existing.origin or Path(existing.origin) != expected):
+    # A bare namespace directory (no code; VibeComfy's own data-files install leaves one in
+    # site-packages) cannot shadow the attested regular package, which wins on resolution and
+    # is verified below. Any other resolution is a conflicting dependency.
+    namespace_only = existing is not None and existing.loader is None and existing.origin is None
+    if existing is not None and not namespace_only and (
+            not existing.origin or Path(existing.origin) != expected):
         raise HostError("installed host has a conflicting VibeComfy package resolution")
     products = _host_product_import_origins()
     original_path = sys.path[:]
