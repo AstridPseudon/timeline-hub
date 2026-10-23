@@ -492,8 +492,27 @@ export function runtimeFixture(options: RuntimeFixtureOptions = {}) {
       receipts.set(headers['Idempotency-Key'], { request: requestJson, body: response.body });
       return response;
     }
+    if (method === 'GET' && path === timelinePath) {
+      // The public timeline resource carries identity/head metadata only. The
+      // mutable document projection remains retired below.
+      return {
+        status: 200,
+        headers: {},
+        body: json({
+          project_id: projectId,
+          timeline_id: timelineId,
+          version: 1,
+          name: timelineId,
+          archived: false,
+          shots: [],
+          references: [],
+          head_revision_id: headRevisionId,
+          head_publication_id: 'publication-current',
+        }),
+      };
+    }
     if (path === timelinePath) {
-      throw new Error('retired mutable timeline GET must not be used');
+      throw new Error('retired mutable timeline write route must not be used');
     }
     if (path.includes('/documents/timeline%3A')) {
       throw new Error('retired mutable timeline document route must not be used');
