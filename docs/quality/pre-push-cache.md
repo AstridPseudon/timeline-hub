@@ -21,3 +21,10 @@ a replacement only if the forced run passes.
 Set `ASTRID_PREPUSH_FORCE=1` to rerun every check and bypass cached receipts.
 The cache only skips checks invoked through `scripts/check-before-push`; running
 `npm test` directly always executes the suite.
+
+Release provenance inspections reuse immutable Git objects only within one
+inspection. Mutable worktree/index state and every history edge are still
+checked, with subprocess containment unchanged. The representative acceptance
+case dropped from 19 to 12 bounded Git calls (47.03 to 27.45 seconds on the same
+machine). Broker-death tests select the broker owned by their own process so
+parallel test runs cannot kill each other's brokers.
