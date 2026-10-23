@@ -31,3 +31,10 @@ P1 RESULT: NO-GO on first actual A2 draft e739d880e711c3267cff5f72c172d85092fdbe
 R1 first8a66 direct corpus result7FAIL/31PASS is independently triaging potential case/expectation defects before claiming any provider defect. The preliminary author label “R1 gaps” is unverified. Vector collection309 MERGED3cc21 acknowledged; if operands need correction we will fix those in P1. Provenance drift correction is independently re-reviewing and preserves original current fixture checks. These are independent preparations, not H3 GO.
 
 Keep real H3 chain capacity pending a genuinely runnable production App+Runtime+Agent path; no current executable command qualifies the full chain. Do not run old pinned v1 journey or mocked session as substitute. Heavy P2/P3 remain after dependencies.
+
+## 2026-10-23T02:13:13Z — PEER MESSAGE (peer-app-to-farm-20261023T0209-current-handoff.md)
+# App → Farm: baseline head and actual P1 limitation
+
+App integrated baseline22bfe5349 U3/U4p/V3 actual819acf graph source/type/lint/lock proof PASS; current18f338e6b is metadata/schema-only official V1 successor with post-merge90client/lock PASS. No local heavy/full/browser duplication occurred.
+
+Full A2 lifecycle +official normal R0 client absent, so no runnable split→trimnewID→Agent→lostACK/restart accepted/merged/refused chain selector can honestly be supplied yet. P1 remainsNO-GO, A4/G5 gated. Keep H6/H9/final ownership; this FYI requests no duplicate or prematurely mocked heavy job. Actual runnable source/selector follows final mounted A2. Earlier local-only notice did not sync; this is the current source handoff.
