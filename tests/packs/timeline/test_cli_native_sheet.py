@@ -16,10 +16,10 @@ from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.outbox import request_bytes
 from astrid.sdk.timeline.sync import TimelineSession
 from astrid.sdk.timeline_checkout import Checkout
-from tests.timeline.test_authoring_bundle import _closure
+from tests.packs.timeline.test_cli_commit_move import _install_history
 from tests.sdk.test_timeline_sheet_native import edit_cell
 from tests.sdk.test_timeline_sync import connected, initial_bundle  # noqa: F401
-
+from tests.timeline.test_authoring_bundle import _closure
 
 RATIONAL_FPS = {'numerator': 30000, 'denominator': 1001}
 OCCURRENCE_CLIP = 'occurrence:occ-1/clip:picture-1'
@@ -66,6 +66,7 @@ def assert_rational_occurrence_move(generated, original, publication):
 @pytest.fixture
 def native_cli(connected, monkeypatch):  # noqa: F811
     client, generated, path = connected
+    _install_history(generated)
     monkeypatch.setattr(storage_root, "resolve_runtime_data_root", lambda: path.parent)
     scope = {"realm_id": "realm", "actor_id": "actor", "project_id": "p", "timeline_id": "t"}
     generated.path = path.parent / "timeline-outbox" / (hashlib.sha256(request_bytes(scope)).hexdigest() + ".json")
@@ -94,24 +95,26 @@ def test_export_preview_apply_and_undo(native_cli, tmp_path, capsys):
     run, _, generated = native_cli
     text = export(native_cli, capsys)
     state = json.loads(generated.path.read_bytes())
-    assert state["sheet"] == {"bundle": initial_bundle(), "basis": generated.head}
+    expected_export = initial_bundle()
+    expected_export["base_parent"]["publication_id"] = "pub0"
+    assert state["sheet"] == {"bundle": expected_export, "basis": generated.head}
     edited = edit_cell(text, "parent/clip:a", "5")
     edited = edit_cell(edited, "parent/track:picture", '"Picture"', label=True)
     path = tmp_path / "edited.txt"
     path.write_text(edited)
     before = generated.path.read_bytes()
-    assert run("apply", "t", str(path), "--native", "--dry-run", "--json") == 0
+    assert run("apply", "t", str(path), "--dry-run", "--json") == 0
     preview = json.loads(capsys.readouterr().out)
     assert len(preview["data"]["commands"]) == 2 and preview["receipt"] is None
     assert generated.calls == [] and generated.path.read_bytes() == before
-    assert run("apply", "t", str(path), "--native", "--json") == 0
+    assert run("apply", "t", str(path), "--json") == 0
     output = json.loads(capsys.readouterr().out)
     assert output["data"]["accepted_publication_id"] == "pub1"
     body = json.loads(generated.calls[0][0])
     assert len(body["commands"]) == 2 and body["base_revision_id"] == "r0"
     assert body["base_publication_id"] == "pub0" and body["source"] == {"via": "sheet"}
     assert generated.bundles["r1"]["parent"]["clips"][0]["at"] == 5
-    assert run("undo", "t", "--publication", "pub1", "--json") == 0
+    assert run("undo", "t", "--commit", "pub1", "--json") == 0
     capsys.readouterr()
     assert generated.bundles["r2"]["parent"] == initial_bundle()["parent"]
     assert path.read_text() == edited
@@ -120,8 +123,15 @@ def test_export_preview_apply_and_undo(native_cli, tmp_path, capsys):
 def test_original_detached_apply_uses_retained_duration_target(connected, tmp_path, monkeypatch, capsys):  # noqa: F811
     from tests.sdk.test_timeline_sheet_native import detached_draft, duration_edit
 
-    tl, text, ref, _ = detached_draft(connected, tmp_path)
     client, generated, _ = connected
+    _install_history(generated)
+    tl, text, ref, _ = detached_draft(connected, tmp_path)
+    base = copy.deepcopy(generated.head)
+    generated.bundles[base["revision_id"]]["base_parent"].update(base)
+    tl.bundle["base_parent"].update(base)
+    tl.save(quiet=True)
+    from astrid.sdk.timeline_sheet import render_sheet
+    text = render_sheet(tl, cuts=["c1"])
     path = tmp_path / 'detached.sheet'
     edited = duration_edit(text, 2)
     path.write_text(edited)
@@ -149,7 +159,7 @@ def test_stale_export_refuses_without_recapturing(native_cli, tmp_path, capsys, 
         initial_bundle(), "parent/clip:a" if relevant else "parent/clip:b", 7)]).bundle
     generated.head = {"revision_id": "peer", "publication_id": "peer-pub"}
     reads = list(client.reads)
-    assert run("apply", "t", str(path), "--native", "--json") == 1
+    assert run("apply", "t", str(path), "--json") == 1
     output = json.loads(capsys.readouterr().out)
     assert "original project, timeline and basis" in output["error"]["message"]
     assert "edited sheet kept" in output["error"]["message"]
@@ -164,7 +174,7 @@ def test_lost_ack_immutable_retry_and_pending_export_refusal(native_cli, tmp_pat
     path = tmp_path / "edited.txt"
     edited = edit_cell(text, "parent/clip:a", "5")
     path.write_text(edited)
-    args = ("apply", "t", str(path), "--native", "--json")
+    args = ("apply", "t", str(path), "--json")
     generated.lose_ack = True
     assert run(*args, "--idempotency-key", "sheet-once") == 1
     capsys.readouterr()
@@ -201,7 +211,7 @@ def test_unsupported_edits_leave_text_and_outbox_intact(native_cli, tmp_path, ca
     path = tmp_path / "edited.txt"
     path.write_text(text)
     before = generated.path.read_bytes()
-    assert run("apply", "t", str(path), "--native", "--json") == 1
+    assert run("apply", "t", str(path), "--json") == 1
     assert "edited sheet kept" in capsys.readouterr().out
     assert generated.path.read_bytes() == before and generated.calls == []
     assert path.read_text() == text
@@ -215,7 +225,7 @@ def test_export_artifact_is_scoped_to_connection(native_cli, tmp_path, capsys, i
     path.write_text(edit_cell(text, "parent/clip:a", "5"))
     original = generated.path.read_bytes()
     client._remote._transport._last_handshake[identity] = "other"
-    assert run("apply", "t", str(path), "--native", "--json") == 1
+    assert run("apply", "t", str(path), "--json") == 1
     assert "no original native sheet export" in capsys.readouterr().out
     assert generated.path.read_bytes() == original and generated.calls == []
 
@@ -237,7 +247,7 @@ def test_unchanged_export_has_no_commit(native_cli, tmp_path, capsys):
     run, _, generated = native_cli
     path = tmp_path / "edited.txt"
     path.write_text(export(native_cli, capsys))
-    assert run("apply", "t", str(path), "--native", "--json") == 0
+    assert run("apply", "t", str(path), "--json") == 0
     output = json.loads(capsys.readouterr().out)
     assert output["data"] == {"status": "unchanged", "commands": []}
     assert output["receipt"] is None and generated.calls == []
@@ -250,12 +260,12 @@ def test_clip_row_omission_is_native_delete_and_keeps_other_rows(native_cli, tmp
     path.write_text("\n".join(line for line in text.splitlines()
                                if not line.endswith(' # ref "parent/clip:a"')) + "\n")
 
-    assert run("apply", "t", str(path), "--native", "--json") == 0
+    assert run("apply", "t", str(path), "--json") == 0
     output = json.loads(capsys.readouterr().out)
     assert [command["op"] for command in output["data"]["commands"]] == ["clip.delete"]
     assert [row["id"] for row in generated.bundles["r1"]["parent"]["clips"]] == ["b"]
     assert generated.bundles["r1"]["parent"]["config"]["tracks"] == generated.bundles["r0"]["parent"]["config"]["tracks"]
-    assert run("undo", "t", "--publication", output["receipt"]["receipt_id"], "--json") == 0
+    assert run("undo", "t", "--commit", output["receipt"]["receipt_id"], "--json") == 0
     capsys.readouterr()
     assert [row["id"] for row in generated.bundles["r2"]["parent"]["clips"]] == ["a", "b"]
 
@@ -276,7 +286,7 @@ def test_original_identity_never_coerces_boolean_to_number(native_cli, tmp_path,
         state["sheet"]["bundle"]["parent"]["clips"][0]["opaque"] = True
     generated.path.write_bytes(request_bytes(state))
     before = generated.path.read_bytes()
-    assert run("apply", "t", str(path), "--native", "--json") == 1
+    assert run("apply", "t", str(path), "--json") == 1
     assert "edited sheet kept" in capsys.readouterr().out
     assert generated.path.read_bytes() == before and generated.calls == []
 
@@ -293,7 +303,7 @@ def test_clip_fragment_is_pinned_and_only_selected_row_is_editable(native_cli, t
     assert json.loads(generated.path.read_bytes())['sheet']['selection'] == {'clip': 'a'}
     path = tmp_path / 'fragment.txt'
     path.write_text(edit_cell(text, 'parent/clip:a', '5'))
-    assert run('apply', 't', str(path), '--native', '--json') == 0
+    assert run('apply', 't', str(path), '--json') == 0
     output = json.loads(capsys.readouterr().out)
     assert len(output['data']['commands']) == 1
     assert State(generated.bundles['r1']).entity('parent/clip:b') == State(initial_bundle()).entity('parent/clip:b')
@@ -320,12 +330,14 @@ def test_cli_trim_clear_and_params_are_one_captured_batch(native_cli, tmp_path, 
     expected = sheet.preview(edited)
     path = tmp_path / 'ordinary.sheet'
     path.write_text(edited)
-    assert run('apply', 't', str(path), '--native', '--json') == 0
+    assert run('apply', 't', str(path), '--json') == 0
     output = json.loads(capsys.readouterr().out)
     assert output['data']['commands'] == expected.commands
     assert [c['op'] for c in expected.commands] == ['clip.trim', 'clip.set', 'clip.set-params']
-    assert len(generated.accepted) == 1 and generated.bundles['r1'] == expected.bundle
-    assert run('undo', 't', '--publication', output['receipt']['receipt_id'], '--json') == 0
+    expected_bundle = copy.deepcopy(expected.bundle)
+    expected_bundle['base_parent'].pop('publication_id', None)
+    assert len(generated.accepted) == 1 and generated.bundles['r1'] == expected_bundle
+    assert run('undo', 't', '--commit', output['receipt']['receipt_id'], '--json') == 0
     capsys.readouterr()
     assert generated.bundles['r2'] == original
     assert path.read_text() == edited
