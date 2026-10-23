@@ -943,10 +943,21 @@ class WorkspaceClient:
         if not isinstance(data, dict) or "receipt" not in value:
             raise ApiError(0, "invalid_response", "commit response requires data and receipt")
         if preview:
-            if data.get("status") != "preview" or receipt is not None:
-                raise ApiError(0, "invalid_response", "preview requires preview status and null receipt")
+            if data.get("status") != "preview" or data.get("would_status") not in ("accepted", "merged") or receipt is not None:
+                raise ApiError(0, "invalid_response", "preview requires preview status, accepted or merged would_status, and null receipt")
         elif data.get("status") not in ("accepted", "rebased", "merged") or not isinstance(receipt, dict):
             raise ApiError(0, "invalid_response", "acceptance requires accepted, rebased, or merged status and committed receipt")
+        else:
+            strings = ("receipt_id", "command_kind", "idempotency_key", "request_hash", "project_id", "created_at")
+            sequence, events = receipt.get("project_seq"), receipt.get("event_ids")
+            if (
+                any(not isinstance(receipt.get(key), str) for key in strings)
+                or "result" not in receipt
+                or not isinstance(sequence, list) or len(sequence) != 2
+                or any(isinstance(item, bool) or not isinstance(item, (int, float)) or item < 1 or item % 1 != 0 for item in sequence)
+                or not isinstance(events, list) or any(not isinstance(item, str) for item in events)
+            ):
+                raise ApiError(0, "invalid_response", "commit response requires a complete committed receipt")
         return value
 
     def commit_timeline(self, project_id: str, timeline_id: str, request: CommitRequest, *, idempotency_key: str) -> CommitAcceptedMutation | CommitPreviewResponse:

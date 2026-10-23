@@ -5,6 +5,87 @@ import { ApiError, CONTRACT_VERSION, WorkspaceClient } from "@astrid/runtime-cli
 
 const json = (value) => new TextEncoder().encode(JSON.stringify(value));
 
+test("public commit client preserves v2 requests, receipts, previews and historical rebased replies", async () => {
+  const digest = `sha256:${"a".repeat(64)}`;
+  const change = { op: "set", ref: "parent", path: ["config", "title"], before: { state: "absent" }, value: "Title" };
+  const request = {
+    api_version: 1, project_id: "p", timeline_id: "t", base_revision_id: "r", base_publication_id: "txn",
+    commands: [
+      { schema_version: 1, op: "doc.patch", version: "1", select: null, args: { changes: [change] } },
+      { schema_version: 1, op: "clip.move", version: "1", select: "parent/clip:c", args: { on: 2 } },
+    ],
+    label: "Mixed edit", merge: "fields", reads: [{ kind: "scope", ref: "timeline", path: [] }], dry_run: false,
+    steps: [
+      { id: "patch", label: "Title", intent: "title", tags: [], command_ordinals: [0], patch: [change], reads: [{ kind: "scope", ref: "timeline", path: [] }] },
+      { id: "semantic", label: "Move", intent: "move", tags: [], command_ordinals: [1], patch: [], reads: [{ kind: "scope", ref: "timeline", path: [] }] },
+    ],
+  };
+  const candidate = {
+    canonical_document: { schema_version: 1, project_id: "p", timeline_id: "t", parent_revision: { revision_id: "next-r", content_digest: digest, payload: { config: { clips: [], tracks: [] }, registry: {}, clips: [], occurrences: [] } }, shot_revisions: [], internal_timeline_revisions: [], dependency_manifest: { shots: [], internal_timelines: [], media: [], documents: [] } },
+    document_digest: digest, commands: request.commands, id_map: {}, provider_version: "provider-v2", compiler_version: "compiler-v2",
+    merge_mode: "fields", steps: request.steps,
+  };
+  const accepted = status => {
+    const data = { status, base_revision_id: "r", base_publication_id: "txn", previous_revision_id: "head-r", previous_publication_id: "head-txn", accepted_revision_id: "next-r", rebased_onto: status === "accepted" ? null : { revision_id: "head-r", publication_id: "head-txn" }, publisher: "actor", ...candidate };
+    return { data, receipt: { receipt_id: "receipt", command_kind: "timeline.commit", idempotency_key: "key", request_hash: digest, project_id: "p", project_seq: [1, 1], event_ids: [], result: data, created_at: "2026-10-23T00:00:00Z" } };
+  };
+  const preview = status => ({ data: { status: "preview", would_status: status, base_revision_id: "r", base_publication_id: "txn", evaluated_head: { revision_id: "head-r", publication_id: "head-txn" }, ...candidate }, receipt: null });
+  let response, sent, httpStatus = 200;
+  const client = new WorkspaceClient("http://runtime", "token", async (method, path, headers, body) => {
+    assert.equal(method, "POST");
+    assert.equal(path, "/v1/projects/p/timelines/t/commit");
+    assert.equal(headers["Idempotency-Key"], "key");
+    sent = JSON.parse(new TextDecoder().decode(body));
+    return { status: httpStatus, headers: {}, body: json(response) };
+  });
+  for (const merge of ["fields", "atomic"]) {
+    for (const status of ["accepted", "merged", "rebased"]) {
+      response = accepted(status);
+      assert.deepEqual(await client.commitTimeline("p", "t", { ...request, merge }, "key"), response);
+      assert.deepEqual(sent, { ...request, merge });
+    }
+    for (const status of ["accepted", "merged"]) {
+      response = preview(status);
+      const body = { ...request, merge, dry_run: true };
+      assert.deepEqual(await client.commitTimeline("p", "t", body, "key"), response);
+      assert.deepEqual(sent, body);
+    }
+  }
+  for (const field of Object.keys(accepted("merged").receipt)) {
+    response = accepted("merged");
+    delete response.receipt[field];
+    await assert.rejects(client.commitTimeline("p", "t", request, "key"), /invalid commit receipt/);
+  }
+  for (const [field, value] of [
+    ["receipt_id", null], ["command_kind", 1], ["idempotency_key", []], ["request_hash", {}], ["project_id", false], ["created_at", 1],
+    ["project_seq", null], ["project_seq", [1]], ["project_seq", [1, 2, 3]], ["project_seq", [true, 1]], ["project_seq", [0, 1]], ["project_seq", [1, 1.5]], ["project_seq", ["1", 1]], ["event_ids", null], ["event_ids", [1]],
+  ]) {
+    response = accepted("merged");
+    response.receipt[field] = value;
+    await assert.rejects(client.commitTimeline("p", "t", request, "key"), /invalid commit receipt/);
+  }
+  response = accepted("merged");
+  response.receipt = { receipt_id: "partial" };
+  await assert.rejects(client.commitTimeline("p", "t", request, "key"), /invalid commit receipt/);
+  for (const status of [undefined, null, "conflict", "invalid", "preview", [], {}]) {
+    response = accepted("merged");
+    response.data.status = status;
+    await assert.rejects(client.commitTimeline("p", "t", request, "key"), /invalid commit status/);
+  }
+  for (const wouldStatus of [undefined, null, "rebased", "invalid", "preview", 1, [], {}]) {
+    response = preview(wouldStatus);
+    await assert.rejects(client.commitTimeline("p", "t", { ...request, dry_run: true }, "key"), /invalid commit preview/);
+  }
+  for (const [status, code, details] of [
+    [409, "conflict", { status: "conflict", reason: "dependency_changed", current: { revision_id: "head-r", publication_id: "head-txn" } }],
+    [422, "invalid", { status: "invalid", code: "previous_value_mismatch", path: ["commands", "0"], hint: "Read the current head", suggested_command: "timeline show" }],
+  ]) {
+    httpStatus = status;
+    response = { code, message: code, details };
+    await assert.rejects(client.commitTimeline("p", "t", request, "key"), error => error instanceof ApiError && error.status === status && error.code === code && assert.deepEqual(error.details, details) === undefined);
+  }
+});
+
 test("verified media read preserves the complete pin and encoded alias without mutation authority", async () => {
   const selection = { asset: "alias/ &", generation_id: "g", variant_id: "v", object_id: `sha256:${"a".repeat(64)}`, catalog_digest: `sha256:${"b".repeat(64)}` };
   const verified = { selection, media_type: "video/mp4", size: 42, duration_seconds: 2 };

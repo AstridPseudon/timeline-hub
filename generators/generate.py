@@ -146,8 +146,27 @@ def render_python_client(manifest_path: Path = MANIFEST) -> str:
 
 
 def render_typescript_client() -> str:
-    """Render the source-frame thumbnail operations into the typed TS client."""
+    """Render contract response guards and resource operations into the TS client."""
     source = _regular(TYPESCRIPT_CLIENT_OUTPUT, "TypeScript client").decode("utf-8")
+    commit_response = '''  private commitResponse(body: Uint8Array, preview: boolean): CommitAcceptedMutation | CommitPreviewResponse {
+    const value = this.json<Record<string, unknown>>(body);
+    if (!value || typeof value !== "object" || Array.isArray(value) || !value.data || typeof value.data !== "object" || Array.isArray(value.data) || !("receipt" in value)) throw new Error("invalid commit response");
+    const data = value.data as Record<string, unknown>;
+    const receipt = value.receipt;
+    if (preview) {
+      if (data.status !== "preview" || !["accepted", "merged"].includes(data.would_status as string) || receipt !== null) throw new Error("invalid commit preview status, would_status or receipt");
+    } else {
+      if (!["accepted", "rebased", "merged"].includes(data.status as string) || !receipt || typeof receipt !== "object" || Array.isArray(receipt)) throw new Error("invalid commit status or receipt");
+      const committed = receipt as Record<string, unknown>;
+      const sequence = committed.project_seq;
+      if (["receipt_id", "command_kind", "idempotency_key", "request_hash", "project_id", "created_at"].some(key => typeof committed[key] !== "string") || !("result" in committed) || !Array.isArray(sequence) || sequence.length !== 2 || sequence.some(item => !Number.isInteger(item) || item < 1) || !Array.isArray(committed.event_ids) || committed.event_ids.some(item => typeof item !== "string")) throw new Error("invalid commit receipt fields");
+    }
+    return value as unknown as CommitAcceptedMutation | CommitPreviewResponse;
+  }
+'''
+    source, count = re.subn(r"^  private commitResponse\([^\n]*\n.*?^  }\n", lambda _: commit_response, source, flags=re.MULTILINE | re.DOTALL)
+    if count != 1:
+        raise SystemExit("TypeScript client must contain exactly one commit response guard")
     agent = json.loads(_regular(ROOT / "contract/schemas/edit-command.json", "command schema"))["$defs"]
     native_types = [name for name in agent if name.endswith("Args") or name.startswith("Producer")]
     native_types += ["ElementRef", "SettledProducerProposal", "DocumentPin", "VerifiedDocument", "VerifiedDocumentObject"]
