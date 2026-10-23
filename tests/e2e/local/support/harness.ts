@@ -723,9 +723,10 @@ if case['fixture'] == 'three-products':
         row['asset'] = pins[key]['asset']
         add(capture_occurrence_add_media(bundle, 'occurrence:f2-occurrence', row, pins[key], verified_media=verified))
 
-    def asset(source):
+    def asset(source, pin):
         row = {'file': source['file'], 'type': source['type'], 'media_id': source['object_id'],
-               'content_sha256': source['digest']}
+               'content_sha256': source['digest'],
+               'generationId': pin['generation_id'], 'variantId': pin['variant_id']}
         return row
 
     image = case['image']
@@ -739,43 +740,48 @@ if case['fixture'] == 'three-products':
     elif case['transitions'] == 'parent-delete':
         parent_clips[1].pop('transition', None)
     parent_registry = {
-        'f2-app': asset({'file': 'f2-app.png', 'type': 'image/png', 'object_id': image['object_id'], 'digest': image['digest']}),
-        'f2-video': asset({'file': video['file'], 'type': video['media_type'], 'object_id': video['object_id'], 'digest': video['digest']}),
+        'f2-app': asset({'file': 'f2-app.png', 'type': 'image/png', 'object_id': image['object_id'], 'digest': image['digest']}, pins['f2-app']),
+        'f2-video': asset({'file': video['file'], 'type': video['media_type'], 'object_id': video['object_id'], 'digest': video['digest']}, pins['f2-video']),
     }
     parent_registry['f2-video']['duration'] = 12
-    before = copy.deepcopy(bundle)
-    bundle_parent = bundle['parent']
-    bundle_parent['config'] = {**bundle_parent['config'], 'clips': copy.deepcopy(parent_clips),
+    # Retain the original authored fixture independently of the native candidate.
+    expected_parent = {'slug': 'main', 'name': 'Main', 'config': {'clips': copy.deepcopy(parent_clips),
         'tracks': [{'id': 'V1', 'kind': 'visual', 'label': 'V1'}, {'id': 'S1', 'kind': 'visual', 'label': 'S1'}],
         'output': {'resolution': '1280x720', 'fps': 30, 'file': 'out.mp4'},
         'x_f2_opaque': case['opaque']['config'],
         'app': {'haus.astrid.scene-phase-markers': {'sceneMarkers': [{'id': 'ordinary-marker-a', 'time': 1}, {'id': 'ordinary-marker-b', 'time': 6}]}},
-    }
-    bundle_parent['clips'] = copy.deepcopy(parent_clips)
-    bundle_parent['registry'] = {'assets': parent_registry}
-    shot = bundle['shots']['f2-shot']
-    shot['payload'] = {'metadata': {'title': 'F2 agent shot'}, 'items': [], 'pools': [], 'selected_variants': {},
+    },
+        'clips': copy.deepcopy(parent_clips), 'registry': {'assets': parent_registry}}
+    expected_shot = {'metadata': {'title': 'F2 agent shot'}, 'items': [], 'pools': [], 'selected_variants': {},
         'provenance': {}, 'generation_inputs': {}, 'audio_bindings': [], 'text_bindings': [],
         'x_f2_opaque': case['opaque']['shot']}
-    shot['internal_timeline']['clips'] = [
+    expected_internal = {
+        'tracks': [{'id': 'plate', 'kind': 'visual', 'label': 'plate'}, {'id': 'V2', 'kind': 'visual', 'label': 'V2'}],
+        'clips': [
         {'id': 'f2-plate', 'at': 0, 'track': 'plate', 'clipType': 'media', 'asset': 'f2-plate', 'hold': 12},
         {'id': 'f2-agent-clip', 'at': 3, 'track': 'V2', 'clipType': 'media', 'asset': 'f2-placeholder', 'hold': 3, 'app': {'f2Opaque': case['opaque']['clip']}},
         {'id': 'f2-agent-clear-clip', 'at': 6, 'track': 'V2', 'clipType': 'media', 'asset': 'f2-clear', 'hold': 3},
-    ]
-    shot['internal_timeline']['registry'] = {'assets': {
-        key: asset({'file': key + '.png', 'type': 'image/png', 'object_id': image['object_id'], 'digest': image['digest']})
+        ],
+        'registry': {'assets': {
+        key: asset({'file': key + '.png', 'type': 'image/png', 'object_id': image['object_id'], 'digest': image['digest']}, pins[key])
         for key in ('f2-plate', 'f2-placeholder', 'f2-clear')
-    }}
-    shot['internal_timeline'].pop('output', None)
-    shot['internal_timeline'].update(effects=[], audio=[], layout={}, assets=[])
+        }},
+        'effects': [], 'audio': [], 'layout': {}, 'assets': [],
+    }
+    expected_occurrence = {'occurrence_id': 'f2-occurrence', 'shot_id': 'f2-shot',
+        'placement': {'start_ms': 0}, 'source_offset': 0, 'duration_ms': 12000, 'speed': 1,
+        'track': 'S1', 'transform': {}, 'gain': 1, 'mute': False, 'provenance': {}}
+    before = copy.deepcopy(bundle)
     after = copy.deepcopy(bundle)
+    after['parent'] = copy.deepcopy(expected_parent)
+    after['shots']['f2-shot']['payload'] = copy.deepcopy(expected_shot)
+    after['shots']['f2-shot']['internal_timeline'] = copy.deepcopy(expected_internal)
     # Project the provider's occurrence edges for payload-only emission.
     occurrences = document_from_bundle(before)['parent_revision']['payload']['occurrences']
     before['parent']['occurrences'] = copy.deepcopy(occurrences)
     after['parent']['occurrences'] = copy.deepcopy(occurrences)
     occurrence = after['parent']['occurrences'][0]
-    occurrence.update(placement={'start_ms': 0}, source_offset=0, duration_ms=12000, speed=1,
-                      track='S1', transform={}, gain=1, mute=False, provenance={})
+    occurrence.update(copy.deepcopy(expected_occurrence))
     patches = emit_document_commands(before, after)
     if patches:
         bundle = execute(before, patches, verified_media=verified).bundle
@@ -783,13 +789,12 @@ if case['fixture'] == 'three-products':
 else:
     before = copy.deepcopy(bundle)
     after = copy.deepcopy(bundle)
-    after['parent']['config'] = {'output': {'resolution': '1280x720', 'fps': 30, 'file': 'out.mp4'},
-                                 'clips': [], 'tracks': [{'id': 'V1', 'kind': 'visual', 'label': 'V1'}]}
+    expected_parent = {'slug': 'main', 'name': 'Main', 'registry': {'assets': {}}, 'clips': [],
+                       'config': {'output': {'resolution': '1280x720', 'fps': 30, 'file': 'out.mp4'},
+                                 'clips': [], 'tracks': [{'id': 'V1', 'kind': 'visual', 'label': 'V1'}]}}
+    after['parent'] = copy.deepcopy(expected_parent)
     for command in emit_document_commands(before, after):
         add(command)
-
-expected_parent = copy.deepcopy(after['parent'])
-expected_parent.pop('occurrences', None)
 
 label = 'Seed three products' if case['fixture'] == 'three-products' else 'Initialize journey timeline'
 scope_reads = [{'kind': 'scope', 'ref': 'timeline', 'path': []}]
@@ -834,14 +839,11 @@ if case['fixture'] == 'three-products':
     raw_occurrence = copy.deepcopy(raw_occurrences[0])
     raw_shot, raw_internal = document['shot_revisions'][0], document['internal_timeline_revisions'][0]
     assert raw_occurrence.pop('shot_revision_id') == raw_shot['revision_id']
-    expected_occurrence = {'occurrence_id': 'f2-occurrence', 'shot_id': 'f2-shot',
-        'placement': {'start_ms': 0}, 'source_offset': 0, 'duration_ms': 12000, 'speed': 1,
-        'track': 'S1', 'transform': {}, 'gain': 1, 'mute': False, 'provenance': {}}
     assert canonical_json(raw_occurrence) == canonical_json(expected_occurrence), 'seed changed authored occurrence'
-    expected_shot = {**shot['payload'], 'internal_timeline_revision_id': raw_internal['revision_id']}
+    expected_shot_payload = {**expected_shot, 'internal_timeline_revision_id': raw_internal['revision_id']}
     assert raw_shot['shot_id'] == 'f2-shot' and raw_internal['timeline_id'] == case['timeline_id']
-    assert canonical_json(raw_shot['payload']) == canonical_json(expected_shot), 'seed changed authored shot payload'
-    assert canonical_json(raw_internal['payload']) == canonical_json(shot['internal_timeline']), 'seed changed authored internal payload'
+    assert canonical_json(raw_shot['payload']) == canonical_json(expected_shot_payload), 'seed changed authored shot payload'
+    assert canonical_json(raw_internal['payload']) == canonical_json(expected_internal), 'seed changed authored internal payload'
 else:
     assert raw_occurrences == document['shot_revisions'] == document['internal_timeline_revisions'] == []
 print(json.dumps({'revisionId': data['accepted_revision_id'], 'publicationId': receipt['receipt_id']}))
