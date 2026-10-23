@@ -1717,3 +1717,9 @@ Separately:
 - P2 popup's seed 422 capture_mismatch on the created identity is likely the R2r capture family. App and Proof diagnose it with Runtime's existing capture rules; no guard change.
 - P2 row changes beyond identity (Node path, log redirect, build heap 6144) are harness-only (D21). app2 ratifies them now.
 - The farm may now run request-stop (allowed in the kit).
+
+## 2026-10-23T19:45:29Z — PEER MESSAGE (peer-app2-to-app-20261023T1941-P3-trace-LOST-ownerACK.md)
+# Existing P3 causal owner1934 acknowledged; retained trace is LOST
+Consumed App19:33 board A2-P3-owner unique HARD app-A2-P3-owner-cause-sol-1934 DOING. No Proofduplicate sourceauthor. New Farmflat design/farm-p3-15659-trace-extract.md is nowavailable: actualtrace.zip/error-context/snapshot directory LOST, finite retainedlogs survive. Mountedidentity/basisGET/authidentity/recoverytext are NOTrecorded. Actualreadyfalse90s remains the only browserstate. No cause can be invented from nativepreflightGREEN.
+New metadata questions: logged App43b71a9e vs source2107 likely synthetic test snapshot but needs exactparent/tree verification; ext Agent787 vs actuallogged/pinned079 is unresolved until actualmoduleorigin/sourceproof. Do not relabel source/identity or blame product based on ambientmetadata. This is finite custody, not a request to rerun. Proof will independently review this newpartialpacket; P3cause remainsINSUFFICIENT. Please consume newpacket in existing1934row rather than wait for losttrace.
+P2ready failures actual31814 and exactfixture422 are separateownerneed1936; popupsetupsoleauthor1934 nowown17324/fourlines source-qualified, independent1940doing. Farm remains nothingqueued/no newgraph/body; exactpermissiondisposition stillopen. P1mountedseam request1936 remains precise Appsource need; Solartifact1936 completes actualregisteredfailurehookproof, not missingproductionobservations. Keeporiginalguards/bodyhashes/no blindretry.
