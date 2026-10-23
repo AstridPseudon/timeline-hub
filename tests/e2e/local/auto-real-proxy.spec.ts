@@ -35,7 +35,7 @@ const test = appTest.extend<{ workspace: Workspace }>({
 
 type Workspace = { harness: DirectHarness; seed: ThreeProductsSeed; vite: ViteWorkspace };
 type ViteWorkspace = { origin: string; restart(): Promise<void>; stop(): Promise<void> };
-type Wire = { method: string; body: string; key: string; receipt?: Record<string, unknown> | null };
+type Wire = { method: string; body: string; key: string; receipt?: Record<string, unknown> | null; receiptBody?: string };
 type JsonRecord = Record<string, any>;
 type PlacementSnapshot = { parent: JsonRecord; shot: JsonRecord; inner: JsonRecord };
 
@@ -114,6 +114,15 @@ function assertFullV2Reply(wire: Wire, projectId: string, timelineId: string): J
   expect(data.canonical_document).toMatchObject({ schema_version: 1, project_id: projectId, timeline_id: timelineId,
     parent_revision: expect.any(Object), shot_revisions: expect.any(Array), internal_timeline_revisions: expect.any(Array),
     dependency_manifest: expect.any(Object) });
+  expect(data.accepted_revision_id).toBe(data.canonical_document.parent_revision.revision_id);
+  expect(wire.receiptBody).toEqual(expect.any(String));
+  expect(JSON.parse(wire.receiptBody!)).toEqual(envelope);
+  // Preserve Runtime's number spelling (1.0 vs 1) from the raw reply and use its official digest.
+  const documentDigest = execFileSync(ASTRID_PYTHON, ['-c',
+    'import json, sys; sys.path.insert(0, sys.argv[1]); from runtime_protocol.timeline_commit_validation import digest; print(digest(json.load(sys.stdin)["data"]["canonical_document"]))',
+    RUNTIME_CHECKOUT], { input: wire.receiptBody, encoding: 'utf8',
+    env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' }, timeout: 30_000 }).trim();
+  expect(data.document_digest).toBe(documentDigest);
   assertReplyLanding(data);
   expect(receipt).toMatchObject({ receipt_id: expect.any(String), command_kind: 'timeline.commit',
     project_id: projectId, idempotency_key: wire.key });
@@ -216,12 +225,14 @@ function replyPlacementSnapshot(data: JsonRecord, seed: ThreeProductsSeed): Plac
 function assertPlacementCanonicalDelta(before: PlacementSnapshot, after: PlacementSnapshot, seed: ThreeProductsSeed, clipId: string, objectId: string, media: JsonRecord): void {
   const beforeOccurrence = (before.parent.occurrences as JsonRecord[]).find((item) => item.occurrence_id === seed.occurrenceId)!;
   const afterOccurrence = (after.parent.occurrences as JsonRecord[]).find((item) => item.occurrence_id === seed.occurrenceId)!;
+  expect(Object.keys(after.parent).sort()).toEqual(Object.keys(before.parent).sort());
   for (const [key, value] of Object.entries(before.parent)) {
     if (key !== 'occurrences') expect(after.parent[key]).toEqual(value);
   }
   expect(after.parent.occurrences).toEqual((before.parent.occurrences as JsonRecord[]).map((item) => item.occurrence_id === seed.occurrenceId
     ? { ...item, shot_revision_id: afterOccurrence.shot_revision_id } : item));
   expect(after.shot).toEqual(before.shot);
+  expect(Object.keys(after.inner).sort()).toEqual(Object.keys(before.inner).sort());
   for (const [key, value] of Object.entries(before.inner)) {
     if (key !== 'clips' && key !== 'registry') expect(after.inner[key]).toEqual(value);
   }
@@ -702,7 +713,8 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   let lost: Wire | undefined;
   await page.route(COMMIT_PATH, async (route) => {
     const response = await route.fetch();
-    lost = { method: route.request().method(), body: route.request().postData() ?? '', key: route.request().headers()['idempotency-key'] ?? '', receipt: await response.json() };
+    const receiptBody = await response.text();
+    lost = { method: route.request().method(), body: route.request().postData() ?? '', key: route.request().headers()['idempotency-key'] ?? '', receipt: JSON.parse(receiptBody), receiptBody };
     await route.abort('connectionreset');
   });
   await clickRecovery(page, retained!.ownerId);
@@ -731,7 +743,7 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   await page.route(COMMIT_PATH, async (route) => {
     const response = await route.fetch();
     const body = await response.body();
-    retry = { method: route.request().method(), body: route.request().postData() ?? '', key: route.request().headers()['idempotency-key'] ?? '', receipt: JSON.parse(body.toString()) };
+    retry = { method: route.request().method(), body: route.request().postData() ?? '', key: route.request().headers()['idempotency-key'] ?? '', receipt: JSON.parse(body.toString()), receiptBody: body.toString() };
     await route.fulfill({ status: response.status(), headers: response.headers(), body });
   });
   await clickRecovery(page, recovered.ownerId);
@@ -772,7 +784,8 @@ test('real operation proxy automatic image placement survives reconnect, lost AC
   const undoBody = JSON.parse((await undoRequest).postData() ?? '{}') as { base_revision_id?: string; base_publication_id?: string; commands?: Array<{ op?: string }> };
   expect(undoBody).toMatchObject({ base_revision_id: expect.any(String), base_publication_id: expect.any(String), commands: [{ op: 'timeline.inverse' }] });
   const undoResponseValue = await undoResponse;
-  const undoWire: Wire = { method: undoResponseValue.request().method(), body: undoResponseValue.request().postData() ?? '', key: undoResponseValue.request().headers()['idempotency-key'] ?? '', receipt: await undoResponseValue.json() };
+  const undoReceiptBody = await undoResponseValue.text();
+  const undoWire: Wire = { method: undoResponseValue.request().method(), body: undoResponseValue.request().postData() ?? '', key: undoResponseValue.request().headers()['idempotency-key'] ?? '', receipt: JSON.parse(undoReceiptBody), receiptBody: undoReceiptBody };
   const undoRequestV2 = assertFullV2Request(undoWire, harness.seed.projectId, seed.timelineId);
   const undoData = assertFullV2Reply(undoWire, harness.seed.projectId, seed.timelineId);
   expect(undoRequestV2.commands[0]).toMatchObject({ op: 'timeline.inverse' });
