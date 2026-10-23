@@ -1871,6 +1871,35 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "doc.patch"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "properties": {
+              "select": {
+                "type": "null"
+              },
+              "version": {
+                "const": "1"
+              },
+              "args": {
+                "$ref": "#/$defs/DocPatchArgs"
+              },
+              "intent": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
         }
       ]
     },
@@ -2668,6 +2697,342 @@
           "required": [
             "clear"
           ]
+        }
+      ]
+    },
+    "DocPatchChange": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "ref": {
+              "type": "string",
+              "pattern": "^(parent|(?:shot|shot-revision|internal|internal-revision):.+)$"
+            },
+            "path": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "before": {
+              "$ref": "#/$defs/AgentState"
+            },
+            "op": {
+              "const": "set"
+            },
+            "value": {
+              "$ref": "#/$defs/JSON"
+            }
+          },
+          "required": [
+            "ref",
+            "path",
+            "before",
+            "op",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ref": {
+              "type": "string",
+              "pattern": "^(parent|(?:shot|shot-revision|internal|internal-revision):.+)$"
+            },
+            "path": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "before": {
+              "$ref": "#/$defs/AgentState"
+            },
+            "op": {
+              "const": "remove"
+            }
+          },
+          "required": [
+            "ref",
+            "path",
+            "before",
+            "op"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ref": {
+              "type": "string",
+              "pattern": "^(parent|(?:shot|shot-revision|internal|internal-revision):.+)$"
+            },
+            "path": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "before": {
+              "$ref": "#/$defs/AgentState"
+            },
+            "op": {
+              "const": "list.insert"
+            },
+            "value": {
+              "$ref": "#/$defs/JSON"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "order_before": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "after_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "ref",
+            "path",
+            "before",
+            "op",
+            "value",
+            "id",
+            "order_before",
+            "after_id"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ref": {
+              "type": "string",
+              "pattern": "^(parent|(?:shot|shot-revision|internal|internal-revision):.+)$"
+            },
+            "path": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "before": {
+              "$ref": "#/$defs/AgentState"
+            },
+            "op": {
+              "const": "list.remove"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "order_before": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "ref",
+            "path",
+            "before",
+            "op",
+            "id",
+            "order_before"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ref": {
+              "type": "string",
+              "pattern": "^(parent|(?:shot|shot-revision|internal|internal-revision):.+)$"
+            },
+            "path": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "before": {
+              "$ref": "#/$defs/AgentState"
+            },
+            "op": {
+              "const": "list.move"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "order_before": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "after_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "ref",
+            "path",
+            "before",
+            "op",
+            "id",
+            "order_before",
+            "after_id"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "DocPatchArgs": {
+      "type": "object",
+      "properties": {
+        "changes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/DocPatchChange"
+          }
+        }
+      },
+      "required": [
+        "changes"
+      ],
+      "additionalProperties": false
+    },
+    "CommitRead": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "ref": {
+              "type": "string",
+              "pattern": "^(timeline|parent|(?:shot|shot-revision|internal|internal-revision):.+)$"
+            },
+            "path": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "kind": {
+              "const": "field"
+            },
+            "state": {
+              "$ref": "#/$defs/AgentState"
+            }
+          },
+          "required": [
+            "ref",
+            "path",
+            "kind",
+            "state"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ref": {
+              "type": "string",
+              "pattern": "^(timeline|parent|(?:shot|shot-revision|internal|internal-revision):.+)$"
+            },
+            "path": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "kind": {
+              "const": "collection"
+            },
+            "members": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "uniqueItems": true
+            },
+            "order": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                }
+              ]
+            }
+          },
+          "required": [
+            "ref",
+            "path",
+            "kind",
+            "members",
+            "order"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "ref": {
+              "type": "string",
+              "pattern": "^(timeline|parent|(?:shot|shot-revision|internal|internal-revision):.+)$"
+            },
+            "path": {
+              "const": []
+            },
+            "kind": {
+              "const": "scope"
+            }
+          },
+          "required": [
+            "ref",
+            "path",
+            "kind"
+          ],
+          "additionalProperties": false
         }
       ]
     }
