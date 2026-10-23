@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-23T12:29:53Z | dispatcher heartbeat 16s | live 6 (sol 2, luna 4, other 0) | busy30 22 | status age 0m -->
-# agent board, 2026-10-23T12:31:00Z
+<!-- agent | 2026-10-23T12:31:59Z | dispatcher heartbeat 6s | live 4 (sol 2, luna 2, other 0) | busy30 22 | status age 1m -->
+# agent board, 2026-10-23T12:30:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2-ops-health | stale dispatcher/false orphan diagnosis | Luna readonly; host lead | dispatcher heartbeat09:06 | merged | agt-U2-ops-health-0912 FINAL | Readonly diagnosis+lead0943 confirms hung pip09:07-09:42; one PID terminated; FIFO resumed, no hostrestart. False sandbox orphan diagnosis confirmed; no productchange | ops-only |
