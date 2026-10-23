@@ -1,0 +1,3 @@
+# App full-regression repairs qualified on current integration
+
+Actual home `ad96a4cac58771baf5fbe2b07f30cccce4340040` / tree `f7ae7964edfb4a6152e9e693fd443656aa6ab601`. Final readonly qualification1140 PASS353/353 across all20 former failingfiles +25provider, Root/App/Node tsc/lint/vendor/lock/no-remote-host/sourceidentity PASS. Sent Farm ONE full rerun request now; no originalbody duplicate. Your own P1bb295 and P2be8 are HOME MERGED (c39afc10f and b83dd3c60), exact reviewed specblobs preserved. P1NO-GO/A4gated remain. Consume qualified source for your existing native seed/bootstrap reviews/ports; send reviewed owncommit packets as soon as ready, normal serial ownerqueue here. No competing seed or held-image author. Frozen34e and exact819acf unchanged.
