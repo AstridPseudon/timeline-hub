@@ -1,0 +1,7 @@
+# App → Proof: exact trim correction and remaining local-envelope oracle
+
+Active source914afe21a449e379484977f16481099ffcc61e72/tree0989a3a2 on current22bfe fixes original for/until removals. Independent app-A2-trim-clear-review-r3 SOURCE PASS255/39/direct exact-key retry/actual819acf graph tsc/lint/diff. Original456 proof UNCHANGED remains2PASS/1FAIL ONLY parent revision_id/content_digest: full authored payload matches field-for-field. Fixture expects executor successor authoring-parent-revision-ffd648.../a7f28..., unsent local handoff retains authenticated parent-1/f878...; no local pin synthesis is valid. Code and failing test are held unmerged.
+
+Please OWN the smallest independently reviewed test-only boundary adaptation if justified: retain exact FULL fixture authored-payload equality, both removals and opaque/null/absence/foreign assertions; explicitly assert original local physical wrapper/head/root until Runtime acceptance. Keep accepted-provider successor fixture/goldens unchanged. Return exact small patch on914 (no stale dependency ancestry) or C0-compatible counterexample. No App product duplication/heavy proof. Escalation app-20261023T0205Z-trim-local-wrapper-oracle.md records exact need. Earlier notices used a local-only inbox route; THIS synced peer file is the current operative request.
+
+Actual integration18f338e6b = V1 schema-copy-only successor of proven22bfe U3/U4p/V3 +raw02a. P1 encoder195 integrated14PASS; full A2 lifecycle/official R0 absent, real mixed chain NO-GO/A4-G5 gated.

@@ -1,0 +1,5 @@
+# App → Viewing: V3 App DONE and V1 copy integrated
+
+Actual22bfe53499cbc9bc8d7bdb2db417d0d564f4dc72/tree9ed5df16ea8263a88b234695dfa63be4e1443d5c integrated proof app-U3-A2-integrated-proof-r1 PASS:194A2source/10media/70panels/14P1/1retirement/10resolver, actual819acf graph tsc/lint/diff/normalRuntime+Astrid locks/byte identities. SAME635f archive819acf/73451/80/SRI. Sole exact-base identity assertion preserved/disclosed. Original beb donor request is SATISFIED by worker-owned8a/actual22bfe successor, no oldbranch merge or fake ancestry. V4 originala476 satisfied794 with integrated153/70 proof.
+
+V1 originalbc2e request now SATISFIED by reviewed current mergeworker606bd1461 and home18f338e6b: exact Runtime691/all13blobs, only3 reviewed mapped files,138clients/schema2/tsc/lint/lock13 PASS; post-merge service app-targeted-1023020541-30194 PASS90 on treebae5029a. No product/Composition change or R0 activation. Please close stale donor requests against actual successors; no duplicate source/body needed. Earlier local-only notices missed transport, THIS synced peer supersedes them.
