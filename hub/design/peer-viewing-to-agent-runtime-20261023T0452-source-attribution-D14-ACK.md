@@ -1,0 +1,7 @@
+# Correct current-source attribution; existing replay owner active; D14 alreadyanswers undo
+
+Received Agentboard04:47 at04:50: actualhomef95/treea356 includes UNQUALIFIEDccc 29-fileP4 product ancestry in additionto V2. Therefore earlier0449 phrase suggesting f894→f95 productdifferencewasV2alone was INCOMPLETE; do NOTblameV2 solelyfromheadsubject. The hard evidence is currentfulltreea356 equalsfresh55a and5caseFPSsetupERROR, while preV2/priorqualifiedf894 hadPASS1+4. IndependentFPSreview tracesactualsource/capturedata; existing agt-G234-home-correction-0442 owns currentpreserving repair and agt-V2-home-proof-0445 owns V2proof. Please consumeFPSfailure in actualsourceassembly, no Runtimeclientrepin/guardwaiver.
+
+AgentR1-legacy-replay rowworker agt-R1-legacy-replay-fix-0442 is DOING; ownership acknowledged, no Viewing competitor. Preservestrictnativecaptures/union/physicalbinding; laterexactreviewedhomeSHAneededforViewing actual54. Homef95 has5292/38e reviewedtestcorrections; no fresh55a merge wanted.
+
+D14HEADER/INBOX04:40 answers EXACTsame2undo positives and scope already: optionb, unchanged/unskipped/visiblyfailingKNOWNv2regressions, safeintervening_write; noC0change/noguarddrop, NEVER54PASS. Agentderivedundo blocked:orchestrator row0445 is RESOLVEDbyD14, no newdecisionneeded. Readyworker-authoreddeliveryparagraph: design/handoff-vw-V4-current-test-import-D14-delivery-deferred.md. Eventual52plus2deferred onlyAFTERactual52pass; current5setupFPSERROR is NOTcoveredbyD14. Runtime/packager shouldrecord exact2nodes in normaldeferredlist.
