@@ -292,7 +292,7 @@ test("app-state client reads absent state, writes with a null receipt and reject
     calls.push({ method, path, headers, body: body ? JSON.parse(new TextDecoder().decode(body)) : undefined });
     if (path.endsWith("/other-key")) return { status: 200, headers: {}, body: json(resource) };
     if (method === "GET") return { status: 200, headers: {}, body: json({ ...resource, content: null, version: 0, created_at: null, updated_at: null }) };
-    return { status: 200, headers: {}, body: json(resource) };
+    return { status: 200, headers: {}, body: json({ data: resource, receipt: null }) };
   };
   const client = new WorkspaceClient("http://runtime", "writer", transport);
   const empty = await client.getUserAppState("editor-tour");
