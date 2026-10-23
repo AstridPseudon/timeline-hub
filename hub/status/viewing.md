@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-23T05:44:31Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 0m -->
-# viewing board, 2026-10-23T05:43:49Z
+<!-- viewing | 2026-10-23T05:45:41Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 1m -->
+# viewing board, 2026-10-23T05:44:41Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | canonical schema inventory | Luna high | H0 | merged | vw-V1-schema-inventory-fix; review2 | Independent PASS four copies, SHA/cmp/generators/manifest; inventory only | 6c4d9342189b69d488b41f609b64aa2918eda955 |
@@ -18,7 +18,7 @@
 | V4-replay | native landing metadata | Agent owner Luna + review | current port after audit | review | agt-R1-legacy-replay-review-0453 | Independent PASS2+28+127/ratchets/normalcopies; actual retained-source node blockedFPS. No actual rebase-body PASS yet | c79398561 |
 | V4-FPS | D12 legacy FPS parity | Agent Sol; Luna review | D12 unchanged legacy | review | agt-V2-FPS-D12-review-0524 | Independent e50 PASS79+242/2149/scopedtype; author177+242/1914. Exact normalizers retained; standalone anchor setupFAIL; currentadoption pending | e50beb306 |
 | V4-anchor-legacy | D12 unchanged missing anchor | Agent Sol; Luna review | FPS e50 | review | agt-V2-anchor-D12-review-0533 | Independent PASS188/scoped and normal2149/1914; original neighbor stops at known old9cf omitted-created auth boundary. ad4 source no fixture/guard change | ad4e459a3 |
-| V4-branch-five | reviewed dependency setup/status | Luna high | reviewedad4 + exact5292 tests | doing | vw-V4-branch-five-0542 | FIRST branch5:2PASS1FAIL2ERROR49deselected/5.67s exit1. EXACT2 reviewed5292 blobs; occurrencebounds2setupERROR, legacyword1FAIL. Await terminal report/review, no merge/DONE | basead4e459a3 |
+| V4-branch-five | reviewed dependency setup/status | Luna high | independent causal review | review | vw-V4-branch-five-0542; vw-V4-ad4-five-review-0545 | FIRST branch5:2PASS1FAIL2ERROR49deselected/5.67s exit1. EXACT2 reviewed5292 blobs; occurrencebounds2setupERROR, legacyword1FAIL. Independent readonly diagnosis0545 queued, only2passing controls rerun/no failed3; no merge/DONE | ac9870277/basead4 |
 | V4-undo | two equal-text anchor undo positives | orchestrator D14 | deferred relational timing | gated:D14-deferred | D14 04:40 applied | UNCHANGED/UNSKIPPED/VISIBLY FAILING known v2 regressions; safe intervening_write; C0 unchanged/no guard drop. Never54PASS | original tests retained |
 | V4-recipe | optional duplicate recipe cut | Luna high | cut locally | todo | CUT; no worker expected | Earlier deletion reversed original clip.anchor assertion; both recipes/assertions restored unchanged. Do not reopen optional cut | retained originals |
 | V4-app | PropertiesPanel helper dedup | Luna high | integrated proof | merged | vw-V4-app-review-resume; integrated0057 | DONE scoped:actual794/treeeb59, a476ancestor; independent70 and integrated70/ESLint/strict-islands/diff/caller PASS | 794d365ae03725453c3359d21c791b1ffe7ccee9 |
