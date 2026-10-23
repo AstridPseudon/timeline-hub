@@ -32,12 +32,51 @@ function pin(result: any) {
   return { revision_id: result.data.accepted_revision_id, publication_id: result.receipt.receipt_id };
 }
 
+function parentOf(result: any) {
+  return result.data.canonical_document.parent_revision.payload;
+}
+
+function assertV2Request(post: CommitPost, harness: DirectHarness, seed: ChainSeed) {
+  const body = post.body as any;
+  expect(body).toMatchObject({
+    api_version: 1,
+    project_id: harness.seed.projectId,
+    timeline_id: seed.timelineId,
+    base_revision_id: expect.any(String),
+    base_publication_id: expect.any(String),
+    commands: expect.any(Array),
+    label: expect.any(String),
+    steps: expect.any(Array),
+    merge: expect.stringMatching(/^(fields|atomic)$/),
+    dry_run: false,
+  });
+  for (const step of body.steps) {
+    expect(step).toMatchObject({ id: expect.any(String), label: expect.any(String), intent: expect.any(String),
+      tags: expect.any(Array), command_ordinals: expect.any(Array), patch: expect.any(Array) });
+    if ('reads' in step) expect(step.reads).toEqual(expect.any(Array));
+  }
+  if ('reads' in body) expect(body.reads).toEqual(expect.any(Array));
+  expect(post.key).toBeTruthy();
+}
+
+function assertAcceptedData(result: any, post: CommitPost, status: 'accepted' | 'merged') {
+  expect(result).toMatchObject({ data: { status, canonical_document: expect.any(Object), document_digest: expect.any(String),
+    commands: expect.any(Array), id_map: expect.any(Object), provider_version: expect.any(String),
+    compiler_version: expect.any(String), merge_mode: expect.stringMatching(/^(fields|atomic)$/), steps: expect.any(Array) },
+    receipt: { receipt_id: expect.any(String), idempotency_key: post.key, request_hash: expect.any(String) } });
+  expect(result.data).not.toHaveProperty('dependencies');
+  expect(result.data.steps).toEqual(expect.any(Array));
+  for (const step of result.data.steps) expect(step).toMatchObject({ id: expect.any(String), label: expect.any(String),
+    intent: expect.any(String), tags: expect.any(Array), command_ordinals: expect.any(Array), patch: expect.any(Array), dependencies: expect.any(Array) });
+  expect(result.receipt.result).toEqual(result.data);
+}
+
 async function seedOneClip(harness: DirectHarness): Promise<ChainSeed> {
   const timelineId = randomUUID();
   const publication = compositionPublication({ projectId: harness.seed.projectId, timelineId }, null, 'P1 chain', 30);
   const clip = {
     id: SOURCE_ID, at: 0, track: 'V1', clipType: 'media', asset: 'p1-video', from: 0, to: 8, speed: 1, hold: 8,
-    app: { opaque: { keep: null, ordered: [false, 0, ''] }, astrid: { for: 8 } },
+    app: { opaque: { keep: null, ordered: [false, 0, ''] }, astrid: { for: 8 }, 'org.example': { literal: SOURCE_ID, clear: null } },
   };
   const parent = publication.parent_composition as Record<string, any>;
   parent.config = { ...parent.config, clips: [clip], opaque: { root: null, order: [0, false] } };
@@ -84,9 +123,25 @@ async function openChain(page: Page, harness: DirectHarness, seed: ChainSeed) {
   await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).some((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
 }
 
+async function setPlayhead(page: Page, seconds: number) {
+  const ruler = page.getByTestId('timeline-ruler');
+  const labels = ruler.locator('[data-testid="timeline-ruler-labels"] span');
+  const marks = await labels.evaluateAll((nodes) => nodes.map((node) => ({ text: node.textContent?.trim() ?? '', box: node.getBoundingClientRect().toJSON() })));
+  const parsed = marks.map((mark) => {
+    const match = mark.text.match(/^(\d+):(\d\d)\.(\d\d)$/);
+    return match ? { seconds: Number(match[1]) * 60 + Number(match[2]) + Number(match[3]) / 100, box: mark.box } : null;
+  }).filter((mark): mark is { seconds: number; box: DOMRect } => mark !== null);
+  const zero = parsed.find((mark) => mark.seconds === 0);
+  const anchor = parsed.find((mark) => mark.seconds > 0);
+  expect(zero, 'the real timeline ruler must expose a zero-time anchor').toBeTruthy();
+  expect(anchor, 'the real timeline ruler must expose a second time anchor').toBeTruthy();
+  const pixelsPerSecond = (anchor!.box.x - zero!.box.x) / anchor!.seconds;
+  await page.mouse.click(zero!.box.x - 6 + seconds * pixelsPerSecond, (await ruler.boundingBox())!.y + 15);
+}
+
 async function splitSource(page: Page, seed: ChainSeed) {
   await page.locator(`.clip-action[data-clip-id="${seed.sourceId}"]`).click();
-  await page.keyboard.press('ArrowRight');
+  await setPlayhead(page, SPLIT_AT);
   await page.keyboard.press('s');
 }
 
@@ -110,17 +165,15 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   const seed = await seedOneClip(harness);
   const traffic = observe(page);
-  let holdTrim = false;
+  let heldSplit: Route | undefined;
   let heldTrim: Route | undefined;
   await page.route(COMMITS, async (route) => {
     if (route.request().method() !== 'POST') return route.fallback();
-    const response = await route.fetch({ maxRetries: 0 });
-    const body = await response.json();
     const post = traffic.posts.find((candidate) => candidate.key === route.request().headers()['idempotency-key']);
-    if (post && holdTrim && traffic.posts.indexOf(post) === 1) {
-      post.status = response.status(); post.response = body; heldTrim = route; return;
-    }
-    await forward(route, response, body);
+    if (post && traffic.posts.indexOf(post) === 0) { heldSplit = route; return; }
+    if (post && traffic.posts.indexOf(post) === 1) { heldTrim = route; return; }
+    const response = await route.fetch({ maxRetries: 0 });
+    await forward(route, response, await response.json());
   });
   await openChain(page, harness, seed);
   const before = await history(harness, seed);
@@ -129,60 +182,92 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
   const originalClip = structuredClone(original.clips[0]);
   await splitSource(page, seed);
   await expect.poll(() => traffic.posts.length, CEILING).toBe(1);
-  await expect.poll(() => traffic.posts[0].status, CEILING).not.toBeUndefined();
-  await expect.poll(() => traffic.posts[0].response, CEILING).not.toBeUndefined();
+  await expect.poll(() => !!heldSplit, CEILING).toBe(true);
   const split = traffic.posts[0];
-  expect(split.status).toBe(200);
+  assertV2Request(split, harness, seed);
   const splitCommand = split.body.commands[0] as any;
   expect(splitCommand).toMatchObject({ schema_version: 1, op: 'doc.patch', version: '1', select: null });
-  const changes = splitCommand.args.changes as Array<any>;
-  const inserted = changes.find((change) => change.op === 'list.insert' && change.path.join('.') === 'clips');
-  expect(inserted).toMatchObject({ before: { state: 'absent' }, value: { clipType: 'media', track: 'V1' } });
+  const inserted = (splitCommand.args.changes as Array<any>).find((change) => change.op === 'list.insert' && change.path.join('.') === 'clips');
+  expect(inserted).toMatchObject({ before: { state: 'absent' }, value: { id: expect.any(String), clipType: 'media', track: 'V1' },
+    order_before: [SOURCE_ID], after_id: SOURCE_ID });
   expect(inserted.id).toMatch(/^p1-chain-source-/);
+  expect(inserted.value.id).toBe(inserted.id);
+  expect(splitCommand.created).toEqual([`parent/clip:${inserted.id}`]);
   const rightId = inserted.id;
   expect(split.body).toMatchObject({ api_version: 1, project_id: harness.seed.projectId, timeline_id: seed.timelineId,
     base_revision_id: before.head.revision_id, base_publication_id: before.head.publication_id,
     source: { via: 'app' }, merge: 'atomic', dry_run: false, label: expect.any(String), commands: [splitCommand] });
   expect(split.body.steps[0]).toMatchObject({ command_ordinals: [0], patch: splitCommand.args.changes });
-  expect(split.response.data).toMatchObject({ document_digest: expect.any(String), commands: split.body.commands,
-    id_map: expect.any(Object), provider_version: expect.any(String), compiler_version: expect.any(String),
-    steps: expect.any(Array), dependencies: expect.any(Array), merge_mode: expect.any(String) });
-  expect(split.response.receipt).toMatchObject({ receipt_id: expect.any(String), idempotency_key: split.key,
-    request_hash: expect.any(String), result: split.response.data });
-  const splitDocument = split.response.data.canonical_document.parent_revision.payload;
+
+  // Release only after the dependent has been authored locally. The outbox must persist it
+  // behind the held split instead of sending it with a guessed base or a new ID.
+  await trimSourceWindow(page, rightId, '3');
+  await expect.poll(() => traffic.posts.length, CEILING).toBe(1);
+  expect((await commandOutboxes(page, seed.timelineId)).some((owner) => owner.pending && owner.intents.length > 0)).toBe(true);
+  const splitWire = await heldSplit!.fetch({ maxRetries: 0 });
+  split.response = await splitWire.json(); split.status = splitWire.status();
+  await forward(heldSplit!, splitWire, split.response);
+  assertAcceptedData(split.response, split, 'accepted');
+  expect(split.response.data.rebased_onto).toBeNull();
+  const splitDocument = parentOf(split.response);
   expect(splitDocument.clips.map((clip: any) => clip.id)).toEqual([SOURCE_ID, rightId]);
   const originalFields = Object.fromEntries(Object.entries(originalClip).filter(([key]) => key !== 'app'));
   expect(splitDocument.clips[0]).toMatchObject({ ...originalFields, to: SPLIT_AT, hold: SPLIT_AT });
   expect(splitDocument.clips[1]).toMatchObject({ ...originalFields, id: rightId, at: SPLIT_AT, from: SPLIT_AT, to: originalClip.to, hold: originalClip.to - SPLIT_AT });
   expect(splitDocument.clips[0].app.opaque).toEqual(originalClip.app.opaque);
   expect(splitDocument.clips[1].app.opaque).toEqual(originalClip.app.opaque);
-  expect(splitDocument.config.clips).toEqual(splitDocument.clips);
+  expect(splitDocument.clips[0].app['org.example']).toEqual(originalClip.app['org.example']);
+  expect(splitDocument.clips[1].app['org.example']).toEqual(originalClip.app['org.example']);
   expect(splitDocument.clips[0].app.astrid).toMatchObject({ for: SPLIT_AT });
   expect(splitDocument.clips[1].app).not.toHaveProperty('astrid');
   expect(splitDocument.config.opaque).toEqual({ root: null, order: [0, false] });
+  expect(splitDocument.config.clips).toEqual(splitDocument.clips);
+  expect(split.response.data.steps[0].patch).toEqual(expect.arrayContaining([expect.objectContaining({ op: 'list.insert', id: rightId,
+    value: expect.objectContaining({ id: rightId }), before: { state: 'absent' }, order_before: [SOURCE_ID], after_id: SOURCE_ID })]));
   expect(splitDocument.registry).toEqual((await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/composition-revisions/${split.response.data.accepted_revision_id}`)).body.payload.registry);
 
-  holdTrim = true;
-  await trimSourceWindow(page, rightId, '3');
   await expect.poll(() => traffic.posts.length, CEILING).toBe(2);
-  await expect.poll(() => traffic.posts[1].status, CEILING).not.toBeUndefined();
   const trim = traffic.posts[1];
-  expect(trim.status).toBe(200);
+  await expect.poll(() => !!heldTrim, CEILING).toBe(true);
+  assertV2Request(trim, harness, seed);
+  expect(trim.status).toBeUndefined();
+  expect(trim.body.steps[0]).toMatchObject({ command_ordinals: [0], patch: (trim.body.commands[0] as any).args.changes });
   expect(trim.body.commands[0]).toMatchObject({ op: 'doc.patch', select: null });
   const trimChange = (trim.body.commands[0] as any).args.changes.find((change: any) => change.path.includes(`id:${rightId}`) && change.path.at(-1) === 'from');
-  expect(trimChange).toMatchObject({ value: 3, before: { state: 'present', value: SPLIT_AT } });
+  expect(trimChange).toMatchObject({ value: 3, before: { state: 'present', value: SPLIT_AT }, path: ['clips', `id:${rightId}`, 'from'] });
+  expect(trim.body.base_revision_id).toBe(split.response.data.accepted_revision_id);
+  expect(trim.body.base_publication_id).toBe(split.response.receipt.receipt_id);
 
   const agent = await astrid.commitCaptured(harness.seed.projectId, seed.timelineId, pin(split.response), { kind: 'label', trackId: 'V1', label: 'Agent edit after split' }, 'p1-agent-after-split');
-  expect(agent.data.status).toMatch(/^(accepted|rebased)$/);
-  expect(heldTrim).toBeTruthy();
+  expect(agent.data.status).toBe('accepted');
+  expect(agent.data.rebased_onto).toBeNull();
   const originalTrim = { raw: trim.raw, key: trim.key };
+  const acceptedTrimResponse = await heldTrim!.fetch({ maxRetries: 0 });
+  const acceptedTrim = await acceptedTrimResponse.json();
+  expect(acceptedTrimResponse.status()).toBe(200);
+  assertAcceptedData(acceptedTrim, trim, 'merged');
+  expect(acceptedTrim.data.rebased_onto).toEqual(pin(agent));
+  const mergedDocument = parentOf(acceptedTrim);
+  expect(mergedDocument.clips.map((clip: any) => clip.id)).toEqual([SOURCE_ID, rightId]);
+  expect(mergedDocument.clips[0]).toMatchObject({ id: SOURCE_ID, to: SPLIT_AT, hold: SPLIT_AT });
+  expect(mergedDocument.clips[1]).toMatchObject({ id: rightId, at: SPLIT_AT, from: 3, to: originalClip.to, hold: originalClip.to - 3 });
+  expect(mergedDocument.config.clips).toEqual(mergedDocument.clips);
+  expect(mergedDocument.clips[0].app).toEqual(originalClip.app);
+  expect(mergedDocument.clips[1].app.opaque).toEqual(originalClip.app.opaque);
+  expect(mergedDocument.registry).toEqual(splitDocument.registry);
+  expect(mergedDocument.occurrences).toEqual(splitDocument.occurrences);
+  expect(acceptedTrim.data.canonical_document.shot_revisions).toEqual(split.response.data.canonical_document.shot_revisions);
+  expect(acceptedTrim.data.canonical_document.internal_timeline_revisions).toEqual(split.response.data.canonical_document.internal_timeline_revisions);
+  expect(mergedDocument.config.tracks).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'V1', label: 'Agent edit after split' })]));
   await heldTrim!.abort('connectionreset');
   await page.unroute(COMMITS);
   await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).some((owner) => owner.pending?.outcome?.kind === 'retry'), CEILING).toBe(true);
   const owner = (await commandOutboxes(page, seed.timelineId)).find((candidate) => candidate.pending?.request.key === originalTrim.key)!;
   expect(owner.pending?.request).toMatchObject({ body: originalTrim.raw, key: originalTrim.key });
   await page.reload();
-  await openChain(page, harness, seed);
+  await expectConnected(page);
+  await expect(firstTrackName(page)).toBeVisible();
+  expect(traffic.posts).toHaveLength(2);
   const restarted = await harness.restartRuntime();
   expect(restarted.oldInstanceId).toBeTruthy();
   await expectConnected(page);
@@ -193,12 +278,13 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
   expect(retryResponse.request().postData()).toBe(originalTrim.raw);
   expect(retryResponse.request().headers()['idempotency-key']).toBe(originalTrim.key);
   const retry = await retryResponse.json();
-  expect(retry.data.status).toMatch(/^(merged|rebased)$/);
+  expect(retry).toEqual(acceptedTrim);
+  expect(retry.data.status).toBe('merged');
   await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).every((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
   expect(traffic.legacy).toEqual([]);
   const final = (await history(harness, seed)).items;
   expect(final).toHaveLength(before.items.length + 3);
-  expect((await history(harness, seed)).items.filter((item: any) => item.receipt?.idempotency_key === originalTrim.key)).toHaveLength(1);
+  expect(final.filter((item: any) => item.receipt?.idempotency_key === originalTrim.key)).toHaveLength(1);
 });
 
 test('P1 split -> trim new clip: a real Agent move refuses the stale trim and the App rolls back with a message', async ({ page, harness, astrid }) => {
@@ -211,18 +297,36 @@ test('P1 split -> trim new clip: a real Agent move refuses the stale trim and th
   await expect.poll(() => traffic.posts.length, CEILING).toBe(1);
   await expect.poll(() => traffic.posts[0].response, CEILING).not.toBeUndefined();
   const split = traffic.posts[0];
+  assertV2Request(split, harness, seed);
   const inserted = (split.body.commands[0] as any).args.changes.find((change: any) => change.op === 'list.insert');
+  expect(inserted.value.id).toBe(inserted.id);
+  expect(inserted.order_before).toEqual([SOURCE_ID]);
+  expect(inserted.after_id).toBe(SOURCE_ID);
   const rightId = inserted.id;
   const agent = await astrid.commitCaptured(harness.seed.projectId, seed.timelineId, pin(split.response), { kind: 'move', clipId: rightId, on: 3 }, 'p1-agent-conflict');
-  expect(agent.data.status).toMatch(/^(accepted|rebased)$/);
+  expect(agent.data.status).toBe('accepted');
+  expect(agent.data.rebased_onto).toBeNull();
   await trimSourceWindow(page, rightId, '3');
   await expect.poll(() => traffic.posts.length, CEILING).toBe(2);
   await expect.poll(() => traffic.posts[1].status, CEILING).not.toBeUndefined();
   expect(traffic.posts[1].status).toBe(409);
-  expect(traffic.posts[1].response.details.status).toBe('conflict');
+  expect(traffic.posts[1].response.details).toMatchObject({ status: 'conflict', reason: expect.any(String),
+    current: pin(agent), conflicts: expect.any(Array) });
+  expect(traffic.posts[1].response.details.conflicts.length).toBeGreaterThan(0);
   await expect(page.getByTestId('timeline-command-recovery')).toContainText('Your changes are retained and need resolution before they can be saved.');
+  await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).find((owner) => owner.pending)?.pending?.outcome?.kind, CEILING).toBe('rejected');
   const current = await history(harness, seed);
   expect(current.items).toHaveLength(before.items.length + 2);
-  expect(current.head.revision_id).toBe(agent.data.accepted_revision_id);
+  expect(current.head).toEqual(pin(agent));
+  const currentParent = (await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/composition-revisions/${current.head.revision_id}`)).body.payload;
+  expect(currentParent.clips.map((clip: any) => clip.id)).toEqual([SOURCE_ID, rightId]);
+  expect(currentParent.clips[0]).toMatchObject({ id: SOURCE_ID, to: SPLIT_AT, hold: SPLIT_AT });
+  expect(currentParent.clips[1]).toMatchObject({ id: rightId, at: 3, from: SPLIT_AT, to: 8, hold: 6 });
+  expect(currentParent.clips[1].from).not.toBe(3);
+  expect(currentParent.clips[0].app.opaque).toEqual(currentParent.clips[1].app.opaque);
+  expect(currentParent.clips[0].app['org.example']).toEqual(currentParent.clips[1].app['org.example']);
+  expect(currentParent.clips[0].app.astrid).toMatchObject({ for: SPLIT_AT });
+  expect(currentParent.clips[1].app).not.toHaveProperty('astrid');
+  expect(currentParent.config.clips).toEqual(currentParent.clips);
   expect(traffic.legacy).toEqual([]);
 });
