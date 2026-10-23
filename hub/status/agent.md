@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T17:50:09Z | dispatcher heartbeat 10s | live 4 (sol 2, luna 2, other 0) | busy30 16 | status age 2m -->
+<!-- agent | 2026-10-23T17:52:04Z | dispatcher heartbeat 2s | live 4 (sol 2, luna 2, other 0) | busy30 16 | status age 0m -->
 # agent board, 2026-10-23T17:48:04Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -119,6 +119,8 @@
 | R2-parent-media | parent-media 14-failure diagnosis | Luna readonly | retained A4 log | merged | agt-R2-parent-media-diagnosis-1740 FINAL | Source/log supports six registry guards and eight nested-derived-range Agent seams; detached MediaRealm, no live Runtime attribution/per-case original imports. Actual requests lost; source reconstruction labeled. No failing body rerun | evidence only |
 | R2-registry-reload | ancestor/container inverse guards after reload | HARD Sol | diagnosis1740 | doing | agt-R2-registry-sol-1750 LIVE | Six exact registry originals; inverse.py unique owner, no guard waiver. Original body reserved after meaningful candidate | pending |
 | R2-nested-derived | nested stages retain derived mirror effects | HARD Sol | diagnosis1740/currentd9e | doing | agt-R2-nested-derived-sol-1750 LIVE | Eight exact/ordered provider originals; _step_undo.py unique owner, inverse.py reserved registry worker; no flattening/source identity waiver | pending |
+
+| G5-restore-draft | retained draft exact closure after restore | Luna readonly causal | joint1750 evidence audit | doing | agt-G5-restore-draft-diagnosis-1753 QUEUED | Source/log diagnosis only; original actual packet LOST. Compare current publication/projection vs stale local state; no testfix/productbug inferred or originalbody rerun | pending |
 
 Resolved: R1 private bac16PASS + Runtime d9e original9PASS; R2 storage653 integrated130PASS; legacy079 integrated107PASS. D17 joined323PASS, P4three original integrated legs DONE, G4/R5 scoped DONE. D14/D23/H9 tests unchanged/unskipped/visible; original full10679 FAIL retained.
 Blockers: Agent — unique R1transcript1735 immutable source capture; registrySol1750 inverse.py and nestedSol1750 _step_undo.py disjoint critical source work. New actual G5 proof failures require evidence audit1750 before precise source attribution; full temp packets lost, no unchanged body reruns.

@@ -1,0 +1,13 @@
+# R2 nested derived interface — early ownership boundary
+
+Base Agent 079580ca46af77e0292d49dc34386b25c8391f99, Runtime d9e2a71e.
+
+Only `_step_undo.py` has been edited. Eight original selectors were collected unchanged (8/85), then retained RED: 8 failed with `nested inverse ranges differ from accepted history`. Complete pre-validation source entries, native/derived records, bindings, effects and realm documents are durably saved under workers/agt-R2-nested-derived-sol-1750/evidence/red-captures/.
+
+The candidate strictly partitions only parent/config/clips compiler mirrors by their contiguous before/after chain and matching accepted stage aggregate effect. It preserves every derived write and the immediate publication/step/ordinal. Other derived sites/foreign causes remain refused. Original cases now give 3 passed / 5 failed: False add and C-image/C-video pass; replacement True and A/target image/video fail `nested inverse effects differ from execution`.
+
+Required owner coordination: `inverse.py:819` calls `restoration_orders(records, only=record)` with a view copied by `inverse_stages`, while `_collections.restoration_orders` only matches `record is only`. Thus stage restoration never runs for this copied nested record. On redo, resurrected clip A/target is appended; the authenticated mirror effect expects its original position. C passes because append is its position. The strict effect comparison correctly refuses this candidate. This is not fixture-invalid source, missing Runtime approval, or a permission for history compaction.
+
+The inverse execution owner needs to consume stage-local authenticated collection order from the selected native/effect partition, preserving full source membership/guard checks and intermediate boundaries. A source-record identity alone is sufficient only for a full-record stage; partial stages must use the authenticated stage mirror before-image, not the whole record's input order. Suggested internal interface: stage record carries an authenticated source record reference plus its actual native/effect bounds, and parent mirror slice; inverse executor derives/restores parent clip order from that slice's input image after reversing its native slice. It must keep existing collection membership checks and compiler/effect comparison. Do not use step patches as mutation instructions.
+
+No edits to inverse.py, _recording.py, _commit_patch.py, commit.py, existing tests or fixtures; no Runtime/public claim. Manager should coordinate the unique registrySol1750 inverse.py owner for one combined repair and rerun these eight unchanged nodes after the join. Current candidate is PARTIAL, not ready to merge as a complete R2 fix.
