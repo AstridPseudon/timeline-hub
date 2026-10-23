@@ -432,15 +432,23 @@ class TimelineSession:
                    "select": None, "args": {"publications": publications}}
         if steps is not None:
             command["args"]["steps"] = copy.deepcopy(steps)
-        with self.outbox.locked():
-            state = self._state()
+
+        def prepare(state):
             if _flight_kind(state["flight"]) == "assembly-admission":
                 raise TimelineEditError("retry the original assembly admission before undo")
             if state["pending"] and state["pending"] != [command]:
                 raise TimelineEditError("flush pending intent before undo")
             state["pending"] = [command]
-            self.outbox.write(state)
-        return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+            # Freeze v2 metadata with new intent. An existing flight, including
+            # one persisted by an older caller, must keep its original body.
+            if state["flight"] is None and "commit_options" not in state:
+                state["commit_options"] = {
+                    "label": "Undo timeline edit", "merge": "fields",
+                    "steps": [{"id": "inverse", "label": "Undo timeline edit", "intent": "",
+                               "tags": [], "command_ordinals": [0], "patch": []}],
+                }
+
+        return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via, prepare=prepare)
 
     def restore(self, revision_id, content_digest, *, idempotency_key=None, dry_run=False, via="python"):
         """Restore one exact retained revision through the native commit path.
