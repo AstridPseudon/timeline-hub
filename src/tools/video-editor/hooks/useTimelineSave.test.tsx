@@ -21,6 +21,7 @@ import { getConfigSignature, getStableConfigSignature } from '../lib/config-util
 import { createDefaultTimelineConfig } from '../lib/defaults';
 import { TimelineVersionConflictError, type DataProvider } from '../data/DataProvider';
 import { loadTimelineDraft, saveTimelineDraft } from '../data/timelineDraftIndexedDb';
+import type { AssetRegistry } from '../types/index.ts';
 import type { VideoEditorRuntimeContextValue } from '../contexts/VideoEditorRuntimeContext';
 import type { TimelineEditability } from '../lib/timeline-editability';
 import { createCommitOutbox } from '../commands/commitOutbox.ts';
@@ -35,6 +36,10 @@ vi.mock('@/integrations/runtime/generated-contract-metadata.ts', async (importOr
 vi.stubGlobal('indexedDB', createFakeIndexedDB());
 vi.mock('@/tools/video-editor/compositions/TimelineRenderer.tsx', () => ({
   invalidateReferencedTimelineCache: vi.fn(),
+}));
+// jsdom has no video decoder; media authority still comes from the selector transport.
+vi.mock('@/shared/lib/media/videoMetadata.ts', () => ({
+  extractVideoMetadata: vi.fn(async () => ({ duration_seconds: 8 })),
 }));
 
 function makeTimelineData(label: string): TimelineData {
@@ -88,7 +93,7 @@ interface SetupResult {
 function setup(
   saveTimelineImpl: DataProvider['saveTimeline'],
   timelineEditability?: TimelineEditability,
-  original?: { data: TimelineData; loadBasis: DataProvider['loadTimelineCommandBasis']; capabilities?: Partial<DataProvider>; strict?: boolean; mediaControls?: boolean },
+  original?: { data: TimelineData; loadBasis: DataProvider['loadTimelineCommandBasis']; capabilities?: Partial<DataProvider>; strict?: boolean; mediaControls?: boolean; mediaAfterClipId?: string },
 ): SetupResult {
   const saveTimeline = vi.fn(saveTimelineImpl);
   const provider: DataProvider = {
@@ -143,7 +148,7 @@ function setup(
         const state = store.getState();
         state.syncSlices({
           data: { ...state.data, data: save.data, dataRef: save.dataRef,
-            resolvedConfig: save.data?.resolvedConfig ?? null, selectedTrackId: 'V1', selectedClipIds: new Set() },
+            resolvedConfig: save.data?.resolvedConfig ?? null, selectedTrackId: 'V1', selectedClipIds: new Set(original.mediaAfterClipId ? [original.mediaAfterClipId] : []) },
           ops: { ...state.ops, applyEdit: save.applyEdit, patchRegistry: save.patchRegistry,
             selectClip: vi.fn(), setSelectedTrackId: save.setSelectedTrackId },
           chrome: { ...state.chrome, saveStatus: save.saveStatus },
@@ -189,8 +194,10 @@ describe('useTimelineSave — recovered draft durability', () => {
     vi.useRealTimers();
   });
 
-  it.each(['accepted', 'merged', 'conflict', 'missing selection', 'retry', 'dependent conflict'] as const)(
-    'routes mounted shot prepared media through the persisted semantic outbox: %s', async outcome => {
+  it.each((['image', 'video'] as const).flatMap(mode =>
+    (['accepted', 'merged', 'conflict', 'missing selection', 'retry', 'dependent conflict', ...(mode === 'video' ? ['missing old selection', 'mismatched old selection', 'extra old selection', 'missing old metadata', 'missing selector', 'existing asset', 'rebased', 'invalid'] as const : [])] as const)
+      .map(outcome => [mode, outcome] as const)))(
+    'routes mounted shot prepared %s through the persisted semantic outbox: %s', async (mode, outcome) => {
       // Transport fixtures prove App routing/adoption, not Runtime media authority or Python execution.
       const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
       Object.defineProperty(navigator, 'locks', { configurable: true, value: {
@@ -199,24 +206,48 @@ describe('useTimelineSave — recovered draft durability', () => {
       const scope = { realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-1' };
       const head = { projectId: scope.projectId, timelineId: scope.timelineId, headRevisionId: 'r0', headPublicationId: 'p0' };
       const config = createDefaultTimelineConfig();
+      const oldMedia = { asset: 'old-video', generation_id: 'generation-old', variant_id: 'variant-old',
+        object_id: `sha256:${'c'.repeat(64)}`, catalog_digest: `sha256:${'d'.repeat(64)}` };
+      const registry: AssetRegistry = { assets: mode === 'video' ? { 'old-video': { media_id: oldMedia.object_id, type: 'video',
+        generationId: oldMedia.generation_id, variantId: oldMedia.variant_id } } : {} };
+      if (outcome === 'missing old metadata') delete registry.assets[oldMedia.asset].variantId;
+      if (outcome === 'existing asset') registry.assets['variant-new'] = { type: 'video', media_id: `sha256:${'a'.repeat(64)}`, generationId: 'generation-new', variantId: 'variant-new' };
+      if (mode === 'video') {
+        config.tracks.push({ id: 'V2', kind: 'visual' });
+        config.clips = [
+          { id: 'source', track: 'V1', at: 0, asset: oldMedia.asset, clipType: 'media', from: 1, to: 5, speed: 2,
+            transition: { type: 'crossfade', duration: .5 }, params: { opaque: [null, false] } },
+          { id: 'later', track: 'V1', at: 4, asset: oldMedia.asset, clipType: 'media', hold: 2 },
+          { id: 'unrelated', track: 'V2', at: 1, asset: oldMedia.asset, clipType: 'media', hold: 2 },
+        ];
+      }
       const initialReply = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' }, { timelineId: scope.timelineId });
       const document = initialReply.data.canonical_document;
-      document.parent_revision.payload = { config: JSON.parse(JSON.stringify(config)), clips: [], registry: { assets: {} }, occurrences: [] };
+      document.parent_revision.payload = { config: JSON.parse(JSON.stringify(config)), clips: JSON.parse(JSON.stringify(config.clips)), registry, occurrences: [] };
       document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
       const initial = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
-      const data = await buildTimelineData(config, { assets: {} }, undefined, 1, undefined, head);
+      const data = await buildTimelineData(config, registry, undefined, 1, undefined, head);
       const media = { asset: 'variant-new', generation_id: 'generation-new', variant_id: 'variant-new',
         object_id: `sha256:${'a'.repeat(64)}`, catalog_digest: `sha256:${'b'.repeat(64)}` };
-      const entry = { file: 'runtime-import.png', type: 'image/png', media_id: media.object_id };
+      const entry = { file: `runtime-import.${mode === 'video' ? 'mp4' : 'png'}`, type: `${mode}/${mode === 'video' ? 'mp4' : 'png'}`, media_id: media.object_id };
       const instance = runtimeFixture();
       const posts: Array<{ body: string; key: string }> = [];
       let harness: SetupResult | undefined;
       let landed: ReturnType<typeof acceptedCommit> | undefined;
       const runtime = new RuntimeDataProvider({ projectId: scope.projectId, transport: async (method, path, headers, body) => {
+        if (method === 'GET' && path.includes('/media-selection?')) {
+          const query = new URL(path, 'http://runtime.test').searchParams;
+          expect(Object.fromEntries(query)).toEqual({ asset: oldMedia.asset, generation_id: oldMedia.generation_id, variant_id: oldMedia.variant_id });
+          return outcome === 'missing old selection' ? { status: 404, headers: {}, body: json({ code: 'not_found', message: 'Selection unavailable' }) }
+            : { status: 200, headers: {}, body: json(outcome === 'mismatched old selection' ? { ...oldMedia, variant_id: 'changed' }
+              : outcome === 'extra old selection' ? { ...oldMedia, extra: true } : oldMedia) };
+        }
         if (method !== 'POST' || !path.endsWith('/commit')) return instance.transport(method, path, headers, body);
         posts.push({ body: new TextDecoder().decode(body), key: headers['Idempotency-Key'] });
         const [durable] = await createCommitOutbox().list(scope);
         expect(durable.pending?.request).toMatchObject(posts.at(-1)!);
+        if (outcome === 'invalid') return { status: 422, headers: {}, body: json({ code: 'invalid', message: 'Media selection changed',
+          details: { status: 'invalid', code: 'selection_changed', path: ['commands', '0', 'args', 'old_media'], hint: 'Reload media', suggested_command: 'timeline show' } }) };
         if (outcome === 'conflict' || (outcome === 'dependent conflict' && posts.length === 2)) return { status: 409, headers: {}, body: json({ code: 'conflict',
           message: 'Media track changed; draft retained', details: { status: 'conflict', reason: 'dependency_changed',
             base: { revision_id: 'r0', publication_id: 'p0' }, current: { revision_id: 'agent-r', publication_id: 'agent-p' }, conflicts: [] } }) };
@@ -226,7 +257,8 @@ describe('useTimelineSave — recovered draft durability', () => {
           const canonical = landed.data.canonical_document;
           const local = harness!.hook.result.current.dataRef.current!;
           const canonicalConfig = JSON.parse(JSON.stringify(local.config)) as typeof config;
-          canonicalConfig.clips[0].at = 2.25;
+          const born = canonicalConfig.clips.find(clip => clip.asset !== oldMedia.asset)!;
+          born.at = 2.25;
           canonical.parent_revision.payload = { config: canonicalConfig, clips: canonicalConfig.clips,
             registry: JSON.parse(JSON.stringify(local.registry)), occurrences: [], metadata: { provider: 'canonical result' } };
           canonical.parent_revision.content_digest = fixtureDigest(canonical.parent_revision.payload);
@@ -234,7 +266,7 @@ describe('useTimelineSave — recovered draft durability', () => {
           landed.data.label = request.label;
           landed.data.steps = request.steps;
           landed.data.merge_mode = request.merge;
-          if (outcome === 'merged') Object.assign(landed.data, { status: 'merged', previous_revision_id: 'agent-r',
+          if (outcome === 'merged' || outcome === 'rebased') Object.assign(landed.data, { status: outcome, previous_revision_id: 'agent-r',
             previous_publication_id: 'agent-p', rebased_onto: { revision_id: 'agent-r', publication_id: 'agent-p' } });
           landed.receipt.idempotency_key = posts[0].key;
         }
@@ -244,7 +276,8 @@ describe('useTimelineSave — recovered draft durability', () => {
       try {
         harness = setup(async () => { throw new Error('No legacy save'); }, undefined, { data,
           loadBasis: async () => landed ? { head: { revisionId: 'r1', publicationId: 'p1' }, canonicalDocument: landed.data.canonical_document } : initial,
-          mediaControls: true, capabilities: {
+          mediaControls: true, mediaAfterClipId: mode === 'video' ? 'source' : undefined, capabilities: {
+            ...(outcome === 'missing selector' ? {} : { getProjectMediaSelection: runtime.getProjectMediaSelection.bind(runtime) }),
             getRecoverableIdentity: async () => ({ realmId: scope.realmId, actorId: scope.actorId }),
             commitTimeline: (request, key) => runtime.commitTimeline(request, key),
             prepareMediaImport: vi.fn(async () => ({ provider: 'runtime', project: scope.projectId, importOperationId: 'import-new',
@@ -254,21 +287,37 @@ describe('useTimelineSave — recovered draft durability', () => {
         await vi.waitFor(() => expect(harness!.hook.result.current.localSaveState?.ownerId).toBeTruthy());
         await settleInitialRecoveryCheck();
         await act(async () => {
-          fireEvent.click(screen.getByRole('button', { name: 'Add media' }));
+          fireEvent.click(screen.getByRole('button', { name: mode === 'video' ? 'Add video after selected clip' : 'Add media' }));
           fireEvent.change(screen.getByLabelText('Choose media for shot timeline'), {
-            target: { files: [new File(['image'], 'new.png', { type: 'image/png' })] },
+            target: { files: [new File([mode], `new.${mode === 'video' ? 'mp4' : 'png'}`, { type: entry.type })] },
           });
         });
         if (outcome === 'missing selection') {
           await vi.waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Runtime project media selection'));
           expect(screen.getByRole('alert')).toHaveTextContent('Import the media again');
-          expect(harness.hook.result.current.dataRef.current!.config.clips).toEqual([]);
+          expect(harness.hook.result.current.dataRef.current!.config.clips).toEqual(data.config.clips);
           await act(async () => { await harness!.hook.result.current.flushPendingSave(); });
           expect(posts).toEqual([]);
           expect((await createCommitOutbox().list(scope))[0].intents).toEqual([]);
           return;
         }
-        await vi.waitFor(() => expect(harness!.hook.result.current.dataRef.current!.config.clips).toHaveLength(1));
+        await vi.waitFor(() => expect(harness!.hook.result.current.dataRef.current!.config.clips).toHaveLength(mode === 'video' ? 4 : 1));
+        const bornId = harness.hook.result.current.dataRef.current!.config.clips[mode === 'video' ? 1 : 0].id;
+        if (mode === 'video') {
+          const preview = harness.hook.result.current.dataRef.current!.config.clips;
+          expect(preview[1]).toMatchObject({ asset: media.asset, at: 2, from: 1, to: 5, speed: 2, transition: config.clips[0].transition, params: config.clips[0].params });
+          expect(preview[2]).toMatchObject({ id: 'later', at: 6 });
+          expect(preview[3]).toEqual(data.config.clips[2]);
+        }
+        if (['missing old selection', 'mismatched old selection', 'extra old selection', 'missing old metadata', 'missing selector'].includes(outcome)) {
+          if (outcome !== 'extra old selection') await vi.waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('source Runtime project media selection. Draft retained'));
+          await act(async () => { await expect(harness!.hook.result.current.localDocumentSave!.flush()).rejects.toThrow('both exact Runtime'); });
+          const [draft] = await createCommitOutbox().list(scope);
+          expect(draft.intents).toEqual([]);
+          expect(draft.pending).toBeUndefined();
+          expect(posts).toEqual([]);
+          return;
+        }
         if (outcome === 'dependent conflict') {
           const editing = renderHook(() => useClipEditing({ dataRef: harness!.hook.result.current.dataRef,
             resolvedConfig: harness!.hook.result.current.dataRef.current!.resolvedConfig,
@@ -279,21 +328,36 @@ describe('useTimelineSave — recovered draft durability', () => {
         }
         await act(async () => {
           const saving = harness!.hook.result.current.flushPendingSave();
-          if (['conflict', 'retry', 'dependent conflict'].includes(outcome)) await expect(saving).rejects.toThrow();
+          if (['conflict', 'invalid', 'retry', 'dependent conflict'].includes(outcome)) await expect(saving).rejects.toThrow();
           else await saving;
         });
         const [stored] = await createCommitOutbox().list(scope);
         const request = JSON.parse(posts[0].body) as CommitRequest;
-        expect(request).toMatchObject({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
-          base_revision_id: 'r0', base_publication_id: 'p0', label: 'Add media', merge: 'fields', dry_run: false,
-          source: { via: 'app' }, steps: [{ id: expect.any(String), label: 'Add media', intent: 'Add media', tags: [], command_ordinals: [0], patch: [] }],
-          commands: [{ schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent', intent: {},
-            args: { media, row: { asset: 'import-alias', at: 1.2667, track: 'V1' } } }] });
-        expect(request.commands).toHaveLength(1);
-        // clip.add-media's registered operation policy is a closed empty object.
-        expect(request.commands[0].intent).toEqual({});
-        expect(request.commands[0].args.media).toEqual(media);
-        expect(request).not.toHaveProperty('reads');
+        if (mode === 'video') {
+          expect(request).toMatchObject({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
+            base_revision_id: 'r0', base_publication_id: 'p0', label: 'Add video after clip', merge: 'fields', dry_run: false, source: { via: 'app' },
+            commands: [{ schema_version: 1, op: 'clip.duplicate-media', version: '1', select: 'parent/clip:source',
+              args: { id: bornId, old_media: oldMedia, media }, intent: { ownership: 'parent' },
+              created: [...(outcome === 'existing asset' ? [] : [`parent/asset:${media.asset}`]), `parent/clip:${bornId}`] }],
+            reads: [{ kind: 'collection', ref: 'parent', path: ['config', 'clips'], members: ['later', 'source', 'unrelated'], order: ['source', 'later', 'unrelated'] }],
+            steps: [{ id: expect.any(String), label: 'Add video after clip', intent: 'Duplicate selected parent video', tags: [], command_ordinals: [0], patch: [],
+              reads: [{ kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:source'], state: { state: 'present', value: config.clips[0] } }] }] });
+          expect(request.commands[0].args).toEqual({ id: bornId, old_media: oldMedia, media });
+          expect(request.rationale).toBe('Duplicate selected parent video');
+          expect(request.group_id).toBe(request.steps![0].id);
+          expect(Object.keys(request.commands[0].args.old_media as object).sort()).toEqual(Object.keys(oldMedia).sort());
+        } else {
+          expect(request).toMatchObject({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
+            base_revision_id: 'r0', base_publication_id: 'p0', label: 'Add media', merge: 'fields', dry_run: false,
+            source: { via: 'app' }, steps: [{ id: expect.any(String), label: 'Add media', intent: 'Add media', tags: [], command_ordinals: [0], patch: [] }],
+            commands: [{ schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent', intent: {},
+              args: { media, row: { asset: 'import-alias', at: 1.2667, track: 'V1' } } }] });
+          expect(request.commands).toHaveLength(1);
+          // clip.add-media's registered operation policy is a closed empty object.
+          expect(request.commands[0].intent).toEqual({});
+          expect(request.commands[0].args.media).toEqual(media);
+          expect(request).not.toHaveProperty('reads');
+        }
         expect(posts[0].key).toBeTruthy();
         expect(harness.saveTimeline).not.toHaveBeenCalled();
         if (outcome === 'dependent conflict') {
@@ -301,24 +365,32 @@ describe('useTimelineSave — recovered draft durability', () => {
           const suffix = JSON.parse(posts[1].body) as CommitRequest;
           expect(suffix).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1', merge: 'fields',
             commands: [{ op: 'doc.patch' }], reads: expect.arrayContaining([
-              { kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${request.commands[0].args.row.id}`, 'at'],
-                state: { state: 'present', value: 1.2667 } },
+              { kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${mode === 'video' ? request.commands[0].args.id : request.commands[0].args.row.id}`, 'at'],
+                state: { state: 'present', value: mode === 'video' ? 2 : 1.2667 } },
             ]) });
           expect(suffix.steps![0].patch).toEqual(suffix.commands[0].args.changes);
           expect(stored.intents).toHaveLength(1);
           expect(stored.intents[0].basis).toEqual({ after: stored.accepted!.intentId });
           expect(stored.pending?.outcome).toMatchObject({ kind: 'rejected', error: { details: { reason: 'dependency_changed' } } });
-          expect(stored.intents[0].payload).toMatchObject({ after: { parent_revision: { payload: { config: { clips: [{ hold: 1, at: 1.2667 }] } } } } });
-          expect(harness.hook.result.current.dataRef.current!.config.clips[0].at).toBe(2.25);
+          expect(stored.intents[0].payload).toMatchObject({ after: { parent_revision: { payload: { config: { clips: mode === 'video'
+            ? [expect.any(Object), expect.objectContaining({ hold: .5, at: 2 }), expect.any(Object), expect.any(Object)]
+            : [{ hold: 1, at: 1.2667 }] } } } } });
+          expect(harness.hook.result.current.dataRef.current!.config.clips[mode === 'video' ? 1 : 0].at).toBe(2.25);
           expect(harness.hook.result.current.localSaveState?.error).toMatchObject({ message: expect.stringContaining('Media track changed') });
+          return;
+        }
+        if (outcome === 'invalid') {
+          expect(stored.pending?.outcome).toMatchObject({ kind: 'rejected', error: { details: { code: 'selection_changed', path: ['commands', '0', 'args', 'old_media'], hint: 'Reload media', suggested_command: 'timeline show' } } });
+          expect(harness.hook.result.current.dataRef.current!.config.clips).toEqual(data.config.clips);
           return;
         }
         if (outcome === 'conflict') {
           expect(stored.pending?.outcome).toMatchObject({ kind: 'rejected', error: { details: { reason: 'dependency_changed',
             current: { revision_id: 'agent-r', publication_id: 'agent-p' } } } });
           expect(stored.intents).toHaveLength(1);
-          expect(stored.intents[0].payload).toMatchObject({ after: { parent_revision: { payload: { config: { clips: [expect.any(Object)] } } } } });
-          expect(harness.hook.result.current.dataRef.current!.config.clips).toEqual([]);
+          expect(stored.intents[0].payload).toMatchObject({ after: { parent_revision: { payload: { config: { clips: mode === 'video'
+            ? [expect.any(Object), expect.any(Object), expect.any(Object), expect.any(Object)] : [expect.any(Object)] } } } } });
+          expect(harness.hook.result.current.dataRef.current!.config.clips).toEqual(data.config.clips);
           expect(harness.hook.result.current.localSaveState?.error).toMatchObject({ message: expect.stringContaining('Media track changed') });
           return;
         }
@@ -328,7 +400,7 @@ describe('useTimelineSave — recovered draft durability', () => {
           expect(posts).toHaveLength(2);
           expect(posts[1]).toEqual(posts[0]);
         }
-        expect(harness.hook.result.current.dataRef.current!.config.clips[0].at).toBe(2.25);
+        expect(harness.hook.result.current.dataRef.current!.config.clips[mode === 'video' ? 1 : 0].at).toBe(2.25);
         const [settled] = await createCommitOutbox().list(scope);
         expect(settled.intents).toEqual([]);
         expect(settled.accepted?.value).toMatchObject({ response: landed, receipt: landed!.receipt,

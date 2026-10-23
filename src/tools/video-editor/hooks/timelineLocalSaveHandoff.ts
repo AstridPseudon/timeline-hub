@@ -1,4 +1,4 @@
-import type { CanonicalDocument, EditCommand, HistoryPage } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { CanonicalDocument, CommitRequest, EditCommand, HistoryPage } from '@/integrations/runtime/timeline-commit-types.ts';
 import type { LocalSaveSession } from '../commands/localSaveSession.ts';
 import { toOutboxJson, type OutboxJson } from '../commands/commitOutbox.ts';
 import { canonicalJsonStringify, type TimelineBundleEnvelope } from '../data/typed/timelineBundle.ts';
@@ -243,6 +243,8 @@ export function createTimelineLocalSaveHandoff(options: {
           }
         }
         let commands: [EditCommand] | undefined;
+        let mediaReads: CommitRequest['reads'];
+        let mediaSteps: CommitRequest['steps'];
         if (gestureBasis?.kind === 'prepared-media') {
           const prepared = gestureBasis.command.payload;
           const media = prepared.asset.mediaSelection;
@@ -251,9 +253,10 @@ export function createTimelineLocalSaveHandoff(options: {
             || keys.some(key => typeof media[key as keyof typeof media] !== 'string' || !media[key as keyof typeof media])) {
             refuse('prepared media needs the Runtime project media selection. Draft retained; reload the timeline, then import the media again');
           }
-          if (prepared.afterClipId || prepared.replaceClipId || prepared.removeClipId || prepared.removeClipIds?.length
+          const duplicateVideo = Boolean(prepared.afterClipId && prepared.asset.mediaType === 'video');
+          if ((!duplicateVideo && prepared.afterClipId) || prepared.replaceClipId || prepared.removeClipId || prepared.removeClipIds?.length
             || prepared.forceNewTrack || prepared.insertAtTop || prepared.pinnedShotGroupsOverride
-            || prepared.asset.mediaType !== 'image') {
+            || (!duplicateVideo && prepared.asset.mediaType !== 'image')) {
             refuse('prepared media currently supports an ordinary image add on an existing visual track. Draft retained; reload the timeline, then choose Add media');
           }
           const config = parent.config as Record<string, OutboxJson>;
@@ -261,10 +264,10 @@ export function createTimelineLocalSaveHandoff(options: {
           const clips = config.clips;
           const nextClips = nextConfig.clips;
           if (!Array.isArray(clips) || !Array.isArray(nextClips)) refuse('prepared media clip collection is unavailable');
-          const row = nextClips.at(-1);
+          const row = duplicateVideo ? nextClips.find(clip => object(clip) && clip.id === gestureBasis.clipId) : nextClips.at(-1);
           if (!object(row) || row.id !== gestureBasis.clipId || row.asset !== prepared.asset.assetKey
             || clips.some(clip => object(clip) && clip.id === row.id)
-            || !same(nextClips.slice(0, -1), clips)
+            || (!duplicateVideo && !same(nextClips.slice(0, -1), clips))
             || !same({ ...nextConfig, clips }, config)
             || !Array.isArray(config.tracks) || !config.tracks.some(track => object(track)
               && track.id === row.track && track.kind === 'visual' && (track.role ?? 'output') === 'output')) {
@@ -275,8 +278,42 @@ export function createTimelineLocalSaveHandoff(options: {
               [prepared.asset.assetKey]: authoredJson(prepared.asset.entry) } })) {
             refuse('prepared media registry changes exceed the selected asset; draft retained');
           }
-          commands = [{ schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent',
-            args: { row: authoredJson(row), media: authoredJson(media) }, intent: {} }];
+          if (duplicateVideo) {
+            const old = prepared.oldMediaSelection;
+            const anchorIndex = clips.findIndex(clip => object(clip) && clip.id === prepared.afterClipId);
+            const anchor = clips[anchorIndex];
+            if (!old || Object.keys(old).length !== keys.length
+              || keys.some(key => typeof old[key as keyof typeof old] !== 'string' || !old[key as keyof typeof old])
+              || !object(anchor) || anchor.asset !== old.asset || row.asset !== media.asset) {
+              refuse('video duplication needs both exact Runtime project media selections. Draft retained; reload the timeline, then import the media again');
+            }
+            // Bound the consumer to the upstream parent duplicate preview. Timing
+            // and metadata normalization remain the provider's responsibility.
+            const retained = nextClips.filter(clip => object(clip) && clip.id !== row.id);
+            if (nextClips.length !== clips.length + 1 || !same(nextClips.map(clip => object(clip) ? clip.id : null),
+              [...clips.slice(0, anchorIndex + 1).map(clip => object(clip) ? clip.id : null), row.id,
+                ...clips.slice(anchorIndex + 1).map(clip => object(clip) ? clip.id : null)])
+              || row.track !== anchor.track || clips.some((clip, index) => {
+                const nextClip = retained[index];
+                if (!object(clip) || !object(nextClip)) return true;
+                return index <= anchorIndex || clip.track !== anchor.track ? !same(clip, nextClip)
+                  : !same({ ...nextClip, at: clip.at }, clip);
+              })) refuse('video duplication exceeds one parent after-anchor preview; draft retained');
+            commands = [{ schema_version: 1, op: 'clip.duplicate-media', version: '1',
+              select: `parent/clip:${prepared.afterClipId}`, args: { id: row.id, old_media: authoredJson(old), media: authoredJson(media) },
+              intent: { ownership: 'parent' }, created: [
+                ...(Object.prototype.hasOwnProperty.call(parent.registry.assets, media.asset) ? [] : [`parent/asset:${media.asset}`]),
+                `parent/clip:${row.id}`,
+              ] }];
+            const order = clips.map(clip => (clip as Record<string, OutboxJson>).id as string);
+            mediaReads = [{ kind: 'collection', ref: 'parent', path: ['config', 'clips'], members: [...order].sort(), order }];
+            mediaSteps = [{ id: crypto.randomUUID(), label: 'Add video after clip', intent: 'Duplicate selected parent video', tags: [],
+              command_ordinals: [0], patch: [], reads: [{ kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${prepared.afterClipId}`],
+                state: { state: 'present', value: authoredJson(anchor) } }] }];
+          } else {
+            commands = [{ schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent',
+              args: { row: authoredJson(row), media: authoredJson(media) }, intent: {} }];
+          }
         }
         if (!commands) {
           const clips = (payload.config as Record<string, OutboxJson>).clips;
@@ -360,7 +397,9 @@ export function createTimelineLocalSaveHandoff(options: {
         }
         // The encoder supplies guards and created IDs; these bytes are never a wire DTO.
         const pending = commands ? options.session.append({ before: toOutboxJson(before), after: toOutboxJson(after),
-          label: 'Add media', commands }) : options.session.appendDocument({ before, after,
+          label: mediaSteps ? 'Add video after clip' : 'Add media', commands,
+          ...(mediaReads && mediaSteps ? { reads: mediaReads, steps: mediaSteps,
+            rationale: mediaSteps[0].intent, group_id: mediaSteps[0].id } : {}) }) : options.session.appendDocument({ before, after,
           roots: [{ ref: 'parent', revisionId: before.parent_revision.revision_id, contentDigest: before.parent_revision.content_digest }],
           ...(reads === undefined ? {} : { reads, merge: 'fields' as const }),
           label: 'Edit timeline', step: { id: crypto.randomUUID(), label: 'Edit timeline', intent: gestureBasis ? (gestureBasis.kind === 'split'

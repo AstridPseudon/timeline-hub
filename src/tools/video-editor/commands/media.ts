@@ -1,4 +1,5 @@
 import { updateClipOrder } from '@/tools/video-editor/lib/coordinate-utils.ts';
+import type { MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
 import { getNextClipId, rowsToConfig, type TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import { buildAssetDropEdit, planAssetDropTarget } from '@/tools/video-editor/lib/timeline-asset-plans.ts';
 import { buildDuplicateClipEdit } from '@/tools/video-editor/lib/duplicate-clip.ts';
@@ -48,6 +49,7 @@ export type PlacePreparedMediaPayload = {
   clipId?: string;
   /** Duplicate an existing clip using the normal ripple and metadata rules. */
   afterClipId?: string;
+  oldMediaSelection?: MediaSelection;
   removeClipId?: string;
   /** Remove several clips as part of the same prepared-media mutation. */
   removeClipIds?: string[];

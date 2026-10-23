@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import type { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
+import type { MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { useAssetManagement } from '@/tools/video-editor/hooks/useAssetManagement.ts';
@@ -124,6 +126,8 @@ export function ShotTimelineMediaControls({
   const canSwap = Boolean(selectedClip?.asset)
     && !['text', 'hold', 'effect-layer'].includes(selectedClip?.clipType ?? '')
     && visualTracks.some(track => track.id === selectedClip?.track);
+  const sourceEntry = selectedClip?.asset ? editor.dataRef.current?.registry?.assets[selectedClip.asset] : undefined;
+  const canDuplicateVideo = canSwap && (sourceEntry?.type === 'video' || sourceEntry?.type?.startsWith('video/'));
   const supported = Boolean(runtime.provider.prepareMediaImport);
   const editable = runtime.timelineEditability?.checkTimeline?.().allowed !== false;
   const projectId = validatedProjectId(runtime.project.projectId);
@@ -141,17 +145,19 @@ export function ShotTimelineMediaControls({
     time: number;
     selection: SelectionSnapshot;
     replaceClipId?: string;
+    afterClipId?: string;
+    oldMediaQuery?: Pick<MediaSelection, 'asset' | 'generation_id' | 'variant_id'>;
   };
   const targetRef = useRef<Target | null>(null);
 
-  const choose = (swap: boolean) => {
+  const choose = (swap: boolean, after = false) => {
     setError(null);
     try {
       const currentProjectId = validatedProjectId(runtime.project.projectId);
       const data = editor.dataRef.current;
       const selection = clipSelectionSnapshot(editor.selectedClipIds, editor.selectedTrackId, selectedClip);
-      const time = swap ? selectedClip?.at : currentTime;
-      if (!supported || !editable || !trackId || !data || (swap && !canSwap)) return;
+      const time = swap || after ? selectedClip?.at : currentTime;
+      if (!supported || !editable || !trackId || !data || (swap && !canSwap) || (after && !canDuplicateVideo)) return;
       if (!currentProjectId) {
         setError('The current project scope is unavailable. Choose the target again.');
         return;
@@ -172,10 +178,14 @@ export function ShotTimelineMediaControls({
         timelineId: runtime.timelineId,
         occurrenceId,
         parentDocumentId,
-        trackId: swap ? selectedClip!.track : trackId,
+        trackId: swap || after ? selectedClip!.track : trackId,
         time,
         selection,
         ...(swap ? { replaceClipId: selectedClip!.id } : {}),
+        ...(after ? { afterClipId: selectedClip!.id } : {}),
+        ...(after && selectedClip?.asset && sourceEntry?.generationId && sourceEntry.variantId ? {
+          oldMediaQuery: { asset: selectedClip.asset, generation_id: sourceEntry.generationId, variant_id: sourceEntry.variantId },
+        } : {}),
       };
       inputRef.current?.click();
     } catch (cause) {
@@ -192,9 +202,24 @@ export function ShotTimelineMediaControls({
       if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
         throw new Error('Choose an image or video file.');
       }
+      if (target.afterClipId && !file.type.startsWith('video/')) throw new Error('Choose a video to add after the selected clip.');
       const uploaded = file.type.startsWith('image/')
         ? await assets.uploadImageGeneration(file)
         : await assets.uploadVideoGeneration(file);
+      let oldMediaSelection: MediaSelection | undefined;
+      if (target.afterClipId) {
+        const query = target.oldMediaQuery;
+        const provider = runtimeRef.current.provider as typeof runtime.provider & Partial<Pick<RuntimeDataProvider, 'getProjectMediaSelection'>>;
+        if (query && provider.getProjectMediaSelection) {
+          try {
+            oldMediaSelection = await provider.getProjectMediaSelection(target.projectId, query);
+            if (oldMediaSelection.asset !== query.asset || oldMediaSelection.generation_id !== query.generation_id
+              || oldMediaSelection.variant_id !== query.variant_id) oldMediaSelection = undefined;
+          } catch {
+            // Keep the upstream preview; the save handoff refuses an unauthenticated draft.
+          }
+        }
+      }
       if (!mounted.current) return;
       const currentEditor = editorRef.current;
       const currentRuntime = runtimeRef.current;
@@ -229,15 +254,20 @@ export function ShotTimelineMediaControls({
         || (currentData?.head?.projectId !== undefined && currentData.head.projectId !== target.projectId)) {
         throw new Error('The shot changed while choosing media. Choose the target again.');
       }
-      const preparedAsset = assetsRef.current.prepareGenerationAsset(uploaded);
+      let preparedAsset = assetsRef.current.prepareGenerationAsset(uploaded);
       if (!preparedAsset) throw new Error('Could not resolve the registered project media selection.');
+      if (target.afterClipId && preparedAsset.mediaSelection) {
+        preparedAsset = { ...preparedAsset, assetKey: preparedAsset.mediaSelection.asset };
+      }
       const result = commandsRef.current.addClip({
         preparedAsset,
         trackId: target.trackId,
         time: target.time,
         ...(target.replaceClipId ? { replaceClipId: target.replaceClipId } : {}),
+        ...(target.afterClipId ? { afterClipId: target.afterClipId, oldMediaSelection } : {}),
       });
       if (!result.ok) throw new Error(result.error.message);
+      if (target.afterClipId && !oldMediaSelection) setError('Could not resolve the source Runtime project media selection. Draft retained; reload the timeline, then import the media again.');
     } catch (cause) {
       if (mounted.current) setError(cause instanceof Error ? cause.message : 'Could not place shot media.');
     } finally {
@@ -252,6 +282,9 @@ export function ShotTimelineMediaControls({
       </Button>
       <Button type="button" size="sm" variant="outline" disabled={!supported || !editable || !projectId || busy || !canSwap} onClick={() => choose(true)}>
         Swap selected clip
+      </Button>
+      <Button type="button" size="sm" variant="outline" disabled={!supported || !editable || !projectId || busy || !canDuplicateVideo} onClick={() => choose(false, true)}>
+        Add video after selected clip
       </Button>
       <span className="text-xs text-muted-foreground">
         {busy ? 'Importing media…' : canSwap ? `Selected clip: ${selectedClip!.id}` : `Add at ${displayTime} on ${trackId ?? 'a visual track'}; select one media clip to swap.`}

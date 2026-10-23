@@ -1,4 +1,5 @@
 import type { TimelineEditability } from '@/tools/video-editor/lib/timeline-editability.ts';
+import type { MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
 import { getAssetImmediateSource } from '../lib/asset-registry.ts';
 import { canonicalJsonStringify } from '../data/typed/timelineBundle.ts';
 import { useMemo } from 'react';
@@ -83,6 +84,7 @@ export interface AddClipCommandInput {
   insertAtTop?: boolean;
   clipSpanSeconds?: number | null;
   afterClipId?: string;
+  oldMediaSelection?: MediaSelection;
   clipId?: string;
   removeClipId?: string;
   removeClipIds?: string[];
@@ -484,6 +486,7 @@ export function createTimelineCommands(
               : {}),
             at: Math.max(0, preparedAt),
             ...(input.afterClipId !== undefined ? { afterClipId: input.afterClipId } : {}),
+            ...(input.oldMediaSelection !== undefined ? { oldMediaSelection: input.oldMediaSelection } : {}),
             forceNewTrack: input.forceNewTrack ?? false,
             insertAtTop: input.insertAtTop ?? false,
             ...(input.clipSpanSeconds !== undefined ? { clipSpanSeconds: input.clipSpanSeconds } : {}),

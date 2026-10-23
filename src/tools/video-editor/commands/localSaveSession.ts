@@ -19,6 +19,10 @@ export interface LocalSave {
   after: OutboxJson;
   label: string;
   commands?: CommitRequest['commands'];
+  reads?: CommitRequest['reads'];
+  steps?: CommitRequest['steps'];
+  rationale?: CommitRequest['rationale'];
+  group_id?: CommitRequest['group_id'];
 }
 
 type StoredSave = LocalSave & { kind: 'local-save'; displayBasis: TimelineCommandBasis; documentIntent?: OutboxJson };
@@ -167,12 +171,15 @@ export async function createLocalSaveSession(options: Options) {
             command_ordinals: [0], patch: patch.changes }],
             merge: patch.merge ?? (patch.reads === undefined ? 'atomic' : 'fields'),
             ...(patch.reads === undefined ? {} : { reads: patch.reads }) }
-            : { steps: [{ id: intent.id, label: original.label, intent: original.label, tags: [],
-              command_ordinals: commands.map((_, index) => index), patch: [] }], merge: 'fields' };
+            : { steps: original.steps ?? [{ id: intent.id, label: original.label, intent: original.label, tags: [],
+              command_ordinals: commands.map((_, index) => index), patch: [] }], merge: 'fields',
+              ...(original.reads === undefined ? {} : { reads: original.reads }) };
           const request: CommitRequest = { api_version: 1, project_id: options.scope.projectId, timeline_id: options.scope.timelineId,
             base_revision_id: head.revisionId, base_publication_id: head.publicationId,
             commands, source: { via: 'app' } };
           Object.assign(request, { label: original.label, dry_run: false });
+          if (original.rationale !== undefined) request.rationale = original.rationale;
+          if (original.group_id !== undefined) request.group_id = original.group_id;
           if (fullV2) Object.assign(request, metadata);
           return { method: 'POST',
             path: `/v1/projects/${encodeURIComponent(options.scope.projectId)}/timelines/${encodeURIComponent(options.scope.timelineId)}/commit`,
