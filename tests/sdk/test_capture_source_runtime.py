@@ -5,6 +5,7 @@ content at admission, so forged captures are refused before any task exists.
 """
 import hashlib
 import json
+import sys
 from copy import deepcopy
 from pathlib import Path
 from types import SimpleNamespace
@@ -16,7 +17,6 @@ from astrid.core.rendering.contracts import RenderRequest
 from astrid.core.timeline.authoring_bundle import open_authoring_bundle, preview_authoring_candidate
 from astrid.sdk.timeline_filmstrip import prepare_filmstrip
 from tests.helpers.runtime import use_runtime
-from tests.timeline.test_authoring_bundle import AUDIO, OLD, _closure, _replace_values
 
 pytestmark = pytest.mark.integration
 CAPABILITY = "rendering.timeline_visualize"
@@ -29,6 +29,27 @@ class CaptureRuntime:
 
     def __init__(self, service, project):
         self.service, self.project_id = service, project
+        timelines = service.list_timelines(project)["items"]
+        assert len(timelines) == 1
+        timeline = service.get_project_timeline(project, timelines[0]["timeline_id"])
+        self.timeline_id = timeline["timeline_id"]
+        self.parent_revision_id = timeline["head_revision_id"]
+        parent = service.get_project_parent_composition_revision(
+            project, self.timeline_id, self.parent_revision_id,
+        )
+        self.occurrences = parent["payload"]["occurrences"]
+        occurrence = self.occurrences[0]
+        self.shot_id = occurrence["shot_id"]
+        self.shot_revision_id = occurrence["shot_revision_id"]
+        self.shot_pairs = list(dict.fromkeys(
+            (row["shot_id"], row["shot_revision_id"]) for row in self.occurrences
+        ))
+        self.internal_revision_ids = []
+        for shot_id, shot_revision_id in self.shot_pairs:
+            shot = service.get_project_shot_revision(project, shot_id, shot_revision_id)
+            if shot["internal_timeline_revision_id"] not in self.internal_revision_ids:
+                self.internal_revision_ids.append(shot["internal_timeline_revision_id"])
+        self.internal_revision_id = self.internal_revision_ids[0]
         self.media = SimpleNamespace(list=self.media_list)
         self._remote = SimpleNamespace(_transport=self)
 
@@ -37,7 +58,7 @@ class CaptureRuntime:
         return {**row, "project_id": row["id"]}
 
     def list_timelines(self, project, **_kwargs):
-        return [[self.service.get_project_timeline(project, "main")], None]
+        return [[self.service.get_project_timeline(project, self.timeline_id)], None]
 
     def media_list(self, project, **kwargs):
         page = self.service.list_project_objects(project, **kwargs)
@@ -56,13 +77,18 @@ class CaptureRuntime:
         return self.service.object(digest)[1]
 
     def snapshot(self, working_copy=False):
-        inputs = {"composed_capture": True, "timeline_ref": "main", "revision_id": "parent-1"}
+        inputs = {"composed_capture": True, "timeline_ref": self.timeline_id,
+                  "revision_id": self.parent_revision_id}
         self.authoring_preview = None
         if working_copy:
-            parent = self.get_project_parent_composition_revision(self.project_id, "main", "parent-1")
-            shot = self.get_project_shot_revision(self.project_id, "shot-shared", "shot-rev-1")
-            internal = self.get_project_timeline_revision(self.project_id, "main", "internal-1")
-            bundle = open_authoring_bundle(parent, shot_revisions=[shot], internal_timeline_revisions=[internal])
+            parent = self.get_project_parent_composition_revision(
+                self.project_id, self.timeline_id, self.parent_revision_id,
+            )
+            shots = [self.get_project_shot_revision(self.project_id, shot_id, revision_id)
+                     for shot_id, revision_id in self.shot_pairs]
+            internals = [self.get_project_timeline_revision(self.project_id, self.timeline_id, revision_id)
+                         for revision_id in self.internal_revision_ids]
+            bundle = open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
             # A real unsaved edit; it must not silently become the saved base.
             bundle["parent"]["config"]["opaque_parent_config"] = {"unsaved": True}
             inputs["authoring_preview"] = preview_authoring_candidate(bundle)
@@ -77,9 +103,9 @@ class CaptureRuntime:
                                        idempotency_key="capture-" + digest.split(":")[1])
         assert response["data"]["object_id"] == digest
         if uncertified:
-            return {"digest": digest, "project_id": self.project_id, "timeline_id": "main", "source_kind": "cas"}
+            return {"digest": digest, "project_id": self.project_id, "timeline_id": self.timeline_id, "source_kind": "cas"}
         authority = snapshot["metadata"]["capture_authority"]
-        ref = {"digest": digest, "project_id": self.project_id, "timeline_id": "main",
+        ref = {"digest": digest, "project_id": self.project_id, "timeline_id": self.timeline_id,
                "revision_id": authority["parent_revision_id"],
                "revision_digest": authority["parent_content_digest"], "source_kind": "revision"}
         marker = snapshot["metadata"].get("working_copy")
@@ -92,7 +118,8 @@ class CaptureRuntime:
 
     def request(self, snapshot, *, inline=False, duplicate=None, forward_candidate=True, uncertified=False):
         authority = snapshot["metadata"].get("capture_authority", {})
-        context = {"mode": "composed_capture", "project_id": self.project_id, "timeline_id": "main",
+        context = {"mode": "composed_capture", "project_id": self.project_id,
+                   "timeline_id": self.timeline_id,
                    "revision_id": authority.get("parent_revision_id")}
         if inline:
             context["capture_snapshot"] = snapshot
@@ -126,39 +153,147 @@ def runtime(tmp_path):
 
 
 def open_source_runtime(tmp_path, before_provider=lambda runtime: None):
-    """Saved parent-1 is published untracked; ``before_provider`` may publish more saved revisions first.
+    """Build the source through Runtime media custody and semantic commands.
 
-    A provider bootstraps tracked heads at create_timeline and refuses untracked publications, so the
-    provider is registered only after the saved chain. Runtime then installs that chain as verified legacy.
+    Generation selection, CAS custody, commit receipts, and the three-plane
+    closure all come from existing Runtime/Agent APIs before the test provider
+    and task capability are registered.
     """
-    use_runtime()
-    from runtime_protocol.service import RuntimeService
-    from runtime_protocol.store import RealmStore
+    runtime_root = use_runtime()
+    if str(runtime_root / "tests") not in sys.path:
+        sys.path.insert(0, str(runtime_root / "tests"))
+    from runtime_protocol.timeline_commit_port import route_path
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+    from test_generation_publish_v1_settlement import _fixture, _output, _settle
 
-    root = tmp_path / "realm"
-    RealmStore.initialize(root).close()
-    service = RuntimeService(root)
+    from astrid.sdk.timeline.capture import capture_track_create
+    from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.timeline.native_initialize import capture_initialize
+    from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+    from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_add_media
+
+    def effect(project_id):
+        return {
+            "effect_type": "generation.publish_v1",
+            "target_id": project_id,
+            "payload": {
+                "version": 1,
+                "modality": "video",
+                "generation_type": "multi_output_render",
+                "metadata": {},
+                "partial_success_policy": "reject",
+                "groups": [{
+                    "group_key": "main",
+                    "selectors": [{
+                        "selector": "picture", "ordinal": 0,
+                        "variant_key": "picture", "output_port": "picture",
+                    }],
+                }],
+            },
+        }
+
+    service, project_row, generation_task, attempt, generation_effect = _fixture(
+        tmp_path, effect_factory=effect, slug="capture-source",
+    )
+    project = project_row["id"]
+    _settle(
+        service, attempt,
+        [_output(
+            b"source picture", output_port="picture", group_key="main",
+            variant_key="picture", ordinal=0, name="source.mp4",
+            media_type="video/mp4", duration_seconds=1.0,
+        )],
+        effect=generation_effect,
+    )
+    managed = service.managed_outputs(generation_task["task"]["id"])[0]
+    media = service.get_project_media_selection(
+        project,
+        {"association_id": managed["association_id"], "object_id": managed["object_id"],
+         "version": managed["lifecycle"]["version"]},
+        authorize=lambda: None,
+    )
+    verified_media = service.get_project_verified_media(project, media, authorize=lambda: None)
+    service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+    service.create_timeline(project, "main", idempotency_key="capture-source-timeline")
+
+    def read_document():
+        timeline = service.get_project_timeline(project, "main")
+        parent = service.get_project_parent_composition_revision(
+            project, "main", timeline["head_revision_id"],
+        )
+        shots, internals, seen = [], [], set()
+        for occurrence in parent["payload"]["occurrences"]:
+            pair = (occurrence["shot_id"], occurrence["shot_revision_id"])
+            if pair in seen:
+                continue
+            seen.add(pair)
+            shot = service.get_project_shot_revision(project, *pair)
+            shots.append({key: shot[key] for key in (
+                "shot_id", "revision_id", "internal_timeline_revision_id",
+                "content_digest", "payload",
+            )})
+            internal = service.get_project_timeline_revision(
+                project, "main", shot["internal_timeline_revision_id"],
+            )
+            internals.append({key: internal[key] for key in (
+                "timeline_id", "revision_id", "content_digest", "payload",
+            )})
+        return {
+            "schema_version": 1, "project_id": project, "timeline_id": "main",
+            "parent_revision": {key: parent[key] for key in (
+                "revision_id", "content_digest", "payload",
+            )},
+            "shot_revisions": shots,
+            "internal_timeline_revisions": internals,
+            "dependency_manifest": parent["dependency_manifest"],
+        }
+
+    def submit(command, key):
+        head = service.get_project_timeline(project, "main")
+        return service.commit_timeline(
+            project, "main",
+            {"api_version": 1, "project_id": project, "timeline_id": "main",
+             "base_revision_id": head["head_revision_id"],
+             "base_publication_id": head["head_publication_id"], "commands": [command]},
+            idempotency_key=key, publisher="capture-source-fixture",
+            invocation_path=route_path(project, "main"), authorize=lambda: None,
+        )
+
+    bundle = bundle_from_document(read_document())
+    initialize = capture_initialize(
+        bundle, name="Main", slug="main",
+        output={"resolution": "1280x720", "fps": 30, "file": "output.mp4",
+                "background": None, "background_scale": None},
+    )
+    submit(initialize, "capture-source-init")
+    bundle = bundle_from_document(read_document())
+    parent_track = capture_track_create(
+        bundle, "parent", {"id": "picture", "kind": "visual", "role": "output"},
+    )
+    submit(parent_track, "capture-source-parent-track")
+    bundle = bundle_from_document(read_document())
+    birth = capture_occurrence_create(
+        bundle, "occurrence-1", "shot-1", name="Opening", track="picture", on=0, duration=1,
+    )
+    submit(birth, "capture-source-birth")
+    bundle = bundle_from_document(read_document())
+    child_track = capture_track_create(
+        bundle, "occurrence:occurrence-1", {"id": "picture", "kind": "visual"},
+    )
+    submit(child_track, "capture-source-child-track")
+    bundle = bundle_from_document(read_document())
+    media_row = {
+        "id": "picture-1", "clipType": "video", "asset": media["asset"],
+        "track": "picture", "at": 0, "hold": 1, "from": 0, "to": 1, "speed": 1,
+    }
+    media_command = capture_occurrence_add_media(
+        bundle, "occurrence:occurrence-1", media_row, media,
+        verified_media=[verified_media],
+    )
+    submit(media_command, "capture-source-media")
     try:
-        from astrid.sdk.timeline.commit import create_runtime_commit_service
-
-        project = service.create_project({"slug": "source-probe", "name": "Source probe"})["id"]
-        service.create_timeline(project, "main", idempotency_key="timeline")
-        replacements = {}
-        for old, data in ((OLD, b"source picture"), (AUDIO, b"source audio")):
-            replacements[old] = service.ingest(project, data, idempotency_key="media-" + old.split(":")[1])["data"]["object_id"]
-        parent, shots, internals = (_replace_values(part, replacements) for part in _closure(shared=False))
-        # This probe does not need a text-binding authority fixture.
-        shots[0]["payload"]["text_bindings"] = []
-        for row in [*shots, *internals]:
-            row.pop("content_digest")
-        service.publish_parent_composition(project, "main", {
-            "project_id": project, "timeline_id": "main", "expected_head": None,
-            "parent_revision_id": "parent-1", "parent_composition": parent["payload"],
-            "shot_revisions": shots, "internal_timeline_revisions": internals,
-        }, idempotency_key="source")
         runtime = CaptureRuntime(service, project)
         before_provider(runtime)
-        service.register_timeline_commit_provider(create_runtime_commit_service())
         service.register_capability({"capability_id": CAPABILITY, "definition_digest": CAPABILITY_DIGEST})
         service.register_executor({"executor_id": "probe", "capabilities": [CAPABILITY]})
         yield runtime
@@ -188,7 +323,8 @@ def test_current_capture_reaches_claim_and_verified_host(runtime, tmp_path, work
         )
 
         parent, projected, expansion = _project_exact_parent_head(
-            client=runtime, project_id=runtime.project_id, timeline_id="main", parent_revision_id="parent-1")
+            client=runtime, project_id=runtime.project_id, timeline_id=runtime.timeline_id,
+            parent_revision_id=runtime.parent_revision_id)
         assert snapshot["config"] == projected.config
         assert snapshot["registry"] == projected.registry
         assert binding["authority"]["expansion"] == {
@@ -208,9 +344,9 @@ def test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host(runtim
     assert binding["authority"]["expansion"]["shots"][0]["content_digest"]
     assert binding["authority"]["expansion"]["children"][0]["config_hash"]
     assert binding["authority"]["expansion"]["shots"][0]["content_digest"] == runtime.get_project_shot_revision(
-        runtime.project_id, "shot-shared", "shot-rev-1")["content_digest"]
+        runtime.project_id, runtime.shot_id, runtime.shot_revision_id)["content_digest"]
     assert binding["authority"]["expansion"]["children"][0]["config_hash"] == runtime.get_project_timeline_revision(
-        runtime.project_id, "main", "internal-1")["content_digest"]
+        runtime.project_id, runtime.timeline_id, runtime.internal_revision_id)["content_digest"]
     assert binding["ref"]["source_kind"] == ("working_copy" if working_copy else "revision")
     if working_copy:
         marker = snapshot["metadata"]["working_copy"]
@@ -220,7 +356,8 @@ def test_saved_projection_and_unsaved_candidate_reach_real_claim_and_host(runtim
         assert task["spec"]["spec"]["inputs"]["authoring_preview"] == runtime.authoring_preview
         from runtime_protocol.errors import NotFoundError
         with pytest.raises(NotFoundError):
-            runtime.get_project_parent_composition_revision(runtime.project_id, "main", marker["candidate_parent_revision_id"])
+            runtime.get_project_parent_composition_revision(
+                runtime.project_id, runtime.timeline_id, marker["candidate_parent_revision_id"])
     else:
         assert "authoring_preview" not in task["spec"]["spec"]["inputs"]
     from astrid.core.rendering.verified_source import SOURCE_ENV

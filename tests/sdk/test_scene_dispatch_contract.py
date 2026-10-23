@@ -20,7 +20,7 @@ def runtime(tmp_path):
 def test_scene_request_and_sdk_admission_keep_certified_source(runtime, tmp_path, monkeypatch, working_copy):
     # Real projection and certification; no render history, sockets or Node.
     snapshot = runtime.snapshot(working_copy)
-    inputs = {'timeline_ref': 'main', 'revision_id': 'parent-1'}
+    inputs = {'timeline_ref': runtime.timeline_id, 'revision_id': runtime.parent_revision_id}
     if working_copy:
         inputs['authoring_preview'] = deepcopy(runtime.authoring_preview)
     request, context = timeline_filmstrip._scene_only_request(
