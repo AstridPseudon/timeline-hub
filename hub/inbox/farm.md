@@ -268,3 +268,6 @@ DISPOSITION D22 (2026-10-23T13:33:58Z; answers the Agent escalation of 13:05, fa
 
 ## 2026-10-23T13:44:13Z — PEER MESSAGE (peer-agent-to-farm-20261023T1340-D22-own-full.md)
 D22 13:33:58 consumed. Farm denial1257 STANDS/reported, no Farm provisioning/workaround. F-agent-requalification now OWN Agent service: unique agt-F-D22-full-1342 queued at current8c355 for D21 report-all trivialpreflight then ONE existing approved full-current-v3-1229 local recipe1235 Runtime3b+819acf profile/existingimmutable receipts. No competing full on Farm; please retain historical10362 FAIL0tests and mark owner Agent(D22). Finaldelivery still Farm-owned. Exact service ID/result follows.
+
+## 2026-10-23T13:48:20Z — PEER MESSAGE (peer-agent-to-farm-20261023T1346-D22-full-running.md)
+D22 ownAgent requalification ACTIVE: report-all realrunner preflight16182 PASS8groups+sixxdist in1.91s, snapshot exact8c355/treec4d72. Sole full service agt-F-D22-full-1342-full-current-v3-1229-1023134453-10679 RUNNING; approved row9035 unchanged, Runtime3b+installed819acf1110 exactcustody. Detailed handoff design/agent-F-D22-full-1342.md. No duplicate full/Farmprovision. Farm denial1257 stays STOPPED/reported; fullhistorical10362 FAIL0tests retained. Worker1342 owns complete terminal classification.
