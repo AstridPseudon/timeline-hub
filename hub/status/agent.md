@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T04:58:37Z | dispatcher heartbeat 4s | live 2 (sol 1, luna 1, other 0) | busy30 13 | status age 0m -->
+<!-- agent | 2026-10-23T05:00:05Z | dispatcher heartbeat 2s | live 3 (sol 2, luna 1, other 0) | busy30 15 | status age 0m -->
 # agent board, 2026-10-23T04:57:48Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -12,8 +12,8 @@
 | R3 | dry-run/structured errors | Luna | R1,R2r | merged | agt-R3-meta-integrated-0235 | Integratedd6f equals reviewedce863:150+2 and7+3+1 PASS; original422 vs replay409 | 360826a17;73df0a99b |
 | AG-V1seam | authored meta reload | Luna | R3,V1 | merged | agt-R3-meta-integrated-0235 | Independent+integrated150+7+3+1; real params.meta dependency preserved, ViewingACK0247 | ce8639a26 |
 | V2 | D12 no new invalidity | Sol; Luna review/proof | R1,D12 | merged | agt-V2-home-proof-0445 | Independent147; actual9729 scoped144 PASS/2150/1915. ccc removed3 unrelatedmeta tests; currentcorrection restores, no wholehome claim | 89c700ade;9729c07b7 |
-| G2 | open/commit bounded rerun | Sol; Luna review | R1,U2,34e | doing | agt-G234-home-correction-0442 | Review0401 FAIL live create_empty; actualccc unqualified; current-preserving correction active | approved5f0;home9729 |
-| G3 | emitter/CLI/sheet | Sol; Luna review | G2 | doing | agt-G234-home-correction-0442 | Correct actualhome to approved5f0 with publicfacade and retainedV2; no stale ancestry approval | 5f0fb2ed |
+| G2 | open/commit bounded rerun | Sol; Luna review | R1,U2,34e | doing | agt-G234-correction-review-0500 | Authored9cf283/184/72/41 PASS; livecreatePASS/renderFAIL unchangedelementRef. Independentassemblyreviewactive, V2repair0500 | approved5f0;home9729 |
+| G3 | emitter/CLI/sheet | Sol; Luna review | G2 | doing | agt-G234-correction-review-0500 | Correction9cf restoresmetadata/tests, sixexactP4/finalfacade; independentreviewactive | 5f0fb2ed |
 | G4-writers | narration/update-element | Sol join; Luna review | G2 | doing | agt-G234-home-correction-0442 | Reviewed f303 source retained in current-preserving assembled correction | f303→5f0 |
 | G4-media | live create_empty/parent-media | Luna; independent Luna | G2 | review | agt-G4-create-empty-review-0442 | Independent0442 PASS14direct+1live,24vendor/artifact,2149/1914; original redo3 separatelyaudit0446. Current assembly active | f677e9bab |
 | G4-render | requester render publication | Luna; Sol join | G2 | doing | agt-G234-home-correction-0442 | Independent0416 PASS actualRemoteTasks.create1+13; group independent0421 PASS25; current join active | 33fc3879;e045b37f |
@@ -26,7 +26,7 @@
 | G4-group | optional sealed group forwarding | Luna; independent Luna | G4 | review | agt-G234-home-correction-0442 | Independent0421 PASS25/2149/1915; no new DTO/pin, assembled with admit fix | e045b37f |
 | G5 | delete superseded paths | Luna | G3,G4,P1 GO | gated:P1 | — | H3 NO-GO; no G5 deletion work started | — |
 | P4-merge-audit | correct unintended product ancestry | Sol; Luna review next | actualccc | doing | agt-P4-ccc-ancestry-audit-0452; Solcorrection0442 | Explicit independent Luna29path audit perorchestrator04:40. NO MORE integration merges until audit/revert PASS | ccc521b78 UNQUALIFIED |
-| R1-legacy-replay | authenticated landing step metadata | Luna | R1,G2 | doing | agt-R1-legacy-replay-review-0453 | Authorc793 2+28+126PASS; authenticatedrequest/head forwarded+landingsteps retained. Actualnode now blockedAgentV2fps atsetup, separateaudit0453 | c79398561 |
+| R1-legacy-replay | authenticated landing step metadata | Luna | R1,G2 | doing | agt-R1-legacy-replay-review-0453 | IndependentPASS2+28+127/ratchets/normalcopies; actualnode blockedV2FPSscope0458, sourceawaitscurrentport afteraudithold | c79398561 |
 | V4-fixture-status | canonical created/C0 status corrections | Viewing Luna; independent Luna | C0 | merged | vw-V4-C0-status-adaptation | Reviewed5292 scopedPASS4+fixture38ePASS1; homef95 merged. Overall54 remains open; no arithmetic/full replay credit | 5292b388a;f95f1e169 |
 | R2-derived-undo | two deferred anchor undo positives | orchestrator D14 | deferred relational timing | gated:D14-deferred | Viewing owns original failing evidence | D14 retain tests unchanged/unskipped/visibly failing; no C0 change/guard exception/54PASS claim | ruling04:40 |
 | A3-fork-plan | same-selected-owner source plan delivered | Sol; independent Luna PASS | independent0422 | gated:orchestrator | agt-A3-source-plan-review-0455 | Independent designreadinessPASS, productionFAIL/NO-CARRIER. Unsupported opt-in only proposal; no productdelta | flatplan0445+review0455 |
@@ -34,6 +34,7 @@
 | R2-bootstrap-redo | authenticate root restore redo observations | Sol R2; Luna review next | audit0446 | doing | agt-R2-bootstrap-redo-fix-0450 | Exact inverse stage input-image/binding mismatch, inherited5f0; separate from legacyreplay. Original3 actual cases retained | basef677 |
 | V2-fps | legacy cross-location FPS parity scope | Luna audit PASS98; decision owed | D12/C0 scope | blocked:orchestrator | audit0453; escalation0458 | Parentnumeric29.97002997002997 vs canvasexact30000/1001, newV2parity refuses unchangedlegacy; originalnode unexecuted | no source change |
 | G4-assembly-auth | Runtime native assembly alias authentication | Runtime Luna author/review | actual parent/source and asset aliases | blocked:runtime | rt-R2r-assembly-alias-review-0445 | Runtimeboardchecked:0ed draft/auth68PASS, reviewactive; no new clienttuple; Runtime owns changed-source116 testport | 0ed3e846 draft |
+| V2-elementref | preserve legacy text reference under D12 | Sol after repeated Luna FAIL | actualG234livefinding | doing | agt-V2-legacy-elementref-fix-0500 | Existing media textbinding wronglytreatedselectedelement; no fixture/guardwaiver; realcreate/render2nodes aftermeaningfulfix | base9cf0fde2 |
 Resolved: runtime — Normal frozen strict34e adoption DONEf894/all15/d106; executionad823 compatible. Runtime P5 independent strict14+fresh crash24 PASS on62c454/f894; no duplicate qualification.
 Blockers: agent — MERGE HOLD per late-consumed orchestrator04:40: actual f95 contains UNQUALIFIEDccc P4 ancestry; only audit/revert merges until independent auditPASS. Reviewed5292 mergedf95 before consuming this late inbox hold. Sol current-preserving correction0442 active; G234 and wholehome acceptance unclaimed until independent review and integrated proof.
 Blockers: orchestrator — A3 same-owner carrier/frozen tuple exception AND V2legacyFPSparity scope owed; independent designproposal0445/0455 and audit0453 delivered. Escalations same-owner-carrier0445 and legacy-fps-parity0458 written. R2 undo2 scope RESOLVED byD14 deferred (no guards/tests changed).
