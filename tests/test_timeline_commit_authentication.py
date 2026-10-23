@@ -10,11 +10,62 @@ from test_timeline_commit_port import commit, request, rows
 
 from runtime_protocol.errors import RuntimeErrorBase
 from runtime_protocol.timeline_commit import CommitRejected
-from runtime_protocol.timeline_commit_auth import _coherent_materialization, site
+from runtime_protocol.timeline_commit_auth import _coherent_materialization, site, validate_claims
 from runtime_protocol.timeline_commit_port import route_path
 from runtime_protocol.timeline_commit_validation import digest, validate_commit_value
 
 service = port_tests.service
+
+
+def _claim_case(*, op="timeline.inverse", submitted_created=None, include_created=False,
+                recorded_created=("parent/clip:restored",), facts=None, publications=None,
+                selected_steps=None):
+    command = {"schema_version": 1, "op": op, "version": "1", "select": None,
+               "args": {"publications": list(publications or ["publication"])} }
+    if selected_steps is not None:
+        command["args"]["steps"] = copy.deepcopy(selected_steps)
+    if include_created:
+        command["created"] = list(submitted_created or [])
+    submitted = copy.deepcopy(command)
+    record_command = copy.deepcopy(command)
+    record_command["created"] = list(recorded_created)
+    record = {"command": record_command, "created": copy.deepcopy(facts or [
+        {"ref": ref, "kind": "clip", "owner": "parent"} for ref in recorded_created]),
+              "writes": [{"ref": ref, "path": [], "before": {"state": "absent"},
+                          "after": {"state": "present"}} for ref in recorded_created],
+              "derived_writes": []}
+    records = {"commands": [record], "undo_of": list(publications or ["publication"]),
+               "undo_steps": copy.deepcopy(selected_steps)}
+    return {"commands": [submitted]}, records
+
+
+def test_inverse_omitted_created_claim_is_distinguished_from_explicit_empty_and_ordinary():
+    request, records = _claim_case()
+    validate_claims(request, records)
+
+    for submitted_created in ([], ["parent/clip:forged"]):
+        explicit_claim, _ = _claim_case(include_created=True, submitted_created=submitted_created)
+        with pytest.raises(CommitRejected):
+            validate_claims(explicit_claim, records)
+
+    ordinary, ordinary_records = _claim_case(op="clip.move")
+    with pytest.raises(CommitRejected):
+        validate_claims(ordinary, ordinary_records)
+
+
+@pytest.mark.parametrize("mutation", ["publication", "step", "fact", "write"])
+def test_inverse_omitted_created_claim_requires_exact_restoration_identity(mutation):
+    request, records = _claim_case(selected_steps={"publication": ["step"]})
+    if mutation == "publication":
+        records["undo_of"] = ["foreign-publication"]
+    elif mutation == "step":
+        records["undo_steps"] = {"publication": ["foreign-step"]}
+    elif mutation == "fact":
+        records["commands"][0]["created"][0]["ref"] = "parent/clip:forged"
+    else:
+        records["commands"][0]["writes"] = []
+    with pytest.raises(CommitRejected):
+        validate_claims(request, records)
 
 
 def body(service):
