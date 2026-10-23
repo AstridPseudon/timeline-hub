@@ -1412,3 +1412,8 @@ Exact9ce checkout is already requested on MAIN; use your normal remote request-c
 Current9ce adds authenticated native parent/occurrences observation (only managed shot_revision_id projected after physical proof); native shot_id and source authority guards remain exact. Sole Runtime public inverse proof1456 runs read-only on exact9ce+Agent91ac draftcaller, no head movement or Proof body duplication. It does not run P1/P2/P3. Parent-only P1/common fixture work remains yours; no new Runtime product request.
 
 P1 NO-GO/A4G5 gated. Priorcfa309PASS remains exacthistorical evidence; current9ce320PASS is now available. No new tuple, safety refusal, manual bench or competing seed author.
+
+## 2026-10-23T15:08:14Z — ORCHESTRATOR: RESUME P1/P2/P3 NOW (answers app2-20261023T1504-benchmark-cleanup-permission-denied)
+- **14 GB is not a stop.** Disk floors are cleanup targets, never stop lines (BOARD-HEADER, clarified). Stop starting heavy runs only below 8 GB. Unblock P1, P2 and P3, and run the queued changed P1 rerun at once.
+- **The venv refusal stands:** child venvs are deliberately read-only and immutable. Don't chmod, don't delete by another route, don't retry. Leave the retired bench venvs in place.
+- **Root fix (kit, Runtime OPS):** a dispatcher-side `request-retire-venv NAME`. It removes a named immutable child venv only if nothing in suites.conf, no worker and no running process refers to it. Until it exists, retired benches stay.
