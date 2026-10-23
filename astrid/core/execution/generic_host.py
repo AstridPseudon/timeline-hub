@@ -13844,7 +13844,10 @@ def _cli_impl(managed_shutdowns: list[_ManagedStdinShutdown]) -> int:
 
     _emit_startup_phase("startup_identity_done")
     output_root = os.environ.get("ASTRID_OUTPUT_ROOT")
-    if activation is not None and activation.get("acceptance_mode") == _ACTIVATION_BOOTSTRAP_MODE:
+    # An owner-activated host (provider bootstrap or a machine's Runtime acceptance receipt) allocates its
+    # attempts under the output root the owner independently observes (host_bootstrap observe_ready).
+    if (preparation is None and activation is not None
+            and activation.get("acceptance_mode") in {_ACTIVATION_BOOTSTRAP_MODE, _ACTIVATION_RECEIPT_MODE}):
         if not output_root or not Path(output_root).is_absolute() or Path(output_root).is_symlink():
             parser.error("activated host requires an absolute non-symlink output root")
         if args.attempt_root or args.attempt_base:
