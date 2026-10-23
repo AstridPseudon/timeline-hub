@@ -40,3 +40,13 @@ Result: `1 failed, 41 passed, 1 warning in 5.57s`, exit `1`.
 ### Remaining owner need
 
 Agent R1 owns the remaining fix: check ordered-collection membership/order dependencies before the item-value guard, while preserving `value_conflict` for stale same-field edits. Requalify this exact d8e1578 packet after that repair. Runtime HTTP/App H3 and v2 `merged` acceptance remain unverified; no full, browser, heavy, or socket suite was run.
+
+## Independent requalification review (2026-10-23)
+
+Result: **PASS on exact assembly/report accuracy only; NOT MERGEABLE while red.**
+
+The review read contract `design/commit-v2.md` §§2–4, the current `design/BOARD-HEADER.md`, and this handoff. Corpus base `0e91cc9f3397c425758331ad5a94765bb3a6b0ef`, provider `28b9b966206d7f19c8fc2212d662797e7024ea1c`, and packet `d8e1578bd9f717eb975addb50c2654de70815475` are the stated revisions. All 15 packet blobs are byte-identical to d8e (15 checked, 0 mismatches); all product bytes are exact at provider 28b; and the corpus commit contains only the three intended test/fixture additions. The packet source is exact at d8e, with no skip/xfail/fails weakening markers.
+
+The mandated pytest command reproduced `1 failed, 41 passed, 1 warning in 5.38s`, exit 1. The sole red is stale ordered-list membership removal returning `value_conflict` instead of required `selection_changed`; same-field `value_conflict` and order `selection_changed` remain passing. Ruff, mypy, and `git diff --check` passed. Logs are `/tmp/ap2-P1-corrected-R1-corpus-{pytest,ruff,mypy,diff-check}.log`.
+
+The existing report is truthful: the disjoint-service `rebased` result remains partial old-fixture evidence only, with no new v2 `merged`, Runtime HTTP, App, or H3 claim. No full/browser/heavy/socket suite was run. This review PASS is not mergeability or full P1 completion; re-run the unchanged d8e packet after the Agent R1 precedence repair.
