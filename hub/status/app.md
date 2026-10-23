@@ -1,5 +1,5 @@
-<!-- app | 2026-10-23T18:48:40Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 0m -->
-# app board, 2026-10-23T18:48Z
+<!-- app | 2026-10-23T18:51:12Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 1m -->
+# app board, 2026-10-23T18:51Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | A2-restart-replay | TOP: mounted lostACK/reload/reconnect exact retry | Sol; independent Luna1736 PASS | original cause stillUNKNOWN | merged | app-A2-restart-replay-sol-1728; review1736; integrated1744 | Independent4+102/6files/AppType/lint/diff/bodyhash PASS. Own7b8 ONLY216testlines, no productiondelta. Exact hook/session/outbox/provider lifecycle automatic replay precedeslateobserver; transport/history/restart simulated. HOME3a0 mountedblob0bd79 EXACT reviewed7b8; P1spec03e8 exact810a retained. H9 integrated1744 FINALPASS102/exact3a0tree/2blobs/sharedcacheidentity; no originalbodyGO | 3a0d76503a /7b8f56f9e |
@@ -108,3 +108,5 @@ Checkpoint18:44: template1842 terminalexit0 FINALPASS; normal7argRemotion reques
 Checkpoint18:45: normalRemotion1830 actualSUCCESS/278packages/Node20.19.4/npm10.8.2/templatevalidated/exact787+2a9. Sole --no-cache originalP1 actuallyqueued18:44:58 ID app-P1-local-OPS-1830-ap2-P1-chain-h6-1023184458-8027, target retainedOPS1830 exactApp2107. Peer1845 publishesactualID toProof/Runtime/Agent; Proof owns independentresult/verdict. Report-all runsbeforebodies; NO result/cause/GOyet. Wait SAMEID, no resubmit. Apphead remains2107; A4/upstream merges heldexactproof/gates.
 
 Checkpoint18:48: service8027 FINALFAILexit2 at selector-collection; originalbodiesNOTRUN. Globalsetup/actualbeforeAll/trivialboot passed; actuallistingexception suppressed. ImmediateuniqueLuna app-P1-list-OPS-return-1848 queued ONLYexactNode20listingdiagnosis/currentrowharnesscorrection, no repeatedseed/body/bench/sourceedit. Proofpeer1848 publishedactualboundary/soleownership. Disk14.927GB<15cleanupTARGET/>8GBheavystart; supportedopportunisticcleanup now. No productcause/GO; original22122FAIL2 remainslatestactualbody.
+
+Checkpoint18:51: OPS1848 exactNode20 target --list reproducesactualRED Playwright duplicateinstance beforeAll/no tests; normalsharedgraphlists2PASS controls. No guessedproductcause/body. WorkerqualifiesmechanicalCLI/loaderinvocation ONLYexistingrow, preservesprivate819acfgraph+cases. Sweep3 COMPLETE6staledirs/~12MiBfreed, no permissiondenial; compact-scratch stillrunning. Apphead2107 unchanged; currentFarm1846 newtwoOPSdecisions/normalbenchGREEN areProof-owned, no AppduplicateP3/P2.
