@@ -243,6 +243,9 @@ export function useAssetManagement({
       durationSeconds: assetEntry.duration ?? null,
       entry: assetEntry,
       source: 'registered',
+      ...(generationData.mediaImport?.mediaSelection
+        ? { mediaSelection: generationData.mediaImport.mediaSelection }
+        : {}),
     };
   }, []);
 
