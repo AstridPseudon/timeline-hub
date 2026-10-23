@@ -2114,3 +2114,20 @@ Currentmain21:35normalpubintermediate e481: makerLIVE+kit+COMMITTEDMATCH; reques
 $ORCH/bin/request-runtime agent-remotion-app-p3-079-2a9-2138 079580ca46af77e0292d49dc34386b25c8391f99 f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d /home/user/work/wt/agt-pin-079580ca /home/user/work/wt/rt-pin-2a9e347f 2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d remotion-env-nodes /home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin
 ```
 Usefreshunusedname; existingapprovedApp1830Node/binonly, no PATH/daemonenv/download/Nodeguardwaiver, no failedFarmroute. Childfreshcommandalreadypeer2125, independentofwaitingNodepubifyourexistingapprovedgraphretained. Appownsrealbenches+fullD21reportall+soleoriginalP3. Runtimeproductsourceabd47 unchanged/qualified; no producerapprovalgate/bodyduplicate. No realNode/build/reuse/GOclaimedfromprivatemocks. FullCodexD30installerreport design/handoff-runtime-OPS-D29-toolchain-review-install-2133.md.
+
+## 2026-10-23T21:39:46Z — ORCHESTRATOR DECISION D31
+RULING D31 (2026-10-23T21:39:46Z; answers app-20261023T2124-A4-legacy-parity-scope). One fact decides it, as in D20: **does any PRODUCTION caller reach the legacy transcriptAssociateCapture paths?** That means the mounted editor UI, the Agent CLI or SDK, or the sheets. Check with one read-only worker: grep plus the call graph from the production entry points.
+- **YES (reachable):** it's a writer migration and IN scope, per PLAN §3. Restore the specific obligations on the v2 path:
+  - the config-mirror fallback;
+  - the atomic legacy-review-key delete-and-move;
+  - the collision and shared-row identity_conflict refusals.
+
+  Provider semantics go to Agent as semantic commands on the existing carrier (the D17/D20 pattern), with App calling them. No new generic metadata guard, and no waived assertions.
+- **NO (dormant, test-only):** DEFER this bounded subset. Keep its implementations and tests in the delivery, unchanged and listed in the delivery's 'remaining legacy subset' with a follow-up. Delete the rest of A4 at P1 GO.
+
+Either way, nothing is weakened and no test is retired. The media dependency_changed item stays a separate ordinary row, as you said.
+
+## 2026-10-23T21:39:07Z — PEER MESSAGE (peer-runtime-to-app-20261023T2140-D29-committed-ready.md)
+# D29 full Node carrier committed; normal request ready now
+Actualmain21:38:26 LIVE+hubkit+COMMITTEDhubHEADb1536bdcc55d5d8efef10901485046f38326c42e BOTHexact873ddcfa636b3ae9e285613a6fb65c643e21ac749e00197d582e0c820dd70149 make-runtime and471fd470efeae102140b96b4f97db857e0d6d79b0839afa10a1a00e911b33b5f request-runtime. NormalpublicationCOMPLETE, no manualsync/Git/kitmutation. IndependentPACKAGE2133PASS/actualcaller14normal+env-i/atomicUTCbackups/idle/sourcepreserved detailedpeer2138 +D30installerreport.
+Pleaseconsumeexisting2138exactvalid8argcommandimmediatelyonceactualAppremotethreewayhashesmatch; no furtherRuntimeapproval/review/publicationwait. Freshnamecanmatchyourfinalrow2049underexistinguniquenessguards. Preserve64charlockf4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d; actualsource079/2a9/template/approved1830Node path explicit. Returnrealnormalreceipt +actualNode/npm/source/storecustody; no privateproofrelabeledactualreuse/build. Existingchild2134remoteACKandnormallyqueuedname2049 consumed; no duplicatechildrequestfromRuntime. AppsoleP3/D21reportall/source2107originalbody staysowner. Mainproductabd47unchanged/qualified.

@@ -1927,3 +1927,15 @@ Separate transcript independentApp2114 FINALPASS56/3types/lint boundedtestonly; 
 Appreadonly2123 final publishedexact design/app-A4-media-authority-facts-2123.md. Runtime independent2121 confirms sameactualdrop/currentcaller: dataProvider capturesMediaSelection -> prepareGenerationAsset losesit -> preparedAsset->localprepared-media->doc.patch; noRuntime/Agentguarddefect. Exactold33934817packet is synthetic/harness-only, cannotbeunchangedauthenticatedproviderproof. Do notfabricate selections/manifests/reads orrepeatknownfailedfour. Agent2119correctedfullpositiveoracles sourcePASS consumed; no extraoracleauthor.
 NewAppA3-prepared-selection rowdoing/uniqueLuna app-A3-prepared-selection-carrier-2132 dispatched oncurrente6d. SmallPR ONLY typedTimelineProvisionedAsset.mediaSelection?: existingMediaSelection +actualprepareGenerationAsset preservation/regression; valuesexactRuntime-returnedfivekeys, missingstaysmissing, no newAPI/authority. Stablefield agreedfornextA2saveconsumer; no scalar/filename/registryinference. No currentbody/headchase.
 Then distinct A2 Sol (PLANmarked) willcarryauthenticselection through existingregisteredPythonsemanticmedia command/A2outbox path, not genericunverifiednewmedia doc.patch orTSexecutor. It starts on2132branchaftercarriercommit, review/normalownmerge. Runtime supplied existingselected_media shape/APIauthorityenough; no newRuntimeproductownerneeded. Newauthenticrequest/base/sourcepin packet will be explicitlyNEW, neverold3393relabel, andAgent retains boundedproviderwitnessowner. Alloldpositiveassertions/tests/implKEEP; no deletion/parity/GOcredit.
+
+## 2026-10-23T21:39:46Z — ORCHESTRATOR DECISION D31
+RULING D31 (2026-10-23T21:39:46Z; answers app-20261023T2124-A4-legacy-parity-scope). One fact decides it, as in D20: **does any PRODUCTION caller reach the legacy transcriptAssociateCapture paths?** That means the mounted editor UI, the Agent CLI or SDK, or the sheets. Check with one read-only worker: grep plus the call graph from the production entry points.
+- **YES (reachable):** it's a writer migration and IN scope, per PLAN §3. Restore the specific obligations on the v2 path:
+  - the config-mirror fallback;
+  - the atomic legacy-review-key delete-and-move;
+  - the collision and shared-row identity_conflict refusals.
+
+  Provider semantics go to Agent as semantic commands on the existing carrier (the D17/D20 pattern), with App calling them. No new generic metadata guard, and no waived assertions.
+- **NO (dormant, test-only):** DEFER this bounded subset. Keep its implementations and tests in the delivery, unchanged and listed in the delivery's 'remaining legacy subset' with a follow-up. Delete the rest of A4 at P1 GO.
+
+Either way, nothing is weakened and no test is retired. The media dependency_changed item stays a separate ordinary row, as you said.
