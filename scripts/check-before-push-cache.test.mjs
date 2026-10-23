@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,7 +23,7 @@ function fixture(t) {
   execFileSync('git', ['-C', root, 'config', 'user.email', 'pre-push@example.invalid'], { env });
   writeFileSync(path.join(root, '.nvmrc'), `${process.version.slice(1)}\n`);
   writeFileSync(path.join(root, 'package-lock.json'), '{"lockfileVersion":3}\n');
-  writeFileSync(path.join(root, '.gitignore'), 'node_modules/\n.env\n');
+  writeFileSync(path.join(root, '.gitignore'), 'node_modules/\n.env*\n');
   writeFileSync(path.join(root, '.env'), 'DUMMY_LOCAL_SECRET=fixture-only\n');
   writeFileSync(path.join(root, 'tracked.txt'), 'clean\n');
   mkdirSync(path.join(root, 'node_modules'));
@@ -61,6 +61,10 @@ function makeCounterCommand(t) {
 test('caches only passing checks for an exact clean commit, toolchain, and environment', (t) => {
   const { root, env } = fixture(t);
   const counter = makeCounterCommand(t);
+  const envTarget = path.join(os.tmpdir(), `astrid-prepush-env-target-${process.pid}`);
+  t.after(() => rmSync(envTarget, { force: true }));
+  writeFileSync(envTarget, 'DUMMY_SYMLINK_ENV=first\n');
+  symlinkSync(envTarget, path.join(root, '.env.local'));
   const first = runPhase(root, env, 'app-tests', counter.command, counter.args);
   assert.equal(first.status, 0, first.stderr);
   assert.equal(counter.count(), 1);
@@ -88,27 +92,40 @@ test('caches only passing checks for an exact clean commit, toolchain, and envir
   assert.equal(envFileChange.status, 0, envFileChange.stderr);
   assert.equal(counter.count(), 4);
 
+  writeFileSync(envTarget, 'DUMMY_SYMLINK_ENV=second\n');
+  const symlinkTargetChange = runPhase(root, env, 'app-tests', counter.command, counter.args);
+  assert.equal(symlinkTargetChange.status, 0, symlinkTargetChange.stderr);
+  assert.doesNotMatch(symlinkTargetChange.stdout, /reusing a passing receipt/);
+  assert.equal(counter.count(), 5);
+  assert.equal(execFileSync('git', ['-C', root, 'status', '--porcelain'], { env, encoding: 'utf8' }).trim(), '');
+
   writeFileSync(path.join(root, 'node_modules/.package-lock.json'), '{"lockfileVersion":3,"packages":{"dep":{"version":"2"}}}\n');
   const dependencyChange = runPhase(root, env, 'app-tests', counter.command, counter.args);
   assert.equal(dependencyChange.status, 0, dependencyChange.stderr);
-  assert.equal(counter.count(), 5);
+  assert.equal(counter.count(), 6);
 
   const otherPhase = runPhase(root, env, 'build-context', counter.command, counter.args);
   assert.equal(otherPhase.status, 0, otherPhase.stderr);
-  assert.equal(counter.count(), 6);
+  assert.equal(counter.count(), 7);
   const otherEnvironment = runPhase(root, env, 'app-tests', counter.command, counter.args, { ASTRID_CACHE_ENV_TEST: 'different' });
   assert.equal(otherEnvironment.status, 0, otherEnvironment.stderr);
-  assert.equal(counter.count(), 7);
+  assert.equal(counter.count(), 8);
   const otherNpm = runPhase(root, env, 'app-tests', counter.command, counter.args, { ASTRID_PREPUSH_NPM_VERSION: 'test-npm-2' });
   assert.equal(otherNpm.status, 0, otherNpm.stderr);
-  assert.equal(counter.count(), 8);
+  assert.equal(counter.count(), 9);
 
   writeFileSync(path.join(root, 'tracked.txt'), 'new commit input\n');
   execFileSync('git', ['-C', root, 'add', 'tracked.txt'], { env });
   execFileSync('git', ['-C', root, 'commit', '-qm', 'new source commit'], { env });
   const newCommit = runPhase(root, env, 'app-tests', counter.command, counter.args);
   assert.equal(newCommit.status, 0, newCommit.stderr);
-  assert.equal(counter.count(), 9);
+  assert.equal(counter.count(), 10);
+
+  rmSync(envTarget, { force: true });
+  const brokenSymlink = runPhase(root, env, 'app-tests', counter.command, counter.args);
+  assert.equal(brokenSymlink.status, 0, brokenSymlink.stderr);
+  assert.match(brokenSymlink.stderr, /Pre-push cache unavailable; running checks fresh/);
+  assert.equal(counter.count(), 11);
 });
 
 test('dirty and untracked worktrees always run fresh and never save receipts', (t) => {

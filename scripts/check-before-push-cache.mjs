@@ -61,8 +61,9 @@ function inputIdentity(command) {
     .sort(([a], [b]) => a.localeCompare(b));
   const envDigest = hash(JSON.stringify(cacheEnvironment));
   const envFiles = readdirSync('.', { withFileTypes: true })
-    .filter((entry) => entry.isFile() && /^\.env(?:\.|$)/.test(entry.name))
+    .filter((entry) => (entry.isFile() || entry.isSymbolicLink()) && /^\.env(?:\.|$)/.test(entry.name))
     .map((entry) => [entry.name, hash(readFileSync(entry.name))]);
+  envFiles.sort(([left], [right]) => left.localeCompare(right));
   const record = {
     schema: CACHE_SCHEMA,
     commit: git(['rev-parse', 'HEAD']),
