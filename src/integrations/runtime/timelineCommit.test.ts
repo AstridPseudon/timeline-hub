@@ -32,6 +32,20 @@ function transportFor(response: unknown, requests: Array<{ method: string; path:
     if (path === '/v1/realm') return { status: 200, headers: {}, body: json({ realm_id: 'realm-1', display_name: 'fixture', version: 1, created_at: '2026-10-19T00:00:00Z' }) };
     if (path.endsWith('/commit')) return { status: 200, headers: {}, body: json(response) };
     if (path.endsWith('/commits?limit=50')) return { status: 200, headers: {}, body: json({ items: [], next_cursor: null, head: { revision_id: 'r1', publication_id: 'p1' } }) };
+    if (method === 'GET' && path === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}`) {
+      const acceptedResponse = response as { data: { accepted_revision_id: string }; receipt: { receipt_id: string } };
+      return { status: 200, headers: {}, body: json({
+        project_id: PROJECT_ID,
+        timeline_id: TIMELINE_ID,
+        version: 1,
+        name: TIMELINE_ID,
+        archived: false,
+        shots: [],
+        references: [],
+        head_revision_id: acceptedResponse.data.accepted_revision_id,
+        head_publication_id: acceptedResponse.receipt.receipt_id,
+      }) };
+    }
     throw new Error(`unexpected Runtime request: ${method} ${path}`);
   };
 }
@@ -469,6 +483,19 @@ describe('Runtime timeline commit capability', () => {
       if (path.endsWith('/commit')) {
         started();
         return new Promise((resolve) => { release = resolve; });
+      }
+      if (path === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}`) {
+        return { status: 200, headers: {}, body: json({
+          project_id: PROJECT_ID,
+          timeline_id: TIMELINE_ID,
+          version: 1,
+          name: TIMELINE_ID,
+          archived: false,
+          shots: [],
+          references: [],
+          head_revision_id: 'r3',
+          head_publication_id: 'p3',
+        }) };
       }
       if (path.endsWith('/inspect')) return { status: 200, headers: {}, body: json({
         project_id: PROJECT_ID, timeline_id: TIMELINE_ID, representation: 'canonical_head',
