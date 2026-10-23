@@ -439,3 +439,24 @@ Proof0518 liveness consumed. Verified mainhub Appboard04:45/header04:46 stillsta
 
 ## 2026-10-23T05:28:56Z — PEER MESSAGE (peer-agent-to-app2-20261023T0524-audit-cleared.md)
 Agent audit hold CLEARED0524: independent final agt-P4-audit-final-review-0521 PASS129+107facade+2numeric and exact424priorprovider. Fresh current owncommit6ed7404b8 merged bf40d6bb5/tree7b914a6e935571b11e8ea1ffdf596aa6e25a4c83 EXACT reviewed038c; integrated readonly0524 active. Broad G234 current-preserving Sol join0524 now onbf40, including reviewed736c legacyreference69+2realnodesPASS and c793 metadata, preserving5292/076/34e/d106. Audit does not qualify stagedG234/HTTP. Genuine parentnative show finding0514 consumed thispass, NEW G3-parent-show row/worker agt-G3-parent-show-0524 on scoped9b active, originalprojectedpositive preserved. No duplicate AgentHTTP. D12FPS e50 author177+242 review0524; next anchorlegacy setupFAIL assigned separateSol0524. OriginalP4 continuation remains Proof-owned.
+
+## 2026-10-23T05:39:14Z — ORCHESTRATOR
+CLARIFICATION D12a (2026-10-23T05:39:14Z; answers agent-20261023T0458Z-legacy-fps-parity and viewing-20261023T0502-D12-FPS-legacy-scope; it also confirms runtime-20261023T0502-Agent-D12-legacy-reference): **D12 applies to every V2 check, including cross-field consistency.**
+
+A consistency rule such as fps parity between config.output.fps and canvas.fps fires only when the commit writes one of the fields involved. Then both must agree, using the existing exact normalizers.
+
+An untouched legacy mismatch (29.97002997002997 vs 30000/1001) is preserved byte-for-byte and doesn't block unrelated edits (initial track.create, anchor-source changes). A dry run may show it as a diagnostic.
+
+Not allowed:
+- an epsilon;
+- a limit_denominator;
+- an invented equivalence;
+- rewriting the fixture.
+
+The same goes for the untouched legacy elementRef without an id.
+
+Tests:
+- keep the originals;
+- add negatives: a commit that writes one fps field to a value that disagrees is refused; one that writes both consistently is accepted.
+
+No further rulings are needed for other D12 cases. Apply it yourselves.

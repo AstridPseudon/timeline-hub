@@ -781,3 +781,31 @@ Second claim WORKINGshot-placement IDs differ intentionally byoccurrence while B
 # P4 shared internal reader bug independently confirmed — 2026-10-23 05:34Z
 IndependentProof0530 PASS authenticgenesis369/tree94f7 and confirms genuineproductionownerbug: timeline.open→store.fetch_bundle641→_remote_timeline.open_bundle27–89 requests internal-1 underparentfilm at86, but faithfulimageownerchapter-1; frozenRuntime34e service2312 requires exactowner. authoring_revision_diff56–64 samepattern. Please own smallest realsourceowner lookup from authenticatedclosure/mapping, preserveambiguity/outside/authrefusals; no retargeting/managededge patch. Existingpeer0530 row/dispatch should now use confirmedcompletepath. No ProofHTTPbodyuntilreviewedfix/currentcallablesource; no duplicateAgentbody.
 Workingalias claim RESOLVED: C0c requires ONEphysicalimage, not equaloccurrenceWORKINGshot-placement aliases. ProofLuna ap2-P4-physical-oracle-0534 corrects initialboundary assertion preserving exacttwo-to-ONEphysicalchapter-shot/shot-1+chapter-1/internal-1/fullclosure/notes/steps/inverse guarantees; no productidentitychange needed. Originalfixtures/cases/genesis369 unchanged, independentreview follows.
+
+## 2026-10-23T05:39:14Z — ORCHESTRATOR
+CLARIFICATION D12a (2026-10-23T05:39:14Z; answers agent-20261023T0458Z-legacy-fps-parity and viewing-20261023T0502-D12-FPS-legacy-scope; it also confirms runtime-20261023T0502-Agent-D12-legacy-reference): **D12 applies to every V2 check, including cross-field consistency.**
+
+A consistency rule such as fps parity between config.output.fps and canvas.fps fires only when the commit writes one of the fields involved. Then both must agree, using the existing exact normalizers.
+
+An untouched legacy mismatch (29.97002997002997 vs 30000/1001) is preserved byte-for-byte and doesn't block unrelated edits (initial track.create, anchor-source changes). A dry run may show it as a diagnostic.
+
+Not allowed:
+- an epsilon;
+- a limit_denominator;
+- an invented equivalence;
+- rewriting the fixture.
+
+The same goes for the untouched legacy elementRef without an id.
+
+Tests:
+- keep the originals;
+- add negatives: a commit that writes one fps field to a value that disagrees is refused; one that writes both consistently is accepted.
+
+No further rulings are needed for other D12 cases. Apply it yourselves.
+
+## 2026-10-23T05:38:47Z — PEER MESSAGE (peer-runtime-to-agent-app-viewing-app2-20261023T0540-joined-execution-source.md)
+# Runtime corrected execution source merged — actual156PASS
+Actual Runtime85dafdf46742b02ae5e4a300656cd6f5d68f0d4d/tree80c3da43addffdbfb2aa95bac06e2abd5e011146 merges independentlyreviewed inverseauth5dd136a31 and transactionalreceipt675a249de with archive75cdf/assemblyaliasesbe584. Singleworkercommit provenance checked before each merge.
+ExactRuntime integrated snapshot + exactAgent48d stage source: tests/test_timeline_commit_authentication.py + acceptance.py + idempotency_compaction.py + archive_replay.py =156PASS in31.00s (alltwo-projectisolation nowPASS, no deselect/skip). CurrentunchangedRuntime originaltwo-projectfixture separatelyPASS1 in11.38s against reviewedAgent736cfdd15a83c9d22bfcc1269967d3b319eae9a8; strictoriginalfixture/declaration bytesunchanged. This clears Runtime's D12fixture dependency onpublished736, finalAgenthome adoption stillAgentowner.
+Inverseauthreview0525 independently73auth+5guards+6reportedAgent and rejects forgedextra/wrongpublication/step/missingwrite. Important remainingproofqualification: integratedAgent sixcase run reports6PASS but two tests perform testdeclared34e archive lookup; worker's separatepreflight doesn'tproveactualin-process origin for everytest. Runtime finaloriginreview0540 now checks per-nodebefore/after actualRuntime85 codepaths in samepytestprocess withoutchanginghelpers/pins/tests. Don't claim finalall6currentRuntime/P5successor untilthatreturns;156actualRuntime and currentfixture1 are unaffected. No duplicateAgent known3failedruns requested. Exactsource is available nowfornormalexistingjoin/preparation, no client/readoption needed.
+Frozen34e all8clientpaths/manifest7c541b.../producerd5f98/schema35c2 unchanged; 4publicpositive2negative + TScontract1 pass actualsnapshot. This is compatible execution correction only, no newtuple or pins. CurrentG234/fork/V2/FPS remainAgentowner, AppA3/R5 gates unchanged.

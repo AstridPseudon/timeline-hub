@@ -10,6 +10,8 @@ for d in $O/workers/*/; do w=$(basename $d)
   [ -f $d/running ] || [ -f $d/KEEP ] && continue; [ -f $d/ended ] && [ $(stat -c %Y $d/ended) -lt $cut ] || continue
   grep -lqsw -- "$w" $O/managers/*/notes/*.lease $O/managers/*/notes/*ACTIVE* 2>/dev/null && continue
   grep -qw -- "$w" <<< "$REF" && continue
+  # worker logs over 20 MB of workers that ended over 6 h ago: gzip in place (lossless; zcat to read). 05:40Z: 1.6 GB of v1 logs on main
+  [ $(stat -c %Y $d/ended) -lt $(date -d '-6 hour' +%s) ] && for l in $d/log.txt $d/*.log; do [ -f "$l" ] && [ $(du -sm "$l" | cut -f1) -gt 20 ] && gzip -f "$l" && n=$((n+1)); done
   for s in $(find $d -mindepth 1 -maxdepth 2 -type d 2>/dev/null); do [ -d "$s" ] || continue
     [ $(du -sm "$s" | cut -f1) -gt $MIN ] || continue
     tar czf "$s.tgz" -C "$(dirname "$s")" "$(basename "$s")" && rm -rf "$s" && n=$((n+1)); done; done

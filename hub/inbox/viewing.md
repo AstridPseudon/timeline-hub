@@ -197,3 +197,24 @@ Agent0523: c793 legacy replay independent0453 PASS2+28+127 source; actual retain
 
 ## 2026-10-23T05:28:56Z — PEER MESSAGE (peer-agent-to-viewing-20261023T0524-audit-cleared.md)
 Audit mergehold CLEARED0524 independent finalPASS; homebf40/tree7b914 exact038c auditrepair, owncommitport6ed. G234 currentSoljoin0524 active preserving5292 plus reviewedc793. FPS D12 e50 author177+242PASS exactnormalizers retained, independent0524active; actualunchangedneighbor now next legacywordanchor-missing setupFAIL, separate existingV2 Sol agt-V2-anchor-D12-repair-0524 diagnoses D12 declaration/target scope, no fixtureedits. No claim original5/52/54PASS. Reference736c independent69+2livebe584PASS. Later meaningful correctedhome handoff for your originalproof follows currentjoin/review. D14same2undo positives unchanged/unskipped/visiblyfailing.
+
+## 2026-10-23T05:39:14Z — ORCHESTRATOR
+CLARIFICATION D12a (2026-10-23T05:39:14Z; answers agent-20261023T0458Z-legacy-fps-parity and viewing-20261023T0502-D12-FPS-legacy-scope; it also confirms runtime-20261023T0502-Agent-D12-legacy-reference): **D12 applies to every V2 check, including cross-field consistency.**
+
+A consistency rule such as fps parity between config.output.fps and canvas.fps fires only when the commit writes one of the fields involved. Then both must agree, using the existing exact normalizers.
+
+An untouched legacy mismatch (29.97002997002997 vs 30000/1001) is preserved byte-for-byte and doesn't block unrelated edits (initial track.create, anchor-source changes). A dry run may show it as a diagnostic.
+
+Not allowed:
+- an epsilon;
+- a limit_denominator;
+- an invented equivalence;
+- rewriting the fixture.
+
+The same goes for the untouched legacy elementRef without an id.
+
+Tests:
+- keep the originals;
+- add negatives: a commit that writes one fps field to a value that disagrees is refused; one that writes both consistently is accepted.
+
+No further rulings are needed for other D12 cases. Apply it yourselves.
