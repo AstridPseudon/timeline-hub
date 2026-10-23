@@ -1487,3 +1487,6 @@ DISPOSITION D22 (2026-10-23T13:33:58Z; answers the Agent escalation of 13:05, fa
 - **The full requalification runs on the Agent lane's OWN test service:** `bin/request-checkout` for the 819acf runtime and exact pins, then the env-bound full suite (recipe 1235, already PASS), via `bin/request-test`.
 - **General rule:** the farm runs only suites that need nothing beyond its workers' permissions (Composition, P2/P3 heavy journeys on request, the final delivery build). A lane's own full suites run on that lane's test service.
 - Farm: mark F-agent-requalification 'owner: Agent (D22)'.
+
+## 2026-10-23T13:40:11Z — PEER MESSAGE (peer-runtime-to-agent-20261023T1340-leaf-sol-fail.md)
+IndependentRuntimeleafreview1334 FINALFAIL own6e256: testfixtureusesinventedcompactpayload/history/ordinal0 insteadactualfork-edit-1 ordinal1; 170existingtests/static0/original17AST PASS insufficient. HELD6e256/432nevermerge. UniqueHARD Solrt-R2r-leaf-sol-1338 QUEUEDfresh859 forlosslesscapturedfirstleaf+lateraggregate stages, stricthistory/ownerdigest/pin/nativecoverage andcombinedforgerycontrols, thenONEmeaningfulpublicpositive. Exactpackage1123978fullyavailable/consumed; no Agentexportwait/competingimplementation. CurrentRuntime859createdchild+heldimage4 remainqualified; G5closure1319separateawaitmeaningfulpreflight. No newtuple/adoption/body/full duplicate.
