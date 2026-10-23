@@ -629,3 +629,124 @@ def test_store_split_and_note_requires_exact_forward_history(editing, monkeypatc
         validate(request, prepared, source, base, continuations, history)
     assert error.value.failure["details"]["reason"] == "invalid_records"
     assert real_tests.rows(editing.service) == before
+
+
+@pytest.fixture
+def source_copy_stage(tmp_path, astrid_importable):
+    from astrid.sdk.timeline.capture import capture_track_create
+    from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.store import RealmStore
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+
+    root = tmp_path / "copy-realm"
+    RealmStore.initialize(root).close()
+    runtime = RuntimeService(root)
+    project = runtime.create_project({"slug": "copy", "name": "Copy"})["id"]
+    runtime.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+    for timeline in ("source", "destination"):
+        runtime.create_timeline(project, timeline, idempotency_key="create-" + timeline)
+    store = runtime._timeline_commits()[0]
+
+    def document(timeline):
+        return store.revision_closure(project, timeline, store.head(project, timeline)["revision_id"])
+
+    def commit(timeline, commands, key):
+        head = store.head(project, timeline)
+        request = {"api_version": 1, "project_id": project, "timeline_id": timeline,
+                   "base_revision_id": head["revision_id"], "base_publication_id": head["publication_id"],
+                   "commands": commands, "label": "Copy stage", "merge": "atomic", "reads": [],
+                   "steps": [{"id": "copy", "label": "Copy stage", "intent": "Keep source",
+                              "tags": [], "command_ordinals": list(range(len(commands))), "patch": [], "reads": []}]}
+        return runtime.commit_timeline(project, timeline, request, idempotency_key=key, publisher="editor",
+                                       invocation_path=route_path(project, timeline), authorize=lambda: None)
+
+    try:
+        bundle = bundle_from_document(document("source"))
+        commit("source", [capture_track_create(bundle, "parent", {"id": "picture", "kind": "visual"})], "track")
+        bundle = bundle_from_document(document("source"))
+        commit("source", [capture_occurrence_create(bundle, "one", "shared", name="Shared",
+                                                   track="picture", on=0, duration=10)], "shot")
+        source = document("source")
+        head = store.head(project, "source")
+        command = {"schema_version": 1, "op": "timeline.duplicate", "version": "1", "select": "parent",
+                   "args": {"source_ref": {"project_id": project, "timeline_id": "source",
+                            "revision_id": head["revision_id"], "publication_id": head["publication_id"],
+                            "content_digest": source["parent_revision"]["content_digest"]},
+                            "shots": {"shared": "copied"}, "occurrences": {"one": "copy-one"}},
+                   "created": ["shot:copied", "occurrence:copy-one"]}
+        yield runtime, document, commit, command
+    finally:
+        runtime.close()
+
+
+@pytest.mark.integration
+def test_source_copy_native_roots_authenticate_and_round_trip(source_copy_stage):
+    runtime, document, commit, command = source_copy_stage
+    original = document("destination")
+    forward = commit("destination", [command], "copy")
+    copied = document("destination")
+    publication = forward["receipt"]["receipt_id"]
+    store = runtime._timeline_commits()[0]
+    history = store.history_entry(original["project_id"], "destination", publication)
+    inverse = commit("destination", [real_tests.inverse(publication)], "undo-copy")
+    assert document("destination") == original
+    commit("destination", [real_tests.inverse(inverse["receipt"]["receipt_id"])], "redo-copy")
+    assert document("destination") == copied
+    assert store.history_entry(original["project_id"], "destination", publication) == history
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("mutation", ["occurrence-before", "shot-before", "shot-edge", "shot-after",
+                                     "path", "ref", "omitted", "extra", "missing-effect", "effect-digest"])
+def test_source_copy_native_root_forgeries_refuse_without_durable_writes(source_copy_stage, monkeypatch, mutation):
+    from runtime_protocol.timeline_commit_port import RequestCommitPort
+
+    runtime, document, commit, command = source_copy_stage
+    forward = commit("destination", [command], "copy")
+    before = real_tests.rows(runtime)
+    stored = tuple(runtime.store.conn.iterdump())
+    project = document("destination")["project_id"]
+    history = runtime.list_timeline_commits(project, "destination", authorize=lambda: None)
+    accept = RequestCommitPort.accept
+    reached = []
+
+    def forged_accept(port, prepared):
+        value = copy.deepcopy(prepared)
+        record = value["records"]["commands"][0]
+        occurrence = next(write for write in record["writes"] if write["ref"] == "occurrence:copy-one")
+        shot = next(write for write in record["writes"] if write["ref"] == "shot:copied")
+        if mutation == "occurrence-before":
+            occurrence["before"]["value"]["muted"] = True
+        elif mutation == "shot-before":
+            shot["before"]["value"]["payload"]["name"] = "forged"
+        elif mutation == "shot-edge":
+            shot["before"]["value"]["payload"]["internal_timeline_revision_id"] = "forged"
+        elif mutation == "shot-after":
+            shot["after"] = copy.deepcopy(shot["before"])
+        elif mutation == "path":
+            occurrence["path"] = ["muted"]
+        elif mutation == "ref":
+            occurrence["ref"] = "occurrence:foreign"
+        elif mutation == "omitted":
+            record["writes"].remove(shot)
+        elif mutation == "extra":
+            record["writes"].append(copy.deepcopy(shot))
+        elif mutation == "missing-effect":
+            record["bindings"] = [binding for binding in record["bindings"] if binding["key"] != "commit.effect"]
+        else:
+            next(binding for binding in record["bindings"] if binding["key"] == "commit.effect")["content_digest"] = (
+                "sha256:" + "0" * 64)
+        reached.append(True)
+        return accept(port, value)
+
+    monkeypatch.setattr(RequestCommitPort, "accept", forged_accept)
+    with pytest.raises(RuntimeErrorBase) as error:
+        commit("destination", [real_tests.inverse(forward["receipt"]["receipt_id"])], "forged-undo")
+    assert reached == [True]
+    assert error.value.details["reason"] == "invalid_records"
+    assert real_tests.rows(runtime) == before
+    assert tuple(runtime.store.conn.iterdump()) == stored
+    assert runtime.list_timeline_commits(project, "destination", authorize=lambda: None) == history

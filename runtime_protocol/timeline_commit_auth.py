@@ -723,6 +723,41 @@ def _inverse_stage_state(boundary, ref, path):
                     absent_items=True)
 
 
+def _inverse_stage_root(boundary, ref):
+    """Observe authored aggregate roots through authenticated physical images."""
+    kind, _, identity = ref.partition(":")
+    if kind == "occurrence":
+        state = location(boundary["parent"]["payload"], ["occurrences", "occurrence_id:" + identity],
+                         absent_items=True)
+        state = copy.deepcopy(state)
+        if state["state"] == "present":
+            assert isinstance(state["value"], dict)
+            state["value"].pop("shot_revision_id", None)
+            state["value"].pop("revision_id", None)
+        return state, []
+    matches = [(key, image) for key, image in boundary.items()
+               if key.startswith("shot-revision:") and image.get("shot_id") == identity]
+    require(len(matches) <= 1, "inverse stage shot root is ambiguous")
+    if not matches:
+        return {"state": "absent"}, []
+    physical, shot = matches[0]
+    internal = "internal-revision:" + shot["internal_timeline_revision_id"]
+    require(internal in boundary and shot["payload"].get("internal_timeline_revision_id")
+            == shot["internal_timeline_revision_id"], "inverse stage shot root has no authenticated internal image")
+    return {"state": "present", "value": {"payload": copy.deepcopy(shot["payload"]),
+            "internal_timeline": copy.deepcopy(boundary[internal]["payload"])}}, [physical, internal]
+
+
+def _inverse_stage_root_equal(observed, claimed, ref):
+    if value_equal(observed, claimed):
+        return True
+    if ref.startswith("shot:") and observed["state"] == "present":
+        authored = copy.deepcopy(observed)
+        authored["value"]["payload"].pop("internal_timeline_revision_id", None)
+        return value_equal(authored, claimed)
+    return False
+
+
 def _inverse_stage_history(records, history):
     """Return the authenticated source stages named by an inverse record."""
     publications = records.get("undo_of")
@@ -880,6 +915,30 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
         # Native captures observe each preceding write (including empty ancestor
         # removals); canonical effects describe the complete stage transition.
         for write in writes:
+            if not write["path"] and re.fullmatch(r"(?:shot|occurrence):[^/]+", write["ref"]):
+                root = write["ref"]
+                observed, physical = _inverse_stage_root(native_image, root)
+                require(_inverse_stage_root_equal(observed, write["before"], root),
+                        "inverse stage root differs from its sequential input")
+                after, successors = _inverse_stage_root(stage_after, root)
+                require(_inverse_stage_root_equal(after, write["after"], root),
+                        "inverse stage root differs from its authenticated effect image")
+                if root.startswith("occurrence:"):
+                    path = ["occurrences", "occurrence_id:" + root.partition(":")[2]]
+                    state = location(stage_after["parent"]["payload"], path, absent_items=True)
+                    native_image["parent"]["payload"] = project_observation(
+                        native_image["parent"]["payload"], path, state)
+                else:
+                    for ref in physical:
+                        if ref.startswith("internal-revision:") and any(
+                                image.get("internal_timeline_revision_id") == ref.partition(":")[2]
+                                for key, image in native_image.items()
+                                if key.startswith("shot-revision:") and key not in physical):
+                            continue
+                        native_image.pop(ref)
+                    for ref in successors:
+                        native_image[ref] = copy.deepcopy(stage_after[ref])
+                continue
             ref, path = _inverse_stage_write_site(native_image, write)
             require(value_equal(_inverse_stage_state(native_image, ref, path), write["before"]),
                     "inverse stage write differs from its sequential input")
@@ -903,6 +962,11 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
                             {ref: image["payload"] for ref, image in stage_after.items()}),
                 "inverse stage native writes do not cover its authenticated effect image")
         for write in writes:
+            if not write["path"] and re.fullmatch(r"(?:shot|occurrence):[^/]+", write["ref"]):
+                require(value_equal(_inverse_stage_root(native_image, write["ref"])[0],
+                                    _inverse_stage_root(stage_after, write["ref"])[0]),
+                        "inverse stage roots differ from its authenticated effect image")
+                continue
             before_ref, before_path = _inverse_stage_write_site(native_image, write)
             after_ref, after_path = _inverse_stage_write_site(stage_after, write)
             require(before_ref == after_ref and before_path == after_path
