@@ -228,12 +228,12 @@ export function createTimelineLocalSaveHandoff(options: {
             reads.push(read(config, 'theme', ['config']), readPath(config, ['theme_overrides', 'visual', 'canvas', 'fps'], ['config']));
           }
           if (typeof clip.asset === 'string') {
-            if (!object(parent.registry) || !object(parent.registry.assets)) refuse('gesture registry read has no authored assets');
+            if (!object(parent.registry)) refuse('gesture registry read has no authored registry');
             // Runtime/provider normalize parent/registry to config/registry and
             // resolve that path to the top-level raw registry when no mirror exists.
             if (Object.prototype.hasOwnProperty.call(config, 'registry')
               && (!object(config.registry) || !same(config.registry, parent.registry))) refuse('contradictory parent registry mirror');
-            reads.push(read(parent.registry.assets, clip.asset, ['config', 'registry', 'assets']));
+            reads.push(readPath(parent.registry, ['assets', clip.asset], ['config', 'registry']));
           }
           if (gestureBasis.kind === 'split') {
             if (!Number.isFinite(gestureBasis.timeSeconds)) refuse('split time is unavailable');

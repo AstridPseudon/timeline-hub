@@ -109,6 +109,8 @@ describe('mounted split and inspector trim authoring reads', () => {
         const trimIntent = structuredClone(authored.intents[1].payload);
         expect(authored.intents[1].basis).toEqual({ after: authored.intents[0].id });
         expect(splitIntent.created).toEqual([`parent/clip:${rightId}`]);
+        expect(splitIntent.step).toMatchObject({ intent: 'Split original at 4' });
+        expect((trimIntent.documentIntent as Record<string, unknown>).step).toMatchObject({ intent: `Trim ${rightId}: {"from":5}` });
         const reads = (trimIntent.documentIntent as Record<string, unknown>).reads as unknown[];
         expect(reads).toContainEqual({ kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${rightId}`, 'to'],
           state: { state: 'present', value: 8 } });
