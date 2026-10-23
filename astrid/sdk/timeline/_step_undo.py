@@ -137,7 +137,84 @@ def inverse_stages(records):
         for step, originals, _ in reversed(_steps(entry)):
             chosen = [commands[record['ordinal']] for record in originals if record['ordinal'] in commands]
             if chosen:
-                yield entry.get('publication_id'), step['id'] if step is not None else None, chosen
+                nested = ([binding for binding in chosen[0].get('bindings', [])
+                           if binding['key'] == 'inverse.stage'] if len(chosen) == 1
+                          and chosen[0]['command']['op'] == 'timeline.inverse' else [])
+                native_only = (nested and all('effect_range' not in binding['boundary'] for binding in nested)
+                               and not any(binding['key'] == 'commit.effect'
+                                           for binding in chosen[0].get('bindings', [])))
+                if not nested or native_only:
+                    # Native-only history predates canonical effect partitions.
+                    # Keep its whole native reversal without inventing v2 facts.
+                    yield entry.get('publication_id'), step['id'] if step is not None else None, chosen
+                    continue
+                record = chosen[0]
+                cursor = 0
+                effect_cursor = 0
+                for binding in nested:
+                    boundary = binding['boundary']
+                    if (step is None or any(not isinstance(boundary.get(key), list)
+                            or len(boundary[key]) != 2 or any(type(index) is not int for index in boundary[key])
+                            for key in ('native_write_range', 'effect_range'))):
+                        raise CommandError('nested inverse ranges differ from accepted history',
+                                           kind='history_unavailable')
+                    start, end = boundary['native_write_range']
+                    first, last = boundary['effect_range']
+                    if (binding['ref'] != 'parent' or binding['policy'] != 'fixed'
+                            or binding['dependencies'] != []
+                            or boundary['publication_id'] not in record['command']['args']['publications']
+                            or start != cursor or not start < end <= len(record['writes'])
+                            or first != effect_cursor or not first < last <= len(step['patch'])
+                            or record.get('derived_writes')):
+                        raise CommandError('nested inverse ranges differ from accepted history',
+                                           kind='history_unavailable')
+                    cursor, effect_cursor = end, last
+                if cursor != len(record['writes']) or effect_cursor != len(step['patch']):
+                    raise CommandError('nested inverse ranges omit accepted history', kind='history_unavailable')
+                for binding in reversed(nested):
+                    start, end = binding['boundary']['native_write_range']
+                    first, last = binding['boundary']['effect_range']
+                    from ._doc_patch import inverse_changes
+
+                    yield entry['publication_id'], step['id'], [{**record, 'writes': record['writes'][start:end],
+                        '_inverse_effects': inverse_changes(step['patch'][first:last])}]
+
+
+def validate_nested_history(entry, load_history, *, ancestors=()):
+    """Authenticate inherited partitions against the original accepted records."""
+    publication = entry['publication_id']
+    if publication in ancestors:
+        raise CommandError('cyclic inverse source history', kind='history_unavailable')
+    for record in _commands(entry):
+        nested = [binding['boundary'] for binding in record.get('bindings', [])
+                  if binding['key'] == 'inverse.stage']
+        if not nested or (all('effect_range' not in boundary for boundary in nested)
+                          and not any(binding['key'] == 'commit.effect' for binding in record['bindings'])):
+            continue
+        if load_history is None or record['command']['op'] != 'timeline.inverse':
+            raise CommandError('nested inverse source history is unavailable', kind='history_unavailable')
+        # Validate immediate ranges before consulting their inherited identities.
+        list(inverse_stages(AcceptedRecords([entry], _commands(entry), None)))
+        args = record['command']['args']
+        sources = [load_history(identity) for identity in args['publications']]
+        for identity, source in zip(args['publications'], sources):
+            if source.get('publication_id') != identity or source.get('intent') != 'recorded':
+                raise CommandError('nested inverse source differs from history', kind='history_unavailable')
+            _steps(source, required=True)
+            validate_nested_history(source, load_history, ancestors=(*ancestors, publication))
+        selected = select_inverse_records(AcceptedRecords(sources,
+            [command for source in sources for command in _commands(source)], None), args.get('steps'))
+        expected = list(inverse_stages(selected))
+        if len(nested) != len(expected):
+            raise CommandError('nested inverse partitions differ from source history', kind='history_unavailable')
+        for boundary, (identity, step_id, commands) in zip(nested, expected):
+            ordinals = boundary.get('command_ordinals')
+            start, end = boundary['native_write_range']
+            if (boundary.get('publication_id') != identity or boundary.get('step_id') != step_id
+                    or not isinstance(ordinals, list) or any(type(index) is not int for index in ordinals)
+                    or ordinals != [command['ordinal'] for command in commands]
+                    or end - start != sum(len(command['writes']) for command in commands)):
+                raise CommandError('nested inverse identity differs from source history', kind='history_unavailable')
 
 
 def _causal_commands(entry, commands):

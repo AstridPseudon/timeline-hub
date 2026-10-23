@@ -1034,7 +1034,8 @@ class RuntimeCommitService:
                 inverse_history = ordered
 
                 def select_at(head_bundle, history):
-                    resolver = (inverse_address_resolver(history, head_bundle, load_boundary=load_boundary)
+                    resolver = (inverse_address_resolver(history, head_bundle, load_boundary=load_boundary,
+                                                        load_history=port.history_entry)
                         if any('physical_ref' in binding for record in accepted_records
                                for binding in record['bindings']) else None)
                     selected = select_inverse_records(accepted_records, undo_steps, address_resolver=resolver)
