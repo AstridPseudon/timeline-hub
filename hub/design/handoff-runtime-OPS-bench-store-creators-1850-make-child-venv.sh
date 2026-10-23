@@ -120,7 +120,7 @@ if [ "${#missing[@]}" -ne 0 ]; then
 fi
 progress "source agent=$S runtime=$RUNTIME_SHA requirements=$REQUIREMENTS_PATH lock_sha256=$LOCK_SHA"
 
-# Keep backend custody: the D21b full-bench/client-only key decision is pending.
+# D21c retains exact backend custody alongside Agent and generated client identity.
 CLIENT_IDENTITY=$(git -C "$R" ls-tree -r --name-only "$RUNTIME_SHA" packages/python/astrid_runtime_client/ | while IFS= read -r path; do
   [ -n "$path" ] || continue
   printf '%s=' "$path"
@@ -153,6 +153,7 @@ def build(stage, final):
 def verify(path):
     subprocess.run(['python3', '-I', '-', str(path), client, checkout, agent,
                     runtime_checkout, backend, work, python], input=verifier, text=True, check=True)
+managed_remotion = bool(remotion and store.registered(remotion))
 def registration(path, final, reused):
     rows = pathlib.Path(tests, 'suites.conf').read_text().splitlines()
     suite = ''
@@ -161,13 +162,12 @@ def registration(path, final, reused):
         if len(matches) != 1:
             raise RuntimeError('child base suite missing or ambiguous')
         import re
-        suite = re.sub(r'^agent ' + re.escape(base_suite) + r' ', 'agent ' + name + '-full ', matches[0])
-        suite = re.sub(r'/home/user/work/venv-agent-child-[^ /]*', str(final), suite)
-        suite = re.sub(r'venv-agent-child-[^ /]*', name, suite)
-        suite = suite.replace('agent-remotion-0012', remotion) + '\n'
-    if not suite:
-        raise RuntimeError('managed child requires exact base suite and Remotion registration')
-    return {'name': name, 'env': '', 'suite': suite, 'requires': []}
+        tail = matches[0].split(None, 2)[2]
+        tail = re.sub(r'/[A-Za-z0-9_./-]*/venv-agent-child-[^ /]*', str(final), tail)
+        tail = re.sub(r'venv-agent-child-[^ /]*', name, tail)
+        suite = 'agent ' + name + '-full ' + tail.replace('agent-remotion-0012', remotion) + '\n'
+    requires = [remotion] if managed_remotion else []
+    return {'name': name, 'env': '', 'suite': suite, 'requires': [], 'require_names': requires}
 try:
     entry = store.ensure('child', identity, registration, build, verify)
 except Exception as error:
@@ -367,8 +367,9 @@ for record in stage.glob('lib/python*/site-packages/*.dist-info/RECORD'):
             row[2] = str(len(data))
     with record.open('w') as output:
         csv.writer(output).writerows(rows)
-report = stage / '.provision-report'
-report.write_text(report.read_text().replace(str(stage), str(final)))
+for name in ('.provision-report', '.astrid-distribution-metadata'):
+    report = stage / name
+    report.write_text(report.read_text().replace(str(stage), str(final)))
 RELOCATE
 run_stage readonly-source "$LOCAL_TIMEOUT_SECONDS" chmod -R a-w "$SRC"
 run_stage readonly-final "$LOCAL_TIMEOUT_SECONDS" chmod -R a-w "$T"

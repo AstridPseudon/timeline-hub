@@ -1,0 +1,376 @@
+FOOTPRINT before-source-group logical=139665 allocated=245760 cap=104857600
+FOOTPRINT after-source-group logical=446975 allocated=851968 cap=104857600
+FOOTPRINT before-baseline-group logical=481966 allocated=892928 cap=104857600
+FOOTPRINT after-baseline-group logical=580104 allocated=1105920 cap=104857600
+FOOTPRINT before-mutable-group logical=580104 allocated=1105920 cap=104857600
+FOOTPRINT after-mutable-group logical=636793 allocated=1228800 cap=104857600
+FOOTPRINT before-reset-group logical=636793 allocated=1228800 cap=104857600
+FOOTPRINT after-reset-group logical=636801 allocated=1228800 cap=104857600
+FOOTPRINT positive-before logical=636801 allocated=1228800 cap=104857600
+FOOTPRINT positive-after logical=637031 allocated=1232896 cap=104857600
+PASS positive rc=0
+FOOTPRINT positive-maker-before logical=637031 allocated=1232896 cap=104857600
+FOOTPRINT positive-maker-after logical=637261 allocated=1236992 cap=104857600
+PASS positive-maker rc=0
+FOOTPRINT before-reset-group logical=637261 allocated=1236992 cap=104857600
+FOOTPRINT after-reset-group logical=637261 allocated=1236992 cap=104857600
+FOOTPRINT standard-lib64-before logical=637264 allocated=1236992 cap=104857600
+FOOTPRINT standard-lib64-after logical=637494 allocated=1241088 cap=104857600
+PASS standard-lib64 rc=0
+FOOTPRINT standard-lib64-maker-before logical=637494 allocated=1241088 cap=104857600
+FOOTPRINT standard-lib64-maker-after logical=637724 allocated=1245184 cap=104857600
+PASS standard-lib64-maker rc=0
+FOOTPRINT positive-env-i-before logical=637724 allocated=1245184 cap=104857600
+FOOTPRINT positive-env-i-after logical=637952 allocated=1249280 cap=104857600
+PASS positive-env-i rc=0
+FOOTPRINT before-reset-group logical=637952 allocated=1249280 cap=104857600
+FOOTPRINT after-reset-group logical=637952 allocated=1249280 cap=104857600
+FOOTPRINT bad-agent-marker-before logical=637951 allocated=1249280 cap=104857600
+FOOTPRINT bad-agent-marker-after logical=638012 allocated=1253376 cap=104857600
+PASS bad-agent-marker rc=2
+FOOTPRINT bad-agent-marker-maker-before logical=638012 allocated=1253376 cap=104857600
+FOOTPRINT bad-agent-marker-maker-after logical=638063 allocated=1257472 cap=104857600
+PASS bad-agent-marker-maker rc=2
+FOOTPRINT before-reset-group logical=638063 allocated=1257472 cap=104857600
+FOOTPRINT after-reset-group logical=638064 allocated=1257472 cap=104857600
+FOOTPRINT bad-runtime-marker-before logical=638063 allocated=1257472 cap=104857600
+FOOTPRINT bad-runtime-marker-after logical=638124 allocated=1261568 cap=104857600
+PASS bad-runtime-marker rc=2
+FOOTPRINT bad-runtime-marker-maker-before logical=638124 allocated=1261568 cap=104857600
+FOOTPRINT bad-runtime-marker-maker-after logical=638175 allocated=1265664 cap=104857600
+PASS bad-runtime-marker-maker rc=2
+FOOTPRINT before-reset-group logical=638175 allocated=1265664 cap=104857600
+FOOTPRINT after-reset-group logical=638176 allocated=1265664 cap=104857600
+FOOTPRINT partial-marker-before logical=637952 allocated=1265664 cap=104857600
+FOOTPRINT partial-marker-after logical=638013 allocated=1269760 cap=104857600
+PASS partial-marker rc=2
+FOOTPRINT partial-marker-maker-before logical=638013 allocated=1269760 cap=104857600
+FOOTPRINT partial-marker-maker-after logical=638064 allocated=1273856 cap=104857600
+PASS partial-marker-maker rc=2
+FOOTPRINT before-reset-group logical=638064 allocated=1273856 cap=104857600
+FOOTPRINT after-reset-group logical=638288 allocated=1273856 cap=104857600
+FOOTPRINT missing-marker-before logical=638288 allocated=1273856 cap=104857600
+FOOTPRINT missing-marker-after logical=638349 allocated=1277952 cap=104857600
+PASS missing-marker rc=2
+FOOTPRINT missing-marker-maker-before logical=638349 allocated=1277952 cap=104857600
+FOOTPRINT missing-marker-maker-after logical=638400 allocated=1282048 cap=104857600
+PASS missing-marker-maker rc=2
+FOOTPRINT before-reset-group logical=638400 allocated=1282048 cap=104857600
+FOOTPRINT after-reset-group logical=638441 allocated=1286144 cap=104857600
+FOOTPRINT clientbyte-before logical=638428 allocated=1286144 cap=104857600
+FOOTPRINT clientbyte-after logical=638554 allocated=1290240 cap=104857600
+PASS clientbyte rc=2
+FOOTPRINT clientbyte-maker-before logical=638554 allocated=1290240 cap=104857600
+FOOTPRINT clientbyte-maker-after logical=638670 allocated=1294336 cap=104857600
+PASS clientbyte-maker rc=2
+FOOTPRINT before-reset-group logical=638670 allocated=1294336 cap=104857600
+FOOTPRINT after-reset-group logical=638683 allocated=1294336 cap=104857600
+FOOTPRINT agentbyte-before logical=638671 allocated=1294336 cap=104857600
+FOOTPRINT agentbyte-after logical=638781 allocated=1298432 cap=104857600
+PASS agentbyte rc=2
+FOOTPRINT agentbyte-maker-before logical=638781 allocated=1298432 cap=104857600
+FOOTPRINT agentbyte-maker-after logical=638881 allocated=1302528 cap=104857600
+PASS agentbyte-maker rc=2
+FOOTPRINT before-reset-group logical=638881 allocated=1302528 cap=104857600
+FOOTPRINT after-reset-group logical=638893 allocated=1302528 cap=104857600
+FOOTPRINT runtimebyte-before logical=638881 allocated=1302528 cap=104857600
+FOOTPRINT runtimebyte-after logical=639007 allocated=1306624 cap=104857600
+PASS runtimebyte rc=2
+FOOTPRINT runtimebyte-maker-before logical=639007 allocated=1306624 cap=104857600
+FOOTPRINT runtimebyte-maker-after logical=639123 allocated=1310720 cap=104857600
+PASS runtimebyte-maker rc=2
+FOOTPRINT before-reset-group logical=639123 allocated=1310720 cap=104857600
+FOOTPRINT after-reset-group logical=639135 allocated=1310720 cap=104857600
+FOOTPRINT version-before logical=639135 allocated=1310720 cap=104857600
+FOOTPRINT version-after logical=639239 allocated=1314816 cap=104857600
+PASS version rc=2
+FOOTPRINT version-maker-before logical=639239 allocated=1314816 cap=104857600
+FOOTPRINT version-maker-after logical=639333 allocated=1318912 cap=104857600
+PASS version-maker rc=2
+FOOTPRINT before-reset-group logical=639333 allocated=1318912 cap=104857600
+FOOTPRINT after-reset-group logical=639333 allocated=1318912 cap=104857600
+FOOTPRINT url-before logical=639251 allocated=1318912 cap=104857600
+FOOTPRINT url-after logical=639351 allocated=1323008 cap=104857600
+PASS url rc=2
+FOOTPRINT url-maker-before logical=639351 allocated=1323008 cap=104857600
+FOOTPRINT url-maker-after logical=639441 allocated=1327104 cap=104857600
+PASS url-maker rc=2
+FOOTPRINT before-reset-group logical=639441 allocated=1327104 cap=104857600
+FOOTPRINT after-reset-group logical=639523 allocated=1327104 cap=104857600
+FOOTPRINT editable-before logical=639522 allocated=1327104 cap=104857600
+FOOTPRINT editable-after logical=639629 allocated=1331200 cap=104857600
+PASS editable rc=2
+FOOTPRINT editable-maker-before logical=639629 allocated=1331200 cap=104857600
+FOOTPRINT editable-maker-after logical=639726 allocated=1335296 cap=104857600
+PASS editable-maker rc=2
+FOOTPRINT before-reset-group logical=639726 allocated=1335296 cap=104857600
+FOOTPRINT after-reset-group logical=639727 allocated=1335296 cap=104857600
+FOOTPRINT record-shape-before logical=639729 allocated=1335296 cap=104857600
+FOOTPRINT record-shape-after logical=639826 allocated=1339392 cap=104857600
+PASS record-shape rc=2
+FOOTPRINT record-shape-maker-before logical=639826 allocated=1339392 cap=104857600
+FOOTPRINT record-shape-maker-after logical=639913 allocated=1343488 cap=104857600
+PASS record-shape-maker rc=2
+FOOTPRINT before-reset-group logical=639913 allocated=1343488 cap=104857600
+FOOTPRINT after-reset-group logical=639911 allocated=1343488 cap=104857600
+FOOTPRINT record-absolute-before logical=639916 allocated=1343488 cap=104857600
+FOOTPRINT record-absolute-after logical=640024 allocated=1347584 cap=104857600
+PASS record-absolute rc=2
+FOOTPRINT record-absolute-maker-before logical=640024 allocated=1347584 cap=104857600
+FOOTPRINT record-absolute-maker-after logical=640122 allocated=1351680 cap=104857600
+PASS record-absolute-maker rc=2
+FOOTPRINT before-reset-group logical=640122 allocated=1351680 cap=104857600
+FOOTPRINT after-reset-group logical=640117 allocated=1351680 cap=104857600
+FOOTPRINT record-blank-before logical=640113 allocated=1351680 cap=104857600
+FOOTPRINT record-blank-after logical=640210 allocated=1355776 cap=104857600
+PASS record-blank rc=2
+FOOTPRINT record-blank-maker-before logical=640210 allocated=1355776 cap=104857600
+FOOTPRINT record-blank-maker-after logical=640297 allocated=1359872 cap=104857600
+PASS record-blank-maker rc=2
+FOOTPRINT before-reset-group logical=640297 allocated=1359872 cap=104857600
+FOOTPRINT after-reset-group logical=640301 allocated=1359872 cap=104857600
+FOOTPRINT record-size-before logical=640336 allocated=1359872 cap=104857600
+FOOTPRINT record-size-after logical=640444 allocated=1363968 cap=104857600
+PASS record-size rc=2
+FOOTPRINT record-size-maker-before logical=640444 allocated=1363968 cap=104857600
+FOOTPRINT record-size-maker-after logical=640542 allocated=1368064 cap=104857600
+PASS record-size-maker rc=2
+FOOTPRINT before-reset-group logical=640542 allocated=1368064 cap=104857600
+FOOTPRINT after-reset-group logical=640507 allocated=1368064 cap=104857600
+FOOTPRINT record-duplicate-before logical=640531 allocated=1368064 cap=104857600
+FOOTPRINT record-duplicate-after logical=640639 allocated=1372160 cap=104857600
+PASS record-duplicate rc=2
+FOOTPRINT record-duplicate-maker-before logical=640639 allocated=1372160 cap=104857600
+FOOTPRINT record-duplicate-maker-after logical=640737 allocated=1376256 cap=104857600
+PASS record-duplicate-maker rc=2
+FOOTPRINT before-reset-group logical=640737 allocated=1376256 cap=104857600
+FOOTPRINT after-reset-group logical=640713 allocated=1376256 cap=104857600
+FOOTPRINT writable-root-before logical=640713 allocated=1376256 cap=104857600
+FOOTPRINT writable-root-after logical=640873 allocated=1380352 cap=104857600
+PASS writable-root rc=2
+FOOTPRINT writable-root-maker-before logical=640873 allocated=1380352 cap=104857600
+FOOTPRINT writable-root-maker-after logical=641023 allocated=1384448 cap=104857600
+PASS writable-root-maker rc=2
+FOOTPRINT before-reset-group logical=641023 allocated=1384448 cap=104857600
+FOOTPRINT after-reset-group logical=641023 allocated=1384448 cap=104857600
+FOOTPRINT writable-nested-before logical=641023 allocated=1384448 cap=104857600
+FOOTPRINT writable-nested-after logical=641219 allocated=1388544 cap=104857600
+PASS writable-nested rc=2
+FOOTPRINT writable-nested-maker-before logical=641219 allocated=1388544 cap=104857600
+FOOTPRINT writable-nested-maker-after logical=641405 allocated=1392640 cap=104857600
+PASS writable-nested-maker rc=2
+FOOTPRINT before-reset-group logical=641405 allocated=1392640 cap=104857600
+FOOTPRINT after-reset-group logical=641405 allocated=1392640 cap=104857600
+FOOTPRINT writable-file-before logical=641405 allocated=1392640 cap=104857600
+FOOTPRINT writable-file-after logical=641613 allocated=1396736 cap=104857600
+PASS writable-file rc=2
+FOOTPRINT writable-file-maker-before logical=641613 allocated=1396736 cap=104857600
+FOOTPRINT writable-file-maker-after logical=641811 allocated=1400832 cap=104857600
+PASS writable-file-maker rc=2
+FOOTPRINT before-reset-group logical=641811 allocated=1400832 cap=104857600
+FOOTPRINT after-reset-group logical=641811 allocated=1400832 cap=104857600
+FOOTPRINT partial-package-before logical=641811 allocated=1400832 cap=104857600
+FOOTPRINT partial-package-after logical=641902 allocated=1404928 cap=104857600
+PASS partial-package rc=2
+FOOTPRINT partial-package-maker-before logical=641902 allocated=1404928 cap=104857600
+FOOTPRINT partial-package-maker-after logical=641983 allocated=1409024 cap=104857600
+PASS partial-package-maker rc=2
+FOOTPRINT before-reset-group logical=641983 allocated=1409024 cap=104857600
+FOOTPRINT after-reset-group logical=642001 allocated=1413120 cap=104857600
+FOOTPRINT symlink-before logical=642068 allocated=1417216 cap=104857600
+FOOTPRINT symlink-after logical=642235 allocated=1421312 cap=104857600
+PASS symlink rc=2
+FOOTPRINT symlink-maker-before logical=642235 allocated=1421312 cap=104857600
+FOOTPRINT symlink-maker-after logical=642392 allocated=1425408 cap=104857600
+PASS symlink-maker rc=2
+FOOTPRINT missing-checkout-before logical=642392 allocated=1425408 cap=104857600
+FOOTPRINT missing-checkout-after logical=642469 allocated=1429504 cap=104857600
+PASS missing-checkout rc=2
+FOOTPRINT missing-checkout-maker-before logical=642469 allocated=1429504 cap=104857600
+FOOTPRINT missing-checkout-maker-after logical=642536 allocated=1433600 cap=104857600
+PASS missing-checkout-maker rc=2
+FOOTPRINT wrong-checkout-before logical=642536 allocated=1433600 cap=104857600
+FOOTPRINT wrong-checkout-after logical=642613 allocated=1437696 cap=104857600
+PASS wrong-checkout rc=2
+FOOTPRINT wrong-checkout-maker-before logical=642613 allocated=1437696 cap=104857600
+FOOTPRINT wrong-checkout-maker-after logical=642680 allocated=1441792 cap=104857600
+PASS wrong-checkout-maker rc=2
+FOOTPRINT same-name-empty-before logical=646776 allocated=1445888 cap=104857600
+FOOTPRINT same-name-empty-after logical=646827 allocated=1449984 cap=104857600
+PASS same-name-empty rc=2
+FOOTPRINT before-reset-group logical=646827 allocated=1449984 cap=104857600
+FOOTPRINT after-reset-group logical=646827 allocated=1449984 cap=104857600
+FOOTPRINT ambiguity-before logical=646827 allocated=1449984 cap=104857600
+FOOTPRINT ambiguity-after logical=646870 allocated=1454080 cap=104857600
+PASS ambiguity rc=2
+FOOTPRINT sourcebyte-before logical=646880 allocated=1454080 cap=104857600
+FOOTPRINT sourcebyte-after logical=647010 allocated=1458176 cap=104857600
+PASS sourcebyte rc=2
+FOOTPRINT source-writable-before logical=647000 allocated=1458176 cap=104857600
+FOOTPRINT source-writable-after logical=647176 allocated=1462272 cap=104857600
+PASS source-writable rc=2
+FOOTPRINT before-reset-group logical=647176 allocated=1462272 cap=104857600
+FOOTPRINT after-reset-group logical=647176 allocated=1462272 cap=104857600
+FOOTPRINT signed-clientbyte-before logical=647182 allocated=1462272 cap=104857600
+FOOTPRINT signed-clientbyte-after logical=647318 allocated=1466368 cap=104857600
+PASS signed-clientbyte rc=2
+FOOTPRINT signed-clientbyte-maker-before logical=647318 allocated=1466368 cap=104857600
+FOOTPRINT signed-clientbyte-maker-after logical=647444 allocated=1470464 cap=104857600
+PASS signed-clientbyte-maker rc=2
+FOOTPRINT before-reset-group logical=647444 allocated=1470464 cap=104857600
+FOOTPRINT after-reset-group logical=647438 allocated=1470464 cap=104857600
+FOOTPRINT signed-agentbyte-before logical=647440 allocated=1470464 cap=104857600
+FOOTPRINT signed-agentbyte-after logical=647560 allocated=1474560 cap=104857600
+PASS signed-agentbyte rc=2
+FOOTPRINT signed-agentbyte-maker-before logical=647560 allocated=1474560 cap=104857600
+FOOTPRINT signed-agentbyte-maker-after logical=647670 allocated=1478656 cap=104857600
+PASS signed-agentbyte-maker rc=2
+FOOTPRINT before-reset-group logical=647670 allocated=1478656 cap=104857600
+FOOTPRINT after-reset-group logical=647668 allocated=1478656 cap=104857600
+FOOTPRINT wrong-owner-before logical=647663 allocated=1478656 cap=104857600
+FOOTPRINT wrong-owner-after logical=647768 allocated=1482752 cap=104857600
+PASS wrong-owner rc=2
+FOOTPRINT wrong-owner-maker-before logical=647768 allocated=1482752 cap=104857600
+FOOTPRINT wrong-owner-maker-after logical=647863 allocated=1486848 cap=104857600
+PASS wrong-owner-maker rc=2
+FOOTPRINT before-reset-group logical=647863 allocated=1486848 cap=104857600
+FOOTPRINT after-reset-group logical=647868 allocated=1486848 cap=104857600
+FOOTPRINT fake-child-launcher-before logical=646372 allocated=1486848 cap=104857600
+FOOTPRINT fake-child-launcher-after logical=646482 allocated=1490944 cap=104857600
+PASS fake-child-launcher rc=2
+FOOTPRINT fake-child-launcher-maker-before logical=646482 allocated=1490944 cap=104857600
+FOOTPRINT fake-child-launcher-maker-after logical=646582 allocated=1495040 cap=104857600
+PASS fake-child-launcher-maker rc=2
+FOOTPRINT before-reset-group logical=646582 allocated=1495040 cap=104857600
+FOOTPRINT after-reset-group logical=648078 allocated=1495040 cap=104857600
+FOOTPRINT fake-valid-launcher-before logical=646977 allocated=1495040 cap=104857600
+FOOTPRINT fake-valid-launcher-after logical=647087 allocated=1499136 cap=104857600
+PASS fake-valid-launcher rc=2
+FOOTPRINT fake-valid-launcher-maker-before logical=647087 allocated=1499136 cap=104857600
+FOOTPRINT fake-valid-launcher-maker-after logical=647187 allocated=1503232 cap=104857600
+PASS fake-valid-launcher-maker rc=2
+FOOTPRINT before-reset-group logical=647187 allocated=1503232 cap=104857600
+FOOTPRINT after-reset-group logical=648288 allocated=1503232 cap=104857600
+FOOTPRINT runtime-version-before logical=648286 allocated=1503232 cap=104857600
+FOOTPRINT runtime-version-after logical=648398 allocated=1507328 cap=104857600
+PASS runtime-version rc=2
+FOOTPRINT runtime-version-maker-before logical=648398 allocated=1507328 cap=104857600
+FOOTPRINT runtime-version-maker-after logical=648500 allocated=1511424 cap=104857600
+PASS runtime-version-maker rc=2
+FOOTPRINT before-reset-group logical=648500 allocated=1511424 cap=104857600
+FOOTPRINT after-reset-group logical=648502 allocated=1511424 cap=104857600
+FOOTPRINT runtime-url-before logical=648378 allocated=1511424 cap=104857600
+FOOTPRINT runtime-url-after logical=648458 allocated=1515520 cap=104857600
+PASS runtime-url rc=2
+FOOTPRINT runtime-url-maker-before logical=648458 allocated=1515520 cap=104857600
+FOOTPRINT runtime-url-maker-after logical=648528 allocated=1519616 cap=104857600
+PASS runtime-url-maker rc=2
+FOOTPRINT before-reset-group logical=648528 allocated=1519616 cap=104857600
+FOOTPRINT after-reset-group logical=648652 allocated=1519616 cap=104857600
+FOOTPRINT missing-record-before logical=648024 allocated=1515520 cap=104857600
+FOOTPRINT missing-record-after logical=648129 allocated=1519616 cap=104857600
+PASS missing-record rc=2
+FOOTPRINT missing-record-maker-before logical=648129 allocated=1519616 cap=104857600
+FOOTPRINT missing-record-maker-after logical=648224 allocated=1523712 cap=104857600
+PASS missing-record-maker rc=2
+FOOTPRINT before-reset-group logical=648224 allocated=1523712 cap=104857600
+FOOTPRINT after-reset-group logical=648852 allocated=1527808 cap=104857600
+FOOTPRINT source-missing-before logical=648835 allocated=1527808 cap=104857600
+FOOTPRINT source-missing-after logical=648991 allocated=1531904 cap=104857600
+PASS source-missing rc=2
+FOOTPRINT source-missing-maker-before logical=648991 allocated=1531904 cap=104857600
+FOOTPRINT source-missing-maker-after logical=649137 allocated=1536000 cap=104857600
+PASS source-missing-maker rc=2
+FOOTPRINT maker-env-i-before logical=649137 allocated=1536000 cap=104857600
+FOOTPRINT maker-env-i-after logical=649365 allocated=1540096 cap=104857600
+PASS maker-env-i rc=0
+FOOTPRINT source-race-before logical=653722 allocated=1548288 cap=104857600
+FOOTPRINT source-race-after logical=653769 allocated=1556480 cap=104857600
+PASS source-race rc=2
+FOOTPRINT dirty-source-before logical=653768 allocated=1556480 cap=104857600
+FOOTPRINT dirty-source-after logical=653846 allocated=1560576 cap=104857600
+PASS dirty-source rc=2
+FOOTPRINT wrong-commit-before logical=653846 allocated=1560576 cap=104857600
+FOOTPRINT wrong-commit-after logical=653923 allocated=1564672 cap=104857600
+PASS wrong-commit rc=2
+FOOTPRINT wrong-commit-maker-before logical=653923 allocated=1564672 cap=104857600
+FOOTPRINT wrong-commit-maker-after logical=653990 allocated=1568768 cap=104857600
+PASS wrong-commit-maker rc=2
+FOOTPRINT malformed-commit-before logical=653990 allocated=1568768 cap=104857600
+FOOTPRINT malformed-commit-after logical=654040 allocated=1572864 cap=104857600
+PASS malformed-commit rc=2
+FOOTPRINT malformed-commit-maker-before logical=654040 allocated=1572864 cap=104857600
+FOOTPRINT malformed-commit-maker-after logical=654077 allocated=1576960 cap=104857600
+PASS malformed-commit-maker rc=2
+FOOTPRINT before-reset-group logical=654077 allocated=1576960 cap=104857600
+FOOTPRINT after-reset-group logical=654094 allocated=1576960 cap=104857600
+FOOTPRINT agent-record-shape-before logical=654093 allocated=1576960 cap=104857600
+FOOTPRINT agent-record-shape-after logical=654182 allocated=1581056 cap=104857600
+PASS agent-record-shape rc=2
+FOOTPRINT agent-record-shape-maker-before logical=654182 allocated=1581056 cap=104857600
+FOOTPRINT agent-record-shape-maker-after logical=654261 allocated=1585152 cap=104857600
+PASS agent-record-shape-maker rc=2
+FOOTPRINT before-reset-group logical=654261 allocated=1585152 cap=104857600
+FOOTPRINT after-reset-group logical=654262 allocated=1585152 cap=104857600
+FOOTPRINT record-traversal-before logical=654278 allocated=1585152 cap=104857600
+FOOTPRINT record-traversal-after logical=654386 allocated=1589248 cap=104857600
+PASS record-traversal rc=2
+FOOTPRINT record-traversal-maker-before logical=654386 allocated=1589248 cap=104857600
+FOOTPRINT record-traversal-maker-after logical=654484 allocated=1593344 cap=104857600
+PASS record-traversal-maker rc=2
+FOOTPRINT before-reset-group logical=654484 allocated=1593344 cap=104857600
+FOOTPRINT after-reset-group logical=654468 allocated=1593344 cap=104857600
+FOOTPRINT ambiguous-dist-before logical=659344 allocated=1609728 cap=104857600
+FOOTPRINT ambiguous-dist-after logical=659447 allocated=1613824 cap=104857600
+PASS ambiguous-dist rc=2
+FOOTPRINT ambiguous-dist-maker-before logical=659447 allocated=1613824 cap=104857600
+FOOTPRINT ambiguous-dist-maker-after logical=659540 allocated=1617920 cap=104857600
+PASS ambiguous-dist-maker rc=2
+FOOTPRINT source-partial-agent-README.md-before logical=659540 allocated=1617920 cap=104857600
+FOOTPRINT source-partial-agent-README.md-after logical=659665 allocated=1622016 cap=104857600
+PASS source-partial-agent-README.md rc=2
+FOOTPRINT source-partial-agent-astrid-nested-command.py-before logical=659665 allocated=1622016 cap=104857600
+FOOTPRINT source-partial-agent-astrid-nested-command.py-after logical=659805 allocated=1626112 cap=104857600
+PASS source-partial-agent-astrid-nested-command.py rc=2
+FOOTPRINT source-partial-runtime-README.md-before logical=659805 allocated=1626112 cap=104857600
+FOOTPRINT source-partial-runtime-README.md-after logical=659938 allocated=1630208 cap=104857600
+PASS source-partial-runtime-README.md rc=2
+FOOTPRINT before-reset-group logical=659938 allocated=1630208 cap=104857600
+FOOTPRINT after-reset-group logical=659938 allocated=1630208 cap=104857600
+FOOTPRINT signed-runtimebyte-before logical=659942 allocated=1630208 cap=104857600
+FOOTPRINT signed-runtimebyte-after logical=660078 allocated=1634304 cap=104857600
+PASS signed-runtimebyte rc=2
+FOOTPRINT signed-runtimebyte-maker-before logical=660078 allocated=1634304 cap=104857600
+FOOTPRINT signed-runtimebyte-maker-after logical=660204 allocated=1638400 cap=104857600
+PASS signed-runtimebyte-maker rc=2
+FOOTPRINT before-reset-group logical=660204 allocated=1638400 cap=104857600
+FOOTPRINT after-reset-group logical=660200 allocated=1638400 cap=104857600
+FOOTPRINT missing-client-row-before logical=660110 allocated=1638400 cap=104857600
+FOOTPRINT missing-client-row-after logical=660215 allocated=1642496 cap=104857600
+PASS missing-client-row rc=2
+FOOTPRINT missing-client-row-maker-before logical=660215 allocated=1642496 cap=104857600
+FOOTPRINT missing-client-row-maker-after logical=660310 allocated=1646592 cap=104857600
+PASS missing-client-row-maker rc=2
+FOOTPRINT before-reset-group logical=660310 allocated=1646592 cap=104857600
+FOOTPRINT after-reset-group logical=660400 allocated=1646592 cap=104857600
+FOOTPRINT unowned-agent-module-before logical=660417 allocated=1650688 cap=104857600
+FOOTPRINT unowned-agent-module-after logical=660620 allocated=1654784 cap=104857600
+PASS unowned-agent-module rc=2
+FOOTPRINT unowned-agent-module-maker-before logical=660620 allocated=1654784 cap=104857600
+FOOTPRINT unowned-agent-module-maker-after logical=660813 allocated=1658880 cap=104857600
+PASS unowned-agent-module-maker rc=2
+FOOTPRINT same-name-symlink-before logical=660875 allocated=1662976 cap=104857600
+FOOTPRINT same-name-symlink-after logical=660936 allocated=1667072 cap=104857600
+PASS same-name-symlink rc=2
+FOOTPRINT same-name-symlink-maker-before logical=660936 allocated=1667072 cap=104857600
+FOOTPRINT same-name-symlink-maker-after logical=660987 allocated=1671168 cap=104857600
+PASS same-name-symlink-maker rc=2
+FOOTPRINT sourcebyte-maker-before logical=660954 allocated=1671168 cap=104857600
+FOOTPRINT sourcebyte-maker-after logical=661069 allocated=1675264 cap=104857600
+PASS sourcebyte-maker rc=2
+FOOTPRINT source-writable-maker-before logical=661102 allocated=1675264 cap=104857600
+FOOTPRINT source-writable-maker-after logical=661280 allocated=1679360 cap=104857600
+PASS source-writable-maker rc=2
+FOOTPRINT final-security-group logical=661280 allocated=1679360 cap=104857600
+PASS 97 custody controls; roots=/tmp/w-2c40903018/controls-qk2yuck9
+FOOTPRINT after-disposable-fixture-release logical=110993 allocated=217088 cap=104857600

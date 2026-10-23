@@ -1,0 +1,10 @@
+FOOTPRINT before-dispatcher-group logical=110993 allocated=217088 cap=104857600
+FOOTPRINT before-source-group logical=115089 allocated=221184 cap=104857600
+FOOTPRINT after-source-group logical=422399 allocated=827392 cap=104857600
+PASS production-defaults request-child-venv.sh
+PASS production-defaults make-child-venv.sh
+PASS exact-payload actual-branch mock-maker normal
+PASS exact-payload actual-branch mock-maker env-i
+PASS default-root evaluation and private-only dispatcher fixtures roots=/tmp/w-2c40903018/dispatcher-xl2tlb5s
+FOOTPRINT after-dispatcher-group logical=460016 allocated=884736 cap=104857600
+FOOTPRINT after-disposable-fixture-release logical=110993 allocated=217088 cap=104857600

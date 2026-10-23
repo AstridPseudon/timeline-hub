@@ -335,9 +335,9 @@ STORE_HELPER=$O/bin/bench_store.py
 [ -f "$STORE_HELPER" ] && [ ! -L "$STORE_HELPER" ] || { echo 'REFUSED: bench store helper unavailable' >&2; exit 2; }
 STORE_ROOT=$W/bench-store
 export STORE_CONTEXT="$(declare -p O W A S N R RS SUITE NODE_BIN NODE_VERSION NPM_VERSION NODE_SHA SUMS_SHA LOCK_SHA PACKAGE_SHA REMOTION_TREE COMPONENT_SHA; declare -f registration candidate_matches artifact_integrity)"
-python3 -I - "$0" "$STORE_HELPER" "$STORE_ROOT" "$O/tests" "$N" "$S" "$RS" "$REMOTION_TREE" <<'STORE_PY'
+python3 -I - "$0" "$STORE_HELPER" "$STORE_ROOT" "$O/tests" "$N" "$S" "$RS" "$REMOTION_TREE" "$LOCK_SHA" "$COMPONENT_SHA" <<'STORE_PY'
 import importlib.util, os, pathlib, shlex, subprocess, sys, tempfile
-script, helper, root, tests, name, agent, backend, tree = sys.argv[1:]
+script, helper, root, tests, name, agent, backend, tree, lock, component = sys.argv[1:]
 spec = importlib.util.spec_from_file_location('bench_store', helper)
 module = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = module
@@ -347,11 +347,14 @@ source = pathlib.Path(script).read_text()
 body = source.split('# STORE_BUILD_BEGIN\n', 1)[1].split('# STORE_BUILD_END', 1)[0]
 context = os.environ['STORE_CONTEXT']
 def shell(code, *args, **kw):
-    return subprocess.run(['bash', '-Eeuo', 'pipefail', '-c', context + '\n' + code, 'store-adapter', *map(str, args)], check=True, **kw)
+    bounded = kw.pop('bounded', False)
+    command = ['bash', '-Eeuo', 'pipefail', '-c', context + '\n' + code, 'store-adapter', *map(str, args)]
+    if bounded: command = ['timeout', '--signal=TERM', '--kill-after=10s', '840s', *command]
+    return subprocess.run(command, check=True, **kw)
 def build(stage, final):
     if os.environ.get('RUNTIME_BUILD_MOCK') == '1':
         raise RuntimeError('build required; installer not run (fixture control)')
-    shell('T=$1; D=$2\n' + body, stage, final)
+    shell('T=$1; D=$2; FREE=$(df -P -B1 \"$W\" | awk \'NR==2 {print $4}\'); [[ \"$FREE\" =~ ^[0-9]+$ ]] && [ \"$FREE\" -ge 2147483648 ]\n' + body, stage, final, bounded=True)
 def verify(path):
     shell('candidate_matches "$1"', path)
 def registration(path, final, reused):
@@ -370,7 +373,9 @@ origin = (path / '.astrid-agent-source-commit').read_text().strip()
 print('status=' + ('reused' if entry['reused'] else 'created'))
 print('runtime=' + str(path))
 print('requested_name=' + name + '\nrequested_agent_sha=' + agent + '\nrequested_runtime_sha=' + backend)
-print('build_origin_agent_sha=' + origin + '\nremotion_tree_sha=' + tree + '\nkey=' + entry['key'] + '\nreuse=verified')
+print('build_origin_agent_sha=' + origin + '\nremotion_tree_sha=' + tree + '\nlock_sha256=' + lock + '\ncomponent_identity=' + component + '\nkey=' + entry['key'] + '\nreuse=verified')
+if not entry['reused']:
+    print('created ' + str(path) + ' from agent ' + agent + ' (lock ' + lock + ', node v20.19.4/npm 10.8.2); env tests/' + name + '.env; suite ' + name + '-nodes')
 STORE_PY
 exit $?
 : <<'STORE_BUILD_BODY'
