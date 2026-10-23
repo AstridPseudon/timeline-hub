@@ -10,6 +10,7 @@ until it exits, so the only thing two writers share is the working-copy file on 
 """
 from __future__ import annotations
 
+import copy
 import json
 import os
 import select
@@ -367,8 +368,13 @@ def genuine_runtime(world, tmp_path):
     world.head.write_text(json.dumps({"revision_id": head["revision_id"], "bundle": current_bundle}), encoding="utf-8")
 
     def publish_candidate(candidate):
+        from astrid.sdk.timeline.sync import CommitConflict
+
         checkout = Checkout(candidate)
-        result = checkout.publish("persistence test", client=client, idempotency_key="persistence-test")
+        try:
+            result = checkout.publish("persistence test", client=client, idempotency_key="persistence-test")
+        except CommitConflict as exc:
+            raise Refused(f"not published: someone published ({exc})") from exc
         latest = client.timelines.open_bundle(project, "t")
         assert latest.ok, latest.error
         moved = world.moved_head_revision
@@ -379,13 +385,36 @@ def genuine_runtime(world, tmp_path):
         }
 
     def move_head(_revision, edit):
-        peer = Checkout.open(project, "t", client=client)
-        edit(peer.bundle)
-        peer.publish("persistence peer", client=client, idempotency_key="persistence-peer")
+        from astrid.sdk.timeline.emitter import emit_document_commands
+
+        history = client.timelines.history(project, "t", limit=200)
+        current = history.data["head"]
+        opened = client.timelines.open_bundle(
+            project, "t", revision_id=current["revision_id"], publication_id=current["publication_id"],
+        )
+        assert opened.ok, opened.error
+        before = opened.data["bundle"]
+        candidate = copy.deepcopy(before)
+        edit(candidate)
+        commands = emit_document_commands(before, candidate)
+        result = client.timelines.commit(
+            project, "t", {
+                "api_version": 1, "project_id": project, "timeline_id": "t",
+                "base_revision_id": current["revision_id"],
+                "base_publication_id": current["publication_id"],
+                "commands": commands, "label": "persistence peer", "source": {"via": "python"},
+                "merge": "atomic",
+                "steps": [{"id": "edit", "label": "persistence peer", "intent": "",
+                           "tags": [], "command_ordinals": list(range(len(commands))),
+                           "patch": [change for call in commands for change in call["args"]["changes"]],
+                           "reads": [{"kind": "scope", "ref": "timeline", "path": []}]}],
+            }, idempotency_key="persistence-peer",
+        )
+        assert result.ok, result.error
         latest = client.timelines.open_bundle(project, "t")
         assert latest.ok, latest.error
         world.moved_head_revision = _revision
-        world.head.write_text(json.dumps({"revision_id": latest.data["revision_id"],
+        world.head.write_text(json.dumps({"revision_id": _revision,
                                           "bundle": latest.data["bundle"]}), encoding="utf-8")
 
     world.publish_candidate = publish_candidate
@@ -651,6 +680,7 @@ def test_publish_after_a_restart_merges_other_clips_onto_the_moved_head(world):
     assert merged.clip("b-type").params["text"] == "LIVE!"  # their change, kept
 
 
+@pytest.mark.usefixtures("genuine_runtime")
 def test_publish_after_a_restart_refuses_a_clip_both_sides_changed(world):
     with world.writer("A") as a:
         a.do("draft")

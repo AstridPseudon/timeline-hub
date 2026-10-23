@@ -164,17 +164,49 @@ def test_ordinary_publish_changed_key_payload_and_force_never_write(restructure_
     assert env.document() == before and history(env) == entries
 
 
-def test_ordinary_disjoint_clips_merge_onto_peer_head(restructure_runtime):
-    """Preserve test_timeline_persistence's successful disjoint-clip publication promise."""
+def test_nudge_disjoint_clips_merge_onto_peer_head(restructure_runtime):
+    """A captured operation-time nudge retains the existing disjoint merge behavior."""
     from astrid.sdk.timeline import open as open_timeline
     env = restructure_runtime
     checkout = Checkout.open(env.project, 't', client=env.client)
-    checkout.clip('p1').data['opaque'] = {'local': True}
+    base = history(env)['head']
+    start = checkout.clip('cross').start
+    checkout.clip('cross').nudge(0.5)
     peer = open_timeline(env.project, 't', client=env.client)
     peer.clip('p2').data['opaque'] = {'peer': True}
     peer.commit('Peer clip', idempotency_key='peer-clip')
     result = checkout.publish('Local clip', client=env.client, idempotency_key='local-clip')
     assert result['receipt']['result']['status'] == 'merged'
+    body = env.calls[-2][0]
+    assert body['merge'] == 'fields' and body['steps'][0]['reads']
+    assert body['base_publication_id'] == base['publication_id']
     loaded = Checkout.open(env.project, 't', client=env.client)
-    assert loaded.clip('p1').data['opaque'] == {'local': True}
+    assert loaded.clip('cross').start == pytest.approx(start + 0.5)
     assert loaded.clip('p2').data['opaque'] == {'peer': True}
+
+
+def test_ordinary_direct_opaque_edit_is_atomic_and_refuses_peer_head(restructure_runtime):
+    """An uncaptured direct edit is conservative when another head intervenes."""
+    from astrid.sdk.timeline import open as open_timeline
+    from astrid.sdk.timeline._common import TimelineEditError
+
+    env = restructure_runtime
+    checkout = Checkout.open(env.project, 't', client=env.client)
+    checkout.clip('p1').data['opaque'] = {'local': True}
+    peer = open_timeline(env.project, 't', client=env.client)
+    peer.clip('p2').data['opaque'] = {'peer': True}
+    peer.commit('Peer clip', idempotency_key='peer-opaque')
+
+    before_document = copy.deepcopy(env.document())
+    before_history = history(env)
+    before_head = copy.deepcopy(before_history['head'])
+    before_database = tuple(env.service.store.conn.iterdump())
+    with pytest.raises((TimelineEditError, WorkspaceClientError)):
+        checkout.publish('Local opaque edit', client=env.client, idempotency_key='local-opaque')
+
+    body = env.calls[-1][0]
+    assert body['merge'] == 'atomic' and 'reads' not in body
+    assert env.document() == before_document
+    after_history = history(env)
+    assert after_history == before_history and after_history['head'] == before_head
+    assert tuple(env.service.store.conn.iterdump()) == before_database
