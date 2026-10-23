@@ -2410,7 +2410,8 @@ class RuntimeService:
                 self._timeline_commit_coordinator = CommitExecutionCoordinator(self._timeline_commit_store)
             return self._timeline_commit_store, self._timeline_commit_coordinator
 
-    def _timeline_authorize(self, project_id, timeline_id, authorize, *, mutation=True):
+    def _timeline_authorize(self, project_id, timeline_id, authorize, *, mutation=True,
+                            allow_archived=False):
         if not callable(authorize):
             raise AuthorizationError("authenticated timeline authority callback is required")
         def check():
@@ -2421,10 +2422,10 @@ class RuntimeService:
             if project["id"] != project_id or project["realm_id"] != self.realm["id"]:
                 raise AuthorizationError("canonical project identity is required")
             if timeline_id is not None:
-                row = self.store.conn.execute(
-                    "SELECT 1 FROM timelines WHERE id=? AND project_id=? AND archived_at IS NULL",
-                    (timeline_id, project_id),
-                ).fetchone()
+                query = "SELECT 1 FROM timelines WHERE id=? AND project_id=?"
+                if not allow_archived:
+                    query += " AND archived_at IS NULL"
+                row = self.store.conn.execute(query, (timeline_id, project_id)).fetchone()
                 if row is None:
                     raise NotFoundError("timeline not found")
         with self.store._mutex:
@@ -2453,7 +2454,25 @@ class RuntimeService:
         if not isinstance(publisher, str) or not publisher:
             raise AuthorizationError("authenticated publisher is required")
         idempotency_key = require_idempotency_key(idempotency_key)
-        check = self._timeline_authorize(project_id, timeline_id, authorize)
+        # A retry must authenticate against the current bearer and canonical
+        # project before it can inspect the durable idempotency row.  Archived
+        # liveness is deferred until the lookup misses, so an exact replay can
+        # still be returned without reopening the mutable producer scope.
+        check = self._timeline_authorize(project_id, timeline_id, authorize, allow_archived=True)
+
+        def require_active():
+            check()
+            with self.store._mutex:
+                connection = self.store.conn
+                if connection is None:
+                    raise RuntimeError("runtime store is not open")
+                row = connection.execute(
+                    "SELECT 1 FROM timelines WHERE id=? AND project_id=? AND archived_at IS NULL",
+                    (timeline_id, project_id),
+                ).fetchone()
+                if row is None:
+                    raise NotFoundError("timeline not found")
+
         invocation = {"operation": operation, "path": invocation_path, "body": detached(original_body)}
         request_hash = hashlib.sha256(canonical_json({
             "operation": operation, "path": invocation_path,
@@ -2467,13 +2486,15 @@ class RuntimeService:
             self._timeline_commit_started = True
             provider = self._timeline_commit_provider
         def port_factory(bound_context):
-            self._ensure_timeline_commit_baseline(commits, project_id, timeline_id, check)
-            return RequestCommitPort(self, commits, bound_context, check)
+            require_active()
+            self._ensure_timeline_commit_baseline(commits, project_id, timeline_id, require_active)
+            return RequestCommitPort(self, commits, bound_context, require_active)
         try:
             if provider is None:
                 replay = commits.lookup(context, authorize=check)
                 if replay is not None:
                     return replay
+                require_active()
                 raise CommitUnavailable()
             outcome = coordinator.execute(context, provider, port_factory, authorize=check)
             if "http_status" in outcome:
