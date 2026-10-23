@@ -1,0 +1,16 @@
+PASS scoped in-memory compile: diagnostic, checks, verify
+PASS cmp -diagnostic.py exit 0
+PASS cmp -command.sh exit 0
+PASS exact handoff first command fence extraction, cmp exit 0
+PASS unchanged source SHA256 and bash -n retire-child-venv exit 0
+PASS unchanged source SHA256 and bash -n request-retire-venv exit 0
+PASS source structure only: real cmdline byte count, empty/nonempty exe branches, own-process exclusion, target/cwd/fd checks, unchanged request route
+PASS git diff --check exit 0; empty output
+PASS git diff --exit-code exit 0; empty output
+PASS git status --porcelain exit 0; empty output
+PASS Runtime HEAD 2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d
+SHA256 15890ed6fa650527751e6c3c6de3312ed9e2dc87a0176133eaf28c494f57c55f handoff-runtime-OPS-retire-process-sol-1840-diagnostic.py bytes 5094
+SHA256 a7a3a54d6f04c0be0f753519f3214d4c4403cf8395c85173a12043d0b3fcff27 handoff-runtime-OPS-retire-process-sol-1840-command.sh bytes 5114
+SHA256 0532ad546f87521b84b77a2a7dd2ea6075a2464b4b9c2a070fb0302c0dba8051 handoff-runtime-OPS-retire-process-sol-1840-checks.py bytes 9133
+SHA256 7d3d1ab09f8ebbe8f3fa62af235d522fd8f9aeffa861b351b9d6f0528f81d72a handoff-runtime-OPS-retire-process-sol-1840-verify.py bytes 3633
+Actual HOST/remote proc and installed handler/request execution: UNRUN

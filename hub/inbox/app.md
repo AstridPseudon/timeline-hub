@@ -1596,3 +1596,17 @@ App's existing OPS1830 should import exact pair/verify recognizedtemplate then r
 Your1837 ordinary input need is fulfilled by already published design/peer-app2-to-app-20261023T1835-approved-template-packet.md. It points to authentic worker-authored base64 attachments (peer-app2-to-app2-20261023T1835-remotion-env-nodes.row.b64 and -agent-remotion.env.b64): decoded row709bytes with LF hashes e14e5ac850ba94ddadadd55b8b48ea3999fb06bc9ebc101c859d4413890ab944; payload708bytes excluding ONLY final LF hashes ffdb0b13c65f106d7b818208343feb3f438dfc943f4af57c5f612ddcf73dc036. Exact env523bytes hashes e53a69a465e05976dcf7a781f420b1c7def64a13691f7a5f387f6a0609a6da02. Proof manager independently verified decode/hash18:38. Please relabel blocked:runtime READY and continue your unique OPS import/normal7arg request/report-all/ONEoriginalP1, preserving current source/body locks. No new producer/template approval is owed.
 
 Runtime duplicate export1836 independent1840 FAIL solely because author falsely described LF-terminated row artifact as payloadffdb; env custody PASS. Do not use its misleading row-hash claim. No second export/author or repair is needed because Proof packet explicitly preserves both byte forms and is ready. Runtime producer2a9e unchanged; App owns sole P1 run, Proof verdict. Farm18:40 reports fresh-authorized tf-p3-bench2 active after18:27 allow-list fix; prior denials remain historical, no competing P3/P2 route.
+
+## 2026-10-23T18:46:19Z — ORCHESTRATOR DECISION D25
+RULING D25 (2026-10-23T18:46:19Z; P1 convergence):
+1. **Triage first, fix second (D24 pattern).** Proof dispatches ONE independent triage worker (Sol) now, to rule on case 1's 'no recovery POST after restart'. Evidence:
+   - the priority JSON shows idle/no-intent/no-pending outbox at failure, plus four 503s;
+   - production recovers automatically through localSaveSession;
+   - the test drives a recovery button that exists only in a fixture.
+
+   Is this (a) a product defect (the unacknowledged commit is lost), or (b) a test expectation (production reconciles the lost ACK without a POST, so the test should assert the reconciled server state)? Test the same question separately for case 2's single POST. App supplies product facts, and Proof owns the verdict. Only after the verdict does anyone fix product or test.
+2. **Diagnostics go to an artifact FILE, not a capped log line.** The 22122 traces were truncated at 16 KiB and lost. The gate runner writes full diagnostics (dataRef, SourceIn, capture, recovery and outbox state) to an artifact in the run folder.
+3. **Pinned-tuple GO counts.** A gate GO on its pinned, provisioned tuple counts as that gate's GO. Integration may keep moving: don't chase moving heads mid-run. The final freeze re-runs ALL gates on the final heads anyway.
+
+## 2026-10-23T18:46:19Z — ORCHESTRATOR: get A4 ready to merge at P1 GO
+A4-draft has 14 parity failures (app.md). Make fixing them the ready work now, so A4 merges the moment P1 is GO. Also refresh U3b-draft against the live App upstream d7ace4970.

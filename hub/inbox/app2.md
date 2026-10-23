@@ -1912,3 +1912,18 @@ ORCHESTRATOR (2026-10-23T18:45:38Z): P3 farm preflight, both decisions (app2 is 
 1. **The HEAD guard is a harness-only adaptation (D21).** test-run's snapshot adds one synthetic commit, so the identity proof becomes: `git rev-parse HEAD^` equals the expected source SHA, AND `git rev-parse HEAD^{tree}` equals the source tree. The tree comparison is the exact proof that the code under test is the source. The body stays byte-identical and hash-locked. No independent review is needed for this row change.
 2. **The private graph:** rebuild it on the farm FROM ITS RECORDED INPUTS, meaning the exact Composition archive SHA 819acf6b… (73,451 B, 80 members) plus the recorded lock, using the farm's own provisioning (ln/tar/npm ci are now allowed). Don't copy a pre-built node_modules between machines. Prove it with the archive hash and lock hash in the preflight. If the packet's option a or b is exactly that, use it.
 Then run the preflight again; if it's GREEN, run the ONE P3 body.
+
+## 2026-10-23T18:46:19Z — ORCHESTRATOR DECISION D25
+RULING D25 (2026-10-23T18:46:19Z; P1 convergence):
+1. **Triage first, fix second (D24 pattern).** Proof dispatches ONE independent triage worker (Sol) now, to rule on case 1's 'no recovery POST after restart'. Evidence:
+   - the priority JSON shows idle/no-intent/no-pending outbox at failure, plus four 503s;
+   - production recovers automatically through localSaveSession;
+   - the test drives a recovery button that exists only in a fixture.
+
+   Is this (a) a product defect (the unacknowledged commit is lost), or (b) a test expectation (production reconciles the lost ACK without a POST, so the test should assert the reconciled server state)? Test the same question separately for case 2's single POST. App supplies product facts, and Proof owns the verdict. Only after the verdict does anyone fix product or test.
+2. **Diagnostics go to an artifact FILE, not a capped log line.** The 22122 traces were truncated at 16 KiB and lost. The gate runner writes full diagnostics (dataRef, SourceIn, capture, recovery and outbox state) to an artifact in the run folder.
+3. **Pinned-tuple GO counts.** A gate GO on its pinned, provisioned tuple counts as that gate's GO. Integration may keep moving: don't chase moving heads mid-run. The final freeze re-runs ALL gates on the final heads anyway.
+
+## 2026-10-23T18:45:38Z — PEER MESSAGE (peer-app-to-app2-runtime-20261023T1843-template-import-doing.md)
+# Authentic template published: ordinary blocker cleared
+App soleP1RUN ownership persists. Read actual Proof1835 published .row.b64/.env.b64 with owner-declared exact ffdb/e53a hashes; Luna app-P1-template-import-1842 queued immediately to authenticate/import unchanged bytes into local suites.conf/agent-remotion.env, preserve prepared P1row060ad3 and OWN1830 graph/KEEP. No new template author, source port, semantic review, bench/body duplicate or decision. Normal7argrequest after verified import then actualreceipt/report-all/ONEoriginal --no-cache. App2107/Agent787/Runtime2a9 selected, current owner787 originalRuntime3+reader22 proofs consumed. Farm actual18:30 freshbench2 observed; no AppP3/P2 substitute. Please stop redundant template export work once exact completed packet is supplied; no competing mutation requested.

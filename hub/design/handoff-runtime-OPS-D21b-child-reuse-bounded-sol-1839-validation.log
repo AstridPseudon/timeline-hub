@@ -1,0 +1,38 @@
+FOOTPRINT before-validation-group logical=110993 allocated=217088 cap=104857600
+COMMAND ['bash', '-n', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-D21b-child-reuse-bounded-sol-1839-make-child-venv.sh'] rc=0
+COMMAND ['bash', '-n', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-D21b-child-reuse-bounded-sol-1839-request-child-venv.sh'] rc=0
+COMMAND ['bash', '-n', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-D21b-child-reuse-bounded-sol-1839-fixture-python.sh'] rc=0
+PASS Python compile fixture-sources.py
+PASS Python compile test-child-reuse.py
+PASS Python compile test-dispatcher.py
+PASS Python compile validate-packet.py
+PASS embedded requester Python compile
+PASS embedded maker Python compile PROVENANCE_SCRIPT
+PASS embedded maker Python compile DIST_METADATA_SCRIPT
+PASS embedded maker Python compile IDENTITY_SCRIPT
+PASS scoped Runtime compile astrid_runtime/__init__.py
+PASS scoped Runtime compile astrid_runtime/cli.py
+PASS scoped Runtime compile astrid_runtime/runtime_boundary.py
+INSTALLED INPUT make-child-venv 39450feacd8ff7d566e19fd6ce0aadc5c02366db1bccd9c88f9cd3a3ceef614f
+COMMAND ['patch', '--batch', '/tmp/w-2c40903018/patch-replay-wa6nnjrl/bin/make-child-venv', '-i', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-D21b-child-reuse-bounded-sol-1839-make-child-venv.patch'] rc=0
+patching file /tmp/w-2c40903018/patch-replay-wa6nnjrl/bin/make-child-venv
+PASS installed patch replay cmp make-child-venv
+COMMAND ['patch', '--batch', '/tmp/w-2c40903018/patch-replay-wa6nnjrl/bin/make-child-venv', '-i', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-D21b-child-reuse-bounded-sol-1839-make-child-venv.from-1811.patch'] rc=0
+patching file /tmp/w-2c40903018/patch-replay-wa6nnjrl/bin/make-child-venv
+PASS 1811 patch replay cmp make-child-venv
+INSTALLED INPUT request-child-venv f9e5ea6f2ff577ebd25218a1eba751e17fafd474b1e1a3a3adbb8524a80c440e
+COMMAND ['patch', '--batch', '/tmp/w-2c40903018/patch-replay-wa6nnjrl/bin/request-child-venv', '-i', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-D21b-child-reuse-bounded-sol-1839-request-child-venv.patch'] rc=0
+patching file /tmp/w-2c40903018/patch-replay-wa6nnjrl/bin/request-child-venv
+PASS installed patch replay cmp request-child-venv
+COMMAND ['patch', '--batch', '/tmp/w-2c40903018/patch-replay-wa6nnjrl/bin/request-child-venv', '-i', '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-D21b-child-reuse-bounded-sol-1839-request-child-venv.from-1811.patch'] rc=0
+patching file /tmp/w-2c40903018/patch-replay-wa6nnjrl/bin/request-child-venv
+PASS 1811 patch replay cmp request-child-venv
+PASS byte-identical 1826 candidate make-child-venv.sh
+PASS byte-identical 1826 candidate request-child-venv.sh
+COMMAND ['git', 'diff', '--check'] rc=0
+COMMAND ['git', 'status', '--porcelain', '--untracked-files=all'] rc=0
+COMMAND ['git', 'rev-parse', 'HEAD'] rc=0
+2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d
+COMMAND ['git', 'diff', '--exit-code', '2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d', '--'] rc=0
+FOOTPRINT after-validation-group logical=110993 allocated=217088 cap=104857600
+PASS syntax/scoped compile/patch replay/Runtime clean

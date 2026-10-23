@@ -35,6 +35,7 @@ def git(repo, *args):
     return subprocess.check_output(['git', '-C', str(repo), *args])
 agent = git(A, 'rev-parse', 'HEAD').decode().strip()
 runtime = git(R, 'rev-parse', 'HEAD').decode().strip()
+footprint('before-baseline-group')
 snapshot = W / '.child-venv-source-fixture'
 files = {}
 for name, repo, sha in [('agent', A, agent), ('runtime', R, runtime)]:
@@ -104,6 +105,7 @@ def origins(bench):
 (base / '.astrid-runtime-client-identity').write_text(identity + '\n')
 readonly(snapshot)
 readonly(base)
+footprint('after-baseline-group')
 
 count = 0
 def run(label, script, work, name, expected, extra=None, minimal=False, sha=None):
@@ -135,9 +137,11 @@ def run(label, script, work, name, expected, extra=None, minimal=False, sha=None
 
 # Keep one immutable baseline and one mutable copy. Reset only private fixture
 # bytes and permissions; move added entries aside rather than deleting anything.
+footprint('before-mutable-group')
 bench = W / 'venv-agent-child-target'
 shutil.copytree(base, bench)
 quarantine = ROOT / 'mutated-entries'; quarantine.mkdir()
+footprint('after-mutable-group')
 reset_count = 0
 def reset_bench():
     global reset_count

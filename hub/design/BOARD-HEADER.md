@@ -22,6 +22,7 @@ MERGE-ONLY lanes: app   (07:20Z: App's container is reclaimed within ~30 min of 
 - **10:40Z: R5 DONE**: old save routes are rejected, with an integrated proof (original 20 + legacy 80). U1b (Runtime upstream) is merged. P2 and P3 are running. The farm is live: App full suite run, 50 real failures sent to App.
 - **11:41Z: P4 DONE** (single, ten-notes, restart, show/history, conflict, rerun): 2 of 5 proofs pass. 25 merges in the last hour. App has held 78 min with the keep-awake.
 - **H18 (15:44Z):** P4 and P5 DONE. P1 runs end to end (2 known fails, D24). P2 and P3 wait on the Runtime atomic-birth guard fix (Sol). App full suite PASS 18,819. ETA about 19:00Z on 24 Oct. Upstream: App efe83c77e (7 conflicts; U3b-draft on a branch); Runtime aa6c5b0cb (deferred).
+- **H21 (18:46Z):** ETA ~20:00Z 24 Oct (14:00Z 24 Oct to 08:00Z 25 Oct). P1 still diagnostic, so D25. P3 is on the farm, with P2 in parallel. Bench lifecycle goes to OPS-bench-store.
 - **H3 go/no-go (P1, 00:40Z): NO-GO (partial).**
   - **PASS:** the R1 real corpus (42 tests on e6f7167d), plus the App provenance and local-save module tests.
   - **NOT proven:** the integrated App chain. Blockers: A2 is not wired into the mounted save path; the v2 DTOs are absent (R0); the rm-f holds (root cause fixed 00:50Z).
@@ -76,6 +77,7 @@ MERGE-ONLY lanes: app   (07:20Z: App's container is reclaimed within ~30 min of 
 - **D21b, bench keys and disk routing (17:51Z):** each bench component is keyed by what it depends on (Remotion runtime = Agent remotion/ tree hash; child venv = Agent SHA plus Runtime client), and reused when unchanged. A lane at its disk stop line hands gate RUNS to a machine with disk (currently the farm). The owning lane keeps authoring and the GO verdict.
 - **D21c (18:41Z):** the child bench is keyed by Agent SHA + backend SHA + client tuple; the Remotion runtime by the remotion/ tree hash only.
 - **Scratch location (18:41Z):** all scratch, fixtures and fixture venvs go in $TMPDIR (harness-cleaned). Worker folders hold under 50 MB (COMMON.md).
+- **D25, P1 convergence (18:46Z):** an independent triage rules defect vs test expectation for the 'no recovery POST' before any fix. Diagnostics go to artifact files, not capped logs. A GO on a pinned tuple counts, and the freeze re-runs all gates on the final heads.
 ## Principles from answered escalations (apply them yourself; at most 10 lines)
 - **Owner's direct approval:** it has been given in each lead's session for the v2.1 kickoff and for freeing disk to at least 15 GB. Operational instructions from the orchestrator carry the owner's authority. Safety and permission refusals still stop you.
 - **v1 leftovers:** v1 pin worktrees (KEEP), dirty v1 worktrees and other v1-only artifacts (private13 graphs, v1 suite scratch dirs, LEASE=READY v1 trees) are abandoned under v2.1. Remove v1 lines from suites.conf too. When disk is needed, release them yourself: check no running process or test uses the path, remove the KEEP marker, then run `bin/recycle`. For a dirty worktree, first keep its diff as `git diff > $ORCH/archive-v1/<name>.patch`. No need to ask.
