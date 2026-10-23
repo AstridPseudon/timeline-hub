@@ -193,7 +193,29 @@ def test_http_ten_note_commit_per_step_inverse_and_redo(runtime, tmp_path, capsy
     original = copy.deepcopy(opened.bundle)
     assert _note_values(original) == {}
     assert len(original["placements"]) == 2
-    canonical = original["source_mapping"]["_runtime_document"]
+    assert "_runtime_document" not in original["source_mapping"]
+    base_head = {
+        "revision_id": seeded["data"]["accepted_revision_id"],
+        "publication_id": seeded["receipt"]["receipt_id"],
+    }
+    assert opened.head == base_head
+    base_read = runtime.client().timelines.open_bundle(
+        runtime.project, "film", revision_id=base_head["revision_id"],
+        publication_id=base_head["publication_id"],
+    )
+    assert base_read.ok
+    authenticated_base = base_read.data["bundle"]
+    canonical = authenticated_base["source_mapping"]["_runtime_document"]
+    assert authenticated_base == {
+        **original,
+        "source_mapping": {**original["source_mapping"], "_runtime_document": canonical},
+        "base_parent": {**original["base_parent"], "publication_id": base_head["publication_id"]},
+    }
+    assert base_read.data["project_id"] == runtime.project
+    assert base_read.data["timeline_id"] == "film"
+    assert base_read.data["revision_id"] == base_head["revision_id"]
+    assert base_read.data["is_current_head"] is True
+    assert canonical["parent_revision"]["revision_id"] == base_head["revision_id"]
     assert set(canonical) == {
         "schema_version", "project_id", "timeline_id", "parent_revision",
         "shot_revisions", "internal_timeline_revisions", "dependency_manifest",
@@ -328,6 +350,11 @@ def test_http_ten_note_commit_per_step_inverse_and_redo(runtime, tmp_path, capsy
         "provider_version", "compiler_version",
     ):
         assert key in data
+    assert data["document_digest"] == _digest(data["canonical_document"])
+    assert data["accepted_revision_id"] == data["canonical_document"]["parent_revision"]["revision_id"]
+    assert data["accepted_publication_id"] == receipt["receipt_id"]
+    assert data["previous_revision_id"] == base_head["revision_id"]
+    assert data["previous_publication_id"] == base_head["publication_id"]
     assert data["id_map"] == {}
     assert data["rebased_onto"] is None
     assert data["publisher"]
@@ -338,6 +365,9 @@ def test_http_ten_note_commit_per_step_inverse_and_redo(runtime, tmp_path, capsy
     assert receipt["receipt_id"]
     assert receipt["command_kind"] == "timeline.commit"
     landed = bundle_from_document(data["canonical_document"])
+    assert landed["source_mapping"] == {
+        **original["source_mapping"], "_runtime_document": data["canonical_document"],
+    }
     assert _note_values(landed) == {note["id"]: note["text"] for note in _notes()}
     assert _without_notes(landed) == _without_notes(original)
 
@@ -369,6 +399,7 @@ def test_http_ten_note_commit_per_step_inverse_and_redo(runtime, tmp_path, capsy
         runtime.project, "film", client=runtime.client(),
         outbox_path=tmp_path / "ten-note-reloaded.json",
     )
+    assert "_runtime_document" not in reloaded.bundle["source_mapping"]
     for note in _notes():
         step_id = f"step-{note['ordinal'] + 1}"
         session = reloaded.session
