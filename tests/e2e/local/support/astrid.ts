@@ -3,7 +3,7 @@
  * as subprocesses against the same Runtime the hosted page talks to.
  *
  * Every call gets an environment built from nothing (no ambient Astrid state, no ambient Runtime, no proxy), `PYTHONPATH`
- * set to the Astrid checkout, and the four `ASTRID_TIMELINE_EVAL_*` variables. Direct mode uses state inside the harness tmp;
+ * set to the Astrid and Runtime checkouts, and the four `ASTRID_TIMELINE_EVAL_*` variables. Direct mode uses state inside the harness tmp;
  * attachment mode reuses F1's data root and credential. The endpoint is read from discovery before each call. The explicit
  * context makes `astrid` skip the launcher and pack host (astrid/sdk/client.py `open_from_launcher`). The product token never enters it.
  */
@@ -170,7 +170,7 @@ export class AstridCli {
       XDG_STATE_HOME: this.state,
       ASTRID_RUNTIME_DATA_ROOT: this.data,
       ...(this.harness.attachment ? { ASTRID_RUNTIME_SOURCE_MANIFEST: this.harness.attachment.sourceManifest } : {}),
-      PYTHONPATH: ASTRID_CHECKOUT,
+      PYTHONPATH: [ASTRID_CHECKOUT, RUNTIME_CHECKOUT].join(path.delimiter),
       PYTHONDONTWRITEBYTECODE: '1',
       PYTHONUNBUFFERED: '1',
       ASTRID_TIMELINE_EVAL_ENDPOINT: discovery.endpoint,
