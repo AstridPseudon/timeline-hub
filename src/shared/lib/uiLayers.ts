@@ -10,6 +10,8 @@ export const UI_Z_LAYERS = {
   TASKS_PANE_TAB_ABOVE_LIGHTBOX: 100015,
   // Pane body sits above the tab so the pane visually covers the tab handle when open; above GenerationsPane so the bottom strip stays clickable.
   TASKS_PANE_CONTENT: 100016,
+  // Astrid's "stopped" / "restarted" card is the one thing to act on, so it stays clickable over the Tasks pane it overlaps at the bottom right.
+  RUNTIME_RECOVERY_CARD: 100017,
   // The editor tour's input shield and card cover everything, panes included, so the Tasks pane chat is dimmed and blocked too.
   EDITOR_TOUR_SHIELD: 100020,
   EDITOR_TOUR_CARD: 100021,
