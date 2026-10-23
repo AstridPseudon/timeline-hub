@@ -19,7 +19,40 @@ const SAVE_DIAGNOSTIC_PHASES = ['schedule', 'capture-called', 'capture-resolved'
   'adoption-start', 'adoption-complete', 'adopted-read', 'handoff-ready', 'owner-error'] as const;
 type SaveDiagnosticPhase = typeof SAVE_DIAGNOSTIC_PHASES[number];
 
+const SAVE_REJECTION_CODES = [
+  'original-head-unavailable', 'capture-source-head-unavailable', 'capture-input-head-unavailable',
+  'source-parent-unavailable', 'source-parent-mismatch', 'source-clip-identity', 'source-track-identity',
+  'source-bundle-mismatch', 'original-read-unavailable',
+  'authored-collection-unavailable', 'authored-binding-ambiguous', 'authored-identity-unavailable',
+  'display-container-unbound', 'trim-binding-mismatch', 'explicit-clear-unavailable', 'display-value-unbound',
+  'child-ownership-unavailable', 'local-document-changed', 'parent-mirror-mismatch',
+  'gesture-basis-mismatch', 'gesture-clips-unavailable', 'gesture-clip-ambiguous',
+  'gesture-registry-unavailable', 'registry-mirror-mismatch', 'split-time-unavailable',
+  'move-track-mismatch', 'move-tracks-unavailable', 'move-track-ambiguous', 'move-routing-unavailable',
+  'trim-operands-unavailable', 'capture-owner-unavailable', 'capture-owner-replaced',
+  'owner-original-read-invalidated', 'owner-identity-invalidated', 'owner-retirement-invalidated',
+  'owner-claim-invalidated', 'owner-recovery-ambiguous', 'owner-history-invalidated',
+] as const;
+export type TimelineSaveRejectionCode = typeof SAVE_REJECTION_CODES[number];
+type SaveRejectionClass = 'TimelineVersionConflictError' | 'Error';
+const saveRejections = new WeakMap<object, { code: TimelineSaveRejectionCode; errorClass: SaveRejectionClass }>();
+
+// Only authentic local throw sites supply these fixed values. Never inspect or
+// mutate an exception; unknown/foreign errors cannot classify themselves.
+export function markTimelineSaveRejection<T extends Error>(error: T, code: TimelineSaveRejectionCode,
+  errorClass: SaveRejectionClass = 'TimelineVersionConflictError'): T {
+  try {
+    if (typeof window !== 'undefined'
+      && (window as unknown as { __timelineSaveDiagnosticsEnabled?: unknown }).__timelineSaveDiagnosticsEnabled === true
+      && SAVE_REJECTION_CODES.includes(code) && ['TimelineVersionConflictError', 'Error'].includes(errorClass)) {
+      saveRejections.set(error, { code, errorClass });
+    }
+  } catch { /* Diagnostic tagging cannot affect the original throw. */ }
+  return error;
+}
+
 interface SaveDiagnosticObservation {
+  error?: unknown;
   owner?: object;
   timelineId?: unknown;
   clipId?: unknown;
@@ -100,6 +133,9 @@ export function emitTimelineSaveDiagnostic(boundary: SaveDiagnosticPhase | (() =
       || (window as unknown as { __timelineSaveDiagnosticsEnabled?: unknown }).__timelineSaveDiagnosticsEnabled !== true) return;
     const phase = choice(typeof boundary === 'function' ? boundary() : boundary, SAVE_DIAGNOSTIC_PHASES);
     const observed = read();
+    const rejected = ['capture-rejected', 'basis-error', 'owner-error'].includes(phase);
+    const rejection = rejected && observed.error && typeof observed.error === 'object'
+      ? saveRejections.get(observed.error) : undefined;
     let ownerAlias: number | string = UNKNOWN;
     if (observed.owner && typeof observed.owner === 'object') {
       ownerAlias = ownerAliases.get(observed.owner) ?? ++nextOwnerAlias;
@@ -129,8 +165,8 @@ export function emitTimelineSaveDiagnostic(boundary: SaveDiagnosticPhase | (() =
       recoverableOwnerCount: typeof ownerCount === 'number' && ownerCount <= 10000 ? ownerCount : UNKNOWN,
       intentsPendingCount: UNKNOWN,
       errorStage: phase === 'capture-rejected' ? 'capture' : phase === 'basis-error' ? 'basis-read' : phase === 'owner-error' ? 'owner-init' : UNKNOWN,
-      errorCode: ['capture-rejected', 'basis-error', 'owner-error'].includes(phase) ? 'operation-rejected' : UNKNOWN,
-      errorClass: UNKNOWN,
+      errorCode: rejection?.code ?? (rejected ? 'operation-rejected' : UNKNOWN),
+      errorClass: rejection?.errorClass ?? UNKNOWN,
     });
     window.dispatchEvent(new CustomEvent('timeline:save-diagnostic', { detail }));
   } catch { /* Diagnostics are observational, including hostile getters/dispatch. */ }

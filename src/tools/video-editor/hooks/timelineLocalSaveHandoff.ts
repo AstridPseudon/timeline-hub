@@ -7,6 +7,7 @@ import { TimelineVersionConflictError, type DataProvider, type TimelineCommandBa
 import type { AssetRegistry, TimelineConfig } from '../types/index.ts';
 import { canonicalizeTimelinePair } from '../lib/timeline-domain.ts';
 import { withDefaultTimelineOutput } from '../lib/defaults.ts';
+import { markTimelineSaveRejection, type TimelineSaveRejectionCode } from '../lib/timeline-diagnostics.ts';
 
 export interface TimelineSaveSource {
   config: TimelineConfig;
@@ -53,20 +54,22 @@ function authoredJson(value: unknown): OutboxJson {
   return toOutboxJson(value);
 }
 
-function refuse(message: string): never {
-  throw new TimelineVersionConflictError(`Local document save retained: ${message}`);
+function refuse(message: string, reason?: TimelineSaveRejectionCode): never {
+  const error = new TimelineVersionConflictError(`Local document save retained: ${message}`);
+  throw reason ? markTimelineSaveRejection(error, reason) : error;
 }
-function checkHead(initial: TimelineCommandBasis, value: TimelineSaveSource) {
+function checkHead(initial: TimelineCommandBasis, value: TimelineSaveSource,
+  reason: TimelineSaveRejectionCode = 'original-head-unavailable') {
   if (!initial.head.revisionId || !initial.head.publicationId
     || initial.canonicalDocument.parent_revision.revision_id !== initial.head.revisionId
     || value.head?.projectId !== initial.canonicalDocument.project_id
     || value.head.timelineId !== initial.canonicalDocument.timeline_id
     || value.head.headRevisionId !== initial.head.revisionId
-    || value.head.headPublicationId !== initial.head.publicationId) refuse('original verified authoring head is unavailable');
+    || value.head.headPublicationId !== initial.head.publicationId) refuse('original verified authoring head is unavailable', reason);
 }
 function checkSource(initial: TimelineCommandBasis, source: TimelineSaveSource) {
   const parent = initial.canonicalDocument.parent_revision.payload;
-  if (!object(parent.config) || !object(parent.registry)) refuse('authored parent config/registry is unavailable');
+  if (!object(parent.config) || !object(parent.registry)) refuse('authored parent config/registry is unavailable', 'source-parent-unavailable');
   const { bundle: _bundle, ...config } = structuredClone(parent.config);
   const loaded = { ...config, ...withDefaultTimelineOutput(config as unknown as TimelineConfig) } as unknown as TimelineConfig;
   const projected = canonicalizeTimelinePair(loaded, structuredClone(parent.registry) as unknown as AssetRegistry);
@@ -75,7 +78,7 @@ function checkSource(initial: TimelineCommandBasis, source: TimelineSaveSource) 
   if ((!same(authoredJson(source.config), authoredJson(loaded))
     && !same(authoredJson(source.config), authoredJson(projected.config)))
     || !same(authoredJson(source.registry), authoredJson(projected.registry))) {
-    refuse('upstream source differs from the verified authored parent');
+    refuse('upstream source differs from the verified authored parent', 'source-parent-mismatch');
   }
   for (const key of ['clips', 'tracks'] as const) {
     const raw = parent.config[key];
@@ -83,10 +86,10 @@ function checkSource(initial: TimelineCommandBasis, source: TimelineSaveSource) 
     if (Array.isArray(raw) && (!Array.isArray(view) || raw.length !== view.length
       || raw.some((row, index) => !object(row) || row.id !== view[index].id)
       || new Set(raw.map((row) => (row as Record<string, unknown>).id)).size !== raw.length)) {
-      refuse(`authored ${key} identity changed in projection`);
+      refuse(`authored ${key} identity changed in projection`, key === 'clips' ? 'source-clip-identity' : 'source-track-identity');
     }
   }
-  if (source.bundle !== undefined && !same(parent.config.bundle, source.bundle)) refuse('original authored bundle differs');
+  if (source.bundle !== undefined && !same(parent.config.bundle, source.bundle)) refuse('original authored bundle differs', 'source-bundle-mismatch');
 }
 
 export interface TimelineOriginalSaveBasis {
@@ -101,7 +104,7 @@ export async function readTimelineOriginalSaveBasis(
 ): Promise<TimelineOriginalSaveBasis> {
   const source = structuredClone(input);
   if (!provider.loadTimelineCommandBasis || source.head?.timelineId !== timelineId) {
-    refuse('original verified authoring read is unavailable');
+    refuse('original verified authoring read is unavailable', 'original-read-unavailable');
   }
   const initial = structuredClone(await provider.loadTimelineCommandBasis(timelineId));
   checkHead(initial, source);
@@ -156,20 +159,20 @@ export function createTimelineLocalSaveHandoff(options: {
     if (same(previous, next)) return structuredClone(raw);
     if (Array.isArray(previous) && Array.isArray(next) && path.length === 2
       && path[0] === 'config' && ['clips', 'tracks'].includes(path[1])) {
-      if (!Array.isArray(raw)) refuse(`authored collection is unavailable: ${path.join('/')}`);
+      if (!Array.isArray(raw)) refuse(`authored collection is unavailable: ${path.join('/')}`, 'authored-collection-unavailable');
       const oldRows = new Map(previous.map((row) => [row.id, row]));
       const rawRows = new Map(raw.map((row) => [row.id, row]));
       if (oldRows.size !== previous.length || new Set(next.map((row) => row.id)).size !== next.length
         || previous.some((row) => typeof row.id !== 'string' || !rawRows.has(row.id))
-        || rawRows.size !== previous.length) refuse('authored parent entity binding is ambiguous');
+        || rawRows.size !== previous.length) refuse('authored parent entity binding is ambiguous', 'authored-binding-ambiguous');
       return next.map((row) => {
-        if (!object(row) || typeof row.id !== 'string' || !row.id) refuse('authored entity identity is unavailable');
+        if (!object(row) || typeof row.id !== 'string' || !row.id) refuse('authored entity identity is unavailable', 'authored-identity-unavailable');
         return oldRows.has(row.id)
           ? changes(rawRows.get(row.id), oldRows.get(row.id), row, [...path, row.id]) : authoredJson(row);
       });
     }
     if (object(previous) && object(next)) {
-      if (!object(raw)) refuse(`changed display container has no authored binding: ${path.join('/')}`);
+      if (!object(raw)) refuse(`changed display container has no authored binding: ${path.join('/')}`, 'display-container-unbound');
       const result = structuredClone(raw);
       // The app extension is projected verbatim. Trim removes these authored
       // leaves from an explicitly supplied namespace; other omissions stay partial.
@@ -177,7 +180,7 @@ export function createTimelineLocalSaveHandoff(options: {
         && path[3] === 'app' && path[4] === 'astrid') {
         for (const key of ['for', 'until']) {
           if (!Object.prototype.hasOwnProperty.call(previous, key) || Object.prototype.hasOwnProperty.call(next, key)) continue;
-          if (!same(field(raw, key), field(previous, key))) refuse(`trim intent has no exact authored binding: ${[...path, key].join('/')}`);
+          if (!same(field(raw, key), field(previous, key))) refuse(`trim intent has no exact authored binding: ${[...path, key].join('/')}`, 'trim-binding-mismatch');
           delete result[key];
         }
       }
@@ -187,7 +190,7 @@ export function createTimelineLocalSaveHandoff(options: {
         if (same(field(previous, key), value)) continue;
         if (value === undefined) {
           if (key !== 'transition' || path.length !== 3 || path[0] !== 'config' || path[1] !== 'clips') {
-            refuse(`explicit clear is unavailable: ${[...path, key].join('/')}`);
+            refuse(`explicit clear is unavailable: ${[...path, key].join('/')}`, 'explicit-clear-unavailable');
           }
           delete result[key];
         } else {
@@ -198,7 +201,7 @@ export function createTimelineLocalSaveHandoff(options: {
       return result;
     }
     if ((Array.isArray(next) || object(next)) && raw !== undefined && !same(raw, previous)) {
-      refuse(`changed display value has no exact authored binding: ${path.join('/')}`);
+      refuse(`changed display value has no exact authored binding: ${path.join('/')}`, 'display-value-unbound');
     }
     return authoredJson(next);
   }
@@ -206,14 +209,14 @@ export function createTimelineLocalSaveHandoff(options: {
     capture(input, gestureBasis) {
       try {
         const next = structuredClone(input);
-        checkHead(initial, source);
-        checkHead(initial, next);
+        checkHead(initial, source, 'capture-source-head-unavailable');
+        checkHead(initial, next, 'capture-input-head-unavailable');
         const before = options.session.getDocument() as unknown as CanonicalDocument;
         const parent = before.parent_revision.payload;
         if (before.shot_revisions.length || before.internal_timeline_revisions.length
-          || (Array.isArray(parent.occurrences) && parent.occurrences.length)) refuse('child ownership/fork mapping is unavailable');
+          || (Array.isArray(parent.occurrences) && parent.occurrences.length)) refuse('child ownership/fork mapping is unavailable', 'child-ownership-unavailable');
         if (!sourceChecked) { checkSource(initial, source); sourceChecked = true; }
-        if (!same(before, document)) refuse('local authored document changed outside this handoff');
+        if (!same(before, document)) refuse('local authored document changed outside this handoff', 'local-document-changed');
         authoredJson(next); // Reject non-finite editor values before mutating the chain.
         const after = structuredClone(before);
         const payload = after.parent_revision.payload;
@@ -224,7 +227,7 @@ export function createTimelineLocalSaveHandoff(options: {
         }
         for (const key of ['clips', 'tracks'] as const) {
           if (!Object.prototype.hasOwnProperty.call(parent, key)) continue;
-          if (!same(parent[key], (parent.config as Record<string, unknown>)[key])) refuse(`contradictory parent ${key} mirror`);
+          if (!same(parent[key], (parent.config as Record<string, unknown>)[key])) refuse(`contradictory parent ${key} mirror`, 'parent-mirror-mismatch');
           payload[key] = (payload.config as Record<string, OutboxJson>)[key];
         }
         let reads: OutboxJson[] | undefined;
@@ -232,13 +235,13 @@ export function createTimelineLocalSaveHandoff(options: {
           if (!['split', 'trim', 'move'].includes(gestureBasis.kind)
             || !same(authoredJson(gestureBasis.config), authoredJson(authoringSource.config))
             || !same(authoredJson(gestureBasis.registry), authoredJson(authoringSource.registry))) {
-            refuse('gesture read basis differs from the original local authoring input');
+            refuse('gesture read basis differs from the original local authoring input', 'gesture-basis-mismatch');
           }
           const config = parent.config as Record<string, unknown>;
           const clips = config.clips;
-          if (!Array.isArray(clips)) refuse('gesture clip read has no authored collection');
+          if (!Array.isArray(clips)) refuse('gesture clip read has no authored collection', 'gesture-clips-unavailable');
           const selected = clips.filter((clip) => object(clip) && clip.id === gestureBasis.clipId);
-          if (selected.length !== 1) refuse('gesture selected clip has no unique authored binding');
+          if (selected.length !== 1) refuse('gesture selected clip has no unique authored binding', 'gesture-clip-ambiguous');
           const clip = selected[0] as Record<string, unknown>;
           const read = (value: Record<string, unknown>, key: string, path: string[]): OutboxJson => ({
             kind: 'field', ref: 'parent', path: [...path, key],
@@ -263,27 +266,27 @@ export function createTimelineLocalSaveHandoff(options: {
           }
           const assetRead = (item: Record<string, unknown>) => {
             if (typeof item.asset !== 'string') return;
-            if (!object(parent.registry)) refuse('gesture registry read has no authored registry');
+            if (!object(parent.registry)) refuse('gesture registry read has no authored registry', 'gesture-registry-unavailable');
             // Runtime/provider normalize parent/registry to config/registry and
             // resolve that path to the top-level raw registry when no mirror exists.
             if (Object.prototype.hasOwnProperty.call(config, 'registry')
-              && (!object(config.registry) || !same(config.registry, parent.registry))) refuse('contradictory parent registry mirror');
+              && (!object(config.registry) || !same(config.registry, parent.registry))) refuse('contradictory parent registry mirror', 'registry-mirror-mismatch');
             reads!.push(readPath(parent.registry, ['assets', item.asset], ['config', 'registry']));
           };
           assetRead(clip);
           if (gestureBasis.kind === 'split') {
-            if (!Number.isFinite(gestureBasis.timeSeconds)) refuse('split time is unavailable');
+            if (!Number.isFinite(gestureBasis.timeSeconds)) refuse('split time is unavailable', 'split-time-unavailable');
             // splitClipAtPlayhead uses order for insertion and every ID for allocation;
             // its pinned-group check reads this id-less list, not neighbor contents.
             const order = clips.map((item) => item.id as string);
             reads.push({ kind: 'collection', ref: 'parent', path: ['config', 'clips'], members: [...order].sort(), order },
               read(config, 'pinnedShotGroups', ['config']));
           } else if (gestureBasis.kind === 'move') {
-            if (clip.track !== gestureBasis.trackId) refuse('move is not on its original track');
+            if (clip.track !== gestureBasis.trackId) refuse('move is not on its original track', 'move-track-mismatch');
             const tracks = config.tracks;
-            if (!Array.isArray(tracks)) refuse('move track read has no authored collection');
+            if (!Array.isArray(tracks)) refuse('move track read has no authored collection', 'move-tracks-unavailable');
             const track = tracks.filter((item) => object(item) && item.id === gestureBasis.trackId);
-            if (track.length !== 1) refuse('move track has no unique authored binding');
+            if (track.length !== 1) refuse('move track has no unique authored binding', 'move-track-ambiguous');
             reads.push(read(track[0], 'kind', ['config', 'tracks', `id:${gestureBasis.trackId}`]),
               read(config, 'pinnedShotGroups', ['config']));
             // Both snap planners select siblings by track. Guard membership and
@@ -291,14 +294,14 @@ export function createTimelineLocalSaveHandoff(options: {
             const order = clips.map((item) => item.id as string);
             reads.push({ kind: 'collection', ref: 'parent', path: ['config', 'clips'], members: [...order].sort(), order });
             for (const item of clips) {
-              if (!object(item)) refuse('move clip routing is unavailable');
+              if (!object(item)) refuse('move clip routing is unavailable', 'move-routing-unavailable');
               if (item.id === clip.id) continue;
               reads.push(read(item, 'track', ['config', 'clips', `id:${item.id}`]));
               if (item.track === gestureBasis.trackId) { reads.push(...timingReads(item)); assetRead(item); }
             }
           } else if (!Object.keys(gestureBasis.patch).length
             || Object.keys(gestureBasis.patch).some((key) => !['from', 'to', 'hold', 'speed'].includes(key))) {
-            refuse('trim operands are unavailable');
+            refuse('trim operands are unavailable', 'trim-operands-unavailable');
           }
         }
         // The encoder supplies guards and created IDs; these bytes are never a wire DTO.

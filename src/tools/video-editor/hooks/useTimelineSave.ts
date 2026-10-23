@@ -25,7 +25,7 @@ import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import { createTimelineLocalSaveHandoff, readTimelineOriginalSaveBasis, type TimelineLocalSaveHandoff, type TimelineOriginalSaveBasis, type TimelineSaveSource } from './timelineLocalSaveHandoff.ts';
 import { createLocalSaveSession, type LocalSaveSession, type LocalSaveState } from '../commands/localSaveSession.ts';
 import { toOutboxJson } from '../commands/commitOutbox.ts';
-import { emitTimelineSaveDiagnostic } from '../lib/timeline-diagnostics.ts';
+import { emitTimelineSaveDiagnostic, markTimelineSaveRejection } from '../lib/timeline-diagnostics.ts';
 export { shouldAcceptPolledData } from '@/tools/video-editor/lib/timeline-save-utils.ts';
 export type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
 
@@ -93,15 +93,15 @@ export function useTimelineSave(
       try {
         const original = structuredClone(source);
         const originalReads = gestureBasis ? structuredClone(gestureBasis) : undefined;
-        if (localOwner.closed || !localOwner.ready) throw new TimelineVersionConflictError('Original local save session is unavailable; draft retained');
+        if (localOwner.closed || !localOwner.ready) throw markTimelineSaveRejection(new TimelineVersionConflictError('Original local save session is unavailable; draft retained'), 'capture-owner-unavailable');
         const handoff = await localOwner.ready;
-        if (localOwner.closed) throw new TimelineVersionConflictError('Local save session was replaced; draft retained');
+        if (localOwner.closed) throw markTimelineSaveRejection(new TimelineVersionConflictError('Local save session was replaced; draft retained'), 'capture-owner-replaced');
         await handoff.capture(original, originalReads);
         emitTimelineSaveDiagnostic('capture-resolved', () => ({ owner: localOwner, timelineId: localOwner.timelineId,
           source: original, gesture: originalReads,
           generation: localOwner.generation, closed: localOwner.closed, sessionPresent: Boolean(localOwner.session) }));
       } catch (error) {
-        emitTimelineSaveDiagnostic('capture-rejected', () => ({ owner: localOwner, timelineId: localOwner.timelineId,
+        emitTimelineSaveDiagnostic('capture-rejected', () => ({ error, owner: localOwner, timelineId: localOwner.timelineId,
           gesture: gestureBasis,
           generation: localOwner.generation, closed: localOwner.closed, sessionPresent: Boolean(localOwner.session) }));
         throw error;
@@ -196,7 +196,7 @@ export function useTimelineSave(
         ? { status: 'ready', value }
         : { status: 'unavailable', reason: 'Local edits preceded completion of the original verified read' });
     }).catch((error: unknown) => {
-      emitTimelineSaveDiagnostic('basis-error', () => ({ owner: localOwner, timelineId,
+      emitTimelineSaveDiagnostic('basis-error', () => ({ error, owner: localOwner, timelineId,
         mounted: localDataRef.current, basisStatus: 'error', closed: localOwner.closed, current: !cancelled }));
       if (!cancelled) setOriginalLocalSaveBasis({ status: 'unavailable', reason: error instanceof Error ? error.message : String(error) });
     });
@@ -208,14 +208,14 @@ export function useTimelineSave(
       localOwner.ready = (async () => {
         const verified = await originalRead;
         if (cancelled || localOwner.closed || localEditSeqRef.current !== editSeq) {
-          throw new TimelineVersionConflictError('Local edits preceded the original verified read; draft retained');
+          throw markTimelineSaveRejection(new TimelineVersionConflictError('Local edits preceded the original verified read; draft retained'), 'owner-original-read-invalidated');
         }
         const identity = await provider.getRecoverableIdentity!();
         emitTimelineSaveDiagnostic('identity-read', () => ({ owner: localOwner, timelineId,
           identityPresent: identity != null, closed: localOwner.closed, current: isCurrent(), generation }));
-        if (cancelled || localOwner.closed) throw new Error('Local save session replaced during identity read');
+        if (cancelled || localOwner.closed) throw markTimelineSaveRejection(new Error('Local save session replaced during identity read'), 'owner-identity-invalidated', 'Error');
         await previousDisposal;
-        if (!isCurrent()) throw new Error('Local save session replaced during owner retirement');
+        if (!isCurrent()) throw markTimelineSaveRejection(new Error('Local save session replaced during owner retirement'), 'owner-retirement-invalidated', 'Error');
         let adoptedSource = structuredClone(verified.source);
         const session = await createLocalSaveSession({
           scope: { ...identity, projectId: verified.initial.canonicalDocument.project_id, timelineId },
@@ -255,7 +255,7 @@ export function useTimelineSave(
             } };
           },
         });
-        if (!isCurrent()) { await session.dispose(); throw new Error('Local save session replaced during outbox claim'); }
+        if (!isCurrent()) { await session.dispose(); throw markTimelineSaveRejection(new Error('Local save session replaced during outbox claim'), 'owner-claim-invalidated', 'Error'); }
         localOwner.session = session;
         emitTimelineSaveDiagnostic('session-created', () => ({ owner: localOwner, timelineId,
           sessionPresent: true, current: isCurrent(), generation, basis: verified, mounted: localDataRef.current }));
@@ -264,7 +264,7 @@ export function useTimelineSave(
           emitTimelineSaveDiagnostic('session-recovered', () => ({ owner: localOwner, timelineId,
             current: isCurrent(), generation, sessionPresent: true }));
         }
-        else if (owners.length) throw new TimelineVersionConflictError('Multiple local save owners require recovery; drafts retained');
+        else if (owners.length) throw markTimelineSaveRejection(new TimelineVersionConflictError('Multiple local save owners require recovery; drafts retained'), 'owner-recovery-ambiguous');
         let initial = verified.initial;
         if (owners.length && session.getState().status === 'saved') {
           initial = await session.flush();
@@ -273,7 +273,7 @@ export function useTimelineSave(
             initial = { ...initial, history: latest.history };
           }
         }
-        if (!isCurrent()) throw new Error('Local save session replaced during history read');
+        if (!isCurrent()) throw markTimelineSaveRejection(new Error('Local save session replaced during history read'), 'owner-history-invalidated', 'Error');
         const handoff = createTimelineLocalSaveHandoff({ initial, source: adoptedSource, session,
           loadHistory: () => provider.loadTimelineCommandBasis!(timelineId),
           adopted: () => {
@@ -291,7 +291,7 @@ export function useTimelineSave(
         return handoff;
       })();
       void localOwner.ready.catch((error: unknown) => {
-        emitTimelineSaveDiagnostic('owner-error', () => ({ owner: localOwner, timelineId,
+        emitTimelineSaveDiagnostic('owner-error', () => ({ error, owner: localOwner, timelineId,
           closed: localOwner.closed, current: isCurrent(), generation, sessionPresent: Boolean(localOwner.session) }));
         if (isCurrent()) setLocalSaveState({ status: 'error', recoverableOwners: [],
           error: { message: error instanceof Error ? error.message : String(error) } });

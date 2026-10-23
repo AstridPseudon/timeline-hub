@@ -6,6 +6,8 @@ import { createCommitOutbox, toOutboxJson } from '../commands/commitOutbox.ts';
 import { createLocalSaveSession } from '../commands/localSaveSession.ts';
 import { createDefaultTimelineConfig, withDefaultTimelineOutput } from '../lib/defaults.ts';
 import { buildTimelineData } from '../lib/timeline-data.ts';
+import { emitTimelineSaveDiagnostic } from '../lib/timeline-diagnostics.ts';
+import { TimelineVersionConflictError } from '../data/DataProvider.ts';
 import type { AssetRegistry, TimelineConfig } from '../types/index.ts';
 import { createTimelineLocalSaveHandoff, type TimelineSaveSource } from './timelineLocalSaveHandoff.ts';
 
@@ -17,7 +19,7 @@ vi.mock('@/integrations/runtime/generated-contract-metadata.ts', async (importOr
   get SCHEMA_DIGEST() { return contractFixture.digest; },
 }));
 
-afterEach(() => { contractFixture.digest = 'sha256:unsupported-test-fixture'; });
+afterEach(() => { contractFixture.digest = 'sha256:unsupported-test-fixture'; vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 async function environment(children = false, raw = false, rawIds = ['authored'], rawApp?: Record<string, unknown>, asset?: { key: string; registry: AssetRegistry; mirror?: boolean | Record<string, unknown>; rawRegistry?: Record<string, unknown> }) {
   const head = { projectId: 'project-commit', timelineId: 'timeline-commit', headRevisionId: 'r0', headPublicationId: 'p0' };
@@ -56,6 +58,65 @@ async function environment(children = false, raw = false, rawIds = ['authored'],
 }
 
 describe('upstream local document handoff', () => {
+  it.each([
+    ['head', 'capture-input-head-unavailable', 'original verified authoring head is unavailable'],
+    ['source', 'source-parent-mismatch', 'upstream source differs from the verified authored parent'],
+    ['children', 'child-ownership-unavailable', 'child ownership/fork mapping is unavailable'],
+    ['gesture', 'gesture-basis-mismatch', 'gesture read basis differs from the original local authoring input'],
+    ['selected clip', 'gesture-clip-ambiguous', 'gesture selected clip has no unique authored binding'],
+    ['trim', 'trim-operands-unavailable', 'trim operands are unavailable'],
+    ['mirror', 'parent-mirror-mismatch', 'contradictory parent clips mirror'],
+    ['nonfinite', 'operation-rejected', 'Outbox values must be finite JSON'],
+  ])('observes the existing %s capture guard with identical enabled/disabled rejection behavior', async (kind, code, message) => {
+    const outcomes: Array<{ message: string; document: unknown; intents: unknown }> = [];
+    for (const enabled of [false, true]) {
+      vi.stubGlobal('__timelineSaveDiagnosticsEnabled', enabled);
+      const env = await environment(kind === 'children', true);
+      let handoff = env.handoff;
+      const next = structuredClone(env.source);
+      const gesture = structuredClone({ kind: 'trim' as const, clipId: 'authored', patch: { hold: 3 },
+        config: env.source.config, registry: env.source.registry });
+      if (kind === 'head') next.head!.headRevisionId = 'other';
+      if (kind === 'source') {
+        const source = structuredClone(env.source);
+        source.config.clips[0].at = 9;
+        handoff = createTimelineLocalSaveHandoff({ initial: env.initial, source, session: env.session, adopted: env.receipt });
+      }
+      if (kind === 'gesture') gesture.config.clips[0].at = 9;
+      if (kind === 'selected clip') gesture.clipId = 'missing';
+      if (kind === 'trim') gesture.patch = {} as typeof gesture.patch;
+      if (kind === 'nonfinite') next.config.clips[0].hold = NaN;
+      if (kind === 'mirror') {
+        env.initial.canonicalDocument.parent_revision.payload.clips = [];
+        const document = toOutboxJson(env.initial.canonicalDocument);
+        vi.spyOn(env.session, 'getDocument').mockReturnValue(document);
+        handoff = createTimelineLocalSaveHandoff({ initial: env.initial, source: env.source, session: env.session, adopted: env.receipt });
+      }
+      const reject = vi.spyOn(Promise, 'reject');
+      const error = await handoff.capture(next, gesture).catch((caught: unknown) => caught);
+      expect(error).toBeInstanceOf(TimelineVersionConflictError);
+      expect(error).toHaveProperty('message', `Local document save retained: ${message}`);
+      // This is the exact error passed to the existing Promise.reject boundary.
+      expect(reject.mock.calls.some(([original]) => original === error)).toBe(true);
+      reject.mockRestore();
+      const descriptors = Object.getOwnPropertyDescriptors(error);
+      const dispatch = vi.spyOn(window, 'dispatchEvent').mockReturnValue(true);
+      emitTimelineSaveDiagnostic('capture-rejected', () => ({ error }));
+      if (enabled) expect((dispatch.mock.lastCall![0] as CustomEvent).detail).toMatchObject({
+        errorCode: code, errorClass: kind === 'nonfinite' ? 'UNKNOWN' : 'TimelineVersionConflictError' });
+      else expect(dispatch).not.toHaveBeenCalled();
+      expect(Object.getOwnPropertyDescriptors(error)).toEqual(descriptors);
+      dispatch.mockRestore();
+      expect(env.send).not.toHaveBeenCalled();
+      const [stored] = await env.outboxes.list(env.scope);
+      expect(stored.intents).toHaveLength(0);
+      expect(env.session.getDocument()).toEqual(env.initial.canonicalDocument);
+      outcomes.push({ message: (error as Error).message, document: env.session.getDocument(), intents: stored.intents });
+      await env.session.dispose();
+    }
+    expect(outcomes[1]).toEqual(outcomes[0]);
+  });
+
   it('persists original parent move reads and sends the exact dependent request after lost ACK and restart', async () => {
     contractFixture.digest = CURRENT_V2_DIGEST;
     const env = await environment(false, true, ['authored', 'sibling']);
