@@ -58,14 +58,11 @@ for (const configFile of configs) {
         for (const importer of importers) {
           const resolved = await resolve(specifier, importer);
           assert.ok(resolved, `${specifier} from ${importer}`);
-          // The edge lane deliberately keeps its source aliases, and the
-          // production Vite config keeps its static registry/theme fallbacks.
-          // The package-root and evaluator imports must resolve to the pinned
-          // archive; retain explicit checks for the compatibility aliases.
+          // The edge lane deliberately keeps its source aliases. Production
+          // Vite uses the pinned archive's public export map for every
+          // Composition subpath, including the generated registries and theme.
           if (configFile === 'config/testing/vitest.edge.config.ts') {
             assert.ok(path.resolve(resolved).startsWith(path.resolve(appRoot, 'vendor/timeline-composition')));
-          } else if (configFile === 'config/vite/vite.config.ts' && ['./theme-api', './registry.generated'].includes(subpath)) {
-            assert.ok(path.resolve(resolved).startsWith(path.resolve(appRoot, 'src/tools/video-editor/lib')));
           } else {
             const expectedPath = path.join(packageRoot, entry.import);
             if (fs.existsSync(resolved)) {
