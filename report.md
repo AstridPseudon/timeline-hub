@@ -141,7 +141,7 @@ Changed-file body hashes (`before` → `after`):
 ```text
 tests/packs/rendering/test_remotion_backend.py 8e5d4d8cabe2715a3cab3ee1f99e228fd54884f013dc13ea01e88f2b4ad35384 -> d55004cd934bc3614f22bcb8fc223fb1f47e2da37282af8556fc821ac69d15bb
 tests/packs/rendering/test_remotion_layer_tail_compat.py 28a7f53e922ae8f1e64a8238ab57f9cfcb9ae7b2f0de0178ef721b5bc9aefdd4 -> 9445ccfac8439bbf55febe53fa67ff252fa46b84b07550f7f0365b5d8f9a8abe
-tests/packs/rendering/test_remotion_typecheck_mappings.py 67eea063cf72fbd7873e318b4a4fd8a77eda73c46f8c1920ca189bd26923c952 -> 28458ab0180a47210d5085d14bde5ffc8437cce96937d7b919174c9c7081488b
+tests/packs/rendering/test_remotion_typecheck_mappings.py 67eea063cf72fbd7873e318b4a4fd8a77eda73c46f8c1920ca189bd26923c952 -> 070dd30217d80f8d0ab79f3cb1d48dae70b4ca0e00af2fb131c6ed952b70103c
 tests/packs/rendering/test_am_snap_plate_scene_capability.py cd09a35874293f42f2a2733f4f0d08f44d3f2b5ea0ab8445fac53a15ae846587 -> 88924d571a95959a2fe2309c4739b0ce2f25f5f95ee6d21eb52dd966b906cbb8
 ```
 
@@ -153,10 +153,11 @@ tests/packs/rendering/test_am_snap_plate_scene_capability.py cd09a35874293f42f2a
   findings in these large test files; no new finding was added.
 - `scripts.reshape.compare_ruff_baseline`: passed, current `2149` equals
   baseline `2149`.
-- `scripts.reshape.compare_mypy_baseline`: blocked before checking by the
-  shared venv: missing `types-PyYAML` and a Python-version stub syntax error;
-  no dependency installation was attempted. The expected baseline count is
-  `1912`.
+- `scripts.reshape.compare_mypy_baseline`: the candidate's shared-venv run was
+  blocked before checking by missing `types-PyYAML` and a Python-version stub
+  syntax error; this review reran it in the private
+  `/home/user/work/venv-agent-typecheck-v2` and got current `1912`, baseline
+  `1912`. No dependency installation was attempted.
 
 ## Ownership / next steps
 
@@ -170,3 +171,47 @@ tests/packs/rendering/test_am_snap_plate_scene_capability.py cd09a35874293f42f2a
 - Audio compile owner: restore the trusted-host prepared envelope transform
   that supplies `audio.render_source`; no xfail/skip/refusal conversion was
   made.
+
+## Independent review
+
+Review disposition: PASS for the test-support correction; overall qualification
+remains FAIL (34 passed, 6 failed).
+
+The exact 58316fd6e diff was checked file by file. The three fixture updates
+are causal and locked to archive
+819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234:
+Composition 0.0.14, 80 regular files, and chunk-A6LVBEHN.js. The original
+SSR, painted-backing, fade, crop, clock, native, shape, and negative-control
+assertions remain unchanged. No product source, archive, generated output,
+pin, dependency, lock, environment, skip, or xfail was added.
+
+The original mapping correction had a vacuity hole: removing every hashed host
+import still passed when the public-registry call remained. I tightened the
+same three parametrized mapping nodes so generated host scopes must cover the
+registry's expected host modules, resolve to an actual component module with a
+default export, and have a declaration with export default component.
+Composition-owned animation/transition registries must enumerate real public
+IDs and retain the public module call. Fixed
+@banodoco/timeline-composition/* imports remain excluded.
+
+Independent targeted command (the actual nine selectors) was:
+
+    env PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-3b926efa ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-v3-819acf-1110 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-v3-819acf-1110/node_modules ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages PYTHONPATH=.:/home/user/work/wt/rt-pin-3b926efa PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/venv-agent/bin:/usr/bin:/bin /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/rendering/test_remotion_layer_tail_compat.py::test_fully_covered_pre_tail_layer_window_keeps_legacy_native_positive tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_registered_plate_ssr_preserves_existing_draw_and_default_theme 'tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params0]' 'tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_public12_outer_geometry_gap_does_not_erase_original_positive[outer0]' 'tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_public12_outer_geometry_gap_does_not_erase_original_positive[outer1]' 'tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_public12_outer_geometry_gap_does_not_erase_original_positive[outer2]' tests/packs/rendering/test_remotion_typecheck_mappings.py::test_every_scope_the_generator_emits_is_declared_and_mapped[effects] tests/packs/rendering/test_remotion_typecheck_mappings.py::test_every_scope_the_generator_emits_is_declared_and_mapped[animations] tests/packs/rendering/test_remotion_typecheck_mappings.py::test_every_scope_the_generator_emits_is_declared_and_mapped[transitions]
+
+Result: 6 passed, 3 failed in 15.16s. The three failures are the unchanged
+geometry positives, visibly GAP versus required UNKNOWN; SSR, painted-backing
+negative, layer-tail native, and all three mapping nodes passed. The
+follow-up mapping-only rerun after hardening was 3 passed in 6.76s.
+
+The private mutation probe passed for missing module, wrong module, missing
+declaration scope, missing path scope, missing generated host import, missing
+declaration type export, and fixed-import exclusion. Static evidence:
+git diff --check passed; compileall on all four changed tests passed; scoped
+Ruff reported the same six existing findings; Ruff baseline was exactly 2149;
+private Mypy baseline was exactly 1912.
+
+The candidate's prose inventory contains a malformed mapping-node spelling
+(test_remotion_layer_tail_compat.py::test_remotion_typecheck_mappings.py::...);
+the retained worker log shows the actual 40-node command used the valid
+tests/packs/rendering/test_remotion_typecheck_mappings.py::... selectors. The
+six remaining failures stay preserved and are not cleared by this review.

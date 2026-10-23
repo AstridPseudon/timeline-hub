@@ -25,15 +25,64 @@ KINDS: tuple[gen_effect_registry.ElementKind, ...] = ("effects", "animations", "
 # Composition-owned imports are fixed package dependencies, not generated
 # component scopes. Only hashed host imports participate in this mapping gate.
 _SCOPE = re.compile(r"""from '(@[^/']+)/[^']+\?astrid=""")
+_IMPORT = re.compile(r"""import \w+ from '(@[^/']+)/(\w[^/]+)/component\?astrid=[^']+'""")
 _DECLARED = re.compile(r"""declare module '(@[^/']+)/\*'""")
+_DECLARATION = re.compile(r"""declare module '(@[^/']+)/\*'\s*\{(?P<body>.*?)\}""", re.DOTALL)
 
 
 def emitted_scopes(generated: str) -> set[str]:
     return set(_SCOPE.findall(generated))
 
 
+def emitted_modules(generated: str) -> set[tuple[str, str]]:
+    return set(_IMPORT.findall(generated))
+
+
 def declared_scopes(declarations: str) -> set[str]:
     return set(_DECLARED.findall(declarations))
+
+
+def declaration_type_exports(declarations: str) -> set[str]:
+    return {
+        scope
+        for scope, body in _DECLARATION.findall(declarations)
+        if re.search(r"\bexport default component;", body)
+    }
+
+
+def actual_module_errors(generated: str, kind: gen_effect_registry.ElementKind) -> list[str]:
+    registry = gen_effect_registry._element_registry()
+    errors = []
+    for scope, element_id in emitted_modules(generated):
+        candidates = [
+            element
+            for element in registry.list(kind=kind, include_shadowed=True)
+            if element.id == element_id
+            and f"@{gen_effect_registry._import_scope_for_element(element)}-{kind}" == scope
+        ]
+        if len(candidates) != 1:
+            errors.append(f"{scope}/{element_id}: expected one registry module, found {len(candidates)}")
+            continue
+        component = candidates[0].component
+        if not component.is_file():
+            errors.append(f"{scope}/{element_id}: missing {component}")
+        elif not re.search(r"^export default\b", component.read_text(encoding="utf-8"), re.MULTILINE):
+            errors.append(f"{scope}/{element_id}: no default type export in {component}")
+    return sorted(errors)
+
+
+def expected_host_modules(kind: gen_effect_registry.ElementKind) -> set[tuple[str, str]]:
+    return {
+        (f"@{plugin.import_scope or plugin.scope}-{kind}", plugin.plugin_id)
+        for plugin in gen_effect_registry.discover_plugins(kind).values()
+        if plugin.root.joinpath("component.tsx").is_file()
+    }
+
+
+def generated_ids(generated: str, kind: gen_effect_registry.ElementKind) -> set[str]:
+    match = re.search(rf"export const {kind[:-1].upper()}_IDS = \[(.*?)\] as const;", generated, re.DOTALL)
+    assert match, f"generated {kind} registry has no ID declaration"
+    return set(re.findall(r"'([^']+)'", match.group(1)))
 
 
 def tsconfig_paths(tsconfig_text: str) -> dict[str, list[str]]:
@@ -72,14 +121,24 @@ def test_unmapped_names_a_scope_missing_from_either_file() -> None:
 def test_every_scope_the_generator_emits_is_declared_and_mapped(kind: gen_effect_registry.ElementKind) -> None:
     generated = gen_effect_registry.generate_element_registry(kind)
     emitted = emitted_scopes(generated)
-    if not emitted:
-        # The current Composition registry owns these public implementations;
-        # there are no generated host imports to map for this kind.
-        assert f"resolveElementRegistries(DEFAULT_THEME).{kind}" in generated
-        return
     declarations = (REMOTION / "src" / "astrid-hashed-imports.d.ts").read_text(encoding="utf-8")
     tsconfig = (REMOTION / "tsconfig.json").read_text(encoding="utf-8")
-    assert unmapped(emitted, declarations, tsconfig) == []
+    modules = emitted_modules(generated)
+    if modules:
+        assert expected_host_modules(kind) <= modules
+        assert actual_module_errors(generated, kind) == []
+        assert emitted <= declaration_type_exports(declarations)
+        assert unmapped(emitted, declarations, tsconfig) == []
+        return
+
+    # Composition-owned kinds intentionally have no host component imports, but
+    # they must still enumerate real public IDs and reference the public module.
+    plugins = gen_effect_registry.discover_plugins(kind)
+    public_ids = gen_effect_registry._public_registry_ids()[kind]
+    assert plugins
+    assert set(plugins) <= generated_ids(generated, kind)
+    assert set(plugins) <= public_ids
+    assert f"resolveElementRegistries(DEFAULT_THEME).{kind}" in generated
 
 
 def test_pack_scope_paths_point_at_the_pack_element_directories() -> None:
