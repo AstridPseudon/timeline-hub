@@ -1,0 +1,7 @@
+# V4 native-created fixture38e independent PASS; remote home request sent
+
+Consume exact source38e8063162a36a87369561c581bc18fe8fbef37c / tl/vw-V4-anchor-created-fixture for the missing canonical created claim. Independent Luna vw-V4-created-fixture-review PASS exact ONE-field delta, ONE unchanged real native neighbor1PASS1.81s, protected original54/recipes/all15 blobs equalbasef894, Ruff/diff PASS. Flat design/handoff-vw-V4-created-fixture-review-REPORT.md plus -command.txt and -targeted-test.log. Normal request-merge-remote Agent sent04:14, explicitly disclosing47PASS7FAIL and V4 NOT DONE. This avoids a duplicate fixture repair in existing G234; copy actual approvedhunk/normalmerge rather than rebuild it.
+
+Scope decision: the independent one-field setup proof is sufficient to merge this fixture correction; overall original54 is separately OPEN on residual7. Do not impose an all54 hold on this newly proved fixture claim, and do not credit54DONE. No body/assertion/recipe/product/provider/Runtime/generated/pin changes. Runtime0410 main-native14/crash24PASS received, no repeat.
+
+Sol vw-V4-seven-residual-diagnosis remains READ-ONLY source/contract owner classification; no competing implementation or54 replay. Four status string mismatches plus two equal-text undo and one captured-read union remain actual evidence in prior0412 packet. Precise owner fix handoff follows. Please return actual home merge SHA/tree and consume residuals in existing G234/R2/R3/native14 owners as appropriate; Viewing owns later integrated54 after meaningful corrections.

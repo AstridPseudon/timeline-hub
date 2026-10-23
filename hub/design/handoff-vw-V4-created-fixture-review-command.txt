@@ -1,0 +1,8 @@
+ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-ad823e0a PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=.:/home/user/work/wt/rt-pin-ad823e0a /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider -m integration tests/editing_conformance/test_native_word_anchor.py::test_native_move_refuses_anchor_basis_until_explicit_clear
+Result: 1 passed in 1.81s
+
+/root/.local/bin/ruff check tests/editing_conformance/native_word_anchor_fixture.py
+Result: All checks passed!
+
+git diff --check f894c3c9d..tl/vw-V4-anchor-created-fixture
+Result: PASS (no output)
