@@ -1,10 +1,4 @@
-"""Fixture-only validation for the early P1 ``doc.patch`` request set.
-
-The provider does not implement ``doc.patch`` on this branch.  These tests
-check that the collected operands are contract-shaped, point at real physical
-closure roots, retain fixture provenance, and carry exact tagged guards.  They
-deliberately do not apply a patch or emulate provider execution.
-"""
+"""Validation for the P1 ``doc.patch`` request set and its real fixtures."""
 
 from __future__ import annotations
 
@@ -67,9 +61,9 @@ def _source_case(vector: dict[str, Any]) -> dict[str, Any]:
 
 
 def _internal_payload(fixture: dict[str, Any], timeline_id: str) -> dict[str, Any]:
-    for revision in fixture["input"]["internal_timeline_revisions"]:
-        if revision["timeline_id"] == timeline_id:
-            return revision["payload"]
+    for local_id, source in fixture["bundle"]["source_mapping"]["shots"].items():
+        if source["internal_timeline_revision_id"] == timeline_id:
+            return fixture["bundle"]["shots"][local_id]["internal_timeline"]
     raise AssertionError(f"missing internal timeline {timeline_id}")
 
 
@@ -96,8 +90,13 @@ def _root_for_change_at(vector: dict[str, Any], ref: str, phase: str) -> Any:
     if ref == "parent":
         document = fixture[phase]
         return document["parent_revision"]["payload"]
-    if ref.startswith("internal:"):
-        return _internal_payload(fixture, ref.removeprefix("internal:"))
+    if ref.startswith(("internal:", "internal-revision:")):
+        revision = ref.split(":", 1)[1]
+        bundle = _bundle_for_phase(fixture, phase)
+        for local_id, source in bundle["source_mapping"]["shots"].items():
+            if source["internal_timeline_revision_id"] == revision:
+                return bundle["shots"][local_id]["internal_timeline"]
+        raise AssertionError(f"missing internal revision {revision}")
     if ref.startswith("occurrence:"):
         occurrence, _, clip = ref.removeprefix("occurrence:").partition("/clip:")
         return _bundle_clip(_bundle_for_phase(fixture, phase), occurrence, clip)
@@ -173,7 +172,10 @@ def _all_changes(vector: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def test_request_set_is_provenanced_to_the_merged_corpus() -> None:
-    assert REQUESTS["status"] == "collection-only; provider execution pending"
+    assert REQUESTS["status"] == (
+        "provider-executed on real R1; membership-removal precedence red; "
+        "Runtime HTTP/App H3 proof pending"
+    )
     assert len(REQUESTS["vectors"]) == 8
 
     for vector in REQUESTS["vectors"]:
@@ -189,6 +191,20 @@ def test_request_set_is_provenanced_to_the_merged_corpus() -> None:
         assert case["source_sha256"] == source["source_sha256"]
         assert vector["scope"]["physical_root"]
         assert vector["unexecuted_provider_cases"]
+
+    for vector in REQUESTS["vectors"]:
+        if vector["id"] in {
+            "params-absent-to-explicit-values",
+            "params-null-to-object",
+            "params-remove-and-preserve-opaque",
+            "disjoint-field-merge",
+        }:
+            assert vector["scope"]["physical_root"] == "internal-revision:ir"
+            assert all(
+                change["ref"] == "internal-revision:ir"
+                and change["path"][:2] == ["clips", "id:c"]
+                for change in _all_changes(vector)
+            )
 
 
 def test_commands_use_the_contract_doc_patch_shape() -> None:
@@ -293,15 +309,17 @@ def test_real_opaque_values_and_tagged_states_are_not_normalized() -> None:
 
     for vector in (params_absent, params_null, params_remove):
         fixture = _fixture(vector)
-        before = _root_for_change_at(vector, "occurrence:o/clip:c", "input")
-        after = _root_for_change_at(vector, "occurrence:o/clip:c", "output")
+        before = _root_for_change_at(vector, "internal-revision:ir", "input")
+        after = _root_for_change_at(vector, "internal-revision:ir", "output")
+        before_clip = _walk(before, ["clips", "id:c"])
+        after_clip = _walk(after, ["clips", "id:c"])
         for change in _all_changes(vector):
             if change["op"] == "set":
                 assert _actual_after(vector, change) == _tagged(change["value"])
             elif change["op"] == "remove":
                 assert _actual_after(vector, change) == {"state": "absent"}
         for key in ("app", "at", "from", "speed", "to"):
-            assert after[key] == before[key]
+            assert after_clip[key] == before_clip[key]
         assert fixture["bundle"]["placements"] == fixture["after_bundle"]["placements"]
 
     assert params_absent["expected"]["tagged_states"] == {
@@ -309,15 +327,15 @@ def test_real_opaque_values_and_tagged_states_are_not_normalized() -> None:
         "params.null": "absent",
         "params.old": "absent",
     }
-    absent_input = _root_for_change_at(params_absent, "occurrence:o/clip:c", "input")
-    assert _state(absent_input, ["params"]) == {"state": "absent"}
-    assert _state(absent_input, ["params", "null"]) == {"state": "absent"}
-    assert _state(absent_input, ["params", "old"]) == {"state": "absent"}
+    absent_input = _root_for_change_at(params_absent, "internal-revision:ir", "input")
+    assert _state(absent_input, ["clips", "id:c", "params"]) == {"state": "absent"}
+    assert _state(absent_input, ["clips", "id:c", "params", "null"]) == {"state": "absent"}
+    assert _state(absent_input, ["clips", "id:c", "params", "old"]) == {"state": "absent"}
 
     null_change = params_null["request"]["commands"][0]["args"]["changes"][0]
     assert null_change["before"] == {"state": "present", "value": None}
-    null_input = _root_for_change_at(params_null, "occurrence:o/clip:c", "input")
-    assert _state(null_input, ["params"]) == {"state": "present", "value": None}
+    null_input = _root_for_change_at(params_null, "internal-revision:ir", "input")
+    assert _state(null_input, ["clips", "id:c", "params"]) == {"state": "present", "value": None}
 
     assert params_remove["expected"]["opaque_preserved"] == {
         "params.opaque": {"keep": [False, {}, ""]},
@@ -327,11 +345,11 @@ def test_real_opaque_values_and_tagged_states_are_not_normalized() -> None:
     remove = params_remove["request"]["commands"][0]["args"]["changes"][0]
     assert remove["op"] == "remove"
     assert remove["before"] == {"state": "present", "value": None}
-    remove_output = _root_for_change_at(params_remove, "occurrence:o/clip:c", "output")
-    assert _state(remove_output, ["params", "old"]) == {"state": "absent"}
-    assert _state(remove_output, ["params", "null"]) == {"state": "present", "value": None}
+    remove_output = _root_for_change_at(params_remove, "internal-revision:ir", "output")
+    assert _state(remove_output, ["clips", "id:c", "params", "old"]) == {"state": "absent"}
+    assert _state(remove_output, ["clips", "id:c", "params", "null"]) == {"state": "present", "value": None}
     for key, value in params_remove["expected"]["opaque_preserved"].items():
-        assert _walk(remove_output, key.split(".")) == value
+        assert _walk(remove_output, ["clips", "id:c", *key.split(".")]) == value
 
 
 def test_collection_vectors_guard_membership_and_order_without_execution() -> None:
@@ -445,11 +463,11 @@ def test_same_field_refusal_uses_real_base_and_labels_constructed_head() -> None
     assert vector["expected"]["code"] == "value_conflict"
 
 
-def test_provider_execution_is_explicitly_pending() -> None:
+def test_provider_execution_disposition_is_recorded() -> None:
     assert not any("executor" in vector for vector in REQUESTS["vectors"])
     assert not any("provider_result" in vector for vector in REQUESTS["vectors"])
     assert {vector["expected"]["status"] for vector in REQUESTS["vectors"]} == {
         "accepted",
-        "merged",
+        "rebased",
         "conflict",
     }

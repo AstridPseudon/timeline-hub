@@ -502,13 +502,19 @@ def test_public_document_swap_and_residual_patch_use_original_sequential_closure
 
 
 def test_public_document_compound_inverse_restores_exact_original():
+    from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
     from tests.sdk.test_timeline_commit_provider import inverse
 
     realm, accepted, document = _public_document_compound(True)
-    # Required R2 acceptance: keep exact restoration expected. Physical child
-    # bindings currently fail in inverse._validate_inputs (outside G3 ownership).
     restored = realm.call([inverse([accepted["receipt"]["receipt_id"]])])
     assert restored["data"]["canonical_document"] == document
+    assert document_from_bundle(bundle_from_document(restored["data"]["canonical_document"])) == document
+    redone = realm.call([inverse([restored["receipt"]["receipt_id"]])])
+    landed = accepted["data"]["canonical_document"]
+    assert redone["data"]["canonical_document"] == landed
+    assert document_from_bundle(bundle_from_document(redone["data"]["canonical_document"])) == landed
+    restored_again = realm.call([inverse([redone["receipt"]["receipt_id"]])])
+    assert restored_again["data"]["canonical_document"] == document
 
 
 @pytest.mark.integration  # a real Runtime from a second checkout
