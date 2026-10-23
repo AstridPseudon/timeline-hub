@@ -1,59 +1,51 @@
-# Farm P3 graph via Node 20 npm ci (tf-p3-graph-npmci): BLOCKED at npm ci; no graph, no row edit, no preflight, no gate
+# tf-p3-graph-npmci: GO-eligible App graph via Node 20.19.4 npm ci (BLOCKED before the build)
 
-Date: 2026-10-23. Tuple: App 2107e1870e51c650d59315f4cc1ab6af338f198c, tree a3ff3584e9b559bbb3c3a82b77be7516ed8e761c. Worktree `/home/user/work/wt/tf-p3-graph-npmci` is clean at 2107e18 (no product, test or spec edits; no commit-msg written because there is nothing to commit).
+Date: 2026-10-23. Tuple: App 2107e1870e51c650d59315f4cc1ab6af338f198c, tree a3ff3584e9b559bbb3c3a82b77be7516ed8e761c.
 
-**Status: BLOCKED.** The sandbox refused the authorized toolchain `npm ci` (`/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/npm`). Steps 2 to 4 were not run. The P3 gate body was not requested.
+**Status: BLOCKED. No graph was built, no row was edited, no preflight was run, and no gate body was requested.**
 
-## 1. Why it is blocked
+The toolchain Node binary is not executable in this worker's session. Every call to it returns `This command requires approval`. The 19:39Z orchestrator allowlist (`Bash(/home/user/work/toolchain/:*)`) has not reached this sandbox yet. I did not use the system Node (v22.22.0) or any other route as a substitute.
 
-The orchestrator's 19:39Z item says `Bash(/home/user/work/toolchain/:*)` is allowed. The kit file `orch/bin/claude-perms.sh` (line 15) does contain that entry. My session does not have it. The orchestrator also wrote that it "arrives with the next hub sync; fresh workers get it". This worker started before that sync, so the permission is not active here. I did not try any alternate route (no plain `npm` on PATH, which would run under Node 22, no `sh -c` or interpreter wrapper, no symlink).
+## 1. Inputs staged from App 2107e18 (verified)
 
-| # | Command | Result |
+Staged with `git show 2107e1870e51c650d59315f4cc1ab6af338f198c:<path>` into the worker folder (the designated `$TMPDIR` `/tmp/w-0a07a732f9` is outside the sandbox's writable set, so the write was refused).
+
+| File (staged path) | sha256 | Match |
 |---|---|---|
-| 1 | `/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node --version` | `This command requires approval` (refused, did not run) |
-| 2 | `/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/npm ci --version` | `This command requires approval` (refused, did not run) |
-| 3 | `PATH=<toolchain bin>:$PATH <toolchain npm> ci --cache <scratch>` (in the staged folder) | Rejected before running: `A variable in this command can't be checked before it runs` |
-| 4 | Same `npm ci` as a second attempt with the plain full path | Not run; the path itself is the refused prefix, so I stopped |
+| `p3graph/app/package.json` | `7c4f3edad16efe09050311635c4ad036f9a4ecbf4d29fb3f216e3d79ac7f4320` | recorded |
+| `p3graph/app/package-lock.json` | `59cd66da9a223eb1ff3cf60fd06dfa5b4b376533786366bd94b74ae3d95140ba` | recorded |
+| `p3graph/app/vendor/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz` | `819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234` | recorded |
+| `p3graph/app/scripts/patches/remotion-4.0.509-audio-resume.mjs` | `845317ae1229c741d50ce61d3fd745b22a83a78afa5d82368fa6c5d3dac82bb6` | App `postinstall` |
 
-No `npm ci` ran, so there is no node_modules, no npm version and no Node 20 version output to record.
+Staging folder: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/tf-p3-graph-npmci2/p3graph/app`. No `npm ci` was run in it.
 
-## 2. Inputs staged and hash-checked (step 1 partial)
+## 2. Commands and exits
 
-Staged in the session scratchpad, not in the worker folder: `/tmp/w-b7b4d71d70/claude-0/-home-user-work-wt-tf-p3-graph-npmci/388ca6ba-dd93-49ba-b1cb-f46174da6963/scratchpad/p3graph/private/` (package.json, package-lock.json, `vendor/artifacts/<tgz>`, `scripts/patches/remotion-4.0.509-audio-resume.mjs`). The npm cache was not created. A `mkdir` under `/tmp/w-b7b4d71d70/tf-p3-graph-npmci` was refused as outside the session's directories, so I used the scratchpad path.
+| Step | Command | Result |
+|---|---|---|
+| Stage inputs | `git show 2107e18:<path> > …/p3graph/app/<path>` (4 files) | exit 0 each |
+| Hash inputs | `sha256sum package.json package-lock.json vendor/artifacts/*.tgz scripts/patches/*.mjs` | matches table above |
+| Toolchain node version | `/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node --version` | `This command requires approval` (not run) |
+| Toolchain npm version | `/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/npm --version` | `This command requires approval` (not run) |
+| Private `mkdir` in `$TMPDIR` (`/tmp/w-0a07a732f9`) | `mkdir -p …` | `needs approval`, path outside working directories (not run) |
 
-| Input (App worktree at 2107e18) | sha256 | Expected | Match |
-|---|---|---|---|
-| `package.json` | `7c4f3edad16efe09050311635c4ad036f9a4ecbf4d29fb3f216e3d79ac7f4320` | 7c4f3eda…4320 | yes |
-| `package-lock.json` | `59cd66da9a223eb1ff3cf60fd06dfa5b4b376533786366bd94b74ae3d95140ba` | 59cd66da…5140ba | yes |
-| `vendor/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz` | `819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234` | 819acf6b…2040234 | yes |
-| `scripts/patches/remotion-4.0.509-audio-resume.mjs` | `845317ae1229c741d50ce61d3fd745b22a83a78afa5d82368fa6c5d3dac82bb6` | (App postinstall) | recorded |
+Not done, because they depend on the blocked Node 20 / npm step: the `npm ci`, the 80-member / 0.0.14 / byte-mismatch graph verification, the GRAPH edit, the preflight and wait-test.
 
-Commands run: `sha256sum` on the four worktree files (exit 0), `cp` of the four files into the staging folder (exit 0). Not yet verified: the 80 members, version 0.0.14, and 0 byte mismatches. They need the built graph.
+## 3. Row body hashes (command bytes after `app <suite> `, no newline)
 
-Node/npm versions: not recorded (toolchain refused). The pinned target is Node 20.19.4 / npm 10.8.2.
+Measured on `$ORCH/tests/suites.conf` before any edit. The suites file was not changed.
 
-## 3. Row state (step 2 not done)
-
-Rows 154 (`ap2-P3-gate5-h6-0348`) and 155 (`…-preflight`) were not edited, because there is no toolchain graph to point at. Current state, read only:
-
-| Item | Value |
+| Row | Body hash now |
 |---|---|
-| `suites.conf` sha256 now | `64afaf615665def79f3660d771f17e226c83fa58223417f5dd11d8cc6227d61d` (differs from run4's `bccffe75…`; I did not edit it, so someone changed it after run4) |
-| Row 154 body hash (command bytes after `app <suite> `, no newline), before = after | `b40072a8b8c5b13dd71618b4e0efda6f33e33030269838b179a65829b5cdcf3b` |
-| Row 155 body hash, before = after | `20a9702ae3d3fe9e94b7feb35183510b25399a7f93bf8845a67da9302141208f` |
-| Row 154/155 GRAPH | `/tmp/w-79d31cf50f/tf-p3-run4/private/node_modules` (run4's helper-built graph, which the orchestrator says is NOT GO-eligible) |
+| 154 `ap2-P3-gate5-h6-0348` | `b40072a8b8c5b13dd71618b4e0efda6f33e33030269838b179a65829b5cdcf3b` |
+| 155 `ap2-P3-gate5-h6-0348-preflight` | `20a9702ae3d3fe9e94b7feb35183510b25399a7f93bf8845a67da9302141208f` |
 
-Row 156 still points at the 0407 path, and rows 158 and 159 at tf-p2-run. These are diagnostic or P2 rows and were not touched.
+These equal the run4 "after" hashes. So both rows still point GRAPH at the run4 helper-built overlay `/tmp/w-79d31cf50f/tf-p3-run4/private/node_modules`, which is harness-cleaned. That graph is NOT the qualified `npm ci` graph and must not be used for GO-eligible runs.
 
-## 4. Preflight and gate: NOT run
+## 4. Items for the orchestrator
 
-- Preflight `ap2-P3-gate5-h6-0348-preflight`: not requested. With the run4 helper graph it would give no GO-eligible evidence.
-- Gate body `ap2-P3-gate5-h6-0348`: not requested (as instructed; the manager decides after the 15659 investigation).
-
-## 5. What is needed to unblock
-
-1. Activate `Bash(/home/user/work/toolchain/:*)` for this session (the hub sync, or a fresh worker), or have an operator run the build with the staged inputs.
-2. Build recipe, once allowed: in the staging folder, `PATH=<toolchain bin>:$PATH <toolchain npm> ci --cache <scratch npm-cache>`, then record `node --version`, `npm --version`, the three hashes above, and the graph path. Then verify the 80 members, 0.0.14, no package-root generated/typescript files, and 0 byte mismatches against the archive (the run4 `verify-graph.mjs` checks are the reference).
-3. Edit GRAPH in rows 154 and 155 to the new path (harness-only, keep the qualified guard form), record body hashes before and after, run the preflight once, then stop.
-
-Observation for the orchestrator: the built graph will live in TMPDIR or the scratchpad, not the worker folder. At ~hundreds of MB it cannot meet the 50 MB worker-folder cap, so it is not durable across harness cleanup. Its path and hashes should go in the preflight record.
+1. The toolchain allowlist (`Bash(/home/user/work/toolchain/:*)`) must reach this worker's sandbox. Once it does, the remaining steps are: `npm ci` in the staging folder with `PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:$PATH` and `--cache` under the worker folder; verify node v20.19.4 and npm 10.8.2; check 80 members, version 0.0.14, no package-root generated/typescript files, and 0 byte mismatches against the archive; then edit GRAPH in rows 154 and 155 only.
+2. Disk and cap: a full App `node_modules` is about 510 MB (`/home/user/work/app/node_modules`), far over the 50 MB worker-folder cap. The graph and npm cache therefore cannot live in the worker folder. The 18:45Z rule puts them in `$TMPDIR`, which this sandbox cannot write. The orchestrator must choose a location.
+3. The rows still reference the run4 graph path. Re-point them only after a verified npm ci graph exists.
+4. The worker's `tmpdir` marker points to `/tmp/w-0a07a732f9`, which the sandbox treats as outside its writable set. This is the same permission gap.
+5. No product, test or spec file was edited. The worker worktree `/home/user/work/wt/tf-p3-graph-npmci2` (HEAD `be890a1f`) has no changes. No commit-msg was written because there is nothing to commit.
