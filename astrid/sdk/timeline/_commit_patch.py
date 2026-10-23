@@ -494,12 +494,12 @@ class CommitPatch:
             destination['patch'].append({'op': 'set', 'ref': ref, 'path': path,
                                          'before': copy.deepcopy(effect['before']),
                                          'value': copy.deepcopy(effect['after']['value'])})
-        if self.v2:
-            for step in self.steps:
-                ordinal = step['command_ordinals'][-1]
-                before = Closure(self.inputs[step['id']])
-                after = inverse_closure(self.outputs[step['id']], self.inverse_sources.get(ordinal, []))
-                record = plan.records[ordinal]
+        for step in self.steps:
+            ordinal = step['command_ordinals'][-1]
+            before = Closure(self.inputs[step['id']])
+            after = inverse_closure(self.outputs[step['id']], self.inverse_sources.get(ordinal, []))
+            record = plan.records[ordinal]
+            if self.v2:
                 for index, effect in enumerate(step['patch']):
                     segment = next(((first, second) for source_ordinal in step['command_ordinals']
                         for stage, (first, second) in zip(
@@ -515,11 +515,13 @@ class CommitPatch:
                         binding.update(key='commit.effect', policy='fixed', dependencies=[],
                                        path=effect['path'], step_id=step['id'], effect_ordinal=index)
                         record['bindings'].append(binding)
-                segments = [(first, second) for index in step['command_ordinals']
-                            for first, second in self.inverse_stages.get(index, [])]
-                for first, second in segments or [(before, after)]:
-                    self.materializations(record, first, second, self.boundaries[ordinal], step,
-                        [write for index in step['command_ordinals'] for write in plan.records[index]['writes']])
+            # Synthesized legacy steps need the same continuation authority as
+            # explicit v2 steps when their native edits materialize child roots.
+            segments = [(first, second) for index in step['command_ordinals']
+                        for first, second in self.inverse_stages.get(index, [])]
+            for first, second in segments or [(before, after)]:
+                self.materializations(record, first, second, self.boundaries[ordinal], step,
+                    [write for index in step['command_ordinals'] for write in plan.records[index]['writes']])
         plan.steps, plan.label, plan.merge_mode = self.steps, self.label, self.merge_mode
         return plan
 

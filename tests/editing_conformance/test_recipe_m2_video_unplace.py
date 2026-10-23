@@ -18,10 +18,11 @@ from tests.editing_conformance.test_recipe_m1_commands import accepted_boundarie
 from tests.editing_conformance.test_recipe_m2_shared_auto_placement import CHILD, OWNER, build
 from tests.editing_conformance.test_recipe_m2_shot_pool import pins, step
 from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm
-from tests.sdk.test_timeline_commit_provider import inverse as inverse_call
 from tests.sdk.test_timeline_commit_provider import (
+    CommitRejected,
     runtime_abi,  # noqa: F401 -- detached ABI fixture
 )
+from tests.sdk.test_timeline_commit_provider import inverse as inverse_call
 
 FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_video_unplace.json'
 
@@ -89,6 +90,30 @@ def test_provider_round_trip_preserves_opaque_registry_and_order(kind, keep):
     bundle = bundle_from_document(document)
     realm = MediaRealm(document, verified)
     removed = realm.call(removal(bundle, verified, keep))
+    entry = copy.deepcopy(realm.entries[-1])
+    proofs = [binding for record in entry['records']['commands'] for binding in record['bindings']
+              if binding['key'] == 'commit.materialization']
+    assert {binding['physical_ref'].split(':', 1)[0] for binding in proofs} == {
+        'shot-revision', 'internal-revision'}
+    if keep:
+        # The pooled step consumes an intermediate physical image; its inverse
+        # must authenticate that image's continuation through the native edit.
+        for damage in ('missing', 'successor'):
+            realm.entries[-1] = copy.deepcopy(entry)
+            for record in realm.entries[-1]['records']['commands']:
+                if damage == 'missing':
+                    record['bindings'] = [binding for binding in record['bindings']
+                                          if binding['key'] != 'commit.materialization']
+                else:
+                    for binding in record['bindings']:
+                        if binding['key'] == 'commit.materialization':
+                            binding['successor'] = binding['physical_ref']
+            before = copy.deepcopy((realm.head, realm.entries, realm.documents, realm.accepted))
+            with pytest.raises(CommitRejected) as error:
+                realm.call([inverse_call([removed['receipt']['receipt_id']])])
+            assert error.value.failure['details']['reason'] == 'history_unavailable'
+            assert (realm.head, realm.entries, realm.documents, realm.accepted) == before
+        realm.entries[-1] = entry
     undone = realm.call([inverse_call([removed['receipt']['receipt_id']])])
     assert undone['data']['canonical_document'] == document
     redone = realm.call([inverse_call([undone['receipt']['receipt_id']])])
