@@ -24,10 +24,14 @@ import pytest
 from runtime_protocol.contract_metadata import SCHEMA_DIGEST
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.door import DoorConfig
-from runtime_protocol.store import RealmStore
+from runtime_protocol.store import SCHEMA_VERSION, RealmStore
 from runtime_protocol.timeline_commit_port import RequestCommitPort, digest
 from runtime_protocol.timeline_commit_store import TimelineCommitStore
-from runtime_protocol.upgrade import compact_idempotency_ledger
+from runtime_protocol.upgrade import (
+    compact_idempotency_ledger,
+    inspect_canonical_schema,
+    migrate_canonical_to_current,
+)
 from runtime_protocol.util import canonical_json
 from tests.door_helpers import HOSTED, PRODUCT_ACTOR, DoorWorld, door_call
 from tests.lanes import requires_posix_process_groups
@@ -66,6 +70,25 @@ def _objects(film):
 
 def _unavailable(*args, **kwargs):
     raise AssertionError("save/retry reached renderer or forbidden semantic work")
+
+
+def _migrate_duplicate_realm(film):
+    """Bring only the mutable duplicate from captured v31 data to current v32."""
+    identity = inspect_canonical_schema(film.duplicate_root)
+    assert identity["version"] == 31
+    realm_id = identity["realm_id"]
+    assert isinstance(realm_id, str)
+    result = migrate_canonical_to_current(
+        film.duplicate_root,
+        confirmation=f"MIGRATE CANONICAL {realm_id}",
+        expected_realm_id=realm_id,
+    )
+    assert result["source_schema_version"] == 31
+    assert result["target_schema_version"] == SCHEMA_VERSION == 32
+    assert result["changed"] is True
+    assert inspect_canonical_schema(
+        film.duplicate_root, expected_realm_id=realm_id
+    )["version"] == SCHEMA_VERSION
 
 
 class _FirstCaptureProvider:
@@ -389,6 +412,9 @@ def _crash_boundary(tmp_path, monkeypatch, film, operation, stage, captures=(), 
     monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[1]))
     source_files = {path.relative_to(film.source_root): path.read_bytes()
                     for path in film.source_root.rglob("*") if path.is_file()}
+    # The authenticated v31 source/archive stays immutable; only this duplicate
+    # is upgraded before the first Runtime owner opens it.
+    _migrate_duplicate_realm(film)
     commit_path = f"/v1/projects/{film.project_id}/timelines/{film.timeline_id}/commit"
     runtime = _Runtime(film, tmp_path, first_capture)
     try:
