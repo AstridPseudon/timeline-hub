@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T15:14:06Z | dispatcher heartbeat 14s | live 5 (sol 1, luna 4, other 0) | busy30 18 | status age 12m -->
+<!-- agent | 2026-10-23T15:16:03Z | dispatcher heartbeat 11s | live 3 (sol 0, luna 3, other 0) | busy30 18 | status age 14m -->
 # agent board, 2026-10-23T15:01:37Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
