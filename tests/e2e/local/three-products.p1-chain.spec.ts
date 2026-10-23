@@ -14,6 +14,9 @@ import {
   boundedDiagnosticRead,
   DIAGNOSTIC_ARTIFACT_TIMEOUT_MS,
   DIAGNOSTIC_COLLECTION_TIMEOUT_MS,
+  DIAGNOSTIC_READ_TIMEOUT_MS,
+  MOUNTED_DIAGNOSTIC_MAX_RECORDS,
+  mountedDiagnosticInitScript,
   withDiagnosticDeadline,
   writeDiagnosticArtifact,
 } from './p1-diagnostic-safety.ts';
@@ -86,9 +89,17 @@ test.beforeAll(() => {
   const reason = harnessUnavailableReason();
   if (reason) throw new Error(`P1 chain cannot run: ${reason}`);
 });
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page }, testInfo) => {
   const trace: P1DiagnosticTrace = { pageErrors: [], consoleErrors: [], requestFailures: [], wireHeads: [], requestProjections: [] };
   diagnosticTraces.set(page, trace);
+  const buffer = testInfo?.title?.includes('real Agent move') ? 'case2' : 'case1';
+  const addInitScript = (page as Page & { addInitScript?: (script: { content: string }) => Promise<void> }).addInitScript;
+  if (typeof addInitScript === 'function') {
+    await addInitScript.call(page, { content: mountedDiagnosticInitScript({
+      buffer,
+      maxRecords: MOUNTED_DIAGNOSTIC_MAX_RECORDS,
+    }) });
+  }
   page.on('pageerror', diagnosticListener((error) => boundedPush(trace.pageErrors, redactDiagnosticText(error.message))));
   page.on('console', diagnosticListener((message) => {
     const text = message.text();
@@ -1187,7 +1198,9 @@ async function captureFailureContinuation(page: Page, testInfo: any) {
   const earlyTimelineId = trace?.timelineId ?? 'UNKNOWN';
   const earlyRightId = trace?.sourceWindow?.after.rightId ?? 'UNKNOWN';
 
-  // Persist the in-memory failure identity before touching IndexedDB or the DOM.
+  // Persist the in-memory failure identity and the already-bounded mounted seam
+  // before touching IndexedDB, the DOM, or any browser evaluation. Later reads
+  // remain strictly best effort.
   // The later collector is strictly best effort; this file is the durable minimum
   // when a page has closed or one of its reads never settles.
   await withDiagnosticDeadline(() => writeDiagnosticArtifact(testInfo, {
@@ -1211,6 +1224,38 @@ async function captureFailureContinuation(page: Page, testInfo: any) {
     losses: { cappedConsole: true, mountedObservations: 'UNKNOWN', callbackPatch: 'UNKNOWN', captureResolution: 'UNKNOWN' },
   }), false, DIAGNOSTIC_ARTIFACT_TIMEOUT_MS);
 
+  const earlyMountedObservations = await withDiagnosticDeadline(() => page.evaluate((_timelineId) => {
+    try {
+      const snapshot = (window as Window & { __timelineSaveDiagnosticsSnapshot?: () => unknown }).__timelineSaveDiagnosticsSnapshot;
+      return typeof snapshot === 'function' ? snapshot() : 'UNKNOWN';
+    } catch {
+      return 'UNKNOWN';
+    }
+  }, earlyTimelineId), 'UNKNOWN', DIAGNOSTIC_READ_TIMEOUT_MS);
+  if (earlyMountedObservations !== 'UNKNOWN') {
+    await withDiagnosticDeadline(() => writeDiagnosticArtifact(testInfo, {
+      schemaVersion: 1,
+      title: caseTitle,
+      status: testInfo.status,
+      expectedStatus: testInfo.expectedStatus,
+      capturedAt: new Date().toISOString(),
+      durationMs: testInfo.duration,
+      phase: 'afterEach_failure_early_return',
+      case: { title: caseTitle, expectedPostCount: 2, observedPostCount: trace?.wireHeads.length ?? 'UNKNOWN' },
+      tuple: { projectId: earlyProjectId, timelineId: earlyTimelineId, sourceId: 'UNKNOWN', rightId: earlyRightId },
+      available: {
+        wireHeads: trace ? artifactWireHeads(trace.wireHeads) : 'UNKNOWN',
+        requestProjections: trace?.requestProjections ?? 'UNKNOWN',
+        sourceWindow: trace?.sourceWindow ?? 'UNKNOWN',
+        mountedObservations: earlyMountedObservations,
+      },
+      mountedObservations: earlyMountedObservations,
+      captureData: 'UNKNOWN',
+      unknowns: { mountedDataRef: 'UNKNOWN', callbackPatch: 'UNKNOWN', captureResolution: 'UNKNOWN' },
+      losses: { cappedConsole: true, mountedObservations: false, callbackPatch: 'UNKNOWN', captureResolution: 'UNKNOWN' },
+    }), false, DIAGNOSTIC_ARTIFACT_TIMEOUT_MS);
+  }
+
   const collectionDeadline = Date.now() + DIAGNOSTIC_COLLECTION_TIMEOUT_MS;
   const read = <T>(operation: () => T | PromiseLike<T>, fallback: T) => (
     boundedDiagnosticRead(operation, fallback, collectionDeadline)
@@ -1226,6 +1271,14 @@ async function captureFailureContinuation(page: Page, testInfo: any) {
   const providerTimelineId = await read(() => diagnosticAttribute(provider, 'data-timeline-id'), 'UNKNOWN');
   const providerProjectId = await read(() => diagnosticAttribute(provider, 'data-project-id'), 'UNKNOWN');
   const timelineId = providerTimelineId !== 'UNKNOWN' ? providerTimelineId : trace?.timelineId ?? 'UNKNOWN';
+  const mountedObservations = await read(() => page.evaluate((_timelineId) => {
+    try {
+      const snapshot = (window as Window & { __timelineSaveDiagnosticsSnapshot?: () => unknown }).__timelineSaveDiagnosticsSnapshot;
+      return typeof snapshot === 'function' ? snapshot() : 'UNKNOWN';
+    } catch {
+      return 'UNKNOWN';
+    }
+  }, timelineId), 'UNKNOWN');
   let outboxRecords: any[] | null = null;
   let outboxReadFailed = false;
   try {
@@ -1284,10 +1337,11 @@ async function captureFailureContinuation(page: Page, testInfo: any) {
         summary: outboxRecords === null ? 'UNKNOWN' : summarizeOutboxes(outboxRecords),
         owners: artifactOutboxOwners(outboxRecords),
       },
+      mountedObservations,
       recovery: ui,
       errors,
     },
-    mountedObservations: 'UNKNOWN',
+    mountedObservations,
     captureData: 'UNKNOWN',
     unknowns: {
       mountedDataRef: 'UNKNOWN',
