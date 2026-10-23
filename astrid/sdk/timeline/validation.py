@@ -65,6 +65,14 @@ def _fps(value: Any, path: str) -> Fraction:
 
 def _fps_values(bundle: Mapping[str, Any]) -> list[tuple[str, Fraction]]:
     values: list[tuple[str, Fraction]] = []
+    exact_rates: list[Fraction] = []
+
+    def record(value: Any, path: str) -> None:
+        rate = _fps(value, path)
+        values.append((path, rate))
+        if isinstance(value, (Mapping, Fraction)):
+            exact_rates.append(rate)
+
     parent_value: Any = bundle.get("parent")
     if not isinstance(parent_value, Mapping):
         _fail("candidate.parent", "must be an object")
@@ -76,7 +84,7 @@ def _fps_values(bundle: Mapping[str, Any]) -> list[tuple[str, Fraction]]:
 
     output = config.get("output")
     if isinstance(output, Mapping) and "fps" in output:
-        values.append(("candidate.parent.config.output.fps", _fps(output["fps"], "candidate.parent.config.output.fps")))
+        record(output["fps"], "candidate.parent.config.output.fps")
     overrides = config.get("theme_overrides")
     if overrides is not None and not isinstance(overrides, Mapping):
         _fail("candidate.parent.config.theme_overrides", "must be an object")
@@ -87,8 +95,7 @@ def _fps_values(bundle: Mapping[str, Any]) -> list[tuple[str, Fraction]]:
     if canvas is not None and not isinstance(canvas, Mapping):
         _fail("candidate.parent.config.theme_overrides.visual.canvas", "must be an object")
     if isinstance(canvas, Mapping) and "fps" in canvas:
-        values.append(("candidate.parent.config.theme_overrides.visual.canvas.fps",
-                       _fps(canvas["fps"], "candidate.parent.config.theme_overrides.visual.canvas.fps")))
+        record(canvas["fps"], "candidate.parent.config.theme_overrides.visual.canvas.fps")
 
     for shot_id, shot in (bundle.get("shots") or {}).items():
         if not isinstance(shot, Mapping):
@@ -98,10 +105,18 @@ def _fps_values(bundle: Mapping[str, Any]) -> list[tuple[str, Fraction]]:
             _fail(f"candidate.shots[{shot_id!r}].internal_timeline", "must be an object")
         child_output = internal.get("output")
         if isinstance(child_output, Mapping) and "fps" in child_output:
-            values.append((f"candidate.shots[{shot_id!r}].internal_timeline.output.fps",
-                           _fps(child_output["fps"], f"candidate.shots[{shot_id!r}].internal_timeline.output.fps")))
+            record(child_output["fps"], f"candidate.shots[{shot_id!r}].internal_timeline.output.fps")
     if values and any(rate != values[0][1] for _, rate in values[1:]):
-        _fail("candidate", "all authored fps values must be the same rational rate")
+        message = "all authored fps values must be the same rational rate"
+        if not exact_rates or any(rate != exact_rates[0] for rate in exact_rates[1:]):
+            _fail("candidate", message)
+        authority = _number(exact_rates[0], "candidate.fps", positive=True)
+        # Match the existing float(Fraction) numeric serialization (core.media),
+        # then its decimal round trip. This is representation compatibility only;
+        # the timing compiler still consumes the untouched exact canvas rate.
+        numeric_rate = _time_fraction(float(authority), "candidate.fps")
+        if any(rate not in (authority, numeric_rate) for _, rate in values):
+            _fail("candidate", message)
     return values
 
 

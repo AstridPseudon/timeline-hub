@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import copy
+import math
+from fractions import Fraction
 
 import pytest
 
@@ -26,6 +28,93 @@ def test_valid_candidate_keeps_unknown_authored_fields_verbatim():
     assert value == before
     assert value["parent"]["unknown"] == {"opaque": ["parent-1", None]}
     assert value["shots"]["chapter-shot"]["internal_timeline"]["unknown"] == [1, 2]
+
+
+def fps_locations(value):
+    config = value["parent"]["config"]
+    canvas = config.setdefault("theme_overrides", {}).setdefault("visual", {}).setdefault("canvas", {})
+    return [config["output"], canvas, value["shots"]["chapter-shot"]["internal_timeline"]["output"]]
+
+
+@pytest.mark.parametrize("numeric_owner", [0, 1, 2])
+@pytest.mark.parametrize("parts", [(30000, 1001), (24000, 1001), (30, 1)])
+def test_legacy_numeric_fps_matches_exact_canonical_serialization_without_rewriting(numeric_owner, parts):
+    value = candidate()
+    for location in fps_locations(value):
+        location["fps"] = dict(zip(("numerator", "denominator"), parts))
+    fps_locations(value)[numeric_owner]["fps"] = float(Fraction(*parts))
+    before = copy.deepcopy(value)
+    validate_final_candidate(value)
+    assert value == before
+
+
+@pytest.mark.parametrize("owner", [0, 1, 2])
+@pytest.mark.parametrize("bad_rate", [
+    29.97, 30, math.nextafter(30000 / 1001, math.inf),
+    math.nextafter(30000 / 1001, -math.inf),
+    {"numerator": 30001, "denominator": 1001},
+    # Distinct exact rationals can have the same numeric serialization.
+    {"numerator": 30000 * 10**15 + 1, "denominator": 1001 * 10**15},
+])
+def test_fps_parity_refuses_distinct_rates_in_every_location(owner, bad_rate):
+    value = candidate()
+    for location in fps_locations(value):
+        location["fps"] = {"numerator": 30000, "denominator": 1001}
+    fps_locations(value)[owner]["fps"] = bad_rate
+    before = copy.deepcopy(value)
+    with pytest.raises(AuthoringBundleError, match="same rational rate"):
+        validate_final_candidate(value, baseline=before)
+    assert value == before
+
+
+@pytest.mark.parametrize("owner", [0, 1, 2])
+@pytest.mark.parametrize("bad_rate", [
+    True, 0, -30, "29.97002997002997", float("nan"), float("inf"), -float("inf"),
+    {"numerator": 30000, "denominator": 0},
+    {"numerator": True, "denominator": 1001},
+])
+def test_fps_compatibility_keeps_invalid_and_nonfinite_rates_refused(owner, bad_rate):
+    value = candidate()
+    fps_locations(value)[owner]["fps"] = bad_rate
+    with pytest.raises(AuthoringBundleError):
+        validate_final_candidate(value)
+
+
+def test_numeric_only_fps_requires_exact_decimal_equality():
+    value = candidate()
+    locations = fps_locations(value)
+    for location in locations:
+        location["fps"] = 30000 / 1001
+    validate_final_candidate(value)
+    locations[2]["fps"] = math.nextafter(30000 / 1001, math.inf)
+    with pytest.raises(AuthoringBundleError, match="same rational rate"):
+        validate_final_candidate(value)
+
+
+def test_mixed_legacy_fps_preserves_exact_canvas_frame_timing(monkeypatch):
+    from astrid.sdk.timeline import _commit_timing_validation as timing
+
+    value = candidate()
+    locations = fps_locations(value)
+    locations[0]["fps"] = locations[2]["fps"] = 30000 / 1001
+    locations[1]["fps"] = {"numerator": 30000, "denominator": 1001}
+    value["parent"]["clips"][0]["at"] = .97
+    value["parent"]["config"]["clips"] = copy.deepcopy(value["parent"]["clips"])
+    before = copy.deepcopy(value)
+    results = []
+    compile_timing = timing.compile_timing
+
+    def compile_candidate(inputs):
+        result = compile_timing(inputs)
+        results.append(result)
+        return result
+
+    monkeypatch.setattr(timing, "compile_timing", compile_candidate)
+    validate_final_candidate(value)
+    interval = results[0].timings[("parent", "", value["parent"]["clips"][0]["id"])]
+    assert interval["start_frame"] == 29
+    assert interval["applied_start"] == Fraction(29029, 30000)
+    assert value == before
 
 
 @pytest.mark.parametrize(
