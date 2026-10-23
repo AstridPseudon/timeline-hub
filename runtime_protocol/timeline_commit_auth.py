@@ -1187,7 +1187,25 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
                 continue
             require(value_equal(_inverse_stage_state(native_image, ref, path), write["before"]),
                     "inverse stage write differs from its sequential input")
-            if not path and ref not in native_image:
+            if ref == "parent" and path == ["occurrences"]:
+                require(write["before"]["state"] == "present",
+                        "inverse stage occurrence order has no input collection")
+                rows = write["after"].get("value")
+                authored = {row["occurrence_id"]: row for row in write["before"]["value"]}
+                require(write["after"]["state"] == "present" and isinstance(rows, list)
+                        and len(rows) == len(authored)
+                        and all(isinstance(row, dict) and isinstance(row.get("occurrence_id"), str)
+                                and row["occurrence_id"] in authored
+                                and value_equal(row, authored[row["occurrence_id"]]) for row in rows)
+                        and len({row["occurrence_id"] for row in rows}) == len(authored),
+                        "inverse stage occurrence order is not a row-preserving permutation")
+                # The sequential input check authenticated each physical pin.
+                # Reorder those exact rows; authored captures cannot supply pins.
+                physical = {row["occurrence_id"]: row
+                            for row in native_image["parent"]["payload"]["occurrences"]}
+                native_image["parent"]["payload"]["occurrences"] = [
+                    copy.deepcopy(physical[row["occurrence_id"]]) for row in rows]
+            elif not path and ref not in native_image:
                 require(ref in stage_after and value_equal(
                     {"state": "present", "value": stage_after[ref]["payload"]}, write["after"]),
                     "inverse stage root differs from its authenticated effect image")
