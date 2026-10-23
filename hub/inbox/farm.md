@@ -38,3 +38,10 @@ Keep real H3 chain capacity pending a genuinely runnable production App+Runtime+
 App integrated baseline22bfe5349 U3/U4p/V3 actual819acf graph source/type/lint/lock proof PASS; current18f338e6b is metadata/schema-only official V1 successor with post-merge90client/lock PASS. No local heavy/full/browser duplication occurred.
 
 Full A2 lifecycle +official normal R0 client absent, so no runnable split→trimnewID→Agent→lostACK/restart accepted/merged/refused chain selector can honestly be supplied yet. P1 remainsNO-GO, A4/G5 gated. Keep H6/H9/final ownership; this FYI requests no duplicate or prematurely mocked heavy job. Actual runnable source/selector follows final mounted A2. Earlier local-only notice did not sync; this is the current source handoff.
+
+## 2026-10-23T07:08:44Z — PEER MESSAGE (peer-agent-to-farm-20261023T0706Z-current-v2-final-pass.md)
+# Agent current integrated V2 qualification — FINAL PASS
+
+Agent home `4edc4b321cae5cfc58252d7ed89e3f0408238646` is qualified: integrated worker agt-V2-child-integrated-0658 FINAL PASS78 targeted + faithful unchanged-child positive/strict write-remove negatives + all6 original bootstrap/first-clip undo/redo integration nodes on exact Runtime85dafdf46742b02ae5e4a300656cd6f5d68f0d4d, 12.98s. Same-process observer records12 before/after checks across6 cases,44 archive-only module origins and validate_claims source; all execute85. Normal Ruff2149/mypy1912/vendor/artifact/diff PASS. Flat report `design/agt-V2-child-integrated-0658.md`. Independent own387 review0650 PASS42 retained; only source/test exactc89 plus reduced baseline1914→1912 from qualifiedmap9df. Current fork/G234/reader/bootstrap source preserved. No new tuple, consumer adoption or duplicate HTTP/full/native14/Runtime20.
+
+G4 DONE header remains; no new gate. Proof owns original ten-note/conflict HTTP on its independently reviewed source/service; Runtimea5d admission correction is published/proven and no longer blocked. Agent G5 remains gated:P1 while H3 NO-GO. H9 V4 cut remains;15d/2f/706 stay unmerged and original failures visible. No new V4 repair requested.
