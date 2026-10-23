@@ -1,23 +1,48 @@
 {
   "format_version": 1,
-  "purpose": "Exact OPS-bench-store source patch custody; artifact branch must never merge into Runtime integration.",
-  "branch": "tl/rt-OPS-bench-store-registration-packet-sol-2056",
-  "base_commit": "abd47e68de6d7a36bec8ac4f0f6e0bc01d98d14e",
+  "purpose": "Private registration source lint repair; artifact branch must never merge into Runtime integration.",
+  "branch": "tl/rt-OPS-bench-store-registration-lint-sol-2111",
+  "base_commit": "620fd13f224c96937dd558eb4e110f255dc00711",
+  "integration_base_commit": "abd47e68de6d7a36bec8ac4f0f6e0bc01d98d14e",
+  "parent_packet": {
+    "branch": "tl/rt-OPS-bench-store-registration-packet-sol-2056",
+    "patch": {
+      "path": "ops-handoff/registration.patch",
+      "bytes": 19380,
+      "sha256": "9d5845bb24fbb87ad0eaf4e8b8d34c2dd29162905e00d84529d26cfe0af60d54"
+    },
+    "manifest_bytes": 17475,
+    "manifest_sha256": "5d11d6d8e71dda3038b963a5b4bc2b872a6ba4b707f2532c7fc7c286e54312e7"
+  },
   "patch": {
     "path": "ops-handoff/registration.patch",
-    "bytes": 19380,
-    "sha256": "9d5845bb24fbb87ad0eaf4e8b8d34c2dd29162905e00d84529d26cfe0af60d54"
+    "bytes": 19551,
+    "sha256": "eadd855ae5d82cfec588bd1052a647e05afe35f42c65d7e571a52079232da765"
+  },
+  "fixture": {
+    "path": "ops-handoff/registration-fixture.py",
+    "bytes": 21647,
+    "sha256": "3309a5305f61aee2838105ce2aed288973052321b680d335c66d3f850ff5b127"
   },
   "patch_generation": {
-    "method": "Python difflib.diff_bytes(difflib.unified_diff), n=3, lineterm=b\"\\n\", splitlines(keepends=True); core then caller; no source transformations",
+    "method": "Python difflib.diff_bytes(difflib.unified_diff), n=3, lineterm=b\"\\n\", splitlines(keepends=True); core then caller; candidate ClassVar lint repair only",
     "paths": [
       "bin/bench_store.py",
       "bin/test-run"
     ],
-    "private_baseline_directory": "/tmp/w-25c7ca46fd/registration-custody/baseline",
-    "private_candidate_directory": "/tmp/w-25c7ca46fd/registration-custody/candidate",
-    "private_replay_directory": "/tmp/w-25c7ca46fd/registration-custody/replay",
-    "apply_command": "patch --batch --fuzz=0 -p1 -d \"/tmp/w-25c7ca46fd/registration-custody/replay\" -i \"/home/user/work/wt/rt-OPS-bench-store-registration-packet-sol-2056/ops-handoff/registration.patch\"",
+    "private_baseline_directory": "/tmp/w-a162d5649a/baseline",
+    "private_candidate_directory": "/tmp/w-a162d5649a/candidate",
+    "private_replay_directory": "/tmp/w-a162d5649a/replay",
+    "apply_command": [
+      "patch",
+      "--batch",
+      "--fuzz=0",
+      "-p1",
+      "-d",
+      "/tmp/w-a162d5649a/replay",
+      "-i",
+      "/home/user/work/wt/rt-OPS-bench-store-registration-lint-sol-2111/ops-handoff/registration.patch"
+    ],
     "apply_exit_code": 0,
     "both_replayed_files_byte_identical": true
   },
@@ -36,6 +61,23 @@
       "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-registration-sol-2034-fixture.py",
       "bytes": 21322,
       "sha256": "2889d0f18736b4e2255c235fc324b6948b21f654b6d3cd83b3c66f724f566c72"
+    }
+  },
+  "result_sources": {
+    "core.py": {
+      "path": "/tmp/w-a162d5649a/candidate/bin/bench_store.py",
+      "bytes": 50154,
+      "sha256": "8f50c00d0c5c9df70f8665861364b25dafbd9eb63cc111dad1578d8d1e920b73"
+    },
+    "test-run": {
+      "path": "/tmp/w-a162d5649a/candidate/bin/test-run",
+      "bytes": 14261,
+      "sha256": "92e43c5c0a9b5d87a1c9f29d7da7ec15c6025fbb57f66f64fe45f73a5c67f99b"
+    },
+    "fixture.py": {
+      "path": "/tmp/w-a162d5649a/test-registration.py",
+      "bytes": 21647,
+      "sha256": "3309a5305f61aee2838105ce2aed288973052321b680d335c66d3f850ff5b127"
     }
   },
   "input_artifacts": {
@@ -137,53 +179,13 @@
     }
   },
   "installed_six_hashes_unchanged": true,
-  "checks": [
-    {
-      "command": "cmp /tmp/w-25c7ca46fd/registration-custody/replay/bin/bench_store.py /tmp/w-25c7ca46fd/registration-custody/candidate/bin/bench_store.py",
-      "exit_code": 0,
-      "stdout": "",
-      "stderr": ""
-    },
-    {
-      "command": "cmp /tmp/w-25c7ca46fd/registration-custody/replay/bin/test-run /tmp/w-25c7ca46fd/registration-custody/candidate/bin/test-run",
-      "exit_code": 0,
-      "stdout": "",
-      "stderr": ""
-    },
-    {
-      "command": "bash -n /tmp/w-25c7ca46fd/registration-custody/candidate/bin/test-run",
-      "exit_code": 0,
-      "stdout": "",
-      "stderr": ""
-    },
-    {
-      "command": "cmp /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-registration-sol-2034-fixture.py /tmp/w-25c7ca46fd/registration-custody/candidate/fixture.py",
-      "exit_code": 0,
-      "stdout": "",
-      "stderr": ""
-    },
-    {
-      "command": "git diff --check",
-      "exit_code": 0,
-      "stdout": "",
-      "stderr": ""
-    }
-  ],
-  "in_memory_compile": {
-    "status": "PASS",
-    "files": [
-      "baseline/bin/bench_store.py",
-      "candidate/bin/bench_store.py",
-      "candidate/fixture.py",
-      "baseline/bin/test-run:BENCH_LEASE_PY",
-      "candidate/bin/test-run:BENCH_LEASE_PY"
-    ],
-    "method": "compile(source_bytes_or_embedded_python, filename, \"exec\"); no execution/import/pyc"
-  },
-  "fixture_custody": {
-    "status": "PASS",
-    "entire_fixture_byte_identical": true,
-    "test_bodies_unchanged": 21,
+  "semantic_scope": {
+    "core": "AST identical to fa11 reviewed source after removing the added typing.ClassVar import and converting only Store.UNREGISTER annotation back to assignment; same seven identity values.",
+    "caller": "Entire caller byte-identical to 92e43 reviewed source; existing CLI and production heredoc preserved.",
+    "fixture": "AST identical outside import ordering and caller_module after normalizing two nested with statements and four loop-local callback default bindings.",
+    "test_count": 21,
+    "exact_test_bodies": 16,
+    "normalized_identical_test_bodies": 21,
     "test_names": [
       "test_exact_seven_shared_key_success_and_no_retry",
       "test_existing_managed_shared_key_and_all_metadata_preserved",
@@ -206,13 +208,26 @@
       "test_replaced_or_symlink_lease_refuses",
       "test_concurrent_real_cli_calls_serialize_one_success_one_refusal",
       "test_real_caller_shape_normal_and_env_i"
+    ],
+    "negative_assertions": "All assertions, expected refusals and self.fail calls unchanged; no skips, xfails or weakening.",
+    "finite_helper_adjustment": "To remove S102, caller_module writes the same extracted production BENCH_LEASE_PY heredoc into a fresh caller.py under TMPDIR and imports it with importlib, keeping private_test_run as its module name and returning vars(module). The production main guard stays inactive; no shell or live caller invocation. Module metadata (__file__/__spec__/__loader__) now exists; tested caller functions do not use it.",
+    "callback_binding": "Defaults capture the current loop iteration; callbacks remain synchronously invoked before iteration advances."
+  },
+  "in_memory_compile": {
+    "status": "PASS",
+    "files": [
+      "baseline core",
+      "candidate core",
+      "fixture",
+      "baseline caller heredoc",
+      "candidate caller heredoc"
     ]
   },
   "lint": {
     "version": "ruff 0.16.8",
     "runs": {
       "baseline": {
-        "command": [
+        "scoped_command": [
           "ruff",
           "check",
           "--no-cache",
@@ -221,46 +236,42 @@
           "E,F",
           "--ignore",
           "E501",
-          "/tmp/w-25c7ca46fd/registration-custody/baseline/bin/bench_store.py"
+          "/tmp/w-a162d5649a/baseline/bin/bench_store.py"
         ],
-        "exit_code": 0,
-        "output": "All checks passed!\n",
-        "supplemental": {
-          "command": [
-            "ruff",
-            "check",
-            "--no-cache",
-            "--isolated",
-            "--output-format",
-            "json",
-            "/tmp/w-25c7ca46fd/registration-custody/baseline/bin/bench_store.py"
-          ],
-          "exit_code": 1,
-          "findings": [
-            {
-              "code": "I001",
-              "line": 2,
-              "column": 1,
-              "message": "Import block is un-sorted or un-formatted"
-            },
-            {
-              "code": "C410",
-              "line": 151,
-              "column": 73,
-              "message": "Unnecessary tuple literal passed to `list()` (rewrite as a single list literal)"
-            },
-            {
-              "code": "BLE001",
-              "line": 650,
-              "column": 28,
-              "message": "Do not catch blind exception: `Exception`"
-            }
-          ],
-          "count": 3
-        }
+        "scoped_exit_code": 0,
+        "supplemental_command": [
+          "ruff",
+          "check",
+          "--no-cache",
+          "--isolated",
+          "--output-format",
+          "json",
+          "/tmp/w-a162d5649a/baseline/bin/bench_store.py"
+        ],
+        "supplemental_exit_code": 1,
+        "findings": [
+          {
+            "code": "I001",
+            "line": 2,
+            "message": "Import block is un-sorted or un-formatted",
+            "source_line": "import argparse"
+          },
+          {
+            "code": "C410",
+            "line": 151,
+            "message": "Unnecessary tuple literal passed to `list()` (rewrite as a single list literal)",
+            "source_line": "            check(inode(self.root / 'mutex') == self.owner['mutex'] and list((os.fstat(fd).st_dev, os.fstat(fd).st_ino)) == self.owner['mutex'], 'mutex inode changed')"
+          },
+          {
+            "code": "BLE001",
+            "line": 650,
+            "message": "Do not catch blind exception: `Exception`",
+            "source_line": "                    except Exception as rollback_error:"
+          }
+        ]
       },
       "candidate": {
-        "command": [
+        "scoped_command": [
           "ruff",
           "check",
           "--no-cache",
@@ -269,52 +280,42 @@
           "E,F",
           "--ignore",
           "E501",
-          "/tmp/w-25c7ca46fd/registration-custody/candidate/bin/bench_store.py"
+          "/tmp/w-a162d5649a/candidate/bin/bench_store.py"
         ],
-        "exit_code": 0,
-        "output": "All checks passed!\n",
-        "supplemental": {
-          "command": [
-            "ruff",
-            "check",
-            "--no-cache",
-            "--isolated",
-            "--output-format",
-            "json",
-            "/tmp/w-25c7ca46fd/registration-custody/candidate/bin/bench_store.py"
-          ],
-          "exit_code": 1,
-          "findings": [
-            {
-              "code": "I001",
-              "line": 2,
-              "column": 1,
-              "message": "Import block is un-sorted or un-formatted"
-            },
-            {
-              "code": "RUF012",
-              "line": 114,
-              "column": 18,
-              "message": "Mutable default value for class attribute"
-            },
-            {
-              "code": "C410",
-              "line": 195,
-              "column": 73,
-              "message": "Unnecessary tuple literal passed to `list()` (rewrite as a single list literal)"
-            },
-            {
-              "code": "BLE001",
-              "line": 708,
-              "column": 28,
-              "message": "Do not catch blind exception: `Exception`"
-            }
-          ],
-          "count": 4
-        }
+        "scoped_exit_code": 0,
+        "supplemental_command": [
+          "ruff",
+          "check",
+          "--no-cache",
+          "--isolated",
+          "--output-format",
+          "json",
+          "/tmp/w-a162d5649a/candidate/bin/bench_store.py"
+        ],
+        "supplemental_exit_code": 1,
+        "findings": [
+          {
+            "code": "I001",
+            "line": 2,
+            "message": "Import block is un-sorted or un-formatted",
+            "source_line": "import argparse"
+          },
+          {
+            "code": "C410",
+            "line": 196,
+            "message": "Unnecessary tuple literal passed to `list()` (rewrite as a single list literal)",
+            "source_line": "            check(inode(self.root / 'mutex') == self.owner['mutex'] and list((os.fstat(fd).st_dev, os.fstat(fd).st_ino)) == self.owner['mutex'], 'mutex inode changed')"
+          },
+          {
+            "code": "BLE001",
+            "line": 709,
+            "message": "Do not catch blind exception: `Exception`",
+            "source_line": "                    except Exception as rollback_error:"
+          }
+        ]
       },
       "fixture": {
-        "command": [
+        "scoped_command": [
           "ruff",
           "check",
           "--no-cache",
@@ -323,127 +324,123 @@
           "E,F",
           "--ignore",
           "E501",
-          "/tmp/w-25c7ca46fd/registration-custody/candidate/fixture.py"
+          "/tmp/w-a162d5649a/test-registration.py"
         ],
-        "exit_code": 0,
-        "output": "All checks passed!\n",
-        "supplemental": {
-          "command": [
-            "ruff",
-            "check",
-            "--no-cache",
-            "--isolated",
-            "--output-format",
-            "json",
-            "/tmp/w-25c7ca46fd/registration-custody/candidate/fixture.py"
-          ],
-          "exit_code": 1,
-          "findings": [
-            {
-              "code": "I001",
-              "line": 2,
-              "column": 1,
-              "message": "Import block is un-sorted or un-formatted"
-            },
-            {
-              "code": "S102",
-              "line": 114,
-              "column": 5,
-              "message": "Use of `exec` detected"
-            },
-            {
-              "code": "SIM117",
-              "line": 197,
-              "column": 9,
-              "message": "Use a single `with` statement with multiple contexts instead of nested `with` statements"
-            },
-            {
-              "code": "B023",
-              "line": 279,
-              "column": 28,
-              "message": "Function definition does not bind loop variable `original_fstat`"
-            },
-            {
-              "code": "B023",
-              "line": 280,
-              "column": 55,
-              "message": "Function definition does not bind loop variable `path`"
-            },
-            {
-              "code": "B023",
-              "line": 280,
-              "column": 75,
-              "message": "Function definition does not bind loop variable `path`"
-            },
-            {
-              "code": "SIM117",
-              "line": 285,
-              "column": 17,
-              "message": "Use a single `with` statement with multiple contexts instead of nested `with` statements"
-            },
-            {
-              "code": "B023",
-              "line": 304,
-              "column": 29,
-              "message": "Function definition does not bind loop variable `point`"
-            },
-            {
-              "code": "B023",
-              "line": 305,
-              "column": 21,
-              "message": "Function definition does not bind loop variable `path`"
-            },
-            {
-              "code": "B023",
-              "line": 340,
-              "column": 33,
-              "message": "Function definition does not bind loop variable `point`"
-            },
-            {
-              "code": "B023",
-              "line": 363,
-              "column": 33,
-              "message": "Function definition does not bind loop variable `point`"
-            }
-          ],
-          "count": 11
-        }
+        "scoped_exit_code": 0,
+        "supplemental_command": [
+          "ruff",
+          "check",
+          "--no-cache",
+          "--isolated",
+          "--output-format",
+          "json",
+          "/tmp/w-a162d5649a/test-registration.py"
+        ],
+        "supplemental_exit_code": 0,
+        "findings": []
       }
     },
-    "supplemental_candidate_plus_fixture_findings": 15,
-    "supplemental_status": "FAIL",
-    "baseline_findings": 3,
-    "candidate_new_relative_to_baseline": [
-      {
-        "code": "RUF012",
-        "line": 114,
-        "message": "Mutable default value for class attribute Store.UNREGISTER"
-      }
-    ],
-    "classification": "Candidate I001/C410/BLE001 already present in baseline; RUF012 is new. Fixture findings: I001, S102, SIM117 x2, B023 x7. Supplemental failure is not waived by scoped E,F acceptance. Sources and lint configuration/suppressions unchanged."
+    "new_core_findings": 0,
+    "fixture_findings": 0,
+    "inherited_core_findings": 3,
+    "classification": "NEW findings cleared: RUF012 core; I001/S102/SIM117x2/B023x7 fixture. Isolated full core Ruff still exits 1 for inherited I001/C410/BLE001 with identical source lines; these are explicitly scoped, not waived. No lint configuration, ignore list or suppression changes."
   },
   "behavioral_evidence": {
-    "status": "SOURCE PASS (reused independent review, not rerun)",
-    "review": "rt-OPS-bench-store-registration-review-2044",
-    "command": "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python /tmp/w-173d90b75d/test-registration.py",
+    "command": [
+      "/home/user/work/venv-runtime/bin/python",
+      "/tmp/w-a162d5649a/test-registration.py"
+    ],
+    "environment": "PYTHONDONTWRITEBYTECODE=1; inherited TMPDIR",
     "passed": 21,
     "failed": 0,
     "skipped": 0,
-    "rerun": false,
-    "foreign_uid_limit": "simulated owner-control only; real cross-UID chown unsupported (errno 22)"
+    "rerun": true,
+    "normal_and_env_i_cli_and_caller_controls": true,
+    "log": "/tmp/w-a162d5649a/registration-tests.log",
+    "foreign_uid_limit": "Simulated owner-control only; no new real cross-UID chown proof."
   },
+  "checks": [
+    {
+      "command": [
+        "patch",
+        "--batch",
+        "--fuzz=0",
+        "-p1",
+        "-d",
+        "/tmp/w-a162d5649a/replay",
+        "-i",
+        "/home/user/work/wt/rt-OPS-bench-store-registration-lint-sol-2111/ops-handoff/registration.patch"
+      ],
+      "exit_code": 0,
+      "stdout": "patching file bin/bench_store.py\npatching file bin/test-run\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "cmp",
+        "/tmp/w-a162d5649a/replay/bin/bench_store.py",
+        "/tmp/w-a162d5649a/candidate/bin/bench_store.py"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "cmp",
+        "/tmp/w-a162d5649a/replay/bin/test-run",
+        "/tmp/w-a162d5649a/candidate/bin/test-run"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "bash",
+        "-n",
+        "/tmp/w-a162d5649a/candidate/bin/test-run"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "-C",
+        "/home/user/work/runtime",
+        "status",
+        "--short"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
   "scope": {
-    "only_worktree_additions": [
+    "only_worktree_changes": [
       "ops-handoff/registration.patch",
-      "ops-handoff/registration-manifest.json"
+      "ops-handoff/registration-manifest.json",
+      "ops-handoff/registration-fixture.py"
     ],
-    "source_core_caller_fixture_unchanged": true,
     "full_suite_requested": false,
     "live_operations_performed": false,
     "installed": false,
-    "live_legacy_cutover": "UNKNOWN/STOPPED",
-    "c0v2_request_reply_shapes": "unchanged",
-    "frozen34e": "unchanged",
-    "next_step": "Independent Luna custody review of harness-committed artifacts; no install authorization."
+    "live_legacy_cutover": "UNKNOWN/STOPPED; missing existing-store birth custody refuses; no bootstrap/adoption/idle flag/process scan/legacy cleanup.",
+    "c0v2_request_reply_shapes": "unchanged: api_version/scope/base pair/commands/label/steps(id,label,intent,tags,command_ordinals,patch,reads)/merge/reads/dry_run/HTTP key; accepted|merged canonical receipt/history; conflict head; invalid code/path/hint/suggested command; preview would-status and null receipt.",
+    "frozen34e": "unchanged; all Runtime product/contract files untouched",
+    "runtime_worktree_clean": true,
+    "next_step": "Independent Luna artifact review; no live cutover or installation authorization."
   }
 }

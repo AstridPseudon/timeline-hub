@@ -1,11 +1,19 @@
 --- a/bin/bench_store.py
 +++ b/bin/bench_store.py
-@@ -110,6 +110,38 @@
+@@ -6,6 +6,7 @@
+ import json
+ import os
+ from pathlib import Path
++from typing import ClassVar
+ import re
+ import shutil
+ import stat
+@@ -110,6 +111,38 @@
  
  
  class Store:
 +    # Exact historical registration identities; these confer no bench ownership.
-+    UNREGISTER = {
++    UNREGISTER: ClassVar[dict[str, dict[str, str]]] = {
 +        'agent-remotion-ap2-p1-f611-1346': {
 +            'suite_sha256': '069cd64dc4847f7a7d7bf610b14006b8ec96279c2ea225ab988297acef258419',
 +            'env_sha256': '551fa8ffae56d106fe1d01f10742ddac1942cdf75968c10fd2742f7eb8d83c8b',
@@ -39,7 +47,7 @@
      # Fixed reserve; adapters cannot bypass retention or reserve via caller flags.
      REPORT_LIMIT = 1024 * 1024
      RESERVE_BYTES = 8 * 1024 * 1024 * 1024
-@@ -118,6 +150,10 @@
+@@ -118,6 +151,10 @@
      def initialize(cls, root, tests_dir):
          root, tests_dir = physical(root), physical(tests_dir)
          check(not root.exists(), 'existing roots are never adopted')
@@ -50,7 +58,7 @@
          root.mkdir(mode=0o700)
          for name in ('entries', 'locks', 'staging'):
              (root / name).mkdir(mode=0o700)
-@@ -127,7 +163,15 @@
+@@ -127,7 +164,15 @@
                   'root': str(root), 'tests': str(tests_dir), 'mutex': inode(root / 'mutex'),
                   'directories': {str(p): inode(p) for p in (root, tests_dir, root / 'entries', root / 'locks', root / 'staging')}}
          atomic(root / 'owner.json', canonical(owner))
@@ -67,7 +75,7 @@
          return cls(root, tests_dir)
  
      def __init__(self, root, tests_dir):
-@@ -180,7 +224,9 @@
+@@ -180,7 +225,9 @@
          return index
  
      def _validate_index(self, index, live):
@@ -78,7 +86,7 @@
          check(isinstance(index['seq'], int) and isinstance(index['entries'], dict) and isinstance(index['registrations'], dict) and isinstance(index['retired'], list), 'index types')
          for eid, entry in index['entries'].items():
              self._validate_entry(eid, entry, live)
-@@ -466,9 +512,16 @@
+@@ -466,9 +513,16 @@
  
      def _roll(self, journal, forward):
          self._verify_pending_reports(journal)
@@ -96,7 +104,7 @@
          if journal['kind'] == 'eviction':
              for eid in journal['victims']:
                  entry = journal['before']['entries'][eid]
-@@ -481,6 +534,9 @@
+@@ -481,6 +535,9 @@
  
      def _validate_transition(self, journal):
          before, after = journal['before'], journal['after']
@@ -106,7 +114,7 @@
          for eid in set(before['entries']) & set(after['entries']):
              check(before['entries'][eid] == after['entries'][eid], 'journal rewrites owned entry')
          for name in set(before['registrations']) & set(after['registrations']):
-@@ -524,7 +580,7 @@
+@@ -524,7 +581,7 @@
                  return
              journal = json.loads(read(self.journal))
              check(set(journal) == {'version', 'owner', 'kind', 'before', 'after', 'projections', 'victims', 'new'} and journal['version'] == 1 and journal['owner'] == self.owner['id'], 'journal ownership/schema')
@@ -115,7 +123,7 @@
              self._validate_index(journal['before'], False)
              self._validate_index(journal['after'], False)
              self._validate_transition(journal)
-@@ -532,7 +588,7 @@
+@@ -532,7 +589,7 @@
              check(current in (journal['before'], journal['after']), 'pending index changed')
              if journal['kind'] == 'eviction':
                  check(journal['new'] is None and set(journal['victims']) == set(journal['before']['entries']) - set(journal['after']['entries']), 'journal eviction authority')
@@ -124,7 +132,7 @@
                  check(not journal['victims'], 'creation cannot evict')
                  if journal['new']:
                      e = journal['new']
-@@ -541,13 +597,15 @@
+@@ -541,13 +598,15 @@
                      check(new_id not in journal['before']['entries'] and journal['after']['entries'].get(new_id, e) == e, 'creation deletion authority')
              held = []
              try:
@@ -142,7 +150,7 @@
              finally:
                  for fd in held:
                      os.close(fd)
-@@ -651,6 +709,139 @@
+@@ -651,6 +710,139 @@
                          raise Refused(f'creation failed: {error}; recovery remains pending: {rollback_error}') from error
                  raise
  
@@ -282,7 +290,7 @@
      def registered(self, name):
          self._name(name)
          with self.mutex():
-@@ -721,6 +912,8 @@
+@@ -721,6 +913,8 @@
      parser.add_argument('--tests-dir', required=True)
      commands = parser.add_subparsers(dest='action', required=True)
      commands.add_parser('recover')
@@ -291,7 +299,7 @@
      key = commands.add_parser('key')
      key.add_argument('component', choices=['child', 'runtime'])
      key.add_argument('--identity', required=True)
-@@ -736,6 +929,9 @@
+@@ -736,6 +930,9 @@
          if args.action == 'recover':
              store.recover()
              return 0
