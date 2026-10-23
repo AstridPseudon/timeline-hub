@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-23T03:03:49Z | dispatcher heartbeat 17s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 0m -->
-# app2 board, 2026-10-23T03:03:36Z
+<!-- app2 | 2026-10-23T03:05:10Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 0m -->
+# app2 board, 2026-10-23T03:04:59Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | P1 | Real corpus + App split/trim/Agent/lostACK/restart | Luna high; prior Sol repair | mounted A2 + normal official v2 consumers | blocked:app+agent | P1 source seam reviewed0242/corrected0247; actual chain pending | R1 corpus42PASS cf315/treeb4ee=same e5; encoder14PASS/service28614 on integrated195/tree991c. Actual mixed chain UNEXECUTED | proof52e9 merged3da84905; vectors14424 merged53684; encoder19500aa36 |
@@ -26,3 +26,5 @@ Current02:55: Agent corrected U4a worker agt-U4a-v2-corrected-0253 is visible on
 Current02:59: source1372 has2collected P1 specs/type/lint PASS, independent0259 source readiness review now running. Review must enforce actual pending dependent schedule, Agent-before-landing merge, historical retry status preservation and new v2 merged (no rebased escape), original raw/fixture fidelity. No merge/body before concrete source verdict and compatible final join. Four P4 test-only packetf4f now independent ownerPASS15; ddff new HTTP source reviewed, waits compatible normal780 join.
 
 Current03:03: new P1 spec1372 source-readiness FAIL0259 despite2collection/tsc/lintPASS; first-return0303 dispatched immediately, tests only. This is Proof test scheduling/expectation repair, not automatically App product bug. Require true pending dependent and Agent-before-trim acceptance; exact durable retry envelope. No H3GO/red merge. Agent780 normal client7d3562028 now in independent0258 review; G3 current-forward owner next. App corrected780 updater active; A3 firstslice active.
+
+Current03:05: local service venv gap solved proactively via bounded worker0305, not product change. Exact Runtime780 checkout requested sanctioned route. New named suite uses existing runner; original agent target untouched. P1 firstreturn0303 active; review next; second source failure goes Sol per rules.
