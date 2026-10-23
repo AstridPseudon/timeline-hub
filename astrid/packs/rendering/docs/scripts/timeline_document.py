@@ -21,7 +21,6 @@ from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import _json
 from astrid.sdk.timeline.emitter import DocumentPatchError, emit_document_commands
 from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_swap_media
-from astrid.sdk.timeline.store import fetch_bundle
 from astrid.sdk.timeline.sync import TimelineSession
 from astrid.sdk.workspace_client import WorkspaceClient, resolve_runtime_connection
 
@@ -270,11 +269,10 @@ def main():
             base_publication_id=base_publication_id,
         )
         session_state = session._state()
-        base = fetch_bundle(
-            candidate["project_id"], candidate["timeline_id"],
-            revision_id=session_state["base"]["revision_id"],
-            publication_id=session_state["base"]["publication_id"], client=client,
-        )
+        # Use the opened session's pinned closure read.  Besides keeping the
+        # base and session on one authenticated path, this lets callers supply
+        # the same session seam for detached-document publication.
+        base = session._bundle(session_state)
         imported = import_authoring_media(plan, transport)
         media_selections, verified_media = resolve_media_rebinds(
             transport, candidate["project_id"], imported["candidate"], base

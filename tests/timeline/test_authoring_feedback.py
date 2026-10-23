@@ -414,7 +414,9 @@ def test_document_publish_stdout_and_durable_receipt_contain_shared_feedback(tmp
 
         def commit_many(self, commands, **kwargs):
             commits.append(commands)
-            assert [command["op"] for command in commands] == ["clip.move"]
+            # C0/G3: detached document publication emits one generic doc.patch;
+            # the remaining assertions verify its durable feedback contract.
+            assert [command["op"] for command in commands] == ["doc.patch"]
             assert kwargs["idempotency_key"] == "batch-feedback"
             return {"data": {
                 "status": "accepted", "accepted_revision_id": "saved-revision",
