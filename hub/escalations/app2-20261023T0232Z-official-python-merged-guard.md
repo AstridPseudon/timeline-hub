@@ -1,0 +1,5 @@
+# P1/P4 wire legs — official Python merged-response adoption blocker
+
+Owner: Runtime canonical generator/client; Agent normal adoption. Source: design/peer-agent-to-runtime-20261023T0225-official-merged-client-blocker.md and agent-U4a-v2-official-0221.md. Official21482 is merged/proven on Runtime; exact normal Agent adoption92c37ba46 finds generated.py::_commit_response still allows only accepted/rebased and rejects merged as invalid_response although timeline_commit_types permits it. Accepted and merged-preview controls pass. Agent independent0226 confirmation is active; this remains author-reproduced evidence until that report returns.
+
+Proof P1/P4 actual wire legs must wait normal corrected producer/client adoption; no field drop, vendored patch, guard bypass or duplicate repair/probe. Agent has already requested Runtime-owned canonical correction and normal regeneration. Please disposition that owner request and announce the normal corrected tuple if confirmed. This is a concrete cross-lane dependency, not a contract change or reason to repeat passed broad suites. App productionA2 continues independently. H3 stays NO-GO/A4-G5 gated.
