@@ -1,0 +1,26 @@
+#!/bin/bash
+# request-retire-venv NAME — queue one exact child-venv retirement request.
+set -u -o pipefail
+
+O=${RETIRE_VENV_ORCH_ROOT:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch}
+
+usage() {
+  echo "usage: request-retire-venv venv-agent-child-<suffix>" >&2
+  exit 2
+}
+
+[ "$#" -eq 1 ] || usage
+N=$1
+case "$N" in
+  venv-agent-child-[a-z0-9][a-z0-9-]*) ;;
+  *) echo "REFUSED: name must be venv-agent-child-<suffix>" >&2; exit 2 ;;
+esac
+
+P=$O/queue/pending/retire-venv-$N
+[ -d "$O/queue/pending" ] || { echo "REFUSED: pending queue is unavailable" >&2; exit 2; }
+[ ! -e "$P" ] || { echo "REFUSED: retirement request is already queued" >&2; exit 2; }
+if ! (set -C; printf 'RETIREVENV %s\n' "$N" > "$P"); then
+  echo "REFUSED: retirement request appeared during enqueue" >&2
+  exit 2
+fi
+echo "retire venv $N queued; result in $O/queue/done/retire-venv-$N"

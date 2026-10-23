@@ -9,6 +9,7 @@ while true; do
     if head -c5 "$f" | grep -q '^TEST '; then out=$($O/bin/test-run $(sed 's/^TEST //' "$f") 2>&1); rc=$?   # starts in background; never blocks
     elif head -c9 "$f" | grep -q '^STOPTEST '; then out=$($O/bin/stop-test $(sed 's/^STOPTEST //' "$f") 2>&1); rc=$?
     elif head -c10 "$f" | grep -q '^CHILDVENV '; then out=$($O/bin/make-child-venv $(sed 's/^CHILDVENV //' "$f") 2>&1); rc=$?
+    elif head -c11 "$f" | grep -q '^RETIREVENV '; then out=$($O/bin/retire-child-venv "$(sed 's/^RETIREVENV //' "$f")" 2>&1); rc=$?
     elif head -c8 "$f" | grep -q '^RUNTIME '; then out=$($O/bin/make-runtime $(sed 's/^RUNTIME //' "$f") 2>&1); rc=$?
     elif head -c9 "$f" | grep -q '^CHECKOUT '; then out=$($O/bin/make-checkout $(sed 's/^CHECKOUT //' "$f") 2>&1); rc=$?
     elif head -c5 "$f" | grep -q '^STOP '; then out=$($O/bin/stop-worker $(sed 's/^STOP //' "$f") 2>&1); rc=$?
