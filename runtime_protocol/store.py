@@ -6447,7 +6447,8 @@ class RealmStore:
                         elif field == "duration_ms":
                             expected_value = int(expected.get(field))
                         else:
-                            expected_value = expected.get(field, {} if field in {"transform", "provenance"} else None)
+                            default = 1 if field == "gain" else {} if field in {"transform", "provenance"} else None
+                            expected_value = expected.get(field, default)
                         values[field] = actual
                         if actual != expected_value:
                             revision_issue("composition_revision_occurrences", identity, "occurrence_field_mismatch", field=field, expected=expected_value, actual=actual)

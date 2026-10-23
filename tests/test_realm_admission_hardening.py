@@ -64,7 +64,7 @@ def _payload_media_ids(value):
     return found
 
 
-def _accept_unrelated_child_fixture(service, project_id, source_timeline, source_revision):
+def _accept_unrelated_child_fixture(service, project_id, source_timeline, source_revision, *, omit_gain=False):
     """Use Runtime acceptance to capture a valid same-project child graph."""
     source = service.get_project_parent_composition_revision(
         project_id, source_timeline, source_revision,
@@ -84,6 +84,8 @@ def _accept_unrelated_child_fixture(service, project_id, source_timeline, source
     other_shot = "other-shot"
     other_shot_revision = "other-shot-revision"
     occurrence.update(shot_id=other_shot, shot_revision_id=other_shot_revision)
+    if omit_gain:
+        occurrence.pop("gain")
     parent_payload = copy.deepcopy(source)
     parent_payload["occurrences"] = [occurrence]
 
@@ -538,6 +540,107 @@ def test_runtime_strict_identity_admission_rejects_before_open_and_preserves_byt
 
     assert error.value.details["checks"]["realm_identity"]["reason"] == "realm_identity_missing"
     assert _tree_bytes(root) == before
+
+
+def test_omitted_occurrence_gain_admits_but_stored_gain_corruption_refuses_before_daemon_boot(tmp_path):
+    captured = load_precut_realm_fixture(tmp_path)
+    root = captured.copy_roots[1]
+    project_id = captured.pins["project_id"]
+    timeline_id = captured.pins["timeline_id"]
+    parent_revision_id = captured.pins["parent_revision_id"]
+    service = RuntimeService(root)
+    try:
+        connection = service.store.conn
+        assert connection is not None
+        original = service.get_project_parent_composition_revision(
+            project_id, timeline_id, parent_revision_id,
+        )["payload"]
+        original_parent_bytes = connection.execute(
+            "SELECT payload_json FROM parent_composition_revisions WHERE id=?",
+            (parent_revision_id,),
+        ).fetchone()[0]
+        source_occurrence = original["occurrences"][0]
+        shared_closure_before = tuple(
+            connection.execute(
+                "SELECT payload_json FROM " + table + " WHERE id=?",
+                (revision_id,),
+            ).fetchone()[0]
+            for table, revision_id in (
+                ("shot_revisions", source_occurrence["shot_revision_id"]),
+                ("internal_timeline_revisions", connection.execute(
+                    "SELECT internal_timeline_revision_id FROM shot_revisions WHERE id=?",
+                    (source_occurrence["shot_revision_id"],),
+                ).fetchone()[0]),
+            )
+        )
+        _accept_unrelated_child_fixture(
+            service, project_id, timeline_id, parent_revision_id, omit_gain=True,
+        )
+        omitted_parent = json.loads(connection.execute(
+            "SELECT payload_json FROM parent_composition_revisions WHERE id='other-parent'"
+        ).fetchone()[0])
+        assert "gain" not in omitted_parent["occurrences"][0]
+        omitted_row = connection.execute(
+            "SELECT gain FROM composition_revision_occurrences WHERE parent_revision_id='other-parent'"
+        ).fetchone()
+        assert omitted_row["gain"] == 1.0
+        assert [row["gain"] for row in connection.execute(
+            "SELECT gain FROM composition_revision_occurrences WHERE parent_revision_id=? ORDER BY ordinal",
+            (parent_revision_id,),
+        )] == [1.0, 1.0, 1.0]
+        assert connection.execute(
+            "SELECT payload_json FROM parent_composition_revisions WHERE id=?",
+            (parent_revision_id,),
+        ).fetchone()[0] == original_parent_bytes
+        shared_closure_after = tuple(
+            connection.execute(
+                "SELECT payload_json FROM " + table + " WHERE id=?",
+                (revision_id,),
+            ).fetchone()[0]
+            for table, revision_id in (
+                ("shot_revisions", source_occurrence["shot_revision_id"]),
+                ("internal_timeline_revisions", connection.execute(
+                    "SELECT internal_timeline_revision_id FROM shot_revisions WHERE id=?",
+                    (source_occurrence["shot_revision_id"],),
+                ).fetchone()[0]),
+            )
+        )
+        assert shared_closure_after == shared_closure_before
+    finally:
+        service.close()
+
+    assert RealmStore.inspect_realm(root)["ok"]
+    assert RealmStore.inspect_realm(root, deep=True)["ok"]
+    reopened = RealmStore(root)
+    try:
+        assert reopened.admission_report["ok"]
+    finally:
+        reopened.close()
+
+    connection = sqlite3.connect(root / "realm.sqlite3")
+    try:
+        connection.execute(
+            "UPDATE composition_revision_occurrences SET gain=2.0 WHERE parent_revision_id='other-parent'"
+        )
+        connection.commit()
+    finally:
+        connection.close()
+
+    corrupt = RealmStore.inspect_realm(root, deep=True)
+    assert not corrupt["ok"]
+    gain_errors = [
+        error for error in corrupt["checks"]["revisions"]["errors"]
+        if error["reason"] == "occurrence_field_mismatch" and error["field"] == "gain"
+    ]
+    assert len(gain_errors) == 1
+    assert gain_errors[0]["expected"] == 1
+    assert gain_errors[0]["actual"] == 2.0
+
+    daemon = RuntimeDaemon(root, support_root=tmp_path / "support")
+    with pytest.raises(RealmAdmissionError):
+        daemon.start()
+    assert daemon.httpd is None
+    assert not (tmp_path / "support" / "credentials").exists()
 
 
 def test_wal_only_commit_survives_owned_backup_and_restore(tmp_path):
