@@ -6,7 +6,7 @@ import { acceptedCommit } from '@/integrations/runtime/__tests__/timelineCommitF
 import { captureClipMove, submitClipMove } from './semanticGestures.ts';
 import { environment, scope, document } from './__tests__/commitSessionEnvironment.ts';
 import { createTimelineCommandSession } from './commitSession.ts';
-import { createCommitOutbox, type OutboxRecord, type OutboxRequest } from './commitOutbox.ts';
+import { createCommitOutbox, toOutboxJson, type OutboxRecord, type OutboxRequest } from './commitOutbox.ts';
 import type { TimelineCommandBasis } from '../data/DataProvider.ts';
 import { createFakeIndexedDB } from 'fake-indexeddb';
 import type { CanonicalDocument } from '@/integrations/runtime/generated.ts';
@@ -65,6 +65,33 @@ function occurrenceDocument(): CanonicalDocument {
 }
 
 describe('real clip move session through the Runtime HTTP boundary', () => {
+  it('keeps an unknown free transform conservative instead of inferring reads from its changes', async () => {
+    const env = await environment();
+    const bundle = await authoringBundleFromDocument(env.initial.canonicalDocument);
+    const change = { op: 'set', ref: 'parent', path: ['opaque', 'absent'],
+      before: { state: 'present', value: null }, value: 'authored' };
+    const command: EditCommand = { schema_version: 1, op: 'doc.patch', version: '1', select: null,
+      args: { changes: [change] }, reads: [] };
+    let intentId = '';
+    await env.outboxes.create(scope, async (box) => {
+      intentId = await box.append(toOutboxJson({ commands: [command], before: bundle, after: bundle,
+        preview: null, displayBasis: env.initial }), { head: env.initial.head });
+    });
+    const session = await env.mount();
+    await session.recover(session.getState().recoverableOwners[0]);
+    const [sent] = env.commits();
+    expect(sent.body).toEqual({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
+      base_revision_id: 'r0', base_publication_id: 'p0', commands: [command], label: 'Edit timeline',
+      steps: [{ id: intentId, label: 'Edit timeline', intent: 'Edit timeline', tags: [], command_ordinals: [0],
+        patch: [change] }], merge: 'atomic', dry_run: false, source: { via: 'app' } });
+    expect(sent.body).not.toHaveProperty('reads');
+    // This unit transport cannot accept patches; its uncertain result must still retain exact bytes/key.
+    expect(session.getState().status).toBe('retry');
+    await session.retry();
+    expect(env.commits()[1]).toEqual(sent);
+    await session.dispose();
+  });
+
   it('fences parent-media preparation across a newer local session generation', async () => {
     const env = await environment();
     const session = await env.mount();

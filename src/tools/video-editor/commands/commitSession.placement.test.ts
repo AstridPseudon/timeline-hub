@@ -258,9 +258,19 @@ describe('production command session automatic image continuation', () => {
     env.task.state = 'succeeded'; env.notify();
     await vi.waitFor(() => expect(env.commits(), JSON.stringify(session.getState())).toHaveLength(1));
     expect(session.getState()).toMatchObject({ status: 'saving', canUndo: false });
-    const command = (JSON.parse(env.commits()[0].body!) as CommitRequest).commands[0];
+    const request = JSON.parse(env.commits()[0].body!) as CommitRequest;
+    const command = request.commands[0];
     expect(command).toMatchObject({ op: 'placement.create', select: 'occurrence:occ-0', intent: { ownership: 'occurrence' },
       args: { id: reserved.placementContinuations![0].input.createdIds[0], media: pin } });
+    const [placing] = await env.outboxes.list(scope);
+    expect(request).toEqual({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
+      base_revision_id: h0.revisionId, base_publication_id: h0.publicationId, commands: [command],
+      label: 'Place image', steps: [{ id: placing.accepted!.intentId, label: 'Place image',
+        intent: 'Place image', tags: [], command_ordinals: [0], patch: [] }],
+      merge: 'fields', reads: [], dry_run: false, source: { via: 'app' } });
+    expect(command.reads?.length).toBeGreaterThan(0);
+    expect(command.created).toContain(`occurrence:occ-0/clip:${reserved.placementContinuations![0].input.createdIds[0]}`);
+    expect(placing.accepted!.value).toMatchObject({ receipt: { idempotency_key: env.commits()[0].key } });
     gate.resolve();
     await vi.waitFor(() => expect(session.getState()).toMatchObject({ status: 'saved', canUndo: true }));
     const receipt = env.receipts.get(env.commits()[0].key!)!;
@@ -274,6 +284,14 @@ describe('production command session automatic image continuation', () => {
     });
     await session.undo(); await session.flush();
     expect(env.directSend).toHaveBeenCalledWith(expect.objectContaining({ commands: [expect.objectContaining({ op: 'timeline.inverse', args: { publications: ['p1'] } })] }), expect.any(String));
+    const [inverse, inverseKey] = env.directSend.mock.calls[0];
+    const [undone] = await env.outboxes.list(scope);
+    expect(inverse).toEqual({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
+      base_revision_id: 'r1', base_publication_id: 'p1', commands: [{ schema_version: 1, op: 'timeline.inverse',
+        version: '1', select: null, args: { publications: ['p1'] } }],
+      label: 'Undo timeline', steps: [{ id: undone.accepted!.intentId, label: 'Undo timeline', intent: 'Undo timeline',
+        tags: [], command_ordinals: [0], patch: [] }], merge: 'fields', reads: [], dry_run: false, source: { via: 'app' } });
+    expect(undone.accepted!.value).toMatchObject({ receipt: { idempotency_key: inverseKey } });
   });
 
   it('reopens the original admission and lost-ACK commit with identical bytes/key and without recapture', async () => {
@@ -290,6 +308,8 @@ describe('production command session automatic image continuation', () => {
     await second.session.recover(saved.ownerId);
     expect(second.session.getState()).toMatchObject({ status: 'retry' });
     const [pending] = await env.outboxes.list(scope), exact = structuredClone(pending.pending!.request);
+    expect(JSON.parse(exact.body)).toMatchObject({ label: 'Place image', dry_run: false,
+      steps: [{ id: pending.intents[0].id, command_ordinals: [0], patch: [] }], merge: 'fields', reads: [] });
     expect(env.admissions().every((call) => call.body === original.request.body && call.key === original.request.key)).toBe(true);
     await second.session.dispose();
     const reads = env.calls.filter((call) => call.path.includes('/media-selection')).length;

@@ -1,7 +1,7 @@
 import { createEditorImagePlacement, type EditorImagePlacementHost } from './editorImagePlacement.ts';
 import { createSessionPlacementRequester } from './sessionPlacement.ts';
 import type { PlacementProgress } from './placementRequester.ts';
-import type { CommitRequest, DocumentPin, EditCommand, JSON, MediaSelection, VerifiedDocument, VerifiedDocumentObject, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { CommitRequest, DocPatchArgs, DocumentPin, EditCommand, JSON, MediaSelection, VerifiedDocument, VerifiedDocumentObject, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import { ApiError } from '@/integrations/runtime/generated.ts';
 import { classifyRuntimeCommitFailure } from '@/integrations/runtime/client.ts';
 import { runtimeGraphToContractFromCanonicalDocument, validateAcceptedCanonicalDocument } from '@/integrations/runtime/dataProvider.ts';
@@ -204,11 +204,22 @@ export async function createTimelineCommandSession(options: Options) {
   const buildRequest: OutboxRequestBuilder = (intent, head) => {
     const commands = (intent.payload as unknown as Payload).commands;
     if (!Array.isArray(commands) || commands.length === 0) throw new Error('Timeline commit requires commands');
+    const patches = commands.filter((command) => command.op === 'doc.patch');
+    const label = commands.every((command) => command.op === 'timeline.inverse') ? 'Undo timeline'
+      : commands.some((command) => command.op === 'placement.create'
+        || (command.op === 'occurrence.add-media' && (command.args.row as { clipType?: string })?.clipType === 'image'))
+        ? 'Place image' : 'Edit timeline';
     return { method: 'POST',
       path: `/v1/projects/${encodeURIComponent(options.scope.projectId)}/timelines/${encodeURIComponent(options.scope.timelineId)}/commit`,
       body: json({ api_version: 1, project_id: options.scope.projectId, timeline_id: options.scope.timelineId,
         base_revision_id: head.revisionId, base_publication_id: head.publicationId,
-        commands: [commands[0], ...commands.slice(1)], source: { via: 'app' } } satisfies CommitRequest) };
+        commands: [commands[0], ...commands.slice(1)], label,
+        steps: [{ id: intent.id, label, intent: label, tags: [], command_ordinals: [0, ...commands.slice(1).map((_, index) => index + 1)],
+          patch: patches.flatMap((command) => (command.args as DocPatchArgs).changes) }],
+        // Native reads retain their sequential command boundary. A free transform's
+        // consulted inputs cannot be inferred from its patch or native read claims.
+        merge: patches.length ? 'atomic' : 'fields', ...(patches.length ? {} : { reads: [] }),
+        dry_run: false, source: { via: 'app' } } satisfies CommitRequest) };
   };
   async function transmit(request: OutboxRequest): Promise<OutboxOutcome> {
     const placement = record?.placementContinuations?.some((item) => item.placement?.intentId === record?.intents[0]?.id);

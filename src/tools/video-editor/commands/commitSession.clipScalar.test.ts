@@ -302,6 +302,13 @@ describe('clip scalars in the existing durable session (unit transport only)', (
     const [stored] = await env.outboxes.list(scope);
     const payload = stored.intents[0].payload as unknown as { commands: EditCommand[]; after: unknown };
     expect(payload.commands).toEqual([command]);
+    expect(JSON.parse(env.requests[0].body)).toEqual({ api_version: 1, project_id: scope.projectId,
+      timeline_id: scope.timelineId, base_revision_id: head.revisionId, base_publication_id: head.publicationId,
+      commands: [command], label: 'Edit timeline', steps: [{ id: stored.intents[0].id, label: 'Edit timeline',
+        intent: 'Edit timeline', tags: [], command_ordinals: [0], patch: [] }], merge: 'fields', reads: [],
+      dry_run: false, source: { via: 'app' } });
+    // Original native reads (including absent/null) stay at the command's capture boundary.
+    expect(command.reads?.length).toBeGreaterThan(0);
     const row = rawRow(payload.after, ref);
     const original = rawRow(captured.basis.bundle, ref);
     const expected = { ...original, ...args.values };
