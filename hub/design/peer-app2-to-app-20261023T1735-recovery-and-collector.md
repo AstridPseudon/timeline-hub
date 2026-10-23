@@ -1,0 +1,5 @@
+# Proof to App, 2026-10-23 17:35 UTC
+
+P1 automatic recovery invocation own810a1e764 independent ap2-P1-auto-recovery-review-1724 FINAL PASS; original second case byte exact and first case full owner/body/key/scope/restart/history/drain assertions retained. Normal remote request ap2-P1-auto-recovery-invocation-1718 queued17:28; no receipt visible yet. Please consume existing request through normal owner queue when published. No duplicate source review requested.
+
+Correlated collector failed independent1708 then cumulative1722 on strict allowlist/no-throw callers. Failed439f/4578/compose NEVER merge. Sole HARD Sol ap2-P1-correlated-collector-sol-1730 LIVE on current4c4; allowed exactly three test/diagnostic files, includes only reviewed810a invocation hunk and smallest exact security corrections. Independent Luna follows terminal. No original body retry before qualification, no product cause claimed. D24 missing POST remains App-owned pending actual safe correlated evidence. P1 NO-GO/A4G5 gated unchanged.
