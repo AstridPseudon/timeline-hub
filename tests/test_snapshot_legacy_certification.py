@@ -76,7 +76,7 @@ def test_already_admitted_capture_after_upgrade(upgraded_capture, request):
         # Agent capture projector (project_capture); until then every legacy capture is an uncertified preview.
         request.node.add_marker(pytest.mark.xfail(
             strict=True, raises=LegacyGenuineUncertified,
-            reason="ledger: no row id yet (PLAN 2026-10-20 capture certification); valid legacy capture is not re-certified until Agent project_capture lands",
+            reason="[declared-xfail:snapshot-legacy-certification] ledger: no row id yet (PLAN 2026-10-20 capture certification); valid legacy capture is not re-certified until Agent project_capture lands",
         ))
         if binding["canonical_source"] is None:
             raise LegacyGenuineUncertified(field)

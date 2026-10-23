@@ -386,3 +386,79 @@ def test_darwin_service_stop_signals_group_after_leader_exit(monkeypatch):
     platform.stop_tree(process, grace=0.15, stop_channel=True)
     assert events == ["eof", platform.TERM, ("grace", 0.15), platform.KILL]
     process.wait.assert_called_once_with(timeout=2.0)
+
+
+def _spawn_group_leader(code):
+    from runtime_protocol.platform import spawn_tree
+    return spawn_tree([sys.executable, "-c", code], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def _deny_killpg(monkeypatch):
+    def deny(_pgid, _signum):
+        raise PermissionError(1, "Operation not permitted")
+    monkeypatch.setattr(platform.os, "killpg", deny)
+
+
+@requires_posix_process_groups
+def test_eperm_from_group_holding_only_a_zombie_leader_means_group_gone(monkeypatch):
+    process = _spawn_group_leader("pass")
+    try:
+        while not platform.tree_exited(process):  # leader exited, left unreaped
+            time.sleep(.01)
+        _deny_killpg(monkeypatch)
+        with pytest.raises(ProcessLookupError):
+            platform._signal_posix_group(process.pid, signal.SIGKILL)
+    finally:
+        monkeypatch.undo()
+        platform.stop_tree(process, grace=.1)
+
+
+def _fake_ps(monkeypatch, stdout):
+    monkeypatch.setattr(platform.subprocess, "run", lambda *_a, **_k: SimpleNamespace(stdout=stdout))
+
+
+@requires_posix_process_groups
+def test_eperm_from_group_with_empty_ps_listing_is_a_real_failure(monkeypatch):
+    _deny_killpg(monkeypatch)
+    _fake_ps(monkeypatch, "")
+    try:
+        with pytest.raises(PermissionError) as raised:
+            platform._signal_posix_group(4242, signal.SIGKILL)
+        assert not isinstance(raised.value, ProcessLookupError)
+    finally:
+        monkeypatch.undo()
+
+
+@requires_posix_process_groups
+def test_eperm_from_group_with_all_zombie_rows_means_group_gone(monkeypatch):
+    _deny_killpg(monkeypatch)
+    _fake_ps(monkeypatch, "4242 Z\n")
+    try:
+        with pytest.raises(ProcessLookupError):
+            platform._signal_posix_group(4242, signal.SIGKILL)
+    finally:
+        monkeypatch.undo()
+
+
+@requires_posix_process_groups
+def test_eperm_from_group_with_zombie_and_live_rows_is_a_real_failure(monkeypatch):
+    _deny_killpg(monkeypatch)
+    _fake_ps(monkeypatch, "4242 Z\n4242 S\n")
+    try:
+        with pytest.raises(PermissionError) as raised:
+            platform._signal_posix_group(4242, signal.SIGKILL)
+        assert not isinstance(raised.value, ProcessLookupError)
+    finally:
+        monkeypatch.undo()
+
+
+@requires_posix_process_groups
+def test_eperm_from_group_with_a_live_member_is_a_real_failure(monkeypatch):
+    process = _spawn_group_leader("import time; time.sleep(60)")
+    try:
+        _deny_killpg(monkeypatch)
+        with pytest.raises(PermissionError):
+            platform._signal_posix_group(process.pid, signal.SIGKILL)
+    finally:
+        monkeypatch.undo()
+        platform.stop_tree(process, grace=.1)

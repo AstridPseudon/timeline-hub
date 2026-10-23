@@ -79,7 +79,7 @@ def test_project_reference_creation_is_keyed_durable_and_non_overwriting(tmp_pat
 
 
 # Timeline shot and timeline reference writers are retired (RT02); this keeps the original expectations until their commit replacements exist.
-@pytest.mark.xfail(strict=True, raises=ApiError, reason="RT02 held: direct shot writes are retired (410); the reference half is the KEPT catalog (RK01)")
+@pytest.mark.xfail(strict=True, raises=ApiError, reason="[declared-xfail:runtime-exact-idempotency] RT02 held: direct shot writes are retired (410); the reference half is the KEPT catalog (RK01)")
 def test_timeline_shot_and_reference_creation_are_keyed_durable_and_non_overwriting(tmp_path):
     root = tmp_path / "realm"
     support = tmp_path / "support"

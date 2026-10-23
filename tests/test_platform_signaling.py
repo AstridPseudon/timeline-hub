@@ -15,6 +15,26 @@ from runtime_protocol import platform
 from tests.lanes import requires_linux_tree_custody
 
 
+def _intercept_close(monkeypatch, record, pidfd=18):
+    """Replace os.close for the fake pidfd only.
+
+    os.close is process-global, so unrelated closes (a garbage-collected
+    TemporaryDirectory, another thread's subprocess spawn) can land while the
+    patch is active. Record only the fake descriptor and pass every other
+    close through to the real one, so the assertions cover exactly the
+    descriptor under test and nothing leaks.
+    """
+    real_close = os.close
+
+    def close(fd):
+        if fd == pidfd:
+            record(fd)
+        else:
+            real_close(fd)
+
+    monkeypatch.setattr(platform.os, "close", close)
+
+
 def _syscall_environment(monkeypatch, *, machine="x86_64", widths=(8, 8), multiarch="", result=0):
     syscall = Mock(return_value=result)
     library = Mock(return_value=SimpleNamespace(syscall=syscall))
@@ -151,7 +171,7 @@ def test_linux_signaling_uses_each_available_stdlib_wrapper(monkeypatch, missing
         if missing in (name, "both"):
             monkeypatch.delattr(module, name, raising=False)
     monkeypatch.setattr(platform, "process_identity", lambda pid: calls.append(("observe", pid)) or expected)
-    monkeypatch.setattr(platform.os, "close", lambda fd: calls.append(("close", fd)))
+    _intercept_close(monkeypatch, lambda fd: calls.append(("close", fd)))
     monkeypatch.setattr(platform.os, "kill", lambda *_: pytest.fail("signaling must use a pidfd"))
 
     def syscall(operation, *arguments):
@@ -176,7 +196,7 @@ def test_linux_signaling_refuses_unknown_abi_and_closes_any_open_pidfd(monkeypat
     observe = Mock(return_value=expected)
     close = Mock()
     monkeypatch.setattr(platform, "process_identity", observe)
-    monkeypatch.setattr(platform.os, "close", close)
+    _intercept_close(monkeypatch, close)
     opener = Mock(return_value=18)
     monkeypatch.setattr(platform.os, "pidfd_open", opener, raising=False)
     if not opener_available:
@@ -195,13 +215,37 @@ def test_linux_signaling_refuses_unknown_abi_and_closes_any_open_pidfd(monkeypat
     library.assert_not_called()
 
 
+def test_foreign_close_during_signaling_is_neither_recorded_nor_swallowed(monkeypatch):
+    _syscall_environment(monkeypatch, machine="mips64")
+    expected = {"pid": 123, "uid": 501, "birth_id": "proc-start-ticks:42"}
+    reader, writer = os.pipe()
+    closed = []
+    _intercept_close(monkeypatch, closed.append)
+
+    def observe(_pid):
+        os.close(writer)  # an unrelated close lands while the patch is active
+        return expected
+
+    monkeypatch.setattr(platform, "process_identity", observe)
+    monkeypatch.setattr(platform.os, "pidfd_open", Mock(return_value=18), raising=False)
+    monkeypatch.delattr(platform.signal, "pidfd_send_signal", raising=False)
+    try:
+        with pytest.raises(NotImplementedError, match="does not support ABI mips64"):
+            platform.signal_process(expected, platform.TERM)
+        assert closed == [18]
+        assert os.read(reader, 1) == b""  # writer really closed, so EOF
+    finally:
+        monkeypatch.undo()
+        os.close(reader)
+
+
 def test_linux_signaling_does_not_observe_identity_when_pidfd_open_fails(monkeypatch):
     _syscall_environment(monkeypatch, result=-1)
     monkeypatch.delattr(platform.os, "pidfd_open", raising=False)
     monkeypatch.delattr(platform.signal, "pidfd_send_signal", raising=False)
     observe, close = Mock(), Mock()
     monkeypatch.setattr(platform, "process_identity", observe)
-    monkeypatch.setattr(platform.os, "close", close)
+    _intercept_close(monkeypatch, close)
     with pytest.raises(PermissionError, match="pidfd_open"):
         platform.signal_process({"pid": 123}, platform.TERM)
     observe.assert_not_called()
@@ -216,7 +260,7 @@ def test_linux_signaling_closes_pidfd_when_send_syscall_fails(monkeypatch):
     monkeypatch.delattr(platform.signal, "pidfd_send_signal", raising=False)
     monkeypatch.setattr(platform, "process_identity", lambda _pid: expected)
     close = Mock()
-    monkeypatch.setattr(platform.os, "close", close)
+    _intercept_close(monkeypatch, close)
     with pytest.raises(PermissionError, match="pidfd_send_signal") as caught:
         platform.signal_process(expected, platform.TERM)
     assert caught.value.errno == errno.EPERM
@@ -435,7 +479,7 @@ def test_signal_process_uses_public_pidfd_helpers(monkeypatch):
     monkeypatch.setattr(platform, "pidfd_open", lambda pid: calls.append(("open", pid)) or 18)
     monkeypatch.setattr(platform, "process_identity", lambda pid: calls.append(("observe", pid)) or expected)
     monkeypatch.setattr(platform, "pidfd_send_signal", lambda fd, sig: calls.append(("send", fd, sig)))
-    monkeypatch.setattr(platform.os, "close", lambda fd: calls.append(("close", fd)))
+    _intercept_close(monkeypatch, lambda fd: calls.append(("close", fd)))
     monkeypatch.setattr(platform.os, "pidfd_open", lambda *_: pytest.fail("use the public helper"), raising=False)
     monkeypatch.setattr(platform.signal, "pidfd_send_signal", lambda *_: pytest.fail("use the public helper"), raising=False)
     platform.signal_process(expected, platform.TERM)
