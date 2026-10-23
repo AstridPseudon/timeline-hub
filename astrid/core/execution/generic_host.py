@@ -1636,7 +1636,8 @@ def _renderer_selection(record: "CapabilityRecord", task_data: Mapping[str, Any]
     here, before any child exists. Only an omitted selector is chosen by the
     host: Remotion when this host can run it, else ffmpeg.
     """
-    if record.adapter.remotion != "selected":
+    adapter = getattr(record, "adapter", None)
+    if adapter is None or adapter.remotion != "selected":
         return None
     from astrid.core.rendering.contracts import FFMPEG_RENDERER_ID, REMOTION_RENDERER_ID
 
