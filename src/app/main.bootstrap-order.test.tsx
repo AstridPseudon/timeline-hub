@@ -39,6 +39,7 @@ vi.mock('@/migrations/astridRenameBrowserMigration.ts', () => ({
 describe('main entry bootstrap order', () => {
   beforeEach(() => {
     vi.resetModules();
+    localStorage.clear();
     bootstrapMocks.initializeVideoEditorExtensionRuntime.mockReset();
     bootstrapMocks.initializeWorkspaceRuntimeIdentity.mockReset();
     bootstrapMocks.migrateAstridBrowserStorage.mockReset();
