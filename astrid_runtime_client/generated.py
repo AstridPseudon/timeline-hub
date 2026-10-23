@@ -16,7 +16,7 @@ from .timeline_commit_types import CommitAcceptedMutation, CommitPreviewResponse
 
 PROTOCOL = "workspace.v1"
 _UNSET = object()
-SCHEMA_DIGEST = "sha256:6b597bc0e377f8743e043e7b6e1fe70606d9f49986c9de6bdda80eae4f0413bc"
+SCHEMA_DIGEST = "sha256:35c2d9c5e0b51ab8d8b7a4f4dbafbdfcb13d232d7bd22fff21cf73e250398d4c"
 OPERATIONS = ('health', 'handshake', 'getRealm', 'doctor', 'createBackup', 'restoreBackup', 'exportRealm', 'tombstoneRealm', 'recoverRealm', 'purgeRealm', 'listProjects', 'createProject', 'getProject', 'updateProject', 'currentProject', 'selectProject', 'getPreferences', 'updatePreferences', 'getUserAppState', 'updateUserAppState', 'listDocuments', 'createDocument', 'getDocument', 'updateDocument', 'listProjectObjects', 'ingestProjectObject', 'importProjectMedia', 'getProjectMediaImport', 'listProjectTasks', 'listManagedOutputs', 'getManagedOutput', 'adoptManagedOutput', 'getProjectObjectLocation', 'exportManagedOutput', 'updateManagedOutputLifecycle', 'listProjectRuns', 'createTimeline', 'listTimelines', 'getProjectTimeline', 'renameTimeline', 'inspectTimeline', 'createTimelineView', 'commitTimeline', 'listTimelineCommits', 'getProjectMediaSelection', 'getProjectVerifiedMedia', 'getProjectVerifiedDocumentObject', 'getProjectVerifiedDocument', 'listProjectParentCompositionRevisions', 'publishParentComposition', 'replaceParentCompositionMedia', 'getProjectParentCompositionRevision', 'restoreProjectParentCompositionRevision', 'createTimelineDocument', 'getProjectShotRevision', 'getProjectTimelineRevision', 'listTimelineHistory', 'replaceTimelineClip', 'diffTimeline', 'archiveTimeline', 'recoverTimeline', 'getShot', 'createProjectShot', 'listProjectShots', 'getProjectShot', 'updateProjectShot', 'archiveProjectShot', 'recoverProjectShot', 'addShotItem', 'removeShotItem', 'promoteProjectShotCandidate', 'reorderShotItems', 'listProjectShotTextBindings', 'setProjectShotTextBinding', 'getProjectShotTextBinding', 'setProjectShotTextBindingById', 'rebindProjectShotTextBinding', 'createProjectReference', 'listProjectReferences', 'getProjectReference', 'updateProjectReference', 'archiveProjectReference', 'recoverProjectReference', 'associateReference', 'setPrimaryReference', 'linkReferences', 'getReference', 'listMediaRelations', 'createMediaRelation', 'getSourceFrameThumbnail', 'ensureSourceFrameThumbnail', 'ingestObject', 'getObject', 'headObject', 'admitTask', 'claimTask', 'admitDelegatedTask', 'getTask', 'cancelTask', 'retryTask', 'recoverTaskPlacement', 'recordRemoteActivation', 'controlRemoteCredential', 'revokeRemoteActivation', 'getRun', 'cancelRun', 'retryRun', 'listRunEvents', 'listEvents', 'registerExecutor', 'getExecutor', 'getLocalWorkerGeneration', 'startLocalWorker', 'relinquishLocalWorker', 'listCapabilities', 'registerCapability', 'listGenerations', 'createGeneration', 'getGeneration', 'listVariants', 'createVariant', 'markGenerationVariantsViewed', 'getVariant', 'attachVariantThumbnail', 'markVariantViewed', 'settleAttempt', 'publishRecoverableSnapshot', 'issueChildAuthority', 'prepareReboot', 'checkpointAttempt', 'publishTimelineRender', 'failAttempt', 'heartbeatAttempt', 'requestReboot', 'resumeAttempt')
 _LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
 
@@ -943,10 +943,21 @@ class WorkspaceClient:
         if not isinstance(data, dict) or "receipt" not in value:
             raise ApiError(0, "invalid_response", "commit response requires data and receipt")
         if preview:
-            if data.get("status") != "preview" or receipt is not None:
-                raise ApiError(0, "invalid_response", "preview requires preview status and null receipt")
-        elif data.get("status") not in ("accepted", "rebased") or not isinstance(receipt, dict):
-            raise ApiError(0, "invalid_response", "acceptance requires accepted status and committed receipt")
+            if data.get("status") != "preview" or data.get("would_status") not in ("accepted", "merged") or receipt is not None:
+                raise ApiError(0, "invalid_response", "preview requires preview status, accepted or merged would_status, and null receipt")
+        elif data.get("status") not in ("accepted", "rebased", "merged") or not isinstance(receipt, dict):
+            raise ApiError(0, "invalid_response", "acceptance requires accepted, rebased, or merged status and committed receipt")
+        else:
+            strings = ("receipt_id", "command_kind", "idempotency_key", "request_hash", "project_id", "created_at")
+            sequence, events = receipt.get("project_seq"), receipt.get("event_ids")
+            if (
+                any(not isinstance(receipt.get(key), str) for key in strings)
+                or "result" not in receipt
+                or not isinstance(sequence, list) or len(sequence) != 2
+                or any(isinstance(item, bool) or not isinstance(item, (int, float)) or item < 1 or item % 1 != 0 for item in sequence)
+                or not isinstance(events, list) or any(not isinstance(item, str) for item in events)
+            ):
+                raise ApiError(0, "invalid_response", "commit response requires a complete committed receipt")
         return value
 
     def commit_timeline(self, project_id: str, timeline_id: str, request: CommitRequest, *, idempotency_key: str) -> CommitAcceptedMutation | CommitPreviewResponse:
