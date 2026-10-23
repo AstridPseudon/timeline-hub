@@ -8,7 +8,6 @@ from pathlib import Path
 from jsonschema import Draft7Validator, Draft202012Validator
 from referencing import Registry, Resource
 
-
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "contract" / "schemas" / "shot-composition.json"
 MATRIX_PATH = ROOT / "conformance" / "fixtures" / "shot-composition-compatibility.json"
@@ -27,17 +26,28 @@ def _matrix() -> dict:
 
 def _composition_validator(schema: dict) -> Draft202012Validator:
     canonical = json.loads(TIMELINE_SCHEMA_PATH.read_text(encoding="utf-8"))
-    registry = Registry().with_resource(TIMELINE_SCHEMA_URI, Resource.from_contents(canonical))
+    registry = Registry().with_resources(
+        (
+            (TIMELINE_SCHEMA_URI, Resource.from_contents(canonical)),
+        )
+    )
     return Draft202012Validator(schema, registry=registry)
 
 
 def _shot_payload_validator(schema: dict) -> Draft202012Validator:
+    canonical = json.loads(TIMELINE_SCHEMA_PATH.read_text(encoding="utf-8"))
     return Draft202012Validator(
         {
             "$schema": schema["$schema"],
+            "$id": schema["$id"],
             "$ref": "#/$defs/ShotPayload",
             "$defs": schema["$defs"],
-        }
+        },
+        registry=Registry().with_resources(
+            (
+                (TIMELINE_SCHEMA_URI, Resource.from_contents(canonical)),
+            )
+        ),
     )
 
 
@@ -138,6 +148,29 @@ def test_pinned_compiled_timeline_schema_remains_strict() -> None:
     assert list(Draft7Validator(canonical).iter_errors(role_config))
 
 
+def test_standalone_timeline_schema_validates_meta_without_registry() -> None:
+    canonical = json.loads(TIMELINE_SCHEMA_PATH.read_text(encoding="utf-8"))
+    config = {
+        "meta": {"org.example.config": {"nullable": None}},
+        "tracks": [{
+            "id": "video",
+            "kind": "visual",
+            "label": "Video",
+            "meta": {"org.example.track": {"enabled": True}},
+        }],
+        "clips": [{
+            "id": "clip",
+            "at": 0,
+            "track": "video",
+            "meta": {"org.example.clip": {"items": [1, None]}},
+        }],
+    }
+
+    validator = Draft7Validator(canonical)
+    assert not list(validator.iter_errors(config))
+    assert list(validator.iter_errors({**config, "meta": {"org..invalid": {}}}))
+
+
 def test_materialized_timeline_schema_provenance_and_compatible_raw_field_reuse() -> None:
     schema = json.loads(TIMELINE_SCHEMA_PATH.read_text(encoding="utf-8"))
     provenance = json.loads(TIMELINE_SCHEMA_PROVENANCE_PATH.read_text(encoding="utf-8"))
@@ -147,9 +180,66 @@ def test_materialized_timeline_schema_provenance_and_compatible_raw_field_reuse(
 
     assert schema["properties"]["tracks"]["items"]["properties"]["role"]["enum"] == ["output", "source"]
     assert provenance["sha256"] == digest
+    assert provenance["base_sha256"] == "f52b82024ecd44a5e6c9c68d5cb326d50d70efe9aaad6f8ac6352ea1c87b97b1"
     assert provenance["role_extension"]["source_commit"] == "3bd1d019715de79cd54aa208cf26de10427c29d5"
-    assert provenance["role_extension"]["source_artifact_sha256"] == digest
+    assert provenance["role_extension"]["source_artifact_sha256"] == provenance["base_sha256"]
+    assert provenance["runtime_meta_extension"]["owner"] == "astrid-runtime"
     assert raw_role == {"$ref": "timeline-config.schema.json#/properties/tracks/items/properties/role"}
+
+
+def test_meta_is_bounded_opaque_and_available_on_all_v1_locations() -> None:
+    schema = _schema()
+    publication = copy.deepcopy(_matrix()["composition_shapes"][0]["publication"])
+    publication["parent_composition"]["meta"] = {
+        "org.example.notes": {"nullable": None, "items": [2, {"keep": True}]}
+    }
+    publication["parent_composition"]["config"] = {
+        "meta": {"com.example.config": {}},
+        "clips": [{"id": "clip", "at": 0, "track": "video", "meta": {"org.example.clip": {}}}],
+        "tracks": [{"id": "video", "kind": "visual", "label": "Video", "meta": {"org.example.track": {}}}],
+        "assets": [{"meta": {"org.example.asset": {"source": "raw"}}}],
+        "registry": {"assets": {"asset": {"meta": {"org.example.asset": {"source": "registry"}}}}},
+    }
+    publication["parent_composition"]["clips"] = [
+        {"id": "clip", "at": 0, "track": "video", "meta": {"org.example.clip": {}}}
+    ]
+    publication["parent_composition"]["occurrences"] = [{
+        "occurrence_id": "occurrence",
+        "shot_id": "shot",
+        "shot_revision_id": "shot-revision",
+        "placement": {},
+        "duration_ms": 1,
+        "track": "video",
+        "meta": {"org.example.occurrence": {}},
+    }]
+    publication["shot_revisions"] = [{
+        "shot_id": "shot",
+        "revision_id": "shot-revision",
+        "internal_timeline_revision_id": "internal-revision",
+        "payload": {"meta": {"org.example.shot": {}}, "assets": [{"meta": {"org.example.asset": {}}}]},
+    }]
+    publication["internal_timeline_revisions"] = [{
+        "timeline_id": "internal",
+        "revision_id": "internal-revision",
+        "payload": {"meta": {"org.example.internal": {}}, "clips": [], "tracks": []},
+    }]
+
+    assert not list(_composition_validator(schema).iter_errors(publication))
+
+    meta = schema["$defs"]["ParentComposition"]["properties"]["meta"]
+    assert meta["$ref"] == "timeline-config.schema.json#/definitions/Meta"
+    canonical = json.loads(TIMELINE_SCHEMA_PATH.read_text(encoding="utf-8"))
+    meta_schema = {"$ref": "#/definitions/Meta", "definitions": canonical["definitions"]}
+    validator = Draft7Validator(meta_schema)
+    assert not list(validator.iter_errors({"a": {}, "z9.test": {"null": None, "array": [False]}}))
+    for invalid in (
+        None,
+        {"Org.example.bad": {}},
+        {"org..bad": {}},
+        {"org.example.bad": None},
+        {str(index): {} for index in range(65)},
+    ):
+        assert list(validator.iter_errors(invalid)), invalid
 
 
 def test_supported_silent_voiceover_legacy_audio_and_extension_payloads_validate() -> None:

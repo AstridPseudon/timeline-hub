@@ -3312,6 +3312,15 @@
     },
     "https://astrid.haus/workspace/v1/schemas/shot-composition.json": {
       "$defs": {
+        "AssetRecord": {
+          "additionalProperties": true,
+          "properties": {
+            "meta": {
+              "$ref": "timeline-config.schema.json#/definitions/Meta"
+            }
+          },
+          "type": "object"
+        },
         "DependencyManifest": {
           "properties": {
             "documents": {
@@ -3371,6 +3380,9 @@
             },
             "gain": {
               "type": "number"
+            },
+            "meta": {
+              "$ref": "timeline-config.schema.json#/definitions/Meta"
             },
             "mute": {
               "type": "boolean"
@@ -3467,6 +3479,9 @@
               "$ref": "#/$defs/RawTimelinePayload",
               "description": "Exact authored parent config; partial output and opaque fields are preserved."
             },
+            "meta": {
+              "$ref": "timeline-config.schema.json#/definitions/Meta"
+            },
             "occurrences": {
               "items": {
                 "$ref": "#/$defs/Occurrence"
@@ -3476,6 +3491,14 @@
             "registry": {
               "additionalProperties": true,
               "description": "Runtime-managed media registry carried by the publication envelope; Runtime-specific and outside the canonical TimelineConfig owned by @banodoco/timeline-schema.",
+              "properties": {
+                "assets": {
+                  "additionalProperties": {
+                    "$ref": "#/$defs/AssetRecord"
+                  },
+                  "type": "object"
+                }
+              },
               "type": "object",
               "x-astrid-runtime-schema-owner": "astrid-runtime#ManagedMediaRegistry"
             }
@@ -3502,6 +3525,9 @@
             },
             "id": {
               "$ref": "timeline-config.schema.json#/definitions/TimelineClip/properties/id"
+            },
+            "meta": {
+              "$ref": "timeline-config.schema.json#/definitions/Meta"
             },
             "track": {
               "$ref": "timeline-config.schema.json#/definitions/TimelineClip/properties/track"
@@ -3562,7 +3588,7 @@
           "properties": {
             "assets": {
               "items": {
-                "$ref": "#/$defs/OpenMap"
+                "$ref": "#/$defs/AssetRecord"
               },
               "type": "array"
             },
@@ -3587,6 +3613,9 @@
             "layout": {
               "$ref": "#/$defs/OpenMap"
             },
+            "meta": {
+              "$ref": "timeline-config.schema.json#/definitions/Meta"
+            },
             "output": {
               "$ref": "#/$defs/RawOutput"
             },
@@ -3594,7 +3623,16 @@
               "$ref": "#/$defs/OpenMap"
             },
             "registry": {
-              "$ref": "#/$defs/OpenMap"
+              "additionalProperties": true,
+              "properties": {
+                "assets": {
+                  "additionalProperties": {
+                    "$ref": "#/$defs/AssetRecord"
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
             },
             "theme": {
               "$ref": "timeline-config.schema.json#/properties/theme"
@@ -3619,6 +3657,9 @@
             },
             "label": {
               "$ref": "timeline-config.schema.json#/properties/tracks/items/properties/label"
+            },
+            "meta": {
+              "$ref": "timeline-config.schema.json#/definitions/Meta"
             },
             "role": {
               "$ref": "timeline-config.schema.json#/properties/tracks/items/properties/role"
@@ -3654,6 +3695,9 @@
             "media_kind": {
               "minLength": 1,
               "type": "string"
+            },
+            "meta": {
+              "$ref": "timeline-config.schema.json#/definitions/Meta"
             },
             "object_id": {
               "minLength": 1,
@@ -3699,6 +3743,9 @@
               "description": "Immutable link to the child timeline revision.",
               "minLength": 1,
               "type": "string"
+            },
+            "meta": {
+              "$ref": "timeline-config.schema.json#/definitions/Meta"
             },
             "metadata": {
               "$ref": "#/$defs/OpenMap"
@@ -5767,6 +5814,9 @@
             "generationId": {
               "type": "string"
             },
+            "meta": {
+              "$ref": "#/definitions/Meta"
+            },
             "resolution": {
               "type": "string"
             },
@@ -5787,6 +5837,60 @@
             }
           },
           "type": "object"
+        },
+        "Meta": {
+          "additionalProperties": {
+            "$ref": "#/definitions/MetaNamespaceValue"
+          },
+          "description": "Optional bounded namespace map. Canonical byte and depth limits are provider-enforced.",
+          "maxProperties": 64,
+          "propertyNames": {
+            "$ref": "#/definitions/MetaNamespaceKey"
+          },
+          "type": "object"
+        },
+        "MetaNamespaceKey": {
+          "description": "ASCII namespace key for opaque extension metadata.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
+          "type": "string"
+        },
+        "MetaNamespaceValue": {
+          "additionalProperties": {
+            "$ref": "#/definitions/MetaValue"
+          },
+          "description": "Opaque namespace payload; the namespace root is always an object.",
+          "type": "object"
+        },
+        "MetaValue": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "$ref": "#/definitions/MetaValue"
+              },
+              "type": "object"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/MetaValue"
+              },
+              "type": "array"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "A finite JSON descendant of an opaque metadata namespace."
         },
         "Theme": {
           "additionalProperties": true,
@@ -5984,6 +6088,9 @@
             "label": {
               "type": "string"
             },
+            "meta": {
+              "$ref": "#/definitions/Meta"
+            },
             "opacity": {
               "type": "number"
             },
@@ -6151,6 +6258,10 @@
           "additionalProperties": {},
           "type": "object"
         },
+        "meta": {
+          "$ref": "#/definitions/Meta",
+          "description": "Runtime-owned opaque extension metadata; ignored by TimelineConfig consumers."
+        },
         "output": {
           "$ref": "#/definitions/TimelineOutput"
         },
@@ -6239,6 +6350,9 @@
               },
               "label": {
                 "type": "string"
+              },
+              "meta": {
+                "$ref": "#/definitions/Meta"
               },
               "muted": {
                 "type": "boolean"
