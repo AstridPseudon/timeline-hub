@@ -1,18 +1,1 @@
-LEAD 12:50Z | PAUSED (owner pause, orchestrator 12:45Z): STOP file set, manager loop + round killed by PID, dispatcher stopped, 0 workers were running, no codex processes, hub-syncd running; hourly routine disabled until resume. Last state: integration 5c88dff7e (12:17), r48 upstream refresh (895e298cd) not merged, 25 commits behind upstream 2dca750a3; ledger 21 DELETED; Gate 7 full r36 PASS 07d86990c. Resume = remove managers/app/STOP, restart dispatcher (PLAYWRIGHT_BROWSERS_PATH shim) and run-manager, re-enable trig_01Tgek99pWsLa2AwUoddbQGu
-# App lead status - 2026-10-20T22:22Z (hourly check-in)
-- Health: dispatcher 2s; hub-syncd alive (last hub-sync app commit 22:16Z); disk 13 GB; Codex logged in; manager gpt-6.1-sol high, round at 2h18m (ends ~22:56Z, loop restarts it), no fallback. Workers 6 (all Luna): D01 parent Delete (delete-mounted-owner-first-guard-triage), D01 settings x2, D01 automatic placement, Gate 3 track (gate3-final-source-central-proof), corrected full (app-m3-full7d42-protected-leaf-corrected-run).
-- Integration: App tl/integration 8ca3554d2 (22:16Z). Latest full: 7d42fcd3a run (21:28Z) INVALID (my sweep deleted the leased public13 toolchain); corrected run in progress on the rebuilt protected toolchain. Last valid references: c57 (19103 pass, 0 fail), 20ea (5 real failures, fixed in targeted runs).
-- Milestones: M1 RECORDED 03:55Z; M2, M3 open; M4/hard stop NOT YET.
-## Work list (hub/lead/app.md items 1-10)
-1. 5 failures: fixes merged; corrected full running, not green yet.
-2. Workers 5+: MET at 22:15 (6). Ledger rows: D01-parent-delete, D01 settings, D01-app-placement; none on D02/D08/D10 (asked the manager).
-3. app2 merges: all have results; stale REFUSED ap2-m2-ordinary-standalone-dispatch-repair (052b94b64 already in integration) and PENDING b58f4f1b5 to be closed by the manager; c4148a52a unreviewed since 18:11Z.
-4. DONE: Composition 0.0.13 at 254bcfbd7 (ancestor of integration).
-5/9. Upstream drift: origin/main 860d43b33, 72 ahead of bebadd0e1 (clean fast-forward). Worker app-m2-main860-current-integration-join produced candidate d71695d1c (parents 0f5d4089c + 35814b16a). My per-file check PASSES: 42 files / 461 removed test lines identical to upstream's, same 15 deleted test files. Manager told to merge now; sha pending.
-6. DONE: stale-adapter owner port 7d42fcd3a; app2 has the sha.
-7. Gate 5/6/3 track RUNNING (gate3-final-source-central-proof); Gate 3 App half PARTIAL, Gate 5 CLI failure investigating, Gate 6 writer open.
-8. Viewing owner-five/controller-two: packet identified (design/handoff-vw-m3-controller-owner-base-self-selection-fix-*; vw-m3-owner-five-current-base-port request is now pending). Next merge after the corrected full is green; ETA from manager pending.
-10. Mounted ordinary journey (3 failures, then cut fallback useTimelineOps.ts:316): relayed 22:14Z, not yet acknowledged.
-## Open
-- Manager STATUS "In flight" stale; Runtime literal-fields (21:31) and delivery-graph (21:42) notes unacknowledged: relayed 22:22Z.
-- 14+ old Viewing vw-* PENDING merge-results; PEER note to Viewing pending its reply.
+2026-10-23T01:42Z procs OK uptime 153m (monitor armed); workers 1 (U3-A2-integrated-proof-r1); ready-undispatched: A2 raw-trim-clear fix (app2 esc 01:37Z) being checked; disk 16G; issues none
