@@ -1,6 +1,6 @@
 # OPS bench store interface 1850 (corrected by core-precondition-1858)
 
-Staged source: `handoff-runtime-OPS-bench-store-core-resume-1854-bench_store.py`.
+Staged source: `handoff-runtime-OPS-bench-store-core-precondition-1858-bench_store.py`.
 Install name (lead only after review): `ORCH/bin/bench_store.py`. Python 3 stdlib, Linux flock. No installation by this worker.
 
 ## Adapter API (frozen now)
@@ -36,3 +36,5 @@ Limits: staged core alone is not production-wired acceptance; creator and test-r
 `names_for_suite(repo, suite, command)` matches the exact stored `repo suite command` row (command before appended --files); it returns managed names, [] for unmanaged rows, and refuses tampered managed projection. `registration_entries(name)` resolves immutable metadata under mutex for creator use, with no lease implied. Acquire yields entries with inheritable `lease_fd`; adapters must pass those FDs to their supervised actual command. `run` explicitly inherits these FDs. The adapter owns waiting for descendants; flock protection survives direct parent death while any inheriting descendant retains the FD.
 
 Eviction and creation have distinct journal kinds and recovery directions as above. No quarantine is credited as freed space. This corrects the earlier rollback requirement, which is withdrawn. Public API signatures and compatible extensions remain unchanged. Migration coverage remains dedicated-store entries only; existing unknown benches are protected and their space is not reclaimed automatically.
+
+1858 source is now exported. The 1854 source basename is an identical compatibility copy for the existing adapter fixtures. Ownership marker is written before build, included unchanged through publication and verification. No prior core source/WIP survived either stopped worker; implementation follows their settled interface.

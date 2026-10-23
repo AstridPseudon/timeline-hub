@@ -178,10 +178,23 @@ class LeaseTests(unittest.TestCase):
         with self.assertRaises(Exception):
             with seam()['suite_lease'](self.store, 'agent', 'bench1', 'true', self.tests):
                 self.fail('forged registration acquired')
+        self.assertTrue(Path(first['path']).is_dir())
+
+    def test_path_name_refuses(self):
+        create(self.store, 1)
         with self.assertRaises(Exception):
             with self.store.acquire(['../../outside']):
                 self.fail('path acquired')
-        self.assertTrue(Path(first['path']).is_dir())
+
+    def test_original_row_whitespace_is_bound_without_changing_command(self):
+        def build(stage, final):
+            (Path(stage) / 'tiny').write_text('fixture')
+        self.store.ensure('runtime', identity(1),
+                          {'name': 'spaced', 'env': '', 'suite': "agent spaced printf 'x  y'\n", 'requires': []},
+                          build, lambda path: None)
+        with seam()['suite_lease'](self.store, 'agent', 'spaced', "printf 'x y'", self.tests) as (entries, fds):
+            self.assertEqual(len(entries), 1)
+            self.assertEqual(len(fds), 1)
 
     def test_resolve_then_eviction_refuses_before_command(self):
         create(self.store, 1)

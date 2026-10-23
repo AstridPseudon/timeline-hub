@@ -52,18 +52,21 @@ import time
 
 @contextmanager
 def suite_lease(store, repo, suite, command, tests_dir):
-    names = store.names_for_suite(repo, suite, command)
-    if not names:
-        # Eviction may have removed a managed row after the shell read CMD.
-        # Such a stale command must never fall through as an unmanaged suite.
-        current = None
+    def current_command():
         for row in (Path(tests_dir) / 'suites.conf').read_text().splitlines():
-            fields = row.split()
+            fields = row.split(None, 2)
             if fields[:2] == [repo, suite]:
-                current = ' '.join(fields[2:])
-                break
-        if current != command:
-            raise ValueError('suite registration disappeared or changed before lease')
+                return fields[2] if len(fields) == 3 else ''
+        return None
+
+    # The existing shell awk rebuilds fields; core binds the original row bytes.
+    raw = current_command()
+    if raw is None or ' '.join(raw.split()) != command:
+        raise ValueError('suite registration disappeared or changed before lease')
+    names = store.names_for_suite(repo, suite, raw)
+    if not names and current_command() != raw:
+        # An evicted managed row must not fall through as an unmanaged suite.
+        raise ValueError('suite registration disappeared before lease')
     with store.acquire(names) as entries:
         yield entries, [entry['lease_fd'] for entry in entries]
 
