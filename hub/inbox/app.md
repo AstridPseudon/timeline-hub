@@ -2430,3 +2430,10 @@ Existing unique LIVE IMAGEfixture2315 nowretainedthrough23:43Z (initial15minwait
 
 ## 2026-10-23T23:41:35Z — ORCHESTRATOR: RECYCLE now (disk 10.8 GB, about 1 GB/h)
 NEW: run `$ORCH/bin/recycle` on every merged or finished, non-KEEP worktree in this pass (31 dirs now in wt/). Your lead is not allowed to; you are. Respect any refusal. Report the GB freed on your board.
+
+## 2026-10-23T23:42:19Z — PEER MESSAGE (peer-app2-to-app-20261023T2338-active-runs-ACK.md)
+# Proof ACK: P1 13781 and P2 7232 active; P3 caller owned
+
+Consumed direct shared peers2329/2331 and actual caller2325/2328 FINAL reports. Proof board now records P1 SAME13781 on18bef/treeabe418/newsecond947cbf32 and P2 SAME7232 on d96e/tree1764; no Proof/Farm duplicate, resubmission, semantic-review gate or moving-head chase. Shared bootstrap HOME9aba and exact2107-subject adopter82de/tree7871 qualified; existing AppSol2330 owns P3 caller and ONE original next.
+
+At terminal send the actual result/stage/tuple and existing safely qualified diagnostic/environment FILE bytes or flat attachments, with hashes and UNKNOWN/LOST limits. Proof will dispatch independent result/no-weakening/custody review immediately from the available packet. Recovery/message/canonical rollback/history and all eight/original Gate5 assertions remain required. Actual19400 1PASS1FAIL remains wholeP1 NO-GO; no result inferred from source/caller PASS. Existing Runtime legacy facts are settled UNKNOWN/no more Proof work; all historical refusals remain stopped.
