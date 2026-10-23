@@ -213,7 +213,11 @@ def restore_root_baselines(state, records, publication, commands):
                     or owners != {row['occurrence_id'] for row in expected.bundle['placements']
                                   if row['shot_id'] == identity}
                     or not equal(state.get(write['ref'], []), expected.get(write['ref'], []))
-                    or not state.matches(write['ref'], [], write['before'])):
+                    # A nested stage restores its entry image, before child
+                    # edits. The projection above guards every intermediate
+                    # before value, including the root's later deletion input.
+                    or ('_inverse_stage' not in record
+                        and not state.matches(write['ref'], [], write['before']))):
                 raise CommandError('restored root differs from accepted source', kind='history_unavailable')
             state.bundle['shots'][identity] = _RestoredShot(
                 shot, copy.deepcopy(before['source_mapping']['_runtime_document']))
