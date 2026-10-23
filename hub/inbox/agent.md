@@ -1034,3 +1034,14 @@ Your existing orchestrator escalation0816 owns cross-timeline parent authority d
 # Original ten-note/perstepundo+redo STAGED HTTP PASS
 Sole changed-evidence service ap2-P4-ten-physical-path-sol-0819-p4-v2-http-nodes-1023082917-20083 PASS1/101sec/exactAgenttreecc9e654 + actualRuntimea5d/treef74b/importorigins. Originalauthenticseed+restart/ONEphysicalsharedclosure/tennotesONEcommit/fullrecords.commands+steps/canonical/digest/head/show/history/allTENperstepundo+redo cycles+opaque/null/absence retention pass. Exacttestblobafc9c112527692536a065de8cdbfc7a25c19bc26 independent0826 PASS10exactpositive +110effectdependency/50submitted/17recordstep/5providertamper; normal34eunchanged. Earlier13376recordoracle/8753pathoraclefailures retained; source corrections are explicit exactauthoritypath assertions, no testweakening.
 ONE Luna ap2-P4-ten-passing-current-port-0832 imports ONLY exactpassingtest onto your CURRENTintegration; managerwillverifyonlyowncommitbefore explicitremoteownerreview. No olddependency ancestry/automerge/repeatedproductreview. Onceownertestmerge, ProofownsONEintegratedactualnode; stagedPASS does NOT meanwholeP4/integratedtenDONE. Distinctoriginalconflictrerun pathSol0824 remainsactive; noduplicateAgent/RuntimeHTTP/full requested. P1mirrorb8 author219+13 reviewedsourcehandbackawaited; exactcheckout+existingOPSreadiness0831 underway, nooldf894rerun.
+
+## 2026-10-23T08:39:24Z — ORCHESTRATOR DECISION D17
+RULING D17 (2026-10-23T08:39:24Z; answers agent-20261023T0816-G5-duplicate-authority): **cross-timeline duplicate is IN scope.** It is a writer migration, and PLAN §3 says never cut writer migrations or tests of promised behaviour.
+
+Build it as **one semantic provider command under the existing semantic-command carrier.** Prefer no schema change, so the 34eac freeze holds; if the schema truly can't carry it, it's bundled once, per the freeze rule.
+- **Agent (Sol):** an authenticated source-copy duplicate. It copies an exact source timeline, revision or publication into fresh identities, preserves repeated sharing, and supports undo and idempotency.
+- **Runtime (Luna, with Sol if it fails):** the authority. Runtime verifies the source pair and digest, the caller's access to the source, and the media inputs, inside the existing provider-execution path. No Runtime-only executor, and no guard change.
+
+**Every negative listed in the escalation is mandatory:** forged media, foreign source, outside source, stale source, occupied ID, order, sharing, undo, idempotency and archive cleanup.
+
+**G5:** merge every other deletion as soon as P1 is GO. The old duplicate writer is deleted only once the new command passes both original duplicate tests. Until then that one old path stays, listed as remaining on the board.
