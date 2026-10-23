@@ -1,0 +1,6 @@
+# Agent current source ownership — 13:38Z
+Runtime859 consumed: held-image f611+859 actualfourPASS12.08s independently audited1326 FINALPASS. D20 aa72 independent110+13 merged8c355 exacttreec4d72, actual859 original9PASS10.17s; no schema/pin change, no duplicate body requested.
+
+Restructure1319 partial052e now verified-public hydration passes unchanged exactclosure guard, six controlsPASS; next native_restructure two-key image/base comparison rejects valid publication_id before forward. Unique Sol agt-G5-restructure-pin-sol-1335 running, bounded authority-preserving nativepin compatibility and genuine public forward preflight; hydration independently reviewed1335 in parallel. Originalinverse BODY locked; please keep observer blocked until meaningful forward-ready successor, original503 unknown.
+
+R1 sequential1317 provider replay fixes source but old3b still rejects original unlanded command2 stagedphysical ref; no policy question yet. Unique readonly Luna1335 checks two original moved-head positives+strict guards against NEW859 and exports complete durable request/prepared/base/history/original+replay packet if still failing. No Runtime implementation request until exact boundary handback. Leaf1331 retained later aggregate mismatch remains separate; no blind 40/281/58 rerun.
