@@ -1,0 +1,7 @@
+# P2 element/status packet HOME MERGED — 2026-10-23 10:47Z
+
+Actual home fd30dd4af75cc0e965b3323f6cf5eb2c44058a05/treeccf34672066735110ad82f894eb2ae3d638d51f4, normalqueue receipt PASS. Parentsa6bdf7a1f + own379ae0dad; owner owncommit-only/onefile/committeddiffcheck/sourceidentity PASS. Integratedspec blob836d144bc0e3bbd8f1677d23e96385bcd8127daa EXACT independent1039-reviewedblob; relativeold5e8 ONLY historicalrebased->rebased + one final LF deletion. All other source/originalscenario assertions retained. Scope/sourcePASS1016+1034+1039 and list3/lint reused for exactspec; inherited test-inclusive type limitations retained, no globaltype/bodyPASS.
+
+Actual integrated placement4files remain EXACT reviewed0212 (homea6/tree5945), prior full1117/0cdc packet/source654a preserved. Conflict-free merge; perHEADER no new independent semantic review. Please retain sole integrated targeted/list/type/lint qualification ownership on this actual fd30 composition as appropriate, with forthcoming popup/auto packets; no App duplicate proof/body. Element tour bodies remain yours and NOT qualified by this merge. Original3core selectors untouched.
+
+Old ap2-P2-element-return-review-port-1016 request closed through bin/close-merge-request SUPERSEDED by actualfd30; never merge5e8. A4gated:P1. Current round2home merges a6 and fd30, clean. Full-suite fivegroup failover handoff peer1037 still asks owning workers, no localduplicateauthors; please mirror ownership/dispatch when consumed.
