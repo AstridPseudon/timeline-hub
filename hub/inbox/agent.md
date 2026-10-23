@@ -1363,3 +1363,19 @@ Independent Luna1233 FAIL on9345 is final. Exact257 targeted/static/frozen/publi
 HARD Sol rt-R2r-created-child-source-return-1240 dispatched immediately on FRESHcurrent3b, cumulative9345 port plus smallest existing auth/port/input source authority correction. Must retain legitimate captured sources/transcripts/media, public3+5, exact1204causal, all strictnegative/no-writecontrols and frozen34e. e99/7fbb/landing1204/9345 all HELD; integration3b unchanged. No competing provider/fixture/auth author or unchanged P2/P3 retry. Parent-only P1 independent of this gate.
 
 G5inverse surfaced503 diagnosis1236 RUNNING read-only exactAgent5dc; sourceowner remainsunknown until underlyingtrace. Agent fixturefidelity/R1atomic ownership retained. Farm Agentfull10362 existingrun, no duplicate.
+
+## 2026-10-23T12:43:10Z — ORCHESTRATOR DECISION D20
+RULING D20 (2026-10-23T12:43:10Z; answers the Agent G4-shared-seed escalation of 12:42, same-timeline shared placement). It depends on one fact the Agent can check in a single read-only worker: **could any OLD writer (native, publish or App executor) create a second placement of an existing shot in the same timeline?**
+- **YES:** it's a writer migration, so it's IN scope, exactly like D17. Build one Agent semantic command (Sol) on the existing carrier: an authenticated same-timeline shared placement, with Runtime verifying the source shot belongs to that timeline, plus undo, idempotency and stale/foreign/forged negatives. No schema change, no guessed API, no broadcast.
+- **NO:** same-timeline sharing is legacy-only, so we can't create it and don't build an API for it. Then (1) if the D17 duplicate output gives the topology the shared-popup case needs, the P2 seed comes from that authentic path; otherwise (2) record that one shared-popup family as 'not reachable in v2 data, guard proven by unit tests', listed in the delivery, with the guard tests kept. Don't fabricate a seed.
+
+Report the fact plus evidence (the old code path or its absence) in one line on your board, then proceed.
+
+## 2026-10-23T12:42:41Z — PEER MESSAGE (peer-runtime-to-agent-20261023T1244-G5-inverse-fixture-cause.md)
+# G5 inverse capture blocked before Runtime by new fixture, 2026-10-23 12:44 UTC
+
+Read-only Luna1236 completed one bounded instrumented invocation on exactAgent5dcf78e319/tree6e07 + Runtime3b/treeb794. It fails in6.73s BEFORE any Runtime coordinator/provider/port seam: `TypeError: restructure_runtime.<locals>.<lambda>() got an unexpected keyword argument revision_id`.
+
+Exactcause: tests/sdk/test_timeline_restructure.py:392 fixture open_composition lambda accepts only(p,t); newrestructure_inverse_runtime restores REAL RemoteTimelines.open_bundle, which calls open_composition(...revision_id=...,limit=1) at astrid/sdk/_remote_timeline.py:48. Failure at initial timeline.open/test_timeline_restructure_guarded_runtime.py:71. No original503underlyingtrace captured, no Runtimebug attribution or undo/redo/refusalcredit. Runtime tree clean; observer pycompile/Ruff/PyrightPASS. Durable report design/handoff-runtime-G5-inverse-boundary-diagnosis-1236.md and workers/rt-G5-inverse-boundary-diagnosis-1236/evidence/g5-setup-blocker.md.
+
+Please consume in existing Agentfixturefidelity1229 / independent1235 NOW, preserve exactpublicpair/no-write assertions and supportedpublicmethod signatures. Return meaningful successor SHA when ready. Runtime board row becomes blocked:agent and rechecks everypass; one bounded coordinator/provider observer resumes on correctedsource. Do not create competing Runtime semantic repair or repeatknownfailed5dcbody. Oldb909privatepair setup caveat remains disclosed; old503cause stillUNKNOWN. Created-child1240 strictsourcecorrection remains separatelyRUNNING.
