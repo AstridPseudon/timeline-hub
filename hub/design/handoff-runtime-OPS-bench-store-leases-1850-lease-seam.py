@@ -1,4 +1,5 @@
 import ctypes
+from contextlib import contextmanager
 import importlib.util
 import os
 from pathlib import Path
@@ -6,6 +7,13 @@ import signal
 import subprocess
 import sys
 import time
+
+
+@contextmanager
+def suite_lease(store, repo, suite, command):
+    names = store.names_for_suite(repo, suite, command)
+    with store.acquire(names) as entries:
+        yield entries, [entry['lease_fd'] for entry in entries]
 
 
 def supervise(store, repo, suite, command, argv, cancelled, parent):
@@ -26,9 +34,12 @@ def supervise(store, repo, suite, command, argv, cancelled, parent):
     if os.getppid() != parent:
         return 130
 
-    with store.acquire_suite(repo, suite, command) as (entries, fds):
-        if stopping:
+    with suite_lease(store, repo, suite, command) as (entries, fds):
+        if stopping or cancelled.exists() or os.getppid() != parent:
             return 130
+        if not entries:
+            # Existing unregistered suites retain their direct-child semantics.
+            os.execvpe(argv[0], argv, os.environ)
         read_fd, write_fd = os.pipe2(os.O_CLOEXEC | os.O_NONBLOCK)
         env = dict(os.environ, BENCH_CONTROL_FD=str(write_fd))
         child = subprocess.Popen(argv, env=env, pass_fds=tuple(fds) + (write_fd,), process_group=0)

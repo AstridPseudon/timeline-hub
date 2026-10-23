@@ -17,7 +17,7 @@
  OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; set -f; for f in $files; do [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"; CMD+=" $f"; done; set +f
  HV=light; case $suite in full*) HV=heavy;; esac
  if [ -z "$RUN" ]; then
-@@ -34,13 +35,147 @@
+@@ -34,13 +35,158 @@
    [ $HV = heavy ] && touch $D/heavy; echo $ID > $C/$KEY.running; echo running > $D/status; rm -f $D/why
    setsid $0 --run $ID > $D/runner.log 2>&1 < /dev/null & echo $! > $D/running; echo "started test $ID ($suite on $target, tree ${TREE:0:10})"; exit 0
  fi
@@ -27,6 +27,7 @@
 +  echo $$ > $D/running; SNAP=/home/user/work/wt/.test-$ID; T0=$(date +%s)
 +  BENCH_RUNNER_PID=$$ python3 -I - "$O" /home/user/work/bench-store "$repo" "$suite" "$BASE_CMD" "$$" "$D/CANCELLED" bash "$0" --lease-body "$ID" <<'BENCH_LEASE_PY'
 +import ctypes
++from contextlib import contextmanager
 +import importlib.util
 +import os
 +from pathlib import Path
@@ -34,6 +35,13 @@
 +import subprocess
 +import sys
 +import time
++
++
++@contextmanager
++def suite_lease(store, repo, suite, command):
++    names = store.names_for_suite(repo, suite, command)
++    with store.acquire(names) as entries:
++        yield entries, [entry['lease_fd'] for entry in entries]
 +
 +
 +def supervise(store, repo, suite, command, argv, cancelled, parent):
@@ -54,9 +62,12 @@
 +    if os.getppid() != parent:
 +        return 130
 +
-+    with store.acquire_suite(repo, suite, command) as (entries, fds):
-+        if stopping:
++    with suite_lease(store, repo, suite, command) as (entries, fds):
++        if stopping or cancelled.exists() or os.getppid() != parent:
 +            return 130
++        if not entries:
++            # Existing unregistered suites retain their direct-child semantics.
++            os.execvpe(argv[0], argv, os.environ)
 +        read_fd, write_fd = os.pipe2(os.O_CLOEXEC | os.O_NONBLOCK)
 +        env = dict(os.environ, BENCH_CONTROL_FD=str(write_fd))
 +        child = subprocess.Popen(argv, env=env, pass_fds=tuple(fds) + (write_fd,), process_group=0)

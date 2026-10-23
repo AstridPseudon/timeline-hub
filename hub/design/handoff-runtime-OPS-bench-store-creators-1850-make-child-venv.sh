@@ -50,6 +50,16 @@ source_state "$A" "$S" || { echo 'REFUSED: Agent checkout/commit is unavailable,
 RUNTIME_SHA=$(git -C "$R" rev-parse --verify HEAD^{commit} 2>/dev/null) || { echo 'REFUSED: Runtime checkout unavailable'; exit 2; }
 source_state "$R" "$RUNTIME_SHA" || { echo 'REFUSED: Runtime checkout is dirty'; exit 2; }
 
+# Legacy benches have no store deletion authority and retain the exact verifier.
+# This branch performs no creation, registration, adoption or eviction.
+if [ -e "$W/$N" ] || [ -L "$W/$N" ]; then
+  SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
+  REQUESTER=$SCRIPT_DIR/request-child-venv
+  [ -f "$REQUESTER" ] || REQUESTER=$SCRIPT_DIR/request-child-venv.sh
+  CHILD_VENV_REUSE_ONLY=1 CHILD_VENV_REUSE_TARGET="$W/$N" "$REQUESTER" "$@"
+  exit "$?"
+fi
+
 failure() {
   rc=$1
   stage=$2
