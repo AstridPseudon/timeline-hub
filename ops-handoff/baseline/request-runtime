@@ -1,0 +1,39 @@
+#!/bin/bash
+# request-runtime NAME AGENT_SHA [LOCK_SHA256] — ask the dispatcher to build or
+# reuse a read-only Remotion runtime. The maker performs the authenticated
+# tree-only lookup after toolchain validation and before build work.
+# /home/user/work/runtimes/NAME (agent-remotion-<version>) from the Agent remotion/ dir at AGENT_SHA. Result in
+# $ORCH/queue/done/runtime-NAME. Runtimes are immutable: a new version gets a new NAME. No escalation needed.
+O=${RUNTIME_ORCH_ROOT:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch}
+[[ "$O" = /* && "$O" != *[!a-zA-Z0-9_./-]* && "/$O/" != */../* && "/$O/" != */./* ]] || {
+  echo 'REFUSED: ORCH root must be a safe absolute path' >&2; exit 2;
+}
+[[ -d "$O/queue/pending" && -w "$O/queue/pending" ]] || {
+  echo 'REFUSED: pending queue is unavailable' >&2; exit 2;
+}
+case $# in
+  2|3|7|8) ;;
+  *) echo "usage: request-runtime NAME AGENT_SHA [LOCK_SHA256] [AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA TEMPLATE_SUITE [NODE_BIN]]" >&2; exit 2 ;;
+esac
+[[ "$1" =~ ^agent-remotion-[0-9a-z][0-9a-z-]*$ && "$2" =~ ^[0-9a-f]{40}$ ]] || { echo 'REFUSED: invalid runtime name or Agent SHA' >&2; exit 2; }
+if [ "$#" -ge 3 ]; then [[ "$3" =~ ^[0-9a-f]{64}$ ]] || { echo 'REFUSED: invalid lock SHA-256' >&2; exit 2; }; fi
+if [ "$#" = 7 ]; then
+  for path in "$4" "$5"; do [[ "$path" = /* && "$path" != *[!a-zA-Z0-9_./-]* && "/$path/" != */../* && "/$path/" != */./* ]] || { echo 'REFUSED: unsafe source checkout' >&2; exit 2; }; done
+  [[ "$6" =~ ^[0-9a-f]{40}$ ]] || { echo 'REFUSED: invalid Runtime SHA' >&2; exit 2; }
+  [[ "$7" = agent-remotion-0013-nodes || "$7" = remotion-env-nodes ]] || { echo 'REFUSED: unapproved registration template' >&2; exit 2; }
+fi
+if [ "$#" = 8 ]; then
+  for key in RUNTIME_AGENT_CHECKOUT RUNTIME_RUNTIME_CHECKOUT RUNTIME_RUNTIME_SHA RUNTIME_TEMPLATE_SUITE RUNTIME_NODE_BIN; do
+    if [[ -v "$key" ]]; then
+      echo "REFUSED: ambiguous positional and inherited source/toolchain: $key" >&2; exit 2
+    fi
+  done
+  for path in "$4" "$5" "$8"; do [[ "$path" = /* && "$path" != *[!a-zA-Z0-9_./-]* && "/$path/" != */../* && "/$path/" != */./* && "$path" != */ ]] || {
+    echo 'REFUSED: unsafe source/toolchain path' >&2; exit 2;
+  }; done
+  [[ "$3" =~ ^[0-9a-f]{64}$ ]] || { echo 'REFUSED: invalid lock SHA-256' >&2; exit 2; }
+  [[ "$6" =~ ^[0-9a-f]{40}$ ]] || { echo 'REFUSED: invalid Runtime SHA' >&2; exit 2; }
+  [[ "$7" = agent-remotion-0013-nodes || "$7" = remotion-env-nodes ]] || { echo 'REFUSED: unapproved registration template' >&2; exit 2; }
+fi
+{ printf 'RUNTIME'; printf ' %s' "$@"; printf '\n'; } > "$O/queue/pending/runtime-$1"
+echo "runtime $1 queued; maker will return reuse or build receipt in $O/queue/done/runtime-$1"

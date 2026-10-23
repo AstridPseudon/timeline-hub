@@ -1,0 +1,57 @@
+--- a/bin/bench_store.py
++++ b/bin/bench_store.py
+@@ -129,6 +129,32 @@
+         atomic(root / 'owner.json', canonical(owner))
+         atomic(root / 'index.json', canonical({'version': 1, 'seq': 0, 'entries': {}, 'registrations': {}, 'retired': [], 'retired_suites': []}))
+         return cls(root, tests_dir)
++
++    @classmethod
++    def open_or_initialize(cls, root, tests_dir):
++        root, tests_dir = physical(root), physical(tests_dir)
++        check(tests_dir.is_dir(), 'tests directory required')
++        inode(tests_dir)
++        parent = physical(root.parent)
++        fd = os.open(parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
++        try:
++            info = os.fstat(fd)
++            check(info.st_uid == os.getuid() and not info.st_mode & 0o022,
++                  'initialization requires an owned private parent')
++            # Lock the existing parent inode, never an unowned root or sidecar.
++            # Both normal makers wait here until the complete store is durable.
++            fcntl.flock(fd, fcntl.LOCK_EX)
++            check(inode(physical(parent)) == [info.st_dev, info.st_ino],
++                  'initialization parent replaced')
++            physical(root)
++            store = cls(root, tests_dir) if root.exists() else cls.initialize(root, tests_dir)
++            with store.mutex():
++                store._load()
++            check(inode(physical(parent)) == [info.st_dev, info.st_ino],
++                  'initialization parent replaced')
++            return store
++        finally:
++            os.close(fd)
+ 
+     def __init__(self, root, tests_dir):
+         self.root, self.tests = physical(root), physical(tests_dir)
+--- a/bin/make-child-venv
++++ b/bin/make-child-venv
+@@ -163,7 +163,7 @@
+ module = importlib.util.module_from_spec(spec)
+ sys.modules[spec.name] = module
+ spec.loader.exec_module(module)
+-store = module.Store(root, tests)
++store = module.Store.open_or_initialize(root, tests)
+ source = pathlib.Path(script).read_text()
+ body = source.split('# STORE_BUILD_BEGIN\n', 1)[1].split('# STORE_BUILD_END', 1)[0]
+ verifier = source.split('# STORE_VERIFY_BEGIN\n', 1)[1].split('# STORE_VERIFY_END', 1)[0]
+--- a/bin/make-runtime
++++ b/bin/make-runtime
+@@ -369,7 +369,7 @@
+ module = importlib.util.module_from_spec(spec)
+ sys.modules[spec.name] = module
+ spec.loader.exec_module(module)
+-store = module.Store(root, tests)
++store = module.Store.open_or_initialize(root, tests)
+ source = pathlib.Path(script).read_text()
+ body = source.split('# STORE_BUILD_BEGIN\n', 1)[1].split('# STORE_BUILD_END', 1)[0]
+ context = os.environ['STORE_CONTEXT']

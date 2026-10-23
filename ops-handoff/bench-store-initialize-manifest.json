@@ -1,0 +1,62 @@
+{
+  "task": "OPS-bench-store",
+  "status": "source-only; no install or host initialization",
+  "runtime_base": "abd47e68",
+  "files": [
+    {
+      "path": "bin/bench_store.py",
+      "source": {
+        "sha256": "6d9368207947aa316e1ed6486c5fa7ef843a84f50163114bb958011b538712a8",
+        "bytes": 38921,
+        "snapshot": "baseline/bench_store.py"
+      },
+      "target": {
+        "sha256": "925c68a09084d16f242e74c11207f45bfabe86199d53de36661b1fa76ce0c83a",
+        "bytes": 40145,
+        "snapshot": "target/bench_store.py"
+      }
+    },
+    {
+      "path": "bin/make-child-venv",
+      "source": {
+        "sha256": "c887a1bef4831f2ca5a43372ee28430000b2f20b9d290bffb237f27ffc404ff2",
+        "bytes": 33373,
+        "snapshot": "baseline/make-child-venv"
+      },
+      "target": {
+        "sha256": "2547087e1acb894af6bd8ecd76a97e4147fbb27d95599a9bea351f5da5997bc7",
+        "bytes": 33392,
+        "snapshot": "target/make-child-venv"
+      }
+    },
+    {
+      "path": "bin/make-runtime",
+      "source": {
+        "sha256": "873ddcfa636b3ae9e285613a6fb65c643e21ac749e00197d582e0c820dd70149",
+        "bytes": 28041,
+        "snapshot": "baseline/make-runtime"
+      },
+      "target": {
+        "sha256": "5d8bc6af0a2fbd10c729c2d0e9db4ca8b185ccd532d548c61ec6581bd08720cc",
+        "bytes": 28060,
+        "snapshot": "target/make-runtime"
+      }
+    }
+  ],
+  "unchanged": {
+    "request-child-venv": {
+      "sha256": "3b771253b465a6ba06b57ab16d6049273114dc75f491ce81d0132fedb3c8aa33",
+      "bytes": 13326
+    },
+    "request-runtime": {
+      "sha256": "471fd470efeae102140b96b4f97db857e0d6d79b0839afa10a1a00e911b33b5f",
+      "bytes": 2735
+    },
+    "dispatcher-daemon": {
+      "sha256": "f18bc20b23010dc47a6891d4ef7a357da5991a620b83b5cdc67e0c8741892c15",
+      "bytes": 3868
+    }
+  },
+  "locking": "Exclusive flock on existing owned non-group/other-writable parent directory inode; no lock sidecar; both makers use the same method. Failed/partial initialization remains refused, never repaired.",
+  "patch_sha256": "9c5774791edde67d4b76e508370d4357e48971601fd1254e6fabec1128f74fbf"
+}
