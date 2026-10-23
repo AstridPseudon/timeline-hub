@@ -724,7 +724,7 @@ def _stage_restoration_orders(records, record):
         return restoration_orders(records, only=record)
     from ._collections import order
     from ._doc_patch import inverse_changes
-    from ._step_undo import _nested_mirrors
+    from ._step_undo import _nested_mirror_partition
 
     source, step, boundary = record['_inverse_stage']
     if (not isinstance(records, AcceptedRecords) or not any(source is item for item in records)
@@ -738,17 +738,17 @@ def _stage_restoration_orders(records, record):
         raise CommandError('inverse stage boundary is unavailable', kind='history_unavailable')
     start, end = boundary['native_write_range']
     first, last = boundary['effect_range']
-    mirrors = _nested_mirrors(source, step, nested)[index]
+    mirrors, images = _nested_mirror_partition(source, step, nested)[index]
     if (any(not equal(record.get(key), value) for key, value in source.items()
             if key not in ('writes', 'derived_writes'))
             or not equal(record['writes'], source['writes'][start:end])
             or not equal(record.get('derived_writes'), mirrors)
             or not equal(record.get('_inverse_effects'), inverse_changes(step['patch'][first:last]))):
         raise CommandError('inverse stage differs from accepted partition', kind='history_unavailable')
-    if not mirrors:
+    if images is None:
         return {}
     result = []
-    for image in (mirrors[0]['before'], mirrors[-1]['after']):
+    for image in images:
         if image.get('state') != 'present' or not isinstance(image.get('value'), list):
             raise CommandError('inverse stage order is unavailable', kind='history_unavailable')
         result.append(order(State({'parent': {'clips': image['value'],

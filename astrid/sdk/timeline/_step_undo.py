@@ -128,17 +128,91 @@ def selected_dependencies(records):
     return result
 
 
+def _native_mirror_partition(record, step, nested):
+    """Attribute aggregate and compiler observations in native execution order."""
+    from ._command_state import State, present
+    from ._doc_patch import replace_at, value_at
+
+    writes = record.get('derived_writes', [])
+    relevant = [write for write in record['writes'] if write['ref'].startswith('parent/clip:')
+                or (write['ref'] == 'parent' and write['path'] in (['clips'], ['config', 'clips']))]
+    first = relevant[0]
+    initial = (writes[0]['before'] if first['ref'].startswith('parent/clip:') and writes
+               else first['before'])
+    if initial.get('state') != 'present' or not isinstance(initial.get('value'), list):
+        raise CommandError('nested inverse mirror input is unavailable', kind='history_unavailable')
+    state = State({'parent': {'clips': copy.deepcopy(initial['value']),
+                             'config': {'clips': copy.deepcopy(initial['value'])}}})
+    cursor, result = 0, []
+
+    def compile_mirror():
+        nonlocal cursor
+        before = state.get('parent', ['config', 'clips'])
+        after = state.get('parent', ['clips'])
+        if equal(before, after):
+            return
+        expected = {'ref': 'parent', 'path': ['config', 'clips'], 'before': before,
+                    'after': after, 'cause': record['ordinal']}
+        if cursor == len(writes) or not equal(writes[cursor], expected):
+            raise CommandError('nested inverse compiler observation differs from native history',
+                               kind='history_unavailable')
+        cursor += 1
+        state.set('parent', ['config', 'clips'], after)
+
+    for binding in nested:
+        start, end = binding['boundary']['native_write_range']
+        first, last = binding['boundary']['effect_range']
+        before = state.get('parent', ['config', 'clips'])
+        image = {'config': {'clips': copy.deepcopy(before['value'])}}
+        for effect in step['patch'][first:last]:
+            if effect['ref'] != 'parent' or effect['path'][:2] != ['config', 'clips']:
+                continue
+            if effect['op'] not in ('set', 'remove') or not equal(
+                    value_at(image, 'parent', effect['path']), effect['before']):
+                raise CommandError('nested inverse mirror effects differ from history',
+                                   kind='history_unavailable')
+            replacement = (present(effect['value']) if effect['op'] == 'set' else {'state': 'absent'})
+            replace_at(image, 'parent', effect['path'], replacement)
+        mirror_start = cursor
+        for write in record['writes'][start:end]:
+            leaf = write['ref'].startswith('parent/clip:')
+            aggregate = write['ref'] == 'parent' and write['path'] in (['clips'], ['config', 'clips'])
+            if not leaf and not aggregate:
+                continue
+            if not equal(state.get(write['ref'], write['path']), write['before']):
+                raise CommandError('nested inverse native mirror input differs from history',
+                                   kind='history_unavailable')
+            state.set(write['ref'], write['path'], write['after'])
+            if leaf:
+                compile_mirror()
+        compile_mirror()
+        after = state.get('parent', ['config', 'clips'])
+        if not equal(after, value_at(image, 'parent', ['config', 'clips'])):
+            raise CommandError('nested inverse observations omit accepted effects', kind='history_unavailable')
+        result.append((writes[mirror_start:cursor], (before, after)))
+    if cursor != len(writes):
+        raise CommandError('nested inverse mirrors exceed native observations', kind='history_unavailable')
+    return result
+
+
 def _nested_mirrors(record, step, nested):
+    return [mirrors for mirrors, _ in _nested_mirror_partition(record, step, nested)]
+
+
+def _nested_mirror_partition(record, step, nested):
     """Partition compiler mirrors by their accepted canonical effect images."""
     from ._doc_patch import replace_at, value_at
 
     writes = record.get('derived_writes', [])
-    if not writes:
-        return [[] for _ in nested]
     if any(write.get('ref') != 'parent' or write.get('path') != ['config', 'clips']
            or type(write.get('cause')) is not int or write['cause'] != record['ordinal']
            for write in writes):
         raise CommandError('nested inverse derived attribution differs from history', kind='history_unavailable')
+    if any(write['ref'] == 'parent' and write['path'] in (['clips'], ['config', 'clips'])
+           for write in record['writes']):
+        return _native_mirror_partition(record, step, nested)
+    if not writes:
+        return [([], None) for _ in nested]
     cursor, result = 0, []
     for binding in nested:
         first, last = binding['boundary']['effect_range']
@@ -171,7 +245,8 @@ def _nested_mirrors(record, step, nested):
                     break
             else:
                 raise CommandError('nested inverse mirrors omit accepted effects', kind='history_unavailable')
-        result.append(writes[start:cursor])
+        mirrors = writes[start:cursor]
+        result.append((mirrors, (mirrors[0]['before'], mirrors[-1]['after']) if mirrors else None))
     if cursor != len(writes):
         raise CommandError('nested inverse mirrors exceed accepted effects', kind='history_unavailable')
     return result
