@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { acceptedCommit, fixtureDigest } from './__tests__/timelineCommitFixture.ts';
-import { WorkspaceClient, type CanonicalDocument, type Transport } from './generated.ts';
+import { WorkspaceClient, type CanonicalDocument, type CommitPreviewResponse, type Transport } from './generated.ts';
 import { classifyRuntimeCommitFailure, AstridRuntimeClient } from './client.ts';
 import { decodeAcceptedTimelineCommit } from './dataProvider.ts';
 import { ApiError } from './generated.ts';
@@ -204,6 +204,33 @@ describe('Runtime timeline commit capability', () => {
       },
       body: mergedRequest,
     }]);
+  });
+
+  it('accepts a complete receipt and refuses a partial receipt through the generated WorkspaceClient', async () => {
+    const response = acceptedCommit({ revision_id: 'r1', publication_id: 'p1' }, { revision_id: 'r0', publication_id: 'p0' });
+    let currentResponse: unknown = response;
+    const client = new WorkspaceClient('http://runtime.test', 'token', async () => ({ status: 200, headers: {}, body: json(currentResponse) }));
+
+    await expect(client.commitTimeline(PROJECT_ID, TIMELINE_ID, request(), response.receipt.idempotency_key)).resolves.toEqual(response);
+    delete (response.receipt as unknown as Record<string, unknown>).result;
+    currentResponse = response;
+    await expect(client.commitTimeline(PROJECT_ID, TIMELINE_ID, request(), response.receipt.idempotency_key)).rejects.toThrow('invalid commit receipt');
+  });
+
+  it('accepts a complete preview and refuses a preview without would_status through the generated WorkspaceClient', async () => {
+    const acceptedResponse = acceptedCommit({ revision_id: 'r1', publication_id: 'p1' }, { revision_id: 'r0', publication_id: 'p0' });
+    const response = {
+      data: { ...acceptedResponse.data, status: 'preview' as const, would_status: 'accepted' as const, evaluated_head: { revision_id: 'r1', publication_id: 'p1' } },
+      receipt: null,
+    } as CommitPreviewResponse;
+    let currentResponse: unknown = response;
+    const client = new WorkspaceClient('http://runtime.test', 'token', async () => ({ status: 200, headers: {}, body: json(currentResponse) }));
+    const previewRequest = { ...request(), dry_run: true };
+
+    await expect(client.commitTimeline(PROJECT_ID, TIMELINE_ID, previewRequest, 'preview-key')).resolves.toEqual(response);
+    delete (response.data as unknown as Record<string, unknown>).would_status;
+    currentResponse = response;
+    await expect(client.commitTimeline(PROJECT_ID, TIMELINE_ID, previewRequest, 'preview-key')).rejects.toThrow('invalid commit preview');
   });
 
   it('preserves repeated occurrences, scoped child images, opaque fields and explicit nulls', async () => {
