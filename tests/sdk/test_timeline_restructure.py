@@ -9,7 +9,20 @@ from astrid.sdk import timeline_intent as intent
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.store import three_way
 from astrid.sdk.timeline_checkout import Checkout
-from astrid.sdk.timeline_restructure import STRUCTURE_KEY, _stable_id, assert_equivalent, differences, flatten, is_split, plan, split, walls_of
+from astrid.sdk.timeline_restructure import (
+    STRUCTURE_KEY,
+    _stable_id,
+    assert_equivalent,
+    differences,
+    flatten,
+    is_split,
+    plan,
+    split,
+    walls_of,
+)
+from tests.editing_conformance import test_commit_runtime_source_copy
+
+saved_source = test_commit_runtime_source_copy.saved_source
 
 TRACKS = [{"id": "type", "kind": "visual"}, {"id": "sprite", "kind": "visual"}, {"id": "plate", "kind": "visual"},
           {"id": "vo", "kind": "audio"}, {"id": "music", "kind": "audio"}]
@@ -386,36 +399,25 @@ def test_flatten_then_split_leaves_every_copy_of_an_asset_equal_to_the_union():
     assert copies and all(copy_ == union for copy_ in copies)
 
 
-def test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chapter(monkeypatch):
-    """A chapter film is read flat; duplicating must copy its stored form (a shot per chapter), not the one flat
-    shot, or the copy is stored as a single shot and every chapter reads back with the same shot id."""
-    from types import SimpleNamespace
-
+def test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chapter(saved_source):
+    """A chapter film reads flat but its authenticated copy stores one shot per chapter."""
     from astrid.sdk import timeline_duplicate as td
+    from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.timeline.native_timeline_duplicate import physical_content
 
     stored = published(split(flat_film()))
     assert len(stored["placements"]) == 3
-    src = Checkout(flatten(copy.deepcopy(stored)))
+    client, project, document, bodies = saved_source(stored)
+    src = Checkout(flatten(bundle_from_document(document('t'))))
     assert len(src.bundle["shots"]) == 1 and STRUCTURE_KEY in src.bundle
-    empty = flat_film()
-    empty["timeline_id"] = "dup"
-    dst = Checkout(empty)
-    for tl in (src, dst):  # the toy film has no real media identities; validity is not what this test is about
-        tl._check_core = lambda: SimpleNamespace(valid=True, blocking=[], problems=[])
-    opened = {"t": src, "dup": dst}
-    monkeypatch.setattr(td.Checkout, "open", classmethod(lambda cls, p, t, client=None, revision_id=None: opened[t]))
-    stored_docs = []
-    monkeypatch.setattr(td.Checkout, "publish", lambda self, *a, **k: stored_docs.append(self.stored_document()) or {})
-    client = SimpleNamespace(timelines=SimpleNamespace(
-        create_empty=lambda **kw: SimpleNamespace(ok=True, data={"timeline_id": "dup"}),
-        archive=lambda *a: SimpleNamespace(ok=True)))
-    out = td._duplicate(client, "p", "t", slug="dup", name=None, revision_id=None)
-    doc = stored_docs[0]
+    out = td._duplicate(client, project, "t", slug="dup", name=None, revision_id=None)
+    doc = physical_content(bundle_from_document(document('dup')))
     shot_ids = [r["shot_id"] for r in doc["placements"]]
     assert out["shots"] == 3 and len(set(shot_ids)) == 3 and set(shot_ids) == set(doc["shots"])
     assert all(s.startswith("dup-") for s in shot_ids)
     assert [doc["shots"][s]["payload"]["name"] for s in shot_ids] == ["01 ONE", "02 TWO", "03 THREE"]
     assert len({r["occurrence_id"] for r in doc["placements"]}) == 3
+    assert [call['op'] for call in bodies[0]['commands']] == ['timeline.duplicate']
 
 
 def test_duplicate_guard_refuses_a_copy_that_collapses_shots_and_keeps_a_repeated_shot_repeated():
@@ -565,9 +567,42 @@ def test_split_routes_a_new_clip_by_placement_and_a_wall_crosser_to_the_film():
 def test_same_asset_follows_the_runtime_identity_fixture():
     import json
     from pathlib import Path
+
     from astrid.sdk.timeline_restructure import same_asset
 
     cases = json.loads((Path(__file__).resolve().parents[1] / "fixtures" / "asset-identity.json").read_text())["cases"]
     for case in cases:
         assert same_asset(case["a"], case["b"]) is case["same"], case["name"]
     assert same_asset({"media_id": "m", "duration": 3}, {"media_id": "m", "duration": 4})
+
+
+def test_duplicate_commit_keeps_a_repeated_shot_shared(saved_source):
+    from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.timeline.native_timeline_duplicate import physical_content
+    from astrid.sdk.timeline_duplicate import duplicate_timeline
+
+    source = flat_film()
+    intent.set_chapters(source, [])
+    internal = source["shots"]["film"]["internal_timeline"]
+    internal["clips"] = [next(clip for clip in internal["clips"] if clip["id"] == "late")]
+    internal["registry"] = {"assets": {}}
+    again = copy.deepcopy(source["placements"][0])
+    again.update(occurrence_id="occ-again", placement={"start_ms": 12000})
+    source["placements"].append(again)
+    client, project, document, bodies = saved_source(source)
+    before = document('t')
+    duplicate_timeline(project, 't', slug='copy', client=client)
+    result = document('copy')
+    # Raw canonical edges, then the authenticated mapping; working aliases differ.
+    rows = result['parent_revision']['payload']['occurrences']
+    assert len(rows) == 2 and rows[0]["shot_id"] == rows[1]["shot_id"]
+    assert len({row["occurrence_id"] for row in rows}) == 2
+    assert len({row['shot_revision_id'] for row in rows}) == 1
+    assert len(result['shot_revisions']) == len(result['internal_timeline_revisions']) == 1
+    reopened = bundle_from_document(result)
+    assert len({row['shot_id'] for row in reopened['placements']}) == 2
+    assert {link['shot_id'] for link in reopened['source_mapping']['shots'].values()} == {rows[0]['shot_id']}
+    assert physical_content(reopened)['placements'] == [{k: v for k, v in row.items()
+        if k not in ('shot_revision_id', 'revision_id')} for row in rows]
+    assert document('t') == before
+    assert [call['op'] for call in bodies[0]['commands']] == ['timeline.duplicate']

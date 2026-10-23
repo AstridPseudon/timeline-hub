@@ -192,7 +192,21 @@ def effect_diff(before, after):
             config[mirror] = value
         return payload
 
-    walk('parent', [], present(logical_parent(old['parent'])), present(logical_parent(new['parent'])))
+    def topology(image):
+        payload = image['payload']
+        config = payload.get('config', {})
+        return [(key in payload, isinstance(config, dict) and key in config)
+                for key in ('clips', 'registry')]
+
+    old_parent, new_parent = logical_parent(old['parent']), logical_parent(new['parent'])
+    if topology(old['parent']) != topology(new['parent']):
+        # Alias paths cannot express a change in raw mirror presence. Bind the
+        # complete parent image so projection preserves each storage location.
+        result.append({'op': 'set', 'ref': 'parent', 'path': [],
+                       'before': present(copy.deepcopy(old['parent']['payload'])),
+                       'value': copy.deepcopy(new['parent']['payload'])})
+    else:
+        walk('parent', [], present(old_parent), present(new_parent))
     for ref in sorted(old.keys() & new.keys() - {'parent'}):
         walk(ref, [], present(old[ref]['payload']), present(new[ref]['payload']))
     for prefix in ('shot-revision:', 'internal-revision:'):

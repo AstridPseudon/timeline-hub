@@ -9,6 +9,68 @@ from ._recording import guard
 from ._step_undo import entry_records
 
 
+def normalize_root_inputs(bundle, records):
+    """Rejoin unchanged working aliases for an authenticated aggregate reversal."""
+    roots = {write['ref'][5:] for record in records for write in record['writes']
+             if write['ref'].startswith('shot:') and not write['path']}
+    if not roots:
+        return
+    from .native_timeline_duplicate import physical_content
+
+    physical = physical_content(bundle)
+    mapping = bundle['source_mapping']['shots']
+    for identity in roots - bundle['shots'].keys():
+        aliases = [local for local, origin in mapping.items()
+                   if origin['shot_id'] == identity and local in bundle['shots']]
+        if not aliases:
+            continue
+        for local in aliases:
+            shot = bundle['shots'][local]
+            if (not equal(shot['payload'], shot['base_payload'])
+                    or not equal(shot['internal_timeline'], shot['base_internal_timeline'])):
+                raise CommandError('aggregate working input changed', kind='inverse_conflict',
+                                   ref='shot:' + identity)
+        if identity not in physical['shots']:
+            raise CommandError('aggregate source is unavailable', kind='history_unavailable')
+        bundle['shots'][identity] = physical['shots'][identity]
+        mapping[identity] = physical['source_mapping']['shots'][identity]
+        for local in aliases:
+            del bundle['shots'][local]
+            del mapping[local]
+        for rows in (bundle['placements'], bundle['base_placements'].values(),
+                     bundle['source_mapping']['placements'].values()):
+            for row in rows:
+                if row['shot_id'] in aliases:
+                    row['shot_id'] = identity
+
+
+def inverse_root_manifest(bundle, records):
+    """Reverse retained-input deltas only for complete accepted root commands."""
+    if not isinstance(records, AcceptedRecords):
+        return None
+    if not records or not equal(list(records), [record for entry in records.entries
+            for record in entry['records']['commands']]):
+        return None
+    if '_runtime_document' not in bundle['source_mapping']:
+        return None
+    if any(record['command']['op'] not in ('timeline.duplicate', 'timeline.inverse')
+           or not any(write['ref'].startswith('shot:') and not write['path']
+                      for write in record['writes'])
+           or not any(read['ref'] == 'timeline' and not read['path']
+                      for read in record['reads']) for record in records):
+        return None
+    manifest = copy.deepcopy(bundle['source_mapping']['_runtime_document']['dependency_manifest'])
+    for entry in reversed(records.entries):
+        before, after = records.load_boundary(entry)
+        for key in ('media', 'documents'):
+            prior = before['source_mapping']['_runtime_document']['dependency_manifest'][key]
+            accepted = after['source_mapping']['_runtime_document']['dependency_manifest'][key]
+            manifest[key] = [pin for pin in manifest[key] if pin not in accepted or pin in prior]
+            manifest[key].extend(copy.deepcopy(pin) for pin in prior
+                                 if pin not in accepted and pin not in manifest[key])
+    return manifest
+
+
 def clip_cache_stages(records):
     """Prove word-cache stages inside guarded clip roots from accepted boundaries."""
     roots = {w['ref'] for record in records for w in record['writes']

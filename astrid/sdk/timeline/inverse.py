@@ -432,6 +432,9 @@ def _legacy_inverse_sites(records, record):
     if record['command']['op'] != 'timeline.inverse' or not isinstance(records, AcceptedRecords):
         raise CommandError('original read stage is unavailable', kind='history_unavailable')
     state, after = records.boundary(record)
+    from ._root_inverse import normalize_root_inputs
+
+    normalize_root_inputs(state.bundle, [record])
     reads = [read for read in record['reads'] if state.matches(read['ref'], read['path'], read['state'])]
     selections = [selected for selected in record['selections']
                   if equal(selection(state, selected['key'], selected['owner'], selected['members']), selected)]
@@ -742,3 +745,26 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
             ctx.select(selected['key'], selected['owner'], selected['members'])
         finally:
             ctx.input_state = original_input
+    from ._root_inverse import inverse_root_manifest
+
+    manifest = inverse_root_manifest(ctx.state.bundle, records)
+    if manifest is not None:
+        from astrid.core.timeline.authoring_bundle import _collect_media
+
+        source = ctx.state.bundle['source_mapping']['_runtime_document']['dependency_manifest']
+        removed = {pin['media_id'] for pin in source['media'] if pin not in manifest['media']}
+        authored = [ctx.state.bundle['parent'], ctx.state.bundle['shots'], ctx.state.bundle['placements']]
+        captures = ctx.state.bundle['source_mapping'].get('pinned_documents', [])
+        authored.extend(capture['document']['content'] for capture in captures
+                        if capture['pin'] in manifest['documents'])
+        if removed & _collect_media(authored):
+            raise CommandError('introduced media has surviving dependents', kind='surviving_dependents')
+        def contains(value, pin):
+            if equal(value, pin):
+                return True
+            if isinstance(value, dict):
+                return any(contains(child, pin) for child in value.values())
+            return isinstance(value, list) and any(contains(child, pin) for child in value)
+        if any(contains(authored, pin) for pin in source['documents'] if pin not in manifest['documents']):
+            raise CommandError('introduced document has surviving dependents', kind='surviving_dependents')
+        ctx.state.bundle['source_mapping']['_copy_manifest'] = manifest
