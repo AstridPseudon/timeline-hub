@@ -1,5 +1,5 @@
 import { expect, test, type BrowserContext } from '@playwright/test';
-import { PROJECT_ID, TIMELINE_SLUG, editorPath, resetFakeRuntimeBaseline } from './support';
+import { PROJECT_ID, TIMELINE_SLUG, editorPath, isAbsentWorldLibraryRead, resetFakeRuntimeBaseline } from './support';
 
 const EDITOR_URL = editorPath({
   params: { transcriptLaneFixture: 'render-matrix' },
@@ -22,7 +22,7 @@ function collectIssues(page: import('@playwright/test').Page): string[] {
     }
   });
   page.on('response', (response) => {
-    if (response.status() >= 400) {
+    if (response.status() >= 400 && !isAbsentWorldLibraryRead(response)) {
       issues.push(`[http ${response.status()}] ${response.url()}`);
     }
   });

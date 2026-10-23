@@ -4,6 +4,7 @@ import {
   TIMELINE_SLUG,
   editorPath,
   resetFakeRuntimeBaseline,
+  isAbsentWorldLibraryRead,
 } from './timeline/support';
 
 const EDITOR_URL = editorPath({ params: { transcriptLaneFixture: '1' } });
@@ -24,12 +25,7 @@ function collectIssues(page: Page): string[] {
     }
   });
   page.on('response', (response) => {
-    // A project without a world library answers 404 to the Explorer's read of its library document; that is
-    // the Runtime's "absent" answer the panel handles (explorer/library.ts readDocument), not an error.
-    const absentWorldLibrary = response.status() === 404
-      && response.request().method() === 'GET'
-      && /\/documents\/world-library%3A[^/]*$/.test(new URL(response.url()).pathname);
-    if (response.status() >= 400 && !absentWorldLibrary) {
+    if (response.status() >= 400 && !isAbsentWorldLibraryRead(response)) {
       issues.push(`[http ${response.status()}] ${response.url()}`);
     }
   });

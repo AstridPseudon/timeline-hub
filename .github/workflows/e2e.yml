@@ -48,12 +48,26 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "20.19.0", cache: npm }
       - run: npm ci --legacy-peer-deps
-      - run: npx playwright install --with-deps chromium chrome
+      - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e:timeline
-      - run: npm run test:e2e:chrome-export
       - uses: actions/upload-artifact@v4
         if: always()
         with: { name: playwright-timeline-results, path: test-results, if-no-files-found: ignore }
+
+  # The timeline lane's second project: H.264 cases that need installed Google Chrome.
+  playwright-timeline-chrome-export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20.19.0", cache: npm }
+      - run: npm ci --legacy-peer-deps
+      - run: npx playwright install --with-deps chrome
+      - run: npm run test:e2e:chrome-export
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: playwright-timeline-chrome-export-results, path: test-results, if-no-files-found: ignore }
 
   extension-accessibility:
     runs-on: ubuntu-latest

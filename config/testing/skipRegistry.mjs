@@ -89,20 +89,17 @@ export const LANES = {
   'playwright-default': {
     what: 'tests/e2e/*.spec.ts (chromium-desktop/condensed/mobile projects)',
     command: 'playwright test --config playwright.config.ts',
-    ci: [],
-    manual: 'no job runs playwright.config.ts; known failures exist (public A03/A08/A11/A12, extension-harness)',
+    ci: ['playwright-default'],
   },
   'playwright-timeline': {
     what: 'tests/e2e/timeline/*.spec.ts (timeline-devices and timeline-chrome-export projects, PLAYWRIGHT_TIMELINE_DEVICES=1)',
     command: 'npm run test:e2e:timeline',
-    ci: [],
-    manual: 'no job runs the timeline specs; known failures exist (layout-geometry, extension-performance-budget)',
+    ci: ['playwright-timeline', 'playwright-timeline-chrome-export'],
   },
   'playwright-extension-a11y-visual-cross-browser': {
     what: 'tests/e2e/extension-{accessibility,visual-regression,cross-browser}.spec.ts',
     command: 'npm run test:e2e:extension-accessibility | extension-visual | extension-cross-browser',
-    ci: [],
-    manual: 'no job runs them; extension visual and a11y fail on main',
+    ci: ['extension-accessibility', 'extension-visual', 'extension-cross-browser'],
   },
   'playwright-quick-descriptor': {
     what: 'tests/e2e/local/three-products.spec.ts "quick: Astrid edit then App edit" (grepInvert unless ASTRID_QUICK_DESCRIPTOR)',

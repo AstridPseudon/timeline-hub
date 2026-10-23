@@ -364,6 +364,17 @@ export async function seedEditorPreferences(
   }, { storageKey: `video-editor:preferences:${timelineId}`, value: patch });
 }
 
+/**
+ * A project without a world library answers 404 to the Explorer's read of its library document. That is the Runtime's
+ * "absent" answer the panel handles (explorer/library.ts `readDocument`), not an error, so specs that fail on any
+ * HTTP error step over it.
+ */
+export function isAbsentWorldLibraryRead(response: { status(): number; url(): string; request(): { method(): string } }): boolean {
+  return response.status() === 404
+    && response.request().method() === 'GET'
+    && /\/documents\/world-library%3A[^/]*$/.test(new URL(response.url()).pathname);
+}
+
 /** Data-kind lanes other than the transcript start hidden; a spec that measures one opts in like a user does. */
 export function showDataLanes(page: Page, timelineId: string = TIMELINE_SLUG): Promise<void> {
   return seedEditorPreferences(page, { showDataLanes: true }, timelineId);
