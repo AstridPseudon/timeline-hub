@@ -161,6 +161,20 @@ function priorityBasis(value: unknown): unknown {
   return { count: value.length, items, summarized: true, truncated: value.length > DIAGNOSTIC_MAX_ARRAY_ITEMS };
 }
 
+function priorityOutbox(value: unknown): unknown {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return redactDiagnosticValue(value);
+  const record = value as Record<string, unknown>;
+  const result = priorityRecord(record, ['readFailed', 'summary']);
+  try {
+    if (Object.prototype.hasOwnProperty.call(record, 'owners')) {
+      result.owners = Array.isArray(record.owners) ? priorityList(record.owners) : redactDiagnosticValue(record.owners);
+    }
+  } catch {
+    result.owners = '[UNREADABLE]';
+  }
+  return result;
+}
+
 function priorityValue(value: unknown): unknown {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const record = value as Record<string, unknown>;
@@ -181,9 +195,10 @@ function priorityValue(value: unknown): unknown {
   ]));
   read('basis', priorityBasis);
   read('displayedHead', (field) => priorityRecord(field, [
-    'revisionId', 'publicationId', 'providerProjectId', 'providerTimelineId', 'commitReplies', 'readonlyReplies', 'runtimeHistoryHead', 'historyReadFailed',
+    'revisionId', 'publicationId', 'providerProjectId', 'providerTimelineId', 'commitReplies', 'currentWireHeads', 'readonlyReplies', 'runtimeHistoryHead', 'historyReadFailed',
   ]));
-  read('outbox', (field) => priorityRecord(field, ['readFailed', 'summary']));
+  read('outbox', priorityOutbox);
+  read('sourceWindow', (field) => priorityRecord(field, ['rightId', 'before', 'after']));
   read('ui', (field) => priorityRecord(field, [
     'connectionState', 'runtimePanelVisible', 'recoveryVisible', 'recoveryMessage', 'timelineErrorVisible', 'timelineErrorMessage', 'alertCount',
   ]));
@@ -192,7 +207,7 @@ function priorityValue(value: unknown): unknown {
   if (!recognized) return null;
   if ('displayedHead' in result && result.displayedHead && typeof result.displayedHead === 'object') {
     const displayedHead = result.displayedHead as Record<string, unknown>;
-    for (const key of ['commitReplies', 'readonlyReplies']) {
+    for (const key of ['commitReplies', 'currentWireHeads', 'readonlyReplies']) {
       if (Array.isArray(displayedHead[key])) displayedHead[key] = priorityList(displayedHead[key]);
     }
   }

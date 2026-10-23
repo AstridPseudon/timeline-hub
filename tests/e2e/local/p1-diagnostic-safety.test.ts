@@ -72,7 +72,11 @@ test('P1 priority diagnostics preserve causal state ahead of oversized readonly 
   const output = formatPriorityDiagnostic('priority', {
     basis: [{ baseRevisionId: 'basis-revision', basePublicationId: 'basis-publication', merge: 'fields', reads: readonlyTraffic }],
     displayedHead: { revisionId: 'displayed-revision', publicationId: 'displayed-publication' },
-    outbox: { summary: { hasPending: true, hasConflict: true } },
+    outbox: {
+      summary: { hasPending: true, hasConflict: true },
+      owners: [{ ownerId: 'owner-1', pending: { intentId: 'intent-1', outcome: { kind: 'retry' } } }],
+    },
+    sourceWindow: { rightId: 'right-1', before: { sourceIn: { numericValue: 0 } }, after: { sourceIn: { numericValue: 3 } } },
     ui: { recoveryMessage: 'changes retained' },
     errors: { page: ['network error'] },
   });
@@ -86,6 +90,9 @@ test('P1 priority diagnostics preserve causal state ahead of oversized readonly 
   assert.equal(body.includes('"summarized":true'), true);
   assert.equal(body.includes('"truncated":false'), true);
   assert.equal(body.includes('displayed-revision'), true);
+  assert.equal(body.includes('owner-1'), true);
+  assert.equal(body.includes('right-1'), true);
+  assert.equal(body.includes('numericValue'), true);
   assert.equal(body.includes(readonlyTraffic[0].reply), false);
 });
 
