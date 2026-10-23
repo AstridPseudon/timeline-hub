@@ -5,7 +5,7 @@ Per-repo detail: design/farm-zip-dry-agent-3.md, -app-2.md, -runtime-3.md, -comp
 |---|---|---|---|---|---|---|
 | agent | d682c5977e0d (7d86b443453d) | 431681a6d | 9,491,748 B, 823 files | PASS | 74f3f7edb, already an ancestor of integration: no drift | ruff, import cycles, structure, doc-refs PASS; mypy gate FAIL (environment: shared venv lacks types-PyYAML and the Runtime package; the base fails the same way); smoke 86 pass, 3 skip, 1 fail (environment: fresh clone has no remotion/node_modules) |
 | app | 6294895141 (03714e15a) | 7c17cc9d9 | 8,435,056 B, 517 files | PASS | efe83c77e, 27 commits past base: 510 of 517 files apply, 7 strict conflicts (4 under 3-way) | private 0.0.14 graph: tsc app 0, tsc node 0, lint 0, two quality guards 0, smoke 444 + 2793 pass |
-| runtime | 9ce4242bc (92ab1f5f739f) | a98fbc2f9 | 5,209,625 B, 246 files | PASS | aa6c5b0cb, 4 commits past base (tests plus a runtime_protocol/visual_seam.py change); patch applies, drift recorded | py_compile 43 files PASS; no lint or typecheck configured; smoke tests NOT RUN, blocked:permission (pip install refused) |
+| runtime | 9ce4242bc (92ab1f5f739f) | a98fbc2f9 | 5,209,625 B, 246 files | PASS | aa6c5b0cb, 4 commits past base (tests plus a runtime_protocol/visual_seam.py change); patch applies, drift recorded | py_compile 43 files PASS; no lint or typecheck configured; smoke step covered by Runtime DB-runtime-dry (PASS, on main; orchestrator 16:41Z), no pip permission needed |
 | composition | 635f4de06fda (5ab5191a2969) | 67b8aa3d0 | 493,374 B, 118 paths | PASS | main is still 67b8aa3d0: no drift | node --check on three .mjs only; npm ci now permitted, not yet run |
 
 Findings:
@@ -13,7 +13,7 @@ Findings:
 2. Farm procedure note: a fresh-tree check must use `git add -f` for tracked-but-ignored paths (App's .gitignore has `*.md`, so docs/cutover-inventory.md is dropped by `git add -A`), or compare ls-tree listings.
 3. App integration declares @supabase/supabase-js (CLAUDE.md forbids @supabase/*); round 2 checked for src/ imports in design/farm-zip-dry-app-2.md. Owner: App.
 4. Agent mypy needs a venv with types-PyYAML and the Runtime package, and its smoke needs remotion/node_modules; a final-build run must provide them.
-5. Open refusal: pip install into a tmpdir venv (Runtime smoke). Owner: orchestrator/owner.
+5. Closed (orchestrator 16:41Z): the pip refusal needs no permission. The Runtime smoke step is covered by Runtime DB-runtime-dry.
 
 Draft ZIP layout (layout only, not built):
 ```
