@@ -803,3 +803,16 @@ App published heartbeat06:43/board05:45 and lead06:42 still show five stopped wo
 Agent home `4edc4b321cae5cfc58252d7ed89e3f0408238646` is qualified: integrated worker agt-V2-child-integrated-0658 FINAL PASS78 targeted + faithful unchanged-child positive/strict write-remove negatives + all6 original bootstrap/first-clip undo/redo integration nodes on exact Runtime85dafdf46742b02ae5e4a300656cd6f5d68f0d4d, 12.98s. Same-process observer records12 before/after checks across6 cases,44 archive-only module origins and validate_claims source; all execute85. Normal Ruff2149/mypy1912/vendor/artifact/diff PASS. Flat report `design/agt-V2-child-integrated-0658.md`. Independent own387 review0650 PASS42 retained; only source/test exactc89 plus reduced baseline1914→1912 from qualifiedmap9df. Current fork/G234/reader/bootstrap source preserved. No new tuple, consumer adoption or duplicate HTTP/full/native14/Runtime20.
 
 G4 DONE header remains; no new gate. Proof owns original ten-note/conflict HTTP on its independently reviewed source/service; Runtimea5d admission correction is published/proven and no longer blocked. Agent G5 remains gated:P1 while H3 NO-GO. H9 V4 cut remains;15d/2f/706 stay unmerged and original failures visible. No new V4 repair requested.
+
+## 2026-10-23T07:14:58Z — ORCHESTRATOR: App's machine is MERGE-ONLY until the owner fixes the keep-awake
+Your workers die on every reclaim (seven at 07:13). **Don't dispatch App-repo workers on this machine.** The Proof lane (app2) now authors A2-undo, A2-move-reads, A2-paired-head, A3-shared and A3-child-placement as failover, from your WIP branches. At each wake, do these first:
+1. process request-merge-remote items from app2 (review evidence included), one merge at a time;
+2. keep your board current, marking those rows "doing (app2 failover)".
+
+Short reviews are fine to dispatch on this machine if they'll finish in under 20 min. Everything else goes to app2.
+
+## 2026-10-23T07:13:54Z — PEER MESSAGE (peer-app2-to-app-runtime-20261023T0711-paired-head-reviewed-current.md)
+# A2/P1 pairedhead current source reviewed PASS, 2026-10-23 07:11Z
+Final05f/tree20c8c1ed5e9ca48bc1f56f66f0404c83f8d97473 independentLuna0705 PASS153 inclsameR/newP regression/actualApp+Node type/lint/normal34e/exact819acf80file/only3files. MatchingpublicGET/strictidentity/exactinspectionrevision/boundedraceretry/refusal/legacyNULL/capturedpairCAS retained. Failed76a cachebug corrected; no redsourcebody.
+Freshcurrent import ap2-A2-paired-head-current-port-0706 has ENTIRETREE20c8 EXACT reviewed05f; owncommit log checked only own commit; remoteApp merge requested NOW explicitownerreview. Please merge atwake. No olddonorancestry, testweakening/newtuple/executor. P1service finalhash0706 prepared; independentOPS0708 active, then Proof existingoriginal2case onceonreviewedstage (integratedcredit onlyafteractualhead). No App duplicatebody. Originalstartup54d+diagnosticf98 alreadymerged9dd.
+Undo r1 remains ownerApp, exact7eb WIPstopped06:41; peer0653 asksresume/handoff, no competingProof productworker. Parentmove r13/remainingA3 ownerApp. H3 NO-GO/A4G5 gated until actualchainPASS.

@@ -34,6 +34,10 @@ for d in $O/workers/*/; do
   dead="$dead $w"
 done
 if [ -n "$dead" ]; then
-  printf '\n## ensure-daemons %s: workers died (container restart)\nRe-dispatch fresh (on the same branch with `--base tl/<worker>` if it has commits):%s\n' "$(date -u +%FT%TZ)" "$dead" >> $O/managers/$A/INBOX.md
+  if grep -qE "^MERGE-ONLY lanes:.*\b$A\b" $O/design/BOARD-HEADER.md 2>/dev/null; then   # lane machine cannot keep workers alive (07:20Z app): failover lane owns them
+    printf '\n## ensure-daemons %s: workers died (container restart)\nThis lane is MERGE-ONLY (BOARD-HEADER): do NOT re-dispatch these here. The failover lane owns them (resume from tl/<worker>):%s\n' "$(date -u +%FT%TZ)" "$dead" >> $O/managers/$A/INBOX.md
+  else
+    printf '\n## ensure-daemons %s: workers died (container restart)\nRe-dispatch fresh (on the same branch with `--base tl/<worker>` if it has commits):%s\n' "$(date -u +%FT%TZ)" "$dead" >> $O/managers/$A/INBOX.md
+  fi
 fi
 echo "$(date -u +%FT%TZ) ensure-daemons $A: uptime $(awk '{printf "%d", $1/60}' /proc/uptime)m; started:${started:- none}; dead workers:${dead:- none}; disk $(df -BG --output=avail /home/user | tail -1 | tr -d ' ')$mgr"
