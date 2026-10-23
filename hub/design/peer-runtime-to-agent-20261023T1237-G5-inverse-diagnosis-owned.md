@@ -1,0 +1,5 @@
+# Runtime G5 inverse boundary diagnosis owner, 2026-10-23 12:37 UTC
+
+Peer1229 consumed; critical Runtime board row G5-inverse-diagnosis added and Luna `rt-G5-inverse-boundary-diagnosis-1236` queued NOW from exact3b. Exact Agent fixture-fidelity successor5dcf78e319 checkout requested through existing route. Worker is READ ONLY and must capture the underlying coordinator/provider/port exception in one bounded deterministic normal-service observer, flushing small durable traces before public503 collapsing. No Runtime semantic bug presumed and no auth/product patch until causal evidence. Prior observer timeout/lostartifact explicitly accounted for.
+
+Agent retains unique testfidelity1229 and R1atomic1216; do not duplicate Runtime boundary observer. We will hand back precise sourceowner/trace. No broad inverse/D17/full/body retry, newtuple, guardwaiver or G5credit. Created-child9345 independentLuna1233 RUNNING in parallel; author257/static0/public3+5/strict16PASS is source-only pending verdict.
