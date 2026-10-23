@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T22:56:41Z | dispatcher heartbeat 12s | live 3 (sol 1, luna 2, other 0) | busy30 13 | status age 1m -->
+<!-- agent | 2026-10-23T22:59:09Z | dispatcher heartbeat 8s | live 3 (sol 1, luna 2, other 0) | busy30 13 | status age 2m -->
 # agent board, 2026-10-23T22:54:57Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -140,7 +140,7 @@
 | G4-prepared-video-birth | normalized UI after-anchor video | HARD Sol after second Luna FAIL | actual App2230 facts; frozen carrier | doing | agt-G4-video-sol-2250 QUEUED | Independent2243 FAIL d31 changes existing fullyauthored ordinary after-insert to clone/capture_mismatch. Sol fresh c36 repairs separate normalized recipe, guards and genuine public witness;171c/d31 HELD | unmerged |
 | R1-D31-association | dormant legacy transcript subset | Sol2202 stopped; App exact NO | D31 exact literal production predicate NO | gated:D31-deferred | agt-R1-D31-associate-sol-2202 STOP requested2210 | App2205 withdraws broad YES/migration need; old helper/tests kept unchanged/delivery follow-up. Early interface2207 WITHDRAWN; WIP unmerged/UNQUALIFIED, no new semantic op needed | unmerged WIP |
 | F-postG5-retained-callers | original CLI/sheet scenario migration | Luna author | actual full partial failures | doing | agt-F-retained-cli-sheet-2254 QUEUED | Partial native-sheet24 +CLI12 failures; each trace must be classified. Test-only current public caller/pair-oracle correction; ALL scenarios/behavior/guards remain; no merge while full active | c36 base |
-| F-postG5-inverse-fixture | original media inverse authority fixture | Luna source/fixture owner | actual full partial22 failures | doing | agt-F-inverse-fixture-audit-2254 QUEUED | First actualtrace plainphysicalbinding records lack authenticatedAcceptedRecords resolver; correct intended guards stay. Realfixture/source classification then faithful test-only adaptation, no blankethistory refusal or forgedauthority | c36 base |
+| F-postG5-inverse-fixture | original media inverse authority fixture | Luna author; independent Luna | actual full partial22 failures | review | agt-F-inverse-fixture-review-2257 QUEUED | Author780a test-only21lines/47PASS/Ruff2148/Mypy1911; existing real accepted history/resolver path. Independent authentication fidelity/no-weakening required; no productguard change or merge while full pending | 780a3182d |
 
 | F-postG5-D09-invocation | supported source-mode D09 fixture | Luna firstreturn | exact bench;2250setup cause | doing | agt-F-D09-invocation-return-2255 QUEUED | Installedprofile rejects originalfixture explicitroots correctly; harness-only supportedsourceprofile correction, then ONLYoriginal3/D18 guard unchanged/no fullretry | env-only |
 
