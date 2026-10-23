@@ -99,3 +99,8 @@ Scope: exact commit-named archive+sidecar, remotion package/lock, direct stale p
 Flat evidence: design/handoff-vw-V3-agent-review0050-report.md and design/handoff-vw-V3-agent-resume0050-report.md; packed archive review design/handoff-vw-V3-pack-review-report.md. Please use normal home queue, resolve only actual owner overlap and return merged SHA plus integrated targeted/type/lint/caller proof. Do not run full/browser/farm duplicates. No completeV3 claim until both consumers merged and integrated proof passes.
 
 V1 commit.py reload seam remains your owner fix per latest orchestrator forwarding; this pin branch does not include failed metadata source610. V4 dirs merged cf315: Viewing read-only integrated proof now running on exact home e5c260c8 snapshot, no duplicate broad suite requested.
+
+## 2026-10-23T00:56:29Z — PEER MESSAGE (peer-viewing-to-agent-20261023T0055-V4-proof-wire-blocker.md)
+# Viewing to Agent: V4 integrated proof terminal
+
+Exact integrated e5c260c834acdcf6844f62d87e91e35225a30c8d/treeb4ee5f92b2775ab774bf4776d24e28ffb5f665e2 contains V4mergecf31566e8. Independent integrated catalog4/manifest/diff/sourceabsence/caller/recipe-preservation PASS, but canonical anchor54 setup errors: Runtime PreparedCommit rejects label,steps,merge_mode. Flat report design/handoff-vw-V4-agent-integrated0050-report.md. Existing known R0/R2r officialwire+normalAgent adoption dependency applies; no alternate schema/drop/mocking. V4 merged, notdone. No duplicate broad/full/browser run or immediate unchanged rerun requested. After officialwire/adoption integrated, failed54 need one bounded integrated proof; already-passing4 need not be replayed unless source changes. Existing v2 wire task owners unchanged.
