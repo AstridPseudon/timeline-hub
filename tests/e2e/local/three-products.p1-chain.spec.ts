@@ -5,6 +5,7 @@ import type { CommitRequest } from '../../../src/integrations/runtime/timeline-c
 import { APP_ENTRY_ROUTE, commandOutboxes, expectConnected, firstTrackName, test as appTest } from './support/app.ts';
 import { ASTRID_PYTHON, AstridCli } from './support/astrid.ts';
 import { compositionPublication, harnessUnavailableReason, type DirectHarness } from './support/harness.ts';
+import { logDiagnostic, redactDiagnosticText, redactDiagnosticValue } from './p1-diagnostic-safety.ts';
 
 const CEILING = { timeout: 90_000 };
 const COMMITS = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
@@ -14,6 +15,13 @@ const SPLIT_AT = 2;
 
 type ChainSeed = { projectSlug: string; timelineId: string; sourceId: string };
 type CommitPost = { body: CommitRequest; raw: string; key: string; status?: number; response?: any };
+type DiagnosticReadonlyTraffic = {
+  method: string;
+  route: string;
+  requestBody: string | null;
+  status?: number;
+  reply?: unknown;
+};
 
 const test = appTest.extend<object, { astrid: AstridCli }>({
   astrid: async ({ harness }, use) => {
@@ -67,12 +75,12 @@ function assertSuccessfulReply(post: Pick<CommitPost, 'status' | 'response'>, la
   const hint = [details.hint, body.hint, nestedError.hint].find((value) => typeof value === 'string');
   const hasStructuredData = body.data !== null && typeof body.data === 'object' && !Array.isArray(body.data);
   if (post.status !== 200 || !hasStructuredData) {
-    console.log(`[P1 ${label} structural reply diagnostic] ${JSON.stringify({
+    logDiagnostic(`P1 ${label} structural reply diagnostic`, {
       status: post.status ?? null,
       ...(code === undefined ? {} : { code }),
       ...(path === undefined ? {} : { path }),
       ...(hint === undefined ? {} : { hint }),
-    })}`);
+    });
   }
   expect(post.status, `${label} expected HTTP 200`).toBe(200);
   expect(hasStructuredData, `${label} expected structured success data`).toBe(true);
@@ -116,14 +124,24 @@ async function history(harness: DirectHarness, seed: ChainSeed) {
   return result.body;
 }
 
-function observe(page: Page) {
+function observe(page: Page, captureReadonlyTraffic = false) {
   const posts: CommitPost[] = [];
   const legacy: string[] = [];
+  const readonlyTraffic: DiagnosticReadonlyTraffic[] = [];
+  const readonlyByRequest = new Map<unknown, DiagnosticReadonlyTraffic>();
   page.on('request', (request) => {
-    if (request.method() !== 'POST') return;
+    if (!captureReadonlyTraffic && request.method() !== 'POST') return;
     const path = new URL(request.url()).pathname;
-    if (COMMITS.test(path)) posts.push({ body: JSON.parse(request.postData() ?? '{}'), raw: request.postData() ?? '', key: request.headers()['idempotency-key'] });
-    if (LEGACY_WRITES.test(path)) legacy.push(path);
+    if (request.method() === 'POST') {
+      if (COMMITS.test(path)) posts.push({ body: JSON.parse(request.postData() ?? '{}'), raw: request.postData() ?? '', key: request.headers()['idempotency-key'] });
+      if (LEGACY_WRITES.test(path)) legacy.push(path);
+    }
+    const route = captureReadonlyTraffic ? diagnosticRoute(path) : undefined;
+    if (route && !COMMITS.test(path)) {
+      const record = { method: request.method(), route, requestBody: request.postData() ?? null };
+      boundedPush(readonlyTraffic, record);
+      readonlyByRequest.set(request, record);
+    }
   });
   page.on('response', (response) => {
     if (!COMMITS.test(new URL(response.url()).pathname)) return;
@@ -132,10 +150,22 @@ function observe(page: Page) {
     post.status = response.status();
     void response.json().then((body) => { post.response = body; }).catch(() => {});
   });
-  return { posts, legacy };
+  page.on('response', (response) => {
+    const record = readonlyByRequest.get(response.request());
+    if (!record) return;
+    record.status = response.status();
+    void response.json().then((body) => { record.reply = body; }).catch(() => {});
+  });
+  return { posts, legacy, readonlyTraffic };
 }
 
-async function openChain(page: Page, harness: DirectHarness, seed: ChainSeed) {
+type P1FailureSignals = {
+  pageErrors: string[];
+  consoleErrors: string[];
+  requestFailures: Array<{ method: string; route: string; error: string | null }>;
+};
+
+async function openChain(page: Page, harness: DirectHarness, seed: ChainSeed, failureSignals?: P1FailureSignals) {
   const runtimeResponses: RuntimeDiagnosticResponse[] = [];
   const pageErrors: DiagnosticErrorSignal[] = [];
   const consoleErrors: DiagnosticErrorSignal[] = [];
@@ -146,17 +176,37 @@ async function openChain(page: Page, harness: DirectHarness, seed: ChainSeed) {
     try { route = diagnosticRoute(new URL(response.url()).pathname); } catch { return; }
     if (method && status !== undefined && route) boundedPush(runtimeResponses, { method, route, status });
   });
-  page.on('pageerror', (error) => boundedPush(pageErrors, classifyDiagnosticError(error.message)));
-  page.on('console', (message) => {
-    if (message.type() === 'error') boundedPush(consoleErrors, classifyDiagnosticError(message.text()));
+  page.on('pageerror', (error) => {
+    boundedPush(pageErrors, classifyDiagnosticError(error.message));
+    if (failureSignals) boundedPush(failureSignals.pageErrors, redactDiagnosticText(error.message));
   });
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      boundedPush(consoleErrors, classifyDiagnosticError(message.text()));
+      if (failureSignals) boundedPush(failureSignals.consoleErrors, redactDiagnosticText(message.text()));
+    }
+  });
+  if (failureSignals) {
+    page.on('requestfailed', (request) => {
+      let route: DiagnosticRoute | undefined;
+      try { route = diagnosticRoute(new URL(request.url()).pathname); } catch { return; }
+      if (!route) return;
+      boundedPush(failureSignals.requestFailures, {
+        method: request.method(), route, error: request.failure()?.errorText ? redactDiagnosticText(request.failure()!.errorText!) : null,
+      });
+    });
+  }
   try {
     await page.goto(`${harness.origin}${APP_ENTRY_ROUTE}?localProject=${encodeURIComponent(seed.projectSlug)}&localTimeline=${encodeURIComponent(seed.timelineId)}`);
     await expectConnected(page);
     await expect(firstTrackName(page)).toBeVisible();
     await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).some((owner) => !owner.pending && !owner.intents.length), CEILING).toBe(true);
   } catch (error) {
-    await openChainDiagnostics(page, seed.timelineId, runtimeResponses, pageErrors, consoleErrors);
+    try {
+      await openChainDiagnostics(page, seed.timelineId, runtimeResponses, pageErrors, consoleErrors);
+    } catch {
+      // Failure-only diagnostics must never replace the original assertion failure.
+    }
     throw error;
   }
 }
@@ -287,6 +337,58 @@ function diagnosticConnectionState(value: string | null): DiagnosticConnectionSt
   return (DIAGNOSTIC_CONNECTION_STATES as readonly string[]).includes(value ?? '') ? value as DiagnosticConnectionState : 'unknown';
 }
 
+function diagnosticHead(value: unknown): { revisionId: string; publicationId: string | null } | null {
+  if (!value || typeof value !== 'object') return null;
+  const record = value as Record<string, any>;
+  const acceptedRevisionId = record.data?.accepted_revision_id ?? record.accepted_revision_id;
+  const receiptId = record.receipt?.receipt_id ?? record.data?.receipt?.receipt_id;
+  if (typeof acceptedRevisionId === 'string' && acceptedRevisionId) {
+    return { revisionId: acceptedRevisionId, publicationId: typeof receiptId === 'string' ? receiptId : null };
+  }
+  const candidates = [record.head, record.data?.head, record.primary_timeline?.head, record.data?.primary_timeline?.head,
+    record.receipt, record.data?.canonical_document?.parent_revision];
+  for (const candidate of candidates) {
+    if (!candidate || typeof candidate !== 'object') continue;
+    const revisionId = candidate.revision_id ?? candidate.revisionId;
+    const publicationId = candidate.publication_id ?? candidate.publicationId ?? candidate.receipt_id ?? candidate.receiptId ?? null;
+    if (typeof revisionId === 'string' && revisionId) return { revisionId, publicationId: typeof publicationId === 'string' ? publicationId : null };
+  }
+  return null;
+}
+
+function summarizeFailureOutboxes(records: any[]) {
+  return records.slice(0, DIAGNOSTIC_LIMIT).map((record) => ({
+    ownerId: record.ownerId,
+    generation: record.generation,
+    intents: Array.isArray(record.intents) ? record.intents.slice(0, DIAGNOSTIC_LIMIT).map((intent: any) => ({
+      id: intent.id,
+      basis: redactDiagnosticValue(intent.basis),
+      readyBase: redactDiagnosticValue(intent.readyBase),
+      conflict: redactDiagnosticValue(intent.conflict),
+    })) : [],
+    pending: record.pending ? {
+      intentId: record.pending.intentId,
+      request: record.pending.request ? {
+        method: record.pending.request.method,
+        path: String(record.pending.request.path ?? '').split(/[?#]/, 1)[0],
+        key: record.pending.request.key,
+        body: redactDiagnosticText(String(record.pending.request.body ?? '')),
+      } : null,
+      outcome: redactDiagnosticValue(record.pending.outcome),
+    } : null,
+    rejected: record.pending?.outcome?.kind === 'rejected',
+    acceptedHead: redactDiagnosticValue(record.accepted?.head),
+  }));
+}
+
+async function diagnosticVisibleText(locator: { isVisible(): Promise<boolean>; innerText(): Promise<string> }) {
+  try {
+    return await locator.isVisible() ? redactDiagnosticText((await locator.innerText()).trim()) : null;
+  } catch {
+    return null;
+  }
+}
+
 function summarizeOutboxes(records: any[]) {
   const observed = records.slice(0, DIAGNOSTIC_LIMIT);
   const intentLengths = observed.map((record) => Array.isArray(record.intents) ? record.intents.length : 0);
@@ -337,7 +439,7 @@ async function openChainDiagnostics(
   const panelState = await runtimePanel.getAttribute('data-state').catch(() => null);
   const selectedTimelineId = await provider.getAttribute('data-timeline-id').catch(() => null);
   const alertCount = await page.locator('[role="alert"]:visible').count().catch(() => 0);
-  console.log(`[P1 openChain diagnostics] ${JSON.stringify({
+  logDiagnostic('P1 openChain diagnostics', {
     outboxReadFailed,
     outboxes: outboxSummary,
     ui: {
@@ -353,7 +455,128 @@ async function openChainDiagnostics(
       page: { count: pageErrors.length, known: pageErrors.filter((signal) => signal !== 'unknown') },
       console: { count: consoleErrors.length, known: consoleErrors.filter((signal) => signal !== 'unknown') },
     },
-  })}`);
+  });
+}
+
+async function captureSecondCaseFailureDiagnostics({
+  page,
+  harness,
+  seed,
+  traffic,
+  signals,
+  before,
+  originalClip,
+  rightId,
+  split,
+  agent,
+}: {
+  page: Page;
+  harness: DirectHarness;
+  seed: ChainSeed;
+  traffic: ReturnType<typeof observe>;
+  signals: P1FailureSignals;
+  before: any;
+  originalClip: any;
+  rightId: string;
+  split: CommitPost;
+  agent: any;
+}) {
+  try {
+    let outboxes: unknown = null;
+    let outboxReadFailed = false;
+    try {
+      outboxes = summarizeFailureOutboxes(await commandOutboxes(page, seed.timelineId));
+    } catch {
+      outboxReadFailed = true;
+    }
+    let runtimeHistory: any = null;
+    let historyReadFailed = false;
+    try {
+      const result = await harness.runtimeJson<any>('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/commits?limit=50`);
+      runtimeHistory = result.body;
+    } catch {
+      historyReadFailed = true;
+    }
+    const provider = page.getByTestId('video-editor-provider');
+    const connection = page.getByTestId('runtime-connection-status');
+    const runtimePanel = page.getByTestId('runtime-not-connected');
+    const recovery = page.getByTestId('timeline-command-recovery');
+    const timelineError = page.locator('[data-video-editor-timeline-error="true"]');
+    const providerTimelineId = await provider.getAttribute('data-timeline-id').catch(() => null);
+    const providerProjectId = await provider.getAttribute('data-project-id').catch(() => null);
+    const connectionState = await connection.getAttribute('data-state').catch(() => null);
+    const panelState = await runtimePanel.getAttribute('data-state').catch(() => null);
+    const readonlyTraffic = traffic.readonlyTraffic.slice(0, DIAGNOSTIC_LIMIT).map((record) => ({
+      method: record.method,
+      route: record.route,
+      requestBody: record.requestBody === null ? null : redactDiagnosticText(record.requestBody),
+      status: record.status ?? null,
+      reply: redactDiagnosticValue(record.reply),
+      displayedHead: diagnosticHead(record.reply),
+    }));
+    const commitTraffic = traffic.posts.slice(0, DIAGNOSTIC_LIMIT).map((post, index) => ({
+      index,
+      key: post.key,
+      status: post.status ?? null,
+      request: { raw: redactDiagnosticText(post.raw), body: redactDiagnosticValue(post.body) },
+      reply: redactDiagnosticValue(post.response),
+      replyHead: diagnosticHead(post.response),
+    }));
+    logDiagnostic('P1 second-case failure diagnostics', {
+      case: {
+        title: 'P1 split -> trim new clip: a real Agent move refuses the stale trim and the App rolls back with a message',
+        phase: 'after-source-in-before-original-post-count-wait',
+        projectId: harness.seed.projectId,
+        projectSlug: seed.projectSlug,
+        timelineId: seed.timelineId,
+        sourceId: seed.sourceId,
+        originalClipId: originalClip.id,
+        rightId,
+        expectedPostCount: 2,
+        observedPostCount: traffic.posts.length,
+      },
+      sourceIdentities: {
+        beforeHead: redactDiagnosticValue(before.head),
+        splitHead: diagnosticHead(split.response),
+        agentHead: diagnosticHead(agent),
+        sourceAsset: originalClip.asset,
+      },
+      traffic: { commits: commitTraffic, readonly: readonlyTraffic },
+      basis: traffic.posts.slice(0, DIAGNOSTIC_LIMIT).map((post, index) => ({
+        index,
+        key: post.key,
+        baseRevisionId: (post.body as any).base_revision_id ?? null,
+        basePublicationId: (post.body as any).base_publication_id ?? null,
+        merge: (post.body as any).merge ?? null,
+        reads: redactDiagnosticValue((post.body as any).reads),
+      })),
+      displayedHead: {
+        providerProjectId,
+        providerTimelineId,
+        commitReplies: commitTraffic.map(({ index, replyHead }) => ({ index, head: replyHead })),
+        readonlyReplies: readonlyTraffic.map(({ route, status, displayedHead }) => ({ route, status, head: displayedHead })),
+        runtimeHistoryHead: redactDiagnosticValue(runtimeHistory?.head ?? null),
+        historyReadFailed,
+      },
+      outbox: { readFailed: outboxReadFailed, records: outboxes },
+      ui: {
+        connectionState: diagnosticConnectionState(connectionState ?? panelState),
+        runtimePanelVisible: await visibleDiagnostic(runtimePanel),
+        recoveryVisible: await visibleDiagnostic(recovery),
+        recoveryMessage: await diagnosticVisibleText(recovery),
+        timelineErrorVisible: await visibleDiagnostic(timelineError),
+        timelineErrorMessage: await diagnosticVisibleText(timelineError),
+        alertCount: await page.locator('[role="alert"]:visible').count().catch(() => 0),
+      },
+      errors: {
+        page: signals.pageErrors.slice(0, DIAGNOSTIC_LIMIT),
+        console: signals.consoleErrors.slice(0, DIAGNOSTIC_LIMIT),
+        requestFailures: signals.requestFailures.slice(0, DIAGNOSTIC_LIMIT),
+      },
+    });
+  } catch {
+    logDiagnostic('P1 second-case failure diagnostics', { capture: 'failed' });
+  }
 }
 
 // Source proof only: execution is NOT READY until A2 supplies its existing authoritative
@@ -489,8 +712,9 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
 test('P1 split -> trim new clip: a real Agent move refuses the stale trim and the App rolls back with a message', async ({ page, harness, astrid }) => {
   const seed = await seedOneClip(harness);
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
-  const traffic = observe(page);
-  await openChain(page, harness, seed);
+  const traffic = observe(page, true);
+  const signals: P1FailureSignals = { pageErrors: [], consoleErrors: [], requestFailures: [] };
+  await openChain(page, harness, seed, signals);
   const before = await history(harness, seed);
   const original = (await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}/composition-revisions/${before.head.revision_id}`)).body.payload;
   const originalClip = structuredClone(original.clips[0]);
@@ -516,7 +740,16 @@ test('P1 split -> trim new clip: a real Agent move refuses the stale trim and th
   expect(agentParent.clips[1].app).toEqual({ ...splitDocument.clips[1].app,
     astrid: { fixed_start: true, for: originalClip.to - SPLIT_AT } });
   await trimSourceWindow(page, rightId, '3');
-  await expect.poll(() => traffic.posts.length, CEILING).toBe(2);
+  try {
+    await expect.poll(() => traffic.posts.length, CEILING).toBe(2);
+  } catch (error) {
+    try {
+      await captureSecondCaseFailureDiagnostics({ page, harness, seed, traffic, signals, before, originalClip, rightId, split, agent });
+    } catch {
+      // Failure-only diagnostics must never replace the original assertion failure.
+    }
+    throw error;
+  }
   await expect.poll(() => traffic.posts[1].status, CEILING).not.toBeUndefined();
   expect(traffic.posts[1].status).toBe(409);
   expect(traffic.posts[1].response.details).toMatchObject({ status: 'conflict', reason: expect.any(String),
