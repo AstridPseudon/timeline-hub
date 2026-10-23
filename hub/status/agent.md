@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-23T22:27:25Z | dispatcher heartbeat 11s | live 2 (sol 1, luna 1, other 0) | busy30 10 | status age 2m -->
-# agent board, 2026-10-23T22:24:35Z
+<!-- agent | 2026-10-23T22:29:24Z | dispatcher heartbeat 7s | live 2 (sol 1, luna 1, other 0) | busy30 11 | status age 1m -->
+# agent board, 2026-10-23T22:28:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2-ops-health | stale dispatcher/false orphan diagnosis | Luna readonly; host lead | dispatcher heartbeat09:06 | merged | agt-U2-ops-health-0912 FINAL | Readonly diagnosis+lead0943 confirms hung pip09:07-09:42; one PID terminated; FIFO resumed, no hostrestart. False sandbox orphan diagnosis confirmed; no productchange | ops-only |
@@ -132,7 +132,7 @@
 
 | OPS-bench-store-ACK | installed six-file remote custody | manager readonly | Runtime2012 reviewedkit | merged | read-only2021 ACK | ALL6 actualremoteLIVE+kit+committedHEAD+origin exactproducerSHA/regular0755/PythonAST+bashsyntaxPASS; hub33e6f1d8. No newbench/migration/eviction/legacyadoption, refusedtargets unchanged. | kit946acb descendant33e6 |
 | G5-review-delivery | D30 once-only causal re-review complete | Luna independent FINALPASS | D30 supported harnessfinalmessage | merged | agt-G5-c271-cause-D30-review-2050 FINALPASS | Independentfullfinalreport5072B exactcopy publishedSHA1bb71ceca639; old2a9 offlineRED/only3pins/7rootsequal/exactAgentcandidate/sourcehistory/credential0. UnsupportedAgent-emission attributionRETRACTED. Old2017copiedreport staysUNQUALIFIED; no originalbodyretry/productchange. | evidence-only |
-| A4-after-positives | authentic prepared IMAGE provider witness | Luna author/newtestonly | Appimagee99 reviewed2153 | doing | agt-A4-image-provider-2223 QUEUED | NEW realRuntime-managedPNG/actualfivefieldselection/requestshape fromAppsource; no old3393syntheticpacket/raw13/14/fourrepeat. Exactinputgapreturnedwithoutguessing; Appownsmountedconsumer | branchc36 |
+| A4-after-positives | authentic prepared IMAGE provider witness | Luna authorFAIL/independentreview | exactAppimagee99 | review | agt-A4-image-envelope-review-2228 QUEUED | Author2223 1FAIL3PASS: currentAppintentownership parent vs registeredemptyintent/schema beforeaccept. Actualowner/origin underindependenttrace review; no speculativeRuntimefix. Discardednewtestabsent/logsurvives, no authoritativeimagepositivecredit | no codechange |
 
 | R2-config-history | current production nested config history | Sol author; independent/integrated Luna PASS | EACH reviewed owncommit | merged | agt-R2-config-integrated-2137 FINAL PASS | Actual09b448/tree395801 EXACT reviewed507:137PASS57.59s/exit0/sameprocessAgent+Runtime8eaorigins+hashes/vendor/artifact/diff/clean; outside3429. Independent2126 EACH+union137/quality0 preserved. No G5 retirement ancestry/body rerun | 4b874103e;507a66432;09b448305 |
 | A4-D31-reachability | equivalent production association reachable | App2146/independent2150 PASS | D31YESspecificmigration | merged | App2146+2150; AgentliteralNOsuperseded | ScopedYESrealmountedextension/hostassociation; literalhelperdormantONLY. Actualnormalpersistence stilloldpublishroute; Agent2150 broadNO/v2mountedclaimRETRACTED. D31specificsemanticmigrationauthorized/no genericguard/testdrop | source-only |
