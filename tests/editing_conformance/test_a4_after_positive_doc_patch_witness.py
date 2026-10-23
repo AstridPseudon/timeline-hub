@@ -294,11 +294,22 @@ def test_app_positive_doc_patch_witness_replays_exact_input_through_registered_p
     assert request["commands"][0]["op"] == "doc.patch"
     assert request["commands"][0]["args"]["changes"] == request["steps"][0]["patch"]
     assert request["commands"][0]["created"] == ["parent/clip:clip-0"]
+    assert request["api_version"] == 1
+    assert request["project_id"] == "project-commit"
+    assert request["timeline_id"] == "timeline-1"
+    assert (request["base_revision_id"], request["base_publication_id"]) == ("r0", "p0")
+    assert request["commands"] == [_request(case)["commands"][0]]
+    assert request["steps"] == [_request(case)["steps"][0]]
     assert request["source"] == {"via": "app"}
     assert request["label"] == "Edit timeline"
     assert request["dry_run"] is False
-    assert request.get("reads", []) == []
-    assert request.get("declared_reads", request.get("declaredreads", [])) == []
+    # The mounted packet omits these controls.  Do not turn omission into an
+    # explicit empty declaration by reading them with a default.
+    assert "reads" not in request
+    assert "declared_reads" not in request
+    assert "declaredreads" not in request
+    assert "reads" not in request["commands"][0]
+    assert "reads" not in request["steps"][0]
     assert request["merge"] == "atomic"
 
     captured_request = copy.deepcopy(request)
@@ -334,29 +345,73 @@ def test_app_positive_doc_patch_witness_replays_exact_input_through_registered_p
         )
 
     data = result["data"]
-    assert data["status"] in {"accepted", "rebased"}
+    assert data["status"] in {"accepted", "merged"}
     assert data["base_revision_id"] == "r0"
     assert data["base_publication_id"] == "p0"
     assert data["canonical_document"]["parent_revision"]["revision_id"] != "r0"
+    assert set(data["canonical_document"]) == {
+        "schema_version", "project_id", "timeline_id", "parent_revision",
+        "shot_revisions", "internal_timeline_revisions", "dependency_manifest",
+    }
+    assert data["document_digest"] == _digest(data["canonical_document"])
     assert data["label"] == request["label"]
     assert data["merge_mode"] == request["merge"]
-    assert data["commands"][0] == request["commands"][0]
+    assert data["commands"] == request["commands"]
     assert result["receipt"] is not None
+    assert set(result["receipt"]) == {
+        "receipt_id", "command_kind", "idempotency_key", "request_hash",
+        "project_id", "project_seq", "event_ids", "result", "created_at",
+    }
     assert result["receipt"]["result"] == data
     assert result["receipt"]["idempotency_key"] == context["idempotency_key"]
+    assert result["receipt"]["request_hash"] == context["request_hash"]
     assert context["request"] == captured_request
 
     accepted_records = realm.entries[-1]["records"]
+    assert set(accepted_records) == {
+        "schema_version", "commands", "steps", "label", "merge_mode",
+        "undo_of", "restored_from", "undo_steps",
+    }
     command_record = accepted_records["commands"][0]
     assert accepted_records["label"] == request["label"]
     assert accepted_records["merge_mode"] == request["merge"]
     assert accepted_records["steps"][0]["patch"] == request["steps"][0]["patch"]
+    accepted_step = accepted_records["steps"][0]
+    assert set(accepted_step) == {
+        "id", "label", "intent", "tags", "command_ordinals", "patch", "dependencies",
+    }
+    assert accepted_step["id"] == request["steps"][0]["id"]
+    assert accepted_step["label"] == request["steps"][0]["label"]
+    assert accepted_step["intent"] == request["steps"][0]["intent"]
+    assert accepted_step["tags"] == request["steps"][0]["tags"]
+    assert accepted_step["command_ordinals"] == request["steps"][0]["command_ordinals"]
+    assert any(
+        dependency == {"kind": "scope", "ref": "parent", "path": []}
+        for dependency in accepted_step["dependencies"]
+    )
     assert command_record["command"] == request["commands"][0]
     assert command_record["writes"]
     assert isinstance(command_record["bindings"], list)
     assert isinstance(command_record["dependencies"], list)
-    assert isinstance(command_record["derived_writes"], list)
+    assert command_record["derived_writes"] == []
+    effect_bindings = [binding for binding in command_record["bindings"]
+                       if binding["key"] == "commit.effect"]
+    assert effect_bindings
+    assert all(binding["policy"] == "fixed" for binding in effect_bindings)
+    assert {binding["step_id"] for binding in effect_bindings} == {accepted_step["id"]}
+    assert {binding["effect_ordinal"] for binding in effect_bindings} == set(range(len(accepted_step["patch"])))
+    assert all(set(dependency) == {"key", "kind", "pin", "policy"}
+               for dependency in command_record["dependencies"])
     assert accepted_records["undo_steps"] is None
+    assert accepted_records["undo_of"] == []
+    assert accepted_records["restored_from"] is None
+
+    history_entry = realm.entries[-1]
+    assert history_entry["intent"] == "recorded"
+    assert history_entry["previous"] == before["head"]
+    assert history_entry["revision_id"] == data["accepted_revision_id"]
+    assert history_entry["receipt"] == result["receipt"]
+    assert history_entry["records"] == accepted_records
 
     # These are the positive intended fields; acceptance must retain every
     # untouched sibling/opaque field and apply only the captured patch effects.
@@ -365,9 +420,19 @@ def test_app_positive_doc_patch_witness_replays_exact_input_through_registered_p
     inserted = next(row for row in payload["clips"] if row["id"] == "clip-0")
     expected = request["commands"][0]["args"]["changes"][0]["value"]
     assert inserted == expected
+    if case == "old video with missing hold":
+        assert "hold" not in inserted
+    elif case == "old video with explicit null hold":
+        assert inserted["hold"] is None
+    elif case == "old video with subminimum duration":
+        assert inserted["hold"] == 0.0667
+    else:
+        assert inserted["transition"] == {"type": "crossfade", "duration": 0.5, "opaque": [False, None]}
     assert payload["clips"][0] == source_pins["anchor"]
     assert payload["clips"][2]["at"] == request["commands"][0]["args"]["changes"][1]["value"]
     assert payload["clips"][3] == source_pins["sibling"]
     assert payload["config"]["clips"] == payload["clips"]
     assert payload["registry"]["assets"]["asset-source"] == source_pins["source_asset"]
     assert payload["registry"]["assets"]["asset-peer"] == {"file": "peer.png", "type": "image/png"}
+    registry_change = request["commands"][0]["args"]["changes"][-1]
+    assert payload["registry"]["assets"][registry_change["path"][-1]] == registry_change["value"]
