@@ -10,6 +10,7 @@ until it exits, so the only thing two writers share is the working-copy file on 
 """
 from __future__ import annotations
 
+import copy
 import json
 import os
 import select
@@ -56,8 +57,9 @@ class _FakeTimelines:
 
     def open_composition(self, project, timeline, **_kw):
         head = self._head()
+        bundle = head["bundle"]
         return SimpleNamespace(ok=True, error="", data={
-            "native_inspection": {"project_id": "p", "timeline_id": "t"},
+            "native_inspection": {"project_id": bundle["project_id"], "timeline_id": bundle["timeline_id"]},
             "summary": {"head_revision_id": head["revision_id"]}})
 
     def open_bundle(self, project, timeline, revision_id=None):
@@ -137,6 +139,8 @@ def worker_main() -> None:
         if op == "discard":
             h.discard()
             return None
+        if op == "candidate":
+            return {"bundle": json.loads(json.dumps(h.bundle)), "path": str(h.path) if h.path else None}
         if op == "publish":
             receipt = h.publish("persistence test", client=client, force=bool(req.get("force")))
             return {"merged": receipt.get("merged"), "new_head": receipt.get("new_head"),
@@ -163,6 +167,7 @@ class Writer:
     """One child process holding one working-copy handle. Use as a context manager for a clean exit."""
 
     def __init__(self, world: SimpleNamespace, name: str):
+        self.world = world
         self.name = name
         self.rc: int | None = None
         self.err_path = world.tmp / f"{name}-{len(world.writers)}.err"
@@ -189,6 +194,14 @@ class Writer:
         return json.loads(line) if line else None
 
     def do(self, op: str, **kw):
+        publisher = getattr(self.world, "publish_candidate", None)
+        if op == "publish" and publisher is not None:
+            reply = self.send("candidate")
+            if reply is None:
+                raise AssertionError(f"{self.name}: worker exited during 'candidate': {self.stderr()}")
+            if not reply["ok"]:
+                raise Refused(reply["error"])
+            return publisher(reply["result"])
         reply = self.send(op, **kw)
         if reply is None:
             raise AssertionError(f"{self.name}: worker exited during {op!r}: {self.stderr()}")
@@ -226,7 +239,9 @@ def world(tmp_path, monkeypatch):
     head.write_text(json.dumps({"revision_id": "rev-0", "bundle": timeline()}), encoding="utf-8")
     w = SimpleNamespace(tmp=tmp_path, root=root, head=head, writers=[])
     w.writer = lambda name: Writer(w, name)
-    w.working_copy = lambda: draft_path("p", "t", "main")
+    w.working_copy = lambda: draft_path(
+        json.loads(head.read_text(encoding="utf-8"))["bundle"]["project_id"],
+        json.loads(head.read_text(encoding="utf-8"))["bundle"]["timeline_id"], "main")
     w.move_head = lambda rev, edit: _move_head(head, rev, edit)
     w.read_state = lambda: _read_state(w)
     yield w
@@ -236,6 +251,214 @@ def world(tmp_path, monkeypatch):
             writer.proc.wait(timeout=30)
         if not writer._err.closed:
             writer._err.close()
+
+
+@pytest.fixture
+def genuine_runtime(world, tmp_path):
+    """Bind one persistence publication to the current Runtime commit/public read path."""
+    from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
+    from astrid.sdk.contracts import DomainResult, ErrorObject
+    from astrid.sdk.remote import RemoteTimelines
+    from astrid.sdk.workspace_client import WorkspaceClient
+    from tests.helpers.runtime import use_runtime
+    from tests.helpers.trusted_seed import seed_trusted_parent
+
+    use_runtime()
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.store import RealmStore
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+
+    runtime_root = tmp_path / "runtime-realm"
+    RealmStore.initialize(runtime_root).close()
+    service = RuntimeService(runtime_root)
+    project = service.create_project({"slug": "persistence", "name": "Persistence"})["id"]
+    service.create_timeline(project, "t", idempotency_key="create-persistence")
+
+    bundle = timeline()
+    old_media = {
+        "P": "sha256:c57bc0c5ceafe2c7fff32d0d16a3a4b0b4bb7885238ac376c70dbf53bd669f44",
+        "R": "sha256:7474f8a576b8a7b2da6b1e48dca004217b924a51c24424c072f57504dcfc35fb",
+        "Q": "sha256:26ae3b4bffec466cdee5db4c6efcf5d1a3780b36d7449cf0b0952d71e2cf0b7d",
+    }
+
+    media = {}
+    for name in ("P", "R", "Q"):
+        media[name] = service.ingest(
+            project, name.encode(), original_name=f"{name}.bin",
+            media_type="application/octet-stream", idempotency_key=f"media-{name}",
+        )["data"]["object_id"]
+
+    def replace_media(value):
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if key == "media_id" and isinstance(child, str):
+                    for name, digest in old_media.items():
+                        if child == digest:
+                            value[key] = media[name]
+                            break
+                else:
+                    replace_media(child)
+        elif isinstance(value, list):
+            for child in value:
+                replace_media(child)
+
+    replace_media(bundle)
+    publication = compile_authoring_candidate(bundle).publication
+    publication.update(project_id=project, timeline_id="t", parent_revision_id="rev-0", expected_head=None)
+    publication["parent_composition"]["registry"] = {}
+    for occurrence in publication["parent_composition"]["occurrences"]:
+        occurrence["track"] = "picture"
+    for revision in publication["internal_timeline_revisions"]:
+        revision["timeline_id"] = "t"
+
+    service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+    seed_trusted_parent(service, publication, idempotency_key="seed-persistence")
+
+    def generated(name):
+        def call(*args, **kwargs):
+            if name == "get_project_parent_composition_revision":
+                return service.get_project_parent_composition_revision(*args)
+            if name == "get_project_shot_revision":
+                return service.get_project_shot_revision(*args)
+            if name == "get_project_timeline_revision":
+                return service.get_project_timeline_revision(*args)
+            if name == "list_timeline_commits":
+                return service.list_timeline_commits(*args, authorize=lambda: None, **kwargs)
+            if name == "commit_timeline":
+                return service.commit_timeline(
+                    *args, publisher="editor",
+                    invocation_path=f"/v1/projects/{project}/timelines/t/commit",
+                    authorize=lambda: None, **kwargs,
+                )
+            raise AssertionError(f"unexpected generated operation {name!r}")
+        return call
+
+    generated_client = SimpleNamespace(**{
+        name: generated(name) for name in (
+            "get_project_parent_composition_revision", "get_project_shot_revision",
+            "get_project_timeline_revision", "list_timeline_commits", "commit_timeline",
+        )
+    })
+    transport = WorkspaceClient.__new__(WorkspaceClient)
+    transport._generated = generated_client
+    transport._last_handshake = {"realm_id": service.realm["id"], "actor_id": "editor"}
+    client = SimpleNamespace(
+        _remote=SimpleNamespace(_transport=transport),
+        timelines=RemoteTimelines(transport),
+    )
+
+    def resolve_timeline(requested_project, requested_timeline):
+        if requested_project != project or requested_timeline != "t":
+            return DomainResult.failure(ErrorObject("not_found", "timeline not found", {}))
+        return DomainResult.success({"project_id": project, "timeline_id": "t"})
+
+    client.timelines._resolve_timeline = resolve_timeline
+    client.timelines.open_composition = lambda requested_project, requested_timeline, **_kw: (
+        DomainResult.success({
+            "native_inspection": {"project_id": project, "timeline_id": "t"},
+            "summary": {"head_revision_id": service.get_project_timeline(project, "t")["head_revision_id"]},
+        })
+        if requested_project == project and requested_timeline == "t"
+        else DomainResult.failure(ErrorObject("not_found", "timeline not found", {}))
+    )
+
+    head = client.timelines.history(project, "t", limit=200).data["head"]
+    opened = client.timelines.open_bundle(
+        project, "t", revision_id=head["revision_id"], publication_id=head["publication_id"],
+    )
+    assert opened.ok, opened.error
+    current_bundle = opened.data["bundle"]
+    world.head.write_text(json.dumps({"revision_id": head["revision_id"], "bundle": current_bundle}), encoding="utf-8")
+
+    def publish_candidate(candidate):
+        from astrid.sdk.timeline.sync import CommitConflict
+
+        bundle = candidate["bundle"]
+        saved_path = candidate.get("path")
+        checkout = Checkout.load(saved_path) if saved_path else Checkout(bundle)
+        assert checkout.bundle == bundle
+        try:
+            result = checkout.publish("persistence test", client=client, idempotency_key="persistence-test")
+        except CommitConflict as exc:
+            raise Refused(f"not published: someone published ({exc})") from exc
+        latest = client.timelines.open_bundle(project, "t")
+        assert latest.ok, latest.error
+        moved = world.moved_head_revision
+        return {
+            "merged": f"merged onto head {moved}" if result.get("merged") else None,
+            "new_head": result.get("new_head"), "candidate": latest.data["bundle"],
+            "runtime_touched": True, "result": result,
+        }
+
+    def move_head(_revision, edit):
+        from astrid.sdk.timeline.emitter import emit_document_commands
+
+        history = client.timelines.history(project, "t", limit=200)
+        current = history.data["head"]
+        opened = client.timelines.open_bundle(
+            project, "t", revision_id=current["revision_id"], publication_id=current["publication_id"],
+        )
+        assert opened.ok, opened.error
+        before = opened.data["bundle"]
+        candidate = copy.deepcopy(before)
+        edit(candidate)
+        commands = emit_document_commands(before, candidate)
+        result = client.timelines.commit(
+            project, "t", {
+                "api_version": 1, "project_id": project, "timeline_id": "t",
+                "base_revision_id": current["revision_id"],
+                "base_publication_id": current["publication_id"],
+                "commands": commands, "label": "persistence peer", "source": {"via": "python"},
+                "merge": "atomic",
+                "steps": [{"id": "edit", "label": "persistence peer", "intent": "",
+                           "tags": [], "command_ordinals": list(range(len(commands))),
+                           "patch": [change for call in commands for change in call["args"]["changes"]],
+                           "reads": [{"kind": "scope", "ref": "timeline", "path": []}]}],
+            }, idempotency_key="persistence-peer",
+        )
+        assert result.ok, result.error
+        latest = client.timelines.open_bundle(project, "t")
+        assert latest.ok, latest.error
+        world.moved_head_revision = _revision
+        world.head.write_text(json.dumps({"revision_id": _revision,
+                                          "bundle": latest.data["bundle"]}), encoding="utf-8")
+
+    world.publish_candidate = publish_candidate
+    world.move_head = move_head
+    world.moved_head_revision = None
+    try:
+        yield SimpleNamespace(service=service, client=client, project=project, head=head,
+                              bundle=current_bundle)
+    finally:
+        service.close()
+
+
+def test_genuine_persistence_fixture_binds_exact_pair_and_refuses_bad_scope_without_writes(genuine_runtime):
+    env = genuine_runtime
+    history = env.client.timelines.history(env.project, "t", limit=200)
+    head = history.data["head"]
+    entry = next(row for row in history.data["items"] if row["publication_id"] == head["publication_id"])
+    opened = env.client.timelines.open_bundle(
+        env.project, "t", revision_id=head["revision_id"], publication_id=head["publication_id"],
+    )
+    assert opened.ok and opened.data["revision_id"] == head["revision_id"]
+    bundle = opened.data["bundle"]
+    document = bundle["source_mapping"]["_runtime_document"]
+    assert bundle["base_parent"]["publication_id"] == head["publication_id"]
+    assert document == entry["receipt"]["result"]["canonical_document"]
+    assert document["parent_revision"]["content_digest"] == bundle["base_parent"]["content_digest"]
+    assert {row["shot_id"] for row in document["shot_revisions"]} == {"A", "B"}
+    assert {row["timeline_id"] for row in document["internal_timeline_revisions"]} == {"t"}
+
+    before = tuple(env.service.store.conn.iterdump())
+    refused = env.client.timelines.open_bundle("other-project", "t")
+    assert not refused.ok
+    missing = env.client.timelines.commit(
+        env.project, "t", {"project_id": env.project, "timeline_id": "t"},
+        idempotency_key="missing-fields",
+    )
+    assert not missing.ok
+    assert tuple(env.service.store.conn.iterdump()) == before
 
 
 def timeline() -> dict:
@@ -444,7 +667,7 @@ def test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_
 
 # ---------------------------------------------------------------- 5. stale base after restart
 
-def test_publish_after_a_restart_merges_other_clips_onto_the_moved_head(world):
+def test_publish_after_a_restart_merges_other_clips_onto_the_moved_head(world, genuine_runtime):
     with world.writer("A") as a:
         a.do("draft")
         a.do("nudge", clip="a-rocket", seconds=0.5)
@@ -463,6 +686,7 @@ def test_publish_after_a_restart_merges_other_clips_onto_the_moved_head(world):
     assert merged.clip("b-type").params["text"] == "LIVE!"  # their change, kept
 
 
+@pytest.mark.usefixtures("genuine_runtime")
 def test_publish_after_a_restart_refuses_a_clip_both_sides_changed(world):
     with world.writer("A") as a:
         a.do("draft")

@@ -210,28 +210,74 @@ Use `timelines check <timeline> --project <project> --sweep` for bounded checks 
 
 Use `timelines log <timeline> --project <project> --verify --json` to verify the journal hash chain. A broken chain returns 1 with `error.code: validation_error`; a missing journal returns 0. See the [timeline editing guide](../../../../docs/timeline-editing-guide.md) for filters and details.
 
-For native edits, use the command registry and its durable outbox:
+Use the current CLI parser and ask its help before choosing an edit shape:
 
 ```bash
+python3 -m astrid timelines --help
 python3 -m astrid timelines show <timeline> --project <project> --json
-python3 -m astrid timelines edit move <timeline> --project <project> \
+python3 -m astrid timelines edit <timeline> --project <project> \
   --clip parent/clip:<id> --on 1.5 --idempotency-key move-42 --json
-python3 -m astrid timelines edit track-label <timeline> --project <project> \
-  --track parent/track:<id> --set "Dialogue" --idempotency-key label-42 --json
+python3 -m astrid timelines edit <timeline> --project <project> \
+  --clip parent/clip:<id> --trim-in 0.5 --trim-out 3.0 \
+  --idempotency-key trim-42 --json
+python3 -m astrid timelines apply <timeline> --project <project> <sheet-file> \
+  --idempotency-key sheet-42 --json
+python3 -m astrid timelines undo <timeline> --project <project> \
+  --commit <receipt-id> --idempotency-key undo-42 --json
+python3 -m astrid timelines redo <timeline> --project <project> \
+  --commit <undo-receipt-id> --idempotency-key redo-42 --json
+python3 -m astrid timelines commit <timeline> --project <project> \
+  --file <candidate.json> -m "Batch edit" \
+  --idempotency-key commit-42 --json
 ```
 
-The session captures original guards once, persists the exact request and
-retry identity, and does not recapture against a newer head after a lost
-acknowledgement. `--dry-run` validates without accepting a publication.
+`show` is the read-only scope/head lookup. The direct `edit` forms above call
+the existing `TimelineSession.move` or `TimelineSession.trim` caller. A sheet
+with supported clip/track rows calls `NativeSheet.load(session).apply`; an
+unsupported or detached sheet stays a working-copy operation and must be
+reported as such. `commit --file` is the complete detached-document caller:
+it sends the candidate through the same `TimelineSession` commit boundary.
+`undo --commit` sends one guarded `timeline.inverse`; `redo --commit` selects
+the receipt created by that undo. Use `--steps '{"<receipt-id>":["<step-id>"]}'`
+with either command to request per-step reversal. Use the command-specific
+`--help` output for the exact flags; these are the only caller forms shown
+here.
 
-`status`, `checkout`, cut-sheet `edit`, `check`, and `publish` remain available
-for detached working-copy capabilities that have not migrated. `publish` is a
-held legacy whole-candidate writer; `apply --native` is the only sheet route
-to use when its operation is covered. Do not use `--force` or the legacy
-three-way merge as a substitute for a native command. A dirty draft is kept
-when `checkout --fresh` refuses, and unsupported edits must be reported rather
-than silently routed through that writer. There is no passive timeline-scoped
-latest-render reader here, so `status` has no `--render` option.
+All of these connected writes use the durable session outbox. The frozen
+request keeps the exact `api_version`, `project_id`, `timeline_id`,
+`base_revision_id`/`base_publication_id` pair, `commands`, `label`, `steps`
+(including each step's `patch` and optional `reads`), `merge` (`fields` or
+`atomic`), declared batch `reads`, `idempotency_key`, `dry_run`, and caller
+`source` (`via: cli` for direct edit/undo/redo, `via: sheet` for a supported
+sheet, and `via: python` for the detached document caller). Optional `rationale` and
+`group_id` are retained when the production caller supplies them. The request
+is never rebuilt from a newer head: after a lost or ambiguous acknowledgement,
+retry the same body with the same key. A refusal is terminal for that request;
+an ambiguous transport result leaves it in the outbox for exact retry.
+
+With `--json`, the top-level envelope is exactly `ok`, `data`, `error`,
+`receipt`, and `idempotency_key`. An accepted or merged result retains the
+complete `canonical_document` (parent revision, shot revisions, internal
+timeline revisions, and the `dependency_manifest` for shots,
+internal_timelines, media, and documents), along with the submitted and
+authoritative `commands`, `id_map`, provider/compiler versions, base and
+previous head pairs, `accepted_revision_id`, `rebased_onto`, `merge_mode`,
+`steps`, `source`, `label`, `rationale`, and `group_id`. Its full `receipt`
+contains `receipt_id`, `command_kind`, `idempotency_key`, `request_hash`,
+`project_id`, `project_seq`, `event_ids`, `result`, and `created_at`.
+Recorded history preserves the label/steps and each command record's writes,
+reads, selections, bindings, created identities, dependencies, and derived
+writes/effects; undo history also retains `undo_of` and `undo_steps`.
+
+A dry run returns `data.status: "preview"`, `would_status: "accepted"` or
+`"merged"`, the evaluated `head`, the full `canonical_document`/commands/steps and
+their reads/dependencies, and `receipt: null`; it has no accepted revision or
+receipt. A refused or invalid reply keeps the structured `error.code` and
+`error.details` including `path`, `head`/`current` when available, `hint`,
+and `suggested_command`. A conflict reply identifies the changed base/head
+and conflicts; a merged reply includes the landed canonical document and full
+receipt. Read accepted history with `timelines history <timeline>
+--project <project> --json` before selecting receipts for undo or redo.
 
 
 ## Agent operating contract
