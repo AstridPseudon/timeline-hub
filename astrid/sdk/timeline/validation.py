@@ -31,7 +31,7 @@ def _fail(path: str, message: str) -> NoReturn:
     raise FinalCandidateError(f"{path}: {message}")
 
 
-def _number(value: Any, path: str, *, positive: bool = False) -> Fraction:
+def _validation_number(value: Any, path: str, *, positive: bool = False) -> Fraction:
     if isinstance(value, bool) or not isinstance(value, (int, float, Fraction)):
         _fail(path, "must be a finite number")
     try:
@@ -61,7 +61,7 @@ def _fps(value: Any, path: str) -> Fraction:
         if numerator <= 0 or denominator <= 0:
             _fail(path, "fps rational must be positive")
         return Fraction(numerator, denominator)
-    return _number(value, path, positive=True)
+    return _validation_number(value, path, positive=True)
 
 
 def _fps_values(bundle: Mapping[str, Any]) -> list[tuple[str, Fraction]]:
@@ -165,33 +165,33 @@ def _identity_rows(rows: Any, path: str, key: str) -> dict[str, Mapping[str, Any
 def _clip_duration(clip: Mapping[str, Any], path: str) -> tuple[Fraction, Fraction]:
     at = clip.get("at")
     at_ms = clip.get("at_ms")
-    if at is not None and at_ms is not None and _number(at, f"{path}.at") != _number(at_ms, f"{path}.at_ms") / 1000:
+    if at is not None and at_ms is not None and _validation_number(at, f"{path}.at") != _validation_number(at_ms, f"{path}.at_ms") / 1000:
         _fail(path, "at and at_ms timing codecs disagree")
     if at is None and at_ms is not None:
-        at = _number(at_ms, f"{path}.at_ms") / 1000
+        at = _validation_number(at_ms, f"{path}.at_ms") / 1000
     if at is None:
         _fail(path, "requires an authored start")
-    start = _number(at, f"{path}.at")
+    start = _validation_number(at, f"{path}.at")
     if start < 0:
         _fail(f"{path}.at", "must not be negative")
-    speed = _number(1 if clip.get("speed") is None else clip["speed"], f"{path}.speed", positive=True)
-    source_start = _number(0 if clip.get("from") is None else clip["from"], f"{path}.from")
+    speed = _validation_number(1 if clip.get("speed") is None else clip["speed"], f"{path}.speed", positive=True)
+    source_start = _validation_number(0 if clip.get("from") is None else clip["from"], f"{path}.from")
     if source_start < 0:
         _fail(f"{path}.from", "must not be negative")
     source_to = clip.get("to")
     if source_to is not None:
-        source_end = _number(source_to, f"{path}.to")
+        source_end = _validation_number(source_to, f"{path}.to")
         if source_end <= source_start:
             _fail(path, "source interval must be half-open and non-empty")
     hold = clip.get("hold")
     if hold is not None:
-        source_length = _number(hold, f"{path}.hold", positive=True)
+        source_length = _validation_number(hold, f"{path}.hold", positive=True)
     else:
         if source_to is None:
             duration = clip.get("duration")
             if duration is None:
                 _fail(path, "requires hold or a complete source interval")
-            source_length = _number(duration, f"{path}.duration", positive=True)
+            source_length = _validation_number(duration, f"{path}.duration", positive=True)
         else:
             source_length = source_end - source_start
     if source_length <= 0:
@@ -203,7 +203,7 @@ def _asset_duration(asset: Mapping[str, Any]) -> Fraction | None:
     for key, scale in (("duration", 1), ("duration_seconds", 1), ("duration_ms", 1000)):
         value = asset.get(key)
         if value is not None:
-            return _number(value, f"asset.{key}") / scale
+            return _validation_number(value, f"asset.{key}") / scale
     return None
 
 
@@ -262,11 +262,11 @@ def _validate_clip_list(
                                      ("media_id", "object_id", "type", "duration", "duration_seconds", "duration_ms"))):
                 continue
             _, duration = _clip_duration(clip, clip_path)
-            source_start = _number(0 if clip.get("from") is None else clip["from"], f"{clip_path}.from")
+            source_start = _validation_number(0 if clip.get("from") is None else clip["from"], f"{clip_path}.from")
             source_duration = _asset_duration(assets[asset_key])
             # The authored source window is independent of an image's hold.
-            source_end = (_number(clip["to"], f"{clip_path}.to") if clip.get("to") is not None
-                          else source_start + duration * _number(
+            source_end = (_validation_number(clip["to"], f"{clip_path}.to") if clip.get("to") is not None
+                          else source_start + duration * _validation_number(
                               1 if clip.get("speed") is None else clip["speed"], f"{clip_path}.speed", positive=True))
             if source_duration is not None and source_end > source_duration:
                 _fail(clip_path, "source interval exceeds the retained asset bounds")
@@ -546,9 +546,9 @@ def validate_final_candidate(
         shot_id = cast(str, shot_id_value)
         if shot_id not in shots:
             _fail(f"candidate.placements[{occurrence_id!r}].shot_id", "references a missing shot")
-        duration_ms = _number(placement.get("duration_ms"), f"candidate.placements[{occurrence_id!r}].duration_ms", positive=True)
+        duration_ms = _validation_number(placement.get("duration_ms"), f"candidate.placements[{occurrence_id!r}].duration_ms", positive=True)
         start_ms = (placement.get("placement") or {}).get("start_ms", placement.get("at_ms", 0))
-        start = _number(start_ms, f"candidate.placements[{occurrence_id!r}].placement.start_ms") / 1000
+        start = _validation_number(start_ms, f"candidate.placements[{occurrence_id!r}].placement.start_ms") / 1000
         if start < 0:
             _fail(f"candidate.placements[{occurrence_id!r}].placement.start_ms", "must not be negative")
         bound = duration_ms / 1000
