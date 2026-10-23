@@ -523,19 +523,31 @@ def test_stale_anchor_refuses_when_intervening_window_excludes_selected_word(rec
 
     case = recipe
     selected = pick(case, 1)
-    anchored = case.submit(case.request([selected]), "anchor-before-window")
-    head = case.head()
+    base = case.head()
     before = bundle(case)
+    legacy_path = ["parent", "clips", "id:card", "app", "astrid", "on"]
+    assert before["parent"]["clips"][0]["app"]["astrid"]["on"] == retained_inputs.DECLARATION
+    assert "word_anchors" not in before["parent"]["clips"][0]["app"]["astrid"]
+    # Keep the original captured request identity/facts auditable even though
+    # D16 makes the source-window edit itself the first rejected operation.
+    captured = copy.deepcopy(case.request([selected], base))
+    assert captured["base_revision_id"] == base["revision_id"]
+    assert captured["base_publication_id"] == base["publication_id"]
+    assert captured["commands"][0]["args"]["choice"] == {
+        "source": "occurrence:occ/clip:voice", "document": case.pin,
+        "word_ids": [case.source["content"]["segments"][0]["words"][1]["id"]]}
     with pytest.raises(RuntimeErrorBase, match="outside the half-open source window") as error:
-        case.submit(case.request([window_command(monkeypatch, 4, 6)]), "window-orphans-anchor")
+        # Old accepted-window -> stale-replay mapping: the same window request
+        # now refuses at the original base because it would orphan the legacy
+        # declaration; the captured stale request is retained above, not run.
+        case.submit(case.request([window_command(monkeypatch, 4, 6)], base), "trim-before-anchor")
     assert error.value.details["reason"] == "invalid_anchor"
     assert error.value.details["status"] == "invalid"
-    assert error.value.details["path"] == [
-        "parent", "clips", "id:card", "app", "astrid", "word_anchors", "on"]
-    assert case.head() == head
-    assert authored(bundle(case))[KEY] == selected["args"]
-    assert bundle(case)["source_mapping"] == before["source_mapping"]
-    assert anchored["data"]["canonical_document"] == case.documents[head["revision_id"]]
+    assert error.value.details["path"] == legacy_path
+    # The original no-write/head/source assertions remain on the earlier
+    # refusal; no authored word_anchors reference is created as a substitute.
+    assert case.head() == base
+    assert bundle(case) == before
 
 
 @pytest.mark.parametrize("damage,match", [
