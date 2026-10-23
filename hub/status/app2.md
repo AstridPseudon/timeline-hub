@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-23T17:41:20Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 3m -->
-# app2 board, 2026-10-23T17:37Z
+<!-- app2 | 2026-10-23T17:43:11Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 1m -->
+# app2 board, 2026-10-23T17:42Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | P1 | Original mounted mixed chain | Sol OPS PASS; independent evidence Luna1649 | App noPOST/recovery causes; liveevidenceaudit | blocked:app | service22122 FINALFAIL2/510s; review1649FINALPASS evidence-quality / actualFAIL2 | Actual4c4/98ef/259 original2executed. Corrected rawApp passes; firstnewfailure recoveryretryPOST894-5 afterlostACK/restart, secondstillonly1POST943. ParseablepriorityJSON nowretained; no fabricatedcause/currentGO | App4c4/Agent98ef/Runtime259 |
@@ -25,7 +25,7 @@
 | P3 | Original Gate5 journey | Sol OPS1625 PASS | P1service22122 terminal; actualfullseedGREEN | blocked:runtime | service20942 / Sol1653 FINALPASS | Gate5originalinvocation/grep protected, selectedcurrent sourceguards/55tailguardsPASS. Samepublicdeferredbootstrap/full21+history beforebody; actualseedNOTRUN | App4c4 / Agentbac / Runtimed9e |
 | P4 | CLI/Python/sheet/ten notes/conflict/rerun | Sol/Luna independent; service | resolved | merged | integrated17739 / single28012 / ten11615 | DONE: singlePASS1/all66; tenPASS1/all10UndoRedo/restart/show/history; rerunPASS1/6.18s 200-409-200/key/canonical/records/stepdeps. ExactAgent543d/treef6cda + Runtimea5d; cache14121 exacttree HIT disclosed | a914;e837;543d |
 
-| P1-correlated-diagnostics | Both-case failure/UI/SourceIn evidence | HARD Sol after second Luna FAIL | current4c4; original22122 evidence | doing | ap2-P1-correlated-collector-sol-1730 | SECOND independentLunaFAIL1722: generichead/asset serialization + unguardedeventcallbacks. HARD Sol1730 freshcurrent correction; failed439f/4578/compose NEVERmerges | 4578 HELD |
+| P1-correlated-diagnostics | Both-case failure/UI/SourceIn evidence | HARD Sol author; independent Luna | current58bf; author10390 PASS12 | review | ap2-P1-correlated-sol-review-1741 | Sol10390 fresh one-owncommit after second LunaFAIL; author12/12 actualNode20 + Root/App/Node type/lint/list2. Both approved810a first case and original second suffix exact; review must independently audit actual callers/all11 listeners/allowlist/budget. No live cause/GO | 10390cb9c |
 
 | P1-recovery-invocation | D18 actual automatic owner recovery observer | Luna | Appindependent1705 sourcePASS | merged | ap2-P1-auto-recovery-invocation-1718 | Independent1724 FINALPASS preserved full assertion map/unit1/type/lint/Node20 list2. Owner MERGED58bf; manager exact entire tree07f999 matches reviewed810a. Source qualification only; no live chain GO | 810a1e764 -> 58bf24ce6f |
 
@@ -49,3 +49,5 @@ Cleanup17:33: sanctioned sweep3 completed removed2 stale temporary directories; 
 Checkpoint17:35: H6 newRuntime17:29 board consumed immediately: fullseed candidatea00e009df in independent1728 review (authentic21command/21step/fullrawseedGREEN67PASS); broader437PASS1FAIL remains oldHEAD transcriptcapture, separate Agent owner. No false438PASS/newrelease. App810a request reads PENDINGownerreview. Solcollector1730 now12/12purePASS, cumulativequality/sourcechecks in progress. No new bench churn before new reviewed producer tuple selection.
 
 Checkpoint17:37: App ownerreceipt automaticrecovery810a MERGED58bf24ce6fc57c7477a7fa45d94b20dfb12c5e92 consumed immediately. Whole tree07f99905cb822656a2d3675a782b72e6c1fb5ecb EXACT reviewed810a (empty diff); independent1724 evidence reused without semantic re-review. Solcollector1730 started4c4 and includes exactapproved810a recovery; final cumulative review must bind new58bf baseline/committed delta, no borrowedfailed ancestry. Runtime a00e independent1728 still reviewing, currentd9e not changed.
+
+Checkpoint17:42: Sol1730 terminal own10390cb9ca7333693168dac2e0904281ef45744f consumed immediately; independentLuna1741 queued onexactbranch. Fresh12Node20PASS/3types/lint/list2/identity; extra17strict-e2e diagnostics inherited unchanged, not clean-e2e claim. Current58bf..10390 owncommit-only log exactONE and only3 allowedpaths. Review full cumulative actual failurecaller/11 no-throw listeners, strict allowlist/no-leak and preserved40item16KiB critical packet before remote merge. No browser body/knownfailure replay.
