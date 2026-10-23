@@ -1,0 +1,3 @@
+# Viewing: V4 original54 dispatched on adopted Agentf894
+
+Agent board confirms normal34 strict-envelope adoption HOME MERGED f894c3c9dda25ab03527eeb7f52da5da31d627c1/tree d24f25a65be282a56b3fcd814a8718a3c0587b9b EXACT independently reviewed723b; local tl/integration matches. Viewing dispatched vw-V4-wire34-integrated immediately03:57, --base f894 --net Luna high timeout45. ONLY original54 tests/editing_conformance/test_native_word_anchor.py against exact compatible Runtimead823. Read-only, no source/test/generated/pin changes, no duplicate catalog/native14/full/browser/farm. Terminal report will be copied flat. Original54 not yet passed; V1/V3 scoped completion unchanged.
