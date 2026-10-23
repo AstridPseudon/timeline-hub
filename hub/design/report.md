@@ -37,3 +37,15 @@
 See [the detailed diagnosis](design/runtime-private017-initial-order-diagnosis-1015.md)
 for the source trace, literal key mapping, preflight identities, and exact
 central result.
++
+
+## P1 current R1 real-document corpus (2026-10-23)
+
+- **PASS** — Agent base/current tree `b7a32c5238f0948a913869b06437f174a277172c`; donor `52e9c0ea659123c86d6cbadc94f78ef972d74308`; original packet `d8e1578bd9f717eb975addb50c2654de70815475`; prior independent PASS42.
+- Verified all 15 permitted packet blobs against donor: 15/15 exact, 0 mismatches. Imported only the three older/missing packet paths: provider test, request test, and `doc_patch_requests.json`. No product/schema/generated/pin/lock/launcher/outside-test/skip/xfail changes.
+- Required pytest: 42 passed, 1 warning, exit 0. Ruff, mypy, and `git diff --check`: passed, exit 0. Logs: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-P1-current-R1-corpus/{pytest,ruff,mypy,diff-check}.log`.
+- Evidence uses the production Agent caller `create_runtime_commit_service().commit(...)` via the existing detached service. Exact command/guards/physical roots/created IDs, absence-vs-null, collection `selection_changed`, same-field `value_conflict`, opaque/order/alias/trim/inverse assertions remain covered.
+- Detached disjoint-head evidence is legacy `rebased`, not v2 `merged`. Mounted App/HTTP chain and Runtime HTTP publication remain unexecuted; product merge eligibility remains Agent-owned. No full/browser/heavy/socket suite ran.
+
+See `design/handoff-ap2-P1-current-R1-corpus.md` for the detailed handoff.
+
