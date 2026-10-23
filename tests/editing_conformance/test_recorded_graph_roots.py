@@ -11,6 +11,7 @@ from astrid.sdk.timeline._collections import AcceptedRecords
 from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, present
 from astrid.sdk.timeline._recording import Recording
 from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+from astrid.sdk.timeline.inverse import coalesce
 from astrid.sdk.timeline.rebase import replay
 from tests.sdk.test_timeline_commit_provider_document import document_fixture
 
@@ -496,15 +497,43 @@ def test_generic_net_zero_root_edges_inverse_redo_preserve_absence_and_created_f
     records = copy.deepcopy(plan.records)
     assert document_from_bundle(plan.bundle) == document_fixture()
     unchanged = [{'ref': root['ref'], 'path': [], 'before': ABSENT, 'after': ABSENT}
-                 for root in reversed(root_values())]
+                 for root in root_values()]
+    sequential = [dict(write, after=present(root['value']))
+                  for write, root in zip(unchanged, root_values())]
+    sequential += [dict(write, before=write['after'], after=ABSENT)
+                   for write in reversed(sequential)]
+    created = [{key: root[key] for key in ('ref', 'kind', 'owner')} for root in root_values()]
+    assert plan.records[0]['writes'] == sequential[:2]
+    assert plan.records[1]['writes'] == sequential[2:]
+    assert plan.records[1]['created'] == []
     undone = commands.execute(plan.bundle, [inverse_command()], inverse_records=plan.records)
-    assert undone.records[0]['writes'] == unchanged
-    assert undone.records[0]['created'] == []
+    # C0 requires child-before-owner restoration, then owner-before-child
+    # removal, even when the boundary projection has no reachable new roots.
+    assert undone.records[0]['writes'] == sequential
+    assert coalesce(undone.records) == unchanged
+    assert undone.records[0]['created'] == created
     assert document_from_bundle(undone.bundle) == document_fixture()
     redone = commands.execute(undone.bundle, [inverse_command()], inverse_records=undone.records)
-    assert redone.records[0]['writes'] == list(reversed(unchanged))
-    assert redone.records[0]['created'] == []
+    assert redone.records[0]['writes'] == sequential
+    assert coalesce(redone.records) == unchanged
+    assert redone.records[0]['created'] == created
     assert document_from_bundle(redone.bundle) == document_fixture()
+    for result in (plan, undone, redone):
+        for root in root_values():
+            assert State(result.bundle).get(root['ref'], []) == ABSENT
+            assert {'ref': root['ref'], 'path': [], 'state': ABSENT} in result.records[0]['reads']
+        for index in range(2):
+            damaged = copy.deepcopy(result.records)
+            value = damaged[0]['writes'][index]['after']['value']
+            if index == 0:
+                value['payload']['name'] = 'Changed intermediate shot'
+            else:
+                value['gain'] = 0
+            head = copy.deepcopy(result.bundle)
+            before = copy.deepcopy(head)
+            with pytest.raises(CommandError) as error:
+                commands.execute(head, [inverse_command()], inverse_records=damaged)
+            assert error.value.kind == 'inverse_conflict'
+            assert head == before
     assert plan.records == records
-    assert plan.records[0]['created'] == [
-        {key: root[key] for key in ('ref', 'kind', 'owner')} for root in root_values()]
+    assert plan.records[0]['created'] == created

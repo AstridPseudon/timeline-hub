@@ -157,4 +157,3 @@ def physical_content(bundle):
     result['source_mapping']['placements'] = copy.deepcopy(result['base_placements'])
     result['base_parent_payload'] = copy.deepcopy(result['parent'])
     return result
-

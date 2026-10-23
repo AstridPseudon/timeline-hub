@@ -539,6 +539,8 @@ def test_provider_preview_reads_exact_parent_media_selections_without_accepting(
     plan, verified = lower(before)
     realm = DetachedRealm(document_from_bundle(before))
     context = realm.context(plan.commands, dry_run=True)
+    expected = commands.execute(before, plan.commands, verified_media=verified,
+                                commit_request=context['request'], evaluated_head=realm.head)
     observed = []
 
     class ParentMediaPort(DetachedPort):
@@ -560,6 +562,6 @@ def test_provider_preview_reads_exact_parent_media_selections_without_accepting(
     else:
         prepared = create_runtime_commit_service().commit(context, ParentMediaPort(realm, context))
         assert observed == [row['selection'] for row in verified]
-        assert prepared['records']['commands'] == plan.records
+        assert prepared['records']['commands'] == expected.records
         assert prepared['canonical_document'] == document_from_bundle(plan.bundle)
     assert not realm.accepted

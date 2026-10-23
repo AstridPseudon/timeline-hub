@@ -127,10 +127,12 @@ def test_source_copy_refuses_bad_authority_or_claims_without_writes(source_copy,
         call['created'] = ['shot:forged']
     before = document('destination')
     history = service.list_timeline_commits(before['project_id'], 'destination', authorize=lambda: None)
+    stored = tuple(service.store.conn.iterdump())
     with pytest.raises(RuntimeErrorBase):
         commit('destination', request('destination', [call]), damage)
     assert document('destination') == before
     assert service.list_timeline_commits(before['project_id'], 'destination', authorize=lambda: None) == history
+    assert tuple(service.store.conn.iterdump()) == stored
 
 
 def test_production_duplicate_caller_uses_authenticated_semantic_and_archives_failures(source_copy, tmp_path, monkeypatch):
@@ -294,7 +296,6 @@ def saved_source(tmp_path, monkeypatch):
 
 # D17 must restore repeated physical roots through guarded inverse without
 # inventing config mirrors or relaxing authored guards. Single-shot undo is green.
-@pytest.mark.xfail(strict=True, reason='D17 repeated-copy inverse needs authenticated physical-root normalization')
 def test_repeated_source_copy_real_port_idempotency_and_guarded_inverse(saved_source):
     from astrid.sdk.timeline import open as open_timeline
     from astrid.sdk.timeline_duplicate import duplicate_timeline
@@ -325,3 +326,74 @@ def test_repeated_source_copy_real_port_idempotency_and_guarded_inverse(saved_so
     timeline.undo(publications=[undone['receipt']['receipt_id']], idempotency_key='redo-copy')
     assert document('copy') == copied
     assert document('t') == original
+
+
+@pytest.mark.parametrize('accepted_before_disconnect', [False, True])
+def test_source_copy_unknown_outcome_retains_destination_and_exact_retry(saved_source, accepted_before_disconnect):
+    from astrid.sdk.timeline import open as open_timeline
+    from astrid.sdk.timeline._common import TimelineEditError
+    from astrid.sdk.timeline_duplicate import duplicate_timeline
+    from tests.sdk.test_timeline_restructure import flat_film
+
+    source = flat_film()
+    source['parent']['clips'] = []
+    source['parent']['registry'] = {}
+    source['shots']['film']['internal_timeline']['clips'] = []
+    source['shots']['film']['internal_timeline']['registry'] = {'assets': {}}
+    client, project, document, bodies = saved_source(source)
+    original = document('t')
+    generated = client._remote._transport._generated
+    send, archive = generated.commit_timeline, client.timelines.archive
+    sent, archived, accepted = [], [], []
+
+    def disconnect(p, t, body, *, idempotency_key):
+        sent.append((copy.deepcopy(body), idempotency_key))
+        if len(sent) == 1:
+            if accepted_before_disconnect:
+                accepted.append(send(p, t, body, idempotency_key=idempotency_key))
+            raise TimeoutError('copy acknowledgement unavailable')
+        return send(p, t, body, idempotency_key=idempotency_key)
+
+    def record_archive(p, t):
+        archived.append(t)
+        return archive(p, t)
+
+    generated.commit_timeline = disconnect
+    client.timelines.archive = record_archive
+    with pytest.raises(TimelineEditError, match='outcome.*unknown'):
+        duplicate_timeline(project, 't', slug='copy', client=client)
+    assert archived == []
+    restarted = open_timeline(project, 'copy', client=client).session
+    with restarted.outbox.locked():
+        pending = restarted._state()
+    assert pending['flight']['key'] == sent[0][1]
+    assert pending['pending'] == sent[0][0]['commands']
+    retried = restarted.flush()
+    assert sent[1] == sent[0]
+    if accepted:
+        assert retried['receipt'] == accepted[0]['receipt']
+    history = client.timelines.history(project, 'copy', limit=200).data['items']
+    assert len([entry for entry in history if entry['intent'] != 'bootstrap']) == 1
+    assert len(document('copy')['parent_revision']['payload']['occurrences']) == 1
+    assert document('t') == original
+    with restarted.outbox.locked():
+        final = restarted._state()
+    assert final['pending'] == [] and final['flight'] is None
+
+
+def test_source_copy_real_port_preserves_raw_parent_config_presence(saved_source):
+    from astrid.sdk.timeline_duplicate import duplicate_timeline
+    from tests.sdk.test_timeline_restructure import flat_film
+
+    source = flat_film()
+    source['parent']['clips'] = []
+    source['parent']['registry'] = {}
+    source['shots']['film']['internal_timeline']['clips'] = []
+    source['shots']['film']['internal_timeline']['registry'] = {'assets': {}}
+    client, project, document, bodies = saved_source(source)
+    original = document('t')['parent_revision']['payload']
+    assert 'clips' not in original['config']
+    duplicate_timeline(project, 't', slug='copy', client=client)
+    copied = document('copy')['parent_revision']['payload']
+    assert {key: value for key, value in copied.items() if key != 'occurrences'} == {
+        key: value for key, value in original.items() if key != 'occurrences'}

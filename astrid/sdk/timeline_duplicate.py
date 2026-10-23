@@ -28,6 +28,10 @@ __all__ = ["duplicate_timeline", "id_map", "copy_content"]
 _SOURCE_BOUND_PAYLOAD_KEYS = ("text_bindings", "internal_timeline_revision_id")
 
 
+class _CopyOutcomeUnknown(TimelineEditError):
+    """The durable copy flight must be reconciled before destination cleanup."""
+
+
 def _commit_bundle(project: str, timeline: str, desired: Mapping[str, Any], *, label: str,
                    client: Any, idempotency_key: str) -> dict[str, Any]:
     """Submit the authenticated copy through the normal durable command session."""
@@ -36,15 +40,24 @@ def _commit_bundle(project: str, timeline: str, desired: Mapping[str, Any], *, l
     session = open_timeline(project, timeline, client=client)
     with session.session.outbox.locked():
         state = session.session._state()
-    if state["pending"] or state["flight"] is not None:
-        result = session.commit(label, merge="atomic", idempotency_key=idempotency_key)
-    else:
-        result = session.session.submit(
-            [copy.deepcopy(desired["_duplicate_command"])], label=label, merge="atomic", reads=[],
-            steps=[{"id": "copy", "label": label, "intent": "Copy authenticated source",
-                    "tags": ["duplicate"], "command_ordinals": [0], "patch": [], "reads": []}],
-            expected_state=state, idempotency_key=idempotency_key)
-        session._accepted(result)
+    try:
+        if state["pending"] or state["flight"] is not None:
+            result = session.commit(label, merge="atomic", idempotency_key=idempotency_key)
+        else:
+            result = session.session.submit(
+                [copy.deepcopy(desired["_duplicate_command"])], label=label, merge="atomic", reads=[],
+                steps=[{"id": "copy", "label": label, "intent": "Copy authenticated source",
+                        "tags": ["duplicate"], "command_ordinals": [0], "patch": [], "reads": []}],
+                expected_state=state, idempotency_key=idempotency_key)
+            session._accepted(result)
+    except Exception as exc:
+        with session.session.outbox.locked():
+            pending = session.session._state()
+        if pending["flight"] is not None and not pending.get("conflict"):
+            raise _CopyOutcomeUnknown(
+                f"copy outcome is unknown for timeline {timeline!r}; destination and pending request "
+                "retained; reopen with timeline.open(...).session.flush() to retry the exact request") from exc
+        raise
     return {"old_head": result["data"].get("previous_revision_id"),
             "new_head": result["data"].get("accepted_revision_id"),
             "receipt": result.get("receipt")}
@@ -278,6 +291,8 @@ def _duplicate(client: Any, project: str, source: str, *, slug: str | None, name
             id_map([str(row["occurrence_id"]) for row in content["placements"]], f"occ-{slug or new_id}"))
         receipt = _commit_bundle(project, new_id, bundle, label=f"duplicate of {source}",
                                  client=client, idempotency_key=f"dup-{uuid.uuid4().hex}")
+    except _CopyOutcomeUnknown:
+        raise
     except Exception as exc:
         archived = client.timelines.archive(project, new_id)  # all or nothing: the empty timeline goes too
         if getattr(archived, "ok", False):

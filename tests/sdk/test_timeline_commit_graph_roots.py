@@ -164,8 +164,20 @@ def test_authenticated_root_creation_reload_inverse_redo_exact_closure():
 
 
 @pytest.mark.usefixtures('child_ops')
-def test_authenticated_created_child_stages_reload_inverse_redo_exact_closure():
+def test_authenticated_created_child_stages_reload_inverse_redo_exact_closure(monkeypatch):
+    from tests.editing_conformance import test_recorded_graph_roots as graph_fixtures
     from tests.sdk.test_timeline_commit_provider import DetachedRealm, inverse
+
+    original_root_values = graph_fixtures.root_values
+
+    def valid_root_values():
+        roots = original_root_values()
+        # C0 final timing validation requires the retained hold to fit the new
+        # occurrence's half-open duration; preserve the child hold=3 assertion.
+        roots[1]['value']['duration_ms'] = 3000
+        return roots
+
+    monkeypatch.setattr(graph_fixtures, 'root_values', valid_root_values)
 
     realm = DetachedRealm(document_fixture())
     original = copy.deepcopy(realm.documents[realm.head['revision_id']])
