@@ -1,5 +1,5 @@
-<!-- main | 2026-10-23T13:33:56Z | dispatcher heartbeat 6s | live 3 (sol 1, luna 2, other 0) | busy30 10 | status age 0m -->
-# runtime board, 2026-10-23T13:33:27Z
+<!-- main | 2026-10-23T13:36:19Z | dispatcher heartbeat 14s | live 3 (sol 1, luna 2, other 0) | busy30 10 | status age 0m -->
+# runtime board, 2026-10-23T13:35:36Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | R2r-D17-stage | authenticated native aggregate inverse normalization | Sol after Luna failures / independent Luna | independent1115 PASS | merged | author1105/review1115; service28978+4445 | DONE5768 MERGED3b926/treeb794 EXACTreviewedtree. Integrated238PASS=204normal34.04s+34marked16.29s; independent137+101/REALSTORE/static0added. Originalfour2PASS2AgentmissingbindingsFAIL retained | 3b926efab /5768a3a63 |
@@ -73,3 +73,5 @@ Checkpoint13:32: resumedPLAN+COMMON+HEADER read; INBOXconsumedthrough1320. Leaff
 Checkpoint13:32 (subsequentpass): consumedINBOX1325childfreezeFAIL/uniqueProofpacketowner, Agent1324 actualheld4PASS12.08s onf611+859 (earlier4PASS11.05 repeatedforcaptureomission disclosed); heldimageacceptanceCLEARED forProof, no wholeinverse/journeyclaim. D20authoraa72/shared12000ms110PASSnowindependent1320; existingRuntimeauthsufficient/no speculativepatch. Reviewer1331 managerbrief hadtrailingpytestdot leadingbroadcollection; STOPrequested andrunningcleared, correctedtargeted-only continuation1334QUEUED onexactsamecandidate, oldobservationsreused. MainSol1323 18originalequivalents+12adaptercontrolsPASS; canonicalbootstrapandimmutablepublicationbyteidentical. Finalinstall/reportpending/no readinessclaim.
 
 Checkpoint 13:33:27: incoming childfreeze1325 finalpacket7f666/patchab7132 availablethroughhub; uniqueMAINLuna1333QUEUEDimmediately onexistingOPSrow. Requires actualPython3.11 embeddedstringcompile+PEP610/adversarialidentityproof beforeconditionalatomicinstall; no envbuild/secondharnessreview. MainSol1323 ownsONLYRemotionport inparallel, preservedchildscript. Normalpublication followedbyProofremoteACK/freshimmutablebench only.
+
+Checkpoint 13:35:36: MainRemotion1323 atomicINSTALLED5245 at13:32:57, safe18+12controls and request->stubdispatcherroutePASS/canonicalbootstrap+publicationbyteidentical. Currentlive+hubkit5245, HEAD stillfd2c lastread; peerhandedbackpartialpublicationNOW/no realbenchclaim. ChildLuna1333 caught genuinePython3.11 embeddedfstringSyntaxError inincoming7f666, correctedminimalprintstatement beforeinstall; bothstringscompilePASS, identitycontrolsnext. Reviewer1334 RUNNING actualvscompactedfixture causalityaudit; no sourcePASS or merge.
