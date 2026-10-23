@@ -89,9 +89,11 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         return AttachedCheckout(session)
 
     @classmethod
-    def open(cls, project: str, timeline: str, *, revision_id: str | None = None, client: Any = None) -> "Checkout":
+    def open(cls, project: str, timeline: str, *, revision_id: str | None = None,
+             publication_id: str | None = None, client: Any = None) -> "Checkout":
         """Check out the current head (read-only until ``publish``)."""
-        bundle = _store.fetch_bundle(project, timeline, revision_id=revision_id, client=client)
+        bundle = _store.fetch_bundle(project, timeline, revision_id=revision_id,
+                                     publication_id=publication_id, client=client)
         intent.migrate(bundle)  # the fetched copy is ours; the published revision is never rewritten
         checkout = cls(bundle)
         checkout._scene_client = client
