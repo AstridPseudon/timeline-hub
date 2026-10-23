@@ -283,6 +283,7 @@ addopts = "--strict-markers -m 'not integration and not darwin_native and not li
 # project, needs heavy deps like torch, and is not part of Astrid's suite).
 testpaths = [
     "tests",
+    "tools/astrid-rename/tests",
 ]
 norecursedirs = [
     "astrid/packs/*/ai_toolkit/upstream",

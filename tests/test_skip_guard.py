@@ -133,3 +133,46 @@ def test_a_module_of_a_deselected_lane_is_not_imported_unless_a_test_in_it_names
     result = run("def test_x():\n    pass\n", "-m", "opt_in or not integration")
     assert result.ret == 0, result.stdout.str()  # test_other.py (integration only) was never imported; test_both.py was, and its opt_in test ran
     result.stdout.fnmatch_lines(["*2 passed*"])
+
+
+def test_tests_deselected_by_a_lane_are_named_under_a_header_that_says_who_runs_the_lane(run) -> None:
+    result = run("import pytest\n\n@pytest.mark.opt_in\ndef test_manual():\n    pass\n\n@pytest.mark.remotion\ndef test_heavy():\n    pass\n\ndef test_x():\n    pass\n", "-m", "not opt_in and not remotion")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines([
+        "*left out of this run by lane (2 entries)*",
+        "[[]opt_in] NO CI job runs this lane*",
+        "  DESELECTED test_case.py::test_manual",
+        f"[[]remotion] run by CI job {lanes.DARWIN}",
+        "  DESELECTED test_case.py::test_heavy",
+    ])
+
+
+def test_a_module_not_imported_because_of_its_lane_is_named_with_the_lane(run, pytester: pytest.Pytester) -> None:
+    pytester.makepyfile(test_hidden="import pytest\n\npytestmark = pytest.mark.integration\n\ndef test_z():\n    pass\n")
+    result = run("def test_x():\n    pass\n", "-m", "not integration")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["[[]integration] NO CI job runs this lane*", "  NOT IMPORTED test_hidden.py *"])
+
+
+def test_a_run_with_nothing_left_out_prints_no_report(run) -> None:
+    result = run("def test_x():\n    pass\n")
+    assert result.ret == 0
+    assert "left out of this run" not in result.stdout.str()
+
+
+def test_a_module_with_a_module_lane_and_one_per_test_lane_is_imported_when_its_other_tests_are_selected(run, pytester: pytest.Pytester) -> None:
+    # The reviewed bug: pytestmark = posix_native plus one @remotion test. Under "not remotion" its posix_native-only
+    # test must run; judging the module by the union of every lane in the file hid it.
+    pytester.makepyfile(test_mixed="import pytest\n\npytestmark = pytest.mark.posix_native\n\n@pytest.mark.remotion\ndef test_heavy():\n    pass\n\ndef test_plain():\n    pass\n")
+    result = run("def test_x():\n    pass\n", "-m", "not remotion", "-v")
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*test_mixed.py::test_plain PASSED*"])
+    result.stdout.fnmatch_lines(["  DESELECTED test_mixed.py::test_heavy"])
+
+
+def test_a_module_is_hidden_only_when_no_combination_of_its_lanes_satisfies_the_expression() -> None:
+    hidden = lanes._module_is_hidden
+    assert hidden("not integration", {"integration"}, {"integration"})
+    assert not hidden("not remotion", {"posix_native"}, {"posix_native", "remotion"})
+    assert hidden("remotion", {"posix_native"}, {"posix_native"})  # nothing in it can be a remotion test
+    assert not hidden("remotion", {"posix_native"}, {"posix_native", "remotion"})

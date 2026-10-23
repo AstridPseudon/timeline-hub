@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import ast
 import importlib
+import itertools
 import os
 import re
 import shutil
@@ -174,6 +175,13 @@ class _SkipGuard:
 
     def __init__(self) -> None:
         self.declared: list[tuple[str, str, str]] = []
+        self.deselected: list[tuple[str, str]] = []  # (lane or "", test id)
+        self.ignored: dict[str, str] = {}  # module path -> lane that hid it
+        self.expression = ""
+
+    def pytest_deselected(self, items):
+        for item in items:
+            self.deselected.append((_deselecting_lane(item, self.expression), item.nodeid))
 
     def _judge(self, report, where: str) -> None:
         if hasattr(report, "wasxfail"):
@@ -226,11 +234,36 @@ class _SkipGuard:
             session.exitstatus = pytest.ExitCode.TESTS_FAILED
 
     def pytest_terminal_summary(self, terminalreporter):
-        if not self.declared:
+        if self.declared:
+            terminalreporter.write_sep("-", f"declared skips ({len(self.declared)})")
+            for nodeid, name, reason in sorted(self.declared):
+                terminalreporter.write_line(f"SKIPPED [{name}] {nodeid}: {reason}")
+        self._report_left_out(terminalreporter)
+
+    def _report_left_out(self, terminalreporter) -> None:
+        """Name every test the run's ``-m`` expression deselected and every module it did not import, by lane."""
+        by_lane: dict[str, tuple[list[str], list[str]]] = {}
+        other = 0
+        for lane, nodeid in self.deselected:
+            if lane:
+                by_lane.setdefault(lane, ([], []))[0].append(nodeid)
+            else:
+                other += 1
+        for path, lane in self.ignored.items():
+            by_lane.setdefault(lane, ([], []))[1].append(path)
+        if not by_lane and not other:
             return
-        terminalreporter.write_sep("-", f"declared skips ({len(self.declared)})")
-        for nodeid, name, reason in sorted(self.declared):
-            terminalreporter.write_line(f"SKIPPED [{name}] {nodeid}: {reason}")
+        total = sum(len(t) + len(m) for t, m in by_lane.values())
+        terminalreporter.write_sep("-", f"left out of this run by lane ({total} entries)")
+        for lane in sorted(by_lane):
+            tests, modules = by_lane[lane]
+            terminalreporter.write_line(f"[{lane}] {lane_runner(lane)}")
+            for nodeid in sorted(tests):
+                terminalreporter.write_line(f"  DESELECTED {nodeid}")
+            for path in sorted(modules):
+                terminalreporter.write_line(f"  NOT IMPORTED {path} (tests not listed; the whole module is in this lane)")
+        if other:
+            terminalreporter.write_line(f"{other} test(s) with no lane marker are not in this run's -m selection (counted, not listed; a run without that -m selection runs them)")
 
 
 def _module_lanes(path: Path) -> set[str]:
@@ -270,28 +303,82 @@ def _marked_lanes(path: Path) -> set[str]:
         return set()
 
 
-def pytest_ignore_collect(collection_path, config):
-    """Do not import a module whose every test belongs to a lane this run deselects.
+MAX_PER_TEST_LANES = 10  # 2**10 subsets is still instant; a module with more per-test lanes is simply collected
 
-    A module under ``pytestmark = pytest.mark.<lane>`` is also kept when a test in it names another lane the run
-    selects (``-m "darwin_native or remotion"``): the module is then wanted, so it is imported.
+
+def _module_is_hidden(expression: str, module_lanes: set[str], per_test_lanes: set[str]) -> bool:
+    """True only if the expression is false for every test the module could hold.
+
+    A test carries the module's lanes plus any subset of the lanes named per test in the file, so the module is
+    hidden only when no such combination satisfies the expression. When that cannot be told, it is collected.
+    """
+    extra = sorted(per_test_lanes - module_lanes)
+    if len(extra) > MAX_PER_TEST_LANES:
+        return False
+    for size in range(len(extra) + 1):
+        for subset in itertools.combinations(extra, size):
+            if _marker_expression_holds(expression, module_lanes | set(subset)):
+                return False
+    return True
+
+
+def _expression_lanes_known(expression: str) -> bool:
+    return set(re.findall(r"\w+", expression)) - {"and", "or", "not"} <= set(LANES)
+
+
+def lane_runner(lane: str) -> str:
+    """The registry's answer to "who runs this lane": the CI jobs, or that none does."""
+    jobs = LANES[lane].jobs
+    if jobs:
+        return "run by CI job " + ", ".join(jobs)
+    return f"NO CI job runs this lane ({LANES[lane].kind}: run it by hand with -m {lane})"
+
+
+def _deselecting_lane(item, expression: str) -> str:
+    """The lane of ``item`` that made the expression leave it out, or "" when no lane did (-k, a plain marker)."""
+    names = _lane_names(item)
+    if not names or not expression or not _expression_lanes_known(expression):
+        return names[0] if names and not expression else ""
+    for name in names:
+        if not _marker_expression_holds(expression, {name}):
+            return name
+    return names[0]
+
+
+def pytest_ignore_collect(collection_path, config):
+    """Do not import a module whose every possible test belongs to a lane this run deselects.
+
+    Whether a module can be hidden is decided for each combination of its module-level lanes and the lanes its
+    tests name one by one, so a module with ``pytestmark = pytest.mark.posix_native`` and one ``@remotion`` test
+    is still imported in a run that deselects ``remotion`` (its other tests run). Each hidden module is reported.
     """
     expression = (config.getoption("markexpr", default="") or "").strip()
     if not expression or collection_path.suffix != ".py":
         return None
     lanes = _module_lanes(collection_path)
-    if not lanes or not set(re.findall(r"\w+", expression)) - {"and", "or", "not"} <= set(LANES):
+    if not lanes or not _expression_lanes_known(expression):
         return None  # not wholly in a lane, or an expression with a marker the registry does not know: never hide a module
-    if not _marker_expression_holds(expression, lanes | _marked_lanes(collection_path)):
-        return True
-    return None
+    if not _module_is_hidden(expression, lanes, _marked_lanes(collection_path)):
+        return None
+    guard = config.pluginmanager.get_plugin("skip-guard")
+    if guard is not None:
+        guard.expression = expression
+        try:
+            shown = str(collection_path.relative_to(config.rootpath))
+        except ValueError:
+            shown = str(collection_path)
+        hiding = next((n for n in sorted(lanes) if not _marker_expression_holds(expression, {n})), sorted(lanes)[0])
+        guard.ignored[shown] = hiding
+    return True
 
 
 def pytest_configure(config):
     for name, lane in LANES.items():
         config.addinivalue_line("markers", f"{name}: {lane.kind} lane: {lane.reason}")
     config.pluginmanager.register(_FdGuard(), "fd-leak-guard")
-    config.pluginmanager.register(_SkipGuard(), "skip-guard")
+    guard = _SkipGuard()
+    guard.expression = (config.getoption("markexpr", default="") or "").strip()
+    config.pluginmanager.register(guard, "skip-guard")
 
 
 @pytest.hookimpl(tryfirst=True)
