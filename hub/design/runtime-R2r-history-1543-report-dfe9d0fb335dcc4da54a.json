@@ -1,16 +1,16 @@
 {
-  "duration": 0.2577524140001515,
+  "duration": 0.3154379810002865,
   "longrepr": "",
   "nodeid": "tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_refusal_has_no_writes[source]",
   "outcome": "passed",
   "sections": [
     [
       "Captured stdout setup",
-      "{\"case\": \"tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_refusal_has_no_writes[source]\", \"phase\": \"before\", \"provider\": \"/home/user/work/wt/agt-pin-67ba416b/astrid/sdk/timeline/_commit_patch.py\", \"runtime\": \"/home/user/work/wt/rt-R2r-current-pair-proof-1626/runtime_protocol/timeline_commit_port.py\"}\n"
+      "{\"case\": \"tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_refusal_has_no_writes[source]\", \"phase\": \"before\", \"provider\": \"/home/user/work/wt/agt-pin-bac09418/astrid/sdk/timeline/_commit_patch.py\", \"runtime\": \"/home/user/work/wt/rt-R2r-fullseed-review-1728/runtime_protocol/timeline_commit_port.py\"}\n"
     ],
     [
       "Captured stdout call",
-      "{\"damage\": \"source\", \"code\": \"conflict\", \"details\": {\"status\": \"conflict\", \"reason\": \"outside_closure\", \"code\": \"outside_closure\", \"path\": [], \"hint\": \"Read the current timeline and retry the edit\", \"suggested_command\": \"timeline show\", \"base\": {\"revision_id\": \"saved-parent\", \"publication_id\": \"txn-8a5e1c67f23346289e458558799f463f\"}, \"current\": {\"revision_id\": \"authoring-parent-revision-e75521eeffa8a3b25d6c4306ed10870d1e25787e567d49bcd3917587c12942e8\", \"publication_id\": \"txn-c2301fc66f9f4958ad58b6a93b3eeb76\"}, \"conflicts\": []}}\n"
+      "{\"damage\": \"source\", \"code\": \"conflict\", \"details\": {\"status\": \"conflict\", \"reason\": \"outside_closure\", \"code\": \"outside_closure\", \"path\": [], \"hint\": \"Read the current timeline and retry the edit\", \"suggested_command\": \"timeline show\", \"base\": {\"revision_id\": \"saved-parent\", \"publication_id\": \"txn-a730e56bee6c47d08307b02911beb5dd\"}, \"current\": {\"revision_id\": \"authoring-parent-revision-6b7870f839e6efc45530dd04a2976041cdd1392d459e46642e1cd0cfb631528f\", \"publication_id\": \"txn-483f3f4f94844c7dbd9a609a4dc99bab\"}, \"conflicts\": []}}\n"
     ]
   ],
   "when": "call"

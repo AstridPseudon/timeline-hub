@@ -1,20 +1,20 @@
 {
-  "duration": 0.00708031000021947,
+  "duration": 0.008171112999662,
   "longrepr": "",
   "nodeid": "tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_refusal_has_no_writes[consulted]",
   "outcome": "passed",
   "sections": [
     [
       "Captured stdout setup",
-      "{\"case\": \"tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_refusal_has_no_writes[consulted]\", \"phase\": \"before\", \"provider\": \"/home/user/work/wt/agt-pin-67ba416b/astrid/sdk/timeline/_commit_patch.py\", \"runtime\": \"/home/user/work/wt/rt-R2r-current-pair-proof-1626/runtime_protocol/timeline_commit_port.py\"}\n"
+      "{\"case\": \"tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_refusal_has_no_writes[consulted]\", \"phase\": \"before\", \"provider\": \"/home/user/work/wt/agt-pin-bac09418/astrid/sdk/timeline/_commit_patch.py\", \"runtime\": \"/home/user/work/wt/rt-R2r-fullseed-review-1728/runtime_protocol/timeline_commit_port.py\"}\n"
     ],
     [
       "Captured stdout call",
-      "{\"damage\": \"consulted\", \"code\": \"conflict\", \"details\": {\"status\": \"conflict\", \"reason\": \"value_conflict\", \"code\": \"value_conflict\", \"path\": [\"clips\", \"id:vo2\", \"app\"], \"hint\": \"Read the current timeline and retry the edit\", \"suggested_command\": \"timeline show\", \"base\": {\"revision_id\": \"saved-parent\", \"publication_id\": \"txn-ec8f95ba3ec64869b96d0bb58a5114f1\"}, \"current\": {\"revision_id\": \"authoring-parent-revision-334139a6c0be7512e21586f3eec0c6df4b4f81a60e3b5989585aef9a16733836\", \"publication_id\": \"txn-a49ef7d88f414e428ff69b1944b1562e\"}, \"conflicts\": [{\"kind\": \"value_conflict\", \"ref\": \"internal-revision:authoring-timeline-revision-9c581c3af9b4b910446abc8e94e7dacce2e12d9c9ed8c8927bd963fc2c431351\", \"path\": [\"clips\", \"id:vo2\", \"app\"], \"base\": {\"state\": \"absent\"}, \"theirs\": {\"state\": \"absent\"}, \"ours\": {\"state\": \"absent\"}, \"choices\": []}]}}\n"
+      "{\"damage\": \"consulted\", \"code\": \"conflict\", \"details\": {\"status\": \"conflict\", \"reason\": \"value_conflict\", \"code\": \"value_conflict\", \"path\": [\"clips\", \"id:vo2\", \"app\"], \"hint\": \"Read the current timeline and retry the edit\", \"suggested_command\": \"timeline show\", \"base\": {\"revision_id\": \"saved-parent\", \"publication_id\": \"txn-cc5676f27d4f4847b4f3098d5fae5107\"}, \"current\": {\"revision_id\": \"authoring-parent-revision-3cc19a9420b1731e12b5edf6637e529d7e4e21b0e953cece516281d10048d179\", \"publication_id\": \"txn-3d03cf6afb22403f8bdbf64568f63e8d\"}, \"conflicts\": [{\"kind\": \"value_conflict\", \"ref\": \"internal-revision:authoring-timeline-revision-cf00b151cc610ffd6dc6111480f78153114d5f63e1270971d7ad982efc423545\", \"path\": [\"clips\", \"id:vo2\", \"app\"], \"base\": {\"state\": \"absent\"}, \"theirs\": {\"state\": \"absent\"}, \"ours\": {\"state\": \"absent\"}, \"choices\": []}]}}\n"
     ],
     [
       "Captured stdout teardown",
-      "{\"case\": \"tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_refusal_has_no_writes[consulted]\", \"phase\": \"after\", \"provider\": \"/home/user/work/wt/agt-pin-67ba416b/astrid/sdk/timeline/_commit_patch.py\", \"runtime\": \"/home/user/work/wt/rt-R2r-current-pair-proof-1626/runtime_protocol/timeline_commit_port.py\"}\n"
+      "{\"case\": \"tests/editing_conformance/test_doc_patch_sequential_rebase.py::test_sequential_refusal_has_no_writes[consulted]\", \"phase\": \"after\", \"provider\": \"/home/user/work/wt/agt-pin-bac09418/astrid/sdk/timeline/_commit_patch.py\", \"runtime\": \"/home/user/work/wt/rt-R2r-fullseed-review-1728/runtime_protocol/timeline_commit_port.py\"}\n"
     ]
   ],
   "when": "teardown"
