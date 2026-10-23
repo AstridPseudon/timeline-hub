@@ -341,19 +341,23 @@ def validate_step(request, records, step, boundary, batch_reads, continuations, 
     if submitted is not None and all(call["op"] == "doc.patch" for call in calls):
         require(value_equal(assertions, patches), "submitted step patch differs from its commands")
     for claim in assertions:
-        claim = normalized(boundary, claim, continuations)
-        require(any(value_equal(claim, {**effect, "path": normalized_path(effect["ref"], effect["path"])})
-                    for effect in step["patch"])
-                or any(value_equal(claim, {**binding["change"], "path": binding["path"]})
-                       for ordinal in step["command_ordinals"] if records["commands"][ordinal]["command"]["op"] == "doc.patch"
-                       for binding in records["commands"][ordinal]["bindings"]
-                       if "change" in binding), "provider effects omit a submitted assertion")
+        matches = []
+        for ordinal in step["command_ordinals"]:
+            command_boundary = (command_inputs or {}).get(ordinal, boundary)
+            for binding in records["commands"][ordinal]["bindings"]:
+                if "change" in binding:
+                    matches.append(normalized(command_boundary, {**binding["change"], "path": binding["path"]},
+                                               continuations))
+        matches.extend(normalized(boundary, {**effect, "path": normalized_path(effect["ref"], effect["path"])},
+                                  continuations) for effect in step["patch"])
+        require(any(value_equal(normalized(boundary, claim, continuations), match) for match in matches),
+                "provider effects omit a submitted assertion")
 
 
 def validate_bindings(request, records, expected, boundary, output, step, ordinal, continuations, original,
-                      step_input, effect_boundaries=None, input_parent_revision=None):
+                      step_input, effect_boundaries=None, input_parent_revision=None, sequential=None):
     record = records["commands"][ordinal]
-    for binding in record["bindings"]:
+    for binding_index, binding in enumerate(record["bindings"]):
         if "physical_ref" not in binding:
             continue  # Original ABI-1 captures do not claim physical provenance.
         captured = binding.get("boundary", {})
@@ -388,15 +392,22 @@ def validate_bindings(request, records, expected, boundary, output, step, ordina
                 require(binding[key] == captured.get(key), "provider binding attribution is inconsistent")
         physical = binding["physical_ref"]
         resolve = site if binding["key"].startswith(("doc.patch:", "commit.")) else native_site
-        ref, _ = (site(bound, binding["ref"], [], continuations) if resolve is site
-                  else resolve(bound, binding["ref"], []))
+        pair = (sequential or {}).get("binding_pairs", {}).get((ordinal, binding_index))
+        if pair is not None:
+            require(pair["landing"]["physical_ref"] == physical
+                    and pair["original"]["physical_ref"] == pair["source_physical_ref"],
+                    "provider sequential source-to-landing binding is inconsistent")
+            ref = physical
+        else:
+            ref, _ = (site(bound, binding["ref"], [], continuations) if resolve is site
+                      else resolve(bound, binding["ref"], []))
         require(ref == physical or ref == "timeline" and binding["key"] in {"commit.read", "commit.atomic"},
                 "provider alias names a different physical image")
         # Materialization observes the authenticated landing input, whose
         # physical sources can already be successors of the requested base.
         # Its owner/edge correspondence is verified below. Submitted aliases
         # still have to retain their original physical source.
-        if (ordinal == 0 and phase != "effect" and resolve is site and binding["ref"] != "timeline"
+        if (pair is None and ordinal == 0 and phase != "effect" and resolve is site and binding["ref"] != "timeline"
                 and binding["key"] != "commit.materialization"):
             original_ref, _ = site(original, binding["ref"], [], continuations)
             continued_ref, _ = site(bound, original_ref, [], continuations)
@@ -430,7 +441,7 @@ def validate_bindings(request, records, expected, boundary, output, step, ordina
                 index = captured.get("change_ordinal")
                 changes = request["commands"][ordinal]["args"]["changes"]
                 require(type(index) is int and 0 <= index < len(changes)
-                        and value_equal(normalized(boundary, changes[index], continuations), normalized(boundary, change)),
+                        and value_equal(normalized(step_input, changes[index], continuations), normalized(step_input, change)),
                         "provider binding differs from the submitted change")
         if "dependency" in binding:
             dependency = binding["dependency"]
@@ -1506,7 +1517,262 @@ def command_output(boundary, record, following, *, accepted=None, identity_scope
     return result
 
 
-def validate(request, prepared, source, base=None, continuations=None, history=None):
+def _capture_document_images(document):
+    require(isinstance(document, dict), "sequential command boundary document is malformed")
+    try:
+        result = images(document)
+    except (KeyError, TypeError) as exc:
+        require(False, "sequential command boundary document is malformed")
+        raise AssertionError("unreachable") from exc
+    for ref, image in result.items():
+        require(isinstance(image, dict) and isinstance(image.get("payload"), dict),
+                "sequential command boundary image is malformed")
+        if ref == "parent" or ref.startswith(("shot-revision:", "internal-revision:")):
+            require(image.get("content_digest") == digest(image["payload"]),
+                    "sequential command boundary image digest differs from its payload")
+    return result
+
+
+def _capture_binding_identity(binding):
+    boundary = binding.get("boundary", {})
+    return canonical_json({key: value for key, value in binding.items()
+                           if key not in {"physical_ref", "revision_id", "content_digest", "successor",
+                                          "edge_before", "edge_after", "boundary"}} | {
+                                              "boundary": {key: boundary.get(key) for key in (
+                                                  "base_revision_id", "base_publication_id", "step_id",
+                                                  "command_ordinal", "change_ordinal", "phase", "side")
+                                                  if key in boundary},
+                                          })
+
+
+def _capture_source_chain(source, *, seen=None):
+    seen = set() if seen is None else seen
+    if isinstance(source, str):
+        require(bool(source), "sequential replay source is empty")
+        require(source not in seen, "sequential replay source is cyclic")
+        return {source}
+    require(isinstance(source, dict) and set(source) == {"step_id", "source", "owner", "owners"},
+            "sequential replay source is malformed")
+    require(isinstance(source["step_id"], str) and isinstance(source["owner"], str)
+            and isinstance(source["owners"], list) and source["owner"] in source["owners"]
+            and len(set(source["owners"])) == len(source["owners"]),
+            "sequential replay source owner attribution is malformed")
+    token = canonical_json(source)
+    require(token not in seen, "sequential replay source is cyclic")
+    return _capture_source_chain(source["source"], seen=seen | {token})
+
+
+def sequential_proof_required(prepared, source, continuations=None):
+    """Identify the moved-head staged-alias case that cannot use the old ABI."""
+    boundary = images(source)
+    continuations = continuations or {}
+    for record in prepared.get("records", {}).get("commands", []):
+        if record.get("ordinal") != 0:
+            continue
+        for binding in record.get("bindings", []):
+            if (binding.get("boundary", {}).get("phase") != "input"
+                    or not isinstance(binding.get("physical_ref"), str)
+                    or not binding["physical_ref"].startswith(("shot-revision:", "internal-revision:"))):
+                continue
+            ref = binding.get("ref")
+            physical = binding["physical_ref"]
+            if physical in boundary or not isinstance(ref, str):
+                continue
+            seen = set()
+            while ref not in boundary and ref in continuations and ref not in seen:
+                seen.add(ref)
+                successors = continuations[ref]
+                if len(successors) != 1:
+                    break
+                ref = next(iter(successors))
+            if ref not in boundary and binding.get("ref", "").startswith(("shot-revision:", "internal-revision:")):
+                return True
+    return False
+
+
+def validate_sequential_capture(request, prepared, capture, source, base, continuations=None, history=None):
+    """Authenticate the private original/landing execution carrier.
+
+    The returned binding pairs are trusted only for this invocation of
+    ``validate``.  They never become accepted-history continuations.
+    """
+    require(isinstance(capture, dict) and set(capture) == {
+        "schema_version", "context", "original", "landing", "replay_bindings", "prepared_digest"
+    } and capture["schema_version"] == 1, "sequential execution capture is malformed")
+    require(capture["prepared_digest"] == digest(prepared),
+            "sequential execution capture does not bind the prepared commit")
+    expected_base = {"revision_id": request["base_revision_id"],
+                     "publication_id": request["base_publication_id"]}
+    expected_landing = prepared["expected_head"]
+    executions = {}
+    for side, expected_head, initial in (("original", expected_base, base),
+                                         ("landing", expected_landing, source)):
+        execution = capture[side]
+        require(isinstance(execution, dict) and set(execution) == {"evaluated_head", "commands", "records"},
+                "sequential execution has an invalid envelope")
+        require(value_equal(execution["evaluated_head"], expected_head)
+                and isinstance(execution["commands"], list)
+                and isinstance(execution["records"], dict),
+                "sequential execution head or records differ from the authenticated invocation")
+        records = execution["records"]
+        require([record.get("command") for record in records.get("commands", [])]
+                == [record.get("command") for record in prepared["records"].get("commands", [])],
+                "sequential execution commands differ from the prepared request")
+        if side == "landing":
+            require(canonical_json(records) == canonical_json(prepared["records"]),
+                    "landing execution records differ from the prepared records")
+        commands = execution["commands"]
+        require(len(commands) == len(records["commands"]) and [
+            item["ordinal"] for item in records["commands"]
+        ] == list(range(len(commands))), "sequential execution command ordinals are incomplete")
+        previous = None
+        last_output = None
+        by_ordinal = {}
+        for ordinal, item in enumerate(commands):
+            require(isinstance(item, dict) and set(item) == {"boundary", "input", "output"},
+                    "sequential command boundary is malformed")
+            boundary = item["boundary"]
+            require(isinstance(boundary, dict) and set(boundary) == {
+                "base_revision_id", "base_publication_id", "evaluated_head", "step_id",
+                "command_ordinal", "phase"
+            } and boundary["base_revision_id"] == request["base_revision_id"]
+                    and boundary["base_publication_id"] == request["base_publication_id"]
+                    and value_equal(boundary["evaluated_head"], expected_head)
+                    and boundary["command_ordinal"] == ordinal and boundary["phase"] == "input",
+                    "sequential command boundary attribution is invalid")
+            step = next((step for step in records.get("steps", [])
+                         if ordinal in step.get("command_ordinals", [])), None)
+            require(step is not None and boundary["step_id"] == step["id"],
+                    "sequential command boundary step is invalid")
+            current = _capture_document_images(item["input"])
+            output = _capture_document_images(item["output"])
+            if ordinal == 0:
+                require(value_equal(current, images(initial)),
+                        "sequential original or landing input does not match its authenticated head")
+            else:
+                require(value_equal(current, previous),
+                        "sequential command input does not match the preceding command output")
+            previous = output
+            last_output = item["output"]
+            by_ordinal[ordinal] = item
+        require(previous is not None, "sequential execution has no command output")
+        if side == "landing":
+            require(last_output is not None and value_equal(last_output, prepared["canonical_document"]),
+                    "landing execution output differs from the prepared document")
+        executions[side] = {"by_ordinal": by_ordinal, "records": records}
+
+    original_records = executions["original"]["records"]
+    landing_records = executions["landing"]["records"]
+    validate_claims(request, original_records)
+    validate_claims(request, landing_records)
+    original_document = capture["original"]["commands"][-1]["output"]
+    original_prepared = {**prepared, "expected_head": expected_base,
+                         "canonical_document": original_document,
+                         "document_digest": digest(original_document),
+                         "records": original_records}
+    validate(request, original_prepared, base, base, {}, history)
+
+    binding_pairs = {}
+    source_to_landing = {}
+    landing_to_source = {}
+    for ordinal, (original_record, landing_record) in enumerate(zip(
+            original_records["commands"], landing_records["commands"])):
+        originals = {}
+        for binding in original_record.get("bindings", []):
+            if "physical_ref" in binding:
+                key = _capture_binding_identity(binding)
+                require(key not in originals, "sequential source binding is ambiguous")
+                originals[key] = binding
+        used = set()
+        for index, binding in enumerate(landing_record.get("bindings", [])):
+            if "physical_ref" not in binding:
+                continue
+            key = _capture_binding_identity(binding)
+            original_binding = originals.get(key)
+            require(original_binding is not None and key not in used,
+                    "sequential landing binding has no unique original correspondence")
+            if original_binding is None:
+                raise AssertionError("unreachable")
+            used.add(key)
+            source_physical = original_binding["physical_ref"]
+            landing_physical = binding["physical_ref"]
+            source_key = canonical_json({"physical_ref": source_physical, "owner": binding.get("owner"),
+                                         "owners": binding.get("owners"), "step_id": binding.get("step_id"),
+                                         "command_ordinal": ordinal, "change_ordinal": binding.get("change_ordinal"),
+                                         "effect_ordinal": binding.get("effect_ordinal"),
+                                         "edge_before": original_binding.get("edge_before"),
+                                         "edge_after": original_binding.get("edge_after"),
+                                         "revision_id": original_binding.get("revision_id"),
+                                         "content_digest": original_binding.get("content_digest")})
+            landing_key = canonical_json({"physical_ref": landing_physical, "owner": binding.get("owner"),
+                                          "owners": binding.get("owners"), "step_id": binding.get("step_id"),
+                                          "command_ordinal": ordinal, "change_ordinal": binding.get("change_ordinal"),
+                                          "effect_ordinal": binding.get("effect_ordinal"),
+                                          "edge_before": binding.get("edge_before"),
+                                          "edge_after": binding.get("edge_after"),
+                                          "revision_id": binding.get("revision_id"),
+                                          "content_digest": binding.get("content_digest")})
+            require(source_to_landing.get(source_key, landing_key) == landing_key
+                    and landing_to_source.get(landing_key, source_key) == source_key,
+                    "sequential source-to-landing correspondence is ambiguous")
+            source_to_landing[source_key] = landing_key
+            landing_to_source[landing_key] = source_key
+            binding_pairs[(ordinal, index)] = {"original": original_binding, "landing": binding,
+                                               "source_physical_ref": source_physical}
+
+    for entry in capture["replay_bindings"]:
+        require(isinstance(entry, dict), "sequential replay binding is malformed")
+        kind = entry.get("kind")
+        binding_candidates = []
+        if kind == "patch":
+            require(set(entry) == {"command_ordinal", "kind", "change_ordinal", "ref", "path", "source"}
+                    and type(entry["command_ordinal"]) is int and type(entry["change_ordinal"]) is int
+                    and isinstance(entry["ref"], str) and isinstance(entry["path"], list),
+                    "sequential patch replay binding is malformed")
+            require(0 <= entry["command_ordinal"] < len(request["commands"]),
+                    "sequential patch replay binding ordinal is invalid")
+            command = request["commands"][entry["command_ordinal"]]
+            changes = command.get("args", {}).get("changes", []) if command.get("op") == "doc.patch" else []
+            require(entry["change_ordinal"] < len(changes)
+                    and changes[entry["change_ordinal"]]["ref"] == entry["ref"]
+                    and changes[entry["change_ordinal"]]["path"] == entry["path"],
+                    "sequential patch replay binding differs from the request")
+            binding_candidates = [binding for binding in original_records["commands"][entry["command_ordinal"]].get("bindings", [])
+                                  if binding.get("change_ordinal") == entry["change_ordinal"]]
+        elif kind == "read":
+            require(set(entry) == {"command_ordinal", "kind", "ref", "path", "phase", "source"}
+                    and type(entry["command_ordinal"]) is int and isinstance(entry["ref"], str)
+                    and isinstance(entry["path"], list) and entry["phase"] in {"input", "batch-read"},
+                    "sequential read replay binding is malformed")
+            record = landing_records["commands"][entry["command_ordinal"]]
+            require(any(read["ref"] == entry["ref"] and read["path"] == entry["path"]
+                        for read in record.get("reads", [])),
+                    "sequential read replay binding differs from the recorded read")
+            require(entry["phase"] != "batch-read" or entry["command_ordinal"] == 0,
+                    "sequential batch read replay binding is out of order")
+            binding_candidates = [binding for binding in original_records["commands"][entry["command_ordinal"]].get("bindings", [])
+                                  if binding.get("key") == "commit.read"
+                                  and binding.get("ref") == entry["ref"]
+                                  and binding.get("path") == entry["path"]]
+        else:
+            require(False, "sequential replay binding kind is invalid")
+        terminals = _capture_source_chain(entry["source"])
+        original_input = executions["original"]["by_ordinal"][entry["command_ordinal"]]["input"]
+        original_images = _capture_document_images(original_input)
+        require(terminals <= set(original_images),
+                "sequential replay source is not present at its original input boundary")
+        if binding_candidates:
+            owners = {owner for binding in binding_candidates for owner in binding.get("owners", [])}
+            owner = next((binding.get("owner") for binding in binding_candidates if binding.get("owner")), None)
+            if isinstance(entry["source"], dict):
+                require(owner is None or entry["source"]["owner"] == owner
+                        and set(entry["source"]["owners"]) == owners,
+                        "sequential replay source owner attribution differs from the original binding")
+    return {"binding_pairs": binding_pairs,
+            "landing": executions["landing"]["by_ordinal"]}
+
+
+def validate(request, prepared, source, base=None, continuations=None, history=None, sequential=None):
     """Check request/record correspondence at authenticated immutable boundaries."""
     records = prepared["records"]
     continuations = copy.deepcopy(continuations or {})
@@ -1557,11 +1823,21 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
                 command_inputs[ordinal], records["commands"][ordinal], records["commands"][next_ordinal],
                 accepted=accepted, identity_scope=(source["project_id"], source["timeline_id"]),
                 manifest=command_manifests[ordinal])
+        if sequential is not None:
+            for ordinal in step["command_ordinals"]:
+                captured = sequential["landing"].get(ordinal)
+                require(captured is not None
+                        and value_equal(images(captured["input"]), command_inputs[ordinal]),
+                        "provider sequential command input differs from its authenticated projection")
         validate_step(request, records, step, boundary, batch_reads, continuations, command_inputs)
         for ref in touched:
             require(covers(step["dependencies"], {"kind": "scope", "ref": ref, "path": []}),
                     "provider atomic dependency union omits a touched scope")
         output = step_output(boundary, step, records, accepted, original)
+        if sequential is not None:
+            last = sequential["landing"].get(step["command_ordinals"][-1])
+            require(last is not None and value_equal(images(last["output"]), output),
+                    "provider sequential command output differs from its authenticated projection")
         effect_boundaries = _inverse_stage_boundaries(boundary, output, step, records, accepted, original, history)
         for ordinal in step["command_ordinals"]:
             record = records["commands"][ordinal]
@@ -1572,7 +1848,8 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
                 require(indices == list(range(len(record["command"]["args"]["changes"]))),
                         "provider patch bindings do not cover its ordered changes")
             validate_bindings(request, records, prepared["expected_head"], command_input, output, step, ordinal,
-                              continuations, original, boundary, effect_boundaries, input_parent_revision)
+                              continuations, original, boundary, effect_boundaries, input_parent_revision,
+                              sequential)
         for ordinal in step["command_ordinals"]:
             for binding in records["commands"][ordinal]["bindings"]:
                 if binding.get("key") == "commit.materialization":

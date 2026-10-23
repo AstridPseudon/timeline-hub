@@ -810,7 +810,15 @@ class TimelineCommitStore:
             continuations = self._binding_continuations(request["project_id"], request["timeline_id"],
                                                        request["base_publication_id"], prepared["expected_head"])
             history = self._inverse_stage_history(request["project_id"], request["timeline_id"], records)
-            validate(request, prepared, source, base, continuations, history)
+            sequential = None
+            if inputs is not None and hasattr(inputs, "_validate_sequential_execution"):
+                sequential = inputs._validate_sequential_execution(
+                    prepared, source, base, continuations, history,
+                )
+            from .timeline_commit_auth import sequential_proof_required
+            if sequential is None and sequential_proof_required(prepared, source, continuations):
+                reject("sequential_proof_unavailable", "moved-head staged physical input requires private sequential proof")
+            validate(request, prepared, source, base, continuations, history, sequential=sequential)
         elif any("physical_ref" in binding for record in commands for binding in record["bindings"]):
             reject("invalid_records", "physical bindings require authoritative steps", status=422)
         for record in commands:
