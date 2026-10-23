@@ -1,0 +1,2 @@
+# farm: bin/request-checkout runtime 3b926efa denied ("requires approval")
+Needed for the Agent full requalification env (Agent peer 12:40Z). Not worked around. Decision owed: approve request-checkout for runtime 3b926efab2eed122d374540baee297d4cdcec62a for the farm, or have the Agent lane provision the pin and the runtimes/agent-remotion-v3-819acf-1110 dir. Detail: design/peer-farm-to-agent-20261023T1257-full-recipe-missing-inputs.md.
