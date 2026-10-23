@@ -1,0 +1,47 @@
+"""Provider-side completion of Runtime's existing timeline preview."""
+from __future__ import annotations
+
+import copy
+
+
+def prepared_records(plan, *, undo_of, restored_from):
+    """Add v2 metadata to the existing authenticated recorder, when available."""
+    records = {
+        "schema_version": 1,
+        "commands": copy.deepcopy(plan.records),
+        "undo_of": copy.deepcopy(undo_of),
+        "restored_from": copy.deepcopy(restored_from),
+    }
+    # These attributes are supplied by R1.  Keeping the fallback allows the
+    # legacy provider ABI and its historical tests to remain unchanged until
+    # the v2 schema is adopted by Runtime.
+    for key in ("label", "steps", "merge_mode"):
+        value = getattr(plan, key, None)
+        if value is not None:
+            records[key] = copy.deepcopy(value)
+    return records
+
+
+def complete_preview(result, prepared, request, evaluated_head):
+    """Expose the landing head and authoritative v2 candidate metadata.
+
+    The Runtime port remains the authority and performs all guarded preview
+    validation.  This only projects metadata already sealed in ``prepared``;
+    it never synthesizes a client-side candidate or writes durable state.
+    """
+    result = copy.deepcopy(result)
+    data = result.get("data")
+    if not isinstance(data, dict):
+        return result
+    data.setdefault("evaluated_head", copy.deepcopy(evaluated_head))
+    data.setdefault("base_revision_id", request["base_revision_id"])
+    data.setdefault("base_publication_id", request["base_publication_id"])
+    records = prepared.get("records", {})
+    for key in ("steps", "merge_mode", "label"):
+        if key in records:
+            data[key] = copy.deepcopy(records[key])
+    base = {"revision_id": request["base_revision_id"],
+            "publication_id": request["base_publication_id"]}
+    data.setdefault("would_status", "accepted" if evaluated_head == base else "merged")
+    result["receipt"] = None
+    return result
