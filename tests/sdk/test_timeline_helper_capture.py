@@ -132,19 +132,77 @@ def test_helper_lost_ack_retries_exact_request(restructure_runtime, tmp_path, mo
     assert env.replies[0] == env.replies[1]
 
 
-def test_contiguous_helpers_keep_sequential_steps(restructure_runtime, tmp_path, monkeypatch):
+@pytest.mark.parametrize('moved_head', [False, True])
+def test_contiguous_helpers_keep_sequential_steps(restructure_runtime, tmp_path, monkeypatch, moved_head):
     env = restructure_runtime
     tl = draft(env, tmp_path, monkeypatch)
     start = tl.clip('cross').start
     tl.clip('cross').nudge(0.5)
     tl.clip('cross').nudge(frames=3)
     tl.save(quiet=True)
-    peer_edit(env)
+    if moved_head:
+        peer_edit(env)
     result = Checkout.load(tl.path).publish('Two nudges', client=env.client)
-    assert result['receipt']['result']['status'] == 'merged'
-    body = env.calls[-2][0]
+    assert result['receipt']['result']['status'] == ('merged' if moved_head else 'accepted')
+    body = next(body for body, _ in env.calls if body['label'] == 'Two nudges')
     assert [step['command_ordinals'] for step in body['steps']] == [[0], [1]]
     assert Checkout.open(env.project, 't', client=env.client).clip('cross').start == pytest.approx(start + 0.6)
+
+
+@pytest.mark.parametrize('anchor', [None, '+1s', '"second"'])
+def test_cut_nudge_restart_merges_other_cut(restructure_runtime, tmp_path, monkeypatch, anchor):
+    env = restructure_runtime
+    setup = open_timeline(env.project, 't', client=env.client)
+    clip = setup.clip('inside')
+    clip.data['app'] = {'astrid': {'cut': 'c2', 'layer': 'sprite'}}
+    if anchor:
+        clip.data['app']['astrid']['on'] = anchor
+    if anchor == '"second"':
+        clip.data['at'] = 4.6
+    setup.commit('Cut setup', idempotency_key='cut-setup')
+    tl = draft(env, tmp_path, monkeypatch)
+    start = tl.clip('inside').start
+    tl.clip('inside').nudge(0.5)
+    tl.save(quiet=True)
+    peer = open_timeline(env.project, 't', client=env.client)
+    peer.clip('late').data['params']['text'] = 'Peer text'
+    peer.commit('Peer cut', idempotency_key='peer-cut')
+    result = Checkout.load(tl.path).publish('Cut nudge', client=env.client, idempotency_key='cut-nudge')
+    assert result['receipt']['result']['status'] == 'merged'
+    body = next(body for body, _ in env.calls if body['label'] == 'Cut nudge')
+    assert body['merge'] == 'fields'
+    assert any(read['kind'] == 'collection' for read in body['steps'][0]['reads'])
+    loaded = Checkout.open(env.project, 't', client=env.client)
+    assert loaded.clip('inside').start == pytest.approx(start + 0.5)
+    assert loaded.clip('late').params['text'] == 'Peer text'
+
+
+@pytest.mark.parametrize('mode', ['same', 'word-source', 'collection', 'mixed'])
+def test_cut_nudge_guarded_inputs_never_write(restructure_runtime, tmp_path, monkeypatch, mode):
+    env = restructure_runtime
+    setup = open_timeline(env.project, 't', client=env.client)
+    setup.clip('inside').data['app'] = {'astrid': {'cut': 'c2', 'layer': 'sprite'}}
+    setup.commit('Cut setup', idempotency_key='cut-setup')
+    tl = draft(env, tmp_path, monkeypatch)
+    tl.clip('inside').nudge(0.5)
+    if mode == 'mixed':
+        tl.clip('inside').data['opaque'] = 'uncaptured'
+    tl.save(quiet=True)
+    peer = open_timeline(env.project, 't', client=env.client)
+    if mode == 'same':
+        peer.clip('inside').data['params']['x'] = 99
+    elif mode == 'word-source':
+        peer.clip('vo2').data['app']['astrid']['words'][0][2] = 'changed'
+    elif mode == 'collection':
+        peer.clip('cross').data['id'] = 'new-member'
+    else:
+        peer.clip('late').data['params']['text'] = 'Peer text'
+    peer.commit('Peer dependency', idempotency_key='peer-dependency')
+    before = tuple(env.service.store.conn.iterdump())
+    with pytest.raises((TimelineEditError, WorkspaceClientError)):
+        Checkout.load(tl.path).publish('Refused cut', client=env.client)
+    assert tuple(env.service.store.conn.iterdump()) == before
+    assert env.calls[-1][0]['merge'] == ('atomic' if mode == 'mixed' else 'fields')
 
 
 @pytest.mark.parametrize('damage', ['wrong-pair', 'ambiguous'])
