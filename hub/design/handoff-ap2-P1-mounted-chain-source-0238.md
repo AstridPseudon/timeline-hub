@@ -1,37 +1,144 @@
 # P1 mounted mixed-chain source handoff
 
-Status: **BLOCKED — no fabricated chain spec**. H3 remains no-go.
+Status: **BLOCKED — corrected seam report; no fabricated chain spec.** H3
+remains **NO-GO** and this is not P1 acceptance.
 
-Base inspected: `tl/integration` / App `9d6df77eac9a3e32854dcee79e1213c48feb9573` (`9d6df77ea`).
+Base inspected: App `tl/ap2-P1-mounted-chain-source-0238` at exact
+`9d6df77eac9a3e32854dcee79e1213c48feb9573` (`9d6df77ea`). This correction
+incorporates independent review `handoff-ap2-P1-chain-seam-review-0242.md` and
+the approved C0c contract sections 1–5 and 7.
 
-## Concrete missing production seam
+## Correction to the earlier handoff
 
-The mounted editor can express a visible split, but the current production caller does not express it as the required A2 command/outbox intent:
+The earlier report was directionally right that the real mounted production
+chain is unavailable, but it incorrectly demanded a new `clipSplitPort`,
+`clipSplitCapture.ts`, or TypeScript split executor. C0c does not require any
+of those. A2 may carry the upstream split as a guarded `doc.patch` identity-list
+insert with a stable authored created ID. The existing contract-compatible
+`documentPatchIntent.ts` path already describes that shape, including a
+`created: ["parent/clip:<id>"]` effect.
 
-- `src/tools/video-editor/hooks/clip-editing/useClipSplitting.ts:28-33` and `:46-51` call `splitClipAtPlayhead(...)` and pass the resulting full snapshot to `applyConfigEdit(...)`.
-- `src/tools/video-editor/commands/commitSession.ts` exposes `clipTrimPort`, but no `clipSplitPort`; the production session has no `clip.split` capture/finish/submit path that reserves and persists the created right-hand ID.
-- `src/tools/video-editor/commands/clipSplitCapture.ts` and `clipSplitGesture.ts` are absent on this base.
-- `src/tools/video-editor/commands/localSaveSession.ts` exists as the A2 boundary, but `createLocalSaveSession` has no production caller in `src/`; its only current callers are tests. The mounted editor still reaches `useTimelinePersistence` through the snapshot save path.
+The missing proof is narrower and unchanged in consequence: the mounted
+production caller has not been shown to use that path. Do not replace the
+required App split with an Agent-only split.
 
-Therefore a new `tests/e2e/local/three-products.p1-chain.spec.ts` cannot honestly drive the requested sequence through “actual mounted upstream editor → A2 persisted outbox → Runtime → Python Agent.” Importing or copying the existing `parent-split-command.spec.ts` would only prove the separate pre-A2 split path and would fabricate the missing created-ID handoff. Per the task decision, no new spec was added.
+## Exact missing production seam
 
-Owning caller: App A2 production integration, specifically the mounted editor split caller/session wiring (`useClipSplitting` → command-session/A2 outbox). The seam must reserve the right ID, submit `clip.split`, expose the canonical `id_map`, and let the dependent trim target that mapped ID without recapture. A2 must also revalidate or roll back dependent intents after predecessor refusal.
+The current mounted UI still follows
+`useClipSplitting.ts:28-33,46-51,70-80` → `applyConfigEdit` → the ordinary
+snapshot persistence path. `useTimelineSave` does not construct or pass the
+existing durable `localSaveSession`/handoff into `useTimelinePersistence`.
+`createLocalSaveSession` currently has only test callers. Therefore the
+mounted editor has not been proven to submit the captured split through the
+persisted outbox, nor to expose its canonical created ID to the dependent trim.
 
-## Required follow-up before source can be prepared
+The owner follow-up is to mount the existing durable handoff at
+`useTimelineSave → useTimelinePersistence → persisted outbox`, join the
+official v2 generated client and status types, and submit the captured
+`documentIntent` as the approved guarded `doc.patch`. The production caller
+must reserve and retain one stable authored right-hand clip ID, use the
+canonical accepted/merged `id_map` and landed document to bind the dependent
+trim, and retain the exact predecessor/dependent request bytes and keys across
+lost acknowledgement and restart.
 
-After the App A2 production caller is integrated with the split port, this test should use the existing three-products fixture/harness and CLI helpers to cover:
+The outbox already has dependent intents of the form `{ after: predecessor }`
+and retains exact pending request bytes/key. On predecessor acceptance, the
+dependent base advances from the canonical landed pair. On predecessor
+refusal, the implementation may either revalidate the dependent suffix against
+the refusal head or roll the suffix back with a user-visible message; C0c does
+not make revalidation mandatory when the permitted rollback-with-message path
+is used. Neither permitted outcome is currently proven by the mounted
+production caller.
 
-1. Agent `clip.split` with an explicit reserved right ID.
-2. Mounted App trim of that newly created ID via the real UI entrypoint.
-3. Agent `track.set` while the App predecessor is pending.
-4. Lost durable ACK, reload/Runtime restart, and exact request body/key retry.
-5. Accepted, disjoint merged (Agent field preserved), and refused predecessor/dependent preservation without overwrite.
+## Required P1 chain, unchanged
 
-The future source must assert raw/opaque/null/absence/membership preservation, canonical closure and digest/head/receipt/commands/authoritative steps/dependencies/merge mode, created-ID handoff, exact retry bytes and key, no duplicate history, Runtime `/commits`, and zero old-route/network writes. New v2 requests must retain `api_version: 1`, project/timeline IDs, both base IDs, semantic or `doc.patch` commands, label, complete steps, merge, reads, dry-run, and `Idempotency-Key`; accepted/merged/conflict/invalid/preview replies must retain the complete v2 fields from `contract/commit-v2.md`.
+The eventual source must drive the original mounted App scenario through the
+real three-products fixture/harness:
 
-## Evidence and acceptance
+1. **App split:** the mounted UI submits the split through A2 as a guarded
+   `doc.patch` list insert, with the authored stable right-hand ID and the
+   canonical created-ID effect.
+2. **App dependent trim:** the mounted UI trims that newly created ID using the
+   predecessor's canonical `id_map`/landed document; it must not recapture or
+   invent a different ID.
+3. **Intervening Agent edit:** an Agent edit lands while the App predecessor is
+   pending, exercising disjoint merge behavior and the actual canonical head.
+4. **Lost ACK and restart:** lose the durable acknowledgement, restart/reload,
+   and retry the exact original request body with the exact original
+   `Idempotency-Key`; there must be no duplicate history entry or re-execution.
+5. Cover predecessor/dependent **accepted**, disjoint **merged** (preserving the
+   Agent field), and **refused** outcomes. For refusal, prove either dependent
+   revalidation at the returned head or the permitted suffix rollback with a
+   clear message. A refusal must not overwrite the Agent edit or silently leave
+   a stale dependent intent.
 
-- Fixture `tests/fixtures/p1-feasibility/cases.json` is explicitly `authored-not-go` and names the missing “App split capture/submit port for `clip.split` and created-id binding” plus A2 dependent revalidation/rollback.
-- Existing `tests/e2e/local/parent-split-command.spec.ts` is a standalone real-UI split proof, not the requested mixed A2 chain; its current production source still targets the pre-A2 path above.
-- A2 draft branch inspected read-only: `tl/ap2-P1-A2-chain-draft-proof` at `e739d880e`; it adds the local-save session boundary but does not mount the split caller into production.
-- No browser, socket, Runtime, or full suite was run. The requested chain source is not source-ready until the owning seam lands.
+No Agent split substitute is acceptable, and no new split port/capture/executor
+is required by this handoff.
+
+## v2 request and outcome preservation
+
+The mounted caller and generated client/status join must preserve the complete
+v2 contract, not a reduced DTO. Every mutation request retains:
+
+- `api_version: 1`;
+- `project_id`, `timeline_id`, `base_revision_id`, and
+  `base_publication_id`;
+- ordered `commands` (native semantic commands or `doc.patch`), including
+  `schema_version`, `op`, `version`, `select`, and `args.changes` with tagged
+  `before` guards;
+- nonempty `label`;
+- complete ordered `steps`, each with stable `id`, `label`, `intent`, `tags`,
+  `command_ordinals`, `patch`, and optional `reads`;
+- `merge` (`fields` or `atomic`), request-level `reads`, `dry_run`, and the
+  HTTP `Idempotency-Key`; and
+- any existing `source`, `rationale`, or `group_id` annotations when supplied.
+
+For accepted and merged success, preserve the full `{data, receipt}` envelope:
+`status` (`accepted` or `merged`), base and previous head IDs,
+`accepted_revision_id`, `rebased_onto`, canonical closure/document, document
+digest, normalized commands, canonical `id_map`, provider/compiler versions,
+authoritative `publisher`, complete authoritative `steps` including patches and
+`dependencies`, effective `merge_mode`, and the durable receipt (including its
+receipt ID/result and authenticated request identity). A merged canonical
+document includes the intervening Agent change and must be adopted before
+replaying still-pending local edits.
+
+Preserve conflict/refusal replies with the returned `head` pair and structured
+reason/details; preserve invalid replies with `code`, `path`, and `hint` (and
+the complete invalid detail where supplied); preserve dry-run/preview replies,
+including `would_status`, canonical preview data, steps/dependencies,
+`merge_mode`, and no durable receipt/history entry. Exact retries after a lost
+ACK or restart return the original accepted/merged envelope for the same body
+and key; a changed body under the same key is `idempotency_mismatch`, not a
+second edit.
+
+The canonical closure and authoritative records must retain opaque, null,
+absent, membership, and order data; resolved physical bindings; canonical
+created-ID dependencies; receipt/request hash; complete command and step
+records; dependencies; and merge mode. Do not reduce the proof to final bytes.
+
+## Existing evidence and boundary
+
+- Fixture `tests/fixtures/p1-feasibility/cases.json` remains explicitly
+  `authored-not-go` for the missing mounted A2 handoff/created-ID binding and
+  refusal handling.
+- `tests/e2e/local/parent-split-command.spec.ts` proves only the standalone
+  pre-A2 real-UI split path; it is not this mixed chain.
+- The A2 draft's `originalLocalSaveBasis`/session staging does not prove that
+  the mounted caller activates the handoff.
+- Existing review evidence remains unchanged: `node
+  node_modules/vitest/vitest.mjs run --config config/testing/vitest.config.ts
+  --no-cache src/tools/video-editor/commands/localSaveSession.test.ts` —
+  **PASS, 15/15**; `node node_modules/typescript/bin/tsc --noEmit` —
+  **PASS**; `node node_modules/eslint/bin/eslint.js
+  src/tools/video-editor/commands/localSaveSession.ts
+  src/tools/video-editor/hooks/clip-editing/useClipSplitting.ts
+  --max-warnings 0` — **PASS**; and `git diff --check` — **PASS**. These
+  checks were not repeated for this documentation correction.
+- No browser, socket, Runtime/Agent chain, full suite, or heavy run was done.
+
+This handoff changes no product, test, fixture, schema, generated-client,
+pin, or launcher file. It adds no old route, rollback override, or executor
+requirement. The next P1 attempt is unblocked only after the owning A2 seam is
+mounted and the complete chain is executed; until then, report **BLOCKED** with
+no P1 acceptance.
