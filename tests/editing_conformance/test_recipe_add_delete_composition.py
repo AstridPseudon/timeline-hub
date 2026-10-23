@@ -42,17 +42,37 @@ def test_native_add_delete_net_zero_inverse_redo_retains_unchanged_write(populat
     assert plan.bundle == original
     assert coalesce(plan.records) == [unchanged]
     assert plan.records[0]['created'] == [{'ref': ref, 'kind': 'clip', 'owner': 'parent'}]
+    assert plan.records[0]['writes'] == [dict(unchanged, after=present(row))]
     assert plan.records[1]['writes'] == [dict(unchanged, before=present(row))]
     assert replay(plan, original).records == plan.records
     undone = inverse(reload(plan.bundle), plan.records)
     assert authored(undone.bundle) == authored(original)
-    assert undone.records[0]['writes'] == [unchanged]
-    assert undone.records[0]['created'] == []
+    # C0 retains intermediate reversals and restoration facts in the recorder;
+    # only the boundary projection is absent-to-absent.
+    sequential = [dict(unchanged, after=present(row)), dict(unchanged, before=present(row))]
+    created = [{'ref': ref, 'kind': 'clip', 'owner': 'parent'}]
+    assert undone.records[0]['writes'] == sequential
+    assert coalesce(undone.records) == [unchanged]
+    assert undone.records[0]['created'] == created
     accepted = accepted_boundaries(undone.records, plan.bundle, undone.bundle)
     redone = inverse(reload(undone.bundle), accepted)
     assert authored(redone.bundle) == authored(original)
-    assert redone.records[0]['writes'] == [unchanged]
-    assert redone.records[0]['created'] == []
+    assert redone.records[0]['writes'] == sequential
+    assert coalesce(redone.records) == [unchanged]
+    assert redone.records[0]['created'] == created
+    for result, input_bundle in ((plan, original), (undone, plan.bundle), (redone, undone.bundle)):
+        assert State(result.bundle).get(ref, []) == ABSENT
+        assert {'ref': ref, 'path': [], 'state': ABSENT} in result.records[0]['reads']
+        damaged = copy.deepcopy(result.records)
+        damaged[0]['writes'][0]['after']['value']['opaque']['intermediate'] = 'changed'
+        if result is not plan:
+            damaged = accepted_boundaries(damaged, input_bundle, result.bundle)
+        head = reload(result.bundle)
+        before = copy.deepcopy(head)
+        with pytest.raises(CommandError) as error:
+            inverse(head, damaged)
+        assert error.value.kind == 'inverse_conflict'
+        assert head == before
     assert plan.records == immutable
 
 
