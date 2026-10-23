@@ -14,7 +14,122 @@ from astrid.sdk.timeline.native_word_anchor import binding, legacy_binding
 from astrid.sdk.timeline.units import _time_fraction
 
 
-def validate_candidate_timing(candidate: Mapping[str, Any]) -> None:
+def _legacy_rows(bundle: Mapping[str, Any]):
+    parent = bundle.get("parent", {})
+    parent_clips = parent.get("clips", []) if isinstance(parent, Mapping) else []
+    for clip in parent_clips:
+        if isinstance(clip, Mapping):
+            yield ("parent", "", clip.get("id")), clip
+    shots = bundle.get("shots", {})
+    if not isinstance(shots, Mapping):
+        return
+    for shot_id, shot in shots.items():
+        internal = shot.get("internal_timeline", {}) if isinstance(shot, Mapping) else {}
+        clips = internal.get("clips", []) if isinstance(internal, Mapping) else []
+        for clip in clips:
+            if isinstance(clip, Mapping):
+                yield ("shot", shot_id, clip.get("id")), clip
+
+
+def _legacy_declarations(clip: Mapping[str, Any]) -> dict[str, str]:
+    declarations = intent._app(clip)
+    anchors = declarations.get("word_anchors")
+    if not isinstance(anchors, Mapping):
+        anchors = {}
+    return {
+        field: value
+        for field in ("on", "until")
+        if field not in anchors
+        and isinstance(value := declarations.get(field), str)
+        and value.strip()
+    }
+
+
+def _reference_shape(clip: Mapping[str, Any]) -> dict[str, Any]:
+    """Keep timing/reference inputs while ignoring unrelated authored params."""
+    value = copy.deepcopy(dict(clip))
+    value.pop("params", None)
+    app = value.get("app")
+    if isinstance(app, dict):
+        app.pop("opaque", None)
+        nested = app.get("astrid")
+        if isinstance(nested, dict):
+            nested.pop("on", None)
+            nested.pop("until", None)
+            nested.pop("opaque", None)
+            if not nested:
+                app.pop("astrid", None)
+        app.pop("on", None)
+        app.pop("until", None)
+        if not app:
+            value.pop("app", None)
+    return value
+
+
+def _reference_basis(bundle: Mapping[str, Any], key: tuple[Any, ...], clip: Mapping[str, Any]) -> dict[str, Any]:
+    """Identify the authored target of one legacy timing declaration."""
+    kind, owner, _ = key
+    basis: dict[str, Any] = {"clip": _reference_shape(clip)}
+    source = bundle.get("source_mapping", {})
+    basis["documents"] = copy.deepcopy(
+        source.get("pinned_documents", []) if isinstance(source, Mapping) else []
+    )
+    if kind == "parent":
+        parent = bundle.get("parent", {})
+        clips = parent.get("clips", []) if isinstance(parent, Mapping) else []
+        basis["siblings"] = [_reference_shape(row) for row in clips if isinstance(row, Mapping)]
+        return basis
+
+    shots = bundle.get("shots", {})
+    shot = shots.get(owner, {}) if isinstance(shots, Mapping) else {}
+    internal = shot.get("internal_timeline", {}) if isinstance(shot, Mapping) else {}
+    clips = internal.get("clips", []) if isinstance(internal, Mapping) else []
+    basis["siblings"] = [_reference_shape(row) for row in clips if isinstance(row, Mapping)]
+    placements = bundle.get("placements", [])
+    basis["placements"] = [
+        copy.deepcopy(row)
+        for row in placements
+        if isinstance(row, Mapping) and row.get("shot_id") == owner
+    ]
+    source_shots = source.get("shots", {}) if isinstance(source, Mapping) else {}
+    source_shot = source_shots.get(owner) if isinstance(source_shots, Mapping) else None
+    basis["source"] = copy.deepcopy(source_shot)
+    return basis
+
+
+def _legacy_exemptions(
+    candidate: Mapping[str, Any], baseline: Mapping[str, Any] | None,
+) -> set[tuple[tuple[Any, ...], str]]:
+    """Return only unchanged, base-existing legacy declarations."""
+    if baseline is None:
+        return set()
+    before = dict(_legacy_rows(baseline))
+    exemptions: set[tuple[tuple[Any, ...], str]] = set()
+    for key, clip in _legacy_rows(candidate):
+        prior = before.get(key)
+        if prior is None:
+            continue
+        current_values = _legacy_declarations(clip)
+        prior_values = _legacy_declarations(prior)
+        for field, value in current_values.items():
+            if (prior_values.get(field) == value
+                    and _reference_basis(candidate, key, clip)
+                    == _reference_basis(baseline, key, prior)):
+                exemptions.add((key, field))
+    return exemptions
+
+
+def _legacy_inputs(
+    candidate: Mapping[str, Any], exemptions: set[tuple[tuple[Any, ...], str]],
+) -> tuple[tuple[tuple[str, str, str], str, str], ...]:
+    rows = dict(_legacy_rows(candidate))
+    return tuple((key, field, _legacy_declarations(rows[key])[field])
+                 for key, field in sorted(exemptions, key=lambda item: (item[0], item[1])))
+
+
+def validate_candidate_timing(
+    candidate: Mapping[str, Any], *, baseline: Mapping[str, Any] | None = None,
+) -> None:
     """Compile a detached validation view, leaving authored JSON and pins intact.
 
     The canonical compiler guards changes to occurrence source maps. As in
@@ -25,6 +140,7 @@ def validate_candidate_timing(candidate: Mapping[str, Any]) -> None:
     """
     publication = compile_authoring_candidate(candidate).publication
     projection = copy.deepcopy(dict(candidate))
+    legacy_declarations = _legacy_inputs(candidate, _legacy_exemptions(candidate, baseline))
     config = projection["parent"]["config"]
     output = config.get("output") or {}
     if "fps" in output:
@@ -109,4 +225,5 @@ def validate_candidate_timing(candidate: Mapping[str, Any]) -> None:
         projection,
         sources=[row for row in sources if row["document"]["kind"] == "media.transcript"],
         bindings=bindings,
+        legacy_declarations=legacy_declarations,
     ))

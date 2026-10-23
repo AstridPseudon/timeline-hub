@@ -438,7 +438,7 @@ def validate_final_candidate(
     from astrid.sdk.timeline._commit_timing_validation import validate_candidate_timing
 
     try:
-        validate_candidate_timing(candidate)
+        validate_candidate_timing(candidate, baseline=baseline)
     except (TimingCompileError, KeyError, TypeError, ValueError) as exc:
         _fail("candidate.timing", str(exc))
 

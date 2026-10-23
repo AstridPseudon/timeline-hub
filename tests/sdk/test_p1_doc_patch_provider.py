@@ -307,6 +307,92 @@ def test_disjoint_child_merge_executes_through_service_on_complete_closure(
     assert _round_trip(document) == document
 
 
+@pytest.mark.parametrize(
+    ("change", "created"),
+    [
+        (
+            {
+                "op": "list.insert",
+                "ref": "internal-revision:ir",
+                "path": ["clips"],
+                "id": "new",
+                "before": {"state": "absent"},
+                "order_before": ["c"],
+                "after_id": "c",
+                "value": {
+                    "id": "new",
+                    "track": "picture",
+                    "at": 0,
+                    "from": 0,
+                    "to": 1,
+                    "app": {"astrid": {"on": "new-anchor"}},
+                },
+            },
+            ["occurrence:o/clip:new", "occurrence:sibling/clip:new"],
+        ),
+        (
+            {
+                "op": "set",
+                "ref": "internal-revision:ir",
+                "path": ["clips", "id:c", "app", "astrid", "on"],
+                "before": {"state": "present", "value": "old-anchor"},
+                "value": "new-anchor",
+            },
+            [],
+        ),
+        (
+            {
+                "op": "set",
+                "ref": "internal-revision:ir",
+                "path": ["clips", "id:c", "from"],
+                "before": {"state": "present", "value": 2},
+                "value": 3,
+            },
+            [],
+        ),
+    ],
+    ids=["create", "modify", "invalidate-by-target-change"],
+)
+def test_new_or_invalidated_legacy_timing_is_422_and_atomic(
+    change: dict[str, Any], created: list[str],
+) -> None:
+    realm = _realm_for("params-absent-to-explicit-values")
+    before_head = copy.deepcopy(realm.head)
+    before_entries = len(realm.entries)
+    command = _doc_patch(change)
+    if created:
+        command["created"] = created
+
+    with pytest.raises(CommitRejected) as error:
+        _service_call(realm, [command], controls={"merge": "fields", "reads": []})
+
+    assert error.value.failure["http_status"] == 422
+    assert error.value.failure["details"]["reason"] == "invalid_document"
+    assert realm.head == before_head
+    assert len(realm.entries) == before_entries
+
+
+def test_unchanged_unresolved_legacy_timing_is_retained_for_unrelated_edit() -> None:
+    realm = _realm_for("params-absent-to-explicit-values")
+    result = _service_call(
+        realm,
+        VECTORS["params-absent-to-explicit-values"]["request"]["commands"],
+        controls=VECTORS["params-absent-to-explicit-values"]["request"],
+    )
+    assert result["data"]["status"] == "accepted"
+    clips = [
+        clip
+        for row in result["data"]["canonical_document"]["internal_timeline_revisions"]
+        for clip in row["payload"]["clips"]
+        if clip["id"] == "c"
+    ]
+    assert clips and all(
+        clip["app"]["astrid"]["on"] == "old-anchor"
+        and clip["app"]["astrid"]["until"] == "end"
+        for clip in clips
+    )
+
+
 def _doc_patch(change: dict[str, Any]) -> dict[str, Any]:
     return {
         "schema_version": 1,

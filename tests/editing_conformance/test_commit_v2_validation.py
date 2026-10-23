@@ -113,9 +113,9 @@ def test_production_validation_always_invokes_the_real_timing_adapter(monkeypatc
     calls = []
     compile_candidate = timing.validate_candidate_timing
 
-    def validate(bundle):
+    def validate(bundle, *, baseline=None):
         calls.append(bundle)
-        compile_candidate(bundle)
+        compile_candidate(bundle, baseline=baseline)
 
     monkeypatch.setattr(timing, "validate_candidate_timing", validate)
     validate_final_candidate(value)

@@ -250,7 +250,12 @@ def _legacy_word_owners(documents, clips, internals, is_source):
     return owners
 
 
-def evaluate(bundle, sources, bindings, policy):
+def evaluate(bundle, sources, bindings, policy, legacy_declarations=()):
+    legacy = {
+        (row[0], row[1]): row[2]
+        for row in legacy_declarations
+        if isinstance(row, (tuple, list)) and len(row) == 3
+    }
     fps = _fps(bundle)
     clips, offsets, internals = {}, {}, {}
     placement_ends, seen_shots, seen_occurrences = [], set(), set()
@@ -494,7 +499,14 @@ def evaluate(bundle, sources, bindings, policy):
         base = local_bases.get((cut, owner[1]), bases.get(cut))
         cut_sid = owner[1] if (cut, owner[1]) in local_bases else ""
         audio = owner[1] and lookup._is_audio(owner[1], clip)
-        on, until = intent.on(clip), intent.until(clip)
+        identity = (("parent", "", owner[2]) if owner[0] == "parent"
+                    else ("shot", owner[1], owner[2]))
+        on = intent.on(clip)
+        until = intent.until(clip)
+        if legacy.get((identity, "on")) == on:
+            on = None
+        if legacy.get((identity, "until")) == until:
+            until = None
         if on:
             add(node(owner, "start"), *moment_rule(owner, "on", on, base == owner))
         elif (cut in bases and base != owner and not audio
