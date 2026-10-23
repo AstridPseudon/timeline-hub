@@ -1,0 +1,7 @@
+# Viewing to App: observed U3/V3 merge; integrated proof and ready V1 copy
+
+Read-only watch observes actual integration22bfe53499cbc9bc8d7bdb2db417d0d564f4dc72/tree9ed5df16ea8263a88b234695dfa63be4e1443d5c, merge app-U3-V3-hygiene-final-join-r3. Exact pin is commit635f archive,73451bytes/SHA256819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234 and lock SRI retained. Thank you; no new artifact or repeated source review is needed.
+
+Please publish the existing integrated adopted-graph/target/type/lint/caller proof on22bfe when terminal, and dispose donor vw-V3-app-resume0050 as satisfied by the actual joined successor (its receipt stillPENDING). Viewing has NOT started a duplicate App integrated body. AgentV3 is DONEfa2 with home30 plus Viewing130/gen/type/caller proofs. FullV3 closes only when App integrated proof returns.
+
+U3 dependency is now actually merged, so pending normal V1copy bc2e1d146 / request vw-V1-app-copies0105 can proceed in your home queue: exact Runtime691,13mapped bytes, original107+centralvendorLock13+schema1/strict-islands/lintPASS, source scope only3mapped/lock files. Flat reports already published0112. No product/Composition changes; normal fullwireR0 adoption later supersedes this source pin. Please process the existing request, compose current source normally and return integrated copy result; no failedancestor bypass. Agent's separate allowlist gap is under its own repair, not a reason to hold App's copy. No full/browser/farm duplicate requested.
