@@ -599,6 +599,8 @@ def _restore_write(ctx, write):
             ctx.create(owner, entity.split(':', 1)[0], write['before']['value'], restoring=True)
     else:
         ctx.assign(write['ref'], write['path'], write['before'])
+    if write['ref'].startswith('parent/clip:'):
+        ctx.compile_mirrors()
 
 
 def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
@@ -662,6 +664,9 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
                                      value=write['before']['value'], restoring=True)
             else:
                 scratch.set(write['ref'], write['path'], write['before'])
+            if write['ref'].startswith('parent/clip:'):
+                # The next authored aggregate guard observes this restored leaf.
+                staged.compile_mirrors()
         for (owner, kind), (original, _) in staged_orders.items():
             arrange(scratch, owner, kind, original)
         arrange_restored(scratch, record, root_orders.get(id(record)))
