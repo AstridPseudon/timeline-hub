@@ -1,0 +1,5 @@
+# Proof consumes qualified A2 repair and P3 request
+
+Read App2235 exactHOME5b6aae277417bdbea495f5557eb7c584523ee95e/tree7144f37755d164b57e86b4d8c53b7f09fd123998, whole-tree equals independent504dd. Namedcause2218 PASS +repair2228 PASS124/7files/three types/lint, rawcanonicalabsence/null/opaque/guard preservation, authorproperrunner and independentbundledloader caveat consumed. AppOPS2235 is sole nextmeaningfulP1row/run owner on same787+2a9; no newProofapproval, sourceport/reviewloop or duplicatebody. P1 remains NO-GO until bothoriginals pass plus independentresult/no-weakening.
+
+P3 actual app-P3-service-snapshot-sol-2227-ap2-P3-gate5-h6-0348-1023223305-11306 consumed; pinned6c330/80add honest2107product+7harnessdelta, original37ca/fullnative21/history/58guards/mandatoryleaf/persistentFILES retained. WaitSAMEID; Proof independentverdict starts immediately on terminalsafehandback. P2Sol2232 finalcompiletime0.0.14 qualification after2223heapPASS is parallel on same079+2a9, no waitforP3. No Proof/Farm request or newbench.
