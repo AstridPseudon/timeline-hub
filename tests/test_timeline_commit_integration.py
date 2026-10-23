@@ -537,7 +537,8 @@ def test_real_door_v2_native_and_patch_preview_accept_retry_and_stale_head(
         assert accepted["data"]["status"] == "accepted"
         assert accepted["data"]["label"] == body["label"]
         assert accepted["data"]["merge_mode"] == merge
-        assert accepted["data"]["reads"] == body["reads"]
+        assert next(row for row in edit.history()
+                    if row["publication_id"] == accepted["receipt"]["receipt_id"])["reads"] == body["reads"]
         assert [step["id"] for step in accepted["data"]["steps"]] == ["native-move", "auth-probe"]
         assert accepted["data"]["steps"][1]["patch"] == [change]
         assert accepted["data"]["steps"][1]["reads"] == body["steps"][1]["reads"]
