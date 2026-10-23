@@ -269,6 +269,117 @@ def test_sequential_step_reads_are_checked_and_persisted():
     assert error.value.failure['details']['reason'] == 'previous_value_mismatch'
 
 
+@pytest.mark.parametrize('merge', ['fields', 'atomic'])
+def test_mixed_native_capture_keeps_inherited_reads_at_original_boundaries(merge):
+    realm = DetachedRealm()
+    base = copy.deepcopy(realm.head)
+    move = realm.move()
+    note = patch(change(['meta'], ABSENT, {'org.example': {'note': 'moved'}}))
+    meta = {'kind': 'field', 'ref': 'parent', 'path': ['meta'], 'state': ABSENT}
+    initial = {'kind': 'field', 'ref': 'parent',
+               'path': ['config', 'clips', 'id:clip-a', 'at'], 'state': present(1)}
+    moved = {**initial, 'state': present(3.003)}
+    controls = {'label': 'Move and note', 'merge': merge, 'reads': [meta, initial],
+                'steps': [step('move', 0, move, reads=[meta]), step('note', 1, note, reads=[moved])]}
+    original = copy.deepcopy([move, note, controls])
+
+    preview = submit(realm, move, note, dry_run=True, **controls)
+    assert preview['data']['status'] == 'preview' and preview['receipt'] is None
+    assert realm.head == base and not realm.accepted
+    accepted = submit(realm, move, note, **controls)
+    assert accepted['data']['status'] == 'accepted' and accepted['receipt']
+    assert accepted['data']['commands'][0] == move
+    assert preview['data']['canonical_document'] == accepted['data']['canonical_document']
+    records = realm.entries[-1]['records']
+    assert records['merge_mode'] == merge and records['label'] == controls['label']
+    for submitted, authoritative in zip(controls['steps'], records['steps']):
+        assert all(read in authoritative['dependencies'] for read in controls['reads'] + submitted.get('reads', []))
+        assert authoritative['patch']
+    assert moved in records['steps'][1]['dependencies']
+    assert {'ref': 'parent', 'path': ['meta'], 'state': ABSENT} in records['commands'][0]['reads']
+    assert records['commands'][0]['command']['reads'] == move['reads']
+    assert all(read in records['commands'][0]['reads'] for read in move['reads'])
+    assert {'kind': 'field', 'ref': 'parent', 'path': ['config', 'output', 'fps'],
+            'state': present({'numerator': 30000, 'denominator': 1001})} in records['steps'][0]['dependencies']
+    bindings = [binding for record in records['commands'] for binding in record['bindings']
+                if binding['key'] == 'commit.read']
+    assert [(binding['boundary']['phase'], binding['boundary']['command_ordinal'],
+             binding['dependency']) for binding in bindings] == [
+                 ('batch-read', 0, meta), ('batch-read', 0, initial), ('input', 0, meta), ('input', 1, moved)]
+    assert all(binding['boundary']['evaluated_head'] == base for binding in bindings)
+    assert accepted['data']['canonical_document']['parent_revision']['payload']['meta'] == note['args']['changes'][0]['value']
+    assert [move, note, controls] == original
+
+
+@pytest.mark.parametrize('merge', ['fields', 'atomic'])
+@pytest.mark.parametrize('damage', ['missing', 'inherited'])
+def test_inherited_reads_do_not_authorize_forged_native_capture(merge, damage):
+    realm = DetachedRealm()
+    move = realm.move()
+    read = {'kind': 'field', 'ref': 'parent', 'path': ['meta'], 'state': ABSENT}
+    if damage == 'missing':
+        move['reads'] = []
+    else:
+        move['reads'].append({key: value for key, value in read.items() if key != 'kind'})
+    note = patch(change(['meta'], ABSENT, {'org.example': {'note': 'moved'}}))
+    with pytest.raises(CommitRejected) as error:
+        submit(realm, move, note, merge=merge, reads=[read],
+               steps=[step('move', 0, move, reads=[read]), step('note', 1, note)])
+    assert error.value.failure['details']['reason'] == 'capture_mismatch'
+    assert realm.head['publication_id'] == 'bootstrap' and not realm.prepared
+
+
+@pytest.mark.parametrize('merge', ['fields', 'atomic'])
+def test_mixed_native_inherited_reads_replay_at_landing_head(merge):
+    realm = DetachedRealm()
+    base = copy.deepcopy(realm.head)
+    move = realm.move()
+    note = patch(change(['meta'], ABSENT, {'org.example': {'note': 'moved'}}))
+    read = {'kind': 'field', 'ref': 'parent', 'path': ['meta'], 'state': ABSENT}
+    controls = {'merge': merge, 'reads': [read],
+                'steps': [step('move', 0, move, reads=[read]), step('note', 1, note)]}
+    submit(realm, patch(change(['unknown', 'theirs'], ABSENT, 'kept')), reads=[])
+    head = copy.deepcopy(realm.head)
+    if merge == 'atomic':
+        with pytest.raises(CommitRejected) as error:
+            submit(realm, move, note, base=base, **controls)
+        assert error.value.failure['details']['reason'] == 'atomic_scope_changed'
+        assert realm.head == head and len(realm.accepted) == 1
+    else:
+        result = submit(realm, move, note, base=base, **controls)
+        assert result['data']['rebased_onto'] == head and result['receipt']
+        assert result['data']['commands'][0] == move
+        assert result['data']['canonical_document']['parent_revision']['payload']['unknown']['theirs'] == 'kept'
+        bindings = realm.entries[-1]['records']['commands'][0]['bindings']
+        assert all(binding['boundary']['evaluated_head'] == head
+                   for binding in bindings if binding['key'] == 'commit.read')
+
+
+@pytest.mark.parametrize('merge', ['fields', 'atomic'])
+@pytest.mark.parametrize('declaration', ['request', 'step'])
+@pytest.mark.parametrize('aba', [False, True])
+def test_inherited_native_read_conflicts_with_later_dependency_writes(merge, declaration, aba):
+    realm = DetachedRealm()
+    base = copy.deepcopy(realm.head)
+    move = realm.move()
+    note = patch(change(['meta'], ABSENT, {'org.example': {'note': 'moved'}}))
+    read = {'kind': 'field', 'ref': 'parent', 'path': ['unknown', 'consulted'], 'state': ABSENT}
+    controls = {'merge': merge, 'reads': [read] if declaration == 'request' else [],
+                'steps': [step('move', 0, move, reads=[read] if declaration == 'step' else []),
+                          step('note', 1, note)]}
+    submit(realm, patch(change(read['path'], ABSENT, True)), reads=[])
+    if aba:
+        submit(realm, patch(change(read['path'], present(True), op='remove')), reads=[])
+    head, entries = copy.deepcopy(realm.head), copy.deepcopy(realm.entries)
+    with pytest.raises(CommitRejected) as error:
+        submit(realm, move, note, base=base, **controls)
+    assert error.value.failure['http_status'] == 409
+    assert error.value.failure['details']['status'] == 'conflict'
+    assert error.value.failure['details']['reason'] == (
+        'atomic_scope_changed' if merge == 'atomic' else 'value_conflict')
+    assert realm.head == head and realm.entries == entries
+
+
 @pytest.mark.parametrize('mutation', ['missing_value', 'extra', 'numeric_path', 'nan', 'tag_extra'])
 def test_invalid_wire_shapes_are_deterministic(mutation):
     call = patch(change(['name'], present('Renamed Film'), 'B'))

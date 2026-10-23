@@ -405,13 +405,13 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
     return copy.deepcopy(document)
 
 
-def _failure(reason, message, base, current=None, *, conflicts=None):
-    return {
-        "http_status": 409, "code": "conflict", "message": message,
-        "details": {"status": "conflict" if conflicts else "refused", "reason": reason,
-                    "base": copy.deepcopy(base), "current": copy.deepcopy(current),
-                    "conflicts": conflicts or []},
-    }
+def _failure(reason, message, base, current=None, *, conflicts=None, path=(),
+             hint=None, suggested_command=None, invalid=None, status=None):
+    from ._commit_errors import failure
+
+    return failure(reason, message, base, current, conflicts=conflicts, path=path,
+                   hint=hint, suggested_command=suggested_command, invalid=invalid,
+                   status=status)
 
 
 def _load(port, context, revision):
@@ -1111,19 +1111,29 @@ class RuntimeCommitService:
                 _check_reservations(port, plan, current, CommitRejected, base)
                 document = document_from_bundle(plan.bundle, source_bundles=inverse_sources,
                                                 inverse_records=inverse_records)
+                from ._commit_preview import prepared_records
+
+                records = prepared_records(plan, undo_of=undo_of,
+                                           restored_from=restored_from)
+                # R2's guarded per-step inverse selection is part of the
+                # authenticated recorder, including when the official v2
+                # preview helper builds the common record fields.
+                records["undo_steps"] = copy.deepcopy(undo_steps)
                 prepared = {
                     "expected_head": copy.deepcopy(current), "canonical_document": document,
                     "document_digest": _digest(document),
-                    "records": {"schema_version": 1, "commands": copy.deepcopy(plan.records),
-                                "undo_of": undo_of, "undo_steps": undo_steps, "restored_from": restored_from,
-                                "label": plan.label, "steps": copy.deepcopy(plan.steps),
-                                "merge_mode": plan.merge_mode},
+                    "records": records,
                     "id_map": {}, "semantic_events": copy.deepcopy(plan.semantic_events),
                     "provider_version": PROVIDER_VERSION, "compiler_version": COMPILER_VERSION,
                 }
                 try:
-                    return (port.preview(prepared) if request.get("dry_run", False)
-                            else port.accept(prepared))
+                    if request.get("dry_run", False):
+                        # Runtime authenticates and retains this exact outcome on
+                        # the port.  Any response projection after this call
+                        # would make the provider's result differ from the
+                        # authenticated candidate.
+                        return port.preview(prepared)
+                    return port.accept(prepared)
                 except StaleHead as exc:
                     current = copy.deepcopy(exc.current_head)
                     if restore:
@@ -1133,15 +1143,22 @@ class RuntimeCommitService:
             raise CommitRejected(_failure("head_busy", "timeline head changed on three attempts",
                                           base, current))
         except AuthoringBundleError as exc:
-            raise CommitRejected(_failure("invalid_document", str(exc), base, current)) from exc
+            raise CommitRejected(_failure("invalid_document", str(exc), base, current,
+                                          invalid=current == base or current is None)) from exc
         except CommandError as exc:
+            path = getattr(exc, "path", ())
+            if not path and exc.kind in {"invalid_commands", "invalid_edit_command",
+                                         "invalid_steps", "unsupported_operation",
+                                         "unsupported_version"}:
+                path = ["commands"]
             conflicts = ([exc.to_json()] if exc.kind in {
                 "value_conflict", "identity_conflict", "identity_collision", "inverse_conflict",
                 "dependency_changed", "inverse_dependency_changed",
                 "intervening_write", "selection_changed", "surviving_dependents",
                 "atomic_scope_changed", "binding_changed", "ambiguous_ref"} else None)
             raise CommitRejected(_failure(exc.kind, str(exc), base, current,
-                                          conflicts=conflicts)) from exc
+                                          conflicts=conflicts, path=path,
+                                          invalid=None)) from exc
 
 
 def create_runtime_commit_service():
