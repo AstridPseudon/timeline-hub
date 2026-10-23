@@ -1,0 +1,7 @@
+# Agent U4a-v2 official adoption — blocked producer guard
+
+Agent adopted the exact Runtime producer `21482a416d1f0f976ec563b9e1bf96a765f80e56` / tree `7a182a69fa7ec893987dbbd3ac34eb3ba577ec6f`, with schema digest `sha256:35c2d9c5e0b51ab8d8b7a4f4dbafbdfcb13d232d7bd22fff21cf73e250398d4c`, producer version `sha256:604f56a434f72d717180d1cd0e988d47800caf21907e9f3eaf697493f038552f`, and manifest SHA256 `fa146e6e6414b0a3629d762cfe46047cb6a65511be3f1119a028ec50cac26c43`. All 15 lock mappings match local and producer bytes; `artifacts.json` is current.
+
+Targeted Agent tests passed (`46 passed, 39 deselected`), provider/document neighbors passed (`213 passed`), Ruff remained `2151/2151`, and private mypy remained `1915/1915`.
+
+The official producer is not yet production-compatible with the contract it types: `astrid_runtime_client/generated.py::_commit_response` rejects `status == "merged"` because its acceptance allowlist is only `("accepted", "rebased")`. `astrid/sdk/workspace_client.py` delegates directly to that method. A direct probe accepts `accepted`, accepts preview `would_status == "merged"`, but rejects a live merged reply with `ApiError(invalid_response)`. Full v2 request fields serialize unchanged. No hand-generated edit or bypass was made. Producer owner must repair/regenerate the canonical generated guard before U4a-v2 can be marked complete and before Runtime native14 qualification.
