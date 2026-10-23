@@ -28,7 +28,6 @@ from typing import Any
 
 from .duration import clip_timeline_duration
 from .shot_composition import validate_shot_composition
-from .validators.meta import validate_meta, validate_timeline_meta_locations
 
 
 class ShotCompositionProjectionError(ValueError):
@@ -61,26 +60,6 @@ def _mapping(value: Any, path: str) -> Mapping[str, Any]:
     if not isinstance(value, Mapping):
         raise ShotCompositionProjectionError(f"{path} must be an object")
     return value
-
-
-def _validate_meta_on_rows(rows: Any, *, path: str) -> None:
-    """Validate meta only on this named row collection; never descend opaquely."""
-    if not isinstance(rows, list):
-        return
-    for index, row in enumerate(rows):
-        if isinstance(row, Mapping) and "meta" in row:
-            validate_meta(row["meta"], path=f"{path}[{index}].meta")
-
-
-def _validate_registry_asset_meta(registry: Any, *, path: str) -> None:
-    if not isinstance(registry, Mapping):
-        return
-    assets = registry.get("assets")
-    if not isinstance(assets, Mapping):
-        return
-    for asset_id, entry in assets.items():
-        if isinstance(entry, Mapping) and "meta" in entry:
-            validate_meta(entry["meta"], path=f"{path}.assets[{asset_id!r}].meta")
 
 
 def _effective_parent_registry(payload: Mapping[str, Any], config: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -220,8 +199,6 @@ def _base_parts(
         registry_value = graph.get("registry", {"assets": {}})
     config = copy.deepcopy(dict(_mapping(config_value, "base_config")))
     registry = copy.deepcopy(dict(_mapping(registry_value, "base_registry")))
-    validate_timeline_meta_locations(config, path="base_config")
-    _validate_registry_asset_meta(registry, path="base_registry")
     if not isinstance(config.get("clips", []), list):
         raise ShotCompositionProjectionError("base_config.clips must be a list")
     if not isinstance(config.get("tracks", []), list):
@@ -503,12 +480,8 @@ def project_runtime_parent_composition(
     if not isinstance(parent_revision_id, str) or not parent_revision_id:
         raise ShotCompositionProjectionError("parent_revision.revision_id must be a non-empty string")
     payload = _mapping(parent.get("payload"), "parent_revision.payload")
-    if "meta" in payload:
-        validate_meta(payload["meta"], path="parent_revision.payload.meta")
     config_value = _mapping(payload.get("config"), "parent_revision.payload.config")
-    validate_timeline_meta_locations(config_value, path="parent_revision.payload.config")
     registry_value = _effective_parent_registry(payload, config_value)
-    _validate_registry_asset_meta(registry_value, path="parent_revision.payload.registry")
     payload_clips = payload.get("clips", [])
     config_clips = config_value.get("clips", [])
     for location, clips in (("clips", payload_clips), ("config.clips", config_clips)):
@@ -519,12 +492,9 @@ def project_runtime_parent_composition(
             "parent_revision.payload.clips and payload.config.clips disagree"
         )
     ordinary_clips = payload_clips or config_clips
-    _validate_meta_on_rows(payload_clips, path="parent_revision.payload.clips")
-    _validate_meta_on_rows(config_clips, path="parent_revision.payload.config.clips")
     raw_occurrences = payload.get("occurrences")
     if not isinstance(raw_occurrences, list):
         raise ShotCompositionProjectionError("parent_revision.payload.occurrences must be a list")
-    _validate_meta_on_rows(raw_occurrences, path="parent_revision.payload.occurrences")
 
     config = copy.deepcopy(dict(config_value))
     registry = copy.deepcopy(dict(registry_value))
@@ -541,11 +511,6 @@ def project_runtime_parent_composition(
     shots: dict[tuple[str, str], Mapping[str, Any]] = {}
     for index, raw in enumerate(shot_revisions):
         shot = _mapping(raw, f"shot_revisions[{index}]")
-        if "meta" in shot:
-            validate_meta(shot["meta"], path=f"shot_revisions[{index}].meta")
-        shot_payload = shot.get("payload")
-        if isinstance(shot_payload, Mapping) and "meta" in shot_payload:
-            validate_meta(shot_payload["meta"], path=f"shot_revisions[{index}].payload.meta")
         key = (shot.get("shot_id"), shot.get("revision_id"))
         if not all(isinstance(value, str) and value for value in key):
             raise ShotCompositionProjectionError(
@@ -603,14 +568,6 @@ def project_runtime_parent_composition(
         timeline = _mapping(
             internal.get("payload"),
             f"internal_timeline_revisions[{internal_revision_id!r}].payload",
-        )
-        validate_timeline_meta_locations(
-            timeline,
-            path=f"internal_timeline_revisions[{internal_revision_id!r}].payload",
-        )
-        _validate_registry_asset_meta(
-            timeline.get("registry"),
-            path=f"internal_timeline_revisions[{internal_revision_id!r}].payload.registry",
         )
         if timeline.get("compositing") not in (None, "source_over", "normal"):
             raise ShotCompositionProjectionError("unsupported compositing mode in internal timeline")

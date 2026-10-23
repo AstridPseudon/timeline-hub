@@ -1,6 +1,7 @@
 """Check out, validate, or publish a detached timeline JSON document."""
 
 import argparse
+import copy
 import hashlib
 import json
 import shlex
@@ -15,7 +16,11 @@ from astrid.sdk.authoring_bundle import (
     plan_authoring_media,
 )
 from astrid.sdk.autobootstrap import ensure_runtime
-from astrid.sdk.timeline.document_diff import DocumentDiffError, document_diff_to_commands
+from astrid.sdk.timeline._command_state import CommandError
+from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.commit import _json
+from astrid.sdk.timeline.emitter import DocumentPatchError, emit_document_commands
+from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_swap_media
 from astrid.sdk.timeline.store import fetch_bundle
 from astrid.sdk.timeline.sync import TimelineSession
 from astrid.sdk.workspace_client import WorkspaceClient, resolve_runtime_connection
@@ -71,6 +76,44 @@ def resolve_media_rebinds(transport, project_id, candidate, base):
                 if value not in verified:
                     verified.append(value)
     return selections, verified
+
+
+def emit_document_publish_commands(base, candidate, media_selections, verified_media):
+    """Capture verified media swaps before emitting the remaining document patches."""
+    candidate = copy.deepcopy(candidate)
+    source = base.get("source_mapping", {}).get("_runtime_document")
+    if source is not None:
+        # Detached files do not carry the private source. Only attach the exact
+        # source read by this publication session; all other provenance must match.
+        candidate_source = candidate["source_mapping"].pop("_runtime_document", source)
+        if _json(candidate_source) != _json(source):
+            raise DocumentPatchError("document canonical source differs from the original base")
+        candidate["source_mapping"]["_runtime_document"] = copy.deepcopy(source)
+        publication = candidate["base_parent"].get("publication_id")
+        if publication is None:
+            candidate["base_parent"]["publication_id"] = base["base_parent"]["publication_id"]
+    working = copy.deepcopy(base)
+    commands = []
+    for (owner, alias), pair in media_selections.items():
+        occurrence_id = owner.removeprefix("occurrence:")
+        placement = next(
+            row for row in working["placements"] if row["occurrence_id"] == occurrence_id
+        )
+        clips = working["shots"][placement["shot_id"]]["internal_timeline"]["clips"]
+        target = next(row for row in clips if row.get("asset") == alias)
+        select = f"{owner}/clip:{target['id']}"
+        try:
+            command = capture_occurrence_swap_media(
+                working, select, pair["old"], pair["new"], verified_media=verified_media
+            )
+            working = execute(working, [command], verified_media=verified_media).bundle
+        except (CommandError, KeyError, StopIteration, TypeError) as exc:
+            raise DocumentPatchError(
+                f"{owner}/asset:{alias} native same-alias media rebind is held: {exc}"
+            ) from exc
+        commands.append(command)
+    commands.extend(emit_document_commands(working, candidate))
+    return commands
 
 
 def dump(path, value):
@@ -227,28 +270,20 @@ def main():
             base_publication_id=base_publication_id,
         )
         session_state = session._state()
-        if session_state.get("pending") or session_state.get("flight") is not None:
-            base = fetch_bundle(
-                candidate["project_id"], candidate["timeline_id"],
-                revision_id=session_state["base"]["revision_id"], client=client,
-            )
-        else:
-            base = session._bundle(session_state)
-        try:
-            document_diff_to_commands(plan["candidate"], base, defer_media=True)
-        except DocumentDiffError as exc:
-            raise RuntimeError(f"document publish is held: {exc}") from exc
+        base = fetch_bundle(
+            candidate["project_id"], candidate["timeline_id"],
+            revision_id=session_state["base"]["revision_id"],
+            publication_id=session_state["base"]["publication_id"], client=client,
+        )
         imported = import_authoring_media(plan, transport)
         media_selections, verified_media = resolve_media_rebinds(
             transport, candidate["project_id"], imported["candidate"], base
         )
         try:
-            native = document_diff_to_commands(
-                imported["candidate"], base,
-                media_selections=media_selections,
-                verified_media=verified_media,
-            )
-        except DocumentDiffError as exc:
+            native = {"commands": emit_document_publish_commands(
+                base, imported["candidate"], media_selections, verified_media
+            )}
+        except DocumentPatchError as exc:
             raise RuntimeError(f"document publish is held: {exc}") from exc
     # Save the durable rewrite separately; preserve the editable source file for
     # review/retry if import or parent CAS fails. This is not another media store.
@@ -293,7 +328,8 @@ def main():
     else:
         publication = session.commit_many(
             native["commands"], idempotency_key=args.idempotency_key, via="script",
-            verified_media=verified_media,
+            verified_media=verified_media, label="Publish document",
+            merge="atomic",
             base={"revision_id": candidate["base_parent"]["revision_id"],
                   "publication_id": base_publication_id},
         )

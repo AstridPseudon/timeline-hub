@@ -24,7 +24,7 @@ class _RemoteTimelineRevisionMixin:
             self, operation: str, *args: Any, key: str | None = None, **kwargs: Any,
         ) -> DomainResult[Any]: ...
 
-    def open_bundle(self, project, ref, *, revision_id=None):
+    def open_bundle(self, project, ref, *, revision_id=None, publication_id=None):
         """Read one complete, read-only authoring bundle (parent → shots → internal timelines).
 
         The same closure ``timeline_document.py checkout`` writes, pinned to the
@@ -41,6 +41,8 @@ class _RemoteTimelineRevisionMixin:
             INTERNAL_IMAGE_FIELDS,
             PARENT_IMAGE_FIELDS,
             SHOT_IMAGE_FIELDS,
+            _json,
+            bundle_from_document,
         )
 
         opened = self.open_composition(project, ref, revision_id=revision_id, limit=1)
@@ -57,6 +59,10 @@ class _RemoteTimelineRevisionMixin:
                 "protocol_error",
                 "timeline inspection did not return a project id, timeline id and revision",
                 {"project": str(project), "timeline": str(ref)},
+            ))
+        if publication_id is not None and (not revision_id or not isinstance(publication_id, str) or not publication_id):
+            return DomainResult.failure(ErrorObject(
+                "protocol_error", "source hydration requires the exact original revision/publication pair", {}
             ))
         parent = self._typed("get_project_parent_composition_revision", project_id, timeline_id, revision)
         if not parent.ok or not isinstance(parent.data, Mapping):
@@ -110,6 +116,46 @@ class _RemoteTimelineRevisionMixin:
                 shot_revisions=shot_images,
                 internal_timeline_revisions=internal_images,
             )
+            if publication_id is not None:
+                # Bind the immutable read to the original publication, even if
+                # another writer has advanced the head. Never infer retained pins.
+                cursor, seen = None, set()
+                while True:
+                    page = self.history(project_id, timeline_id, cursor=cursor, limit=100)
+                    if not page.ok:
+                        return page
+                    entry = next((row for row in page.data["items"]
+                                  if row["publication_id"] == publication_id), None)
+                    if entry is not None:
+                        if entry["revision_id"] != revision or entry["receipt"]["receipt_id"] != publication_id:
+                            raise AuthoringBundleError("original revision/publication pair changed")
+                        break
+                    cursor = page.data.get("next_cursor")
+                    if cursor is None or cursor in seen:
+                        raise AuthoringBundleError("original publication is unavailable")
+                    seen.add(cursor)
+                document = entry["receipt"]["result"].get("canonical_document")
+                if document is None:
+                    # Bootstrap/legacy receipts need the manifest retained by
+                    # Runtime's verified immutable parent read, not a rebuilt one.
+                    document = {
+                        "schema_version": 1, "project_id": project_id, "timeline_id": timeline_id,
+                        "parent_revision": {key: parent.data[key] for key in PARENT_IMAGE_FIELDS},
+                        "shot_revisions": sorted(
+                            ({key: row[key] for key in SHOT_IMAGE_FIELDS} for row in shots.values()),
+                            key=lambda row: (row["shot_id"], row["revision_id"])),
+                        "internal_timeline_revisions": sorted(
+                            ({key: row[key] for key in INTERNAL_IMAGE_FIELDS} for row in internals.values()),
+                            key=lambda row: (row["timeline_id"], row["revision_id"])),
+                        "dependency_manifest": parent.data["dependency_manifest"],
+                    }
+                hydrated = bundle_from_document(document)
+                source = hydrated["source_mapping"].pop("_runtime_document")
+                if _json(hydrated) != _json(bundle) or ("dependency_manifest" in parent.data
+                        and _json(parent.data["dependency_manifest"]) != _json(source["dependency_manifest"])):
+                    raise AuthoringBundleError("canonical document differs from the original closure read")
+                bundle["source_mapping"]["_runtime_document"] = source
+                bundle["base_parent"]["publication_id"] = publication_id
         except (AuthoringBundleError, KeyError, TypeError) as exc:
             return DomainResult.failure(ErrorObject(
                 "protocol_error", f"could not open the timeline closure: {exc}",
