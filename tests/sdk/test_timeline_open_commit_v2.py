@@ -7,16 +7,19 @@ from __future__ import annotations
 
 import copy
 import json
+import sys
 
 import pytest
-from astrid_runtime_client import ApiError
 
 from astrid.sdk import timeline
 from astrid.sdk.timeline import api, commit_session
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.sync import CommitConflict
 from astrid.sdk.workspace_client import WorkspaceClientError
+from astrid_runtime_client import ApiError
+from tests.sdk.test_timeline_commit_provider_document import document_fixture
 from tests.sdk.test_timeline_sync import connected  # noqa: F401
 
 
@@ -290,13 +293,54 @@ def test_callback_exception_and_nested_commit_publish_nothing(connected):
     assert tl.bundle == before and generated.calls == [] and tl._journal == []
 
 
-def test_missing_g3_emitter_refuses_free_edits_without_publication(connected):
+def test_missing_g3_emitter_refuses_free_edits_without_publication(connected, monkeypatch):
     tl = opened(connected)
     _, generated, _ = connected
+    # Keep the original unavailable-dependency control now that the real
+    # emitter is mounted in this branch.  The ordinary G2 bundle intentionally
+    # has no verified Runtime document, so allowing the import would exercise a
+    # different dependency failure instead of the original refusal boundary.
+    monkeypatch.setitem(sys.modules, "astrid.sdk.timeline.emitter", None)
     tl.bundle["parent"]["clips"][0]["at"] = 4
     with pytest.raises(TimelineEditError, match="G3 document emitter"):
         tl.commit("Free edit")
     assert generated.calls == [] and at(tl) == 4
+
+
+def test_g3_emitter_uses_existing_provider_with_verified_runtime_document(connected):
+    client, generated, path = connected
+    document = document_fixture(shared=False)
+    document.update(project_id="p", timeline_id="t")
+    document["parent_revision"]["revision_id"] = "r0"
+    generated.bundles = {"r0": bundle_from_document(document)}
+    assert "_runtime_document" in generated.bundles["r0"]["source_mapping"]
+
+    tl = timeline.open("p", "t", client=client, outbox_path=path)
+    tl.bundle["parent"]["name"] = "Joined film"
+    # The existing generated provider compiles only changed child images; keep
+    # the fixture's complete closure valid through its real acceptance path.
+    tl.bundle["shots"]["chapter-shot"]["payload"]["name"] = "Joined chapter"
+    result = tl.commit("Rename film")
+
+    assert result["data"]["status"] == "accepted"
+    assert len(generated.calls) == 1
+    body = json.loads(generated.calls[0][0])
+    assert body["label"] == "Rename film"
+    assert body["merge"] == "atomic"
+    assert body["commands"][0]["op"] == "doc.patch"
+    assert {
+        "op": "set", "ref": "parent", "path": ["name"],
+        "before": {"state": "present", "value": "Renamed Film"},
+        "value": "Joined film",
+    } in body["commands"][0]["args"]["changes"]
+    assert {
+        "op": "set", "ref": "shot-revision:shot-1", "path": ["name"],
+        "before": {"state": "present", "value": "Chapter One"},
+        "value": "Joined chapter",
+    } in body["commands"][0]["args"]["changes"]
+    assert body["steps"][0]["label"] == "Edit document"
+    assert body["steps"][0]["patch"] == body["commands"][0]["args"]["changes"]
+    assert generated.bundles[result["data"]["accepted_revision_id"]]["parent"]["name"] == "Joined film"
 
 
 def test_g3_emitter_seam_captures_helpers_once(connected, monkeypatch):

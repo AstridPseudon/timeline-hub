@@ -297,20 +297,41 @@ class TimelineSession:
         commands = [_native_command(command) for command in commands]
         return self._stage(lambda state: execute(self._bundle(state, commands), commands).commands)
 
-    def commit(self, command, *, idempotency_key=None, dry_run=False, via="python", verified_media=()):
+    def commit(self, command, *, idempotency_key=None, dry_run=False, via="python", verified_media=(),
+               label=None, steps=None, merge="fields", reads=None):
         """Capture and flush one native command, or retry its original flight."""
         return self.commit_many([command], idempotency_key=idempotency_key, dry_run=dry_run,
-                                via=via, verified_media=verified_media)
+                                via=via, verified_media=verified_media, label=label, steps=steps,
+                                merge=merge, reads=reads)
 
     def commit_many(
         self, commands, *, idempotency_key=None, dry_run=False, via="python", base=None,
-        verified_media=(),
+        verified_media=(), label=None, steps=None, merge="fields", reads=None,
     ):
         """Capture and flush a batch, or retry its exact flight before a suffix."""
         from astrid.sdk.timeline._command_state import equal
         from astrid.sdk.timeline.commands import execute
 
         commands = [_native_command(command) for command in commands]
+        metadata_requested = label is not None or steps is not None or merge != "fields" or reads is not None
+        label = label if label is not None else "Timeline edit"
+        if not isinstance(label, str) or not label.strip():
+            raise TimelineEditError("commit label must be a nonempty string")
+        if merge not in {"fields", "atomic"}:
+            raise TimelineEditError("merge must be fields or atomic")
+        if steps is None:
+            steps = []
+            for ordinal, command in enumerate(commands):
+                patch = (copy.deepcopy(command.get("args", {}).get("changes", []))
+                         if command.get("op") == "doc.patch" else [])
+                steps.append({"id": f"step-{ordinal + 1}", "label": label,
+                              "intent": "", "tags": [], "command_ordinals": [ordinal],
+                              "patch": patch})
+        else:
+            steps = copy.deepcopy(steps)
+        options = {"label": label, "steps": steps, "merge": merge}
+        if reads is not None:
+            options["reads"] = copy.deepcopy(reads)
         self._stage(lambda state: execute(
                         self._bundle(state, commands), commands, verified_media=verified_media
                     ).commands,
@@ -319,6 +340,15 @@ class TimelineSession:
                         and all(equal(saved["intent"].get(key), value)
                                 for key, value in command.get("intent", {}).items())
                         for saved, command in zip(pending, commands)), base=base)
+        with self.outbox.locked():
+            state = self._state()
+            if metadata_requested:
+                existing = state.get("commit_options")
+                if existing is not None and existing != options:
+                    raise TimelineEditError("pending commit metadata differs; retry the original request")
+                if state.get("flight") is None:
+                    state["commit_options"] = copy.deepcopy(options)
+                    self.outbox.write(state)
         return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
 
     def _queue(self, capture, matches=None):

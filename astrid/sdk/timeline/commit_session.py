@@ -63,9 +63,16 @@ class Timeline(Checkout):
             self._free_edits = True
 
     def _append(self, commands, *, label, intent="", tags=(), reads=None):
-        from .commands import execute
+        from .commands import CommandError, execute
 
-        plan = execute(self._command_bundle, commands)
+        try:
+            plan = execute(self._command_bundle, commands)
+        except CommandError as exc:
+            if exc.kind == "unsupported_operation" and any(command.get("op") == "doc.patch" for command in commands):
+                raise TimelineEditError(
+                    "free edits require the G3 document emitter and the R1 doc.patch provider"
+                ) from exc
+            raise
         start = len(self._commands)
         patch = [copy.deepcopy(change) for command in commands if command["op"] == "doc.patch"
                  for change in command["args"]["changes"]]

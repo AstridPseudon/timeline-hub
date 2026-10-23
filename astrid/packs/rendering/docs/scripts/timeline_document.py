@@ -15,7 +15,7 @@ from astrid.sdk.authoring_bundle import (
     plan_authoring_media,
 )
 from astrid.sdk.autobootstrap import ensure_runtime
-from astrid.sdk.timeline.document_diff import DocumentDiffError, document_diff_to_commands
+from astrid.sdk.timeline.emitter import DocumentPatchError, emit_document_commands
 from astrid.sdk.timeline.store import fetch_bundle
 from astrid.sdk.timeline.sync import TimelineSession
 from astrid.sdk.workspace_client import WorkspaceClient, resolve_runtime_connection
@@ -235,20 +235,16 @@ def main():
         else:
             base = session._bundle(session_state)
         try:
-            document_diff_to_commands(plan["candidate"], base, defer_media=True)
-        except DocumentDiffError as exc:
+            emit_document_commands(base, plan["candidate"])
+        except DocumentPatchError as exc:
             raise RuntimeError(f"document publish is held: {exc}") from exc
         imported = import_authoring_media(plan, transport)
-        media_selections, verified_media = resolve_media_rebinds(
+        _media_selections, verified_media = resolve_media_rebinds(
             transport, candidate["project_id"], imported["candidate"], base
         )
         try:
-            native = document_diff_to_commands(
-                imported["candidate"], base,
-                media_selections=media_selections,
-                verified_media=verified_media,
-            )
-        except DocumentDiffError as exc:
+            native = {"commands": emit_document_commands(base, imported["candidate"])}
+        except DocumentPatchError as exc:
             raise RuntimeError(f"document publish is held: {exc}") from exc
     # Save the durable rewrite separately; preserve the editable source file for
     # review/retry if import or parent CAS fails. This is not another media store.
@@ -293,7 +289,7 @@ def main():
     else:
         publication = session.commit_many(
             native["commands"], idempotency_key=args.idempotency_key, via="script",
-            verified_media=verified_media,
+            verified_media=verified_media, label="Publish document",
             base={"revision_id": candidate["base_parent"]["revision_id"],
                   "publication_id": base_publication_id},
         )
