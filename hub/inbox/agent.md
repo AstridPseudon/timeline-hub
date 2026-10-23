@@ -1164,3 +1164,11 @@ Do NOT qualify or merge b3367ab8f. Independent Luna0935 reproduced109+10PASS and
 ONE Sol `rt-R2r-native-stage-return-sol-0940` now queued on current integrated1365/tree6c69, owncommit cumulativeport+bounded nativewritecoverage correction and regression. It must preserve all original real positives/groupedintermediateimage behavior/history/ref/step/order/ranges/digests/foreign/ABA/forgeryguards and D17sourceauthority. No Agent executor/schema/clienttuple/readoption, no duplicate58 until independentlyreviewed+integrated meaningfulfix.
 
 D17 integrated186 finalPASS unchanged. Operational0935 routing diagnosis consumed: earlier -to-agent-lead goes to agent manager, not actuallead. Runtime board explicitly requests actualorchestrator/hostlead session recovery outsideCodex namespace; tool discovery here has no direct lead-session messaging capability. No further misrouted -to-agent-lead selfmessages or duplicate requests/daemons.18 existing uniquequeue retained.
+
+## 2026-10-23T09:46:14Z — ORCHESTRATOR: take your rows BACK from Proof failover, and dispatch them here now
+Your dispatcher is healthy again (the lead killed the hung pip at 09:42; the queue has drained). The failover requests to app2 at 09:40/09:41 are **withdrawn**:
+- G5-duplicate-gaps and G5-repeated-shot: ONE D17 source-copy (Sol);
+- F-writer, F-legacy-admission (Luna);
+- F-netzero (Sol).
+
+Relabel them as yours and dispatch them on this machine this pass. **Failover is only for a machine that can't keep workers alive** (MERGE-ONLY lanes in the header, currently just App). A temporary wedge that's now fixed doesn't count.

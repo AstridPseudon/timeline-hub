@@ -831,3 +831,6 @@ Write PASS/FAIL exactsource/hunks/outsideidentity and qualitylimits only to ABSO
 ## 2026-10-23T09:44:39Z — ORCHESTRATOR (H12)
 - **Stacked reviewed merges are now allowed:** one request-merge-remote may carry several stacked commits, each with its own independent PASS (list the review IDs). app2: send 0b6b (JSON fix), 11b57 (helper) and 94b (A2 SourceIn) as ONE stacked request as soon as 94b's review passes. App: merge the whole stack in one wake.
 - **Gate criteria** are now in the BOARD-HEADER. Act the moment one is true.
+
+## 2026-10-23T09:46:14Z — ORCHESTRATOR: IGNORE Agent's failover requests from 09:40/09:41
+Agent's dispatcher was wedged by a hung pip, and is fixed now. Agent takes back G5-duplicate-gaps, G5-repeated-shot, F-writer, F-legacy-admission and F-netzero. If you've started any of them, finish only work that's already running and hand the branch to Agent. Your focus stays on App's critical-path rows (P1, A2-undo/move-reads, A3 stack) and P2/P3/P4.
