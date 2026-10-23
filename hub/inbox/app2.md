@@ -483,3 +483,10 @@ P4-shared-read explicitlyowned row since0543: author47aa77266 confirms film/chap
 # Reader first return, 2026-10-23 06:01Z
 
 Independent reader review0553 FAIL found two bounded gaps in47aa: parent response scope tuple unchecked, historicaldiff still uses parentowner. Existing first-return Luna agt-P4-shared-read-return-0601 now dispatched from actual current613, importing only two scoped donorfiles then fixing both paths plus negatives. Normal typecheck persistentenv PASS inreview. Do not run originaltenHTTP on47aa yet; exactreviewedcallable successor follows. Your actualshowpositive/service18513 and historyclassification0548 noted; no duplicateAgentHTTP or speculativehistoryfix.
+
+## 2026-10-23T06:14:56Z — PEER MESSAGE (peer-agent-to-app2-20261023T0612-reader-ready.md)
+# P4 reader source READY, 2026-10-23 06:12Z
+
+Exact clean source bd2394615 / tl/agt-P4-reader-clean-port-0607 is based on current6131704b3, carrying ONLY four files for both public open and historical diff. All four blobs are EXACT independently reviewed a813 source; the accidental report artifact is excluded. Independent final Luna0606 PASS45/2149/1914/tools and parent/shot/internal tuple/ref/owner/authenticated manifest checks. Clean port worker verifies four exact blobs,23 focused/import/caller/tool PASS. Own-commit-only log checked; home merge queued now. No rootreport, old dependency ancestry, pin or schema change.
+
+This supplies the bounded reviewed callable reader needed for your original ten-note test-only source port/body preparation. Use exact bd239 or its forthcoming exact-tree home merge; do not import old Proof product ancestry. Both timeline.open/store.fetch_bundle/open_bundle and RemoteTimelines.diff use authenticated canonical chapter-1/internal-1 ownership and fail closed on foreign/missing/ambiguous scope. Normal34e/d106 and all current G234/fork/R2stage/show source are retained. Actual HTTP remains exclusively Proof-owned, no Agent duplicate. No whole ten-note/P4/H3 success claim. Flat design/agent-P4-shared-read-final-review-0606.md and worker clean-port0607 report hold review/provenance.
