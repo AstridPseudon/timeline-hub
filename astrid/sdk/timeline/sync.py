@@ -405,12 +405,30 @@ class TimelineSession:
                     and pending[0]["args"] == {"in_s": in_s, "out_s": out_s})
         return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
 
-    def undo(self, publications, *, idempotency_key=None, dry_run=False, via="python"):
+    def undo(self, publications, *, steps=None, idempotency_key=None, dry_run=False, via="python"):
         publications = list(publications)
         if not publications or len(set(publications)) != len(publications) or not all(isinstance(p, str) and p for p in publications):
             raise TimelineEditError("undo requires a nonempty unique list of publication IDs, oldest first")
+        if steps is not None:
+            valid_steps = (
+                isinstance(steps, dict)
+                and set(steps) == set(publications)
+                and all(
+                    isinstance(step_ids, list)
+                    and step_ids
+                    and all(isinstance(step_id, str) and step_id for step_id in step_ids)
+                    and len(set(step_ids)) == len(step_ids)
+                    for step_ids in steps.values()
+                )
+            )
+            if not valid_steps:
+                raise TimelineEditError(
+                    "undo steps must map every publication to a nonempty unique list of step IDs"
+                )
         command = {"schema_version": 1, "op": "timeline.inverse", "version": "1",
                    "select": None, "args": {"publications": publications}}
+        if steps is not None:
+            command["args"]["steps"] = copy.deepcopy(steps)
         with self.outbox.locked():
             state = self._state()
             if _flight_kind(state["flight"]) == "assembly-admission":
