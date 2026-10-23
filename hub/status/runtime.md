@@ -1,5 +1,5 @@
-<!-- main | 2026-10-23T13:17:47Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 1m -->
-# runtime board, 2026-10-23T13:16:00Z
+<!-- main | 2026-10-23T13:19:57Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 2m -->
+# runtime board, 2026-10-23T13:18:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | R2r-D17-stage | authenticated native aggregate inverse normalization | Sol after Luna failures / independent Luna | independent1115 PASS | merged | author1105/review1115; service28978+4445 | DONE5768 MERGED3b926/treeb794 EXACTreviewedtree. Integrated238PASS=204normal34.04s+34marked16.29s; independent137+101/REALSTORE/static0added. Originalfour2PASS2AgentmissingbindingsFAIL retained | 3b926efab /5768a3a63 |
@@ -94,3 +94,5 @@ Checkpoint13:11: merge1240 RECEIPT MERGED8592822fd11275540f596562f43c715676f2bc0
 Published13:13: COMPATIBLEEXECUTION Runtime8592822fd11275540f596562f43c715676f2bc0f/treeed9856f43a4e44a058bf2230badea2c4c7080050, own9c694858e independently1303PASS and EXACT integrated5824 PASS288/77.50s56marked+232normal0skip. Runtimecreatedchild/capturedsource prerequisiteCLEARED; consumersownlaterpubliccase/P2P3bench/journeyproof. OFFICIALCLIENT34e/d106/819acf and77frozenbytes unchanged; no newtuple/adoption. Independentfreshmanagedmedia/child/transcript/laterhead/restart/history/retry + uncapturedsourceand1204refusals retainstrictauthority. EarlierfailedcandidatesNEVERmerge. PriorD17d1fa+3b323scopeunchanged, no currentwhole323claim.
 
 Checkpoint13:16: childmakerMAIN+actualhubkit5d1ac4PUBLISHEDviaexistingnormalcycle; remoteACKrequestedpeer1316. LateProof1310 saysRemotion1303packetpartial/bootstrapnotwired; installedfd2c isHELD/NOTREADY, existinguniqueProofSol1310ownsfinalpacket. No realprovisionrun; no blanketOPSdone. LeafLuna1304 FINALcandidateHELD:138existingtestsPASS/static0 butactualpublicpositivefailsEARLIERrootsequentialinput. NeedactualAgent1246auth-input/stageJSONnotdeliveredthroughhub; peer1316ordinaryrequest/blocked:agent. No knownfailedrerun/merge/newauthoruntilmeaningfulcapture.
+
+Checkpoint13:18: ProofSol1310partialflatfinalmakerfileappeared; mainLunafirstreturnrt-OPS-D21-runtime-kit-return-1318QUEUEDstart-on-branchcomparison NOW, no installuntilSolfinalhash/sourcePASS. Child5d1ac4preserved; no competingbootstrapdesignorrealenvwork. Agent1312 hasuniqueactualleafJSONexportownerQUEUED; doNOTrepeatfailedpublicregressionpendingactualcapture. NewD20interface1310isAgentsemantic/currentclosureauthority, no concreteRuntimechange requested; no speculativepatch.
