@@ -1649,21 +1649,20 @@ class RuntimeService:
 
     @staticmethod
     def _require_timeline_command():
-        from .errors import RetiredRouteError
-
         raise RetiredRouteError(
             "legacy timeline writes are retired; submit EditCommands through commitTimeline",
             details={"status": "refused", "reason": "timeline_commit_required",
+                     "hint": "Submit a timeline commit instead of the retired save route.",
+                     "suggested_command": "timeline commit",
                      "replacement": "POST /v1/projects/{project_id}/timelines/{timeline_id}/commit"},
         )
 
-    @_durable_mutation
     def update_timeline(self, timeline_id, body, *, idempotency_key=None):
         self._require_timeline_command()
 
-    @_durable_mutation
     def replace_timeline_clip(self, timeline_id, body, *, idempotency_key=None):
         self._require_timeline_command()
+
     def _timeline_name(self, name):
         if not isinstance(name, str):
             raise ValidationError("timeline name must be a string")
@@ -1763,7 +1762,6 @@ class RuntimeService:
             return self._command_replay("timeline.create", "timelines", idempotency_key, request_hash, project_id=project_id)
         return resource
 
-    @_durable_mutation
     def create_timeline_document(self, project_id, body, *, idempotency_key=None):
         self._require_timeline_command()
 
@@ -2660,7 +2658,6 @@ class RuntimeService:
         }
         return self._command_record("timeline.view", timeline_id, idempotency_key, request_hash, result, with_receipt=False)
 
-    @_durable_mutation
     def replace_parent_composition_media(self, project_id, timeline_id, body, *, idempotency_key=None):
         self._require_timeline_command()
 
@@ -2795,388 +2792,8 @@ class RuntimeService:
                 found.update(self._collect_digest_media(item))
         return found
 
-    @_durable_mutation
     def publish_parent_composition(self, project_id, timeline_id, body, *, idempotency_key=None):
-        idempotency_key = require_idempotency_key(idempotency_key)
-        self._require_object_body(body)
-        project = self.store.get_project(project_id)
-        if (
-            "project_id" not in body
-            or "timeline_id" not in body
-            or ("expected_head" not in body and "expected_head_revision_id" not in body)
-        ):
-            raise ValidationError("publication requires project_id, timeline_id, and expected_head")
-        if body.get("project_id") != project["id"] or body.get("timeline_id") != timeline_id:
-            raise ConflictError("publication identity does not match route scope")
-        request_hash = hashlib.sha256(canonical_json({"project_id": project["id"], "timeline_id": timeline_id, "body": body}).encode()).hexdigest()
-        prior_key = self.store.conn.execute("SELECT aggregate_id, request_hash FROM command_idempotency WHERE command_kind=? AND idempotency_key=? LIMIT 1", ("parent_composition.publish", idempotency_key)).fetchone()
-        if prior_key and prior_key["aggregate_id"] != timeline_id:
-            raise ConflictError("idempotency key was already used with different input")
-        replay = self._command_replay("parent_composition.publish", timeline_id, idempotency_key, request_hash, project_id=project["id"])
-        if replay is not None:
-            return replay
-        expected_head = body.get("expected_head") if "expected_head" in body else body.get("expected_head_revision_id")
-        if expected_head is not None:
-            self._revision_id(expected_head, "expected_head")
-        timeline = self.store.conn.execute("SELECT * FROM timelines WHERE id=?", (timeline_id,)).fetchone()
-        if timeline and timeline["project_id"] != project["id"]:
-            raise ConflictError("timeline belongs to a different project")
-        current_head_row = self.store.conn.execute("SELECT revision_id, publication_id FROM parent_composition_heads WHERE timeline_id=? AND project_id=?", (timeline_id, project["id"])).fetchone()
-        if current_head_row is not None and current_head_row["publication_id"] is not None:
-            raise ConflictError("tracked timeline publication requires a timeline command",
-                                details={"status": "refused", "reason": "timeline_commit_required"})
-        current_head = current_head_row["revision_id"] if current_head_row else None
-        if current_head != expected_head:
-            # details.reason is the stable machine-readable discriminator for a lost
-            # head race (publish and restore); the message wording is not a contract.
-            # Not added to the openapi text: that would change the pinned schema digest.
-            raise ConflictError("parent composition head is stale", details={"reason": "stale_head", "expected_head": expected_head, "actual_head": current_head})
-        if current_head is None:
-            # expected_head null matches a headless shell, so the head guard cannot see authored
-            # shell content that the public resource hides; refuse before any write.
-            if not timeline_scope_is_empty(self.store.conn, timeline_id, project_id=project["id"]):
-                raise ConflictError("headless timeline holds authored content", details={"status": "refused", "reason": "headless_content_not_empty"})
-
-        raw_internal = body.get("internal_timeline_revisions", body.get("timelines", []))
-        raw_shots = body.get("shot_revisions", body.get("shots", []))
-        if not isinstance(raw_internal, list) or not isinstance(raw_shots, list):
-            raise ValidationError("internal_timeline_revisions and shot_revisions must be lists")
-        internal = {}
-        for entry in raw_internal:
-            revision_id = self._revision_id(entry.get("revision_id", entry.get("id")) if isinstance(entry, dict) else None, "internal timeline revision_id")
-            timeline_key = entry.get("timeline_id", timeline_id) if isinstance(entry, dict) else timeline_id
-            if not isinstance(timeline_key, str) or not timeline_key:
-                raise ValidationError("internal timeline timeline_id is required")
-            timeline_identity = self.store.conn.execute("SELECT project_id FROM timelines WHERE id=?", (timeline_key,)).fetchone()
-            if timeline_identity is None:
-                if timeline_key != timeline_id or timeline is not None:
-                    raise NotFoundError("internal timeline dependency is missing", details={"timeline_id": timeline_key})
-            elif timeline_identity["project_id"] != project["id"]:
-                raise ConflictError("internal timeline belongs to a different project", details={"timeline_id": timeline_key})
-            payload = self._complete_internal_timeline_payload(self._revision_payload(entry, excluded={"revision_id", "id", "timeline_id", "content_digest", "payload", "content"}))
-            digest = self._revision_digest(payload)
-            supplied = entry.get("content_digest")
-            if supplied is not None and supplied != digest:
-                raise ConflictError("internal timeline content digest mismatch", details={"revision_id": revision_id, "expected": digest, "actual": supplied})
-            key = (timeline_key, revision_id)
-            if key in internal and internal[key]["content_digest"] != digest:
-                raise ConflictError("internal timeline revision identity was reused with different bytes", details={"revision_id": revision_id})
-            internal[key] = {"revision_id": revision_id, "timeline_id": timeline_key, "payload": payload, "content_digest": digest}
-        shots = {}
-        for entry in raw_shots:
-            revision_id = self._revision_id(entry.get("revision_id", entry.get("id")) if isinstance(entry, dict) else None, "shot revision_id")
-            shot_id = entry.get("shot_id") if isinstance(entry, dict) else None
-            if not isinstance(shot_id, str) or not shot_id:
-                raise ValidationError("shot revision shot_id is required")
-            internal_id = entry.get("internal_timeline_revision_id", entry.get("timeline_revision_id")) if isinstance(entry, dict) else None
-            internal_id = self._revision_id(internal_id, "internal_timeline_revision_id")
-            payload = self._complete_shot_payload(self._revision_payload(entry, excluded={"revision_id", "id", "shot_id", "internal_timeline_revision_id", "timeline_revision_id", "content_digest", "payload", "content"}), internal_id)
-            digest = self._revision_digest(payload)
-            supplied = entry.get("content_digest")
-            if supplied is not None and supplied != digest:
-                raise ConflictError("shot content digest mismatch", details={"revision_id": revision_id, "expected": digest, "actual": supplied})
-            key = (shot_id, revision_id)
-            if key in shots and shots[key]["content_digest"] != digest:
-                raise ConflictError("shot revision identity was reused with different bytes", details={"revision_id": revision_id})
-            shots[key] = {"revision_id": revision_id, "shot_id": shot_id, "internal_timeline_revision_id": internal_id, "payload": payload, "content_digest": digest}
-        # Validate identities and any already-committed bytes before the
-        # publication can create a projection or immutable row.
-        for value in internal.values():
-            existing = self.store.conn.execute("SELECT * FROM internal_timeline_revisions WHERE id=?", (value["revision_id"],)).fetchone()
-            if existing and (existing["project_id"] != project["id"] or existing["timeline_id"] != value["timeline_id"]):
-                raise ConflictError("internal timeline revision has the wrong project or timeline identity", details={"revision_id": value["revision_id"]})
-            if existing and (existing["content_digest"] != value["content_digest"] or existing["payload_json"] != canonical_json(value["payload"])):
-                raise ConflictError("internal timeline revision identity was reused with different bytes", details={"revision_id": value["revision_id"]})
-        # Complete the dependency closure for linked reuse as well: an
-        # existing shot reference carries an immutable internal-timeline
-        # identity even when the caller omits the already committed child
-        # payloads from this publication request.
-        for value in list(shots.values()):
-            shot_identity = self.store.conn.execute("SELECT project_id FROM project_shots WHERE id=?", (value["shot_id"],)).fetchone()
-            if shot_identity and shot_identity["project_id"] != project["id"]:
-                raise ConflictError("destination_occupied", details={"status": "refused", "reason": "destination_occupied"})
-            if any(item["revision_id"] == value["internal_timeline_revision_id"] for item in internal.values()):
-                continue
-            existing_internal = self.store.conn.execute("SELECT * FROM internal_timeline_revisions WHERE id=?", (value["internal_timeline_revision_id"],)).fetchone()
-            if existing_internal:
-                if existing_internal["project_id"] != project["id"]:
-                    raise ConflictError("internal timeline revision belongs to a different project")
-                existing_timeline = self.store.conn.execute("SELECT project_id FROM timelines WHERE id=?", (existing_internal["timeline_id"],)).fetchone()
-                scoped_shot = str(existing_internal["timeline_id"]).removeprefix("shot:") if str(existing_internal["timeline_id"]).startswith("shot:") else None
-                scoped = self.store.conn.execute("SELECT project_id FROM project_shots WHERE id=?", (scoped_shot,)).fetchone() if scoped_shot else None
-                if (existing_timeline is None or existing_timeline["project_id"] != project["id"]) and (scoped is None or scoped["project_id"] != project["id"]):
-                    raise ConflictError("internal timeline revision has the wrong project or timeline identity", details={"revision_id": existing_internal["id"]})
-                existing_payload = json.loads(existing_internal["payload_json"])
-                if self._revision_digest(existing_payload) != existing_internal["content_digest"]:
-                    raise ConflictError("internal timeline revision bytes failed immutable verification", details={"revision_id": existing_internal["id"]})
-                internal[(existing_internal["timeline_id"], existing_internal["id"])] = {"revision_id": existing_internal["id"], "timeline_id": existing_internal["timeline_id"], "payload": existing_payload, "content_digest": existing_internal["content_digest"]}
-            else:
-                raise NotFoundError("shot revision internal timeline dependency is missing", details={"revision_id": value["internal_timeline_revision_id"]})
-        parent_source = body.get("parent_composition", body.get("parent", body.get("composition")))
-        if parent_source is None:
-            raise ValidationError("parent_composition is required")
-        parent_payload = self._complete_parent_payload(parent_source)
-        occurrences = []
-        occurrence_ids = set()
-        # A publication may link to an already committed immutable child
-        # revision. Resolve those identities before validating occurrence
-        # records; the child bytes are never reconstructed from mutable heads.
-        for occurrence in parent_payload["occurrences"]:
-            if not isinstance(occurrence, dict):
-                continue
-            shot_key = (occurrence.get("shot_id"), occurrence.get("shot_revision_id"))
-            if shot_key in shots:
-                continue
-            existing_child = self.store.conn.execute(
-                "SELECT * FROM shot_revisions WHERE id=? AND shot_id=?",
-                (occurrence.get("shot_revision_id"), occurrence.get("shot_id")),
-            ).fetchone()
-            if existing_child:
-                if existing_child["project_id"] != project["id"]:
-                    raise ConflictError("occurrence shot revision belongs to a different project")
-                payload = json.loads(existing_child["payload_json"])
-                if self._revision_digest(payload) != existing_child["content_digest"]:
-                    raise ConflictError("occurrence shot revision bytes failed immutable verification", details={"revision_id": existing_child["id"]})
-                shot_identity = self.store.conn.execute(
-                    "SELECT project_id FROM project_shots WHERE id=?",
-                    (existing_child["shot_id"],),
-                ).fetchone()
-                if shot_identity is None or shot_identity["project_id"] != project["id"]:
-                    raise ConflictError("occurrence shot revision has the wrong project or shot identity")
-                if payload.get("internal_timeline_revision_id") != existing_child["internal_timeline_revision_id"]:
-                    raise ConflictError(
-                        "occurrence shot revision internal timeline identity is corrupt",
-                        details={"revision_id": existing_child["id"]},
-                    )
-                shots[shot_key] = {"revision_id": occurrence["shot_revision_id"], "shot_id": occurrence["shot_id"], "internal_timeline_revision_id": existing_child["internal_timeline_revision_id"], "payload": payload, "content_digest": existing_child["content_digest"], "existing": True}
-                existing_internal = self.store.conn.execute(
-                    "SELECT * FROM internal_timeline_revisions WHERE id=?",
-                    (existing_child["internal_timeline_revision_id"],),
-                ).fetchone()
-                if existing_internal is None:
-                    raise NotFoundError(
-                        "shot revision internal timeline dependency is missing",
-                        details={"revision_id": existing_child["internal_timeline_revision_id"]},
-                    )
-                if existing_internal["project_id"] != project["id"]:
-                    raise ConflictError("internal timeline revision belongs to a different project")
-                existing_internal_payload = json.loads(existing_internal["payload_json"])
-                if self._revision_digest(existing_internal_payload) != existing_internal["content_digest"]:
-                    raise ConflictError(
-                        "internal timeline revision bytes failed immutable verification",
-                        details={"revision_id": existing_internal["id"]},
-                    )
-                internal[(existing_internal["timeline_id"], existing_internal["id"])] = {
-                    "revision_id": existing_internal["id"],
-                    "timeline_id": existing_internal["timeline_id"],
-                    "payload": existing_internal_payload,
-                    "content_digest": existing_internal["content_digest"],
-                }
-        for occurrence in parent_payload["occurrences"]:
-            normalized = self._normalize_occurrence(occurrence, shot_lookup=shots)
-            if normalized["occurrence_id"] in occurrence_ids:
-                raise ValidationError("occurrence_id values must be unique")
-            occurrence_ids.add(normalized["occurrence_id"])
-            occurrences.append(normalized)
-        parent_payload["occurrences"] = occurrences
-        parent_revision_id = self._revision_id(body.get("parent_revision_id", body.get("revision_id", new_id())), "parent_revision_id")
-        parent_digest = self._revision_digest(parent_payload)
-        supplied_parent_digest = body.get("content_digest")
-        if supplied_parent_digest is not None and supplied_parent_digest != parent_digest:
-            raise ConflictError("parent composition content digest mismatch", details={"expected": parent_digest, "actual": supplied_parent_digest})
-        manifest_source = body.get("dependency_manifest", body.get("dependencies", {}))
-        if isinstance(manifest_source, list):
-            manifest_source = {"media": manifest_source}
-        if not isinstance(manifest_source, dict):
-            raise ValidationError("dependency_manifest must be an object")
-        for key in manifest_source:
-            if key not in {"media", "shots", "internal_timelines", "timelines"}:
-                raise ValidationError("dependency_manifest contains unsupported fields", details={"field": key})
-        for key in ("shots", "internal_timelines", "timelines"):
-            if key in manifest_source and not isinstance(manifest_source[key], list):
-                raise ValidationError(f"dependency_manifest.{key} must be a list")
-        for item in manifest_source.get("timelines", []) + manifest_source.get("internal_timelines", []):
-            if isinstance(item, dict) and any(key in item for key in ("parent_revision_id", "composition_revision_id")):
-                raise ValidationError("nested composition dependencies are not supported")
-        media = self._validate_media_dependencies(project["id"], manifest_source)
-        resolved_keys = {(occurrence["shot_id"], occurrence["shot_revision_id"]) for occurrence in occurrences}
-        resolved_shots = {key: shots[key] for key in resolved_keys}
-        resolved_internal = {}
-        for value in resolved_shots.values():
-            match = next((item for item in internal.values() if item["revision_id"] == value["internal_timeline_revision_id"]), None)
-            if match is None:
-                raise NotFoundError("shot revision internal timeline dependency is missing", details={"revision_id": value["internal_timeline_revision_id"]})
-            resolved_internal[(match["timeline_id"], match["revision_id"])] = match
-        # A caller may include an already-committed child in `shot_revisions`
-        # instead of linking it only from an occurrence. Preserve that exact
-        # immutable pin without requiring the mutable text binding head to
-        # remain current. New child revisions must pin the binding head seen
-        # by this same publication transaction.
-        for value in resolved_shots.values():
-            existing = self.store.conn.execute(
-                "SELECT * FROM shot_revisions WHERE id=?", (value["revision_id"],)
-            ).fetchone()
-            if existing is not None:
-                if (existing["project_id"] != project["id"] or existing["shot_id"] != value["shot_id"]
-                        or existing["internal_timeline_revision_id"] != value["internal_timeline_revision_id"]
-                        or existing["content_digest"] != value["content_digest"]
-                        or existing["payload_json"] != canonical_json(value["payload"])):
-                    raise ConflictError("shot revision identity was reused with different bytes", details={"revision_id": value["revision_id"]})
-                value["existing"] = True
-            if not value.get("existing", False):
-                self._validate_published_text_bindings(
-                    project["id"], value["shot_id"], value["payload"], require_current=True,
-                )
-        # New children replace mutable rows. Exact immutable reuse only does so
-        # when the global shot head is missing; that is not permission to adopt
-        # an occupied destination. Prove every destination before any writes.
-        occupied = set()
-        for value in resolved_shots.values():
-            head = self.store.conn.execute("SELECT revision_id FROM shot_revision_heads WHERE shot_id=?", (value["shot_id"],)).fetchone()
-            if value.get("existing") and head is not None:
-                continue
-            if self.store.conn.execute("SELECT 1 FROM project_shots WHERE id=?", (value["shot_id"],)).fetchone():
-                occupied.add(value["shot_id"])
-        if occupied:
-            from .timeline_commit_baseline import verify_baseline
-
-            owned = set()
-            if current_head is not None:
-                try:
-                    facts = verify_baseline(self.store.conn, project["id"], timeline_id, read_object=self.cas.read)
-                    if facts["head"]["revision_id"] == current_head:
-                        owned = {(s["shot_id"], s["revision_id"]) for s in facts["canonical_document"]["shot_revisions"]}
-                except ConflictError:
-                    pass  # Missing or corrupt publication facts confer no ownership.
-            for shot_id in occupied:
-                head = self.store.conn.execute("SELECT project_id, revision_id FROM shot_revision_heads WHERE shot_id=?", (shot_id,)).fetchone()
-                if head is None or head["project_id"] != project["id"] or (shot_id, head["revision_id"]) not in owned:
-                    raise ConflictError("destination_occupied", details={"status": "refused", "reason": "destination_occupied"})
-        # Recompute closure only after every occurrence has been resolved to
-        # immutable child bytes.  This is the source of truth for both the
-        # manifest check and the rows stored below.
-        payload_media = set(self._collect_digest_media(parent_payload))
-        payload_media.update(digest for value in resolved_shots.values() for digest in self._collect_digest_media(value.get("payload", {})))
-        payload_media.update(digest for value in resolved_internal.values() for digest in self._collect_digest_media(value.get("payload", {})))
-        for digest in sorted(payload_media):
-            if digest not in {item["content_digest"] for item in media}:
-                media.extend(self._validate_media_dependencies(project["id"], {"media": [digest]}))
-        expected_manifest_shots = {(item["shot_id"], item["revision_id"], item["internal_timeline_revision_id"], item["content_digest"]) for item in resolved_shots.values()}
-        expected_manifest_timelines = {(item["timeline_id"], item["revision_id"], item["content_digest"]) for item in resolved_internal.values()}
-        if "shots" in manifest_source:
-            supplied_shots = {(item.get("shot_id"), item.get("revision_id", item.get("shot_revision_id")), item.get("internal_timeline_revision_id"), item.get("content_digest")) for item in manifest_source["shots"] if isinstance(item, dict)}
-            if supplied_shots != expected_manifest_shots:
-                raise ConflictError("dependency manifest does not match the complete shot closure")
-        if "internal_timelines" in manifest_source:
-            supplied_timelines = {(item.get("timeline_id"), item.get("revision_id", item.get("timeline_revision_id")), item.get("content_digest")) for item in manifest_source["internal_timelines"] if isinstance(item, dict)}
-            if supplied_timelines != expected_manifest_timelines:
-                raise ConflictError("dependency manifest does not match the complete internal timeline closure")
-        if "media" in manifest_source:
-            supplied_media = set()
-            for item in manifest_source["media"]:
-                if isinstance(item, str):
-                    supplied_media.add(item if item.startswith("sha256:") else "sha256:" + item)
-                elif isinstance(item, dict) and isinstance(item.get("content_digest"), str):
-                    supplied_media.add(item["content_digest"])
-            if supplied_media != {item["content_digest"] for item in media}:
-                raise ConflictError("dependency manifest does not match the complete media closure")
-        manifest = {
-            "shots": [{"shot_id": value["shot_id"], "revision_id": value["revision_id"], "internal_timeline_revision_id": value["internal_timeline_revision_id"], "content_digest": value["content_digest"]} for value in sorted(resolved_shots.values(), key=lambda item: (item["shot_id"], item["revision_id"]))],
-            "internal_timelines": [{"timeline_id": value["timeline_id"], "revision_id": value["revision_id"], "content_digest": value["content_digest"]} for value in sorted(resolved_internal.values(), key=lambda item: (item["timeline_id"], item["revision_id"]))],
-            "media": sorted(media, key=lambda item: item["content_digest"]),
-        }
-        if any(isinstance(item, dict) and item.get("dependency_kind") in {"composition", "parent_composition", "nested"} for item in manifest_source.get("timelines", [])):
-            raise ValidationError("one-level composition cannot depend on another composition")
-        # Authoring publication records seam diagnostics but does not apply a
-        # render-readiness gate to an otherwise valid parent edit. Existing
-        # canonical timelines may predate seam intent metadata; blocking a
-        # track reorder here would make ordinary authoring persistence depend
-        # on render migration. Render admission likewise returns these
-        # diagnostics for review without gating on report findings.
-        seam_report, _ = evaluate_closure(
-            parent_payload, resolved_shots,
-            {v["revision_id"]: v for v in resolved_internal.values()},
-            timeline_id=timeline_id,
-        )
-        timestamp = now()
-        if timeline is None:
-            self.store.conn.execute("INSERT INTO timelines(id, project_id, version, created_at, archived_at) VALUES (?, ?, 1, ?, NULL)", (timeline_id, project["id"], timestamp))
-        for value in resolved_internal.values():
-            existing = self.store.conn.execute("SELECT * FROM internal_timeline_revisions WHERE id=?", (value["revision_id"],)).fetchone()
-            if existing:
-                if existing["project_id"] != project["id"]:
-                    raise ConflictError("internal timeline revision belongs to a different project", details={"revision_id": value["revision_id"]})
-                if existing["project_id"] != project["id"] or existing["timeline_id"] != value["timeline_id"] or existing["content_digest"] != value["content_digest"] or existing["payload_json"] != canonical_json(value["payload"]):
-                    raise ConflictError("internal timeline revision identity was reused with different bytes", details={"revision_id": value["revision_id"]})
-            else:
-                self.store.conn.execute("INSERT INTO internal_timeline_revisions(id, project_id, timeline_id, payload_json, content_digest, created_at) VALUES (?, ?, ?, ?, ?, ?)", (value["revision_id"], project["id"], value["timeline_id"], canonical_json(value["payload"]), value["content_digest"], timestamp))
-        shot_lookup = {}
-        for value in resolved_shots.values():
-            if value.get("existing"):
-                self._validate_published_shot_payload(value)
-                shot_lookup[(value["shot_id"], value["revision_id"])] = value
-                continue
-            self._validate_published_shot_payload(value)
-            internal_row = self.store.conn.execute("SELECT project_id FROM internal_timeline_revisions WHERE id=?", (value["internal_timeline_revision_id"],)).fetchone()
-            if not internal_row:
-                raise NotFoundError("shot revision internal timeline dependency is missing", details={"revision_id": value["internal_timeline_revision_id"]})
-            if internal_row["project_id"] != project["id"]:
-                raise ConflictError("internal timeline revision belongs to a different project")
-            existing = self.store.conn.execute("SELECT * FROM shot_revisions WHERE id=?", (value["revision_id"],)).fetchone()
-            if existing:
-                if existing["project_id"] != project["id"] or existing["shot_id"] != value["shot_id"] or existing["internal_timeline_revision_id"] != value["internal_timeline_revision_id"] or existing["content_digest"] != value["content_digest"] or existing["payload_json"] != canonical_json(value["payload"]):
-                    raise ConflictError("shot revision identity was reused with different bytes", details={"revision_id": value["revision_id"]})
-                value["existing"] = True
-            else:
-                self._apply_published_shot_projection(project["id"], value, timestamp)
-                self.store.conn.execute("INSERT INTO shot_revisions(id, project_id, shot_id, internal_timeline_revision_id, payload_json, content_digest, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)", (value["revision_id"], project["id"], value["shot_id"], value["internal_timeline_revision_id"], canonical_json(value["payload"]), value["content_digest"], timestamp))
-            shot_lookup[(value["shot_id"], value["revision_id"])] = value
-        for occurrence in occurrences:
-            if (occurrence["shot_id"], occurrence["shot_revision_id"]) not in shot_lookup:
-                row = self.store.conn.execute("SELECT project_id, shot_id, content_digest FROM shot_revisions WHERE id=?", (occurrence["shot_revision_id"],)).fetchone()
-                if not row:
-                    raise NotFoundError("occurrence shot revision dependency is missing", details={"revision_id": occurrence["shot_revision_id"]})
-                if row["project_id"] != project["id"] or row["shot_id"] != occurrence["shot_id"]:
-                    raise ConflictError("occurrence shot revision has the wrong project or shot identity")
-                shot_lookup[(occurrence["shot_id"], occurrence["shot_revision_id"])] = {"shot_id": occurrence["shot_id"], "revision_id": occurrence["shot_revision_id"], "content_digest": row["content_digest"]}
-        parent_existing = self.store.conn.execute("SELECT * FROM parent_composition_revisions WHERE id=?", (parent_revision_id,)).fetchone()
-        if parent_existing and (parent_existing["project_id"] != project["id"] or parent_existing["timeline_id"] != timeline_id or parent_existing["content_digest"] != parent_digest or parent_existing["payload_json"] != canonical_json(parent_payload)):
-            raise ConflictError("parent composition revision identity was reused with different bytes", details={"revision_id": parent_revision_id})
-        if not parent_existing:
-            self.store.conn.execute("INSERT INTO parent_composition_revisions(id, project_id, timeline_id, payload_json, content_digest, created_at) VALUES (?, ?, ?, ?, ?, ?)", (parent_revision_id, project["id"], timeline_id, canonical_json(parent_payload), parent_digest, timestamp))
-            for ordinal, occurrence in enumerate(occurrences):
-                self.store.conn.execute("INSERT INTO composition_revision_occurrences(parent_revision_id, occurrence_id, ordinal, project_id, shot_id, shot_revision_id, placement_json, source_offset_json, duration_ms, speed_json, track, transform_json, gain, muted, provenance_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (parent_revision_id, occurrence["occurrence_id"], ordinal, project["id"], occurrence["shot_id"], occurrence["shot_revision_id"], canonical_json(occurrence["placement"]), canonical_json(occurrence["source_offset"]), occurrence["duration_ms"], canonical_json(occurrence["speed"]), occurrence["track"], canonical_json(occurrence["transform"]), occurrence["gain"], int(occurrence["muted"]), canonical_json(occurrence["provenance"])))
-            for ordinal, dependency in enumerate(manifest["shots"] + manifest["internal_timelines"] + manifest["media"]):
-                kind = "shot_revision" if "shot_id" in dependency else "internal_timeline_revision" if "timeline_id" in dependency else "media"
-                identity = dependency.get("revision_id", dependency.get("media_id"))
-                self.store.conn.execute("INSERT INTO composition_revision_dependencies(parent_revision_id, dependency_kind, dependency_id, content_digest, ordinal) VALUES (?, ?, ?, ?, ?)", (parent_revision_id, kind, identity, dependency["content_digest"], ordinal))
-        for value in shot_lookup.values():
-            current = self.store.conn.execute("SELECT project_id, revision_id FROM shot_revision_heads WHERE shot_id=?", (value["shot_id"],)).fetchone()
-            if current is None:
-                if value.get("existing"):
-                    self._apply_published_shot_projection(project["id"], value, timestamp)
-                self.store.conn.execute("INSERT INTO shot_revision_heads(shot_id, project_id, revision_id, updated_at) VALUES (?, ?, ?, ?)", (value["shot_id"], project["id"], value["revision_id"], timestamp))
-            elif current["project_id"] != project["id"]:
-                raise ConflictError("shot revision head belongs to a different project", details={"shot_id": value["shot_id"]})
-            elif current["revision_id"] == value["revision_id"]:
-                self._verify_shot_head_projection(project["id"], value["shot_id"], current["revision_id"])
-            elif value.get("existing"):
-                # An older linked revision must never regress the mutable
-                # projection or head; prove that the current head remains
-                # internally consistent instead.
-                self._verify_shot_head_projection(project["id"], value["shot_id"], current["revision_id"])
-            else:
-                self.store.conn.execute("UPDATE shot_revision_heads SET revision_id=?, updated_at=? WHERE shot_id=? AND project_id=?", (value["revision_id"], timestamp, value["shot_id"], project["id"]))
-        self.store.conn.execute("INSERT OR IGNORE INTO parent_composition_heads(timeline_id, project_id, revision_id, updated_at) VALUES (?, ?, NULL, ?)", (timeline_id, project["id"], timestamp))
-        changed = self.store.conn.execute("UPDATE parent_composition_heads SET revision_id=?, publication_id=NULL, updated_at=? WHERE timeline_id=? AND project_id=? AND revision_id IS ?", (parent_revision_id, timestamp, timeline_id, project["id"], expected_head)).rowcount
-        if changed != 1:
-            raise ConflictError("parent composition head is stale", details={"reason": "stale_head", "expected_head": expected_head})
-        event_payload = {"project_id": project["id"], "timeline_id": timeline_id, "old_head": expected_head, "new_head": parent_revision_id, "content_digest": parent_digest, "dependency_manifest": manifest}
-        event_id = self.store._append_timeline_event(timeline_id, "parent.composition.published", event_payload)
-        event_seq = self.store.conn.execute("SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?", (timeline_id,)).fetchone()[0]
-        result = {"project_id": project["id"], "timeline_id": timeline_id, "revision_id": parent_revision_id, "parent_revision_id": parent_revision_id, "content_digest": parent_digest, "payload": parent_payload, "old_head": expected_head, "new_head": parent_revision_id, "dependency_manifest": manifest, "content_digests": {"parent": parent_digest, **{item["revision_id"]: item["content_digest"] for item in manifest["shots"] + manifest["internal_timelines"]}, **{item["media_id"]: item["content_digest"] for item in manifest["media"]}}, "event_id": event_id, "created_at": timestamp}
-        result["visual_seam_report"] = seam_report
-        return self._command_record("parent_composition.publish", timeline_id, idempotency_key, request_hash, result, project_id=project["id"], event_ids=(event_id,), primary_stream_id=timeline_id, resulting_stream_seq=event_seq)
+        self._require_timeline_command()
 
     def _project_shot_resource(self, row):
         value = dict(row)
@@ -4502,13 +4119,9 @@ class RuntimeService:
         return value
 
     @staticmethod
-    def _reject_canonical_document_write(document_id, kind):
-        if str(document_id).startswith("timeline:") or kind == "timeline.composition":
-            from .errors import RetiredRouteError
-            raise RetiredRouteError(
-                "canonical timeline documents must be edited through timeline commit",
-                details={"replacement": "POST /v1/projects/{project_id}/timelines/{timeline_id}/commit"},
-            )
+    def _reject_canonical_document_write(document_id, kind, *, carries_timeline_id=False):
+        if carries_timeline_id or str(document_id).startswith("timeline:") or kind == "timeline.composition":
+            RuntimeService._require_timeline_command()
 
     @_durable_mutation
     def create_document(self, project_id, body, *, idempotency_key=None):
@@ -4518,7 +4131,9 @@ class RuntimeService:
         kind = str(body.get("kind") or "")
         if not document_id or not kind or "content" not in body:
             raise ValidationError("document_id, kind, and content are required")
-        self._reject_canonical_document_write(document_id, kind)
+        self._reject_canonical_document_write(
+            document_id, kind, carries_timeline_id="timeline_id" in body,
+        )
         existing = self.store.conn.execute("SELECT * FROM project_documents WHERE project_id=? AND id=?", (project["id"], document_id)).fetchone()
         if existing:
             self._reject_canonical_document_write(existing["id"], existing["kind"])
@@ -4562,8 +4177,14 @@ class RuntimeService:
         self._require_object_body(body)
         expected = self._expected_version(body)
         project = self.store.get_project(project_id)
-        self._reject_canonical_document_write(document_id, body.get("kind"))
-        self._reject_canonical_document_write(body.get("document_id", document_id), body.get("kind"))
+        carries_timeline_id = "timeline_id" in body
+        self._reject_canonical_document_write(
+            document_id, body.get("kind"), carries_timeline_id=carries_timeline_id,
+        )
+        self._reject_canonical_document_write(
+            body.get("document_id", document_id), body.get("kind"),
+            carries_timeline_id=carries_timeline_id,
+        )
         row = self.store.conn.execute("SELECT * FROM project_documents WHERE project_id=? AND id=?", (project["id"], document_id)).fetchone()
         if row:
             self._reject_canonical_document_write(row["id"], row["kind"])
@@ -7578,208 +7199,8 @@ class RuntimeService:
             finally:
                 self._discard_staged_outputs(staged)
 
-    def _assert_legacy_render_publication_target(self, task, project_id, timeline_id):
-        try:
-            publication = self.store._spec(task)["spec"]["runtime_dependencies"]["publication"]
-            target_id = publication["timeline_id"]
-            if not isinstance(target_id, str) or not target_id.strip():
-                raise ValueError()
-            if "admitted_target" in publication:
-                target = publication["admitted_target"]
-                if (not isinstance(target, dict)
-                        or set(target) != {"project_id", "timeline_id", "base_revision_id", "base_publication_id"}
-                        or any(not isinstance(value, str) or not value.strip() for value in target.values())
-                        or target["project_id"] != project_id or target["timeline_id"] != target_id):
-                    raise ValueError()
-        except (KeyError, TypeError, ValueError, ValidationError) as exc:
-            raise ConflictError("authoring task publication target is unavailable",
-                                details={"reason": "publication_target_unavailable"}) from exc
-        if target_id != timeline_id:
-            raise ConflictError("timeline does not match the admitted publication target",
-                                details={"reason": "publication_target_mismatch"})
-        head = self.store.conn.execute(
-            "SELECT publication_id FROM parent_composition_heads WHERE project_id=? AND timeline_id=?",
-            (project_id, timeline_id),
-        ).fetchone()
-        if head is not None and head["publication_id"] is not None:
-            raise ConflictError("tracked timeline publication requires a timeline command",
-                                details={"status": "refused", "reason": "timeline_commit_required"})
-
-    @_verified_mutation
     def publish_timeline_render(self, attempt_id, body, *, idempotency_key=None, identity=None):
-        """Publish one untracked legacy timeline document and render task once.
-
-        The checkpoint is keyed by the authoring task rather than an attempt,
-        so an exact retry may resume after a worker crash.  Every unfinished
-        publication must still present the task's current live attempt fence.
-        """
-        require_idempotency_key(idempotency_key)
-        body = dict(_wire_object(
-            body,
-            required=("lease_id", "fence", "runtime_epoch", "timeline_id", "expected_version", "config", "registry", "render"),
-            allowed=("lease_id", "fence", "runtime_epoch", "timeline_id", "expected_version", "config", "registry", "render", "slug", "name"),
-        ))
-        _wire_string(body, "lease_id")
-        _wire_integer(body, "fence")
-        _wire_integer(body, "runtime_epoch", positive=True)
-        timeline_id = _wire_string(body, "timeline_id")
-        expected_version = self._expected_version(body)
-        config, registry, render = body["config"], body["registry"], body["render"]
-        if not isinstance(config, dict) or not isinstance(registry, dict) or not isinstance(render, dict):
-            raise ValidationError("config, registry, and render must be objects")
-        allowed_render = {"capability_id", "capability_digest", "schema_version", "spec", "storage_estimate", "settlement_effect"}
-        unknown_render = sorted(set(render) - allowed_render)
-        if unknown_render:
-            raise ValidationError("render contains unsupported fields", details={"fields": unknown_render})
-        if render.get("capability_id") != "rendering.render":
-            raise ValidationError("publication render capability must be rendering.render")
-        render_digest = _wire_string(render, "capability_digest")
-        render_spec = render.get("spec")
-        if not isinstance(render_spec, dict):
-            raise ValidationError("render.spec must be an object")
-        frozen = {
-            "timeline_id": timeline_id,
-            "expected_version": expected_version,
-            "config": config,
-            "registry": registry,
-            "render": render,
-            "slug": body.get("slug"),
-            "name": body.get("name"),
-        }
-        request_hash = hashlib.sha256(canonical_json(frozen).encode()).hexdigest()
-
-        with self.store._mutex:
-            attempt = self.store.conn.execute("SELECT * FROM attempts WHERE id=?", (attempt_id,)).fetchone()
-            self._assert_attempt_identity(attempt, identity)
-            current_epoch = self.store._current_runtime_epoch()
-            task = self.store.conn.execute("SELECT * FROM tasks WHERE id=?", (attempt["task_id"],)).fetchone() if attempt else None
-            authoring_task_id = str(task["id"]) if task else ""
-            existing = self.store.timeline_render_publication(authoring_task_id) if authoring_task_id else None
-            if existing is not None:
-                if existing["request_hash"] != request_hash:
-                    raise ConflictError("authoring task publication payload changed")
-                if existing["state"] == "published":
-                    return existing["result"]
-            self._validate_attempt_lease(attempt, body, current_epoch)
-            if not task or task["status"] != "running" or task["attempt_id"] != attempt_id:
-                raise LeaseError("attempt lease is stale or already settled")
-            dependency_count = self.store.conn.execute(
-                "SELECT COUNT(*) FROM task_dependencies WHERE continuation_task_id=?", (authoring_task_id,)
-            ).fetchone()[0]
-            admitted = self.store.conn.execute(
-                "SELECT 1 FROM continuation_admissions WHERE continuation_task_id=?", (authoring_task_id,)
-            ).fetchone()
-            if dependency_count != 2 or admitted is None:
-                raise ValidationError("timeline publication requires an admitted two-child continuation")
-            project_id = self.store.conn.execute("SELECT project_id FROM runs WHERE id=?", (task["run_id"],)).fetchone()[0]
-            timeline = self.store.conn.execute("SELECT * FROM timelines WHERE id=?", (timeline_id,)).fetchone()
-            if not timeline:
-                raise NotFoundError("timeline not found")
-            if timeline["project_id"] != project_id:
-                raise ConflictError("timeline is outside the authoring task project")
-            self._assert_legacy_render_publication_target(task, project_id, timeline_id)
-            self.store.prepare_timeline_render_publication(
-                authoring_task_id, attempt_id, body["fence"], body["runtime_epoch"], request_hash, frozen
-            )
-
-            # Revalidate after the separately committed prepare checkpoint.
-            attempt = self.store.conn.execute("SELECT * FROM attempts WHERE id=?", (attempt_id,)).fetchone()
-            self._validate_attempt_lease(attempt, body, self.store._current_runtime_epoch())
-            task = self.store.conn.execute("SELECT * FROM tasks WHERE id=?", (authoring_task_id,)).fetchone()
-            if not task or task["status"] != "running" or task["attempt_id"] != attempt_id:
-                raise LeaseError("attempt lease is stale or already settled")
-
-            with self.store._transaction():
-                checkpoint = self.store.timeline_render_publication(authoring_task_id)
-                if checkpoint["state"] == "published":
-                    return checkpoint["result"]
-                # The prepare checkpoint commits separately; canonical tracking
-                # may have changed before this publication transaction began.
-                self._assert_legacy_render_publication_target(task, project_id, timeline_id)
-                document_id = f"timeline:{timeline_id}"
-                document = self.store.conn.execute(
-                    "SELECT * FROM project_documents WHERE id=? AND project_id=?", (document_id, project_id)
-                ).fetchone()
-                if not document:
-                    raise NotFoundError("timeline document not found")
-                if int(document["version"]) != expected_version:
-                    raise ConflictError("timeline document version conflict", details={"expected": expected_version, "actual": int(document["version"])})
-                content = json.loads(document["content_json"])
-                content.update({"config": config, "registry": registry})
-                if body.get("slug") is not None:
-                    content["slug"] = body["slug"]
-                if body.get("name") is not None:
-                    content["name"] = body["name"]
-                timeline_version = expected_version + 1
-                timestamp = now()
-                self.store.conn.execute(
-                    "UPDATE project_documents SET content_json=?, version=?, updated_at=? WHERE id=? AND project_id=?",
-                    (canonical_json(content), timeline_version, timestamp, document_id, project_id),
-                )
-                timeline_event_id = self.store._append_timeline_event(
-                    timeline_id, "timeline.document.saved",
-                    {"project_id": project_id, "document_id": document_id, "config_version": timeline_version, "authoring_task_id": authoring_task_id},
-                )
-
-                admitted_spec = copy.deepcopy(render_spec)
-                inputs = admitted_spec.setdefault("inputs", {})
-                if not isinstance(inputs, dict):
-                    raise ValidationError("render.spec.inputs must be an object")
-                supplied_ref = inputs.get("timeline_ref")
-                if supplied_ref not in (None, timeline_id, content.get("slug")):
-                    raise ConflictError("render timeline_ref does not identify the published timeline")
-                supplied_version = inputs.get("expected_version")
-                if supplied_version not in (None, timeline_version):
-                    raise ConflictError("render expected_version does not match the published timeline")
-                inputs.update({
-                    "timeline_ref": timeline_id,
-                    "expected_version": timeline_version,
-                })
-                inputs["timeline_snapshot_ref"] = self.store._publish_spec_snapshot(
-                    {"timeline_id": timeline_id, "project_id": project_id,
-                     "config_version": timeline_version, "config": config, "registry": registry},
-                    {"project_id": project_id, "timeline_id": timeline_id,
-                     "revision_id": None, "revision_digest": None}, project_id,
-                )
-                input_object_ids = []
-                assets = registry.get("assets") if isinstance(registry.get("assets"), dict) else {}
-                for asset in assets.values():
-                    if not isinstance(asset, dict):
-                        continue
-                    candidate = next((asset.get(key) for key in ("object_id", "media_id", "content_sha256", "digest", "sha256", "hash") if isinstance(asset.get(key), str) and OBJECT_ID_RE.fullmatch(asset.get(key))), None)
-                    if candidate is not None and candidate not in input_object_ids:
-                        input_object_ids.append(candidate)
-                task_spec = {
-                    "input_object_ids": input_object_ids,
-                    "schema_version": render.get("schema_version", "1"),
-                    "capability_digest": render_digest,
-                    "spec": admitted_spec,
-                }
-                if "storage_estimate" in render:
-                    task_spec["storage_estimate"] = self.store._validate_storage_estimate(render["storage_estimate"])
-                render_key = f"timeline-publication-{authoring_task_id}"
-                render_value = self.store.create_task(
-                    "rendering.render", task_spec, project_id, render_key,
-                    render.get("settlement_effect"), render_digest, enforce_readiness=True,
-                )
-                render_task_id = render_value["task"]["id"]
-                render_run_id = render_value["run"]["id"]
-                author_event_id = self.store._append_event(
-                    task["run_id"], authoring_task_id, "task.timeline_render_published",
-                    {"timeline_id": timeline_id, "timeline_version": timeline_version, "render_task_id": render_task_id, "render_run_id": render_run_id},
-                )
-                result = {
-                    "checkpoint_state": "published", "authoring_task_id": authoring_task_id,
-                    "timeline_id": timeline_id, "timeline_version": timeline_version,
-                    "render_task_id": render_task_id, "render_run_id": render_run_id,
-                    "timeline_event_id": timeline_event_id, "authoring_event_id": author_event_id,
-                }
-                self.store.complete_timeline_render_publication(
-                    authoring_task_id, attempt_id=attempt_id, fence=body["fence"], runtime_epoch=body["runtime_epoch"],
-                    timeline_id=timeline_id, timeline_version=timeline_version,
-                    render_task_id=render_task_id, render_run_id=render_run_id, result=result,
-                )
-                return result
+        self._require_timeline_command()
 
     def _is_authorized_generic_output(
         self, digest, size, media_type, *, name, output_port, filename,
