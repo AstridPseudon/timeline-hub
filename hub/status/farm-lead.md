@@ -1,1 +1,1 @@
-2026-10-23T19:40:56Z procs: hub-syncd dispatcher run-manager up; board 19:39Z; workers running 0; disk 19G free; issues: P3 and P2 RED (reported to orchestrator/app2); farm idle pending their decision
+2026-10-23T20:40:58Z procs: hub-syncd dispatcher run-manager up; board 20:35Z; workers running 0; disk 18G free; issues: none (idle, awaiting orchestrator/app2)
