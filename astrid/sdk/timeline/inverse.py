@@ -392,10 +392,26 @@ def check_intervening(records, intervening_records, *, include_reads=True, state
             guarded.append((owner, (root[0] + '_id',) if root else ('id',)))
         selections = []
     root_address = _root_addresses(records, state)
+    authored = {id(capture) for record in records for capture in
+                [*_effect_writes(record), *record['reads'], *record['selections'], *record.get('bindings', [])]}
+    authored.update(id(dependency) for dependency in dependencies)
 
     def address(capture, ref, path):
         if address_resolver is not None:
-            return address_resolver(capture, ref, path)
+            resolved = address_resolver(capture, ref, path)
+            if id(capture) in authored and ref.startswith('occurrence:') and '/' in ref:
+                owner = ref.split('/', 1)[0] + '/shot'
+                for record in records:
+                    for binding in record.get('bindings', []):
+                        if binding.get('key') != 'commit.materialization' or binding.get('owner') != owner:
+                            continue
+                        source = address_resolver(binding, binding['physical_ref'], ())
+                        output = address_resolver(binding, binding['successor'], ())
+                        if source != output and resolved[0] == source[0]:
+                            # Undo removes this owner's fork, not its retained
+                            # sibling's equal input image. Keep the field path.
+                            return output[0], resolved[1]
+            return resolved
         return root_address(ref, path)
 
     def selected_overlap(selected, write):
@@ -449,8 +465,13 @@ def check_intervening(records, intervening_records, *, include_reads=True, state
         for write in _effect_writes(record):
             location = write['ref'], tuple(write['path'])
             resolved = address(write, *location)
+            aliases = [resolved]
+            if address_resolver is not None and write['ref'].startswith('shot:') and not write['path']:
+                # A native shot aggregate writes its physical shot as well as
+                # its child. Resolve at this capture's boundary, not the head.
+                aliases.append(address(write, write['ref'], ['payload']))
             if ((address_resolver is None and any(overlaps(location, prior) for prior in [*guarded, *source_roots]))
-                    or any(overlaps(resolved, prior) for prior in normalized_guards)
+                    or any(overlaps(alias, prior) for alias in aliases for prior in normalized_guards)
                     or any(selected_overlap(s, write) for s in selections)
                     or any(_dependency_overlap(dependency, write, address) for dependency in dependencies)):
                 raise CommandError("an intervening publication wrote a guarded address",
@@ -779,6 +800,38 @@ def _stage_restoration_orders(records, record):
     return {('parent', 'clip'): tuple(result)}
 
 
+def _validate_materializations(records):
+    """Require every managed edge proof, even while its source stays reachable."""
+    if not isinstance(records, AcceptedRecords):
+        return
+    from ._commit_patch import _managed_boundaries, _materialization_sites
+    from ._doc_patch import Closure
+
+    for entry in records.entries:
+        before, after = (Closure(bundle) for bundle in records.load_boundary(entry))
+        expected, missing = [], set()
+        for old_images, old_rows, new_images, new_rows, commands, step in _managed_boundaries(entry, before, after):
+            transitions = []
+            _materialization_sites(entry, old_images, old_rows, new_images, new_rows, commands, step,
+                                   transitions, missing, [])
+            expected.extend((old, new, owner + '/shot', step['id'], step['command_ordinals'][-1])
+                            for old, new, owner in transitions)
+        if missing:
+            raise CommandError('missing authenticated fork materialization', kind='history_unavailable')
+        for record in entry['records']['commands']:
+            for binding in record.get('bindings', []):
+                if binding.get('key') != 'commit.materialization':
+                    continue
+                identity = (binding.get('physical_ref'), binding.get('successor'), binding.get('owner'),
+                            binding.get('step_id'), record['ordinal'])
+                if (identity not in expected or binding.get('policy') != 'fixed'
+                        or binding.get('dependencies') != []):
+                    raise CommandError('ambiguous or unexpected fork materialization', kind='history_unavailable')
+                expected.remove(identity)
+        if expected:
+            raise CommandError('incomplete authenticated fork materialization', kind='history_unavailable')
+
+
 def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
     if not records:
         raise CommandError("inverse requires trusted accepted records", kind='history_unavailable')
@@ -791,6 +844,7 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
     if any('physical_ref' in binding for record in records for binding in record.get('bindings', [])):
         if not isinstance(records, AcceptedRecords) or address_resolver is None:
             raise CommandError('inverse needs authenticated physical binding normalization', kind='history_unavailable')
+    _validate_materializations(records)
     check_step_dependents(records, state=ctx.state)
     check_intervening(records, intervening_records, state=ctx.state, include_dependents=True,
                       dependencies=dependencies, later_dependencies=selected_dependencies(intervening_records),
