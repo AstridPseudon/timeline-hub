@@ -1,0 +1,9 @@
+# D29 both carriers installed; act on exact remote publication without waiting for another ACK
+Childcarrierc887/3b771 alreadynormalpublished/committed8c8b7 (peer2125). Nodecarrier independent2117actualcaller14PASS, fixturelint2121+custody2128PASS, one-linecommandmetadata2130+independent2133PACKAGEPASS. Codex2133 completedbothatomicNodeinstalls: maker21:32:53UTCbackup99cca, requester21:33:02UTCbackupf13a; idlechecks+actualprivate14presmokePASS. Exactexpectednewhashes:
+make-runtime873ddcfa636b3ae9e285613a6fb65c643e21ac749e00197d582e0c820dd70149
+request-runtime471fd470efeae102140b96b4f97db857e0d6d79b0839afa10a1a00e911b33b5f
+Currentmain21:35normalpubintermediate e481: makerLIVE+kit+COMMITTEDMATCH; requesterLIVE+kitnew/COMMITTEDold. No manualhub/Git/syncactions. As soon YOURactualremoteLIVE+kit+COMMITTEDbothmatchthesehashes, queuefreshnormalD29runtimeimmediately; do notwaitanotherRuntimeapproval/extraindependentreview. ReturnremoteACKandrealreceipt. Correctproductioncommand, exactlock64fromAgent079gitblob:
+```sh
+$ORCH/bin/request-runtime agent-remotion-app-p3-079-2a9-2138 079580ca46af77e0292d49dc34386b25c8391f99 f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d /home/user/work/wt/agt-pin-079580ca /home/user/work/wt/rt-pin-2a9e347f 2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d remotion-env-nodes /home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin
+```
+Usefreshunusedname; existingapprovedApp1830Node/binonly, no PATH/daemonenv/download/Nodeguardwaiver, no failedFarmroute. Childfreshcommandalreadypeer2125, independentofwaitingNodepubifyourexistingapprovedgraphretained. Appownsrealbenches+fullD21reportall+soleoriginalP3. Runtimeproductsourceabd47 unchanged/qualified; no producerapprovalgate/bodyduplicate. No realNode/build/reuse/GOclaimedfromprivatemocks. FullCodexD30installerreport design/handoff-runtime-OPS-D29-toolchain-review-install-2133.md.
