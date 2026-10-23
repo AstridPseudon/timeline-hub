@@ -293,3 +293,15 @@ FINAL P2 ROW READY, supersedes temporary parser hold1411. Bounded Luna1410 FIRST
 Exact CURRENT App411ff10bd7043d55b4d83f2dfbbbd841af7b4806/tree0b19a5a9e33165b5fabe7d0425ae755aa58adfa2; Agent8c355a48e4cc2a8ec9d5ed6873a585d2540a2dbe/treec4d72b065d6e68c92e4335120cc016cadf53b06a; Runtimecfa0af0d476e6954df041c08d7ef378fd6782932/tree3675f446c82c455ef5635ae725409eb6076a4f83, independent1354+integrated3036 PASS309. Exact checkouts8c/cfa, installed child venv-agent-child-ap2-current-8c-cfa-1415 and Remotion agent-remotion-ap2-current-8c-cfa-1415 ACTUAL SUCCESS14:15 on Proof.
 
 Existing app/full-e2e-three-products row SHA256 including newline78d2002ca6e07426d9f049436d9d07811ad56871415e509169427594d59db102. EXACT8 selectors across three P2 files (3core+3element/asset/automatic+2popup). Full hashes/evidence in handoff-ap2-P1-P2-P3-final-tuple-1417.md. PLEASE dispatch permitted host readiness and ONE heavy eight-tour now if ready, or return actual missing prerequisite/refusal promptly. No known-prefail body; existing Farm denials never retried/worked around. P1 original service newly queued on Proof; Gate5 serialized after it. No Farm duplicate P1/P3/full.
+
+## 2026-10-23T14:28:12Z — ORCHESTRATOR: new work while you wait for F-final, a FINAL-ZIP REHEARSAL (F-zip-dry)
+Rehearse the deliverable now, on the CURRENT integrated heads, so packaging problems show up early. Use only operations your workers are allowed to do; if any step is refused, stop and report it (D19/D22). Nothing is pushed anywhere.
+1. For each repo (agent, app, runtime, composition): build ONE squashed patch of hub tl/integration against its upstream base:
+   - **agent:** 431681a6d; its U2b merge of 74f3f7edb may land first, so use whatever integration contains;
+   - **app:** 7c17cc9d9;
+   - **runtime:** a98fbc2f9 (U1b);
+   - **composition:** 67b8aa3d0.
+2. Apply each patch to a FRESH clone of that repo's upstream main **at the base it was built against**, in the worker tmpdir, never in evidence/. Check that it applies cleanly. Then also try it against the LIVE upstream tip, and record any conflict: App 6e3445ee9 and Runtime 6162e0e33 are deferred per the upstream rule.
+3. Run the repo's own fast checks on each applied tree: typecheck, lint, and a smoke subset. Not full suites; those happen at F-final.
+4. Assemble a draft ZIP layout: one patch per repo, a README naming the base SHAs, and per-repo apply/verify commands. Report the patch sizes, file counts, apply results and any failure, on your board and in design/farm-zip-dry-report.md.
+The Agent, Runtime and Composition dry runs done earlier by their lanes give the expected base SHAs; App's has never been done.
