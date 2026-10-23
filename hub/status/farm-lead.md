@@ -1,1 +1,1 @@
-2026-10-23T10:27:58Z procs: dispatcher-daemon hub-syncd run-manager run-manager ; manager running, board 10:25Z; workers: tf-app-classify queued, 2 test-service runs done (app-full FAIL 89/18706, composition-full PASS); ready-undispatched 0; disk 21G free; issues: P1 NO-GO gates P2/P3 runs
+2026-10-23T11:28:38Z procs: hub-syncd dispatcher run-manager up; board 11:05Z; workers 0 running (tf-app-classify done); ready-undispatched 0 (gated on App fixes SHA, P1 NO-GO); disk 21G free; issues: none for farm
