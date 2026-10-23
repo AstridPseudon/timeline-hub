@@ -15,11 +15,13 @@ from astrid.core.timeline.authoring_bundle import open_authoring_bundle, publish
 from astrid.core.timeline.authoring_feedback import authoring_change_summary, publication_feedback
 from astrid.packs.timeline.cli import _configure_diff, _configure_show, _configure_visualize
 from astrid.sdk.authoring_remote import AuthoringRemoteError, TargetBoundAuthoringBundle
-from astrid.sdk.timeline.commit import document_from_bundle
+from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.emitter import DocumentPatchError, emit_document_commands
 from astrid.sdk.timeline_editing import duplicate_authoring_shot, remove_authoring_shot
 from astrid.sdk.workspace_client import WorkspaceClientError
 from tests.editing_conformance.test_document_patch_emitter_engine import source as emitter_bundle
+from tests.sdk.test_timeline_commit_provider import DetachedRealm
+from tests.sdk.test_timeline_commit_provider_document import document_fixture
 from tests.timeline.test_authoring_bundle import NEW, OLD, _closure, _digest
 
 
@@ -187,6 +189,67 @@ def test_document_emitter_emits_narration_and_media_patches():
         "path": ["registry", "assets", "picture", "media_id"],
         "before": {"state": "present", "value": OLD}, "value": NEW,
     }]
+
+
+@pytest.mark.parametrize("invalid", ["param", "unknown", "media"])
+def test_document_emitter_provider_refuses_invalid_param_and_unverified_media(invalid):
+    document = document_fixture(shared=False)
+    before = bundle_from_document(document)
+    if invalid in {"param", "unknown"}:
+        for rows in (before["parent"]["clips"], before["parent"]["config"]["clips"]):
+            rows[0].update(
+                clipType="am-type" if invalid == "param" else "am-flap",
+                params=(
+                    {"text": "hello"}
+                    if invalid == "param" else {"values": [{"text": "hello", "at": 0}]}
+                ),
+            )
+    after = copy.deepcopy(before)
+    if invalid == "param":
+        for rows in (after["parent"]["clips"], after["parent"]["config"]["clips"]):
+            rows[0]["params"]["text"] = None
+        expected = {
+            "wire_code": "validation_error", "code": "invalid_document", "reason": "invalid_document",
+            "hint": "Read the timeline and submit a valid canonical document change",
+            "suggested_command": "timeline edit",
+        }
+    elif invalid == "unknown":
+        for rows in (after["parent"]["clips"], after["parent"]["config"]["clips"]):
+            rows[0]["params"]["null"] = None
+        expected = {
+            "wire_code": "validation_error", "code": "invalid_document", "reason": "invalid_document",
+            "hint": "Read the timeline and submit a valid canonical document change",
+            "suggested_command": "timeline edit",
+        }
+    else:
+        after["parent"]["registry"]["assets"]["picture"]["media_id"] = "sha256:" + "9" * 64
+        expected = {
+            "wire_code": "conflict", "code": "dependency_changed", "reason": "dependency_changed",
+            "hint": "Read the current dependency and reapply the intended change",
+            "suggested_command": "timeline show",
+        }
+
+    commands = emit_document_commands(before, after)
+    assert commands and all(command["op"] == "doc.patch" for command in commands)
+    realm = DetachedRealm(document_from_bundle(before))
+    head = copy.deepcopy(realm.head)
+    entries = copy.deepcopy(realm.entries)
+    documents = copy.deepcopy(realm.documents)
+    from runtime_protocol.timeline_commit import CommitRejected
+
+    with pytest.raises(CommitRejected) as refusal:
+        realm.call(commands)
+    failure = refusal.value.failure
+    details = failure["details"]
+    assert failure["code"] == expected["wire_code"]
+    assert details["code"] == expected["code"]
+    assert details["reason"] == expected["reason"]
+    assert details["path"] == []
+    assert details["hint"] == expected["hint"]
+    assert details["suggested_command"] == expected["suggested_command"]
+    assert realm.head == head
+    assert realm.entries == entries
+    assert realm.documents == documents
 
 
 def test_document_emitter_refuses_a_noncanonical_pinned_base():

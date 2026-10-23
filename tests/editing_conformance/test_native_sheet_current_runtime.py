@@ -20,7 +20,7 @@ from astrid.sdk.timeline._track_commands import capture_track_set
 from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
-from astrid.sdk.timeline.emitter import DocumentPatchError, emit_document_commands
+from astrid.sdk.timeline.emitter import emit_document_commands
 from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
 from astrid.sdk.timeline_checkout import Checkout
 from astrid.sdk.timeline_editing import add_track
@@ -277,13 +277,34 @@ def test_http_emitter_null_presence_and_track_roundtrip_is_authenticated(runtime
                     if row['id'] == 'f2-agent-clip')
 
     unsupported = copy.deepcopy(before)
-    child(unsupported)['params']['null'] = None
+    child(unsupported)['params']['text'] = None
     head_before_refusal = copy.deepcopy(runtime.history()['head'])
+    history_before_refusal = copy.deepcopy(runtime.history()['items'])
     calls_before_refusal = len(runtime.calls)
-    with pytest.raises(DocumentPatchError, match='source-bound|managed|closure'):
-        emit_document_commands(before, unsupported)
+    invalid_commands = emit_document_commands(before, unsupported)
+    assert invalid_commands == [{
+        'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+        'args': {'changes': [{
+            'op': 'set', 'ref': 'internal-revision:' + before['source_mapping']['shots'][
+                next(row for row in before['placements']
+                     if row['occurrence_id'] == 'f2-occurrence')['shot_id']
+            ]['internal_timeline_revision_id'],
+            'path': ['clips', 'id:f2-agent-clip', 'params', 'text'],
+            'before': {'state': 'present', 'value': 'hello'}, 'value': None,
+        }]},
+    }]
+    invalid_session = runtime.session(name='emitter-invalid')
+    with pytest.raises(CommitConflict) as refusal:
+        invalid_session.commit_many(invalid_commands, idempotency_key='emitter-invalid-param')
+    details = refusal.value.failure['details']
+    assert refusal.value.failure['code'] == 'validation_error'
+    assert details['reason'] == details['code'] == 'invalid_document'
+    assert details['path'] == []
+    assert details['hint'] == 'Read the timeline and submit a valid canonical document change'
+    assert details['suggested_command'] == 'timeline edit'
     assert runtime.history()['head'] == head_before_refusal
-    assert len(runtime.calls) == calls_before_refusal
+    assert runtime.history()['items'] == history_before_refusal
+    assert len(runtime.calls) == calls_before_refusal + 1
 
     candidate = copy.deepcopy(before)
     for rows in (candidate['parent']['clips'], candidate['parent']['config']['clips']):
