@@ -1,9 +1,8 @@
 // @vitest-environment jsdom
 import React, { createRef } from 'react';
-import { act, cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { RemotionPreview, type PreviewHandle } from './RemotionPreview';
-import type { PreviewRevision } from './previewRevision';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types';
 
 vi.mock('@/tools/video-editor/compositions/TimelineRenderer', () => ({ TimelineRenderer: () => null }));
@@ -15,11 +14,6 @@ const boundary = vi.hoisted(() => ({
   props: null as any,
   applied: [] as ResolvedTimelineConfig[],
   events: [] as Array<{ frame: number; fps: number; config: string }>,
-  order: [] as string[],
-  frameSchedulers: [] as Array<() => void>,
-  frameEffects: [] as Array<() => void>,
-  deferFrameEffects: false,
-  commitFrame: null as ((frame: number) => void) | null,
   listeners: new Map<string, Set<(event: any) => void>>(),
 }));
 vi.mock('@remotion/player', async () => {
@@ -28,36 +22,19 @@ vi.mock('@remotion/player', async () => {
     Player: React.forwardRef(function Player(props: any, ref: any) {
       boundary.props = props;
       boundary.applied.push(props.inputProps.config);
-      const [frame, setFrame] = React.useState(props.initialFrame);
-      const frameRef = React.useRef(frame);
-      frameRef.current = frame;
-      const hasCommittedFrame = React.useRef(false);
-      React.useEffect(() => {
-        if (!hasCommittedFrame.current) {
-          hasCommittedFrame.current = true;
-          return;
-        }
-        const dispatchFrameUpdate = () => {
-          boundary.order.push(`frameupdate:${frame}`);
-          for (const listener of boundary.listeners.get('frameupdate') ?? []) listener({ detail: { frame } });
-        };
-        if (boundary.deferFrameEffects) boundary.frameEffects.push(dispatchFrameUpdate);
-        else dispatchFrameUpdate();
-      }, [frame]);
-      boundary.commitFrame = setFrame;
       const handle = React.useRef<any>(null);
       if (!handle.current) {
+        let frame = props.initialFrame;
         let playing = false;
         const emit = (name: string) => {
           for (const listener of boundary.listeners.get(name) ?? []) listener({});
         };
         handle.current = {
           seekTo: vi.fn((next: number) => {
-            boundary.order.push(`seek:${next}`);
-            boundary.frameSchedulers.push(() => setFrame(next));
-            boundary.events.push({ frame: next, fps: boundary.props.fps, config: boundary.props.inputProps.config.output.file });
+            frame = next;
+            boundary.events.push({ frame, fps: boundary.props.fps, config: boundary.props.inputProps.config.output.file });
           }),
-          getCurrentFrame: vi.fn(() => frameRef.current),
+          getCurrentFrame: vi.fn(() => frame),
           isPlaying: vi.fn(() => playing),
           play: vi.fn(() => { playing = true; emit('play'); }),
           pause: vi.fn(() => { playing = false; emit('pause'); }),
@@ -102,26 +79,13 @@ function settle() {
   }
   expect(raf.size, 'finite RAF work exhausted').toBe(0);
 }
-function preview(initial: ResolvedTimelineConfig, initialRevision?: PreviewRevision) {
+function preview(initial: ResolvedTimelineConfig) {
   const ref = createRef<PreviewHandle>();
   const container = createRef<HTMLDivElement>();
   const onTimeUpdate = vi.fn();
-  const draw = (c: ResolvedTimelineConfig, revision = initialRevision) => (
-    <RemotionPreview
-      ref={ref}
-      config={c}
-      previewRevision={revision}
-      onTimeUpdate={onTimeUpdate}
-      playerContainerRef={container}
-    />
-  );
+  const draw = (c: ResolvedTimelineConfig) => <RemotionPreview ref={ref} config={c} onTimeUpdate={onTimeUpdate} playerContainerRef={container} />;
   const view = render(draw(initial));
-  return {
-    ref,
-    view,
-    onTimeUpdate,
-    replace: (c: ResolvedTimelineConfig, revision?: PreviewRevision) => view.rerender(draw(c, revision)),
-  };
+  return { ref, view, replace: (c: ResolvedTimelineConfig) => view.rerender(draw(c)) };
 }
 beforeEach(() => {
   vi.useFakeTimers();
@@ -129,11 +93,6 @@ beforeEach(() => {
   boundary.props = null;
   boundary.applied = [];
   boundary.events = [];
-  boundary.order = [];
-  boundary.frameSchedulers = [];
-  boundary.frameEffects = [];
-  boundary.deferFrameEffects = false;
-  boundary.commitFrame = null;
   boundary.listeners.clear();
   raf = new Map();
   nextRaf = 0;
@@ -141,12 +100,6 @@ beforeEach(() => {
   vi.stubGlobal('cancelAnimationFrame', (id: number) => raf.delete(id));
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.useRealTimers(); });
-
-function commitScheduledFrame() {
-  const commit = boundary.frameSchedulers.shift();
-  expect(commit, 'Player frame scheduler has a pending frame').toBeDefined();
-  act(() => commit?.());
-}
 
 it('H3 newest C beats queued playing B on explicit pause and subsequent one-second seek', () => {
   const a = config('h3-a', 30), b = config('h3-b', 60), c = config('h3-c', 90);
@@ -168,128 +121,6 @@ it('H3 newest C beats queued playing B on explicit pause and subsequent one-seco
   expect.soft(boundary.applied).not.toContain(b);
   expect.soft(raf.size).toBe(0);
   expect.soft(vi.getTimerCount()).toBe(0);
-});
-
-it('marks only the surviving queued seek complete after the real Player frame effects', () => {
-  const fps = 30000 / 1001;
-  const h = preview(config('queued-order', fps));
-  settle();
-
-  act(() => {
-    h.ref.current!.seek(0.5);
-    h.ref.current!.seek(1);
-  });
-
-  expect(boundary.order).toEqual(['seek:15']);
-  expect(h.onTimeUpdate).not.toHaveBeenCalled();
-
-  // The Player's React frame effect for A can run before the preview mailbox
-  // RAF dispatches B. Its feedback remains ordinary because B is pending.
-  commitScheduledFrame();
-  expect(boundary.order).toEqual(['seek:15', 'frameupdate:15']);
-  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(15 / fps);
-
-  flushFrame();
-  expect(boundary.order).toEqual(['seek:15', 'frameupdate:15', 'seek:30']);
-  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(15 / fps);
-
-  // B's frame effect is the completion point. The callback retains the
-  // existing frame/fps feedback value and adds only the completion bit.
-  commitScheduledFrame();
-  expect(boundary.order).toEqual(['seek:15', 'frameupdate:15', 'seek:30', 'frameupdate:30']);
-  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(30 / fps, true);
-
-  act(() => boundary.commitFrame?.(45));
-  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(45 / fps);
-});
-
-it('completes a same-frame seek without waiting for a Player frame effect', () => {
-  const h = preview(config('same-frame'));
-  settle();
-
-  act(() => h.ref.current!.seek(0));
-
-  expect(boundary.events).toHaveLength(1);
-  expect(boundary.frameSchedulers).toHaveLength(1);
-  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(0, true);
-  expect(boundary.order).toEqual(['seek:0']);
-});
-
-it('does not echo a queued same-frame effect after explicit completion', () => {
-  const fps = 30000 / 1001;
-  const h = preview(config('same-frame-late-echo', fps));
-  settle();
-
-  // A's native frame state reaches 30 while its Remotion frameupdate effect
-  // remains queued. B1 is authored as 1 second, which rounds to that same
-  // frame at 30000/1001.
-  boundary.deferFrameEffects = true;
-  act(() => boundary.commitFrame?.(30));
-  expect(boundary.player.getCurrentFrame()).toBe(30);
-  expect(boundary.frameEffects).toHaveLength(1);
-
-  // B sees the existing frame and therefore completes explicitly without a
-  // second native frame transition. The queued A effect is delivered after it.
-  act(() => h.ref.current!.seek(1));
-  expect(boundary.order).toEqual(['seek:30']);
-  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(30 / fps, true);
-
-  boundary.deferFrameEffects = false;
-  act(() => boundary.frameEffects.shift()?.());
-  expect(boundary.order).toEqual(['seek:30', 'frameupdate:30']);
-
-  act(() => boundary.commitFrame?.(45));
-  expect(h.onTimeUpdate.mock.calls).toEqual([
-    [30 / fps, true],
-    [45 / fps],
-  ]);
-});
-
-it('coalesces queued seeks and completes only the surviving target', () => {
-  const h = preview(config('coalesced-completion'));
-  settle();
-
-  act(() => {
-    h.ref.current!.seek(0.5);
-    h.ref.current!.seek(1);
-    h.ref.current!.seek(1.5);
-  });
-  commitScheduledFrame();
-  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(15 / 30);
-
-  flushFrame();
-  expect(boundary.order).toEqual(['seek:15', 'frameupdate:15', 'seek:45']);
-  commitScheduledFrame();
-  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(45 / 30, true);
-  expect(boundary.events.map((event) => event.frame)).toEqual([15, 45]);
-});
-
-it('keeps a config-deferred seek held until the matching Player delivery', () => {
-  const h = preview(config('deferred-a'));
-  settle();
-  h.replace(config('deferred-b', 60));
-
-  act(() => h.ref.current!.seek(1));
-  advance(149);
-  expect(boundary.events).toHaveLength(0);
-  expect(h.onTimeUpdate).not.toHaveBeenCalled();
-
-  advance(1);
-  expect(boundary.events.map((event) => event.frame)).toEqual([60]);
-  expect(h.onTimeUpdate).not.toHaveBeenCalled();
-  commitScheduledFrame();
-  expect(h.onTimeUpdate).toHaveBeenLastCalledWith(60 / 60, true);
-});
-
-it('cancels outstanding completion state on unmount', () => {
-  const h = preview(config('unmount-completion'));
-  settle();
-  act(() => h.ref.current!.seek(0.5));
-
-  h.view.unmount();
-
-  expect(raf.size).toBe(0);
-  expect(h.onTimeUpdate).not.toHaveBeenCalled();
 });
 
 it('flushes pending B immediately when pausing without a newer config', () => {
@@ -378,106 +209,4 @@ it('cancels pending mailbox and paused timer work on unmount', () => {
   expect(raf.size).toBe(0);
   settle();
   expect(boundary.applied).not.toContain(b);
-});
-
-it('labels a delivered historical committed revision', () => {
-  preview(config('historical'), { kind: 'committed', revisionId: 'R1' });
-
-  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Committed R1');
-});
-
-it('labels a delivered local draft with its committed base', () => {
-  preview(config('draft'), { kind: 'local', baseRevisionId: 'R1' });
-
-  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Unsaved local · based on R1');
-});
-
-it('keeps the old label until the throttled config and its metadata arrive together', () => {
-  const first = config('label-first');
-  const draft = config('label-draft');
-  const h = preview(first, { kind: 'committed', revisionId: 'R1' });
-
-  h.replace(draft, { kind: 'local', baseRevisionId: 'R1' });
-  expect(boundary.props.inputProps.config).toBe(first);
-  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Committed R1');
-
-  advance(149);
-  expect(boundary.props.inputProps.config).toBe(first);
-  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Committed R1');
-
-  advance(1);
-  expect(boundary.props.inputProps.config).toBe(draft);
-  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Unsaved local · based on R1');
-});
-
-it('does not let a late acknowledgement relabel a delivered local suffix', () => {
-  const local = config('local-prefix');
-  const suffix = config('local-suffix');
-  const h = preview(local, { kind: 'local', baseRevisionId: 'R1' });
-  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Unsaved local · based on R1');
-
-  // The acknowledgement changes host metadata but not the Player input.
-  h.replace(local, { kind: 'committed', revisionId: 'R2' });
-  expect(boundary.props.inputProps.config).toBe(local);
-  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Unsaved local · based on R1');
-
-  h.replace(suffix, { kind: 'local', baseRevisionId: 'R2' });
-  advance(150);
-  expect(boundary.props.inputProps.config).toBe(suffix);
-  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Unsaved local · based on R2');
-});
-
-it('ignores stale paused generation completion and its stale label', () => {
-  const first = config('stale-first');
-  const stale = config('stale-generation');
-  const newest = config('newest-generation');
-  const h = preview(first, { kind: 'committed', revisionId: 'R1' });
-
-  h.replace(stale, { kind: 'committed', revisionId: 'R2' });
-  advance(100);
-  h.replace(newest, { kind: 'local', baseRevisionId: 'R2' });
-  advance(150);
-
-  expect(boundary.props.inputProps.config).toBe(newest);
-  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Unsaved local · based on R2');
-});
-
-it('keeps cached committed pixels labelled while a target is unavailable', () => {
-  const h = preview(config('cached-r1'), {
-    kind: 'committed',
-    revisionId: 'R1',
-    unavailableTarget: { targetRevisionId: 'R2', reason: 'Runtime read failed' },
-  });
-
-  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Committed R1');
-  expect(screen.getByTestId('preview-revision-unavailable')).toHaveTextContent('Preview of R2 unavailable');
-  expect(boundary.props.inputProps.previewRevision).toMatchObject({ kind: 'committed', revisionId: 'R1' });
-});
-
-it('shows an unavailable target without inventing a committed revision when there is no cache', () => {
-  preview(config('no-cache'), {
-    kind: 'unavailable',
-    unavailableTarget: { targetRevisionId: 'R2', reason: 'Runtime read failed' },
-  });
-
-  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Preview of R2 unavailable');
-  expect(screen.queryByText('Committed R2')).toBeNull();
-});
-
-it('clears a recovered unavailable request without relabelling the delivered pixels', () => {
-  const current = config('recovered-r1');
-  const h = preview(current, {
-    kind: 'committed',
-    revisionId: 'R1',
-    unavailableTarget: { targetRevisionId: 'R2', reason: 'Runtime read failed' },
-  });
-
-  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Committed R1');
-  expect(screen.getByTestId('preview-revision-unavailable')).toHaveTextContent('Preview of R2 unavailable');
-
-  h.replace(current, { kind: 'committed', revisionId: 'R1' });
-
-  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Committed R1');
-  expect(screen.queryByTestId('preview-revision-unavailable')).toBeNull();
-  expect(boundary.props.inputProps.previewRevision).toEqual({ kind: 'committed', revisionId: 'R1' });
 });

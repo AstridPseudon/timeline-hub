@@ -83,4 +83,3 @@ describe('operation-to-local task client adapter', () => {
     expect(env.calls).toHaveLength(0);
   });
 });
-

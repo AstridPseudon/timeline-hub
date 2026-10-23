@@ -597,7 +597,6 @@ export interface UseEditorRuntimeSyncOptions {
 export interface EditorRuntimeSync {
   store: UseTimelineStateResult['store'];
   editor: UseTimelineStateResult['editor'];
-  editorOps: UseTimelineStateResult['editorOps'];
   transcriptHost?: import('../lib/transcript-panel-host.ts').TranscriptPanelHost;
   chrome: UseTimelineStateResult['chrome'];
   activeExtensionIds: ReadonlySet<string>;
@@ -1031,7 +1030,6 @@ export function useEditorRuntimeSync({
 
   return {
     store,
-    editorOps,
     transcriptHost:editorOps.transcriptHost,
     editor,
     chrome,

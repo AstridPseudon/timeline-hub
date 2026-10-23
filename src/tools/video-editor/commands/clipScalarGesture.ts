@@ -23,6 +23,8 @@ export interface CapturedClipScalarEdit {
 export function clipScalarPreview(clipId: string, args: ClipScalarArgs): TimelinePatch {
   const transitionSet = Object.prototype.hasOwnProperty.call(args.values, 'transition')
     || Object.prototype.hasOwnProperty.call(args.values, 'elementRef');
+  // `elementRef` is a local preview-only clear paired with a transition clear;
+  // the public patch contract intentionally exposes only executable leaves.
   return { version: 1, operations: [{
     op: 'clip.update', target: clipId, payload: structuredClone(args.values),
     ...(args.clear.length || !transitionSet

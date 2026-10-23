@@ -1,3 +1,4 @@
+import { getTimelineDurationInFrames } from '@/tools/video-editor/lib/config-utils.ts';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
 import { AlertCircle, Film } from 'lucide-react';
@@ -6,7 +7,6 @@ import { VideoEditorProvider } from '@/tools/video-editor/contexts/VideoEditorPr
 import { TimelineEditorCore } from '@/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx';
 import { RemotionPreview } from '@/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx';
 import { projectCanonicalComposition } from '@/tools/video-editor/data/shotCompositionProjection.ts';
-import { getTimelineDurationInFrames } from '@/tools/video-editor/lib/config-utils.ts';
 import { useTimelinePlaybackContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useTimelineChromeContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useTimelineEditorData } from '@/tools/video-editor/hooks/timelineStore.ts';
