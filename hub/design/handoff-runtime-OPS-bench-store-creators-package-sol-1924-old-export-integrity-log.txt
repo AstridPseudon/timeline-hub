@@ -1,0 +1,14 @@
+COMMAND sha256sum -c /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-runtime-OPS-bench-store-creators-return-1912-hashmanifest.txt
+handoff-runtime-OPS-bench-store-creators-return-1912-make-child-venv.sh: FAILED
+handoff-runtime-OPS-bench-store-creators-return-1912-make-child-venv.patch: FAILED
+handoff-runtime-OPS-bench-store-creators-return-1912-request-child-venv.sh: OK
+handoff-runtime-OPS-bench-store-creators-return-1912-request-child-venv.patch: OK
+handoff-runtime-OPS-bench-store-creators-return-1912-make-runtime.sh: OK
+handoff-runtime-OPS-bench-store-creators-return-1912-make-runtime.patch: OK
+handoff-runtime-OPS-bench-store-creators-return-1912-request-runtime.sh: OK
+handoff-runtime-OPS-bench-store-creators-return-1912-request-runtime.patch: OK
+handoff-runtime-OPS-bench-store-creators-return-1912-test-adapters.py: OK
+handoff-runtime-OPS-bench-store-creators-return-1912-test-receipts.py: FAILED
+handoff-runtime-OPS-bench-store-creators-return-1912-validate-packet.py: FAILED
+sha256sum: WARNING: 4 computed checksums did NOT match
+EXIT 1 (expected historical packet FAIL)

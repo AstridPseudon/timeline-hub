@@ -1,0 +1,292 @@
+--- handoff-runtime-OPS-bench-store-creators-return-1912-make-child-venv.sh
++++ handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-child-venv.sh
+@@ -164,6 +164,14 @@
+     for key, value in expected.items():
+         if [line for line in lines if line.startswith(key + '=')] != [key + '=' + value]:
+             raise RuntimeError('provision report identity mismatch: ' + key)
++    for section, end, marker in (
++        ('installed_import_origins:', 'installed_distribution_metadata:', '.astrid-import-origins'),
++        ('installed_distribution_metadata:', 'pip_freeze:', '.astrid-distribution-metadata')):
++        if lines.count(section) != 1 or lines.count(end) != 1:
++            raise RuntimeError('provision report section missing or duplicated')
++        actual = lines[lines.index(section) + 1:lines.index(end)]
++        if actual != pathlib.Path(path, marker).read_text().splitlines():
++            raise RuntimeError('provision report provenance mismatch: ' + marker)
+     return data
+ 
+ def success_receipt(entry, report):
+@@ -196,11 +204,14 @@
+                     runtime_checkout, backend, work, python], input=verifier, text=True, check=True)
+     # Re-run the existing freeze identity verifier at the verified final path.
+     data = report_bytes(retained)
+-    identity_script = source.split("IDENTITY_SCRIPT='", 1)[1].split("'\nrun_stage", 1)[0]
+-    subprocess.run([str(retained / 'bin/python'), '-I', '-c', identity_script,
++    identity_script = source.split("\nIDENTITY_SCRIPT=" + "'", 1)[1].split("'\nrun_stage", 1)[0]
++    snapshots = list(retained.glob('.child-venv-source-*'))
++    if len(snapshots) != 1:
++        raise RuntimeError('ambiguous retained child source snapshots')
++    subprocess.run([str(retained / 'bin/python'), '-B', '-I', '-c', identity_script,
+                     str(retained / '.provision-report'), str(retained),
+-                    str(next(retained.glob('.child-venv-source-*')) / 'agent'),
+-                    str(next(retained.glob('.child-venv-source-*')) / 'runtime'), agent, backend],
++                    str(snapshots[0] / 'agent'),
++                    str(snapshots[0] / 'runtime'), agent, backend],
+                    check=True, timeout=int(os.environ.get('CHILD_VENV_LOCAL_TIMEOUT_SECONDS', '600')))
+     verified_reports[str(retained)] = data
+ managed_remotion = bool(remotion and store.registered(remotion))
+--- handoff-runtime-OPS-bench-store-creators-return-1912-make-child-venv.patch
++++ handoff-runtime-OPS-bench-store-creators-package-sol-1924-make-child-venv.patch
+@@ -84,7 +84,7 @@
+  
+  failure() {
+    rc=$1
+-@@ -128,11 +126,113 @@
++@@ -128,11 +126,125 @@
+    printf 'inventory=python:%s runtime_sha:%s requirements_lock_sha256:%s free_bytes:%s\n' \
+      "$PYTHON_ACTUAL" "$RUNTIME_SHA" "$LOCK_SHA" "$FREE_BYTES" >&2
+    printf 'missing_prerequisite=%s\n' "${missing[@]}" >&2
+@@ -105,9 +105,9 @@
+ +STORE_HELPER=$O/bin/bench_store.py
+ +[ -f "$STORE_HELPER" ] && [ ! -L "$STORE_HELPER" ] || { echo 'REFUSED: bench store helper unavailable' >&2; exit 2; }
+ +export STORE_CONTEXT="$(declare -p O A R W PYTHON TIMEOUT_BIN PIP_TIMEOUT_SECONDS LOCAL_TIMEOUT_SECONDS FREEZE_TIMEOUT_SECONDS BUILD_TIMEOUT_SECONDS KILL_AFTER_SECONDS PIP_NETWORK_TIMEOUT_SECONDS PIP_RETRIES REQUIREMENTS_PATH N S BS RT RUNTIME_SHA CLIENT_IDENTITY LOCK_SHA; declare -f failure run_stage progress source_state)"
+-+python3 -I - "$0" "$STORE_HELPER" "$W/bench-store" "$O/tests" "$N" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$A" "$R" "$W" "$PYTHON" "$BS" "$RT" <<'STORE_PY'
+++python3 -I - "$0" "$STORE_HELPER" "$W/bench-store" "$O/tests" "$N" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$A" "$R" "$W" "$PYTHON" "$BS" "$RT" "$REQUIREMENTS_PATH" "$LOCK_SHA" <<'STORE_PY'
+ +import hashlib, importlib.util, os, pathlib, shlex, subprocess, sys
+-+script, helper, root, tests, name, agent, backend, client, checkout, runtime_checkout, work, python, base_suite, remotion = sys.argv[1:]
+++script, helper, root, tests, name, agent, backend, client, checkout, runtime_checkout, work, python, base_suite, remotion, requirements, lock = sys.argv[1:]
+ +sys.dont_write_bytecode = True
+ +spec = importlib.util.spec_from_file_location('bench_store', helper)
+ +module = importlib.util.module_from_spec(spec)
+@@ -123,10 +123,19 @@
+ +    data = pathlib.Path(path, '.provision-report').read_bytes()
+ +    lines = data.decode('utf-8').splitlines()
+ +    expected = {'status': 'passed', 'agent_sha': agent, 'runtime_sha': backend,
+++                'requirements_path': requirements, 'requirements_lock_sha256': lock,
+ +                'runtime_client_identity_sha256': hashlib.sha256(client.encode()).hexdigest()}
+ +    for key, value in expected.items():
+ +        if [line for line in lines if line.startswith(key + '=')] != [key + '=' + value]:
+ +            raise RuntimeError('provision report identity mismatch: ' + key)
+++    for section, end, marker in (
+++        ('installed_import_origins:', 'installed_distribution_metadata:', '.astrid-import-origins'),
+++        ('installed_distribution_metadata:', 'pip_freeze:', '.astrid-distribution-metadata')):
+++        if lines.count(section) != 1 or lines.count(end) != 1:
+++            raise RuntimeError('provision report section missing or duplicated')
+++        actual = lines[lines.index(section) + 1:lines.index(end)]
+++        if actual != pathlib.Path(path, marker).read_text().splitlines():
+++            raise RuntimeError('provision report provenance mismatch: ' + marker)
+ +    return data
+ +
+ +def success_receipt(entry, report):
+@@ -159,11 +168,14 @@
+ +                    runtime_checkout, backend, work, python], input=verifier, text=True, check=True)
+ +    # Re-run the existing freeze identity verifier at the verified final path.
+ +    data = report_bytes(retained)
+-+    identity_script = source.split("IDENTITY_SCRIPT='", 1)[1].split("'\nrun_stage", 1)[0]
+-+    subprocess.run([str(retained / 'bin/python'), '-I', '-c', identity_script,
+++    identity_script = source.split("\nIDENTITY_SCRIPT=" + "'", 1)[1].split("'\nrun_stage", 1)[0]
+++    snapshots = list(retained.glob('.child-venv-source-*'))
+++    if len(snapshots) != 1:
+++        raise RuntimeError('ambiguous retained child source snapshots')
+++    subprocess.run([str(retained / 'bin/python'), '-B', '-I', '-c', identity_script,
+ +                    str(retained / '.provision-report'), str(retained),
+-+                    str(next(retained.glob('.child-venv-source-*')) / 'agent'),
+-+                    str(next(retained.glob('.child-venv-source-*')) / 'runtime'), agent, backend],
+++                    str(snapshots[0] / 'agent'),
+++                    str(snapshots[0] / 'runtime'), agent, backend],
+ +                   check=True, timeout=int(os.environ.get('CHILD_VENV_LOCAL_TIMEOUT_SECONDS', '600')))
+ +    verified_reports[str(retained)] = data
+ +managed_remotion = bool(remotion and store.registered(remotion))
+@@ -200,7 +212,7 @@
+  P=$T/bin/python
+  PIP_ARGS=(--no-cache-dir --disable-pip-version-check --progress-bar off --retries "$PIP_RETRIES" --timeout "$PIP_NETWORK_TIMEOUT_SECONDS")
+  run_stage bootstrap-pip "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q \
+-@@ -159,6 +259,7 @@
++@@ -159,6 +271,7 @@
+  run_stage install-runtime "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$RUNTIME_SRC"
+  printf '%s\n' "$S" > "$T/.astrid-source-commit"
+  printf '%s\n' "$RUNTIME_SHA" > "$T/.astrid-runtime-source-commit"
+@@ -208,7 +220,7 @@
+  
+  PROVENANCE_SCRIPT='import importlib.util, pathlib
+  names = ("astrid", "astrid_runtime", "runtime_protocol", "astrid_runtime_client")
+-@@ -174,8 +275,8 @@
++@@ -174,8 +287,8 @@
+    'set -e; "$1" --help >/dev/null; "$2" --help >/dev/null; "$3" -I -m astrid_runtime --help >/dev/null' \
+    _ "$T/bin/astrid-runtime" "$T/bin/astrid-runtime-protocol" "$P"
+  run_stage markers "$LOCAL_TIMEOUT_SECONDS" bash -c \
+@@ -219,7 +231,7 @@
+  
+  # PEP 610 direct_url.json is the installed distribution provenance. Local
+  # source installs have directory metadata; wheel installs have archive hashes.
+-@@ -211,8 +312,8 @@
++@@ -211,8 +324,8 @@
+    "$P" "$DIST_METADATA_SCRIPT" "$AGENT_SRC" "$RUNTIME_SRC" "$T/.astrid-distribution-metadata"
+  
+  run_stage freeze "$FREEZE_TIMEOUT_SECONDS" bash -c \
+@@ -230,7 +242,7 @@
+  
+  IDENTITY_SCRIPT='import importlib.metadata as metadata, json, pathlib, sys, tomllib
+  from urllib.parse import unquote, urlparse
+-@@ -295,22 +396,188 @@
++@@ -295,22 +408,188 @@
+    'set -e
+     while IFS= read -r file; do sed -i "s#$1#$2#g" "$file"; done < <(grep -rl -- "$1" "$3/bin" 2>/dev/null || true)' \
+    _ "$T" "$D" "$T"
+--- handoff-runtime-OPS-bench-store-creators-return-1912-test-receipts.py
++++ handoff-runtime-OPS-bench-store-creators-package-sol-1924-test-receipts.py
+@@ -7,6 +7,7 @@
+ import io
+ from pathlib import Path
+ import subprocess
++import sys
+ import types
+ 
+ HERE = Path(__file__).resolve().parent
+@@ -55,6 +56,8 @@
+           '\ninstalled_import_origins:\nastrid=/owned/entry/lib/site-packages/astrid/__init__.py\n'
+           'installed_distribution_metadata:\npip_freeze:\n').encode()
+ files[entry_path + '/.provision-report'] = report
++files[entry_path + '/.astrid-import-origins'] = b'astrid=/owned/entry/lib/site-packages/astrid/__init__.py\n'
++files[entry_path + '/.astrid-distribution-metadata'] = b''
+ files[entry_path + '/.astrid-source-commit'] = (agent + '\n').encode()
+ files[entry_path + '/.astrid-runtime-source-commit'] = (backend + '\n').encode()
+ files['/tests/provision/' + name + '.txt'] = report
+@@ -71,6 +74,11 @@
+                  ('report_bytes', 'registration', 'success_receipt')]
+     exec(compile(ast.Module(body=functions, type_ignores=[]), prefix, 'exec'), env)
+     return env, tree
++
++child_source = (HERE / (PREFIX + 'make-child-venv.sh')).read_text()
++freeze_identity = child_source.split("\nIDENTITY_SCRIPT=" + "'", 1)[1].split("'\nrun_stage", 1)[0]
++compile(freeze_identity, 'final-path-freeze-identity', 'exec')
++print('PASS exact final-path freeze identity extraction/compile')
+ 
+ old, tree = namespace(OLD)
+ new, _ = namespace(PREFIX)
+@@ -126,3 +134,34 @@
+ print('PASS failure/tamper/no-verification/no-projection controls')
+ print('Proof parser source SHA256=' + hashlib.sha256(PROOF.read_bytes()).hexdigest())
+ print('SOURCE fixtures only; combined child remains FAIL/UNQUALIFIED and STOPPED')
++
++for prefix, expected in ((OLD, False), (PREFIX, True)):
++    requester = (HERE / (prefix + 'request-child-venv.sh')).read_text()
++    printf = next(line for line in requester.splitlines() if "printf 'reused child venv path=" in line)
++    result = subprocess.run(['bash', '-c', 'qualified=(/owned/legacy)\n' + printf],
++                            env={'PATH': '/usr/bin:/bin', 'S': agent, 'RUNTIME_SHA': backend},
++                            text=True, capture_output=True, check=True)
++    assert parse(result.stdout) == expected
++print('PASS oldRED/newGREEN legacy verified-reuse receipt parser')
++
++class RefusingStore:
++    def ensure(self, component, identity, registration, build, verify):
++        verify(entry_path)
++        raise AssertionError('verify must refuse')
++def failed_verify(path):
++    raise RuntimeError('custody verification failed')
++new.update(store=RefusingStore(), identity={}, build=None, verify=failed_verify, sys=sys)
++tree = embedded(PREFIX)
++flow = [n for n in tree.body if isinstance(n, ast.Try) or
++        (isinstance(n, ast.Expr) and isinstance(n.value, ast.Call) and
++         isinstance(n.value.func, ast.Name) and n.value.func.id == 'print')]
++output = io.StringIO()
++try:
++    with contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):
++        exec(compile(ast.Module(body=flow, type_ignores=[]), 'exact-maker-receipt-flow', 'exec'), new)
++except SystemExit as error:
++    assert error.code == 2
++else:
++    raise AssertionError('custody failure returned success')
++assert 'REFUSED:' in output.getvalue() and not parse(output.getvalue())
++print('PASS exact maker failure flow emits refusal and no success receipt')
+--- handoff-runtime-OPS-bench-store-creators-return-1912-validate-packet.py
++++ handoff-runtime-OPS-bench-store-creators-package-sol-1924-validate-packet.py
+@@ -1,6 +1,8 @@
+ """Compile/check exact sources and replay installed-source patches in TMPDIR."""
+ from pathlib import Path
+ import hashlib
++import json
++import re
+ import os
+ import subprocess
+ import tempfile
+@@ -18,6 +20,12 @@
+     assert result.returncode == 0
+     return result
+ 
++baselines = json.loads(artifact('baselines.json').read_text())
++for name, record in baselines.items():
++    data = Path(record['path']).read_bytes()
++    assert len(data) == record['bytes'] and hashlib.sha256(data).hexdigest() == record['sha256']
++    print('PASS actual installed baseline hash', name, record['sha256'])
++
+ with tempfile.TemporaryDirectory(prefix='creator-patch-', dir=os.environ['TMPDIR']) as temp:
+     for name in ('make-child-venv', 'request-child-venv', 'make-runtime', 'request-runtime'):
+         source = artifact(name + '.sh')
+@@ -25,11 +33,19 @@
+         text = source.read_text()
+         if "<<'STORE_PY'\n" in text:
+             compile(text.split("<<'STORE_PY'\n", 1)[1].split('\nSTORE_PY\n', 1)[0], name + ':store', 'exec')
++        for index, match in enumerate(re.finditer(r"<<'(STORE_PY|PY|REGISTRATION|RELOCATE)'\n(.*?)^\1$", text, re.M | re.S)):
++            compile(match.group(2), name + ':' + match.group(1) + ':' + str(index), 'exec')
++            print('PASS embedded Python compile', name, match.group(1), index)
++        if name == 'make-runtime':
++            for index, code in enumerate(re.findall(r"python3 -c '([^']*)'", text)):
++                compile(code, name + ':inline:' + str(index), 'exec')
++                print('PASS inline Python compile', name, index)
+         destination = Path(temp, name)
+         destination.write_bytes((ORCH / 'bin' / name).read_bytes())
+         patch = artifact(name + '.patch')
+-        if patch.stat().st_size:
+-            check(['patch', '--batch', str(destination), '-i', str(patch)])
++        check(['patch', '--dry-run', '--batch', str(destination), '-i', str(patch)])
++        check(['patch', '--batch', str(destination), '-i', str(patch)])
++        check(['cmp', str(destination), str(source)])
+         assert destination.read_bytes() == source.read_bytes()
+         print('PASS installed patch replay cmp', name)
+     child = artifact('make-child-venv.sh').read_text()
+@@ -42,7 +58,9 @@
+     request = artifact('request-child-venv.sh').read_text()
+     compile(request.split("<<'PY'\n", 1)[1].split('\nPY\n', 1)[0], 'request-child-verifier', 'exec')
+     for name in ('PROVENANCE_SCRIPT', 'DIST_METADATA_SCRIPT', 'IDENTITY_SCRIPT'):
+-        code = child.split(name + "='", 1)[1].split("'\nrun_stage", 1)[0]
++        matches = re.findall(r"^" + name + r"='(.*?)'\nrun_stage", child, re.M | re.S)
++        assert len(matches) == 1, (name, 'shell assignment missing or duplicated')
++        code = matches[0]
+         compile(code, name, 'exec')
+     compile(child.split("<<'RELOCATE'\n", 1)[1].split('\nRELOCATE\n', 1)[0], 'path-relocation', 'exec')
+     original = (ORCH / 'bin/make-runtime').read_text()
+@@ -54,13 +72,31 @@
+     print('PASS byte-exact Remotion registration/artifact/source guards and pins')
+     assert artifact('request-runtime.sh').read_bytes() == (ORCH / 'bin/request-runtime').read_bytes()
+     print('PASS byte-exact runtime request writer')
+-for name in ('test-adapters.py', 'validate-packet.py'):
++for name in ('test-adapters.py', 'test-receipts.py', 'validate-packet.py'):
+     path = artifact(name)
+     compile(path.read_bytes(), str(path), 'exec')
+-    env = {**os.environ, 'PYTHONPYCACHEPREFIX': os.environ['TMPDIR'] + '/compile-cache'}
+-    check(['python3', '-m', 'py_compile', str(path)], env=env)
++    print('PASS scoped Python compile', path.name)
++check(['git', 'diff', '--check'])
++assert check(['git', 'status', '--porcelain']).stdout == ''
+ check(['git', '-C', '/home/user/work/runtime', 'diff', '--check'])
+ status = check(['git', '-C', '/home/user/work/runtime', 'status', '--porcelain']).stdout
+ assert status == ''
+ check(['sha256sum', '-c', str(artifact('hashmanifest.txt'))], cwd=HERE)
+ print('PASS packet syntax/compile/hash/cmp/patch replay; integration Runtime unchanged')
++
++old_prefix = 'handoff-runtime-OPS-bench-store-creators-1850-'
++for name in ('make-runtime.sh', 'request-runtime.sh', 'test-adapters.py'):
++    assert artifact(name).read_bytes() == (HERE / (old_prefix + name)).read_bytes()
++old_child = (HERE / (old_prefix + 'make-child-venv.sh')).read_text()
++for start, end in [('# STORE_BUILD_BEGIN\n', '# STORE_BUILD_END'), ('# STORE_VERIFY_BEGIN\n', '# STORE_VERIFY_END')]:
++    assert child.split(start, 1)[1].split(end, 1)[0] == old_child.split(start, 1)[1].split(end, 1)[0]
++old_request = (HERE / (old_prefix + 'request-child-venv.sh')).read_text()
++assert request.replace('registration=existing status=passed\\n', 'registration=existing\\n') == old_request
++check(['sha256sum', '-c', str(HERE / (old_prefix + 'hashmanifest.txt'))], cwd=HERE)
++print('PASS immutable1850; exact build/verifier/runtime/requester guards retained')
++
++# All packet and old1850 hashes must still agree after the scoped checks.
++check(['sha256sum', '-c', str(artifact('hashmanifest.txt'))], cwd=HERE)
++for name, record in baselines.items():
++    assert hashlib.sha256(Path(record['path']).read_bytes()).hexdigest() == record['sha256']
++print('SOURCE PASS; combined FAIL / UNQUALIFIED / STOPPED; STOP1905 pending')

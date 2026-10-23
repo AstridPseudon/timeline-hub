@@ -1,0 +1,62 @@
+{
+  "make-child-venv.sh": {
+    "old_export_sha256": "f339a3f3db3c85bd7fb3c17f199ceeb3d09476f9906cff45cb663007eb0a48e6",
+    "new_export_sha256": "d32ede5ff3de131c0fdc25395bdb3fe934b5bb8aa7f00d3d310f689eee38d5cc",
+    "identical": false
+  },
+  "make-child-venv.patch": {
+    "old_export_sha256": "dbda817c251cb2803702a9f709e217e6b301dde4355307c02007d23d84a9ca8f",
+    "new_export_sha256": "4f453badd875e64851eda6cc0deff754d8ca4649feeaf20b5e14482494e4f8f9",
+    "identical": false
+  },
+  "request-child-venv.sh": {
+    "old_export_sha256": "72cafb3a5ec343f648a0e41d59a51e7c803ee51b4d04a394dc2010df828bd731",
+    "new_export_sha256": "72cafb3a5ec343f648a0e41d59a51e7c803ee51b4d04a394dc2010df828bd731",
+    "identical": true
+  },
+  "request-child-venv.patch": {
+    "old_export_sha256": "777e56d07ed8ef83be6dc992bf592ff13e1ba453b39375ec4e4cfca7e5290a77",
+    "new_export_sha256": "777e56d07ed8ef83be6dc992bf592ff13e1ba453b39375ec4e4cfca7e5290a77",
+    "identical": true
+  },
+  "make-runtime.sh": {
+    "old_export_sha256": "9f897619de6872ae399fd42154937d17804178793ed67326835c784d35fd45ca",
+    "new_export_sha256": "9f897619de6872ae399fd42154937d17804178793ed67326835c784d35fd45ca",
+    "identical": true
+  },
+  "make-runtime.patch": {
+    "old_export_sha256": "69b7b4df7fda3ff823ac4db67463f922d901e716e9528fc51d79d8c8ff3024f3",
+    "new_export_sha256": "69b7b4df7fda3ff823ac4db67463f922d901e716e9528fc51d79d8c8ff3024f3",
+    "identical": true
+  },
+  "request-runtime.sh": {
+    "old_export_sha256": "f13a1d073699712ccfb05e8463ad97ff69dc210a2617f2c9e0140a242591f7b1",
+    "new_export_sha256": "f13a1d073699712ccfb05e8463ad97ff69dc210a2617f2c9e0140a242591f7b1",
+    "identical": true
+  },
+  "request-runtime.patch": {
+    "old_export_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "new_export_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "identical": true
+  },
+  "test-adapters.py": {
+    "old_export_sha256": "fbb6b22e4e39ca678daa1f455d71a5ce5d778536cc2528447b6c08249548af2e",
+    "new_export_sha256": "fbb6b22e4e39ca678daa1f455d71a5ce5d778536cc2528447b6c08249548af2e",
+    "identical": true
+  },
+  "test-receipts.py": {
+    "old_export_sha256": "943994484ec81f912e1caef5658627064ec20d2e8a159144fd6b753b3d5336a8",
+    "new_export_sha256": "97b5d9ab62485ade0f39ca85d12dcddc54240e676e62cdef09d7f54de0397cb7",
+    "identical": false
+  },
+  "validate-packet.py": {
+    "old_export_sha256": "7c25a8d7b27c7166a7cb2578bb4997c5d9b6d9ded08ceccc1bd0c74a3d4d3718",
+    "new_export_sha256": "926d4ecf7c9730698e2ce6f3e88d88b8bb32f8cd5e43e5bf3936c13bea16900d",
+    "identical": false
+  },
+  "interface-needs.md": {
+    "old_export_sha256": "ad47e3dd7011007e70b37d1f848d0c0e221daf7442940a3a00c38349e7146733",
+    "new_export_sha256": "ad47e3dd7011007e70b37d1f848d0c0e221daf7442940a3a00c38349e7146733",
+    "identical": true
+  }
+}

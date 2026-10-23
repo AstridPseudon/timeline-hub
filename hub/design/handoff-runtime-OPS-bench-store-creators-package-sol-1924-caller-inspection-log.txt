@@ -1,0 +1,12 @@
+COMMAND read-only source inspection; no request submitted
+dispatcher_sha256=f18bc20b23010dc47a6891d4ef7a357da5991a620b83b5cdc67e0c8741892c15
+proof_sha256=08b0e19abfcff0c8211f2bd1ba7ccba2411b1997c703a8fed9dae2c251db0d7e
+    elif head -c10 "$f" | grep -q '^CHILDVENV '; then out=$($O/bin/make-child-venv $(sed 's/^CHILDVENV //' "$f") 2>&1); rc=$?
+    elif head -c8 "$f" | grep -q '^RUNTIME '; then out=$($O/bin/make-runtime $(sed 's/^RUNTIME //' "$f") 2>&1); rc=$?
+  printf 'reused child venv path=%s agent=%s runtime=%s remotion=%s registration=existing status=passed\n' "${qualified[0]}" "$S" "$RUNTIME_SHA" "${REMOTION:-none}"
+printf 'CHILDVENV %s %s%s%s\n' "$N" "$S" "${BS:+ $BS}" "${REMOTION:+ $REMOTION}" > "$O/queue/pending/childvenv-$N"
+identity = {'agent_sha': agent, 'backend_sha': backend,
+            'client_tuple': dict(line.split('=', 1) for line in client.splitlines())}
+            'report': data.decode('utf-8')}
+    entry = store.ensure('child', identity, registration, build, verify)
+PASS static request -> dispatcher positional maker -> Store.ensure -> unchanged exact Proof parser; live route NOT RUN
