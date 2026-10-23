@@ -280,7 +280,15 @@ def test_retained_restore_does_not_reopen_consumed_draft_steps(
         assert restored['receipt']['receipt_id'] != accepted['receipt']['receipt_id']
         draft._reset_base(client=client)
         draft = Checkout.load(draft.path)
-        assert draft.document() == Checkout(original).document()
+        new_publication = restored['receipt']['receipt_id']
+        assert new_publication != original['base_parent']['publication_id']
+        expected = copy.deepcopy(original)
+        expected['base_parent']['publication_id'] = new_publication
+        assert draft.bundle['base_parent'] == expected['base_parent']
+        assert draft.document() == Checkout(expected).document()
+        assert draft.bundle['source_mapping']['_runtime_document'] == (
+            original['source_mapping']['_runtime_document']
+        )
         for operation in (draft.undo, draft.redo):
             with pytest.raises(TimelineEditError, match='no unsent draft edit'):
                 operation()
