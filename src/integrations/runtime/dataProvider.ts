@@ -89,6 +89,7 @@ type CanonicalTimelineState = {
 
 const HEAD_CHECK_DEDUPE_MS = 1_000;
 const CANONICAL_HEAD_REFRESH_MS = 6_000;
+const HEAD_PAIR_MISMATCH = Symbol('timeline-head-pair-mismatch');
 
 export interface RuntimeDataProviderOptions {
   projectId: string;
@@ -1394,59 +1395,95 @@ export class RuntimeDataProvider implements DataProvider {
 
   private async readTimelineInOrder(timelineId: string, poll = false): Promise<RuntimeRecord> {
     try {
-      const inspection = await (poll
-        ? this.pollCanonicalTimelineHead(this.projectId, timelineId)
-        : this.inspectCanonicalTimelineHead(this.projectId, timelineId));
-      if (!poll) this.rememberFreshHead(this.projectId, timelineId, inspection);
-      const headRevisionId = nullableString(
-        inspection.head_revision_id,
-        'canonical timeline inspection.head_revision_id',
-      );
-      const headPublicationId = optionalNullableString(
-        (inspection as unknown as RuntimeRecord).head_publication_id,
-        'canonical timeline inspection.head_publication_id',
-      );
-      const previous = this.canonicalTimelineState.get(timelineId);
-      const parentComposition = previous?.headRevisionId === headRevisionId
-        && previous.headPublicationId === headPublicationId
-        ? previous.parentComposition
-        : headRevisionId === null
-          ? { config: {}, registry: { assets: {} }, clips: [], occurrences: [] }
-        : await this.readImmutableInFlight(
-            JSON.stringify(['parent', this.projectId, timelineId, headRevisionId]),
-            () => this.client.getProjectParentCompositionRevision(this.projectId, timelineId, headRevisionId),
-          ).then((record) => {
-            assertRuntimeIdentity(record, this.projectId, timelineId, 'parent composition revision');
-            assertRevisionIdentity(record, headRevisionId, 'parent composition revision');
-            return requiredRecord(record.payload, 'parent composition revision.payload');
-          });
-      const config = asRecord(parentComposition.config);
-      if (!config) {
-        throw new TimelineSchemaIncompatibleError('Workspace Runtime canonical timeline has no config object');
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        const inspection = await (poll
+          ? this.pollCanonicalTimelineHead(this.projectId, timelineId)
+          : this.inspectCanonicalTimelineHead(this.projectId, timelineId));
+        if (!poll) this.rememberFreshHead(this.projectId, timelineId, inspection);
+        const headRevisionId = nullableString(
+          inspection.head_revision_id,
+          'canonical timeline inspection.head_revision_id',
+        );
+        const headPublicationId = await this.readMatchingPublicHead(
+          timelineId,
+          headRevisionId,
+        );
+        if (headPublicationId === HEAD_PAIR_MISMATCH) {
+          this.invalidatePolledHead(this.projectId, timelineId);
+          if (attempt === 0) continue;
+          throw new TimelineSchemaIncompatibleError(
+            'Workspace Runtime changed the public timeline head while loading the displayed revision',
+          );
+        }
+        const previous = this.canonicalTimelineState.get(timelineId);
+        const parentComposition = previous?.headRevisionId === headRevisionId
+          && previous.headPublicationId === headPublicationId
+          ? previous.parentComposition
+          : headRevisionId === null
+            ? { config: {}, registry: { assets: {} }, clips: [], occurrences: [] }
+          : await this.readImmutableInFlight(
+              JSON.stringify(['parent', this.projectId, timelineId, headRevisionId]),
+              () => this.client.getProjectParentCompositionRevision(this.projectId, timelineId, headRevisionId),
+            ).then((record) => {
+              assertRuntimeIdentity(record, this.projectId, timelineId, 'parent composition revision');
+              assertRevisionIdentity(record, headRevisionId, 'parent composition revision');
+              return requiredRecord(record.payload, 'parent composition revision.payload');
+            });
+        const config = asRecord(parentComposition.config);
+        if (!config) {
+          throw new TimelineSchemaIncompatibleError('Workspace Runtime canonical timeline has no config object');
+        }
+        const clips = canonicalParentClips(parentComposition, config);
+        const version = previous && previous.headRevisionId === headRevisionId
+          && previous.headPublicationId === headPublicationId
+          ? previous.version
+          : (previous?.version ?? 0) + 1;
+        this.canonicalTimelineState.set(timelineId, {
+          headRevisionId,
+          headPublicationId,
+          parentComposition,
+          version,
+        });
+        return {
+          project_id: this.projectId,
+          timeline_id: timelineId,
+          version,
+          head_revision_id: headRevisionId,
+          head_publication_id: headPublicationId,
+          config: { ...config, clips },
+          registry: parentComposition.registry ?? { assets: {} },
+        };
       }
-      const clips = canonicalParentClips(parentComposition, config);
-      const version = previous && previous.headRevisionId === headRevisionId
-        && previous.headPublicationId === headPublicationId
-        ? previous.version
-        : (previous?.version ?? 0) + 1;
-      this.canonicalTimelineState.set(timelineId, {
-        headRevisionId,
-        headPublicationId,
-        parentComposition,
-        version,
-      });
-      return {
-        project_id: this.projectId,
-        timeline_id: timelineId,
-        version,
-        head_revision_id: headRevisionId,
-        head_publication_id: headPublicationId,
-        config: { ...config, clips },
-        registry: parentComposition.registry ?? { assets: {} },
-      };
+      throw new TimelineSchemaIncompatibleError('Workspace Runtime timeline head could not be loaded');
     } catch (error) {
       throw this.toProviderError(error, timelineId);
     }
+  }
+
+  /**
+   * Inspection identifies the immutable document to display, but its schema
+   * predates publication identity. The public timeline read supplies that
+   * second half only when it names the exact inspected revision.
+   */
+  private async readMatchingPublicHead(
+    timelineId: string,
+    displayedRevisionId: string | null,
+  ): Promise<string | null | typeof HEAD_PAIR_MISMATCH> {
+    if (displayedRevisionId === null) return null;
+    let timeline: RuntimeRecord;
+    try {
+      timeline = await this.client.getProjectTimeline(this.projectId, timelineId);
+    } catch (error) {
+      // Keep legacy loading usable when an older Runtime does not expose the
+      // pair-bearing read. Saves remain fail-closed because their head lacks a
+      // verified publication identity.
+      if (!(error instanceof ApiError)) return null;
+      throw error;
+    }
+    assertRuntimeIdentity(timeline, this.projectId, timelineId, 'timeline');
+    const publicRevisionId = optionalNullableString(timeline.head_revision_id, 'timeline.head_revision_id');
+    if (publicRevisionId !== displayedRevisionId) return HEAD_PAIR_MISMATCH;
+    return optionalNullableString(timeline.head_publication_id, 'timeline.head_publication_id');
   }
 
   private findManagedAsset(

@@ -17,6 +17,15 @@ import type { MediaSelection, VerifiedMedia } from './generated.ts';
 
 const MANAGED_OBJECT_URL = `http://runtime.test/v1/objects/${encodeURIComponent(MANAGED_OBJECT_ID)}`;
 
+function publicHeadResponse(revisionId: string, publicationId: string | null = 'publication-current') {
+  return json({
+    project_id: PROJECT_ID,
+    timeline_id: TIMELINE_ID,
+    head_revision_id: revisionId,
+    head_publication_id: publicationId,
+  });
+}
+
 function restoreHeadResource(overrides: Record<string, unknown> = {}) {
   return {
     project_id: PROJECT_ID, timeline_id: TIMELINE_ID, version: 1, name: 'Main',
@@ -84,6 +93,68 @@ function compactParentComposition() {
 
 
 describe('RuntimeDataProvider', () => {
+  it('mounts the public publication onto the exact inspected revision', async () => {
+    const fixture = runtimeFixture();
+    let publicReads = 0;
+    const provider = new RuntimeDataProvider({
+      projectId: PROJECT_ID,
+      transport: async (method, path, headers, body) => {
+        if (method === 'GET' && path === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}`) {
+          publicReads += 1;
+          return { status: 200, headers: {}, body: publicHeadResponse('parent-r1', 'publication-r1') };
+        }
+        return fixture.transport(method, path, headers, body);
+      },
+    });
+
+    await expect(provider.loadTimeline(TIMELINE_ID)).resolves.toMatchObject({
+      head: { headRevisionId: 'parent-r1', headPublicationId: 'publication-r1' },
+    });
+    expect(publicReads).toBe(1);
+  });
+
+  it('retries a concurrent public-head mismatch before loading the displayed revision', async () => {
+    const fixture = runtimeFixture();
+    let publicReads = 0;
+    const provider = new RuntimeDataProvider({
+      projectId: PROJECT_ID,
+      transport: async (method, path, headers, body) => {
+        if (method === 'GET' && path === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}`) {
+          publicReads += 1;
+          return { status: 200, headers: {}, body: publicHeadResponse(publicReads === 1 ? 'parent-r2' : 'parent-r1') };
+        }
+        return fixture.transport(method, path, headers, body);
+      },
+    });
+
+    await expect(provider.loadTimeline(TIMELINE_ID)).resolves.toMatchObject({
+      head: { headRevisionId: 'parent-r1', headPublicationId: 'publication-current' },
+    });
+    expect(publicReads).toBe(2);
+    expect(fixture.requests.filter((request) => request.path.endsWith('/inspect'))).toHaveLength(2);
+  });
+
+  it('refuses after a repeated public-head mismatch without reading a mismatched revision', async () => {
+    const fixture = runtimeFixture();
+    let publicReads = 0;
+    const provider = new RuntimeDataProvider({
+      projectId: PROJECT_ID,
+      transport: async (method, path, headers, body) => {
+        if (method === 'GET' && path === `/v1/projects/${PROJECT_ID}/timelines/${TIMELINE_ID}`) {
+          publicReads += 1;
+          return { status: 200, headers: {}, body: publicHeadResponse('parent-r2') };
+        }
+        return fixture.transport(method, path, headers, body);
+      },
+    });
+
+    await expect(provider.loadTimeline(TIMELINE_ID)).rejects.toThrow(
+      'changed the public timeline head while loading the displayed revision',
+    );
+    expect(publicReads).toBe(2);
+    expect(fixture.requests.some((request) => request.path.includes('/composition-revisions/'))).toBe(false);
+  });
+
   it('reads exact verified media through the project-scoped Runtime facade without writing canonical state', async () => {
     const fixture = runtimeFixture();
     const selection = preparedMediaSelection();
