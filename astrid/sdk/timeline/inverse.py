@@ -202,6 +202,10 @@ def _root_addresses(records, state=None):
 def coalesce(records, state=None, *, cache_stages=None):
     """Retain first-before/last-after, folding descendants into authored roots."""
     root_address = _root_addresses(records, state)
+    registry_writes = [write for record in records for write in record['writes']
+                       if write['ref'] == 'parent' and write['path'][:1] == ['registry']]
+    direct_registry = bool(registry_writes) and (
+        registry_writes[0]['path'] != ['registry'] or registry_writes[0]['before'] != ABSENT)
 
     def value_address(write):
         # A direct registry write targets physical storage. Folding it into a
@@ -247,6 +251,18 @@ def coalesce(records, state=None, *, cache_stages=None):
                     rows.pop(indices[0])
                 else:
                     rows[indices[0]] = copy.deepcopy(raw['after']['value'])
+        aliases = []
+        for write in writes:
+            aliases.append(write)
+            if write['ref'] == 'parent' and write['path'] == ['registry']:
+                direct_registry = write['after'] != ABSENT
+            if direct_registry and write['ref'].startswith('parent/asset:'):
+                # Project only declared storage at this native boundary. Keep
+                # source writes unchanged for sequential reversal and scans.
+                aliases.append({**write, 'ref': 'parent',
+                                'path': ['registry', 'assets',
+                                         write['ref'].removeprefix('parent/asset:'), *write['path']]})
+        writes = aliases
         for raw in [*writes, *(cache_stages or {}).get(id(record), [])]:
             write = copy.deepcopy(raw)
             address = value_address(write)
