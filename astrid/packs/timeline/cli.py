@@ -1206,7 +1206,7 @@ def _timeline_editing_resources() -> dict[str, Any]:
     return {
         "guide": str(guide),
         "script": str(script),
-        "workflow": ["checkout", "edit", "check", "publish"],
+        "workflow": ["checkout", "edit", "check", "apply"],
         "scope": "complete parent/shot/internal-timeline composition",
         "checkout_revision": "current Runtime head at checkout; historical revisions remain read-only",
     }
@@ -1227,11 +1227,11 @@ def _editing_navigation(
         "python3", "-m", "astrid.packs.rendering.docs.scripts.timeline_document",
         "check", "--file", file_path,
     ])
-    publish = shlex.join([
-        "python3", "-m", "astrid.packs.rendering.docs.scripts.timeline_document",
-        "publish", "--file", file_path, "--idempotency-key", "<edit-key>",
+    apply = shlex.join([
+        "python3", "-m", "astrid", "timelines", "apply", timeline or "<timeline>",
+        "--project", project or "<project>", file_path,
     ])
-    resources["commands"] = {"checkout": checkout, "check": check, "publish": publish}
+    resources["commands"] = {"checkout": checkout, "check": check, "apply": apply}
     return resources
 
 
@@ -3234,9 +3234,10 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
         )
         print(f"next: timelines show {parsed.ref} --project {parsed.project or '<project>'} --range "
               f"{_edit_range(before, tl.document())} (your change)   ·   "
-              f'timelines publish {parsed.ref} --project {parsed.project or "<project>"} -m "..."')
+              f'timelines apply {parsed.ref} --project {parsed.project or "<project>"} <sheet-file>')
     else:
-        print(f'next: timelines check {target}   ·   timelines publish {target} -m "..."')
+        print(f'next: timelines check {target}   ·   timelines apply {target} --project '
+              f'{parsed.project or "<project>"} <sheet-file>')
     return sweep_status or verify_status
 
 
