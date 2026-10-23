@@ -59,6 +59,49 @@ describe.each(['data', 'config'] as const)('%s effect internal validation', (typ
   });
 });
 
+describe.each(['data', 'config'] as const)('%s effect opaque-root preservation', (type) => {
+  it('accepts foreign roots while preserving values, null, and absence', async () => {
+    const current = await makeCurrent();
+    const opaqueConfig = {
+      ...current.config,
+      opaque: [null, false, 0],
+      nullable: null,
+    } as TimelineConfig;
+    const effect: TimelineCommandEffect = { mutation: type === 'data'
+      ? { type, data: { ...current, config: opaqueConfig } }
+      : { type, config: opaqueConfig } };
+    const runner = runnerFor(effect);
+
+    for (const result of [
+      runner.apply(current, { type: 'test-effect', payload: {} }),
+      runner.dryRun(current, { type: 'test-effect', payload: {} }),
+    ]) {
+      expect(result.status).toBe('ok');
+      expect(result.nextData.config.opaque).toEqual([null, false, 0]);
+      expect(result.nextData.config.nullable).toBeNull();
+      expect(Object.hasOwn(result.nextData.config, 'absent')).toBe(false);
+    }
+  });
+});
+
+describe('opaque-root safety guards', () => {
+  it.each(['__proto__', 'constructor', 'prototype'])('refuses unsafe top-level key %s', (key) => {
+    const config = {
+      output: { resolution: '1280x720', fps: 30, file: 'output.mp4' },
+      tracks: [{ id: 'V1', kind: 'visual' }],
+      clips: [{ id: 'clip-1', track: 'V1', at: 0, clipType: 'hold', hold: 2 }],
+    } as TimelineConfig & Record<string, unknown>;
+    Object.defineProperty(config, key, {
+      value: null,
+      enumerable: true,
+      configurable: true,
+      writable: true,
+    });
+
+    expect(() => validateSerializedConfig(config)).toThrow(`forbidden top-level key '${key}'`);
+  });
+});
+
 describe('command envelope guards with opaque roots', () => {
   it.each([NaN, Infinity, -Infinity])('rejects a non-finite payload value %s before applying its effect', async (at) => {
     const current = await makeCurrent();

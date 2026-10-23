@@ -52,6 +52,7 @@ export type TimelineDomainIssueCode =
   | 'malformed_non_hold_trim_repaired'
   | 'malformed_non_hold_trim_zero_duration'
   | 'unexpected_top_level_key'
+  | 'unsafe_top_level_key'
   | 'unexpected_clip_key'
   | 'unexpected_track_key'
   | 'invalid_track_role'
@@ -224,6 +225,8 @@ const ALLOWED_TOP_LEVEL_KEYS = new Set([
   'generation_defaults',
   'app',
 ]);
+
+const UNSAFE_TOP_LEVEL_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 const NORMALIZED_TOP_LEVEL_KEYS = new Set(['output', 'tracks', 'clips', 'pinnedShotGroups']);
 
@@ -2550,7 +2553,15 @@ const validateSerializedConfig = (
 
   const topLevelKeys = Object.keys(config);
   for (const key of topLevelKeys) {
-    if (validateRootKeys && !ALLOWED_TOP_LEVEL_KEYS.has(key)) {
+    if (UNSAFE_TOP_LEVEL_KEYS.has(key)) {
+      issues.push(createIssue(
+        level,
+        'error',
+        'unsafe_top_level_key',
+        `Serialized timeline has forbidden top-level key '${key}'.`,
+        { path: key },
+      ));
+    } else if (validateRootKeys && !ALLOWED_TOP_LEVEL_KEYS.has(key)) {
       issues.push(createIssue(
         level,
         'error',
@@ -2688,7 +2699,10 @@ export const validateTimelinePair = (
 };
 
 export const assertValidTimelineConfigSnapshot = (config: TimelineConfig): void => {
-  const validation = validateTimelineConfigSnapshot(config);
+  // The mounted editor command validator must retain foreign document roots;
+  // the serializer emits only modeled roots, while unsafe object keys remain
+  // rejected in every validation mode above.
+  const validation = validateSerializedConfig(config, 'config-only', false);
   if (!validation.ok) {
     throw new TimelineDomainError(validation.level, validation.issues);
   }
