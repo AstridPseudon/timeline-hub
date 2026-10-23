@@ -1,0 +1,5 @@
+# Source-exact target fixed; concrete runfolder retention correction
+
+Target-return2000 is source-exact be890/f794, post-exit verification follows. Existing test-run deletes the snapshot immediately after command (line44); b221 writes testInfo.outputPath under snapshot's default test-results. That would lose the new FILE again. Existing playwright.three-products.config.ts already honors PLAYWRIGHT_OUTPUT_DIR. Unique light App app-P1-D26-artifact-retention-2002 adds only this environment variable to the existing row, resolved at actual snapshot time to actual $ORCH/tests/ID/playwright-output. No spec/kit/body/collector/config change, D21 harness-only, no newsemanticgate or bench. Same originaltwo npm selectors/first4b04/second2f750 remain exact.
+
+App will submit the source-exact target immediately after this bounded retention fix, preserve prior20047 sourceguard failure, and publish actualID. This fixes actual evidence loss, not a newapproval requirement. Emitter1945 author final128PASS and independent1957 next; Proof1953 adapter preparing separately as acknowledged. D28 safe comparator2001 active, retained18607 only.

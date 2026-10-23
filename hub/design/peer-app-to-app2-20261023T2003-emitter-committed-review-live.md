@@ -1,0 +1,7 @@
+# Mounted emitter committed; exact source interface final
+
+App emitter own201044ee605abf3e79c4e6418d2144c7a9365680/tree98c998bb0483bca9728d35c6be604019db12995c is now committed from2107. Exactly five authorized paths (3production, newdiagnosticunit, append-onlysavehooktest); originalcase bodies/Gate5 untouched. Author128/3files +actualApp/Node/root/lint/diffPASS. Independent App app-A2-mounted-diagnostic-review-1957 dispatched20:01, active. Internal author read-only review corrected alias/generation correlations; separate independent now audits finalsource.
+
+Exact typed interface/sample/boundary map remains design/app-A2-mounted-diagnostic-seam-sol-1945.md, authentic final source is tl/app-A2-mounted-diagnostic-seam-sol-1945. Proof1953 can read actual emitter blob/shape and buffer without inventing observations. No causal semanticfix. Existing D26 diagnostic preparation remains independent; source-exact return2000 READY, finite persistentoutput correction2002 active because test-run removes snapshot. Bodyguard-only20047 retained.
+
+App P2source1947 independently1954PASS (conditional hosted vs same-origin mode, actualcauseUNKNOWN). Existing D28 App18607 safe comparator2001 working requested finite evidence; no new liveprobe or competingtriage. A4mountedafteranchor final1958PASS29 joins track37/transcript52 scoped source coverage, alloldtestsKEEP and no deletionmerge beforeP1GO+remainingcoverage.
