@@ -5,7 +5,7 @@
 # codex_fallback MODEL -> prints the Claude model to use when $O/CODEX_UNAVAILABLE exists (owner rule: Sol->Sonnet, Luna->Haiku, Astra->Opus), else MODEL unchanged.
 codex_fallback() { local m=$1; if [ -f $O/CODEX_UNAVAILABLE ]; then case $m in gpt-6.1-sol*|gpt-6-sol*) m=claude-sonnet-5-5;; gpt-6-astra*) m=claude-opus-5-5;; gpt-*) m=claude-haiku-5-5;; esac; fi; echo $m; }
 CLAUDE_PERMS=(--allowedTools Read Edit Write Glob Grep
-  "Bash($O/bin/request:*)" "Bash($O/bin/request-test:*)" "Bash($O/bin/wait-test:*)" "Bash($O/bin/request-merge:*)" "Bash($O/bin/request-merge-remote:*)"
+  "Bash($O/bin/request:*)" "Bash($O/bin/request-checkout:*)" "Bash($O/bin/request-child-venv:*)" "Bash($O/bin/request-runtime:*)" "Bash($O/bin/request-retire-venv:*)" "Bash($O/bin/request-test:*)" "Bash($O/bin/wait-test:*)" "Bash($O/bin/request-merge:*)" "Bash($O/bin/request-merge-remote:*)"
   "Bash($O/bin/digest:*)" "Bash($O/bin/workers:*)" "Bash($O/bin/ledger-index:*)" "Bash($O/bin/merge-forward:*)" "Bash($O/bin/rm-own:*)" "Bash(python3:*)"
   "Bash(/home/user/work/venv-agent/bin/python:*)" "Bash(/home/user/work/venv-runtime/bin/python:*)"
   "Bash(npx vitest:*)" "Bash(npx tsc:*)" "Bash(npm test:*)" "Bash(npm run:*)" "Bash(node:*)"
