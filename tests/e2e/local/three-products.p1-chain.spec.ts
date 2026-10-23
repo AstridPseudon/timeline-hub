@@ -153,6 +153,7 @@ async function seedOneClip(harness: DirectHarness, astrid: AstridCli): Promise<C
   const run = await astrid.python(['-c', String.raw`
 import copy, json, sys
 from astrid.sdk.client import AstridClient
+from astrid.sdk.timeline._command_state import CommandError
 from astrid.sdk.timeline.capture import capture_track_create
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.emitter import emit_document_commands
@@ -178,7 +179,17 @@ with AstridClient.open_from_launcher(start_pack_host=False, client_name="p1-seed
         "background": None, "background_scale": None,
     }))
     add(capture_track_create(bundle, "parent", {"id": "V1", "kind": "visual", "label": "V1"}))
-    add(capture_clip_add_media(bundle, case["clip"], case["pin"], verified_media=verified))
+    try:
+        capture_clip_add_media(bundle, case["clip"], case["pin"], verified_media=verified)
+    except CommandError as exc:
+        if exc.kind != "unsupported_timing":
+            raise RuntimeError(f"native relation guard changed kind: {exc.kind}") from exc
+    else:
+        raise RuntimeError("native relation guard unexpectedly accepted app.astrid.for")
+
+    supported_clip = copy.deepcopy(case["clip"])
+    supported_clip["app"]["astrid"].pop("for")
+    add(capture_clip_add_media(bundle, supported_clip, case["pin"], verified_media=verified))
 
     before = copy.deepcopy(bundle)
     after = copy.deepcopy(bundle)
@@ -192,7 +203,9 @@ with AstridClient.open_from_launcher(start_pack_host=False, client_name="p1-seed
         bundle = execute(before, patches, verified_media=verified).bundle
         commands.extend(patches)
 
-    if bundle["parent"]["config"] != case["payload"]["config"] or bundle["parent"]["registry"] != case["payload"]["registry"] or bundle["parent"]["clips"] != case["payload"]["clips"]:
+    expected_parent = copy.deepcopy(case["payload"])
+    expected_parent.pop("occurrences")
+    if bundle["parent"] != expected_parent:
         raise RuntimeError("native seed changed the authored P1 payload")
     steps = [{"id": f"seed-{index + 1}", "label": "Seed P1 chain", "intent": "Initialize P1 chain fixture",
               "tags": ["bootstrap"], "command_ordinals": [index],
@@ -208,15 +221,46 @@ with AstridClient.open_from_launcher(start_pack_host=False, client_name="p1-seed
     if not result.ok:
         raise RuntimeError(str(result.error))
     data = result.data
-    if data["canonical_document"]["parent_revision"]["payload"] != case["payload"]:
+    receipt = result.receipt
+    document = data["canonical_document"]
+    parent = document["parent_revision"]
+    manifest = document["dependency_manifest"]
+    if data["status"] != "accepted":
+        raise RuntimeError(f"seed commit was not accepted: {data['status']}")
+    if (data["base_revision_id"], data["base_publication_id"]) != (case["base_revision_id"], case["base_publication_id"]):
+        raise RuntimeError("seed acknowledgement changed its requested base pair")
+    if (data["previous_revision_id"], data["previous_publication_id"]) != (case["base_revision_id"], case["base_publication_id"]):
+        raise RuntimeError("accepted seed does not immediately follow its Runtime bootstrap")
+    if data["rebased_onto"] is not None or data["accepted_revision_id"] != parent["revision_id"]:
+        raise RuntimeError("seed acknowledgement has an invalid accepted revision identity")
+    if (receipt["command_kind"], receipt["project_id"], receipt["idempotency_key"]) != (
+            "timeline.commit", case["project_id"], case["idempotency_key"]):
+        raise RuntimeError("seed acknowledgement has an invalid publication receipt identity")
+    if receipt["receipt_id"] == case["base_publication_id"] or receipt["result"] != data:
+        raise RuntimeError("seed publication receipt is not bound to its accepted result")
+    if (document["schema_version"], document["project_id"], document["timeline_id"]) != (
+            1, case["project_id"], case["timeline_id"]):
+        raise RuntimeError("seed canonical document has the wrong Runtime scope")
+    if set(document) != {"schema_version", "project_id", "timeline_id", "parent_revision",
+                         "shot_revisions", "internal_timeline_revisions", "dependency_manifest"}:
+        raise RuntimeError("seed canonical document is incomplete")
+    if set(parent) != {"revision_id", "content_digest", "payload"} or not isinstance(parent["content_digest"], str):
+        raise RuntimeError("seed canonical parent image is incomplete")
+    if document["shot_revisions"] != [] or document["internal_timeline_revisions"] != []:
+        raise RuntimeError("seed unexpectedly created child closure roots")
+    expected_media = {"media_id": case["pin"]["object_id"], "content_digest": case["pin"]["object_id"]}
+    if manifest != {"shots": [], "internal_timelines": [], "media": [expected_media], "documents": []}:
+        raise RuntimeError("seed dependency manifest is not the Runtime-derived media-only closure")
+    if parent["payload"] != case["payload"]:
         raise RuntimeError("Runtime canonical document changed the authored P1 payload")
-    print(json.dumps({"head_revision_id": data["accepted_revision_id"]}))
+    print(json.dumps({"head_revision_id": data["accepted_revision_id"], "publication_id": receipt["receipt_id"]}))
 `, JSON.stringify({
     project_id: harness.seed.projectId, timeline_id: timelineId, base_revision_id: baseRevisionId, base_publication_id: basePublicationId,
     clip, payload: authoredPayload, pin, verified: verified.body.data ?? verified.body, idempotency_key: idempotencyKey,
   })]);
-  const seeded = JSON.parse(run.stdout.trim().split('\n').pop() ?? '{}') as { head_revision_id?: string };
+  const seeded = JSON.parse(run.stdout.trim().split('\n').pop() ?? '{}') as { head_revision_id?: string; publication_id?: string };
   expect(seeded.head_revision_id).toEqual(expect.any(String));
+  expect(seeded.publication_id).toEqual(expect.any(String));
   const project = await harness.runtimeJson('GET', `/v1/projects/${harness.seed.projectId}`);
   return { projectSlug: (project.body.data ?? project.body).slug, timelineId, sourceId: SOURCE_ID };
 }
