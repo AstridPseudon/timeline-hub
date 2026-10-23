@@ -64,9 +64,12 @@ def operations():
     from .native_text_binding import TEXT_INTENT, text_binding_set
     from .native_timeline_duplicate import PARAMETERS as DUPLICATE_PARAMETERS
     from .native_timeline_duplicate import duplicate
+    from .native_transcript_association import PARAMETERS as ASSOCIATION_PARAMETERS
+    from .native_transcript_association import associate
     from .native_word_anchor import declare
     from .producer import producer_guard
     return {'doc.patch': Operation(_SCHEMA['$defs']['DocPatchArgs'], patch, {}),
+            'transcript.associate': Operation(ASSOCIATION_PARAMETERS, associate, {'ownership': 'parent'}, True),
             'text-binding.set': Operation(_SCHEMA['$defs']['TextBindingSetArgs'], text_binding_set, TEXT_INTENT, True),
             'timeline.duplicate': Operation(DUPLICATE_PARAMETERS, duplicate, {}),
             'timeline.restructure': Operation(RESTRUCTURE_PARAMETERS, restructure, {}),

@@ -263,6 +263,9 @@ def validate_payload(ref, payload):
     if ref == 'parent':
         config = payload.get('config', {})
         for key in ('clips', 'registry'):
+            if (key == 'clips' and payload.get(key) == [] and isinstance(config, dict)
+                    and isinstance(config.get(key), list)):
+                continue
             if key in payload and isinstance(config, dict) and key in config and not equal(payload[key], config[key]):
                 raise CommandError('contradictory parent mirrors', kind='identity_conflict', path=[key])
 

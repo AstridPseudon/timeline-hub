@@ -190,6 +190,9 @@ def effect_diff(before, after):
                 continue
             value = payload.pop(mirror)
             config = payload.setdefault('config', {})
+            if mirror == 'clips' and value == [] and isinstance(config.get(mirror), list) and config[mirror]:
+                # Main's collection reader uses the populated config fallback.
+                continue
             if mirror in config and not equal(present(config[mirror]), present(value)):
                 raise CommandError('contradictory parent mirrors', kind='capture_mismatch',
                                    ref='parent', path=['config', mirror])

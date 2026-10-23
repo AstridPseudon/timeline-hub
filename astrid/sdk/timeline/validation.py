@@ -526,15 +526,17 @@ def validate_final_candidate(
     baseline_parent = (baseline or {}).get("parent", {})
     if not _same_fields(candidate, baseline, ("project_id", "timeline_id", "base_parent")):
         baseline_parent = {}
+    primary = parent.get("clips")
+    mirror = config.get("clips")
+    fallback = isinstance(primary, list) and not primary and isinstance(mirror, list) and bool(mirror)
     clips = _validate_clip_list(
-        parent.get("clips", config.get("clips")), path="candidate.parent.clips",
+        mirror if fallback else parent.get("clips", mirror), path="candidate.parent.clips",
         tracks=tracks, registry=registry,
-        baseline={"clips": baseline_parent.get("clips", []),
+        baseline={"clips": (baseline_parent.get("clips") or baseline_parent.get("config", {}).get("clips", [])),
                   "tracks": baseline_parent.get("config", {}).get("tracks", []),
                   "registry": effective_parent_registry(baseline_parent)} if baseline_parent else None,
     )
-    mirror = config.get("clips")
-    if isinstance(mirror, list) and isinstance(parent.get("clips"), list) and mirror and mirror != parent["clips"]:
+    if isinstance(mirror, list) and isinstance(primary, list) and primary and mirror and mirror != primary:
         _fail("candidate.parent.config.clips", "does not match parent.clips")
 
     placements = _identity_rows(candidate.get("placements", []), "candidate.placements", "occurrence_id")

@@ -143,6 +143,12 @@ def _native_mirror_partition(record, step, nested):
         raise CommandError('nested inverse mirror input is unavailable', kind='history_unavailable')
     state = State({'parent': {'clips': copy.deepcopy(initial['value']),
                              'config': {'clips': copy.deepcopy(initial['value'])}}})
+    if first['ref'] == 'parent' and first['path'] == ['config', 'clips'] and any(
+            read['ref'] == 'parent' and read['path'] == ['clips'] and read['state'] == present([])
+            for read in record['reads']):
+        # The accepted input proved main's config-only collection fallback.
+        state.set('parent', ['clips'], present([]))
+        state = State(state.bundle)
     config = next((write for write in record['writes'] if write['ref'] == 'parent'
                    and write['path'] == ['config']), None)
     if config is not None and (record['writes'].index(config) < record['writes'].index(first)
@@ -178,7 +184,7 @@ def _native_mirror_partition(record, step, nested):
     for binding in nested:
         start, end = binding['boundary']['native_write_range']
         first, last = binding['boundary']['effect_range']
-        before = state.get('parent', ['clips'])
+        before = state.get('parent', state.parent_clip_path)
         image = copy.deepcopy(state.bundle['parent'])
         root_effect = False
         for effect in step['patch'][first:last]:
@@ -219,7 +225,7 @@ def _native_mirror_partition(record, step, nested):
             if leaf:
                 compile_mirror()
         compile_mirror()
-        after = state.get('parent', ['clips'])
+        after = state.get('parent', state.parent_clip_path)
         observed = (state.bundle['parent'] if root_effect
                     else state.get('parent', ['config', 'clips']))
         expected = image if root_effect else value_at(image, 'parent', ['config', 'clips'])

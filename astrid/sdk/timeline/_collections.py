@@ -78,7 +78,8 @@ def rows(state, owner, kind, *, check_mirrors=True):
     if kind == 'clip' and owner == 'parent':
         parent = state.bundle['parent']
         a, b = parent.get('clips'), config.get('clips')
-        if check_mirrors and isinstance(a, list) and isinstance(b, list) and not equal(a, b):
+        if (check_mirrors and isinstance(a, list) and isinstance(b, list) and not equal(a, b)
+                and state.parent_clip_path != ('config', 'clips')):
             raise CommandError('divergent parent clip mirrors', kind='identity_conflict')
         result = state.collection(owner, kind)
         # Absence and null are not an empty authored list.
