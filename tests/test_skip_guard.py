@@ -173,17 +173,18 @@ def test_a_skip_raised_in_a_fixture_teardown_fails_the_run(sandbox):
 
 
 def test_a_declared_skip_raised_in_a_fixture_teardown_is_listed(sandbox):
-    result = _run(sandbox, """
+    name = "windows-security" if sys.platform != "win32" else "posix-process-groups"  # its condition holds on this host
+    result = _run(sandbox, f"""
         import pytest
         @pytest.fixture
         def late():
             yield
-            pytest.skip("[declared:windows-security] native Windows socket exclusivity and file DACL APIs")
+            pytest.skip("[declared:{name}] declared reason")
         def test_a(late): pass
         def test_b(): pass
         """)
     assert result.ret == 0, result.stdout.str()
-    result.stdout.fnmatch_lines(["declared skips (1):", "  SKIP *::test_a: [[]declared:windows-security]*"])
+    result.stdout.fnmatch_lines(["declared skips (1):", f"  SKIP *::test_a: [[]declared:{name}]*"])
 
 
 def test_skips_of_non_blocking_entries_are_listed_under_their_own_header(sandbox):
@@ -206,3 +207,41 @@ def test_skips_of_non_blocking_entries_are_listed_under_their_own_header(sandbox
         "declared skips whose tests run only in non-blocking CI jobs (1):",
         "  NON-BLOCKING *::test_platform_only: [[]declared:*",
     ])
+
+
+def test_skips_of_entries_no_ci_job_runs_are_listed_under_their_own_header(sandbox):
+    helper = _foreign_helper()
+    result = _run(sandbox, f"""
+        import dataclasses
+        from tests import lanes
+        from tests.lanes import {helper}
+
+        lanes.SKIP_REGISTRY.update({{
+            name: dataclasses.replace(entry, no_ci="no job on purpose")
+            for name, entry in lanes.SKIP_REGISTRY.items()
+        }})
+        @{helper}
+        def test_platform_only(): assert False
+        def test_runs(): pass
+        """)
+    assert result.ret == 0, result.stdout.str()
+    result.stdout.fnmatch_lines([
+        "NOT RUN BY ANY CI JOB (1):",
+        "  NO CI *::test_platform_only: [[]declared:*] no job on purpose",
+    ])
+
+
+def test_a_declared_skip_where_its_condition_is_false_here_fails_the_run(sandbox):
+    # An entry whose condition is false on this host: the tag is registered but the reason does not apply.
+    # `name`'s condition is false on this host (so the skip hides a test that should run); `right`'s is true.
+    name, right = ("posix-fork", "windows-security") if sys.platform != "win32" else ("windows-security", "posix-fork")
+    result = _run(sandbox, f"""
+        import pytest
+        @pytest.mark.skipif(True, reason="[declared:{name}] misused")
+        def test_misused(): pass
+        @pytest.mark.skipif(True, reason="[declared:{right}] fine")
+        def test_proper(): pass
+        def test_runs(): pass
+        """)
+    assert result.ret != 0
+    result.stdout.fnmatch_lines(["UNDECLARED SKIP *::test_misused: *[[]declared:" + name + "] used where its condition*is false*"])

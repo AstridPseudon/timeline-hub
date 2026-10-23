@@ -52,9 +52,11 @@ LANE_MARKERS = {
 # no unlisted job does. ``blocking=False`` says every job and OS that runs the
 # test has ``continue-on-error``, so a failure there cannot fail CI; the run
 # summary lists those skips under their own header.
-# Today every entry is blocking: the Windows ``unit`` matrix leg is continue-on-error,
-# but each Windows entry is also run by ``portability-lifecycle`` (or
-# ``windows-worker-handoff``), which fails CI.
+# ``no_ci`` is the one exception to "some CI job runs it": a plain reason, for an
+# entry that no CI job runs. The test is skipped wherever CI runs, the checker
+# accepts the reason in place of a job (and fails if a job does run it, or if an
+# entry has neither), and the run summary prints those skips under
+# "NOT RUN BY ANY CI JOB". Keep the list short.
 
 HOSTS = {
     "linux": Host("linux", "posix"),
@@ -70,6 +72,7 @@ class DeclaredSkip:
     skip_when: str  # Python expression over ``sys_platform`` and ``os_name``; true = skipped
     reason: str
     ci: tuple[str, ...]  # jobs that run the test on a host where the condition is false
+    no_ci: str = ""  # why no CI job runs it (then ``ci`` is empty)
     blocking: bool = True  # False: every (job, OS) that runs it is continue-on-error
     only_error: Callable[[BaseException], bool] | None = None  # runtime entries: the one error that may skip
 
@@ -96,6 +99,7 @@ class DeclaredSkip:
 
 
 SKIP_REGISTRY: dict[str, DeclaredSkip] = {}
+NO_WINDOWS_CI = "Windows is not supported yet; no Windows CI job until Windows support is real work"
 
 
 @dataclass(frozen=True)
@@ -217,7 +221,7 @@ def _declare(name: str, skip_when: str, reason: str, ci: tuple[str, ...], **extr
 
 requires_windows_security = _declare(
     "windows-security", "sys_platform != 'win32'",
-    "native Windows socket exclusivity and file DACL APIs", ("unit", "portability-lifecycle"),
+    "native Windows socket exclusivity and file DACL APIs", (), no_ci=NO_WINDOWS_CI,
 ).mark()
 requires_linux_tree_custody = _declare(
     "linux-tree-custody", "sys_platform != 'linux'",
@@ -241,7 +245,7 @@ requires_posix_private_modes = _declare(
 ).mark()
 requires_windows_token_process_times = _declare(
     "windows-token-process-times", "sys_platform != 'win32'",
-    "Windows token and process-time APIs", ("unit", "portability-lifecycle"),
+    "Windows token and process-time APIs", (), no_ci=NO_WINDOWS_CI,
 ).mark()
 requires_posix_process_groups = _declare(
     "posix-process-groups", "sys_platform == 'win32'",
@@ -249,23 +253,23 @@ requires_posix_process_groups = _declare(
 ).mark()
 requires_windows_job_object = _declare(
     "windows-job-object", "sys_platform != 'win32'",
-    "Windows Job Object integration", ("portability-lifecycle",),
+    "Windows Job Object integration", (), no_ci=NO_WINDOWS_CI,
 ).mark()
 requires_windows_dirfd_adapter = _declare(
     "windows-dirfd-adapter", "os_name != 'nt'",
-    "exercises the native Windows dir-fd adapter", ("unit", "portability-lifecycle"),
+    "exercises the native Windows dir-fd adapter", (), no_ci=NO_WINDOWS_CI,
 ).mark()
 requires_windows_reparse_point_rejection = _declare(
     "windows-reparse-point-rejection", "os_name != 'nt'",
-    "exercises Windows reparse-point rejection", ("unit", "portability-lifecycle"),
+    "exercises Windows reparse-point rejection", (), no_ci=NO_WINDOWS_CI,
 ).mark()
 requires_windows_sqlite_backup = _declare(
     "windows-sqlite-backup", "os_name != 'nt'",
-    "exercises Windows SQLite backup snapshots", ("unit", "portability-lifecycle"),
+    "exercises Windows SQLite backup snapshots", (), no_ci=NO_WINDOWS_CI,
 ).mark()
 requires_windows_process_and_lock_apis = _declare(
     "windows-process-and-lock-apis", "os_name != 'nt'",
-    "native Windows process and lock APIs", ("portability-lifecycle", "windows-worker-handoff"),
+    "native Windows process and lock APIs", (), no_ci=NO_WINDOWS_CI,
 ).mark()
 requires_posix_owner_only_permissions = _declare(
     "posix-owner-only-permissions", "os_name == 'nt'",
@@ -284,7 +288,7 @@ requires_posix_fork = _declare(
 # only fire on Windows, and only for WinError 1314 (no symlink privilege).
 _WINDOWS_SYMLINKS = _declare(
     "windows-symlink-creation", "os_name == 'nt'",
-    "symlink creation is unavailable for this Windows account", ("unit", "portability-lifecycle"),
+    "symlink creation is unavailable for this Windows account", ("unit",),
     only_error=lambda error: getattr(error, "winerror", None) == 1314,
 )
 # Applied to every ``darwin_native`` test below; the lane is deselected by default
@@ -383,7 +387,15 @@ class _SkipGuard:
         reason = reason.removeprefix("Skipped: ")
         match = _DECLARED_TAG.search(reason)
         if match and match.group(1) in SKIP_REGISTRY:
-            self.declared.append((report.nodeid, reason))
+            entry = SKIP_REGISTRY[match.group(1)]
+            if entry.applies(CURRENT):
+                self.declared.append((report.nodeid, reason))
+            else:
+                # The declared reason does not hold here, so the skip hides a test that should run.
+                self.undeclared.append((
+                    report.nodeid,
+                    f"{entry.tag} used where its condition ({entry.skip_when}) is false on this host: {reason}",
+                ))
         else:
             self.undeclared.append((report.nodeid, reason))
 
@@ -427,6 +439,15 @@ class _SkipGuard:
             write(f"declared skips whose tests run only in non-blocking CI jobs ({len(non_blocking)}):")
             for nodeid, reason in non_blocking:
                 write(f"  NON-BLOCKING {nodeid}: {reason}")
+        no_ci = [
+            (nodeid, reason) for nodeid, reason in sorted(self.declared)
+            if SKIP_REGISTRY[_DECLARED_TAG.search(reason).group(1)].no_ci
+        ]
+        if no_ci:
+            write(f"NOT RUN BY ANY CI JOB ({len(no_ci)}):")
+            for nodeid, reason in no_ci:
+                entry = SKIP_REGISTRY[_DECLARED_TAG.search(reason).group(1)]
+                write(f"  NO CI {nodeid}: {entry.tag} {entry.no_ci}")
         for nodeid, reason in sorted(self.undeclared):
             write(f"UNDECLARED SKIP {nodeid}: {reason}")
 

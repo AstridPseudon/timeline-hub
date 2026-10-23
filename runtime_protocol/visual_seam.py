@@ -23,12 +23,11 @@ AUXILIARY = frozenset({"end-spanning-layer", "effect-layer", "frame-overlay", "t
 PICTURE = frozenset({"media", "hold", "video", "image", "animated-media-transform", "haus.astrid.liveScene"})
 
 
-def picture_clip(clip, track, *, declared=False):
+def picture_clip(clip, track):
     """A visual lane may carry a custom renderer's opaque picture clips.
 
-    Unknown types count as picture on visual tracks without requiring a
-    pictureTracks declaration. Known auxiliary types and source/audio lanes
-    cannot supply picture coverage. Timing disclosure remains independent,
+    Unknown types count as picture on visual tracks. Known auxiliary types and
+    source/audio lanes cannot supply picture coverage. Timing disclosure remains independent,
     including for custom picture.
     """
     kind = clip.get("clipType", clip.get("clip_type", "media"))
@@ -157,8 +156,6 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
     policy = (config.get("app") or {}).get("visualSeamContract") or {}
     tracks = {t["id"]: t for t in config.get("tracks", []) if isinstance(t, dict) and "id" in t}
     explicit = policy.get("continuityTracks")
-    picture_tracks = policy.get("pictureTracks")
-    picture_tracks = set(picture_tracks) if isinstance(picture_tracks, list) else set()
     continuity = set(explicit) if isinstance(explicit, list) else {k for k, t in tracks.items() if t.get("kind") == "visual"}
     # Canonical occurrence tracks are explicit editorial picture lanes.
     if explicit is None:
@@ -195,8 +192,7 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
         duration = clip_seconds(clip, (bound[1] - offset) * clip["speed"] if bound else 0, speed=clip["speed"])
         track = clip.get("track", inherited_track or "video")
         definition = (track_definitions if track_definitions is not None else tracks).get(track, {})
-        primary = render and (track in continuity or definition.get("kind") == "visual") and picture_clip(
-            clip, definition, declared=track in picture_tracks)
+        primary = render and (track in continuity or definition.get("kind") == "visual") and picture_clip(clip, definition)
         if at < 0 or offset + at < 0:
             structural.append({"code": "boundary/negative-start", "path": path})
         raw_start = js_round((offset + at) * fps)
@@ -322,7 +318,7 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
         for c in clips:
             track = c.get("track", o["track"])
             definition = child_tracks.get(track, {})
-            if explicit is None and definition.get("kind") == "visual" and picture_clip(c, definition, declared=track in picture_tracks):
+            if explicit is None and definition.get("kind") == "visual" and picture_clip(c, definition):
                 continuity.add(track)
             add(c, child_registry, path + ["clip", str(c.get("id", "?"))], offset=offset, bound=(offset, end), inherited_speed=inherited_speed,
                 inherited_track=o["track"], source_offset=source_offset, inherited_gain=o.get("gain", 1), muted=o.get("muted", o.get("mute", False)),

@@ -703,13 +703,16 @@ def _custom_picture_closure():
     return parent, shots, internal
 
 
-def test_custom_picture_on_visual_lane_counts_without_declaration_or_mutating_pins():
+def test_custom_picture_on_visual_lane_counts_and_legacy_picture_tracks_is_ignored():
     parent, shots, internal = _custom_picture_closure()
     original = copy.deepcopy(internal)
     undeclared, _ = evaluate_closure(parent, shots, internal, timeline_id="main")
     assert not any(issue["code"] == "boundary/empty-child-picture" for issue in undeclared["structuralIssues"])
     assert all(span["primary"] for span in undeclared["spans"])
+    baseline, _ = evaluate_closure(parent, shots, internal, timeline_id="main")
     parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"], "pictureTracks": ["plate"]}}
+    legacy, _ = evaluate_closure(parent, shots, internal, timeline_id="main")
+    assert legacy["spans"] == baseline["spans"]
     report, metadata = admit_closure(parent, shots, internal, timeline_id="main", materialize=True)
     assert not report["blocked"]
     assert not report["structuralIssues"]
@@ -752,7 +755,7 @@ def test_empty_visual_plate_still_reports_empty_child_picture():
 
 def test_layered_picture_coverage_is_independent_of_strict_continuity_lanes():
     parent, shots, internal = _custom_picture_closure()
-    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"], "pictureTracks": ["plate"]}}
+    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"]}}
     internal["ir-0"]["payload"]["clips"].append(
         {"id": "layer", "clipType": "custom-picture", "track": "plate", "at": 0.2, "hold": 0.8})
     report, _ = admit_closure(parent, shots, internal, timeline_id="main")
@@ -785,7 +788,7 @@ def test_visual_picture_lane_never_counts_auxiliary_or_inactive_content(change):
                                    {"id": "plate", "kind": "visual", "role": "source"}])
 def test_declared_custom_picture_requires_a_visual_output_lane(track):
     parent, shots, internal = _custom_picture_closure()
-    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"], "pictureTracks": ["plate"]}}
+    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"]}}
     internal["ir-0"]["payload"]["tracks"][0] = track
     report, _ = evaluate_closure(parent, shots, internal, timeline_id="main")
     assert report["blocked"]
@@ -796,7 +799,7 @@ def test_declared_custom_picture_requires_a_visual_output_lane(track):
 def test_picture_classification_matches_parent_first_materialized_track_definitions(parent_kind, child_kind, picture):
     parent, shots, internal = _custom_picture_closure()
     parent["config"]["tracks"].append({"id": "plate", "kind": parent_kind})
-    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"], "pictureTracks": ["plate"]}}
+    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"]}}
     for child in internal.values():
         child["payload"]["tracks"][0]["kind"] = child_kind
     report, metadata = evaluate_closure(parent, shots, internal, timeline_id="main", materialize=True)
@@ -807,7 +810,7 @@ def test_picture_classification_matches_parent_first_materialized_track_definiti
 
 def test_source_only_child_tail_does_not_extend_rendered_picture_coverage():
     parent, shots, internal = _custom_picture_closure()
-    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"], "pictureTracks": ["plate"]}}
+    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"]}}
     child = internal["ir-1"]["payload"]
     child["tracks"].append({"id": "reference", "kind": "visual", "role": "source"})
     child["clips"].append({"id": "unused-reference", "clipType": "media", "track": "reference", "at": 10, "hold": 5})
@@ -818,9 +821,9 @@ def test_source_only_child_tail_does_not_extend_rendered_picture_coverage():
     assert child["clips"][-1]["hold"] == 5
 
 
-def test_declared_custom_picture_preserves_auxiliary_activation_and_context_bound_intents():
+def test_custom_picture_preserves_auxiliary_activation_and_context_bound_intents():
     parent, shots, internal = _custom_picture_closure()
-    policy = {"continuityTracks": ["v"], "pictureTracks": ["plate"]}
+    policy = {"continuityTracks": ["v"]}
     parent["config"]["app"] = {"visualSeamContract": policy}
     for child in internal.values():
         next(track for track in child["payload"]["tracks"] if track["id"] == "fx")["kind"] = "audio"
@@ -841,7 +844,7 @@ def test_declared_custom_picture_preserves_auxiliary_activation_and_context_boun
 
 def test_declared_picture_lane_keeps_timeline_scoped_effects_auxiliary():
     parent, shots, internal = _custom_picture_closure()
-    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"], "pictureTracks": ["plate"]}}
+    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"]}}
     internal["ir-1"]["payload"]["effects"] = [
         {"id": "timeline-effect", "type": "opacity", "track": "plate", "hold": 1, "params": {"opacity": 0.5}}]
     report, metadata = evaluate_closure(parent, shots, internal, timeline_id="main")
@@ -857,7 +860,7 @@ def test_declared_picture_lane_keeps_timeline_scoped_effects_auxiliary():
 def test_fractional_occurrence_bounds_match_render_frames_and_preserve_real_gaps(duration, fps, gap_frames):
     parent, shots, internal = _custom_picture_closure()
     parent["config"]["output"]["fps"] = fps
-    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"], "pictureTracks": ["plate"]}}
+    parent["config"]["app"] = {"visualSeamContract": {"continuityTracks": ["v"]}}
     parent["occurrences"][1]["placement"]["start_ms"] = duration * 1000
     internal["ir-0"]["payload"]["clips"][0]["hold"] = duration - gap_frames / fps
     internal["ir-0"]["payload"]["clips"].append(

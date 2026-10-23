@@ -1,8 +1,8 @@
 # Runtime portability checks
 
 The portability CI job runs the platform boundary, native process custody,
-foreground lifecycle, and installed-wheel lifecycle checks on Ubuntu, macOS,
-and Windows. It invokes the selected tests with `-m ""` because pytest's
+foreground lifecycle, and installed-wheel lifecycle checks on Ubuntu and macOS.
+Windows is not supported yet and has no CI job. It invokes the selected tests with `-m ""` because pytest's
 default configuration excludes integration-marked tests.
 
 Run the same host-specific subset locally after installing the test and
