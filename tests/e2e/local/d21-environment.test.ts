@@ -1,9 +1,17 @@
 import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+import { mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { test } from 'node:test';
+import os from 'node:os';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import {
   createD21Environment,
   observeD21Harness,
   observeD21Page,
+  persistD21Environment,
+  recordD21Error,
   recordD21Readiness,
   serializeD21Environment,
 } from './d21-environment.ts';
@@ -119,4 +127,94 @@ test('the bounded serializer rejects oversized output instead of truncating JSON
   })));
   artifact.backend.imports.daemon.modules = { observation: 'OBSERVED', value: Array.from({ length: 5000 }, () => 'module') };
   assert.throws(() => serializeD21Environment(artifact), /32KiB/);
+});
+
+function filesNamed(root: string, name: string): string[] {
+  const found: string[] = [];
+  const pending = [root];
+  while (pending.length > 0) {
+    const current = pending.pop()!;
+    for (const entry of readdirSync(current)) {
+      const candidate = path.join(current, entry);
+      if (statSync(candidate).isDirectory()) pending.push(candidate);
+      else if (entry === name) found.push(candidate);
+    }
+  }
+  return found;
+}
+
+function runWorkerLifecycleControl(failSetup: boolean): { root: string; result: ReturnType<typeof spawnSync> } {
+  const root = mkdtempSync(path.join(process.env.TMPDIR ?? os.tmpdir(), 'd21-workerinfo-'));
+  const outputDir = path.join(root, 'results');
+  const reportFile = path.join(root, 'report.json');
+  const environmentModule = fileURLToPath(new URL('./d21-environment.ts', import.meta.url));
+  const playwrightModule = path.join(path.dirname(createRequire(import.meta.url).resolve('@playwright/test')), 'index.mjs');
+  writeFileSync(path.join(root, 'worker-lifecycle.spec.ts'), `
+import { test as base } from ${JSON.stringify(playwrightModule)};
+import { createD21Environment, persistD21Environment, recordD21Error } from ${JSON.stringify(environmentModule)};
+
+const test = base.extend<{ carrier: void }>({
+  carrier: [async ({}, use, workerInfo) => {
+    const artifact = createD21Environment();
+    await persistD21Environment(workerInfo, artifact);
+    if (process.env.D21_LIFECYCLE_FAIL === '1') {
+      artifact.status = 'failed';
+      recordD21Error(artifact, { code: 'controlled_setup_failure', class: 'setup', stage: 'worker' });
+      await persistD21Environment(workerInfo, artifact);
+      throw new Error('controlled setup failure');
+    }
+    await use();
+  }, { scope: 'worker' }],
+});
+
+test('worker carrier reaches the genuine test-info boundary', async ({ carrier }, testInfo) => {
+  void carrier;
+  await persistD21Environment(testInfo, createD21Environment());
+});
+`);
+  writeFileSync(path.join(root, 'playwright.config.mjs'), `
+import { defineConfig } from ${JSON.stringify(playwrightModule)};
+export default defineConfig({
+  testDir: ${JSON.stringify(root)},
+  testMatch: /worker-lifecycle\\.spec\\.ts$/,
+  outputDir: ${JSON.stringify(outputDir)},
+  reporter: [['json', { outputFile: ${JSON.stringify(reportFile)} }]],
+  workers: 1,
+  timeout: 10_000,
+});
+`);
+  const result = spawnSync(process.execPath, [
+    '--import', 'tsx', path.resolve('node_modules/@playwright/test/cli.js'), 'test',
+    '--config', path.join(root, 'playwright.config.mjs'),
+  ], {
+    cwd: path.resolve('.'),
+    env: { ...process.env, D21_LIFECYCLE_FAIL: failSetup ? '1' : '0' },
+    encoding: 'utf8',
+    timeout: 30_000,
+  });
+  return { root, result };
+}
+
+test('real worker fixture writes an early artifact and preserves controlled setup failure', () => {
+  const success = runWorkerLifecycleControl(false);
+  assert.equal(success.result.status, 0, `${success.result.stdout}\n${success.result.stderr}`);
+  const successArtifacts = filesNamed(success.root, 'd21-environment.json');
+  assert.ok(successArtifacts.some((file) => file.includes(`${path.sep}worker-0${path.sep}`)));
+  assert.ok(successArtifacts.some((file) => !file.includes(`${path.sep}worker-0${path.sep}`)));
+  const earlyPath = successArtifacts.find((file) => file.includes(`${path.sep}worker-0${path.sep}`))!;
+  const early = JSON.parse(readFileSync(earlyPath, 'utf8'));
+  assert.equal(early.status, 'preflight');
+  assert.equal(early.backend.host.observation, 'UNKNOWN');
+  assert.equal(statSync(earlyPath).mode & 0o777, 0o600);
+  assert.match(readFileSync(path.join(success.root, 'report.json'), 'utf8'), /d21-environment\.json/);
+
+  const failure = runWorkerLifecycleControl(true);
+  assert.notEqual(failure.result.status, 0, `${failure.result.stdout}\n${failure.result.stderr}`);
+  const failureArtifacts = filesNamed(failure.root, 'd21-environment.json');
+  const failedEarlyPath = failureArtifacts.find((file) => file.includes(`${path.sep}worker-0${path.sep}`))!;
+  const failedEarly = JSON.parse(readFileSync(failedEarlyPath, 'utf8'));
+  assert.equal(failedEarly.status, 'failed');
+  assert.deepEqual(failedEarly.backend.error.value, { code: 'controlled_setup_failure', class: 'setup', stage: 'worker' });
+  assert.equal(statSync(failedEarlyPath).mode & 0o777, 0o600);
+  assert.match(readFileSync(path.join(failure.root, 'report.json'), 'utf8'), /controlled setup failure/);
 });

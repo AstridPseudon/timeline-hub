@@ -66,22 +66,22 @@ function observeHarnessEnvironment(environment: D21EnvironmentArtifact, harness:
 const test = appTest.extend<object, { environment: D21EnvironmentArtifact; harness: DirectHarness; seed3: ThreeProductsSeed }>({
   // Persist a bounded carrier before worker setup so harness/seed failures retain setup evidence.
   // eslint-disable-next-line no-empty-pattern
-  environment: [async ({}, use, testInfo) => {
+  environment: [async ({}, use, workerInfo) => {
     const environment = createD21Environment();
-    await persistD21Environment(testInfo, environment);
+    await persistD21Environment(workerInfo, environment);
     await use(environment);
   }, { scope: 'worker' }],
   // Keep the same P3 bootstrap: defer the empty timeline, then let the native full seed create the fixture.
-  harness: [async ({ environment }, use, testInfo) => {
+  harness: [async ({ environment }, use, workerInfo) => {
     let harness: DirectHarness | undefined;
     try {
       harness = await startDirectHarness({ deferTimelineInitialization: true });
       observeHarnessEnvironment(environment, harness);
-      await persistD21Environment(testInfo, environment);
+      await persistD21Environment(workerInfo, environment);
     } catch (error) {
       environment.status = 'failed';
       recordD21Error(environment, { code: 'setup_failed', class: 'setup', stage: 'harness' });
-      await persistD21Environment(testInfo, environment).catch(() => {});
+      await persistD21Environment(workerInfo, environment).catch(() => {});
       throw error;
     }
     try { await use(harness); }
@@ -91,17 +91,17 @@ const test = appTest.extend<object, { environment: D21EnvironmentArtifact; harne
       }
     }
   }, { scope: 'worker', timeout: process.env.ASTRID_QUICK_DESCRIPTOR ? 0 : 240_000 }],
-  seed3: [async ({ environment, harness }, use, testInfo) => {
+  seed3: [async ({ environment, harness }, use, workerInfo) => {
     let seed: ThreeProductsSeed;
     try {
       seed = await harness.seedThreeProducts();
       observeHarnessEnvironment(environment, harness);
-      await persistD21Environment(testInfo, environment);
+      await persistD21Environment(workerInfo, environment);
     } catch (error) {
       environment.status = 'failed';
       observeHarnessEnvironment(environment, harness);
       recordD21Error(environment, { code: 'setup_failed', class: 'setup', stage: 'seed' });
-      await persistD21Environment(testInfo, environment).catch(() => {});
+      await persistD21Environment(workerInfo, environment).catch(() => {});
       throw error;
     }
     await use(seed);
