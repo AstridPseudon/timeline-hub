@@ -203,6 +203,37 @@ function createCanonicalTimeline(config: TimelineConfig, composition: PreparedSh
   };
 }
 
+function restoreRawAppCollisionsInRecoveryDraft(
+  config: TimelineConfig,
+  composition: PreparedShotComposition,
+): TimelineConfig {
+  const counterparts = projectedClipCounterparts(composition, config.clips);
+  return {
+    ...config,
+    clips: config.clips.map((clip) => {
+      const raw = counterparts.get(clip.id);
+      const app = object(clip.app);
+      const rawApp = raw ? object(raw.app) : null;
+      if (!raw || !app || !rawApp
+        || !['canonical', 'canonicalTiming'].some((key) => own(rawApp, key))) return clip;
+      const restoredApp = { ...app };
+      for (const key of ['canonical', 'canonicalTiming']) {
+        if (rawApp && Object.prototype.hasOwnProperty.call(rawApp, key)) {
+          Object.defineProperty(restoredApp, key, {
+            value: structuredClone(rawApp[key]),
+            enumerable: true,
+            configurable: true,
+            writable: true,
+          });
+        } else {
+          Reflect.deleteProperty(restoredApp, key);
+        }
+      }
+      return { ...clip, app: restoredApp };
+    }),
+  };
+}
+
 function stableStringify(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
   if (value !== null && typeof value === 'object') {
@@ -1267,7 +1298,8 @@ export function createShotTimelineDataProvider(
               // stored occurrence duration used to replay its preview. The
               // publication candidate above remains the sanitized canonical
               // graph; do not strip replay metadata from the stale draft.
-              config: recoveryMatchesThisSave ? recoveryAtStart!.draft.config : nextConfig,
+              config: recoveryMatchesThisSave ? recoveryAtStart!.draft.config
+                : restoreRawAppCollisionsInRecoveryDraft(nextConfig, rawComposition),
               registry: draftRegistry,
               canonicalPublication: candidate,
             };
