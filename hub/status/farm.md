@@ -1,18 +1,18 @@
-<!-- farm | 2026-10-23T10:23:43Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 10m -->
-# farm board, 2026-10-23 (round start; disk 21 GB free, above the 15 GB floor)
+<!-- farm | 2026-10-23T10:25:19Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 0, other 1) | busy30 1 | status age 1m -->
+# farm board, 2026-10-23T10:25Z (disk 21 GB free, above the 15 GB floor)
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
-| F-H0 | upstream baselines (runtime/agent/app) | claude | none | todo: no farm-*.md result exists and no tf- worker has ever run; not executed | none | none | n/a |
-| F-H6 | integrated full suites + tour + journey | claude | P1 GO, A2/A3 | todo: not run. Header: farm was down and Proof ran P1/P3 on the test service | none | none | n/a |
-| F-H9 | same, at H9 | claude | P1 GO | todo: not run | none | none | n/a |
-| F-app-full | App full suite on integrated head (orchestrator priority 1) | test service | none | doing (running at 10:12Z) | test service | app-full-1023100721-23537 | pending |
-| F-comp-full | Composition full suite (priority 3) | test service | none | doing (queued 10:07Z) | test service | composition-full-1023100726-4261 | n/a |
-| F-EXACT8 | agent heavy-journey failures (2 sigterm, 6 quick_run) | claude | n/a | Agent owns it as farm-down fallback (peer 09:19Z): sole id agent-targeted-1023091523-8962. Farm must NOT dispatch a copy | none | Agent's id pending | n/a |
-| F-final | final run + delivery-build dry run | claude | all lanes | todo | none | none | n/a |
+| F-H0 | upstream baselines | n/a | none | superseded by orchestrator priorities 10:02Z (Agent and Runtime ran their own full suites); App upstream 7c17cc9d9 baseline only if the classifier needs it | none | none | n/a |
+| F-app-full | App full suite on integrated head | test service | none | merged-head run DONE: FAIL, 89 failed / 18706 passed, 20 files, exit 1, 908s | test service | app-full-1023100721-23537 (app tree 87c00cb43a07, `npm test -- --maxWorkers=3`) | n/a |
+| F-app-classify | classify the 89 App failures (real / pre-existing / env / D14) | Luna high | F-app-full | doing (queued 10:24Z) | tf-app-classify | design/farm-app-full-classification.md pending | pending |
+| F-comp-full | Composition full suite | test service | none | DONE: PASS | test service | composition-full-1023100726-4261 | n/a |
+| F-EXACT8 | agent heavy-journey failures (2 sigterm, 6 quick_run) | n/a | n/a | Agent owns it (peer 09:19Z), id agent-targeted-1023091523-8962. No farm copy | none | Agent's id pending | n/a |
+| F-H6/H9 | integrated suites + P2 tour + P3 journey | test service | P1 GO, A2-undo, A2-move-reads | gated:P1 | none | none | n/a |
+| F-final | final run + delivery-build dry run | test service | all lanes | todo | none | none | n/a |
 
 Blockers:
-- P1 is NO-GO (App/Proof peers, through 02:13Z): no mounted A2 chain selector exists, so no honest H3/H6 chain run can be requested. Owner: App/Proof.
-- Peer asks to acknowledge: the v1 checkpoint12 and gate6 requests are VOID (orchestrator 22:55Z). I'm not serving them.
-- Heavy-run capacity: 0 of 2 in use. Ready to take a run the moment one is named with an exact SHA and command.
+- P1 is NO-GO (App/Proof peers): no mounted A2 chain selector, so no honest P2/P3 or chain run can be requested. Owner: App/Proof.
+- The v1 checkpoint12 and gate6 requests are VOID (orchestrator 22:55Z); I'm not serving them.
+- Provisional triage from the log, to be confirmed by tf-app-classify: ~25 providerCompatibility.runtime failures all hit 'retired mutable timeline GET must not be used' (src/test/fakeWorkspaceRuntime.ts:496); runner.test.ts (12), semanticGestures.test.ts (~25), VideoEditorPage P2-L04 (3), vendoredTimelineCompositionAliases (3) and others. Real ones go to App as peer messages once classified.
 
-Next ready: none until a lane names an exact SHA and command. I'll serve the Agent EXACT8 result only if the Agent's id fails for infrastructure reasons.
+Next ready: after classification, peer messages to App; the P2/P3 runs when the A2 gates merge.
