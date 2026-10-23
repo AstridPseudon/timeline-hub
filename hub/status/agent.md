@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-23T05:05:58Z | dispatcher heartbeat 5s | live 5 (sol 3, luna 2, other 0) | busy30 18 | status age 1m -->
-# agent board, 2026-10-23T05:04:03Z
+<!-- agent | 2026-10-23T05:07:31Z | dispatcher heartbeat 6s | live 4 (sol 3, luna 1, other 0) | busy30 19 | status age 0m -->
+# agent board, 2026-10-23T05:07:15Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2 | upstream and quality | Luna/Sol; Luna review | — | merged | agt-U2-media-repair; ratchet-review | Integrated184 + manifest/lock PASS; baseline2151/1915 | 3f1ceaed1;649ba6481 |
@@ -31,7 +31,7 @@
 | R2-derived-undo | two deferred anchor undo positives | orchestrator D14 | deferred relational timing | gated:D14-deferred | Viewing owns original failing evidence | D14 retain tests unchanged/unskipped/visibly failing; no C0 change/guard exception/54PASS claim | ruling04:40 |
 | A3-fork-plan | same-selected-owner source plan delivered | Sol; independent Luna PASS | independent0422 | gated:orchestrator | agt-A3-source-plan-review-0455 | Independent designreadinessPASS, productionFAIL/NO-CARRIER. Unsupported opt-in only proposal; no productdelta | flatplan0445+review0455 |
 | A3-fork-wire | D15 occurrence.fork provider and carrier | Sol explicitD15 | D15 | doing | agt-A3-occurrence-fork-0504 | D15 authorizesONEsemanticfork; proveexistingcarrier, canonicalschemaonlyifclosed, RuntimeONEbundle/dryadoptionthenwire | base9cf |
-| R2-bootstrap-redo | authenticate root restore redo observations | Sol R2; Luna review next | audit0446 | doing | agt-R2-bootstrap-redo-fix-0450 | Exact inverse stage input-image/binding mismatch, inherited5f0; separate from legacyreplay. Original3 actual cases retained | basef677 |
+| R2-bootstrap-redo | authenticate stage inputs/restored redo IDs | Sol partial; Luna review | original real failures | review | agt-R2-stage-review-0507 | Partial48d strictnewRuntime2+focused100PASS, originals3redoFAIL atcreatedclaim mismatch; crosslaneRuntimehandback0507 | 48d7c597/tree32ec2bda |
 | V2-fps | canonical numeric/rational FPS compatibility | Sol after LunaFAIL; independenttrace | Viewing0454+Agent0453 | doing | agt-V2-fps-canonical-fix-0504 | Boundedexistingauthority/serializationfix, exactprecision retained; no epsilon/fixturechange/newpin | base9cf |
 | G4-assembly-auth | Runtime native assembly alias authentication | Runtime Luna author/review | actual parent/source and asset aliases | blocked:runtime | rt-R2r-assembly-alias-review-0445 | Runtimeboardchecked:0ed draft/auth68PASS, reviewactive; no new clienttuple; Runtime owns changed-source116 testport | 0ed3e846 draft |
 | V2-elementref | preserve legacy text reference under D12 | Sol after repeated Luna FAIL | actualG234livefinding | doing | agt-V2-legacy-elementref-fix-0500 | Existing media textbinding wronglytreatedselectedelement; no fixture/guardwaiver; realcreate/render2nodes aftermeaningfulfix | base9cf0fde2 |
