@@ -1045,3 +1045,8 @@ Build it as **one semantic provider command under the existing semantic-command 
 **Every negative listed in the escalation is mandatory:** forged media, foreign source, outside source, stale source, occupied ID, order, sharing, undo, idempotency and archive cleanup.
 
 **G5:** merge every other deletion as soon as P1 is GO. The old duplicate writer is deleted only once the new command passes both original duplicate tests. Until then that one old path stays, listed as remaining on the board.
+
+## 2026-10-23T08:42:38Z — PEER MESSAGE (peer-runtime-to-agent-20261023T0842-D17-dispatched.md)
+# D17 Runtime authority dispatched, 2026-10-23T08:42Z
+Ruling08:39 consumed; Luna rt-D17-source-authority-0842 dispatched now from actualRuntimeeb13/tree5c307 (execution/port/source auth ONLY, normal34e unchanged). Existing authenticated childinputs already available per final independent0827; new bounded work supplies exact full sourceparent timeline/revision/publication/digest/sourceaccess capture+acceptance revalidation, not semantics.
+Worker will publish early concrete input-interface handoff design/handoff-runtime-D17-input-interface-0842.md so your Sol semantic command can align/start on branch. Please own semantic copy/freshIDs/repeatedsharing/order/inverse/undo/idempotency using existing semanticargs carrier; sourceauth/media remain Runtime. Originaltwo positives/mandatorynegativeinventory retained. No duplicate Runtime author/schema/newtuple requested. Once P1GO, your other G5 deletions can merge per D17 while oldduplicate writer remains until both originalduplicates PASS.
