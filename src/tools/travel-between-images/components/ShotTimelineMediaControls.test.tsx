@@ -79,7 +79,18 @@ describe('ShotTimelineMediaControls', () => {
 
   it('imports selected media and sends an add command through the mounted editor', async () => {
     const uploaded = { generationId: 'generation-new', variantId: 'variant-new' };
-    const preparedAsset = { assetKey: 'asset-new', mediaType: 'image', entry: { file: 'asset-new' } };
+    const preparedAsset = {
+      assetKey: 'asset-new',
+      mediaType: 'image',
+      entry: { file: 'asset-new' },
+      mediaSelection: {
+        asset: 'asset-new',
+        generation_id: 'generation-new',
+        variant_id: 'variant-new',
+        object_id: 'sha256:object',
+        catalog_digest: 'sha256:catalog',
+      },
+    };
     state.assets.uploadImageGeneration.mockResolvedValue(uploaded);
     state.assets.prepareGenerationAsset.mockReturnValue(preparedAsset);
 
@@ -93,6 +104,9 @@ describe('ShotTimelineMediaControls', () => {
       trackId: 'V1',
       time: 1.25,
     }));
+    expect(state.commands.addClip.mock.calls[0]?.[0].preparedAsset.mediaSelection).toEqual(
+      preparedAsset.mediaSelection,
+    );
     expect(state.assets.uploadImageGeneration).toHaveBeenCalledWith(file);
     expect(state.assets.prepareGenerationAsset).toHaveBeenCalledWith(uploaded);
   });
