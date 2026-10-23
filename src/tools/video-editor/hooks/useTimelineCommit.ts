@@ -433,6 +433,10 @@ export function useTimelineCommit({
       }
 
       commitData(prepared.nextData, {
+        ...(!current.registry.assets[mutation.command.payload.asset.assetKey] ? {
+          gestureBasis: { kind: 'prepared-media' as const, config: current.config, registry: current.registry,
+            clipId: prepared.commandResult!.detail!.clipId as string, command: mutation.command },
+        } : {}),
         save: options?.save,
         selectedClipId: options?.selectedClipId,
         selectedTrackId: options?.selectedTrackId,

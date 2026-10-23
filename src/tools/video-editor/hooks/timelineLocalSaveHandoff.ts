@@ -8,6 +8,7 @@ import type { AssetRegistry, TimelineConfig } from '../types/index.ts';
 import { canonicalizeTimelinePair } from '../lib/timeline-domain.ts';
 import { withDefaultTimelineOutput } from '../lib/defaults.ts';
 import { markTimelineSaveRejection, type TimelineSaveRejectionCode } from '../lib/timeline-diagnostics.ts';
+import type { PlacePreparedMediaCommand } from '../commands/media.ts';
 
 export interface TimelineSaveSource {
   config: TimelineConfig;
@@ -23,7 +24,7 @@ export type TimelineGestureReadBasis = {
   clipId: string;
 } & ({ kind: 'split'; timeSeconds: number } | { kind: 'move'; trackId: string } | {
   kind: 'trim'; patch: Partial<Pick<TimelineConfig['clips'][number], 'from' | 'to' | 'hold' | 'speed'>>;
-});
+} | { kind: 'prepared-media'; command: PlacePreparedMediaCommand });
 
 /** Assembly supplies the ORIGINAL verified read, not loadTimelineCommandBasis at save time. */
 export interface TimelineLocalSaveHandoff {
@@ -132,6 +133,7 @@ export function createTimelineLocalSaveHandoff(options: {
   let sourceChecked = false;
   let targets = historyTargets(options.initial.history, options.initial.head);
   let inversePending = false;
+  let preparedMediaFailure: TimelineVersionConflictError | undefined;
 
   async function appendInverse(kind: 'undo' | 'redo'): Promise<void> {
     if (!remoteHistoryAvailable()) refuse('durable timeline history is not settled');
@@ -153,7 +155,7 @@ export function createTimelineLocalSaveHandoff(options: {
   }
 
   function remoteHistoryAvailable(): boolean {
-    return !inversePending && options.session.getState().status === 'saved';
+    return !inversePending && !preparedMediaFailure && options.session.getState().status === 'saved';
   }
   function changes(raw: unknown, previous: unknown, next: unknown, path: string[]): unknown {
     if (same(previous, next)) return structuredClone(raw);
@@ -208,6 +210,8 @@ export function createTimelineLocalSaveHandoff(options: {
   const handoff: TimelineLocalSaveHandoff = {
     capture(input, gestureBasis) {
       try {
+        // A later generic save must not absorb an unsubmitted media birth.
+        if (preparedMediaFailure) throw preparedMediaFailure;
         const next = structuredClone(input);
         checkHead(initial, source, 'capture-source-head-unavailable');
         checkHead(initial, next, 'capture-input-head-unavailable');
@@ -232,11 +236,61 @@ export function createTimelineLocalSaveHandoff(options: {
         }
         let reads: OutboxJson[] | undefined;
         if (gestureBasis) {
-          if (!['split', 'trim', 'move'].includes(gestureBasis.kind)
+          if (!['split', 'trim', 'move', 'prepared-media'].includes(gestureBasis.kind)
             || !same(authoredJson(gestureBasis.config), authoredJson(authoringSource.config))
             || !same(authoredJson(gestureBasis.registry), authoredJson(authoringSource.registry))) {
             refuse('gesture read basis differs from the original local authoring input', 'gesture-basis-mismatch');
           }
+        }
+        let commands: [EditCommand] | undefined;
+        if (gestureBasis?.kind === 'prepared-media') {
+          const prepared = gestureBasis.command.payload;
+          const media = prepared.asset.mediaSelection;
+          const keys = ['asset', 'generation_id', 'variant_id', 'object_id', 'catalog_digest'];
+          if (!media || Object.keys(media).length !== keys.length
+            || keys.some(key => typeof media[key as keyof typeof media] !== 'string' || !media[key as keyof typeof media])) {
+            refuse('prepared media needs the Runtime project media selection. Draft retained; reload the timeline, then import the media again');
+          }
+          if (prepared.afterClipId || prepared.replaceClipId || prepared.removeClipId || prepared.removeClipIds?.length
+            || prepared.forceNewTrack || prepared.insertAtTop || prepared.pinnedShotGroupsOverride
+            || prepared.asset.mediaType !== 'image') {
+            refuse('prepared media currently supports an ordinary image add on an existing visual track. Draft retained; reload the timeline, then choose Add media');
+          }
+          const config = parent.config as Record<string, OutboxJson>;
+          const nextConfig = payload.config as Record<string, OutboxJson>;
+          const clips = config.clips;
+          const nextClips = nextConfig.clips;
+          if (!Array.isArray(clips) || !Array.isArray(nextClips)) refuse('prepared media clip collection is unavailable');
+          const row = nextClips.at(-1);
+          if (!object(row) || row.id !== gestureBasis.clipId || row.asset !== prepared.asset.assetKey
+            || clips.some(clip => object(clip) && clip.id === row.id)
+            || !same(nextClips.slice(0, -1), clips)
+            || !same({ ...nextConfig, clips }, config)
+            || !Array.isArray(config.tracks) || !config.tracks.some(track => object(track)
+              && track.id === row.track && track.kind === 'visual' && (track.role ?? 'output') === 'output')) {
+            refuse('prepared media changes more than one ordinary parent clip. Draft retained; reload the timeline, then choose an existing visual track');
+          }
+          if (!object(parent.registry) || !object(parent.registry.assets)
+            || !same(payload.registry, { ...parent.registry, assets: { ...parent.registry.assets,
+              [prepared.asset.assetKey]: authoredJson(prepared.asset.entry) } })) {
+            refuse('prepared media registry changes exceed the selected asset; draft retained');
+          }
+          commands = [{ schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent',
+            args: { row: authoredJson(row), media: authoredJson(media) }, intent: { ownership: 'parent' } }];
+        }
+        if (!commands) {
+          const clips = (payload.config as Record<string, OutboxJson>).clips;
+          const previous = (parent.config as Record<string, OutboxJson>).clips;
+          const assets = object(parent.registry) && object(parent.registry.assets) ? parent.registry.assets : {};
+          const nextAssets = object(payload.registry) && object(payload.registry.assets) ? payload.registry.assets : {};
+          if (Array.isArray(clips) && clips.some(clip => object(clip) && typeof clip.asset === 'string'
+            && !Object.prototype.hasOwnProperty.call(assets, clip.asset)
+            && (Object.prototype.hasOwnProperty.call(nextAssets, clip.asset) || !Array.isArray(previous)
+              || !previous.some(old => object(old) && old.id === clip.id && old.asset === clip.asset)))) {
+            refuse('new media needs its original Runtime project media selection. Draft retained; reload the timeline, then import the media again');
+          }
+        }
+        if (gestureBasis && gestureBasis.kind !== 'prepared-media') {
           const config = parent.config as Record<string, unknown>;
           const clips = config.clips;
           if (!Array.isArray(clips)) refuse('gesture clip read has no authored collection', 'gesture-clips-unavailable');
@@ -305,13 +359,15 @@ export function createTimelineLocalSaveHandoff(options: {
           }
         }
         // The encoder supplies guards and created IDs; these bytes are never a wire DTO.
-        const pending = options.session.appendDocument({ before, after,
+        const pending = commands ? options.session.append({ before: toOutboxJson(before), after: toOutboxJson(after),
+          label: 'Add media', commands }) : options.session.appendDocument({ before, after,
           roots: [{ ref: 'parent', revisionId: before.parent_revision.revision_id, contentDigest: before.parent_revision.content_digest }],
           ...(reads === undefined ? {} : { reads, merge: 'fields' as const }),
           label: 'Edit timeline', step: { id: crypto.randomUUID(), label: 'Edit timeline', intent: gestureBasis ? (gestureBasis.kind === 'split'
             ? `Split ${gestureBasis.clipId} at ${gestureBasis.timeSeconds}`
             : gestureBasis.kind === 'move' ? `Move ${gestureBasis.clipId} on ${gestureBasis.trackId}`
-              : `Trim ${gestureBasis.clipId}: ${canonicalJsonStringify(gestureBasis.patch)}`) : 'Save local editor changes', tags: [] } });
+              : gestureBasis.kind === 'trim' ? `Trim ${gestureBasis.clipId}: ${canonicalJsonStringify(gestureBasis.patch)}`
+                : 'Add media') : 'Save local editor changes', tags: [] } });
         source = { ...next,
           config: changes(source.config, source.config, next.config, ['config']) as TimelineConfig,
           registry: changes(source.registry, source.registry, next.registry, ['registry']) as AssetRegistry,
@@ -321,12 +377,15 @@ export function createTimelineLocalSaveHandoff(options: {
         document = structuredClone(after);
         return pending;
       } catch (error) {
-        return Promise.reject(error instanceof TimelineVersionConflictError ? error
-          : new TimelineVersionConflictError(`Local document save retained: ${error instanceof Error ? error.message : String(error)}`));
+        const rejection = error instanceof TimelineVersionConflictError ? error
+          : new TimelineVersionConflictError(`Local document save retained: ${error instanceof Error ? error.message : String(error)}`);
+        if (gestureBasis?.kind === 'prepared-media') preparedMediaFailure = rejection;
+        return Promise.reject(rejection);
       }
     },
     async flush() {
       try {
+        if (preparedMediaFailure) throw preparedMediaFailure;
         const basis = await options.session.flush();
         const adopted = options.adopted(basis);
         const head = adopted.receipt.head;

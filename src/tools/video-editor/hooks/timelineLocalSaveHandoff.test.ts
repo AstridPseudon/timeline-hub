@@ -4,6 +4,7 @@ import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/
 import { WorkspaceClient, type Transport } from '@/integrations/runtime/generated.ts';
 import { createCommitOutbox, toOutboxJson } from '../commands/commitOutbox.ts';
 import { createLocalSaveSession } from '../commands/localSaveSession.ts';
+import { applyPreparedMediaCommand } from '../commands/media.ts';
 import { createDefaultTimelineConfig, withDefaultTimelineOutput } from '../lib/defaults.ts';
 import { buildTimelineData } from '../lib/timeline-data.ts';
 import { emitTimelineSaveDiagnostic } from '../lib/timeline-diagnostics.ts';
@@ -58,6 +59,42 @@ async function environment(children = false, raw = false, rawIds = ['authored'],
 }
 
 describe('upstream local document handoff', () => {
+  it('retains the upstream video preview whose row lacks the hold required by Python media add', async () => {
+    const env = await environment();
+    const current = await buildTimelineData(env.source.config, env.source.registry);
+    const command = { type: 'place-prepared-media' as const, payload: { at: 0, trackId: 'V1', asset: {
+      assetKey: 'import-video', mediaType: 'video' as const, durationSeconds: 3, source: 'registered' as const,
+      entry: { file: 'import.mp4', type: 'video/mp4', duration: 3 }, mediaSelection: { asset: 'import-video',
+        generation_id: 'generation', variant_id: 'variant', object_id: `sha256:${'a'.repeat(64)}`, catalog_digest: `sha256:${'b'.repeat(64)}` },
+    } } };
+    const preview = applyPreparedMediaCommand(current, command)!;
+    const row = preview.nextData.config.clips[0];
+    expect(row).toMatchObject({ from: 0, to: 3, asset: 'import-video' });
+    expect(row.hold).toBeUndefined();
+    await expect(env.handoff.capture({ ...env.source, config: preview.nextData.config, registry: preview.nextData.registry },
+      { kind: 'prepared-media', config: env.source.config, registry: env.source.registry, clipId: row.id, command }))
+      .rejects.toThrow('ordinary image add');
+    await expect(env.handoff.capture({ ...env.source, config: preview.nextData.config, registry: preview.nextData.registry }))
+      .rejects.toThrow('ordinary image add');
+    expect(env.session.getDocument()).toEqual(env.initial.canonicalDocument);
+    expect((await env.outboxes.list(env.scope))[0].intents).toEqual([]);
+    expect(env.send).not.toHaveBeenCalled();
+    await env.session.dispose();
+  });
+
+  it('refuses a restored media draft without its semantic selection instead of encoding doc.patch', async () => {
+    contractFixture.digest = CURRENT_V2_DIGEST;
+    const env = await environment();
+    const next = structuredClone(env.source);
+    next.config.clips = [{ id: 'restored', track: 'V1', at: 0, hold: 2, clipType: 'media', asset: 'new-media' }];
+    next.registry.assets['new-media'] = { file: 'import.png', type: 'image/png' };
+    await expect(env.handoff.capture(next)).rejects.toThrow('original Runtime project media selection');
+    expect(env.session.getDocument()).toEqual(env.initial.canonicalDocument);
+    expect((await env.outboxes.list(env.scope))[0].intents).toEqual([]);
+    expect(env.send).not.toHaveBeenCalled();
+    await env.session.dispose();
+  });
+
   it.each([
     ['head', 'capture-input-head-unavailable', 'original verified authoring head is unavailable'],
     ['source', 'source-parent-mismatch', 'upstream source differs from the verified authored parent'],
