@@ -86,6 +86,13 @@ def test_a_declared_platform_skip_passes_and_is_listed_by_test_id(run) -> None:
     ])
 
 
+def test_skips_of_a_lane_no_ci_job_runs_are_listed_under_their_own_header(run) -> None:
+    result = run("import pytest\n\n@pytest.mark.windows_native\ndef test_x():\n    assert False\n\ndef test_y():\n    pass\n")
+    assert result.ret == 0
+    if sys.platform != "win32":  # on Windows the lane's tests run, so nothing is skipped or listed
+        result.stdout.fnmatch_lines(["*NOT RUN BY ANY CI JOB (1)*", "  NO CI test_case.py::test_x: [[]windows_native] Windows is not supported yet*"])
+
+
 def test_a_declared_dependency_skip_passes_where_no_job_provides_it_and_is_listed(run) -> None:
     result = run("import pytest\n\n@pytest.mark.ffmpeg\ndef test_x():\n    pass\n\ndef test_y():\n    pass\n", bare_path_env=True)
     assert result.ret == 0

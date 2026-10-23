@@ -52,15 +52,13 @@ jobs:
   unit-shard:
     name: unit shard ${{ matrix.group }} / 8 (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    # Windows port in progress: feat/runtime-portable
-    continue-on-error: ${{ matrix.os == 'windows-latest' }}
     env:
       # The test run's skip registry (tests/lanes.py) reads this: a lane this job provides fails, not skips, when its dependency is missing.
       ASTRID_CI_JOB: unit-shard-${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
         group: [1, 2, 3, 4, 5, 6, 7, 8]
 
     steps:
@@ -88,10 +86,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg fonts-dejavu-core
         shell: bash
-
-      - name: Install system media tools (Windows)
-        if: runner.os == 'Windows'
-        run: choco install ffmpeg --no-progress
 
       - name: Install package with dev extras
         run: python -m pip install -e '.[dev]'

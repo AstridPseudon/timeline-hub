@@ -51,7 +51,7 @@ FD_LEAK_ALLOWANCE = 64
 REPO = Path(__file__).resolve().parents[1]
 
 UBUNTU = "unit-shard-ubuntu-latest"
-WINDOWS = "unit-shard-windows-latest"
+NO_WINDOWS_CI = "Windows is not supported yet; no Windows CI job until Windows support is real work"
 DARWIN = "darwin-native"
 INTEGRATION = "lanes-integration"  # .github/workflows/lanes.yml
 OPT_IN = "lanes-opt-in"  # .github/workflows/lanes.yml
@@ -114,6 +114,7 @@ class Lane:
     jobs: tuple[str, ...] = ()  # the CI jobs (ASTRID_CI_JOB) that run these tests where `available` holds
     default_off: bool = False  # deselected by addopts; a run that selects the lane must find its dependency
     provision: str = ""  # text each job in `jobs` must contain to provide the dependency
+    no_ci: str = ""  # a plain reason no CI job runs this lane (then `jobs` is empty); the one alternative to a job, besides kind "manual"
 
     @property
     def requires_dependency(self) -> bool:
@@ -128,10 +129,10 @@ LANES: dict[str, Lane] = {
     "posix_native": Lane("platform", "needs POSIX-only process or file descriptor APIs", lambda: os.name == "posix", (UBUNTU,)),
     "non_root": Lane("platform", "needs a non-root user (chmod 000 does not block root)", lambda: not hasattr(os, "geteuid") or os.geteuid() != 0, (UBUNTU,)),
     "linux_native": Lane("platform", "needs Linux-only /proc or pidfd APIs", lambda: sys.platform.startswith("linux"), (UBUNTU,)),
-    "windows_native": Lane("platform", "needs native Windows APIs", lambda: sys.platform == "win32", (WINDOWS,)),
+    "windows_native": Lane("platform", "needs native Windows APIs", lambda: sys.platform == "win32", no_ci=NO_WINDOWS_CI),
     "darwin_native": Lane("platform", "needs native macOS APIs", lambda: sys.platform == "darwin", (DARWIN,), default_off=True),
-    "ffmpeg": Lane("dependency", "needs ffmpeg and ffprobe on PATH", has_media_tools, (UBUNTU, WINDOWS), provision="ffmpeg"),
-    "node": Lane("dependency", "needs Node on PATH", lambda: bool(shutil.which("node")), (UBUNTU, WINDOWS), provision="setup-node"),
+    "ffmpeg": Lane("dependency", "needs ffmpeg and ffprobe on PATH", has_media_tools, (UBUNTU,), provision="ffmpeg"),
+    "node": Lane("dependency", "needs Node on PATH", lambda: bool(shutil.which("node")), (UBUNTU,), provision="setup-node"),
     "font": Lane("dependency", "needs a system TTF font (DejaVu Sans on Linux, Arial on macOS)", has_font, (UBUNTU,), provision="fonts-dejavu-core"),
     "chrome": Lane(
         "dependency", "needs the provisioned Remotion headless Chromium (npx remotion browser ensure)", has_chrome,
@@ -297,6 +298,11 @@ class _SkipGuard:
             terminalreporter.write_sep("-", f"declared skips ({len(self.declared)})")
             for nodeid, name, reason in sorted(self.declared):
                 terminalreporter.write_line(f"SKIPPED [{name}] {nodeid}: {reason}")
+            no_ci = sorted((nodeid, name) for nodeid, name, _ in self.declared if LANES[name].no_ci)
+            if no_ci:
+                terminalreporter.write_sep("-", f"NOT RUN BY ANY CI JOB ({len(no_ci)})")
+                for nodeid, name in no_ci:
+                    terminalreporter.write_line(f"  NO CI {nodeid}: [{name}] {LANES[name].no_ci}")
         self._report_left_out(terminalreporter)
 
     def _report_left_out(self, terminalreporter) -> None:
@@ -390,6 +396,8 @@ def lane_runner(lane: str) -> str:
     jobs = LANES[lane].jobs
     if jobs:
         return "run by CI job " + ", ".join(jobs)
+    if LANES[lane].no_ci:
+        return f"NO CI job runs this lane ({LANES[lane].no_ci})"
     return f"NO CI job runs this lane ({LANES[lane].kind}: run it by hand with -m {lane})"
 
 

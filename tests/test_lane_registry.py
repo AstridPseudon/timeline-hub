@@ -56,8 +56,10 @@ def test_every_lane_is_manual_or_run_by_a_ci_job() -> None:
     for name, lane in lanes.LANES.items():
         if lane.kind == "manual":
             assert not lane.jobs and lane.default_off, f"{name}: a manual lane has no CI job and is deselected by default"
+        elif lane.no_ci:
+            assert not lane.jobs, f"{name} says no CI job runs it but names {lane.jobs}"
         else:
-            assert lane.jobs, f"{name} is declared but no CI job runs it: give it a job or make it a manual lane"
+            assert lane.jobs, f"{name} is declared but no CI job runs it: give it a job, a no_ci reason, or make it a manual lane"
 
 
 @pytest.mark.parametrize("name", [name for name, lane in lanes.LANES.items() if lane.jobs])

@@ -1,5 +1,7 @@
 # Getting Started with Astrid
 
+Windows isn't supported yet; CI runs on Linux and macOS.
+
 Open Terminal on macOS or Linux, or PowerShell on Windows. Install Astrid on
 this computer, then use it at [astrid.haus](https://astrid.haus). Do not
 install or clone `astrid-app` to use Astrid; that repository is for developers.
