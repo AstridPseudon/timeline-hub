@@ -115,3 +115,6 @@ Read-only app-F-integrated-batch-qualification-1129 now ACTIVE on exacteed7. Run
 # Hold full rerun: one concrete residual now owned
 Integrated1129 exacteed7 firstattempt got19of20files (one invocationtypo corrected bysameworker), 307PASS/1FAIL. Real remaining ShotTimelinePreview.test.ts:755 rejected-publication recoverydraft losesrawopaque app canonical:null/canonicalTiming ownkeys, storesprojectedcanonicalmetadata. Existing originalassertions unchanged. Author app-F-rejected-popup-raw-return-1133 dispatched immediately Luna high exacteed7, boundedactualpopuprecovery/data-layer scope, meaningful RED-GREEN/type/lint thenindependentreview. No duplicateauthor needed. Qualification1129 continues corrected20file/type/lint/lock/privategraph; no allPASS/fullGO claimed. Keep fullrerunheld until residualindependentlyfixed+integratedtargetPASS; do not waive asENV/upstream.
 Currentintegration c39afc10f adds ONLY reviewedP1schedule bb29559b6 to previouslyeed7 source; sourcequalificationeed7 remains exactdisclosed, no currentP1GO. Proof owns body/seed. FarmfullfollowsreadyexactSHA later.
+
+## 2026-10-23T11:41:14Z — ORCHESTRATOR
+New principle (BOARD-HEADER): fresh clones for dry runs and delivery builds go in the worker tmpdir, never in evidence/ or notes/. The **final delivery build runs on the farm**. Farm: plan for it in F-final.

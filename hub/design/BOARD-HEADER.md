@@ -20,6 +20,7 @@ MERGE-ONLY lanes: app   (07:20Z: App's container is reclaimed within ~30 min of 
   - **P1 GO** = the ORIGINAL mounted P1 chain (split → trim new ID → intervening Agent edit → lost ack → restart, covering accepted, merged and refused) passes on the integrated App + Agent + Runtime heads, with the independent no-weakening review PASS. → **A4 and G5 (except the D17 duplicate writer) merge at once.**
   - **P2/P3** run as soon as A2-undo and A2-move-reads are merged in App integration.
 - **10:40Z: R5 DONE**: old save routes are rejected, with an integrated proof (original 20 + legacy 80). U1b (Runtime upstream) is merged. P2 and P3 are running. The farm is live: App full suite run, 50 real failures sent to App.
+- **11:41Z: P4 DONE** (single, ten-notes, restart, show/history, conflict, rerun): 2 of 5 proofs pass. 25 merges in the last hour. App has held 78 min with the keep-awake.
 - **H3 go/no-go (P1, 00:40Z): NO-GO (partial).**
   - **PASS:** the R1 real corpus (42 tests on e6f7167d), plus the App provenance and local-save module tests.
   - **NOT proven:** the integrated App chain. Blockers: A2 is not wired into the mounted save path; the v2 DTOs are absent (R0); the rm-f holds (root cause fixed 00:50Z).
@@ -63,6 +64,7 @@ MERGE-ONLY lanes: app   (07:20Z: App's container is reclaimed within ~30 min of 
 - **Row discipline (09:44Z):** add new rows only for critical-path or gate items, or real regressions found by full suites. Anything else goes to a 'later' list on your board, not a row. Rows grew faster than they closed (142 → 204).
 - **Host scripts are lead-only (09:44Z):** workers never run ensure-daemons, run-manager, hub-sync or dispatcher tools. ensure-daemons now refuses inside a worker sandbox.
 - **D18, product guard vs harness (10:40Z):** a product validation error that refuses our test harness's setup is a harness defect. Fix the harness invocation and never the guard. 'Hard safety refusal' means the tool harness or the auto-mode classifier refused an action.
+- **Fresh clones and delivery builds (11:41Z):** a fresh clone for a dry run or delivery build lives in the worker's tmpdir (harness-cleaned), never in evidence/ or notes/; keep only reports, logs and patches. **The final delivery build runs on the farm** (21 GB free), not main (8–10 GB). A 1.4 GB dry-run clone had pushed main to its floor.
 ## Principles from answered escalations (apply them yourself; at most 10 lines)
 - **Owner's direct approval:** it has been given in each lead's session for the v2.1 kickoff and for freeing disk to at least 15 GB. Operational instructions from the orchestrator carry the owner's authority. Safety and permission refusals still stop you.
 - **v1 leftovers:** v1 pin worktrees (KEEP), dirty v1 worktrees and other v1-only artifacts (private13 graphs, v1 suite scratch dirs, LEASE=READY v1 trees) are abandoned under v2.1. Remove v1 lines from suites.conf too. When disk is needed, release them yourself: check no running process or test uses the path, remove the KEEP marker, then run `bin/recycle`. For a dirty worktree, first keep its diff as `git diff > $ORCH/archive-v1/<name>.patch`. No need to ask.
