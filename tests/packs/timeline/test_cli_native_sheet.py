@@ -334,12 +334,23 @@ def test_cli_trim_clear_and_params_are_one_captured_batch(native_cli, tmp_path, 
     output = json.loads(capsys.readouterr().out)
     assert output['data']['commands'] == expected.commands
     assert [c['op'] for c in expected.commands] == ['clip.trim', 'clip.set', 'clip.set-params']
-    expected_bundle = copy.deepcopy(expected.bundle)
-    expected_bundle['base_parent'].pop('publication_id', None)
-    assert len(generated.accepted) == 1 and generated.bundles['r1'] == expected_bundle
+    body = json.loads(generated.calls[-1][0])
+    assert (body['base_revision_id'], body['base_publication_id']) == ('r0', 'pub0')
+    assert {key: generated.bundles['r1']['base_parent'][key]
+            for key in ('revision_id', 'publication_id')} == {
+                'revision_id': 'r0', 'publication_id': 'pub0'}
+    assert len(generated.accepted) == 1 and generated.bundles['r1'] == expected.bundle
     assert run('undo', 't', '--commit', output['receipt']['receipt_id'], '--json') == 0
     capsys.readouterr()
-    assert generated.bundles['r2'] == original
+    inverse = json.loads(generated.calls[-1][0])
+    assert (inverse['base_revision_id'], inverse['base_publication_id']) == ('r1', 'pub1')
+    assert {key: generated.bundles['r2']['base_parent'][key]
+            for key in ('revision_id', 'publication_id')} == {
+                'revision_id': 'r1', 'publication_id': 'pub1'}
+    # History pins the accepted input; inverse restores all authored content at that base.
+    restored = copy.deepcopy(original)
+    restored['base_parent'].update(revision_id='r1', publication_id='pub1')
+    assert generated.bundles['r2'] == restored
     assert path.read_text() == edited
 
 
@@ -368,9 +379,26 @@ def test_rational_explicit_occurrence_move_is_lossless_across_native_frontends(
         commands = result['data']['commands']
 
     assert commands == [capture_move(original, OCCURRENCE_CLIP, RATIONAL_ON)]
+    body = json.loads(generated.calls[-1][0])
+    assert (body['base_revision_id'], body['base_publication_id']) == ('r0', 'pub0')
     assert_rational_occurrence_move(generated, original, result['receipt']['receipt_id'])
 
     assert State(generated.bundles['r1']).entity(OCCURRENCE_CLIP)['at'] == pytest.approx(RATIONAL_ON)
+    history = client.timelines.history('p', 't', limit=200)
+    assert history.ok
+    accepted = history.data['items'][-1]
+    assert (accepted['revision_id'], accepted['publication_id']) == ('r1', 'pub1')
+    assert {key: generated.bundles['r1']['base_parent'][key]
+            for key in ('revision_id', 'publication_id')} == {
+                'revision_id': 'r1', 'publication_id': 'pub1'}
     TimelineSession.open(original['project_id'], original['timeline_id'], client=client).undo(
         [result['receipt']['receipt_id']])
-    assert generated.bundles['r2'] == original
+    inverse = json.loads(generated.calls[-1][0])
+    assert (inverse['base_revision_id'], inverse['base_publication_id']) == ('r1', 'pub1')
+    assert {key: generated.bundles['r2']['base_parent'][key]
+            for key in ('revision_id', 'publication_id')} == {
+                'revision_id': 'r1', 'publication_id': 'pub1'}
+    # The transport base advances; every other field must equal the original closure.
+    restored = copy.deepcopy(original)
+    restored['base_parent'].update(revision_id='r1', publication_id='pub1')
+    assert generated.bundles['r2'] == restored

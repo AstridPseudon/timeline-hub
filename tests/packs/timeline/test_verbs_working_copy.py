@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import json
 import re
+import shlex
 
 import pytest
 
@@ -182,10 +183,20 @@ def test_draft_flow_checkout_edit_status_discard(tmp_path, monkeypatch, capsys):
     assert _run("checkout", "t", "--project", "P") == 0
     out = capsys.readouterr().out.splitlines()
     assert out[0].startswith('working copy "main" of t · from published rev-0 · ')
-    assert "next:" in out and any(line.strip().startswith("publish  timelines status t --project P") for line in out)
+    draft_path = tc.draft_path('p', 't', 'main')
+    commit_command = (
+        'python3 -m astrid.packs.rendering.docs.scripts.timeline_document commit '
+        f'--file {shlex.quote(str(draft_path))} --idempotency-key timeline-edit-1'
+    )
+    assert "next:" in out and f"  commit   {commit_command}" in out
 
     assert _run("status", "t", "--project", "P", "--text") == 0
-    assert capsys.readouterr().out.startswith('WORKING COPY "main" · 0 clips changed')
+    status = capsys.readouterr().out
+    assert status.startswith('WORKING COPY "main" · 0 clips changed')
+    assert status.splitlines()[-1] == (
+        'next: timelines show t --project P --as sheet   ·   '
+        'timelines edit t --project P --clip c22.rocket --on viral'
+    )
 
     assert _run("edit", "t", "--project", "P", "--clip", "R", "--at-word", "viral") == 0
     out = capsys.readouterr().out
@@ -195,6 +206,7 @@ def test_draft_flow_checkout_edit_status_discard(tmp_path, monkeypatch, capsys):
     status = capsys.readouterr().out
     assert status.startswith('WORKING COPY "main" · 1 clip changed vs published rev-0')
     assert "a-rocket" in status
+    assert status.splitlines()[-1] == f'next: {commit_command}'
 
     assert _run("discard", "t", "--project", "P") == 0
     assert "1 clip changed, dropped" in capsys.readouterr().out
