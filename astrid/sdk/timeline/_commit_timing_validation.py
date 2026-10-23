@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import json
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -271,6 +272,32 @@ def _legacy_inputs(
                  for key, field in sorted(exemptions, key=lambda item: (item[0], item[1])))
 
 
+def _timing_basis(bundle: Mapping[str, Any]) -> str:
+    """Retain every timing input, excluding unused tracks and opaque params."""
+    parent = bundle["parent"]
+    timelines = {"parent": {**parent["config"], **parent}}
+    timelines.update({"shot:" + key: shot["internal_timeline"] for key, shot in bundle["shots"].items()})
+    inputs = {}
+    for owner, timeline in timelines.items():
+        clips = timeline.get("clips", [])
+        tracks = {clip.get("track") for clip in clips}
+        inputs[owner] = {
+            "clips": [{"clip": _reference_shape(clip), "declarations": intent._app(clip)} for clip in clips],
+            "tracks": [row for row in timeline.get("tracks", []) if row.get("id") in tracks],
+            "config": {key: value for key, value in timeline.items()
+                       if key not in {"clips", "tracks", "config", "name", "unknown", "meta"}},
+        }
+    source = bundle.get("source_mapping", {})
+    return json.dumps({
+        "project_id": bundle.get("project_id"), "timeline_id": bundle.get("timeline_id"),
+        "parent_owner": bundle.get("base_parent"), "placements": bundle.get("placements"),
+        "source_shots": source.get("shots"), "documents": source.get("pinned_documents"),
+        "shots": {key: {field: value for field, value in shot.items() if field != "internal_timeline"}
+                  for key, shot in bundle["shots"].items()},
+        "timelines": inputs,
+    }, sort_keys=True, allow_nan=False)
+
+
 def validate_candidate_timing(
     candidate: Mapping[str, Any], *, baseline: Mapping[str, Any] | None = None,
     _allow_physical_context_fallback: bool = True,
@@ -379,6 +406,11 @@ def validate_candidate_timing(
     try:
         compile_timing(inputs)
     except TimingCompileError as exc:
+        # An unsupported legacy map is not interpreted or removed. Only an
+        # edit that leaves the complete timing basis untouched can retain it.
+        if ("unsupported explicit map" in str(exc) and baseline is not None
+                and _timing_basis(candidate) == _timing_basis(baseline)):
+            return
         if (not _allow_physical_context_fallback
                 or not any(marker in str(exc) for marker in (
                     "ambiguous cut identity", "clip starts before its occurrence"))
