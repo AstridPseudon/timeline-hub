@@ -1,4 +1,4 @@
-"""Requester render handoff; generated acceptance/admission remain transport fakes."""
+"""Requester render handoff; includes a real Runtime admission control."""
 from __future__ import annotations
 
 import copy
@@ -52,11 +52,11 @@ def requester(tmp_path):
     session.client.tasks = RemoteTasks(transport)
     renders = []
 
-    def admit(**body):
+    def create(**body):
         renders.append(copy.deepcopy(body))
         return DomainResult.success({'task_id': 'render-1'}, idempotency_key=body['idempotency_key'])
 
-    session.client.tasks.admit = admit
+    session.client.tasks.create = create
     return session, generated, proposal, renders, association
 
 
@@ -112,17 +112,17 @@ def test_requester_lost_commit_ack_retries_identical_v2_flight_after_restart(tmp
 
 def test_lost_render_ack_replays_original_acceptance_after_peer_head_moves(tmp_path):
     session, generated, proposal, renders, _ = requester(tmp_path)
-    admit = session.client.tasks.admit
+    create = session.client.tasks.create
 
     def lose_ack(**body):
-        admit(**body)
+        create(**body)
         raise WorkspaceClientError(0, 'transport_error', 'lost render acknowledgement')
 
-    session.client.tasks.admit = lose_ack
+    session.client.tasks.create = lose_ack
     with pytest.raises(WorkspaceClientError, match='lost render acknowledgement'):
         publish(session, proposal)
     generated.head = {'revision_id': 'peer', 'publication_id': 'peer-pub'}
-    session.client.tasks.admit = admit
+    session.client.tasks.create = create
     result = publish(session, proposal)
     assert result['data']['accepted_revision_id'] == 'r1'
     assert len(generated.accepted) == 1
@@ -243,3 +243,78 @@ def test_landed_peer_state_and_original_merge_spelling_survive_replay(tmp_path, 
     assert result['data']['rebased_onto'] == {'revision_id': 'peer', 'publication_id': 'peer-pub'}
     assert publish(session, proposal) == result
     assert len(generated.accepted) == 1 and renders[0] == renders[1]
+
+
+@pytest.mark.integration
+def test_requester_render_reaches_real_task_admission_after_commit(real_runtime, tmp_path, monkeypatch):
+    """The mounted requester path uses the real RemoteTasks admission method."""
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+    from tests.helpers.runtime import use_runtime, vendored_runtime_commit
+
+    runtime = use_runtime(commit=vendored_runtime_commit())
+    monkeypatch.syspath_prepend(str(runtime / "tests"))
+    from timeline_commit_film_fixture import build_film_fixture
+
+    fixture = build_film_fixture(tmp_path)
+    daemon = real_runtime(
+        fixture.duplicate_root, support_root=tmp_path / "support",
+        commit=vendored_runtime_commit(), authoring_profile="astrid",
+    )
+    daemon.service.register_capability({
+        "capability_id": "rendering.render", "definition_digest": DIGEST, "status": "ready",
+    })
+    client = open_client(daemon)
+    from astrid.sdk.remote import RemoteTasks
+    from astrid.sdk.workspace_client import WorkspaceClient
+
+    assert isinstance(client._remote._transport, WorkspaceClient)
+    assert isinstance(client.tasks, RemoteTasks)
+    session = TimelineSession.open(
+        fixture.project_id, fixture.timeline_id, client=client,
+        outbox_path=tmp_path / "real-render-outbox.json",
+    )
+    state = session._state()
+    bundle = session._bundle(state)
+    clip = bundle["parent"]["clips"][0]
+    command = capture_move(bundle, f"parent/clip:{clip['id']}", 2)
+    body = {
+        "api_version": 1, "project_id": fixture.project_id, "timeline_id": fixture.timeline_id,
+        "base_revision_id": state["base"]["revision_id"],
+        "base_publication_id": state["base"]["publication_id"],
+        "commands": [command], "label": "Real requester render control",
+        "steps": [{"id": "edit", "label": "Real requester render control", "intent": "control",
+                    "tags": [], "command_ordinals": [0], "patch": []}],
+        "merge": "atomic", "reads": [], "dry_run": False, "source": {"via": "python"},
+    }
+    proposal = {
+        "admitted_target": {"project_id": fixture.project_id, "timeline_id": fixture.timeline_id,
+                            **state["base"]},
+        "producer": {"attempt_id": "attempt"},
+    }
+
+    def requester_commit(_attempt_id, _proposal, *, idempotency_key, **_options):
+        result = client.timelines.commit(
+            fixture.project_id, fixture.timeline_id, body, idempotency_key=idempotency_key,
+        )
+        assert result.ok, result.as_dict()
+        return result
+
+    client.tasks.publish_timeline_render = requester_commit
+    first = publish_authoring_proposal(
+        client, proposal=proposal, timeline_id=fixture.timeline_id, expected_version=1,
+        render_capability_digest=DIGEST, output_name="real.mp4", selector="rendering.ffmpeg",
+        requester_session=session, idempotency_key="real-publish",
+    )
+    second = publish_authoring_proposal(
+        client, proposal=proposal, timeline_id=fixture.timeline_id, expected_version=1,
+        render_capability_digest=DIGEST, output_name="real.mp4", selector="rendering.ffmpeg",
+        requester_session=session, idempotency_key="real-publish",
+    )
+    assert first["render_task_id"] == second["render_task_id"]
+    assert daemon.service.store.conn.execute(
+        "SELECT COUNT(*) FROM tasks WHERE capability='rendering.render'"
+    ).fetchone()[0] == 1
+    task = daemon.service.task(first["render_task_id"])["task"]
+    assert task["spec"]["spec"]["params"]["selector"] == "rendering.ffmpeg"
+    assert task["spec"]["spec"]["params"]["output_name"] == "real.mp4"
+    assert task["spec"]["spec"]["params"]["canonical_revision"]["revision_id"] == first["data"]["accepted_revision_id"]

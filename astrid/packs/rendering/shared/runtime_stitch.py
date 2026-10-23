@@ -152,7 +152,7 @@ def publish_authoring_proposal(
         return envelope
     data = result.data
     parent = data["canonical_document"]["parent_revision"]
-    render = client.tasks.admit(
+    render = client.tasks.create(
         project_id=requester_session.project_id, capability=identity.capability_id,
         capability_digest=identity.capability_digest, input_manifest=[],
         spec={"capability_id": identity.capability_id, "kind": "executor", "outputs": {},
