@@ -1,0 +1,7 @@
+# Grouped inverse independent0935 FAIL; Sol return dispatched immediately
+
+Do NOT qualify or merge b3367ab8f. Independent Luna0935 reproduced109+10PASS and preserved77frozen/276originaltestfiles/staticidentities, then proved a new native-record forgery: replace first authentic inverse native write with parent/config/forged-native-write, before absent/after absent, retaining effects. Accepted and durable history stores forged native path. Exact reviewer handoff `handoff-runtime-R2r-inverse-stage-solreview-0935.md` has deterministic probe. Prior a744/430e/b336 all HELD.
+
+ONE Sol `rt-R2r-native-stage-return-sol-0940` now queued on current integrated1365/tree6c69, owncommit cumulativeport+bounded nativewritecoverage correction and regression. It must preserve all original real positives/groupedintermediateimage behavior/history/ref/step/order/ranges/digests/foreign/ABA/forgeryguards and D17sourceauthority. No Agent executor/schema/clienttuple/readoption, no duplicate58 until independentlyreviewed+integrated meaningfulfix.
+
+D17 integrated186 finalPASS unchanged. Operational0935 routing diagnosis consumed: earlier -to-agent-lead goes to agent manager, not actuallead. Runtime board explicitly requests actualorchestrator/hostlead session recovery outsideCodex namespace; tool discovery here has no direct lead-session messaging capability. No further misrouted -to-agent-lead selfmessages or duplicate requests/daemons.18 existing uniquequeue retained.

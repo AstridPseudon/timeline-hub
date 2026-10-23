@@ -14,6 +14,7 @@ Clock: **H0 = 2026-10-22T21:40Z** (H3 = 00:40Z, H6 = 03:40Z, H9 = 06:40Z). Plan:
   - R5 is drafted on a branch.
 - **H9 (06:43Z):** P5 DONE and P4 partial (1 of 5 proofs). 105 of 142 rows merged. ETA 10:00–16:00Z on 24 Oct, so per the cut order **V4 is CUT**. **G4 DONE, and the R5 gate is A3 only.** App's machine is reclaimed hourly (keep-awake denied, owner to-do #1); the Proof lane may author App-repo rows as failover.
 MERGE-ONLY lanes: app   (07:20Z: App's container is reclaimed within ~30 min of each wake. App merges only; app2 authors App product rows as failover. Remove when the owner allows App's keep-awake.)
+- **Upstream drift (09:40Z):** Runtime upstream is now a98fbc2f9 (macOS CI fixes plus a skip registry; 3 conflicts) → U1b dispatched. Agent, App and Composition are unchanged.
 - **H3 go/no-go (P1, 00:40Z): NO-GO (partial).**
   - **PASS:** the R1 real corpus (42 tests on e6f7167d), plus the App provenance and local-save module tests.
   - **NOT proven:** the integrated App chain. Blockers: A2 is not wired into the mounted save path; the v2 DTOs are absent (R0); the rm-f holds (root cause fixed 00:50Z).
