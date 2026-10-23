@@ -4,7 +4,7 @@
  * parent gestures without copying that journey's broad fixture or helpers.
  */
 import { expect, type Page, type Request, type Response } from '@playwright/test';
-import { THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
+import { sha256Hex, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 import { ASTRID_PYTHON } from './support/astrid.ts';
 import { test as appTest } from './support/app.ts';
 import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
@@ -53,6 +53,13 @@ function canonical(value: unknown): string {
     return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical((value as JsonObject)[key])}`).join(',')}}`;
   }
   return JSON.stringify(value);
+}
+
+function digest(value: unknown): string {
+  const json = JSON.stringify(value, (_key, item) => item && typeof item === 'object' && !Array.isArray(item)
+    ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0))
+    : item);
+  return sha256Hex(new TextEncoder().encode(json));
 }
 
 async function revisionBody(harness: DirectHarness, revisionId: string): Promise<JsonObject> {
@@ -105,9 +112,11 @@ async function history(harness: DirectHarness, seed: ThreeProductsSeed): Promise
 function wireFor(page: Page): TourWire {
   const wire: TourWire = { posts: [], legacy: [] };
   page.on('request', (request) => {
-    if (request.method() !== 'POST') return;
     const pathname = new URL(request.url()).pathname;
-    if (LEGACY_WRITES.test(pathname) || pathname.includes('/composition-revisions')) wire.legacy.push(pathname);
+    if (!['GET', 'HEAD'].includes(request.method())
+      && (LEGACY_WRITES.test(pathname) || pathname.includes('/composition-revisions'))) {
+      wire.legacy.push(`${request.method()} ${pathname}`);
+    }
   });
   return wire;
 }
@@ -146,6 +155,25 @@ function clipById(document: CanonicalDocument, clipId: string): JsonObject {
   return clip!;
 }
 
+function assertCanonicalClosure(document: CanonicalDocument, harness: DirectHarness, seed: ThreeProductsSeed): void {
+  expect(document.schema_version).toBe(1);
+  expect(document.project_id).toBe(harness.seed.projectId);
+  expect(document.timeline_id).toBe(seed.timelineId);
+  expect(document.parent_revision.content_digest).toBe(digest(document.parent_revision.payload));
+  for (const shot of document.shot_revisions) expect(shot.content_digest).toBe(digest(shot.payload));
+  for (const internal of document.internal_timeline_revisions) expect(internal.content_digest).toBe(digest(internal.payload));
+  for (const pin of document.dependency_manifest.shots) {
+    const shot = document.shot_revisions.find((candidate) => candidate.revision_id === pin.revision_id);
+    expect(shot, `manifest shot ${pin.revision_id}`).toBeTruthy();
+    expect(pin.content_digest).toBe(shot!.content_digest);
+  }
+  for (const pin of document.dependency_manifest.internal_timelines) {
+    const internal = document.internal_timeline_revisions.find((candidate) => candidate.revision_id === pin.revision_id);
+    expect(internal, `manifest internal ${pin.revision_id}`).toBeTruthy();
+    expect(pin.content_digest).toBe(internal!.content_digest);
+  }
+}
+
 function assertOnlyParentClipFieldsChanged(before: CanonicalDocument, after: CanonicalDocument, clipIds: string[], fields: string[]): void {
   const beforeParent = before.parent_revision.payload as unknown as JsonObject;
   const afterParent = after.parent_revision.payload as unknown as JsonObject;
@@ -162,12 +190,15 @@ function assertOnlyParentClipFieldsChanged(before: CanonicalDocument, after: Can
       return;
     }
     if (canonical(left) === canonical(right)) return;
-    const match = /\.clips\[(\d+)\]\.(.+)$/.exec(path);
+    const match = /(?:\.config)?\.clips\[(\d+)\]\.(.+)$/.exec(path);
     if (!match) throw new Error(`unexpected canonical delta at ${path}`);
     const clip = (beforeParent.clips as Array<JsonObject>)[Number(match[1])];
     expect(allowed.has(`${String(clip.id)}:${match[2]}`), `only intended field changed at ${path}`).toBe(true);
   };
   compare(before.parent_revision.payload, after.parent_revision.payload, 'parent');
+  const beforeConfig = beforeParent.config as JsonObject;
+  const afterConfig = afterParent.config as JsonObject;
+  if (Array.isArray(beforeConfig.clips)) expect(afterConfig.clips).toEqual(afterParent.clips);
   expect(before.shot_revisions).toEqual(after.shot_revisions);
   expect(before.internal_timeline_revisions).toEqual(after.internal_timeline_revisions);
   expect(before.dependency_manifest).toEqual(after.dependency_manifest);
@@ -202,26 +233,37 @@ function assertRawTransitionCleared(before: CanonicalDocument, after: CanonicalD
   }
 }
 
-function assertReplyShape(post: CommitPost, before: HeadPin): CommitAcceptedMutation {
+function assertReplyShape(post: CommitPost, before: HeadPin, modern = true): CommitAcceptedMutation {
   expect(post.response.status(), JSON.stringify(post.json)).toBe(200);
   const envelope = object(post.json, 'commit reply');
   const data = object(envelope.data, 'commit reply data');
   expect(['accepted', 'merged']).toContain(data.status);
   expect(data.base_revision_id).toBe(before.revision_id);
   expect(data.base_publication_id).toBe(before.publication_id);
+  expect(data.previous_revision_id).toBe(before.revision_id);
+  expect(data.previous_publication_id).toBe(before.publication_id);
   expect(data.accepted_revision_id).toEqual(expect.any(String));
   expect(data.canonical_document).toBeTruthy();
   expect(data.document_digest).toEqual(expect.any(String));
-  expect(data.merge_mode).toEqual(expect.any(String));
-  expect(data.steps).toEqual(expect.any(Array));
+  expect(data.commands).toEqual(post.body.commands);
+  expect(data.id_map).toEqual(expect.any(Object));
+  expect(data.provider_version).toEqual(expect.any(String));
+  expect(data.compiler_version).toEqual(expect.any(String));
+  expect(data.publisher).toEqual(expect.any(String));
+  if (modern) {
+    expect(data.merge_mode).toBe(post.body.merge ?? 'fields');
+    expect(data.steps).toEqual(expect.any(Array));
+  }
   const receipt = object(envelope.receipt, 'accepted receipt');
   expect(receipt.receipt_id).toBe(post.key);
+  expect(receipt.idempotency_key).toBe(post.key);
   expect(receipt.result).toEqual(envelope.data);
-  if (data.status === 'merged') expect(data.rebased_onto).toMatchObject({ revision_id: expect.any(String), publication_id: expect.any(String) });
+  if (data.status === 'accepted') expect(data.rebased_onto).toBeNull();
+  else expect(data.rebased_onto).toMatchObject({ revision_id: expect.any(String), publication_id: expect.any(String) });
   return envelope as unknown as CommitAcceptedMutation;
 }
 
-function assertRequestV2(post: CommitPost, before: HeadPin): void {
+function assertRequestV2(post: CommitPost, before: HeadPin, modern = true): void {
   expect(post.key).toBeTruthy();
   expect(post.body).toMatchObject({
     api_version: 1,
@@ -232,6 +274,7 @@ function assertRequestV2(post: CommitPost, before: HeadPin): void {
     commands: expect.any(Array),
   });
   expect(post.body.commands.length).toBeGreaterThan(0);
+  if (!modern) return;
   expect(post.body.label).toEqual(expect.any(String));
   expect(post.body.steps).toEqual(expect.any(Array));
   expect(post.body.steps!.length).toBeGreaterThan(0);
@@ -241,35 +284,65 @@ function assertRequestV2(post: CommitPost, before: HeadPin): void {
     expect(step.patch).toEqual(expect.any(Array));
     if (step.reads !== undefined) expect(step.reads).toEqual(expect.any(Array));
   }
-  expect(['fields', 'atomic']).toContain(post.body.merge ?? 'fields');
+  expect(post.body.merge).toBe('atomic');
+  expect(Object.hasOwn(post.body, 'reads'), 'the mounted document-patch fallback omits request reads').toBe(false);
   expect(post.body.dry_run ?? false).toBe(false);
-  if (post.body.reads !== undefined) expect(post.body.reads).toEqual(expect.any(Array));
+  for (const step of post.body.steps!) {
+    expect(Object.hasOwn(step, 'reads'), 'the mounted document-patch fallback omits step reads').toBe(false);
+  }
+  expect(post.body.source).toEqual({ via: 'app' });
+}
+
+function assertDocumentPatchRequest(body: CommitRequest, changes: unknown[]): void {
+  expect(body.commands).toEqual([{
+    schema_version: 1,
+    op: 'doc.patch',
+    version: '1',
+    select: null,
+    args: { changes },
+  }]);
+  expect(body.steps).toHaveLength(1);
+  expect(body.steps![0]).toMatchObject({
+    label: 'Edit timeline',
+    intent: 'Save local editor changes',
+    tags: [],
+    command_ordinals: [0],
+    patch: changes,
+  });
 }
 
 function assertHistoryMetadata(entry: HistoryEntry, post: CommitPost, result: CommitAcceptedMutation): void {
+  const modern = Object.hasOwn(post.body, 'steps');
   expect(entry.intent).toBe('recorded');
   expect(entry.records).not.toBeNull();
   expect(entry.publication_id).toBe(post.key);
   expect(entry.receipt).toEqual(result.receipt);
   expect(entry.publisher).toBe(result.data.publisher);
-  expect(entry.label).toBe(post.body.label);
-  expect(entry.merge).toBe(post.body.merge ?? 'fields');
-  expect(entry.merge_mode).toBe(result.data.merge_mode);
-  expect(entry.steps).toEqual(result.data.steps);
-  expect(entry.records!.steps).toEqual(result.data.steps);
+  if (modern) {
+    expect(entry.label).toBe(post.body.label);
+    expect(entry.merge).toBe(post.body.merge ?? 'fields');
+    expect(entry.merge_mode).toBe(result.data.merge_mode);
+  }
+  expect(entry.previous).toEqual({ revision_id: result.data.previous_revision_id, publication_id: result.data.previous_publication_id });
+  if (modern) {
+    expect(entry.steps).toEqual(result.data.steps);
+    expect(entry.records!.steps).toEqual(result.data.steps);
+  }
   expect(entry.records!.commands.map((record) => record.command)).toEqual(post.body.commands);
   for (const step of entry.records!.steps ?? []) {
     expect(step.patch).toEqual(expect.any(Array));
     expect(step.command_ordinals.length).toBeGreaterThan(0);
-    if (step.dependencies !== undefined) expect(step.dependencies).toEqual(expect.any(Array));
+    expect(step.dependencies).toEqual(expect.any(Array));
+    if (modern) expect(step.dependencies!.length).toBeGreaterThan(0);
   }
   for (const record of entry.records!.commands) {
     expect(record.writes.length).toBeGreaterThan(0);
     expect(record.reads.length).toBeGreaterThan(0);
     expect(record.bindings.length).toBeGreaterThan(0);
     expect(record.dependencies).toEqual(expect.any(Array));
+    if (modern) expect(record.dependencies.length).toBeGreaterThan(0);
   }
-  if (post.body.reads !== undefined) expect(entry.reads).toEqual(post.body.reads);
+  if (modern) expect(Object.hasOwn(entry, 'reads'), 'history preserves omitted request reads').toBe(false);
 }
 
 function assertHistoryProof(
@@ -283,9 +356,16 @@ function assertHistoryProof(
 ): void {
   assertHistoryMetadata(entry, post, result);
   const patches = (entry.records!.steps ?? []).flatMap((step) => step.patch);
+  const requestedChanges = post.body.commands[0]!.args.changes as unknown[];
+  expect(patches).toEqual(requestedChanges.map((change) => {
+    const value = object(change, 'submitted document patch');
+    const path = value.path as string[];
+    return { ...value, path: ['config', ...path] };
+  }));
   for (const clipId of clipIds) {
     for (const field of fields) {
-      const patch = patches.find((change) => change.ref === `parent/clip:${clipId}` && change.path.at(-1) === field);
+      const patch = patches.find((change) => change.ref === 'parent'
+        && canonical(change.path) === canonical(['config', 'clips', `id:${clipId}`, field]));
       expect(patch, `authoritative step patch for ${clipId}.${field}`).toBeTruthy();
       const beforeValue = clipById(original, clipId)[field];
       expect(patch!.before).toEqual(Object.hasOwn(clipById(original, clipId), field)
@@ -295,6 +375,19 @@ function assertHistoryProof(
       if (patch!.op === 'remove') expect(Object.hasOwn(clipById(after, clipId), field)).toBe(false);
     }
   }
+}
+
+function assertAuthoritativeCanonical(
+  result: CommitAcceptedMutation,
+  actual: CanonicalDocument,
+  harness: DirectHarness,
+  seed: ThreeProductsSeed,
+): void {
+  const document = result.data.canonical_document;
+  assertCanonicalClosure(document, harness, seed);
+  expect(document.parent_revision.revision_id).toBe(result.data.accepted_revision_id);
+  expect(result.data.document_digest).toBe(digest(document));
+  expect(actual).toEqual(document);
 }
 
 function assertNoNewLegacyEntries(before: HistoryPage, after: HistoryPage): void {
@@ -357,11 +450,14 @@ async function proveGestureAndUndo(
   assertAfter: (after: CanonicalDocument) => void,
   assertUndo: (undone: CanonicalDocument) => void,
 ): Promise<void> {
+  assertCanonicalClosure(original, harness, seed);
   const post = await commitFromGesture(page, wire, gesture);
   assertRequestV2(post, before.head);
   assertCommands(post.body);
   const result = assertReplyShape(post, before.head);
   const after = result.data.canonical_document;
+  const actualAfter = await canonicalDocumentAt(harness, seed, result.data.accepted_revision_id);
+  assertAuthoritativeCanonical(result, actualAfter, harness, seed);
   assertOnlyParentClipFieldsChanged(original, after, expectedClipIds, expectedFields);
   assertAfter(after);
   const committed = await history(harness, seed);
@@ -369,6 +465,7 @@ async function proveGestureAndUndo(
   expect(entry, 'history joins by receipt/publication id').toBeTruthy();
   assertHistoryProof(entry!, post, result, original, after, expectedClipIds, expectedFields);
   assertNoNewLegacyEntries(before, committed);
+  expect(committed.items.filter((candidate) => !before.items.some((known) => known.publication_id === candidate.publication_id))).toHaveLength(1);
   expect(committed.head.revision_id).toBe(result.data.accepted_revision_id);
   expect(committed.head.publication_id).toBe(post.key);
   await assertReloaded(page, harness, result.data.accepted_revision_id);
@@ -377,9 +474,11 @@ async function proveGestureAndUndo(
   const inverse = await commitFromGesture(page, wire, async () => {
     await page.getByRole('button', { name: 'Undo', exact: true }).click();
   });
-  assertRequestV2(inverse, pinOf(result));
-  const inverseResult = assertReplyShape(inverse, pinOf(result));
+  assertRequestV2(inverse, pinOf(result), false);
+  const inverseResult = assertReplyShape(inverse, pinOf(result), false);
   const undone = inverseResult.data.canonical_document;
+  const actualUndone = await canonicalDocumentAt(harness, seed, inverseResult.data.accepted_revision_id);
+  assertAuthoritativeCanonical(inverseResult, actualUndone, harness, seed);
   assertCanonicalRestored(original, undone);
   assertUndo(undone);
   expect(inverse.body.commands).toEqual([expect.objectContaining({ op: 'timeline.inverse', args: { publications: [post.key] } })]);
@@ -389,6 +488,7 @@ async function proveGestureAndUndo(
   assertHistoryMetadata(inverseEntry!, inverse, inverseResult);
   expect(inverseEntry?.records?.undo_of).toEqual([post.key]);
   assertNoNewLegacyEntries(before, finalHistory);
+  expect(finalHistory.items.filter((candidate) => !before.items.some((known) => known.publication_id === candidate.publication_id))).toHaveLength(2);
   expect(finalHistory.head).toEqual(pinOf(inverseResult));
   expect(wire.legacy, 'mounted Undo has no old-route write').toEqual([]);
 }
@@ -413,9 +513,13 @@ test('P2 mounted single parent move: v2 commit, exact field delta, reload and gu
       await page.mouse.up();
     },
     [seed3.appClipId], ['at'],
-    (body) => expect(body.commands).toEqual([expect.objectContaining({
-      op: 'clip.move', select: `parent/clip:${seed3.appClipId}`, args: { on: 5 },
-    })]),
+    (body) => assertDocumentPatchRequest(body, [{
+      op: 'set',
+      ref: 'parent',
+      path: ['clips', `id:${seed3.appClipId}`, 'at'],
+      before: { state: 'present', value: from },
+      value: 5,
+    }]),
     (after) => expect(clipById(after, seed3.appClipId).at).toBe(5),
     (undone) => expect(clipById(undone, seed3.appClipId).at).toBe(from));
 });
@@ -428,11 +532,12 @@ test('P2 mounted transition None single: raw clear preserves opaque data/order a
   await proveGestureAndUndo(page, harness, seed3, wire, before, original,
     () => clearTransition(page, seed3.transitionClipId),
     [seed3.transitionClipId], ['transition'],
-    (body) => {
-      expect(body.commands).toHaveLength(1);
-      expect(body.commands[0]).toMatchObject({ op: 'clip.set', select: `parent/clip:${seed3.transitionClipId}` });
-      expect(body.commands[0]!.args).toEqual({ values: {}, clear: ['transition'] });
-    },
+    (body) => assertDocumentPatchRequest(body, [{
+      op: 'remove',
+      ref: 'parent',
+      path: ['clips', `id:${seed3.transitionClipId}`, 'transition'],
+      before: { state: 'present', value: clipById(original, seed3.transitionClipId).transition },
+    }]),
     (after) => assertRawTransitionCleared(original, after, [seed3.transitionClipId]),
     (undone) => expect(clipById(undone, seed3.transitionClipId).transition).toEqual(clipById(original, seed3.transitionClipId).transition));
 });
@@ -445,14 +550,12 @@ test('P2 mounted transition None bulk: atomic raw clears preserve unknown fields
   const ids = [seed3.appClipId, seed3.transitionClipId];
   await proveGestureAndUndo(page, harness, seed3, wire, before, original,
     () => clearTransitionBulk(page, seed3), ids, ['transition'],
-    (body) => {
-      expect(body.commands).toHaveLength(ids.length);
-      for (const command of body.commands) {
-        expect(command).toMatchObject({ op: 'clip.set', select: expect.stringMatching(/^parent\/clip:/) });
-        expect(command.args).toEqual({ values: {}, clear: ['transition'] });
-      }
-      expect(body.commands.map((command) => command.select).sort()).toEqual(ids.map((id) => `parent/clip:${id}`).sort());
-    },
+    (body) => assertDocumentPatchRequest(body, ids.map((id) => ({
+      op: 'remove',
+      ref: 'parent',
+      path: ['clips', `id:${id}`, 'transition'],
+      before: { state: 'present', value: clipById(original, id).transition },
+    }))),
     (after) => assertRawTransitionCleared(original, after, ids),
     (undone) => {
       for (const id of ids) expect(clipById(undone, id).transition).toEqual(clipById(original, id).transition);
