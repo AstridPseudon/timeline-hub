@@ -7,7 +7,7 @@ import { expect, type Page, type TestInfo } from '@playwright/test';
 import { writeFileSync } from 'node:fs';
 import { harnessUnavailableReason, runtimePython, startDirectHarness, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 import { bootstrapMountedBaseline, commandOutboxes, expectConnected, openApp, openSeededTimeline, test as appTest, UI } from './support/app.ts';
-import { hasFreshSettledOwner, isFreshlyConnected, readExistingReadonly, type ReadonlyOutboxRead } from './mounted-readiness-safety.ts';
+import { hasFreshSettledOwner, isFreshlyConnected, readExistingReadonly, readMountedBootstrapFailure, type MountedBootstrapFailure, type ReadonlyOutboxRead } from './mounted-readiness-safety.ts';
 import { createD21Environment, observeD21Harness, observeD21Page, persistD21Environment, recordD21Error, recordD21Readiness, recordD21Stage, type D21EnvironmentArtifact } from './d21-environment.ts';
 
 const CEILING = { timeout: 90_000 };
@@ -44,7 +44,7 @@ interface MountedReadinessDiagnostics {
   stages: StageSnapshot[];
   notRunStages: string[];
   routeStatusErrors: Array<{ stage: string; route: string; status: number; code: string; class: 'route-status' }>;
-  failure?: { stage: string; code: 'assertion' | 'timeout' | 'setup'; class: 'assertion' | 'timeout' | 'setup' };
+  failure?: MountedBootstrapFailure | { stage: string; code: 'assertion' | 'timeout' | 'setup'; class: 'assertion' | 'timeout' | 'setup' };
 }
 
 function observeHarnessEnvironment(environment: D21EnvironmentArtifact, harness: DirectHarness): void {
@@ -167,6 +167,8 @@ function persistDiagnostics(testInfo: TestInfo, diagnostics: MountedReadinessDia
 }
 
 function failureProjection(error: unknown, stage: string): MountedReadinessDiagnostics['failure'] {
+  const bootstrapFailure = readMountedBootstrapFailure();
+  if (bootstrapFailure && stage === 'before-load') return bootstrapFailure;
   const timeout = error instanceof Error && error.name === 'TimeoutError';
   return { stage, code: timeout ? 'timeout' : stage === 'before-load' ? 'setup' : 'assertion', class: timeout ? 'timeout' : stage === 'before-load' ? 'setup' : 'assertion' };
 }

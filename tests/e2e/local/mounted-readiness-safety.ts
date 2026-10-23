@@ -2,6 +2,38 @@ export type ReadonlyOutboxRead<T> =
   | { status: 'verified'; value: T }
   | { status: 'unknown'; reason: 'unavailable' | 'read-rejected' };
 
+export type MountedBootstrapStage = 'context' | 'navigation' | 'connection' | 'selection' | 'outbox-read';
+
+export type MountedBootstrapFailure = {
+  stage: MountedBootstrapStage;
+  code: 'mounted-bootstrap';
+  class: 'mounted-bootstrap';
+};
+
+export class MountedBootstrapError extends Error {
+  readonly failure: MountedBootstrapFailure;
+
+  constructor(failure: MountedBootstrapFailure, cause: unknown) {
+    super(`mounted baseline ${failure.stage} failed`, { cause });
+    this.name = 'MountedBootstrapError';
+    this.failure = failure;
+  }
+}
+
+let lastMountedBootstrapFailure: MountedBootstrapFailure | undefined;
+
+export function clearMountedBootstrapFailure(): void {
+  lastMountedBootstrapFailure = undefined;
+}
+
+export function recordMountedBootstrapFailure(error: unknown): void {
+  lastMountedBootstrapFailure = error instanceof MountedBootstrapError ? error.failure : undefined;
+}
+
+export function readMountedBootstrapFailure(): MountedBootstrapFailure | undefined {
+  return lastMountedBootstrapFailure;
+}
+
 export async function readExistingReadonly<T>(
   databaseExists: () => Promise<boolean>,
   readExisting: () => Promise<T>,
