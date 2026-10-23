@@ -567,13 +567,13 @@ def _validate_inputs(state, record, records):
             raise CommandError('inverse selection changed', kind='selection_changed', ref=selected['owner'])
     created = {item['ref'] for item in record['created']}
     for binding in record.get('bindings', []):
-        if 'physical_ref' in binding:
-            # Physical bindings are authenticated guard inputs, not native
-            # entity aliases to re-resolve after historical reversal.
+        if 'physical_ref' in binding and isinstance(records, AcceptedRecords):
+            # Accepted physical bindings use the resolver required by
+            # apply_inverse, not entity aliases after historical reversal.
             continue
         ref = binding['ref']
         if (ref not in created and not _authenticated_timeline_scope_binding(record, binding)
-                and 'physical_ref' not in binding and state.entity(ref, optional=True) is None):
+                and state.entity(ref, optional=True) is None):
             if sites is None:
                 sites = proven_sites()
             if ref not in sites[2]:
