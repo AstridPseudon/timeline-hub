@@ -1,15 +1,12 @@
 from __future__ import annotations
 
 import copy
-import importlib.util
 import json
-import sys
-from contextlib import nullcontext
-from pathlib import Path
 
 import pytest
 
 from astrid.packs.timeline import cli as timeline_cli
+from astrid.sdk.contracts import DomainResult, ErrorObject
 from astrid.sdk.timeline import store as timeline_store
 from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline_checkout import Checkout
@@ -22,8 +19,8 @@ def _json_result(capsys):
 
 
 @pytest.fixture
-def document_commit(public_session, monkeypatch, tmp_path):  # noqa: F811 - imported fixture
-    """Run the supported detached-document commit against the public fixture closure."""
+def normal_commit(public_session, tmp_path):  # noqa: F811 - imported fixture
+    """Run the normal timeline CLI commit against the public fixture closure."""
     opened, realm, sent, client, _ = public_session
     document = copy.deepcopy(realm.documents[realm.head["revision_id"]])
     candidate = bundle_from_document(document)
@@ -31,26 +28,16 @@ def document_commit(public_session, monkeypatch, tmp_path):  # noqa: F811 - impo
     path = tmp_path / "timeline.json"
     path.write_text(json.dumps(candidate), encoding="utf-8")
 
-    script = Path(__file__).parents[3] / "astrid/packs/rendering/docs/scripts/timeline_document.py"
-    spec = importlib.util.spec_from_file_location("timeline_document_cli_test", script)
-    helper = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(helper)
+    parser = timeline_cli.build_parser(client)
 
-    class Workspace:
-        def get_project_media_selection(self, *_args, **_kwargs):
-            raise AssertionError("the unchanged fixture must not resolve media")
+    def run(*args, message="Timeline edit", as_json=True):
+        argv = ["commit", "film", "--project", "project-1", "--file", str(path), "-m", message, *args]
+        if as_json:
+            argv.append("--json")
+        parsed = parser.parse_args(argv)
+        return parsed.handler(parsed)
 
-        def get_project_verified_media(self, *_args, **_kwargs):
-            raise AssertionError("the unchanged fixture must not verify media")
-
-    monkeypatch.setattr(helper.AstridClient, "open_from_launcher", lambda **_kwargs: nullcontext(client))
-    monkeypatch.setattr(helper, "workspace", lambda: Workspace())
-
-    def run(*args):
-        monkeypatch.setattr(sys, "argv", [str(script), "commit", "--file", str(path), *args])
-        helper.main()
-
-    return run, path, realm, sent, opened, helper
+    return run, path, realm, sent, opened, client
 
 
 def test_status_absent_draft_reports_head_without_creating(tmp_path, monkeypatch, capsys) -> None:
@@ -223,73 +210,106 @@ def test_checkout_fresh_refuses_parent_config_edit_when_clip_diff_is_empty(tmp_p
     assert calls == []
 
 
-def test_document_commit_forwards_key_through_the_authenticated_closure(document_commit, capsys) -> None:
-    run, path, realm, sent, _, _ = document_commit
+def test_normal_commit_forwards_key_through_the_authenticated_closure(normal_commit, capsys) -> None:
+    run, path, realm, sent, _, _ = normal_commit
     candidate = json.loads(path.read_text(encoding="utf-8"))
     candidate["parent"]["name"] = "Committed Film"
     path.write_text(json.dumps(candidate), encoding="utf-8")
 
-    run("--idempotency-key", "edit-42")
+    assert run("--idempotency-key", "edit-42", message="Committed Film") == 0
     payload = _json_result(capsys)
-    publication = payload["publication"]
-    assert publication["data"]["status"] == "accepted"
-    assert publication["receipt"]["idempotency_key"] == "edit-42"
+    assert payload["ok"] is True
+    assert payload["data"]["status"] == "accepted"
+    assert payload["receipt"]["idempotency_key"] == "edit-42"
     assert sent[-1]["base_revision_id"] == realm.entries[0]["revision_id"]
     assert sent[-1]["base_publication_id"] == "bootstrap"
     assert realm.entries[-1]["receipt"]["idempotency_key"] == "edit-42"
-    assert json.loads(path.with_suffix(".publication.json").read_text())["publication"] == publication
+    assert sent[-1]["label"] == "Committed Film"
 
 
 @pytest.mark.parametrize("as_json", [False, True])
-def test_document_commit_retry_reuses_the_same_receipt_without_a_second_write(document_commit, capsys, as_json) -> None:
-    run, path, realm, _, _, _ = document_commit
+def test_normal_commit_partial_publication_error_preserves_receipt_and_does_not_retry(
+    normal_commit, monkeypatch, capsys, as_json,
+) -> None:
+    run, path, realm, _, _, client = normal_commit
+    candidate = json.loads(path.read_text(encoding="utf-8"))
+    candidate["parent"]["name"] = "Partial Film"
+    path.write_text(json.dumps(candidate), encoding="utf-8")
+    receipt = {
+        "old_head": "head-1",
+        "new_head": "head-2",
+        "narration_pinned": [],
+        "narration_error": "binding CAS conflict",
+    }
+    calls = []
+    original = client.timelines._typed
+
+    def refusal(operation, *args, **kwargs):
+        if operation == "commit_timeline":
+            calls.append((args, kwargs))
+            return DomainResult.failure(
+                ErrorObject("partial_publication", "binding CAS conflict", {"receipt": receipt}),
+                idempotency_key=kwargs["idempotency_key"],
+            )
+        return original(operation, *args, **kwargs)
+
+    monkeypatch.setattr(client.timelines, "_typed", refusal)
+    assert run("--idempotency-key", "edit-43", message="Partial Film", as_json=as_json) == 1
+    captured = capsys.readouterr()
+    if as_json:
+        payload = json.loads(captured.out)
+        assert payload["ok"] is False
+        assert payload["error"]["code"] == "partial_publication"
+        assert payload["error"]["details"]["receipt"] == receipt
+        assert payload["idempotency_key"] == "edit-43"
+    else:
+        assert captured.out == ""
+        assert "error partial_publication:" in captured.err
+    assert calls and len(calls) == 1
+    assert len(realm.entries) == 1
+
+
+@pytest.mark.parametrize("as_json", [False, True])
+def test_normal_commit_retry_reuses_the_same_receipt_without_a_second_write(normal_commit, capsys, as_json) -> None:
+    run, path, realm, _, _, _ = normal_commit
     candidate = json.loads(path.read_text(encoding="utf-8"))
     candidate["parent"]["name"] = "Retryable Film"
     path.write_text(json.dumps(candidate), encoding="utf-8")
 
     key = "edit-43-json" if as_json else "edit-43"
-    run("--idempotency-key", key)
-    first = _json_result(capsys)
+    assert run("--idempotency-key", key, as_json=as_json) == 0
+    first = capsys.readouterr()
     assert len(realm.entries) == 2
-    run("--idempotency-key", key)
-    second = _json_result(capsys)
-    assert second["publication"] == first["publication"]
+    assert run("--idempotency-key", key, as_json=as_json) == 0
+    second = capsys.readouterr()
+    if as_json:
+        assert json.loads(second.out) == json.loads(first.out)
+    else:
+        assert second.out == first.out
     assert len(realm.entries) == 2
 
 
 
 
-def test_document_commit_output_keeps_summary_receipt_and_next_actions(document_commit, capsys) -> None:
-    run, path, _, _, _, _ = document_commit
+def test_normal_commit_output_keeps_summary_and_receipt(normal_commit, capsys) -> None:
+    run, path, realm, sent, _, _ = normal_commit
     candidate = json.loads(path.read_text(encoding="utf-8"))
     candidate["parent"]["name"] = "Summary Film"
     path.write_text(json.dumps(candidate), encoding="utf-8")
 
-    run("--idempotency-key", "edit-44")
-    payload = _json_result(capsys)
-    saved = json.loads(path.with_suffix(".publication.json").read_text(encoding="utf-8"))
-    assert payload["publication"]["receipt"]["idempotency_key"] == "edit-44"
-    assert payload["summary"]["authored_change_count"] > 0
-    assert payload["next_actions"] == saved["next_actions"]
-    assert "timelines show film --project project-1 --json" in payload["update"]
-    assert "timelines visualize film --project project-1 --mode inputs" in payload["update"]
-    assert "{\"parent_revision\"" not in payload["update"]
-
-
-def test_document_commit_requires_a_caller_idempotency_key(document_commit, monkeypatch) -> None:
-    _, path, realm, _, _, helper = document_commit
-    monkeypatch.setattr(sys, "argv", [str(path), "commit", "--file", str(path)])
-    with pytest.raises(SystemExit) as error:
-        helper.main()
-    assert error.value.code == 2
-    assert len(realm.entries) == 1
+    assert run("--idempotency-key", "edit-44", message="Summary Film", as_json=False) == 0
+    output = capsys.readouterr().out
+    assert "accepted revision" in output
+    assert len(output) < 1000 and "canonical_document" not in output
+    assert sent[-1]["label"] == "Summary Film"
+    assert realm.entries[-1]["receipt"]["idempotency_key"] == "edit-44"
 
 
 @pytest.mark.parametrize("as_json", [False, True])
-def test_document_commit_cas_refusal_preserves_file_and_does_not_retry(document_commit, capsys, as_json) -> None:
+def test_normal_commit_cas_refusal_preserves_file_and_does_not_retry(normal_commit, capsys, as_json) -> None:
     from tests.sdk.test_timeline_public_command import rename
 
-    run, path, realm, _, opened, _ = document_commit
+    run, path, realm, _, opened, _ = normal_commit
     candidate = json.loads(path.read_text(encoding="utf-8"))
     candidate["parent"]["name"] = "Local Film"
     path.write_text(json.dumps(candidate), encoding="utf-8")
@@ -299,20 +319,26 @@ def test_document_commit_cas_refusal_preserves_file_and_does_not_retry(document_
     capsys.readouterr()
 
     key = "cas-key-json" if as_json else "cas-key"
-    with pytest.raises(Exception, match="intervening publication|changed"):
-        run("--idempotency-key", key)
+    assert run("--idempotency-key", key, as_json=as_json) == 1
+    captured = capsys.readouterr()
+    if as_json:
+        payload = json.loads(captured.out)
+        assert payload["ok"] is False
+        assert payload["error"]["code"] == "conflict"
+    else:
+        assert captured.out == ""
+        assert "error conflict:" in captured.err
     assert path.read_bytes() == before
     assert len(realm.entries) == 2
-    assert not path.with_suffix(".publication.json").exists()
 
 
-def test_document_commit_of_a_clean_working_copy_publishes_nothing(document_commit, capsys) -> None:
-    run, path, realm, _, _, _ = document_commit
+def test_normal_commit_of_a_clean_working_copy_writes_nothing(normal_commit, capsys) -> None:
+    run, path, realm, _, _, _ = normal_commit
     before = path.read_bytes()
-    run("--idempotency-key", "clean-key")
+    assert run("--idempotency-key", "clean-key") == 0
     payload = _json_result(capsys)
-    assert payload["publication"] is None
-    assert payload["summary"]["authored_change_count"] == 0
+    assert payload["ok"] is True
+    assert payload["receipt"] is None
     assert len(realm.entries) == 1
     assert path.read_bytes() == before
 
