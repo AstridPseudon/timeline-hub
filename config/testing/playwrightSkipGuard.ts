@@ -11,11 +11,16 @@ import { classifySkips, formatSkipReport } from './skipRegistry.mjs';
  *    Both are named here and count as a failure of the run, never as a quiet skip.
  */
 export default class PlaywrightSkipGuard implements Reporter {
+  private readonly listMode: boolean;
   private readonly entries: Array<{ name: string; reason: string }> = [];
   private readonly notRun: string[] = [];
   private readonly ended = new Set<string>();
   private all: TestCase[] = [];
   private passed = 0;
+
+  constructor(options: { _mode?: string } = {}) {
+    this.listMode = options._mode === 'list';
+  }
 
   printsToStdio(): boolean {
     return false;
@@ -35,6 +40,11 @@ export default class PlaywrightSkipGuard implements Reporter {
   }
 
   async onEnd(): Promise<{ status: FullResult['status'] } | undefined> {
+    // Playwright's --list mode discovers tests without executing them. There are no
+    // test results to audit in that mode; the normal run-time checks below must stay
+    // active for every real execution.
+    if (this.listMode) return undefined;
+
     for (const test of this.all) {
       if (this.ended.has(test.id)) continue;
       if (test.expectedStatus === 'skipped' || test.annotations.some((a) => a.type === 'skip' || a.type === 'fixme')) {
