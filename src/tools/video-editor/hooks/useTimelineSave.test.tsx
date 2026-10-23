@@ -4,6 +4,10 @@ import { act, renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB, resetFakeIndexedDB } from 'fake-indexeddb';
+import { useTimelineHistory } from './useTimelineHistory';
+import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
+import { json, runtimeFixture } from '@/test/fakeWorkspaceRuntime.ts';
+import type { HistoryEntry, HistoryPage, CommitRequest } from '@/integrations/runtime/timeline-commit-types.ts';
 import { useTimelineSave } from './useTimelineSave';
 import { VideoEditorRuntimeProvider } from '../contexts/VideoEditorRuntimeContext';
 import { createTimelineStore } from './timelineStore';
@@ -69,10 +73,11 @@ function makeTimelineData(label: string): TimelineData {
 
 interface SetupResult {
   hook: {
-    result: { current: ReturnType<typeof useTimelineSave> };
+    result: { current: ReturnType<typeof useTimelineSave> & { history: ReturnType<typeof useTimelineHistory> } };
     unmount: () => void;
   };
   saveTimeline: ReturnType<typeof vi.fn>;
+  toast: { error: ReturnType<typeof vi.fn>; success: ReturnType<typeof vi.fn> };
 }
 
 function setup(
@@ -97,8 +102,11 @@ function setup(
   const interactionStateRef: InteractionStateRef = { current: createInteractionState() };
   const store = createTimelineStore();
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  const toast = { error: vi.fn(), success: vi.fn() };
   const runtime = {
     provider,
+    project: { projectId: 'project-commit' },
+    toast,
     timelineId: 'timeline-1',
     shots: { canonicalDraft: null },
     assetResolver: { resolveAssetUrl: vi.fn(async (file: string) => file) },
@@ -116,10 +124,15 @@ function setup(
     </QueryClientProvider>
   );
   const hook = renderHook(
-    () => useTimelineSave(queries, provider, interactionStateRef, store, original?.data),
+    () => {
+      const save = useTimelineSave(queries, provider, interactionStateRef, store, original?.data);
+      const history = useTimelineHistory({ dataRef: save.dataRef, commitData: save.commitData,
+        interactionStateRef, pendingOpsRef: save.pendingOpsRef, remoteHistory: save.localDocumentSave });
+      return { ...save, history };
+    },
     { wrapper },
   );
-  return { hook, saveTimeline };
+  return { hook, saveTimeline, toast };
 }
 
 async function flush() {
@@ -150,6 +163,201 @@ describe('useTimelineSave — recovered draft durability', () => {
     vi.clearAllTimers();
     vi.useRealTimers();
   });
+
+  it.each(['accepted', 'merged', 'lost acknowledgement', 'later_write', 'aba_write', 'history_unavailable', 'invalid', 'legacy_unknown'] as const)(
+    'mounted Undo uses the public client, authoritative history and reload (%s)', async (outcome) => {
+      const locks = new Set<string>();
+      const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
+      Object.defineProperty(navigator, 'locks', { configurable: true, value: {
+        request: async (name: string, _options: unknown, work: (lock: object | null) => Promise<unknown>) => {
+          if (locks.has(name)) return work(null);
+          locks.add(name);
+          try { return await work({}); } finally { locks.delete(name); }
+        },
+      } });
+      const fixture = runtimeFixture();
+      const timelineId = 'timeline-1';
+      const projectId = 'project-commit';
+      const baseConfig = createDefaultTimelineConfig();
+      const authoredConfig = { ...baseConfig, output: { ...baseConfig.output, file: 'authored.mp4' } };
+      const makeResponse = (ordinal: number, config = authoredConfig) => {
+        const response = acceptedCommit({ revision_id: `r${ordinal}`, publication_id: `p${ordinal}` },
+          { revision_id: `r${Math.max(0, ordinal - 1)}`, publication_id: `p${Math.max(0, ordinal - 1)}` }, { timelineId });
+        response.data.canonical_document.parent_revision.payload = { config: structuredClone(config), clips: [],
+          occurrences: [], registry: { assets: {} }, opaque: { keep: null, agent: true } };
+        response.data.canonical_document.parent_revision.content_digest = fixtureDigest(response.data.canonical_document.parent_revision.payload);
+        response.data.document_digest = fixtureDigest(response.data.canonical_document);
+        return response;
+      };
+      const bootstrap = makeResponse(0, baseConfig);
+      let current = bootstrap;
+      const images = new Map([['r0', bootstrap.data.canonical_document]]);
+      const entry = (response: typeof current, undoOf: string[] = []): HistoryEntry => ({
+        publication_id: response.receipt.receipt_id, revision_id: response.data.accepted_revision_id,
+        previous: response.receipt.receipt_id === 'p0' ? null
+          : { revision_id: response.data.previous_revision_id, publication_id: response.data.previous_publication_id },
+        receipt: response.receipt, intent: response.receipt.receipt_id === 'p0' ? 'bootstrap' : 'recorded',
+        records: { schema_version: 1, commands: [], steps: response.data.steps, undo_of: undoOf, undo_steps: null, restored_from: null },
+        publisher: response.data.publisher, provider_version: response.data.provider_version,
+        compiler_version: response.data.compiler_version, label: response.data.label,
+      });
+      const items = [entry(bootstrap)];
+      const posted: { body: string; key: string; path: string }[] = [];
+      let lost = false;
+      const refused = ['later_write', 'aba_write', 'history_unavailable', 'invalid'].includes(outcome);
+      const transport: typeof fixture.transport = async (method, path, headers, body) => {
+        if (method === 'GET' && path.includes('/commits?')) {
+          const history: HistoryPage = { items, next_cursor: null,
+            head: { revision_id: current.data.accepted_revision_id, publication_id: current.receipt.receipt_id } };
+          return { status: 200, headers: {}, body: json(history) };
+        }
+        if (method === 'GET' && path.includes('/composition-revisions/')) {
+          const document = images.get(decodeURIComponent(path.split('/').at(-1)!))!;
+          return { status: 200, headers: {}, body: json({ project_id: projectId, timeline_id: timelineId,
+            revision_id: document.parent_revision.revision_id, payload: document.parent_revision.payload,
+            content_digest: document.parent_revision.content_digest, dependency_manifest: document.dependency_manifest }) };
+        }
+        if (method === 'POST' && path.endsWith('/commit')) {
+          const bytes = new TextDecoder().decode(body as Uint8Array);
+          const request = JSON.parse(bytes) as CommitRequest;
+          if (request.commands[0].op === 'doc.patch') {
+            expect(request).toMatchObject({ api_version: 1, project_id: projectId, timeline_id: timelineId,
+              base_revision_id: 'r0', base_publication_id: 'p0', label: 'Edit timeline', merge: 'atomic', dry_run: false,
+              steps: [{ command_ordinals: [0], patch: request.commands[0].args.changes }] });
+            current = makeResponse(1);
+            current.data.commands = request.commands;
+            current.data.steps = request.steps;
+            current.receipt.idempotency_key = headers['Idempotency-Key'];
+            images.set('r1', current.data.canonical_document);
+            items.push(entry(current));
+            if (outcome === 'legacy_unknown') { items[1].intent = 'legacy_unknown'; items[1].records = null; }
+            return { status: 200, headers: {}, body: json(current) };
+          }
+          posted.push({ body: bytes, key: headers['Idempotency-Key'], path });
+          if (refused) return { status: outcome === 'invalid' ? 422 : 409, headers: {}, body: json({
+            code: outcome, message: 'Guarded inverse refused', request_id: 'undo-refusal', details: {
+              status: outcome === 'invalid' ? 'invalid' : 'refused', reason: outcome, code: outcome,
+              path: ['config', 'output', 'file'], hint: 'Reload authoritative history',
+              base: { revision_id: 'r1', publication_id: 'p1' }, current: { revision_id: 'r1', publication_id: 'p1' }, conflicts: [],
+            },
+          }) };
+          if (!(lost && posted.length === 2)) {
+            const ordinal = items.length;
+            current = makeResponse(ordinal, ordinal % 2 === 0 ? baseConfig : authoredConfig);
+            current.data.commands = request.commands;
+            current.data.label = request.label;
+            current.data.steps = request.steps;
+            current.data.merge_mode = 'fields';
+            if (outcome === 'merged') {
+              current.data.status = 'merged';
+              current.data.rebased_onto = { revision_id: 'agent-r', publication_id: 'agent-p' };
+            }
+            current.receipt.idempotency_key = headers['Idempotency-Key'];
+            images.set(current.data.accepted_revision_id, current.data.canonical_document);
+            items.push(entry(current, request.commands[0].args.publications as string[]));
+          }
+          if (outcome === 'lost acknowledgement' && !lost) { lost = true; throw new Error('Lost acknowledgement'); }
+          return { status: 200, headers: {}, body: json(current) };
+        }
+        return fixture.transport(method, path, headers, body);
+      };
+      const runtime = new RuntimeDataProvider({ projectId, transport });
+      const scope = { actorId: 'actor', realmId: 'realm', projectId, timelineId };
+      const mount = async () => {
+        const basis = await runtime.loadTimelineCommandBasis(timelineId);
+        const head = { projectId, timelineId, headRevisionId: basis.head.revisionId, headPublicationId: basis.head.publicationId };
+        const data = await buildTimelineData(basis.canonicalDocument.parent_revision.payload.config as unknown as typeof baseConfig,
+          { assets: {} }, undefined, 1, undefined, head);
+        return setup(async () => { throw new Error('No snapshot save'); }, undefined, { data,
+          loadBasis: () => runtime.loadTimelineCommandBasis(timelineId), capabilities: {
+            commitTimeline: (request, key) => runtime.commitTimeline(request, key), getRecoverableIdentity: async () => scope,
+          } });
+      };
+      let harness: Awaited<ReturnType<typeof mount>> | undefined;
+      try {
+        harness = await mount();
+        await vi.waitFor(() => expect(harness!.hook.result.current.localSaveState?.ownerId).toBeTruthy());
+        expect(harness.hook.result.current.history.canUndo).toBe(false);
+        const edited = await buildTimelineData(authoredConfig, { assets: {} }, undefined, 1, undefined,
+          { projectId, timelineId, headRevisionId: 'r0', headPublicationId: 'p0' });
+        await act(async () => {
+          harness!.hook.result.current.commitData(edited, { save: true });
+          await harness!.hook.result.current.flushPendingSave();
+        });
+        if (outcome === 'legacy_unknown') {
+          expect(harness.hook.result.current.history.canUndo).toBe(false);
+          act(() => harness!.hook.result.current.history.undo());
+          expect(posted).toHaveLength(0);
+          expect(harness.saveTimeline).not.toHaveBeenCalled();
+          return;
+        }
+        await vi.waitFor(() => expect(harness!.hook.result.current.history.canUndo).toBe(true));
+        act(() => harness!.hook.result.current.history.undo());
+        await vi.waitFor(() => expect(posted).toHaveLength(1));
+        const sent = JSON.parse(posted[0].body);
+        expect(sent).toMatchObject({ api_version: 1, project_id: projectId, timeline_id: timelineId,
+          base_revision_id: 'r1', base_publication_id: 'p1', label: 'Undo timeline', merge: 'fields', dry_run: false,
+          commands: [{ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: ['p1'] } }],
+          steps: [{ label: 'Undo timeline', command_ordinals: [0], patch: [] }] });
+        expect(sent).not.toHaveProperty('reads');
+        expect(posted[0].path).toBe(`/v1/projects/${projectId}/timelines/${timelineId}/commit`);
+        if (refused || lost) {
+          await vi.waitFor(() => expect(harness!.toast.error).toHaveBeenCalled());
+          expect(harness.hook.result.current.history.canUndo).toBe(false);
+          expect(harness.hook.result.current.history.canRedo).toBe(false);
+          const [stored] = await createCommitOutbox().list(scope);
+          expect(stored.pending!.request).toMatchObject({ body: posted[0].body, key: posted[0].key });
+          if (refused) {
+            expect(stored.pending!.outcome).toMatchObject({ kind: 'rejected', error: { code: outcome,
+              details: { code: outcome, path: ['config', 'output', 'file'], hint: 'Reload authoritative history' } } });
+            expect(harness.hook.result.current.dataRef.current?.config.output.file).toBe('authored.mp4');
+            expect(harness.hook.result.current.localSaveState?.status).toBe('conflict');
+            expect(harness.hook.result.current.saveStatus).toBe('error');
+            harness.hook.unmount();
+            await vi.waitFor(() => expect(locks.size).toBe(0));
+            harness = await mount();
+            await vi.waitFor(() => expect(harness!.hook.result.current.localSaveState?.status).toBe('conflict'));
+            expect(harness.hook.result.current.history.canUndo).toBe(false);
+            expect(posted).toHaveLength(1);
+            const [retained] = await createCommitOutbox().list(scope);
+            expect(retained.pending).toEqual(stored.pending);
+            expect(harness.saveTimeline).not.toHaveBeenCalled();
+            return;
+          }
+          expect(harness.hook.result.current.saveStatus).toBe('error');
+        } else {
+          await vi.waitFor(() => expect(harness!.hook.result.current.history.canRedo).toBe(true));
+          expect(harness.hook.result.current.dataRef.current?.config.output.file).toBe(baseConfig.output.file);
+          expect(harness.hook.result.current.dataRef.current?.head?.headPublicationId).toBe('p2');
+          const [stored] = await createCommitOutbox().list(scope);
+          expect(stored.accepted!.value).toMatchObject({ response: current, receipt: current.receipt,
+            canonicalDocument: current.data.canonical_document });
+        }
+        harness.hook.unmount();
+        await vi.waitFor(() => expect(locks.size).toBe(0));
+        harness = await mount();
+        await vi.waitFor(() => expect(harness!.hook.result.current.history.canRedo).toBe(true));
+        if (lost) expect(posted[1]).toEqual(posted[0]);
+        act(() => harness!.hook.result.current.history.redo());
+        await vi.waitFor(() => expect(harness!.hook.result.current.history.canUndo).toBe(true));
+        expect(JSON.parse(posted.at(-1)!.body).commands[0].args.publications).toEqual(['p2']);
+        expect(posted.at(-1)!.key).not.toBe(posted[0].key);
+        expect(harness.hook.result.current.dataRef.current?.config.output.file).toBe('authored.mp4');
+        harness.hook.unmount();
+        await vi.waitFor(() => expect(locks.size).toBe(0));
+        harness = await mount();
+        await vi.waitFor(() => expect(harness!.hook.result.current.history.canUndo).toBe(true));
+        act(() => harness!.hook.result.current.history.undo());
+        await vi.waitFor(() => expect(harness!.hook.result.current.history.canRedo).toBe(true));
+        expect(JSON.parse(posted.at(-1)!.body).commands[0].args.publications).toEqual(['p3']);
+        expect(harness.saveTimeline).not.toHaveBeenCalled();
+      } finally {
+        harness?.hook.unmount();
+        await vi.waitFor(() => expect(locks.size).toBe(0));
+        if (descriptor) Object.defineProperty(navigator, 'locks', descriptor);
+        else Reflect.deleteProperty(navigator, 'locks');
+      }
+    });
 
   it.each(['accepted', 'merged', 'conflict', 'invalid', 'restart', 'dependent', 'merged dependent', 'late reply', 'strict'] as const)(
     'the production caller uses it: mounted local document %s', async (outcome) => {

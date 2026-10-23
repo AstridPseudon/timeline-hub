@@ -78,6 +78,7 @@ export function useTimelineSave(
   const localOwner = useMemo(() => ({ provider, timelineId, closed: false, started: false, generation: 0,
     headKey: '', recovered: false,
     ready: undefined as Promise<TimelineLocalSaveHandoff> | undefined,
+    handoff: undefined as TimelineLocalSaveHandoff | undefined,
     session: undefined as LocalSaveSession | undefined }), [provider, timelineId]);
   const usesLocalDocumentSave = Boolean(provider.loadTimelineCommandBasis && provider.commitTimeline && provider.getRecoverableIdentity);
   // Stable from the first render: a gesture during assembly cannot fall through
@@ -97,6 +98,21 @@ export function useTimelineSave(
       if (localOwner.closed) throw new TimelineVersionConflictError('Local save session was replaced; draft retained');
       return handoff.flush();
     },
+    remoteHistoryAvailable: () => localOwner.handoff?.remoteHistoryAvailable() ?? false,
+    canUndo: () => localOwner.handoff?.canUndo() ?? false,
+    canRedo: () => localOwner.handoff?.canRedo() ?? false,
+    undo: async () => {
+      const handoff = await localOwner.ready;
+      if (localOwner.closed || !handoff) throw new TimelineVersionConflictError('Original local save session is unavailable; draft retained');
+      try { await handoff.undo(); }
+      finally { if (!localOwner.closed) setLocalSaveState((current) => current ? { ...current } : current); }
+    },
+    redo: async () => {
+      const handoff = await localOwner.ready;
+      if (localOwner.closed || !handoff) throw new TimelineVersionConflictError('Original local save session is unavailable; draft retained');
+      try { await handoff.redo(); }
+      finally { if (!localOwner.closed) setLocalSaveState((current) => current ? { ...current } : current); }
+    },
   } : undefined, [localOwner, usesLocalDocumentSave]);
   useEffect(() => {
     localOwner.closed = false;
@@ -106,6 +122,7 @@ export function useTimelineSave(
       localOwner.generation++;
       localOwner.started = false;
       localOwner.ready = undefined;
+      localOwner.handoff = undefined;
       void localOwner.session?.dispose().catch(() => {});
     };
   }, [localOwner]);
@@ -121,6 +138,7 @@ export function useTimelineSave(
       localOwner.generation++;
       previousDisposal = localOwner.session.dispose();
       localOwner.session = undefined;
+      localOwner.handoff = undefined;
       localOwner.started = false;
     }
     const original = localDataRef.current;
@@ -198,10 +216,22 @@ export function useTimelineSave(
         const owners = session.getState().recoverableOwners;
         if (owners.length === 1) { localOwner.recovered = true; await session.recover(owners[0]); }
         else if (owners.length) throw new TimelineVersionConflictError('Multiple local save owners require recovery; drafts retained');
-        const initial = owners.length && session.getState().status === 'saved' ? await session.flush() : verified.initial;
-        return createTimelineLocalSaveHandoff({ initial, source: adoptedSource, session,
+        let initial = verified.initial;
+        if (owners.length && session.getState().status === 'saved') {
+          initial = await session.flush();
+          const latest = await provider.loadTimelineCommandBasis!(timelineId);
+          if (canonicalJsonStringify(latest.head) === canonicalJsonStringify(initial.head)) {
+            initial = { ...initial, history: latest.history };
+          }
+        }
+        if (!isCurrent()) throw new Error('Local save session replaced during history read');
+        const handoff = createTimelineLocalSaveHandoff({ initial, source: adoptedSource, session,
+          loadHistory: () => provider.loadTimelineCommandBasis!(timelineId),
           adopted: () => ({ source: adoptedSource,
             receipt: { configVersion: configVersionRef.current, head: adoptedSource.head! } }) });
+        localOwner.handoff = handoff;
+        setLocalSaveState((current) => current ? { ...current } : current);
+        return handoff;
       })();
       void localOwner.ready.catch((error: unknown) => {
         if (isCurrent()) setLocalSaveState({ status: 'error', recoverableOwners: [],
@@ -537,6 +567,7 @@ export function useTimelineSave(
     ownsRegistryMutation, canRollbackRegistryMutation, rollbackRegistryMutation]);
 
   return {
+    localDocumentSave,
     localSaveState,
     originalLocalSaveBasis,
     data: commit.data,
@@ -544,8 +575,8 @@ export function useTimelineSave(
     isConflictExhausted: persistence.isConflictExhausted,
     selectedClipId: commit.selectedClipId,
     selectedTrackId: commit.selectedTrackId,
-    saveStatus: localSaveState && ['blocked', 'conflict', 'error', 'recovery'].includes(localSaveState.status)
-      ? 'error' : recoveredAsDirty && persistence.saveStatus === 'saved' ? 'dirty' : persistence.saveStatus,
+    saveStatus: localSaveState && ['blocked', 'conflict', 'error', 'recovery', 'retry'].includes(localSaveState.status)
+      ? 'error' : localSaveState?.status === 'saving' ? 'saving' : localSaveState?.status === 'dirty' ? 'dirty' : recoveredAsDirty && persistence.saveStatus === 'saved' ? 'dirty' : persistence.saveStatus,
     schemaIncompatible: persistence.schemaIncompatible,
     flushPendingSave: persistence.flushPendingSave,
     registrationOwner,

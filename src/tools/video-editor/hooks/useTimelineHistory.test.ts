@@ -14,6 +14,7 @@ import { createInteractionState } from '../lib/interaction-state';
 import { buildDataFromCurrentRegistry } from '../lib/timeline-save-utils';
 import { configToRows, type TimelineData } from '../lib/timeline-data';
 import { useTimelineHistory } from './useTimelineHistory';
+import type { TimelineLocalSaveHandoff } from './timelineLocalSaveHandoff';
 import type { Checkpoint } from '../types/history';
 import type { TimelineEditability } from '../lib/timeline-editability';
 
@@ -173,6 +174,7 @@ function setup(options: {
   initialData?: TimelineData;
   providerOverrides?: Partial<DataProvider>;
   editability?: TimelineEditability;
+  remoteHistory?: Pick<TimelineLocalSaveHandoff, 'remoteHistoryAvailable' | 'canUndo' | 'canRedo' | 'undo' | 'redo'>;
 } = {}) {
   const provider = makeProvider(options.providerOverrides);
   const dataRef = { current: options.initialData ?? makeTimelineData(options.initialStep ?? 0) };
@@ -206,7 +208,8 @@ function setup(options: {
   );
 
   const hook = renderHook(
-    () => useTimelineHistory({ dataRef, commitData, interactionStateRef, pendingOpsRef, editability: options.editability }),
+    () => useTimelineHistory({ dataRef, commitData, interactionStateRef, pendingOpsRef, editability: options.editability,
+      remoteHistory: options.remoteHistory }),
     { wrapper },
   );
 
@@ -238,6 +241,56 @@ afterEach(() => {
 });
 
 describe('useTimelineHistory', () => {
+  it('delegates mounted undo/redo to durable history once the owner is settled', async () => {
+    const remoteHistory = {
+      remoteHistoryAvailable: vi.fn(() => true),
+      canUndo: vi.fn(() => true),
+      canRedo: vi.fn(() => false),
+      undo: vi.fn(async () => {}),
+      redo: vi.fn(async () => {}),
+    };
+    const harness = setup({ remoteHistory });
+
+    expect(harness.result.current.canUndo).toBe(true);
+    expect(harness.result.current.canRedo).toBe(false);
+    act(() => harness.result.current.undo());
+    act(() => harness.result.current.redo());
+    expect(remoteHistory.redo).not.toHaveBeenCalled();
+    remoteHistory.canRedo.mockReturnValue(true);
+    act(() => harness.result.current.redo());
+    expect(remoteHistory.undo).toHaveBeenCalledTimes(1);
+    expect(remoteHistory.redo).toHaveBeenCalledTimes(1);
+    expect(harness.commitData).not.toHaveBeenCalled();
+  });
+
+  it('keeps snapshot history behind the durable boundary while saves are unsettled', () => {
+    const remoteHistory = { remoteHistoryAvailable: () => false, canUndo: () => false, canRedo: () => false,
+      undo: vi.fn(async () => {}), redo: vi.fn(async () => {}) };
+    const harness = setup({ remoteHistory });
+    act(() => {
+      harness.result.current.onBeforeCommit(harness.dataRef.current, { transactionId: 'local' });
+      harness.dataRef.current = makeTimelineData(1);
+    });
+    expect(harness.result.current.canUndo).toBe(false);
+    act(() => harness.result.current.undo());
+    expect(harness.commitData).not.toHaveBeenCalled();
+    expect(remoteHistory.undo).not.toHaveBeenCalled();
+  });
+
+  it('keeps upload guards on durable Undo and reports a refusal without restoring a snapshot', async () => {
+    const remoteHistory = { remoteHistoryAvailable: () => true, canUndo: () => true, canRedo: () => true,
+      undo: vi.fn(async () => { throw new Error('Later write to target'); }), redo: vi.fn(async () => {}) };
+    const harness = setup({ remoteHistory });
+    harness.pendingOpsRef.current = 1;
+    act(() => { harness.result.current.undo(); harness.result.current.redo(); });
+    expect(remoteHistory.undo).not.toHaveBeenCalled();
+    expect(remoteHistory.redo).not.toHaveBeenCalled();
+    harness.pendingOpsRef.current = 0;
+    await act(async () => { harness.result.current.undo(); });
+    expect(harness.toast.error).toHaveBeenCalledWith('Could not undo timeline', { description: 'Later write to target' });
+    expect(harness.commitData).not.toHaveBeenCalled();
+  });
+
   it('undoes/redoes source-only edits and restores source-inclusive checkpoints after a clip edit', async () => {
     const saveCheckpoint = vi.fn(async (_timelineId: string, _checkpoint: Omit<Checkpoint, 'id'>) => 'source-checkpoint');
     const seed = makeTimelineData(0);
