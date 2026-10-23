@@ -1,5 +1,5 @@
-<!-- farm | 2026-10-23T15:12:00Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 26m -->
-# farm board, 2026-10-23T10:25Z (disk 21 GB free, above the 15 GB floor)
+<!-- farm | 2026-10-23T15:14:39Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# farm board, 2026-10-23T14:45Z (disk 21 GB free, above the 15 GB floor). UPDATE 14:45Z: P2 tour is now Proof-owned on its own service (peers 14:38Z/14:39Z); the farm runs no P2 body and holds nothing. All tf- workers are done, none running. Farm idle until F-final (needs P1 GO, deletions, freeze) or a new request.
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | F-H0 | upstream baselines | n/a | none | superseded by orchestrator priorities 10:02Z (Agent and Runtime ran their own full suites); App upstream 7c17cc9d9 baseline only if the classifier needs it | none | none | n/a |
