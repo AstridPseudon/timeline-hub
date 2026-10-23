@@ -1,0 +1,11 @@
+--- a/bin/test-run
++++ b/bin/test-run
+@@ -68,6 +68,8 @@
+         # An evicted managed row must not fall through as an unmanaged suite.
+         raise ValueError('suite registration disappeared before lease')
+     with store.acquire(names) as entries:
++        if current_command() != raw:
++            raise ValueError('suite registration disappeared or changed during lease acquisition')
+         yield entries, [entry['lease_fd'] for entry in entries]
+ 
+ 
