@@ -7,7 +7,7 @@ import { expect, type Page, type Request, type Response } from '@playwright/test
 import { sha256Hex, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 import { ASTRID_PYTHON } from './support/astrid.ts';
 import { test as appTest } from './support/app.ts';
-import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
+import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditCommand, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 
 const COMMITS = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
 const LEGACY_WRITES = /\/timelines\/[^/]+\/(?:composition-revisions|saves)$/;
@@ -208,7 +208,9 @@ function assertRawTransitionCleared(before: CanonicalDocument, after: CanonicalD
   const beforeParent = before.parent_revision.payload as unknown as JsonObject;
   const afterParent = after.parent_revision.payload as unknown as JsonObject;
   for (const [key, value] of Object.entries(beforeParent)) {
-    if (key !== 'clips') expect((afterParent as JsonObject)[key]).toEqual(value);
+    if (key === 'config') {
+      expect(afterParent.config).toEqual({ ...value as JsonObject, clips: (afterParent.config as JsonObject).clips });
+    } else if (key !== 'clips') expect(afterParent[key]).toEqual(value);
   }
   for (const id of ids) {
     const beforeClip = clipById(before, id);
@@ -233,6 +235,25 @@ function assertRawTransitionCleared(before: CanonicalDocument, after: CanonicalD
   }
 }
 
+function assertNormalizedCommands(commands: EditCommand[], submitted: EditCommand[]): void {
+  expect(commands).toHaveLength(submitted.length);
+  for (const [ordinal, claim] of submitted.entries()) {
+    const command = commands[ordinal];
+    // Both doc.patch and ABI-1 inverse gain provider captures. Every submitted
+    // field (including complete args and optional guards) must survive exactly.
+    expect(['doc.patch', 'timeline.inverse']).toContain(claim.op);
+    for (const [field, value] of Object.entries(claim)) {
+      expect((command as unknown as JsonObject)[field], `command ${ordinal}.${field}`).toEqual(value);
+    }
+    expect(command.intent).toEqual(claim.intent ?? {});
+    expect(command.resolved).toEqual(claim.resolved ?? []);
+    expect(Object.keys(command).sort()).toEqual([...new Set([
+      ...Object.keys(claim), 'intent', 'resolved', 'expect', 'authorship',
+      'reads', 'selections', 'bindings', 'created',
+    ])].sort());
+  }
+}
+
 function assertReplyShape(post: CommitPost, before: HeadPin, modern = true): CommitAcceptedMutation {
   expect(post.response.status(), JSON.stringify(post.json)).toBe(200);
   const envelope = object(post.json, 'commit reply');
@@ -245,7 +266,7 @@ function assertReplyShape(post: CommitPost, before: HeadPin, modern = true): Com
   expect(data.accepted_revision_id).toEqual(expect.any(String));
   expect(data.canonical_document).toBeTruthy();
   expect(data.document_digest).toEqual(expect.any(String));
-  expect(data.commands).toEqual(post.body.commands);
+  assertNormalizedCommands(data.commands as EditCommand[], post.body.commands);
   expect(data.label).toBe(modern ? post.body.label : 'Timeline edit');
   expect(data.id_map).toEqual(expect.any(Object));
   expect(data.provider_version).toEqual(expect.any(String));
@@ -265,6 +286,13 @@ function assertReplyShape(post: CommitPost, before: HeadPin, modern = true): Com
     expect((step.patch as unknown[]).length).toBeGreaterThan(0);
     expect(step.dependencies).toEqual(expect.any(Array));
     expect((step.dependencies as unknown[]).length).toBeGreaterThan(0);
+  }
+  if (!modern) {
+    expect(data.steps).toEqual([{
+      id: 'edit', label: 'Timeline edit', intent: '', tags: [], command_ordinals: [0],
+      patch: (data.steps as Array<JsonObject>)[0].patch,
+      dependencies: (data.steps as Array<JsonObject>)[0].dependencies,
+    }]);
   }
   expect(data.source).toEqual(post.body.source);
   const receipt = object(envelope.receipt, 'accepted receipt');
@@ -287,7 +315,14 @@ function assertRequestV2(post: CommitPost, before: HeadPin, modern = true): void
     commands: expect.any(Array),
   });
   expect(post.body.commands.length).toBeGreaterThan(0);
-  if (!modern) return;
+  if (!modern) {
+    expect(post.body).toEqual({
+      api_version: 1, project_id: post.body.project_id, timeline_id: post.body.timeline_id,
+      base_revision_id: before.revision_id, base_publication_id: before.publication_id,
+      commands: post.body.commands, source: { via: 'app' },
+    });
+    return;
+  }
   expect(post.body.label).toEqual(expect.any(String));
   expect(post.body.steps).toEqual(expect.any(Array));
   expect(post.body.steps!.length).toBeGreaterThan(0);
@@ -328,8 +363,11 @@ function assertHistoryMetadata(entry: HistoryEntry, post: CommitPost, result: Co
   expect(entry.intent).toBe('recorded');
   expect(entry.records).not.toBeNull();
   expect(entry.publication_id).toBe(post.key);
+  expect(entry.revision_id).toBe(result.data.accepted_revision_id);
   expect(entry.receipt).toEqual(result.receipt);
   expect(entry.publisher).toBe(result.data.publisher);
+  expect(entry.provider_version).toBe(result.data.provider_version);
+  expect(entry.compiler_version).toBe(result.data.compiler_version);
   expect(entry.label).toBe(Object.hasOwn(post.body, 'label') ? post.body.label : 'Timeline edit');
   expect(entry.merge).toBe(post.body.merge ?? 'fields');
   expect(entry.merge_mode).toBe(result.data.merge_mode);
@@ -337,7 +375,16 @@ function assertHistoryMetadata(entry: HistoryEntry, post: CommitPost, result: Co
   expect(entry.previous).toEqual({ revision_id: result.data.previous_revision_id, publication_id: result.data.previous_publication_id });
   expect(entry.steps).toEqual(result.data.steps);
   expect(entry.records!.steps).toEqual(result.data.steps);
-  expect(entry.records!.commands.map((record) => record.command)).toEqual(post.body.commands);
+  expect(entry.records!.label).toBe(result.data.label);
+  expect(entry.records!.merge_mode).toBe(result.data.merge_mode);
+  expect(result.data.commands).toEqual(entry.records!.commands.map((record) => record.command));
+  assertNormalizedCommands(result.data.commands, post.body.commands);
+  expect(entry.records!.commands.map((record) => record.ordinal)).toEqual(post.body.commands.map((_, ordinal) => ordinal));
+  if (post.body.steps) {
+    expect(result.data.steps).toEqual(post.body.steps.map((step, index) => ({
+      ...step, patch: result.data.steps![index].patch, dependencies: result.data.steps![index].dependencies,
+    })));
+  }
   for (const step of entry.records!.steps ?? []) {
     expect(step.patch).toEqual(expect.any(Array));
     expect(step.command_ordinals.length).toBeGreaterThan(0);
@@ -348,8 +395,9 @@ function assertHistoryMetadata(entry: HistoryEntry, post: CommitPost, result: Co
     expect(record.writes.length).toBeGreaterThan(0);
     expect(record.reads.length).toBeGreaterThan(0);
     expect(record.bindings.length).toBeGreaterThan(0);
-    expect(record.dependencies).toEqual(expect.any(Array));
-    expect(record.dependencies.length).toBeGreaterThan(0);
+    // These operations capture field/scope guards in step.dependencies; they
+    // do not use the native move recipe's external dependency pins.
+    expect(record.dependencies).toEqual([]);
   }
   expect(Object.hasOwn(entry, 'reads'), 'history preserves omitted request reads').toBe(false);
 }
@@ -366,11 +414,15 @@ function assertHistoryProof(
   assertHistoryMetadata(entry, post, result);
   const patches = (entry.records!.steps ?? []).flatMap((step) => step.patch);
   const requestedChanges = post.body.commands[0]!.args.changes as unknown[];
+  const bindings = entry.records!.commands.flatMap((record) => record.bindings
+    .filter((binding) => binding.key.startsWith('doc.patch:')));
+  expect(bindings.map((binding) => binding.change)).toEqual(requestedChanges);
   expect(patches).toEqual(requestedChanges.map((change) => {
     const value = object(change, 'submitted document patch');
     const path = value.path as string[];
     return { ...value, path: ['config', ...path] };
   }));
+  expect(bindings.map((binding) => ({ ...binding.change, ref: binding.physical_ref, path: binding.path }))).toEqual(patches);
   for (const clipId of clipIds) {
     for (const field of fields) {
       const patch = patches.find((change) => change.ref === 'parent'
@@ -478,27 +530,34 @@ async function proveGestureAndUndo(
   expect(committed.head.revision_id).toBe(result.data.accepted_revision_id);
   expect(committed.head.publication_id).toBe(post.key);
   await assertReloaded(page, harness, result.data.accepted_revision_id);
+  expect(await history(harness, seed), 'reload preserves the complete authoritative history').toEqual(committed);
   expect(wire.legacy, 'the mounted gesture has no old-route write').toEqual([]);
 
   const inverse = await commitFromGesture(page, wire, async () => {
     await page.getByRole('button', { name: 'Undo', exact: true }).click();
   });
   assertRequestV2(inverse, pinOf(result), false);
+  expect(inverse.body.commands).toEqual([{
+    schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
+    args: { publications: [post.key] },
+  }]);
   const inverseResult = assertReplyShape(inverse, pinOf(result), false);
   const undone = inverseResult.data.canonical_document;
   const actualUndone = await canonicalDocumentAt(harness, seed, inverseResult.data.accepted_revision_id);
   assertAuthoritativeCanonical(inverseResult, actualUndone, harness, seed);
   assertCanonicalRestored(original, undone);
   assertUndo(undone);
-  expect(inverse.body.commands).toEqual([expect.objectContaining({ op: 'timeline.inverse', args: { publications: [post.key] } })]);
   const finalHistory = await history(harness, seed);
   const inverseEntry = finalHistory.items.find((candidate) => candidate.publication_id === inverse.key);
   expect(inverseEntry, 'Undo history joins by receipt/publication id').toBeTruthy();
   assertHistoryMetadata(inverseEntry!, inverse, inverseResult);
   expect(inverseEntry?.records?.undo_of).toEqual([post.key]);
+  expect(finalHistory.items.filter((candidate) => candidate.publication_id !== inverse.key),
+    'Undo preserves every prior authoritative history entry').toEqual(committed.items);
   assertNoNewLegacyEntries(before, finalHistory);
   expect(finalHistory.items.filter((candidate) => !before.items.some((known) => known.publication_id === candidate.publication_id))).toHaveLength(2);
   expect(finalHistory.head).toEqual(pinOf(inverseResult));
+  expect(await history(harness, seed), 'repeated reads preserve complete inverse records and dependencies').toEqual(finalHistory);
   expect(wire.legacy, 'mounted Undo has no old-route write').toEqual([]);
 }
 
