@@ -15,7 +15,7 @@ export function PublicAstridHeroCta({ active = true }: { active?: boolean }) {
           onClick={rememberAppEntryPreference}>
           <span>Try Astrid</span><ArrowRight size={17} aria-hidden="true" />
         </a>
-        <button className="astrid-button" type="button" data-active={active}
+        <button className="astrid-button astrid-hero-cta-secondary" type="button" data-active={active}
           aria-hidden={!active} aria-haspopup="dialog" tabIndex={active ? undefined : -1}
           onClick={() => setInstallOpen(true)}>Get the app</button>
       </div>
