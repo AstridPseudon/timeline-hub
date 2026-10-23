@@ -190,12 +190,30 @@ export const serializeForDisk = (
   return serialized;
 };
 
+/** Restore unchanged display labels by ID; changed labels remain intentional edits. */
+export function withAuthoredClipLabels(
+  resolved: ResolvedTimelineConfig,
+  authoredConfig: TimelineConfig,
+  previous: ResolvedTimelineConfig = resolved,
+): ResolvedTimelineConfig {
+  const rawClips = new Map(authoredConfig.clips.map((clip) => [clip.id, clip]));
+  const displayedClips = new Map(previous.clips.map((clip) => [clip.id, clip]));
+  return { ...resolved, clips: resolved.clips.map((clip) => {
+    const raw = rawClips.get(clip.id);
+    const displayed = displayedClips.get(clip.id);
+    if (!raw || !displayed || clip.label !== displayed.label) return clip;
+    const { label: _displayLabel, ...rest } = clip;
+    return Object.prototype.hasOwnProperty.call(raw, 'label') ? { ...rest, label: raw.label } : rest;
+  }) };
+}
+
 /** Editor edits keep opaque authored roots; strict disk serialization stays closed. */
 export const serializeResolvedTimelineEdit = (
   resolved: ResolvedTimelineConfig,
   pinnedShotGroups?: TimelineConfig['pinnedShotGroups'],
   authoredConfig?: TimelineConfig,
   rawComposition?: PreparedShotComposition | null,
+  previous?: ResolvedTimelineConfig,
 ): TimelineConfig => {
   const { registry: _resolvedRegistry, ...authored } = resolved;
   return {
@@ -204,6 +222,10 @@ export const serializeResolvedTimelineEdit = (
     ...(authoredConfig && Object.prototype.hasOwnProperty.call(authoredConfig, 'registry')
       ? cloneAppExtension({ registry: Reflect.get(authoredConfig, 'registry') })
       : {}),
-    ...serializeForDisk(resolved, pinnedShotGroups, undefined, rawComposition),
+    ...serializeForDisk(authoredConfig ? withAuthoredClipLabels(resolved, authoredConfig, previous) : resolved,
+      pinnedShotGroups, undefined, rawComposition),
+    // Config gestures carry the loaded output or an actual edit. Disk omission
+    // must not make the registry rebuild author a new set of render defaults.
+    output: { ...resolved.output },
   };
 };

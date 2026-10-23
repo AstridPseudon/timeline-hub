@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { splitClipAtPlayhead } from '@/tools/video-editor/lib/editor-utils.ts';
 import { splitIntersectingClipsAtPlayhead } from '@/tools/video-editor/lib/clip-editing-utils.ts';
+import { withAuthoredClipLabels } from '@/tools/video-editor/lib/serialize.ts';
 import type { ClipEditingContext } from './types.ts';
 
 export function useClipSplitting(ctx: ClipEditingContext) {
@@ -30,7 +31,8 @@ export function useClipSplitting(ctx: ClipEditingContext) {
       kind: 'split' as const, clipId: selectedClipId, timeSeconds: currentTimeRef.current,
       config: current.config, registry: current.registry,
     }) : undefined;
-    const splitResult = splitClipAtPlayhead(resolvedConfig, selectedClipId, currentTimeRef.current);
+    const authored = current ? withAuthoredClipLabels(resolvedConfig, current.config) : resolvedConfig;
+    const splitResult = splitClipAtPlayhead(authored, selectedClipId, currentTimeRef.current);
     if (!splitResult.nextSelectedClipId) {
       return;
     }
@@ -52,7 +54,8 @@ export function useClipSplitting(ctx: ClipEditingContext) {
     const gestureBasis = current?.resolvedConfig === resolvedConfig ? structuredClone({
       kind: 'split' as const, clipId, timeSeconds, config: current.config, registry: current.registry,
     }) : undefined;
-    const splitResult = splitClipAtPlayhead(resolvedConfig, clipId, timeSeconds);
+    const authored = current ? withAuthoredClipLabels(resolvedConfig, current.config) : resolvedConfig;
+    const splitResult = splitClipAtPlayhead(authored, clipId, timeSeconds);
     if (!splitResult.nextSelectedClipId) {
       return;
     }
@@ -77,7 +80,7 @@ export function useClipSplitting(ctx: ClipEditingContext) {
     }
 
     const { config: nextResolvedConfig, didSplit } = splitIntersectingClipsAtPlayhead(
-      resolvedConfig,
+      withAuthoredClipLabels(resolvedConfig, current.config),
       current.rows,
       validClipIds,
       currentTimeRef.current,
