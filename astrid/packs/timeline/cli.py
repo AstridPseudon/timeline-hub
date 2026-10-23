@@ -2242,6 +2242,13 @@ def _cmd_render(parsed: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_commit(parsed: argparse.Namespace) -> int:
+    """Commit one detached document through the existing Runtime commit door."""
+    from astrid.packs.timeline.cli_native import commit_document
+
+    return commit_document(parsed)
+
+
 def _render_video_handle(result: Any, project: Any) -> dict[str, str]:
     """The film's handle and its export command (users guessed run:R/output#0; the port is video)."""
     run_id = getattr(result, "kernel_run_id", None) or getattr(result, "run_id", None)
@@ -3590,6 +3597,21 @@ def _configure_checkout(subparser: argparse.ArgumentParser) -> None:
     subparser.set_defaults(handler=_as_timeline_verb(_guarded(2, _cmd_checkout)))
 
 
+def _configure_commit(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser, required=False)
+    subparser.add_argument("ref", help="Timeline UUID, ULID, or slug named by the detached document.")
+    subparser.add_argument("--file", type=Path, required=True,
+                           help="Detached timeline JSON from the existing timeline document checkout.")
+    subparser.add_argument("-m", "--message", required=True,
+                           help="Nonempty commit label recorded in Runtime history.")
+    subparser.add_argument("--idempotency-key", required=True,
+                           help="Stable key to retry this exact document commit.")
+    subparser.add_argument("--dry-run", action="store_true",
+                           help="Preview the commit without accepting a Runtime publication.")
+    _add_json_flag(subparser, default=False)
+    subparser.set_defaults(handler=_as_timeline_verb(_cmd_commit))
+
+
 def _configure_status(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser, required=False)
     subparser.add_argument("ref", help="Timeline id or slug to inspect.")
@@ -3812,6 +3834,7 @@ def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None
 
 COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec("checkout", help="Create or open a detached editable working copy.", configure=_configure_checkout),
+    CommandSpec("commit", help="Commit a detached timeline document through Runtime.", configure=_configure_commit),
     CommandSpec("edit", help="Commit a clip move or trim, or edit a legacy detached working copy.", configure=_configure_edit),
     CommandSpec("assets", help="List timeline asset keys, media details, and every clip using each key.", configure=_configure_assets),
     CommandSpec("find", help="Find what you hear or see: addresses and times.", configure=_configure_find),

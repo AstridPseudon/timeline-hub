@@ -8,7 +8,7 @@ from typing import Any
 
 # Verbs whose --project is optional: omitted, it is the workspace runtime's current project.
 CURRENT_PROJECT_VERBS = frozenset(
-    {"checkout", "apply", "assets", "check", "discard", "find", "lines", "redo", "status", "undo"}
+    {"checkout", "apply", "assets", "check", "commit", "discard", "find", "lines", "redo", "status", "undo"}
 )
 
 
@@ -53,7 +53,9 @@ class TimelinesParser(argparse.ArgumentParser):
                 parsed.more_addresses, loose = list(loose), []  # show TL a b c: one record each
         if loose or len(extras) != len([e for e in extras if not e.startswith("-")]):
             self.error(f"unrecognized arguments: {' '.join(extras)}")
-        if getattr(parsed, "command", None) in CURRENT_PROJECT_VERBS and not getattr(parsed, "project", None) and not getattr(parsed, "file", None):
+        if (getattr(parsed, "command", None) in CURRENT_PROJECT_VERBS
+                and not getattr(parsed, "project", None)
+                and (getattr(parsed, "command", None) == "commit" or not getattr(parsed, "file", None))):
             project = resolve_current_project(parsed)  # an explicit --project always wins
             if project is None:
                 self.error(
