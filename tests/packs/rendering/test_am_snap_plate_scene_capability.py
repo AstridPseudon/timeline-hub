@@ -339,8 +339,8 @@ def test_unproven_backing_cannot_claim_opaque_coverage(prepared_root, params):
 def test_public12_outer_geometry_gap_does_not_erase_original_positive(prepared_root, outer):
     from astrid.core.timeline.onscreen import element_coverage, visible_at
 
-    # Public12 itself marks these outer wrappers unknown. Keep the private
-    # positive intact until a package-owned replacement evaluates the wrapper.
+    # Keep the private positive intact while checking the package-owned public
+    # capability result for the same wrapper.
     original = plate({"src": SRC}, **outer)
     private = visible_at({"tracks": [{"id": "picture", "kind": "visual"}], "clips": [original]},
                          0, 24, {"width": 200, "height": 100}, element_coverage(["am-snap-plate"]))[0]
@@ -350,6 +350,26 @@ def test_public12_outer_geometry_gap_does_not_erase_original_positive(prepared_r
         assert private.full_frame is False and private.opacity == 1
     props, basis, _ = prepared_root([original])
     row = scene_answers.host_frames_at(props, basis, [0])[0]
-    assert row["coverage"] == "UNKNOWN" and row["content"] is None
-    assert row["layers"][0]["bounds"]["status"] == "unknown"
-    assert "unknown-animation-geometry" in {finding["code"] for finding in row["layers"][0]["findings"]}
+    layer = row["layers"][0]
+    assert row["coverage"] == "GAP" and row["content"] is None and row["findings"] == []
+    assert layer["targetBounds"] == {
+        "status": "known", "rect": {"x": 0, "y": 0, "width": 200, "height": 100}}
+    if "cropLeft" in outer:
+        expected_bounds = {"x": 40, "y": 0, "width": 160, "height": 100}
+        expected_opacity = 1
+        expected_visible = True
+    elif outer["entrance"]["type"] == "scale-in":
+        expected_bounds = {"x": 15, "y": 7.5, "width": 170, "height": 85}
+        expected_opacity = 0
+        expected_visible = False
+    else:
+        expected_bounds = {"x": 0, "y": 40, "width": 200, "height": 60}
+        expected_opacity = 0
+        expected_visible = False
+    assert layer["bounds"] == {"status": "known", "rect": expected_bounds}
+    assert layer["opacity"] == expected_opacity
+    assert layer["visible"] is expected_visible
+    assert layer["fullFrame"] is False
+    assert layer["opaqueSupport"] == "rect"
+    assert layer["coverage"] == "partial"
+    assert layer["findings"] == []
