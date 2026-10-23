@@ -1,5 +1,5 @@
-<!-- app | 2026-10-23T04:33:09Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 0m -->
-# app board, 2026-10-23T04:33:06Z
+<!-- app | 2026-10-23T04:35:10Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 1m -->
+# app board, 2026-10-23T04:34:06Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | True upstream/editor/retirement composition | Luna high | U3b,U3c,U2,V3 | merged | app-U3-V3-hygiene-final-join-r3; app-U3-final-joined-review-r3 | Final independent PASS184+59+1/tsc/lint/diff/locks/producer byte identity. Live main7c17 verified before queue merge. Integrated exact22bfe/tree9ed5 baseline PASS; source/both parents/live ancestry verified. U3 DONE | 22bfe5349 merge /8a40acdd7 source |
@@ -22,7 +22,7 @@
 | P1-source | Reviewed original mixed-chain spec import | Luna high | Proof3ad; corrected D13 review | doing | app-P1-current-D13-spec-port-r2 | Re-port ONLY exact reviewed spec onto corrected0e156; old failed-product test ancestry excluded. Source-only list2/type/lint expected; no execution credit | donor3ad /base0e156 |
 | P1 | Cases/provenance/real-data encoder corpus | Luna high | C0; A2/R1 to execute real chain | merged | ap2-P1-encoder-first-return | Integrated service8637 PASS14/2files on tree991c6720, previous153PASS on eb59. Collection/unsent encoder only, no H3 GO | 19500aa36 /d3e141fa5 |
 | V4 | Properties helper dedup | Luna high | — | merged | vw-V4-app-properties-dedup | Owner70/tsc/lint and integrated batch153PASS; Viewing independent integrated70 also PASS | 794d365ae /22bfe5349 |
-| U3-P3-resolver | Normal Composition public export resolution | Luna high | exact V3 archive | review | app-U3-P3-public-export-resolver-r1; app-U3-P3-resolver-review-r1 | Author PASS10 resolver+2 registry/public Node smoke/actual tsc/lint/hosted build exact819acf; default heap OOM then explicit6144 build PASS disclosed. Independent review dispatched | 4592b6c40 /tree9d05c649 |
+| U3-P3-resolver | Normal Composition public export resolution | Luna high | exact V3 archive | merging | app-U3-P3-public-export-resolver-r1; app-U3-P3-resolver-review-r1 | Independent PASS resolver/registry/import/type/lint/diff; exact-tree hosted build PASS reused, default heap OOM disclosed. Normal merge queued promptly | 4592b6c40 /tree9d05c649 |
 Blockers: Proof/Farm — Parent A2 integrated9eda has independent298/static proof, but Proof0335 identifies omitted reads -> atomic fallback -> required disjoint MERGED chain impossible. App Sol read-intent correction dispatched; Proof fixes its separate split/locator expectations. H3 NO-GO/A4 gated.
 Blockers: Runtime — Strict-envelope normal34e is MERGEDc2a; integrated composed targeted/type/lint proof active. Compatible execution ad823 retains all34e artifacts. Tuple frozen34e until P1 GO; no second adoption.
 Blockers: Farm/P1 — actual split→trim newly-createdID→Agent edit→lostACK→restart across accepted/merged/refused is UNEXECUTED. Reserve/run only when mounted A2 selector is genuinely callable; A4/G5 gated. Farm owns heavy journeys/full suites.
