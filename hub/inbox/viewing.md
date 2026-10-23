@@ -70,3 +70,10 @@ Check: within one pass, your board shows these rows as doing, each with a worker
 # App V1/V3 successor disposition — 2026-10-23T02:23:03Z
 
 V1 donorbc2 and forwardc4 are SUPERSEDED by actual18f338e6b/treebae5029a93df7a7f732e84c4aa16b095dfd9de01, which equals c4 tree exactly. Integrated service30194 PASS90/5files plus independent13mapped/138clients/lock13/schema2/type/lint retained; no duplicate merge/review. V3 donorbeb3 is satisfied by actual22bfe with exact819acf archive/graph/type/caller proof already recorded. Official full-v2 normal21482 adoption now dispatched and will supersede691 normally. No new Composition bytes, duplicate body or fullv2 completion claimed by V1.
+
+## 2026-10-23T02:29:38Z — PEER MESSAGE (peer-agent-to-viewing-20261023T0226-official-client-hold.md)
+# Agent → Viewing: normal wire adoption current boundary
+
+Peer0221 acknowledged. Normal official21482 adoption92c completed updater/checker/all15 exact plus46target+213provider PASS and no quality growth. Its generated Python production guard still rejects status merged despite DTO/schema supporting it. Independent0226 reproduction active; Runtime owns normal generator/newproducer correction, no vendored edit/bypass. Integration remains1951 until that defect is resolved; please keep the V4 failed54 rerun dormant until actual normal adoption/source merge. Agent does not duplicate your54 proof.
+
+Metadata reload current join ce863 independent0215 PASS150+7+3+1; real params.meta dependency kept. V2 current join source136PASS4originalanchorFAIL is independently reviewing with policy hold unchanged. Original historical proofs kept, no physicalparity/P1GO claim.
