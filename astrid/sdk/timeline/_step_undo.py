@@ -143,13 +143,29 @@ def _native_mirror_partition(record, step, nested):
         raise CommandError('nested inverse mirror input is unavailable', kind='history_unavailable')
     state = State({'parent': {'clips': copy.deepcopy(initial['value']),
                              'config': {'clips': copy.deepcopy(initial['value'])}}})
+    config = next((write for write in record['writes'] if write['ref'] == 'parent'
+                   and write['path'] == ['config']), None)
+    if config is not None and (record['writes'].index(config) < record['writes'].index(first)
+            or (record['writes'].index(config) < nested[0]['boundary']['native_write_range'][1]
+                and config['before'].get('state') == 'present'
+                and isinstance(config['before'].get('value'), dict)
+                and equal(config['before']['value'].get('clips'), initial['value'])
+                and not any(write['ref'].startswith('parent/clip:')
+                            or (write['ref'] == 'parent' and write['path'][:1] == ['config'])
+                            for write in record['writes'][:record['writes'].index(config)]))):
+        # A whole config replacement can enable or disable compiler mirrors.
+        # Aggregate clips writes leave config untouched until the stage compiles;
+        # its full native input remains valid before that first compiler boundary.
+        # A later config input must still contain the initial mirrored clips.
+        state.set('parent', ['config'], config['before'])
+    mirrored = equal(state.get('parent', ['config', 'clips']), state.get('parent', ['clips']))
     cursor, result = 0, []
 
     def compile_mirror():
         nonlocal cursor
         before = state.get('parent', ['config', 'clips'])
         after = state.get('parent', ['clips'])
-        if equal(before, after):
+        if not mirrored or equal(before, after):
             return
         expected = {'ref': 'parent', 'path': ['config', 'clips'], 'before': before,
                     'after': after, 'cause': record['ordinal']}
@@ -162,10 +178,24 @@ def _native_mirror_partition(record, step, nested):
     for binding in nested:
         start, end = binding['boundary']['native_write_range']
         first, last = binding['boundary']['effect_range']
-        before = state.get('parent', ['config', 'clips'])
-        image = {'config': {'clips': copy.deepcopy(before['value'])}}
+        before = state.get('parent', ['clips'])
+        image = copy.deepcopy(state.bundle['parent'])
+        root_effect = False
         for effect in step['patch'][first:last]:
-            if effect['ref'] != 'parent' or effect['path'][:2] != ['config', 'clips']:
+            if effect['ref'] != 'parent':
+                continue
+            if not effect['path']:
+                root_effect = True
+                def projection(payload):
+                    return {key: copy.deepcopy(payload[key]) for key in ('clips', 'config') if key in payload}
+
+                if (effect['op'] != 'set' or effect['before'].get('state') != 'present'
+                        or not equal(image, projection(effect['before']['value']))):
+                    raise CommandError('nested inverse mirror effects differ from history',
+                                       kind='history_unavailable')
+                image = projection(effect['value'])
+                continue
+            if effect['path'] != ['config'] and effect['path'][:2] != ['config', 'clips']:
                 continue
             if effect['op'] not in ('set', 'remove') or not equal(
                     value_at(image, 'parent', effect['path']), effect['before']):
@@ -176,18 +206,24 @@ def _native_mirror_partition(record, step, nested):
         mirror_start = cursor
         for write in record['writes'][start:end]:
             leaf = write['ref'].startswith('parent/clip:')
-            aggregate = write['ref'] == 'parent' and write['path'] in (['clips'], ['config', 'clips'])
+            aggregate = write['ref'] == 'parent' and write['path'] in (
+                ['clips'], ['config', 'clips'], ['config'])
             if not leaf and not aggregate:
                 continue
             if not equal(state.get(write['ref'], write['path']), write['before']):
                 raise CommandError('nested inverse native mirror input differs from history',
                                    kind='history_unavailable')
             state.set(write['ref'], write['path'], write['after'])
+            if write['ref'] == 'parent' and write['path'] == ['config']:
+                mirrored = equal(state.get('parent', ['config', 'clips']), state.get('parent', ['clips']))
             if leaf:
                 compile_mirror()
         compile_mirror()
-        after = state.get('parent', ['config', 'clips'])
-        if not equal(after, value_at(image, 'parent', ['config', 'clips'])):
+        after = state.get('parent', ['clips'])
+        observed = (state.bundle['parent'] if root_effect
+                    else state.get('parent', ['config', 'clips']))
+        expected = image if root_effect else value_at(image, 'parent', ['config', 'clips'])
+        if not equal(observed, expected):
             raise CommandError('nested inverse observations omit accepted effects', kind='history_unavailable')
         result.append((writes[mirror_start:cursor], (before, after)))
     if cursor != len(writes):
