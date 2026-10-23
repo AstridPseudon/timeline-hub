@@ -15,6 +15,7 @@ const {
   checkAstridDoctorAvailabilityMock: vi.fn(),
   useUserUIStateMock: vi.fn(),
 }));
+const mode = vi.hoisted(() => ({ current: 'first-run' as 'first-run' | 'reconnect' }));
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => navigateMock,
@@ -31,6 +32,7 @@ vi.mock('@/shared/lib/errorHandling/runtimeError', () => ({
 vi.mock('@/shared/hooks/useOnboarding', () => ({
   useOnboarding: () => ({
     showOnboardingModal: false,
+    onboardingMode: mode.current,
     closeOnboardingModal: closeOnboardingModalMock,
   }),
 }));
@@ -42,11 +44,12 @@ vi.mock('@/shared/hooks/useUserUIState', () => ({
 describe('useOnboardingFlow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mode.current = 'first-run';
     vi.useFakeTimers();
     checkAstridDoctorAvailabilityMock.mockResolvedValue({ status: 'available' });
   });
 
-  it('closes, checks Astrid, enters the local tool, and starts the tour', async () => {
+  it('closes, checks Astrid, and returns to the editor entry', async () => {
     const { result, unmount } = renderHook(() => useOnboardingFlow());
 
     await act(async () => {
@@ -56,11 +59,28 @@ describe('useOnboardingFlow', () => {
     expect(closeOnboardingModalMock).toHaveBeenCalledTimes(1);
     expect(checkAstridDoctorAvailabilityMock).toHaveBeenCalledTimes(1);
     expect(result.current.doctorAvailability).toEqual({ status: 'available' });
-    expect(navigateMock).toHaveBeenCalledWith('/tools/travel-between-images');
+    expect(navigateMock).toHaveBeenCalledWith('/tools/video-editor');
 
     expect(handleErrorMock).not.toHaveBeenCalled();
 
     unmount();
+    vi.useRealTimers();
+  });
+
+  it('returns directly from reconnect without navigating away from the current editor route', async () => {
+    mode.current = 'reconnect';
+    const { result, unmount } = renderHook(() => useOnboardingFlow());
+
+    await act(async () => {
+      await result.current.handleOnboardingClose();
+    });
+
+    expect(closeOnboardingModalMock).toHaveBeenCalledOnce();
+    expect(checkAstridDoctorAvailabilityMock).not.toHaveBeenCalled();
+    expect(navigateMock).not.toHaveBeenCalled();
+
+    unmount();
+    mode.current = 'first-run';
     vi.useRealTimers();
   });
 

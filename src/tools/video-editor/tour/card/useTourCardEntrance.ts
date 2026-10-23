@@ -6,7 +6,7 @@ export const TOUR_CARD_ENTRANCE_MS = 1500;
 
 /**
  * Plays the card's entrance (`entranceMs` long) once per `key`, then settles: everything rests in its end state (a video may
- * keep looping) and, when `reportsReady`, the card marks itself ready. A `skipAnimation` bump settles it at
+ * finish playing and hold its last frame) and, when `reportsReady`, the card marks itself ready. A `skipAnimation` bump settles it at
  * once; reduced motion, and arriving by Back (`instant`), start settled (Back still plays a video).
  */
 export function useTourCardEntrance(

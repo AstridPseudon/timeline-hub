@@ -13,7 +13,7 @@ vi.mock('@/tools/video-editor/compositions/TimelineRenderer', () => ({
 }));
 
 const playerListeners = new Map<string, Set<(...args: any[]) => void>>();
-const playerPropsHistory: Array<{ config: ResolvedTimelineConfig; durationInFrames?: number; astridElementHost?: AstridElementHost; numberOfSharedAudioTags?: number }> = [];
+const playerPropsHistory: Array<{ config: ResolvedTimelineConfig; durationInFrames?: number; moveToBeginningWhenEnded?: boolean; astridElementHost?: AstridElementHost; numberOfSharedAudioTags?: number }> = [];
 const playerHandles: Array<{
   seekTo: ReturnType<typeof vi.fn>;
   getCurrentFrame: ReturnType<typeof vi.fn>;
@@ -26,12 +26,13 @@ vi.mock('@remotion/player', async () => {
 
   return {
     Player: React.forwardRef(function MockPlayer(
-      props: { component: React.ComponentType<{config: ResolvedTimelineConfig; astridElementHost?: AstridElementHost; preparing: boolean}>; inputProps: { config: ResolvedTimelineConfig; astridElementHost?: AstridElementHost; preparing: boolean }; durationInFrames?: number; numberOfSharedAudioTags?: number },
+      props: { component: React.ComponentType<{config: ResolvedTimelineConfig; astridElementHost?: AstridElementHost; preparing: boolean}>; inputProps: { config: ResolvedTimelineConfig; astridElementHost?: AstridElementHost; preparing: boolean }; durationInFrames?: number; moveToBeginningWhenEnded?: boolean; numberOfSharedAudioTags?: number },
       ref: React.Ref<unknown>,
     ) {
       playerPropsHistory.push({
         config: props.inputProps.config,
         durationInFrames: props.durationInFrames,
+        moveToBeginningWhenEnded: props.moveToBeginningWhenEnded,
         astridElementHost: props.inputProps.astridElementHost,
         numberOfSharedAudioTags: props.numberOfSharedAudioTags,
         durationInFrames: props.durationInFrames,
@@ -221,6 +222,15 @@ describe('RemotionPreview', () => {
       </VideoEditorRuntimeProvider>,
     );
     expect(playerPropsHistory.at(-1)?.astridElementHost).toBe(host);
+  });
+
+  it('holds the last frame after natural completion so replay remains an explicit Play action', () => {
+    render(<RemotionPreview config={makeConfig('natural-end')} onTimeUpdate={vi.fn()} playerContainerRef={createRef<HTMLDivElement>()} />);
+
+    // Remotion defaults moveToBeginningWhenEnded to true. The preview opts out:
+    // natural completion pauses on its last valid frame, while Player.play()
+    // still rewinds automatically when the person presses Play again there.
+    expect(playerPropsHistory.at(-1)?.moveToBeginningWhenEnded).toBe(false);
   });
 
   it('leaves the outer surround transparent without changing the Player picture/config', () => {

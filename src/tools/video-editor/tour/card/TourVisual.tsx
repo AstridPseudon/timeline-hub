@@ -62,7 +62,7 @@ function FrameToStill({ labels: [source, model] }: { labels: readonly [string, s
   );
 }
 
-/** The start frame comes alive: the 10 s shot fades up over it and plays under a slow playhead. */
+/** The start frame comes alive: the 14 s shot fades up over it and plays under a slow playhead. */
 function StillToVideo({ labels: [model, length], playing }: { labels: readonly [string, string]; playing: boolean }) {
   return (
     <>

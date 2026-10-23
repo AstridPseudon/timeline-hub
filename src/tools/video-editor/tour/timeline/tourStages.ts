@@ -13,25 +13,27 @@ export const EDITOR_TOUR_PROJECT_NAME = 'Onboarding project';
 export const EDITOR_TOUR_TIMELINE_NAME = 'Lantern Valley';
 export const EDITOR_TOUR_LIVE_SCENE_CLIP_TYPE = 'haus.astrid.liveScene';
 /** The scene's length on the timeline, which the video row spans too. */
-export const TOUR_SCENE_SECONDS = 10;
-/** How long each anchor frame (start, end) holds on the stills row. */
+export const TOUR_SCENE_SECONDS = 14;
+/** How long each of the four anchor frames holds on the stills row. */
 export const TOUR_ANCHOR_SECONDS = 1;
 
 export const TOUR_CLIP_IDS = Object.freeze({
   scene: 'tour-scene-clip',
-  stills: ['tour-still-clip-start', 'tour-still-clip-end'],
+  stills: ['tour-still-clip-start', 'tour-still-clip-mid-1', 'tour-still-clip-mid-2', 'tour-still-clip-end'],
   video: 'tour-video-clip',
 } as const);
 
 const TOUR_ASSET_IDS = Object.freeze({
-  stills: ['tour-still-start', 'tour-still-end'],
+  stills: ['tour-still-start', 'tour-still-mid-1', 'tour-still-mid-2', 'tour-still-end'],
   video: 'tour-video',
 } as const);
 
-/** The stills row: the realistic start frame at 0 s and end frame in the scene's last second. */
-const ANCHORS = [
+/** Four realistic reference frames, aligned to the guide flight. */
+export const TOUR_ANCHORS = [
   { label: 'Start frame', at: 0 },
-  { label: 'End frame', at: TOUR_SCENE_SECONDS - TOUR_ANCHOR_SECONDS },
+  { label: 'Mountain frame', at: 6.5 },
+  { label: 'Descent frame', at: 10 },
+  { label: 'Town frame', at: TOUR_SCENE_SECONDS - TOUR_ANCHOR_SECONDS },
 ] as const;
 
 /** Shown until the media slot has a real file: a neutral dark frame, never an empty `src`. */
@@ -58,7 +60,8 @@ export function createEditorTourTimeline(): TimelineConfig {
 function assetEntry(slot: EditorTourMediaSlot, type: string, label: string, duration?: number): AssetRegistryEntry {
   return {
     file: slot.url || NEUTRAL_FRAME_URL,
-    type,
+    type: slot.mediaType ?? type,
+    ...(slot.sha256 ? { content_sha256: slot.sha256, origin: 'immutable-public' } : {}),
     resolution: `${slot.width}x${slot.height}`,
     ...(duration === undefined ? {} : { duration }),
     metadata: { filename: label },
@@ -71,7 +74,7 @@ const VIDEO_NAME = EDITOR_TOUR_SCRIPT.acts[3].card.labels[0];
 export function createEditorTourAssetRegistry(media = EDITOR_TOUR_MEDIA): AssetRegistry {
   const assets: AssetRegistry['assets'] = {};
   media.stills.forEach((slot, index) => {
-    assets[TOUR_ASSET_IDS.stills[index]] = assetEntry(slot, 'image/webp', ANCHORS[index].label);
+    assets[TOUR_ASSET_IDS.stills[index]] = assetEntry(slot, 'image/webp', TOUR_ANCHORS[index].label);
   });
   assets[TOUR_ASSET_IDS.video] = assetEntry(
     media.video, 'video/mp4', VIDEO_NAME, media.video.durationSeconds ?? TOUR_SCENE_SECONDS,
@@ -147,7 +150,7 @@ export function createEditorTourStagePatch(
       : { track: EDITOR_TOUR_TRACK_IDS.videos, label: 'Video', before: EDITOR_TOUR_TRACK_IDS.stills };
     operations.push({ op: 'track.add', target: row.track, payload: { kind: 'visual', label: row.label, before: row.before } });
     if (stage === 2) {
-      ANCHORS.forEach(({ label, at }, index) => {
+      TOUR_ANCHORS.forEach(({ label, at }, index) => {
         const clipId = TOUR_CLIP_IDS.stills[index];
         operations.push(
           { op: 'clip.add', target: clipId, payload: { track: row.track, at, clipType: 'hold' } },
@@ -164,7 +167,7 @@ export function createEditorTourStagePatch(
         {
           op: 'clip.update',
           target: TOUR_CLIP_IDS.video,
-          payload: { mode: 'merge', asset: TOUR_ASSET_IDS.video, from: 0, to: TOUR_SCENE_SECONDS, speed: 1, label: VIDEO_NAME },
+          payload: { mode: 'merge', asset: TOUR_ASSET_IDS.video, from: 0, to: TOUR_SCENE_SECONDS, speed: 1, volume: 0, label: VIDEO_NAME },
         },
       );
     }

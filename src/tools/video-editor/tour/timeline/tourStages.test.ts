@@ -63,8 +63,8 @@ describe('editor tour timeline stages', () => {
     expect(clip.track).toBe(EDITOR_TOUR_TRACK_IDS.scene);
     expect(clip.clipType).toBe(EDITOR_TOUR_LIVE_SCENE_CLIP_TYPE);
     expect(clip.at).toBe(0);
-    expect(clip.from).toBe(50);
-    expect(clip.to).toBe(60);
+    expect(clip.from).toBe(2.5);
+    expect(clip.to).toBe(16.5);
     expect(clip.app?.liveScene).toEqual(fakeLiveScene);
   });
 
@@ -76,7 +76,7 @@ describe('editor tour timeline stages', () => {
     expect(data.config.tracks?.find((track) => track.id === EDITOR_TOUR_TRACK_IDS.scene)?.label).toBe('V1');
   });
 
-  it('stage 2 adds the frames row above the scene: a 1 s start frame at 0 s and a 1 s end frame at 9 s', async () => {
+  it('stage 2 places all four reference frames above the scene at their guide times', async () => {
     const start = await buildStartData();
     const stage1 = applyStage(start, createEditorTourStagePatch(1, fakeLiveScene));
     const data = applyStage(stage1, createEditorTourStagePatch(2, fakeLiveScene));
@@ -85,14 +85,16 @@ describe('editor tour timeline stages', () => {
     expect(clipIdsOn(data, EDITOR_TOUR_TRACK_IDS.scene)).toEqual([TOUR_CLIP_IDS.scene]);
     expect(clipIdsOn(data, EDITOR_TOUR_TRACK_IDS.stills)).toEqual([...TOUR_CLIP_IDS.stills]);
 
-    const [first, second] = TOUR_CLIP_IDS.stills.map((id) => data.config.clips.find((clip) => clip.id === id));
+    const [first, mountain, descent, last] = TOUR_CLIP_IDS.stills.map((id) => data.config.clips.find((clip) => clip.id === id));
     expect(first).toMatchObject({ track: EDITOR_TOUR_TRACK_IDS.stills, at: 0, clipType: 'hold', asset: 'tour-still-start', hold: TOUR_ANCHOR_SECONDS, label: 'Start frame' });
-    expect(second).toMatchObject({ track: EDITOR_TOUR_TRACK_IDS.stills, at: TOUR_SCENE_SECONDS - TOUR_ANCHOR_SECONDS, clipType: 'hold', asset: 'tour-still-end', hold: TOUR_ANCHOR_SECONDS, label: 'End frame' });
+    expect(mountain).toMatchObject({ at: 6.5, asset: 'tour-still-mid-1', hold: 1 });
+    expect(descent).toMatchObject({ at: 10, asset: 'tour-still-mid-2', hold: 1 });
+    expect(last).toMatchObject({ track: EDITOR_TOUR_TRACK_IDS.stills, at: 13, clipType: 'hold', asset: 'tour-still-end', hold: TOUR_ANCHOR_SECONDS, label: 'Town frame' });
     expect(TOUR_ANCHOR_SECONDS).toBe(1);
-    expect(second?.at).toBe(9);
+    expect(last?.at).toBe(13);
   });
 
-  it('stage 3 adds the video row on top with one 10 s MiniMax H3 clip', async () => {
+  it('stage 3 adds the video row on top with one muted 14 s MiniMax H3 clip', async () => {
     const start = await buildStartData();
     const stage1 = applyStage(start, createEditorTourStagePatch(1, fakeLiveScene));
     const stage2 = applyStage(stage1, createEditorTourStagePatch(2, fakeLiveScene));
@@ -108,15 +110,17 @@ describe('editor tour timeline stages', () => {
     expect(clipIdsOn(data, EDITOR_TOUR_TRACK_IDS.videos)).toEqual([TOUR_CLIP_IDS.video]);
 
     const video = data.config.clips.find((clip) => clip.id === TOUR_CLIP_IDS.video);
-    expect(video).toMatchObject({ track: EDITOR_TOUR_TRACK_IDS.videos, at: 0, clipType: 'media', asset: 'tour-video', from: 0, to: 10, label: 'MiniMax H3' });
-    expect(TOUR_SCENE_SECONDS).toBe(10);
+    expect(video).toMatchObject({ track: EDITOR_TOUR_TRACK_IDS.videos, at: 0, clipType: 'media', asset: 'tour-video', from: 0, to: 14, volume: 0, label: 'MiniMax H3' });
+    expect(TOUR_SCENE_SECONDS).toBe(14);
   });
 
   it('points every media asset at the real URL of its slot', () => {
     const { assets } = createEditorTourAssetRegistry();
     const expected: Record<string, string> = {
       'tour-still-start': EDITOR_TOUR_MEDIA.stills[0].url,
-      'tour-still-end': EDITOR_TOUR_MEDIA.stills[1].url,
+      'tour-still-mid-1': EDITOR_TOUR_MEDIA.stills[1].url,
+      'tour-still-mid-2': EDITOR_TOUR_MEDIA.stills[2].url,
+      'tour-still-end': EDITOR_TOUR_MEDIA.stills[3].url,
       'tour-video': EDITOR_TOUR_MEDIA.video.url,
     };
     for (const [id, url] of Object.entries(expected)) {
@@ -124,19 +128,19 @@ describe('editor tour timeline stages', () => {
       expect(assets[id].file, id).toBe(url);
       expect(assets[id].file.startsWith('data:'), id).toBe(false);
     }
-    expect(assets['tour-video'].duration).toBe(10);
+    expect(assets['tour-video'].duration).toBe(14.375);
   });
 
   it('names the media after what it is, not after the files', () => {
     const { assets } = createEditorTourAssetRegistry();
     expect(assets['tour-still-start'].metadata?.filename).toBe('Start frame');
-    expect(assets['tour-still-end'].metadata?.filename).toBe('End frame');
+    expect(assets['tour-still-end'].metadata?.filename).toBe('Town frame');
     expect(assets['tour-video'].metadata?.filename).toBe('MiniMax H3');
   });
 
   it('gives an empty media slot a non-empty neutral url', () => {
     const empty = { url: '', width: 1280, height: 720, durationSeconds: 10 };
-    const { assets } = createEditorTourAssetRegistry({ frames: [empty, empty], stills: [empty, empty], video: empty });
+    const { assets } = createEditorTourAssetRegistry({ frames: [empty, empty], stills: [empty, empty, empty, empty], video: empty });
     for (const id of ['tour-still-start', 'tour-still-end', 'tour-video']) {
       expect(assets[id].file.startsWith('data:'), id).toBe(true);
     }

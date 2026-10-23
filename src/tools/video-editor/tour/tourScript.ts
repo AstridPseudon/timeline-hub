@@ -40,7 +40,7 @@ export interface EditorTourScript {
 }
 
 /**
- * Prompts keep the owner's wording. Each act's card title says what the agent just did (it creates and uses
+ * The tour replays the completed Lantern Valley project; Send advances the demonstration. Each act's card title says what the agent just did (it creates and uses
  * extensions, generates with local models, brings it all together); the body carries the bigger picture.
  * Captions keep the tour's three claims and read in about two seconds.
  */
@@ -48,11 +48,11 @@ export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
   acts: {
     1: {
       composeHeader: 'Ask your agent to do any kind of creative work',
-      prompt: 'Make me a Three.js journey through a valley with lanterns in it as the moon rises.',
-      reply: 'Lantern Valley is on your timeline: 10 seconds of a live Three.js scene, with the moon up and the lanterns lifting off the water.',
+      prompt: 'Make me a 14-second bird flight through Lantern Valley, soaring past the mountains and descending into town.',
+      reply: 'Lantern Valley is on your timeline: a 14-second live Three.js flight that climbs toward the moon, then swoops across the lake into town.',
       toolCards: [
         { name: 'Built Lantern Valley', detail: 'Three.js live scene' },
-        { name: 'Placed it on the timeline', detail: 'Moon overlook · 10 s' },
+        { name: 'Placed it on the timeline', detail: 'Valley flight · 14 s' },
       ],
       card: {
         title: 'Create together with your agent using extendable tools',
@@ -64,36 +64,36 @@ export const EDITOR_TOUR_SCRIPT = Object.freeze<EditorTourScript>({
     2: {
       composeHeader: 'Your agent can do anything with open models',
       prompt: 'Can you make me realistic frames for that using Qwen Image 2.1?',
-      reply: 'I made realistic start and end frames with Qwen Image 2.1 in ComfyUI. Both stills are on a new row above the scene.',
+      reply: 'I made four realistic reference frames with Qwen Image 2.1 through WaveSpeed. They follow the flight from the valley to natural-looking buildings in town.',
       toolCards: [
-        { name: 'Captured 2 frames', detail: 'Lantern Valley · start and end' },
-        { name: 'Qwen Image 2.1 × 2', detail: 'ComfyUI · frame → realistic still' },
+        { name: 'Captured 4 frames', detail: 'Start · mountains · descent · town' },
+        { name: 'Qwen Image 2.1 × 4', detail: 'WaveSpeed · frame → realistic still' },
       ],
       card: {
-        title: 'Your agent generates with local models, equipped with the ecosystem’s knowledge',
-        body: 'Your agent can run ComfyUI, Wan2GP or any inference framework, and handles the tricky setup and optimization.',
+        title: 'Your agent works with open models and the ecosystem’s knowledge',
+        body: 'Use open models locally with ComfyUI or Wan2GP, or through a hosted service. These four frames were generated through WaveSpeed.',
         visual: 'frame-to-still',
         labels: ['Frame', 'Qwen Image 2.1'],
       },
     },
     3: {
       composeHeader: 'Your agent can combine different assets to create final generations',
-      prompt: 'Now use MiniMax H3 to turn that into a 10-second video, following the motion in the Three.js scene.',
-      reply: 'MiniMax H3 turned your start and end frames into one 10-second shot that follows the scene’s motion. It’s on the top row, ready to play.',
-      toolCards: [{ name: 'MiniMax H3', detail: 'start + end frames · 10 s' }],
+      prompt: 'Now use MiniMax H3 to make a 14-second video using all four frames and the Three.js motion guide.',
+      reply: 'MiniMax H3 used all four reference frames and the 14-second guide to make this flight. The finished shot is trimmed to 14 seconds on the top row, ready to play.',
+      toolCards: [{ name: 'MiniMax H3', detail: '4 frames + motion guide · 14 s' }],
       card: {
         title: 'Your agent uses everything on your timeline to create the final shot',
         body: 'Every input you and your agent create gives you production‑level creative control.',
         visual: 'still-to-video',
-        labels: ['MiniMax H3', '10 s'],
+        labels: ['MiniMax H3', '14 s'],
       },
     },
   },
-  welcome: { title: 'Welcome to Astrid', body: 'I’m just going to show you a very quick tour of what Astrid can do.', action: 'OK' },
+  welcome: { title: 'Welcome to Astrid', body: 'Explore a completed project in this quick guided demo. The prompts replay its steps; no new generation runs.', action: 'OK' },
   hints: { compose: 'Press Send to ask Astrid', respond: 'Your agent uses community-built tools to deliver this request' },
   controls: { next: 'Next', back: 'Back', skip: 'Skip tour' },
   strip: ['Three.js', 'Frames', 'Video'],
-  finale: { title: 'Do you get it?', action: 'I got it', recap: ['Agent + extensions', 'Local models', 'Production'] },
+  finale: { title: 'Do you get it?', action: 'I got it', recap: ['Agent + extensions', 'Open models', 'Finished shot'] },
   feedback: {
     title: 'We actually need your feedback',
     body: 'We’re aiming for a tool that helps unlock the creative potential of open models and the open‑source community. But Astrid is a very early-stage product, and in many ways it doesn’t get there yet. Feedback on any issue you hit helps us improve it: no problem is too large or too small.',

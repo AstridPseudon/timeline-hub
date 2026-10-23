@@ -14,12 +14,13 @@ import {
 import { requestCenterTimelineClip } from '@/tools/video-editor/lib/timeline-viewport-events.ts';
 import { editorTourTrackSelector } from '@/tools/video-editor/tour/anchors.ts';
 import { loadTourLiveScene, TOUR_SCENE_SOURCE_FROM } from './tourSceneSource.ts';
-import { createEditorTourStagePatch, createEditorTourStageRemovalPatch, tourStageFocusClipId, tourTrackOrder } from './tourStages.ts';
+import { createEditorTourStagePatch, createEditorTourStageRemovalPatch, tourStageFocusClipId, tourTrackOrder, TOUR_ANCHORS, TOUR_CLIP_IDS } from './tourStages.ts';
 
 const SceneSurface = lazy(() => import('@astrid/packs/rendering/ui/threejs-live-editor/SceneSurface')
   .then((module) => ({ default: module.SceneSurface })));
 
 const RENDER_WAIT_MS = 3000;
+export const TOUR_ANCHOR_DWELL_MS = 1200;
 const WARMUP_GIVE_UP_MS = 8000;
 /** The longest `land` waits for the visible scene's first painted frame before showing the card over it anyway. */
 const SCENE_READY_GIVE_UP_MS = 8000;
@@ -62,7 +63,7 @@ function SceneWarmup({ liveScene, onWarm }: { liveScene: Record<string, unknown>
 /**
  * Lives inside the tour's editor and takes the demo timeline to the tour's stage through the editor's
  * own ops (`track.add`, `clip.add`, `clip.update`), then presents it: scroll the new row into view,
- * and on each `land` beat play the 10 s from the start (act 2 holds on its start frame instead).
+ * and on each `land` beat play the 14 s from the start (act 2 presents each reference frame, then holds the last).
  * Reports `ready.timeline` per beat.
  */
 export function EditorTourTimelineDriver() {
@@ -76,15 +77,21 @@ export function EditorTourTimelineDriver() {
   const [appliedStage, setAppliedStage] = useState<EditorTourStage>(0);
   const [liveScene, setLiveScene] = useState<Record<string, unknown> | null>(null);
   const [warm, setWarm] = useState(false);
+  const [sceneLoadAttempt, setSceneLoadAttempt] = useState(0);
+  const [sceneLoadError, setSceneLoadError] = useState(false);
   const [retry, setRetry] = useState(0);
   const applying = useRef(false);
 
   // The world loads as soon as the tour mounts, well before the first `land` beat needs it.
   useEffect(() => {
     let active = true;
-    loadTourLiveScene().then((scene) => { if (active) setLiveScene(scene); }, () => undefined);
+    setSceneLoadError(false);
+    loadTourLiveScene().then(
+      (scene) => { if (active) setLiveScene(scene); },
+      () => { if (active) setSceneLoadError(true); },
+    );
     return () => { active = false; };
-  }, []);
+  }, [sceneLoadAttempt]);
 
   useEffect(() => {
     if (!loaded || !ops || applying.current) return;
@@ -127,7 +134,10 @@ export function EditorTourTimelineDriver() {
   useEffect(() => {
     if (!loaded || appliedStage !== stage) return;
     let cancelled = false;
-    const isCancelled = () => cancelled;
+    const isCancelled = () => {
+      const current = getEditorTourState();
+      return cancelled || current.status !== 'running' || current.runId !== runId || current.act !== act || current.beat !== beat;
+    };
     void (async () => {
       if (beat === 'respond' && act === 1 && !instant) await waitFor(() => warm, WARMUP_GIVE_UP_MS, isCancelled);
       if (beat === 'land') {
@@ -137,29 +147,50 @@ export function EditorTourTimelineDriver() {
           RENDER_WAIT_MS,
           isCancelled,
         );
-        const focusClipId = tourStageFocusClipId(stage);
-        if (focusClipId) requestCenterTimelineClip(focusClipId);
+        if (isCancelled()) return;
         await waitFor(() => previewRef.current !== null, RENDER_WAIT_MS, isCancelled);
-        // Pause before seeking: a seek issued while the previous act is still playing doesn't stick.
+        if (isCancelled()) return;
+        // Pause before seeking so an earlier act's playback cannot overwrite the new position.
         previewRef.current?.pause();
-        previewRef.current?.seek(0);
-        // The scene lands first: hold at 0 until its first frame is painted (an Enter during the wait skips it),
-        // so the card never shows over an empty preview and the moonrise plays from its start.
-        if (act === 1 && !instant) {
+        if (act === 2) {
           const skipped = getEditorTourState().skipAnimation;
-          await waitFor(
-            () => document.querySelector(SCENE_READY_SELECTOR) !== null || getEditorTourState().skipAnimation !== skipped,
-            SCENE_READY_GIVE_UP_MS,
-            isCancelled,
-          );
+          const anchors = instant ? [TOUR_ANCHORS.length - 1] : TOUR_ANCHORS.map((_, index) => index);
+          for (const index of anchors) {
+            if (isCancelled() || getEditorTourState().skipAnimation !== skipped) break;
+            requestCenterTimelineClip(TOUR_CLIP_IDS.stills[index]);
+            previewRef.current?.seek(TOUR_ANCHORS[index].at);
+            if (!instant) await waitFor(
+              () => getEditorTourState().skipAnimation !== skipped,
+              TOUR_ANCHOR_DWELL_MS,
+              isCancelled,
+            );
+          }
+        } else {
+          const focusClipId = tourStageFocusClipId(stage);
+          if (focusClipId) requestCenterTimelineClip(focusClipId);
+          previewRef.current?.seek(0);
+          // Wait for the first painted world frame before playing the flight.
+          if (act === 1 && !instant) {
+            const skipped = getEditorTourState().skipAnimation;
+            await waitFor(
+              () => document.querySelector(SCENE_READY_SELECTOR) !== null || getEditorTourState().skipAnimation !== skipped,
+              SCENE_READY_GIVE_UP_MS,
+              isCancelled,
+            );
+          }
+          if (!isCancelled()) previewRef.current?.play();
         }
-        // Act 2's result is the start frame, which holds for the first second only: stay on it, paused.
-        if (act !== 2) previewRef.current?.play();
       }
-      if (!cancelled) markEditorTourReady('timeline');
+      if (!isCancelled()) markEditorTourReady('timeline');
     })();
     return () => { cancelled = true; };
   }, [runId, act, beat, stage, appliedStage, loaded, warm, instant, previewRef]);
 
+  if (sceneLoadError) return (
+    <div role="alert" className="fixed bottom-6 left-1/2 z-[2147483647] flex -translate-x-1/2 items-center gap-3 rounded-lg border bg-background p-4 text-sm text-foreground shadow-lg">
+      <span>The Lantern Valley demo could not load. Check your connection and try again.</span>
+      <button type="button" className="shrink-0 rounded-md bg-primary px-3 py-2 text-primary-foreground" onClick={() => setSceneLoadAttempt((count) => count + 1)}>Retry demo</button>
+    </div>
+  );
   return warming && liveScene ? <SceneWarmup liveScene={liveScene} onWarm={() => setWarm(true)} /> : null;
 }
