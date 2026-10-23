@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T06:43:31Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 1m -->
+<!-- agent | 2026-10-23T06:45:03Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 1m -->
 # agent board, 2026-10-23T06:41:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -45,7 +45,7 @@
 | P4-single-test | final 66-assertion HTTP test import | Proof Luna review; Agent audit | Proof0612/source417 | merged | ap2-P4-single-artifact-return-0607; ownerroute0619 | Legacyhub-sync auto-queued417 and merged a914 beforeownercheck. Finaldelta1 reviewedtestblob033482; owncurrentimport0617 now proof-only, NEVERmerge. Proof owns actualintegratedoneHTTP. Opsrepair0619 disablesobsoleteautomaticroute | 417678285;a914497a4 |
 | V2-map-locality | dependency-local legacy map validation | Sol author; independent Luna | D12a/b42 | merged | agt-V2-map-integrated-0642 | Independent60+exact0616probe+12realmountedPASS, normal2150/1915 inherited; exact2files/oneowncommit/no budgetchange. Actual9df integratedproof0642 active; no doneclaim beforePASS | fb3f1dc2f;9df06d16d |
 | U2-owner-merge-route | persist removal of ap2 auto-merge | Runtime Luna firstreturn/review | main publishes kit | blocked:runtime | rt-ops-owner-merge-route-0635 | Mainowner ACK0636, exact3line candidate -> review -> install/publication/livehashcheck. Remote0619 overwritten; independent0628 FAIL persistence. a914 exacttestonly audited | ops-only |
-| V2-child-asset | preserve untouched dangling child media | Luna author/independent | D12a/current3e | review | agt-V2-child-asset-final-review-0636 | Trace+independentclassificationPASS: realdefect. Author83PASS/2149/scopedtype; finalmypy1912 vslocked1914 adjudication next. Onlyauthoring_bundle+boundarytests | author0630 |
+| V2-child-asset | preserve untouched dangling child media | Luna source/review/currentport | D12a/current9df | doing | agt-V2-child-current-ratchet-0643 | IndependentSOURCEPASS83/probe/guards; acceptance ratchet exit1 because1912<1914, zerointroduced/tworesolved. Freshcurrentport exact2c89blobs + normalREDUCEDbaseline, no merge beforeexit0/review | c89d5ea4c staged |
 | V2-current-rebase | retained-source original native node | Viewing Luna classification | current3e | review | vw-V4-rebase-review-0630 | Actualoriginal1FAIL beforefreshaccept move-source wordmissing; four0626/independent0630 PASS4 on actual3e/treefbae. No duplicatefour/body or failed706merge | base3e4261e96 |
 Resolved: runtime — Normal frozen strict34e adoption DONE; compatible execution85dafdf467 merged/proven156+original48d6 allactualorigins. No newtuple/re-adoption/native14 duplicate.
 Resolved: agent audit — ccc scope hold CLEARED at auditedbf40; currentG234 reviewed31a5 and currentfork900 merged ea302 with integrated131+2replay+2live PASS. Owncommit checks retained.
