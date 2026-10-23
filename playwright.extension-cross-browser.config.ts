@@ -22,7 +22,6 @@ const fakeRuntimePort = inheritedRunPorts
   : allocateIsolatedPort('FAKE_RUNTIME_PORT', allocatedPorts);
 const baseURL = resolveCanonicalBaseUrl(port);
 const fakeRuntimeViteEnv = fakeRuntimeEnv({ port: fakeRuntimePort });
-const includeEdge = process.env.PLAYWRIGHT_INCLUDE_EDGE === '1';
 
 process.env.BASE_URL = baseURL;
 process.env.PLAYWRIGHT_BASE_URL = baseURL;
@@ -32,10 +31,6 @@ process.env.ASTRID_APP_EXTENSION_PORTS_ALLOCATED = '1';
  * Bounded, opt-in release gate for extension behavior in installed Chrome and
  * Playwright's Firefox/WebKit engines. It intentionally runs only one compact
  * spec; the ordinary Chromium timeline suite remains the fast feedback loop.
- *
- * Edge is explicit opt-in because Playwright's `msedge` channel requires an
- * installed Microsoft Edge binary:
- *   PLAYWRIGHT_INCLUDE_EDGE=1 npm run test:e2e:extension-cross-browser
  */
 export default defineConfig({
   testDir: './tests/e2e',
@@ -45,7 +40,8 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? 'github' : 'list',
+  forbidOnly: !!process.env.CI,
+  reporter: [[process.env.CI ? 'github' : 'list'], ['./config/testing/playwrightSkipGuard.ts']],
   outputDir: 'artifacts/extension-cross-browser/test-results',
   use: {
     baseURL,
@@ -89,11 +85,5 @@ export default defineConfig({
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
     },
-    ...(includeEdge
-      ? [{
-          name: 'edge-stable',
-          use: { ...devices['Desktop Edge'], channel: 'msedge' as const },
-        }]
-      : []),
   ],
 });

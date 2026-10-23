@@ -5,6 +5,7 @@ import { describe, it } from 'node:test';
 import { Worker } from 'node:worker_threads';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
+import { declaredSkip } from '../quality/declared-skip.mjs';
 
 import {
   BoundedCommandError,
@@ -22,12 +23,26 @@ import {
 } from './bounded-command-scan-policy.mjs';
 
 const NODE = process.execPath;
-const BASE = Object.freeze({ timeoutMs: 2_000, maxBuffer: 64 * 1024, killSignal: 'SIGKILL' });
+// Cases that expect success bound only a hang: the commands exit at once, and a slow runner (or twenty starting together) must not turn
+// them into timeouts. Cases whose subject is the timeout pass their own short bound.
+const HANG_GUARD_MS = 120_000;
+const BASE = Object.freeze({ timeoutMs: HANG_GUARD_MS, maxBuffer: 64 * 1024, killSignal: 'SIGKILL' });
 
 function run(source, options = {}) {
   return runBoundedCommand(NODE, ['-e', source], { ...BASE, ...options });
 }
 
+function processState(pid) {
+  try {
+    return execFileSync('/bin/ps', ['-p', String(pid), '-o', 'stat='], { encoding: 'utf8' }).trim();
+  } catch (error) {
+    if (error?.status === 1) return '';
+    throw error;
+  }
+}
+
+// The broker and process-scope containment run on macOS (lockf, ps eww); see `macos-release-process-containment`.
+// The cases that need no broker still run everywhere.
 describe('runBoundedCommand', () => {
   it('keeps an unavailable broker owner scan fail-closed instead of deleting artifacts', () => {
     assert.deepEqual(inspectBrokerOwner(null, 42, 1_700_000_000), {
@@ -97,7 +112,7 @@ describe('runBoundedCommand', () => {
     assert.equal(PROCESS_SCOPE_CLEANUP_ALLOWANCE_MS, 111_250);
   });
 
-  it('returns spawnSync-shaped success output and immutable invocation details', () => {
+  it('returns spawnSync-shaped success output and immutable invocation details', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const args = ['-e', "process.stdout.write('hello'); process.stderr.write('warn')"];
     const result = runBoundedCommand(NODE, args, { ...BASE, label: 'greeting' });
     args[1] = 'mutated after invocation';
@@ -112,13 +127,13 @@ describe('runBoundedCommand', () => {
     assert.ok(Object.isFrozen(result.args));
   });
 
-  it('reaps repeated broker-election candidates on macOS', { skip: process.platform !== 'darwin' || !existsSync('/usr/bin/lockf') }, () => {
+  it('reaps repeated broker-election candidates on macOS', { skip: declaredSkip('macos-lockf-broker') }, () => {
     const moduleUrl = new URL('./bounded-command.mjs', import.meta.url).href;
     const childSource = [
       `process.env.ASTRID_APP_BOUNDED_BROKER_SESSION = ${JSON.stringify('c'.repeat(32))};`,
       `const { runBoundedCommand } = await import(${JSON.stringify(moduleUrl)});`,
       'for (let index = 0; index < 12; index += 1) {',
-      "  const result = runBoundedCommand(process.execPath, ['-e', \"process.stdout.write('reap-ok')\"], { timeoutMs: 2_000, maxBuffer: 64 * 1024, killSignal: 'SIGKILL' });",
+      `  const result = runBoundedCommand(process.execPath, ['-e', \"process.stdout.write('reap-ok')\"], { timeoutMs: ${HANG_GUARD_MS}, maxBuffer: 64 * 1024, killSignal: 'SIGKILL' });`,
       "  if (result.failureType !== 'success' || result.stdout !== 'reap-ok') throw new Error(`bounded invocation ${index} failed: ${result.failureType}`);",
       '}',
       "await new Promise((resolvePromise) => setTimeout(resolvePromise, 100));",
@@ -131,7 +146,7 @@ describe('runBoundedCommand', () => {
     assert.deepEqual(JSON.parse(output), { zombieCount: 0 });
   });
 
-  it('throws structured diagnostics for a nonzero exit', () => {
+  it('throws structured diagnostics for a nonzero exit', { skip: declaredSkip('macos-release-process-containment') }, () => {
     assert.throws(
       () => run("process.stdout.write('token=secret'); process.stderr.write('bad'); process.exit(7)", {
         label: 'nonzero-check',
@@ -148,7 +163,7 @@ describe('runBoundedCommand', () => {
     );
   });
 
-  it('redacts environment values by default', () => {
+  it('redacts environment values by default', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const secret = `bounded-output-secret-${process.pid}-${Date.now()}`;
     const result = run('process.stdout.write(process.env.BOUNDED_OUTPUT_SECRET)', {
       env: { PATH: process.env.PATH ?? '', BOUNDED_OUTPUT_SECRET: secret },
@@ -157,7 +172,7 @@ describe('runBoundedCommand', () => {
     assert.equal(result.stdout, '[REDACTED]');
   });
 
-  it('parses JSON before redaction, preserving CI booleans and freezing the payload', () => {
+  it('parses JSON before redaction, preserving CI booleans and freezing the payload', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const runtimeRoot = `/var/folders/bounded-json-${process.pid}`;
     const result = run(
       'process.stdout.write(JSON.stringify({ ci: process.env.CI === "true", enabled: false, nested: { ok: true } }))',
@@ -173,7 +188,7 @@ describe('runBoundedCommand', () => {
     assert.doesNotMatch(result.stdout, /bounded-json-/);
   });
 
-  it('preserves absolute env-root paths and npm-like boolean/scrub shape in memory', () => {
+  it('preserves absolute env-root paths and npm-like boolean/scrub shape in memory', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const runtimeRoot = `/var/folders/npm-like-${process.pid}`;
     const result = run(
       'process.stdout.write(JSON.stringify({ name: "pkg", extraneous: false, resolved: `${process.env.TMPDIR}/node_modules/pkg`, dependencies: { dep: { dev: false } } }))',
@@ -196,7 +211,7 @@ describe('runBoundedCommand', () => {
     assert.doesNotMatch(result.stdout, new RegExp(runtimeRoot.replaceAll('/', '\\/')));
   });
 
-  it('fails closed on malformed structured JSON without leaking a secret', () => {
+  it('fails closed on malformed structured JSON without leaking a secret', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const secret = `malformed-structured-secret-${process.pid}`;
     const result = run(
       `process.stdout.write('not-json:${secret}'); process.stderr.write('stderr:${secret}')`,
@@ -215,7 +230,7 @@ describe('runBoundedCommand', () => {
     assert.doesNotMatch(result.error?.message ?? '', new RegExp(secret));
   });
 
-  it('preserves boolean JSON when environment redaction is explicitly disabled', () => {
+  it('preserves boolean JSON when environment redaction is explicitly disabled', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const secret = 'explicit-structured-secret';
     const result = run('process.stdout.write(JSON.stringify({overridden: false, enabled: true, secret: process.env.BOUNDED_JSON_SECRET}))', {
       env: {
@@ -244,7 +259,7 @@ describe('runBoundedCommand', () => {
     );
   });
 
-  it('distinguishes a child signal from a timeout, including SIGTERM/SIGKILL-like signals', () => {
+  it('distinguishes a child signal from a timeout, including SIGTERM/SIGKILL-like signals', { skip: declaredSkip('macos-release-process-containment') }, () => {
     for (const signal of ['SIGTERM', 'SIGKILL']) {
       const result = run(`process.kill(process.pid, '${signal}')`, { allowFailure: true });
       assert.equal(result.ok, false);
@@ -254,7 +269,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('reports spawn errors separately from child failures', () => {
+  it('reports spawn errors separately from child failures', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const result = runBoundedCommand('/definitely/not/a/real/command', [], { ...BASE, allowFailure: true });
     assert.equal(result.ok, false);
     assert.equal(result.failureType, 'spawn-error');
@@ -262,7 +277,7 @@ describe('runBoundedCommand', () => {
     assert.match(result.error?.code ?? '', /ENOENT|EACCES/);
   });
 
-  it('caps captured output and fails closed without retaining the full stream', () => {
+  it('caps captured output and fails closed without retaining the full stream', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const result = run("process.stdout.write('x'.repeat(100_000))", {
       maxBuffer: 256,
       structuredOutput: 'json',
@@ -275,7 +290,7 @@ describe('runBoundedCommand', () => {
     assert.equal(result.payload, undefined);
   });
 
-  it('times out and kills the child without leaving a marker behind', () => {
+  it('times out and kills the child without leaving a marker behind', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const root = mkdtempSync(resolve(tmpdir(), 'bounded-command-'));
     const marker = resolve(root, 'orphan-marker');
     try {
@@ -295,7 +310,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('forwards SIGTERM as the first timeout signal and reports SIGKILL only after escalation', () => {
+  it('forwards SIGTERM as the first timeout signal and reports SIGKILL only after escalation', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const termResult = run(
       "process.on('SIGTERM', () => process.exit(0)); process.stdout.write('ready'); setInterval(() => {}, 1_000)",
       { timeoutMs: 50, killSignal: 'SIGTERM', allowFailure: true },
@@ -315,7 +330,7 @@ describe('runBoundedCommand', () => {
     assert.equal(killResult.signal, 'SIGKILL');
   });
 
-  it('cleans a detached unref descendant after the scoped leader exits first', async () => {
+  it('cleans a detached unref descendant after the scoped leader exits first', { skip: declaredSkip('macos-release-process-containment') }, async () => {
     const root = mkdtempSync(resolve(tmpdir(), 'bounded-command-exited-leader-'));
     const marker = resolve(root, 'exited-leader-marker');
     try {
@@ -327,7 +342,7 @@ describe('runBoundedCommand', () => {
         'grandchild.unref();',
         'process.exit(0);',
       ].join('');
-      const result = run(source, { timeoutMs: 1_000, allowFailure: true });
+      const result = run(source, { timeoutMs: HANG_GUARD_MS, allowFailure: true });
       assert.equal(result.failureType, 'success');
       await new Promise((resolvePromise) => setTimeout(resolvePromise, 850));
       assert.equal(existsSync(marker), false);
@@ -336,7 +351,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('rescans the scope when a descendant spawns during TERM', async () => {
+  it('rescans the scope when a descendant spawns during TERM', { skip: declaredSkip('macos-release-process-containment') }, async () => {
     const root = mkdtempSync(resolve(tmpdir(), 'bounded-command-term-spawn-'));
     const marker = resolve(root, 'term-spawn-marker');
     try {
@@ -356,7 +371,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('keeps twenty concurrent scoped cleanups isolated from an unrelated process', async () => {
+  it('keeps twenty concurrent scoped cleanups isolated from an unrelated process', { skip: declaredSkip('macos-release-process-containment') }, async () => {
     const root = mkdtempSync(resolve(tmpdir(), 'bounded-command-parallel-scope-'));
     const unrelated = spawn(NODE, ['-e', 'setInterval(() => {}, 1_000)'], { detached: true, stdio: 'ignore' });
     unrelated.unref();
@@ -381,7 +396,8 @@ describe('runBoundedCommand', () => {
         return new Promise((resolvePromise, reject) => {
           const worker = new Worker(workerSource, {
             eval: true,
-            workerData: { moduleUrl, source, options: { ...BASE, timeoutMs: 1_000, allowFailure: true } },
+            // The command exits at once; the bound is only a hang guard, so a slow runner starting twenty at a time cannot make it a timeout.
+            workerData: { moduleUrl, source, options: { ...BASE, allowFailure: true } },
           });
           worker.once('message', (message) => { worker.terminate(); resolvePromise(message); });
           worker.once('error', reject);
@@ -398,7 +414,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('preserves outer scope ownership across a nested bounded command', async () => {
+  it('preserves outer scope ownership across a nested bounded command', { skip: declaredSkip('macos-release-process-containment') }, async () => {
     const root = mkdtempSync(resolve(tmpdir(), 'bounded-command-nested-scope-'));
     const ready = resolve(root, 'inner-ready');
     const marker = resolve(root, 'nested-orphan-marker');
@@ -429,7 +445,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('keeps invocation and environment secrets out of helper process listings', () => {
+  it('keeps invocation and environment secrets out of helper process listings', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const secret = `bounded-secret-${process.pid}-${Date.now()}`;
     const source = [
       "const { execFileSync } = require('node:child_process');",
@@ -445,7 +461,7 @@ describe('runBoundedCommand', () => {
     const previous = process.env.BOUNDED_PARENT_SECRET;
     process.env.BOUNDED_PARENT_SECRET = secret;
     try {
-      const result = run(source, { timeoutMs: 2_000 });
+      const result = run(source, { timeoutMs: HANG_GUARD_MS });
       assert.equal(result.failureType, 'success');
       assert.equal(result.stdout, 'safe');
       assert.equal(result.args.some((arg) => arg.includes(secret)), false);
@@ -456,11 +472,13 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('fails closed and locally drains the scope when the shared broker is killed', async () => {
+  it('fails closed and locally drains the scope when the shared broker is killed', { skip: declaredSkip('macos-release-process-containment') }, async () => {
     const root = mkdtempSync(resolve(tmpdir(), 'bounded-command-broker-death-'));
     const ready = resolve(root, 'target-ready');
+    const childReady = resolve(root, 'orphan-child-ready');
     const marker = resolve(root, 'broker-death-orphan');
     const moduleUrl = new URL('./bounded-command.mjs', import.meta.url).href;
+    let orphanChildPid = null;
     const workerSource = `
       const { parentPort, workerData } = require('node:worker_threads');
       import(workerData.moduleUrl).then(({ runBoundedCommand }) => {
@@ -468,14 +486,29 @@ describe('runBoundedCommand', () => {
       }).catch((error) => parentPort.postMessage({ workerError: error.stack || error.message }));
     `;
     try {
+      const initial = run("process.stdout.write('broker-ready')", { allowFailure: true });
+      assert.equal(initial.failureType, 'success');
+      const ownedBrokerPattern = new RegExp(
+        `bounded-command-wrapper\\.mjs --broker\\s+\\S+\\s+\\S+\\s+${process.pid}\\s+`,
+      );
+      const ownedBrokers = execFileSync('/bin/ps', ['-axo', 'pid=,ppid=,command='], { encoding: 'utf8' })
+        .split('\n')
+        .map((line) => line.match(/^\s*(\d+)\s+(\d+)\s+(.*)$/))
+        .filter((match) => match
+          && ownedBrokerPattern.test(match[3])
+          && !match[3].startsWith('/usr/bin/lockf '));
+      assert.equal(ownedBrokers.length, 1, 'expected exactly one broker owned by this test process');
+      const brokerPid = Number(ownedBrokers[0][1]);
+
       const targetSource = [
         "const { spawn } = require('node:child_process');",
-        "const { writeFileSync } = require('node:fs');",
-        `writeFileSync(${JSON.stringify(ready)}, 'ready');`,
+        "const { existsSync, writeFileSync } = require('node:fs');",
         `const child = spawn(process.execPath, ['-e', ${JSON.stringify(
-          `setTimeout(() => require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'orphan'), 2_500);`,
+          `require('node:fs').writeFileSync(${JSON.stringify(childReady)}, String(process.pid)); setTimeout(() => require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'orphan'), 60_000);`,
         )}], { detached: true, stdio: 'ignore' });`,
-        'child.unref(); setInterval(() => {}, 1_000);',
+        'child.unref();',
+        `const readyTimer = setInterval(() => { if (existsSync(${JSON.stringify(childReady)})) { clearInterval(readyTimer); writeFileSync(${JSON.stringify(ready)}, 'ready'); } }, 20);`,
+        'setInterval(() => {}, 1_000);',
       ].join('');
       const resultPromise = new Promise((resolvePromise, reject) => {
         const worker = new Worker(workerSource, {
@@ -493,36 +526,38 @@ describe('runBoundedCommand', () => {
       while (!existsSync(ready) && Date.now() < deadline) {
         await new Promise((resolvePromise) => setTimeout(resolvePromise, 25));
       }
-      assert.equal(existsSync(ready), true, 'target did not become ready before broker kill');
-      const brokerRow = execFileSync('/bin/ps', ['-axo', 'pid=,ppid=,command='], { encoding: 'utf8' })
-        .split('\n')
-        .map((line) => ({ line, match: line.match(/^\s*(\d+)\s+(\d+)\s+(.*)$/) }))
-        .find(({ match }) => match
-          && match[3].includes('bounded-command-wrapper.mjs --broker')
-          && !match[3].startsWith('/usr/bin/lockf '));
-      assert.ok(brokerRow?.match, 'shared broker process was not found');
-      process.kill(Number(brokerRow.match[1]), 'SIGKILL');
+      assert.equal(existsSync(ready), true, 'target and detached child did not become ready before broker kill');
+      orphanChildPid = Number(readFileSync(childReady, 'utf8'));
+      assert.ok(Number.isSafeInteger(orphanChildPid) && orphanChildPid > 0, 'detached child did not report its PID');
+      process.kill(brokerPid, 'SIGKILL');
       const result = await resultPromise;
       assert.equal(result.failureType, 'cleanup-error');
       assert.match(result.cleanupError?.message ?? '', /broker failed; local fallback cleanup completed/);
-      const recovered = run("process.stdout.write('recovered')", { timeoutMs: 2_000, allowFailure: true });
+      const recovered = run("process.stdout.write('recovered')", { timeoutMs: HANG_GUARD_MS, allowFailure: true });
       assert.equal(recovered.failureType, 'success');
       assert.equal(recovered.stdout, 'recovered');
-      await new Promise((resolvePromise) => setTimeout(resolvePromise, 2_800));
+      const childState = processState(orphanChildPid);
+      assert.equal(childState === '' || childState.startsWith('Z'), true, 'detached descendant remained live after local fallback');
       assert.equal(existsSync(marker), false);
     } finally {
+      if (orphanChildPid) {
+        const childState = processState(orphanChildPid);
+        if (childState && !childState.startsWith('Z')) {
+          try { process.kill(orphanChildPid, 'SIGKILL'); } catch { /* already exited */ }
+        }
+      }
       rmSync(root, { recursive: true, force: true });
     }
   });
 
-  it('recovers corrupt stale broker lock, readiness, and socket artifacts', () => {
+  it('recovers corrupt stale broker lock, readiness, and socket artifacts', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const moduleUrl = new URL('./bounded-command.mjs', import.meta.url).href;
     const session = 'a'.repeat(32);
     const childSource = [
       "import { mkdirSync, rmSync, writeFileSync } from 'node:fs';",
       "import { join } from 'node:path';",
       `process.env.ASTRID_APP_BOUNDED_BROKER_SESSION = ${JSON.stringify(session)};`,
-      `const root = join(${JSON.stringify(process.platform === 'darwin' ? '/tmp' : tmpdir())}, \`rb-\${process.pid}-${session.slice(0, 12)}\`);`,
+      `const root = join(${JSON.stringify('/tmp')}, \`rb-\${process.pid}-${session.slice(0, 12)}\`);`,
       "mkdirSync(root, { mode: 0o700 });",
       "const socket = join(root, 'broker.sock');",
       "writeFileSync(`${socket}.lock`, 'corrupt-lock');",
@@ -532,7 +567,7 @@ describe('runBoundedCommand', () => {
       'try {',
       `  const { runBoundedCommand } = await import(${JSON.stringify(moduleUrl)});`,
       "  const result = runBoundedCommand(process.execPath, ['-e', \"process.stdout.write('recovered')\"], {",
-      "    timeoutMs: 2_000, maxBuffer: 64 * 1024, killSignal: 'SIGKILL', allowFailure: true,",
+      `    timeoutMs: ${HANG_GUARD_MS}, maxBuffer: 64 * 1024, killSignal: 'SIGKILL', allowFailure: true,`,
       '  });',
       "  process.stdout.write(JSON.stringify({ failureType: result.failureType, stdout: result.stdout }));",
       '} finally {',
@@ -543,7 +578,7 @@ describe('runBoundedCommand', () => {
     assert.deepEqual(JSON.parse(output), { failureType: 'success', stdout: 'recovered' });
   });
 
-  it('survives lock-guardian death and restarts after broker death', async () => {
+  it('survives lock-guardian death and restarts after broker death', { skip: declaredSkip('macos-release-process-containment') }, async () => {
     const initial = run("process.stdout.write('initial')", { allowFailure: true });
     assert.equal(initial.failureType, 'success');
     const ownedBrokerPattern = new RegExp(
@@ -554,14 +589,13 @@ describe('runBoundedCommand', () => {
       .map((line) => line.match(/^\s*(\d+)\s+(\d+)\s+(.*)$/))
       .find((match) => match
         && ownedBrokerPattern.test(match[3])
-        && !match[3].startsWith('/usr/bin/lockf ')
-        && !match[3].startsWith('/usr/bin/flock '));
+        && !match[3].startsWith('/usr/bin/lockf '));
     const before = brokerRow();
     assert.ok(before, 'kernel-elected broker was not found');
     const brokerPid = Number(before[1]);
     const guardianPid = Number(before[2]);
     const guardian = execFileSync('/bin/ps', ['-p', String(guardianPid), '-o', 'command='], { encoding: 'utf8' });
-    assert.match(guardian, process.platform === 'darwin' ? /\/usr\/bin\/lockf/ : /\/usr\/bin\/flock/);
+    assert.match(guardian, /\/usr\/bin\/lockf/);
 
     process.kill(guardianPid, 'SIGKILL');
     const guardianDeadline = Date.now() + 1_000;
@@ -583,7 +617,7 @@ describe('runBoundedCommand', () => {
     assert.notEqual(Number(brokerRow()?.[1]), brokerPid, 'broker death did not elect a replacement');
   });
 
-  it('serializes concurrent recovery of a corrupt/dead broker lock', () => {
+  it('serializes concurrent recovery of a corrupt/dead broker lock', { skip: declaredSkip('macos-release-process-containment') }, () => {
     const moduleUrl = new URL('./bounded-command.mjs', import.meta.url).href;
     const session = 'b'.repeat(32);
     const childSource = [
@@ -591,7 +625,7 @@ describe('runBoundedCommand', () => {
       "import { join } from 'node:path';",
       "import { Worker } from 'node:worker_threads';",
       `process.env.ASTRID_APP_BOUNDED_BROKER_SESSION = ${JSON.stringify(session)};`,
-      `const root = join(${JSON.stringify(process.platform === 'darwin' ? '/tmp' : tmpdir())}, \`rb-\${process.pid}-${session.slice(0, 12)}\`);`,
+      `const root = join(${JSON.stringify('/tmp')}, \`rb-\${process.pid}-${session.slice(0, 12)}\`);`,
       "mkdirSync(root, { mode: 0o700 });",
       "const socket = join(root, 'broker.sock');",
       "writeFileSync(`${socket}.lock`, JSON.stringify({ pid: 999999, nonce: 'cccccccccccccccccccccccccccccccc' }));",
@@ -601,7 +635,7 @@ describe('runBoundedCommand', () => {
         const { parentPort, workerData } = require('node:worker_threads');
         import(workerData.moduleUrl).then(({ runBoundedCommand }) => {
           const result = runBoundedCommand(process.execPath, ['-e', "process.stdout.write('stress-ok')"], {
-            timeoutMs: 2_000, maxBuffer: 64 * 1024, killSignal: 'SIGKILL', allowFailure: true,
+            timeoutMs: ${HANG_GUARD_MS}, maxBuffer: 64 * 1024, killSignal: 'SIGKILL', allowFailure: true,
           });
           parentPort.postMessage({ failureType: result.failureType, stdout: result.stdout });
         }).catch((error) => parentPort.postMessage({ error: error.stack || error.message }));
@@ -658,7 +692,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('drains the owned scope when the direct wrapper is killed', async () => {
+  it('drains the owned scope when the direct wrapper is killed', { skip: declaredSkip('macos-release-process-containment') }, async () => {
     const root = mkdtempSync(resolve(tmpdir(), 'bounded-command-wrapper-death-'));
     const ready = resolve(root, 'target-ready');
     const marker = resolve(root, 'wrapper-death-orphan');
@@ -703,7 +737,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('kills the complete owned scope when the synchronous parent is SIGKILLed', async () => {
+  it('kills the complete owned scope when the synchronous parent is SIGKILLed', { skip: declaredSkip('macos-release-process-containment') }, async () => {
     const root = mkdtempSync(resolve(tmpdir(), 'bounded-command-parent-death-'));
     const ready = resolve(root, 'target-ready');
     const marker = resolve(root, 'parent-death-orphan');
@@ -745,7 +779,7 @@ describe('runBoundedCommand', () => {
     }
   });
 
-  it('kills a detached and unref grandchild before it can leave an orphan marker', async () => {
+  it('kills a detached and unref grandchild before it can leave an orphan marker', { skip: declaredSkip('macos-release-process-containment') }, async () => {
     const root = mkdtempSync(resolve(tmpdir(), 'bounded-command-grandchild-'));
     const marker = resolve(root, 'detached-grandchild-marker');
     try {
@@ -764,6 +798,17 @@ describe('runBoundedCommand', () => {
       assert.equal(existsSync(marker), false);
     } finally {
       rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('refuses clearly off macOS, after validating its arguments', () => {
+    const real = Object.getOwnPropertyDescriptor(process, 'platform');
+    Object.defineProperty(process, 'platform', { ...real, value: 'linux' });
+    try {
+      assert.throws(() => run('process.exit(0)'), /macOS-only by design.*linux is unsupported/);
+      assert.throws(() => run('process.exit(0)', { timeoutMs: 0 }), /positive/);
+    } finally {
+      Object.defineProperty(process, 'platform', real);
     }
   });
 

@@ -35,9 +35,8 @@ const inMemoryFactory: ProviderFactory = (seed) => {
 
 describe('InMemoryDataProvider compatibility (browser-runtime)', () => {
   runProviderCompatibilitySuite(inMemoryFactory, {
-    skipCheckpoints: false,
     versionConflictIsSoft: false,
     timelineId: 'compat-test-timeline',
-    skipRegisterAsset: false,
+    checkpoints: true,
   });
 });

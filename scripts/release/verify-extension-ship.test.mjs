@@ -1,6 +1,7 @@
 import { strict as assert } from 'node:assert';
 import { spawnSync } from 'node:child_process';
 import { describe, it } from 'node:test';
+import { declaredSkip } from '../quality/declared-skip.mjs';
 
 import {
   ASTRID_GATE_PROFILE,
@@ -598,14 +599,18 @@ describe('extension ship verifier', () => {
       /must be absolute/,
     );
     assert.throws(
-      () => resolveAstridPython(manifest, { ASTRID_PYTHON: '/bin/sh' }),
-      /not a usable Python interpreter|not a Python interpreter|identity mismatch/,
-    );
-    assert.throws(
       () => resolveAstridPython(manifest, {
         ASTRID_PYTHON: '/tmp/python path/with spaces/bin/python',
       }),
       /does not exist|unsafe for Make recipes/,
+    );
+  });
+
+  // The identity probe runs the interpreter through runBoundedCommand, which is macOS-only by design.
+  it('rejects a shell as the Astrid Python', { skip: declaredSkip('macos-release-process-containment') }, () => {
+    assert.throws(
+      () => resolveAstridPython(manifest, { ASTRID_PYTHON: '/bin/sh' }),
+      /not a usable Python interpreter|not a Python interpreter|identity mismatch/,
     );
   });
 

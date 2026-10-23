@@ -131,10 +131,6 @@ const AUXILIARY_CLIP_TYPES = new Set([
   'audio',
 ]);
 
-const BUILTIN_PICTURE_CLIP_TYPES = new Set([
-  'media', 'hold', 'video', 'image', 'animated-media-transform', 'haus.astrid.liveScene',
-]);
-
 function record(value: unknown): JsonRecord | undefined {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
     ? value as JsonRecord
@@ -168,15 +164,14 @@ function clipType(clip: ResolvedTimelineClip): string {
 function isPrimaryVisualClip(
   clip: ResolvedTimelineClip,
   track: TrackDefinition | undefined,
-  pictureTracks: ReadonlySet<string>,
 ): boolean {
   if (track?.kind !== 'visual' || track.role === 'source' || AUXILIARY_CLIP_TYPES.has(clipType(clip))) return false;
-  const elementKind = record(clip.elementRef)?.kind;
-  if (['effect', 'animation', 'transition'].includes(String(elementKind))) return false;
-  return BUILTIN_PICTURE_CLIP_TYPES.has(clipType(clip)) || pictureTracks.has(track.id);
+  // Runtime picture_clip (240d5bb): any other clip on a visual, non-source track is picture, whatever its type;
+  // Runtime does not read a pictureTracks declaration either.
+  return !['effect', 'animation', 'transition'].includes(String(record(clip.elementRef)?.kind));
 }
 
-function declaredTrackPolicy(config: ResolvedTimelineConfig, key: 'pictureTracks' | 'continuityTracks'): Set<string> | undefined {
+function declaredTrackPolicy(config: ResolvedTimelineConfig, key: 'continuityTracks'): Set<string> | undefined {
   const contract = record(record(config.app)?.visualSeamContract);
   const value = contract?.[key];
   return Array.isArray(value)
@@ -323,7 +318,6 @@ function cuesNearFrame(cues: readonly Cue[], frame: number, guardFrames: number)
 
 function buildSpans(config: ResolvedTimelineConfig): ClipSpan[] {
   const tracks = trackMap(config);
-  const pictureTracks = declaredTrackPolicy(config, 'pictureTracks') ?? new Set<string>();
   const fps = finite(config.output.fps) && config.output.fps > 0 ? config.output.fps : 30;
   return config.clips
     .filter(active)
@@ -336,7 +330,7 @@ function buildSpans(config: ResolvedTimelineConfig): ClipSpan[] {
         track,
         startFrame,
         endFrame: startFrame + durationFrames,
-        primary: isPrimaryVisualClip(clip, track, pictureTracks),
+        primary: isPrimaryVisualClip(clip, track),
       };
     });
 }

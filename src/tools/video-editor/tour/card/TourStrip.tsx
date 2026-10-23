@@ -35,7 +35,7 @@ export function TourStrip({ filled, labels, size = 'compact', playing = false }:
   filled: 1 | 2 | 3;
   labels: readonly [string, string, string];
   size?: 'compact' | 'large';
-  /** The video step loops (large strip only). */
+  /** The video step plays once and holds its final frame (large strip only). */
   playing?: boolean;
 }) {
   const large = size === 'large';

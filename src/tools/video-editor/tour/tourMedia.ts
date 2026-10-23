@@ -1,45 +1,39 @@
-import frame1Url from './assets/frame-1.webp?url';
-import frame2Url from './assets/frame-2.webp?url';
-import still1Url from './assets/still-1.webp?url';
-import still2Url from './assets/still-2.webp?url';
-import videoUrl from './assets/video.mp4?url';
+import manifest from './asset-manifest.json';
 
-/**
- * Media slots for the editor tour. The stills and the video are placeholders for now; real media
- * replaces the files behind these slots without code changes.
- */
+/** Immutable public files; no runtime connection or generation credentials are required. */
+export const EDITOR_TOUR_ASSET_BASE_URL = `${import.meta.env.BASE_URL}astrid/onboarding/lantern-valley-14s-v1/`;
+export const EDITOR_TOUR_ASSET_MANIFEST = manifest;
 
 export interface EditorTourMediaSlot {
   url: string;
   width: number;
   height: number;
   durationSeconds?: number;
+  previewDurationSeconds?: number;
+  mediaType?: string;
+  sha256?: string;
 }
 
 export interface EditorTourMedia {
-  /** Lantern Valley's start and end frames (the explainer's "before"). */
+  /** Matching first and last captures from the Three.js guide. */
   frames: readonly [EditorTourMediaSlot, EditorTourMediaSlot];
-  /** The realistic start and end frames, 1 s each at either end of the stills row. */
-  stills: readonly [EditorTourMediaSlot, EditorTourMediaSlot];
-  /** The one 10 s shot made from the start and end frames, on the top row. */
+  /** Four Qwen reference frames at 0, 6.5, 10 and 13 seconds. */
+  stills: readonly [EditorTourMediaSlot, EditorTourMediaSlot, EditorTourMediaSlot, EditorTourMediaSlot];
+  /** Native H3 source; the timeline trims it to the 14-second guide. */
   video: EditorTourMediaSlot;
 }
 
-const slot = (url: string, size: Omit<EditorTourMediaSlot, 'url'>): EditorTourMediaSlot =>
-  Object.freeze({ url, ...size });
+export function editorTourAssetUrl(filename: string): string {
+  return `${EDITOR_TOUR_ASSET_BASE_URL}${filename}`;
+}
 
-const FRAME_SIZE = { width: 1280, height: 720 } as const;
-const STILL_SIZE = { width: 1280, height: 720 } as const;
-const VIDEO_SIZE = { width: 1280, height: 720, durationSeconds: 10 } as const;
+function slot(name: Exclude<keyof typeof manifest.assets, 'world'>): EditorTourMediaSlot {
+  const asset = manifest.assets[name];
+  return Object.freeze({ ...asset, url: editorTourAssetUrl(asset.filename) });
+}
 
-export const EDITOR_TOUR_MEDIA: EditorTourMedia = {
-  frames: [
-    slot(frame1Url, FRAME_SIZE),
-    slot(frame2Url, FRAME_SIZE),
-  ],
-  stills: [
-    slot(still1Url, STILL_SIZE),
-    slot(still2Url, STILL_SIZE),
-  ],
-  video: slot(videoUrl, VIDEO_SIZE),
-};
+export const EDITOR_TOUR_MEDIA: EditorTourMedia = Object.freeze({
+  frames: [slot('frame1'), slot('frame4')] as const,
+  stills: [slot('still1'), slot('still2'), slot('still3'), slot('still4')] as const,
+  video: { ...slot('video'), previewDurationSeconds: manifest.durationSeconds },
+});

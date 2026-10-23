@@ -51,6 +51,8 @@ interface GenerationsPaneGalleryModel {
   generationFilters: MediaGalleryProps['generationFilters'];
   currentViewingShotId?: string;
   onAddGenerationToTimeline?: (generationId: string) => void;
+  /** The selected editor belongs to another project than this gallery, so adding to it is refused. */
+  addTargetProjectMismatch?: boolean;
   config?: Partial<GalleryConfig>;
   readOnly?: boolean;
   emptyStateMessage?: string;
@@ -187,8 +189,11 @@ export function GenerationsPaneGallery({
                     // On touch it is the way a tapped item reaches the timeline: a full-size target.
                     '[@media(pointer:coarse)]:px-4 [@media(pointer:coarse)]:text-sm',
                     COARSE_TOUCH_TARGET,
+                    'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent',
                   )}
                   onClick={() => gallery.onAddGenerationToTimeline?.(selectedGenerationId)}
+                  disabled={gallery.addTargetProjectMismatch}
+                  title={gallery.addTargetProjectMismatch ? "This gallery's project is not the selected editor's project" : undefined}
                   data-testid="add-selected-generation-to-timeline"
                 >
                   Add selected to timeline

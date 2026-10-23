@@ -16,8 +16,8 @@
 /* Reduced motion: the card fades in once and everything inside it is already at rest. */
 .editor-tour-card-reduced { animation: editor-tour-fade 200ms ease-out both; }
 
-/* A slow, quiet playhead across the video, in step with its 10 s loop. Idles after the entrance too. */
-.editor-tour-playhead { animation: editor-tour-playhead 10s linear infinite; transform-origin: left; }
+/* A slow, quiet playhead across the video, in step with its 14 s playback. Idles after the entrance too. */
+.editor-tour-playhead { animation: editor-tour-playhead 14s linear forwards; transform-origin: left; }
 .editor-tour-card-reduced .editor-tour-playhead { animation: none; }
 
 .editor-tour-card { --tour-ease: cubic-bezier(0.22, 1, 0.36, 1); }

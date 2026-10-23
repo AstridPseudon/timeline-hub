@@ -30,6 +30,8 @@ import {
 import os from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isSymlinkPermissionError } from '../../config/testing/skipConditions.mjs';
+import { declaredSkipIf } from './declared-skip.mjs';
 
 const moduleDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(moduleDir, '..', '..');
@@ -607,9 +609,11 @@ describe('check-extension-family-conformance — release-mode uiIntegrationTest 
           outsideTarget,
           join(root, 'src/tools/video-editor/runtime/linked-consumer.test.ts'),
         );
-      } catch {
-        t.skip('symlink creation is not permitted in this environment');
-        return;
+      } catch (error) {
+        // Only the precise "not allowed to make symlinks" error may skip, and only when the declared probe
+        // agrees; any other failure (or a disagreement) fails the test.
+        if (isSymlinkPermissionError(error) && declaredSkipIf(t, 'symlink-creation-permitted')) return;
+        throw error;
       }
       const result = runGate(
         root,

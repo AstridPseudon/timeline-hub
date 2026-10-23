@@ -52,14 +52,8 @@ and traces remain in the Playwright artifact directory.
 | `chrome-stable` | Installed Google Chrome (`channel: chrome`) | Yes |
 | `firefox` | Playwright Firefox | Yes |
 | `webkit` | Playwright WebKit | Yes |
-| `edge-stable` | Installed Microsoft Edge (`channel: msedge`) | No; set `PLAYWRIGHT_INCLUDE_EDGE=1` |
 
-Microsoft Edge is not bundled by Playwright. On a machine with Edge installed,
-include it with:
-
-```sh
-PLAYWRIGHT_INCLUDE_EDGE=1 npm run test:e2e:extension-cross-browser
-```
+There is no Microsoft Edge project: no job has an Edge binary, and a project nothing runs is not a gate.
 
 On 2026-08-23, `/Applications/Microsoft Edge.app` was not installed on the
 release-gate Mac, so Edge execution was blocked by missing browser availability,
@@ -74,7 +68,6 @@ Environment: Node `20.19.4`, npm `10.8.2`, Playwright `1.60.0`.
 | `chrome-stable` | Google Chrome `151.0.7922.170` | 3/3 passed |
 | `firefox` | Firefox `150.0.2` (Playwright cache revision `1522`) | 3/3 passed |
 | `webkit` | WebKit `26.4` (Playwright cache revision `2287`) | 3/3 passed |
-| `edge-stable` | Not installed | Blocked before execution |
 
 That run is historical browser evidence, not a frozen-RC receipt: it passed 9/9
 tests with one worker in 1.7 minutes and observed no unexpected browser/page

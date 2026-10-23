@@ -30,6 +30,7 @@ import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
+import { astridOnboardedStorageState } from '../fixtures/astridOnboardedStorageState';
 import {
   CLIP_BODY_SELECTOR,
   EDIT_AREA_SELECTOR,
@@ -82,10 +83,14 @@ interface Context {
   name: string;
   viewport: { width: number; height: number };
   touch: boolean;
+  /** A first-time user's Activity pane: nothing saved, so desktop opens it locked beside the editor. */
+  firstRunActivityPane?: boolean;
 }
 
 const CONTEXTS: Context[] = [
   { name: 'desktop', viewport: { width: 1600, height: 1000 }, touch: false },
+  // Same viewport as `desktop`, with the product default for the Activity pane (the other contexts seed it unlocked).
+  { name: 'desktopFirstRun', viewport: { width: 1600, height: 1000 }, touch: false, firstRunActivityPane: true },
   { name: 'phone', viewport: { width: 420, height: 820 }, touch: true },
   { name: 'tabletPortrait', viewport: { width: 834, height: 1194 }, touch: true },
   { name: 'tabletLandscape', viewport: { width: 1180, height: 820 }, touch: true },
@@ -248,6 +253,9 @@ test.describe('timeline layout geometry', () => {
       test.use({
         viewport: ctx.viewport,
         ...(ctx.touch ? { hasTouch: true, isMobile: true, deviceScaleFactor: 2 } : {}),
+        ...(ctx.firstRunActivityPane
+          ? { storageState: astridOnboardedStorageState(process.env.BASE_URL!, { activityPaneUnlocked: false }) }
+          : {}),
       });
 
       test(`${ctx.name}: geometry snapshot ${REGENERATE ? '(regenerating baseline)' : 'matches baseline'}`, async (

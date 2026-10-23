@@ -77,10 +77,13 @@ print('Astrid was uninstalled.' if '--uninstall' in args else 'Astrid is ready.'
 export async function fixture() {
   const root = await mkdtemp(path.join(os.tmpdir(), 'astrid-bootstrap-test-'));
   const home = path.join(root, 'home');
-  const data = path.join(root, 'data');
+  // The POSIX installer's own layout (public/install): macOS is HOME-based and ignores XDG_*; Linux honours them.
+  const macos = process.platform === 'darwin';
+  const data = macos ? path.join(home, '.local/share') : path.join(root, 'data');
   const bootstrap = path.join(data, 'astrid/bootstrap');
+  const installLog = macos ? path.join(home, 'Library/Logs/Astrid Runtime/install.log') : path.join(root, 'state/astrid-runtime/logs/install.log');
   const bin = path.join(root, 'bin');
-  await Promise.all([mkdir(home), mkdir(bin), mkdir(bootstrap, { recursive: true })]);
+  await Promise.all([mkdir(home, { recursive: true }), mkdir(bin), mkdir(bootstrap, { recursive: true })]);
   const manifest = JSON.parse(await readFile(path.join(repo, 'public/install-manifest.json'), 'utf8'));
   const manifestFile = path.join(root, 'source-manifest.json');
   const env = {
@@ -94,7 +97,7 @@ export async function fixture() {
     ASTRID_INSTALL_MANIFEST_URL: 'http://127.0.0.1:17427/developer-manifest.json',
     MOCK_MANIFEST: manifestFile,
     MOCK_CALLS: path.join(root, 'calls.jsonl'),
-    MOCK_LOG: path.join(root, 'state/astrid-runtime/logs/install.log'),
+    MOCK_LOG: installLog,
   };
   for (const key of ['MOCK_PYTHON_EXIT', 'MOCK_CORE_EXIT', 'MOCK_REMOVE_BOOTSTRAP', 'MOCK_FETCH_EXIT', 'MOCK_VOLUME_BYTES', 'MOCK_UV_VERSION', 'MOCK_STAGE_RELEASE', 'MOCK_INTERRUPTED', 'MOCK_CORE_RAW_EXIT', 'MOCK_CORE_APPEND_LOG', 'MOCK_REQUIRE_TTY', 'MOCK_CORE_DISK_FAILURE', 'MOCK_UNICODE_OUTPUT', 'MOCK_ACL_FAILURE', 'MOCK_PYTHON_RELEASE']) delete env[key];
   await writeFile(path.join(bootstrap, 'uv'), mockUv, { mode: 0o755 });

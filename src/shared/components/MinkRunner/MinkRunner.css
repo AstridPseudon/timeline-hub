@@ -6,16 +6,14 @@
   --frame-w: 81;
   --frame-h: 44;
   --frames: 11;
-  --scale: 1;
+  --scale: calc(var(--astrid-loading-mink-width, 90) / var(--frame-w));
   --cycle: 770ms;
   display: grid;
   justify-items: center;
   gap: calc(1px * var(--scale));
 }
-/* index.html's boot mink size: each 81px frame is a whole 180 device pixels wide (20/9 CSS px a sprite px at 1x,
-   10/9 at 2x), so the stepped sheet never lands between pixels and the hand-off from the boot layer changes nothing. */
-.astrid-mink-runner-boot { --scale: calc(20 / 9); }
-@media (min-resolution: 2dppx) { .astrid-mink-runner-boot { --scale: calc(10 / 9); } }
+/* The inline boot token keeps every loading mark 90 CSS pixels wide. The fallback also
+   covers standalone component hosts without index.html; bootSize only opts into the handoff. */
 .astrid-mink-runner-window {
   display: block;
   overflow: hidden;

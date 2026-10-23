@@ -479,6 +479,8 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
           component={PreviewComposition}
           inputProps={inputProps}
           durationInFrames={metadata.durationInFrames}
+          // Hold the final frame on completion; replay remains an explicit Play action.
+          moveToBeginningWhenEnded={false}
           fps={metadata.fps}
           compositionWidth={metadata.compositionWidth}
           compositionHeight={metadata.compositionHeight}

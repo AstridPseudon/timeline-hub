@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, render, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -17,7 +17,7 @@ import {
   type TimelineStoreApi,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { EDITOR_TOUR_TRACK_ATTRIBUTE, EDITOR_TOUR_TRACK_IDS } from '@/tools/video-editor/tour/anchors.ts';
-import { TOUR_SCENE_SOURCE_FROM } from './tourSceneSource.ts';
+import { loadTourLiveScene, TOUR_SCENE_SOURCE_FROM } from './tourSceneSource.ts';
 import { TOUR_CLIP_IDS } from './tourStages.ts';
 
 const fakeLiveScene = { kind: 'fake-live-scene' };
@@ -40,7 +40,7 @@ vi.mock('@astrid/packs/rendering/ui/threejs-live-editor/SceneSurface', () => ({
   },
 }));
 
-import { EditorTourTimelineDriver } from './EditorTourTimelineDriver.tsx';
+import { EditorTourTimelineDriver, TOUR_ANCHOR_DWELL_MS } from './EditorTourTimelineDriver.tsx';
 
 function createHarness() {
   const calls: string[] = [];
@@ -98,8 +98,84 @@ describe('EditorTourTimelineDriver', () => {
     trackRow.remove();
     document.querySelectorAll(`[${EDITOR_TOUR_TRACK_ATTRIBUTE}]`).forEach((row) => row.remove());
     document.querySelectorAll('[data-testid="astrid-live-scene-entry"]').forEach((scene) => scene.remove());
+    vi.useRealTimers();
     vi.restoreAllMocks();
     act_(() => exitEditorTour());
+  });
+
+  it('shows a retry when the world fails to load and lands the stage after retry succeeds', async () => {
+    vi.mocked(loadTourLiveScene).mockRejectedValueOnce(new Error('offline'));
+    const view = createHarness();
+    addScene('ready');
+    goTo(1, 'land');
+    expect(await view.findByRole('alert')).toHaveTextContent('could not load');
+    expect(view.apply).not.toHaveBeenCalled();
+    fireEvent.click(view.getByRole('button', { name: 'Retry demo' }));
+    await waitFor(() => expect(view.apply).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(ready()).toBe(true));
+    expect(view.queryByRole('alert')).toBeNull();
+  });
+
+  let presentationClock = 0;
+  async function beginAnchorPresentation() {
+    presentationClock = 0;
+    const realNow = performance.now.bind(performance);
+    vi.spyOn(performance, 'now').mockImplementation(() => realNow() + presentationClock);
+    const view = createHarness();
+    const row = document.createElement('div');
+    row.setAttribute(EDITOR_TOUR_TRACK_ATTRIBUTE, EDITOR_TOUR_TRACK_IDS.stills);
+    document.body.append(row);
+    goTo(2, 'land');
+    await waitFor(() => expect(view.previewHandle.seek).toHaveBeenCalledWith(0));
+    return view;
+  }
+
+  const dwell = () => act(async () => {
+    presentationClock += TOUR_ANCHOR_DWELL_MS + 32;
+    await new Promise((resolve) => setTimeout(resolve, 35));
+  });
+
+  it('presents all four anchors in order with a readable dwell and holds the final frame', async () => {
+    const { previewHandle } = await beginAnchorPresentation();
+    expect(ready()).toBe(false);
+    expect(previewHandle.seek.mock.calls).toEqual([[0]]);
+    await dwell();
+    expect(previewHandle.seek.mock.calls).toEqual([[0], [6.5]]);
+    await dwell();
+    expect(previewHandle.seek.mock.calls).toEqual([[0], [6.5], [10]]);
+    await dwell();
+    expect(previewHandle.seek.mock.calls).toEqual([[0], [6.5], [10], [13]]);
+    expect(ready()).toBe(false);
+    await dwell();
+    expect(ready()).toBe(true);
+    expect(harness.centered).toEqual([...TOUR_CLIP_IDS.stills]);
+    expect(previewHandle.pause).toHaveBeenCalledTimes(1);
+    expect(previewHandle.play).not.toHaveBeenCalled();
+    await dwell();
+    expect(previewHandle.seek).toHaveBeenCalledTimes(4);
+  });
+
+  it.each(['back', 'skip', 'exit', 'unmount', 'next-act'] as const)('cancels the anchor presentation on %s without delayed seeks', async (destination) => {
+    const view = await beginAnchorPresentation();
+    await dwell();
+    expect(view.previewHandle.seek.mock.calls).toEqual([[0], [6.5]]);
+    if (destination === 'back') act_(() => setEditorTourBeat(2, 'compose', true));
+    if (destination === 'skip') act_(() => skipEditorTourAnimation());
+    if (destination === 'exit') act_(() => exitEditorTour());
+    if (destination === 'unmount') view.unmount();
+    if (destination === 'next-act') {
+      const row = document.createElement('div');
+      row.setAttribute(EDITOR_TOUR_TRACK_ATTRIBUTE, EDITOR_TOUR_TRACK_IDS.videos);
+      document.body.append(row);
+      goTo(3, 'land');
+    }
+    await dwell();
+    const calls = view.previewHandle.seek.mock.calls.map(([time]) => time);
+    expect(calls).toEqual(destination === 'next-act' ? [0, 6.5, 0] : [0, 6.5]);
+    presentationClock += 10_000;
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 35)); });
+    expect(view.previewHandle.seek.mock.calls.map(([time]) => time)).toEqual(calls);
+    if (destination === 'skip') expect(ready()).toBe(true);
   });
 
   it('reports ready on compose without touching the timeline or booting a scene', async () => {
@@ -125,7 +201,7 @@ describe('EditorTourTimelineDriver', () => {
     expect(apply).not.toHaveBeenCalled();
   });
 
-  it('lands each stage through ops.apply, scrolls to its first clip, then seeks 0 and plays (act 2 holds)', async () => {
+  it('lands each stage through ops.apply, scrolls to its first clip, then seeks 0 and plays (act 2 holds its last frame when entered instantly)', async () => {
     const { apply, calls, previewHandle } = createHarness();
     addScene('ready');
 
@@ -152,17 +228,17 @@ describe('EditorTourTimelineDriver', () => {
     const stillsRow = document.createElement('div');
     stillsRow.setAttribute(EDITOR_TOUR_TRACK_ATTRIBUTE, EDITOR_TOUR_TRACK_IDS.stills);
     document.body.append(stillsRow);
-    goTo(2, 'land');
+    act_(() => setEditorTourBeat(2, 'land', true));
     await waitFor(() => expect(ready()).toBe(true));
     expect(apply).toHaveBeenCalledTimes(2);
     expect(apply.mock.calls[1][0].operations[0].op).toBe('track.add');
     expect(apply.mock.calls[1][0].operations[0].payload).toMatchObject({ before: EDITOR_TOUR_TRACK_IDS.scene });
-    expect(harness.centered).toEqual([TOUR_CLIP_IDS.scene, TOUR_CLIP_IDS.stills[0]]);
-    // Act 2 holds on the start frame (shown for the first second only) rather than playing past it.
+    expect(harness.centered).toEqual([TOUR_CLIP_IDS.scene, TOUR_CLIP_IDS.stills[3]]);
+    // An instant arrival skips the presentation and holds the last reference frame.
     expect(previewHandle.seek).toHaveBeenCalledTimes(2);
     expect(previewHandle.play).toHaveBeenCalledTimes(1);
     expect(previewHandle.pause).toHaveBeenCalledTimes(2);
-    expect(calls.slice(-2)).toEqual(['pause', 'seek:0']);
+    expect(calls.slice(-2)).toEqual(['pause', 'seek:13']);
 
     const videosRow = document.createElement('div');
     videosRow.setAttribute(EDITOR_TOUR_TRACK_ATTRIBUTE, EDITOR_TOUR_TRACK_IDS.videos);
@@ -188,7 +264,7 @@ describe('EditorTourTimelineDriver', () => {
 
     goTo(1, 'land');
     await waitFor(() => expect(ready()).toBe(true));
-    goTo(2, 'land');
+    act_(() => setEditorTourBeat(2, 'land', true));
     await waitFor(() => expect(ready()).toBe(true));
     expect(apply).toHaveBeenCalledTimes(2);
 
@@ -200,7 +276,7 @@ describe('EditorTourTimelineDriver', () => {
     expect(previewHandle.play).not.toHaveBeenCalled();
 
     // Forward again lands the stills row afresh.
-    goTo(2, 'land');
+    act_(() => setEditorTourBeat(2, 'land', true));
     await waitFor(() => expect(apply).toHaveBeenCalledTimes(4));
     expect(apply.mock.calls[3][0].operations[0].op).toBe('track.add');
 
@@ -269,7 +345,7 @@ describe('EditorTourTimelineDriver', () => {
     const stillsRow = document.createElement('div');
     stillsRow.setAttribute(EDITOR_TOUR_TRACK_ATTRIBUTE, EDITOR_TOUR_TRACK_IDS.stills);
     document.body.append(stillsRow);
-    goTo(2, 'land');
+    act_(() => setEditorTourBeat(2, 'land', true));
     await waitFor(() => expect(ready()).toBe(true));
     expect(previewHandle.seek).toHaveBeenCalledTimes(2);
     expect(previewHandle.pause).toHaveBeenCalledTimes(2);

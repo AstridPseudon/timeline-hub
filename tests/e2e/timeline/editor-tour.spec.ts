@@ -29,7 +29,7 @@ type Beat = 'welcome' | 'compose' | 'respond' | 'land' | 'finale' | 'feedback';
 test.use({
   viewport: { width: 1440, height: 900 },
   deviceScaleFactor: 2,
-  storageState: astridOnboardedStorageState(BASE_URL, { editorTourSeen: true }),
+  storageState: astridOnboardedStorageState(BASE_URL, { editorTourSeen: true, activityPaneUnlocked: false }),
 });
 
 interface TourSnapshot {

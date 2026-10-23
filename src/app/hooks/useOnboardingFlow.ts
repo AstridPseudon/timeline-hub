@@ -8,6 +8,7 @@ import {
 } from '@/integrations/astrid/doctorAvailability.ts';
 import { getBridgeRecoveryGuidance } from '@/integrations/astrid/bridgeRecovery.ts';
 import { hasRuntimeDocumentIdentity } from '@/app/runtime/runtimeDocument';
+import { APP_ENTRY_PATH } from '@/app/entryClassification';
 
 export function useOnboardingFlow() {
   const { showOnboardingModal, onboardingMode, closeOnboardingModal } = useOnboarding();
@@ -50,7 +51,7 @@ export function useOnboardingFlow() {
     }
 
     closeOnboardingModal();
-    navigate('/tools/travel-between-images');
+    navigate(APP_ENTRY_PATH);
   }, [closeOnboardingModal, navigate, onboardingMode, refreshDoctorAvailability]);
 
   useEffect(() => {

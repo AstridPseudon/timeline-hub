@@ -56,7 +56,6 @@ const launchOptions = chromiumExecutablePath
 // Their opt-in script owns their collection.
 // See `npm run test:e2e:timeline`.
 const TIMELINE_DEVICE_SPECS = /tests[\\/]e2e[\\/]timeline[\\/].*\.spec\.ts$/;
-const RENDERER_OWNED_TIMELINE_SPECS = /caption-render-export\.spec\.ts$/;
 // Cases that need H.264 in the browser: encoding it (export) or decoding it (the preview plays
 // example-video.mp4). Playwright's bundled Chromium has neither, so these run only in the
 // `timeline-chrome-export` project (channel 'chrome', `npm run test:e2e:chrome-export`), never in
@@ -86,6 +85,9 @@ const extensionHarnessDependencies = ['extension-harness-setup'];
 // The same-machine direct journey needs a Runtime checkout, a gateway and its
 // own config (`playwright.direct.config.ts`, `npm run test:e2e:direct`).
 const LOCAL_JOURNEY_SPECS = /tests[\\/]e2e[\\/]local[\\/].*\.spec\.ts$/;
+// These two specs set their own desktop viewport and drive the pointer editor, so the device projects would only
+// repeat the desktop run; chromium-desktop runs them.
+const DESKTOP_ONLY_SPECS = /(?:production-widget-scope|video-editor-instance-lifecycle)\.spec\.ts$/;
 const defaultProjectIgnores = [
   TIMELINE_DEVICE_SPECS,
   EXTENSION_HARNESS_SETUP_SPEC,
@@ -104,7 +106,8 @@ export default defineConfig({
     timeout: 5_000,
   },
   fullyParallel: true,
-  reporter: process.env.CI ? 'github' : 'list',
+  forbidOnly: !!process.env.CI,
+  reporter: [[process.env.CI ? 'github' : 'list'], ['./config/testing/playwrightSkipGuard.ts']],
   use: {
     baseURL,
     storageState: astridOnboardedStorageState(baseURL),
@@ -161,24 +164,24 @@ export default defineConfig({
     },
     {
       name: 'chromium-condensed',
-      testIgnore: defaultProjectIgnores,
+      testIgnore: [...defaultProjectIgnores, DESKTOP_ONLY_SPECS],
       dependencies: extensionHarnessDependencies,
-      use: { ...devices['iPad Mini'] },
+      // The device profile defaults to WebKit; these projects are Chromium (the launch args below are
+      // Chromium-only and mobile WebKit is not a gate here).
+      use: { ...devices['iPad Mini'], defaultBrowserType: 'chromium' },
     },
     {
       name: 'chromium-mobile',
-      testIgnore: defaultProjectIgnores,
+      testIgnore: [...defaultProjectIgnores, DESKTOP_ONLY_SPECS],
       dependencies: extensionHarnessDependencies,
-      use: { ...devices['iPhone 13'] },
+      use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium' },
     },
     ...(includeTimelineDevices
       ? [{
           name: 'timeline-devices',
           testMatch: TIMELINE_DEVICE_SPECS,
           // Cases tagged @chrome-h264 export or decode H.264 and run in the `timeline-chrome-export`
-          // project; this project must not collect them. The caption export spec requires a producing
-          // render worker plus managed media fixtures and remains renderer-owned.
-          testIgnore: RENDERER_OWNED_TIMELINE_SPECS,
+          // project; this project must not collect them.
           grepInvert: CHROME_H264_TAG,
           // Each spec sets its own viewport/touch profile via test.use().
           use: { ...devices['Desktop Chrome'] },

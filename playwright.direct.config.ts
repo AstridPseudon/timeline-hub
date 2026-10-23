@@ -14,7 +14,8 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: 0,
-  reporter: [['list']],
+  forbidOnly: !!process.env.CI,
+  reporter: [['list'], ['./config/testing/playwrightSkipGuard.ts']],
   use: {
     acceptDownloads: true,
     trace: 'retain-on-failure',

@@ -887,7 +887,10 @@ export default function VideoEditorPage() {
                       : "Create a blank timeline for this project to open it in the editor."}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {!projectId && projects?.length === 0 && <EmptyWorkspaceGuidance onRefresh={() => void runtimeDiscovery.projectsQuery.refetch()} />}
+                    {!projectId && projects?.length === 0 && <EmptyWorkspaceGuidance
+                      onRefresh={() => void runtimeDiscovery.projectsQuery.refetch()}
+                      confirmedEmpty={runtimeDiscovery.projectsQuery.isSuccess && !discoveryError}
+                    />}
                     {selectedProject && !timelineId && !discoveryError && <Button
                       onClick={() => void handleCreateFirstTimeline()}
                       disabled={creatingFirstTimeline}

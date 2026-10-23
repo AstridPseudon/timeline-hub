@@ -46,27 +46,29 @@ function config(): ResolvedTimelineConfig {
     ]};
 }
 describe('portable Astrid intent admitted by authoritative Runtime', () => {
-  it('matches Runtime picture ownership for explicitly declared custom picture tracks', () => {
+  it('matches Runtime picture ownership for custom clip types on visual tracks', () => {
     const base = config();
     base.tracks.push(
       {id: 'plate', kind: 'visual', label: 'Plate'},
       {id: 'source', kind: 'visual', role: 'source', label: 'Source'},
       {id: 'audio', kind: 'audio', label: 'Audio'},
+      {id: 'extra', kind: 'visual', label: 'Extra'},
     );
     base.clips.push(
       {id: 'plate', clipType: 'am-footage', track: 'plate', at: 0.9, hold: 0.2},
-      {id: 'unlisted', clipType: 'am-sprite', track: 'v', at: 0.9, hold: 0.2},
+      {id: 'unlisted', clipType: 'am-sprite', track: 'extra', at: 0.9, hold: 0.2},
       {id: 'text', clipType: 'text', track: 'plate', at: 0.9, hold: 0.2},
       {id: 'effect', clipType: 'am-snap-plate', track: 'plate', at: 0.9, hold: 0.2,
         elementRef: {id: 'effect', revision: 'sha256:abc', kind: 'effect'}},
       {id: 'source', clipType: 'media', track: 'source', at: 0, hold: 2},
       {id: 'audio-clip', clipType: 'media', track: 'audio', at: 0, hold: 2},
     );
-    base.app = {visualSeamContract: {pictureTracks: ['plate'], continuityTracks: ['v']}};
+    base.app = {visualSeamContract: {continuityTracks: ['v']}};
 
     const owners = visualSeamOwners(base);
     const primary = owners.filter((owner) => owner.primary).map((owner) => owner.clipId).sort();
-    expect(primary).toEqual(['a', 'b', 'plate']);
+    // A custom clip type on a visual track is picture without a declaration (Runtime 240d5bb); 'text' and 'effect' are not.
+    expect(primary).toEqual(['a', 'b', 'plate', 'unlisted']);
     expect(owners.some((owner) => owner.clipId === 'plate' && owner.disclosure.opaque.length > 0)).toBe(true);
     expect(owners.some((owner) => owner.clipId === 'plate' && owner.disclosure.cues.some((cue) => cue.kind === 'activation'))).toBe(false);
 

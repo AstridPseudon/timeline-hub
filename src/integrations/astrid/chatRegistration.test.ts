@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { skipWhen } from '@/test/declaredSkip';
 import { chmodSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -36,8 +37,8 @@ describe('agent-owned chat discovery', () => {
     }
   });
 
-  it('refuses a registration readable by other users on POSIX', () => {
-    if (process.platform === 'win32') return;
+  it('refuses a registration readable by other users on POSIX', (ctx) => {
+    skipWhen('posix-owner-only-modes', ctx);
     const { path, discovery } = fixture();
     writeFileSync(path, JSON.stringify({ endpoint: 'http://127.0.0.1:17335', token: 'private' }));
     chmodSync(path, 0o644);
