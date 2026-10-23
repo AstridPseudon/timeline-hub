@@ -16,6 +16,7 @@ from referencing import Registry
 from referencing.exceptions import Unresolvable
 
 from astrid.core.timeline.authoring_bundle import AuthoringBundleError
+from astrid.core.timeline.parent_registry import ParentRegistryError, effective_parent_registry
 from astrid.sdk.timeline._command_state import equal
 from astrid.sdk.timeline.compiler import TimingCompileError
 from astrid.sdk.timeline.units import _time_fraction
@@ -193,8 +194,11 @@ def _validate_clip_list(
                 _fail(f"{clip_path}.asset", f"unknown asset {asset_key!r}")
             source_start = _number(clip.get("from", 0), f"{clip_path}.from")
             source_duration = _asset_duration(assets[asset_key])
-            if source_duration is not None and source_start + duration * _number(
-                    clip.get("speed", 1), f"{clip_path}.speed", positive=True) > source_duration:
+            # The authored source window is independent of an image's hold.
+            source_end = (_number(clip["to"], f"{clip_path}.to") if clip.get("to") is not None
+                          else source_start + duration * _number(
+                              clip.get("speed", 1), f"{clip_path}.speed", positive=True))
+            if source_duration is not None and source_end > source_duration:
                 _fail(clip_path, "source interval exceeds the retained asset bounds")
     return by_id
 
@@ -215,13 +219,11 @@ def _baseline_clips(bundle: Mapping[str, Any]) -> dict[tuple[str, str], Mapping[
 
 def _schema_for_selected(
     clip: Mapping[str, Any], *, schema_inputs: Sequence[Any], realm_id: str | None, project: str,
+    required: bool = True,
 ) -> Mapping[str, Any] | None:
     reference = clip.get("elementRef") or clip.get("element_ref")
     if not isinstance(reference, Mapping) or not reference.get("packId"):
         return None
-    if not isinstance(realm_id, str) or not realm_id:
-        _fail("elementRef", "selected project elements require retained schema authority")
-
     # The retained closure may contain more than one admission for the same
     # pack owner.  Select the immutable element identity first; pack_id alone
     # is only a namespace and must never choose the declaration or pin.
@@ -246,6 +248,8 @@ def _schema_for_selected(
         if len(exact) == 1:
             matches.append((verified, objects, exact[0]))
     if not matches:
+        if not required:
+            return None
         _fail("elementRef", "selected project element has no unique retained schema")
     from astrid.core.element.project_packs import admitted_element_snapshot_descriptor
 
@@ -261,6 +265,8 @@ def _schema_for_selected(
         snapshot = objects.get(object_id) if isinstance(object_id, str) else None
         if snapshot is None:
             continue
+        if not isinstance(realm_id, str) or not realm_id:
+            _fail("elementRef", "selected project elements require retained schema authority")
         try:
             descriptor = admitted_element_snapshot_descriptor(
                 realm_id, project, dict(reference), verified,
@@ -271,11 +277,15 @@ def _schema_for_selected(
         if isinstance(descriptor, Mapping):
             declarations.append(descriptor)
     if not declarations:
+        if not required:
+            return None
         _fail("elementRef", "retained element declaration is unavailable")
     schemas = [declaration.get("schema") for declaration in declarations]
     if any(schema != schemas[0] for schema in schemas[1:]):
         _fail("elementRef", "selected project element has ambiguous retained declarations")
-    return schemas[0] if isinstance(schemas[0], Mapping) else None
+    if not isinstance(schemas[0], Mapping):
+        _fail("elementRef", "retained element schema is unavailable")
+    return schemas[0]
 
 
 def _validate_params(
@@ -283,15 +293,15 @@ def _validate_params(
     schema_inputs: Sequence[Any], realm_id: str | None, project: str,
 ) -> None:
     params = clip.get("params", {})
+    # Guarded inverse may restore this literal container after a PARAM write.
+    if params is None:
+        return
     if not isinstance(params, Mapping):
         _fail(f"{path}.params", "must be an object")
     previous = baseline.get("params", {}) if isinstance(baseline, Mapping) else {}
     previous = previous if isinstance(previous, Mapping) else {}
     changed = {key: value for key, value in params.items()
                if key not in previous or not equal(previous[key], value)}
-    if not changed:
-        return
-
     element_ref = clip.get("elementRef") or clip.get("element_ref")
     element = element_ref.get("id") if isinstance(element_ref, Mapping) else clip.get("clipType", "media")
     if not isinstance(element, str):
@@ -302,8 +312,13 @@ def _validate_params(
     selected = isinstance(element_ref, Mapping) and element_ref.get("packId")
     if selected and baseline is None:
         return
-    schema = _schema_for_selected(clip, schema_inputs=schema_inputs, realm_id=realm_id, project=project)
-    if schema is None:
+    if selected:
+        schema = _schema_for_selected(
+            clip, schema_inputs=schema_inputs, realm_id=realm_id, project=project,
+            required=bool(changed))
+        if schema is None:
+            return
+    else:
         from astrid.sdk.timeline_address import element_schema
 
         schema = element_schema(element)
@@ -322,17 +337,15 @@ def _validate_params(
         additional = schema.get("additional", schema.get("additionalProperties", True))
     else:
         additional = True
-    for key, value in changed.items():
+    for key, value in params.items():
         if key in properties:
-            if key in previous and equal(previous[key], value):
-                continue
             try:
                 errors = list(validator.evolve(schema=properties[key]).iter_errors(value))
             except Unresolvable as exc:
                 _fail(f"{path}.params.{key}", f"parameter schema reference is unavailable: {exc}")
             if errors:
                 _fail(f"{path}.params.{key}", errors[0].message)
-        elif baseline is not None and key not in previous and additional is False:
+        elif key in changed and key not in previous and additional is False:
             _fail(f"{path}.params.{key}", "is not declared by the retained element schema")
 
 
@@ -367,9 +380,13 @@ def validate_final_candidate(
         _fail("candidate.parent.config", "must be an object")
     config: Mapping[str, Any] = config_value
     tracks = _identity_rows(config.get("tracks", []), "candidate.parent.config.tracks", "id")
+    try:
+        registry = effective_parent_registry(parent)
+    except ParentRegistryError as exc:
+        _fail("candidate.parent.registry", str(exc))
     clips = _validate_clip_list(
         parent.get("clips", config.get("clips")), path="candidate.parent.clips",
-        tracks=tracks, registry=parent.get("registry", {}),
+        tracks=tracks, registry=registry,
     )
     mirror = config.get("clips")
     if isinstance(mirror, list) and isinstance(parent.get("clips"), list) and mirror and mirror != parent["clips"]:
@@ -418,25 +435,12 @@ def validate_final_candidate(
             schema_inputs=schema_inputs, realm_id=realm_id, project=str(candidate.get("project_id", "")),
         )
 
-    # The existing timing kernel remains the sole resolver for authored timing.
-    # Plain literal clips need no synthetic bindings; authored relations do.
-    from astrid.sdk import timeline_intent as intent
-    from astrid.sdk.timeline.native_word_anchor import compile_authored
+    from astrid.sdk.timeline._commit_timing_validation import validate_candidate_timing
 
-    has_timing = any(
-        isinstance(clip, Mapping) and (
-            isinstance(intent._app(clip).get("word_anchors"), Mapping)
-            or intent._app(clip).get("on") is not None
-            or intent._app(clip).get("until") is not None
-            or intent._app(clip).get("for") is not None
-        )
-        for clip in clips.values()
-    )
-    if has_timing:
-        try:
-            compile_authored(candidate, candidate.get("source_mapping", {}).get("pinned_documents", []))
-        except (TimingCompileError, KeyError, TypeError, ValueError) as exc:
-            _fail("candidate.timing", str(exc))
+    try:
+        validate_candidate_timing(candidate)
+    except (TimingCompileError, KeyError, TypeError, ValueError) as exc:
+        _fail("candidate.timing", str(exc))
 
 
 __all__ = ["FinalCandidateError", "validate_final_candidate"]
