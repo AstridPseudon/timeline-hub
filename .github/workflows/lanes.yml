@@ -115,6 +115,13 @@ jobs:
           python-version: "3.11"
       - name: Install ffmpeg
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+      # The App harness looks for the Runtime venv at <runtime>/.venv (it is only attached to here, never started by the case).
+      - name: Build the Runtime venv
+        working-directory: astrid-runtime
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -e .
+          .venv/bin/python -m runtime_protocol.cli --help > /dev/null
       - name: Build the Astrid venv (with the sibling Runtime)
         working-directory: astrid-agent
         run: |
