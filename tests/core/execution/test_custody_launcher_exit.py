@@ -27,7 +27,7 @@ LAUNCHER = textwrap.dedent(
 )
 
 
-@pytest.mark.skipif(sys.platform != "darwin", reason="the inventory owner exists only on the Darwin custody path")
+@pytest.mark.darwin_native
 def test_a_detached_child_does_not_keep_its_launcher_alive() -> None:
     started = time.monotonic()
     result = subprocess.run([sys.executable, "-c", LAUNCHER, str(CHILD_SECONDS)], capture_output=True, text=True,

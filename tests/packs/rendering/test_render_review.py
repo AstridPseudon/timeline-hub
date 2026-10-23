@@ -105,7 +105,7 @@ def test_render_review_cli_flag_is_declared_on_the_action() -> None:
     assert flags["highlight"] == "--highlight"
 
 
-@pytest.mark.skipif(FFMPEG is None, reason="ffmpeg is needed to render a test video")
+@pytest.mark.ffmpeg
 def test_review_samples_a_real_render_and_measures_its_audio(tmp_path: Path) -> None:
     video = tmp_path / "render.mp4"
     # 4 s: a 1 kHz tone for 2 s, then digital silence for 2 s.

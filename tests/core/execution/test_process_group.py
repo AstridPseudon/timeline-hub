@@ -176,7 +176,6 @@ def test_fresh_only_child_enters_tree_bookkeeping_before_reparenting(tmp_path, m
 
 
 @pytest.mark.darwin_native
-@pytest.mark.skipif(sys.platform != "darwin", reason="native Darwin exact-token proof")
 def test_native_multiple_exec_keeps_birth_anchor_and_cleans_with_fresh_token():
     source = (
         "import os,sys,time; stage=int(sys.argv[1]); "
@@ -432,7 +431,6 @@ def test_final_verification_uncertainty_cannot_be_cleared_by_a_later_census(monk
 
 
 @pytest.mark.darwin_native
-@pytest.mark.skipif(sys.platform != "darwin", reason="Darwin suspended SETEXEC admission proof")
 def test_target_code_waits_until_suspended_launch_observer_is_ready(monkeypatch, tmp_path):
     from astrid.core.execution import custody_broker
 
@@ -568,7 +566,6 @@ def test_native_census_preserves_terminal_status_and_precise_birth(monkeypatch):
 
 
 @pytest.mark.darwin_native
-@pytest.mark.skipif(sys.platform != "darwin", reason="real Darwin native adapter graph proof")
 def test_native_vibe_birth_observation_owned_child_has_no_helper_descendants(tmp_path):
     import json
     child = tmp_path / "native_observer.py"
@@ -747,7 +744,6 @@ def test_failed_launch_preserves_admission_error_and_original_custody(monkeypatc
 
 
 @pytest.mark.darwin_native
-@pytest.mark.skipif(sys.platform != "darwin", reason="Darwin real suspended admission failure")
 def test_failed_suspended_admission_kills_and_reaps_original_child(monkeypatch):
     admission_error = RuntimeError("injected observer admission failure")
     retained, signals, waits = [], [], []
@@ -1013,7 +1009,7 @@ def test_final_verification_still_fails_closed_when_lock_stays_busy(tmp_path, mo
     assert process._astrid_tree_uncertain
 
 
-linux_only = pytest.mark.skipif(not sys.platform.startswith("linux"), reason="/proc zombie witness is Linux-only")
+linux_only = pytest.mark.linux_native
 
 
 _BOUND_OWNERS: list = []

@@ -380,9 +380,8 @@ def test_interval_lists_cannot_certify_a_copied_non_media_candidate(tmp_path: Pa
         verify_candidate(preparation=preparation, composition=composition, source=source)
 
 
+@pytest.mark.ffmpeg
 def test_composition_carries_provenance_and_decoded_protected_samples(tmp_path: Path) -> None:
-    if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
-        pytest.skip("ffmpeg is required for the media composition contract test")
     source = tmp_path / "source.mp4"
     generated = tmp_path / "generated.mp4"
     subprocess.run(
@@ -406,9 +405,8 @@ def test_composition_carries_provenance_and_decoded_protected_samples(tmp_path: 
     assert composition["preservation_evidence"]["protected_samples"]["video"]
 
 
+@pytest.mark.ffmpeg
 def test_full_replacement_composition_trims_generated_av_to_request_duration(tmp_path: Path) -> None:
-    if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
-        pytest.skip("ffmpeg/ffprobe required for the full-replacement media regression")
     source = tmp_path / "silent-source.mp4"
     generated = tmp_path / "overlong-generated.mp4"
     subprocess.run(
@@ -451,10 +449,9 @@ def test_full_replacement_composition_trims_generated_av_to_request_duration(tmp
     assert composition["coverage"]["candidate"]["audio"]["duration"] == pytest.approx(2, abs=0.05)
 
 
+@pytest.mark.ffmpeg
 def test_protected_audio_witness_tolerates_aac_to_pcm_roundtrip(tmp_path: Path) -> None:
     """AAC source audio must verify after concat emits PCM in another container."""
-    if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
-        pytest.skip("ffmpeg is required for the media composition contract test")
     source = tmp_path / "source-32k-aac.mp4"
     generated = tmp_path / "generated-32k-aac.mp4"
     subprocess.run(
@@ -480,9 +477,8 @@ def test_protected_audio_witness_tolerates_aac_to_pcm_roundtrip(tmp_path: Path) 
     assert report["status"] == "verified"
 
 
+@pytest.mark.ffmpeg
 def test_composition_normalizes_generated_working_resolution_to_source(tmp_path: Path) -> None:
-    if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
-        pytest.skip("ffmpeg is required for the media composition contract test")
     source = tmp_path / "source.mp4"
     generated = tmp_path / "generated.mp4"
     subprocess.run(
@@ -718,14 +714,13 @@ def test_generation_prompt_socket_type_survives_canonical_reload(tmp_path: Path,
     ("continue", "rejected"), ("continue", "unclaimed"), ("character", "passed"),
 ])
 @pytest.mark.integration
+@pytest.mark.ffmpeg
 def test_transform_managed_handoffs_survive_removal_of_every_previous_attempt(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, operation: str, finalizer_state: str,
 ):
     """Run the real H3 stages through admission/materialization; fake only CAS
     transport and GPU generation. No preceding directory survives a handoff.
     """
-    if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):
-        pytest.skip("ffmpeg/ffprobe required for CPU AV regression")
     import yaml
     from astrid.core.execution.generic_host import GenericPackHost
     from astrid.packs.h3_av.actions.transform import run as transform

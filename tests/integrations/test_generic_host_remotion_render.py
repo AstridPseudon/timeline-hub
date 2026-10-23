@@ -18,6 +18,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.lanes import unavailable
+
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_ROOT = ROOT.parent / "astrid-app" / "vendor" / "timeline-schema" / "python"
 DEPENDENCY_ROOT = Path(
@@ -26,13 +28,6 @@ DEPENDENCY_ROOT = Path(
         str(ROOT.parent / "Astrid-beta-convergence" / "remotion" / "node_modules"),
     )
 ).expanduser()
-
-if not DEPENDENCY_ROOT.is_dir():
-    pytest.skip(
-        "provisioned Remotion dependency root is unavailable; set "
-        "ASTRID_TEST_REMOTION_DEPENDENCY_ROOT",
-        allow_module_level=True,
-    )
 
 from astrid.core.execution.generic_host import (  # noqa: E402
     GenericPackHost,
@@ -51,6 +46,12 @@ from astrid.sdk.host_bootstrap import PACK_HOST_ACTOR  # noqa: E402
 from astrid_runtime_client import WorkspaceClient  # noqa: E402
 
 pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
+
+
+@pytest.fixture(autouse=True)
+def _remotion_dependency_root() -> None:
+    if not DEPENDENCY_ROOT.is_dir():
+        unavailable("provisioned Remotion dependency root is unavailable; set ASTRID_TEST_REMOTION_DEPENDENCY_ROOT")
 
 
 def _make_media(root: Path) -> tuple[Path, Path]:
@@ -180,7 +181,7 @@ def _prepare_remotion_fixture(
         or not os.access(node, os.X_OK)
         or shutil.which("ffmpeg") is None
     ):
-        pytest.skip("node and ffmpeg are required for the Remotion acceptance fixture")
+        unavailable("node and ffmpeg are required for the Remotion acceptance fixture")
     monkeypatch.setenv(
         "ASTRID_NODE_EXECUTABLE",
         configured_node if configured_node else str(node.resolve()),
@@ -308,7 +309,7 @@ def test_generic_host_remotion_register_claim_execute_settle_and_cas(
 ) -> None:
     node = shutil.which("node")
     if node is None or shutil.which("ffmpeg") is None:
-        pytest.skip("node and ffmpeg are required for the Remotion acceptance render")
+        unavailable("node and ffmpeg are required for the Remotion acceptance render")
     monkeypatch.setenv("ASTRID_NODE_EXECUTABLE", str(Path(node).resolve()))
     monkeypatch.setenv("ASTRID_TIMELINE_SCHEMA_PYTHONPATH", str(SCHEMA_ROOT))
     monkeypatch.setenv(

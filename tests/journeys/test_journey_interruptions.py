@@ -129,6 +129,7 @@ def test_mismatched_declared_runtime_refuses_before_source_change(tmp_path: Path
     assert "does not match imported Runtime" in report["error"]
 
 
+@pytest.mark.posix_native  # POSIX-only process-group API
 def test_reaper_escalates_only_after_fresh_group_ownership_scan(tmp_path: Path, monkeypatch) -> None:
     root = tmp_path / "private-journey"
     own_group = 300

@@ -33,6 +33,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+from tests.lanes import unavailable
 
 from astrid.core.cli.domain_product import run_product_family
 from astrid.core.receipts.contract import CommandReceipt
@@ -1176,11 +1177,12 @@ def test_visualization_human_navigation_footer_is_compact(capsys) -> None:
     assert "exact frame:" not in output
 
 
+@pytest.mark.integration
 def test_timelines_show_reads_runtime_motion_and_scoped_friendly_media(capsys, tmp_path) -> None:
     """Exercise actual Runtime closure -> SDK projection -> human CLI output."""
     runtime_root = os.environ.get("ASTRID_RUNTIME_SOURCE_ROOT")
     if not runtime_root:
-        pytest.skip("set ASTRID_RUNTIME_SOURCE_ROOT to the paired Runtime execution worktree")
+        unavailable("set ASTRID_RUNTIME_SOURCE_ROOT to the paired Runtime execution worktree")
     runtime_path = Path(runtime_root).resolve()
     if not (runtime_path / "runtime_protocol" / "service.py").is_file():
         pytest.fail(f"ASTRID_RUNTIME_SOURCE_ROOT has no runtime_protocol package: {runtime_path}")

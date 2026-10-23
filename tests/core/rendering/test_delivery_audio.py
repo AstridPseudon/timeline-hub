@@ -96,10 +96,7 @@ def test_shorthand_flags_build_the_target() -> None:
 
 
 def _ffmpeg() -> str:
-    binary = shutil.which("ffmpeg")
-    if binary is None:
-        pytest.skip("ffmpeg is not installed")
-    return binary
+    return shutil.which("ffmpeg")
 
 
 @pytest.fixture()
@@ -127,8 +124,6 @@ def film_like_fixture(tmp_path: Path) -> Path:
 
 def _probe_streams(path: Path) -> dict[str, str]:
     ffprobe = shutil.which("ffprobe")
-    if ffprobe is None:
-        pytest.skip("ffprobe is not installed")
     proc = subprocess.run(
         [ffprobe, "-v", "error", "-show_entries", "stream=codec_type,codec_name", "-of", "json", str(path)],
         capture_output=True, text=True, check=True,
@@ -136,6 +131,7 @@ def _probe_streams(path: Path) -> dict[str, str]:
     return {stream["codec_type"]: stream["codec_name"] for stream in json.loads(proc.stdout)["streams"]}
 
 
+@pytest.mark.ffmpeg
 def test_master_meets_true_peak_ceiling_and_loudness_target(film_like_fixture: Path, tmp_path: Path) -> None:
     ffmpeg = _ffmpeg()
     dest = tmp_path / "delivery-audio.mp4"
@@ -154,11 +150,10 @@ def test_master_meets_true_peak_ceiling_and_loudness_target(film_like_fixture: P
     assert streams.get("audio") == "aac"
 
 
+@pytest.mark.ffmpeg
 def test_master_keeps_the_source_sample_rate(film_like_fixture: Path, tmp_path: Path) -> None:
     """loudnorm resamples to 192 kHz internally; the film's masters shipped 96 kHz AAC."""
     ffprobe = shutil.which("ffprobe")
-    if ffprobe is None:
-        pytest.skip("ffprobe is not installed")
     dest = tmp_path / "delivery-audio.mp4"
     apply_delivery_audio(film_like_fixture, dest, DeliveryAudioTarget(), ffmpeg=_ffmpeg())
     rate = subprocess.run([ffprobe, "-v", "error", "-select_streams", "a", "-show_entries", "stream=sample_rate",
@@ -166,6 +161,7 @@ def test_master_keeps_the_source_sample_rate(film_like_fixture: Path, tmp_path: 
     assert rate == "48000"
 
 
+@pytest.mark.ffmpeg
 def test_video_is_stream_copied_bit_for_bit(film_like_fixture: Path, tmp_path: Path) -> None:
     ffmpeg = _ffmpeg()
     dest = tmp_path / "delivery-audio.mp4"
@@ -181,6 +177,7 @@ def test_video_is_stream_copied_bit_for_bit(film_like_fixture: Path, tmp_path: P
     assert video_packets(dest) == video_packets(film_like_fixture)
 
 
+@pytest.mark.ffmpeg
 def test_unreachable_ceiling_is_refused_and_leaves_no_output(film_like_fixture: Path, tmp_path: Path) -> None:
     ffmpeg = _ffmpeg()
     dest = tmp_path / "delivery-audio.mp4"
@@ -212,6 +209,7 @@ def test_service_hook_is_inert_without_a_target() -> None:
     assert RenderService._delivery_audio_target(request) is None
 
 
+@pytest.mark.ffmpeg
 def test_service_hook_masters_the_final_mix_and_returns_a_receipt(film_like_fixture: Path, tmp_path: Path) -> None:
     from types import SimpleNamespace
 

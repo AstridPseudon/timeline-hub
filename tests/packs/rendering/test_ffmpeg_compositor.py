@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -268,10 +267,6 @@ def test_support_rejects_duplicate_z_layer(tmp_path: Path) -> None:
 # --- synthetic media helpers (real ffmpeg) ---
 
 
-def _ffmpeg_available() -> bool:
-    return shutil.which("ffmpeg") is not None and shutil.which("ffprobe") is not None
-
-
 def _make_bottom(
     path: Path,
     *,
@@ -456,10 +451,8 @@ def _assert_rgb(actual: tuple[int, ...], expected: tuple[int, int, int]) -> None
     assert len(actual) == 3 and all(abs(a - e) <= 2 for a, e in zip(actual, expected)), (actual, expected)
 
 
+@pytest.mark.ffmpeg
 def test_synthetic_composite_pixel_proof(tmp_path: Path) -> None:
-    if not _ffmpeg_available():
-        pytest.skip("real FFmpeg compositor smoke requires ffmpeg and ffprobe")
-
     request = _synthetic_request(tmp_path, bottom_frames=10, top_frames=10)
 
     result = compositor.finalize(request, workspace=tmp_path)
@@ -488,11 +481,9 @@ def test_synthetic_composite_pixel_proof(tmp_path: Path) -> None:
     _assert_rgb(_frame_pixel(output, 0, tmp_path, 50, 50), (252, 0, 0))
 
 
+@pytest.mark.ffmpeg
 def test_short_bottom_layer_reveals_base_after_eof(tmp_path: Path) -> None:
     """B3 deferral: a short z=0 layer ends; the rest is top over the black base."""
-
-    if not _ffmpeg_available():
-        pytest.skip("real FFmpeg compositor smoke requires ffmpeg and ffprobe")
 
     request = _synthetic_request(
         tmp_path,
@@ -554,10 +545,8 @@ def test_opacity_below_one_emits_colorchannelmixer() -> None:
     assert "libvpx-vp9" in argv
 
 
+@pytest.mark.ffmpeg
 def test_short_top_layer_pads_to_plan_length(tmp_path: Path) -> None:
-    if not _ffmpeg_available():
-        pytest.skip("real FFmpeg compositor smoke requires ffmpeg and ffprobe")
-
     request = _synthetic_request(tmp_path, bottom_frames=10, top_frames=5)
 
     result = compositor.finalize(request, workspace=tmp_path)
@@ -573,10 +562,8 @@ def test_short_top_layer_pads_to_plan_length(tmp_path: Path) -> None:
     _assert_rgb(_frame_pixel(output, 8, tmp_path, 50, 50), (252, 0, 0))
 
 
+@pytest.mark.ffmpeg
 def test_zero_alpha_top_layer_leaves_bottom_visible(tmp_path: Path) -> None:
-    if not _ffmpeg_available():
-        pytest.skip("real FFmpeg compositor smoke requires ffmpeg and ffprobe")
-
     request = _synthetic_request(
         tmp_path,
         bottom_frames=10,
@@ -595,10 +582,8 @@ def test_zero_alpha_top_layer_leaves_bottom_visible(tmp_path: Path) -> None:
     _assert_rgb(_frame_pixel(output, 0, tmp_path, 50, 50), (252, 0, 0))
 
 
+@pytest.mark.ffmpeg
 def test_synthetic_composite_audio_from_lowest_z_segment(tmp_path: Path) -> None:
-    if not _ffmpeg_available():
-        pytest.skip("real FFmpeg compositor smoke requires ffmpeg and ffprobe")
-
     request = _synthetic_request(
         tmp_path,
         bottom_frames=10,
@@ -617,10 +602,8 @@ def test_synthetic_composite_audio_from_lowest_z_segment(tmp_path: Path) -> None
     assert result.backend_fragments[compositor.BACKEND_ID]["audio_source_z"] == 0
 
 
+@pytest.mark.ffmpeg
 def test_recovery_cleans_staging_and_restores_previous_output(tmp_path: Path) -> None:
-    if not _ffmpeg_available():
-        pytest.skip("real FFmpeg compositor smoke requires ffmpeg and ffprobe")
-
     request = _synthetic_request(tmp_path, bottom_frames=10, top_frames=5)
     output_path = tmp_path / "outputs" / "composite.mp4"
     output_path.parent.mkdir(parents=True, exist_ok=True)

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import shutil
 import subprocess
 from dataclasses import replace
 from pathlib import Path
@@ -685,12 +684,10 @@ def test_raw_adapter_writes_finalize_result(tmp_path: Path) -> None:
     ] == "ffmpeg"
 
 
+@pytest.mark.ffmpeg
 def test_real_ffmpeg_normalizes_rational_profile_and_emits_valid_media(
     tmp_path: Path,
 ) -> None:
-    if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
-        pytest.skip("real FFmpeg finalizer smoke requires ffmpeg and ffprobe")
-
     source_path = tmp_path / "segments" / "source.mp4"
     source_path.parent.mkdir(parents=True)
     subprocess.run(

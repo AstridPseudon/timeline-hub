@@ -6,6 +6,7 @@ import sys
 import pytest
 
 
+@pytest.mark.posix_native  # POSIX-only process-group API
 def test_isolated_child_group_is_reaped_after_interrupted_journey(owned_process_groups):
     process = owned_process_groups.popen(
         [sys.executable, "-c", "import time; time.sleep(60)"], start_new_session=True

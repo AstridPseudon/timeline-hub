@@ -76,10 +76,9 @@ def test_a_bare_layer_name_used_in_several_cuts_lists_each_with_its_time(tl):
     for cut in tl.cuts[:2]:
         for clip in cut.clips:
             if clip.track == "sprite":
-                clip.data.setdefault("app", {})["layer"] = "claw"
+                intent.set_layer(clip.data, "claw")
     claws = [c for c in tl.clips() if intent.layer_of(c.data) == "claw"]
-    if len(claws) < 2:
-        pytest.skip("the fixture has one sprite")
+    assert len(claws) == 2
     with pytest.raises(AddressError) as err:
         resolve(tl, "claw")
     for clip in claws:

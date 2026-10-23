@@ -49,7 +49,7 @@ def _lookup(clip, dotted):
 def _marked(vectors):
     cases = []
     for vector in vectors:
-        marks = [pytest.mark.xfail(strict=True, reason=vector['xfail'])] if 'xfail' in vector else []
+        marks = []
         cases.append(pytest.param(vector, id=vector['id'], marks=marks))
     return cases
 

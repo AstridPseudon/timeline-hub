@@ -19,6 +19,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import pytest
+
 from astrid.core.pack import PackValidationError
 from astrid.core.pack.validate import (
     PackValidator,
@@ -1265,10 +1267,7 @@ Path({sentinel!r}).write_text('imported')
             "IMPORT SENTINEL: run.py was IMPORTED during validation!",
         )
 
-    @unittest.skipIf(
-        hasattr(os, "geteuid") and os.geteuid() == 0,
-        "chmod 000 does not block reads for root",
-    )
+    @pytest.mark.non_root  # chmod 000 does not block reads for root
     def test_validate_rejects_unreadable_run_py(self) -> None:
         """An unreadable declared resource (run.py) is reported, not a crash."""
         root = self.make_pack_root()

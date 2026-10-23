@@ -3,7 +3,6 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
-import pytest
 
 import astrid.core.structure as structure
 from astrid.core.structure import (
@@ -980,8 +979,6 @@ def test_giant_file_inventory_matches_rationale() -> None:
 
     # ── 2. Parse the rationale doc ──────────────────────────────────────
     rationale_path = REPO_ROOT / "docs" / "giant-file-rationale.md"
-    if not rationale_path.is_file():
-        pytest.skip("retired M4 giant-file rationale inventory is not shipped")
     rationale_text = rationale_path.read_text(encoding="utf-8")
 
     # Extract table entries of the form: | N | `path` | NNNN | ...

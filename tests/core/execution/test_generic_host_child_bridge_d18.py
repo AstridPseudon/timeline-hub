@@ -1740,8 +1740,7 @@ def test_existing_network_sandbox_preserves_inherited_local_channel(tmp_path):
     """No TCP connection: only the already-connected private socket pair."""
     import subprocess
     from astrid.core.execution.generic_host import _network_sandbox_argv
-    if sys.platform != "darwin" or not Path("/usr/bin/sandbox-exec").exists():
-        pytest.skip("existing host OS network sandbox requires macOS sandbox-exec")
+    assert Path("/usr/bin/sandbox-exec").exists(), "macOS ships sandbox-exec; the darwin_native lane needs it"
     host, child = socket.socketpair()
     host.settimeout(5)
     try:

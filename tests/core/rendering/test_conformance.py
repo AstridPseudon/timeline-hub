@@ -30,14 +30,12 @@ fully asserted; the SDK half lights up automatically once the module lands.
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import os
 import shutil
 import sys
 from pathlib import Path
 
-import pytest
 
 from astrid.core.rendering import RenderResult, SupportReport
 from astrid.core.rendering.errors import RendererException
@@ -55,7 +53,6 @@ SDK_ENTRYPOINT = "sdk_render.py"
 SUPPORTED_WINDOW_FRAMES = 48
 ATTACHMENT_NAME = "sdk_manifest.json"
 
-SDK_AVAILABLE = importlib.util.find_spec("astrid.sdk.rendering") is not None
 
 
 # ---------------------------------------------------------------------------
@@ -86,11 +83,6 @@ def _run_backend(
     on success or the raised :class:`RendererException` for a structured
     backend error, and *payload* is the authoritative result-file JSON.
     """
-    if entrypoint == SDK_ENTRYPOINT and not SDK_AVAILABLE:
-        pytest.skip(
-            "astrid.sdk.rendering is not available yet (T6.2 pending); the SDK "
-            "half of the conformance harness lights up when it lands"
-        )
     request_path = _write_request(workspace, request_name)
     result_path = workspace / "result.json"
     transport = CommandTransport(BACKEND_ID, termination_grace=0.15)

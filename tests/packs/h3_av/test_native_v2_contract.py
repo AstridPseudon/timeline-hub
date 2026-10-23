@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -194,10 +193,7 @@ def test_source_backed_v2_accepts_exact_native_video_coverage(
     assert coverage["requested_duration"] == 1.0
 
 
-@pytest.mark.skipif(
-    shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None,
-    reason="ffmpeg and ffprobe are required",
-)
+@pytest.mark.ffmpeg
 def test_regional_video_mask_restores_and_verifies_pixels_outside_edit_area(
     tmp_path: Path,
 ) -> None:
@@ -287,10 +283,7 @@ def test_regional_video_mask_restores_and_verifies_pixels_outside_edit_area(
         verify_candidate(preparation=preparation, composition=composition, source=source)
 
 
-@pytest.mark.skipif(
-    shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None,
-    reason="ffmpeg and ffprobe are required",
-)
+@pytest.mark.ffmpeg
 def test_masked_composition_keeps_temporal_yuv420p_witnesses_exact(tmp_path: Path) -> None:
     source = tmp_path / "source-yuv420p.mkv"
     generated = tmp_path / "generated-yuv420p.mkv"
@@ -343,10 +336,7 @@ def test_masked_composition_keeps_temporal_yuv420p_witnesses_exact(tmp_path: Pat
     assert verification["preservation"]["status"] == "protected_sample_evidence"
 
 
-@pytest.mark.skipif(
-    shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None,
-    reason="ffmpeg and ffprobe are required",
-)
+@pytest.mark.ffmpeg
 @pytest.mark.integration
 def test_canonical_v2_source_free_reaches_real_compose_and_verify_boundary(
     tmp_path: Path,
@@ -398,10 +388,7 @@ def test_canonical_v2_source_free_reaches_real_compose_and_verify_boundary(
     assert verification["preservation"]["status"] == "no_protected_permissions"
 
 
-@pytest.mark.skipif(
-    shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None,
-    reason="ffmpeg and ffprobe are required",
-)
+@pytest.mark.ffmpeg
 def test_v2_source_backed_extension_preserves_prefix_through_composition(
     tmp_path: Path,
 ) -> None:
@@ -458,10 +445,7 @@ def test_v2_source_backed_extension_preserves_prefix_through_composition(
     assert verification["preservation"]["status"] == "protected_sample_evidence"
 
 
-@pytest.mark.skipif(
-    shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None,
-    reason="ffmpeg and ffprobe are required",
-)
+@pytest.mark.ffmpeg
 def test_v2_full_timeline_audio_composes_with_independent_video_permissions(
     tmp_path: Path,
 ) -> None:
@@ -529,10 +513,7 @@ def test_v2_full_timeline_audio_composes_with_independent_video_permissions(
     assert candidate_prefix == source_prefix
 
 
-@pytest.mark.skipif(
-    shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None,
-    reason="ffmpeg and ffprobe are required",
-)
+@pytest.mark.ffmpeg
 @pytest.mark.integration
 def test_v2_same_length_edit_binds_intervals_and_reaches_compose_verify(
     tmp_path: Path,

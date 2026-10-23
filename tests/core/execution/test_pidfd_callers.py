@@ -146,7 +146,7 @@ def test_custody_post_open_failure_closes_untransferred_handle(
 
 
 @pytest.mark.integration
-@pytest.mark.skipif(sys.platform != "linux", reason="Linux retained pidfd custody")
+@pytest.mark.linux_native
 def test_pack_host_and_retained_custody_without_stdlib_pidfds(tmp_path, without_stdlib_pidfds):
     from astrid.core.execution.generic_host import GenericPackHost
 

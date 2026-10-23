@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import shutil
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
@@ -143,9 +142,8 @@ def test_lanpaint_retrieval_requires_and_preserves_video_audio_roles(tmp_path: P
     assert {item["role"] for item in manifest["outputs"]} == {"video", "audio"}
 
 
+@pytest.mark.ffmpeg
 def test_paired_lanpaint_bundle_reaches_composition_with_both_streams(tmp_path: Path) -> None:
-    if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
-        pytest.skip("ffmpeg is required for paired H3 composition")
     source = tmp_path / "source.mp4"
     video = tmp_path / "video.mp4"
     audio = tmp_path / "audio.flac"

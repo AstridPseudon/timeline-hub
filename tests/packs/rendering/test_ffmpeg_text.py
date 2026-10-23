@@ -2,10 +2,9 @@
 pure overlay argv builder, plus one live media+text smoke rendered by a real
 ffmpeg binary.
 
-Color/shadow/fade/empty-content/window/anchor tests call helpers directly and
-never skip. Wrap and rasterize tests need a real system TTF; they resolve one
-via the module's font resolver and skip when it returns None (no bundled
-font, no CI font package).
+Color/shadow/fade/empty-content/window/anchor tests call helpers directly. Wrap and
+rasterize tests need a real system TTF and carry the ``font`` lane (tests/lanes.py);
+the Linux CI job installs one.
 """
 
 from __future__ import annotations
@@ -13,7 +12,6 @@ from __future__ import annotations
 import dataclasses
 import json
 import math
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -27,15 +25,16 @@ from astrid.packs.rendering.rendering.renderers.ffmpeg import run as ffmpeg_run
 from astrid.packs.rendering.rendering.renderers.ffmpeg import text as ffmpeg_text
 
 
-def _skip_if_no_font(bold: bool = False) -> ImageFont.FreeTypeFont:
+def _font(bold: bool = False) -> ImageFont.FreeTypeFont:
+    """The system TTF the renderer would pick; the ``font`` lane guarantees one exists."""
     font_path = ffmpeg_text._resolve_font_path(bold)
-    if font_path is None:
-        pytest.skip("no system TTF available for text rasterization")
+    assert font_path is not None, "no system TTF available for text rasterization"
     return ImageFont.truetype(str(font_path), 42)
 
 
+@pytest.mark.font
 def test_wrap_respects_max_width_and_keeps_single_line_without_it() -> None:
-    font = _skip_if_no_font()
+    font = _font()
     lines = ffmpeg_text._wrap_lines(font, "One track per concern", 200)
     assert len(lines) >= 2
     for line in lines:
@@ -72,8 +71,9 @@ def test_anchor_origin_bottom_center_and_top_right() -> None:
     assert x == 60.0
 
 
+@pytest.mark.font
 def test_rasterize_places_ink_in_anchored_top_right_region(tmp_path) -> None:  # W3B-2
-    _skip_if_no_font(bold=True)
+    _font(bold=True)
     dest = tmp_path / "brand.png"
     clip = {
         "id": "brand_wordmark",
@@ -102,8 +102,9 @@ def test_rasterize_places_ink_in_anchored_top_right_region(tmp_path) -> None:  #
     assert bottom < 720 / 2  # ink lives in the top region
 
 
+@pytest.mark.font
 def test_rasterize_bottom_center_caption_ignores_fades(tmp_path) -> None:
-    _skip_if_no_font()
+    _font()
     dest = tmp_path / "caption.png"
     clip = {
         "id": "cap_search",
@@ -543,10 +544,10 @@ def _luma_stats(path: Path) -> tuple[int, int, float]:
     return low, high, mean
 
 
+@pytest.mark.ffmpeg
+@pytest.mark.font
 def test_live_media_plus_text_smoke(tmp_path: Path) -> None:
-    if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
-        pytest.skip("live media+text smoke requires ffmpeg and ffprobe")
-    _skip_if_no_font()
+    _font()
 
     # Constant-color 4s plate via the suite's lavfi -> libx264 smoke pattern.
     source_path = tmp_path / "source.mp4"

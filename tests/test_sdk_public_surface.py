@@ -17,13 +17,6 @@ import pytest
 
 from tests._sdk_contract import EXPECTED_PUBLIC_NAMES
 
-SDK_MODULE_MISSING = importlib.util.find_spec("astrid.sdk") is None
-
-pytestmark = pytest.mark.skipif(
-    SDK_MODULE_MISSING,
-    reason="public SDK facade lands in later execution batches",
-)
-
 
 REPRESENTATIVE_SUBMODULES = (
     "astrid.core.gateway",

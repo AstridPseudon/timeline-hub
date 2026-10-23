@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -77,7 +76,7 @@ def test_generation_thumbnail_output_for_image_preserves_creative_contract(
     assert creative["selector"] == {"group_key": "main", "variant_key": "original"}
 
 
-@pytest.mark.skipif(not shutil.which("ffmpeg"), reason="ffmpeg is required")
+@pytest.mark.ffmpeg
 def test_generation_thumbnail_output_extracts_video_frame(tmp_path: Path) -> None:
     attempt = tmp_path / "attempt"
     output = attempt / "outputs" / "video.mp4"

@@ -53,6 +53,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     # Windows port in progress: feat/runtime-portable
     continue-on-error: ${{ matrix.os == 'windows-latest' }}
+    env:
+      # The test run's skip registry (tests/lanes.py) reads this: a lane this job provides fails, not skips, when its dependency is missing.
+      ASTRID_CI_JOB: unit-shard-${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -72,11 +75,17 @@ jobs:
             pyproject.toml
             requirements/*.lock
 
-      - name: Install system media tools
+      # The product's pinned Node (.node-version), the one the installer ships: the tests run the same Node the product does.
+      - name: Set up Node.js from .node-version
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+
+      - name: Install system media tools and a system font
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg
+          sudo apt-get install -y ffmpeg fonts-dejavu-core
         shell: bash
 
       - name: Install system media tools (Windows)
@@ -114,6 +123,8 @@ jobs:
   darwin-native:
     name: darwin native
     runs-on: macos-latest
+    env:
+      ASTRID_CI_JOB: darwin-native
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -127,10 +138,10 @@ jobs:
             pyproject.toml
             requirements/*.lock
 
-      - name: Set up Node.js 20
+      - name: Set up Node.js from .node-version
         uses: actions/setup-node@v4
         with:
-          node-version: "20.19.4"
+          node-version-file: .node-version
           cache: npm
           cache-dependency-path: remotion/package-lock.json
 
@@ -146,8 +157,13 @@ jobs:
       - name: Install the pinned Runtime and client
         run: python scripts/ci_install_runtime.py
 
-      - name: Darwin native tests
-        run: python -m pytest -q -m darwin_native
+      - name: Provision the Remotion browser
+        run: npx remotion browser ensure
+        working-directory: remotion
+
+      # The lanes the default run deselects and only this job provides: native macOS, the Remotion install, headless Chromium.
+      - name: Darwin native, Remotion and browser tests
+        run: python -m pytest -q -m "darwin_native or remotion or chrome"
 
   # Release wheel (testing plan R-1: kept from the old m8 artifact job). Hashed build tools, one wheel,
   # installed with only the hashed runtime lock, and the toolchain recorded next to it. It is also the

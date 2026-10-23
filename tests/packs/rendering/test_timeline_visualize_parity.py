@@ -10,16 +10,6 @@ from typing import Any
 
 import pytest
 
-# The canonical schema is an optional external package. Keep this module
-# collectible in a clean Astrid install so the independent compositor parity
-# tests still run; only the exact canonical-schema assertion below needs it.
-try:
-    from banodoco_timeline_schema import validate_timeline as validate_timeline_schema
-except ModuleNotFoundError as exc:  # pragma: no cover - clean-install regression
-    if exc.name != "banodoco_timeline_schema":
-        raise
-    validate_timeline_schema = None
-
 from astrid.core.timeline.duration import (
     clip_end_frame,
     clip_source_duration,
@@ -109,12 +99,10 @@ def test_fixture_manifest_is_complete() -> None:
 
 @pytest.mark.parametrize("fixture_path", FIXTURE_PATHS, ids=lambda path: path.stem)
 def test_fixture_is_valid_against_canonical_timeline_schema(fixture_path: Path) -> None:
-    if validate_timeline_schema is None:
-        pytest.skip(
-            "optional banodoco_timeline_schema is unavailable; install the external "
-            "package with `python -m pip install -e "
-            "/path/to/banodoco-workspace/packages/timeline-schema/python`"
-        )
+    # banodoco-timeline-schema is a declared dev dependency (pyproject.toml). Importing here keeps the
+    # rest of this module usable without it; a missing package fails this test, it never skips.
+    from banodoco_timeline_schema import validate_timeline as validate_timeline_schema
+
     validate_timeline_schema(_load(fixture_path), strict=True)
 
 

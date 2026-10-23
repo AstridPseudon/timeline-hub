@@ -1,6 +1,5 @@
 import hashlib
 import json
-import shutil
 import struct
 import subprocess
 import wave
@@ -360,7 +359,7 @@ def test_input_audio_rail_is_prominent_but_remains_timing_only(tmp_path):
         assert image.getpixel((80, 212)) == (16, 22, 29)
 
 
-@pytest.mark.skipif(shutil.which('ffmpeg') is None or shutil.which('ffprobe') is None, reason='ffmpeg required')
+@pytest.mark.ffmpeg
 def test_input_audio_visualizer_uses_verified_source_amplitude(tmp_path):
     source = tmp_path / 'source.wav'
     frames = [0.8] * 500 + [0.05] * 500
@@ -414,7 +413,7 @@ def test_input_audio_visualizer_uses_verified_source_amplitude(tmp_path):
     assert mint_rows and min(mint_rows) < 200 < max(mint_rows)
 
 
-@pytest.mark.skipif(shutil.which('ffmpeg') is None or shutil.which('ffprobe') is None, reason='ffmpeg required')
+@pytest.mark.ffmpeg
 def test_input_audio_visualizer_discovers_audio_embedded_in_verified_video(tmp_path):
     source = tmp_path / 'source.mp4'
     subprocess.run([
@@ -866,7 +865,7 @@ def test_paired_navigation_describes_pages_and_drill_down():
     assert '--page-size' not in navigation['commands']['rerun_base']
 
 
-@pytest.mark.skipif(shutil.which('ffmpeg') is None or shutil.which('ffprobe') is None, reason='ffmpeg required')
+@pytest.mark.ffmpeg
 def test_execution_delivers_audio_sidecar_optional_media_and_reuses_cache(tmp_path, monkeypatch):
     video = tmp_path / 'video.mp4'
     subprocess.run([

@@ -7,13 +7,15 @@ import sys
 from pathlib import Path
 
 import pytest
+from tests.lanes import unavailable
 
 
+@pytest.mark.opt_in
 def test_real_omp_registers_and_executes_packaged_admission_tool(tmp_path):
     omp_root = os.environ.get("ASTRID_OMP_TEST_PACKAGE_ROOT")
     bun = shutil.which("bun")
     if not omp_root or not bun or os.environ.get("ASTRID_OMP_TEST_RUNTIME") != "1":
-        pytest.skip("Provide OMP, Bun and ASTRID_OMP_TEST_RUNTIME=1 with a scoped Runtime for integration")
+        unavailable("Provide OMP, Bun and ASTRID_OMP_TEST_RUNTIME=1 with a scoped Runtime for integration")
     root = Path(__file__).parents[1]
     loader = Path(omp_root) / "src/extensibility/extensions/loader.ts"
     extension = root / "astrid/omp_extensions/astrid-invoke.ts"

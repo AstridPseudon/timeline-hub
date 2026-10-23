@@ -30,6 +30,12 @@ from astrid.sdk.client import AstridClient
 from astrid.sdk.timeline.assembly import read_assembly_proposal
 from astrid.sdk.timeline.sync import TimelineSession
 from astrid.sdk.workspace_client import WorkspaceClientError
+from tests.sdk.test_timeline_render_publication import (
+    publish as publish_requester_commit,
+)
+from tests.sdk.test_timeline_render_publication import (
+    requester as requester_commit_fixture,
+)
 
 _D13_REQUIRED_PROFILE_KEYS = frozenset(
     {"profile", "runtime_checkout", "source_checkout", "runtime_environment"}
@@ -936,44 +942,28 @@ def test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task(tm
         daemon.stop()
 
 
-@pytest.mark.xfail(strict=True, reason="D13 removes the legacy assembler publication hook; native requester commit is required")
-def test_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke(tmp_path):
-    """The registered authoring host hook has one Runtime publication route."""
-    proposal_path = tmp_path / "attempt" / "outputs" / "authoring-proposal.json"
-    proposal_path.parent.mkdir(parents=True)
-    proposal_path.write_text(json.dumps({
-        "timeline": {"tracks": [], "clips": []}, "registry": {"assets": {}},
-        "publication": {"authority": "workspace_runtime", "render_capability": "rendering.render"},
-    }))
+def test_requester_commit_publishes_without_local_save_or_invoke(tmp_path):
+    """The surviving requester commit path has one Runtime publication route."""
+    session, generated, proposal, renders, _ = requester_commit_fixture(tmp_path)
 
-    class Runtime:
-        def __init__(self): self.calls = []
-        def publish_timeline_render(self, *args, **kwargs):
-            self.calls.append((args, kwargs))
-            return {"timeline_version": 2, "render_task_id": "render-1"}
-
-    runtime = Runtime()
-    host = GenericPackHost.__new__(GenericPackHost)
-    host.client = runtime
-    host.capabilities = {}
-    result = host._publish_assembled_timeline(
-        task_data={"id": "author-1", "spec": {"family": "stitch_finalization", "runtime_dependencies": {
-            "publication": {"timeline_id": "main", "expected_version": 1, "render": {
-                "capability_id": "rendering.render", "capability_digest": _digest("rendering.render"),
-                "spec": {"inputs": {"selector": "rendering.ffmpeg"}},
-            }},
-        }}},
-        attempt_id="attempt-1", fence=1, lease_token="lease-1",
-        outputs=[{"path": str(proposal_path), "artifact_type": "timeline/authoring-proposal"}],
-        attempt_root=proposal_path.parents[1],
+    result = publish_requester_commit(
+        session, proposal, runtime_attempt=proposal["producer"],
     )
+
     assert result["render_task_id"] == "render-1"
-    assert len(runtime.calls) == 1
-    args, kwargs = runtime.calls[0]
-    assert args[:2] == ("attempt-1", "lease-1")
-    assert kwargs["timeline_id"] == "main"
-    assert kwargs["expected_version"] == 1
-    assert "save" not in repr(runtime.calls) and "invoke" not in repr(runtime.calls)
+    assert len(generated.calls) == 1
+    body = json.loads(generated.calls[0][0])
+    assert (body["project_id"], body["timeline_id"]) == (
+        proposal["admitted_target"]["project_id"], proposal["admitted_target"]["timeline_id"],
+    )
+    pin = body["commands"][0]["args"]["pin"]
+    assert pin["attempt_id"] == proposal["producer"]["attempt_id"]
+    assert pin["fence"] == proposal["producer"]["fence"]
+    assert body["base_revision_id"] == proposal["admitted_target"]["base_revision_id"]
+    assert body["base_publication_id"] == proposal["admitted_target"]["base_publication_id"]
+    assert len(renders) == 1
+    assert renders[0]["capability"] == "rendering.render"
+    assert "save" not in repr(generated.calls) and "invoke" not in repr(generated.calls)
 
 
 def test_legacy_assembler_admission_refuses_before_execution_and_keeps_artifacts(tmp_path):
