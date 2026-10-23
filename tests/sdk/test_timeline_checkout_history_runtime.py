@@ -47,7 +47,7 @@ def test_checkout_reload_undo_cli_redo_uses_retained_history(
         assert parent_of(undone) == expected
         assert_readback(client, fixture, undone)
         redone = cli(client, fixture, capsys, 'redo', fixture.timeline_id,
-                     '--publication', undone['receipt']['receipt_id'])
+                     '--commit', undone['receipt']['receipt_id'])
         assert parent_of(redone) == parent_of(disjoint)
         assert_readback(client, fixture, redone)
         assert Checkout.open(fixture.project_id, fixture.timeline_id, client=client).base_revision == redone['data']['accepted_revision_id']
