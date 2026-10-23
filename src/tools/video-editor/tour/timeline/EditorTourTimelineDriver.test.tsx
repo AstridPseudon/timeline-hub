@@ -18,6 +18,7 @@ import {
 } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { EDITOR_TOUR_TRACK_ATTRIBUTE, EDITOR_TOUR_TRACK_IDS } from '@/tools/video-editor/tour/anchors.ts';
 import { loadTourLiveScene, TOUR_SCENE_SOURCE_FROM } from './tourSceneSource.ts';
+import { EDITOR_TOUR_MEDIA } from '../tourMedia.ts';
 import { TOUR_CLIP_IDS } from './tourStages.ts';
 
 const fakeLiveScene = { kind: 'fake-live-scene' };
@@ -83,6 +84,15 @@ function addScene(phase: 'loading' | 'ready'): HTMLElement {
 
 describe('EditorTourTimelineDriver', () => {
   let trackRow: HTMLElement;
+  let preview: HTMLElement;
+  function addDecodedVideo(frame: number, parent = preview, src = EDITOR_TOUR_MEDIA.video.url) {
+    const marker = document.createElement('span');
+    marker.dataset.previewDecodedFrame = 'true';
+    marker.dataset.previewMediaSrc = src;
+    marker.dataset.previewPresentedFrame = String(frame);
+    parent.append(marker);
+    return marker;
+  }
 
   beforeEach(() => {
     harness.warmups.length = 0;
@@ -91,11 +101,16 @@ describe('EditorTourTimelineDriver', () => {
     trackRow = document.createElement('div');
     trackRow.setAttribute(EDITOR_TOUR_TRACK_ATTRIBUTE, EDITOR_TOUR_TRACK_IDS.scene);
     document.body.append(trackRow);
+    preview = document.createElement('div');
+    preview.dataset.editorTour = 'preview';
+    document.body.append(preview);
+    addDecodedVideo(0);
     act_(() => startEditorTour());
   });
 
   afterEach(() => {
     trackRow.remove();
+    preview.remove();
     document.querySelectorAll(`[${EDITOR_TOUR_TRACK_ATTRIBUTE}]`).forEach((row) => row.remove());
     document.querySelectorAll('[data-testid="astrid-live-scene-entry"]').forEach((scene) => scene.remove());
     vi.useRealTimers();
@@ -176,6 +191,68 @@ describe('EditorTourTimelineDriver', () => {
     await act(async () => { await new Promise((resolve) => setTimeout(resolve, 35)); });
     expect(view.previewHandle.seek.mock.calls.map(([time]) => time)).toEqual(calls);
     if (destination === 'skip') expect(ready()).toBe(true);
+  });
+
+  async function beginVideoLanding() {
+    preview.replaceChildren();
+    const view = createHarness();
+    for (const id of [EDITOR_TOUR_TRACK_IDS.stills, EDITOR_TOUR_TRACK_IDS.videos]) {
+      const row = document.createElement('div');
+      row.setAttribute(EDITOR_TOUR_TRACK_ATTRIBUTE, id);
+      document.body.append(row);
+    }
+    act_(() => setEditorTourBeat(2, 'land', true));
+    await waitFor(() => expect(ready()).toBe(true));
+    expect(view.previewHandle.seek).toHaveBeenLastCalledWith(13);
+    view.previewHandle.seek.mockClear();
+    view.previewHandle.play.mockClear();
+    goTo(3, 'land');
+    await waitFor(() => expect(view.apply).toHaveBeenCalledTimes(3));
+    return view;
+  }
+
+  it('keeps the town frame while the new video composition arrives, then waits for decoded frame zero before playing', async () => {
+    const view = await beginVideoLanding();
+    // Track DOM and the preview handle exist, but the old paused composition is still displayed.
+    const elsewhere = addDecodedVideo(0, document.body);
+    addDecodedVideo(0, preview, '/different-video.mp4');
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 50)); });
+    expect(view.previewHandle.seek).not.toHaveBeenCalled();
+    expect(view.previewHandle.play).not.toHaveBeenCalled();
+    expect(ready()).toBe(false);
+    const video = addDecodedVideo(390, preview, new URL(EDITOR_TOUR_MEDIA.video.url, document.baseURI).href);
+    await waitFor(() => expect(view.previewHandle.seek).toHaveBeenCalledWith(0));
+    expect(view.previewHandle.play).not.toHaveBeenCalled();
+    expect(ready()).toBe(false);
+    video.dataset.previewPresentedFrame = '0';
+    await waitFor(() => expect(view.previewHandle.play).toHaveBeenCalledTimes(1));
+    expect(ready()).toBe(true);
+    elsewhere.remove();
+  });
+
+  it.each(['before-seek', 'after-seek'] as const)('cancels video readiness %s when leaving the beat, without late playback', async (phase) => {
+    const view = await beginVideoLanding();
+    let video: HTMLElement | undefined;
+    if (phase === 'after-seek') {
+      video = addDecodedVideo(390);
+      await waitFor(() => expect(view.previewHandle.seek).toHaveBeenCalledWith(0));
+    }
+    act_(() => setEditorTourBeat(3, 'compose', true));
+    if (video) video.dataset.previewPresentedFrame = '0';
+    else addDecodedVideo(0);
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 50)); });
+    expect(view.previewHandle.play).not.toHaveBeenCalled();
+    expect(view.previewHandle.seek).toHaveBeenCalledTimes(phase === 'after-seek' ? 1 : 0);
+  });
+
+  it('lets Skip finish a video wait without seeking or playing the old composition', async () => {
+    const view = await beginVideoLanding();
+    act_(() => skipEditorTourAnimation());
+    await waitFor(() => expect(ready()).toBe(true));
+    addDecodedVideo(0);
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 50)); });
+    expect(view.previewHandle.seek).not.toHaveBeenCalled();
+    expect(view.previewHandle.play).not.toHaveBeenCalled();
   });
 
   it('reports ready on compose without touching the timeline or booting a scene', async () => {
