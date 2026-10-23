@@ -30,7 +30,10 @@ function preferredProject(): string | null {
 }
 
 /** Mount only inside the connected Runtime gate. The intent is a retry token, never a project ID. */
-export function StarterProjectHandoff({ onReady }: { onReady: (selection: StarterProjectSelection) => void }) {
+export function StarterProjectHandoff({ onReady, onContinueWithoutProject }: {
+  onReady: (selection: StarterProjectSelection) => void;
+  onContinueWithoutProject?: () => void;
+}) {
   const [intentId] = useState(projectIntent);
   const [attempt, setAttempt] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +62,10 @@ export function StarterProjectHandoff({ onReady }: { onReady: (selection: Starte
       <h1 className="text-2xl font-semibold">{error ? 'Couldn’t open your project' : 'Opening your project…'}</h1>
       {error ? <>
         <p role="alert" className="text-sm text-muted-foreground">{error}</p>
-        <Button onClick={retry}>Retry project setup</Button>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Button onClick={retry}>Retry project setup</Button>
+          {onContinueWithoutProject && <Button variant="outline" onClick={onContinueWithoutProject}>Open editor</Button>}
+        </div>
       </> : <p role="status" className="text-sm text-muted-foreground">Your Runtime is connected. We’re getting your project ready.</p>}
     </div>
   </main>;

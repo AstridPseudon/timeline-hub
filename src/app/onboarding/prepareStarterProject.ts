@@ -10,6 +10,11 @@ export interface StarterProjectSelection {
 
 export const STARTER_PROJECT_INTENT_METADATA = 'astrid_onboarding_intent';
 
+function validProject(project: Project): boolean {
+  return typeof project.project_id === 'string' && project.project_id.length > 0
+    && typeof project.slug === 'string' && project.slug.length > 0 && typeof project.name === 'string';
+}
+
 function existingProject(projects: Project[], preferredId?: string | null): Project | undefined {
   return projects.find(project => project.project_id === preferredId || project.slug === preferredId)
     ?? [...projects].sort((left, right) => {
@@ -46,7 +51,7 @@ export async function prepareStarterProject({
   if (!/^[a-zA-Z0-9-]{1,80}$/.test(intentId)) throw new Error('Invalid project setup request.');
   // Never convert discovery failure into an empty workspace.
   const discovered = await client.listProjects();
-  if (discovered.some(project => !project.project_id || !project.slug || typeof project.name !== 'string')) {
+  if (discovered.some(project => !validProject(project))) {
     throw new Error('Runtime returned invalid projects. Retry to refresh the workspace.');
   }
   const projects = discovered.filter(project => !project.archived);
@@ -67,6 +72,7 @@ export async function prepareStarterProject({
         [STARTER_PROJECT_INTENT_METADATA]: intentId,
       });
   }
+  if (!validProject(project)) throw new Error('Runtime did not confirm the new project. Retry to refresh the workspace.');
   const timelineId = await ensureProjectHasTimeline(project.project_id, client);
   const timelines = await readTimelines(client, project.project_id);
   if (!timelines.some(timeline => timeline.timeline_id === timelineId && timeline.head_revision_id)) {

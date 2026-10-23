@@ -46,4 +46,15 @@ describe('StarterProjectHandoff', () => {
     expect(ready).not.toHaveBeenCalled();
     expect(localStorage.getItem(PENDING_STARTER_PROJECT_KEY)).toBeTruthy();
   });
+
+  it('lets a user enter the editor after setup fails without fabricating a selection', async () => {
+    vi.mocked(prepareStarterProject).mockRejectedValue(new Error('This starter project was archived.'));
+    const ready = vi.fn();
+    const openEditor = vi.fn();
+    render(<StarterProjectHandoff onReady={ready} onContinueWithoutProject={openEditor} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Open editor' }));
+    expect(openEditor).toHaveBeenCalledOnce();
+    expect(ready).not.toHaveBeenCalled();
+    expect(localStorage.getItem(PENDING_STARTER_PROJECT_KEY)).toBeTruthy();
+  });
 });

@@ -57,6 +57,13 @@ describe('prepareStarterProject', () => {
     expect(methods.createProject).not.toHaveBeenCalled();
   });
 
+  it('does not publish into an unconfirmed project after a malformed create response', async () => {
+    const { client, methods } = workspace();
+    methods.createProject.mockResolvedValue({ name: 'My first project' } as Project);
+    await expect(prepareStarterProject({ intentId: 'intent-1', client })).rejects.toThrow('did not confirm');
+    expect(methods.publishParentComposition).not.toHaveBeenCalled();
+  });
+
   it('reopens the last project and its chosen timeline without mutating existing work', async () => {
     const { client, methods, timelines } = workspace([
       project('last', { metadata: { default_timeline_id: 'chosen-alias' } }),
