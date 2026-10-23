@@ -1,0 +1,56 @@
+{
+  "task": "agt-G5-redo-reproducer-source-1534",
+  "classification": "source-only bounded public redo diagnostic; not executed by author",
+  "source": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-redo-reproducer-1534-7e4b.py",
+    "sha256": "153be3ff0db9e473bde9289e9964ea7900e8666713073677a8d4251c42c91740",
+    "bytes": 27333,
+    "lines": 664,
+    "product_changes": false,
+    "target_body_sha256": "c2711a2d10765828694ee1906d75bdf62a91ed6ac0bbef8e4cb0d823e48ec30d",
+    "target_body_bytes": 6798,
+    "agent_head": "91ac58a9fc6f1f752be16c0e4b8a1bf17095acee",
+    "agent_tree": "ac1251cdc911b99d690d303cdd777fe14643bdb1",
+    "runtime_head": "9ce4242bc01f100bab9efc51032a73985cefb2b2",
+    "runtime_tree": "92ab1f5f739ffdfedf7b25fbd2a7b46ae42c5d1a"
+  },
+  "execution": {
+    "author_status": "NOT_RUN",
+    "reason": "brief forbids reproducer/original-body execution in this worker",
+    "qualified_command": "AGENT_ROOT=/home/user/work/wt/agt-pin-91ac58a9 RUNTIME_ROOT=/home/user/work/wt/rt-G5-native-order-public-1456 PYTHONDONTWRITEBYTECODE=1 ASTRID_RUNTIME_CHECKOUT=$RUNTIME_ROOT PYTHONPATH=$AGENT_ROOT:$RUNTIME_ROOT:$RUNTIME_ROOT/packages/python /home/user/work/venv-agent/bin/python /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-G5-redo-reproducer-1534-7e4b.py --agent-root $AGENT_ROOT --runtime-root $RUNTIME_ROOT --net --tmpdir /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-G5-redo-reproducer-source-1534/tmpdir --out /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-G5-redo-reproducer-source-1534/evidence",
+    "timeout_seconds": 30,
+    "expected_exit": "1 when the known redo boundary is reproduced; 0 only when redo and the later overlap refusal both pass",
+    "expected_artifacts": [
+      "g5-redo-diagnostic.json",
+      "g5-redo-diagnostic.sha256"
+    ]
+  },
+  "fixture": {
+    "module": "tests.sdk.test_timeline_restructure_guarded_runtime",
+    "base_fixture": "restructure_runtime.__wrapped__",
+    "public_fixture": "restructure_inverse_runtime.__wrapped__",
+    "genesis": "the fixture's ordinary native setup plus the unchanged public Name source chapter commit",
+    "closure_check": "open_bundle(project, timeline, revision_id=head_revision_id, publication_id=head_publication_id) and compare its runtime document and base_parent pins to the service head",
+    "forward": "Checkout.open(...).publish('Restructure', restructure=True, client=client, idempotency_key='inverse-cut')",
+    "whole_undo": "TimelineSession.undo([forward_receipt_id], idempotency_key='inverse-undo')",
+    "redo": "TimelineSession.undo([whole_undo_receipt_id], idempotency_key='inverse-redo')",
+    "later_overlap": "ordinary bed volume edit followed by guarded inverse refusal, retained even when redo does not reach it"
+  },
+  "capture": {
+    "transport": "exact generated commit body/key, full reply, and thrown Runtime error",
+    "provider": "provider context/request, full outcome or throw, selected provider traceback locals",
+    "port": "targeted head/history/revision/source/media/preview/accept calls and prepared records",
+    "guard": "imported guard helper arguments and actual state, including ref/path/base/theirs on throw",
+    "state": "boot/admission, closure pairs, canonical documents, accepted history, SQL dumps, calls/replies, module origins",
+    "c0_fields": "request bodies remain verbatim; required v2 keys and step keys are audited; rationale/group_id are retained when present; accepted/merged/preview/error envelopes are not normalized"
+  },
+  "safety": {
+    "no_global_trace": true,
+    "no_history_or_provider_semantics_patch": true,
+    "no_cache_injection_or_guard_waiver": true,
+    "no_product_test_schema_client_pin_dependency_change": true,
+    "no_retry_after_redo_refusal": true,
+    "no_git_write": true
+  },
+  "expected_interpretation": "A redo refusal is a diagnostic FAIL, not evidence for a historical 503 or a new 422 cause. Manager-owned independent fidelity review must precede one meaningful live diagnostic; do not blindly retry the old body."
+}
