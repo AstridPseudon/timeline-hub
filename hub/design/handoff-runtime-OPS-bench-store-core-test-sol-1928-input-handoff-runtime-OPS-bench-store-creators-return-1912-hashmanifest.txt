@@ -1,0 +1,11 @@
+d32ede5ff3de131c0fdc25395bdb3fe934b5bb8aa7f00d3d310f689eee38d5cc  handoff-runtime-OPS-bench-store-creators-return-1912-make-child-venv.sh
+4f453badd875e64851eda6cc0deff754d8ca4649feeaf20b5e14482494e4f8f9  handoff-runtime-OPS-bench-store-creators-return-1912-make-child-venv.patch
+72cafb3a5ec343f648a0e41d59a51e7c803ee51b4d04a394dc2010df828bd731  handoff-runtime-OPS-bench-store-creators-return-1912-request-child-venv.sh
+777e56d07ed8ef83be6dc992bf592ff13e1ba453b39375ec4e4cfca7e5290a77  handoff-runtime-OPS-bench-store-creators-return-1912-request-child-venv.patch
+9f897619de6872ae399fd42154937d17804178793ed67326835c784d35fd45ca  handoff-runtime-OPS-bench-store-creators-return-1912-make-runtime.sh
+69b7b4df7fda3ff823ac4db67463f922d901e716e9528fc51d79d8c8ff3024f3  handoff-runtime-OPS-bench-store-creators-return-1912-make-runtime.patch
+f13a1d073699712ccfb05e8463ad97ff69dc210a2617f2c9e0140a242591f7b1  handoff-runtime-OPS-bench-store-creators-return-1912-request-runtime.sh
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  handoff-runtime-OPS-bench-store-creators-return-1912-request-runtime.patch
+fbb6b22e4e39ca678daa1f455d71a5ce5d778536cc2528447b6c08249548af2e  handoff-runtime-OPS-bench-store-creators-return-1912-test-adapters.py
+23338d5321723b42d2763863bd23f3becb2c846e9115acf741fbca209ddb4363  handoff-runtime-OPS-bench-store-creators-return-1912-test-receipts.py
+108c1958c4c23d935f48bf133181096f10b2e37c9e408cb37f21fe1384b37983  handoff-runtime-OPS-bench-store-creators-return-1912-validate-packet.py

@@ -1,0 +1,65 @@
+--- frozen1915-test-core.py
++++ corrected1928-test-core.py
+@@ -1,5 +1,7 @@
+ """Private tiny lifecycle fixtures; no installed benches or services."""
+ import importlib.util
++import hashlib
++import stat
+ import json
+ import os
+ from pathlib import Path
+@@ -8,7 +10,7 @@
+ import tempfile
+ import unittest
+ 
+-CORE = Path(__file__).with_name('handoff-runtime-OPS-bench-store-core-projection-1915-bench_store.py')
++CORE = Path(__file__).with_name('handoff-runtime-OPS-bench-store-core-test-sol-1928-bench_store.py')
+ if not CORE.exists():
+     CORE = Path(__file__).with_name('bench_store.py')
+ spec = importlib.util.spec_from_file_location('core', CORE)
+@@ -37,6 +39,16 @@
+ 
+ def create(store, n, builder=build, reg=None):
+     return store.ensure('runtime', identity(n), reg or registration(n), builder, verify)
++
++
++def assert_payload_reclaimed(root, payload):
++    # Match the unique old fixture bytes, allowing inode reuse for new metadata.
++    expected = hashlib.sha256(payload).digest()
++    for path in root.rglob('*'):
++        info = path.lstat()
++        if stat.S_ISREG(info.st_mode) and info.st_size == len(payload):
++            if hashlib.sha256(path.read_bytes()).digest() == expected:
++                raise AssertionError('old payload retained: ' + str(path))
+ 
+ 
+ class CoreTests(unittest.TestCase):
+@@ -50,16 +62,25 @@
+         self.store = core.Store.initialize(self.folder / 'store', self.tests)
+ 
+     def test_reclamation_is_real_before_callback_and_failure_preserves_eviction(self):
+-        first = create(self.store, 1)
++        # Distinct old bytes let the oracle detect retained or quarantined payloads
++        # without imposing a global inode allocation policy on the filesystem.
++        old_payload = b'evicted-only1928' * 4096
++        def old_build(stage, final):
++            with (stage / 'payload').open('wb') as stream:
++                stream.write(old_payload)
++                stream.flush()
++                os.fsync(stream.fileno())
++        first = create(self.store, 1, old_build)
+         second = create(self.store, 2)
+-        old_inode = (Path(first['path']) / 'payload').stat().st_ino
+         old_free = os.statvfs(self.folder).f_bavail * os.statvfs(self.folder).f_frsize
+         called = []
+         def fail(stage, final):
+             self.assertFalse(Path(first['path']).exists())
+             self.assertFalse((self.tests / 'bench1.env').exists())
+             self.assertNotIn('bench1-nodes', (self.tests / 'suites.conf').read_text())
+-            self.assertFalse(any(p.lstat().st_ino == old_inode for p in self.store.root.rglob('*')))
++            assert_payload_reclaimed(self.store.root, old_payload)
++            self.assertNotIn('runtime-' + core.runtime_key(identity(1)['remotion_tree']), self.store._load()['entries'])
++            self.assertNotIn('bench1', self.store._load()['registrations'])
+             free = os.statvfs(self.folder).f_bavail * os.statvfs(self.folder).f_frsize
+             self.assertGreaterEqual(free, old_free + 32768)
+             self.assertFalse(self.store.journal.read_text().find('"kind":"eviction"') >= 0)

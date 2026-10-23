@@ -1,0 +1,192 @@
+--- bench_store.py
++++ bench_store.py
+@@ -78,7 +78,7 @@
+     try:
+         info = os.fstat(fd)
+         check(stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid() and info.st_nlink == 1, 'unsafe metadata file')
+-        with os.fdopen(fd, 'r', closefd=False) as stream:
++        with os.fdopen(fd, 'r', encoding='utf-8', newline='', closefd=False) as stream:
+             return stream.read()
+     finally:
+         os.close(fd)
+@@ -89,7 +89,7 @@
+     temp = path.with_name('.write-' + uuid.uuid4().hex)
+     fd = os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+     try:
+-        with os.fdopen(fd, 'w', closefd=False) as stream:
++        with os.fdopen(fd, 'w', encoding='utf-8', newline='', closefd=False) as stream:
+             stream.write(value)
+             stream.flush()
+             os.fsync(fd)
+@@ -111,6 +111,7 @@
+ 
+ class Store:
+     # Fixed reserve; adapters cannot bypass retention or reserve via caller flags.
++    REPORT_LIMIT = 1024 * 1024
+     RESERVE_BYTES = 8 * 1024 * 1024 * 1024
+ 
+     @classmethod
+@@ -185,8 +186,11 @@
+             self._validate_entry(eid, entry, live)
+         for name, reg in index['registrations'].items():
+             self._name(name)
+-            check(set(reg) == {'env', 'suite', 'requires', 'hash'} and isinstance(reg['env'], str) and isinstance(reg['suite'], str), 'registration schema')
+-            check(reg['hash'] == digest(canonical({k: reg[k] for k in ('env', 'suite', 'requires')})), 'registration hash mismatch')
++            check(set(reg) in ({'env', 'suite', 'requires', 'hash'}, {'env', 'suite', 'requires', 'hash', 'report', 'report_sha256'}) and isinstance(reg['env'], str) and isinstance(reg['suite'], str), 'registration schema')
++            if 'report' in reg:
++                self._report(reg['report'])
++                check(bool(reg['report']) and reg['report_sha256'] == digest(reg['report']), 'report hash mismatch')
++            check(reg['hash'] == digest(canonical({k: v for k, v in reg.items() if k != 'hash'})), 'registration hash mismatch')
+             check(isinstance(reg['requires'], list) and bool(reg['requires']) and len(set(reg['requires'])) == len(reg['requires']), 'registration dependency schema')
+             check(all(eid in index['entries'] for eid in reg['requires']), 'registration missing dependency')
+             self._suite(reg['suite'])
+@@ -200,9 +204,56 @@
+     def _suite(self, row):
+         check(not row or row.endswith('\n') and row.count('\n') == 1 and len(row.split(None, 2)) == 3, 'single full suite row required')
+ 
++    def _report(self, value):
++        check(isinstance(value, str), 'report string required')
++        check(len(value.encode('utf-8')) <= self.REPORT_LIMIT, 'report size limit')
++        return value
++
++    def _report_path(self, name):
++        self._name(name)
++        folder = self.tests / 'provision'
++        if folder.exists() or folder.is_symlink():
++            physical(folder)
++            check(folder.stat().st_uid == os.getuid(), 'foreign provision directory')
++        return folder / (name + '.txt')
++
++    def _read_report(self, path):
++        if not path.exists() and not path.is_symlink():
++            return None
++        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
++        try:
++            info = os.fstat(fd)
++            check(stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid()
++                  and info.st_nlink == 1 and info.st_size <= self.REPORT_LIMIT, 'unsafe report file')
++            with os.fdopen(fd, 'rb', closefd=False) as stream:
++                value = stream.read(self.REPORT_LIMIT + 1)
++            check(len(value) <= self.REPORT_LIMIT, 'report size limit')
++            return value.decode('utf-8')
++        finally:
++            os.close(fd)
++
++    def _report_changes(self, before, after):
++        result = {}
++        for name in set(before['registrations']) | set(after['registrations']):
++            old = before['registrations'].get(name, {}).get('report') or None
++            new = after['registrations'].get(name, {}).get('report') or None
++            if old != new:
++                result['provision/' + name + '.txt'] = [old, new]
++        return result
++
++    def _verify_pending_reports(self, journal):
++        names = {name for name, reg in journal['before']['registrations'].items() if reg.get('report')}
++        names.update(name[10:-4] for name in journal['projections'] if name.startswith('provision/'))
++        for name in names:
++            values = [index['registrations'].get(name, {}).get('report') or None
++                      for index in (journal['before'], journal['after'])]
++            check(self._read_report(self._report_path(name)) in values, 'report changed while pending')
++
+     def _verify_projection(self, index):
+         suites = read(self.tests / 'suites.conf')
+         for name, reg in index['registrations'].items():
++            if reg.get('report'):
++                check(self._read_report(self._report_path(name)) == reg['report'], 'registration report changed: ' + name)
+             check(optional(self.tests / (name + '.env')) == (reg['env'] or None), 'registration env changed: ' + name)
+             check(not reg['suite'] or suites.splitlines(keepends=True).count(reg['suite']) == 1, 'registration suite changed: ' + name)
+             if reg['suite']:
+@@ -247,16 +298,31 @@
+             if old != new:
+                 check(optional(self.tests / (name + '.env')) == old, 'foreign env protected')
+                 projections[name + '.env'] = [old, new]
++        for name, values in self._report_changes(before, after).items():
++            check(self._read_report(self._report_path(name[10:-4])) == values[0], 'foreign report protected')
++            projections[name] = values
+         return projections
+ 
+     def _apply_projection(self, projections, forward):
+         # Validate every target before the first write (including recovery).
+         for name, values in projections.items():
+-            check(name == 'suites.conf' or re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]*\.env', name), 'journal projection path')
++            check(name == 'suites.conf' or re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]*\.env', name) or re.fullmatch(r'provision/[A-Za-z0-9][A-Za-z0-9_-]*\.txt', name), 'journal projection path')
+             check(isinstance(values, list) and len(values) == 2 and all(v is None or isinstance(v, str) for v in values), 'journal projection schema')
+-            check(optional(self.tests / name) in values, 'projection changed while pending')
++            if name.startswith('provision/'):
++                for value in values:
++                    if value is not None:
++                        self._report(value)
++                current = self._read_report(self._report_path(name[10:-4]))
++            else:
++                current = optional(self.tests / name)
++            check(current in values, 'projection changed while pending')
+         for name, values in projections.items():
+             path, value = self.tests / name, values[1 if forward else 0]
++            if name.startswith('provision/'):
++                path = self._report_path(name[10:-4])
++                if value is not None and not path.parent.exists():
++                    path.parent.mkdir(mode=0o700)
++                    sync_dir(self.tests)
+             if value is None:
+                 if path.exists():
+                     path.unlink()
+@@ -369,6 +435,7 @@
+                 os.close(fd)
+ 
+     def _roll(self, journal, forward):
++        self._verify_pending_reports(journal)
+         self._apply_projection(journal['projections'], forward)
+         atomic(self.root / 'index.json', canonical(journal['after'] if forward else journal['before']))
+         self._checkpoint('index')
+@@ -418,6 +485,7 @@
+             new = after['registrations'].get(name, {}).get('env') or None
+             if old != new:
+                 expected_projections[name + '.env'] = [old, new]
++        expected_projections.update(self._report_changes(before, after))
+         check(projections == expected_projections, 'journal projection authority/hash mismatch')
+ 
+     def recover(self):
+@@ -452,7 +520,7 @@
+                     os.close(fd)
+ 
+     def _registration(self, value, entry, index):
+-        check(isinstance(value, dict) and set(value) <= {'name', 'env', 'suite', 'requires', 'require_names'} and {'name', 'env', 'suite'} <= set(value), 'registration input schema')
++        check(isinstance(value, dict) and set(value) <= {'name', 'env', 'suite', 'requires', 'require_names', 'report'} and {'name', 'env', 'suite'} <= set(value), 'registration input schema')
+         name = value['name']
+         self._name(name)
+         check(isinstance(value['env'], str) and isinstance(value['suite'], str), 'registration strings required')
+@@ -466,6 +534,10 @@
+             refs.update(index['registrations'][required]['requires'])
+         check(all(eid in index['entries'] for eid in refs), 'required tuple absent')
+         reg = {'env': value['env'].replace('{bench_path}', entry['path']), 'suite': value['suite'].replace('{bench_path}', entry['path']), 'requires': sorted(refs)}
++        report = self._report(value.get('report', ''))
++        if report:
++            check(self._read_report(Path(entry['path']) / '.provision-report') == report, 'report differs from verified entry')
++            reg.update(report=report, report_sha256=digest(report))
+         self._suite(reg['suite'])
+         check(not reg['suite'] or reg['suite'].split(None, 2)[:2] not in index['retired_suites'], 'retired suite immutable')
+         reg['hash'] = digest(canonical(reg))
+@@ -557,7 +629,7 @@
+     def names_for_suite(self, repo, suite, command):
+         with self.mutex():
+             index = self._load()
+-            self._verify_projection(index)
++            suites = self._verify_projection(index)
+             names = []
+             for name, reg in index['registrations'].items():
+                 parts = reg['suite'].rstrip('\n').split(None, 2)
+@@ -565,6 +637,13 @@
+                     check(len(parts) == 3 and parts[2] == command, 'managed suite command mismatch')
+                     names.append(name)
+             check([repo, suite] not in index['retired_suites'], 'suite registration evicted')
++            if not names:
++                rows = [row.split(None, 2) for row in suites.splitlines()
++                        if row.split(None, 2)[:2] == [repo, suite]]
++                check(len(rows) == 1 and len(rows[0]) == 3 and rows[0][2] == command, 'suite absent, ambiguous or changed')
++                # Existing custom rows may use any managed environment/path.
++                # Acquire all registered dependencies without interpreting shell.
++                names = sorted(index['registrations'])
+             return names
+ 
+     @contextlib.contextmanager

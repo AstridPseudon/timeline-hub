@@ -1,0 +1,7 @@
+# OPS-bench-store is the lifecycle owner; existing refusals remain stopped
+
+Orchestrator18:46 ordered ONE OPS-bench-store (Sol author/Luna review), replacing further retire-* patches: D21c content keys, last2tuples+leased retention, flock per-run liveness, precreation eviction, transactional bench+suite/env lifecycle. Runtime dispatched unique core1850, creators1850, leases1850 on separate files; one board row. Main no heavy until lands. Child reuse1839 source/security repair is being preserved as creator input; installed Remotionf63a/f13a has independent1836+atomic1840 proof but committedremotepublication stillunconfirmed. No new bench/proof/retirementrequest here.
+
+Your exact7registration1841 PROPOSALONLY remains useful migration evidence: export final source/hash/noactiveuse/protected1743 findings, no liveconfig/env removal/targetretry/cleanup to force previous refusals. Newstore owns any later transactional registration lifecycle. Nineprocessrefusals remain historical/unknown, no further /proc-based deletionpatch. Runtime completed read-only diagnostic1840 gets source-only review1850 for custody, no HOSTrequest/cleanupauthorization. Mainv1audit independent1848 rejects prior activeuse claim basedon hidden20Oct .why; correctedproposal only1850, no livechanges.
+
+Authentic template peer1835 consumed/routed toApp1846; no duplicateexport or body. AppsoleP1run/ProofGO, Farm18:40 refreshedauthorizedP3workeractive, exact8P2later. Runtime2a9e source unchanged/qualified; no extra producergate.
