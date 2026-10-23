@@ -9,6 +9,7 @@ import copy
 import json
 import sys
 from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, datetime, timedelta
 from threading import Barrier, Lock
 from types import SimpleNamespace
 
@@ -24,7 +25,7 @@ pytestmark = pytest.mark.integration
 
 
 @pytest.fixture
-def film(tmp_path):
+def film(tmp_path, monkeypatch):
     captured = load_precut_realm_fixture(tmp_path, variant="music-documents")
     pins = captured.pins
     fixture = FilmFixture(
@@ -50,8 +51,27 @@ def film(tmp_path):
         original_events = [tuple(row) for row in service.store.conn.execute(
             "SELECT * FROM timeline_events ORDER BY id",
         )]
+        assert service.store.conn is not None
+        timestamps = [datetime.fromisoformat(row[0]) for row in service.store.conn.execute(
+            "SELECT created_at FROM command_idempotency",
+        )]
     finally:
         service.close()
+    # Continue just after the capture, inside the real receipt replay window.
+    # Keep normal pruning enabled and leave the captured bytes untouched.
+    captured_now = max(timestamps) + timedelta(seconds=1)
+    from runtime_protocol import idempotency, store, util
+
+    assert captured_now.tzinfo == UTC
+    assert min(timestamps) > captured_now - timedelta(seconds=store.IDEMPOTENCY_RESULT_WINDOW_SECONDS)
+
+    class CaptureClock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return captured_now.astimezone(tz) if tz else captured_now.replace(tzinfo=None)
+
+    for module in (store, idempotency, util):
+        monkeypatch.setattr(module, "datetime", CaptureClock)
     return SimpleNamespace(fixture=fixture, publication=publication, original_events=original_events)
 
 
@@ -105,9 +125,14 @@ class Editing:
 
     def body(self, commands, base=None):
         base = base or self.head()
+        label = "Real renderer-free integration"
         return {"api_version": 1, "project_id": self.project, "timeline_id": self.timeline,
                 "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"],
                 "commands": copy.deepcopy(commands), "source": {"via": "python"},
+                "label": label, "merge": "fields", "reads": [], "dry_run": False,
+                "steps": [{"id": "edit", "label": label, "intent": "Exercise native editing",
+                           "tags": ["integration"], "command_ordinals": list(range(len(commands))),
+                           "patch": [], "reads": []}],
                 "rationale": "real renderer-free integration"}
 
     def move(self, clip, on, *, document=None):
@@ -141,6 +166,14 @@ class Editing:
         revision = document["parent_revision"]["revision_id"]
         assert data["accepted_revision_id"] == revision
         assert accepted["receipt"]["result"] == data
+        entry = next(row for row in self.history()
+                     if row["publication_id"] == accepted["receipt"]["receipt_id"])
+        assert entry["receipt"] == accepted["receipt"]
+        assert entry["label"] == data["label"]
+        assert entry["steps"] == entry["records"]["steps"] == data["steps"]
+        assert entry["publisher"] == data["publisher"]
+        assert entry["merge_mode"] == data["merge_mode"]
+        assert all(isinstance(step["patch"], list) for step in data["steps"])
         assert self.document(revision) == document
         parent = self.service.get_project_parent_composition_revision(self.project, self.timeline, revision)
         assert parent["revision_id"] == revision
@@ -206,9 +239,14 @@ def test_real_move_rebases_disjoint_clip_and_conflicts_on_same_clip(editing):
     disjoint = editing.body([editing.move("music-other", 2, document=document)], base)
     conflicting = editing.body([editing.move("music-bed", 3, document=document)], base)
     first = editing.commit(first_body, "move-first")
+    assert editing.service.store._last_idempotency_prune > 0
     second = editing.commit(disjoint, "move-disjoint")
     assert first["data"]["status"] == "accepted"
-    assert second["data"]["status"] == "rebased"
+    assert second["data"]["status"] == "merged"
+    assert second["data"]["rebased_onto"] == {
+        "revision_id": first["data"]["accepted_revision_id"],
+        "publication_id": first["receipt"]["receipt_id"],
+    }
     assert positions(second["data"]["canonical_document"]) == {"music-bed": 1, "music-other": 2}
     editing.assert_readback(first)  # Exact old accepted closure after a newer head.
     editing.assert_readback(second)
@@ -259,7 +297,7 @@ def test_real_door_concurrent_disjoint_moves_accept_and_rebase(film, agent, tmp_
             results = [future.result(timeout=30) for future in futures]
 
         assert sorted(provider_keys) == sorted(key for _, key in requests)
-        assert sorted(result["data"]["status"] for result in results) == ["accepted", "rebased"]
+        assert sorted(result["data"]["status"] for result in results) == ["accepted", "merged"]
         assert len({result["receipt"]["receipt_id"] for result in results}) == 2
         for result in results:
             editing.assert_readback(result)
@@ -401,6 +439,7 @@ def _start_door(film, tmp_path):
         film.fixture.duplicate_root, support_root=tmp_path / "support", authoring_profile="astrid",
         door=DoorConfig(origin=HOSTED, port=0, credential_file=credential),
     ).start()
+    assert daemon.service is not None
     world = DoorWorld(tmp_path, daemon, credential)
     world.provision()
     handshake = world.call("/api/runtime/v1/handshake", "POST", body=b"{}",
@@ -416,37 +455,285 @@ def _post_door(world, path, body, key):
     return response.json()
 
 
-def test_real_door_commit_admission_checks_origin_auth_and_project_scope(film, agent, tmp_path):
+def _full_v2_auth_body(edit):
+    change = {
+        "op": "set",
+        "ref": "parent",
+        "path": ["meta", "org.example.auth-probe"],
+        "before": {"state": "absent"},
+        "value": "must-not-write",
+    }
+    reads = [{"kind": "field", "ref": "parent", "path": change["path"],
+              "state": {"state": "absent"}}]
+    command = {
+        "schema_version": 1,
+        "op": "doc.patch",
+        "version": "1",
+        "select": None,
+        "args": {"changes": [copy.deepcopy(change)]},
+    }
+    body = edit.body([command])
+    body.update({
+        "label": "Door authorization probe",
+        "steps": [{
+            "id": "auth-probe",
+            "label": "Door authorization probe",
+            "intent": "Verify commit admission",
+            "tags": ["authorization"],
+            "command_ordinals": [0],
+            "patch": [change],
+            "reads": reads,
+        }],
+        "merge": "fields",
+        "reads": reads,
+    })
+    return body
+
+
+def _assert_door_refusal_unchanged(edit, response, expected_status, expected_body,
+                                   before_rows, before_head, before_history):
+    assert response.status == expected_status, response.body
+    assert response.json() == expected_body
+    assert rows(edit.service) == before_rows
+    assert edit.head() == before_head
+    assert edit.history() == before_history
+
+
+@pytest.mark.parametrize("merge", ["fields", "atomic"])
+def test_real_door_v2_native_and_patch_preview_accept_retry_and_stale_head(
+        film, agent, tmp_path, monkeypatch, merge):
+    world = _start_door(film, tmp_path)
+    try:
+        edit = Editing(world.daemon.service, film, agent)
+        assert edit.service is not None
+        base, document = edit.head(), edit.document()
+        body = _full_v2_auth_body(edit)
+        body["merge"] = merge
+        change = body["commands"][0]["args"]["changes"][0]
+        # This capture has no meta container; create it as one guarded value.
+        assert "meta" not in document["parent_revision"]["payload"]
+        change["path"] = ["meta"]
+        change["value"] = {"org.example.auth-probe": {"note": "Preserve alongside the native move"}}
+        body["reads"][0]["path"] = ["meta"]
+        body["steps"][0]["reads"][0]["path"] = ["meta"]
+        body["steps"][0]["patch"] = [copy.deepcopy(change)]
+        body["commands"].insert(0, edit.move("music-bed", 1, document=document))
+        body["steps"][0]["command_ordinals"] = [1]
+        body["steps"].insert(0, {
+            "id": "native-move", "label": "Move the music bed", "intent": "Retain native semantics",
+            "tags": ["integration"], "command_ordinals": [0], "patch": [], "reads": [],
+        })
+        frozen = copy.deepcopy(body)
+        before = rows(edit.service)
+        preview = _post_door(world, edit.path, {**body, "dry_run": True}, "v2-preview")
+        assert preview["data"]["status"] == "preview"
+        assert preview["data"]["would_status"] == "accepted"
+        assert preview["data"]["evaluated_head"] == base
+        assert preview["data"]["merge_mode"] == merge
+        assert preview["receipt"] is None
+        assert rows(edit.service) == before
+
+        accepted = _post_door(world, edit.path, body, "v2-mixed")
+        assert accepted["data"]["status"] == "accepted"
+        assert accepted["data"]["label"] == body["label"]
+        assert accepted["data"]["merge_mode"] == merge
+        assert next(row for row in edit.history()
+                    if row["publication_id"] == accepted["receipt"]["receipt_id"])["reads"] == body["reads"]
+        assert [step["id"] for step in accepted["data"]["steps"]] == ["native-move", "auth-probe"]
+        assert accepted["data"]["steps"][1]["patch"] == [change]
+        assert accepted["data"]["steps"][1]["reads"] == body["steps"][1]["reads"]
+        canonical = accepted["data"]["canonical_document"]
+        assert positions(canonical) == {"music-bed": 1, "music-other": 0}
+        assert canonical["parent_revision"]["payload"]["meta"] == change["value"]
+        edit.assert_readback(accepted)
+        after = rows(edit.service)
+
+        def forbidden(self, context, port):
+            raise AssertionError("exact v2 retry executed the semantic provider")
+
+        with monkeypatch.context() as retry:
+            retry.setattr(type(edit.service._timeline_commit_provider), "commit", forbidden)
+            assert _post_door(world, edit.path, body, "v2-mixed") == accepted
+        assert body == frozen
+        assert rows(edit.service) == after
+
+        stale = edit.body([edit.move("music-other", 2, document=document)], base)
+        stale["merge"] = merge
+        response = world.call("/api/runtime" + edit.path, "POST", body=json.dumps(stale).encode(),
+                              headers={"Content-Type": "application/json", "Idempotency-Key": "v2-stale"})
+        if merge == "fields":
+            assert response.status == 200, response.body
+            merged = response.json()
+            assert merged["data"]["status"] == "merged"
+            assert merged["data"]["rebased_onto"] == {
+                "revision_id": accepted["data"]["accepted_revision_id"],
+                "publication_id": accepted["receipt"]["receipt_id"],
+            }
+            assert positions(merged["data"]["canonical_document"]) == {"music-bed": 1, "music-other": 2}
+            assert merged["data"]["canonical_document"]["parent_revision"]["payload"]["meta"] == canonical["parent_revision"]["payload"]["meta"]
+            edit.assert_readback(merged)
+        else:
+            assert response.status == 409, response.body
+            details = response.json()["details"]
+            assert details["status"] == "conflict"
+            assert details["code"] == "atomic_scope_changed"
+            assert details["current"] == edit.head()
+            assert isinstance(details["path"], list)
+            assert details["hint"] and details["suggested_command"]
+            assert rows(edit.service) == after
+        edit.assert_baseline()
+    finally:
+        world.stop()
+
+
+def test_real_door_v2_invalid_patch_has_structured_failure_without_writes(film, agent, tmp_path):
+    world = _start_door(film, tmp_path)
+    try:
+        edit = Editing(world.daemon.service, film, agent)
+        body = _full_v2_auth_body(edit)
+        change = body["commands"][0]["args"]["changes"][0]
+        change["path"] = ["meta"]
+        change["before"] = {"state": "present", "value": {"org.example.auth-probe": {"note": "never existed"}}}
+        change["value"] = {"org.example.auth-probe": {"note": "must not be accepted"}}
+        body["reads"][0]["path"] = ["meta"]
+        body["steps"][0]["reads"][0]["path"] = ["meta"]
+        body["steps"][0]["patch"] = [copy.deepcopy(change)]
+        before, head, history = rows(edit.service), edit.head(), copy.deepcopy(edit.history())
+        response = world.call("/api/runtime" + edit.path, "POST", body=json.dumps(body).encode(),
+                              headers={"Content-Type": "application/json", "Idempotency-Key": "v2-invalid"})
+        assert response.status == 422, response.body
+        failure = response.json()
+        assert failure["code"] == "validation_error"
+        details = failure["details"]
+        assert details["status"] == "invalid"
+        assert details["code"] == "previous_value_mismatch"
+        assert details["path"] == change["path"]
+        assert details["current"] == head
+        assert details["hint"] and details["suggested_command"]
+        assert "receipt" not in failure
+        assert rows(edit.service) == before
+        assert edit.head() == head
+        assert edit.history() == history
+        edit.assert_baseline()
+    finally:
+        world.stop()
+
+
+def _assert_route_scope_refusal_unchanged(edit, response, before_rows, before_head,
+                                          before_history):
+    assert response.status == 409, response.body
+    payload = response.json()
+    assert payload["code"] == "conflict"
+    assert payload["message"] == "commit project/timeline identity does not match the route"
+    assert isinstance(payload["request_id"], str) and payload["request_id"]
+    assert rows(edit.service) == before_rows
+    assert edit.head() == before_head
+    assert edit.history() == before_history
+
+
+def test_real_door_commit_admission_checks_origin_auth_and_project_scope(film, agent, tmp_path, monkeypatch):
+    from runtime_protocol import door as door_module
+    from tests.door_helpers import PRODUCT_ACTOR, write_owner_only
+
     world = _start_door(film, tmp_path)
     try:
         evil_origin = "https://evil.test"
         edit = Editing(world.daemon.service, film, agent)
         edit.assert_baseline()
         body = edit.body([edit.move("music-bed", 1)])
-        encoded = json.dumps(body).encode()
+        negative_body = _full_v2_auth_body(edit)
+        encoded = json.dumps(negative_body).encode()
         path = "/api/runtime" + edit.path
         headers = {"Content-Type": "application/json", "Idempotency-Key": "door-admission"}
         before = rows(edit.service)
+        before_head = edit.head()
+        before_history = copy.deepcopy(edit.history())
 
-        refused = world.call(path, "POST", origin=evil_origin, body=encoded, headers=headers)
-        assert refused.status == 403
-        assert refused.json() == {"error": "hosted_origin_required"}
+        service = edit.service
+        assert service is not None
+        provider_type = type(service._timeline_commit_provider)
 
-        refused = world.call(path, "POST", body=encoded,
-                             headers={**headers, "Authorization": f"Bearer {world.product_token}"})
-        assert refused.status == 403
-        assert refused.json() == {"error": "browser_credentials_forbidden"}
+        def forbidden_provider(*args, **kwargs):
+            raise AssertionError("refused door request reached the commit provider")
 
-        foreign = copy.deepcopy(body)
-        foreign["project_id"] = "foreign-project"
-        refused = world.call(path, "POST", body=json.dumps(foreign).encode(),
-                             headers={**headers, "Idempotency-Key": "door-foreign-project"})
-        assert refused.status == 409
-        assert refused.json()["code"] == "conflict"
-        assert rows(edit.service) == before
+        with monkeypatch.context() as guard:
+            guard.setattr(provider_type, "commit", forbidden_provider)
+
+            refused = world.call(path, "POST", origin=evil_origin, body=encoded, headers=headers)
+            _assert_door_refusal_unchanged(
+                edit, refused, 403, {"error": "hosted_origin_required"},
+                before, before_head, before_history,
+            )
+
+            refused = world.call(path, "POST", body=encoded,
+                                 headers={**headers, "Authorization": "Bearer browser"})
+            _assert_door_refusal_unchanged(
+                edit, refused, 403, {"error": "browser_credentials_forbidden"},
+                before, before_head, before_history,
+            )
+
+            world.credential_file.unlink()
+            refused = world.call(path, "POST", body=encoded,
+                                 headers={**headers, "Idempotency-Key": "door-missing-credential"})
+            _assert_door_refusal_unchanged(
+                edit, refused, 503, {"error": "runtime_unavailable"},
+                before, before_head, before_history,
+            )
+
+            write_owner_only(world.credential_file, {
+                "version": 1, "scope": "astrid", "actor_id": PRODUCT_ACTOR,
+                "token": "not-a-token-the-runtime-knows",
+            })
+            refused = world.call(path, "POST", body=encoded,
+                                 headers={**headers, "Idempotency-Key": "door-invalid-credential"})
+            _assert_door_refusal_unchanged(
+                edit, refused, 503, {"error": "runtime_unavailable"},
+                before, before_head, before_history,
+            )
+
+            assert world.daemon.credentials is not None
+            credential_store = world.daemon.credentials
+            reduced_scopes = [scope for scope in door_module.PRODUCT_SCOPES if scope != "projects:write"]
+            readonly_token, _ = credential_store.provision(
+                PRODUCT_ACTOR, reduced_scopes, rotate=True,
+            )
+            identity = credential_store.require(readonly_token, "handshake")
+            assert identity["actor"] == PRODUCT_ACTOR
+            assert identity["scopes"] == reduced_scopes
+            # The unchanged door requires the exact product scope set before
+            # dispatch, so missing write authority fails profile admission.
+            write_owner_only(world.credential_file, {
+                "version": 1, "scope": "astrid", "actor_id": PRODUCT_ACTOR,
+                "token": readonly_token,
+            })
+            refused = world.call(path, "POST", body=encoded,
+                                 headers={**headers, "Idempotency-Key": "door-read-only-credential"})
+            _assert_door_refusal_unchanged(
+                edit, refused, 503, {"error": "runtime_identity_mismatch"},
+                before, before_head, before_history,
+            )
+
+            world.provision()
+
+            foreign = copy.deepcopy(negative_body)
+            foreign["project_id"] = "foreign-project"
+            refused = world.call(path, "POST", body=json.dumps(foreign).encode(),
+                                 headers={**headers, "Idempotency-Key": "door-foreign-project"})
+            _assert_route_scope_refusal_unchanged(edit, refused, before, before_head, before_history)
+
+            foreign_path = "/api/runtime/v1/projects/{}/timelines/{}/commit".format(
+                edit.project, "foreign-timeline",
+            )
+            refused = world.call(foreign_path, "POST", body=encoded,
+                                 headers={**headers, "Idempotency-Key": "door-foreign-route"})
+            _assert_route_scope_refusal_unchanged(edit, refused, before, before_head, before_history)
 
         accepted = _post_door(world, edit.path, body, "door-admission")
         assert accepted["data"]["status"] == "accepted"
+        assert accepted["data"]["publisher"] == PRODUCT_ACTOR
+        assert edit.history()[-1]["publisher"] == PRODUCT_ACTOR
+        edit.assert_readback(accepted)
+        edit.assert_baseline()
     finally:
         world.stop()
 
