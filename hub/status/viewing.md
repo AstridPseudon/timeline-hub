@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-23T09:55:20Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+<!-- viewing | 2026-10-23T09:56:33Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
 # viewing board, 2026-10-23T09:53:23Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -57,3 +57,5 @@ Runtime D17authority1365e4/tree6c69 integrated1527PASS186; Agent semanticqualifi
 HEADER09:44 machine-checkable gates apply immediately: A3 requires shared+child+JSON0b6b integrated plus jointA2/A3PASS; then R5. OriginalmountedP1 integratedPASS plus independent no-weakeningPASS -> A4/G5 exceptD17duplicatewriter. P2/P3 after mergedUndo+move reads; actualProof readiness remainsowner-managed. Stackedcommits EACH need independentPASS with no unreviewedancestry. Newrows onlycriticalpath/gates/actualfullregressions. Hostscripts remainlead-only.
 
 Disk16,157,667,328bytes >15GBfloor; no cleanupworker justified. Historicalrecycle Permissiondenied remainsPARKED with existingescalation, no retry/chmod/chown/alternatedeletion. HistoricalMONITOR/keepawake denial stopped. No new safety/permission refusal or decision escalation. No managerproduct/test/generated/pin/lock/archive/sharedinstall edits or gitcommit/merge/rebase/reset. Finalintegration support onrequest; report-only3b8 andfailed2f/706 NEVERmerge,15d unqualified/unmerged. OriginalvisibleV4 failures retained; no arithmetic52/54PASS.
+
+Consumed09:56 flat peer Agent HOST lead0949: dispatcherRECOVERED after host killed onehungpip, freshheartbeat/queue0 andqueuedrequestsstarted; falseSTOPPED143 didnotloseWIP. No furtherViewinghostlivenessaction requested. ExistingProoftransfers remainowner-managed; no newrow/worker.
