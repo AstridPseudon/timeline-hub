@@ -19,8 +19,6 @@ class DocumentPatchError(TimelineEditError):
     """A document change cannot be represented as a safe generic patch."""
 
 
-# Kept as a discoverable name for callers migrating from the detached adapter.
-DocumentEmitterError = DocumentPatchError
 _MISSING = object()
 
 
@@ -295,4 +293,4 @@ def emit_document_commands(before_bundle: Mapping[str, Any], after_bundle: Mappi
         raise DocumentPatchError(f"cannot emit a source-bound doc.patch: {exc}") from exc
 
 
-__all__ = ["DocumentPatchError", "DocumentEmitterError", "emit_document_commands"]
+__all__ = ["DocumentPatchError", "emit_document_commands"]

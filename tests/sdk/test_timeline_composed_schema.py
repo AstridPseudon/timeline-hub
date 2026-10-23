@@ -47,6 +47,25 @@ def test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden
     conditions = {condition['if']['properties']['op']['const']: condition['then']['properties']
                   for condition in _SCHEMA['$defs']['EditCommand']['allOf']}
     for op, operation in operations().items():
+        # D15's occurrence.fork is a Python-only semantic command.  The
+        # frozen wire schema deliberately does not gain a tuple for it; the
+        # provider still owns and validates its closed argument object.
+        if op == 'occurrence.fork':
+            assert op not in conditions
+            command = {
+                'schema_version': 1,
+                'op': op,
+                'version': '1',
+                'select': 'occurrence:occ-0',
+                'args': {'shot_id': 'shot-fork'},
+            }
+            arg_validator = validator.evolve(schema=operation.parameters)
+            arg_validator.validate(command['args'])
+            unknown = copy.deepcopy(command)
+            unknown['args']['unsupported_argument'] = None
+            with pytest.raises(ValidationError):
+                arg_validator.validate(unknown['args'])
+            continue
         ref = conditions[op]['args']['$ref'].removeprefix('#/$defs/')
         assert _SCHEMA['$defs'][ref] == operation.parameters
         assert operation.parameters['additionalProperties'] is False
