@@ -1,6 +1,7 @@
 """Append-only working-copy records with a verifiable hash chain."""
 from __future__ import annotations
 
+import copy
 import dataclasses
 import datetime as dt
 import getpass
@@ -101,6 +102,120 @@ def _hash(previous: str | None, body: Mapping[str, Any]) -> str:
 def document_digest(document: Any) -> str:
     raw = json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str)
     return "sha256:" + hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def authored_digest(bundle):
+    return document_digest({"parent": bundle["parent"], "placements": bundle["placements"],
+        "shots": {key: {field: row[field] for field in ("payload", "internal_timeline")}
+                  for key, row in bundle["shots"].items()}})
+
+
+def begin_nudge(clip, seconds, frames):
+    """Observe the bounded, unanchored helper before it mutates its original state."""
+    from astrid.sdk import timeline_intent as intent
+
+    from ._doc_patch import Closure, value_at
+
+    tl = clip._tl
+    if (not tl.bundle.get("base_parent", {}).get("publication_id")
+            or "_runtime_document" not in tl.bundle.get("source_mapping", {})
+            or "structure_base" in tl.bundle or clip.shot_id not in tl.bundle.get("shots", {})
+            or intent.on(clip.data) or intent.cut_of(clip.data)
+            or isinstance(seconds, bool) or not isinstance(seconds, (int, float))
+            or isinstance(frames, bool) or not isinstance(frames, int)):
+        return None
+    before = copy.deepcopy(tl.bundle)
+    closure = Closure(before)
+    refs = [ref for ref, owners in closure.owners.items()
+            if ref.startswith("internal-revision:")
+            and any(local == clip.shot_id for _, local in owners)]
+    rows = [row for row in before["placements"] if row["shot_id"] == clip.shot_id]
+    if len(refs) != 1 or len(rows) != 1:
+        return None
+    ref = refs[0]
+    path = ["clips", "id:" + clip.id]
+    # Consume the whole original row as a finite literal, so a peer's change
+    # to this helper's selected clip cannot silently become its new input.
+    state = value_at(closure.payload(ref), ref, path)
+    json.dumps(state, allow_nan=False)
+    reads = [{"kind": "field", "ref": ref, "path": path, "state": state}]
+    sites = [("parent", ["config", "theme_overrides"]),
+             ("parent", ["occurrences", "occurrence_id:" + rows[0]["occurrence_id"], "placement", "start_ms"]),
+             ("parent", ["occurrences", "occurrence_id:" + rows[0]["occurrence_id"], "at_ms"])]
+    for root, tokens in sites:
+        reads.append({"kind": "field", "ref": root, "path": tokens,
+                      "state": value_at(closure.payload(root), root, tokens)})
+    return {"op": "nudge", "shot": clip.shot_id, "clip": clip.id,
+            "seconds": seconds, "frames": frames, "reads": reads, "_before": before,
+            "base": {key: before["base_parent"][key] for key in ("revision_id", "publication_id")}}
+
+
+def finish_nudge(tl, capture):
+    from .emitter import emit_document_commands
+
+    before = capture.pop("_before")
+    after = copy.deepcopy(tl.bundle)
+    if authored_digest(before) == authored_digest(after):
+        return
+    capture.update(before=authored_digest(before), after=authored_digest(after),
+                   commands=emit_document_commands(before, after))
+    tl._helper_calls.append(capture)
+
+
+def helper_batch(tl, base, candidate):
+    """Replay untrusted journal claims; only a complete original chain is bounded."""
+    from ._command_state import equal
+    from ._common import TimelineEditError
+    from .checkout import Checkout
+
+    calls = []
+    if tl.path:
+        path = journal_path(str(base["project_id"]), str(base["timeline_id"]))
+        if verify(path):
+            raise TimelineEditError("helper journal is damaged; run timelines log --verify")
+        rows = [row for row in read(path) if row.draft == Path(tl.path).stem
+                and row.kind == "save" and row.outcome == "changed"]
+        # The authenticated base digest selects a start, never an arbitrary suffix.
+        basis = {key: base["base_parent"][key] for key in ("revision_id", "publication_id")}
+        starts = [i for i, row in enumerate(rows) if row.calls
+                  and row.calls[0].get("base") == basis
+                  and row.calls[0].get("before") == authored_digest(base)]
+        if len(starts) > 1:
+            raise TimelineEditError("helper journal has ambiguous original capture")
+        if starts:
+            for row in rows[starts[0]:]:
+                if not row.calls:
+                    return None  # old snapshots or a direct edit keep the atomic policy
+                calls.extend(row.calls)
+    calls.extend(copy.deepcopy(tl._helper_calls))
+    if len(calls) != 1:
+        # Sequential helper roots need provider-verified boundary rebinding.
+        # Preserve ordinary atomic publication until that slice is qualified.
+        return None
+    replay = Checkout(copy.deepcopy(base))
+    commands, steps = [], []
+    for call in calls:
+        if call.get("before") != authored_digest(replay.document()):
+            return None  # an uncaptured edit occurred between helper operations
+        if call.get("op") != "nudge":
+            raise TimelineEditError("unknown helper capture")
+        selected = [clip for clip in replay.clips() if clip.id == call.get("clip")
+                    and clip.shot_id == call.get("shot")]
+        if len(selected) != 1:
+            raise TimelineEditError("helper capture has no unique original clip")
+        replay._helper_calls = []
+        selected[0].nudge(call["seconds"], frames=call["frames"])
+        if len(replay._helper_calls) != 1 or not equal(replay._helper_calls[0], call):
+            raise TimelineEditError("helper capture differs from its original operation")
+        start = len(commands)
+        commands.extend(copy.deepcopy(call["commands"]))
+        steps.append({"id": f"helper-{len(steps)}", "label": "Nudge " + call["clip"],
+            "intent": "nudge", "tags": [], "command_ordinals": list(range(start, len(commands))),
+            "patch": [copy.deepcopy(change) for command in call["commands"]
+                      for change in command["args"]["changes"]], "reads": copy.deepcopy(call["reads"])})
+    if authored_digest(replay.document()) != authored_digest(candidate):
+        return None  # final direct edits cannot inherit the helper's bounded reads
+    return commands, steps
 
 
 def digest(text: str) -> str:

@@ -227,7 +227,9 @@ class _PublishMixin:
                     "idempotency_key": key, "structure": "unchanged", "_narration_pending": True}
         if state["pending"] or flight is not None:
             raise TimelineEditError("flush pending commands before publishing")
-        matches = [entry for entry in entries if entry["revision_id"] == base_revision]
+        original_publication = stored["base_parent"].get("publication_id")
+        matches = [entry for entry in entries if entry["revision_id"] == base_revision
+                   and (original_publication is None or entry["publication_id"] == original_publication)]
         if len(matches) != 1:
             raise TimelineEditError("checkout has no unique publication base; reopen the timeline")
         base_pair = {"revision_id": base_revision, "publication_id": matches[0]["publication_id"]}
@@ -251,6 +253,9 @@ class _PublishMixin:
             for field in ("payload", "internal_timeline"):
                 candidate["shots"][identity][field] = copy.deepcopy(shot[field])
         commands = emit_document_commands(base, candidate)
+        captured_helpers = _journal.helper_batch(self, base, candidate)
+        if captured_helpers is not None:
+            commands = captured_helpers[0]
         # Acknowledged cuts can still have an unstarted narration follow-up.
         # Recover their identity from Runtime history, never a second journal.
         for entry in entries:
@@ -275,8 +280,11 @@ class _PublishMixin:
                         "idempotency_key": key, "structure": "unchanged"}
             return {"old_head": base_revision, "new_head": base_revision,
                     "structure": "unchanged", "idempotency_key": key}
-        result = session.submit(commands, label=message or "Timeline edit", merge="atomic",
-            steps=[{"id": "edit", "label": message or "Timeline edit", "intent": message,
+        result = session.submit(commands, label=message or "Timeline edit",
+            merge="fields" if captured_helpers is not None else "atomic",
+            reads=captured_helpers[1][0]["reads"] if captured_helpers is not None else None,
+            steps=captured_helpers[1] if captured_helpers is not None else [
+                   {"id": "edit", "label": message or "Timeline edit", "intent": message,
                     "tags": [], "command_ordinals": list(range(len(commands))),
                     "patch": [copy.deepcopy(change) for call in commands for change in call["args"]["changes"]],
                     "reads": [{"kind": "scope", "ref": "timeline", "path": []}]}],

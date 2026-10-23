@@ -53,6 +53,7 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
         self._kept: list[str] = []
         self._outside: list[str] = []
         self._journal: list[tuple[str, str | None]] = []  # (label, the document before that edit), one per edit
+        self._helper_calls: list[dict[str, Any]] = []
         self._edit_depth = 0
         self._open_edit: Any = None  # the Edit of the tl.edit now open (nested edits join it)
         self._orphan_reason = "its line was removed"
@@ -227,9 +228,11 @@ class Checkout(_LookupMixin, _EditMixin, _ReflowMixin, _CheckMixin, _PublishMixi
                 clips, cuts = _clip_changes(before_text, text)
                 _journal.record_working_copy(target, owner=self, kind="save", outcome="changed", label=label,
                                              before=_journal.digest(before_text), after=_journal.digest(text),
-                                             clips=tuple(clips), cuts=tuple(cuts), undo_step=undo_step)
+                                             clips=tuple(clips), cuts=tuple(cuts), undo_step=undo_step,
+                                             calls=tuple(self._helper_calls))
             except Exception as exc:  # noqa: BLE001 - the save is committed; only its journal record is missing
                 _journal.note_failure(self, exc)
+        self._helper_calls = []
         return target
 
     def _merge_writer(self, target: Path, now: str, *, force: bool) -> None:

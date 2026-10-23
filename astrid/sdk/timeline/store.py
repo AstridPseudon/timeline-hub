@@ -181,7 +181,19 @@ def _journaled(function, kind):
                            + [f"{key}={value!r}"[:40] for key, value in kwargs.items()])
         label = f"{who + '.' if who else ''}{function.__name__}({shown})"
         with checkout.step(label):
-            return function(owner, *args, **kwargs)
+            from . import journal
+
+            capture = None
+            if kind == "clip" and function.__name__ == "nudge":
+                from inspect import signature
+
+                bound = signature(function).bind(owner, *args, **kwargs)
+                bound.apply_defaults()
+                capture = journal.begin_nudge(owner, bound.arguments["seconds"], bound.arguments["frames"])
+            result = function(owner, *args, **kwargs)
+            if capture is not None:
+                journal.finish_nudge(checkout, capture)
+            return result
     return wrapped
 
 
@@ -648,7 +660,34 @@ def fetch_bundle(project: str, timeline: str, *, revision_id: str | None = None,
         opened = c.timelines.open_bundle(project, timeline, revision_id=revision_id, **options)
         if not opened.ok or not isinstance(opened.data, Mapping):
             raise TimelineEditError(f"could not open {timeline!r} in {project!r}: {opened.error}")
-        return copy.deepcopy(dict(opened.data["bundle"]))
+        bundle = copy.deepcopy(dict(opened.data["bundle"]))
+        pin = bundle.get("base_parent", {})
+        if not pin.get("publication_id") and callable(getattr(c.timelines, "history", None)):
+            entries, cursor, seen = [], None, set()
+            while True:
+                page = c.timelines.history(project, timeline, cursor=cursor, limit=200)
+                if not page.ok:
+                    raise TimelineEditError(f"could not pin checkout publication: {page.error}")
+                entries.extend(page.data["items"])
+                cursor = page.data.get("next_cursor")
+                if cursor is None:
+                    break
+                if cursor in seen:
+                    raise TimelineEditError("publication history cursor repeated")
+                seen.add(cursor)
+            matches = [row for row in entries if row["revision_id"] == pin.get("revision_id")
+                       and (publication_id is None or row["publication_id"] == publication_id)]
+            if len(matches) != 1:
+                raise TimelineEditError("checkout has no unique publication base; reopen the timeline")
+            pin["publication_id"] = matches[0]["publication_id"]
+        if pin.get("publication_id") and "_runtime_document" not in bundle.get("source_mapping", {}):
+            hydrated = c.timelines.open_bundle(project, timeline, revision_id=pin["revision_id"],
+                                               publication_id=pin["publication_id"])
+            if not hydrated.ok or not isinstance(hydrated.data, Mapping):
+                raise TimelineEditError(f"could not hydrate original checkout publication: {hydrated.error}")
+            bundle = copy.deepcopy(dict(hydrated.data["bundle"]))
+            bundle["base_parent"]["publication_id"] = pin["publication_id"]
+        return bundle
 
     if client is not None:
         return read(client)
