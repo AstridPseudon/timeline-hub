@@ -10,9 +10,6 @@ from typing import Any
 
 import pytest
 
-# banodoco-timeline-schema is a declared dev dependency (pyproject.toml); a missing install is a failure.
-from banodoco_timeline_schema import validate_timeline as validate_timeline_schema
-
 from astrid.core.timeline.duration import (
     clip_end_frame,
     clip_source_duration,
@@ -102,6 +99,10 @@ def test_fixture_manifest_is_complete() -> None:
 
 @pytest.mark.parametrize("fixture_path", FIXTURE_PATHS, ids=lambda path: path.stem)
 def test_fixture_is_valid_against_canonical_timeline_schema(fixture_path: Path) -> None:
+    # banodoco-timeline-schema is a declared dev dependency (pyproject.toml). Importing here keeps the
+    # rest of this module usable without it; a missing package fails this test, it never skips.
+    from banodoco_timeline_schema import validate_timeline as validate_timeline_schema
+
     validate_timeline_schema(_load(fixture_path), strict=True)
 
 
