@@ -299,7 +299,10 @@ export async function createLocalSaveSession(options: Options) {
       assertOpen();
       await pump();
       if (writeError) throw writeError;
-      if (state.status !== 'saved') throw new Error('Local saves remain unacknowledged; draft retained');
+      if (state.status !== 'saved') {
+        const message = state.error && typeof state.error === 'object' && !Array.isArray(state.error) ? state.error.message : undefined;
+        throw new Error(typeof message === 'string' ? `${message}; draft retained` : 'Local saves remain unacknowledged; draft retained');
+      }
       return clone(basis);
     },
     async recover(ownerId: string) {

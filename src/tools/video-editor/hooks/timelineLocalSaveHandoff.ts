@@ -28,7 +28,7 @@ export type TimelineGestureReadBasis = {
 export interface TimelineLocalSaveHandoff {
   capture(source: TimelineSaveSource, gestureBasis?: TimelineGestureReadBasis): Promise<void>;
   flush(): Promise<TimelineSaveReceipt>;
-  /** True only when the durable owner is settled and has an accepted target. */
+  /** True only when the durable owner is settled. */
   remoteHistoryAvailable(): boolean;
   canUndo(): boolean;
   canRedo(): boolean;
@@ -117,6 +117,7 @@ export function createTimelineLocalSaveHandoff(options: {
   initial: TimelineCommandBasis;
   source: TimelineSaveSource;
   session: LocalSaveSession;
+  loadHistory?(): Promise<HistoryPage>;
   /** Read the upstream assembly after the session has adopted the complete canonical result. */
   adopted(basis: TimelineCommandBasis): { receipt: TimelineSaveReceipt; source: TimelineSaveSource };
 }): TimelineLocalSaveHandoff {
@@ -142,7 +143,6 @@ export function createTimelineLocalSaveHandoff(options: {
       redoTargets = [...redoTargets, publicationId];
     } else if (pendingInverse?.kind === 'redo') {
       undoTargets = [...undoTargets, publicationId];
-      redoTargets = redoTargets.slice(0, -1);
     } else if (pendingNormalCommits > 0) {
       undoTargets = [...undoTargets, publicationId];
       redoTargets = [];
@@ -154,12 +154,12 @@ export function createTimelineLocalSaveHandoff(options: {
   function appendInverse(kind: 'undo' | 'redo'): Promise<void> {
     if (!remoteHistoryAvailable()) return Promise.reject(new TimelineVersionConflictError('Durable timeline history is not settled; draft retained'));
     const targets = kind === 'undo' ? undoTargets : redoTargets;
-    const target = targets.at(-1);
+    const target = targets[targets.length - 1];
     if (!target) return Promise.reject(new TimelineVersionConflictError(`No persisted ${kind} target is available`));
     if (kind === 'undo') undoTargets = undoTargets.slice(0, -1);
     else redoTargets = redoTargets.slice(0, -1);
     pendingInverse = { kind, target };
-    const before = session.getDocument() as unknown as CanonicalDocument;
+    const before = toOutboxJson(options.session.getDocument());
     const command: EditCommand = {
       schema_version: 1,
       op: 'timeline.inverse',
@@ -167,10 +167,10 @@ export function createTimelineLocalSaveHandoff(options: {
       select: null,
       args: { publications: [target] },
     };
-    return session.append({ before, after: before, label: `${kind === 'undo' ? 'Undo' : 'Redo'} timeline`, commands: [command] })
+    return options.session.append({ before, after: before, label: `${kind === 'undo' ? 'Undo' : 'Redo'} timeline`, commands: [command] })
       .then(() => flush())
       .catch((error) => {
-        if (pendingInverse?.target === target) {
+        if (options.session.getState().status !== 'retry' && pendingInverse?.target === target) {
           if (kind === 'undo') undoTargets = [...undoTargets, target];
           else redoTargets = [...redoTargets, target];
           pendingInverse = undefined;
@@ -180,7 +180,34 @@ export function createTimelineLocalSaveHandoff(options: {
   }
 
   function remoteHistoryAvailable(): boolean {
-    return session.getState().status === 'saved';
+    return !pendingInverse && options.session.getState().status === 'saved';
+  }
+  async function flush(): Promise<TimelineSaveReceipt> {
+    try {
+      const basis = await options.session.flush();
+      const adopted = options.adopted(basis);
+      const head = adopted.receipt.head;
+      if (head.projectId !== initial.canonicalDocument.project_id || head.timelineId !== initial.canonicalDocument.timeline_id
+        || head.headRevisionId !== basis.head.revisionId || head.headPublicationId !== basis.head.publicationId
+        || !same(adopted.source.head, head)) refuse('canonical assembly did not adopt the accepted head');
+      initial = structuredClone(basis);
+      source = structuredClone(adopted.source);
+      authoringSource = structuredClone(adopted.source);
+      document = structuredClone(basis.canonicalDocument);
+      sourceChecked = false;
+      settleHistory(basis);
+      if (options.loadHistory) {
+        const history = await options.loadHistory();
+        const index = history.items.findIndex((entry) => entry.publication_id === basis.head.publicationId);
+        if (index >= 0) ({ undo: undoTargets, redo: redoTargets } = historyTargets({ ...history, items: history.items.slice(index) }));
+      }
+      return adopted.receipt;
+    } catch (error) {
+      if (['blocked', 'conflict', 'error', 'recovery'].includes(options.session.getState().status)) {
+        refuse(error instanceof Error ? error.message : String(error));
+      }
+      throw error;
+    }
   }
   function changes(raw: unknown, previous: unknown, next: unknown, path: string[]): unknown {
     if (same(previous, next)) return structuredClone(raw);
@@ -317,7 +344,7 @@ export function createTimelineLocalSaveHandoff(options: {
           label: 'Edit timeline', step: { id: crypto.randomUUID(), label: 'Edit timeline', intent: gestureBasis ? (gestureBasis.kind === 'split'
             ? `Split ${gestureBasis.clipId} at ${gestureBasis.timeSeconds}`
             : `Trim ${gestureBasis.clipId}: ${canonicalJsonStringify(gestureBasis.patch)}`) : 'Save local editor changes', tags: [] } });
-        pendingNormalCommits += 1;
+        if (!same(before, after)) pendingNormalCommits += 1;
         source = { ...next,
           config: changes(source.config, source.config, next.config, ['config']) as TimelineConfig,
           registry: changes(source.registry, source.registry, next.registry, ['registry']) as AssetRegistry,
@@ -331,29 +358,7 @@ export function createTimelineLocalSaveHandoff(options: {
           : new TimelineVersionConflictError(`Local document save retained: ${error instanceof Error ? error.message : String(error)}`));
       }
     },
-    async flush() {
-      try {
-        const basis = await options.session.flush();
-        const adopted = options.adopted(basis);
-        const head = adopted.receipt.head;
-        if (head.projectId !== initial.canonicalDocument.project_id || head.timelineId !== initial.canonicalDocument.timeline_id
-          || head.headRevisionId !== basis.head.revisionId || head.headPublicationId !== basis.head.publicationId
-          || !same(adopted.source.head, head)) refuse('canonical assembly did not adopt the accepted head');
-        initial = structuredClone(basis);
-        source = structuredClone(adopted.source);
-        authoringSource = structuredClone(adopted.source);
-        document = structuredClone(basis.canonicalDocument);
-        sourceChecked = false;
-        settleHistory(basis);
-        return adopted.receipt;
-      }
-      catch (error) {
-        if (['blocked', 'conflict', 'error', 'recovery'].includes(options.session.getState().status)) {
-          refuse(error instanceof Error ? error.message : String(error));
-        }
-        throw error;
-      }
-    },
+    flush,
     remoteHistoryAvailable,
     canUndo: () => remoteHistoryAvailable() && undoTargets.length > 0,
     canRedo: () => remoteHistoryAvailable() && redoTargets.length > 0,

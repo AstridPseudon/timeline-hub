@@ -425,8 +425,12 @@ export function useTimelineHistory({
   }, [syncHistoryState]);
 
   const undo = useCallback(() => {
+    if (editability?.checkTimeline && !editability.checkTimeline().allowed) return;
+    if (pendingOpsRef.current > 0 || isInteractionActive(interactionStateRef)) return;
     if (remoteHistory?.remoteHistoryAvailable()) {
-      void remoteHistory.undo();
+      void remoteHistory.undo().catch((error: unknown) => {
+        toast.error('Could not undo timeline edit', { description: error instanceof Error ? error.message : String(error) });
+      });
       return;
     }
     if (editability?.checkTimeline && !editability.checkTimeline().allowed) return;
@@ -459,11 +463,15 @@ export function useTimelineHistory({
       },
     ].slice(-UNDO_STACK_LIMIT);
     syncHistoryState();
-  }, [dataRef, editability, interactionStateRef, pendingOpsRef, remoteHistory, restoreHistoryEntry, syncHistoryState]);
+  }, [dataRef, editability, interactionStateRef, pendingOpsRef, remoteHistory, restoreHistoryEntry, syncHistoryState, toast]);
 
   const redo = useCallback(() => {
+    if (editability?.checkTimeline && !editability.checkTimeline().allowed) return;
+    if (pendingOpsRef.current > 0 || isInteractionActive(interactionStateRef)) return;
     if (remoteHistory?.remoteHistoryAvailable()) {
-      void remoteHistory.redo();
+      void remoteHistory.redo().catch((error: unknown) => {
+        toast.error('Could not redo timeline edit', { description: error instanceof Error ? error.message : String(error) });
+      });
       return;
     }
     if (editability?.checkTimeline && !editability.checkTimeline().allowed) return;
@@ -494,7 +502,7 @@ export function useTimelineHistory({
       },
     ].slice(-UNDO_STACK_LIMIT);
     syncHistoryState();
-  }, [dataRef, editability, interactionStateRef, pendingOpsRef, remoteHistory, restoreHistoryEntry, syncHistoryState]);
+  }, [dataRef, editability, interactionStateRef, pendingOpsRef, remoteHistory, restoreHistoryEntry, syncHistoryState, toast]);
 
   const jumpToCheckpoint = useCallback((checkpointId: string) => {
     if (editability?.checkTimeline && !editability.checkTimeline().allowed) return;
