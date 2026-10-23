@@ -45,7 +45,10 @@ test('full/dialog save, reopen, canonical import, selected agent CAS and host Ta
     const evidence = (window as EvidenceWindow).editorWorkflowEvidence;
     return Promise.all(['workflow-full', 'workflow-dialog'].map(id => evidence.provider.loadTimeline(id)));
   });
-  expect(pair[0].config.clips[0]).toEqual(pair[1].config.clips[0]);
+  // The edit (fade, hold, track) is what must agree. The full editor's own save also persists the clip's readable
+  // display name (`label`, from the asset's filename); the agent's patch on the dialog's head does not write one.
+  const withoutLabel = ({ label: _label, ...clip }: (typeof pair)[number]['config']['clips'][number]) => clip;
+  expect(withoutLabel(pair[0].config.clips[0])).toEqual(withoutLabel(pair[1].config.clips[0]));
   await page.getByTestId('import-dialog').click();
   await expect(page.getByTestId('result-dialog')).toContainText('"ok":true');
   const importedClipId = JSON.parse((await page.getByTestId('result-dialog').textContent())!).data.clipId;
@@ -131,12 +134,17 @@ test('an offline editor draft survives close/reopen and clears only after the sa
 });
 
 test('the explicitly supported local browser renderer exports real media from the same editor', async ({ page }, testInfo) => {
+  // Chromium's save-file picker waits on a native dialog nothing answers here; without it the editor takes its
+  // anchor-download path (Firefox and Safari), which is what Playwright can observe as a download.
+  await page.addInitScript(() => { delete (window as { showSaveFilePicker?: unknown }).showSaveFilePicker; });
   await page.goto(fixtureUrl);
   await expect(page.getByTestId('version-full')).toHaveText('1');
   const full = page.locator('[data-video-editor-instance="full"]');
-  const downloadPromise = page.waitForEvent('download', { timeout: 60000 });
   await full.getByRole('button', { name: 'Render', exact: true }).click();
   await expect(page.getByTestId('render-full')).toHaveText('done', { timeout: 60000 });
+  // f0cad8b19: a finished render opens in the editor's player; saving the file is the explicit Download.
+  const downloadPromise = page.waitForEvent('download', { timeout: 60000 });
+  await page.getByRole('dialog', { name: 'Rendered film' }).getByRole('button', { name: 'Download' }).click();
   const download = await downloadPromise;
   const output = testInfo.outputPath(download.suggestedFilename());
   await download.saveAs(output);
