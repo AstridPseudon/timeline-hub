@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-23T23:11:36Z | dispatcher heartbeat 7s | live 4 (sol 1, luna 3, other 0) | busy30 15 | status age 2m -->
-# agent board, 2026-10-23T23:09:25Z
+<!-- agent | 2026-10-23T23:13:26Z | dispatcher heartbeat 11s | live 4 (sol 1, luna 3, other 0) | busy30 15 | status age 0m -->
+# agent board, 2026-10-23T23:13:23Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2-ops-health | stale dispatcher/false orphan diagnosis | Luna readonly; host lead | dispatcher heartbeat09:06 | merged | agt-U2-ops-health-0912 FINAL | Readonly diagnosis+lead0943 confirms hung pip09:07-09:42; one PID terminated; FIFO resumed, no hostrestart. False sandbox orphan diagnosis confirmed; no productchange | ops-only |
@@ -142,10 +142,12 @@
 | F-postG5-retained-callers | original CLI/sheet scenario migration | Luna author; independent Luna | actual full partial36 failures | review | agt-F-retained-callers-review-2307 LIVE | Own1794 test-only5files/author92PASS102.25s/original92count/Ruff2148Mypy1911/guards preserved; independent no-weakening/currentpair/callermigration audit active | 1794f0a2e |
 | F-postG5-inverse-fixture | original media inverse authority fixture | Luna author; independent Luna PASS | same full terminal before head movement | ready | agt-F-inverse-fixture-review-2257 FINAL PASS | Independent47PASS10.59s/all11functions/params/assertions preserved; actualDetachedRealm accepted history+productionresolver no fabricatedauthority; scopedRuffMypy/vendor/artifact/diffPASS. Own780a only; normalmerge oncefullterminal | 780a3182d |
 
-| F-postG5-D09-invocation | supported source-mode D09 fixture | Luna firstreturn | exact bench;2250setup cause | doing | agt-F-D09-invocation-return-2255 QUEUED | Installedprofile rejects originalfixture explicitroots correctly; harness-only supportedsourceprofile correction, then ONLYoriginal3/D18 guard unchanged/no fullretry | env-only |
+| F-postG5-D09-invocation | supported source-mode D09 fixture | Luna harness proof | exact managed c36/abd47 bench | merged | agt-F-D09-invocation-return-2255 FINAL PASS | Original3PASS510.58s/exactbodyhashes/sourceprofile/NodePATH/installedRuntime/guardunchanged/origins+receipt+stderr+nowrite96KB. Priorsetup failures retained;015f root harnessscript proofONLY nevermerge. D21 noextra review | env-only |
 
 | F-postG5-R2-equal-write | original scalar old-inverse acceptance | HARD Sol source owner | actual full original scalar failure | doing | agt-F-R2-equal-write-sol-2306 QUEUED | Original False/occurrence clip-asset line80 DIDNOTRAISE; source/acceptedfacts causality first then bounded REDGREEN if confirmed; strictABA/equalwrites/physicalguards stay. Sole inverse hunkowner | c36 base |
 | F-postG5-graph-roots | five original graph-root failures | Luna readonly | retained full traces/source | doing | agt-F-graph-root-diagnosis-2306 QUEUED | First created-child stages reload inverse refuses restored-root source equality; exact5node/phase/source vsfixture ownership audit, no failedbodyrepeat or competinginverse author | c36 base |
+
+| F-postG5-scene-fixture | retired save in source-certification setup | Luna fixture owner | actual full2Scene setup failures | doing | agt-F-scene-fixture-2312 QUEUED | open_source_runtime usesretiredpublish_parent_composition; existingguardcorrect. Faithfulauthenticseed/capturefixture continuation only, allsource/custody positives+forgery checks KEEP; no Runtime/product/guard edit | c36 base |
 
 Resolved: G5 merged c36 after H24 case1+P4 criterion; actual350+SDK4+c2711 PASS, independent2155 custody audit PASS with130 raw packet loss disclosed. P4/P5/R5 retained scoped DONE. D14/D23/H9 tests unchanged, unskipped, visibly failing.
 Integration: c36ca8c94b695b0e25b7d42c89f194661f187423/tree50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92. Hold Agent integration while SAME full25691 runs; all branch authors/reviews continue. Frozen34e/d106/819acf unchanged.
