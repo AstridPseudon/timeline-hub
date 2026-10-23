@@ -190,10 +190,14 @@ def _root_pairs(before: Mapping[str, Any], after: Mapping[str, Any]):
                 _payload_for_emit("shot:" if kind == "shot" else "internal:", old)
                 continue
             origin = source.get(local, {})
-            revision = origin.get("revision_id" if kind == "shot" else "internal_timeline_revision_id")
-            if not isinstance(revision, str) or not revision:
-                raise DocumentPatchError(f"shot {local!r} has no verified {kind} revision")
-            ref = closure.resolve(kind + "-revision:" + revision)
+            # A preceding semantic command can materialize a successor. Resolve
+            # that sequential physical root through its verified owner projection.
+            refs = [ref for ref, owners in closure.owners.items()
+                    if ref.startswith(kind + "-revision:")
+                    and any(owner_local == local for _, owner_local in owners)]
+            if len(refs) != 1:
+                raise DocumentPatchError(f"shot {local!r} has no unique verified {kind} revision")
+            ref = refs[0]
             if kind == "shot":
                 mapping = {v: k for k, v in origin.get("item_id_map", {}).items()}
                 old = _remap_known_item_references(old, mapping)

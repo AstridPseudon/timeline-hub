@@ -6,17 +6,20 @@ import copy
 from ._collections import AcceptedRecords
 from ._command_state import ABSENT, CommandError, State, equal, root_identity
 from ._recording import guard
+from ._step_undo import entry_records
 
 
 def clip_cache_stages(records):
     """Prove word-cache stages inside guarded clip roots from accepted boundaries."""
     roots = {w['ref'] for record in records for w in record['writes']
              if w['ref'].startswith('parent/clip:') and not w['path']}
+    complete = ([record for entry in records.entries for record in entry['records']['commands']]
+                if isinstance(records, AcceptedRecords) else records)
     if not any(w['ref'] in roots and w['path'] in (['at'], ['hold'])
-               for record in records for w in record['derived_writes']):
+               for record in complete for w in record['derived_writes']):
         return {}
     if not isinstance(records, AcceptedRecords) or not equal(list(records), [
-            record for entry in records.entries for record in entry['records']['commands']]):
+            record for entry in records.entries for record in entry_records(records, entry)]):
         raise CommandError('clip cache stages need accepted records', kind='history_unavailable')
     stages = {}
     for entry in records.entries:
@@ -31,7 +34,7 @@ def clip_cache_stages(records):
                     state.set(write['ref'], write['path'], write['after'])
             anchored.update(ref for ref in roots if state.get(
                 ref, ['app', 'astrid', 'word_anchors']).get('value'))
-            caches = []
+            stages.setdefault(id(record), [])
             for write in record['derived_writes']:
                 if write['ref'] not in roots or write['path'] not in (['at'], ['hold']):
                     continue
@@ -39,13 +42,15 @@ def clip_cache_stages(records):
                     raise CommandError('clip cache has no word owner', kind='history_unavailable')
                 guard(state, write['ref'], write['path'], write['before'], kind='history_unavailable')
                 state.set(write['ref'], write['path'], write['after'])
-                caches.append(write)
-            stages[id(record)] = caches
+                cause = write.get('cause', record['ordinal'])
+                if type(cause) is not int or not 0 <= cause <= record['ordinal']:
+                    raise CommandError('clip cache cause is unavailable', kind='history_unavailable')
+                stages.setdefault(id(entry['records']['commands'][cause]), []).append(write)
         for ref in roots:
             guard(state, ref, [], accepted.get(ref, []), kind='history_unavailable')
     # Entry commands and the flattened records compare equal but need not share identity.
-    return {id(record): stages[id(original)] for record, original in zip(
-        records, (record for entry in records.entries for record in entry['records']['commands']))}
+    return {id(record): stages[id(entry['records']['commands'][record['ordinal']])]
+            for entry in records.entries for record in entry_records(records, entry)}
 
 
 def recover_source(state, value, source):
@@ -82,18 +87,15 @@ def occurrence_orders(state, records, changes):
     if not isinstance(records, AcceptedRecords):
         raise CommandError('removed occurrence needs accepted order/source boundaries', kind='history_unavailable')
     result = {}
-    offset = 0
     for entry in records.entries:
-        count = len(entry['records']['commands'])
-        commands = records[offset:offset + count]
-        offset += count
-        if not equal(commands, entry['records']['commands']):
-            raise CommandError('root inverse records differ from accepted history', kind='history_unavailable')
+        commands = entry_records(records, entry)
         if not any(id(record) in needed for record in commands):
             continue
         before, after = records.load_boundary(entry)
         ordered = [row['occurrence_id'] for row in before['placements']]
-        for record in commands:
+        selected = {record['ordinal']: record for record in commands}
+        for original_record in entry['records']['commands']:
+            record = selected.get(original_record['ordinal'], original_record)
             original = list(ordered)
             for write in record['writes']:
                 if root_identity(write['ref']) is None or not write['ref'].startswith('occurrence:') or write['path']:
