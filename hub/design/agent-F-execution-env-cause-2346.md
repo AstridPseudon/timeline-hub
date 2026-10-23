@@ -1,0 +1,398 @@
+# Report
+
+Read `PLAN.md`, `design/agent-F-full-terminal-2302.md`, and the durable terminal outcomes.
+
+No product files changed. Worktree is clean; `git diff --check` passed. No tests were rerun, per task prohibition against original-body reruns/full retries. Commit message and `DONE` marker were written.
+
+Evidence:
+
+- Terminal run: `17,159 passed, 262 failed, 5 errors, 4 skipped`, 17,430 collected.
+- Full-run source: Agent tree `50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92`, parent `c36ca8c94b695b0e25b7d42c89f194661f187423`.
+- Current source: commit `19646f04d815900853a8892dd24f1ddefffe9c21`, tree `f5a756298d51327413decdc2cf22afc19283c010`.
+- Runtime pin: `8ea0766f5e9fb23cea26c7398770a8aaac06b258`, tree `6047ac3033c3594b8f83db3afd8bb2c47cafa6d6`.
+- Full-body hash: `5ebb51b8d7100a60658595176fac538d8248e9e2a85e082dc7c7feffd16bec71`.
+- Profile manifest: `ed4616c674ffea71e6849f615f385ffa312914c7ca39cf0172e0da1e6df9750e`.
+- Outcome archive SHA256: `974f3324334ca329e5140b72a54fb5820fc60f4268a2b5178c99ce2503d34c4b`.
+
+Current `19646` contains the five reviewed fixes, but none touch execution/environment startup code. The 86-node environment cohort is not cleared.
+
+## Causal ownership
+
+- 62 `runtime_protocol` child-import failures: child `PYTHONPATH` is rebuilt from the Agent root and approved dependencies, while the Runtime checkout is not included. Owner: Agent execution/host plus Runtime OPS. Smallest scope: qualify the existing child-runner environment with the exact managed Runtime path; no source/test mutation yet.
+- 9 isolated `astrid` imports: `python -I` removes `PYTHONPATH`, but the installed probe cannot import Astrid. Owner: Agent installed-profile/bootstrap. Smallest scope: establish the correct installed Astrid import root or exact isolated runner invocation.
+- 15 startup/probe failures: all fail `registry_discovery` with `original_wait_exit_code=1`; same environment dependency is missing before custody assertions. Owner: startup/host and Runtime OPS.
+- 3 D09 setup failures: same probe failure, but separately owned by D09 harness owner 2255.
+- 22 occurrence-media failures: `inverse needs authenticated physical binding normalization`. Owner: SDK inverse/binding fixture; smallest scope is authenticated fixture normalization.
+- 6 rendering missing-result failures: cause remains unconfirmed; owner: rendering harness/backend; need exact result-path/producer evidence.
+- 3 `FakeCheckout.path` failures: fixture lacks `path`; owner: CLI test fixture.
+- 28 retired-route failures: current parser rejects old `--native`/legacy command routes. Owner: G5/R5 CLI migration.
+- 2 setup retired-route failures: explicit `RetiredRouteError`; owner: scene fixture migration.
+- Remaining 117 are explicitly unconfirmed below; no upstream/preexisting attribution is made.
+
+## Full node map
+
+Each section’s phase applies to every listed original node ID.
+
+### Environment: missing `runtime_protocol` — phase `call`, 62
+
+Owner: Agent execution/host + Runtime OPS. Smallest scope: exact managed Runtime import path in the child runner.
+
+```text
+tests/core/execution/test_remotion_host_session.py::test_two_public_command_workers_settle_task_leases_then_host_drains_original
+tests/core/execution/test_generic_host_actions_v3.py::test_static_discover_admit_dry_run_and_owned_child
+tests/core/execution/test_generic_host_actions_v3.py::test_python_action_receives_original_host_bridge_before_import
+tests/core/execution/test_generic_host_actions_v3.py::test_private_child_command_preserves_entrypoint_and_original_bridge[-c]
+tests/core/execution/test_generic_host_actions_v3.py::test_private_child_command_preserves_entrypoint_and_original_bridge[-m]
+tests/core/execution/test_generic_host_actions_v3.py::test_private_child_command_preserves_entrypoint_and_original_bridge[script]
+tests/core/execution/test_generic_host_actions_v3.py::test_strict_json_results_are_nested_data[None]
+tests/core/execution/test_generic_host_actions_v3.py::test_strict_json_results_are_nested_data[False]
+tests/core/execution/test_generic_host_actions_v3.py::test_strict_json_results_are_nested_data[0]
+tests/core/execution/test_generic_host_actions_v3.py::test_strict_json_results_are_nested_data[]
+tests/core/execution/test_generic_host_actions_v3.py::test_strict_json_results_are_nested_data[value4]
+tests/core/execution/test_generic_host_actions_v3.py::test_strict_json_results_are_nested_data[value5]
+tests/core/execution/test_generic_host_actions_v3.py::test_strict_json_results_are_nested_data[value6]
+tests/core/execution/test_generic_host_actions_v3.py::test_non_json_result_fails[float('nan')]
+tests/core/execution/test_generic_host_actions_v3.py::test_non_json_result_fails[float('inf')]
+tests/core/execution/test_generic_host_actions_v3.py::test_non_json_result_fails[object()]
+tests/core/execution/test_generic_host_actions_v3.py::test_non_json_result_fails[(1, 2)]
+tests/core/execution/test_generic_host_actions_v3.py::test_non_json_result_fails[{1: 'bad'}]
+tests/core/execution/test_generic_host_actions_v3.py::test_non_json_result_fails[__import__('pathlib').Path('/fake')]
+tests/core/execution/test_generic_host_actions_v3.py::test_output_schema_validates_return_without_file_ports
+tests/core/execution/test_generic_host_actions_v3.py::test_input_schema_before_import_and_only_effective_kwargs
+tests/core/execution/test_generic_host_actions_v3.py::test_relative_helpers_initializers_and_source_only_bytecode[actions/hello.py-from .helper import value\nfrom ..shared import extra\n]
+tests/core/execution/test_generic_host_actions_v3.py::test_relative_helpers_initializers_and_source_only_bytecode[actions/larger/run.py-from ..helper import value\nfrom ...shared import extra\n]
+tests/core/execution/test_generic_host_actions_v3.py::test_malformed_entrypoint_rejected_without_import[/tmp/escape.py-run]
+tests/core/execution/test_generic_host_actions_v3.py::test_malformed_entrypoint_rejected_without_import[actions/../escape.py-run]
+tests/core/execution/test_generic_host_actions_v3.py::test_malformed_entrypoint_rejected_without_import[actions/hello.py-bad-name]
+tests/core/execution/test_generic_host_actions_v3.py::test_action_failure_uses_existing_host_error[other = 1\n-missing or not callable]
+tests/core/execution/test_generic_host_actions_v3.py::test_action_failure_uses_existing_host_error[run = 1\n-missing or not callable]
+tests/core/execution/test_generic_host_actions_v3.py::test_action_failure_uses_existing_host_error[def run(value):\n    raise RuntimeError('intentional failure')\n-intentional failure]
+tests/core/execution/test_generic_host_actions_v3.py::test_condition_skip_and_public_runner_bypass_are_import_free
+tests/core/execution/test_generic_host_actions_v3.py::test_runtime_cancellation_contains_owned_action_without_terminal_ack[typed-cancel_requested-False]
+tests/core/execution/test_generic_host_actions_v3.py::test_runtime_cancellation_contains_owned_action_without_terminal_ack[typed-cancelled-False]
+tests/core/execution/test_generic_host_actions_v3.py::test_runtime_cancellation_contains_owned_action_without_terminal_ack[canonical-cancel_requested-False]
+tests/core/execution/test_generic_host_actions_v3.py::test_runtime_cancellation_contains_owned_action_without_terminal_ack[canonical-cancelled-False]
+tests/core/execution/test_generic_host_actions_v3.py::test_runtime_cancellation_contains_owned_action_without_terminal_ack[wrapped-cancel_requested-False]
+tests/core/execution/test_generic_host_actions_v3.py::test_runtime_cancellation_contains_owned_action_without_terminal_ack[wrapped-cancelled-False]
+tests/core/execution/test_generic_host_actions_v3.py::test_runtime_cancellation_contains_owned_action_without_terminal_ack[legacy-cancel_requested-False]
+tests/core/execution/test_generic_host_actions_v3.py::test_runtime_cancellation_contains_owned_action_without_terminal_ack[legacy-cancelled-False]
+tests/core/execution/test_generic_host_actions_v3.py::test_runtime_cancellation_contains_owned_action_without_terminal_ack[canonical-cancel_requested-True]
+tests/core/execution/test_generic_host_actions_v3.py::test_canonical_running_state_wins_over_legacy_cancelled_field[False]
+tests/core/execution/test_generic_host_actions_v3.py::test_canonical_running_state_wins_over_legacy_cancelled_field[True]
+tests/core/execution/test_generic_host_actions_v3.py::test_canonical_punctuation_paths_use_opaque_module_names[actions/hello-world.py]
+tests/core/execution/test_generic_host_actions_v3.py::test_canonical_punctuation_paths_use_opaque_module_names[actions/a-folder/script.v1.py]
+tests/core/execution/test_generic_host_actions_v3.py::test_python_return_settles_with_trusted_evidence_and_no_files
+tests/core/execution/test_generic_host_actions_v3.py::test_python_declared_files_require_real_attempt_output[False]
+tests/core/execution/test_generic_host_actions_v3.py::test_python_declared_files_require_real_attempt_output[True]
+tests/core/execution/test_generic_host_actions_v3.py::test_private_imports_add_no_repository_or_pack_pythonpath
+tests/core/execution/test_generic_host_actions_v3.py::test_legacy_child_command_and_ancestor_import_fence
+tests/core/execution/test_generic_host_actions_v3.py::test_schema_required_value_preserves_json_semantics[None]
+tests/core/execution/test_generic_host_actions_v3.py::test_schema_required_value_preserves_json_semantics[]
+tests/core/execution/test_generic_host_actions_v3.py::test_cancellation_after_child_result_blocks_success
+tests/core/execution/test_generic_host_actions_v3.py::test_legacy_orchestrator_child_command_route
+tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[False-False]
+tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[False-True]
+tests/core/pack/test_source_setup.py::test_real_outer_command_inventory_route_retains_sibling_creator_waits_and_graph
+tests/core/pack/test_source_setup.py::test_real_filtered_command_root_cf_pin_preserves_all_four_inventory_operations
+tests/packs/test_vibecomfy_ir_bridge.py::test_t9_actual_executor_child_loads_pinned_callable_and_settles_output
+tests/packs/test_vibecomfy_ir_bridge.py::test_t9_absent_explicit_activation_preserves_production_dispatch[False]
+tests/packs/test_vibecomfy_ir_bridge.py::test_t9_absent_explicit_activation_preserves_production_dispatch[True]
+tests/packs/test_vibecomfy_ir_bridge.py::test_t9_child_uses_explicit_pinned_fixture_outside_product_root[None]
+tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack
+tests/test_generic_host.py::test_structure_pack_members_survive_harvest_cleanup_and_reopen
+```
+
+### Environment: isolated `astrid` import — phase `call`, 9
+
+Owner: installed-profile/bootstrap. Missing fact: exact installed Astrid import root under `python -I`.
+
+```text
+tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]
+tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]
+tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]
+tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]
+tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]
+tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]
+tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]
+tests/reshape/test_doctor_contract_shapes.py::test_smoke_doctor_lane_accepts_both_payload_shapes[observed-with-ok]
+tests/reshape/test_doctor_contract_shapes.py::test_smoke_doctor_lane_accepts_both_payload_shapes[observed-without-ok]
+```
+
+### Environment: startup validation — phase `call`, 15
+
+Owner: startup/host + Runtime OPS. Exact failure: `registry_discovery`, `original_wait_exit_code=1`.
+
+```text
+tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_passes_inventory_identity_and_restarts_on_change
+tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_stops_on_correlated_terminal_registration_failure
+tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-25-ready-True-25-None]
+tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-None-ready-False-300.0-None]
+tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-25-ready-True-25-None]
+tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-120-None]
+tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-terminal-False-1-None]
+tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_pid-False-1-None]
+tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_birth-False-1-None]
+tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_instance-False-1-None]
+tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_source-False-1-None]
+tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-None]
+tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-400-ready-True-400-400]
+tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-150.3-30]
+tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-30]
+```
+
+### D09 setup failures — phase `setup`, 3
+
+Owner: D09 harness 2255. Same probe failure; separate from the 86-node environment cohort.
+
+```text
+tests/integrations/test_d09_managed_scene_only.py::test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle[saved]
+tests/integrations/test_d09_managed_scene_only.py::test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle[candidate]
+tests/integrations/test_d09_managed_scene_only.py::test_public_checkout_check_uses_retained_managed_scene_result
+```
+
+### Occurrence-media inverse — phase `call`, 22
+
+Owner: SDK inverse/binding fixture. Exact cause: authenticated physical binding normalization unavailable.
+
+```text
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-missing]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-digest]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-foreign]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-revision]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-extra-pin]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-document-pin]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-payload]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-writes]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-missing]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-digest]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-foreign]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-revision]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-extra-pin]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-document-pin]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-payload]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-writes]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-missing]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-dependent]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-disjoint]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-missing]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-dependent]
+tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-disjoint]
+```
+
+### Rendering missing-result files — phase `call`, 6
+
+Cause unconfirmed. Owner: rendering harness/backend. Missing fact: exact producer/result-path behavior.
+
+```text
+tests/core/rendering/test_conformance.py::test_minimal_render_wire_parity
+tests/core/rendering/test_conformance.py::test_request_sensitive_support_wire_parity
+tests/core/rendering/test_conformance.py::test_passthrough_audio_wire_parity
+tests/core/rendering/test_conformance.py::test_no_audio_wire_parity
+tests/core/rendering/test_conformance.py::test_attachment_wire_parity
+tests/core/rendering/test_conformance.py::test_intentional_failure_wire_parity
+```
+
+### `FakeCheckout.path` fixture failures — phase `call`, 3
+
+Owner: CLI fixture owner. Smallest scope: repair the existing fake checkout shape.
+
+```text
+tests/packs/timeline/test_cli_assets.py::test_edit_replace_asset_and_swap_asset_forward_to_the_sdk
+tests/packs/timeline/test_cli_voice_bindings.py::test_replace_insert_and_from_script_forward_existing_sdk_arguments
+tests/packs/timeline/test_cli_voice_bindings.py::test_repeated_gap_flags_and_script_gap_override_preserve_sdk_rules
+```
+
+### Retired CLI route — phase `call`, 28
+
+Owner: G5/R5 CLI migration. Current parser rejects the old route; preserve original assertions while migrating invocation.
+
+```text
+tests/editing_conformance/test_native_sheet_current.py::test_same_semantics_original_pins_exact_commands_reload_inverse[False-python]
+tests/editing_conformance/test_native_sheet_current.py::test_same_semantics_original_pins_exact_commands_reload_inverse[False-cli]
+tests/editing_conformance/test_native_sheet_current.py::test_same_semantics_original_pins_exact_commands_reload_inverse[False-sheet-python]
+tests/editing_conformance/test_native_sheet_current.py::test_same_semantics_original_pins_exact_commands_reload_inverse[False-sheet-cli]
+tests/editing_conformance/test_native_sheet_current.py::test_same_semantics_original_pins_exact_commands_reload_inverse[True-python]
+tests/editing_conformance/test_native_sheet_current.py::test_same_semantics_original_pins_exact_commands_reload_inverse[True-cli]
+tests/editing_conformance/test_native_sheet_current.py::test_same_semantics_original_pins_exact_commands_reload_inverse[True-sheet-python]
+tests/editing_conformance/test_native_sheet_current.py::test_same_semantics_original_pins_exact_commands_reload_inverse[True-sheet-cli]
+tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[hold-null]
+tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[hold-""]
+tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[hold-"clear"]
+tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[asset-null]
+tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[asset-""]
+tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[transition-null]
+tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[transition-""]
+tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[hold-None]
+tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[text-None]
+tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[text-null]
+tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[text-\u0192(mark)]
+tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[text-{"a":1}]
+tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[opaque-2]
+tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[x-1 ~ignored]
+tests/editing_conformance/test_native_sheet_current.py::test_custom_pack_param_refuses_without_client_inputs
+tests/editing_conformance/test_native_sheet_current.py::test_unchanged_text_cannot_hide_an_existing_inflight_sheet
+tests/packs/timeline/test_cli_native.py::test_track_label_dispatch_matches_native_capture[args0-\u753b\u9762 \U0001f3ac]
+tests/packs/timeline/test_cli_native.py::test_track_label_dispatch_matches_native_capture[args1-]
+tests/packs/timeline/test_cli_native.py::test_track_label_dispatch_matches_native_capture[args2-None]
+tests/packs/timeline/test_cli_native.py::test_cli_matches_full_app_portable_golden
+```
+
+### Retired route setup — phase `setup`, 2
+
+Owner: scene fixture migration.
+
+```text
+tests/sdk/test_scene_dispatch_contract.py::test_scene_request_and_sdk_admission_keep_certified_source[False]
+tests/sdk/test_scene_dispatch_contract.py::test_scene_request_and_sdk_admission_keep_certified_source[True]
+```
+
+### SDK/timeline — explicitly unconfirmed, phase `call`, 52
+
+Missing fact for every node: whether it persists against the current source/base pair after environment masking is removed. Next owner: SDK timeline reviewer. No product-vs-fixture conclusion is made.
+
+```text
+tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[False]
+tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[True]
+tests/sdk/test_timeline_clip_scalar_provider.py::test_provider_unchanged_publication_and_aba_refuse_old_inverse[False-occurrence:f2-occurrence/clip:f2-agent-clear-clip-asset]
+tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure
+tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-False-child]
+tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-True-child]
+tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard equal_state_publications[True-False-child]
+tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-True-child]
+tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_preserves_complete_closure_and_followups
+tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_exact_retry_and_narration_resume[1]
+tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_exact_retry_and_narration_resume[2]
+tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_recovers_narration_before_flight
+tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_changed_key_payload_and_force_never_write
+tests/sdk/test_timeline_normal_publish.py::test_nudge_disjoint_clips_merge_onto_peer_head
+tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-0]
+tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-1]
+tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history
+tests/sdk/test_timeline_persistence.py::test_a_writer_that_dies_holding_the_lock_does_not_block_the_next_writer
+tests/sdk/test_timeline_persistence.py::test_a_truncated_temp_file_is_never_read_as_the_working_copy
+tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param
+tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_refuses_a_clip_both_sides_changed
+tests/sdk/test_timeline_persistence.py::test_a_discard_in_one_process_leaves_the_next_process_with_no_working_copy
+tests/sdk/test_timeline_publish_connection.py::test_a_publish_with_no_client_writes_through_the_connection_it_opens
+tests/sdk/test_timeline_publish_connection.py::test_a_publish_with_a_client_writes_through_that_client
+tests/sdk/test_p4_commit_cases.py::test_p4_sources_are_real_and_parseable
+tests/sdk/test_timeline_restructure.py::test_three_way_merge_works_on_the_stored_form
+tests/sdk/test_timeline_restructure.py::test_cli_restructure_commits_the_complete_equivalent_bundle_and_followups
+tests/sdk/test_timeline_restructure.py::test_restructure_retries_the_original_commit_after_lost_ack
+tests/sdk/test_timeline_restructure.py::test_restructure_reconciles_narration_without_republishing_the_cut
+tests/sdk/test_timeline_commit_provider_scalar.py::test_occurrence_inverse_reuses_original_images_and_preserves_later_sibling_pins
+tests/sdk/test_timeline_composed_schema.py::test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden
+tests/sdk/test_timeline_restructure.py::test_restructure_reuses_an_existing_chapter_root
+tests/sdk/test_timeline_restructure.py::test_restructure_retries_narration_before_a_flight_exists
+tests/sdk/test_timeline_restructure_guarded_runtime.py::test_fixture_restructure_caller_refuses_mismatched_original_closure_without_writes[historical]
+tests/sdk/test_timeline_current_union_schema.py::test_closed_union_operation_inventory_is_exactly_the_supported_cohort
+tests/sdk/test_timeline_helper_capture.py::test_genuine_anchor_capture_has_exact_source_scope_and_base_pair
+tests/sdk/test_timeline_helper_capture.py::test_nudge_restart_merges_peer_other_clip
+tests/sdk/test_timeline_helper_capture.py::test_conflicts_and_uncaptured_edits_never_write[same]
+tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[hash]
+tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[commands]
+tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[reads]
+tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[after]
+tests/sdk/test_timeline_helper_capture.py::test_helper_lost_ack_retries_exact_request
+tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[False]
+tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[True]
+tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[None]
+tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[+1s]
+tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut["second"]
+tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[same]
+tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[word-source]
+tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[collection]
+```
+
+### Execution/rendering — explicitly unconfirmed, phase `call`, 22
+
+Missing fact: exact current producer/fixture behavior after the import environment is corrected. Next owners: execution host and rendering backend owners.
+
+```text
+tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[True-False]
+tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[True-True]
+tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[False-False]
+tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[False-True]
+tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[True-False]
+tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[True-True]
+tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_cannot_close_unproved_real_attempt[observation]
+tests/core/rendering/test_freeze.py::test_freeze_real_ffmpeg_transport_one_video_one_committed_sidecar
+tests/packs/rendering/test_render_export_task_adapter.py::test_render_export_adapter_writes_real_mp4_and_is_callable
+tests/core/rendering/test_service.py::test_real_ffmpeg_renders_through_generic_service[nominal]
+tests/core/rendering/test_service.py::test_real_ffmpeg_renders_through_generic_service[with-audio]
+tests/core/rendering/test_service.py::test_real_ffmpeg_audio_reactive_through_generic_service
+tests/packs/rendering/test_threejs_backend.py::test_threejs_support_accepts_empty_and_exact_text_fields
+tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons
+tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_non_rendered_audio_ownership
+tests/packs/rendering/test_threejs_backend.py::test_threejs_support_accepts_window_and_rejects_fps_mismatch
+tests/packs/rendering/test_threejs_backend.py::test_threejs_identity_invariants_never_claim_remotion
+tests/packs/rendering/test_threejs_backend.py::test_threejs_own_namespace_config_is_strict
+tests/packs/rendering/test_builtin_registration.py::test_real_ffmpeg_render_through_registered_backend
+tests/packs/rendering/test_ffmpeg_backend.py::test_manifest_command_dispatches_from_pack_root
+tests/packs/rendering/test_remotion_backend.py::test_manifest_command_runs_from_owning_pack_root
+tests/stage1/test_media_handoff_render_boundary.py::test_host_derived_registry_executes_canonical_ffmpeg_executor
+```
+
+### CLI/manifest — explicitly unconfirmed, phase `call`, 7
+
+Missing fact: current generated surface/manifest qualification against the current source. Next owner: CLI/manifest owner.
+
+```text
+tests/test_artifact_manifest.py::test_cli_surface_is_current
+tests/test_artifact_manifest.py::test_planted_cli_surface_drift_is_named
+tests/test_cli_surface_conformance.py::test_gateway_help_matches_every_exported_family_and_verb
+tests/test_canonical_aliases.py::TimelineProductParserAliasTest::test_product_timeline_parser_exposes_only_the_supported_verbs
+tests/test_canonical_aliases.py::TimelineProductParserAliasTest::test_product_timeline_parser_has_no_obsolete_aliases
+tests/v10/test_domain_cli_projects_timelines.py::test_timelines_parser_has_visualize_and_no_aliases
+tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale
+```
+
+### Skip/lanes guards — explicitly unconfirmed, phase `call`, 23
+
+Missing fact: whether the guard implementation or injected lane/plugin environment caused the altered output. Next owner: test guard/lanes owner.
+
+```text
+tests/test_skip_guard.py::test_an_undeclared_skip_in_a_test_body_fails_the_run
+tests/test_skip_guard.py::test_an_undeclared_skipif_mark_fails_the_run
+tests/test_skip_guard.py::test_an_importorskip_in_a_test_body_fails_the_run
+tests/test_skip_guard.py::test_a_module_level_importorskip_fails_the_run
+tests/test_skip_guard.py::test_a_skip_that_pretends_to_be_declared_fails_the_run
+tests/test_skip_guard.py::test_a_copied_reason_on_an_unregistered_node_fails_the_run
+tests/test_skip_guard.py::test_a_declared_reason_must_match_the_registry_exactly
+tests/test_skip_guard.py::test_an_xfail_fails_the_run
+tests/test_skip_guard.py::test_a_declared_platform_skip_passes_and_is_listed_by_test_id
+tests/test_skip_guard.py::test_a_declared_dependency_skip_passes_where_no_job_provides_it_and_is_listed
+tests/test_skip_guard.py::test_a_missing_dependency_fails_in_the_job_that_is_meant_to_provide_it
+tests/test_skip_guard.py::test_a_missing_dependency_fails_in_a_lane_the_run_selected_by_name
+tests/test_skip_guard.py::test_a_test_in_several_lanes_is_one_declared_skip_where_one_of_them_does_not_hold
+tests/test_skip_guard.py::test_an_unregistered_marker_is_an_error_under_strict_markers
+tests/test_skip_guard.py::test_a_run_in_which_every_test_is_skipped_or_deselected_fails
+tests/test_skip_guard.py::test_a_module_of_a_deselected_lane_is_not_imported_unless_a_test_in_it_names_a_selected_lane
+tests/test_skip_guard.py::test_tests_deselected_by_a_lane_are_named_under_a_header_that_says_who_runs_the_lane
+tests/test_skip_guard.py::test_a_module_not_imported_because_of_its_lane_is_named_with_the_lane
+tests/test_skip_guard.py::test_a_run_with_nothing_left_out_prints_no_report
+tests/test_skip_guard.py::test_a_module_with_a_module_lane_and_one_per_test_lane_is_imported_when_its_other_tests_are_selected
+tests/test_skip_guard.py::test_a_test_removed_by_name_is_counted_and_not_attributed_to_its_lane
+tests/test_skip_guard.py::test_a_test_in_two_lanes_is_attributed_only_to_the_lane_that_makes_the_expression_false
+tests/test_skip_guard.py::test_a_module_the_run_never_asked_for_is_not_reported_as_not_imported
+```
+
+### Other task-specific — explicitly unconfirmed, phase `call`, 13
+
+```text
+tests/core/execution/test_worker_startup_identity.py::test_sanitized_child_import_proves_current_host_sdk_version_and_vendored_client
+tests/packs/timeline/test_cli_edit_flags.py::test_edit_nudge_frames_set_and_close_gap
+tests/packs/timeline/test_cli_edit_flags.py::test_voice_line_swap_reflows_and_reports
+tests/packs/timeline/test_cli_native.py::test_cli_native_preview_and_lost_ack_retry
+tests/packs/timeline/test_cli_native.py::test_cli_native_track_selector_is_parent_scoped
+tests/packs/timeline/test_cli_native.py::test_help_exposes_native_entry_and_explicit_legacy_working_copy
+tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight
+tests/test_conftest_environment.py::test_bootstrap_environment_is_accepted_by_the_remotion_probe_context
+tests/test_lanes.py::test_a_module_of_a_lane_the_run_deselects_is_not_imported_and_fails_in_the_run_that_selects_it
+tests/test_lanes.py::test_a_missing_runtime_is_not_looked_for_in_the_default_lane_and_fails_in_the_integration_lane
+tests/test_installer_service_repair_integration.py::test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_pids[False-0]
+tests/test_installer_service_repair_integration.py::test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_pids[True-1]
+tests/timeline/test_authoring_media.py::test_document_publish_forwards_new_stale_head_to_runtime
+```
+
+Recommended next steps: qualify the exact child Runtime import path first, then the isolated installed-profile import path, then rerun only the existing environment/startup probes through the central test service. Do not credit the 86-node cohort from the three bench PASS results or D09 evidence.
