@@ -1,0 +1,20 @@
+--- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-1753/evidence/request-runtime.candidate	2026-10-23 17:58:04.182956990 +0000
++++ /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-remotion-reuse-return-1811/evidence/request-runtime.candidate	2026-10-23 18:16:11.475021622 +0000
+@@ -4,7 +4,16 @@
+ # tree-only lookup before any toolchain/build work.
+ # /home/user/work/runtimes/NAME (agent-remotion-<version>) from the Agent remotion/ dir at AGENT_SHA. Result in
+ # $ORCH/queue/done/runtime-NAME. Runtimes are immutable: a new version gets a new NAME. No escalation needed.
+-O=${RUNTIME_ORCH_ROOT:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch}
++if [[ -z "${RUNTIME_ORCH_ROOT:-}" ]]; then
++  echo 'REFUSED: RUNTIME_ORCH_ROOT must name the private ORCH root' >&2; exit 2
++fi
++O=$RUNTIME_ORCH_ROOT
++[[ "$O" = /* && "$O" != *[!a-zA-Z0-9_./-]* && "/$O/" != */../* && "/$O/" != */./* ]] || {
++  echo 'REFUSED: ORCH root must be a safe absolute path' >&2; exit 2;
++}
++[[ -d "$O/queue/pending" && -w "$O/queue/pending" ]] || {
++  echo 'REFUSED: private pending queue is unavailable' >&2; exit 2;
++}
+ case $# in
+   2|3|7) ;;
+   *) echo "usage: request-runtime NAME AGENT_SHA [LOCK_SHA256] [AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA TEMPLATE_SUITE]" >&2; exit 2 ;;
