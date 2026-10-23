@@ -407,6 +407,20 @@
           },
           "minItems": 1,
           "uniqueItems": true
+        },
+        "steps": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/ID"
+          },
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/ID"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          }
         }
       },
       "required": [

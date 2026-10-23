@@ -185,6 +185,66 @@ def test_restore_is_sole_command_and_requires_both_head_guards():
     )
 
 
+def test_inverse_step_selection_and_v2_request_carriers_are_closed():
+    change = {
+        "ref": "parent",
+        "path": ["config", "title"],
+        "before": {"state": "absent"},
+        "op": "set",
+        "value": "new title",
+    }
+    value = request()
+    value.update(
+        label="Rename",
+        merge="fields",
+        reads=[{"kind": "scope", "ref": "timeline", "path": []}],
+        steps=[
+            {
+                "id": "step-1",
+                "label": "Rename",
+                "intent": "set title",
+                "tags": ["title"],
+                "command_ordinals": [0],
+                "patch": [change],
+                "reads": [{"kind": "scope", "ref": "timeline", "path": []}],
+            }
+        ],
+    )
+    value["commands"] = [
+        {
+            "schema_version": 1,
+            "op": "doc.patch",
+            "version": "1",
+            "select": None,
+            "args": {"changes": [change]},
+            "intent": {},
+        }
+    ]
+    validator("CommitRequest").validate(value)
+
+    inverse = {
+        "schema_version": 1,
+        "op": "timeline.inverse",
+        "version": "1",
+        "select": None,
+        "args": {
+            "publications": ["pub-1"],
+            "steps": {"pub-1": ["step-1"]},
+        },
+        "intent": {},
+    }
+    value["commands"] = [inverse]
+    validator("CommitRequest").validate(value)
+    for invalid_steps in (
+        None,
+        {"pub-1": []},
+        {"pub-1": ["step-1", "step-1"]},
+        {"pub-1": "step-1"},
+    ):
+        value["commands"][0]["args"]["steps"] = invalid_steps
+        assert not validator("CommitRequest").is_valid(value)
+
+
 def test_invalid_reply_preserves_structured_error_context():
     validator("CommitFailure").validate(
         {
@@ -227,6 +287,42 @@ def test_recorders_retain_execution_ordinal_and_all_leaf_families():
     )
     recorder = dict(schema_version=1, commands=[record], undo_of=[], restored_from=None)
     validator("Recorder").validate(recorder)
+    step = {
+        "id": "step-1",
+        "label": "Move",
+        "intent": "move clip",
+        "tags": ["position"],
+        "command_ordinals": [0],
+        "patch": [
+            {
+                "ref": "parent/clip:c",
+                "path": ["at"],
+                "before": {"state": "present", "value": 1},
+                "op": "set",
+                "value": 2,
+            }
+        ],
+        "reads": [{"kind": "scope", "ref": "timeline", "path": []}],
+        "dependencies": [],
+    }
+    recorder.update(
+        steps=[step],
+        label="Move",
+        merge_mode="fields",
+        undo_of=["pub-1"],
+        undo_steps={"pub-1": ["step-1"]},
+    )
+    validator("Recorder").validate(recorder)
+    recorder["undo_steps"] = None
+    validator("Recorder").validate(recorder)
+    for invalid_undo_steps in (
+        {"pub-1": []},
+        {"pub-1": ["step-1", "step-1"]},
+        {"pub-1": "step-1"},
+    ):
+        recorder["undo_steps"] = invalid_undo_steps
+        assert not validator("Recorder").is_valid(recorder)
+    recorder["undo_steps"] = None
     for invalid in (-1, True, 0.5):
         record["ordinal"] = invalid
         assert not validator("Recorder").is_valid(recorder)

@@ -102,3 +102,21 @@ def test_typescript_track_label_positive_and_negative_fixtures():
         "tsc", "--noEmit", "--strict", "--module", "NodeNext", "--target", "ES2022",
         str(ROOT / "tests/fixtures/timeline-commit-types.mts"),
     ], check=True)
+
+
+@pytest.mark.parametrize(
+    "module_name",
+    ["runtime_protocol.timeline_commit_types", "astrid_runtime_client.timeline_commit_types"],
+)
+def test_inverse_args_generate_optional_step_selection(module_name):
+    dto = importlib.import_module(module_name)
+    inverse = dto.InverseArgs
+    assert inverse.__required_keys__ == {"publications"}
+    assert inverse.__optional_keys__ == {"steps"}
+    assert get_type_hints(inverse) == {
+        "publications": list[str],
+        "steps": dict[str, list[str]],
+    }
+
+    rendered = timeline_commit_types.render()["packages/typescript/src/timeline-commit-types.ts"]
+    assert "export type InverseArgs = { publications: [ID, ...Array<ID>]; steps?: { [key: string]: [ID, ...Array<ID>] } };" in rendered

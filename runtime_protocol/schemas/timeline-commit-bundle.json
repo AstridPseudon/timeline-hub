@@ -2363,6 +2363,20 @@
               "minItems": 1,
               "type": "array",
               "uniqueItems": true
+            },
+            "steps": {
+              "additionalProperties": {
+                "items": {
+                  "$ref": "#/$defs/ID"
+                },
+                "minItems": 1,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "propertyNames": {
+                "$ref": "#/$defs/ID"
+              },
+              "type": "object"
             }
           },
           "required": [
