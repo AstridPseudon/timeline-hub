@@ -111,7 +111,7 @@ def _ack(result, body, flight, identity):
             _pin(data["evaluated_head"])
             require(not any(key in data for key in ("accepted_revision_id", "publisher", "accepted_publication_id")))
         else:
-            require(data["status"] in {"accepted", "rebased"})
+            require(data["status"] in {"accepted", "merged", "rebased"})
             CommandReceipt.from_dict(receipt)
             require(receipt["command_kind"] == "timeline.commit")
             require(receipt["project_id"] == body["project_id"] and receipt["idempotency_key"] == flight["key"])
@@ -195,8 +195,11 @@ class TimelineSession:
         from astrid.sdk.timeline.native_source_inputs import materialize_transcript_inputs
         from astrid.sdk.timeline.store import fetch_bundle
 
+        commands = [*state["pending"], *extra_commands]
+        source = ({"publication_id": state["base"]["publication_id"]}
+                  if any(command["op"] == "doc.patch" for command in commands) else {})
         bundle = fetch_bundle(self.project_id, self.timeline_id,
-                              revision_id=state["base"]["revision_id"], client=self.client)
+                              revision_id=state["base"]["revision_id"], client=self.client, **source)
         materialize_transcript_inputs(
             bundle, [*state["pending"], *extra_commands],
             client=self.client.timelines._client, project=self.project_id)
@@ -297,20 +300,41 @@ class TimelineSession:
         commands = [_native_command(command) for command in commands]
         return self._stage(lambda state: execute(self._bundle(state, commands), commands).commands)
 
-    def commit(self, command, *, idempotency_key=None, dry_run=False, via="python", verified_media=()):
+    def commit(self, command, *, idempotency_key=None, dry_run=False, via="python", verified_media=(),
+               label=None, steps=None, merge="fields", reads=None):
         """Capture and flush one native command, or retry its original flight."""
         return self.commit_many([command], idempotency_key=idempotency_key, dry_run=dry_run,
-                                via=via, verified_media=verified_media)
+                                via=via, verified_media=verified_media, label=label, steps=steps,
+                                merge=merge, reads=reads)
 
     def commit_many(
         self, commands, *, idempotency_key=None, dry_run=False, via="python", base=None,
-        verified_media=(),
+        verified_media=(), label=None, steps=None, merge="fields", reads=None,
     ):
         """Capture and flush a batch, or retry its exact flight before a suffix."""
         from astrid.sdk.timeline._command_state import equal
         from astrid.sdk.timeline.commands import execute
 
         commands = [_native_command(command) for command in commands]
+        metadata_requested = label is not None or steps is not None or merge != "fields" or reads is not None
+        label = label if label is not None else "Timeline edit"
+        if not isinstance(label, str) or not label.strip():
+            raise TimelineEditError("commit label must be a nonempty string")
+        if merge not in {"fields", "atomic"}:
+            raise TimelineEditError("merge must be fields or atomic")
+        if steps is None:
+            steps = []
+            for ordinal, command in enumerate(commands):
+                patch = (copy.deepcopy(command.get("args", {}).get("changes", []))
+                         if command.get("op") == "doc.patch" else [])
+                steps.append({"id": f"step-{ordinal + 1}", "label": label,
+                              "intent": "", "tags": [], "command_ordinals": [ordinal],
+                              "patch": patch})
+        else:
+            steps = copy.deepcopy(steps)
+        options = {"label": label, "steps": steps, "merge": merge}
+        if reads is not None:
+            options["reads"] = copy.deepcopy(reads)
         self._stage(lambda state: execute(
                         self._bundle(state, commands), commands, verified_media=verified_media
                     ).commands,
@@ -319,6 +343,15 @@ class TimelineSession:
                         and all(equal(saved["intent"].get(key), value)
                                 for key, value in command.get("intent", {}).items())
                         for saved, command in zip(pending, commands)), base=base)
+        with self.outbox.locked():
+            state = self._state()
+            if metadata_requested:
+                existing = state.get("commit_options")
+                if existing is not None and existing != options:
+                    raise TimelineEditError("pending commit metadata differs; retry the original request")
+                if state.get("flight") is None:
+                    state["commit_options"] = copy.deepcopy(options)
+                    self.outbox.write(state)
         return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
 
     def _queue(self, capture, matches=None):
@@ -418,6 +451,37 @@ class TimelineSession:
         """Send/retry exactly one prefix; leave newer local commands untouched."""
         return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
 
+    def submit(self, commands, *, label, steps, merge="fields", reads=None,
+               idempotency_key=None, dry_run=False, expected_state, base=None, evaluation=None):
+        """Freeze an already captured v2 batch, without recapturing its guards.
+
+        A replacement is allowed only after an explicit conflict. Transport
+        retries use flush(), which retains the entire original request.
+        """
+        commands = [_native_command(command) for command in commands]
+        options = {"label": label, "steps": copy.deepcopy(steps), "merge": merge}
+        if reads is not None:
+            options["reads"] = copy.deepcopy(reads)
+
+        def prepare(state):
+            if state != expected_state:
+                raise TimelineEditError("outbox changed during evaluation; nothing was submitted")
+            if state["pending"] or state["flight"] is not None:
+                if state.get("conflict", {}).get("details", {}).get("status") != "conflict":
+                    raise TimelineEditError("retry the original in-flight request before another edit")
+                if state["flight"]["count"] != len(state["pending"]):
+                    raise TimelineEditError("pending dependent commands require revalidation before recomputing")
+                if idempotency_key is not None and idempotency_key == state["flight"]["key"]:
+                    raise TimelineEditError("recomputed intent requires a fresh idempotency key")
+            state["base"] = _pin(base or state["base"])
+            state["pending"] = copy.deepcopy(commands)
+            state["flight"] = None
+            state.pop("conflict", None)
+            state["commit_options"] = options
+            state["evaluation"] = copy.deepcopy(evaluation)
+
+        return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, prepare=prepare)
+
     def _flush(self, *, idempotency_key=None, dry_run=False, via="python", prepare=None):
         with self.outbox.locked():
             state = self._state()
@@ -435,6 +499,7 @@ class TimelineSession:
                         "commands": copy.deepcopy(state["pending"]), "source": {"via": via}, "dry_run": dry_run}
                 if 'rationale' in state:
                     body['rationale'] = state['rationale']
+                body.update(copy.deepcopy(state.get("commit_options", {})))
                 key = idempotency_key if idempotency_key is not None else f"timeline-edit-{uuid.uuid4().hex}"
                 if key == state.get("preview_key"):
                     raise TimelineEditError("use a fresh key after a preview")
@@ -453,7 +518,7 @@ class TimelineSession:
             ))
         except Exception as exc:
             details = getattr(exc, "details", {})
-            if isinstance(details, dict) and details.get("status") in {"conflict", "refused"}:
+            if isinstance(details, dict) and details.get("status") in {"conflict", "refused", "invalid"}:
                 failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
                 with self.outbox.locked():
                     state = self._state()
@@ -477,6 +542,11 @@ class TimelineSession:
                                            "publication_id": receipt["receipt_id"]})
                     del state["pending"][:flight["count"]]
                     state.pop('rationale', None)
+                if "commit_options" in state:
+                    if dry_run:
+                        del state["pending"][:flight["count"]]
+                    state.pop("commit_options", None)
+                    state.pop("evaluation", None)
                 state["flight"] = None
                 state.pop("conflict", None)
                 self.outbox.write(state)

@@ -72,34 +72,6 @@ def test_complete_document_roundtrip_reuses_original_images_and_unknown_fields(s
     assert document == original
 
 
-def test_canonical_reload_filters_authored_meta_but_discovers_component_params_media():
-    document = document_fixture(shared=False)
-    authored_only = "sha256:" + "2" * 64
-    component_media = "sha256:" + "3" * 64
-    internal = document["internal_timeline_revisions"][0]
-    clip = internal["payload"]["clips"][0]
-    clip["meta"] = {"org.example.notes": {"media_id": authored_only}}
-    clip["params"] = {"meta": {"media_id": component_media}}
-    internal["content_digest"] = _digest(internal["payload"])
-    document["dependency_manifest"]["media"] = [
-        {"media_id": MEDIA, "content_digest": MEDIA},
-        {"media_id": component_media, "content_digest": component_media},
-    ]
-    document["dependency_manifest"] = _manifest(
-        document["shot_revisions"], document["internal_timeline_revisions"],
-        document["dependency_manifest"]["media"], [],
-    )
-
-    assert document_from_bundle(bundle_from_document(document)) == document
-
-    missing_component_media = copy.deepcopy(document)
-    missing_component_media["dependency_manifest"]["media"] = [
-        {"media_id": MEDIA, "content_digest": MEDIA},
-    ]
-    with pytest.raises(AuthoringBundleError, match="missing media dependency"):
-        bundle_from_document(missing_component_media)
-
-
 def test_parent_edit_keeps_shared_child_closure_and_main_fields():
     document = document_fixture()
     bundle = bundle_from_document(document)

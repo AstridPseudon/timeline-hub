@@ -408,7 +408,6 @@ class _RemoteFamily:
             elif operation == "list_variants": value = self._client.list_variants(*args, **kwargs)
             elif operation == "mark_generation_variants_viewed": value = self._client.mark_generation_variants_viewed(*args, **kwargs)
             elif operation == "mark_variant_viewed": value = self._client.mark_variant_viewed(*args, **kwargs)
-            elif operation == "publish_timeline_render": value = self._client.publish_timeline_render(*args, **kwargs)
             elif operation == "publish_parent_composition": value = self._client.publish_parent_composition(*args, **kwargs)
             elif operation == "promote_project_shot_candidate": value = self._client.promote_project_shot_candidate(*args, **kwargs)
             elif operation == "recover_project_reference": value = self._client.recover_project_reference(*args, **kwargs)
@@ -2021,34 +2020,39 @@ class RemoteTasks(_RemoteFamily):
             runtime_epoch=int(runtime_epoch),
             idempotency_key=f"fail-{attempt_id}-{int(fence)}",
         )
-    def publish_timeline_render(self, attempt_id: str, publication: Mapping[str, Any], *, idempotency_key: str):
-        """Use the Runtime publication checkpoint with a typed wire body."""
-        if not isinstance(publication, Mapping):
-            return DomainResult.failure(
-                ErrorObject("validation_error", "timeline publication must be an object", {}),
+    def publish_timeline_render(self, attempt_id: str, publication: Mapping[str, Any], *,
+                                idempotency_key: str, requester_session=None,
+                                label="Assemble timeline", steps=None, merge="fields",
+                                reads=None, dry_run=False):
+        """Publish a settled assembler result through its requester's commit outbox."""
+        from .timeline._common import TimelineEditError
+        from .timeline.assembly import commit_assembly
+        from .timeline.sync import CommitConflict
+
+        try:
+            if (requester_session is None
+                    or requester_session.client._remote._transport is not self._client):
+                raise TimelineEditError("render publication requires its authenticated requester session")
+            if not isinstance(publication, Mapping) or publication.get("producer", {}).get("attempt_id") != attempt_id:
+                raise TimelineEditError("render publication requires the exact settled assembly attempt")
+            result = commit_assembly(
+                requester_session, publication, idempotency_key=idempotency_key,
+                label=label, steps=steps, merge=merge, reads=reads, dry_run=dry_run,
+            )
+            return DomainResult.success(
+                result["data"], receipt=CommandReceipt.from_dict(result["receipt"]) if result["receipt"] else None,
                 idempotency_key=idempotency_key,
             )
-        required = (
-            "lease_id", "fence", "runtime_epoch", "timeline_id",
-            "expected_version", "config", "registry", "render",
-        )
-        missing = [field for field in required if field not in publication]
-        if missing:
-            return DomainResult.failure(
-                ErrorObject("validation_error", "timeline publication is missing required fields", {"fields": missing}),
-                idempotency_key=idempotency_key,
-            )
-        return self._typed(
-            "publish_timeline_render", attempt_id, key=idempotency_key,
-            idempotency_key=idempotency_key,
-            lease_id=publication["lease_id"], fence=publication["fence"],
-            runtime_epoch=publication["runtime_epoch"],
-            timeline_id=publication["timeline_id"],
-            expected_version=publication["expected_version"],
-            config=publication["config"], registry=publication["registry"],
-            render=publication["render"],
-            **{key: publication[key] for key in ("slug", "name") if key in publication},
-        )
+        except CommitConflict as exc:
+            return DomainResult.failure(ErrorObject(**exc.failure), idempotency_key=idempotency_key)
+        except WorkspaceClientError as exc:
+            return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_key=idempotency_key)
+        except (TimelineEditError, KeyError, TypeError, AttributeError) as exc:
+            return DomainResult.failure(ErrorObject("validation_error", str(exc), {
+                "status": "invalid", "code": "assembly_requester_required", "path": [],
+                "hint": "Use admit_assembly and the settled proposal with the original requester session.",
+                "suggested_command": "astrid timelines show",
+            }), idempotency_key=idempotency_key)
     def list(self, project_id, *, cursor=None, limit=50):
         return self._typed("list_project_tasks", project_id, cursor=cursor, limit=limit)
     def show(self, task_id): return self._typed("get_task", task_id)

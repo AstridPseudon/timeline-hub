@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+import json
 import re
 import sys
 import uuid
@@ -19,6 +21,62 @@ from astrid.sdk.timeline._common import (EDITABLE_NOTE, TimelineEditError, _num,
 from astrid.sdk.timeline.doc import (_row_start, _set_length, _strip_derived)
 from astrid.sdk.timeline.model import Voice
 from astrid.sdk import timeline_transcripts as _transcripts  # module access: its functions resolve at call time
+
+
+_NARRATION_MEDIA_TYPE = "text/plain; charset=utf-8"
+
+
+def _narration_descriptor(text: str) -> tuple[dict[str, Any], bytes]:
+    """Return the exact managed-object descriptor and bytes for one narration line."""
+    raw = text.encode("utf-8")
+    digest = "sha256:" + hashlib.sha256(raw).hexdigest()
+    return ({"object_id": digest, "digest": digest, "size": len(raw),
+             "media_type": _NARRATION_MEDIA_TYPE}, raw)
+
+
+def _narration_occurrence(bundle: Mapping[str, Any], shot_id: str) -> str:
+    """Resolve a narration shot to its sole occurrence-owned binding target."""
+    matches = [row for row in bundle.get("placements") or []
+               if isinstance(row, Mapping) and row.get("shot_id") == shot_id]
+    if len(matches) != 1 or not isinstance(matches[0].get("occurrence_id"), str):
+        raise TimelineEditError(
+            f"narration binding for shot {shot_id!r} requires one exclusive occurrence; "
+            "the current Main shot binding has no commit-owned occurrence seam"
+        )
+    return "occurrence:" + matches[0]["occurrence_id"]
+
+
+def _capture_narration_commands(
+    bundle: dict[str, Any], changes: Mapping[str, str]
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Capture narration changes as native commands and update a local preview.
+
+    Runtime re-verifies each descriptor at commit admission.  The local preview
+    only supplies the exact command guards; it never authorizes a film write.
+    """
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.native_text_binding import capture_text_binding_set
+
+    local = copy.deepcopy(bundle)
+    commands: list[dict[str, Any]] = []
+    verified: list[dict[str, Any]] = []
+    for shot_id, text in changes.items():
+        owner = _narration_occurrence(local, shot_id)
+        descriptor, raw = _narration_descriptor(text)
+        verified_descriptor = {**descriptor, "utf8": True}
+        command = capture_text_binding_set(
+            local, owner, {"kind": "voiceover_script", "slot": None},
+            text=descriptor, verified_text=[verified_descriptor],
+        )
+        commands.append(command)
+        verified.append(verified_descriptor)
+        local = execute(local, [command], verified_media=[verified_descriptor]).bundle
+        # Keep the bytes alive through this helper's boundary.  The descriptor
+        # is the custody witness; Runtime performs the authoritative read.
+        if len(raw) != descriptor["size"]:
+            raise TimelineEditError(f"narration source bytes changed for shot {shot_id!r}")
+    return commands, verified
+
 
 class _PublishMixin:
     """Checkout: publish, narration binding, and the document as it is saved (annotated) and read back (absorb)."""
@@ -54,8 +112,8 @@ class _PublishMixin:
                 receipt.update(self._publish_narration(key, client=client))
             except TimelineEditError as exc:  # the structure IS published: say so, and how to finish
                 receipt["narration_error"] = (f"{exc}. The cut is published (head {receipt.get('new_head')}); only the "
-                                              "narration binding is behind: timelines checkout TL --fresh, then "
-                                              "timelines publish TL -m \"narration\" pins it")
+                                              "narration binding is behind: retry the original publish to reconcile "
+                                              "the durable narration commit")
         # Media is ingested by _register_asset before this point; its registry
         # entry now carries the stable object id. One document covers each take.
         receipt["transcripts"] = []
@@ -110,12 +168,99 @@ class _PublishMixin:
     def _publish_narration(self, key: str, *, client: Any = None) -> dict[str, Any]:
         def run(c: Any) -> dict[str, Any]:
             from astrid.sdk.timeline.checkout import Checkout
-            head = Checkout(_store.fetch_bundle(str(self.bundle["project_id"]), str(self.bundle["timeline_id"]), client=c))
-            pinned = head.pin_narration(c, idempotency_key=key)
-            if not pinned:
-                return {"narration_pinned": []}
-            second = _store.publish_bundle(head.stored_document(), f"{key}-narration", client=c)
-            return {"narration_pinned": pinned, "new_head": second.get("new_head"), "narration_head": second.get("new_head")}
+            from astrid.sdk.timeline.sync import TimelineSession
+
+            project_id = str(self.bundle["project_id"])
+            timeline_id = str(self.bundle["timeline_id"])
+            session = TimelineSession.open(project_id, timeline_id, client=c)
+            with session.outbox.locked():
+                state = session._state()
+            flight = state.get("flight")
+            commit_key = f"{key}-narration"[:120]
+            pinned: list[str] = []
+            if flight is not None:
+                try:
+                    flight_body = json.loads(flight.get("body", "{}"))
+                except (AttributeError, TypeError, ValueError):
+                    flight_body = {}
+                flight_commands = flight_body.get("commands")
+                if (flight_body.get("label") != "Bind narration"
+                        or not isinstance(flight_commands, list)
+                        or not flight_commands
+                        or not all(isinstance(command, Mapping)
+                                   and command.get("op") == "text-binding.set"
+                                   for command in flight_commands)):
+                    raise TimelineEditError(
+                        "another timeline request is awaiting reconciliation; retry that request before narration"
+                    )
+                # The durable flight owns the original key and body. A later
+                # publish invocation may generate a new outer key, but must
+                # still retry this exact narration request.
+                occurrence_shots = {
+                    str(row["occurrence_id"]): str(row["shot_id"])
+                    for row in self.bundle.get("placements") or []
+                    if isinstance(row, Mapping)
+                    and isinstance(row.get("occurrence_id"), str)
+                    and isinstance(row.get("shot_id"), str)
+                }
+                pinned = [
+                    occurrence_shots.get(str(command["select"]).removeprefix("occurrence:"),
+                                         str(command["select"]).removeprefix("occurrence:"))
+                    for command in flight_commands
+                    if isinstance(command.get("select"), str)
+                ]
+                result = session.flush(idempotency_key=flight["key"])
+            else:
+                if state.get("pending"):
+                    raise TimelineEditError(
+                        "another timeline request is pending; flush it before narration binding"
+                    )
+                bundle = session._bundle(state)
+                changes = Checkout(bundle).narration_changes()
+                if not changes:
+                    return {"narration_pinned": []}
+                pinned = list(changes)
+
+                # Ingest the exact UTF-8 source bytes as ordinary project
+                # media; the film-affecting association is made only by the
+                # commit below.
+                for shot_id, text in changes.items():
+                    descriptor, raw = _narration_descriptor(text)
+                    imported = c.media.import_bytes(
+                        project=project_id, data=raw,
+                        filename=f"narration-{shot_id}.txt",
+                        media_type=_NARRATION_MEDIA_TYPE,
+                        idempotency_key=f"{key}-narration-media-{shot_id}"[:120],
+                    )
+                    if getattr(imported, "ok", True) is False:
+                        raise TimelineEditError(
+                            f"could not retain narration source bytes for shot {shot_id}: "
+                            f"{getattr(imported, 'error', imported)}"
+                        )
+                    returned = getattr(imported, "data", imported)
+                    if isinstance(returned, Mapping):
+                        returned_id = returned.get("object_id") or returned.get("digest")
+                        if returned_id is not None and returned_id != descriptor["object_id"]:
+                            raise TimelineEditError(
+                                f"narration source custody mismatch for shot {shot_id}: "
+                                f"Runtime retained {returned_id!r}, expected {descriptor['object_id']!r}"
+                            )
+                commands, _ = _capture_narration_commands(bundle, changes)
+                steps = [{
+                    "id": f"step-{index}",
+                    "label": f"Bind narration for {shot_id}",
+                    "intent": "bind narration script text",
+                    "tags": ["narration", "voiceover_script"],
+                    "command_ordinals": [index],
+                    "patch": [],
+                } for index, shot_id in enumerate(changes)]
+                result = session.submit(
+                    commands, label="Bind narration", steps=steps, merge="fields", reads=[],
+                    idempotency_key=commit_key, expected_state=state, base=state["base"],
+                    evaluation={"kind": "label", "count": 0},
+                )
+            accepted = result["data"]["accepted_revision_id"]
+            return {"narration_pinned": pinned, "new_head": accepted, "narration_head": accepted}
 
         if client is not None:
             return run(client)

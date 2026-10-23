@@ -14,8 +14,6 @@ from collections.abc import Mapping
 from astrid.core.timeline.authoring_bundle import (
     AuthoringBundleError,
     _collect_media,
-    _timeline_media_view,
-    _without_meta,
     compile_authoring_candidate,
     open_authoring_bundle,
     preview_authoring_candidate,
@@ -138,11 +136,8 @@ def _verify_document(document):
                  and isinstance(row["media_id"], str) and _DIGEST.fullmatch(row["media_id"])
                  and row["content_digest"] == row["media_id"], "invalid immutable media pin")
     _require(len({row["media_id"] for row in media}) == len(media), "duplicate media pin")
-    required_media = (
-        _collect_media(_timeline_media_view(parent["payload"], include_parent_locations=True))
-        | set().union(*(_collect_media(_without_meta(row["payload"])) for row in shots))
-        | set().union(*(_collect_media(_timeline_media_view(row["payload"])) for row in internals))
-    )
+    required_media = set().union(*(_collect_media(row["payload"])
+                                   for row in [parent, *shots, *internals]))
     _require(required_media <= {row["media_id"] for row in media}, "missing media dependency")
     _require(manifest == _manifest(shots, internals, media, documents),
              "dependency manifest does not match the immutable closure")
@@ -1120,9 +1115,9 @@ class RuntimeCommitService:
 
                 records = prepared_records(plan, undo_of=undo_of,
                                            restored_from=restored_from)
-                # R2's guarded whole/per-step inverse metadata remains part of
-                # the authenticated history record alongside the v2 preview
-                # projection assembled by R3.
+                # R2's guarded per-step inverse selection is part of the
+                # authenticated recorder, including when the official v2
+                # preview helper builds the common record fields.
                 records["undo_steps"] = copy.deepcopy(undo_steps)
                 prepared = {
                     "expected_head": copy.deepcopy(current), "canonical_document": document,
