@@ -1,7 +1,7 @@
 {
-  "task": "OPS-D29-runtime-toolchain-return-2110",
+  "task": "OPS-D29-toolchain-lint-sol-2121",
   "repo": "runtime",
-  "artifact_branch": "tl/rt-OPS-D29-toolchain-return-2110",
+  "artifact_branch": "tl/rt-OPS-D29-toolchain-lint-sol-2121",
   "base": {
     "branch": "tl/rt-OPS-D29-runtime-toolchain-carrier-2057",
     "commit": "abd47e68de6d7a36bec8ac4f0f6e0bc01d98d14e"
@@ -39,8 +39,8 @@
     "shape": "actual requester -> unchanged dispatcher RUNTIME word split -> actual maker preflight",
     "fixture": {
       "script": "ops-handoff/test-node-carrier.py",
-      "bytes": 8675,
-      "sha256": "9abe24db3fe3a260cf07b0d0ca9d849b7e07c42df1f8059d59b28f3901b56324",
+      "bytes": 8709,
+      "sha256": "0159a9d70ae81fecd9c4d836fe8c9e7f4bf91bbeee81b862c6960f77e9d1366a",
       "result": "PASS cases=14 explicit=2 legacy=3 wrong-version/npm/path/missing/symlink/unsafe/extra/ambiguous=9 store=0 build=0",
       "limits": "bounded mocks only; no actual Node path, receipt, build or Store; queue/daemon are private finite fixture copies; no network"
     }

@@ -1,7 +1,12 @@
-#!/usr/bin/env python3
 """Bounded D29 carrier proof: requester -> unchanged dispatcher -> maker preflight."""
 from __future__ import annotations
-import hashlib, json, os, shutil, subprocess, tempfile
+
+import hashlib
+import json
+import os
+import shutil
+import subprocess
+import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -9,7 +14,7 @@ DEFAULT_ORCH = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90
 
 def run(argv, *, env=None, cwd=None, timeout=8):
     return subprocess.run(argv, env=env, cwd=cwd, text=True, stdout=subprocess.PIPE,
-                          stderr=subprocess.STDOUT, timeout=timeout)
+                          stderr=subprocess.STDOUT, timeout=timeout, check=False)
 
 def git(path, *args):
     return subprocess.check_output(["git", "-C", str(path), *args], text=True).strip()
@@ -55,7 +60,7 @@ def main() -> None:
         # Feed the canonical patch through patch(1), without inventing a queue payload.
         result = subprocess.run(["patch", "--batch", "--fuzz=0", "-d", str(orch), "-p1"],
                                 input=(HERE / "remotion-toolchain.patch").read_text(),
-                                text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                                text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False)
         assert result.returncode == 0, result.stdout
         assert run(["bash", "-n", str(orch / "bin/request-runtime")]).returncode == 0
         assert run(["bash", "-n", str(orch / "bin/make-runtime")]).returncode == 0
