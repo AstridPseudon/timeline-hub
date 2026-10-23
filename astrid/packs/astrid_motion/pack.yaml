@@ -461,6 +461,10 @@
         },
         {
           "kind": "implementation",
+          "path": "rendering/elements/effects/am-type/position-keys.ts"
+        },
+        {
+          "kind": "implementation",
           "path": "rendering/elements/effects/am-type/element.yaml"
         }
       ]

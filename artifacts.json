@@ -47,8 +47,10 @@
     "astrid/packs/astrid_motion/rendering/elements/effects/am-terminal/element.yaml": "sha256:1e05df27df1ccf82d76d62cf2085dea7551018da6dc62fbfe9a6f42edbaa89a6",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-tweet/component.tsx": "sha256:b889f7d0dd95d945deebec74e825b9f168f0b6d8f5ea6457f9464d04871d4d2b",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-tweet/element.yaml": "sha256:be1a09967880f5f2e3fcb91eed17317a73bbe34eaf13f433907c5a0eeb9744f5",
-    "astrid/packs/astrid_motion/rendering/elements/effects/am-type/component.tsx": "sha256:bc8270ba7c506d3bdf2ccc8041cb8fa0ae3c3293f1c1bfdf5bc02d96985f186c",
-    "astrid/packs/astrid_motion/rendering/elements/effects/am-type/element.yaml": "sha256:fab87dca9d9c4032bfd4715459f08e561b843edc39a2e456308ed674d1d1c84e",
+    "astrid/packs/astrid_motion/rendering/elements/effects/am-type/component.tsx": "sha256:2d9fdb33fb995d5fc049cac431048b3a7a82e13d863eae2fd13c17533ce032b9",
+    "astrid/packs/astrid_motion/rendering/elements/effects/am-type/element.yaml": "sha256:8a78e98f4cf2fefd54f2559123e49c6f9dc396865144cf110a8a280cce4eec8b",
+    "astrid/packs/astrid_motion/rendering/elements/effects/am-type/position-keys.test.ts": "sha256:cd3da6375339e9e83e6abc083ce51b1f73387eebba3c2ede4d634014d32cd15d",
+    "astrid/packs/astrid_motion/rendering/elements/effects/am-type/position-keys.ts": "sha256:2e7775b541c786975d3c0267da237eec5fef38b4bcbb08f3ae77c7c09a952fb7",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-ui-sketch/component.tsx": "sha256:8e1219af8d926dd352507d6cdb2dddba1b876bfbe95ac5c580c6d0644f7a8b90",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-ui-sketch/element.yaml": "sha256:e7281271f6a17d75100e5266877330501198f328c0f2972f281e1d0a5c109ae8",
     "astrid/packs/local/rendering/elements/boundary.ts": "sha256:cc8a8700a08cb1991f00bc1f0d231aa7f256227fb86cfe474f530827ae010fe7",
@@ -171,5 +173,5 @@
     "schemas/public-boundary/fixtures/redaction.json": "sha256:d827821a8b1c1bd9b50fa695550deeb770175e283b9949635d1c85ee03bece46"
   },
   "producer": "astrid-agent",
-  "version": "sha256:eabd40d8367b0e4f8285949b6a724839475c846653868d3b550c8ee70f53e375"
+  "version": "sha256:192632b508a84f2c7895b089e8f8965dcc13c7895c85190e0db7ed273a6a6c36"
 }
