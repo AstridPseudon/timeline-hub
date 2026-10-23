@@ -37,6 +37,7 @@ NEW_OPERATIONS = {
     "occurrence.create",
     "clip.swap-media",
     "text-binding.set",
+    "doc.patch",
 }
 
 
@@ -46,10 +47,10 @@ def command(op, select, args):
 
 def test_exact_frozen_schema_and_operation_inventory_are_packaged():
     raw = (ROOT / "contract/schemas/edit-command.json").read_bytes()
-    assert hashlib.sha256(raw).hexdigest() == "6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d"
+    assert hashlib.sha256(raw).hexdigest() == "d106dfe8212500709b4072d7bc0486f83c27d5d8de33d215cb52b9ea7d46357d"
     schema = json.loads(raw)
-    assert len(schema["$defs"]) == 55
-    assert len(schema["$defs"]["EditCommand"]["allOf"]) == 29
+    assert len(schema["$defs"]) == 58
+    assert len(schema["$defs"]["EditCommand"]["allOf"]) == 30
     expected_operations = {c[0] for c in CASES} | NEW_OPERATIONS
     assert {c["if"]["properties"]["op"]["const"] for c in schema["$defs"]["EditCommand"]["allOf"]} == expected_operations
     bundle = json.loads((ROOT / "runtime_protocol/schemas/timeline-commit-bundle.json").read_bytes())
