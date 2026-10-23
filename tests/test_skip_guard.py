@@ -141,17 +141,18 @@ def test_a_skip_raised_in_a_fixture_teardown_fails_the_run(sandbox):
 
 
 def test_a_declared_skip_raised_in_a_fixture_teardown_is_listed(sandbox):
-    result = _run(sandbox, """
+    name = "windows-security" if sys.platform != "win32" else "posix-process-groups"  # its condition holds on this host
+    result = _run(sandbox, f"""
         import pytest
         @pytest.fixture
         def late():
             yield
-            pytest.skip("[declared:windows-security] native Windows socket exclusivity and file DACL APIs")
+            pytest.skip("[declared:{name}] declared reason")
         def test_a(late): pass
         def test_b(): pass
         """)
     assert result.ret == 0, result.stdout.str()
-    result.stdout.fnmatch_lines(["declared skips (1):", "  SKIP *::test_a: [[]declared:windows-security]*"])
+    result.stdout.fnmatch_lines(["declared skips (1):", f"  SKIP *::test_a: [[]declared:{name}]*"])
 
 
 def test_skips_of_non_blocking_entries_are_listed_under_their_own_header(sandbox):
