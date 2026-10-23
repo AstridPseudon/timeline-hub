@@ -1,1 +1,1 @@
-2026-10-23T00:11:53Z daemons+manager alive (up 65m); 1 worker running (G3 repair), others in review; ready-undispatched none; merges worker-branch only; disk 16G; issue: R2r stopped by auto safety review (rm -f) - manager holding, no bypass
+2026-10-23T00:40:55Z daemons+manager alive; workers running 5; ready-undispatched none seen; merges worker-branch only; disk 15G; no issues
