@@ -10,7 +10,7 @@ from test_timeline_commit_port import commit, request, rows
 
 from runtime_protocol.errors import RuntimeErrorBase
 from runtime_protocol.timeline_commit import CommitRejected
-from runtime_protocol.timeline_commit_auth import site
+from runtime_protocol.timeline_commit_auth import _coherent_materialization, site
 from runtime_protocol.timeline_commit_port import route_path
 from runtime_protocol.timeline_commit_validation import digest, validate_commit_value
 
@@ -210,6 +210,23 @@ def test_native_text_alias_duplicate_slot_is_ambiguous():
     }
     with pytest.raises(CommitRejected):
         site(boundary, "occurrence:occ-1/text-binding:prompt:hero", [])
+
+
+def test_materialization_turnover_requires_the_captured_physical_owner():
+    boundary = {"parent": {"payload": {"occurrences": [{
+        "occurrence_id": "occ-1", "shot_id": "shot-1", "shot_revision_id": "old",
+    }]}}, "shot-revision:old": {"payload": {}}}
+    effects = [{"op": "set", "ref": "shot-revision:new", "path": [],
+                "before": {"state": "absent"},
+                "value": {"internal_timeline_revision_id": "internal-new",
+                          "text_bindings": [{"shot_id": "shot-1"}]}},
+               {"op": "set", "ref": "parent",
+                "path": ["occurrences", "occurrence_id:occ-1", "shot_revision_id"],
+                "before": {"state": "present", "value": "old"}, "value": "new"}]
+    assert _coherent_materialization(boundary, effects[1], effects)
+    forged = copy.deepcopy(effects)
+    forged[0]["value"]["text_bindings"][0]["shot_id"] = "shot-foreign"
+    assert not _coherent_materialization(boundary, forged[1], forged)
 
 
 @pytest.mark.parametrize("step_read", [False, True])

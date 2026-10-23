@@ -422,16 +422,171 @@ def project_observation(payload, path, state):
     return result
 
 
-def step_output(boundary, step, records, accepted):
+def _physical_owner(document, ref):
+    """Return the occurrence owning an authenticated shot/internal image."""
+    parent = document.get("parent", {}).get("payload", {})
+    for row in parent.get("occurrences", []):
+        occurrence = row.get("occurrence_id")
+        shot_ref = "shot-revision:" + str(row.get("shot_revision_id"))
+        if ref == shot_ref:
+            return occurrence, row.get("shot_id")
+        shot = document.get(shot_ref, {})
+        if ref == "internal-revision:" + str(shot.get("internal_timeline_revision_id")):
+            return occurrence, row.get("shot_id")
+    return None
+
+
+def _coherent_materialization(boundary, effect, effects):
+    """Accept a physical turnover only when its sibling effect names its owner."""
+    if not effects:
+        return False
+    parent = boundary.get("parent", {}).get("payload", {})
+    occurrences = {row.get("occurrence_id"): row for row in parent.get("occurrences", [])}
+    roots = [candidate for candidate in effects
+             if not normalized_path(candidate["ref"], candidate["path"])
+             and candidate["ref"].startswith("shot-revision:")]
+
+    def payload(effect):
+        if effect["op"] == "remove":
+            value = effect.get("before")
+            return value.get("value") if value.get("state") == "present" else None
+        return effect.get("value")
+
+    def shot_ids(image):
+        return {binding.get("shot_id") for binding in (image or {}).get("text_bindings", [])
+                if binding.get("shot_id") is not None}
+
+    if effect["ref"] == "parent" and effect["path"][-1:] == ["shot_revision_id"]:
+        occurrence = next((part.split(":", 1)[1] for part in effect["path"]
+                           if part.startswith("occurrence_id:")), None)
+        row = occurrences.get(occurrence)
+        if row is None:
+            return False
+        return any(effect.get("value") == root["ref"].partition(":")[2]
+                   and row.get("shot_id") in shot_ids(payload(root)) for root in roots)
+
+    if effect["ref"].startswith(("shot-revision:", "internal-revision:")) and not effect["path"]:
+        internal_id = effect["ref"].partition(":")[2]
+        if effect["ref"].startswith("shot-revision:"):
+            image = payload(effect) or {}
+            internal_id = image.get("internal_timeline_revision_id")
+        if internal_id is None:
+            return False
+        return any(root_payload.get("internal_timeline_revision_id") == internal_id
+                   and any(row.get("shot_id") in shot_ids(root_payload) for row in occurrences.values())
+                   for root in roots for root_payload in [payload(root) or {}])
+    return False
+
+
+def _materialization_input(boundary, original, effect, observed_path, effects=None):
+    """Accept a rebased physical edge only across one authenticated owner."""
+    if original is None:
+        return False
+    ref, path = effect["ref"], normalized_path(effect["ref"], effect["path"])
+    if ref == "parent" and path[-1:] == ["shot_revision_id"]:
+        owner_path = path[:-1]
+        original_value = location(original[ref]["payload"], path)
+        if original_value.get("state") != "present":
+            return False
+        owner = owner_path[-1].partition(":")[2] if owner_path[-1].startswith("occurrence_id:") else None
+        current_value = location(boundary[ref]["payload"], path)
+        if owner is None or current_value.get("state") != "present":
+            return False
+        old_ref = "shot-revision:" + str(original_value["value"])
+        current_ref = "shot-revision:" + str(current_value["value"])
+        old_owner = _physical_owner(original, old_ref)
+        current_owner = _physical_owner(boundary, current_ref)
+        return ((old_owner is not None and current_owner is not None
+                 and old_owner == current_owner == (owner, old_owner[1]))
+                or _coherent_materialization(boundary, effect, effects))
+    if not path and ref.startswith(("shot-revision:", "internal-revision:")):
+        old_owner = _physical_owner(original, ref)
+        current_owner = _physical_owner(boundary, ref)
+        return old_owner is not None or current_owner is not None or _coherent_materialization(boundary, effect, effects)
+    return _coherent_materialization(boundary, effect, effects)
+
+
+def _align_materialized_images(result, accepted):
+    """Map provider-generated physical ids to the accepted authenticated images."""
+    for ref, image in list(result.items()):
+        if ref == "parent" or not ref.startswith(("shot-revision:", "internal-revision:")):
+            continue
+        candidates = [candidate for candidate, known in accepted.items()
+                      if candidate.startswith(ref.split(":", 1)[0] + ":")
+                      and value_equal(known["payload"], image["payload"])
+                      and _physical_owner(result, ref) == _physical_owner(accepted, candidate)]
+        if len(candidates) != 1:
+            continue
+        candidate = candidates[0]
+        result[candidate] = copy.deepcopy(accepted[candidate])
+        if candidate != ref:
+            if ref.startswith("shot-revision:"):
+                old_id, new_id = ref.partition(":")[2], candidate.partition(":")[2]
+                for row in result["parent"]["payload"].get("occurrences", []):
+                    if row.get("shot_revision_id") == old_id:
+                        row["shot_revision_id"] = new_id
+            else:
+                old_id, new_id = ref.partition(":")[2], candidate.partition(":")[2]
+                for shot_ref, shot in result.items():
+                    if shot_ref.startswith("shot-revision:") and shot["payload"].get("internal_timeline_revision_id") == old_id:
+                        shot["payload"]["internal_timeline_revision_id"] = new_id
+            result.pop(ref)
+
+
+def _parent_materialization_reconciles(result, accepted):
+    """Recognize a landing parent whose only delta is authenticated shot turnover."""
+    before = copy.deepcopy(result["parent"]["payload"])
+    after = copy.deepcopy(accepted["parent"]["payload"])
+    before_rows = {row.get("occurrence_id"): row for row in before.get("occurrences", [])}
+    after_rows = {row.get("occurrence_id"): row for row in after.get("occurrences", [])}
+    if set(before_rows) != set(after_rows):
+        return False
+    changed = False
+    for occurrence, row in before_rows.items():
+        other = after_rows[occurrence]
+        old_ref, new_ref = row.get("shot_revision_id"), other.get("shot_revision_id")
+        row.pop("shot_revision_id", None)
+        other.pop("shot_revision_id", None)
+        if old_ref != new_ref:
+            changed = True
+            if (_physical_owner(result, "shot-revision:" + str(old_ref)) is None
+                    or _physical_owner(accepted, "shot-revision:" + str(new_ref)) is None):
+                return False
+    return changed and value_equal(before, after)
+
+
+def _reconcile_materialized_owner_images(result, accepted):
+    def owner_token(document, ref):
+        image = document.get(ref, {})
+        if ref.startswith("shot-revision:"):
+            return "shot:" + str(image.get("payload", {}).get("internal_timeline_revision_id"))
+        if ref.startswith("internal-revision:"):
+            return ref
+        return None
+
+    owners = {owner_token(accepted, ref) for ref in accepted
+              if ref.startswith(("shot-revision:", "internal-revision:"))}
+    for owner in owners - {None}:
+        result_refs = {ref for ref in result if owner_token(result, ref) == owner}
+        accepted_refs = {ref for ref in accepted if owner_token(accepted, ref) == owner}
+        for ref in result_refs - accepted_refs:
+                result.pop(ref, None)
+        for ref in accepted_refs:
+            result[ref] = copy.deepcopy(accepted[ref])
+
+
+def step_output(boundary, step, records, accepted, original=None):
     """Project complete authoritative effects solely to authenticate their boundaries."""
     result = copy.deepcopy(boundary)
     for effect in step["patch"]:
         ref, path = effect["ref"], normalized_path(effect["ref"], effect["path"])
         if ref != "parent" and not path:
             before = {"state": "present", "value": result[ref]["payload"]} if ref in result else {"state": "absent"}
-            require(value_equal(before, effect["before"]), "provider root effect has a different input")
+            require(value_equal(before, effect["before"])
+                    or _materialization_input(boundary, original, effect, path, step["patch"]),
+                    "provider root effect has a different input")
             if effect["op"] == "remove":
-                result.pop(ref)
+                result.pop(ref, None)
             else:
                 require(effect["op"] == "set", "provider root effect is not an observed value")
                 result[ref] = {**copy.deepcopy(accepted.get(ref, {})), "revision_id": ref.partition(":")[2],
@@ -451,7 +606,8 @@ def step_output(boundary, step, records, accepted):
             require(bool(observations), "provider list effect lacks a full collection observation")
             state = observations[-1]["after"]
         else:
-            require(value_equal(location(payload, observed_path), effect["before"]),
+            require(value_equal(location(payload, observed_path), effect["before"])
+                    or _materialization_input(boundary, original, effect, observed_path, step["patch"]),
                     "provider effect has a different input value")
             state = {"state": "present", "value": effect["value"]} if effect["op"] == "set" else {"state": "absent"}
         result[ref]["payload"] = project_observation(payload, observed_path, state)
@@ -460,6 +616,7 @@ def step_output(boundary, step, records, accepted):
             if mirror in payload and mirror in result[ref]["payload"].get("config", {}):
                 result[ref]["payload"][mirror] = copy.deepcopy(result[ref]["payload"]["config"].get(mirror))
         result[ref]["content_digest"] = digest(result[ref]["payload"])
+    _align_materialized_images(result, accepted)
     # Bindings of complete effect images carry the provider's generated revision
     # names. Their payload digest must agree with the projected observations.
     for row in result["parent"]["payload"]["occurrences"]:
@@ -468,7 +625,7 @@ def step_output(boundary, step, records, accepted):
         require(result[ref].get("shot_id", row["shot_id"]) == row["shot_id"],
                 "provider occurrence effect changes physical shot ownership")
         result[ref]["shot_id"] = row["shot_id"]
-    for ref, image in result.items():
+    for ref, image in list(result.items()):
         known = accepted.get(ref)
         if ref == "parent":
             pins = [binding for ordinal in step["command_ordinals"]
@@ -480,9 +637,13 @@ def step_output(boundary, step, records, accepted):
                 require(len({pin["revision_id"] for pin in pins}) == 1, "provider intermediate parent pins disagree")
                 image["revision_id"] = pins[0]["revision_id"]
             else:
-                require(known is not None and value_equal(known["payload"], image["payload"]),
+                reconciled = known is not None and _parent_materialization_reconciles(result, accepted)
+                require(known is not None and (value_equal(known["payload"], image["payload"])
+                                                or reconciled),
                         "provider intermediate parent lacks an effect image")
                 result[ref] = copy.deepcopy(known)
+                if reconciled:
+                    _reconcile_materialized_owner_images(result, accepted)
         elif known is not None and value_equal(known["payload"], image["payload"]):
             result[ref] = copy.deepcopy(known)
     return result
@@ -538,7 +699,7 @@ def validate(request, prepared, source, base=None, continuations=None):
         for ref in touched:
             require(covers(step["dependencies"], {"kind": "scope", "ref": ref, "path": []}),
                     "provider atomic dependency union omits a touched scope")
-        output = step_output(boundary, step, records, accepted)
+        output = step_output(boundary, step, records, accepted, original)
         command_input = boundary
         for ordinal in step["command_ordinals"]:
             record = records["commands"][ordinal]
