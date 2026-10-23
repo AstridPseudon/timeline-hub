@@ -427,6 +427,20 @@ def check_intervening(records, intervening_records, *, include_reads=True, state
                          for record in records for capture in
                          [*_effect_writes(record), *(record['reads'] if include_reads else [])]]
     normalized_guards.extend(address(binding, ref, path) for binding, ref, path in bound_owners)
+    # A shared source can remain reachable after its authored fork. Its input
+    # address then stays distinct from the authenticated output that undo removes.
+    # Guard that output as well; ordinary revision continuations resolve alike.
+    output_guards = []
+    if address_resolver is not None and not identities_only:
+        for record in records:
+            for binding in record.get('bindings', []):
+                if binding.get('key') != 'commit.materialization':
+                    continue
+                source = address(binding, binding['physical_ref'], ())
+                output = address(binding, binding['successor'], ())
+                if source != output:
+                    output_guards.append(output)
+        normalized_guards.extend(output_guards)
     if identities_only:
         normalized_guards = [root_address(*prior) for prior in guarded]
     for record in intervening_records:
@@ -450,6 +464,12 @@ def check_intervening(records, intervening_records, *, include_reads=True, state
                     raise CommandError("an intervening publication replaced an owner",
                                        kind='intervening_write', ref=location[0])
         if include_dependents:
+            if any(any(overlaps(changed, address(read, read['ref'], read['path']))
+                       for read in record.get('reads', []))
+                   or any(binding_consumes(binding, changed) for binding in record.get('bindings', []))
+                   for changed in output_guards):
+                raise CommandError('a surviving command consumed the materialized output',
+                                   kind='inverse_conflict')
             for write in writes:
                 changed = address(write, write['ref'], write['path'])
                 if (any(overlaps(changed, address(read, read['ref'], read['path']))
@@ -461,6 +481,9 @@ def check_intervening(records, intervening_records, *, include_reads=True, state
                     raise CommandError('a surviving command consumed the selected output',
                                        kind=_consumer_conflict(write), ref=write['ref'], path=write['path'])
     if include_dependents:
+        if any(overlaps(changed, address(dependency, dependency['ref'], dependency['path']))
+               for changed in output_guards for dependency in later_dependencies):
+            raise CommandError('a surviving step consumed the materialized output', kind='inverse_conflict')
         for write in writes:
             if any(_dependency_overlap(dependency, write, address) for dependency in later_dependencies):
                 raise CommandError('a surviving step consumed the selected output',
