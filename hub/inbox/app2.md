@@ -1321,3 +1321,12 @@ Original mounted gesture tail hash2eda7eb8fe2fa77ed69195f471ecf5d6d46736bed012cb
 
 ## 2026-10-23T14:04:51Z — PEER MESSAGE (peer-runtime-to-app2-20261023T1406-current-runtime-leaf-proof.md)
 Runtime current cfa0af0d476e6954df041c08d7ef378fd6782932/tree3675f446c82c455ef5635ae725409eb6076a4f83 adds ONLY independentlyreviewed4578 leaf+aggregate inverse normalization atop qualified859. Integrated3036 FINAL309PASS76.20s/all8files/allmarks0skip; frozen34e and source/physicalallocation bytes preserved. Existing selected immutableP1/P3 tuple859 stays qualified; no request to restart currentbenches/body for unrelated leafdelta. Agent originalwholeundo+exactretry PASS on cfa0; redo distinctAgent compilation failure beforeRuntimeaccept retained/packet handedback, no wholejourneyGO. Mainmake-runtime9fc7 published+independent1351 finalPASS, exactrequest supported inpeer1358; consume remoteACK/freshbench via existingowner, no duplicate request or realbench claim. Child39450 remoteACK1343 consumed; actualchild1343 installed/currentcorpus49PASS noted on your13:59board. No extra review/approval needed to proceed existingD21 preflight once exactbench receipt READY.
+
+## 2026-10-23T14:08:23Z — ORCHESTRATOR DECISION D23
+RULING D23 (2026-10-23T14:08:23Z; answers agent-20261023T1356-child-anchor-carrier-scope): **deferred, as relational timing (PLAN §1), the D14 pattern.**
+
+A child clip anchored to a word moment, re-resolved by mutable lookup, is the relational-timing feature PLAN §1 defers. Supporting it needs a new child-target anchor contract and a schema change, which the 34eac freeze and the scope both exclude.
+- The original child-on-second positive stays **unchanged, unskipped and visibly failing**. List it in the delivery's deferred list next to the two D14 cases: 'child-clip word anchors (relational timing) — deferred'.
+- Don't waive any guard. Don't fabricate a word capture or transplant another test's pin. No new op, schema or tuple.
+- **G5 can still retire the ordinary SDK publisher** once P1 is GO. The deferred behaviour is recorded and isn't a blocker; parent-target anchors keep working through the existing native capture.
+- **Owner question** (bundled with D14): fund relational timing (child and word anchors) as a follow-up?

@@ -1,0 +1,30 @@
+{
+  "body_hashes": [
+    {
+      "bytes": 6798,
+      "expected": "c2711a2d10765828694ee1906d75bdf62a91ed6ac0bbef8e4cb0d823e48ec30d",
+      "matches": true,
+      "path": "/home/user/work/wt/agt-pin-91ac58a9/tests/sdk/test_timeline_restructure_guarded_runtime.py",
+      "sha256": "c2711a2d10765828694ee1906d75bdf62a91ed6ac0bbef8e4cb0d823e48ec30d"
+    },
+    {
+      "bytes": 6798,
+      "expected": "c2711a2d10765828694ee1906d75bdf62a91ed6ac0bbef8e4cb0d823e48ec30d",
+      "matches": true,
+      "path": "/home/user/work/wt/agt-pin-91ac58a9/tests/sdk/test_timeline_restructure_guarded_runtime.py",
+      "sha256": "c2711a2d10765828694ee1906d75bdf62a91ed6ac0bbef8e4cb0d823e48ec30d"
+    }
+  ],
+  "credential_scan": {
+    "clean": true,
+    "findings": []
+  },
+  "event_count": 166,
+  "packet": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-G5-inverse-diagnosis-1358/evidence/g5-inverse-boundary-packet.json",
+  "packet_bytes": 2865779,
+  "packet_sha256": "01ccdec35f2a8f3e72e99541092f99ec20bda2de036adc6fe77d7f773157aaeb",
+  "protocol": "timeline.g5.inverse.boundary.v1",
+  "pytest_exitstatus": 1,
+  "roundtrip_equal": true,
+  "roundtrip_sha256": "01ccdec35f2a8f3e72e99541092f99ec20bda2de036adc6fe77d7f773157aaeb"
+}
