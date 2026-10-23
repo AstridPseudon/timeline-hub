@@ -35,7 +35,6 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from tests.editing_conformance.test_commit_runtime_source_copy import saved_source  # noqa: F401
 from tests.lanes import unavailable
 
 from astrid.core.cli.domain_product import run_product_family
@@ -1181,41 +1180,99 @@ def test_visualization_human_navigation_footer_is_compact(capsys) -> None:
 
 
 @pytest.fixture
-def guidance_source(saved_source, tmp_path, monkeypatch):  # noqa: F811
-    """Reuse trusted setup, then read through the production public closure reader."""
-    from runtime_protocol.service import RuntimeService
+def guidance_source(tmp_path):
+    """Own one trusted-seeded Runtime and use its public exact-pair reader."""
+    import copy
 
+    from tests.helpers.runtime import use_runtime
+
+    use_runtime()
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.store import RealmStore
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+
+    from astrid.sdk.workspace_client import WorkspaceClient
+    from tests.helpers.trusted_seed import seed_trusted_parent
     from tests.sdk.test_timeline_restructure import flat_film
 
-    client, project, _, bodies = saved_source(flat_film())
-    # A separate connection exposes only public reads of the seeded realm;
-    # the imported fixture's private revision_closure reader is never used.
-    service = RuntimeService(tmp_path / "saved-source")
-    transport = client._remote._transport
-    generated = transport._generated
-    for name in ("get_project_parent_composition_revision", "get_project_shot_revision",
-                 "get_project_timeline_revision"):
-        monkeypatch.setattr(generated, name, getattr(service, name), raising=False)
-
-    def inspection(p, t, **kwargs):
-        head = service.get_project_timeline(project, "t")["head_revision_id"]
-        return DomainResult.success({
-            "native_inspection": {"project_id": project, "timeline_id": "t", "head_revision_id": head},
-            "summary": {"head_revision_id": head},
-        })
-
-    monkeypatch.setattr(client.timelines, "open_composition", inspection)
-    monkeypatch.setattr(client.timelines, "open_bundle",
-                        RemoteTimelines.open_bundle.__get__(client.timelines))
-
-    def document(timeline):
-        history = client.timelines.history(project, timeline, limit=100)
-        assert history.ok, history.error
-        opened = client.timelines.open_bundle(project, timeline, **history.data["head"])
-        assert opened.ok, opened.error
-        return opened.data["bundle"]["source_mapping"]["_runtime_document"]
-
+    root = tmp_path / "saved-source"
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
     try:
+        project = service.create_project({"slug": "saved", "name": "Saved source"})["id"]
+        service.create_timeline(project, "t", idempotency_key="source")
+        source = flat_film()
+
+        # Reuse the saved-film fixture's trusted setup; this is not edit evidence.
+        def ingest(value):
+            if isinstance(value, dict):
+                for key, item in value.items():
+                    if key == "media_id" and isinstance(item, str):
+                        value[key] = service.ingest(
+                            project, item.encode(), original_name=item + ".bin",
+                            media_type="application/octet-stream", idempotency_key="media-" + item,
+                        )["data"]["object_id"]
+                    else:
+                        ingest(item)
+            elif isinstance(value, list):
+                for item in value:
+                    ingest(item)
+
+        ingest(source)
+        shots, internals = [], []
+        for sid, shot in source["shots"].items():
+            internal_id = "internal-" + sid
+            internals.append({"timeline_id": "t", "revision_id": internal_id, "payload": shot["internal_timeline"]})
+            shots.append({"shot_id": sid, "revision_id": "shot-" + sid,
+                          "internal_timeline_revision_id": internal_id, "payload": shot["payload"]})
+        parent = source["parent"]
+        parent["occurrences"] = [{**row, "shot_revision_id": "shot-" + row["shot_id"]} for row in source["placements"]]
+        seed_trusted_parent(service, {
+            "project_id": project, "timeline_id": "t", "parent_revision_id": "saved-parent",
+            "parent_composition": parent, "shot_revisions": shots, "internal_timeline_revisions": internals,
+        }, idempotency_key="saved-source")
+        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+
+        bodies = []
+
+        def send(p, t, body, *, idempotency_key):
+            assert p == project and t == "t"
+            bodies.append(copy.deepcopy(body))
+            return service.commit_timeline(
+                p, t, body, idempotency_key=idempotency_key, publisher="editor",
+                invocation_path=f"/v1/projects/{p}/timelines/{t}/commit", authorize=lambda: None,
+            )
+
+        generated = SimpleNamespace(
+            commit_timeline=send,
+            list_timeline_commits=lambda p, t, cursor=None, limit=200: service.list_timeline_commits(
+                p, t, cursor=cursor, limit=limit, authorize=lambda: None),
+            get_project_parent_composition_revision=service.get_project_parent_composition_revision,
+            get_project_shot_revision=service.get_project_shot_revision,
+            get_project_timeline_revision=service.get_project_timeline_revision,
+        )
+        transport = WorkspaceClient.__new__(WorkspaceClient)
+        transport._generated = generated
+        transport._last_handshake = {"realm_id": service.realm["id"], "actor_id": "editor"}
+        client = SimpleNamespace(_remote=SimpleNamespace(_transport=transport), timelines=RemoteTimelines(transport))
+        client.timelines._resolve_timeline = lambda p, t: DomainResult.success({"project_id": project, "timeline_id": "t"})
+
+        def inspection(p, t, **kwargs):
+            head = service.get_project_timeline(project, "t")["head_revision_id"]
+            return DomainResult.success({
+                "native_inspection": {"project_id": project, "timeline_id": "t", "head_revision_id": head},
+                "summary": {"head_revision_id": head},
+            })
+
+        client.timelines.open_composition = inspection
+
+        def document(timeline):
+            history = client.timelines.history(project, timeline, limit=100)
+            assert history.ok, history.error
+            opened = client.timelines.open_bundle(project, timeline, **history.data["head"])
+            assert opened.ok, opened.error
+            return opened.data["bundle"]["source_mapping"]["_runtime_document"]
+
         yield client, project, document, bodies, service
     finally:
         service.close()
