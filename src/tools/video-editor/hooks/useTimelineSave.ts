@@ -103,13 +103,15 @@ export function useTimelineSave(
     canRedo: () => localOwner.handoff?.canRedo() ?? false,
     undo: async () => {
       const handoff = await localOwner.ready;
-      if (!handoff) throw new TimelineVersionConflictError('Original local save session is unavailable; draft retained');
-      await handoff.undo();
+      if (localOwner.closed || !handoff) throw new TimelineVersionConflictError('Original local save session is unavailable; draft retained');
+      try { await handoff.undo(); }
+      finally { if (!localOwner.closed) setLocalSaveState((current) => current ? { ...current } : current); }
     },
     redo: async () => {
       const handoff = await localOwner.ready;
-      if (!handoff) throw new TimelineVersionConflictError('Original local save session is unavailable; draft retained');
-      await handoff.redo();
+      if (localOwner.closed || !handoff) throw new TimelineVersionConflictError('Original local save session is unavailable; draft retained');
+      try { await handoff.redo(); }
+      finally { if (!localOwner.closed) setLocalSaveState((current) => current ? { ...current } : current); }
     },
   } : undefined, [localOwner, usesLocalDocumentSave]);
   useEffect(() => {
@@ -136,6 +138,7 @@ export function useTimelineSave(
       localOwner.generation++;
       previousDisposal = localOwner.session.dispose();
       localOwner.session = undefined;
+      localOwner.handoff = undefined;
       localOwner.started = false;
     }
     const original = localDataRef.current;
@@ -213,8 +216,17 @@ export function useTimelineSave(
         const owners = session.getState().recoverableOwners;
         if (owners.length === 1) { localOwner.recovered = true; await session.recover(owners[0]); }
         else if (owners.length) throw new TimelineVersionConflictError('Multiple local save owners require recovery; drafts retained');
-        const initial = owners.length && session.getState().status === 'saved' ? await session.flush() : verified.initial;
+        let initial = verified.initial;
+        if (owners.length && session.getState().status === 'saved') {
+          initial = await session.flush();
+          const latest = await provider.loadTimelineCommandBasis!(timelineId);
+          if (canonicalJsonStringify(latest.head) === canonicalJsonStringify(initial.head)) {
+            initial = { ...initial, history: latest.history };
+          }
+        }
+        if (!isCurrent()) throw new Error('Local save session replaced during history read');
         const handoff = createTimelineLocalSaveHandoff({ initial, source: adoptedSource, session,
+          loadHistory: () => provider.loadTimelineCommandBasis!(timelineId),
           adopted: () => ({ source: adoptedSource,
             receipt: { configVersion: configVersionRef.current, head: adoptedSource.head! } }) });
         localOwner.handoff = handoff;
@@ -563,8 +575,8 @@ export function useTimelineSave(
     isConflictExhausted: persistence.isConflictExhausted,
     selectedClipId: commit.selectedClipId,
     selectedTrackId: commit.selectedTrackId,
-    saveStatus: localSaveState && ['blocked', 'conflict', 'error', 'recovery'].includes(localSaveState.status)
-      ? 'error' : recoveredAsDirty && persistence.saveStatus === 'saved' ? 'dirty' : persistence.saveStatus,
+    saveStatus: localSaveState && ['blocked', 'conflict', 'error', 'recovery', 'retry'].includes(localSaveState.status)
+      ? 'error' : localSaveState?.status === 'saving' ? 'saving' : localSaveState?.status === 'dirty' ? 'dirty' : recoveredAsDirty && persistence.saveStatus === 'saved' ? 'dirty' : persistence.saveStatus,
     schemaIncompatible: persistence.schemaIncompatible,
     flushPendingSave: persistence.flushPendingSave,
     registrationOwner,

@@ -255,8 +255,39 @@ describe('useTimelineHistory', () => {
     expect(harness.result.current.canRedo).toBe(false);
     act(() => harness.result.current.undo());
     act(() => harness.result.current.redo());
+    expect(remoteHistory.redo).not.toHaveBeenCalled();
+    remoteHistory.canRedo.mockReturnValue(true);
+    act(() => harness.result.current.redo());
     expect(remoteHistory.undo).toHaveBeenCalledTimes(1);
     expect(remoteHistory.redo).toHaveBeenCalledTimes(1);
+    expect(harness.commitData).not.toHaveBeenCalled();
+  });
+
+  it('keeps snapshot history behind the durable boundary while saves are unsettled', () => {
+    const remoteHistory = { remoteHistoryAvailable: () => false, canUndo: () => false, canRedo: () => false,
+      undo: vi.fn(async () => {}), redo: vi.fn(async () => {}) };
+    const harness = setup({ remoteHistory });
+    act(() => {
+      harness.result.current.onBeforeCommit(harness.dataRef.current, { transactionId: 'local' });
+      harness.dataRef.current = makeTimelineData(1);
+    });
+    expect(harness.result.current.canUndo).toBe(false);
+    act(() => harness.result.current.undo());
+    expect(harness.commitData).not.toHaveBeenCalled();
+    expect(remoteHistory.undo).not.toHaveBeenCalled();
+  });
+
+  it('keeps upload guards on durable Undo and reports a refusal without restoring a snapshot', async () => {
+    const remoteHistory = { remoteHistoryAvailable: () => true, canUndo: () => true, canRedo: () => true,
+      undo: vi.fn(async () => { throw new Error('Later write to target'); }), redo: vi.fn(async () => {}) };
+    const harness = setup({ remoteHistory });
+    harness.pendingOpsRef.current = 1;
+    act(() => { harness.result.current.undo(); harness.result.current.redo(); });
+    expect(remoteHistory.undo).not.toHaveBeenCalled();
+    expect(remoteHistory.redo).not.toHaveBeenCalled();
+    harness.pendingOpsRef.current = 0;
+    await act(async () => { harness.result.current.undo(); });
+    expect(harness.toast.error).toHaveBeenCalledWith('Could not undo timeline', { description: 'Later write to target' });
     expect(harness.commitData).not.toHaveBeenCalled();
   });
 
