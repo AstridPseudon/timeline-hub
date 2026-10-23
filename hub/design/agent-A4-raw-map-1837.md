@@ -22,11 +22,14 @@ Runtime/HTTP execution, or the old capture envelopes. All old App capture files
 and tests remain KEEP. The old App preview/editor acceptance and normalization
 are not raw-provider evidence.
 
-The current production App save boundary is `localSaveSession` (A2), which
-serializes persisted document intent as generic `doc.patch`; the dormant
-`commitSession` path is type-only/detached at the reviewed source snapshot.
-The production raw-provider boundary is the Agent provider reached by the
-normal commit service, not local App preview.
+The current production App save boundary is the mounted `localSaveSession`
+(A2). It persists either supplied command inputs (including `clip.add-media`)
+or document intent whose fallback command is generic `doc.patch`; transport is
+the existing `commitTimeline` service. The tools `commitSession` path remains
+source-retained but its current non-test imports are type-only; no current
+production caller invokes `createTimelineCommandSession`. The production
+raw-provider boundary is the Agent provider reached by the normal commit
+service, not local App preview.
 
 ## Evidence heads and source identities
 
@@ -37,10 +40,46 @@ normal commit service, not local App preview.
 | Transcript witness | integrated in `14fc0740f278e13c3075fa12d5ebf975cc7044af`; blob `c074858c073b0594985729f13bd26b633b7cd66d` (SHA-1), SHA-256 `5181e08490658dcc97e367b38c7a54f19687e539994c3535128d08f5d085d182` | seven cases; pinned integrated run `7 passed in 1.80s`; current HEAD retains the blob |
 | Track review source | App donor `68594c668` / track fixture blob `b79b69f9a95b8df417c7b157f0db92eb803535e3`; fixture content SHA-256 `5aa9aed23a9764e4a9fb0d56fd5efc47368711933adbfaa224f2f725a766ed00` | reviewed byte-identical fixture; no mounted-App claim |
 | App capture donor | App `7f7e2daffad39a6d9aa3917a9fc526ba91caf2e6` | exact old capture test bodies read read-only |
-| App qualified frozen ref | `8f0c2484463e9b666d184a744d52e252984e551a` | current qualified App source; dormant capture files are absent there |
+| App current `tl/integration` | `2107e1870e51c650d59315f4cc1ab6af338f198c` | actual current App source; old capture implementations/tests are present and retained |
+| App R4 retained snapshot | `8f0c2484463e9b666d184a744d52e252984e551a` | frozen `candidate-app-qualified` snapshot/draft; old capture files and `localSaveSession` are absent at this snapshot; not current App state |
 | Runtime pin used by retained witness runs | `2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d` | used as PYTHONPATH authority in retained runs; no live Runtime claim |
 
 The retained App handoff is `peer-app-to-agent-20261023T1823-A4-scoped-PASS-and-raw-map.md`; the corrected mounted-boundary source is `agent-A4-provider-map-mount-return-1758.md`; the integrated witness reports are `agent-A4-track-integrated-1813.md` and `agent-A4-transcript-integrated-1823.md`.
+
+## Independent review (agt-A4-raw-map-review-1842)
+
+**Verdict: PASS with one provenance correction applied.** This review is
+read-only and does not change App behavior, Agent operations, tests, schema,
+pins, or the retained 71-pass/14-fail result.
+
+- **PASS — Agent base and witness identity.** Current Agent is
+  `78738040d72ce74c42ddf7731221aecb06f9246d`; the track and transcript
+  witness blobs and their retained `9 passed` / `7 passed` runs match the
+  cited evidence. These remain generic `doc.patch` witnesses, not
+  `track.reorder` or `transcript.associate` proof.
+- **PASS — old App donor separation.** The three old capture implementation
+  and test blobs at current App `2107e187...` are byte-identical to donor
+  `7f7e2da...`; this verifies the donor's body claims separately from current
+  App provenance. The old behavior and tests remain KEEP.
+- **FAIL, corrected — stale App reference label.** `8f0c2484...` is the
+  frozen R4 `candidate-app-qualified` snapshot, not current App `tl/integration`.
+  Its absence of the old capture files and `localSaveSession` is snapshot
+  evidence only. Current App `2107e187...` contains the old capture files and
+  current A2 `localSaveSession`; no deletion authorization is inferred.
+- **PASS — mounted boundary.** Current App mounts `localSaveSession` from
+  `shotTimelineDataProvider` and `useTimelineSave`; persisted shared command
+  inputs can carry `clip.add-media`, while document-intent saves are emitted
+  as `doc.patch`. The retained `commitSession` implementation is not treated
+  as a production caller.
+- **PASS — coverage honesty.** The map preserves exact covered assertions,
+  registry/source guards, and UNCOVERED cases separately. It does not infer
+  relational metadata integrity, obsolete operations, guard waivers, a new
+  API, or deletion of old tests. The parent-media `71 passed, 14 failed`
+  result is retained historical evidence, not a current `787` execution.
+
+Smallest correction is complete: keep `8f0c2484...` as a retained snapshot
+row, add current App `2107e187...`, and state the mounted A2 command split
+explicitly. No further map correction was required by this review.
 
 ## Current registry and request/reply boundary
 
@@ -304,5 +343,7 @@ was performed.
   `astrid/sdk/timeline/commands.py`,
   `astrid/sdk/timeline/native_parent_media_commands.py`,
   `astrid/sdk/timeline/native_source_inputs.py`.
+- Current App `tl/integration` `2107e187...`: `src/tools/video-editor/commands/localSaveSession.ts` 153-179, mounted by `src/tools/travel-between-images/components/shotTimelineDataProvider.ts` 970-993 and `src/tools/video-editor/hooks/useTimelineSave.ts` 171-213; shared command append at `shotTimelineDataProvider.ts` 1154-1169.
+- Current App retained `commitSession.ts`: `src/tools/video-editor/commands/commitSession.ts` 163-230; reviewed as a retained/dormant implementation path, not a production caller.
 - Frozen App donor: `git show 7f7e2daffad39a6d9aa3917a9fc526ba91caf2e6:<old capture file>`.
 
