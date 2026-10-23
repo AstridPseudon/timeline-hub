@@ -4,6 +4,7 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
 import {
@@ -16,6 +17,8 @@ import {
   formatDiagnosticArtifact,
   formatPriorityDiagnostic,
   MOUNTED_DIAGNOSTIC_EVENT,
+  MOUNTED_DIAGNOSTIC_ERROR_CLASSES,
+  MOUNTED_DIAGNOSTIC_ERROR_CODES,
   MOUNTED_DIAGNOSTIC_MAX_RECORDS,
   MOUNTED_DIAGNOSTIC_PHASES,
   mountedDiagnosticInitScript,
@@ -99,6 +102,51 @@ test('P1 mounted seam projection accepts the exact App record and nested observa
   assert.equal(JSON.stringify(artifact).includes('must-not-enter'), false);
 });
 
+test('P1 mounted seam consumes the exact finite source enum and preserves safe rejection classes', () => {
+  const serialized = `${JSON.stringify({ errorCode: MOUNTED_DIAGNOSTIC_ERROR_CODES, errorClass: MOUNTED_DIAGNOSTIC_ERROR_CLASSES })}\n`;
+  assert.equal(createHash('sha256').update(serialized).digest('hex'), '5f7d9e8f3da6f39c4b4b96a14908b9b9b5f36d33f5940275b6a511fa0ff6b897');
+  assert.equal(MOUNTED_DIAGNOSTIC_ERROR_CODES.length, 38);
+  assert.deepEqual(MOUNTED_DIAGNOSTIC_ERROR_CLASSES, ['TimelineVersionConflictError', 'Error']);
+
+  for (const errorClass of MOUNTED_DIAGNOSTIC_ERROR_CLASSES) {
+    const result = projectMountedDiagnosticDetail({ version: 1, phase: 'capture-rejected', errorCode: 'capture-input-head-unavailable', errorClass });
+    assert.equal(result.accepted, true);
+    if (result.accepted) {
+      assert.equal(result.record.errorCode, 'capture-input-head-unavailable');
+      assert.equal(result.record.errorClass, errorClass);
+    }
+  }
+  for (const errorCode of ['forged-code', 'capture-input-head-unavailable\0', 'Error: capture-input-head-unavailable']) {
+    const result = projectMountedDiagnosticDetail({ version: 1, phase: 'capture-rejected', errorCode, errorClass: 'Error: TimelineVersionConflictError' });
+    assert.equal(result.accepted, true);
+    if (result.accepted) {
+      assert.equal(result.record.errorCode, 'UNKNOWN');
+      assert.equal(result.record.errorClass, 'UNKNOWN');
+    }
+  }
+  const generic = projectMountedDiagnosticDetail({ version: 1, phase: 'capture-rejected', errorCode: 'operation-rejected', errorClass: 'UNKNOWN' });
+  assert.equal(generic.accepted, true);
+  if (generic.accepted) assert.deepEqual({ errorCode: generic.record.errorCode, errorClass: generic.record.errorClass }, { errorCode: 'operation-rejected', errorClass: 'UNKNOWN' });
+  const untagged = projectMountedDiagnosticDetail({ version: 1, phase: 'schedule', errorCode: 'capture-input-head-unavailable', errorClass: 'Error' });
+  assert.equal(untagged.accepted, true);
+  if (untagged.accepted) assert.deepEqual({ errorCode: untagged.record.errorCode, errorClass: untagged.record.errorClass }, { errorCode: 'UNKNOWN', errorClass: 'UNKNOWN' });
+
+  const listeners = new Map<string, (event: unknown) => void>();
+  const window = {
+    __timelineSaveDiagnosticsEnabled: false,
+    addEventListener: (name: string, listener: (event: unknown) => void) => { listeners.set(name, listener); },
+  } as Record<string, unknown>;
+  runInNewContext(mountedDiagnosticInitScript({ buffer: 'enum', maxRecords: 64 }), { window, Object, Set, Number, JSON });
+  const listener = listeners.get(MOUNTED_DIAGNOSTIC_EVENT);
+  assert.ok(listener);
+  MOUNTED_DIAGNOSTIC_ERROR_CODES.forEach((errorCode, sequence) => listener!({ detail: {
+    version: 1, sequence, phase: 'capture-rejected', errorCode, errorClass: 'Error',
+  } }));
+  const snapshot = (window.__timelineSaveDiagnosticsSnapshot as () => Record<string, any>)();
+  assert.deepEqual(Array.from(snapshot.records as any[], (record: any) => record.errorCode), [...MOUNTED_DIAGNOSTIC_ERROR_CODES]);
+  assert.ok((snapshot.records as any[]).every((record) => record.errorClass === 'Error'));
+});
+
 test('P1 mounted seam accepts every published phase and rejects unknown metadata', () => {
   for (const phase of MOUNTED_DIAGNOSTIC_PHASES) {
     assert.equal(projectMountedDiagnosticDetail({ version: 1, phase }).accepted, true, phase);
@@ -154,6 +202,71 @@ test('P1 mounted seam listener is bounded and disposable under hostile events', 
   assert.equal(snapshot.listenerErrors, 0);
   assert.equal(snapshot.records.length, 2);
   assert.equal(JSON.stringify(snapshot.records).includes('secret'), false);
+});
+
+test('P1 registered listener retains an authentic capture rejection through later background events', () => {
+  const listeners = new Map<string, (event: unknown) => void>();
+  const window = {
+    __timelineSaveDiagnosticsEnabled: false,
+    addEventListener: (name: string, listener: (event: unknown) => void) => { listeners.set(name, listener); },
+  } as Record<string, unknown>;
+  runInNewContext(mountedDiagnosticInitScript({
+    buffer: 'registered-capture-rejection',
+    maxRecords: MOUNTED_DIAGNOSTIC_MAX_RECORDS,
+  }), { window, Object, Set, Number, JSON });
+  const listener = listeners.get(MOUNTED_DIAGNOSTIC_EVENT);
+  assert.ok(listener);
+
+  // This is the v1 detail emitted by the reviewed 6ecc producer at its
+  // authentic capture-rejected boundary; the producer remains a separate
+  // source change and is not recreated by this consumer test.
+  const authenticCaptureRejected = {
+    version: 1, sequence: 101, time: 42.5, phase: 'capture-rejected',
+    projectId: 'project-commit', timelineId: 'timeline-1', clipId: 'diagnostic-clip', ownerAlias: 7,
+    generation: 3, sessionPresent: true, closed: false, current: true, identityPresent: true, scopeMatched: true,
+    mountedHead: { revisionId: 'r0', publicationId: 'p0' }, originalHead: { revisionId: 'r0', publicationId: 'p0' },
+    basisStatus: 'ready', gestureKind: 'trim',
+    patch: { from: 3, fromState: 'present', to: 8, toState: 'present', at: 0, atState: 'present', hold: 8, holdState: 'present', speed: 1, speedState: 'present' },
+    mountedClip: { from: 3, fromState: 'present', to: 8, toState: 'present', at: 0, atState: 'present', hold: 8, holdState: 'present', speed: 1, speedState: 'present' },
+    sourceClip: { from: 0, fromState: 'present', to: 8, toState: 'present', at: 0, atState: 'present', hold: 8, holdState: 'present', speed: 1, speedState: 'present' },
+    gestureClip: { from: 3, fromState: 'present', to: 8, toState: 'present', at: 0, atState: 'present', hold: 8, holdState: 'present', speed: 1, speedState: 'present' },
+    originalClip: { from: 0, fromState: 'present', to: 8, toState: 'present', at: 0, atState: 'present', hold: 8, holdState: 'present', speed: 1, speedState: 'present' },
+    status: 'error', ownerPresent: true, recoverableOwnerCount: 1, intentsPendingCount: 'UNKNOWN',
+    errorStage: 'capture', errorCode: 'capture-input-head-unavailable', errorClass: 'TimelineVersionConflictError',
+  };
+  listener!({ detail: authenticCaptureRejected });
+  for (let sequence = 102; sequence <= 134; sequence += 1) {
+    listener!({ detail: {
+      version: 1, sequence, time: sequence, phase: 'schedule', projectId: 'project-commit', timelineId: 'timeline-1',
+      clipId: 'diagnostic-clip', ownerAlias: 7, generation: 3, sessionPresent: true, closed: false,
+      current: true, identityPresent: true, scopeMatched: true, mountedHead: { revisionId: 'r0', publicationId: 'p0' },
+      patch: { from: 3, fromState: 'present' }, status: 'dirty', ownerPresent: true,
+    } });
+  }
+
+  const snapshot = (window.__timelineSaveDiagnosticsSnapshot as () => Record<string, any>)();
+  assert.equal(snapshot.accepted, 34);
+  assert.equal(snapshot.rejected, 0);
+  assert.equal(snapshot.overflow, 2);
+  assert.equal(snapshot.listenerErrors, 0);
+  assert.equal(snapshot.records.length, MOUNTED_DIAGNOSTIC_MAX_RECORDS);
+  assert.deepEqual(Array.from(snapshot.records as any[], (record: any) => record.sequence), [101, ...Array.from({ length: 31 }, (_, index) => index + 102)]);
+
+  const nodeProjection = projectMountedDiagnosticDetail(authenticCaptureRejected);
+  assert.equal(nodeProjection.accepted, true);
+  if (!nodeProjection.accepted) return;
+  assert.deepEqual(JSON.parse(JSON.stringify(snapshot.records[0])), nodeProjection.record);
+  const artifact = JSON.parse(formatDiagnosticArtifact({
+    schemaVersion: 1, mountedObservations: snapshot,
+  })) as Record<string, any>;
+  const retained = artifact.mountedObservations.records[0];
+  assert.equal(retained.phase, 'capture-rejected');
+  assert.equal(retained.errorCode, 'capture-input-head-unavailable');
+  assert.equal(retained.errorClass, 'TimelineVersionConflictError');
+  assert.equal(retained.patch.from, 3);
+  assert.equal(retained.ownerAlias, 7);
+  assert.deepEqual(retained.mountedHead, { revisionId: 'r0', publicationId: 'p0' });
+  assert.equal(artifact.mountedObservations.overflow, 2);
 });
 
 test('P1 diagnostics bound breadth, depth, arrays, strings, and bytes', () => {

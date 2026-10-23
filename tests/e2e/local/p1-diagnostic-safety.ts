@@ -17,6 +17,21 @@ export const DIAGNOSTIC_COLLECTION_TIMEOUT_MS = 1_000;
 export const MOUNTED_DIAGNOSTIC_EVENT = 'timeline:save-diagnostic';
 export const MOUNTED_DIAGNOSTIC_MAX_RECORDS = 32;
 
+export const MOUNTED_DIAGNOSTIC_ERROR_CODES = [
+  'original-head-unavailable', 'capture-source-head-unavailable', 'capture-input-head-unavailable',
+  'source-parent-unavailable', 'source-parent-mismatch', 'source-clip-identity', 'source-track-identity',
+  'source-bundle-mismatch', 'original-read-unavailable', 'authored-collection-unavailable',
+  'authored-binding-ambiguous', 'authored-identity-unavailable', 'display-container-unbound',
+  'trim-binding-mismatch', 'explicit-clear-unavailable', 'display-value-unbound', 'child-ownership-unavailable',
+  'local-document-changed', 'parent-mirror-mismatch', 'gesture-basis-mismatch', 'gesture-clips-unavailable',
+  'gesture-clip-ambiguous', 'gesture-registry-unavailable', 'registry-mirror-mismatch', 'split-time-unavailable',
+  'move-track-mismatch', 'move-tracks-unavailable', 'move-track-ambiguous', 'move-routing-unavailable',
+  'trim-operands-unavailable', 'capture-owner-unavailable', 'capture-owner-replaced',
+  'owner-original-read-invalidated', 'owner-identity-invalidated', 'owner-retirement-invalidated',
+  'owner-claim-invalidated', 'owner-recovery-ambiguous', 'owner-history-invalidated',
+] as const;
+export const MOUNTED_DIAGNOSTIC_ERROR_CLASSES = ['TimelineVersionConflictError', 'Error'] as const;
+
 export const MOUNTED_DIAGNOSTIC_PHASES = [
   'schedule', 'capture-called', 'capture-resolved', 'capture-rejected', 'owner-init', 'owner-closed',
   'owner-retired', 'lifecycle-cancel', 'basis-read', 'basis-ready', 'basis-unavailable', 'basis-error',
@@ -25,6 +40,9 @@ export const MOUNTED_DIAGNOSTIC_PHASES = [
 ] as const;
 
 const MOUNTED_DIAGNOSTIC_PHASE_SET = new Set<string>(MOUNTED_DIAGNOSTIC_PHASES);
+const MOUNTED_DIAGNOSTIC_ERROR_CODE_SET = new Set<string>(MOUNTED_DIAGNOSTIC_ERROR_CODES);
+const MOUNTED_DIAGNOSTIC_ERROR_CLASS_SET = new Set<string>(MOUNTED_DIAGNOSTIC_ERROR_CLASSES);
+const MOUNTED_DIAGNOSTIC_PRIORITY_PHASE_SET = new Set(['capture-rejected', 'basis-error', 'owner-error']);
 const MOUNTED_DIAGNOSTIC_FIELDS = [
   'version', 'sequence', 'time', 'phase', 'projectId', 'timelineId', 'clipId', 'ownerAlias', 'generation',
   'sessionPresent', 'closed', 'current', 'identityPresent', 'scopeMatched', 'mountedHead', 'originalHead',
@@ -86,7 +104,12 @@ function mountedErrorStage(value: unknown): string {
 }
 
 function mountedErrorCode(value: unknown): string {
-  return value === 'operation-rejected' ? value : UNKNOWN;
+  return typeof value === 'string'
+    && (value === 'operation-rejected' || MOUNTED_DIAGNOSTIC_ERROR_CODE_SET.has(value)) ? value : UNKNOWN;
+}
+
+function mountedErrorClass(value: unknown): string {
+  return typeof value === 'string' && MOUNTED_DIAGNOSTIC_ERROR_CLASS_SET.has(value) ? value : UNKNOWN;
 }
 
 function mountedHead(value: unknown): Record<string, unknown> {
@@ -129,7 +152,7 @@ function mountedNumericRecord(value: unknown): Record<string, unknown> {
   return result;
 }
 
-function mountedRecordField(detail: object, key: typeof MOUNTED_DIAGNOSTIC_FIELDS[number]): unknown {
+function mountedRecordField(detail: object, key: typeof MOUNTED_DIAGNOSTIC_FIELDS[number], phase: string): unknown {
   const field = mountedOwnData(detail, key);
   if (key === 'version') return 1;
   if (key === 'phase') return field.present && typeof field.value === 'string' && MOUNTED_DIAGNOSTIC_PHASE_SET.has(field.value) ? field.value : UNKNOWN;
@@ -138,7 +161,7 @@ function mountedRecordField(detail: object, key: typeof MOUNTED_DIAGNOSTIC_FIELD
   if (key === 'patch' || key === 'mountedClip' || key === 'sourceClip' || key === 'gestureClip' || key === 'originalClip') {
     return mountedNumericRecord(field.present ? field.value : undefined);
   }
-  if (key === 'intentsPendingCount' || key === 'errorClass') return UNKNOWN;
+  if (key === 'intentsPendingCount') return UNKNOWN;
   if (key === 'sequence' || key === 'time' || key === 'generation' || key === 'ownerAlias' || key === 'recoverableOwnerCount' || key === 'intentsPendingCount') {
     if (key === 'time') return mountedSafeNumber(field.present ? field.value : undefined);
     if (key === 'recoverableOwnerCount') return mountedSafeNonNegativeInteger(field.present ? field.value : undefined, 10_000);
@@ -148,7 +171,8 @@ function mountedRecordField(detail: object, key: typeof MOUNTED_DIAGNOSTIC_FIELD
     return mountedSafeBoolean(field.present ? field.value : undefined);
   }
   if (key === 'errorStage') return field.present ? mountedErrorStage(field.value) : UNKNOWN;
-  if (key === 'errorCode') return field.present ? mountedErrorCode(field.value) : UNKNOWN;
+  if (key === 'errorCode') return MOUNTED_DIAGNOSTIC_PRIORITY_PHASE_SET.has(phase) && field.present ? mountedErrorCode(field.value) : UNKNOWN;
+  if (key === 'errorClass') return MOUNTED_DIAGNOSTIC_PRIORITY_PHASE_SET.has(phase) && field.present ? mountedErrorClass(field.value) : UNKNOWN;
   return field.present ? mountedSafeScalar(field.value) : UNKNOWN;
 }
 
@@ -160,7 +184,7 @@ export function projectMountedDiagnosticDetail(detail: unknown): MountedDiagnost
     return { accepted: false };
   }
   const record: Record<string, unknown> = {};
-  for (const key of MOUNTED_DIAGNOSTIC_FIELDS) record[key] = mountedRecordField(detail, key);
+  for (const key of MOUNTED_DIAGNOSTIC_FIELDS) record[key] = mountedRecordField(detail, key, phase.value);
   return { accepted: true, record };
 }
 
@@ -178,6 +202,9 @@ export function mountedDiagnosticInitScript(options: { buffer: string; maxRecord
     const phases = new Set(['schedule', 'capture-called', 'capture-resolved', 'capture-rejected', 'owner-init', 'owner-closed', 'owner-retired', 'lifecycle-cancel', 'basis-read', 'basis-ready', 'basis-unavailable', 'basis-error', 'identity-read', 'session-created', 'session-recovered', 'session-changed', 'adoption-start', 'adoption-complete', 'adopted-read', 'handoff-ready', 'owner-error']);
     const numericFields = ['from', 'to', 'at', 'hold', 'speed'];
     const states = new Set(['present', 'absent', 'null', 'UNKNOWN']);
+    const errorCodes = new Set(['original-head-unavailable', 'capture-source-head-unavailable', 'capture-input-head-unavailable', 'source-parent-unavailable', 'source-parent-mismatch', 'source-clip-identity', 'source-track-identity', 'source-bundle-mismatch', 'original-read-unavailable', 'authored-collection-unavailable', 'authored-binding-ambiguous', 'authored-identity-unavailable', 'display-container-unbound', 'trim-binding-mismatch', 'explicit-clear-unavailable', 'display-value-unbound', 'child-ownership-unavailable', 'local-document-changed', 'parent-mirror-mismatch', 'gesture-basis-mismatch', 'gesture-clips-unavailable', 'gesture-clip-ambiguous', 'gesture-registry-unavailable', 'registry-mirror-mismatch', 'split-time-unavailable', 'move-track-mismatch', 'move-tracks-unavailable', 'move-track-ambiguous', 'move-routing-unavailable', 'trim-operands-unavailable', 'capture-owner-unavailable', 'capture-owner-replaced', 'owner-original-read-invalidated', 'owner-identity-invalidated', 'owner-retirement-invalidated', 'owner-claim-invalidated', 'owner-recovery-ambiguous', 'owner-history-invalidated']);
+    const errorClasses = new Set(['TimelineVersionConflictError', 'Error']);
+    const priorityPhases = new Set(['capture-rejected', 'basis-error', 'owner-error']);
     const fields = ['version', 'sequence', 'time', 'phase', 'projectId', 'timelineId', 'clipId', 'ownerAlias', 'generation', 'sessionPresent', 'closed', 'current', 'identityPresent', 'scopeMatched', 'mountedHead', 'originalHead', 'basisStatus', 'gestureKind', 'patch', 'mountedClip', 'sourceClip', 'gestureClip', 'originalClip', 'status', 'ownerPresent', 'recoverableOwnerCount', 'intentsPendingCount', 'errorStage', 'errorCode', 'errorClass'];
     const unknown = 'UNKNOWN';
     const id = (value: unknown) => value === null ? null : typeof value === 'string' && value.length > 0 && value.length <= 160 && /^[a-zA-Z0-9_.:-]+$/.test(value) && !/^[a-z][a-z\d+.-]*:\/\//i.test(value) ? value : unknown;
@@ -213,6 +240,7 @@ export function mountedDiagnosticInitScript(options: { buffer: string; maxRecord
     const project = (detail: object) => {
       const version = own(detail, 'version'); const phase = own(detail, 'phase');
       if (version.value !== 1 || !phase.present || typeof phase.value !== 'string' || !phases.has(phase.value)) return null;
+      const rejectionPhase = priorityPhases.has(phase.value);
       const result: Record<string, unknown> = {};
       for (const key of fields) {
         const field = own(detail, key); const value = field.value;
@@ -221,17 +249,19 @@ export function mountedDiagnosticInitScript(options: { buffer: string; maxRecord
         else if (key === 'projectId' || key === 'timelineId' || key === 'clipId') result[key] = field.present ? id(value) : unknown;
         else if (key === 'mountedHead' || key === 'originalHead') result[key] = head(field.present ? value : undefined);
         else if (key === 'patch' || key === 'mountedClip' || key === 'sourceClip' || key === 'gestureClip' || key === 'originalClip') result[key] = numericRecord(field.present ? value : undefined);
-        else if (key === 'intentsPendingCount' || key === 'errorClass') result[key] = unknown;
+        else if (key === 'intentsPendingCount') result[key] = unknown;
         else if (key === 'sequence' || key === 'generation' || key === 'ownerAlias') result[key] = nonNegative(field.present ? value : undefined);
         else if (key === 'recoverableOwnerCount') result[key] = nonNegative(field.present ? value : undefined, 10000);
         else if (key === 'time') result[key] = number(field.present ? value : undefined);
         else if (key === 'sessionPresent' || key === 'closed' || key === 'current' || key === 'identityPresent' || key === 'scopeMatched' || key === 'ownerPresent') result[key] = boolean(field.present ? value : undefined);
         else if (key === 'errorStage') result[key] = field.present && (value === 'capture' || value === 'basis-read' || value === 'owner-init') ? value : unknown;
-        else if (key === 'errorCode') result[key] = field.present && value === 'operation-rejected' ? value : unknown;
+        else if (key === 'errorCode') result[key] = rejectionPhase && field.present && (value === 'operation-rejected' || (typeof value === 'string' && errorCodes.has(value))) ? value : unknown;
+        else if (key === 'errorClass') result[key] = rejectionPhase && field.present && typeof value === 'string' && errorClasses.has(value) ? value : unknown;
         else result[key] = field.present ? scalar(value) : unknown;
       }
       return result;
     };
+    const capacity = Number.isSafeInteger(config.maxRecords) && config.maxRecords > 0 ? config.maxRecords : 1;
     const state = { records: [] as unknown[], accepted: 0, rejected: 0, overflow: 0, listenerErrors: 0 };
     const snapshot = () => ({ status: state.records.length > 0 ? 'observed' : 'UNKNOWN', buffer: config.buffer, records: state.records.slice(), accepted: state.accepted, rejected: state.rejected, overflow: state.overflow, listenerErrors: state.listenerErrors });
     const snapshotName = '__timelineSaveDiagnosticsSnapshot';
@@ -247,8 +277,18 @@ export function mountedDiagnosticInitScript(options: { buffer: string; maxRecord
           if (detailValue === undefined || !detailValue || typeof detailValue !== 'object' || Array.isArray(detailValue)) { state.rejected += 1; return; }
           const record = project(detailValue as object);
           if (!record) { state.rejected += 1; return; }
-          if (state.records.length >= config.maxRecords) { state.records.shift(); state.overflow += 1; }
-          state.records.push(record); state.accepted += 1;
+          state.accepted += 1;
+          if (state.records.length >= capacity) {
+            const isPriority = priorityPhases.has(String((record as Record<string, unknown>).phase));
+            const firstNonPriority = state.records.findIndex((item) => !priorityPhases.has(String((item as Record<string, unknown>).phase)));
+            if (!isPriority && state.records.some((item) => priorityPhases.has(String((item as Record<string, unknown>).phase)))) {
+              state.overflow += 1;
+              return;
+            }
+            state.records.splice(isPriority && firstNonPriority >= 0 ? firstNonPriority : 0, 1);
+            state.overflow += 1;
+          }
+          state.records.push(record);
         } catch { state.listenerErrors += 1; }
       });
     } catch { state.listenerErrors += 1; }
