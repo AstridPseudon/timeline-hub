@@ -7,6 +7,14 @@ import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataPro
 import { createCommitOutbox, toOutboxJson, type OutboxJson } from './commitOutbox.ts';
 import { createLocalSaveSession, type LocalSave, type LocalSaveSession, type LocalSaveState } from './localSaveSession.ts';
 
+// These document-intent cases exercise the pre-v2 fallback explicitly. The
+// joined generated client is full-v2, so the unavailable-contract condition
+// must not depend on the production metadata.
+vi.mock('@/integrations/runtime/generated-contract-metadata.ts', async (importOriginal) => ({
+  ...await importOriginal<typeof import('@/integrations/runtime/generated-contract-metadata.ts')>(),
+  SCHEMA_DIGEST: 'sha256:unsupported-test-fixture',
+}));
+
 const scope = { realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-commit' };
 const h0 = { revisionId: 'r0', publicationId: 'p0' };
 const h1 = { revisionId: 'r1', publicationId: 'p1' };
