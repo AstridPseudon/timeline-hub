@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T06:37:25Z | dispatcher heartbeat 8s | live 2 (sol 0, luna 2, other 0) | busy30 16 | status age 0m -->
+<!-- agent | 2026-10-23T06:38:55Z | dispatcher heartbeat 8s | live 2 (sol 0, luna 2, other 0) | busy30 14 | status age 0m -->
 # agent board, 2026-10-23T06:36:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -46,6 +46,7 @@
 | V2-map-locality | dependency-local legacy map validation | Sol author; Luna independent | D12a/b42 | review | agt-V2-map-review-0636 | Author262+fork1+12mounted+unchanged0616probePASS; 2150/1915 inheritedbase, currentjoin next. Twofiles only, independentguard/localityreview active | author0621 |
 | U2-owner-merge-route | persist removal of ap2 auto-merge | Luna ops; independent Luna | main publishes kit | blocked:runtime | author0619; review0628 FAIL; peer0631 | Remote repair overwritten by oldmainkit. Exact3line deletion/stubPASS; main source/publish/livehashverification requested. Actuala914 test-only033482 audited | ops-only |
 | V2-child-asset | preserve untouched dangling child media | Luna author/independent | D12a/current3e | review | agt-V2-child-asset-final-review-0636 | Trace+independentclassificationPASS: realdefect. Author83PASS/2149/scopedtype; finalmypy1912 vslocked1914 adjudication next. Onlyauthoring_bundle+boundarytests | author0630 |
+| V2-current-rebase | retained-source original native node | Viewing Luna classification | current3e | review | vw-V4-rebase-review-0630 | Actualoriginal1FAIL beforefreshaccept at move-source candidate.timing legacywordmissing; originalfour0626 PASS4. Independent causalclassification pending; no duplicatebody/productfix | base3e4261e96 |
 Resolved: runtime — Normal frozen strict34e adoption DONE; compatible execution85dafdf467 merged/proven156+original48d6 allactualorigins. No newtuple/re-adoption/native14 duplicate.
 Resolved: agent audit — ccc scope hold CLEARED at auditedbf40; currentG234 reviewed31a5 and currentfork900 merged ea302 with integrated131+2replay+2live PASS. Owncommit checks retained.
 Resolved: orchestrator — D12a applies everyV2 check, no inventednormalization; D15fork900/currentea302 integratedPASS; D14two undo positives deferred unchanged/unskipped/visiblyfailing, no54PASS.
