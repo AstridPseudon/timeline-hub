@@ -38,14 +38,6 @@ function parentOnly(input: CanonicalDocument): CanonicalDocument {
   return document;
 }
 
-function authoredPayloadClosure(document: CanonicalDocument) {
-  return {
-    parent: document.parent_revision.payload,
-    shots: document.shot_revisions.map(({ payload }) => payload),
-    internalTimelines: document.internal_timeline_revisions.map(({ payload }) => payload),
-  };
-}
-
 async function sourceFor(document: CanonicalDocument, head: TimelineSaveSource['head'], preserveRaw = false): Promise<TimelineSaveSource> {
   const bundle = await authoringBundleFromDocument(document);
   const parentConfig = bundle.parent.config as unknown as TimelineConfig;
@@ -77,7 +69,10 @@ async function captureFixture(before: CanonicalDocument, after: CanonicalDocumen
   expect(owner.intents[0].payload).toMatchObject({ kind: 'local-save', label: 'Edit timeline',
     documentIntent: { basis: { head: initial.head }, created: [], changes: expectedChanges } });
   const local = session.getDocument() as unknown as CanonicalDocument;
-  expect(authoredPayloadClosure(local)).toEqual(authoredPayloadClosure(after));
+  const expected = structuredClone(after);
+  expected.parent_revision.revision_id = before.parent_revision.revision_id;
+  expected.parent_revision.content_digest = before.parent_revision.content_digest;
+  expect(local).toEqual(expected);
   expect({ projectId: local.project_id, timelineId: local.timeline_id,
     revisionId: local.parent_revision.revision_id, contentDigest: local.parent_revision.content_digest })
     .toEqual({ projectId: before.project_id, timelineId: before.timeline_id,
