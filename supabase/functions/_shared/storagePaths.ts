@@ -25,27 +25,24 @@ export function getFileExtension(
   if (dotIndex > 0 && dotIndex < cleanName.length - 1) {
     return cleanName.slice(dotIndex + 1).toLowerCase();
   }
-  
+
   if (mimeType) {
     const mimeExt = mimeType.split('/')[1]?.split(';')[0]?.replace('jpeg', 'jpg');
     if (mimeExt) return mimeExt;
   }
-  
+
   return defaultExt;
 }
 
 export const storagePaths = {
-  upload: (userId: string, filename: string): string => 
+  upload: (userId: string, filename: string): string =>
     `${userId}/uploads/${filename}`,
-  thumbnail: (userId: string, filename: string): string => 
+  thumbnail: (userId: string, filename: string): string =>
     `${userId}/thumbnails/${filename}`,
-  taskOutput: (userId: string, taskId: string, filename: string): string => 
+  taskOutput: (userId: string, taskId: string, filename: string): string =>
     `${userId}/tasks/${taskId}/${filename}`,
-  taskThumbnail: (userId: string, taskId: string, filename: string): string => 
+  taskThumbnail: (userId: string, taskId: string, filename: string): string =>
     `${userId}/tasks/${taskId}/thumbnails/${filename}`,
 };
 
 export const MEDIA_BUCKET = 'image_uploads';
-
-
-
