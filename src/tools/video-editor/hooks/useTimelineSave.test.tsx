@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB, resetFakeIndexedDB } from 'fake-indexeddb';
 import { useTimelineSave } from './useTimelineSave';
+import { useClipEditing } from './useClipEditing';
 import { VideoEditorRuntimeProvider } from '../contexts/VideoEditorRuntimeContext';
 import { createTimelineStore } from './timelineStore';
 import { createInteractionState, type InteractionStateRef } from '../lib/interaction-state';
@@ -149,6 +150,71 @@ describe('useTimelineSave — recovered draft durability', () => {
   afterEach(() => {
     vi.clearAllTimers();
     vi.useRealTimers();
+  });
+
+  it('persists an inspector trim of the locally split new ID while its split is awaiting acceptance', async () => {
+    const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
+    Object.defineProperty(navigator, 'locks', { configurable: true, value: {
+      request: async (_name: string, _options: unknown, work: (lock: object) => Promise<unknown>) => work({}),
+    } });
+    const head = { projectId: 'project-commit', timelineId: 'timeline-1', headRevisionId: 'r0', headPublicationId: 'p0' };
+    const config = createDefaultTimelineConfig();
+    config.clips = [{ id: 'p1-chain-source', at: 0, track: 'V1', clipType: 'media', asset: 'p1-video', from: 0, to: 8, speed: 1, hold: 8,
+      app: { opaque: { keep: null }, astrid: { for: 8 }, 'org.example': { clear: null } } }];
+    const registry = { assets: { 'p1-video': { file: 'p1-video.mp4', type: 'video/mp4', duration: 8 } } };
+    const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' },
+      { timelineId: 'timeline-1' }).data.canonical_document;
+    document.parent_revision.payload = { config, clips: config.clips, registry, occurrences: [] };
+    document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
+    const initial = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
+    const data = await buildTimelineData(config, registry, undefined, 1, undefined, head);
+    let acknowledge!: (value: Awaited<ReturnType<NonNullable<DataProvider['commitTimeline']>>>) => void;
+    const send = vi.fn<NonNullable<DataProvider['commitTimeline']>>().mockImplementationOnce(() => new Promise((resolve) => { acknowledge = resolve; }));
+    const harness = setup(async () => { throw new Error('Legacy save must not be called'); }, undefined, {
+      data, loadBasis: vi.fn(async () => initial), capabilities: {
+        commitTimeline: send, getRecoverableIdentity: vi.fn(async () => ({ actorId: 'actor', realmId: 'realm' })),
+      },
+    });
+    const editing = renderHook(() => useClipEditing({
+      dataRef: harness.hook.result.current.dataRef,
+      resolvedConfig: harness.hook.result.current.dataRef.current?.resolvedConfig ?? null,
+      selectedClipId: harness.hook.result.current.selectedClipId,
+      selectedTrack: null, currentTime: 2, selectClip: vi.fn(), setSelectedTrackId: vi.fn(),
+      applyEdit: harness.hook.result.current.applyEdit,
+    }));
+    try {
+      await vi.waitFor(() => expect(harness.hook.result.current.localSaveState?.ownerId).toBeTruthy());
+      await settleInitialRecoveryCheck();
+      await act(async () => { editing.result.current.handleSplitClipAtTime('p1-chain-source', 2); });
+      await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+      await vi.waitFor(() => expect(send).toHaveBeenCalledTimes(1));
+      const rightId = harness.hook.result.current.selectedClipId!;
+      expect(rightId).not.toBe('p1-chain-source');
+      editing.rerender();
+      await act(async () => { editing.result.current.handleSelectedClipChange({ from: 3 }); });
+      const [owner] = await createCommitOutbox().list({ realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-1' });
+      expect(owner.intents).toHaveLength(2);
+      expect(owner.intents[1].basis).toEqual({ after: owner.intents[0].id });
+      expect(owner.intents[1].payload).toMatchObject({ documentIntent: {
+        changes: expect.arrayContaining([{ op: 'set', ref: 'parent', path: ['clips', `id:${rightId}`, 'from'],
+          before: { state: 'present', value: 0 }, value: 3 }]),
+        reads: expect.arrayContaining([{ kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${rightId}`, 'from'],
+          state: { state: 'present', value: 0 } }]),
+      } });
+    } finally {
+      // Settle the held transport before releasing this mounted durable owner.
+      if (acknowledge) {
+        send.mockRejectedValue(new ApiError(409, 'conflict', 'Consumed read changed', '', { path: ['hold'], hint: 'Read latest' }));
+        const response = acceptedCommit({ revision_id: 'r1', publication_id: 'p1' }, { revision_id: 'r0', publication_id: 'p0' }, { timelineId: 'timeline-1' });
+        response.data.canonical_document = structuredClone(document);
+        response.data.canonical_document.parent_revision.revision_id = 'r1';
+        await act(async () => { acknowledge({ response, accepted: { revisionId: 'r1', publicationId: 'p1' }, canonicalDocument: response.data.canonical_document, graph: {}, receipt: response.receipt }); });
+      }
+      editing.unmount();
+      harness.hook.unmount();
+      if (descriptor) Object.defineProperty(navigator, 'locks', descriptor);
+      else Reflect.deleteProperty(navigator, 'locks');
+    }
   });
 
   it.each(['accepted', 'merged', 'conflict', 'invalid', 'restart', 'dependent', 'merged dependent', 'late reply', 'strict'] as const)(
