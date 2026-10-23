@@ -4,8 +4,14 @@ import { randomUUID } from 'node:crypto';
 import type { CommitRequest } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 import { APP_ENTRY_ROUTE, commandOutboxes, expectConnected, firstTrackName, test as appTest } from './support/app.ts';
 import { ASTRID_PYTHON, AstridCli } from './support/astrid.ts';
-import { harnessUnavailableReason, type DirectHarness } from './support/harness.ts';
-import { logDiagnostic, logPriorityDiagnostic, redactDiagnosticText, redactDiagnosticValue } from './p1-diagnostic-safety.ts';
+import { harnessUnavailableReason, PRODUCT_ACTOR, type DirectHarness } from './support/harness.ts';
+import {
+  diagnosticObservedVisibility,
+  logDiagnostic,
+  logPriorityDiagnostic,
+  redactDiagnosticText,
+  redactDiagnosticValue,
+} from './p1-diagnostic-safety.ts';
 
 const CEILING = { timeout: 90_000 };
 const COMMITS = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
@@ -18,10 +24,41 @@ type CommitPost = { body: CommitRequest; raw: string; key: string; status?: numb
 type DiagnosticReadonlyTraffic = {
   method: string;
   route: string;
-  requestBody: string | null;
   status?: number;
   reply?: unknown;
 };
+type DiagnosticWireHead = {
+  method: string;
+  route: string;
+  key: string | null;
+  status: number;
+  head: { revisionId: string; publicationId: string | null } | null;
+  replyReadFailed: boolean;
+};
+type DiagnosticSourceWindow = {
+  rightId: string;
+  sourceIn: {
+    value: string | 'UNKNOWN';
+    numericValue: number | 'UNKNOWN';
+    visible: boolean | 'UNKNOWN';
+  };
+  selectedClip: {
+    identity: Record<string, string | null> | 'UNKNOWN';
+    visible: boolean | 'UNKNOWN';
+    status: string | 'UNKNOWN';
+    text: string | 'UNKNOWN';
+  };
+};
+type P1DiagnosticTrace = {
+  pageErrors: string[];
+  consoleErrors: Array<{ type: string; signal: DiagnosticErrorSignal; message: string; location: unknown }>;
+  requestFailures: Array<{ method: string; route: string; error: string | null }>;
+  wireHeads: DiagnosticWireHead[];
+  projectId?: string;
+  timelineId?: string;
+  sourceWindow?: { before: DiagnosticSourceWindow; after: DiagnosticSourceWindow };
+};
+const diagnosticTraces = new WeakMap<Page, P1DiagnosticTrace>();
 
 const test = appTest.extend<object, { astrid: AstridCli }>({
   astrid: async ({ harness }, use) => {
@@ -33,6 +70,54 @@ const test = appTest.extend<object, { astrid: AstridCli }>({
 test.beforeAll(() => {
   const reason = harnessUnavailableReason();
   if (reason) throw new Error(`P1 chain cannot run: ${reason}`);
+});
+test.beforeEach(async ({ page }) => {
+  const trace: P1DiagnosticTrace = { pageErrors: [], consoleErrors: [], requestFailures: [], wireHeads: [] };
+  diagnosticTraces.set(page, trace);
+  page.on('pageerror', (error) => boundedPush(trace.pageErrors, redactDiagnosticText(error.message)));
+  page.on('console', (message) => {
+    const text = message.text();
+    if (message.type() !== 'error' && !/save|commit|outbox|recover/i.test(text)) return;
+    let location: unknown = 'UNKNOWN';
+    try { location = redactDiagnosticValue(message.location()); } catch { location = 'UNKNOWN'; }
+    boundedPush(trace.consoleErrors, {
+      type: message.type(),
+      signal: classifyDiagnosticError(text),
+      message: redactDiagnosticText(text),
+      location,
+    });
+  });
+  page.on('requestfailed', (request) => {
+    let path: string;
+    try { path = new URL(request.url()).pathname; } catch { return; }
+    const route = diagnosticRoute(path);
+    if (!route) return;
+    boundedPush(trace.requestFailures, {
+      method: request.method(),
+      route,
+      error: request.failure()?.errorText ? redactDiagnosticText(request.failure()!.errorText!) : null,
+    });
+  });
+  page.on('response', (response) => {
+    let path: string;
+    try { path = new URL(response.url()).pathname; } catch { return; }
+    if (!COMMITS.test(path)) return;
+    const scope = path.match(/^\/api\/(?:runtime|astrid)\/v1\/projects\/([^/]+)\/timelines\/([^/]+)\/commit$/);
+    if (scope) {
+      trace.projectId = scope[1];
+      trace.timelineId = scope[2];
+    }
+    const wire: DiagnosticWireHead = {
+      method: response.request().method(),
+      route: diagnosticRoute(path) ?? '/unknown',
+      key: response.request().headers()['idempotency-key'] ?? null,
+      status: response.status(),
+      head: null,
+      replyReadFailed: false,
+    };
+    boundedPush(trace.wireHeads, wire);
+    void response.json().then((body) => { wire.head = diagnosticHead(body); }).catch(() => { wire.replyReadFailed = true; });
+  });
 });
 
 function pin(result: any) {
@@ -285,7 +370,7 @@ function observe(page: Page, captureReadonlyTraffic = false) {
     }
     const route = captureReadonlyTraffic ? diagnosticRoute(path) : undefined;
     if (route && !COMMITS.test(path)) {
-      const record = { method: request.method(), route, requestBody: request.postData() ?? null };
+      const record = { method: request.method(), route };
       boundedPush(readonlyTraffic, record);
       readonlyByRequest.set(request, record);
     }
@@ -380,6 +465,72 @@ async function splitSource(page: Page, seed: ChainSeed) {
   await page.keyboard.press('s');
 }
 
+async function sourceWindowSnapshot(page: Page, clipId: string, input: any): Promise<DiagnosticSourceWindow> {
+  const sourceIn: DiagnosticSourceWindow['sourceIn'] = { value: 'UNKNOWN', numericValue: 'UNKNOWN', visible: 'UNKNOWN' };
+  try {
+    const snapshots = await input.evaluateAll((nodes: Element[]) => nodes.slice(0, 2).map((node) => {
+      const element = node as HTMLInputElement;
+      const style = window.getComputedStyle(element);
+      const box = element.getBoundingClientRect();
+      return {
+        attached: node.isConnected,
+        visible: style.visibility !== 'hidden' && style.display !== 'none' && box.width > 0 && box.height > 0,
+        value: element.value,
+      };
+    }));
+    sourceIn.visible = diagnosticObservedVisibility(snapshots);
+    if (snapshots.length === 1 && snapshots[0].attached) {
+      const value = snapshots[0].value;
+      sourceIn.value = redactDiagnosticText(value);
+      const numericValue = Number(value);
+      sourceIn.numericValue = value.trim() !== '' && Number.isFinite(numericValue) ? numericValue : 'UNKNOWN';
+    }
+  } catch {
+    sourceIn.visible = 'UNKNOWN';
+    sourceIn.value = 'UNKNOWN';
+    sourceIn.numericValue = 'UNKNOWN';
+  }
+
+  const selectedClip = page.locator(`.clip-action[data-clip-id="${clipId}"]`);
+  let identity: DiagnosticSourceWindow['selectedClip']['identity'] = 'UNKNOWN';
+  let status: DiagnosticSourceWindow['selectedClip']['status'] = 'UNKNOWN';
+  let text: DiagnosticSourceWindow['selectedClip']['text'] = 'UNKNOWN';
+  try {
+    const snapshots = await selectedClip.evaluateAll((nodes: Element[]) => nodes.slice(0, 2).map((node) => {
+      const style = window.getComputedStyle(node);
+      const box = node.getBoundingClientRect();
+      return {
+        attached: node.isConnected,
+        visible: style.visibility !== 'hidden' && style.display !== 'none' && box.width > 0 && box.height > 0,
+        identity: {
+          tagName: node.tagName,
+          id: node.id || null,
+          clipId: node.getAttribute('data-clip-id'),
+          testId: node.getAttribute('data-testid'),
+          ariaSelected: node.getAttribute('aria-selected'),
+          className: typeof node.className === 'string' ? node.className : null,
+        },
+        status: node.getAttribute('data-status') ?? node.getAttribute('data-state') ?? 'UNKNOWN',
+        text: node.textContent?.trim() ?? '',
+      };
+    }));
+    const visibility = diagnosticObservedVisibility(snapshots);
+    if (snapshots.length === 1 && snapshots[0].attached) {
+      const details = snapshots[0];
+      identity = details.identity;
+      status = details.status;
+      text = redactDiagnosticText(details.text);
+      return { rightId: clipId, sourceIn, selectedClip: { identity, visible: visibility, status, text } };
+    }
+    return { rightId: clipId, sourceIn, selectedClip: { identity, visible: 'UNKNOWN', status, text } };
+  } catch {
+    identity = 'UNKNOWN';
+    status = 'UNKNOWN';
+    text = 'UNKNOWN';
+  }
+  return { rightId: clipId, sourceIn, selectedClip: { identity, visible: 'UNKNOWN', status, text } };
+}
+
 async function trimSourceWindow(page: Page, clipId: string, value: string) {
   await page.locator(`.clip-action[data-clip-id="${clipId}"]`).click();
   await page.getByRole('tab', { name: 'Timing', exact: true }).click();
@@ -388,10 +539,17 @@ async function trimSourceWindow(page: Page, clipId: string, value: string) {
   const field = page.getByText('Source In', { exact: true }).locator('..');
   await expect(field).toBeVisible();
   const input = field.locator('input:not([aria-hidden="true"])');
-  await expect(input).toBeEditable();
-  await input.fill(value);
-  await input.press('Enter');
-  await input.press('Tab');
+  const before = await sourceWindowSnapshot(page, clipId, input);
+  try {
+    await expect(input).toBeEditable();
+    await input.fill(value);
+    await input.press('Enter');
+    await input.press('Tab');
+  } finally {
+    const after = await sourceWindowSnapshot(page, clipId, input);
+    const trace = diagnosticTraces.get(page);
+    if (trace) trace.sourceWindow = { before, after };
+  }
 }
 
 async function forward(route: Route, response: any, body: any) {
@@ -503,28 +661,43 @@ function diagnosticHead(value: unknown): { revisionId: string; publicationId: st
   return null;
 }
 
+function summarizeBasisReads(value: unknown) {
+  if (!Array.isArray(value)) return { count: 'UNKNOWN', items: [], summarized: true, truncated: false };
+  const items = value.slice(0, DIAGNOSTIC_LIMIT).map((read) => {
+    if (!read || typeof read !== 'object' || Array.isArray(read)) return { kind: 'UNKNOWN', ref: 'UNKNOWN', path: 'UNKNOWN' };
+    const record = read as Record<string, unknown>;
+    return {
+      kind: typeof record.kind === 'string' ? record.kind : 'UNKNOWN',
+      ref: typeof record.ref === 'string' ? record.ref : 'UNKNOWN',
+      path: Array.isArray(record.path) ? record.path.filter((part): part is string => typeof part === 'string') : 'UNKNOWN',
+      state: record.state && typeof record.state === 'object' && !Array.isArray(record.state)
+        ? ((record.state as Record<string, unknown>).state ?? 'UNKNOWN')
+        : 'UNKNOWN',
+    };
+  });
+  return { count: value.length, items, summarized: true, truncated: value.length > DIAGNOSTIC_LIMIT };
+}
+
 function summarizeFailureOutboxes(records: any[]) {
   return records.slice(0, DIAGNOSTIC_LIMIT).map((record) => ({
-    ownerId: record.ownerId,
-    generation: record.generation,
-    intents: Array.isArray(record.intents) ? record.intents.slice(0, DIAGNOSTIC_LIMIT).map((intent: any) => ({
-      id: intent.id,
-      basis: redactDiagnosticValue(intent.basis),
-      readyBase: redactDiagnosticValue(intent.readyBase),
-      conflict: redactDiagnosticValue(intent.conflict),
-    })) : [],
+    ownerId: typeof record.ownerId === 'string' ? record.ownerId : 'UNKNOWN',
+    generation: typeof record.generation === 'number' ? record.generation : 'UNKNOWN',
+    intentCount: Array.isArray(record.intents) ? record.intents.length : 'UNKNOWN',
     pending: record.pending ? {
-      intentId: record.pending.intentId,
+      intentId: typeof record.pending.intentId === 'string' ? record.pending.intentId : 'UNKNOWN',
       request: record.pending.request ? {
-        method: record.pending.request.method,
-        path: String(record.pending.request.path ?? '').split(/[?#]/, 1)[0],
-        key: record.pending.request.key,
-        body: redactDiagnosticText(String(record.pending.request.body ?? '')),
+        method: typeof record.pending.request.method === 'string' ? record.pending.request.method : 'UNKNOWN',
+        path: String(record.pending.request.path ?? '').split(/[?#]/, 1)[0] || 'UNKNOWN',
+        key: typeof record.pending.request.key === 'string' ? record.pending.request.key : 'UNKNOWN',
       } : null,
-      outcome: redactDiagnosticValue(record.pending.outcome),
+      outcome: record.pending.outcome ? {
+        kind: typeof record.pending.outcome.kind === 'string' ? record.pending.outcome.kind : 'UNKNOWN',
+        status: typeof record.pending.outcome.status === 'number' ? record.pending.outcome.status : 'UNKNOWN',
+        reason: typeof record.pending.outcome.reason === 'string' ? record.pending.outcome.reason : 'UNKNOWN',
+      } : null,
     } : null,
     rejected: record.pending?.outcome?.kind === 'rejected',
-    acceptedHead: redactDiagnosticValue(record.accepted?.head),
+    acceptedHead: diagnosticHead(record.accepted?.head),
   }));
 }
 
@@ -658,17 +831,13 @@ async function captureSecondCaseFailureDiagnostics({
     const readonlyTraffic = traffic.readonlyTraffic.slice(0, DIAGNOSTIC_LIMIT).map((record) => ({
       method: record.method,
       route: record.route,
-      requestBody: record.requestBody === null ? null : redactDiagnosticText(record.requestBody),
       status: record.status ?? null,
-      reply: redactDiagnosticValue(record.reply),
       displayedHead: diagnosticHead(record.reply),
     }));
     const commitTraffic = traffic.posts.slice(0, DIAGNOSTIC_LIMIT).map((post, index) => ({
       index,
       key: post.key,
       status: post.status ?? null,
-      request: { raw: redactDiagnosticText(post.raw), body: redactDiagnosticValue(post.body) },
-      reply: redactDiagnosticValue(post.response),
       replyHead: diagnosticHead(post.response),
     }));
     const basis = traffic.posts.slice(0, DIAGNOSTIC_LIMIT).map((post, index) => ({
@@ -677,7 +846,7 @@ async function captureSecondCaseFailureDiagnostics({
       baseRevisionId: (post.body as any).base_revision_id ?? null,
       basePublicationId: (post.body as any).base_publication_id ?? null,
       merge: (post.body as any).merge ?? null,
-      reads: redactDiagnosticValue((post.body as any).reads),
+      reads: summarizeBasisReads((post.body as any).reads),
     }));
     const priorityBasis = traffic.posts.slice(0, DIAGNOSTIC_LIMIT).map((post, index) => ({
       index,
@@ -709,8 +878,7 @@ async function captureSecondCaseFailureDiagnostics({
       console: signals.consoleErrors.slice(0, 4),
       requestFailures: signals.requestFailures.slice(0, 4),
     };
-    // Keep causal state ahead of the verbose readonly packet. The latter can contain a
-    // large response and is intentionally retained below as failure evidence.
+    // Keep causal state ahead of the bounded structural traffic summaries.
     logPriorityDiagnostic('P1 second-case priority diagnostics', {
       case: {
         projectId: harness.seed.projectId,
@@ -778,6 +946,109 @@ async function captureSecondCaseFailureDiagnostics({
   }
 }
 
+function summarizePriorityOutboxes(records: any[]): unknown[] {
+  return records.slice(0, DIAGNOSTIC_LIMIT).map((record) => ({
+    ownerId: typeof record.ownerId === 'string' ? record.ownerId : 'UNKNOWN',
+    generation: typeof record.generation === 'number' ? record.generation : 'UNKNOWN',
+    intentCount: Array.isArray(record.intents) ? record.intents.length : 'UNKNOWN',
+    pending: record.pending ? {
+      intentId: typeof record.pending.intentId === 'string' ? record.pending.intentId : 'UNKNOWN',
+      request: record.pending.request ? {
+        method: typeof record.pending.request.method === 'string' ? record.pending.request.method : 'UNKNOWN',
+        path: String(record.pending.request.path ?? '').split(/[?#]/, 1)[0] || 'UNKNOWN',
+        key: typeof record.pending.request.key === 'string' ? record.pending.request.key : 'UNKNOWN',
+      } : 'UNKNOWN',
+      outcome: record.pending.outcome ? {
+        kind: typeof record.pending.outcome.kind === 'string' ? record.pending.outcome.kind : 'UNKNOWN',
+        status: typeof record.pending.outcome.status === 'number' ? record.pending.outcome.status : 'UNKNOWN',
+        reason: typeof record.pending.outcome.reason === 'string' ? record.pending.outcome.reason : 'UNKNOWN',
+      } : 'UNKNOWN',
+    } : null,
+    acceptedHead: diagnosticHead(record.accepted?.head) ?? 'UNKNOWN',
+  }));
+}
+
+async function diagnosticVisibleState(locator: any): Promise<boolean | 'UNKNOWN'> {
+  try { return await locator.isVisible(); } catch { return 'UNKNOWN'; }
+}
+
+async function diagnosticVisibleTextState(locator: any): Promise<string> {
+  try {
+    return await locator.isVisible() ? redactDiagnosticText((await locator.innerText()).trim()) : 'UNKNOWN';
+  } catch {
+    return 'UNKNOWN';
+  }
+}
+
+async function diagnosticAttribute(locator: any, name: string): Promise<string> {
+  try { return (await locator.getAttribute(name)) ?? 'UNKNOWN'; } catch { return 'UNKNOWN'; }
+}
+
+async function captureFailureContinuation(page: Page, testInfo: any) {
+  const trace = diagnosticTraces.get(page);
+  const provider = page.getByTestId('video-editor-provider');
+  const connection = page.getByTestId('runtime-connection-status');
+  const runtimePanel = page.getByTestId('runtime-not-connected');
+  const recovery = page.getByTestId('timeline-command-recovery');
+  const timelineError = page.locator('[data-video-editor-timeline-error="true"]');
+  const providerTimelineId = await diagnosticAttribute(provider, 'data-timeline-id');
+  const providerProjectId = await diagnosticAttribute(provider, 'data-project-id');
+  const timelineId = providerTimelineId !== 'UNKNOWN' ? providerTimelineId : trace?.timelineId ?? 'UNKNOWN';
+  let outboxRecords: any[] | null = null;
+  let outboxReadFailed = false;
+  try {
+    if (timelineId === 'UNKNOWN') throw new Error('timeline id unavailable');
+    outboxRecords = await commandOutboxes(page, timelineId);
+  } catch {
+    outboxReadFailed = true;
+  }
+  const connectionState = await diagnosticAttribute(connection, 'data-state');
+  const panelState = await diagnosticAttribute(runtimePanel, 'data-state');
+  const wireHeads = trace?.wireHeads ?? [];
+  logPriorityDiagnostic(`P1 failure continuation ${testInfo.title}`, {
+    case: {
+      projectId: providerProjectId !== 'UNKNOWN' ? providerProjectId : trace?.projectId ?? 'UNKNOWN',
+      timelineId,
+      rightId: trace?.sourceWindow?.after.rightId ?? 'UNKNOWN',
+      observedPostCount: wireHeads.length,
+    },
+    displayedHead: {
+      providerProjectId,
+      providerTimelineId,
+      currentWireHeads: wireHeads,
+    },
+    outbox: {
+      readFailed: outboxReadFailed,
+      summary: outboxRecords === null ? 'UNKNOWN' : summarizeOutboxes(outboxRecords),
+      owners: outboxRecords === null ? 'UNKNOWN' : summarizePriorityOutboxes(outboxRecords),
+    },
+    sourceWindow: trace?.sourceWindow ?? 'UNKNOWN',
+    ui: {
+      connectionState: diagnosticConnectionState(connectionState !== 'UNKNOWN' ? connectionState : panelState),
+      runtimePanelVisible: await diagnosticVisibleState(runtimePanel),
+      recoveryVisible: await diagnosticVisibleState(recovery),
+      recoveryMessage: await diagnosticVisibleTextState(recovery),
+      timelineErrorVisible: await diagnosticVisibleState(timelineError),
+      timelineErrorMessage: await diagnosticVisibleTextState(timelineError),
+      alertCount: await page.locator('[role="alert"]:visible').count().catch(() => 'UNKNOWN'),
+    },
+    errors: {
+      page: trace?.pageErrors ?? 'UNKNOWN',
+      console: trace?.consoleErrors ?? 'UNKNOWN',
+      requestFailures: trace?.requestFailures ?? 'UNKNOWN',
+    },
+  });
+}
+
+test.afterEach(async ({ page }, testInfo) => {
+  if (testInfo.status === testInfo.expectedStatus) return;
+  try {
+    await captureFailureContinuation(page, testInfo);
+  } catch {
+    logPriorityDiagnostic('P1 failure continuation unavailable', { diagnostic: 'UNKNOWN' });
+  }
+});
+
 // Source proof only: execution is NOT READY until A2 supplies its existing authoritative
 // read/intent seam. The strict merged reply assertions below remain required; do not infer
 // reads or reinterpret this boundary as a refusal.
@@ -787,6 +1058,8 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
   const traffic = observe(page);
   let heldSplit: Route | undefined;
   let heldTrim: Route | undefined;
+  let heldRetry: Route | undefined;
+  let retryPost: CommitPost | undefined;
   await page.route(COMMITS, async (route) => {
     if (route.request().method() !== 'POST') return route.fallback();
     const post = traffic.posts.find((candidate) => candidate.key === route.request().headers()['idempotency-key']);
@@ -882,18 +1155,57 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
   await heldTrim!.abort('connectionreset');
   await page.unroute(COMMITS);
   await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).some((owner) => owner.pending?.outcome?.kind === 'retry'), CEILING).toBe(true);
-  const owner = (await commandOutboxes(page, seed.timelineId)).find((candidate) => candidate.pending?.request.key === originalTrim.key)!;
+  const ownersBeforeReload = await commandOutboxes(page, seed.timelineId);
+  expect(ownersBeforeReload).toHaveLength(1);
+  const owner = ownersBeforeReload[0];
+  expect(owner.scope).toEqual({ realmId: harness.realmId, actorId: PRODUCT_ACTOR,
+    projectId: harness.seed.projectId, timelineId: seed.timelineId });
   expect(owner.pending?.request).toMatchObject({ body: originalTrim.raw, key: originalTrim.key });
+
+  // The mounted local-save session claims the sole authenticated owner on reload and
+  // invokes recovery automatically. Arm the observer first, then hold that real request
+  // so the lost-ACK/restart boundary remains genuine and the retry reaches the restarted
+  // Runtime with its persisted body and key.
+  await page.unroute(COMMITS);
+  expect(traffic.posts).toHaveLength(2);
+  const retryResponsePromise = page.waitForResponse((response) => response.request().method() === 'POST'
+    && COMMITS.test(new URL(response.url()).pathname)
+    && response.request().headers()['idempotency-key'] === originalTrim.key, CEILING);
+  await page.route(COMMITS, async (route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
+    const key = route.request().headers()['idempotency-key'];
+    const post = [...traffic.posts].reverse().find((candidate) => candidate.key === key);
+    if (key === originalTrim.key && post) {
+      retryPost = post;
+      heldRetry = route;
+      return;
+    }
+    const response = await route.fetch({ maxRetries: 0 });
+    await forward(route, response, await response.json());
+  });
   await page.reload();
   await expectConnected(page);
   await expect(firstTrackName(page)).toBeVisible();
-  expect(traffic.posts).toHaveLength(2);
+  await expect.poll(() => !!heldRetry, CEILING).toBe(true);
+  expect(traffic.posts).toHaveLength(3);
+  expect(retryPost).toBe(traffic.posts[2]);
+  // Automatic recovery has reserved exactly one request, but the route has not forwarded
+  // it yet; this is the replacement for the obsolete fixture-button traffic-count guard.
+  expect(retryPost?.raw).toBe(originalTrim.raw);
+  expect(retryPost?.key).toBe(originalTrim.key);
+  expect(retryPost?.status).toBeUndefined();
+  const ownersAfterReload = await commandOutboxes(page, seed.timelineId);
+  expect(ownersAfterReload).toHaveLength(1);
+  expect(ownersAfterReload[0].ownerId).toBe(owner.ownerId);
+  expect(ownersAfterReload[0].scope).toEqual(owner.scope);
+  expect(ownersAfterReload[0].pending?.request).toMatchObject({ body: originalTrim.raw, key: originalTrim.key });
   const restarted = await harness.restartRuntime();
   expect(restarted.oldInstanceId).toBeTruthy();
   await expectConnected(page);
-  const recovered = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);
-  await page.getByRole('button', { name: /^Recover saved edits/ }).and(page.locator(`[data-owner-id="${owner.ownerId}"]`)).click();
-  const retryResponse = await recovered;
+  const retryWire = await heldRetry!.fetch({ maxRetries: 0 });
+  const retryBody = await retryWire.json();
+  await forward(heldRetry!, retryWire, retryBody);
+  const retryResponse = await retryResponsePromise;
   expect(retryResponse.status()).toBe(200);
   expect(retryResponse.request().postData()).toBe(originalTrim.raw);
   expect(retryResponse.request().headers()['idempotency-key']).toBe(originalTrim.key);
