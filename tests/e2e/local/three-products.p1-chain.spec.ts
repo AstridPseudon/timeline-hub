@@ -162,7 +162,7 @@ from astrid.sdk.timeline.native_parent_media_commands import capture_clip_add_me
 
 case = json.loads(sys.argv[1])
 with AstridClient.open_from_launcher(start_pack_host=False, client_name="p1-seed") as client:
-    opened = client.timelines.open_bundle(case["project_id"], case["timeline_id"], revision_id=case["base_revision_id"])
+    opened = client.timelines.open_bundle(case["project_id"], case["timeline_id"], revision_id=case["base_revision_id"], publication_id=case["base_publication_id"])
     if not opened.ok:
         raise RuntimeError(str(opened.error))
     bundle = opened.data["bundle"]
@@ -221,7 +221,7 @@ with AstridClient.open_from_launcher(start_pack_host=False, client_name="p1-seed
     if not result.ok:
         raise RuntimeError(str(result.error))
     data = result.data
-    receipt = result.receipt
+    receipt = result.as_dict()["receipt"]
     document = data["canonical_document"]
     parent = document["parent_revision"]
     manifest = document["dependency_manifest"]
