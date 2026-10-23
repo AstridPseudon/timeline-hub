@@ -177,6 +177,28 @@ def test_skips_of_non_blocking_entries_are_listed_under_their_own_header(sandbox
     ])
 
 
+def test_skips_of_entries_no_ci_job_runs_are_listed_under_their_own_header(sandbox):
+    helper = _foreign_helper()
+    result = _run(sandbox, f"""
+        import dataclasses
+        from tests import lanes
+        from tests.lanes import {helper}
+
+        lanes.SKIP_REGISTRY.update({{
+            name: dataclasses.replace(entry, no_ci="no job on purpose")
+            for name, entry in lanes.SKIP_REGISTRY.items()
+        }})
+        @{helper}
+        def test_platform_only(): assert False
+        def test_runs(): pass
+        """)
+    assert result.ret == 0, result.stdout.str()
+    result.stdout.fnmatch_lines([
+        "NOT RUN BY ANY CI JOB (1):",
+        "  NO CI *::test_platform_only: [[]declared:*] no job on purpose",
+    ])
+
+
 def test_a_declared_skip_where_its_condition_is_false_here_fails_the_run(sandbox):
     # An entry whose condition is false on this host: the tag is registered but the reason does not apply.
     # `name`'s condition is false on this host (so the skip hides a test that should run); `right`'s is true.

@@ -27,6 +27,8 @@ import pytest
 import yaml
 from _pytest.mark.expression import Expression
 
+import sys
+
 from tests import lanes
 from tests.lanes import HOSTS, SKIP_REGISTRY, DeclaredSkip
 
@@ -34,6 +36,7 @@ REPO = Path(__file__).resolve().parent.parent
 WORKFLOWS = REPO / ".github" / "workflows"
 TESTS = REPO / "tests"
 LANE_NAMES = set(lanes.LANE_MARKERS)
+_this = sys.modules[__name__]
 AUTOMATIC_TRIGGERS = {"push", "pull_request", "schedule"}
 
 
@@ -310,8 +313,12 @@ def test_every_entry_has_tests_and_a_condition_that_lets_some_host_run_them() ->
 def test_every_declared_job_exists_and_runs_a_test_of_the_entry() -> None:
     jobs, uses, problems = _jobs(), _uses(), []
     for entry in SKIP_REGISTRY.values():
+        if entry.no_ci:
+            if entry.ci:
+                problems.append(f"{entry.name}: has both no_ci and ci jobs {entry.ci}")
+            continue  # test_no_undeclared_job_runs_a_test_of_the_entry fails if a job does run it
         if not entry.ci:
-            problems.append(f"{entry.name}: no CI job runs it where the condition is false")
+            problems.append(f"{entry.name}: no CI job runs it where the condition is false; list a job or give no_ci a reason")
         for name in entry.ci:
             if name not in jobs:
                 problems.append(f"{entry.name}: no such CI job {name!r}")
@@ -339,7 +346,7 @@ def test_some_declared_job_runs_automatically() -> None:
     problems = [
         f"{entry.name}: its jobs {entry.ci} are triggered only by {sorted(set().union(*(jobs[j].triggers for j in entry.ci)))}"
         for entry in SKIP_REGISTRY.values()
-        if not AUTOMATIC_TRIGGERS & set().union(*(jobs[j].triggers for j in entry.ci))
+        if entry.ci and not AUTOMATIC_TRIGGERS & set().union(*(jobs[j].triggers for j in entry.ci))
     ]
     assert not problems, "\n".join(problems)
 
@@ -347,6 +354,8 @@ def test_some_declared_job_runs_automatically() -> None:
 def test_blocking_says_whether_any_job_that_runs_the_test_can_fail_ci() -> None:
     jobs, uses, problems = _jobs(), _uses(), []
     for entry in SKIP_REGISTRY.values():
+        if entry.no_ci:
+            continue  # no job runs it; there is nothing to be blocking
         pairs = {
             (name, os_key): blocking
             for name in entry.ci
@@ -448,3 +457,13 @@ def test_k_expression_is_parsed_and_only_a_plain_untouching_exclusion_credits_a_
         bad = job_with(other)
         assert not _running(_ENTRY, bad, [_use("test_a")])
         assert _bad_k_filters({"j": bad})
+
+
+def test_an_entry_with_neither_a_job_nor_no_ci_is_rejected(monkeypatch) -> None:
+    bare = DeclaredSkip("bare", "os_name == 'nt'", "demo", ())
+    monkeypatch.setattr(_this, "SKIP_REGISTRY", {"bare": bare})
+    monkeypatch.setattr(_this, "_uses", lambda: {"bare": [_use()]})
+    with pytest.raises(AssertionError, match="bare: no CI job runs it"):
+        test_every_declared_job_exists_and_runs_a_test_of_the_entry()
+    monkeypatch.setattr(_this, "SKIP_REGISTRY", {"bare": DeclaredSkip("bare", "os_name == 'nt'", "demo", (), no_ci="not supported")})
+    test_every_declared_job_exists_and_runs_a_test_of_the_entry()
