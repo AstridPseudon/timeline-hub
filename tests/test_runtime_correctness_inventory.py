@@ -123,4 +123,3 @@ def test_runtime_assert_conversion_inventory_triage_is_fixed_only_at_planned_sit
     assert "## Planned Runtime Assert Conversions Completed" in text
     for path, line in PLANNED_ASSERT_CONVERSIONS:
         assert f"`{path}:{line}`: completed" in text
-

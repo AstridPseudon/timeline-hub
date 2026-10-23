@@ -27,4 +27,3 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
         raise pytest.UsageError(f"runpod_lifecycle is a declared dev dependency and is not installed: {_INSTALL}")
     for item in runpod_items:
         item.add_marker(pytest.mark.integration)
-
