@@ -1,0 +1,7 @@
+# Handoff: P1/D25 artifact-return review 1931
+
+**FAIL.** Exact reviewed HEAD d0898e216f545057b8cfdf2f525c35c74cddfa5c / tree 919bbf410fb23e941572cfcee3e781e40c2a6118. The return source correctly places an early parseable file write before the actual outbox/DOM reads and bounds those reads. It passes the approved focused/type/lint/list checks and preserves the protected first/second body hashes 4b04ad7ef74b8106244d87c23d12c7a18da251dd8f5a746f42d3221a72ea8b7f / 2f7501184477c8aec38d3cd289dd13c0d011fa8f69ecd43378f24f6c3100a2f7.
+
+The acceptance gap is explicit: p1-diagnostic-safety.test.ts:196–221 only calls writeDiagnosticArtifact and boundedDiagnosticRead directly plus static source ordering; it never invokes production captureFailureContinuation/afterEach with real commandOutboxes (tests/e2e/local/support/app.ts:200–218). The existing VM test is also a helper mirror. Therefore actual failure retention remains unproven; retain actual 18607 as 1 PASS/1 FAIL, no GO, and both historical causes as insufficient evidence.
+
+Missing dataRef, callback patch, originalLocalSaveBasis, capture result, and session adoption remain UNKNOWN. Existing safe observations include wire/body/key projections, heads, source-window DOM 0→3, bounded outbox/UI/error summaries; DOM 0→3 is not callback proof. Concrete App seams are listed in the worker report; no guessed probe or alternate route was added. Exact file/blob/source/body hashes, all command results, and limitations are in the worker report.
