@@ -1,0 +1,46 @@
+--- installed/request-retire-venv@4713b456
++++ staged/request-retire-venv
+@@ -1,20 +1,37 @@
+ #!/bin/bash
+-# request-retire-venv NAME — queue one exact child-venv retirement request.
++# request-retire-venv NAME — queue one exact child-venv/leftover retirement request.
+ set -u -o pipefail
+ 
+ O=${RETIRE_VENV_ORCH_ROOT:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch}
+ 
+ usage() {
+-  echo "usage: request-retire-venv venv-agent-child-<suffix>" >&2
++  echo "usage: request-retire-venv venv-agent-child-<suffix>[.partial.<suffix>]" >&2
+   exit 2
+ }
+ 
+ [ "$#" -eq 1 ] || usage
+ N=$1
+-case "$N" in
+-  venv-agent-child-[a-z0-9][a-z0-9-]*) ;;
+-  *) echo "REFUSED: name must be venv-agent-child-<suffix>" >&2; exit 2 ;;
+-esac
++valid_source_timestamp() {
++  local stamp=$1 parsed
++  parsed=$(date -u -d "${stamp:0:4}-${stamp:4:2}-${stamp:6:2} ${stamp:9:2}:${stamp:11:2}:${stamp:13:2}" +%Y%m%dT%H%M%SZ 2>/dev/null) || return 1
++  [ "$parsed" = "$stamp" ]
++}
++
++valid_source_name() {
++  local name=$1 stamp
++  [[ "$name" =~ ^\.child-venv-source-venv-agent-child-[a-z0-9][a-z0-9-]*-([0-9]{8}T[0-9]{6}Z)-([1-9][0-9]*)\.([A-Za-z0-9]{6})$ ]] || return 1
++  stamp=${BASH_REMATCH[1]}
++  valid_source_timestamp "$stamp"
++}
++
++if [[ ! "$N" =~ ^venv-agent-child-[a-z0-9][a-z0-9-]*$ && ! "$N" =~ ^venv-agent-child-[a-z0-9][a-z0-9-]*\.partial\.[A-Za-z0-9._-]+$ && ! "$N" =~ ^\.child-venv-source-venv-agent-child-[a-z0-9][a-z0-9-]*-[0-9]{8}T[0-9]{6}Z-[1-9][0-9]*\.[A-Za-z0-9]{6}$ ]]; then
++  echo "REFUSED: name does not match an owned child-venv grammar" >&2
++  exit 2
++fi
++if [[ "$N" == .child-venv-source-* ]] && ! valid_source_name "$N"; then
++  echo "REFUSED: name does not match an owned child-venv grammar" >&2
++  exit 2
++fi
+ 
+ P=$O/queue/pending/retire-venv-$N
+ [ -d "$O/queue/pending" ] || { echo "REFUSED: pending queue is unavailable" >&2; exit 2; }
