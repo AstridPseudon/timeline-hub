@@ -140,10 +140,13 @@ const MOBILE_COPY = {
  * option to use it right here instead. Either choice makes the site open straight into the app on
  * later visits; /home keeps the landing page.
  */
+const FOCUSABLE_CONTROL = 'button, a[href], input, select, textarea, [role="button"]';
+
 export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
+  const lastActivatedRef = useRef<HTMLElement | null>(null);
   const closeNotifiedRef = useRef(true);
   const onCloseRef = useRef(onClose);
   const scenario = useInstallScenario();
@@ -152,6 +155,18 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
   useEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
+
+  // Safari (macOS and iOS) does not focus a button when it is clicked or tapped: `document.activeElement` is the
+  // body, or the nearest focusable ancestor (here `main`), when the dialog opens, and focus would return there.
+  // The control that was activated is the opener either way.
+  useEffect(() => {
+    const remember = (event: MouseEvent) => {
+      const target = event.target instanceof Element ? event.target.closest<HTMLElement>(FOCUSABLE_CONTROL) : null;
+      lastActivatedRef.current = target;
+    };
+    document.addEventListener('click', remember, true);
+    return () => document.removeEventListener('click', remember, true);
+  }, []);
 
   const restoreFocus = useCallback(() => {
     const target = returnFocusRef.current;
@@ -181,10 +196,12 @@ export function PublicAstridInstallDialog({ open, onClose }: { open: boolean; on
     const dialog = dialogRef.current;
     if (!dialog) return;
     if (open && !dialog.open) {
-      const activeElement = document.activeElement;
-      if (activeElement instanceof HTMLElement && activeElement !== document.body && !dialog.contains(activeElement)) {
-        returnFocusRef.current = activeElement;
-      }
+      const focused = document.activeElement;
+      const focusedControl = focused instanceof HTMLElement && focused.matches(FOCUSABLE_CONTROL) ? focused : null;
+      const activated = lastActivatedRef.current?.isConnected ? lastActivatedRef.current : null;
+      lastActivatedRef.current = null;
+      const opener = focusedControl ?? activated ?? (focused instanceof HTMLElement && focused !== document.body ? focused : null);
+      if (opener && !dialog.contains(opener)) returnFocusRef.current = opener;
       closeNotifiedRef.current = false;
       dialog.showModal();
       closeButtonRef.current?.focus({ preventScroll: true });
