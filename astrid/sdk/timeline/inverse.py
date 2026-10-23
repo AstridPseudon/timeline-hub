@@ -718,6 +718,44 @@ def _restore_write(ctx, write):
         ctx.compile_mirrors()
 
 
+def _stage_restoration_orders(records, record):
+    """Recover a nested slice's order from its authenticated compiler mirror."""
+    if '_inverse_stage' not in record:
+        return restoration_orders(records, only=record)
+    from ._collections import order
+    from ._doc_patch import inverse_changes
+    from ._step_undo import _nested_mirrors
+
+    source, step, boundary = record['_inverse_stage']
+    if (not isinstance(records, AcceptedRecords) or not any(source is item for item in records)
+            or not any(any(source is item for item in entry['records']['commands'])
+                       and any(step is item for item in entry['records'].get('steps', []))
+                       for entry in records.entries)):
+        raise CommandError('inverse stage source is unavailable', kind='history_unavailable')
+    nested = [binding for binding in source.get('bindings', []) if binding['key'] == 'inverse.stage']
+    index = next((i for i, binding in enumerate(nested) if binding['boundary'] is boundary), None)
+    if index is None:
+        raise CommandError('inverse stage boundary is unavailable', kind='history_unavailable')
+    start, end = boundary['native_write_range']
+    first, last = boundary['effect_range']
+    mirrors = _nested_mirrors(source, step, nested)[index]
+    if (any(not equal(record.get(key), value) for key, value in source.items()
+            if key not in ('writes', 'derived_writes'))
+            or not equal(record['writes'], source['writes'][start:end])
+            or not equal(record.get('derived_writes'), mirrors)
+            or not equal(record.get('_inverse_effects'), inverse_changes(step['patch'][first:last]))):
+        raise CommandError('inverse stage differs from accepted partition', kind='history_unavailable')
+    if not mirrors:
+        return {}
+    result = []
+    for image in (mirrors[0]['before'], mirrors[-1]['after']):
+        if image.get('state') != 'present' or not isinstance(image.get('value'), list):
+            raise CommandError('inverse stage order is unavailable', kind='history_unavailable')
+        result.append(order(State({'parent': {'clips': image['value'],
+                                             'config': {'clips': image['value']}}}), 'parent', 'clip'))
+    return {('parent', 'clip'): tuple(result)}
+
+
 def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
     if not records:
         raise CommandError("inverse requires trusted accepted records", kind='history_unavailable')
@@ -830,10 +868,18 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
                        if write['ref'].startswith('occurrence:') and '/' in write['ref']}
         start = len(ctx.record['writes'])
         for record in reversed(commands):
+            stage_orders = _stage_restoration_orders(records, record)
+            if '_inverse_stage' in record:
+                from ._collections import order
+
+                for (owner, kind), (_, expected) in stage_orders.items():
+                    if order(ctx.state, owner, kind) != expected:
+                        raise CommandError('inverse stage membership/order changed',
+                                           kind='selection_changed', ref=owner)
             for write in reversed([*record['writes'], *caches.get(id(record), [])]):
                 with _recording_storage(ctx, write['ref'], write['path'], records):
                     _restore_write(ctx, write)
-            for (owner, kind), (original, _) in restoration_orders(records, only=record).items():
+            for (owner, kind), (original, _) in stage_orders.items():
                 if ctx.state.entity(owner, optional=True) is not None:
                     arrange(ctx.state, owner, kind, original)
             arrange_restored(ctx.state, record, root_orders.get(id(record)))
