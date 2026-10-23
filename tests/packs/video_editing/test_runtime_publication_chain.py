@@ -337,6 +337,8 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
                     "project_id": author_claim["project_id"],
                     "attempt_id": author_claim["attempt_id"],
                     "fence": author_claim["fence"],
+                    "run_id": service.task(author_claim["task_id"])["task"]["run_id"],
+                    "runtime_epoch": author_claim["runtime_epoch"],
                 }
             },
             lease_token=author_claim["lease_id"],
@@ -360,6 +362,8 @@ def test_daemon_backed_host_executes_authoring_and_final_render(tmp_path, monkey
                     "project_id": render_claim["project_id"],
                     "attempt_id": render_claim["attempt_id"],
                     "fence": render_claim["fence"],
+                    "run_id": service.task(render_claim["task_id"])["task"]["run_id"],
+                    "runtime_epoch": render_claim["runtime_epoch"],
                 }
             },
             lease_token=render_claim["lease_id"],

@@ -23,6 +23,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.lanes import unavailable
+
 from astrid.core.execution.generic_host import (
     GenericPackHost,
     HostError,
@@ -34,10 +36,8 @@ from astrid_runtime_client import WorkspaceClient
 
 pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
 
-ASTRID_APP_ROOT = Path(
-    os.environ.get("ASTRID_APP_CHECKOUT")
-    or "/Users/hannahomalley/Documents/Codex/2026-09-09/can-you-see-the-poms-skills/work/astrid-prep/repos/astrid-app"
-).resolve()
+APP_CHECKOUT_ENV = "ASTRID_APP_CHECKOUT"
+ASTRID_APP_ROOT = Path(os.environ.get(APP_CHECKOUT_ENV) or "astrid-app-checkout-not-set").resolve()
 
 _PNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
 
@@ -350,13 +350,17 @@ def _shipped_cpu_media_runner(
     runner.write_text(
         f"""
 import hashlib
+import importlib
 import sys
 from pathlib import Path
 
-from astrid.packs.vibecomfy.media import run as media_run
+from astrid.packs.vibecomfy.media import runtime as media_run
 import astrid.packs.vibecomfy.production_engine as production_engine
 
 CAPABILITY = {capability!r}
+ACTION = importlib.import_module(
+    "astrid.packs.vibecomfy.actions." + CAPABILITY.split(".", 1)[1] + ".run"
+)
 TEMPLATE_ID = {template_id!r}
 MODEL_ID = {model_id!r}
 INPUT_BINDINGS = {input_bindings!r}
@@ -409,7 +413,7 @@ def _checked_readiness(path, digest):
 
 
 media_run._read_profile = _checked_readiness
-raise SystemExit(media_run.main(sys.argv[1:]))
+raise SystemExit(ACTION.main(sys.argv[1:]))
 """,
         encoding="utf-8",
     )
@@ -846,8 +850,11 @@ def test_typed_character_animation_admission_consumes_ordered_cas_and_readback(t
         daemon.stop()
 
 
+@pytest.mark.app_checkout
 def test_astrid_character_animation_producer_composes_runtime_and_gallery_readback(tmp_path: Path, real_runtime) -> None:
     """Prove the paired Astrid App producer → Runtime → shipped host → gallery path."""
+    if not (ASTRID_APP_ROOT / "node_modules/.bin/tsx").is_file():
+        unavailable(f"set {APP_CHECKOUT_ENV} to a banodoco/astrid-app checkout with `npm ci` done")
     pack = _character_animation_cpu_fixture(tmp_path)
     previous_readiness = _set_cpu_readiness_environment(pack)
     daemon = real_runtime()
@@ -1166,7 +1173,7 @@ fal_module.default_client = lambda: HttpClient(transport=_transport)
         )
         host.discover()
         record = host.capabilities["generation.generate_image"]
-        assert record.definition.kind == "built_in"
+        assert record.definition.kind == "external"
         assert record.definition.command.argv[2:5] == (
             "astrid.packs.generation.actions.generate_image.run",
             "--model",
@@ -1615,7 +1622,7 @@ def test_production_i2i_command_uses_ordered_cas_through_https_connect_and_auth(
         )
         host.discover()
         record = host.capabilities["generation.generate_image_cloud_i2i"]
-        assert record.definition.kind == "built_in"
+        assert record.definition.kind == "external"
         assert record.definition.isolation.network is True
         assert record.definition.metadata["secrets_required"] == ["FAL_KEY"]
         assert record.definition.metadata["fixed_inputs"] == {
@@ -1873,7 +1880,7 @@ def test_production_qwen_edit_command_uses_ordered_cas_through_https_connect_and
         )
         host.discover()
         record = host.capabilities["generation.generate_image_edit"]
-        assert record.definition.kind == "built_in"
+        assert record.definition.kind == "external"
         assert record.definition.isolation.network is True
         assert record.definition.metadata["secrets_required"] == ["FAL_KEY"]
         assert record.definition.metadata["fixed_inputs"] == {"execution": "cloud"}

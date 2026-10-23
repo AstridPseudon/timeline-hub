@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import hashlib
 import json
-import shutil
 from collections.abc import Mapping
 from pathlib import Path
 
 import pytest
+import yaml
 
 from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient
 from astrid.sdk.client import AstridClient
@@ -14,29 +14,49 @@ from astrid.sdk.client import AstridClient
 pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
 
 ROOT = Path(__file__).resolve().parents[2]
-IMPORT_CAPABILITY = (
-    ROOT / "astrid" / "packs" / "vibecomfy" / "executors" / "import" / "executor.yaml"
-)
-EDIT_CAPABILITY = (
-    ROOT / "astrid" / "packs" / "vibecomfy" / "executors" / "edit" / "executor.yaml"
-)
+SHIPPED_PACK = ROOT / "astrid" / "packs" / "vibecomfy" / "pack.yaml"
+
+
+def _executor_token(daemon, executor_id: str) -> str:
+    """A credential bound to one executor with the Runtime's worker scopes (no
+    owner/admin scope); the host registers and claims with it."""
+    from runtime_protocol.daemon import WORKER_SCOPES
+
+    token, _path = daemon.credentials.provision(executor_id, list(WORKER_SCOPES))
+    return token
 
 
 def _write_fake_vibecomfy_package(pack_root: Path) -> None:
     package_root = pack_root / "vibecomfy"
-    executor_root = package_root / "executors" / "import"
-    edit_executor_root = package_root / "executors" / "edit"
     service_root = package_root / "porting"
     edit_service_root = service_root / "edit"
-    executor_root.mkdir(parents=True)
-    edit_executor_root.mkdir(parents=True)
+    package_root.mkdir(parents=True)
     service_root.mkdir(parents=True)
     edit_service_root.mkdir(parents=True)
-    shutil.copyfile(IMPORT_CAPABILITY, executor_root / "executor.yaml")
-    shutil.copyfile(EDIT_CAPABILITY, edit_executor_root / "executor.yaml")
+    shipped = yaml.safe_load(SHIPPED_PACK.read_text(encoding="utf-8"))
+    actions = {}
+    for name in ("import", "edit"):
+        action = json.loads(json.dumps(shipped["actions"][name]))
+        action.pop("resources", None)  # the fixture ships no action source files
+        actions[name] = action
     (package_root / "pack.yaml").write_text(
-        "schema_version: 2\nid: vibecomfy\nname: Fixture VibeComfy\nversion: 1.0.0\n"
-        "capabilities: [import_workflow, edit_workflow_ir]\ncontent:\n  executors: executors\n",
+        yaml.safe_dump(
+            {
+                "schema_version": 3,
+                "id": "vibecomfy",
+                "name": "Fixture VibeComfy",
+                "version": "1.0.0",
+                "status": "active",
+                "domain": "generation",
+                "stability": "experimental",
+                "support": "core",
+                "visibility": "visible",
+                "description": "Shipped import and edit actions over a fake VibeComfy package.",
+                "capabilities": [],
+                "actions": actions,
+            },
+            sort_keys=False,
+        ),
         encoding="utf-8",
     )
     (package_root / "__init__.py").write_text("\n", encoding="utf-8")
@@ -204,7 +224,7 @@ def test_import_edit_capture_history_runs_as_runtime_tasks_and_settles_lineage(
         host = GenericPackHost(
             pack_roots=[pack_root],
             attempt_root=tmp_path / "attempt",
-            client=RuntimeProtocolClient(daemon.endpoint, daemon.credential_path.read_text().strip()),
+            client=RuntimeProtocolClient(daemon.endpoint, _executor_token(daemon, "vibecomfy-import-test-host")),
             executor_id="vibecomfy-import-test-host",
         )
         records = host.discover()
@@ -334,7 +354,7 @@ def test_import_edit_capture_history_runs_as_runtime_tasks_and_settles_lineage(
             pack_roots=[pack_root],
             attempt_root=tmp_path / "edit-attempt",
             client=RuntimeProtocolClient(
-                daemon.endpoint, daemon.credential_path.read_text().strip()
+                daemon.endpoint, _executor_token(daemon, "vibecomfy-import-test-host")
             ),
             executor_id="vibecomfy-import-test-host",
         )
@@ -430,7 +450,7 @@ def test_import_edit_capture_history_runs_as_runtime_tasks_and_settles_lineage(
             pack_roots=[pack_root],
             attempt_root=tmp_path / "edit-two-attempt",
             client=RuntimeProtocolClient(
-                daemon.endpoint, daemon.credential_path.read_text().strip()
+                daemon.endpoint, _executor_token(daemon, "vibecomfy-import-test-host")
             ),
             executor_id="vibecomfy-import-test-host",
         )
@@ -515,7 +535,7 @@ def test_import_edit_capture_history_runs_as_runtime_tasks_and_settles_lineage(
             pack_roots=[pack_root],
             attempt_root=tmp_path / "capture-attempt",
             client=RuntimeProtocolClient(
-                daemon.endpoint, daemon.credential_path.read_text().strip()
+                daemon.endpoint, _executor_token(daemon, "vibecomfy-import-test-host")
             ),
             executor_id="vibecomfy-import-test-host",
         )

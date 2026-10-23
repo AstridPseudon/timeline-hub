@@ -19,11 +19,10 @@ pretending to render.
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
-import os
 import shutil
 import subprocess
-from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -40,58 +39,24 @@ ROOT = Path(__file__).resolve().parents[3]
 PACK_ROOT = ROOT / "tests" / "fixtures" / "renderer_packs"
 HYPERFRAMES_ROOT = PACK_ROOT / "hyperframes"
 HYPERFRAMES_ID = "hyperframes.renderer"
-NODE = shutil.which("node")
+
+def _load_pack_render_module():
+    spec = importlib.util.spec_from_file_location("hyperframes_pack_render", HYPERFRAMES_ROOT / "render.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
-def _require_hyperframes_environment() -> str:
-    """Return a node >= 22 executable, or fail (these tests are in the manual ``integration`` lane).
+def _require_hyperframes_environment() -> None:
+    """Fail (these tests are in the ``integration`` lane) unless ffmpeg and a Node >= 22 are available.
 
-    Prefers a node that satisfies HyperFrames' Node 22+ requirement (v20 on
-    PATH is common): the PATH node, then nvm versions, then the GitHub runner
-    tool cache (``RUNNER_TOOL_CACHE/node/<version>/<arch>``, where a second
-    ``actions/setup-node`` step leaves Node 22 without changing the PATH node).
+    The pack finds its own Node 22 (render.find_node22: PATH, the runner tool cache, nvm), because the
+    lane's PATH node is the pinned Node 20 that Remotion requires.
     """
     if shutil.which("ffmpeg") is None:
         unavailable("ffmpeg is unavailable")
-    candidates: list[str] = []
-    if NODE is not None:
-        candidates.append(NODE)
-    nvm_versions = Path.home() / ".nvm" / "versions" / "node"
-    if nvm_versions.is_dir():
-        candidates.extend(
-            str(path / "bin" / "node")
-            for path in sorted(nvm_versions.iterdir(), reverse=True)
-            if (path / "bin" / "node").is_file()
-        )
-    tool_cache = os.environ.get("RUNNER_TOOL_CACHE")
-    if tool_cache:
-        candidates.extend(
-            str(path)
-            for path in sorted(Path(tool_cache).glob("node/*/*/bin/node"), reverse=True)
-        )
-    for node in candidates:
-        version = subprocess.run(
-            [node, "--version"], capture_output=True, text=True, check=False
-        ).stdout.strip()
-        try:
-            major = int(version.lstrip("v").split(".")[0])
-        except (ValueError, IndexError):
-            continue
-        if major >= 22:
-            return node
-    unavailable("node >= 22 required for hyperframes (checked PATH, nvm and the runner tool cache)")
-
-
-@contextmanager
-def _node_on_path(node: str):
-    """Prepend *node*'s bin dir to PATH so `npx` resolves the same node."""
-    bin_dir = str(Path(node).resolve().parent)
-    old_path = os.environ.get("PATH", "")
-    os.environ["PATH"] = f"{bin_dir}:{old_path}"
-    try:
-        yield
-    finally:
-        os.environ["PATH"] = old_path
+    if _load_pack_render_module().find_node22() is None:
+        unavailable("node >= 22 required for hyperframes (checked PATH, the runner tool cache and nvm)")
 
 
 def _text_timeline(tmp_path: Path) -> Path:
@@ -272,11 +237,11 @@ def test_hyperframes_support_is_honest(tmp_path: Path) -> None:
 @pytest.mark.integration
 @pytest.mark.timeout(600)
 def test_hyperframes_real_render_through_public_service(tmp_path: Path) -> None:
-    node = _require_hyperframes_environment()
+    _require_hyperframes_environment()
     timeline = _text_timeline(tmp_path)
     output = tmp_path / "hyperframes.mp4"
     try:
-        with _execution_env(), _node_on_path(node):
+        with _execution_env():
             published = RenderService(extra_pack_roots=(str(PACK_ROOT),)).render(
                 RenderRequest(
                     schema_version=SCHEMA_VERSION,
@@ -329,7 +294,7 @@ def test_hyperframes_real_media_render_through_public_service(tmp_path: Path) ->
     output; the engine's data-mediaStart/data-playback-rate trim the source
     window.  This locks the adapter's media capability end-to-end.
     """
-    node = _require_hyperframes_environment()
+    _require_hyperframes_environment()
     source = _source_video(tmp_path)
     assets = tmp_path / "media-assets.json"
     assets.write_text(
@@ -375,7 +340,7 @@ def test_hyperframes_real_media_render_through_public_service(tmp_path: Path) ->
     )
     output = tmp_path / "hyperframes-media.mp4"
     try:
-        with _execution_env(), _node_on_path(node):
+        with _execution_env():
             published = RenderService(extra_pack_roots=(str(PACK_ROOT),)).render(
                 RenderRequest(
                     schema_version=SCHEMA_VERSION,
@@ -489,6 +454,7 @@ def _combined_timeline(tmp_path: Path) -> Path:
 
 @pytest.mark.integration
 @pytest.mark.timeout(900)
+@pytest.mark.usefixtures("remotion_launch_validation")
 def test_hyperframes_remotion_combined_render(tmp_path: Path) -> None:
     """hyperframes.planner collates HyperFrames + Remotion via FFmpeg concat.
 
@@ -501,9 +467,7 @@ def test_hyperframes_remotion_combined_render(tmp_path: Path) -> None:
     duration validation (Remotion's audio-padded container must not reject a
     correct segment).
     """
-    node = _require_hyperframes_environment()
-    if not (ROOT / "remotion" / "node_modules").is_dir():
-        unavailable("remotion/node_modules absent; the combined render needs it")
+    _require_hyperframes_environment()
     source = _source_video(tmp_path)
     assets = tmp_path / "real-assets.json"
     assets.write_text(
@@ -526,7 +490,7 @@ def test_hyperframes_remotion_combined_render(tmp_path: Path) -> None:
     timeline = _combined_timeline(tmp_path)
     output = tmp_path / "combined.mp4"
     try:
-        with _execution_env(), _node_on_path(node):
+        with _execution_env():
             published = RenderService(extra_pack_roots=(str(PACK_ROOT),)).render(
                 RenderRequest(
                     schema_version=SCHEMA_VERSION,

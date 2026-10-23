@@ -1149,6 +1149,11 @@ class _ParkedPackHostInspector:
             "support_root": str(Path(reference.support_root).resolve(strict=True)),
             "capacity": capacity,
         }
+        # Every placement kind carries the output root: Runtime's observation contract requires it.
+        output = Path(reference.output_root)
+        if output.is_symlink() or not output.is_dir():
+            raise PackHostBootstrapError("parked host output root is unsafe")
+        result["output_root"] = str(output.resolve(strict=True))
         if self.provider_observer is not None:
             provider = self.provider_observer(handle)
             target = reference.effective_target
@@ -1157,10 +1162,6 @@ class _ParkedPackHostInspector:
             result["target"] = dict(target)
             result.pop("machine_identity")
             result["provider_identity"] = dict(provider)
-            output = Path(reference.output_root)
-            if output.is_symlink() or not output.is_dir():
-                raise PackHostBootstrapError("parked host output root is unsafe")
-            result["output_root"] = str(output.resolve(strict=True))
         return result
 
     def observe_ready(self, handle: Any) -> Mapping[str, Any]:

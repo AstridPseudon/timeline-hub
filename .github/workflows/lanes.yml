@@ -87,7 +87,7 @@ jobs:
         working-directory: remotion
 
       - name: Integration tests (shard)
-        run: python -m pytest -q -m "integration and not opt_in" --splits 4 --group ${{ matrix.group }}
+        run: python -m pytest -q -m "integration and not opt_in and not app_checkout" --splits 4 --group ${{ matrix.group }}
 
   opt-in:
     name: opt-in

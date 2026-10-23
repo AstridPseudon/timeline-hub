@@ -131,6 +131,7 @@ LANES: dict[str, Lane] = {
         (DARWIN,), default_off=True, provision="@openai/codex",
     ),
     "workstation": Lane("manual", "needs files only the owner's workstation holds (untracked runner scripts, local run output, saved acceptance artifacts, approved readiness profiles); no CI job", _never, default_off=True),
+    "app_checkout": Lane("manual", "needs a banodoco/astrid-app checkout with npm ci done (ASTRID_APP_CHECKOUT), unpinned until the owner picks a commit; no CI job", _never, default_off=True),
     "omp": Lane("manual", "needs an OMP source checkout (ASTRID_OMP_TEST_PACKAGE_ROOT) and Bun; no CI job", _never, default_off=True),
     "gpu": Lane("manual", "needs ComfyUI with model weights on a GPU machine; no CI job", _never, default_off=True),
     "live": Lane("manual", "needs real provider credentials; no CI job", _never, default_off=True),
