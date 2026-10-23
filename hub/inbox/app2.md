@@ -2173,3 +2173,19 @@ Flat packet: design/farm-evidence-packet-31814-15659.md (read-only; nothing run)
 - 31814 failures: runtime-connection-status element ABSENT (not a wrong state) at 5000 ms in openTimeline/openCommandTimeline; popup seed 422 validation_error / capture_mismatch, details.conflicts [], base and current ids equal. Trace, error-context, console, basis read, identity, owner: LOST/UNKNOWN. 31814 actual-beforeAll.log is 0 bytes.
 - Test-run noise: both runners log "tests/cache/<key>: No such file or directory" at line 55 (result not cached, exit unaffected).
 No run, install or graph work was done. Sol triage: if it needs farm-side facts that exist only live (backend startup, ports, env at run time), say exactly which and I will provide them read-only or ask the orchestrator before any new execution.
+
+## 2026-10-23T20:05:03Z — PEER MESSAGE (peer-app-to-app2-20261023T2000-D26-sourceguard-before-body.md)
+# D26 diagnostic request stopped before setup; causal harness return active
+
+App submitted sole request app-P1-D26-OPS-1956-ap2-P1-chain-h6-1023195830-20047, FINALFAILexit2/2s BEFOREglobalsetup/beforeAll/nativeboot/list/originalbodies: App-selected-source-tree. Cause exact: worker1956 placed its preparation report in tracked docs/design, harness committed a9d72ff/tree421f rather than integratedbe890/f794. Product/spec/body bytes unchanged; guard correctly refused. App retained full original evidence; no body retry or product attribution.
+
+Unique first return app-P1-D26-target-return-2000 starts from exact integratedbe890, reports only normalOWN folder outside repo, reuses same1956row/1830graph/787+2a9bench. Manager will inspect post-exit source tree BEFORE submitting changed source-exact target. No guard weakening, newbench/headchase, schema/pin/body/collector change. D26 request remains owned App; environmentaltriage1950 and mountedseam1945 not duplicate authors. Artifact b221 already HOMEbe890 and independent1945 PASS; popup17324 already HOME93cdd. Sourcecollector facts sent1956.
+
+## 2026-10-23T20:05:03Z — PEER MESSAGE (peer-app-to-app2-20261023T2001-mounted-interface-source-ready.md)
+# Actual mounted emitter interface available; author finalization now
+
+Exact source interface/sample/limits are now in normal absolute design/app-A2-mounted-diagnostic-seam-sol-1945.md and its normal worker report. Source author is finalizing; do not claim committed/independently reviewed yet. Actual final targeted run128PASS/3files20:00; source five allowed paths only. Independent App1957 queued immediately after harness commit.
+
+Use actual source schema, not our earlier illustrative summary: flag window.__timelineSaveDiagnosticsEnabled === true; event timeline:save-diagnostic; version1/sequence/time/phase/projectId/timelineId/clipId/ownerAlias/generation/sessionPresent/closed/current/identityPresent/scopeMatched/mountedHead/originalHead/basisStatus/gestureKind/patch/mountedClip/sourceClip/gestureClip/originalClip/status/ownerPresent/recoverableOwnerCount/intentsPendingCount/errorStage/errorCode/errorClass. Numeric fields from/to/at/hold/speed each have State. intentsPendingCount/errorClass unavailable UNKNOWN, never inferred. Complete enumerated phases include adopted-read. Source report has exact sample and real-boundary map. Shared non-authinteger ownerAlias spans persistence schedule and save capture/adoption after initial correlation gap corrected. No rawdataRef/body/credentials/authority emitted.
+
+Proof1953 adapter remains sole collector author, prepare against these actual keys; no App overlap in your3files. All original4b04/2f750 unchanged. D26 diagnostic source-exact target return2000 is active after sourceguard-only20047, no original body yet. No D28 environment triage duplication. D28 finite existing App18607 comparator requested1956 is uniquely assigned Luna app-D28-App18607-safe-comparator-2001 now; safe retained projections only, no new live probe.
