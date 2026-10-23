@@ -816,6 +816,58 @@ def _inverse_stage_root_equal(observed, claimed, ref):
     return False
 
 
+def _inverse_stage_inherited(source_step, source_commands, source_records, publication):
+    """Project partitions of a sealed inverse, retaining its immediate identity.
+
+    History entries come from history_entry, which verifies their acceptance
+    and ancestry before exposing these bindings. They are not provider claims.
+    """
+    bindings = [binding for command in source_commands for binding in command.get("bindings", [])
+                if binding.get("key") == "inverse.stage"]
+    if len(bindings) <= 1:
+        return None
+    require(len(source_commands) == 1 and source_commands[0]["command"]["op"] == "timeline.inverse",
+            "inherited inverse stages require one authenticated source command")
+    command = source_commands[0]
+    targets = source_records.get("undo_of")
+    require(isinstance(targets, list) and targets and publication not in targets
+            and len(set(targets)) == len(targets)
+            and command["command"]["args"].get("publications") == targets,
+            "inherited inverse stage targets differ from authenticated history")
+    native_end = effect_end = 0
+    partitions = []
+    for binding in bindings:
+        boundary = binding.get("boundary", {})
+        require(binding.get("ref") == "parent" and binding.get("policy") == "fixed"
+                and binding.get("dependencies") == []
+                and boundary.get("publication_id") in targets
+                and isinstance(boundary.get("step_id"), str) and boundary["step_id"]
+                and isinstance(boundary.get("command_ordinals"), list)
+                and boundary["command_ordinals"]
+                and all(type(ordinal) is int and ordinal >= 0 for ordinal in boundary["command_ordinals"]),
+                "inherited inverse stage identity differs from authenticated history")
+        native = boundary.get("native_write_range")
+        effect = boundary.get("effect_range")
+        require(isinstance(native, list) and len(native) == 2
+                and all(type(item) is int for item in native)
+                and native[0] == native_end < native[1] <= len(command["writes"])
+                and isinstance(effect, list) and len(effect) == 2
+                and all(type(item) is int for item in effect)
+                and effect[0] == effect_end < effect[1] <= len(source_step["patch"]),
+                "inherited inverse ranges are missing, reordered, or overlapping")
+        writes = [{**write, "before": write["after"], "after": write["before"]}
+                  for write in reversed(command["writes"][native[0]:native[1]])]
+        partitions.append({"native_sites": [(write["ref"], write["path"]) for write in writes],
+                           "source_writes": writes,
+                           "source_effects": source_step["patch"][effect[0]:effect[1]],
+                           "effect_sites": [(effect["ref"], effect["path"])
+                                            for effect in reversed(source_step["patch"][effect[0]:effect[1]])]})
+        native_end, effect_end = native[1], effect[1]
+    require(native_end == len(command["writes"]) and effect_end == len(source_step["patch"]),
+            "inherited inverse ranges do not cover authenticated history")
+    return list(reversed(partitions))
+
+
 def _inverse_stage_history(records, history):
     """Return the authenticated source stages named by an inverse record."""
     publications = records.get("undo_of")
@@ -868,6 +920,11 @@ def _inverse_stage_history(records, history):
                     and all(type(ordinal) is int and 0 <= ordinal < len(commands) for ordinal in ordinals),
                     "inverse stage source step command boundary is malformed")
             source_commands = [commands[ordinal] for ordinal in ordinals]
+            inherited = _inverse_stage_inherited(source_step, source_commands, source_records, publication)
+            if inherited is not None:
+                expected.extend({"publication_id": publication, "step_id": source_step["id"],
+                                 "command_ordinals": ordinals, **partition} for partition in inherited)
+                continue
             native_sites = [(write["ref"], write["path"]) for command in reversed(source_commands)
                             for write in reversed([*command.get("writes", []),
                                 *(write for write in command.get("derived_writes", [])
@@ -889,6 +946,9 @@ def _inverse_stage_ranges(step, records, history=None):
                 stages.append(binding)
                 stage_records.append(record)
     if not stages:
+        require(not any(records["commands"][ordinal]["command"]["op"] == "timeline.inverse"
+                        for ordinal in step["command_ordinals"]),
+                "inverse stage provenance is absent")
         return None
 
     expected = _inverse_stage_history(records, history)
@@ -939,6 +999,21 @@ def _inverse_stage_ranges(step, records, history=None):
                 "inverse stage effect ranges are missing, reordered, or overlapping")
         native_sites = [(write["ref"], write["path"]) for write in record["writes"][native_start:native_end]]
         effect_sites = [(effect["ref"], effect["path"]) for effect in step["patch"][effect_start:effect_end]]
+        if "source_writes" in source_stage:
+            require(value_equal(record["writes"][native_start:native_end], source_stage["source_writes"])
+                    and effect_sites == source_stage["effect_sites"],
+                    "inherited inverse native captures or effects differ from authenticated history")
+            for effect, source_effect in zip(step["patch"][effect_start:effect_end],
+                                             reversed(source_stage["source_effects"])):
+                require(source_effect["op"] in {"set", "remove"} and effect["op"] in {"set", "remove"},
+                        "inherited inverse effects are not authenticated observations")
+                source_after = ({"state": "present", "value": source_effect["value"]}
+                                if source_effect["op"] == "set" else {"state": "absent"})
+                after = ({"state": "present", "value": effect["value"]}
+                         if effect["op"] == "set" else {"state": "absent"})
+                require(value_equal(effect["before"], source_after)
+                        and value_equal(after, source_effect["before"]),
+                        "inherited inverse effects differ from authenticated source images")
         # A recorder may observe the exact canonical stage effects directly or
         # retain the source's finer native captures in reverse execution order.
         # Neither representation permits extra sites or mere ancestor overlap.
@@ -946,7 +1021,7 @@ def _inverse_stage_ranges(step, records, history=None):
                 "inverse stage native write membership differs from its authenticated stage")
         previous_native_end, previous_effect_end = native_end, effect_end
         result.append({"binding": binding, "record": record, "native_range": native_range,
-                       "effect_range": effect_range})
+                       "effect_range": effect_range, "source_stage": source_stage})
     require(previous_native_end == len(record["writes"])
             and previous_effect_end == len(step["patch"]),
             "inverse stage ranges do not cover the authenticated inverse")
@@ -984,6 +1059,7 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
                                for binding in source_commands[ordinal].get("bindings", [])
                                if binding.get("key") == "commit.materialization"]
         native_image = copy.deepcopy(stage_before)
+        inherited_effects = stage["source_stage"].get("source_effects")
         root_checks = []
         # Native captures observe each preceding write (including empty ancestor
         # removals); canonical effects describe the complete stage transition.
@@ -1011,6 +1087,21 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
                         native_image[ref] = copy.deepcopy(stage_after[ref])
                 continue
             ref, path = _inverse_stage_write_site(native_image, write)
+            if (inherited_effects is not None and write["ref"].startswith("occurrence:")
+                    and "/" not in write["ref"] and write["path"] == ["shot_id"]):
+                occurrence_path = ["occurrences", "occurrence_id:" + write["ref"].partition(":")[2]]
+                for field in ("shot_id", "shot_revision_id"):
+                    captures = [effect for effect in inherited_effects
+                                if effect["ref"] == "parent" and effect["path"] == [*occurrence_path, field]]
+                    require(len(captures) == 1 and captures[0]["op"] == "set"
+                            and value_equal(location(stage_before["parent"]["payload"], [*occurrence_path, field]),
+                                            {"state": "present", "value": captures[0]["value"]})
+                            and value_equal(location(stage_after["parent"]["payload"], [*occurrence_path, field]),
+                                            captures[0]["before"]),
+                            "inherited inverse occurrence differs from authenticated source edges")
+                    native_image["parent"]["payload"] = project_observation(
+                        native_image["parent"]["payload"], [*occurrence_path, field], captures[0]["before"])
+                continue
             require(value_equal(_inverse_stage_state(native_image, ref, path), write["before"]),
                     "inverse stage write differs from its sequential input")
             if not path and ref not in native_image:
@@ -1167,6 +1258,14 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
         for observed, before_claim, root, physical, after, after_claim, successors in root_checks:
             before_claim = copy.deepcopy(before_claim)
             after_claim = copy.deepcopy(after_claim)
+            if inherited_effects is not None and root.startswith("shot:"):
+                # These exact captures were authenticated at source acceptance.
+                # Their native pin may precede a canonical physical turnover;
+                # both endpoint images are fixed by the exact source effects.
+                for claim, image in ((before_claim, observed), (after_claim, after)):
+                    if claim["state"] == image["state"] == "present":
+                        claim["value"]["payload"]["internal_timeline_revision_id"] = (
+                            image["value"]["payload"]["internal_timeline_revision_id"])
             # A later aggregate capture retains the pin from the native source
             # execution. Translate only the exact edge already proved in an
             # earlier inverse stage, preserving every other aggregate byte.
@@ -1182,6 +1281,11 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
             require(_inverse_stage_root_equal(after, after_claim, root),
                     "inverse stage root differs from its authenticated effect image")
         authenticated_turnovers.extend(transitions)
+
+        if inherited_effects is not None:
+            # Exact inverse source effects already authenticate both physical
+            # endpoints. Align only complete equal payloads with the same owner.
+            _align_materialized_images(native_image, stage_after)
 
         require(value_equal({ref: image["payload"] for ref, image in native_image.items()},
                             {ref: image["payload"] for ref, image in stage_after.items()}),
