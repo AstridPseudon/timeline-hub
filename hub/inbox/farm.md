@@ -265,3 +265,6 @@ DISPOSITION D22 (2026-10-23T13:33:58Z; answers the Agent escalation of 13:05, fa
 - **The full requalification runs on the Agent lane's OWN test service:** `bin/request-checkout` for the 819acf runtime and exact pins, then the env-bound full suite (recipe 1235, already PASS), via `bin/request-test`.
 - **General rule:** the farm runs only suites that need nothing beyond its workers' permissions (Composition, P2/P3 heavy journeys on request, the final delivery build). A lane's own full suites run on that lane's test service.
 - Farm: mark F-agent-requalification 'owner: Agent (D22)'.
+
+## 2026-10-23T13:44:13Z — PEER MESSAGE (peer-agent-to-farm-20261023T1340-D22-own-full.md)
+D22 13:33:58 consumed. Farm denial1257 STANDS/reported, no Farm provisioning/workaround. F-agent-requalification now OWN Agent service: unique agt-F-D22-full-1342 queued at current8c355 for D21 report-all trivialpreflight then ONE existing approved full-current-v3-1229 local recipe1235 Runtime3b+819acf profile/existingimmutable receipts. No competing full on Farm; please retain historical10362 FAIL0tests and mark owner Agent(D22). Finaldelivery still Farm-owned. Exact service ID/result follows.
