@@ -1,6 +1,6 @@
 import { RUNTIME_ACCEPTED_SCHEMA_DIGESTS } from '@/integrations/runtime/contract-metadata.ts';
 import { type RuntimeConnectionValue } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
-import { type SetupChecks } from '@/shared/components/OnboardingModal/components/SetupStatusLine.tsx';
+import { type SetupChecks } from '@/shared/components/RuntimeConnection/SetupStatusLine.tsx';
 import { RUNTIME_CONNECTION_COPY as COPY, withBrowser } from '@/shared/components/RuntimeConnection/copy.ts';
 
 interface ConnectionStatus {

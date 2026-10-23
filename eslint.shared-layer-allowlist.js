@@ -87,7 +87,6 @@ export const sharedLayerEnforcedFiles = [
   'src/shared/hooks/tasks/useTaskType.ts',
   'src/shared/hooks/tasks/useTasks.ts',
   'src/shared/hooks/timeline/timelineMutationService.ts',
-  'src/shared/hooks/useOnboarding.ts',
   'src/shared/hooks/useUserUIState.ts',
   'src/shared/hooks/variants/useMarkVariantViewed.ts',
   'src/shared/hooks/variants/useVariants.ts',
