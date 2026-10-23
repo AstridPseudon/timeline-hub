@@ -70,3 +70,46 @@ def test_hydration_still_rejects_forged_or_foreign_transcript_before_staging(dam
     with pytest.raises(AuthoringBundleError, match='exact scoped pin'):
         _hydrate(Sources(verified), bundle, calls)
     assert bundle == original
+
+
+@pytest.mark.parametrize('source', ['requested', 'retained', 'unconsumed'])
+def test_hydration_replaces_caller_manifest_with_authenticated_closure(source):
+    bundle, verified, calls = inputs()
+    document = bundle['source_mapping']['_runtime_document']
+    if source == 'retained':
+        document['dependency_manifest']['documents'] = [copy.deepcopy(verified['pin'])]
+    elif source == 'unconsumed':
+        calls = calls[:1]
+    immutable = copy.deepcopy(document)
+    forged = {'document_id': 'transcript:foreign-project:media:source',
+              'version': 99, 'content_digest': 'sha256:' + 'f' * 64}
+    bundle['source_mapping']['_copy_manifest'] = {
+        **copy.deepcopy(document['dependency_manifest']), 'documents': [forged],
+        'media': [{'media_id': 'sha256:' + 'f' * 64,
+                   'content_digest': 'sha256:' + 'f' * 64}]}
+    _hydrate(Sources(verified), bundle, calls)
+    assert document_from_bundle(bundle) == immutable
+    plan = execute(bundle, calls, commit_request={'reads': [], 'label': 'Manifest boundary'})
+    result = document_from_bundle(plan.bundle)
+    expected = [] if source == 'unconsumed' else [verified['pin']]
+    assert result['dependency_manifest']['documents'] == expected
+    assert result['dependency_manifest']['media'] == immutable['dependency_manifest']['media']
+    assert bundle['source_mapping']['_runtime_document'] == immutable
+
+
+@pytest.mark.parametrize('damage', ['digest', 'project', 'version'])
+def test_forged_manifest_cannot_bypass_source_validation_or_mutate_input(damage):
+    bundle, verified, calls = inputs()
+    bundle['source_mapping']['_copy_manifest'] = {
+        **copy.deepcopy(bundle['source_mapping']['_runtime_document']['dependency_manifest']),
+        'documents': [copy.deepcopy(verified['pin'])]}
+    original = copy.deepcopy(bundle)
+    if damage == 'digest':
+        verified['document']['content']['segments'][0]['text'] = 'forged'
+    elif damage == 'project':
+        verified['document']['project_id'] = 'foreign'
+    else:
+        verified['document']['version'] += 1
+    with pytest.raises(AuthoringBundleError, match='exact scoped pin'):
+        _hydrate(Sources(verified), bundle, calls)
+    assert bundle == original
