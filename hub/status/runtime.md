@@ -1,4 +1,4 @@
-<!-- main | 2026-10-23T18:01:47Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 0m -->
+<!-- main | 2026-10-23T18:03:49Z | dispatcher heartbeat 4s | live 3 (sol 0, luna 3, other 0) | busy30 13 | status age 1m -->
 # runtime board, 2026-10-23T18:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -25,7 +25,7 @@
 | OPS-owner/provision | persistent queue + bounded child maker | Luna author/review/install | remote0648/1025 ACK | merged | reviews0638/1010; remote0648/1025 | DONE owner-route784bf live+kit+HEAD+daemon/normalmerge path; bounded child8a646 actualGNUtimeout/processgroup/FIFO +isolatedpackage guards; later39450 retains functionality | kit784bf/8a646 |
 
 | OPS-retire-runtime | Guarded superseded Remotion runtime retirement | Luna1753 author PASS; independent Luna1800 | Explicit17:51; v2layer independently1754PASS | review | rt-OPS-retire-runtime-review-1800 QUEUED | Author17+37+7+8+13runtime+5caller normal/env-iPASS stagedonly; directcanonicalW/runtimes >1h/unreferenced/notlive; no actualcleanup | pendingindependent |
-| OPS-D21b-bench-reuse | Key components by actual dependencies | Luna Remotion + child1753 | ExplicitD21b17:51 | doing | rt-OPS-remotion-reuse-1753 +rt-OPS-child-reuse-1753 LIVE17:54 | Remotion onlyAgentremotiontree; childAgentSHA+Runtimeclient. Truthfulbackendorigins/guards retained; earlyaudit if installedbackend participates, no relabelledtuple | staged pending |
+| OPS-D21b-bench-reuse | Key components by actual dependencies | Luna Remotion + child1753 | ExplicitD21b17:51 | doing | authors1753 DONE; rt-OPS-remotion-reuse-review-1802 +rt-OPS-child-reuse-review-1802 QUEUED | Remotioncandidate staged. Childcandidate stillrequiresbackendSHA/sourcecustody despiteclientkey, independenttaskfit audit required; accidentalsharedchildbuild disclosed/leftuntouched. No installedreusequalification | staged pending |
 
 Blockers: Proof/App — P1 remains NO-GO. Latest original22122 FAIL2/510s on App4c4/Agent98ef/Runtime259; raw App oracle passes, lostACK/restart misses recovery retryPOST894-5 and second case has only1POST943. App/Proof own causes and reviewed successors. A4/G5 remain gated:P1; no journey/full duplicate here.
 Blockers: Agent — transcript initial pin defect sourceeb2f1735 is in independentLuna1748 review, author5causalPASS and3originalRuntimecasesPASS on exactd9e and separately2a9e; no Runtime pin waiver. Wait actualownerhome/integrated qualification, no duplicatecohort/original9. Historical completeRuntimecohort437PASS1FAIL stays scoped, never438PASS/fullPASS.
@@ -44,3 +44,5 @@ Blockers: KIT CHANGE: retire-child-venv 48cac6c70578b9435a259da7cb9adbd07bf045a3
 Blockers: KIT CHANGE: make-runtime 9fc7f72a7d03fcb4618310ad57f5c9cf111b78a59b2c02caa702073d0951fd09; make-child-venv 39450feacd8ff7d566e19fd6ce0aadc5c02366db1bccd9c88f9cd3a3ceef614f retained — reviewed dispatcher custody/Node20.19.4/npm10.8.2/immutable package qualification; remote1403/1417 actual normal queue success, backups retained. No installation this round.
 
 Next ready: TOP PRIORITY OPSv2 independent1754 -> exact HOST install/publication immediately -> notify Proof supported retirement re-request. Runtime-retirement extension, Remotiontree reuse and childkey/sourceaudit1753 all dispatched on disjoint staged files. Agent transcriptindependent1748 -> ownerhome/integrated; recheckeachpass. Proof existingP2P3OPS nowDOING actual079/2a9; P1NO-GO. No ready qualified source/review leftwaiting.
+
+Blockers: OPS incident — childauthor1753 smoke accidentally invoked predecessor hardcodedsharedrequester; dispatcher completed /home/user/work/venv-agent-child-d21b-fixture (queue/done/childvenv-venv-agent-child-d21b-fixture). Not qualification; no retry/cleanup/chmod/mutation. Main8.8GiB afterbuild, above8GBheavystartline. Independentchild1802 reviewsbothcontainment andD21b backend-key/sourcefit; no installation beforequalifiedverdict.
