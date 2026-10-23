@@ -99,18 +99,20 @@ def test_remotion_lock_pins_the_immutable_composition_public_entry():
     package = json.loads((ROOT / "remotion/package.json").read_text(encoding="utf-8"))
     lock = json.loads((ROOT / "remotion/package-lock.json").read_text(encoding="utf-8"))
     composition = lock["packages"]["node_modules/@banodoco/timeline-composition"]
-    artifact = ROOT / "remotion/artifacts/banodoco-timeline-composition-0.0.14.tgz"
+    artifact = ROOT / "remotion/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz"
     public_exports = (".", "./evaluation", "./theme-api", "./registries",
                       "./effects.generated", "./animations.generated",
                       "./transitions.generated", "./registry.generated")
 
     assert package["dependencies"]["@banodoco/timeline-composition"] == (
-        "file:artifacts/banodoco-timeline-composition-0.0.14.tgz"
+        "file:artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz"
     )
     assert composition["version"] == "0.0.14"
-    assert composition["resolved"] == "file:artifacts/banodoco-timeline-composition-0.0.14.tgz"
+    assert composition["resolved"] == (
+        "file:artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz"
+    )
     assert composition["integrity"] == (
-        "sha512-Bgf9lHdk3CJCTsA3Jbd5WW9UYCHEZQTF3VFM1YO6dimZ+q8bQ8cX6CZ4FCfClBNgg10DQ1bozGMqFCpkGNXvvw=="
+        "sha512-Ajl7lyCbJqbbOpHKEr2xlhFw85hWyirlTU1Dq63BNNUdHYfqgzLXljmudP359uKH6yBxSBMPTDoHLxgiDt65oQ=="
     )
     assert "node_modules/@banodoco/timeline-schema" not in lock["packages"]
     assert "node_modules/@banodoco/timeline-theme-2rp" not in lock["packages"]
