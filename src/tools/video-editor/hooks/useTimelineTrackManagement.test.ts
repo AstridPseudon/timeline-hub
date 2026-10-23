@@ -94,6 +94,22 @@ describe('reorderTracksByDirection', () => {
 });
 
 describe('runtime editability at commit', () => {
+  it.each(['V1', 'V2'])('captures original same-row move inputs without claiming a cross-track basis: %s', async (target) => {
+    const config = makeResolvedConfig([makeTrack('V1', 'visual'), makeTrack('V2', 'visual')]);
+    const data = await buildTimelineData(config, { assets: {} });
+    const applyEdit = vi.fn();
+    const { result } = renderHook(() => useTimelineTrackManagement({ dataRef: { current: data }, resolvedConfig: data.resolvedConfig,
+      selectedClipId: 'clip-V1', setSelectedTrackId: vi.fn(), applyEdit }));
+    act(() => result.current.moveClipToRow('clip-V1', target, 5, 'move-transaction'));
+    expect(applyEdit).toHaveBeenCalledTimes(1);
+    const [mutation, options] = applyEdit.mock.calls[0];
+    expect(mutation.rows.find((row: { id: string }) => row.id === target).actions).toContainEqual(expect.objectContaining({ id: 'clip-V1', start: 5 }));
+    if (target === 'V1') {
+      expect(options.gestureBasis).toEqual({ kind: 'move', clipId: 'clip-V1', trackId: 'V1', config: data.config, registry: data.registry });
+      expect(options.gestureBasis.config).not.toBe(data.config);
+    } else expect(options).not.toHaveProperty('gestureBasis');
+  });
+
   it('rechecks a lock after the drag plan was produced', () => {
     const tracks = [makeTrack('V1', 'visual'), makeTrack('V2', 'visual')];
     const dataRef = { current: {

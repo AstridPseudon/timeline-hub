@@ -15,12 +15,12 @@ export interface TimelineSaveSource {
   head?: TimelineHeadRevision;
 }
 
-/** The split/inspector caller snapshots its input before authoring the local transform. */
+/** Known gesture callers snapshot their input before authoring the local transform. */
 export type TimelineGestureReadBasis = {
   config: TimelineConfig;
   registry: AssetRegistry;
   clipId: string;
-} & ({ kind: 'split'; timeSeconds: number } | {
+} & ({ kind: 'split'; timeSeconds: number } | { kind: 'move'; trackId: string } | {
   kind: 'trim'; patch: Partial<Pick<TimelineConfig['clips'][number], 'from' | 'to' | 'hold' | 'speed'>>;
 });
 
@@ -196,7 +196,7 @@ export function createTimelineLocalSaveHandoff(options: {
         }
         let reads: OutboxJson[] | undefined;
         if (gestureBasis) {
-          if (!['split', 'trim'].includes(gestureBasis.kind)
+          if (!['split', 'trim', 'move'].includes(gestureBasis.kind)
             || !same(authoredJson(gestureBasis.config), authoredJson(authoringSource.config))
             || !same(authoredJson(gestureBasis.registry), authoredJson(authoringSource.registry))) {
             refuse('gesture read basis differs from the original local authoring input');
@@ -220,21 +220,24 @@ export function createTimelineLocalSaveHandoff(options: {
           };
           // recalcActionEnd/getClipTimelineDuration consult these selected fields.
           // Serializing copied rows/tracks is not a read of their entire contents.
-          reads = ['id', 'track', 'at', 'clipType', 'hold', 'from', 'to', 'speed', 'asset']
-            .map((key) => read(clip, key, ['config', 'clips', `id:${gestureBasis.clipId}`]));
+          const timingReads = (item: Record<string, unknown>) => ['id', 'track', 'at', 'clipType', 'hold', 'from', 'to', 'speed', 'asset']
+            .map((key) => read(item, key, ['config', 'clips', `id:${item.id}`]));
+          reads = timingReads(clip);
           reads.push(readPath(config, ['output', 'fps'], ['config']));
           if (!object(config.output) || config.output.fps == null) {
             // withDefaultTimelineOutput falls back to the selected theme canvas.
             reads.push(read(config, 'theme', ['config']), readPath(config, ['theme_overrides', 'visual', 'canvas', 'fps'], ['config']));
           }
-          if (typeof clip.asset === 'string') {
+          const assetRead = (item: Record<string, unknown>) => {
+            if (typeof item.asset !== 'string') return;
             if (!object(parent.registry)) refuse('gesture registry read has no authored registry');
             // Runtime/provider normalize parent/registry to config/registry and
             // resolve that path to the top-level raw registry when no mirror exists.
             if (Object.prototype.hasOwnProperty.call(config, 'registry')
               && (!object(config.registry) || !same(config.registry, parent.registry))) refuse('contradictory parent registry mirror');
-            reads.push(readPath(parent.registry, ['assets', clip.asset], ['config', 'registry']));
-          }
+            reads!.push(readPath(parent.registry, ['assets', item.asset], ['config', 'registry']));
+          };
+          assetRead(clip);
           if (gestureBasis.kind === 'split') {
             if (!Number.isFinite(gestureBasis.timeSeconds)) refuse('split time is unavailable');
             // splitClipAtPlayhead uses order for insertion and every ID for allocation;
@@ -242,6 +245,24 @@ export function createTimelineLocalSaveHandoff(options: {
             const order = clips.map((item) => item.id as string);
             reads.push({ kind: 'collection', ref: 'parent', path: ['config', 'clips'], members: [...order].sort(), order },
               read(config, 'pinnedShotGroups', ['config']));
+          } else if (gestureBasis.kind === 'move') {
+            if (clip.track !== gestureBasis.trackId) refuse('move is not on its original track');
+            const tracks = config.tracks;
+            if (!Array.isArray(tracks)) refuse('move track read has no authored collection');
+            const track = tracks.filter((item) => object(item) && item.id === gestureBasis.trackId);
+            if (track.length !== 1) refuse('move track has no unique authored binding');
+            reads.push(read(track[0], 'kind', ['config', 'tracks', `id:${gestureBasis.trackId}`]),
+              read(config, 'pinnedShotGroups', ['config']));
+            // Both snap planners select siblings by track. Guard membership and
+            // routing, then timing only for the siblings actually consulted.
+            const order = clips.map((item) => item.id as string);
+            reads.push({ kind: 'collection', ref: 'parent', path: ['config', 'clips'], members: [...order].sort(), order });
+            for (const item of clips) {
+              if (!object(item)) refuse('move clip routing is unavailable');
+              if (item.id === clip.id) continue;
+              reads.push(read(item, 'track', ['config', 'clips', `id:${item.id}`]));
+              if (item.track === gestureBasis.trackId) { reads.push(...timingReads(item)); assetRead(item); }
+            }
           } else if (!Object.keys(gestureBasis.patch).length
             || Object.keys(gestureBasis.patch).some((key) => !['from', 'to', 'hold', 'speed'].includes(key))) {
             refuse('trim operands are unavailable');
@@ -253,7 +274,8 @@ export function createTimelineLocalSaveHandoff(options: {
           ...(reads === undefined ? {} : { reads, merge: 'fields' as const }),
           label: 'Edit timeline', step: { id: crypto.randomUUID(), label: 'Edit timeline', intent: gestureBasis ? (gestureBasis.kind === 'split'
             ? `Split ${gestureBasis.clipId} at ${gestureBasis.timeSeconds}`
-            : `Trim ${gestureBasis.clipId}: ${canonicalJsonStringify(gestureBasis.patch)}`) : 'Save local editor changes', tags: [] } });
+            : gestureBasis.kind === 'move' ? `Move ${gestureBasis.clipId} on ${gestureBasis.trackId}`
+              : `Trim ${gestureBasis.clipId}: ${canonicalJsonStringify(gestureBasis.patch)}`) : 'Save local editor changes', tags: [] } });
         source = { ...next,
           config: changes(source.config, source.config, next.config, ['config']) as TimelineConfig,
           registry: changes(source.registry, source.registry, next.registry, ['registry']) as AssetRegistry,

@@ -9,6 +9,7 @@ import { createInteractionState } from '@/tools/video-editor/lib/interaction-sta
 import { repairConfig } from '@/tools/video-editor/lib/migrate';
 import { configToRows, type TimelineData } from '@/tools/video-editor/lib/timeline-data';
 import type { TimelineConfig, TrackDefinition } from '@/tools/video-editor/types';
+import { planClipDrag } from '@/tools/video-editor/lib/clip-drag-planner.ts';
 import type { ReactNode } from 'react';
 import {
   createTimelineStore,
@@ -310,7 +311,7 @@ type ClipDragScenario =
     | 'applyEdit'
   >;
 
-function renderClipDrag(scenario: ClipDragScenario) {
+function renderClipDrag(scenario: ClipDragScenario & { applyResolvedClipMove?: TimelineEditorOpsContextValue['applyResolvedClipMove'] }) {
   const store = createTimelineStore();
   const initial = store.getState();
   initial.syncSlices({
@@ -333,6 +334,7 @@ function renderClipDrag(scenario: ClipDragScenario) {
       setGestureOwner: scenario.setGestureOwner,
       setInputModalityFromPointerType: scenario.setInputModalityFromPointerType,
       moveClipToRow: scenario.moveClipToRow,
+      ...(scenario.applyResolvedClipMove ? { applyResolvedClipMove: scenario.applyResolvedClipMove } : {}),
       createTrackAndMoveClip: scenario.createTrackAndMoveClip,
       selectClip: scenario.selectClip,
       selectClips: scenario.selectClips,
@@ -419,6 +421,33 @@ afterEach(() => {
 });
 
 describe('useClipDrag', () => {
+  it.each(['stable', 'changed'] as const)('passes the original ordinary move inputs only while the planner input remains %s', (input) => {
+    const { clip, wrapper, cleanup } = setupDom();
+    const data = makeData();
+    const dataRef = { current: data };
+    const plan = planClipDrag({ pointerTime: 5, clipDuration: 2, clipId: 'clip-1', sourceKind: 'visual',
+      tracks: data.tracks, rows: data.rows, pointerRowIndex: 0, pixelSnapThreshold: 8, pixelsPerSecond: 100 });
+    const coordinator = makeCoordinator({ time: plan.resolvedStart, plan });
+    Object.defineProperty(coordinator, 'lastPlan', { get: () => plan });
+    const applyResolvedClipMove = vi.fn();
+    try {
+      renderClipDrag({ timelineWrapperRef: { current: wrapper }, dataRef, coordinator, scale: 1, scaleWidth: 100,
+        deviceClass: 'desktop', interactionMode: 'select', gestureOwner: 'none', setGestureOwner: vi.fn(),
+        setInputModalityFromPointerType: () => 'mouse', selectedClipIdsRef: { current: new Set(['clip-1']) },
+        additiveSelectionRef: { current: false }, moveClipToRow: vi.fn(), applyResolvedClipMove,
+        createTrackAndMoveClip: vi.fn(), selectClip: vi.fn(), selectClips: vi.fn(), applyEdit: vi.fn() });
+      fireEvent.pointerDown(clip, { button: 0, pointerId: 77, clientX: 20, clientY: 12 });
+      fireEvent.pointerMove(window, { pointerId: 77, clientX: 80, clientY: 12 });
+      if (input === 'changed') dataRef.current = structuredClone(data);
+      fireEvent.pointerUp(window, { pointerId: 77, clientX: 80, clientY: 12 });
+      expect(applyResolvedClipMove).toHaveBeenCalledTimes(1);
+      const args = applyResolvedClipMove.mock.calls[0];
+      expect(args.slice(0, 5)).toEqual(['clip-1', 'V1', 'V1', 5, false]);
+      if (input === 'stable') expect(args[6]).toEqual({ kind: 'move', clipId: 'clip-1', trackId: 'V1', config: data.config, registry: data.registry });
+      else expect(args).toHaveLength(6);
+    } finally { cleanup(); }
+  });
+
   it('toggles interactionStateRef.drag only after the drag threshold is crossed', () => {
     const interactionStateRef = { current: createInteractionState() };
     const { clip, wrapper, cleanup } = setupDom();
