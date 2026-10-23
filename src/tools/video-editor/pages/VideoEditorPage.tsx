@@ -76,7 +76,7 @@ import { useEditorTourHost } from "@/tools/video-editor/tour/runner/useEditorTou
 import { EditorTourSlot } from "@/tools/video-editor/tour/timeline/editorTourSlot.tsx";
 import { EditorTourTimelineDriver } from "@/tools/video-editor/tour/timeline/EditorTourTimelineDriver.tsx";
 import { createEditorTourDataProvider } from "@/tools/video-editor/tour/timeline/tourDataProvider.ts";
-import { EDITOR_TOUR_TIMELINE_ID } from "@/tools/video-editor/tour/timeline/tourStages.ts";
+import { EDITOR_TOUR_PROJECT_NAME, EDITOR_TOUR_TIMELINE_ID, EDITOR_TOUR_TIMELINE_NAME } from "@/tools/video-editor/tour/timeline/tourStages.ts";
 
 type ProviderSelection = {
   dataProvider: DataProvider;
@@ -159,7 +159,7 @@ function useEditorTourSelection(): ProviderSelection | null {
     projectId: null,
     projectSlug: null,
     timelineId: EDITOR_TOUR_TIMELINE_ID,
-    timelineName: "Editor tour",
+    timelineName: EDITOR_TOUR_TIMELINE_NAME,
     userId: null,
     remountKey: `tour:${runId}`,
   } : null, [running, runId]);
@@ -720,9 +720,11 @@ export default function VideoEditorPage() {
       .map(({ editTime: _editTime, ...row }) => row),
     projectId: projectId,
     timelineId: timelineId,
-    projectName: selectedProject?.name,
-    timelineName:
-      selectedTimeline?.name?.trim() || selectedTimeline?.slug,
+    // The tour is not a project of the user's: its header names win and the pickers stay shut.
+    projectName: tourSelection ? EDITOR_TOUR_PROJECT_NAME : selectedProject?.name,
+    timelineName: tourSelection
+      ? tourSelection.timelineName
+      : selectedTimeline?.name?.trim() || selectedTimeline?.slug,
     projectsLoading:
       runtimeDiscovery.projectsQuery.isLoading,
     // The timeline list waits on the project list; a timeline named by the URL
@@ -746,7 +748,7 @@ export default function VideoEditorPage() {
     onSetPrimaryTimeline: handleSetPrimaryTimeline,
     settingPrimaryTimelineId,
     onRetry: () => void handleRuntimeRetry(),
-    disabled: isSwitchBlockedBySave,
+    disabled: isSwitchBlockedBySave || !!tourSelection,
     onOpenChange: setSelectorsOpen,
   };
   const runtimeProjectControls = (

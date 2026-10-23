@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TourCard } from './TourCard';
 import { TOUR_CARD_ENTRANCE_MS } from './useTourCardEntrance';
+import { TOUR_FINALE_ENTRANCE_MS } from './TourStrip';
 import { EDITOR_TOUR_SCRIPT as SCRIPT } from '../tourScript';
 import { DISCORD_URL } from '@/pages/Home/publicAstridLinks';
 import {
@@ -114,13 +115,84 @@ describe('TourCard', () => {
     for (const recap of SCRIPT.finale.recap) expect(screen.getByText(recap)).toBeInTheDocument();
     expect(container.querySelectorAll('ol img, ol video')).toHaveLength(3);
     expect(screen.queryByRole('button', { name: /Skip tour/ })).toBeNull();
-    advance(TOUR_CARD_ENTRANCE_MS);
+    advance(TOUR_FINALE_ENTRANCE_MS);
     expect(cardReady()).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: new RegExp(SCRIPT.finale.action) }));
     expect(onPrimary).toHaveBeenCalledTimes(1);
   });
 
-  it.each([1, 2] as const)('shows act %i its own compose header, above the Press Send line', (tourAct) => {
+  describe('the finale chain', () => {
+    const litNodes = (root: Element) => root.querySelectorAll('[data-tour-lit="node"]');
+    const litLines = (root: Element) => root.querySelectorAll('[data-tour-lit="line"]');
+    const delayOf = (el: Element) => parseInt((el as HTMLElement).style.getPropertyValue('--tour-delay'), 10);
+
+    it('lights node, line, node, line, node in order while the card plays, and ends lit', () => {
+      const { container } = renderAt(3, 'finale');
+      expect(litNodes(container)).toHaveLength(3);
+      expect(litLines(container)).toHaveLength(2);
+      // Lit in the accent: the nodes' borders and the lines.
+      for (const el of litNodes(container)) expect(el).toHaveClass('border-primary');
+      for (const el of litLines(container)) expect(el).toHaveClass('bg-primary');
+      const [n1, n2, n3] = [...litNodes(container)];
+      const [l1, l2] = [...litLines(container)];
+      // Each step starts after the one before it, so the chain lights in reading order.
+      const order = [n1, l1, n2, l2, n3].map(delayOf);
+      expect(order).toEqual([...order].sort((a, b) => a - b));
+      expect(new Set(order).size).toBe(5);
+      expect(n1).toHaveClass('editor-tour-light');
+      expect(l1).toHaveClass('editor-tour-draw');
+      expect(container.querySelector('.editor-tour-card-playing')).not.toBeNull();
+
+      // The chain is still lighting when an ordinary card would have settled.
+      advance(TOUR_CARD_ENTRANCE_MS);
+      expect(cardReady()).toBe(false);
+      expect(TOUR_FINALE_ENTRANCE_MS).toBeGreaterThan(delayOf(n3));
+      advance(TOUR_FINALE_ENTRANCE_MS - TOUR_CARD_ENTRANCE_MS);
+      expect(cardReady()).toBe(true);
+      // At rest: no animation runs, and every node and line keeps its lit style.
+      expect(container.querySelector('.editor-tour-card-playing')).toBeNull();
+      expect(litNodes(container)).toHaveLength(3);
+      expect(litLines(container)).toHaveLength(2);
+    });
+
+    it('arrives already lit, without playing, when reached by Back (instant)', () => {
+      vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({ matches: false, media: query } as MediaQueryList));
+      startEditorTour();
+      setEditorTourBeat(3, 'finale', true);
+      expect(getEditorTourState().instant).toBe(true);
+      const { container } = render(<TourCard act={3} beat="finale" onPrimary={vi.fn()} onBack={vi.fn()} />);
+      expect(cardReady()).toBe(true);
+      expect(container.querySelector('.editor-tour-card-playing')).toBeNull();
+      expect(litNodes(container)).toHaveLength(3);
+      expect(litLines(container)).toHaveLength(2);
+    });
+
+    it('arrives already lit, without playing, under reduced motion', () => {
+      const { container } = renderAt(3, 'finale', { reducedMotion: true });
+      expect(cardReady()).toBe(true);
+      expect(container.querySelector('.editor-tour-card-reduced')).not.toBeNull();
+      expect(container.querySelector('.editor-tour-card-playing')).toBeNull();
+      expect(litNodes(container)).toHaveLength(3);
+      expect(litLines(container)).toHaveLength(2);
+    });
+
+    it('settles lit at once on a skipAnimation bump', () => {
+      const { container } = renderAt(3, 'finale');
+      advance(200);
+      act(() => skipEditorTourAnimation());
+      expect(cardReady()).toBe(true);
+      expect(container.querySelector('.editor-tour-card-playing')).toBeNull();
+      expect(litNodes(container)).toHaveLength(3);
+    });
+
+    it('leaves the act cards\' compact strip unlit', () => {
+      const { container } = renderAt(3, 'land');
+      expect(litNodes(container)).toHaveLength(0);
+      expect(litLines(container)).toHaveLength(0);
+    });
+  });
+
+  it.each([1, 2, 3] as const)('shows act %i its own compose header, above the Press Send line', (tourAct) => {
     renderAt(tourAct, 'compose');
     const header = screen.getByRole('heading', { name: SCRIPT.acts[tourAct].composeHeader });
     expect(header.compareDocumentPosition(screen.getByText(SCRIPT.hints.compose)) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -128,12 +200,12 @@ describe('TourCard', () => {
     expect(header.closest('section')).toHaveClass('w-[360px]');
   });
 
-  it('gives acts 1 and 2 distinct compose headers, and act 3 none', () => {
-    expect(SCRIPT.acts[1].composeHeader).not.toBe(SCRIPT.acts[2].composeHeader);
-    for (const act of [3] as const) {
-      const view = renderAt(act, 'compose');
-      expect(screen.queryByRole('heading')).toBeNull();
-      expect(screen.getByText(SCRIPT.hints.compose).closest('section')).toHaveClass('w-[300px]');
+  it('gives every act a distinct compose header', () => {
+    const headers = [1, 2, 3].map((tourAct) => SCRIPT.acts[tourAct as EditorTourAct].composeHeader);
+    expect(new Set(headers).size).toBe(3);
+    for (const tourAct of [1, 2, 3] as const) {
+      const view = renderAt(tourAct, 'compose');
+      expect(screen.getByRole('heading', { name: SCRIPT.acts[tourAct].composeHeader })).toBeInTheDocument();
       view.unmount();
       exitEditorTour();
     }
