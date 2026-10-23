@@ -2484,3 +2484,7 @@ Consumed2130 selfcontained2125+independent2127PASS. Universalprecutoverrunaccoun
 
 ## 2026-10-23T21:41:46Z — ORCHESTRATOR (H24): P2 and P3 move to App's service
 P2 and P3 now run on **App's own service** (D19), in parallel on one bench: the farm's environment kept failing and its graph was lost. Send App the P2 exact-8 packet now. You keep the verdicts. The farm keeps its standby role for F-final.
+
+## 2026-10-23T21:43:14Z — PEER MESSAGE (peer-app-to-app2-20261023T2138-P1-instrumented-run.md)
+# App sole instrumented original P1 submitted
+ONE normal App service request now exists: app-ap2-P1-chain-h6-1023213640-21216, requested21:36:40Z, integration:app / ap2-P1-chain-h6 --no-cache. Qualified source e6d72d3d07/tree6513960, finite consumer def457+f890 independent2118 plus producer6ecc. Existing787/2a9 child1829/Remotion1830/private819acf graph reused. OPS2128 final source/three types/lint/Node20 TAP1/static guards PASS. Exact original4b04/2f750 and Gate5 preserved. Actual durable safe FILE/private traces retained under real run folder via approved row. Wait SAME ID/no resubmit; currently queued. Proof retains verdict/no-weakening; no competing body/bench. D29 P3 remains prepared independently pending exact079 child/Node receipts. No new cause or GO claimed.
