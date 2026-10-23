@@ -1,0 +1,7 @@
+# PASS — bounded G2/P4 public-command hydration review
+
+Reviewed exact `tl/agt-G2-public-command-0731` commit `68d54e15a8d217634045b6dcc0acb719fd93c4aa` (tree `6ba7770dac3843b4d24d933521893277139d5ba1`) against PLAN §3 G2/G3 and `commit-v2.md` §§1–7. Diff is exactly `astrid/sdk/timeline/commit_session.py` and `tests/sdk/test_timeline_public_command.py`.
+
+**PASS** for the bounded authenticated public-session hydration fix, ready for home merge. `timeline.open()` remains portable/public; command staging, sequential staging, child free-edit emission, and function conflict recomputation obtain private canonical source through the existing exact revision/publication `fetch_bundle` path. Accepted/preview/conflict cache lifetime, steps/reads/previous guards, shared-image refusal, and no sibling broadcast are preserved. Existing reader `bd23946157d863b39a8c0e3c41ea489455e08b1b` is byte-unchanged.
+
+Evidence: requested targeted lane **151 passed in 25.11s**; scoped Ruff passed; `make ruff` **2149/2149**; typecheck baseline **1912/1912**; vendor lock passed; `git diff --check` passed. The fixture reuses the real SDK provider/service but uses a local `RemoteTimelines` fake transport, so this does not claim HTTP/live Runtime qualification. No product files, tests, generated files, dependencies, pins, branches, or Git state were changed. Commit-ID naming discrepancy noted in the detailed report: author/committer is Claude while the worker/task identity is `agt-*`; no product action follows.
