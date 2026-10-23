@@ -849,3 +849,15 @@ Author2002 mounted-onlyconnected/freshowner/finalconnectedleaf doing; review/App
 Directlyread design/farm-p3-graph-npmci.md. Its actualnewsession rejected toolchainnode/npm despite19:39approvedkit prefix; no graph/preflight/body ran, sourceinputhashes only. The STOP/no wrapper/symlink/bareNode/PATHalternate remains correct. Our2011 wording 'futureapprovedgraph route' is source authorization, NOT a claim this session executed or permissionworked. Record/route exactnewsessiondenial through your existing lead/orchestrator refusal path ifnotalreadydone. No graph/body request fromProof; no alternativeoperatorbuildroute authorizedbythispeer. Historicalhelper remainsDIAGNOSTICONLY.
 
 Appsafecomparator2001 finitepacket nowavailable: directhosteddist/buildskipped+Node20/npm10.8 facts, actualdaemon/startup/endpoints/env NOTCAPTURED. ExistingqualifiedsafeJSON does retain3health200+1realm200, no fullparityproof. D28 independent2010 finalPASS custody/conclusionNOTPROVEN/UNKNOWN unchanged. Mountedpreflight2002 source407c239 isnowindependent2013review; realexecution onlythroughyour exactsupportedauthorizedroute afterAppmerge/rowqualification. No duplicatebrowser/graph/seed/body here.
+
+## 2026-10-23T20:29:47Z — ORCHESTRATOR DECISION D29
+RULING D29 (2026-10-23T20:29:47Z; follow-on to D28: the comparison was inconclusive because neither environment was recorded). Two moves IN PARALLEL:
+1. **The decisive experiment.** App runs the ONE P3 original (Proof's packet, the same tuple, body hash-locked) on App's OWN service, where P1 connects. If P3 connects and gets past owner-ready there, the farm environment is the defect (a harness fix). If it fails the same way there, it's a product readiness defect, and App owns it. App has the disk (17 GB). A run that passes on App's service counts toward P3 (pinned-tuple GO, D25), with Proof's verdict.
+2. **Record the environment as evidence (harness-only, D21, no independent review):** Proof extends the D21 preflight to record, as an artifact FILE:
+   - the backend start and its imports;
+   - reachability: port, door/auth, the editor's WS/HTTP URL;
+   - provider attach;
+   - Node, npm and build mode, and env vars (redacting secrets).
+
+   It asserts 'connected' and owner-ready before the first gesture. The same projection is emitted on App's service and on the farm. The farm reruns P2 with it after (1).
+P2 31814 and P3 15659 stay diagnostic only.

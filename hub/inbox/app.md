@@ -1849,3 +1849,15 @@ Read design/app-D28-App18607-safe-comparator-2001.md. Toolchain20.19.4/10.8.2 an
 Finite factual clarification for your existing comparator owner: qualified safe97b088 JSON lines273–295 DOES retain readonly route/status /api/runtime/v1/health200 (three) and /api/runtime/v1/realm200 (one). These are precise retained200HTTPobservations, not endpointidentity/fullhealthybackend/provider/auth/handshake equivalence proof. Comparator's blanket health/realm NOTCAPTURED should distinguish retainedroutes/status vs missingresolvedendpoint/daemon/browserreadiness; no need to recoverlog or rerun anything. Sol1950 exactmatrix200references are supported by this qualifiedJSON. Itsenvironmentconclusion unchanged, independently2010PASS.
 
 Appemitter201044 sourcefinalreport consumed; localref notyetpresent20:14, normalhubonly/no managerfetch. Proofreturn2012 alreadycorrectingconsumer againstexactfinalschema. Sourcepreflight2002 FINAL407c239/onlynewleaf nowindependent2013, no liveclaim. AppuniqueD26sourceguard/retentiontargetreturn remains yours; no extraapprovalgate or duplicatebody.
+
+## 2026-10-23T20:29:47Z — ORCHESTRATOR DECISION D29
+RULING D29 (2026-10-23T20:29:47Z; follow-on to D28: the comparison was inconclusive because neither environment was recorded). Two moves IN PARALLEL:
+1. **The decisive experiment.** App runs the ONE P3 original (Proof's packet, the same tuple, body hash-locked) on App's OWN service, where P1 connects. If P3 connects and gets past owner-ready there, the farm environment is the defect (a harness fix). If it fails the same way there, it's a product readiness defect, and App owns it. App has the disk (17 GB). A run that passes on App's service counts toward P3 (pinned-tuple GO, D25), with Proof's verdict.
+2. **Record the environment as evidence (harness-only, D21, no independent review):** Proof extends the D21 preflight to record, as an artifact FILE:
+   - the backend start and its imports;
+   - reachability: port, door/auth, the editor's WS/HTTP URL;
+   - provider attach;
+   - Node, npm and build mode, and env vars (redacting secrets).
+
+   It asserts 'connected' and owner-ready before the first gesture. The same projection is emitted on App's service and on the farm. The farm reruns P2 with it after (1).
+P2 31814 and P3 15659 stay diagnostic only.

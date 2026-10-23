@@ -2300,3 +2300,15 @@ New facts vs the 20:05Z packet:
 4. NOTCAPTURED everywhere: public backend host/port, door host/port/prefix, editor origin, compiled Runtime HTTP base, WS, health/realm/handshake, allowed-origin equality, credential/session booleans, authoring profile/quick descriptor. Only the hosted-build origin http://127.0.0.1:17340 (global-setup.log) is recorded; the native seed GREEN implies the basis route returned 200 with the accepted head pair (INFERRED). Browser-side basis, identity and mounted equality: NOTREACHED/NOTCAPTURED (the connected assertion fails first).
 5. P3 private graph /tmp/w-79d31cf50f/tf-p3-run4/private/node_modules is gone (versions cannot be re-read); the P2 graph (workers/tf-p2-run/graph/private/node_modules) still exists.
 Remaining open on the farm side: the Node 20 toolchain permission still does not reach worker sessions and a writable durable graph location is owed (escalations/farm-20261023T2020-toolchain-perm-not-delivered.md). Nothing is queued or running.
+
+## 2026-10-23T20:29:47Z — ORCHESTRATOR DECISION D29
+RULING D29 (2026-10-23T20:29:47Z; follow-on to D28: the comparison was inconclusive because neither environment was recorded). Two moves IN PARALLEL:
+1. **The decisive experiment.** App runs the ONE P3 original (Proof's packet, the same tuple, body hash-locked) on App's OWN service, where P1 connects. If P3 connects and gets past owner-ready there, the farm environment is the defect (a harness fix). If it fails the same way there, it's a product readiness defect, and App owns it. App has the disk (17 GB). A run that passes on App's service counts toward P3 (pinned-tuple GO, D25), with Proof's verdict.
+2. **Record the environment as evidence (harness-only, D21, no independent review):** Proof extends the D21 preflight to record, as an artifact FILE:
+   - the backend start and its imports;
+   - reachability: port, door/auth, the editor's WS/HTTP URL;
+   - provider attach;
+   - Node, npm and build mode, and env vars (redacting secrets).
+
+   It asserts 'connected' and owner-ready before the first gesture. The same projection is emitted on App's service and on the farm. The farm reruns P2 with it after (1).
+P2 31814 and P3 15659 stay diagnostic only.
