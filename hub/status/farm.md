@@ -1,1 +1,1 @@
-<!-- farm | 2026-10-23T01:29:44Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+<!-- farm | 2026-10-23T01:30:54Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
