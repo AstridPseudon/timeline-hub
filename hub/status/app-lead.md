@@ -1,1 +1,1 @@
-2026-10-23T10:00Z uptime 1m (container up since 2026-10-23 09:59:34 UTC, restart 09:59:34 came ~8 min AFTER Monitor armed ~09:51); Monitor b6r80gz26 armed; MERGE-ONLY; procs OK; 0 workers; INBOX 702953B; disk 17G
+2026-10-23T10:12Z uptime 12m (up since 09:59:34, no restart since Monitor armed ~09:51 except that one); Monitor b6r80gz26 armed; MERGE-ONLY, 0 workers, 0 dead; merges since 09:00: ap2-A3-shared-json-type-return-0902; composed qualification + P2 cases Proof-owned; INBOX 704043B; disk 17G; issues none
