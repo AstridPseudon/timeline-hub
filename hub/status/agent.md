@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-23T07:12:35Z | dispatcher heartbeat 5s | live 3 (sol 0, luna 3, other 0) | busy30 9 | status age 0m -->
+<!-- agent | 2026-10-23T07:14:18Z | dispatcher heartbeat 3s | live 3 (sol 0, luna 3, other 0) | busy30 9 | status age 1m -->
 # agent board, 2026-10-23T07:11:48Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -49,8 +49,9 @@
 | V2-child-asset | preserve untouched dangling child media | Luna source/review/integrated | D12a/map9df | merged | agt-V2-child-integrated-0658 FINAL PASS | Actual4edc:78 targeted + faithful child positive/strict negatives + ALL6 Runtime85 integration PASS12.98s, 12 before/after observations/44 archive-only origins. Independent42 retained;2149/1912/vendor/artifact/diff PASS. | 387f874a5;4edc4b321 |
 | V2-current-rebase | unsupported legacy retained-source positive | Viewing author/independent | D16 behavior-unavailable principle | gated:D16-deferred | disposition0637/review0641 PASS | ONEoriginalretainedTrue failure keptunchanged/unskipped/visible; lacks authenticatedexactcapture, earlierrefusal cannotprovepositive rebase/restart/secondmove. Reviewed deliveryparagraph; H9no sourcefix | originaltestunchanged |
 | G5-draft | retire superseded paths on draft only | Luna | orchestrator07:08; G3/G4 | doing | agt-G5-draft-0710 | Queued current4edc; original behaviour tests retained; no merge until P1GO | pending |
-| F-agent-full | integrated full suite and every failure classified | Luna/testservice | orchestrator07:08 farm failover | doing | agt-F-agent-full-0710 | SOLE service agent-full-1023071006-24096 queued on integration4edc; no duplicate full | pending |
+| F-agent-full | integrated full suite and every failure classified | Luna/testservice | orchestrator07:08 farm failover | doing | agt-F-agent-full-0710; env0713 | Service24096 exit4 BEFOREcollection: runtime_protocol missing in suite environment; classifier active, narrowenvrepair dispatched. No behavior credit | pending |
 | DB-agent-dry | fresh-clone delivery squash verification | Luna | orchestrator07:08; upstream431 | doing | agt-DB-agent-dry-0710 | Current4edc/tree f17b against exact431; sanctioned delivery-build dry run, targeted freshclone proof, nothing pushed | pending |
+| F-agent-env | repair full service import environment | Luna | service24096 exact failure | doing | agt-F-env-full-0713 | Existing agent full ONErow only; collection/import preflight then independentreview before full retry | ops-only |
 Resolved: runtime — Normal frozen strict34e adoption DONE; compatible execution85dafdf467 merged/proven156+original48d6 allactualorigins. No newtuple/re-adoption/native14 duplicate.
 Resolved: agent audit — ccc scope hold CLEARED at auditedbf40; currentG234 reviewed31a5 and currentfork900 merged ea302 with integrated131+2replay+2live PASS. Owncommit checks retained.
 Resolved: orchestrator — D12a applies everyV2 check, no inventednormalization; D15fork900/currentea302 integratedPASS; D14two undo positives deferred unchanged/unskipped/visiblyfailing, no54PASS.
