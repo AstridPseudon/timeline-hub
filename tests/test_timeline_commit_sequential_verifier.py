@@ -99,6 +99,19 @@ def test_private_sequential_carrier_rejects_prepared_digest_and_boundary_tamperi
         assert auth.rows(service) == before
 
 
+def test_private_sequential_carrier_rejects_boolean_command_ordinal(service):
+    def mutate(capture, _prepared):
+        capture["landing"]["commands"][0]["boundary"]["command_ordinal"] = True
+
+    _provider_with_capture(service, mutate)
+    before = auth.rows(service)
+    with pytest.raises(RuntimeErrorBase) as error:
+        auth.commit(service, auth.body(service), key="sequential-private-bool-ordinal")
+    assert error.value.details is not None
+    assert error.value.details["reason"] == "invalid_records"
+    assert auth.rows(service) == before
+
+
 def test_private_sequential_carrier_is_one_attempt_and_does_not_extend_history(service):
     def execute(context, port):
         prepared = auth.candidate(context, port)
