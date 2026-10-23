@@ -384,7 +384,8 @@ describe('runBoundedCommand', () => {
         return new Promise((resolvePromise, reject) => {
           const worker = new Worker(workerSource, {
             eval: true,
-            workerData: { moduleUrl, source, options: { ...BASE, timeoutMs: 1_000, allowFailure: true } },
+            // The command exits at once; the bound is only a hang guard, so a slow runner starting twenty at a time cannot make it a timeout.
+            workerData: { moduleUrl, source, options: { ...BASE, timeoutMs: 120_000, allowFailure: true } },
           });
           worker.once('message', (message) => { worker.terminate(); resolvePromise(message); });
           worker.once('error', reject);
