@@ -12,6 +12,7 @@ import json
 import re
 import shlex
 import sys
+import uuid
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
@@ -470,6 +471,7 @@ def _cmd_duplicate(parsed: argparse.Namespace) -> int:
 def _cmd_restructure(parsed: argparse.Namespace) -> int:
     """Store each chapter as a shot and the music / wall-crossing clips on the film, after proving the render input is equal."""
     from astrid.sdk.timeline_checkout import Checkout
+    from astrid.sdk.timeline_duplicate import _commit_bundle
     from astrid.sdk.timeline_restructure import check_restructure
 
     tl = Checkout.open(need_project(parsed), parsed.ref, client=parsed.client)
@@ -490,8 +492,14 @@ def _cmd_restructure(parsed: argparse.Namespace) -> int:
 
         kept = duplicate_timeline(parsed.project, parsed.ref, name=parsed.keep_original, client=parsed.client)
         print(f"kept original head as {kept['timeline_id']} ({parsed.keep_original})")
-    receipt = tl.publish(parsed.message or "restructure: chapters as shots, music and wall-crossing clips on the film",
-                         client=parsed.client, restructure=True)
+    receipt = _commit_bundle(
+        need_project(parsed),
+        parsed.ref,
+        _after,
+        label=parsed.message or "restructure: chapters as shots, music and wall-crossing clips on the film",
+        client=parsed.client,
+        idempotency_key=f"restructure-{parsed.ref}-{uuid.uuid4().hex}",
+    )
     print(f"restructured {parsed.ref} · head {receipt.get('new_head')}"
           + (f" · narration pinned for {len(receipt.get('narration_pinned') or [])} shot(s)" if receipt.get("narration_pinned") else ""))
     if receipt.get("narration_error"):

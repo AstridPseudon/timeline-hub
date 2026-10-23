@@ -12,6 +12,7 @@ Pure parts (``id_map``, ``copy_content``) take and return plain dicts; only
 from __future__ import annotations
 
 import copy
+import sys
 import uuid
 from collections.abc import Iterable, Mapping
 from typing import Any
@@ -22,6 +23,93 @@ from astrid.sdk.timeline_editing import add_authoring_shot
 from astrid.sdk.timeline_restructure import STRUCTURE_KEY, flatten
 
 __all__ = ["duplicate_timeline", "id_map", "copy_content"]
+
+
+def _commit_bundle(project: str, timeline: str, desired: Mapping[str, Any], *, label: str,
+                   client: Any, idempotency_key: str) -> dict[str, Any]:
+    """Commit a prepared bundle through the public session and G3 emitter.
+
+    New closure identities must be introduced by the existing semantic carrier;
+    authored parent and child content is then emitted as source-bound patches.
+    Keeping the session's generated closure metadata avoids rebuilding Runtime
+    identities in this caller.
+    """
+    from astrid.sdk.timeline import open as open_timeline
+    from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+
+    session = open_timeline(project, timeline, client=client)
+    for row in desired.get("placements") or []:
+        shot_id = str(row["shot_id"])
+        if shot_id in session._command_bundle.get("shots", {}):
+            continue
+        shot = (desired.get("shots") or {}).get(shot_id) or {}
+        payload = shot.get("payload") or {}
+        placement = row.get("placement") or {}
+        track = placement.get("track", row.get("track"))
+        if not isinstance(track, str):
+            raise TimelineEditError(f"copy of shot {shot_id!r} has no parent output track")
+        start_ms = placement.get("start_ms", row.get("at_ms", 0))
+        duration_ms = row.get("duration_ms")
+        if not isinstance(start_ms, (int, float)) or not isinstance(duration_ms, (int, float)):
+            raise TimelineEditError(f"copy of shot {shot_id!r} has invalid placement timing")
+        command = capture_occurrence_create(
+            session._command_bundle,
+            str(row["occurrence_id"]),
+            shot_id,
+            name=str(payload.get("name") or ""),
+            track=track,
+            on=float(start_ms) / 1000.0,
+            duration=float(duration_ms) / 1000.0,
+        )
+        session._append([command], label=f"Create shot {shot_id}")
+
+    current = copy.deepcopy(session._command_bundle)
+    current_rows = {str(row["occurrence_id"]): row for row in current.get("placements") or []}
+    for row in desired.get("placements") or []:
+        actual = current_rows.get(str(row["occurrence_id"]))
+        if actual != row:
+            raise TimelineEditError(
+                f"semantic occurrence creation changed placement {row['occurrence_id']!r}; "
+                "the duplicate cannot be committed without changing its stored identity"
+            )
+    current["parent"] = copy.deepcopy(desired["parent"])
+    for shot_id, shot in (desired.get("shots") or {}).items():
+        if shot_id not in current.get("shots", {}):
+            raise TimelineEditError(f"semantic occurrence creation omitted shot {shot_id!r}")
+        current["shots"][shot_id]["payload"] = copy.deepcopy(shot["payload"])
+        current["shots"][shot_id]["internal_timeline"] = copy.deepcopy(shot["internal_timeline"])
+    session.bundle = current
+    result = session.commit(label, merge="atomic", idempotency_key=idempotency_key)
+    data = result["data"]
+    receipt = {
+        "old_head": data.get("previous_revision_id"),
+        "new_head": data.get("accepted_revision_id"),
+        "structure": "changed",
+        "receipt": result.get("receipt"),
+        "idempotency_key": (result.get("receipt") or {}).get("idempotency_key", idempotency_key),
+        "narration_pinned": [],
+        "transcripts": [],
+        "message": data.get("rationale", label),
+    }
+    try:
+        narration = session._publish_narration(idempotency_key, client=client)
+        receipt.update(narration)
+    except TimelineEditError as exc:
+        receipt["narration_error"] = (
+            f"{exc}. The cut is published (head {receipt.get('new_head')}); only the narration binding is behind: "
+            "retry the original commit to reconcile the durable narration commit"
+        )
+    from astrid.sdk import timeline_transcripts as transcripts
+
+    try:
+        if any(item["status"] == "planned" for item in transcripts.plan_narration_transcripts(session)):
+            receipt["transcripts"] = transcripts.sync_narration_transcripts(session, client, project)
+    except Exception as exc:  # noqa: BLE001 - the timeline commit is already durable
+        print(f"note: narration transcript registration failed: {exc}", file=sys.stderr)
+    for item in receipt["transcripts"]:
+        if item["status"] == "skipped":
+            print(f"note: narration transcript {item['label']}: {item.get('reason', 'skipped')}", file=sys.stderr)
+    return receipt
 
 # Payload fields that point at the source's own runtime records. They are not
 # copied: the new shot gets its own records on the next publish.
@@ -222,8 +310,14 @@ def _duplicate(client: Any, project: str, source: str, *, slug: str | None, name
         report = dst._check_core()
         if not report.valid:
             raise TimelineEditError("the copy is invalid: " + "; ".join(report.problems or [str(report)]))
-        receipt = dst.publish(f"duplicate of {source}", client=client,
-                              idempotency_key=f"dup-{uuid.uuid4().hex}")
+        receipt = _commit_bundle(
+            project,
+            new_id,
+            bundle,
+            label=f"duplicate of {source}",
+            client=client,
+            idempotency_key=f"dup-{uuid.uuid4().hex}",
+        )
     except Exception as exc:
         archived = client.timelines.archive(project, new_id)  # all or nothing: the empty timeline goes too
         if getattr(archived, "ok", False):
