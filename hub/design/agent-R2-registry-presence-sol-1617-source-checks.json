@@ -1,0 +1,58 @@
+{
+  "astrid/sdk/timeline/inverse.py": {
+    "sha256": "fb0cb16bab8a4fbd72a24c9dffadd6992e397925b383ce9ec79f6cc6bbb00d5a",
+    "base_sha256": "4e00ec2e1c629af6d0fa84a4b6f8992b0990b38460561849cb0bb11c70921325"
+  },
+  "astrid/sdk/timeline/_step_undo.py": {
+    "sha256": "6cedff390a06ff74a957b962199efb4144b82e2e7e48664269098f39fbae8915",
+    "base_sha256": "6cedff390a06ff74a957b962199efb4144b82e2e7e48664269098f39fbae8915"
+  },
+  "astrid/sdk/timeline/_root_inverse.py": {
+    "sha256": "0d81d995582622367cca770855d7604735d3a707a7e8d6d6d5d6102367c4949a",
+    "base_sha256": "0d81d995582622367cca770855d7604735d3a707a7e8d6d6d5d6102367c4949a"
+  },
+  "astrid/sdk/timeline/_commit_patch.py": {
+    "sha256": "06e35825df4f6578ef192de92ab27dbc5131484d99c4953f001293f9bad9490c",
+    "base_sha256": "06e35825df4f6578ef192de92ab27dbc5131484d99c4953f001293f9bad9490c"
+  },
+  "astrid/sdk/timeline/_recording.py": {
+    "sha256": "85aefe0328a7c9787a18c2b7e19eb8b3e4220a1c53627d1e16102b42b29c8b43",
+    "base_sha256": "85aefe0328a7c9787a18c2b7e19eb8b3e4220a1c53627d1e16102b42b29c8b43"
+  },
+  "astrid/sdk/timeline/native_restructure.py": {
+    "sha256": null,
+    "base_sha256": null
+  },
+  "astrid/sdk/timeline_restructure.py": {
+    "sha256": "842850e1e867eaf2a8c003897b6624bb040a2b7c8f910eecad1d5aa8c9f851ee",
+    "base_sha256": "842850e1e867eaf2a8c003897b6624bb040a2b7c8f910eecad1d5aa8c9f851ee"
+  },
+  "tests/editing_conformance/test_captured_nested_redo.py": {
+    "sha256": "36e2ea620e558e7516ccf93e0090c65d4f3fa85a3487ecc4c0d001a741b20fa4",
+    "base_sha256": "36e2ea620e558e7516ccf93e0090c65d4f3fa85a3487ecc4c0d001a741b20fa4"
+  },
+  "tests/editing_conformance/test_captured_registry_redo.py": {
+    "sha256": "ad96279d8cee5bbf1fcf6e0a91f053bb26019ae4096e1c3e2c737fc290882606",
+    "base_sha256": null
+  },
+  "captured_source": {
+    "sha256": "b55cca41df4ee9490c537e01e77742310fc198729f9c4c7acb595da8d833a266",
+    "bytes": 104781,
+    "events": [
+      154,
+      264,
+      266
+    ],
+    "base": "6aec04e8bdbdcbcca7e6ee7d979c105618357f87",
+    "publication_id": "txn-9f7767940cc94cc4bd37abcef74e0045",
+    "revision_id": "authoring-parent-revision-fb1f973628d5f8c253cad72719f57bebd73924cb3e7b4ed3fb9106386b363db6",
+    "next_guard": {
+      "path": [
+        "occurrences"
+      ],
+      "expected_rows": 3,
+      "canonical_rows": 1
+    },
+    "packet_sha256": "7ab92b619cbe6466b782852afd63c46309722d6d65d88f8fbb8c1e93111a6c15"
+  }
+}
