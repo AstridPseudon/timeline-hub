@@ -3,7 +3,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { classifySkips, declaredTag, SKIP_REGISTRY } from '../../config/testing/skipRegistry.mjs';
+import { classifySkips, declaredTag, skipReason, SKIP_REGISTRY } from '../../config/testing/skipRegistry.mjs';
+import { isSymlinkPermissionError, symlinkCreationRefused } from '../../config/testing/skipConditions.mjs';
 import { checkNoRawSkips } from '../../scripts/quality/check-no-raw-skips.mjs';
 import { checkSkipRegistry } from '../../scripts/quality/check-skip-registry.mjs';
 
@@ -20,7 +21,9 @@ function run(command: string, args: string[], env: Record<string, string> = {}) 
     return { code: failure.status, out: `${failure.stdout}${failure.stderr}` };
   }
 }
-const vitest = (file: string) => run(path.join(ROOT, 'node_modules/.bin/vitest'), ['run', '--config', path.join(FIXTURES, 'vitest.config.ts'), file]);
+// The fixtures that need a skip point the Runtime checkout nowhere, so the declared harness condition holds on any machine.
+const NO_RUNTIME = { ASTRID_RUNTIME_CHECKOUT: path.join(tmpdir(), 'no-such-runtime-checkout') };
+const vitest = (file: string, env: Record<string, string> = {}) => run(path.join(ROOT, 'node_modules/.bin/vitest'), ['run', '--config', path.join(FIXTURES, 'vitest.config.ts'), file], env);
 const playwright = (file: string, env: Record<string, string> = {}) => run(path.join(ROOT, 'node_modules/.bin/playwright'), ['test', '--config', path.join(FIXTURES, 'playwright.config.ts'), file], env);
 
 describe('the skip registry', () => {
@@ -37,6 +40,30 @@ describe('the skip registry', () => {
 
   it('refuses an unknown name', () => {
     expect(() => declaredTag('made-up')).toThrow(/not declared/);
+    expect(() => skipReason('made-up')).toThrow(/not declared/);
+  });
+
+  it('gives every entry its own predicate, which the helpers evaluate', () => {
+    for (const [name, entry] of Object.entries(SKIP_REGISTRY)) expect(typeof entry.applies, name).toBe('function');
+    const original = SKIP_REGISTRY['posix-owner-only-modes'].applies;
+    try {
+      SKIP_REGISTRY['posix-owner-only-modes'].applies = () => 'forced for this test';
+      expect(skipReason('posix-owner-only-modes')).toBe('forced for this test');
+      SKIP_REGISTRY['posix-owner-only-modes'].applies = () => false;
+      expect(skipReason('posix-owner-only-modes')).toBeNull();
+    } finally {
+      SKIP_REGISTRY['posix-owner-only-modes'].applies = original;
+    }
+  });
+
+  it('only a symlink permission error is a skip; the probe never swallows another error', () => {
+    expect(isSymlinkPermissionError(Object.assign(new Error('x'), { code: 'EPERM', syscall: 'symlink' }))).toBe(true);
+    expect(isSymlinkPermissionError(Object.assign(new Error('x'), { code: 'EACCES', syscall: 'symlink' }))).toBe(true);
+    expect(isSymlinkPermissionError(Object.assign(new Error('x'), { code: 'ENOENT', syscall: 'symlink' }))).toBe(false);
+    expect(isSymlinkPermissionError(Object.assign(new Error('x'), { code: 'EPERM', syscall: 'open' }))).toBe(false);
+    expect(isSymlinkPermissionError(new Error('boom'))).toBe(false);
+    // Where symlinks are allowed (CI, macOS, Linux) the declared condition is false, so the test runs.
+    expect(typeof symlinkCreationRefused()).toBe('boolean');
   });
 
   it('is consistent with the workflows and the tests that use it', () => {
@@ -45,13 +72,14 @@ describe('the skip registry', () => {
 
   it('reports a missing CI job, a missing manual note and a stale entry', () => {
     const problems = checkSkipRegistry({
-      skips: { ...SKIP_REGISTRY, ghost: { skipWhen: 'x', reason: 'x', ci: ['no-such-job'] }, orphan: { skipWhen: 'x', reason: 'x', ci: [] } },
+      skips: { ...SKIP_REGISTRY, ghost: { skipWhen: 'x', reason: 'x', applies: () => false, ci: ['no-such-job'] }, orphan: { skipWhen: 'x', reason: 'x', applies: () => false, ci: [] }, bare: { skipWhen: 'x', reason: 'x', ci: ['vitest'] } as never },
       lanes: {},
     });
     expect(problems).toEqual(expect.arrayContaining([
       'skip ghost: no CI job "no-such-job"',
       'skip orphan: no CI job runs it; say why in "manual"',
       'skip ghost: declared but no test uses it',
+      expect.stringContaining('skip bare: no `applies` predicate'),
     ]));
   });
 });
@@ -99,9 +127,21 @@ describe('vitest guard', () => {
   });
 
   it('passes a declared skip and reports it by name', () => {
-    const result = vitest('declared-ok.fixture.ts');
+    const result = vitest('declared-ok.fixture.ts', NO_RUNTIME);
     expect(result.code).toBe(0);
-    expect(result.out).toMatch(/SKIP .*declared-ok\.fixture\.ts > platform case: \[declared:posix-owner-only-modes\]/);
+    expect(result.out).toMatch(/SKIP .*declared-ok\.fixture\.ts > harness case: \[declared:direct-journey-harness\]/);
+  });
+
+  it('runs a test whose declared condition is false', () => {
+    const result = vitest('condition-false.fixture.ts');
+    expect(result.code).toBe(0);
+    expect(result.out).not.toMatch(/SKIP /);
+  });
+
+  it('fails a run in which no test passed, even when every skip is declared', () => {
+    const result = vitest('all-skipped.fixture.ts', NO_RUNTIME);
+    expect(result.code).not.toBe(0);
+    expect(result.out).toContain('No test passed in this run');
   });
 
   it('fails the run on .only', () => {
@@ -124,9 +164,15 @@ describe('Playwright guard', () => {
   });
 
   it('passes a declared skip and reports it by name', () => {
-    const result = playwright('declared-ok.pwfixture.ts');
+    const result = playwright('declared-ok.pwfixture.ts', NO_RUNTIME);
     expect(result.code).toBe(0);
-    expect(result.out).toMatch(/SKIP .*lane case: \[declared:direct-journey-ffmpeg\]/);
+    expect(result.out).toMatch(/SKIP .*lane case: \[declared:direct-journey-harness\]/);
+  });
+
+  it('fails a run in which no test passed, even when every skip is declared', () => {
+    const result = playwright('all-skipped.pwfixture.ts', NO_RUNTIME);
+    expect(result.code).not.toBe(0);
+    expect(result.out).toContain('No test passed in this run');
   });
 
   it('names tests not run because an earlier serial test failed', () => {
@@ -144,14 +190,14 @@ describe('Playwright guard', () => {
   });
 
   it('fails instead of skipping in a job that provides the lane', () => {
-    const result = playwright('required.pwfixture.ts', { ASTRID_REQUIRE_LANES: 'direct-journey' });
+    const result = playwright('required.pwfixture.ts', { ...NO_RUNTIME, ASTRID_REQUIRE_LANES: 'direct-journey' });
     expect(result.code).not.toBe(0);
     expect(result.out).toContain('required in this lane but unavailable');
   });
 });
 
 describe('node:test guard', () => {
-  const nodeTest = (file: string) => run(process.execPath, ['--test', '--test-reporter=./scripts/quality/node-skip-guard-reporter.mjs', path.join(FIXTURES, file)]);
+  const nodeTest = (file: string, env: Record<string, string> = {}) => run(process.execPath, ['--test', '--test-reporter=./scripts/quality/node-skip-guard-reporter.mjs', path.join(FIXTURES, file)], env);
 
   it('fails the run on an undeclared skip', () => {
     const result = nodeTest('undeclared.node.mjs');
@@ -160,8 +206,14 @@ describe('node:test guard', () => {
   });
 
   it('passes a declared skip and reports it by name', () => {
-    const result = nodeTest('declared.node.mjs');
+    const result = nodeTest('declared.node.mjs', NO_RUNTIME);
     expect(result.code).toBe(0);
-    expect(result.out).toContain('[declared:macos-lockf-broker]');
+    expect(result.out).toContain('[declared:direct-journey-harness]');
+  });
+
+  it('fails a run in which no test passed, even when every skip is declared', () => {
+    const result = nodeTest('all-skipped.node.mjs', NO_RUNTIME);
+    expect(result.code).not.toBe(0);
+    expect(result.out).toContain('No test passed in this run');
   });
 });

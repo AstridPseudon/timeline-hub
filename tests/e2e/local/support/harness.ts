@@ -19,6 +19,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deflateSync } from 'node:zlib';
+import { DIST_DIR, RUNTIME_CHECKOUT, ffmpegUnavailableReason, harnessUnavailableReason } from '../../../../config/testing/skipConditions.mjs';
 import { EDITOR_TOUR_VERSION } from '../../../../src/shared/lib/editorTourVersion.ts';
 import { loadQuickDescriptor, type QuickDescriptor } from './quick-descriptor.ts';
 
@@ -46,20 +47,11 @@ export const PRODUCT_SCOPES = ['handshake', 'projects:read', 'projects:write', '
 export const BIG_DOWNLOAD_BYTES = 60 * 1024 * 1024;
 export const BIG_UPLOAD_BYTES = 200 * 1024 * 1024;
 
-export const RUNTIME_CHECKOUT = path.resolve(process.env.ASTRID_RUNTIME_CHECKOUT ?? path.join(REPO_ROOT, '..', 'astrid-runtime'));
-const DIST_DIR = path.resolve(process.env.ASTRID_APP_DIRECT_DIST ?? path.join(REPO_ROOT, 'dist'));
+export { DIST_DIR, RUNTIME_CHECKOUT, harnessUnavailableReason };
 
 export function runtimePython(): string | null {
   const python = path.join(RUNTIME_CHECKOUT, '.venv', 'bin', 'python');
   return existsSync(python) ? python : null;
-}
-
-/** Why the harness cannot run here, or null when it can. */
-export function harnessUnavailableReason(): string | null {
-  if (!runtimePython()) return `Runtime venv not found at ${RUNTIME_CHECKOUT}/.venv (set ASTRID_RUNTIME_CHECKOUT)`;
-  if (!existsSync(path.join(DIST_DIR, 'index.html'))) return `no production build at ${DIST_DIR} (run npm run build, or use npm run test:e2e:direct)`;
-  try { execFileSync('openssl', ['version'], { stdio: 'ignore' }); } catch { return 'openssl is required to make the test certificate'; }
-  return null;
 }
 
 export const sha256Hex = (data: Uint8Array) => `sha256:${createHash('sha256').update(data).digest('hex')}`;
@@ -245,15 +237,18 @@ export function makePng(width = 64, height = 48): Buffer {
   return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(Buffer.concat(rows))), chunk('IEND', Buffer.alloc(0))]);
 }
 
-/** A few-second VP8 clip when ffmpeg exists (decodable in stock Chromium); otherwise a repo MP4 that only exercises bytes and Range. */
+/**
+ * A few-second VP8 clip (decodable in stock Chromium) when ffmpeg can make one; otherwise a repo MP4 that only
+ * exercises bytes and Range. Whether ffmpeg can is the declared `direct-journey-ffmpeg` condition; once it says yes,
+ * a failure to make the clip is an error, never a quiet fallback.
+ */
 function makeVideo(dir: string): { data: Buffer; mediaType: string; decodable: boolean } {
-  const out = path.join(dir, 'clip.webm');
-  try {
-    execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc=size=320x180:rate=15:duration=12', '-c:v', 'libvpx', '-b:v', '600k', '-g', '15', out], { stdio: 'ignore', timeout: 60_000, env: cleanProcessEnv() });
-    return { data: readFileSync(out), mediaType: 'video/webm', decodable: true };
-  } catch {
+  if (ffmpegUnavailableReason() !== null) {
     return { data: readFileSync(path.join(REPO_ROOT, 'src/pages/Home/light-study-assets/first-light.mp4')), mediaType: 'video/mp4', decodable: false };
   }
+  const out = path.join(dir, 'clip.webm');
+  execFileSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc=size=320x180:rate=15:duration=12', '-c:v', 'libvpx', '-b:v', '600k', '-g', '15', out], { stdio: 'ignore', timeout: 60_000, env: cleanProcessEnv() });
+  return { data: readFileSync(out), mediaType: 'video/webm', decodable: true };
 }
 
 // ---------------------------------------------------------------------------------------------

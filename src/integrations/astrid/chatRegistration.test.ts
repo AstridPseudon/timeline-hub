@@ -38,7 +38,7 @@ describe('agent-owned chat discovery', () => {
   });
 
   it('refuses a registration readable by other users on POSIX', (ctx) => {
-    skipWhen('posix-owner-only-modes', process.platform === 'win32', ctx);
+    skipWhen('posix-owner-only-modes', ctx);
     const { path, discovery } = fixture();
     writeFileSync(path, JSON.stringify({ endpoint: 'http://127.0.0.1:17335', token: 'private' }));
     chmodSync(path, 0o644);

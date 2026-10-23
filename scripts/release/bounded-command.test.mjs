@@ -113,7 +113,7 @@ describe('runBoundedCommand', () => {
     assert.ok(Object.isFrozen(result.args));
   });
 
-  it('reaps repeated broker-election candidates on macOS', { skip: declaredSkip('macos-lockf-broker', process.platform !== 'darwin' || !existsSync('/usr/bin/lockf')) }, () => {
+  it('reaps repeated broker-election candidates on macOS', { skip: declaredSkip('macos-lockf-broker') }, () => {
     const moduleUrl = new URL('./bounded-command.mjs', import.meta.url).href;
     const childSource = [
       `process.env.ASTRID_APP_BOUNDED_BROKER_SESSION = ${JSON.stringify('c'.repeat(32))};`,

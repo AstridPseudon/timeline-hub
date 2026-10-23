@@ -6,11 +6,17 @@ import { classifySkips, formatSkipReport } from '../../config/testing/skipRegist
 
 export default async function* nodeSkipGuard(source) {
   const entries = [];
+  let passed = 0;
   for await (const event of source) {
     if (event.type !== 'test:pass' && event.type !== 'test:fail') continue;
-    const { name, skip, todo, file } = event.data;
+    const { name, skip, todo, file, details } = event.data;
+    if (event.type === 'test:pass' && skip === undefined && todo === undefined && details?.type !== 'suite') passed += 1;
     if (skip === undefined && todo === undefined) continue;
     entries.push({ name: `${file ?? ''} > ${name}`, reason: typeof skip === 'string' ? skip : typeof todo === 'string' ? todo : '' });
+  }
+  if (passed === 0) {
+    yield '\nNo test passed in this run: a run where everything was skipped, todo or failed is not a green run.\n';
+    process.exitCode = 1;
   }
   if (!entries.length) return;
   const report = classifySkips(entries);

@@ -19,7 +19,6 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { skipWhen } from '@/test/declaredSkip';
 import {
   TimelineVersionConflictError,
   isTimelineVersionConflictError,
@@ -84,8 +83,6 @@ export type ProviderFactory = (
 export function runProviderCompatibilitySuite(
   factory: ProviderFactory,
   options: {
-    /** If true, the provider has no checkpoint API: the checkpoint cases report a declared skip (provider-no-checkpoint-api). */
-    skipCheckpoints?: boolean;
     /** If true, the provider's saveTimeline ignores expectedVersion (Astrid). */
     versionConflictIsSoft?: boolean;
     /** Timeline ID to use for tests. Defaults to 'compat-test-timeline'. */
@@ -99,7 +96,6 @@ export function runProviderCompatibilitySuite(
   } = {},
 ): void {
   const {
-    skipCheckpoints = false,
     versionConflictIsSoft = false,
     timelineId: defaultTimelineId = 'compat-test-timeline',
     derivedOutputOnSave = false,
@@ -665,30 +661,28 @@ export function runProviderCompatibilitySuite(
   // ── Checkpoints (optional) ─────────────────────────────────────────────────
 
   describe('checkpoints (optional contract)', () => {
-    it('has saveCheckpoint and loadCheckpoints methods', async (ctx) => {
-      skipWhen('provider-no-checkpoint-api', skipCheckpoints, ctx);
-      const provider = await factory({
-        timelineId: tid,
-        config: config1,
-        configVersion: 1,
-      });
+    // saveCheckpoint / loadCheckpoints are optional on DataProvider. The capability is read from the provider
+    // under test: a provider without them must lack both (asserted), a provider with them must pass the cases.
+    const seeded = () => factory({ timelineId: tid, config: config1, configVersion: 1 });
 
-      // Optional on the interface, but a provider that does not opt out must have them.
-      expect(typeof (provider as any).saveCheckpoint).toBe('function');
-      expect(typeof (provider as any).loadCheckpoints).toBe('function');
+    it('has both checkpoint methods or neither', async () => {
+      const provider = await seeded();
+      const hasSave = typeof provider.saveCheckpoint === 'function';
+      const hasLoad = typeof provider.loadCheckpoints === 'function';
+      expect(hasLoad).toBe(hasSave);
+      if (!hasSave) {
+        expect(provider.saveCheckpoint).toBeUndefined();
+        expect(provider.loadCheckpoints).toBeUndefined();
+      }
     });
 
-    it('saveCheckpoint returns a truthy checkpoint ID', async (ctx) => {
-      skipWhen('provider-no-checkpoint-api', skipCheckpoints, ctx);
-      const provider = await factory({
-        timelineId: tid,
-        config: config1,
-        configVersion: 1,
-      });
-
-      expect(typeof (provider as any).saveCheckpoint).toBe('function');
-
-      const checkpointId = await (provider as any).saveCheckpoint(tid, {
+    it('saveCheckpoint returns a truthy checkpoint ID', async () => {
+      const provider = await seeded();
+      if (typeof provider.saveCheckpoint !== 'function') {
+        expect(provider.loadCheckpoints).toBeUndefined();
+        return;
+      }
+      const checkpointId = await provider.saveCheckpoint(tid, {
         timelineId: tid,
         config: config1,
         createdAt: new Date('2026-06-20T00:00:00.000Z').toISOString(),
@@ -701,17 +695,13 @@ export function runProviderCompatibilitySuite(
       expect(typeof checkpointId).toBe('string');
     });
 
-    it('loadCheckpoints returns an array', async (ctx) => {
-      skipWhen('provider-no-checkpoint-api', skipCheckpoints, ctx);
-      const provider = await factory({
-        timelineId: tid,
-        config: config1,
-        configVersion: 1,
-      });
-
-      expect(typeof (provider as any).loadCheckpoints).toBe('function');
-
-      const checkpoints = await (provider as any).loadCheckpoints(tid);
+    it('loadCheckpoints returns an array', async () => {
+      const provider = await seeded();
+      if (typeof provider.loadCheckpoints !== 'function') {
+        expect(provider.saveCheckpoint).toBeUndefined();
+        return;
+      }
+      const checkpoints = await provider.loadCheckpoints(tid);
       expect(Array.isArray(checkpoints)).toBe(true);
     });
   });

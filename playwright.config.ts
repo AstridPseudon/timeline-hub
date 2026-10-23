@@ -56,7 +56,6 @@ const launchOptions = chromiumExecutablePath
 // Their opt-in script owns their collection.
 // See `npm run test:e2e:timeline`.
 const TIMELINE_DEVICE_SPECS = /tests[\\/]e2e[\\/]timeline[\\/].*\.spec\.ts$/;
-const RENDERER_OWNED_TIMELINE_SPECS = /caption-render-export\.spec\.ts$/;
 // Cases that need H.264 in the browser: encoding it (export) or decoding it (the preview plays
 // example-video.mp4). Playwright's bundled Chromium has neither, so these run only in the
 // `timeline-chrome-export` project (channel 'chrome', `npm run test:e2e:chrome-export`), never in
@@ -177,9 +176,7 @@ export default defineConfig({
           name: 'timeline-devices',
           testMatch: TIMELINE_DEVICE_SPECS,
           // Cases tagged @chrome-h264 export or decode H.264 and run in the `timeline-chrome-export`
-          // project; this project must not collect them. The caption export spec requires a producing
-          // render worker plus managed media fixtures and remains renderer-owned.
-          testIgnore: RENDERER_OWNED_TIMELINE_SPECS,
+          // project; this project must not collect them.
           grepInvert: CHROME_H264_TAG,
           // Each spec sets its own viewport/touch profile via test.use().
           use: { ...devices['Desktop Chrome'] },

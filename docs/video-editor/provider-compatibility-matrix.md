@@ -152,7 +152,7 @@ The `SourceMapRuntime` stores entries in extension project-data under `__sm__:<e
 | `timeline-golden-replay.test.ts` (81 tests) | ✓ All pass | N/A (pure compiler) |
 | `InMemoryDataProvider.test.ts` (13 tests) | ✓ All pass | N/A |
 | `src/integrations/runtime/dataProvider.test.ts` | N/A | ✓ Head-checked save, history, assets |
-| `providerCompatibility.runtime.test.ts` (shared suite over `runtimeFixture`) | N/A | ✓ Shared suite with `skipCheckpoints` |
+| `providerCompatibility.runtime.test.ts` (shared suite over `runtimeFixture`) | N/A | ✓ Shared suite; checkpoint cases read the capability from the provider |
 | `proposal-runtime.test.ts` (39 tests) | ✓ All pass | N/A (in-memory runtime) |
 | `source-map-runtime.test.ts` (31 tests) | ✓ All pass | N/A (project-data backed) |
 
@@ -175,7 +175,7 @@ The `providerCompatibility.runtime.test.ts` suite uses the shared `runProviderCo
 
 | Flag | Value | Reason |
 |---|---|---|
-| `skipCheckpoints` | `true` | Runtime has no checkpoint API; history is composition revisions |
+| checkpoint cases | read from the provider | Runtime has no checkpoint API (asserted absent); history is composition revisions |
 | `derivedOutputOnSave` | `true` | Runtime treats `config.output` as host-derived: saves drop it and loads re-materialise defaults |
 | `skipRegisterAsset` | `false` | `registerAsset` merges the registry and publishes through the head-checked save |
 
@@ -185,7 +185,7 @@ The suite saves with numeric `expectedVersion`; `RuntimeDataProvider` refuses th
 
 | Shared suite section | Skipped? | Reason | Coverage delegated to |
 |---|---|---|---|
-| checkpoints | Yes (`skipCheckpoints: true`) | No checkpoint API; history is Runtime composition revisions | `dataProvider.test.ts` ("loads project-scoped canonical revisions and restores through a current-head CAS") |
+| checkpoints | Yes (the shared suite asserts both methods are absent) | No checkpoint API; history is Runtime composition revisions | `dataProvider.test.ts` ("loads project-scoped canonical revisions and restores through a current-head CAS") |
 | strict CAS version conflict | No | Stale head rejected by Runtime, mapped to `TimelineVersionConflictError` | `providerCompatibility.runtime.test.ts` through `VersionedRuntimeProvider`; `dataProvider.test.ts` |
 
 **Contract-recheck row links:**
@@ -204,8 +204,8 @@ Both InMemory variants (**testing** and **browser-runtime**) have no environment
 
 | Variant | Test file | Shared suite flags | Environment notes |
 |---|---|---|---|
-| Testing (`src/tools/video-editor/testing/InMemoryDataProvider`) | `providerCompatibility.inmemory.test.ts` | `skipCheckpoints: false`, `versionConflictIsSoft: false`, `skipRegisterAsset: false` | Pure Map-backed; no env dependencies; canonical shared-suite baseline |
-| Browser-runtime (`src/tools/video-editor/lib/browser-runtime`) | `providerCompatibility.browserInMemory.test.ts` | `skipCheckpoints: false`, `versionConflictIsSoft: false`, `skipRegisterAsset: false` | Uses `createLocalAssetResolver`; works in any JS environment (Node, browser, CI) |
+| Testing (`src/tools/video-editor/testing/InMemoryDataProvider`) | `providerCompatibility.inmemory.test.ts` | `versionConflictIsSoft: false`, `skipRegisterAsset: false` | Pure Map-backed; no env dependencies; canonical shared-suite baseline |
+| Browser-runtime (`src/tools/video-editor/lib/browser-runtime`) | `providerCompatibility.browserInMemory.test.ts` | `versionConflictIsSoft: false`, `skipRegisterAsset: false` | Uses `createLocalAssetResolver`; works in any JS environment (Node, browser, CI) |
 
 **Contract-recheck row links:**
 
@@ -230,7 +230,7 @@ Per the shared matrix helper (SD1), the `providerCompatibility` shared suite is 
 | Status | Definition | Example |
 |---|---|---|
 | **pass** | The shared suite passes with all applicable flags in the provider's documented environment | InMemory (both): full pass, no skips |
-| **deferred** | The shared suite section was skipped via a documented flag (`skipCheckpoints`, `skipMissingTimelineTests`, `versionConflictIsSoft`) and the skip reason is linked to a contract-recheck row or blocker entry | Runtime: checkpoints deferred (history is composition revisions) |
+| **deferred** | The shared suite section was skipped via a documented flag (`skipMissingTimelineTests`, `versionConflictIsSoft`) and the skip reason is linked to a contract-recheck row or blocker entry | Runtime: checkpoints deferred (history is composition revisions) |
 | **gap** | The shared suite section was not exercised and no alternative coverage exists | N/A — all current gaps have alternative coverage or documented deferral |
 | **blocked** | The shared suite cannot exercise a section and no alternative coverage or deferral exists | None currently — all environment-impossible cases have documented resolutions |
 | **release-blocking** | A gap without documented resolution that affects V1 supported claims | None — see [contract-recheck blocker section](./extension-platform-contract-recheck.md#3-blocker-section) for M14/M12/M11 blockers that are independent of provider compatibility |

@@ -11,10 +11,14 @@
 // Tests never call .skip / .only / .fixme / .todo / skipIf / runIf themselves
 // (scripts/quality/check-no-raw-skips.mjs). They use `skipWhen` (src/test/declaredSkip.ts, vitest),
 // `skipUnlessLane` (tests/e2e/support/declaredSkip.ts, Playwright) or `declaredSkip` (scripts/quality/declared-skip.mjs, node:test).
+// Each entry carries the predicate that decides its skip (`applies`, from skipConditions.mjs); callers pass only the
+// name and the helper evaluates it, so no catch-all can turn an unrelated error into a declared skip.
 // Share this definition with the Runtime (tests/lanes.py) and Astrid agent repos.
 
+import { ffmpegUnavailableReason, harnessUnavailableReason, isWindows, macosLockfMissing, symlinkCreationRefused } from './skipConditions.mjs';
+
 /**
- * Skips reported at run time. `ci` = CI jobs (job ids in .github/workflows) where the skip condition is
+ * Skips reported at run time. `applies` = the predicate (true or a reason string when the skip applies, false when the test runs). `ci` = CI jobs (job ids in .github/workflows) where the skip condition is
  * false, so the test runs. `requireInLane`: in a job that sets ASTRID_REQUIRE_LANES to include this value,
  * the condition is a failure, never a skip (the lane's job provides the dependency).
  */
@@ -22,36 +26,35 @@ export const SKIP_REGISTRY = {
   'direct-journey-harness': {
     skipWhen: 'harnessUnavailableReason() !== null: no Runtime venv, no hosted dist/ build, or no openssl',
     reason: 'the direct journey needs a Runtime venv, a production build and openssl on the machine',
+    applies: harnessUnavailableReason,
     ci: ['direct-journey'],
     requireInLane: 'direct-journey',
   },
   'direct-journey-ffmpeg': {
-    skipWhen: '!harness.seed.video.decodable: ffmpeg is not installed, so stock Chromium cannot decode the fallback MP4',
+    skipWhen: 'ffmpegUnavailableReason() !== null: ffmpeg (with libvpx) is not installed, so stock Chromium cannot decode the fallback MP4',
     reason: 'the video-load case needs ffmpeg to make a decodable clip',
+    applies: ffmpegUnavailableReason,
     ci: ['direct-journey'],
     requireInLane: 'direct-journey',
-  },
-  'provider-no-checkpoint-api': {
-    skipWhen: 'the provider under test sets skipCheckpoints: it has no saveCheckpoint / loadCheckpoints (optional in DataProvider.ts)',
-    reason: 'the provider has no checkpoint API (RuntimeDataProvider keeps composition revisions; the testing InMemoryDataProvider has none); the browser in-memory provider runs these',
-    ci: ['vitest'],
   },
   'posix-owner-only-modes': {
     skipWhen: "process.platform === 'win32'",
     reason: 'owner-only file modes (chmod 0644 refusal) are a POSIX permission model',
+    applies: isWindows,
     ci: ['vitest'],
   },
   'macos-lockf-broker': {
     skipWhen: "process.platform !== 'darwin' || !existsSync('/usr/bin/lockf')",
     reason: 'the broker-election reaping case exercises macOS /usr/bin/lockf',
+    applies: macosLockfMissing,
     ci: [],
     manual: 'no CI job runs on macOS, and no job runs scripts/release tests; run `npm run test:extension-ship-verifier` on a Mac',
   },
   'symlink-creation-permitted': {
-    skipWhen: 'fs.symlinkSync throws (no symlink privilege in this environment)',
+    skipWhen: 'a probe symlink in a temp dir fails with EPERM/EACCES (no symlink privilege in this environment); any other error fails the test',
     reason: 'the symlink-escape case needs permission to create symlinks',
-    ci: [],
-    manual: 'no CI job runs scripts/quality node tests; run `node --test scripts/quality/check-extension-family-conformance.test.mjs` locally',
+    applies: symlinkCreationRefused,
+    ci: ['vitest'],
   },
 };
 
@@ -102,6 +105,12 @@ export const LANES = {
     ci: [],
     manual: 'needs an adopted Runtime realm descriptor from the owner; no job has one',
   },
+  'node-installer-bootstrap': {
+    what: 'scripts/installer/bootstrap.test.mjs (12 of 27 fail on macOS: the POSIX installer exits 1) and bootstrap-powershell.test.mjs (needs pwsh)',
+    command: 'node --test scripts/installer/bootstrap.test.mjs scripts/installer/bootstrap-powershell.test.mjs',
+    ci: [],
+    manual: 'red when run (found 23 Oct, cause not yet diagnosed); in no job until fixed, so they are not hidden by a skip',
+  },
   'playwright-direct': {
     what: 'tests/e2e/local/{direct-journey,settings-persist}.spec.ts',
     command: 'npm run test:e2e:direct',
@@ -119,6 +128,17 @@ export const DECLARED_TAG = /\[declared:([a-z0-9-]+)\]/;
 export function declaredTag(name) {
   if (!Object.hasOwn(SKIP_REGISTRY, name)) throw new Error(`skip "${name}" is not declared in config/testing/skipRegistry.mjs`);
   return `[declared:${name}] ${SKIP_REGISTRY[name].reason}`;
+}
+
+/**
+ * Evaluates the declared predicate for `name`: null when the test must run, else the detail of why it skips
+ * (a non-empty string). Throws on an unknown name, or when the predicate itself errors.
+ */
+export function skipReason(name) {
+  declaredTag(name);
+  const applies = SKIP_REGISTRY[name].applies();
+  if (!applies) return null;
+  return typeof applies === 'string' ? applies : SKIP_REGISTRY[name].skipWhen;
 }
 
 /** The registered name carried by a skip reason, or null when the skip is undeclared. */

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Every skip and lane in config/testing/skipRegistry.mjs must be real and visible:
 //  - each `ci` job id exists in .github/workflows/*.yml;
+//  - every skip carries its `applies` predicate (callers pass only the name);
 //  - an entry with no CI job says why in `manual`, and an entry with CI jobs does not claim `manual`;
 //  - every name passed to skipWhen / skipUnlessLane / declaredSkip / declaredSkipIf in a test is declared,
 //    and every declared skip is used by at least one test (a stale entry is an invisible hole).
@@ -39,6 +40,7 @@ export function checkSkipRegistry({ repoRoot = DEFAULT_REPO_ROOT, skips = SKIP_R
   const jobs = ciJobs(repoRoot);
   for (const [kind, table] of [['skip', skips], ['lane', lanes]]) {
     for (const [name, entry] of Object.entries(table)) {
+      if (kind === 'skip' && typeof entry.applies !== 'function') problems.push(`skip ${name}: no \`applies\` predicate; the registry, not the caller, decides when it skips`);
       for (const job of entry.ci) if (!jobs.has(job)) problems.push(`${kind} ${name}: no CI job "${job}"`);
       if (entry.ci.length === 0 && !entry.manual) problems.push(`${kind} ${name}: no CI job runs it; say why in "manual"`);
       if (entry.ci.length > 0 && entry.manual) problems.push(`${kind} ${name}: has CI jobs and a "manual" note; drop one`);

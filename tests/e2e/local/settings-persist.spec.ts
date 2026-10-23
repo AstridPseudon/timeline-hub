@@ -8,7 +8,6 @@
 import { expect, type Page } from '@playwright/test';
 import { EDITOR_TOUR_VERSION } from '../../../src/shared/lib/editorTourVersion.ts';
 import { skipWhen } from '../support/declaredSkip.ts';
-import { harnessUnavailableReason } from './support/harness.ts';
 import { expectConnected, openApp, test } from './support/app.ts';
 
 /** The Tasks pane's edge tab: "Unlock pane" while the pane is locked open, "Lock pane" while it is not. */
@@ -23,7 +22,7 @@ const SNAPSHOT_KEY = 'astrid.settings.snapshot.v1:ui.panes';
 
 test.describe.configure({ mode: 'serial' });
 test.beforeEach(() => {
-  skipWhen('direct-journey-harness', harnessUnavailableReason());
+  skipWhen('direct-journey-harness');
 });
 
 test('a changed Tasks pane lock holds after clearing the browser and reloading (the Runtime holds it)', async ({ page, harness }) => {
