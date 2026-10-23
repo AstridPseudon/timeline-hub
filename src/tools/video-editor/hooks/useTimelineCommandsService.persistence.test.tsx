@@ -397,3 +397,216 @@ describe('mounted prepared-media command persistence', () => {
     }
   });
 });
+
+type MountedAfterAnchorPositiveCase = {
+  name: string;
+  configure: (config: TimelineConfig) => void;
+  expectedSource: Record<string, unknown>;
+  expectedInserted: Record<string, unknown>;
+  expectedLaterAt: number;
+  sourceHoldPatched?: boolean;
+};
+
+const mountedAfterAnchorPositiveCases: MountedAfterAnchorPositiveCase[] = [
+  {
+    name: 'old video with missing hold',
+    configure: (config) => {
+      const anchor = config.clips.find((clip) => clip.id === 'anchor')!;
+      anchor.clipType = 'video';
+      delete anchor.hold;
+    },
+    expectedSource: { clipType: 'video' },
+    expectedInserted: { clipType: 'video', from: 2, to: 6, speed: 2 },
+    expectedLaterAt: 7,
+  },
+  {
+    name: 'old video with explicit null hold',
+    configure: (config) => {
+      const anchor = config.clips.find((clip) => clip.id === 'anchor')!;
+      anchor.clipType = 'video';
+      anchor.hold = null;
+    },
+    expectedSource: { clipType: 'video', hold: null },
+    expectedInserted: { clipType: 'video', hold: null, from: 2, to: 6, speed: 2 },
+    expectedLaterAt: 7,
+  },
+  {
+    name: 'old video with subminimum duration',
+    configure: (config) => {
+      const anchor = config.clips.find((clip) => clip.id === 'anchor')!;
+      anchor.clipType = 'video';
+      anchor.hold = 0.01;
+      delete anchor.from;
+      delete anchor.to;
+      delete anchor.speed;
+    },
+    expectedSource: { clipType: 'video', hold: 0 },
+    expectedInserted: { clipType: 'video', hold: 0.0667 },
+    expectedLaterAt: 5.0667,
+    sourceHoldPatched: true,
+  },
+  {
+    name: 'old video with incoming transition',
+    configure: (config) => {
+      const anchor = config.clips.find((clip) => clip.id === 'anchor')!;
+      anchor.clipType = 'video';
+      delete anchor.hold;
+      anchor.transition = { type: 'crossfade', duration: 0.5, opaque: [false, null] };
+    },
+    expectedSource: {
+      clipType: 'video',
+      transition: { type: 'crossfade', duration: 0.5, opaque: [false, null] },
+    },
+    expectedInserted: {
+      clipType: 'video', from: 2, to: 6, speed: 2,
+      transition: { type: 'crossfade', duration: 0.5, opaque: [false, null] },
+    },
+    expectedLaterAt: 7,
+  },
+];
+
+const mountedAfterAnchorPackets: Array<Record<string, unknown>> = [];
+
+afterAll(async () => {
+  const packetPath = process.env.A4_AFTER_POSITIVE_PACKET;
+  if (!packetPath) return;
+  const { writeFile } = await import('node:fs/promises');
+  await writeFile(packetPath, `${JSON.stringify({ cases: mountedAfterAnchorPackets }, null, 2)}\n`);
+});
+
+describe('mounted prepared-media after-anchor positive parity', () => {
+  beforeEach(async () => {
+    const { clearTimelineDraft } = await import('../data/timelineDraftIndexedDb.ts');
+    await clearTimelineDraft(scope.timelineId);
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.deleteDatabase('astrid.command-outbox');
+      request.addEventListener('success', () => resolve());
+      request.addEventListener('error', () => reject(request.error));
+      request.addEventListener('blocked', () => reject(new Error('Outbox database remained open during test isolation')));
+    });
+  });
+
+  it.each(mountedAfterAnchorPositiveCases)('$name emits the normalized v2 doc.patch through A2', async (testCase) => {
+    const config = authoredConfig();
+    testCase.configure(config);
+    const document = authoredDocument(config);
+    const initial: TimelineCommandBasis = { head, canonicalDocument: document };
+    const initialData = await buildTimelineData(config, document.parent_revision.payload.registry as unknown as AssetRegistry,
+      async (file) => file, 1, undefined, runtimeHead);
+    const assetSuffix = testCase.name.replaceAll(' ', '-');
+    const preparedAsset = {
+      assetKey: `asset-${assetSuffix}`,
+      mediaType: 'video' as const,
+      durationSeconds: 2,
+      entry: {
+        file: `${assetSuffix}.mp4`, type: 'video/mp4',
+        media_id: `media-${assetSuffix}`, generationId: `generation-${assetSuffix}`,
+      },
+      source: 'registered' as const,
+    };
+    const preparedCommand: PlacePreparedMediaCommand = {
+      type: 'place-prepared-media',
+      payload: {
+        asset: preparedAsset, selectedTrackId: null, at: 0, afterClipId: 'anchor',
+        forceNewTrack: false, insertAtTop: false,
+      },
+    };
+    const preparedPreview = applyPreparedMediaCommand(initialData, preparedCommand);
+    expect(preparedPreview).not.toBeNull();
+    const expectedPreview = preparedPreview!.nextData.config.clips;
+    let latest = initial;
+    const transportCalls: Array<{ method: string; path: string; headers: Record<string, string>; rawBody?: string; body?: unknown }> = [];
+    const transport = runtimeDiscoveryTransport(transportCalls, (request, key, path) => {
+      const revision = `r-${assetSuffix}`;
+      const accepted = acceptedReply(request, adoptedDocument(document, preparedPreview!.nextData, revision), revision, key);
+      accepted.receipt.request_hash = fixtureDigest({ operation: 'commitTimeline', path,
+        publisher: accepted.response.data.publisher, request }).slice(7);
+      accepted.receipt.result = accepted.response.data;
+      latest = { head: accepted.accepted, canonicalDocument: accepted.canonicalDocument };
+      return { status: 200, headers: {}, body: json(accepted.response) };
+    });
+    const runtimeClient = new AstridRuntimeClient({ baseUrl: 'http://runtime.test', token: 'runtime-token', transport });
+    const provider = new RuntimeDataProvider({ projectId: scope.projectId, runtimeClient });
+    vi.spyOn(provider, 'loadTimelineCommandBasis').mockImplementation(async () => structuredClone(latest));
+    const actualCommit = provider.commitTimeline.bind(provider);
+    const send = vi.fn<NonNullable<DataProvider['commitTimeline']>>().mockImplementation(
+      (request, key) => actualCommit(request, key),
+    );
+    provider.commitTimeline = send;
+    const store = createTimelineStore();
+    const mounted = renderHook(() => useMountedCommands(store, provider, initialData), { wrapper: wrapperFor(store, provider) });
+    try {
+      await waitFor(() => expect(mounted.result.current.save.localSaveState).not.toBeNull());
+      expect(mounted.result.current.save.localSaveState).toMatchObject({ status: 'saved', ownerId: expect.any(String) });
+      let result: ReturnType<typeof mounted.result.current.commands.addClip>;
+      act(() => {
+        result = mounted.result.current.commands.addClip({
+          preparedAsset, trackId: 'V1', afterClipId: 'anchor', time: 0,
+        });
+      });
+      expect(result!).toEqual({ ok: true, data: { clipId: 'clip-0', trackId: 'V1' } });
+      const previewClips = mounted.result.current.save.dataRef.current?.config.clips ?? [];
+      expect(previewClips).toEqual(expectedPreview);
+      expect(previewClips.find((clip) => clip.id === 'anchor')).toMatchObject(testCase.expectedSource);
+      expect(previewClips.find((clip) => clip.id === 'clip-0')).toMatchObject({
+        id: 'clip-0', asset: preparedAsset.assetKey, at: expect.any(Number), track: 'V1', ...testCase.expectedInserted,
+      });
+      expect(previewClips.map((clip) => clip.id)).toEqual(['anchor', 'clip-0', 'later', 'sibling']);
+      expect(previewClips.find((clip) => clip.id === 'later')?.at).toBe(testCase.expectedLaterAt);
+      expect(previewClips.find((clip) => clip.id === 'sibling')?.at).toBe(5);
+
+      await act(async () => { await mounted.result.current.save.flushPendingSave(); });
+      expect(send).toHaveBeenCalledOnce();
+      const [request, key] = send.mock.calls[0]!;
+      expect(request).toMatchObject({
+        api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
+        base_revision_id: 'r0', base_publication_id: 'p0', label: 'Edit timeline', merge: 'atomic', dry_run: false,
+        source: { via: 'app' }, commands: [{ schema_version: 1, op: 'doc.patch', version: '1', select: null,
+          created: ['parent/clip:clip-0'] }],
+        steps: [{ id: expect.any(String), label: 'Edit timeline', intent: 'Save local editor changes', tags: [], command_ordinals: [0] }],
+      });
+      expect(request).not.toHaveProperty('reads');
+      const changes = request.commands[0]!.args.changes;
+      expect(changes).toEqual(expect.arrayContaining([
+        { op: 'list.insert', ref: 'parent', path: ['clips'], id: 'clip-0', before: { state: 'absent' },
+          value: expect.objectContaining({ id: 'clip-0', asset: preparedAsset.assetKey }),
+          order_before: ['anchor', 'later', 'sibling'], after_id: 'anchor' },
+        { op: 'set', ref: 'parent', path: ['clips', 'id:later', 'at'], before: { state: 'present', value: 5 },
+          value: testCase.expectedLaterAt },
+        { op: 'set', ref: 'parent', path: ['registry', 'assets', preparedAsset.assetKey], before: { state: 'absent' },
+          value: preparedAsset.entry },
+      ]));
+      expect(changes.some((change) => change.path.join('/') === 'clips/id:anchor/hold'))
+        .toBe(testCase.sourceHoldPatched ?? false);
+      expect(request.steps?.[0]?.patch).toEqual(changes);
+      const [wire] = transportCalls.filter((call) => call.path.endsWith('/commit'));
+      expect(wire.rawBody).toBe(JSON.stringify(request));
+      expect(wire.body).toEqual(request);
+      expect(key).toEqual(expect.any(String));
+      const accepted = await send.mock.results[0]!.value as TimelineCommitResult;
+      expect(accepted.response.data.canonical_document).toEqual(accepted.canonicalDocument);
+      expect(mounted.result.current.save.dataRef.current?.config.clips).toEqual(expectedPreview);
+
+      const requestBytes = JSON.stringify(request);
+      const { createHash } = await import('node:crypto');
+      mountedAfterAnchorPackets.push({
+        source_case: testCase.name,
+        actual_production_call_binding: 'useMountedCommands(...).commands.addClip({ preparedAsset, trackId: V1, afterClipId: anchor, time: 0 }) -> useTimelineSave.applyEdit -> localSaveSession/outbox -> RuntimeDataProvider.commitTimeline -> AstridRuntimeClient/generated transport',
+        request_json: request,
+        request_bytes: requestBytes,
+        request_byte_length: new TextEncoder().encode(requestBytes).byteLength,
+        request_sha256: createHash('sha256').update(requestBytes).digest('hex'),
+        canonical_base_closure: document,
+        source_pins: {
+          anchor: config.clips.find((clip) => clip.id === 'anchor'),
+          later: config.clips.find((clip) => clip.id === 'later'),
+          sibling: config.clips.find((clip) => clip.id === 'sibling'),
+          source_asset: (document.parent_revision.payload.registry as AssetRegistry).assets['asset-source'],
+        },
+      });
+    } finally {
+      mounted.unmount();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+  });
+});
