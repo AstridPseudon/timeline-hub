@@ -249,7 +249,6 @@ def test_timelines_transcripts_sync_parser():
 
 def test_publish_registers_after_timeline_commit_and_survives_document_failure(monkeypatch, capsys):
     from astrid.sdk import timeline_transcripts
-    from astrid.sdk.timeline import store
     from astrid.sdk.timeline.checkout import Checkout
 
     bundle = {"project_id": "p", "timeline_id": "t", "placements": [], "shots": {}, "parent": {"clips": []}}
@@ -260,7 +259,8 @@ def test_publish_registers_after_timeline_commit_and_survives_document_failure(m
     monkeypatch.setattr(tl, "narration_changes", lambda: {})
     monkeypatch.setattr(tl, "stored_document", lambda **_kwargs: bundle)
     sequence = []
-    monkeypatch.setattr(store, "publish_bundle", lambda *_args, **_kwargs: (
+    monkeypatch.setattr(tl, "_publish_narration", lambda *a, **kw: {})
+    monkeypatch.setattr(tl, "_commit_document", lambda *_args, **_kwargs: (
         sequence.append("publish") or {"new_head": "rev-1"}))
     monkeypatch.setattr(timeline_transcripts, "plan_narration_transcripts", lambda _tl: [
         {"status": "planned"}])
