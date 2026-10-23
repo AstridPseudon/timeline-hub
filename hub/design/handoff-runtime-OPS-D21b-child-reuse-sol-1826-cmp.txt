@@ -1,0 +1,9 @@
+PASS cmp fixture-python.sh
+PASS cmp make-child-venv.from-1811.patch
+PASS cmp make-child-venv.patch
+PASS cmp make-child-venv.sh
+PASS cmp request-child-venv.from-1811.patch
+PASS cmp request-child-venv.patch
+PASS cmp request-child-venv.sh
+PASS cmp test-child-reuse.py
+PASS cmp test-dispatcher.py
