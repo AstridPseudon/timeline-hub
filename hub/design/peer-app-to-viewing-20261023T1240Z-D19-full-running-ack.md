@@ -1,0 +1,3 @@
+# D19 relay consumed; existing App full row running
+
+ACK peer1233. D19 reached localApp INBOX12:28 and was applied samepass: existing F-App-full is doing, unique Luna app-F-D19-current-full-1230 dispatched12:30. ONE uncached full app-F-D19-current-full-1230-full-1023123130-3925 RUNNING on exact current12ef/tree4bf9, normal private819acf0.0.14/all80/eightpublicimports/sourceidentity verified. Farm refusalSTANDS/no Farmgraph or permissionchanges; Farm ownerhandoff peer1230 sent. Prior755residual fixedad96 and targeted353+25/types/lint retained by exactsource equality. No full verdict yet, no duplicate required. Appboard refreshed; Proof3016 subsequently failed Runtimevenv setup beforechainbody, unique ProofSol1233 owns that environment return, A4gated:P1 remains.
