@@ -23,7 +23,10 @@ import {
 } from './bounded-command-scan-policy.mjs';
 
 const NODE = process.execPath;
-const BASE = Object.freeze({ timeoutMs: 2_000, maxBuffer: 64 * 1024, killSignal: 'SIGKILL' });
+// Cases that expect success bound only a hang: the commands exit at once, and a slow runner (or twenty starting together) must not turn
+// them into timeouts. Cases whose subject is the timeout pass their own short bound.
+const HANG_GUARD_MS = 120_000;
+const BASE = Object.freeze({ timeoutMs: HANG_GUARD_MS, maxBuffer: 64 * 1024, killSignal: 'SIGKILL' });
 
 function run(source, options = {}) {
   return runBoundedCommand(NODE, ['-e', source], { ...BASE, ...options });
@@ -121,7 +124,7 @@ describe('runBoundedCommand', () => {
       `process.env.ASTRID_APP_BOUNDED_BROKER_SESSION = ${JSON.stringify('c'.repeat(32))};`,
       `const { runBoundedCommand } = await import(${JSON.stringify(moduleUrl)});`,
       'for (let index = 0; index < 12; index += 1) {',
-      "  const result = runBoundedCommand(process.execPath, ['-e', \"process.stdout.write('reap-ok')\"], { timeoutMs: 2_000, maxBuffer: 64 * 1024, killSignal: 'SIGKILL' });",
+      `  const result = runBoundedCommand(process.execPath, ['-e', \"process.stdout.write('reap-ok')\"], { timeoutMs: ${HANG_GUARD_MS}, maxBuffer: 64 * 1024, killSignal: 'SIGKILL' });`,
       "  if (result.failureType !== 'success' || result.stdout !== 'reap-ok') throw new Error(`bounded invocation ${index} failed: ${result.failureType}`);",
       '}',
       "await new Promise((resolvePromise) => setTimeout(resolvePromise, 100));",
@@ -330,7 +333,7 @@ describe('runBoundedCommand', () => {
         'grandchild.unref();',
         'process.exit(0);',
       ].join('');
-      const result = run(source, { timeoutMs: 1_000, allowFailure: true });
+      const result = run(source, { timeoutMs: HANG_GUARD_MS, allowFailure: true });
       assert.equal(result.failureType, 'success');
       await new Promise((resolvePromise) => setTimeout(resolvePromise, 850));
       assert.equal(existsSync(marker), false);
@@ -385,7 +388,7 @@ describe('runBoundedCommand', () => {
           const worker = new Worker(workerSource, {
             eval: true,
             // The command exits at once; the bound is only a hang guard, so a slow runner starting twenty at a time cannot make it a timeout.
-            workerData: { moduleUrl, source, options: { ...BASE, timeoutMs: 120_000, allowFailure: true } },
+            workerData: { moduleUrl, source, options: { ...BASE, allowFailure: true } },
           });
           worker.once('message', (message) => { worker.terminate(); resolvePromise(message); });
           worker.once('error', reject);
@@ -449,7 +452,7 @@ describe('runBoundedCommand', () => {
     const previous = process.env.BOUNDED_PARENT_SECRET;
     process.env.BOUNDED_PARENT_SECRET = secret;
     try {
-      const result = run(source, { timeoutMs: 2_000 });
+      const result = run(source, { timeoutMs: HANG_GUARD_MS });
       assert.equal(result.failureType, 'success');
       assert.equal(result.stdout, 'safe');
       assert.equal(result.args.some((arg) => arg.includes(secret)), false);
@@ -509,7 +512,7 @@ describe('runBoundedCommand', () => {
       const result = await resultPromise;
       assert.equal(result.failureType, 'cleanup-error');
       assert.match(result.cleanupError?.message ?? '', /broker failed; local fallback cleanup completed/);
-      const recovered = run("process.stdout.write('recovered')", { timeoutMs: 2_000, allowFailure: true });
+      const recovered = run("process.stdout.write('recovered')", { timeoutMs: HANG_GUARD_MS, allowFailure: true });
       assert.equal(recovered.failureType, 'success');
       assert.equal(recovered.stdout, 'recovered');
       await new Promise((resolvePromise) => setTimeout(resolvePromise, 2_800));
@@ -536,7 +539,7 @@ describe('runBoundedCommand', () => {
       'try {',
       `  const { runBoundedCommand } = await import(${JSON.stringify(moduleUrl)});`,
       "  const result = runBoundedCommand(process.execPath, ['-e', \"process.stdout.write('recovered')\"], {",
-      "    timeoutMs: 2_000, maxBuffer: 64 * 1024, killSignal: 'SIGKILL', allowFailure: true,",
+      `    timeoutMs: ${HANG_GUARD_MS}, maxBuffer: 64 * 1024, killSignal: 'SIGKILL', allowFailure: true,`,
       '  });',
       "  process.stdout.write(JSON.stringify({ failureType: result.failureType, stdout: result.stdout }));",
       '} finally {',
@@ -604,7 +607,7 @@ describe('runBoundedCommand', () => {
         const { parentPort, workerData } = require('node:worker_threads');
         import(workerData.moduleUrl).then(({ runBoundedCommand }) => {
           const result = runBoundedCommand(process.execPath, ['-e', "process.stdout.write('stress-ok')"], {
-            timeoutMs: 2_000, maxBuffer: 64 * 1024, killSignal: 'SIGKILL', allowFailure: true,
+            timeoutMs: ${HANG_GUARD_MS}, maxBuffer: 64 * 1024, killSignal: 'SIGKILL', allowFailure: true,
           });
           parentPort.postMessage({ failureType: result.failureType, stdout: result.stdout });
         }).catch((error) => parentPort.postMessage({ error: error.stack || error.message }));

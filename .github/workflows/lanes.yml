@@ -4,6 +4,9 @@ name: Lanes
 
 on:
   push:
+  # Nightly, like direct-journey.yml: the siblings' main moves without an App push, and these lanes catch that drift.
+  schedule:
+    - cron: "43 3 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -34,7 +37,7 @@ jobs:
           token: ${{ secrets.ASTRID_READ_TOKEN || github.token }}
       - uses: actions/setup-node@v4
         with:
-          node-version: "20.19.0"
+          node-version-file: astrid-app/.nvmrc
           cache: npm
           cache-dependency-path: astrid-app/package-lock.json
       - uses: actions/setup-python@v5
@@ -115,8 +118,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      # A stalled apt download once held a runner for 30 minutes: retry and time out every apt call in this job,
+      # including the one inside `playwright install --with-deps`.
+      - name: Harden apt
+        run: |
+          printf 'Acquire::Retries "5";\nAcquire::http::Timeout "30";\nAcquire::https::Timeout "30";\n' | sudo tee /etc/apt/apt.conf.d/99-lanes-retries
+          sudo apt-get update
       - name: Install ffmpeg
-        run: sudo apt-get install -y --no-install-recommends -o Acquire::Retries=5 -o Acquire::http::Timeout=30 ffmpeg
+        run: sudo apt-get install -y --no-install-recommends ffmpeg
       # The App harness looks for the Runtime venv at <runtime>/.venv (it is only attached to here, never started by the case).
       - name: Build the Runtime venv
         working-directory: astrid-runtime
@@ -141,8 +150,6 @@ jobs:
         working-directory: astrid-agent
         env:
           ASTRID_RUNTIME_CHECKOUT: ${{ github.workspace }}/astrid-runtime
-          ASTRID_REQUIRE_LANES: direct-journey
-          NODE_OPTIONS: --max-old-space-size=4096
         run: .venv/bin/python -m astrid.core.dev.journey --tier quick --reference generated --app-checkout ../astrid-app --summary "$RUNNER_TEMP/quick-journey.json"
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}

@@ -51,7 +51,7 @@ export const SKIP_REGISTRY = {
   },
   'macos-release-process-containment': {
     skipWhen: "process.platform !== 'darwin' || !existsSync('/usr/bin/lockf')",
-    reason: 'macOS-only by design: the release tooling (scripts/release bounded-command broker, and the git calls of astrid-release-provenance that go through it) is built and pinned for darwin/arm64 and needs lockf and BSD ps eww; it has no other-platform branch and refuses clearly elsewhere',
+    reason: 'macOS-only by design: the release tooling (scripts/release bounded-command broker, and the git calls of astrid-release-provenance that go through it) is built and pinned for darwin/arm64 and needs lockf and BSD ps eww; it has no other-platform branch and refuses clearly elsewhere, and its coverage runs in the release-tooling-macos job',
     applies: macosLockfMissing,
     ci: ['release-tooling-macos'],
   },

@@ -46,7 +46,7 @@ function config(): ResolvedTimelineConfig {
     ]};
 }
 describe('portable Astrid intent admitted by authoritative Runtime', () => {
-  it('matches Runtime picture ownership for explicitly declared custom picture tracks', () => {
+  it('matches Runtime picture ownership for custom clip types on visual tracks', () => {
     const base = config();
     base.tracks.push(
       {id: 'plate', kind: 'visual', label: 'Plate'},
@@ -63,7 +63,7 @@ describe('portable Astrid intent admitted by authoritative Runtime', () => {
       {id: 'source', clipType: 'media', track: 'source', at: 0, hold: 2},
       {id: 'audio-clip', clipType: 'media', track: 'audio', at: 0, hold: 2},
     );
-    base.app = {visualSeamContract: {pictureTracks: ['plate'], continuityTracks: ['v']}};
+    base.app = {visualSeamContract: {continuityTracks: ['v']}};
 
     const owners = visualSeamOwners(base);
     const primary = owners.filter((owner) => owner.primary).map((owner) => owner.clipId).sort();

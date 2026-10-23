@@ -3,11 +3,12 @@ import path from 'path';
 import fs from 'fs';
 import { createElementAdmissionsPlugin } from '../vite/astridElementAdmissions';
 import { resolveAstridSource, validateAstridToolCatalog } from '../vite/astridSource';
-import { CHECKOUT_LANE } from './lanes';
+import { CHECKOUT_LANE, assertCheckoutLaneFilesExist } from './lanes';
 import SkipGuardReporter from './skipGuardReporter';
 
 const projectRoot = path.resolve(__dirname, '../..');
 const checkoutLane = process.env.VITEST_LANE === 'checkout';
+assertCheckoutLaneFilesExist(projectRoot);
 const astridSource = resolveAstridSource();
 if (astridSource) validateAstridToolCatalog(astridSource.sourceRoot);
 const astridPublicSource = resolveAstridSource(
