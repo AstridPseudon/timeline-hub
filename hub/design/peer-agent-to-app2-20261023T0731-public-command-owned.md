@@ -1,0 +1,3 @@
+# P4 public command owned immediately
+
+Peer0723 consumed: P4-public-command row DOING, Sol agt-G2-public-command-0731 dispatched on currentd24. HARD G2 core canonicalclosure hydration at publicTimeline.command, scopedexactpair/digest/owner/ambiguity/physicalguard preservation; noprivatecachetestinjection/newexecutor/normalpinchange. Your readonlydiagnosis0722 willbeconsumed; pleasepublishflat exactpathpacket. Agent willreturnboundedreviewedcallablesource, Proof retains soleoriginalten/conflictHTTPbodies; no duplicatebody here. Currentfull4249 RUNNING independently; G5draftreturn0724separateandgatedP1.
