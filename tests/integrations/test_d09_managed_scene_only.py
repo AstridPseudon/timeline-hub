@@ -8,6 +8,7 @@ import json
 import os
 import shutil
 import sys
+import tarfile
 import threading
 import uuid
 import zipfile
@@ -29,9 +30,30 @@ from astrid.sdk.timeline.capture import capture_track_create
 from astrid.sdk.timeline_checkout import Checkout
 
 ROOT = Path(__file__).resolve().parents[2]
-REMOTION = Path("/home/user/work/runtimes/agent-remotion-0013").resolve()
+REMOTION = Path(
+    os.environ.get(
+        "ASTRID_REMOTION_PROJECT_DIR",
+        "/home/user/work/runtimes/agent-remotion-composition14-255b6856",
+    )
+).resolve()
 NODE = Path("/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node").resolve()
 SCHEMA = Path("/home/user/work/venv-agent/lib/python3.13/site-packages").resolve()
+_APPROVED_REMOTION_PACKAGE = json.loads(
+    (ROOT / "remotion" / "package.json").read_text(encoding="utf-8")
+)
+_APPROVED_REMOTION_LOCK = json.loads(
+    (ROOT / "remotion" / "package-lock.json").read_text(encoding="utf-8")
+)
+_APPROVED_COMPOSITION_DEPENDENCY = _APPROVED_REMOTION_PACKAGE["dependencies"][
+    "@banodoco/timeline-composition"
+]
+_APPROVED_COMPOSITION_ARTIFACT = _APPROVED_COMPOSITION_DEPENDENCY.removeprefix("file:")
+_APPROVED_COMPOSITION_SHA256 = (
+    ROOT / "remotion" / f"{_APPROVED_COMPOSITION_ARTIFACT}.sha256"
+).read_text(encoding="utf-8").strip()
+_APPROVED_COMPOSITION_LOCK = _APPROVED_REMOTION_LOCK["packages"][
+    "node_modules/@banodoco/timeline-composition"
+]
 PACK_ROOTS = (
     ROOT / "astrid" / "packs" / "rendering",
     ROOT / "astrid" / "packs" / "astrid_motion",
@@ -41,8 +63,7 @@ PACK_ROOTS = (
 
 def _assert_current_source_imports() -> None:
     """Keep the live proof tied to the committed candidate source tree."""
-    from astrid.core.rendering import verified_source
-    from astrid.core.rendering import scene_answers
+    from astrid.core.rendering import scene_answers, verified_source
     from astrid.packs.rendering.actions.timeline_visualize import filmstrip_execution, scene_only
     from astrid.packs.rendering.rendering.renderers.remotion import root_preparation
 
@@ -91,7 +112,7 @@ def _public13_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> No
         "ASTRID_RUNTIME_CHECKOUT",
         os.environ.get("ASTRID_RUNTIME_CHECKOUT", "/home/user/work/runtime"),
     )
-    private_profile = tmp_path / "public13-profile"
+    private_profile = tmp_path / "current-composition-profile"
     shutil.copytree(
         REMOTION,
         private_profile,
@@ -113,9 +134,40 @@ def _public13_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> No
     assert private_profile.is_dir()
     assert NODE.is_file() and os.access(NODE, os.X_OK)
     package = json.loads((private_profile / "package.json").read_text(encoding="utf-8"))
-    assert package["dependencies"]["@banodoco/timeline-composition"] == (
-        "file:artifacts/banodoco-timeline-composition-0.0.13.tgz"
+    assert _APPROVED_COMPOSITION_DEPENDENCY == (
+        "file:artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz"
     )
+    assert package["dependencies"]["@banodoco/timeline-composition"] == (
+        _APPROVED_COMPOSITION_DEPENDENCY
+    )
+    lock = json.loads((private_profile / "package-lock.json").read_text(encoding="utf-8"))
+    installed_lock = lock["packages"]["node_modules/@banodoco/timeline-composition"]
+    assert installed_lock["resolved"] == _APPROVED_COMPOSITION_DEPENDENCY
+    assert installed_lock["integrity"] == _APPROVED_COMPOSITION_LOCK["integrity"]
+    artifact = private_profile / _APPROVED_COMPOSITION_ARTIFACT
+    assert artifact.is_file()
+    assert hashlib.sha256(artifact.read_bytes()).hexdigest() == _APPROVED_COMPOSITION_SHA256
+    assert artifact.stat().st_size == 73451
+    installed_package = private_profile / "node_modules/@banodoco/timeline-composition"
+    with tarfile.open(artifact) as archive:
+        regular_members = [member for member in archive.getmembers() if member.isfile()]
+        assert len(regular_members) == 80
+        manifest_file = archive.extractfile("package/package.json")
+        assert manifest_file is not None
+        manifest = json.load(manifest_file)
+        assert manifest["version"] == "0.0.14"
+        expected_files = {member.name.removeprefix("package/") for member in regular_members}
+        actual_files = {
+            path.relative_to(installed_package).as_posix()
+            for path in installed_package.rglob("*")
+            if path.is_file()
+        }
+        assert actual_files == expected_files
+        for member in regular_members:
+            target = installed_package / member.name.removeprefix("package/")
+            member_file = archive.extractfile(member)
+            assert member_file is not None
+            assert target.read_bytes() == member_file.read()
     from astrid.core.rendering.remotion_runtime import prepare_remotion_validation
 
     worker_contexts = _launch_worker_probe_environments(
