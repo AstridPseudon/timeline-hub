@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-23T15:32:25Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 2m -->
-# viewing board, 2026-10-23T15:30:17Z
+<!-- viewing | 2026-10-23T15:33:46Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 0m -->
+# viewing board, 2026-10-23T15:32:59Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | canonical schema inventory | Luna high | H0 | merged | vw-V1-schema-inventory-fix; review2 | Independent PASS four copies, SHA/cmp/generators/manifest; inventory only | 6c4d9342189b69d488b41f609b64aa2918eda955 |
@@ -29,7 +29,7 @@
 | V4-recipe | optional duplicate recipe deletion | Luna historical | H9 cut | cut:H9 | no worker | Original recipes and original clip.anchor assertions retained. Do not reopen | originals retained |
 | DB-composition-dry | fresh-clone squash/build/pin verification | Luna high | orchestrator07:40; source635f/live upstream | merged | vw-DB-composition-first-return-0757; return-review0802 PASS | DONE dryrun scope: independent0802 PASS all120sourcefiles/tree5ab5191, controlledarchive819acf/73451B/80/allpayloadcmp, registry/TS/meta1/SRI/callers. Tool retryexit0/source635f/live67b8. Earlier1b263/build:test falsePASS preserved/corrected; no general parity claim | source635f / upstream67b8; report-only3b8 NEVERmerge |
 | DB-composition-template | required delivery input repair | Luna high | missing README template | merged | vw-DB-composition-template-0749; review0751 PASS scoped | DONE scoped: v2 README template only; tool retryexit0, tree5ab5191 equality; independent0751 template/delivery PASS, noZIP. Initial failure retained | source635f |
-| F-D22-geometry | classify three original outer-geometry failures | Luna high | Agent peer1510/profile1454 | doing | cause1520; review1526; first-return1530 | Independent1526 supports all3 math/source/caller but strictFAIL one impossible TimelineComposition citation569-603. Exact source has386lines, prep232-262/query278-280. Unique firstreturn1530 corrects only citation; originalfailedpacket retained. No behavior/testmergePASS; d6f NEVERmerge | Composition635f / Agent583 / archive819acf |
+| F-D22-geometry | classify three original outer-geometry failures | Luna high | Agent peer1510/profile1454 | review | cause1520; review1526; return1530; closure1532 | Independent1526 supports all3 math/source/caller but strictFAIL one impossible TimelineComposition citation569-603. Exact source has386lines, prep232-262/query278-280. Unique firstreturn1530 corrects only citation; originalfailedpacket retained. No behavior/testmergePASS; d6f NEVERmerge | Composition635f / Agent583 / archive819acf |
 
 V1 metadata and V3 shared-artifact scopes are DONE on their recorded integrated proofs. V3 stays one immutable archive: SHA256 819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234, 73,451 bytes, 80 members, source635f4de06. No rendering parity or H3 GO follows from it. V4 App is DONE; merged V4 work stays. Whole V4 Agent is NOT DONE; residual work is cut:H9.
 
@@ -61,3 +61,5 @@ Manager changed only own STATUS, one worker brief and one peer ACK. No product/t
 Checkpoint15:27: author1520 source-onlyPASS: declared known crop/entrance geometry yieldsGAP, oldpublic12UNKNOWN oracle stale. Independent1526 dispatched immediately, also recovers exact author report blob97d63 from reportonlyd6f into correct ORCHdesign. Manager brief ambiguous legacy0.0.14artifact path FAIL21fde preserved; correct prior controlledpack819acf hashesPASS. No artifact substitution/adoption. No product/test/source merge authorized; d6f NEVERmerge.
 
 Checkpoint15:30: independent1526 FINAL source/math/productioncaller/819acf supports stalepublic12expectation classification, strictpacketFAIL solely impossibleTimelineComposition569-603citation. Samebranch Luna first-return1530 dispatched immediately to verify/correctONLYcitation in new flatreport; original97d63/FAIL preserved, no source/test or archive changes/repeatedproof. Independent narrow finding closure follows before Agent handback.
+
+Checkpoint15:32: firstreturn1530 terminal correctedONLYcitation/clean/diffPASS; independent1532 dispatched immediately for bounded exactdiff/line finding closure, all substantive independent1526 source/math/caller reused. No repeatedtest/full or source mutation. Originalfailedpacket/citation preserved.
