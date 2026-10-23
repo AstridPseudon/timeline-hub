@@ -1109,6 +1109,14 @@ class RuntimeCommitService:
                     if record['command']['op'] == 'timeline.inverse' and undo_steps is not None:
                         record['command']['args']['steps'] = copy.deepcopy(undo_steps)
                 _check_reservations(port, plan, current, CommitRejected, base)
+                from astrid.sdk.timeline.validation import validate_final_candidate
+
+                validate_final_candidate(
+                    plan.bundle,
+                    baseline=bundle if current == base else head_bundle,
+                    schema_inputs=schema_inputs,
+                    realm_id=context.get('realm_id'),
+                )
                 document = document_from_bundle(plan.bundle, source_bundles=inverse_sources,
                                                 inverse_records=inverse_records)
                 from ._commit_preview import prepared_records

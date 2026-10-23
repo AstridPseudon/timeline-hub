@@ -55,6 +55,17 @@ def _value(value, key, default=0):
     return default if value.get(key) is None else value[key]
 
 
+def _cut_identity(bundle, shot_id):
+    # The final-candidate adapter carries the exact physical pin into this view.
+    # Equal bytes on different revisions never establish shared ownership.
+    source = bundle.get("source_mapping", {}).get("shots", {}).get(shot_id, {})
+    revision = source.get("internal_timeline_revision_id")
+    digest = source.get("internal_timeline_content_digest")
+    if revision and digest == _digest(bundle["shots"][shot_id]["internal_timeline"]):
+        return ("internal", source.get("internal_timeline_id"), revision, digest)
+    return ("shot", shot_id)
+
+
 class _ReadLookup(Checkout):
     def __init__(self, bundle, fps):
         self.bundle, self.fps = bundle, fps
@@ -239,7 +250,12 @@ def _legacy_word_owners(documents, clips, internals, is_source):
     return owners
 
 
-def evaluate(bundle, sources, bindings, policy):
+def evaluate(bundle, sources, bindings, policy, legacy_declarations=()):
+    legacy = {
+        (row[0], row[1]): row[2]
+        for row in legacy_declarations
+        if isinstance(row, (tuple, list)) and len(row) == 3
+    }
     fps = _fps(bundle)
     clips, offsets, internals = {}, {}, {}
     placement_ends, seen_shots, seen_occurrences = [], set(), set()
@@ -283,20 +299,27 @@ def evaluate(bundle, sources, bindings, policy):
     lookup = _ReadLookup(bundle, fps)
     groups = lookup._cut_groups()
     by_clip = {(owner[1], owner[2]): owner for owner in clips if owner[1]}
-    bases = {}
+    bases, local_groups, local_bases = {}, {}, {}
     for group in groups:
-        if len({c.shot_id for c in group["clips"]}) != 1:
+        if len({_cut_identity(bundle, c.shot_id) for c in group["clips"]}) != 1:
             raise TimingCompileError("ambiguous cut identity across occurrences")
         base = group["picture"] or min(group["clips"], key=lambda c: (c.start, c.id))
         bases[group["id"]] = by_clip[base.shot_id, base.id]
+        if len({c.shot_id for c in group["clips"]}) > 1:
+            for sid in {c.shot_id for c in group["clips"]}:
+                members = [c for c in group["clips"] if c.shot_id == sid]
+                pictures = [c for c in members if c.track == "plate" and not c.is_audio]
+                local = min(pictures or members, key=lambda c: (c.start, c.id))
+                local_bases[group["id"], sid] = by_clip[sid, local.id]
+                local_groups.setdefault(sid, []).append(group["id"])
     film_end = max(placement_ends, default=Fraction(0))
     graph, functions = {}, {}
 
     def node(owner, edge):
         return ("clip", *owner, edge)
 
-    def cut_node(cut, edge):
-        return ("cut", cut, edge)
+    def cut_node(cut, edge, sid=""):
+        return ("cut", cut, edge, sid) if sid else ("cut", cut, edge)
 
     def is_beat_source(owner, clip):
         return owner[0] != "parent" and lookup._is_audio(owner[1], clip)
@@ -314,6 +337,18 @@ def evaluate(bundle, sources, bindings, policy):
             forward(cut_node(cut, "end"), cut_node(groups[index + 1]["id"], "start"))
         else:
             add(cut_node(cut, "end"), [], lambda values: film_end)
+
+    # One physical child can appear several times. Keep each occurrence's cut
+    # interval local while retaining the global alias and its ambiguity check.
+    for sid, cuts in local_groups.items():
+        for index, cut in enumerate(cuts):
+            owner = local_bases[cut, sid]
+            forward(cut_node(cut, "start", sid), node(owner, "start"))
+            if index + 1 < len(cuts):
+                forward(cut_node(cut, "end", sid), cut_node(cuts[index + 1], "start", sid))
+            else:
+                end = occurrence_intervals[owner[0]][1]
+                add(cut_node(cut, "end", sid), [], lambda values, end=end: end)
 
     pins = {}
     for binding in bindings:
@@ -390,7 +425,7 @@ def evaluate(bundle, sources, bindings, policy):
             if cut not in bases:
                 raise TimingCompileError(f"missing cut anchor {text!r} for {owner}")
             edge = "end" if moment.kind in ("cut_end", "end") else "start"
-            dependencies = [cut_node(cut, edge)]
+            dependencies = [cut_node(cut, edge, owner[1] if (cut, owner[1]) in local_bases else "")]
             moment = replace(moment, cut=cut) if moment.cut else moment
         # Main offsets and first-word picture in-point semantics, on the exact bound pool.
         moment = replace(moment, offset_s=_timing_number(moment.offset_s))
@@ -461,13 +496,22 @@ def evaluate(bundle, sources, bindings, policy):
         length = _duration(clip)
         start = offsets[owner] + _timing_number(clip.get("at", 0))
         cut = intent.cut_of(clip)
+        base = local_bases.get((cut, owner[1]), bases.get(cut))
+        cut_sid = owner[1] if (cut, owner[1]) in local_bases else ""
         audio = owner[1] and lookup._is_audio(owner[1], clip)
-        on, until = intent.on(clip), intent.until(clip)
+        identity = (("parent", "", owner[2]) if owner[0] == "parent"
+                    else ("shot", owner[1], owner[2]))
+        on = intent.on(clip)
+        until = intent.until(clip)
+        if legacy.get((identity, "on")) == on:
+            on = None
+        if legacy.get((identity, "until")) == until:
+            until = None
         if on:
-            add(node(owner, "start"), *moment_rule(owner, "on", on, bases.get(cut) == owner))
-        elif (cut in bases and bases[cut] != owner and not audio
+            add(node(owner, "start"), *moment_rule(owner, "on", on, base == owner))
+        elif (cut in bases and base != owner and not audio
               and not declarations.get("fixed_start")):
-            forward(node(owner, "start"), cut_node(cut, "start"))
+            forward(node(owner, "start"), cut_node(cut, "start", cut_sid))
         else:
             add(node(owner, "start"), [], lambda values, start=start: start)
         if until:
@@ -478,10 +522,11 @@ def evaluate(bundle, sources, bindings, policy):
                 raise TimingCompileError("declared duration must be positive")
             add(node(owner, "end"), [node(owner, "start")],
                 lambda values, owner=owner, length=length: values[node(owner, "start")] + length)
-        elif cut in bases and not audio and group_has_successor(groups, cut):
-            forward(node(owner, "end"), cut_node(cut, "end"))
-        elif cut in bases and bases[cut] != owner and not audio:
-            forward(node(owner, "end"), node(bases[cut], "end"))
+        elif cut in bases and not audio and (group_has_successor(groups, cut) if not cut_sid
+                                            else local_groups[cut_sid][-1] != cut):
+            forward(node(owner, "end"), cut_node(cut, "end", cut_sid))
+        elif cut in bases and base != owner and not audio:
+            forward(node(owner, "end"), node(base, "end"))
         elif length is not None:
             add(node(owner, "end"), [node(owner, "start")],
                 lambda values, owner=owner, length=length: values[node(owner, "start")] + length)

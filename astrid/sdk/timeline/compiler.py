@@ -84,9 +84,11 @@ class TimingInputs:
     _bundle: str = field(repr=False)
     _sources: str = field(repr=False)
     bindings: tuple[WordBinding, ...]
+    legacy_declarations: tuple[tuple[tuple[str, str, str], str, str], ...]
     policy: str
 
-    def __init__(self, bundle: Mapping[str, Any], *, sources=(), bindings=(), policy="nearest"):
+    def __init__(self, bundle: Mapping[str, Any], *, sources=(), bindings=(),
+                 legacy_declarations=(), policy="nearest"):
         if policy not in ("nearest", "floor", "ceil"):
             raise TimingCompileError("invalid frame projection policy")
         object.__setattr__(self, "_bundle", json.dumps(bundle, allow_nan=False))
@@ -95,6 +97,17 @@ class TimingInputs:
         if any(not isinstance(pin, WordBinding) for pin in pins):
             raise TimingCompileError("bindings must be captured WordBinding values")
         object.__setattr__(self, "bindings", pins)
+        legacy = tuple(legacy_declarations)
+        if any(
+            not isinstance(row, tuple)
+            or len(row) != 3
+            or not isinstance(row[0], tuple)
+            or len(row[0]) != 3
+            or any(not isinstance(value, str) for value in (*row[0], row[1], row[2]))
+            for row in legacy
+        ):
+            raise TimingCompileError("invalid legacy timing declaration")
+        object.__setattr__(self, "legacy_declarations", legacy)
         object.__setattr__(self, "policy", policy)
 
     @property
@@ -120,7 +133,8 @@ def compile_timing(inputs: TimingInputs) -> TimingResult:
         raise TypeError("compile_timing requires captured TimingInputs")
     bundle = inputs.bundle
     try:
-        timings = evaluate(bundle, inputs.sources, inputs.bindings, inputs.policy)
+        timings = evaluate(bundle, inputs.sources, inputs.bindings, inputs.policy,
+                           inputs.legacy_declarations)
     except TimingCompileError:
         raise
     except (ValueError, TypeError, KeyError, ZeroDivisionError, OverflowError) as exc:
