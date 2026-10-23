@@ -641,6 +641,222 @@ describe('useTimelineSave — recovered draft durability', () => {
       }
     });
 
+  it.each([
+    ['accepted', 'before reload'], ['merged', 'before reload'],
+    ['accepted', 'after replay'], ['merged', 'after replay'],
+  ] as const)('automatically replays a mounted lost-ACK %s with Runtime restart %s, before a late observer', async (outcome, restartAt) => {
+    const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
+    const locks = new Set<string>();
+    Object.defineProperty(navigator, 'locks', { configurable: true, value: {
+      request: async (name: string, _options: unknown, work: (lock: object | null) => Promise<unknown>) => {
+        if (locks.has(name)) return work(null);
+        locks.add(name);
+        try { return await work({}); } finally { locks.delete(name); }
+      },
+    } });
+    const projectId = 'project-commit';
+    const timelineId = 'timeline-1';
+    const config = createDefaultTimelineConfig();
+    config.clips = [{ id: 'replay-clip', track: 'V1', clipType: 'hold', at: 0, hold: 4 }];
+    let trimmed = structuredClone(config);
+    const makeReply = (revision: string, publication: string, nextConfig: typeof config) => {
+      const reply = acceptedCommit({ revision_id: revision, publication_id: publication },
+        { revision_id: 'r0', publication_id: 'p0' }, { projectId, timelineId });
+      reply.data.canonical_document.parent_revision.payload = { config: structuredClone(nextConfig),
+        clips: structuredClone(nextConfig.clips), registry: { assets: {} }, occurrences: [], opaque: { keep: null } };
+      reply.data.canonical_document.parent_revision.content_digest = fixtureDigest(reply.data.canonical_document.parent_revision.payload);
+      reply.data.document_digest = fixtureDigest(reply.data.canonical_document);
+      return reply;
+    };
+    const bootstrap = makeReply('r0', 'p0', config);
+    let splitReply = bootstrap;
+    let landed = bootstrap;
+    const entry = (reply: typeof bootstrap): HistoryEntry => ({
+      publication_id: reply.receipt.receipt_id, revision_id: reply.data.accepted_revision_id,
+      previous: reply === bootstrap ? null : { revision_id: reply.data.previous_revision_id, publication_id: reply.data.previous_publication_id },
+      receipt: reply.receipt, intent: reply === bootstrap ? 'bootstrap' : 'recorded',
+      records: { schema_version: 1, commands: reply.data.commands, steps: reply.data.steps, undo_of: [], undo_steps: null, restored_from: null },
+      publisher: reply.data.publisher, provider_version: reply.data.provider_version, compiler_version: reply.data.compiler_version,
+      label: reply.data.label,
+    });
+    let current = bootstrap;
+    const history = [entry(bootstrap)];
+    let instance = runtimeFixture({ runtimeInstanceId: 'replay-instance-1' });
+    const posts: { body: string; key: string; path: string }[] = [];
+    const lateObserved: string[] = [];
+    let observerArmed = false;
+    const transport: typeof instance.transport = async (method, path, headers, body) => {
+      if (method === 'GET' && path.includes('/commits?')) return { status: 200, headers: {}, body: json({
+        items: history, next_cursor: null,
+        head: { revision_id: current.data.accepted_revision_id, publication_id: current.receipt.receipt_id },
+      }) };
+      if (method === 'GET' && path.includes('/composition-revisions/')) {
+        const document = current.data.canonical_document;
+        expect(decodeURIComponent(path.split('/').at(-1)!)).toBe(document.parent_revision.revision_id);
+        return { status: 200, headers: {}, body: json({ project_id: projectId, timeline_id: timelineId,
+          revision_id: document.parent_revision.revision_id, payload: document.parent_revision.payload,
+          content_digest: document.parent_revision.content_digest, dependency_manifest: document.dependency_manifest }) };
+      }
+      if (method === 'POST' && path.endsWith('/commit')) {
+        const bytes = new TextDecoder().decode(body as Uint8Array);
+        posts.push({ body: bytes, key: headers['Idempotency-Key'], path });
+        if (observerArmed) lateObserved.push(bytes);
+        if (posts.length <= 2) {
+          const request = JSON.parse(bytes) as CommitRequest;
+          const reply = posts.length === 1 ? splitReply : landed;
+          reply.data.commands = request.commands;
+          reply.data.steps = request.steps;
+          reply.data.label = request.label;
+          reply.data.merge_mode = request.merge;
+          reply.receipt.idempotency_key = headers['Idempotency-Key'];
+          reply.receipt.request_hash = fixtureDigest({ operation: 'commitTimeline', path,
+            publisher: reply.data.publisher, request }).slice(7);
+          if (posts.length === 1) {
+            current = splitReply;
+            history.push(entry(splitReply));
+            return { status: 200, headers: {}, body: json(splitReply) };
+          }
+          if (outcome === 'merged') {
+            const agentConfig = structuredClone(splitReply.data.canonical_document.parent_revision.payload.config) as unknown as typeof config;
+            agentConfig.tracks = trimmed.tracks;
+            const agent = makeReply('agent-r', 'agent-p', agentConfig);
+            Object.assign(agent.data, { base_revision_id: 'split-r', base_publication_id: 'split-p',
+              previous_revision_id: 'split-r', previous_publication_id: 'split-p' });
+            history.push(entry(agent));
+          }
+          current = landed;
+          history.push(entry(landed));
+          throw new Error('Runtime accepted; acknowledgement lost');
+        }
+        expect(posts.at(-1)).toEqual(posts[1]);
+        return { status: 200, headers: {}, body: json(landed) };
+      }
+      return instance.transport(method, path, headers, body);
+    };
+    const mount = async () => {
+      const runtime = new RuntimeDataProvider({ projectId, transport });
+      await runtime.reconnect();
+      const identity = await runtime.getRecoverableIdentity();
+      const basis = await runtime.loadTimelineCommandBasis(timelineId);
+      const head = { projectId, timelineId, headRevisionId: basis.head.revisionId, headPublicationId: basis.head.publicationId };
+      const data = await buildTimelineData(basis.canonicalDocument.parent_revision.payload.config as unknown as typeof config,
+        { assets: {} }, undefined, 1, undefined, head);
+      const harness = setup(async () => { throw new Error('No legacy save'); }, undefined, { data,
+        loadBasis: () => runtime.loadTimelineCommandBasis(timelineId), capabilities: {
+          commitTimeline: (request, key) => runtime.commitTimeline(request, key),
+          getRecoverableIdentity: () => runtime.getRecoverableIdentity(),
+        } });
+      return { ...harness, runtime, identity, basis };
+    };
+    let harness: Awaited<ReturnType<typeof mount>> | undefined;
+    let editing: ReturnType<typeof renderHook<ReturnType<typeof useClipEditing>, unknown>> | undefined;
+    try {
+      harness = await mount();
+      const identity = harness.identity;
+      const scope = { ...identity, projectId, timelineId };
+      await vi.waitFor(() => expect(harness!.hook.result.current.localSaveState?.ownerId).toBeTruthy());
+      await settleInitialRecoveryCheck();
+      editing = renderHook(() => useClipEditing({
+        dataRef: harness!.hook.result.current.dataRef,
+        resolvedConfig: harness!.hook.result.current.dataRef.current!.resolvedConfig,
+        selectedClipId: harness!.hook.result.current.selectedClipId, selectedTrack: null, currentTime: 0,
+        selectClip: vi.fn(), setSelectedTrackId: vi.fn(), applyEdit: harness!.hook.result.current.applyEdit,
+      }));
+      await act(async () => { editing!.result.current.handleSplitClipAtTime('replay-clip', 2); });
+      const rightId = harness.hook.result.current.selectedClipId!;
+      expect(rightId).not.toBe('replay-clip');
+      const splitConfig = JSON.parse(JSON.stringify(harness.hook.result.current.dataRef.current!.config)) as typeof config;
+      splitReply = makeReply('split-r', 'split-p', splitConfig);
+      await act(async () => { await harness!.hook.result.current.flushPendingSave(); });
+      expect(posts).toHaveLength(1);
+      const [prefix] = await createCommitOutbox().list(scope);
+      expect(prefix.accepted?.head).toEqual({ revisionId: 'split-r', publicationId: 'split-p' });
+      expect(prefix.pending).toBeUndefined();
+      trimmed = structuredClone(splitConfig);
+      trimmed.clips.find((clip) => clip.id === rightId)!.hold = 1;
+      if (outcome === 'merged') trimmed.tracks[0].label = 'Intervening Agent edit';
+      landed = makeReply('r1', 'p1', trimmed);
+      Object.assign(landed.data, { base_revision_id: 'split-r', base_publication_id: 'split-p',
+        previous_revision_id: 'split-r', previous_publication_id: 'split-p' });
+      if (outcome === 'merged') Object.assign(landed.data, { status: 'merged',
+        previous_revision_id: 'agent-r', previous_publication_id: 'agent-p',
+        rebased_onto: { revision_id: 'agent-r', publication_id: 'agent-p' } });
+      editing.rerender();
+      await act(async () => { editing!.result.current.handleSelectedClipChange({ hold: 1 }); });
+      await act(async () => { await expect(harness!.hook.result.current.flushPendingSave()).rejects.toThrow(); });
+      expect(posts).toHaveLength(2);
+      const [pending] = await createCommitOutbox().list(scope);
+      expect(pending.ownerId).toBe(prefix.ownerId);
+      expect(pending.accepted).toEqual(prefix.accepted);
+      expect(pending.pending).toMatchObject({ request: posts[1], outcome: { kind: 'retry' } });
+      expect(pending.pending?.request.method).toBe('POST');
+      expect(pending.pending?.request.path).toBe(`/v1/projects/${projectId}/timelines/${timelineId}/commit`);
+      expect(posts[1].key).not.toBe(posts[0].key);
+      expect(pending.intents).toHaveLength(1);
+      expect(pending.intents[0].basis).toEqual({ after: prefix.accepted!.intentId });
+      const request = JSON.parse(posts[1].body) as CommitRequest;
+      expect(request).toMatchObject({ api_version: 1, project_id: projectId, timeline_id: timelineId,
+        base_revision_id: 'split-r', base_publication_id: 'split-p', label: 'Edit timeline', merge: 'fields', dry_run: false,
+        source: { via: 'app' }, commands: [{ op: 'doc.patch', schema_version: 1, version: '1', select: null, created: [] }],
+        reads: expect.arrayContaining([{ kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${rightId}`, 'hold'],
+          state: { state: 'present', value: 2 } }]),
+        steps: [{ id: expect.any(String), label: expect.any(String), intent: expect.any(String), tags: [], command_ordinals: [0] }],
+      });
+      expect(request.steps![0].patch).toEqual(request.commands[0].args.changes);
+      expect(request.commands[0].args.changes).toEqual(expect.arrayContaining([
+        { op: 'set', ref: 'parent', path: ['clips', `id:${rightId}`, 'hold'],
+          before: { state: 'present', value: 2 }, value: 1 },
+      ]));
+      expect(harness.saveTimeline).not.toHaveBeenCalled();
+      editing.unmount();
+      editing = undefined;
+      harness.hook.unmount();
+      await vi.waitFor(() => expect(locks.size).toBe(0));
+      if (restartAt === 'before reload') instance = runtimeFixture({ runtimeInstanceId: 'replay-instance-2' });
+      // Reopen through the authenticated client and current canonical read, not the stale optimistic image.
+      harness = await mount();
+      expect(harness.identity).toEqual(identity);
+      expect(harness.basis.head).toEqual({ revisionId: 'r1', publicationId: 'p1' });
+      await vi.waitFor(() => expect(harness!.hook.result.current.localSaveState?.status).toBe('saved'));
+      expect(posts).toHaveLength(3);
+      expect(posts[2]).toEqual(posts[1]);
+      expect(harness.hook.result.current.localSaveState?.ownerId).toBe(pending.ownerId);
+      const [replayed] = await createCommitOutbox().list(scope);
+      expect(replayed.ownerId).toBe(pending.ownerId);
+      expect(replayed.generation).toBeGreaterThan(pending.generation);
+      expect(replayed.intents).toEqual([]);
+      expect(replayed.pending).toBeUndefined();
+      expect(replayed.accepted?.intentId).toBe(pending.intents[0].id);
+      expect(replayed.accepted?.value).toMatchObject({ canonicalDocument: landed.data.canonical_document, receipt: landed.receipt });
+      expect(harness.hook.result.current.dataRef.current?.head).toMatchObject({ headRevisionId: 'r1', headPublicationId: 'p1' });
+      const canonicalDisplay = await buildTimelineData(trimmed, { assets: {} });
+      expect(harness.hook.result.current.dataRef.current?.config).toEqual(canonicalDisplay.config);
+      expect(harness.hook.result.current.recoveryDraft).toBeNull();
+      expect(harness.saveTimeline).not.toHaveBeenCalled();
+      // The original P1 observer was armed only after reload, restart and reconnect.
+      if (restartAt === 'after replay') {
+        harness.hook.unmount();
+        await vi.waitFor(() => expect(locks.size).toBe(0));
+        instance = runtimeFixture({ runtimeInstanceId: 'replay-instance-2' });
+        harness = await mount();
+        expect(harness.identity).toEqual(identity);
+        await vi.waitFor(() => expect(harness!.hook.result.current.localSaveState?.ownerId).toBeTruthy());
+      }
+      observerArmed = true;
+      await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
+      expect(posts).toHaveLength(3);
+      expect(lateObserved).toEqual([]);
+      expect((await harness.runtime.loadTimelineCommandBasis(timelineId)).history?.items).toHaveLength(outcome === 'merged' ? 4 : 3);
+      expect(harness.saveTimeline).not.toHaveBeenCalled();
+    } finally {
+      editing?.unmount();
+      harness?.hook.unmount();
+      await vi.waitFor(() => expect(locks.size).toBe(0));
+      if (descriptor) Object.defineProperty(navigator, 'locks', descriptor);
+      else Reflect.deleteProperty(navigator, 'locks');
+    }
+  });
+
   it.each(['accepted', 'merged', 'conflict', 'invalid', 'restart', 'dependent', 'merged dependent', 'late reply', 'strict'] as const)(
     'the production caller uses it: mounted local document %s', async (outcome) => {
       const dependent = outcome === 'dependent' || outcome === 'merged dependent';
