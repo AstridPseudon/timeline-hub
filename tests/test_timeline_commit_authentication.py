@@ -453,8 +453,10 @@ def test_sequential_created_child_boundary_uses_the_native_birth_not_future_outp
     canonical_shot = {**shot_payload, "internal_timeline_revision_id": "internal-new"}
     accepted = {
         "parent": {"revision_id": "accepted-parent",
-                    "content_digest": digest({**parent, "occurrences": [occurrence]}),
-                    "payload": {**parent, "occurrences": [occurrence]}},
+                    "content_digest": digest({**parent, "occurrences": [{**occurrence,
+                                                                            "shot_revision_id": "shot-new-r1"}]}),
+                    "payload": {**parent, "occurrences": [{**occurrence,
+                                                               "shot_revision_id": "shot-new-r1"}]}},
         "shot-revision:shot-new-r1": {"shot_id": "shot-new", "revision_id": "shot-new-r1",
                                        "internal_timeline_revision_id": "internal-new",
                                        "payload": canonical_shot, "content_digest": digest(canonical_shot)},
@@ -489,6 +491,17 @@ def test_sequential_created_child_boundary_uses_the_native_birth_not_future_outp
     result = command_output(boundary, record, next_record, accepted=accepted)
     assert result["parent"]["payload"]["occurrences"] == [{**occurrence, "shot_revision_id": "shot-new-r1"}]
     assert result["internal-revision:internal-new"]["payload"] == internal_payload
+
+    ambiguous = copy.deepcopy(accepted)
+    ambiguous["shot-revision:shot-new-r2"] = copy.deepcopy(ambiguous["shot-revision:shot-new-r1"])
+    ambiguous["shot-revision:shot-new-r2"]["revision_id"] = "shot-new-r2"
+    with pytest.raises(CommitRejected, match="ambiguous accepted physical shot"):
+        command_output(boundary, record, next_record, accepted=ambiguous)
+
+    wrong_owner = copy.deepcopy(accepted)
+    wrong_owner["parent"]["payload"]["occurrences"][0]["shot_revision_id"] = "foreign-shot-r1"
+    with pytest.raises(CommitRejected, match="ambiguous accepted owner"):
+        command_output(boundary, record, next_record, accepted=wrong_owner)
 
     foreign = copy.deepcopy(next_record)
     foreign["reads"][0]["ref"] = "occurrence:foreign/source"
