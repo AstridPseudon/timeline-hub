@@ -6,19 +6,32 @@ the design is docs/design/audio-compile-contract.md and docs/design/visual-compi
 from __future__ import annotations
 
 import hashlib
+import io
 import json
+import os
+import shutil
+import struct
 import subprocess
 import tarfile
+import urllib.parse
+import urllib.request
+import wave
 from copy import deepcopy
 from fractions import Fraction
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
+from astrid.core.rendering.assets import AssetMaterializer, InvocationAssetServer
+from astrid.core.rendering.remotion_runtime import RemotionRuntimeTools
 from astrid.core.timeline.duration import clip_end_frame, clip_start_frame, clip_timeline_duration
 from astrid.core.timeline.shot_composition_projection import (
     project_runtime_parent_composition,
     project_shot_composition,
+)
+from astrid.packs.rendering.rendering.renderers.remotion.normal_audio import (
+    prepare_normal_audio_sources,
 )
 
 REPO = Path(__file__).resolve().parents[2]
@@ -68,9 +81,77 @@ def _audio_clip(vector):
                 and c['app']['astrid_shot_composition']['source_clip_id'] == AUDIO['base']['child'])
 
 
+@pytest.fixture
+def audio_host_fixture(tmp_path):
+    """Prepare projected audio through the authenticated normal-render producer."""
+    pcm = io.BytesIO()
+    with wave.open(pcm, 'wb') as writer:
+        writer.setparams((2, 2, 30000, 0, 'NONE', 'not compressed'))
+        writer.writeframes(struct.pack('<hh', 8192, -4096) * 30000)
+    payload = pcm.getvalue()
+    digest = hashlib.sha256(payload).hexdigest()
+    registry_path = tmp_path / 'assets.json'
+    registry_path.write_text(json.dumps({'assets': {'alpha-audio': {
+        'object_id': 'object-alpha-audio', 'digest': digest, 'type': 'audio/wav',
+    }}}), encoding='utf-8')
+    project = Path(os.environ.get('ASTRID_REMOTION_PROJECT_DIR', REPO / 'remotion')).resolve()
+    node = Path(os.environ.get('ASTRID_NODE_EXECUTABLE', shutil.which('node') or '')).resolve()
+    assert node.is_file()
+    node_version = subprocess.run([str(node), '--version'], capture_output=True, text=True,
+                                  check=True).stdout.strip()
+    tools = RemotionRuntimeTools(node, node_version, project / 'unused-render-cli')
+
+    with AssetMaterializer(registry_path, materialized_objects={
+        'object-alpha-audio': payload,
+    }) as materializer, InvocationAssetServer(materializer.serving_root) as server:
+        registry = materializer.resolved_registry(server)
+        staged = materializer.assets['alpha-audio'].local_path
+        assert staged is not None
+        assert staged.read_bytes() == payload
+        assert hashlib.sha256(staged.read_bytes()).hexdigest() == digest
+        assert digest in registry_path.read_text(encoding='utf-8')
+        attempt = materializer.serving_root / 'compile-contract-audio-attempt'
+        attempt.mkdir()
+
+        def prepare(clip):
+            props = {
+                'timeline': {
+                    'tracks': [{'id': clip['track'], 'kind': 'audio'}],
+                    'clips': [deepcopy(clip)],
+                },
+                'assets': deepcopy(registry),
+                'compiledTransitions': {'fps': 30, 'tracks': []},
+            }
+            before = deepcopy(props)
+            prepared = prepare_normal_audio_sources(
+                props, materializer=materializer, asset_server=server,
+                attempt_directory=attempt, project_dir=project, runtime_tools=tools,
+                fps=30,
+            )
+            assert props == before
+            source = prepared['timeline']['clips'][0]['audio']['render_source']
+            assert source['file'].startswith(server.base_url + '/')
+            with urllib.request.urlopen(source['file'], timeout=5) as response:
+                served = response.read()
+            output_path = materializer.serving_root / urllib.parse.unquote(
+                urllib.parse.urlsplit(source['file']).path.lstrip('/')
+            )
+            assert output_path.is_file()
+            assert output_path.is_relative_to(attempt)
+            assert served == output_path.read_bytes()
+            assert served.startswith(b'RIFF')
+            assert hashlib.sha256(served).hexdigest() == hashlib.sha256(output_path.read_bytes()).hexdigest()
+            assert source['envelope_key']
+            return prepared['timeline']['clips'][0]
+
+        yield SimpleNamespace(prepare=prepare)
+
+
 @pytest.mark.parametrize('vector', _marked(AUDIO['vectors']))
-def test_audio_vector(vector):
+def test_audio_vector(vector, audio_host_fixture):
     clip = _audio_clip(vector)
+    if 'audio.render_source' in vector['expect']:
+        clip = audio_host_fixture.prepare(clip)
     for key, want in vector['expect'].items():
         if key == 'metadata':
             meta = clip['app']['astrid_shot_composition']

@@ -26,15 +26,13 @@
       "id": "fade-in-needs-prepared-envelope-source",
       "child": {"params": {"fadeIn": 0.5}},
       "occurrence": {},
-      "expect": {"audio.render_source": true},
-      "xfail": "Agent normal render route has no producer for a prepared envelope source; non-Player param fades refuse ENVELOPE_UNRENDERED (public10 applyAudioEnvelope join, 03:17 + 03:20 decisions). Restored by the trusted-host prepared-transform join, whose envelope applies params.fadeInCurve (04:24 decision)."
+      "expect": {"audio.render_source": true}
     },
     {
       "id": "fade-out-needs-prepared-envelope-source",
       "child": {"params": {"fadeOut": 0.5}},
       "occurrence": {},
-      "expect": {"audio.render_source": true},
-      "xfail": "Same join as fade-in-needs-prepared-envelope-source, for the exit fade, which applies params.fadeOutCurve."
+      "expect": {"audio.render_source": true}
     }
   ]
 }
