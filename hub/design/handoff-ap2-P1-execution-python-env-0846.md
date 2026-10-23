@@ -1,0 +1,8 @@
+# P1 OPS execution-python environment handoff
+
+**OPSREADY PASS.** Restored only the ignored link
+`/home/user/work/wt/rt-pin-a5d42583/.venv/bin/python -> /home/user/work/venv-app2-native/bin/python`, matching the existing `rt-pin-34eac004/.venv/bin/python` convention. No shared-venv mutation, install, tracked source, test, pin, lock, package, or suite-row change.
+
+Source guards: App `c24dfb33e46317ce73655b42d074905e5794dd3a` / tree `7821bc8430c85190f00e52c2a8d6db91ecca8c7d`; actual Runtime `a5d4258312c979024865ee704da2d632ca5b2730` / tree `f74b016ea837f8148db4a602c972073a226ed177`; Agent/vendor `b8e5076250cc37cadf88c1ce699f2a05511fb909` / tree `eee66dc206817b16f0621087a12505389ec41630`; normal Runtime `34eac0041b0891e9011966b39bcbd26053fde5bc` / tree `9853574865f25e08284e82ffb26c0bdecaa16a30`. App, Agent, both Runtime checkouts are tracked-clean; only the actual Runtime's ignored `.venv` was added. `suites.conf` was not edited (SHA-256 `e7f44d0920291c27ef4b790b00de8b1d514a27e28ccfef839b0b45fdb3537d55`).
+
+Offline PASS: exact Runtime modules resolve from `rt-pin-a5d42583`; Agent client/vendor modules resolve from `agt-pin-b8e50762`; normal Runtime modules resolve from `rt-pin-34eac004`; Runtime CLI `--help` succeeds; harness `runtimePython()` exports the exact `.venv/bin/python` and `harnessUnavailableReason()` returns `null` with a temporary dist-existence sentinel. No socket/HTTP/browser/build/full/live-body run. The worker checkout had no production `dist`, so that sentinel is not a production-build claim. Independent Luna operational review must precede the one original two-case node.
