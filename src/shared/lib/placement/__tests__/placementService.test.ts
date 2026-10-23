@@ -11,6 +11,7 @@ import {
   buildOccurrenceForkCommand,
   fetchGalleryRows,
   fetchProjectPlacements,
+  forkOccurrence,
   placeGeneration,
   unplaceGeneration,
 } from '../placementService';
@@ -122,7 +123,15 @@ vi.mock('@/integrations/runtime/dataProvider', () => ({
       }
       const document = canonicalDocument();
       const nextHead = `rev-${runtime.publishes.length + 2}`;
-      applyChanges(document, request.commands[0].args.changes);
+      if (request.commands[0].op === 'occurrence.fork') {
+        const command = request.commands[0];
+        const occurrence = document.parent_revision.payload.occurrences.find(
+          (row: { occurrence_id: string }) => row.occurrence_id === command.select.slice('occurrence:'.length),
+        );
+        occurrence.shot_id = command.args.shot_id;
+      } else {
+        applyChanges(document, request.commands[0].args.changes);
+      }
       document.parent_revision.revision_id = nextHead;
       runtime.config = structuredClone(document.parent_revision.payload.config);
       runtime.registry = structuredClone(document.parent_revision.payload.registry);
@@ -201,6 +210,57 @@ describe('placementService: CAS round-trips over workspace.v1', () => {
       ownerRef: 'occurrence:shot-child',
       shotId: 'shot-fork',
     })).toThrow('uniquely bound canonical occurrence');
+  });
+
+  it('sends the explicit occurrence fork through the durable semantic outbox', async () => {
+    const router = createFakeRuntimeRouter();
+    installRuntime(router);
+
+    const basis = await forkOccurrence({
+      projectSlug: PROJECT,
+      timelineRef: TIMELINE,
+      configVersion: 1,
+      headRevisionId: 'rev-1',
+      ownerRef: 'occurrence:occurrence-1',
+      shotId: 'shot-fork',
+    });
+
+    expect(runtime.commits).toHaveLength(1);
+    const request = runtime.commits[0]!.body as any;
+    expect(request.commands).toEqual([{
+      schema_version: 1,
+      op: 'occurrence.fork',
+      version: '1',
+      select: 'occurrence:occurrence-1',
+      args: { shot_id: 'shot-fork' },
+      intent: { ownership: 'occurrence' },
+      created: ['shot:shot-fork'],
+    }]);
+    expect(request.steps).toMatchObject([{
+      label: 'Fork selected occurrence',
+      intent: 'Fork selected occurrence',
+      command_ordinals: [0],
+      patch: [],
+    }]);
+    expect(runtime.commits[0]!.key).toBeTruthy();
+    expect(basis.head).toEqual({ revisionId: 'rev-2', publicationId: 'pub-rev-2' });
+    expect(basis.canonicalDocument.parent_revision.payload.occurrences[0]?.shot_id).toBe('shot-fork');
+  });
+
+  it('refuses a fork when the caller-selected head is stale', async () => {
+    const router = createFakeRuntimeRouter();
+    installRuntime(router);
+    runtime.head = 'rev-newer';
+
+    await expect(forkOccurrence({
+      projectSlug: PROJECT,
+      timelineRef: TIMELINE,
+      configVersion: 1,
+      headRevisionId: 'rev-1',
+      ownerRef: 'occurrence:occurrence-1',
+      shotId: 'shot-fork',
+    })).rejects.toMatchObject({ code: 'timeline_version_conflict' });
+    expect(runtime.commits).toHaveLength(0);
   });
 
   it('keeps every raw root at the provider boundary across placement, frame update, pooling and removal', async () => {

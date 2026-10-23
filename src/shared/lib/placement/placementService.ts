@@ -323,6 +323,16 @@ function createDocumentStore(target: ActiveTimelineTarget): DocumentStore {
   };
 }
 
+function assertActiveTimelineTarget(target: ActiveTimelineTarget, document: LoadedDocument): void {
+  if (target.allowVersionRebase) return;
+  const stale = target.headRevisionId !== undefined && document.headRevisionId !== target.headRevisionId;
+  if (stale) {
+    throw new TimelineVersionConflictError(
+      `Timeline ${target.timelineRef} is at version ${document.expectedVersion}; expected active editor version ${target.configVersion}`,
+    );
+  }
+}
+
 async function resolveDefaultTimelineRef(client: AstridLocalClient, projectSlug: string): Promise<string> {
   const timelines = (await client.timelines.list()).timelines ?? [];
   if (timelines.length === 0) throw new PlacementProjectMissingError(projectSlug);
@@ -339,14 +349,7 @@ export async function mutateTimelineDocument<T>(
   const ref = target.timelineRef;
 
   const document = await store.load();
-  if (!target.allowVersionRebase) {
-    const stale = target.headRevisionId !== undefined && document.headRevisionId !== target.headRevisionId;
-    if (stale) {
-      throw new TimelineVersionConflictError(
-        `Timeline ${ref} is at version ${document.expectedVersion}; expected active editor version ${target.configVersion}`,
-      );
-    }
-  }
+  assertActiveTimelineTarget(target, document);
   const result = mutate(document);
   return { result, configVersion: await store.save(document) };
 }
@@ -425,6 +428,7 @@ export function buildOccurrenceForkCommand(document: CanonicalDocument, request:
 export async function forkOccurrence(request: OccurrenceForkRequest): Promise<TimelineCommandBasis> {
   const store = createDocumentStore(request);
   const document = await store.load();
+  assertActiveTimelineTarget(request, document);
   try {
     const command = buildOccurrenceForkCommand(document.basis.canonicalDocument, request);
     const before = document.session.getDocument();
