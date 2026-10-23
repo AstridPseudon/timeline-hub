@@ -80,6 +80,66 @@ def test_commit_route_passes_exact_service_shape_and_rechecks_authority():
     assert handler.scopes_seen == ["projects:write", "projects:write"]
 
 
+def test_commit_route_forwards_full_v2_envelope_and_reply_unchanged():
+    calls = []
+    reads = [{"kind": "scope", "ref": "parent", "path": []}]
+    patch = {
+        "op": "set",
+        "ref": "parent",
+        "path": ["config", "title"],
+        "before": {"state": "absent"},
+        "value": "Opening",
+    }
+    body = request_body(
+        commands=[{
+            "schema_version": 1,
+            "op": "doc.patch",
+            "version": "1",
+            "select": None,
+            "args": {"changes": [patch]},
+        }],
+        label="Opening title",
+        steps=[{
+            "id": "opening",
+            "label": "Opening title",
+            "intent": "Set the opening title",
+            "tags": ["title"],
+            "command_ordinals": [0],
+            "patch": [patch],
+            "reads": reads,
+        }],
+        merge="fields",
+        reads=reads,
+        source={"via": "app", "detail": "mounted-v2"},
+    )
+    reply = {
+        "data": {
+            "status": "merged",
+            "label": body["label"],
+            "merge_mode": body["merge"],
+            "steps": body["steps"],
+            "commands": body["commands"],
+        },
+        "receipt": {"receipt_id": "r-v2", "request_hash": "h-v2"},
+    }
+
+    def commit(project_id, timeline_id, received, **kwargs):
+        calls.append((project_id, timeline_id, received, kwargs))
+        return reply
+
+    handler = make_handler(SimpleNamespace(commit_timeline=commit), body)
+    handler._route()
+
+    assert handler.reply == (200, reply)
+    assert len(calls) == 1
+    project, timeline, received, kwargs = calls[0]
+    assert (project, timeline, received) == (PROJECT, TIMELINE, body)
+    assert kwargs["idempotency_key"] == "commit-key-1"
+    assert kwargs["publisher"] == "publisher-1"
+    assert kwargs["invocation_path"] == f"/v1/projects/{PROJECT}/timelines/{TIMELINE}/commit"
+    assert kwargs["authorize"]()["actor"] == "publisher-1"
+
+
 def test_commit_route_leaves_semantic_schema_validation_to_service():
     calls = []
 
