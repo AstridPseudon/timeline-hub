@@ -268,7 +268,7 @@ type ShotTimelineDataProvider = DataProvider & {
 };
 
 type PopupLocalSaveProvider = Pick<DataProvider,
-  'loadTimelineCommandBasis' | 'getRecoverableIdentity' | 'commitTimeline'>;
+  'loadTimelineCommandBasis' | 'getRecoverableIdentity' | 'commitTimeline'> & Partial<ShotTimelineMediaProvider>;
 
 function object(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -656,6 +656,136 @@ function hasPopupStructuralChange(before: CanonicalDocument, after: CanonicalDoc
     || registryChanged;
 }
 
+type SharedPopupMediaCommands = {
+  commands: CommitRequest['commands'];
+};
+
+function mediaAssetId(row: Record<string, unknown>): string | null {
+  const value = row.asset ?? row.asset_id;
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+function mediaRowWithoutAsset(row: Record<string, unknown>): Record<string, unknown> {
+  const result = structuredClone(row);
+  delete result.asset;
+  delete result.asset_id;
+  delete result.assetEntry;
+  if (result.clipType === undefined && result.clip_type !== undefined) {
+    result.clipType = result.clip_type;
+  }
+  delete result.clip_type;
+  return result;
+}
+
+async function projectMediaSelection(
+  provider: PopupLocalSaveProvider,
+  projectId: string,
+  asset: string,
+  registry: unknown,
+): Promise<MediaSelection> {
+  const entry = object(object(registry)?.assets)?.[asset];
+  const generationId = object(entry)?.generation_id ?? object(entry)?.generationId;
+  const variantId = object(entry)?.variant_id ?? object(entry)?.variantId;
+  if (typeof generationId !== 'string' || typeof variantId !== 'string') {
+    throw new Error('Shared popup media requires the Runtime selection identity for the chosen asset');
+  }
+  const reader = provider.getProjectMediaSelection;
+  if (!reader) throw new Error('Shared popup media requires the existing Runtime selection reader');
+  const query = { asset, generation_id: generationId, variant_id: variantId };
+  const selected = reader.length >= 2
+    ? await (reader as unknown as (project: string, value: MediaSelectionQuery) => Promise<MediaSelection>)(projectId, query)
+    : await reader(query);
+  if (selected.asset !== asset || selected.generation_id !== generationId || selected.variant_id !== variantId) {
+    throw new Error('Runtime returned a mismatched popup media selection');
+  }
+  return selected;
+}
+
+/**
+ * A shared child cannot accept a raw patch: the fork must be the first command
+ * in the same durable request, and the registered media command then resolves
+ * against the newly materialized occurrence owner.
+ */
+async function sharedPopupMediaCommands(
+  before: CanonicalDocument,
+  nextConfig: TimelineConfig,
+  nextRegistry: unknown,
+  composition: PreparedShotComposition,
+  occurrenceId: string,
+  mediaProvider: PopupLocalSaveProvider,
+): Promise<SharedPopupMediaCommands | null> {
+  const parent = object(before.parent_revision.payload);
+  const occurrence = Array.isArray(parent?.occurrences)
+    ? parent.occurrences.find((value) => object(value)?.occurrence_id === occurrenceId)
+    : undefined;
+  const occurrenceRecord = object(occurrence);
+  if (!occurrenceRecord) throw new Error('Popup save has no unique physical occurrence binding');
+  const shot = before.shot_revisions.find((candidate) => candidate.shot_id === occurrenceRecord.shot_id
+    && candidate.revision_id === occurrenceRecord.shot_revision_id);
+  if (!shot) throw new Error('Popup save has no unique child shot revision binding');
+  const internal = before.internal_timeline_revisions.filter((candidate) => (
+    candidate.revision_id === shot.internal_timeline_revision_id));
+  if (internal.length !== 1) throw new Error('Popup save has no unique child timeline root binding');
+  const shared = Array.isArray(parent?.occurrences) && parent.occurrences.filter((value) => {
+    const row = object(value);
+    return row?.shot_revision_id !== undefined && before.shot_revisions.some((candidate) => (
+      candidate.shot_id === row?.shot_id && candidate.revision_id === row?.shot_revision_id
+        && candidate.internal_timeline_revision_id === internal[0].revision_id));
+  }).length > 1;
+  if (!shared) return null;
+
+  const displayed = composition.occurrences.find((candidate) => candidate.occurrenceId === occurrenceId);
+  if (!displayed || displayed.shotId !== shot.shot_id || displayed.revisionId !== shot.revision_id
+    || object(displayed.revision.internal_timeline_revision)?.revision_id !== internal[0].revision_id) {
+    throw new Error('Popup displayed occurrence differs from its verified physical closure pin');
+  }
+  if (!mediaProvider.getProjectMediaSelection) {
+    throw new Error('Popup occurrence isolation requires a registered per-occurrence fork before editing the shared image');
+  }
+  const rawTimeline = object(internal[0].payload);
+  if (!rawTimeline || !Array.isArray(rawTimeline.clips)) throw new Error('Popup save has no verified raw child timeline');
+  const authored = createCanonicalTimeline(nextConfig, composition);
+  const oldRows = collectionRows(rawTimeline.clips, ['clips']);
+  const nextRows = collectionRows(authored.clips, ['clips']);
+  const added = [...nextRows.entries()].filter(([id]) => !oldRows.has(id));
+  const changed = [...nextRows.entries()].filter(([id, row]) => oldRows.has(id)
+    && mediaAssetId(oldRows.get(id)!) !== mediaAssetId(row));
+  if (added.length > 1 || changed.length > 1 || (added.length === 0 && changed.length === 0)) {
+    throw new Error('Shared popup edits require one occurrence media ADD or SWAP');
+  }
+  const forkShotId = `shot-fork-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
+  const fork: CommitRequest['commands'][number] = {
+    schema_version: 1, op: 'occurrence.fork', version: '1', select: `occurrence:${occurrenceId}`,
+    args: { shot_id: forkShotId }, intent: { ownership: 'occurrence' }, created: [`shot:${forkShotId}`],
+  };
+  if (added.length === 1) {
+    const [id, row] = added[0];
+    const asset = mediaAssetId(row);
+    if (!asset) throw new Error('Shared popup media ADD has no stable asset identity');
+    const media = await projectMediaSelection(mediaProvider, composition.projectId, asset, nextRegistry);
+    const addRow = mediaRowWithoutAsset(row);
+    addRow.id = id;
+    addRow.asset = asset;
+    return { commands: [fork, {
+      schema_version: 1, op: 'occurrence.add-media', version: '1', select: `occurrence:${occurrenceId}`,
+      args: { row: addRow, media }, intent: { ownership: 'occurrence' },
+    }] };
+  }
+  const [id, row] = changed[0];
+  const old = oldRows.get(id)!;
+  const oldAsset = mediaAssetId(old);
+  const newAsset = mediaAssetId(row);
+  if (!oldAsset || !newAsset) throw new Error('Shared popup media SWAP has no stable asset identity');
+  const [oldMedia, media] = await Promise.all([
+    projectMediaSelection(mediaProvider, composition.projectId, oldAsset, nextRegistry),
+    projectMediaSelection(mediaProvider, composition.projectId, newAsset, nextRegistry),
+  ]);
+  return { commands: [fork, {
+    schema_version: 1, op: 'occurrence.swap-media', version: '1', select: `occurrence:${occurrenceId}/clip:${id}`,
+    args: { old_media: oldMedia, media }, intent: { ownership: 'occurrence' },
+  }] };
+}
+
 /** Ephemeral shot-local geometry projection; it never changes the CAS graph. */
 export function projectShotTimelineDraftComposition(
   composition: PreparedShotComposition,
@@ -983,22 +1113,38 @@ export function createShotTimelineDataProvider(
         const before = session.getDocument() as unknown as CanonicalDocument;
         const signature = stableStringify({ config: nextConfig, registry: draftRegistry });
         if (session.getState().status !== 'retry' || pendingLocalSaveSignature !== signature) {
-          const edit = popupDocumentAfter(
-            before,
-            nextConfig,
-            localSaveSource?.config ?? timelineConfig,
-            nextRegistry && !sameJson(nextRegistry, localSaveSource?.registry ?? registry) ? draftRegistry : undefined,
-            localSaveSource?.registry ?? registry,
-            rawComposition,
-            occurrenceId,
-          );
           const step = {
             id: globalThis.crypto?.randomUUID?.() ?? `popup-edit-${Date.now()}`,
             label: 'Edit shot timeline',
             intent: 'Save shot-local timeline changes',
             tags: ['shot-popup'],
           };
-          if (hasPopupStructuralChange(before, edit.document)) {
+          const sharedCommands = await sharedPopupMediaCommands(
+            before,
+            nextConfig,
+            draftRegistry,
+            rawComposition,
+            occurrenceId,
+            timelineDataProvider!,
+          );
+          if (sharedCommands) {
+            await session.append({
+              before: toOutboxJson(before),
+              after: toOutboxJson(before),
+              label: 'Edit shot timeline',
+              commands: sharedCommands.commands,
+            });
+          } else {
+            const edit = popupDocumentAfter(
+              before,
+              nextConfig,
+              localSaveSource?.config ?? timelineConfig,
+              nextRegistry && !sameJson(nextRegistry, localSaveSource?.registry ?? registry) ? draftRegistry : undefined,
+              localSaveSource?.registry ?? registry,
+              rawComposition,
+              occurrenceId,
+            );
+            if (hasPopupStructuralChange(before, edit.document)) {
             const intent = popupDocumentPatchIntent(before, edit, occurrenceId, 'Edit shot timeline', step);
             const intentObject = intent as unknown as Record<string, unknown>;
             const command: CommitRequest['commands'][number] = {
@@ -1017,16 +1163,17 @@ export function createShotTimelineDataProvider(
               documentIntent: intent,
             };
             await session.append(save);
-          } else {
-            await session.appendDocument({
-              before,
-              after: edit.document,
-              roots: edit.roots,
-              label: 'Edit shot timeline',
-              step: { ...step, reads: edit.reads },
-              reads: edit.reads,
-              merge: 'atomic',
-            });
+            } else {
+              await session.appendDocument({
+                before,
+                after: edit.document,
+                roots: edit.roots,
+                label: 'Edit shot timeline',
+                step: { ...step, reads: edit.reads },
+                reads: edit.reads,
+                merge: 'atomic',
+              });
+            }
           }
           pendingLocalSaveSignature = signature;
           localSaveSource = structuredClone({ config: nextConfig, registry: draftRegistry });
