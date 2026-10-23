@@ -383,7 +383,10 @@ class Store:
                             os.close(child_fd)
             validate_children(root_fd)
             self._checkpoint('deletion:validated')
-            self._owned_dir(path, entry) if marker.exists() else check(not os.listdir(root_fd), 'missing deletion marker')
+            if marker.exists() or marker.is_symlink():
+                self._owned_dir(path, entry)
+            else:
+                check(not os.listdir(root_fd), 'missing deletion marker')
             check(inode(path) == entry['node'], 'deletion root replaced')
             check(inode(self.root / 'locks' / self._entry_id(entry['component'], entry['key'])) == entry['lock'], 'lease inode changed')
             os.fchmod(root_fd, root_info.st_mode | stat.S_IWUSR)

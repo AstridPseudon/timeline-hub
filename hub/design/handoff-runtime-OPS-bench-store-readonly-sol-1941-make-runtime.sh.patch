@@ -1,0 +1,39 @@
+--- make-runtime.sh
++++ make-runtime.sh
+@@ -302,8 +302,8 @@
+                                       if key in source_entry):
+             raise ValueError("installed component provenance")
+     if text(".astrid-artifact-integrity") != artifact(): raise ValueError("artifact integrity")
+-    for path in root.rglob("*"):
+-        if path.is_file() and path.stat().st_mode & 0o222: raise ValueError("writable artifact")
++    for path in [root, *root.rglob("*")]:
++        if not path.is_symlink() and path.lstat().st_mode & 0o222: raise ValueError("writable artifact")
+ except (OSError, ValueError, KeyError, json.JSONDecodeError) as error:
+     print("invalid same-tree graph: " + str(error), file=sys.stderr)
+     raise SystemExit(2)
+@@ -356,6 +356,8 @@
+     if os.environ.get('RUNTIME_BUILD_MOCK') == '1':
+         raise RuntimeError('build required; installer not run (fixture control)')
+     shell('T=$1; D=$2; FREE=$(df -P -B1 \"$W\" | awk \'NR==2 {print $4}\'); [[ \"$FREE\" =~ ^[0-9]+$ ]] && [ \"$FREE\" -ge 2147483648 ]\n' + body, stage, final, bounded=True)
++def seal(path):
++    shell('chmod -R a-w "$1"', path, bounded=True)
+ def verify(path):
+     shell('candidate_matches "$1"', path)
+ def registration(path, final, reused):
+@@ -365,7 +367,7 @@
+         return {'name': name, 'env': pathlib.Path(temp, '.runtime-env').read_text(),
+                 'suite': pathlib.Path(temp, '.runtime-suite').read_text(), 'requires': []}
+ try:
+-    entry = store.ensure('runtime', {'remotion_tree': tree}, registration, build, verify)
++    entry = store.ensure('runtime', {'remotion_tree': tree}, registration, build, verify, seal=seal)
+ except Exception as error:
+     print('REFUSED: bench store: ' + str(error), file=sys.stderr)
+     sys.exit(2)
+@@ -459,7 +461,5 @@
+ printf '%s\n' "$NPM_VERSION" > "$T/.astrid-npm-version"
+ printf '%s\n' "$(sha256sum "$T/node_modules/.package-lock.json" | cut -d' ' -f1)" > "$T/.astrid-node-modules-lock-sha256"
+ printf '%s\n' "$(artifact_integrity "$T")" > "$T/.astrid-artifact-integrity"
+-stage=read-only
+-find "$T" -type f -exec chmod a-w {} +
+ # STORE_BUILD_END
+ STORE_BUILD_BODY

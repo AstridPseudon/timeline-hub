@@ -1,0 +1,29 @@
+--- make-child-venv.sh
++++ make-child-venv.sh
+@@ -193,6 +193,9 @@
+     subprocess.run(['timeout', '--kill-after=30', os.environ.get('CHILD_VENV_BUILD_TIMEOUT_SECONDS', '3600'),
+                     'bash', '-u', '-o', 'pipefail', '-c', context + '\n' + setup + body,
+                     'store-child', str(stage), str(final)], check=True)
++def seal(path):
++    subprocess.run(['timeout', '--kill-after=30', os.environ.get('CHILD_VENV_LOCAL_TIMEOUT_SECONDS', '600'),
++                    'chmod', '-R', 'a-w', str(path)], check=True)
+ def verify(path):
+     retained = pathlib.Path(path)
+     if retained.is_symlink() or not retained.is_dir() or not os.access(retained / 'bin/python', os.X_OK):
+@@ -234,7 +237,7 @@
+     return {'name': name, 'env': '', 'suite': suite, 'requires': [], 'require_names': requires,
+             'report': data.decode('utf-8')}
+ try:
+-    entry = store.ensure('child', identity, registration, build, verify)
++    entry = store.ensure('child', identity, registration, build, verify, seal=seal)
+     receipt = success_receipt(entry, verified_reports[entry['path']])
+ except Exception as error:
+     print('REFUSED: bench store: ' + str(error), file=sys.stderr)
+@@ -436,7 +439,6 @@
+     report.write_text(report.read_text().replace(str(stage), str(final)))
+ RELOCATE
+ run_stage readonly-source "$LOCAL_TIMEOUT_SECONDS" chmod -R a-w "$SRC"
+-run_stage readonly-final "$LOCAL_TIMEOUT_SECONDS" chmod -R a-w "$T"
+ 
+ # STORE_BUILD_END
+ STORE_BUILD_BODY

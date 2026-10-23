@@ -179,6 +179,41 @@ class LifecycleTests(unittest.TestCase):
             self.store._delete_owned(path, entry)
         self.assertEqual(path.stat().st_mode, mode)
 
+    def test_child_symlink_race_refuses_without_chmod(self):
+        entry = self.create()
+        entry.pop('reused')
+        path = Path(entry['path'])
+        nested = path / 'nested'
+        mode = nested.stat().st_mode
+        foreign = self.root / 'foreign'
+        foreign.mkdir(mode=0o500)
+        def race(point):
+            if point == 'deletion:child':
+                self.store._checkpoint = lambda actual: None
+                nested.chmod(mode | stat.S_IWUSR)
+                nested.rename(self.root / 'held-child')
+                (self.root / 'held-child').chmod(mode)
+                nested.symlink_to(foreign, target_is_directory=True)
+        self.store._checkpoint = race
+        with self.assertRaises(core.Refused):
+            self.store._delete_owned(path, entry)
+        self.assertEqual(foreign.stat().st_mode & 0o777, 0o500)
+        self.assertEqual((self.root / 'held-child').stat().st_mode, mode)
+
+    def test_seal_callback_failure_rolls_back_partially_sealed_tree(self):
+        original = self.store.ensure
+        def fail_seal(*args, **kwargs):
+            seal = kwargs['seal']
+            def fail(final):
+                seal(final)
+                raise RuntimeError('seal callback failed')
+            kwargs['seal'] = fail
+            return original(*args, **kwargs)
+        self.store.ensure = fail_seal
+        with self.assertRaisesRegex(RuntimeError, 'seal callback failed'):
+            self.create()
+        self.assert_rolled_back()
+
     def test_root_race_after_validation_refuses_without_chmod(self):
         entry = self.create()
         entry.pop('reused')
