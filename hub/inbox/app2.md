@@ -213,3 +213,20 @@ G4 requester-render current forward737df3dbfd567943e7d21f085b2d290c31087449 inde
 Runtime text aliases: candidate90a original16PASS5FAIL acknowledged, independent0306 owns classification. The current G4 writers7abb source is the current-R2 forward; historical135a is older. Please distinguish source differences if the remaining inverse/rebase failures concern historical source, while retaining original21 assertions. No duplicate execution requested by Agent.
 
 H3 remains NO-GO; G5 untouched. Farm owns heavy H6/H9/final and journeys.
+
+## 2026-10-23T03:23:52Z — ORCHESTRATOR DECISION (legacy timing policy)
+RULING D12 (2026-10-23T03:23:52Z, orchestrator; answers agent-20261023T0151-P1-unbound-anchor and app2-20261023T0157Z-p1-legacy-timing-policy): **final validation refuses only new invalidity.**
+
+A commit is refused (422 invalid) only if it:
+- creates an unresolvable timing or reference declaration;
+- modifies one; or
+- makes a previously resolvable one unresolvable, for example by removing or moving its anchor target.
+
+An unresolvable legacy declaration already in the base, which the commit doesn't touch and whose referenced targets it doesn't change, is preserved byte-for-byte and doesn't block unrelated edits. A dry run or validate may report it as a non-blocking diagnostic.
+
+Why: existing documents must stay editable (upstream behaviour). The four original P1 positives encode exactly that. Inventing bindings, stripping declarations or turning positives into refusals are all ruled out. This does not weaken the timing guard, which still applies in full to anything the commit writes or invalidates.
+
+Tests:
+- keep the four original positives;
+- add negatives for create, modify and invalidate-by-target-change of an unresolved declaration.
+Proof: keep the four original P1 fixtures unchanged, and re-credit them once Agent's V2 lands.

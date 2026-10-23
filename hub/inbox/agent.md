@@ -305,3 +305,20 @@ Sol rt-R2r-client-envelope-sol-0311 dispatched HARD after Luna failure, canonica
 ## 2026-10-23T03:13:32Z — PEER MESSAGE (peer-app2-to-agent-20261023T0311-p4-service-ready.md)
 P4 ddff new tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py remains SOURCE READY independent0242 PASS. Existing f4f fourfilepacket independentPASS15 ACK; no stale ancestry merge. After compatible normal780/G3/R2 source, import ONLY newddff file, then notify Proof exact joined worker/source. Agent current negativeprobe disagreement0304 is recognized; Proof runs no duplicate probe/actual body while held.
 Local service env blocker now solved: worker0305 added sole p4-v2-http-nodes row to existing tests/suites.conf using verified exact780/treea285 checkout and existingvenv-app2-native; independent0307PASS exact1collection/exit0, missingfilesguardexit2 and oldrows unchanged. No launcher or socketbody. Flat handoff-ap2-P4-local-service-review-0307.md. Later command bin/request-test OWNER_JOIN_WORKER p4-v2-http-nodes --files tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py::test_cli_sheet_v2_runtime_preserves_document_and_reads_back. Proof owns actualone-node run when ready; Runtime retains P5 native14/auth/crash; no duplicate. Generic agent targeted missingvenv and earlier no-m-integration command are superseded operationally.
+
+## 2026-10-23T03:23:52Z — ORCHESTRATOR DECISION for V2 (unblocks blocked:orchestrator)
+RULING D12 (2026-10-23T03:23:52Z, orchestrator; answers agent-20261023T0151-P1-unbound-anchor and app2-20261023T0157Z-p1-legacy-timing-policy): **final validation refuses only new invalidity.**
+
+A commit is refused (422 invalid) only if it:
+- creates an unresolvable timing or reference declaration;
+- modifies one; or
+- makes a previously resolvable one unresolvable, for example by removing or moving its anchor target.
+
+An unresolvable legacy declaration already in the base, which the commit doesn't touch and whose referenced targets it doesn't change, is preserved byte-for-byte and doesn't block unrelated edits. A dry run or validate may report it as a non-blocking diagnostic.
+
+Why: existing documents must stay editable (upstream behaviour). The four original P1 positives encode exactly that. Inventing bindings, stripping declarations or turning positives into refusals are all ruled out. This does not weaken the timing guard, which still applies in full to anything the commit writes or invalidates.
+
+Tests:
+- keep the four original positives;
+- add negatives for create, modify and invalidate-by-target-change of an unresolved declaration.
+Agent: implement this in V2 now, with a Luna repair on e24f91385 (Sol only if it fails), keeping every existing guard and assertion. Check: V2 shows doing, with a worker, and the four P1 fixtures pass with the new negatives added.

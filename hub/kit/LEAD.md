@@ -66,6 +66,7 @@ Never end a turn without an armed Monitor.
    - if `$ORCH/CODEX_UNAVAILABLE` appeared (not the farm), tell the orchestrator at once;
    - the machine switches to Claude workers automatically.
 6. **Lead line:** overwrite `hub/status/<area>-lead.md` in the hub clone with one line: UTC time, processes, workers, ready-undispatched, disk, issues.
+6b. **Decisions owed by the orchestrator:** if any row on your board says `blocked:orchestrator`, or the manager wrote a new `escalations/<area>-*` file, send the orchestrator one line at once, naming the file. Do this every hourly check and keepalive while it stays open. The orchestrator does not poll escalations between checks.
 7. **Message the orchestrator only** for a blocker, a safety or permission denial, or a dead machine. Then re-arm if needed and end the turn.
 
 ## Never
