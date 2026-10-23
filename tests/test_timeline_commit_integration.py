@@ -416,34 +416,154 @@ def _post_door(world, path, body, key):
     return response.json()
 
 
-def test_real_door_commit_admission_checks_origin_auth_and_project_scope(film, agent, tmp_path):
+def _full_v2_auth_body(edit):
+    change = {
+        "op": "set",
+        "ref": "parent",
+        "path": ["meta", "org.example.auth-probe"],
+        "before": {"state": "absent"},
+        "value": "must-not-write",
+    }
+    reads = [{"kind": "field", "ref": "parent", "path": change["path"],
+              "state": {"state": "absent"}}]
+    command = {
+        "schema_version": 1,
+        "op": "doc.patch",
+        "version": "1",
+        "select": None,
+        "args": {"changes": [copy.deepcopy(change)]},
+    }
+    body = edit.body([command])
+    body.update({
+        "label": "Door authorization probe",
+        "steps": [{
+            "id": "auth-probe",
+            "label": "Door authorization probe",
+            "intent": "Verify commit admission",
+            "tags": ["authorization"],
+            "command_ordinals": [0],
+            "patch": [change],
+            "reads": reads,
+        }],
+        "merge": "fields",
+        "reads": reads,
+    })
+    return body
+
+
+def _assert_door_refusal_unchanged(edit, response, expected_status, expected_body,
+                                   before_rows, before_head, before_history):
+    assert response.status == expected_status, response.body
+    assert response.json() == expected_body
+    assert rows(edit.service) == before_rows
+    assert edit.head() == before_head
+    assert edit.history() == before_history
+
+
+def _assert_route_scope_refusal_unchanged(edit, response, before_rows, before_head,
+                                          before_history):
+    assert response.status == 409, response.body
+    payload = response.json()
+    assert payload["code"] == "conflict"
+    assert payload["message"] == "commit project/timeline identity does not match the route"
+    assert isinstance(payload["request_id"], str) and payload["request_id"]
+    assert rows(edit.service) == before_rows
+    assert edit.head() == before_head
+    assert edit.history() == before_history
+
+
+def test_real_door_commit_admission_checks_origin_auth_and_project_scope(film, agent, tmp_path, monkeypatch):
+    from tests.door_helpers import PRODUCT_ACTOR, write_owner_only
+
     world = _start_door(film, tmp_path)
     try:
         evil_origin = "https://evil.test"
         edit = Editing(world.daemon.service, film, agent)
         edit.assert_baseline()
         body = edit.body([edit.move("music-bed", 1)])
-        encoded = json.dumps(body).encode()
+        negative_body = _full_v2_auth_body(edit)
+        encoded = json.dumps(negative_body).encode()
         path = "/api/runtime" + edit.path
         headers = {"Content-Type": "application/json", "Idempotency-Key": "door-admission"}
         before = rows(edit.service)
+        before_head = edit.head()
+        before_history = copy.deepcopy(edit.history())
 
-        refused = world.call(path, "POST", origin=evil_origin, body=encoded, headers=headers)
-        assert refused.status == 403
-        assert refused.json() == {"error": "hosted_origin_required"}
+        service = edit.service
+        assert service is not None
+        provider_type = type(service._timeline_commit_provider)
 
-        refused = world.call(path, "POST", body=encoded,
-                             headers={**headers, "Authorization": f"Bearer {world.product_token}"})
-        assert refused.status == 403
-        assert refused.json() == {"error": "browser_credentials_forbidden"}
+        def forbidden_provider(*args, **kwargs):
+            raise AssertionError("refused door request reached the commit provider")
 
-        foreign = copy.deepcopy(body)
-        foreign["project_id"] = "foreign-project"
-        refused = world.call(path, "POST", body=json.dumps(foreign).encode(),
-                             headers={**headers, "Idempotency-Key": "door-foreign-project"})
-        assert refused.status == 409
-        assert refused.json()["code"] == "conflict"
-        assert rows(edit.service) == before
+        with monkeypatch.context() as guard:
+            guard.setattr(provider_type, "commit", forbidden_provider)
+
+            refused = world.call(path, "POST", origin=evil_origin, body=encoded, headers=headers)
+            _assert_door_refusal_unchanged(
+                edit, refused, 403, {"error": "hosted_origin_required"},
+                before, before_head, before_history,
+            )
+
+            refused = world.call(path, "POST", body=encoded,
+                                 headers={**headers, "Authorization": "Bearer browser"})
+            _assert_door_refusal_unchanged(
+                edit, refused, 403, {"error": "browser_credentials_forbidden"},
+                before, before_head, before_history,
+            )
+
+            world.credential_file.unlink()
+            refused = world.call(path, "POST", body=encoded,
+                                 headers={**headers, "Idempotency-Key": "door-missing-credential"})
+            _assert_door_refusal_unchanged(
+                edit, refused, 503, {"error": "runtime_unavailable"},
+                before, before_head, before_history,
+            )
+
+            write_owner_only(world.credential_file, {
+                "version": 1, "scope": "astrid", "actor_id": PRODUCT_ACTOR,
+                "token": "not-a-token-the-runtime-knows",
+            })
+            refused = world.call(path, "POST", body=encoded,
+                                 headers={**headers, "Idempotency-Key": "door-invalid-credential"})
+            _assert_door_refusal_unchanged(
+                edit, refused, 503, {"error": "runtime_unavailable"},
+                before, before_head, before_history,
+            )
+
+            assert world.daemon.credentials is not None
+            credential_store = world.daemon.credentials
+            readonly_token, _ = credential_store.provision(
+                "door-read-only", ["handshake", "projects:read"], rotate=True,
+            )
+            write_owner_only(world.credential_file, {
+                "version": 1, "scope": "astrid", "actor_id": "door-read-only",
+                "token": readonly_token,
+            })
+            refused = world.call(path, "POST", body=encoded,
+                                 headers={**headers, "Idempotency-Key": "door-read-only-credential"})
+            _assert_door_refusal_unchanged(
+                edit, refused, 503, {"error": "runtime_identity_mismatch"},
+                before, before_head, before_history,
+            )
+
+            write_owner_only(world.credential_file, {
+                "version": 1, "scope": "astrid", "actor_id": PRODUCT_ACTOR,
+                "token": world.product_token,
+            })
+
+            foreign = copy.deepcopy(negative_body)
+            foreign["project_id"] = "foreign-project"
+            refused = world.call(path, "POST", body=json.dumps(foreign).encode(),
+                                 headers={**headers, "Idempotency-Key": "door-foreign-project"})
+            _assert_route_scope_refusal_unchanged(edit, refused, before, before_head, before_history)
+
+            foreign_path = "/api/runtime/v1/projects/{}/timelines/{}/commit".format(
+                edit.project, "foreign-timeline",
+            )
+            refused = world.call(foreign_path, "POST", body=encoded,
+                                 headers={**headers, "Idempotency-Key": "door-foreign-route"})
+            _assert_route_scope_refusal_unchanged(edit, refused, before, before_head, before_history)
 
         accepted = _post_door(world, edit.path, body, "door-admission")
         assert accepted["data"]["status"] == "accepted"
