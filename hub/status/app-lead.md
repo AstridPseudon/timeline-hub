@@ -1,1 +1,1 @@
-2026-10-23T09:41Z procs restarted after reclaim (09:40); MERGE-ONLY: 0 running, 0 dead; no merges since 08:44Z; composed App tsc FAIL TS2322 in shared ADD JSON row, Proof owns the repair (gates Runtime R5); MONITOR DENIED, CRON-ONLY (send_later 10:10 + orch :40); INBOX 699941B; disk 15G; issues none new
+2026-10-23T10:00Z uptime 1m (container up since 2026-10-23 09:59:34 UTC, restart 09:59:34 came ~8 min AFTER Monitor armed ~09:51); Monitor b6r80gz26 armed; MERGE-ONLY; procs OK; 0 workers; INBOX 702953B; disk 17G
