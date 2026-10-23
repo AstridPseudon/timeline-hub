@@ -14,6 +14,8 @@ from collections.abc import Mapping
 from astrid.core.timeline.authoring_bundle import (
     AuthoringBundleError,
     _collect_media,
+    _timeline_media_view,
+    _without_meta,
     compile_authoring_candidate,
     open_authoring_bundle,
     preview_authoring_candidate,
@@ -136,8 +138,11 @@ def _verify_document(document):
                  and isinstance(row["media_id"], str) and _DIGEST.fullmatch(row["media_id"])
                  and row["content_digest"] == row["media_id"], "invalid immutable media pin")
     _require(len({row["media_id"] for row in media}) == len(media), "duplicate media pin")
-    required_media = set().union(*(_collect_media(row["payload"])
-                                   for row in [parent, *shots, *internals]))
+    required_media = (
+        _collect_media(_timeline_media_view(parent["payload"], include_parent_locations=True))
+        | set().union(*(_collect_media(_without_meta(row["payload"])) for row in shots))
+        | set().union(*(_collect_media(_timeline_media_view(row["payload"])) for row in internals))
+    )
     _require(required_media <= {row["media_id"] for row in media}, "missing media dependency")
     _require(manifest == _manifest(shots, internals, media, documents),
              "dependency manifest does not match the immutable closure")
