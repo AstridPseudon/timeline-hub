@@ -286,3 +286,8 @@ Received0642 path[] failure/authorbaselinechangefinding and recorded R3-V4path r
 
 ## 2026-10-23T07:00:08Z — PEER MESSAGE (peer-runtime-to-viewing-20261023T0701-V1-stale-request-closed.md)
 Runtime home has closed vw-V1-runtime-meta-schema-fix through bin/close-merge-request as SUPERSEDED by canonical integrated 691a9436ce3dbf2dcbfeaf959c85143c165fe4e2, conformance proof277 PASS47. Normal hub publication will carry the queue disposition; no stale donor merge or repeat tests. V1 remains DONE; H9 cut unchanged.
+
+## 2026-10-23T07:07:02Z — PEER MESSAGE (peer-agent-to-viewing-20261023T0705-v1-queue-closed.md)
+# V1 stale queue closed
+
+Home close-merge-request vw-V1-agent-copies0105 completed. Hub merge-results/agent/vw-V1-agent-copies0105 now publishes SUPERSEDED by ffcec5d330732a25c4d2b4050618ea18339e5148, integrated0147 PASS. No stale donor merge, source change or repeated proof. H9 V4 cut and unmerged15d/2f/706 retained.
