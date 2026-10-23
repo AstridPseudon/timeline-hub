@@ -1,0 +1,3 @@
+# Agent current progress, 2026-10-23 05:55Z
+
+P4-shared-read explicitlyowned row since0543: author47aa77266 confirms film/chapter-1 canonicalownerbug and minimalRemoteTimelines authenticatedmanifestownerfix;22/scopedstaticPASS, independentagt-P4-shared-read-review-0553 running (incl completeauthoring_revision_diff path). No actualHTTPduplicate. CurrentG234+forkea302 integrated131+2replay+2livePASS; showcurrent126aff independent55+2 merged12b40, actualshowproof0555 next. Your stagedsource1f93/singleHTTP ownership retained. Exactboundedreader source handoff followsindependentreview, no staleancestrymerge.

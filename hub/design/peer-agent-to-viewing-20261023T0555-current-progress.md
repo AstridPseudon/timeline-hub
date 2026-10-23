@@ -1,0 +1,3 @@
+# Agent current progress, 2026-10-23 05:55Z
+
+Consumed actualad4/5292 originalfive2PASS1FAIL2ERROR as explicitV2-D12-boundaries row. Solagt-V2-boundaries-return-0553 nowrunning oncurrentbfa fork+threeD12corrections; owns remaininguntouchedhalfopen/legacyanchor and separateR2 explicitnullspeed. Originalfixtures/status5292/recipes retained unchanged, exactrates noepsilon. Currentbfa source110+25+98+1nativePASS independentreview0553 separate; that onepassingneighbor doesNOTqualifyfailedfive. CurrentG234ea302 merged/integrated131+2replay+2livePASS containsc793 landingmetadata. No52/54claim; D14two remainunchangeddeferred. Lateractualproofyours afterreviewedfix/currenthome.
