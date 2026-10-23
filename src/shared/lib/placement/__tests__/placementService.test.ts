@@ -5,6 +5,21 @@ import { createFakeRuntimeRouter, type FakeRuntimeRouter } from '@/test/fakeRunt
 import { ApiError } from '@/integrations/runtime/generated.ts';
 import { createCommitOutbox } from '@/tools/video-editor/commands/commitOutbox.ts';
 import { createDefaultTimelineConfig } from '@/tools/video-editor/lib/defaults';
+import { createElement } from 'react';
+import { act, renderHook } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useGalleryPageState } from '@/features/gallery/hooks/useGalleryPageState';
+import { __resetSelectionStoreForTests, setTimelineClipData, userSelectTimelineClips } from '@/shared/state/selectionStore';
+import { createShotCompositionAdapter } from '@/tools/video-editor/data/shotCompositionAdapter';
+import compositionFixture from '@/tools/video-editor/data/shotComposition.fixture.json';
+
+vi.mock('@/shared/contexts/ProjectContext', () => ({
+  useProjectSelectionContext: () => ({ selectedProjectId: 'demo-project' }),
+}));
+vi.mock('@/shared/contexts/ShotsContext', () => ({ useShots: () => ({ shots: [] }) }));
+vi.mock('@/shared/hooks/projects/useProjectGenerations', () => ({
+  useProjectGenerations: () => ({ data: { items: [], total: 0 }, isLoading: false, isFetching: false }),
+}));
 
 import {
   batchUpdatePlacementFrames,
@@ -218,11 +233,57 @@ describe('placementService: CAS round-trips over workspace.v1', () => {
     runtime.publishes = [];
     runtime.commits = [];
     runtime.beforePublish = null;
+    __resetSelectionStoreForTests();
     vi.stubGlobal('indexedDB', createFakeIndexedDB());
     vi.stubGlobal('navigator', { locks: { request: async (_name: string, _options: unknown, work: (lock: object) => Promise<unknown>) => work({}) } });
   });
   afterEach(() => {
+    __resetSelectionStoreForTests();
     vi.unstubAllGlobals();
+  });
+
+  it.each(['add', 'position', 'pooled'] as const)('carries the mounted gallery %s selection through fork and placement', async (action) => {
+    const router = createFakeRuntimeRouter();
+    installRuntime(router);
+    const generationId = firstSeededGenerationId(router);
+    const fixture = JSON.parse(JSON.stringify(compositionFixture)
+      .replaceAll('project-001', PROJECT).replaceAll('document-primary', TIMELINE));
+    const composition = createShotCompositionAdapter({ load: async () => fixture }).prepare(fixture);
+    runtime.occurrences = [
+      { occurrence_id: 'occ-1', shot_id: 'shot-alpha', shot_revision_id: 'shot-r1' },
+      { occurrence_id: 'occ-2', shot_id: 'shot-alpha', shot_revision_id: 'shot-r1' },
+    ];
+    runtime.shotRevisions[0].shot_id = 'shot-alpha';
+    const sibling = structuredClone(runtime.occurrences[0]);
+    const owner = Symbol('mounted-editor');
+    const release = setTimelineClipData([], owner, { projectId: PROJECT, timelineId: TIMELINE, composition });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+    const { result, unmount } = renderHook(() => useGalleryPageState({ enableDataLoading: false }), {
+      wrapper: ({ children }) => createElement(QueryClientProvider, { client }, children),
+    });
+    act(() => userSelectTimelineClips(['occ-2:alpha-video'], {}, owner));
+    if (action === 'position') {
+      act(() => result.current.setSelectedShotFilter('shot-alpha'));
+      expect(result.current.selectedShotFilter).toBe('shot-alpha');
+    }
+    let succeeded = false;
+    await act(async () => {
+      succeeded = await (action === 'pooled' ? result.current.handleAddToShotWithoutPosition : result.current.handleAddToShot)('shot-alpha', generationId);
+    });
+    expect(succeeded).toBe(true);
+    expect(runtime.commits).toHaveLength(2);
+    const destination = runtime.occurrences[1].shot_id;
+    expect(destination).not.toBe('shot-alpha');
+    expect(runtime.commits[0].body).toMatchObject({
+      commands: [{ op: 'occurrence.fork', select: 'occurrence:occ-2', args: { shot_id: destination } }],
+    });
+    expect(runtime.commits[1].body.commands[0].op).toBe('doc.patch');
+    expect(runtime.occurrences[0]).toEqual(sibling);
+    const read = await fetchProjectPlacements(PROJECT);
+    expect(read.byShot.get(destination as string)?.map((row) => row.generationId)).toEqual([generationId]);
+    unmount();
+    client.clear();
+    release();
   });
 
   it('builds the registered fork from the explicit canonical occurrence owner', () => {
@@ -304,6 +365,16 @@ describe('placementService: CAS round-trips over workspace.v1', () => {
       generationId,
       ownerRef: '' as `occurrence:${string}`,
     })).rejects.toThrow('one explicit canonical occurrence owner');
+    expect(runtime.commits).toHaveLength(0);
+  });
+
+  it('refuses a selected occurrence from another editor timeline before submitting a fork', async () => {
+    const router = createFakeRuntimeRouter();
+    installRuntime(router);
+    await expect(placeGeneration({
+      projectSlug: PROJECT, shotId: 'reserved-shot', generationId: firstSeededGenerationId(router),
+      ownerRef: 'occurrence:occurrence-1', timelineRef: 'foreign-timeline',
+    })).rejects.toThrow('differs from the selected editor timeline');
     expect(runtime.commits).toHaveLength(0);
   });
 

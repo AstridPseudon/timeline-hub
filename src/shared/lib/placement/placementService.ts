@@ -369,6 +369,8 @@ export interface PlaceGenerationRequest {
   generationId: string;
   /** Explicit canonical occurrence owner; its child is forked before placement when supplied. */
   ownerRef?: OccurrenceForkRequest['ownerRef'];
+  /** Selected editor identity; refuse a placement resolved into another timeline. */
+  timelineRef?: string;
   /** `undefined` → auto-position; `null` → pooled; number → explicit frame. */
   timelineFrame?: number | null;
 }
@@ -456,6 +458,9 @@ export async function placeGeneration(request: PlaceGenerationRequest): Promise<
   }
 
   const target = await resolveLegacyPlacementTarget(request.projectSlug);
+  if (request.timelineRef !== undefined && request.timelineRef !== target.timelineRef) {
+    throw new TimelineVersionConflictError('Placement target differs from the selected editor timeline');
+  }
   if (request.ownerRef !== undefined) {
     await forkOccurrence({ ...target, ownerRef: request.ownerRef, shotId: request.shotId });
   }

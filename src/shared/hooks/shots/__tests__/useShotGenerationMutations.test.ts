@@ -4,6 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import { enqueueGenerationsInvalidation } from '@/shared/hooks/invalidation';
 import { queryKeys } from '@/shared/lib/queryKeys';
+import { __resetSelectionStoreForTests, setTimelineClipData, userSelectTimelineClips } from '@/shared/state/selectionStore';
+import { createShotCompositionAdapter } from '@/tools/video-editor/data/shotCompositionAdapter';
+import compositionFixture from '@/tools/video-editor/data/shotComposition.fixture.json';
 
 const mockPlaceGeneration = vi.fn();
 const mockUnplaceGeneration = vi.fn();
@@ -54,6 +57,43 @@ function createWrapper() {
 
 // The deterministic entry id the document read model surfaces for a pair.
 const entryId = (shotId: string, generationId: string) => `sg-${shotId}-${generationId}`;
+
+describe('mounted selection fallback for existing shot callers', () => {
+  beforeEach(() => { vi.clearAllMocks(); __resetSelectionStoreForTests(); });
+
+  it.each(['add', 'position'] as const)('resolves %s from the active editor when the caller only has a shot id', async (operation) => {
+    const composition = createShotCompositionAdapter({ load: async () => compositionFixture }).prepare(compositionFixture);
+    const owner = Symbol('mounted-editor');
+    const release = setTimelineClipData([], owner, {
+      projectId: composition.projectId, timelineId: composition.parentDocumentId, composition,
+    });
+    userSelectTimelineClips(['occ-2:alpha-video'], {}, owner);
+    mockPlaceGeneration.mockImplementation(async (request) => ({
+      entryId: 'placed', shotId: request.shotId, generationId: 'gen-1', timelineFrame: 0,
+    }));
+    mockPlaceGeneration.mockRejectedValueOnce(new Error('temporary placement failure'));
+    const { wrapper, queryClient } = createWrapper();
+    queryClient.setDefaultOptions({ mutations: { retry: 1, retryDelay: 0 } });
+    const { result, unmount } = renderHook(() => {
+      const add = useAddImageToShot();
+      const position = usePositionExistingGenerationInShot();
+      return operation === 'add' ? add : position;
+    }, { wrapper });
+    await act(async () => {
+      await result.current.mutateAsync({ shot_id: 'shot-alpha', generation_id: 'gen-1', project_id: composition.projectId });
+    });
+    expect(mockPlaceGeneration).toHaveBeenCalledWith(expect.objectContaining({
+      projectSlug: composition.projectId, ownerRef: 'occurrence:occ-2', timelineRef: composition.parentDocumentId,
+    }));
+    expect(mockPlaceGeneration.mock.calls[0][0].shotId).not.toBe('shot-alpha');
+    expect(mockPlaceGeneration).toHaveBeenCalledTimes(2);
+    expect(mockPlaceGeneration.mock.calls[1][0]).toEqual(mockPlaceGeneration.mock.calls[0][0]);
+    unmount();
+    queryClient.clear();
+    release();
+    __resetSelectionStoreForTests();
+  });
+});
 
 describe('useAddImageToShot', () => {
   beforeEach(() => {

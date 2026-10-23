@@ -10,6 +10,7 @@ export interface AddImageToShotVariables {
   thumbUrl?: string;
   /** Authenticated canonical occurrence owner; absent keeps parent-only callers unchanged. */
   ownerRef?: PlaceGenerationRequest['ownerRef'];
+  timelineRef?: string;
   timelineFrame?: number | null;
   abortSignal?: AbortSignal;
   onMaterializeProgress?: (progress: number) => void;
@@ -45,6 +46,7 @@ export async function runAddImageMutation(
     shotId: shot_id,
     generationId: generation_id,
     ...(variables.ownerRef === undefined ? {} : { ownerRef: variables.ownerRef }),
+    ...(variables.timelineRef === undefined ? {} : { timelineRef: variables.timelineRef }),
     timelineFrame,
   });
 
