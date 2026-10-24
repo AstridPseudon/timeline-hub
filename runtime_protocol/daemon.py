@@ -6,10 +6,12 @@ from .dirfd import filesystem as os
 from . import platform
 from . import cancellation
 import shutil
+import sys
 import threading
 import time
 import uuid
 from datetime import datetime, timezone
+from contextlib import ExitStack
 from pathlib import Path
 
 from .auth import CredentialStore
@@ -20,6 +22,7 @@ from .door import CHAT_FILE_NAME, open_door
 from .errors import ConflictError, NotFoundError, ProtocolError
 from .server import RuntimeHTTPServer, RuntimeHandler
 from .service import RuntimeService
+from .store import realm_admission_fence
 from .util import atomic_json_write, now
 
 
@@ -94,6 +97,7 @@ class RuntimeDaemon:
         self.local_worker_inspector = local_worker_inspector
         self.local_worker_launcher = None
         self._local_worker_deferred = False
+        self._replacement_admission_fd = None
         # Local launch and remote credential control share one actor. Keep
         # their ownership transitions mutually exclusive without adding a
         # second actor or credential ledger.
@@ -232,7 +236,7 @@ class RuntimeDaemon:
     def _start(self, *, rotate_credentials=False):
         cancellation.check()
         epoch_floor = self._read_epoch_floor()
-        self.service = RuntimeService(self.root, display_name=self.display_name, realm_id=self.realm_id, support_root=self.support_root, export_root=self.export_root, reboot_executor=self.reboot_executor, reboot_allowlist=self.reboot_allowlist, runtime_epoch_floor=epoch_floor, admission_timeout=self.admission_timeout)
+        self.service = RuntimeService(self.root, display_name=self.display_name, realm_id=self.realm_id, support_root=self.support_root, export_root=self.export_root, reboot_executor=self.reboot_executor, reboot_allowlist=self.reboot_allowlist, runtime_epoch_floor=epoch_floor, admission_timeout=self.admission_timeout, _admission_fd=self._replacement_admission_fd)
         cancellation.check()
         self.service.set_readiness_callback(self._revoke_readiness)
         self.service.set_local_claim_generation_verifier(self._verify_local_claim_generation, actor=WORKER_ACTOR)
@@ -1118,7 +1122,13 @@ class RuntimeDaemon:
         moved_old = False
         moved_candidate = False
         replacement_committed = False
+        admission_custody = ExitStack()
+        active_admission = None
         try:
+            active_admission = admission_custody.enter_context(realm_admission_fence(self.root, blocking=False))
+            candidate_admission = admission_custody.enter_context(realm_admission_fence(candidate, blocking=False))
+            candidate_owner = self._acquire_offline_custody(candidate)
+            self._release_offline_custody(candidate_owner)
             validate_parent(self.root, active_identity)
             validate_parent(candidate, candidate_identity)
             first = verify_restore_candidate(candidate, directory_identity=candidate_identity)
@@ -1144,6 +1154,7 @@ class RuntimeDaemon:
             validate_parent(self.root, active_identity)
             self._write_replacement_state(state="candidate_published", candidate=candidate, superseded=superseded, retain_superseded=retain_superseded)
             self.instance_id = uuid.uuid4().hex
+            self._replacement_admission_fd = candidate_admission
             self._start(rotate_credentials=True)
             # The candidate is now serving requests. From this point onward
             # failures may affect bookkeeping or cleanup, never rollback.
@@ -1226,19 +1237,23 @@ class RuntimeDaemon:
                 ) from exc
             self.instance_id = uuid.uuid4().hex
             try:
+                self._replacement_admission_fd = active_admission
                 self._start(rotate_credentials=True)
             except Exception:
                 pass
             raise
         finally:
+            self._replacement_admission_fd = None
+            admission_custody.close()
             close_pinned(candidate_identity)
             close_pinned(active_identity)
 
-    def _acquire_offline_custody(self):
+    def _acquire_offline_custody(self, root=None):
         """Fence an active path without admitting or opening its database."""
-        if self.root.is_symlink() or not self.root.is_dir():
+        root = self.root if root is None else root
+        if root.is_symlink() or not root.is_dir():
             raise ConflictError("damaged active root must be an ordinary directory")
-        lock_path = self.root / "owner.lock"
+        lock_path = root / "owner.lock"
         if lock_path.is_symlink():
             raise ConflictError("damaged active owner lock must not be a symlink")
         handle = lock_path.open("a+")
@@ -1291,12 +1306,22 @@ class RuntimeDaemon:
         moved_old = False
         moved_candidate = False
         replacement_committed = False
+        admission_custody = ExitStack()
         try:
+            admission_custody.enter_context(realm_admission_fence(self.root, blocking=False))
+            candidate_admission = admission_custody.enter_context(realm_admission_fence(candidate, blocking=False))
+            candidate_owner = self._acquire_offline_custody(candidate)
+            self._release_offline_custody(candidate_owner)
             verify_restore_candidate(candidate, directory_identity=candidate_identity)
             custody = self._acquire_offline_custody()
             validate_parent(self.root, active_identity)
             validate_parent(candidate, candidate_identity)
             self._write_replacement_state(state="offline_verified", candidate=candidate, superseded=superseded, retain_superseded=retain_superseded)
+            if sys.platform == "win32":
+                # Directory admission now fences every opener; Windows needs
+                # the descendant owner handle closed before renaming the tree.
+                self._release_offline_custody(custody)
+                custody = None
             parent_fd = int(active_identity["_parent_fd"])
             os.rename(self.root.name, superseded.name, src_dir_fd=parent_fd, dst_dir_fd=parent_fd)
             moved_old = True
@@ -1309,6 +1334,7 @@ class RuntimeDaemon:
             self._release_offline_custody(custody)
             custody = None
             self.instance_id = uuid.uuid4().hex
+            self._replacement_admission_fd = candidate_admission
             self._start(rotate_credentials=True)
             # The candidate is now serving requests. From this point onward
             # failures may affect bookkeeping or cleanup, never rollback.
@@ -1398,6 +1424,8 @@ class RuntimeDaemon:
         finally:
             if custody is not None:
                 self._release_offline_custody(custody)
+            self._replacement_admission_fd = None
+            admission_custody.close()
             close_pinned(candidate_identity)
             close_pinned(active_identity)
 

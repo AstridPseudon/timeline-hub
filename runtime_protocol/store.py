@@ -497,6 +497,31 @@ def execution_facts_match(required, verified):
     return True
 
 
+@contextmanager
+def realm_admission_fence(root, *, blocking=True):
+    """Retain directory custody across moves without opening any descendants.
+
+    A replacement may lend the descriptor to startup while retaining the fence
+    until startup succeeds or rollback finishes. The borrower never releases it.
+    """
+    descriptor = os.open(root, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0))
+    locked = False
+    try:
+        platform.lock_file(descriptor, blocking=blocking)
+        locked = True
+        held = os.fstat(descriptor)
+        current = os.stat(root, follow_symlinks=False)
+        if not stat.S_ISDIR(current.st_mode) or (held.st_dev, held.st_ino) != (current.st_dev, current.st_ino):
+            raise RealmAdmissionError("admission fence does not match realm root")
+        yield descriptor
+    finally:
+        try:
+            if locked:
+                platform.unlock_file(descriptor)
+        finally:
+            os.close(descriptor)
+
+
 class RealmStore:
     """The sole durable writer for one realm.
 
@@ -630,6 +655,10 @@ class RealmStore:
         published = False
         root_was_present = root.exists()
         try:
+            if sys.platform == "win32":
+                # This lock follows the directory identity across publication.
+                # Openers take the same lock before touching any child files.
+                store._acquire_admission_lock()
             store._acquire_owner()
             store._open(fresh=True)
             timestamp = now()
@@ -652,31 +681,37 @@ class RealmStore:
                 os.close(staged_fd)
             parent_fd = os.open(root.parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
             if sys.platform == "win32":
-                # SQLite's Windows VFS holds non-delete-sharing file handles.
-                # Preserve owner.lock while closing SQLite across publication.
+                # Windows cannot rename a directory with open descendants,
+                # even when owner.lock was opened with delete sharing. Keep
+                # the directory admission lock while closing both descendants.
                 store.conn.close()
                 store.conn = None
+                store._release_owner()
             os.rename(staged_root.name, root.name, src_dir_fd=parent_fd, dst_dir_fd=parent_fd)
             published = True
             os.fsync(parent_fd)
-            # Keep the staged owner lock held through publication and final
-            # admission. Reopening here would create an ownership race in
-            # which another opener can acquire the just-published root before
-            # the creator's second admission completes.
+            # POSIX retains owner.lock across rename. Windows transfers custody
+            # back from the directory admission lock before admitting openers.
             store.root = root
             store.lock_path = root / "owner.lock"
             store.db_path = root / "realm.sqlite3"
             store.cas_root = root / "cas" / "sha256"
             store.staging_root = root / "staging"
             if sys.platform == "win32":
+                store._acquire_owner()
                 store._open()
             store._begin_admission_session()
+            store._release_admission_lock()
             return store
         except Exception:
             rollback_error = None
-            if sys.platform == "win32" and store.conn is not None:
-                store.conn.close()
-                store.conn = None
+            if sys.platform == "win32":
+                if store.conn is not None:
+                    store.conn.close()
+                    store.conn = None
+                # Keep admission fenced through removal, but close every child
+                # handle so Windows can remove either staged or published data.
+                store._release_owner()
             if published and parent_fd >= 0:
                 # The final name may already be visible when durability or
                 # post-publication admission fails.  Remove it below the
@@ -708,7 +743,7 @@ class RealmStore:
             if parent_fd >= 0:
                 os.close(parent_fd)
 
-    def __init__(self, root: str | Path, *, create: bool = False, acquire_owner: bool = True, admission_timeout: float = REALM_ADMISSION_TIMEOUT_SECONDS):
+    def __init__(self, root: str | Path, *, create: bool = False, acquire_owner: bool = True, admission_timeout: float = REALM_ADMISSION_TIMEOUT_SECONDS, _admission_fd=None):
         self.root = _local_realm_root(root)
         self.admission_timeout = admission_timeout
         if create:
@@ -732,7 +767,15 @@ class RealmStore:
             # persistent marker in the realm. This closes the gap between
             # discovering owner.lock and taking it: two fresh openers must not
             # both inspect/copy a database before either one becomes owner.
-            self._acquire_admission_lock()
+            if _admission_fd is None:
+                self._acquire_admission_lock()
+            # Internal replacement startup borrows its caller's fence. An
+            # ordinary opener may also have waited while its root was moved:
+            # neither may admit a different directory under the old lock.
+            held = os.fstat(self._admission_lock_file if _admission_fd is None else _admission_fd)
+            current = os.stat(self.root, follow_symlinks=False)
+            if not stat.S_ISDIR(held.st_mode) or not stat.S_ISDIR(current.st_mode) or (held.st_dev, held.st_ino) != (current.st_dev, current.st_ino):
+                raise RealmAdmissionError("admission fence does not match realm root")
             sqlite_components = [
                 self.db_path,
                 *(Path(str(self.db_path) + suffix) for suffix in ("-wal", "-shm", "-journal")),
@@ -767,7 +810,10 @@ class RealmStore:
         ``owner.lock`` cannot be used for the first inspection because
         malformed roots must fail without creating it. An advisory flock on
         the realm directory provides that short critical section while leaving
-        no marker behind. The daemon's owner.lock remains the lifetime lock.
+        no marker behind. Windows uses a named mutex keyed by directory file
+        identity, so fresh creation can retain this lock across rename while
+        closing all descendant handles. The daemon's owner.lock remains the
+        lifetime lock.
         """
         try:
             descriptor = os.open(self.root, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
@@ -864,6 +910,14 @@ class RealmStore:
             self._lock_file.close()
             self._lock_file = None
             raise OwnerBusyError("another runtime daemon owns this realm") from exc
+
+    def _release_owner(self):
+        if self._lock_file is not None:
+            try:
+                platform.unlock_file(self._lock_file.fileno())
+            finally:
+                self._lock_file.close()
+                self._lock_file = None
 
     @staticmethod
     def _copy_admission_file(source: Path, destination: Path, deadline: float) -> None:
@@ -1302,12 +1356,7 @@ class RealmStore:
                         if clean_realm_id is not None:
                             self._write_admission_state(clean=True, realm_id=clean_realm_id)
                 finally:
-                    if self._lock_file is not None:
-                        try:
-                            platform.unlock_file(self._lock_file.fileno())
-                        finally:
-                            self._lock_file.close()
-                            self._lock_file = None
+                    self._release_owner()
         finally:
             self._release_admission_lock()
 

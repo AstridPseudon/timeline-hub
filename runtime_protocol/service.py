@@ -462,7 +462,7 @@ def _durable_mutation(function):
 class RuntimeService:
     """Neutral application service composed by the daemon or an isolated test."""
 
-    def __init__(self, root, *, display_name="Workspace", realm_id=None, support_root=None, export_root=None, reboot_executor=None, reboot_allowlist=None, runtime_epoch_floor=None, admission_timeout=None):
+    def __init__(self, root, *, display_name="Workspace", realm_id=None, support_root=None, export_root=None, reboot_executor=None, reboot_allowlist=None, runtime_epoch_floor=None, admission_timeout=None, _admission_fd=None):
         configured_max = os.environ.get("RUNTIME_MAX_OBJECT_BYTES", str(OBJECT_MAX_BYTES))
         if not re.fullmatch(r"[0-9]{1,20}", configured_max):
             raise ValidationError("RUNTIME_MAX_OBJECT_BYTES must be a positive decimal integer")
@@ -474,6 +474,8 @@ class RuntimeService:
         # explicit through RealmStore.initialize; a missing path must fail
         # before schema, identity, lock, or storage roots can be created.
         store_kwargs = {}
+        if _admission_fd is not None:
+            store_kwargs["_admission_fd"] = _admission_fd
         if admission_timeout is not None:
             try:
                 admission_timeout = float(admission_timeout)

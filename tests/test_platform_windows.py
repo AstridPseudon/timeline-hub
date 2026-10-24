@@ -5,6 +5,7 @@ import ctypes
 import struct
 import subprocess
 import sys
+from types import SimpleNamespace
 
 import pytest
 
@@ -15,6 +16,36 @@ from runtime_protocol.dirfd import filesystem
 
 
 WINDOWS_ONLY = requires_windows_process_and_lock_apis
+
+
+def test_windows_directory_mutex_uses_global_user_scoped_identity(monkeypatch):
+    """All sessions for one user must contend on the same directory mutex."""
+    names = []
+
+    def create_mutex(_security, _owned, name):
+        names.append(name)
+        return 123
+
+    def wait(_handle, _timeout):
+        return 0
+
+    def close(_handle):
+        return True
+
+    monkeypatch.setattr(platform, "_kernel", lambda: SimpleNamespace(
+        CreateMutexW=create_mutex, WaitForSingleObject=wait, CloseHandle=close,
+    ))
+    monkeypatch.setattr(platform, "_directory_mutex_gates", {})
+    for user, volume, inode in [(7, 11, 13), (7, 11, 13), (8, 11, 13), (7, 12, 13), (7, 11, 14)]:
+        monkeypatch.setattr(platform, "current_user", lambda: user)
+        _handle, gate, _thread = platform._lock_windows_directory(
+            -1, SimpleNamespace(st_dev=volume, st_ino=inode), blocking=False,
+        )
+        gate.release()
+
+    assert all(name.startswith("Global\\AstridRuntime.directory.") for name in names)
+    assert names[0] == names[1]
+    assert len(set(names)) == 4
 
 
 @WINDOWS_ONLY

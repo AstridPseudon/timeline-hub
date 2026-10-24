@@ -31,6 +31,7 @@ from .cas import ContentAddressedStore
 from .catalog import _safe_path
 from .errors import ConflictError, OwnerBusyError, RealmAdmissionError, ValidationError
 from .store import (REQUIRED_SCHEMA_COLUMNS, REQUIRED_SCHEMA_TABLES, SCHEMA_VERSION, RealmStore,
+                    realm_admission_fence,
                     IDEMPOTENCY_RESULT_MARKER_PREFIX, IDEMPOTENCY_RESULT_WINDOW_SECONDS,
                     EXPIRABLE_RESULT_SQL, expired_command_result, expired_publication_result,
                     retire_terminal_specs, configured_spec_retention_days)
@@ -487,20 +488,26 @@ def _owner_fence(root: Path):
     lock_path = root / "owner.lock"
     if lock_path.is_symlink():
         raise ValidationError("owner lock must not be a symlink")
-    handle = lock_path.open("a+")
+    handle = None
     try:
         try:
-            platform.owner_only(lock_path)
-            platform.lock_file(handle.fileno(), blocking=False)
+            # Replacement can temporarily close owner.lock on Windows while
+            # retaining directory custody. Maintenance must join that fence
+            # before acquiring the lifetime owner lock, just like startup.
+            with realm_admission_fence(root, blocking=False):
+                handle = lock_path.open("a+")
+                platform.owner_only(lock_path)
+                platform.lock_file(handle.fileno(), blocking=False)
         except (BlockingIOError, OSError) as exc:
             raise OwnerBusyError("another runtime daemon owns this realm") from exc
         yield
     finally:
-        try:
-            platform.unlock_file(handle.fileno())
-        except OSError:
-            pass
-        handle.close()
+        if handle is not None:
+            try:
+                platform.unlock_file(handle.fileno())
+            except OSError:
+                pass
+            handle.close()
 
 
 
