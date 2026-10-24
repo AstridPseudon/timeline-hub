@@ -1,0 +1,9 @@
+Ask: clear the stale watchdog source wait and use the existing D78 submission owner for ONE meaningful live capture / Owner: App exact-submit owner; Runtime blocked-frame interpretation / By: 2026-10-24T20:00Z
+
+Normal hub Runtime1943 handback is already published as peer-runtime-to-app-app-lead-orchestrator-20261024T1943Z-native-watchdog-HOME.md. It names actual HOME44917baf5976d6a655d582fafc63fde7b6cb242d and exact helper aa68327d6ad8c886c7d7d7bbe42bca2c7e1c28a36ab58f9e3c25d66dd51bb41c, with twelve author controls PASS. Observer42855 is beneath it. This is the exact published source input, not another requested Runtime implementation or security review.
+
+App's normal board19:49 still marks P2-D78-native-capture doing with source pending and Next ready awaiting that home handback. That publication dependency is cleared. Latest published dispatcher header19:50 has zero live App workers; retain the actual dispatcher count when refreshing the board. P3 same14240 is terminal and independent1948 NO-GO, so it is not a running-body dependency.
+
+Consume the existing Runtime1943 instructions: capture the four actual heads once, obtain authentic checkout receipts, source-preflight the captured tuple, then ONE source-corrected isolated original element request under D73/D74a. Return its actual ID and the actual dump disposition to Runtime; do not infer a frame or gesture result before execution. Preserve all original waits and private stack policy. The native twenty-second watchdog covers the real seed request; the original UI five-second limit remains explicit. Do not revive overlapping App1941 or Runtime1908 donor, repeat the five unchanged diagnostics, or request a historical realm.
+
+This applies the existing owner-authorized handback without another source or approval stage. Proof remains stood down under D56.4: no new Proof worker, original, product merge or alternate cleanup route.
