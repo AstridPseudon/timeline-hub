@@ -563,3 +563,24 @@ def test_unknown_workflow_input_lists_valid_names(monkeypatch):
     monkeypatch.setattr(production_engine, "_canonical_bundle_value", lambda _: bundle)
     with pytest.raises(production_engine.ProductionEngineError, match="valid inputs: prompt, seed"):
         production_engine._validate_workflow_input_bindings(bundle, {"typo": "value"})
+
+
+def test_local_server_failure_has_runnable_discovery_hint(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
+    action = importlib.import_module("astrid.packs.vibecomfy.actions.run.run")
+    workflow = tmp_path / "workflow.json"
+    workflow.write_text("{}")
+    monkeypatch.setattr(
+        action, "_run_and_settle",
+        Mock(side_effect=production_engine.ProductionEngineError("missing nodes: MissingNode")),
+    )
+
+    assert action.main([
+        "run", str(workflow), "--out", str(tmp_path / "out"),
+        "--comfy-url", "http://127.0.0.1:8188",
+    ]) == 1
+
+    error = capsys.readouterr().err
+    assert "missing nodes: MissingNode" in error
+    assert "recovery: python3 -m astrid.packs.vibecomfy.local scan" in error
+    assert "astrid executors" not in error

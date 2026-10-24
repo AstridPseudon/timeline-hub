@@ -811,18 +811,20 @@ def _approve_local_server(bundle: Any, bindings: dict[str, Any], provider: Any) 
     return record
 
 
-def _local_server_bundle(resolved: Any, destination: Path, *, output_identity: str) -> Any:
+def _local_server_bundle(resolved: Any, destination: Path, *, output_identity: str | None = None) -> Any:
     """Derive attempt-owned image bindings and fresh output filenames.
 
     A seedless graph can otherwise reuse SaveImage's cached result from an
     earlier task. Keep the user's prefix, adding an attempt namespace in a
     private canonical revision; the saved workflow remains unchanged.
+    Without an output identity, prepare only image bindings before preflight.
     """
     from vibecomfy.security.provenance import Provenance
     from vibecomfy.workflow_bundle import emit_bundle_with_candidate, load_bundle
     from astrid.packs.vibecomfy.local_server import validate_identity
 
-    validate_identity(output_identity)
+    if output_identity is not None:
+        validate_identity(output_identity)
     bundle = _canonical_bundle_value(resolved)
     workflow = bundle.workflow.clone()
     changed = False
@@ -843,7 +845,7 @@ def _local_server_bundle(resolved: Any, destination: Path, *, output_identity: s
     for output in workflow.outputs:
         node = workflow.nodes[output.node_id]
         prefix = node.inputs.get("filename_prefix", node.widgets.get("filename_prefix"))
-        if isinstance(prefix, str) and prefix:
+        if output_identity is not None and isinstance(prefix, str) and prefix:
             fields = node.inputs if "filename_prefix" in node.inputs else node.widgets
             fields["filename_prefix"] = f"{prefix}_astrid_{output_identity}"
             changed = True
@@ -893,6 +895,11 @@ def _run_local_server(
         values["attempt_id"] = attempt_identity
     config = SessionConfig.from_dict(values)
     provider = _local_server_preflight(bundle, run_inputs, url, destination)
+    # Unknown connected classes may not survive a canonical rewrite. Report
+    # live dependency gaps before deriving the attempt's private save prefixes.
+    bundle = _local_server_bundle(
+        bundle, destination, output_identity=attempt_identity or task_identity,
+    )
     bindings = dict(run_inputs or {})
     for name, value in bindings.items():
         spec = bundle.workflow.inputs[name]
@@ -1157,9 +1164,7 @@ def run_workflow_path(
             raise ProductionEngineError("workflow execution identity changed before launch")
     resolved = loaded.resolved
     if profile_id == "local_server":
-        resolved = _local_server_bundle(
-            resolved, destination_path, output_identity=attempt_identity or task_identity,
-        )
+        resolved = _local_server_bundle(resolved, destination_path)
     run_inputs = _validate_workflow_input_bindings(resolved, workflow_input_bindings)
     if profile_id == "local_server":
         bundle = _canonical_bundle_value(resolved)

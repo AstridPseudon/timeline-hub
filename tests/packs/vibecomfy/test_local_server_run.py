@@ -168,6 +168,31 @@ def test_missing_live_node_fails_before_queueing(comfy, tmp_path):
     assert not comfy.prompts
 
 
+def test_unknown_connected_node_fails_live_preflight_before_staging(comfy, tmp_path):
+    workflow = _workflow()
+    workflow["nodes"][0].update(
+        type="AstridDefinitelyMissingNode",
+        properties={"Node name for S&R": "AstridDefinitelyMissingNode"},
+        widgets_values=[],
+    )
+    comfy.workflow.write_text(json.dumps(workflow))
+    original_workflow = comfy.workflow.read_bytes()
+    assert "AstridDefinitelyMissingNode" not in comfy.schema
+
+    with pytest.raises(
+        production_engine.ProductionEngineError,
+        match=r"missing nodes: AstridDefinitelyMissingNode.*Missing nodes and models",
+    ):
+        production_engine.run_workflow_result_path(
+            comfy.workflow, tmp_path / "attempt" / "outputs", task_identity="task-1",
+            comfy_url=comfy.url, comfy_output_dir=str(comfy.output), profile_id="local_server",
+        )
+
+    assert not comfy.prompts
+    assert not [call for call in comfy.calls if call[0] == "POST"]
+    assert comfy.workflow.read_bytes() == original_workflow
+
+
 @pytest.mark.parametrize("choices", [[], ["other.safetensors"]])
 def test_missing_model_fails_before_queueing(comfy, tmp_path, choices):
     comfy.schema["SeedImage"]["input"]["required"]["ckpt_name"] = [choices]
