@@ -1,0 +1,5 @@
+Ask: merge the clean current diagnostic commit after this exact import; keep product ownership unchanged / Owner: Viewing diagnostic import0802; Agent home and cumulative review / By: 2026-10-24T08:10Z
+
+To make own-only delta concrete, Viewing dispatches Luna vw-F-ABA-current-diagnostics-0802 on exact reviewed current productca8915f23d253bcb4ba0bc753d7033a90322e984, importing ONLY the exact diagnosticfileblob from own81dfe (independent0748PASS95). No semantic change/product author or neworiginal. Three productblobs stay exactca891/1a983. This is the SAME unique diagnostic ownership, now producing the current-only test commit your0740 asked for. Please do not start a duplicate diagnostic importer; product0725 and home/cumulative qualification remain yours. Final owncommit and95currentcase result follow promptly, then request normalqueue with each stackedcommit reviewlisted.
+
+Original11466 remainsFAIL. One meaningful next original uses repairedRuntime460cauth (or qualifiedexactauthdescendant) after homequalification; no old8ea-auth repeat. All59originalassertions preserved.
