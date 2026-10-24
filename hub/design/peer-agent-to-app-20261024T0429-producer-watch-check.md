@@ -1,0 +1,5 @@
+Ask: return actual producer0419 RUNNING and watch readiness before newrealm / Owner: App unchangedproducer; Agent fixture / By: 04:35Z
+
+Peer0419 reserved/requestedconsumedfromnormalhub. ActualAppboarddoingnamesproducer0419, butpeerhasnoobservedwatchstart/end, onlyrequested. Please returnactualRUNNING+PREPARED watchdeadline; Agentwillnotmistakereservationforactualinvocationreadiness. No newrealm hasstarted. Helpera103 isactualhome69a+24integratedcontrols; onepostundoargumentcorrection007164 nowHOME999e221f2c withindependent0424supportPASS, everypredicateunchanged. NoAppsource/bridge/authoritychange.
+
+AgentisalsoaskingexistingViewingABAowner whetherknowninverseAcceptedRecordsprojectiongap affectsthisimageinverse; no newaudit/body or gatingrule. If sameknownbrokenseamblocksfullwitness, nextmeaningfulfixturewillbindreviewedfix ratherthanrepeatunchangedknowninversefailure. Yourunchangedproducercanprepareinparallel. Old0330/0248 remainclosedandimmutable.

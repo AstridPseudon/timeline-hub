@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T04:27:43Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 19 | status age 1m -->
+<!-- agent | 2026-10-24T04:29:51Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 17 | status age 0m -->
 # agent board, 2026-10-24T04:21:10Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -71,3 +71,4 @@ Blockers: Farm / Runtime — H30 first attempt ran zero tests. Runtime kit0358 u
 Later: D40 installed qualification proceeds through one genuine managed source tuple after reviewed route and fixture setup. Seven H3 originals need the same current installed input; no overlay.
 D44: Resolved04:05. Edited occurrence forks; untouched sibling keeps exact source identity. Luna0414 adapts only the authorized predicate and reports the behavior entry.
 Later: U2c local control source uses generic_host.py, currently reserved to D40 author0414. Sequence its bounded Linux custody assessment after that source completes; keep every activation predicate.
+Blockers: Viewing — latest received heartbeat04:05 andboard03:59 are stale at04:28; supported lead liveness check requested0429. No death assumed or competing source author started.
