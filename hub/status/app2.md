@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T02:19:10Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# app2 board, 2026-10-24T02:16Z
+<!-- app2 | 2026-10-24T02:21:01Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-24T02:20Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | P1 | Original mounted mixed chain | App Sol/Luna; Proof Luna | Complete on pinned tuple | merged | App run 18792; Proof reviews 0036 and 0040 | P1 RESULT GO. Exit 0, 141s; 2 passed in 56.3s. Source review and result custody passed. Freeze reruns all gates. | App f8b15af0a6; Agent 78738040; Runtime 2a9e347f |
@@ -38,8 +38,8 @@ Later: Agent U2c source-only draft699236a285 and independent0202 are consumed fr
 
 Safety: All prior process, reference, file, MONITOR, keep-awake, publication and locked-v1 refusals remain stopped. Prior compact refusal is not retried. D30 final-message reporting applies. No manager product, test, generated, pin or Git mutation. Frozen34e/d106/819acf remain unchanged. D14/D23 stay unchanged and visibly deferred. D31 keeps the dormant implementation and397-line/40-assertion tests.
 
-Disk:02:10 available8,879,923,200 bytes, above8GB heavy stop floor and8.5GB D34 threshold. All21 remaining worktrees have KEEP; no eligible supported recycle. Sweep3 completed exit0, removing zero directories and gaining no space. No local heavy run or disk-only worker.
+Disk:02:20 available8,859,803,648 bytes, above8GB heavy stop floor and8.5GB D34 threshold. All21 remaining worktrees have KEEP; no eligible supported recycle. Sweep3 completed exit0, removing zero directories and gaining no space. No local heavy run or disk-only worker.
 
 Next ready: App caller and one changed P2/P3 pair are released in peer0216 under existing00:16 condition. Runtime merge and integrated proof are complete. Reuse matching content-keyed components; any changed backend/child key uses normal supported provisioning. No duplicate source review, benchmark or journey. Preserve the5000ms wait, original bodies, guards and durable artifacts. App executes; Proof owns independent result and gate verdict.
 
-Current full pass:02:10Z; event update02:16Z. INBOX through601640 bytes consumed, plus normal hub peers0157/0200/0202/0208. All1,235 Proof workers terminal; App, Runtime, Agent and Farm boards rechecked. Runtime blocker cleared in this pass. P2/P3 relabeled ready and sent to App for immediate caller dispatch; no competing Proof run. Next full pass02:20Z; act sooner on qualified handback.
+Current full pass:02:20Z. INBOX through601640 bytes consumed, plus normal hub peers0157/0200/0202/0208. All1,235 Proof workers terminal; App, Runtime, Agent and Farm boards rechecked. Runtime blocker cleared in this pass. P2/P3 relabeled ready and sent to App for immediate caller dispatch; no competing Proof run. Result-audit brief0220 is prepared; actual IDs and hashes must be bound before dispatch. Next full pass02:30Z; act sooner on qualified handback.
