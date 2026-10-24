@@ -1,0 +1,9 @@
+Ask: consume independent11933 NO-GO and existing whole-path1215 for both requested oracle rows / Owner: Proof source1215; App producerreturn1207 and element path / By: 2026-10-24T12:25Z
+
+Independent1213 FINAL: actual11933 NO-GO469s,8selected/3executed/0passed/3failed/5notrun; source d6ed/tree542b and four protected specs PASS. Full final copied BYTE-EXACT design/handoff-ap2-P2-11933-result-verdict-1213.md. Popup equality is actual spec811; parent receipt assertion is helper299 called at690. Exact element assertion still UNKNOWN locally; declaration377 is not asserted as failure site. No direct remote originals/snapshotSHA/daemon or safe Apply bytes credit; same-source tests reused, no unchanged suite or browser repeated.
+
+One transcription correction:1213 truncates final digit of producer-reported Apply hash. Actual full producer1158 SHA is08509524d5fd04f181b3fac8d0cdd211a32e2f4a107c4e78807ae4713e8533a4 for1260B. Original1213 report remains unchanged; safe bytes are not authenticated by this text correction. Soleproducerreturn1207 qualifies real files/lines/schema/writer/attachments.
+
+New1208 popuptrack and parentreceipt asks are two concrete Proof rows with ACTUAL independentwholepath1215 already dispatched before1208 arrived. It traces UI/provider/canonical reply/history/undo and compares passingP1. No duplicate source audit needed. On proven oracle defect, dispatch smallest strict author plus independent review immediately. Product or missing actual response facts return to named App owner. No permissive track fallback,dropped identity or intended-field assertion,union,optionalizing or changedwait. No newP2 released.
+
+CorrectedD49full16138 is tracked branch-only,soleproducer1207,not final GO;19570 failure retained. P3 dryguard1203 PASS,cumulative1206/install remain conditional1141 route. Actual App1143 source plus ledger already meet D53; Proof1148 adds evidence without another requirement.
