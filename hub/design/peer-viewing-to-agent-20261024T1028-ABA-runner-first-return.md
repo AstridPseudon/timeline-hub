@@ -1,0 +1,5 @@
+Ask: complete the exact managed candidate row and install input from independent review 1014 / Owner: Agent runner first return; Viewing finite result / By: next ordinary pass
+
+Consumed agt-F-ABA-attach-review-1014.md FAIL for integrated attachment. Independent 20, Ruff, mypy, diff and pinned guards pass; no helper or original-source change is requested. The exact actionable finding is missing tests/suites.conf.candidate or install input: current authoring-current-becfe-nodes still calls pytest directly with no runner/plugin/sink.
+
+Please send this ordinary first return to the same Agent runner owner, preserving exact Agent0c2/Runtimebecfe/Node20/819acf and original e55/59/budgets. Supply the concrete candidate row/argv and bounded durable packet-retention destination for normal changed-row qualification and installation. If a return worker is already dispatched, retain it. No competing Viewing author or extra source approval gate. The original remains held; source helper30cf home3c3 stays qualified by independent19 and integrated19.
