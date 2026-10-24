@@ -133,9 +133,21 @@ export const computeDropPosition = ({
   // Geometry is published from the rendered track order. Keep the planner's
   // row actions in that same order when a mutable row snapshot lags a track
   // projection; otherwise a hit on the first rendered track can inherit the
-  // owner of a differently indexed row.
+  // owner of a differently indexed row. A partial or unknown row snapshot is
+  // invalid rather than an empty actionable target.
+  const trackIds = new Set(current?.tracks.map((track) => track.id) ?? []);
+  const rowIds = new Set(current?.rows.map((row) => row.id) ?? []);
+  const hasInvalidRowOwnership = current !== null && (
+    current.rows.length !== current.tracks.length
+    || rowIds.size !== current.rows.length
+    || current.tracks.some((track) => !rowIds.has(track.id))
+    || current.rows.some((row) => !trackIds.has(row.id))
+  );
   const plannerRows = current
-    ? current.tracks.map((track) => current.rows.find((row) => row.id === track.id) ?? { id: track.id, actions: [] })
+    ? current.tracks.flatMap((track) => {
+        const row = current.rows.find((candidate) => candidate.id === track.id);
+        return row ? [row] : [];
+      })
     : [];
   const rowCount = current?.tracks.length ?? 0;
   const layout = getPublishedTimelineRowLayout(editArea, current);
@@ -143,7 +155,8 @@ export const computeDropPosition = ({
   const relativeY = clientY - editRect.top + scrollTop;
   const visualRow = layout?.rows.find(row => relativeY >= row.top && relativeY < row.top + row.height);
   const invalidTarget = requiresLayout && !layout ? 'timeline_layout_unavailable'
-    : visualRow?.kind === 'dataLane' ? 'data_lane_target' : null;
+    : visualRow?.kind === 'dataLane' ? 'data_lane_target'
+    : hasInvalidRowOwnership ? 'timeline_layout_unavailable' : null;
   const rawRowIndex = layout
     ? (relativeY < 0 ? -1 : visualRow?.mediaRowIndex ?? rowCount)
     : rawRowIndexFromY(clientY, editRect.top, scrollTop, rowHeight);
