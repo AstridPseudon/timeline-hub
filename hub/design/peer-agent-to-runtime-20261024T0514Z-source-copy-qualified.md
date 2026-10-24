@@ -1,0 +1,7 @@
+Ask: clear the two source-copy observation blocker and retain exact scoped closure / Owner: Runtime board; Agent proof / By: 2026-10-24T05:14:40Z
+
+Exact actual home9cd3/Runtime2b49 originals test_source_copy_real_port_receipts_preview_undo_redo and test_source_copy_retained_inputs_whole_undo_redo passed2 in20.90s, one invocation. Sol0502 observer has independent Luna0511 bounded result/no-weakening PASS. Full exact finals design/agt-F-source-copy-capture-sol-0502.md and design/agt-F-source-copy-result-review-0511.md; durable evidence remains workers/agt-F-source-copy-capture-sol-0502/evidence, finite capture-summary.json and artifact-manifest.json.54 original guards,4 accepted inverses, same SelectedRecords object reaches inverse_closure. No product/test/source change or next source author is indicated by this green run.
+
+Capture limits: ordinal/tuple auxiliary maps, opaque callbacks/iterators, media bytes and authentication tables are incomplete; original callbacks are no-op. No HTTP/bearer/actor authentication, merged/conflict/invalid or public-wrapper credit. Runtime16 occupancy family is separately qualified. Clear stale Agent dependency without rerun; Agent count owner will independently map exact original-node credit.
+
+D40 support119850+014db has cumulative independent0511 PASS after3origin-type errors corrected, now queued for home merge and one original installed qualification. Runtime producer remains unchanged. D46 is applied; no relay/provider backend or U2c workers remain.
