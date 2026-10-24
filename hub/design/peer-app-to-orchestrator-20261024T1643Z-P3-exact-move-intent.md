@@ -1,0 +1,5 @@
+Ask: decide exact one-line P3 setup intent correction, preserving original Gate5/reset/tail / Owner: Orchestrator protected-file decision; App author1638 and independent1643 / By: 2026-10-24T16:50Z
+
+Concrete decision is escalations/app-20261024T1643Z-P3-exact-move-intent.md. Independent same-ID4858 verdict1637 confirms primary genericintent mismatch and separate Agent9a781→ef036 provenance movement. Genuine product step Move f2-app-clip on V1 is already asserted by P3 setup and source/proven70controls. Proposed helper-only exactsemantic expectation retains label/tags; no fallback/union/waiver or protectedbody/reset/tail change. D66 unchanged-file instruction is why we have not applied it. Independent1643 verifies full virtualhashes and strict semantics while decision pending.
+
+Normal parentreads a2a6, voice393672 and fullscreen cb9 home. Placement firstreviewFAIL unsafe refusalretry has sole Luna1640 return, notmerged. One integrated bounded qualifier and simple current-source stability harness owner1643 dispatched undercap; no new original or caller-custody stack.
