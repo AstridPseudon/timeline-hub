@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T15:16:56Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 0m -->
-# runtime board, 2026-10-24T15:16:12Z
+<!-- main | 2026-10-24T15:20:03Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 2m -->
+# runtime board, 2026-10-24T15:17:55Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -92,8 +92,9 @@
 | R0-D61-history-wire | Generate approved optional history ABI field | Luna | Joined authenticated producer | gated:producer | Author1447; independent1454 PASS | Source6e8:148 retained positives plus16 corrected recorded-response PASS; no new static diagnostics. [Review](../../design/rt-R0-D61-wire-review-1454.md) | 6e8ae0142 |
 | R-recorder-native-custody | Review eight native omission captures | Luna | D62 source scope decided | merged | Review1445 PASS source cause | Eight actual accepts verified. D62 defers submit completeness; no new custody seam. [Review](../../design/rt-R-recorder-native-custody-review-1445.md) | Evidence only |
 | R-recorder-abi-security | Review exact coverage authority design | Luna | Design assessment complete | merged | Luna1422 design only | Validated request can select regime; exact full coverage must be proved. Final source review remains required. [Design](../../design/rt-R-recorder-abi-security-design-1422.md) | Base438 source facts |
+| FREEZE-App-compatibility | Qualify accepted installer schema | App Luna | Current actual full8158 | blocked:app | app-F-install-schema-skew-1507 | Current8158:19256PASS/1FAIL at installer schema guard; Node stage unknown. Exact upstream comparison and supported repair App-owned. | App be98 / Runtime e68 |
 | FREEZE-current-P2-P3 | Qualify refreshed original App journeys | App Sol / Luna | Actual service launch repair | blocked:app | App1437; whole path1437; verdicts1438 | Actual12541/1689 FAIL at first environment guard; all original bodies NOTRUN. No Runtime/provider cause inferred. | App be98 / Agent5492 / Runtime e68 |
-| FREEZE | Reach final tuple cut | Runtime manager | D59 cut and D61 producer | doing | Runtime1410; Agent/App owners | Runtime1 required D61 task; Agent6 tracked core; App9 gates. Confirmed regressions0. Cut requires current heads0/0 plus P2/P3 PASS. | Runtime e68 |
+| FREEZE | Reach final tuple cut | Runtime manager | D59 cut and D61 producer | doing | Runtime1410; Agent/App owners | Runtime3 tracked producer/forward cases; Agent7 core; App10 including installer compatibility. Confirmed regressions0. Cut requires current heads0/0 plus P2/P3 PASS. | Runtime e68 |
 | F-final | Main delivery build and ZIP | Luna | D59 cut and final proofs | doing | Builder1233; docs1229; service1244 | Builder and v2 prose installed. Durable service helper repair active; live-main refresh and final build wait qualified cut and proofs. | No delivery artifact |
 | F-final-builder | Put verifier clones in TMPDIR | Luna / Luna | Exact installed proof complete | merged | Review1229; installed1233 PASS | f25d atomically installed0755, old script backed up. Installed smoke and integrity checks passed; no real build. | f25dfab1 installed |
 | F-final-docs | Refresh v1 delivery prose | Luna | Installed hashes and rendering passed | merged | Author1226; install1229 PASS | Two exact v2 documents installed atomically; predecessors backed up. Final tuple, gates and ZIP remain pending. | ef414 / 403384 installed |
@@ -124,7 +125,7 @@
 
 Runtime full: Zero of the 36 original failures remain open at their retained integrated scopes. This is historical scoped accounting, not a new full-suite PASS. Runtime producer becfe6db88b2cc034dba3fafa6c050117cdf2b06 is merged and independently qualified after 409 targeted passes. Loss of its temporary JUnit remains disclosed. [Producer review](../../design/runtime-freeze-result-review-0727.md).
 
-FREEZE under D59: D60 final Runtime upstream d4f496 merged as home e68; integrated qualification passed 448 cases; original D39 bytes unchanged; Agent/App U/D39 home. Candidate P2/P3 cycles use current integration while unrelated Agent repairs continue. Cut requires every active lane0core/0regressions plus P2/P3 PASS on those heads. Runtime has D62 producer plus two forward ABI1 cases open and 0 confirmed regressions; retained originals remain 0 open. Agent current board tracks7 core: four fork failures, one managed D13 unknown, and two forward-provider originals. Proposal inverse is actual-home13 PASS. Refreshed acf/e68 retains152 requiredPASS; home equivalence1415 active. Scope159core/117noncore; categories env78/deferred1/unproven197, with0proven regressions. App reports 9 gate cases unqualified; actual refreshed-tree proof closes 36 Node regressions, with 2 SSH environment failures retained. No cut or final gate PASS. D51 delivery-time live-main refresh per repo remains.
+FREEZE under D59: D60 final Runtime upstream d4f496 merged as home e68; integrated qualification passed 448 cases; original D39 bytes unchanged; Agent/App U/D39 home. Candidate P2/P3 cycles use current integration while unrelated Agent repairs continue. Cut requires every active lane0core/0regressions plus P2/P3 PASS on those heads. Runtime has D62 producer plus two forward ABI1 cases open and 0 confirmed regressions; retained originals remain 0 open. Agent current board tracks7 core: four fork failures, one managed D13 unknown, and two forward-provider originals. Proposal inverse is actual-home13 PASS. Refreshed acf/e68 retains152 requiredPASS; home equivalence1415 active. Scope159core/117noncore; categories env78/deferred1/unproven197, with0proven regressions. App reports10 core cases open:9 gate cases plus1 installer compatibility; actual refreshed-tree proof closes 36 Node regressions, with 2 SSH environment failures retained. No cut or final gate PASS. D51 delivery-time live-main refresh per repo remains.
 
 Venues: P1/P2/P3 on App service with App verdicts; P4 on Agent service; P5 and Composition on main. Product change in X reruns P1–P5 plus X core suite; harness/test change reruns the affected gate. Main P5 and Composition bench preflights1244 are active on existing qualified inputs. Farm/schema access stay stopped, with no new child or alternate denied-source route. Viewing stands down. All8 original P2 gestures remain core. Runtime owns final build and ZIP after cut and required proofs.
 
@@ -148,7 +149,7 @@ KIT CHANGE: delivery-build f25dfab1 installed and qualified. Final service3309e3
 Blockers: Runtime — exact joined producere02f committed; independent security1511 and full paired union pending. Normal merge, consumer adoption and current central HTTP proof follow PASS.
 Blockers: D61 consumers — old e68 rebind complete on Agent5492/Appbe98. New additive history producer needs Runtime source/security PASS before normal D39 adoption; App current cycles continue.
 Blockers: Final delivery — D59 cut requires every active lane0core/0regressions plus current P2/P3 PASS, then required final proofs and D51 live-main refresh.
-Blockers: App — current12541/1689 stop at missing external launch inputs before bodies. App Sol1437 and independent wholepath1437 own actual service-prefix repair; verdict1438 retains NOTRUN.
+Blockers: App —10 core open. Current12541/1689 launch-onlyFAIL:Sol1437 and verdict1438. Full8158 has installer schema failure:Luna1507,19256PASS/1FAIL; Node unknown.
 Blockers: Agent — tracks7 core: four D61 fork originals, D13 input unknown, two forward-created originals. Proposal inverse actual-home13 PASS; D63 accounting is Agent-owned.
 Next ready: Join D62 accepted-mode source, forward-created auth and generated wire on author completion; one cumulative security review, normal merge and exact integrated proof, then D39 consumer adoption.
 
@@ -158,7 +159,7 @@ Disk: About8.5GB free, above main8GB heavy floor. Five old v1 trees refused recy
 
 Pass 2026-10-24T14:34:59Z: INBOX consumed through Agent1425. Agent consumer d373 has author249+17+46+134 PASS, independent security/current port active; producer qualification still required. Agent tracks6 core and App9 gates. Runtime Sol1422 runs targeted controls; final gates remain unqualified.
 
-live 1 / cap 4; ready-undispatched 0. Copied dispatcher15:07:38Z: live1 Sol0/Luna1. Proof preparation1512 queued after this snapshot; security brief ready for committed joined source.
+live 2 / cap 4; ready-undispatched 0. Copied dispatcher15:16:56Z reports2 Luna/0 Sol. Security1511 and proof-return1517 active; source merge waits actual security PASS.
 
 Sol exceptions: Both1450 source authors finished. Producer custody and forward R1/R2 allocation/reservation authentication justified Sol. Current mechanical join1503 and final independent security use Luna.
 
@@ -183,3 +184,5 @@ Pass 2026-10-24T15:05:32Z: Both source authors finished; exact finals published.
 Pass 2026-10-24T15:10:59Z: PLAN, common rules, current header D62/D63 and peer boards consumed. Join1503 is active in static checks; independent security brief1511 ready for its committed head. Independent proof preparation1512 dispatched. No new ready source row waiting. Current App8158 remains unique; current P2/P3 are preflight FAIL with all originals NOTRUN. No new clean finished Runtime tree exists; historical refused cleanup targets stay stopped.
 
 Pass 2026-10-24T15:16:12Z: Joined sourcee02f finished; dispatched independent Luna security1511 immediately. Preserved411PASS/1 old-consumerFAIL, exact9460 synthetic ABI1/2PASS and all source/blob/canonical checks. Preparation1512 first-return1517 corrects exact Runtime lock authority, request/wait mechanics and unique XML custody; no body rerun or live registry mutation.
+
+Pass 2026-10-24T15:17:55Z: New App1508 intake became FREEZE-App-compatibility row with actual owner1507 this pass. Current App8158 terminalFAIL19256PASS/1FAIL schema acceptance; Node stage unknown. No Runtime product cause or regression classification inferred. D62 cumulative security1511 and proof packet1517 continue independently.
