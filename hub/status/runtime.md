@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T22:53:47Z | dispatcher heartbeat 11s | live 3 (sol 1, luna 2, other 0) | busy30 10 | status age 2m -->
-# runtime board, 2026-10-24T22:51:20Z
+<!-- main | 2026-10-24T22:56:53Z | dispatcher heartbeat 0s | live 3 (sol 0, luna 3, other 0) | busy30 10 | status age 0m -->
+# runtime board, 2026-10-24T22:55:27Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -190,12 +190,12 @@
 
 | F-final-upstream-installer | Keep fresh upstream installer tests | Luna | Author checklist checks passed | merged | rt-F-final-upstream-installer-2216 | Exact 08e6 object and paths verified; 92 targets and guards preserved. [Report](../../design/runtime-final-upstream-installer-2216.md) | Private checklist only |
 
-| F-final-rehearsal | Rehearse fresh upstream delivery | Luna | Critical timing and App priority | gated:critical-capacity | rt-F-final-rehearsal-2219 BLOCKED | App shallow-parent traversal stopped staging. No ZIP. Private input fix resumes after critical sample; raw temp loss disclosed. | Source unchanged |
-| F-final-matrix | Join exact Agent venue handoff | Luna | Agent2236 handoff complete | doing | rt-F-matrix-Agent-2252 | Private ten-venue runner consumes exact current five versus final three selector inputs. Pending tuple and render stay explicit. No install or body. | Private candidate |
+| F-final-rehearsal | Repair exact shallow source input | Luna | Heavy rehearsal waits disk and main | doing | rt-F-rehearsal-input-2257 | Source-only continuation; fixes existing private callable input before next build. Original exit2 retained; no ZIP or final credit. | Private candidate |
+| F-final-matrix | Join exact Agent venue handoff | Luna | Durable author controls passed | merged | rt-F-matrix-Agent-2252 PASS | Ten venues and final three P4 selectors verified; exact inherited hashes, stub once/poison zero, pending refuses. [Report](../../design/runtime-final-matrix-Agent-2252.md) | Private candidate only |
 
 | P2-spare-venue | Run four assigned main diagnostics | Luna / main service | Exact pinned package resolution | doing | rt-P2-main-dependency-2250 | Node and collection blockers resolved; build stopped before readiness or gestures. Parent, SWAP, single and bulk remain main exclusive. | No original result yet |
 
-| P4-D84a-distinct | Remove recursive history assembly | HARD Sol | Security review after source return | doing | rt-R2-fresh-assembly-sol-2240 | Old control repeats graph nodes; candidate control passes. Source and mutation tests active. No security release or original45s credit. | Runtime732 base |
+| P4-D84a-distinct | Review fresh-history assembly repair | Sol / independent Luna | Candidate final source qualified | review | Author2240; security2255 | Required193 and neighbors192 PASS; finiteN8 checks128 to8. Independent security and actual merge pending. [Author](../../design/runtime-R2-fresh-assembly-author-2255.md) | Candidatebad9ce1d1 |
 
 | P2-popup-digest | Attribute accepted popup digest mismatch | App Luna | Actual5083 retained response | blocked:app | app-P2-popup-5083-digest-source-2233 | Accepted response reaches strict guards then canonical digest equality fails. App owns source attribution; no Runtime witness returned yet. | Appbceb / Runtime732 |
 
@@ -209,14 +209,16 @@ Blockers: Runtime P4 — Sol2240 fixes recursive assembly before proof lookup, m
 Blockers: App P2 — element7131 pending observation remains open. Popup5083 reaches acceptedHTTP200 and strict receipt guards, then digest equality fails; App2239 reviews exact raw numeric hashing correction. App owns asset/placement; main owns parent/SWAP/single/bulk.
 Blockers: Main profile — Luna2250 resolves existing pinned Composition package;2238 exposed shared0.0.2 missing animations export before any original. No safety refusal or product finding. [Report](../../design/runtime-main-profile-2238.md).
 Blockers: Final cut — D59 requires all lanes core0/regressions0, final pinned P1–P5/core, D69 and genuine installed render. Private final candidates remain uninstalled. Rehearsal retry waits heavy8.5GB threshold and critical priority.
-Next ready: Security review immediately when2240 returns. Luna2252 now joins Agent2236 handoff into private runner; final tuple remains pending.
+Next ready: Security review immediately when2240 returns. Matrix2252 is complete; rehearsal2257 repairs private input only. Final tuple remains pending.
 
 Venues: App P1/P2/P3 and final P2 tour; Agent P4; main P5/Composition. Spare main four diagnostics use fixedbceb/039f/732/635f only. D73 captures tuple once, genuine checkout receipts and preflight precede body. Newer heads do not invalidate an in-flight run.
 Delivery: Runtime merge, Agent merge, authentic App manifest command with schema digest equality, App merge. D65/D67/D72 docs installed. D77 render and D62 submit-completeness known gap remain explicit.
 Later: E1/E3, AgentE2 and D79 paused until ZIP. D42 cross-request memo held; V4 cut, D14/D23 deferred; unsafe D34 cleanup held. D56 Farm/schema access stopped. All historical safety/access/cleanup/process refusals remain stopped.
 Disk: 8145801216 available bytes at last read; cap4 by D74 GB thresholds; reserved security slot remains. No ended clean non-KEEP Runtime worktree eligible. Guarded routine maintenance follows existing tools; no historical refused target retry.
 
-live 3 / cap 4; ready-undispatched 0. HARD Sol2240 owns history authorization assembly; Luna2250 owns main profile/four diagnostics; Luna2252 owns finite Agent matrix join. One security slot reserved.
+live 3 / cap 4; ready-undispatched 0. Sol2240 done; Luna2255 owns final security and normal apply. Luna2250 owns main diagnostics; Luna2257 repairs rehearsal input only; matrix2252 complete. No other Sol or ready critical row.
 Pass 2026-10-24T22:50:16Z: Read PLAN/common, header through H49, inbox through605296 bytes, App/Agent actual boards and dispatcher returns. Consumed2238 setup result and dispatched2250 immediately. Published exact report and peer2250. Actual Agent7c48 four R2 closure retained; no stale Agent input blocker. No duplicate original, product edits by manager or denied route.
 
 Intake 2026-10-24T22:51:20Z: consumed inbox through605296 bytes. App2240 delayed main-READY note is already fulfilled by2232/2238/2250; no stale App need gate. Agent2242 handoff dispatched immediately to2252; no registry/body. No new source release.
+
+Pass 2026-10-24T22:55:27Z: author2240 finalbad9 consumed and security2255 dispatched immediately. Preliminary source-only review is retained honestly; final source and test attacks now independently qualified in2255. Guarded sweep3 removed0, compact packed0/gzipped0. No eligible non-KEEP Runtime tree.
