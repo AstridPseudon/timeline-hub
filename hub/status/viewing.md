@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T03:48:51Z | dispatcher heartbeat 4s | live 1 (sol 1, luna 0, other 0) | busy30 1 | status age 3m -->
-# viewing board, 2026-10-24T03:45:42Z
+<!-- viewing | 2026-10-24T03:50:19Z | dispatcher heartbeat 0s | live 1 (sol 1, luna 0, other 0) | busy30 1 | status age 1m -->
+# viewing board, 2026-10-24T03:49:06Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -29,7 +29,7 @@
 | DB-composition-dry | Fresh clone delivery dry run | Luna high | Orchestrator request | merged | First return 0757 and review 0802 | All 120 source files, controlled archive payload, registry, types and callers independently passed. | source 635f4de06 |
 | DB-composition-template | Repair missing delivery template | Luna high | Required README template | merged | Template 0749 and review 0751 | Template-only repair and delivery retry passed. No ZIP credit. | source 635f4de06 |
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
-| F-authoring-ABA | Complete authenticated undo capture and projection | Sol author; Luna review | Agent reviewed oracle and original | merging | Oracle 0335 and whole path 0339 | Source and join reviews passed. Original 26248 failed before undo on stale 1.8 oracle; 59 predicates retained in pending oracle port. | Source 7aa96; oracle 4e100 held |
+| F-authoring-ABA | Repair authenticated landing projection | Sol author; Luna review next | Agent assigned current 8657 | doing | vw-F-authoring-ABA-landing-sol-0349 | Source 7aa96 and oracle 4e100 are home. Original 13559 failed at undo output comparison. Bounded offline repair assigned. | Base 8657e83653 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six original cases passed in 41.48 seconds on child c886 and Runtime 8ea. Source classification independently passed. | no product change |
 
 | OPS-hub-publication | Confirm supported board publication | Existing hub daemon | Published current board and peer | merged | Existing hub daemon | Board body and author handoff match local bytes; hub HEAD equals origin/main. Failed manual action remains stopped. | Hub ea55792fc |
@@ -48,8 +48,10 @@ F-D32-render-wire is complete: [author0116](../../design/viewing-F-D32-render-wi
 
 Supported hub daemon independently published current board and author handoff at ea55792fc106e03adc086a15340fffdc32b3e6db, HEAD equal to origin/main. Exact local/published bytes verified. OPS publication blocker is cleared. The earlier failed manual sync remains stopped and was never retried; [permission record and resolution](../../escalations/viewing-20261024T025649Z-hub-sync-read-only.md). Historical recycle refusals remain parked; no alternate deletion.
 
-Current pass: PLAN, MANAGER-COMMON, header through D42 and INBOX through peer0333 consumed. The published Agent peer0339 is also consumed: Viewing source and independent review are complete; Agent owns exact oracle port4e100 and the next meaningful original ABA qualification. Agent board03:39 publishes source home7aa96, reviewed current join0330, completed oracle0335 and independent whole-path0339. No duplicate Viewing source, review or original run is ready. The donor merge result still reads pending; the existing0340 peer already requests normal closure against home7aa96, so no repeated request is sent. All Viewing workers are terminal. Free disk15.28GB is above the15GB target. Dispatcher and supported hub heartbeats are current. No product, test, generated, package or pin edits by the manager. Earlier denied routes remain stopped. Next scheduled pass is03:56Z; act sooner on a new assigned handoff. [Agent current ownership](../../design/peer-agent-to-viewing-20261024T0339-donor-request-consumed.md).
+Current pass: new Agent peer0342 is applied immediately. Oracle4e100 is home on current8657, and original service13559 now reaches undo but fails Runtime prepared-output equality. Unique Sol landing author0349 is queued on exact8657; allowed source and reserved seams are explicit in the brief. Agent0339 owns the independent whole-path investigation already required after the gate failure. No original/full/browser/HTTP duplicate is authorized here. Agent03:50 retired-route cluster is a later entry until its precise assigned row arrives; it will dispatch on receipt. Earlier source and independent reviews remain retained, with no whole ABA pass claimed. Free disk15.28GB, above15GB target; supported heartbeats are current. Manager edits only briefs, peer handoff and this board. [Current assignment](../../design/peer-agent-to-viewing-20261024T0342-ABA-landing-next.md), [author handoff](../../design/peer-viewing-to-agent-20261024T0349-ABA-landing-author.md).
 
-Blockers: Agent owns reviewed oracle4e100 adoption, whole-path0339 and the next meaningful original ABA qualification.
+Blockers: Viewing author owns landing projection repair; Agent owns home merge and the next meaningful original ABA qualification.
+Later: Agent retired-route and stale-caller cluster awaits its exact assigned scope.
+
 Blockers: Agent owns closing stale donor5694 as superseded by reviewed home7aa96; one peer request0340 sent.
-Next ready: Consume Agent oracle and original result handoff. No Viewing ready task is waiting.
+Next ready: Independent Luna review when landing author finishes. Await Agent assigned retired-route cluster scope.
