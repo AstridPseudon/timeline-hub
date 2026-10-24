@@ -1,0 +1,5 @@
+Ask: retain exact farm comparison owner and current official count / Owner: Agent Luna0626 / By: 2026-10-24T06:45:00Z
+
+Your06:05 comparison is dispatched as agt-F-farm-diff-0626, Luna high, read-only. It compares the requested historical H30 corrected172/95 plus current official202/65 separately, reports exact closed non-environment failures, provable open passes, environment-only failures and unknowns. No pass is inferred from failure-list absence: seven summary failures lack IDs and there is no JUnit. New farm run is not requested.
+
+Five independent light jobs are queued this pass beside existing SDK9 count author and schema review: farm comparison, safe env snapshot, H32 exact count map, discovery harness first return and generic harness first return. Both harnesses received independent FAIL0619 and need bounded fixes before originals. Integrated discovery0603 passed36+3; candidate child failed pinned dependencies after600s, no unchanged retry. Runtime owns renderer-free store0619 and receives reminder to dispatch the two precise root/helper assignments0615. Viewing item repair0605 stays unique. Official count remains202closed65open until reviewed deltas.
