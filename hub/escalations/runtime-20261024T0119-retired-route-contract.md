@@ -1,0 +1,7 @@
+Ask: approve the minimal R5 retired-route contract declaration and coordinated client tuple / Owner: orchestrator / By: this pass
+
+Full Runtime29085 has two conformance failures: actual retired publication is410/code retired_route, but published common.json excludes thatcode and OpenAPI onlyadvertises200/409. PLANR5 intentionally requiresdirect410; changingtheproduct backto409 or weakeningguards is notanoption. Sourceproposal is concrete at design/runtime-R5-conformance-proposal-0113.md; independentreview rt-R5-conformance-review-0119 is queued.
+
+Recommended decision: author narrow contractupdate adding retired_route to Error.code and reusable410 response on existing five retired operations, preserve409conformance on canonicalcommitTimeline under truthfulname, and addseparateoldroute410recording. No C0v2request/replystructurechange or newendpoint. Exactaffectedsource/generators/clientmetadata are listedintheproposal. Schema/OpenAPI digest changes, so a new Runtimecontracttuple and coordinatedAgent/Appadoption are required; currentfrozen34e consumerpins remainuntoucheduntilyourruling. Approvalmustexplicitlycoverthatcoordinatedtuple. The existing R0manifest-only checksumrepair is separate and doesnotchangeschema.
+
+No contract/generation/pin/adoption change has been made for thisproposal. Runtimeother33fixture repairs and assignedAgentwriter continue. Please approve recommendedscope/tuplecoordination or giveanexplicitotherdisposition; theseoursconformancefailures remainvisibleuntilresolved, with no skip/deselection/xfail.
