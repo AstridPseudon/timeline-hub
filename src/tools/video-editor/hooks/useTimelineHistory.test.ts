@@ -2,10 +2,6 @@
 import React from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  createTimelineCommandRunner,
-  MEDIA_COMMAND_DESCRIPTORS,
-} from '@/tools/video-editor/commands';
 import { VideoEditorRuntimeProvider } from '../contexts/VideoEditorRuntimeContext';
 import type { DataProvider } from '../data/DataProvider';
 import { getConfigSignature, getStableConfigSignature } from '../lib/config-utils';
@@ -33,7 +29,6 @@ type CommitCall = {
 };
 
 const SESSION_IDLE_MS = 5 * 60 * 1000;
-const historyCommandRunner = createTimelineCommandRunner([...MEDIA_COMMAND_DESCRIPTORS]);
 
 function makeConfig(step: number) {
   const base = createDefaultTimelineConfig();
@@ -445,37 +440,17 @@ describe('useTimelineHistory', () => {
     expect(result.current.canUndo).toBe(true);
   });
 
-  it('uses inverse command history to undo and redo migrated edits', () => {
+  it('uses snapshot history to undo and redo migrated edits', () => {
     const initialData = makeMediaTimelineData('asset-old');
     const { result, dataRef, commitCalls } = setup({ initialData });
-    const applied = historyCommandRunner.apply(initialData, {
-      transactionId: 'swap-history',
-      commands: [{
-        type: 'swap',
-        payload: {
-          clipId: 'clip-1',
-          asset: {
-            assetKey: 'asset-new',
-            mediaType: 'image',
-            durationSeconds: null,
-            entry: { file: 'https://example.com/new.png', type: 'image/png' },
-            source: 'registered',
-          },
-        },
-      }],
-    });
-
-    expect(applied.status).toBe('ok');
+    const applied = makeMediaTimelineData('asset-new');
+    expect(applied.config.clips[0]?.asset).toBe('asset-new');
 
     act(() => {
       result.current.onBeforeCommit(initialData, {
-        transactionId: applied.transaction.transactionId,
-        commandHistory: {
-          transaction: applied.transaction,
-          history: applied.history,
-        },
+        transactionId: 'swap-history',
       });
-      dataRef.current = applied.nextData;
+      dataRef.current = applied;
     });
 
     expect(dataRef.current.config.clips[0]?.asset).toBe('asset-new');
@@ -494,41 +469,17 @@ describe('useTimelineHistory', () => {
     expect(commitCalls.at(-1)?.options).toMatchObject({ save: true, skipHistory: true });
   });
 
-  it('falls back to snapshot history when command metadata cannot invert', () => {
+  it('restores snapshot history for migrated edits without a local executor', () => {
     const initialData = makeMediaTimelineData('asset-old');
     const { result, dataRef } = setup({ initialData });
-    const applied = historyCommandRunner.apply(initialData, {
-      transactionId: 'swap-fallback',
-      commands: [{
-        type: 'swap',
-        payload: {
-          clipId: 'clip-1',
-          asset: {
-            assetKey: 'asset-new',
-            mediaType: 'image',
-            durationSeconds: null,
-            entry: { file: 'https://example.com/new.png', type: 'image/png' },
-            source: 'registered',
-          },
-        },
-      }],
-    });
-
-    expect(applied.status).toBe('ok');
+    const applied = makeMediaTimelineData('asset-new');
+    expect(applied.config.clips[0]?.asset).toBe('asset-new');
 
     act(() => {
       result.current.onBeforeCommit(initialData, {
-        transactionId: applied.transaction.transactionId,
-        commandHistory: {
-          transaction: applied.transaction,
-          history: {
-            ...applied.history,
-            strategy: 'snapshot_fallback',
-            inverseTransaction: null,
-          },
-        },
+        transactionId: 'swap-fallback',
       });
-      dataRef.current = applied.nextData;
+      dataRef.current = applied;
     });
 
     act(() => {
