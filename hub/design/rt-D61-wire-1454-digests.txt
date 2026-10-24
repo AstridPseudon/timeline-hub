@@ -1,0 +1,10 @@
+openapi=302523509996d42fb1d978912f4e6ea022d8ba596896c6cc307161d2cdc5c075
+contract_schema=3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815
+runtime_bundle=e4da5c0edc728869a7e78b5820b36f0a0756e1891af64a4f8c0fc37d705196e1
+artifact_manifest_file=9bbce65e5b8dd4fd7ca1f24105ffb88d341e5d5beb10348e555dda79145c4dd3
+artifact_manifest_version=sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5
+schema_digest=sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b
+python_history=NotRequired[Literal[1, 2]]
+typescript_history=recorder_abi?: 1 | 2
+schema_probe=omitted/1/2 PASS; 0/3/1.5/boolean/string/array/null REJECT in both canonical and runtime bundle schemas
+request_result_preview_conflict_invalid=unchanged; only HistoryEntry.recorder_abi was added in each schema

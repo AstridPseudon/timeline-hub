@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T14:58:47Z | dispatcher heartbeat 15s | live 2 (sol 2, luna 0, other 0) | busy30 6 | status age 3m -->
-# runtime board, 2026-10-24T14:51:01Z
+<!-- main | 2026-10-24T15:01:43Z | dispatcher heartbeat 11s | live 2 (sol 2, luna 0, other 0) | busy30 6 | status age 1m -->
+# runtime board, 2026-10-24T15:00:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -87,7 +87,7 @@
 | U1d-consumer-rebind | Rebind producer identity in consumers | Agent / App Luna | Normal vendor checks passed | merged | Agent custody1410; App adoption1404 | Agent5492 and Appbe98 adopt e68 provenance. Canonical15/14 bytes unchanged. D61 successor adoption remains separate. | Agent5492 / Appbe98 |
 | R-recorder-abi-authority | Persist accepted recorder mode under D62 | HARD Sol | D62 decided; wire1447 parallel | doing | rt-R-recorder-D62-producer-sol-1450 | D62 declines submit-time custody. Compute accepted-record mode once; immutable event and metadata authenticate history. | Base d068 held |
 | R-forward-created-authority | Preserve omitted forward allocation claims | HARD Sol | Agent exact two-case source handback | doing | rt-R-forward-created-authority-sol-1450 | Auth.py only; preserves explicit claims and reservation custody. Separate from store/port D62 source. | Base e68 |
-| R0-D61-history-wire | Generate approved optional history ABI field | Luna | D61/D62 field approved | review | Author1447; Luna1454 | Source6e8 generated. Existing148 PASS,15 setup errors lack Agent input; review corrects service env and retains durable proof. Held until joined producer PASS. | 6e8ae0142 |
+| R0-D61-history-wire | Generate approved optional history ABI field | Luna | Joined authenticated producer | gated:producer | Author1447; independent1454 PASS | Source6e8:148 retained positives plus16 corrected recorded-response PASS; no new static diagnostics. [Review](../../design/rt-R0-D61-wire-review-1454.md) | 6e8ae0142 |
 | R-recorder-native-custody | Review eight native omission captures | Luna | D62 source scope decided | merged | Review1445 PASS source cause | Eight actual accepts verified. D62 defers submit completeness; no new custody seam. [Review](../../design/rt-R-recorder-native-custody-review-1445.md) | Evidence only |
 | R-recorder-abi-security | Review exact coverage authority design | Luna | Design assessment complete | merged | Luna1422 design only | Validated request can select regime; exact full coverage must be proved. Final source review remains required. [Design](../../design/rt-R-recorder-abi-security-design-1422.md) | Base438 source facts |
 | FREEZE-current-P2-P3 | Qualify refreshed original App journeys | App Sol / Luna | Actual service launch repair | blocked:app | App1437; whole path1437; verdicts1438 | Actual12541/1689 FAIL at first environment guard; all original bodies NOTRUN. No Runtime/provider cause inferred. | App be98 / Agent5492 / Runtime e68 |
@@ -156,7 +156,7 @@ Disk: About8.5GB free, above main8GB heavy floor. Five old v1 trees refused recy
 
 Pass 2026-10-24T14:34:59Z: INBOX consumed through Agent1425. Agent consumer d373 has author249+17+46+134 PASS, independent security/current port active; producer qualification still required. Agent tracks6 core and App9 gates. Runtime Sol1422 runs targeted controls; final gates remain unqualified.
 
-live 2 / cap 4; ready-undispatched 0. Copied dispatcher14:52:27Z reports2 Sol/0 Luna. Source1450 workers confirmed; Luna1454 review subsequently launched. Normal header refresh pending.
+live 3 / cap 4; ready-undispatched 0. Copied dispatcher14:55:43Z reports2 Sol/1 Luna. Wire reviewer1454 has since finished PASS; two disjoint source authors remain active. Normal count refresh pending.
 
 Sol exceptions: D62 producer1450 is explicitly mandated immutable custody code. Forward-created1450 is R1/R2 allocation/reservation authentication for two precise core failures. Generation and reviews use Luna.
 
@@ -173,3 +173,5 @@ Pass 2026-10-24T14:51:01Z: D62 consumed and decision blocker cleared immediately
 Pass14:54Z: Wire1447 committed6e8. Luna1454 reviews exact source and corrects recorded-response service input; 148 earlier positives require exact source comparison. Final source authors1450 remain disjoint. All new work is assigned; no source merge/adoption yet.
 
 Pass14:54Z peer intake: App current12541/1689 are preflight-only FAIL, all original bodies NOTRUN. Existing FREEZE row now names actual launch1437 and verdict1438 owners. Three newly finished trees were already absent at recycle check; no refused target retried. Disk about8.4GB.
+
+Pass 2026-10-24T15:00:00Z: Wire independent1454 PASS on exact6e8; earlier148 same-tree positives retained and corrected central16 recorded-response cases pass with durable XML. Schema/generated15 inventory published unchanged. Wire remains producer-join-gated; D62 producer and forward source still active.
