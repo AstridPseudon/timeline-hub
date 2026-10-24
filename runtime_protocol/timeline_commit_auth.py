@@ -956,8 +956,16 @@ def _inverse_stage_inherited(source_step, source_commands, source_records, publi
     """
     bindings = [binding for command in source_commands for binding in command.get("bindings", [])
                 if binding.get("key") == "inverse.stage"]
-    if len(bindings) <= 1:
+    if not bindings or (len(bindings) == 1 and not any(
+            effect["op"] == "remove" and not effect["path"]
+            and effect["ref"].startswith(("shot-revision:", "internal-revision:"))
+            for effect in source_step["patch"])):
         return None
+    if len(bindings) == 1:
+        writes = [write for command in source_commands for write in command.get("writes", [])]
+        if (len(writes) != 1 or writes[0]["path"]
+                or not re.fullmatch(r"occurrence:[^/]+", writes[0]["ref"])):
+            return None
     require(len(source_commands) == 1 and source_commands[0]["command"]["op"] == "timeline.inverse",
             "inherited inverse stages require one authenticated source command")
     command = source_commands[0]
@@ -1436,6 +1444,35 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
                                                source_entry, source_step, source_commands)
 
         if inherited_effects is not None:
+            # Reversing a sealed inverse also reopens physical roots that it
+            # retired. Its exact effect reversal was checked by stage_ranges;
+            # retain the source's immutable pins rather than infer new images.
+            for effect in inherited_effects:
+                ref = effect["ref"]
+                if (effect["op"] != "remove" or effect["path"] or ref in native_image
+                        or not ref.startswith(("shot-revision:", "internal-revision:"))):
+                    continue
+                require(ref in stage_after and value_equal(
+                    effect["before"], {"state": "present", "value": stage_after[ref]["payload"]}),
+                    "inherited inverse root differs from its authenticated source payload")
+                assert source_step is not None
+                pins = [pin for ordinal in source_step["command_ordinals"]
+                        for pin in source_commands[ordinal]["bindings"]
+                        if pin.get("key") == "commit.effect" and pin.get("physical_ref") == ref
+                        and pin.get("boundary", {}).get("side") == "before"]
+                owners = ["occurrence:" + row["occurrence_id"] + "/shot"
+                          for row in stage_after["parent"]["payload"].get("occurrences", [])
+                          if ref == "shot-revision:" + row["shot_revision_id"]
+                          or ref == "internal-revision:" + str(stage_after.get(
+                              "shot-revision:" + row["shot_revision_id"], {}).get("internal_timeline_revision_id"))]
+                require(len(pins) == 1 and pins[0].get("revision_id") == stage_after[ref]["revision_id"]
+                        and pins[0].get("content_digest") == stage_after[ref]["content_digest"]
+                        and pins[0].get("owners") == owners and owners
+                        and pins[0].get("policy") == "fixed" and pins[0].get("dependencies") == []
+                        and stage_after[ref]["content_digest"] == digest(stage_after[ref]["payload"])
+                        and _physical_owner(stage_after, ref) is not None,
+                        "inherited inverse root differs from its authenticated source pin")
+                native_image[ref] = copy.deepcopy(stage_after[ref])
             # Exact inverse source effects already authenticate both physical
             # endpoints. Align only complete equal payloads with the same owner.
             _align_materialized_images(native_image, stage_after)
