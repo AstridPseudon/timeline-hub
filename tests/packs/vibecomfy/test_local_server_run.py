@@ -4,7 +4,6 @@ import hashlib
 import importlib
 import json
 import threading
-import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from types import SimpleNamespace
@@ -13,7 +12,7 @@ import pytest
 from PIL import Image
 
 from astrid.packs.vibecomfy import production_engine
-from astrid.packs.vibecomfy.asset_manifest import build_asset_manifest
+from astrid.packs.vibecomfy.local import pack_images
 
 pytestmark = pytest.mark.integration  # pinned VibeComfy checkout
 
@@ -182,11 +181,8 @@ def test_managed_image_is_uploaded_and_bound_to_load_image(comfy, tmp_path):
                                 "output": ["IMAGE", "MASK"], "output_node": False}
     source = tmp_path / "portrait.png"
     Image.new("RGB", (16, 16)).save(source)
-    manifest = build_asset_manifest({"image": source})
     archive = tmp_path / "images.zip"
-    with zipfile.ZipFile(archive, "w") as writer:
-        writer.writestr("manifest.json", json.dumps(manifest))
-        writer.writestr(manifest["assets"][0]["member"], source.read_bytes())
+    pack_images(str(archive), [str(source)])
     result = action._run_and_settle(
         comfy.workflow, tmp_path / "attempt" / "outputs", task_identity="task-1",
         comfy_url=comfy.url, comfy_output_dir=str(comfy.output), managed_assets=str(archive),
@@ -348,3 +344,27 @@ def test_host_command_runs_local_server_on_dynamic_port(comfy, tmp_path):
     assert not any(path == "/api/free" for _, path, _ in comfy.calls)
     evidence = json.loads((attempt / "network-evidence.json").read_text())
     assert evidence["policy"]["allowed_destinations"] == [comfy.url.removeprefix("http://")]
+
+
+def test_seedless_rerun_uses_attempt_specific_save_prefix(comfy, tmp_path):
+    workflow = _workflow()
+    workflow["nodes"][0]["widgets_values"] = ["installed.safetensors"]
+    comfy.workflow.write_text(json.dumps(workflow))
+    del comfy.schema["SeedImage"]["input"]["required"]["seed"]
+    index_path = tmp_path / "node_index.json"
+    index = json.loads(index_path.read_text())
+    del next(node for node in index if node["class_type"] == "SeedImage")["inputs"]["seed"]
+    index_path.write_text(json.dumps(index))
+    original = comfy.workflow.read_bytes()
+    prefixes = []
+    for number in range(2):
+        production_engine.run_workflow_result_path(
+            comfy.workflow, tmp_path / f"attempt-{number}" / "outputs", task_identity="same-task",
+            attempt_identity=f"attempt-{number}", comfy_url=comfy.url,
+            comfy_output_dir=str(comfy.output), profile_id="local_server",
+        )
+        assert "seed" not in comfy.prompts[-1]["1"]["inputs"]
+        prefixes.append(comfy.prompts[-1]["2"]["inputs"]["filename_prefix"])
+    assert prefixes[0] != prefixes[1]
+    assert all(prefix.startswith("astrid") for prefix in prefixes)
+    assert comfy.workflow.read_bytes() == original

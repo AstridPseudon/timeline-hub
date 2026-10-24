@@ -141,13 +141,16 @@ def pack_images(out_path: str, images: list[str]) -> dict[str, Any]:
         source = source.resolve(strict=True)
         if not source.is_file():
             raise ValueError(f"image is not a regular file: {source}")
-        binding = f"image_{index}"
+        binding = "image" if index == 1 else f"image_{index}"
         bindings[binding] = source
     manifest = build_asset_manifest(bindings)
     names_by_binding = {
         record["binding"]: Path(record["member"]).name for record in manifest["assets"]
     }
-    names = [names_by_binding[f"image_{index}"] for index in range(1, len(images) + 1)]
+    names = [
+        names_by_binding["image" if index == 1 else f"image_{index}"]
+        for index in range(1, len(images) + 1)
+    ]
     payload = io.BytesIO()
     with zipfile.ZipFile(payload, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         archive.writestr(

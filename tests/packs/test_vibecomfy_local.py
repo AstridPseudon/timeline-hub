@@ -103,20 +103,28 @@ def test_scan_returns_errors_for_unavailable_ports() -> None:
 def test_pack_images_round_trips_through_manifest_and_run_staging(tmp_path: Path) -> None:
     image = tmp_path / "portrait.png"
     image.write_bytes(b"fake image bytes")
+    second_image = tmp_path / "reference.png"
+    second_image.write_bytes(b"second image bytes")
     archive_path = tmp_path / "managed-assets.zip"
 
-    result = pack_images(str(archive_path), [str(image)])
+    result = pack_images(str(archive_path), [str(image), str(second_image)])
 
     resolved = read_archive(archive_path)
-    assert result == {"zip": str(archive_path), "names": [resolved.manifest["assets"][0]["member"].split("/")[-1]]}
-    assert resolved.bindings["image_1"] == result["names"][0]
+    assert result == {
+        "zip": str(archive_path),
+        "names": [record["member"].split("/")[-1] for record in resolved.manifest["assets"]],
+    }
+    assert resolved.bindings["image"] == result["names"][0]
+    assert resolved.bindings["image_2"] == result["names"][1]
     output_root = tmp_path / "worker-output"
     staged = _stage_managed_asset_manifest(
         str(archive_path), readiness_profile=None, output_root=output_root
     )
     staged_file = output_root / "engine-input" / result["names"][0]
-    assert staged.bindings["image_1"] == result["names"][0]
+    assert staged.bindings["image"] == result["names"][0]
+    assert staged.bindings["image_2"] == result["names"][1]
     assert staged_file.read_bytes() == image.read_bytes()
+    assert (output_root / "engine-input" / result["names"][1]).read_bytes() == second_image.read_bytes()
 
 
 def test_pack_images_refuses_to_overwrite(tmp_path: Path) -> None:

@@ -822,34 +822,44 @@ def _approve_local_server(bundle: Any, bindings: dict[str, Any], provider: Any) 
     return record
 
 
-def _local_server_bundle(resolved: Any, destination: Path) -> Any:
-    """Retain the first LoadImage as an input in an attempt-owned derived pair.
+def _local_server_bundle(resolved: Any, destination: Path, *, output_identity: str) -> Any:
+    """Derive attempt-owned image bindings and fresh output filenames.
 
-    The pinned UI importer infers image inputs but its retained-input emitter
-    only publishes prompt/seed controls. Never mutate a sealed bundle to fix
-    that: use VibeComfy's canonical writer to establish a new revision.
+    A seedless graph can otherwise reuse SaveImage's cached result from an
+    earlier task. Keep the user's prefix, adding an attempt namespace in a
+    private canonical revision; the saved workflow remains unchanged.
     """
     from vibecomfy.security.provenance import Provenance
     from vibecomfy.workflow_bundle import emit_bundle_with_candidate, load_bundle
+    from astrid.packs.vibecomfy.local_server import validate_identity
 
+    validate_identity(output_identity)
     bundle = _canonical_bundle_value(resolved)
-    if "image" in bundle.workflow.inputs:
-        return bundle
-    nodes = [node for node in bundle.workflow.nodes.values() if node.class_type == "LoadImage"]
-    if not nodes:
-        return bundle
-    node = nodes[0]
-    if any(spec.node_id == node.id and spec.field == "image" for spec in bundle.workflow.inputs.values()):
-        return bundle
     workflow = bundle.workflow.clone()
-    value = node.inputs.get("image", node.widgets.get("image"))
-    if not isinstance(value, str):
+    changed = False
+    if "image" not in workflow.inputs:
+        nodes = [node for node in workflow.nodes.values() if node.class_type == "LoadImage"]
+        if nodes:
+            node = nodes[0]
+            value = node.inputs.get("image", node.widgets.get("image"))
+            if (isinstance(value, str) and not any(
+                    spec.node_id == node.id and spec.field == "image"
+                    for spec in workflow.inputs.values())):
+                input_types = dict(zip(node.native_input_names or (), node.native_input_types or ()))
+                workflow.register_input(
+                    "image", node.id, "image", value,
+                    type=input_types.get("image", "STRING"), media_semantics="image",
+                )
+                changed = True
+    for output in workflow.outputs:
+        node = workflow.nodes[output.node_id]
+        prefix = node.inputs.get("filename_prefix", node.widgets.get("filename_prefix"))
+        if isinstance(prefix, str) and prefix:
+            fields = node.inputs if "filename_prefix" in node.inputs else node.widgets
+            fields["filename_prefix"] = f"{prefix}_astrid_{output_identity}"
+            changed = True
+    if not changed:
         return bundle
-    input_types = dict(zip(node.native_input_names or (), node.native_input_types or ()))
-    workflow.register_input(
-        "image", node.id, "image", value,
-        type=input_types.get("image", "STRING"), media_semantics="image",
-    )
     root = destination / "local-server-workflow"
     root.mkdir(parents=True, exist_ok=True)
     source = bundle.python_path.with_name("source.json") if bundle.python_path else None
@@ -1158,7 +1168,9 @@ def run_workflow_path(
             raise ProductionEngineError("workflow execution identity changed before launch")
     resolved = loaded.resolved
     if profile_id == "local_server":
-        resolved = _local_server_bundle(resolved, destination_path)
+        resolved = _local_server_bundle(
+            resolved, destination_path, output_identity=attempt_identity or task_identity,
+        )
     run_inputs = _validate_workflow_input_bindings(resolved, workflow_input_bindings)
     if profile_id == "local_server":
         bundle = _canonical_bundle_value(resolved)
