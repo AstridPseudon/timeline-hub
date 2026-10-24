@@ -16,6 +16,7 @@ import os
 from pathlib import Path
 import re
 import shlex
+import stat
 import subprocess
 
 
@@ -42,21 +43,22 @@ PROVISION_RECEIPT = ORCH / "tests/provision" / f"{CHILD}.txt"
 CHILD_RECEIPT = ORCH / "queue/done" / f"childvenv-{CHILD}"
 REMOTION_RECEIPT = ORCH / "queue/done" / f"runtime-{REMOTION}"
 D41_AGENT_MANIFEST_ENV = "TIMELINE_D41_AGENT_MANIFEST"
+BENCH_STORE = Path("/home/user/work/bench-store")
 SHA1_RE = re.compile(r"^[0-9a-f]{40}$")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 WIRE_FIELDS = (
-    "api_version", "scope", "project_id", "timeline_id", "base_revision_id", "base_publication_id",
+    "api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id",
     "commands", "schema_version", "op", "version", "select", "args", "created", "label", "steps",
     "id", "intent", "tags", "command_ordinals", "patch", "reads", "merge", "fields", "atomic",
     "Idempotency-Key", "dry_run", "source", "rationale", "group_id", "data", "receipt", "status",
-    "canonical_document", "document_digest", "id_map", "authoritative_commands", "steps", "dependencies",
+    "canonical_document", "document_digest", "id_map", "authoritative_commands", "dependencies",
     "merge_mode", "base", "previous",
     "previous_revision_id", "previous_publication_id", "accepted_ids", "accepted_revision_id",
-    "publisher", "receipt", "provider_version", "compiler_version", "rebased_onto", "accepted",
+    "publisher", "provider_version", "compiler_version", "rebased_onto", "accepted",
     "merged", "conflict", "invalid", "rebased", "evaluated_head", "would_status", "receipt_id",
     "command_kind", "idempotency_key", "request_hash", "project_seq", "event_ids", "result", "created_at",
-    "http_status", "message", "details", "reason", "head", "base", "current", "conflicts", "kind", "ref",
+    "http_status", "message", "details", "reason", "head", "current", "conflicts", "kind", "ref",
     "theirs", "ours", "choices", "code", "path", "hint", "suggested_command",
 )
 
@@ -106,6 +108,8 @@ def key_value_file(path: Path) -> dict[str, str]:
     for line in path.read_text().splitlines():
         key, separator, value = line.partition("=")
         if separator:
+            if key in values:
+                raise RuntimeError(f"PREPARED: duplicate receipt field: {key}")
             values[key] = value
     return values
 
@@ -133,38 +137,130 @@ def receipt_value(receipt: dict[str, object], key: str) -> object:
 
 
 def require_sha(value: object, label: str, pattern: re.Pattern[str]) -> str:
-    text = str(value)
-    if not pattern.fullmatch(text):
+    if not isinstance(value, str) or not pattern.fullmatch(value):
         raise RuntimeError(f"PREPARED: {label} is not a full SHA")
-    return text
+    return value
 
 
-def immutable_receipt(manifest: dict[str, object], key: str, needles: tuple[str, ...]) -> dict[str, object]:
-    path_value = manifest.get(key)
-    hash_value = manifest.get(f"{key}_sha256")
-    if not isinstance(path_value, str) or not path_value or not isinstance(hash_value, str):
+def physical_path(path: Path) -> Path:
+    if not path.exists() or not path.is_absolute() or path != path.resolve() or any(p.is_symlink() for p in (path, *path.parents)):
+        raise RuntimeError(f"PREPARED: unavailable or nonphysical custody path: {path}")
+    return path
+
+
+def immutable_receipt(manifest: dict[str, object], key: str, expected: dict[str, str]) -> dict[str, object]:
+    # These are the existing dispatcher/maker/provision/import projections.
+    # A caller-supplied digest authenticates bytes only after their origin binds.
+    if not isinstance(expected, dict):
+        raise RuntimeError("PREPARED: structured receipt identity is required")
+    child = str(manifest.get("child", ""))
+    worker = str(manifest.get("worker", ""))
+    if not re.fullmatch(r"venv-agent-child-[a-z0-9-]+", child) or not re.fullmatch(r"[A-Za-z0-9_-]+", worker):
+        raise RuntimeError("PREPARED: receipt worker/child identity is invalid")
+    origins = {
+        "source_receipt": ORCH / "workers" / worker / "meta",
+        "maker_receipt": ORCH / "queue/done" / f"childvenv-{child}",
+        "provision_receipt": ORCH / "tests/provision" / f"{child}.txt",
+        "import_receipt": Path(str(manifest.get("child_root", ""))) / ".astrid-import-origins",
+    }
+    if key not in origins or not isinstance(manifest.get(key), str):
         raise RuntimeError(f"PREPARED: D41 {key} receipt is missing")
-    require_sha(hash_value, f"D41 {key} receipt hash", SHA256_RE)
-    candidate = Path(path_value)
-    if candidate.is_symlink():
-        raise RuntimeError(f"PREPARED: D41 {key} receipt must not be a symlink")
-    path = candidate.resolve()
-    try:
-        path.relative_to(ORCH)
-    except ValueError as exc:
-        raise RuntimeError(f"PREPARED: D41 {key} receipt is outside the dispatcher area") from exc
-    if not path.is_file() or digest(path.read_bytes()) != hash_value:
-        raise RuntimeError(f"PREPARED: D41 {key} receipt is unavailable or changed")
-    raw = path.read_text()
-    try:
-        receipt = json.loads(raw)
-    except json.JSONDecodeError:
-        receipt = key_value_file(path)
-    if not isinstance(receipt, dict):
-        raise RuntimeError(f"PREPARED: D41 {key} receipt is not an object")
-    if any(needle not in raw for needle in needles):
-        raise RuntimeError(f"PREPARED: D41 {key} receipt identity is incomplete")
-    return {"path": str(path), "sha256": hash_value}
+    path = physical_path(Path(manifest[key]))
+    if path != origins[key] or not path.is_file():
+        raise RuntimeError(f"PREPARED: D41 {key} receipt has no dispatcher/provision origin")
+    expected_hash = require_sha(manifest.get(f"{key}_sha256"), f"D41 {key} hash", SHA256_RE)
+    if digest(path.read_bytes()) != expected_hash:
+        raise RuntimeError(f"PREPARED: D41 {key} receipt changed")
+    if key == "maker_receipt":
+        lines = path.read_text().splitlines()
+        if not lines:
+            raise RuntimeError("PREPARED: empty maker receipt")
+        line = lines[-1]
+        if line.startswith("created "):
+            root, *fields = shlex.split(line.removeprefix("created "))
+        elif line.startswith("reused child venv path="):
+            root, *fields = shlex.split(line.removeprefix("reused child venv path="))
+        else:
+            raise RuntimeError("PREPARED: maker success record is missing")
+        values = {"path": root}
+        for field in fields:
+            name, separator, value = field.partition("=")
+            if not separator or name in values:
+                raise RuntimeError("PREPARED: ambiguous maker receipt fields")
+            values[name] = value
+        if set(values) != set(expected):
+            raise RuntimeError("PREPARED: maker receipt field set differs")
+    elif key == "provision_receipt":
+        header = path.read_text().split("installed_import_origins:\n", 1)[0]
+        values = key_value_file(path)
+        if header != "".join(f"{name}={value}\n" for name, value in expected.items()):
+            raise RuntimeError("PREPARED: provision identity header differs")
+    else:
+        values = key_value_file(path)
+        if key == "import_receipt" and set(values) != set(expected):
+            raise RuntimeError("PREPARED: import origin field set differs")
+    if any(values.get(name) != value for name, value in expected.items()):
+        raise RuntimeError(f"PREPARED: D41 {key} structured identity differs")
+    return {"path": str(path), "sha256": expected_hash}
+
+
+def child_receipts(manifest: dict[str, object], lock_hash: str) -> None:
+    child = str(manifest["child"])
+    root = physical_path(Path(str(manifest["child_root"])))
+    clients = manifest["client_hashes"]
+    identity = {"agent_sha": manifest["source"], "backend_sha": RUNTIME, "client_tuple": clients}
+    canonical = lambda value: json.dumps(value, sort_keys=True, separators=(",", ":"))
+    key = digest(canonical(["child", manifest["source"], RUNTIME, clients]).encode())
+    if manifest["child_key"] != key or root != BENCH_STORE / "entries" / f"child-{key}":
+        raise RuntimeError("PREPARED: child key/root does not bind exact source/backend/clients")
+    index = json.loads(physical_path(BENCH_STORE / "index.json").read_text())
+    owner = json.loads(physical_path(BENCH_STORE / "owner.json").read_text())
+    entry = index["entries"].get(f"child-{key}", {})
+    marker = json.loads(physical_path(root / ".bench-owner.json").read_text())
+    expected_owner = {"owner": owner["id"], "component": "child", "key": key, "identity": identity}
+    if (marker != expected_owner or any(entry.get(k) != v for k, v in expected_owner.items())
+            or entry.get("path") != str(root) or entry.get("node") != [root.stat().st_dev, root.stat().st_ino]):
+        raise RuntimeError("PREPARED: child store ownership/identity differs")
+    registration = index["registrations"].get(child, {})
+    if not registration:
+        raise RuntimeError("PREPARED: child registration/provision origin is missing")
+    report_path = ORCH / "tests/provision" / f"{child}.txt"
+    report = physical_path(report_path).read_bytes()
+    if (f"child-{key}" not in registration.get("requires", [])
+            or registration.get("report") != report.decode()
+            or registration.get("report_sha256") != digest(report)
+            or registration.get("hash") != digest(canonical({k: v for k, v in registration.items() if k != "hash"}).encode())
+            or physical_path(root / ".provision-report").read_bytes() != report):
+        raise RuntimeError("PREPARED: child registration/provision projection differs")
+    client_identity = "\n".join(f"{p}={v}" for p, v in sorted(clients.items()))
+    for name, value in ((".astrid-source-commit", manifest["source"]), (".astrid-runtime-source-commit", RUNTIME),
+                        (".astrid-runtime-client-identity", client_identity)):
+        if physical_path(root / name).read_text().rstrip("\n") != value:
+            raise RuntimeError(f"PREPARED: child marker differs: {name}")
+    immutable_receipt(manifest, "maker_receipt", {
+        "path": str(root), "agent": str(manifest["source"]), "runtime": RUNTIME,
+        "remotion": str(manifest["remotion"]), "registration": "existing", "key": key,
+        "requested_name": child, "actual_agent": str(manifest["source"]), "actual_runtime": RUNTIME,
+        "provision_report": str(report_path), "provision_report_sha256": digest(report), "status": "passed",
+    })
+    immutable_receipt(manifest, "provision_receipt", {
+        "status": "passed", "agent_sha": str(manifest["source"]), "runtime_sha": RUNTIME,
+        "runtime_client_identity_sha256": digest(client_identity.encode()),
+        "requirements_path": "requirements/proof.lock", "requirements_lock_sha256": lock_hash,
+    })
+    origins = {name: str(root / "lib/python3.13/site-packages" / name / "__init__.py")
+               for name in ("astrid", "astrid_runtime", "runtime_protocol", "astrid_runtime_client")}
+    immutable_receipt(manifest, "import_receipt", origins)
+    raw = report.decode()
+    for start, end, marker_name in (("installed_import_origins:", "installed_distribution_metadata:", ".astrid-import-origins"),
+                                    ("installed_distribution_metadata:", "pip_freeze:", ".astrid-distribution-metadata")):
+        lines = raw.splitlines()
+        if lines.count(start) != 1 or lines.count(end) != 1 or lines.index(start) >= lines.index(end):
+            raise RuntimeError("PREPARED: provision sections are ambiguous")
+        if lines[lines.index(start) + 1:lines.index(end)] != physical_path(root / marker_name).read_text().splitlines():
+            raise RuntimeError("PREPARED: provision import/distribution projection differs")
+    for origin in origins.values():
+        physical_path(Path(origin))
 
 
 def d41_agent_input() -> dict[str, object]:
@@ -206,8 +302,14 @@ def d41_agent_input() -> dict[str, object]:
         raise RuntimeError("PREPARED: D41 Agent source is the retained 079 source")
     if manifest["runtime"] != RUNTIME or manifest["runtime_tree"] != RUNTIME_TREE:
         raise RuntimeError("PREPARED: D41 Agent Runtime identity is not the retained Runtime37eb pair")
-    if len(str(manifest["parent"]).split()) != 1:
-        raise RuntimeError("PREPARED: D41 Agent source must have one parent")
+    if parent != AGENT or base_sha != AGENT:
+        raise RuntimeError("PREPARED: D41 Agent parent/base must be exact retained 079")
+    qualified = json.loads((APP / "caller-custody.json").read_text())["d41_agent_rebinding"].get("qualified_source")
+    if not isinstance(qualified, dict):
+        raise RuntimeError("PREPARED: actual independently reviewed D41 source/delta is not qualified")
+    for key in ("source", "tree", "parent", "worker", "branch", "base", "base_sha", "checkout"):
+        if qualified.get(key) != manifest[key]:
+            raise RuntimeError(f"PREPARED: D41 source differs from reviewed qualification: {key}")
     receipt_names = ("source_receipt", "maker_receipt", "provision_receipt", "import_receipt")
     receipt_paths = [Path(str(manifest[key])).resolve() for key in receipt_names]
     if len(set(receipt_paths)) != len(receipt_paths) or manifest_path.resolve() in receipt_paths:
@@ -223,7 +325,8 @@ def d41_agent_input() -> dict[str, object]:
         meta.get("name") != worker
         or meta.get("repo") != "agent"
         or meta.get("base") != manifest["base"]
-        or meta.get("base_sha") != manifest["base_sha"]
+        or not re.fullmatch(r"[0-9a-f]{10,40}", meta.get("base_sha", ""))
+        or not AGENT.startswith(meta["base_sha"])
         or manifest["branch"] != f"tl/{worker}"
     ):
         raise RuntimeError("PREPARED: D41 Agent source does not match dispatcher identity")
@@ -231,7 +334,7 @@ def d41_agent_input() -> dict[str, object]:
     root_candidate = Path(root_value)
     if root_candidate.is_symlink():
         raise RuntimeError("PREPARED: D41 Agent checkout must not be a symlink")
-    root = root_candidate.resolve()
+    root = physical_path(root_candidate)
     if root == APP or not root.is_dir() or Path(meta.get("worktree", "")).resolve() != root:
         raise RuntimeError("PREPARED: D41 Agent checkout is not the dispatched proof worker")
     if any((root / name).exists() for name in ("caller-publication.py", "caller-custody.json")):
@@ -247,20 +350,33 @@ def d41_agent_input() -> dict[str, object]:
     if git(root, "show", "-s", "--format=%P", source).decode().strip() != parent:
         raise RuntimeError("PREPARED: D41 Agent parent does not match source")
     base_commit = git(root, "rev-parse", f"{manifest['base']}^{{commit}}").decode().strip()
-    if not base_commit.startswith(base_sha):
+    if base_commit != AGENT:
         raise RuntimeError("PREPARED: D41 Agent base does not match dispatcher metadata")
-    source_receipt = immutable_receipt(manifest, "source_receipt", (source, tree, parent, root_value))
-    immutable_receipt(manifest, "maker_receipt", (source, tree, parent))
-    immutable_receipt(manifest, "provision_receipt", (source, RUNTIME, str(manifest["child"])))
-    immutable_receipt(manifest, "import_receipt", (source, RUNTIME, str(manifest["child"])))
+    delta = git(root, "diff", "--binary", "--full-index", "--no-ext-diff", AGENT, source)
+    if not delta or qualified.get("delta_sha256") != digest(delta):
+        raise RuntimeError("PREPARED: D41 source delta is not the exact reviewed backport")
+    for path in git(root, "ls-tree", "-r", "--name-only", source).decode().splitlines():
+        file = physical_path(root / path)
+        mode = file.stat().st_mode
+        if not stat.S_ISREG(mode) or mode & 0o222 or file.read_bytes() != source_bytes(root, source, path):
+            raise RuntimeError(f"PREPARED: D41 source is not an exact read-only checkout: {path}")
+    dispatch = physical_path(ORCH / "queue/done" / worker)
+    if dispatch.read_text().strip() != f"dispatched {worker} in {root} (base {manifest['base']})":
+        raise RuntimeError("PREPARED: D41 source dispatcher origin differs")
+    source_receipt = immutable_receipt(manifest, "source_receipt", {
+        "name": worker, "repo": "agent", "base": str(manifest["base"]),
+        "base_sha": meta["base_sha"], "worktree": str(root),
+    })
 
     runtime_candidate = Path(str(manifest["runtime_checkout"]))
     if runtime_candidate.is_symlink():
         raise RuntimeError("PREPARED: D41 Runtime checkout must not be a symlink")
-    runtime_checkout = runtime_candidate.resolve()
+    runtime_checkout = physical_path(runtime_candidate)
     if runtime_checkout != RUNTIME_CHECKOUT or not runtime_checkout.is_dir():
         raise RuntimeError("PREPARED: D41 Runtime checkout is not the retained exact checkout")
-    if git(runtime_checkout, "rev-parse", "HEAD").decode().strip() != RUNTIME:
+    if (git(runtime_checkout, "rev-parse", "HEAD").decode().strip() != RUNTIME
+            or git(runtime_checkout, "show", "-s", "--format=%T", RUNTIME).decode().strip() != RUNTIME_TREE
+            or git(runtime_checkout, "status", "--porcelain=v1", "--untracked-files=all").strip()):
         raise RuntimeError("PREPARED: D41 Runtime checkout is not Runtime37eb")
     runtime_paths = git(runtime_checkout, "ls-tree", "-r", "--name-only", RUNTIME, "packages/python/astrid_runtime_client/").decode().splitlines()
     if len(runtime_paths) != 4:
@@ -287,16 +403,17 @@ def d41_agent_input() -> dict[str, object]:
     child_candidate = Path(str(manifest["child_root"]))
     if child_candidate.is_symlink():
         raise RuntimeError("PREPARED: D41 child checkout must not be a symlink")
-    child_root = child_candidate.resolve()
+    child_root = physical_path(child_candidate)
     if child_root.name != f"child-{child_key}" or not child_root.is_dir():
         raise RuntimeError("PREPARED: D41 child checkout is not a genuine keyed child")
+    child_receipts(manifest, digest(source_bytes(root, source, "requirements/proof.lock")))
     child_site = child_root / "lib/python3.13/site-packages"
     for path in runtime_paths:
-        installed = child_site / path.removeprefix("packages/python/")
+        installed = physical_path(child_site / path.removeprefix("packages/python/"))
         if not installed.is_file() or installed.read_bytes() != git(runtime_checkout, "show", f"{RUNTIME}:{path}"):
             raise RuntimeError(f"PREPARED: D41 child client import differs: {path}")
     for path, expected in backend_hashes.items():
-        installed = child_site / path
+        installed = physical_path(child_site / path)
         if not installed.is_file() or digest(installed.read_bytes()) != expected:
             raise RuntimeError(f"PREPARED: D41 child backend import differs: {path}")
     remotion_candidate = Path(str(manifest["remotion_root"]))

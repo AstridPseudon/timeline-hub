@@ -2,7 +2,7 @@
   "status": "PREPARED",
   "run_authorization": "NOT_GRANTED",
   "artifact": {
-    "branch": "tl/app-P2-P3-D41-caller-prep-0939",
+    "branch": "tl/app-P2-P3-D41-caller-return-sol-0950",
     "purpose": "prepare the existing qualified caller for one genuine D41 Agent079 backport",
     "original_run": false,
     "caller_artifacts_only": ["caller-publication.py", "caller-custody.json"]
@@ -34,7 +34,7 @@
   },
   "wire_fields": {
     "request": [
-      "api_version", "scope", "project_id", "timeline_id", "base_revision_id", "base_publication_id",
+      "api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id",
       "commands", "schema_version", "op", "version", "select", "args", "created", "label", "steps",
       "id", "intent", "tags", "command_ordinals", "patch", "reads", "merge", "fields", "atomic",
       "Idempotency-Key", "dry_run", "source", "rationale", "group_id"
@@ -43,10 +43,10 @@
       "data", "receipt", "status", "canonical_document", "document_digest", "id_map", "authoritative_commands",
       "commands", "steps", "dependencies", "merge_mode", "base", "base_revision_id", "base_publication_id", "previous", "previous_revision_id",
       "previous_publication_id", "accepted_ids", "accepted_revision_id", "publisher", "provider_version",
-      "compiler_version", "steps", "merge_mode", "rebased_onto", "accepted", "merged", "conflict", "invalid",
+      "compiler_version", "rebased_onto", "accepted", "merged", "conflict", "invalid",
       "rebased", "source", "rationale", "group_id", "evaluated_head", "would_status", "receipt_id",
       "command_kind", "idempotency_key", "request_hash", "project_seq", "event_ids", "result", "created_at",
-      "http_status", "message", "details", "reason", "current", "conflicts", "kind", "ref", "path", "base",
+      "http_status", "message", "details", "reason", "current", "conflicts", "kind", "ref", "path",
       "theirs", "ours", "choices", "code", "hint", "suggested_command"
     ],
     "forbidden_invention": ["identity_map", "digest"]
@@ -108,6 +108,15 @@
   "d41_agent_rebinding": {
     "manifest_env": "TIMELINE_D41_AGENT_MANIFEST",
     "status": "PENDING",
+    "qualified_source": null,
+    "qualification_gate": "An independently reviewed exact source/tree/079 parent/worker/branch/base/checkout and git binary delta SHA256 must be bound here by a reviewed caller update; manifest self-PASS cannot supply qualification.",
+    "receipt_origins": {
+      "source": "ORCH/workers/<worker>/meta plus exact ORCH/queue/done/<worker> dispatch record and qualified source binding",
+      "maker": "ORCH/queue/done/childvenv-<child>, strict final maker success fields",
+      "provision": "ORCH/tests/provision/<child>.txt, equal to registered report and child .provision-report",
+      "import": "keyed child .astrid-import-origins, equal to provision section and exact physical installed paths",
+      "child": "existing bench-store identity-derived key, owned entry and named registration; no new key format"
+    },
     "tuple": {
       "source": "PENDING",
       "tree": "PENDING",
@@ -125,7 +134,8 @@
     },
     "required": [
       "full Agent source/tree/parent SHA and separate clean dispatched checkout",
-      "dispatcher worker/base/branch metadata and hashed source receipt",
+      "dispatcher worker/base/branch metadata, actual dispatch origin, and hashed metadata receipt",
+      "exact independently reviewed nonempty 079 backport delta and read-only source checkout",
       "independent review PASS",
       "Runtime37eb checkout/tree and exact four canonical client hashes",
       "exact Runtime37eb backend hash set and digest",
@@ -143,8 +153,8 @@
       "meaning": "historical qualified path only; never relabeled as the D41 source or child"
     },
     "fail_closed": [
-      "unknown or missing manifest",
-      "wrong source/tree/parent/checkout",
+      "unknown or missing manifest or independently reviewed source/delta qualification",
+      "wrong source/tree/exact079parent/base/checkout or arbitrary unreviewed delta",
       "wrong Runtime/client/backend bytes",
       "forged, missing, changed, or mismatched maker/provision/import receipt",
       "old child relabel or dirty/caller-artifact target"
