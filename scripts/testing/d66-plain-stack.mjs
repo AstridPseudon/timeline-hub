@@ -60,6 +60,9 @@ export const suites = {
   },
   p3: { files: ['tests/e2e/local/three-products.spec.ts'], count: 1,
     grep: 'M2 real gate 5 \\(M1 real mounted path\\): Agent edit, lost ACK, newer local gesture, exact retry, restart and undo preserve intent$' },
+  'p3-diagnostic': { files: ['tests/e2e/local/three-products.spec.ts'], count: 1,
+    grep: 'M2 real gate 5 \\(M1 real mounted path\\): Agent edit, lost ACK, newer local gesture, exact retry, restart and undo preserve intent$',
+    diagnostic: true },
   'live-edit-smoke': { files: ['tests/e2e/local/three-products.live-edit-smoke.spec.ts'], count: 1,
     grep: 'D79 live-edit smoke: Agent edit arrives during a held drag and remote undo stays safe$' },
 };
@@ -102,6 +105,29 @@ export function exactCheckoutPath(role, head, checkoutRoot = '/home/user/work/wt
 
 function missingCheckoutError(role, head, checkout) {
   return new Error(`D66 ${role} exact checkout is unavailable at ${checkout}; request-checkout ${role} ${head} "D66 exact ${role} source"`);
+}
+
+const diagnosticSource = 'tests/e2e/local/three-products.spec.ts';
+const diagnosticExpectImport = "import { expect, type Locator, type Page, type Request, type Route } from '@playwright/test';";
+const diagnosticExpectBinding = "import { expect as d66Expect, type Locator, type Page, type Request, type Route } from '@playwright/test';\nconst expect = d66Expect.configure({ soft: true });";
+const diagnosticGate5Marker = 'M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local gesture, exact retry, restart and undo preserve intent';
+
+/** Transform only the imported assertion function; the Gate 5 body remains byte-for-byte unchanged. */
+export function p3DiagnosticSpecText(source) {
+  const occurrences = source.split(diagnosticExpectImport).length - 1;
+  assert.equal(occurrences, 1, 'D83 diagnostic requires the exact current three-products Playwright import');
+  return source.replace(diagnosticExpectImport, diagnosticExpectBinding);
+}
+
+/** Create the throwaway diagnostic copy without ever writing the captured source itself. */
+export function createP3DiagnosticSpec({ sourcePath, copyPath }) {
+  assert.equal(path.basename(sourcePath), path.basename(diagnosticSource), 'D83 diagnostic source must be the exact Gate 5 spec');
+  assert.notEqual(path.resolve(sourcePath), path.resolve(copyPath), 'D83 diagnostic copy must not overwrite the original spec');
+  const source = readFileSync(sourcePath, 'utf8');
+  assert(source.includes(diagnosticGate5Marker), 'D83 diagnostic source must contain the exact Gate 5 case');
+  const copy = p3DiagnosticSpecText(source);
+  writeFileSync(copyPath, copy);
+  return { sourcePath, copyPath, sourceSha256: createHash('sha256').update(source).digest('hex') };
 }
 
 /** Pure control shared by the launcher and its focused tests. */
@@ -276,7 +302,7 @@ export function captureSubmitPins(paths = normalHomes) {
 }
 
 export function buildSubmitPlan({ name, target, paths = normalHomes, checkoutRoot = '/home/user/work/wt', receiptRoot = path.join(orch, 'queue', 'done') } = {}) {
-  assert(suites[name], 'choose p1, p2, p2-element or p3');
+  assert(suites[name], 'choose p1, p2, p2-element, p3 or p3-diagnostic');
   if (target?.startsWith('integration:')) throw new Error('D66 submit requires the stable exact App checkout target');
   const pins = captureSubmitPins(paths);
   const checkouts = Object.fromEntries(sourceRoles.map((role) => [role, exactCheckoutPath(role, pins[role].head, checkoutRoot)]));
@@ -289,7 +315,7 @@ export function buildSubmitPlan({ name, target, paths = normalHomes, checkoutRoo
 }
 
 export function serviceRecipe({ name, pins, checkouts, preflight = false }) {
-  assert(suites[name], 'choose p1, p2, p2-element or p3');
+  assert(suites[name], 'choose p1, p2, p2-element, p3 or p3-diagnostic');
   for (const role of sourceRoles) {
     validateObjectId(pins[role]?.head, `${role} SHA`);
     validateObjectId(pins[role]?.tree, `${role} tree`);
@@ -616,7 +642,7 @@ export async function submit(name, options = {}) {
 
 export async function main(sourceOptions = {}) {
   const [name, mode = 'run'] = process.argv.slice(2);
-  assert(suites[name], 'choose p1, p2, p2-element or p3');
+  assert(suites[name], 'choose p1, p2, p2-element, p3 or p3-diagnostic');
   assert(['run', '--collect', '--launch', '--submit', '--preflight'].includes(mode), 'unknown mode');
   if (mode === '--submit') return submit(name);
   const suite = suites[name];
@@ -666,6 +692,7 @@ export async function main(sourceOptions = {}) {
     ...(sources ? { source_checkouts: sources, service_source: preflight.service_source, service_target: preflight.target } : {}),
     test_sha256_before: hashes(), service_versions: importVersions ? { imports: importVersions } : {},
     junit: { readiness: path.join(output, 'readiness.xml'), original: path.join(output, `${name}.xml`) },
+    ...(suite.diagnostic ? { diagnostic: { source: diagnosticSource, assertion_mode: 'expect.configure({ soft: true })', selected_case: suite.grep } } : {}),
   };
   const save = () => writeFileSync(path.join(output, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
   let stage = 'collection';
@@ -764,20 +791,41 @@ export async function main(sourceOptions = {}) {
     }
   }
 
-  try {
-    const collection = playwright(suite.files, { grep: suite.grep, list: true });
+  let diagnosticCopy;
+  const diagnosticFiles = () => {
+    if (!suite.diagnostic) return suite.files;
+    if (diagnosticCopy) return [manifest.diagnostic.copy];
+    const copyPath = path.join(root, 'tests/e2e/local', `three-products.p3-diagnostic-${process.pid}.spec.ts`);
+    diagnosticCopy = createP3DiagnosticSpec({ sourcePath: path.join(root, diagnosticSource), copyPath });
+    manifest.diagnostic.copy = path.relative(root, copyPath);
+    manifest.diagnostic.source_sha256 = diagnosticCopy.sourceSha256;
+    return [manifest.diagnostic.copy];
+  };
+
+  const collect = () => {
+    const collection = playwright(diagnosticFiles(), { grep: suite.grep, list: true });
     const listed = execFileSync(node, collection.args, { cwd: root, env: collection.env, encoding: 'utf8' });
     writeFileSync(path.join(output, 'collection.txt'), listed);
     assert.match(listed, new RegExp(`Total: ${suite.count} tests? in `));
     console.log(listed.trim());
-    if (mode !== '--collect') await launch();
+  };
+
+  try {
+    // The diagnostic copy would make the service snapshot dirty, so create it only after launch's source checks.
+    if (suite.diagnostic && mode !== '--collect') {
+      await launch();
+      collect();
+    } else {
+      collect();
+      if (mode !== '--collect') await launch();
+    }
     if (mode === 'run') {
       stage = 'mounted-readiness';
       const ready = playwright([readiness], { stage: 'readiness' });
       manifest.readiness_exit = await run(node, ready.args, ready.env);
       if (manifest.readiness_exit === 0) {
         stage = name;
-        const original = playwright(suite.files, { grep: suite.grep });
+        const original = playwright(diagnosticFiles(), { grep: suite.grep });
         manifest.original_exit = await run(node, original.args, original.env);
       }
       process.exitCode = manifest.readiness_exit || manifest.original_exit || 0;
@@ -789,6 +837,8 @@ export async function main(sourceOptions = {}) {
     console.error(`D66 ${stage}: ${manifest.failure.message}`);
     process.exitCode = 1;
   } finally {
+    const copyPath = diagnosticCopy?.copyPath;
+    if (copyPath && existsSync(copyPath)) unlinkSync(copyPath);
     manifest.test_sha256_after = hashes();
     assert.deepEqual(manifest.test_sha256_after, manifest.test_sha256_before);
     manifest.finished_at = new Date().toISOString();
