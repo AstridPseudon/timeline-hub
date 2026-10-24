@@ -646,3 +646,24 @@ def test_png_font_loading_fails_closed_when_bundled_font_is_missing(tmp_path, mo
     monkeypatch.setattr(filmstrip_cards, '_PNG_FONT_PATH', tmp_path / 'missing.ttf')
     with pytest.raises(RuntimeError, match='Bundled PNG font is unavailable'):
         filmstrip_cards._png_font(12)
+
+
+@pytest.mark.ffmpeg
+def test_d69_upstream_pack_uses_rendered_frames_without_html_artifact(tmp_path):
+    video = tmp_path / 'render.mp4'
+    subprocess.run(['ffmpeg', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=red:size=160x90:rate=24:duration=4', '-c:v', 'libx264', '-y', str(video)], check=True)
+    snap = snapshot(scripts=[dict(start=0, end=4, text='</script><script>alert("x")</script>')], metadata={'selection': 'explicit_render'})
+    result = build_filmstrip_pack(out_root=tmp_path / 'pack', video_path=video, snapshot=snap, options={'every': 2})
+    assert set(result['paths']) == {'png', 'json', 'markdown'}
+    assert not (tmp_path / 'pack' / 'filmstrip.html').exists()
+    index = json.loads(Path(result['paths']['json']).read_text())
+    assert index['provenance']['render_run_id'] == 'run-exact'
+    assert '--render-run run-exact' in index['cards'][0]['actions']['focus_command']
+    from PIL import Image
+    with Image.open(tmp_path / 'pack' / index['cards'][0]['image']) as image:
+        r, g, b = image.getpixel((20, 20))
+        assert r > 200 and g < 30 and b < 30
+    assert Path(result['paths']['png'][0]).exists()
+    markdown = Path(result['paths']['markdown']).read_text()
+    assert '</script><script>alert' not in markdown
+    assert not list((tmp_path / 'pack').glob('*.svg'))

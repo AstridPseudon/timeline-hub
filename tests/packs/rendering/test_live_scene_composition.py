@@ -371,3 +371,29 @@ def test_real_render_scene_window_audio_and_overlay(tmp_path, remotion_launch_va
     assert fragment['live_scenes'][0]['from'] == 63
     assert fragment['source_window']['start_frame'] == 180
     print(json.dumps({'output': str(output), 'sha256': hashlib.sha256(output.read_bytes()).hexdigest(), 'revision': package['revision'], 'rms': levels}))
+
+
+@pytest.mark.parametrize('z', [0, 1])
+def test_d69_upstream_native_window_layer_is_materialized_once_with_pin_hold_and_alpha(tmp_path, z):
+    package = _package()
+    config = _composition(package)
+    config['clips'][0]['hold'] = 20
+    path = tmp_path / 'timeline.json'
+    path.write_text(json.dumps(config))
+    candidate = _candidate(tmp_path, 'fixture.native', 'renderer', capabilities={'supports_windows': True, 'supports_full_timeline': True})
+    request = _request(path)
+    segment = RenderSegment(window=request.window, renderer=_renderer_resolution(candidate.id), input_hashes={}, layer=LayerRef(z=z, tracks=('scene',)))
+    service = RenderService()
+    adapted, hashes = service._segment_request(request, candidate=candidate, segment=segment, index=0, workspace=tmp_path)
+    assert adapted.window is None
+    materialized = json.loads(Path(adapted.timeline_path).read_text())
+    assert [track['id'] for track in materialized['tracks']] == ['scene']
+    assert len(materialized['clips']) == 1  # Audio/overlay belong to other tracks.
+    scene = materialized['clips'][0]
+    assert scene['app']['liveScene'] == package
+    assert (scene['at'], scene['from'], scene['to'], scene['speed'], scene['hold']) == (0, 63, 65, 2, 2)
+    assert materialized['metadata']['astrid_layer'] == {'z': z, 'alpha': z > 0}
+    assert hashes['materialized_timeline'] == hashlib.sha256(Path(adapted.timeline_path).read_bytes()).hexdigest()
+    assert threejs._window_timeline(materialized, adapted) is materialized
+    assert threejs._support_reasons(materialized) == []
+    assert json.loads(path.read_text())['clips'][0]['from'] == 55

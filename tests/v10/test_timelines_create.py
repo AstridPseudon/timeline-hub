@@ -354,6 +354,18 @@ def test_remote_create_empty_emits_guarded_raw_config_and_replays_exact_receipt(
     assert len(session.calls) == calls_before_retry
 
 
+def test_d69_upstream_remote_create_empty_generates_ulid_when_no_id_given() -> None:
+    writer = _Writer()
+    result = RemoteTimelines(writer).create_empty(project="render-smoke")
+    assert result.ok, result.error
+    timeline_id = result.data["timeline_id"]
+    assert is_ulid(timeline_id)
+    assert writer.calls[0][1] == ("render-smoke", timeline_id)
+    assert writer.calls[1][1][1] == timeline_id
+    assert writer.calls[1][2]["idempotency_key"] == f"{result.idempotency_key}-head"
+    assert writer.calls[1][1][2]["parent_composition"]["config"] == {"tracks": []}
+
+
 def test_remote_create_empty_stops_when_shell_is_rejected() -> None:
     writer = _Writer(shell_error=WorkspaceClientError(409, "conflict", "timeline already exists"))
     result = RemoteTimelines(writer).create_empty(project="render-smoke", timeline_id="T-1", idempotency_key="k")
