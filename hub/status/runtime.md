@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T19:41:08Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 2m -->
-# runtime board, 2026-10-24T19:32:34Z
+<!-- main | 2026-10-24T19:44:20Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 0m -->
+# runtime board, 2026-10-24T19:44:04Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -151,10 +151,12 @@
 | D78-App-donor | Retain overlapping helper candidate | Luna | Sole App shipping owner1859 | gated:App-shipping | rt-D78-app-stack-activation-1908 | Donor six controls PASS; never merge beside App1859 HOME7098. No actual live capture inferred. | Held donor |
 
 | D78-observer-scope | Fix stale request phase attribution | Luna | Author seven regressions passed | merged | rt-D78-observer-scope-fix-1932 | Seven PASS; parent two RED; Ruff, Pyright, compile PASS. Exact two-file harness fix. No auth change or original rerun. | 42855b640 / b4ec6e4f4 |
-| D78-native-stack | Dump real pending native request stacks | Runtime Luna | Observer1932 author complete | doing | rt-D78-native-watchdog-1935 | Own daemon faulthandler watchdog in existing helper; default20s precedes client30s. App bootstrap uses it; no same-file parallel author. | On authored1932 source |
+| D78-native-stack | Dump real pending native request stacks | Runtime Luna | Author12 passed; source home | merged | rt-D78-native-watchdog-1935 | Native20s daemon watchdog, cap1, private all-thread dump. Existing App bootstrap uses it. Actual live capture still owed; UI5s limitation explicit. | 44917baf5 |
 | R-P4-live-profile | Profile actual ten-note service step | HARD Sol / Agent venue | ONE Agent service capture | blocked:agent | Sol1932 prep PASS; handoff1938 | Actual handler is in pytest MemorySocket fixture. Exact helper/launch sanity PASS; top10/wall/pernote counts await ONE real profile. | Prepared on Runtimee89 |
 
-Runtime producer: Normal e89eb contains security-PASS finite walk f51e over reviewed popup87bc and empty ranges1bae. Canonical15/schema867f/config4d74 unchanged. Actual finite home1919 PASS173+12, no new diagnostics.
+| R2-False-history-tail | Close two remaining historical timeouts | HARD Sol / Agent Luna | Actual P4 profile and path1932 | blocked:agent | Runtime profileSol1932; Agent path1932 | Actuale89 candidate four originals: True pair PASS42.9s, False pair FAIL45s before PARAM resolver. Source held; no repeat or memo. | Agent3b2 / Runtimee89 |
+
+Runtime producer: Normal44917 adds only two harness observer/watchdog files over e89eb cost, popup87bc and ranges1bae. Native watchdog12PASS, observer7PASS, productsource173+12PASS. Canonical15/schema867f/config4d74 unchanged. App actual corrected live capture ready.
 
 core open: 2 Runtime boundaries: original P4 ten-note45s timeout and element pending-to-teardown with terminal cause UNKNOWN. Popup source qualified; App original22847 stays failed until meaningful proof. Final Runtime core suite owed.
 regressions: 1 presumed installed-render regression under D77a awaiting genuine final render. Reviewed dfea is normal Agent831df; actual34 adversarial plus2 positive PASS. No waiver inferred.
@@ -163,15 +165,15 @@ FREEZE D59/D66: Current P1 31083 readiness1/original2 PASS with independent1846.
 Venues: App P1/P2/P3, Agent P4, main P5/Composition. D73 captures four exact SHAs once, waits checkout receipts, then source-only preflight. Newer home does not invalidate a run. Product change reruns P1–P5 plus affected core at cut.
 D65 delivery: Runtime merge, Agent merge, authentic App manifest command with generated digest equality, then App merge. Installed v2 docs and D67 exact13env7keys retained. Private final candidate remains cut-gated; fresh-main apply checks required.
 
-Blockers: App live capture — actual13100 has no dump. Sol1924 proves stale observer attribution and lost generator lock completion; Luna1932 fixes Runtime observer. App1932 native Python pending stack coverage requested. Actual frame UNKNOWN; deadline19:50Z.
-Blockers: Agent original cost proof — Runtime e89eb/f51e security1910 and home1919 PASS173+12 published. Normal adoption ready. ORCH19:31 requires ONE actual ten-note daemon profile; RuntimeSol1932 prepared exact actual-handler profile; Agent venue capture pending, no further cost change before profile.
+Blockers: App live capture — Runtime44917 corrected observer/watchdog is HOME12PASS; source dependency cleared. App1943 single meaningful live requested under D74a6.0GB floor. Prior13100 no dump; actual frame UNKNOWN. Deadline19:50Z.
+Blockers: Agent actual profile — RuntimeSol1932 exact actual-handler helper/launch published1938. One original P4 servicebody must profile before further costchange. Four R2 originals on e89 return2PASS2FAIL; False pair remains45s, Agent independent path1932 active.
 Blockers: App popup original — reviewed87bc carrier actual23 Runtime plus4 Agent PASS, selector accounting complete. Original meaningful App qualification still owed; no new backend author.
 Blockers: Final cut — all lanes core0/regressions0, P2/P3 and D69 complete; genuine installed render required. No final proof/build before cut.
-Next ready: Consume observerLuna1932 and live-profileSol1932; Runtime native watchdog1935 brief ready after observer1932 commit. Four seed timeouts share one investigation; no claim of shared cause without frame.
+Next ready: App source-corrected D78 live ONE request ready on44917, peer1943. Agent one realP4 profile ready with exact helper1938. No further costchange until top10frames returned; two False tails remain open.
 Later: D79 missing complete authentic accepted record/history/context; no synthetic fixture or new body. D80 non-gating hold remains. D47 memo/proof pins post-delivery, nine attacks open. V4 cut; D14/D23 deferred; D34 broader cleanup held. D62 submit completeness remains known gap.
 Admission: D56 Farm/schema-access stopped. Exact403 and auto access refusal remain stopped. Historical denied cleanup/process/retirement targets untouched. D67 D13 unchanged environment gap.
 Disk: About7.9GiB; cap4. Four newly finished current trees already recycled automatically. Prior refused dirty v1 and KEEP targets untouched. No alternate deletion.
 
-live 1 / cap 4; ready-undispatched 0 critical. Observer1932 merged42855, nativeWatchdogLuna1935 active. P4 realprofile prep complete; Agent receives exact helper/launch1938. Runtime native watchdog1935 follows current observer1932 branch; D79 Runtime hold remains. Agent cost adoption ready on normal source handback. D78 actual App capture input still missing.
+live 0 / cap 4; ready-undispatched 0 critical local. Watchdog44917 source ready for App single live request; P4 actual-handler profile ready for Agent one servicebody. Both exact handbacks published, no local duplicate body. Agent cost adoption ready on normal source handback. D78 actual App capture input still missing.
 
-Pass 2026-10-24T19:32:34Z: Actual128 phase interpretation complete, not two invocations for ordinal1: start/end pairs. Ordinal2 reaches accept then capture128 exhausted. Two concrete observer defects now authorLuna1932. ORCH19:31 real-profile instruction dispatchedSol1932, coordinating one Agent body. No product auth or further cost patch; no safety refusal or duplicate original.
+Pass 2026-10-24T19:44:04Z: Observer1932 merged42855; nativewatchdog1935 author12PASS merged44917. App single correctedlive ready underD74a, actualframe stillUNKNOWN. SolP4profileprep complete exactserverfixture scoped; Agent body pending. New R2 False-pair peer1935 attached existingcost/profile row, no further guess patch. Prior refusals untouched.
