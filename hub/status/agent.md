@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T01:24:25Z | dispatcher heartbeat 6s | live 4 (sol 0, luna 4, other 0) | busy30 22 | status age 0m -->
-# agent board, 2026-10-24T01:24:00Z
+<!-- agent | 2026-10-24T01:26:22Z | dispatcher heartbeat 1s | live 3 (sol 0, luna 3, other 0) | busy30 24 | status age 1m -->
+# agent board, 2026-10-24T01:25:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -21,8 +21,8 @@
 | F-SDK-closure | Repair the public reader fixture | Luna | G2 pair | merged | agt-F-SDK-fixture-review-0037 | Exact fixture independently passed; joined 14 controls passed on 1146. | 5e6823577 |
 | F-capture | Keep both published capture positives | Luna | Runtime fixture | merged | agt-F-capture-integrated-0052 | Actual b61: six original positives and no-CAS controls passed; exact reviewed blobs and static identities retained. | f9c305c8e |
 | F-persistence | Restart and disjoint-edit fixture | Luna | Helper 3b0 reviewed | merging | agt-F-helper-fixture-0114 | Independent no-weakening PASS 1 plus 6 controls. Only an optional private-cache pop changed; seven original assertions remain. | fixture held |
-| F-helper-digest | Keep verified helper intent after restart | Sol | G2 | merging | agt-F-helper-reader-integrated-0118 | Source merged 3059. Independent PASS 14; actual integrated proof is running. Three other failures stay assigned. | 3b0dc9e80 |
-| F-renderless | Renderer-free saves with readable show | Luna | SDK reader | merging | agt-F-helper-reader-integrated-0118 | Exact reviewed port merged 92b. Author 75 plus closure passed; actual integrated proof is running. | 61070c542 |
+| F-helper-digest | Keep verified helper intent after restart | Sol | G2 | merging | agt-F-helper-reader-integrated-0118 | Actual 92b: 14 passed; reviewed blobs and Runtime origins verified. Strict Ruff improvement is tracked separately. | 3b0dc9e80 |
+| F-renderless | Renderer-free saves with readable show | Luna | SDK reader | merging | agt-F-helper-reader-integrated-0118 | Actual 92b: 75 plus closure passed, with all six public fields retained. Strict Ruff improvement is tracked separately. | 61070c542 |
 | F-render-startup | Avoid unused transition-catalog scans | Luna | Source cause 0045 | doing | agt-F-transition-current-port-0118 | Independent PASS 116; both catalog authority counterexamples fixed. Exact current port is running. | branch only |
 | F-external-roots | Trust admitted installed pack roots | Sol | Runtime source capture | blocked:runtime | agt-F-external-trust-sol-0104 | Sol kept product unchanged. Runtime-owned source authority is missing; peer 0110 requests precise existing input. | 3d86; 07b held |
 | F-env-86 | Original installed-child cohort | Luna | External pack fix | blocked:agent | Services 11789 and 19627 | 69 cases passed, then 16 supported source invocations passed. One external-pack positive remains open. | c36 scope |
@@ -49,7 +49,7 @@ Integration: 92baf961275baa42514bc120351ea512bfbe6e6b, tree c5265e3f903c665a7d2c
 Blockers: Agent full waits for the remaining owned fixes and finite qualifications. D32 tagging and ownership reconciliation passed.
 Blockers: D32 upstream comparison waits for the lead to fetch Agent 90d469808. Collection and current-proof tagging continue.
 Blockers: Agent external-pack source repair waits for Runtime to name the authenticated capture input; peer 0110 sent.
-Blockers: IMAGE acceptance waits for App created-claim correction and independent source review; the old fixture is closed.
+Blockers: IMAGE acceptance waits for App created-claim correction; Agent source audit and independent review passed. The old fixture is closed.
 Blockers: Viewing must return its render-wire and ABA repair worker IDs. Runtime must return the seven-import and helper-map assessment worker IDs.
 Safety: Earlier Farm, monitor, publication and bench permission refusals remain stopped. No denied action was retried here.
 Disk: Sweep removed six old temp directories; compact compressed seven logs. About 11,056 MiB remains, above the 8 GB heavy-run floor. No refused target was retried.
