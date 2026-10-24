@@ -327,7 +327,12 @@ function assertUndoHistoryPublication(entry: HistoryEntry, publicationId: string
   expect(entry.records?.undo_of).toEqual([publicationId]);
 }
 
-function assertRequestV2(post: CommitPost, before: HeadPin, modern = true): void {
+function assertRequestV2(
+  post: CommitPost,
+  before: HeadPin,
+  modern = true,
+  undoExpectation?: { projectId: string; timelineId: string; publicationId: string },
+): void {
   expect(post.key).toBeTruthy();
   expect(post.body).toMatchObject({
     api_version: 1,
@@ -339,10 +344,24 @@ function assertRequestV2(post: CommitPost, before: HeadPin, modern = true): void
   });
   expect(post.body.commands.length).toBeGreaterThan(0);
   if (!modern) {
+    expect(undoExpectation).toBeTruthy();
+    const command = {
+      schema_version: 1,
+      op: 'timeline.inverse',
+      version: '1',
+      select: null,
+      args: { publications: [undoExpectation!.publicationId] },
+    };
     expect(post.body).toEqual({
-      api_version: 1, project_id: post.body.project_id, timeline_id: post.body.timeline_id,
+      api_version: 1, project_id: undoExpectation!.projectId, timeline_id: undoExpectation!.timelineId,
       base_revision_id: before.revision_id, base_publication_id: before.publication_id,
-      commands: post.body.commands, source: { via: 'app' },
+      commands: [command],
+      label: 'Undo timeline',
+      steps: [{
+        id: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/),
+        label: 'Undo timeline', intent: 'Undo timeline', tags: [], command_ordinals: [0], patch: [],
+      }],
+      merge: 'fields', reads: [], dry_run: false, source: { via: 'app' },
     });
     return;
   }
@@ -364,7 +383,7 @@ function assertRequestV2(post: CommitPost, before: HeadPin, modern = true): void
   expect(post.body.source).toEqual({ via: 'app' });
 }
 
-function assertDocumentPatchRequest(body: CommitRequest, changes: unknown[], created?: string[], intent = 'Save local editor changes'): void {
+function assertDocumentPatchRequest(body: CommitRequest, changes: unknown[], created: string[] | undefined, intent: string): void {
   expect(body.commands).toEqual([{
     schema_version: 1,
     op: 'doc.patch',
@@ -374,13 +393,11 @@ function assertDocumentPatchRequest(body: CommitRequest, changes: unknown[], cre
     args: { changes },
   }]);
   expect(body.steps).toHaveLength(1);
-  expect(body.steps![0]).toMatchObject({
-    label: 'Edit timeline',
-    intent,
-    tags: [],
-    command_ordinals: [0],
-    patch: changes,
-  });
+  expect(body.steps![0]!.label).toBe('Edit timeline');
+  expect(body.steps![0]!.intent).toBe(intent);
+  expect(body.steps![0]!.tags).toEqual([]);
+  expect(body.steps![0]!.command_ordinals).toEqual([0]);
+  expect(body.steps![0]!.patch).toEqual(changes);
 }
 
 function assertParentMoveRequestV2(
@@ -437,14 +454,14 @@ function assertParentMoveRequestV2(
   }];
   expect(post.body).toEqual({
     api_version: 1,
-    project_id: expect.any(String),
-    timeline_id: expect.any(String),
+    project_id: original.project_id,
+    timeline_id: original.timeline_id,
     base_revision_id: before.revision_id,
     base_publication_id: before.publication_id,
     commands: [{ schema_version: 1, op: 'doc.patch', version: '1', select: null, created: [], args: { changes } }],
     label: 'Edit timeline',
     steps: [{
-      id: expect.any(String), label: 'Edit timeline', intent: `Move ${clipId} on ${trackId}`, tags: [],
+      id: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/), label: 'Edit timeline', intent: `Move ${clipId} on ${trackId}`, tags: [],
       command_ordinals: [0], patch: changes, reads,
     }],
     merge: 'fields', reads, dry_run: false, source: { via: 'app' },
@@ -693,7 +710,11 @@ async function proveGestureAndUndo(
   const inverse = await commitFromGesture(page, wire, async () => {
     await page.getByRole('button', { name: 'Undo', exact: true }).click();
   });
-  assertRequestV2(inverse, pinOf(result), false);
+  assertRequestV2(inverse, pinOf(result), false, {
+    projectId: original.project_id,
+    timelineId: original.timeline_id,
+    publicationId: result.receipt.receipt_id,
+  });
   assertInverseTargetsPublication(inverse, result.receipt.receipt_id);
   const inverseResult = assertReplyShape(inverse, pinOf(result), false);
   const undone = inverseResult.data.canonical_document;
@@ -761,7 +782,7 @@ test('P2 mounted transition None single: raw clear preserves opaque data/order a
   await proveGestureAndUndo(page, harness, seed3, wire, before, original,
     () => clearTransition(page, seed3.transitionClipId),
     [seed3.transitionClipId], ['transition'],
-    (body) => assertDocumentPatchRequest(body, changes, []),
+    (body) => assertDocumentPatchRequest(body, changes, [], `Clear transitions: ${[seed3.transitionClipId].join(', ')}`),
     (after) => assertRawTransitionCleared(original, after, [seed3.transitionClipId]),
     (undone) => expect(clipById(undone, seed3.transitionClipId).transition).toEqual(clipById(original, seed3.transitionClipId).transition),
     (post, head) => assertTransitionRequestV2(post, head, original, [seed3.transitionClipId], changes));
@@ -781,7 +802,7 @@ test('P2 mounted transition None bulk: atomic raw clears preserve unknown fields
   }));
   await proveGestureAndUndo(page, harness, seed3, wire, before, original,
     () => clearTransitionBulk(page, seed3), ids, ['transition'],
-    (body) => assertDocumentPatchRequest(body, changes, []),
+    (body) => assertDocumentPatchRequest(body, changes, [], `Clear transitions: ${[seed3.appClipId, seed3.transitionClipId].join(', ')}`),
     (after) => assertRawTransitionCleared(original, after, ids),
     (undone) => {
       for (const id of ids) expect(clipById(undone, id).transition).toEqual(clipById(original, id).transition);
