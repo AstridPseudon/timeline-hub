@@ -25,6 +25,22 @@ test('D66 full P2 launch retains bounded Runtime phase logs while other suites s
   assert.notEqual(launch('p2').D66_RUNTIME_LOG_DIR, launch('p2-element').D66_RUNTIME_LOG_DIR);
 });
 
+test('D80 focused P2 descriptors select one exact original test each', () => {
+  const expected = {
+    'p2-register-asset': ['tests/e2e/local/three-products.p2-elements-assets.spec.ts', 'P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo$'],
+    'p2-automatic-child-placement': ['tests/e2e/local/three-products.p2-elements-assets.spec.ts', 'P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo$'],
+    'p2-popup-swap': ['tests/e2e/local/three-products.p2-popup.spec.ts', 'P2 popup mounted SWAP on selected child uses authenticated old/new media selections$'],
+    'p2-transition-none-single': ['tests/e2e/local/three-products.p2-tour.spec.ts', 'P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo$'],
+    'p2-transition-none-bulk': ['tests/e2e/local/three-products.p2-tour.spec.ts', 'P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo$'],
+  };
+  for (const [name, [file, grep]] of Object.entries(expected)) {
+    assert.deepEqual(suites[name].files, [file]);
+    assert.equal(suites[name].count, 1);
+    assert.equal(suites[name].grep, grep);
+    assert.equal(suites[name].retainRuntimeLogs, true);
+  }
+});
+
 test('D66 accepts a detached clean checkout matching the normal head and tree', () => {
   assert.deepEqual(validateSelectedSource({
     role: 'agent', selected: '/snapshot/agent', normal: '/home/user/work/agent',

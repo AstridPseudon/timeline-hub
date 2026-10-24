@@ -23,6 +23,31 @@ export const suites = {
     grep: 'P2 mounted element edit: real catalog apply, exact params patch, reload and guarded Undo$',
     retainRuntimeLogs: true,
   },
+  'p2-register-asset': {
+    files: ['tests/e2e/local/three-products.p2-elements-assets.spec.ts'], count: 1,
+    grep: 'P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo$',
+    retainRuntimeLogs: true,
+  },
+  'p2-automatic-child-placement': {
+    files: ['tests/e2e/local/three-products.p2-elements-assets.spec.ts'], count: 1,
+    grep: 'P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo$',
+    retainRuntimeLogs: true,
+  },
+  'p2-popup-swap': {
+    files: ['tests/e2e/local/three-products.p2-popup.spec.ts'], count: 1,
+    grep: 'P2 popup mounted SWAP on selected child uses authenticated old/new media selections$',
+    retainRuntimeLogs: true,
+  },
+  'p2-transition-none-single': {
+    files: ['tests/e2e/local/three-products.p2-tour.spec.ts'], count: 1,
+    grep: 'P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo$',
+    retainRuntimeLogs: true,
+  },
+  'p2-transition-none-bulk': {
+    files: ['tests/e2e/local/three-products.p2-tour.spec.ts'], count: 1,
+    grep: 'P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo$',
+    retainRuntimeLogs: true,
+  },
   p3: { files: ['tests/e2e/local/three-products.spec.ts'], count: 1,
     grep: 'M2 real gate 5 \\(M1 real mounted path\\): Agent edit, lost ACK, newer local gesture, exact retry, restart and undo preserve intent$' },
   'live-edit-smoke': { files: ['tests/e2e/local/three-products.live-edit-smoke.spec.ts'], count: 1,
