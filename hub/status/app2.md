@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T06:56:18Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 0m -->
+<!-- app2 | 2026-10-24T06:58:24Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 1m -->
 # app2 board, 2026-10-24T06:56Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -32,6 +32,7 @@
 | P2/P3-target | Qualify exact product dispatch target | App Sol; D21 | Source target 0644 PASS | merged | app-P2-P3-source-target-sol-0644 | Fifteen source control blocks passed. Real selected source and modeled snapshot accepted; wrong artifact refused. No journey credit. | Exact 663 / tree 9a3726 |
 | P2/P3-source-review | Review final source and original assertions | Independent Luna | Review 0649 PASS | merged | ap2-P2-P3-current-source-verdict-0649 | Original eight and Gate5 tail preserved. Readiness 12, environment 7, Gate5 controls, three types and lint passed. Source scope only. | Exact 663 / tree 9a3726 |
 | P2/P3-preflight-facts | Retain failed source admission facts | App Luna producer | Actual 20674 and 10144 terminal | merged | app-P2-P3-corrected-result-handoff-0634 | Both exit 2 in 6 seconds at source guard. All original cases and prior stages not run. Current direct-file custody is bounded. | Wrong artifact d545 refused |
+| P2-five-oracle | Review candidate strict expectation mismatches | App independent Luna; Proof if confirmed | Source precheck 0647 complete | doing | app-P2-five-oracle-review-0651 | Candidate claims only. Current pair remains unchanged; no test edit until independent classification. | Report only |
 | F-final-gate-map | Map preserved P1 to P5 final proof routes | Luna | D48 and D49 header authority | doing | ap2-P1-P5-final-gate-map-0657 | Report only. Identify exact originals, supported App service routes and genuine missing owner inputs. No gate run. | Current source 663 |
 | F-final-gates | Rerun P1 to P5 on the final tuple | App service; Proof verdict | Final tuple qualification under D48 | gated:freeze | App service; Proof final reviewers | Venue is App service under D49. Current pinned proofs do not replace final tuple results. | Final heads pending |
 
