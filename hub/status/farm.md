@@ -1,4 +1,4 @@
-<!-- farm | 2026-10-24T04:57:19Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 9m -->
+<!-- farm | 2026-10-24T04:58:53Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 0, other 1) | busy30 2 | status age 0m -->
 # farm board, 2026-10-24T01:45Z. No worker running.
 UPDATE 01:45Z: Stale P1 line cleared (the Blockers line below no longer mentions P1 NO-GO). P1 is GO (00:43Z, D35). P2/P3 are not proven (App runs 10973/14249 failed before the first gesture); no journey rerun or graph rebuild is authorised. The farm stays on standby. Disk 18 GB free.
 
@@ -7,7 +7,7 @@ UPDATE 01:45Z: Stale P1 line cleared (the Blockers line below no longer mentions
 | F-P3 / F-P2 | Gate-5 and 8-gesture tour | n/a | n/a | moved to App (H24); farm stood down | none | 15659 / 31814 diagnostic only | n/a |
 | F-agent-post-G5-full | Agent full after retirement | n/a | n/a | owner: Agent (own service); no farm duplicate | none | pending (Agent) | n/a |
 | F-app-full / F-comp-full / F-app-D19 / F-zip-dry | earlier suites and ZIP rehearsal | n/a | n/a | done (see design/farm-*.md) | n/a | see design/farm-*.md | n/a |
-| F-agent-full-checkpoint | Agent FULL suite on current tl/integration head (checkpoint, not a gate; orchestrator 03:42Z) | claude-sonnet-5-5 | none | doing: Store initialised 04:38Z (phase 1 done, owner 90c89928); runtime checkout 45c3a7f4 done (clean); (A) reported to lead 04:50Z. Waiting on the lead's eight-field request-runtime (step B), then row-append worker (C), then ONE run of agent full-farm (D) | tf-farm-store-init-0436 (done) | design/farm-agent-full-checkpoint-20261024T0355Z.md; head 8657e836 | n/a |
+| F-agent-full-checkpoint | Agent FULL suite on current tl/integration head (checkpoint, not a gate; orchestrator 03:42Z) | claude-sonnet-5-5 | none | doing: Store initialised 04:38Z (phase 1 done, owner 90c89928); runtime checkout 45c3a7f4 done (clean); (A) reported to lead 04:50Z. Step B done 04:56Z (runtime key 5ca5c561). Step C row-append worker tf-farm-row-append-0457 queued 04:58Z; then ONE run of agent full-farm (D) | tf-farm-store-init-0436 (done) | design/farm-agent-full-checkpoint-20261024T0355Z.md; head 8657e836 | n/a |
 | F-final | final delivery build + full suites where permissions allow | test service | P2/P3 GO, deletions, upstream freeze (P1 GO cleared) | todo (standby, not ready) | none | none | n/a |
 
 Blockers: none for the farm. F-final waits on P2/P3 (not proven; owners App, Proof, Runtime), the remaining deletions and the upstream freeze.
