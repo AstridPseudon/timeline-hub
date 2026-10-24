@@ -43,7 +43,6 @@ _PROFILE_CONFIGS = {
 }
 
 _EMBEDDED_COMFY_CLIENT = Path("comfy/client/embedded_comfy_client.py")
-_EMBEDDED_COMFY_FALLBACKS = (Path("/root/b06-t04/comfyui-embedded"),)
 _LOCAL_PROMPT_TIMEOUT_SEC = 3300  # leave containment time below the host's 3600s deadline
 
 
@@ -116,23 +115,13 @@ def _profile_comfyui_version_requirement(hc03_profile: Any) -> str | None:
 
 def _bootstrap_embedded_comfy_client() -> Path:
     """Select and import the embedded-client ComfyUI tree for pip execution."""
-    candidates: list[str | Path] = []
     configured = os.environ.get("COMFYUI_PATH")
-    if configured:
-        candidates.append(configured)
-    candidates.extend(_EMBEDDED_COMFY_FALLBACKS)
-
-    root: Path | None = None
-    for raw in candidates:
-        candidate = Path(raw).expanduser().resolve()
-        if (candidate / _EMBEDDED_COMFY_CLIENT).is_file():
-            root = candidate
-            break
-    if root is None:
+    root = Path(configured).expanduser().resolve() if configured else None
+    if root is None or not (root / _EMBEDDED_COMFY_CLIENT).is_file():
         raise ProductionEngineError(
             "pip_embedded requires a ComfyUI tree containing "
-            "comfy/client/embedded_comfy_client.py; set COMFYUI_PATH or install "
-            "the embedded checkout at /root/b06-t04/comfyui-embedded"
+            "comfy/client/embedded_comfy_client.py; set COMFYUI_PATH, or use "
+            "local_server mode (comfy_url) with your own ComfyUI"
         )
 
     root_string = str(root)
