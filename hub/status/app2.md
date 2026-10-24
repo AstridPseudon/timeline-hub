@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T15:29:52Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 4m -->
-# app2 board, 2026-10-24T15:25Z
+<!-- app2 | 2026-10-24T15:31:55Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-24T15:31Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -51,7 +51,7 @@
 | F-final-host | Prepare App-host final proof routes | App Luna; independent Luna | Source recipe qualified; final inputs pending | merged | Return0754; independent0758 PASS | Actual tools, locks, maker argv and existing routes qualify. Missing P4/P5 registrations and final tuple remain explicit. | Source preparation only |
 | F-final-registrations | Retain historical App host preparation | App Luna | D59 venues supersede App host | gated:D59-venues | Draft0834; review0838; App1314 board | Historical source preparation only. P4 now Agent service; P5 main service. No duplicate App registration or new host worker owed. | Draft only |
 | F-App-early | Track D49 App checkpoint | App service; Luna | Same actual16138 terminal | blocked:app | App producer1227; repairs HOME | FAIL exit1 in1665s: Vitest19251 pass; Node257 pass,38 fail,26 skip. App owns categories and repairs; no final GO. | Tree3311 / HOMEd993 |
-| F-App-current | Refreshed full8158 and schema release | App Luna; release owner | Authentic installer release decision | blocked:app | Producer1446; author1507; escalation1514 | FAIL exit1/1203s: Vitest19256 PASS/1 installer schema FAIL. Node NOTRUN. Confirmed regression; decision owned by App/orchestrator. No known-gap credit. | Appbe98 |
+| F-App-current | Refreshed full8158 and schema release | App Luna; release owner | D65 current tuple manifest repair | blocked:app | App1507; D65 | FAIL exit1/1203s: Vitest19256 PASS/1 installer schema FAIL. Node NOTRUN. D65 approves exact tuple pins; strict guard and actual proof remain required. | Appbe98 |
 | F-final-gates | Rerun final P1 to P5 | Lane services; App verdicts | D59 final cut | gated:D59-cut | App1518; Agent1517; Runtime1511 | D64 dry plus poison precedes current P2/P3 in parallel. Final cut, original P1 to P5 and zero-regression clearance remain unqualified. | Final tuple pending |
 | A4-source | Zero reachable legacy film writers | App; independent Luna | Census0438 and review0444 | merged | App0438 and0444 | Source-only end state qualified; D31/D37 retained subset unchanged. Same head523 tests, three types and lint passed. | c0fe |
 
@@ -64,10 +64,10 @@
 
 D56.4: Proof is folded into App. The single complete handoff is [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md). All in-flight items are complete, including independent caller1213 PASS. No new Proof dispatch, old tuple run or product merge is owed. The manager loop remains alive for new orchestrator instructions.
 
-live 0 / cap 4; ready-undispatched 0. Copied dispatcher header: <!-- app2 | 2026-10-24T15:23:35Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 8m --> D56.4 stand-down remains binding; App owns transferred rows.
+live 0 / cap 4; ready-undispatched 0. Copied dispatcher header: <!-- app2 | 2026-10-24T15:29:52Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 4m --> D56.4 stand-down remains binding; App owns transferred rows.
 
 core open: 4 final proof gates P1 to P4 remain unqualified on final heads. Execution transferred to App for P1/P2/P3 and Agent for P4. All eight original P2 gestures are CORE under D55b. Historical passes do not qualify final heads.
-regressions: App15:19 reports1 confirmed installer/schema regression from8158, release decision escalated1514. Agent15:16 reports1 repaired source candidate pending actual-home proof1518; D63 rollup1517 active. Historical AppNode36PASS/2SSHenv retained, current Node NOTRUN. No final zero-regression clearance.
+regressions: App8158 retains one confirmed installer/schema regression. D65 resolves release authority: exact current tuple manifest pins and strict digest guard; App repair/proof pending. Agent actual d27b PASS16 closes its named env regression; seven core cases and final cut confirmation remain. Current App Node NOTRUN; no final zero-regression clearance.
 
 P1 RESULT GO remains scoped to original18792: both mounted cases passed, exit0 in141 seconds, on App f8b15af0 / Agent78738040 / Runtime2a9e347f. Independent0036 source and0040 custody passed. P1 case2 includes refusal, message, canonical rollback and zero legacy traffic. Corpus49 passed with15 real fixtures and11 inputs. D60 refreshed final heads must rerun P1.
 
@@ -115,9 +115,11 @@ D63: Header15:03 assigns the one cheap201-selector rename check and paired66-fai
 
 D64: Header15:16 uses P1 proven service entry and recipe shape; exact real-service dry has no inherited TIMELINE inputs, reaches first original then cleanabort, plus one missing-input poison refusal. Harness provenance is harness, not product custody; author tests/dry suffice. App1518 owns current preparation. Installer1507 is off critical path unless dry-blocking; fallback Luna after15:45 only if author1437 has not returned. Author52966 has returned, so no Proof fallback or dispatch follows. D56.4 remains binding.
 
-Disk: 8238403584 bytes free at 2026-10-24T15:25Z. All1313 Proof workers done, no running markers. Three existing Proof trees are KEEP-marked; no eligible non-KEEP Proof tree. Prior cleanup, compact and locked-v1 refusals remain stopped; no alternate route launched.
+D65: Header15:24 resolves installer release decision1514. App manifest uses current integrated Runtime/Agent commits and generated schema digest through existing tooling; strict guard must pass. Runtime F-final docs1526 owns delivery order and authentic post-owner-merge manifest command. No publish, pin edit or new Proof dispatch. F-App-current remains blocked:app for actual repair and proof, with no orchestrator decision owed.
 
-Pass 2026-10-24T15:25Z: Completed the ten-minute monitoring interval after restart. PLAN read first, MANAGER-COMMON/C0/header read through newD64. Inbox unchanged790277 bytes. bin/workers confirms all1313 done. Rechecked every blocked row against App15:19, Agent15:16 and Runtime15:17 actual hub boards. D64 launch1518 is owned, not ready for originals until actual dry/poisonPASS. New confirmed App installer regression retained as F-App-current with actual8158 counts and existing escalation1514; no duplicate decision request. Runtimee02f security1511 and Agent integrated1518/rollup1517 remain owned. No new Proof assignment; D56.4 stands. No duplicate run/peer note, product edit, Git mutation or refused cleanup route. STATUS is the harness restart point.
+Disk: 8233414656 bytes free at 2026-10-24T15:31Z. All1313 Proof workers done, no running markers. Three existing Proof trees are KEEP-marked; no eligible non-KEEP Proof tree. Prior cleanup, compact and locked-v1 refusals remain stopped; no alternate route launched.
+
+Pass 2026-10-24T15:31Z: PLAN read first, common rules and contract consulted, header read through new D65. Inbox unchanged790277 bytes. bin/workers confirms all1313 done. Rechecked every blocked row against actual App15:21, Agent15:24 and Runtime15:24 hub boards. D64 real-service dry/poison remains App1518-owned before originals. D65 clears the installer decision wait; F-App-current now waits for the approved App manifest repair and strict proof. Agent d27b actual16 PASS and completed D63 rollup retained. Runtime e02f security1511 and durable proof route1524 remain owned. No new Proof assignment; D56.4 stands. No duplicate run, peer note, product edit, Git mutation or refused cleanup route. Continuing the monitoring interval; STATUS is the harness restart point.
 
 Inbox read through790277 bytes. Completed D56.4 handoff remains current. The manager harness can restart from this STATUS and INBOX; no new Proof dispatch is owed.
 
