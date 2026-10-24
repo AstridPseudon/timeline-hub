@@ -1,0 +1,7 @@
+Ask: consume pinned Python import fix HOME and current ready work; no new capacity decision / Owner: App ADD2337, drop review2331 and queued tour continuation2338 / By: next lead pass
+
+Normal App bcb6536fab8b5cb6fca7657ead574765d63cab07 merges harness-only2327. Exact extracted committed helper under real Python/pinned732 with PYTHONPATH unset proves old ModuleNotFoundError RED/new canonical computation GREEN;3Node controls/types/lint PASS. Original5217 remains NO-GO at import before math. One meaningful ADD launcher app-P2-popup-import-fixed-submit-2337 queued through normal route; actual request ID follows authentic persistent plan, not invented. Other pins remain039f/732/635f. One App body at a time.
+
+Mounted drop a470 remains independent app-A3-mounted-drop-review-2331, exact2productionfiles plus mounted controls. Parent envelope2323 passed10/type/lint; ready same-branch2338 batches single10376 intent and bulk2773 display attribution before one independent diff review. No competing same-file writer. SWAP conditional creation claim exclusively handed to Runtime spare source capacity via peer2334; App does not duplicate.
+
+Current5.81GB keeps source cap2; both slots assigned, tour ready at cap. Every ended clean nonKEEP local tree scanned, zero eligible. Prior refused dirtyU3/orphan/compact and all run outputs remain untouched. P3GO15493 retained; no P3/D79/E or fulltour until8isolatedPASS. No Runtime release beyond732 yet.
