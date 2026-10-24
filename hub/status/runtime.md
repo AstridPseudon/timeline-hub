@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T05:07:47Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 0m -->
-# runtime board, 2026-10-24T05:07:00Z
+<!-- main | 2026-10-24T05:10:14Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 0m -->
+# runtime board, 2026-10-24T05:09:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -43,7 +43,7 @@
 | F-authoring-seed-fixture | Preserve shared alias compiler case | Sol / Luna | Explicit D44 behavior and review | merged | Agent author0414; independent0418 PASS | Original case passed in4.96s; other10 predicates unchanged. Exact reviewed tree equals Agent home. [Review](../../design/agent-D44-alias-review-0418.md) | Agent5c97e35b05 |
 | OPS-manifest-restore | Restore accidental generated manifest write | Luna | Exact main file identity | merged | Restore 0110; independent 0113 PASS | Exact tracked hash restored; main cleanliness and byte equality independently verified. | HEAD 458595850 |
 | R0-public-export-manifest | Refresh generated artifact hash | Luna | Integrated verification passed | merged | Author 0111; review 0115; integrated 0128 | Actual head db11 passed 74 cases and generation checks; 77 of 78 entries unchanged. [Proof](../../design/runtime-R0-manifest-integrated-0128.md) | db11ea829 / 8a742b1c2 |
-| R5-full-headless | Preserve headless acceptance and retry | Luna | Exact allocation order classification | review | Qualification0501; review0505 | Twelve passed, one failed at created-list order. Later positive assertions remain unreached. No fixture or source change yet. | Runtime 66657; Agent 9cd3 |
+| R5-full-headless | Preserve headless acceptance and retry | Luna | Exact fixture order correction | doing | rt-R5-headless-order-return-0509 | Review0505 proves fixture oracle bug. Keep exact list comparison; change expected order to track, asset, clip. All 84 predicates stay. | Runtime 66657; Agent 9cd3 |
 | R5-full-occupancy | Preserve fifteen occupancy scenarios | Luna / Luna | Integrated proof and result review passed | merged | Reviews0430/0438; integrated0444; audit0449 | Actual faf6 passed 16 in 45.92s;15 original nodes close. All65 original predicates and source guards retained; no full-suite claim. | faf6a5477 / f8051e52b |
 | R5-full-speed | Preserve six speed refusals | Luna | Integrated proof passed | merged | Review 0138; port review 0148; service 13500 | Actual head 28bb passed 14 cases. Original six inputs and SQL/CAS checks retained; no new type diagnostics. | 4e983cebc / 0e28e6261 |
 | R5-full-receipt-key | Preserve receipt and key guards | Luna | Integrated proof passed | merged | Reviews 0138 and 0148; integrated 0157 | Actual head 28bb passed both cases with explicit Agent source path. All receipt and replay equalities retained. | 28bb65668 / b57ab2331 |
@@ -71,7 +71,7 @@ Runtime integration is faf6a5477, tree5e909a876c78. Actual integrated occupancy1
 D47 defers the memo and validation capsule until after delivery. Held source remains unmerged. D45 and D46 keep the next pair on existing 37eb and Agent 079 with reviewed App fixes.
 
 P2/P3: App submitted the one D45 pair at 04:53:33Z, P2 13583 and P3 4065, on App c0fe / Agent 079 / Runtime 37eb. App handoff 0454 and Proof own the actual verdict; no Runtime prerequisite remains.
-Blockers: Runtime — original failure count remains ten open pending integrated proof. Headless family returned twelve passed and one allocation-order mismatch; independent review 0505 classifies it.
+Blockers: Runtime — ten original failures remain open pending integrated proof. Independent 0505 found a fixture order bug; return 0509 corrects only the expected list order.
 Farm: full-farm row appended at 04:59 with outside bytes unchanged. Farm worker tf-agent-full-farm-0503 queued the one checkpoint at 05:04. Setup has no remaining blocker.
 Blockers: Freeze — D39 client regeneration and Agent/App tuple adoption are held for the freeze; current consumer pins stay intact.
 
@@ -81,4 +81,4 @@ D34: Main has 8.8 GiB free at the latest check. The orchestrator orders no furth
 
 Later: D46 closes U2c. Runtime facts are complete; no new relay or provider custody backend. Its upstream commit arrives with the freeze U-merge. Disk work stays paused. D42 pin and HTTP work stay deferred pending safe source.
 
-Next ready: Consume order review 0505, then correct the proven source or fixture once. Farm completes its row and one checkpoint. Agent owns the source-copy observation. Memo is post-delivery under D47.
+Next ready: Consume exact fixture return 0509, review and merge it, then qualify the integrated head. Farm completes its row and one checkpoint. Agent owns the source-copy observation. Memo is post-delivery under D47.
