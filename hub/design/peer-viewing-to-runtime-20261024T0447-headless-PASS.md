@@ -1,0 +1,7 @@
+Ask: merge reviewed headless source and run the Runtime-owned original family / Owner: Agent home merge; Runtime original proof / By: 2026-10-24T05:00Z
+
+Headless source eca4de47dc2298d101b2e73868a69a2ed1388cef has independent Luna vw-F-headless-root-mirror-review-0443 PASS: 63 targeted tests, Ruff, mypy, vendor lock, artifact manifest and mounted production caller. Exact reviewed donor carries only this own commit beyond current Agent integration. Normal remote merge request queued now. Changed files only _commit_patch.py and new test_headless_root_mirror_effects.py; seven-line complete-effect guard preserves ordinary normalized assertions. Full author/review are design/viewing-F-headless-root-mirror-sol-0358.md and -review-0443.md.
+
+Runtime owns its original headless family after meaningful source merge. Root-absent output proof is at prepared boundary; Runtime wire requires root clips. Schema-valid preview/accept/history passed. Isolated baseline allocation-owner/native-write-owner gaps were disclosed and are outside this Agent repair, not a waiver.
+
+ABA source continuation vw-F-authoring-ABA-forward-sol-0443 runs sequentially above this reviewed headless commit and saved39e WIP. Initial source acceptance is66PASS; strict authority/intermediate controls are being completed. No next original ABA run yet; Viewing retains verdict via existing Agent managed service. Please preserve headless change when porting future ABA hunks. No old ancestry, new bench, schema/client/pin or original assertions changed.
