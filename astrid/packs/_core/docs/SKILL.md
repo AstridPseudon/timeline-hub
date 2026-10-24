@@ -20,6 +20,7 @@ Choose the route by the requested result. Read only that route's guidance:
 
 | Request | Start here |
 | --- | --- |
+| Generate with the user's own ComfyUI: "my ComfyUI", "my saved workflow", local generation | [Run on your own ComfyUI](../../vibecomfy/docs/SKILL.md#run-on-your-own-comfyui) |
 | Find a project, inspect a run, or open a render | The CLI recipes below |
 | Change timing, text, layout, effects, or existing timeline clips, then publish and point the user to the editor (render only if asked) | [Timeline editing](../../rendering/docs/SKILL.md) |
 | Generate images, video, or audio (including Foley); understand, assemble, compare, or publish work | [Creative work](creative-work/SKILL.md), then the relevant pack |
@@ -47,9 +48,11 @@ irm https://astrid.haus/install.ps1 | iex
 
 The installer checks that Astrid is healthy and opens astrid.haus itself. Tell
 the user to choose Allow if Chrome or Edge asks to reach their computer, then
-confirm astrid.haus shows Connected. That is the end of setup. (Connecting
-local engines such as ComfyUI or Wan2GP is not covered here yet.) Do not
-install or clone `astrid-app`; it is for app developers.
+confirm astrid.haus shows Connected. That is the end of setup. To generate
+with a ComfyUI the user already runs, follow [Run on your own
+ComfyUI](../../vibecomfy/docs/SKILL.md#run-on-your-own-comfyui); it covers
+Wan2GP results too. Do not install or clone `astrid-app`; it is for app
+developers.
 
 ## Commands for outside agents
 
@@ -92,8 +95,11 @@ project changes or before editing. Current explicit instructions take
 precedence over project preferences, then user preferences, then ordinary
 defaults. Temporary choices stay in the conversation. Save a lasting default
 only when the user asks to remember it; "for this project" means project scope,
-while "remember my default" means user scope. Never put passwords, API keys, or
-other secrets in preferences; they are included in model prompts.
+while "remember my default" means user scope. One exception: after the first
+successful run on the user's own ComfyUI, save its machine facts (URL, folders,
+saved workflow names) to the user scope and say so; see the VibeComfy skill.
+Never put passwords, API keys, or other secrets in preferences; they are
+included in model prompts.
 
 Use `astrid preferences` for both scopes, `astrid preferences user` for the user
 document, and `astrid preferences project` for the selected project's

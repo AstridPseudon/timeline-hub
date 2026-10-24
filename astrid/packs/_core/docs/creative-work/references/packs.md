@@ -25,7 +25,7 @@
 | training | Training pack — build video training datasets and run LoRA training end to end: clip pools, captioning/review, RunPod... | `astrid/packs/training/docs/SKILL.md` |
 | typed_timeline | Map admitted typed rows into validated runtime render timelines using explicit mapping resources. | `astrid/packs/typed_timeline/docs/SKILL.md` |
 | understanding | Understanding pack: modality-specific LLM inspection executors for audio, images, video, and scene captioning.  Inclu... | `astrid/packs/understanding/docs/SKILL.md` |
-| vibecomfy | Import, inspect, edit, validate, and run ComfyUI workflows through VibeComfy's canonical Python/companion/source bund... | `astrid/packs/vibecomfy/docs/SKILL.md` |
+| vibecomfy | Run the user's own ComfyUI and saved workflows on their machine (local generation), and import, inspect, edit, valida... | `astrid/packs/vibecomfy/docs/SKILL.md` |
 | video_editing | Video editing pack: orchestrators for the full hype pipeline, event talk videos, thumbnail generation, iteration vide... | `astrid/packs/video_editing/docs/SKILL.md` |
 | wan2gp | Native Wan2GP pack — generate video through the GenericPackHost-owned persistent upstream Python session (shared.api.... | `astrid/packs/wan2gp/docs/SKILL.md` |
 | youtube | YouTube pack — acquire or publish YouTube media (audio MP3 / video MP4 via yt-dlp) and publish finished videos to YouTube via Za... | `astrid/packs/youtube/docs/SKILL.md` |
