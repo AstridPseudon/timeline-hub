@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T03:22:55Z | dispatcher heartbeat 13s | live 3 (sol 1, luna 2, other 0) | busy30 12 | status age 0m -->
+<!-- agent | 2026-10-24T03:25:02Z | dispatcher heartbeat 4s | live 5 (sol 1, luna 4, other 0) | busy30 14 | status age 1m -->
 # agent board, 2026-10-24T03:18:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -39,8 +39,8 @@
 | F-R1-reorder | Replay occurrence order through history | Sol / Luna | Independent 0248 PASS | merged | Author0239; review0248; join0256 | Independent145 plus12 passed; actual66d proof passed42 reorder/history and seven original publication cases. | a7a6d0e48c |
 | F-G4-occupancy | Faithful historical shared placement | Sol / Luna | Runtime inverse retirement | doing | Agent redo0308; Runtime review0316 | Runtime candidate4027 has causal old RED/new GREEN; independent review active. Agent implements accepted-source redo revalidation. Original family held. | candidate held |
 | F-authoring-neighbors | Restore seven publication behaviors | Luna | First home qualification | merged | Port0256; integrated0302 PASS | Actual66d:60 passed in6.41s, stable home origins and clean tree. Eleven migrations,seven original neighbors and42 reorder/history controls. | 66d85b5db8 |
-| F-authoring shared alias | Project one materialized occurrence | Sol / Luna failover | Independent source review | review | Runtime author0303; review0313 | Candidate8f9a6 passed21 plus3 controls. Eleven real assertions retained; original behavior not yet run. Exact SHA owns branch-name discrepancy. | 8f9a6acc held |
-| F-authoring-ABA | Preserve complete authoring undo and ABA | Sol failover | Existing cause0227 | doing | vw-F-authoring-ABA-projection-sol-0300 | Viewing board confirms unique implementation active. Original141 undo FAIL retained; inverse and timing source remain Agent-owned. | source pending |
+| F-authoring shared alias | Project one materialized occurrence | Sol / Luna failover | Independent source review | review | Runtime review0313; Agent port0324 | Candidate8f9a6 passed21 plus3 controls; exact current port active. Eleven real assertions retained. Original behavior awaits review. | 8f9a6acc held |
+| F-authoring-ABA | Preserve complete authoring undo and ABA | Sol / Luna | Donor review and current join | review | Viewing review0312; Agent port0324 | Donor55 plus112 controls passed. Current join preserves guarded reorder history. Original141 and two broader transient cases remain unqualified. | 5694c7147 held |
 | F-D32-render-wire | Six original SDK wire results | Luna / service | Existing installed child | merged | Service 27934 | Six original cases passed in 41.48s; body hashes, 19 source identities, import origins and read-only profile retained. | 521c source |
 | F-helper-sequential | Repair sequential replay map | Sol / Luna | Integrated proof passed | merged | Source184dc; review0224; integrated0232 | Actual8a8d:12focused, Ruff2145 and mypy1909 passed; vendor/artifact passed. Original True and False passed on exact reviewed source. | 184dc20a70 |
 | F-D32-h3-import | Seven isolated child-import cases | Luna | Existing installed child | merged | agt-F-h3-env-0137 | All seven original fault cases passed in 3.60s; preflight/postflight, body and source identities retained. | 521c source |
