@@ -456,6 +456,13 @@ def test_parent_receipt_compaction_preserves_publication_integrity(tmp_path, ast
             publisher="editor", invocation_path=route_path(project_id, "main"),
             authorize=lambda: None,
         )
+        assert replay["data"] == original["data"]
+        assert replay["receipt"]["result"] == original["receipt"]["result"]
+        committed = reopened.committed_receipt(
+            "timeline.commit", canonical_json([project_id, "main"]), "current-commit", project_id=project_id,
+        )
+        assert committed is not None
+        assert committed["result"] == original["data"]
         assert replay == original
         assert tuple(connection.iterdump()) == before
     finally:
