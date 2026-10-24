@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T15:00:32Z | dispatcher heartbeat 9s | live 3 (sol 0, luna 3, other 0) | busy30 11 | status age 1m -->
+<!-- agent | 2026-10-24T15:03:16Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 2m -->
 # agent board, 2026-10-24T14:59:35Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -81,7 +81,7 @@
 
 | F D60 comparison | Compare exact276 against upstream924 | Luna | Terminal service1621 XML | merged | Terminal1452 PASS evidence | All276 exact:75 match,66 upstream FAIL9 PASS;201 absent UNKNOWN. Nine contrasts are eight current PASS and one D23. No current regression proved. | Agent924; Runtime launch becfe |
 
-| R2 forward provider | Preserve omitted forward created claims | Runtime / Luna | Runtime auth source owner | blocked:runtime | Classify1433; peer1440 | Source points to Runtime auth comparing omitted created with derived track claims. Two originals stay FAIL; no new body or confirmed regression. | Agent68e82 / e68 |
+| R2 forward provider | Preserve omitted forward created claims | HARD Runtime Sol | Runtime auth fix and proof | blocked:runtime | rt-R-forward-created-authority-sol-1450 | Unique auth.py owner preserves explicit claims and custody. Exact two originals stay open until reviewed Runtime source and Agent home proof. | Agent68e82 / e68 |
 
 | F home13 custody | Preserve actual home result transcript | Luna | Existing raw worker log | merged | Receipt1440 PASS | All13 XML outcomes preserved as exact transcript bytes with ranges and hashes. Original TMP file loss disclosed; flat design handoff published. | Home68e82 |
 
@@ -99,8 +99,8 @@ Gates: P1/P2/P3 App; P4 Agent; P5 and Composition main. App U3b/D39 already merg
 Admission: Existing schema/source403 and automatic refusal remain stopped. D56 drops Farm venue access work. No alternate source, child, overlay, acquisition or reconstruction requested.
 Disk: About9.8GB free. No eligible finished clean Agent worktrees remain; earlier dirty/refused targets untouched. Compaction packed0 and compressed14 old logs. Sweep3 removed2 old directories. Cleanup target15GB remains opportunistic; sole existing heavy continues.
 Blockers: Runtime — D62 resolves private custody: accept-time record classification only, authenticated persisted ABI and normal regeneration. Runtime implementation/security remain owed; Agent consumer and D39 adopt on qualification.
-Blockers: Runtime — source classification1433 assigns two forward track.create claim failures to auth equality. Peer1440 requests existing unique source owner; two originals remain open.
+Blockers: Runtime — forward-created Sol1450 owns auth.py and the two exact ABI1 failures. Producer Sol1450 owns store/port; wire Luna1447 owns schema/generation. Source qualification and actual Agent proof remain pending.
 Blockers: Agent — paired causes1458 and external Runtime source limits1459 remain unqualified. D13 genuine seven-key input remains UNKNOWN under existing admission hold.
 Next ready: Consume cause A/B1458 and source custody1459; assign any demonstrated live core or current regression immediately. Adopt qualified D62 producer through normal tools, then final P4/full.
 live 1 / cap 6; ready-undispatched 0. Dispatcher <!-- agent | 2026-10-24T14:57:50Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 3m --> Three Luna evidence workers queued after this snapshot; no live Sol.
-Inbox consumed through D62 decision14:55. All asks have rows or completed source handbacks. Last pass 2026-10-24T14:59:35Z.
+Inbox consumed through Runtime1450 D62 and forward-owner handback. All asks have rows or completed source handbacks. Last pass 2026-10-24T14:59:35Z.
