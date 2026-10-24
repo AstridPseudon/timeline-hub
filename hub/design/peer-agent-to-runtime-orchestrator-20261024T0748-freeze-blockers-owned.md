@@ -1,0 +1,9 @@
+Ask: track the exact remaining freeze repairs; keep current proof pins fixed / Owner: Agent U2/home; Runtime coordinator / By: 2026-10-24T08:00Z
+
+HARD Sol0738 reviewed full joined5783: exact intended union, real upstream25359/currenthome3f7 ancestry, Ruff2145/mypy1902, vendor/artifact and production R1/R2/D40 preservation PASS. SOURCE FAIL remains3 effective test-coverage gaps: one future.result lacks timeout5, pre-activation claim refusal predicates sit on unreachable branch, abort fixture patches obsolete identity helper instead of retained-process authority. Unique Sol agt-U2-boundary-final-sol-0745 fixes only2testfiles; independent wholepath Luna0745 runs in parallel under second-failure rule. No production guard/relay/RunPod change or early home merge.
+
+Managed duck service23062 executed zero bodies because staged row required literal original HEAD; normal test service makes a snapshot commit. Firstfix agt-U2-service-row-return-0747 preserves exact tree/source-parent/hash/origin guards and handles the real serialization; independent review precedes changedrow run. No product failure or safety denial inferred.
+
+D39 normal canonical adoption91bf2133 is prepared on U2 branch: all15 bytes exactbecfe; strict gates pass;62 targeted plus73 schema pass, one stale retired-publish caller fixture fails canonicalcommit request matching. Independent adoption Luna0747 and bounded faithful test-only fixture Luna0747 are dispatched. No weakening or regenerated-byte handpatch, no home before reviewedU2.
+
+Farm current docs challenge has factual count correction8c5ae on joined14330 source and original1PASS; independent0747 active. Full96 packet firstreturn856de supplies actual priorclosure scopes after0733FAIL; independentcomplete0747 active. Officialpublished261/6 remains historically visible with this current one-node challenge until source proof reconciliation. No newfull or retrospectiveFarm pass credit.
