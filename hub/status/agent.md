@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T01:28:22Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 24 | status age 1m -->
-# agent board, 2026-10-24T01:27:00Z
+<!-- agent | 2026-10-24T01:30:20Z | dispatcher heartbeat 9s | live 4 (sol 0, luna 4, other 0) | busy30 25 | status age 0m -->
+# agent board, 2026-10-24T01:30:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -15,7 +15,7 @@
 | G5 | Retire superseded Agent writers | Luna / Sol | H24 criteria | merged | agt-G5-integrated-custody-review-2155 | 350 cases, four SDK cases and c271 passed. Raw packet loss is disclosed in the retained report. | c36ca8c94 |
 | P4 owner | Single edit, ten steps, conflict rerun | Proof | G2, G3, R2 | merged | Proof services 28012, 11615, 17739 | All three original HTTP legs passed on integrated heads. No duplicate run here. | e837 / 543d |
 | F-full | Post-G5 full suite | Luna | Remaining fixes | blocked:agent | Full 25691; census review 2346 | 17,159 passed; 262 failed; 5 errors; 4 skips. All 267 failing nodes verified. No full retry. | c36ca8c94 |
-| F-D32 | Tag and reconcile all 267 failures | Luna | Upstream comparison | review | agt-F-D32-reconcile-review-0118 PASS | All 267 exact nodes are tagged and owned. Reviewed reconciliation retains 136 scoped proofs; no whole-suite pass or pre-existing claim. | evidence only |
+| F-D32 | Tag and reconcile all 267 failures | Luna | All owners assigned | review | agt-F-D32-reconcile-review-0118 PASS | All 267 exact nodes are tagged and owned. Reviewed reconciliation retains 136 scoped proofs; no whole-suite pass or pre-existing claim. | evidence only |
 | F-G2-pair | Preserve exact public publication pair | Sol | G2 | merged | agt-F-joined-integrated-0037 | Actual ca93: 15 joined checks passed, including five pair controls. | 61727f / 8563 |
 | F-R2-owner | Nested order and sibling successors | Sol / Luna | R2 | merged | agt-F-R2-joined-integrated-0042 | Actual 1146: 56 plus 14 passed. Independent 186 strict controls remain valid on exact source. | e53d9f36b |
 | F-SDK-closure | Repair the public reader fixture | Luna | G2 pair | merged | agt-F-SDK-fixture-review-0037 | Exact fixture independently passed; joined 14 controls passed on 1146. | 5e6823577 |
@@ -35,19 +35,18 @@
 | F-P4-symbol | Rename stale fixture symbol | Luna | G5 | merged | agt-F-P4-symbol-integrated-0023 | Both original metadata and CLI behavior cases passed on the integrated head. | 45cecae7b |
 | F-authoring-publish-writer | Migrate the remaining publication helper | Sol | failover-ok; assigned Runtime | doing | rt-F-authoring-publish-media-sol-0114 | Production publish_authoring_candidate calls a retired route after authentic fixture setup. Two Luna attempts are retained. | 20b fixture |
 | F-authoring-ABA | Repair duplicate same-alias captures | Sol | failover-ok; assigned Viewing | ready | Viewing repair assigned 0118 | Independent source verdict: Agent repeats a physical track binding for valid same-alias consumers. Sol repair assigned; strict Runtime guard stays. | 20b fixture |
-| F-D32-render-wire | Six missing render results | Luna | Existing installed child | doing | agt-F-render-wire-env-0124 | Viewing cause and review passed: child import fails before result. Agent prepares one supported six-case service run. | 92baf9612 |
+| F-D32-render-wire | Six missing render results | Luna | Existing installed child | doing | agt-F-render-wire-return-0129 | Service 4492 stopped before bodies on snapshot identity. Environment passed; harness tree binding is being corrected. | 92baf9612 |
 | F-helper-sequential | Attribute helper replay-map refusal | Luna requested | Runtime source classification | blocked:runtime | Peer 0114 requests assessment | One original contiguous-helper positive refuses map duplication or omission; no source cause is yet established. | 3b0 source |
 | F-D32-h3-import | Seven isolated child-import cases | Luna | failover-ok; assigned Runtime | ready | Runtime assignment 0118 | Source attribution first. Existing installed cohort proofs are retained; no duplicate full or environment build. | 92baf9612 |
-| F-ruff-baseline | Record one fewer Ruff finding | Luna | Strict static gate | review | agt-F-ruff-review-0126 | Generator tightened 2,148 to 2,147; only remote.py I001 disappeared. Zero new identities; independent review is running. | 92baf9612 |
+| F-ruff-baseline | Record one fewer Ruff finding | Luna | Strict static gate | merging | agt-F-static-integrated-0130 | Independent PASS; baseline-only source merged 521c. Actual strict static gates are running on the integrated head. | 92baf9612 |
 | A4 IMAGE | Actual App request and Runtime acceptance | Luna / App | App created claims | blocked:app | Agent audit 0112; review 0116 PASS | Missing asset and clip claims reproduced the exact Runtime refusal. App source correction requested; old fixture closed. | 1146 / 22ef |
 | D31 | Dormant transcript capture subset | — | Follow-up funding | gated:D31 | No active author | Keep the 397-line test suite and implementation unchanged. Literal production reachability is NO. | unchanged |
 | V4 / D14 / D23 | Cut and deferred relational timing | — | Scope decisions | gated:H9 | No repair worker | Keep original tests unchanged, unskipped and visibly failing. No V4 or relational-timing completion claim. | unchanged |
 | U2c | Upstream readiness candidate | — | Only if App readiness fix fails | gated:conditional | Not started | Latest orchestrator instruction holds this draft. App owns the cancelled-bootstrap restart deadlock. | no change |
 
 P1: GO. Original service 18792 passed both cases; Proof reviews 0036 and 0040 passed. P4 and P5 are done. G5 already merged under H24. P2 and P3 remain with App and Proof.
-Integration: 940b54d60; exact tree will be recorded with integrated proof 0126. Frozen 34e client, d106 schema and 819acf Composition artifact unchanged.
+Integration: 521c88802330901281cc37ba25818baf2575f05e, tree fcd3135b3dc8e93009b86b7e4b75053a4e5b9476. Frozen 34e client, d106 schema and 819acf Composition artifact unchanged.
 Blockers: Agent full waits for the remaining owned fixes and finite qualifications. D32 tagging and ownership reconciliation passed.
-Blockers: D32 upstream comparison waits for the lead to fetch Agent 90d469808. Collection and current-proof tagging continue.
 Blockers: Agent external-pack source repair waits for Runtime to name the authenticated capture input; peer 0110 sent.
 Blockers: IMAGE acceptance waits for App created-claim correction; Agent source audit and independent review passed. The old fixture is closed.
 Blockers: Viewing must return its render-wire and ABA repair worker IDs. Runtime must return the seven-import and helper-map assessment worker IDs.
@@ -55,3 +54,5 @@ Safety: Earlier Farm, monitor, publication and bench permission refusals remain 
 Disk: Sweep removed six old temp directories; compact compressed seven logs. About 11,056 MiB remains, above the 8 GB heavy-run floor. No refused target was retried.
 Next ready: Merge reviewed current ports, consume integrated proof and D32 review, and follow up on assigned peer work. U2c stays held.
 Evidence: Earlier detailed results remain in [the archived board](archive-v2/STATUS-20261024T0055Z.md) and the existing design handoffs. Worker final messages are copied unchanged into design.
+
+D32: Upstream 90d469808 is unavailable. All 267 remain ours; no pre-existing credit. Completion sent to the orchestrator in peer 0130.
