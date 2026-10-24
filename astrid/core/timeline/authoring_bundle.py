@@ -1835,9 +1835,15 @@ def publish_authoring_candidate(
     writer: AuthoringCandidateWriter,
     *,
     idempotency_key: str,
+    approval: Mapping[str, Any] | None = None,
     media_imports: Sequence[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Compile and publish through Runtime's guarded v2 commit boundary.
+
+    When supplied, ``approval`` is a detached authorization for this exact
+    candidate, publication, scope, and base.  It is checked before the commit
+    request is built; it is not added to the Runtime wire request.  Omitting it
+    retains the ordinary authoring commit behavior.
 
     Optional ``media_imports`` are receipts from the existing catalog import
     helper, used only for feedback. Without them, catalog counts stay unknown.
@@ -1846,6 +1852,28 @@ def publish_authoring_candidate(
     if not isinstance(idempotency_key, str) or not idempotency_key:
         raise AuthoringBundleError("idempotency_key must be a non-empty string")
     compilation = compile_authoring_candidate(candidate)
+    approval_value: Mapping[str, Any] | None = None
+    if approval is not None:
+        approval_value = _mapping(approval, "approval")
+        if approval_value.get("kind") != "authoring-candidate-approval":
+            raise AuthoringBundleError("approval.kind is invalid")
+        if approval_value.get("schema_version") != AUTHORING_BUNDLE_SCHEMA_VERSION:
+            raise AuthoringBundleError("approval.schema_version is invalid")
+        if approval_value.get("decision") != "approved":
+            raise AuthoringBundleError("candidate is not approved")
+        root = _mapping(candidate, "candidate")
+        expected = {
+            "project_id": root["project_id"],
+            "timeline_id": root["timeline_id"],
+            "candidate_digest": compilation.candidate_digest,
+            "publication_digest": _digest(compilation.publication),
+            "base_parent": dict(_mapping(root.get("base_parent"), "candidate.base_parent")),
+        }
+        for field, value in expected.items():
+            if approval_value.get(field) != value:
+                raise AuthoringBundleError(
+                    f"approval is stale or does not match candidate: {field}"
+                )
     from astrid.sdk.timeline.authoring_commit import authoring_commit_request, response_data
 
     from .authoring_feedback import authoring_change_summary, publication_feedback
@@ -1871,7 +1899,7 @@ def publish_authoring_candidate(
         result['data'] = _copy(result)
     if isinstance(envelope, Mapping) and 'receipt' in envelope:
         result['receipt'] = _copy(envelope['receipt'])
-    return {
+    result_value = {
         "candidate_digest": compilation.candidate_digest,
         "identity_mapping": _copy(dict(compilation.identity_mapping)),
         "changed_identities": _copy(list(compilation.changed_identities)),
@@ -1881,6 +1909,9 @@ def publish_authoring_candidate(
             project_id=publication["project_id"], timeline_id=publication["timeline_id"],
         ),
     }
+    if approval_value is not None:
+        result_value["approval"] = _copy(dict(approval_value))
+    return result_value
 
 
 __all__ = [

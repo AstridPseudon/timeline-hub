@@ -1025,45 +1025,36 @@ def test_legacy_assembler_admission_refuses_before_execution_and_keeps_artifacts
     assert not any("publish_timeline_render" in repr(call) for call in runtime.calls)
 
 
-# D66 restore of upstream-924 selector 6635.  The body is retained verbatim;
-# the current tree no longer exposes the retired assembler publication seam.
+# D66 restore of upstream-924 selector 6635, migrated to the requester-owned
+# v2 commit route after the generic-host publication hook was retired.
 def test_d66_upstream_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke(tmp_path):
-    """The registered authoring host hook has one Runtime publication route."""
-    proposal_path = tmp_path / "attempt" / "outputs" / "authoring-proposal.json"
-    proposal_path.parent.mkdir(parents=True)
-    proposal_path.write_text(json.dumps({
-        "timeline": {"tracks": [], "clips": []}, "registry": {"assets": {}},
-        "publication": {"authority": "workspace_runtime", "render_capability": "rendering.render"},
-    }))
-
-    class Runtime:
-        def __init__(self): self.calls = []
-        def publish_timeline_render(self, *args, **kwargs):
-            self.calls.append((args, kwargs))
-            return {"timeline_version": 2, "render_task_id": "render-1"}
-
-    runtime = Runtime()
-    host = GenericPackHost.__new__(GenericPackHost)
-    host.client = runtime
-    host.capabilities = {}
-    result = host._publish_assembled_timeline(
-        task_data={"id": "author-1", "spec": {"family": "stitch_finalization", "runtime_dependencies": {
-            "publication": {"timeline_id": "main", "expected_version": 1, "render": {
-                "capability_id": "rendering.render", "capability_digest": _digest("rendering.render"),
-                "spec": {"inputs": {"selector": "rendering.ffmpeg"}},
-            }},
-        }}},
-        attempt_id="attempt-1", fence=1, lease_token="lease-1",
-        outputs=[{"path": str(proposal_path), "artifact_type": "timeline/authoring-proposal"}],
-        attempt_root=proposal_path.parents[1],
+    """The settled proposal has one requester-owned Runtime publication route."""
+    session, generated, proposal, renders, _ = requester_commit_fixture(tmp_path)
+    result = publish_authoring_proposal(
+        session.client,
+        proposal=proposal,
+        timeline_id="t",
+        expected_version=1,
+        runtime_attempt=proposal["producer"],
+        render_capability_digest=_digest("rendering.render"),
+        output_name="chain.mp4",
+        requester_session=session,
+        idempotency_key="publish",
     )
     assert result["render_task_id"] == "render-1"
-    assert len(runtime.calls) == 1
-    args, kwargs = runtime.calls[0]
-    assert args[:2] == ("attempt-1", "lease-1")
-    assert kwargs["timeline_id"] == "main"
-    assert kwargs["expected_version"] == 1
-    assert "save" not in repr(runtime.calls) and "invoke" not in repr(runtime.calls)
+    assert len(generated.calls) == 1
+    assert len(renders) == 1
+    body = json.loads(generated.calls[0][0])
+    assert body["project_id"] == proposal["admitted_target"]["project_id"]
+    assert body["timeline_id"] == proposal["admitted_target"]["timeline_id"]
+    assert body["base_revision_id"] == proposal["admitted_target"]["base_revision_id"]
+    assert body["base_publication_id"] == proposal["admitted_target"]["base_publication_id"]
+    assert body["commands"][0]["op"] == "producer.guard"
+    assert body["commands"][0]["args"]["pin"]["attempt_id"] == proposal["producer"]["attempt_id"]
+    assert body["commands"][0]["args"]["pin"]["fence"] == proposal["producer"]["fence"]
+    assert renders[0]["capability"] == "rendering.render"
+    assert renders[0]["spec"]["params"]["output_name"] == "chain.mp4"
+    assert "save" not in repr(generated.calls) and "invoke" not in repr(generated.calls)
 
 
 @pytest.mark.integration

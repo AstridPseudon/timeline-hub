@@ -307,20 +307,6 @@ def test_three_way_merges_disjoint_edits_and_refuses_overlapping_ones(tmp_path):
     assert Checkout.load(conflict_path).clip("R").start == pytest.approx(1.5)
 
 
-def test_three_way_merges_disjoint_edits_and_refuses_overlapping_ones_r4_original():
-    base = bundle()
-    ours, theirs = copy.deepcopy(base), copy.deepcopy(base)
-    Checkout(ours).clip("R").nudge(0.5)
-    Checkout(theirs).clip("b-type").set(text="LIVE!")
-    merged, conflicts = three_way(base, theirs, ours)  # noqa: F821 -- retired upstream route remains visible
-    assert not conflicts
-    m = Checkout(merged)
-    assert m.clip("R").start == pytest.approx(1.5) and m.clip("b-type").params["text"] == "LIVE!"
-    Checkout(theirs).clip("R").nudge(-0.5)
-    _merged, conflicts = three_way(base, theirs, ours)  # noqa: F821 -- retired upstream route remains visible
-    assert conflicts and "a-rocket" in conflicts[0]
-
-
 def test_add_overlay_on_a_word_in_a_corner():
     tl = Checkout(bundle())
     sparkle = tl.add("am-type", at="Live", hold=0.5, params={"text": "*", "width": 200}, corner="top-right")

@@ -593,6 +593,113 @@ class _Writer:
         }, "receipt": {"receipt_id": "saved-receipt"}}
 
 
+class _RuntimeAuthoringTransport:
+    """Expose the authenticated Runtime reads and commit port to the SDK."""
+
+    def __init__(self, service):
+        self.service = service
+        self.calls = []
+
+    def list_timeline_commits(self, project_id, timeline_id, **kwargs):
+        return self.service.list_timeline_commits(
+            project_id, timeline_id, authorize=lambda: None, **kwargs
+        )
+
+    def get_project_parent_composition_revision(self, project_id, timeline_id, revision):
+        return self.service.get_project_parent_composition_revision(
+            project_id, timeline_id, revision
+        )
+
+    def get_project_shot_revision(self, project_id, shot_id, revision):
+        return self.service.get_project_shot_revision(project_id, shot_id, revision)
+
+    def get_project_timeline_revision(self, project_id, timeline_id, revision):
+        return self.service.get_project_timeline_revision(project_id, timeline_id, revision)
+
+    def get_project_media_selection(self, project_id, selection):
+        return self.service.get_project_media_selection(
+            project_id, selection, authorize=lambda: None
+        )
+
+    def commit_timeline(self, project_id, timeline_id, body, *, idempotency_key):
+        self.calls.append((project_id, timeline_id, copy.deepcopy(body), idempotency_key))
+        return self.service.commit_timeline(
+            project_id,
+            timeline_id,
+            body,
+            publisher="author",
+            invocation_path=f"/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+            authorize=lambda: None,
+            idempotency_key=idempotency_key,
+        )
+
+
+def _real_authoring_candidate(tmp_path):
+    """Create a real authenticated closure for the authoring commit path."""
+    from tests.helpers.runtime import use_runtime
+    from tests.helpers.trusted_seed import seed_trusted_parent
+
+    use_runtime()
+    from runtime_protocol import service as runtime_service
+    from runtime_protocol import store as runtime_store
+
+    from astrid.sdk.timeline.commit import create_runtime_commit_service
+
+    root = tmp_path / "realm"
+    runtime_store.RealmStore.initialize(root).close()
+    service = runtime_service.RuntimeService(root)
+    service.register_timeline_commit_provider(create_runtime_commit_service())
+    project_id = service.create_project(
+        {"slug": "authoring-approval", "name": "Authoring approval"},
+        idempotency_key="project",
+    )["id"]
+    service.create_timeline(project_id, "main", idempotency_key="timeline")
+    old = service.ingest(
+        project_id, b"old-picture", media_type="image/png", idempotency_key="old"
+    )["data"]["object_id"]
+    audio = service.ingest(
+        project_id, b"voiceover", media_type="audio/wav", idempotency_key="audio"
+    )["data"]["object_id"]
+
+    parent, shots, timelines = _closure(shared=True)
+    shots[0]["payload"]["text_bindings"] = []
+    replacements = {OLD: old, AUDIO: audio, "project-1": project_id}
+    parent = _replace_values(parent, replacements)
+    shots = _replace_values(shots, replacements)
+    timelines = _replace_values(timelines, replacements)
+    for row in (parent, shots[0], timelines[0]):
+        row["content_digest"] = _digest(row["payload"])
+    seed_trusted_parent(
+        service,
+        {
+            "project_id": project_id,
+            "timeline_id": "main",
+            "expected_head": None,
+            "parent_revision_id": "parent-1",
+            "parent_composition": parent["payload"],
+            "internal_timeline_revisions": timelines,
+            "shot_revisions": shots,
+        },
+        idempotency_key="seed-parent",
+    )
+
+    parent_revision = service.get_project_parent_composition_revision(
+        project_id, "main", "parent-1"
+    )
+    shot_revision = service.get_project_shot_revision(
+        project_id, "shot-shared", "shot-rev-1"
+    )
+    internal_revision = service.get_project_timeline_revision(
+        project_id, "main", "internal-1"
+    )
+    candidate = open_authoring_bundle(
+        parent_revision,
+        shot_revisions=[shot_revision],
+        internal_timeline_revisions=[internal_revision],
+    )
+    return service, candidate, _RuntimeAuthoringTransport(service)
+
+
 def test_publish_uses_one_compilation_and_returns_complete_mapping():
     parent, shots, timelines = _closure(shared=True)
     candidate = open_authoring_bundle(
@@ -1403,35 +1510,43 @@ def test_diff_ignores_float_noise_but_reports_real_clip_edits():
     assert [row["path"].rsplit(".", 2)[-2:] for row in changed] == [[clip["id"], "at"]]
 
 
-# D66 restore of upstream-924 selector 11522.  Retain the exact approval and
-# promotion assertions until an approved ledger entry or replacement exists.
-def test_d66_upstream_approval_is_bound_to_candidate_and_base_revision():
-    parent, shots, timelines = _closure(shared=True)
-    candidate = open_authoring_bundle(
-        parent, shot_revisions=shots, internal_timeline_revisions=timelines
-    )
-    approval = approve_authoring_candidate(
-        candidate, approver="editor-1", approval_id="approval-1"
-    )
-    writer = _Writer()
-
-    changed = copy.deepcopy(candidate)
-    changed["parent"]["config"]["approved-edit"] = True
-    with pytest.raises(AuthoringBundleError, match="stale or does not match"):
-        promote_approved_authoring_candidate(  # noqa: F821 - restored seam is absent
-            changed, approval, writer, idempotency_key="promote-1"
+# D72 migration of upstream-924 selector 11522.  The detached approval remains
+# bound to the candidate, while publication uses the authenticated commit port.
+def test_d66_upstream_approval_is_bound_to_candidate_and_base_revision(tmp_path):
+    service, candidate, writer = _real_authoring_candidate(tmp_path)
+    try:
+        approval = approve_authoring_candidate(
+            candidate, approver="editor-1", approval_id="approval-1"
         )
-    assert writer.calls == []
+        assert approval["base_parent"] == candidate["base_parent"]
 
-    promoted = promote_approved_authoring_candidate(  # noqa: F821 - restored seam is absent
-        candidate, approval, writer, idempotency_key="promote-1"
-    )
-    assert promoted["approval"]["approval_id"] == "approval-1"
-    assert len(writer.calls) == 1
+        changed = copy.deepcopy(candidate)
+        changed["parent"]["config"]["approved-edit"] = True
+        changed["base_parent"]["content_digest"] = "sha256:" + "f" * 64
+        assert compile_authoring_candidate(changed).candidate_digest != approval["candidate_digest"]
+        with pytest.raises(
+            AuthoringBundleError,
+            match="approval is stale or does not match candidate: candidate_digest",
+        ):
+            publish_authoring_candidate(
+                changed, writer, idempotency_key="promote-1", approval=approval
+            )
+        assert writer.calls == []
+
+        published = publish_authoring_candidate(
+            candidate, writer, idempotency_key="promote-1", approval=approval
+        )
+        assert published["approval"] == approval
+        assert published["approval"]["approval_id"] == "approval-1"
+        assert published["candidate_digest"] == approval["candidate_digest"]
+        assert "approval" not in writer.calls[0][2]
+        assert len(writer.calls) == 1
+    finally:
+        service.close()
 
 
-# D66 restore of upstream-924 selector 11523.  This body remains unchanged so
-# the missing candidate-promotion seam is visible to the owning lane.
+# D72 migration of upstream-924 selector 11523.  Render/restart assertions are
+# retained; the final publication uses the authenticated commit port.
 def test_d66_upstream_frozen_render_restart_then_approval_promotion_is_single_generation(tmp_path):
     """Exercise the contract, durable replay, and candidate promotion seam together."""
     from astrid.core.execution.reconciler import ExecutionReconciler
@@ -1566,14 +1681,16 @@ def test_d66_upstream_frozen_render_restart_then_approval_promotion_is_single_ge
     assert render_count == 1
     assert [name for name, _ in runtime.calls].count("claim") == 1
 
-    parent, shots, timelines = _closure(shared=True)
-    candidate = open_authoring_bundle(
-        parent, shot_revisions=shots, internal_timeline_revisions=timelines
-    )
-    approval = approve_authoring_candidate(candidate, approver="editor-1", approval_id="approval-render-1")
-    writer = _Writer()
-    promoted = promote_approved_authoring_candidate(  # noqa: F821 - restored seam is absent
-        candidate, approval, writer, idempotency_key="promote-render-1"
-    )
-    assert promoted["candidate_digest"] == approval["candidate_digest"]
-    assert len(writer.calls) == 1
+    service, candidate, writer = _real_authoring_candidate(tmp_path)
+    try:
+        approval = approve_authoring_candidate(
+            candidate, approver="editor-1", approval_id="approval-render-1"
+        )
+        published = publish_authoring_candidate(
+            candidate, writer, idempotency_key="promote-render-1", approval=approval
+        )
+        assert published["approval"] == approval
+        assert published["candidate_digest"] == approval["candidate_digest"]
+        assert len(writer.calls) == 1
+    finally:
+        service.close()
