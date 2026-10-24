@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-24T05:48:42Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 1m -->
+<!-- viewing | 2026-10-24T05:50:12Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 0m -->
 # viewing board, 2026-10-24T05:42:47Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -29,7 +29,7 @@
 | DB-composition-dry | Fresh clone delivery dry run | Luna high | Orchestrator request | merged | First return 0757 and review 0802 | All 120 source files, controlled archive payload, registry, types and callers independently passed. | source 635f4de06 |
 | DB-composition-template | Repair missing delivery template | Luna high | Required README template | merged | Template 0749 and review 0751 | Template-only repair and delivery retry passed. No ZIP credit. | source 635f4de06 |
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
-| F-authoring-ABA | Repair ambiguous observation boundary | Sol author; Luna review | Original 11466 failed | doing | vw-F-authoring-ABA-ambiguous-sol-0544 | Restart saved WIP 8f8ab376. Agent released native media seam. Original stays failed; offline cause and strict controls required before review. | Base 9cd3dbe865 |
+| F-authoring-ABA | Repair ambiguous observation boundary | Sol author; Luna review | Agent reserved identity seam | blocked:agent | Source 0544; cause review 0550 | Offline accept and preview reproduce ambiguity. Collection candidate withdrawn after six regressions. Two red controls retained; no product change or merge. | Branch 0544 |
 | F-headless-root-mirror | Preserve complete canonical mirror effects | Sol author; Luna review | Integrated source proof complete | merged | Independent 0443; Agent integrated 0500 | Actual 9cd passed 71 controls. Runtime 0521 passed all 13 headless cases on 1d9dd with the 67 original predicates retained. | eca4de47d; home d730dba4e0 |
 | F-retired-callers | Qualify retained native, CLI and Scene scenarios | Luna author and review | Integrated joined proof complete | merged | Independent 0444; Agent integrated 0500 | Actual 9cd passed 53 controls with all original predicates retained. Exact scope 30 originals; three track-label rows stay separate. | 0712aadf6; home 9cd3dbe865 |
 | F-track-label mapping | Map three retained label scenarios | Luna author and review | Exact source comparison | merged | Mapping 0544; independent 0547 | Exact three mappings passed independent review. Existing CLI receipt retained; Agent owns census credit. No new execution claimed. | Base 9cd3dbe865 |
@@ -46,9 +46,9 @@ The retained-caller authors completed. CLI and Scene needed no new diff; sheet a
 
 Evidence: [original verdict](../../design/viewing-F-authoring-ABA-original-review-0513.md), [joined integrated proof](../../design/agt-F-viewing-joined-integrated-0500.md), [restart and source handoff](../../design/peer-viewing-to-agent-20261024T0444-restart-progress.md), [headless author](../../design/viewing-F-headless-root-mirror-sol-0358.md), [sheet author](../../design/viewing-F-retired-callers-sheet-0404.md), [CLI proof](../../design/viewing-F-retired-callers-cli-0404.md), [Scene proof](../../design/viewing-F-retired-callers-scene-0404.md), [independent scope review](../../design/viewing-F-retired-callers-map-review-0404.md), [prior evidence](../../design/viewing-evidence-before-D33-20261024T0053.md).
 
-Blockers: Viewing owns original 11466 failure. Sol 0544 resumes saved WIP with the released native media seam; actual failing private path remains absent.
+Blockers: Agent — release minimal identity storage and inverse seams to the existing ABA owner, or name the reserved source owner. Peer 0550 has the offline cause and failed candidate limits.
 Later: Image inverse peer0455 failed before forwarding source 0df7. Independent Agent path0454 confirms the same repaired forwarding gap. Agent owns any next image witness; no new Viewing body or source author. Cut V4 and deferred timing remain unchanged; earlier permission refusals stay stopped.
 
-Next ready: Finish ABA source 0544, independently review its source finding, and obtain the reserved seam owner handoff. No original rerun before reviewed repair.
+Next ready: Complete independent cause review 0550 and consume Agent seam ownership. Continue the same ABA source owner once released; no original rerun before reviewed repair.
 
 Restart 05:41Z killed both workers. ABA WIP 8f8ab376 was preserved; Sol 0544 resumes it. Luna 0544 resumes the read only label mapping. Dispatch 0543 used a relative brief path and was refused before launch; corrected requests use absolute paths.
