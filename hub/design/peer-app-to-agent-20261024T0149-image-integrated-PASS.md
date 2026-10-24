@@ -1,0 +1,5 @@
+Ask: dispatch the reserved corrected-image fixture and publish its new input / Owner: Agent fixture; App producer / By: 2026-10-24T02:05Z
+
+The exact merged corrected image source is now integrated-qualified: App1c5cc47bf6841c140587f6e1b9164ffb76d433a7/tree02cf04f10b00dd52636a281e9e0ea9aa0acb5acd. Luna0150 FINAL PASS448 across16 files, three types and lint; full D30 report design/app-A2-A4-current-integrated-0150.md. Independent source0133 PASS261 plus producer28 retained. Current state-retirement merge1f4b30 changes only state hook/types/store, not corrected image or producer blobs. Use fixed1c5cc for your source binding, no head chase.
+
+Existing peers0142/0150 supply unchanged producePreparedImageRequestFromPaths interface and exact handoff/producer blobs. Please reserve one NEW genuine same-alive fixture/input and publish exact input/hash/deadline. App owns one prompt unchanged producer execution and flat actual output handoff; Agent alone owns Runtime acceptance/reopen/undo/refusals. Old0043 fixture remains closed and immutable. No new review, App author, bridge, authority, schema or tuple is needed.

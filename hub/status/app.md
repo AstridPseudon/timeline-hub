@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T01:46:09Z | dispatcher heartbeat 12s | live 3 (sol 0, luna 3, other 0) | busy30 21 | status age 0m -->
+<!-- app | 2026-10-24T01:48:49Z | dispatcher heartbeat 6s | live 3 (sol 0, luna 3, other 0) | busy30 21 | status age 1m -->
 # app board, 2026-10-24T01:46Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -10,7 +10,7 @@
 | P1 | Original mixed chain | App runner; Proof review | Resolved | merged | Test 18792; Proof 0036 and 0040 | GO at 00:43. Both cases passed; exit 0, 141 seconds. Fixed App f8 / Agent 787 / Runtime 2a9. | f8b15af0a6 |
 | A4 | Executor and capture retirement | Luna; Sol author | P1 GO | doing | State review 0142; lifecycle 0139; goldens review 0150 | Preview, session, history and staged changes are merged. State and lifecycle cuts continue; joined proof 0150 runs. | See cut rows |
 | A2-staged-caller | Move staged generation onto current save | Sol; Luna review | Review 0133 PASS | merged | app-A2-staged-caller-sol-0122 | Independent 279 tests, three types and lint passed. Integrated joined proof 0150 runs. | 9969949827 / e9bce18bea |
-| A4-state | Retire state transaction runner API | Luna | Staged source merged | review | app-A4-state-review-0142 | Author 175 plus six mounted cases, three types and lint passed. Independent review runs. | ce7a48e137 branch |
+| A4-state | Retire state transaction runner API | Luna | Review 0142 PASS | merged | app-A4-state-runner-retirement-0135 | Independent 175 tests, three types and lint passed. Integrated source follow-up will include current media-wrapper cut. | ce7a48e137 / 1f4b30a51b |
 | A4-history | Retire history runner execution | Luna | Review 0131 PASS | merged | app-A4-history-retirement-0125 | Independent 95 tests, three types and lint passed. Mounted guarded Runtime undo retained; joined proof 0150 runs. | b2a546f535 / 0a0f95efc7 |
 | A4-session-tests | Move five protocol tests to current save | Luna | Review 0123 and proof 0129 PASS | merged | Proof app-A4-preview-session-integrated-0129 | Five cases retained. Joined preview/session proof passed 136 tests, three types and lint on 8bd7. | 039fc35ed7 / 8bd7d59e19 |
 | A4-dormant-scope | Preserve dormant raw and track assertions | Orchestrator | Scope decision | blocked:orchestrator | Escalation 0116 | Same-order track write and raw-birth positives have no production caller. Tests and implementations stay unchanged. | No change |
@@ -32,13 +32,15 @@
 | A4-unused-goldens | Delete two unused parity scripts | Luna | Author 0140 complete | review | app-A4-goldens-review-0150 | Author removed only two unreferenced scripts. Independent reference and quality checks dispatched. | Reviewed branch pending |
 | A2-A4-joined-proof | Qualify staged, image and history join | Luna | Three reviewed merges | doing | app-A2-A4-current-integrated-0150 | Exact integrated head 1c5cc47bf6; bounded combined source tests, three types and lint dispatched. | 1c5cc47bf6 |
 
+| A4-media-wrappers | Retire unused media executor wrappers | Luna | State and staged source merged | doing | app-A4-media-runner-wrappers-0155 | Remove only uncalled wrappers and exports. Current preview, descriptors and all behavior tests stay intact. | Base 1f4b30a51b |
+
 Blockers: U3b awaits P2/P3 and the final freeze.
 Blockers: Orchestrator owes bounded dormant track and raw-birth scope; escalation app-20261024T0116-A4-dormant-assertion-scope.md.
 Blockers: Runtime Sol 0138 owns the server history reproduction. P2/P3 remain held; no journey rerun is authorised.
 Blockers: Agent owns the new image fixture and input. App has supplied qualified corrected source and reserves one producer execution.
 Next ready: Consume state, lifecycle, goldens and joined proof results. Execute the reserved image producer promptly on new actual input. Runtime owns the shared server probe.
-Integration: 1c5cc47bf6841c140587f6e1b9164ffb76d433a7. History, staged caller and image created claims are merged. Changed readiness experiments remain fixed at 804134d747.
-Disk: Latest available 11.79 GB. Eight finished worker trees were already recycled, so this check freed 0 GB. Safe sweep is running. Protected benches and previously refused paths remain untouched.
+Integration: 1f4b30a51b; state retirement is also merged. Joined proof 0150 stays bound to exact 1c5cc47bf6. History, staged caller and image created claims are merged. Changed readiness experiments remain fixed at 804134d747.
+Disk: Available 11.79 GB. Eight finished worker trees were already recycled, so recycling freed 0 GB. Sweep removed three old temporary directories and freed about 139 MiB. Protected and refused paths stayed untouched.
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes.
 Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397-line, 40-assertion test, plus required helpers, under D31.
 Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-handoff-0029.md), [image review](/home/user/timeline-hub/hub/design/app-A2-image-created-review-0133.md), [A4 cut map](/home/user/timeline-hub/hub/design/app-A4-current-cut-census-0042.md).
