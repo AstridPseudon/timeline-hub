@@ -1,1 +1,1 @@
-LEAD 2026-10-24T08:41Z | up | P1 GO stands | D50 one-line tail change merged with review, hashes and ledger | P2 tour compose merged; P3 predecessor-shape merging | no live P2 or P3 credit yet | disk 8.07G
+LEAD 2026-10-24T10:46Z | up | P1 GO stands | One P3 original submitted 10:32 on pure 82cb (actual 3896), waiting for its result, no repeat | P2 blocked on App | disk 8.04G
