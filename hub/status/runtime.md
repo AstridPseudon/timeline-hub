@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T05:17:41Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 0m -->
-# runtime board, 2026-10-24T05:18:00Z
+<!-- main | 2026-10-24T05:20:10Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 1m -->
+# runtime board, 2026-10-24T05:19:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -61,7 +61,7 @@
 | R-D42-history-memo | Harden verified replay memo | Sol / Luna | Post-delivery scope under D47 | gated:D47 | Design0448; review0454 PASS | Deferred by D47. No stable validation boundary; nine state attacks remain open. Source stays unmerged. | Tests 6c6bb375; source held |
 | R-D42-proof-pin | Preserve a compatible future memo pin | Sol / Luna | Post-delivery safe memo under D47 | gated:D47 | No active pin author | D45: next P2/P3 uses existing37eb without memo. Prior unsafe backport stays held; no new checkout needed. | Earlier backport held |
 | R-D42-HTTP | Measure a future memo pin over HTTP | Luna | Post-delivery safe memo under D47 | gated:D47 | No active HTTP worker | D45 removes these timings from the next P2/P3 prerequisites. Do not run an unsafe pin or a duplicate gate. | No released memo pin |
-| R2r-source-copy-guards | Classify two retained source-copy guards | Luna / Luna | Agent exact observer packet | blocked:agent | Facts0435 and review0439 PASS; Agent0447 | Agent owns one causal two-node observation with complete guard and authority bytes. No Runtime author or duplicate body. | Read-only facts |
+| R2r-source-copy-guards | Classify two retained source-copy guards | Agent Sol / Luna | Agent independent result review | review | Agent0502; review0511 | Actual Agent 9cd and Runtime 2b49 passed both nodes in 20.90 seconds. Capture retained; independent review pending. No source fix. | Read-only facts and proof |
 | U2c-child-proof | Identify supported activation child proof | Luna / Luna | Source facts independently reviewed | merged | Facts0425; independent0430 PASS | Producer is absent in Agent RunPod adapter. Exact owner and custody seam returned; Runtime guard unchanged. | Source facts only |
 
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
