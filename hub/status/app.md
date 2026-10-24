@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T22:20:53Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 2m -->
+<!-- app | 2026-10-24T22:24:15Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 2m -->
 # app board, 2026-10-24T22:19Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -96,17 +96,19 @@
 | U4p-next | Adopt qualified structural release | Luna | Runtime732 released | merged | app-U4p-D84a-adoption-2212 | Normal tools PASS8strict/15vendor/14mappings;protected6/asset exact. Only lock/manifest; actual normal merge home. | Homebceb035032 |
 | P2-D84a-element | Qualify released structural source | Luna; Service | Appbceb adoption home | doing | app-P2-D84a-element-2216; actual7131 | Preflight29193 PASS; original7131 submitted22:17:50 on vm. Pinsbceb/039f/732/635f. SameID only; no result yet. | Appbceb; Runtime732 |
 
+| P2-D84a-main-venue | Prepare four parallel diagnostics | Runtime Luna | Element7131 first signal | blocked:runtime | Runtime peer2221 accepted offer | Main owns parentmove,SWAP,singleclear,bulkclear; App owns ADD,asset,placement. Exact same four pins, unchanged originals. Finaltour staysApp. | Tuplebceb/039f/732/635f |
+
 Integration: Appbceb0350326f22beefdde5c5ba275412bb09b419 normally adopts released Runtime732c48c6f5a9441a65c61b24595d454a1cd3e180. Home tree exactly equals tested U4p2212 author; only lock/manifest changed. Independent asset repair5fcb and placement00918 are retained. Placement spec413d314d; otherfiveprotected and asset source blobs exact.
 
 core open: Eight original P2 gestures remain unqualified. Isolated element2216 runs first on D84a, then remainingcases oneatatime. All8PASS before one fulltour. Asset and placement source repairs are independently PASS and home; browser proof owed.
 regressions: Zero remaining confirmed App source findings. Independent asset96required/162neighbors and placement22controls/types/lint passed; no browser or finalcut credit inferred. Historical D69 restoration proofs retained.
 
 Blockers: Final cut — all8isolatedP2 plus fulltour, final pinned P1–P5/core, D69 and genuine installedrender required. Runtime coordinates cut matrix and ZIP. P1 original31083 and P3 original15493 retain recorded GO tuples.
-Next ready: Current element7131 sameIDterminal. Report change from bc04 appliedstatus5s boundary; remaining originals oneatatime on released source. No P3/D79/E work.
+Next ready: Current element7131 firstsignal then App ADD/asset/placement serial and Runtime parentmove/SWAP/single/bulk in parallel waves, allsamepins. Runtime offer accepted2221. No P3/D79/E work.
 
-live 1 / cap 2; ready-undispatched 0. Element2216 assigned immediately after adoptionhome. Othercases gated by one-body rule; no parallel body or sourceworker needed.
+live 1 / cap 2; ready-undispatched 0. Element2216 assigned immediately after adoptionhome. Latest owner22:24 authorizes parallel diagnostic venues after firstsignal. App retains onebodyatatime; Runtime peer2221 prepares fourcases.
 Capacity: Cleared through10 fresh stale-pin releases under D74a principles. All clean, noncurrent, no active/queued test, lease or process use; all run evidence retained. Current Agent840a pin preserved. Receipt design/app-D74a-fresh-stale-pins-2214.md.
 Disk: 6.757GB during actual7131. Owner22:14 Appcriticalsource/gate floor5.2GB; stop4.5GB NON-elementfirst, protectelement. Noncriticalwork retains7.5GB floor and E/D79paused. Orphan ownerdecision separate.
 Safety: No new refusal. Prior dirtyU3/compact/graph/publication/source-access refusal targets stay stopped; no rawdelete or alternate denied route.
-Inbox consumed through1760218bytes. PLAN/common/C0/header and Runtime/Agent boards rechecked. Owner22:09 and exactRuntime2205 release consumed; no stale Runtime release/adoption blocker. U4p2212 normalhome author equality verified. Next original uses D73 exactpins/checkouts/preflight; newerheads never invalidate capturedtuple.
+Inbox consumed through1761149bytes. PLAN/common/C0/header and Runtime/Agent boards rechecked. Owner22:09 and exactRuntime2205 release consumed; no stale Runtime release/adoption blocker. U4p2212 normalhome author equality verified. Next original uses D73 exactpins/checkouts/preflight; newerheads never invalidate capturedtuple.
 Evidence: [Asset independent PASS](../../design/app-A3-asset-drop-rereview-2154.md), [placement independent PASS](../../design/app-P2-placement-selector-review-2152.md), [normal adoption](../../design/app-U4p-D84a-adoption-2212.md), [Runtime release](../../design/peer-runtime-to-app-20261024T2205Z-D84a-RELEASED.md).
