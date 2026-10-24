@@ -1,11 +1,44 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createFakeIndexedDB } from 'fake-indexeddb';
 import { fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import type { CanonicalDocument } from '@/integrations/runtime/generated.ts';
-import type { OutboxRequest } from './commitOutbox.ts';
+import { createCommitOutbox, toOutboxJson, type OutboxExclusiveLock, type OutboxRequest } from './commitOutbox.ts';
+import { createLocalSaveSession } from './localSaveSession.ts';
 import { environment, h0, scope } from './__tests__/localSaveSessionEnvironment.ts';
+
+function statefulExclusiveLock() {
+  type LockRequest = { name: string; held: boolean; released: Promise<void> };
+  const active = new Map<string, LockRequest>();
+  const history: LockRequest[] = [];
+  const exclusiveLock: OutboxExclusiveLock = async (name, work) => {
+    if (active.has(name)) throw new Error('claimed');
+    let release!: () => void;
+    const request: LockRequest = { name, held: true, released: new Promise<void>((resolve) => { release = resolve; }) };
+    active.set(name, request);
+    history.push(request);
+    try {
+      return await work();
+    } finally {
+      request.held = false;
+      active.delete(name);
+      release();
+    }
+  };
+  const requestsFor = (ownerId: string) => history.filter((request) => request.name.endsWith(`${JSON.stringify(ownerId)}]`));
+  return {
+    exclusiveLock,
+    heldFor(ownerId: string) { return requestsFor(ownerId).at(-1)?.held === true; },
+    async releasedFor(ownerId: string) { await requestsFor(ownerId).at(-1)?.released; },
+  };
+}
 
 function lifecycleEnvironment() {
   const env = environment();
+  const lock = statefulExclusiveLock();
+  const outboxes = createCommitOutbox({ indexedDB: createFakeIndexedDB(), exclusiveLock: lock.exclusiveLock });
+  const mount = (basis = env.initial) => createLocalSaveSession({ scope, initial: basis,
+    document: toOutboxJson(basis.canonicalDocument), outboxes, send: env.send,
+    loadLatest: async () => basis, prepareDisplay: env.prepareDisplay, changed: () => {} });
   const initial = env.initial.canonicalDocument as CanonicalDocument;
   const payload = initial.parent_revision.payload as Record<string, unknown>;
   const clip = { id: 'x', track: 'V1', at: 1, hold: 1, text: { content: 'keep' }, app: { opaque: null } };
@@ -20,7 +53,7 @@ function lifecycleEnvironment() {
     if (!document) throw new Error('Missing authored lifecycle document');
     return env.accepted(document, { revisionId: `r${requests.length}`, publicationId: `p${requests.length}` });
   });
-  const move = async (session: Awaited<ReturnType<typeof env.mount>>, on: number) => {
+  const move = async (session: Awaited<ReturnType<typeof mount>>, on: number) => {
     const before = session.getDocument() as unknown as CanonicalDocument;
     const after = structuredClone(before);
     const next = after.parent_revision.payload as Record<string, unknown>;
@@ -34,7 +67,7 @@ function lifecycleEnvironment() {
     return after;
   };
   const commits = () => requests.map(({ body, request }) => ({ path: request.path, method: request.method, body, key: request.key }));
-  return { ...env, initial, authored, requests, move, commits };
+  return { ...env, outboxes, mount, lock, initial, authored, requests, move, commits };
 }
 
 describe('local save session close and recovery lifecycle', () => {
@@ -66,31 +99,31 @@ describe('local save session close and recovery lifecycle', () => {
     let finishAppend!: () => void;
     const gate = new Promise<void>((resolve) => { finishAppend = resolve; });
     const create = env.outboxes.create;
-    const recover = env.outboxes.recover;
-    let claimed = false;
-    env.outboxes.recover = async (...args) => {
-      if (claimed) throw new Error('claimed');
-      return recover(...args);
-    };
     const appending = vi.fn();
     env.outboxes.create = (outboxScope, work) => create(outboxScope, (box, owner) => work({ ...box, append: async (...args) => {
       appending();
-      claimed = true;
       await gate;
-      claimed = false;
       return box.append(...args);
     } }, owner));
     const session = await env.mount();
+    const owner = session.getState().ownerId!;
+    expect(env.lock.heldFor(owner)).toBe(true);
     const moving = env.move(session, 5);
     await vi.waitFor(() => expect(appending).toHaveBeenCalledOnce());
+    expect(env.lock.heldFor(owner)).toBe(true);
     const closed = vi.fn();
     const closing = session.dispose().then(closed);
     await Promise.resolve();
     expect(closed).not.toHaveBeenCalled();
-    await expect(env.outboxes.recover(scope, session.getState().ownerId!, async () => {})).rejects.toThrow('claimed');
+    await expect(env.outboxes.recover(scope, owner, async () => {})).rejects.toThrow('claimed');
     finishAppend();
     await moving;
     await closing;
+    await env.lock.releasedFor(owner);
+    expect(env.lock.heldFor(owner)).toBe(false);
+    let contenderClaimed = false;
+    await env.outboxes.recover(scope, owner, async () => { contenderClaimed = true; });
+    expect(contenderClaimed).toBe(true);
     expect((await env.outboxes.list(scope))[0].intents).toHaveLength(1);
     expect(env.commits()).toHaveLength(0);
   });
