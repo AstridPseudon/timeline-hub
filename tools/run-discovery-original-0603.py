@@ -10,6 +10,7 @@ installed child interpreter and uses the existing
 
 from __future__ import annotations
 
+import argparse
 import ast
 import base64
 import csv
@@ -43,6 +44,7 @@ EXPECTED_NODE_VERSION = "v20.19.4"
 EXPECTED_COMPOSITION_ARCHIVE_SHA256 = (
     "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234"
 )
+EXPECTED_PACKAGE_LOCK_SHA256 = "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d"
 EXPECTED_DISCOVERY_SHA256 = "40ae7c5945529bb65dbeb3853a80b1b03650e7dcc5f4a60ddaa04c4dc9f37999"
 EXPECTED_DISCOVERY_TEST_SHA256 = "9faabadd340c1b2df04f0ab6e83c9d00ac1e6f9cf68fd2f8ed2b81af7e108e5f"
 EXPECTED_TARGET_FILE_SHA256 = "9efe493cb2f8339177e07616b976afe6f9813ae4d415923ff25701b471e991c7"
@@ -50,6 +52,10 @@ EXPECTED_TARGET_FUNCTION_SHA256 = "ca54f2d5059bb3b5cca1e8ee43156df6762d3a86739ca
 EXPECTED_TARGET_ASSERTIONS_SHA256 = (
     "087c80d0211e714a7c073d12adb2e260d5de299ba3d251ac31b853562eb6de1e"
 )
+EXPECTED_ORIGIN_SHA256 = {
+    "astrid": "a8374cb5b08949bf8d87d0b44701289c0b2798be1655e125ee0bff8ddda0da33",
+    "astrid-runtime": "9349a54831e0b760c13ca31bdbf2f19cf162abe3960037c74c7623e606fdef3b",
+}
 EXPECTED_CLIENT_FILES = {
     "astrid_runtime_client/__init__.py": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
     "astrid_runtime_client/contract_metadata.py": "a79b2e12de96ec8f2c4bf7b6811ccb3538baf18ca839172f7a3d7bf525029aae",
@@ -175,6 +181,49 @@ def source_facts() -> dict[str, Any]:
     }
 
 
+def require_clean_sources() -> None:
+    for name, repo in (
+        ("Agent", ROOT),
+        ("Runtime", Path("/home/user/work/wt/rt-pin-f3208b26")),
+    ):
+        status = git("status", "--porcelain", "--untracked-files=all", cwd=repo)
+        if status:
+            raise RuntimeError(f"{name} source tree is dirty: {status.splitlines()[:5]}")
+
+
+def canonical_origin_sha(value: dict[str, Any], child: Path, expected_root: Path) -> str:
+    info = value.get("dir_info", value.get("directory_info", {}))
+    canonical = {
+        "dir_info": info,
+        "url": "file://<candidate-child>/" + expected_root.relative_to(child).as_posix(),
+    }
+    return sha_bytes(json.dumps(canonical, sort_keys=True, separators=(",", ":")).encode())
+
+
+def reviewed_run_gate(reviewed_harness_sha256: str | None, gate: Path | None) -> dict[str, str]:
+    actual = sha(Path(__file__).resolve())
+    if reviewed_harness_sha256 != actual:
+        raise RuntimeError("reviewed harness SHA is required and must match this source")
+    if gate is None or not gate.is_file():
+        raise RuntimeError("manager run gate is required for the original body")
+    lines = gate.read_text(encoding="utf-8").splitlines()
+    entries: dict[str, str] = {}
+    for line in lines:
+        if "=" not in line:
+            raise RuntimeError("manager run gate has a malformed line")
+        key, value = line.split("=", 1)
+        if key in entries or not value:
+            raise RuntimeError("manager run gate has duplicate or empty entries")
+        entries[key] = value
+    if entries.get("status") != "approved":
+        raise RuntimeError("manager run gate is not approved")
+    if entries.get("mode") != "run":
+        raise RuntimeError("manager run gate is not for the original run")
+    if entries.get("harness_sha256") != actual:
+        raise RuntimeError("manager run gate does not name this reviewed harness")
+    return {"path": str(gate), "sha256": sha(gate), "harness_sha256": actual}
+
+
 def resolve_child() -> Path:
     if not RECEIPT.is_file():
         raise RuntimeError(f"candidate receipt is unavailable: {RECEIPT}")
@@ -214,6 +263,8 @@ def initial_before() -> dict[str, Any]:
             "node": str(NODE),
             "node_version": EXPECTED_NODE_VERSION,
             "composition_archive_sha256": EXPECTED_COMPOSITION_ARCHIVE_SHA256,
+            "package_lock_sha256": EXPECTED_PACKAGE_LOCK_SHA256,
+            "origin_sha256": EXPECTED_ORIGIN_SHA256,
             "discovery_sha256": EXPECTED_DISCOVERY_SHA256,
             "discovery_test_sha256": EXPECTED_DISCOVERY_TEST_SHA256,
             "target_file_sha256": EXPECTED_TARGET_FILE_SHA256,
@@ -299,16 +350,29 @@ def verify_direct_urls(child: Path, site: Path) -> dict[str, Any]:
         info = value.get("dir_info", value.get("directory_info", {}))
         if info.get("editable", False):
             raise RuntimeError(f"{name} is editable")
-        direct[name] = {"path": str(matches[0]), "sha256": sha(matches[0]), "value": value}
+        origin_sha256 = canonical_origin_sha(value, child, expected_root)
+        if origin_sha256 != EXPECTED_ORIGIN_SHA256[name]:
+            raise RuntimeError(f"{name} direct_url identity mismatch")
+        direct[name] = {
+            "path": str(matches[0]),
+            "sha256": sha(matches[0]),
+            "canonical_sha256": origin_sha256,
+            "value": value,
+        }
     return direct
 
 
-def run_child() -> int:
+def run_child(
+    mode: str,
+    reviewed_harness_sha256: str | None,
+    manager_run_gate: Path | None,
+) -> int:
     child = Path(sys.prefix).resolve()
     site = child / "lib/python3.13/site-packages"
     preflight: dict[str, Any] = {
         "status": "started",
         "argv": sys.argv,
+        "mode": mode,
         "cwd": os.getcwd(),
         "env_keys": sorted(os.environ),
         "declared_env": declared(dict(os.environ)),
@@ -323,6 +387,7 @@ def run_child() -> int:
             != EXPECTED_RUNTIME
         ):
             raise RuntimeError("Runtime source is not the expected f320 candidate")
+        require_clean_sources()
         if not site.is_dir() or not Path(sys.executable).is_relative_to(child):
             raise RuntimeError("child interpreter is not the candidate installed venv")
         if (child / ".astrid-source-commit").read_text().strip() != EXPECTED_AGENT:
@@ -388,10 +453,7 @@ def run_child() -> int:
         )
         if sha(archive) != EXPECTED_COMPOSITION_ARCHIVE_SHA256:
             raise RuntimeError("Remotion composition archive changed")
-        if (
-            sha(PROFILE / "package-lock.json")
-            != "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234"
-        ):
+        if sha(PROFILE / "package-lock.json") != EXPECTED_PACKAGE_LOCK_SHA256:
             raise RuntimeError("Remotion graph package lock changed")
         if not (PROFILE / "node_modules").is_dir() or not NODE.is_file():
             raise RuntimeError("qualified Remotion graph or Node is unavailable")
@@ -439,6 +501,10 @@ def run_child() -> int:
                 pass
         preflight["status"] = "passed"
         preflight["timings"]["end_monotonic"] = time.monotonic()
+        if mode == "preflight":
+            write_json("preflight.json", preflight)
+            return 0
+        preflight["run_gate"] = reviewed_run_gate(reviewed_harness_sha256, manager_run_gate)
         write_json("preflight.json", preflight)
         (EVIDENCE / "body-started").write_text(
             time.strftime("%Y-%m-%dT%H:%M:%SZ"), encoding="utf-8"
@@ -536,7 +602,11 @@ def run_child() -> int:
         write_json("postflight.json", post)
 
 
-def run_parent(mode: str) -> int:
+def run_parent(
+    mode: str,
+    reviewed_harness_sha256: str | None,
+    manager_run_gate: Path | None,
+) -> int:
     try:
         before = initial_before()
     except Exception as exc:  # noqa: BLE001 - before evidence must survive setup failures
@@ -546,10 +616,27 @@ def run_parent(mode: str) -> int:
     child = None
     completed: subprocess.CompletedProcess[str] | None = None
     failure: dict[str, str] | None = None
+    command: list[str] | None = None
+    environment: dict[str, str] = {}
+    gate: dict[str, str] | None = None
     try:
+        if mode == "run":
+            gate = reviewed_run_gate(reviewed_harness_sha256, manager_run_gate)
+        else:
+            gate = None
         child = resolve_child()
         environment = child_environment(child)
-        command = [str(child / "bin/python"), "-P", str(Path(__file__).resolve()), "--child", mode]
+        command = [
+            str(child / "bin/python"),
+            "-P",
+            str(Path(__file__).resolve()),
+            "--child",
+            mode,
+        ]
+        if reviewed_harness_sha256 is not None:
+            command.extend(["--reviewed-harness-sha256", reviewed_harness_sha256])
+        if manager_run_gate is not None:
+            command.extend(["--manager-run-gate", str(manager_run_gate)])
         completed = subprocess.run(
             command,
             cwd=ROOT,
@@ -587,21 +674,24 @@ def run_parent(mode: str) -> int:
                 else {"sha256": None, "text": ""}
             ),
             "failure": failure,
+            "manager_gate": gate if failure is None and mode == "run" else None,
         }
         write_json("after.json", after)
     return returncode
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("mode", nargs="?", choices=("run", "preflight"), default="run")
+    parser.add_argument("--child", action="store_true")
+    parser.add_argument("--reviewed-harness-sha256")
+    parser.add_argument("--manager-run-gate", type=Path)
+    args = parser.parse_args()
     EVIDENCE.mkdir(parents=True, exist_ok=True)
-    if "--child" in sys.argv:
+    if args.child:
         SCRATCH.mkdir(parents=True, exist_ok=True)
-        return run_child()
-    mode = sys.argv[1] if len(sys.argv) > 1 else "run"
-    if mode not in {"run", "preflight"}:
-        print("usage: run-discovery-original-0603.py [preflight|run]", file=sys.stderr)
-        return 2
-    return run_parent(mode)
+        return run_child(args.mode, args.reviewed_harness_sha256, args.manager_run_gate)
+    return run_parent(args.mode, args.reviewed_harness_sha256, args.manager_run_gate)
 
 
 if __name__ == "__main__":
