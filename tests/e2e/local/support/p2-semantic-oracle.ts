@@ -1,5 +1,9 @@
 import { expect } from '@playwright/test';
 import type { CanonicalDocument, CommitRequest, HeadPin } from '../../../../src/integrations/runtime/timeline-commit-types.ts';
+import { buildTimelineData, getNextClipId } from '../../../../src/tools/video-editor/lib/timeline-data.ts';
+import { trySnapToEdge } from '../../../../src/tools/video-editor/lib/coordinate-utils.ts';
+import { withDefaultTimelineOutput } from '../../../../src/tools/video-editor/lib/defaults.ts';
+import type { AssetRegistry, TimelineConfig } from '../../../../src/tools/video-editor/types/index.ts';
 
 type JsonObject = Record<string, unknown>;
 
@@ -8,6 +12,8 @@ export type SemanticAddMediaOracle = {
   owner: string;
   select: string;
   label: string;
+  row: JsonObject;
+  media: JsonObject;
 };
 
 export type SemanticCommitPost = {
@@ -35,14 +41,9 @@ function assetIds(container: unknown): Set<string> {
   return new Set(Object.keys(object(assets, 'authored assets')));
 }
 
-function authoredAssetIds(before: CanonicalDocument, owner: string): Set<string> {
+function authoredContainer(before: CanonicalDocument, owner: string): JsonObject {
   const parent = before.parent_revision.payload as unknown as JsonObject;
-  if (owner === 'parent') {
-    const ids = assetIds(parent);
-    const config = parent.config;
-    for (const id of assetIds(config)) ids.add(id);
-    return ids;
-  }
+  if (owner === 'parent') return parent;
 
   expect(owner).toMatch(/^occurrence:[^/]+$/);
   const occurrenceId = owner.slice('occurrence:'.length);
@@ -55,7 +56,39 @@ function authoredAssetIds(before: CanonicalDocument, owner: string): Set<string>
   expect(shot, `authored shot for ${owner}`).toBeTruthy();
   const internal = before.internal_timeline_revisions.find((candidate) => candidate.revision_id === shot!.internal_timeline_revision_id);
   expect(internal, `authored internal timeline for ${owner}`).toBeTruthy();
-  return assetIds(internal!.payload);
+  return internal!.payload as JsonObject;
+}
+
+function authoredAssetIds(before: CanonicalDocument, owner: string): Set<string> {
+  const container = authoredContainer(before, owner);
+  const ids = assetIds(container);
+  if (owner === 'parent') for (const id of assetIds(container.config)) ids.add(id);
+  return ids;
+}
+
+/** Image drop defaults from buildAssetDropEdit; IDs come from the pregesture editor allocator. */
+export async function expectedImageDropRow(
+  before: CanonicalDocument, owner: string, asset: string, trackId: string, at: number,
+): Promise<JsonObject> {
+  const container = authoredContainer(before, owner);
+  const config = owner === 'parent' ? object(container.config, 'authored parent config') : container;
+  const rows = (container.clips ?? config.clips) as Array<JsonObject>;
+  const tracks = (container.tracks ?? config.tracks) as Array<JsonObject>;
+  expect(Array.isArray(rows), 'authored clips').toBe(true);
+  expect(Array.isArray(tracks), 'authored tracks').toBe(true);
+  const current = await buildTimelineData(
+    withDefaultTimelineOutput({ ...structuredClone(config), clips: structuredClone(rows), tracks: structuredClone(tracks) } as unknown as TimelineConfig),
+    structuredClone(container.registry ?? config.registry ?? { assets: {} }) as AssetRegistry,
+  );
+  const track = current.tracks.find((candidate) => candidate.id === trackId);
+  expect(track?.kind, 'image drop visual track').toBe('visual');
+  const ids = owner === 'parent' ? current.meta
+    : Object.fromEntries(Object.keys(current.meta).map((id) => [`${owner.slice('occurrence:'.length)}:${id}`, {}]));
+  return {
+    id: getNextClipId(ids), at: trySnapToEdge(current.rows, trackId, at, 5).time,
+    track: trackId, asset, clipType: 'hold', hold: 5, opacity: 1,
+    ...(track!.fit === 'manual' ? { x: 100, y: 100, width: 320, height: 240 } : {}),
+  };
 }
 
 /** Strict request oracle for the two semantic media-birth routes. */
@@ -92,12 +125,11 @@ export function assertSemanticAddMediaRequest(
   expect(command.intent).toEqual(expected.op === 'clip.add-media' ? {} : { ownership: 'occurrence' });
   const args = object(command.args, `${expected.op} args`);
   exactKeys(args, ['media', 'row'], `${expected.op} args`);
-  const row = object(args.row, `${expected.op} row`);
-  exactKeys(row, ['asset', 'at', 'clipType', 'hold', 'id', 'track'], `${expected.op} row`);
-  expect(row.id).toEqual(expect.any(String));
-  expect(row.asset).toEqual(expect.any(String));
+  const row = expected.row;
+  expect(args.row).toStrictEqual(row);
   const media = object(args.media, `${expected.op} media`);
   exactKeys(media, ['asset', 'catalog_digest', 'generation_id', 'object_id', 'variant_id'], `${expected.op} media`);
+  expect(media).toStrictEqual(expected.media);
 
   const created = authoredAssetIds(authored, expected.owner).has(row.asset as string)
     ? [`${expected.owner}/clip:${row.id}`]
@@ -107,8 +139,9 @@ export function assertSemanticAddMediaRequest(
   const step = body.steps[0]!;
   exactKeys(step, ['command_ordinals', 'id', 'intent', 'label', 'patch', 'tags'], 'semantic commit step');
   expect(step.id).toEqual(expect.any(String));
-  expect(step.label).toBe(body.label);
-  expect(step.intent).toBe(body.label);
+  expect(step.id).toMatch(/\S/);
+  expect(step.label).toBe(expected.label);
+  expect(step.intent).toBe(expected.label);
   expect(step.tags).toEqual([]);
   expect(step.command_ordinals).toEqual([0]);
   expect(step.patch).toEqual([]);
