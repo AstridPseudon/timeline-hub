@@ -882,6 +882,10 @@ def _inverse_stage_occurrence_collection(boundary, state):
 
 
 def _inverse_stage_state(boundary, ref, path):
+    if ref == "timeline":
+        require(not path, "inverse stage timeline capture is not a whole closure")
+        return {"state": "present", "value": {
+            key: boundary["parent"][key] for key in ("revision_id", "content_digest")}}
     if ref not in boundary:
         return {"state": "absent"}
     state = location(boundary[ref]["payload"], stored_path(boundary[ref]["payload"], ref, path),
@@ -1466,7 +1470,34 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
                 continue
             require(value_equal(_inverse_stage_state(native_image, ref, path), write["before"]),
                     "inverse stage write differs from its sequential input")
-            if ref == "parent" and path == ["occurrences"]:
+            if ref == "timeline":
+                assert source_step is not None
+                captures = [capture for ordinal in source_step["command_ordinals"]
+                            for capture in source_commands[ordinal]["writes"]]
+                require(len(writes) == len(captures) == 1
+                        and captures[0]["ref"] == "timeline" and captures[0]["path"] == []
+                        and value_equal(captures[0]["after"], write["before"])
+                        and value_equal(captures[0]["before"], write["after"])
+                        and value_equal(_inverse_stage_state(stage_after, ref, path), write["after"]),
+                        "inverse stage timeline capture differs from authenticated source endpoints")
+                effects = []
+                for effect in reversed(source_step["patch"]):
+                    require(effect["op"] in {"set", "remove"},
+                            "inverse stage timeline source effects are not authenticated observations")
+                    restored = {"op": "set" if effect["before"]["state"] == "present" else "remove",
+                                "ref": effect["ref"], "path": effect["path"],
+                                "before": ({"state": "present", "value": effect["value"]}
+                                           if effect["op"] == "set" else {"state": "absent"})}
+                    if restored["op"] == "set":
+                        restored["value"] = effect["before"]["value"]
+                    effects.append(restored)
+                require(value_equal(stage_step["patch"], effects),
+                        "inverse stage timeline effects differ from authenticated source history")
+                # The native whole-closure capture carries an immutable parent
+                # pin, not a payload root. The exact reversed source pins bind
+                # the complete endpoint projected from this stage's effects.
+                native_image = copy.deepcopy(stage_after)
+            elif ref == "parent" and path == ["occurrences"]:
                 require(write["before"]["state"] == "present",
                         "inverse stage occurrence order has no input collection")
                 rows = write["after"].get("value")
