@@ -36,13 +36,17 @@ def sha(value):
     return value
 
 
-def child_key(agent_sha, backend_sha, client_tuple, bootstrap_authority=None):
+def child_key(agent_sha, backend_sha, client_tuple, bootstrap_authority=None, farm_authority=None):
     check(isinstance(client_tuple, dict) and bool(client_tuple), 'client tuple required')
     parts = ['child', sha(agent_sha), sha(backend_sha), client_tuple]
     if bootstrap_authority is not None:
         check(isinstance(bootstrap_authority, str) and re.fullmatch('[0-9a-f]{64}', bootstrap_authority),
               'bootstrap authority digest required')
         parts.append(bootstrap_authority)
+    if farm_authority is not None:
+        check(bootstrap_authority is not None and isinstance(farm_authority, str)
+              and re.fullmatch("[0-9a-f]{64}", farm_authority), "Farm authority requires bootstrap authority")
+        parts.append(farm_authority)
     return digest(canonical(parts))
 
 
@@ -54,7 +58,11 @@ def key_for(component, identity):
     check(isinstance(identity, dict), 'identity object required')
     if component == 'child':
         check(set(identity) in ({'agent_sha', 'backend_sha', 'client_tuple'},
-                                {'agent_sha', 'backend_sha', 'client_tuple', 'bootstrap_authority'}), 'child identity schema')
+                                {'agent_sha', 'backend_sha', 'client_tuple', 'bootstrap_authority'},
+                                {'agent_sha', 'backend_sha', 'client_tuple', 'bootstrap_authority', 'farm_authority'}), 'child identity schema')
+        if 'farm_authority' in identity:
+            check(isinstance(identity['farm_authority'], str)
+                  and re.fullmatch('[0-9a-f]{64}', identity['farm_authority']), 'Farm authority digest required')
         return child_key(**identity)
     check(component == 'runtime' and set(identity) == {'remotion_tree'}, 'runtime identity schema')
     return runtime_key(**identity)

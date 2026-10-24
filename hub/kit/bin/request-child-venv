@@ -10,6 +10,8 @@ R=${CHILD_VENV_RUNTIME_CHECKOUT:-/home/user/work/runtime}
 N=${1:-}; S=${2:-}; BS=${3:-}; REMOTION=${4:-}
 RUNTIME_SHA=
 DEPENDENCY_SEED=${CHILD_VENV_DEPENDENCY_WHEELHOUSE:-}
+FARM_SCHEMA_SOURCE=${CHILD_VENV_FARM_SCHEMA_SOURCE:-}
+FARM_REQUIRED=0
 refuse() { echo "REFUSED: $*" >&2; exit 2; }
 case "$O:$W" in /*:/*) ;; *) refuse 'roots must be absolute';; esac
 [[ "$N" =~ ^venv-agent-child-[a-z0-9-]+$ ]] || refuse 'invalid child name'
@@ -25,6 +27,13 @@ while [ "$#" -gt 0 ]; do
       [ "$#" -ge 4 ] || refuse 'source carrier requires Agent checkout, Runtime checkout and Runtime SHA'
       A=$2; R=$3; RUNTIME_SHA=$4; shift 4
       ;;
+    --farm-distributions)
+      FARM_REQUIRED=1; shift
+      ;;
+    --farm-schema-source)
+      [ "$#" -ge 2 ] || { echo 'REFUSED: Farm schema source path is missing' >&2; exit 2; }
+      FARM_SCHEMA_SOURCE=$2; FARM_REQUIRED=1; shift 2
+      ;;
     --dependency-wheelhouse)
       [ "$#" -ge 2 ] || refuse 'dependency wheelhouse path is missing'
       DEPENDENCY_SEED=$2; shift 2
@@ -32,6 +41,13 @@ while [ "$#" -gt 0 ]; do
     *) refuse 'unknown child venv option';;
   esac
 done
+[ -z "$FARM_SCHEMA_SOURCE" ] || FARM_REQUIRED=1
+[ "$BS" != OPS-farm-agent-full ] || FARM_REQUIRED=1
+if [ "$FARM_REQUIRED" = 1 ]; then
+  [[ "$FARM_SCHEMA_SOURCE" =~ ^/[A-Za-z0-9._/-]+$ ]] || { echo 'REFUSED: missing authentic selected Farm schema Git source' >&2; exit 2; }
+  [ -d "$FARM_SCHEMA_SOURCE" ] && [ "$FARM_SCHEMA_SOURCE" = "$(readlink -e -- "$FARM_SCHEMA_SOURCE" 2>/dev/null)" ] || { echo 'REFUSED: Farm schema source must be an existing physical directory' >&2; exit 2; }
+  [ -n "$DEPENDENCY_SEED" ] || { echo 'REFUSED: Farm requires original67 dependency wheelhouse and complete-root bootstrap' >&2; exit 2; }
+fi
 case "$A:$R" in /*:/*) ;; *) refuse 'source checkouts must be absolute';; esac
 [[ "$A" =~ ^/[A-Za-z0-9._/-]+$ && "$R" =~ ^/[A-Za-z0-9._/-]+$ ]] || refuse 'source checkout path contains unsafe characters'
 [ "$A" = "$(readlink -e -- "$A" 2>/dev/null)" ] || refuse 'Agent checkout path is missing or symlinked'
@@ -68,7 +84,7 @@ for d in "$W"/venv-agent-child-*; do
   [ -z "$TARGET" ] || [ "$d" = "$TARGET" ] || continue
   # A legacy child has no Store custody or retained original wheel authority.
   # Only the Store maker may qualify opt-in seeded reuse; never adopt this path.
-  if [ -n "$DEPENDENCY_SEED" ]; then
+  if [ -n "$DEPENDENCY_SEED" ] || [ "$FARM_REQUIRED" = 1 ]; then
     [ -z "$TARGET" ] || refuse 'seeded reuse requires Store custody and retained original wheels'
     continue
   fi
@@ -251,6 +267,7 @@ done
   [ -z "$BS" ] || printf ' %s' "$BS"
   [ -z "$REMOTION" ] || printf ' %s' "$REMOTION"
   [ -z "$DEPENDENCY_SEED" ] || printf ' --dependency-wheelhouse %s' "$DEPENDENCY_SEED"
+  [ "$FARM_REQUIRED" != 1 ] || printf ' --farm-schema-source %s' "$FARM_SCHEMA_SOURCE"
   printf ' --source-carrier %s %s %s\n' "$A" "$R" "$RUNTIME_SHA"
 } > "$O/queue/pending/childvenv-$N"
 echo "child venv $N queued; result in $O/queue/done/childvenv-$N"
