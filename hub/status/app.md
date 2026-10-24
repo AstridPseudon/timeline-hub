@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T06:25:38Z | dispatcher heartbeat 8s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 1m -->
-# app board, 2026-10-24T06:10Z
+<!-- app | 2026-10-24T06:28:37Z | dispatcher heartbeat 6s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 0m -->
+# app board, 2026-10-24T06:29Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -19,8 +19,8 @@
 | readiness-after-bootstrap | Qualify history and bootstrap readiness | App source; Proof verdict | D45 actual stage PASS | merged | Caller 0446; producer 0454; Proof 0508 | Both D45 readiness leaves passed; P3 test 16.7 seconds. Gate failures are downstream. Historical causes stay bounded. | c0fe / 079 / 37eb |
 | P-door-port-alloc | Allocate door port per run | Luna; D21 | Resolved | merged | app-P2-P3-door-allocation-0039 | [Node 20 allocation, shared stage value and failure checks passed.](/home/user/timeline-hub/hub/design/app-P2-P3-door-allocation-0039.md) | Harness rows only |
 | readiness-upstream-check | Check f38e candidate | Sol; Luna review | Review 0057 PASS | merged | App Sol 0046; Luna 0057 | No census or attempt-root signature supports attribution. Exact patch is unavailable locally; historical cause remains unknown. | Report only |
-| P2 | Eight original gesture cases | App service; Proof verdict | Joined proof and final caller | blocked:app | Joined0609; caller0609; Proof verdict | D45 13583 failed three; five not run. All reviewed repairs are HOMEb238. No new pair submitted. | b238 source; c0fe historical result |
-| P3 | Original Gate-5 journey | App service; Proof verdict | Joined proof and final caller | blocked:app | Joined0609; caller0609; Proof verdict | Setup is HOMEae7 after review0553. Original live4065 remains NO-GO; final caller adopts new setup body and unchanged reset/tail. | bb5ee / ae7 / b238 join |
+| P2 | Eight original gesture cases | App service; Proof verdict | Corrected proof and caller | blocked:app | Joined 0629; caller 0623; Proof verdict | D45 13583 failed three; five not run. Repairs and timing correction are HOME. Conditional release 0615 applies after checks pass. | 9b810408cc source |
+| P3 | Original Gate-5 journey | App service; Proof verdict | Corrected proof and caller | blocked:app | Joined 0629; caller 0623; Proof verdict | Reviewed setup is HOME. Live 4065 remains NO-GO. Caller retains original reset and full downstream tail. | bb5ee / ae7 / 9b810408cc join |
 | A2-parent-media-closure | Preserve untouched child closure | Sol; Luna review | Resolved | merged | app-A2-parent-media-integrated-0035 | [299 tests, types, lint and external producer passed.](/home/user/timeline-hub/hub/design/app-A2-parent-media-integrated-0035.md) | 1b0428db7d |
 | A2-image-created | Declare genuine image creations | Sol; Luna review | Review 0133 PASS | merged | app-A2-image-created-sol-0126 | Independent 261 tests and producer 28, three types and lint passed. Clip and new authored registry alias claims match provider. Joined proof 0150 passed 448 tests, three types and lint. | b3a84dea71 / 1c5cc47bf6 |
 | A4-image-live | Complete source-bound image witness | Luna producer; Agent independent review | Independent 0636 PASS | merged | App producer0520; Agent0554 and0636 | [Actual acceptance, retry, refusals, undo, history and canonical restore PASS.](../../design/agt-A4-image-result-review-0636.md) Direct Runtime service scope. | App1c5cc / Agent2007 / Runtime8ea |
@@ -76,14 +76,14 @@
 | P2-popup-created-oracle | Assert exact required created claims | Proof Luna; independent review | Review 0526 PASS; home merge | merged | ap2-P2-created-claims-oracle-0521 | Exact ordered asset and clip refs; all other bytes retained. Home merge receipt 5f43 confirmed. Live P2 remains open. | 2972a7c4c / 5f43d9e86a |
 | P2-five-current-paths | Recheck five original never-run paths | Luna; independent Luna | Review 0525 PASS | merged | app-P2-current-path-repro-review-0525 | All five real selectors and mounted paths confirmed. No prior static gap remains. Browser upload, dispatch, reload and undo stay unknown. | Report only |
 | A2-parent-materialization | Preserve untouched move data and basis | Sol; Luna review | Reviews 0536 and 0545 PASS | merged | app-A2-parent-materialization-sol-0525 | Reviewed packet is HOME. Mounted ready and delayed owner requests passed; 273 plus 161 tests, three types and lint. Integrated joined proof follows source merges. | 5e242c64e3 / 7551bb2146 |
-| P2-P3-stage-retention | Preserve earlier stage diagnostic files | Sol; D21 | Caller controls complete; source held | blocked:app | app-A2-final-retained-caller-sol-0609 | READYcaller on held b238: 60 controls and six real browser-free stages retained files. Corrected source rebind remains; no request submitted. | Source b2380539c5 |
-| App-current-real-path-proof | Qualify all final mounted caller repairs | Luna | Timing interaction repair | blocked:app | app-A2-A3-current-joined-proof-0609 | On b238: 685 passed, one unchanged media timing positive failed. P3 controls12, three types, lint and donor26 passed. Pre-existing label is not adopted. | b2380539c5 |
+| P2-P3-stage-retention | Preserve earlier stage diagnostic files | Luna; D21 | Media correction merged | doing | app-P2-P3-source-rebind-0623 | Rebind on HOME 9b810408cc active. Prior 60 controls and six real browser-free stages retained files. No journey submitted. | 9b810408cc |
+| App-current-real-path-proof | Qualify all final mounted caller repairs | Luna | Media correction merged | doing | app-A2-A3-corrected-integrated-0629 | Corrected 27-file union, Gate5 controls, types and lint queued. Prior b238 result retained as 685 PASS and one FAIL, with no pre-existing waiver. | 9b810408cc |
 
-| A2-media-timing-join | Preserve prepared media canonical timing | Sol; Luna review | Author252 PASS; exact cause named | review | app-A2-media-timing-review-0623 | Raw restoration revived matching at_ms alias; preview normalizes exact numeric alias and refuses contradictions. Original test unchanged; all26 media tests pass. | 6635416195 |
-Integration: b2380539c5545661954d2794976631312ee1d939 joins every reviewed repair: catalog a63 plus3393 plus172033, P3 setupbb5ee, parameter1d9 plus9b5, popup03f98 plusfa59, parent5e242 and oracle2972.
+| A2-media-timing-join | Preserve prepared media canonical timing | Sol; Luna review | Independent 0623 PASS | merged | app-A2-media-timing-review-0623 | [252 tests, all 26 media tests, three types and lint passed.](../../design/app-A2-media-timing-review-0623.md) Original timing assertion unchanged. | 6635416195 / 9b810408cc |
+Integration: 9b810408ccf8aadbca708dd0bc461afc19576427, tree 9a37265f0286128df7e6240a9df9877d959474af. Exact whole tree equals independently reviewed timing candidate 6635416195. All reviewed catalog, parameter, popup, parent, P3 setup and oracle repairs remain present.
 
-Next ready: Independent timing review0623 and mechanical caller rebind0623 queued in parallel. Exact corrected integrated proof follows home merge. Proof owns pair release; no request submitted.
-Blockers: App — one media timing interaction fails the joined proof. Sol0616 repairs it; final caller cannot release a journey before corrected proof.
+Next ready: Corrected integrated worker 0629 queued; mechanical caller rebind 0623 active. Submit exactly one P2 and one P3 after both checks pass under Proof conditional release 0615. No further approval roundtrip.
+Blockers: App — corrected integrated qualification 0629 and final caller source binding 0623 must pass before the released pair.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
 
 P2/P3: D45 pair is consumed. P213583 failed three with five not run; P34065 failed first original reset after readiness passed. Every original guard, wait, intended-field, reload, undo and tail remains required.
