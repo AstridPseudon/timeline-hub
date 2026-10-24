@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T10:09:45Z | dispatcher heartbeat 3s | live 8 (sol 1, luna 7, other 0) | busy30 13 | status age 0m -->
-# runtime board, 2026-10-24T10:09:29Z
+<!-- main | 2026-10-24T10:12:40Z | dispatcher heartbeat 13s | live 10 (sol 2, luna 8, other 0) | busy30 14 | status age 1m -->
+# runtime board, 2026-10-24T10:11:46Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -55,7 +55,7 @@
 | F-helper-sequential | Classify helper replay-map refusal | Agent Sol / Luna | Integrated proof complete | merged | Agent184dc; review0224; integrated0232 | Actual Agent 8a8d passed 12 focused cases and static, vendor and artifact checks. Both original variants passed on reviewed source. | Agent184dc20a70 |
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Current installed qualification passed | merged | Agent0508; independent0517 PASS | Exact seven originals passed on managed child 3b5c, Agent ba8f and Runtime f320. Current 9cd relevant sources and test AST match. | Managed child 3b5c |
-| OPS-farm-agent-full | Complete Farm child distributions | Luna / independent Luna | Cumulative component review | review | Fix 1003; review 1007 | First correction has 17 passes and is saved. Independent review checks both prior attacks; component remains unwired. | a458bd76b held |
+| OPS-farm-agent-full | Complete Farm child distributions | HARD Sol / Luna | Second source correction | doing | Sol 1012; review 1007 FAIL; path 1012 | All 17 tests pass; directory ownership and writable modes still fail security. Sol repair and whole-path review run in parallel. | a458bd76b held |
 | OPS-child-dependency-route | Publish verified dependency seed route | Sol / Luna | Actual input and received kit passed | merged | Source 0752; live 0805; Agent 0814 PASS | All 67 unchanged wheels and received kit passed. Actual changed child request is separate; bootstrap remains unverified. | b330 installed |
 | R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Integrated proof passed | merged | Review 0405; integrated 0413 PASS | 13 standalone cases and 243 controls passed; 74 configured deselections. [Proof](../../design/runtime-historical-image-integrated-0413.md) | 2b49da8d6 / 2e96c68c |
 | R-D42-history-memo | Harden verified replay memo | Sol / Luna | Post-delivery scope under D47 | gated:D47 | Design0448; review0454 PASS | Deferred by D47. No stable validation boundary; nine state attacks remain open. Source stays unmerged. | Tests 6c6bb375; source held |
@@ -110,5 +110,5 @@ Proof: P1 remains historical GO at its exact tuple. P4 and P5 retain their sourc
 Blockers: Runtime — Sol0951 must close whole-root inventory and bootstrap authority, pass independent cumulative security review, then use guarded installation. Agent child remains held.
 Blockers: Orchestrator — exact schema source HTTP403 and the supported read-access request were refused. Owner disposition is pending; all alternate routes stay stopped. [Refusal evidence](../../design/runtime-schema-acquisition-status-0955.md).
 Blockers: App and Agent — popup repair and complete App caller qualification precede the next conditional pair. Header P2/P3 GO precedes App U3b and D39 home adoption.
-Next ready: Cumulative component review1007 is running on exact a458bd76b after the first correction17PASS. Sol0951 continues in parallel. Normal maker join follows both source reviews; actual schema admission remains held. No unassigned ready Runtime task.
+Next ready: HARD Sol component1012 and independent whole-path1012 are queued immediately after second security FAIL. Verifier0951 acceptance140PASS awaits source finalization and independent review. Sol0951 continues in parallel. Normal maker join follows both source reviews; actual schema admission remains held. No unassigned ready Runtime task.
 Later: D47 memo remains held until after delivery. D34 disk work stays held above the main floor; 8,989,306,880 bytes free after normal recycling of newly finished component0946 and schema0955. Saved branches and byte-exact evidence retained. Prior cleanup, process, retirement and publication permission refusals remain stopped. Three historical non-KEEP Runtime trees are dirty. V4 is cut; D14/D23 and D31/D37 remain unchanged.
