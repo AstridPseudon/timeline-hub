@@ -1,1 +1,1 @@
-2026-10-24T12:07:50Z procs: hub-syncd dispatcher run-manager up; board 11:38Z; workers running 0; disk 17G free; issues: none (idle; waiting on Runtime: kit receipt complete, admission held)
+2026-10-24T13:09:21Z procs: hub-syncd dispatcher run-manager up (idle); board 12:20Z; workers running 0; disk 17G free; issues: none (farm stood down per D56.3, awaiting orchestrator release)
