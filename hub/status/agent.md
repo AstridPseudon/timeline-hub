@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T15:31:04Z | dispatcher heartbeat 8s | live 2 (sol 0, luna 2, other 0) | busy30 13 | status age 1m -->
+<!-- agent | 2026-10-24T15:33:51Z | dispatcher heartbeat 8s | live 3 (sol 0, luna 3, other 0) | busy30 11 | status age 1m -->
 # agent board, 2026-10-24T15:29:59Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -103,7 +103,7 @@
 
 | F D66 reverse diff | Map missing upstream tests | Luna | Existing authentic924 XML | doing | agt-F-D66-reverse-diff-1527 | One reverse inventory: renamed with exact mapping, cited D52 deletion, or smallest restore. No bodies, full or child; counts pending. | Currentd27b /924 |
 
-| U4a D62 preparation | Adopt normal generated ABI field | Luna | Runtime security then home merge | doing | agt-D39-D62-producer-prepare-1529 | Exacte02f normal checkout and vendor tools;15 canonical mappings. Preparation authorized by Runtime1516; candidate held until producer qualified. | Runtimee02f pending |
+| U4a D62 preparation | Adopt normal generated ABI field | Luna | Runtime security then home merge | review | Author1529; review1533 | Candidate0eda is four normal generated/lock files;15 mappings exact, author37 PASS. Independent1533 retains actual XML; producer security/home holds merge. | Candidate0eda0abf |
 
 Integration: Agentd27b6601e5 includes U2 final924, normal e68 vendor adoption and independently reviewed legacy inverse plus environment key fix. Proposal inverse actual-home13 passed. D61 consumer9460a443 retains all three reviewed donor blobs, held for qualified Runtime producer then normal D39 and current-home qualification. No generated code or lock edited by manager.
 core open: 6 tracked: four D61 fork checkpoint failures and two forward-provider originals outside276. D67 makes D13 an ENV known gap, unchanged and visibly failing. Env79; two D23 originals remain deferred. Final tuple proof pending.
@@ -116,5 +116,5 @@ Blockers: Runtime — D62 resolves private custody: accept-time record classific
 Blockers: Runtime — forward-created Sol1450 owns auth.py and the two exact ABI1 failures. Producer Sol1450 owns store/port; wire Luna1447 owns schema/generation. Source qualification and actual Agent proof remain pending.
 Blockers: Agent — D67 clears D13 blocker as ENV known gap; no owner action. D66 reverse diff1527 active; counts pending.
 Next ready: Adopt qualified Runtime D62 producer through normal D39 and reviewed consumer, then one actual-home six-original proof and final P4/core. Remaining Runtime source/security owns the readiness boundary.
-live 3 / cap 6; ready-undispatched 0. Luna1525 service,1527 reverse diff,1529 normal vendor preparation active. Cause1528 complete; Runtime e02f security1511 pending.
+live 3 / cap 6; ready-undispatched 0. Luna1525 service,1527 reverse diff,1533 vendor review. Author1529 complete; Runtime e02f security1511 pending.
 Inbox consumed through Runtime1516, D66 and D67 relays. Producer still unqualified; consumer home remains held. Last pass 2026-10-24T15:20:04Z.
