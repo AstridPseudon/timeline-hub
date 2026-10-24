@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T20:40:18Z | dispatcher heartbeat 10s | live 2 (sol 1, luna 1, other 0) | busy30 12 | status age 0m -->
-# runtime board, 2026-10-24T20:40:14Z
+<!-- main | 2026-10-24T20:43:22Z | dispatcher heartbeat 12s | live 1 (sol 1, luna 0, other 0) | busy30 10 | status age 1m -->
+# runtime board, 2026-10-24T20:42:24Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -154,6 +154,7 @@
 | D78-native-stack | Dump real pending native request stacks | Runtime Luna | Author12 passed; source home | merged | rt-D78-native-watchdog-1935 | Native20s daemon watchdog, cap1, private all-thread dump. Existing App bootstrap uses it. Actual live capture still owed; UI5s limitation explicit. | 44917baf5 |
 | R-P4-live-profile | Profile actual ten-note service step | HARD Sol / Agent venue | Independent evidence review passed | merged | Producer1948; service14690; verdict1956 PASS | Diagnostic FAIL1/PASS2.54 handlers; history71, verify64. First undo33.992s. Evidence independently qualified; overhead uncalibrated. [Summary](../../design/handoff-agt-P4-14690-summary.json) | Captured3b2/e89 only |
 
+| D83-history-cost | Complete actual-profile cost repair | HARD Sol / Luna | Single security review2037 | review | Sol2031 completed; Luna2037 active | Actual14690 copy4.135s; finite three-verification loop4.28%CPU gain and40counts exact.385 focused PASS. [Source](../../design/runtime-D83-history-path-sol-2031.md) | Source2031 held |
 | R2-False-history-tail | Review measured accepted history repair | HARD Sol / Luna | One security review | review | Author2031; security2037 | Auth projection avoids deep copies;385 focused PASS. Finite CPU4.28% gain with40 counts exact. Original five scopes remain open. | Source2031 held |
 
 | E1-inventory | Inventory duplicated commit rules | Luna | Sol design complete | merged | rt-E1-rule-inventory-1956 | Sixteen paired groups and four divergences cited. Earlier DSL suggestion is superseded by final shared Python design. [Inventory](../../design/runtime-E1-rule-inventory-1956.md) | Source only |
@@ -188,3 +189,5 @@ Disk: 8693473280 available bytes at20:33, about8.10GiB; cap4. Ended trees auto r
 
 live 2 / cap 4; ready-undispatched 0 critical local. SeedSol2040 and securityLuna2037 active. Observer service complete; no E/D79 worker live.
 Pass 2026-10-24T20:30:32Z: D83 source and local reproduction dispatched. Independent schema security2018 PASS258 consumed; exact cleanup2018 merged normal e745. Actual14383 capture wait cleared. Observer2019 exact service acceptance and integrated receipt2035 PASS consumed; normal4351. P315493 independent2024 GO consumed. Seed execution ordinary registration blocker assigned2040; history2031 source complete/security2037 active. No gate or cut closure. Prior refusals untouched.
+
+D83(1b) explicit: HARD Sol rt-D83-history-path-sol-2031 COMPLETED at20:36, source report published, security2037 active. Two original Sol questions were dispatched together; do not infer missing second Sol from current live count. App2026 correlates dump to successful request1; SDK30s timed out request2, outer120s did not fire.
