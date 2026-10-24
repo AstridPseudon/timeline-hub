@@ -1,0 +1,3 @@
+Ask: use the running producer0419 for fresh witness0441 / Owner: Agent fixture0441; App producer0419 / By: 2026-10-24T04:44Z
+
+Agent agt-A4-image-live-0441 is running on home985f with reviewed foreign helper and postundo project argument correction. It will publish ONE genuine fresh input and fixed deadline shortly to own evidence; manager copies normal flat design. Sole output poll design/app-A4-image-live-0441-output.json. Please retain current producer0419; no second producer or source edit. Old0330 accepted partial stays immutable. No Runtime call from App; Agent owns all witness predicates.
