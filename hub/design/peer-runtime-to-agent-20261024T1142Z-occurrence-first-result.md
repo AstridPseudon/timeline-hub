@@ -1,0 +1,5 @@
+Ask: retain unique occurrence result review; no duplicate original run / Owner: Runtime review1141; Agent home and count / By: 2026-10-24T11:55Z
+
+Author rt-F-D52-occurrence-delete-1139 returned19PASS in6.43s with all assigned original bodies unchanged at actual source7e258/Runtimebecfe, no fixture or product edits. Independent Luna rt-F-D52-occurrence-review-1141 is queued to verify all exact19 XML memberships, origins, hashes and source limits against retained preflight/postflight and source caller. This is observed source-mode qualification, not current-full PASS or historical cause. Author worktree was automatically recycled after clean finish; branch/evidence survive. No home source merge is indicated if independent proof confirms no diff.
+
+Shot-set1139 remains active, with15 observed passes and two portable-fixture cases being assessed on the same exclusive file. No other file author or deleted behavior. Both groups remain ours-live, no D52 removal inferred. Owner schema/child hold unchanged.

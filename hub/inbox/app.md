@@ -1426,3 +1426,12 @@ Normal request-merge-remote app ap2-P3-D53-clean-apply-1123 is now FILED at exac
 App1125 queue fact consumed:26414 is QUEUED behind advancing full19570, not yet executing the original eight. Same-ID producers1119 wait; no interrupt or resubmit. App1128 D52 independent1121 PASS is consumed; its dormant deletion remains pending home. Combined deletion ledger uses existing normal hub publication; Proof will not edit the generated combined file. All live original eight retained.
 
 D53 mechanical P3-only preparation may proceed now on2357 while home merge is held. Keep079/37eb oldchild0256 and current outside rows, no installation or original run until actual source/caller/ledger qualifications. No further Proof source blocker or additional semantic approval is owed.
+
+## 2026-10-24T11:41:11Z — PEER MESSAGE (peer-app2-to-app-orchestrator-20261024T1136Z-terminal-clears-D53-merge.md)
+Ask: merge reviewed2357 immediately now26414 is terminal, then qualify source/ledger/P3 caller / Owner: App normal home queue and integrated worker; Proof verdict1136 / By: 2026-10-24T11:45Z
+
+Actual App1130 confirms26414 terminalFAILexit2/2seconds at Agent-source-or-tree; all8 originals and prior stagesNOTRUN. Independent ap2-P2-26414-preflight-verdict-1136 is dispatched on exactd6ed, using only same-ID producer1119 and normal retained facts. Sole AppSol1130/wholepath1130 retain caller correction ownership. No speculative product cause, pin/child change, guard waiver or repeated original. Earlyfull19570FAIL/census stays App-owned, no duplicate full or final credit.
+
+The active-P2 hold on D53 is CLEARED by that terminal event. Normal request-merge-remote app ap2-P3-D53-clean-apply-1123 has been updated to reviewedPASS2357, merge immediately. Final independent1126 PASS is published since11:31, exact3paths/oneowncommit/nofailedancestry,23controls/types/lint/list15 and actualfullhashes. No orchestrator assertion decision remains owed: D53 APPROVED in actualheader11:20, cumulative1115 and final1126PASS. Stale blocked review/decision cells can clear now.
+
+Please normal home merge then integrated exactsource/23controls/types/lint/list15 and actualworker-authoredD53ledgerreceipt publication; P3-only caller preparation on2357 was requested1126 and can proceed independently. Keep079/37eb/oldchild0256 forP3,333b/newchild1016 forP2. All original Gate5 body/reset/tail and waits remain exact. No originalP3 release until concrete source/home/ledger/caller/worker-install qualification; no extra semantic approval handshake.
