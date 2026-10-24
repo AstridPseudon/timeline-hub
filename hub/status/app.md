@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T21:26:19Z | dispatcher heartbeat 6s | live 2 (sol 0, luna 2, other 0) | busy30 5 | status age 1m -->
-# app board, 2026-10-24T21:26Z
+<!-- app | 2026-10-24T21:29:56Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 1m -->
+# app board, 2026-10-24T21:29Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -67,7 +67,7 @@
 | P2-D80-bulk | Transition bulk clear alone | Luna; Service | Preflight17367 PASS | review | Actual25054; producer1855 | Readiness PASS, original fixture transport_timeout before gesture. All five actual diagnostics complete, no gate credit. | App3c29 |
 
 | P2-D78-live | One unchanged element gesture with stacks | Service; Luna | Preflight9965 PASS | review | Actual13100; producer1856 | Exit1/213s; readiness PASS, native-seed timeout before element.128safe phase records published; no stack/PID captured. All output retained. | App3c29 |
-| P2-D80-seed | Qualify meaningful native seed correction | Runtime Sol; App Luna | Runtime dc55 local8 and security PASS | doing | app-P2-D83-isolated-qualification-2058 | Runtime20:52 releases combined fix. App adoption home ce1cd9; next original element first, one body at a time. | Runtime dc55 |
+| P2-D80-seed | Qualify meaningful native seed correction | Runtime Sol; App Luna | Runtime dc55 local8 and security PASS | blocked:runtime | Runtime Sol2113; App2058 held | Five isolated attempts pass native setup but fail current read or response boundaries. Owner21:31 holds remaining bodies for history fix. | Runtime dc55 |
 | P2-D78-wire | Wire published pending-request stack helper | Luna | Author focused checks PASS | merged | app-P2-D78-stack-wire-1859 | Helper exact8fe211, published patch and normal-stage activation;20Node/helper/activation controls, types/lint PASS. No actual dump claimed. | Home7098c7eeb5 |
 | P2-D80-path | Attribute native-seed boundary from App | Luna | Four retained setup failures | merged | app-P2-D80-native-seed-path-1910 | Request reaches Runtime; SDK30s timeout, App process120s. Relevant paths equal passingP1. No App repair justified; Runtime cost/progress unknown. | Source unchanged |
 | P2-D78-native-capture | Runtime native watchdog | Runtime Luna | Author12 PASS | merged | Runtime1932 and1935 | Normal44917 includes attribution fixes and daemon watchdog. Native source wait cleared; actual live14383 uses this helper. | Runtime44917 |
@@ -97,10 +97,10 @@
 | P2-D83-parent-move | Parent move isolated original | Luna; Service | Preflight20867 PASS | review | App2058; actual837 | Readiness1 PASS, original1 ERROR at response wait90000ms. Source attribution queued for next slot; no gate credit. | Appce1cd9; Agent5fc1 |
 | P2-parent-837 | Attribute parent and asset response waits | Luna | Actual837 and12674; extended6GB floor | doing | app-P2-parent-837-cause-2125 | Dispatched immediately on owner floor extension. Genuine trace/source attribution only; no browser/build. | Source ce1cd9 |
 | P2-D83-asset | RegisterAsset isolated original | Luna; Service | Preflight PASS | review | App2058; actual12674 | Readiness1 PASS, original1 ERROR at commitFromGesture responsewait90000. Author2125 compares actual source boundary. | Appce1cd9; Agent5fc1 |
-| P2-D83-placement | Automatic placement isolated original | Luna; Service | Preflight29256 PASS | doing | App2058; actual28255 | Submitted21:24:07Z; current one body. No result or gate credit yet. | Appce1cd9; Agent5fc1 |
-| P2-D83-swap | Popup SWAP isolated original | Luna; Service | Qualified dc55 source; prior body ends | doing | app-P2-D83-isolated-qualification-2058 | Assigned sequentially under D74a critical 6 GB floor. Actual IDs pending; no current PASS or gate credit claimed. | Fresh captured tuple |
-| P2-D83-clear | Transition single clear isolated original | Luna; Service | Qualified dc55 source; prior body ends | doing | app-P2-D83-isolated-qualification-2058 | Assigned sequentially under D74a critical 6 GB floor. Actual IDs pending; no current PASS or gate credit claimed. | Fresh captured tuple |
-| P2-D83-bulk | Transition bulk clear isolated original | Luna; Service | Qualified dc55 source; prior body ends | doing | app-P2-D83-isolated-qualification-2058 | Assigned sequentially under D74a critical 6 GB floor. Actual IDs pending; no current PASS or gate credit claimed. | Fresh captured tuple |
+| P2-D83-placement | Automatic placement isolated original | Luna; Service | Preflight29256 PASS | review | App2058; actual28255 | Readiness1PASS, original1FAIL visible locator in dropFileIn358 before intended save. No gate credit. Retained for next source qualification. | Appce1cd9; Agent5fc1 |
+| P2-D83-swap | Popup SWAP isolated original | Luna; Service | Meaningful reviewed history fix | blocked:runtime | App2058 held; Runtime Sol2113 | Owner21:31 holds remaining body; no gesture run. Resume all eight only after new source home. | Source unchanged |
+| P2-D83-clear | Transition single clear isolated original | Luna; Service | Meaningful reviewed history fix | blocked:runtime | App2058 held; Runtime Sol2113 | Owner21:31 holds remaining body; no gesture run. Resume all eight only after new source home. | Source unchanged |
+| P2-D83-bulk | Transition bulk clear isolated original | Luna; Service | Meaningful reviewed history fix | blocked:runtime | App2058 held; Runtime Sol2113 | Owner21:31 holds remaining body; no gesture run. Resume all eight only after new source home. | Source unchanged |
 
 Integration: App24a76a6b16 adds author-tested missing popupADD/parentmove D83 selectors; allsix protected hashes unchanged. Appc184bd includes exact independently qualified D82spec93c2 and original15493 GO. App860e added tested two-second watchdog selection for isolated capture14383. App e771 adds independently reviewed intermediate recovery readiness poll, exact spec736fd381. App7098 includes author-qualified D79 stack helper, fixture and normal-stage activation for future runs. App3c29 includes author-tested five D80 one-case descriptors. App2bd162 includes reviewed D75b both-mount recovery; parent status830252; D79 setup49f6; full phase38f39. App5d7550 includes one-command guarded submit037a8 over587316, with D73 snapshot admission6c7c over255f, with real Runtime CLI phase bootstrap over D73fd74, current popup provenance924140, D69c3d79, approved D70aaddaf, parent reads/audited restorations and frozen upstream3881. No new upstream refresh for gating.
 
@@ -109,14 +109,14 @@ regressions: 0 confirmed open App source findings. D69 all four restorations hom
 
 
 Blockers: Final cut — eight P2 cases remain unqualified. P3 current15493 is independently GO. Runtime coordinates source repair, final tuple rerun matrix, suites and ZIP.
-Blockers: App qualification — Runtime dc55 source/security and local eight controls are released. App2058 owns all eight isolated cases, one body at a time; stop repeated native failures and return actual results.
-Next ready: Producer2058 runs remaining four cases sequentially; author2125 attributes parent and asset response waits. Full P2 only after eight isolated PASS. P3 independently GO.
+Blockers: Runtime history source — owner21:31 holds remaining isolated bodies after placement28255. Runtime Sol2113 owns accepted-history correction; App2125 attributes parent and asset waits. Requalify all eight on new source.
+Next ready: Author2125 returns actual parent and asset source boundary. Wait meaningful reviewed Runtime history fix, then all eight isolated cases before one full P2. P3 independently GO.
 
-live 2 / cap 2; ready-undispatched 0. Producer2058 owns remaining four cases. Parent and asset source2125 dispatched on extended6GB floor. Popup2115 complete, Runtime peer2121 published. One body only.
+live 1 plus stopping producer / cap 2; ready-undispatched 0. Parent and asset source2125 continues. Producer2058 stop requested under owner21:31; remaining originals held for Runtime fix. No body active at last check.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
 Disk: Current 6.386 GB; cap 2. One critical P2 build/body runs under D74a 6 GB exception. No concurrent body or noncritical dispatch. Guarded scan found no finished clean non-KEEP App worktree remaining. Six stale pins previously released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
-Inbox consumed through 1718318 bytes; ORCH 20:47 cancels both redundant P3 workers. Owner boards Runtime 20:30 and Agent 20:27 rechecked. Runtime e745 schema setup is home, but both D83 Sol rows and observer acceptance remain active; no consolidated native wait release. P3 current 15493 independently GO.
+Inbox consumed through 1720517 bytes; ORCH 20:47 cancels both redundant P3 workers. Owner boards Runtime 20:30 and Agent 20:27 rechecked. Runtime e745 schema setup is home, but both D83 Sol rows and observer acceptance remain active; no consolidated native wait release. P3 current 15493 independently GO.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
 
@@ -135,3 +135,5 @@ Evidence current: [Element safe report](../../design/app-P2-element-22971-safe-r
 Pass21:24Z: NEW inbox consumed through1717736bytes, Runtime2113 owner ask fulfilled by existing2058 and safe handoffs2110/2115. Header/Runtime/Agent boards checked; no merged successor clears either Runtime row. No clean ended nonKEEP worktree eligible. Parentauthor remains gated6.5GB at6.386; registerAsset12674 active. Separate lead2124 note published because combined peers route only first recipient.
 
 21:26Z: owner21:28 extended6GB floor for small critical source authors consumed immediately. Parent837 sourceauthor2125 queued now, also compares retained registerAsset12674 originalresponsewait90000ERROR. No repeated element/popup service body. Placement28255 submitted21:24:07 afterpreflight29256; onebody. Owner ask fulfilled samepass; no slot idle or sourcefloor hold remains.
+
+21:29Z owner21:31 HOLD applied immediately: placement28255 is terminal, source-only popupSWAPpreflight12165 was preparing but no normal body ID at check. Requested normalstop ofproducer2058, preserving five actual results/allplans. Parentauthor2125 continues, brief already requires Runtime-boundary attribution before any App edit. Current five originals0PASS/5FAIL-orERROR, separate readiness5PASS. No sourcefinding or gate closure inferred. Runtime2119 owns finite element intake and Sol2113 sole source.
