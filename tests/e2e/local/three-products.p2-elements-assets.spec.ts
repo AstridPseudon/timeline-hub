@@ -1,7 +1,9 @@
 import { expect, type Locator, type Page, type Request, type Response } from '@playwright/test';
 import { sha256Hex, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 import { ASTRID_PYTHON } from './support/astrid.ts';
-import { dropFileOnTimeline, openEmbeddedCanonicalShot, test as appTest } from './support/app.ts';
+import { commandOutboxes, dropFileOnTimeline, openEmbeddedCanonicalShot, test as appTest } from './support/app.ts';
+import { assertCatalogDocumentPatch, assertInverseRequestV2, assertParamsDocumentPatch } from './support/p2-document-oracle.ts';
+import { originalPageOwnerReady } from './support/p2-original-owner-ready.ts';
 import { assertSemanticAddMediaRequest } from './support/p2-semantic-oracle.ts';
 import type {
   CanonicalDocument,
@@ -163,44 +165,22 @@ async function commitFromGesture(page: Page, wire: Wire, gesture: () => Promise<
 
 async function openTimeline(page: Page, harness: DirectHarness, seed: ThreeProductsSeed): Promise<void> {
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
+  const previousOwnerIds = new Set((page.url().startsWith(harness.origin)
+    ? await commandOutboxes(page, seed.timelineId) : []).map((owner) => owner.ownerId));
   await page.goto(`${harness.origin}/tools/video-editor`);
   await expect(page.locator('[data-testid="runtime-connection-status"]')).toHaveAttribute('data-state', 'connected');
   await expect(page.getByRole('combobox', { name: 'Select project' })).toContainText(harness.seed.projectName);
   await expect(page.getByRole('textbox', { name: 'Track name' }).first()).toBeVisible();
+  await expect.poll(async () => originalPageOwnerReady({
+    connected: true,
+    projectSelected: true,
+    trackVisible: await page.getByRole('textbox', { name: 'Track name' }).first().isVisible(),
+    owners: await commandOutboxes(page, seed.timelineId),
+    previousOwnerIds,
+    projectId: harness.seed.projectId,
+    timelineId: seed.timelineId,
+  }), { ...CEILING, message: 'the mounted editor must claim a new durable command owner before the gesture' }).toBe(true);
   expect(seed.timelineId).toBe(harness.seed.timelineId);
-}
-
-function assertRequestV2(post: CommitPost, before: HeadPin): void {
-  expect(post.key).toMatch(/\S/);
-  expect(post.body).toMatchObject({
-    api_version: 1,
-    project_id: expect.any(String),
-    timeline_id: expect.any(String),
-    base_revision_id: before.revision_id,
-    base_publication_id: before.publication_id,
-    commands: expect.any(Array),
-    label: expect.any(String),
-    steps: expect.any(Array),
-    merge: 'atomic',
-    dry_run: false,
-    source: { via: 'app' },
-  });
-  expect(Object.hasOwn(post.body, 'reads')).toBe(false);
-  expect(post.body.commands.length).toBeGreaterThan(0);
-  for (const key of ['rationale', 'group_id'] as const) {
-    if (Object.hasOwn(post.body, key)) expect(post.body[key]).toEqual(expect.any(String));
-  }
-  expect(post.body.steps!.length).toBeGreaterThan(0);
-  for (const step of post.body.steps!) {
-    expect(step.id).toEqual(expect.any(String));
-    expect(step.label).toEqual(expect.any(String));
-    expect(step.intent).toEqual(expect.any(String));
-    expect(step.tags).toEqual(expect.any(Array));
-    expect(step.command_ordinals.length).toBeGreaterThan(0);
-    expect(step.patch).toEqual(expect.any(Array));
-    expect(step.patch.length).toBeGreaterThan(0);
-    expect(Object.hasOwn(step, 'reads')).toBe(false);
-  }
 }
 
 function assertAcceptedReply(post: CommitPost, before: HeadPin): CommitAcceptedMutation {
@@ -284,11 +264,17 @@ function assertHistoryEntry(page: HistoryPage, post: CommitPost, result: CommitA
   }
 }
 
-function assertUndoHistoryEntry(page: HistoryPage, undo: CommitPost, target: CommitPost): void {
+function assertUndoHistoryEntry(page: HistoryPage, undo: CommitPost, target: CommitPost, result: CommitAcceptedMutation): void {
   const entry = page.items.find((candidate) => candidate.publication_id === undo.key);
   expect(entry, 'Undo is recorded in /commits').toBeTruthy();
   expect(entry!.records?.undo_of).toEqual([target.key]);
   expect(entry!.records?.undo_steps).toBeNull();
+  expect(entry!.receipt).toEqual((undo.json as JsonObject).receipt);
+  expect(entry!.label).toBe(undo.body.label);
+  expect(entry!.merge_mode).toBe(undo.body.merge);
+  expect(entry!.source).toEqual(undo.body.source);
+  expect(entry!.steps).toEqual(result.data.steps);
+  expect(entry!.records?.commands.map((record) => record.command)).toEqual(result.data.commands);
 }
 
 function assertNoLegacy(wire: Wire): void {
@@ -390,9 +376,7 @@ test('P2 mounted element edit: real catalog apply, exact params patch, reload an
     await dialog.getByRole('button', { name: 'Apply', exact: true }).click();
     await expect(dialog.getByRole('status')).toContainText('applied');
   });
-  assertRequestV2(apply, beforeHistory.head);
-  expect(apply.body.commands[0]!.op).toBe('doc.patch');
-  expect((apply.body.commands[0]!.args.changes as Array<JsonObject>).some((change) => change.op === 'list.insert')).toBe(true);
+  assertCatalogDocumentPatch(apply, beforeHistory.head, original, seed3.appClipId);
   const applied = assertAcceptedReply(apply, beforeHistory.head);
   const appliedDocument = applied.data.canonical_document;
   const actualApplied = await canonicalAt(harness, seed3, applied.data.accepted_revision_id);
@@ -419,11 +403,7 @@ test('P2 mounted element edit: real catalog apply, exact params patch, reload an
     await bob.press('Enter');
     await bob.blur();
   });
-  assertRequestV2(paramsCommit, beforeParams.head);
-  expect(paramsCommit.body.commands[0]!.op).toBe('doc.patch');
-  const paramsChanges = paramsCommit.body.commands[0]!.args.changes as Array<JsonObject>;
-  expect(paramsChanges).toHaveLength(1);
-  expect(paramsChanges[0]).toMatchObject({ op: 'set', ref: 'parent', path: ['clips', `id:${addedId}`, 'params'] });
+  assertParamsDocumentPatch(paramsCommit, beforeParams.head, paramsBase, addedId!);
   const paramsResult = assertAcceptedReply(paramsCommit, beforeParams.head);
   const paramsDocument = paramsResult.data.canonical_document;
   assertCanonicalResult(paramsResult, await canonicalAt(harness, seed3, paramsResult.data.accepted_revision_id), harness, seed3);
@@ -440,12 +420,11 @@ test('P2 mounted element edit: real catalog apply, exact params patch, reload an
   const undo = await commitFromGesture(page, wire, async () => {
     await page.getByRole('button', { name: 'Undo', exact: true }).click();
   });
-  assertRequestV2(undo, { revision_id: paramsResult.data.accepted_revision_id, publication_id: paramsCommit.key });
-  expect(undo.body.commands[0]).toEqual({ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [paramsCommit.key] } });
+  assertInverseRequestV2(undo, { revision_id: paramsResult.data.accepted_revision_id, publication_id: paramsCommit.key }, paramsCommit.key);
   const undoneParams = assertAcceptedReply(undo, { revision_id: paramsResult.data.accepted_revision_id, publication_id: paramsCommit.key });
   expect(undoneParams.data.canonical_document.parent_revision.payload).toEqual(paramsBase.parent_revision.payload);
   assertNoLegacy(wire);
-  assertUndoHistoryEntry(await history(harness, seed3), undo, paramsCommit);
+  assertUndoHistoryEntry(await history(harness, seed3), undo, paramsCommit, undoneParams);
   const restoredBob = (clip(paramsBase, addedId!).params as JsonObject).bob;
   await assertReload(page, harness, seed3, undoneParams.data.accepted_revision_id, paramsBase, async () => {
     await page.locator(`.clip-action[data-clip-id="${addedId}"]`).first().click();
@@ -456,10 +435,11 @@ test('P2 mounted element edit: real catalog apply, exact params patch, reload an
   const undoApply = await commitFromGesture(page, wire, async () => {
     await page.getByRole('button', { name: 'Undo', exact: true }).click();
   });
+  assertInverseRequestV2(undoApply, { revision_id: undoneParams.data.accepted_revision_id, publication_id: undo.key }, undo.key);
   const undoneApply = assertAcceptedReply(undoApply, { revision_id: undoneParams.data.accepted_revision_id, publication_id: undo.key });
   expect(undoneApply.data.canonical_document.parent_revision.payload).toEqual(original.parent_revision.payload);
   assertNoLegacy(wire);
-  assertUndoHistoryEntry(await history(harness, seed3), undoApply, apply);
+  assertUndoHistoryEntry(await history(harness, seed3), undoApply, apply, undoneApply);
   await assertReload(page, harness, seed3, undoneApply.data.accepted_revision_id, original, async () => {
     await expect(page.locator(`.clip-action[data-clip-id="${addedId}"]`)).toHaveCount(0);
   });
@@ -508,12 +488,11 @@ test('P2 mounted registerAsset save: real file drop, exact media/registry fields
     await expect(page.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toBeVisible();
   });
   const undo = await commitFromGesture(page, wire, async () => { await page.getByRole('button', { name: 'Undo', exact: true }).click(); });
-  assertRequestV2(undo, { revision_id: result.data.accepted_revision_id, publication_id: post.key });
-  expect(undo.body.commands[0]).toEqual({ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [post.key] } });
+  assertInverseRequestV2(undo, { revision_id: result.data.accepted_revision_id, publication_id: post.key }, post.key);
   const undone = assertAcceptedReply(undo, { revision_id: result.data.accepted_revision_id, publication_id: post.key });
   expect(undone.data.canonical_document.parent_revision.payload).toEqual(original.parent_revision.payload);
   assertNoLegacy(wire);
-  assertUndoHistoryEntry(await history(harness, seed3), undo, post);
+  assertUndoHistoryEntry(await history(harness, seed3), undo, post, undone);
   await assertReload(page, harness, seed3, undone.data.accepted_revision_id, original, async () => {
     await expect(page.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toHaveCount(0);
     await expect(page.locator(`.clip-action[data-clip-id="${seed3.appClipId}"]`).first()).toBeVisible();
@@ -567,14 +546,13 @@ test('P2 mounted automatic child placement: embedded shot file gesture, occurren
     await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toBeVisible();
   });
   const undo = await commitFromGesture(page, wire, async () => { await page.getByRole('button', { name: 'Undo', exact: true }).click(); });
-  assertRequestV2(undo, { revision_id: result.data.accepted_revision_id, publication_id: post.key });
-  expect(undo.body.commands[0]).toEqual({ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [post.key] } });
+  assertInverseRequestV2(undo, { revision_id: result.data.accepted_revision_id, publication_id: post.key }, post.key);
   const undone = assertAcceptedReply(undo, { revision_id: result.data.accepted_revision_id, publication_id: post.key });
   expect(undone.data.canonical_document.parent_revision.payload).toEqual(original.parent_revision.payload);
   expect(undone.data.canonical_document.shot_revisions).toEqual(original.shot_revisions);
   expect(undone.data.canonical_document.internal_timeline_revisions).toEqual(original.internal_timeline_revisions);
   assertNoLegacy(wire);
-  assertUndoHistoryEntry(await history(harness, seed3), undo, post);
+  assertUndoHistoryEntry(await history(harness, seed3), undo, post, undone);
   await assertReload(page, harness, seed3, undone.data.accepted_revision_id, original, async () => {
     const reloadedDialog = await openEmbeddedCanonicalShot(page, seed3.occurrenceId, 'F2 agent shot');
     await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toHaveCount(0);
