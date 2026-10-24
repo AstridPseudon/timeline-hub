@@ -1,5 +1,6 @@
 import { withTimelineBasisDiagnostics } from '../lib/timeline-basis-diagnostics.ts';
-import type { ElementTimelineRoutes, ElementTimelineDocument } from '../runtime/element-adapter.ts';
+import { type AstridElementOperationAdapter, type ElementTimelineRoutes, type ElementTimelineDocument } from '../runtime/element-adapter.ts';
+import type { AstridAgentElementContext } from '../runtime/element-contract.ts';
 import { persistedTranscriptItems } from '../data/typed/projectTranscript.ts';
 import type { RegistrationSaveOwner } from './timeline-state-types.ts';
 import {
@@ -10,7 +11,7 @@ import {
   useState,
 } from 'react';
 import type { InteractionStateRef } from '@/tools/video-editor/lib/interaction-state.ts';
-import { useTimelineCommit, type OwnedRegistryMutation } from '@/tools/video-editor/hooks/useTimelineCommit.ts';
+import { useTimelineCommit, type OwnedRegistryMutation, type TimelineEditMutation } from '@/tools/video-editor/hooks/useTimelineCommit.ts';
 import { TimelineEventBus } from '@/tools/video-editor/hooks/useTimelineEventBus.ts';
 import { useTimelinePersistence } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
 import { clearTimelineDraft, loadTimelineDraft } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
@@ -25,7 +26,7 @@ import { isDataProviderPersistenceEnabled, TimelineVersionConflictError, type Da
 import type { TimelineDraftRecord } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import { canonicalJsonStringify, parseTimelineBundle, type TimelineBundleEnvelope } from '@/tools/video-editor/data/typed/timelineBundle.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
-import { createTimelineLocalSaveHandoff, readTimelineOriginalSaveBasis, type TimelineLocalSaveHandoff, type TimelineOriginalSaveBasis, type TimelineSaveSource } from './timelineLocalSaveHandoff.ts';
+import { createTimelineLocalSaveHandoff, readTimelineOriginalSaveBasis, type TimelineLocalSaveHandoff, type TimelineOriginalSaveBasis, type TimelineSaveSource, type TimelineGestureReadBasis } from './timelineLocalSaveHandoff.ts';
 import { createLocalSaveSession, type LocalSaveSession, type LocalSaveState } from '../commands/localSaveSession.ts';
 import { toOutboxJson } from '../commands/commitOutbox.ts';
 import { emitTimelineSaveDiagnostic, markTimelineSaveRejection } from '../lib/timeline-diagnostics.ts';
@@ -47,6 +48,40 @@ interface PendingOriginalSaveRead {
   settled: boolean;
 }
 
+const elementParameterOwners = new WeakMap<ElementTimelineRoutes, { context: AstridAgentElementContext; adapter: AstridElementOperationAdapter }>();
+
+/** Share the mounted adapter's authority with its exact Inspector source. */
+export function bindElementParameterOwner(routes: ElementTimelineRoutes, context: AstridAgentElementContext, adapter: AstridElementOperationAdapter) {
+  const binding = { context, adapter };
+  elementParameterOwners.set(routes, binding);
+  return () => { if (elementParameterOwners.get(routes) === binding) elementParameterOwners.delete(routes); };
+}
+
+/** Keep parameter gestures on the scoped element route, before generic serialization. */
+export async function saveElementParameterEdit(current: TimelineData, mutation: TimelineEditMutation,
+  basis: TimelineGestureReadBasis, routes: ElementTimelineRoutes, timelineId: string, adapter: AstridElementOperationAdapter) {
+  if (basis.kind !== 'element') throw new TimelineVersionConflictError('Element parameter basis is unavailable; draft retained');
+  const op = basis.operation;
+  if (!op || op.name !== 'timeline.update_element' || !op.params || op.element || op.duration !== undefined
+    || op.clip_id !== basis.clipId || op.timeline !== timelineId || op.expected_version !== current.configVersion
+    || mutation.type !== 'config' || mutation.pinnedShotGroupsOverride !== undefined || !current.head
+    || canonicalJsonStringify(basis.config) !== canonicalJsonStringify(current.config)
+    || canonicalJsonStringify(basis.registry) !== canonicalJsonStringify(current.registry)
+    || canonicalJsonStringify(mutation.resolvedConfig) !== canonicalJsonStringify({ ...current.resolvedConfig,
+      clips: current.resolvedConfig.clips.map(clip => clip.id === op.clip_id
+        ? { ...clip, params: { ...clip.params, ...op.params } } : clip) })) {
+    throw new TimelineVersionConflictError('Element parameter source changed; draft retained');
+  }
+  const original = await routes.get(timelineId);
+  if (canonicalJsonStringify(original.config) !== canonicalJsonStringify(basis.config)
+    || canonicalJsonStringify(original.registry) !== canonicalJsonStringify(basis.registry)
+    || canonicalJsonStringify(original.head ?? null) !== canonicalJsonStringify(current.head)
+    || original.config_version !== current.configVersion) {
+    throw new TimelineVersionConflictError('Element parameter owner changed; draft retained');
+  }
+  return adapter.execute(op);
+}
+
 export function useTimelineSave(
   queries: UseTimelineSaveQueries,
   provider: DataProvider,
@@ -54,7 +89,7 @@ export function useTimelineSave(
   store: TimelineStoreApi,
   initialData?: TimelineData,
 ) {
-  const { timelineId, assetResolver, timelineEditability, shots } = useVideoEditorRuntime();
+  const { timelineId, assetResolver, timelineEditability, shots, toast } = useVideoEditorRuntime();
   const resolveAssetUrl = useCallback(async (file: string) => {
     if (assetResolver) {
       return await assetResolver.resolveAssetUrl(file);
@@ -741,11 +776,15 @@ export function useTimelineSave(
         if (localDocumentSave) {
           const handoff = await localOwner.ready;
           if (!handoff || localOwner.closed) throw new TimelineVersionConflictError('Element local save owner was replaced');
+          const next = await buildTimelineData(config, registry, resolveAssetUrl, input.expectedVersion,
+            input.bundle?.itemsBySchemaRef, input.expectedHead, input.bundle?.transcriptReferences);
           checkCurrent();
           await handoff.capture({ config, registry, head: input.expectedHead, bundle: input.bundle }, {
             kind: 'element', config: original!.config as TimelineConfig, registry: original!.registry as AssetRegistry,
             clipId: 'clip_id' in input.operation ? input.operation.clip_id ?? '' : '', operation: input.operation, context: input.context,
           });
+          checkCurrent();
+          commitElementData(next, { save: false, skipHistory: true });
           await handoff.flush();
         } else {
           const next = await buildTimelineData(config, registry, resolveAssetUrl, input.expectedVersion,
@@ -760,6 +799,19 @@ export function useTimelineSave(
   }, [elementDataRef, commitElementData, timelineId, timelineEditability, localDocumentSave,
     localOwner, elementReloadRef,
     elementConflictRef, flushElementSave, resolveAssetUrl]);
+
+  const commitApplyEdit = commit.applyEdit;
+  const applyEdit = useCallback<ReturnType<typeof useTimelineCommit>['applyEdit']>((mutation, options) => {
+    if (options?.gestureBasis?.kind !== 'element') { commitApplyEdit(mutation, options); return; }
+    const current = elementDataRef.current;
+    if (!current) { toast.error('Element parameter source is unavailable; draft retained'); return; }
+    const owner = elementParameterOwners.get(elementTimelineRoutes);
+    if (!owner || owner.context !== options.gestureBasis.context) {
+      toast.error('Element parameter editor owner changed or is unavailable; draft retained'); return;
+    }
+    void saveElementParameterEdit(current, mutation, options.gestureBasis, elementTimelineRoutes, timelineId, owner.adapter.captureForTurn())
+      .catch(error => toast.error(error instanceof Error ? error.message : String(error)));
+  }, [commitApplyEdit, elementDataRef, elementTimelineRoutes, timelineId, toast]);
 
   return {
     elementTimelineRoutes,
@@ -777,7 +829,7 @@ export function useTimelineSave(
     flushPendingSave: persistence.flushPendingSave,
     registrationOwner,
     setSelectedTrackId: commit.setSelectedTrackId,
-    applyEdit: commit.applyEdit,
+    applyEdit,
     patchRegistry: commit.patchRegistry,
     unpatchRegistry: commit.unpatchRegistry,
     commitData: commit.commitData,

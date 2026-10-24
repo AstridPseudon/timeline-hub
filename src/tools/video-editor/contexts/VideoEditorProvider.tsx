@@ -1,4 +1,5 @@
 import { admittedCatalogEntries, getAdmittedElementSelection, subscribeAdmittedElements, setAdmittedElementScope, refreshAdmittedElements } from '../runtime/admitted-elements';
+import { bindElementParameterOwner } from '../hooks/useTimelineSave.ts';
 import type { ExtensionPendingWorkState } from '@/sdk/context.ts';
 import { useEffects } from '@/tools/video-editor/hooks/useEffects.ts';
 /**
@@ -225,7 +226,10 @@ function LocalTestDiagnosticsBridge({ collection }: { collection?: DiagnosticCol
 
 /** Registers video-editor state into the app-level AgentChatContext and keeps
  *  timeline attachment metadata synchronized in the selection store. */
-function AgentChatBridgeRegistration({ operationsEnabled = true, elementTimelineRoutes }: { operationsEnabled?: boolean; elementTimelineRoutes?: import('../runtime/element-adapter.ts').ElementTimelineRoutes }) {
+function AgentChatBridgeRegistration({ operationsEnabled = true, elementTimelineRoutes }: {
+  operationsEnabled?: boolean;
+  elementTimelineRoutes?: import('../runtime/element-adapter.ts').ElementTimelineRoutes;
+}) {
   const { timelineId, timelineName, project, agentChat, liveSceneOperationPort, agentSelectionOwner, astridElementHost, timelineEditability, userId, shots } = useVideoEditorRuntime();
   const { registerTimeline, unregisterTimeline } = agentChat;
   const operationAuthority = useRef({ active: true, operationsEnabled, timelineEditability });
@@ -253,13 +257,13 @@ function AgentChatBridgeRegistration({ operationsEnabled = true, elementTimeline
       0,
     );
     return {
-      configVersion,
+      configVersion: Math.max(configVersion, data?.configVersion ?? 0),
       trackCount: tracks.length,
       clipCount: clips.length,
       assetCount: Object.keys(registry).length,
       duration,
     };
-  }, [configVersion, resolvedConfig]);
+  }, [configVersion, data?.configVersion, resolvedConfig]);
   const resolvedClips = resolvedConfig?.clips ?? EMPTY_RESOLVED_CLIPS;
   const admission = useSyncExternalStore(subscribeAdmittedElements, getAdmittedElementSelection, getAdmittedElementSelection);
   const packRefsKey = JSON.stringify(resolvedClips.flatMap(clip=>{
@@ -330,6 +334,9 @@ function AgentChatBridgeRegistration({ operationsEnabled = true, elementTimeline
   }, [project.projectSlug, elementTimelineRoutes, timelineId]);
   ownedElementAdapter?.updateContext(elementContext);
   const elementOperationAdapter = operationsEnabled && timelineWritable ? ownedElementAdapter : undefined;
+  useLayoutEffect(() => {
+    if (elementTimelineRoutes && elementOperationAdapter) return bindElementParameterOwner(elementTimelineRoutes, elementContext, elementOperationAdapter);
+  }, [elementTimelineRoutes, elementContext, elementOperationAdapter]);
 
   const clipRegistration = useRef<(() => void) | null>(null);
   const chatRegistration = useRef<{
