@@ -36,8 +36,9 @@ ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchp
   1d9ddba546f8fb1300f55ff62607ed492719cbaa
 ```
 
-The request must not be sent when the D21b child receipt is absent.  The
-receipt must identify the requested child name, Agent and Runtime SHAs, the
+The request creates the D21b child receipt; it precedes receipt validation.
+Installation must refuse until that receipt exists. The receipt must identify
+the requested child name, Agent and Runtime SHAs, the
 generated client tuple, the physical child path/interpreter, successful normal
 maker status, retained source snapshots, installed import origins, and the
 existing managed Remotion registration.  A request argument is not proof of
@@ -69,3 +70,13 @@ decision remain Farm-owned after reviewed installation.
 
 Private tests are synthetic fixture tests only.  They do not constitute an
 actual Farm READY result or a checkpoint result.
+
+The private caller demonstration executes the installed `test-run` awk selection
+and `suite_lease` code, opens an existing temporary Store, installs atomically,
+and launches the rendered row from a private staged source fixture under both
+leases. Only the final pytest body becomes a bounded diagnostic; it launches a
+second `-I` child and observes exact fixture origins, absent `PYTHONPATH`, and
+inherited lease descriptors. Invented source archives and graph packages are
+explicit fixture inputs, not actual Farm receipts. Actual carrier checkouts,
+normal child receipt/custody, managed graph and parent/child import results must
+still be supplied by Farm before checkpoint credit.

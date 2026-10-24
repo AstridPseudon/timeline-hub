@@ -21,5 +21,12 @@
     "astrid_runtime_client/generated.py": "9b5686c388347108898956c3475b16960e2434d64adcefcc71a26fc269cdd904",
     "astrid_runtime_client/timeline_commit_types.py": "88c67d9eb650b445b8ad04c9011c1f44f1ec5e9f72a4a733050515de7ec0b616"
   },
-  "status": "source packet only; normal D21b child receipt and Farm inputs pending"
+  "status": "source packet only; normal D21b child receipt and Farm inputs pending",
+  "required_agent_checkout": "/home/user/work/wt/agt-pin-9cd3dbe8",
+  "proof_lock_sha256": "236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778",
+  "maker_python": "/usr/bin/python3.13",
+  "bench_store_sha256": "ba31adcf5dfbad179dfe08b048c48052cee2083026ec62790659c8cdbbc903bd",
+  "maker_sha256": "e4c0a9cb09f2e938c880970dcbc054eb0aa866e12af499d258e1d450589bc978",
+  "test_run_sha256": "f599c5ad7bf3cd61aeb01791d903ce6edfa87d5d04a39b3ebb630b3517b17ff4",
+  "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db"
 }
