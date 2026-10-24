@@ -22,6 +22,10 @@ import {
   shotTimelineRecoveryId,
 } from './shotTimelineDataProvider.ts';
 import { ShotTimelineRecoveryControls } from './ShotTimelinePreview.tsx';
+import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
+import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
+import { createCommitOutbox } from '@/tools/video-editor/commands/commitOutbox.ts';
+import type { CanonicalDocument } from '@/integrations/runtime/timeline-commit-types.ts';
 
 vi.stubGlobal('indexedDB', createFakeIndexedDB());
 
@@ -102,6 +106,102 @@ describe('shot timeline popup real recovery integration', () => {
     staleVariantRepository.fetchPrimaryVariantLocations.mockReset();
     resetFakeIndexedDB();
     await clearTimelineDraft(recoveryKey);
+  });
+
+  it('saves a mounted popup gesture through the durable A2 handoff without invoking the snapshot writer', async () => {
+    Object.defineProperty(navigator, 'locks', { configurable: true, value: {
+      request: async (_name: string, _options: unknown, work: (lock: object) => Promise<unknown>) => work({}),
+    } });
+    const initialGraph = structuredClone(fixture);
+    // Runtime revision IDs are globally unique; this display fixture reuses rev-a across shots.
+    for (const row of initialGraph.occurrences) {
+      const revisionId = `${row.shot_id}-${row.revision_id}`;
+      row.stable_deep_link = row.stable_deep_link.replace(`/revision/${row.revision_id}/`, `/revision/${revisionId}/`);
+      row.revision_id = revisionId;
+    }
+    for (const shot of initialGraph.shot_revisions) {
+      shot.revision_id = `${shot.shot_id}-${shot.revision_id}`;
+      for (const dependency of shot.dependencies) dependency.revision_id = `${dependency.shot_id}-${dependency.revision_id}`;
+    }
+    const oldPublish = vi.fn();
+    const adapter = createShotCompositionAdapter({ load: vi.fn(), publish: oldPublish });
+    const composition = adapter.prepare(initialGraph);
+    const canonical: CanonicalDocument = {
+      schema_version: 1, project_id: composition.projectId, timeline_id: composition.parentDocumentId,
+      parent_revision: { revision_id: composition.headRevisionId, content_digest: 'sha256:parent',
+        payload: { config: initialGraph.parent_composition.config, occurrences: initialGraph.occurrences.map(row => ({
+          ...row, shot_revision_id: row.revision_id,
+        })) } },
+      shot_revisions: initialGraph.shot_revisions.map(shot => ({ shot_id: shot.shot_id, revision_id: shot.revision_id,
+        content_digest: `sha256:${shot.revision_id}`, internal_timeline_revision_id: shot.internal_timeline_revision.revision_id,
+        payload: { internal_timeline_revision_id: shot.internal_timeline_revision.revision_id } })),
+      internal_timeline_revisions: initialGraph.shot_revisions.map(shot => ({ timeline_id: `timeline-${shot.shot_id}`,
+        revision_id: shot.internal_timeline_revision.revision_id, content_digest: shot.internal_timeline_revision.content_digest,
+        payload: shot.internal_timeline_revision.timeline })),
+      dependency_manifest: { shots: [], internal_timelines: [], media: [], documents: [] },
+    } as CanonicalDocument;
+    canonical.dependency_manifest.shots = canonical.shot_revisions.map(({ payload: _payload, ...pin }) => pin);
+    canonical.dependency_manifest.internal_timelines = canonical.internal_timeline_revisions.map(({ payload: _payload, ...pin }) => pin);
+    const identity = { actorId: 'mounted-popup', realmId: 'test' };
+    const runtime = new RuntimeDataProvider({ projectId: composition.projectId });
+    vi.spyOn(runtime, 'getRecoverableIdentity').mockResolvedValue(identity);
+    vi.spyOn(runtime, 'loadTimelineCommandBasis').mockResolvedValue({
+      head: { revisionId: composition.headRevisionId, publicationId: 'pub-mounted' }, canonicalDocument: canonical, graph: initialGraph,
+    });
+    const outboxes = createCommitOutbox();
+    const send = vi.spyOn(runtime, 'commitTimeline').mockImplementation(async (request, key) => {
+      const [record] = await outboxes.list({ ...identity, projectId: composition.projectId, timelineId: composition.parentDocumentId });
+      const intent = record.intents[0].payload as unknown as { before: CanonicalDocument; after: CanonicalDocument };
+      expect(intent.before).toEqual(canonical);
+      expect(intent.after.parent_revision).toEqual(canonical.parent_revision);
+      expect(intent.after.shot_revisions).toEqual(canonical.shot_revisions);
+      expect(intent.after.dependency_manifest).toEqual(canonical.dependency_manifest);
+      expect(JSON.parse(record.pending!.request.body)).toEqual(request);
+      expect(record.pending!.request.key).toBe(key);
+      expect(request).toMatchObject({ api_version: 1, base_revision_id: composition.headRevisionId,
+        base_publication_id: 'pub-mounted', dry_run: false, label: 'Edit shot timeline', merge: 'atomic', source: { via: 'app' } });
+      expect(request.commands[0].op).toBe('doc.patch');
+      expect(request.steps![0]).toMatchObject({ command_ordinals: [0], tags: ['shot-popup'] });
+      expect(request.reads).toContainEqual(expect.objectContaining({ ref: 'parent', path: ['occurrences'] }));
+      const response = acceptedCommit({ revision_id: 'mounted-accepted', publication_id: 'pub-accepted' },
+        { revision_id: request.base_revision_id, publication_id: request.base_publication_id },
+        { projectId: composition.projectId, timelineId: composition.parentDocumentId, commands: request.commands });
+      const document = structuredClone(canonical);
+      document.parent_revision.revision_id = 'mounted-accepted';
+      Object.assign(response.data, { canonical_document: document, document_digest: fixtureDigest(document), merge_mode: 'atomic' });
+      response.receipt.idempotency_key = key;
+      response.receipt.request_hash = fixtureDigest({ operation: 'commitTimeline',
+        path: `/v1/projects/${composition.projectId}/timelines/${composition.parentDocumentId}/commit`,
+        publisher: response.data.publisher, request }).slice(7);
+      response.receipt.result = response.data;
+      const graph = structuredClone(initialGraph);
+      graph.primary_timeline.head.revision_id = 'mounted-accepted';
+      return { response, accepted: { revisionId: 'mounted-accepted', publicationId: 'pub-accepted' },
+        canonicalDocument: document, graph, receipt: response.receipt };
+    });
+    const createRealProvider = shotTimelineDataProvider.createShotTimelineDataProvider;
+    const legacy = vi.fn(() => { throw new Error('Mounted popup reached legacy snapshot writer'); });
+    vi.spyOn(shotTimelineDataProvider, 'createShotTimelineDataProvider').mockImplementation((...args) => {
+      const provider = createRealProvider(...args);
+      vi.spyOn(provider, 'saveTimeline').mockImplementation(legacy);
+      return provider;
+    });
+    const view = render(<ShotTimelinePreview composition={composition} occurrenceId="occ-3"
+      shotCompositionAdapter={adapter} timelineDataProvider={runtime} />, { wrapper: wrapper() });
+    try {
+      await waitFor(() => expect(document.querySelector('.timeline-wrapper')).toBeTruthy());
+      const clip = document.querySelector('.clip-action')!;
+      fireEvent.keyDown(clip, { key: 'Enter' });
+      fireEvent.contextMenu(clip, { clientX: 20, clientY: 20 });
+      fireEvent.click(screen.getByText('Delete Clip'));
+      await waitFor(() => expect(send).toHaveBeenCalledTimes(1), { timeout: 3000 });
+      expect(legacy).not.toHaveBeenCalled();
+      expect(oldPublish).not.toHaveBeenCalled();
+      await waitFor(() => expect(screen.getByRole('region', { name: 'Shot timeline' }))
+        .toHaveAttribute('data-shot-timeline-head-revision-id', 'mounted-accepted'));
+      await waitFor(() => expect(document.querySelector('[data-shot-timeline-canvas="true"]'))
+        .toHaveAttribute('data-shot-timeline-clip-count', '1'));
+    } finally { view.unmount(); }
   });
 
   it('renders immediately from the supplied prepared composition without waiting for adapter freshness', async () => {
