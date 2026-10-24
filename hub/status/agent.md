@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T22:34:56Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 0m -->
-# agent board, 2026-10-24T22:34:38Z
+<!-- agent | 2026-10-24T22:37:44Z | dispatcher heartbeat 9s | live 2 (sol 0, luna 2, other 0) | busy30 5 | status age 1m -->
+# agent board, 2026-10-24T22:36:47Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -142,6 +142,7 @@
 | P4 / R2 D84a five | Retain same-five actual checkpoint | Luna / Service | Authentic terminal evidence complete | merged | Batch2214; service29429 | Automatic NO-GO1FAIL4PASS84.318s; one ten-note timeout. Allfour R2PASS unlocked normal candidate merge. [XML](../../design/handoff-agt-D84a-29429-five.xml) | c2a63 /732c /5fcb /635f |
 | U2 late owner upstream | Retain08e6 Windows installer for F-final | Runtime final / Luna if conflict | D68 fresh upstream packaging | later | Runtime F-final checklist | No gating merge. F-final preserves both test sets and runs test_installer_platforms plus test_installer_windows_tasks. | Upstream08e6b90511 |
 | F core rehearsal | Rehearse full current core and D69 D72 | Luna / Service | Owner22:32; current home | doing | agt-F-core-rehearsal-2234 | Queued; exact full current core plus live D69 D72, original45s and known gaps visible. No body yet; no D59 credit. | Agent7c48 / Runtime732c |
+| F matrix handoff | Publish existing final P4 and core entry | Luna | Runtime peer2228 | doing | agt-F-matrix-handoff-2236 | Read-only finite source and tuple-input handoff; no body or live registry change. Existing actual29429 packet already published. | Current7c48; final tuple pending |
 Integration: Normal Agent7c485e5b612a31a9b4f6e9a67163612a4a3313d4 adopts Runtime732c and merges exact reviewed PARAM donor2 after allfour originals PASS. Home tree742a1195e33b1b94cbd7d817c5b4d8167c4a20d5 equals tested candidatec2a63 exactly. Canonical15/schema867f/config4d74 unchanged.
 core open: One remaining observed original failure, P4 ten-note. Allfour R2 originals PASS on captured candidate; exact tested tree is now normalhome7c48. Final D59 tuple/home confirmation stays owed; no final gate credit inferred.
 regressions: D71 leak, CLI terminal lines and named D72 family behavior retain their recorded qualification. D77a source controls pass; genuine installed render remains cut-blocking at D59.
@@ -155,5 +156,5 @@ Disk: 8266424320 bytes free, 7.70 GiB; cap4 and critical6GBfloor. Sweep3 removed
 Blockers: Runtime P4 source — rt-P4-D84a-distinct-sol-2227 owns remaining ten-note cost. Actual29429 FAIL45.314s retained; Agent ten-note-only brief ready after meaningful released source.
 Blockers: Final cut — final pinned P1–P5 and core proofs plus genuine installed render remain D59 gated. Existing GO qualifies only its recorded tuple.
 Next ready: Rehearsal2234 prepares exact pinned full core invocation now. Released Runtime successor -> normal adoption and remaining ten-note original, serialized after current heavy body. Passing R2 wait final matrix.
-live 1 queued or running / cap 4; ready-undispatched 0. Luna2234 owns newly authorized full-core rehearsal. RuntimeSol2227 owns remaining P4 repair. Final gate proof remains D59-gated; E2 and D79 paused.
-Inbox consumed through 1129228 bytes. Pass 2026-10-24T22:34:38Z: owner22:32 full-core rehearsal became row and dispatched Luna2234 immediately, timeout180/net/heavy. Exact current home7c48/Runtime732, live D69/D72 and visible gaps required; no D59 gate credit. Runtime2227 assigned, old missing-worker wait cleared. No duplicate original diagnosis or NO-GO review.
+live 2 queued or running / cap 4; ready-undispatched 0. Luna2234 owns full-core rehearsal; Luna2236 owns Runtime matrix handoff. Sole heavy body is rehearsal. RuntimeSol2227 owns P4 source; finalD59/E2/D79 holds remain.
+Inbox consumed through 1132807 bytes. Pass 2026-10-24T22:36:47Z: Runtime peer2228 became Fmatrix handoff row and Luna2236 dispatched same pass. Actual29429/home7c48 packet already published. Core rehearsal2234 active; exact serviceID pending. No source overlap, new original, diagnosis or independent NO-GO review.
