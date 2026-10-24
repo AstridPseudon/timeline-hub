@@ -15,7 +15,8 @@ from astrid.sdk.timeline.sync import CommitConflict
 from astrid.sdk.timeline_checkout import Checkout
 from astrid.sdk.timeline_sheet import NativeSheet, SheetError, apply_sheet, render_sheet
 from astrid.sdk.workspace_client import WorkspaceClientError
-from tests.sdk.test_timeline_sync import connected, initial_bundle, open_session  # noqa: F401
+from tests.sdk.test_timeline_sync import connected, open_session  # noqa: F401
+from tests.sdk.test_timeline_sync import initial_bundle as _initial_bundle
 
 
 def detached_duration_bundle():
@@ -52,6 +53,15 @@ def _attach_authenticated_source(bundle):
         'dependency_manifest': {'shots': [], 'internal_timelines': [], 'media': [], 'documents': []},
     }
     return bundle
+
+
+def initial_bundle():
+    return _attach_authenticated_source(_initial_bundle())
+
+
+@pytest.fixture(autouse=True)
+def _authenticate_connected_source(connected):  # noqa: F811
+    _attach_authenticated_source(connected[1].bundles["r0"])
 
 
 def detached_draft(connected, tmp_path, *, params=None):  # noqa: F811
@@ -605,11 +615,9 @@ def test_omitting_native_clip_row_deletes_exact_bound_clip_and_preserves_sibling
 
 
 def test_omitted_native_clip_row_uses_normal_commit_retry_undo_redo_and_rebases(connected):  # noqa: F811
-    client, generated, path = connected
-    _attach_authenticated_source(generated.bundles['r0'])
     session = open_session(connected)
-    authenticated_initial = _attach_authenticated_source(initial_bundle())
-    sheet = sheet_for(authenticated_initial)
+    client, generated, path = connected
+    sheet = sheet_for(initial_bundle())
     edited = remove_row(sheet.text, "parent/clip:a")
     expected = sheet.preview(edited)
     generated.lose_ack = True
@@ -630,7 +638,7 @@ def test_omitted_native_clip_row_uses_normal_commit_retry_undo_redo_and_rebases(
     assert State(generated.bundles["r1"]).entity("parent/clip:b") == State(initial_bundle()).entity("parent/clip:b")
 
     restarted.undo([result["receipt"]["receipt_id"]])
-    assert generated.bundles["r2"] == authenticated_initial
+    assert generated.bundles["r2"] == initial_bundle()
     from tests.editing_conformance.test_recipe_m1_commands import accepted_boundaries, inverse
 
     undone = inverse(expected.bundle, expected.records)

@@ -61,6 +61,7 @@ def _open_real_document(connected_fixture) -> tuple[Any, Any, dict[str, Any]]:  
     document = _seed_document()
     generated.bundles = {"r0": bundle_from_document(document)}
     generated.head = {"revision_id": "r0", "publication_id": "pub0"}
+    generated.publications["peer-revision"] = "peer-publication"
     return timeline.open("p", "t", client=client, outbox_path=path), generated, document
 
 
@@ -83,7 +84,6 @@ def test_p4_note_conflict_reruns_public_function_from_verified_peer_document(con
             _set_note(peer_bundle, peer_value)
             generated.bundles["peer-revision"] = peer_bundle
             generated.head = {"revision_id": "peer-revision", "publication_id": "peer-publication"}
-            generated.publications["peer-revision"] = "peer-publication"
             raise ApiError(409, "conflict", "changed", details={
                 "status": "conflict",
                 "reason": "value_conflict",
