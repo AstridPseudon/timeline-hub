@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { execFileSync } from 'node:child_process';
+import { execFile } from 'node:child_process';
 import { AgentChatProvider } from '@/shared/contexts/AgentChatContext.tsx';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -166,21 +166,27 @@ function expectedRequest(): CommitRequest {
   };
 }
 
-function providerFixture(document: CanonicalDocument, status: 'accepted' | 'merged') {
+async function providerFixture(document: CanonicalDocument, status: 'accepted' | 'merged') {
   // Public source only; no Runtime service, database, acceptance port or wire capture.
   // Override the checkout/interpreter for another exact qualified source environment.
-  return JSON.parse(execFileSync(process.env.A3_AGENT_PYTHON ?? '/home/user/work/venv-agent/bin/python',
-    ['src/tools/travel-between-images/components/popupAuthorityFixture.py'], {
-      env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', PYTHONPATH: `${process.env.A3_AGENT_SOURCE ?? '/home/user/work/agent'}:${process.env.A3_RUNTIME_SOURCE ?? '/home/user/work/runtime'}` },
-      input: JSON.stringify({ document, request: expectedRequest(), status }), encoding: 'utf8',
-    })) as {
+  const output = await new Promise<string>((resolve, reject) => {
+    const child = execFile(process.env.A3_AGENT_PYTHON ?? '/home/user/work/venv-agent/bin/python',
+      ['src/tools/travel-between-images/components/popupAuthorityFixture.py'], {
+        env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', PYTHONPATH: `${process.env.A3_AGENT_SOURCE ?? '/home/user/work/agent'}:${process.env.A3_RUNTIME_SOURCE ?? '/home/user/work/runtime'}` },
+        encoding: 'utf8', timeout: 10_000, killSignal: 'SIGKILL',
+      }, (error, stdout) => error ? reject(error) : resolve(stdout));
+    child.stdin!.on('error', reject);
+    // json.load reads to EOF; finish stdin while the event loop drains the result.
+    child.stdin!.end(JSON.stringify({ document, request: expectedRequest(), status }));
+  });
+  return JSON.parse(output) as {
       document: CanonicalDocument; commands: CommitRequest['commands']; steps: NonNullable<CommitAcceptedMutation['data']['steps']>;
       records: Array<{ command: unknown; reads: unknown[]; bindings: unknown[]; created: unknown[] }>;
       previous: { revision_id: string; publication_id: string }; merge_mode: 'fields'; document_digest: string; provider_version: string; compiler_version: string;
     };
 }
 
-function authoritativeResponse(facts: ReturnType<typeof providerFixture>, status: 'accepted' | 'merged'): CommitAcceptedMutation {
+function authoritativeResponse(facts: Awaited<ReturnType<typeof providerFixture>>, status: 'accepted' | 'merged'): CommitAcceptedMutation {
   const previous = facts.previous;
   const data: CommitAcceptedMutation['data'] = {
     status, base_revision_id: baseRevisionId, base_publication_id: basePublicationId,
@@ -205,7 +211,7 @@ function wrapper() {
   );
 }
 
-function runtimeTransport(calls: TransportCall[], reply: () => CommitAcceptedMutation): Transport {
+function runtimeTransport(calls: TransportCall[], reply: () => Promise<CommitAcceptedMutation>): Transport {
   return async (method, path, headers, body) => {
     const isMediaImport = path.endsWith('/media-imports');
     const rawBody = !isMediaImport && body instanceof Blob ? await body.text() : !isMediaImport && body ? new TextDecoder().decode(body) : undefined;
@@ -219,7 +225,7 @@ function runtimeTransport(calls: TransportCall[], reply: () => CommitAcceptedMut
     if (method === 'POST' && path === `/v1/projects/${projectId}/timelines/${timelineId}/commit`) {
       expect(headers['Idempotency-Key']).toBe(uuid);
       expect(parsedBody).toEqual(expectedRequest());
-      return response(structuredClone(reply()));
+      return response(structuredClone(await reply()));
     }
     throw new Error(`Unexpected Runtime request: ${method} ${path}`);
   };
@@ -238,16 +244,15 @@ describe('A3 mounted popup full caller', () => {
     const before = canonicalDocument(graph);
     for (const shot of before.shot_revisions) graph.shot_revisions.find((candidate) => candidate.revision_id === shot.revision_id)!.content_digest = shot.content_digest;
     const composition = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() }).prepare(graph);
-    let facts!: ReturnType<typeof providerFixture>;
+    let facts!: Awaited<ReturnType<typeof providerFixture>>;
     let reply!: CommitAcceptedMutation;
-    let fixtureFailure: unknown;
+    let fixtureExecution!: ReturnType<typeof providerFixture>;
     const calls: TransportCall[] = [];
-    const runtimeClient = new AstridRuntimeClient({ baseUrl: 'http://runtime.test', token: 'runtime-token', transport: runtimeTransport(calls, () => {
-      try {
-        facts = providerFixture(before, status);
-        reply = authoritativeResponse(facts, status);
-        return reply;
-      } catch (error) { fixtureFailure = error; throw error; }
+    const runtimeClient = new AstridRuntimeClient({ baseUrl: 'http://runtime.test', token: 'runtime-token', transport: runtimeTransport(calls, async () => {
+      fixtureExecution = providerFixture(before, status);
+      facts = await fixtureExecution;
+      reply = authoritativeResponse(facts, status);
+      return reply;
     }) });
     const runtime = new RuntimeDataProvider({ projectId, runtimeClient });
     const initial = { head: { revisionId: baseRevisionId, publicationId: basePublicationId }, canonicalDocument: before, graph };
@@ -268,7 +273,7 @@ describe('A3 mounted popup full caller', () => {
       const selectionCall = calls.find((call) => call.path.includes('/media-selection?'))!;
       const commitCall = calls.find((call) => call.path.endsWith('/commit'))!;
       const request = commitCall.body as CommitRequest;
-      if (fixtureFailure) throw fixtureFailure;
+      await fixtureExecution;
       expect(importCall).toMatchObject({ method: 'POST', headers: { 'Content-Type': 'image/png', 'X-Original-Name': 'local0.png' } });
       expect(selectionCall.method).toBe('GET');
       expect(commitCall.headers['Idempotency-Key']).toMatch(/^[0-9a-f-]{36}$/);
