@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T16:42:28Z | dispatcher heartbeat 5s | live 2 (sol 2, luna 0, other 0) | busy30 16 | status age 1m -->
-# agent board, 2026-10-24T16:41:03Z
+<!-- agent | 2026-10-24T16:45:16Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 15 | status age 2m -->
+# agent board, 2026-10-24T16:43:13Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -112,7 +112,7 @@
 | F D69 weakening audit | Audit178 changed upstream tests | Luna | Two upstream assertions owed | doing | Audit1603; small restore ready | One pass:167 cleared9 cited D09/D10,2 owed restore in CLI edit-flags. Source unchanged; exact hunks retained. | Current9502 /924 |
 
 | P4 CLI default | Preserve ordinary parser namespace | Luna | Actual current P4 proof | merged | Author1613; review1617 PASS36 | One-line default reviewed; retired flag rejected, P4 originals unchanged. [Review](../../workers/agt-P4-native-default-review-1617/report.md) | 4de7cdbc53 |
-| P4 ten-note cause | Qualify historical validation hot path | Runtime Luna / Agent | Qualified source correction | blocked:runtime | rt-P4-history-cost-1625 | Finite schema-cost profile active on bc227; every validation and45s retained. Agent owns original verdict. [Owner](../../design/peer-runtime-to-agent-orchestrator-20261024T1625Z-P4-cost-owner.md) | Runtime bc227 |
+| P4 ten-note cause | Qualify historical validation hot path | Runtime Luna / Agent | Qualified source correction | blocked:runtime | rt-P4-history-cost-sol-1635 | Luna1625 measured schema cost but found no safe change. Sol1635 continues caller-cost work; every validation and45s retained. [Owner](../../design/peer-runtime-to-agent-orchestrator-20261024T1625Z-P4-cost-owner.md) | Runtime bc227 |
 | D69 owed assertions | Restore two terminal-line predicates | Luna | Behavior proof | merged | Author1617; review1622 PASS | Both predicates and all47 successor records independently exact. Behavior pending. [Review](../../workers/agt-F-D69-two-assertions-review-1622/report.md) | 9a781a38f7 |
 
 | U4a root-auth successor | Bind qualified Runtime provenance | Luna | Normal merge complete | merged | agt-U4a-root-auth-rebind-1630 PASS | Lock-only tool update; 15 mappings unchanged, vendor/artifact checks PASS. [Report](../../workers/agt-U4a-root-auth-rebind-1630/report.md) | ef0363985e |
@@ -121,7 +121,7 @@
 | P4 current service | Qualify repaired single-edit original | Luna / Service | Current source | merged | Launcher1633; actual30725 FAIL1 | Original ran and exposed a later cache predicate failure. [JUnit](../../design/handoff-agt-P4-single-30725-p4-current-single.xml) | Agent ef036 / Runtime bc227 |
 | D69 current launch | Qualify restored47 and two predicates | Luna / HARD Sol | Actual service preflight | doing | Sol1642; whole path1634; service17475 | Exact49 collected.17475 also zero-body: direct HEAD guard rejects synthetic snapshot. Sol1642 owns exact parent predicate and real stub preflight. | Agent ef036 / Runtime bc227 |
 
-| G2 P4 read boundary | Preserve ordinary and canonical read authority | HARD Sol / Luna | Actual P4 failure30725 | doing | Sol1639; whole-path1639 | Ordinary initial bundle unexpectedly has authenticated-document cache. Original predicate unchanged; source diagnosis active. | Agent ef036 / Runtime bc227 |
+| G2 P4 read boundary | Preserve ordinary and canonical read authority | HARD Sol / Luna | Actual P4 failure30725 | doing | Sol1639; whole-path1639 | Independent whole-path traces unconditional sync.py publication hydration. Sol1639 tests correction; accepted canonical authority must remain intact. | Agent ef036 / Runtime bc227 |
 
 Integration: Agent ef0363985e includes true upstream924, normal Runtime8b32 adoption, reviewed recorder consumer, 47 unchanged upstream test restorations and reviewed P4 parser default. Runtime root-auth successor is actual local normal bc227 with exact reviewed tree1d410 and expected parents. Normal provenance adoption1630 merged; one actual-home inverse original1632 dispatched.
 core open: 2 tracked: P4 single edit fails cache boundary at assertion113 on actual30725; ten-note times out45s. Root inverse original PASS1 in2.08s. Parser predicate now passes. Prior five/54 scopes retained; final-core body owed.
@@ -132,7 +132,7 @@ Gates: P1/P2/P3 App; P4 Agent; P5 and Composition Runtime. Original P4 service29
 Admission: D56 ends Farm/schema venue work. Prior access and safety refusals stay stopped. D67 D13 remains unchanged visible environment known gap with no owner action. D23 timing remains deferred.
 Disk: About9GB free; cap6 above9GB. Newly completed read-only trees are already recycled. Sweep3 removed0; prior refused targets stay stopped.
 
-Blockers: Runtime — P4 ten-note first redo times out45s. Unique rt-P4-history-cost-1625 profiles shared schema validation; guarded source correction and independent review precede original retry.
-Next ready: Consume actual-service no-op preflight1642, then original49 once. Consume P4 source1639 and independent whole-path1639, review meaningful correction. Runtime ten-note cost1625 remains unique owner.
+Blockers: Runtime — P4 ten-note first redo times out45s. Luna1625 found no justified optimization; HARD Sol1635 continues bounded caller-cost work. Every validation and45s retained; independent review before retry.
+Next ready: Consume actual-service no-op preflight1642, then original49 once. Consume P4 source1639 and independent whole-path1639, review meaningful correction. Runtime ten-note costSol1635 remains unique owner after Luna profile1625.
 live 3 / cap 6; ready-undispatched 0. HARD Sol1639 read authority; Luna1639 whole path; HARD Sol1642 repairs repeated harness snapshot failure. No original49 body has run.
-Inbox consumed through Runtime1625 P4 source owner and1621 actual root-auth home. Runtime actual normal successor bc227 verified locally by tree and parents; stale source wait cleared. Pass 2026-10-24T16:26:38Z.
+Inbox consumed through Runtime1635 P4 cost continuation and1621 actual root-auth home. Runtime actual normal successor bc227 verified locally by tree and parents; stale source wait cleared. Pass 2026-10-24T16:26:38Z.
