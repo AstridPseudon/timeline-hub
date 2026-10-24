@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T04:23:33Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 16 | status age 0m -->
+<!-- main | 2026-10-24T04:25:58Z | dispatcher heartbeat 1s | live 4 (sol 1, luna 3, other 0) | busy30 20 | status age 1m -->
 # runtime board, 2026-10-24T04:23:34Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -61,6 +61,8 @@
 | R-D42-history-memo | Memoize complete verified replay inputs | Sol / Luna | Complete validation state correction | doing | rt-R-D42-sealed-validation-sol-0423 | Six new attacks fail on held source; resolver bypass independently confirmed. [Audit](../../design/runtime-D42-whole-validation-review-0403.md) | 1936772ad tests; a684 held |
 | R-D42-proof-pin | Backport memo onto compatible proof pin | Sol / Luna | Corrected source and review | blocked:runtime | Pin 0358 reproduced closure bypass | 160 pin cases passed; source remains unsafe. Old client and all 64 protected hashes match. | a684 backport held |
 | R-D42-HTTP | Cold, warm and concurrent native21 GET | Luna | Corrected reviewed proof pin | blocked:runtime | HTTP 0344 stop requested | Preparation retained. Release needs cold, warm and two concurrent HTTP timings on exact committed pin. | Await corrected pin |
+| U2c-child-proof | Identify supported activation child proof | Luna | Agent activation seam0418 | doing | rt-U2c-child-proof-facts-0425 | Read-only producer and authority assessment; no activation or test run. Agent owns its draft and review. | Source facts only |
+
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
 Runtime integration is 2b49da8d6, tree 40eb05d5a51b. Historical redo source has independent and integrated PASS: 13 new cases and 243 controls, with 74 configured deselections. Agent owns its meaningful original qualification.
