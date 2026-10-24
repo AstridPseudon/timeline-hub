@@ -9,6 +9,7 @@ import copy
 import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -20,19 +21,48 @@ pytestmark = pytest.mark.integration
 @pytest.fixture
 def film(tmp_path, monkeypatch):
     runtime = use_runtime(commit=vendored_runtime_commit())
-    # Reuse Runtime's API-built duplicate realm/CAS fixture, as its own real
-    # provider lane does. Never create a second bootstrap or DB model here.
+    # Keep the committed film as an immutable source closure, but put the live
+    # case on a new bootstrap-created target through the real provider.
     monkeypatch.syspath_prepend(str(runtime / "tests"))
     from runtime_protocol.service import RuntimeService
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
     from timeline_commit_film_fixture import build_film_fixture
 
-    fixture = build_film_fixture(tmp_path)
-    service = RuntimeService(fixture.duplicate_root)
+    from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.timeline.emitter import emit_document_commands
+    from astrid.sdk.timeline.native_timeline_duplicate import copy_command
+
+    source_fixture = build_film_fixture(tmp_path)
+    service = RuntimeService(source_fixture.duplicate_root)
     try:
-        original = service.get_project_parent_composition_revision(
-            fixture.project_id, fixture.timeline_id, fixture.parent_revision_id,
+        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+        source_document = service._timeline_commits()[0].revision_closure(
+            source_fixture.project_id, source_fixture.timeline_id, source_fixture.parent_revision_id,
         )
-        parent = copy.deepcopy(original["payload"])
+        target_timeline = "m1-journey"
+        service.create_timeline(
+            source_fixture.project_id, target_timeline,
+            idempotency_key="m1-journey-create",
+        )
+        source_ref = {
+            "project_id": source_fixture.project_id, "timeline_id": source_fixture.timeline_id,
+            "revision_id": source_document["parent_revision"]["revision_id"],
+            "publication_id": service.get_project_timeline(
+                source_fixture.project_id, source_fixture.timeline_id,
+            )["head_publication_id"],
+            "content_digest": source_document["parent_revision"]["content_digest"],
+        }
+        source_rows = source_document["parent_revision"]["payload"]["occurrences"]
+        shot_ids = {row["shot_id"] for row in source_rows}
+        occurrence_ids = {row["occurrence_id"] for row in source_rows}
+        duplicate = copy_command(
+            source_ref,
+            {identity: "m1-" + identity for identity in sorted(shot_ids)},
+            {identity: "m1-" + identity for identity in sorted(occurrence_ids)},
+        )
+        source_bundle = bundle_from_document(source_document)
+        desired_bundle = copy.deepcopy(source_bundle)
+        parent = desired_bundle["parent"]
         parent["config"]["tracks"].append({"id": "music-other", "kind": "audio"})
         parent["clips"][0]["app"] = {
             "on": "word:word-1", "until": None, "until_film_end": True,
@@ -45,15 +75,39 @@ def film(tmp_path, monkeypatch):
             "extension": {"opaque": [None, {"keep": True}]},
         })
         parent["config"]["clips"] = copy.deepcopy(parent["clips"])
-        publication = service.publish_parent_composition(
-            fixture.project_id, fixture.timeline_id,
-            {"project_id": fixture.project_id, "timeline_id": fixture.timeline_id,
-             "expected_head": fixture.parent_revision_id,
-             "parent_revision_id": "m1-journey-baseline", "parent_composition": parent},
+        patches = emit_document_commands(source_bundle, desired_bundle)
+        head = service.get_project_timeline(source_fixture.project_id, target_timeline)
+        body = {
+            "api_version": 1, "project_id": source_fixture.project_id, "timeline_id": target_timeline,
+            "base_revision_id": head["head_revision_id"], "base_publication_id": head["head_publication_id"],
+            "commands": [duplicate, *patches], "label": "M1 journey baseline", "merge": "atomic",
+            "reads": [], "dry_run": False, "source": {"via": "python"},
+            "rationale": "M1 real provider baseline", "group_id": "m1-journey",
+            "steps": [{"id": "baseline", "label": "M1 journey baseline", "intent": "Prepare M1 fixture",
+                        "tags": ["integration"], "command_ordinals": list(range(1 + len(patches))),
+                        "patch": [change for command in patches for change in command["args"]["changes"]],
+                        "reads": []}],
+        }
+        publication = service.commit_timeline(
+            source_fixture.project_id, target_timeline, body,
             idempotency_key="m1-journey-baseline",
+            publisher="owner",
+            invocation_path=f"/v1/projects/{source_fixture.project_id}/timelines/{target_timeline}/commit",
+            authorize=lambda: None,
         )
     finally:
         service.close()
+    fixture = SimpleNamespace(
+        duplicate_root=source_fixture.duplicate_root,
+        source_root=source_fixture.source_root,
+        project_id=source_fixture.project_id,
+        timeline_id=target_timeline,
+        parent_revision_id=publication["data"]["accepted_revision_id"],
+        media_ids=source_fixture.media_ids,
+        transcript_document_id=source_fixture.transcript_document_id,
+        text_binding_id=source_fixture.text_binding_id,
+    )
+    parent = publication["data"]["canonical_document"]["parent_revision"]["payload"]
     return fixture, parent, publication
 
 
@@ -65,28 +119,57 @@ def renderer_off(film, monkeypatch):
 @pytest.fixture
 def auto_film(film):
     from runtime_protocol.service import RuntimeService
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
 
-    from astrid.sdk.timeline._command_state import State
+    from astrid.sdk.timeline._command_state import State, present
     from astrid.sdk.timeline.capture import rate
     from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.timeline.emitter import emit_document_commands
 
     fixture, _, _ = film
     service = RuntimeService(fixture.duplicate_root)
     try:
+        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
         parent = service.get_project_parent_composition_revision(
-            fixture.project_id, fixture.timeline_id, "m1-journey-baseline")["payload"]
+            fixture.project_id, fixture.timeline_id, fixture.parent_revision_id)["payload"]
         document = service._timeline_commits()[0].revision_closure(
-            fixture.project_id, fixture.timeline_id, "m1-journey-baseline")
+            fixture.project_id, fixture.timeline_id, fixture.parent_revision_id)
         owner = "occurrence:" + parent["occurrences"][0]["occurrence_id"]
         fps = rate(State(bundle_from_document(document)).config(owner).get("output", {}).get("fps"))
         assert fps.denominator == 1
-        parent["config"]["output"]["fps"] = fps.numerator
-        parent["occurrences"][0]["duration_ms"] = 12000
-        service.publish_parent_composition(fixture.project_id, fixture.timeline_id, {
-            "project_id": fixture.project_id, "timeline_id": fixture.timeline_id,
-            "expected_head": "m1-journey-baseline", "parent_revision_id": "auto-baseline",
-            "parent_composition": parent,
-        }, idempotency_key="auto-baseline")
+        before_bundle = bundle_from_document(document)
+        after_bundle = copy.deepcopy(before_bundle)
+        after_bundle["parent"]["config"]["output"]["fps"] = fps.numerator
+        commands = emit_document_commands(before_bundle, after_bundle)
+        occurrence = document["parent_revision"]["payload"]["occurrences"][0]
+        commands.append({
+            "schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+            "args": {"changes": [{
+                "op": "set", "ref": "parent",
+                "path": ["occurrences", "occurrence_id:" + occurrence["occurrence_id"], "duration_ms"],
+                "before": present(occurrence["duration_ms"]), "value": 12000,
+            }]},
+        })
+        head = service.get_project_timeline(fixture.project_id, fixture.timeline_id)
+        service.commit_timeline(
+            fixture.project_id, fixture.timeline_id,
+            {"api_version": 1, "project_id": fixture.project_id, "timeline_id": fixture.timeline_id,
+             "base_revision_id": head["head_revision_id"], "base_publication_id": head["head_publication_id"],
+             "commands": commands, "label": "Auto placement baseline", "merge": "fields", "reads": [],
+             "dry_run": False, "source": {"via": "python"}, "rationale": "M1 auto fixture",
+             "steps": [{"id": "auto-baseline", "label": "Auto placement baseline",
+                        "intent": "Prepare auto placement", "tags": ["integration"],
+                        "command_ordinals": list(range(len(commands))),
+                        "patch": [change for command in commands for change in command["args"]["changes"]],
+                        "reads": []}]},
+            idempotency_key="auto-baseline", publisher="owner",
+            invocation_path=f"/v1/projects/{fixture.project_id}/timelines/{fixture.timeline_id}/commit",
+            authorize=lambda: None,
+        )
+        parent = service._timeline_commits()[0].revision_closure(
+            fixture.project_id, fixture.timeline_id,
+            service.get_project_timeline(fixture.project_id, fixture.timeline_id)["head_revision_id"],
+        )["parent_revision"]["payload"]
     finally:
         service.close()
     return fixture, parent
@@ -258,8 +341,9 @@ def test_cli_python_outbox_restart_and_guarded_inverse(
     base_history = history(client, fixture)
     assert len(base_history["items"]) == 2
     assert base_history["items"][-1]["receipt"] == baseline["receipt"]
-    assert all(row["intent"] == "legacy_unknown" and row["records"] is None
-               for row in base_history["items"])
+    assert base_history["items"][0]["intent"] == "bootstrap"
+    assert base_history["items"][-1]["intent"] == "recorded"
+    assert base_history["items"][0]["records"] is None
 
     moved = cli(client, fixture, capsys, "edit", "move", fixture.timeline_id,
                 "--clip", "parent/clip:music-bed", "--on", "1")
@@ -484,7 +568,7 @@ def test_keyed_view_requires_write_but_inspection_remains_read_only(
         assert error.value.status == 401
         inspection = transport.inspect_timeline(fixture.project_id, fixture.timeline_id,
                                                  {"formats": ["md"]})
-        assert inspection["revision_id"] == "m1-journey-baseline"
+        assert inspection["revision_id"] == fixture.parent_revision_id
     result = WorkspaceClient(daemon.endpoint, writer).create_timeline_view(
         fixture.project_id, fixture.timeline_id, {"formats": ["md"]}, idempotency_key="writer-view")
     assert result["inspection"] == inspection
