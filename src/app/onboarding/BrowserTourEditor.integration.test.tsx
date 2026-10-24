@@ -1,17 +1,35 @@
-import { render, waitFor, screen, within } from '@testing-library/react';
+import { act, render, waitFor, screen, within } from '@testing-library/react';
 import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { webcrypto } from 'node:crypto';
 import { TooltipProvider } from '@/shared/components/ui/tooltip';
+import { setEditorTourBeat } from '@/shared/state/editorTourStore';
+import { useTimelineEditorData, useTimelineOpsFromStoreSafe } from '@/tools/video-editor/hooks/timelineStore';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext';
+import { useClipTypeRegistryContext } from '@/tools/video-editor/clip-types/ClipTypeRegistryContext';
+import type { ClipRendererProps } from '@/tools/video-editor/clip-types/ClipTypeRegistry';
+import type { ComponentType } from 'react';
+import { TOUR_CLIP_IDS } from '@/tools/video-editor/tour/timeline/tourStages';
 
+let captured: ReturnType<typeof useTimelineEditorData>;
+let operations: ReturnType<typeof useTimelineOpsFromStoreSafe>;
 let runtime: ReturnType<typeof useVideoEditorRuntime>;
-// Keep the actual provider and extension activation. Browser media and layout are outside jsdom.
+// Keep the actual provider, extension activation and driver operations. Browser media and layout
+// are outside jsdom: the preview boundary records the real resolved composition instead.
 vi.mock('@/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx', () => ({ RemotionPreview: () => {
-  runtime = useVideoEditorRuntime();
-  return <div data-testid="captured-preview" />;
+  captured = useTimelineEditorData(); operations = useTimelineOpsFromStoreSafe(); runtime = useVideoEditorRuntime();
+  const { registry } = useClipTypeRegistryContext();
+  const scene = captured.resolvedConfig?.clips.find(clip => clip.clipType === 'haus.astrid.liveScene');
+  const record = registry.resolve('haus.astrid.liveScene');
+  if (!scene || record?.status !== 'active' || typeof record.renderer !== 'function') return <div data-testid="captured-preview" />;
+  const Renderer = record.renderer as ComponentType<ClipRendererProps>;
+  return <div data-testid="captured-preview"><Renderer clipId={scene.id} clipTypeId={scene.clipType!}
+    time={0} sourceTime={2.5} source={scene.app as Record<string, unknown>} params={{}}
+    width={1280} height={720} live={{bindings: [], diagnostics: [], getSource: () => undefined,
+      getChannelMetadata: () => undefined, readLatestSample: () => undefined, readSampleAt: () => undefined,
+      readSamples: () => [], getSampleCount: () => 0, resolveChannelId: () => undefined}} /></div>;
 } }));
 vi.mock('@/tools/video-editor/components/TimelineEditor/TimelineEditorCoreBody.tsx', () => ({ TimelineEditorCoreBody: () => null }));
 vi.mock('@/tools/video-editor/tour/runner/EditorTourRunner.tsx', () => ({ EditorTourRunner: () => null }));
@@ -26,6 +44,7 @@ vi.mock('@astrid/packs/rendering/ui/threejs-live-editor/SceneSurface', async () 
   } };
 });
 import { BrowserTourEditor } from './BrowserTourEditor';
+import { EDITOR_TOUR_MEDIA } from '@/tools/video-editor/tour/tourMedia';
 const requests: string[] = [];
 beforeEach(() => {
   onlineManager.setOnline(true);
@@ -39,7 +58,7 @@ beforeEach(() => {
   }));
 });
 afterEach(() => vi.unstubAllGlobals());
-it('shows the bundled tour with no Runtime requests', async () => {
+it('admits the bundled world and applies all three stages with only shipped asset fetches', async () => {
   render(<QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false}}})}><TooltipProvider><MemoryRouter>
     <BrowserTourEditor onFinish={() => undefined} />
   </MemoryRouter></TooltipProvider></QueryClientProvider>);
@@ -60,10 +79,22 @@ it('shows the bundled tour with no Runtime requests', async () => {
   expect(chat.querySelector('[data-editor-tour="chat-transcript"]')).not.toBeNull();
   expect(chat.querySelector('[data-editor-tour="chat-send"]')).not.toBeNull();
   expect(document.querySelectorAll('[data-editor-tour="chat-composer"]')).toHaveLength(1);
-  await waitFor(() => expect(runtime).toBeTruthy());
-  expect(runtime.extensionRuntime.extensions.map(extension => extension.manifest.id)).toContain('haus.astrid.threejs-live-editor');
+  await waitFor(() => expect(operations).toBeTruthy());
+  act(() => setEditorTourBeat(1, 'land', true));
+  await waitFor(() => expect(captured.resolvedConfig?.clips.some(clip => clip.clipType === 'haus.astrid.liveScene')).toBe(true));
+  expect(await within(extensionsDock).findByRole('region', { name: 'World Explorer' })).toBeInTheDocument();
+  await waitFor(() => expect(document.querySelector('[data-testid="scene-renderer-ready"][data-phase="ready"]')).not.toBeNull());
+  expect(document.querySelector('[data-testid="scene-renderer-ready"]')).toHaveAttribute('data-has-source', 'true');
+  expect(document.querySelector('[data-testid="scene-renderer-ready"]')).toHaveAttribute('data-source-time', '2.5');
   expect(runtime.provider.persistenceEnabled).toBe(false);
   expect(runtime.livePermissionService).toBeUndefined();
+  act(() => setEditorTourBeat(2, 'land', true));
+  await waitFor(() => expect(captured.resolvedConfig?.clips.filter(clip => (
+    TOUR_CLIP_IDS.stills.includes(clip.id as typeof TOUR_CLIP_IDS.stills[number]) && clip.clipType === 'hold'
+  ))).toHaveLength(4));
+  act(() => setEditorTourBeat(3, 'land', true));
+  await waitFor(() => expect(captured.resolvedConfig?.clips.some(clip => clip.id === TOUR_CLIP_IDS.video && clip.clipType === 'media')).toBe(true));
   expect(requests.length).toBeGreaterThan(0);
   expect(requests.every(url => url.startsWith('/astrid/onboarding/'))).toBe(true);
+  expect(EDITOR_TOUR_MEDIA.video).toBeTruthy();
 });
