@@ -33,10 +33,11 @@ export function writeWelcomePhase(phase: WelcomePhase): void {
 }
 
 /** Pick the only owner for this URL and phase. Work links take precedence over onboarding. */
-export function entryFor(url: URL, phase: WelcomePhase | null): WelcomeEntry {
+export function entryFor(url: URL, phase: WelcomePhase | null, localBuild = false): WelcomeEntry {
   if (url.pathname !== APP_ENTRY_PATH) return 'editor';
   if (['project', 'timeline', 'localProject', 'localTimeline'].some(key => url.searchParams.has(key))) return 'editor';
   if (url.searchParams.get('connect') === '1') return 'connection';
+  if (localBuild && phase === 'choose') return 'connection';
   return phase === 'complete' ? 'editor' : phase ?? 'tour';
 }
 

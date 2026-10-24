@@ -5,7 +5,7 @@ import {
   resolveInstallerConnectEntry,
   resolveReturningAppEntry,
 } from '@/app/entryClassification.ts';
-import { setRuntimeOrigin } from '@/integrations/runtime/connection.ts';
+import { runtimeOrigin, setRuntimeOrigin } from '@/integrations/runtime/connection.ts';
 import { releaseBootLayerWhenReady } from '@/app/bootLayer.ts';
 import { migrateAstridBrowserStorage } from '@/migrations/astridRenameBrowserMigration.ts';
 
@@ -45,14 +45,13 @@ async function main(): Promise<void> {
 }
 
 const PRELOAD_RELOAD_FLAG = 'astrid:preload-reloaded';
-/** A render counts as a good boot only if it stays free of chunk failures this long. */
+/** A render releases the reload cooldown only after it stays free of chunk failures this long. */
 const PRELOAD_GUARD_SETTLE_MS = 10_000;
 let preloadErrorSeen = false;
 
 /**
- * Keep the reload guard until the render has committed AND stayed free of chunk-load failures for a
- * settle period. Clearing at first paint would loop: a lazy chunk that is still missing fails right
- * after the shell renders, so each reload would clear the guard and reload again.
+ * Keep the reload cooldown until the render has committed AND stayed free of chunk-load failures
+ * for a settle period. Remember failed URLs for the whole session so the same missing file cannot loop.
  */
 function clearPreloadReloadAfterRender(rootElement: HTMLElement): void {
   const existingChildren = new Set(rootElement.children);
@@ -66,7 +65,8 @@ function clearPreloadReloadAfterRender(rootElement: HTMLElement): void {
     window.setTimeout(() => {
       if (preloadErrorSeen) return;
       try {
-        sessionStorage.removeItem(PRELOAD_RELOAD_FLAG);
+        const guard = readPreloadReloadGuard();
+        if (guard) sessionStorage.setItem(PRELOAD_RELOAD_FLAG, JSON.stringify({ ...guard, lastReloadAt: null }));
       } catch {
         // Storage can be unavailable; the current page is still usable.
       }
@@ -76,15 +76,48 @@ function clearPreloadReloadAfterRender(rootElement: HTMLElement): void {
   clear();
 }
 
+interface PreloadReloadGuard {
+  readonly urls: readonly string[];
+  readonly lastReloadAt: number | null;
+}
+
+function readPreloadReloadGuard(): PreloadReloadGuard | null {
+  const stored = sessionStorage.getItem(PRELOAD_RELOAD_FLAG);
+  if (!stored) return null;
+  try {
+    const value: unknown = JSON.parse(stored);
+    if (typeof value === 'object' && value !== null && 'urls' in value && Array.isArray(value.urls)
+      && value.urls.every(url => typeof url === 'string')
+      && 'lastReloadAt' in value && (typeof value.lastReloadAt === 'number' || value.lastReloadAt === null)) {
+      return value as PreloadReloadGuard;
+    }
+  } catch { /* An older or corrupt guard blocks reloads for this session. */ }
+  return { urls: ['*'], lastReloadAt: Date.now() };
+}
+
+function preloadChunkUrl(event: Event): string {
+  const payload = (event as Event & { payload?: unknown }).payload;
+  const message = payload instanceof Error ? payload.message : typeof payload === 'string' ? payload : '';
+  const found = message.match(/(?:https?:\/\/|\/)[^\s)"']+/)?.[0]?.replace(/[.,;:]$/, '');
+  return found ?? (message || 'unknown-preload-failure');
+}
+
 /**
- * A hashed chunk that 404s after a redeploy: reload once for the new build. The session flag keeps a
- * chunk that is still missing after the reload from looping; then the error reaches the error boundary.
+ * A hashed chunk that 404s after a redeploy: reload once for the new build. Repeated failures reach
+ * the error boundary; a different URL may reload after the settled boot cooldown.
  */
 function handlePreloadError(event: Event): void {
   preloadErrorSeen = true;
   try {
-    if (sessionStorage.getItem(PRELOAD_RELOAD_FLAG)) return;
-    sessionStorage.setItem(PRELOAD_RELOAD_FLAG, '1');
+    const url = preloadChunkUrl(event);
+    const guard = readPreloadReloadGuard();
+    if (guard?.urls.includes(url) || guard?.urls.includes('*')) return;
+    if (guard?.lastReloadAt !== null && guard?.lastReloadAt !== undefined
+      && Date.now() - guard.lastReloadAt < PRELOAD_GUARD_SETTLE_MS) return;
+    sessionStorage.setItem(PRELOAD_RELOAD_FLAG, JSON.stringify({
+      urls: [...(guard?.urls ?? []), url],
+      lastReloadAt: Date.now(),
+    } satisfies PreloadReloadGuard));
   } catch {
     return; // Without storage we cannot guard against a loop, so do not reload.
   }
@@ -163,11 +196,12 @@ async function startApp(rootElement: HTMLElement): Promise<void> {
     return;
   }
 
-  const welcomeEntry = entryFor(new URL(window.location.href), readWelcomePhase());
+  const localBuild = runtimeOrigin() === '';
+  const welcomeEntry = entryFor(new URL(window.location.href), readWelcomePhase(), localBuild);
   if (welcomeEntry !== 'editor') {
     const { renderWelcome } = await import('@/app/onboarding/welcomeBootstrap.tsx');
     clearPreloadReloadAfterRender(rootElement);
-    renderWelcome(rootElement, welcomeEntry);
+    renderWelcome(rootElement, welcomeEntry, localBuild);
     releaseBootLayerWhenReady(rootElement);
     return;
   }

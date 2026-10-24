@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { RadioGroup, RadioGroupItem } from '@/shared/components/ui/radio-group.tsx';
 import { SegmentedControl, SegmentedControlItem } from '@/shared/components/ui/segmented-control.tsx';
-import { detectBrowser } from '@/shared/hooks/platformInstall/platformDetection.ts';
 import { runInstallPrompt, useInstallPromptSignals, useStandaloneStatus } from '@/shared/hooks/platformInstall/signals.ts';
 import { detectInstallScenario } from '@/pages/Home/installScenario.ts';
 import type { WindowMode } from '@/shared/components/RuntimeConnection/copy.ts';
@@ -26,12 +25,16 @@ const ASTRID_REPO = 'https://github.com/banodoco/astrid-app';
 export function WelcomeRunMode({ onContinue, windowMode, setWindowMode, runMode, setRunMode }: Props) {
   const { deferredPrompt, consumeDeferredPrompt } = useInstallPromptSignals();
   const standalone = useStandaloneStatus();
-  const browser = detectBrowser();
   const scenario = detectInstallScenario();
   const canInstall = !standalone && scenario === 'chromium' && deferredPrompt !== null;
   const [opened, setOpened] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const continueHere = () => onContinue('connection');
+  const copyForChromium = async () => {
+    await navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+  };
   const installApp = async () => {
     if (!deferredPrompt) return continueHere();
     writeWelcomePhase('connection');
@@ -80,7 +83,7 @@ export function WelcomeRunMode({ onContinue, windowMode, setWindowMode, runMode,
                   <SegmentedControlItem value="browser-tab">Browser tab</SegmentedControlItem>
                 </SegmentedControl>
               </div>}
-              {runMode === 'hosted' && browser === 'safari' && !standalone && <p className="px-3.5 pb-3.5 pl-[43px] text-left text-[13px] text-muted-foreground">For an app window, choose File → Add to Dock in Safari.</p>}
+              {runMode === 'hosted' && scenario === 'unsupported' && <p className="px-3.5 pb-3.5 pl-[43px] text-[13px] text-muted-foreground">Needs Chrome or Edge to reach your computer.</p>}
             </div>
             <div className={`rounded-xl border transition-colors ${runMode === 'local' ? 'border-primary/70 bg-primary/[0.06]' : 'border-border hover:border-foreground/25 hover:bg-muted/40'}`}>
               <label htmlFor="welcome-run-local" onClick={() => setRunMode('local')} className="flex cursor-pointer items-start gap-3 p-3.5">
@@ -97,9 +100,10 @@ export function WelcomeRunMode({ onContinue, windowMode, setWindowMode, runMode,
           </RadioGroup>
           <Button type="button" className="h-11 w-full rounded-xl" onClick={() => {
             if (runMode === 'local') onContinue('local');
+            else if (scenario === 'unsupported') void copyForChromium();
             else if (canInstall && windowMode === 'app-window') void installApp();
             else continueHere();
-          }}>{buttonLabel}</Button>
+          }}>{runMode === 'hosted' && scenario === 'unsupported' ? copied ? 'Copied. Open it in Chrome or Edge.' : 'Copy link for Chrome or Edge' : buttonLabel}</Button>
         </div>
       </EditorCard>
     </EditorCardLayer>

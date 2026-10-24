@@ -41,8 +41,16 @@ describe('onboarding instructions', () => {
     expect(text).toContain('Please set up Astrid to run fully on this computer, including the editor, so I can change Astrid itself.');
     expect(text).toContain('https://github.com/banodoco/astrid-app');
     expect(text).toContain('npm run dev:local');
+    expect(text.match(/npx -y npm@11 ci/g)).toHaveLength(2);
+    expect(text).not.toContain('npm ci');
     expect(text).toContain('http://127.0.0.1:5180/tools/video-editor?connect=1');
     expect(text).toContain(LOCAL_SETUP.startCommand);
+  });
+
+  it('uses the set-up title that matches the permission screen', async () => {
+    const { RUNTIME_CONNECTION_COPY } = await import('./copy.ts');
+    expect(RUNTIME_CONNECTION_COPY.setUp.title).toBe('Set up Astrid on this computer');
+    expect(RUNTIME_CONNECTION_COPY.permission.title).toBe('Connect to Astrid on this computer');
   });
 
   it('local setup start command is defined', () => {

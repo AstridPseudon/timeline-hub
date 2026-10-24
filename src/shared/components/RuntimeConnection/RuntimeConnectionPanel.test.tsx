@@ -59,7 +59,7 @@ describe('RuntimeConnectionPanel', () => {
     // Permission `prompt` and never connected: the welcome's connection step lands here, with no Connect to press.
     panel(connectionFor({ status: 'set_up' }, { awaitingConnect: true }));
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'set_up');
-    expect(screen.getByRole('heading', { name: 'Connect Astrid on this computer' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Set up Astrid on this computer' })).toBeInTheDocument();
     expect(shownText()).not.toMatch(/will ask|Choose Allow/);
     expect(screen.queryByRole('button', { name: 'Connect' })).not.toBeInTheDocument();
   });
@@ -251,7 +251,7 @@ describe('RuntimeConnectionPanel', () => {
     panel(connectionFor({ status: 'set_up' }));
 
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'set_up');
-    expect(screen.getByRole('heading', { name: 'Connect Astrid on this computer' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Set up Astrid on this computer' })).toBeInTheDocument();
     const sentence = screen.getByText('Your coding agent can set Astrid up, or reconnect the one you have.');
     expect(sentence).toHaveClass('text-sm', 'text-muted-foreground');
     expect(screen.getAllByRole('button')).toHaveLength(2);
@@ -291,7 +291,7 @@ describe('RuntimeConnectionPanel', () => {
     expect(screen.getByRole('button', { name: COPY.agent.commandCopy })).toBeInTheDocument();
     expect(screen.getByRole('code')).toHaveTextContent(installCommand('install'));
     expect(shownText()).not.toMatch(/reload/i);
-    expect(screen.queryByText('Connect Astrid on this computer')).not.toBeInTheDocument();
+    expect(screen.queryByText('Set up Astrid on this computer')).not.toBeInTheDocument();
   });
 
   describe('on a phone', () => {
@@ -426,7 +426,7 @@ describe('RuntimeConnectionPanel', () => {
 
       expect(within(card.lastElementChild as HTMLElement).getByRole('status')).toHaveTextContent(COPY.connected.sentence);
       expect(screen.queryByText(COPY.waiting)).not.toBeInTheDocument();
-      expect(screen.getByRole('heading', { name: 'Connect Astrid on this computer' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Set up Astrid on this computer' })).toBeInTheDocument();
 
       act(() => { vi.advanceTimersByTime(CONNECTED_MIN_MS + LEAVE_MS); });
       expect(section).not.toHaveAttribute('data-leaving');

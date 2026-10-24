@@ -15,11 +15,15 @@ describe('welcome entry', () => {
     ['/tools/video-editor?localTimeline=t', 'tour', 'editor'],
     ['/tools/video-editor?project=p&connect=1', 'tour', 'editor'],
     ['/tools/video-editor?connect=0', 'local', 'local'],
+    ['/tools/video-editor', 'tour', 'tour', true],
+    ['/tools/video-editor', 'choose', 'connection', true],
+    ['/tools/video-editor', 'local', 'local', true],
+    ['/tools/video-editor?project=p', 'choose', 'editor', true],
     ['/tools/video-editor', 'complete', 'editor'],
     ['/tools/other', 'tour', 'editor'],
-  ] as const)('routes %s at %s to %s', async (path, phase, expected) => {
+  ] as const)('routes %s at %s to %s', async (path, phase, expected, localBuild = false) => {
     const { entryFor } = await import('./welcomeProgress');
-    expect(entryFor(new URL(`https://astrid.haus${path}`), phase)).toBe(expected);
+    expect(entryFor(new URL(`https://astrid.haus${path}`), phase, localBuild)).toBe(expected);
   });
 
   it.each(['astrid.runtime.connectedBefore', 'astrid-setup-complete', 'astrid-editor-tour-v1', 'astrid:lastOpenedLocalProjectSlug'])('normalizes legacy marker %s once', async key => {

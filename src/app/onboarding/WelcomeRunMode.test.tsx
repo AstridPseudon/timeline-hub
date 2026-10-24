@@ -35,7 +35,7 @@ beforeEach(() => {
   vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
   vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Macintosh) Chrome/131.0.0.0 Safari/537.36');
 });
-afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+afterEach(() => { cleanup(); vi.restoreAllMocks(); delete (navigator as Navigator & { clipboard?: Clipboard }).clipboard; });
 
 describe('run-mode choice', () => {
   it('selects the hosted tile by default and shows App window by default in Chrome', () => {
@@ -46,14 +46,18 @@ describe('run-mode choice', () => {
     expect(screen.getByRole('radio', { name: 'Browser tab' })).toBeInTheDocument();
   });
 
-  it('Safari shows the Add to Dock hint and continues in the browser tab', () => {
+  it('Safari explains the browser requirement and copies the page link for Chrome or Edge', async () => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Macintosh) Version/17.0 Safari/605.1.15');
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
     mount();
-    // Under the option's left-aligned text, not centred like the card's heading.
-    expect(screen.getByText('For an app window, choose File → Add to Dock in Safari.')).toHaveClass('text-left');
+    expect(screen.getByText('Needs Chrome or Edge to reach your computer.')).toBeInTheDocument();
     expect(screen.queryByRole('radiogroup', { name: 'Open in' })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Continue in this tab' }));
-    expect(localStorage.getItem('astrid:welcome-v1')).toBe('connection');
+    expect(screen.queryByText(/Add to Dock/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Copy link for Chrome or Edge' }));
+    await vi.waitFor(() => expect(screen.getByRole('button', { name: 'Copied. Open it in Chrome or Edge.' })).toBeInTheDocument());
+    expect(writeText).toHaveBeenCalledWith(window.location.href);
+    expect(localStorage.getItem('astrid:welcome-v1')).toBeNull();
   });
 
   it('Firefox offers the browser tab only', () => {
@@ -61,7 +65,9 @@ describe('run-mode choice', () => {
     mount();
     expect(screen.queryByRole('radio', { name: 'App window' })).not.toBeInTheDocument();
     expect(screen.queryByRole('radiogroup', { name: 'Open in' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Continue in this tab' })).toBeInTheDocument();
+    expect(screen.getByText('Needs Chrome or Edge to reach your computer.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy link for Chrome or Edge' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Run everything on your computer' })).toBeInTheDocument();
   });
 
   it('an installed standalone app has no window choice', () => {

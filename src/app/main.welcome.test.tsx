@@ -13,6 +13,7 @@ vi.mock('@/app/bootLayer.ts', () => ({ releaseBootLayerWhenReady: boot.release }
 describe('main welcome routing', () => {
   beforeEach(() => {
     vi.resetModules();
+    vi.stubEnv('VITE_RUNTIME_ORIGIN', 'http://127.0.0.1:17340');
     localStorage.clear();
     boot.steps = [];
     boot.welcomeEntry = null;
@@ -45,12 +46,19 @@ describe('main welcome routing', () => {
     window.history.replaceState({}, '', '/tools/video-editor');
   });
 
-  afterEach(() => { localStorage.clear(); });
+  afterEach(() => { localStorage.clear(); vi.unstubAllEnvs(); });
 
   async function enter(): Promise<void> {
     await import('@/app/main');
     await vi.waitFor(() => expect(boot.release).toHaveBeenCalledOnce());
   }
+
+  it('skips the run-mode choice on the same-origin local build', async () => {
+    vi.stubEnv('VITE_RUNTIME_ORIGIN', '');
+    localStorage.setItem('astrid:welcome-v1', 'choose');
+    await enter();
+    expect(boot.welcomeEntry).toBe('connection');
+  });
 
   it('renders welcome on a fresh unselected editor visit before importing any Runtime or app bootstrap', async () => {
     await enter();

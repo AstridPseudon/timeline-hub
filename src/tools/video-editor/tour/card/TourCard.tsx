@@ -10,6 +10,7 @@ import { DiscordMark } from '@/pages/Home/PublicAstridSocialLinks';
 import { DISCORD_URL } from '@/pages/Home/publicAstridLinks';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
+import { detectInstallScenario } from '@/pages/Home/installScenario.ts';
 
 export interface TourCardProps {
   /** The beat to show: the runner's settled beat, which trails the store's while the card is about to move. */
@@ -36,6 +37,8 @@ export function TourCard({ act, beat, onPrimary, onBack, onSkip }: TourCardProps
   const live = useEditorTour((state) => state.act === act && state.beat === beat);
   const key = `${runId}:${act}:${beat}`;
   const explains = beat === 'welcome' || beat === 'land' || beat === 'finale' || beat === 'feedback';
+  const showKeyboardHints = detectInstallScenario() !== 'mobile'
+    && !(typeof window !== 'undefined' && Boolean(window.matchMedia?.('(pointer: coarse)').matches));
   // A card still showing the previous beat never reports ready for the new one.
   // The finale's entrance runs on until its chain has lit.
   const { settled, reducedMotion } = useTourCardEntrance(key, explains && live, beat === 'finale' ? TOUR_FINALE_ENTRANCE_MS : TOUR_CARD_ENTRANCE_MS);
@@ -58,34 +61,34 @@ export function TourCard({ act, beat, onPrimary, onBack, onSkip }: TourCardProps
           !explains && (beat === 'respond' || (beat === 'compose' && SCRIPT.acts[act].composeHeader) ? 'w-[360px]' : 'w-[300px]') + ' px-4 py-3',
         )}
       >
-        {beat === 'welcome' && <Welcome onPrimary={onPrimary} onSkip={onSkip} />}
-        {beat === 'land' && <Explainer act={act} playing={!reducedMotion} onPrimary={onPrimary} onBack={onBack} onSkip={onSkip} />}
-        {beat === 'finale' && <Finale playing={!reducedMotion} onPrimary={onPrimary} onBack={onBack} />}
-        {beat === 'feedback' && <Feedback onPrimary={onPrimary} onBack={onBack} />}
-        {!explains && <Hint act={act} beat={beat} onPrimary={onPrimary} onBack={onBack} onSkip={onSkip} />}
+        {beat === 'welcome' && <Welcome onPrimary={onPrimary} onSkip={onSkip} showKeyboardHints={showKeyboardHints} />}
+        {beat === 'land' && <Explainer act={act} playing={!reducedMotion} onPrimary={onPrimary} onBack={onBack} onSkip={onSkip} showKeyboardHints={showKeyboardHints} />}
+        {beat === 'finale' && <Finale playing={!reducedMotion} onPrimary={onPrimary} onBack={onBack} showKeyboardHints={showKeyboardHints} />}
+        {beat === 'feedback' && <Feedback onPrimary={onPrimary} onBack={onBack} showKeyboardHints={showKeyboardHints} />}
+        {!explains && <Hint act={act} beat={beat} onPrimary={onPrimary} onBack={onBack} onSkip={onSkip} showKeyboardHints={showKeyboardHints} />}
       </section>
     </div>
   );
 }
 
 /** The top row of the Hint and the Explainer: "N of 3", Back right beside it, Skip on the right. */
-function CounterRow({ act, onBack, onSkip }: { act: EditorTourAct } & Pick<TourCardProps, 'onBack' | 'onSkip'>) {
+function CounterRow({ act, onBack, onSkip, showKeyboardHint }: { act: EditorTourAct; showKeyboardHint: boolean } & Pick<TourCardProps, 'onBack' | 'onSkip'>) {
   return (
     <div className="flex items-center justify-between leading-none text-muted-foreground">
       <div className="flex items-center gap-3">
         <span className="text-xs tabular-nums">{act} of {ACT_COUNT}</span>
         <BackControl onBack={onBack} />
       </div>
-      <SkipControl onSkip={onSkip} />
+      <SkipControl onSkip={onSkip} showKeyboardHint={showKeyboardHint} />
     </div>
   );
 }
 
-function Explainer({ act, playing, onPrimary, onBack, onSkip }: { act: EditorTourAct; playing: boolean } & Omit<TourCardProps, 'act' | 'beat'>) {
+function Explainer({ act, playing, onPrimary, onBack, onSkip, showKeyboardHints }: { act: EditorTourAct; playing: boolean; showKeyboardHints: boolean } & Omit<TourCardProps, 'act' | 'beat'>) {
   const { title, body, visual, labels } = SCRIPT.acts[act].card;
   return (
     <>
-      <CounterRow act={act} onBack={onBack} onSkip={onSkip} />
+      <CounterRow act={act} onBack={onBack} onSkip={onSkip} showKeyboardHint={showKeyboardHints} />
       <div className="mt-3">
         <TourVisual visual={visual} labels={labels} playing={playing} />
       </div>
@@ -95,7 +98,7 @@ function Explainer({ act, playing, onPrimary, onBack, onSkip }: { act: EditorTou
         <TourStrip filled={act} labels={SCRIPT.strip} />
       </div>
       <div className="mt-5 flex justify-end">
-        <PrimaryButton label={SCRIPT.controls.next} onPrimary={onPrimary} />
+        <PrimaryButton label={SCRIPT.controls.next} onPrimary={onPrimary} showKeyboardHint={showKeyboardHints} />
       </div>
     </>
   );
@@ -111,20 +114,20 @@ function MinkTitle({ children }: { children: ReactNode }) {
   );
 }
 
-function Welcome({ onPrimary, onSkip }: Omit<TourCardProps, 'act' | 'beat'>) {
+function Welcome({ onPrimary, onSkip, showKeyboardHints }: Omit<TourCardProps, 'act' | 'beat'> & { showKeyboardHints: boolean }) {
   return (
     <>
       <MinkTitle>{SCRIPT.welcome.title}</MinkTitle>
       <p className="mt-3 text-pretty text-[15px] leading-6 text-muted-foreground">{SCRIPT.welcome.body}</p>
       <div className="mt-6 flex items-center justify-between gap-3">
-        <SkipControl onSkip={onSkip} />
-        <PrimaryButton label={SCRIPT.welcome.action} onPrimary={onPrimary} size="default" />
+        <SkipControl onSkip={onSkip} showKeyboardHint={showKeyboardHints} />
+        <PrimaryButton label={SCRIPT.welcome.action} onPrimary={onPrimary} size="default" showKeyboardHint={showKeyboardHints} />
       </div>
     </>
   );
 }
 
-function Finale({ playing, onPrimary, onBack }: { playing: boolean; onPrimary: () => void; onBack?: () => void }) {
+function Finale({ playing, onPrimary, onBack, showKeyboardHints }: { playing: boolean; onPrimary: () => void; onBack?: () => void; showKeyboardHints: boolean }) {
   return (
     <>
       <MinkTitle>{SCRIPT.finale.title}</MinkTitle>
@@ -133,13 +136,13 @@ function Finale({ playing, onPrimary, onBack }: { playing: boolean; onPrimary: (
       </div>
       <div className="mt-7 flex items-center justify-between gap-3">
         <BackControl onBack={onBack} />
-        <PrimaryButton label={SCRIPT.finale.action} onPrimary={onPrimary} size="default" />
+        <PrimaryButton label={SCRIPT.finale.action} onPrimary={onPrimary} size="default" showKeyboardHint={showKeyboardHints} />
       </div>
     </>
   );
 }
 
-function Feedback({ onPrimary, onBack }: { onPrimary: () => void; onBack?: () => void }) {
+function Feedback({ onPrimary, onBack, showKeyboardHints }: { onPrimary: () => void; onBack?: () => void; showKeyboardHints: boolean }) {
   return (
     <>
       <MinkTitle>{SCRIPT.feedback.title}</MinkTitle>
@@ -152,35 +155,35 @@ function Feedback({ onPrimary, onBack }: { onPrimary: () => void; onBack?: () =>
       </Button>
       <div className="mt-6 flex items-center justify-between gap-3">
         <BackControl onBack={onBack} />
-        <PrimaryButton label={SCRIPT.feedback.action} onPrimary={onPrimary} size="default" />
+        <PrimaryButton label={SCRIPT.feedback.action} onPrimary={onPrimary} size="default" showKeyboardHint={showKeyboardHints} />
       </div>
     </>
   );
 }
 
 /** Compose: send the prompt (the chat's Send, or Enter). Respond (act 1 only): the reply's Next. */
-function Hint({ act, beat, onPrimary, onBack, onSkip }: TourCardProps) {
+function Hint({ act, beat, onPrimary, onBack, onSkip, showKeyboardHints }: TourCardProps & { showKeyboardHints: boolean }) {
   const compose = beat === 'compose';
   const header = compose ? SCRIPT.acts[act].composeHeader : undefined;
   return (
     <>
-      <CounterRow act={act} onBack={onBack} onSkip={onSkip} />
+      <CounterRow act={act} onBack={onBack} onSkip={onSkip} showKeyboardHint={showKeyboardHints} />
       {header && (
         <h2 className="mt-3 text-pretty font-serif font-theme-heading text-lg leading-tight text-foreground">{header}</h2>
       )}
       <div className="mt-2 flex min-h-9 items-center justify-between gap-3">
         <p className="text-sm text-foreground">{compose ? SCRIPT.hints.compose : SCRIPT.hints.respond}</p>
-        {compose ? <Kbd>↵</Kbd> : <PrimaryButton label={SCRIPT.controls.next} onPrimary={onPrimary} />}
+        {compose ? showKeyboardHints && <Kbd>↵</Kbd> : <PrimaryButton label={SCRIPT.controls.next} onPrimary={onPrimary} showKeyboardHint={showKeyboardHints} />}
       </div>
     </>
   );
 }
 
-function PrimaryButton({ label, onPrimary, size = 'sm' }: { label: string; onPrimary: () => void; size?: 'sm' | 'default' }) {
+function PrimaryButton({ label, onPrimary, size = 'sm', showKeyboardHint }: { label: string; onPrimary: () => void; size?: 'sm' | 'default'; showKeyboardHint: boolean }) {
   return (
     <Button type="button" size={size} className="gap-2 pr-2.5" onClick={onPrimary}>
       {label}
-      <Kbd onPrimary>↵</Kbd>
+      {showKeyboardHint && <Kbd onPrimary>↵</Kbd>}
     </Button>
   );
 }
@@ -199,11 +202,11 @@ function BackControl({ onBack }: { onBack?: () => void }) {
   );
 }
 
-function SkipControl({ onSkip }: { onSkip?: () => void }) {
+function SkipControl({ onSkip, showKeyboardHint }: { onSkip?: () => void; showKeyboardHint: boolean }) {
   const content = (
     <>
       {SCRIPT.controls.skip}
-      <Kbd>Esc</Kbd>
+      {showKeyboardHint && <Kbd>Esc</Kbd>}
     </>
   );
   const className = 'inline-flex items-center gap-1.5 text-xs leading-none text-muted-foreground';
