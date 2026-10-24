@@ -1,7 +1,7 @@
 {
   "schema": "timeline.d32.current-node-reconciliation.delta-mapping.v1",
   "base_artifact": "evidence/agent-D32-current-node-reconciliation-H30-corrected.json",
-  "base_artifact_sha256": "40d4c076e23ff18116e71f10ffd94633246ca57b0c71dbb6b525d6ce2f65f64d",
+  "base_artifact_sha256": "22ee4d6df217eef1cef60f7e9c646b6f5fe13a45d31163afb2ffe46126facae0",
   "base_artifact_sha256_meaning": "SHA-256 of the current corrected census file named by base_artifact; package linkage, not a historical source or proof hash.",
   "actual_home": {
     "head": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
@@ -1340,9 +1340,9 @@
       "original_source_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
       "original_source_file_sha256": "",
       "current_source_file_sha256": "",
-      "scenario_mapping": "Original restart/crash/truncated-temp/discard storage predicates and same-clip restart refusal retained; no merge-positive credit. Retained body AST SHA-256 prefix 6b1885acf3b9fea9; full identity/source/authorization findings: sdk9_mapping and 0008 retained module result (log lines 17520-17697); 0037 retained original/restored-source 9-pass/1-fail result; independent 0603 and corrected 0619.",
-      "proof_ref": "sdk9_persistence_retained",
-      "credit": "confirmed_closed",
+      "scenario_mapping": "Original restart/crash/truncated-temp/discard storage predicates and same-clip restart refusal retained; no merge-positive credit. Retained body AST SHA-256 prefix 6b1885acf3b9fea9; full identity/source/authorization findings: sdk9_mapping and 0008 retained module result (log lines 17520-17697); 0037 retained original/restored-source 9-pass/1-fail result; independent 0603 and corrected 0619. CURRENT CHALLENGE0649: this mapping is retained as historical inventory only, superseded for current restart coverage. Independent0645 rejects older38af executed-source custody; current exact restart fails at draft (_FakeTimelines.history absent), within actual2FAIL1.92s. No current closure credit; Runtime fixture migration is unqualified.",
+      "proof_ref": "sdk9_persistence_retained;persistence_current_challenge0649",
+      "credit": "historical_challenged",
       "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
@@ -1819,6 +1819,500 @@
       "proof_ref": "h32_track_labels_retained",
       "credit": "confirmed_closed",
       "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_clip_scalar_provider.py::test_provider_unchanged_publication_and_aba_refuse_old_inverse[False-occurrence:f2-occurrence/clip:f2-agent-clear-clip-asset]",
+      "current_node_id": "tests/sdk/test_timeline_clip_scalar_provider.py::test_provider_unchanged_publication_and_aba_refuse_old_inverse[False-occurrence:f2-occurrence/clip:f2-agent-clear-clip-asset]",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_provider_unchanged_publication_and_aba_refuse_old_inverse",
+      "current_function": "test_provider_unchanged_publication_and_aba_refuse_old_inverse",
+      "function_renamed": "no",
+      "current_function_line": "64",
+      "original_body_ast_sha256": "35e30eba7b1030476cc81686f8a59845ad05cdd133f377f4b1d1461db6285d69",
+      "current_body_ast_sha256": "35e30eba7b1030476cc81686f8a59845ad05cdd133f377f4b1d1461db6285d69",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "1428644d1f81787cbb283f5bfe8eab0b717970928ab46ccd3ccf5ae109e1888c",
+      "current_source_file_sha256": "1428644d1f81787cbb283f5bfe8eab0b717970928ab46ccd3ccf5ae109e1888c",
+      "scenario_mapping": "provider publication preserves unchanged scalar and refuses old ABA inverse",
+      "proof_ref": "runtime_R2_root_originals_0622;runtime_R2_root_review_0625",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
+      "current_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
+      "current_function": "test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
+      "function_renamed": "no",
+      "current_function_line": "167",
+      "original_body_ast_sha256": "62b8eb5602a59a936a24134d77a7faf18873007cf8a1eac30830091cf394730c",
+      "current_body_ast_sha256": "62b8eb5602a59a936a24134d77a7faf18873007cf8a1eac30830091cf394730c",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "19a04ccf8cc3fa30cd067c55b6a3941d4c2f46270fb850ce37ca92353f40c148",
+      "current_source_file_sha256": "19a04ccf8cc3fa30cd067c55b6a3941d4c2f46270fb850ce37ca92353f40c148",
+      "scenario_mapping": "authenticated created child survives stage/reload/inverse/redo with exact closure",
+      "proof_ref": "runtime_R2_root_originals_0622;runtime_R2_root_review_0625",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-False-child]",
+      "current_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-False-child]",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_provider_root_child_aliases_guard_equal_state_publications",
+      "current_function": "test_provider_root_child_aliases_guard_equal_state_publications",
+      "function_renamed": "no",
+      "current_function_line": "199",
+      "original_body_ast_sha256": "9957d670578cdae04b26a2db26953532913552c34f74b667457ffb192a43c059",
+      "current_body_ast_sha256": "9957d670578cdae04b26a2db26953532913552c34f74b667457ffb192a43c059",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "19a04ccf8cc3fa30cd067c55b6a3941d4c2f46270fb850ce37ca92353f40c148",
+      "current_source_file_sha256": "19a04ccf8cc3fa30cd067c55b6a3941d4c2f46270fb850ce37ca92353f40c148",
+      "scenario_mapping": "provider-root child alias equal-state publication remains guarded across both flags",
+      "proof_ref": "runtime_R2_root_originals_0622;runtime_R2_root_review_0625",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-True-child]",
+      "current_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-True-child]",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_provider_root_child_aliases_guard_equal_state_publications",
+      "current_function": "test_provider_root_child_aliases_guard_equal_state_publications",
+      "function_renamed": "no",
+      "current_function_line": "199",
+      "original_body_ast_sha256": "9957d670578cdae04b26a2db26953532913552c34f74b667457ffb192a43c059",
+      "current_body_ast_sha256": "9957d670578cdae04b26a2db26953532913552c34f74b667457ffb192a43c059",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "19a04ccf8cc3fa30cd067c55b6a3941d4c2f46270fb850ce37ca92353f40c148",
+      "current_source_file_sha256": "19a04ccf8cc3fa30cd067c55b6a3941d4c2f46270fb850ce37ca92353f40c148",
+      "scenario_mapping": "provider-root child alias equal-state publication remains guarded across both flags",
+      "proof_ref": "runtime_R2_root_originals_0622;runtime_R2_root_review_0625",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-False-child]",
+      "current_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-False-child]",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_provider_root_child_aliases_guard_equal_state_publications",
+      "current_function": "test_provider_root_child_aliases_guard_equal_state_publications",
+      "function_renamed": "no",
+      "current_function_line": "199",
+      "original_body_ast_sha256": "9957d670578cdae04b26a2db26953532913552c34f74b667457ffb192a43c059",
+      "current_body_ast_sha256": "9957d670578cdae04b26a2db26953532913552c34f74b667457ffb192a43c059",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "19a04ccf8cc3fa30cd067c55b6a3941d4c2f46270fb850ce37ca92353f40c148",
+      "current_source_file_sha256": "19a04ccf8cc3fa30cd067c55b6a3941d4c2f46270fb850ce37ca92353f40c148",
+      "scenario_mapping": "provider-root child alias equal-state publication remains guarded across both flags",
+      "proof_ref": "runtime_R2_root_originals_0622;runtime_R2_root_review_0625",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-True-child]",
+      "current_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-True-child]",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_provider_root_child_aliases_guard_equal_state_publications",
+      "current_function": "test_provider_root_child_aliases_guard_equal_state_publications",
+      "function_renamed": "no",
+      "current_function_line": "199",
+      "original_body_ast_sha256": "9957d670578cdae04b26a2db26953532913552c34f74b667457ffb192a43c059",
+      "current_body_ast_sha256": "9957d670578cdae04b26a2db26953532913552c34f74b667457ffb192a43c059",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "19a04ccf8cc3fa30cd067c55b6a3941d4c2f46270fb850ce37ca92353f40c148",
+      "current_source_file_sha256": "19a04ccf8cc3fa30cd067c55b6a3941d4c2f46270fb850ce37ca92353f40c148",
+      "scenario_mapping": "provider-root child alias equal-state publication remains guarded across both flags",
+      "proof_ref": "runtime_R2_root_originals_0622;runtime_R2_root_review_0625",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_commit_provider_scalar.py::test_occurrence_inverse_reuses_original_images_and_preserves_later_sibling_pins",
+      "current_node_id": "tests/sdk/test_timeline_commit_provider_scalar.py::test_occurrence_inverse_reuses_original_images_and_preserves_later_sibling_pins",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_occurrence_inverse_reuses_original_images_and_preserves_later_sibling_pins",
+      "current_function": "test_occurrence_inverse_reuses_original_images_and_preserves_later_sibling_pins",
+      "function_renamed": "no",
+      "current_function_line": "299",
+      "original_body_ast_sha256": "4c833e157815b74bd53721223f5811c636e63d0ae1cd1aafa1ae7b2b06a3e3b7",
+      "current_body_ast_sha256": "4c833e157815b74bd53721223f5811c636e63d0ae1cd1aafa1ae7b2b06a3e3b7",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "15b731bc8598c83639e12110a042b1b2ac9f31ba44cf25883a18a0bbe7b656ea",
+      "current_source_file_sha256": "15b731bc8598c83639e12110a042b1b2ac9f31ba44cf25883a18a0bbe7b656ea",
+      "scenario_mapping": "occurrence inverse reuses original media and preserves later sibling pins",
+      "proof_ref": "runtime_R2_root_originals_0622;runtime_R2_root_review_0625",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-0]",
+      "current_node_id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-0]",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_authenticated_delete_reload_exact_inverse_redo",
+      "current_function": "test_authenticated_delete_reload_exact_inverse_redo",
+      "function_renamed": "no",
+      "current_function_line": "21",
+      "original_body_ast_sha256": "b43c91288fd6a15796608facce291582f7fac9e4e249815d4c6c42b9e8de0281",
+      "current_body_ast_sha256": "b43c91288fd6a15796608facce291582f7fac9e4e249815d4c6c42b9e8de0281",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "170100955c0699e1aed0bed5551edb33e8cd0bda9350c85c8bc31266fe46b928",
+      "current_source_file_sha256": "170100955c0699e1aed0bed5551edb33e8cd0bda9350c85c8bc31266fe46b928",
+      "scenario_mapping": "authenticated delete reload inverse redo preserves exact provider closure",
+      "proof_ref": "runtime_R2_root_originals_0622;runtime_R2_root_review_0625",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-1]",
+      "current_node_id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-1]",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_authenticated_delete_reload_exact_inverse_redo",
+      "current_function": "test_authenticated_delete_reload_exact_inverse_redo",
+      "function_renamed": "no",
+      "current_function_line": "21",
+      "original_body_ast_sha256": "b43c91288fd6a15796608facce291582f7fac9e4e249815d4c6c42b9e8de0281",
+      "current_body_ast_sha256": "b43c91288fd6a15796608facce291582f7fac9e4e249815d4c6c42b9e8de0281",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "170100955c0699e1aed0bed5551edb33e8cd0bda9350c85c8bc31266fe46b928",
+      "current_source_file_sha256": "170100955c0699e1aed0bed5551edb33e8cd0bda9350c85c8bc31266fe46b928",
+      "scenario_mapping": "authenticated delete reload inverse redo preserves exact provider closure",
+      "proof_ref": "runtime_R2_root_originals_0622;runtime_R2_root_review_0625",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_helper_capture.py::test_genuine_anchor_capture_has_exact_source_scope_and_base_pair",
+      "current_node_id": "tests/sdk/test_timeline_helper_capture.py::test_genuine_anchor_capture_has_exact_source_scope_and_base_pair",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_genuine_anchor_capture_has_exact_source_scope_and_base_pair",
+      "current_function": "test_genuine_anchor_capture_has_exact_source_scope_and_base_pair",
+      "function_renamed": "no",
+      "current_function_line": "69",
+      "original_body_ast_sha256": "47592eef10999f869b80c3df6c07ae612ea9adb47b0ea4551b62090387497df2",
+      "current_body_ast_sha256": "47592eef10999f869b80c3df6c07ae612ea9adb47b0ea4551b62090387497df2",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "2e4925262bbc605ab199ab0d4dea92e9cc5724eb4fc5865e2030b0307fe890e2",
+      "current_source_file_sha256": "c0379c95ffe6e1f8f7ab9676d46e9b3b9cbf0fdacc6717a28caacedd431ef46a",
+      "scenario_mapping": "anchor capture binds exact source scope and base pair",
+      "proof_ref": "runtime_helper_originals_0622;runtime_helper_review_0627",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_helper_capture.py::test_nudge_restart_merges_peer_other_clip",
+      "current_node_id": "tests/sdk/test_timeline_helper_capture.py::test_nudge_restart_merges_peer_other_clip",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_nudge_restart_merges_peer_other_clip",
+      "current_function": "test_nudge_restart_merges_peer_other_clip",
+      "function_renamed": "no",
+      "current_function_line": "101",
+      "original_body_ast_sha256": "f575273ade5f953f503e9270cecce483fb39e79e1ed60cd0a8b6be419428571f",
+      "current_body_ast_sha256": "d4cb8e361202cef863ced93f203a7fdd724401dfc6c0a6a85d09e9bf3105f0a1",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "2e4925262bbc605ab199ab0d4dea92e9cc5724eb4fc5865e2030b0307fe890e2",
+      "current_source_file_sha256": "c0379c95ffe6e1f8f7ab9676d46e9b3b9cbf0fdacc6717a28caacedd431ef46a",
+      "scenario_mapping": "nudge/restart merges a peer's other clip; original-census fixture pop(_runtime_document) becomes pop(_runtime_document, None), retaining all original behavior assertions; reviewed fixture0114, not byte-identical to full25691.",
+      "proof_ref": "runtime_helper_originals_0622;runtime_helper_review_0627",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_helper_capture.py::test_conflicts_and_uncaptured_edits_never_write[same]",
+      "current_node_id": "tests/sdk/test_timeline_helper_capture.py::test_conflicts_and_uncaptured_edits_never_write[same]",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_conflicts_and_uncaptured_edits_never_write",
+      "current_function": "test_conflicts_and_uncaptured_edits_never_write",
+      "function_renamed": "no",
+      "current_function_line": "135",
+      "original_body_ast_sha256": "8f16e5ed3eedc852067adaa24fba78273e8aac332f8bda9e5635b621382124c8",
+      "current_body_ast_sha256": "8f16e5ed3eedc852067adaa24fba78273e8aac332f8bda9e5635b621382124c8",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "2e4925262bbc605ab199ab0d4dea92e9cc5724eb4fc5865e2030b0307fe890e2",
+      "current_source_file_sha256": "c0379c95ffe6e1f8f7ab9676d46e9b3b9cbf0fdacc6717a28caacedd431ef46a",
+      "scenario_mapping": "same-clip conflict and uncaptured edits never write",
+      "proof_ref": "runtime_helper_originals_0622;runtime_helper_review_0627",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[after]",
+      "current_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[after]",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_journal_tamper_and_forged_capture_refuse",
+      "current_function": "test_journal_tamper_and_forged_capture_refuse",
+      "function_renamed": "no",
+      "current_function_line": "155",
+      "original_body_ast_sha256": "62736fbd322f21ce56866b93c0adb00cfb0139e094f031855186558674c2f356",
+      "current_body_ast_sha256": "62736fbd322f21ce56866b93c0adb00cfb0139e094f031855186558674c2f356",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "2e4925262bbc605ab199ab0d4dea92e9cc5724eb4fc5865e2030b0307fe890e2",
+      "current_source_file_sha256": "c0379c95ffe6e1f8f7ab9676d46e9b3b9cbf0fdacc6717a28caacedd431ef46a",
+      "scenario_mapping": "tampered or forged capture journal input is refused",
+      "proof_ref": "runtime_helper_originals_0622;runtime_helper_review_0627",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[commands]",
+      "current_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[commands]",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_journal_tamper_and_forged_capture_refuse",
+      "current_function": "test_journal_tamper_and_forged_capture_refuse",
+      "function_renamed": "no",
+      "current_function_line": "155",
+      "original_body_ast_sha256": "62736fbd322f21ce56866b93c0adb00cfb0139e094f031855186558674c2f356",
+      "current_body_ast_sha256": "62736fbd322f21ce56866b93c0adb00cfb0139e094f031855186558674c2f356",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "2e4925262bbc605ab199ab0d4dea92e9cc5724eb4fc5865e2030b0307fe890e2",
+      "current_source_file_sha256": "c0379c95ffe6e1f8f7ab9676d46e9b3b9cbf0fdacc6717a28caacedd431ef46a",
+      "scenario_mapping": "tampered or forged capture journal input is refused",
+      "proof_ref": "runtime_helper_originals_0622;runtime_helper_review_0627",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[hash]",
+      "current_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[hash]",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_journal_tamper_and_forged_capture_refuse",
+      "current_function": "test_journal_tamper_and_forged_capture_refuse",
+      "function_renamed": "no",
+      "current_function_line": "155",
+      "original_body_ast_sha256": "62736fbd322f21ce56866b93c0adb00cfb0139e094f031855186558674c2f356",
+      "current_body_ast_sha256": "62736fbd322f21ce56866b93c0adb00cfb0139e094f031855186558674c2f356",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "2e4925262bbc605ab199ab0d4dea92e9cc5724eb4fc5865e2030b0307fe890e2",
+      "current_source_file_sha256": "c0379c95ffe6e1f8f7ab9676d46e9b3b9cbf0fdacc6717a28caacedd431ef46a",
+      "scenario_mapping": "tampered or forged capture journal input is refused",
+      "proof_ref": "runtime_helper_originals_0622;runtime_helper_review_0627",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[reads]",
+      "current_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[reads]",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_journal_tamper_and_forged_capture_refuse",
+      "current_function": "test_journal_tamper_and_forged_capture_refuse",
+      "function_renamed": "no",
+      "current_function_line": "155",
+      "original_body_ast_sha256": "62736fbd322f21ce56866b93c0adb00cfb0139e094f031855186558674c2f356",
+      "current_body_ast_sha256": "62736fbd322f21ce56866b93c0adb00cfb0139e094f031855186558674c2f356",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "2e4925262bbc605ab199ab0d4dea92e9cc5724eb4fc5865e2030b0307fe890e2",
+      "current_source_file_sha256": "c0379c95ffe6e1f8f7ab9676d46e9b3b9cbf0fdacc6717a28caacedd431ef46a",
+      "scenario_mapping": "tampered or forged capture journal input is refused",
+      "proof_ref": "runtime_helper_originals_0622;runtime_helper_review_0627",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_helper_capture.py::test_helper_lost_ack_retries_exact_request",
+      "current_node_id": "tests/sdk/test_timeline_helper_capture.py::test_helper_lost_ack_retries_exact_request",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_helper_lost_ack_retries_exact_request",
+      "current_function": "test_helper_lost_ack_retries_exact_request",
+      "function_renamed": "no",
+      "current_function_line": "181",
+      "original_body_ast_sha256": "f019b9b6e30411c981c5e46b52a1fe6f06c2dbf87f53752b09ae2be7cf68d73b",
+      "current_body_ast_sha256": "f019b9b6e30411c981c5e46b52a1fe6f06c2dbf87f53752b09ae2be7cf68d73b",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "2e4925262bbc605ab199ab0d4dea92e9cc5724eb4fc5865e2030b0307fe890e2",
+      "current_source_file_sha256": "c0379c95ffe6e1f8f7ab9676d46e9b3b9cbf0fdacc6717a28caacedd431ef46a",
+      "scenario_mapping": "lost helper acknowledgement retries exact request",
+      "proof_ref": "runtime_helper_originals_0622;runtime_helper_review_0627",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[+1s]",
+      "current_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[+1s]",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_cut_nudge_restart_merges_other_cut",
+      "current_function": "test_cut_nudge_restart_merges_other_cut",
+      "function_renamed": "no",
+      "current_function_line": "222",
+      "original_body_ast_sha256": "4d61c6261a9b59b6348e1f5868e03fe46dda10b78c9db74084e9ef90d9ba13e2",
+      "current_body_ast_sha256": "4d61c6261a9b59b6348e1f5868e03fe46dda10b78c9db74084e9ef90d9ba13e2",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "2e4925262bbc605ab199ab0d4dea92e9cc5724eb4fc5865e2030b0307fe890e2",
+      "current_source_file_sha256": "c0379c95ffe6e1f8f7ab9676d46e9b3b9cbf0fdacc6717a28caacedd431ef46a",
+      "scenario_mapping": "eligible non-second cut/nudge restart merges other cut",
+      "proof_ref": "runtime_helper_originals_0622;runtime_helper_review_0627",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[None]",
+      "current_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[None]",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_cut_nudge_restart_merges_other_cut",
+      "current_function": "test_cut_nudge_restart_merges_other_cut",
+      "function_renamed": "no",
+      "current_function_line": "222",
+      "original_body_ast_sha256": "4d61c6261a9b59b6348e1f5868e03fe46dda10b78c9db74084e9ef90d9ba13e2",
+      "current_body_ast_sha256": "4d61c6261a9b59b6348e1f5868e03fe46dda10b78c9db74084e9ef90d9ba13e2",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "2e4925262bbc605ab199ab0d4dea92e9cc5724eb4fc5865e2030b0307fe890e2",
+      "current_source_file_sha256": "c0379c95ffe6e1f8f7ab9676d46e9b3b9cbf0fdacc6717a28caacedd431ef46a",
+      "scenario_mapping": "eligible non-second cut/nudge restart merges other cut",
+      "proof_ref": "runtime_helper_originals_0622;runtime_helper_review_0627",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[collection]",
+      "current_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[collection]",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_cut_nudge_guarded_inputs_never_write",
+      "current_function": "test_cut_nudge_guarded_inputs_never_write",
+      "function_renamed": "no",
+      "current_function_line": "250",
+      "original_body_ast_sha256": "a76aacef97d3260e04ef1e4680173e86e0365863321211dea8458abdfbf72769",
+      "current_body_ast_sha256": "a76aacef97d3260e04ef1e4680173e86e0365863321211dea8458abdfbf72769",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "2e4925262bbc605ab199ab0d4dea92e9cc5724eb4fc5865e2030b0307fe890e2",
+      "current_source_file_sha256": "c0379c95ffe6e1f8f7ab9676d46e9b3b9cbf0fdacc6717a28caacedd431ef46a",
+      "scenario_mapping": "guarded cut/nudge input never writes",
+      "proof_ref": "runtime_helper_originals_0622;runtime_helper_review_0627",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[same]",
+      "current_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[same]",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_cut_nudge_guarded_inputs_never_write",
+      "current_function": "test_cut_nudge_guarded_inputs_never_write",
+      "function_renamed": "no",
+      "current_function_line": "250",
+      "original_body_ast_sha256": "a76aacef97d3260e04ef1e4680173e86e0365863321211dea8458abdfbf72769",
+      "current_body_ast_sha256": "a76aacef97d3260e04ef1e4680173e86e0365863321211dea8458abdfbf72769",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "2e4925262bbc605ab199ab0d4dea92e9cc5724eb4fc5865e2030b0307fe890e2",
+      "current_source_file_sha256": "c0379c95ffe6e1f8f7ab9676d46e9b3b9cbf0fdacc6717a28caacedd431ef46a",
+      "scenario_mapping": "guarded cut/nudge input never writes",
+      "proof_ref": "runtime_helper_originals_0622;runtime_helper_review_0627",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[word-source]",
+      "current_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[word-source]",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_cut_nudge_guarded_inputs_never_write",
+      "current_function": "test_cut_nudge_guarded_inputs_never_write",
+      "function_renamed": "no",
+      "current_function_line": "250",
+      "original_body_ast_sha256": "a76aacef97d3260e04ef1e4680173e86e0365863321211dea8458abdfbf72769",
+      "current_body_ast_sha256": "a76aacef97d3260e04ef1e4680173e86e0365863321211dea8458abdfbf72769",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "2e4925262bbc605ab199ab0d4dea92e9cc5724eb4fc5865e2030b0307fe890e2",
+      "current_source_file_sha256": "c0379c95ffe6e1f8f7ab9676d46e9b3b9cbf0fdacc6717a28caacedd431ef46a",
+      "scenario_mapping": "guarded cut/nudge input never writes",
+      "proof_ref": "runtime_helper_originals_0622;runtime_helper_review_0627",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_composed_schema.py::test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden",
+      "current_node_id": "tests/sdk/test_timeline_composed_schema.py::test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden",
+      "current_function": "test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden",
+      "function_renamed": "no",
+      "current_function_line": "80",
+      "original_body_ast_sha256": "b8fad22ac9c614e4495790a44fa2ca8ee2d42a8c8d487c47c94474cd0dce8490",
+      "current_body_ast_sha256": "766a0bf39d1a78a80bad425af51a42383d6192670d56e82e22c6a4f5221eaa4e",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "d527bda2ae6cf6b8f130e659e09345bf73f6a549dfa66a644d7f0a52c7937a7a",
+      "current_source_file_sha256": "db4ebe8523c0f0678e63602188c18d69314aa2a9838e31f67ab822b28e655f92",
+      "scenario_mapping": "registered operations have closed canonical args and valid golden; reviewed fixture correction adds media.admit and the explicit six provider-only operations, with pin-only inputs/select=None and unchanged 30-branch wire inventory; original closed-args/unknown-arg/golden and exact-inventory predicates retained, not original-byte identity.",
+      "proof_ref": "schema_census_fix_0605;schema_census_review_0622;schema_integrated_0634",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_current_union_schema.py::test_closed_union_operation_inventory_is_exactly_the_supported_cohort",
+      "current_node_id": "tests/sdk/test_timeline_current_union_schema.py::test_closed_union_operation_inventory_is_exactly_the_supported_cohort",
+      "phase": "call",
+      "lane": "SDK",
+      "original_function": "test_closed_union_operation_inventory_is_exactly_the_supported_cohort",
+      "current_function": "test_closed_union_operation_inventory_is_exactly_the_supported_cohort",
+      "function_renamed": "no",
+      "current_function_line": "230",
+      "original_body_ast_sha256": "433130cfa4c2e29ff91bddc805ae160a0fb5c5819f1deb5a6094789dcfa61e15",
+      "current_body_ast_sha256": "296a5c275c837f20aef3103d01430b746de00dc16e63bc88c638f626b557803c",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "bbe8e1f48f03f01677a0a958b1321b62d61ad45b7e3f802e7288acfba4950325",
+      "current_source_file_sha256": "94fe598272a1a224bfa58f65a9fc5fa9d312aeb5a9b880202096215862db46d0",
+      "scenario_mapping": "closed union operation inventory is exactly supported cohort; reviewed fixture correction adds media.admit and the explicit six provider-only operations, with pin-only inputs/select=None and unchanged 30-branch wire inventory; original closed-args/unknown-arg/golden and exact-inventory predicates retained, not original-byte identity.",
+      "proof_ref": "schema_census_fix_0605;schema_census_review_0622;schema_integrated_0634",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/timeline/test_authoring_media.py::test_document_publish_forwards_new_stale_head_to_runtime",
+      "current_node_id": "tests/timeline/test_authoring_media.py::test_document_publish_forwards_new_stale_head_to_runtime",
+      "phase": "call",
+      "lane": "Runtime",
+      "original_function": "test_document_publish_forwards_new_stale_head_to_runtime",
+      "current_function": "test_document_publish_forwards_new_stale_head_to_runtime",
+      "function_renamed": "no",
+      "current_function_line": "229",
+      "original_body_ast_sha256": "d4240a22f3b5976127f6e1e9a39f24f8bccd35197bea0b6051c6f679011d2fe7",
+      "current_body_ast_sha256": "ff9cb3644394c1b9d730251ec4014939bd48c6b90cb01a8ddc488df3cbb37389",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "755e4c572550cecd672e62065997fdd2de72c09e1dfd0e8929cd50f4b0159303",
+      "current_source_file_sha256": "0c23fc68bfcd32342cd4331a69a725d8d2ffe4d48527dfc795f402f222fbc487",
+      "scenario_mapping": "Original c36 Session.commit_many/fetch_bundle collaborators migrated to public timelines open/commit mocks. Six original file/sidecar/import assertions remain AST-identical. Original swap-media and exact base-pair checks move from nested collaborators to observed request/open_bundle assertions. RuntimeError from old Session becomes ValueError surfaced from WorkspaceClientError409; same stale-head refusal/no-write intent. Original9 assertions -> current22; not byte/AST identity to c36. One source-mode mocked unit only: the production timeline_document.main publish branch uses TimelineSession.open/commit_many and the public timelines.commit boundary. Runtime was supplied on PYTHONPATH but no Runtime module/API was exercised. No HTTP, installed, authenticated actor, full reply, history/undo or full-suite qualification.",
+      "proof_ref": "stale_head_0638_review0645",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_preserves_complete_closure_and_followups",
+      "current_node_id": "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_preserves_complete_closure_and_followups",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_ordinary_publish_preserves_complete_closure_and_followups",
+      "current_function": "test_ordinary_publish_preserves_complete_closure_and_followups",
+      "function_renamed": "no",
+      "current_function_line": "22",
+      "original_body_ast_sha256": "ab9660943a2af977f069eb3ad3df1572c2cf8195d1f04d0eaecd8d272d55c664",
+      "current_body_ast_sha256": "ab9660943a2af977f069eb3ad3df1572c2cf8195d1f04d0eaecd8d272d55c664",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "df643aef3c7e125de45b2b759de3402fc38f82e1ba4439a16e1612ade10a938c",
+      "current_source_file_sha256": "df643aef3c7e125de45b2b759de3402fc38f82e1ba4439a16e1612ade10a938c",
+      "scenario_mapping": "Original full25691/2007/0557/HOME file, function/body AST and all22 assertion AST hashes unchanged. Canonical complete closure, media/opaque/null-vs-missing, narration/transcript followups, receipt, new head, clean journal and saved reload retained. One original source-mode outcome on Agent1f15/Runtime1d9 only; all22 original predicates retained. Real Runtime/provider via the in-process fixture, no renderer import. No HTTP/socket, installed-profile, full-suite/browser/provisioning or complete reply-variant qualification. Seven0557 publication passes already in236 remain unchanged and earn no second credit.",
+      "proof_ref": "normal_closure_home0640_review0645",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     }
   ],
   "non_credit_dispositions": [
@@ -2252,6 +2746,403 @@
         "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-persistence-fixture-0008/log.txt",
         "limit": "Historical stored log hash is preserved in the unchanged proof record, but this log is absent locally and was not rehashed. Durable 0008/0037 reports and corrected independent source/receipt findings remain the available basis."
       }
+    ]
+  },
+  "root_helper_schema_mapping": {
+    "exact_count": 24,
+    "roots": [
+      "tests/sdk/test_timeline_clip_scalar_provider.py::test_provider_unchanged_publication_and_aba_refuse_old_inverse[False-occurrence:f2-occurrence/clip:f2-agent-clear-clip-asset]",
+      "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
+      "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-False-child]",
+      "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-True-child]",
+      "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-False-child]",
+      "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-True-child]",
+      "tests/sdk/test_timeline_commit_provider_scalar.py::test_occurrence_inverse_reuses_original_images_and_preserves_later_sibling_pins",
+      "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-0]",
+      "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-1]"
+    ],
+    "eligible_helpers": [
+      "tests/sdk/test_timeline_helper_capture.py::test_genuine_anchor_capture_has_exact_source_scope_and_base_pair",
+      "tests/sdk/test_timeline_helper_capture.py::test_nudge_restart_merges_peer_other_clip",
+      "tests/sdk/test_timeline_helper_capture.py::test_conflicts_and_uncaptured_edits_never_write[same]",
+      "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[after]",
+      "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[commands]",
+      "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[hash]",
+      "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[reads]",
+      "tests/sdk/test_timeline_helper_capture.py::test_helper_lost_ack_retries_exact_request",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[+1s]",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[None]",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[collection]",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[same]",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[word-source]"
+    ],
+    "schema_census": [
+      "tests/sdk/test_timeline_composed_schema.py::test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden",
+      "tests/sdk/test_timeline_current_union_schema.py::test_closed_union_operation_inventory_is_exactly_the_supported_cohort"
+    ],
+    "source_refs": {
+      "agent_current": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+      "schema_current": "0b4255fd8a1c20b089093cb2508394e896f54a96",
+      "original_census": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "schema_reviewed_author": "3b995372448dd8f8f85f23380adb153ea3270d80",
+      "reviewed_2007_baseline": "2007cf7aaf5d304964e68a33e967502a16de1d24"
+    },
+    "junit_membership": {
+      "root": {
+        "expected": 9,
+        "matched": 9,
+        "missing": [],
+        "unexpected": [],
+        "timing_seconds": 3.63,
+        "result": "PASS",
+        "membership_basis": "Retained author/independent review reports, not fresh raw JUnit validation; raw receipt unavailable locally.",
+        "reported_junit": "workers/rt-F-R2-root-originals-0622/f-r2-root-originals-junit.xml"
+      },
+      "helper": {
+        "expected": 13,
+        "matched": 13,
+        "missing": [],
+        "unexpected": [],
+        "timing_seconds": 73.955,
+        "result": "PASS",
+        "excluded_open": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]",
+        "membership_basis": "Retained author/independent review reports, not fresh raw JUnit validation; raw receipt unavailable locally.",
+        "reported_junit": "workers/rt-F-helper-originals-0622/helper-originals-eligible.xml"
+      },
+      "schema": {
+        "expected": 2,
+        "matched": 2,
+        "missing": [],
+        "unexpected": [],
+        "timing_seconds": 0.89,
+        "result": "PASS",
+        "membership_basis": "Retained author/independent review reports, not fresh raw JUnit validation; raw receipt unavailable locally.",
+        "reported_junit": "/tmp/w-474a6bd7fd/schema-integrated.xml"
+      }
+    },
+    "proof_refs": {
+      "root": [
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625"
+      ],
+      "helper": [
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
+      ],
+      "schema": [
+        "schema_census_fix_0605",
+        "schema_census_review_0622",
+        "schema_integrated_0634"
+      ]
+    },
+    "root_limits": [
+      "Provider/source qualification through RuntimeCommitService.commit -> commands.execute -> inverse/history/closure validation; DetachedPort is in-memory CAS/history with fixture ABI metadata/exceptions. No HTTP, installed-runtime, live actor, complete C0 wire shape or full reply claim. Initial literal pre/post hash capture failed because tmpdir was a regular file; fallback HEAD-to-worktree and independent 17-file audit do not supply a separately preserved immediate pre/post runtime-import snapshot."
+    ],
+    "helper_limits": [
+      "Only 13 exact eligible originals, source/in-process Runtime execution. Independent0627 confirms actual source/function-body/AST hashes match author pre/post evidence and module origins. No HTTP, bearer-auth, installed-runtime, browser, full reply or live actor proof. Child-word second is already D23 deferred, unchanged, visibly open and unrun."
+    ],
+    "schema_contract": {
+      "provider_only_operations": [
+        "media.admit",
+        "occurrence.fork",
+        "occurrence.place-shared",
+        "timeline.duplicate",
+        "timeline.restructure",
+        "clip.duplicate-media"
+      ],
+      "frozen_wire_branch_count": 30,
+      "provider_source": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+      "fixture_blobs": {
+        "composed": "10e8adce785b69f5b853811e35f3a0d554970a74",
+        "union": "f118a555ffd655e97ddcacf54ea2e0c84f6468ce"
+      }
+    },
+    "production_caller_review": {
+      "requirement": "Acceptance includes the production caller uses it; complete contract expectations are preserved separately, not inferred from these finite tests.",
+      "root_path": "Retained0625: real RuntimeCommitService.commit -> commands.execute -> inverse/history/closure; DetachedPort supplies in-process CAS/history.",
+      "helper_path": "Retained0627: Checkout helper capture/save/reload/publish -> existing commit_timeline -> Runtime service/provider, with original refusal and replay assertions.",
+      "schema_path": "Retained0622/0634: commands.operations media.admit registration uses native_media_admission PARAMETERS/handler; authoring_commit_request emits pin-only and selection forms. Inventory tests alone prove no complete production wire request/reply.",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-corrected.json#/CONTRACTINVENTORY",
+      "proof_field_coverage_ref": "agent-D32-current-node-reconciliation-H30-corrected.json#/PROOF_FIELD_COVERAGE",
+      "limit": "No full reply/all optional fields, HTTP, installed-runtime, live actor or blanket production C0 acceptance claim."
+    },
+    "remaining_next_author_ids": [
+      "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]",
+      "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_preserves_complete_closure_and_followups",
+      "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head",
+      "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param",
+      "tests/test_generic_host.py::test_structure_pack_members_survive_harvest_cleanup_and_reopen",
+      "tests/timeline/test_authoring_media.py::test_document_publish_forwards_new_stale_head_to_runtime"
+    ],
+    "base_commit": "02bd3f1f238501ae42061d7802dd69fd34dd1821",
+    "historical_base_census_sha256": "40d4c076e23ff18116e71f10ffd94633246ca57b0c71dbb6b525d6ce2f65f64d",
+    "mapping_input_commit": "3e929c6abb592e47f25550cbf9ebc95bbfe5d4ab",
+    "mapping_input_scope": "0641 source/AST/map input only; old-parent package/status/ownership/metadata are not adopted.",
+    "breakdown": {
+      "roots": 9,
+      "eligible_helpers": 13,
+      "schema_census": 2
+    },
+    "source_deltas_from_original_census": {
+      "test_nudge_restart_merges_peer_other_clip": {
+        "original_census_body_ast_sha256": "f575273ade5f953f503e9270cecce483fb39e79e1ed60cd0a8b6be419428571f",
+        "reviewed_body_ast_sha256": "d4cb8e361202cef863ced93f203a7fdd724401dfc6c0a6a85d09e9bf3105f0a1",
+        "reviewed_source_ref": "bb50a43c915ec00c05c5ee34569a040bab8e817c"
+      },
+      "test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden": {
+        "original_census_body_ast_sha256": "b8fad22ac9c614e4495790a44fa2ca8ee2d42a8c8d487c47c94474cd0dce8490",
+        "reviewed_body_ast_sha256": "766a0bf39d1a78a80bad425af51a42383d6192670d56e82e22c6a4f5221eaa4e",
+        "reviewed_source_ref": "0b4255fd8a1c20b089093cb2508394e896f54a96"
+      },
+      "test_closed_union_operation_inventory_is_exactly_the_supported_cohort": {
+        "original_census_body_ast_sha256": "433130cfa4c2e29ff91bddc805ae160a0fb5c5819f1deb5a6094789dcfa61e15",
+        "reviewed_body_ast_sha256": "296a5c275c837f20aef3103d01430b746de00dc16e63bc88c638f626b557803c",
+        "reviewed_source_ref": "0b4255fd8a1c20b089093cb2508394e896f54a96"
+      }
+    },
+    "ast_hash_method": "SHA-256 of ast.dump(ast.Module(body=function.body,type_ignores=[]),include_attributes=False); source file hashes are raw git blob contents. Original rows use full25691 c36, current rows use tested bb50 or reviewed integrated schema0b425. Unequal hashes are explicit fixture mappings, not byte identity.",
+    "retained_sources": {
+      "runtime_R2_root_originals_0622": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-R2-root-originals-0622.md",
+        "sha256": "8dceb9b9db88818c7b3b7e88f68219e805476ee7b54bb2c4e71fa02f66eb9425"
+      },
+      "runtime_R2_root_review_0625": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-R2-root-review-0625.md",
+        "sha256": "868133cfa96845b93b3b0103a3153e094574c90fa127fa3903823bb7acbb4723"
+      },
+      "runtime_helper_originals_0622": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-helper-originals-0622.md",
+        "sha256": "08c13b4148462e16df278dc4394e9b8f70f57f84831e04be68201822a5f1e971"
+      },
+      "runtime_helper_review_0627": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-helper-review-0627.md",
+        "sha256": "e309b2a58235a6ab4f5a640f26de2faf6ee2b202c73e37b52620743e4174f193"
+      },
+      "schema_census_fix_0605": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-schema-census-fix-0605/report.md",
+        "sha256": "9596a278466d1504947b324a0614568262ca2c12a7e6d2754abff4aa88797991"
+      },
+      "schema_census_review_0622": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-schema-census-review-0622/report.md",
+        "sha256": "2888e734c7bca76fa87581268d9f5b00ff45adfc485ff8271c8e94787f278c49"
+      },
+      "schema_integrated_0634": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-schema-integrated-0634/report.md",
+        "sha256": "5c05aedf14ea22e525b4cd8ddef7f1d39dfb81b6faadf784a6bd0baecbb33ed1"
+      }
+    },
+    "schema_limits": [
+      "Two original selector/predicate mappings after reviewed fixture correction only; no commit request/reply execution or HTTP/actor qualification. Explicit six provider-only registrations and frozen 30 unique wire branches; provider registration/handler/PARAMETERS and authoring producer unchanged. 41-module and mypy1902 parity remain retained review controls, not extra census credit."
+    ],
+    "known_open_word_second": {
+      "exact_original_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]",
+      "disposition": "Existing D23 deferred relational timing; unchanged, unskipped, visibly open, unrun. This is not a new product blocker.",
+      "peer0114": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-agent-to-runtime-20261024T0114-helper-sequential-cause.md",
+      "peer0114_sha256": "e13c7afb40662bb3e232f154a8c099e5f4bd089228c023b90dfac31edcf595bb"
+    },
+    "preservation": {
+      "unchanged_other_node_records": 243,
+      "unchanged_prior_proof_records": 38,
+      "unchanged_prior_mapping_rows": 94,
+      "new_mapping_rows": 24,
+      "total_mapping_rows": 118,
+      "all267_tag": "ours",
+      "phases": {
+        "call": 262,
+        "setup": 5
+      }
+    },
+    "base_independent_review": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-count-H32-core-review-0644/report.md",
+      "sha256": "e4ecfb4cff70b1200bf5583f9e508965d47c08579dccadc449e5b8e189a9e0be",
+      "verdict": "CORE PASS and scoped metadata/cumulative correction PASS for02bd3f1f; no broad full-suite package PASS."
+    },
+    "historical_metadata0636_scope": "metadata0636 and its original pending-review wording are preserved verbatim as historical236/31 correction metadata; independent0644 resolves that scoped base review. This next24 package still requires its own independent review."
+  },
+  "current_challenge_mapping": {
+    "status": "CANDIDATE; independent package PASS pending",
+    "base_commit": "5419e0fcae202be2d8b1f517462244f5a9234913",
+    "base_census_sha256": "b7af85439f36b31c1603b162d331d9daea77dd2a2e44148f0ed369462fd59e8c",
+    "historical_base_counts": {
+      "total": 267,
+      "closed": 260,
+      "open": 7,
+      "mappings": 118
+    },
+    "official_parent_commit": "02bd3f1f238501ae42061d7802dd69fd34dd1821",
+    "official_parent_counts": {
+      "closed": 236,
+      "open": 31,
+      "mappings": 94
+    },
+    "delta": {
+      "reopened": [
+        "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history"
+      ],
+      "newly_closed": [
+        "tests/timeline/test_authoring_media.py::test_document_publish_forwards_new_stale_head_to_runtime",
+        "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_preserves_complete_closure_and_followups"
+      ],
+      "net_closed": 1
+    },
+    "counts": {
+      "total": 267,
+      "closed": 261,
+      "open": 6
+    },
+    "active_owner_counts": {
+      "Agent": 6
+    },
+    "active_family_counts": {
+      "Agent SDK / timeline unconfirmed": 4,
+      "CLI FakeCheckout fixture": 0,
+      "D09 installed-profile setup": 0,
+      "Execution/rendering/pack remainder": 1,
+      "Isolated Agent child import fence": 0,
+      "Occurrence-media inverse fixture": 0,
+      "Other task-specific unconfirmed": 0,
+      "Rendering missing result file": 0,
+      "Retired CLI/native route or stale caller": 0,
+      "Runtime child import / OPS": 1
+    },
+    "remaining_exact_original_node_ids": [
+      "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]",
+      "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head",
+      "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param",
+      "tests/test_generic_host.py::test_structure_pack_members_survive_harvest_cleanup_and_reopen"
+    ],
+    "mapping_inventory": {
+      "total": 120,
+      "current_confirmed_closed": 119,
+      "historical_challenged": 1,
+      "note": "Historical restart mapping is retained inventory, not current closure coverage; mapping count is not the261-node closed total."
+    },
+    "proof_inventory": {
+      "total": 48,
+      "unchanged_prior_records": 45,
+      "new_scoped_pass_records": 2,
+      "new_current_failure_records": 1,
+      "note": "Composite historical SDK9 proof remains unchanged, with restart current applicability superseded below. No proof record is a whole-suite PASS.",
+      "distinct_proof_refs_on_current_closed_nodes": 45,
+      "distinct_proof_refs_note": "45 defined proof records are referenced by current261 closed nodes. This is a reference count, not45 executions or blanket current wire/whole-HEAD qualification; composite proofs retain source scope."
+    },
+    "current_proof_applicability": {
+      "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history": {
+        "current_credit": false,
+        "historical_proof_refs": [
+          "sdk9_persistence_retained",
+          "sdk9_source_map_0554",
+          "sdk9_independent_0603",
+          "sdk9_corrected_0619"
+        ],
+        "current_proof_ref": "persistence_current_challenge0649",
+        "historical_mapping_credit": "superseded historical scope, challenged"
+      },
+      "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param": {
+        "current_credit": false,
+        "current_proof_ref": "persistence_current_challenge0649",
+        "record_unchanged": true
+      },
+      "tests/timeline/test_authoring_media.py::test_document_publish_forwards_new_stale_head_to_runtime": {
+        "current_credit": true,
+        "proof_ref": "stale_head_0638_review0645",
+        "scope": "One source-mode mocked unit only: the production timeline_document.main publish branch uses TimelineSession.open/commit_many and the public timelines.commit boundary. Runtime was supplied on PYTHONPATH but no Runtime module/API was exercised. No HTTP, installed, authenticated actor, full reply, history/undo or full-suite qualification."
+      },
+      "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_preserves_complete_closure_and_followups": {
+        "current_credit": true,
+        "proof_ref": "normal_closure_home0640_review0645",
+        "scope": "One original source-mode outcome on Agent1f15/Runtime1d9 only; all22 original predicates retained. Real Runtime/provider via the in-process fixture, no renderer import. No HTTP/socket, installed-profile, full-suite/browser/provisioning or complete reply-variant qualification. Seven0557 publication passes already in236 remain unchanged and earn no second credit.",
+        "historical_h32_no_renderer_failure": "Historical0557 failure remains recorded; superseded only for this selector by HOME0640/independent0645."
+      }
+    },
+    "retained_sources": {
+      "stale_author0638": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-SDK-three-originals-0638.md",
+        "sha256": "1d91d569c0f135f4544565f9571d866b3453f4db7863b07686dd684675f409bc"
+      },
+      "sdk_independent0645": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-SDK-result-review-0645.md",
+        "sha256": "384b62ceb19c06efc3c0f0ad09b51abb413f1bf915e6891327324bc2188548f0"
+      },
+      "closure_author0640": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-normal-publish-home-0640.md",
+        "sha256": "f85869f660d5f2d49df78123c94ff815d723452d1def5bc97e593c72f4493093"
+      },
+      "closure_independent0645": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-normal-publish-result-review-0645.md",
+        "sha256": "dc699a0473674a256a8f124022c5aee28f9daae31a3b71934cce995c5ce65ec6"
+      },
+      "current_failure0649": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-SDK-two-first-return-0649.md",
+        "sha256": "97b69b8fbe214c95df4d06ed40a83fb30c10f1455eafb27bf578bfaa2c2669e4"
+      },
+      "fixture_peer0654": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-runtime-to-agent-orchestrator-20261024T0654-SDK-fixture-seam.md",
+        "sha256": "b8413a452279fc353f48518d7683a4e431d544feb7284175d4fc090dbf59bb33"
+      }
+    },
+    "source_identity": {
+      "tests/timeline/test_authoring_media.py::test_document_publish_forwards_new_stale_head_to_runtime": "agent-D32-current-node-reconciliation-H30-corrected.json#/proofs/stale_head_0638_review0645/source_identity",
+      "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_preserves_complete_closure_and_followups": "agent-D32-current-node-reconciliation-H30-corrected.json#/proofs/normal_closure_home0640_review0645/source_identity",
+      "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history": "agent-D32-current-node-reconciliation-H30-corrected.json#/proofs/persistence_current_challenge0649/source_identity/tests~1sdk~1test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param": "agent-D32-current-node-reconciliation-H30-corrected.json#/proofs/persistence_current_challenge0649/source_identity/tests~1sdk~1test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param"
+    },
+    "historical_restart_mapping": {
+      "exact_original_node_id": "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "current_node_id": "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "current_function": "test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "function_renamed": "no",
+      "current_function_line": "",
+      "original_body_ast_sha256": "",
+      "current_body_ast_sha256": "",
+      "original_source_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+      "original_source_file_sha256": "",
+      "current_source_file_sha256": "",
+      "scenario_mapping": "Original restart/crash/truncated-temp/discard storage predicates and same-clip restart refusal retained; no merge-positive credit. Retained body AST SHA-256 prefix 6b1885acf3b9fea9; full identity/source/authorization findings: sdk9_mapping and 0008 retained module result (log lines 17520-17697); 0037 retained original/restored-source 9-pass/1-fail result; independent 0603 and corrected 0619.",
+      "proof_ref": "sdk9_persistence_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    "raw_custody": {
+      "reported_junit_paths": {
+        "stale": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-SDK-three-originals-0638/sdk-three-originals-publication.xml",
+        "closure": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-normal-publish-home-0640/evidence/normal-publish-home.xml",
+        "persistence_two": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-SDK-two-first-return-0649/evidence/sdk-persistence-two.xml"
+      },
+      "present_locally": {
+        "stale": false,
+        "closure": false,
+        "persistence_two": false
+      },
+      "limit": "Primary author reports and independent verdicts read and SHA-256 hashed locally. Reported raw JUnit/log directories are absent locally; reported paths are references only, with no fabricated raw digest or fresh raw-result validation. No original body was rerun."
+    },
+    "scope_policy": "Original source-mode scope only; no relabeling of retained source pins as current integration execution.",
+    "preservation": {
+      "unchanged_other_node_records": 264,
+      "unchanged_prior_proofs": 45,
+      "unchanged_prior_field_coverage": 45,
+      "unchanged_prior_mapping_rows": 117,
+      "challenged_prior_mapping_rows": 1,
+      "new_mapping_rows": 2,
+      "prior24_roots_helpers_schema": "all records/proofs/mappings unchanged",
+      "phases": {
+        "call": 262,
+        "setup": 5
+      },
+      "CONTRACTINVENTORY": "unchanged complete metadata0636 inventory; production caller uses it remains required"
+    },
+    "historical_metadata_policy": "All earlier proof/coverage/mapping inventories retain original source/result and observed-field scope. Current applicability overrides are explicit here; historical OPEN/PASS prose is not a current claim.",
+    "retained_limits": [
+      "D23 wordsecond unchanged/open/deferred, all5assertions retained",
+      "source-only helper/root limits; root initial pre/post import snapshot gap",
+      "full25691 FAIL; frozen Farm26511 source/head mismatch and96 possible closed-node failures unresolved",
+      "No farm retrospective credit, full-suite green, HTTP/installed/full-v2 acceptance, product/static/behavior test run or product edit"
     ]
   }
 }
