@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T20:00:38Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 0m -->
-# agent board, 2026-10-24T19:59:56Z
+<!-- agent | 2026-10-24T20:03:24Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 2m -->
+# agent board, 2026-10-24T20:01:10Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -132,7 +132,7 @@
 | R2 e89 whole path | Compare failing and passing history paths | Luna | Runtime measured source follow-through | merged | agt-R2-e89-wholepath-1932 | Recursive history revalidation qualified; exact per-original cost split unmeasured. Existing P4 profile14690 supplied separately. | Evidence only |
 | P4 registry preflight | Verify exact service-parsed command | Luna | Runtime profile recipe for real body | merged | agt-P4-registry-preflight-only-1944 | Exact parsed-row syntax0, positive preflight0/body17/count1, poison1/count0. Original hash,45s,tuple and registry unchanged; no body. | PREPARED |
 | U4a observer provenance | Bind qualified Runtime observer home | Luna | Normal merge complete | merged | agt-U4a-observer-home-adopt-1952 PASS | Normal tools, lock-only adoption; 15 client and schema mappings unchanged. [Report](../../workers/agt-U4a-observer-home-adopt-1952/report.md) | Home22d00393f7 / Runtime44917 |
-| E2 ABI1 retirement design | Inventory legacy branches and migration | Luna | D81 design only; critical rows first | doing | agt-E2-legacy-abi-design-2000 queued | Source-only inventory and honest legacy unknown proposal. No product or tuple change, integration merge, original body or gate credit. | Design only |
+| E2 ABI1 retirement design | Inventory legacy branches and migration | Luna | D81 design only; critical rows first | doing | agt-E2-legacy-abi-design-2000 running | Source-only inventory and honest legacy unknown proposal. No product or tuple change, integration merge, original body or gate credit. | Design only |
 Integration: Agent22d00393f7 normally adopts qualified Runtime44917 observer/watchdog. All15 canonical bytes/schema unchanged; cost e89/f51e remains exact. PARAM donor2 prepared1925 remains unmerged.
 core open: 5 tracked. PARAM candidate1929 has True2 PASS and False2 timeout45s; corrected review1938 leaves current-home True2 unproven. P4 ten-note remains open; installed render cut-blocking.
 regressions: D71 leak and CLI terminal predicates qualified. D77a staged rendering source repaired and focused proof passed; genuine installed render remains required at cut.
@@ -140,10 +140,10 @@ D69/D72: exact47 membership retained. Audit178:167 cleared,9 cited,2 restored. C
 Gates: P4 actual14690 diagnostic FAIL1/PASS2: CLI/sheet2.821s, ten-note45.407s at first undo, conflict/rerun9.630s. Exact3b2/e89/e771/635f retained. cProfile overhead uncalibrated; no unprofiled gate credit.
 D60 baseline: upstream924 terminal12396 PASS,91 FAIL,14 errors,16 skips,566 subtests. Exact276 split199 NEW-OURS/77 counterparts; mutable external Runtime scope disclosed. D67 env and D23 deferrals unchanged.
 Admission: D56 Farm/schema venue stand-down and prior source/access/cleanup refusals remain stopped. No source substitute, child, KEEP release or installed-record relabel.
-Disk: About8.7GiB free; cap6. One ended non-KEEP Agent tree remains dirty; no clean eligible tree. Refused KEEP/pin targets untouched; guarded sweep and compact follow this pass.
+Disk: 8941MiB free; cap6. Sweep3 removed0; compact packed0 and gzipped2 old logs. No ended clean non-KEEP Agent tree remains; dirty old and refused KEEP/pin targets untouched.
 Blockers: Runtime — remaining False PARAM2 timeout45s in accepted-history validation on e89. Actual P4 profile14690 published byte-exact peer1955 for unique Sol1932 interpretation and measured correction.
 Blockers: Final cut — final core and genuine installed render remain D59 gated. P4 evidence verdict1956 is PASS; original gate remains open pending Runtime measured correction.
 Next ready: Runtime unique Sol1932 interprets completed actual profile and owns measured repair. Agent original proof follows qualified source; App capture can use normal Agent22d/Runtime44917.
-live 0 / cap 6; queued 1; ready-undispatched 0. E2 Luna2000 design-only queued behind critical rows. P4 verdict1956 published and observer1952 MERGED22d; Runtime actual-profile input cleared.
-Inbox consumed through D81 E-plan19:58. Actual hub E-PLAN read; unique Agent E2 Luna2000 queued. Runtime recipe nudge1953 is superseded by completed service14690 and independent verdict1956.
+live 1 / cap 6; ready-undispatched 0. E2 Luna2000 running design-only behind critical rows. Runtime actual-profile input cleared; P4 and four tail originals await meaningful reviewed source.
+Inbox consumed through 1069530 bytes, including D81 and Runtime1953 recipe nudge. Existing P4 service14690/independent1956 satisfy that ask; E2 design2000 dispatched.
 D79 later: Inventory1831 complete; no full accepted record/context survived. Existing non-gating input request retained. No fixture or test fabricated.
