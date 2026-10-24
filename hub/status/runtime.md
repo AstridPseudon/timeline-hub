@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T15:55:31Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 1m -->
-# runtime board, 2026-10-24T15:54:21Z
+<!-- main | 2026-10-24T15:58:23Z | dispatcher heartbeat 14s | live 2 (sol 1, luna 1, other 0) | busy30 10 | status age 1m -->
+# runtime board, 2026-10-24T15:56:52Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -88,6 +88,7 @@
 | R-D62-integrated-proof | Prepare exact central HTTP proof | Luna | D66 removes separate stage | gated:D66-superseded | Prep1512; corrected1517 | No separate D62 integrated stage. Author plus security and Agent actual-home six originals suffice; cut covers remaining proof. | Evidence only |
 | R-D62-http-route | Add durable central proof output | Luna | D66 removes separate stage | merged | rt-R-D62-http-route-1524 | Installed one isolated row, outside bytes and historical XML exact. No body run; unused under D66. | Installed config only |
 | R-D62-joined-producer | Join mode, forward auth and wire | Luna | Independent security PASS | merged | Join1503; security1511 PASS | Actual8b32 tree equals reviewed e02f exactly; paired source412PASS. Agent owns six actual-home originals. [Review](../../design/rt-R-D62-security-review-1511.md) | 8b32cacea / e02f |
+| R-inverse-sequential | Resolve retained inverse input refusal | HARD Sol | Actual original1540 failure | doing | rt-R-inverse-sequential-sol-1557 | Five of six originals pass. One inverse sequential-input failure delegated; cause pending parallel Agent wholepath1546. | Actual8b32 unchanged |
 | R-recorder-abi-authority | Persist accepted recorder mode | Sol / Luna | D62 source security PASS | merged | Author1450; security1511 | Actual8b32 tree equals reviewed source; immutable mode/history tamper guards and paired412PASS. Agent home proof remains Agent-owned. | 8b32cacea / 8825 |
 | R-forward-created-authority | Authenticate forward allocation claims | Sol / Luna | D62 source security PASS | merged | Author1450; security1511 | Actual8b32 tree equals reviewed source; exact allocation/read/owner/root-write and explicit claim guards PASS. Deferred producer probe visible. | 8b32cacea / 9433 |
 | R0-D61-history-wire | Generate optional history ABI field | Luna | Joined source security PASS | merged | Wire1454; security1511 | Actual8b32 has canonical15 exact reviewed6e8. Schema867f and optional enum1/2 published; normal consumers ready. | 8b32cacea / 6e8 |
@@ -124,10 +125,10 @@
 
 Runtime producer: 8b32cacea617c6d45241d7db90b34893a06d3026, tree a095ecbe8b01b0ff0a7825c4c19bbf41120ec3ed. Normal merge receipt is complete; actual tree equals security-reviewed e02f exactly. Independent1511 passed412 paired-source cases, source hashes, original bodies, static and generation checks. [Review](../../design/rt-R-D62-security-review-1511.md).
 
-core open: 0 Runtime-owned. Agent owns six actual-home outcomes after D62 consumer adoption: four fork and two forward. The final-cut Runtime core suite is still required.
+core open: 1 provisional delegated inverse cause, source attribution pending. Actual Agent5777/Runtime8b32 closes five of six originals; retained inverse sequential-input refusal has Sol1557 plus Agent independent1546. Final Runtime core suite remains required.
 regressions: 0 confirmed Runtime originals. Historical36closed/0open/0unaccounted remains scoped accounting, not a new full-suite PASS.
 
-FREEZE D59/D66: Runtime producer8b32 READY. Agent consumer and15 canonical mappings HOME5777; sole six-original1540 active. App normal14 mapping rebind1539 and once-only manifest pin remain owned. App9 gate cases and1 installer regression remain open. No cut, finalGO or artifact.
+FREEZE D59/D66: Runtime producer8b32 is home; one inverse source cause now owned. Agent5777 actual-six5PASS1FAIL;54strictPASS. App normal14 mapping rebind1539 and once-only manifest pin remain owned. App9 gate cases and1 installer regression remain open. No cut, finalGO or artifact.
 
 D66: no separate D62 integrated-proof stage. Author tests plus independent security and Agent actual-home six suffice; final cut covers remaining Runtime proof. The isolated1524 route is installed but unused. Provider-completion historical incident is not held open; the originating cut rerun decides closure or a new core cause.
 
@@ -135,7 +136,7 @@ Venues: P1/P2/P3 on App service with unchanged originals and App verdicts; P4 on
 
 D65 delivery: owner merges Runtime, then Agent, runs authentic App update-manifest with generated digest equality, then merges App. Command1539 and App tool home daa6 received; Runtime docs1546 installed after actual source/renderer checks, including normal vendor rebind precondition. D67 exact13env/7key appendix1533 stays installed. All final outcomes PENDING.
 
-Blockers: Agent — actual5777 normal adoption and consumer are home; one six-original worker1540 active on5777/8b32. Terminal outcomes remain Agent-owned.
+Blockers: Runtime / Agent — actual six1540 is5PASS1FAIL. Sol1557 owns inverse stage-input cause; Agent1546 independently traces whole path. Separate empty-create original is Agent G4-owned.
 Blockers: App — D66 plain launch/P1 control precedes current P2/P3 parallel. Historical12541/1689 remain preflightFAIL/all originalsNOTRUN.
 Blockers: App manifest — fix confirmed installer regression once against new8b32/schema867f and actual Agent after normal adoption; strict guard retained.
 
@@ -148,7 +149,7 @@ Admission: D56 stops Farm and schema-access work. Exact403 and automatic access 
 
 Disk: about8.6GB, above main8GB heavy floor. Newly finished1543,1533,1511 already absent. Sweep3 freed0; compact packed0 and compressed7 old logs. No old refused target retry or forced removal.
 
-live 0 / cap 4; ready-undispatched 0. Copied dispatcher header15:46:59Z reports0 Sol/0 Luna. Docs1546 and packaging1546 now dispatched; final core refresh1550 queued. All local ready work assigned.
+live 1 / cap 4; ready-undispatched 0. Copied dispatcher header15:55:31Z reports0 Sol/1 Luna. D68 review1554 active; source Sol1557 queued immediately on new original failure. All ready assigned.
 
 Pass 2026-10-24T15:34:02Z: PLAN/common/header D62–D67 and peer boards consumed. SecurityPASS412 -> normal merge8b32 completed and exact producer handed to Agent/App immediately. Separate D62 proof removed perD66. D67 docs installer1533 active; D65 missing command assigned App. No final proof or delivery claim.
 
@@ -163,3 +164,5 @@ Pass 2026-10-24T15:49:16Z: final-core source list3309 lacks new recorder ABI and
 Pass 2026-10-24T15:51:27Z: D65 docs1546 actual install/renderer/diff/appendix checksPASS consumed; exactreport published and App/orchestrator notified. Agent normal5777 adoption now clears vendor dependency; single home-six1540 alreadyactive, no repeat requested. Core1550 and D68 isolated1546 remain active.
 
 Pass 2026-10-24T15:54:21Z: core1550 source ready83 Python files+TS,122 new-file nodes collected, no bodies or install. D68 candidatefda author synthetic preservation controlsPASS; independent delivery-integrity review1554 dispatched immediately. Actual wrappers and artifact installation remain held.
+
+Pass 2026-10-24T15:56:52Z: actual-six1540 closes five originals, leaves inverse sequential-input refusal; HARD Sol1557 dispatched on8b32 immediately. Agent wholepath1546 independent in parallel. Separate empty-timeline failure stays Agent G4-owned. Runtime provisional core1, no cut or waiver. App D66 plain P1 actual13564 active.
