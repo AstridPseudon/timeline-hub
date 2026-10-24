@@ -1,0 +1,27 @@
+{
+  "verdict": "FAILsource",
+  "body_verdict": "FAIL",
+  "scope": {
+    "agent_head": "ef0363985e645481952448619f2cbb25e9d51a66",
+    "runtime_head": "bc227de072",
+    "tests": [
+      "tests/editing_conformance/test_commit_runtime_source_copy.py::test_repeated_source_copy_real_port_idempotency_and_guarded_inverse[False]",
+      "tests/editing_conformance/test_commit_runtime_source_copy.py::test_repeated_source_copy_real_port_idempotency_and_guarded_inverse[True]"
+    ]
+  },
+  "classification": "live R2 Agent source defect, not fixture mismatch",
+  "boundary": "forward copy accepted; exact idempotency replay accepted; first inverse accepted and empties destination; second inverse/redo refuses with original authored guard changed",
+  "cause": {
+    "source_owner": "Agent R2 inverse/root-baseline restoration",
+    "smallest_unique_files": [
+      "astrid/sdk/timeline/inverse.py",
+      "astrid/sdk/timeline/_root_inverse.py"
+    ],
+    "seam": "inverse.py physical occurrence adapter handles canonical placements for ordinary inverse guards, while _root_inverse.py restore_root_baselines historical projected guard uses plain State; repeated source-copy shares one physical shot across two occurrence roots and exercises this native-authored-versus-canonical physical-row boundary on redo",
+    "authenticated_guard": "accepted source-copy/inverse history authored before-image, retained with exact revision/publication/digest/source closure and native occurrence rows without provider-managed shot_revision_id",
+    "landing_image": "after first inverse, destination is empty; redo reconstructs the shared shot and both occurrence owners from authenticated history, whose canonical physical placement rows carry the managed shot_revision_id",
+    "limit": "controls.xml/log retain the public conflict and full boundary, but not the lower guard ref/path/base/theirs tuple; line attribution is source-backed/static, not claimed as a captured lower traceback"
+  },
+  "separation": "Runtime1557/older D17 native-v2 evidence stopped at first inverse and is not reused as this cause",
+  "no_change": "no product, test, registry, schema, lock, Runtime, or Git changes"
+}
