@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T18:04:12Z | dispatcher heartbeat 4s | live 4 (sol 2, luna 2, other 0) | busy30 12 | status age 0m -->
-# runtime board, 2026-10-24T18:04:07Z
+<!-- main | 2026-10-24T18:07:54Z | dispatcher heartbeat 1s | live 2 (sol 2, luna 0, other 0) | busy30 10 | status age 0m -->
+# runtime board, 2026-10-24T18:07:09Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -81,7 +81,7 @@
 | R-P4-history-cost | Reduce remaining historical validation cost | HARD Sol / Luna | Original16328 first-redo45s FAIL | doing | Sol1803; profileLuna1804 | Prior1752 no qualified optimization; finite56/58 checks retained. Only immutable schema compilation attempted; D47 holds and original45s unchanged. | Runtime327da unchanged |
 | R-P2-popup-422 | Project genuine fork-created shot roots | Luna | App current P2 proof | merged | Security1658; integrated1704 PASS | Actualb318:4 PASS0.16s, exact reviewedsource; forgedowner/sibling/source refused. App original stillpending. [Proof](../../design/rt-P2-popup-integrated-1704.md) | b318a8ec4 /88b9cf6 |
 | R-P2-popup-observation | Attribute popup physical observation refusal | Luna | Source finding complete | merged | rt-P2-popup-observation-1638 | Runtime created-child projection lacks fork-created shot roots.2Runtime+8Agent comparators PASS; source cause only. | Source unchanged |
-| R-P2-element-docpatch-hang | Observe actual server request phases | Sol / Luna | App real-service preflight correction | blocked:app | Runtime1700; App20321/source1739 | Actual20321 zero-body source-snapshot failure. App Sol+whole-path1739 own launch correction; server outcome still UNKNOWN. | 2c1bf0877 /04de |
+| R-P2-element-docpatch-hang | Observe actual server request phases | Sol / Luna | App current P2 safe phases | blocked:app | Runtime1700; App22847/1753 | App587316 launch corrected; native/history/readiness passed. Element failed; actual safe server phases await producer1753. No terminal cause yet. | 2c1bf0877 /04de |
 | U1-D69-marker-scope | Preserve mixed-route live catalog predicates | Luna | Actual integrated proof passed | merged | Citations1702; integrated1708 PASS | Actual2c1:9 PASS9s; exact approvedledgerappendix published once, outsidebytes intact. [Proof](../../design/rt-U1-D69-phase-integrated-1708.md) | ea3bca10d /925a7dd |
 | U1-D69-restore-guard | Restore two skip guard originals | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 |
 | U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 /bb022 |
@@ -153,8 +153,8 @@ Venues: P1/P2/P3 App service and verdicts; P4 Agent service; P5 and Composition 
 D65 delivery: owner Runtime merge, Agent merge, authentic App update-manifest with generated digest equality, then App merge. Qualified command/docs and D67 exact13env/7key postinstall appendix stay installed; actual final outcomes PENDING. Independent coherent84Python+TS/D68 finalcandidate1621PASS stays private untilcut.
 
 Blockers: App popup proof — Runtime normal b318 merged after security1658 PASS; exact reviewed tree. Integrated focused1704 active; App owns meaningful P2. No wire change or regeneration.
-Blockers: App element phases — activation CLOSED at App255f. Actual20321 zero-body source-snapshot failure; App1739 owns real service correction. One focused body remains unrun; Runtime awaits safe phases.
-Blockers: Runtime P4 cost — original16328 after327da FAIL45.336s; CLI/sheet and conflict-rerun PASS. HARD Sol1752 resumes fresh complete validation cost; Agent1744 owns independent whole path/verdict. No unchanged retry.
+Blockers: App element phases — Actual P222847 reached original element after launch correction587316. Producer1753 owns safe server phases; Runtime resumes exact causal source work on receipt.
+Blockers: Runtime P4 cost — Original16328 ten-note FAIL45.336s. Unique Sol1803 tests immutable schema preparation; Luna1804 profiles one finite history control. All validations and45s retained.
 Blockers: App — changed P34858 intent correction and stable current sources owned. P1 recordedGO; no duplicate P2/P3. Runtime1700 owns safe next-run phase capture; App owns normal launch wiring.
 Blockers: Final delivery — all active lanes need core0/regressions0 plus current P2/P3 and D69 completion. Agent newly reports39 restored-node failures; four classifiers own them. No cut/proofs/build/ZIP.
 Next ready: exact19 selector input for home29; consume four active returns/reviews. App owns actual gate launch; Agent1744 verdict/whole-path complete. Final candidate gated cut.
@@ -206,3 +206,5 @@ Pass 2026-10-24T17:57:55Z: D77a decision consumed immediately; evidence enough f
 Blockers: Agent home29 input — preflight1756 verified exactf4d6/327da and194ASTs; authentic19 remaining selectors/approval and SDK receipts absent. Peer1756 requested exact byte handoff; no invented list.
 
 Pass 2026-10-24T18:04:07Z: Ready D76 duplicate failover1752 dispatchedLuna1803. Cost1752 completed101controls/no product optimization; Sol1803 attempts immutable validator compilation and Luna1804 profiles finite repeated-history call multiplicity, no original/gate duplicate. Home29 missing19 inputs recordedblockedAgent; four active undercap4.
+
+Pass 2026-10-24T18:07:09Z: Current four workers live with fresh progress. App actual22847 is meaningful P2 and phase producer1753 owns evidence; historical20321 remains zero body. Home29 exact19 input still absent; explicit owned-worker and selector handoff1808 published. D77a scope applied; no new acquisition or denied target retry.
