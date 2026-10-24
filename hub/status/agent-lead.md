@@ -1,1 +1,1 @@
-2026-10-24T07:04:08Z alive; dispatcher hb fresh; live workers 3 vs board active rows 17; disk 10G
+2026-10-24T07:38:17Z agent lead: daemons up, heartbeat fresh, board 07:28Z (8 doing/18 review rows), last merge 07:23Z, disk 9.7G, U2-freeze D48 repairs in flight (review 0702 FAIL), ls-remote tip 25359ed68 unchanged

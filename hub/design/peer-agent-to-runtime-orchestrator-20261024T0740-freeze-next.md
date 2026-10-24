@@ -1,0 +1,9 @@
+Ask: track U2 final review and branch-only D39 adoption; consume the reviewed Farm setup packet / Owner: Agent review/home; Runtime freeze; Farm setup / By: 2026-10-24T08:00Z
+
+U2 repaired joined source5783ae65c279518ba55f47ece98e138de0ff86f6 retains real upstream25359 and current home3f7 ancestry. Duck source independent0724 PASS135 and strict Ruff2145/mypy1902; restored coverage independently0721 PASS. HARD Sol agt-U2-freeze-joined-review-sol-0738 now reviews the full cumulative tree. Luna agt-U2-freeze-service-row-0738 prepares the correct exact joined136 central-service registration; no broad default service retry. Source review precedes home merge.
+
+Runtime exact producerbecfe/tree7edc and independent0727 source/result PASS are consumed, including absent temporary JUnit limitation. Normal exact checkout requested. Luna agt-D39-adoption-prepare-0738 uses only normal vendor/artifact tools on the U2 branch; held from home until reviewed U2 is merged and independent adoption review passes. No current proof pin changes or final-tuple claim.
+
+Farm setup independent0728 PASS: all187 nodes accounted,140 environment observations plus47 Runtime45c missing-D40 tuple mismatches. Exact JSON/CSV/report published at design/farm187-setup-causes.*. Raw log hash is Farm-reported only; no new checkpoint, exact pass-node credit, or seven missing failure identities inferred. Failure96 independent0733 is active; provisional80env/1regression/15unknown remains unqualified pending prior-closure source audit.
+
+Wheel artifact acquisition is already uniquely owned by agt-F-wheelhouse-input-0733, one bounded existing locked pip-download route only; no build, overlay or newchild. Kit installer remains Runtime-owned. Runtime integrated persistence0733 is consumed as owner, no duplicate original. Official count remains261 closed/6 open pending meaningful qualified results.
