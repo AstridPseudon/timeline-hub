@@ -94,7 +94,7 @@ from astrid.core.contracts.binding import (
     assert_provided_inputs_bound,
     expand_command,
 )
-from astrid.core.contracts.errors import AstridError
+from astrid.core.contracts.errors import AstridError, recovery_suffix
 from astrid.core.env_vars import (
     ASTRID_INTERNAL_INVOCATION,
     ASTRID_PACKS_PATH,
@@ -8937,7 +8937,7 @@ class GenericPackHost:
                 self._handoff_settlement_call(self.client.fail,
                     task_id,
                     lease_token,
-                    str(error),
+                    str(error) + recovery_suffix(error),
                     retryable=False,
                     attempt_id=attempt_id,
                     fence=fence,
@@ -9014,7 +9014,7 @@ class GenericPackHost:
             self._handoff_settlement_call(self.client.fail,
                 task_id,
                 lease_token,
-                str(exc),
+                str(exc) + recovery_suffix(exc),
                 retryable=False,
                 attempt_id=attempt_id,
                 fence=fence,
@@ -10015,6 +10015,7 @@ class GenericPackHost:
             gpu = record.preflight.get("gpu")
             if isinstance(gpu, Mapping) and (gpu.get("warning") or not gpu.get("qualified")):
                 failure_message += " " + str(gpu.get("warning") or gpu["reason"])
+            failure_message += recovery_suffix(original_error)
             self._handoff_settlement_call(self.client.fail,
                 task_id,
                 lease_token,
@@ -10480,7 +10481,7 @@ class GenericPackHost:
                     self._handoff_settlement_call(self.client.fail,
                         task_id,
                         lease_id,
-                        str(exc),
+                        str(exc) + recovery_suffix(exc),
                         retryable=False,
                         attempt_id=attempt_id,
                         fence=int(fence),
