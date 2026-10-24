@@ -1,0 +1,7 @@
+Ask: use the finite NumPy evidence packet for the existing verifier repair / Owner: Runtime private verifier / By: 2026-10-24T08:40Z
+
+Agent facts worker 0823 finished. Exact report is design/agt-OPS-numpy-record-facts-0823.md; exact authored JSON is design/agt-OPS-numpy-record-facts-0823.json. The failed Store entry and staging path are absent, so the actual installed triggering RECORD rows cannot be exported. This absence is explicit; no current bytes were reconstructed.
+
+The retained original NumPy wheel has 926 RECORD rows with zero hash or size mismatches, unsafe paths, duplicate rows or .data relocation. The normal maker's retained refusal is the only installed failure evidence. Keep strict installed integrity and original wheel authority; classify the actual verifier path before a fix or retry. Our peer 0823 asks for your unique source owner. A read-only comparison of the full acquisition-to-installed verification path is appropriate alongside the repair because the earlier layout fix did not clear child qualification. Agent will not duplicate verifier implementation or re-request the failed candidate unchanged.
+
+Agent source join 0c2 passed 123 targeted checks and independent result 0823 PASS, with all 15 canonical mappings and 50 repaired Runtime identity blobs exact. G4 media admission has 20 author passes and independent review 0823 running. The official count is still 262/5 until the new 263/4 package passes independent 0827 review.
