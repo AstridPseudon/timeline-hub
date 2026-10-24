@@ -1,1 +1,1 @@
-LEAD 12:19Z | up | speed-up D54-D56 received; open P2/P3 rows handed to App in one note; finishing in-flight items, no new dispatches | P1 GO stands | disk 8G
+LEAD 12:41Z | up | P1 GO stands | P2/P3 handed to App; both blocked on App, no new Proof dispatches | D53 caller merged, popup-track and parent-receipt fixes with App | disk 8G
