@@ -37,9 +37,28 @@
     "ap2-P3-gate5-h6-0348": {
       "installed_sha256": "4ae8ae786cefd6be2aedb901a539fe81eb77a299ae4c246a8cd31c429440798d"
     },
-    "outside_rows": 249,
-    "outside_bytes": 509969,
-    "outside_sha256": "1340ef479d7f0b850f71f149347806146a4686f7b195b8d6fca3184667fce9d7",
+    "outside_rows": 248,
+    "outside_bytes": 509237,
+    "outside_sha256": "ead5526f663ab292bb0bf02e910f5cea5703645c8658028762a2792fb9168a4a",
+    "registry_snapshot": {
+      "line_count": 249,
+      "byte_count": 567369,
+      "sha256": "2ed2444c3c2a64dc744d03c7c7a4687abebaa9529a65fab0102b4082ab54670e",
+      "outside_row_count": 248,
+      "outside_bytes": 509237,
+      "outside_sha256": "ead5526f663ab292bb0bf02e910f5cea5703645c8658028762a2792fb9168a4a",
+      "p2_row_sha256": "1fe55269347c878c986263b93afedccd6a198952d61858794ce84f0304f01fd1"
+    },
+    "retained_before_evidence": {
+      "status": "VERIFIED",
+      "path": "/tmp/w-8922952ec4/app-P3-solo-return-1011/outside.before",
+      "row_count": 249,
+      "bytes": 509969,
+      "sha256": "1340ef479d7f0b850f71f149347806146a4686f7b195b8d6fca3184667fce9d7",
+      "removed_keys": ["agent venv-agent-child-app-p3-079-2a9-2147-full"],
+      "added_keys": [],
+      "changed_common_keys": []
+    },
     "draft_sha256": "23226c274dbdbb8750f009cb89d7920db40eb49513af906df7b4f76d9a7a3bf0"
   },
   "wire_fields": {

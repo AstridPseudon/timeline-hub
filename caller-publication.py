@@ -42,6 +42,8 @@ P3_SOURCE_META = ORCH / "workers" / P3_SOURCE_WORKER / "meta"
 P3_SOURCE_REPORT = ORCH / "workers" / P3_SOURCE_WORKER / "report.md"
 P3_SOURCE_QUEUE = ORCH / "queue" / "done" / P3_SOURCE_WORKER
 P3_SOURCE_CHECKOUT_QUEUE = ORCH / "queue" / "done" / f"checkout-app-{P3_SOURCE}"
+RETAINED_OUTSIDE_BEFORE = Path("/tmp/w-8922952ec4/app-P3-solo-return-1011/outside.before")
+EXPECTED_REMOVED_ROW = "agent venv-agent-child-app-p3-079-2a9-2147-full"
 SOURCE_BASE = "f90e708b379145ac456924742cc51c187ed6e0c6"
 AGENT = "079580ca46af77e0292d49dc34386b25c8391f99"
 RUNTIME = "37eb6c7bdb79dcae2523883e66b5cea5be721ffd"
@@ -250,6 +252,79 @@ def selected_rows() -> tuple[bytes, dict[str, tuple[int, bytes]]]:
     return raw, found
 
 
+def registry_row_key(line: bytes) -> str:
+    fields = line.split(None, 2)
+    if len(fields) < 2:
+        raise RuntimeError("PREPARED: suites registry row has no stable key")
+    return " ".join(field.decode() for field in fields[:2])
+
+
+def keyed_registry_lines(raw: bytes) -> list[tuple[str, bytes]]:
+    return [
+        (registry_row_key(line), line)
+        for line in raw.splitlines(keepends=True)
+        if line.strip() and not line.lstrip().startswith(b"#")
+    ]
+
+
+def registry_snapshot(raw: bytes, p3_line_number: int) -> tuple[dict[str, object], bytes]:
+    lines = raw.splitlines(keepends=True)
+    outside = b"".join(line for i, line in enumerate(lines, 1) if i != p3_line_number)
+    return {
+        "line_count": len(lines),
+        "byte_count": len(raw),
+        "sha256": digest(raw),
+        "outside_row_count": len(lines) - 1,
+        "outside_bytes": len(outside),
+        "outside_sha256": digest(outside),
+    }, outside
+
+
+def retained_registry_evidence(outside: bytes) -> dict[str, object]:
+    """Compare the live retained rows with the prior run when that evidence exists."""
+    path = RETAINED_OUTSIDE_BEFORE
+    if path.is_symlink() or not path.is_file():
+        return {
+            "status": "UNAVAILABLE",
+            "path": str(path),
+            "evidence_limit": "retained-before registry bytes were unavailable; only the live snapshot is authoritative",
+        }
+    previous = path.read_bytes()
+    previous_keyed = keyed_registry_lines(previous)
+    current_keyed = keyed_registry_lines(outside)
+    previous_rows = dict(previous_keyed)
+    current_rows = dict(current_keyed)
+    if len(previous_rows) != len(previous_keyed):
+        raise RuntimeError("PREPARED: retained-before registry has duplicate row keys")
+    if len(current_rows) != len(current_keyed):
+        raise RuntimeError("PREPARED: current registry has duplicate retained row keys")
+    common = set(previous_rows) & set(current_rows)
+    changed = sorted(key for key in common if previous_rows[key] != current_rows[key])
+    removed = sorted(set(previous_rows) - set(current_rows))
+    added = sorted(set(current_rows) - set(previous_rows))
+    if changed or added or removed != [EXPECTED_REMOVED_ROW]:
+        raise RuntimeError(
+            "PREPARED: retained-before registry comparison is broader than the known retirement: "
+            f"removed={removed!r}, added={added!r}, changed={changed!r}"
+        )
+    previous_without_removed = b"".join(
+        line for line in previous.splitlines(keepends=True)
+        if not (line.strip() and not line.lstrip().startswith(b"#") and registry_row_key(line) == EXPECTED_REMOVED_ROW)
+    )
+    if previous_without_removed != outside:
+        raise RuntimeError("PREPARED: retained-before registry has changed common bytes")
+    return {
+        "status": "VERIFIED",
+        "path": str(path),
+        "sha256": digest(previous),
+        "row_count": len(previous.splitlines(keepends=True)),
+        "bytes": len(previous),
+        "removed_keys": removed,
+        "added_keys": added,
+        "changed_common_keys": changed,
+    }
+
+
 def stage_assignment(root: str) -> str:
     return f'PLAYWRIGHT_OUTPUT_DIR="{root}"; mkdir -p "$PLAYWRIGHT_OUTPUT_DIR"; export PLAYWRIGHT_OUTPUT_DIR; '
 
@@ -383,9 +458,8 @@ def prepare(out: Path) -> dict[str, object]:
     source = source_custody(final)
     custody = custody_facts()
     raw, rows = selected_rows()
-    outside = b"".join(line for i, line in enumerate(raw.splitlines(keepends=True), 1) if i != rows[P3_SUITE][0])
-    assert len(raw.splitlines(keepends=True)) - 1 == 249
-    assert len(outside) == 509969 and digest(outside) == "1340ef479d7f0b850f71f149347806146a4686f7b195b8d6fca3184667fce9d7"
+    registry, outside = registry_snapshot(raw, rows[P3_SUITE][0])
+    retained_evidence = retained_registry_evidence(outside)
     p2_line = rows[P2_SUITE][1]
     p2_line_sha256 = digest(p2_line)
     binding_replacements = {
@@ -471,6 +545,15 @@ def prepare(out: Path) -> dict[str, object]:
         drafts[name] = f"app {name} {new_outer}"
         stage_records[name] = {**controls, "native_body_preserved": True, "output_stages": ["native-history", "mounted-readiness", "gate5"]}
 
+    # The registry is a live input. Re-read it after decoding and rebinding so
+    # a concurrent edit cannot produce a candidate from a stale snapshot.
+    current_raw, current_rows = selected_rows()
+    current_registry, _ = registry_snapshot(current_raw, current_rows[P3_SUITE][0])
+    if current_raw != raw or current_registry != registry:
+        raise RuntimeError("PREPARED: suites registry changed during candidate preparation")
+    if current_rows[P2_SUITE][1] != p2_line:
+        raise RuntimeError("PREPARED: installed P2 row changed during candidate preparation")
+
     manifest = {
         "status": "REVIEWABLE",
         "replacements": replacements,
@@ -479,8 +562,21 @@ def prepare(out: Path) -> dict[str, object]:
         "source_base": SOURCE_BASE, "final_source": source, "custody": custody,
         "live_row_sha256": {name: digest(rows[name][1]) for name in SUITES},
         "draft_row_sha256": {name: digest((drafts[name] + "\n").encode()) for name in SUITES},
-        "p2_row_unchanged": p2_line_sha256 == digest(rows[P2_SUITE][1]),
-        "outside_row_count": 249, "outside_bytes": len(outside), "outside_sha256": digest(outside),
+        "p2_row_unchanged": current_rows[P2_SUITE][1] == p2_line,
+        "p2_row_sha256": p2_line_sha256,
+        "registry_snapshot": registry,
+        "registry_evidence": retained_evidence,
+        "registry_installation_guard": {
+            "path": str(SUITES_FILE),
+            "line_count": registry["line_count"],
+            "byte_count": registry["byte_count"],
+            "sha256": registry["sha256"],
+            "outside_row_count": registry["outside_row_count"],
+            "outside_bytes": registry["outside_bytes"],
+            "outside_sha256": registry["outside_sha256"],
+            "p2_row_sha256": p2_line_sha256,
+        },
+        "outside_row_count": registry["outside_row_count"], "outside_bytes": registry["outside_bytes"], "outside_sha256": registry["outside_sha256"],
         "wire_fields": WIRE_FIELDS,
         "stage_records": stage_records,
         "door_port": {"allocation": ["P2_ALLOCATED_PORT", "P3_ALLOCATED_PORT"], "propagates_before_every_stage": True, "changed": False},
@@ -514,7 +610,9 @@ def prepare(out: Path) -> dict[str, object]:
         "custody": custody,
         "p2_row_sha256": p2_line_sha256,
         "p3_row_sha256": manifest["draft_row_sha256"][P3_SUITE],
-        "outside_rows": {"count": 249, "bytes": len(outside), "sha256": digest(outside)},
+        "registry_snapshot": manifest["registry_snapshot"],
+        "registry_evidence": retained_evidence,
+        "outside_rows": {"count": registry["outside_row_count"], "bytes": registry["outside_bytes"], "sha256": registry["outside_sha256"]},
     }, indent=2) + "\n")
     return manifest
 
