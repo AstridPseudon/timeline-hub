@@ -47,7 +47,7 @@ TD=/tmp/w-$(echo -n $N | md5sum | cut -c1-10); mkdir -p $TD; echo $TD > $D/tmpdi
   # Codex usage limit -> machine-wide Claude fallback (Luna->Haiku, Sol->Sonnet, Astra->Opus), lifted automatically by the dispatcher's probe
   if [[ $M != claude-* ]] && [ "$(cat $D/exit 2>/dev/null)" != 0 ] && tail -60 $D/log.txt 2>/dev/null | grep -qiE "usage limit|hit your usage|usage_limit|quota exceeded|insufficient_quota"; then
     [ -f $O/CODEX_UNAVAILABLE ] || echo "$(date -u +%FT%TZ) Codex usage limit seen in worker $N; automatic Claude fallback (MODELS.md). The dispatcher probes Codex every 20 min and lifts this when it works." > $O/CODEX_UNAVAILABLE; fi
-  rm -f $D/running; date -u +%FT%TZ > $D/ended; [ -f $D/KEEP ] || rm -rf "$TD"
+  rm -f $D/running; date -u +%FT%TZ > $D/ended; [ -f $D/KEEP ] || { rm -rf "$TD"; for x in /tmp/"$N".* /tmp/"$N"-*; do [ -d "$x" ] && [ -O "$x" ] && rm -rf -- "$x"; done; }   # 02:08Z: also the worker's own /tmp/<worker>.* scratch made outside TMPDIR (LOOPS #40)
   # recycle-on-finish (owner disk rule 2026-10-20): drop a finished, clean worktree; the branch tl/$N and the reports stay, managers review by branch, test-run recreates it if needed. Skip KEEP/leased.
   [ -f $D/KEEP ] || grep -lqsw -- "$N" $O/managers/*/notes/*.lease $O/managers/*/notes/*ACTIVE* 2>/dev/null || { [ -z "$(git -C $WT status --porcelain 2>/dev/null | head -1)" ] && git -C /home/user/work/$REPO worktree remove $WT 2>/dev/null && touch $D/recycled; } ) >/dev/null 2>&1 &
 echo "dispatched $N in $WT (base $BASE)"
