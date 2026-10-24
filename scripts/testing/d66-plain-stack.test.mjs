@@ -405,6 +405,52 @@ test('D73 timeout resumes the same preflight ID without duplicating either reque
   assert.equal(result.normal.id, 'd73-submit-timeout-2');
 });
 
+test('D79 serializes concurrent same-plan callers and preserves one normal ID across a 124 resume', async () => {
+  const f = serviceFixture();
+  const registryPath = path.join(f.base, 'suites.conf');
+  writeFileSync(registryPath, 'app existing-suite existing-command\n');
+  const io = submitIo(f);
+  let releaseWait;
+  let enteredWait;
+  const waitEntered = new Promise((resolve) => { enteredWait = resolve; });
+  const blocked = new Promise((resolve) => { releaseWait = resolve; });
+  let waits = 0;
+  const env = { ...f.env, D66_SUBMIT_SUITE: 'd79-submit-race', D66_OUTPUT_DIR: f.base };
+  const options = {
+    env, homes: f.homes, appRoot: f.snapshot, receiptRoot: f.receiptRoot,
+    workerRoot: f.workerRoot, checkoutRoot: f.base, registryPath,
+    runCommand: io.runCommand,
+    runWait: async (args) => {
+      waits += 1;
+      if (waits === 1) {
+        enteredWait();
+        await blocked;
+        io.calls.push({ type: 'wait-test', args });
+        return { status: 124, stdout: '', stderr: '' };
+      }
+      return io.runWait(args);
+    },
+    readStatus: io.readStatus,
+  };
+
+  const first = submit('p1', options);
+  await waitEntered;
+  const second = submit('p1', options);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(io.calls.filter((call) => call.type === 'request-test').length, 1,
+    'the queued caller must not submit while the first caller owns the plan');
+  releaseWait();
+  const [firstResult, secondResult] = await Promise.all([first, second]);
+  assert.equal(firstResult.normal.id, 'd79-submit-race-2');
+  assert.equal(secondResult.normal.id, firstResult.normal.id);
+  assert.deepEqual(io.calls.filter((call) => call.type === 'request-test').map((call) => call.args[1]), [
+    'd79-submit-race-preflight', 'd79-submit-race',
+  ]);
+  assert.deepEqual(io.calls.filter((call) => call.type === 'wait-test').map((call) => call.args), [
+    ['d79-submit-race-preflight-1'], ['d79-submit-race-preflight-1'],
+  ]);
+});
+
 test('D73 registry registration refuses a concurrent outside-byte change', () => {
   const base = Buffer.from('app old old-command\n');
   let reads = 0;

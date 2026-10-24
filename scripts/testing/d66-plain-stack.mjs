@@ -408,6 +408,57 @@ function saveSubmitArtifact(file, artifact) {
   writeFileSync(file, `${JSON.stringify(artifact, null, 2)}\n`);
 }
 
+const submitLocks = new Map();
+
+function processIsAlive(pid) {
+  try { process.kill(pid, 0); return true; } catch (error) {
+    return error?.code === 'EPERM';
+  }
+}
+
+async function acquireSubmitFileLock(artifactPath) {
+  const lockPath = `${artifactPath}.lock`;
+  mkdirSync(path.dirname(lockPath), { recursive: true });
+  for (;;) {
+    try {
+      const descriptor = openSync(lockPath, 'wx', 0o600);
+      writeFileSync(descriptor, `${JSON.stringify({ pid: process.pid })}\n`);
+      closeSync(descriptor);
+      let released = false;
+      return () => {
+        if (released) return;
+        released = true;
+        try { unlinkSync(lockPath); } catch (error) {
+          if (error?.code !== 'ENOENT') throw error;
+        }
+      };
+    } catch (error) {
+      if (error?.code !== 'EEXIST') throw error;
+      let owner;
+      try { owner = JSON.parse(readFileSync(lockPath, 'utf8')); } catch { owner = null; }
+      if (Number.isInteger(owner?.pid) && !processIsAlive(owner.pid)) {
+        try { unlinkSync(lockPath); } catch (staleError) {
+          if (staleError?.code !== 'ENOENT') throw staleError;
+        }
+        continue;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  }
+}
+
+async function withSubmitLock(artifactPath, work) {
+  const key = path.resolve(artifactPath);
+  const previous = submitLocks.get(key) ?? Promise.resolve();
+  const current = previous.then(work, work);
+  submitLocks.set(key, current);
+  try {
+    return await current;
+  } finally {
+    if (submitLocks.get(key) === current) submitLocks.delete(key);
+  }
+}
+
 function commandResult(file, args) {
   const result = spawn(file, args, { encoding: 'utf8' });
   return new Promise((resolve, reject) => {
@@ -482,7 +533,7 @@ function submitPlainPlan(artifact) {
   ].join('\n');
 }
 
-export async function submit(name, { env = process.env, homes = normalHomes, appRoot = root,
+async function submitUnlocked(name, { env = process.env, homes = normalHomes, appRoot = root,
   registryPath = env.D66_SUITE_REGISTRY ?? path.join(orch, 'tests', 'suites.conf'), receiptRoot = path.join(orch, 'queue', 'done'),
   workerRoot = path.join(orch, 'workers'), checkoutRoot = env.D66_CHECKOUT_ROOT ?? '/home/user/work/wt', runCommand = commandResult, runWait, readStatus,
   beforeRegistryCommit = () => {} } = {}) {
@@ -540,6 +591,15 @@ export async function submit(name, { env = process.env, homes = normalHomes, app
   saveSubmitArtifact(artifactPath, artifact);
   console.log(submitPlainPlan(artifact));
   return artifact;
+}
+
+export async function submit(name, options = {}) {
+  const env = options.env ?? process.env;
+  const artifactPath = submitPlanPath(name, env);
+  return withSubmitLock(artifactPath, async () => {
+    const release = await acquireSubmitFileLock(path.resolve(artifactPath));
+    try { return await submitUnlocked(name, options); } finally { release(); }
+  });
 }
 
 export async function main(sourceOptions = {}) {
