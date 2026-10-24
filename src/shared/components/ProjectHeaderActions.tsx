@@ -22,6 +22,7 @@ interface ProjectHeaderActionsProps {
   onProjectUpdated?: () => void;
   disabled?: boolean;
   confirmNavigation?: () => boolean;
+  showDialogs?: boolean;
 }
 
 function toProject(summary: ProjectSummary | null, contextProject: Project | null): Project | null {
@@ -40,6 +41,48 @@ function toProject(summary: ProjectSummary | null, contextProject: Project | nul
     ...(aspectRatio ? { aspectRatio } : {}),
     createdAt: contextProject?.createdAt,
   };
+}
+
+function ProjectActionDialogs({
+  selectedProject,
+  isCreateProjectModalOpen,
+  setIsCreateProjectModalOpen,
+  isProjectSettingsModalOpen,
+  setIsProjectSettingsModalOpen,
+  onProjectCreated,
+  onProjectUpdated,
+  confirmNavigation,
+}: {
+  selectedProject: ProjectSummary | null;
+  isCreateProjectModalOpen: boolean;
+  setIsCreateProjectModalOpen: (open: boolean) => void;
+  isProjectSettingsModalOpen: boolean;
+  setIsProjectSettingsModalOpen: (open: boolean) => void;
+  onProjectCreated?: () => void;
+  onProjectUpdated?: () => void;
+  confirmNavigation?: () => boolean;
+}) {
+  const { project: contextProject } = useProjectSelectionContext();
+  const project = toProject(selectedProject, contextProject);
+
+  return (
+    <>
+      <CreateProjectModal
+        isOpen={isCreateProjectModalOpen}
+        onOpenChange={setIsCreateProjectModalOpen}
+        onProjectCreated={onProjectCreated}
+        confirmNavigation={confirmNavigation}
+      />
+      <ProjectSettingsModal
+        isOpen={isProjectSettingsModalOpen}
+        onOpenChange={(open) => {
+          setIsProjectSettingsModalOpen(open);
+          if (!open) onProjectUpdated?.();
+        }}
+        project={project}
+      />
+    </>
+  );
 }
 
 function ProjectActionButton({
@@ -75,11 +118,10 @@ export function ProjectHeaderActions({
   onProjectUpdated,
   disabled = false,
   confirmNavigation,
+  showDialogs = true,
 }: ProjectHeaderActionsProps) {
-  const { project: contextProject } = useProjectSelectionContext();
   const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] = useState(false);
   const [isProjectSettingsModalOpen, setIsProjectSettingsModalOpen] = useState(false);
-  const project = toProject(selectedProject, contextProject);
 
   return (
     <>
@@ -87,7 +129,7 @@ export function ProjectHeaderActions({
         <ProjectActionButton
           label="Project settings"
           onClick={() => setIsProjectSettingsModalOpen(true)}
-          disabled={disabled || !project}
+          disabled={disabled || !selectedProject}
         >
           <Wrench className="h-3.5 w-3.5" />
         </ProjectActionButton>
@@ -106,20 +148,16 @@ export function ProjectHeaderActions({
         </Button>
       </div>
 
-      <CreateProjectModal
-        isOpen={isCreateProjectModalOpen}
-        onOpenChange={setIsCreateProjectModalOpen}
+      {showDialogs && <ProjectActionDialogs
+        selectedProject={selectedProject}
+        isCreateProjectModalOpen={isCreateProjectModalOpen}
+        setIsCreateProjectModalOpen={setIsCreateProjectModalOpen}
+        isProjectSettingsModalOpen={isProjectSettingsModalOpen}
+        setIsProjectSettingsModalOpen={setIsProjectSettingsModalOpen}
         onProjectCreated={onProjectCreated}
+        onProjectUpdated={onProjectUpdated}
         confirmNavigation={confirmNavigation}
-      />
-      <ProjectSettingsModal
-        isOpen={isProjectSettingsModalOpen}
-        onOpenChange={(open) => {
-          setIsProjectSettingsModalOpen(open);
-          if (!open) onProjectUpdated?.();
-        }}
-        project={project}
-      />
+      />}
     </>
   );
 }
