@@ -899,6 +899,55 @@ def _inverse_stage_root_equal(observed, claimed, ref):
     return False
 
 
+def _inverse_stage_retire_occurrence_images(native_image, stage_before, writes,
+                                           source_entry, source_step, source_commands):
+    """Project closure loss from an exact accepted occurrence creation."""
+    if source_step is None:
+        return
+    document = source_entry.get("receipt", {}).get("result", {}).get("canonical_document")
+    if document is None:
+        return
+    accepted_source = images(document)
+    source_writes = [capture for ordinal in source_step["command_ordinals"]
+                     for capture in source_commands[ordinal]["writes"]]
+    for write in writes:
+        if (write["path"] or not re.fullmatch(r"occurrence:[^/]+", write["ref"])
+                or write["before"]["state"] != "present" or write["after"] != {"state": "absent"}):
+            continue
+        occurrence = write["ref"].partition(":")[2]
+        path = ["occurrences", "occurrence_id:" + occurrence]
+        row = location(stage_before["parent"]["payload"], path, absent_items=True)
+        require(row["state"] == "present", "inverse retirement has no authenticated occurrence")
+        assert isinstance(row["value"], dict)
+        shot_ref = "shot-revision:" + row["value"]["shot_revision_id"]
+        if shot_ref not in native_image or any(
+                item.get("shot_revision_id") == row["value"]["shot_revision_id"]
+                for item in native_image["parent"]["payload"].get("occurrences", [])):
+            continue
+        captures = [capture for capture in source_writes
+                    if capture["ref"] == write["ref"] and capture["path"] == []]
+        require(len(captures) == 1 and value_equal(captures[0]["after"], write["before"])
+                and value_equal(captures[0]["before"], write["after"])
+                and value_equal(location(accepted_source["parent"]["payload"], path, absent_items=True), row),
+                "inverse retirement differs from its accepted occurrence creation")
+        shot = stage_before[shot_ref]
+        internal_id = shot["internal_timeline_revision_id"]
+        internal_ref = "internal-revision:" + internal_id
+        require(shot.get("shot_id") == row["value"]["shot_id"]
+                and shot["payload"].get("internal_timeline_revision_id") == internal_id
+                and internal_ref in stage_before
+                and all(ref in accepted_source and value_equal(stage_before[ref], accepted_source[ref])
+                        and value_equal(native_image.get(ref), stage_before[ref])
+                        and stage_before[ref]["content_digest"] == digest(stage_before[ref]["payload"])
+                        for ref in (shot_ref, internal_ref)),
+                "inverse retirement differs from its accepted physical images")
+        native_image.pop(shot_ref)
+        if not any(image.get("internal_timeline_revision_id") == internal_id
+                   or image.get("payload", {}).get("internal_timeline_revision_id") == internal_id
+                   for ref, image in native_image.items() if ref.startswith("shot-revision:")):
+            native_image.pop(internal_ref)
+
+
 def _inverse_stage_inherited(source_step, source_commands, source_records, publication):
     """Project partitions of a sealed inverse, retaining its immediate identity.
 
@@ -1382,6 +1431,9 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
             require(_inverse_stage_root_equal(after, after_claim, root),
                     "inverse stage root differs from its authenticated effect image")
         authenticated_turnovers.extend(transitions)
+
+        _inverse_stage_retire_occurrence_images(native_image, stage_before, writes,
+                                               source_entry, source_step, source_commands)
 
         if inherited_effects is not None:
             # Exact inverse source effects already authenticate both physical
