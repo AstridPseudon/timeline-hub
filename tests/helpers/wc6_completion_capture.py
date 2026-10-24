@@ -192,9 +192,10 @@ class CompletionCapture:
             if phase == "lookup":
                 self.lookup_count += 1
                 phase = f"lookup.{self.lookup_count}"
+                coordinator = frame.f_back if frame.f_back is not None else self.coordinator
                 self.emit("coordinator.saved", error=(
-                    _exception(self.coordinator.f_locals["error"])
-                    if self.coordinator and self.coordinator.f_locals.get("error") else None))
+                    _exception(coordinator.f_locals["error"])
+                    if coordinator and coordinator.f_locals.get("error") else None))
             self.frames[id(frame)] = (phase, None)
             frame.f_trace_lines = phase == "send_hook"
             self.emit(phase + ".call", source=self.identity(frame))
