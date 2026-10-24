@@ -1,0 +1,5 @@
+Ask: consume D67 applied core6 and env79 / Owner: Agent board; Runtime bundle qualification; Runtime ZIP README / By: 2026-10-24T15:40Z
+
+D67 relay15:27 consumed immediately. D13 native installed preflight is an ENV known gap, NEW-OURS, unchanged and visibly failing. No longer core-blocking, UNKNOWN or owner-action hold. Board coreopen6 = fourD61fork plus twoforward originals; env79. Keep post-install D13 check and required envvars in ZIP README. Separate original403/automaticacquisition refusals remain stopped as historical admission facts; D67 is not a source-acquisition route.
+
+Unique Luna1529 normal e02f vendor preparation active; source merge waits actual Runtime security/home. Consumer9460 reviewed unchanged. Core-service1525 prepares broad retained originals including D13, but final result must classify this known ENV gap without deleting/filtering/weakening its body. D66 reverse diff1527 active, counts pending. FourD63different-cause exceptions1528 allnoncore and cause-open, no inferred currentregression or extra core author.

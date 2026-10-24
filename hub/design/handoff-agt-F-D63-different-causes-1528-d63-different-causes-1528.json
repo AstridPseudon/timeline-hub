@@ -1,0 +1,159 @@
+{
+  "schema": "timeline.agent.d63.different-causes.v1",
+  "task": "agt-F-D63-different-causes-1528",
+  "read_only": true,
+  "scope": {
+    "old_run": "full9758",
+    "upstream_run": "full9244377/1621",
+    "selection": "exact four retained D54 cause_identity=not_identical rows only",
+    "orders": [5, 49, 50, 51],
+    "repeated_66_audit": false,
+    "artifact_hunt": false,
+    "current_run": "NOT_RUN_CURRENT_CORE159"
+  },
+  "decision": "All four have matching historical/upstream FAILED status but different retained exception or location. D54/D63 therefore leaves all four OPEN and unproven: none is pre-existing, none is exact-environment qualified, no current failure is inferred, and no regression is invented from an upstream FAIL.",
+  "current_receipt_status": {
+    "receipt_ref": "git:tl/agt-F-D52-current-receipts-1225:evidence/d52-current-receipts-1225.json",
+    "receipt_sha256": "becb8648b804b19b72a8ec6204462e0d25dcfd7c6796bae78314e6d2e244e000",
+    "all_four": {
+      "current_verdict": "open",
+      "proof_matches": 0,
+      "qualifies_current_integrated_source": false,
+      "full9758_closure_credit": false,
+      "missing_fact": "No current c2b exact result and/or literal caller proof"
+    }
+  },
+  "source_refs": {
+    "d54_paired_cause_a": {
+      "ref": "git:tl/agt-F-D54-paired-cause-a-1458:evidence/d54a-paired-cause-1458.json",
+      "sha256": "907b544403e5ea3f70ecd78825820ee9a258647352c635dc4ef058564124a91b"
+    },
+    "d52_classification": {
+      "ref": "git:tl/agt-F-D52-package-return-1132:agent-F-D52-classification.json",
+      "sha256": "01ed4dbcfffb5a07206136e6b6f714b9a79919da0747a1af2719a390e5ae3a09",
+      "observed_agent_head": "ba55ac1e9e70156f03f7e31cc1b1ef040bb75b84",
+      "observed_agent_tree": "c13d368666e710bb911ff448b86251b516867c03",
+      "observed_runtime_head": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+      "observed_runtime_tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89"
+    },
+    "d52_child_import_review": {
+      "ref": "design/agt-F-D52-import-review-1213.md",
+      "commit": "d411f439acce0c6bc2fa50f77a7f92c103773d5d",
+      "tree": "b8218b65149cba8b16c2895fc3c58078be957539",
+      "scope": "exact 33 retained subsets only: 15 bootstrap, 4 generic-child, 14 rendering"
+    },
+    "d52_package_manifest": {
+      "ref": "git:tl/agt-F-D52-package-return-1132:agent-F-D52-package-manifest.json",
+      "sha256": "1a741f09e1c9a0a4c6242706d379e047f62290ca404aa80d354556152baa69a9"
+    },
+    "d52_classification_csv": {
+      "ref": "git:tl/agt-F-D52-package-return-1132:agent-F-D52-classification.csv",
+      "sha256": "f41c5f37b06f18bbc55438e84d33bd21dcfa99d551ae11d0b5f53fe6b50b2e79"
+    },
+    "upstream_924_junit": {
+      "ref": "workers/agt-F-D60-snapshot-return-1342/evidence/upstream-full-9244377.xml",
+      "sha256": "2941565205663912985f766210bfead7db42264976fabee7dc899d03d4f4657f"
+    },
+    "upstream_924_comparison": {
+      "ref": "workers/agt-F-D60-baseline-terminal-1452/evidence/upstream-comparison-9244377.json",
+      "sha256": "97a96ade253896e208223294fb7b9e71744b52047b5fe3bcb1cf4fd97768b532"
+    }
+  },
+  "rows": [
+    {
+      "old276_order": 5,
+      "node_id": "tests/core/execution/test_worker_startup_identity.py::test_sanitized_child_import_proves_current_host_sdk_version_and_vendored_client",
+      "scope": "non-core",
+      "d54": {
+        "old_status": "FAILED",
+        "upstream_status": "FAILED",
+        "cause_identity": "not_identical",
+        "old_cause": "CommandError: missing or ambiguous identity 'occ-0'",
+        "old_range": "lines 3021-3248; bytes 1502166-1515217",
+        "old_sha256": "74293949ef3d236805e72b402e1c30046f359b4d52aa3101bfe7d8f6eb4a92eb",
+        "upstream_cause": "CalledProcessError; child import fails with ModuleNotFoundError: No module named 'runtime_protocol'"
+      },
+      "d63": {
+        "disposition": "MATCHED_STATUS_DIFFERENT_CAUSE_OPEN",
+        "historical_boundary": "identity/occ-0",
+        "upstream_boundary": "child runtime_protocol import",
+        "current_source_seam": "Current child runtime import/caller qualification is absent. The D52 exact-33 child-import attribution is bounded to the named subset and does not establish the old identity cause or a current failure.",
+        "core_source_work_required": false
+      }
+    },
+    {
+      "old276_order": 49,
+      "node_id": "tests/core/pack/test_source_setup.py::test_real_outer_command_inventory_route_retains_sibling_creator_waits_and_graph",
+      "scope": "non-core",
+      "d54": {
+        "old_status": "FAILED",
+        "upstream_status": "FAILED",
+        "cause_identity": "not_identical",
+        "old_cause": "AssertionError: validation_error parent-composition candidate could not be prepared; assert result.ok",
+        "old_range": "lines 7739-7776; bytes 1797581-1800311",
+        "old_sha256": "ea0688b0d7c8cea32c6c0379bf6c9ab2f42dfea29643d5bd7fe6fc6a17207957",
+        "upstream_cause": "subprocess assertion; ModuleNotFoundError: No module named 'runtime_protocol' while importing source_setup"
+      },
+      "d63": {
+        "disposition": "MATCHED_STATUS_DIFFERENT_CAUSE_OPEN",
+        "historical_boundary": "parent-composition candidate preparation/validation",
+        "upstream_boundary": "child runtime_protocol import while importing source_setup",
+        "current_source_seam": "Only D52 source/setup classification is present; the bounded exact-33 child-import attribution does not generalize to this row. No current exact result or literal caller proof exists.",
+        "core_source_work_required": false
+      }
+    },
+    {
+      "old276_order": 50,
+      "node_id": "tests/core/pack/test_source_setup.py::test_real_filtered_command_root_cf_pin_preserves_all_four_inventory_operations",
+      "scope": "non-core",
+      "d54": {
+        "old_status": "FAILED",
+        "upstream_status": "FAILED",
+        "cause_identity": "not_identical",
+        "old_cause": "DomainResult(ok=False), validation_error parent-composition candidate could not be prepared; assert False",
+        "old_range": "lines 7776-7826; bytes 1800311-1803692",
+        "old_sha256": "ae453db82cbea3dc3ec59644c20b31914a3e9c9c63b15ae65cc2771c34129a30",
+        "upstream_cause": "subprocess assertion; ModuleNotFoundError: No module named 'runtime_protocol' while importing source_setup"
+      },
+      "d63": {
+        "disposition": "MATCHED_STATUS_DIFFERENT_CAUSE_OPEN",
+        "historical_boundary": "parent-composition candidate preparation/validation",
+        "upstream_boundary": "child runtime_protocol import while importing source_setup",
+        "current_source_seam": "Only D52 source/setup classification is present; the bounded exact-33 child-import attribution does not generalize to this row. No current exact result or literal caller proof exists.",
+        "core_source_work_required": false
+      }
+    },
+    {
+      "old276_order": 51,
+      "node_id": "tests/core/execution/test_remotion_host_session.py::test_two_public_command_workers_settle_task_leases_then_host_drains_original",
+      "scope": "non-core",
+      "d54": {
+        "old_status": "FAILED",
+        "upstream_status": "FAILED",
+        "cause_identity": "not_identical",
+        "old_cause": "Mixed retained block includes shot item source unavailable/changed and Remotion symlink-loop errors",
+        "old_range": "lines 7826-11363; bytes 1803692-2032796",
+        "old_sha256": "3807c4adf8c25d47ef5b77453fe2c26f7a37dd98d6b37d36d6cd11e5f7ebc6c4",
+        "upstream_cause": "HostError; child startup fails with ModuleNotFoundError: No module named 'runtime_protocol'"
+      },
+      "d63": {
+        "disposition": "MATCHED_STATUS_DIFFERENT_CAUSE_OPEN",
+        "historical_boundary": "mixed shot-source and Remotion symlink-loop block; no single cause assumed",
+        "upstream_boundary": "child runtime_protocol import",
+        "current_source_seam": "D52 rendering attribution covers its exact retained rendering subset and the bounded child runtime_protocol boundary; it does not relabel the old mixed block. No current exact result or literal caller proof exists.",
+        "core_source_work_required": false
+      }
+    }
+  ],
+  "contract_preservation": {
+    "request_fields": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "dry_run", "source", "rationale", "group_id", "Idempotency-Key"],
+    "reply_shapes": ["accepted/merged canonical closure with IDs/digests/commands/id_map/records/steps/dependencies/effects/bindings/history/durable receipt", "dry-run would_status with null receipt", "conflict reason/head", "invalid code/path/hint/suggested_command"],
+    "production_caller_required": true,
+    "production_caller_status": "Not proven for these four current rows; no caller invented. This is an evidence gap, not a contract relaxation."
+  },
+  "limits": [
+    "No source, test, fixture, registry, runtime, HTTP, daemon, child, install, acquisition, or product change was made.",
+    "No 66-row audit was repeated and no new artifact was hunted.",
+    "The current source seam is unresolved because the existing receipt has no exact current result/literal caller proof; current core source work is therefore not justified by this evidence."
+  ]
+}
