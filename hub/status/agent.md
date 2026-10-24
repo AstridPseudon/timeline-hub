@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T09:16:47Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 0m -->
-# agent board, 2026-10-24T09:16:32Z
+<!-- agent | 2026-10-24T09:19:19Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 1m -->
+# agent board, 2026-10-24T09:18:02Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -136,11 +136,11 @@
 | U2 duck acceptance | Qualify the original managed music workflow | Luna | Exact G4 installed child | blocked:runtime | Home 0832; result review 0840 | Product source has 20 passes. Original 17 assertions unchanged; managed body remains held. | 0ff3d103fb |
 
 | U2 duck staged row | Prepare exact managed source guards | Luna | Genuine child/profile/Store receipt | blocked:runtime | Author0856; review0857 PASS | Snapshot,parent,tree,source and Runtime guards qualified. Row explicitly HOLD until genuine installed inputs bind. | Staged evidence only |
-| F ABA lost-ack path | Preserve exact undo flight on transport errors | Sol / Luna | Integrated targeted proof | doing | Viewing0906 PASS17; home0916 | Own-onlyf966 mergedba55. Six offline transport controls retain budget and replay; original Runtime boundary remains unresolved. | ba55ac1e9e |
+| F ABA lost-ack path | Preserve exact undo flight on transport errors | Sol / Luna | Integrated targeted PASS | merged | Viewing0906; home0916 PASS17 | Actualba55 exact testblob and unchanged product bytes; six offline controls plus11 existing checks pass. No original repair claim. | ba55ac1e9e |
 | F Farm giant regression | Attribute315 lines and verify smallest repair | Luna / Luna | Exact repair and causal reviews PASS | merged | Source0904; cause0909/0914 PASS | Current14,330 and rationale match prior PASS. Farm315=31 inherited+284 D40; laterU2+17. No new source,body or count credit. | Existing8c5ae21/a8f4 |
 | OPS shared schema input | Return genuine installed distribution provenance | Luna | Runtime peer0910 | doing | agt-OPS-schema-input-0918 | Bounded metadata,RECORD,direct_url and recorded source facts only. No package action,probe or new child. Due09:25. | Existing passing venv |
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
-Integration: Actual67d5f19716 contains exact reviewed two runners; integrated0856 PASS static and all15 mappings. Source0ff3 independently20PASS; earlier0c2 joined123 retains its scope. Original20732 failed lost-ack code.
+Integration: ba55ac1e9e adds only reviewed offline transport tests, integrated0916 PASS17. Runner67d5 static PASS; product0ff3 independently20PASS; earlier0c2 joined123 retains its scope. Original20732 failed at lost-ack error code.
 Count: Official263 closed /4 open of267 restored after independent current-repair0904 and causal0914 PASS. Exactly123 mappings remain; census e13d65ba unchanged. Farm giant was an already repaired original, so no duplicate closure or new census artifact.
 Open originals: discovery support; generic harvest/reopen; D23 helper word-second; D23 moved-head restart. All original records and historical challenges retained.
 Farm: Checkpoint 26511 remains 17,335 passed, 288 failed, 187 setup errors and 4 skips on Agent 9cd / Runtime 45c3. Independently reviewed 96-node packet: 80 environment, 1 docs regression and 15 unknown. Setup packet: 140 environment and 47 tuple mismatches. No new Farm pass credit.
