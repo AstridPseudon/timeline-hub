@@ -2,33 +2,19 @@ diff --git a/tests/e2e/local/three-products.spec.ts b/tests/e2e/local/three-prod
 index 1af9a62b62..aca69c367f 100644
 --- a/tests/e2e/local/three-products.spec.ts
 +++ b/tests/e2e/local/three-products.spec.ts
-@@ -787,6 +787,7 @@ async function faultFirstCommit(page: Page) {
-   const posts: CommitPost[] = [];
-   const forwarded: Array<{ identity: Gate5CommitIdentity; response: unknown }> = [];
+@@ -789,2 +789,3 @@ async function faultFirstCommit(page: Page) {
    const observed: Gate5CommitIdentity[] = [];
 +  const observedUrls: string[] = [];
    const stagedRetries: Gate5CommitIdentity[] = [];
-   const legacy: string[] = [];
-   let held: Route | undefined;
-@@ -796,6 +797,7 @@ async function faultFirstCommit(page: Page) {
-   const stagedReady = new Promise<void>((resolve) => { stagedResolve = resolve; });
-   let initial: Gate5CommitIdentity | undefined;
+@@ -798,2 +799,3 @@ async function faultFirstCommit(page: Page) {
    let recoveryForwarded = false;
 +  let recoveryRetryArmed = false;
    const MAX_OBSERVED_ATTEMPTS = 16;
-   const observe = (target: Page) => {
-     target.on('request', (request) => {
-@@ -836,6 +838,7 @@ async function faultFirstCommit(page: Page) {
-     if (!route || !target || target.isClosed()) throw new Error('Gate5 fault control has no staged retry to release');
-     stagedRoute = undefined;
+@@ -838,2 +840,3 @@ async function faultFirstCommit(page: Page) {
      stagedPage = undefined;
 +    recoveryRetryArmed = false;
      await forward(route, route.request(), {
-       body: route.request().postData()!, key: route.request().headers()['idempotency-key'],
-     });
-@@ -849,6 +852,17 @@ async function faultFirstCommit(page: Page) {
-       throw new Error(`Gate5 fault control observed more than ${MAX_OBSERVED_ATTEMPTS} commit POST attempts`);
-     }
+@@ -851,2 +854,13 @@ async function faultFirstCommit(page: Page) {
      observed.push(identity);
 +    observedUrls.push(request.url());
 +    if (recoveryRetryArmed && stagedRetries.length > 0 && !recoveryForwarded
@@ -42,43 +28,25 @@ index 1af9a62b62..aca69c367f 100644
 +      return;
 +    }
      const action = classifyGate5FaultOrder({ initial, candidate: identity,
-       automaticRetryStaged: stagedRetries.length > 0, recoveryForwarded });
-     if (action === 'reject-unexpected-duplicate' || action === 'reject-early-dependent') {
-@@ -891,12 +905,13 @@ async function faultFirstCommit(page: Page) {
-   };
-   await attach(page);
+@@ -893,3 +907,3 @@ async function faultFirstCommit(page: Page) {
    return {
 -    posts, forwarded, observed, stagedRetries, legacy, attach,
 +    posts, forwarded, observed, stagedRetries, legacy, attach, observedUrls,
      get attempts() { return observed.length; },
-     get forwardedAttempts() { return posts.length; },
-     waitForStagedRetry,
-     releaseStagedRetry,
+@@ -899,2 +913,3 @@ async function faultFirstCommit(page: Page) {
      abortStagedRetry,
 +    armRecoveryRetry() { recoveryRetryArmed = true; },
      async loseAck() {
-       if (!held) throw new Error('No durably accepted response to lose');
-       await held.abort('connectionreset');
-@@ -1724,12 +1739,15 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
- 
-   const realmBefore = await expectSameRealm(page, harness, astrid);
+@@ -1726,2 +1741,4 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
    const originalARequest = { body: wire.posts[0].body, key: wire.posts[0].key };
 +  wire.armRecoveryRetry();
 +  await wire.abortStagedRetry();
    await page.reload();
-   await expectConnected(page);
-   const afterReload = (await commandOutboxes(page, seed3.timelineId)).find((candidate) => candidate.ownerId === owner.ownerId)!;
-   expect(afterReload.pending?.request).toEqual(owner.pending!.request);
-   expect(afterReload.intents).toEqual(owner.intents);
+@@ -1732,2 +1749,3 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
    expect(wire.posts, 'reload does not send queued B or retry A').toHaveLength(1);
 +  await wire.abortStagedRetry('connectionclosed');
    await page.close();
- 
-   const restarted = await harness.restartRuntime();
-@@ -1751,14 +1769,29 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
-   expect(persisted.intents).toEqual(owner.intents);
-   expect(wire.posts).toHaveLength(1);
- 
+@@ -1754,3 +1772,10 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
 -  await reopened.getByRole('button', { name: /^Recover saved edits/ })
 -    .and(reopened.locator(`[data-owner-id="${owner.ownerId}"]`)).click();
 +  wire.armRecoveryRetry();
@@ -91,10 +59,7 @@ index 1af9a62b62..aca69c367f 100644
 +  expect(wire.forwarded).toHaveLength(1);
 +  await wire.releaseStagedRetry();
    await expect.poll(() => wire.posts.length, CEILING).toBe(3);
-   expect(wire.posts[1].body).toBe(originalARequest.body);
-   expect(wire.posts[1].key).toBe(originalARequest.key);
-   expect(wire.posts[1].response).toEqual(wire.posts[0].response);
-   expect(await expectV2History(harness, seed3, wire.posts[1], 'accepted')).toEqual(recordedA);
+@@ -1761,2 +1786,10 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
    const b = accepted(wire.posts[2]);
 +  expect(wire.observed).toHaveLength(5);
 +  expect(wire.observed.slice(0, 4)).toEqual([originalARequest, originalARequest, originalARequest, originalARequest]);
@@ -105,5 +70,3 @@ index 1af9a62b62..aca69c367f 100644
 +      new URL(harness.doorBase).origin, new URL(harness.doorBase).origin, new URL(harness.doorBase).origin]);
 +  expect(wire.forwarded).toHaveLength(3);
    const requestB = JSON.parse(wire.posts[2].body) as CommitRequest;
-   const mountedB = mountedDocumentIntentOf(owner.intents[1].payload);
-   expect(wire.posts[2].key).not.toBe(wire.posts[0].key);

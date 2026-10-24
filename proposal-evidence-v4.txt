@@ -1,98 +1,70 @@
-P3 D75b corrected source proposal — application-ready candidate
-===============================================================
+P3/D75b return controls — committed-candidate procedure
+=========================================================
 
-Scope and disposition
----------------------
-The candidate is applied on this review branch for inspection. It retains both
-automatic-recovery mounts: the intermediate page.reload() mount and the fresh
-post-Runtime-restart mount. The original fixture recovery click is removed.
+Scope
+-----
+The production change remains limited to the existing Gate-5 recovery helper
+and the existing mounted Gate-5 journey. The candidate keeps both automatic
+recovery mounts and asserts the physical request sequence:
 
-The strict lifecycle accounting is complete and ordered:
+  observed:  A, A, A, A, B  (exactly 5)
+  forwarded: A, A, B        (exactly 3)
 
-  observed attempts:  A, A, A, A, B  (exactly 5)
-  forwarded attempts: A, A, B        (exactly 3)
+The new focused Vitest proof drives the production useTimelineSave hook. That
+hook creates the real localSaveSession and durable commit outbox; the test
+reconnects by unmounting/remounting the hook and uses a boundary HTTP double
+only to observe, hold, reject, and release actual commit requests. It does not
+manually schedule A/B sends. It covers fast and delayed schedules, exact body
+and idempotency-key retention, URL/origin identity, durable owner cleanup, and
+strict negative accounting for wrong/missing/extra/reordered/double-forwarded
+attempts.
 
-The first four attempts assert byte-identical request body and
-Idempotency-Key to A. Every observed URL is asserted equal to the first URL,
-and every observed URL origin is asserted equal to the stable Runtime door
-origin. The fifth observed attempt is asserted to have B's exact body and key.
-The candidate keeps the existing A receipt/history assertion at posts[1], B at
-posts[2], and all downstream merged/canonical/history/preview/Agent/guarded
-undo/opaque-data/legacy assertions byte exact.
+Immutable source pair
+----------------------
+  author parent: 5d7550ca7d005f948695ee3dc1d49273890bf59c
+  candidate source: current committed HEAD
+  source before SHA-256: a6468188ff21c4fd8bd397ff242b0260ee92ab6f2f90ac94786973eaf3c1e99
+  source after SHA-256:  8661fc919714d292c567844dc4f423855923077ca6a679a1398ec2a46154315b5
 
-The independent app-P3-D75-scope-review-1806 report confirms the intermediate
-automatic retry is physically reachable through useTimelineSave's fresh-mount
-recovery. It reports 97/97 targeted production tests and 20/20 retained v3
-controls, and concludes that suppressing or hiding that retry is unfaithful.
+The controls read the before image only with `git show <author-parent>:<path>`
+and the after image only with `git show <current-HEAD>:<path>`. They verify the
+parent is an ancestor, the tree is clean, the exact parent/HEAD patch matches
+the retained artifact, and the committed source diff passes `git diff --check`.
+This remains valid after the candidate commit and from a clean source checkout.
 
-Validation
-----------
-/opt/node20/bin/node --import tsx --test tests/e2e/local/support/gate5-fault-order.test.mjs
-  PASS: 3/3.
+Validation performed in this worker
+------------------------------------
+  ./node_modules/.bin/eslint src/tools/video-editor/hooks/useTimelineSave.mountedRecovery.test.tsx --max-warnings 0
+    PASS.
 
-/opt/node20/bin/node --import tsx --test proposal-controls-v4.mjs
-  PASS: 4/4 retained controls. Fast and slow schedules exercise both mounts;
-  exact five/three counts, request/key/body/order, stable-door URL identity,
-  wrong-origin rejection, no-intermediate-suppression, and source boundary
-  controls pass.
+  ./node_modules/.bin/tsc --noEmit --pretty false --incremental false
+    PASS, zero diagnostics.
 
-/opt/node20/bin/node --import tsx proposal-controls-v4.mjs --lint
-  PASS: virtual protected spec lint, zero diagnostics.
+  ./node_modules/.bin/vitest run --no-cache --config config/testing/vitest.config.ts \
+    --reporter dot src/tools/video-editor/hooks/useTimelineSave.mountedRecovery.test.tsx
+    PASS: 3/3 (fast, slow, strict negative controls).
 
-/opt/node20/bin/node --import tsx proposal-controls-v4.mjs --types
-  PASS: baseline 23 / virtual 23 diagnostics, zero added diagnostics.
+  /opt/node20/bin/node --check proposal-controls-v4.mjs
+    PASS.
 
-/opt/node20/bin/node --import tsx proposal-controls-v4.mjs --hashes
-  PASS: deterministic before/virtual-after hashes recorded below.
+  git diff --check HEAD --
+    PASS for the working-tree changes. The parent-to-candidate check must be
+    rerun after the harness commits this worker because HEAD currently points
+    at the prior candidate while the new focused test is uncommitted.
 
-/opt/node20/bin/node node_modules/@playwright/test/cli.js test --config
-playwright.three-products.config.ts tests/e2e/local/three-products.spec.ts --list
-  PASS: exactly 15 cases listed in the protected three-products spec; zero
-  cases ran.
+  Playwright --list and browser/service/full suites
+    NOT RUN, per task scope and the no-live/full-suite rule.
 
-git apply --cached --whitespace=error --check proposed-v4.patch
-  PASS against the unmodified index/base source. The reverse check also passes
-  against the applied candidate; the patch is the exact base-to-candidate
-  source delta and applies forward to a clean tl/integration base.
+Committed-candidate acceptance to run after harness commit
+-----------------------------------------------------------
+  /opt/node20/bin/node --import tsx --test \
+    tests/e2e/local/support/gate5-fault-order.test.mjs proposal-controls-v4.mjs
+  /opt/node20/bin/node --import tsx proposal-controls-v4.mjs --lint
+  /opt/node20/bin/node --import tsx proposal-controls-v4.mjs --types
+  /opt/node20/bin/node --import tsx proposal-controls-v4.mjs --hashes
+  git diff --check 5d7550ca7d005f948695ee3dc1d49273890bf59c HEAD --
+  node node_modules/@playwright/test/cli.js test --config \
+    playwright.three-products.config.ts tests/e2e/local/three-products.spec.ts --list
 
-git diff --check
-  PASS.
-
-No browser, original P3 journey, Runtime service, live socket, or full suite
-was run, per the task brief. The Playwright command above was list-only; the
-central service run remains intentionally unrequested by this worker.
-
-SHA-256 evidence
-----------------
-Full spec before:
-a6468188ff21c4fd8bd397ff242b0260ee92ab6f2f90ac94786973eaf3c1e99
-Full spec after:
-8661fc919714d292c567844dc4f423855923077ca6a679a1398ec2a46154315b
-
-faultFirstCommit helper before:
-0ac6ab0f91cfc9fee0136ec90f408584e2a7755f245b7aea2f85f06c8c316c31
-faultFirstCommit helper after:
-c8b5270351c8191fe17b4611f119808655fc79b038ccd95fbad21d9480015c15
-
-Complete P3 case before:
-d47d55265b3905a1882ffb370df033cf92b35c3492d4bec366d8da0272b9fb20
-Complete P3 case after:
-ae264be1af6dbc621d2b39b014af67fb49298710de36464c7c8dac8bbab2b2e8
-
-P3 recovery/counts region before:
-77056565d0f54bfbe0498985aa5c68340d24d10bfd233cb2b48ec9f68a50a6fd
-P3 recovery/counts region after:
-8d834d52679929cbf6f4c32b152ce383632a85b5261aabc0758e51115b7364d5
-
-P3 downstream B/history/canonical/undo region before:
-9a0b1e6bb39e47197407ab33e1959231c73aebd1bb98ec11672436b0083d14b3
-P3 downstream B/history/canonical/undo region after:
-9a0b1e6bb39e47197407ab33e1959231c73aebd1bb98ec11672436b0083d14b3
-
-proposed-v4.patch:
-ce3471b73254a48405d04d27fc5ebdb848c46219a47b7480d7a7cae28c4dff5b
-
-Candidate source delta: +36/-3 lines, 1,901 UTF-8 bytes.
-Files changed: tests/e2e/local/three-products.spec.ts plus these retained
-review artifacts and controls. No product, pin, generated client, or other
-spec was changed.
+The controls intentionally require the clean committed candidate pair, so the
+node:test control command is unverified until the harness commits these edits.
