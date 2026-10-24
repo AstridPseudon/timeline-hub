@@ -839,6 +839,52 @@ describe('track labels in the existing durable command session', () => {
     else expect(command.reads?.some((read) => read.ref.includes('/clip:'))).toBe(false);
     await session.dispose();
   });
+  it('refuses synthetic or ambiguous track ownership and unprepared commands atomically', async () => {
+    const raw = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
+      { revision_id: 'old', publication_id: 'old' }, { children: true }).data.canonical_document;
+    const env = await environment(raw);
+    const session = await env.mount();
+    expect(() => captureTrackLabelEdit(session.trackLabelPort, env.current(), env.current().config.tracks[0].id)).toThrow();
+    expect(() => session.trackLabelPort.submit({ command: { schema_version: 1, op: 'track.set', version: '1',
+      select: 'parent/track:V1', args: { values: { label: 'Uncaptured' }, clear: [] } },
+    preview: { version: 1, operations: [] } })).toThrow('not captured');
+    expect(env.previews).not.toHaveBeenCalled();
+    expect(env.commits()).toHaveLength(0);
+    await session.dispose();
+  });
+  it.each(['project', 'timeline', 'publication', 'synthetic'] as const)('refuses a mismatched %s display basis', async (mismatch) => {
+    const env = await environment();
+    const session = await env.mount();
+    const current = structuredClone(env.current());
+    if (mismatch === 'project') current.head!.projectId = 'other-project';
+    if (mismatch === 'timeline') current.head!.timelineId = 'other-timeline';
+    if (mismatch === 'publication') delete current.head!.headPublicationId;
+    if (mismatch === 'synthetic') {
+      current.resolvedConfig.tracks[0].id = 'display-only';
+      current.config.tracks[0].id = 'display-only';
+    }
+    expect(() => captureTrackLabelEdit(session.trackLabelPort, current, mismatch === 'synthetic' ? 'display-only' : 'V1')).toThrow();
+    expect(env.previews).not.toHaveBeenCalled();
+    expect(env.commits()).toHaveLength(0);
+    await session.dispose();
+  });
+  it('refuses mixed previews atomically and keeps the original capture available', async () => {
+    const env = await environment();
+    const session = await env.mount();
+    const captured = captureTrackLabelEdit(session.trackLabelPort, env.current(), 'V1');
+    const args: TrackLabelArgs = { values: { label: 'Only label' }, clear: [] };
+    const { command } = session.trackLabelPort.finish(captured.basis, args);
+    expect(() => session.trackLabelPort.submit({ command, preview: { version: 1, operations: [
+      { op: 'track.update', target: 'V1', payload: { label: 'Only label', muted: true } },
+    ] } })).toThrow('label-only preview');
+    expect(env.previews).not.toHaveBeenCalled();
+    expect((await env.outboxes.list(scope))[0].intents).toHaveLength(0);
+    submitTrackLabelEdit(captured, args);
+    await session.flush();
+    expect(env.commits()).toHaveLength(1);
+    expect(env.commits()[0].body!.commands[0]).toEqual(command);
+    await session.dispose();
+  });
 });
 
 // HTTP and acceptance are fabricated by the unit fixture; browser/Runtime proof is a separate lane.
