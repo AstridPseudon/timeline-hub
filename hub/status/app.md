@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T14:02:34Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 4m -->
-# app board, 2026-10-24T13:59Z
+<!-- app | 2026-10-24T14:05:53Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 0m -->
+# app board, 2026-10-24T14:06Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -7,6 +7,7 @@
 | U3b | Merge current upstream editor | Sol; Luna review | D56 merge now | merged | Join1146; review1157 | Normal home equals reviewed5a9ff tree. Upstream snapshot2a288 retained under D51. | d99396bca7 |
 | U3-final | Merge completed upstream once | Luna | D60 exact09c844 | merged | Author1330; net1339; audit1343 | Home tree equals reviewedfe0.56 Node,132 Vitest,366 seams,types/lint PASS;164 tests and579 predicates retained. | d24ed69dcd |
 | U4p | Adopt final D39 client and schema | Sol; Luna review | U3b and producerbecfe | merged | Tool1005; caller1022; review1157 | Normal tools;79 producer and14 consumer artifacts exact. | d99396bca7 |
+| U4p-D60 | Adopt current Runtime provenance | Luna | Runtime e68 HOME | doing | app-U4p-D60-provenance-adoption-1404 | Run normal sync and vendor tools; expected canonical14 files unchanged, source lock provenance advances. | Base d24ed |
 | A2 | Production save funnel | Sol; Luna review | C0 and U3 | merged | Authors; integrated1036 | Dependent outbox saves and authoritative reply handling integrated. Final gate remains open. | Current home |
 | A3 | Popup placement element asset saves | Luna; Sol after failures | A2 | merged | Source reviews; joined1036 | Mounted save routes integrated. Popup target source repair and final gesture proof remain. | Current home |
 | A4 | Reachable executor retirement | Luna; independent review | P1 GO | merged | Census0438; review0444 | Zero reachable legacy film writers. Live behavioral controls retained. | c0fe889944 |
@@ -34,9 +35,9 @@
 | F-caller-path | Challenge remaining caller architecture | Independent Luna | Repeated custody review failure | merged | app-F-caller-whole-path-1307 | Three actual guard gaps confirmed; production mounted path structurally PASS. Guidance with Sol1307. | Report only |
 | F-inputs | Qualify existing working service recipe | Luna; custody review | Actual source and custody PASS | merged | Recipe1304; review1309 | Normal venv origins/current client/artifacts/Remotion/graph PASS; no child, overlay or live daemon claim. | ed81088ed8 |
 | F-service-binding | Qualify exact environment adapter | Luna; custody review | Review1330 PASS | review | Binding1323; review1330 | Module-only PASS36 attacks, real imports and consumed interpreters. Joined current-fact refresh remains. | d387ab1ec6 |
-| F-caller-join | Join caller and working environment | Luna | Positive1350 dry prepare | review | app-F-joined-current-custody-review-1358 | Current-fact refresh and normal/optimized joined prepare PASS; complete independent custody review active. | d606c72b55 |
+| F-caller-join | Join caller and working environment | Luna | Actual Runtime e68 lock adoption | blocked:agent | Review1358; App adoption1404 | Current dry refused changed Runtime source; both consumer locks still becfe. Normal App and Agent adoption requested. | d606c72b55 |
 | F-node-current | Verify prior Node regressions | Luna | Refreshed home tree | merged | Node1345 PASS36; ENV2 | 33 verifier,marker guard and both release nodes pass. Two extension SSH setup failures remain explicit. | d24ed69dcd |
-| F-visual-seam | Qualify shared upstream seam fixture | Luna | Published Runtimef69 fixture | review | Fixture1356 PASS | All10 shared cases pass. Runtime fixtureblob1f3d845c must match final HOME before integrated credit. No source edits. | Appd24ed; Runtimef69 |
+| F-visual-seam | Qualify shared upstream seam fixture | Luna | Final Runtime fixture identity | merged | Fixture1356 PASS; exact e68 blob | All10 cases pass on App d24. Actual Runtime e68 fixture equals qualified f69 blob; no copies or source edits. | App d24; Runtime e68 |
 | F-App-full | Corrected App checkpoint terminal | App service; Luna producer | Same actual16138 | merged | Terminal producer1227 | FAIL exit1/1665s. Vitest19251PASS;Node257PASS38FAIL26SKIP. Final full GO remains open. | 5a9ff97cf0 |
 | F-core-map | Map App core suites and old failures | Luna | D54/D54a | merged | Return1233 | Historical19570 groups fixed or D52 removed. Home upstream behavior UNKNOWN; no false pre-existing claim. | cca3deb361 |
 | F-offline | Repair verifier schema references | Luna; security review | Review1238 PASS33 | merged | Author1235; review1238 | 33 unchanged security cases pass. Namespace repair retains strict unknown-resource and reference guards. | 73aa558266 |
@@ -48,15 +49,15 @@
 
 Integration:d24ed69dcdbd464159a1b6db27403ce6a96be2e5, treeead5ba0d4f755cf3d38c8312d9d91478eeeebe45 equals reviewedfe0. U3b and D39 are HOME atd993; later reviewed transcript, diagnostic, verifier, release and quality corrections are integrated. D59 current integrated heads every cycle; no wait for unrelated Agent repairs, D41 backports or old pinned runs.
 
-live 2 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T13:56:06Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 0m --> Complete custody1358 dispatched immediately after actual positive dry preparation.
+live 0 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T14:02:34Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 4m --> Newly ready App adoption1404 dispatched immediately; Agent dependency is a peer row, no escalation.
 
 core open:9 final App gate cases unqualified,8 P2 and1 P3. D55b accepts all eight P2 as core. Historical16138 Vitest had0 failures; final core full and final P1–P5 remain required.
 
 regressions:0 open among historical App Node38 after exact refreshed-tree proof1345:36 repaired and passing,2 SSH environment failures. Final integrated full remains required; no new upstream regression is inferred.
 
-Blockers: App caller — source HOME d24ed qualified. Currentfacts d606 positive dry prepare PASS; independent complete custody1358 active before atomic worker install and current P2/P3.
+Blockers: Consumer adoption — Runtime HOME e68 advanced during custody1358. Both locks still becfe, so dry correctly refuses. App Luna1404 active; Agent peer1404 requests normal U4a adoption. Final review follows genuine locks.
 Blockers: Owner admission — historical403 and automatic access refusal remain stopped. No alternate schema, child, overlay or receipt route.
-Next ready: Consume custody1358; worker-only current-fact refresh and atomic install, readback, then P2/P3. Recheck Runtime/Agent D60 handbacks; no wire regeneration reported. Shared fixture10cases PASS, final home byte identity next.
+Next ready: Merge normal App adoption1404 after tests; consume Agent normal adoption. Refresh caller facts, positive dry first and complete custody review; atomic install and P2/P3. Shared fixture matches actual Runtime e68.
 
 Historical signals: P2 actual11933 exit1/469s,0PASS3FAIL5NOTRUN; native/history/readiness passed. Actual element request was pending with no observed response or terminal outcome. P3 actual3896 exit1/268s reached predecessor/reset,A acceptance,ACK loss and exact A retry; B/restart/undo tail not reached. P226414 was stale-source preflight-only,all originalsNOTRUN. Earlier source-admission20674/10144 and D45/D41 failures retain their original limits. No signal is relabeled final GO.
 
