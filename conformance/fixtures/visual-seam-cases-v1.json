@@ -135,13 +135,16 @@
           {"id": "overlay", "kind": "visual", "role": "output", "label": "Overlay"}
         ],
         "clips": [
-          {"id": "base", "clipType": "media", "asset_id": "base", "track": "picture", "at": 0, "hold": 2,
-            "app": {"canonical": {"occurrenceId": "occ-effect", "sourceClipId": "base"},
+          {"id": "base-a", "clipType": "media", "asset_id": "base-a", "track": "picture", "at": 0, "hold": 1,
+            "app": {"canonical": {"occurrenceId": "occ-effect", "sourceClipId": "base-a"},
               "canonicalTiming": {"occurrenceStartMs": 0, "occurrenceDurationMs": 2000},
-              "canonicalEffects": {"localCount": 0, "timeline": [{"id": "wide-overlay", "type": "am-overlay", "at": 0.5, "hold": 1, "track": "overlay"}]}}}
+              "canonicalEffects": {"localCount": 0, "timeline": [{"id": "wide-overlay", "type": "am-overlay", "at": 1, "hold": 0.5, "track": "overlay"}]}}},
+          {"id": "base-b", "clipType": "media", "asset_id": "base-b", "track": "picture", "at": 1, "hold": 1,
+            "app": {"canonical": {"occurrenceId": "occ-effect", "sourceClipId": "base-b"},
+              "canonicalTiming": {"occurrenceStartMs": 0, "occurrenceDurationMs": 2000}}}
         ],
         "effects": [
-          {"id": "wide-overlay", "type": "am-overlay", "at": 0.5, "hold": 1, "track": "overlay"}
+          {"id": "wide-overlay", "type": "am-overlay", "at": 1, "hold": 0.5, "track": "overlay"}
         ]
       },
       "expected": [],
