@@ -103,8 +103,13 @@ export function validatePinnedSources({ sources, appRootState = null }) {
       expectedHead: source.head, expectedTree: source.tree,
       selectedState: source.state ?? { root: source.checkout, head: source.head, tree: source.tree, branch: null, dirty: false } });
   }
-  if (appRootState && (appRootState.head !== sources.app.head || appRootState.tree !== sources.app.tree)) {
-    throw new Error(`D66 App service source does not match its submit-time pin: ${appRootState.head}/${appRootState.tree}, pinned ${sources.app.head}/${sources.app.tree}`);
+  if (appRootState) {
+    const exactHead = appRootState.head === sources.app.head;
+    // test-run always wraps the target tree in a commit with the target HEAD as its sole parent.
+    const snapshot = appRootState.parents?.length === 1 && appRootState.parents[0] === sources.app.head;
+    if (appRootState.tree !== sources.app.tree || (!exactHead && !snapshot)) {
+      throw new Error(`D66 App service source does not match its submit-time pin or direct unchanged-tree snapshot: ${appRootState.head}/${appRootState.tree}, pinned ${sources.app.head}/${sources.app.tree}`);
+    }
   }
   if (appRootState?.dirty) throw new Error('D66 App service source is dirty');
   return sources;
@@ -118,6 +123,7 @@ function checkoutState(checkout) {
     root: rootPath,
     head: git(resolved, ['rev-parse', 'HEAD']),
     tree: git(resolved, ['rev-parse', 'HEAD^{tree}']),
+    parents: git(resolved, ['show', '-s', '--format=%P', 'HEAD']).split(' ').filter(Boolean),
     branch: optionalGit(resolved, ['symbolic-ref', '--quiet', '--short', 'HEAD']),
     dirty: Boolean(git(resolved, ['status', '--porcelain=v1', '--untracked-files=all'])),
   };
@@ -127,12 +133,14 @@ function checkoutState(checkout) {
 
 export function selectPinnedSources(env = process.env, homes = normalHomes, appRoot = root) {
   const selected = {};
+  // Refuse incomplete tuples before touching any selected checkout.
+  for (const role of sourceRoles) {
+    for (const key of pinEnvironment[role]) validateObjectId(env[key]?.trim(), `${role} ${key.endsWith('_SHA') ? 'SHA' : 'tree'}`);
+  }
   for (const role of sourceRoles) {
     const [headKey, treeKey] = pinEnvironment[role];
     const expectedHead = env[headKey]?.trim();
     const expectedTree = env[treeKey]?.trim();
-    validateObjectId(expectedHead, `${role} SHA`);
-    validateObjectId(expectedTree, `${role} tree`);
     const normal = realpathSync(homes[role]);
     const key = selectedEnvironment[role].find((candidate) => env[candidate]?.trim());
     const requested = key ? env[key].trim() : exactCheckoutPath(role, expectedHead);
@@ -213,7 +221,7 @@ export function captureSubmitPins(paths = normalHomes) {
 
 export function buildSubmitPlan({ name, target, paths = normalHomes } = {}) {
   assert(suites[name], 'choose p1, p2, p2-element or p3');
-  if (!target || target.startsWith('integration:')) throw new Error('D66 submit requires an exact App proof-worker target');
+  if (target?.startsWith('integration:')) throw new Error('D66 submit requires the stable exact App checkout target');
   const pins = captureSubmitPins(paths);
   const checkouts = Object.fromEntries(sourceRoles.map((role) => [role, exactCheckoutPath(role, pins[role].head)]));
   const checkoutRequests = sourceRoles.map((role) => ({
@@ -221,17 +229,22 @@ export function buildSubmitPlan({ name, target, paths = normalHomes } = {}) {
     command: [path.join(orch, 'bin', 'request-checkout'), role, pins[role].head, `D66 exact ${role} source`],
     receipt: receiptPath(role, pins[role].head),
   }));
-  return { name, target, pins, checkouts, checkoutRequests,
-    service: serviceRecipe({ name, target, pins, checkouts }) };
+  return { name, target, pins, checkouts, checkoutRequests };
 }
 
-export function serviceRecipe({ name, target, pins, checkouts }) {
+export function serviceRecipe({ name, pins, checkouts, preflight = false }) {
+  assert(suites[name], 'choose p1, p2, p2-element or p3');
+  for (const role of sourceRoles) {
+    validateObjectId(pins[role]?.head, `${role} SHA`);
+    validateObjectId(pins[role]?.tree, `${role} tree`);
+    assert(path.isAbsolute(checkouts[role]), `D66 ${role} checkout must be absolute`);
+  }
   const env = sourceRoles.flatMap((role) => [
     `D66_${role.toUpperCase()}_SHA=${shellQuote(pins[role].head)}`,
     `D66_${role.toUpperCase()}_TREE=${shellQuote(pins[role].tree)}`,
     `D66_${role.toUpperCase()}_CHECKOUT=${shellQuote(checkouts[role])}`,
   ]);
-  return `${env.join(' ')} ${shellQuote(node)} --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs ${shellQuote(name)}`;
+  return `${env.join(' ')} ${shellQuote(node)} --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs ${shellQuote(name)}${preflight ? ' --preflight' : ''}`;
 }
 
 export function receiptCheckout(receipt, role, head) {
@@ -239,6 +252,31 @@ export function receiptCheckout(receipt, role, head) {
   const match = text.match(/(?:created|exists):?\s+(\S+)(?:\s+\(detached at |\s+at\s+)([0-9a-f]{40})/);
   if (!match || match[2] !== head) throw new Error(`D66 ${role} checkout receipt is missing or tampered: ${receipt}`);
   return match[1];
+}
+
+/** request-checkout registers its stable detached checkout as a service target. */
+export function appCheckoutTarget(checkout, head, { target = path.basename(checkout), workerRoot = path.join(orch, 'workers') } = {}) {
+  const expected = `${checkoutPrefixes.app}-${head.slice(0, 8)}`;
+  if (target !== expected || path.basename(checkout) !== expected) throw new Error(`D66 service target must be the stable exact App checkout ${expected}`);
+  const metadata = Object.fromEntries(readFileSync(path.join(workerRoot, target, 'meta'), 'utf8').trim().split('\n')
+    .map((line) => { const index = line.indexOf('='); return [line.slice(0, index), line.slice(index + 1)]; }));
+  if (metadata.name !== target || metadata.repo !== 'app' || realpathSync(metadata.worktree) !== checkout) {
+    throw new Error(`D66 App checkout target metadata does not match ${checkout}`);
+  }
+  return target;
+}
+
+export function preflightSources(env = process.env, homes = normalHomes, appRoot = root, {
+  receiptRoot = path.join(orch, 'queue', 'done'), workerRoot = path.join(orch, 'workers'),
+} = {}) {
+  const sources = selectPinnedSources(env, homes, appRoot);
+  for (const role of sourceRoles) {
+    const source = sources[role];
+    const receipt = path.join(receiptRoot, `checkout-${role}-${source.head}`);
+    assert.equal(realpathSync(receiptCheckout(receipt, role, source.head)), source.checkout, `D66 ${role} receipt selected the wrong checkout`);
+  }
+  const target = appCheckoutTarget(sources.app.checkout, sources.app.head, { workerRoot });
+  return { sources, target, service_source: checkoutState(appRoot) };
 }
 
 export async function waitForSubmitReceipts(plan, { waitMs = 300_000, pollMs = 250 } = {}) {
@@ -250,7 +288,7 @@ export async function waitForSubmitReceipts(plan, { waitMs = 300_000, pollMs = 2
     const receiptCheckoutPath = realpathSync(receiptCheckout(request.receipt, request.role, request.head));
     assert.equal(receiptCheckoutPath, request.checkout, `D66 ${request.role} receipt selected the wrong checkout`);
     const state = checkoutState(receiptCheckoutPath);
-    validatePinnedSource({ role: request.role, selected: receiptCheckoutPath, normal: realpathSync(normalHomes[request.role]),
+    validatePinnedSource({ role: request.role, selected: receiptCheckoutPath, normal: plan.pins[request.role].checkout,
       expectedHead: plan.pins[request.role].head, expectedTree: plan.pins[request.role].tree, selectedState: state });
     resolved[request.role] = receiptCheckoutPath;
   }
@@ -260,35 +298,45 @@ export async function waitForSubmitReceipts(plan, { waitMs = 300_000, pollMs = 2
 async function submit(name) {
   const target = process.env.D66_SUBMIT_TARGET;
   const suiteName = process.env.D66_SUBMIT_SUITE ?? `d66-${name}-exact-submit`;
-  if (!target) throw new Error('D66 submit requires D66_SUBMIT_TARGET, an exact App proof-worker target');
   const plan = buildSubmitPlan({ name, target });
   for (const request of plan.checkoutRequests) execFileSync(request.command[0], request.command.slice(1), { stdio: 'inherit' });
-  await waitForSubmitReceipts(plan, { waitMs: Number(process.env.D66_CHECKOUT_WAIT_MS ?? 300_000) });
-  console.log(`D66 exact service recipe (register as ${suiteName}): ${plan.service}`);
-  console.log(`After registering that exact recipe, submit only now: ${path.join(orch, 'bin', 'request-test')} ${target} ${suiteName}`);
+  const checkouts = await waitForSubmitReceipts(plan, { waitMs: Number(process.env.D66_CHECKOUT_WAIT_MS ?? 300_000) });
+  const serviceTarget = appCheckoutTarget(checkouts.app, plan.pins.app.head, { target });
+  const recipe = serviceRecipe({ name, pins: plan.pins, checkouts });
+  console.log(`D66 exact preflight recipe (register as ${suiteName}-preflight): ${recipe} --preflight`);
+  console.log(`D66 exact service recipe (register as ${suiteName}): ${recipe}`);
+  console.log(`Submit preflight first: ${path.join(orch, 'bin', 'request-test')} ${serviceTarget} ${suiteName}-preflight`);
+  console.log(`After preflight passes, submit the same captured inputs: ${path.join(orch, 'bin', 'request-test')} ${serviceTarget} ${suiteName}`);
 }
 
-async function main() {
+export async function main(sourceOptions = {}) {
   const [name, mode = 'run'] = process.argv.slice(2);
   assert(suites[name], 'choose p1, p2, p2-element or p3');
-  assert(['run', '--collect', '--launch', '--submit'].includes(mode), 'unknown mode');
+  assert(['run', '--collect', '--launch', '--submit', '--preflight'].includes(mode), 'unknown mode');
   if (mode === '--submit') return submit(name);
   const suite = suites[name];
-  // Collection is a source-independent descriptor check. Service launch still
-  // requires the detached exact current Agent/Runtime checkouts below.
-  const sources = mode === '--collect' ? null : selectPinnedSources();
+  // Collection is a source-independent descriptor check; both service modes verify the same captured inputs.
+  const preflight = mode === '--collect' ? null : preflightSources(process.env, normalHomes, root, sourceOptions);
+  const sources = preflight?.sources;
   if (sources) assertSourcesUnchanged(sources);
+  const snapshot = path.basename(root);
+  const output = process.env.D66_OUTPUT_DIR ?? (snapshot.startsWith('.test-')
+    ? path.join(orch, 'tests', snapshot.slice(6), 'd66')
+    : path.join(process.env.TMPDIR ?? '/tmp', `d66-${name}`));
+  mkdirSync(output, { recursive: true });
+  if (mode === '--preflight') {
+    const manifest = { suite: name, mode, repo_heads: repoHeads(sources), repo_trees: repoTrees(sources),
+      source_checkouts: sources, service_source: preflight.service_source, service_target: preflight.target };
+    writeFileSync(path.join(output, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+    console.log(`D66 source preflight PASS: ${path.join(output, 'manifest.json')}`);
+    return;
+  }
   const agentPython = requireExecutable(process.env.ASTRID_PYTHON ?? '/home/user/work/venv-agent/bin/python', 'Agent Python');
   const runtimePython = requireExecutable(process.env.ASTRID_RUNTIME_PYTHON ?? '/home/user/work/venv-runtime/bin/python', 'Runtime Python');
   const importVersions = sources ? {
     runtime: importReadback(sources, runtimePython, [sources.runtime.checkout, sources.agent.checkout]),
     agent: importReadback(sources, agentPython, [sources.agent.checkout, sources.runtime.checkout]),
   } : undefined;
-  const snapshot = path.basename(root);
-  const output = process.env.D66_OUTPUT_DIR ?? (snapshot.startsWith('.test-')
-    ? path.join(orch, 'tests', snapshot.slice(6), 'd66')
-    : path.join(process.env.TMPDIR ?? '/tmp', `d66-${name}`));
-  mkdirSync(output, { recursive: true });
 
   for (const key of ['NODE_PATH', 'ASTRID_QUICK_DESCRIPTOR', 'ASTRID_APP_DIRECT_DIST', 'APP_DIRECT_DIST',
     'ASTRID_LOCAL_DATA_ROOT', 'ASTRID_RUNTIME_DATA_ROOT', 'ASTRID_LOCAL_SOURCE_MANIFEST', 'ASTRID_RUNTIME_SOURCE_MANIFEST',
@@ -310,7 +358,7 @@ async function main() {
     suite: name, started_at: new Date().toISOString(),
     repo_heads: sources ? repoHeads(sources) : { app: git(root, ['rev-parse', 'HEAD']), composition: git('/home/user/work/composition', ['rev-parse', 'HEAD']) },
     repo_trees: sources ? repoTrees(sources) : { app: git(root, ['rev-parse', 'HEAD^{tree}']), composition: git('/home/user/work/composition', ['rev-parse', 'HEAD^{tree}']) },
-    ...(sources ? { source_checkouts: sources } : {}),
+    ...(sources ? { source_checkouts: sources, service_source: preflight.service_source, service_target: preflight.target } : {}),
     test_sha256_before: hashes(), service_versions: importVersions ? { imports: importVersions } : {},
     junit: { readiness: path.join(output, 'readiness.xml'), original: path.join(output, `${name}.xml`) },
   };
