@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T03:51:51Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
+<!-- app2 | 2026-10-24T03:53:48Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 1m -->
 # app2 board, 2026-10-24T03:52Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -8,8 +8,8 @@
 | P1-corpus | Real document roundtrip and merge | Luna | Complete | merged | Corpus1348 | 49 passed with15 fixtures and11 inputs. Direct provider scope; mounted proof recorded separately. | e6 /9729 |
 | P1-seed | Full native atomic bootstrap | Sol; Luna review | Complete | merged | Common0618; seed2d7; Runtime a00e | All21 native assertions and history passed in18792. Runtime2a9 integrated proof passed67. | App12ef; Runtime2a9 |
 | P1-diagnostics | Safe files and source guard codes | Sol; Luna review | Complete source qualification | merged | Reviews1945 and2118; App2238 | Real emitter, serialized listener and failure file passed. Ring32 retains critical events. Success18792 produced no failure-only file. | b221 /6ecc /def457 /f890 |
-| readiness-after-bootstrap | Reviewed D42 memo on proof pin | Runtime Sol; Luna review | Security review and compatible backport | blocked:runtime | Runtime0330 and0339 | Candidate145 plus159 passed. Pin-specific review and proof remain pending. No new pair. | Candidate35320; base37eb |
-| readiness-App | Same head reuse and truthful phase events | App Luna; Sol return | Independent review and diagnostic correction | blocked:app | Coalesce0325; review0338; return0339 | Author91 plus90 tests, types and lint passed. Donor diagnostics failed review; first return active. | dee99 candidate |
+| readiness-after-bootstrap | Reviewed D42 memo on proof pin | Runtime Sol; Luna review | Security review and compatible backport | blocked:runtime | Runtime0330; review0339; return0346 | Security review FAIL: changed validation helper bypassed warm memo. Sol0346 owns correction; pin and HTTP proof held. | Candidate35320; base37eb |
+| readiness-App | Same head reuse and truthful phase events | App Luna; Sol return | Independent review and diagnostic correction | blocked:app | Coalesce0338; return0339; review0345 | Coalescing review PASS181 plus22 and12 controls. Corrected diagnostic stack awaits cumulative review0345. | dee99 candidate |
 | readiness-client-link | Compare P1 and native seed history | App Sol; Luna review | Complete retained comparison | merged | App0121; review0128 | Both histories contain two entries. Native seed has21 commands and child closure. Failed browser request counts remain unknown. | Report only |
 | P2 | Eight original gestures | App service; Proof Luna | Three App fixes and reviewed D42 pin | blocked:app | App12221; Proof0320 and0325 | NO-GO. Exit1,501 seconds. Readiness passed; three original cases failed and five were not run. | App804; Agent079; Runtime37eb |
 | P2-element | Original element head capture failure | App Sol; Luna review | Integrated proof and original failure coverage | blocked:app | Element0314; review0335; census0340 | Source merged after221 tests, types and lint. Exact original trigger remains unknown; source migration alone gives no P2 credit. | f90e708b37 |
@@ -26,10 +26,10 @@
 
 P1 RESULT GO. BOARD-HEADER records GO at00:43Z; D35 is satisfied. Original18792 passed both cases on Appf8b15af0, Agent78738040 and Runtime2a9e347f. P4 and G5 are done. All final freeze gates and original tails must run again on final heads.
 
-Blockers: Runtime owes the reviewed D42 memo backport onto37eb with unchanged client bytes and pin-specific proof.
+Blockers: Runtime owes helper-invalidation correction0346, independent PASS, compatible pin proof and cold, warm and concurrent HTTP checks.
 Blockers: App owes three qualified gesture fixes, same-head reuse and corrected diagnostic completion events before the next pair.
 Blockers: Farm F-final waits for remaining deletions, upstream freeze and P2/P3 proof. Agent owns D32 repairs and classification.
-Next ready: No Proof source task is ready. Consume Runtime0339 and App0338/0339 handoffs immediately; release one pair only after all prerequisites and authentic caller custody pass.
+Next ready: No Proof source task is ready. Consume Runtime0346 and App0345 handoffs immediately; release one pair only after all prerequisites and authentic caller custody pass.
 
 Current authority: INBOX through622074 bytes, including03:50 instruction, is consumed. The next pair waits for all three App gesture fixes plus the D42 pin. App service remains the sole runner; Proof owns verdicts. No repeat or fallback pair is submitted. [Release prerequisites](../../design/peer-app2-to-app-runtime-orchestrator-20261024T0352-release-prerequisites.md).
 
@@ -48,4 +48,6 @@ Later: Agent U2c699236a285 stays unmerged. Activation15 collected with6FAIL and9
 Safety: All prior process, reference, file, MONITOR, keep-awake, publication and locked-v1 refusals remain stopped. Prior compact refusal is not retried. D30 applies: worker final message is the report; managers copy qualified handoffs. No manager product, test, generated, pin or Git mutation. Frozen34e/d106/819acf, D14/D23 and dormant D31 implementation with397-line/40-assertion tests remain unchanged.
 
 Disk:03:48 available8779976704 bytes, above8GB heavy stop and8.5GB D34 threshold. All21 remaining worktrees have KEEP; no eligible supported recycle. Supported sweep3 completed: zero eligible directories,8375 to8374 MiB available. No local heavy run or disk-only worker.
+D42 security finding: [Independent0339](../../design/runtime-D42-security-review-0339.md) reproduced a warm-memo bypass after changing validate_claims while auth.validate stayed unchanged. Candidate35320 is held. Required304 tests passed but do not override the attack. Runtime owns correction0346; no safety refusal or contract decision is involved.
+
 Pass: All1237 Proof workers checked and done. Runtime, App, Agent and Farm boards rechecked. No pending Proof review or merge blocks source work. Next full pass04:00Z; act earlier on a real handback.
