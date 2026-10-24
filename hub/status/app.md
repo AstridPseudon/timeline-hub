@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T12:39:07Z | dispatcher heartbeat 13s | live 3 (sol 0, luna 3, other 0) | busy30 28 | status age 3m -->
-# app board, 2026-10-24T12:36Z
+<!-- app | 2026-10-24T12:42:35Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 26 | status age 0m -->
+# app board, 2026-10-24T12:40Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -10,11 +10,11 @@
 | A3 | Popup placement element asset saves | Sol; Luna review | A2 | merged | Source reviews; joined1036 | Mounted source passes targeted checks. Historical P2 three failures remain signals. | d99396bca7 |
 | A4 | Reachable executor retirement | Luna; independent review | P1 GO | merged | Census0438; review0444 | Zero reachable legacy film writers. D52 dormant cuts tracked below. | c0fe889944 |
 | A4-D52 | Delete parent and track dormant pairs | Luna; independent review | Current caller census | merged | Author1118; review1121 | Four deletions qualified on actual home by tree identity and focused checks. | 2e3c8f65a8 |
-| A4-D52-session | Preserve live 6 / cap 6; ready-undispatched 0. Current dry caller, terminal producer, diagnostic review, offline verifier, quality and release groups each have workers.
+| A4-D52-session | Preserve live 6 / cap 6; ready-undispatched 0. Three independent reviews, release repair, popup source repair and parent oracle correction have workers.
 
-core open: 9 final App gate cases unqualified: 8 P2 gestures and1 P3 journey. Full16138 Vitest has0 failed tests; final node-stage core classification pending.
+core open: 9 final App gate cases unqualified: 8 P2 gestures and1 P3 journey. Full16138 Vitest has0 failed tests; 33 verifier regressions have tested repair under review; exact core label remains qualified separately.
 
-regressions: UNKNOWN final count. Actual16138 Node stage has38 failures split by directory; each needs actual category and evidence, core or not.
+regressions: 34 source-proven Node failures from16138;33 verifier fix under review and1 marker fixture fixed. Two release failures are candidates;2 ssh-keygen failures are ENV.
 
 Blockers: App — final P2/P3 source and authenticated caller binding remain with1222; historical11933 three failures need classification and real fixes where proven.
 Blockers: Orchestrator — D55 decision on all-eight-core recommendation is owed; evidence and escalation published in this pass.
@@ -44,5 +44,7 @@ Current historical P2 signal: app-P2-final-pure-integrated-1036-full-e2e-three-p
 
 
 Classification: [all eight original gestures](../../design/app-P2-core-classification-1222.md). [Independent historical11933 verdict](../../design/app-P2-11933-verdict-1222.md).
+
+Final inputs: Runtime1231 source/adoption receipts consumed; existing Agent working-service inputs requested in [owner handback](../../design/peer-app-to-agent-runtime-orchestrator-20261024T1244-existing-final-service-inputs.md). No new child requirement inferred from obsolete Farm recipes.
 
 Current handoff: [final home and ownership](../../design/peer-app-to-runtime-app2-orchestrator-20261024T1227-final-home-and-ownership.md). Inbox consumed1513866 bytes through owner-approved12:19 relay. Normal hub header D54–D56 verified12:26. Disk about11GB; kit automatic recycling active. No finished non-KEEP worktree remains eligible; prior safety refusals stay stopped.
