@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T07:09:45Z | dispatcher heartbeat 11s | live 2 (sol 1, luna 1, other 0) | busy30 19 | status age 0m -->
-# runtime board, 2026-10-24T07:09:42Z
+<!-- main | 2026-10-24T07:12:26Z | dispatcher heartbeat 4s | live 4 (sol 1, luna 3, other 0) | busy30 20 | status age 0m -->
+# runtime board, 2026-10-24T07:12:20Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -70,15 +70,15 @@
 | F-G5-restructure-remainder | Qualify seven restructure originals | Luna / Luna | Independent result review passed | merged | Author 0557; review 0602 PASS | Seven exact originals passed in 54.26 seconds on Agent 2007 and Runtime 1d9dd. [Review](../../design/runtime-restructure-review-0602.md) | Agent 2007 unchanged |
 | F-normal-publish-remainder | Qualify eight publication originals | Luna | Integrated result review passed | merged | Author 0640; independent 0645 PASS | Eight exact originals qualified with separate source scopes. Last closure case passed 6.34 s on Agent 1f15; no predicates changed. [Review](../../design/runtime-normal-publish-result-review-0645.md) | Agent 1f15 / Runtime 1d9 |
 | F-renderless-store | Open sessions without renderer imports | Sol / Luna | Integrated result review passed | merged | Author 0640; independent 0645 PASS | Eight exact originals qualified with separate source scopes. Last closure case passed 6.34 s on Agent 1f15; no predicates changed. [Review](../../design/runtime-normal-publish-result-review-0645.md) | Agent 1f15 / e149 |
-| F-SDK-three-originals | Repair faithful persistence setup | Luna | Agent 0704 assigns fixture scope | doing | Fixture 0708; prior result 0654 | Two exact originals wait changed history/pair fixture. Original predicates stay intact; restart challenges old closed receipt. | Agent 1f15 base |
+| F-SDK-three-originals | Repair faithful persistence setup | Luna | Independent source and result review | review | Author 0708; review 0713 | Two originals passed4.19s after truthful history/pair setup. All10 bodies and assertions unchanged; restart credit remains a challenge. | 848bfb6b1 held |
 | F-helper-originals | Qualify fourteen retained helper rows | Luna | Settled D23 child-word scope | gated:D23 | Author 0622; review 0627; Agent 0640 | Thirteen passed. Remaining child-word case is D23 deferred, unchanged and open; no fixture binding or timing backend invented. | Agent bb50 unchanged |
 | F-R2-root-originals | Qualify nine retained root cases | Luna | Independent exact result review passed | merged | Author0622; review0625 PASS | Nine originals passed; source only. Pre/post capture limit disclosed. [Review](../../design/runtime-R2-root-review-0625.md) | Agent bb50 unchanged |
-| R2r-shared-inverse-auth | Verify shared inverse source identities | Sol / Luna | Integrated proof after queued merge | merging | Author 0647; independent 0701 PASS | Source security passed177 controls. Six frozen diagnostic mismatches independently classified; original and joined Agent proof still pending. | 35764ce10 queued |
+| R2r-shared-inverse-auth | Verify shared inverse source identities | Sol / Luna | Integrated proof after queued merge | doing | Author 0647; review 0701; integrated 0711 | Source security passed177 controls. Six frozen diagnostic mismatches independently classified; original and joined Agent proof still pending. | Home 460c2d397 / 35764 |
 | FREEZE | Coordinate final merge and proof sequence | Runtime manager | D48 and D49 | doing | Runtime join 0652; peer lane owners | Runtime join review 0703; D39 next. Agent cb6ce draft under Sol0702 review; App and Composition handoffs requested. Proof map 0657 prepares final gates; final tuple, full suites and ZIP wait. | Exact proof pins unchanged |
 
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
-Runtime integration is 1d9ddba54, tree f56c396c4495. The merge adds only the reviewed headless fixture. Integrated 0521 passed thirteen; independent accounting 0524 passed: all 36 original failures closed, zero open and zero unaccounted. Prior proofs keep their exact Agent source scope. This is not a new full-suite PASS. Product source remains unchanged from 2b49.
+Runtime integration is 460c2d397 after reviewed shared inverse auth merge35764; its new integrated proof0711 is assigned. Prior head1d9dd treef56c retains the headless/accounting proofs. The merge adds only the reviewed headless fixture. Integrated 0521 passed thirteen; independent accounting 0524 passed: all 36 original failures closed, zero open and zero unaccounted. Prior proofs keep their exact Agent source scope. This is not a new full-suite PASS. Product source remains unchanged from 2b49.
 
 D47 defers the memo and validation capsule until after delivery. Held source remains unmerged. D45 and D46 keep the next pair on existing 37eb and Agent 079 with reviewed App fixes.
 
