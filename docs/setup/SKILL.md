@@ -21,6 +21,12 @@ from [Getting Started](../getting-started.md). Read the installer before running
 For an agent using another shell on Windows (such as Git Bash), run
 `powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://astrid.haus/install.ps1 | iex"`.
 
+If the agent runs inside an MSIX-packaged Windows desktop app, use standalone
+PowerShell opened from the Start menu for installation. Launching PowerShell
+as a child of that app can inherit filesystem redirection: files written under
+`%LOCALAPPDATA%` may land in the app's private cache, where the Astrid scheduled
+task cannot find them.
+
 ## Use astrid.haus (default)
 
 The installer checks that Astrid is healthy and opens astrid.haus itself. Tell
