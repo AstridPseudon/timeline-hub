@@ -1,15 +1,14 @@
-# H30/D43/H3 incremental census limits
+# H30/D43/H3 cumulative census limits
 
 - Artifact: `agent-D32-current-node-reconciliation-H30-corrected.json`
-- Artifact SHA-256: `c70b6627e6fe4cd7f6d900e0bcb99168dd8e56a4269ad8d88e12b07eec272268`
-- Current qualified census: **267 total; 179 closed; 88 open**.
-- Historical baseline preserved: **172 closed / 95 open** (136 baseline proof records, six current render-wire records, and 30 retained-caller records); all 267 original IDs, statuses, proofs, bodies, assertion mappings, and the exact 37-row delta mapping remain preserved.
-- Prior artifact SHA-256: `990f231afced56377202ff9d7d3fa2705d075f30a09bdd96c58ce962c2fe047f` (172 closed / 95 open).
-- Delta in this update: **+7 exact current H3 originals**, all in `test_character_swap_cpu_boundary.py`.
-- Current H3 proof: 7 passed once on genuine child3b5c (Agent `ba8f0bc8`, Runtime `f3208b26`), independently PASS-reviewed 0517; relevant current HOME `9cd3dbe8` source bytes and target AST match the installed child, and the production caller reaches the installed guard.
-- Historical `h3_import_0137` remains historical; it was not retroactively relabeled. The seven nodes retain that proof reference and add `h3_current_0508`.
-- Source-copy 0502/0511: 2 exact selectors passed in 20.90s, but neither selector exists among the original 267 IDs. Scope note only; **zero census credit**, no alias or original matching.
-- Three track-label rows, ABA-11466, IMAGE inverse, D40 installed-positive result, renderer timeout 0509, and Farm checkpoint remain open. No late D40 credit was available from an independent qualifying result review.
-- No unrelated closed node was audited or relabeled. No full, browser, gate, body rerun, product/test edit, or v2 implementation was performed.
-
-The delta mapping contains one row per credited exact original node: the prior 30 retained-caller rows plus the seven H3 rows. The source-copy selectors intentionally have no mapping rows.
+- Artifact SHA-256: `705c6df3a22200510c335143826c9a57df5de8ea05abe1697e4ca21058586771`
+- Current qualified census: **267 total; 201 closed; 66 open**.
+- Historical baseline preserved: **172 closed / 95 open**; the 0550 package snapshot remains historical **179 closed / 88 open** metadata context only.
+- Cumulative delta in this update: **+22 exact current Occurrence-media inverse originals** (16 corruption and 6 retained-scope cases), all phase `call`, Agent-owned at base, now independently reviewed PASS.
+- Inverse proof: qualifier `agt-F-inverse22-qualified-0537`; **22 passed in 3.55s**; independent result review `agt-F-inverse22-result-review-0550` PASS. Exact JUnit/log and before/after source custody/hash proof are recorded in `inverse22_current_0537` and the 59-row mapping.
+- Fixture identity: full c36 original source SHA-256 `1dc677be9aecb97c1d401691af70269c9cf80e9c1e697b645fa8807008a5977c`; current source SHA-256 `f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d`; both target functions AST-identical. Agent `2007cf7aaf5d304964e68a33e967502a16de1d24` / tree `68b0309cede387e758ba6baac84bb1d3cad9c803`; Runtime `2b49da8d6d8dbb8245a1a7cc8d7eee7d3bdaae65` / tree `40eb05d5a51b8d7b31cbfad8a38afeb3318fbd44`.
+- The helper’s two-import plus `accepted_records` changes normalize actual realm history/boundaries through the real resolver and selected-records path; original 16 corruption and six retained-scope predicates were preserved and executed. This is source-mode evidence, not an installed-source claim.
+- The exact 22 rows are the only status changes here. No credit is taken from aggregate 47/186/56 results, source-copy selectors, installed packages, D40, or unrelated prior evidence.
+- Cumulative 0550 disposition: metadata-only H3 correction, preserving all 267 IDs and the exact prior 37-row mapping; its 179/88 count is historical context, not final current membership.
+- D40 custody, three track-label rows, ABA-11466, IMAGE inverse, renderer timeout 0509, and Farm checkpoint remain open. Source-copy selectors absent from the original census receive zero credit.
+- This evidence does not claim v2 production caller/wire-contract acceptance or any product/test/schema/client/pin/M5 change.
