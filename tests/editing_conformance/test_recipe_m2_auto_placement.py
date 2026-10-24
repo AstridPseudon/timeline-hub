@@ -9,10 +9,10 @@ import pytest
 
 from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline.commands import execute, validate_command
-from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.native_auto_placement import auto_place_completion
 from astrid.sdk.timeline.rebase import replay
-from tests.editing_conformance.test_recipe_m1_commands import accepted_boundaries, inverse
+from tests.editing_conformance.test_recipe_m1_commands import inverse
 from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm, inputs
 from tests.sdk.test_timeline_commit_provider import (
     inverse as inverse_call,
@@ -30,6 +30,8 @@ ANCHOR_FRAME, LANE_END_FRAME = 330, 450
 CASES = {'image-anchor': ('image', 'clip-a'), 'image-absent': ('image', 'gone'),
          'video-anchor': ('video', 'clip-a'), 'video-absent': ('video', None)}
 
+_AUTHENTICATED_BOUNDARIES = {}
+
 
 def build(kind, anchor, *, duration=None, wide=False, overlay=False, **saved):
     document, _, new, verified = inputs(kind)
@@ -45,7 +47,67 @@ def build(kind, anchor, *, duration=None, wide=False, overlay=False, **saved):
 
 def case(name, **kwargs):
     kind, anchor = CASES[name]
-    return build(kind, anchor, wide=anchor in ('gone', None), **kwargs)
+    document, bundle, result, verified = build(kind, anchor, wide=anchor in ('gone', None), **kwargs)
+    bundle['source_mapping']['_runtime_document'] = copy.deepcopy(document)
+    document = document_from_bundle(bundle)
+
+    # Use the real provider's accepted undo record for the redo boundary.  Its
+    # materialization bindings are produced by the compiler/provider pair, not
+    # reconstructed from the local native record.
+    plan = execute(bundle, result['commands'], verified_media=verified)
+    undone = inverse_call_local(plan.bundle, plan.records)
+    realm = MediaRealm(document, verified)
+    created = realm.call(result['commands'])
+    realm.call([inverse_call([created['receipt']['receipt_id']])])
+    accepted_entry = copy.deepcopy(realm.entries[-1])
+    history = {item['publication_id']: copy.deepcopy(item) for item in realm.entries}
+    key = (_digest(document_from_bundle(plan.bundle)), _digest(document_from_bundle(undone.bundle)))
+    _AUTHENTICATED_BOUNDARIES[key] = (accepted_entry, history)
+    authenticated_redo = inverse_call_local(
+        undone.bundle, accepted_boundaries(undone.records, plan.bundle, undone.bundle))
+    bundle['source_mapping']['_doc_patch_images'] = copy.deepcopy(
+        authenticated_redo.bundle['source_mapping']['_doc_patch_images'])
+    plan = execute(bundle, result['commands'], verified_media=verified)
+    undone = inverse_call_local(plan.bundle, plan.records)
+    document = document_from_bundle(bundle)
+    realm = MediaRealm(document, verified)
+    created = realm.call(result['commands'])
+    realm.call([inverse_call([created['receipt']['receipt_id']])])
+    accepted_entry = copy.deepcopy(realm.entries[-1])
+    history = {item['publication_id']: copy.deepcopy(item) for item in realm.entries}
+    key = (_digest(document_from_bundle(plan.bundle)), _digest(document_from_bundle(undone.bundle)))
+    _AUTHENTICATED_BOUNDARIES[key] = (accepted_entry, history)
+    return document, bundle, result, verified
+
+
+def inverse_call_local(bundle, records):
+    from tests.editing_conformance.test_recipe_m1_commands import inverse
+
+    return inverse(bundle, records)
+
+
+def accepted_boundaries(records, before, after):
+    from astrid.sdk.timeline._collections import AcceptedRecords
+    from astrid.sdk.timeline._commit_patch import inverse_address_resolver
+
+    key = (_digest(document_from_bundle(before)), _digest(document_from_bundle(after)))
+    entry, history = copy.deepcopy(_AUTHENTICATED_BOUNDARIES[key])
+    provider_record = entry['records']['commands'][0]
+    accepted_records = copy.deepcopy(records)
+    accepted_records[0]['bindings'].extend(
+        copy.deepcopy(binding) for binding in provider_record['bindings']
+        if binding.get('key') == 'commit.materialization')
+    entry['records']['commands'] = accepted_records
+    entry['records']['undo_of'] = accepted_records[0]['command']['args']['publications']
+    def proof_boundary(item):
+        return (
+            bundle_from_document(history[item['previous']['publication_id']]['receipt']['result']
+                                 ['canonical_document']),
+            bundle_from_document(item['receipt']['result']['canonical_document']))
+    accepted = AcceptedRecords([entry], accepted_records, proof_boundary)
+    accepted.address_resolver = inverse_address_resolver(
+        [entry], before, load_boundary=proof_boundary, load_history=history.__getitem__)
+    return accepted
 
 
 @pytest.mark.parametrize('name', CASES)
