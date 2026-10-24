@@ -300,7 +300,7 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
     - no manual recovery, ignored attempt or alias;
     - real before and after hashes, with nothing inferred.
   - Log it with D44/D50/D53/D70. After PASS: apply it and rerun P3 at once on a D73-pinned tuple.
-- **D74a, critical-path runs get a lower floor (19:40Z):** the P1–P5 gate runs and the D78 live element run may be SUBMITTED down to **6.0 GB** free, one at a time. **Extended 21:28Z:** small SOURCE-ONLY authors on critical-path rows (~0.2 GB checkout, no service build) may also dispatch down to 6.0 GB. Everything else keeps D74: no new dispatch below 7.5 GB for non-critical work, and none at all below 6.5 GB except those runs.
+- **D74a, critical-path runs get a lower floor (19:40Z):** the P1–P5 gate runs and the D78 live element run may be SUBMITTED down to **6.0 GB** free, one at a time. It applies on every lane (21:38Z), including heavy critical batches such as Agent P4 and timeout originals; the 8.5 GB heavy gate applies only to non-critical heavy work. **Extended 21:28Z:** small SOURCE-ONLY authors on critical-path rows (~0.2 GB checkout, no service build) may also dispatch down to 6.0 GB. Everything else keeps D74: no new dispatch below 7.5 GB for non-critical work, and none at all below 6.5 GB except those runs.
   - **Release stale trees by the principles route.** KEEP pins whose SHA is not a current lane head, a running or queued request, or an in-flight P-run's D73 tuple: confirm nothing uses them, remove KEEP, then bin/recycle.
   - Dirty old U3b trees: first save `git diff > $ORCH/archive-v1/<name>.patch`, then recycle.
   - If the classifier or a guard refuses, stop and report.

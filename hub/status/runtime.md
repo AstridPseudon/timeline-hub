@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T21:32:02Z | dispatcher heartbeat 14s | live 3 (sol 2, luna 1, other 0) | busy30 6 | status age 2m -->
-# runtime board, 2026-10-24T21:29:23Z
+<!-- main | 2026-10-24T21:35:11Z | dispatcher heartbeat 6s | live 1 (sol 1, luna 0, other 0) | busy30 6 | status age 2m -->
+# runtime board, 2026-10-24T21:32:19Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -175,10 +175,13 @@
 | D83-request-lock | Measure real lock hold and wait | HARD Sol | ORCH 21:28 element and popup inputs | doing | rt-D83-request-lock-sol-2126 | Read-only seconds-long genuine daemon control; per-request wait/hold versus verify compute. No new original or speculative source fix. | Metadata author branch |
 | D83-request-cost | Measure verify cost per ordinal | HARD Sol | ORCH 21:28 accepted-history priority | doing | rt-D83-request-cost-sol-2126 | Sole next product author: finite N and ordinal counts, strict measured correction or source-backed limit. Prior metadata review remains independent. | Metadata author branch |
 
+| R-P2-popup-read | Qualify internal timeline read response | HARD Sol | App26387 source finding | doing | rt-D83-request-cost-sol-2126 | Native/readiness PASS; internal timeline read pending before ADD group helper. No App defect or old422 proved. Same accepted-history owner takes source input. | Runtime dc55 captured |
+| R2r-legacy-ABI-expectation | Preserve legacy metadata and ABI assertions | Luna | Approved ABI behavior must be cited | doing | rt-R2-legacy-ABI-expectation-2131 | Resolve parent-identical recorderABI SQL expectation without dropping legacy replay/restart predicates. Exact correction only if normative; one independent review. | Base bc04 |
+
 Runtime producer: Normal bc04caa23f4b503fc55e49769ead20677904702a, treefa696b342468ae191735409822fa3c7c66f8a590. Freshmetadata1fa security2122 PASS above schemae745/observer4351/projection57df. Canonical15/schema867f unchanged. Released21:29 to both receiving lanes; new2126 questions do not gate adoption or originals.
 
 core open: 2 Runtime boundaries remain at original scope: P4 ten-note45s and full native-seed/element outcome. Agent retains five historical original scopes, all unclosed. Source qualification does not close originals. Final Runtime core suite owed.
-regressions: D77a genuine installed final render remains cut-blocking. Agent actual34adversarial+2positive PASS is source proof only.
+regressions: D77a genuine installed final render remains cut-blocking. Retained legacy metadata expectation fails identicallydc55 andbc04; Luna2131 owns exact approved-ABI correction or source finding, without weakening.
 
 Current proof: P1 readiness1/original2 GO31083; P3 readiness1/original1 GO15493 with independent2024 and full strict tail at c184/22d/44917/635f. All8P2 remain open. Historical P2143/P314240 NO-GO retained; no relabel.
 D83 source proof: security2018 schema258PASS; observer2035 exact service2PASS and integrated2PASS including helper13; projectionsecurity2037 31+289+96PASS; exact currentdc55 genuine reduced native loop8PASS84.30s. Baselinee745 7PASS1FAIL145s remains. Reduced control excludesmedia/finaldocpatch, not original seed credit.
@@ -195,5 +198,5 @@ Later: E1/E3 designs and E2 Agentdesign complete before D83; further E/D79 pause
 Admission: D56 Farm/schema access stopped. Original403/accessrefusals, historical deniedcleanup/process/retirement targets untouched. D67D13envgap unchanged. AppdirtyU3guardrefusals stopped.
 Disk: 8660201472 available bytes (8.07 GiB), cap 4. No ended clean non-KEEP Runtime tree eligible; five old dirty trees remain untouched. Existing KEEP and refused targets not retried; 15 GB target not reached.
 
-live 2 / cap 4; ready-undispatched 0. Security2122 completed and normalbc04 RELEASED immediately to separate Agent/App/orchestrator notes. Two requested Sol2126 remainactive; E/D79paused.
-Pass 2026-10-24T21:29:23Z: independent2122 PASS and normalmergeconsumedimmediately, exactreportcopiedbyteforbyte todesign/runtime-D83-metadata-security-2122.md. Normalheadbc04/treefa696/sourceblob96d7 qualifiedbyreviewer. ReceivinglanesneednoextraRuntimeapproval/review/audit or2126result beforetheirpreparedoriginals. Sourcequalificationdoesnotcloseoriginaltiming. New2126questionsstillactiveonreviewedmetadata1fa, nooverlappingproductauthor. Inboxconsumedthrough561682bytes. Main disk8.00GiB/cap4; no endedcleaneligibleRuntime tree, priorrefusalsuntouched.
+live 3 / cap 4; ready-undispatched 0. Two requested Sol2126 active; spare-slot Luna2131 resolves retained exact legacyABI expectation failure. Security2122 COMPLETE; normalbc04 remains RELEASED to both receiving lanes.
+Pass 2026-10-24T21:32:19Z: actualpopup26387sourcefinding2121 consumed as rowR-P2-popup-read with existing costSol2126; no newcollector/body/sourceauthor. Native/readiness passes butinternalreadunknownthroughteardown; old422notinferred. Parent837 responsewait andasset12674 findingsremainAppproducerowned; ORCH21:31 holds furtherisolatedbodiesuntilbc04adoption. Metadata2122 PASS/release2129 already normallypublished; no receiverholdfor2126. Criticalfinalprooflegacyassertion getsLuna2131 onbc04, test-onlystrictcorrectionifnormative, allotherpredicatesexact. Inboxconsumedthrough563299bytes. All3workershavefreshprogress. Main8GiB/cap4, endedcleanworkerautorecycle; refusedtargetsuntouched.
