@@ -10,8 +10,8 @@ const mocks = vi.hoisted(() => ({
   connect: vi.fn(),
   connection: {
     state: { status: 'connected', realm: { realm_id: 'realm-1', display_name: 'Studio' } },
-    awaitingConnect: false, isChecking: false, schemaDigest: null, localServiceOutOfDate: false, connect: () => {},
-  } as { state: { status: string; realm?: { realm_id: string; display_name: string } }; awaitingConnect: boolean; isChecking: boolean; schemaDigest: string | null; localServiceOutOfDate: boolean; connect: () => void },
+    isChecking: false, schemaDigest: null, localServiceOutOfDate: false, connect: () => {},
+  } as { state: { status: string; realm?: { realm_id: string; display_name: string } }; isChecking: boolean; schemaDigest: string | null; localServiceOutOfDate: boolean; connect: () => void },
 }));
 
 vi.mock('@/integrations/runtime/client.ts', () => ({
@@ -35,7 +35,6 @@ async function openDetails() {
 describe('AstridStatusSection', () => {
   beforeEach(() => {
     mocks.connection.state = { status: 'connected', realm: { realm_id: 'realm-1', display_name: 'Studio' } };
-    mocks.connection.awaitingConnect = false;
     mocks.connection.isChecking = false;
     mocks.connection.localServiceOutOfDate = false;
     mocks.connection.connect = mocks.connect.mockReset();
@@ -71,8 +70,7 @@ describe('AstridStatusSection', () => {
   });
 
   it('offers the browser permission action before checking Runtime details', () => {
-    mocks.connection.state = { status: 'connecting' };
-    mocks.connection.awaitingConnect = true;
+    mocks.connection.state = { status: 'needs_permission' };
     render(<AstridStatusSection isOpen />);
     fireEvent.click(screen.getByRole('button', { name: CONNECTION_COPY.permission.connect }));
     expect(mocks.connect).toHaveBeenCalledOnce();
@@ -211,7 +209,7 @@ describe('AstridStatusSection', () => {
     mocks.connection.state = { status: 'not_running' };
     render(<AstridStatusSection isOpen />);
 
-    expect(screen.getByRole('status')).toHaveTextContent('Not running');
+    expect(screen.getByRole('status')).toHaveTextContent(CONNECTION_COPY.notRunning.title);
     expect(mocks.readStatus).not.toHaveBeenCalled();
   });
 

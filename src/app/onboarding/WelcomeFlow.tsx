@@ -6,7 +6,7 @@ import { BrowserTourEditor } from './BrowserTourEditor.tsx';
 import { EditorBackdrop } from '@/shared/components/RuntimeConnection/EditorCardLayer.tsx';
 import { WelcomeRunMode, type RunMode, type WindowMode } from './WelcomeRunMode.tsx';
 import { WelcomeLocalSetup } from './WelcomeLocalSetup.tsx';
-import { writeWelcomePhase, type WelcomeEntry } from './welcomeProgress.ts';
+import { readWelcomePhase, writeWelcomePhase, type WelcomeEntry } from './welcomeProgress.ts';
 import { detectInstallScenario } from '@/pages/Home/installScenario.ts';
 
 // Even module initialization for connection/identity stays outside the browser-only tour.
@@ -14,11 +14,13 @@ const WelcomeConnection = lazy(() => import('./WelcomeConnection.tsx'));
 export function WelcomeFlow({ entry, localBuild = false }: { entry: WelcomeEntry; localBuild?: boolean }) {
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
   const [phase, setPhase] = useState<WelcomeEntry>(() => {
+    // An installer handoff must not change a fully local setup into the hosted route.
+    if (entry === 'connection' && readWelcomePhase() === 'local') return 'local';
     if (entry !== 'editor') writeWelcomePhase(entry);
     return entry;
   });
   const [windowMode, setWindowMode] = useState<WindowMode>('app-window');
-  const [runMode, setRunMode] = useState<RunMode>(entry === 'local' ? 'local' : 'hosted');
+  const [runMode, setRunMode] = useState<RunMode>(phase === 'local' ? 'local' : 'hosted');
   const enter = useCallback((next: 'choose' | 'connection' | 'local') => {
     writeWelcomePhase(next);
     setPhase(next);
@@ -28,7 +30,6 @@ export function WelcomeFlow({ entry, localBuild = false }: { entry: WelcomeEntry
     {phase === 'tour' && <BrowserTourEditor onFinish={finishTour} />}
     {phase === 'choose' && <WelcomeRunMode onContinue={enter} windowMode={windowMode} setWindowMode={setWindowMode} runMode={runMode} setRunMode={setRunMode} />}
     {phase === 'local' && <WelcomeLocalSetup onBack={() => enter('choose')} />}
-    {phase === 'connection' && <Suspense fallback={<><EditorBackdrop /><p role="status" className="sr-only">Connecting to Astrid…</p></>}><WelcomeConnection windowMode={windowMode} /></Suspense>}
-    {phase === 'editor' && null}
+    {phase === 'connection' && <Suspense fallback={<><EditorBackdrop /><p role="status" className="sr-only">Connecting to Astrid…</p></>}><WelcomeConnection /></Suspense>}
   </MemoryRouter></TooltipProvider></QueryClientProvider>;
 }

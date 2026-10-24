@@ -1,3 +1,5 @@
+import { RUNTIME_CONNECTION_COPY } from '@/shared/components/RuntimeConnection/copy.ts';
+
 /** User-facing copy for the Astrid status section in App Settings. */
 export const ASTRID_STATUS_COPY = {
   title: 'Astrid on this computer',
@@ -7,8 +9,7 @@ export const ASTRID_STATUS_COPY = {
   degraded: "Part of Astrid isn't working. Give these instructions to your coding agent to restart it.",
   checking: 'Reading details…',
   unavailable: "Astrid's details aren't available right now.",
-  setUp: 'Not found yet',
-  notRunning: 'Not running',
+  notRunning: "Astrid isn't answering on this computer",
   updateNeeded: 'Needs an update',
   chatUpdateNeeded: 'Connected. Chat needs an update',
   blocked: "Blocked by your browser's settings",
@@ -41,7 +42,9 @@ export function connectionStatusCopy(status: string): string {
   switch (status) {
     case 'connected': return ASTRID_STATUS_COPY.connected;
     case 'connecting': return ASTRID_STATUS_COPY.connecting;
-    case 'set_up': return ASTRID_STATUS_COPY.setUp;
+    case 'needs_permission': return RUNTIME_CONNECTION_COPY.permission.title;
+    case 'phone': return RUNTIME_CONNECTION_COPY.phone.title;
+    case 'unsupported': return RUNTIME_CONNECTION_COPY.unsupported.title;
     case 'not_running': return ASTRID_STATUS_COPY.notRunning;
     case 'update_needed': return ASTRID_STATUS_COPY.updateNeeded;
     case 'blocked': return ASTRID_STATUS_COPY.blocked;

@@ -41,7 +41,8 @@ export function connectionStatus(connection: RuntimeConnectionValue): Connection
         checks: REACHED,
       };
     case 'connecting':
-      if (!connection.awaitingConnect) return { title: COPY.connecting.sentence, checks: LOOKING };
+      return { title: COPY.connecting.sentence, checks: LOOKING };
+    case 'needs_permission':
       if (connection.isChecking) {
         return { title: withBrowser(COPY.permission.pending.title), detail: withBrowser(COPY.permission.pending.sentence) };
       }
@@ -49,8 +50,10 @@ export function connectionStatus(connection: RuntimeConnectionValue): Connection
     case 'blocked':
       // The steps, not the reason: the title already says what is wrong.
       return { title: withBrowser(COPY.blocked.title), detail: COPY.blocked.steps.join(' ') };
-    case 'set_up':
-      return { title: COPY.setUp.title, detail: COPY.setUp.sentence, checks: LOOKING };
+    case 'phone':
+      return { title: COPY.phone.title, detail: COPY.phone.sentence };
+    case 'unsupported':
+      return { title: COPY.unsupported.title, detail: COPY.unsupported.sentence };
     case 'update_needed':
       return { title: COPY.updateNeeded.title, detail: COPY.updateNeeded.sentence, checks: LOOKING, outOfDate: 'runtime' };
     case 'not_running':
