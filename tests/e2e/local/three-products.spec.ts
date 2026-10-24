@@ -954,6 +954,27 @@ async function history(harness: DirectHarness, seed: ThreeProductsSeed, scope: T
 }
 
 /** The v2 commit envelope and the authenticated /commits projection must agree. */
+function expectRecordedDocumentPatchCommand(recorded: EditCommand | undefined, submitted: EditCommand, clipId: string): void {
+  expect(recorded).toBeTruthy();
+  const command = recorded as EditCommand;
+  const address = `parent/clip:${clipId}::at`;
+  expect(Object.keys(submitted).sort()).toEqual(['args', 'created', 'op', 'schema_version', 'select', 'version']);
+  expect(Object.keys(command).sort()).toEqual([
+    'args', 'authorship', 'bindings', 'created', 'expect', 'intent', 'op', 'reads', 'resolved',
+    'schema_version', 'select', 'selections', 'version',
+  ]);
+  expect(command).toEqual({
+    ...submitted,
+    authorship: { [address]: 'direct' },
+    bindings: {},
+    expect: { [address]: { state: 'present', value: 5 } },
+    intent: {},
+    reads: [{ ref: `parent/clip:${clipId}`, path: ['at'], state: { state: 'present', value: 5 } }],
+    resolved: [],
+    selections: [],
+  });
+}
+
 async function expectV2History(harness: DirectHarness, seed: ThreeProductsSeed, post: CommitPost,
   expectedStatus: 'accepted' | 'merged', expectedUndoOf: string[] = []) {
   const request = JSON.parse(post.body) as CommitRequest;
@@ -1817,7 +1838,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
     .find((candidate) => candidate.ownerId === owner.ownerId)?.intents.length, CEILING).toBe(0);
   expect((await history(harness, seed3)).items).toHaveLength(before.items.length + 3);
   const recordedB = (await history(harness, seed3)).items.find((entry) => entry.publication_id === pinOf(b).publication_id)?.records;
-  expect(recordedB?.commands[0].command).toEqual(requestB.commands[0]);
+  expectRecordedDocumentPatchCommand(recordedB?.commands[0].command, requestB.commands[0], seed3.appClipId);
   expect(recordedB?.commands[0].reads.length).toBeGreaterThan(0);
   expect(recordedB?.commands[0].bindings.length).toBeGreaterThan(0);
   const recordedMerged = await expectV2History(harness, seed3, wire.posts[2], 'merged');
