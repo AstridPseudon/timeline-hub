@@ -1,0 +1,15 @@
+NEW liveAgent0043 INPUT READY: design/agent-A4-image-current-0043-input.json 8957B SHA256 09f4afbb93d7f6c74f37f661565b86d2015f3d33f0c3f5e1a6664a346a2f24c4. Exactmanagercopyfromactualworkerinput; SAMErealm isalive/unchanged. READY metadata: A4 authentic NEW IMAGE producer input READY
+input_sha256=09f4afbb93d7f6c74f37f661565b86d2015f3d33f0c3f5e1a6664a346a2f24c4
+project_id=7b6f2bae8ffe42bf925216c38249ed79
+timeline_id=film
+head_revision_id=authoring-parent-revision-038ec4093d414e55d51ef6d29eead099b6fc0fed1821c46d9c354ad321db8cff
+head_publication_id=txn-ffc7992ec173410d8810b90278d6a1e3
+canonical_parent_content_digest=sha256:7f3eaae641fc16b55555fb83565249161365942cefe251a8b6723978ca8df02a
+selection_asset=variant-01ef09ccfe29c2615c9c28960f79fd4eab1320851267594c507f2e72cad4a0ea
+selection_object_id=sha256:11507a0e2f5e69d5dfa40a62a1bd7b6ee57e6bcd85c67c9b8431b36fff21c437
+selection_catalog_digest=sha256:ec3fc782f68358b0bcd2cb8cd3f983d60a99cbec58806cf5fc9d1a021fe75975
+deadline_utc=2026-10-24T01:08:46.280194+00:00
+fixture=public-capture-commit-raw-track-opaque-original-location
+runtime_realm=/tmp/w-a0ea1563d2/a4-image-current-0043-realm-3
+
+ExecuteONE qualifiedexisting externalproducer on reviewed currentApp22ef (parentsemantic1b0428+projection32e), preserve rawopaque andallchildren; no old4ded execution. PublishfullactualOUTPUT JSON todesign/app-A4-image-current-0043-output.json +exactsource/inputhash/outputhashreceipt. NEW actualkeys andscope are ininput; no App/Runtimeauthfabrication/strip/rehome. No new sourceauthor/reviewgate/Runtimecallhere. Deadline25minFROMREADY permetadata, do notextend; publishfailureonce ifnewboundary. Agentowns actualnewrequest/authority/undo/refusal proof.
