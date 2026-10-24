@@ -15,7 +15,8 @@ from astrid.sdk.timeline.sync import CommitConflict
 from astrid.sdk.timeline_checkout import Checkout
 from astrid.sdk.timeline_sheet import NativeSheet, SheetError, apply_sheet, render_sheet
 from astrid.sdk.workspace_client import WorkspaceClientError
-from tests.sdk.test_timeline_sync import connected, initial_bundle, open_session  # noqa: F401
+from tests.sdk.test_timeline_sync import connected, open_session  # noqa: F401
+from tests.sdk.test_timeline_sync import initial_bundle as _initial_bundle
 
 
 def detached_duration_bundle():
@@ -36,7 +37,34 @@ def detached_duration_bundle():
     return bundle
 
 
-def detached_draft(connected, tmp_path, *, params=None):
+def _attach_authenticated_source(bundle):
+    """Pair the local sheet fixture with the source image used by inverse checks."""
+    bundle['source_mapping']['_runtime_document'] = {
+        'schema_version': 1,
+        'project_id': bundle['project_id'],
+        'timeline_id': bundle['timeline_id'],
+        'parent_revision': {
+            'revision_id': bundle['base_parent']['revision_id'],
+            'content_digest': bundle['base_parent']['content_digest'],
+            'payload': copy.deepcopy(bundle['base_parent_payload']),
+        },
+        'shot_revisions': [],
+        'internal_timeline_revisions': [],
+        'dependency_manifest': {'shots': [], 'internal_timelines': [], 'media': [], 'documents': []},
+    }
+    return bundle
+
+
+def initial_bundle():
+    return _attach_authenticated_source(_initial_bundle())
+
+
+@pytest.fixture(autouse=True)
+def _authenticate_connected_source(connected):  # noqa: F811
+    _attach_authenticated_source(connected[1].bundles["r0"])
+
+
+def detached_draft(connected, tmp_path, *, params=None):  # noqa: F811
     client, generated, _ = connected
     original = detached_duration_bundle()
     if params:

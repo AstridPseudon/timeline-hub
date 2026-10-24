@@ -61,6 +61,7 @@ def _open_real_document(connected_fixture) -> tuple[Any, Any, dict[str, Any]]:  
     document = _seed_document()
     generated.bundles = {"r0": bundle_from_document(document)}
     generated.head = {"revision_id": "r0", "publication_id": "pub0"}
+    generated.publications["peer-revision"] = "peer-publication"
     return timeline.open("p", "t", client=client, outbox_path=path), generated, document
 
 

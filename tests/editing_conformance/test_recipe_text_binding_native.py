@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import json
 
 import pytest
 
@@ -11,6 +12,7 @@ from astrid.sdk.timeline.commands import execute, validate_command
 from astrid.sdk.timeline.native_text_binding import TEXT_MEDIA_TYPE, capture_text_binding_set
 from astrid.sdk.timeline.rebase import replay
 from tests.editing_conformance.test_recipe_m1_commands import bundle, inverse, later
+from tests.timeline.test_authoring_bundle import _runtime_document
 
 OWNER = 'occurrence:occ-1'
 VOICE = {'kind': 'voiceover_script', 'slot': None}
@@ -28,11 +30,49 @@ def payload(base):
     return base['shots'][State(base).occurrence(OWNER)['shot_id']]['payload']
 
 
+def _attach_authenticated_source(base):
+    """Keep the conformance bundle paired with its immutable source closure."""
+    parent = {
+        'revision_id': base['base_parent']['revision_id'],
+        'project_id': base['project_id'],
+        'timeline_id': base['timeline_id'],
+        'content_digest': base['base_parent']['content_digest'],
+        'payload': copy.deepcopy(base['base_parent_payload']),
+    }
+    parent['payload']['occurrences'] = []
+    for placement in base['placements']:
+        source = base['source_mapping']['shots'][placement['shot_id']]
+        occurrence = copy.deepcopy(placement)
+        occurrence['shot_revision_id'] = source['revision_id']
+        parent['payload']['occurrences'].append(occurrence)
+    shots, internals = [], []
+    for shot_id, shot in base['shots'].items():
+        source = base['source_mapping']['shots'][shot_id]
+        shots.append({
+            'shot_id': shot_id,
+            'revision_id': source['revision_id'],
+            'internal_timeline_revision_id': source['internal_timeline_revision_id'],
+            'content_digest': source['content_digest'],
+            'payload': copy.deepcopy(shot['base_payload']),
+        })
+        internals.append({
+            'timeline_id': source.get('internal_timeline_id', base['timeline_id']),
+            'revision_id': source['internal_timeline_revision_id'],
+            'content_digest': source['internal_timeline_content_digest'],
+            'payload': copy.deepcopy(shot['base_internal_timeline']),
+        })
+    parent['content_digest'] = 'sha256:' + hashlib.sha256(
+        json.dumps(parent['payload'], sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode()
+    ).hexdigest()
+    base['source_mapping']['_runtime_document'] = _runtime_document(parent, shots, internals)
+    return base
+
+
 @pytest.fixture
 def original():
     base = bundle(shared=False)
     payload(base)['text_bindings'] = []
-    return base
+    return _attach_authenticated_source(base)
 
 
 def apply(base, binding=VOICE, data=b'voice', *, clear=False):
