@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T08:26:42Z | dispatcher heartbeat 9s | live 2 (sol 0, luna 2, other 0) | busy30 18 | status age 0m -->
+<!-- app | 2026-10-24T08:29:53Z | dispatcher heartbeat 0s | live 3 (sol 0, luna 3, other 0) | busy30 17 | status age 2m -->
 # app board, 2026-10-24T08:24Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -33,6 +33,7 @@
 | U3b-home | Merge reviewed freeze draft | Manager merge queue | Header P2/P3 GO | gated:freeze | Final draft review 0738 | Upstream 2a288 included. Refresh live upstream at actual merge; do not merge before header condition. | Draft branch only |
 | U4p-D39 | Adopt final generated tuple | Luna | U3b home and exact producer | gated:freeze | Dispatch after U3b | Producer becfe6 inventory ready. Normal generated-client tooling; no manual type/pin edit or old consumer compatibility claim. | Producer becfe6 |
 | F-final-host-prep | Prepare final App host commands | Luna; independent review | Cumulative 0758 PASS with limits | merged | Return 0754; review 0758 | Corrected tool, locks and maker argv qualified. P4/P5 rows missing; final Agent/App and receipts are explicit inputs. No final tuple claimed. | Report only |
+| F-P4-P5-registrations | Draft missing final host rows | Luna; independent review | Existing source interfaces | doing | app-F-P4-P5-registration-draft-0828 | Static exact3 P4 plus14/24 P5 rows and strict preflight; install waits genuine final tuple and receipts. | Draft only |
 | F-App-final | Full suite on final App head | App test service | Final tuple and freeze | gated:freeze | App service; Runtime FREEZE | D49 venue accepted. Historical 12ef full passed 18,819; current final qualification is still required. | Final head pending |
 
 | A3-popup-inputs | Compare actual asset and planner inputs | Luna; independent Luna | Independent0814 PASS | merged | Author0748; review0814 | Valid type, size, timing, track and selection; async prepared asset absent. Fullcaller witness remains RED, cause not yet attributed. | Report only |
@@ -78,4 +79,4 @@ Pass08:16: PLAN, COMMON, current header and peer boards rechecked. Tour/D50 and 
 
 Pass08:22: Fullcaller independent0814 confirms valid-input production refusal: derived assetEntry reaches strict authored serialization. Immediate first return0822 plus independent whole-path0822 dispatched on209723; failed expected-failure donor remains held. Diagnostic35ff merged209723 after cumulative0818PASS; joined qualification pending. Current ledger0819 completed and independent0822 queued.
 
-Later: Runtime read-only mounted-caller correction0812 and independent whole-path0812 continue on the same existing assessment. Static server counts remain qualified; no backend latency, guard removal, probe or execution wait is inferred.
+Later: Runtime mounted-caller correction0812 and independent final0818 are complete PASS. Real savehook to local session to provider is qualified; no backend latency, guard removal, probe or actual handler outcome is inferred.
