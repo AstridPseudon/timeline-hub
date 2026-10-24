@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T01:52:39Z | dispatcher heartbeat 14s | live 4 (sol 0, luna 4, other 0) | busy30 24 | status age 2m -->
-# agent board, 2026-10-24T01:49:51Z
+<!-- agent | 2026-10-24T01:54:47Z | dispatcher heartbeat 4s | live 3 (sol 1, luna 2, other 0) | busy30 22 | status age 1m -->
+# agent board, 2026-10-24T01:53:19Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -26,14 +26,14 @@
 | F-render-startup | Avoid unused transition-catalog scans | Luna | Source cause 0045 | merged | agt-F-transition-fixture-integrated-0126 | Actual 940b: 116 controls passed. Exact reviewed source retained both catalog authority guards. | 2b2c1a02f |
 | F-external-roots | Authenticate installed external roots | Sol | Runtime private source authority | blocked:runtime | Runtime review 0125; Sol 0134 | Runtime observed bytes but lacks authenticated origin/definition admission. Runtime escalation 0143 owns scope; no trust waiver. | candidates held |
 | F-env-86 | Original installed-child cohort | Luna | External pack fix | blocked:agent | Services 11789 and 19627 | 69 cases passed, then 16 supported source invocations passed. One external-pack positive remains open. | c36 scope |
-| F-render-21 | Original rendering timeout | Luna | Supported current child invocation | doing | Service render-timeout-return-0148 | D18 return now uses admitted current child for body and postflight. One meaningful original service queued; 4004 failure retained. | 521c source |
+| F-render-21 | Original rendering timeout | Sol | Two Luna attempts did not qualify | doing | agt-F-render-timeout-sol-0152 | Correct-child service 25513 timed out at unchanged 45 seconds; preflight/postflight passed. Source-causal assessment only, no body retry. | 521c source |
 | F-env-misc | D13, installers and bootstrap | Luna | Exact installed inputs | merged | agt-F-D13-wheel-input-0039 | Three original environment cases plus D13 passed. Exact c36 wheel matched installed payloads; wheel itself was temporary. | harness only |
 | F-CLI | CLI census, generation and motion fixture | Luna | G5 | merged | agt-F-CLI-integrated-0012 | Eight integrated cases and 32 subtests passed; reviewed generation and fixture changes only. | 43bbb / ff5dd |
 | F-observer | Nested pytest plugin isolation | Luna | G5 full | merged | agt-F-observer-harness-2355 | 25 original guard cases passed. Test bodies remain unchanged. | c8459e9f8 |
 | F-schema | Registered provider-operation census | Luna | Frozen schema | merged | agt-F-joined-integrated-0037 | Six schema cases and three exact union selectors passed; schema and provider guards unchanged. | 7cc6e74c2 |
 | F-stale-head | Current public helper fixture | Luna | G2 | merged | agt-F-joined-integrated-0037 | Original stale-head case passed on ca93; two other authoring gaps are assigned below. | ca93d63bd |
 | F-P4-symbol | Rename stale fixture symbol | Luna | G5 | merged | agt-F-P4-symbol-integrated-0023 | Both original metadata and CLI behavior cases passed on the integrated head. | 45cecae7b |
-| F-authoring-publish-writer | Migrate publication helper | Sol / Luna | Cumulative source review | review | agt-F-publish-review-0148 | Runtime 5aee source complete; original first test plus six controls passed. Agent reviews all ten cumulative paths. | 5aee branch |
+| F-authoring-publish-writer | Current publication helper port | Luna after Sol; review PASS | Reviewed ten-file source | doing | agt-F-publish-current-port-0152 | Independent 0148: original first plus six controls 7 passed, zero new static findings. Current-only source port active. | 5aee reviewed |
 | F-authoring-ABA | Original same-alias rebind and undo | Luna / service | Reviewed source and fixture merged | doing | agt-F-ABA-integrated-0150 | Home bc38 contains exact reviewed source and 52-assertion fixture. One original live run plus integrated 87 controls queued. | 61d53 / c3af |
 | F-D32-render-wire | Six original SDK wire results | Luna / service | Existing installed child | merged | Service 27934 | Six original cases passed in 41.48s; body hashes, 19 source identities, import origins and read-only profile retained. | 521c source |
 | F-helper-sequential | Capture actual helper replay-map refusal | Luna | Existing diagnostic seam | doing | agt-F-helper-capture-0149 | Actual failure inputs were lost; inventory 0144 excludes numeric and old captures. One bounded observed diagnostic is queued. | no product change |
