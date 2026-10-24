@@ -9,10 +9,10 @@ import pytest
 
 from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline.commands import execute, validate_command
-from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.native_auto_placement import auto_place_completion
 from astrid.sdk.timeline.rebase import replay
-from tests.editing_conformance.test_recipe_m1_commands import accepted_boundaries, inverse
+from tests.editing_conformance.test_recipe_m1_commands import inverse
 from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm, inputs
 from tests.sdk.test_timeline_commit_provider import (
     inverse as inverse_call,
@@ -30,6 +30,8 @@ ANCHOR_FRAME, LANE_END_FRAME = 330, 450
 CASES = {'image-anchor': ('image', 'clip-a'), 'image-absent': ('image', 'gone'),
          'video-anchor': ('video', 'clip-a'), 'video-absent': ('video', None)}
 
+_AUTHENTICATED_BOUNDARIES = {}
+
 
 def build(kind, anchor, *, duration=None, wide=False, overlay=False, **saved):
     document, _, new, verified = inputs(kind)
@@ -45,7 +47,46 @@ def build(kind, anchor, *, duration=None, wide=False, overlay=False, **saved):
 
 def case(name, **kwargs):
     kind, anchor = CASES[name]
-    return build(kind, anchor, wide=anchor in ('gone', None), **kwargs)
+    document, bundle, result, verified = build(kind, anchor, wide=anchor in ('gone', None), **kwargs)
+    # Keep the provider's accepted undo record intact. The local inverse is
+    # only the execution target; its native record must not be augmented with
+    # caller-authored materialization bindings.
+    document = document_from_bundle(bundle)
+    plan = execute(bundle, result['commands'], verified_media=verified)
+    undone = inverse(plan.bundle, plan.records)
+    realm = MediaRealm(document, verified)
+    created = realm.call(result['commands'])
+    realm.call([inverse_call([created['receipt']['receipt_id']])])
+    accepted_entry = copy.deepcopy(realm.entries[-1])
+    history = {item['publication_id']: copy.deepcopy(item) for item in realm.entries}
+    key = (_digest(document_from_bundle(plan.bundle)), _digest(document_from_bundle(undone.bundle)))
+    _AUTHENTICATED_BOUNDARIES[key] = (accepted_entry, history)
+    authenticated_redo = inverse(
+        undone.bundle, accepted_boundaries(undone.records, plan.bundle, undone.bundle))
+    bundle['source_mapping']['_doc_patch_images'] = copy.deepcopy(
+        authenticated_redo.bundle['source_mapping']['_doc_patch_images'])
+    plan = execute(bundle, result['commands'], verified_media=verified)
+    undone = inverse(plan.bundle, plan.records)
+    key = (_digest(document_from_bundle(plan.bundle)), _digest(document_from_bundle(undone.bundle)))
+    _AUTHENTICATED_BOUNDARIES[key] = (accepted_entry, history)
+    return document, bundle, result, verified
+
+
+def accepted_boundaries(_records, before, after):
+    from astrid.sdk.timeline._collections import AcceptedRecords
+    from astrid.sdk.timeline._commit_patch import inverse_address_resolver
+
+    key = (_digest(document_from_bundle(before)), _digest(document_from_bundle(after)))
+    entry, history = copy.deepcopy(_AUTHENTICATED_BOUNDARIES[key])
+    def proof_boundary(item):
+        return (
+            bundle_from_document(history[item['previous']['publication_id']]['receipt']['result']
+                                 ['canonical_document']),
+            bundle_from_document(item['receipt']['result']['canonical_document']))
+    accepted = AcceptedRecords([entry], entry['records']['commands'], proof_boundary)
+    accepted.address_resolver = inverse_address_resolver(
+        [entry], after, load_boundary=proof_boundary, load_history=history.__getitem__)
+    return accepted
 
 
 @pytest.mark.parametrize('name', CASES)
