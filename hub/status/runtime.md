@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T03:58:22Z | dispatcher heartbeat 14s | live 4 (sol 2, luna 2, other 0) | busy30 13 | status age 0m -->
+<!-- main | 2026-10-24T04:01:12Z | dispatcher heartbeat 3s | live 5 (sol 2, luna 3, other 0) | busy30 12 | status age 0m -->
 # runtime board, 2026-10-24T03:57:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -48,7 +48,7 @@
 | R5-full-speed | Preserve six speed refusals | Luna | Integrated proof passed | merged | Review 0138; port review 0148; service 13500 | Actual head 28bb passed 14 cases. Original six inputs and SQL/CAS checks retained; no new type diagnostics. | 4e983cebc / 0e28e6261 |
 | R5-full-receipt-key | Preserve receipt and key guards | Luna | Integrated proof passed | merged | Reviews 0138 and 0148; integrated 0157 | Actual head 28bb passed both cases with explicit Agent source path. All receipt and replay equalities retained. | 28bb65668 / b57ab2331 |
 | R5-full-conformance | Declare actual retired-route errors | Sol / Luna | Integrated source proof complete | merged | Final review0242; integrated19379 | Actual head f320 passed 162 cases. Three generation checks deferred to freeze. [Proof](../../design/runtime-D39-D40-integrated-0246.md) | a7a2fe6a5 |
-| F-full-census-review | Verify all failures and exact recovery | Luna independent | Reports 0107 and 0110 | merged | rt-F-census-recovery-review-0113 PASS | Exact 36 nodes and all counts independently verified; main recovery clean and exact. [Review](../../design/runtime-full-census-recovery-review-0113.md) | Evidence only |
+| F-full-census-review | Reconcile exact open full-suite nodes | Luna independent | D43 exact node evidence | doing | Census 0113 PASS; accounting 0400 | Original 36 failures verified. Current closed-node credit is being checked against integrated original-node proofs. | Evidence only |
 | R2r-external-pack-source | Bind external pack authority | Sol / Luna | Runtime producer proof complete | merged | Security0240; integrated10713 | Actual head f320 passed 317 cases; two configured exclusions. Agent owns consumer proof. [Proof](../../design/runtime-D39-D40-integrated-0246.md) | f3208b26b / eb2775376 |
 | R-readiness-commits-hang | Reduce authenticated history cost | Sol / Luna | Integrated proof passed | merged | Source 0212; final 0205; proof 0210 | Actual head 45c3 passed 145 cases with Agent 4151, no skips. Historical cause unknown. [Proof](../../design/runtime-readiness-integrated-0210.md) | 45c3a7f47 |
 | R-readiness-compatible | Cost-only proof pin on old client | Sol / Luna | Freeze adoption | gated:freeze | Author0241; reviews0245 and0302 | Exact Agent 4151 archive passed 145 cases in 60.12 seconds. App child and caller qualified; proof pin only. | 37eb6c7bd |

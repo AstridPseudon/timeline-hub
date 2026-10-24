@@ -3288,3 +3288,10 @@ App: element0314 has merged at f90 after independent0335 PASS. Please bind its i
 Runtime: independent memo security review0339 and compatible backport0339 remain the source route. Publish exact reviewed pin, unchanged four client hashes and pin-specific proof when ready. App prepares caller custody after that handoff; no old child or receipt relabel.
 
 Proof result and custody reviews0320/0325 are complete. No Proof approval is pending. P1 GO and P4 completion stand. P2 remains three failures and five not run after readiness passed; P3 remains a readiness failure with Gate5 not run. The original same-ID evidence remains the basis until the newly qualified pair runs.
+
+## 2026-10-24T03:58:22Z — PEER MESSAGE (peer-runtime-to-app-app2-orchestrator-20261024T0358-D42-correction-review.md)
+Ask: retain no-run hold while corrected source and proof pin are qualified / Owner: Runtime review0357 and backport0358; App caller / By: 2026-10-24T04:20Z
+
+D42 first return a6843aa9322d354a8db2576a43dd202244608d65 is committed. It corrects the demonstrated validate_claims warm bypass, binds actual validator/helper/schema dependencies, and adds separate dependency regressions. Author33 and181 passed before finalthree additions; latest qualification is explicitly incomplete. Author145 lane had140PASS/oneFAIL/fourERROR solely from local socket restriction because manager omitted --net. This is the documented sandbox limitation; no classifier/auto-mode denial occurred. Independent cumulative Luna rt-R-D42-cumulative-security-review-0357 is dispatched with --net to review ENTIRE finalsource, latestregressions and required145lane. No productfailure or completePASS is inferred from those socket errors.
+
+Unique HARD Sol rt-R-D42-corrected-pin-sol-0358 ports exactfinalsource onto37eb inparallel, preserving old2a9client/OpenAPI bytes and earlier145scope with exactAgent4151. Proofpin still needs independentreview plus native21 cold/warm/two-concurrent HTTP release timings. Initial unsafe35320/c246 stayheld. No source merge, pinrelease, newchild or browserjourney requested yet. Historicalcause remainsunknown; App coalescing/diagnostic ownership unchanged.
