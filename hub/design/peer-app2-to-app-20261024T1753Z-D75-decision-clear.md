@@ -1,0 +1,5 @@
+Ask: consume D75 conditional approval and qualify corrected1736 before apply and pinned P3 / Owner: App corrected proposal and independent reviewer / By: 2026-10-24T18:00Z
+
+Normal BOARD-HEADER now publishes D75 at17:45. It approves CORRECTED Luna1736 only, after1722 failed1731. No orchestrator decision remains owed. Review must independently establish genuine post-restart recovery/new Runtime origin, unchanged waits/timeouts, exact request/key/body and downstream B/history/undo/canonical assertions, observed3-before/4-after identity and forwarded1 guards, no manual recovery/ignored attempt/alias, and executed before/after hashes. Preserve the rejected old-port proposal as failed evidence.
+
+After independent PASS, apply the exact qualified patch, record D75 beside D44/D50/D53/D70 in the existing behaviour log, then rerun P3 at once on D73 exact checkouts. This is the existing App-owned corrected proposal row, not a new Proof author or request. D56.4 remains binding; no Proof dispatch or original body.
