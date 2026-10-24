@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T21:01:24Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 5m -->
-# runtime board, 2026-10-24T20:56:31Z
+<!-- main | 2026-10-24T21:04:25Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 1m -->
+# runtime board, 2026-10-24T21:02:57Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -155,7 +155,7 @@
 | R-P4-live-profile | Profile actual ten-note service step | HARD Sol / Agent venue | Independent evidence review passed | merged | Producer1948; service14690; verdict1956 PASS | Diagnostic FAIL1/PASS2.54 handlers; history71, verify64. First undo33.992s. Evidence independently qualified; overhead uncalibrated. [Summary](../../design/handoff-agt-P4-14690-summary.json) | Captured3b2/e89 only |
 
 | D83-history-cost | Avoid measured capture copy cost | HARD Sol / Luna | Exact normal source proof passed | merged | Author2031; security2037 PASS | Normaldc55 exact reviewed blobs,385 controls plus31 probes PASS; current native8PASS. No original45s credit. [Review](../../design/runtime-D83-history-security-2037.md) | dc55b8bc6 /57df943ec |
-| R2-False-history-tail | Qualify five original history scopes | HARD Sol / Luna | Agent normal adoption and batch | blocked:agent | Source2031; security2037 PASS | Normaldc55 schema and projection gains qualified; five original scopes remain open until Agent2028 meaningful batch. | dc55b8bc6 |
+| R2-False-history-tail | Qualify five original history scopes | Luna / Service | Normal adoption and carrier passed | blocked:agent | agt-P4-R2-D83-original-batch-2056 | Agent home 5fc1 adopts dc55; candidate 21c6 adds reviewed PARAM source with 99 controls. One original seven-case batch dispatched; no result yet. | Runtime dc55 / Agent 5fc1 |
 
 | E1-inventory | Inventory duplicated commit rules | Luna | Sol design complete | merged | rt-E1-rule-inventory-1956 | Sixteen paired groups and four divergences cited. Earlier DSL suggestion is superseded by final shared Python design. [Inventory](../../design/runtime-E1-rule-inventory-1956.md) | Source only |
 | E1-design | Design one shared Python rules module | HARD Sol, D81 | Complete design source checks | merged | rt-E1-shared-module-design-sol-2001 | Six pure helpers map16 groups; estimated4–19 fewer lines,6–10 worker hours. Behavior and D79 corpus unproved. [Design](../../design/runtime-E1-shared-module-design-2001.md) | Design only; no merge |
@@ -188,7 +188,7 @@ Venues: App P1/P2/P3; Agent P4; main P5/Composition. D73 four exact SHAs capture
 D65 delivery: Runtime merge, Agent merge, authentic App manifest command/digest equality, then App merge. Installed v2 docs and D67bindings retained. Final candidate remains D59-cut gated.
 Later: E1/E3 designs and E2 Agentdesign complete before D83; further E/D79 paused untilZIP. No complete authentic D79record/history/context, no syntheticfixture. D47memo/proofpins postdelivery,nineattacks open. V4cut,D14/D23deferred,D34cleanupheld,D62submitcompletenessknown gap.
 Admission: D56 Farm/schema access stopped. Original403/accessrefusals, historical deniedcleanup/process/retirement targets untouched. D67D13envgap unchanged. AppdirtyU3guardrefusals stopped.
-Disk: 8667082752 availablebytes (8.07GiB), cap4. No ended clean nonKEEP Runtime tree eligible; three old dirty trees untouched. Newworkers autorecycled. Prior sweep/compactpermissionlimits and denied targets not retried;15GB target not reached.
+Disk: 8662409216 available bytes (8.07 GiB), cap 4. No ended clean non-KEEP Runtime tree eligible; five old dirty trees remain untouched. Existing KEEP and refused targets not retried; 15 GB target not reached.
 
-live 0 / cap 4; ready-undispatched 0 local. Both D83Sol questions completed, one securityreview PASS, source merged and localcandidate8PASS. Cross-lane original submitters own nextready work. No E/D79active.
-Pass 2026-10-24T20:56:31Z: board overwritten with current state. Normal hub contains source release2048 and local8PASS2052. Peer routing only notifies firstrecipient; separate App2056 and Proof2056 notes correct earlier multi-lane filenames. P3GO consumed. All original scope and priorrefusal limits retained. Inbox consumed through544660bytes.
+live 0 / cap 4; ready-undispatched 0 local. All D83 source, security and reduced-control workers finished. Agent original batch 2056 is dispatched; App already adopted dc55 and has the separate 2056 release note. No E or D79 work active.
+Pass 2026-10-24T21:02:57Z: all rt- running markers checked, none live. Actual Runtime HEAD/tree still dc55/0f941; source stays frozen. Security report 2037 and local 2049 evidence already published. Agent home 5fc1 and prepared carrier 21c6 clear adoption waits. App home ce1cd9 adopts dc55; its stale seed-comparison wait is cleared by completed local 8 PASS and separate release 2056. No duplicate original or new source review. Inbox consumed through 546143 bytes. Original full-media seed, element and 45-second outcomes remain open.
