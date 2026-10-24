@@ -66,6 +66,12 @@ if [ -e "$W/$N" ] || [ -L "$W/$N" ]; then TARGET=$W/$N; fi
 for d in "$W"/venv-agent-child-*; do
   [[ "$(basename "$d")" =~ ^venv-agent-child-[a-z0-9-]+$ ]] || continue
   [ -z "$TARGET" ] || [ "$d" = "$TARGET" ] || continue
+  # A legacy child has no Store custody or retained original wheel authority.
+  # Only the Store maker may qualify opt-in seeded reuse; never adopt this path.
+  if [ -n "$DEPENDENCY_SEED" ]; then
+    [ -z "$TARGET" ] || refuse 'seeded reuse requires Store custody and retained original wheels'
+    continue
+  fi
   [ -d "$d" ] && [ ! -L "$d" ] && [ -x "$d/bin/python" ] || continue
   [ -f "$d/.astrid-source-commit" ] && [ "$(<"$d/.astrid-source-commit")" = "$S" ] || continue
   [ -f "$d/.astrid-runtime-source-commit" ] && [ "$(<"$d/.astrid-runtime-source-commit")" = "$RUNTIME_SHA" ] || continue

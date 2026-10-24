@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
 """Authenticate a finite wheelhouse against an active hash-locked requirements file."""
 
+import base64
+import csv
 import email
+import fcntl
 import hashlib
+import importlib.metadata as md
+import importlib.util
 import io
+import marshal
 import os
 import re
 import stat
+import subprocess
 import sys
 import zipfile
 from pathlib import Path
@@ -14,7 +21,7 @@ from typing import NoReturn
 
 from packaging.markers import default_environment
 from packaging.requirements import InvalidRequirement, Requirement
-from packaging.tags import parse_tag, sys_tags
+from packaging.tags import Tag, parse_tag, sys_tags
 from packaging.utils import (
     InvalidWheelFilename,
     canonicalize_name,
@@ -118,7 +125,7 @@ def archive_identity(data: bytes, display_name: str, filename_name: str, filenam
                 fail(f"wheel METADATA name does not match filename: {display_name}")
             if metadata.get("Version", "") != filename_version:
                 fail(f"wheel METADATA version does not match filename: {display_name}")
-            internal_tags = set()
+            internal_tags: set[Tag] = set()
             for value in wheel_metadata.get_all("Tag", []):
                 internal_tags.update(parse_tag(value.strip()))
             if internal_tags != filename_tags:
@@ -156,30 +163,145 @@ def write_snapshot(snapshot: Path, requirements: bytes, artifacts: dict[str, byt
         fail(f"cannot create immutable snapshot: {exc}")
 
 
+def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
+    """Compare installed bytes to authenticated original wheels, not RECORD claims."""
+    sites = list((root / "lib").glob("python*/site-packages"))
+    if len(sites) != 1 or root.is_symlink():
+        fail("installed child layout is missing or ambiguous")
+    site = sites[0]
+    owned: set[str] = set()
+    for filename, data in artifacts.items():
+        name, version, _, _ = parse_wheel_filename(filename)
+        distributions = [dist for dist in md.distributions(path=[str(site)])
+                         if canonicalize_name(dist.metadata.get("Name", "")) == name]
+        if len(distributions) != 1 or distributions[0].version != str(version):
+            fail(f"missing or ambiguous installed dependency: {name}")
+        dist = distributions[0]
+        records = [str(item) for item in dist.files or [] if str(item).endswith(".dist-info/RECORD")]
+        if len(records) != 1:
+            fail(f"missing installed dependency RECORD: {name}")
+        record = records[0]
+        wheel_files: dict[str, bytes] = {}
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            for entry in archive.infolist():
+                if entry.is_dir() or entry.filename.endswith(".dist-info/RECORD"):
+                    continue
+                if any(part.endswith(".data") for part in Path(entry.filename).parts):
+                    fail(f"unsupported relocated wheel layout: {filename}")
+                wheel_files[entry.filename] = archive.read(entry)
+        rows: set[str] = set()
+        for row in csv.reader(io.StringIO(captured_bytes(site / record).decode()), strict=True):
+            if len(row) != 3:
+                fail(f"malformed dependency RECORD: {name}")
+            rel, encoded, size = row
+            path = site / rel
+            if rel in rows or rel in owned or "\\" in rel or Path(rel).is_absolute() or path.resolve() != path or not path.is_relative_to(root):
+                fail(f"unsafe or overlapping dependency RECORD: {name}")
+            rows.add(rel)
+            content = captured_bytes(path)
+            original = wheel_files.get(rel)
+            if original is not None:
+                if content != original:
+                    fail(f"installed dependency differs from original wheel: {rel}")
+            elif rel == record:
+                if encoded or size:
+                    fail("dependency RECORD must be self-unhashed")
+                continue
+            elif rel.endswith(".pyc") and "__pycache__" in Path(rel).parts:
+                source = importlib.util.source_from_cache(str(path))
+                source_rel = str(Path(source).relative_to(site))
+                if source_rel not in wheel_files or content[:4] != importlib.util.MAGIC_NUMBER or len(content) < 16:
+                    fail(f"unowned dependency bytecode: {rel}")
+                if marshal.loads(content[16:]) != compile(wheel_files[source_rel], source, "exec"):
+                    fail(f"dependency bytecode differs from original wheel: {rel}")
+                if not encoded and not size:
+                    continue
+            elif Path(rel).parent != Path(record).parent or Path(rel).name not in {"INSTALLER", "REQUESTED"}:
+                fail(f"unowned installed dependency file: {rel}")
+            digest = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).decode().rstrip("=")
+            if encoded != "sha256=" + digest or size != str(len(content)):
+                fail(f"dependency RECORD integrity mismatch: {rel}")
+        if not set(wheel_files).issubset(rows):
+            fail(f"incomplete installed dependency: {name}")
+        for prefix in {Path(rel).parts[0] for rel in wheel_files}:
+            location = site / prefix
+            for path in ([location] if location.is_file() else location.rglob("*")):
+                if path.is_file() and str(path.relative_to(site)) not in rows:
+                    fail(f"unowned dependency package file: {path.name}")
+        owned.update(rows)
+
+
+def install_snapshot(wheelhouse: Path, requirements: bytes, flags: list[str]) -> None:
+    # pip rechecks every wheel hash against a kernel-sealed lock. Parent rename
+    # or snapshot mutation cannot substitute requirements or authorize new bytes.
+    lock_fd = os.memfd_create("dependency-lock", os.MFD_ALLOW_SEALING)
+    directory_fd = os.open(wheelhouse, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        with os.fdopen(lock_fd, "wb", closefd=False) as stream:
+            stream.write(requirements)
+            stream.flush()
+        fcntl.fcntl(lock_fd, fcntl.F_ADD_SEALS,
+                    fcntl.F_SEAL_WRITE | fcntl.F_SEAL_GROW | fcntl.F_SEAL_SHRINK | fcntl.F_SEAL_SEAL)
+        subprocess.run([sys.executable, "-m", "pip", "install", *flags,
+                        "--no-index", "--find-links", f"/proc/self/fd/{directory_fd}",
+                        "--require-hashes", "--no-deps", "-r", f"/proc/self/fd/{lock_fd}"],
+                       pass_fds=(lock_fd, directory_fd), check=True)
+    finally:
+        os.close(directory_fd)
+        os.close(lock_fd)
+
+
 def main() -> int:
-    if len(sys.argv) not in (3, 4):
+    args = sys.argv[1:]
+    committed_lock = None
+    if "--committed-lock" in args:
+        index = args.index("--committed-lock")
+        if len(args) < index + 5:
+            fail("committed lock requires checkout, commit, path and SHA256")
+        checkout, commit, lock_path, lock_hash = args[index + 1:index + 5]
+        committed_lock = subprocess.check_output(["git", "-C", checkout, "show", commit + ":" + lock_path])
+        if hashlib.sha256(committed_lock).hexdigest() != lock_hash:
+            fail("committed lock SHA256 mismatch")
+        committed_lock = b"\n".join(line for line in committed_lock.splitlines()
+                                    if not line.startswith((b"astrid @", b"pip==", b"setuptools==", b"wheel=="))) + b"\n"
+        args = args[:index] + args[index + 5:]
+    install_flags = None
+    installed = None
+    if "--install" in args:
+        index = args.index("--install")
+        install_flags, args = args[index + 1:], args[:index]
+    elif "--installed" in args:
+        index = args.index("--installed")
+        if len(args) != index + 2:
+            fail("installed verification requires one child root")
+        installed, args = Path(args[index + 1]), args[:index]
+    if len(args) not in (2, 3):
         fail("usage is verify_dependency_seed.py WHEELHOUSE REQUIREMENTS [SNAPSHOT]")
-    wheelhouse = Path(sys.argv[1])
-    requirements = Path(sys.argv[2])
-    snapshot = Path(sys.argv[3]) if len(sys.argv) == 4 else None
+    wheelhouse = Path(args[0])
+    requirements = Path(args[1])
+    snapshot = Path(args[2]) if len(args) == 3 else None
     if not wheelhouse.is_absolute() or wheelhouse != wheelhouse.resolve():
         fail("wheelhouse must be an absolute physical path")
     if wheelhouse.is_symlink() or not wheelhouse.is_dir():
         fail("wheelhouse is missing or symlinked")
-    if requirements.is_symlink() or not requirements.is_file():
+    if str(requirements) != "-" and (requirements.is_symlink() or not requirements.is_file()):
         fail("requirements file is missing or symlinked")
-    requirements_bytes = captured_bytes(requirements)
-    files = list(wheelhouse.iterdir())
+    requirements_bytes = (committed_lock if committed_lock is not None else
+                          sys.stdin.buffer.read() if str(requirements) == "-" else captured_bytes(requirements))
+    internal = installed is not None or install_flags is not None
+    if internal and captured_bytes(wheelhouse / "requirements.txt") != requirements_bytes:
+        fail("retained lock differs from requested committed lock")
+    files = [item for item in wheelhouse.iterdir() if not (internal and item.name == "requirements.txt")]
     if any(item.is_symlink() or not item.is_file() for item in files):
         fail("wheelhouse contains a symlink or non-file")
     if any(item.suffix != ".whl" for item in files):
         fail("wheelhouse contains an unsupported artifact")
 
     active: dict[str, tuple[Requirement, set[str]]] = {}
-    env = default_environment()
+    env = {key: str(value) for key, value in default_environment().items()}
     for text in logical_requirements(requirements_bytes):
         requirement, hashes = exact_lock_entry(text)
-        if requirement.marker is not None and not requirement.marker.evaluate(env):
+        if requirement.marker is not None and not requirement.marker.evaluate(dict(env)):
             continue
         key = canonicalize_name(requirement.name)
         if key in active:
@@ -215,8 +337,13 @@ def main() -> int:
     missing = sorted(set(active) - set(matched))
     if missing:
         fail("missing compatible wheel for: " + ", ".join(missing))
+    artifacts = {path.name: data for path, data in matched.values()}
+    if installed is not None:
+        installed_integrity(installed, artifacts)
+    if install_flags is not None:
+        install_snapshot(wheelhouse, requirements_bytes, install_flags)
     if snapshot is not None:
-        write_snapshot(snapshot, requirements_bytes, {path.name: data for path, data in matched.values()})
+        write_snapshot(snapshot, requirements_bytes, artifacts)
         print(f"verified dependency seed snapshot={snapshot} packages={len(matched)}")
     else:
         print(f"verified dependency seed wheelhouse={wheelhouse} packages={len(matched)}")

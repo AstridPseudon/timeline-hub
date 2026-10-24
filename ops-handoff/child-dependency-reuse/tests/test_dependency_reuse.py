@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
+import json
 import os
 import shlex
 import stat
@@ -74,7 +76,7 @@ def run_verify(
 def test_candidate_baseline_is_preserved_and_maker_wires_verified_seed() -> None:
     baseline = CANDIDATE / "make-child-venv.baseline"
     assert baseline.read_bytes() == (Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv")).read_bytes()
-    source = MAKER.read_text() + (CANDIDATE / "request-child-venv").read_text()
+    source = MAKER.read_text() + (CANDIDATE / "request-child-venv").read_text() + VERIFY.read_text()
     assert 'CHILD_VENV_DEPENDENCY_WHEELHOUSE' in source
     assert '236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778' in source
     assert 'verify_dependency_seed.py' in source
@@ -309,8 +311,235 @@ esac
     assert dispatch.returncode == 0, dispatch.stdout + dispatch.stderr
     records = log.read_text().splitlines()
     assert any(line.startswith("VERIFIER ") for line in records)
-    pinned = [line for line in records if line.startswith("PIP ") and "--no-index" in line]
+    pinned = [line for line in records if line.startswith("VERIFIER ") and "--install" in line]
     assert len(pinned) == 1
-    assert "--find-links" in pinned[0] and "--require-hashes" in pinned[0] and "--no-deps" in pinned[0]
+    assert "--committed-lock" in pinned[0]
     assert ".dependency-wheelhouse" in pinned[0]
     assert str(wheelhouse) not in pinned[0]
+
+
+def load_helper(name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_pip_uses_sealed_lock_and_open_snapshot(tmp_path: Path, monkeypatch) -> None:
+    helper = load_helper("seed_fixture", VERIFY)
+    snapshot = tmp_path / "snapshot"
+    snapshot.mkdir()
+    requirements = b"seedpkg==1.0.0 --hash=sha256:" + b"a" * 64 + b"\n"
+    (snapshot / "requirements.txt").write_bytes(requirements)
+    observed = []
+
+    def pip(args, *, pass_fds, check):
+        import fcntl
+
+        assert check
+        lock_fd, directory_fd = pass_fds
+        assert fcntl.fcntl(lock_fd, fcntl.F_GET_SEALS) & fcntl.F_SEAL_WRITE
+        snapshot.rename(tmp_path / "renamed")
+        snapshot.mkdir()
+        (snapshot / "requirements.txt").write_text("attacker>=0\n")
+        assert Path(f"/proc/self/fd/{lock_fd}").read_bytes() == requirements
+        assert Path(f"/proc/self/fd/{directory_fd}/requirements.txt").read_bytes() == requirements
+        assert {"--no-index", "--find-links", "--require-hashes", "--no-deps"}.issubset(args)
+        observed.append(args)
+
+    monkeypatch.setattr(helper.subprocess, "run", pip)
+    helper.install_snapshot(snapshot, requirements, ["--no-cache-dir"])
+    assert len(observed) == 1
+
+
+def write_record(site: Path, metadata: str, files: dict[str, bytes]) -> None:
+    import base64
+    import csv
+
+    for rel, content in files.items():
+        target = site / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(content)
+    record = site / metadata / "RECORD"
+    record.parent.mkdir(parents=True, exist_ok=True)
+    with record.open("w") as output:
+        writer = csv.writer(output)
+        for rel, content in files.items():
+            digest = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).decode().rstrip("=")
+            writer.writerow([rel, "sha256=" + digest, len(content)])
+        writer.writerow([metadata + "/RECORD", "", ""])
+
+
+def retained_fixture(tmp_path: Path, *, managed: bool, provenance: str = "valid"):
+    """Tiny installed/source fixture; no pip, venv or production Store mutation."""
+    import shutil
+
+    store_module = load_helper("store_fixture", CANDIDATE / "bench_store.py")
+    orch, work = tmp_path / "orch", tmp_path / "work"
+    (orch / "tests").mkdir(parents=True)
+    (orch / "tests/suites.conf").write_text("")
+    (orch / "queue/pending").mkdir(parents=True)
+    (orch / "bin").mkdir()
+    shutil.copyfile(CANDIDATE / "bench_store.py", orch / "bin/bench_store.py")
+    work.mkdir()
+    wheelhouse = tmp_path / "wheelhouse"
+    wheelhouse.mkdir()
+    artifact = wheel(wheelhouse, "seedpkg-1.0.0-py3-none-any.whl", b"VALUE = 1\n")
+    lock_path = tmp_path / "lock"
+    lock(lock_path, artifact)
+    lock_bytes = lock_path.read_bytes()
+    project = b"[project]\nname='astrid'\nversion='1.0'\n[tool.setuptools.packages.find]\ninclude=['astrid*']\n"
+    client = b"CLIENT = True\n"
+    agent_files = {"pyproject.toml": project, "requirements/proof.lock": lock_bytes,
+                   "astrid/__init__.py": b"", "astrid_runtime_client/__init__.py": client}
+    runtime_files = {"pyproject.toml": project.replace(b"name='astrid'", b"name='astrid-runtime'").replace(b"['astrid*']", b"['astrid_runtime*', 'runtime_protocol*']"),
+                     "astrid_runtime/__init__.py": b"", "runtime_protocol/__init__.py": b"",
+                     "packages/python/astrid_runtime_client/__init__.py": client}
+    agent, runtime = tmp_path / "agent", tmp_path / "runtime"
+    agent_sha, runtime_sha = git_repo(agent, agent_files), git_repo(runtime, runtime_files)
+    identity = {"agent_sha": agent_sha, "backend_sha": runtime_sha,
+                "client_tuple": {"packages/python/astrid_runtime_client/__init__.py": hashlib.sha256(client).hexdigest()}}
+    maker_python = tmp_path / "maker-python"
+    maker_python.write_text(f'#!/bin/bash\ncase "$*" in *verify_dependency_seed.py*) exec {shlex.quote(sys.executable)} "$@";; esac\nexit 0\n')
+    maker_python.chmod(0o755)
+    name = "venv-agent-child-retained"
+    store = store_module.Store.initialize(work / "bench-store", orch / "tests") if managed else None
+    final = (work / "bench-store/entries" / ("child-" + store_module.key_for("child", identity))) if managed else work / name
+
+    def build(stage, destination):
+        source = destination / ".child-venv-source-fixture"
+        site = stage / "lib/python3.13/site-packages"
+        site.mkdir(parents=True)
+        for directory, files in (("agent", agent_files), ("runtime", runtime_files)):
+            for rel, content in files.items():
+                path = stage / ".child-venv-source-fixture" / directory / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(content)
+        for owner, modules, snapshot in (("astrid", ["astrid", "astrid_runtime_client"], "agent"),
+                                         ("astrid_runtime", ["astrid_runtime", "runtime_protocol"], "runtime")):
+            metadata = owner + "-1.0.dist-info"
+            files = {module + "/__init__.py": client if module == "astrid_runtime_client" else b"" for module in modules}
+            files[metadata + "/METADATA"] = f"Name: {owner.replace('_', '-')}\nVersion: 1.0\n".encode()
+            files[metadata + "/direct_url.json"] = json.dumps({"url": (source / snapshot).as_uri(), "dir_info": {}}).encode()
+            write_record(site, metadata, files)
+        with zipfile.ZipFile(artifact) as archive:
+            dependency_files = {entry.filename: archive.read(entry) for entry in archive.infolist()}
+        if provenance == "forged-record":
+            dependency_files["seedpkg/__init__.py"] = b"ATTACKER = True\n"
+        write_record(site, "seedpkg-1.0.0.dist-info", dependency_files)
+        if provenance == "unowned-file":
+            (site / "seedpkg/injected.py").write_text("ATTACKER = True\n")
+        if provenance in ("valid-pyc", "forged-pyc"):
+            import py_compile
+
+            py_compile.compile(str(site / "seedpkg/__init__.py"), doraise=True)
+            pyc = next((site / "seedpkg/__pycache__").iterdir())
+            if provenance == "forged-pyc":
+                import marshal
+
+                pyc.write_bytes(pyc.read_bytes()[:16] + marshal.dumps(compile("ATTACKER = True", str(site / "seedpkg/__init__.py"), "exec")))
+            with (site / "seedpkg-1.0.0.dist-info/RECORD").open("a") as output:
+                output.write(str(pyc.relative_to(site)) + ",,\n")
+        if provenance != "missing":
+            retained = stage / ".dependency-wheelhouse"
+            retained.mkdir()
+            (retained / artifact.name).write_bytes(artifact.read_bytes() if provenance != "wrong-wheel" else b"wrong")
+            (retained / "requirements.txt").write_bytes(lock_bytes if provenance != "wrong-lock" else b"seedpkg>=0\n")
+        (stage / "bin").mkdir()
+        shutil.copyfile(maker_python, stage / "bin/python")
+        (stage / "bin/python").chmod(0o755)
+        markers = {".astrid-source-commit": agent_sha, ".astrid-runtime-source-commit": runtime_sha,
+                   ".astrid-runtime-client-identity": "\n".join(f"{key}={value}" for key, value in identity["client_tuple"].items()),
+                   ".astrid-import-origins": "\n".join(f"{module}={destination}/lib/python3.13/site-packages/{module}/__init__.py" for module in ("astrid", "astrid_runtime", "runtime_protocol", "astrid_runtime_client")),
+                   ".astrid-distribution-metadata": ""}
+        for marker, value in markers.items():
+            (stage / marker).write_text(value + ("\n" if value else ""))
+        report = (f"status=passed\nagent_sha={agent_sha}\nruntime_sha={runtime_sha}\nrequirements_path=requirements/proof.lock\nrequirements_lock_sha256={hashlib.sha256(lock_bytes).hexdigest()}\n"
+                  f"runtime_client_identity_sha256={hashlib.sha256(markers['.astrid-runtime-client-identity'].encode()).hexdigest()}\n"
+                  f"installed_import_origins:\n{markers['.astrid-import-origins']}\ninstalled_distribution_metadata:\npip_freeze:\n")
+        (stage / ".provision-report").write_text(report)
+
+    def seal(path):
+        for item in [path, *path.rglob("*")]:
+            item.chmod(item.stat().st_mode & ~0o222)
+
+    if store is not None:
+        store.ensure("child", identity, {"name": "fixture", "env": "", "suite": "", "requires": []}, build, lambda path: None, seal=seal)
+    else:
+        final.mkdir()
+        build(final, final)
+        seal(final)
+    env = os.environ.copy()
+    env.pop("CHILD_VENV_DEPENDENCY_WHEELHOUSE", None)
+    env.update({"CHILD_VENV_ORCH_ROOT": str(orch), "CHILD_VENV_WORK_ROOT": str(work),
+                "CHILD_VENV_PYTHON": str(maker_python)})
+    return env, [name, agent_sha, "--source-carrier", str(agent), str(runtime), runtime_sha], wheelhouse
+
+
+def retain_caller_evidence(label: str, result: subprocess.CompletedProcess[str]) -> None:
+    directory = os.environ.get("CHILD_DEPENDENCY_TEST_EVIDENCE")
+    if directory:
+        Path(directory, label + ".json").write_text(json.dumps({"returncode": result.returncode, "stdout": result.stdout, "stderr": result.stderr}, indent=2) + "\n")
+
+
+def test_real_maker_preserves_existing_target_arguments(tmp_path: Path) -> None:
+    env, args, _ = retained_fixture(tmp_path, managed=False)
+    # Optional positional fields must survive parsing along with the carrier.
+    args[2:2] = ["base-suite", "remotion-graph"]
+    result = subprocess.run([str(MAKER), *args], env=env, text=True, capture_output=True, check=False)
+    retain_caller_evidence("legacy-argument-reuse", result)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "reused child venv path=" in result.stdout and "remotion=remotion-graph" in result.stdout
+
+
+@pytest.mark.parametrize("provenance", ["valid", "valid-pyc", "missing", "forged-record", "wrong-wheel", "wrong-lock", "unowned-file", "forged-pyc"])
+def test_real_maker_seeded_store_reuse(tmp_path: Path, provenance: str) -> None:
+    env, args, wheelhouse = retained_fixture(tmp_path, managed=True, provenance=provenance)
+    # The production maker pins the approved real lock; the private fixture pins
+    # its own tiny lock without changing production trust or installing anything.
+    private = tmp_path / "maker-kit"
+    private.mkdir()
+    source = MAKER.read_text()
+    agent = Path(args[3])
+    digest = hashlib.sha256((agent / "requirements/proof.lock").read_bytes()).hexdigest()
+    source = source.replace("EXPECTED_PROOF_LOCK_SHA256=236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778", "EXPECTED_PROOF_LOCK_SHA256=" + digest)
+    maker = private / "make-child-venv"
+    maker.write_text(source)
+    maker.chmod(0o755)
+    (private / VERIFY.name).write_bytes(VERIFY.read_bytes())
+    result = subprocess.run([str(maker), *args, "--dependency-wheelhouse", str(wheelhouse)], env=env, text=True, capture_output=True, check=False)
+    retain_caller_evidence("seeded-store-" + provenance, result)
+    if provenance in ("valid", "valid-pyc"):
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "reused child venv path=" in result.stdout
+    else:
+        assert result.returncode != 0
+        assert "status=passed" not in result.stdout
+
+
+def test_real_maker_refuses_seeded_top_level_old_child(tmp_path: Path) -> None:
+    env, args, wheelhouse = retained_fixture(tmp_path, managed=False, provenance="missing")
+    result = subprocess.run([str(MAKER), *args, "--dependency-wheelhouse", str(wheelhouse)], env=env, text=True, capture_output=True, check=False)
+    retain_caller_evidence("seeded-legacy-refusal", result)
+    assert result.returncode == 2
+    assert "seeded reuse requires Store custody and retained original wheels" in result.stderr
+
+
+def test_real_maker_keeps_unseeded_store_compatibility(tmp_path: Path) -> None:
+    env, args, _ = retained_fixture(tmp_path, managed=True, provenance="missing")
+    result = subprocess.run([str(MAKER), *args], env=env, text=True, capture_output=True, check=False)
+    retain_caller_evidence("unseeded-store-reuse", result)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "reused child venv path=" in result.stdout
+
+
+@pytest.mark.parametrize("changed", ["agent", "runtime", "client"])
+def test_real_request_keeps_exact_source_checks(tmp_path: Path, changed: str) -> None:
+    env, args, _ = retained_fixture(tmp_path, managed=False)
+    checkout = Path(args[3] if changed == "agent" else args[4])
+    target = checkout / ("packages/python/astrid_runtime_client/__init__.py" if changed == "client" else "pyproject.toml")
+    target.write_bytes(target.read_bytes() + b"# changed\n")
+    result = subprocess.run([str(MAKER), *args], env=env, text=True, capture_output=True, check=False)
+    assert result.returncode == 2
+    assert "dirty" in result.stdout

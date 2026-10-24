@@ -3,6 +3,7 @@
 # The fourth argument remains the optional Remotion graph used for suite substitution.
 # Explicit source carrier: ... --source-carrier AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA
 set -u -o pipefail
+ORIGINAL_ARGS=("$@")
 
 O=${CHILD_VENV_ORCH_ROOT:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch}
 A=${CHILD_VENV_AGENT_CHECKOUT:-/home/user/work/agent}
@@ -20,7 +21,7 @@ PIP_NETWORK_TIMEOUT_SECONDS=${CHILD_VENV_PIP_NETWORK_TIMEOUT_SECONDS:-30}
 PIP_RETRIES=${CHILD_VENV_PIP_RETRIES:-2}
 REQUIREMENTS_PATH=${CHILD_VENV_REQUIREMENTS_PATH:-requirements/proof.lock}
 EXPECTED_PROOF_LOCK_SHA256=236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778
-VERIFIER_SHA256=3aba7a5a289b242f3152f39dd4939028eef94325c4c82fb0d96b41809df3c48e
+VERIFIER_SHA256=8f95cdaee258b87dde8e859e99fb955e9cde91dfeec9e7191f4837a5ced6714f
 DEPENDENCY_SEED=
 SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
 
@@ -89,7 +90,7 @@ if [ -e "$W/$N" ] || [ -L "$W/$N" ]; then
   SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
   REQUESTER=$SCRIPT_DIR/request-child-venv
   [ -f "$REQUESTER" ] || REQUESTER=$SCRIPT_DIR/request-child-venv.sh
-  CHILD_VENV_REUSE_ONLY=1 CHILD_VENV_REUSE_TARGET="$W/$N" "$REQUESTER" "$@"
+  CHILD_VENV_REUSE_ONLY=1 CHILD_VENV_REUSE_TARGET="$W/$N" "$REQUESTER" "${ORIGINAL_ARGS[@]}"
   exit "$?"
 fi
 
@@ -186,9 +187,9 @@ done)
 STORE_HELPER=$O/bin/bench_store.py
 [ -f "$STORE_HELPER" ] && [ ! -L "$STORE_HELPER" ] || { echo 'REFUSED: bench store helper unavailable' >&2; exit 2; }
 export STORE_CONTEXT="$(declare -p O A R W PYTHON TIMEOUT_BIN PIP_TIMEOUT_SECONDS LOCAL_TIMEOUT_SECONDS FREEZE_TIMEOUT_SECONDS BUILD_TIMEOUT_SECONDS KILL_AFTER_SECONDS PIP_NETWORK_TIMEOUT_SECONDS PIP_RETRIES REQUIREMENTS_PATH N S BS RT RUNTIME_SHA CLIENT_IDENTITY LOCK_SHA DEPENDENCY_SEED SCRIPT_DIR; declare -f failure run_stage progress source_state)"
-python3 -I - "$0" "$STORE_HELPER" "$W/bench-store" "$O/tests" "$N" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$A" "$R" "$W" "$PYTHON" "$BS" "$RT" "$REQUIREMENTS_PATH" "$LOCK_SHA" <<'STORE_PY'
+python3 -I - "$0" "$STORE_HELPER" "$W/bench-store" "$O/tests" "$N" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$A" "$R" "$W" "$PYTHON" "$BS" "$RT" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$DEPENDENCY_SEED" <<'STORE_PY'
 import hashlib, importlib.util, os, pathlib, shlex, subprocess, sys
-script, helper, root, tests, name, agent, backend, client, checkout, runtime_checkout, work, python, base_suite, remotion, requirements, lock = sys.argv[1:]
+script, helper, root, tests, name, agent, backend, client, checkout, runtime_checkout, work, python, base_suite, remotion, requirements, lock, dependency_seed = sys.argv[1:]
 sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location('bench_store', helper)
 module = importlib.util.module_from_spec(spec)
@@ -250,6 +251,12 @@ def verify(path):
             raise RuntimeError('retained child source/client marker mismatch: ' + marker)
     subprocess.run(['python3', '-I', '-', str(path), client, checkout, agent,
                     runtime_checkout, backend, work, python], input=verifier, text=True, check=True)
+    if dependency_seed:
+        # Authenticate retained ORIGINAL wheels before executing this child.
+        subprocess.run([python, '-I', str(pathlib.Path(script).parent / 'verify_dependency_seed.py'),
+                        str(retained / '.dependency-wheelhouse'), '-', '--committed-lock', checkout,
+                        agent, requirements, lock, '--installed', str(retained)], check=True,
+                       timeout=int(os.environ.get('CHILD_VENV_LOCAL_TIMEOUT_SECONDS', '600')))
     # Re-run the existing freeze identity verifier at the verified final path.
     data = report_bytes(retained)
     identity_script = source.split("\nIDENTITY_SCRIPT=" + "'", 1)[1].split("'\nrun_stage", 1)[0]
@@ -303,14 +310,12 @@ REQ=$T/.provision-requirements.txt
 run_stage filter-requirements "$LOCAL_TIMEOUT_SECONDS" bash -c \
   'set -o pipefail; git -C "$1" show "$2:$3" | grep -v -e "^astrid @" -e "^pip==" -e "^setuptools==" -e "^wheel==" > "$4"' \
   _ "$A" "$S" "$REQUIREMENTS_PATH" "$REQ"
-SEED_ARGS=()
 if [ -n "$DEPENDENCY_SEED" ]; then
   SEED_SNAPSHOT=$T/.dependency-wheelhouse
-  run_stage verify-dependency-seed "$LOCAL_TIMEOUT_SECONDS" "$P" -I "$SCRIPT_DIR/verify_dependency_seed.py" "$DEPENDENCY_SEED" "$REQ" "$SEED_SNAPSHOT"
-  SEED_ARGS=(--no-index --find-links "$SEED_SNAPSHOT" --require-hashes)
+  run_stage verify-dependency-seed "$LOCAL_TIMEOUT_SECONDS" "$P" -I "$SCRIPT_DIR/verify_dependency_seed.py" "$DEPENDENCY_SEED" - "$SEED_SNAPSHOT" --committed-lock "$A" "$S" "$REQUIREMENTS_PATH" "$LOCK_SHA"
 fi
 if [ -n "$DEPENDENCY_SEED" ]; then
-  run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" "${SEED_ARGS[@]}" -q --no-deps -r "$SEED_SNAPSHOT/requirements.txt"
+  run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$P" -I "$SCRIPT_DIR/verify_dependency_seed.py" "$SEED_SNAPSHOT" - --committed-lock "$A" "$S" "$REQUIREMENTS_PATH" "$LOCK_SHA" --install "${PIP_ARGS[@]}"
 else
   run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps -r "$REQ"
 fi
