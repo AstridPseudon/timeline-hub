@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T16:58:36Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 25 | status age 0m -->
-# app board, 2026-10-24T16:59Z
+<!-- app | 2026-10-24T17:02:04Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 23 | status age 0m -->
+# app board, 2026-10-24T17:02Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -62,7 +62,7 @@
 | P3-changed-run | Original Gate5 after history fix | App service; Luna verdict | Reviewed history fix home | review | Actual 4858; verdict 1637 | Exit 1 in 278s; readiness PASS. Primary setup intent mismatch; separate Agent tuple movement. | Snapshot e76ac/tree c139 |
 | U4p-current | Bind current Runtime provenance | Luna | Runtime bc227 home | merged | app-U4p-current-provenance-1635 | Normal tools; 14 mappings exact; strict 2 skew, 4 updater, 2 schema controls PASS. | 7f3d605de5 |
 
-| P3-step-intent | Apply approved exact setup intent | Luna | D70 approved; review 1643 PASS | doing | app-P3-D70-apply-1655 | Exact source-bound move intent; one line only. Original body/reset/tail remain exact. Immediate meaningful P3 after home. | Current home |
+| P3-step-intent | Apply approved exact setup intent | Luna | D70 approved; review 1643 PASS | merged | app-P3-D70-apply-1655 | Exact one-line/file hash a646 matches virtual review; 23 controls, four types/lint PASS. Original body/reset/tail exact. | aaddaf12d2 |
 
 | P3-4858-verdict | Judge changed original Gate5 | Luna | Same-ID terminal facts | merged | app-P3-4858-verdict-path-1637 | Independent NO-GO. Stale intent primary; Agent source/provenance drift secondary. History precondition passed. | Read only |
 | D66-stable-source | Keep current imports stable per run | Luna | Author plus actual positive PASS | merged | Author 1649; positive 1652 | Same plain command; real current ef036/5c1a routes. Empty-input collects 2/8/1; five controls/lint PASS. | 19795cef5b |
@@ -71,16 +71,20 @@
 | P2-server-phase | Answer exact retained handler input | Luna | Runtime peer 1639 | merged | app-P2-25943-server-phase-return-1647 | UNAVAILABLE: no server stdout, matching handler trace or receipt. Safe client phases only. Peer1649 returns finite input. | Read only |
 | D69-placement-path | Challenge definitive refusal replay | Luna | Whole path complete | merged | app-U3-D69-placement-whole-path-1650 | Generic 409 is definitive; CAS contention is handled internally. No qualified Runtime semantic retry marker exists. | Read only |
 
-| U4p-release-current | Align current policy-merge release tuple | Luna | Actual current source proof | merging | app-U4p-current-release-1656 | Normal tools, exact14maps and strict8controls PASS. Runtime5c1a/Agentef036/schema867f. | Author branch |
+| U4p-release-current | Align current policy-merge release tuple | Luna | Actual current source proof | merged | app-U4p-current-release-1656 | Normal tools, exact14maps and strict8controls PASS. Runtime5c1a/Agentef036/schema867f. | 9e1f581847 |
 
-Integration: App19795cef5b includes stable current-source launcher over a2a6. Earlier a2a6 includes parent reads, voice, fullscreen, normal current Runtime provenance7f3d and strict P3 history9f4 over1540. Frozen upstream 3881, D62 normal client, D65 strict schema and D66 plain launcher retained. All six original spec hashes unchanged. Current P1 26312 is independently GREEN at its recorded App1540/Agent9502/Runtime8b32 tuple; never relabelled after source movement.
+| P2-element-venue | Prepare one focused real reproduction | Luna | Runtime peer1650; ORCH16:45 | doing | app-P2-element-diagnostic-route-1700 | Original case unchanged; App route and retained daemon logs. Runtime owns phase instrumentation; no body consumed. | Current home |
 
-live 2 / cap 6; ready-undispatched 0. Approved D70 author and placement cumulative review active; current metadata PASS queued for merge. No ready row waiting; no original currently running. No original currently running.
+| P3-D70-run | Original Gate5 after approved intent fix | App service; Luna verdict | D70 home aaddaf | doing | Actual 31887 | One no-cache plain launch submitted17:01:35Z. Current ef036/5c1a source snapshots; exact a646 file. Same ID awaited. | App aaddaf12d2 |
+
+Integration: App aaddaf12d2401760b75f6fb54e9e624883434447 includes approved D70 expectation and normal release9e1f over stable-source19795 and a2a6. Earlier a2a6 includes parent reads, voice, fullscreen, normal current Runtime provenance7f3d and strict P3 history9f4 over1540. Frozen upstream 3881, D62 normal client, D65 strict schema and D66 plain launcher retained. Original case bodies/reset/tail unchanged; D70 approved fullspec95d9→a646 and P2 exact reads helper are logged and independently reviewed. Current P1 26312 is independently GREEN at its recorded App1540/Agent9502/Runtime8b32 tuple; never relabelled after source movement.
+
+live 2 / cap 6; ready-undispatched 0. Placement cumulative review1657 and element diagnostic route1700 active. D70 home; one meaningful P3 submitted17:01 on current source. No duplicate original. No original currently running.
 
 core open: 9 active gesture cases (8 P2 plus 1 P3). Current P1 original 2 PASS and independent 1616 PASS at recorded tuple. All eight P2 are CORE; current P2 25943 is 0 PASS, 3 FAIL, 5 NOTRUN. Current P3 10033 NO-GO; meaningful changed 4858 failed at a new setup intent boundary and Agent tuple drift, independent verdict active.
 regressions: 1 confirmed open placement retry defect; Sol correction41PASS now in independent cumulative review1657. Voice/fullscreen fixes home and integrated1643 PASS. All restored bodies and original protected cases retained.
 
-Blockers: App — D70 exact apply1655 and placement cumulative review1657 active. Harness home19795 and qualifier1643 PASS. Current release metadata1656 PASS queued.
+Blockers: App — Placement cumulative review1657 and focused element route1700 active. D70 and current release metadata are home; changed P3 is active.
 D70 decision: APPROVED16:55 via lead16:54, condition independent1643PASS met. Exact one-line author1655 dispatched immediately; no decision blocker remains.
 Blockers: Runtime — Popup Luna rt-P2-popup-auth-1643 owns fork-root projection; element HARD Sol rt-P2-element-sol-1643 owns exact next observation/reproduction. Existing App phases UNAVAILABLE; peer1649 sent.
 Blockers: Final cut — Current P2/P3 and D69 placement restoration remain open. Normal producer adoption home; Runtime owns final proofs/build/ZIP.
@@ -95,5 +99,5 @@ Disk: About 11 GB free, cap 6; heavy stop 8 GB. Automatic recycle active; no eli
 
 Evidence: [P3 independent strict history review](../../design/app-P3-history-review-1626.md), [P2 same-ID verdict](../../design/app-P2-25943-verdict-1625.md), [current P1 independent verdict](../../design/app-P1-26312-current-verdict-1616.md), [current composed source qualification](../../design/app-F-current-join-proof-1553.md), [all eight core](../../design/app-P2-core-classification-1222.md).
 
-Inbox consumed through 1566120 bytes. Runtime and Agent boards rechecked from /home/user/timeline-hub/hub/status: Runtime bc227 inverse auth fix is home with unchanged wire/schema; App normal provenance 1635 ready and dispatched. No source/adoption decision owed. Agent inverse original now PASS1 at its current proof; Agent/Runtime own remaining P4 repairs. Runtime D69 policy nowhome5c1a; normal current checkout queued, no wire change inferred.
+Inbox consumed through 1569783 bytes. Runtime and Agent boards rechecked from /home/user/timeline-hub/hub/status: Runtime bc227 inverse auth fix is home with unchanged wire/schema; App normal provenance 1635 ready and dispatched. No source/adoption decision owed. Agent inverse original now PASS1 at its current proof; Agent/Runtime own remaining P4 repairs. Runtime D69 policy nowhome5c1a; normal current checkout queued, no wire change inferred.
 Next ready: consume author/review returns, merge qualified disjoint fixes immediately; review parent reads on completion; same-ID P3 verdict on terminal.

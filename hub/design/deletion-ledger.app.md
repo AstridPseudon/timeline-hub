@@ -94,3 +94,12 @@ D53 | fullspec 26c1ae764013f8907ff7f3664dbcee016c88bc17a797f66800d012e618165d5b�
 |---|---|---|---|
 | P3-history | Authenticated `recorder_abi: 2` is required for physical-binding Gate-5 history; wrong/missing ABI is rejected. | C0 §§4,7; D62 history-only `recorder_abi` | Author `471dc827…`; home merge `9f4ec08f…`, tree `c13980c7…`; 23/23 controls passed. |
 | P2-parentreads | Submitted request `reads` must match authoritative history exactly; omitted reads remain absent. | C0 §§1,4,5,7 | Author `6b7b6e7a…`; integrated home `a2a6e4ab…`, tree `6cae4f2f…`; 10/10 P2 controls passed. |
+
+
+D70 — approved new ours line `cc64db` absent upstream; mounted V1 move intent preserves D13/C0 intent fidelity; home receipt remains pending.
+
+- Current file: `a6468188ff21c4fd8bd397ff242b0260ee92ab6f2f90ac94786973eaf3c1e99a`
+- Setup helper: `77c10439a9b1d8287853d325bec82088e65e7401542a5380f8f361d4a9feb6f4`
+- Protected Gate-5 body: `d47d55265b3905a1882ffb370df033cf92b35c3492d4bec366d8da0272b9fb20`
+- Protected reset block: `980b4cbe2c1d7a05840c8419fd55991ff73783784c89df6c717e2721a212fe62`
+- Protected canonical tail: `5ede6f374857a66a327da3cea0e85de0457a04267003f3f66e3d40ee4f380912`
