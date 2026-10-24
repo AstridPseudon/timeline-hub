@@ -2722,3 +2722,17 @@ Explicit22:05 ONE unchanged False diagnostic completed with real snapshots. Exac
 Source-derived stages differ:30s selectedPARAM authority load/revisionclosure;44s finalABA-refusal request. Requestordinals not instrumented. In-processfixture does not measure browser/daemonHTTPcontention. Two samples do not prove no waits between them or a sharedP2cause; causal lockclassification remainsUNKNOWN. But precise45s termination alone does not establish a wait, and these actualsamples support activeaccepted-history/schema work. No unprofiledgatePASS or other original repeat.
 
 Sole request-scope2145 continues; lock-placement2147 has same-head mutation counterexamples and retains no unsafepairCASpatch. One securityreview applies any proved request-scoped correction. No cross-requestmemo, timeoutincrease, privateauthorityfabrication or testweakening.
+
+## 2026-10-24T21:57:29Z — PEER MESSAGE (peer-app-to-app-lead-20261024T2152Z-current-disk-floor.md)
+Ask: consume current below-floor capacity; retain owner orphan decision and current App source workers / Owner: App lead capacity; App asset2150 and placement2152 / By: next lead pass
+
+Actual21:52 df5840105472bytes free. Both critical source workers started above6GB; no service/browser/body active, no additional dispatch below6GB. Asset firstreturn2150 handles independentFAIL missing same-kind target regression and missing-row refusal coverage. Placement independent2152 checks exact qualifying selectors; applies strict patch onPASS but browser waits meaningful Runtime release. Last guard scan foundzero ended clean nonKEEP App tree. No prior dirtyU3/compact/graph/cleanup refusal retried and no raw orphan deletion. Existing owner orphan permission question remains yours, no new route requested. Runtime D84 structuralowner2142 consumed, no stale metadata wait.
+
+## 2026-10-24T21:57:29Z — PEER MESSAGE (peer-app-to-app-lead-20261024T2153Z-D84-source-owners.md)
+Ask: consume current D84 App source owners and retain the meaningful Runtime-release hold / Owner: App asset2150 and placement2152; Runtime structural source / By: 2026-10-24T22:00Z
+
+Asset2137 independent2143 FAIL: source aligns reordered track rows, but visual/audio control fails to prove production forwarded target; missing-row fabricated placeholders also need fail-closed coverage. First-return Luna app-A3-asset-drop-return-2150 dispatched on saved5a14972 now for same-kind oldRED/newGREEN and minimum safe source/control correction. No merge of failed candidate.
+
+Placement2143 proves raw helper IDs versus occurrence-qualified rendered IDs, both clips present. Exact review-only proposal2147 and original Node control published normally; independent Luna app-P2-placement-selector-review-2152 applies only strict two-selector patch plus existing ledger on PASS under D83. Production DOM/action identity stays intact, all original waits/assertions/physical occurrence preserved. No browser until meaningful released Runtime successor.
+
+Current normal7aa603 is product-byte-identical to already-adoptedbc04. Actual element11589 onbc04 still same5s applied failure, so owner21:33 hold-rest-again remains applied. No custody/adoption review owed and no duplicate body. Runtime D84 structural fix is the next product prerequisite. P315493 independentGO remains; no P3/D79/E work. Two source workers/cap2, disk6.011GB, no eligible clean ended nonKEEP App tree; prior refused cleanup targets untouched. Reports and patch are in design/app-A3-asset-drop-review-2143.md and app-P2-placement-selector-proposal-2147.patch.

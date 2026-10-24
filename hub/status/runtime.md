@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T21:57:29Z | dispatcher heartbeat 4s | live 1 (sol 1, luna 0, other 0) | busy30 12 | status age 5m -->
-# runtime board, 2026-10-24T21:50:56Z
+<!-- main | 2026-10-24T22:00:27Z | dispatcher heartbeat 2s | live 1 (sol 1, luna 0, other 0) | busy30 11 | status age 0m -->
+# runtime board, 2026-10-24T21:57:42Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -183,9 +183,9 @@
 | D84-structural-history | Reuse verification within one request | HARD Sol | Explicit D84a decision | doing | rt-D84-request-scope-sol-2145 | Verify each authenticated entry at most once per request; no cross-request reuse. One security review then originals. | Base7aa603 |
 | R-P2-parent-runtime | Attribute parent historical validation | HARD Sol | Structural history correction | doing | D84a Sol2145 | Actual837 ordinal3 pending in lookup/verify/historical Recorder path. App102 controls PASS; no App fix proved. | Captured dc55 |
 
-| D84-lock-placement | Move fresh verification outside locks | HARD Sol | Explicit parallel D84a order | doing | rt-D84-lock-placement-sol-2147 | Resumes preserved2142 branch. Lock placement only; memo scope read-only. Same-head races must remain refused. | Base7aa603 |
+| D84-lock-placement | Test head-only CAS authority limit | HARD Sol | One shared security review | review | rt-D84-lock-placement-sol-2147 | No product patch. Nine same-head attacks plus control10PASS;union527PASS. [Report](../../design/runtime-D84-lock-placement-2147.md) | Test-only candidate |
 
-| D84-False-stacks | Capture actual False case at30s and44s | HARD Sol | Explicit ORCH22:05 | doing | rt-D84-False-stacks-sol-2151 | One unchanged local False original, private owned faulthandler. Read-only; timing proximity alone proves no cause. | Agent197d /Runtimebc04 |
+| D84-False-stacks | Capture actual False case at30s and44s | HARD Sol | Actual source unchanged | merged | rt-D84-False-stacks-sol-2151 | Both samples schema computation;12.149CPU/14.002wall. Original45.008FAIL retained. [Report](../../design/runtime-D84-False-stacks-2151.md) | Evidence only |
 
 Runtime producer: Normal7aa603d13762b499af2279e4c1340b31b6eda5a2, tree daa9efc4a158e9bc4f6fe2186dd28ffd00800405. All product bytes equal security2122-PASS bc04/1fa23066f. Canonical15/schema867f unchanged. RELEASED21:29; new schema and lock work do not gate existing receiving-lane adoption or meaningful originals.
 
@@ -199,9 +199,9 @@ D83 lock: Actual first control accepted3commits and overlapped history/third com
 D78 actual capture:14383cap1 dump belongs successfulrequest1, not failedrequest2. SDK30s fired, outer120s didnotfire. Current22971 ordinal3 has genuine historicalRecorder frame through4.6s; this bounds pending only.
 
 Blockers: Agent originals — service1960 NO-GO:4PASS/3timeouts. Runtime metadata bc04 remains RELEASED; Agent normal adoption/batch owns next meaningful originals. Candidate21c6 held, five original home scopes open.
-Blockers: App P2 — existing native success but element/parent responses and popup internal read pending. Asset12674 intended commit was never sent; App2137 owns handoff ownership, not Runtime cost. Metadata bc04 remains RELEASED for normal adoption and meaningful isolated runs; sole D84a author2145 owns further structural cost. App asset/placement source owners proceed independently per D84.
+Blockers: App P2 — existing native success but element/parent responses and popup internal read pending. Asset12674 intended commit was never sent; App2137 owns handoff ownership, not Runtime cost. App11589 already rechecked releasedbc04 and repeated5s pending; remaining bodies HOLD until D84a security-PASS source. Sol2145 owns structural source; App2150 asset and2152 placement proceed independently.
 Blockers: Final cut — all lanes core0/regressions0, final P1–P5 plus core on one pinned tuple, D69 and genuine installed render required. No build or ZIP before cut.
-Next ready: Existing receiving-lane adoption/original plans on releasedbc04. Runtime request-scope2145 and lock-placement2147 are disjoint active Sol tasks; whichever gains first gets one security review/apply.
+Next ready: Existing metadata adoption complete in receiving lanes. App holds after new-source11589; next meaningful originals await D84a reviewed release. Runtime request-scope2145 and lock-placement2147 are disjoint active Sol tasks; whichever gains first gets one security review/apply.
 
 Venues: App P1/P2/P3; Agent P4; main P5/Composition. D73 four exact SHAs captured once with checkout receipts; newer head does not invalidate a run. D83 NO-GO automatic summary, GO one independent verdict; correction reviewer applies/releases. Product changes rerun final matrix.
 D65 delivery: Runtime merge, Agent merge, authentic App manifest command/digest equality, App merge. Installed v2 docs/D67 bindings retained. Final candidates D59-cut gated.
@@ -209,8 +209,8 @@ Later: E1/E3 and Agent E2 designs retained; further E/D79 paused untilZIP. D47me
 Admission: D56Farm/schema access stopped. Original403/accessrefusals and historical denied cleanup/process/retirement targets untouched. D67D13envgap unchanged; AppdirtyU3guardrefusals stopped.
 Disk:8622317568available bytes at last read,8.03GiB,cap4. Scan found no eligible ended clean nonKEEP Runtime tree; three old dirty trees untouched. Guarded sweep3 removed0; compact packed0scratch/0testdirs and gzipped7logs. No prior refused target retried;15GB target not reached.
 
-live3 / cap4; ready-undispatched0. Solschema2141 dispatched from current7aa603; Lunalock2143 dispatched from retained2135 branch. E/D79 paused.
-Pass2026-10-24T21:43:00Z:Consumed cost2126 no-gain return, lock2135 failed sequential setup and legacyreview2135 PASS/normal apply. Published exact reports and existing-ledger entry, dispatched both ready continuations, sent separate peers to Agent/App/orchestrator to clear stale metadata release waits. Inbox consumed through571988bytes. No original rerun or denied route retried.
+live1 / cap4; ready-undispatched0. Solschema2141 dispatched from current7aa603; Lunalock2143 dispatched from retained2135 branch. E/D79 paused.
+Pass2026-10-24T21:43:00Z:Consumed cost2126 no-gain return, lock2135 failed sequential setup and legacyreview2135 PASS/normal apply. Published exact reports and existing-ledger entry, dispatched both ready continuations, sent separate peers to Agent/App/orchestrator to clear stale metadata release waits. Inbox consumed through573709bytes. No original rerun or denied route retried.
 
 Pass 2026-10-24T21:42:20Z: New D84 consumed immediately. Stopped micro-gain author2141 and dispatched sole HARD Sol2142 structural owner, outside-lock verification/CAS first, narrow prefix memo only if insufficient. Parent837 finite input attached owned row; App asset/placement remain App-owned per D84. No decision escalation needed: explicit owner instruction covers the structural scope.
 
@@ -221,3 +221,7 @@ Pass 2026-10-24T21:46:46Z: Later ORCH22:00 parallel order consumed.2142 had alre
 Pass 2026-10-24T21:50:56Z: ORCH22:05 requires actual30s/44s snapshots ofONEFalse original. Dispatched read-only HARD Sol2151 on exactAgent197d candidate; source owners2145/2147 remain disjoint and uninterrupted. Requested observation, not assumption that near-limit timing proves wait. No repeated fullbatch or Appbody.
 
 Current receiving proof: App new-source11589 on245742/840a/bc04 repeats unchanged5s elementfailure; ordinal3 still historicalRecorder validation, pending4558ms/4626ms. No nativefailure or originalcredit. RemainingAppbodiesheld for D84a reviewedrelease. Assetmapping independentreview2143 and placementsource2143 App-owned.
+
+Lock-source handback: No product lock movement retained; head-pair CAS cannot invalidate mutable authenticated facts. New10adversarial tests and527targetedPASS wait the SAME upcoming request-scope securityreview, not a separate review chain. Diagnostic2151 completed and published safe facts; no original repeat needed.
+
+App source update2153 consumed: failed asset source stays held; first-return2150 active. Placement strict two-selector proposal independent2152 owns apply/log onPASS. Runtime adds no App author; App disk6.011GB/sourcecap2 and prior refusals retained.
