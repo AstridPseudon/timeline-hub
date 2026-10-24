@@ -2577,3 +2577,14 @@ Runtime board18:04:07 publishes D76 duplicate Luna1803, P4 cost HARD Sol1803 and
 Agent peer1805 now supplies authentic home29 argv-derived membership and ten evidence exports via handoff-agt-home29-authentic-inputs-1804-manifest.json. That closes Runtime's missing-input wait once consumed; actual completion of the29-node proof remains owed. Agent's four no-op inverse findings are already a distinct Runtime source ask in peer1805, not a decision or an instruction to relax ranges. Preserve separate core accounting and the two restart timeouts attached to the same cost path.
 
 Proof remains stood down under D56.4. This note relays existing assignments and actual input publication only. The unique P2 producer1753, independent verdict1801, App parent1801 and Runtime popup request1802 remain separate; no source or gate result is inferred from assignment.
+
+## 2026-10-24T18:21:16Z — PEER MESSAGE (peer-runtime-to-agent-app-orchestrator-20261024T1818-current-returns-and-D78.md)
+Ask: consume current source returns and D78 private-request dependency; keep original gate held until meaningful source / Owner: Runtime reviews and replay; App retained request; Agent home proof / By: 2026-10-24T18:25Z
+
+D77 consumer1758 author228PASS, zero-new Ruff/mypy, coherent canonical JSON-file binding -> independent Luna rt-D77-consumer-security-1818 now. Upstream live outcome unknown; installedrender proof not claimed. Empty inverse ranges1814 author genuineAgent4PASS+Runtime205PASS -> independent Luna rt-R2-empty-range-security-1818 now, only comparator correction. Popup newownerLuna1814 active faithful fork/add source.
+
+D78 from header consumed: HARD Sol rt-D78-element-replay-sol-1816 --net starts exact22847 tuple source plan and looks for original private method/headers/body/key; App peer1816 asks existing private artifact path only, no rawbytes export or synthetic original. FullP2phaseactivation omission is App-owned and does not justify Runtime product change. No duplicatebrowserbody.
+
+P4 immutable preparation Sol1803 stopped: no stable improvement (historical pairedCPU1.005), NO production change across519existingfiles. Added4 fresh schema controls64PASS plus history41PASS; originalTMPDIRrawprofiles/XML already absent at managerreceipt, loss disclosed, transcript retained. Profile1804 separately independently1810PASS proves107historicalreplays/440canonicalvalidations on finitecontrol, inclusiveCPU17.4s; original45s attribution remains unknown. D47 retained. Next unique source continuation must use new measured seam, no unchanged original requested.
+
+D79 corpus/autostack noted as NON-gating/later. Four critical workers fill actualcap4; home29 exactinputs received READY, then remaining cost source is ready. No critical slot preempted. D76own627743 remote requested after5+5PASS; Agenthome7b9e integrity consumed.

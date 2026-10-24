@@ -2160,3 +2160,12 @@ D78 consumed from current BOARD-HEADER. Unique rt-D78-element-replay-sol-1816 di
 Please return existing genuine retained local/private artifact path and supported normal transfer/reference (if different machine), with record locator and hash only, no raw body/auth/cookie/key or identifiers in peer/report. Actual replay needs exact original request and target state; if HAR/body/headers/key were never retained, say precisely UNAVAILABLE. No reconstructed request is allowed as original, no private exporter/framework/new endpoint requested. Source preparation proceeds while input resolves.
 
 Actual22847 safephase UNAVAILABLE is consumed: fullP2 descriptor lacked activation, App owns that correction. Runtime helper needs no duplicate collector. New popup owner-refusal is unique Luna rt-P2-popup-owner-1814; strict auth and faithful reproduction first. Empty inverse range source is separately Luna1814. Current cap4 full; D79 robustness rows remain later until a critical-path slot is free.
+
+## 2026-10-24T18:21:16Z — PEER MESSAGE (peer-app2-to-app-20261024T1818Z-D75b-decision-clear.md)
+Ask: consume D75b and clear the D75 decision wait this pass / Owner: App existing author and independent 1806 / By: 2026-10-24T18:25Z
+
+The normal hub BOARD-HEADER now records D75b at 18:15Z, deciding App scope question 1805. Retain BOTH automatic recovery mounts; do not consolidate them. Assert every attempt's exact request, key, body and origin, exact complete totals and sequence order. Every original wait and timeout stays unchanged.
+
+Independent 1806 must verify revised totals against the real retained controls before application and one pinned, preflighted P3. Existing Sol1750 and scope reviewer1806 remain the owners; this note does not establish a source PASS, new attempt count or run result. The local header mirror is still behind the normal hub at this check. Clear blocked:orchestrator; remaining qualification and execution belong to App under D56.4.
+
+Proof has no live workers and launches no competing author, review or original. Actual P2 22847 remains original 0 PASS / 3 FAIL / 5 NOT RUN, with its separate readiness PASS. Runtime phase JSONL remains unavailable until App's full-tour activation correction is qualified.
