@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T08:05:50Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 0m -->
-# runtime board, 2026-10-24T08:05:00Z
+<!-- main | 2026-10-24T08:08:38Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 16 | status age 1m -->
+# runtime board, 2026-10-24T08:07:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -55,7 +55,7 @@
 | F-helper-sequential | Classify helper replay-map refusal | Agent Sol / Luna | Integrated proof complete | merged | Agent184dc; review0224; integrated0232 | Actual Agent 8a8d passed 12 focused cases and static, vendor and artifact checks. Both original variants passed on reviewed source. | Agent184dc20a70 |
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Current installed qualification passed | merged | Agent0508; independent0517 PASS | Exact seven originals passed on managed child 3b5c, Agent ba8f and Runtime f320. Current 9cd relevant sources and test AST match. | Managed child 3b5c |
-| OPS-farm-agent-full | Install exact child for Farm full suite | Luna / Luna | Reviewed v3 packet and genuine child | doing | Source0803; facts0801; review0804 | Owner selects normal D21 child for9cd/1d9. New packet drops PYTHONPATH and preserves verified graph. No checkpoint. | v2 471712; v3 pending |
+| OPS-farm-agent-full | Install exact child for Farm full suite | Luna / Luna | Reviewed v3 packet and genuine child | review | Author0803; review0807 | V3 private20 tests pass. Independent whole-path review pending; no actual child or checkpoint. | 8d53f9b04 |
 | OPS-child-dependency-route | Publish verified dependency seed route | Sol / Luna | Reviewed wheel layout and actual input | doing | Source0752; independent0756 | Original67 wheel hashes qualified by Agent0740. Narrow layout repair is in security review; no candidate built. | 33fc installed; b330 candidate |
 | R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Integrated proof passed | merged | Review 0405; integrated 0413 PASS | 13 standalone cases and 243 controls passed; 74 configured deselections. [Proof](../../design/runtime-historical-image-integrated-0413.md) | 2b49da8d6 / 2e96c68c |
 | R-D42-history-memo | Harden verified replay memo | Sol / Luna | Post-delivery scope under D47 | gated:D47 | Design0448; review0454 PASS | Deferred by D47. No stable validation boundary; nine state attacks remain open. Source stays unmerged. | Tests 6c6bb375; source held |
@@ -103,7 +103,7 @@ D34: main has about9 GiB free at07:17. No main disk work per the explicit orches
 Blockers: Farm — isolated children need installed Runtime. Runtime source0803 authors normal managed-child full-farm packet; Farm lead owns actual child request.
 Blockers: Agent and App — reviewed U2 home, D39 consumer adoption and header P2/P3 GO are still needed for the final tuple.
 Blockers: Agent child — b330 is installed on main; independent0805 publication and actual67-wheel acceptance remain pending before child use.
-Next ready: Wheel installer0801, Farm sourcefacts0801 and v3 packet0803 are dispatched. Agent owns actual67-wheel acceptance; no unassigned ready task.
+Next ready: V3 whole-path review0807 and wheel installed review0805 are running. Sourcefacts0801 independently0804 passed. Agent owns actual67-wheel acceptance; no ready task waiting.
 Later: Viewing owns the original ABA joined-source verdict. Runtime shared-auth handoff0715 is complete; no competing Runtime author or original body. D34 disk work and D47 memo resume only under their stated conditions.
 
 Later: Agent peer0714 classifies the separate moved-head persistence original as existing D23 child-word scope. It remains unchanged and visibly open; no new journal/publish repair or duplicate body. This does not alter the two Runtime fixture selectors.
