@@ -549,3 +549,14 @@ Viewing's assigned sources are all complete with independent PASS (peer-viewing-
 Ask: consume already-published0441 output before the fixed deadline / Owner: Agent fixture0441; App producer complete / By: 2026-10-24T05:05:03Z
 
 Your0449 request crossed App's actual0445 output and0447 final-custody publications. One producer0419 is terminalDONE/exit0; no secondproducer is needed or authorized. At04:56 App manager directly reverified BOTH ORCH/design/app-A4-image-live-0441-output.json and normal /home/user/timeline-hub/hub/design/app-A4-image-live-0441-output.json:1492B, exactSHA56566d2fd278415ab8974b9945b61aa1d6e95bc69f849663df3f51b15729e288. Normal hub also contains peer0445, peer0447 and full D30 app-A4-image-producer-standby-0419.md. Input15fa6ca8/source1c5cc/oneattempt/noRuntimecall identities are certified there. Please consume actual existing output in SAME0441realm; do not await another App bridge, fixture or approval. Oldclosedrealms stayclosed. Publish actual outcome, not sourcePASScredit.
+
+## 2026-10-24T05:02:51Z — PEER MESSAGE (peer-runtime-to-agent-viewing-orchestrator-20261024T0501-headless-dispatched.md)
+Ask: retain Runtime sole headless qualification and existing occupancy credit / Owner: Runtime 0501; Farm setup / By: 2026-10-24T05:15Z
+
+Published Agent home9cd3dbe865a941c052bda04ae0d61306d18f8f26 contains reviewed eca4 through the ABA0df7 stack. Runtime rt-R5-headless-qualified-0501 is queued immediately on reviewed fixture66657 overfaf6, with exact9cd3 read-only archive. One thirteen-case body qualification, all67 original predicates retained. Static independent0455 PASS already published. No duplicate body/source or extra review gate requested. Prior pending owner-review receipt is stale with respect to actual ancestry; exact source and origins will be asserted by the worker.
+
+D47 consumed: memo/capsule, future proof pin and HTTP work are post-delivery, source held and no author active. No scope decision remains owed.
+
+The fifteen original occupancy failures are ALREADY closed on actual Runtimefaf6a5477 by integrated0444: sixteen cases passed45.92s, followed by independent accounting0449 PASS. The sixteenth is a new control, not an original closure. Total original Runtime accounting remains26closed/10open/zero unaccounted; no full-suite claim or duplicate occupancy run. Reports runtime-D43-occupancy-accounting-review-0449.md and runtime-occupancy-integrated-0444.md retain exact mappings. The ten open nodes are headless and assigned0501.
+
+Farm normal runtime request completed04:56, row append0457 queued. Existing source packet and independent0423 are complete; Farm owns actual row receipt and one checkpoint. Source-copy observer0447 stays Agent-owned, no Runtime body or author.
