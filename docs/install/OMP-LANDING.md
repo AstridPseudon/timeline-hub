@@ -45,7 +45,7 @@ to the same commit ID.
 
 ## Select the landed producer
 
-The qualified local fork head is `a62a0128305c7860796dab3d7b0844f5e1ef19bf`. The published manifest's OMP entry
+The qualified local fork head is `78f0e0960f471c2c62b943272a48c33366f239fe`. The published manifest's OMP entry
 must select exactly this source (the app manifest lives in the separate app
 repository and is not edited in this agent worktree):
 
@@ -55,7 +55,7 @@ repository and is not edited in this agent worktree):
     "omp": {
       "source": {
         "repo": "https://github.com/peteromallet/oh-my-pi",
-        "sha": "a62a0128305c7860796dab3d7b0844f5e1ef19bf"
+        "sha": "78f0e0960f471c2c62b943272a48c33366f239fe"
       }
     }
   }
