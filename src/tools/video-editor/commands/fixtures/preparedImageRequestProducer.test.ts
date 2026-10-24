@@ -1,7 +1,17 @@
 import { access, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { createFakeIndexedDB } from 'fake-indexeddb';
+import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
+import { buildTimelineData } from '../../lib/timeline-data.ts';
+import { withDefaultTimelineOutput } from '../../lib/defaults.ts';
+import { buildPlacePreparedMediaCommand } from '../../hooks/useAssetManagement.ts';
+import { previewPreparedMediaCommand } from '../media.ts';
+import { createCommitOutbox, toOutboxJson } from '../commitOutbox.ts';
+import { createLocalSaveSession } from '../localSaveSession.ts';
+import { createTimelineLocalSaveHandoff, type TimelineGestureReadBasis } from '../../hooks/timelineLocalSaveHandoff.ts';
+import type { AssetRegistry } from '../../types/index.ts';
 import { document } from '../__tests__/commitSessionEnvironment.ts';
 import { producePreparedImageRequestFromPaths, type PreparedImageRequestInput } from './preparedImageRequestProducer.ts';
 import { serializeTimelineConfigSnapshot } from '../../lib/timeline-domain.ts';
@@ -79,4 +89,108 @@ describe('prepared image request producer fixture', () => {
     await expect(producePreparedImageRequestFromPaths(malformedPath, malformedOutput)).rejects.toThrow('malformed');
     await expect(access(malformedOutput)).rejects.toThrow();
   });
+
+  it.each(['valid', 'generic', 'child row', 'occurrence lane', 'placement lane', 'head', 'foreign timeline', 'gesture basis',
+    'local child mutation', 'registry', 'missing selection', 'extra selection', 'wrong recipe', 'wrong command', 'track mutation',
+    'additional row', 'bundle', 'unknown gesture', 'source mismatch', 'child selection', 'mirrors'] as const)('preserves a mixed raw parent closure and bounds the prepared recipe: %s', async (kind) => {
+    const fixture = input();
+    const closure = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' }, { children: true }).data.canonical_document;
+    const canonical = fixture.canonicalDocument;
+    canonical.shot_revisions = structuredClone(closure.shot_revisions);
+    canonical.internal_timeline_revisions = structuredClone(closure.internal_timeline_revisions);
+    canonical.dependency_manifest = structuredClone(closure.dependency_manifest);
+    const parent = canonical.parent_revision.payload;
+    parent.occurrences = structuredClone(closure.parent_revision.payload.occurrences);
+    for (const occurrence of parent.occurrences as Array<Record<string, unknown>>) {
+      occurrence.track = kind === 'placement lane' ? 'other' : 'picture';
+      (occurrence.placement as Record<string, unknown>).track = 'picture';
+    }
+    (parent.config.tracks as unknown[]).push({ id: 'picture', kind: 'visual' });
+    parent.tracks = structuredClone(parent.config.tracks);
+    // The real IMAGE input owns clips at the parent root, with config.clips absent.
+    delete parent.config.clips;
+    canonical.parent_revision.content_digest = fixtureDigest(parent);
+    const head = { projectId: fixture.projectId, timelineId: fixture.timelineId,
+      headRevisionId: fixture.head.revisionId, headPublicationId: fixture.head.publicationId };
+    const { bundle: _bundle, ...config } = parent.config;
+    const loaded = { ...config, clips: structuredClone(parent.clips) } as unknown as TimelineConfig;
+    const data = await buildTimelineData({ ...loaded, ...withDefaultTimelineOutput(loaded) },
+      parent.registry as unknown as AssetRegistry);
+    const source = { config: data.config, registry: data.registry, head };
+    const command = buildPlacePreparedMediaCommand({ prepared: fixture.preparedAsset, trackId: 'V1', time: 2,
+      forceNewTrack: false, insertAtTop: false });
+    const preview = previewPreparedMediaCommand(data, command)!;
+    const row = preview.nextData.config.clips.at(-1)!;
+    const next = { ...source, config: structuredClone(preview.nextData.config), registry: structuredClone(preview.nextData.registry) };
+    const gesture: TimelineGestureReadBasis = structuredClone({ kind: 'prepared-media', config: source.config,
+      registry: source.registry, clipId: row.id, command });
+    if (kind === 'source mismatch') source.config.clips[0].at = 99;
+    if (kind === 'mirrors') parent.tracks = [];
+    const initial = { head: fixture.head, canonicalDocument: canonical };
+    const scope = { realmId: 'fixture', actorId: 'fixture', projectId: fixture.projectId, timelineId: fixture.timelineId };
+    const outboxes = createCommitOutbox({ indexedDB: createFakeIndexedDB(), exclusiveLock: async (_key, work) => work() });
+    const send = vi.fn();
+    const session = await createLocalSaveSession({ scope, initial, document: toOutboxJson(canonical), outboxes, send,
+      loadLatest: async () => initial, changed: () => {}, prepareDisplay: async () => { throw new Error('No acceptance in capture test'); } });
+    const original = JSON.stringify(canonical);
+    const handoff = createTimelineLocalSaveHandoff({ initial, source, session, adopted: () => { throw new Error('No adoption in capture test'); } });
+    if (kind === 'child row') next.config.clips.unshift({ id: 'occ-0::clip', track: 'picture', at: 0, hold: 1 });
+    if (kind === 'occurrence lane' || kind === 'placement lane') {
+      next.config.clips.at(-1)!.track = 'picture';
+    }
+    if (kind === 'head') next.head = { ...head, headRevisionId: 'other' };
+    if (kind === 'foreign timeline') next.head = { ...head, timelineId: 'other' };
+    if (kind === 'gesture basis') gesture.config.clips[0].at = 99;
+    if (kind === 'local child mutation') {
+      const changed = structuredClone(canonical);
+      changed.shot_revisions[0].payload.name = 'external mutation';
+      vi.spyOn(session, 'getDocument').mockReturnValue(toOutboxJson(changed));
+    }
+    if (kind === 'registry') next.registry.assets.extra = { file: 'unselected.png', type: 'image/png' };
+    if (kind === 'missing selection') delete (gesture.command.payload.asset as { mediaSelection?: unknown }).mediaSelection;
+    if (kind === 'extra selection') Object.assign(gesture.command.payload.asset.mediaSelection!, { extra: 'unbound' });
+    if (kind === 'wrong recipe') gesture.command.payload.replaceClipId = 'x';
+    if (kind === 'wrong command') Object.assign(gesture.command, { type: 'swap' });
+    if (kind === 'unknown gesture') Object.assign(gesture, { kind: 'unknown' });
+    if (kind === 'child selection') gesture.clipId = 'occ-0::clip';
+    if (kind === 'track mutation') next.config.tracks[0].label = 'changed';
+    if (kind === 'additional row') next.config.clips.push({ ...row, id: 'extra' });
+    try {
+      const capture = handoff.capture(kind === 'bundle' ? { ...next, bundle: { schema_version: 1, itemsBySchemaRef: {} } } : next,
+        kind === 'generic' ? undefined : gesture);
+      if (kind !== 'valid') {
+        const message = kind === 'generic' || kind === 'unknown gesture' || kind === 'occurrence lane' || kind === 'placement lane' ? 'child ownership/fork mapping'
+          : kind === 'source mismatch' ? 'upstream source differs'
+            : kind === 'mirrors' ? 'contradictory parent tracks mirror'
+          : kind === 'head' || kind === 'foreign timeline' ? 'original verified authoring head'
+            : kind === 'gesture basis' ? 'gesture read basis differs'
+              : kind === 'local child mutation' ? 'local authored document changed'
+                : kind === 'registry' ? 'registry changes exceed'
+                  : kind === 'missing selection' || kind === 'extra selection' ? 'Runtime project media selection'
+                    : kind === 'wrong recipe' ? 'ordinary image add'
+                      : kind === 'wrong command' ? 'prepared media command is unavailable' : 'more than one ordinary parent clip';
+        await expect(capture).rejects.toThrow(message);
+        const [stored] = await outboxes.list(scope);
+        expect(stored.intents).toEqual([]);
+        expect(stored.pending).toBeUndefined();
+        expect(send).not.toHaveBeenCalled();
+      } else {
+        await capture;
+        const [stored] = await outboxes.list(scope);
+        expect(stored.intents).toHaveLength(1);
+        expect(stored.intents[0].payload).toHaveProperty('before', canonical);
+        const captured = session.getDocument() as unknown as typeof canonical;
+        const expected = structuredClone(canonical);
+        expected.parent_revision.payload.clips = [...structuredClone(parent.clips), row];
+        expected.parent_revision.payload.registry = structuredClone(next.registry);
+        expect(JSON.stringify(captured)).toBe(JSON.stringify(expected));
+        expect(captured.parent_revision.payload.config).not.toHaveProperty('clips');
+        expect(stored.intents[0].payload).toHaveProperty('after', captured);
+        expect(stored.intents[0].payload).toHaveProperty('commands', [{ schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent',
+          args: { row, media: SYNTHETIC_SELECTION }, intent: {} }]);
+      }
+      expect(JSON.stringify(canonical)).toBe(original);
+    } finally { await session.dispose(); }
+  });
+
 });

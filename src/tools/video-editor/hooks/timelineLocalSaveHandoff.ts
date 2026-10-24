@@ -74,11 +74,17 @@ function checkSource(initial: TimelineCommandBasis, source: TimelineSaveSource) 
   const { bundle: _bundle, ...config } = structuredClone(parent.config);
   const loaded = { ...config, ...withDefaultTimelineOutput(config as unknown as TimelineConfig) } as unknown as TimelineConfig;
   const projected = canonicalizeTimelinePair(loaded, structuredClone(parent.registry) as unknown as AssetRegistry);
+  // Runtime also loads an explicitly authored top-level parent clip list when
+  // config has no clip list. This is a physical parent binding, never children.
+  const parentClips = !Object.prototype.hasOwnProperty.call(parent.config, 'clips') && Array.isArray(parent.clips)
+    ? canonicalizeTimelinePair({ ...loaded, clips: structuredClone(parent.clips) } as TimelineConfig,
+      structuredClone(parent.registry) as unknown as AssetRegistry) : undefined;
   // Accept the original raw view or main's actual load/build view. No arbitrary
   // display snapshot can establish an authored entity binding.
   if ((!same(authoredJson(source.config), authoredJson(loaded))
     && !same(authoredJson(source.config), authoredJson(projected.config))
-    && !same(authoredJson(source.config), authoredJson(projectTimelineTracksForDisplay(projected.config))))
+    && !same(authoredJson(source.config), authoredJson(projectTimelineTracksForDisplay(projected.config)))
+    && !(parentClips && same(authoredJson(source.config), authoredJson(projectTimelineTracksForDisplay(parentClips.config)))))
     || !same(authoredJson(source.registry), authoredJson(projected.registry))) {
     refuse('upstream source differs from the verified authored parent', 'source-parent-mismatch');
   }
@@ -117,7 +123,7 @@ export async function readTimelineOriginalSaveBasis(
   return { initial, source, authoringBundle };
 }
 
-/** Parent-only upstream save mapping. Child/occurrence ownership needs its own authored assembly join. */
+/** Parent-only upstream save mapping. Child edits need their own authored assembly join. */
 export function createTimelineLocalSaveHandoff(options: {
   initial: TimelineCommandBasis;
   source: TimelineSaveSource;
@@ -218,20 +224,27 @@ export function createTimelineLocalSaveHandoff(options: {
         checkHead(initial, next, 'capture-input-head-unavailable');
         const before = options.session.getDocument() as unknown as CanonicalDocument;
         const parent = before.parent_revision.payload;
-        if (before.shot_revisions.length || before.internal_timeline_revisions.length
-          || (Array.isArray(parent.occurrences) && parent.occurrences.length)) refuse('child ownership/fork mapping is unavailable', 'child-ownership-unavailable');
+        const hasChildren = before.shot_revisions.length || before.internal_timeline_revisions.length
+          || (Array.isArray(parent.occurrences) && parent.occurrences.length);
+        if (hasChildren && gestureBasis?.kind !== 'prepared-media') refuse('child ownership/fork mapping is unavailable', 'child-ownership-unavailable');
         if (!sourceChecked) { checkSource(initial, source); sourceChecked = true; }
         if (!same(before, document)) refuse('local authored document changed outside this handoff', 'local-document-changed');
         authoredJson(next); // Reject non-finite editor values before mutating the chain.
         const after = structuredClone(before);
         const payload = after.parent_revision.payload;
-        payload.config = changes(parent.config, source.config, next.config, ['config']) as Record<string, OutboxJson>;
+        const topLevelClips = gestureBasis?.kind === 'prepared-media' && object(parent.config)
+          && !Object.prototype.hasOwnProperty.call(parent.config, 'clips') && Array.isArray(parent.clips);
+        const configBefore = topLevelClips ? { ...parent.config as Record<string, OutboxJson>, clips: parent.clips } : parent.config;
+        const configSource = topLevelClips && !source.config.clips.length
+          ? { ...source.config, clips: parent.clips } : source.config;
+        payload.config = changes(configBefore, configSource, next.config, ['config']) as Record<string, OutboxJson>;
         payload.registry = changes(parent.registry, source.registry, next.registry, ['registry']) as Record<string, OutboxJson>;
         if (next.bundle !== undefined && !same(source.bundle, next.bundle)) {
           (payload.config as Record<string, OutboxJson>).bundle = authoredJson(next.bundle);
         }
         for (const key of ['clips', 'tracks'] as const) {
           if (!Object.prototype.hasOwnProperty.call(parent, key)) continue;
+          if (key === 'clips' && topLevelClips) { payload.clips = (payload.config as Record<string, OutboxJson>).clips; continue; }
           if (!same(parent[key], (parent.config as Record<string, unknown>)[key])) refuse(`contradictory parent ${key} mirror`, 'parent-mirror-mismatch');
           payload[key] = (payload.config as Record<string, OutboxJson>)[key];
         }
@@ -247,6 +260,7 @@ export function createTimelineLocalSaveHandoff(options: {
         let mediaReads: CommitRequest['reads'];
         let mediaSteps: CommitRequest['steps'];
         if (gestureBasis?.kind === 'prepared-media') {
+          if (gestureBasis.command.type !== 'place-prepared-media') refuse('prepared media command is unavailable');
           const prepared = gestureBasis.command.payload;
           const media = prepared.asset.mediaSelection;
           const keys = ['asset', 'generation_id', 'variant_id', 'object_id', 'catalog_digest'];
@@ -260,7 +274,7 @@ export function createTimelineLocalSaveHandoff(options: {
             || (!duplicateVideo && prepared.asset.mediaType !== 'image')) {
             refuse('prepared media currently supports an ordinary image add on an existing visual track. Draft retained; reload the timeline, then choose Add media');
           }
-          const config = parent.config as Record<string, OutboxJson>;
+          const config = configBefore as Record<string, OutboxJson>;
           const nextConfig = payload.config as Record<string, OutboxJson>;
           const clips = config.clips;
           const nextClips = nextConfig.clips;
@@ -273,6 +287,10 @@ export function createTimelineLocalSaveHandoff(options: {
             || !Array.isArray(config.tracks) || !config.tracks.some(track => object(track)
               && track.id === row.track && track.kind === 'visual' && (track.role ?? 'output') === 'output')) {
             refuse('prepared media changes more than one ordinary parent clip. Draft retained; reload the timeline, then choose an existing visual track');
+          }
+          if (Array.isArray(parent.occurrences) && parent.occurrences.some(occurrence => object(occurrence)
+            && (occurrence.track === row.track || (object(occurrence.placement) && occurrence.placement.track === row.track)))) {
+            refuse('child ownership/fork mapping is unavailable', 'child-ownership-unavailable');
           }
           if (!object(parent.registry) || !object(parent.registry.assets)
             || !same(payload.registry, { ...parent.registry, assets: { ...parent.registry.assets,
@@ -316,6 +334,10 @@ export function createTimelineLocalSaveHandoff(options: {
               args: { row: authoredJson(row), media: authoredJson(media) }, intent: {} }];
           }
         }
+        // Only the two validated parent semantic recipes can coexist with child
+        // closure. The complete before image was cloned; no child patch is owned.
+        if (hasChildren && !commands) refuse('child ownership/fork mapping is unavailable', 'child-ownership-unavailable');
+        if (topLevelClips) delete (payload.config as Record<string, OutboxJson>).clips;
         if (!commands) {
           const clips = (payload.config as Record<string, OutboxJson>).clips;
           const previous = (parent.config as Record<string, OutboxJson>).clips;

@@ -93,7 +93,7 @@ interface SetupResult {
 function setup(
   saveTimelineImpl: DataProvider['saveTimeline'],
   timelineEditability?: TimelineEditability,
-  original?: { data: TimelineData; loadBasis: DataProvider['loadTimelineCommandBasis']; capabilities?: Partial<DataProvider>; strict?: boolean; mediaControls?: boolean; mediaAfterClipId?: string },
+  original?: { data: TimelineData; loadBasis: DataProvider['loadTimelineCommandBasis']; capabilities?: Partial<DataProvider>; strict?: boolean; mediaControls?: boolean; mediaAfterClipId?: string; mediaTime?: () => number },
 ): SetupResult {
   const saveTimeline = vi.fn(saveTimelineImpl);
   const provider: DataProvider = {
@@ -152,7 +152,7 @@ function setup(
           ops: { ...state.ops, applyEdit: save.applyEdit, patchRegistry: save.patchRegistry,
             selectClip: vi.fn(), setSelectedTrackId: save.setSelectedTrackId },
           chrome: { ...state.chrome, saveStatus: save.saveStatus },
-          playback: { ...state.playback, currentTime: 1.25 },
+          playback: { ...state.playback, currentTime: original.mediaTime?.() ?? 1.25 },
         });
       }, [save.data, save.saveStatus]);
       return { ...save, history };
@@ -196,8 +196,10 @@ describe('useTimelineSave — recovered draft durability', () => {
 
   it.each((['image', 'video'] as const).flatMap(mode =>
     (['accepted', 'merged', 'conflict', 'missing selection', 'retry', 'dependent conflict', ...(mode === 'video' ? ['missing old selection', 'mismatched old selection', 'extra old selection', 'missing old metadata', 'missing selector', 'existing asset', 'rebased', 'invalid'] as const : [])] as const)
-      .map(outcome => [mode, outcome] as const)))(
-    'routes mounted shot prepared %s through the persisted semantic outbox: %s', async (mode, outcome) => {
+      .flatMap(outcome => [[mode, outcome, false] as const,
+        ...(['accepted', 'merged', 'conflict', 'retry', 'missing selection', 'invalid'].includes(outcome)
+          ? [[mode, outcome, true] as const] : [])])))(
+    'routes mounted shot prepared %s through the persisted semantic outbox: %s (children: %s)', async (mode, outcome, children) => {
       // Transport fixtures prove App routing/adoption, not Runtime media authority or Python execution.
       const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
       Object.defineProperty(navigator, 'locks', { configurable: true, value: {
@@ -226,12 +228,22 @@ describe('useTimelineSave — recovered draft durability', () => {
           { id: 'unrelated', track: 'V2', at: 1, asset: oldMedia.asset, clipType: 'media', hold: 2 },
         ];
       }
-      const initialReply = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' }, { timelineId: scope.timelineId });
+      const initialReply = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' }, { timelineId: scope.timelineId, children });
       const document = initialReply.data.canonical_document;
-      document.parent_revision.payload = { config: JSON.parse(JSON.stringify(config)), clips: JSON.parse(JSON.stringify(config.clips)), registry, occurrences: [],
+      if (children) {
+        config.tracks.push({ id: 'picture', kind: 'visual' });
+        for (const occurrence of document.parent_revision.payload.occurrences as Array<Record<string, unknown>>) {
+          occurrence.track = 'picture';
+          (occurrence.placement as Record<string, unknown>).track = 'picture';
+        }
+      }
+      document.parent_revision.payload = { config: JSON.parse(JSON.stringify(config)), clips: JSON.parse(JSON.stringify(config.clips)), registry, occurrences: document.parent_revision.payload.occurrences,
         metadata: { opaque: [null, false], absent: null } };
       document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
       const originalDocument = JSON.stringify(document);
+      const closure = (value: typeof document) => JSON.stringify({ shots: value.shot_revisions, internals: value.internal_timeline_revisions,
+        pins: value.dependency_manifest, occurrences: value.parent_revision.payload.occurrences });
+      const originalClosure = closure(document);
       const initial = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
       const data = mode === 'image'
         ? await buildTimelineDataWithResolver(config, registry, { resolveAssetUrl: file => file }, 1, scope.timelineId, undefined, head)
@@ -243,6 +255,8 @@ describe('useTimelineSave — recovered draft durability', () => {
       const posts: Array<{ body: string; key: string }> = [];
       let harness: SetupResult | undefined;
       let landed: ReturnType<typeof acceptedCommit> | undefined;
+      let imports = 0;
+      const canonicalAt = children ? 2.2 : 2.25;
       const runtime = new RuntimeDataProvider({ projectId: scope.projectId, transport: async (method, path, headers, body) => {
         if (method === 'GET' && path.includes('/media-selection?')) {
           const query = new URL(path, 'http://runtime.test').searchParams;
@@ -256,11 +270,15 @@ describe('useTimelineSave — recovered draft durability', () => {
         const [durable] = await createCommitOutbox().list(scope);
         expect(durable.pending?.request).toMatchObject(posts.at(-1)!);
         if (posts.length === 1) expect(durable.intents[0].payload).toHaveProperty('before', document);
+        const metadata = children && outcome === 'accepted' && posts.length > 1 ? { provider: 'canonical result' } : document.parent_revision.payload.metadata;
         for (const intent of durable.intents) {
+          for (const image of ['before', 'after'] as const) {
+            expect(closure((intent.payload as unknown as Record<string, typeof document>)[image])).toBe(originalClosure);
+          }
           expect(intent.payload).toMatchObject({ before: { parent_revision: { payload: {
-            config: { tracks: config.tracks }, metadata: document.parent_revision.payload.metadata,
+            config: { tracks: config.tracks }, metadata,
           } } }, after: { parent_revision: { payload: {
-            config: { tracks: config.tracks }, metadata: document.parent_revision.payload.metadata,
+            config: { tracks: config.tracks }, metadata,
           } } } });
           expect(intent.payload).toHaveProperty('before.parent_revision.payload.config.tracks', config.tracks);
           expect(intent.payload).toHaveProperty('after.parent_revision.payload.config.tracks', config.tracks);
@@ -271,18 +289,22 @@ describe('useTimelineSave — recovered draft durability', () => {
         if (outcome === 'conflict' || (outcome === 'dependent conflict' && posts.length === 2)) return { status: 409, headers: {}, body: json({ code: 'conflict',
           message: 'Media track changed; draft retained', details: { status: 'conflict', reason: 'dependency_changed',
             base: { revision_id: 'r0', publication_id: 'p0' }, current: { revision_id: 'agent-r', publication_id: 'agent-p' }, conflicts: [] } }) };
-        if (!landed) {
-          const request = JSON.parse(posts[0].body) as CommitRequest;
-          landed = acceptedCommit({ revision_id: 'r1', publication_id: 'p1' }, { revision_id: 'r0', publication_id: 'p0' }, { timelineId: scope.timelineId, commands: request.commands });
+        if (!landed || (children && outcome === 'accepted' && posts.length === 2)) {
+          const request = JSON.parse(posts.at(-1)!.body) as CommitRequest;
+          landed = acceptedCommit({ revision_id: `r${posts.length}`, publication_id: `p${posts.length}` },
+            { revision_id: request.base_revision_id, publication_id: request.base_publication_id }, { timelineId: scope.timelineId, commands: request.commands });
           const canonical = landed.data.canonical_document;
+          canonical.shot_revisions = structuredClone(document.shot_revisions);
+          canonical.internal_timeline_revisions = structuredClone(document.internal_timeline_revisions);
+          canonical.dependency_manifest = structuredClone(document.dependency_manifest);
           const local = harness!.hook.result.current.dataRef.current!;
           const canonicalConfig = JSON.parse(JSON.stringify(local.config)) as typeof config;
           // Fixture replies preserve canonical fields the display does not model.
           canonicalConfig.tracks = structuredClone(config.tracks);
           const born = canonicalConfig.clips.find(clip => clip.asset !== oldMedia.asset)!;
-          born.at = 2.25;
+          born.at = canonicalAt;
           canonical.parent_revision.payload = { config: canonicalConfig, clips: canonicalConfig.clips,
-            registry: JSON.parse(JSON.stringify(local.registry)), occurrences: [], metadata: { provider: 'canonical result' } };
+            registry: JSON.parse(JSON.stringify(local.registry)), occurrences: structuredClone(document.parent_revision.payload.occurrences), metadata: { provider: 'canonical result' } };
           canonical.parent_revision.content_digest = fixtureDigest(canonical.parent_revision.payload);
           landed.data.document_digest = fixtureDigest(canonical);
           landed.data.label = request.label;
@@ -290,21 +312,27 @@ describe('useTimelineSave — recovered draft durability', () => {
           landed.data.merge_mode = request.merge;
           if (outcome === 'merged' || outcome === 'rebased') Object.assign(landed.data, { status: outcome, previous_revision_id: 'agent-r',
             previous_publication_id: 'agent-p', rebased_onto: { revision_id: 'agent-r', publication_id: 'agent-p' } });
-          landed.receipt.idempotency_key = posts[0].key;
+          landed.receipt.idempotency_key = posts.at(-1)!.key;
         }
         if (outcome === 'retry' && posts.length === 1) throw new Error('Acknowledgement lost');
         return { status: 200, headers: {}, body: json(landed) };
       } });
       try {
         harness = setup(async () => { throw new Error('No legacy save'); }, undefined, { data,
-          loadBasis: async () => landed ? { head: { revisionId: 'r1', publicationId: 'p1' }, canonicalDocument: landed.data.canonical_document } : initial,
-          mediaControls: true, mediaAfterClipId: mode === 'video' ? 'source' : undefined, capabilities: {
+          loadBasis: async () => landed ? { head: { revisionId: landed.data.accepted_revision_id, publicationId: landed.receipt.receipt_id }, canonicalDocument: landed.data.canonical_document } : initial,
+          mediaControls: true, mediaAfterClipId: mode === 'video' ? 'source' : undefined,
+          mediaTime: children ? () => imports ? 10 : 1.25 : undefined, capabilities: {
             ...(outcome === 'missing selector' ? {} : { getProjectMediaSelection: runtime.getProjectMediaSelection.bind(runtime) }),
             getRecoverableIdentity: async () => ({ realmId: scope.realmId, actorId: scope.actorId }),
             commitTimeline: (request, key) => runtime.commitTimeline(request, key),
-            prepareMediaImport: vi.fn(async () => ({ provider: 'runtime', project: scope.projectId, importOperationId: 'import-new',
-              generationId: media.generation_id, variantId: media.variant_id, assetId: 'import-alias', entry,
-              ...(outcome === 'missing selection' ? {} : { mediaSelection: media }) })),
+            prepareMediaImport: vi.fn(async () => {
+              const second = ++imports === 2;
+              const selection = second ? { ...media, asset: 'variant-second', generation_id: 'generation-second', variant_id: 'variant-second', object_id: `sha256:${'e'.repeat(64)}` } : media;
+              return { provider: 'runtime', project: scope.projectId, importOperationId: second ? 'import-second' : 'import-new',
+                generationId: selection.generation_id, variantId: selection.variant_id, assetId: second ? 'import-second' : 'import-alias',
+                entry: second ? { ...entry, file: `runtime-second.${mode === 'video' ? 'mp4' : 'png'}`, media_id: selection.object_id } : entry,
+                ...(outcome === 'missing selection' ? {} : { mediaSelection: selection }) };
+            }),
           } });
         await vi.waitFor(() => expect(harness!.hook.result.current.localSaveState?.ownerId).toBeTruthy());
         await settleInitialRecoveryCheck();
@@ -406,7 +434,7 @@ describe('useTimelineSave — recovered draft durability', () => {
           expect(stored.intents[0].payload).toMatchObject({ after: { parent_revision: { payload: { config: { clips: mode === 'video'
             ? [expect.any(Object), expect.objectContaining({ hold: .5, at: 2 }), expect.any(Object), expect.any(Object)]
             : [{ hold: 1, at: 1.2667 }] } } } } });
-          expect(harness.hook.result.current.dataRef.current!.config.clips[mode === 'video' ? 1 : 0].at).toBe(2.25);
+          expect(harness.hook.result.current.dataRef.current!.config.clips[mode === 'video' ? 1 : 0].at).toBe(canonicalAt);
           expect(harness.hook.result.current.localSaveState?.error).toMatchObject({ message: expect.stringContaining('Media track changed') });
           return;
         }
@@ -431,13 +459,43 @@ describe('useTimelineSave — recovered draft durability', () => {
           expect(posts).toHaveLength(2);
           expect(posts[1]).toEqual(posts[0]);
         }
-        expect(harness.hook.result.current.dataRef.current!.config.clips[mode === 'video' ? 1 : 0].at).toBe(2.25);
+        expect(harness.hook.result.current.dataRef.current!.config.clips[mode === 'video' ? 1 : 0].at).toBe(canonicalAt);
         const [settled] = await createCommitOutbox().list(scope);
         expect(settled.intents).toEqual([]);
         expect(settled.accepted?.value).toMatchObject({ response: landed, receipt: landed!.receipt,
           canonicalDocument: landed!.data.canonical_document });
         expect(landed!.data.canonical_document.parent_revision.payload.config).toMatchObject({ tracks: config.tracks });
-        if (mode === 'image' && outcome === 'accepted') {
+        expect(closure(landed!.data.canonical_document)).toBe(originalClosure);
+        if (children && outcome === 'accepted') {
+          const accepted = structuredClone(landed!.data.canonical_document);
+          const capture = vi.spyOn(harness.hook.result.current.localDocumentSave!, 'capture');
+          await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: mode === 'video' ? 'Add video after selected clip' : 'Add media' }));
+            fireEvent.change(screen.getByLabelText('Choose media for shot timeline'), {
+              target: { files: [new File([mode], `second.${mode === 'video' ? 'mp4' : 'png'}`, { type: entry.type })] },
+            });
+          });
+          await vi.waitFor(() => expect(capture).toHaveBeenCalled());
+          await capture.mock.results[0].value;
+          await vi.waitFor(async () => expect((await createCommitOutbox().list(scope))[0].intents).toHaveLength(1));
+          const [dependent] = await createCommitOutbox().list(scope);
+          expect(dependent.intents[0].basis).toEqual({ after: dependent.accepted!.intentId });
+          expect(dependent.intents[0].payload).toHaveProperty('before', accepted);
+          expect(closure((dependent.intents[0].payload as unknown as { after: typeof document }).after)).toBe(originalClosure);
+          await act(async () => { await harness!.hook.result.current.localDocumentSave!.flush(); });
+          expect(posts).toHaveLength(2);
+          const suffix = JSON.parse(posts[1].body) as CommitRequest;
+          expect(suffix).toMatchObject({ base_revision_id: 'r1', base_publication_id: 'p1', merge: 'fields',
+            commands: [{ op: mode === 'video' ? 'clip.duplicate-media' : 'clip.add-media', args: { media: { asset: 'variant-second' } } }] });
+          expect(suffix.commands).toHaveLength(1);
+          expect(harness.hook.result.current.dataRef.current!.head?.headRevisionId).toBe('r2');
+          expect(closure(landed!.data.canonical_document)).toBe(originalClosure);
+          const [complete] = await createCommitOutbox().list(scope);
+          expect(complete.intents).toEqual([]);
+          expect(complete.accepted?.value).toMatchObject({ response: landed, receipt: landed!.receipt,
+            canonicalDocument: landed!.data.canonical_document });
+        }
+        if (!children && mode === 'image' && outcome === 'accepted') {
           const editing = renderHook(() => useClipEditing({ dataRef: harness!.hook.result.current.dataRef,
             resolvedConfig: harness!.hook.result.current.dataRef.current!.resolvedConfig,
             selectedClipId: bornId, selectedTrack: null, currentTime: 0,
