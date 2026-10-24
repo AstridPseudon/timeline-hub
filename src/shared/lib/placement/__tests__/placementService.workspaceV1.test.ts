@@ -23,6 +23,7 @@ const runtime = vi.hoisted(() => ({
   replies: new Map<string, unknown>(),
   loseAck: false,
   mergeNext: false,
+  nextFailure: null as null | 'refused' | 'invalid' | 'transport',
   /** Runs once, before the next publish is checked — simulates a sibling publish. */
   beforePublish: null as null | (() => void),
 }));
@@ -82,6 +83,17 @@ vi.mock('@/integrations/runtime/dataProvider', () => ({
       runtime.requests.push({ body: JSON.stringify(request), key });
       const replay = runtime.replies.get(key);
       if (replay) return replay;
+      const failure = runtime.nextFailure;
+      runtime.nextFailure = null;
+      if (failure === 'refused') {
+        throw new ApiError(409, 'refused', 'Runtime refused this placement', '', {
+          status: 'refused', reason: 'placement_not_permitted',
+        });
+      }
+      if (failure === 'invalid') {
+        throw new ApiError(422, 'invalid', 'Runtime rejected this placement');
+      }
+      if (failure === 'transport') throw new Error('Runtime connection lost');
       const merged = request.base_revision_id !== runtime.head && runtime.mergeNext;
       runtime.mergeNext = false;
       if (request.base_revision_id !== runtime.head && !merged) {
@@ -150,6 +162,7 @@ describe('placementService under Workspace v1', () => {
     runtime.replies = new Map();
     runtime.loseAck = false;
     runtime.mergeNext = false;
+    runtime.nextFailure = null;
     runtime.beforePublish = null;
     vi.stubGlobal('indexedDB', createFakeIndexedDB());
     vi.stubGlobal('navigator', { locks: { request: async (_name: string, _options: unknown, work: (lock: object) => Promise<unknown>) => work({}) } });
@@ -199,6 +212,21 @@ describe('placementService under Workspace v1', () => {
 
     await expect(placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId: 'gen-1' }))
       .rejects.toMatchObject({ code: 'timeline_version_conflict' });
+    expect(runtime.publishes).toHaveLength(0);
+  });
+
+  it.each([
+    ['a definitive Runtime refusal', 'refused'],
+    ['an invalid placement', 'invalid'],
+    ['an unclassified transport failure', 'transport'],
+  ] as const)('%s is retained without semantic replay', async (_label, failure) => {
+    installV1Fetch();
+    const { placeGeneration } = await loadService();
+    runtime.nextFailure = failure;
+
+    await expect(placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId: 'gen-1' }))
+      .rejects.toThrow('unacknowledged');
+    expect(runtime.requests).toHaveLength(1);
     expect(runtime.publishes).toHaveLength(0);
   });
 

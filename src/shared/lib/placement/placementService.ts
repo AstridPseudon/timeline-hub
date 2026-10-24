@@ -120,6 +120,15 @@ function refusePlacement(message: string): never {
   throw new TimelineVersionConflictError(`Local document save retained: ${message}`);
 }
 
+function isClassifiedStaleHeadConflict(error: unknown): boolean {
+  if (error === null || typeof error !== 'object' || Array.isArray(error)) return false;
+  const record = error as Record<string, unknown>;
+  const details = record.details;
+  return record.kind === 'conflict'
+    && details !== null && typeof details === 'object' && !Array.isArray(details)
+    && (details as Record<string, unknown>).status === 'conflict';
+}
+
 function checkPlacementHead(initial: TimelineCommandBasis, source: TimelineSaveSource): void {
   if (!initial.head.revisionId || !initial.head.publicationId
     || initial.canonicalDocument.parent_revision.revision_id !== initial.head.revisionId
@@ -216,7 +225,11 @@ function createPlacementLocalSaveHandoff(options: {
         document = structuredClone(basis.canonicalDocument);
         return adopted.receipt;
       } catch (error) {
-        if (['blocked', 'conflict', 'error', 'recovery'].includes(options.session.getState().status)) {
+        const state = options.session.getState();
+        // Only the LocalSaveSession's explicit Runtime conflict classification is
+        // retryable here. Refusals, validation failures, and transport uncertainty
+        // retain their durable intent and must not be semantically replayed.
+        if (state.status === 'conflict' && isClassifiedStaleHeadConflict(state.error)) {
           refusePlacement(error instanceof Error ? error.message : String(error));
         }
         throw error;
