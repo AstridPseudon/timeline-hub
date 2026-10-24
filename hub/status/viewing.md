@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T05:42:35Z | dispatcher heartbeat 9s | live 2 (sol 1, luna 1, other 0) | busy30 5 | status age 24m -->
-# viewing board, 2026-10-24T05:18:19Z
+<!-- viewing | 2026-10-24T05:44:10Z | dispatcher heartbeat 14s | live 2 (sol 1, luna 1, other 0) | busy30 5 | status age 1m -->
+# viewing board, 2026-10-24T05:42:47Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -29,10 +29,10 @@
 | DB-composition-dry | Fresh clone delivery dry run | Luna high | Orchestrator request | merged | First return 0757 and review 0802 | All 120 source files, controlled archive payload, registry, types and callers independently passed. | source 635f4de06 |
 | DB-composition-template | Repair missing delivery template | Luna high | Required README template | merged | Template 0749 and review 0751 | Template-only repair and delivery retry passed. No ZIP credit. | source 635f4de06 |
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
-| F-authoring-ABA | Repair new ambiguous observation boundary | Sol author; Luna verdict | Actual original 11466 failed | doing | vw-F-authoring-ABA-ambiguous-sol-0513 | Independent packet review confirms FAIL at undo, 59 assertions retained. Sol source0513 is active; Agent path0507 offers a static path hypothesis. Earlier integrated controls remain passed. | Base 9cd3dbe865 |
+| F-authoring-ABA | Repair ambiguous observation boundary | Sol author; Luna review | Original 11466 failed | doing | vw-F-authoring-ABA-ambiguous-sol-0544 | Restart saved WIP 8f8ab376. Agent released native media seam. Original stays failed; offline cause and strict controls required before review. | Base 9cd3dbe865 |
 | F-headless-root-mirror | Preserve complete canonical mirror effects | Sol author; Luna review | Integrated source proof complete | merged | Independent 0443; Agent integrated 0500 | Actual 9cd passed 71 controls with reviewed mirror hunks exact. Runtime original family is released and remains Runtime owned. | eca4de47d; home d730dba4e0 |
 | F-retired-callers | Qualify retained native, CLI and Scene scenarios | Luna author and review | Integrated joined proof complete | merged | Independent 0444; Agent integrated 0500 | Actual 9cd passed 53 controls with all original predicates retained. Exact scope 30 originals; three track-label rows stay separate. | 0712aadf6; home 9cd3dbe865 |
-| F-track-label mapping | Map three retained label scenarios | Luna high | Existing CLI proof and current source | doing | vw-F-track-label-map-0518 | Read only mapping of exact original cases to current apply counterparts; no repeated original body. | Base 9cd3dbe865 |
+| F-track-label mapping | Map three retained label scenarios | Luna high | Existing CLI proof and current source | doing | vw-F-track-label-map-0544 | Restarted read only mapping from original selectors to current apply counterparts. Existing CLI receipt reused only on exact source match. | Base 9cd3dbe865 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six original cases passed in 41.48 seconds on child c886 and Runtime 8ea. Source classification independently passed. | no product change |
 
 | OPS-hub-publication | Confirm supported board publication | Existing hub daemon | Published current board and peer | merged | Existing hub daemon | Board body and author handoff match local bytes; hub HEAD equals origin/main. Failed manual action remains stopped. | Hub ea55792fc |
@@ -46,7 +46,9 @@ The retained-caller authors completed. CLI and Scene needed no new diff; sheet a
 
 Evidence: [original verdict](../../design/viewing-F-authoring-ABA-original-review-0513.md), [joined integrated proof](../../design/agt-F-viewing-joined-integrated-0500.md), [restart and source handoff](../../design/peer-viewing-to-agent-20261024T0444-restart-progress.md), [headless author](../../design/viewing-F-headless-root-mirror-sol-0358.md), [sheet author](../../design/viewing-F-retired-callers-sheet-0404.md), [CLI proof](../../design/viewing-F-retired-callers-cli-0404.md), [Scene proof](../../design/viewing-F-retired-callers-scene-0404.md), [independent scope review](../../design/viewing-F-retired-callers-map-review-0404.md), [prior evidence](../../design/viewing-evidence-before-D33-20261024T0053.md).
 
-Blockers: Viewing owns original11466 ambiguous-path failure. Unique Sol source0513 is active; independent packet verdict is FAIL and Agent path0507 supplies source facts.
+Blockers: Viewing owns original 11466 failure. Sol 0544 resumes saved WIP with the released native media seam; actual failing private path remains absent.
 Later: Image inverse peer0455 failed before forwarding source 0df7. Independent Agent path0454 confirms the same repaired forwarding gap. Agent owns any next image witness; no new Viewing body or source author. Cut V4 and deferred timing remain unchanged; earlier permission refusals stay stopped.
 
-Next ready: Complete source0513 and track-label mapping0518, then independent review. No original rerun before reviewed source; Runtime owns original headless qualification.
+Next ready: Complete source 0544 and mapping 0544, then independent Luna review. No original rerun before reviewed source. Runtime owns headless qualification.
+
+Restart 05:41Z killed both workers. ABA WIP 8f8ab376 was preserved; Sol 0544 resumes it. Luna 0544 resumes the read only label mapping. Dispatch 0543 used a relative brief path and was refused before launch; corrected requests use absolute paths.
