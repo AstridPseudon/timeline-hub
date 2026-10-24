@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T01:21:18Z | dispatcher heartbeat 3s | live 4 (sol 0, luna 4, other 0) | busy30 23 | status age 3m -->
-# agent board, 2026-10-24T01:19:00Z
+<!-- agent | 2026-10-24T01:24:25Z | dispatcher heartbeat 6s | live 4 (sol 0, luna 4, other 0) | busy30 22 | status age 0m -->
+# agent board, 2026-10-24T01:24:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -15,14 +15,14 @@
 | G5 | Retire superseded Agent writers | Luna / Sol | H24 criteria | merged | agt-G5-integrated-custody-review-2155 | 350 cases, four SDK cases and c271 passed. Raw packet loss is disclosed in the retained report. | c36ca8c94 |
 | P4 owner | Single edit, ten steps, conflict rerun | Proof | G2, G3, R2 | merged | Proof services 28012, 11615, 17739 | All three original HTTP legs passed on integrated heads. No duplicate run here. | e837 / 543d |
 | F-full | Post-G5 full suite | Luna | Remaining fixes | blocked:agent | Full 25691; census review 2346 | 17,159 passed; 262 failed; 5 errors; 4 skips. All 267 failing nodes verified. No full retry. | c36ca8c94 |
-| F-D32 | Tag and reconcile all 267 failures | Luna | Upstream comparison | review | agt-F-D32-reconcile-review-0118 | Tags passed. The new exact-node reconciliation needs review because several SDK rows already have owners and proofs. | evidence only |
+| F-D32 | Tag and reconcile all 267 failures | Luna | Upstream comparison | review | agt-F-D32-reconcile-review-0118 PASS | All 267 exact nodes are tagged and owned. Reviewed reconciliation retains 136 scoped proofs; no whole-suite pass or pre-existing claim. | evidence only |
 | F-G2-pair | Preserve exact public publication pair | Sol | G2 | merged | agt-F-joined-integrated-0037 | Actual ca93: 15 joined checks passed, including five pair controls. | 61727f / 8563 |
 | F-R2-owner | Nested order and sibling successors | Sol / Luna | R2 | merged | agt-F-R2-joined-integrated-0042 | Actual 1146: 56 plus 14 passed. Independent 186 strict controls remain valid on exact source. | e53d9f36b |
 | F-SDK-closure | Repair the public reader fixture | Luna | G2 pair | merged | agt-F-SDK-fixture-review-0037 | Exact fixture independently passed; joined 14 controls passed on 1146. | 5e6823577 |
 | F-capture | Keep both published capture positives | Luna | Runtime fixture | merged | agt-F-capture-integrated-0052 | Actual b61: six original positives and no-CAS controls passed; exact reviewed blobs and static identities retained. | f9c305c8e |
-| F-persistence | Restart and disjoint-edit fixture | Luna | Helper 3b0 reviewed | doing | agt-F-helper-fixture-0114 | Repair supported public reader setup. Sequential-map attribution sent to Runtime; child-word timing remains visible. | fixture held |
-| F-helper-digest | Keep verified helper intent after restart | Sol | G2 | merging | agt-F-helper-reader-integrated-0118 | Source merged 3059. Independent PASS 14; actual integrated proof is running. Three other failures stay assigned. | branch only |
-| F-renderless | Renderer-free saves with readable show | Luna | SDK reader | merging | agt-F-helper-reader-integrated-0118 | Exact reviewed port merged 92b. Author 75 plus closure passed; actual integrated proof is running. | f502 held |
+| F-persistence | Restart and disjoint-edit fixture | Luna | Helper 3b0 reviewed | merging | agt-F-helper-fixture-0114 | Independent no-weakening PASS 1 plus 6 controls. Only an optional private-cache pop changed; seven original assertions remain. | fixture held |
+| F-helper-digest | Keep verified helper intent after restart | Sol | G2 | merging | agt-F-helper-reader-integrated-0118 | Source merged 3059. Independent PASS 14; actual integrated proof is running. Three other failures stay assigned. | 3b0dc9e80 |
+| F-renderless | Renderer-free saves with readable show | Luna | SDK reader | merging | agt-F-helper-reader-integrated-0118 | Exact reviewed port merged 92b. Author 75 plus closure passed; actual integrated proof is running. | 61070c542 |
 | F-render-startup | Avoid unused transition-catalog scans | Luna | Source cause 0045 | doing | agt-F-transition-current-port-0118 | Independent PASS 116; both catalog authority counterexamples fixed. Exact current port is running. | branch only |
 | F-external-roots | Trust admitted installed pack roots | Sol | Runtime source capture | blocked:runtime | agt-F-external-trust-sol-0104 | Sol kept product unchanged. Runtime-owned source authority is missing; peer 0110 requests precise existing input. | 3d86; 07b held |
 | F-env-86 | Original installed-child cohort | Luna | External pack fix | blocked:agent | Services 11789 and 19627 | 69 cases passed, then 16 supported source invocations passed. One external-pack positive remains open. | c36 scope |
@@ -33,24 +33,25 @@
 | F-schema | Registered provider-operation census | Luna | Frozen schema | merged | agt-F-joined-integrated-0037 | Six schema cases and three exact union selectors passed; schema and provider guards unchanged. | 7cc6e74c2 |
 | F-stale-head | Current public helper fixture | Luna | G2 | merged | agt-F-joined-integrated-0037 | Original stale-head case passed on ca93; two other authoring gaps are assigned below. | ca93d63bd |
 | F-P4-symbol | Rename stale fixture symbol | Luna | G5 | merged | agt-F-P4-symbol-integrated-0023 | Both original metadata and CLI behavior cases passed on the integrated head. | 45cecae7b |
-| F-authoring-publish-writer | Migrate the remaining publication helper | Sol | failover-ok; assigned Runtime | doing | rt-F-authoring-publish-writer-resume-0104 | Production publish_authoring_candidate calls a retired route after authentic fixture setup. Two Luna attempts are retained. | 20b fixture |
-| F-authoring-ABA | Classify same-alias capture ambiguity | Luna | failover-ok; assigned Viewing | ready | Viewing repair assigned 0118 | Independent source verdict: Agent repeats a physical track binding for valid same-alias consumers. Sol repair assigned; strict Runtime guard stays. | 20b fixture |
-| F-D32-render-wire | Six missing render results | Luna | failover-ok; assigned Viewing | ready | Viewing assignment 0108 | Classify producer and result-path custody first; no overlap with Agent startup or installed-pack fixes. | b61cebe8e |
+| F-authoring-publish-writer | Migrate the remaining publication helper | Sol | failover-ok; assigned Runtime | doing | rt-F-authoring-publish-media-sol-0114 | Production publish_authoring_candidate calls a retired route after authentic fixture setup. Two Luna attempts are retained. | 20b fixture |
+| F-authoring-ABA | Repair duplicate same-alias captures | Sol | failover-ok; assigned Viewing | ready | Viewing repair assigned 0118 | Independent source verdict: Agent repeats a physical track binding for valid same-alias consumers. Sol repair assigned; strict Runtime guard stays. | 20b fixture |
+| F-D32-render-wire | Six missing render results | Luna | Existing installed child | doing | agt-F-render-wire-env-0124 | Viewing cause and review passed: child import fails before result. Agent prepares one supported six-case service run. | 92baf9612 |
 | F-helper-sequential | Attribute helper replay-map refusal | Luna requested | Runtime source classification | blocked:runtime | Peer 0114 requests assessment | One original contiguous-helper positive refuses map duplication or omission; no source cause is yet established. | 3b0 source |
 | F-D32-h3-import | Seven isolated child-import cases | Luna | failover-ok; assigned Runtime | ready | Runtime assignment 0118 | Source attribution first. Existing installed cohort proofs are retained; no duplicate full or environment build. | 92baf9612 |
-| A4 IMAGE | Actual App request and Runtime acceptance | Luna / App | App 22ef qualified | review | agt-A4-image-claim-review-0116 | App omitted asset and clip created claims. Exact audit reproduced Runtime refusal; App source correction requested. No accepted write. | 1146 / 22ef |
+| F-ruff-baseline | Record one fewer Ruff finding | Luna | Strict static gate | doing | agt-F-ruff-baseline-0123 | Current source has 2,147 findings versus 2,148. Worker must prove no new identities before generating the lower baseline. | 92baf9612 |
+| A4 IMAGE | Actual App request and Runtime acceptance | Luna / App | App created claims | blocked:app | Agent audit 0112; review 0116 PASS | Missing asset and clip claims reproduced the exact Runtime refusal. App source correction requested; old fixture closed. | 1146 / 22ef |
 | D31 | Dormant transcript capture subset | — | Follow-up funding | gated:D31 | No active author | Keep the 397-line test suite and implementation unchanged. Literal production reachability is NO. | unchanged |
 | V4 / D14 / D23 | Cut and deferred relational timing | — | Scope decisions | gated:H9 | No repair worker | Keep original tests unchanged, unskipped and visibly failing. No V4 or relational-timing completion claim. | unchanged |
 | U2c | Upstream readiness candidate | — | Only if App readiness fix fails | gated:conditional | Not started | Latest orchestrator instruction holds this draft. App owns the cancelled-bootstrap restart deadlock. | no change |
 
 P1: GO. Original service 18792 passed both cases; Proof reviews 0036 and 0040 passed. P4 and P5 are done. G5 already merged under H24. P2 and P3 remain with App and Proof.
 Integration: 92baf961275baa42514bc120351ea512bfbe6e6b, tree c5265e3f903c665a7d2cdef01448bc9ec19acd29. Frozen 34e client, d106 schema and 819acf Composition artifact unchanged.
-Blockers: Agent full waits for the remaining owned fixes and D32 classification.
+Blockers: Agent full waits for the remaining owned fixes and finite qualifications. D32 tagging and ownership reconciliation passed.
 Blockers: D32 upstream comparison waits for the lead to fetch Agent 90d469808. Collection and current-proof tagging continue.
 Blockers: Agent external-pack source repair waits for Runtime to name the authenticated capture input; peer 0110 sent.
 Blockers: IMAGE acceptance waits for App created-claim correction and independent source review; the old fixture is closed.
 Blockers: Viewing must return its render-wire and ABA repair worker IDs. Runtime must return the seven-import and helper-map assessment worker IDs.
 Safety: Earlier Farm, monitor, publication and bench permission refusals remain stopped. No denied action was retried here.
-Disk: Last check 11,610 MiB free; below the 15 GB cleanup target and above the 8 GB heavy-run floor. Sweep removed zero directories; compact compressed seven old logs. No eligible clean worktree remained.
-Next ready: Merge the transition port, consume integrated proof and D32 review, then follow up on assigned peer work. U2c stays held. Runtime owns F-authoring-publish-writer; Viewing owns F-authoring-ABA. Do not start U2c.
+Disk: Sweep removed six old temp directories; compact compressed seven logs. About 11,056 MiB remains, above the 8 GB heavy-run floor. No refused target was retried.
+Next ready: Merge reviewed current ports, consume integrated proof and D32 review, and follow up on assigned peer work. U2c stays held.
 Evidence: Earlier detailed results remain in [the archived board](archive-v2/STATUS-20261024T0055Z.md) and the existing design handoffs. Worker final messages are copied unchanged into design.
