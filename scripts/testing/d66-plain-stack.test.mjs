@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { execFileSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { exactCheckoutPath, receiptCheckout, selectPinnedSources, serviceRecipe, validatePinnedSource, validatePinnedSources, validateSelectedSource } from './d66-plain-stack.mjs';
+import { appCheckoutTarget, buildSubmitPlan, captureSubmitPins, exactCheckoutPath, preflightSources, receiptCheckout, selectPinnedSources, serviceRecipe, validatePinnedSource, validatePinnedSources, validateSelectedSource, waitForSubmitReceipts } from './d66-plain-stack.mjs';
 
 const state = (overrides = {}) => ({
   root: '/snapshot/agent', head: 'a'.repeat(40), tree: 'b'.repeat(40), branch: null, dirty: false, ...overrides,
@@ -99,6 +99,9 @@ test('D73 service recipe carries full SHA/tree and all four exact checkout paths
     assert.match(recipe, new RegExp(`D66_${role}_CHECKOUT='[^']+'`));
   }
   assert.doesNotMatch(recipe, /current normal|gesture|POST|publish/);
+  assert.equal(serviceRecipe({ name: 'p3', pins, checkouts: {
+    app: '/snapshot/app', agent: '/snapshot/agent', runtime: '/snapshot/runtime', composition: '/snapshot/composition',
+  }, preflight: true }), `${recipe} --preflight`);
 });
 
 function runGit(directory, ...args) {
@@ -111,6 +114,10 @@ function fixtureRepo(directory, name) {
   runGit(directory, 'config', 'user.email', 'd73@example.test');
   runGit(directory, 'config', 'user.name', 'D73 fixture');
   writeFileSync(path.join(directory, `${name}.txt`), `${name}\n`);
+  if (name === 'app') {
+    mkdirSync(path.join(directory, 'scripts/testing'), { recursive: true });
+    writeFileSync(path.join(directory, 'scripts/testing/d66-plain-stack.mjs'), readFileSync(new URL('./d66-plain-stack.mjs', import.meta.url)));
+  }
   runGit(directory, 'add', '.');
   runGit(directory, 'commit', '-qm', 'fixture');
   return { head: runGit(directory, 'rev-parse', 'HEAD'), tree: runGit(directory, 'rev-parse', 'HEAD^{tree}') };
@@ -118,6 +125,8 @@ function fixtureRepo(directory, name) {
 
 function detachedFixture(normal, checkout) {
   execFileSync('git', ['clone', '-q', normal, checkout]);
+  runGit(checkout, 'config', 'user.email', 'd73@example.test');
+  runGit(checkout, 'config', 'user.name', 'D73 fixture');
   runGit(checkout, 'checkout', '--detach', '-q', 'HEAD');
 }
 
@@ -141,4 +150,149 @@ test('D73 dry-preflight selects env paths and parses genuine checkout receipts b
   const missingPinEnv = { ...env };
   delete missingPinEnv.D66_RUNTIME_TREE;
   assert.throws(() => selectPinnedSources(missingPinEnv, homes, checkouts.app), /runtime tree must be a full 40-character SHA/);
+});
+
+function serviceFixture() {
+  const base = mkdtempSync(path.join(os.tmpdir(), 'd73-service-'));
+  const roles = ['app', 'agent', 'runtime', 'composition'];
+  const homes = Object.fromEntries(roles.map((role) => [role, path.join(base, `${role}-normal`)]));
+  for (const role of roles) fixtureRepo(homes[role], role);
+  const pins = captureSubmitPins(homes);
+  const checkouts = Object.fromEntries(roles.map((role) => [role, exactCheckoutPath(role, pins[role].head, base)]));
+  const receiptRoot = path.join(base, 'receipts');
+  const workerRoot = path.join(base, 'workers');
+  mkdirSync(receiptRoot);
+  for (const role of roles) {
+    detachedFixture(homes[role], checkouts[role]);
+    const receipt = role === 'runtime'
+      ? `exists: ${checkouts[role]} at ${pins[role].head}\n`
+      : `created ${checkouts[role]} (detached at ${pins[role].head}, KEEP)\n`;
+    writeFileSync(path.join(receiptRoot, `checkout-${role}-${pins[role].head}`), receipt);
+  }
+  const target = path.basename(checkouts.app);
+  mkdirSync(path.join(workerRoot, target), { recursive: true });
+  writeFileSync(path.join(workerRoot, target, 'meta'), `name=${target}\nrepo=app\nworktree=${checkouts.app}\n`);
+  // Match bin/test-run: commit-tree <target tree> -p HEAD, then a detached worktree.
+  const snapshot = path.join(base, '.test-fixture');
+  const snapshotHead = runGit(checkouts.app, 'commit-tree', pins.app.tree, '-p', 'HEAD', '-m', 'test snapshot fixture');
+  runGit(checkouts.app, 'worktree', 'add', '-q', '--detach', snapshot, snapshotHead);
+  const env = Object.fromEntries(roles.flatMap((role) => [
+    [`D66_${role.toUpperCase()}_SHA`, pins[role].head], [`D66_${role.toUpperCase()}_TREE`, pins[role].tree],
+    [`D66_${role.toUpperCase()}_CHECKOUT`, checkouts[role]],
+  ]));
+  return { base, roles, homes, pins, checkouts, env, snapshot, snapshotHead, target, receiptRoot, workerRoot };
+}
+
+test('D73 verifies a real service snapshot, receipts and target after mutable homes move', async () => {
+  const f = serviceFixture();
+  const plan = buildSubmitPlan({ name: 'p1', paths: f.homes });
+  assert.deepEqual(plan.pins, f.pins);
+  assert.equal(plan.target, undefined);
+  for (const role of f.roles) {
+    writeFileSync(path.join(f.homes[role], `${role}.txt`), 'normal home advanced\n');
+    runGit(f.homes[role], 'add', '.');
+    runGit(f.homes[role], 'commit', '-qm', 'advance normal home');
+  }
+  const result = preflightSources(f.env, f.homes, f.snapshot, f);
+  assert.equal(result.target, f.target);
+  assert.equal(result.sources.app.head, f.pins.app.head);
+  assert.equal(result.service_source.head, f.snapshotHead);
+  assert.equal(result.service_source.tree, f.pins.app.tree);
+  assert.deepEqual(result.service_source.parents, [f.pins.app.head]);
+  assert.equal(preflightSources(f.env, f.homes, f.checkouts.app, f).service_source.head, f.pins.app.head);
+  const checkoutRequests = f.roles.map((role) => ({ role, head: f.pins[role].head, checkout: f.checkouts[role],
+    receipt: path.join(f.receiptRoot, `checkout-${role}-${f.pins[role].head}`) }));
+  assert.deepEqual(await waitForSubmitReceipts({ pins: f.pins, checkoutRequests }, { waitMs: 0 }), f.checkouts);
+});
+
+test('D73 refuses same-tree worker finalization parents, grandparents, multiple parents and changed snapshot trees', () => {
+  const f = serviceFixture();
+  const finalized = runGit(f.checkouts.app, 'commit-tree', f.pins.app.tree, '-p', f.pins.app.head, '-m', 'worker finalization');
+  const wrongTree = runGit(f.checkouts.agent, 'rev-parse', 'HEAD^{tree}');
+  // Import only this tiny fixture tree into the App fixture object store.
+  runGit(f.checkouts.app, 'fetch', '-q', f.checkouts.agent, 'HEAD');
+  const cases = [
+    [f.pins.app.tree, '-p', finalized],
+    [f.pins.app.tree, '-p', f.pins.app.head, '-p', finalized],
+    [f.pins.app.tree],
+    [wrongTree, '-p', f.pins.app.head],
+  ];
+  for (const args of cases) {
+    const head = runGit(f.checkouts.app, 'commit-tree', ...args, '-m', 'bad service snapshot');
+    // Only HEAD changes; every same-tree counterexample has identical tracked files.
+    runGit(f.snapshot, 'update-ref', '--no-deref', 'HEAD', head);
+    assert.throws(() => preflightSources(f.env, f.homes, f.snapshot, f), /App service source/);
+  }
+  runGit(f.snapshot, 'update-ref', '--no-deref', 'HEAD', f.snapshotHead);
+  runGit(f.checkouts.app, 'update-ref', '--no-deref', 'HEAD', finalized);
+  assert.throws(() => preflightSources(f.env, f.homes, f.snapshot, f), /app source does not match its submit-time pin/);
+});
+
+test('D73 refuses wrong App selection, attached or dirty selected checkouts, and dirty service roots', () => {
+  const f = serviceFixture();
+  assert.throws(() => preflightSources({ ...f.env, D66_APP_CHECKOUT: f.snapshot }, f.homes, f.snapshot, f), /does not match its submit-time pin/);
+  for (const role of f.roles) {
+    runGit(f.checkouts[role], 'update-ref', 'refs/heads/d73-attached', f.pins[role].head);
+    runGit(f.checkouts[role], 'symbolic-ref', 'HEAD', 'refs/heads/d73-attached');
+    assert.throws(() => preflightSources(f.env, f.homes, f.snapshot, f), /must be detached/);
+    runGit(f.checkouts[role], 'update-ref', '--no-deref', 'HEAD', f.pins[role].head);
+    writeFileSync(path.join(f.checkouts[role], `${role}.txt`), 'dirty\n');
+    assert.throws(() => preflightSources(f.env, f.homes, f.snapshot, f), /dirty/);
+    writeFileSync(path.join(f.checkouts[role], `${role}.txt`), `${role}\n`);
+  }
+  writeFileSync(path.join(f.snapshot, 'app.txt'), 'dirty service root\n');
+  assert.throws(() => preflightSources(f.env, f.homes, f.snapshot, f), /App service source is dirty/);
+});
+
+test('D73 refuses missing pins before checkout access, missing/wrong receipts and target metadata mismatches', () => {
+  const f = serviceFixture();
+  for (const role of f.roles) {
+    for (const kind of ['SHA', 'TREE']) {
+      const env = { ...f.env, D66_APP_CHECKOUT: '/unavailable/should-not-be-read' };
+      delete env[`D66_${role.toUpperCase()}_${kind}`];
+      assert.throws(() => preflightSources(env, f.homes, f.snapshot, f), /must be a full 40-character SHA/);
+    }
+  }
+  assert.throws(() => preflightSources(f.env, f.homes, f.snapshot, { ...f, receiptRoot: path.join(f.base, 'missing-receipts') }), /ENOENT/);
+  const receipt = path.join(f.receiptRoot, `checkout-agent-${f.pins.agent.head}`);
+  writeFileSync(receipt, `exists: ${f.checkouts.runtime} at ${f.pins.agent.head}\n`);
+  assert.throws(() => preflightSources(f.env, f.homes, f.snapshot, f), /receipt selected the wrong checkout/);
+  writeFileSync(receipt, `exists: ${f.checkouts.agent} at ${f.pins.runtime.head}\n`);
+  assert.throws(() => preflightSources(f.env, f.homes, f.snapshot, f), /receipt is missing or tampered/);
+  assert.throws(() => appCheckoutTarget(f.checkouts.app, f.pins.app.head, { ...f, target: 'app-proof-worker' }), /stable exact App checkout/);
+  writeFileSync(path.join(f.workerRoot, f.target, 'meta'), `name=${f.target}\nrepo=app\nworktree=${f.snapshot}\n`);
+  assert.throws(() => appCheckoutTarget(f.checkouts.app, f.pins.app.head, f), /target metadata does not match/);
+});
+
+test('D73 preflight entrypoint records actual snapshot separately and stops before imports, build or collection', () => {
+  const f = serviceFixture();
+  const script = path.join(f.snapshot, 'scripts/testing/d66-plain-stack.mjs');
+  const output = path.join(f.base, 'output');
+  const invoke = (pins, mode = '--preflight') => spawnSync(process.execPath, ['--input-type=module', '-e', [
+    `import { main } from ${JSON.stringify(script)};`,
+    `process.argv = [process.execPath, ${JSON.stringify(script)}, 'p1', ${JSON.stringify(mode)}];`,
+    `await main(${JSON.stringify({ receiptRoot: f.receiptRoot, workerRoot: f.workerRoot })});`,
+  ].join('\n')], {
+    cwd: f.snapshot, encoding: 'utf8', env: { ...process.env, ...pins, D66_OUTPUT_DIR: output,
+      D66_NORMAL_AGENT_HOME: f.homes.agent, D66_NORMAL_RUNTIME_HOME: f.homes.runtime,
+      D66_NORMAL_COMPOSITION_HOME: f.homes.composition,
+      ASTRID_PYTHON: '/missing/no-python-in-preflight', ASTRID_RUNTIME_PYTHON: '/missing/no-python-in-preflight' },
+  });
+  // The fixture has no node_modules, build config or specs. Python paths deliberately do not exist.
+  const result = invoke(f.env);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /source preflight PASS/);
+  const manifest = JSON.parse(readFileSync(path.join(output, 'manifest.json'), 'utf8'));
+  assert.equal(manifest.repo_heads.app, f.pins.app.head);
+  assert.equal(manifest.service_source.head, f.snapshotHead);
+  assert.deepEqual(manifest.service_source.parents, [f.pins.app.head]);
+  assert.equal(manifest.service_target, f.target);
+  assert.equal(manifest.service_versions, undefined);
+  const poisoned = invoke({ ...f.env, D66_RUNTIME_SHA: '' });
+  assert.equal(poisoned.status, 1);
+  assert.match(poisoned.stderr, /runtime SHA must be a full 40-character SHA/);
+  assert.doesNotMatch(poisoned.stdout, /PASS/);
+  const poisonedRun = invoke({ ...f.env, D66_RUNTIME_SHA: '' }, 'run');
+  assert.equal(poisonedRun.status, 1);
+  assert.match(poisonedRun.stderr, /runtime SHA must be a full 40-character SHA/);
 });
