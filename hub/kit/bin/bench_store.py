@@ -36,9 +36,14 @@ def sha(value):
     return value
 
 
-def child_key(agent_sha, backend_sha, client_tuple):
+def child_key(agent_sha, backend_sha, client_tuple, bootstrap_authority=None):
     check(isinstance(client_tuple, dict) and bool(client_tuple), 'client tuple required')
-    return digest(canonical(['child', sha(agent_sha), sha(backend_sha), client_tuple]))
+    parts = ['child', sha(agent_sha), sha(backend_sha), client_tuple]
+    if bootstrap_authority is not None:
+        check(isinstance(bootstrap_authority, str) and re.fullmatch('[0-9a-f]{64}', bootstrap_authority),
+              'bootstrap authority digest required')
+        parts.append(bootstrap_authority)
+    return digest(canonical(parts))
 
 
 def runtime_key(remotion_tree):
@@ -48,7 +53,8 @@ def runtime_key(remotion_tree):
 def key_for(component, identity):
     check(isinstance(identity, dict), 'identity object required')
     if component == 'child':
-        check(set(identity) == {'agent_sha', 'backend_sha', 'client_tuple'}, 'child identity schema')
+        check(set(identity) in ({'agent_sha', 'backend_sha', 'client_tuple'},
+                                {'agent_sha', 'backend_sha', 'client_tuple', 'bootstrap_authority'}), 'child identity schema')
         return child_key(**identity)
     check(component == 'runtime' and set(identity) == {'remotion_tree'}, 'runtime identity schema')
     return runtime_key(**identity)

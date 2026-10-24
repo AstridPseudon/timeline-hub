@@ -2,6 +2,7 @@
 """Authenticate a finite wheelhouse against an active hash-locked requirements file."""
 
 import base64
+import configparser
 import csv
 import email
 import fcntl
@@ -9,14 +10,19 @@ import hashlib
 import importlib.metadata as md
 import importlib.util
 import io
+import json
 import marshal
 import os
 import re
+import shutil
 import stat
 import subprocess
 import sys
+import tarfile
+import types
+import venv
 import zipfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import NoReturn
 
 from packaging.markers import default_environment
@@ -26,6 +32,11 @@ from packaging.utils import (
     InvalidWheelFilename,
     canonicalize_name,
     parse_wheel_filename,
+)
+
+ENTRY_POINT_TARGET = re.compile(
+    r"\A(?P<module>\w+(?:\.\w+)*):(?P<function>\w+(?:\.\w+)*)"
+    r"(?:\s*\[\s*[\w-]+(?:=\w+)?(?:,\s*\w+(?:=\w+)?)*\s*\])?\Z"
 )
 
 
@@ -175,20 +186,276 @@ def write_snapshot(snapshot: Path, requirements: bytes, artifacts: dict[str, byt
         fail(f"cannot create immutable snapshot: {exc}")
 
 
-def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
+def validated_record_path(root: Path, site: Path, dist: object, record: str, name: str) -> Path:
+    pure = PurePosixPath(record)
+    if (
+        not record
+        or "\\" in record
+        or "\x00" in record
+        or pure.is_absolute()
+        or str(pure) != record
+        or ".." in pure.parts
+    ):
+        fail(f"unsafe dependency RECORD ownership: {name}")
+    path = site / record
+    resolved = path.resolve()
+    if not resolved.is_relative_to(root):
+        fail(f"dependency RECORD escapes child: {name}")
+    cursor = site
+    for part in pure.parts:
+        cursor /= part
+        if cursor.is_symlink():
+            fail(f"symlinked dependency RECORD: {name}")
+    dist_path = getattr(dist, "_path", None)
+    if not isinstance(dist_path, Path) or not dist_path.is_absolute() or dist_path.is_symlink():
+        fail(f"dependency RECORD ownership is unavailable: {name}")
+    if dist_path != dist_path.resolve():
+        fail(f"dependency RECORD owner is not physical: {name}")
+    dist_resolved = dist_path.resolve()
+    if not dist_path.is_relative_to(site) or not dist_resolved.is_relative_to(root):
+        fail(f"dependency RECORD owner escapes child: {name}")
+    try:
+        dist_rel = dist_path.relative_to(site)
+    except ValueError:
+        fail(f"dependency RECORD owner escapes site-packages: {name}")
+    owner_cursor = site
+    for part in dist_rel.parts:
+        owner_cursor /= part
+        if owner_cursor.is_symlink():
+            fail(f"symlinked dependency RECORD owner: {name}")
+    if resolved != dist_resolved / "RECORD":
+        fail(f"dependency RECORD is not owned by distribution: {name}")
+    try:
+        info = path.stat(follow_symlinks=False)
+    except OSError as exc:
+        fail(f"cannot stat dependency RECORD: {name}: {exc}")
+    if not stat.S_ISREG(info.st_mode):
+        fail(f"dependency RECORD is not a regular file: {name}")
+    return path
+
+
+def child_file(root: Path, path: Path) -> None:
+    if not path.is_relative_to(root) or not path.resolve().is_relative_to(root):
+        fail("installed dependency file escapes child")
+    cursor = root
+    for part in path.relative_to(root).parts:
+        cursor /= part
+        info = cursor.lstat()
+        if stat.S_ISLNK(info.st_mode) or info.st_uid != os.getuid():
+            fail("symlinked or foreign installed dependency path")
+    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+        fail("installed dependency path is not a regular file")
+
+
+# Independently reviewed original input0932 / publication0940. Test-only wheels
+# remain in the archive and never enter the bootstrap installation snapshot.
+BOOTSTRAP_ARCHIVE_SHA256 = "443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548"
+BOOTSTRAP_WHEELS = {
+    "pip-26.2.1-py3-none-any.whl": "71138adf1f4ca900cdb7d289c21b7494329f2332b6d85f0e1c42108c0384ed3e",
+    "setuptools-80.9.0-py3-none-any.whl": "062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922",
+    "wheel-0.46.3-py3-none-any.whl": "4b399d56c9d9338230118d705d9737a2a468ccca63d5e813e2a4fc7815d8bc4d",
+}
+BOOTSTRAP_LOCK = "".join(
+    f"{name.split('-')[0]}=={name.split('-')[1]} --hash=sha256:{digest}\n"
+    for name, digest in BOOTSTRAP_WHEELS.items()
+).encode()
+
+
+def bootstrap_artifacts(archive_path: Path) -> dict[str, bytes]:
+    if not archive_path.is_file() or archive_path.is_symlink():
+        fail("missing genuine bootstrap input0932 archive " + str(archive_path) + " SHA256 " + BOOTSTRAP_ARCHIVE_SHA256)
+    data = captured_bytes(archive_path)
+    if hashlib.sha256(data).hexdigest() != BOOTSTRAP_ARCHIVE_SHA256:
+        fail("missing genuine bootstrap input0932 archive SHA256 " + BOOTSTRAP_ARCHIVE_SHA256)
+    artifacts = {}
+    with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as archive:
+        for name, digest in BOOTSTRAP_WHEELS.items():
+            member = archive.getmember("timeline-bootstrap-wheel-input-0932/wheelhouse/" + name)
+            if not member.isfile():
+                fail("bootstrap archive wheel is not a file")
+            stream = archive.extractfile(member)
+            if stream is None:
+                fail("bootstrap archive wheel is missing")
+            content = stream.read()
+            if hashlib.sha256(content).hexdigest() != digest:
+                fail("bootstrap original wheel hash mismatch: " + name)
+            package, version, _, tags = parse_wheel_filename(name)
+            archive_identity(content, name, str(package), str(version), set(tags))
+            artifacts[name] = content
+    return artifacts
+
+
+def trusted_venv_sources() -> dict[str, bytes]:
+    source = Path(venv.__file__).resolve()
+    paths = [source, *sorted((source.parent / "scripts/common").rglob("*")),
+             *sorted((source.parent / "scripts" / os.name).rglob("*"))]
+    result = {}
+    for path in paths:
+        if path.is_dir():
+            continue
+        if not path.is_relative_to(Path(sys.base_prefix).resolve()):
+            fail("venv source is outside trusted host Python")
+        for item in [path, *path.parents]:
+            info = item.lstat()
+            if info.st_uid != 0 or info.st_mode & 0o022 or stat.S_ISLNK(info.st_mode):
+                fail("venv source requires immutable root-owned host Python input")
+        result[str(path)] = captured_bytes(path)
+    return result
+
+
+def bootstrap_identity(interpreter: Path) -> str:
+    sources = trusted_venv_sources()
+    identity = {"inventory": "whole-child-root-v1", "archive": BOOTSTRAP_ARCHIVE_SHA256,
+                "lock": hashlib.sha256(BOOTSTRAP_LOCK).hexdigest(),
+                "wheels": BOOTSTRAP_WHEELS,
+                "python": str(interpreter.resolve()),
+                "python_sha256": hashlib.sha256(captured_bytes(interpreter.resolve())).hexdigest(),
+                "version": sys.version,
+                "venv": {p: hashlib.sha256(b).hexdigest() for p, b in sources.items()}}
+    return hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
+
+
+def venv_files(root: Path) -> dict[str, bytes]:
+    # Render from trusted host templates; never derive authority from child bytes.
+    sources = trusted_venv_sources()
+    base_executable = Path(sys._base_executable)  # type: ignore[attr-defined]
+    context = types.SimpleNamespace(env_dir=str(root), env_name=root.name,
+                                    prompt="child", bin_name="bin",
+                                    env_exe=str(root / "bin" / base_executable.name))
+    builder = venv.EnvBuilder(prompt="child")
+    result = {}
+    for source, content in sources.items():
+        path = Path(source)
+        if path.name == "__init__.py":
+            continue
+        context.script_path = source
+        result["bin/" + path.name] = builder.replace_variables(content.decode(), context).encode()
+    # A deterministic, non-executable configuration established before pip runs.
+    result["pyvenv.cfg"] = (
+        f"home = {base_executable.parent}\n"
+        "include-system-site-packages = false\n"
+        f"version = {'.'.join(map(str, sys.version_info[:3]))}\n"
+        "prompt = 'child'\n"
+    ).encode()
+    return result
+
+
+def verify_venv_files(root: Path) -> set[str]:
+    owned = set()
+    for rel, expected in venv_files(root).items():
+        child_file(root, root / rel)
+        if captured_bytes(root / rel) != expected:
+            fail("venv-owned file differs from trusted host source: " + rel)
+        owned.add(rel)
+    return owned
+
+
+def retained_bootstrap(root: Path, interpreter: Path) -> dict[str, bytes]:
+    authority = bootstrap_identity(interpreter)
+    child_file(root, root / ".bootstrap-authority")
+    child_file(root, root / ".bootstrap-input.tgz")
+    if captured_bytes(root / ".bootstrap-authority") != (authority + "\n").encode():
+        fail("retained bootstrap source/interpreter authority mismatch")
+    artifacts = bootstrap_artifacts(root / ".bootstrap-input.tgz")
+    seed = root / ".bootstrap-wheelhouse"
+    if seed != seed.resolve() or {p.name for p in seed.iterdir()} != {"requirements.txt", *artifacts}:
+        fail("retained bootstrap snapshot inventory mismatch")
+    for name, data in {"requirements.txt": BOOTSTRAP_LOCK, **artifacts}.items():
+        child_file(root, seed / name)
+        if captured_bytes(seed / name) != data:
+            fail("retained bootstrap snapshot differs from original input: " + name)
+    return artifacts
+
+
+def store_metadata(root: Path, interpreter: Path) -> set[str]:
+    marker = root / ".bench-owner.json"
+    if not marker.exists() and not marker.is_symlink():
+        return set()
+    child_file(root, marker)
+    store = root.parent.parent
+    if root.parent.name not in {"staging", "entries"} or store != store.resolve():
+        fail("Store metadata is outside normal child custody")
+    owner = json.loads(captured_bytes(store / "owner.json"))
+    value = json.loads(captured_bytes(marker))
+    if set(value) != {"owner", "component", "key", "identity"} or value["component"] != "child" or value["owner"] != owner["id"] or owner["root"] != str(store):
+        fail("retained Store ownership metadata mismatch")
+    identity = value["identity"]
+    if set(identity) != {"agent_sha", "backend_sha", "client_tuple", "bootstrap_authority"} or identity["bootstrap_authority"] != bootstrap_identity(interpreter):
+        fail("Store child lacks genuine bootstrap authority")
+    parts = ["child", identity["agent_sha"], identity["backend_sha"], identity["client_tuple"], identity["bootstrap_authority"]]
+    key = hashlib.sha256(json.dumps(parts, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    if value["key"] != key or root.name != (("child-" if root.parent.name == "entries" else "") + key):
+        fail("retained Store key differs from bootstrap/source identity")
+    if captured_bytes(marker) != json.dumps(value, sort_keys=True, separators=(",", ":")).encode():
+        fail("noncanonical retained Store metadata")
+    return {marker.name}
+
+
+def installed_integrity(
+    root: Path,
+    artifacts: dict[str, bytes],
+    *,
+    interpreter: Path | None = None,
+    local_inventory: dict[str, set[str]] | None = None,
+    bootstrap: bool = False,
+) -> None:
     """Compare installed bytes to authenticated original wheels, not RECORD claims."""
+    if not root.is_absolute() or root != root.resolve() or root.stat().st_uid != os.getuid():
+        fail("installed child root is not physical or owned")
     sites = list((root / "lib").glob("python*/site-packages"))
-    if len(sites) != 1 or root.is_symlink():
+    if (len(sites) != 1 or root.is_symlink() or sites[0].is_symlink()
+            or sites[0] != root / "lib" / f"python{sys.version_info.major}.{sys.version_info.minor}" / "site-packages"):
         fail("installed child layout is missing or ambiguous")
     site = sites[0]
-    owned: set[str] = set()
+    if site != site.resolve() or not site.is_relative_to(root):
+        fail("installed site-packages escapes child")
+    distributions = list(md.distributions(path=[str(site)]))
+    # Distribution.files reads RECORD internally. Validate its physical owner
+    # before asking importlib.metadata to read either metadata or the file list.
+    for dist in distributions:
+        dist_path = getattr(dist, "_path", None)
+        if not isinstance(dist_path, Path) or not dist_path.is_relative_to(site):
+            fail("dependency RECORD owner escapes child")
+        record_path = validated_record_path(root, site, dist, str(dist_path.relative_to(site) / "RECORD"), "installed")
+        child_file(root, record_path)
+        child_file(root, dist_path / "METADATA")
+    # Only the maker's committed-source verifier can supply local ownership.
+    # This is deliberately not an on-disk/CLI allowlist or a package exemption.
+    local_inventory = local_inventory or {}
+    if set(local_inventory) - {"astrid", "astrid-runtime", "__root__"}:
+        fail("unsupported local distribution ownership")
+    # __root__ is supplied only by the authenticated committed-source verifier,
+    # after validating each maker/Store/source file. It is never read from disk.
+    root_owned = local_inventory.pop("__root__", set())
+    owned: set[str] = verify_venv_files(root) if bootstrap else set()
+    for rel in root_owned:
+        child_file(root, root / rel)
+        owned.add(rel)
+    if bootstrap:
+        owned.update(store_metadata(root, interpreter or Path(sys.executable)))
+        retained_bootstrap(root, interpreter or Path(sys.executable))
+        owned.update({".bootstrap-authority", ".bootstrap-input.tgz"})
+        owned.update(".bootstrap-wheelhouse/" + name for name in {"requirements.txt", *BOOTSTRAP_WHEELS})
+    expected_distributions: set[object] = set()
+    for dist in distributions:
+        name = canonicalize_name(dist.metadata.get("Name", ""))
+        if name in local_inventory:
+            expected_distributions.add(getattr(dist, "_path", None))
+            for rel in local_inventory[name]:
+                path = site / rel
+                child_file(root, path)
+                physical = str(path.resolve().relative_to(root))
+                if physical in owned:
+                    fail("overlapping local distribution ownership")
+                owned.add(physical)
     for filename, data in artifacts.items():
         name, version, _, _ = parse_wheel_filename(filename)
-        distributions = [dist for dist in md.distributions(path=[str(site)])
-                         if canonicalize_name(dist.metadata.get("Name", "")) == name]
-        if len(distributions) != 1 or distributions[0].version != str(version):
+        matches = [dist for dist in distributions
+                   if canonicalize_name(dist.metadata.get("Name", "")) == name]
+        if len(matches) != 1 or matches[0].version != str(version):
             fail(f"missing or ambiguous installed dependency: {name}")
-        dist = distributions[0]
+        dist = matches[0]
+        expected_distributions.add(getattr(dist, "_path", None))
         records = [str(item) for item in dist.files or [] if str(item).endswith(".dist-info/RECORD")]
         if len(records) != 1:
             fail(f"missing installed dependency RECORD: {name}")
@@ -201,15 +468,101 @@ def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
                 if any(part.endswith(".data") for part in Path(entry.filename).parts):
                     fail(f"unsupported relocated wheel layout: {filename}")
                 wheel_files[entry.filename] = archive.read(entry)
+        generated_scripts: dict[str, set[bytes]] = {}
+        entrypoint_files = [
+            rel for rel in wheel_files if rel == str(Path(record).parent / "entry_points.txt")
+        ]
+        if len(entrypoint_files) > 1:
+            fail(f"ambiguous console entry-point metadata: {name}")
+        if entrypoint_files:
+            parser = configparser.ConfigParser(interpolation=None, strict=True)
+            parser.optionxform = str  # type: ignore[method-assign, assignment]
+            try:
+                parser.read_string(wheel_files[entrypoint_files[0]].decode("utf-8"))
+                if parser.defaults():
+                    fail(f"unsupported default console entry-point metadata: {name}")
+                entrypoints = (
+                    list(parser.items("console_scripts", raw=True))
+                    if parser.has_section("console_scripts")
+                    else []
+                )
+            except (configparser.Error, UnicodeDecodeError) as exc:
+                fail(f"malformed console entry-point metadata: {name}: {exc}")
+            if name == "pip" and filename in BOOTSTRAP_WHEELS and hashlib.sha256(data).hexdigest() == BOOTSTRAP_WHEELS[filename]:
+                # pip's authenticated installer emits the versioned pip alias.
+                entrypoints.append((f"pip{sys.version_info.major}.{sys.version_info.minor}", "pip._internal.cli.main:main"))
+            for script_name, target in entrypoints:
+                if (
+                    not script_name
+                    or "/" in script_name
+                    or "\\" in script_name
+                    or "\x00" in script_name
+                    or any(character.isspace() for character in script_name)
+                    or script_name.startswith("[")
+                    or script_name in {".", ".."}
+                ):
+                    fail(f"unsafe console entry-point name: {name}:{script_name!r}")
+                match = ENTRY_POINT_TARGET.fullmatch(target)
+                if match is None:
+                    fail(f"malformed console entry-point target: {name}:{script_name}")
+                module = match.group("module")
+                function = match.group("function")
+                script_path = root / "bin" / script_name
+                rel = str(Path(os.path.relpath(script_path, site)))
+                if rel in generated_scripts:
+                    fail(f"duplicate console entry-point script: {name}:{script_name}")
+                body = (
+                    "import sys\n"
+                    f"from {module} import {function.split('.', 1)[0]}\n"
+                    "if __name__ == '__main__':\n"
+                    "    sys.argv[0] = sys.argv[0].removesuffix('.exe')\n"
+                    f"    sys.exit({function}())\n"
+                ).encode()
+                executable = str(root / "bin/python")
+                if " " in executable:
+                    executable = '"' + executable + '"'
+                # Pip's long-path shell trampoline survives maker relocation.
+                generated_scripts[rel] = {
+                    f"#!{executable}\n".encode() + body,
+                    (f"#!/bin/sh\n'''exec' {executable} \"$0\" \"$@\"\n' '''\n").encode() + body,
+                }
         rows: set[str] = set()
-        for row in csv.reader(io.StringIO(captured_bytes(site / record).decode()), strict=True):
+        physical_rows: set[str] = set()
+        record_path = validated_record_path(root, site, dist, record, name)
+        child_file(root, record_path)
+        for row in csv.reader(io.StringIO(captured_bytes(record_path).decode()), strict=True):
             if len(row) != 3:
                 fail(f"malformed dependency RECORD: {name}")
             rel, encoded, size = row
+            pure = PurePosixPath(rel)
+            if (
+                not rel
+                or rel in rows
+                or "\\" in rel
+                or "\x00" in rel
+                or pure.is_absolute()
+                or str(pure) != rel
+                or (".." in pure.parts and rel not in generated_scripts)
+            ):
+                fail(f"unsafe or overlapping dependency RECORD: {name}")
             path = site / rel
-            if rel in rows or rel in owned or "\\" in rel or Path(rel).is_absolute() or path.resolve() != path or not path.is_relative_to(root):
+            resolved = path.resolve()
+            if not resolved.is_relative_to(root):
+                fail(f"unsafe or overlapping dependency RECORD: {name}")
+            cursor = site
+            for part in pure.parts:
+                if part == "..":
+                    cursor = cursor.parent
+                else:
+                    cursor /= part
+                    if cursor.is_symlink():
+                        fail(f"unsafe or overlapping dependency RECORD: {name}")
+            physical = str(resolved.relative_to(root))
+            if physical in physical_rows or physical in owned:
                 fail(f"unsafe or overlapping dependency RECORD: {name}")
             rows.add(rel)
+            physical_rows.add(physical)
+            child_file(root, resolved)
             content = captured_bytes(path)
             original = wheel_files.get(rel)
             if original is not None:
@@ -228,22 +581,81 @@ def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
                     fail(f"dependency bytecode differs from original wheel: {rel}")
                 if not encoded and not size:
                     continue
+            elif rel in generated_scripts:
+                if content not in generated_scripts[rel]:
+                    fail(f"generated dependency script differs from wheel entry point: {rel}")
             elif Path(rel).parent != Path(record).parent or Path(rel).name not in {"INSTALLER", "REQUESTED"}:
                 fail(f"unowned installed dependency file: {rel}")
+            elif content != (b"pip\n" if Path(rel).name == "INSTALLER" else b""):
+                fail(f"unexpected installer bookkeeping: {rel}")
             digest = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).decode().rstrip("=")
             if encoded != "sha256=" + digest or size != str(len(content)):
                 fail(f"dependency RECORD integrity mismatch: {rel}")
         if not set(wheel_files).issubset(rows):
             fail(f"incomplete installed dependency: {name}")
+        if record not in rows:
+            fail(f"missing installed dependency RECORD self-row: {name}")
+        if not set(generated_scripts).issubset(rows):
+            fail(f"missing installed console script: {name}")
         for prefix in {Path(rel).parts[0] for rel in wheel_files}:
             location = site / prefix
             for path in ([location] if location.is_file() else location.rglob("*")):
+                if path.is_symlink():
+                    fail(f"symlinked dependency package path: {path.name}")
                 if path.is_file() and str(path.relative_to(site)) not in rows:
                     fail(f"unowned dependency package file: {path.name}")
-        owned.update(rows)
+        owned.update(physical_rows)
+
+    # Reconcile every installed file, including metadata not discovered by
+    # importlib and executables outside active package prefixes.
+    for dist in distributions:
+        if getattr(dist, "_path", None) not in expected_distributions:
+            name = canonicalize_name(dist.metadata.get("Name", ""))
+            if name in {"pip", "setuptools", "wheel"}:
+                fail(f"missing authenticated original bootstrap wheel: {name}=={dist.version}")
+            fail(f"unowned installed distribution: {name}")
+    maker = (interpreter or Path(sys.executable)).resolve()
+    if maker.is_relative_to(root):
+        fail("maker interpreter must be outside the installed child")
+    maker_bytes = captured_bytes(maker)
+    aliases = {"python", "python3"}
+    if re.fullmatch(r"python3\.[0-9]+", maker.name):
+        aliases.add(maker.name)
+    if bootstrap:
+        aliases.add(f"python{sys.version_info.major}.{sys.version_info.minor}")
+    for alias in aliases:
+        path = root / "bin" / alias
+        if bootstrap and not path.exists():
+            fail("missing bootstrap interpreter: bin/" + alias)
+        if path.exists() or path.is_symlink():
+            child_file(root, path)
+            if captured_bytes(path) != maker_bytes:
+                fail("child interpreter differs from maker interpreter")
+            physical = str(path.relative_to(root))
+            if physical in owned:
+                fail("dependency RECORD overlaps bootstrap interpreter")
+            owned.add(physical)
+    if "bin/python" not in owned:
+        fail("missing bootstrap interpreter: bin/python")
+    # Only ancestors of authenticated files and the exact empty venv include
+    # layout are structural directories. No namespace grants file ownership.
+    allowed_dirs = {root, root / "lib", site.parent, site, root / "include", root / "include" / f"python{sys.version_info.major}.{sys.version_info.minor}"}
+    for rel in owned:
+        allowed_dirs.update((root / rel).parents)
+    for path in root.rglob("*"):
+        info = path.lstat()
+        if info.st_uid == os.getuid() and stat.S_ISLNK(info.st_mode) and path == root / "lib64" and path.readlink() == Path("lib") and (root / "lib") == (root / "lib").resolve():
+            continue
+        if stat.S_ISDIR(info.st_mode):
+            if info.st_uid != os.getuid() or path not in allowed_dirs:
+                fail(f"unowned installed directory: {path.relative_to(root)}")
+            continue
+        child_file(root, path)
+        if str(path.relative_to(root)) not in owned:
+            fail(f"unowned installed file: {path.relative_to(root)}")
 
 
-def install_snapshot(wheelhouse: Path, requirements: bytes, flags: list[str]) -> None:
+def install_snapshot(wheelhouse: Path, requirements: bytes, flags: list[str], *, python: str | None = None) -> None:
     # pip rechecks every wheel hash against a kernel-sealed lock. Parent rename
     # or snapshot mutation cannot substitute requirements or authorize new bytes.
     lock_fd = os.memfd_create("dependency-lock", os.MFD_ALLOW_SEALING)
@@ -254,7 +666,17 @@ def install_snapshot(wheelhouse: Path, requirements: bytes, flags: list[str]) ->
             stream.flush()
         fcntl.fcntl(lock_fd, fcntl.F_ADD_SEALS,
                     fcntl.F_SEAL_WRITE | fcntl.F_SEAL_GROW | fcntl.F_SEAL_SHRINK | fcntl.F_SEAL_SEAL)
-        subprocess.run([sys.executable, "-m", "pip", "install", *flags,
+        command = [python or sys.executable, "-I", "-m", "pip"]
+        bootstrap_flags = []
+        if wheelhouse.name == ".bootstrap-wheelhouse":
+            pip_name = next(name for name in BOOTSTRAP_WHEELS if name.startswith("pip-"))
+            if captured_bytes(wheelhouse / "requirements.txt") != BOOTSTRAP_LOCK or hashlib.sha256(captured_bytes(wheelhouse / pip_name)).hexdigest() != BOOTSTRAP_WHEELS[pip_name]:
+                fail("bootstrap installer differs from original pip wheel")
+            bootstrap_flags = ["--ignore-installed"]
+            command = [python or sys.executable, "-I", "-c",
+                       "import runpy,sys; sys.path.insert(0,sys.argv.pop(1)); runpy.run_module('pip',run_name='__main__')",
+                       f"/proc/self/fd/{directory_fd}/{pip_name}"]
+        subprocess.run([*command, "install", *bootstrap_flags, *flags,
                         "--no-index", "--find-links", f"/proc/self/fd/{directory_fd}",
                         "--require-hashes", "--no-deps", "-r", f"/proc/self/fd/{lock_fd}"],
                        pass_fds=(lock_fd, directory_fd), check=True)
@@ -263,8 +685,52 @@ def install_snapshot(wheelhouse: Path, requirements: bytes, flags: list[str]) ->
         os.close(lock_fd)
 
 
-def main() -> int:
+def main(*, local_inventory: dict[str, set[str]] | None = None) -> int:
+    interpreter: Path | None = None
     args = sys.argv[1:]
+    if args and args[0] == "--bootstrap-identity":
+        print(bootstrap_identity(Path(args[1])))
+        return 0
+    if args and args[0] == "--verify-bootstrap":
+        root, interpreter = map(Path, args[1:])
+        installed_integrity(root, retained_bootstrap(root, interpreter), interpreter=interpreter, bootstrap=True)
+        return 0
+    if args and args[0] == "--prepare-bootstrap":
+        archive, root, interpreter = map(Path, args[1:])
+        artifacts = bootstrap_artifacts(archive)
+        authority = bootstrap_identity(interpreter)
+        write_snapshot(root / ".bootstrap-wheelhouse", BOOTSTRAP_LOCK, artifacts)
+        (root / ".bootstrap-input.tgz").write_bytes(captured_bytes(archive))
+        (root / ".bootstrap-authority").write_text(authority + "\n")
+        (root / "pyvenv.cfg").write_bytes(venv_files(root)["pyvenv.cfg"])
+        verify_venv_files(root)
+        # Interpreter copies are checked before any dependent wheel executes.
+        for alias in ("python", "python3", f"python3.{sys.version_info.minor}"):
+            child_file(root, root / "bin" / alias)
+            if captured_bytes(root / "bin" / alias) != captured_bytes(interpreter.resolve()):
+                fail("child interpreter differs from maker interpreter")
+        installed_integrity(root, {}, interpreter=interpreter, bootstrap=True)
+        return 0
+    bootstrap_root = None
+    if "--bootstrap-root" in args:
+        index = args.index("--bootstrap-root")
+        bootstrap_root = Path(args[index + 1])
+        args = args[:index] + args[index + 2:]
+    install_python = None
+    if "--install-python" in args:
+        index = args.index("--install-python")
+        install_python = args[index + 1]
+        args = args[:index] + args[index + 2:]
+    interpreter = None
+    if "--maker-python" in args:
+        index = args.index("--maker-python")
+        if len(args) <= index + 1:
+            fail("maker interpreter path is missing")
+        executable = shutil.which(args[index + 1])
+        if executable is None:
+            fail("maker interpreter is unavailable")
+        interpreter = Path(executable)
+        args = args[:index] + args[index + 2:]
     committed_lock = None
     if "--committed-lock" in args:
         index = args.index("--committed-lock")
@@ -351,9 +817,27 @@ def main() -> int:
         fail("missing compatible wheel for: " + ", ".join(missing))
     artifacts = {path.name: data for path, data in matched.values()}
     if installed is not None:
-        installed_integrity(installed, artifacts)
+        if bootstrap_root is not None:
+            if bootstrap_root != installed or interpreter is None:
+                fail("bootstrap verification requires exact child and maker interpreter")
+            bootstrap_wheels = retained_bootstrap(installed, interpreter)
+            if artifacts.keys() & bootstrap_wheels.keys():
+                fail("dependency seed overlaps bootstrap wheels")
+            artifacts.update(bootstrap_wheels)
+        local_inventory = dict(local_inventory or {})
+        root_owned = set(local_inventory.get("__root__", set()))
+        root_owned.update(str((wheelhouse / name).relative_to(installed)) for name in {"requirements.txt", *(path.name for path, _ in matched.values())})
+        req = installed / ".provision-requirements.txt"
+        if req.exists():
+            child_file(installed, req)
+            if captured_bytes(req) != requirements_bytes:
+                fail("retained provision requirements differ from committed lock")
+            root_owned.add(req.name)
+        local_inventory["__root__"] = root_owned
+        installed_integrity(installed, artifacts, interpreter=interpreter, local_inventory=local_inventory,
+                            bootstrap=bootstrap_root is not None)
     if install_flags is not None:
-        install_snapshot(wheelhouse, requirements_bytes, install_flags)
+        install_snapshot(wheelhouse, requirements_bytes, install_flags, python=install_python)
     if snapshot is not None:
         write_snapshot(snapshot, requirements_bytes, artifacts)
         print(f"verified dependency seed snapshot={snapshot} packages={len(matched)}")
