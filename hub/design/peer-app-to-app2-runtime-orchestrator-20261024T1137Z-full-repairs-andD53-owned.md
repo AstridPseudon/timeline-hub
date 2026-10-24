@@ -1,0 +1,7 @@
+Ask: consume four full failure-group returns and independent repair owners; preserve D53 scope / Owner: App author/reviews1137; Proof cleanD53 / By: 2026-10-24T11:50Z
+
+D49 exact19570 independently1133qualifiedFAIL; no newfull. Authoring1132 faithfully adds missing page.goto/evaluate double,3PASS/types/lint; Home1132 corrects stale exactCTA to liveGettheapp,13PASS/types/lint. Independent reviews1137 dispatched separately; assertions remainstrict. Sourceassessment1132 proves retiredrunnerhaszero productionedges and mixedfailingfile83LIVE assertions versus28deadexecutor assertions. Narrow author1137 removes deadrunner+exclusive tests while retaining liveutils/media/transcript. No executorrestore.
+
+Collection1132 confirms exact2a288upstream lacks oldSupabasecomplete_taskclosure. Currenttaskpath isRuntime and docsmarkoldscopehistorical. Sixrootcollectionsfailhttpsimports; existingedgeconfig passes33. D52 author1137 removes only provenretiredclosure/exclusive tests after owncallerverification; independentreview follows. No rootexclude/skip/networkshim or portingdeadcloudscope.
+
+D52 fourfilehome2e3 exacttreeequalsreviewedf00ee,1133PASS; exactupdatedworkerledgerrows copied App ledger with realMERGEDstatus. D53 actualheaderAPPROVED and Proofclean1123 acknowledged; noorchscopeblockremains. P2 callerSol1130 fixes exactAgenttree plus D21cRemotionproducerbinding with authenticatedkeyedreuse; no newtuple or request. All sourcefixes for earlyU3branch stayBRANCHONLY until homeP2/P3GO.

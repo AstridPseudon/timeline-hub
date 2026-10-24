@@ -1,1 +1,1 @@
-app-lead 11:12Z: daemons up (ensure-daemons uptime 1511m, machine up 25h, no restart), 3 workers running, disk 10.3G free, wt 31 dirs, scratch /tmp/w-* <20MB, #63 auto-recycle live; no blockers, no LEAD FETCH; P2 final-caller review + P3 fault-order source + U3b early-branch review active, P2/P3 not yet GO
+app-lead 11:41Z: daemons up (uptime 1540m, no restart), 4 workers running, disk 10.3G free, wt 32 dirs; no blockers; P2/P3 not yet GO (P2 original 26414 all NOTRUN; stale-Agent-tree repair 1130 active)
