@@ -76,7 +76,9 @@ def pytest_sessionfinish(session, exitstatus):
     for pgid in groups:
         try:
             os.killpg(pgid, signal.SIGTERM)
-        except ProcessLookupError:
+        except (ProcessLookupError, PermissionError):
+            # PermissionError: seccomp sandboxes (e.g. OpenShell) deny process-group
+            # kills; still report the leak below instead of losing the summary.
             pass
     deadline = time.monotonic() + 2
     while time.monotonic() < deadline and any(_group_exists(pgid) for pgid in groups):
@@ -85,7 +87,7 @@ def pytest_sessionfinish(session, exitstatus):
         if _group_exists(pgid):
             try:
                 os.killpg(pgid, signal.SIGKILL)
-            except ProcessLookupError:
+            except (ProcessLookupError, PermissionError):
                 pass
     reporter = session.config.pluginmanager.get_plugin("terminalreporter")
     if reporter is not None:
