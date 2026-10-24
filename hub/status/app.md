@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T06:48:20Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 1m -->
-# app board, 2026-10-24T06:47Z
+<!-- app | 2026-10-24T06:51:56Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 0m -->
+# app board, 2026-10-24T06:51Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -19,8 +19,8 @@
 | readiness-after-bootstrap | Qualify history and bootstrap readiness | App source; Proof verdict | D45 actual stage PASS | merged | Caller 0446; producer 0454; Proof 0508 | Both D45 readiness leaves passed; P3 test 16.7 seconds. Gate failures are downstream. Historical causes stay bounded. | c0fe / 079 / 37eb |
 | P-door-port-alloc | Allocate door port per run | Luna; D21 | Resolved | merged | app-P2-P3-door-allocation-0039 | [Node 20 allocation, shared stage value and failure checks passed.](/home/user/timeline-hub/hub/design/app-P2-P3-door-allocation-0039.md) | Harness rows only |
 | readiness-upstream-check | Check f38e candidate | Sol; Luna review | Review 0057 PASS | merged | App Sol 0046; Luna 0057 | No census or attempt-root signature supports attribution. Exact patch is unavailable locally; historical cause remains unknown. | Report only |
-| P2 | Eight original gesture cases | App service; Proof verdict | Corrected proof and caller PASS | doing | Actual 20674; target check 0636 | Source preflight exit2 in6s. All eight originals NOTRUN. Caller artifact target refused correctly; exact product-target correction active. | Selected 663; HOME 9b810 |
-| P3 | Original Gate-5 journey | App service; Proof verdict | Corrected proof and caller PASS | doing | Actual 10144; target check 0636 | Source preflight exit2 in6s. Gate5 NOTRUN. Same wrong artifact target refused; no body or guard change. | Selected 663; HOME 9b810 |
+| P2 | Eight original gesture cases | App service; Proof verdict | Corrected proof and caller PASS | doing | Actual 23809; producer0648; Proof verdict | Verified product-target request submitted06:47:59Z. Prior20674 source refusal preserved, originals NOTRUN. Await new actual ID. | Selected 663; HOME 9b810 |
+| P3 | Original Gate-5 journey | App service; Proof verdict | Corrected proof and caller PASS | doing | Actual 9310; producer0648; Proof verdict | Verified product-target request submitted06:47:59Z. Prior10144 source refusal preserved, Gate5 NOTRUN. Await new actual ID. | Selected 663; HOME 9b810 |
 | A2-parent-media-closure | Preserve untouched child closure | Sol; Luna review | Resolved | merged | app-A2-parent-media-integrated-0035 | [299 tests, types, lint and external producer passed.](/home/user/timeline-hub/hub/design/app-A2-parent-media-integrated-0035.md) | 1b0428db7d |
 | A2-image-created | Declare genuine image creations | Sol; Luna review | Review 0133 PASS | merged | app-A2-image-created-sol-0126 | Independent 261 tests and producer 28, three types and lint passed. Clip and new authored registry alias claims match provider. Joined proof 0150 passed 448 tests, three types and lint. | b3a84dea71 / 1c5cc47bf6 |
 | A4-image-live | Complete source-bound image witness | Luna producer; Agent independent review | Independent 0636 PASS | merged | App producer0520; Agent0554 and0636 | [Actual acceptance, retry, refusals, undo, history and canonical restore PASS.](../../design/agt-A4-image-result-review-0636.md) Direct Runtime service scope. | App1c5cc / Agent2007 / Runtime8ea |
@@ -80,18 +80,17 @@
 | App-current-real-path-proof | Qualify all final mounted caller repairs | Luna | Independent correction merged | merged | app-A2-A3-corrected-integrated-0629 | [27 files, 690 tests, Gate5 12 controls, three types and lint PASS.](../../design/app-A2-A3-corrected-integrated-0629.md) Donor and protected blobs pass. | 9b810408cc |
 
 | A2-media-timing-join | Preserve prepared media canonical timing | Sol; Luna review | Independent 0623 PASS | merged | app-A2-media-timing-review-0623 | [252 tests, all 26 media tests, three types and lint passed.](../../design/app-A2-media-timing-review-0623.md) Original timing assertion unchanged. | 6635416195 / 9b810408cc |
-| P2-P3-target | Qualify product source dispatch target | Luna; D21 | Source and caller PASS | doing | app-P2-P3-source-target-sol-0644 | Luna fixture expanded into copied bench and was stopped. Sol now checks only unchanged App source guards; no new bench or suite changes. | Source663 / HOME9b810 |
+| P2-P3-target | Qualify product source dispatch target | Sol; D21 | Final source guards PASS | merged | app-P2-P3-source-target-sol-0644 | [15 source control blocks PASS, 43KB fixture.](../../design/app-P2-P3-source-target-sol-0644.md) Correct target exact663; wrong artifact tree refuses. | Source663 / HOME9b810 |
 
-| P2-five-final-precheck | Precheck five original never-run paths | Luna | Orchestrator 06:45 ask | doing | app-P2-five-current-precheck-0647 | Current 9b810 source map; certain defects only. No browser claim or new original. | 9b810408cc |
+| P2-five-final-precheck | Precheck five original never-run paths | Luna; independent review | Author0647 complete | review | app-P2-five-oracle-review-0651 | Four candidate strict helper mismatches need whole-helper validation. Popup SWAP aligned. No source edits or live proof. | 9b810408cc |
 | U3b-freeze-plan | Prepare upstream delta and merge order | Luna | Orchestrator 06:45 ask | doing | app-U3b-freeze-plan-0647 | Read-only delta to local upstream 2a288; conflict preview and final gate plan. Actual merge remains frozen. | Plan only |
 
 Integration: 9b810408ccf8aadbca708dd0bc461afc19576427, tree 9a37265f0286128df7e6240a9df9877d959474af. Exact whole tree equals independently reviewed timing candidate 6635416195. All reviewed catalog, parameter, popup, parent, P3 setup and oracle repairs remain present.
 
-Next ready: D21 source target Sol0644 qualifies exact product branch before corrected dispatch. Producer0634 returns actual preflight NOTRUN facts; no repeat of terminal IDs.
-Blockers: App — exact product source guard qualification0644 must pass. Luna0636 was stopped after an oversized copied bench fixture.
+Next ready: Sole producer0648 qualifies actual23809/9310 terminal results. Wait same IDs. Five-current-gestureprecheck0647 and freezeplan0647 active in parallel.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
 
-P2/P3: Requests 20674 and10144 failed source preflight in6s, before setup or originals. Target correction0636 is active; original meaningful pair still awaits correct source target. D45 pair is consumed. P213583 failed three with five not run; P34065 failed first original reset after readiness passed. Every original guard, wait, intended-field, reload, undo and tail remains required.
+P2/P3: Verified product-target requests23809 and9310 submitted06:47:59Z. Wait same IDs. Prior20674/10144 wrong artifact target failed source preflight in6s, all originalsNOTRUN. Correct target qualified15 controls0644. D45 pair is consumed. P213583 failed three with five not run; P34065 failed first original reset after readiness passed. Every original guard, wait, intended-field, reload, undo and tail remains required.
 P1: GO at00:43 on Appf8, Agent787 and Runtime2a9 with original18792 and independent0036/0040. Final freeze reruns all gates on final heads.
 IMAGE0554: independent0636 PASS closes the bounded direct RuntimeService behavior on App1c5cc, Agent2007 and Runtime8ea. App commit/blob metadata mislabel remains disclosed. No HTTP/auth or broader gate credit.
 
