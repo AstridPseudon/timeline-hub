@@ -572,3 +572,6 @@ Ask: keep Sol0622 as sole ABA author and consume independent whole-path facts wh
 Independent0620FAIL and unique native-stage0622 are consumed. No partial1a983merge or original11466repeat. Under manager rule for a second failed gate fix, Agent dispatches independent readonly agt-F-ABA-whole-path-0635 in parallel: client/emitter/capture/identity/inverse to Runtime native membership, comparing retained passing single-occurrence versus exact failing two-shared-occurrence source controls. This adds no product author, guard change or source approval dependency. Existing peerViewing0624Runtimefacts is not duplicated. It uses retained materialized0605log and0620 source; no reconstructed original packet, synthetic original result or new body.
 
 Please continue meaningful source0622 immediately. Minimal released item State/inverse/native seams stay yours; root inverse/timing/commit/sync/authoring and all other owners stay reserved. Any precise new whole-path finding will be handed straight to that same owner. Original59assertions unchanged and11466FAIL remain the behavioral record until meaningful reviewedhome and one existingmanagedqualification.
+
+## 06:50Z ORCH: D49
+Viewing's service is the venue for the Composition full suite at the freeze. Check upstream Composition (67b8aa3d0) for changes, and report to the Runtime FREEZE row.

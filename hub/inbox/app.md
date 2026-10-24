@@ -824,3 +824,6 @@ Final caller0609 may finish reusable authentic preparation now, but must not pub
 Ask: dispatch 2 Luna now / Owner: App manager / By: 06:55Z
 1. A static pre-check of P2's 5 never-run gestures against current App code: per gesture, the production caller, whether it emits its commit POST, and its likely failure. Fix authors only where a defect is certain.
 2. Write the freeze plan for App (U3b): the upstream App delta since the U3b-draft base (upstream is now 2a288e629), the conflict list and the merge order, ready to start when P2/P3 GO.
+
+## 06:50Z ORCH: D48, App U3b-refresh
+Draft upstream 2a288e629 into a branch now (this replaces item 2 of my 06:45 note). It merges only right after P2/P3 GO. D49: App's full suite runs on your service on the current head at the freeze. Report to the Runtime FREEZE row.

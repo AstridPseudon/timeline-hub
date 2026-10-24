@@ -33,6 +33,7 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - 46 merges in 3 h.
   - **ETA ~14:00Z 25 Oct (06:00Z 25 Oct to 06:00Z 26 Oct).**
 - **05:13Z: READINESS SOLVED for P2 and P3** (D45 pair on App c0fe889944 + Agent 079 + Runtime 37eb, no memo). P3 4065 passes readiness in 16.7 s; the original Gate-5 ran and then FAILED (its reset expects a 5-second state the fresh fixture lacks; Proof owns the setup correction, no weakening). P2 13583: element, popup ADD and parent move still FAIL, 5 NOT RUN (Sol 0459 + independent).
+- **H33 (06:55Z):** Agent D32 is 65 of 267 open; Runtime full 0 of 36. P3 needs a setup precondition; P2 has 3 App gesture fixes plus 5 never-run gestures. D48 freeze plan and D49 venues set. 32 merges in 3 h. **ETA ~16:00Z 25 Oct (06:00Z 25 Oct to 10:00Z 26 Oct).**
 - **H3 go/no-go (P1, 00:40Z): NO-GO (partial).**
   - **PASS:** the R1 real corpus (42 tests on e6f7167d), plus the App provenance and local-save module tests.
   - **NOT proven:** the integrated App chain. Blockers: A2 is not wired into the mounted save path; the v2 DTOs are absent (R0); the rm-f holds (root cause fixed 00:50Z).
@@ -121,6 +122,21 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
 - **D45, the next P2/P3 run doesn't wait for the D42 memo (04:45Z):** the memo's security review keeps finding bypasses (sealed-validation Sol 0423). The run doesn't need it: 37eb's 3x cost cut plus App's merged coalescing (one history GET, not two) should fit the 5 s poll.
 - **D46, U2c closed; relay and remote-provider custody stay out of scope (04:55Z):**
 - **D47, D42 memo deferred (05:08Z):** the D42 verification memo or validation capsule is DEFERRED until after delivery, as Runtime recommended. No stable sealed validator boundary exists, and nine state attacks are open. Its held source stays unmerged on its branch, listed as a follow-up. No capsule scope is opened now. Runtime priority: the farm checkpoint follow-through, the 10 open headless nodes and the occupancy rows.
+- **D48, the freeze is an owned, dated sequence (06:50Z). Coordinator: Runtime manager** (main machine, with hub access). One row `FREEZE` on the Runtime board, listing each step with its owner and state:
+  1. **Draft now, on branches, in parallel:**
+     - Runtime U1c (ready);
+     - **Agent U2-freeze**: upstream 25359ed68 into Agent tl/integration (includes f38e164cca and D46). Agent manager, Luna + Sol review;
+     - **App U3b-refresh**: upstream 2a288e629 (App manager);
+     - Composition: check upstream; no merge if it is unchanged (67b8aa3d0).
+  2. **Merge into integration as soon as reviewed:** Runtime U1c, then D39 client generation; Agent U2-freeze, then D39 tuple adoption in Agent. This is now allowed: the P2/P3 runs use exact pins (App 9b810 / Agent 079 / Runtime 37eb), not integration heads, and the freeze re-runs every gate anyway. That supersedes 'no merge while an exact-pin proof is pending' for this freeze. **App U3b merges right after P2/P3 GO** (so App's in-flight P2 fixes don't rebase onto it), then D39 adoption in App.
+  3. **Integrated qualification** of the final tuple (all three integration heads), then **re-run P1–P5** on it (Proof), then the **final full suites** (D49), then **farm F-final + ZIP**.
+- **D49, final full-suite venues (06:50Z), each proven by one checkpoint run before the freeze ends:**
+  - Runtime full: main's test service (proven: 0 of 36 open).
+  - Agent full: **the farm**, once OPS-farm-agent-full v2 fixes its environment and a checkpoint shows zero setup errors. The fallback is Agent's own service, after the child-venv dependency-reuse fix.
+  - App full: App's test service, on the current head (last full run was 12ef).
+  - Composition: Viewing's service.
+  - P1–P5: App's service, with Proof verdicts.
+  - Each lane board shows its venue and the checkpoint result.
   - U2c (the early port of upstream f38e164cca) is CLOSED: the readiness root cause was Runtime-side (D42 and D45). The commit arrives with the single Agent U-merge at the freeze, and candidate a181136220 stays unmerged.
   - **No new authority backend** for Linux relay peers, and **no provider-child custody** for RunPod. The paired relay and remote providers are owner-deferred scope (default: local Runtime door only), and the guards stay fail-closed.
   - At the freeze, any upstream test that fails only because our custody rejects unauthenticated relay peers or unproven provider children is reported to the owner as a known gap of deferred scope, unchanged and visibly failing, unless upstream's own lane registry already marks it manual or opt-in. Never weaken a guard to pass it.
