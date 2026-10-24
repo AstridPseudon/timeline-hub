@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T04:05:48Z | dispatcher heartbeat 3s | live 3 (sol 0, luna 3, other 0) | busy30 20 | status age 0m -->
+<!-- agent | 2026-10-24T04:08:02Z | dispatcher heartbeat 12s | live 3 (sol 1, luna 2, other 0) | busy30 19 | status age 0m -->
 # agent board, 2026-10-24T04:05:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -45,16 +45,16 @@
 | F-helper-sequential | Repair sequential replay map | Sol / Luna | Integrated proof passed | merged | Source184dc; review0224; integrated0232 | Actual8a8d:12focused, Ruff2145 and mypy1909 passed; vendor/artifact passed. Original True and False passed on exact reviewed source. | 184dc20a70 |
 | F-D32-h3-import | Seven isolated child-import cases | Luna | Existing installed child | merged | agt-F-h3-env-0137 | All seven original fault cases passed in 3.60s; preflight/postflight, body and source identities retained. | 521c source |
 | F-ruff-baseline | Tighten static baselines | Luna | Exact reviewed tree | merged | Review0218; D38 remainder0228 | Actual10d2 tree exactly reviewedc836: Ruff2145 and mypy1909 makegates PASS. Remainder mypy timeout disclosed, no repeat. | c8360b3732 |
-| A4 IMAGE | Complete accepted image witness | Luna | Fixture merge and new producer readiness | merging | Foreign0348; review0354 PASS |17 fixture and7 authority controls pass; live0330 accepted and retried. Full inverse/reopen/refusals remain unrun. Parent20 failures stay ours. | a1036f9e8d queued |
+| A4 IMAGE | Complete accepted image witness | Luna | Fixture merge and new producer readiness | review | Foreign0348; review0354; integrated0412 | 17 fixture and7 authority controls pass; live0330 accepted and retried. Full inverse/reopen/refusals remain unrun. Parent20 failures stay ours. | a1036f9e8d; home69a854d82b |
 | OPS-suites-prune | Retain required registry entries | Runtime Luna | No target proven unreferenced | gated:eligibility | Final citation review0306 PASS | Finite assessment complete. Zero qualified retirement targets, zero live edits and zero GB freed. No new audit requested. | evidence only |
 | D31 | Dormant transcript capture subset | — | Follow-up funding | gated:D31 | No active author | Keep the 397-line test suite and implementation unchanged. Literal production reachability is NO. | unchanged |
 | V4 / D14 / D23 | Cut and deferred relational timing | — | Scope decisions | gated:H9 | No repair worker | Keep original tests unchanged, unskipped and visibly failing. No V4 or relational-timing completion claim. | unchanged |
-| U2c | Qualify freeze-held readiness draft | Luna | Exact dependency and abort causes | review | Cause0354; review0407 | Nine errors plus one failure need Runtime API alignment; four abort mismatches and one socket failure remain. Branch held; no readiness claim. | 699236a285 held |
+| U2c | Qualify freeze-held readiness draft | Luna | Exact dependency and abort causes | doing | Sol agt-U2c-activation-sol-0410 | Independent0407 names obsolete fixture keyword and real abort identity gap. Same draft fix dispatched with supported net route. Branch held; no readiness claim. | 699236a285 held |
 | F-headless-root-mirror | Preserve complete canonical mirror effects | Sol / Luna | Bounded source repair | doing | vw-F-headless-root-mirror-sol-0358 | Runtime0332 and0349 independently confirm omitted mirror removal. Viewing uniquely owns effect shortcut; original67 predicates retained. | Base8657e83653 |
 | F-retired-callers | Retained native, CLI and scene scenarios | Luna / Sol | Exact33 subset | doing | vw-F-retired-callers-census-0358 | Exact24 native-sheet,7 CLI,2 scene nodes independently verified. Viewing maps prior proofs before fixing; no retired writer restoration. | Census H30 |
-| F-count | Reconcile all267 original failures | Luna | Independent correction0358 | doing | agt-F-census-return-0407 | Review corrects142 closed,125 open. Six render-wire originals credited; seven H3 nodes need current D40 source. Farm checkpoint pending. | Evidence only |
+| F-count | Reconcile all267 original failures | Luna | Independent correction0358 | review | Return0407; final review0410 | Corrected JSON preserves267 exact IDs:142 closed,125 open. Six render-wire originals credited; seven H3 nodes need current D40 source. Farm checkpoint pending. | Evidence only |
 P1: GO. Original service 18792 passed both cases; Proof reviews 0036 and 0040 passed. P4 and P5 are done. G5 already merged under H24. P2 and P3 remain with App and Proof.
-Integration: 9f2da582a6 includes reviewed historical carrier12701589. Canonical45c3 client, schema d106 and Composition819acf unchanged. Image fixture a103 merge queued.
+Integration: 9f2da582a6 includes reviewed historical carrier12701589. Canonical45c3 client, schema d106 and Composition819acf unchanged. Image fixture a103 is merged at69a854d82b; lightweight actual integrated controls0412 queued.
 Blockers: Agent full waits for the remaining owned fixes and finite qualifications. D32 comparison rejected all pre-existing credits; no full retry.
 Blockers: Agent full waits for complete authoring undo, shared-alias projection, historical sharing, installed external sources, image proof and the original rendering timeout.
 Safety: Earlier Farm, monitor, publication and bench permission refusals remain stopped. No denied action was retried here.
