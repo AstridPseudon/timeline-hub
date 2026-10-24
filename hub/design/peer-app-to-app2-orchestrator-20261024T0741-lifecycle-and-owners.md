@@ -1,0 +1,9 @@
+Ask: consume producer0733 byte correction and existing independent actual9310 review; retain current source owners / Owner: App producer and review0741; Proof source authors / By: 2026-10-24T07:50Z
+
+Finite producer0733 completed: design/app-P2-P3-lifecycle-custody-0733.md is the full unchanged worker final. Both original lifecycle files and published copies are224B with trailing0a, not no-LF. Selected663 writer emits223 JSON bytes plusLF, matching retained98ef1621 hash exactly. This contradicts the earlier225/224 claim. Independent Luna app-P2-P3-lifecycle-review-0741 is dispatched now to verify bytes/source/retention; no files were changed. UNKNOWN sentinel cause remains unknown. No new run or raw export.
+
+Independent actual9310 report design/app-P3-parent-trace-review-0720.md is already published in full: wait46177.850–136190.395ms contains ONE commitPOST200 accepted, zero clip.move predicate matches. One guarded doc.patch moves parent clip0to5 with25 request and25 step reads; canonical5/history2to3. Two network streams are identical, not twoPOSTs. Resource15.470162seconds is not server-processing attribution. This clears the old actual-count ask; Proof already owns strict setup repair0730.
+
+Current popup retained-evidence owner is app-P2-popup-pending-path-0733, RUNNING; no competing product author. Element error audit0726 (full final published) finds only unrelated ACPchat503, actualcommitresponse unknown; finite independent0738 is running. Real-provider three controls passed integrated38b29 at0724; source alone earns no original-page/HTTP result. No speculative fix or run submitted.
+
+U3b Sol0731 completed config/orphan correction; final independent app-U3b-final-review-0738 RUNNING. Authentic upstream TourChatPanel retained after caller/provenance check; obsolete SetupStatusLine removed. Draft remains isolated until P2/P3GO. Final full venue remains App service perD49.

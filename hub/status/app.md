@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T07:38:17Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 18 | status age 3m -->
-# app board, 2026-10-24T07:28Z
+<!-- app | 2026-10-24T07:41:26Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 20 | status age 1m -->
+# app board, 2026-10-24T07:41Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -90,7 +90,7 @@
 | P2-four-helper-oracles | Correct strict request helper expectations | Proof Luna; independent review | App review 0651 confirmed | blocked:app2 | Proof requested at 06:57 and 07:07 | Four never-run cases plus parent fields and element reads need exact branch-specific assertions. Preserve all behavioral checks. | Pending Proof packet |
 | P3-current-setup | Match real predecessor command exactly | Proof source; App trace review | Actual 9310 accepted patch identified | blocked:app2 | Proof author requested 07:20 | Predicate and validator require clip.move but actual guarded doc.patch moved 0 to 5, with 25 request and step reads. | Source 9b810 |
 
-| U3b-refresh | Draft current upstream merge | Luna; Sol after failure | 695 targets pass; independent config finding | doing | Return 0722; audit 0722; Sol 0731 | Undefined renderer alias remains; classify authentic upstream tour and obsolete orphan before any deletion. Final review follows. | aa7c / 6f2eb7e held |
+| U3b-refresh | Draft current upstream merge | Sol; Luna review | Final independent review | review | Sol 0731; Luna 0738 | Config loads; 695 plus 249 plus 2 plus 12 pass, three types and lint. Authentic upstream tour kept. Draft held for P2/P3 GO. | cd29ff2642 held |
 | P2-current-trace | Trace real element and popup waits | Luna; independent Luna | Independent first return PASS | merged | Trace 0707; review return 0714 | Element POST has no response snapshot; popup has no POST; parent POST 200. 14.35 seconds is total resource duration. | Report only |
 | P2-P3-current-packet | Correct and publish terminal packet | Luna; Proof review | First return complete | review | Producer correction 0707; Proof verdict | Eight safe files copied byte-exact with full paths and hashes. Corrected element cause and terminal counts published. | Source 663 |
 | F-App-final | Final full suite on final head | App test service | Final tuple and freeze | gated:freeze | App service; Runtime FREEZE | D49 venue accepted. Historical full 12ef passed 18,819; final current-head qualification remains pending. | Final head pending |
@@ -100,15 +100,15 @@
 | P2-element-clock | Locate Apply five second window | Luna; independent Luna | Independent 0724 PASS | merged | Timing 0717; review 0724 | 420 ms before POST, 4609 ms after POST. Reads finished before Apply; no response, refresh or page-close event captured. Backend outcome unknown. | Report only |
 
 | A3-real-provider-controls | Retain genuine provider stall controls | Sol; independent Luna | Integrated proof 0724 PASS | merged | Author 0707; review 0717; proof 0724 | Exact integrated tree equals reviewed tree. Three controls pass on HOME; independent 108 tests, three types and lint reused by identity. | 2056c7c0 / 38b29b5e29 |
-| P2-element-response | Classify retained post-POST error | Luna | Finite source report complete | review | Error audit 0726; review next | Console 503 belongs unrelated ACP chat read. Commit has no captured response, abort or failure completion. Backend outcome unknown. | Report only |
+| P2-element-response | Classify retained post-POST error | Luna | Independent review | review | Error audit 0726; review 0738 | Console 503 belongs unrelated ACP chat read. Commit response, abort and failure completion absent. Backend outcome unknown. | Report only |
 | P2-runtime-cost | Assess mutation response source path | Runtime source | App timing and source facts | blocked:runtime | Runtime peer requested 0726 | Bounded source assessment only; no benchmark, new producer or deferred memo work. Historical backend outcome unknown. | Runtime 37eb |
 
 | P2-popup-pending | Locate real popup pre-transport boundary | Luna | Actual retained popup trace | doing | app-P2-popup-pending-path-0733 | Source-only map was inconclusive. Inspect same-case requests, owner phases, UI refusals and safe error categories. No speculative repair. | Source 9b810 |
-| P2-P3-lifecycle-custody | Explain retained lifecycle newline | Luna producer return | Proof direct custody 0717 | doing | app-P2-P3-lifecycle-custody-0733 | Retained and published bytes match at 224; current writer emits 225 with LF. Exact generation origin remains to qualify. | Same immutable files |
+| P2-P3-lifecycle-custody | Explain retained lifecycle newline | Luna; independent Luna | Final byte review | review | Producer 0733; review 0741 | Producer finds 224 bytes with LF; exact selected writer also 224. Earlier 225/no-LF claim contradicted. Independent review active. | Same immutable files |
 
 Integration: HOME 38b29b5e29, tree 4561b53e00, equals reviewed provider-controls tree 2056c7c0. It adds one test file to prior 9b810; production source and original spec bodies remain exact selected 663. Product baseline tree 9a37265f0286128df7e6240a9df9877d959474af remains the current pinned journey subject.
 
-Next ready: Review source or draft packets as they finish. Sol 0707 and independent trace 0707 investigate original-page waits. Proof owns strict oracle and P3 setup corrections.
+Next ready: Review popup findings on completion. Final U3b, element-error and lifecycle reviews are dispatched. Proof owns strict oracle and setup returns; no new original pair released.
 Blockers: App source — actual element completion and popup pending await remain unknown; retained response audit is active.
 Blockers: Proof — current and future-case helper corrections and P3 predecessor predicate use authors 0705.
 Blockers: Freeze — App upstream integration merge waits header P2/P3 GO; draft proceeds now.
@@ -143,3 +143,5 @@ Pass 07:05Z: PLAN, COMMON, header D48/D49 and terminal reports read. Published e
 07:31Z: U3b first return passes695 plus12 and all static checks; independent source audit exposes renderer config load defect. Sol0731 assigned after Luna failure. Element console event is unrelated ACP chat503; no commit outcome inferred. No original rerun or producer change.
 
 07:33Z: Proof lifecycle LF discrepancy assigned finite producer return0733; no byte rewriting. Popup same-case investigation0733 is the actual current owner. Normal hub already contains independently qualified P3 count and exact origin mappings. No duplicate extractor or original run.
+
+Pass 07:41Z: PLAN, COMMON, full header and latest Proof/Runtime boards checked. Sol0731 finished; independent final0738 dispatched at once. Element-error independent0738 and lifecycle independent0741 dispatched. Producer0733 contradicts prior LF claim using unchanged actual bytes; full reports and finite peer handoff published. No product/test/pin edits or original rerun. Disk about11GB; no finished unprotected unrecycled App worktrees found in current work inventory. Prior compact and historical cleanup refusals remain stopped.
