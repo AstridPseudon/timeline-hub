@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T14:07:25Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# app2 board, 2026-10-24T14:05Z
+<!-- app2 | 2026-10-24T14:09:40Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-24T14:07Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -51,7 +51,7 @@
 | F-final-host | Prepare App-host final proof routes | App Luna; independent Luna | Source recipe qualified; final inputs pending | merged | Return0754; independent0758 PASS | Actual tools, locks, maker argv and existing routes qualify. Missing P4/P5 registrations and final tuple remain explicit. | Source preparation only |
 | F-final-registrations | Retain historical App host preparation | App Luna | D59 venues supersede App host | gated:D59-venues | Draft0834; review0838; App1314 board | Historical source preparation only. P4 now Agent service; P5 main service. No duplicate App registration or new host worker owed. | Draft only |
 | F-App-early | Track D49 App checkpoint | App service; Luna | Same actual16138 terminal | blocked:app | App producer1227; repairs HOME | FAIL exit1 in1665s: Vitest19251 pass; Node257 pass,38 fail,26 skip. App owns categories and repairs; no final GO. | Tree3311 / HOMEd993 |
-| F-final-gates | Rerun final P1 to P5 | Lane services; App verdicts | D60 refresh and D59 cut | blocked:app | App1358; Agent1347 and ruling1400; Runtime1346 | Cut needs all lanes core0 and regressions0 plus current P2/P3 PASS. Caller, final source and final proofs remain owned. | Final tuple pending |
+| F-final-gates | Rerun final P1 to P5 | Lane services; App verdicts | D60 refresh and D59 cut | blocked:app | App1358; Agent1347 and ruling1400; Runtime1401 | Cut needs all lanes core0 and regressions0 plus current P2/P3 PASS. Caller, final source and final proofs remain owned. | Final tuple pending |
 | A4-source | Zero reachable legacy film writers | App; independent Luna | Census0438 and review0444 | merged | App0438 and0444 | Source-only end state qualified; D31/D37 retained subset unchanged. Same head523 tests, three types and lint passed. | c0fe |
 
 | P2-11933-verdict | Qualify terminal and retained limits | Independent Luna | Published producer1158 and peer1205 | merged | ap2-P2-11933-result-verdict-1213 | NO-GO469s,0pass/3fail/5notrun. Exact source and preserved assertions PASS. Remote files,full snapshot,daemon and direct safe bytes UNKNOWN. | Exactd6ed |
@@ -63,7 +63,7 @@
 
 D56.4: Proof is folded into App. The single complete handoff is [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md). All in-flight items are complete, including independent caller1213 PASS. No new Proof dispatch, old tuple run or product merge is owed. The manager loop remains alive for new orchestrator instructions.
 
-live 0 / cap 4; ready-undispatched 0. Copied dispatcher header: <!-- app2 | 2026-10-24T14:05:17Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 7m --> D56.4 stand-down remains binding; App owns transferred rows.
+live 0 / cap 4; ready-undispatched 0. Copied dispatcher header: <!-- app2 | 2026-10-24T14:07:25Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m --> D56.4 stand-down remains binding; App owns transferred rows.
 
 core open: 4 final proof gates P1 to P4 remain unqualified on final heads. Execution transferred to App for P1/P2/P3 and Agent for P4. All eight original P2 gestures are CORE under D55b. Historical passes do not qualify final heads.
 regressions: App13:51 reports0 open among historical Node38 on refreshed d24ed:36 repaired and passing;2 SSH environment failures. Final integrated full remains required. Proof claims no final zero-regression clearance.
@@ -90,7 +90,7 @@ Historical23809/9310 remain separate NO-GO: P2 exit1/463 seconds,three failed/fi
 
 D45 six older diagnostics are NOT RETAINED; creation/loss unproved. Synthetic P3 f182af and current3896 synthetic1bc3 are same-tree authorized snapshots; P2 historical synthetic identity and actual daemon attribution stay UNKNOWN. Source-preflight20674/10144 were wrong artifact targets, each exit2/6 seconds and all originalsNOTRUN. No failed run was relabelled or resubmitted.
 
-Final gates: App13:59 reports HOME d24ed qualified, current-fact d606 normal/optimized dry prepare PASS and independent complete custody1358 active; worker install/readback then current P2/P3 remain. Shared visual fixture1356 passed10 cases, with final Runtime home identity still required. Agent14:01 retains152 required PASS,4 fork FAIL,1 D13 UNKNOWN on47b; fork security candidate held for orchestrator ABI-mode ruling1400. Amended924 review and meaningful upstream baseline remain Agent-owned. Runtime f69 final source/test union remains under owner review. No final tuple or gate GO.
+Final gates: App13:59 reports HOME d24ed qualified, current-fact d606 normal/optimized dry prepare PASS and independent complete custody1358 active; worker install/readback then current P2/P3 remain. Shared visual fixture1356 passed10 cases, with final Runtime home identity still required. Agent14:01 retains152 required PASS,4 fork FAIL,1 D13 UNKNOWN on47b; fork security candidate held for orchestrator ABI-mode ruling1400. Amended924 review and meaningful upstream baseline remain Agent-owned. Runtime HOME e68 includes the final d4 upstream merge; core1346 and protected1351 passed, and integrated1400/producer1401 remain active. No final tuple or gate GO.
 
 Blockers: App caller — source HOME d24ed qualified and current-fact d606 dry preparation PASS. Independent complete custody1358, worker-only current-fact refresh and atomic installation/readback remain App-owned before P2/P3.
 
@@ -106,9 +106,9 @@ D59: Current integrated heads may run P2/P3 each cycle without waiting for unrel
 
 D60: Final upstream refresh is required before cut: Runtime d4f496ec4 first, Agent924437716 retargeted13:38Z, App09c844033; Composition67b8aa3d0 unchanged. Runtime owns producer/contract qualification. Header13:40 requires BOTH upstream tests and our live cases, with independent predicate mapping. Agent13:33 board now names amended924 and actual seven-conflict return1336; refreshed924 home custody is not claimed. Delivery uses the same approved tips. D56.4 Proof stand-down remains binding.
 
-Disk: 8276287488 bytes free at 2026-10-24T14:05Z. All1313 Proof workers done, no running markers. Exactly three existing Proof trees are KEEP-marked; no eligible non-KEEP Proof tree exists. Prior cleanup/compact and locked-v1 refusals stay stopped; no alternate route launched.
+Disk: 8275378176 bytes free at 2026-10-24T14:07Z. All 1313 Proof workers done, no running markers. Three existing Proof trees are KEEP-marked; no eligible non-KEEP Proof tree exists. Prior cleanup/compact and locked-v1 refusals stay stopped; no alternate route launched.
 
-Pass 2026-10-24T14:05Z: Repeated manager pass after monitoring interval. Inbox unchanged at790277 bytes; header D56.4 unchanged; all1313 Proof workers done. Every blocked row checked against normal owner boards. App current-fact preparation now PASS, so stale-facts repair wait cleared; complete custody1358 and worker installation remain. Agent ABI authority question has its owner escalation1400; no duplicate Proof escalation. Runtime final union remains owner-reviewed. No new Proof instruction, ready task, dispatch, peer note, run, product edit or denied cleanup route.
+Pass 2026-10-24T14:07Z: Read PLAN and manager rules, unchanged inbox through 790277 bytes, contract request/reply sections and current header. D56.4 unchanged; all 1313 Proof workers done. Every blocked row checked against normal owner boards in /home/user/timeline-hub/hub/status. App custody1358 and worker installation remain owned; current-fact preparation is PASS. Agent has ABI ruling1400 and independent final merge review1347. Runtime final HOME e68 is merged with integrated1400/producer1401 active. No new Proof instruction, ready task, dispatch, peer note, run, product edit or denied cleanup route.
 
 Inbox read through790277 bytes. Completed D56.4 handoff remains current. The manager harness can restart from this STATUS and INBOX; no new Proof dispatch is owed.
 
