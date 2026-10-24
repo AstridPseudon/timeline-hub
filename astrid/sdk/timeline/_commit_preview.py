@@ -60,6 +60,16 @@ def capture_sequential_execution(port, context, original, plan, replay_bindings,
             item = {'command_ordinal': key[0], 'kind': 'patch', 'change_ordinal': key[1]}
         else:
             ordinal, _, ref, path, phase = key
+            def read_binding(executed):
+                return next(binding for binding in executed.records[ordinal]['bindings']
+                            if binding.get('key') == 'commit.read' and binding['ref'] == ref
+                            and tuple(binding['path']) == path
+                            and binding['boundary']['phase'] == phase)
+
+            # Reads retain their complete execution captures. The replay map
+            # indexes only physical turnover, including staged step outputs.
+            if read_binding(original)['physical_ref'] == read_binding(plan)['physical_ref']:
+                continue
             item = {'command_ordinal': ordinal, 'kind': 'read', 'ref': ref,
                     'path': list(path), 'phase': phase}
         bindings.append({**item, 'source': source(value)})
