@@ -16,28 +16,33 @@ from .util import canonical_json
 
 def finite_json(value) -> None:
     active = set()
-    pending = [(value, False)]
-    while pending:
-        item, leaving = pending.pop()
-        if leaving:
-            active.remove(id(item))
-            continue
-        kind = type(item)
-        if item is None or kind in (str, bool, int):
-            continue
-        if kind is float and math.isfinite(item):
-            continue
-        if kind not in (dict, list):
-            raise ValidationError("commit value must contain only finite JSON")
-        if id(item) in active:
-            raise ValidationError("commit value must not contain cycles")
-        if kind is dict and any(type(key) is not str for key in item):
-            raise ValidationError("commit JSON object keys must be strings")
-        active.add(id(item))
-        pending.append((item, True))
-        pending.extend(
-            (child, False) for child in (item.values() if kind is dict else item)
-        )
+    parents = []
+    children = iter((value,))
+    while True:
+        for item in children:
+            kind = type(item)
+            if kind is str or kind is int or kind is bool or item is None:
+                continue
+            if kind is float and math.isfinite(item):
+                continue
+            if kind not in (dict, list):
+                raise ValidationError("commit value must contain only finite JSON")
+            if id(item) in active:
+                raise ValidationError("commit value must not contain cycles")
+            if kind is dict and any(type(key) is not str for key in item):
+                raise ValidationError("commit JSON object keys must be strings")
+            active.add(id(item))
+            # Keep only container frames; scalar children need no pending tuples.
+            parents.append((item, children))
+            # Capture sibling references when entering a container, matching
+            # the eager pending stack without allocating one tuple per child.
+            children = reversed(tuple(item.values() if kind is dict else item))
+            break
+        else:
+            if not parents:
+                return
+            parent, children = parents.pop()
+            active.remove(id(parent))
 
 
 def detached(value):
