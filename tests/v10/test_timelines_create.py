@@ -9,6 +9,7 @@ refuse a timeline that has no head.
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -21,12 +22,85 @@ from astrid.sdk.remote import RemoteTimelines
 from astrid.sdk.workspace_client import WorkspaceClientError
 
 ENVELOPE_KEYS = {"ok", "data", "error", "receipt", "idempotency_key"}
+INTEGRATION_FIXTURES = {"runtime_create_case"}
 DEFAULT_CONFIG = {
     "tracks": [],
     "theme_overrides": {
         "visual": {"canvas": {"width": 1920, "height": 1080, "fps": 30}}
     },
 }
+
+
+@pytest.fixture
+def runtime_create_case(tmp_path, monkeypatch):
+    """Use the current integration Runtime/TimelineSession bootstrap path."""
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "support"))
+    from tests.helpers.runtime import use_runtime
+
+    use_runtime()
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.store import RealmStore
+
+    from astrid.sdk.timeline import commit
+    from astrid.sdk.workspace_client import WorkspaceClient
+
+    root = tmp_path / "realm"
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
+    service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+    project = service.create_project({"slug": "render-smoke", "name": "Render smoke"})["id"]
+    generated = SimpleNamespace()
+    transport = WorkspaceClient.__new__(WorkspaceClient)
+    transport._generated = generated
+    transport._last_handshake = {"realm_id": service.realm["id"], "actor_id": "editor"}
+    calls: list[tuple[str, tuple[Any, ...], dict[str, Any]]] = []
+    timelines = RemoteTimelines(transport)
+    timelines._resolve_timeline = lambda _project, timeline: DomainResult.success(
+        {"project_id": project, "timeline_id": timeline}
+    )
+    timelines.open_composition = lambda _project, timeline, **_options: DomainResult.success({
+        "native_inspection": {"project_id": project, "timeline_id": timeline},
+        "summary": {"head_revision_id": service.get_project_timeline(project, timeline)["head_revision_id"]},
+    })
+    timelines.open_bundle = lambda _project, timeline, revision_id=None, **_options: DomainResult.success({
+        "bundle": commit.bundle_from_document(
+            service._timeline_commits()[0].revision_closure(project, timeline, revision_id)
+        )
+    })
+
+    def create_timeline(_project, timeline, *, name=None, idempotency_key):
+        calls.append(("create_timeline", (project, timeline), {
+            "name": name, "idempotency_key": idempotency_key,
+        }))
+        return service.create_timeline(project, timeline, name=name, idempotency_key=idempotency_key)
+
+    generated.create_timeline = create_timeline
+
+    def list_timeline_commits(_project, timeline, cursor=None, limit=200):
+        calls.append(("list_timeline_commits", (project, timeline), {
+            "cursor": cursor, "limit": limit,
+        }))
+        return service.list_timeline_commits(
+            project, timeline, cursor=cursor, limit=limit, authorize=lambda: None
+        )
+
+    generated.list_timeline_commits = list_timeline_commits
+
+    def commit_timeline(_project, timeline, body, *, idempotency_key):
+        calls.append(("commit_timeline", (project, timeline, body), {
+            "idempotency_key": idempotency_key,
+        }))
+        return service.commit_timeline(
+            project, timeline, body, idempotency_key=idempotency_key, publisher="editor",
+            invocation_path=f"/v1/projects/{project}/timelines/{timeline}/commit",
+            authorize=lambda: None,
+        )
+
+    generated.commit_timeline = commit_timeline
+    try:
+        yield SimpleNamespace(service=service, project=project, timelines=timelines, calls=calls)
+    finally:
+        service.close()
 
 
 def _receipt(key: str) -> CommandReceipt:
@@ -183,68 +257,6 @@ def test_timelines_create_help_is_executable(argv: list[str]) -> None:
 # -- SDK route ------------------------------------------------------------
 
 
-class _SessionOutbox:
-    def __init__(self, session: "_Session") -> None:
-        self.session = session
-
-    def locked(self):
-        return self
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *_args):
-        return False
-
-
-class _Session:
-    def __init__(self, writer: "_Writer") -> None:
-        from astrid.sdk.timeline.commit import bundle_from_document
-        from tests.editing_conformance.test_pristine_initialize import empty_document
-
-        self.writer = writer
-        self.bundle = bundle_from_document(empty_document())
-        self.outbox = _SessionOutbox(self)
-        self.calls: list[tuple[list[dict[str, Any]], str]] = []
-
-    def _state(self):
-        return {"base": {"revision_id": "bootstrap", "publication_id": "bootstrap-publication"},
-                "pending": [], "flight": None}
-
-    def _bundle(self, _state):
-        return self.bundle
-
-    def commit_many(self, commands, *, idempotency_key, label, steps, merge, reads):
-        import copy
-
-        from astrid.sdk.timeline.commands import execute
-        from astrid.sdk.timeline.commit import _digest, document_from_bundle
-
-        self.calls.append((copy.deepcopy(commands), idempotency_key))
-        self.writer.calls.append(("commit_timeline", tuple(commands), {"idempotency_key": idempotency_key}))
-        plan = execute(self.bundle, commands)
-        document = document_from_bundle(plan.bundle)
-        data = {
-            "status": "accepted", "accepted_revision_id": "H-1",
-            "base_revision_id": "bootstrap", "base_publication_id": "bootstrap-publication",
-            "previous_revision_id": "bootstrap", "previous_publication_id": "bootstrap-publication",
-            "rebased_onto": None, "canonical_document": document,
-            "document_digest": _digest(document), "commands": plan.commands,
-            "id_map": {}, "steps": steps, "merge_mode": merge,
-            "reads": reads,
-            "provider_version": "astrid-v1", "compiler_version": "authoring-bundle-1",
-            "publisher": "actor",
-        }
-        receipt = {
-            "receipt_id": "publication-1", "command_kind": "timeline.commit",
-            "idempotency_key": idempotency_key, "request_hash": "0" * 64,
-            "project_id": "P-1", "project_seq": [1, 1], "event_ids": ["event-1"],
-            "result": copy.deepcopy(data), "created_at": "2026-10-23T00:00:00Z",
-        }
-        self.writer.history.append({"receipt": receipt})
-        return {"data": data, "receipt": receipt}
-
-
 class _Writer:
     """Records the native shell/history/commit calls; no legacy writer exists."""
 
@@ -272,57 +284,64 @@ class _Writer:
                 "items": list(self.history), "next_cursor": None}
 
 
-def _native_session(monkeypatch, writer):
-    from astrid.sdk.timeline.sync import TimelineSession
-
-    session = _Session(writer)
-    monkeypatch.setattr(TimelineSession, "open", lambda *args, **kwargs: session)
-    return session
-
-
-def test_remote_create_empty_creates_shell_then_native_commit(monkeypatch) -> None:
-    writer = _Writer()
-    session = _native_session(monkeypatch, writer)
-    result = RemoteTimelines(writer).create_empty(
-        project="render-smoke", timeline_id="01ARZ3NDEKTSV4RRFFQ69G5FAV",
+def test_remote_create_empty_creates_shell_then_native_commit(runtime_create_case) -> None:
+    result = runtime_create_case.timelines.create_empty(
+        project=runtime_create_case.project, timeline_id="01ARZ3NDEKTSV4RRFFQ69G5FAV",
         config=DEFAULT_CONFIG, idempotency_key="caller-1",
     )
     assert result.ok, result.error
-    assert result.data["project_id"] == "P-1"
+    assert result.data["project_id"] == runtime_create_case.project
     assert result.data["timeline_id"] == "01ARZ3NDEKTSV4RRFFQ69G5FAV"
-    assert result.data["head_revision_id"] == "H-1"
+    assert result.data["head_revision_id"] == result.data["canonical_document"]["parent_revision"]["revision_id"]
     assert result.data["created"] is True
     assert result.idempotency_key == "caller-1"
-    assert writer.calls[0] == (
-        "create_timeline", ("render-smoke", "01ARZ3NDEKTSV4RRFFQ69G5FAV"),
-        {"idempotency_key": "caller-1-shell"},
+    assert runtime_create_case.calls[1:3] == [
+        (
+            "list_timeline_commits",
+            (runtime_create_case.project, "01ARZ3NDEKTSV4RRFFQ69G5FAV"),
+            {"cursor": None, "limit": 100},
+        ),
+        (
+            "list_timeline_commits",
+            (runtime_create_case.project, "01ARZ3NDEKTSV4RRFFQ69G5FAV"),
+            {"cursor": None, "limit": 1},
+        ),
+    ]
+    assert runtime_create_case.calls[0] == (
+        "create_timeline", (runtime_create_case.project, "01ARZ3NDEKTSV4RRFFQ69G5FAV"),
+        {"name": None, "idempotency_key": "caller-1-shell"},
     )
-    assert writer.calls[1][0] == "list_timeline_commits"
-    command, key = session.calls[0]
-    assert key == "caller-1-head"
+    assert runtime_create_case.calls[-1][0] == "commit_timeline"
+    command = runtime_create_case.calls[-1][1][2]["commands"]
+    assert runtime_create_case.calls[-1][2] == {"idempotency_key": "caller-1-head"}
     assert command[0]["op"] == "timeline.init"
-    assert command[0]["args"]["name"] == "Main"
-    assert session.writer.history[0]["receipt"]["result"]["steps"][0]["reads"] == [
+    assert command[0]["args"] == {
+        "name": "Main",
+        "slug": "main",
+        "output": {
+            "resolution": "1280x720", "fps": 30, "file": "output.mp4",
+            "background": None, "background_scale": None,
+        },
+    }
+    history = runtime_create_case.timelines.history(runtime_create_case.project, result.data["timeline_id"], limit=100)
+    assert history.ok
+    assert history.data["items"][-1]["receipt"]["result"]["steps"][0]["reads"] == [
         {"kind": "scope", "ref": "timeline", "path": []},
     ]
-    assert not any(name == "publish_parent_composition" for name, _, _ in writer.calls)
+    assert not any(name == "publish_parent_composition" for name, _, _ in runtime_create_case.calls)
 
 
-def test_remote_create_empty_generates_ulid_when_no_id_given(monkeypatch) -> None:
-    writer = _Writer()
-    _native_session(monkeypatch, writer)
-    result = RemoteTimelines(writer).create_empty(project="render-smoke")
+def test_remote_create_empty_generates_ulid_when_no_id_given(runtime_create_case) -> None:
+    result = runtime_create_case.timelines.create_empty(project=runtime_create_case.project)
     assert result.ok, result.error
     timeline_key = result.data["timeline_id"]
     assert is_ulid(timeline_key)
-    assert writer.calls[0][1] == ("render-smoke", timeline_key)
-    assert writer.calls[1][0] == "list_timeline_commits"
+    assert runtime_create_case.calls[0][1] == (runtime_create_case.project, timeline_key)
+    assert runtime_create_case.calls[-1][0] == "commit_timeline"
     assert result.data["canonical_document"]["parent_revision"]["payload"]["config"]["tracks"] == []
 
 
-def test_remote_create_empty_emits_guarded_raw_config_and_replays_exact_receipt(monkeypatch) -> None:
-    writer = _Writer()
-    session = _native_session(monkeypatch, writer)
+def test_remote_create_empty_emits_guarded_raw_config_and_replays_exact_receipt(runtime_create_case) -> None:
     config = {
         "tracks": [],
         "theme_overrides": {
@@ -331,39 +350,41 @@ def test_remote_create_empty_emits_guarded_raw_config_and_replays_exact_receipt(
         },
         "meta": {"org.example": {"null": None, "opaque": [None, False, 0]}},
     }
-    result = RemoteTimelines(writer).create_empty(
-        project="render-smoke", timeline_id="film", name="Second Cut",
+    result = runtime_create_case.timelines.create_empty(
+        project=runtime_create_case.project, timeline_id="film", name="Second Cut",
         config=config, idempotency_key="raw-config",
     )
     assert result.ok, result.error
     payload = result.data["canonical_document"]["parent_revision"]["payload"]
     assert payload["name"] == "Second Cut" and payload["slug"] == "second-cut"
-    assert payload["config"]["theme_overrides"] == config["theme_overrides"]
-    assert payload["config"]["meta"] == config["meta"]
-    assert payload["config"]["output"]["resolution"] == "640x360"
-    assert payload["config"]["output"]["fps"] == 24
-    assert any(command["op"] == "doc.patch" for command in session.calls[0][0][1:])
-    calls_before_retry = len(session.calls)
-    replayed = RemoteTimelines(writer).create_empty(
-        project="render-smoke", timeline_id="film", name="Second Cut",
+    assert payload["config"] == {
+        "tracks": [], "theme_overrides": config["theme_overrides"], "meta": config["meta"],
+        "output": {
+            "resolution": "640x360", "fps": 24, "file": "output.mp4",
+            "background": None, "background_scale": None,
+        },
+        "clips": [],
+    }
+    commit_calls_before_retry = [call for call in runtime_create_case.calls if call[0] == "commit_timeline"]
+    assert any(command["op"] == "doc.patch" for command in commit_calls_before_retry[0][1][2]["commands"][1:])
+    replayed = runtime_create_case.timelines.create_empty(
+        project=runtime_create_case.project, timeline_id="film", name="Second Cut",
         config=config, idempotency_key="raw-config",
     )
     assert replayed.ok, replayed.error
     assert replayed.receipt == result.receipt
     assert replayed.data["canonical_document"] == result.data["canonical_document"]
-    assert len(session.calls) == calls_before_retry
+    assert [call for call in runtime_create_case.calls if call[0] == "commit_timeline"] == commit_calls_before_retry
 
 
-def test_d69_upstream_remote_create_empty_generates_ulid_when_no_id_given(monkeypatch) -> None:
-    writer = _Writer()
-    session = _native_session(monkeypatch, writer)
-    result = RemoteTimelines(writer).create_empty(project="render-smoke")
+@pytest.mark.integration
+def test_d69_upstream_remote_create_empty_generates_ulid_when_no_id_given(runtime_create_case) -> None:
+    result = runtime_create_case.timelines.create_empty(project=runtime_create_case.project)
     assert result.ok, result.error
     timeline_id = result.data["timeline_id"]
     assert is_ulid(timeline_id)
-    assert writer.calls[0][1] == ("render-smoke", timeline_id)
-    assert writer.calls[1][1][1] == timeline_id
-    assert session.calls[0][1] == f"{result.idempotency_key}-head"
+    assert result.data["project_id"] == runtime_create_case.project
+    assert result.data["head_revision_id"]
     assert result.data["canonical_document"]["parent_revision"]["payload"]["config"] == {
         "tracks": [],
         "output": {
@@ -384,11 +405,10 @@ def test_remote_create_empty_stops_when_shell_is_rejected() -> None:
 
 # D66 restore of upstream-924 selector 12306.  The old positive is retained
 # beside the native commit case; no old-route retirement is inferred here.
-def test_d66_upstream_remote_create_empty_creates_shell_then_empty_head(monkeypatch) -> None:
-    writer = _Writer()
-    session = _native_session(monkeypatch, writer)
-    result = RemoteTimelines(writer).create_empty(
-        project="render-smoke",
+@pytest.mark.integration
+def test_d66_upstream_remote_create_empty_creates_shell_then_empty_head(runtime_create_case) -> None:
+    result = runtime_create_case.timelines.create_empty(
+        project=runtime_create_case.project,
         timeline_id="01ARZ3NDEKTSV4RRFFQ69G5FAV",
         config=DEFAULT_CONFIG,
         idempotency_key="caller-1",
@@ -398,44 +418,53 @@ def test_d66_upstream_remote_create_empty_creates_shell_then_empty_head(monkeypa
         key: result.data[key]
         for key in ("project_id", "timeline_id", "head_revision_id", "created")
     } == {
-        "project_id": "P-1",
+        "project_id": runtime_create_case.project,
         "timeline_id": "01ARZ3NDEKTSV4RRFFQ69G5FAV",
-        "head_revision_id": "H-1",
+        "head_revision_id": result.data["canonical_document"]["parent_revision"]["revision_id"],
         "created": True,
     }
     assert result.idempotency_key == "caller-1"
-    assert writer.calls[0] == (
-        "create_timeline",
-        ("render-smoke", "01ARZ3NDEKTSV4RRFFQ69G5FAV"),
-        {"idempotency_key": "caller-1-shell"},
+    assert runtime_create_case.calls[0] == (
+        "create_timeline", (runtime_create_case.project, "01ARZ3NDEKTSV4RRFFQ69G5FAV"),
+        {"name": None, "idempotency_key": "caller-1-shell"},
     )
-    inspection, publication = writer.calls[1:]
-    assert inspection[0] == "list_timeline_commits"
-    assert inspection[1] == ("P-1", "01ARZ3NDEKTSV4RRFFQ69G5FAV")
-    assert publication[0] == "commit_timeline"
-    assert publication[2] == {"idempotency_key": "caller-1-head"}
-    command, key = session.calls[0]
-    assert key == "caller-1-head"
-    assert command[0]["op"] == "timeline.init"
-    assert command[0]["args"]["name"] == "Main"
+    assert [call[0] for call in runtime_create_case.calls] == [
+        "create_timeline", "list_timeline_commits", "list_timeline_commits", "commit_timeline",
+    ]
+    assert runtime_create_case.calls[1][1] == (
+        runtime_create_case.project, "01ARZ3NDEKTSV4RRFFQ69G5FAV"
+    )
+    assert runtime_create_case.calls[2][1] == runtime_create_case.calls[1][1]
+    assert runtime_create_case.calls[1][2] == {"cursor": None, "limit": 100}
+    assert runtime_create_case.calls[2][2] == {"cursor": None, "limit": 1}
+    assert runtime_create_case.calls[-1][2] == {"idempotency_key": "caller-1-head"}
+    assert runtime_create_case.calls[-1][1][2]["commands"][0]["args"] == {
+        "name": "Main",
+        "slug": "main",
+        "output": {
+            "resolution": "1280x720", "fps": 30, "file": "output.mp4",
+            "background": None, "background_scale": None,
+        },
+    }
     payload = result.data["canonical_document"]["parent_revision"]["payload"]
-    assert payload["config"]["tracks"] == DEFAULT_CONFIG["tracks"]
-    assert payload["config"]["theme_overrides"] == DEFAULT_CONFIG["theme_overrides"]
-    assert payload["registry"]["assets"] == {}
+    assert payload["config"] == {
+        **DEFAULT_CONFIG,
+        "output": {
+            "resolution": "1920x1080", "fps": 30, "file": "output.mp4",
+            "background": None, "background_scale": None,
+        },
+        "clips": [],
+    }
+    assert payload["registry"] == {"assets": {}}
     assert payload["clips"] == []
     assert payload["occurrences"] == []
-    assert payload["config"]["output"] == {
-        "resolution": "1920x1080", "fps": 30, "file": "output.mp4",
-        "background": None, "background_scale": None,
-    }
-    assert payload["config"]["clips"] == []
     assert result.data["canonical_document"]["shot_revisions"] == []
     assert result.data["canonical_document"]["internal_timeline_revisions"] == []
-    assert session.writer.history[0]["receipt"]["result"]["base_revision_id"] == "bootstrap"
-    assert session.writer.history[0]["receipt"]["result"]["base_publication_id"] == "bootstrap-publication"
-    assert session.writer.history[0]["receipt"]["result"]["steps"][0]["reads"] == [
+    history = runtime_create_case.timelines.history(runtime_create_case.project, result.data["timeline_id"], limit=100)
+    assert history.ok
+    assert len(history.data["items"]) == 2
+    assert history.data["items"][0]["intent"] == "bootstrap"
+    assert len([item for item in history.data["items"] if item["intent"] == "recorded"]) == 1
+    assert history.data["items"][1]["receipt"]["result"]["steps"][0]["reads"] == [
         {"kind": "scope", "ref": "timeline", "path": []},
-    ]
-    assert [name for name, _, _ in writer.calls] == [
-        "create_timeline", "list_timeline_commits", "commit_timeline",
     ]
