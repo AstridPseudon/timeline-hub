@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T04:10:13Z | dispatcher heartbeat 8s | live 2 (sol 1, luna 1, other 0) | busy30 19 | status age 0m -->
-# agent board, 2026-10-24T04:05:00Z
+<!-- agent | 2026-10-24T04:12:26Z | dispatcher heartbeat 5s | live 3 (sol 2, luna 1, other 0) | busy30 19 | status age 0m -->
+# agent board, 2026-10-24T04:11:37Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -52,7 +52,8 @@
 | U2c | Qualify freeze-held readiness draft | Luna | Exact dependency and abort causes | doing | Sol agt-U2c-activation-sol-0410 | Independent0407 names obsolete fixture keyword and real abort identity gap. Same draft fix dispatched with supported net route. Branch held; no readiness claim. | 699236a285 held |
 | F-headless-root-mirror | Preserve complete canonical mirror effects | Sol / Luna | Bounded source repair | doing | vw-F-headless-root-mirror-sol-0358 | Runtime0332 and0349 independently confirm omitted mirror removal. Viewing uniquely owns effect shortcut; original67 predicates retained. | Base8657e83653 |
 | F-retired-callers | Retained native, CLI and scene scenarios | Luna / Sol | Exact33 subset | doing | vw-F-retired-callers-census-0358 | Exact24 native-sheet,7 CLI,2 scene nodes independently verified. Viewing maps prior proofs before fixing; no retired writer restoration. | Census H30 |
-| F-count | Reconcile all267 original failures | Luna | Independent correction0358 | review | Return0407; final review0410 | Corrected JSON preserves267 exact IDs:142 closed,125 open. Six render-wire originals credited; seven H3 nodes need current D40 source. Farm checkpoint pending. | Evidence only |
+| F-count | Reconcile all267 original failures | Luna | Independent correction0358 | merged | Return0407; final review0410 PASS | Corrected JSON preserves267 exact IDs:142 closed,125 open. Six render-wire originals credited; seven H3 nodes need current D40 source. Farm checkpoint pending. | Evidence only |
+| F-D40-installed | Genuine installed external positive | Sol / Luna | Captured orchestrator route | doing | agt-F-D40-orchestrator-sol-0414 | Review0407 found original orchestrator invocation lacks captured-source forwarding. Sol classifies and fixes existing route; managed child waits for source. | Current69a854d82b |
 P1: GO. Original service 18792 passed both cases; Proof reviews 0036 and 0040 passed. P4 and P5 are done. G5 already merged under H24. P2 and P3 remain with App and Proof.
 Integration: 9f2da582a6 includes reviewed historical carrier12701589. Canonical45c3 client, schema d106 and Composition819acf unchanged. Image fixture a103 is merged at69a854d82b; lightweight actual integrated controls0412 queued.
 Blockers: Agent full waits for the remaining owned fixes and finite qualifications. D32 comparison rejected all pre-existing credits; no full retry.
@@ -67,5 +68,4 @@ Capacity: Three light workers queued0407; current disk is above8 GB. No duplicat
 Count: 125 of 267 open after independent0358 correction;142 bounded closures, all267 tagged ours. Corrected full artifact0407 is in progress. Farm checkpoint pending.
 Blockers: Farm — return the H30 checkpoint on an actual published integration head with exact original node outcomes. No duplicate full suite here.
 Later: D40 installed qualification proceeds through one genuine managed source tuple after reviewed route and fixture setup. Seven H3 originals need the same current installed input; no overlay.
-| F-D40-installed | Genuine installed external positive | Sol / Luna | Captured orchestrator route | doing | agt-F-D40-orchestrator-sol-0414 | Review0407 found original orchestrator invocation lacks captured-source forwarding. Sol classifies and fixes existing route; managed child waits for source. | Current69a854d82b |
 D44: Resolved04:05. Edited occurrence forks; untouched sibling keeps exact source identity. Luna0414 adapts only the authorized predicate and reports the behavior entry.
