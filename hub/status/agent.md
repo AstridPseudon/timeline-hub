@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T09:36:18Z | dispatcher heartbeat 13s | live 1 (sol 1, luna 0, other 0) | busy30 10 | status age 3m -->
-# agent board, 2026-10-24T09:33:14Z
+<!-- agent | 2026-10-24T09:38:45Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 2m -->
+# agent board, 2026-10-24T09:36:36Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -118,7 +118,7 @@
 | OPS received kit | Verify kit receipt and jaraco facts | Luna | Independent finite result review | merged | Independent 0814 PASS | New helper b8b5 and maker e4c0 match live, normal publication and committed hub. Requester and Store unchanged. | Evidence only |
 | G4 media admission | Connect ordinary publish to verified inputs | Luna | Existing authentic admission path | merged | Source 0823 PASS; home 0832 PASS20 | Authoritative public admission, retry and foreign no-write work on integrated home; original managed duck remains separate. | 0ff3d103fb |
 | F joined source | Qualify U2, D39, D18 and ABA together | Luna | Reviewed normal home merges | merged | Joined 0816; independent 0823 PASS | 123 cases, all 15 mappings, 50 auth blobs, Ruff2145 and mypy1902 pass on exact home 0c2c. | 0c2c28da4f |
-| F ABA managed row | Run original with repaired Runtime | Service / Viewing | Meaningful Runtime source repair | blocked:runtime | Service20732; Viewing verdict0901 | One original failed40.19s at line1090. Hook and durable undo remain unproven; no unchanged retry. | Source0c2 / Runtimebecfe |
+| F ABA managed row | Identify meaningful request capture seam | Luna | Runtime diagnosis 0923 complete | doing | agt-F-ABA-capture-path-0938 | Original 20732 failed at assertion42. Cause remains unknown; read-only capture proposal due 10:00. No body retry. | Source 0c2; Runtime becfe |
 | OPS wheel result review | Verify actual input and new kit receipt | Luna | Reviewed b330 helper | merged | agt-OPS-real-wheel-review-0814 PASS | All 67 original wheels and all four received kit files independently verified. Bootstrap unverified. | Lock 236d unchanged |
 
 | F count giant home | Credit one exact qualified original | Sol | Independent result 0814 PASS | merged | Author 0818; independent 0827 PASS | Official 263 closed / 4 open. All 266 other records unchanged; 123 mappings. | e13d65ba |
@@ -160,5 +160,5 @@ D49 venue: Agent final full on Farm after a zero-setup-error checkpoint. Fallbac
 Safety: Prior Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
 Disk: About11 GB free. Fresh read-only check found one remaining finished non-KEEP Agent tree; it is dirty. No eligible clean merged tree to recycle. Prior cleanup refusals remain stopped; light work proceeds.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred. D46 U2c closed and folded into the freeze; relay and remote providers stay deferred and fail-closed. D47 memo held.
-Next ready: Schema input independently0922 PASS and returned; R1 popup classification0922 confirms current-source failure; HARD Sol0928 queued. Transport home0916 passed17. Runtime owns ABA diagnosis0915, inventory repair0923 and authentic schema source0918. No ready Agent task waits.
+Next ready: Schema input independently0922 PASS and returned; R1 popup classification0922 confirms current-source failure; HARD Sol0928 queued. Transport home0916 passed17. Runtime ABA diagnosis0923 complete, cause unknown; Agent capture0938 active. Runtime inventory0923 and schema source0918 remain owned. No ready Agent task waits.
 Evidence: [D39 review](../../design/agt-D39-header-review-0809.md), [ABA review](../../design/agt-F-ABA-cumulative-review-0809.md), [wheel input](../../design/agt-OPS-real-wheel-qualify-0810.md), [Farm checkpoint](../../design/farm-agent-full-checkpoint-20261024T0555Z.md).
