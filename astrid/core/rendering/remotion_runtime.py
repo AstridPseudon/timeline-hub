@@ -37,7 +37,7 @@ from astrid.core.env_vars import (
 )
 from astrid.core.execution.platform_helpers import owned_by_current_user
 from astrid.core.foundation.paths import REPO_ROOT
-from astrid.core.rendering import _registry_origin, _remotion_package
+from astrid.core.rendering import _local_schema, _registry_origin, _remotion_package
 
 REMOTION_PROJECT_DIR_ENV = ASTRID_REMOTION_PROJECT_DIR
 NODE_EXECUTABLE_ENV = ASTRID_NODE_EXECUTABLE
@@ -52,37 +52,42 @@ _COMPOSITION_PACKAGE_NAME = _remotion_package._COMPOSITION_PACKAGE_NAME
 _COMPOSITION_PACKAGE_VERSION = _remotion_package._COMPOSITION_PACKAGE_VERSION
 _REQUIRED_COMPOSITION_EXPORTS = _remotion_package._REQUIRED_COMPOSITION_EXPORTS
 _composition_package_problem = _remotion_package.composition_package_problem
-_REQUIRED_SCHEMA_FILES = (
-    "__init__.py",
-    "generated.py",
-    "materialize.py",
-    "theme.py",
-    "timeline.schema.json",
-    "validate.py",
-)
-
 _SCHEMA_PROBE = """
+import importlib.machinery
 import json
 import pathlib
 import sys
 
-root = pathlib.Path(sys.argv[1]).resolve()
-sys.path.insert(0, str(root))
-import banodoco_timeline_schema as schema
-from banodoco_timeline_schema import (
-    AssetEntry,
-    Theme,
-    ThemeOverrides,
-    TimelineClip,
-    TimelineConfig,
-    TimelineOutput,
-    materialize_output,
-    resolve_theme,
-)
-origin = pathlib.Path(schema.__file__).resolve()
-if not origin.is_relative_to(root / "banodoco_timeline_schema"):
-    raise RuntimeError(f"schema origin escaped trusted root: {origin}")
-contract = json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8"))
+root = pathlib.Path(sys.argv[2])
+if sys.argv[3] == 'source':
+    sys.path.insert(0, str(root))
+elif sys.argv[3] != 'installed' or not sys.flags.isolated:
+    raise RuntimeError('schema validation requires an isolated installed interpreter')
+# Check the selected reader before executing any of its package initializers.
+# Installed mode uses the interpreter's distribution; source mode uses only
+# the launch-selected checkout, never the configured schema as an import root.
+specs = {}
+for name in ('astrid', 'astrid.core', 'astrid.core.rendering',
+             'astrid.core.rendering._local_schema', 'astrid.core.timeline',
+             'astrid.core.timeline.banodoco_schema'):
+    parent = name.rpartition('.')[0]
+    search = specs[parent].submodule_search_locations if parent else sys.path
+    spec = importlib.machinery.PathFinder.find_spec(name.rsplit('.', 1)[-1], search)
+    path = root.joinpath(*name.split('.'))
+    expected = path / '__init__.py' if path.is_dir() else path.with_suffix('.py')
+    if (spec is None or not expected.is_file()
+            or any(p.is_symlink() for p in (expected, *expected.parents))
+            or spec.origin != str(expected)
+            or not isinstance(spec.loader, importlib.machinery.SourceFileLoader)
+            or (spec.submodule_search_locations is not None
+                and list(spec.submodule_search_locations) != [str(path)])):
+        raise RuntimeError('canonical schema reader origin differs from selected Agent source')
+    specs[name] = spec
+from astrid.core.rendering import _local_schema
+if pathlib.Path(_local_schema.__file__) != root / 'astrid/core/rendering/_local_schema.py':
+    raise RuntimeError('canonical schema helper has a foreign origin')
+contract = _local_schema.load_verified_schema(root, sys.argv[1])
+origin = pathlib.Path(sys.argv[1])
 import jsonschema
 jsonschema.validate(
     {"tracks": [{"id": "source", "kind": "visual", "label": "Source", "role": "source"}],
@@ -235,6 +240,7 @@ def probe_context(*, environment: Mapping[str, str], python_executable: str) -> 
     if any(not isinstance(environment[k], str) for k in _NODE_ENV_KEYS if k in environment):
         raise RemotionValidationError("runtime probe environment values must be strings")
     return {"policy": "clean-schema-env/v1", "python_executable": str(python),
+            "schema_profile": 'installed' if _installed_registry_profile(environment) else 'source',
             "node_env": {k: (_dedupe_path(environment[k]) if k == "PATH" else environment[k])
                          for k in _NODE_ENV_KEYS if k in environment},
             "schema_env": {k: environment[k] for k in _SCHEMA_ENV_KEYS if k in environment}}
@@ -349,22 +355,23 @@ def _runtime_inputs(project_dir: Path, environment: Mapping[str, str], python: s
     node = Path(configured)
     if not os.access(node, os.X_OK):
         raise RemotionValidationError("configured Node is not executable")
-    schema = Path(schema_raw).resolve(strict=True)
+    try:
+        schema = _local_schema.verified_schema_path(REPO_ROOT, schema_raw)
+    except (OSError, ValueError) as exc:
+        raise RemotionValidationError(f"runtime schema inputs changed or invalid identity: {exc}") from exc
     cli = project / REMOTION_CLI_RELATIVE_PATH
     cli.resolve(strict=True).relative_to(project)
     composition_problem = _composition_package_problem(project)
     if composition_problem:
         raise RemotionValidationError(composition_problem)
-    for name in _REQUIRED_SCHEMA_FILES:
-        if not (schema / "banodoco_timeline_schema" / name).is_file():
-            raise RemotionValidationError("installed timeline schema is incomplete")
-    roots = [project / "node_modules", schema / "banodoco_timeline_schema"]
+    roots = [project / "node_modules", schema.parent]
     if (project / "src").is_dir():
         roots.append(project / "src")
     roots.extend(Path(p) for p in closure.get("package_roots", []))
     paths = [node, Path(python), cli, project / "package.json", project / "package-lock.json", Path(__file__),
-             Path(_remotion_package.__file__),
-             REPO_ROOT / "astrid" / "core" / "timeline" / "schema" / "timeline-config.schema.json"]
+             Path(_remotion_package.__file__), Path(_local_schema.__file__),
+             REPO_ROOT / "runtime.lock.json", schema,
+             *(REPO_ROOT / p for p in _local_schema.READER_INPUTS)]
     paths.extend(p for p in project.iterdir() if p.is_file() and p.suffix in {".ts", ".js", ".mjs", ".cjs", ".json"})
     cfg = Path(python).parent.parent / "pyvenv.cfg"
     if cfg.is_file():
@@ -940,7 +947,8 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
             # project) are in proof_key, so this context repeats a proven binding;
             # the final fresh per-proof check below still brackets publication.
             return qualify_registry(context, registry_context, environment, key, proof)
-        schema_root = Path(environment[TIMELINE_SCHEMA_PYTHONPATH_ENV]).resolve(strict=True)
+        schema_root = Path(environment[TIMELINE_SCHEMA_PYTHONPATH_ENV])
+        schema_profile = 'installed' if _installed_registry_profile(environment) else 'source'
         node = Path(environment[NODE_EXECUTABLE_ENV]).resolve(strict=True)
         baseline = _runtime_inputs(project, environment, python_executable, {}, digest_memo=digest_memo)
         probe, node_wait = _owned_probe([str(node), '--version'], cwd=project,
@@ -952,7 +960,7 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
             raise error
         schema_probe, schema_wait = _owned_probe(
             [python_executable, '-I', '-c', _schema_probe_source(), str(schema_root),
-             str(REPO_ROOT / "astrid" / "core" / "timeline" / "schema" / "timeline-config.schema.json")],
+             str(REPO_ROOT), schema_profile],
             cwd=schema_root.parent, env=context['schema_env'], timeout=5)
         if schema_probe.returncode:
             error = RemotionValidationError("clean timeline schema validation failed")
@@ -960,7 +968,8 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
             raise error
         try:
             closure = json.loads(schema_probe.stdout)
-            Path(closure['origin']).relative_to(schema_root / 'banodoco_timeline_schema')
+            if closure['origin'] != str(schema_root):
+                raise RemotionValidationError("clean schema validation returned invalid identity")
             executable = closure['startup']['executable']
             if (not isinstance(executable, str) or not Path(executable).is_absolute()
                     or Path(executable).resolve(strict=True) != Path(python_executable).resolve(strict=True)):
@@ -982,7 +991,7 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
         complete_before = _runtime_inputs(project, environment, python_executable, closure, digest_memo=digest_memo)
         qualifying, qualifying_wait = _owned_probe(
             [python_executable, '-I', '-c', _schema_probe_source(), str(schema_root),
-             str(REPO_ROOT / "astrid" / "core" / "timeline" / "schema" / "timeline-config.schema.json")],
+             str(REPO_ROOT), schema_profile],
             cwd=schema_root.parent, env=context['schema_env'], timeout=5)
         try:
             qualifying_closure = json.loads(qualifying.stdout)
@@ -1338,17 +1347,13 @@ def remotion_runtime_status(
             project_dir,
             f"{TIMELINE_SCHEMA_PYTHONPATH_ENV} must be an absolute path",
         )
-    schema_root = schema_root.resolve()
-    schema_package = schema_root / "banodoco_timeline_schema"
-    missing_schema_files = [
-        name for name in _REQUIRED_SCHEMA_FILES if not (schema_package / name).is_file()
-    ]
-    if missing_schema_files:
+    try:
+        _local_schema.verified_schema_path(REPO_ROOT, schema_root_raw)
+    except (OSError, ValueError) as exc:
         return RemotionRuntimeStatus(
             False,
             project_dir,
-            "installed timeline schema is incomplete under "
-            f"{schema_root}: {', '.join(missing_schema_files)}",
+            f"installed timeline schema is incomplete or invalid: {exc}",
         )
     runtime_tools, tools_error = resolve_remotion_runtime_tools(project_dir)
     if tools_error:

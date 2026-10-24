@@ -465,7 +465,7 @@ def _provision_render_runtime_env(
 
     Packaged deployments may supply all three absolute settings themselves.
     For a source checkout, the launcher turns its installed Remotion bundle,
-    schema package, and resolved Node executable into the same explicit
+    canonical schema, and resolved Node executable into the same explicit
     settings before strict host preflight runs.
     """
     from astrid.core.env_vars import (
@@ -482,18 +482,15 @@ def _provision_render_runtime_env(
     ):
         child_env[ASTRID_REMOTION_PROJECT_DIR] = str(project_dir)
 
-    schema_root = (
-        project_dir
-        / "node_modules"
-        / "@banodoco"
-        / "timeline-schema"
-        / "python"
-    )
-    if (
-        ASTRID_TIMELINE_SCHEMA_PYTHONPATH not in child_env
-        and (schema_root / "banodoco_timeline_schema" / "__init__.py").is_file()
-    ):
-        child_env[ASTRID_TIMELINE_SCHEMA_PYTHONPATH] = str(schema_root.resolve())
+    from astrid.core.rendering._local_schema import SCHEMA_RELATIVE_PATH, verified_schema_path
+
+    schema = source_path.absolute() / SCHEMA_RELATIVE_PATH
+    if ASTRID_TIMELINE_SCHEMA_PYTHONPATH not in child_env and schema.is_file():
+        try:
+            child_env[ASTRID_TIMELINE_SCHEMA_PYTHONPATH] = str(
+                verified_schema_path(source_path, str(schema)))
+        except (OSError, ValueError) as exc:
+            raise PackHostBootstrapError(f"the pack host was not started: {exc}") from exc
 
     if (project_dir / "package.json").is_file() and (project_dir / "node_modules").is_dir():
         # One resolver (core/rendering/node_pin): the project's engines pin picks the renderer's

@@ -1,4 +1,4 @@
-"""D72's local JSON contract does not supply D67's installed Python models."""
+"""The staged Runtime-pinned contract reaches the strict render consumer."""
 
 import hashlib
 import json
@@ -7,7 +7,7 @@ from pathlib import Path
 import jsonschema
 import pytest
 
-from astrid.core.rendering import node_pin, remotion_runtime
+from astrid.core.rendering import _local_schema, node_pin, remotion_runtime
 from astrid.core.timeline import banodoco_schema
 from astrid.installer.backend import Backend
 from astrid.sdk import host_bootstrap
@@ -16,7 +16,7 @@ ROOT = Path(__file__).parents[1]
 SCHEMA = Path("astrid/core/timeline/schema/timeline-config.schema.json")
 
 
-def test_staged_canonical_schema_is_not_an_installed_model_package(tmp_path, monkeypatch):
+def test_staged_canonical_schema_reaches_strict_consumer(tmp_path, monkeypatch):
     # Acquisition, installation and native tools are outside this finite test.
     # Keep stage, source-host provisioning and the schema readers real.
     backend = Backend(tmp_path / "program", tmp_path / "log", tmp_path / "uv")
@@ -24,7 +24,7 @@ def test_staged_canonical_schema_is_not_an_installed_model_package(tmp_path, mon
     def source(name, _sha, destination, **_kwargs):
         destination.mkdir(parents=True)
         if name == "agent":
-            for relative in (SCHEMA, Path("runtime.lock.json"),
+            for relative in (SCHEMA, Path("runtime.lock.json"), *_local_schema.READER_INPUTS,
                              Path("remotion/package.json"), Path("remotion/package-lock.json")):
                 target = destination / relative
                 target.parent.mkdir(parents=True, exist_ok=True)
@@ -78,24 +78,24 @@ def test_staged_canonical_schema_is_not_an_installed_model_package(tmp_path, mon
                         node_pin.NodeResolution(Path("/tools/node"), "v20.19.4", "v20.19.4", "test"))
     environment = host_bootstrap._host_render_environment(agent)
     assert environment["ASTRID_REMOTION_PROJECT_DIR"] == str(agent / "remotion")
-    assert "ASTRID_TIMELINE_SCHEMA_PYTHONPATH" not in environment
+    assert environment["ASTRID_TIMELINE_SCHEMA_PYTHONPATH"] == str(agent / SCHEMA)
     assert not (agent / "remotion/node_modules/@banodoco/timeline-schema").exists()
 
     # Isolate the schema preflight from the separately qualified JS bundle.
-    # Never manufacture Python modules or report runtime readiness here.
+    # A verified schema alone must never report runtime readiness.
+    monkeypatch.setattr(remotion_runtime, "REPO_ROOT", agent)
     monkeypatch.setattr(remotion_runtime, "remotion_install_problem", lambda _project: None)
     monkeypatch.setattr(remotion_runtime, "resolve_remotion_runtime_tools", lambda *_args:
-                        pytest.fail("missing schema must refuse before native tools"))
+                        (None, "explicit owned validation still required"))
     monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", environment["ASTRID_REMOTION_PROJECT_DIR"])
     status = remotion_runtime.remotion_runtime_status(require_explicit_project=True)
     assert not status.available
     assert status.reason == "ASTRID_TIMELINE_SCHEMA_PYTHONPATH must point to the installed timeline schema"
 
-    # Binding the JSON directory as a Python package cannot satisfy the reader.
-    monkeypatch.setenv("ASTRID_TIMELINE_SCHEMA_PYTHONPATH", str((agent / SCHEMA).parent))
+    monkeypatch.setenv("ASTRID_TIMELINE_SCHEMA_PYTHONPATH", environment["ASTRID_TIMELINE_SCHEMA_PYTHONPATH"])
     status = remotion_runtime.remotion_runtime_status(require_explicit_project=True)
     assert not status.available
-    assert status.reason.startswith("installed timeline schema is incomplete under ")
+    assert status.reason == "explicit owned validation still required"
 
     profile = json.loads(version.profile.read_text())
     assert profile["source_checkout"] == str(agent)
