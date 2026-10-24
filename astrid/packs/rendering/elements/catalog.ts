@@ -4135,7 +4135,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:bab94b36a46e6b4e88a96bdc2c326137ba93f6a05cde1f2ae58a7ebc3f3ef8cb",
+    "revision": "sha256:e7c4342664b04705f53fd42bbb0624db6e8959ada7b905fc897b622daa6ddff0",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -4208,9 +4208,65 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
           "description": "Canvas px from the left.",
           "type": "number"
         },
+        "xKeyframes": {
+          "description": "Optional glide on x, same shape as yKeyframes with x in place of y; overrides x.",
+          "items": {
+            "properties": {
+              "at": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "ease": {
+                "enum": [
+                  "linear",
+                  "easeOut",
+                  "easeInOut"
+                ],
+                "type": "string"
+              },
+              "x": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "at",
+              "x"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
         "y": {
           "description": "Canvas px from the top.",
           "type": "number"
+        },
+        "yKeyframes": {
+          "description": "Optional glide: [{at: clip frame, y: px, ease?: linear|easeOut|easeInOut}], interpolated smoothly per frame (holds before the first and after the last); overrides y, composes with reveal.",
+          "items": {
+            "properties": {
+              "at": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "ease": {
+                "enum": [
+                  "linear",
+                  "easeOut",
+                  "easeInOut"
+                ],
+                "type": "string"
+              },
+              "y": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "at",
+              "y"
+            ],
+            "type": "object"
+          },
+          "type": "array"
         }
       },
       "required": [
