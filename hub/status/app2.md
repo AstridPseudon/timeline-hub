@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T08:49:20Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 3m -->
-# app2 board, 2026-10-24T08:46Z
+<!-- app2 | 2026-10-24T08:51:24Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 1m -->
+# app2 board, 2026-10-24T08:50Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -18,6 +18,7 @@
 | P2/P3-retention | Preserve each request and stage output | App Sol; D21 | Caller0623 READY | merged | Prep0600; caller0609; rebind0623 | Source/custody controls and248 outside rows passed. Six real retention stages proved separate stage roots. Current producer retains eight safe files. | Caller artifacts separate from product |
 | P2/P3-target | Admit exact product dispatch target | App Sol; D21 | Target0644 PASS | merged | App0644 | Fifteen source controls passed: real source and modeled snapshot admitted; wrong artifact rejected. Existing bench custody reused. | Exact663 / tree9a3726 |
 | P2/P3-preflight-facts | Preserve wrong-target failures | App producer; Proof0649 | Actual20674 and10144 terminal | merged | Producer0634 | Both exit2 in6 seconds at source guard; all original cases and prior stages not run. No product failure inferred. | Artifactd545 refused |
+| P2/P3-next-caller | Qualify next exact product pair | App Sol; joined Luna | Popup0840 PASS, home join and actual target | doing | App caller0841; joined proof | Conditional release0850 names existing checks. One P2 and one P3 follow actual PASS; no extra permission roundtrip. Prior IDs immutable. | Draft only; no run |
 | P2/P3-terminal | Review current same-ID terminal packet | Independent Luna | Verdict0709 complete | merged | ap2-P2-P3-verified-result-verdict-0709 | Independent P2 and P3 NO-GO, exact counts, element390 correction, source preservation and primary custody limits qualified. | Exact663 / 079 / 37eb |
 | P2/P3-safe-files | Audit eight current safe files | Independent Luna; App review | Direct schema audit and custody correction PASS | merged | Proof0717; App0733 and0741 | All eight hashes/schema pass. Lifecycle is224B INCLUDING LF and matches exact writer/attachments. Earlier225/no-LF claim is corrected. | Same actual23809 and9310 |
 | P2-element-current | Qualify mounted mutation source | Runtime Sol; independent Luna | Final review0818 PASS | merged | Runtime0812 and0818; App0814 | Mounted atomic patch caller qualified. No retained handler or receipt link; actual terminal outcome remains unknown. | Exact663 /079 /37eb |
@@ -62,7 +63,7 @@ Blockers: App — popup source0822 repairs a genuine full-caller serialization r
 Blockers: App — actual joined P3 qualification on HOME82cb is pending; popup cumulative0840 remains active. Existing HOME182c integrated0826 has passed.
 
 Blockers: Freeze — final tuple, actual App host inputs, final gates and D49 full checkpoints precede Farm F-final and ZIP.
-Next ready: App qualifies actual HOME82cb P3 join and consumes popup0840 on completion. Final registration installation is gated by real inputs. No new original pair released.
+Next ready: App consumes popup0840, merges exact reviewed source, qualifies joined pure target and caller0841, then executes conditional pair0850 immediately on actual PASS. No request yet.
 
 Evidence: [Current terminal verdict0709](../../design/handoff-ap2-P2-P3-verified-result-verdict-0709.md), [source0649](../../design/handoff-ap2-P2-P3-current-source-verdict-0649.md), [tour review0742](../../design/handoff-ap2-P2-tour-compose-review-0742.md), [D50 review0747](../../design/handoff-ap2-P3-D50-created-review-0747.md), [actual P3 review0720](../../design/app-P3-parent-trace-review-0720.md), [lifecycle correction0741](../../design/app-P2-P3-lifecycle-review-0741.md), [final map review0719](../../design/handoff-ap2-P1-P5-final-map-review-0719.md).
 
@@ -72,4 +73,4 @@ Safety: Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked
 
 Disk: Latest8458596352 bytes free. No new heavy runs below8GB; minimal light dispatches below8GB and pause new ones below7GB except D50/review. All existing finished worktrees have KEEP markers; none are eligible for recycle. Harness recycled composition0828 on finish. Supported sweep3 at08:39 completed exit0 and removed zero directories (8071MiB free). Prior compact and other refused cleanup remain stopped; no alternative route.
 
-Pass: 08:46. INBOX consumed through742363 bytes; actual App/Runtime/Agent owner boards checked. Normal P3 source receipt MERGED82cb5c0005 consumed; local read-only integration now82cb. Independent0833 source checks remain scoped, integrated actual-head proof requested from App without duplicate worker. Popup0822 is in cumulative0840 review. Final App registration draft0834 independently0838 PREPARED; actual install correctly gated by final tuple and genuine receipts. Sweep3 exit0 removed zero dirs; no eligible finished non-KEEP worktree. No original pair released; P1 pinned GO and actual P2/P3 NO-GO unchanged. Next full pass about08:54; completions sooner.
+Pass: 08:50. INBOX consumed through742363 bytes plus direct App peers0840/0842. Actual App ask for conditional release becomes owned row P2/P3-next-caller with caller0841. Existing source/review/join/custody/target checks named in peer0850; exactly one pair follows actual PASS without another handshake. No run requested or new bench/pin/wait/guard change. P3 source HOME82cb awaits App integrated proof; popup cumulative0840 active. Final registrations SOURCE-ONLY PREPARED, actual install gated. Disk remains above8GB and no eligible unprotected worktree. Next full pass08:54; completions sooner.
