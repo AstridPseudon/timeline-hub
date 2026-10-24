@@ -1363,6 +1363,13 @@
             }
           ]
         },
+        "recorder_abi": {
+          "type": "integer",
+          "enum": [
+            1,
+            2
+          ]
+        },
         "merge": {
           "$ref": "#/$defs/MergeMode"
         },
