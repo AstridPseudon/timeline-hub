@@ -10,6 +10,7 @@ import base64
 import hashlib
 import json
 import re
+from collections import OrderedDict
 
 from .errors import ConflictError, ProtocolError, ValidationError
 from .idempotency import command_result
@@ -19,6 +20,9 @@ from .util import canonical_json, new_id, now
 
 _METADATA = ("source", "label", "rationale", "group_id")
 _PRIVATE_EXECUTION = "_sequential_execution"
+# Bump when the deterministic replay implementation changes.
+_REPLAY_VALIDATOR_VERSION = 1
+_REPLAY_MEMO_LIMIT = 256
 _DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
 _TEXT_BINDING_REF = re.compile(r"occurrence:([^/]+)/text-binding:(prompt|voiceover_script|transcript)(?::([a-z][a-z0-9-]{0,63}))?\Z")
 
@@ -156,6 +160,7 @@ class TimelineCommitStore:
         # Agent-owned leaves. It must raise on invalid data, never normalize it.
         self.validate_prepared = validate_prepared
         self.validate_event = validate_event
+        self._replay_memo = OrderedDict()
 
     @property
     def conn(self):
@@ -241,32 +246,6 @@ class TimelineCommitStore:
                 valid = valid and data.get("label") == records["label"]
             if "merge_mode" in records:
                 valid = valid and data.get("merge_mode") == records["merge_mode"]
-            if "steps" in records:
-                from .timeline_commit_auth import validate
-                replay_request = {**metadata, "commands": data["commands"],
-                                  "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"]}
-                source = self.revision_closure(edge["project_id"], edge["timeline_id"], previous["revision_id"],
-                                               allow_archived=allow_archived)
-                continuations = self._binding_continuations(
-                    edge["project_id"], edge["timeline_id"], base["publication_id"], previous,
-                    allow_archived=allow_archived,
-                )
-                history = self._inverse_stage_history(edge["project_id"], edge["timeline_id"], records,
-                                                      allow_archived=allow_archived)
-                prepared = {"records": records, "expected_head": previous, "canonical_document": document}
-                original = self.revision_closure(edge["project_id"], edge["timeline_id"], base["revision_id"],
-                                                 allow_archived=allow_archived)
-                sequential = None
-                if _PRIVATE_EXECUTION in metadata:
-                    replay_request, prepared, sequential = self._historical_sequential(
-                        metadata[_PRIVATE_EXECUTION], row, edge, data, prepared, original, source,
-                        continuations, history,
-                    )
-                else:
-                    from .timeline_commit_auth import sequential_proof_required
-                    if sequential_proof_required(prepared, source, continuations):
-                        raise ValueError("historical sequential proof is missing")
-                validate(replay_request, prepared, source, original, continuations, history, sequential=sequential)
             ids = json.loads(row["event_ids_json"])
             seq = row["resulting_stream_seq"]
             # Replay verifies the accepted prefix, independent of later writes.
@@ -306,20 +285,73 @@ class TimelineCommitStore:
                     raise ValueError()
                 self._check_inherited_allocations(project, timeline, records, allocations, edge["project_seq"],
                                                    allow_archived=allow_archived)
+            if "steps" in records:
+                replay_request = {**metadata, "commands": data["commands"],
+                                  "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"]}
+                source = self.revision_closure(edge["project_id"], edge["timeline_id"], previous["revision_id"],
+                                               allow_archived=allow_archived)
+                continuations = self._binding_continuations(
+                    edge["project_id"], edge["timeline_id"], base["publication_id"], previous,
+                    allow_archived=allow_archived,
+                )
+                history = self._inverse_stage_history(edge["project_id"], edge["timeline_id"], records,
+                                                      allow_archived=allow_archived)
+                prepared = {"records": records, "expected_head": previous, "canonical_document": document}
+                original = self.revision_closure(edge["project_id"], edge["timeline_id"], base["revision_id"],
+                                                 allow_archived=allow_archived)
+                capture = None
+                if _PRIVATE_EXECUTION in metadata:
+                    replay_request, prepared, capture = self._historical_sequential(
+                        metadata[_PRIVATE_EXECUTION], row, edge, data, prepared,
+                    )
+                self._verify_replay(row, edge, replay_request, prepared, source, original,
+                                    continuations, history, capture, allow_archived=allow_archived)
         except (KeyError, TypeError, ValueError, IndexError, ValidationError, CommitRejected) as exc:
             raise ProtocolError("accepted commit record is corrupt") from exc
 
-    def _historical_sequential(self, execution, row, edge, data, accepted, base, source, continuations, history):
-        from .timeline_commit_auth import validate_sequential_capture
+    def _verify_replay(self, row, edge, request, prepared, source, original, continuations, history, capture,
+                       *, allow_archived):
+        from . import timeline_commit_auth as auth
+        from . import timeline_commit_validation as validation
+
+        # Only pure replay is reusable. The caller has freshly checked the
+        # envelope, event prefix, sequence, closures and transitive history.
+        # Raw JSON columns remain strings here: even whitespace changes miss.
+        realm = self.conn.execute("SELECT realm_id FROM projects WHERE id=?", (edge["project_id"],)).fetchone()
+        if realm is None:
+            raise ValueError("accepted project is missing")
+        content = hashlib.sha256(canonical_json([
+            dict(row), dict(edge), realm[0], allow_archived, request, prepared, source, original,
+            {ref: sorted(successors) for ref, successors in continuations.items()}, history, capture,
+        ]).encode()).digest()
+        key = (content, _REPLAY_VALIDATOR_VERSION, digest(validation._schema_resources()[0]),
+               auth.validate, auth.validate_sequential_capture, auth.sequential_proof_required,
+               auth.validate_commit_value, validation.validate_commit_value, validation._validator)
+        if key in self._replay_memo:
+            self._replay_memo.move_to_end(key)
+            return
+        sequential = None
+        if capture is not None:
+            validation.validate_commit_value(capture["context"], "CommitContext")
+            validation.validate_commit_value(prepared, "PreparedCommit")
+            sequential = auth.validate_sequential_capture(
+                request, prepared, capture, source, original, continuations, history,
+            )
+        elif auth.sequential_proof_required(prepared, source, continuations):
+            raise ValueError("historical sequential proof is missing")
+        auth.validate(request, prepared, source, original, continuations, history, sequential=sequential)
+        # Retain no caller-owned values and never cache a failed verification.
+        self._replay_memo[key] = None
+        if len(self._replay_memo) > _REPLAY_MEMO_LIMIT:
+            self._replay_memo.popitem(last=False)
+
+    def _historical_sequential(self, execution, row, edge, data, accepted):
         from .timeline_commit_port import route_path
-        from .timeline_commit_validation import validate_commit_value
 
         if set(execution) != {"capture", "prepared"}:
             raise ValueError("historical sequential execution is malformed")
         capture, prepared = execution["capture"], execution["prepared"]
         context = capture["context"]
-        validate_commit_value(context, "CommitContext")
-        validate_commit_value(prepared, "PreparedCommit")
         request = context["request"]
         realm = self.conn.execute("SELECT realm_id FROM projects WHERE id=?", (edge["project_id"],)).fetchone()
         if (realm is None or context["realm_id"] != realm[0]
@@ -350,9 +382,7 @@ class TimelineCommitStore:
                     "project_id": edge["project_id"], "timeline_id": edge["timeline_id"],
                     "publisher": edge["publisher"], **semantic}:
                 raise ValueError("historical sequential events differ from acceptance")
-        return request, prepared, validate_sequential_capture(
-            request, prepared, capture, source, base, continuations, history,
-        )
+        return request, prepared, capture
 
     def _check_inherited_allocations(self, project, timeline, records, allocations, before_seq=None,
                                      *, allow_archived=False):
