@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T04:11:24Z | dispatcher heartbeat 14s | live 1 (sol 1, luna 0, other 0) | busy30 16 | status age 0m -->
+<!-- main | 2026-10-24T04:13:47Z | dispatcher heartbeat 7s | live 3 (sol 2, luna 1, other 0) | busy30 17 | status age 0m -->
 # runtime board, 2026-10-24T04:05:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -56,14 +56,14 @@
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Agent existing child qualified | merged | Source 0125; review 0132; Agent 0137 | Exact seven cases passed in 3.60 seconds on existing child c886; wrong-tree control refused. Source and body identities retained. | Source 521c888; installed c36 |
 
-| OPS-farm-agent-full | Prepare supported farm full-suite setup | Luna / Luna | Inode validation correction | doing | Review 0405 FAIL; return 0410 | Six replaced-inode cases bypass helper checks. Existing store mutex route is the bounded correction; no live install. | 9c81f15e held |
-| R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Integrated proof | merging | Author 0353; review 0405 PASS; merge queued | 13 standalone cases and 243 controls passed. Temporary capture loss disclosed. Original packet remains uncertified. | 2e96c68c |
+| OPS-farm-agent-full | Prepare supported farm full-suite setup | Sol / Luna | Existing normal API qualification | doing | Return 0410 blocked; Sol 0413 | Optional helper remains held. Farm inputs arrived; existing fresh Store.initialize route is being qualified. | Artifact only |
+| R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Actual integrated proof | merging | Review 0405 PASS; integrated 0413 | Home tree exactly matches reviewed source. Original packet and temporary capture limits remain explicit. | 2b49da8d6 / 2e96c68c |
 | R-D42-history-memo | Memoize complete verified replay inputs | Sol / Luna | Stateful dependency correction | doing | Review 0357 found bypass; Sol 0403; audit 0403 | 145 passed. Mutable closure attack still bypasses warm verification. Candidate held; whole validation path under review. | a6843aa9 held |
 | R-D42-proof-pin | Backport memo onto compatible proof pin | Sol / Luna | Corrected source and review | blocked:runtime | Pin 0358 reproduced closure bypass | 160 pin cases passed; source remains unsafe. Old client and all 64 protected hashes match. | a684 backport held |
 | R-D42-HTTP | Cold, warm and concurrent native21 GET | Luna | Corrected reviewed proof pin | blocked:runtime | HTTP 0344 stop requested | Preparation retained. Release needs cold, warm and two concurrent HTTP timings on exact committed pin. | Await corrected pin |
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
-Runtime integration is 36760ee0ad, tree 11389911c2ee. Foreign retirement passed 230 cases on that integrated head. D39 and D40 producer changes are merged; their integrated proofs passed 162 and 317 cases, with two configured exclusions in the latter.
+Runtime integration is 2b49da8d6, tree 40eb05d5a51b. Historical redo source merged after independent PASS; actual integrated proof 0413 is running. Prior D39/D40 and foreign-retirement proofs remain at their exact recorded scope.
 
 The earlier history cost fix passed 145 cases on exact head 45c3 with Agent 4151. Compatible proof pin 37eb remains separate from integration. The D42 memo is held after a security failure; Sol 0346 owns its correction. Current wire shapes and consumer pins remain unchanged. No final full-suite pass is claimed.
 
