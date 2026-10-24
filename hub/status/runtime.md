@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T10:35:21Z | dispatcher heartbeat 6s | live 2 (sol 1, luna 1, other 0) | busy30 17 | status age 1m -->
-# runtime board, 2026-10-24T10:33:35Z
+<!-- main | 2026-10-24T10:38:21Z | dispatcher heartbeat 6s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 0m -->
+# runtime board, 2026-10-24T10:37:37Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -82,15 +82,15 @@
 
 | OPS-farm-bootstrap-input | Authenticate bootstrap and xdist wheels | Luna / independent Luna | Received-input verification | merged | Reviews0936/0946 PASS; committedbf4d | Artifact 443977 and all five original wheels received and independently verified on Agent 1011 PASS. Farm receipt is unknown. | Input only |
 
-| OPS-Agent-current-child | Qualify changed Agent source child | Dispatcher / Agent Luna | Reviewed verifier installation | blocked:runtime | Original final 0c2c child; Sol 0951 | Bootstrap and all installs passed. Final installed inventory refused. No child retry or READY claim. | Agent 0c2c / Runtime becfe |
+| OPS-Agent-current-child | Qualify changed Agent source child | Agent / Luna | Actual received kit verification | blocked:agent | Original 0c2 failure; Agent next receipt | Runtime security and installed publication passed. Exact four hashes sent to Agent; one meaningful normal child follows actual received-kit PASS. | Agent tuple pending |
 | OPS-Farm-current-child | Qualify Farm checkpoint child | Farm lead / Runtime Luna | Authenticated schema and test distributions | blocked:runtime | Preflight 0900; component review 0958 | Runtime and Agent isolated imports pass. Shared schema and xdist remain absent. Runtime package is present. | Agent 9cd / Runtime 1d9 |
 
-| OPS-child-verifier-numpy-RECORD | Authenticate complete child inventory | HARD Sol / Luna | Publication and protected route receipt | review | Security 1006; installed 1027; route 1035 | Security passed 140 tests and 79 attacks. Installed integrity passed; route drift and committed publication remain open. [Review](../../design/runtime-bootstrap-installed-review-1027.md) | ab6d49bfb installed |
+| OPS-child-verifier-numpy-RECORD | Authenticate complete child inventory | HARD Sol / Luna | Agent received kit and actual child | blocked:agent | Security 1006; installed 1027; route 1035 PASS | Four installed and committed files match. Source passed 140 tests and 79 attacks; Agent owns received kit and genuine child. [Receipt](../../design/runtime-installed-route-review-1035.md) | ab6d49bfb installed |
 
 | R2r-provider-completion | Classify post-provider replay failure | HARD Sol / Luna | Independent source review passed | merged | Author0915; review0923 PASS | Bounded source assessment passed; original cause UNKNOWN. Nine author controls passed; temporary JUnit lost. [Review](../../design/runtime-provider-completion-review-0923.md). | Runtime becfe unchanged |
 
 | OPS-schema-source-access | Obtain authentic schema source | Luna / orchestrator | Session access decision | blocked:orchestrator | Acquisition 0955 stopped | Exact declared GitHub source returned HTTP 403. No original source acquired and no alternate route attempted. | Input absent |
-| OPS-installed-route | Resolve installed route provenance | Luna | Installed review 1027 | doing | rt-OPS-installed-route-review-1035 | Read-only attribution of ensure-daemons drift and normal committed publication. No install or child request. | Evidence pending |
+| OPS-installed-route | Resolve installed route provenance | Luna | Independent receipt passed | merged | rt-OPS-installed-route-review-1035 | Four-file installed and committed publication PASS at 15eee8cd. Daemon drift attributed to separate orchestrator maintenance. [Review](../../design/runtime-installed-route-review-1035.md) | Evidence only |
 
 Runtime full: zero of 36 original failures open at retained integrated scopes; no new full-suite PASS. Producer becfe6db88b2cc034dba3fafa6c050117cdf2b06 is merged and independently qualified after 409 targeted passes. Temporary producer JUnit loss remains disclosed. [Proof](../../design/runtime-freeze-result-review-0727.md).
 
@@ -98,7 +98,7 @@ FREEZE, D48/D49: Runtime upstream and D39 are home. Agent upstream and D39 are h
 
 Sequence: qualify actual final Runtime, Agent and adopted App integration heads; rerun P1–P5 on App service with Proof verdicts; run final full suites at D49 venues; then Farm F-final and ZIP. No final tuple or final gate run is released. Runtime venue is main service; Agent own service is primary pending the schema-access owner disposition; its existing full 9758 continues. Farm schema admission stays held. App venue is App service; Composition venue is Viewing service.
 
-Verifier: source ab6d49bfb independently passed 140 controls plus 79 attacks. Guarded installer 1023 passed; independent installed review 1027 passes exact helper 02513492, Store bd18ef1d, maker c1197e1a and unchanged requester 08f1b00a. It found an unrelated ensure-daemons change and incomplete committed publication; read-only Luna 1035 owns attribution and normal publication receipt. No new child is authorized as ready by this evidence. Original failed 0c2 installed NumPy rows are absent; precise attribution remains UNKNOWN.
+Verifier: source ab6d49bfb independently passed 140 controls plus 79 attacks. Guarded installer 1023 passed; independent installed review 1027 passes exact helper 02513492, Store bd18ef1d, maker c1197e1a and unchanged requester 08f1b00a. Follow-up Luna 1035 independently attributed daemon drift to orchestrator maintenance and verified four-file committed publication at 15eee8cd. Agent now owns actual received-kit and one changed child; no child READY is implied. Original failed 0c2 installed NumPy rows are absent; precise attribution remains UNKNOWN.
 
 Farm component: HARD Sol 1012 saved 234eeb443; independent cumulative security 1020 passed all 74 tests, retaining the original 17 controls and refusing source mutation, unsafe ownership and forged wheels. Component is not yet wired. HARD Sol 1030 joins only reviewed component blobs into the independently reviewed verifier source, including normal create, final and reuse authority. Source-only work proceeds without authentic schema bytes; no build, installation or Farm admission is implied.
 
@@ -110,8 +110,8 @@ Provider completion: Runtime 0915 and independent 0923 PASS retain original caus
 
 Proof: P1 remains historical GO. P4 and P5 retain named scopes. P2 23809 and P3 9310 remain terminal NO-GO. App and Proof own the next conditional pair and exact caller custody; no duplicate Runtime body or benchmark. Final P4/P5 App-host registration remains App-owned after final tuple input.
 
-Blockers: Runtime — independent installed route review 1035 and committed publication receipt precede Agent received-kit verification and one changed child.
+Blockers: Agent — actual received-kit verification and one meaningful changed child follow Runtime source, installed and committed-publication PASS.
 Blockers: Orchestrator — declared schema source HTTP 403 and automatic read-access refusal await owner disposition; all alternate routes remain stopped. [Evidence](../../design/runtime-schema-acquisition-status-0955.md).
 Blockers: App and Agent — reviewed popup repair and complete caller qualification precede the next pair. Header P2/P3 GO precedes App upstream and D39 home adoption.
-Next ready: Sol 1030 owns normal maker join; independent review follows its saved result. Luna 1035 owns installed route and publication facts. No unassigned ready Runtime task or new heavy run.
-Later: D47 memo stays held until after delivery. D34 broader cleanup resumes below 8.5 GB or after delivery; prior denied cleanup, process, retirement and publication targets remain stopped. Seven newly finished clean review trees recycled this pass; about 8.3 GB free. Three historical Runtime trees remain dirty. V4 is cut; D14/D23 and D31/D37 remain unchanged.
+Next ready: Sol 1030 owns normal maker join; independent review follows its saved result. Installed route review 1035 passed; Agent owns actual received-kit verification and one changed child. No unassigned ready Runtime task or new heavy run.
+Later: D47 memo stays held until after delivery. D34 broader cleanup resumes below 8.5 GB or after delivery; prior denied cleanup, process, retirement and publication targets remain stopped. Seven newly finished clean review trees recycled. Sweep3 removed zero directories; compact packed zero and losslessly compressed twelve old logs. About 8.5 GB free. Three historical Runtime trees remain dirty. V4 is cut; D14/D23 and D31/D37 remain unchanged.
