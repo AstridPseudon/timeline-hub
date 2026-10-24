@@ -2,21 +2,24 @@
 from __future__ import annotations
 
 import copy
+import json
 
 import pytest
 
 from astrid.sdk import timeline
+from astrid.sdk.contracts import DomainResult
 from astrid.sdk.timeline import store
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.capture import capture_move
 from astrid.sdk.timeline.commands import execute
-from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.sdk.timeline.commit import _digest, bundle_from_document
 from astrid.sdk.timeline.sync import TimelineSession
 from astrid.sdk.timeline_sheet import NativeSheet
 from tests.sdk.test_timeline_restructure import restructure_runtime  # noqa: F401
 from tests.sdk.test_timeline_restructure_guarded_runtime import (
     restructure_inverse_runtime,  # noqa: F401
 )
+from tests.sdk.test_timeline_sheet_native import edit_cell
 
 
 def test_revision_inspection_does_not_replace_authenticated_session_capture(
@@ -43,7 +46,10 @@ def test_revision_inspection_does_not_replace_authenticated_session_capture(
         "base_parent": {**ordinary["base_parent"], "publication_id": base["publication_id"]},
         "source_mapping": {**ordinary["source_mapping"], "_runtime_document": document},
     }
-    assert session._bundle(state) == authenticated
+    projected = {**ordinary, "base_parent": authenticated["base_parent"]}
+    assert session._bundle(state) == projected
+    assert "_runtime_document" not in json.dumps(session._bundle(state))
+    assert session._capture_bundle(state) == authenticated
     assert NativeSheet.export(session)._bundle == authenticated
     assert NativeSheet.load(session)._bundle == authenticated
     canonical = bundle_from_document(document)
@@ -73,3 +79,67 @@ def test_clean_session_capture_refuses_a_mismatched_pair_without_writes(
     assert tuple(env.service.store.conn.iterdump()) == stored
     assert session.outbox.path.read_bytes() == outbox
     assert env.calls == calls
+
+
+@pytest.mark.parametrize("damage", ["publication", "accepted-document"])
+def test_private_capture_reauthenticates_same_revision_without_writes(
+    restructure_inverse_runtime, tmp_path, monkeypatch, damage,  # noqa: F811
+):
+    env = restructure_inverse_runtime
+    session = TimelineSession.open(env.project, "t", client=env.client,
+                                   outbox_path=tmp_path / "reauthenticate.json")
+    state = session.outbox.read()
+    genuine = session._capture_bundle(state)
+    history = env.client.timelines.history
+    stored = tuple(env.service.store.conn.iterdump())
+    outbox = session.outbox.path.read_bytes()
+    calls = copy.deepcopy(env.calls)
+
+    def damaged(*args, **kwargs):
+        data = copy.deepcopy(history(*args, **kwargs).data)
+        entry = next(row for row in data["items"]
+                     if row["publication_id"] == state["base"]["publication_id"])
+        assert entry["revision_id"] == state["base"]["revision_id"]
+        if damage == "publication":
+            entry["receipt"]["receipt_id"] = "different-publication"
+        else:
+            document = copy.deepcopy(genuine["source_mapping"]["_runtime_document"])
+            parent = document["parent_revision"]
+            parent["payload"]["private-cache-forgery"] = True
+            parent["content_digest"] = _digest(parent["payload"])
+            entry["receipt"]["result"]["canonical_document"] = document
+        return DomainResult.success(data)
+
+    monkeypatch.setattr(env.client.timelines, "history", damaged)
+    message = ("original revision/publication pair changed" if damage == "publication"
+               else "canonical document differs from the original closure read")
+    for read in (session._bundle, session._capture_bundle):
+        with pytest.raises(TimelineEditError, match=message):
+            read(state)
+    assert tuple(env.service.store.conn.iterdump()) == stored
+    assert session.outbox.path.read_bytes() == outbox
+    assert env.calls == calls
+
+
+def test_private_capture_serves_real_sheet_and_session_acceptance(
+    restructure_inverse_runtime, tmp_path,  # noqa: F811
+):
+    env = restructure_inverse_runtime
+    session = TimelineSession.open(env.project, "t", client=env.client,
+                                   outbox_path=tmp_path / "sheet-session.json")
+    exported = NativeSheet.export(session)
+    loaded = NativeSheet.load(session)
+    assert loaded._bundle == exported._bundle == session._capture_bundle(session._state())
+    text = edit_cell(loaded.text, "occurrence:occ-film/clip:cross", "4")
+    landed = loaded.apply(text, session=session, dry_run=False, idempotency_key="private-sheet")
+    assert landed["data"]["status"] == "accepted"
+    assert "_runtime_document" not in session._bundle(session._state())["source_mapping"]
+
+    opened = timeline.open(env.project, "t", client=env.client,
+                           outbox_path=tmp_path / "python-session.json")
+    opened.bundle["parent"]["opaque"]["private-cache-session"] = True
+    accepted = opened.commit("Private capture", idempotency_key="private-python")
+    assert accepted["data"]["status"] == "accepted"
+    assert accepted["data"]["canonical_document"]["parent_revision"]["payload"]["opaque"]["private-cache-session"] is True
+    assert "_runtime_document" not in opened.bundle["source_mapping"]
+    assert opened._runtime_document == accepted["data"]["canonical_document"]
