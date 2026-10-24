@@ -39,6 +39,7 @@ import { timelineBase as runtimeTimelineBase, timelineFromList, type TimelineLis
 import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditCommand, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
 import { centreCell, gridDifference, letterbox, matches, pictureGrid, MATCH, type GridDifference, type PictureGrid, type Rect } from './support/pictures.ts';
+import { assertGate5ResetPrecondition } from './support/gate5-reset-precondition.ts';
 
 /** A hang ceiling for one wait (R-10): many times the usual time, never a budget. */
 const CEILING = { timeout: 90_000 };
@@ -1535,6 +1536,39 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   sniff.attach(page);
   let c!: CommitAcceptedMutation;
   await openCommandTimeline(page, harness, seed3);
+  const preconditionBase = await history(harness, seed3);
+  const preconditionRequest = page.waitForRequest((request) => {
+    if (request.method() !== 'POST' || new URL(request.url()).pathname !== `/api/runtime${timelineBase(harness, seed3)}/commit`) return false;
+    const body = request.postDataJSON() as Record<string, any>;
+    return body?.base_revision_id === preconditionBase.head.revision_id
+      && body?.base_publication_id === preconditionBase.head.publication_id
+      && body?.commands?.length === 1
+      && body.commands[0]?.op === 'clip.move'
+      && body.commands[0]?.select === `parent/clip:${seed3.appClipId}`
+      && body.commands[0]?.args?.on === 5;
+  }, CEILING);
+  await dragTimelineClip(page, seed3.appClipId, seed3.transitionClipId, 0, 5, THREE_PRODUCTS_REFERENCE_AT);
+  const setupRequest = await preconditionRequest;
+  const setupResponse = await page.waitForResponse((response) => response.request() === setupRequest, CEILING);
+  const setupBody = await setupResponse.json();
+  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).every((item) => !item.pending && !item.intents.length), CEILING).toBe(true);
+  const setupPost: CommitPost = {
+    method: setupRequest.method(), path: new URL(setupRequest.url()).pathname.replace(/^\/api\/runtime/, ''),
+    body: setupRequest.postData()!, key: setupRequest.headers()['idempotency-key'],
+    status: setupResponse.status(), response: setupBody,
+  };
+  await expectV2History(harness, seed3, setupPost, 'accepted');
+  const setupData = (setupBody as CommitAcceptedMutation).data;
+  const authoritativeHead = (await history(harness, seed3)).head;
+  const authoritativeRevision = await revisionBody(harness, setupData.accepted_revision_id);
+  assertGate5ResetPrecondition({
+    request: setupRequest.postDataJSON(), requestIdentity: setupRequest, responseRequest: setupResponse.request(),
+    requestIdempotencyKey: setupRequest.headers()['idempotency-key'], responseStatus: setupResponse.status(), responseBody: setupBody,
+    expectedBase: { revisionId: preconditionBase.head.revision_id, publicationId: preconditionBase.head.publication_id },
+    expectedScope: { projectId: harness.seed.projectId, timelineId: seed3.timelineId },
+    clipId: seed3.appClipId, expectedPosition: 5, settledOutboxes: await commandOutboxes(page, seed3.timelineId),
+    authoritativeHead, authoritativeRevision,
+  });
   const resetResponse = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);
   await dragTimelineClip(page, seed3.appClipId, seed3.transitionClipId, 5, 0, THREE_PRODUCTS_REFERENCE_AT);
   const reset = await resetResponse;
