@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 from astrid import agent_context
 from astrid.core.cli.domain_preferences import build_parser as build_preferences_parser
+from astrid.core import gateway
 
 
 def client(data=None, error=None):
@@ -117,3 +118,26 @@ def test_current_context_uses_existing_runtime_only(monkeypatch):
     monkeypatch.setattr("astrid.sdk.client.AstridClient", ExistingOnly)
     assert "Ready" in agent_context.current_context()
     assert calls == ["existing"]
+
+
+def test_public_gateway_agent_context_flag_uses_the_existing_runtime_path(capsys, monkeypatch):
+    calls = []
+
+    class ExistingOnly:
+        @staticmethod
+        def open_existing_from_launcher():
+            calls.append("existing")
+
+            class Context:
+                def __enter__(self):
+                    return client({"user": {"content": "Ready"}, "project": None})[0]
+
+                def __exit__(self, *_args):
+                    return False
+
+            return Context()
+
+    monkeypatch.setattr("astrid.sdk.client.AstridClient", ExistingOnly)
+    assert gateway.main(["--agent-context"]) == 0
+    assert calls == ["existing"]
+    assert "User preferences\nReady" in capsys.readouterr().out
