@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T01:16:13Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
+<!-- app2 | 2026-10-24T01:18:12Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
 # app2 board, 2026-10-24T01:12Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -38,4 +38,4 @@ Disk: 01:09 available 8,952,619,008 bytes, above the 8 GB stop line. Supported r
 
 Next ready: App cause worker0105 publishes qualified terminal packets -> immediate independent Proof result/verdict audit. No repeated P2/P3 run, no guessed repair and no duplicate private extractor. P1 GO remains complete.
 
-Current update: 2026-10-24T01:12Z; last full pass01:09Z. INBOX consumed through595067 bytes plus direct normal0106 terminal peer. P2 run10973 exit2/189s and P3 run14249 exit2/194s on fixed804/079/2a9. Exact stage and original case counts are not yet qualified. App Sol0105 owns retained-evidence triage with named independent reviewer. All1234 local Proof workers terminal; no ready source task waiting. Next full pass01:19Z; act sooner on qualified packets.
+Current update: 2026-10-24T01:12Z; last full pass01:09Z. INBOX consumed through596617 bytes plus direct normal0106 terminal peer. P2 run10973 exit2/189s and P3 run14249 exit2/194s on fixed804/079/2a9. Exact stage and original case counts are not yet qualified. App Sol0105 owns retained-evidence triage with named independent reviewer. All1234 local Proof workers terminal; no ready source task waiting. Next full pass01:19Z; act sooner on qualified packets.
