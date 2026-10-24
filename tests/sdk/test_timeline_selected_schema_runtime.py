@@ -888,8 +888,13 @@ def test_native_provider_refuses_unavailable_or_wrong_retained_basis(retained_pa
     assert case.head() == before
 
 
-def test_paired_provider_requires_exact_installed_contract_digest():
+def test_paired_provider_requires_exact_installed_contract_digest(monkeypatch):
+    import sys
+
     use_runtime()
+    for name in tuple(sys.modules):
+        if name == 'runtime_protocol' or name.startswith('runtime_protocol.'):
+            monkeypatch.delitem(sys.modules, name)
     from runtime_protocol.errors import ValidationError
     from runtime_protocol.timeline_commit_provider import validate_timeline_commit_provider
 

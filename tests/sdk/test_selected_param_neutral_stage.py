@@ -316,9 +316,9 @@ def mounted_pack(monkeypatch, request):
 
     # This lane uses the real mounted provider, rather than the detached ABI.
     use_runtime()
-    for name in ('runtime_protocol', 'runtime_protocol.contract_metadata',
-                 'runtime_protocol.timeline_commit'):
-        monkeypatch.delitem(sys.modules, name)
+    for name in tuple(sys.modules):
+        if name == 'runtime_protocol' or name.startswith('runtime_protocol.'):
+            monkeypatch.delitem(sys.modules, name)
     return request.getfixturevalue('retained_pack')
 
 
