@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T22:28:25Z | dispatcher heartbeat 12s | live 2 (sol 1, luna 1, other 0) | busy30 8 | status age 1m -->
-# runtime board, 2026-10-24T22:27:24Z
+<!-- main | 2026-10-24T22:31:35Z | dispatcher heartbeat 8s | live 1 (sol 1, luna 0, other 0) | busy30 8 | status age 1m -->
+# runtime board, 2026-10-24T22:30:29Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -193,9 +193,9 @@
 | F-final-rehearsal | Rehearse fresh upstream delivery | Luna | Critical timing and App priority | gated:critical-capacity | rt-F-final-rehearsal-2219 BLOCKED | App shallow-parent traversal stopped staging. No ZIP. Private input fix resumes after critical sample; raw temp loss disclosed. | Source unchanged |
 | F-final-matrix | Prepare pinned per-venue dispatch | Luna | Durable first return | doing | rt-F-final-matrix-return-2228 | Predecessor controls pass; five committed artifacts retained on branch. Return makes handoff durable and completes command inputs. | 2219 branch only |
 
-| P2-spare-venue | Reserve main for App diagnostics | App owner / Runtime service | App pinned diagnostic plan | blocked:app | App existing isolated producer | Owner22:24 reserves two main slots and test service ahead of rehearsal. Final P2 tour stays App. No duplicate request. | Await App plan |
+| P2-spare-venue | Keep main diagnostic capacity available | App owner / Runtime service | App now has local capacity | gated:App-need | App sole producer2216 | App2219 explicitly clears spare-venue need; owner reserve retained if needed. Actual7131 is App-only. No main duplicate. | No main request |
 
-| P4-D84a-distinct | Sample remaining ten-note bottleneck | HARD Sol | Owner 22:27; R2 four PASS | doing | rt-P4-D84a-distinct-sol-2227 | One original local sample with CPU, 15/30/44 second stacks and request curve, then measured strict repair. No further batch yet. | Runtime732 base |
+| P4-D84a-distinct | Repair remaining multi-command cost | HARD Sol | Owner 22:27 and 22:31 | doing | rt-P4-element-D84a-return-sol-2231 | Prior one-case sample retained: 46.220 wall, 43.858 main CPU; 15/30/44 second stacks. Resume adds element shape, no original repeat. | Runtime732 base |
 
 Runtime producer: RELEASED 732c48c6f5a9441a65c61b24595d454a1cd3e180, tree 7ed0559c6f0a05954427cc668e303b6cd2f51586. Three product hashes exactly match the independent security review. Canonical 15 files and schema867f are unchanged. Actual release receipts and hashes are in [release](../../design/runtime-D84a-release-2205.md).
 
@@ -209,7 +209,7 @@ Lock finding: Nine genuine same-head mutations plus an unchanged control pass. H
 Actual False diagnostic: One unchanged candidate197d/bc04 case failed45.008seconds. Both30/44second samples show Recorder/schema computation, with12.149CPU seconds over14.002wall seconds. No main-thread wait sampled; intervening waits and HTTP contention remain unknown. Raw stacks0600 private. No further diagnostic body needed.
 
 Blockers: Agent home proof — Agent039ff adopted732. Owner29429 reports four R2PASS and ten-note45.314FAIL. Agent owns exact batch/candidate merge and home applicability; Sol2227 owns the remaining measured cost source.
-Blockers: App P2 — Appbceb normally adopts732; sole element2216 is active. Capacity cleared by ten fresh stale-pin retirements, all outputs retained. Two main slots and service reserved for diagnostic handoff; finaltour stays App.
+Blockers: App P2 — Appbceb adopts732; actual7131 remains NO-GO5s per owner22:31. Sole safe-facts2227 returns existing evidence. No main spare venue needed now; all8P2 stay open. Sol2231 compares element shape without a browser repeat.
 Blockers: Final cut — all lanes core0/regressions0, final P1–P5 plus core on one pinned tuple, D69 and genuine installed render required. No build or ZIP before cut.
 Next ready: Agent and App adopt released732 and run their existing meaningful original plans. Runtime private final-core inventory2207 is complete. D59 still holds installation, final suites and build.
 
@@ -219,7 +219,7 @@ Later: E1/E3 and Agent E2 designs retained; further E/D79 paused until ZIP. All 
 Admission: D56 Farm/schema access stopped. Original403 and historical access, cleanup, process and retirement refusals remain stopped. D67 D13 environment gap and App dirty-U3 refusals remain unchanged.
 Disk: Last read 8600858624 available bytes, 8.01 GiB; cap4 conservatively. No ended clean non-KEEP Runtime worktree is eligible. Guarded sweep3 removed zero; compact packed zero and gzipped two old logs. Historical refused targets remain stopped; 15GB target not reached.
 
-live 2 queued or running / cap 4; ready-undispatched 0. HARD Sol2227 owns measured ten-note repair; Luna2228 owns durable matrix handoff. Two slots reserved for App diagnostics. Rehearsal yields to their priority.
+live 2 queued or running / cap 4; ready-undispatched 0. HARD Sol2231 resumes measured ten-note and element repair; Luna2228 owns durable matrix handoff. Two slots reserved for App diagnostics. Rehearsal yields to their priority.
 Pass 2026-10-24T22:13:47Z: Read PLAN/common, new inbox through577361bytes, header and owner boards. App asset/placement source repairs accepted HOME with browser proof still open. Runtime732 product blobs remain released and actual home clean. Consumed2207 harness completion without a redundant review under D56; private92+TS inventory remains PENDING tuple and uninstalled. Published exact author report. No new source, duplicate original or denied route.
 
 Intake 2026-10-24T22:15:49Z: Orchestrator fresh Agent08e6b90511 packaging overlap became owned row F-final-upstream-installer and dispatched Luna2216 immediately. Gating source is frozen. No upstream fetch or merge requested.
@@ -229,3 +229,5 @@ Intake 2026-10-24T22:20:13Z: Orchestrator22:20 two independent final-path reques
 Pass 2026-10-24T22:20:53Z: consumed owner22:24 spare venue priority and2216 PASS. Exact author report published. App normal adoption2212 is active after successful stale-pin recycle; Agent adoption/carrier2209 active. Source732 released. Reserve two main slots; no duplicate App body or finaltour on main. Inbox through578666bytes.
 
 Pass 2026-10-24T22:27:24Z: owner22:27 distinct ten-note critical source dispatched immediately. Agent/App adoption receipts consumed. Both2219 returns consumed: matrix first return dispatched; rehearsal input/disk block retained, no artifact claimed. Disk restored8592900096bytes after harness cleanup. Source732 unchanged. Inbox through584855bytes.
+
+Pass 2026-10-24T22:30:29Z: original sample2227 completed and durably retained, then checkpoint-stopped only to deliver owner22:31 expanded shape scope. New Sol2231 resumes samebranch without repeatingoriginal. MainCPU43.858/wall46.220 is sample fact, no lock/causal verdict inferred. App7131 NO-GO and explicit spare-venue selfclear consumed. Inbox through586973bytes.
