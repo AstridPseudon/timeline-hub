@@ -167,6 +167,10 @@ test('mounted bootstrap retention uses the authentic producer through the real b
   assert.equal(artifact.diagnostics.overflow, 0);
   assert.equal(artifact.diagnostics.records.length, 8);
   assert.deepEqual(artifact.diagnostics.records.at(-1), {
+    dependencyBaselinePresent: 'UNKNOWN', providerChanged: 'UNKNOWN', timelineChanged: 'UNKNOWN', headChanged: 'UNKNOWN',
+    dataRefChanged: 'UNKNOWN', editSeqRefChanged: 'UNKNOWN', adoptionChanged: 'UNKNOWN', ownerChanged: 'UNKNOWN',
+    resolverChanged: 'UNKNOWN', localSaveChanged: 'UNKNOWN', basisReadOrdinal: 'UNKNOWN', operation: 'UNKNOWN',
+    operationOrdinal: 'UNKNOWN', operationState: 'UNKNOWN',
     version: 1, sequence: 11, time: artifact.diagnostics.records.at(-1)?.time, phase: 'capture-rejected', projectId: 'project',
     timelineId: 'timeline', clipId: 'clip', ownerAlias: 1, generation: 1, sessionPresent: true, closed: false,
     current: true, identityPresent: 'UNKNOWN', scopeMatched: 'UNKNOWN', mountedHead: { revisionId: 'revision', publicationId: 'publication' },

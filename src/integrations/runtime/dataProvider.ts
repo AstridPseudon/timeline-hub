@@ -1,3 +1,4 @@
+import { timelineBasisDiagnostics } from '@/tools/video-editor/lib/timeline-basis-diagnostics.ts';
 import { PROJECT_TRANSCRIPT_KIND, parseProjectTranscriptDocument, projectTranscriptSchema, transcriptDocumentId, type ProjectTranscriptRepository } from '@/tools/video-editor/data/typed/projectTranscript.ts';
 import { ApiError, type ByteResponse, type MediaImportOperation as MediaImport, type RequestBody } from './generated.ts';
 import type {
@@ -883,77 +884,113 @@ export class RuntimeDataProvider implements DataProvider {
 
   /** Public verified history pins plus scoped immutable reads, never projected rows. */
   async loadTimelineCommandBasis(timelineId: string): Promise<TimelineCommandBasis> {
-    const firstHistory = await this.listTimelineCommits(timelineId);
-    const pages = [firstHistory];
-    const seenCursors = new Set<string>();
-    const requireHead = (page: HistoryPage): HistoryPage['head'] => {
-      const head = page?.head;
-      if (!head || typeof head.revision_id !== 'string' || !head.revision_id
-        || typeof head.publication_id !== 'string' || !head.publication_id) {
-        throw new TimelineSchemaIncompatibleError('Workspace Runtime returned a malformed timeline history head');
+    const observe = timelineBasisDiagnostics(this);
+    const finishLoader = observe('loader');
+    // Immutable reads are complete only when their assembled closure validates.
+    const pendingReads: Array<(completed: boolean) => void> = [];
+    try {
+      const requireHead = (page: HistoryPage): HistoryPage['head'] => {
+        const head = page?.head;
+        if (!head || typeof head.revision_id !== 'string' || !head.revision_id
+          || typeof head.publication_id !== 'string' || !head.publication_id) {
+          throw new TimelineSchemaIncompatibleError('Workspace Runtime returned a malformed timeline history head');
+        }
+        return head;
+      };
+      const finishFirstHistory = observe('history');
+      let firstHistory;
+      let firstHead;
+      try {
+        firstHistory = await this.listTimelineCommits(timelineId);
+        firstHead = requireHead(firstHistory);
+        finishFirstHistory(true);
+      } catch (error) {
+        finishFirstHistory(false);
+        throw error;
       }
-      return head;
-    };
-    const firstHead = requireHead(firstHistory);
-    while (pages[pages.length - 1]!.next_cursor !== null) {
-      const cursor = pages[pages.length - 1]!.next_cursor!;
-      if (seenCursors.has(cursor)) {
-        throw new TimelineSchemaIncompatibleError('Workspace Runtime returned a cyclic timeline history cursor');
+      const pages = [firstHistory];
+      const seenCursors = new Set<string>();
+      while (pages[pages.length - 1]!.next_cursor !== null) {
+        const cursor = pages[pages.length - 1]!.next_cursor!;
+        if (seenCursors.has(cursor)) {
+          throw new TimelineSchemaIncompatibleError('Workspace Runtime returned a cyclic timeline history cursor');
+        }
+        seenCursors.add(cursor);
+        const finishNextPage = observe('history');
+        let nextPage;
+        try {
+          nextPage = await this.listTimelineCommits(timelineId, cursor);
+          const nextHead = requireHead(nextPage);
+          if (nextHead.revision_id !== firstHead.revision_id
+            || nextHead.publication_id !== firstHead.publication_id) {
+            throw new TimelineSchemaIncompatibleError('Workspace Runtime changed the captured timeline history head');
+          }
+          finishNextPage(true);
+        } catch (error) {
+          finishNextPage(false);
+          throw error;
+        }
+        pages.push(nextPage);
       }
-      seenCursors.add(cursor);
-      const nextPage = await this.listTimelineCommits(timelineId, cursor);
-      const nextHead = requireHead(nextPage);
-      if (nextHead.revision_id !== firstHead.revision_id
-        || nextHead.publication_id !== firstHead.publication_id) {
-        throw new TimelineSchemaIncompatibleError('Workspace Runtime changed the captured timeline history head');
+      const history: HistoryPage = {
+        ...firstHistory,
+        items: pages.flatMap((page) => page.items),
+        next_cursor: null,
+      };
+      const head = history.head;
+      if (!head?.revision_id || !head.publication_id) {
+        throw new TimelineSchemaIncompatibleError('Timeline has no verified authoring history head');
       }
-      pages.push(nextPage);
+      const finishParent = observe('parent');
+      pendingReads.push(finishParent);
+      const parent = await this.readParentCompositionAtHead(this.projectId, timelineId, head.revision_id);
+      const manifest = requiredRecord(parent.dependency_manifest, 'verified parent dependency manifest');
+      const shots = await Promise.all(array(manifest.shots, 'baseline shots').map(async (value) => {
+        const pin = requiredRecord(value, 'baseline shot pin');
+        const shotId = requiredString(pin.shot_id, 'baseline shot_id');
+        const revision = requiredString(pin.revision_id, 'baseline shot revision_id');
+        const finishShot = observe('shot');
+        pendingReads.push(finishShot);
+        const shot = await this.client.getProjectShotRevision(this.projectId, shotId, revision);
+        assertRuntimeIdentity(shot, this.projectId, shotId, 'shot revision');
+        assertRevisionIdentity(shot, revision, 'shot revision');
+        if (shot.shot_id !== shotId || shot.content_digest !== pin.content_digest
+          || shot.internal_timeline_revision_id !== pin.internal_timeline_revision_id) {
+          throw new TimelineSchemaIncompatibleError('Baseline shot pin mismatch');
+        }
+        return { shot_id: pin.shot_id, revision_id: pin.revision_id, internal_timeline_revision_id: pin.internal_timeline_revision_id,
+          content_digest: pin.content_digest, payload: requiredRecord(shot.payload, 'shot payload') };
+      }));
+      const internals = await Promise.all(array(manifest.internal_timelines, 'baseline internals').map(async (value) => {
+        const pin = requiredRecord(value, 'baseline internal pin');
+        const scope = requiredString(pin.timeline_id, 'baseline internal timeline_id');
+        const revision = requiredString(pin.revision_id, 'baseline internal revision_id');
+        const finishInternal = observe('internal');
+        pendingReads.push(finishInternal);
+        const internal = await this.client.getProjectTimelineRevision(this.projectId, scope, revision);
+        assertRuntimeIdentity(internal, this.projectId, scope, 'internal timeline revision');
+        assertRevisionIdentity(internal, revision, 'internal timeline revision');
+        if (internal.content_digest !== pin.content_digest) throw new TimelineSchemaIncompatibleError('Baseline internal pin mismatch');
+        return { timeline_id: pin.timeline_id, revision_id: pin.revision_id, content_digest: pin.content_digest,
+          payload: requiredRecord(internal.payload, 'internal payload') };
+      }));
+      const raw = { schema_version: 1, project_id: this.projectId, timeline_id: timelineId,
+          parent_revision: { revision_id: head.revision_id, content_digest: parent.content_digest, payload: parent.payload },
+          shot_revisions: shots, internal_timeline_revisions: internals,
+          dependency_manifest: manifest };
+      const canonicalDocument = validateAcceptedCanonicalDocument(raw as CanonicalDocument, this.projectId, timelineId, head.revision_id);
+      const result = {
+        head: { revisionId: head.revision_id, publicationId: head.publication_id }, canonicalDocument, history,
+        graph: runtimeGraphToContractFromCanonicalDocument(this.projectId, timelineId, canonicalDocument, head.publication_id),
+      };
+      for (const finish of pendingReads) finish(true);
+      finishLoader(true);
+      return result;
+    } catch (error) {
+      for (const finish of pendingReads) finish(false);
+      finishLoader(false);
+      throw error;
     }
-    const history: HistoryPage = {
-      ...firstHistory,
-      items: pages.flatMap((page) => page.items),
-      next_cursor: null,
-    };
-    const head = history.head;
-    if (!head?.revision_id || !head.publication_id) {
-      throw new TimelineSchemaIncompatibleError('Timeline has no verified authoring history head');
-    }
-    const parent = await this.readParentCompositionAtHead(this.projectId, timelineId, head.revision_id);
-    const manifest = requiredRecord(parent.dependency_manifest, 'verified parent dependency manifest');
-    const shots = await Promise.all(array(manifest.shots, 'baseline shots').map(async (value) => {
-      const pin = requiredRecord(value, 'baseline shot pin');
-      const shotId = requiredString(pin.shot_id, 'baseline shot_id');
-      const revision = requiredString(pin.revision_id, 'baseline shot revision_id');
-      const shot = await this.client.getProjectShotRevision(this.projectId, shotId, revision);
-      assertRuntimeIdentity(shot, this.projectId, shotId, 'shot revision');
-      assertRevisionIdentity(shot, revision, 'shot revision');
-      if (shot.shot_id !== shotId || shot.content_digest !== pin.content_digest
-        || shot.internal_timeline_revision_id !== pin.internal_timeline_revision_id) {
-        throw new TimelineSchemaIncompatibleError('Baseline shot pin mismatch');
-      }
-      return { shot_id: pin.shot_id, revision_id: pin.revision_id, internal_timeline_revision_id: pin.internal_timeline_revision_id,
-        content_digest: pin.content_digest, payload: requiredRecord(shot.payload, 'shot payload') };
-    }));
-    const internals = await Promise.all(array(manifest.internal_timelines, 'baseline internals').map(async (value) => {
-      const pin = requiredRecord(value, 'baseline internal pin');
-      const scope = requiredString(pin.timeline_id, 'baseline internal timeline_id');
-      const revision = requiredString(pin.revision_id, 'baseline internal revision_id');
-      const internal = await this.client.getProjectTimelineRevision(this.projectId, scope, revision);
-      assertRuntimeIdentity(internal, this.projectId, scope, 'internal timeline revision');
-      assertRevisionIdentity(internal, revision, 'internal timeline revision');
-      if (internal.content_digest !== pin.content_digest) throw new TimelineSchemaIncompatibleError('Baseline internal pin mismatch');
-      return { timeline_id: pin.timeline_id, revision_id: pin.revision_id, content_digest: pin.content_digest,
-        payload: requiredRecord(internal.payload, 'internal payload') };
-    }));
-    const raw = { schema_version: 1, project_id: this.projectId, timeline_id: timelineId,
-        parent_revision: { revision_id: head.revision_id, content_digest: parent.content_digest, payload: parent.payload },
-        shot_revisions: shots, internal_timeline_revisions: internals,
-        dependency_manifest: manifest };
-    const canonicalDocument = validateAcceptedCanonicalDocument(raw as CanonicalDocument, this.projectId, timelineId, head.revision_id);
-    return {
-      head: { revisionId: head.revision_id, publicationId: head.publication_id }, canonicalDocument, history,
-      graph: runtimeGraphToContractFromCanonicalDocument(this.projectId, timelineId, canonicalDocument, head.publication_id),
-    };
   }
 
   async loadTimeline(timelineId: string, options?: { poll?: boolean }): Promise<LoadedTimeline> {
