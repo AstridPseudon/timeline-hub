@@ -245,10 +245,10 @@ def _restore_inverse_baselines(bundle, sources):
                 bundle['shots'][identity] = _RestoredShot(shot, copy.deepcopy(document))
 
 
-def inverse_closure(bundle, sources):
+def inverse_closure(bundle, sources, *, inverse_records=()):
     """Compile inverse effects using the same authenticated immutable reuse as acceptance."""
     _restore_inverse_baselines(bundle, sources)
-    return Closure(bundle, source_bundles=sources)
+    return Closure(bundle, source_bundles=sources, inverse_records=inverse_records)
 
 
 class CommitPatch:
@@ -279,6 +279,7 @@ class CommitPatch:
         self.inverse_stages = {}
         self.inverse_effects = {}
         self.inverse_sources = {}
+        self.inverse_records = {}
         self.execution_boundaries = []
 
     def step(self, ordinal):
@@ -430,7 +431,7 @@ class CommitPatch:
                     if dependency not in self.dependencies[step_id]:
                         self.dependencies[step_id].append(dependency)
 
-    def after(self, ctx):
+    def after(self, ctx, *, inverse_records=()):
         if not self.active:
             return
         ordinal = ctx.record['ordinal']
@@ -447,6 +448,7 @@ class CommitPatch:
         step = self.step(ordinal)
         if hasattr(ctx, 'inverse_stages'):
             self.inverse_sources[ordinal] = ctx.inverse_sources
+            self.inverse_records[ordinal] = inverse_records
             self.inverse_effects[ordinal] = getattr(ctx, 'inverse_effects', [])
             _restore_inverse_baselines(ctx.state.bundle, ctx.inverse_sources)
             stages = self.inverse_stages[ordinal] = []
@@ -456,9 +458,11 @@ class CommitPatch:
                 # The last native stage precedes retained-input reconciliation.
                 # Project its completed boundary, including the authenticated
                 # manifest used by acceptance to reuse a historical parent pin.
-                if index == len(ctx.inverse_stages) - 1:
+                completed = index == len(ctx.inverse_stages) - 1
+                if completed:
                     bundle = ctx.state.bundle
-                after = inverse_closure(bundle, ctx.inverse_sources)
+                after = inverse_closure(bundle, ctx.inverse_sources,
+                                        inverse_records=inverse_records if completed else ())
                 stages.append((before, after))
                 before = after
         for binding in ctx.record['bindings']:
@@ -478,7 +482,8 @@ class CommitPatch:
             self.execution_boundaries.append({
                 'boundary': copy.deepcopy(self.boundaries[ordinal]),
                 'input': copy.deepcopy(self.closures[ordinal].document),
-                'output': inverse_closure(ctx.state.bundle, self.inverse_sources.get(ordinal, [])).document,
+                'output': inverse_closure(ctx.state.bundle, self.inverse_sources.get(ordinal, []),
+                                          inverse_records=self.inverse_records.get(ordinal, ())).document,
             })
 
     def finish(self, plan):
@@ -486,8 +491,9 @@ class CommitPatch:
             return plan
         for step in self.steps:
             before = Closure(self.inputs[step['id']])
-            after = inverse_closure(self.outputs[step['id']], self.inverse_sources.get(
-                step['command_ordinals'][-1], []))
+            ordinal = step['command_ordinals'][-1]
+            after = inverse_closure(self.outputs[step['id']], self.inverse_sources.get(ordinal, []),
+                                    inverse_records=self.inverse_records.get(ordinal, ()))
             dependencies = self.dependencies[step['id']]
             for ordinal in step['command_ordinals']:
                 closure = self.closures[ordinal]
@@ -578,7 +584,8 @@ class CommitPatch:
         for step in self.steps:
             ordinal = step['command_ordinals'][-1]
             before = Closure(self.inputs[step['id']])
-            after = inverse_closure(self.outputs[step['id']], self.inverse_sources.get(ordinal, []))
+            after = inverse_closure(self.outputs[step['id']], self.inverse_sources.get(ordinal, []),
+                                    inverse_records=self.inverse_records.get(ordinal, ()))
             record = plan.records[ordinal]
             if self.v2:
                 for index, effect in enumerate(step['patch']):
