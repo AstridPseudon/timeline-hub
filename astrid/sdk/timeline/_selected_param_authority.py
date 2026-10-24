@@ -1,31 +1,46 @@
 """Selected PARAM provenance from the existing accepted publication chain."""
 from __future__ import annotations
 
+import copy
 from functools import lru_cache
 
-from ._command_state import CommandError, State
+from ._command_state import CommandError, State, equal
 
 
-def _association(record, select):
+def _bound(record, expected):
+    bindings = [b for b in record['bindings'] if b['key'] == expected['key']]
+    if len(bindings) != 1:
+        return False
+    return equal(bindings[0], expected)
+
+
+def _association(record, select, source=None, boundary=None):
     from .commit import _document_pin
+
+    def bound(expected):
+        if source is not None:
+            from ._commit_patch import canonical_site
+
+            physical, path = canonical_site(source, expected['ref'], [])
+            expected = {**expected, **source.binding(expected['ref'], physical, **boundary),
+                        'path': path}
+        return _bound(record, expected)
 
     command = record['command']
     if command['select'] != select:
         return None
     schemas = [d for d in record['dependencies'] if d['key'] == 'params.schema']
     snapshots = [d for d in record['dependencies'] if d['key'] == 'params.snapshot']
-    bindings = [b for b in record['bindings'] if b['key'] == 'params.element']
-    if len(schemas) != 1 or len(snapshots) != 1 or bindings != [{
+    if len(schemas) != 1 or len(snapshots) != 1 or not bound({
             'key': 'params.element', 'ref': select, 'policy': 'fixed',
-            'dependencies': ['params.schema', 'params.snapshot']}]:
+            'dependencies': ['params.schema', 'params.snapshot']}):
         return None
     owner = select.rsplit('/', 1)[0]
     required = [{'key': 'scalar.target', 'ref': select, 'policy': 'fixed',
                  'dependencies': ['scalar.images']}]
     if owner != 'parent':
         required.append({'key': 'scalar.owner', 'ref': owner, 'policy': 'fixed', 'dependencies': []})
-    if any([b for b in record['bindings'] if b['key'] == expected['key']] != [expected]
-           for expected in required):
+    if any(not bound(expected) for expected in required):
         return None
     schema, snapshot = schemas[0], snapshots[0]
     pin = snapshot['pin']
@@ -68,10 +83,12 @@ def resolve_selected_param_source(port, *, context, through, select, staged=()):
     def relevant(record, index):
         for write in record['writes']:
             ref, path = write['ref'], write['path']
-            if ref == select and (not path or path[0] in ('params', 'elementRef', 'element_ref')):
+            if ref == select and (not path or path[0] in (
+                    'params', 'elementRef', 'element_ref', 'id', 'clipType', 'clip_type',
+                    'asset', 'asset_id', 'media_id', 'object_id', 'file', 'src', 'source')):
                 return True
             if ref == 'timeline' or ref == owner and (not path or path[0] in (
-                    'clips', 'shot_id', 'shot_revision_id', 'internal_timeline_revision_id')):
+                    'clips', 'occurrence_id', 'shot_id', 'shot_revision_id', 'internal_timeline_revision_id')):
                 return True
             if owner == 'parent' and ref == 'parent' and path[:2] == ['config', 'clips']:
                 return True
@@ -86,12 +103,52 @@ def resolve_selected_param_source(port, *, context, through, select, staged=()):
         return record['command']['select'] == select and record['command']['op'] in (
             'clip.set-element', 'clip.set-params')
 
-    def effect(value, record, index, envelope=None):
+    def physical_context(records, record, index, envelope):
+        from ._commit_patch import normalize_steps
+        from ._doc_patch import Closure
+
+        staged = index == len(entries)
+        request = context['request'] if staged else entries[index]['receipt']['result']
+        v2 = (any(key in request for key in ('label', 'steps', 'merge', 'reads'))
+              or any(call['op'] == 'doc.patch' for call in request['commands'])
+              if staged else any('physical_ref' in binding and binding['key'] in (
+                  'params.element', 'scalar.target', 'scalar.owner', 'commit.effect')
+                  for item in records for binding in item['bindings']))
+        if not v2:
+            return None, None
+        head = through if staged else entries[index]['previous']
+        steps = (normalize_steps(request, request['commands'])[1] if staged else envelope['steps'])
+        step, = [step for step in steps if record['ordinal'] in step['command_ordinals']]
+        boundary = {key: request[key] for key in ('base_revision_id', 'base_publication_id')}
+        boundary.update(evaluated_head=copy.deepcopy(head), step_id=step['id'],
+                        command_ordinal=record['ordinal'], phase='input')
+        current = State(copy.deepcopy(_load(port, context, head['revision_id'])))
+        mapping = current.bundle['source_mapping']
+        mapping['_copy_manifest'] = copy.deepcopy(mapping['_runtime_document']['dependency_manifest'])
+        # Project recorder effects over the sealed input, without executing
+        # handlers or trusting an image/owner claimed by a binding. Each command
+        # may legitimately have a different physical revision from the head.
+        for ordinal, prior in enumerate(records[:record['ordinal']]):
+            if prior['ordinal'] != ordinal:
+                raise ValueError('unordered staged records')
+            for write in [*prior['writes'], *prior['derived_writes']]:
+                if not current.matches(write['ref'], write['path'], write['before']):
+                    raise ValueError('staged input differs from recorded before value')
+                current.set(write['ref'], write['path'], write['after'])
+            for dependency in prior['dependencies']:
+                if dependency['kind'] in ('source', 'transcript'):
+                    documents = mapping['_copy_manifest']['documents']
+                    if dependency['pin'] not in documents:
+                        documents.append(copy.deepcopy(dependency['pin']))
+        return Closure(current.bundle), boundary
+
+    def effect(value, record, index, envelope=None, records=()):
         if not relevant(record, index):
             return value
         command = record['command']
         if command['op'] in ('clip.set-element', 'clip.set-params'):
-            association = _association(record, select)
+            source, boundary = physical_context(records, record, index, envelope)
+            association = _association(record, select, source, boundary)
             if association is None:
                 return None
             element = association['element']
@@ -145,7 +202,7 @@ def resolve_selected_param_source(port, *, context, through, select, staged=()):
                                              before.get(owner + '/shot', ['shot_id']))):
                     value = None
             for record in records:
-                value = effect(value, record, index, entry['records'])
+                value = effect(value, record, index, entry['records'], records)
             row = state(index).entity(select, optional=True)
             element = (row.get('elementRef') or row.get('element_ref')) if row else None
             if value is not None and element != value['element']:
@@ -155,7 +212,7 @@ def resolve_selected_param_source(port, *, context, through, select, staged=()):
     try:
         value = at(len(entries) - 1)
         for record in staged:
-            value = effect(value, record, len(entries))
+            value = effect(value, record, len(entries), records=staged)
     except (KeyError, TypeError, ValueError, IndexError) as exc:
         raise CommandError('selected PARAM history is malformed', kind='history_unavailable', ref=select) from exc
     if value is None:
