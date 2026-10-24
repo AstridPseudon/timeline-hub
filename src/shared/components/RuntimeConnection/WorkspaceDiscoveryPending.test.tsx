@@ -18,14 +18,15 @@ describe('WorkspaceDiscoveryPending', () => {
 
     expect(document.querySelector('[data-boot-hold]')).not.toBeNull();
     expect(screen.getByRole('heading', { name: 'Opening your workspace…' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Retry workspace discovery' })).toBeNull();
+    expect(screen.getByRole('status')).toHaveTextContent('Astrid is looking for your projects on this computer.');
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
     act(() => vi.advanceTimersByTime(RUNTIME_REQUEST_WAIT_MS - 1));
-    expect(screen.queryByRole('button', { name: 'Retry workspace discovery' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
 
     act(() => vi.advanceTimersByTime(1));
     expect(document.querySelector('[data-boot-hold]')).toBeNull();
     expect(screen.getByRole('heading', { name: 'Still waiting for your workspace' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Retry workspace discovery' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Open editor' })).toBeInTheDocument();
     expect(onRetry).not.toHaveBeenCalled();
     expect(onOpenEditor).not.toHaveBeenCalled();
@@ -37,13 +38,13 @@ describe('WorkspaceDiscoveryPending', () => {
     render(<WorkspaceDiscoveryPending onRetry={onRetry} onOpenEditor={onOpenEditor} />);
     act(() => vi.advanceTimersByTime(RUNTIME_REQUEST_WAIT_MS));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Retry workspace discovery' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(onRetry).toHaveBeenCalledOnce();
     expect(screen.getByRole('heading', { name: 'Opening your workspace…' })).toBeInTheDocument();
     act(() => vi.advanceTimersByTime(RUNTIME_REQUEST_WAIT_MS - 1));
-    expect(screen.queryByRole('button', { name: 'Retry workspace discovery' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
     act(() => vi.advanceTimersByTime(1));
-    expect(screen.getByRole('button', { name: 'Retry workspace discovery' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Open editor' }));
     expect(onOpenEditor).toHaveBeenCalledOnce();

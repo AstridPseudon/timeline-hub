@@ -72,7 +72,7 @@ it('admits the bundled world and applies all three stages with only shipped asse
   expect(main).toHaveClass('md:grid-cols-[minmax(0,1fr)_var(--tasks-pane-width)]');
   const extensionsDock = screen.getByTestId('video-editor-right-panel-dock');
   expect(extensionsDock).toHaveAttribute('data-open', 'true');
-  expect(within(extensionsDock).getByRole('tab', { name: 'Extensions' })).toHaveAttribute('aria-selected', 'true');
+  expect(within(extensionsDock).getByRole('tab', { name: 'Inspector' })).toHaveAttribute('aria-selected', 'true');
   const chat = pane.querySelector('[data-tasks-pane-chat]')!;
   expect(within(pane).getByRole('textbox')).toHaveAttribute('readonly');
   expect(chat.querySelector('[data-editor-tour="chat-composer"]')).not.toBeNull();
@@ -82,6 +82,7 @@ it('admits the bundled world and applies all three stages with only shipped asse
   await waitFor(() => expect(operations).toBeTruthy());
   act(() => setEditorTourBeat(1, 'land', true));
   await waitFor(() => expect(captured.resolvedConfig?.clips.some(clip => clip.clipType === 'haus.astrid.liveScene')).toBe(true));
+  expect(within(extensionsDock).getByRole('tab', { name: 'Extensions' })).toHaveAttribute('aria-selected', 'true');
   expect(await within(extensionsDock).findByRole('region', { name: 'World Explorer' })).toBeInTheDocument();
   await waitFor(() => expect(document.querySelector('[data-testid="scene-renderer-ready"][data-phase="ready"]')).not.toBeNull());
   expect(document.querySelector('[data-testid="scene-renderer-ready"]')).toHaveAttribute('data-has-source', 'true');

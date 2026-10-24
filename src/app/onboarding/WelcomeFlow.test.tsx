@@ -17,7 +17,8 @@ vi.mock('./BrowserTourEditor', () => ({ BrowserTourEditor: ({onFinish}: {onFinis
   return <><h1>Welcome to Astrid</h1><button onClick={finishEditorTour}>Skip</button><button onClick={() => { setEditorTourBeat(3, 'feedback'); finishEditorTour(); }}>Done</button></>;
 } }));
 vi.mock('./WelcomeConnection', () => ({ default: () => { spies.connected(); return <h1>Connect your machine</h1>; } }));
-vi.mock('./WelcomeRunMode', () => ({ WelcomeRunMode: ({ local, onContinue, onBack }: { local?: boolean; onContinue?: (phase: 'local' | 'connection') => void; onBack?: () => void }) => local ? <><h1>Have your agent set it up</h1><button onClick={onBack}>Back</button></> : <><h1>How do you want to run Astrid?</h1><button onClick={() => onContinue?.('connection')}>Connect</button><button onClick={() => onContinue?.('local')}>Local</button></> }));
+vi.mock('./WelcomeRunMode', () => ({ WelcomeRunMode: ({ onContinue, runMode, setRunMode }: { onContinue: (phase: 'local' | 'connection') => void; runMode: 'hosted' | 'local'; setRunMode: (mode: 'hosted' | 'local') => void }) => <><h1>How do you want to run Astrid?</h1><button onClick={() => onContinue('connection')}>Connect</button><button onClick={() => { setRunMode('local'); onContinue('local'); }}>Local</button><span>{runMode}</span></> }));
+vi.mock('./WelcomeLocalSetup', () => ({ WelcomeLocalSetup: ({ onBack }: { onBack: () => void }) => <><h1>Have your agent set it up</h1><button onClick={onBack}>Back</button></> }));
 import { WelcomeFlow } from './WelcomeFlow';
 beforeEach(() => { localStorage.clear(); spies.record.mockClear(); spies.connected.mockClear(); window.history.replaceState({}, '', '/tools/video-editor'); });
 for (const action of ['Skip', 'Done']) it(`${action} opens the run-mode choice`, async () => {
@@ -46,6 +47,7 @@ it('moves from the choice to local setup or connection and back', async () => {
   expect(localStorage.getItem('astrid:welcome-v1')).toBe('local');
   fireEvent.click(screen.getByText('Back'));
   expect(await screen.findByText('How do you want to run Astrid?')).toBeInTheDocument();
+  expect(screen.getByText('local')).toBeInTheDocument();
   fireEvent.click(screen.getByText('Connect'));
   expect(await screen.findByText('Connect your machine')).toBeInTheDocument();
   expect(localStorage.getItem('astrid:welcome-v1')).toBe('connection');

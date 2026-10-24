@@ -93,59 +93,66 @@ function handlePreloadError(event: Event): void {
 }
 window.addEventListener('vite:preloadError', handlePreloadError);
 
-function showStartupFailure(rootElement: HTMLElement, error: unknown): void {
-  console.error('Astrid failed to start', error);
+// Shown before the app's CSS loads: keep in step with index.html's fallback
+function showFailureCard(rootElement: HTMLElement, { title: titleText, sentence, button: buttonText, onClick }: {
+  title: string;
+  sentence: string;
+  button: string;
+  onClick: () => void;
+}): HTMLButtonElement {
   const container = document.createElement('main');
   container.setAttribute('role', 'alert');
-  container.className = 'grid min-h-screen place-content-center gap-3 p-6 text-foreground';
+  container.style.cssText = 'min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;text-align:center;color:var(--boot-ink,#2b2724);font-family:Inter,system-ui,-apple-system,sans-serif';
+  const width = document.createElement('div');
+  width.style.maxWidth = '420px';
+  const icon = document.createElement('img');
+  icon.src = '/astrid-app-icon-192.png';
+  icon.alt = '';
+  icon.width = 76;
+  icon.height = 76;
+  icon.style.cssText = 'display:block;margin:0 auto';
 
   const title = document.createElement('h1');
-  title.textContent = 'Astrid could not start';
-  title.className = 'text-xl font-semibold';
+  title.textContent = titleText;
+  title.style.cssText = "margin:10px 0 4px;font:400 25px/1.2 Georgia,'Times New Roman',serif";
 
   const detail = document.createElement('p');
-  detail.textContent = 'Astrid may have just been updated. Reload to try again.';
-  detail.className = 'max-w-prose text-muted-foreground';
+  detail.textContent = sentence;
+  detail.style.cssText = 'margin:0 0 16px;font-size:14px;line-height:24px;opacity:.72';
 
   const button = document.createElement('button');
   button.type = 'button';
-  button.textContent = 'Reload';
-  button.className = 'w-fit rounded-md bg-primary px-4 py-2 text-primary-foreground';
-  button.addEventListener('click', () => window.location.reload());
+  button.textContent = buttonText;
+  button.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 28px;border-radius:12px;background:var(--boot-ink,#2b2724);color:var(--boot-background,#faf8f5);font-size:14px;font-weight:500;text-decoration:none;border:0;cursor:pointer;font-family:inherit';
+  button.addEventListener('click', onClick);
 
-  container.append(title, detail, button);
+  width.append(icon, title, detail, button);
+  container.append(width);
   rootElement.replaceChildren(container);
+  return button;
 }
 
-function showMigrationFailure(
-  rootElement: HTMLElement,
-  store: string,
-  retry: () => Promise<void>,
-): void {
-  const container = document.createElement('main');
-  container.setAttribute('role', 'alert');
-  container.className = 'grid min-h-screen place-content-center gap-3 p-6 text-foreground';
-
-  const title = document.createElement('h1');
-  title.textContent = 'Astrid could not prepare browser storage';
-  title.className = 'text-xl font-semibold';
-
-  const detail = document.createElement('p');
-  detail.textContent = `Migration failed for ${store}. Your existing browser data is preserved. Retry to try again.`;
-  detail.className = 'max-w-prose text-muted-foreground';
-
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.textContent = 'Retry migration';
-  button.className = 'w-fit rounded-md bg-primary px-4 py-2 text-primary-foreground';
-  button.addEventListener('click', () => {
-    button.disabled = true;
-    button.textContent = 'Retrying…';
-    void retry();
+function showStartupFailure(rootElement: HTMLElement, error: unknown): void {
+  console.error('Astrid failed to start', error);
+  showFailureCard(rootElement, {
+    title: 'Astrid could not start',
+    sentence: 'It may have just been updated. Reload to try again.',
+    button: 'Reload',
+    onClick: () => window.location.reload(),
   });
+}
 
-  container.append(title, detail, button);
-  rootElement.replaceChildren(container);
+function showMigrationFailure(rootElement: HTMLElement, store: string, retry: () => Promise<void>): void {
+  const button = showFailureCard(rootElement, {
+    title: 'Astrid could not prepare browser storage',
+    sentence: `Migration failed for ${store}. Your existing browser data is preserved. Retry to try again.`,
+    button: 'Retry migration',
+    onClick: () => {
+      button.disabled = true;
+      button.textContent = 'Retrying…';
+      void retry();
+    },
+  });
 }
 
 async function startApp(rootElement: HTMLElement): Promise<void> {

@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Check, Link2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/components/ui/collapsible.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn.ts';
 import { MinkRunner } from '@/shared/components/MinkRunner/MinkRunner.tsx';
 import { ToolbarPointer } from '@/shared/components/ToolbarPointer/ToolbarPointer.tsx';
@@ -10,7 +9,8 @@ import { ASTRID_HELP_URL } from '@/integrations/astrid/help.ts';
 import { isMobileDevice } from '@/pages/Home/installScenario.ts';
 import { useSendLinkToComputer } from '@/pages/Home/useSendLinkToComputer.ts';
 import { CopyInstallCommand } from './CopyInstallCommand.tsx';
-import { EmptyEditorShell } from './EmptyEditorShell.tsx';
+import { CardDisclosure, EditorCard, EditorCardFoot } from './EditorCard.tsx';
+import { EditorCardLayer } from './EditorCardLayer.tsx';
 import { RUNTIME_CONNECTION_COPY as COPY, withBrowser, type WindowMode } from './copy.ts';
 
 export interface RuntimeConnectionPanelProps {
@@ -33,9 +33,6 @@ export const CONNECTED_MIN_MS = 900;
 export const SETTLED_QUIET_MS = 150;
 /** The panel's way out: the card lifts away and the empty editor cross-fades into the real one. */
 export const LEAVE_MS = 500;
-
-/** The same face the landing page, the install dialog and the header show: the pixel mink's app icon. */
-const AVATAR_SRC = '/astrid-app-icon-192.png';
 
 /** The editor beneath has painted its frame: nothing in the page holds the boot (`bootLayer.ts`'s ready signal). */
 function appSettled(): boolean {
@@ -95,34 +92,9 @@ const ConnectedContext = createContext(false);
  */
 function GateLayer({ dataState, exit, children }: { dataState: string; exit: RuntimeConnectionPanelExit | null; children: ReactNode }) {
   const leaving = useLeaving(exit, CONNECTED_MIN_MS);
-  return (
-    <section
-      aria-label={COPY.panelLabel}
-      data-testid="runtime-not-connected"
-      data-state={dataState}
-      data-leaving={leaving ? '' : undefined}
-      // Over the app's own panes (the chat pane sits at z 100016) while the app mounts beneath it.
-      className={cn('fixed inset-0 z-[100100] overflow-y-auto text-foreground', leaving && 'pointer-events-none')}
-    >
-      {/* Fades in over the boot screen's paper; fades out over the real editor. */}
-      <div className={cn('fixed inset-0 transition-opacity duration-500 ease-out animate-in fade-in-0 motion-reduce:animate-none motion-reduce:transition-none', leaving && 'opacity-0')}>
-        <EmptyEditorShell />
-        <div aria-hidden="true" className="absolute inset-0 bg-foreground/[0.07] backdrop-blur-[2px]" />
-      </div>
-      <div className="relative flex min-h-full items-center justify-center p-4">
-        <div
-          key={dataState}
-          className={cn(
-            // Opacity only on the way in: the "Up here" arrow is fixed to the viewport, so nothing above it may transform.
-            'w-full max-w-[576px] transition-[opacity,transform] duration-300 ease-out animate-in fade-in-0 motion-reduce:transition-none motion-reduce:animate-none',
-            leaving && '-translate-y-1 opacity-0',
-          )}
-        >
-          <ConnectedContext.Provider value={Boolean(exit)}>{children}</ConnectedContext.Provider>
-        </div>
-      </div>
-    </section>
-  );
+  return <EditorCardLayer aria-label={COPY.panelLabel} data-testid="runtime-not-connected" data-state={dataState} data-leaving={leaving ? '' : undefined} leaving={leaving} cardKey={dataState}>
+    <ConnectedContext.Provider value={Boolean(exit)}>{children}</ConnectedContext.Provider>
+  </EditorCardLayer>;
 }
 
 /**
@@ -139,7 +111,7 @@ function StatusLine({ text, help }: { text: string; help: boolean }) {
     if (!connected && wordsRef.current) waitingWidth.current = wordsRef.current.getBoundingClientRect().width;
   });
   return (
-    <div className="flex min-h-12 items-center justify-center gap-2 border-t border-border/70 bg-muted/40 px-[22px] py-3 text-[13px] text-muted-foreground">
+    <EditorCardFoot>
       <span aria-hidden="true" className="relative flex h-4 w-4 shrink-0 items-center justify-center">
         <span className={cn('absolute h-2 w-2 rounded-full bg-primary transition-opacity duration-200', connected ? 'opacity-0' : 'animate-pulse')} />
         <span className={cn('absolute flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground transition-[opacity,transform] duration-300 ease-out', connected ? 'scale-100 opacity-100' : 'scale-50 opacity-0')}>
@@ -157,7 +129,7 @@ function StatusLine({ text, help }: { text: string; help: boolean }) {
           </>
         )}
       </span>
-    </div>
+    </EditorCardFoot>
   );
 }
 
@@ -182,24 +154,13 @@ interface CardProps {
  */
 function Card({ title, sentence, action, children, status, pointer, showHelp = false }: CardProps) {
   const connected = useContext(ConnectedContext);
-  return (
-    <div className="relative overflow-hidden rounded-[18px] border border-border bg-card text-center shadow-[0_24px_60px_-24px_rgb(37_36_31/0.45),0_2px_8px_rgb(37_36_31/0.08)]">
-      <div className="space-y-4 p-[22px] pt-[26px]">
-        <header className="grid justify-items-center gap-3">
-          {/* The icon file carries its own rounded tile and shadow, as the install dialog shows it at this size. */}
-          <img src={AVATAR_SRC} alt="" className="-mb-1.5 h-[76px] w-[76px]" />
-          <div className="space-y-1">
-            <h1 className="text-balance font-serif font-theme-heading text-[25px] font-normal leading-tight text-foreground">{title}</h1>
-            <p className="text-balance text-sm leading-6 text-muted-foreground">{sentence}</p>
-          </div>
-        </header>
-        {children}
-        {action}
-      </div>
-      {(status || connected) && <StatusLine text={status ?? COPY.waiting} help={showHelp} />}
-      {pointer && !connected && <ToolbarPointer label={pointer} corner="top-left" tone="page" />}
-    </div>
-  );
+  return <>
+    <EditorCard title={title} sentence={sentence} foot={(status || connected) ? <StatusLine text={status ?? COPY.waiting} help={showHelp} /> : undefined}>
+      {children}
+      {action}
+    </EditorCard>
+    {pointer && !connected && <ToolbarPointer label={pointer} corner="top-left" tone="page" />}
+  </>;
 }
 
 /**
@@ -275,10 +236,7 @@ function PermissionCard({ connection, firstRun = false }: { connection: RuntimeC
     <Card
       title={firstRun ? COPY.firstRun.title : withBrowser(permission.title)}
       sentence={withBrowser(firstRun ? COPY.firstRun.sentence : permission.sentence)}
-      action={<div className="space-y-3"><Collapsible>
-        <CollapsibleTrigger className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">{permission.allowTitle}</CollapsibleTrigger>
-        <CollapsibleContent className="pt-2 text-left text-sm leading-6 text-muted-foreground">{permission.allowDetails}</CollapsibleContent>
-      </Collapsible><Button type="button" className="h-11 w-full rounded-xl" onClick={() => connection.connect()}>{permission.connect}</Button></div>}
+      action={<div className="space-y-2"><Button type="button" className="h-11 w-full rounded-xl" onClick={() => connection.connect()}>{permission.connect}</Button><CardDisclosure label={permission.allowTitle}>{permission.allowDetails}</CardDisclosure></div>}
     />
   );
 }

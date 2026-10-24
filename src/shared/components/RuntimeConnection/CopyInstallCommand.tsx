@@ -14,7 +14,7 @@ type CopyStatus = 'idle' | 'copied' | 'failed';
 const COPIED_MS = 2000;
 
 /** Each action owns its feedback so copying a command cannot claim the agent brief was copied. */
-function useCopyAction(text: string) {
+export function useCopyAction(text: string) {
   const [status, setStatus] = useState<CopyStatus>('idle');
   const resetRef = useRef<number | null>(null);
   useEffect(() => () => {
@@ -32,7 +32,7 @@ function useCopyAction(text: string) {
   return { status, copy };
 }
 
-function CopyFallback({ text, label }: { text: string; label: string }) {
+export function CopyFallback({ text, label }: { text: string; label: string }) {
   const fieldRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => { fieldRef.current?.select(); }, [text]);
   return (

@@ -1,45 +1,37 @@
 import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button.tsx';
+import { RadioGroup, RadioGroupItem } from '@/shared/components/ui/radio-group.tsx';
+import { SegmentedControl, SegmentedControlItem } from '@/shared/components/ui/segmented-control.tsx';
 import { detectBrowser } from '@/shared/hooks/platformInstall/platformDetection.ts';
 import { runInstallPrompt, useInstallPromptSignals, useStandaloneStatus } from '@/shared/hooks/platformInstall/signals.ts';
 import { detectInstallScenario } from '@/pages/Home/installScenario.ts';
-import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard.ts';
-import { localSetupInstructions, type WindowMode } from '@/shared/components/RuntimeConnection/copy.ts';
+import type { WindowMode } from '@/shared/components/RuntimeConnection/copy.ts';
+import { EditorCard } from '@/shared/components/RuntimeConnection/EditorCard.tsx';
+import { EditorCardLayer } from '@/shared/components/RuntimeConnection/EditorCardLayer.tsx';
 import { writeWelcomePhase } from './welcomeProgress.ts';
 
 export type { WindowMode };
+export type RunMode = 'hosted' | 'local';
 
 interface Props {
-  readonly local?: boolean;
-  readonly onContinue?: (phase: 'connection' | 'local') => void;
-  readonly onBack?: () => void;
+  readonly onContinue: (phase: 'connection' | 'local') => void;
   readonly windowMode: WindowMode;
   readonly setWindowMode: (mode: WindowMode) => void;
+  readonly runMode: RunMode;
+  readonly setRunMode: (mode: RunMode) => void;
 }
 
-export function WelcomeRunMode({ local = false, onContinue, onBack, windowMode, setWindowMode }: Props) {
+const ASTRID_REPO = 'https://github.com/banodoco/astrid-app';
+
+export function WelcomeRunMode({ onContinue, windowMode, setWindowMode, runMode, setRunMode }: Props) {
   const { deferredPrompt, consumeDeferredPrompt } = useInstallPromptSignals();
   const standalone = useStandaloneStatus();
   const browser = detectBrowser();
   const scenario = detectInstallScenario();
   const canInstall = !standalone && scenario === 'chromium' && deferredPrompt !== null;
   const [opened, setOpened] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [copyFailed, setCopyFailed] = useState(false);
 
-  if (local) {
-    const instructions = localSetupInstructions();
-    return <main className="mx-auto grid min-h-screen w-full max-w-2xl content-center gap-6 px-6 py-10 text-foreground">
-      <header className="space-y-3"><h1 className="text-balance font-serif text-3xl">Have your agent set it up</h1>
-        <p className="text-pretty leading-7 text-muted-foreground">Paste these instructions into Claude Code, Codex or another agent. It installs Astrid, downloads the editor from <a className="underline underline-offset-4" href="https://github.com/banodoco/astrid-app">github.com/banodoco/astrid-app</a>, and starts both on your computer. When it&apos;s done, Astrid opens in your browser from your own machine.</p>
-      </header>
-      <div className="rounded-xl border border-border bg-card p-4"><pre className="whitespace-pre-wrap text-sm leading-6">{instructions}</pre></div>
-      <div className="flex flex-wrap gap-3"><Button onClick={() => { void writeClipboardTextSafe(instructions).then(ok => { setCopied(ok); setCopyFailed(!ok); }); }}>{copied ? 'Copied' : 'Copy instructions'}</Button><Button variant="outline" onClick={onBack}>Back</Button></div>
-      {copyFailed && <p role="status" className="text-sm text-muted-foreground">Copying didn&apos;t work. Select the instructions above and copy them.</p>}
-    </main>;
-  }
-
-  const continueHere = () => onContinue?.('connection');
+  const continueHere = () => onContinue('connection');
   const installApp = async () => {
     if (!deferredPrompt) return continueHere();
     writeWelcomePhase('connection');
@@ -51,24 +43,65 @@ export function WelcomeRunMode({ local = false, onContinue, onBack, windowMode, 
     } catch { continueHere(); }
   };
 
-  if (opened) return <main className="mx-auto grid min-h-screen w-full max-w-xl content-center gap-6 px-6 py-10 text-center text-foreground">
-    <h1 className="text-balance font-serif text-3xl">Astrid opened in its own window</h1>
-    <a href="#continue" className="underline underline-offset-4" onClick={event => { event.preventDefault(); continueHere(); }}>Continue here instead</a>
+  if (opened) return <main aria-label="Astrid opened in its own window">
+    <EditorCardLayer cardKey="opened">
+      <EditorCard title="Astrid opened in its own window" sentence="Carry on there. You can close this tab.">
+        <a href="#continue" className="text-[13px] text-muted-foreground underline underline-offset-4 hover:text-foreground" onClick={event => { event.preventDefault(); continueHere(); }}>Continue here instead</a>
+      </EditorCard>
+    </EditorCardLayer>
   </main>;
 
-  return <main className="mx-auto grid min-h-screen w-full max-w-2xl content-center gap-6 px-6 py-10 text-foreground">
-    <header className="space-y-2"><h1 className="text-balance font-serif text-3xl">How do you want to run Astrid?</h1></header>
-    <section className="space-y-4 rounded-xl border border-border bg-card p-5">
-      <div className="space-y-1"><h2 className="font-semibold">Use it at astrid.haus.</h2><p className="text-sm text-muted-foreground">Most convenient. The editor stays up to date and connects to Astrid on your computer, where your files, models and agent run.</p></div>
-      {canInstall && <div className="flex items-center gap-2"><span className="text-sm text-muted-foreground">Open in:</span><div role="radiogroup" aria-label="Open in" className="flex gap-2">
-        {(['app-window', 'browser-tab'] as const).map(value => <button key={value} type="button" role="radio" aria-checked={windowMode === value} className="rounded-md border border-border px-3 py-2 text-sm hover:bg-muted" onClick={() => setWindowMode(value)}>{value === 'app-window' ? 'App window' : 'Browser tab'}</button>)}
-      </div></div>}
-      {browser === 'safari' && !standalone && <p className="text-sm text-muted-foreground">File → Add to Dock</p>}
-      <Button className="w-full" onClick={canInstall && windowMode === 'app-window' ? installApp : continueHere}>{canInstall && windowMode === 'app-window' ? 'App window' : 'Continue in browser tab'}</Button>
-    </section>
-    <section className="space-y-4 rounded-xl border border-border bg-card p-5">
-      <div className="space-y-1"><h2 className="font-semibold">Run everything on your computer.</h2><p className="text-sm text-muted-foreground">Most control. The editor runs on your machine too: no browser permission, works offline, and you can change Astrid itself. Your agent sets it up from <a className="underline underline-offset-4" href="https://github.com/banodoco/astrid-app">github.com/banodoco/astrid-app</a>.</p></div>
-      <Button variant="outline" className="w-full" onClick={() => onContinue?.('local')}>Run everything on your computer</Button>
-    </section>
+  const buttonLabel = runMode === 'local'
+    ? 'Set up with your agent'
+    : canInstall && windowMode === 'app-window'
+      ? 'Install app and continue'
+      : standalone ? 'Continue' : 'Continue in this tab';
+
+  return <main aria-label="How to run Astrid">
+    <EditorCardLayer cardKey="choose">
+      <EditorCard title="How do you want to run Astrid?">
+        <div className="space-y-4">
+          <RadioGroup aria-label="How to run Astrid" value={runMode} onValueChange={value => setRunMode(value as RunMode)} className="space-y-2.5">
+            <div className={`rounded-xl border transition-colors ${runMode === 'hosted' ? 'border-primary/70 bg-primary/[0.06]' : 'border-border hover:border-foreground/25 hover:bg-muted/40'}`}>
+              <label htmlFor="welcome-run-hosted" onClick={() => setRunMode('hosted')} className="flex cursor-pointer items-start gap-3 p-3.5">
+                <RadioGroupItem id="welcome-run-hosted" value="hosted" aria-labelledby="welcome-title-hosted" className="mt-[3px] border-muted-foreground/50 data-[checked]:border-primary" />
+                <span className="min-w-0 flex-1 text-left">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span id="welcome-title-hosted" className="text-[15px] font-medium text-foreground">Use it at astrid.haus</span>
+                    <span className="rounded-full bg-muted px-2 py-px text-[11px] text-muted-foreground">Most convenient</span>
+                  </span>
+                  <span className="mt-1 block text-[13px] leading-5 text-muted-foreground">The editor stays up to date and connects to Astrid on your computer, where your files, models and agent run.</span>
+                </span>
+              </label>
+              {runMode === 'hosted' && canInstall && <div className="flex items-center gap-2.5 px-3.5 pb-3.5 pl-[43px]">
+                <span className="text-[13px] text-muted-foreground">Open in</span>
+                <SegmentedControl value={windowMode} onValueChange={value => setWindowMode(value as WindowMode)} size="sm" aria-label="Open in">
+                  <SegmentedControlItem value="app-window">App window</SegmentedControlItem>
+                  <SegmentedControlItem value="browser-tab">Browser tab</SegmentedControlItem>
+                </SegmentedControl>
+              </div>}
+              {runMode === 'hosted' && browser === 'safari' && !standalone && <p className="px-3.5 pb-3.5 pl-[43px] text-[13px] text-muted-foreground">For an app window, choose File → Add to Dock in Safari.</p>}
+            </div>
+            <div className={`rounded-xl border transition-colors ${runMode === 'local' ? 'border-primary/70 bg-primary/[0.06]' : 'border-border hover:border-foreground/25 hover:bg-muted/40'}`}>
+              <label htmlFor="welcome-run-local" onClick={() => setRunMode('local')} className="flex cursor-pointer items-start gap-3 p-3.5">
+                <RadioGroupItem id="welcome-run-local" value="local" aria-labelledby="welcome-title-local" className="mt-[3px] border-muted-foreground/50 data-[checked]:border-primary" />
+                <span className="min-w-0 flex-1 text-left">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span id="welcome-title-local" className="text-[15px] font-medium text-foreground">Run everything on your computer</span>
+                    <span className="rounded-full bg-muted px-2 py-px text-[11px] text-muted-foreground">Most control</span>
+                  </span>
+                  <span className="mt-1 block text-[13px] leading-5 text-muted-foreground">The editor runs on your machine too: no browser permission, works offline, and you can change Astrid itself. Your agent sets it up from <a className="underline underline-offset-4 hover:text-foreground" href={ASTRID_REPO} target="_blank" rel="noreferrer">github.com/banodoco/astrid-app</a>.</span>
+                </span>
+              </label>
+            </div>
+          </RadioGroup>
+          <Button type="button" className="h-11 w-full rounded-xl" onClick={() => {
+            if (runMode === 'local') onContinue('local');
+            else if (canInstall && windowMode === 'app-window') void installApp();
+            else continueHere();
+          }}>{buttonLabel}</Button>
+        </div>
+      </EditorCard>
+    </EditorCardLayer>
   </main>;
 }

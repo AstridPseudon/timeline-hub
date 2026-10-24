@@ -199,15 +199,29 @@
         var boot = document.getElementById('boot');
         if (boot) boot.remove();
         var message = document.createElement('main');
+        var content = document.createElement('div');
+        var icon = document.createElement('img');
         var title = document.createElement('h1');
+        var detail = document.createElement('p');
         var link = document.createElement('a');
+        // Shown before the app's CSS loads: keep in step with showFailureCard in src/app/main.tsx
         message.setAttribute('role', 'alert');
-        message.className = 'grid min-h-screen place-content-center gap-3 p-6 text-foreground';
+        message.style.cssText = 'min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;text-align:center;color:var(--boot-ink,#2b2724);font-family:Inter,system-ui,-apple-system,sans-serif';
+        content.style.maxWidth = '420px';
+        icon.src = '/astrid-app-icon-192.png';
+        icon.alt = '';
+        icon.width = 76;
+        icon.height = 76;
+        icon.style.cssText = 'display:block;margin:0 auto';
         title.textContent = 'Astrid could not load';
-        title.className = 'text-xl font-semibold';
+        title.style.cssText = "margin:10px 0 4px;font:400 25px/1.2 Georgia,'Times New Roman',serif";
+        detail.textContent = 'Check your connection, then reload.';
+        detail.style.cssText = 'margin:0 0 16px;font-size:14px;line-height:24px;opacity:.72';
         link.textContent = 'Reload';
         link.href = window.location.href;
-        message.append(title, link);
+        link.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 28px;border-radius:12px;background:var(--boot-ink,#2b2724);color:var(--boot-background,#faf8f5);font-size:14px;font-weight:500;text-decoration:none';
+        content.append(icon, title, detail, link);
+        message.append(content);
         root.replaceChildren(message);
       }, true);
 

@@ -90,7 +90,7 @@ describe('RuntimeDocumentNormalizationGate pending discovery', () => {
     act(() => vi.advanceTimersByTime(RUNTIME_REQUEST_WAIT_MS));
 
     expect(screen.getByRole('heading', { name: 'Still waiting for your workspace' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Retry workspace discovery' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Open editor' })).toBeInTheDocument();
     expect(screen.getByTestId('location')).toHaveTextContent('project=project-slug');
   });
@@ -104,7 +104,7 @@ describe('RuntimeDocumentNormalizationGate pending discovery', () => {
     expect(mocks.listProjects).toHaveBeenCalledOnce();
     act(() => vi.advanceTimersByTime(RUNTIME_REQUEST_WAIT_MS));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Retry workspace discovery' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(mocks.listProjects).toHaveBeenCalledTimes(2);
     expect(mocks.signals[0].aborted).toBe(true);
     expect(mocks.signals[1].aborted).toBe(false);

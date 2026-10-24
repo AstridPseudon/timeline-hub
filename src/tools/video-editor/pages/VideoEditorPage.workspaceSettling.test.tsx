@@ -144,7 +144,7 @@ describe('VideoEditorPage workspace settling', () => {
     expect(screen.getByRole('heading', { name: 'Still waiting for your workspace' })).toBeInTheDocument();
     expect(document.querySelector('[data-boot-hold]')).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Retry workspace discovery' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(harness.reconnect).toHaveBeenCalledOnce();
     expect(screen.getByText('No projects yet')).toBeInTheDocument();
     expect(screen.getByText('Empty workspace help')).toBeInTheDocument();
@@ -163,7 +163,7 @@ describe('VideoEditorPage workspace settling', () => {
     act(() => vi.advanceTimersByTime(RUNTIME_REQUEST_WAIT_MS));
     expect(screen.getByRole('heading', { name: 'Still waiting for your workspace' })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Retry workspace discovery' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(harness.reconnect).toHaveBeenCalledOnce();
     expect(screen.getByTestId('video-editor-provider')).toBeInTheDocument();
     expect(screen.getByText('Editor mounted')).toBeInTheDocument();

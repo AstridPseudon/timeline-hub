@@ -165,7 +165,11 @@ describe('RuntimeConnectionPanel', () => {
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'permission');
     expect(screen.getByRole('heading', { name: 'Connect to Astrid on this computer' })).toBeInTheDocument();
     expect(screen.getByText('Chrome will ask to reach your computer. Choose Allow.')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'What does this allow?' }));
+    const connectButton = screen.getByRole('button', { name: 'Connect' });
+    const disclosureButton = screen.getByRole('button', { name: 'What does this allow?' });
+    expect(connectButton.compareDocumentPosition(disclosureButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByText(COPY.permission.allowDetails)).not.toBeInTheDocument();
+    fireEvent.click(disclosureButton);
     expect(screen.getByText("This page can talk to Astrid running on your computer, and nothing else. Astrid only lets it work with your Astrid projects, media and jobs. It can't open your other files or apps. Chat messages go to your own agent on this computer. Your work never passes through our servers.")).toBeInTheDocument();
     // Nothing is waiting yet: Connect is what starts it.
     expect(screen.queryByText(COPY.waiting)).not.toBeInTheDocument();
@@ -193,8 +197,9 @@ describe('RuntimeConnectionPanel', () => {
     expect(arrow).toHaveAttribute('data-corner', 'top-left');
     expect(arrow).toHaveAttribute('data-tone', 'page');
     expect(arrow).toHaveAttribute('aria-hidden', 'true');
-    // It hangs off the card (its parent is the card it leaves) and says "Up here" like the dialog's.
-    expect(arrow.parentElement).toBe(screen.getByTestId('runtime-not-connected').querySelector(CARD));
+    // It is the card's sibling because it is fixed to the viewport, and says "Up here" like the dialog's.
+    expect(arrow.parentElement?.querySelector(CARD)).toBe(screen.getByTestId('runtime-not-connected').querySelector(CARD));
+    expect(arrow.parentElement).not.toBe(screen.getByTestId('runtime-not-connected').querySelector(CARD));
     expect(arrow.querySelector('text')?.textContent).toBe('UP HERE');
     expect(arrow.querySelector('path.astrid-toolbar-pointer-line')).not.toBeNull();
     expect(shownText()).not.toContain('just below the address bar');

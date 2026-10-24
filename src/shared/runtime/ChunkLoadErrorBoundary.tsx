@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '@/shared/components/ui/button';
+import { EditorCard, EditorCardPage } from '@/shared/components/RuntimeConnection/EditorCard.tsx';
 import { reportErrorBoundaryCatch } from '@/shared/lib/errorHandling/recoverableError';
 
 /** True for the failures a stale hashed chunk produces after a redeploy. */
@@ -62,17 +63,11 @@ export class ChunkLoadErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <main className="grid min-h-screen place-content-center gap-3 p-6 text-foreground">
-          <h1 className="text-xl font-semibold">Astrid was updated</h1>
-          <p className="max-w-prose text-muted-foreground">Reload to continue.</p>
-          <Button
-            className="w-fit"
-            onClick={() => window.location.reload()}
-            type="button"
-          >
-            Reload
-          </Button>
-        </main>
+        <EditorCardPage>
+          <EditorCard title="Astrid was updated" sentence="Reload to get the new version.">
+            <Button className="h-11 w-full rounded-xl" onClick={() => window.location.reload()} type="button">Reload</Button>
+          </EditorCard>
+        </EditorCardPage>
       );
     }
 

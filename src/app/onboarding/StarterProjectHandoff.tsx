@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/shared/components/ui/button.tsx';
+import { CardDisclosure, EditorCard } from '@/shared/components/RuntimeConnection/EditorCard.tsx';
+import { EditorCardLayer } from '@/shared/components/RuntimeConnection/EditorCardLayer.tsx';
 import { useRuntimeRequestWait } from '@/integrations/runtime/useRuntimeRequestWait.ts';
 import { prepareStarterProject, type StarterProjectSelection } from './prepareStarterProject.ts';
 
@@ -69,16 +71,21 @@ export function StarterProjectHandoff({ onReady, onContinueWithoutProject }: {
     setError(null);
     setAttempt(value => value + 1);
   };
-  return <main className="flex min-h-screen items-center justify-center px-6">
-    <div className="max-w-md space-y-4 text-center">
-      <h1 className="text-2xl font-semibold">{error ? 'Couldn’t open your project' : stillWaiting ? 'Still getting your project ready' : 'Opening your project…'}</h1>
-      {error || stillWaiting ? <>
-        <p role={error ? 'alert' : 'status'} className="text-sm text-muted-foreground">{error ?? 'Astrid is taking longer than usual to answer. You can keep waiting or retry.'}</p>
-        <div className="flex flex-wrap justify-center gap-3">
-          <Button onClick={retry}>Retry project setup</Button>
-          {onContinueWithoutProject && <Button variant="outline" onClick={() => { cancelAttempt(); onContinueWithoutProject(); }}>Open editor</Button>}
-        </div>
-      </> : <p role="status" className="text-sm text-muted-foreground">Your Runtime is connected. We’re getting your project ready.</p>}
-    </div>
+  const state = error ? 'error' : stillWaiting ? 'waiting' : 'opening';
+  return <main aria-label="Opening your project">
+    <EditorCardLayer cardKey={state}>
+      <EditorCard title={error ? "Couldn't open your project" : stillWaiting ? 'Still getting your project ready' : 'Opening your project…'}
+        sentence={error ? <span role="alert">Astrid on this computer couldn&apos;t set it up.</span> : stillWaiting
+          ? <span role="status">Astrid on this computer is taking longer than usual. You can keep waiting or try again.</span>
+          : <span role="status">Astrid is connected and getting your project ready.</span>}>
+        {(error || stillWaiting) && <div className="space-y-3">
+          {error && <CardDisclosure label="Details"><p className="break-words font-mono text-xs">{error}</p></CardDisclosure>}
+          <div className={onContinueWithoutProject ? 'grid gap-2 sm:grid-cols-2' : ''}>
+            <Button className="h-11 w-full rounded-xl" onClick={retry}>Try again</Button>
+            {onContinueWithoutProject && <Button className="h-11 w-full rounded-xl" variant="outline" onClick={() => { cancelAttempt(); onContinueWithoutProject(); }}>Open editor</Button>}
+          </div>
+        </div>}
+      </EditorCard>
+    </EditorCardLayer>
   </main>;
 }

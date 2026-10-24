@@ -31,7 +31,7 @@ describe('StarterProjectHandoff', () => {
     render(<StarterProjectHandoff onReady={ready} />);
     await screen.findByRole('alert');
     vi.mocked(prepareStarterProject).mockResolvedValue(selection);
-    fireEvent.click(screen.getByRole('button', { name: 'Retry project setup' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     await waitFor(() => expect(ready).toHaveBeenCalledWith(selection));
     expect(vi.mocked(prepareStarterProject).mock.calls.map(([input]) => input.intentId)).toEqual([intentId, intentId, intentId]);
   });

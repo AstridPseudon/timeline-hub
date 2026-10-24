@@ -1,9 +1,10 @@
 import React from 'react';
 import { Button } from '@/shared/components/ui/button';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { reportErrorBoundaryCatch } from '@/shared/lib/errorHandling/recoverableError';
 import { isChunkLoadError } from '@/shared/runtime/ChunkLoadErrorBoundary';
 import { ErrorDebugDetails } from '@/shared/components/error/ErrorDebugDetails';
+import { ASTRID_HELP_URL } from '@/integrations/astrid/help.ts';
+import { EditorCard, EditorCardFoot, EditorCardPage } from '@/shared/components/RuntimeConnection/EditorCard.tsx';
 
 interface AppErrorBoundaryState {
   hasError: boolean;
@@ -64,50 +65,17 @@ export class AppErrorBoundary extends React.Component<
       // A stale hashed chunk after a redeploy: a reload fetches the new build, retrying cannot.
       const isStale = isChunkLoadError(error);
 
-      return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
-          <div className="max-w-md w-full space-y-6 text-center">
-            {/* Error icon */}
-            <div className="flex justify-center">
-              <div className="rounded-full bg-destructive/10 p-4">
-                <AlertTriangle className="h-12 w-12 text-destructive" />
-              </div>
-            </div>
-
-            {/* Error message */}
-            <div className="space-y-2">
-              <h1 className="text-2xl font-semibold text-foreground">
-                {isStale ? 'Astrid was updated' : 'Something went wrong'}
-              </h1>
-              <p className="text-muted-foreground">
-                {isStale
-                  ? 'A newer version of Astrid is available. Reload to continue.'
-                  : "We're sorry, but something unexpected happened. Please try refreshing the page."}
-              </p>
-            </div>
-
-            <ErrorDebugDetails error={error} isDev={isDev} />
-
-            {/* Action buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              {!isStale && (
-                <Button onClick={this.handleRetry} variant="outline">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Try Again
-                </Button>
-              )}
-              <Button onClick={this.handleReload}>
-                Reload
-              </Button>
-            </div>
-
-            {/* Help text */}
-            <p className="text-sm text-muted-foreground">
-              If this keeps happening, try clearing your browser cache or contact support.
-            </p>
-          </div>
+      if (isStale) return <EditorCardPage><EditorCard title="Astrid was updated" sentence="Reload to get the new version.">
+        <Button className="h-11 w-full rounded-xl" onClick={this.handleReload}>Reload</Button>
+      </EditorCard></EditorCardPage>;
+      return <EditorCardPage><EditorCard title="Something went wrong" sentence="This page ran into a problem. Try again, or reload the page."
+        foot={<EditorCardFoot>Keeps happening? <a className="underline underline-offset-4 hover:text-foreground" href={ASTRID_HELP_URL} target="_blank" rel="noreferrer">Get help</a></EditorCardFoot>}>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Button className="h-11 rounded-xl" onClick={this.handleReload}>Reload</Button>
+          <Button className="h-11 rounded-xl" variant="outline" onClick={this.handleRetry}>Try again</Button>
         </div>
-      );
+        {isDev && <div className="text-left"><ErrorDebugDetails error={error} isDev={isDev} /></div>}
+      </EditorCard></EditorCardPage>;
     }
 
     return this.props.children;

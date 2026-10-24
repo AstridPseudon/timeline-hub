@@ -26,11 +26,12 @@ describe('StarterProjectHandoff while Runtime is slow', () => {
     vi.mocked(prepareStarterProject).mockReturnValue(result.promise);
     const ready = vi.fn();
     render(<StarterProjectHandoff onReady={ready} />);
+    expect(screen.getByRole('status')).toHaveTextContent('Astrid is connected and getting your project ready.');
     const signal = vi.mocked(prepareStarterProject).mock.calls[0][0].signal!;
 
     await act(async () => { await vi.advanceTimersByTimeAsync(RUNTIME_REQUEST_WAIT_MS); });
-    expect(screen.getByRole('status').textContent).toContain('taking longer');
-    expect(screen.getByRole('button', { name: 'Retry project setup' })).toBeTruthy();
+    expect(screen.getByRole('status')).toHaveTextContent('Astrid on this computer is taking longer than usual. You can keep waiting or try again.');
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
     expect(signal.aborted).toBe(false);
 
     await act(async () => result.resolve({ projectId: 'ready-project', timelineId: 'main' }));
@@ -48,7 +49,7 @@ describe('StarterProjectHandoff while Runtime is slow', () => {
     const firstSignal = vi.mocked(prepareStarterProject).mock.calls[0][0].signal!;
 
     await act(async () => { await vi.advanceTimersByTimeAsync(RUNTIME_REQUEST_WAIT_MS); });
-    fireEvent.click(screen.getByRole('button', { name: 'Retry project setup' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(firstSignal.aborted).toBe(true);
     expect(localStorage.getItem(PENDING_STARTER_PROJECT_KEY)).toBe(intentId);
     expect(vi.mocked(prepareStarterProject)).toHaveBeenCalledTimes(2);
@@ -70,12 +71,14 @@ describe('StarterProjectHandoff while Runtime is slow', () => {
     render(<StarterProjectHandoff onReady={vi.fn()} />);
     const intentId = localStorage.getItem(PENDING_STARTER_PROJECT_KEY);
     await act(async () => { await vi.advanceTimersByTimeAsync(RUNTIME_REQUEST_WAIT_MS); });
-    fireEvent.click(screen.getByRole('button', { name: 'Retry project setup' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     await act(async () => second.reject(new Error('current attempt failed')));
-    expect(screen.getByRole('alert').textContent).toContain('current attempt failed');
+    expect(screen.getByRole('alert')).toHaveTextContent("Astrid on this computer couldn't set it up.");
+    fireEvent.click(screen.getByRole('button', { name: 'Details' }));
+    expect(screen.getByText('current attempt failed')).toBeInTheDocument();
 
     await act(async () => first.reject(new Error('late obsolete error')));
-    expect(screen.getByRole('alert').textContent).toContain('current attempt failed');
+    expect(screen.getByText('current attempt failed')).toBeInTheDocument();
     expect(localStorage.getItem(PENDING_STARTER_PROJECT_KEY)).toBe(intentId);
   });
 

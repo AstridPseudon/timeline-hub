@@ -17,7 +17,7 @@ import { startEditorTour, exitEditorTour } from '@/shared/state/editorTourStore.
 import { TourChatPanel } from '@/tools/video-editor/components/AgentChat/TourChatPanel.tsx';
 import { RemotionPreview } from '@/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx';
 import { TimelineEditorCoreBody } from '@/tools/video-editor/components/TimelineEditor/TimelineEditorCoreBody.tsx';
-import { useTimelineEditorData, useTimelinePlaybackContext } from '@/tools/video-editor/hooks/timelineStore.ts';
+import { useTimelineDataSelector, useTimelineEditorData, useTimelinePlaybackContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { useTimelineEditorOps } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { VideoEditorRightPanelDock } from '@/tools/video-editor/components/PropertiesPanel/VideoEditorRightPanelDock.tsx';
 import { HOST_EXTENSIONS_PANEL_KEY, HOST_PROPERTIES_PANEL_KEY } from '@/tools/video-editor/components/PropertiesPanel/VideoEditorPanelDisplayControl.tsx';
@@ -39,13 +39,15 @@ function BrowserTourEditorSurface() {
   const ops = useTimelineEditorOps();
   const opsRef = useRef(ops);
   opsRef.current = ops;
+  const hasWorld = useTimelineDataSelector((timeline) => timeline.data?.resolvedConfig.clips.some(
+    (clip) => clip.clipType === 'haus.astrid.liveScene',
+  ) ?? false);
 
   useLayoutEffect(() => {
-    // The tour runs on an in-memory timeline, so this only opens the bundled
-    // extension panel in the tour host; no user preference or workspace state is saved.
+    // The tour runs on an in-memory timeline, so nothing here is saved. The dock shows Inspector while the demo timeline is empty, then Extensions once the world lands.
     opsRef.current.setRightPanelLayoutSlot(HOST_PROPERTIES_PANEL_KEY, 'dock');
-    opsRef.current.setSelectedRightPanelId(HOST_EXTENSIONS_PANEL_KEY);
-  }, []);
+    opsRef.current.setSelectedRightPanelId(hasWorld ? HOST_EXTENSIONS_PANEL_KEY : HOST_PROPERTIES_PANEL_KEY);
+  }, [hasWorld]);
 
   return <div className="grid min-h-0 min-w-0 grid-cols-1 grid-rows-[minmax(0,1fr)_minmax(0,.8fr)_minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_minmax(220px,min(calc(32vw_+_12px),432px))] md:grid-rows-[minmax(0,1fr)_minmax(180px,35%)]">
     <section className="relative min-h-0 min-w-0" data-editor-tour="preview"><Preview /></section>
