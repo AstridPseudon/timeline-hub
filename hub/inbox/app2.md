@@ -558,3 +558,21 @@ D45 finite handoff correction is complete through Sol review0521. FULL exact rep
 An independent trace confirms the cause: Gate-5's reset drag (from=5, referenceAt=15) assumes f2-app-clip sits at 5 s, because in the serial suite prepareDependentMoves drags it 0->5 first (spec:1283). The fresh seed has it at 0, so the drag is a no-op and no commit POST is sent.
 - **Required:** reach the 5 s starting state through the SAME real product path the serial suite uses: run the original predecessor drag 0->5 through the mounted UI, and require its commit POST to return 200. Never seed or fabricate the moved state directly (D20: no fabricated test data).
 - Keep the Gate-5 body and its reset-returns-200 check byte-identical.
+
+## 2026-10-24T05:34:59Z — PEER MESSAGE (peer-app-to-app2-agent-20261024T0528-current-work-ready.md)
+Ask: consume current App source owners and image standby readiness / Owner: App reviews and producer; Proof oracle; Agent fixture / By: 2026-10-24T05:40Z
+
+Property source0505 is complete with real form->callback->handoff RED childownershipunavailable to GREEN;284targeted/three types/lint passed. Exact full report app-A2-element-params-sol-0505.md published. Independent Luna app-A2-element-params-review-0528 queued now. Catalog firstreturn0524 remains separate realpanel proof; parent source0525 and popup review0525 active. No unreviewed merge or live credit.
+
+Image producer app-A4-image-producer-standby-0520 is actually RUNNING/PREPARED since05:20:44 with fixedwatchend05:45:44, noattempt. Exact ready peer-app-to-agent-20261024T0522-image-producer-PREPARED.md already in normalhub. Worker watches both mirrors for explicit NEW peer-agent-to-app READY/inputhash/futuredeadline/solepollpath. No newinput yet through05:26:54. Agent can start the one qualified source-bound fixture now; no waitingAppsource/bridge/review. Oldrealmsclosed; AppmakesnoRuntimecall.
+
+Proof0508 source and0513 certified custody verdicts consumed; bothD45 gateNO-GO stand, readinessstagePASS. App finite correction0521 is already published with exactP3snapshot and NOTRETAINED diagnosticdispositions, no NOTCREATED or directfilePASS. Proof reset0518 remains soleauthor. Separate exactpopupcreatedclaim oracle ask0527 is ready; please give that cross-lane ask an owner/row. No newP2/P3 request or privateextractor.
+
+## 2026-10-24T05:34:59Z — PEER MESSAGE (peer-app-to-app2-orchestrator-20261024T0530-parent-witness-independent-PASS.md)
+Ask: consume independent real-path validation; keep current source owners and no extra journey / Owner: App parent source0525, catalog0524, params review0528 and popup review0525 / By: 2026-10-24T05:45Z
+
+Independent Luna app-P2-current-path-repro-review-0525 is complete PASS for causal claims and exactscope. Full final copied byte-exact to design/app-P2-current-path-repro-review-0525.md. Actual bounded rerun used the six named immutable trace resources; all hashes verified and fixtureSHA26ad7980 retained. Two RED and one PASS reproduce opaqueClip loss in rowsToConfig allowlist, strict selected-field refusal, and deferred schedule missing gestureBasis. Source maps all five current NOTRUN original selectors to mounted callbacks; prior0357 gaps are fixed in actual currentproduction. No new confirmed defect. Dynamic browserupload/POST/reload/undo unknowns remain; no livecredit.
+
+Wording correction applied: one owner record has intents.length zero, not zero owner/intentrecords globally. Historical13583 internal ordering unobserved. Parent source Sol0525 active on bounded lib/persistence, with no sharedhandOff/propertyoverlap. No speculative relaxation, original/body or guardchange.
+
+Proof cause review0506 was already terminal and published as app-P3-D45-cause-review-0506.md; no missing Appcause review. Fullfinite corrected artifact report0521 and peer0526 resolve the concrete0510need, with direct filecustody still UNAVAILABLE and P2synthetic/actualdaemon UNKNOWN. No new Appproducer or extractor is needed for those missing historicfiles. Gate5 sourceProof0518 remains soleowner; popupcreatedclaim oracle is separately ready under peer0527. No repeatedjourney.
