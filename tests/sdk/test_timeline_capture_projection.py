@@ -9,9 +9,13 @@ from pathlib import Path
 
 import pytest
 
-from astrid.core.timeline.authoring_bundle import AuthoringBundleError, preview_authoring_candidate
+from astrid.core.timeline.authoring_bundle import (
+    AuthoringBundleError,
+    open_authoring_bundle,
+    preview_authoring_candidate,
+    publish_authoring_candidate,
+)
 from astrid.sdk.timeline.commit import RuntimeCommitService, bundle_from_document
-from tests.helpers.trusted_seed import seed_trusted_parent
 from tests.sdk.test_timeline_commit_provider_document import document_fixture
 
 
@@ -203,57 +207,112 @@ assert set(RuntimeCommitService('pure').capture_candidate_inputs(document, candi
 
 @pytest.fixture
 def saved_runtime(tmp_path):
-    from tests.helpers.runtime import use_runtime
     from tests.sdk import test_capture_source_runtime as captures
 
-    use_runtime(commit="4bb1d0f7efd2972d7b027fd9f458dbe8dabd0136")
-    yield from captures.runtime.__wrapped__(tmp_path)
+    yield from captures.open_source_runtime(tmp_path)
+
+
+def _saved_document(runtime):
+    parent = runtime.get_project_parent_composition_revision(
+        runtime.project_id, runtime.timeline_id, runtime.parent_revision_id,
+    )
+    shots, internals, seen_shots, seen_internals = [], [], set(), set()
+    for occurrence in parent["payload"]["occurrences"]:
+        shot_key = (occurrence["shot_id"], occurrence["shot_revision_id"])
+        if shot_key not in seen_shots:
+            seen_shots.add(shot_key)
+            shot = runtime.get_project_shot_revision(runtime.project_id, *shot_key)
+            shots.append(shot)
+        internal_id = next(row for row in shots if (row["shot_id"], row["revision_id"]) == shot_key)[
+            "internal_timeline_revision_id"
+        ]
+        if internal_id not in seen_internals:
+            seen_internals.add(internal_id)
+            internals.append(runtime.get_project_timeline_revision(
+                runtime.project_id, runtime.timeline_id, internal_id,
+            ))
+    return {
+        "schema_version": 1,
+        "project_id": runtime.project_id,
+        "timeline_id": runtime.timeline_id,
+        "parent_revision": {key: parent[key] for key in ("revision_id", "content_digest", "payload")},
+        "shot_revisions": shots,
+        "internal_timeline_revisions": internals,
+        "dependency_manifest": parent["dependency_manifest"],
+    }
+
+
+class _RuntimeAuthoringWriter:
+    """Expose the authenticated Runtime commit port to authoring publication."""
+
+    def __init__(self, service):
+        self.service = service
+
+    def list_timeline_commits(self, project_id, timeline_id, **kwargs):
+        return self.service.list_timeline_commits(
+            project_id, timeline_id, authorize=lambda: None, **kwargs,
+        )
+
+    def get_project_media_selection(self, project_id, selection):
+        return self.service.get_project_media_selection(
+            project_id, selection, authorize=lambda: None,
+        )
+
+    def __getattr__(self, name):
+        return getattr(self.service, name)
+
+    def commit_timeline(self, project_id, timeline_id, body, *, idempotency_key):
+        return self.service.commit_timeline(
+            project_id, timeline_id, body, idempotency_key=idempotency_key,
+            publisher="capture-projection-fixture",
+            invocation_path=f"/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+            authorize=lambda: None,
+        )
 
 
 @pytest.fixture
 def saved_closure(saved_runtime):
     """Public publication with reference order different from canonical sort order."""
+    from astrid.sdk.timeline_editing import duplicate_authoring_shot, remove_authoring_shot
+
     runtime = saved_runtime
-    project_id = runtime.project_id
-    parent = runtime.get_project_parent_composition_revision(project_id, "main", "parent-1")
-    shot = runtime.get_project_shot_revision(project_id, "shot-shared", "shot-rev-1")
-    internal = runtime.get_project_timeline_revision(project_id, "main", "internal-1")
-    shots, internals, occurrences = [], [], []
+    document = _saved_document(runtime)
+    parent = document["parent_revision"]
+    bundle = open_authoring_bundle(
+        {**parent, "project_id": runtime.project_id, "timeline_id": runtime.timeline_id},
+        shot_revisions=[{**row, "project_id": runtime.project_id} for row in document["shot_revisions"]],
+        internal_timeline_revisions=[{**row, "project_id": runtime.project_id}
+                                     for row in document["internal_timeline_revisions"]],
+    )
+    source_shot = next(iter(bundle["shots"]))
+    duplicate_authoring_shot(bundle, source_shot, new_shot_id="shot-z", occurrence_id="occ-z", start_ms=0)
+    duplicate_authoring_shot(bundle, source_shot, new_shot_id="shot-a", occurrence_id="occ-a", start_ms=1000)
+    remove_authoring_shot(bundle, source_shot)
+    bundle["parent"]["created_at"] = "authored parent"
+    bundle["parent"]["dependency_manifest"] = {"opaque": {"created_at": [None, False, 0]}}
+    bundle["parent"]["config"]["theme_overrides"] = {
+        "visual": {"canvas": {"fps": [30000, 1001]}},
+    }
     for name in ("z", "a"):
-        child = {**copy.deepcopy(internal), "revision_id": f"internal-{name}"}
-        child.pop("created_at")
-        child.pop("content_digest")
-        child["payload"]["opaque_timeline"]["source"] = name
-        child["payload"]["created_at"] = f"authored internal {name}"
-        child["payload"]["dependency_manifest"] = {"opaque": [None, False, 0, {"created_at": name}]}
-        image = {**copy.deepcopy(shot), "shot_id": f"shot-{name}", "revision_id": f"shot-{name}-r1",
-                 "internal_timeline_revision_id": child["revision_id"]}
-        image.pop("created_at")
-        image.pop("content_digest")
-        image["payload"]["internal_timeline_revision_id"] = child["revision_id"]
-        image["payload"]["created_at"] = f"authored shot {name}"
-        image["payload"]["metadata"]["dependency_manifest"] = {"opaque": [name, None]}
-        for item in image["payload"]["items"]:
-            item["item_id"] += "-" + name
-        occurrence = copy.deepcopy(parent["payload"]["occurrences"][0])
-        occurrence.update(occurrence_id=f"occ-{name}", shot_id=image["shot_id"],
-                          shot_revision_id=image["revision_id"], ordinal=len(occurrences), source_offset=0)
-        occurrence["placement"]["start_ms"] = len(occurrences) * 1000
-        shots.append(image)
-        internals.append(child)
-        occurrences.append(occurrence)
-    payload = copy.deepcopy(parent["payload"])
-    payload["occurrences"] = occurrences
-    payload["created_at"] = "authored parent"
-    payload["dependency_manifest"] = {"opaque": {"created_at": [None, False, 0]}}
-    payload["config"]["theme_overrides"] = {"visual": {"canvas": {"fps": [30000, 1001]}}}
-    seed_trusted_parent(runtime.service, {
-        "project_id": project_id, "timeline_id": "main", "expected_head": "parent-1",
-        "parent_revision_id": "parent-golden", "parent_composition": payload,
-        "shot_revisions": shots, "internal_timeline_revisions": internals,
-    }, idempotency_key="golden")
-    commits, _ = runtime.service._timeline_commits()
-    document = commits.revision_closure(project_id, "main", "parent-golden")
+        shot = bundle["shots"][f"shot-{name}"]
+        internal = shot["internal_timeline"]
+        internal["opaque_timeline"]["source"] = name
+        internal["created_at"] = f"authored internal {name}"
+        internal["dependency_manifest"] = {"opaque": [None, False, 0, {"created_at": name}]}
+        shot["payload"]["created_at"] = f"authored shot {name}"
+        shot["payload"].setdefault("metadata", {})["dependency_manifest"] = {"opaque": [name, None]}
+    writer = _RuntimeAuthoringWriter(runtime.service)
+    published = publish_authoring_candidate(bundle, writer, idempotency_key="capture-projection-golden")
+    document = published["publication"]["canonical_document"]
+    runtime.parent_revision_id = document["parent_revision"]["revision_id"]
+    runtime.golden_parent_revision_id = runtime.parent_revision_id
+    runtime.golden_internal_revision_ids = {
+        name: next(
+            row["revision_id"] for row in document["internal_timeline_revisions"]
+            if row["payload"].get("opaque_timeline", {}).get("source") == name
+        )
+        for name in ("z", "a")
+    }
     return runtime, document
 
 
@@ -263,7 +322,8 @@ def test_real_saved_projection_config_registry_and_full_pins_golden(saved_closur
 
     runtime, document = saved_closure
     parent, expected, expansion = _project_exact_parent_head(
-        client=runtime, project_id=runtime.project_id, timeline_id="main", parent_revision_id="parent-golden")
+        client=runtime, project_id=runtime.project_id, timeline_id="main",
+        parent_revision_id=runtime.golden_parent_revision_id)
     result = project(document)
     assert result["config"] == expected.config
     assert result["registry"] == expected.registry
@@ -274,7 +334,8 @@ def test_real_saved_projection_config_registry_and_full_pins_golden(saved_closur
     assert result["expansion"]["shots"][0]["content_digest"] == next(
         row["content_digest"] for row in document["shot_revisions"] if row["shot_id"] == "shot-z")
     assert result["expansion"]["children"][0]["config_hash"] == next(
-        row["content_digest"] for row in document["internal_timeline_revisions"] if row["revision_id"] == "internal-z")
+        row["content_digest"] for row in document["internal_timeline_revisions"]
+        if row["revision_id"] == runtime.golden_internal_revision_ids["z"])
 
 
 @pytest.mark.integration
@@ -283,7 +344,8 @@ def test_real_saved_entire_expansion_golden(saved_closure):
 
     runtime, document = saved_closure
     parent, projected, expansion = _project_exact_parent_head(
-        client=runtime, project_id=runtime.project_id, timeline_id="main", parent_revision_id="parent-golden")
+        client=runtime, project_id=runtime.project_id, timeline_id="main",
+        parent_revision_id=runtime.golden_parent_revision_id)
     assert project(document) == {
         "config": projected.config, "registry": projected.registry,
         "expansion": {**expansion, "parent_content_digest": parent["content_digest"]},
@@ -295,7 +357,8 @@ def test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_row
     from astrid.packs.rendering.actions.render.managed_timeline import _project_exact_parent_head
 
     runtime, document = saved_closure
-    parent = runtime.get_project_parent_composition_revision(runtime.project_id, "main", "parent-golden")
+    parent = runtime.get_project_parent_composition_revision(
+        runtime.project_id, "main", runtime.golden_parent_revision_id)
     shots = {(row["shot_id"], row["revision_id"]): runtime.get_project_shot_revision(
         runtime.project_id, row["shot_id"], row["revision_id"]) for row in document["shot_revisions"]}
     internals = {row["revision_id"]: runtime.get_project_timeline_revision(
@@ -310,7 +373,8 @@ def test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_row
     monkeypatch.setattr(runtime, "get_project_shot_revision", lambda p, s, r: shots[s, r])
     monkeypatch.setattr(runtime, "get_project_timeline_revision", lambda p, t, r: internals[r])
     returned, projected, expansion = _project_exact_parent_head(
-        client=runtime, project_id=runtime.project_id, timeline_id="main", parent_revision_id="parent-golden")
+        client=runtime, project_id=runtime.project_id, timeline_id="main",
+        parent_revision_id=runtime.golden_parent_revision_id)
     graph = expansion["graph"]
     assert graph == project(document)["expansion"]["graph"]
     assert returned["dependency_manifest"] == manifest
@@ -321,7 +385,8 @@ def test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_row
     assert graph["parent_revision"]["content_digest"] == document["parent_revision"]["content_digest"]
     assert "dependency_manifest" not in graph["parent_revision"]
     assert [row["shot_id"] for row in graph["shot_revisions"]] == ["shot-z", "shot-a"]
-    assert [row["revision_id"] for row in graph["internal_timeline_revisions"]] == ["internal-z", "internal-a"]
+    assert [row["revision_id"] for row in graph["internal_timeline_revisions"]] == [
+        runtime.golden_internal_revision_ids["z"], runtime.golden_internal_revision_ids["a"]]
     images = [graph["parent_revision"], *graph["shot_revisions"], *graph["internal_timeline_revisions"]]
     for row in images:
         assert "created_at" not in row
@@ -336,7 +401,7 @@ def test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_row
     projected.graph["parent_revision"]["payload"]["created_at"] = "caller mutation"
     assert (parent, shots, internals, document) == before
     assert runtime.service.get_project_parent_composition_revision(
-        runtime.project_id, "main", "parent-golden")["payload"] == before[0]["payload"]
+        runtime.project_id, "main", runtime.golden_parent_revision_id)["payload"] == before[0]["payload"]
 
 
 @pytest.mark.integration
@@ -354,7 +419,8 @@ def test_real_candidate_matches_sdk_opener_exactly(saved_closure, change):
     bundle = bundle_from_document(document)
     if change == "sdk_bundle":
         bundle = open_authoring_bundle(
-            runtime.get_project_parent_composition_revision(runtime.project_id, "main", "parent-golden"),
+            runtime.get_project_parent_composition_revision(
+                runtime.project_id, "main", runtime.golden_parent_revision_id),
             shot_revisions=[runtime.get_project_shot_revision(runtime.project_id, row["shot_id"], row["revision_id"])
                             for row in document["shot_revisions"]],
             internal_timeline_revisions=[runtime.get_project_timeline_revision(runtime.project_id, "main", row["revision_id"])
@@ -374,4 +440,5 @@ def test_real_candidate_matches_sdk_opener_exactly(saved_closure, change):
     config, registry, expansion = _open_candidate_input_closure(
         runtime, project_id=runtime.project_id, timeline_id="main", preview=preview)
     assert project(document, preview) == {"config": config, "registry": registry, "expansion": expansion}
-    assert runtime.service.get_project_timeline(runtime.project_id, "main")["head_revision_id"] == "parent-golden"
+    assert runtime.service.get_project_timeline(
+        runtime.project_id, "main")["head_revision_id"] == runtime.golden_parent_revision_id
