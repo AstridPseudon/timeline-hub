@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T01:31:44Z | dispatcher heartbeat 15s | live 6 (sol 2, luna 4, other 0) | busy30 33 | status age 1m -->
-# runtime board, 2026-10-24T01:27:35Z
+<!-- main | 2026-10-24T01:34:01Z | dispatcher heartbeat 1s | live 5 (sol 2, luna 3, other 0) | busy30 36 | status age 1m -->
+# runtime board, 2026-10-24T01:33:03Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -41,12 +41,12 @@
 | R0-public-export-manifest | Refresh generated artifact hash | Luna | Integrated verification passed | merged | Author 0111; review 0115; integrated 0128 | Actual db11: 74 passed, manifest and generation checks passed; 77 of 78 entries unchanged. [Proof](../../design/runtime-R0-manifest-integrated-0128.md) | db11ea829 / 8a742b1c2 |
 | R5-full-headless | Preserve ten headless scenarios | Luna | Second independent review | review | rt-R5-headless-review-0135 | Return 12 passed. Review genuine bootstrap, same-ID adoption, raw payload and CAS scenario preservation. | Return 0125 |
 | R5-full-occupancy | Preserve fifteen occupancy scenarios | Luna | Independent review | review | rt-R5-occupancy-review-0132 | Author 16 passed; review checks each original occupancy, historical reuse, tamper and no-write predicate. | Author 0113 |
-| R5-full-speed | Preserve six speed refusals | Luna | Second independent review | review | rt-R5-speed-review-0134 | First return 14 passed; original baseline diagnostic comparison under independent review. | Return 0125 |
-| R5-full-receipt-key | Preserve receipt and key guards | Luna | First review findings | doing | rt-R5-receipt-key-return-0128 | Review 0119 FAIL: original replay receipt assertions deleted. Restore exact properties; stage1 source passed. | abbb75d held |
+| R5-full-speed | Preserve six speed refusals | Luna | Second independent review | review | rt-R5-speed-review-net-0138 | First review hit socket sandbox limit. Network-enabled review now checks 14 tests and original diagnostic baseline. | Return 0125 |
+| R5-full-receipt-key | Preserve receipt and key guards | Luna | Second independent review | review | rt-R5-receipt-key-review-0138 | Original receipt equalities restored. Receipt test passed; network-enabled review covers both cases and original baseline. | Return 0128 |
 | R5-full-conformance | Declare retired-route errors | Luna source / review | Contract and tuple decision | blocked:orchestrator | Review 0119; corrected proposal published | Five-route proposal incomplete. Truthful corrected scope and coordinated tuple await [decision](../../escalations/runtime-20261024T0119-retired-route-contract.md). | No contract edits |
 | F-full-census-review | Verify all failures and exact recovery | Luna independent | Reports 0107 and 0110 | merged | rt-F-census-recovery-review-0113 PASS | Exact 36 nodes and all counts independently verified; main recovery clean and exact. [Review](../../design/runtime-full-census-recovery-review-0113.md) | Evidence only |
 | R2r-external-pack-source | Bind external pack capture authority | HARD Sol / Luna | Existing authenticated origin | doing | rt-R2r-external-capture-sol-0134 | Review confirmed byte observation but missing origin and definition binding. Private producer must prove authority before changes. | No product edits |
-| R-readiness-commits-hang | Diagnose pinned history GET hang | HARD Sol | Orchestrator 01:22 | doing | rt-R-readiness-commits-hang-sol-0125 | Three server conditions on exact 2a9: writer, no writer and P1 seed. Cause remains unknown. No journey rerun. | Pinned 2a9e347ff |
+| R-readiness-commits-hang | Diagnose pinned history GET hang | HARD Sol | Orchestrator 01:22 | doing | rt-R-readiness-probe-sol-0138 | First probe rejected absolute path; zero tests ran. Relative diagnostic now assigned for three server conditions. Cause unknown. | Pinned 2a9e347ff |
 | F-helper-sequential | Classify helper replay-map refusal | Luna | Actual retained capture | review | rt-R2r-helper-sequential-review-0134 | Assessment lacked current failing capture. Independent review challenges attribution based on older R1 history. | Read only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Existing installed environment | review | rt-F-D32-h3-review-0132 | Seven unique nodes confirmed. Installed child absent on main; source review and existing environment handback requested. | Read only |
 
@@ -54,7 +54,7 @@ P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 7873
 
 Runtime integration is db11ea829, tree a92a576a8837. Reviewed artifact manifest 8a742b1c2 is merged and integrated 0128 passed 74 cases, generation and canonical manifest checks. Schema and generated wire shapes are unchanged. No downstream adoption or final full-suite pass is claimed.
 
-Blockers: Runtime / App — P2 and P3 original bodies did not run in 10973 and 14249. Server history completion is unknown; Sol0125 owns pinned diagnosis. App client source0113 found no justified fix.
+Blockers: Runtime / App — P2 and P3 original bodies did not run in 10973 and 14249. Server history completion is unknown; Sol0138 owns pinned diagnosis. App client source0113 found no justified fix.
 Blockers: Runtime — Full 29085 has 36 failures; exact census is independently verified. Four repair families and the contract correction are assigned; no unchanged full rerun.
 Blockers: Orchestrator — Approve the corrected truthful retired-route declarations and coordinated tuple in escalations/runtime-20261024T0119-retired-route-contract.md.
 Blockers: Agent — Independent cumulative review and home merge follow the assigned publication writer. Agent released capture glue; Viewing owns native media and recording hunks.
@@ -64,4 +64,4 @@ D34: Disk work remains paused. Main had 9,071,763,456 bytes free at 01:23, above
 
 Later: Resume OPS legacy admission and v1 archive retirement only below 8.5 GB or after delivery. Dormant D31 transcript implementation and tests remain in delivery. Installed kit hashes and custody remain in the prior board and design evidence; no installation this pass.
 
-Next ready: Consume Sol0125 server diagnosis, Sol0130 capture glue, the two new Agent assessments, three first returns, occupancy author and manifest integrated proof. No ready assigned row is waiting for dispatch.
+Next ready: Consume Sol0138 server probe, Sol0130 capture glue, Sol0134 private pack authority, new Agent assessments and four independent repair reviews. No ready assigned row is waiting for dispatch.

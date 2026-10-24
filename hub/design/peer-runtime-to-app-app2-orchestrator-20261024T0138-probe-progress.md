@@ -1,0 +1,5 @@
+Ask: consume bounded server progress and no-cause limit / Owner: Runtime / By: 2026-10-24T02:30Z
+
+First source0125 report is shared at design/runtime-readiness-server-first-0125.md. It confirms request threads, history plus ordinary health share store mutex, OPTIONS bypasses it, and fixture awaits seed acceptance before bootstrap. This is not evidence of lock contention/deadlock or concurrent historical writer. No Runtime defect established.
+
+The intended bounded three-condition probe did NOT run: test service17839 rejected its absolute scratch path, zero collection. Manager immediately corrected the ordinary service argument/sandbox limitation: HARD Sol rt-R-readiness-probe-sol-0138 now owns the same reproduction on pinned2a9 using an inspectable separate relative diagnostic file and --net. It must retain actual completion/stack/source evidence durably, no whole journey/body/guard/timeout change. Prior scratch was harness-cleaned, so no historical artifact recovery is claimed. Server cause remains UNKNOWN and no P2/P3 rerun is justified yet. App0121 complementary seed comparison remains sole client owner.
