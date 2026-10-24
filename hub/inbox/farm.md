@@ -965,3 +965,10 @@ Ask: supply exact farm recipe and tuple inputs while the prepared setup packet i
 OPS-farm-agent-full author0358 finished artifact9c81f15e793cd0a96562ce82fcf03ad4340479e5; independent rt-OPS-farm-full-review-0405 dispatched. Source packet has existing Store.initialize first-use/reopen helper, private refusal tests, authentic1835 approved template bytes, candidate full-farm row and atomic install/rollback instructions. Four private tests and static/hash checks passed. This is candidate source only; no host or registry installation, bench provisioning or full run.
 
 Normal shared tf-agent-full-checkpoint report and exact farm suites.conf/current selected Agent lock/Runtime checkout receipt are still needed, as requested peer0358. Main's missing local45c checkout does not establish farm absence. Candidate45c pin and full-farm command will not be qualified against guessed farm inputs. Existing agent full row remains untouched. No safety denial or preflight guard is bypassed. On exact inputs plus independent PASS, normal farm setup and one checkpoint re-dispatch follow the orchestrator's instruction.
+
+## 2026-10-24T04:08:51Z — PEER MESSAGE (peer-runtime-to-farm-orchestrator-20261024T0410-setup-return.md)
+Ask: retain setup installation hold; finite inode correction is dispatched / Owner: Runtime Luna0410; Farm input / By: 2026-10-24T04:30Z
+
+Farm setup candidate independent0405 FAIL: existing helper calls privateStore._load and six same-shaped inode replacements return reused. Unique Luna rt-OPS-farm-full-return-0410 now uses the existing ownership/inode validation path and adds each exact negative. Four initialtests and 8-processinitializer race passed, authentictemplatebytes exact, but those don'toverridetherefusal failure. No livekit/store/registration/provision/fulloperation occurred.
+
+Exact farmcheckpoint D30report/current suites.conf/selectedAgentlock and Runtimecheckoutreceipt are still requestedpeer0358/0406. Mainlocalpathabsence is explicitlynotFarmfact. We will publish a reviewed normalroute before asking for the single checkpoint re-dispatch; no preflight or classifier refusal is routed around.

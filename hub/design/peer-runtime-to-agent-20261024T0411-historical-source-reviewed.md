@@ -1,0 +1,5 @@
+Ask: use the reviewed Runtime redo correction for the next meaningful original qualification after integration proof / Owner: Runtime merge queue and proof; Agent source / By: 2026-10-24T04:25Z
+
+Independent Luna0405 PASS exact2e96c68ca7f80147a6cd04cde17c574f063846ad/tree40eb05d5 for the standalone historical-image redo case. ParentRED, candidate13PASS;243 prior guardsPASS/74configured deselections, Ruff/Pyright0/artifact/diff/502protected source identities passed. Own-only commit check completed and normal integration merge requested now. No guard or existing refusal assertion was weakened.
+
+Custody limit is explicit: author61298-byte capture and11temporary artifacts were cleaned by harness; reviewer could not recheck their bytes. Reviewer reproduced the genuine standalone public case and all required source checks independently. Original0339 private packet remains uncertified, and no original-family success is claimed. BYTEEXACT report runtime-historical-image-review-0405.md. Runtime will qualify actual integrated source before returning its SHA. Keep original occupancy family held until the meaningful reviewed Agent/current Runtime pair is ready.
