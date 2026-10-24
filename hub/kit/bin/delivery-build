@@ -5,8 +5,8 @@ For each repo: one squashed patch that turns origin/main into tl/integration's t
 bundle of tl/integration. The patch is a single commit on origin/main whose message lists the
 first-parent commits of the range. Verification re-applies the patch with git am to a fresh
 repository holding only origin/main, checks the bundle, and compares both resulting trees with
-tl/integration's tree. Work repos are only read; all writes go to delivery/ (staging, tmp-verify,
-the ZIP).
+tl/integration's tree. Work repos are only read; delivery writes go to staging and the ZIP,
+while verifier roots are private children of the service TMPDIR.
 
   delivery-build [--dry-run] [--repos "agent runtime"]
 
@@ -522,9 +522,8 @@ def main():
 
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     staging = os.path.join(DELIVERY, f"build-{stamp}")
-    tmp_root = os.path.join(DELIVERY, "tmp-verify", stamp)
+    tmp_root = tempfile.mkdtemp(prefix="timeline-delivery-")
     os.makedirs(staging)
-    os.makedirs(tmp_root)
 
     results = []
     try:
