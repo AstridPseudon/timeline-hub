@@ -278,6 +278,7 @@ export function planAssetDropTarget({
     const trackState = preservedTrack as (typeof preservedTrack & {
       active?: unknown;
       enabled?: unknown;
+      disabled?: unknown;
       hidden?: unknown;
       deleted?: unknown;
     }) | undefined;
@@ -288,6 +289,7 @@ export function planAssetDropTarget({
       || trackState.role === 'source'
       || trackState.active === false
       || trackState.enabled === false
+      || trackState.disabled === true
       || trackState.hidden === true
       || trackState.deleted === true) {
       return { ok: false, error: 'preserved_track_unavailable' };

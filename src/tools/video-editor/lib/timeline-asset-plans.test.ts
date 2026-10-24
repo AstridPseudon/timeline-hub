@@ -98,6 +98,7 @@ describe('planAssetDropTarget occurrence raw-track policy', () => {
     ['missing', 'missing', undefined],
     ['wrong kind', 'A1', [{ id: 'A1', kind: 'audio', label: 'A1' }]],
     ['inactive', 'V2', [{ id: 'V2', kind: 'visual', label: 'V2', active: false }]],
+    ['disabled', 'V2', [{ id: 'V2', kind: 'visual', label: 'V2', disabled: true }]],
   ] as const)('refuses a %s captured track locally', (_name, trackId, tracks) => {
     const result = planAssetDropTarget({
       current: plannerData(tracks === undefined ? {} : { tracks: tracks as TimelineData['tracks'] }),

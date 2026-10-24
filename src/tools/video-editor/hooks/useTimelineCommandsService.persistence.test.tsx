@@ -201,6 +201,94 @@ function wrapperFor(store: ReturnType<typeof createTimelineStore>, provider: Dat
 }
 
 describe('mounted prepared-media command persistence', () => {
+  beforeEach(async () => {
+    const { clearTimelineDraft } = await import('../data/timelineDraftIndexedDb.ts');
+    await clearTimelineDraft(scope.timelineId);
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.deleteDatabase('astrid.command-outbox');
+      request.addEventListener('success', () => resolve());
+      request.addEventListener('error', () => reject(request.error));
+      request.addEventListener('blocked', () => reject(new Error('Outbox database remained open during test isolation')));
+    });
+  });
+
+  it('preserves an occupied captured V2 through the mounted command service and A2 outbox', async () => {
+    const config = authoredConfig();
+    const document = authoredDocument(config);
+    const initial: TimelineCommandBasis = { head, canonicalDocument: document };
+    const initialData = await buildTimelineData(config, document.parent_revision.payload.registry as unknown as AssetRegistry,
+      async (file) => file, 1, undefined, runtimeHead);
+    const preparedAsset = {
+      assetKey: 'asset-occupied-v2', mediaType: 'image' as const, durationSeconds: 5,
+      entry: { file: 'occupied-v2.png', type: 'image/png', media_id: 'media-occupied-v2', generationId: 'generation-occupied-v2' },
+      source: 'registered' as const,
+      mediaSelection: preparedMediaSelection('asset-occupied-v2', 'generation-occupied-v2', 'variant-occupied-v2'),
+    };
+    const preparedCommand: PlacePreparedMediaCommand = {
+      type: 'place-prepared-media',
+      payload: {
+        asset: preparedAsset, trackId: 'V2', selectedTrackId: 'V2', at: 0,
+        placementPolicy: { kind: 'occurrence-raw-track', trackId: 'V2' },
+      },
+    };
+    const preparedPreview = applyPreparedMediaCommand(initialData, preparedCommand);
+    expect(preparedPreview).not.toBeNull();
+    expect(preparedPreview?.nextData.config.clips).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'clip-0', asset: preparedAsset.assetKey, track: 'V2', at: 0, hold: 5 }),
+    ]));
+    let latest = initial;
+    const transportCalls: Array<{ method: string; path: string; headers: Record<string, string>; rawBody?: string; body?: unknown }> = [];
+    const transport = runtimeDiscoveryTransport(transportCalls, (request, key, path) => {
+      const accepted = acceptedReply(request, adoptedDocument(document, preparedPreview!.nextData, 'r-occupied-v2'), 'r-occupied-v2', key);
+      accepted.receipt.request_hash = fixtureDigest({ operation: 'commitTimeline', path,
+        publisher: accepted.response.data.publisher, request }).slice(7);
+      accepted.receipt.result = accepted.response.data;
+      latest = { head: accepted.accepted, canonicalDocument: accepted.canonicalDocument };
+      return { status: 200, headers: {}, body: json(accepted.response) };
+    });
+    const runtimeClient = new AstridRuntimeClient({ baseUrl: 'http://runtime.test', token: 'runtime-token', transport });
+    const provider = new RuntimeDataProvider({ projectId: scope.projectId, runtimeClient });
+    vi.spyOn(provider, 'loadTimelineCommandBasis').mockImplementation(async () => structuredClone(latest));
+    const actualCommit = provider.commitTimeline.bind(provider);
+    const send = vi.fn<NonNullable<DataProvider['commitTimeline']>>().mockImplementation(
+      (request, key) => actualCommit(request, key),
+    );
+    provider.commitTimeline = send;
+    const store = createTimelineStore();
+    const mounted = renderHook(() => useMountedCommands(store, provider, initialData), { wrapper: wrapperFor(store, provider) });
+    try {
+      await waitFor(() => expect(mounted.result.current.save.localSaveState).toMatchObject({ status: 'saved', ownerId: expect.any(String) }));
+      let result: ReturnType<typeof mounted.result.current.commands.addClip>;
+      act(() => {
+        result = mounted.result.current.commands.addClip({
+          preparedAsset, trackId: 'V2', time: 0,
+          placementPolicy: { kind: 'occurrence-raw-track', trackId: 'V2' },
+        });
+      });
+      expect(result!).toEqual({ ok: true, data: { clipId: 'clip-0', trackId: 'V2' } });
+      expect(mounted.result.current.save.dataRef.current?.config.clips).toEqual(preparedPreview!.nextData.config.clips);
+      expect(mounted.result.current.save.dataRef.current?.config.clips.find((clip) => clip.id === 'clip-0'))
+        .toMatchObject({ asset: preparedAsset.assetKey, track: 'V2', at: 0, hold: 5 });
+
+      await act(async () => { await mounted.result.current.save.flushPendingSave(); });
+      expect(send).toHaveBeenCalledOnce();
+      const [request] = send.mock.calls[0]!;
+      expect(request).toMatchObject({
+        api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
+        base_revision_id: 'r0', base_publication_id: 'p0', label: 'Add media', merge: 'fields', dry_run: false,
+        source: { via: 'app' },
+        commands: [{ schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent',
+          args: { row: expect.objectContaining({ id: 'clip-0', asset: preparedAsset.assetKey, track: 'V2', at: 0, hold: 5 }),
+            media: preparedAsset.mediaSelection }, intent: {}, created: ['parent/asset:asset-occupied-v2', 'parent/clip:clip-0'] }],
+      });
+      expect(request.commands?.[0]?.args.row).not.toMatchObject({ track: 'V3' });
+      expect(transportCalls.filter((call) => call.path.endsWith('/commit'))).toHaveLength(1);
+    } finally {
+      mounted.unmount();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+  });
+
   it('adopts an after-anchor prepared duplicate through the real v2 outbox request', async () => {
     const config = authoredConfig();
     const document = authoredDocument(config);
