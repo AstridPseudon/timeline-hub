@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T16:56:40Z | dispatcher heartbeat 3s | live 2 (sol 1, luna 1, other 0) | busy30 19 | status age 3m -->
-# agent board, 2026-10-24T16:49:20Z
+<!-- agent | 2026-10-24T16:59:31Z | dispatcher heartbeat 7s | live 1 (sol 1, luna 0, other 0) | busy30 18 | status age 2m -->
+# agent board, 2026-10-24T16:57:33Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -128,24 +128,24 @@
 | D69 SDK failures | Resolve10 contracts and one duplicate seam | Luna / Orchestrator | D69 versus G5 disposition | blocked:orchestrator | SDK1646; duplicate1653 | Ten conflicts,one possible duplicate regression,five PASS. [Report](../../design/agt-F-D69-failures-sdk-1646.md) | Evidence only |
 | D69 core failures | Resolve11 old-writer fixture contracts | Luna / Orchestrator | D69 versus G5/R5 disposition | blocked:orchestrator | Core1646 complete | Eleven exact original failures require removed element/promotion/create writer seams. [Report](../../design/agt-F-D69-failures-core-1646.md) | Evidence only |
 | D69 rendering failures | Resolve4 native-window and input contracts | Luna / Orchestrator | Exact prior contract disposition | blocked:orchestrator | Rendering1646 complete | Four decision conflicts,two PASS; zero env. [Report](../../design/agt-F-D69-failures-render-1646.md) | Evidence only |
-| D69 CLI terminal hints | Restore two original terminal lines | Luna | Independent core review | review | Author1646 PASS2+1; review1653 | All guidance retained; original test hashes unchanged. [Author](../../workers/agt-F-D69-cli-terminal-hint-1646/report.md) | 81a2615c54 |
+| D69 CLI terminal hints | Restore two original terminal lines | Luna | Normal merge | merging | Author1646; review1653 PASS2 | All guidance retained; exact original bytes, Ruff2143/mypy1902 unchanged. [Review](../../workers/agt-F-D69-cli-hint-review-1653/report.md) | 81a2615c54 |
 
-| R2 repeated source copy | Classify two redo-copy failures | Luna | Retained exact55-control XML | doing | agt-R2-sourcecopy-whole-path-1650 | Two originals FAIL at redo-copy, original authored guard changed. No broader cause inferred. [XML](../../design/handoff-agt-G2-P4-read-boundary-sol-1639-controls.xml) | Agent ef036 / Runtime bc227 |
+| R2 repeated source copy | Repair authenticated root-baseline guard | HARD Sol / Luna | Source cause qualified | doing | Whole-path1650; Sol1655 | Live Agent R2 defect: repeated physical shot revisions versus authored root guard. Two originals remain FAIL. [Cause](../../design/agt-R2-sourcecopy-whole-path-1650-source-cause.json) | Source pending |
 
-| G4 D69 duplicate | Qualify chapter duplicate validation seam | Luna | Source cause and guard safety | doing | agt-G4-D69-duplicate-validation-1653 | Determine live regression versus outdated mocked check; no invalid media/admission waiver or renderer call permitted. | Agent ef036 / Runtime bc227 |
+| G4 D69 duplicate | Resolve invalid mock versus admission contract | Luna / Orchestrator | D69 exact fixture disposition | blocked:orchestrator | Independent1653 complete | No product defect found; original invalid media bypasses old mocked check. Four live/negative controls PASS. [Report](../../design/agt-G4-D69-duplicate-validation-1653.md) | Source unchanged |
 
 Integration: Agent ef0363985e includes true upstream924, normal Runtime8b32 adoption, reviewed recorder consumer, 47 unchanged upstream test restorations and reviewed P4 parser default. Runtime root-auth successor is actual local normal bc227 with exact reviewed tree1d410 and expected parents. Normal provenance adoption1630 merged; one actual-home inverse original1632 dispatched.
-core open: 7 tracked (2 P4,2 source-copy redo,2 CLI terminal predicates,1 duplicate seam), plus36 D69 decision-conflict cases blocking cut. No restored failure is called a known gap. Single-edit boundary decision escalated1650; sourcecopy investigatorLuna1650; ten-note cost ownerRuntimeSol1635. Root inverse actualhome PASS1.
-regressions: 2 confirmed CLI output-order failures under independent review1653;1 duplicate seam under source qualification1653. Remaining36 actual failures are consolidated D69/G5/R5 decision conflicts, not known gaps. Prior order181 remains PASS16.
+core open: 6 tracked (2 P4,2 source-copy redo,2 CLI terminal predicates), plus37 D69 decision-conflict cases blocking cut. No restored failure is called a known gap. Single-edit boundary decision escalated1650; sourcecopy repairSol1655; ten-note cost ownerRuntimeSol1635. Root inverse actualhome PASS1.
+regressions: 2 confirmed CLI output-order failures now independently PASS2 and normal merge queued. All37 original restored failures are exact D69/G5/contract conflicts, not known gaps. Duplicate hypothesis disproved by stricter canonical admission and PASS4. Prior order181 remains PASS16.
 D60 baseline: Upstream924 full1621 terminal FAIL: 12396 passed, 91 failed, 14 errors, 16 skips, 566 subtests. Exact276:199 NEW-OURS and77 counterparts. Mutable external Runtime scope remains disclosed.
-D66 reverse:137 ledgered,178 present-changed,47 restored,0 renamed. Original47 ASTs exact924 at3d67. Durable service repair1634 active after two zero-body launches. Independent whole-path1634 runs in parallel. D69 audit:167 cleared,9 cited,2 restored at home9a781 after independent1622 PASS. Behavior proof pending.
+D66 reverse:137 ledgered,178 present-changed,47 restored,0 renamed. Actual47:10PASS37FAIL; every failure source-classified as a concrete contract/fixture conflict under escalation1654. Audit178:167 cleared,9 cited,2 restored; terminal fix81a261 independentPASS2 merge queued.
 Gates: P1/P2/P3 App; P4 Agent; P5 and Composition Runtime. Original P4 service29577 FAIL2/PASS1. Next P4 run needs current source rebind and meaningful ten-note correction. Final-core body still owed.
 Admission: D56 ends Farm/schema venue work. Prior access and safety refusals stay stopped. D67 D13 remains unchanged visible environment known gap with no owner action. D23 timing remains deferred.
 Disk: About9GB free; cap6 above9GB. Newly completed read-only trees are already recycled. Sweep3 removed0; prior refused targets stay stopped.
 
-Blockers: Orchestrator — D69 exact36 restored expectations conflict with current retired writer/native-window/schema contracts. Consolidated escalation agent-20261024T1654Z-D69-restores-vs-retired-contracts.md; all bodies unchanged.
+Blockers: Orchestrator — D69 exact37 restored expectations conflict with current retired writer/native-window/schema contracts. Consolidated escalation agent-20261024T1654Z-D69-restores-vs-retired-contracts.md; all bodies unchanged.
 Blockers: Orchestrator — P4 inspection versus authenticated-capture contract. Exact conflicting original and passing custody control are in escalation agent-20261024T1650Z-P4-inspection-capture-contract.md; no source/test weakening applied.
-Blockers: Runtime — P4 ten-note first redo times out45s. Luna1625 found no justified optimization; HARD Sol1635 continues bounded caller-cost work. Every validation and45s retained; independent review before retry.
+Blockers: Runtime — P4 ten-note first redo times out45s. Profile1635 WIP held; shared caller-cost owner Sol1643 continues source facts with element request. All validation/budgets retained.
 Next ready: Review/merge CLI output81a261 on PASS; consume duplicate and source-copy diagnosis. Apply orchestrator answers to P4 boundary1650 and consolidated D69 contract1654 immediately. Runtime ten-note costSol1635 remains unique owner.
-live 3 / cap 6; ready-undispatched 0. Luna: source-copy investigator1650, CLI hint reviewer1653 and duplicate author1653. Four classifiers finished. No local Sol.
-Inbox consumed through Runtime1635 P4 cost continuation and1621 actual root-auth home. Runtime actual normal successor bc227 verified locally by tree and parents; stale source wait cleared. Pass 2026-10-24T16:26:38Z.
+live 2 / cap 6; ready-undispatched 0. HARD Sol1655 source-copy repair; Luna1657 normal Runtime5c1 provenance adoption. CLI hint independent1653 PASS2 merge queued.
+Inbox consumed through Runtime1635 P4 cost continuation and1621 actual root-auth home. Runtime actual normal successor bc227 verified locally by tree and parents; stale source wait cleared. Pass 2026-10-24T16:57:33Z.
