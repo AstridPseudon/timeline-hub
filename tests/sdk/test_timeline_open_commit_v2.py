@@ -39,6 +39,9 @@ def advance(generated, ordinal, *, clip="a"):
     revision = "other-" + str(ordinal)
     generated.bundles[revision] = execute(base, [command]).bundle
     generated.head = {"revision_id": revision, "publication_id": "pub-" + revision}
+    # The peer head is produced by the real command engine above; keep the
+    # public reader's authenticated revision/publication pair in sync with it.
+    generated.publications[revision] = generated.head["publication_id"]
 
 
 def conflict(generated, *, status="conflict", current=True):
