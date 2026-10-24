@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T02:15:00Z | dispatcher heartbeat 9s | live 2 (sol 0, luna 2, other 0) | busy30 20 | status age 5m -->
+<!-- app | 2026-10-24T02:17:30Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 20 | status age 1m -->
 # app board, 2026-10-24T02:06Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -13,7 +13,7 @@
 | A4-state | Retire state transaction runner API | Luna | Review 0142 PASS | merged | app-A4-state-runner-retirement-0135 | Independent 175 tests, three types and lint passed. Integrated source follow-up will include current media-wrapper cut. | ce7a48e137 / 1f4b30a51b |
 | A4-history | Retire history runner execution | Luna | Review 0131 PASS | merged | app-A4-history-retirement-0125 | Independent 95 tests, three types and lint passed. Mounted guarded Runtime undo retained; joined proof 0150 passed 448 tests, three types and lint. | b2a546f535 / 0a0f95efc7 |
 | A4-session-tests | Move five protocol tests to current save | Luna | Review 0123 and proof 0129 PASS | merged | Proof app-A4-preview-session-integrated-0129 | Five cases retained. Joined preview/session proof passed 136 tests, three types and lint on 8bd7. | 039fc35ed7 / 8bd7d59e19 |
-| A4-dormant-scope | Preserve dormant raw and track assertions | Orchestrator | Scope decision | blocked:orchestrator | Escalation 0116 | Same-order track write and raw-birth positives have no production caller. Tests and implementations stay unchanged. | No change |
+| A4-dormant-scope | Record dormant raw and track subsets | Luna | D37 decision received | doing | app-A4-D37-delivery-record-0216 | D37 says keep both implementations and tests unchanged. Draft two records for the existing App deletion ledger; no provider migration. | No product change |
 | A4-reviewed-stack | Ports and mounted witnesses | Luna | Review 0105 and integrated 0115 PASS | merged | app-A4-mounted-fixture-return-0059 | Independent and integrated 111 plus 33 tests passed on exact93d487. Types/lint passed; mocked authority limit retained. | 93d48799a2 |
 | A2-bootstrap-fix | Restart cancelled bootstrap | Sol; Luna review | Resolved | merged | app-A2-basis-cancel-repro-sol-0029 | [326 tests, three typechecks and lint passed.](/home/user/timeline-hub/hub/design/app-A2-bootstrap-integrated-0046.md) | 804134d747 |
 | readiness-after-bootstrap | Verified basis read does not finish | Sol; Luna review | Runtime uninstrumented cost | blocked:runtime | rt-R-readiness-auth-cost-sol-0155 | All 18 probe requests completed. Native history took about six seconds with wrappers. Historical hang cause remains unknown; no P2/P3 rerun. | Fixed 804134d747 |
@@ -40,11 +40,11 @@
 | readiness-client-confirmation | Compare history cardinality and wait | Sol; Luna review | Existing 0121 and 0128 PASS | merged | App Sol 0121; Luna 0128 | Both histories have two entries; full child closure and seed command count differ. Browser request count unknown. Reply 0200 published. | Report only |
 
 Blockers: U3b awaits P2/P3 and the final freeze.
-Blockers: Orchestrator owes bounded dormant track and raw-birth scope; escalation app-20261024T0116-A4-dormant-assertion-scope.md.
+
 Blockers: Runtime Sol 0155 owns uninstrumented history cost and guard-preserving source assessment. Historical hang remains unknown; P2/P3 stay held.
 
 Next ready: Consume lifecycle and executor reviews, owner-recovery return and wrapper merge. Agent has the exact image output. Runtime cost source is in review; P2/P3 remain held.
-Integration: 4b7786fb88; state retirement and two unused parity deletions are merged. Joined proof 0150 stays bound to exact 1c5cc47bf6. History, staged caller and image created claims are merged. Changed readiness experiments remain fixed at 804134d747.
+Integration: 9e5d1bb791; reviewed media-wrapper packet is also merged. Joined proof 0150 stays bound to exact 1c5cc47bf6. History, staged caller and image created claims are merged. Changed readiness experiments remain fixed at 804134d747.
 Disk: Available 11.79 GB. Eight finished worker trees were already recycled, so recycling freed 0 GB. Sweep removed three old temporary directories and freed about 139 MiB. Protected and refused paths stayed untouched.
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes.
 Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397-line, 40-assertion test, plus required helpers, under D31.

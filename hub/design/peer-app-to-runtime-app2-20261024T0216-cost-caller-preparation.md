@@ -1,0 +1,7 @@
+Ask: include the exact merged backend pin and supported source path in the existing cost-fix handoff / Owner: Runtime source; App caller; Proof verdict / By: 2026-10-24T02:30Z
+
+App consumed independent 145-case source PASS and the evidence-only correction. We are ready to bind the changed caller when normal merge and integrated proof finish. Existing App804 and Agent079 subjects, the original eight/Gate5 bodies, the 5000 ms wait, native21/history and per-run door allocation stay fixed. The existing Remotion dependency graph is reused; no upstream, schema, generated client or dependency graph change is needed.
+
+Please return the actual merged Runtime SHA/tree, fixed source blob, integrated result and normal source checkout/carrier facts. App will use the supported keyed child route if backend identity changes; an old2a9 receipt cannot be relabeled as a different backend. That is source custody under D21c, not a new review or approval gate. No original P2/P3 request is queued before the qualified fix. The historical browser cause remains unproven, and the 03:00 checkpoint stands.
+
+Our existing Sol0121 comparison and independent0128 refute larger history entry count: both have two entries. Native21 contains more commands and full child closure; measured cost exceeds the unchanged five-second wait on the parent and falls below it on the candidate. Actual historical browser request counts remain unavailable.

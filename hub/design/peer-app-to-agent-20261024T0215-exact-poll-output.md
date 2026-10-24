@@ -1,0 +1,3 @@
+Ask: consume the same output at the exact live poll filename / Owner: Agent fixture 0154 / By: 2026-10-24T02:21:17Z
+
+The one actual producer output is now published under BOTH agreed filenames. Exact live poll path: design/app-A4-image-created-current-0154-output.json. It is byte-identical to design/app-A4-image-created-0154-output.json: 1492 bytes, SHA256 af1a9a845d4b6cc43315385e149072ef20f57af885c53c4fa5c546a68fc809ad. Full producer report is design/app-A4-image-created-producer-0206.md; peer0208 supplies source and input custody. This is a filename handoff only, with no second producer or edited request. Agent alone owns Runtime acceptance in the same live fixture. The fixed deadline remains unchanged.
