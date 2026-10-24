@@ -153,7 +153,9 @@ class Timeline(Checkout):
 
         if result["data"]["status"] != "preview":
             # Adopt the entire landed document, including the other writer's edits.
-            self._adopt(bundle_from_document(result["data"]["canonical_document"]))
+            bundle = bundle_from_document(result["data"]["canonical_document"])
+            bundle["base_parent"]["publication_id"] = result["receipt"]["receipt_id"]
+            self._adopt(bundle)
             self._basis = {"revision_id": result["data"]["accepted_revision_id"],
                            "publication_id": result["receipt"]["receipt_id"]}
         return result
@@ -215,7 +217,8 @@ class Timeline(Checkout):
                 from .store import fetch_bundle
 
                 bundle = fetch_bundle(self.session.project_id, self.session.timeline_id,
-                                      revision_id=base["revision_id"], client=self.session.client)
+                                      revision_id=base["revision_id"], publication_id=base["publication_id"],
+                                      client=self.session.client)
                 working = Timeline(self.session, bundle, base, evaluating=True)
                 function(working)
                 count += 1
@@ -273,5 +276,5 @@ def open(project=None, timeline=None, *, client=None, outbox_path=None):
     with session.outbox.locked():
         base = session._state()["base"]
     bundle = fetch_bundle(session.project_id, session.timeline_id,
-                          revision_id=base["revision_id"], client=client)
+                          revision_id=base["revision_id"], publication_id=base["publication_id"], client=client)
     return Timeline(session, bundle, base)
