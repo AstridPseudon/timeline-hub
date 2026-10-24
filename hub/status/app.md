@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T10:43:20Z | dispatcher heartbeat 5s | live 8 (sol 1, luna 7, other 0) | busy30 27 | status age 2m -->
-# app board, 2026-10-24T10:40Z
+<!-- app | 2026-10-24T10:46:28Z | dispatcher heartbeat 12s | live 6 (sol 2, luna 4, other 0) | busy30 27 | status age 2m -->
+# app board, 2026-10-24T10:44Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -54,15 +54,18 @@
 
 | P3-lost-ack | Classify lost-ACK attempt order | Sol; independent Luna | Actual3896 terminal | doing | Sol1040; whole-path1040 | Distinguish exact retry A from early dependent B using mounted source and retained evidence. Compare passing P1; no expectation change. | HOME d6ed; actual82cb |
 | P3-terminal-current | Correct terminal stages and safe inventory | Luna; Proof verdict | Producer1033 terminal | doing | Return1040 | Same-ID only. Correct broad NOTRUN statements, static hashes and actual snapshot; retain immutable primary facts and private boundaries. | Actual3896 |
-| P2-current-join | Qualify pure joined product target | Luna | Reviewed popup and diagnostic home | doing | Pure integrated1036 | Required joined union, controls, three types, lint and exact protected-source identities. This clean source is the sole next P2 execution target. | d6ed8cbda1 |
+| P2-current-join | Qualify pure joined product target | Luna | Reviewed popup and diagnostic home | merged | Pure integrated1036 PASS | 695 plus67 tests,30 controls including20 Gate5,11 diagnostics,three types and lint PASS; all protected blobs exact. Pure execution target only. | d6ed8cbda1 |
 | U4p-D39-test-identity | Refresh strict current producer identity | Luna | Sol1022 caller repair | doing | Identity1035 | Change only one stale digest literal to exact approved D39 producer; all original semantic assertions remain. Cumulative independent review follows. | Earlyfreeze only |
+
+| P2-final-caller | Bind only P2 to actual pure target | Luna; independent review | Source1036 and custody1035 PASS | doing | Final caller1043 | Actual d6ed pure source plus333b/37eb/new child1016. Preserve P3 and all current outsiders; no installation before review. | Artifacts only |
+| P3-fault-order | Preserve strict lost-ACK ordering | Proof harness | Sole Sol1040 identity finding | blocked:app2 | Peer1044; Proof owner requested | Source permits automatic retry A; early B is unproved. Proof owns deterministic fault order and strict original predicates if trace confirms. | No source edit yet |
 
 Integration: HOME d6ed8cbda1 includes independently reviewed own-only popup84b08 and retained diagnostic01ea. Exact current pure-product qualification1036 is running. Earlier P3 pure82cb qualified20 controls/types/lint/list and original3896 now terminal. Source qualification gives no live gate credit.
 
-Blockers: App — joined pure-product1036 and actual D41 custody review1035 precede final P2-only caller binding and independent review. No P2 original submitted.
+Blockers: App — pure-product1036 and custody1035 PASS; sole final P2-only caller1043 binds exact source/target and preserves P3. Independent review and separate installation precede ONE P2.
 Blockers: App — actualP3 3896 lost-ACK attempt count has sole Sol1040 and independent whole-path1040. Producer return1040 corrects stage facts and safe-file inventory. No repeat.
 Blockers: Freeze — home U3b waits P2/P3 GO. Early branch caller772PASS; strict current-producer test identity1035 then cumulative review precede D49 branch full checkpoint.
-Next ready: Finish current1035/1036 qualifications; bind only P2 after exact pure source PASS. Dispatch independent earlyfreeze cumulative review after strict identity1035 completes.
+Next ready: Final P2 caller1043 is active after pure source1036 PASS. Earlyfreeze source1035 passed; normal harness finalization precedes cumulative branch join/review and checkpoint.
 
 Later: Final P1–P5 run on App service with Proof verdict after final tuple qualification, then D49 full suites and Farm F-final/ZIP. No duplicate farm or Proof run. D47 memo/capsule stays deferred and held unmerged. D46 U2c draft stays closed. D14/D23 deferred relational timing cases retain their original assertions and failures.
 
@@ -95,3 +98,5 @@ Pass10:29Z: INBOX consumed1444910 bytes. P3 final1023 PASS on28039, exact candid
 Pass10:33Z: P3 original request3896 submitted immediately after actual caller1023 and installation1028 PASS/readback. Exact target0900 selects82cb, existing079/37eb custody unchanged. Sole producer1033 dispatched and actualID published to Proof. P2 remains held for own source joins and final caller, without another P3. Early freeze source772 PASS clears43 failures; one old digest collection guard remains unchanged.
 
 Pass10:40Z: INBOX consumed1447990 bytes through disk hold10:36. Recycled11 eligible clean finalized worktrees; prior refused/KEEP paths untouched. Both own-only source merges already home d6ed; joined1036 and custody1035 active. ActualP3 3896 failed lost-ACK attempt assertion, not readiness. Sole source1040, independent whole-path1040 and finite producer return1040 queued; peer handback published. No repeated original, P2 request or earlyfreeze home merge.
+
+Pass10:44Z: joined1036 PASS695+67+30+11/types/lint/protected identities; actual custody1035 PASS PREPARED. Final P2-only caller1043 active. Independent P3 source1040 rejects unsupported early-B inference; sole Sol1040 owns retained identity classification and Proof1044 receives strict harness-order ask. Producer return1040 corrects predecessor/reset to assertedPASS while retaining failure and remainderNOTRUN. Lead1043 owns exited harness finalization. INBOX consumed1449881 bytes; explicit10:41 hold lift acknowledged.
