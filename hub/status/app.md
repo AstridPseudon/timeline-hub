@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T16:03:22Z | dispatcher heartbeat 9s | live 1 (sol 1, luna 0, other 0) | busy30 11 | status age 2m -->
+<!-- app | 2026-10-24T16:06:42Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 0m -->
 # app board, 2026-10-24T15:59Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -29,7 +29,7 @@
 | D66-plain-launch | Boot unchanged originals with manifest | HARD Sol by D66 | Current homes | merged | Sol1528 | Native/history/identity/collection/lint PASS. RealP1 readinessPASS; both original split casesFAIL. | 941e758bac |
 | F-current-join | Qualify composed App head | Luna | D62,D65,D66,D68 home | merged | app-F-current-join-proof-1553 |2skew+4Node+2schema PASS;14maps exact;289/71 source evidence reused by identity. | 6d74fdd88a |
 | P1-current-run | Plain original control | App service | D66 normal launch | review | Actual13564; verdict1600 | Exit1/352s. Readiness1PASS; originals0PASS2FAIL at initial split observedPOST0. | Manifestbc0b/tree ded51 |
-| P1-split-fix | Repair initial split no POST | HARD Sol PLAN A2/D66 | Same-ID13564 | doing | app-P1-split-no-post-sol-1600 | Sole author: prove actual source or launch cause; originals and waits unchanged. | Base6d74 |
+| P1-split-fix | Repair initial split no POST | HARD Sol PLAN A2/D66 | Same-ID13564 | review | app-P1-split-no-post-sol-1600 | Exact867f admission plus real mounted regression.227tests,types/lint PASS; independent1605queued. | 4349ad6ec1 |
 | P1-split-path | Independent whole-path challenge | Luna | Same-ID13564 | merged | app-P1-split-whole-path-1600 | Proven stale full-v2 digest list blocks dirty session before outbox dispatch; focused8PASS1RED. | Base6d74 |
 | P1-current-verdict | Judge same original13564 | Luna | Same-ID terminal facts | merged | app-P1-13564-verdict-1600 | Independent FAIL: readiness1PASS/original2FAIL; manifest and originalspec hashes qualify perD66. | Read only |
 | F-current-full | Retain refreshed checkpoint failure | Service; Luna | Actualbe98 | merged | Actual8158; producer1446 |19256VitestPASS/1installerFAIL;NodeNOTRUN. Installer now fixed; final full required at cut. | be98aac54e |
@@ -38,9 +38,11 @@
 | F-env | Missing SSH tool failures | Service environment | D54a | gated:environment | Quality1236; producer1227 |Twoextension nodes fail ssh-keygen ENOENT; tests/security unchanged. | Historical16138 |
 | F-final | Final P1–P5 and core suites | Lane services; App verdicts | D59 cut | gated:D59-cut | Runtime coordinator; App gates |Cut needs each active lane core0/regressions0 and current P2/P3PASS, then final proofs/build. | Cut pending |
 
+| P1-fix-review | Review exact current contract fix | Luna | Author4349PASS | review | app-P1-current-contract-review-1605 | Challenge failclosed admission and authoritative mounted reply; originals unchanged. | 4349ad6ec1 |
+
 Integration: App6d74fdd88abe2aacb5c605a443e473aaab99ad64, tree da2043257a6bce08b2ca37a98c49e53e530026a7. Includes frozen upstream3881,D62normalclient,D65manifest/schema and D66plainlauncher. Current qualified tuple Agent57779274/Runtime8b32/schema867f. Normal14consumer mappings exact. All6 original spec hashes unchanged.
 
-live 1 / cap 6; ready-undispatched 0. Dispatcher reports soleSol1600; two independentLuna1600 completed. Latest shared lead header15:41 reports2 and is stale. Core-source review becomes ready on author completion.
+live 1 / cap 6; ready-undispatched 0. Dispatcher authorSol1600 finished; independentLuna1605queued immediately. Wholepath and verdict1600complete; latest shared lead header remains stale.
 
 core open:11 current App original cases unqualified:2P1 failures,8P2 and1P3 notrun on the plain current stack. All8P2 remain CORE. Historical P1GO stays scoped to its recorded tuple.
 regressions:1 current compatibility regression: normal D62 adoption generated867f but full-v2 admission list kept35c2/4118,blocking all saves. Sol1600 fixes it. Installer regression CLOSED by integrated2+4+2PASS.
