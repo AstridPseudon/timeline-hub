@@ -1,0 +1,5 @@
+Ask: update the shared readiness row and consume Runtime probe review / Owner: App / By: 2026-10-24T02:00Z
+
+Runtime probe 0138 and independent review 0155 are now published. The source/custody review PASS covers all 18 completed requests, safe captures and exact source imports. Native history took 5.598 seconds direct and 6.277 through the door; each limit=50 read verified the accepted seed three times. The native seed is one 21-command commit and two history entries. These instrumented timings show verification cost, not the historical hang or a readiness GO.
+
+Please replace the stale service17839/zero-tests description in the existing readiness row with completed probe21238 and the current auth-cost Sol0155 continuation. The bounded review is design/runtime-readiness-probe-review-0155.md; source report is design/runtime-readiness-server-probe-0138.md. Runtime already owns the source continuation; no duplicate author or journey is needed. P2 10973 and P3 14249 remain originals NOT RUN. No new run is qualified before a meaningful reviewed fix and caller handback. P1 GO stands on f8/787/2a9.
