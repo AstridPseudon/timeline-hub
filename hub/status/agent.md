@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T20:25:42Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 0m -->
-# agent board, 2026-10-24T20:25:05Z
+<!-- agent | 2026-10-24T20:28:33Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 1m -->
+# agent board, 2026-10-24T20:27:36Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -133,6 +133,7 @@
 | P4 registry preflight | Verify exact service-parsed command | Luna | Runtime profile recipe for real body | merged | agt-P4-registry-preflight-only-1944 | Exact parsed-row syntax0, positive preflight0/body17/count1, poison1/count0. Original hash,45s,tuple and registry unchanged; no body. | PREPARED |
 | U4a observer provenance | Bind qualified Runtime observer home | Luna | Normal merge complete | merged | agt-U4a-observer-home-adopt-1952 PASS | Normal tools, lock-only adoption; 15 client and schema mappings unchanged. [Report](../../workers/agt-U4a-observer-home-adopt-1952/report.md) | Home22d00393f7 / Runtime44917 |
 | E2 ABI1 retirement design | Retain completed design; pause further work | Luna | D83 pause until after ZIP | gated:after-ZIP | 2008 completed before D83 | Existing design retained; no live worker or follow-up. [Design](../../design/agent-E2-legacy-abi-design.md) | Design only; no code |
+| P4 / R2 D83 batch | Prepare one unprofiled original batch | Luna | Qualified Runtime fix before bodies | doing | agt-P4-R2-D83-batch-prep-2028 | Recipe and exact 3 plus 4 selectors only. No original run, source adoption or PARAM merge yet. | Harness only |
 Integration: Agent22d00393f7 normally adopts qualified Runtime44917 observer/watchdog. All15 canonical bytes/schema unchanged; cost e89/f51e remains exact. PARAM donor2 prepared1925 remains unmerged.
 core open: 5 tracked. PARAM candidate1929 has True2 PASS and False2 timeout45s; corrected review1938 leaves current-home True2 unproven. P4 ten-note remains open; installed render cut-blocking.
 regressions: D71 leak and CLI terminal predicates qualified. D77a staged rendering source repaired and focused proof passed; genuine installed render remains required at cut.
@@ -143,9 +144,11 @@ Admission: D56 Farm/schema venue stand-down and prior source/access/cleanup refu
 Disk: About8.8GiB free; cap6. Sweep3 removed0; compact packed0 and gzipped2 old logs at20:01. Ended clean workers auto recycled; dirty old and refused KEEP/pin targets untouched.
 Blockers: Runtime — D83 assigns accepted-history cost and ordinal2 wait to two Runtime Sol owners. Agent adds no diagnosis. P4 and four tail cases await qualified home fix, normal adoption and one batch.
 Blockers: Final cut — final core and genuine installed render remain D59 gated. P4 evidence verdict1956 is PASS; original gate remains open pending Runtime measured correction.
-Next ready: Qualified Runtime fix -> normal D39 adoption -> one batched original run on captured tuple. D83: NO-GO automatic summary, GO one verdict; correction reviewer applies/submits. E2/D79 paused until ZIP.
-live 0 / cap 6; ready-undispatched 0 local. D83 critical Runtime owners active; Agent waits published fix, then normal adoption and one original proof. E2 further work paused until ZIP.
+Next ready: Runtime security and home fix -> normal D39 adoption -> candidate PARAM qualification and one unprofiled original batch on captured tuple. D83: NO-GO automatic summary, GO one verdict; correction reviewer applies/submits. E2/D79 paused until ZIP.
+live 0 / cap 6; queued 1; ready-undispatched 0 local. Luna batch prep2028 queued. Runtime security2018 and actual frame2019 own the critical fix. E2 and D79 paused until ZIP.
 Inbox consumed through 1076534 bytes, including full D83 at20:20. Security review and45s stay required; no extra NO-GO verdict or whole-path loop. E2 finished before pause; no live E/D79.
 D79 later: Inventory1831 complete; no full accepted record/context survived. Existing non-gating input request retained. No fixture or test fabricated.
 Continuation: P4 current service row uses the1948 opt-in profiling recipe. After qualified Runtime fix, worker restores normal unprofiled launch via guarded registry route for D83 original batch; no repeated diagnostic profile.
 Continuation: PARAM carrier1925 has exactly two reviewed donor blobs and99 controls, but remains unmerged. True2 candidate results do not qualify current home. Preserve this distinction through fix adoption, batch result and normal merge.
+
+Pass 2026-10-24T20:27:36Z: INBOX unchanged at1076534 bytes. Runtime measured history candidate fbba9 remains in security2018 and cleanup2018; no source release yet. Batch prep2028 queued without originals or new diagnosis. No eligible ended clean non-KEEP Agent worktrees exist; prior refused pin and KEEP targets untouched. Sweep3 and compact are running.

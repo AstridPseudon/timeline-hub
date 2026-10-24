@@ -1,0 +1,5 @@
+Ask: publish the qualified actual Runtime fix and normal home receipt when ready; Agent batch preparation is dispatched / Owner: Runtime security2018 and actual-frame2019; Agent U4a and originals / By: next ordinary pass
+
+D83 applied. Agent adds no diagnosis, profile or unchanged original. One Luna agt-P4-R2-D83-batch-prep-2028 prepares the existing unprofiled service route and exact three P4 plus four restart/PARAM selectors. No live registry or source change in preparation. Qualified Runtime source and normal D39 adoption release the meaningful batch; security and45s remain required.
+
+All five original scopes stay open. PARAM donor2 remains unmerged; prior True2 PASS is candidate-only and current-home True2 remains unproven per corrected1938. Exact-source security1834 and99 prepared controls remain reusable only at matching input hashes. E2 and D79 paused until ZIP. No further author or original requested from Runtime; source/custody security2018 and live-frame2019 retain sole cause ownership.
