@@ -862,9 +862,12 @@ async function sharedPopupMediaCommands(
     projectMediaSelection(mediaProvider, composition.projectId, oldAsset, beforeRegistry),
     projectMediaSelection(mediaProvider, composition.projectId, newAsset, nextRegistry),
   ]);
+  const created = Object.prototype.hasOwnProperty.call(registryAssets(beforeRegistry) ?? {}, newAsset)
+    ? []
+    : [`occurrence:${occurrenceId}/asset:${newAsset}`];
   return { commands: [fork, {
     schema_version: 1, op: 'occurrence.swap-media', version: '1', select: `occurrence:${occurrenceId}/clip:${id}`,
-    args: { old_media: oldMedia, media }, intent: { ownership: 'occurrence' },
+    args: { old_media: oldMedia, media }, intent: { ownership: 'occurrence' }, created,
   }] };
 }
 

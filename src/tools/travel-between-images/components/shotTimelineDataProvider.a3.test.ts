@@ -387,9 +387,48 @@ describe('shot popup A3 save ingress', () => {
     if (kind === 'add') expect(request.commands[1].created).toEqual([
       `occurrence:occ-3/clip:popup-added-a3`,
     ]);
+    if (kind === 'swap') expect(request.commands[1].created).toEqual([]);
     expect(captured.intents[0].payload).toMatchObject({ commands: request.commands });
     expect(h.transport.getProjectMediaSelection).toHaveBeenCalled();
     await provider.dispose();
+  });
+
+  it('claims a newly registered occurrence asset before a shared media SWAP', async () => {
+    const before = canonicalDocument();
+    const parent = before.parent_revision.payload;
+    const selected = (parent.occurrences as Array<Record<string, unknown>>)[0];
+    (parent.occurrences as unknown[]).push({ ...selected, occurrence_id: 'occ-sibling' });
+    const h = harness(before);
+    const originalAsset = h.config.clips[0].asset;
+    const replacementAsset = 'popup-new-swap-asset';
+    h.config.registry[originalAsset] = { ...h.config.registry[originalAsset], generationId: 'generation-old', variantId: 'variant-old' };
+    h.transport.getProjectMediaSelection = vi.fn(async (query: MediaSelectionQuery) => ({
+      ...query, object_id: `sha256:${'5'.repeat(64)}`, catalog_digest: `sha256:${'6'.repeat(64)}`,
+    }));
+    let captured!: OutboxRecord;
+    h.send.mockImplementation(async (request, key) => {
+      [captured] = await h.records();
+      return JSON.parse(JSON.stringify(h.reply(request, key, savedDocument(captured))));
+    });
+    const provider = h.mount();
+    const next = { ...h.config, clips: h.config.clips.map((clip, index) => index === 0
+      ? { ...clip, asset: replacementAsset } : clip) };
+    const registry = await provider.loadAssetRegistry('popup-timeline');
+    const nextRegistry = { ...registry, assets: {
+      ...registry.assets,
+      [replacementAsset]: { file: replacementAsset, type: 'image', generationId: 'generation-new', variantId: 'variant-new' },
+    } };
+    try {
+      await expect(provider.saveTimeline('popup-timeline', next, 1, nextRegistry)).resolves.toBe(2);
+      const [request] = h.send.mock.calls[0];
+      expect(request.commands[1]).toMatchObject({ op: 'occurrence.swap-media',
+        select: 'occurrence:occ-3/clip:alpha-video-b',
+        created: ['occurrence:occ-3/asset:popup-new-swap-asset'] });
+      expect(request.commands[1].args).toEqual(expect.objectContaining({ old_media: expect.any(Object), media: expect.any(Object) }));
+      expect(captured.intents[0].payload).toMatchObject({ commands: request.commands });
+    } finally {
+      await provider.dispose();
+    }
   });
 
   it('uses the A2 session for a uniquely owned child root and publishes its accepted closure', async () => {
