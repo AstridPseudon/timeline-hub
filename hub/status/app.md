@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T22:10:26Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 0m -->
-# app board, 2026-10-24T22:09Z
+<!-- app | 2026-10-24T22:13:43Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 2m -->
+# app board, 2026-10-24T22:12Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -109,19 +109,19 @@
 | P2-placement-selector | Qualify exact occurrence selectors | Luna; independent | Proposal2147 | merged | app-P2-placement-selector-review-2152 | Independent PASS;22 controls/types/lint and strict selector negatives. Home tree equals tested author. Browser proof remains owed. | Home00918dc720 |
 
 
-| U4p-next | Adopt qualified structural release | Luna | Runtime732 released;6GB | gated:disk | Adoption brief prepared | Owner22:09 RELEASE supersedes hold. Normal732c48c6 source available; dispatch at6GB. Lead2209 capacity help sent, no approval layer. | Currentbc04 adopted |
+| U4p-next | Adopt qualified structural release | Luna | Runtime732 released | doing | app-U4p-D84a-adoption-2212 | Guarded stale App245742 pin recycled after usage checks;6.142GB restored. Normal-tool adoption dispatched immediately. No approval layer. | Currentbc04 adopted |
 
 Integration: App5fcb9ad5cf merges independently qualified asset drop planner and negatives; both product/test blobs exact tested c88d. Prior00918dc720 merges independently qualified placement selectors. Home tree equals tested author61165b69; target spec413d314d, five other protected hashes unchanged. Runtimebc04/Agent840a adoption remains normal245742. P3 original15493 is independently GO at Appc184bd/Agent22d/Runtime44917/Composition635f; P1 original31083 GO retains its recorded tuple.
 
 core open: Eight original P2 gestures remain unqualified. App asset-drop source repair and strict placement selector correction are independently PASS and merged; their original browser proof remains owed. Runtime owns element, popup read and parent history waits.
 regressions: Asset ownership source finding repaired and independently PASS; zero remaining confirmed App source findings. Its browser case remains unqualified. Source fixes and unit results carry no browser or final-cut credit. Historical D69 restoration proofs remain retained.
 
-Blockers: Capacity — Runtime D84a RELEASED owner22:09, normal732c48c6. Free5.936GB below6GB source/gate floor; lead2209 asked for supported capacity help. No adoption or body until6GB.
+Capacity: Cleared this pass through authorized D74a stale-pin route. App245742 pin was clean, unused, noncurrent and all associated runs terminal; named KEEP released then bin/recycle succeeded. No refusal.
 Blockers: Final cut — all eight isolated P2 cases must pass before one full tour. Runtime coordinates final pinned tuple, P1–P5/core rerun matrix, genuine installed render and ZIP.
 Next ready: At6GB dispatch prepared U4p adoption for released732; normalmerge thenONEelement first, other isolatedcases oneatatime. BothApprepairs5fcb/00918 home. NoP3/D79work.
 
-live 0 / cap 2; ready-undispatched 0. Asset2154 PASS and author merged5fcb9ad5cf. Placement merged00918dc720. No browser body active. Runtime release dependency cleared; normal adoption ready at6GB capacity floor.
-Disk: 5.936 GB last measured. Both source workers started above6GB; no further dispatch below6GB. D74a critical small-source floor6GB used; no new dispatch below6GB. Expanded scan across all local worker records found zero ended clean nonKEEP trees. Prior dirtyU3, compact, graph, publication and source-access refusal targets remain stopped; no alternate cleanup route used. All run evidence retained.
+live 1 / cap 2; ready-undispatched 0. Normal U4p adoption2212 dispatched at6.142GB. Both App fixes merged. No browser body active; next element runs after actual adoption home and6GB.
+Disk: 6.142 GB immediately after successful guarded stale App245742 pin recycle. Both source workers started above6GB; no further dispatch below6GB. D74a critical small-source floor6GB used; no new dispatch below6GB. Expanded nonKEEP scan foundzero; newly stale App245742 KEEP pin was then proved unused and released by D74a route. All retained run evidence untouched. Prior dirtyU3, compact, graph, publication and source-access refusal targets remain stopped; no alternate cleanup route used. All run evidence retained.
 Safety: Prior refusals stay stopped. No new refusal in this pass.
 Inbox consumed through 1751109 bytes. PLAN, common rules, C0, header and Runtime/Agent owner boards rechecked. Runtime D84a request-scope2145 remains active; latest actual False2151 snapshots show main-thread CPU in verification, not sampled lock waits. Same-head mutation counterexamples hold lock-placement changes; no new qualified product successor published. All blocked Runtime rows retain their actual dependency.
 Evidence: [Asset review FAIL](../../design/app-A3-asset-drop-review-2143.md), [placement attribution](../../design/app-A3-placement-locator-2143.md), [selector proposal](../../design/app-P2-placement-selector-proposal-2147.md), [exact patch](../../design/app-P2-placement-selector-proposal-2147.patch).
