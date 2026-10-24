@@ -439,12 +439,11 @@ def test_pip_embedded_fails_closed_when_embedded_client_is_missing(
     monkeypatch: pytest.MonkeyPatch,
     _isolated_comfy_imports: None,
 ) -> None:
-    monkeypatch.setenv("COMFYUI_PATH", str(tmp_path / "missing-client"))
-    monkeypatch.setattr(production_engine, "_EMBEDDED_COMFY_FALLBACKS", ())
+    monkeypatch.delenv("COMFYUI_PATH", raising=False)
 
     with pytest.raises(
         production_engine.ProductionEngineError,
-        match="comfy/client/embedded_comfy_client.py",
+        match=r"set COMFYUI_PATH, or use local_server mode \(comfy_url\) with your own ComfyUI",
     ):
         production_engine._run_profile(
             object(),
@@ -469,7 +468,6 @@ def test_pip_embedded_inserts_tree_containing_embedded_client(
     (client.parent / "__init__.py").write_text("", encoding="utf-8")
     client.write_text("class Comfy:\n    pass\n", encoding="utf-8")
     monkeypatch.setenv("COMFYUI_PATH", str(root))
-    monkeypatch.setattr(production_engine, "_EMBEDDED_COMFY_FALLBACKS", ())
 
     selected = production_engine._bootstrap_embedded_comfy_client()
 
@@ -493,7 +491,6 @@ def test_pip_embedded_consumes_canonical_bundle_and_pinned_session_config(
     (client.parent / "__init__.py").write_text("", encoding="utf-8")
     client.write_text("class Comfy:\n    pass\n", encoding="utf-8")
     monkeypatch.setenv("COMFYUI_PATH", str(root))
-    monkeypatch.setattr(production_engine, "_EMBEDDED_COMFY_FALLBACKS", ())
 
     workflow = SimpleNamespace(metadata={"comfy_configuration": {"cache_none": True}})
     bundle = SimpleNamespace(workflow=workflow)
