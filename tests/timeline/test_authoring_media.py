@@ -231,6 +231,8 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
     from contextlib import nullcontext
     from types import SimpleNamespace
 
+    from astrid.sdk.workspace_client import WorkspaceClientError
+
     script = Path(__file__).parents[2] / "astrid/packs/rendering/docs/scripts/timeline_document.py"
     spec = importlib.util.spec_from_file_location("timeline_document_test", script)
     helper = importlib.util.module_from_spec(spec)
@@ -248,8 +250,6 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
     edit(work, path.name)
     document = tmp_path / "timeline.json"
     document.write_text(json.dumps(work))
-    shown = SimpleNamespace(ok=True, data={"summary": {"head_revision_id": "advanced-head"}})
-    client = SimpleNamespace(timelines=SimpleNamespace(open_composition=lambda *args: shown))
     class StaleWorkspace(Catalog):
         def get_project_media_selection(self, _project_id, selection):
             if selection["generation_id"] == "generation-old":
@@ -266,12 +266,22 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
             return {"selection": selection, "media_type": "image/png", "size": 78,
                     "width": 16, "height": 12}
 
-    class Session:
-        def _state(self):
-            return {"base": {"revision_id": "parent-1", "publication_id": "publication-1"},
-                    "pending": [], "flight": None}
+    class PublicTimelines:
+        def __init__(self):
+            self._client = None
+            self.open_composition_calls = []
+            self.open_bundle_calls = []
+            self.commit_calls = []
 
-        def _bundle(self, _state):
+        def open_composition(self, project, timeline):
+            self.open_composition_calls.append((project, timeline))
+            return SimpleNamespace(ok=True, data={
+                "native_inspection": {"project_id": project, "timeline_id": timeline},
+                "summary": {"head_revision_id": "advanced-head"},
+            })
+
+        def open_bundle(self, project, timeline, *, revision_id, publication_id=None):
+            self.open_bundle_calls.append((project, timeline, revision_id, publication_id))
             original = bundle()
             original["base_parent"]["publication_id"] = "publication-1"
             original["placements"][0].update(source_offset=0, speed=1)
@@ -283,32 +293,35 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
             original_shot["internal_timeline"]["registry"]["assets"]["old-picture"].update(
                 generationId="generation-old", variantId="variant-old"
             )
-            return original
+            return SimpleNamespace(ok=True, data={"bundle": original})
 
-        def commit_many(self, commands, **kwargs):
-            assert [command["op"] for command in commands] == ["occurrence.swap-media"]
-            assert kwargs["base"] == {"revision_id": "parent-1", "publication_id": "publication-1"}
-            raise RuntimeError("parent composition head is stale")
+        def commit(self, project, timeline, body, *, idempotency_key):
+            self.commit_calls.append((project, timeline, body, idempotency_key))
+            raise WorkspaceClientError(
+                409, "conflict", "parent composition head is stale", {"status": "conflict"}
+            )
 
     stale_workspace = StaleWorkspace()
+    public_timelines = PublicTimelines()
+    public_timelines._client = stale_workspace
+    client = SimpleNamespace(
+        _remote=SimpleNamespace(
+            _transport=SimpleNamespace(_last_handshake={"realm_id": "test", "actor_id": "author"})
+        ),
+        timelines=public_timelines,
+    )
     monkeypatch.setattr(
         helper.AstridClient, "open_from_launcher", lambda **kwargs: nullcontext(client)
     )
     monkeypatch.setattr(
         helper, "workspace", lambda: stale_workspace
     )
-    monkeypatch.setattr(helper.TimelineSession, "open", lambda *args, **kwargs: Session())
-    def fetch_original(project, timeline, *, revision_id, publication_id, client):
-        assert (revision_id, publication_id) == ("parent-1", "publication-1")
-        return Session()._bundle(None)
-
-    monkeypatch.setattr(helper, "fetch_bundle", fetch_original)
     monkeypatch.setattr(
         sys,
         "argv",
         [str(script), "publish", "--file", str(document), "--idempotency-key", "stale-edit"],
     )
-    with pytest.raises(RuntimeError, match="parent composition head is stale"):
+    with pytest.raises(ValueError, match="parent composition head is stale"):
         helper.main()
     assert document.read_text() == json.dumps(work)
     assert document.with_suffix(".check.json").exists()
@@ -316,6 +329,25 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
     assert document.with_suffix(".prepared.json").exists()
     assert not document.with_suffix(".publication.json").exists()
     assert len(stale_workspace.calls) == 1
+    assert public_timelines.open_composition_calls == [("project-1", "main")]
+    assert public_timelines.open_bundle_calls == [
+        ("project-1", "main", "parent-1", "publication-1"),
+    ] * 4
+    assert len(public_timelines.commit_calls) == 1
+    project_id, timeline_id, request, key = public_timelines.commit_calls[0]
+    assert (project_id, timeline_id, key) == ("project-1", "main", "stale-edit")
+    assert request["api_version"] == 1
+    assert request["project_id"] == "project-1"
+    assert request["timeline_id"] == "main"
+    assert request["base_revision_id"] == "parent-1"
+    assert request["base_publication_id"] == "publication-1"
+    assert [command["op"] for command in request["commands"]] == ["occurrence.swap-media"]
+    assert request["label"] == "Publish document"
+    assert request["merge"] == "atomic"
+    assert request["dry_run"] is False
+    assert request["source"] == {"via": "script"}
+    assert len(request["steps"]) == 1
+    assert request["steps"][0]["command_ordinals"] == [0]
 
 
 def test_document_publish_captures_verified_media_before_document_patches():
