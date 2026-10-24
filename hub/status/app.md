@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T16:13:14Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 1m -->
-# app board, 2026-10-24T16:12Z
+<!-- app | 2026-10-24T16:17:35Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 1m -->
+# app board, 2026-10-24T16:16Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -15,8 +15,8 @@
 | A4 | Reachable executor retirement | Luna; review | Historical P1 GO | merged | Census0438; review0444 | Zero reachable legacy film writers; live controls retained. | c0fe889944 |
 | A4-D52 | Proven dormant deletions | Luna; review | Current caller census | merged | Authors1118/1210; reviews1121/1232 | Parent/track and exclusive transcript pairs deleted;85/50live neighbors/types PASS. Live session restored. | 2e3c8f/cca3deb |
 | P1 | Historical mixed chain | Service; independent Luna | Historical tuple | merged | Actual18792; reviews0036/0040 | Historical GO only; current control13564 failed initial split. | Appf8;Agent787;Runtime2a9 |
-| P2 | Eight original core gestures | Service; independent Luna | D66 P1 green | blocked:app | Sol1600 and wholepath1600 | All8 CORE by D55b. Current plain control failed; no new P2 submitted. | Current home |
-| P3 | Original Gate5 journey | Service; independent Luna | D66 P1 green | blocked:app | Sol1600 and wholepath1600 | Submit parallel with P2 immediately after P1 GREEN; no verdict wait. | Current home |
+| P2 | Eight original core gestures | Service; independent Luna | D66 amended16:13 | doing | Actual25943 | Submitted16:13:26currentintegration through plainlauncher. All8 CORE; sameIDwait. | App1540b3f12e |
+| P3 | Original Gate5 journey | Service; independent Luna | D66 amended16:13 | doing | Actual10033 | Submitted16:13:26in parallel withP2;originalGate5unchanged. SameIDwait. | App1540b3f12e |
 | P2-core | Classify all eight gestures | Luna; decision | D55b | merged | Worker1222; accepted12:40 | All8 CORE; no behavior cut. | Report only |
 | P2-diagnostic | Retained lifecycle and Apply sampler | Sol; review | Actual serialized Apply | merged | Authors1214/1309; reviews1235/1315 |28diagnostic and97mounted controls,types/lint PASS; strict original cases retained. | fbf5bfe/971a29 |
 | P2-popup-track | Current selected popup target | Luna; review | Actual source defect | merged | Author1240; review1246 | Mounted pointer RED to GREEN;79 tests/types/lint PASS. | 450f3080ec |
@@ -42,16 +42,18 @@
 
 | U3-D69 | Audit missing and weakened upstream tests | Luna | D69 current3881 | doing | app-U3-D69-reverse-test-audit-1608 | Reverse diff and assertion audit; actual decisions or restoration needs. Does not block gates. | Current integration |
 
-| P1-changed-run | Current split admission control | App service | Corefix1540HOME | doing | Actual26312 | Integration current-head no-cache request16:11:33; wait sameID. GREEN releases parallelP2/P3 immediately. | App1540b3f12e |
+| P1-changed-run | Current split admission control | App service; Luna verdict | Corefix1540HOME | review | Actual26312; verdict1616 | PASSexit0/237s:readiness1PASS,original2PASS. Independentplainmanifest/XMLverdict active;pair alreadyrunning. | App1540b3f12e |
 
-Integration: App1540b3f12ebde61c56a19be9089af2b2f2917e6c, tree a3b3b97851cacbb1515df36fdb779d42b15dc631. Normalmerge tree equals reviewed4349;304focusedtests/types/lint retained by exactidentity. Includes frozen upstream3881,D62normalclient,D65manifest/schema and D66plainlauncher. Current source Agentfba2/Runtime8b32/schema867f;1553vendor proof retains5777 exact client mappings. Normal14consumer mappings exact. All6 original spec hashes unchanged.
+| P1-green-verdict | Review same current green26312 | Luna | Exact terminal26312 | review | app-P1-26312-current-verdict-1616 | D66manifest/XML/originalhashreview only;reuse unchanged304sourcechecks. | App1540/treea3b3 |
 
-live 1 / cap 6; ready-undispatched 0. Dispatcher Luna1608audit running; coreLuna1605PASS and author1600HOME1540. ChangedP126312submitted; no unassigned independent readyrow.
+Integration: App1540b3f12ebde61c56a19be9089af2b2f2917e6c, tree a3b3b97851cacbb1515df36fdb779d42b15dc631. Normalmerge tree equals reviewed4349;304focusedtests/types/lint retained by exactidentity. Includes frozen upstream3881,D62normalclient,D65manifest/schema and D66plainlauncher. P1actualmanifest Agent9502/Runtime8b32/schema867f;1553vendor proof retains5777 exactclient mappings. Each newrun records its actualsourceversions. Normal14consumer mappings exact. All6 original spec hashes unchanged.
 
-core open:11 current App original cases unqualified:2P1 failures,8P2 and1P3 notrun on the plain current stack. All8P2 remain CORE. Historical P1GO stays scoped to its recorded tuple.
+live 2 / cap 6; ready-undispatched 0. Dispatcher Luna1608audit active; independentLuna1616greenverdict queuedimmediately. P225943/P310033serviceactive;P126312GREEN.
+
+core open:9 activecurrentgesturecases (8P2+1P3). CurrentP1original2PASS,independent1616verdictpending;no finalP1GOclaimuntilreview. All8P2 CORE;historicalP1GOretainsrecordedscope.
 regressions:0 confirmed open at qualifiedsource: stale D62admission fixed1540,independent304controlsPASS and exacthome tree. Installer regression CLOSED by integrated2+4+2PASS. Actual changedP1 stillpending.
 
-Blockers: App service — ChangedP1control26312 submitted16:11:33 on merged1540; wait sameID. Prior13564 causefixed. D66 releases parallelP2/P3 only on GREEN currentP1.
+Blockers: App service — P126312GREEN,independent1616active;P225943/P310033running,wait sameIDs. D66amended16:13 removes greenP1serialization;allthreeplainoriginalsrun.
 
 Historical signals:11933 exited1/469s,0PASS3FAIL5NOTRUN. Native/history/readinessPASS; element terminal outcomeUNKNOWN. P33896 reached predecessor/reset,Aacceptance,ACKloss and exactAretry;B/restart/undo tailNOTRUN.12541/1689 and26414 are source/launch preflight failures with originalsNOTRUN. No historical signal is relabeled finalGO.
 
@@ -64,5 +66,5 @@ Disk: About11GB free; sweep3 in progress; eligible finished clean nonKEEP worktr
 
 Evidence: [current composed qualification](../../design/app-F-current-join-proof-1553.md), [current P1 manifest](../../tests/app-D66-plain-stack-sol-1528-d66-plain-p1-three-products-1024154715-13564/d66/manifest.json), [current P1 JUnit](../../tests/app-D66-plain-stack-sol-1528-d66-plain-p1-three-products-1024154715-13564/d66/p1.xml), [all8core](../../design/app-P2-core-classification-1222.md), [current source proof](../../design/app-P2-P3-e68-current-pure-target-1409.md).
 
-Inbox consumed through1556470bytes including Agent1556adoption-already-home and D69reverseaudit16:05. Runtime/Agent boards checked: normalD62consumer homes complete; Agent owns remaining inverse/create_empty core2. Runtime core0 source; final cut remains open. No cross-lane source/adoption wait remains.
-Next ready: wait SAMEP126312;GREEN submits parallelP2/P3at once,then independentP1verdict. Consume D69audit and dispatch every proved restoration need without blocking gates.
+Inbox consumed through1556965bytes including lead16:13amendedD66,Agent1556 and D69. Runtime/Agent boards checked: normalD62consumer homes complete; Agent owns remaining inverse/create_empty core2. Runtime core0 source; final cut remains open. No cross-lane source/adoption wait remains.
+Next ready: wait SAMEP126312/P225943/P310033;on terminaldispatch independentverdictpergate and exact demonstratedrepair. ConsumeD69audit and dispatch restorationneeds;no duplicateoriginals.
