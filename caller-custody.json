@@ -2,8 +2,8 @@
   "status": "PREPARED",
   "run_authorization": "NOT_GRANTED",
   "artifact": {
-    "branch": "tl/app-P2-final-caller-bind-1043",
-    "purpose": "prepare the P2-only caller for the authenticated pure-product join",
+    "branch": "tl/app-P2-Agent-tree-return-sol-1130",
+    "purpose": "repair the actual26414 decoded Agent tree and retained Remotion origin bindings",
     "original_run": false,
     "caller_artifacts_only": ["caller-publication.py", "caller-custody.json"]
   },
@@ -22,7 +22,7 @@
   },
   "existing_suite_rows": {
     "full-e2e-three-products": {
-      "installed_sha256": "1fe55269347c878c986263b93afedccd6a198952d61858794ce84f0304f01fd1"
+      "installed_sha256": "11b2eebf5a610670623c4a7f958dfa799841da088bc9ccb13aa146dab60575da"
     },
     "ap2-P3-gate5-h6-0348": {
       "installed_sha256": "23226c274dbdbb8750f009cb89d7920db40eb49513af906df7b4f76d9a7a3bf0"
@@ -201,9 +201,8 @@
       "explicit unchanged Remotion0258 checkout/tree and authenticated graph reuse"
     ],
     "replacement_scope": [
-      "decoded P2 Agent source SHA",
-      "decoded P2 Agent checkout",
-      "decoded P2 child registration"
+      "decoded P2 Agent tree: 2deab1a1494fbccfce5e9235412bacb8a949c0cd -> 1094bf3662c785e4b21eddf7e3ae980da79b1af1",
+      "encoded bench guard: retained Remotion0258 marker, environment, and receipt Agent origin remains 079580ca46af77e0292d49dc34386b25c8391f99"
     ],
     "retained_legacy": {
       "agent": "079580ca46af77e0292d49dc34386b25c8391f99",
@@ -242,6 +241,8 @@
   "negative_context": {
     "source_target_0644": "source-only target context; not an execution target",
     "wrong_artifact_requests": ["20674", "10144"],
+    "stale_agent_binding_request": "26414",
+    "stale_agent_binding_result": "exit 2 in 2s; Agent-source-or-tree, retained Remotion origin and dependent graph checks refused; all eight originals NOTRUN; installed row remains immutable",
     "wrong_artifact_result": "preflight-only exit 2; originals NOTRUN; immutable and never relabeled"
   },
   "missing_final_inputs": [

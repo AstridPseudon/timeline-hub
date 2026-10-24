@@ -10,6 +10,7 @@ is unavailable and must never fall back to this caller-artifact worktree.
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
@@ -24,6 +25,7 @@ ORCH = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/
 APP = Path(__file__).resolve().parent
 SUITES_FILE = ORCH / "tests/suites.conf"
 SUITES = ("full-e2e-three-products", "ap2-P3-gate5-h6-0348")
+CURRENT_P2_ROW_SHA256 = "11b2eebf5a610670623c4a7f958dfa799841da088bc9ccb13aa146dab60575da"
 
 QUALIFIED_APP = "66354161950d1e747965c095ea97b881d2592708"
 QUALIFIED_TREE = "9a37265f0286128df7e6240a9df9877d959474af"
@@ -838,6 +840,27 @@ def refresh_fingerprints(inner: str, n: int, final: dict[str, object]) -> tuple[
     return updated, refreshed
 
 
+def bind_retained_remotion(inner: str) -> str:
+    """Keep the retained runtime's receipt origin distinct from the new child."""
+    pattern = r'base64.b64decode\(\\"([A-Za-z0-9+/=]+)'
+    matches = list(re.finditer(pattern, inner))
+    if len(matches) != 1:
+        raise RuntimeError("PREPARED: expected one decoded bench custody guard")
+    match = matches[0]
+    guard = base64.b64decode(match[1], validate=True).decode()
+    for before in (
+        'marker(runtime_path, ".astrid-agent-source-commit") != agent_sha',
+        'env.get("ASTRID_AGENT_SOURCE_COMMIT") != agent_sha',
+        'str(runtime_path) + " from agent " + agent_sha',
+        '"requested_agent_sha=" + agent_sha',
+    ):
+        if guard.count(before) != 1:
+            raise RuntimeError("PREPARED: retained Remotion origin binding is ambiguous")
+        guard = guard.replace(before, before.removesuffix("agent_sha") + repr(AGENT), 1)
+    encoded = base64.b64encode(guard.encode()).decode()
+    return inner[:match.start(1)] + encoded + inner[match.end(1):]
+
+
 def mechanical_controls(
     inner: str,
     n: int,
@@ -885,6 +908,8 @@ def prepare(out: Path) -> dict[str, object]:
     agent = d41_agent_input()
     custody = custody_facts()
     raw, rows = selected_rows()
+    if digest(rows[SUITES[0]][1]) != CURRENT_P2_ROW_SHA256:
+        raise RuntimeError("PREPARED: installed P2 row differs from the immutable 26414 caller")
     if SUITES_FILE.read_bytes() != raw:
         raise RuntimeError("PREPARED: suites file changed during custody preparation")
     app_input = source_custody(final) if final is not None else {
@@ -896,9 +921,7 @@ def prepare(out: Path) -> dict[str, object]:
     }
     outside = b"".join(line for i, line in enumerate(raw.splitlines(keepends=True), 1) if i not in {rows[name][0] for name in SUITES})
     binding_replacements = {
-        AGENT: str(agent["source"]),
-        str(AGENT_CHECKOUT): str(agent["checkout"]),
-        CHILD: str(agent["child"]),
+        str(custody["agent_tree"]): str(agent["tree"]),
     }
     replacements = dict(binding_replacements)
     drafts = {}
@@ -912,20 +935,15 @@ def prepare(out: Path) -> dict[str, object]:
             stage_records[name] = {"preserved": True, "live_row_sha256": digest(line)}
             continue
         text = line.decode()
-        current_app = f"P{n}APP={QUALIFIED_APP}"
-        current_tree = f"P{n}TREE={QUALIFIED_TREE}"
+        current_app = f"P{n}APP={app_input['source']}"
+        current_tree = f"P{n}TREE={app_input['tree']}"
         current_parent = f"P{n}PARENT="
         assert text.count(current_app) == 1 and text.count(current_tree) == 1
         if n == 2:
             assert text.count(current_parent) == 1
-        assert QUALIFIED_PARENT in text
+        assert str(app_input["parent"]) in text
         outer, inner, tail = extract_inner(line)
         row_replacements = dict(binding_replacements)
-        row_replacements.update({
-            QUALIFIED_APP: str(app_input["source"]),
-            QUALIFIED_TREE: str(app_input["tree"]),
-            QUALIFIED_PARENT: str(app_input["parent"]),
-        })
         updated = inner
         for before, after in row_replacements.items():
             count = updated.count(before)
@@ -934,6 +952,7 @@ def prepare(out: Path) -> dict[str, object]:
             updated = updated.replace(before, after)
             if before != after and updated.count(before):
                 raise RuntimeError(f"mounted source token was not fully rebound: {before}")
+        updated = bind_retained_remotion(updated)
         if (
             f"P{n}APP={app_input['source']}" not in updated
             or f"P{n}TREE={app_input['tree']}" not in updated
@@ -943,6 +962,8 @@ def prepare(out: Path) -> dict[str, object]:
         ):
             raise RuntimeError("decoded P2 caller retained stale Agent source identity")
         assert f"P{n}A={agent['source']}" in updated and f"P{n}R={RUNTIME}" in updated
+        assert str(agent["checkout"]) in updated and str(AGENT_CHECKOUT) not in updated
+        assert updated.count(str(agent["tree"])) == 1
         assert f"P{n}APP={app_input['source']}" in updated
         assert f"P{n}TREE={app_input['tree']}" in updated
         assert f"P{n}PARENT='{app_input['parent']}'" in updated
@@ -951,8 +972,8 @@ def prepare(out: Path) -> dict[str, object]:
         native_end = inner.index("finally { await harness.stop(); }")
         before_native = inner[native_start:native_end]
         # The selected rows are the already-installed, qualified 0609 callers.
-        # Keep their six-stage shell byte-for-byte intact; this pass only refreshes
-        # the App identity and the source guards for the reviewed successor.
+        # Keep their stage shell intact while rebinding the Agent tree and the
+        # retained Remotion receipt origin; App source guards remain exact.
         assert updated.count("PLAYWRIGHT_OUTPUT_DIR=") >= 2
         assert "original-body-NOTRUN" in updated
         updated_native_start = updated.index("import { expect }")
