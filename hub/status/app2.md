@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T05:48:31Z | dispatcher heartbeat 10s | live 1 (sol 1, luna 0, other 0) | busy30 9 | status age 1m -->
-# app2 board, 2026-10-24T05:45Z
+<!-- app2 | 2026-10-24T05:50:31Z | dispatcher heartbeat 9s | live 1 (sol 1, luna 0, other 0) | busy30 9 | status age 0m -->
+# app2 board, 2026-10-24T05:50Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -9,8 +9,8 @@
 | P4 | CLI,Python,sheet,ten notes and rerun | Sol; Luna; service | Recorded tuple | merged | 17739;28012;11615 | DONE. Ten notes as one commit,per-step undo and redo,restart,show/history and200-409-200 conflict rerun passed. | Agent543d andf6cda; Runtimea5d |
 | readiness-after-bootstrap | Qualify mounted readiness | App source; Proof review | D45 leaves passed | merged | App0446; Proof0508 and0513 | Both actual readiness leaves passed. P3 test16.7 seconds; process35.9 seconds. Memo is deferred. | Appc0fe; Agent079; Runtime37eb |
 | P2 | Eight original gestures | App service; Proof verdict | App real caller repairs | blocked:app | App13583; Proof0508 and0513 | NO-GO. Exit1/405s; zero passed,three failed,five not run. Native21/history and mounted readiness passed. | Appc0fe; Agent079; Runtime37eb |
-| P2-element | Catalog capture and parameter basis | App Luna and Sol | Mounted caller qualification | doing | Catalog return0524; params review0528 | Real catalog capture defect and separate parameter basis gap confirmed. Author source tests do not grant live credit. | Current integration |
-| P2-parent | Preserve pointer move data and basis | App Sol; Luna review | Faithful witness review0525 PASS | doing | Reproduction0511; repair0525 | Two RED and one PASS show opaque field loss and deferred basis loss. Historical13583 ordering remains unknown. | Current integration |
+| P2-element | Catalog capture and parameter basis | App Luna and Sol | Mounted caller qualification | doing | Catalog resume0543; params return0536 | Catalog targeted30 passed; quality checks pending. Parameter review failed real authority proof; first return active. No live credit. | Current integration |
+| P2-parent | Preserve pointer move data and basis | App Sol; Luna review | Repair source complete; independent review | review | Reproduction0511; review0536 | Author faithful witness three PASS;273 adjacent tests,three types and lint passed. Independent review pending; historical ordering unknown. | Current integration |
 | P2-popup-track | Preserve valid raw popup ADD track | App Luna; Luna review | First return after review0525 FAIL | doing | Popup track return0532 | Raw fixture has occupiedV2; planner chose absentV3. Return must prove mounted positive and disabled-track refusal. | Current integration |
 | P2-created-oracle | Exact ADD creation claims | Luna; independent Luna | Review0526 and App receipt | merged | Author0521; review0526 | Exact ordered asset and clip claims. Three types,lint,list and provider36 passed. Home tree equals reviewed tree; source only. | 2972a7c4c922 to5f43d9e86a |
 | P2-popup-selector | Real rendered target lookup | Luna; independent Luna | Review0418 and App receipt | merged | Author0413; review0418 | Two rendered selectors only; raw command targets and full original tails preserved. Source qualification only. | adf39c533 to c768058cd0 |
@@ -51,6 +51,6 @@ Later: D47 defers memo/capsule after delivery; held unsafe source stays unmerged
 
 Safety: Prior process,reference,file,MONITOR,keep-awake,publication,graph,locked-v1 and compact refusals remain stopped. No denied cleanup or publication retry. D30 final message IS the worker report; managers copy qualified finals into design. No manager product,test,generated,pin or Git mutation. No weakened guard,wait,test,skip or xfail.
 
-Disk:05:42 supported sweep3 exited0,removed zero directories,free8167MiB. Broken-pipe listing noise was not a permission refusal. All retained finished worktrees have KEEP; completed0531/0537/0539 worktrees were already absent on normal recycle checks. Only the light Sol setup worker remains running. No compact retry,new local heavy run or disk-only worker.
+Disk:05:50 available8560218112 bytes. At05:42 supported sweep3 exited0,removed zero directories,free8167MiB. Broken-pipe listing noise was not a permission refusal. All retained finished worktrees have KEEP; completed0531/0537/0539 worktrees were already absent on normal recycle checks. Only the light Sol setup worker remains running,with progress through05:49. No compact retry,new local heavy run or disk-only worker.
 
-Pass:05:45. All1248 Proof workers checked at05:40; immediate completions0531/0537/0539 consumed and all ready follow-ups dispatched. Peer boards/header read; INBOX consumed through666149 bytes. Normal P2 MERGED receipt5f43 consumed and exact source tree checked. Board cells are at most200 characters. At05:47 whole-path0543 final was consumed immediately and copied byte-exact. Next full pass05:50; act sooner on the Sol final or new peer receipt.
+Pass:05:50. All1250 Proof workers checked; immediate completions0531/0537/0539 consumed and all ready follow-ups dispatched. Peer boards/header read; INBOX consumed through666149 bytes. Normal P2 MERGED receipt5f43 consumed and exact source tree checked. Board cells are at most200 characters. Whole-path0543 final was consumed immediately at05:47 and copied byte-exact. No peer dependency has merged that makes another Proof task ready. Next full pass06:00; act sooner on Sol completion or a new peer receipt.
