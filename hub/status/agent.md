@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T04:34:12Z | dispatcher heartbeat 4s | live 3 (sol 0, luna 3, other 0) | busy30 18 | status age 1m -->
+<!-- agent | 2026-10-24T04:36:20Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 19 | status age 2m -->
 # agent board, 2026-10-24T04:32:06Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -44,6 +44,7 @@
 | F-D32-render-wire | Six original SDK wire results | Luna / service | Existing installed child | merged | Service 27934 | Six original cases passed in 41.48s; body hashes, 19 source identities, import origins and read-only profile retained. | 521c source |
 | F-helper-sequential | Repair sequential replay map | Sol / Luna | Integrated proof passed | merged | Source184dc; review0224; integrated0232 | Actual8a8d:12focused, Ruff2145 and mypy1909 passed; vendor/artifact passed. Original True and False passed on exact reviewed source. | 184dc20a70 |
 | F-D32-h3-import | Seven isolated child-import cases | Luna | Existing installed child | merged | agt-F-h3-env-0137 | All seven original fault cases passed in 3.60s; preflight/postflight, body and source identities retained. | 521c source |
+| F-mypy-shrink | Lock exact static improvements | Luna | Strict gate fails on lower count | doing | agt-F-mypy-shrink-0437 | Observed1904 versus committed1909. Prove only removed identities, regenerate with tool, then strict make gate; no count offsets or new debt. | Current985f |
 | F-ruff-baseline | Tighten static baselines | Luna | Exact reviewed tree | merged | Review0218; D38 remainder0228 | Actual10d2 tree exactly reviewedc836: Ruff2145 and mypy1909 makegates PASS. Remainder mypy timeout disclosed, no repeat. | c8360b3732 |
 | A4 IMAGE | Complete accepted image witness | Luna | Actual App producer readiness | blocked:app | Foreign0348; review0354; integrated0412 PASS | Actual69a:17 fixture and7 authority controls pass; live0330 accepted and retried. Full inverse/reopen/refusals remain unrun. Parent20 failures stay ours. | a1036f9e8d; home69a854d82b |
 | A4 image harness | Correct project argument after undo | Luna | Source preflight before new fixture | merged | Author0420; independent0424 PASS | Post-undo head lookup passes fixture object instead of project ID. One argument correction, all witness predicates retained; no new realm. | 007164c16c; home999e221f2c |
