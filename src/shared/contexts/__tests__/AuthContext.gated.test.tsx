@@ -64,6 +64,10 @@ describe('AuthProvider on the hosted build', () => {
   beforeEach(() => {
     window.history.replaceState({}, '', '/');
     window.localStorage.clear();
+    // The hosted gate probes only supported desktop Chromium browsers.
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+    );
     probeBridgeSessionMock.mockReset();
   });
   afterEach(() => {
@@ -114,7 +118,8 @@ describe('AuthProvider on the hosted build', () => {
       await permissionRead;
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('isLoading')).toHaveTextContent('true');
+    // The first answer ends booting; subsequent background polls keep the panel visible.
+    expect(screen.getByTestId('isLoading')).toHaveTextContent('false');
     await act(async () => {
       await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
     });
