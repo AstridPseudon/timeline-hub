@@ -9,6 +9,7 @@ import pytest
 import runtime_protocol
 from runtime_protocol.timeline_commit_auth import location, validate_sequential_capture
 
+from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline.commit import _digest, bundle_from_document, create_runtime_commit_service
 from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_swap_media
 from tests.editing_conformance.test_doc_patch_v2 import submit
@@ -43,9 +44,6 @@ def source_control():
     return realm, baseline, created
 
 
-# The reserved native media seam must restore acceptance without relaxing Runtime paths.
-@pytest.mark.xfail(strict=True, raises=CommitRejected,
-                   reason='F-authoring-ABA requires native media collection captures that Runtime can authenticate')
 @pytest.mark.parametrize('dry_run', [False, True])
 def test_same_alias_inverse_observations_validate(source_control, monkeypatch, tmp_path, dry_run):
     realm, baseline, created = source_control
@@ -84,10 +82,30 @@ def test_source_control_has_one_item_and_a_changed_native_observation(source_con
     record, = realm.entries[-1]['records']['commands']
     write, = [write for write in record['writes']
               if write['ref'] == OWNER + '/shot' and write['path'][:2] == ['payload', 'items']]
+    assert write['path'] == ['payload', 'items', '0', 'media_id']
     assert write['before'] != write['after']
     shot, = realm.entries[-1]['receipt']['result']['canonical_document']['shot_revisions']
     assert len(shot['payload']['items']) == 1
     assert shot['payload']['items'][0]['item_id'] == 'item-1'
+
+
+def test_collection_candidate_requires_source_to_authoring_item_projection():
+    baseline, _, _, _ = inputs()
+    bundle = bundle_from_document(baseline)
+    state = State(bundle)
+    shot = state.occurrence(OWNER)['shot_id']
+    source = bundle['source_mapping']['shots'][shot]
+    observed = state.get(OWNER + '/shot', ['payload', 'items'])['value']
+    authored = bundle['shots'][shot]['payload']['items']
+    # A published item and its placement-local item have distinct identities.
+    assert observed[0]['item_id'] == 'item-1'
+    assert source['item_id_map'][observed[0]['item_id']] == authored[0]['item_id']
+    assert authored[0]['item_id'] != observed[0]['item_id']
+    # State.set writes collection values literally; a collection repair must
+    # project this exact map before storage and preserve it during inversion.
+    state.set(OWNER + '/shot', ['payload', 'items'], {'state': 'present', 'value': observed})
+    assert bundle['shots'][shot]['payload']['items'] == observed
+    assert bundle['shots'][shot]['payload']['items'] != authored
 
 
 @pytest.mark.parametrize('rows, token', [
@@ -95,6 +113,7 @@ def test_source_control_has_one_item_and_a_changed_native_observation(source_con
     ([{'item_id': 'a'}], 'item_id:missing'),
     ([{'item_id': 'a'}, {'item_id': 'a'}], 'item_id:a'),
 ])
-def test_runtime_strict_item_path_rejects_numeric_missing_and_duplicate(rows, token):
+def test_runtime_strict_item_path_rejects_numeric_missing_and_duplicate(rows, token, monkeypatch):
+    monkeypatch.setitem(sys.modules, 'runtime_protocol', runtime_protocol)
     with pytest.raises(CommitRejected, match='provider observation has an ambiguous item path'):
         location({'items': rows}, ['items', token, 'media_id'])
