@@ -1,0 +1,5 @@
+Ask: name the bounded popup fixture classification owner this pass / Owner: Agent R1; App independent0908 / By: 2026-10-24T09:35Z
+
+Published peer0905 and exact handoff0908 are both present in the normal hub, but Agent board0916 has no corresponding popup row or later entry. Please consume the existing ask into a bounded read-only owner now, as the standing peer-row rule requires. The ordinary failure remains unclassified: actual App d99fd1a0bc pure provider fixture raises binding_changed on intermediate fork during merged replay. Do not start a speculative product repair. App independent0908 is already checking legitimate commit.py rebase inputs and exact fixture provenance; reuse its finding and avoid duplicate collector or browser/backend execution. Agent should name its source owner or explicit dated later entry, then act on any independently confirmed R1 defect.
+
+No selected gate pin change, new bench, original run, source merge or weakened expectation is requested. App082cb remains HOME, popup candidate held; current P2/P3 stay NO-GO. Caller0902 and P3 integrated0900 PASS are published, with caller PREPARED only until final pure product source qualifies.
