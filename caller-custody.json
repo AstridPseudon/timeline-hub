@@ -2,8 +2,8 @@
   "status": "PREPARED",
   "run_authorization": "NOT_GRANTED",
   "artifact": {
-    "branch": "tl/app-P2-P3-caller-prep-0841",
-    "purpose": "mechanical source/body refresh of the existing qualified caller",
+    "branch": "tl/app-P2-P3-D41-caller-prep-0939",
+    "purpose": "prepare the existing qualified caller for one genuine D41 Agent079 backport",
     "original_run": false,
     "caller_artifacts_only": ["caller-publication.py", "caller-custody.json"]
   },
@@ -34,14 +34,14 @@
   },
   "wire_fields": {
     "request": [
-      "api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id",
+      "api_version", "scope", "project_id", "timeline_id", "base_revision_id", "base_publication_id",
       "commands", "schema_version", "op", "version", "select", "args", "created", "label", "steps",
       "id", "intent", "tags", "command_ordinals", "patch", "reads", "merge", "fields", "atomic",
       "Idempotency-Key", "dry_run", "source", "rationale", "group_id"
     ],
     "reply": [
       "data", "receipt", "status", "canonical_document", "document_digest", "id_map", "authoritative_commands",
-      "commands", "base", "base_revision_id", "base_publication_id", "previous", "previous_revision_id",
+      "commands", "steps", "dependencies", "merge_mode", "base", "base_revision_id", "base_publication_id", "previous", "previous_revision_id",
       "previous_publication_id", "accepted_ids", "accepted_revision_id", "publisher", "provider_version",
       "compiler_version", "steps", "merge_mode", "rebased_onto", "accepted", "merged", "conflict", "invalid",
       "rebased", "source", "rationale", "group_id", "evaluated_head", "would_status", "receipt_id",
@@ -105,6 +105,51 @@
     },
     "no_obsolete_hash_reuse": true
   },
+  "d41_agent_rebinding": {
+    "manifest_env": "TIMELINE_D41_AGENT_MANIFEST",
+    "status": "PENDING",
+    "tuple": {
+      "source": "PENDING",
+      "tree": "PENDING",
+      "parent": "PENDING",
+      "checkout": "PENDING",
+      "runtime": "37eb6c7bdb79dcae2523883e66b5cea5be721ffd",
+      "runtime_tree": "be4114705127f9ee9e86b26cd6de3f467e771c01",
+      "runtime_checkout": "/home/user/work/wt/rt-pin-37eb6c7b",
+      "child": "PENDING",
+      "child_key": "PENDING",
+      "child_root": "PENDING",
+      "remotion": "agent-remotion-app-ready-079-37eb-0258",
+      "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db",
+      "remotion_root": "/home/user/work/bench-store/entries/runtime-5ca5c561b7be7069051ac8769432cc1edf29060bed39384cd3c4ecab1736e690"
+    },
+    "required": [
+      "full Agent source/tree/parent SHA and separate clean dispatched checkout",
+      "dispatcher worker/base/branch metadata and hashed source receipt",
+      "independent review PASS",
+      "Runtime37eb checkout/tree and exact four canonical client hashes",
+      "exact Runtime37eb backend hash set and digest",
+      "new keyed child checkout plus maker/provision/import receipts and matching installed client/backend bytes",
+      "explicit unchanged Remotion0258 checkout/tree and authenticated graph reuse"
+    ],
+    "replacement_scope": [
+      "decoded P2/P3 Agent source SHA",
+      "decoded P2/P3 Agent checkout",
+      "decoded P2/P3 child registration"
+    ],
+    "retained_legacy": {
+      "agent": "079580ca46af77e0292d49dc34386b25c8391f99",
+      "child": "venv-agent-child-app-ready-079-37eb-0256",
+      "meaning": "historical qualified path only; never relabeled as the D41 source or child"
+    },
+    "fail_closed": [
+      "unknown or missing manifest",
+      "wrong source/tree/parent/checkout",
+      "wrong Runtime/client/backend bytes",
+      "forged, missing, changed, or mismatched maker/provision/import receipt",
+      "old child relabel or dirty/caller-artifact target"
+    ]
+  },
   "retained_custody": {
     "agent": "079580ca46af77e0292d49dc34386b25c8391f99",
     "agent_tree": "2deab1a1494fbccfce5e9235412bacb8a949c0cd",
@@ -135,6 +180,8 @@
     "actual final reviewed joined source SHA/tree/parent",
     "source fingerprints and spec/body hashes rederived from that tree",
     "independent review PASS for the joined source",
+    "actual D41 Agent source/tree/parent/client/backend SHA tuple and dispatched checkout",
+    "genuine D41 maker/provision/import receipts and a new keyed child",
     "separate read-only pure final-integrated proof-worker target",
     "existing dispatcher worker metadata, branch/base identity, and hashed immutable source receipt",
     "normal-service single-parent same-tree snapshot authorization",
