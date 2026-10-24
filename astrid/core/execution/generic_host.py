@@ -202,8 +202,13 @@ class _RuntimeSourceCustody:
     """Retain the private launcher's bytes, never a caller's source claims."""
 
     def __init__(self, sources: Any):
+        from runtime_protocol import verified_host_launch
+
         issuer = sys.modules.get(type(sources).__module__)
-        if issuer is None or type(sources) is not getattr(issuer, "_RuntimeExternalSources", None):
+        issuer_file = getattr(issuer, "__file__", None)
+        if (issuer is None or type(sources) is not getattr(issuer, "_RuntimeExternalSources", None)
+                or not isinstance(issuer_file, str)
+                or Path(issuer_file).resolve() != Path(verified_host_launch.__file__).resolve()):
             raise HostError("external sources require the private Runtime launcher handle")
         self._sources = sources
         self._payload = sources.inventory()
@@ -243,6 +248,13 @@ class _RuntimeSourceCustody:
         if ({key: preparation.get(key) for key in value["scope"]} != value["scope"]
                 or raw_digest(preparation.get("profile")) != value["selected_profile_digest"]):
             raise HostError("external source custody differs from retained preparation")
+        extras = preparation["profile"].get("host_launch", {}).get("additional_pack_roots", [])
+        if extras != [{"path": source["root"], "files": source["files"]} for source in value["sources"]]:
+            raise HostError("external selected roots differ from retained preparation")
+        self._owner_support_root = Path(preparation["profile"]["support_root"])
+        self._workspace_uuid = preparation["profile"]["workspace_uuid"]
+        self._launch_roots = [preparation["profile"].get("host_launch", {}).get("pack_root"),
+                              *(source["root"] for source in value["sources"])]
         self._bound = True
         self.verify()
 
@@ -251,35 +263,49 @@ class _RuntimeSourceCustody:
             raise HostError("external source custody has no retained preparation")
         if self._sources.inventory() != self._payload:
             raise HostError("external source custody changed")
+        from runtime_protocol.external_pack_sources import _capture, _read_state, _state_path
+        from runtime_protocol.verified_host_launch import canonical
+
+        state = _read_state(_state_path(self._owner_support_root)) if self._bound else None
+        if state is not None and (not isinstance(state, dict)
+                or set(state) != {"workspace_uuid", "grants"}
+                or state["workspace_uuid"] != self._workspace_uuid):
+            raise HostError("external source owner scope changed")
         for source in json.loads(self._payload)["sources"]:
-            root = Path(source["root"])
-            expected = source["materialization"]
-            if set(expected) != {str(root), *(str(path) for path in root.rglob("*"))}:
-                raise HostError("external source materialization changed")
-            if set(source["ancestors"]) != {str(path) for path in root.parents}:
-                raise HostError("external source ancestor inventory changed")
-            for ancestor, identities in ((False, expected), (True, source["ancestors"])):
-                for raw_path, identity in identities.items():
-                    path = Path(raw_path)
-                    info = path.lstat()
-                    current = [info.st_dev, info.st_ino]
-                    if not ancestor:
-                        current += [info.st_mode, info.st_size, info.st_mtime_ns, info.st_ctime_ns]
-                    if path.is_symlink() or current != identity:
-                        raise HostError("external source or ancestor identity changed")
+            grant = {key: value for key, value in source.items()
+                     if key not in {"contents", "materialization", "ancestors"}}
+            if state is not None and grant not in state["grants"]:
+                raise HostError("external source owner grant was revoked")
+            if canonical(_capture(grant)) != canonical(source):
+                raise HostError("external repository custody changed")
 
     def source_for(self, path: Path) -> Mapping[str, Any] | None:
         return next((source for source in json.loads(self._payload)["sources"]
                      if path == Path(source["root"]) or path.is_relative_to(source["root"])), None)
 
+    def descriptor(self, record: Any):
+        selected = self.select(record)
+        if selected is None:
+            return None
+        channel = tempfile.TemporaryFile()
+        channel.write(selected)
+        channel.seek(0)
+        return channel
+
     def select(self, record: Any) -> bytes | None:
+        self.verify()
         source = self.source_for(record.source_root)
         if source is None:
-            return None
-        self.verify()
+            builtin = self._launch_roots[0]
+            if builtin and record.source_root.is_relative_to(builtin):
+                return None
+            raise HostError("external source has no Runtime owner grant")
+        if _capability_digest(record.definition.to_dict()) != record.capability_digest:
+            raise HostError("external definition changed after discovery")
         value = json.loads(self._payload)
         matches = [definition for definition in source["definitions"]
-                   if definition["capability_id"] == record.id
+                   if definition["capability_kind"] == "executor"
+                   and definition["capability_id"] == record.id
                    and definition["definition_digest"] == record.capability_digest
                    and record.manifest_path == Path(source["root"]) / definition["path"]]
         if len(matches) != 1:
@@ -2183,7 +2209,8 @@ site.execsitecustomize = lambda: None
 site.execusercustomize = lambda: None
 site.main()
 sys.path[:0] = list(dict.fromkeys(config['imports']))
-sys.path.insert(0, os.getcwd())
+if not config["captured"]:
+    sys.path.insert(0, os.getcwd())
 import runpy
 sys.argv = [config['module'], *sys.argv[2:]]
 runpy.run_module(config['module'], run_name='__main__', alter_sys=True)
@@ -2207,9 +2234,28 @@ def _network_startup_argv(argv: list[str], attempt: Path, env: Mapping[str, str]
         "imports": [path for path in env.get("PYTHONPATH", "").split(os.pathsep) if path],
         "module": arguments[1],
         "broker_required": broker_required,
+        "captured": "--external-source-fd" in arguments,
     }
     return [argv[0], *flags, "-I", "-S", "-c", _STRICT_NETWORK_STARTUP,
             json.dumps(config, sort_keys=True), *arguments[2:]]
+
+
+def _captured_worker_argv(argv: list[str]) -> list[str]:
+    """Use the existing worker without startup imports from a mutable pack cwd."""
+    if "-I" in argv:
+        return argv
+    roots = []
+    if os.environ.get("ASTRID_HOST_EXECUTION_PROFILE") != "installed":
+        for name in ("astrid", "runtime_protocol", "astrid_runtime_client"):
+            module = sys.modules.get(name)
+            if module is not None and module.__file__:
+                roots.append(str(Path(module.__file__).resolve().parent.parent))
+        roots.extend(_dependency_pythonpath())
+    startup = ("import sys,runpy;sys.path[:0]=" + repr(list(dict.fromkeys(roots)))
+               + ";sys.argv=['astrid.core.execution.generic_host_worker',*sys.argv[1:]];"
+               + "runpy.run_module('astrid.core.execution.generic_host_worker',run_name='__main__')")
+    module_index = argv.index("astrid.core.execution.generic_host_worker")
+    return [argv[0], *argv[1:module_index - 1], "-I", "-c", startup, *argv[module_index + 1:]]
 
 
 def _network_sandbox_argv(argv: list[str], attempt: Path, endpoint: str | None) -> list[str]:
@@ -5353,6 +5399,10 @@ class GenericPackHost:
         for raw_root in os.environ.get(ASTRID_PACKS_PATH, "").split(os.pathsep):
             if raw_root:
                 configured_roots.append(Path(raw_root).expanduser().resolve())
+        if _runtime_external_sources is not None:
+            _runtime_external_sources.verify()
+            if any(str(root) not in _runtime_external_sources._launch_roots for root in configured_roots):
+                raise HostError("discovery root is outside retained Runtime source custody")
         self.pack_roots = tuple(dict.fromkeys(configured_roots))
         self.client = client
         self.executor_id = executor_id
@@ -6026,6 +6076,8 @@ class GenericPackHost:
         )
         from astrid.core.execution.executor.schema import ExecutorValidationError
 
+        if _runtime_external_sources is not None:
+            _runtime_external_sources.verify()
         records: dict[str, CapabilityRecord] = {}
         quarantined_dirs, quarantined_ids = _quarantine_scope(self.pack_roots)
         for root in self.pack_roots:
@@ -6106,6 +6158,10 @@ class GenericPackHost:
             key: CapabilityRecord(**{**record.__dict__, "dependency_digest": _dependency_digest(record.definition, records)})
             for key, record in records.items()
         }
+        if _runtime_external_sources is not None:
+            _runtime_external_sources.verify()
+            for record in records.values():
+                _runtime_external_sources.select(record)
         self.capabilities = records
         root = self.pack_roots[0] if self.pack_roots else Path.cwd()
         self.source_epoch = _canonical_digest({
@@ -8295,7 +8351,7 @@ class GenericPackHost:
             values=values,
         )
         broker_endpoint = network_broker.policy.get("proxy") if network_broker is not None else None
-        inherited_fds = ()
+        inherited_fds: tuple[int, ...] = ()
         if child_bridge is not None:
             # Bootstrap in the action interpreter before pack code. Private
             # launch arguments contain a descriptor and command, no authority.
@@ -8312,6 +8368,19 @@ class GenericPackHost:
             inherited_fds = (child_bridge.inherited_fd(),)
             argv = [sys.executable, *flags, "-m", "astrid.core.execution.generic_host_worker",
                     "--child-command", str(inherited_fds[0]), json.dumps(arguments)]
+        source_channel = _runtime_external_sources.descriptor(record) if _runtime_external_sources is not None else None
+        if source_channel is not None:
+            if Path(argv[0]).resolve() != Path(sys.executable).resolve():
+                source_channel.close()
+                raise HostError("captured external commands require the admitted Python interpreter")
+            inherited_fds += (source_channel.fileno(),)
+            if child_bridge is None:
+                argv = [sys.executable, "-m", "astrid.core.execution.generic_host_worker",
+                        "--captured-command", json.dumps(argv[1:])]
+            worker_index = argv.index("astrid.core.execution.generic_host_worker") + 1
+            argv[worker_index:worker_index] = ["--external-source-fd", str(source_channel.fileno())]
+            # External code is loaded from the descriptor, never PYTHONPATH.
+            env["PYTHONPATH"] = os.pathsep.join((package_parent, *_dependency_pythonpath()))
         remotion_lease = None
         if record.id == "rendering.timeline_visualize":
             if not argv or Path(argv[0]).resolve() != Path(sys.executable).resolve():
@@ -8324,6 +8393,8 @@ class GenericPackHost:
                         "--renderer-command", str(remotion_lease.inherited_fd()), json.dumps(argv[1:])]
             if not allow_runtime_connection and (network_broker is not None or _network_policy(record) is not None):
                 argv = _network_startup_argv(argv, attempt, env, broker_required=network_broker is not None)
+            if source_channel is not None:
+                argv = _captured_worker_argv(argv)
             # Rendering can create native descendants that change groups.
             # Retain their incarnation-bound custody while the leader runs;
             # a group-only census after it exits cannot own those processes.
@@ -8345,6 +8416,9 @@ class GenericPackHost:
                 self._latch_cleanup_uncertainty(str(exc))
                 raise CommandCleanupUnresolved(f"render launch custody unresolved: {type(exc).__name__}") from exc
             raise
+        finally:
+            if source_channel is not None:
+                source_channel.close()
         if child_bridge is not None:
             child_bridge.launched()
         if remotion_lease is not None:
@@ -8570,7 +8644,18 @@ class GenericPackHost:
             env[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in self.pack_roots)
         broker_endpoint = str((child_env or {}).get("ASTRID_BROKER_PROXY") or "")
         argv = [sys.executable, "-m", "astrid.core.execution.generic_host_worker", str(request_path)]
-        inherited_fds = ()
+        inherited_fds: tuple[int, ...] = ()
+        source_channel = None
+        if _runtime_external_sources is not None:
+            record = self.capabilities.get(capability_id)
+            if record is None:
+                raise HostError("external execution requires a discovered definition")
+            if definition != record.definition.to_dict():
+                raise HostError("external execution definition differs from discovery")
+            source_channel = _runtime_external_sources.descriptor(record)
+            if source_channel is not None:
+                inherited_fds = (source_channel.fileno(),)
+                argv[3:3] = ["--external-source-fd", str(source_channel.fileno())]
         try:
             if capability_kind == "executor" and capability_id == "rendering.timeline_visualize":
                 remotion_lease = self._renderer_task_lease(env, attempt_path)
@@ -8583,6 +8668,8 @@ class GenericPackHost:
                 argv.extend(("--child-bridge", str(bridge_fd)))
             if require_network_startup:
                 argv = _network_startup_argv(argv, attempt_path, env, broker_required=network_broker_required)
+            if source_channel is not None:
+                argv = _captured_worker_argv(argv)
             render_scope = capability_id == "rendering.render"
             if render_scope:
                 env["ASTRID_RENDER_INHERIT_PROCESS_GROUP"] = "1"
@@ -8601,6 +8688,9 @@ class GenericPackHost:
                 self._latch_cleanup_uncertainty(str(exc))
                 raise CommandCleanupUnresolved(f"render launch custody unresolved: {type(exc).__name__}") from exc
             raise
+        finally:
+            if source_channel is not None:
+                source_channel.close()
         if child_bridge is not None:
             child_bridge.launched()
         if remotion_lease is not None:
@@ -13922,6 +14012,11 @@ def _cli_impl(managed_shutdowns: list[_ManagedStdinShutdown]) -> int:
         except OSError as exc:
             parser.error(f"host-only attempt directory is not writable: {exc}")
         args.attempt_base = str(owned_attempts)
+
+    if _runtime_external_sources is not None:
+        if preparation is None or preparation._request is None or preparation._aborted:
+            raise HostError("external sources require retained Runtime preparation")
+        _runtime_external_sources.bind(preparation._request)
 
     _emit_startup_phase("host_constructor_begin")
     _install_host_vibecomfy_import_root()
