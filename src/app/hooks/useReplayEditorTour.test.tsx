@@ -6,11 +6,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { exitEditorTour, getEditorTourState } from '@/shared/state/editorTourStore';
 import { useReplayEditorTour } from './useReplayEditorTour';
 
-vi.mock('@/tools/video-editor/tour/runner/tourRecord', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/tools/video-editor/tour/runner/tourRecord')>()),
-  recordEditorTour: vi.fn(async () => undefined),
-}));
-
 const device = { mobile: false, tablet: false };
 vi.mock('@/shared/hooks/mobile', () => ({
   useIsMobile: () => device.mobile,
@@ -42,12 +37,12 @@ describe('useReplayEditorTour', () => {
     expect(getEditorTourState()).toMatchObject({ status: 'running', beat: 'welcome' });
   });
 
-  it('leaves the seen flag as it was', () => {
+  it('does not write the legacy seen flag', () => {
     const { result } = setup('/tools/video-editor');
     act(() => result.current.replay!());
-    expect(window.localStorage.getItem('astrid-editor-tour-v1')).toBe('1');
+    expect(window.localStorage.getItem('astrid-editor-tour-v1')).toBeNull();
     exitEditorTour();
-    expect(window.localStorage.getItem('astrid-editor-tour-v1')).toBe('1');
+    expect(window.localStorage.getItem('astrid-editor-tour-v1')).toBeNull();
   });
 
   it('is not offered on a phone or tablet, or while a tour runs', () => {

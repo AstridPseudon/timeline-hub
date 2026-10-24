@@ -21,7 +21,7 @@ Verify the source assets and production output:
 node scripts/onboarding/verify-assets.mjs public
 npm run build:hosted
 node scripts/onboarding/verify-assets.mjs dist
-npx vitest run --config config/testing/vitest.config.ts src/tools/video-editor/tour src/app/onboarding
+npx vitest run --config config/testing/vitest.config.ts src/tools/video-editor/tour src/app src/tools/video-editor/pages
 ```
 
 After publishing the app, verify anonymous downloads against the deployment:

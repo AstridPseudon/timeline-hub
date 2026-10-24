@@ -6,12 +6,6 @@ import { exitEditorTour, getEditorTourState, markEditorTourReady, startEditorTou
 import { EditorTourSlot } from '../timeline/editorTourSlot';
 import { useEditorTourHost } from './useEditorTourHost';
 
-vi.mock('./tourRecord', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./tourRecord')>()),
-  readRuntimeTourStatus: vi.fn(async () => 'unseen'),
-  recordEditorTour: vi.fn(async () => undefined),
-}));
-
 vi.mock('@/shared/hooks/mobile', () => ({
   useIsMobile: () => false,
   useIsTablet: () => false,
@@ -61,7 +55,7 @@ describe('useEditorTourHost', () => {
     const { unmount } = render(<Page />);
     act(() => startEditorTour());
     await waitFor(() => expect(document.querySelector('[data-editor-tour-shield]')).not.toBeNull());
-    // Replay path: the flag is set, so only an explicit start runs it again.
+    // Enter advances the welcome beat after its card is ready.
     // The welcome card has played its entrance, so Enter is its OK.
     act(() => markEditorTourReady('card'));
     const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });

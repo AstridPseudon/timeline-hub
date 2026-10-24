@@ -7,8 +7,8 @@ vi.mock('@/integrations/runtime/client.ts', () => ({ AstridRuntimeClient: class 
 vi.mock('@/integrations/runtime/connection.ts', () => ({ runtimeApiBase: () => 'http://127.0.0.1:17340/api/runtime' }));
 vi.mock('@/integrations/runtime/RuntimeConnectionProvider.tsx', () => ({ useRuntimeConnection: () => ({ connectedBefore: mocks.connectedBefore }) }));
 vi.mock('@/shared/lib/browser/clipboard.ts', () => ({ writeClipboardTextSafe: mocks.clipboard }));
-vi.mock('@/tools/video-editor/tour/runner/useEditorTourTrigger.ts', () => ({ useIsDesktopEditor: () => mocks.desktop }));
-vi.mock('@/tools/video-editor/tour/runner/tourFlag.ts', () => ({ beginEditorTour: mocks.beginTour }));
+vi.mock('@/tools/video-editor/tour/runner/useIsDesktopEditor.ts', () => ({ useIsDesktopEditor: () => mocks.desktop }));
+vi.mock('@/shared/state/editorTourStore', () => ({ startEditorTour: mocks.beginTour }));
 
 import { EmptyWorkspaceGuidance } from './EmptyWorkspaceGuidance.tsx';
 import { installCommand, RUNTIME_CONNECTION_COPY } from './copy.ts';

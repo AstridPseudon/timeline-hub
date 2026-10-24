@@ -4,8 +4,8 @@ import { AstridRuntimeClient } from '@/integrations/runtime/client.ts';
 import { useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { runtimeApiBase } from '@/integrations/runtime/connection.ts';
 import { Button } from '@/shared/components/ui/button.tsx';
-import { useIsDesktopEditor } from '@/tools/video-editor/tour/runner/useEditorTourTrigger.ts';
-import { beginEditorTour } from '@/tools/video-editor/tour/runner/tourFlag.ts';
+import { useIsDesktopEditor } from '@/tools/video-editor/tour/runner/useIsDesktopEditor.ts';
+import { startEditorTour } from '@/shared/state/editorTourStore';
 import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard.ts';
 import { installCommand, RUNTIME_CONNECTION_COPY } from './copy.ts';
 
@@ -82,7 +82,7 @@ export function EmptyWorkspaceGuidance({ onRefresh, confirmedEmpty = false }: { 
   // try the in-memory tour before creating any project.
   if (!connectedBefore && !showTour) return null;
   return <div className="space-y-3 text-sm text-muted-foreground">
-    {showTour && <Button variant="outline" onClick={beginEditorTour}>Take the editor tour</Button>}
+    {showTour && <Button variant="outline" onClick={startEditorTour}>Take the editor tour</Button>}
     {connectedBefore && <>
       <p>Expected to see your work? It may be in another Astrid folder on this computer.</p>
       <details onToggle={event => setShowDetails(event.currentTarget.open)}>

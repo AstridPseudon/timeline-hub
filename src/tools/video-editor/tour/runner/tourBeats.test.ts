@@ -8,18 +8,10 @@ import {
   startEditorTour,
 } from '@/shared/state/editorTourStore';
 import { backEditorTour, finishEditorTour, runEditorTourPrimary, watchEditorTourSend } from './tourBeats';
-import { beginEditorTour } from './tourFlag';
-import { recordEditorTour } from './tourRecord';
-
-vi.mock('./tourRecord', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./tourRecord')>()),
-  recordEditorTour: vi.fn(async () => undefined),
-}));
 
 let stopWatching: (() => void) | undefined;
 
 beforeEach(() => {
-  vi.mocked(recordEditorTour).mockClear();
   exitEditorTour();
   localStorage.clear();
   stopWatching = watchEditorTourSend();
@@ -136,12 +128,9 @@ describe('tour beat machine', () => {
     markEditorTourReady('card');
     runEditorTourPrimary(); // I got it
     expect(getEditorTourState()).toMatchObject({ act: 3, beat: 'feedback', status: 'running' });
-    expect(recordEditorTour).not.toHaveBeenCalledWith(expect.objectContaining({ outcome: 'completed' }));
-
     markEditorTourReady('card');
     runEditorTourPrimary(); // Start creating
     expect(getEditorTourState()).toMatchObject({ status: 'idle' });
-    expect(vi.mocked(recordEditorTour).mock.calls.at(-1)?.[0]).toMatchObject({ outcome: 'completed', step: 'act3/feedback' });
   });
 
   it('the feedback card waits on card readiness', () => {
@@ -202,7 +191,7 @@ describe('tour beat machine', () => {
     expect(getEditorTourState()).toMatchObject({ act: 2, beat: 'compose' });
     const firstRun = getEditorTourState().runId;
 
-    beginEditorTour();
+    startEditorTour();
 
     expect(getEditorTourState()).toMatchObject({
       runId: firstRun + 1,
@@ -212,63 +201,6 @@ describe('tour beat machine', () => {
       sent: false,
       ready: { chat: false, timeline: false, card: false },
     });
-  });
-});
-
-describe('the recorded outcome', () => {
-  const lastRecord = () => vi.mocked(recordEditorTour).mock.calls.at(-1)?.[0];
-
-  it('finishing from the feedback card is completed, with where it ended', () => {
-    setEditorTourBeat(3, 'feedback');
-    markEditorTourReady('card');
-
-    runEditorTourPrimary();
-
-    expect(getEditorTourState().status).toBe('idle');
-    expect(lastRecord()).toMatchObject({ version: 1, outcome: 'completed', step: 'act3/feedback' });
-    expect(Date.parse(lastRecord()!.at)).not.toBeNaN();
-  });
-
-  it('Skip, Esc or leaving the page before the finale is skipped, at the step it ended on', () => {
-    setEditorTourBeat(1, 'respond');
-
-    finishEditorTour();
-
-    expect(lastRecord()).toMatchObject({ outcome: 'skipped', step: 'act1/respond' });
-  });
-
-  it('skipping on the welcome card is skipped at the welcome', () => {
-    startEditorTour();
-
-    finishEditorTour();
-
-    expect(lastRecord()).toMatchObject({ outcome: 'skipped', step: 'act1/welcome' });
-  });
-
-  it('Esc on the finale itself still counts as completed: the user had seen everything', () => {
-    setEditorTourBeat(3, 'finale');
-
-    finishEditorTour();
-
-    expect(lastRecord()).toMatchObject({ outcome: 'completed', step: 'act3/finale' });
-  });
-
-  it('Esc on the feedback card counts as completed', () => {
-    setEditorTourBeat(3, 'feedback');
-
-    finishEditorTour();
-
-    expect(getEditorTourState().status).toBe('idle');
-    expect(lastRecord()).toMatchObject({ outcome: 'completed', step: 'act3/feedback' });
-  });
-
-  it('records nothing when no tour is running', () => {
-    exitEditorTour();
-    vi.mocked(recordEditorTour).mockClear();
-
-    finishEditorTour();
-
-    expect(recordEditorTour).not.toHaveBeenCalled();
   });
 });
 
@@ -299,12 +231,11 @@ describe('tour Back', () => {
     expect(getEditorTourState()).toMatchObject({ act: 1, beat: 'welcome', instant: false });
   });
 
-  it('does nothing once the tour has exited, and records nothing', () => {
+  it('does nothing once the tour has exited', () => {
     at(2, 'land');
     exitEditorTour();
     backEditorTour();
     expect(getEditorTourState()).toMatchObject({ status: 'idle', instant: false });
-    expect(recordEditorTour).not.toHaveBeenCalled();
   });
 
   it('clears instant on any forward move', () => {
