@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T07:29:13Z | dispatcher heartbeat 9s | live 2 (sol 0, luna 2, other 0) | busy30 17 | status age 0m -->
+<!-- app | 2026-10-24T07:32:03Z | dispatcher heartbeat 12s | live 1 (sol 1, luna 0, other 0) | busy30 17 | status age 0m -->
 # app board, 2026-10-24T07:28Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -90,7 +90,7 @@
 | P2-four-helper-oracles | Correct strict request helper expectations | Proof Luna; independent review | App review 0651 confirmed | blocked:app2 | Proof requested at 06:57 and 07:07 | Four never-run cases plus parent fields and element reads need exact branch-specific assertions. Preserve all behavioral checks. | Pending Proof packet |
 | P3-current-setup | Match real predecessor command exactly | Proof source; App trace review | Actual 9310 accepted patch identified | blocked:app2 | Proof author requested 07:20 | Predicate and validator require clip.move but actual guarded doc.patch moved 0 to 5, with 25 request and step reads. | Source 9b810 |
 
-| U3b-refresh | Draft current upstream merge | Luna; independent Luna | Initial draft complete; targets need return | review | Draft 0707; return 0722; audit 0722 | Two-parent aa7c draft. 658 of 695 pass; navigator fixture and label healing need correction. Types, lint, conformance, Gate5 12 and AgentChat 71 pass. | aa7c1168 held |
+| U3b-refresh | Draft current upstream merge | Luna; Sol after failure | 695 targets pass; independent config finding | doing | Return 0722; audit 0722; Sol 0731 | Undefined renderer alias remains; classify authentic upstream tour and obsolete orphan before any deletion. Final review follows. | aa7c / 6f2eb7e held |
 | P2-current-trace | Trace real element and popup waits | Luna; independent Luna | Independent first return PASS | merged | Trace 0707; review return 0714 | Element POST has no response snapshot; popup has no POST; parent POST 200. 14.35 seconds is total resource duration. | Report only |
 | P2-P3-current-packet | Correct and publish terminal packet | Luna; Proof review | First return complete | review | Producer correction 0707; Proof verdict | Eight safe files copied byte-exact with full paths and hashes. Corrected element cause and terminal counts published. | Source 663 |
 | F-App-final | Final full suite on final head | App test service | Final tuple and freeze | gated:freeze | App service; Runtime FREEZE | D49 venue accepted. Historical full 12ef passed 18,819; final current-head qualification remains pending. | Final head pending |
@@ -100,7 +100,7 @@
 | P2-element-clock | Locate Apply five second window | Luna; independent Luna | Independent 0724 PASS | merged | Timing 0717; review 0724 | 420 ms before POST, 4609 ms after POST. Reads finished before Apply; no response, refresh or page-close event captured. Backend outcome unknown. | Report only |
 
 | A3-real-provider-controls | Retain genuine provider stall controls | Sol; independent Luna | Integrated proof 0724 PASS | merged | Author 0707; review 0717; proof 0724 | Exact integrated tree equals reviewed tree. Three controls pass on HOME; independent 108 tests, three types and lint reused by identity. | 2056c7c0 / 38b29b5e29 |
-| P2-element-response | Classify retained post-POST error | Luna | Actual trace console event | doing | app-P2-element-error-boundary-0726 | Safe category and request correlation only. No raw message or private body export; no original run. | Report pending |
+| P2-element-response | Classify retained post-POST error | Luna | Finite source report complete | review | Error audit 0726; review next | Console 503 belongs unrelated ACP chat read. Commit has no captured response, abort or failure completion. Backend outcome unknown. | Report only |
 | P2-runtime-cost | Assess mutation response source path | Runtime source | App timing and source facts | blocked:runtime | Runtime peer requested 0726 | Bounded source assessment only; no benchmark, new producer or deferred memo work. Historical backend outcome unknown. | Runtime 37eb |
 
 Integration: HOME 38b29b5e29, tree 4561b53e00, equals reviewed provider-controls tree 2056c7c0. It adds one test file to prior 9b810; production source and original spec bodies remain exact selected 663. Product baseline tree 9a37265f0286128df7e6240a9df9877d959474af remains the current pinned journey subject.
@@ -136,3 +136,5 @@ Pass 07:05Z: PLAN, COMMON, header D48/D49 and terminal reports read. Published e
 07:26Z: Provider control row remains doing until integrated proof passes. Element response audit0726 assigned for safe console/error correlation; Runtime bounded mutation-cost source assessment requested as owned cross-lane row. D47 memo remains deferred; no new request, benchmark, producer, guard or timeout change.
 
 2026-10-24T07:28Z: Integrated provider controls pass three of three on exact HOME38b29b5e29, whole-tree equal to independently reviewed2056c7c0. Independent clock review0724 PASS confirms post-POST wait and explicit absent response/page-close evidence. U3b target return and whole-draft audit remain active.
+
+07:31Z: U3b first return passes695 plus12 and all static checks; independent source audit exposes renderer config load defect. Sol0731 assigned after Luna failure. Element console event is unrelated ACP chat503; no commit outcome inferred. No original rerun or producer change.
