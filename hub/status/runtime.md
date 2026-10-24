@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T04:35:42Z | dispatcher heartbeat 14s | live 2 (sol 1, luna 1, other 0) | busy30 17 | status age 0m -->
-# runtime board, 2026-10-24T04:23:34Z
+<!-- main | 2026-10-24T04:38:10Z | dispatcher heartbeat 12s | live 1 (sol 1, luna 0, other 0) | busy30 15 | status age 0m -->
+# runtime board, 2026-10-24T04:38:01Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -44,7 +44,7 @@
 | OPS-manifest-restore | Restore accidental generated manifest write | Luna | Exact main file identity | merged | Restore 0110; independent 0113 PASS | Exact tracked hash restored; main cleanliness and byte equality independently verified. | HEAD 458595850 |
 | R0-public-export-manifest | Refresh generated artifact hash | Luna | Integrated verification passed | merged | Author 0111; review 0115; integrated 0128 | Actual head db11 passed 74 cases and generation checks; 77 of 78 entries unchanged. [Proof](../../design/runtime-R0-manifest-integrated-0128.md) | db11ea829 / 8a742b1c2 |
 | R5-full-headless | Preserve headless acceptance and retry | Sol / Luna | Viewing authoritative effect fix | blocked:viewing | Cause 0332; review 0349 PASS; Viewing 0358 | 12 cases passed; one failed. First patch after bootstrap omits a mirror removal in Agent effects. [Cause](../../design/runtime-headless-effect-cause-0332.md) | ddaa6aed held |
-| R5-full-occupancy | Preserve fifteen occupancy scenarios | Luna / Luna | Final fixture lint cleanup | doing | Independent0430 PASS; rt-R5-occupancy-lint-return-0434 | Both authors and reviewer passed16 cases. Four donor lint findings need cleanup against actual integration baseline before merge. | eb7d406d4 |
+| R5-full-occupancy | Preserve fifteen occupancy scenarios | Luna / Luna | Narrow lint review before merge | review | rt-R5-occupancy-lint-review-0438 | Final fixture passed16 in45.10s; Ruff0; Pyright0 errors and2 unchanged warnings. All predicates retained. | f8051e52b over eb7d406d4 |
 | R5-full-speed | Preserve six speed refusals | Luna | Integrated proof passed | merged | Review 0138; port review 0148; service 13500 | Actual head 28bb passed 14 cases. Original six inputs and SQL/CAS checks retained; no new type diagnostics. | 4e983cebc / 0e28e6261 |
 | R5-full-receipt-key | Preserve receipt and key guards | Luna | Integrated proof passed | merged | Reviews 0138 and 0148; integrated 0157 | Actual head 28bb passed both cases with explicit Agent source path. All receipt and replay equalities retained. | 28bb65668 / b57ab2331 |
 | R5-full-conformance | Declare actual retired-route errors | Sol / Luna | Integrated source proof complete | merged | Final review0242; integrated19379 | Actual head f320 passed 162 cases. Three generation checks deferred to freeze. [Proof](../../design/runtime-D39-D40-integrated-0246.md) | a7a2fe6a5 |
