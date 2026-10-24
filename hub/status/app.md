@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T19:02:24Z | dispatcher heartbeat 8s | live 4 (sol 0, luna 4, other 0) | busy30 15 | status age 1m -->
-# app board, 2026-10-24T19:02Z
+<!-- app | 2026-10-24T19:07:56Z | dispatcher heartbeat 4s | live 3 (sol 0, luna 3, other 0) | busy30 14 | status age 0m -->
+# app board, 2026-10-24T19:07Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -45,7 +45,9 @@
 | D79 | One live-edit robustness smoke | Luna; Service | D80 diagnostics first | gated:D80 | Producer1834; setup1838 | Readiness PASS; initial smoke bearer setup failed. Owner18:58 requires same D66 auth route; rerun later when critical slots clear. | App830252 |
 
 | P3-D75-clean | Clean same-blob home packet and ledger | Luna | Home2bd162 | merged | app-P3-D75b-home-receipt-1848 | Actual home, parents, donor equality and computed hash correction PASS. Existing ledger updated; original report retained. | Home2bd162 |
-| P3-current | Corrected both-mount original Gate5 | Luna; Service | Preflight20128 PASS | doing | Actual26908; producer1855 | One original running; App3c29, Agent831d, Runtime1bae, Composition635f. Exact tuple captured once; both mounts retained. | App3c29 |
+| P3-current | Corrected both-mount original Gate5 | Luna; Service | Preflight20128 PASS | review | Actual26908; producer1855 | Exit1/471s; readiness PASS, original FAIL at1773: expected fourth recovery observation, actual3. Downstream tail unproved. | App3c29 |
+| P3-26908-cause | Trace fourth recovery observation | Luna; HARD Sol if needed | Actual26908 retained packet | ready | Next critical slot | Distinguish mounted recovery from observer lifecycle; preserve exact counts/waits. No unchanged rerun or speculative repair. | App3c29 |
+| P3-26908-path | Independent verdict and full path | Luna | Producer1855 final | doing | app-P3-26908-verdict-wholepath-1905 | Same-ID manifest/XML/no weakening and full client-to-server comparison with passingP131083. | Evidence only |
 
 | P1-current | Updated parent-source control | Service; Luna | Independent1846 PASS | merged | Actual31083; verdict1846 | Readiness1/original2 PASS on App830252,Agent263696,Runtime1bae. Exact pins/hashes/XML qualified. | App830252 |
 
@@ -55,7 +57,7 @@
 | P2-D80-clear | Transition single clear alone | Luna; Service | Recipe1846 home3c29 | doing | app-P2-D80-submit-produce-1855 | One unchanged case each, own captured pins and real preflight. Publish IDs while queued; stagger builds below8.5GB. No gate credit. | Current source |
 | P2-D80-bulk | Transition bulk clear alone | Luna; Service | Recipe1846 home3c29 | doing | app-P2-D80-submit-produce-1855 | One unchanged case each, own captured pins and real preflight. Publish IDs while queued; stagger builds below8.5GB. No gate credit. | Current source |
 
-| P2-D78-live | One unchanged element gesture with stacks | Service; Luna | Kit1847 or19:06 fallback | doing | app-P2-D78-live-submit-1856 | Highest priority. Pinned preflight submit; notify Runtime ID/host while pending. No changed waits; preserve output for stack confirmation. | Current source |
+| P2-D78-live | One unchanged element gesture with stacks | Service; Luna | Preflight9965 PASS | doing | Actual13100; producer1856 | Queued App-host supervised fallback; Runtime ID/host peer1907 sent immediately. Helper1859 not yet home. Preserve all output until Runtime disposition. | App3c29 |
 | P2-D80-seed | Two native-seed transport timeouts | Runtime peer | Actual13134 and20974 | blocked:runtime | Peer1901; existing cost owner | Both stop before gesture in native seed. Cause unknown; Runtime consumes exact signals. No speculative App author or unchanged rerun. | Runtime1bae |
 | P2-D78-wire | Wire published pending-request stack helper | Luna | Runtime published source1850 | doing | app-P2-D78-stack-wire-1859 | Actual helper, fixture and D66 normal-stage activation; author tests only. Service7e857 provides durable output routing. No original edits. | Current source |
 | P2-D78-state | Historical exact realm replay input | Runtime; App | Live route supersedes | gated:D78-live | Runtime1832; App peer1855 | No demonstrated surviving original realm. Exact historic replay UNAVAILABLE; no invented state or Origin. Retained packet complete at stated limits. | Evidence only |
@@ -66,16 +68,16 @@ core open: 9 original gesture cases, eight P2 plus one P3. P1 original2 PASS and
 regressions: 0 confirmed open App source findings. D69 all four restorations home and final1704 PASS; original gates remain open.
 
 Blockers: Runtime — New popup authenticated shot-owner422 in22847, exactpeer1802; source owner owed there.
-Blockers: App harness — Runtime1850 supplied actual stack helper/patch; wire1859 qualifies activation. Service7e857 routes durable output only. Live1856 keeps19:06 supervised fallback.
+Blockers: Runtime supervised capture — actual13100 queued on App host via fallback, peer1907 carries ID/venue. Stackwire1859 future-only; no duplicate live request. Service7e857 routes durable output.
 Blockers: Runtime execution — D80asset13134 and placement20974 stop in fixture native seed with transport_timeout; peer1901 requests existing owner classification. Gesture results unproved.
 Blockers: Final cut — Current P2/P3 nine core cases remain unqualified; Runtime coordinates final suites and ZIP.
 Next ready: Submit P3 and five isolated D80 diagnostics through their assigned workers. Live element1856 takes next slot on kit receipt or19:06 fallback. D79 later.
 
-live 4 / cap 4; ready-undispatched 0 workers. D80 producer1855 owns five submissions; P3 producer1855 owns corrected original; D78 live1856 owns highest-priority capture. Source tasks complete.
+live 4 / cap 4; ready-undispatched 1 worker. Independent P3 verdict/full path1905 dispatched as producer1855 ended. P3 cause author awaits next slot; D78 wiring critical. D80 producer1855 owns five submissions; P3 producer1855 owns corrected original; D78 live1856 owns highest-priority capture. Source tasks complete.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
 Disk: About7.6GB free; three existing service runs active. Further D80 builds stagger; deferred guarded-route request remains with App lead. Ended clean non-KEEP recycle check found none eligible. D74 caps and D80 build staggering apply; no run output released before verdict. Prior denied targets stay stopped.
-Inbox consumed through1647250 bytes including D80 and D79 rerun direction. Normal hub Runtime18:45 and Agent18:02 checked; newer Runtime1850 replay-input ask superseded by live route. D75 scope cleared.
+Inbox consumed through1649639 bytes including D80 and D79 rerun direction. Normal hub Runtime18:45 and Agent18:02 checked; newer Runtime1850 replay-input ask superseded by live route. D75 scope cleared.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
 Blockers: App lead kit — Disk8.6GB below9 trigger; exact deferred guarded graph/retention route requested again. Prior denied targets stay stopped; no output release before verdict.
