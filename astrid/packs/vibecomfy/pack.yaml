@@ -495,6 +495,16 @@ actions:
       required: false
       type: string
     - default: ''
+      description: Optional URL for an existing loopback ComfyUI server.
+      name: comfy_url
+      required: false
+      type: string
+    - default: ''
+      description: Optional absolute path to an existing external ComfyUI output directory.
+      name: comfy_output_dir
+      required: false
+      type: string
+    - default: ''
       description: Optional canonical workflow.py member.
       name: python
       required: false
@@ -632,6 +642,10 @@ actions:
         - '{managed_assets}'
         - --workflow-inputs
         - '{workflow_inputs}'
+        - --comfy-url
+        - '{comfy_url}'
+        - --comfy-output-dir
+        - '{comfy_output_dir}'
         env:
           VIBECOMFY_HEADLESS: '1'
     resources:

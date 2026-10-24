@@ -7,6 +7,7 @@ import hashlib
 import importlib
 import json
 import os
+import secrets
 import shutil
 import sys
 import tempfile
@@ -19,6 +20,12 @@ from typing import Any
 from runtime_protocol import platform
 
 _PROFILE_CONFIGS = {
+    "local_server": {
+        "name": "local_server",
+        "session_kind": "external_server",
+        "warm_policy": "never",
+        "cancellation": "delete-owned-prompt-and-interrupt-if-running",
+    },
     "pip_embedded": {
         "name": "pip_embedded",
         "dependency_lock": "vibecomfy-pip-comfyui-0.26.0",
@@ -36,7 +43,6 @@ _PROFILE_CONFIGS = {
 }
 
 _EMBEDDED_COMFY_CLIENT = Path("comfy/client/embedded_comfy_client.py")
-_EMBEDDED_COMFY_FALLBACKS = (Path("/root/b06-t04/comfyui-embedded"),)
 
 
 class ProductionEngineError(RuntimeError):
@@ -108,23 +114,13 @@ def _profile_comfyui_version_requirement(hc03_profile: Any) -> str | None:
 
 def _bootstrap_embedded_comfy_client() -> Path:
     """Select and import the embedded-client ComfyUI tree for pip execution."""
-    candidates: list[str | Path] = []
     configured = os.environ.get("COMFYUI_PATH")
-    if configured:
-        candidates.append(configured)
-    candidates.extend(_EMBEDDED_COMFY_FALLBACKS)
-
-    root: Path | None = None
-    for raw in candidates:
-        candidate = Path(raw).expanduser().resolve()
-        if (candidate / _EMBEDDED_COMFY_CLIENT).is_file():
-            root = candidate
-            break
-    if root is None:
+    root = Path(configured).expanduser().resolve() if configured else None
+    if root is None or not (root / _EMBEDDED_COMFY_CLIENT).is_file():
         raise ProductionEngineError(
             "pip_embedded requires a ComfyUI tree containing "
-            "comfy/client/embedded_comfy_client.py; set COMFYUI_PATH or install "
-            "the embedded checkout at /root/b06-t04/comfyui-embedded"
+            "comfy/client/embedded_comfy_client.py; set COMFYUI_PATH, or use "
+            "local_server mode (comfy_url) with your own ComfyUI"
         )
 
     root_string = str(root)
@@ -572,7 +568,8 @@ def _validate_workflow_input_bindings(
             raise ProductionEngineError("workflow run input names must be non-empty strings")
         if name not in public_inputs:
             raise ProductionEngineError(
-                f"workflow run input {name!r} is not a declared public input"
+                f"workflow run input {name!r} is not a declared public input; "
+                f"valid inputs: {', '.join(sorted(public_inputs)) or '(none)'}"
             )
         input_type = str(getattr(public_inputs[name], "type", "") or "").upper()
         media = str(getattr(public_inputs[name], "media_semantics", "") or "").lower()
@@ -598,23 +595,7 @@ def _validate_workflow_input_bindings(
     return validated
 
 
-def _embedded_session_config(
-    bundle: Any,
-    destination: Path,
-    comfy_root: Path,
-    *,
-    task_identity: str,
-    attempt_identity: str | None = None,
-) -> Any:
-    """Build a pinned SessionConfig for the embedded profile.
-
-    The Comfy-specific values remain in VibeComfy's ``extra`` mapping; the
-    runtime-root and cwd fields are typed SessionConfig fields.  This keeps
-    model/configuration identity explicit and prevents the child from
-    inheriting a task worker's ambient cwd or global model registry.
-    """
-    from vibecomfy.runtime.session import SessionConfig
-
+def _workflow_comfy_configuration(bundle: Any) -> dict[str, Any]:
     metadata = getattr(bundle.workflow, "metadata", {})
     configured = metadata.get("comfy_configuration", {})
     if not isinstance(configured, Mapping):
@@ -649,7 +630,27 @@ def _embedded_session_config(
             "workflow comfy_configuration attempts to override host-owned keys: "
             + ", ".join(overridden)
         )
-    values = dict(configured)
+    return dict(configured)
+
+
+def _embedded_session_config(
+    bundle: Any,
+    destination: Path,
+    comfy_root: Path,
+    *,
+    task_identity: str,
+    attempt_identity: str | None = None,
+) -> Any:
+    """Build a pinned SessionConfig for the embedded profile.
+
+    The Comfy-specific values remain in VibeComfy's ``extra`` mapping; the
+    runtime-root and cwd fields are typed SessionConfig fields.  This keeps
+    model/configuration identity explicit and prevents the child from
+    inheriting a task worker's ambient cwd or global model registry.
+    """
+    from vibecomfy.runtime.session import SessionConfig
+
+    values = _workflow_comfy_configuration(bundle)
     values.update(
         {
             "base_directory": str(comfy_root.resolve()),
@@ -733,7 +734,20 @@ def _run_profile_result(
     destination: Path,
     attempt_identity: str | None = None,
     run_inputs: Mapping[str, Any] | None = None,
+    comfy_url: str = "",
+    comfy_output_dir: str = "",
 ) -> ProductionRunResult:
+    if comfy_url and profile_id != "local_server":
+        raise ProductionEngineError("comfy_url requires the local_server profile")
+    if profile_id == "local_server":
+        if hc03_profile is not None:
+            raise ProductionEngineError("local_server cannot use a readiness profile")
+        from astrid.packs.vibecomfy.local_server_engine import run_local_server
+
+        return run_local_server(
+            resolved, destination, comfy_url=comfy_url, comfy_output_dir=comfy_output_dir,
+            task_identity=task_identity, attempt_identity=attempt_identity, run_inputs=run_inputs,
+        )
     if profile_id == "pip_embedded":
         comfy_root = _bootstrap_embedded_comfy_client()
         from vibecomfy.runtime.run import run_embedded_sync
@@ -858,9 +872,16 @@ def _run_profile(
     destination: Path,
     attempt_identity: str | None = None,
     run_inputs: Mapping[str, Any] | None = None,
+    comfy_url: str = "",
+    comfy_output_dir: str = "",
 ) -> tuple[Path, ...]:
     """Compatibility projection for callers that only need output paths."""
     global _LAST_PRODUCTION_RESULT
+    local_kwargs: dict[str, Any] = {}
+    if comfy_url:
+        local_kwargs["comfy_url"] = comfy_url
+    if comfy_output_dir:
+        local_kwargs["comfy_output_dir"] = comfy_output_dir
     _LAST_PRODUCTION_RESULT = _run_profile_result(
         resolved,
         profile_id,
@@ -871,6 +892,7 @@ def _run_profile(
         destination=destination,
         attempt_identity=attempt_identity,
         run_inputs=run_inputs,
+        **local_kwargs,
     )
     return _LAST_PRODUCTION_RESULT.outputs
 
@@ -887,6 +909,8 @@ def run_workflow_path(
     expected_execution_identity: str | None = None,
     attempt_identity: str | None = None,
     workflow_input_bindings: Mapping[str, Any] | None = None,
+    comfy_url: str = "",
+    comfy_output_dir: str = "",
 ) -> tuple[Path, ...]:
     """Run a file workflow through the reviewed production-engine path.
 
@@ -909,16 +933,28 @@ def run_workflow_path(
         actual_identity = loaded_workflow_execution_identity(loaded, hc03_profile)
         if actual_identity != expected_execution_identity:
             raise ProductionEngineError("workflow execution identity changed before launch")
-    run_inputs = _validate_workflow_input_bindings(
-        loaded.resolved, workflow_input_bindings
-    )
+    resolved = loaded.resolved
+    if profile_id == "local_server":
+        from astrid.packs.vibecomfy.local_server_engine import local_server_bundle
+
+        resolved = local_server_bundle(resolved, destination_path)
+    run_inputs = _validate_workflow_input_bindings(resolved, workflow_input_bindings)
+    if profile_id == "local_server":
+        bundle = _canonical_bundle_value(resolved)
+        run_inputs = dict(run_inputs or {})
+        if "seed" in bundle.workflow.inputs and "seed" not in run_inputs:
+            run_inputs["seed"] = secrets.randbelow(2**32)
     global _LAST_PRODUCTION_RESULT
     _LAST_PRODUCTION_RESULT = None
     profile_kwargs: dict[str, Any] = {}
     if attempt_identity is not None:
         profile_kwargs["attempt_identity"] = attempt_identity
+    if comfy_url:
+        profile_kwargs["comfy_url"] = comfy_url
+    if comfy_output_dir:
+        profile_kwargs["comfy_output_dir"] = comfy_output_dir
     outputs = _run_profile(
-        loaded.resolved,
+        resolved,
         profile_id,
         hc03_profile,
         model_id=loaded.model_id,
@@ -943,6 +979,8 @@ def run_workflow_result_path(
     expected_execution_identity: str | None = None,
     attempt_identity: str | None = None,
     workflow_input_bindings: Mapping[str, Any] | None = None,
+    comfy_url: str = "",
+    comfy_output_dir: str = "",
 ) -> ProductionRunResult:
     """Run a workflow while retaining the producer result envelope.
 
@@ -965,6 +1003,10 @@ def run_workflow_result_path(
         kwargs["attempt_identity"] = attempt_identity
     if workflow_input_bindings is not None:
         kwargs["workflow_input_bindings"] = workflow_input_bindings
+    if comfy_url:
+        kwargs["comfy_url"] = comfy_url
+    if comfy_output_dir:
+        kwargs["comfy_output_dir"] = comfy_output_dir
     outputs = run_workflow_path(
         workflow_path,
         destination,

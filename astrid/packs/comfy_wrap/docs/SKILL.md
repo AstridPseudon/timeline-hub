@@ -29,6 +29,8 @@ node, dependency, and recovery details.
 
 ## When NOT to use
 
+- Do not use for the user's own running ComfyUI or their saved workflows —
+  follow [Run on your own ComfyUI](../../vibecomfy/docs/SKILL.md#run-on-your-own-comfyui).
 - Do not use for arbitrary model selection or multi-modal generation — use
   `generation.generate_image` for the standard happy path.
 - Do not use for LoRAs, IP-adapter, ControlNet, or custom samplers — use

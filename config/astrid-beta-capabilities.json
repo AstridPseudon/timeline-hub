@@ -346,7 +346,7 @@
   {
    "id": "generation.generate_audio",
    "disposition": "required",
-   "evidence_reason": "Required generation facade; provider readiness is credential-gated.",
+   "evidence_reason": "Required generation facade; provider credentials are checked at call time.",
    "adapter_family": "provider",
    "resource_keys": [
     "provider"
@@ -361,7 +361,7 @@
   {
    "id": "generation.generate_image",
    "disposition": "required",
-   "evidence_reason": "Required image-generation facade; provider readiness is credential-gated.",
+   "evidence_reason": "Required image-generation facade; provider credentials are checked at call time.",
    "adapter_family": "provider",
    "resource_keys": [
     "provider"
@@ -385,7 +385,7 @@
   {
    "id": "generation.generate_image_cloud_i2i",
    "disposition": "required",
-   "evidence_reason": "Narrow z-image cloud i2i capability with an enforced whole-task storage envelope; provider readiness is credential-gated.",
+   "evidence_reason": "Narrow z-image cloud i2i capability with an enforced whole-task storage envelope; provider credentials are checked at call time.",
    "adapter_family": "provider",
    "resource_keys": [
     "provider"
@@ -399,7 +399,7 @@
   {
    "id": "generation.generate_image_edit",
    "disposition": "required",
-   "evidence_reason": "Unified bounded cloud image-edit capability with source-only Qwen, source-only Klein, and source-plus-mask Qwen inpaint profiles under one typed CAS/storage envelope; provider readiness is credential-gated.",
+   "evidence_reason": "Unified bounded cloud image-edit capability with source-only Qwen, source-only Klein, and source-plus-mask Qwen inpaint profiles under one typed CAS/storage envelope; provider credentials are checked at call time.",
    "adapter_family": "provider",
    "resource_keys": [
     "provider"
@@ -457,7 +457,7 @@
   {
    "id": "generation.generate_video",
    "disposition": "required",
-   "evidence_reason": "Required video-generation facade; provider readiness is credential-gated.",
+   "evidence_reason": "Required video-generation facade; provider credentials are checked at call time.",
    "adapter_family": "provider",
    "resource_keys": [
     "provider"
@@ -1077,7 +1077,7 @@
     "provider"
    ],
    "required_env": [
-    "OPENAI_API_KEY"
+    "GEMINI_API_KEY"
    ],
    "required_binaries": [],
    "required_packages": []
@@ -1105,7 +1105,7 @@
     "provider"
    ],
    "required_env": [
-    "OPENAI_API_KEY"
+    "GEMINI_API_KEY"
    ],
    "required_binaries": [],
    "required_packages": []
@@ -1369,7 +1369,7 @@
   {
    "id": "hivemind.contribute",
    "disposition": "optional",
-   "evidence_reason": "Optional Hivemind contribution route; provider readiness is credential-gated.",
+   "evidence_reason": "Optional Hivemind contribution route; provider credentials are checked at call time.",
    "adapter_family": "provider",
    "resource_keys": ["provider"],
    "required_env": ["HIVEMIND_CONTRIBUTOR_KEY"],
@@ -1389,7 +1389,7 @@
   {
    "id": "hivemind.ingest_article",
    "disposition": "optional",
-   "evidence_reason": "Optional Hivemind article ingestion route; provider readiness is credential-gated.",
+   "evidence_reason": "Optional Hivemind article ingestion route; provider credentials are checked at call time.",
    "adapter_family": "provider",
    "resource_keys": ["provider"],
    "required_env": ["HIVEMIND_CONTRIBUTOR_KEY"],
@@ -1399,7 +1399,7 @@
   {
    "id": "hivemind.ingest_workflow",
    "disposition": "optional",
-   "evidence_reason": "Optional Hivemind workflow ingestion route; provider readiness is credential-gated.",
+   "evidence_reason": "Optional Hivemind workflow ingestion route; provider credentials are checked at call time.",
    "adapter_family": "provider",
    "resource_keys": ["provider"],
    "required_env": ["HIVEMIND_CONTRIBUTOR_KEY"],

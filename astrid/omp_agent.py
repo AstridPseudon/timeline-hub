@@ -490,14 +490,16 @@ def _print_one_shot_header(agent: str, stream=None) -> None:
     print(f"\x1b[1m{header}\x1b[0m", file=stream, flush=True)
 
 
-def _prompt_args(flags: list[str], *, agent: str = DEFAULT_AGENT, env=None) -> list[str]:
+def _prompt_args(
+    flags: list[str], *, agent: str = DEFAULT_AGENT, env=None, preferences_context: str = ""
+) -> list[str]:
     """Return only an explicit Astrid prompt override.
 
     This contains only the optional appended notice/override; the shipped
     profile body is selected separately as OMP's base system prompt when no
     project or user named profile exists. Alternate agents never inherit it.
     """
-    if "--system-prompt" in flags:
+    if any(flag in flags for flag in ("--system-prompt", "--append-system-prompt")):
         return []
     if agent != DEFAULT_AGENT:
         return []
@@ -522,6 +524,8 @@ def _prompt_args(flags: list[str], *, agent: str = DEFAULT_AGENT, env=None) -> l
             "Prefer these files over ambient user-home skill links; "
             "a missing global skill link is not a reason to search retired checkouts."
         )
+    if preferences_context:
+        prompt = f"{prompt}\n\n{preferences_context}"
     return ["--append-system-prompt", prompt]
 
 
@@ -541,7 +545,9 @@ def _has_named_agent_profile(agent: str = DEFAULT_AGENT, *, env=None, cwd=None) 
     )
 
 
-def _exec_omp_with_packaged_profile(omp_bin: str, flags: list[str], message: list[str]) -> int:
+def _exec_omp_with_packaged_profile(
+    omp_bin: str, flags: list[str], message: list[str], *, preferences_context: str = ""
+) -> int:
     """Run OMP directly with the packaged profile, avoiding user-profile/cache writes."""
     exec_argv = [omp_bin]
     if "--system-prompt" not in flags:
@@ -551,7 +557,7 @@ def _exec_omp_with_packaged_profile(omp_bin: str, flags: list[str], message: lis
         exec_argv += ["--system-prompt", ASTRID_SYSTEM_PROMPT]
     exec_argv += flags
     if not any(flag in flags for flag in ("--system-prompt", "--append-system-prompt")):
-        exec_argv += _prompt_args(flags)
+        exec_argv += _prompt_args(flags, preferences_context=preferences_context)
     if message:
         exec_argv += ["--print", *message]
         _print_one_shot_header(DEFAULT_AGENT)
@@ -577,6 +583,18 @@ def main(argv: list[str] | None = None) -> int:
             print("astrid: --agent-profile-file takes no other arguments", file=sys.stderr)
             return 2
         return _print_agent_profile_file()
+    if rest and rest[0] == "--agent-context":
+        if len(rest) != 1:
+            return 0
+        try:
+            from astrid.agent_context import current_context
+
+            block = current_context()
+            if block:
+                print(block)
+        except Exception:  # noqa: BLE001 - this launcher contract is best effort and always succeeds
+            pass
+        return 0
     if len(rest) > 1 and rest[0] == "agent" and rest[1] in {"models", "use"}:
         return _run_model_command(rest[1:])
     if rest and rest[0] == "help":
@@ -638,6 +656,17 @@ def main(argv: list[str] | None = None) -> int:
         print("astrid: flags must precede the message, e.g. astrid -c \"follow-up\"", file=sys.stderr)
         return 1
 
+    preferences_context = ""
+    if agent == DEFAULT_AGENT and not any(
+        flag in flags for flag in ("--system-prompt", "--append-system-prompt")
+    ):
+        try:
+            from astrid.agent_context import current_context
+
+            preferences_context = current_context()
+        except Exception:  # noqa: BLE001 - saved preferences are optional prompt context
+            preferences_context = ""
+
     _select_omp_bin()
     if agent == DEFAULT_AGENT:
         os.environ["ASTRID_OMP_PYTHON"] = sys.executable
@@ -654,7 +683,9 @@ def main(argv: list[str] | None = None) -> int:
         if omp_bin is None:
             print("astrid: could not locate the OMP binary; set OMP_BIN or install oh-my-pi", file=sys.stderr)
             return 1
-        return _exec_omp_with_packaged_profile(omp_bin, flags, message)
+        return _exec_omp_with_packaged_profile(
+            omp_bin, flags, message, preferences_context=preferences_context
+        )
 
     launcher = _find_launcher()
     if launcher is None:
@@ -663,7 +694,7 @@ def main(argv: list[str] | None = None) -> int:
 
     exec_argv = [str(launcher), "run", agent, *flags]
     if not any(flag in flags for flag in ("--system-prompt", "--append-system-prompt")):
-        exec_argv += _prompt_args(flags, agent=agent)
+        exec_argv += _prompt_args(flags, agent=agent, preferences_context=preferences_context)
     if message:
         exec_argv += ["--print", *message]
         _print_one_shot_header(agent)

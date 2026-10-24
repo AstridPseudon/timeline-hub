@@ -73,12 +73,18 @@ def test_comfy_plan_requires_admitted_vibecomfy_source(tmp_path):
 
 @pytest.mark.parametrize("capability", ["wan2gp.generate_video", "vibecomfy.run", "vibecomfy.generate_image", "vibecomfy.video_enhance", "comfy_wrap.run"])
 @pytest.mark.parametrize("opt_in", ["", "true", "0", "1"])
-def test_unqualified_label_and_explicit_opt_in(capability, opt_in):
+def test_unqualified_label_is_a_warning_and_opt_in_is_retained(capability, opt_in):
     status = gpu.windows_gpu_status(capability, platform="win32", environ={gpu.ALLOW_UNQUALIFIED_ENV: opt_in}, detection=DEVICE)
-    assert status["ok"] is (opt_in == "1")
+    assert status["ok"] is True
     assert status["qualified"] is False
     assert status["status"] == "not qualified yet"
     assert status["reason"].endswith("is not qualified yet.")
+    label = "Wan2GP" if capability == "wan2gp.generate_video" else "ComfyUI"
+    assert status["warning"] == (
+        f"{label} on Windows with this NVIDIA GPU is untested. It will probably work, "
+        "but please tell us how it went (GPU model and driver from `nvidia-smi`)."
+    )
+    assert status["opted_in"] is (opt_in == "1")
     assert status["opt_in_env"] == "ASTRID_ALLOW_UNQUALIFIED_GPU=1"
 
 
@@ -100,9 +106,21 @@ def test_qualification_table_is_specific_to_pack_os_and_gpu(monkeypatch):
     status = gpu.windows_gpu_status("wan2gp.generate_video", platform="win32", environ={}, detection=DEVICE)
     assert status["qualified"] is True and status["ok"] is True
     assert status["reason"] == ""
-    assert gpu.windows_gpu_status("vibecomfy.run", platform="win32", environ={}, detection=DEVICE)["ok"] is False
+    assert gpu.windows_gpu_status("vibecomfy.run", platform="win32", environ={}, detection=DEVICE)["ok"] is True
     other = {**DEVICE, "devices": ["NVIDIA GeForce RTX 3090"]}
-    assert gpu.windows_gpu_status("wan2gp.generate_video", platform="win32", environ={}, detection=other)["ok"] is False
+    assert gpu.windows_gpu_status("wan2gp.generate_video", platform="win32", environ={}, detection=other)["ok"] is True
+
+
+@pytest.mark.parametrize("capability", ["vibecomfy.run", "vibecomfy.generate_image", "comfy_wrap.run"])
+def test_vibecomfy_readiness_does_not_require_detected_nvidia(capability):
+    status = gpu.windows_gpu_status(
+        capability, platform="win32", environ={},
+        detection={"available": False, "devices": [], "reason": "No NVIDIA GPU was detected."},
+    )
+    assert status["ok"] is True
+    assert status["qualified"] is False
+    assert status["reason"] == "No NVIDIA GPU was detected."
+    assert status["warning"] == "VibeComfy uses your own ComfyUI, so Astrid does not need to detect an NVIDIA GPU."
 
 
 def test_detection_resolves_executable_and_parses_devices(monkeypatch):
@@ -138,7 +156,7 @@ def test_detection_failures_are_plain_and_cannot_be_overridden(monkeypatch, fail
     assert detected["devices"] == []
     assert "NVIDIA GPU" in detected["reason"]
     status = gpu.windows_gpu_status("vibecomfy.run", platform="win32", environ={gpu.ALLOW_UNQUALIFIED_ENV: "1"}, detection=detected)
-    assert status["ok"] is False
+    assert status["ok"] is True
     assert status["reason"] == detected["reason"]
 
 

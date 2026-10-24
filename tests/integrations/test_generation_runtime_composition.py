@@ -1971,15 +1971,17 @@ def test_production_qwen_edit_command_uses_ordered_cas_through_https_connect_and
         provider_thread.join(timeout=2)
 
 
-def test_production_qwen_edit_manifest_requires_fal_secret() -> None:
+def test_production_qwen_edit_manifest_is_ready_without_fal_secret(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("ASTRID_ENV_FILE", str(tmp_path / "missing.env"))
+    monkeypatch.delenv("FAL_KEY", raising=False)
     generation_root = Path(__file__).resolve().parents[2] / "astrid/packs/generation"
     host = GenericPackHost(pack_roots=[generation_root], credential_source={})
     host.discover()
     host.preflight("generation.generate_image_edit")
     record = host.capabilities["generation.generate_image_edit"]
-    assert record.ready is False
+    assert record.ready is True
     assert record.preflight["credentials"] == {
-        "ok": False,
+        "ok": True,
         "missing": ["FAL_KEY"],
     }
 

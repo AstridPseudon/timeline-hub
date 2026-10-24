@@ -225,6 +225,8 @@ if (args[0] === '--agent-profile-file') {
   } else {
     process.stdout.write(${JSON.stringify(profile)});
   }
+} else if (args[0] === '--agent-context') {
+  // Saved-preferences block: nothing to add.
 } else if (args[0] === 'login') {
   process.stdout.write('Logged in using ChatGPT');
 } else {

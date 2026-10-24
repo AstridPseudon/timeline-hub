@@ -4135,7 +4135,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:e7c4342664b04705f53fd42bbb0624db6e8959ada7b905fc897b622daa6ddff0",
+    "revision": "sha256:75ef63dfb4bbbebaaf36b2e68f9c5b0da0b54d49537820bcaadb11591ffa42fe",
     "runtime": {},
     "schema": {
       "additionalProperties": true,

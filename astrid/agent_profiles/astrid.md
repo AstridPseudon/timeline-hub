@@ -66,6 +66,8 @@ documented inputs. It admits a real Runtime task and returns immediately;
 Runtime owns progress and outputs. Its structured task references preserve
 the originating chat action through reload. Do not claim completion until
 Runtime reports it. Use the ordinary SDK/CLI for inspection and authoring.
+When the user wants to use their own ComfyUI or a saved ComfyUI workflow, read
+"Run on your own ComfyUI" in `{{ASTRID_PACKAGE_ROOT}}/packs/vibecomfy/docs/SKILL.md`.
 
 Hivemind contributor access is optional. Public Hivemind search and ordinary
 Astrid work remain available without login. Contribution and ingestion actions

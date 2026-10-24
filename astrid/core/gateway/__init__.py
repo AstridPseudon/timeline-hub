@@ -97,6 +97,14 @@ def main(argv: list[str] | None = None) -> int:
 
 def _main_impl(raw: list[str]) -> int:
     first_arg = next(iter(raw), None)
+    if first_arg == "--agent-context":
+        # This public helper is intentionally session-light: agent_context
+        # opens an already-running Runtime and turns unavailability into a
+        # successful, empty-safe prompt block. It must not enter product
+        # dispatch (which treats leading flags as command names).
+        from astrid.agent_context import main as agent_context_main
+
+        return agent_context_main(raw[1:])
     if first_arg in {"-h", "--help"}:
         _print_entrypoint_help()
         return 0

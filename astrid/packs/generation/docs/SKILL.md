@@ -13,6 +13,12 @@ The generation pack provides a first-class **library facade** for image, audio,
 and video generation and also exposes the underlying executors for direct (SDK)
 and automation use.
 
+If the user wants their own running ComfyUI or one of their saved workflows
+("use my ComfyUI", "my portrait workflow"), this pack is the wrong route,
+including its `execution: "local"` mode, which uses Astrid's built-in engine.
+Follow [Run on your own ComfyUI](../../vibecomfy/docs/SKILL.md#run-on-your-own-comfyui)
+instead.
+
 ## Quick-start — runtime-backed generation
 
 Use the runtime-backed SDK generation facade. Successful managed calls return
