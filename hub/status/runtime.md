@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T02:59:57Z | dispatcher heartbeat 15s | live 3 (sol 1, luna 2, other 0) | busy30 17 | status age 1m -->
-# runtime board, 2026-10-24T02:58:00Z
+<!-- main | 2026-10-24T03:02:34Z | dispatcher heartbeat 6s | live 1 (sol 1, luna 0, other 0) | busy30 18 | status age 1m -->
+# runtime board, 2026-10-24T03:02:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -51,7 +51,7 @@
 | F-full-census-review | Verify all failures and exact recovery | Luna independent | Reports 0107 and 0110 | merged | rt-F-census-recovery-review-0113 PASS | Exact 36 nodes and all counts independently verified; main recovery clean and exact. [Review](../../design/runtime-full-census-recovery-review-0113.md) | Evidence only |
 | R2r-external-pack-source | Bind external pack authority | Sol / Luna | Runtime producer proof complete | merged | Security0240; integrated10713 | Actual f320:317passed2configuredexclusions. Agent consumer remains unqualified. [Proof](../../design/runtime-D39-D40-integrated-0246.md) | f3208b26b / eb2775376 |
 | R-readiness-commits-hang | Reduce authenticated history cost | Sol / Luna | Integrated proof passed | merged | Source 0212; final 0205; proof 0210 | Actual 45c3 with Agent4151: 145 passed, zero skips. Historical cause unknown. [Proof](../../design/runtime-readiness-integrated-0210.md). | 45c3a7f47 |
-| R-readiness-compatible | Cost-only proof pin on old client | Sol / Luna | App actual caller qualification | blocked:app | Author0241; independent0245 PASS | Proof pin37eb:145passed with4151. Exact079clientbytes match; old079transcriptfailure retained. [Review](../../design/runtime-readiness-backport-review-0245.md) | 37eb6c7bd proof pin |
+| R-readiness-compatible | Cost-only proof pin on old client | Sol / Luna | App actual caller qualification | blocked:app | Author0241; independent0245 PASS | Proof pin37eb: exact4151 first run145passed60.12s. Review0302 corrects second-run duration attribution; no new test run. [Review](../../design/runtime-readiness-backport-review-0245.md) | 37eb6c7bd proof pin |
 | F-helper-sequential | Classify helper replay-map refusal | Agent Sol / Luna | Integrated proof complete | merged | Agent184dc; review0224; integrated0232 | Actual8a8d:12focused and static/vendor/artifact passed; originalTrue/Falsepassed on exact reviewedsource. Runtime guard unchanged. | Agent184dc20a70 |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Agent existing child qualified | merged | Source 0125; review 0132; Agent 0137 | Exact seven passed in 3.60 s on existing child c886; wrong-tree control refused and body/source identities retained. | Source 521c888; installed c36 |
 

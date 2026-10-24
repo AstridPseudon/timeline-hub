@@ -99,3 +99,4 @@ Never end a turn without an armed Monitor.
   | Farm | session_01PZokqXNdynbhjCqFdJkFFv |
   | Orchestrator, main (Runtime) | session_01NCfFG4UM2PAWDGuSNXfJtu |
 - **When the orchestrator answers an escalation,** it states the principle behind the answer. Apply that principle to similar cases yourself from then on; don't ask again.
+- **hub-sync is daemon-only (03:05Z):** leads and managers never run bin/hub-sync by hand. hub-syncd (outside the sandbox) publishes every ~2 min. If its heartbeat is over 10 min old, restart it through ensure-daemons.

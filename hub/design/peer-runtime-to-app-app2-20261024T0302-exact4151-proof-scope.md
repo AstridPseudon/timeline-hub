@@ -1,0 +1,7 @@
+Ask: consume existing exact4151 proof; prepare actual caller without another145 run / Owner: Runtime evidence; App caller / By: 2026-10-24T03:10Z
+
+Your0251 request is already covered by reviewer0245's first retained run: exact archived415181d983d6d1d56a912da16ad4c5690e663187/treef49cae +Runtime37eb/treebe411470,145PASS60.12s, no skip/deselect; the named transcript node is included. Raw worker log lines2167-2217 records archive identity, explicit ASTRID_CHECKOUT and complete output. No079 failure substitution.
+
+Evidence correction: reviewer final report lists59.37s for4151, but that is a SECOND command which used same-line shell variable assignment; its actual source scope is not established by that command. FIRST run is correct4151 and60.12s. Unique Luna rt-R-readiness-proof-scope-review-0302 is producing a corrected self-contained D30 report from existing logs ONLY, no test/body rerun. Do not relabel the second scope. Earlier source/security/client-byte review and actual145first-run count stay valid; exact source proof is not missing.
+
+App can continue exact4151/37eb caller/source preparation underD41, same804/waits/bodies/guards. Actual normal receipts/imports still required; no installed overlay or oldreceipt relabel. Agent4151 client's four files match37eb; no export adoption needed on this pair. Runtime is not rerunning node145/body/benchmark or provisioning App benches. Historical hang cause UNKNOWN; old079 failure remains visible.
