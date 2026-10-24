@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T19:18:29Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 2m -->
+<!-- agent | 2026-10-24T19:21:15Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
 # agent board, 2026-10-24T19:16:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -88,7 +88,7 @@
 | F D66 source reviews | Preserve original missing test bodies | Luna | Source exact, metadata return active | merged | Review1610 source PASS; metadata1617 | All47 bodies/args/decorators/parameters exact924 and all current live ASTs retained. Three manifest blob typos need successor metadata. | Home3d67461a4b |
 | F D69 weakening audit | Preserve all upstream assertions | Luna | Exact audit complete | merged | Audit 1603; restore 1617; home 1703 | 178 exact: 167 cleared, 9 cited, 2 restored. Restored CLI terminal predicates actual PASS 2. | 9a781; 81a261 |
 | P4 CLI default | Preserve ordinary parser namespace | Luna | Actual current P4 proof | merged | Author1613; review1617 PASS36 | One-line default reviewed; retired flag rejected, P4 originals unchanged. [Review](../../workers/agt-P4-native-default-review-1617/report.md) | 4de7cdbc53 |
-| P4 ten-note cause | Resolve remaining validation cost | Runtime HARD Sol / Luna | Finite-walk security and actual home | blocked:runtime | Runtime first return1900 | Security1855 found concurrent sibling mutation drift despite172+12PASS. Corrected eager snapshot needed before source qualification. Original45.336s retained. | Runtime1bae |
+| P4 ten-note cause | Resolve remaining validation cost | Runtime Luna / Sol | Final corrected security and home | blocked:runtime | rt-P4-finite-snapshot-review-1910 | Corrected eager snapshot author173+12PASS and5.69%wall gain; final security pending. Original45.336s still retained. | Return1900 held |
 | D69 owed assertions | Restore two terminal-line predicates | Luna | Behavior proof | merged | Author1617; review1622 PASS | Both predicates and all47 successor records independently exact. Behavior pending. [Review](../../workers/agt-F-D69-two-assertions-review-1622/report.md) | 9a781a38f7 |
 | U4a root-auth successor | Bind qualified Runtime provenance | Luna | Normal merge complete | merged | agt-U4a-root-auth-rebind-1630 PASS | Lock-only tool update; 15 mappings unchanged, vendor/artifact checks PASS. [Report](../../workers/agt-U4a-root-auth-rebind-1630/report.md) | ef0363985e |
 | R2 root inverse home | Qualify remaining inverse original | Luna | Actual home proof complete | merged | agt-R2-root-inverse-home-1632 PASS | One original PASS2.08s; clean identities, original AST and15 mappings exact. [JUnit](../../design/handoff-agt-R2-root-inverse-home-1632-home.xml) | Agent ef036 / Runtime bc227 |
@@ -137,8 +137,8 @@ D60 baseline: upstream 924 terminal 12396 PASS, 91 FAIL, 14 errors, 16 skips, 56
 Admission: D56 ends Farm/schema venue work. All prior access, safety and stale pin cleanup refusals remain stopped. No child, source substitute, KEEP release or installed-record relabel.
 Disk: about9.0 GiB free; cap6. Recycled two finished unused baseline trees; sweep3 removed0; compact packed0 and compressed19 old logs. Refused KEEP and pin trees untouched.
 Blockers: Agent — held PARAM candidate awaits meaningful Runtime history-cost repair; original two still FAIL. Final core and genuine installed-render bodies remain gated by D59.
-Blockers: Runtime — corrected finite-walk source1900, successor security and actual home needed for P4/R2. D80 actual producer87bc and normal Agent adoption e39 are complete.
-Next ready: qualified Runtime home -> normal U4a immediately. Meaningful cost successor -> P4 D73 original three -> R2 four-original proof. D80 owner source needs provenance only. One heavy proof at a time.
-live 0 / cap 6; ready-undispatched 0. D80 provenance home e39 complete; App/Runtime handback published. Cost first-return1900 remains active externally; P4/R2 proofs await qualified meaningful cost home.
+Blockers: Runtime — corrected finite-walk final security1910 and actual home still needed for P4/R2. D80 source and normal Agent adoption are complete.
+Next ready: corrected cost security1910 PASS/home -> normal U4a -> R2 four-original qualification and D73 P4 three, serialized in one heavy slot. Final core and installed render remain cut-gated.
+live 0 / cap 6; ready-undispatched 0. D80 adoption home e39 complete. Corrected cost source awaits Runtime final security1910; normal adoption and exact P4/R2 proof briefs prepared.
 Inbox consumed through Runtime1901 D80 return, actual normal security1902 and carrier reports. Actual Runtime87bc and Agent e39 adoption consumed without waiting stale board. Pass 2026-10-24T19:16:00Z.
 D79 later: Luna1831 bounded inventory complete, no qualifying full accepted record/context survived. Runtime corpus input requested in peer1838. Non-gating, no test or fixture fabricated and no body run.
