@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T07:41:20Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 16 | status age 0m -->
-# runtime board, 2026-10-24T07:40:55Z
+<!-- main | 2026-10-24T07:44:04Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 2m -->
+# runtime board, 2026-10-24T07:41:50Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -56,7 +56,7 @@
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Current installed qualification passed | merged | Agent0508; independent0517 PASS | Exact seven originals passed on managed child 3b5c, Agent ba8f and Runtime f320. Current 9cd relevant sources and test AST match. | Managed child 3b5c |
 | OPS-farm-agent-full | Correct farm full-suite environment | Sol / Luna | Farm lead request and host preflight | blocked:farm | Sol0617; review0632 SOURCE PASS | Fourteen checks passed. Farm has byte-exact packet and reviewed setup; host remains unverified. [Review](../../design/runtime-farm-full-v2-source-review-0632.md) | 471712 reviewed packet |
-| OPS-child-dependency-route | Verify local dependency seed route | Sol / Luna | Reviewed installation and real artifacts | review | Sol 0707; review 0721 PASS | Source reviews passed 34 and 40 cases. Exact kit installed0735; live/publication review0739 runs. Genuine wheels remain unverified. | ac2412f0c reviewed |
+| OPS-child-dependency-route | Publish verified dependency seed route | Sol / Luna | Actual Agent artifact input | blocked:agent | Reviews 0721 and 0730; live 0739 PASS | Reviewed kit installed and normally published. Genuine wheelhouse and bootstrap remain unverified; no candidate built. | 33fc06bbd installed |
 | R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Integrated proof passed | merged | Review 0405; integrated 0413 PASS | 13 standalone cases and 243 controls passed; 74 configured deselections. [Proof](../../design/runtime-historical-image-integrated-0413.md) | 2b49da8d6 / 2e96c68c |
 | R-D42-history-memo | Harden verified replay memo | Sol / Luna | Post-delivery scope under D47 | gated:D47 | Design0448; review0454 PASS | Deferred by D47. No stable validation boundary; nine state attacks remain open. Source stays unmerged. | Tests 6c6bb375; source held |
 | R-D42-proof-pin | Preserve a compatible future memo pin | Sol / Luna | Post-delivery safe memo under D47 | gated:D47 | No active pin author | D45: next P2/P3 uses existing37eb without memo. Prior unsafe backport stays held; no new checkout needed. | Earlier backport held |
@@ -75,7 +75,7 @@
 | F-R2-root-originals | Qualify nine retained root cases | Luna | Independent exact result review passed | merged | Author0622; review0625 PASS | Nine originals passed; source only. Pre/post capture limit disclosed. [Review](../../design/runtime-R2-root-review-0625.md) | Agent bb50 unchanged |
 | R2r-shared-inverse-auth | Verify shared inverse source identities | Sol / Luna | Integrated source proof passed | merged | Author 0647; review 0701; integrated 0711 | Actual460c passed177 plus six shared/source-copy controls on exact Agent d33fe archive. No original ABA or HTTP credit. | 460c2d397 / 35764ce10 |
 | FREEZE | Coordinate final tuple and proofs | Runtime manager | D48 and D49 | doing | Runtime 0721; Agent 0702; App 0707 | U1c and D39 merged. Agent U2 repairs0713 and App GO remain pending. Farm lead owns the normal request after the role decision. | Runtime becfe6db8 |
-| OPS-child-observability | Retain bounded maker failure evidence | Luna | Independent live and publication check | review | Review 0730; installed 0735; live review 0739 | Four exact scripts installed with UTC backups. Shared publication stayed old during observation; no real candidate yet. | 33fc06bbd installed on main |
+| OPS-child-observability | Retain bounded maker failure evidence | Luna | Independent installed proof passed | merged | Review 0730; installed 0735; live 0739 PASS | All four live, publication and committed copies match reviewed bytes. Real child and bootstrap remain unqualified. | 33fc06bbd installed |
 | OPS-wheel-acquisition | Identify normal original-wheel acquisition | Luna | Exact committed lock and reviewed seed route | doing | rt-OPS-wheel-acquisition-facts-0743 | Source-only concrete operation requested. No download, package, cache or child probe. | Source 33fc |
 | R-commit-response | Classify mutation response work | Luna | App source facts 0726 and 0731 | doing | rt-R-commit-response-source-0745 | Exact proof pin 37eb and App663/Agent079. No server timing or daemon identity claim; no D47 work. | Read only |
 
@@ -93,7 +93,7 @@ P1 remains historical GO under D25 on original18792 and exact f8b15/787380/2a9 t
 
 Farm checkpoint26511 remains terminal on Agent9cd/tree57f0231d and Runtime45c3:17,335 passed,288 failed,187 setup errors,four skips; no JUnit and seven missing FAILED lines. Corrected packet471712 passed independent source review0632. Farm checkouts9cd and1d9 are complete. Farm board reports its07:26 request-runtime attempt required approval and was stopped without retry. Orchestrator07:36 resolved the role assignment: Farm lead issues its existing supported request; no permission change or manager retry. Escalate again only if lead is refused. Reviewed row installation and genuine import preflight remain held. No new checkpoint before preflight PASS. Runtime45c3 lacks external_pack_sources; selected1d9 contains D40 with the prior four client hashes.
 
-Child dependency: private Sol repair0707 passed34 tests. Independent security review0721 PASS34; no real candidate or AgentREADY. New observability source33fc passed independent0730 with40 cases; normal installer0735 completed all four files; independent live/publication verifier0739 runs. Same-lock original wheel custody and bootstrap availability remain unverified. Agent0642 RECORDs do not prove dependency wheel hashes. Unique Luna0724 completed the bounded stage/failure retention seam; no unchanged candidate retry, installed overlay, old-child relabel or new trust backend.
+Child dependency: private Sol repair0707 passed34 tests. Independent security review0721 PASS34; no real candidate or AgentREADY. New observability source33fc passed independent0730 with40 cases; normal installer0735 completed all four files; independent live/publication verifier0739 PASS; normal publication now matches all four files. Same-lock original wheel custody and bootstrap availability remain unverified. Agent0642 RECORDs do not prove dependency wheel hashes. Unique Luna0724 completed the bounded stage/failure retention seam; no unchanged candidate retry, installed overlay, old-child relabel or new trust backend.
 
 SDK persistence fixture848b is independently0713 PASS, exact two originals passed4.19s and all ten body/assertion hashes remain unchanged. Normal Agent merge0708 completed at3f7e63b0cf; exact integrated two-original worker0733 passed2 in4.17s with durable JUnit; independent result review0736 PASS. Agent owns count mapping. Restart resolves a challenge to an old closure and earns no duplicate credit. Agent owns journal/publish merge-positive source separately.
 
@@ -101,8 +101,8 @@ D34: main has about9 GiB free at07:17. No main disk work per the explicit orches
 
 Blockers: Farm lead — orchestrator07:36 assigned the existing request-runtime to the Farm lead, with no permission change. Manager action stays stopped; managed receipt and host preflight remain pending.
 Blockers: Agent and App — reviewed U2 home, D39 consumer adoption and header P2/P3 GO are still needed for the final tuple.
-Blockers: Runtime kit — independent dependency review and genuine lock-authenticated wheel artifacts are needed before one candidate child request.
-Next ready: No unassigned ready Runtime task. Live/publication review0739, wheel acquisition source facts0743 and response source assessment0745 are dispatched. Agent owns real artifacts; main lead owns normal publication.
+Blockers: Agent artifacts — installed reviewed route is published; actual received-kit receipt, original lock-authenticated wheels and bootstrap remain needed.
+Next ready: No unassigned ready Runtime task. Wheel acquisition source facts0743 and response source assessment0745 are dispatched. Live/publication review0739 passed. Agent owns real artifacts; normal publication is qualified; Agent owns actual received-kit and artifact input.
 Later: Viewing owns the original ABA joined-source verdict. Runtime shared-auth handoff0715 is complete; no competing Runtime author or original body. D34 disk work and D47 memo resume only under their stated conditions.
 
 Later: Agent peer0714 classifies the separate moved-head persistence original as existing D23 child-word scope. It remains unchanged and visibly open; no new journal/publish repair or duplicate body. This does not alter the two Runtime fixture selectors.
@@ -115,4 +115,4 @@ Agent accounting: latest independently reviewed package0715 reports261 closed an
 
 App actual trace0722: element POST starts420ms into the fixed5-second assertion window; outcome afterPOST is unknown. P3 predecessor accepted guarded doc.patch0to5 with25reads and history2to3; Proof owns stale clip.move vocabulary. No timeout/body weakening or new pair is requested here.
 
-KIT CHANGE: reviewed four-file kit installed on main, source33fc. Shared publication was still old at installer observation; normal hub route health requested from main lead. No manual publication or partial remote install. Exact receipt design/runtime-child-kit-install-0735.md.
+KIT CHANGE: reviewed four-file kit installed on main, source33fc. Shared publication was old initially; independent0739 verified normal propagation and stable matching live/publication/committed copies. No manual publication or partial remote install. Exact receipt design/runtime-child-kit-install-0735.md.
