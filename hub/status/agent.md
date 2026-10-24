@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T02:24:20Z | dispatcher heartbeat 9s | live 5 (sol 3, luna 2, other 0) | busy30 29 | status age 2m -->
+<!-- agent | 2026-10-24T02:26:30Z | dispatcher heartbeat 2s | live 3 (sol 1, luna 2, other 0) | busy30 29 | status age 1m -->
 # agent board, 2026-10-24T02:21:54Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -26,7 +26,7 @@
 | F-render-startup | Avoid unused transition-catalog scans | Luna | Source cause 0045 | merged | agt-F-transition-fixture-integrated-0126 | Actual 940b: 116 controls passed. Exact reviewed source retained both catalog authority guards. | 2b2c1a02f |
 | F-external-roots | Authenticate installed external roots | Sol | Runtime private source authority | blocked:runtime | Runtime review 0125; Sol 0134 | Runtime observed bytes but lacks authenticated origin/definition admission. Runtime escalation 0143 owns scope; no trust waiver. | candidates held |
 | F-env-86 | Original installed-child cohort | Luna | External pack fix | blocked:agent | Services 11789 and 19627 | 69 cases passed, then 16 supported source invocations passed. One external-pack positive remains open. | c36 scope |
-| F-render-21 | Preserve admission custody while reducing scans | Sol | Review 0204 FAIL | doing | agt-F-render-scan-return-sol-0215 | Root-only cache accepts a mutated manifest. Unsafe source held; return must preserve strict custody before any original timeout run. | b895 held |
+| F-render-21 | Preserve strict admission while reducing scans | Sol / Luna | Safe performance approach | review | agt-F-render-custody-review-0225 | Unsafe root caches removed;24 custody controls pass. Registry source matches current; no performance improvement or original timeout PASS. | b895 ancestry held |
 | F-env-misc | D13, installers and bootstrap | Luna | Exact installed inputs | merged | agt-F-D13-wheel-input-0039 | Three original environment cases plus D13 passed. Exact c36 wheel matched installed payloads; wheel itself was temporary. | harness only |
 | F-CLI | CLI census, generation and motion fixture | Luna | G5 | merged | agt-F-CLI-integrated-0012 | Eight integrated cases and 32 subtests passed; reviewed generation and fixture changes only. | 43bbb / ff5dd |
 | F-observer | Nested pytest plugin isolation | Luna | G5 full | merged | agt-F-observer-harness-2355 | 25 original guard cases passed. Test bodies remain unchanged. | c8459e9f8 |
@@ -37,12 +37,12 @@
 | F-G4-root-assignment | Preserve a newly assigned parent clips root | Sol | Runtime independent cause PASS | doing | agt-R1-root-assignment-sol-0213 | Headless writer loses parent clips after config replacement; Runtime owns faithful original fixtures. No mirror workaround or guard waiver. | current 4151 |
 | F-G4-occupancy | Faithful historical shared placement | Sol / Luna | Existing authenticated source authority | doing | agt-G4-historical-sharing-sol-0226; review0226 | Assessment0213 finds Agent foreign-closure and inverse gap; Runtime authority exists. Original fixtures remain Runtime-owned. | current 4151 |
 | F-authoring-neighbors | Restore seven publication behaviors | Sol; Runtime fixture author | Independent source cause PASS | doing | agt-F-authoring-behavior-sol-0215 | No-op, removal, unused local shot and reordering regressions are source-owned. Runtime retains two fixture files and one old seed. | 4151 source |
-| F-authoring-ABA | Verify canonical raw before values | Sol / Luna | Source review and exact suite | review | agt-F-ABA-oracle-review-0224; OPS0224 | Baseline pair/rawhold0.9 verified;52 original predicates preserved. Original body not yet run; harness row being prepared. | c70c4665b2 |
+| F-authoring-ABA | Verify canonical raw before values | Sol / Luna | Exact original service | doing | Oracle review0224 PASS; service141 | All52 original predicates plus7 authentication checks retained. Exact Runtime8ea bounded original node running. | c70c4665b2 |
 | F-D32-render-wire | Six original SDK wire results | Luna / service | Existing installed child | merged | Service 27934 | Six original cases passed in 41.48s; body hashes, 19 source identities, import origins and read-only profile retained. | 521c source |
 | F-helper-sequential | Repair sequential replay map | Sol / Luna | Independent source and harness proof | review | agt-F-helper-map-review-0224 | Exact retained packet old RED/new GREEN, map14 to5;12 controls pass. Observer serialization blocked original acceptance. | candidate held |
 | F-D32-h3-import | Seven isolated child-import cases | Luna | Existing installed child | merged | agt-F-h3-env-0137 | All seven original fault cases passed in 3.60s; preflight/postflight, body and source identities retained. | 521c source |
 | F-ruff-baseline | Tighten static baselines | Luna | Integrated static proof | merging | agt-F-static-review-0218; remainder0228 | Independent make Ruff and mypy PASS; exact two baseline reductions merged10d2. D38 remainder checks queued. | c8360b3732 |
-| A4 IMAGE | Review accepted App image command | Luna | Exact accepted response evidence | review | agt-A4-image-result-review-0224 | Same fixture accepted txn15e03; returned command enrichment broke exact equality. Fixture closed; later obligations unrun. | bc38 / b3a84 |
+| A4 IMAGE | Accepted App image request evidence | Luna | Remaining witness assertions | review | agt-A4-image-result-review-0224 PASS | Submitted fields preserved; Runtime correctly enriched records. Accepted txn15e03; fixture closed before readback/inverse/refusals. | evidence only |
 | OPS-suites-prune | Retire unused registry entries | Runtime Luna | Reviewed finite proposal | doing | Runtime0210; Agent snapshot0218 | Exact suites and environment bytes published with hashes. New ABA suite author is separate; preserve concurrent rows. | snapshot only |
 | D31 | Dormant transcript capture subset | — | Follow-up funding | gated:D31 | No active author | Keep the 397-line test suite and implementation unchanged. Literal production reachability is NO. | unchanged |
 | V4 / D14 / D23 | Cut and deferred relational timing | — | Scope decisions | gated:H9 | No repair worker | Keep original tests unchanged, unskipped and visibly failing. No V4 or relational-timing completion claim. | unchanged |
@@ -51,7 +51,7 @@ P1: GO. Original service 18792 passed both cases; Proof reviews 0036 and 0040 pa
 Integration: 10d2dc551f7f994686051f2377a58d8dd2e983bc, tree ceb413456540607a908e2a9bc913d241fbc938b0. Frozen34e client,d106 schema and819acf artifact unchanged.
 Blockers: Agent full waits for the remaining owned fixes and finite qualifications. D32 comparison rejected all pre-existing credits; no full retry.
 Blockers: Runtime external-source producer waits for its orchestrator decision 0143; Agent host consumer remains unchanged.
-Blockers: Agent image witness reached acceptance then failed returned-command equality. Full retained result and closure disposition are pending.
+Blockers: Agent image acceptance is verified; full witness remains incomplete because its submitted-versus-recorded assertion was stale. Fixture closed; no retry.
 Blockers: Agent owns remaining helper evidence, ABA fixture/live proof and rendering timeout. All peer worker IDs are received.
 Safety: Earlier Farm, monitor, publication and bench permission refusals remain stopped. No denied action was retried here.
 Disk: About7.3GB free. Sweep removed five old eligible temp dirs; compact gzipped three old logs. Dirty worktree recycle refused, untouched. No new heavy run until above8.5GB.
