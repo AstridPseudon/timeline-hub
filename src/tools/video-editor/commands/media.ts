@@ -820,33 +820,33 @@ export const applyPreparedMediaCommand = (
     }
     return null;
   };
-  try {
-    if (!preparedMediaInput.safeParse(command).success) {
-      return refuse();
-    }
-    const payload = command.payload;
+  if (!preparedMediaInput.safeParse(command).success) {
+    return refuse();
+  }
+  const payload = command.payload;
+  diagnostic = {
+    stage: 'provisioned-asset',
+    reason: 'invalid-asset',
+    fieldCategory: 'asset',
+  };
+  if (!payload || validateProvisionedAsset(payload.asset, '$.payload.asset').length > 0) {
+    return refuse();
+  }
+  if (!Number.isFinite(payload.at) || payload.at < 0) {
     diagnostic = {
-      stage: 'provisioned-asset',
-      reason: 'invalid-asset',
-      fieldCategory: 'asset',
-    };
-    if (!payload || validateProvisionedAsset(payload.asset, '$.payload.asset').length > 0) {
-      return refuse();
-    }
-    if (!Number.isFinite(payload.at) || payload.at < 0) {
-      diagnostic = {
-        stage: 'command-schema',
-        reason: 'invalid-command',
-        fieldCategory: 'placement',
-      };
-      return refuse();
-    }
-
-    diagnostic = {
-      stage: 'placement',
-      reason: 'invalid-placement',
+      stage: 'command-schema',
+      reason: 'invalid-command',
       fieldCategory: 'placement',
     };
+    return refuse();
+  }
+
+  diagnostic = {
+    stage: 'placement',
+    reason: 'invalid-placement',
+    fieldCategory: 'placement',
+  };
+  try {
     const effect = buildPlacePreparedMediaEffect(currentData, payload);
     const nextData = effect.mutation.data;
     diagnostic = {

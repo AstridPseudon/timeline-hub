@@ -859,4 +859,28 @@ describe('prepared media command', () => {
       validateSerializedConfig.mockRestore();
     }
   });
+
+  it('preserves exceptions from the pre-effect guard checks', async () => {
+    const current = await buildTimelineData(createDefaultTimelineConfig(), { assets: {} });
+    const expected = new Error('placement guard failed');
+    const payload = {
+      asset: {
+        assetKey: 'asset-new', mediaType: 'image' as const, durationSeconds: 2,
+        entry: { file: 'new.png', type: 'image/png' }, source: 'registered' as const,
+      },
+      at: 0,
+    };
+    let atReads = 0;
+    Object.defineProperty(payload, 'at', {
+      enumerable: true,
+      get: () => {
+        atReads += 1;
+        if (atReads > 1) throw expected;
+        return 0;
+      },
+    });
+    const command = { type: 'place-prepared-media', payload } as unknown as PlacePreparedMediaCommand;
+
+    expect(() => previewPreparedMedia(current, command)).toThrow(expected);
+  });
 });

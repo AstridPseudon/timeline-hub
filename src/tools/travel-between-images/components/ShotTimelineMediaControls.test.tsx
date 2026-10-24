@@ -110,6 +110,51 @@ describe('ShotTimelineMediaControls', () => {
     );
     expect(state.assets.uploadImageGeneration).toHaveBeenCalledWith(file);
     expect(state.assets.prepareGenerationAsset).toHaveBeenCalledWith(uploaded);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('retains the bounded command diagnostic on the real popup alert and clears it when reopened', async () => {
+    const uploaded = { generationId: 'generation-new', variantId: 'variant-new' };
+    const preparedAsset = {
+      assetKey: 'asset-new',
+      mediaType: 'image',
+      entry: { file: 'asset-new' },
+    };
+    state.assets.uploadImageGeneration.mockResolvedValue(uploaded);
+    state.assets.prepareGenerationAsset.mockReturnValue(preparedAsset);
+    state.commands.addClip.mockReturnValue({
+      ok: false,
+      error: {
+        code: 'mutation_failed',
+        message: 'Failed to place the prepared asset on the timeline.',
+        diagnostic: { stage: 'placement', reason: 'invalid-placement', fieldCategory: 'placement' },
+      },
+    });
+
+    render(<ShotTimelineMediaControls occurrenceId="occ-1" parentDocumentId="document-1" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Add media' }));
+    fireEvent.change(screen.getByLabelText('Choose media for shot timeline'), {
+      target: { files: [new File(['image'], 'new.png', { type: 'image/png' })] },
+    });
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Failed to place the prepared asset on the timeline.');
+    expect(alert).toHaveAttribute('data-diagnostic-stage', 'placement');
+    expect(alert).toHaveAttribute('data-diagnostic-reason', 'invalid-placement');
+    expect(alert).toHaveAttribute('data-diagnostic-field-category', 'placement');
+
+    state.commands.addClip.mockReturnValue({ ok: true, data: { clipId: 'clip-new', trackId: 'V1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add media' }));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Choose media for shot timeline'), { target: { files: [] } });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add media' }));
+    fireEvent.change(screen.getByLabelText('Choose media for shot timeline'), {
+      target: { files: [new File(['image'], 'new-success.png', { type: 'image/png' })] },
+    });
+    await waitFor(() => expect(state.commands.addClip).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
   it('refuses an import when the captured popup data is stale', async () => {
