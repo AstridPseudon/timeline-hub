@@ -102,7 +102,7 @@ describe('expected-failure marker ban', () => {
 
   it('passes for this repository and exits 0 from its CLI entry point', () => {
     const result = checkKnownFailures({ repoRoot });
-    assert.equal(result.allowedEntries.length, 3);
+    assert.equal(result.allowedEntries.length, 0);
     assert.deepEqual(result.forbiddenEntries, []);
     assert.deepEqual(result.problems, []);
     const proc = spawnSync(process.execPath, [gateScript], { cwd: repoRoot, encoding: 'utf8' });
