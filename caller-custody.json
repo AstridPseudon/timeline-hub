@@ -1,0 +1,52 @@
+{
+  "status": "PREPARED",
+  "run_authorization": "NOT_GRANTED",
+  "app": {
+    "commit": "e42ee6227f86581d5d7591dcf067a8f8be25ac60",
+    "tree": "c0a54b2bef5e8e125c6d4caf9d90af7788c8fc2d",
+    "parents": "79cd94f7e020d8ea79527bb1406fca7f6215d013 9b5be36fa9b4cc37ee929b6ea2393e3f287d3823",
+    "source_base": "f90e708b379145ac456924742cc51c187ed6e0c6",
+    "changed_file_count": 35,
+    "changed_fingerprint_sha256": "da34bb2323aa24093aa78ed2b1a60cd3e77de7890363957c89c12093cee0d1dd"
+  },
+  "protected_body": {
+    "p1": "37caf28577d42fbe98afd2320dffa3c72e6e74b1",
+    "p2_tour": "45a8088fafd72a462409e444c0294e8a35682a0f",
+    "p2_elements": "836d144bc0e3bbd8f1677d23e96385bcd8127daa",
+    "p2_popup_current_2972": "c5926a2d304b96bc9ded59a71c8079d90ac3ac32"
+  },
+  "retained_custody": {
+    "agent": "079580ca46af77e0292d49dc34386b25c8391f99",
+    "runtime": "37eb6c7bdb79dcae2523883e66b5cea5be721ffd",
+    "child": "venv-agent-child-app-ready-079-37eb-0256",
+    "child_key": "5464e85332660e8d6d133653d0600709f2aac5a6c9a0ff0e0bc1fb18312d7f2f",
+    "remotion": "agent-remotion-app-ready-079-37eb-0258",
+    "runtime_backend_files": 78,
+    "client_files": 4,
+    "remotion_graph_files": 80
+  },
+  "final_inputs": {
+    "catalog_source": "MISSING",
+    "p3_source": "MISSING"
+  },
+  "tool_versions": {
+    "node": "v22.22.0",
+    "npm": "10.9.4",
+    "playwright": "1.60.0"
+  },
+  "door_port": {
+    "allocation": ["P2_ALLOCATED_PORT", "P3_ALLOCATED_PORT"],
+    "propagates_before_every_stage": true,
+    "changed": false
+  },
+  "selected_source_snapshot": {
+    "selected_source": "e42ee6227f86581d5d7591dcf067a8f8be25ac60",
+    "installed_snapshot": "D45 rows remain c0fe until authorized binding"
+  },
+  "daemon_identity": "UNINFERRED_BY_SOURCE_PREPARATION",
+  "outside_rows": {
+    "count": 248,
+    "bytes": 466341,
+    "sha256": "b33d30918d6e2ae039dfa296bc75b1e0b2674828b53f07a16ee029933d5ad734"
+  }
+}
