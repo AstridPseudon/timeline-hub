@@ -39,6 +39,7 @@ import { timelineBase as runtimeTimelineBase, timelineFromList, type TimelineLis
 import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditCommand, HeadPin, HistoryEntry, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
 import { centreCell, gridDifference, letterbox, matches, pictureGrid, MATCH, type GridDifference, type PictureGrid, type Rect } from './support/pictures.ts';
+import { assertGate5ResetPrecondition } from './support/gate5-reset-precondition.ts';
 
 /** A hang ceiling for one wait (R-10): many times the usual time, never a budget. */
 const CEILING = { timeout: 90_000 };
@@ -1535,6 +1536,19 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   sniff.attach(page);
   let c!: CommitAcceptedMutation;
   await openCommandTimeline(page, harness, seed3);
+  const preconditionBase = await history(harness, seed3);
+  const preconditionRequest = page.waitForRequest((request) => request.method() === 'POST' && COMMITS.test(new URL(request.url()).pathname), CEILING);
+  const preconditionResponse = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);
+  await dragTimelineClip(page, seed3.appClipId, seed3.transitionClipId, 0, 5, THREE_PRODUCTS_REFERENCE_AT);
+  const setupRequest = await preconditionRequest;
+  const setupResponse = await preconditionResponse;
+  const setupBody = await setupResponse.json();
+  await expect.poll(async () => (await commandOutboxes(page, seed3.timelineId)).every((item) => !item.pending && !item.intents.length), CEILING).toBe(true);
+  assertGate5ResetPrecondition({
+    request: setupRequest.postDataJSON(), responseStatus: setupResponse.status(), responseBody: setupBody,
+    expectedBase: { revisionId: preconditionBase.head.revision_id, publicationId: preconditionBase.head.publication_id },
+    clipId: seed3.appClipId, expectedPosition: 5, settledOutboxes: await commandOutboxes(page, seed3.timelineId),
+  });
   const resetResponse = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);
   await dragTimelineClip(page, seed3.appClipId, seed3.transitionClipId, 5, 0, THREE_PRODUCTS_REFERENCE_AT);
   const reset = await resetResponse;
