@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T02:33:14Z | dispatcher heartbeat 13s | live 3 (sol 0, luna 3, other 0) | busy30 20 | status age 1m -->
+<!-- app | 2026-10-24T02:36:02Z | dispatcher heartbeat 14s | live 4 (sol 0, luna 4, other 0) | busy30 21 | status age 0m -->
 # app board, 2026-10-24T02:31Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -45,10 +45,12 @@ Safety: Historical cleanup, graph and publication denials stand. Managers write 
 Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397-line, 40-assertion test, plus required helpers, under D31.
 Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-handoff-0029.md), [image review](/home/user/timeline-hub/hub/design/app-A2-image-created-review-0133.md), [A4 cut map](/home/user/timeline-hub/hub/design/app-A4-current-cut-census-0042.md).
 
-| A2-recovery-basis | Preserve seven dependent recovery guards | Sol; Luna review | Author 0224 PASS 100 tests | review | app-A2-recovery-basis-review-0230 | Seven original failures now pass; valid refreshed-mount replay retained. Independent source and no-weakening review active. | 4182bea449 branch |
+| A2-recovery-basis | Preserve seven dependent recovery guards | Sol; Luna review | Review 0230 FAIL on error assertions | doing | app-A2-recovery-basis-return-sol-0235 | Underlying guard works. First return restores exact error status, cause propagation and blocked actions; original expectations retained. | 4182bea449 held |
 | A4-remaining-protocol | Map remaining legacy protocol cases | Luna | Read-only map complete | merged | app-A4-remaining-protocol-map-0226 | Remaining cases mapped into bounded current-save packets. Six chain and six label declarations are now assigned. | Report only |
 | A4-protocol-chain | Move six local chain declarations | Luna | Map 0226 | doing | app-A4-protocol-chain-0231 | Preserve exact guards, request identity and refusal behavior through current local save; no production changes. | Branch only |
 | A4-track-label | Move six label protocol declarations | Luna | Map 0226 | doing | app-A4-track-label-protocol-0231 | Use actual production document patch handoff; retain all original positive and refusal assertions. | Branch only |
+| A4-replay-protocol | Move six retained replay declarations | Luna | Map 0226 and guard source | doing | app-A4-replay-protocol-0233 | Exact request keys, original display basis, retained failures and no-send assertions stay unchanged. | Branch only |
+| A4-label-refusals | Move six label refusal declarations | Luna | Map 0226 | doing | app-A4-label-refusal-protocol-0233 | Preserve pending bytes and original stale, ambiguous, scope and mixed-edit refusals through the real handoff. | Branch only |
 | readiness-backend-bench | Exact Runtime 45c3 child and graph receipts | Dispatcher; App caller | Canonical Agent client adoption | blocked:agent | Agent peer 0229 | Remotion reuse authenticated. Old Agent child refused client mismatch; a new qualified Agent pin needs a fresh request. | Failed child 0222 |
 
 Blockers: U3b awaits P2/P3 and the final freeze.
