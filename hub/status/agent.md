@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T13:38:13Z | dispatcher heartbeat 8s | live 2 (sol 0, luna 2, other 0) | busy30 18 | status age 3m -->
+<!-- agent | 2026-10-24T13:40:55Z | dispatcher heartbeat 2s | live 3 (sol 1, luna 2, other 0) | busy30 21 | status age 1m -->
 # agent board, 2026-10-24T13:33:25Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -61,22 +61,25 @@
 | F upstream baseline | Preserve superseded baseline partial | Service | D60 final tip replaces25359 | later | Service16468 cancelled by D60 | Partial tests retained, no completed baseline.14973 remains zero-body preflight-only. New exact0d5 baseline row1330 active. | 25359ed687 |
 | App final service input | Return existing source and service receipts | Luna | Exact existing receipt handback | merged | Readonly1300; peer1305 | Current source/client15 and historical service receipts published. Installed child remains UNKNOWN; no source relabel. | Evidence only |
 
-| U2 final / D60 | Merge owner final upstream once | Luna | Live tip checked at start | doing | agt-U2-final-1330 | Worker ls-remote and origin/main exact0d5. Supported merge-forward clean,8 incoming files; targeted acceptance active. | Base47b; parent0d5 |
-| F D60 baseline row | Bind final upstream comparison | Luna | Cancelled old heavy | doing | agt-F-D60-upstream-row-1330 | Existing corrected launcher; exact0d5 row and guarded installation active. No full body queued yet. | Upstream0d5d16af6 |
+| U2 final / D60 | Merge final owner upstream | Luna | D60 amended924437716 | doing | Author1330; amend1336 | First true merge2e519 PASS56+24; amended924 supplied by supported merge-forward,7 conflicts now Luna-owned. No further chase. | Branch2e519; parent924 |
+| F D60 baseline row | Bind final upstream comparison | Luna | D60 amended924437716 | doing | Row1330 PASS; amend1336 | Author-tested0d5 row not run. Amended exact924 row installing now; only one meaningful baseline will run. | Upstream924437716 |
 | F current core159 | Qualify exact core checkpoint nodes | Luna | Reviewed R2 merged | doing | agt-R2-core-home-1330 | All159 IDs prepared; ordinary158 body qualification active, managed D13 needs genuine current input. D23 remains visible. | Home47b744dfe9 |
 
-| R1 core fork remainder | Classify four current fork failures | Luna | Actual XML152 PASS6 FAIL | doing | agt-R1-core-fork-whole-path-1335 | Independent read-only production-path comparison; no original repeat or speculative author. | Home47b744dfe9 |
+| R1 core fork remainder | Restore fork custody before inverse validation | HARD Sol / Luna | Independent1335 proved product cause | doing | Wholepath1335 PASS; Sol1340 | CopiedShot provenance lost on reload, existing authenticated restoration occurs too late. Four originals stay unchanged; strict repair active. | Base47b744dfe9 |
 
-Integration: Agent home47b744dfe9 contains reviewed final R2 null04a and G4 join3db. Runtimebecfe and15 canonical mappings retained. App U3b/D39 merged12:20Z. D60 U2-final clean merge is in worker acceptance.
-core open: 51 pending exact current home accounting1330; current ordinary158 returned152 PASS6 FAIL, with deferred and managed scope still separate. Prior rollup1254 qualified118 of276; scope159core and117non-core.
-regressions: 0 proven; env78,deferred1,pre-existing0,dead-scope0,unproven197. Unknown comparisons are not known gaps. D60 baseline now0d5d16af6.
+| F core receipt rollup | Reconcile276 with new core proof | Luna | Actualhome1330 XML | doing | agt-F-core-counts-1338 | Exact memberships only; no bodies or upstream categories inferred. | Evidence only |
+| F core held inputs | Bind timing deferrals and D13 input | Luna | Existing decisions and inputs | doing | agt-F-core-held-inputs-1338 | Exact D23 selectors versus order213; D13 existing input feasibility only. No new admission or body. | Evidence only |
+
+Integration: Agent home47b744dfe9 contains reviewed final R2 null04a and G4 join3db. Runtimebecfe and15 canonical mappings retained. App U3b/D39 merged12:20Z. D60 amended924 U2-final has7 actual conflicts in current worker; source changes outside timelinecore retained.
+core open: 6 on actual47b qualification1330:152 of158 required PASS,5 FAIL and1 managed D13 UNKNOWN. Deferred D23 order170 separately failed visibly; scope159core117non-core. Exact276 rollup1338 active.
+regressions: 0 proven; env78,deferred1,pre-existing0,dead-scope0,unproven197. Unknown comparisons are not known gaps. D60 amended baseline924437716, fixed even if upstream moves again.
 Current receipts: Original full9758 remains terminal FAIL:17673 passed,231 failed,45 errors,4 skips,566 subtests. Historical267 remains263 closed/4 open, separate. New G4 and R2 receipts await exact rollup.
-D59 cut rows: Frozen6 source repairs now merged; G4 actual joined proof PASS. R2 final independent review PASS; actual home core qualification active. D60 owner final upstream merge added by explicit ruling.
+D59 cut rows: Frozen6 source repairs now merged; G4 actual joined proof PASS. R2 final independent review PASS; actual home152 core PASS plus17 strict46 null. Four fork failures under wholepath1335; timing and D13 under1338. D60 owner final upstream merge added by explicit ruling.
 Gates and venues: Current integrated heads; D41 retired. P1/P2/P3 App service and verdicts; P4 Agent service; P5 and Composition main. Runtime owns F-final and ZIP. Final full after meaningful final source and baseline slot.
 Admission: D56 drops Farm venue/source access. Historical403 and automatic refusal remain stopped. No alternate source,child,installed overlay or reconstruction requested.
 Later: Viewing stood down. Original ABA3783 remains FAIL with missing completion outcomes and retained packet1055. No new original/observer. DeferredD23/D14 and D47 remain held.
 Disk: About9GB free; superseded25359 heavy cancelled. Sweep3 and lossless compact-scratch running. New heavy admission requires8.5GB and one heavy at a time.
-Blockers: D54 exact comparisons need completed D60 baseline; owner Agent. Core qualification1330 and final U2 acceptance hold current source closure. Managed D13 existing current input missing; owner Agent, no new admission route.
+Blockers: D54 exact comparisons need completed D60 baseline; owner Agent. Four fork failures under unique Sol1340 after independent1335 source cause, timing213/D13 under1338, and final U2 amendment acceptance hold current source closure; owner Agent. No new admission route.
 Next ready: U2 independent core/security review after author. Queue one meaningful D60 upstream baseline after guarded row PASS and slot clear. P4 body follows final source binding and heavy slot. All classifier slices complete.
-live 4 / cap 6; ready-undispatched 0. Dispatcher published13:32:09Z reports4 Luna/0 Sol; independent fork whole-path1335 just queued after core158 returned152 PASS6 FAIL. No ready independent row waits.
+live 2 / cap 6; ready-undispatched 0. Dispatcher published13:38:13Z reports2 Luna/0 Sol before later dispatches. HARD Sol1340 is sole inverse-custody author; all other active work is Luna. No independent ready row waits.
 Evidence: [Rollup](../../design/agt-F-D54-rollup-1242.md), [R2 final review](../../workers/agt-R2-null-final-review-1317/report.md), [G4 joined proof](../../workers/agt-G4-joined-home-1317/report.md).
