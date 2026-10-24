@@ -3,14 +3,23 @@
   "status": "PREPARED",
   "submitted": false,
   "source": {
-    "checkout": "/home/user/work/wt/app-P1-current-caller-prepare-1451",
+    "checkout": "/home/user/work/app",
     "ref": "tl/integration",
     "commit": "be98aac54e275282467d85f79d3beb4665416039",
     "tree": "2839c7e7841d1c0897fd8e7c12f0c848d94e3979",
     "parents": [
       "d24ed69dcdbd464159a1b6db27403ce6a96be2e5",
       "94d89d36e3760af41602a545f775fb9aeeb7f0ef"
-    ]
+    ],
+    "authority": {
+      "ref": "tl/app-P2-P3-e68-current-pure-target-1409",
+      "commit": "be98aac54e275282467d85f79d3beb4665416039",
+      "tree": "2839c7e7841d1c0897fd8e7c12f0c848d94e3979",
+      "parents": [
+        "d24ed69dcdbd464159a1b6db27403ce6a96be2e5",
+        "94d89d36e3760af41602a545f775fb9aeeb7f0ef"
+      ]
+    }
   },
   "integrations": {
     "agent": {
@@ -48,8 +57,17 @@
       "producer_version": "sha256:9af2df7561a7e7d6793ad9f82acb7770ddbecf03dbdc753496c42ff86466eb24"
     }
   },
+  "clients": {
+    "files": {
+      "src/integrations/runtime/generated.ts": "7be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4",
+      "src/integrations/runtime/generated-contract-metadata.ts": "1028aaeca1cd15f860994c1e830ba69f55405e648841877eff4d43f466f40c79",
+      "src/integrations/runtime/timeline-commit-types.ts": "bf4728831e35bdfec96ffa0188feb439f3c89a2aecfa8682925019eba5855470",
+      "vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd"
+    }
+  },
   "interpreters": {
     "agent": {
+      "command": "/home/user/work/venv-agent/bin/python",
       "python": "/usr/bin/python3.13",
       "imports": {
         "astrid": "/home/user/work/agent/astrid/__init__.py",
@@ -62,6 +80,7 @@
       }
     },
     "runtime": {
+      "command": "/home/user/work/venv-runtime/bin/python",
       "python": "/usr/bin/python3.13",
       "imports": {
         "astrid_runtime": "/home/user/work/runtime/astrid_runtime/__init__.py",
@@ -83,16 +102,19 @@
   "remotion": {
     "tree": "b01dca9b3b24f54093c20b7c5657316f997725db",
     "package_lock_sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+    "package_sha256": "3dbcfbf7f63c084a8e571cba4e584fcd4e53e37aeadc6ece4e74ed8ec279d723",
     "node": "v20.19.4",
     "npm": "10.8.2",
     "composition_version": "0.0.14"
   },
   "composition": {
-    "artifact": "/home/user/work/wt/app-P1-current-caller-prepare-1451/vendor/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz",
+    "artifact": "/home/user/work/app/vendor/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz",
     "artifact_sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
-    "graph": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-local-OPS-1830/private819acf-D19/node_modules/@banodoco/timeline-composition",
+    "graph": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/node_modules/@banodoco/timeline-composition",
+    "version": "0.0.14",
     "file_count": 80,
-    "file_map_sha256": "ac0bf2a252d3f3a7640ed2a0b555b8a91ff81671a3b70074ed27676357edbbc9"
+    "file_map_sha256": "ac0bf2a252d3f3a7640ed2a0b555b8a91ff81671a3b70074ed27676357edbbc9",
+    "package_sha256": "a2435c315fe2235c63d32551f3c38ec85e049f2fc950f3ab556686fd7dab40f7"
   },
   "spec": {
     "path": "tests/e2e/local/three-products.p1-chain.spec.ts",
@@ -104,7 +126,10 @@
     ]
   },
   "target": {
-    "cwd": "/home/user/work/wt/app-P1-current-caller-prepare-1451",
+    "cwd": "/home/user/work/app",
+    "source_ref": "tl/app-P2-P3-e68-current-pure-target-1409",
+    "source_commit": "be98aac54e275282467d85f79d3beb4665416039",
+    "source_tree": "2839c7e7841d1c0897fd8e7c12f0c848d94e3979",
     "command": ["npm", "run", "test:e2e:three-products", "--", "tests/e2e/local/three-products.p1-chain.spec.ts"],
     "route": "mounted App -> persisted outbox -> generated commitTimeline"
   },
@@ -114,6 +139,18 @@
     "future_snapshot_required": false,
     "historical_caller_reused": false,
     "historical_row": "ap2-P1-chain-h6"
+  },
+  "stages": {
+    "root": "/tmp/timeline-p1-current-caller",
+    "source": {
+      "files": ["commit", "tree", "parents"]
+    },
+    "environment": {
+      "files": ["integration-heads", "body"]
+    },
+    "original": {
+      "files": ["stdout.log", "stderr.log", "status", "playwright-output"]
+    }
   },
   "execution": {
     "mode": "source-mode",
