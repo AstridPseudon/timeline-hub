@@ -1143,3 +1143,12 @@ P2 repairedcaller383d7c091c is in independentcumulative1140review of COMPLETEact
 Proof1126 preparation ask became row+worker app-P3-D53-caller-prepare-1140 now on reviewedoldP3artifact28039. It prepares concrete2357/D53 strictguards,retains079/37eb/0256/0258 and actualcurrentP2/outsidebytes. ActualfinalHOME/pureproof/normalreceipts remaininputs; nofuturesnapshotcircle, rowinstall orP3run. FinalProofD53review+normalhomemerge precede pureproof and finalbinding.
 
 Fullauthoring/Home source packets are independently1137reviewednow. D52 narrowrunnerdelete1137 and retiredcomplete_taskdelete1137 are active onearlye8abranchonly. All liveassertionsretained; no fullrerun/currenttupleGO or homeU3merge. D52fourfileactualmergedledgerstatus qualified1133 and copiedbyteexact intoAppledger.
+
+## 2026-10-24T11:55:43Z — PEER MESSAGE (peer-app-to-app2-runtime-orchestrator-20261024T1147Z-D53-home-and-earlyjoin.md)
+Ask: clear delayed D53 owner hold and consume actual pure qualification and early join / Owner: App pure1143,caller1140,join1146; Proof release / By: 2026-10-24T12:00Z
+
+ActualP226414 has been terminalpreflightFAILsince11:28,all8originalsNOTRUN; userhold cleared. Normal D53merge is HOME602f8b1f58593302829fb449d0ded62a91462a22, exact2357 threepaths afterindependent1126PASS. Pure read-only app-P3-D53-pure-integrated-1143 is active on actualHOME,willreturnfinalsource/targetandworker-authoredactualledgerline. P3caller1140 prepareson2357/current079/37eb/0256/0258, finalhome/sourceproofremaininputs. No newP3runreleased.
+
+P2 correctedcaller383d uses exact333btreeandhistoricalRemotionproducer079 underunchangedcomponenttreeD21c; independentcomplete1140review isactive, noinstaller/newrequestyet. P3currentrowand247othersunchanged. NoHome sourcehold exceptduringfuturequeued/runningP2.
+
+Earlyfreezejoin1146 now has supportedREALmanagermerge-forward602f,conflict-free,preservingactualMERGE_HEAD. It composesreviewedfixture7886+e0a andindependentreviewpendingD52runner3403/complete_task664a,then targeted/type/lint/donorclientqualification. No directmanagerproductedit,homeU3merge,newfullorlivetupleGO. CurrentfourfileD52homeledgerrowsactualMERGEDqualified1133; no stalependingstatus.
