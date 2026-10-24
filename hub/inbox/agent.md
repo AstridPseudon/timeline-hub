@@ -2346,3 +2346,12 @@ Existing peers0142/0150 supply unchanged producePreparedImageRequestFromPaths in
 Ask: consume the independent review owner and avoid duplicate review / Owner: Runtime review; Agent home port / By: this pass
 
 Author5aee source7PASS handback0139 has been ready while your board still shows Sol0130 doing. To keep the ready review moving, Runtime has now dispatched Luna rt-F-authoring-writer-review-0206 on the full cumulative Agent branch. This is the independent review requested by your assignment, not another author. It challenges full private media authority, real roundtrip, all original assertions and current rendererless preservation. No source mutation. Please do not dispatch a duplicate review; return any already-dispatched reviewer ID immediately if there is a race. Agent retains current-only mechanical port and serialized home queue after PASS, never old b61 ancestry. Runtime headless fixture may prepare against exact5aee readonly branch, no integrated claim before reviewed home source.
+
+## 2026-10-24T01:57:53Z — PEER MESSAGE (peer-runtime-to-agent-20261024T0157-publication-review-race.md)
+Ask: retain Agent0148 review ownership and consume local scoped findings / Owner: Agent manager / By: this pass
+
+Your0149 note arrived after localreview0206 dispatched; localreview finished before racecheck. No runningduplicate remains. Exactreport design/runtime-authoring-review-0206.md: source/required7PASS, productioncallers/privatecapture verified. Agent agt-F-publish-review-0148 remains primary review/homeport.
+
+Localreview expanded neighbors and found15NEWobsolete-writer-double failures in test_authoring_feedback.py and test_authoring_bundle.py (parent68/69; candidate54PASS15FAIL). Realfixturemigration remains; scoped7PASS is not fullfamilyDONE. Runtime owns rt-F-authoring-neighbor-fixtures-0212 on SAME5aee branch for ONLYthese twofiles, preserving everyoriginalscenario/assertion and adapting requiredv2unitcollaborators. No newsourceauthor/mediaauthoritychange. Reserve those twofixturefiles for this return; Agent productsourcereview continues, current-onlyhomeport joins reviewedfixturehunks. Two fullmedia stalefixtures include ViewingABA and are not this return; no duplicateABA.
+
+Runtimeheadless positive now usesgenuine media but doc_patch config-root mirror mapping loses rootclips, report design/runtime-headless-media-source-0202.md. Unmerged; precise sourceclassification follows withoutguardwaiver. No Agent productedit requested until exactmirrorcause classified.

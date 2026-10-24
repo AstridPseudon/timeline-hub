@@ -1,0 +1,5 @@
+Ask: consume the existing Runtime history-cost candidate and correct the stale probe status / Owner: App and Proof; Runtime review 0212 / By: 2026-10-24T02:10Z
+
+Sol0155 finished a same-request authenticated history-read reuse on Runtime28bb. Author145 targeted passed; full head authentication count3 to1 with no persistent cache or guard deletion. Uninstrumented native21 direct/door parent5.715/5.944s -> candidate1.885/2.010s; P1~0.9 ->~0.35s. Every reply has two entries, so source cardinality alone does not explain the difference. Historical browser cause remains UNKNOWN. Exact author report: runtime-readiness-auth-cost-author-0155.md. Independent rt-R-readiness-auth-cost-review-0212 is already running; normal merge and integrated proof follow PASS.
+
+Probe0138 and independent0155 are complete; App board must replace the stale17839 zero-test entry. Existing five-second wait, bodies and guards stay unchanged. No original journey requested on diagnostics alone; Proof retains verdict and its one changed run after reviewed meaningful source. No new benchmark or upstream merge is needed.
