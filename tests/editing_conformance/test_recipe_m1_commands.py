@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 from jsonschema import Draft202012Validator
@@ -12,6 +13,7 @@ from astrid.core.timeline.authoring_bundle import (
     compile_authoring_candidate,
     open_authoring_bundle,
 )
+from astrid.sdk.timeline import capture as capture_module
 from astrid.sdk.timeline._command_state import (
     ABSENT,
     CommandError,
@@ -21,17 +23,26 @@ from astrid.sdk.timeline._command_state import (
     overlaps,
     present,
 )
-from astrid.sdk.timeline import capture as capture_module
 from astrid.sdk.timeline.capture import capture_move, capture_track_create
 from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+from astrid.sdk.timeline.emitter import emit_document_commands
 from astrid.sdk.timeline.rebase import replay
 from tests.editing_conformance.staging_recipes import (
     install_staging_operations,
     staged_move,
 )
-from tests.timeline.test_authoring_bundle import _closure, _digest
+from tests.sdk.test_timeline_commit_provider import runtime_abi as runtime_abi
+from tests.timeline.test_authoring_bundle import _closure, _digest, _runtime_document
 
 FIXTURES = Path(__file__).parent / 'fixtures'
+_REMOVALS: dict[int, tuple[Any, Any, dict, dict]] = {}
+
+
+@pytest.fixture(autouse=True)
+def removal_history():
+    yield
+    _REMOVALS.clear()
 
 
 def bundle(*, shared=True, app='missing', fps=30):
@@ -47,7 +58,7 @@ def bundle(*, shared=True, app='missing', fps=30):
         parent['payload']['config']['clips'][0]['app'] = copy.deepcopy(app)
     for image in [parent, *shots, *internals]:
         image['content_digest'] = _digest(image['payload'])
-    return open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
+    return bundle_from_document(_runtime_document(parent, shots, internals))
 
 
 def clip(bundle, ref='parent/clip:direct'):
@@ -55,6 +66,26 @@ def clip(bundle, ref='parent/clip:direct'):
 
 
 def inverse(bundle, records, intervening=()):
+    context = _REMOVALS.get(id(records))
+    if context is not None and context[0] is records:
+        _, realm, entry, previous = context
+        later_commands = emit_document_commands(previous, bundle)
+        if later_commands:
+            removal_commit(realm, later_commands, 'Edit surviving row')
+        publications = [entry['publication_id']]
+        command = {'schema_version': 1, 'op': 'timeline.inverse', 'version': '1',
+                   'select': None, 'args': {'publications': publications}}
+        selected = removal_records(realm, entry, bundle)
+        later_records = [record for item in realm.entries[
+            realm.entries.index(entry) + 1:] for record in item['records']['commands']]
+        # Acceptance exercises the production history guard; local execution
+        # retains the fixture's authoring projection for its exact comparisons.
+        removal_commit(realm, [command], 'Invert collection edit')
+        plan = execute(bundle, [command], inverse_records=selected,
+                       intervening_records=[*later_records, *intervening])
+        _REMOVALS[id(plan.records)] = (plan.records, realm, realm.entries[-1],
+                                      copy.deepcopy(plan.bundle))
+        return plan
     return execute(bundle, [{'schema_version': 1, 'op': 'timeline.inverse', 'version': '1',
                              'select': None, 'args': {'publications': ['accepted-publication']}}],
                    inverse_records=records, intervening_records=intervening)
@@ -603,24 +634,65 @@ def test_materialization_alias_is_exact_for_arbitrary_source_ids():
 
 
 def recorded_removal(original, owner, kind, identities):
-    from astrid.sdk.timeline._recording import Recording
+    from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm
 
+    realm = MediaRealm(document_from_bundle(original), [])
     candidate = copy.deepcopy(original)
-    ctx = Recording(candidate, {'schema_version': 1, 'op': kind + '.remove', 'version': '1',
-                                 'select': owner, 'args': {}}, 0)
-    ctx.select('collection.' + kind + 's', owner)
-    for identity in identities:
-        ctx.clear(owner + '/' + kind + ':' + identity, [])
-    ctx.compile_mirrors()
-    return candidate, [ctx.finish(capture=True)]
+    rows = State(candidate).collection(owner, kind)
+    rows[:] = [row for row in rows if row['id'] not in identities]
+    if owner == 'parent' and kind == 'clip':
+        commands = [{'schema_version': 1, 'op': 'clip.delete', 'version': '1',
+                     'select': owner + '/clip:' + identity, 'args': {}}
+                    for identity in identities]
+    else:
+        commands = emit_document_commands(original, candidate)
+    result = removal_commit(realm, commands, 'Remove collection rows')
+    removed = bundle_from_document(result['data']['canonical_document'])
+    records = removal_records(realm, realm.entries[-1], removed)
+    _REMOVALS[id(records)] = (records, realm, realm.entries[-1], copy.deepcopy(removed))
+    return removed, records
+
+
+def removal_commit(realm, commands, label):
+    from tests.editing_conformance.test_doc_patch_v2 import submit
+
+    document = realm.documents[realm.head['revision_id']]
+    return submit(
+        realm, *commands, project_id=document['project_id'], timeline_id=document['timeline_id'],
+        label=label, merge='fields', reads=[], dry_run=False, source={'via': 'python'},
+        rationale='M1 exact collection inverse and redo', group_id='m1-collection',
+        steps=[{'id': 'edit', 'label': label, 'intent': 'Preserve full rows and authored order',
+                'tags': [], 'command_ordinals': list(range(len(commands))), 'reads': [],
+                'patch': [change for command in commands if command['op'] == 'doc.patch'
+                          for change in command['args']['changes']]}])
+
+
+def removal_records(realm, entry, head):
+    from astrid.sdk.timeline._collections import AcceptedRecords
+    from astrid.sdk.timeline._commit_patch import inverse_address_resolver
+    from astrid.sdk.timeline._step_undo import select_inverse_records
+
+    def load_boundary(item):
+        previous = next(edge for edge in realm.entries
+                        if edge['publication_id'] == item['previous']['publication_id'])
+        return tuple(bundle_from_document(edge['receipt']['result'].get(
+            'canonical_document', realm.documents[edge['revision_id']]))
+                     for edge in (previous, item))
+
+    history = {item['publication_id']: item for item in realm.entries}
+    accepted = AcceptedRecords([entry], entry['records']['commands'], load_boundary)
+    resolver = inverse_address_resolver(
+        realm.entries[1:], head, load_boundary=load_boundary, load_history=history.__getitem__)
+    return select_inverse_records(accepted, address_resolver=resolver)
 
 
 def accepted_boundaries(records, before, after):
-    from astrid.sdk.timeline._collections import AcceptedRecords
-
-    entry = {'records': {'commands': records,
-                         'undo_of': records[0]['command']['args']['publications']}}
-    return AcceptedRecords([entry], records, lambda _: (before, after))
+    # The accepted entry supplies the boundary, never the caller's projections.
+    captured, realm, entry, previous = _REMOVALS[id(records)]
+    assert captured is records
+    accepted = removal_records(realm, entry, after)
+    _REMOVALS[id(accepted)] = (accepted, realm, entry, previous)
+    return accepted
 
 
 @pytest.mark.parametrize('owner', ['parent', 'occurrence:occ-1'])
