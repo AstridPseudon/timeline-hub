@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T04:03:45Z | dispatcher heartbeat 6s | live 2 (sol 1, luna 1, other 0) | busy30 14 | status age 0m -->
-# runtime board, 2026-10-24T03:57:00Z
+<!-- main | 2026-10-24T04:06:14Z | dispatcher heartbeat 4s | live 5 (sol 1, luna 4, other 0) | busy30 17 | status age 0m -->
+# runtime board, 2026-10-24T04:05:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -48,7 +48,7 @@
 | R5-full-speed | Preserve six speed refusals | Luna | Integrated proof passed | merged | Review 0138; port review 0148; service 13500 | Actual head 28bb passed 14 cases. Original six inputs and SQL/CAS checks retained; no new type diagnostics. | 4e983cebc / 0e28e6261 |
 | R5-full-receipt-key | Preserve receipt and key guards | Luna | Integrated proof passed | merged | Reviews 0138 and 0148; integrated 0157 | Actual head 28bb passed both cases with explicit Agent source path. All receipt and replay equalities retained. | 28bb65668 / b57ab2331 |
 | R5-full-conformance | Declare actual retired-route errors | Sol / Luna | Integrated source proof complete | merged | Final review0242; integrated19379 | Actual head f320 passed 162 cases. Three generation checks deferred to freeze. [Proof](../../design/runtime-D39-D40-integrated-0246.md) | a7a2fe6a5 |
-| F-full-census-review | Reconcile exact open full-suite nodes | Luna independent | D43 exact node evidence | doing | Census 0113 PASS; accounting 0400 | Original 36 failures verified. Current closed-node credit is being checked against integrated original-node proofs. | Evidence only |
+| F-full-census-review | Reconcile exact open full-suite nodes | Luna independent | D43 accounting review | review | Author 0400; review 0405 | Author counts 25 of 36 failures open; 11 exact original-node credits await independent review. | Evidence only |
 | R2r-external-pack-source | Bind external pack authority | Sol / Luna | Runtime producer proof complete | merged | Security0240; integrated10713 | Actual head f320 passed 317 cases; two configured exclusions. Agent owns consumer proof. [Proof](../../design/runtime-D39-D40-integrated-0246.md) | f3208b26b / eb2775376 |
 | R-readiness-commits-hang | Reduce authenticated history cost | Sol / Luna | Integrated proof passed | merged | Source 0212; final 0205; proof 0210 | Actual head 45c3 passed 145 cases with Agent 4151, no skips. Historical cause unknown. [Proof](../../design/runtime-readiness-integrated-0210.md) | 45c3a7f47 |
 | R-readiness-compatible | Cost-only proof pin on old client | Sol / Luna | Freeze adoption | gated:freeze | Author0241; reviews0245 and0302 | Exact Agent 4151 archive passed 145 cases in 60.12 seconds. App child and caller qualified; proof pin only. | 37eb6c7bd |
@@ -56,10 +56,10 @@
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Agent existing child qualified | merged | Source 0125; review 0132; Agent 0137 | Exact seven cases passed in 3.60 seconds on existing child c886; wrong-tree control refused. Source and body identities retained. | Source 521c888; installed c36 |
 
-| OPS-farm-agent-full | Prepare supported farm full-suite setup | Luna / Luna | Exact farm suite and tuple inputs | doing | rt-OPS-farm-agent-full-0358 | Candidate only: fresh store API, authentic template and separate full-farm row. No live operation or full run. | Integration artifact base |
-| R2r-historical-image | Classify current inverse image mismatch | Sol / Luna | Exact Agent 12701589 source | doing | rt-R2r-historical-image-sol-0353 | Original last-owner case fails on Runtime 36760. Compare actual native and effect images; no bug attribution yet. | 36760 base |
+| OPS-farm-agent-full | Prepare supported farm full-suite setup | Luna / Luna | Exact farm suite and tuple inputs | review | Author 0358; review 0405 | Four private tests passed. Farm baseline and actual source receipt remain unverified; no live install. | 9c81f15e artifact only |
+| R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Independent security review | review | Author 0353; review 0405 | 13 standalone cases and 243 controls passed; 74 configured deselections. Original packet remains uncertified. | 2e96c68c held |
 | R-D42-history-memo | Memoize complete verified replay inputs | Sol / Luna | Stateful dependency correction | doing | Review 0357 found bypass; Sol 0403; audit 0403 | 145 passed. Mutable closure attack still bypasses warm verification. Candidate held; whole validation path under review. | a6843aa9 held |
-| R-D42-proof-pin | Backport memo onto compatible proof pin | Sol / Luna | Source review in parallel | doing | Corrected pin Sol 0358; prior 0339 BLOCKED | 145 plus 135 passed; helper bypass reproduced. Ten imported later guards also fail on unchanged parent. | 37eb base; candidate held |
+| R-D42-proof-pin | Backport memo onto compatible proof pin | Sol / Luna | Corrected source and review | blocked:runtime | Pin 0358 reproduced closure bypass | 160 pin cases passed; source remains unsafe. Old client and all 64 protected hashes match. | a684 backport held |
 | R-D42-HTTP | Cold, warm and concurrent native21 GET | Luna | Corrected reviewed proof pin | blocked:runtime | HTTP 0344 stop requested | Preparation retained. Release needs cold, warm and two concurrent HTTP timings on exact committed pin. | Await corrected pin |
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
@@ -68,7 +68,7 @@ Runtime integration is 36760ee0ad, tree 11389911c2ee. Foreign retirement passed 
 The earlier history cost fix passed 145 cases on exact head 45c3 with Agent 4151. Compatible proof pin 37eb remains separate from integration. The D42 memo is held after a security failure; Sol 0346 owns its correction. Current wire shapes and consumer pins remain unchanged. No final full-suite pass is claimed.
 
 Blockers: App / Proof — P3 3362 failed before Gate5. P2 12221 passed readiness; three gestures failed, five not run. App owns causes and D42 coalescing; no repeat before qualified pin.
-Blockers: Runtime — Full 29085 retains 36 failures. Targeted speed, receipt and manifest repairs passed. Headless, occupancy and contract remain assigned. No unchanged full rerun.
+Blockers: Runtime — Full 29085 had 36 failures. D43 author counts 25 open and 11 closed; independent 0405 reviews exact-node credits. Headless and occupancy families remain open. No full rerun.
 Blockers: Freeze — D39 client regeneration and Agent/App tuple adoption are held for the freeze; current consumer pins stay intact.
 Blockers: Runtime — D42 review 0357 demonstrated a mutable closure bypass. Sol 0403 owns correction; independent whole-path audit 0403 runs in parallel. No pin release.
 Blockers: Agent — D40 consumer merged on 4745 after independent 32-control review. Integrated and installed qualifications remain Agent-owned; no Runtime producer action owed.
@@ -79,4 +79,4 @@ D34: Main remains near 8.4 GiB. The orchestrator orders no further main disk wor
 
 Later: Legacy admission and v1 archive retirement resume only below 8.5 GB or after delivery. The finite Agent prune assessment found no unreferenced target. No live cleanup or installation is qualified this pass.
 
-Next ready: D42 corrected source review, source merge and integrated proof, corrected proof pin and independent review, then required HTTP release timings. Agent owns alias, headless effects and occupancy joins.
+Next ready: D42 corrected source review, source merge and integrated proof, corrected proof pin and independent review, then required HTTP release timings. Agent owns alias, headless effects and its occupancy join; Runtime owns the new redo image correction.
