@@ -71,10 +71,15 @@ FINAL_SOURCE_MANIFEST_ENV = "TIMELINE_P3_FINAL_SOURCE_MANIFEST"
 PURE_PROOF_MANIFEST_ENV = "TIMELINE_P3_PURE_PROOF_MANIFEST"
 FINAL_HOME_BASE = "2e3c8f65a8628127cd283ed26116f7bcb2977b83"
 FINAL_HOME_REQUIRED_PARENTS = (FINAL_HOME_BASE, P3_SOURCE)
+FINAL_HOME_SOURCE = "602f8b1f58593302829fb449d0ded62a91462a22"
+FINAL_HOME_TREE = "a38844975865110cd2c026dc10fd7aa1ea488e71"
 FINAL_HOME_CHECKOUT_RECEIPT = ORCH / "queue" / "done" / "checkout-app-602f8b1f58593302829fb449d0ded62a91462a22"
 FINAL_HOME_CHECKOUT_RECEIPT_SHA256 = "bb462c89a7679a43dfcd855fe36c47c97c2d37dd0be8a674508ace8ed9223327"
 RETAINED_OUTSIDE_BEFORE = Path("/tmp/w-8922952ec4/app-P3-solo-return-1011/outside.before")
 EXPECTED_REMOVED_ROW = "agent venv-agent-child-app-p3-079-2a9-2147-full"
+P2_INSTALLED_ROW_SHA256 = "6a45d0567f7dea7a3c15fbcaf687f9dd62debf4527464529d8a4faf8f8e48fee"
+P3_INSTALLED_ROW_SHA256 = "23226c274dbdbb8750f009cb89d7920db40eb49513af906df7b4f76d9a7a3bf0"
+REGISTRY_OUTSIDE_SHA256 = "b9c97fbbfd26fa4d6d2ed3fac150196fc3fbae24deade990624196f0c5423fee"
 SOURCE_BASE = D53_BASE
 AGENT = "079580ca46af77e0292d49dc34386b25c8391f99"
 RUNTIME = "37eb6c7bdb79dcae2523883e66b5cea5be721ffd"
@@ -127,6 +132,11 @@ def git(root: Path, *args: str) -> bytes:
 
 def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def require(condition: bool, message: str) -> None:
+    if not condition:
+        raise RuntimeError(f"PREPARED: {message}")
 
 
 def git_blob(data: bytes) -> str:
@@ -262,7 +272,7 @@ def pure_proof_input(final: dict[str, object]) -> dict[str, object] | None:
 
 def final_source_input() -> dict[str, object]:
     """Capture final HOME by full SHA and fixed pure-proof provenance."""
-    if os.environ.get("TIMELINE_FINAL_SOURCE_MANIFEST"):
+    if os.environ.get(FINAL_SOURCE_MANIFEST_ENV):
         raise RuntimeError("PREPARED: generic final source manifests are unsupported")
     root = FINAL_HOME
     if root.is_symlink() or root == APP or not root.is_dir():
@@ -274,7 +284,7 @@ def final_source_input() -> dict[str, object]:
     source = git(root, "rev-parse", "HEAD").decode().strip()
     tree = git(root, "show", "-s", "--format=%T", source).decode().strip()
     parents = tuple(git(root, "show", "-s", "--format=%P", source).decode().strip().split())
-    if len(source) != 40 or parents != FINAL_HOME_REQUIRED_PARENTS:
+    if source != FINAL_HOME_SOURCE or tree != FINAL_HOME_TREE or parents != FINAL_HOME_REQUIRED_PARENTS:
         raise RuntimeError("PREPARED: final HOME is not the reviewed D52 plus D53 merge")
     checkout_receipt = exact_record(
         FINAL_HOME_CHECKOUT_RECEIPT,
@@ -372,6 +382,8 @@ def source_custody(final: dict[str, object]) -> dict[str, object]:
         path: digest(source_bytes(root, P3_SOURCE, path))
         for path in required_paths
     }
+    if observed_hashes != reviewed_hashes:
+        raise RuntimeError("PREPARED: final reviewed source bodies differ from the authenticated D53 source")
     tail = final_regions["canonical_tail"]
     p3 = final_regions["gate5_body"]
     parents = tuple(parent.split())
@@ -396,33 +408,33 @@ def custody_facts() -> dict[str, object]:
     child_receipt = ORCH / "queue/done" / f"childvenv-{CHILD}"
     remotion_receipt = ORCH / "queue/done" / f"runtime-{REMOTION}"
     child_root = Path("/home/user/work/bench-store/entries") / f"child-{CHILD_KEY}"
-    assert git(AGENT_CHECKOUT, "rev-parse", "HEAD").decode().strip() == AGENT
-    assert git(AGENT_CHECKOUT, "show", "-s", "--format=%T", "HEAD").decode().strip() == "2deab1a1494fbccfce5e9235412bacb8a949c0cd"
-    assert not git(AGENT_CHECKOUT, "status", "--porcelain=v1", "--untracked-files=all").strip()
-    assert git(RUNTIME_CHECKOUT, "rev-parse", "HEAD").decode().strip() == RUNTIME
-    assert git(RUNTIME_CHECKOUT, "show", "-s", "--format=%T", "HEAD").decode().strip() == RUNTIME_TREE
-    assert not git(RUNTIME_CHECKOUT, "status", "--porcelain=v1", "--untracked-files=all").strip()
+    require(git(AGENT_CHECKOUT, "rev-parse", "HEAD").decode().strip() == AGENT, "Agent checkout identity changed")
+    require(git(AGENT_CHECKOUT, "show", "-s", "--format=%T", "HEAD").decode().strip() == "2deab1a1494fbccfce5e9235412bacb8a949c0cd", "Agent checkout tree changed")
+    require(not git(AGENT_CHECKOUT, "status", "--porcelain=v1", "--untracked-files=all").strip(), "Agent checkout is dirty")
+    require(git(RUNTIME_CHECKOUT, "rev-parse", "HEAD").decode().strip() == RUNTIME, "Runtime checkout identity changed")
+    require(git(RUNTIME_CHECKOUT, "show", "-s", "--format=%T", "HEAD").decode().strip() == RUNTIME_TREE, "Runtime checkout tree changed")
+    require(not git(RUNTIME_CHECKOUT, "status", "--porcelain=v1", "--untracked-files=all").strip(), "Runtime checkout is dirty")
     for receipt in (provision_receipt, child_receipt, remotion_receipt):
-        assert receipt.is_file()
+        require(receipt.is_file() and not receipt.is_symlink(), f"custody receipt is unavailable: {receipt}")
     provision = provision_receipt.read_text()
     child = child_receipt.read_text()
     remotion = remotion_receipt.read_text()
-    assert f"agent_sha={AGENT}" in provision and f"runtime_sha={RUNTIME}" in provision
-    assert f"requested_name={CHILD}" in child and f"actual_agent={AGENT}" in child and f"actual_runtime={RUNTIME}" in child
-    assert f"requested_name={REMOTION}" in remotion and f"requested_runtime_sha={RUNTIME}" in remotion
-    assert "reuse=verified" in remotion
+    require(f"agent_sha={AGENT}" in provision and f"runtime_sha={RUNTIME}" in provision, "Agent/Runtime provision receipt is not authentic")
+    require(f"requested_name={CHILD}" in child and f"actual_agent={AGENT}" in child and f"actual_runtime={RUNTIME}" in child, "child receipt is not authentic")
+    require(f"requested_name={REMOTION}" in remotion and f"requested_runtime_sha={RUNTIME}" in remotion, "Remotion receipt is not authentic")
+    require("reuse=verified" in remotion, "Remotion receipt does not prove verified reuse")
 
     paths = git(RUNTIME_CHECKOUT, "ls-tree", "-r", "--name-only", RUNTIME, "packages/python/astrid_runtime_client/").decode().splitlines()
-    assert len(paths) == 4
+    require(len(paths) == 4, "runtime client file set changed")
     client_hashes = {}
-    assert child_root.is_dir() and not child_root.is_symlink()
+    require(child_root.is_dir() and not child_root.is_symlink(), "child environment root is unavailable")
     child_site = child_root / "lib/python3.13/site-packages"
     for path in paths:
         runtime_bytes = git(RUNTIME_CHECKOUT, "show", f"{RUNTIME}:{path}")
         agent_path = path.removeprefix("packages/python/")
-        assert runtime_bytes == git(AGENT_CHECKOUT, "show", f"{AGENT}:{agent_path}")
+        require(runtime_bytes == git(AGENT_CHECKOUT, "show", f"{AGENT}:{agent_path}"), f"Agent/Runtime client differs: {path}")
         installed = child_site / agent_path
-        assert installed.is_file() and installed.read_bytes() == runtime_bytes
+        require(installed.is_file() and installed.read_bytes() == runtime_bytes, f"installed client differs: {path}")
         client_hashes[path] = digest(runtime_bytes)
 
     backend_hashes = {}
@@ -431,15 +443,15 @@ def custody_facts() -> dict[str, object]:
         if path.endswith(".py"):
             data = git(RUNTIME_CHECKOUT, "show", f"{RUNTIME}:{path}")
             installed = child_site / path
-            assert installed.is_file() and installed.read_bytes() == data
+            require(installed.is_file() and installed.read_bytes() == data, f"installed runtime backend differs: {path}")
             backend_hashes[path] = digest(data)
-    assert len(backend_hashes) == 78
-    assert digest(json.dumps(backend_hashes, sort_keys=True, separators=(",", ":")).encode()) == "d70ce25e13e02c1b805e682e7e098fba78cc6732f90c482a84bf074ab98ef2bb"
+    require(len(backend_hashes) == 78, "runtime backend file set changed")
+    require(digest(json.dumps(backend_hashes, sort_keys=True, separators=(",", ":")).encode()) == "d70ce25e13e02c1b805e682e7e098fba78cc6732f90c482a84bf074ab98ef2bb", "runtime backend digest changed")
 
     graph_root = REMOTION_ROOT / "node_modules/@banodoco/timeline-composition"
     graph_files = sorted(path for path in graph_root.rglob("*") if path.is_file())
     graph_hashes = {str(path.relative_to(graph_root)): digest(path.read_bytes()) for path in graph_files}
-    assert len(graph_hashes) == 80
+    require(len(graph_hashes) == 80, "Composition graph file set changed")
     return {"agent": AGENT, "agent_tree": "2deab1a1494fbccfce5e9235412bacb8a949c0cd", "runtime": RUNTIME, "runtime_tree": RUNTIME_TREE, "child": CHILD, "child_key": CHILD_KEY, "remotion": REMOTION, "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db", "provision_receipt_sha256": digest(provision_receipt.read_bytes()), "child_receipt_sha256": digest(child_receipt.read_bytes()), "remotion_receipt_sha256": digest(remotion_receipt.read_bytes()), "client_file_count": len(client_hashes), "client_hashes": client_hashes, "runtime_backend_file_count": len(backend_hashes), "runtime_backend_digest": digest(json.dumps(backend_hashes, sort_keys=True, separators=(",", ":")).encode()), "graph_file_count": len(graph_hashes), "graph_digest": digest(json.dumps(graph_hashes, sort_keys=True, separators=(",", ":")).encode()), "daemon_identity": "UNINFERRED_BY_SOURCE_PREPARATION"}
 
 
@@ -450,9 +462,9 @@ def selected_rows() -> tuple[bytes, dict[str, tuple[int, bytes]]]:
     for index, line in enumerate(lines, 1):
         fields = line.split(None, 2)
         if len(fields) >= 2 and fields[0] == b"app" and fields[1].decode() in SUITES:
-            assert fields[1].decode() not in found
+            require(fields[1].decode() not in found, "suite registry has duplicate selected rows")
             found[fields[1].decode()] = (index, line)
-    assert set(found) == set(SUITES)
+    require(set(found) == set(SUITES), "suite registry does not contain the exact selected rows")
     return raw, found
 
 
@@ -555,13 +567,13 @@ def add_stages(inner: str, n: int) -> str:
         ]
         updated = inner
         for marker, assignment in markers:
-            assert updated.count(marker) == 1
+            require(updated.count(marker) == 1, f"P{n} stage marker is not unique")
             updated = updated.replace(marker, assignment + marker, 1)
         return updated
 
     updated = inner
     native = 'if test "$SETUP_OK" = 1 && test "$P3FAIL" = ""; then "${ENV_BASE[@]}" timeout 300s node --import tsx'
-    assert updated.count(native) == 1
+    require(updated.count(native) == 1, f"P{n} native stage is not unique")
     updated = updated.replace(native, stage_assignment('$P3O/tests/$RUN_ID/playwright-output/p3/native-history') + native, 1)
     return updated
 
@@ -571,11 +583,11 @@ def add_tail_stages(tail: str, n: int) -> str:
         return '{ PLAYWRIGHT_OUTPUT_DIR="' + root + '" && mkdir -p "$PLAYWRIGHT_OUTPUT_DIR" && export PLAYWRIGHT_OUTPUT_DIR; } && '
     if n == 2:
         needle = 'eval "$P2_ENV" && env -u NODE_PATH NODE_OPTIONS=--max-old-space-size=6144'
-        assert tail.count(needle) == 1
+        require(tail.count(needle) == 1, "P2 tail stage is not unique")
         return tail.replace(needle, 'eval "$P2_ENV" && ' + select('${PLAYWRIGHT_OUTPUT_DIR%/*}/original-body') + 'env -u NODE_PATH NODE_OPTIONS=--max-old-space-size=6144', 1)
     mounted = '&& env -u NODE_PATH NODE_OPTIONS=--max-old-space-size=4096'
     positions = [i for i in range(len(tail)) if tail.startswith(mounted, i)]
-    assert len(positions) == 2
+    require(len(positions) == 2, "P3 mounted stages are not unique")
     tail = tail[:positions[1] + 3] + select('${PLAYWRIGHT_OUTPUT_DIR%/*}/gate5') + tail[positions[1] + 3:]
     return tail[:positions[0] + 3] + select('$PLAYWRIGHT_OUTPUT_DIR/p3/mounted-readiness') + tail[positions[0] + 3:]
 
@@ -585,7 +597,7 @@ def extract_inner(line: bytes) -> tuple[str, str, str]:
     start = outer.index("$(bash -c ") + len("$(bash -c ")
     end = outer.index(")\" && eval", start)
     decoded = shlex.split(outer[start:end])
-    assert len(decoded) == 1
+    require(len(decoded) == 1, "caller bash payload is not a single decoded argument")
     return outer, decoded[0], outer[end:]
 
 
@@ -680,6 +692,10 @@ def prepare(out: Path) -> dict[str, object]:
     retained_evidence = retained_registry_evidence(outside)
     p2_line = rows[P2_SUITE][1]
     p2_line_sha256 = digest(p2_line)
+    require(p2_line_sha256 == P2_INSTALLED_ROW_SHA256, "installed P2 row is not the authenticated current row")
+    require(digest(rows[P3_SUITE][1]) == P3_INSTALLED_ROW_SHA256, "installed P3 row/body is not the authenticated current row")
+    require(registry["outside_row_count"] == 248, "suite registry outside-row count changed")
+    require(registry["outside_sha256"] == REGISTRY_OUTSIDE_SHA256, "suite registry outside rows are not the authenticated current snapshot")
     replacements = {}
     drafts = {}
     stage_records = {}
@@ -694,7 +710,7 @@ def prepare(out: Path) -> dict[str, object]:
                 "unchanged": True,
             }
             continue
-        assert name == P3_SUITE
+        require(name == P3_SUITE, "unexpected selected suite row")
         text = line.decode()
         outer, inner, tail = extract_inner(line)
         app_match = re.search(rf"\bP{n}APP=([0-9a-f]{{40}})", inner)
@@ -746,22 +762,22 @@ def prepare(out: Path) -> dict[str, object]:
             for path, info in source["fingerprints"].items() if path not in guarded_paths
         )
         marker = f"if ! P{n}_ALLOCATED_PORT="
-        assert updated.count(marker) == 1
+        require(updated.count(marker) == 1, "P3 allocated-port guard is not unique")
         if extra:
             updated = updated.replace(marker, extra + " " + marker, 1)
-        assert f"P{n}A={AGENT}" in updated and f"P{n}R={RUNTIME}" in updated
-        assert CHILD in updated and REMOTION in updated
+        require(f"P{n}A={AGENT}" in updated and f"P{n}R={RUNTIME}" in updated, "P3 Agent/Runtime identity controls changed")
+        require(CHILD in updated and REMOTION in updated, "P3 retained child identities changed")
         native_start = inner.index("import { expect }")
         native_end = inner.index("finally { await harness.stop(); }")
         before_native = inner[native_start:native_end]
         # Keep the installed P3 shell byte-for-byte intact; this pass only
         # refreshes its App identity and source guards for the reviewed source.
-        assert updated.count("PLAYWRIGHT_OUTPUT_DIR=") >= 2
-        assert "original-body-NOTRUN" in updated
+        require(updated.count("PLAYWRIGHT_OUTPUT_DIR=") >= 2, "P3 output stage controls were removed")
+        require("original-body-NOTRUN" in updated, "P3 original-body refusal marker was removed")
         updated_native_start = updated.index("import { expect }")
         updated_native_end = updated.index("finally { await harness.stop(); }")
-        assert updated[updated_native_start:updated_native_end] == before_native
-        assert f"P{n}_ALLOCATED_PORT" in updated and "original-body-NOTRUN" in updated
+        require(updated[updated_native_start:updated_native_end] == before_native, "P3 native body changed")
+        require(f"P{n}_ALLOCATED_PORT" in updated and "original-body-NOTRUN" in updated, "P3 stage refusal controls changed")
         controls = mechanical_controls(updated, n, len(row_fingerprints(inner, n)), final)
         new_outer = outer[:outer.index("$(bash -c ") + len("$(bash -c ")] + shlex.quote(updated) + tail
         for label, data in ((f"p{n}-inner.sh", inner), (f"p{n}-new-inner.sh", updated), (f"p{n}-outer.sh", outer), (f"p{n}-new-outer.sh", new_outer)):
@@ -813,7 +829,7 @@ def prepare(out: Path) -> dict[str, object]:
             "source_manifest": "not used; clean merged HOME identity is authoritative",
             "pure_proof": final.get("pure_proof_status"),
         },
-        "missing_inputs": ["pure proof real receipt", "integrated P3 execution and daemon identity"],
+        "missing_inputs": ["integrated P3 execution and daemon identity"],
         "negative_context": {"source_target_0644": "retained as source-only context", "wrong_artifacts": ["20674", "10144"], "wrong_artifacts_status": "preflight-only, originals NOTRUN; never reuse or relabel"},
         "retention_reuse": {"allowed": True, "condition": "decoded caller logic byte-identical after audited bindings/fingerprints/body hashes/log identity", "otherwise": "bounded real execution controls required", "qualified_stages": 60},
         "selected_source": {
