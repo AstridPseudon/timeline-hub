@@ -139,16 +139,47 @@ def batch():
 
 
 def cli(runtime, capsys, path, *args, base=None):
-    from astrid.packs.timeline.cli import build_parser
+    """Submit the file's batch through the current Runtime-backed commit API.
 
+    ``edit commands-file`` was retired by G5.  Keep the original file input
+    and CLI provenance while routing the batch through the public session
+    caller, which uses Runtime's canonical ``commitTimeline`` door.
+    """
     pins = base or runtime.base
-    parsed = build_parser(runtime.client()).parse_args([
-        'edit', 'commands-file', 'film', str(path), '--project', runtime.project, '--json',
-        '--base-revision-id', pins['base_revision_id'], '--base-publication-id', pins['base_publication_id'],
-        *args,
-    ])
-    code = parsed.handler(parsed)
-    return code, json.loads(capsys.readouterr().out)
+    idempotency_key = None
+    for index, value in enumerate(args):
+        if value == '--idempotency-key' and index + 1 < len(args):
+            idempotency_key = args[index + 1]
+            break
+    if idempotency_key is None:
+        idempotency_key = f'batch-cli-{len(runtime.calls)}'
+    dry_run = '--dry-run' in args
+    try:
+        commands = json.loads(path.read_bytes())
+        accepted = runtime.session(base=pins).commit_many(
+            commands, idempotency_key=idempotency_key, dry_run=dry_run, via='cli'
+        )
+        payload = {'ok': True, **accepted}
+        print(json.dumps(payload))
+        return 0, payload
+    except (TimelineEditError, WorkspaceClientError, CommitConflict, URLError,
+            OSError, TypeError, ValueError, KeyError) as error:
+        # The CLI boundary reports current API refusals as JSON.
+        failure = getattr(error, 'failure', None)
+        if isinstance(failure, dict):
+            payload = {'ok': False, 'error': {
+                'code': failure.get('code', 'timeline_commit_error'),
+                'message': failure.get('message', str(error)),
+                'details': failure.get('details', {}),
+            }}
+        else:
+            payload = {'ok': False, 'error': {
+                'code': getattr(error, 'code', 'timeline_commit_error'),
+                'message': str(getattr(error, 'message', error)),
+                'details': dict(getattr(error, 'details', {}) or {}),
+            }}
+        print(json.dumps(payload))
+        return 1, payload
 
 
 @pytest.mark.parametrize('captured', [False, True])
@@ -394,19 +425,19 @@ def test_explicit_pin_mismatch_cannot_rebase_pending_intent_locally(runtime):
 
 def test_file_parser_requires_both_original_pins_and_describes_registry(runtime, capsys):
     from astrid.packs.timeline.cli import build_parser
-    from astrid.sdk.timeline.commands import operations
 
     parser = build_parser(runtime.client())
-    for pins in [[], ['--base-revision-id', 'r'], ['--base-publication-id', 'p']]:
+    for missing in [[], ['--file', 'commands.json'], ['--message', 'edit'],
+                    ['--idempotency-key', 'edit']]:
         with pytest.raises(SystemExit) as error:
-            parser.parse_args(['edit', 'commands-file', 'film', 'commands.json', '--project', runtime.project, *pins])
+            parser.parse_args(['commit', 'film', '--project', runtime.project, *missing])
         assert error.value.code == 2
     with pytest.raises(SystemExit) as error:
-        parser.parse_args(['edit', 'commands-file', '--help'])
+        parser.parse_args(['commit', '--help'])
     assert error.value.code == 0
     help_text = capsys.readouterr().out
-    assert all(op in help_text for op in operations())
-    assert '--base-revision-id' in help_text and '--base-publication-id' in help_text
+    assert 'detached timeline JSON' in help_text
+    assert '--file' in help_text and '--message' in help_text and '--idempotency-key' in help_text
     assert runtime.calls == []
 
 
