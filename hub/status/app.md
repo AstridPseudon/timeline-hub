@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T23:32:25Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 0m -->
+<!-- app | 2026-10-24T23:35:47Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 2m -->
 # app board, 2026-10-24T23:32Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -122,7 +122,7 @@
 
 | P2-popup-path | Bind parent hash helper to pinned Python source | Luna harness | Actual5217 import failure | doing | app-P2-popup-python-path-return-2327 | Minimum existing import-path pattern; real helper/Python/Runtime checkout with PYTHONPATH unset must prove oldRED/newGREEN. Assertions unchanged. | Base32036 |
 
-| A3-SWAP-claim | Declare newly created occurrence asset | Luna | Runtime2308 exact attribution | ready | Next source slot | App provider866 omits commands1.created; Agent allocates alias. Use conditional ADD pattern, preserve strict Runtime guard; one core review. | Appbceb; Runtime732 |
+| A3-SWAP-claim | Declare newly created occurrence asset | Luna | Runtime2308 exact attribution | blocked:runtime | Runtime2308 followup requested2334 | App provider866 omits commands1.created; Agent allocates alias. Use conditional ADD pattern, preserve strict Runtime guard; one core review. | Appbceb; Runtime732 |
 | P2-main-bulk | Attribute None display and sentinel | Luna | Main actual2773 terminal | ready | Same tour batch as2323 | UI displays __none__ while expected None. Cause unproved; inspect source plus real retained selection before any exact expectation change. | Appbceb; Runtime732 |
 
 Integration: Current App32036b3cc0ff0b4c02d3940b0ad0dd4316fc239f merges independently reviewed parent oracle fe628 onto reviewed asset home7d53. Both reviewed handoff source/test blobs exact. Popup parent exact normalization is merged32036; next meaningful ADD ready after source/body slots free. App normally adopts Runtime732c48c6f5a9441a65c61b24595d454a1cd3e180. Exact diagnostic tuple is Appbceb / Agent039ff2c2187d02b723074a8a6dfcbc6a70544c19 / Runtime732 / Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40. Existing asset5fcb and strict placement00918 repairs are included; original placement spec413d and other five protected files retained.
@@ -133,7 +133,7 @@ regressions: Mounted image drop/placement routing repair a470 is in review; Runt
 Blockers: Final cut — all8 isolated P2 plus full tour, final pinned P1–P5/core, D69 and genuine installed render required. Runtime coordinates matrix and ZIP. P1 31083 and P3 15493 GO retain recorded tuple scopes.
 Next ready: Asset8419 still no intended POST; unique HARD Sol2319 owns mounted wiring for both drop paths. Placement2313 read-only finding published. Placement8259 source author2313 dispatched at review slot release. Parent8232 exact envelope correction takes next source slot. Popup parent oracle home32036; ADD5217 submitted after asset8419 terminal; parent8232 source2323 dispatched immediately as launch checkpoint freed slot. Runtime2250 owns main four profile dependency; no App input owed. No P3, D79 or E work.
 
-live 2 / cap 2; ready-undispatched 2 (tour batch and SWAP claim). Luna2331 drop review and Luna2327 helper setup; no active App body.
+live 2 / cap 2; ready-undispatched 1 (tour batch). SWAP source exclusively offered Runtime spare D85 capacity; no duplicate App writer. Luna2331 drop review and Luna2327 helper setup; no active App body.
 Capacity: Every ended clean non-KEEP local worktree scanned this pass; zero eligible. Latest ten stale pins released through guarded D74a route, receipt design/app-D74a-fresh-stale-pins-2214.md. Current tuple pins and all run evidence retained.
 Disk: 5.822GB after ADD5217 terminal; D85 source cap6 needs above6.5GB, so current cap2; floor5.2GB for new critical dispatch, stop4.5GB. Owner22:14 App critical source/gate floor5.2GB; stop4.5GB, NON-element first. One body at a time on App; parallel main diagnostic venue authorized22:24. Noncritical work retains7.5GB floor.
 Safety: No new refusal. Prior dirtyU3, compact, graph, publication and source-access refusal targets stay stopped. No raw deletion or alternative denied route.
