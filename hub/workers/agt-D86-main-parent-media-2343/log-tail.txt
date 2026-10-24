@@ -1,400 +1,400 @@
-109-    assert candidate["shot_revisions"] == document["shot_revisions"]
-110-    assert candidate["internal_timeline_revisions"] == document["internal_timeline_revisions"]
-111-    assert candidate["dependency_manifest"] == document["dependency_manifest"]
-112-    parent = candidate["parent_revision"]["payload"]
-113-    assert parent["occurrences"] == document["parent_revision"]["payload"]["occurrences"]
-114-    assert parent["name"] == "Renamed Film"
-115-    assert parent["unknown"] == document["parent_revision"]["payload"]["unknown"]
-116-    assert parent["config"]["output"]["fps"] == {"numerator": 30000, "denominator": 1001}
-117-    assert candidate["parent_revision"]["revision_id"] != "parent-1"
-118-
-119-
-120-def test_occurrence_edit_closes_reused_sibling_and_new_exact_child():
-121-    document = document_fixture()
-122-    bundle = bundle_from_document(document)
-123-    shot = bundle["shots"][bundle["placements"][0]["shot_id"]]
-124-    shot["internal_timeline"]["clips"][0]["at"] = 3
-125-    candidate = document_from_bundle(bundle)
-126-    assert len(candidate["shot_revisions"]) == 2
-127-    assert len(candidate["internal_timeline_revisions"]) == 2
-128-    assert document["shot_revisions"][0] in candidate["shot_revisions"]
-129-    assert document["internal_timeline_revisions"][0] in candidate["internal_timeline_revisions"]
-130-    changed = next(row for row in candidate["internal_timeline_revisions"]
-131-                   if row["revision_id"] != "internal-1")
-132-    assert changed["payload"]["clips"][0]["at"] == 3
-133-    assert changed["payload"]["source_window"] == {"start": 4, "end": 9}
-134-    assert changed["payload"]["unknown"] == [1, 2]
-135-    assert document_from_bundle(bundle) == candidate
-136-
-137-
-138-@pytest.mark.parametrize("damage", ["digest", "missing_child", "missing_internal", "foreign_project",
-139-                                   "foreign_image", "shot_link", "manifest", "missing_media",
-140-                                   "extra_child", "duplicate_child", "nonfinite", "bad_pin"])
-141-def test_malformed_complete_closure_fails_closed(damage):
-142-    document = document_fixture()
-143-    if damage == "digest":
-144-        document["shot_revisions"][0]["payload"]["name"] = "corrupt"
-145-    elif damage == "missing_child":
-146-        document["shot_revisions"] = []
-147-    elif damage == "missing_internal":
-148-        document["internal_timeline_revisions"] = []
-149-    elif damage == "foreign_project":
-150-        document["project_id"] = ""
-151-    elif damage == "foreign_image":
-152-        document["shot_revisions"][0]["project_id"] = "other-project"
-153-    elif damage == "shot_link":
-154-        document["shot_revisions"][0]["internal_timeline_revision_id"] = "other-revision"
-155-    elif damage == "manifest":
-156-        document["dependency_manifest"]["shots"][0]["revision_id"] = "latest-child"
-157-    elif damage == "missing_media":
-158-        document["dependency_manifest"]["media"] = []
-159-    elif damage == "extra_child":
-160-        document["shot_revisions"].append(dict(copy.deepcopy(document["shot_revisions"][0]),
-161-                                                shot_id="orphan", revision_id="orphan-1"))
-162-    elif damage == "duplicate_child":
+-    return call('clip.add-media', {'row': value or row(editing), 'media': pin or editing.pins['new']})
++    command = call('clip.add-media', {'row': value or row(editing), 'media': pin or editing.pins['new']})
++    command['created'] = ['parent/asset:' + command['args']['row']['asset'],
++                          'parent/clip:' + command['args']['row']['id']]
++    return command
+ 
+ 
+ def undo(editing, result, key):
+@@ -89,12 +102,10 @@ def media_realm(tmp_path, monkeypatch, kind, *, historical, pristine=False):
+     runtime = use_runtime()
+     monkeypatch.syspath_prepend(str(runtime / 'tests'))
+     from runtime_protocol.auth import CredentialStore
+-    from runtime_protocol.service import RuntimeService
+     from runtime_protocol.timeline_commit_port import RequestCommitPort
+     from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+     from runtime_protocol.timeline_commit_validation import validate_commit_value
+     from test_generation_publish_v1_settlement import (
+-        CAPABILITY,
+         _effect,
+         _fixture,
+         _output,
+@@ -109,24 +120,8 @@ def media_realm(tmp_path, monkeypatch, kind, *, historical, pristine=False):
+                                        'params': {'duration_seconds': 6} if kind == 'video' else {}}
+         return value
+ 
+-    if historical:
+-        from timeline_commit_film_fixture import build_film_fixture
+-
+-        film = build_film_fixture(tmp_path)
+-        root = film.duplicate_root
+-        service = RuntimeService(root)
+-        project = {'id': film.project_id}
+-        service.register_executor({'executor_id': 'publish-worker', 'capabilities': [CAPABILITY]},
+-                                  idempotency_key='publish-executor')
+-        admitted = effect(project['id'])
+-        task = service.create_task({
+-            'capability_id': CAPABILITY, 'capability_digest': 'sha256:' + hashlib.sha256(CAPABILITY.encode()).hexdigest(),
+-            'project': project['id'], 'settlement_effect': admitted, 'idempotency_key': 'publish-task'})
+-        attempt = service.claim_next({'executor_id': 'publish-worker', 'capability_ids': [CAPABILITY],
+-            'runtime_epoch': service.health()['runtime_epoch']}, idempotency_key='publish-claim')
+-    else:
+-        service, project, task, attempt, admitted = _fixture(tmp_path, effect_factory=effect)
+-        root = tmp_path / 'publish'
++    service, project, task, attempt, admitted = _fixture(tmp_path, effect_factory=effect)
++    root = tmp_path / 'publish'
+     credentials = CredentialStore(tmp_path / 'credentials')
+     token, _ = credentials.provision('parent-editor', ['projects:read', 'projects:write'])
+     editing = SimpleNamespace(service=service, project=project['id'], root=root,
+@@ -158,16 +153,39 @@ def media_realm(tmp_path, monkeypatch, kind, *, historical, pristine=False):
+             'version': association['lifecycle']['version']}, authorize=editing.authorize)
+             for association in editing.associations}
+         service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
+-        if not historical:
+-            service.create_timeline(editing.project, 'film', idempotency_key='empty-film')
+-        else:
+-            # Install only the verified legacy baseline from the committed,
+-            # authenticated pre-cut backup, through the normal history read.
+-            service.list_timeline_commits(editing.project, 'film', authorize=editing.authorize)
++        service.create_timeline(editing.project, 'film', idempotency_key='empty-film')
+         if not pristine:
+             tracked = capture_track_create(bundle_from_document(current(editing)), 'parent', {
+                 'id': 'visual', 'kind': 'visual', 'role': 'output', 'opaque': [None, False]})
+             commit(editing, body(editing, [tracked]), 'visual-track')
++        if historical:
++            music_pin = service.get_project_media_selection(editing.project, {
++                'asset': 'music-bed', 'generation_id': editing.pins['old']['generation_id'],
++                'variant_id': editing.pins['old']['variant_id']}, authorize=editing.authorize)
++            commit(editing, body(editing, [birth(editing, row(editing, 'music-bed', asset='music-bed'),
++                                                  music_pin)]), 'music-bed')
++            occurrence = capture_occurrence_create(
++                bundle_from_document(current(editing)), 'occurrence-2', 'shot-2',
++                name='Transition', track='visual', on=0, duration=8)
++            commit(editing, body(editing, [occurrence]), 'occurrence-2')
++            child_track = capture_track_create(bundle_from_document(current(editing)),
++                                                'occurrence:occurrence-2', {
++                                                    'id': 'visual', 'kind': 'visual', 'role': 'output',
++                                                    'opaque': [None, False]})
++            commit(editing, body(editing, [child_track]), 'occurrence-2-track')
++            child = row(editing, 'clip-2', asset='music-bed')
++            child_preview = call('occurrence.add-media', {
++                'row': child, 'media': music_pin}, 'occurrence:occurrence-2')
++            child_preview['intent'] = {'ownership': 'occurrence'}
++            commit(editing, body(editing, [child_preview], dry_run=True), 'occurrence-2-selection')
++            child_command = capture_occurrence_add_media(
++                bundle_from_document(current(editing)), 'occurrence:occurrence-2', child,
++                music_pin, verified_media=editing.selected)
++            commit(editing, body(editing, [child_command]), 'occurrence-2-clip')
++            transition = capture_clip_set(
++                bundle_from_document(current(editing)), 'occurrence:occurrence-2/clip:clip-2',
++                values={'transition': {'type': 'crossfade', 'duration': 0.5}})
++            commit(editing, body(editing, [transition]), 'occurrence-2-transition')
+         editing.selected.clear()
+         editing.candidates.clear()
+         yield editing
 
+2026-10-24T23:49:01.173499Z ERROR codex_core::tools::router: error=apply_patch verification failed: invalid patch: The last line of the patch must be '*** End Patch'
 exec
-/bin/bash -lc "rg -n -A240 '"'^def seed_shared_occurrence_parent'"' tests/editing_conformance/test_native_sheet_current_runtime.py | head -260; sed -n '1,100p' tests/editing_conformance/test_native_sheet_current_runtime.py" in /home/user/work/wt/agt-D86-main-parent-media-2343
- succeeded in 0ms:
-172:def seed_shared_occurrence_parent(runtime, *, prepare=None, identity_scope=None):
-173-    """Seed the existing shared-source App closure at the real Runtime boundary."""
-174-    parent, shots, internals = app_closure()
-175-    project = runtime.project
-176-    media_ids = set()
-177-
-178-    def collect(value):
-179-        if isinstance(value, dict):
-180-            for key, child in value.items():
-181-                if key in ('media_id', 'object_id') and isinstance(child, str):
-182-                    media_ids.add(child)
-183-                collect(child)
-184-        elif isinstance(value, list):
-185-            for child in value:
-186-                collect(child)
-187-
-188-    collect([parent, *shots, *internals])
-189-    replacements = {}
-190-    for index, source_id in enumerate(sorted(media_ids)):
-191-        ingested = runtime.service().ingest(
-192-            project, f'connected-occurrence-source-{index}'.encode(),
-193-            media_type='application/octet-stream',
-194-            original_name=f'connected-occurrence-source-{index}',
-195-            idempotency_key=f'connected-occurrence-source-{index}',
-196-        )
-197-        replacements[source_id] = ingested['data']['object_id']
-198-    _replace_media_ids(parent, replacements)
-199-    _replace_media_ids(shots, replacements)
-200-    _replace_media_ids(internals, replacements)
-201-
-202-    parent_revision_id = 'native-sheet-connected-occurrence-parent'
-203-    if identity_scope is not None:
-204-        shot = shots[0]
-205-        old_shot_id = shot['shot_id']
-206-        old_shot_revision_id = shot['revision_id']
-207-        old_internal_revision_id = shot['internal_timeline_revision_id']
-208-        shot_id = f'{identity_scope}-shot'
-209-        shot_revision_id = f'{identity_scope}-shot-revision'
-210-        internal_revision_id = f'{identity_scope}-internal-revision'
-211-        for occurrence in parent['payload']['occurrences']:
-212-            if occurrence['shot_id'] == old_shot_id:
-213-                occurrence['shot_id'] = shot_id
-214-            if occurrence['shot_revision_id'] == old_shot_revision_id:
-215-                occurrence['shot_revision_id'] = shot_revision_id
-216-        shot['shot_id'] = shot_id
-217-        shot['revision_id'] = shot_revision_id
-218-        shot['internal_timeline_revision_id'] = internal_revision_id
-219-        shot['payload']['internal_timeline_revision_id'] = internal_revision_id
-220-        internal = next(item for item in internals if item['revision_id'] == old_internal_revision_id)
-221-        internal['revision_id'] = internal_revision_id
-222-        parent_revision_id = f'{identity_scope}-parent-revision'
-223-
-224-    if prepare is not None:
-225-        prepare(parent, shots, internals)
-226-
-227-    parent['project_id'] = project
-228-    parent['timeline_id'] = 'film'
-229-    for image in [*shots, *internals]:
-230-        image['project_id'] = project
-231-    for image in internals:
-232-        image['timeline_id'] = 'film'
-233-    document = {
-234-        'project_id': project,
-235-        'timeline_id': 'film',
-236-        'expected_head': None,
-237-        'parent_revision_id': parent_revision_id,
-238-        'parent_composition': parent['payload'],
-239-        'shot_revisions': shots,
-240-        'internal_timeline_revisions': internals,
-241-    }
-242-    seed_key = (f'{identity_scope}-seed' if identity_scope is not None
-243-                else 'native-sheet-connected-occurrence-parent')
-244-    receipt = seed_trusted_parent(runtime.service(), document, idempotency_key=seed_key)
-245-    return document, receipt
-246-
-247-
-248-def seed_document_diff_parent(runtime):
-249-    """Seed real App-shaped rows exercised by the current document emitter."""
-250-    def prepare(parent, shots, internals):
-251-        parent_rows = parent['payload']['clips']
-252-        for rows in (parent_rows, parent['payload']['config']['clips']):
-253-            next(row for row in rows if row['id'] == 'f2-app-clip').update(hold=3)
-254-        child = next(row for row in internals[0]['payload']['clips']
-255-                     if row['id'] == 'f2-agent-clip')
-256-        child.update({'clipType': 'am-type', 'from': 0, 'to': 3, 'params': {'text': 'hello'}})
-257-        child.pop('asset', None)
-258-
-259-    return seed_shared_occurrence_parent(
-260-        runtime, prepare=prepare, identity_scope=f'emitter-{runtime.project}',
-261-    )
-262-
-263-
-264-def test_http_emitter_null_presence_and_track_roundtrip_is_authenticated(runtime):
-265-    _document, setup = seed_document_diff_parent(runtime)
-266-    runtime.restart()
-267-    session = runtime.session(name='emitter')
-268-    loaded = session.client.timelines.open_bundle(runtime.project, 'film')
-269-    assert loaded.ok
-270-    public_before = loaded.data['bundle']
-271-    assert '_runtime_document' not in public_before['source_mapping']
-272-    base = {
-273-        'revision_id': setup['data']['accepted_revision_id'],
-274-        'publication_id': setup['receipt']['receipt_id'],
-275-    }
-276-    assert base == runtime.history()['head']
-277-    # Production Timeline._execution_bundle hydrates this exact pair before
-278-    # invoking the pure emitter for child edits.
-279-    hydrated = session.client.timelines.open_bundle(
-280-        runtime.project, 'film', revision_id=base['revision_id'],
-281-        publication_id=base['publication_id'],
-282-    )
-283-    assert hydrated.ok
-284-    assert hydrated.data['project_id'] == runtime.project
-285-    assert hydrated.data['timeline_id'] == 'film'
-286-    assert hydrated.data['revision_id'] == base['revision_id']
-287-    assert hydrated.data['is_current_head'] is True
-288-    original_document = hydrated.data['bundle']['source_mapping']['_runtime_document']
-289-    assert original_document == setup['data']['canonical_document']
-290-    assert _digest(original_document) == setup['data']['document_digest']
-291-    before = bundle_from_document(original_document)
-292-    assert hydrated.data['bundle'] == {
-293-        **before,
-294-        'base_parent': {**before['base_parent'], 'publication_id': base['publication_id']},
-295-    }
-296-    assert persisted_bundle(before) == public_before
-297-    source = occurrence_source_pin(before, OCCURRENCE_TARGET)
-298-    assert source['text_bindings'] == [{'slot': 'voiceover', 'text': 'hello'}]
-299-    fork = capture_occurrence_fork(before, 'occurrence:f2-occurrence', 'emitter-selected-shot')
-300-    # Project the registered fork so the emitter addresses its unique physical
-301-    # source. Both commands still land in the original single transaction.
-302-    projected = bundle_from_document(document_from_bundle(execute(before, [fork]).bundle))
-303-
-304-    def child(candidate):
-305-        return State(candidate).entity(OCCURRENCE_TARGET)
-306-
-307-    unsupported = copy.deepcopy(projected)
-308-    child(unsupported)['params']['text'] = None
-309-    head_before_refusal = copy.deepcopy(runtime.history()['head'])
-310-    history_before_refusal = copy.deepcopy(runtime.history()['items'])
-311-    calls_before_refusal = len(runtime.calls)
-312-    invalid_commands = [fork, *emit_document_commands(projected, unsupported)]
-313-    assert invalid_commands == [fork, {
-314-        'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
-315-        'args': {'changes': [{
-316-            'op': 'set', 'ref': 'internal-revision:' + projected['source_mapping']['shots'][
-317-                next(row for row in projected['placements']
-318-                     if row['occurrence_id'] == 'f2-occurrence')['shot_id']
-319-            ]['internal_timeline_revision_id'],
-320-            'path': ['clips', 'id:f2-agent-clip', 'params', 'text'],
-321-            'before': {'state': 'present', 'value': 'hello'}, 'value': None,
-322-        }]},
-323-    }]
-324-    invalid_session = runtime.session(name='emitter-invalid')
-325-    with pytest.raises(CommitConflict) as refusal:
-326-        invalid_session.commit_many(invalid_commands, idempotency_key='emitter-invalid-param',
-327-                                    label='Invalid occurrence-local parameter')
-328-    details = refusal.value.failure['details']
-329-    assert refusal.value.failure['code'] == 'validation_error'
-330-    assert details['reason'] == details['code'] == 'invalid_document'
-331-    assert details['path'] == []
-332-    assert details['hint'] == 'Read the timeline and submit a valid canonical document change'
-333-    assert details['suggested_command'] == 'timeline edit'
-334-    assert runtime.history()['head'] == head_before_refusal
-335-    assert runtime.history()['items'] == history_before_refusal
-336-    assert len(runtime.calls) == calls_before_refusal + 1
-337-
-338-    candidate = copy.deepcopy(projected)
-339-    for rows in (candidate['parent']['clips'], candidate['parent']['config']['clips']):
-340-        next(row for row in rows if row['id'] == 'f2-app-clip').pop('hold')
-341-    edited_child = child(candidate)
-342-    edited_child.pop('hold')
-343-    edited_child['params'] = {}
-344-    candidate['parent']['config']['tracks'][0]['label'] = 'Renamed'
-345-
-346-    commands = [fork, *emit_document_commands(projected, candidate)]
-347-    target_shot = next(row for row in projected['placements']
-348-                       if row['occurrence_id'] == 'f2-occurrence')['shot_id']
-349-    internal_ref = 'internal-revision:' + projected['source_mapping']['shots'][target_shot][
-350-        'internal_timeline_revision_id']
-351-    assert [command['op'] for command in commands] == ['occurrence.fork', 'doc.patch', 'doc.patch']
-352-    assert [change for command in commands[1:] for change in command['args']['changes']] == [
-353-        {'op': 'set', 'ref': 'parent', 'path': ['config', 'tracks', 'id:V1', 'label'],
-354-         'before': {'state': 'absent'}, 'value': 'Renamed'},
-355-        {'op': 'remove', 'ref': 'parent', 'path': ['clips', 'id:f2-app-clip', 'hold'],
-356-         'before': {'state': 'present', 'value': 3}},
-357-        {'op': 'remove', 'ref': internal_ref,
-358-         'path': ['clips', 'id:f2-agent-clip', 'hold'],
-359-         'before': {'state': 'present', 'value': 3}},
-360-        {'op': 'remove', 'ref': internal_ref,
-361-         'path': ['clips', 'id:f2-agent-clip', 'params', 'text'],
-362-         'before': {'state': 'present', 'value': 'hello'}},
-363-    ]
-364-    # Match the session's normal command capture, then compare the complete v2
-365-    # recorder against the exact submitted request and authenticated base pair.
-366-    commands = execute(before, commands).commands
-367-    result = session.commit_many(commands, idempotency_key='emitter-roundtrip',
-368-                                 label='Occurrence-local emitter roundtrip')
-369-    assert result['data']['commands'] == commands
-370-    body = json.loads(runtime.calls[-1][0])
-371-    assert body['commands'] == commands
-372-    assert body['source'] == {'via': 'python'}
-373-    assert body['base_revision_id'] == base['revision_id']
-374-    assert body['base_publication_id'] == base['publication_id']
-375-    expected_records = execute(before, commands, commit_request=body, evaluated_head=base).records
-376-
-377-    expected_input = execute(before, commands, commit_request=body, evaluated_head=base).bundle
-378-    expected_document = document_from_bundle(expected_input)
-379-    assert result['data']['canonical_document'] == expected_document
-380-    accepted = bundle_from_document(result['data']['canonical_document'])
-381-    expected = bundle_from_document(expected_document)
-382-    assert persisted_bundle(accepted) == persisted_bundle(expected)
-383-    accepted_parent = next(row for row in accepted['parent']['clips'] if row['id'] == 'f2-app-clip')
-384-    accepted_child = State(accepted).entity(OCCURRENCE_TARGET)
-385-    assert 'hold' not in accepted_parent and accepted_parent['from'] == 0 and accepted_parent['to'] == 3
-386-    assert 'hold' not in accepted_child and accepted_child['from'] == 0 and accepted_child['to'] == 3
-387-    assert accepted_child['params'] == {}
-388-    assert accepted_child['app'] == {'f2Opaque': {'owner': 'f2', 'nested': [1, {'k': 'v'}]}}
-389-    assert accepted['parent']['config']['tracks'][0]['label'] == 'Renamed'
-390-    assert accepted['parent']['config']['x_f2_opaque'] == before['parent']['config']['x_f2_opaque']
-391-    # Compile materialization gives only the edited occurrence its fresh expected source pin.
-392-    assert occurrence_source_pin(accepted, OCCURRENCE_TARGET) == occurrence_source_pin(
-393-        expected, OCCURRENCE_TARGET)
-394-    target_pin = occurrence_source_pin(accepted, OCCURRENCE_TARGET)
-395-    sibling_pin = occurrence_source_pin(accepted, OCCURRENCE_SIBLING)
-396-    assert target_pin['shot_id'] != source['shot_id']
-397-    assert target_pin['revision_id'] != source['revision_id']
-398-    assert target_pin['internal_timeline_revision_id'] != source['internal_timeline_revision_id']
-399-    assert sibling_pin == occurrence_source_pin(before, OCCURRENCE_SIBLING)
-400-    assert State(accepted).entity(OCCURRENCE_SIBLING) == State(before).entity(OCCURRENCE_SIBLING)
-401-    assert original_document['shot_revisions'][0] in result['data']['canonical_document']['shot_revisions']
-402-    assert original_document['internal_timeline_revisions'][0] in result['data'][
-403-        'canonical_document']['internal_timeline_revisions']
-404-    assert [row['occurrence_id'] for row in accepted['placements']] == [
-405-        row['occurrence_id'] for row in before['placements']]
-406-    before_occurrences = {row['occurrence_id']: row for row in before['placements']}
-407-    for row in accepted['placements']:
-408-        original = before_occurrences[row['occurrence_id']]
-409-        assert {key: row[key] for key in ('placement', 'source_offset', 'duration_ms', 'speed', 'track')} == {
-410-            key: original[key] for key in ('placement', 'source_offset', 'duration_ms', 'speed', 'track')
-411-        }
-412-
-"""Ordinary pinned CLI/Python/sheet commands on authenticated Runtime HTTP.
+/bin/bash -lc 'git status --short && git diff --name-only && git diff --check' in /home/user/work/wt/agt-D86-main-parent-media-2343
+exec
+/bin/bash -lc "rg -n 'pytest\\.mark\\.skip|pytest\\.mark\\.xfail|xfail\\(|skip\\(|objectContaining|permissive' tests/editing_conformance/test_commit_runtime_parent_media.py || true" in /home/user/work/wt/agt-D86-main-parent-media-2343
+exec
+/bin/bash -lc "test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/commit-msg && sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/commit-msg" in /home/user/work/wt/agt-D86-main-parent-media-2343
+ succeeded in 13ms:
+ succeeded in 38ms:
+test(timeline): F-D86 D86-parent-media
 
-Run only through the central test service. This uses the existing injected
-transport, unmodified generated client and startup-loaded semantic provider.
-"""
-from __future__ import annotations
+Migrate parent-media conformance setup to current native Runtime commits and
+reserve the exact created claims required by the current Agent provider.
 
-import copy
-import json
-from fractions import Fraction
-from pathlib import Path
+ succeeded in 78ms:
+ M tests/editing_conformance/test_commit_runtime_parent_media.py
+tests/editing_conformance/test_commit_runtime_parent_media.py
 
-import pytest
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..1b8d4ed6c92a7f69a02763ed94393d663b6208b9
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): F-D86 D86-parent-media
++
++Migrate parent-media conformance setup to current native Runtime commits and
++reserve the exact created claims required by the current Agent provider.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/evidence/commands-and-exits.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/evidence/commands-and-exits.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..a01d53c378cc969ee2a53d1f022e211503fc2ad5
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/evidence/commands-and-exits.md
+@@ -0,0 +1,10 @@
++# D86 parent-media source-only evidence
++
++- `PYCACHEPREFIX=<evidence>/pycache /home/user/work/venv-agent/bin/python -m py_compile tests/editing_conformance/test_commit_runtime_parent_media.py` — exit 0
++- `/home/user/work/venv-agent/bin/ruff check tests/editing_conformance/test_commit_runtime_parent_media.py` — exit 0, `All checks passed!`
++- `/home/user/work/venv-agent/bin/mypy tests/editing_conformance/test_commit_runtime_parent_media.py` — exit 0, `Success: no issues found in 1 source file`
++- `git diff --check` — exit 0
++- AST comparison against Agent base `5d4ae93c833cc1adee109b28405276210165c0db` — 10 test functions, exact AST, no changed test functions
++- D86 selector manifest — 20 selectors
++
++No pytest/per-family-body/service/build/browser/original/collection/benchmark/profile suite was run, per task constraints.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/evidence/own-diff.patch b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/evidence/own-diff.patch
+new file mode 100644
+index 0000000000000000000000000000000000000000..218044628f2556726b842dbc6256f23e85468b3e
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/evidence/own-diff.patch
+@@ -0,0 +1,8 @@
++Only file changed:
++tests/editing_conformance/test_commit_runtime_parent_media.py
++
++Change summary:
++- replaced retired historical film fixture setup with current _fixture(), create_timeline(), and current native track/media/occurrence commits;
++- added current created claims to raw parent clip.add-media caller commands;
++- supplied C0 label, steps, merge, reads, rationale, and group_id fields;
++- preserved all ten test function ASTs and the 20-selector manifest.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/evidence/selector-manifest.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/evidence/selector-manifest.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..683e36c8e71de7288ed9b7bd2913f5b0bcf21c5d
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/evidence/selector-manifest.txt
+@@ -0,0 +1,20 @@
++test_fresh_film_first_media_birth_and_exact_inverse[image]
++test_fresh_film_first_media_birth_and_exact_inverse[video]
++test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[image-False]
++test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[image-True]
++test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[video-False]
++test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[video-True]
++test_stale_explicit_replacement_membership_refuses_before_accept_and_writes[image]
++test_stale_explicit_replacement_membership_refuses_before_accept_and_writes[video]
++test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-dependent-False]
++test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-dependent-True]
++test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-ABA-False]
++test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-ABA-True]
++test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-dependent-False]
++test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-dependent-True]
++test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-ABA-False]
++test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-ABA-True]
++test_exact_old_source_tuple_survives_new_primary_variant_and_replacement_inverse[image]
++test_exact_old_source_tuple_survives_new_primary_variant_and_replacement_inverse[video]
++test_ordered_replacement_preserves_unrelated_historical_transition[image]
++test_ordered_replacement_preserves_unrelated_historical_transition[video]
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/evidence/source-hashes.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/evidence/source-hashes.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..8c09f52ab7939dd9305801ad8f3f770aaae0b970
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/evidence/source-hashes.txt
+@@ -0,0 +1,2 @@
++base 5d4ae93c833cc1adee109b28405276210165c0db tests/editing_conformance/test_commit_runtime_parent_media.py 9d79b56977e4e7c92d36ba49fde1a39ebde1822b3e1c0e9a4c5f3d5764bd5b4e
++current deafe3971df238009e3108c28983480b95f6eab781b3aa62d9fef2ea5d452fb6 tests/editing_conformance/test_commit_runtime_parent_media.py
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/evidence/static-ast.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/evidence/static-ast.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..4da3c7d48a250a70f92e98d148cb8e478adb5b04
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/evidence/static-ast.txt
+@@ -0,0 +1,8 @@
++base: 5d4ae93c833cc1adee109b28405276210165c0db
++test_function_count: 10
++test_function_ast_exact: True
++changed_test_functions: []
++selector_count: 20
++selector_manifest_exact: True
++target_files_changed: tests/editing_conformance/test_commit_runtime_parent_media.py
++forbidden historical fixture references: absent
+diff --git a/tests/editing_conformance/test_commit_runtime_parent_media.py b/tests/editing_conformance/test_commit_runtime_parent_media.py
+index 0e756c2374bd04b68a5531caa0e4a4023ec61345..31005dfdc55d8df023ed42bb15679e5755e58d0e
+--- a/tests/editing_conformance/test_commit_runtime_parent_media.py
++++ b/tests/editing_conformance/test_commit_runtime_parent_media.py
+@@ -1,7 +1,7 @@
+ """Ordinary parent media edits through managed custody and the real Agent provider.
+ 
+ No daemon, schema substitution, prepared provider, or synthetic accepted history.
+-Existing-film tests restore Runtime's approved pre-cut film backup.
++Existing-film variants build their baseline through current native commits.
+ Generation settlement qualifies selection custody, not the assembler proposal lifecycle.
+ """
+ from __future__ import annotations
+@@ -16,6 +16,8 @@
+ from astrid.sdk.timeline._command_state import State
+ from astrid.sdk.timeline.capture import capture_track_create
+ from astrid.sdk.timeline.commit import bundle_from_document
++from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
++from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_add_media
+ from astrid.sdk.timeline.native_parent_media_commands import (
+     capture_clip_replace_media,
+ )
+@@ -30,10 +32,18 @@
+ 
+ def body(editing, calls, *, dry_run=False):
+     head = editing.service.get_project_timeline(editing.project, 'film')
++    label = 'Parent media edit'
++    changes = [change for command in calls if command['op'] == 'doc.patch'
++               for change in command['args']['changes']]
++    step = {'id': 'parent-media', 'label': label, 'intent': 'Parent media edit',
++            'tags': ['parent-media'], 'command_ordinals': list(range(len(calls))),
++            'patch': changes, 'reads': []}
+     return {'api_version': 1, 'project_id': editing.project, 'timeline_id': 'film',
+             'base_revision_id': head['head_revision_id'],
+             'base_publication_id': head['head_publication_id'], 'commands': calls,
+-            'dry_run': dry_run, 'source': {'via': 'python'}}
++            'label': label, 'steps': [step], 'merge': 'fields', 'reads': [],
++            'dry_run': dry_run, 'source': {'via': 'python'},
++            'rationale': 'Apply an authored parent media edit.', 'group_id': 'D86-parent-media'}
+ 
+ 
+ def commit(editing, request, key):
+@@ -67,7 +77,10 @@
+ 
+ 
+ def birth(editing, value=None, pin=None):
+-    return call('clip.add-media', {'row': value or row(editing), 'media': pin or editing.pins['new']})
++    command = call('clip.add-media', {'row': value or row(editing), 'media': pin or editing.pins['new']})
++    command['created'] = ['parent/asset:' + command['args']['row']['asset'],
++                          'parent/clip:' + command['args']['row']['id']]
++    return command
+ 
+ 
+ def undo(editing, result, key):
+@@ -89,12 +102,10 @@
+     runtime = use_runtime()
+     monkeypatch.syspath_prepend(str(runtime / 'tests'))
+     from runtime_protocol.auth import CredentialStore
+-    from runtime_protocol.service import RuntimeService
+     from runtime_protocol.timeline_commit_port import RequestCommitPort
+     from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+     from runtime_protocol.timeline_commit_validation import validate_commit_value
+     from test_generation_publish_v1_settlement import (
+-        CAPABILITY,
+         _effect,
+         _fixture,
+         _output,
+@@ -108,25 +119,9 @@
+         value['payload']['metadata'] = {'prompt': 'parent media source',
+                                        'params': {'duration_seconds': 6} if kind == 'video' else {}}
+         return value
+-
+-    if historical:
+-        from timeline_commit_film_fixture import build_film_fixture
+ 
+-        film = build_film_fixture(tmp_path)
+-        root = film.duplicate_root
+-        service = RuntimeService(root)
+-        project = {'id': film.project_id}
+-        service.register_executor({'executor_id': 'publish-worker', 'capabilities': [CAPABILITY]},
+-                                  idempotency_key='publish-executor')
+-        admitted = effect(project['id'])
+-        task = service.create_task({
+-            'capability_id': CAPABILITY, 'capability_digest': 'sha256:' + hashlib.sha256(CAPABILITY.encode()).hexdigest(),
+-            'project': project['id'], 'settlement_effect': admitted, 'idempotency_key': 'publish-task'})
+-        attempt = service.claim_next({'executor_id': 'publish-worker', 'capability_ids': [CAPABILITY],
+-            'runtime_epoch': service.health()['runtime_epoch']}, idempotency_key='publish-claim')
+-    else:
+-        service, project, task, attempt, admitted = _fixture(tmp_path, effect_factory=effect)
+-        root = tmp_path / 'publish'
++    service, project, task, attempt, admitted = _fixture(tmp_path, effect_factory=effect)
++    root = tmp_path / 'publish'
+     credentials = CredentialStore(tmp_path / 'credentials')
+     token, _ = credentials.provision('parent-editor', ['projects:read', 'projects:write'])
+     editing = SimpleNamespace(service=service, project=project['id'], root=root,
+@@ -158,16 +153,39 @@
+             'version': association['lifecycle']['version']}, authorize=editing.authorize)
+             for association in editing.associations}
+         service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
+-        if not historical:
+-            service.create_timeline(editing.project, 'film', idempotency_key='empty-film')
+-        else:
+-            # Install only the verified legacy baseline from the committed,
+-            # authenticated pre-cut backup, through the normal history read.
+-            service.list_timeline_commits(editing.project, 'film', authorize=editing.authorize)
++        service.create_timeline(editing.project, 'film', idempotency_key='empty-film')
+         if not pristine:
+             tracked = capture_track_create(bundle_from_document(current(editing)), 'parent', {
+                 'id': 'visual', 'kind': 'visual', 'role': 'output', 'opaque': [None, False]})
+             commit(editing, body(editing, [tracked]), 'visual-track')
++        if historical:
++            music_pin = service.get_project_media_selection(editing.project, {
++                'asset': 'music-bed', 'generation_id': editing.pins['old']['generation_id'],
++                'variant_id': editing.pins['old']['variant_id']}, authorize=editing.authorize)
++            commit(editing, body(editing, [birth(editing, row(editing, 'music-bed', asset='music-bed'),
++                                                  music_pin)]), 'music-bed')
++            occurrence = capture_occurrence_create(
++                bundle_from_document(current(editing)), 'occurrence-2', 'shot-2',
++                name='Transition', track='visual', on=0, duration=8)
++            commit(editing, body(editing, [occurrence]), 'occurrence-2')
++            child_track = capture_track_create(bundle_from_document(current(editing)),
++                                                'occurrence:occurrence-2', {
++                                                    'id': 'visual', 'kind': 'visual', 'role': 'output',
++                                                    'opaque': [None, False]})
++            commit(editing, body(editing, [child_track]), 'occurrence-2-track')
++            child = row(editing, 'clip-2', asset='music-bed')
++            child_preview = call('occurrence.add-media', {
++                'row': child, 'media': music_pin}, 'occurrence:occurrence-2')
++            child_preview['intent'] = {'ownership': 'occurrence'}
++            commit(editing, body(editing, [child_preview], dry_run=True), 'occurrence-2-selection')
++            child_command = capture_occurrence_add_media(
++                bundle_from_document(current(editing)), 'occurrence:occurrence-2', child,
++                music_pin, verified_media=editing.selected)
++            commit(editing, body(editing, [child_command]), 'occurrence-2-clip')
++            transition = capture_clip_set(
++                bundle_from_document(current(editing)), 'occurrence:occurrence-2/clip:clip-2',
++                values={'transition': {'type': 'crossfade', 'duration': 0.5}})
++            commit(editing, body(editing, [transition]), 'occurrence-2-transition')
+         editing.selected.clear()
+         editing.candidates.clear()
+         yield editing
 
-from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
-from astrid.packs.timeline.cli import build_parser
-from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
-from astrid.sdk.timeline._command_state import State
-from astrid.sdk.timeline._track_commands import capture_track_set
-from astrid.sdk.timeline.capture import capture_move
-from astrid.sdk.timeline.commands import execute
-from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
-from astrid.sdk.timeline.emitter import emit_document_commands
-from astrid.sdk.timeline.native_occurrence_fork import capture_occurrence_fork
-from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
-from astrid.sdk.timeline_checkout import Checkout
-from astrid.sdk.timeline_editing import add_track
-from astrid.sdk.timeline_sheet import NativeSheet
-from astrid.sdk.workspace_client import WorkspaceClientError
-from tests.editing_conformance import test_native_batch_ingress
-from tests.editing_conformance.test_native_batch_ingress import command, label
-from tests.editing_conformance.test_native_sheet_current import property_cell
-from tests.editing_conformance.test_recipe_clip_scalar_fields import app_closure
-from tests.helpers.trusted_seed import seed_trusted_parent
-from tests.sdk.test_timeline_sheet_native import edit_cell, remove_row
+codex
+## Report
 
-pytestmark = pytest.mark.integration
-runtime = test_native_batch_ingress.runtime
-REF = 'parent/clip:title'
-RATIONAL_FPS = {'numerator': 30000, 'denominator': 1001}
-RATIONAL_FPS_VALUE = Fraction(30000, 1001)
-RATIONAL_LATTICE_SECONDS = 1.001
-RATIONAL_TARGET = 'parent/clip:b-plate'
-OCCURRENCE_TARGET = 'occurrence:f2-occurrence/clip:f2-agent-clip'
-OCCURRENCE_CLEAR = 'occurrence:f2-occurrence/clip:f2-agent-clear-clip'
-OCCURRENCE_SIBLING = 'occurrence:shared-sibling/clip:f2-agent-clip'
-OCCURRENCE_GLOBAL_ON = 9
+Implemented D86 parent-media migration in the sole permitted test file.
 
+- Replaced retired historical fixture setup with current Runtime bootstrap/native commits.
+- Added exact `created` claims for parent media births.
+- Added full C0 request fields: label, steps, merge, reads, rationale, group_id.
+- Preserved all 10 test-function ASTs and exact 20-selector manifest.
+- No skips, xfails, weakened assertions, or other files changed.
 
-def run(runtime, *args):
-    parsed = build_parser(runtime.client()).parse_args([*args, '--project', runtime.project, '--json'])
-    return parsed.handler(parsed)
+Checks passed:
 
+- `py_compile` — exit 0
+- Ruff — exit 0
+- Mypy — exit 0
+- `git diff --check` — exit 0
 
-def export(runtime, capsys, tmp_path):
-    assert run(runtime, 'show', 'film', '--as', 'sheet', '--native') == 0
-    text = json.loads(capsys.readouterr().out)['data']['text']
-    session = TimelineSession.open(runtime.project, 'film', client=runtime.client())
-    sheet = NativeSheet.load(session)
-    assert text == sheet.text
-    text = edit_cell(text, REF, '3.017')
-    text = property_cell(text, REF, 'hold', '2.013')
-    text = property_cell(text, REF, 'transition', 'clear')
-    text = property_cell(text, REF, 'text', '""')
-    text = edit_cell(text, 'parent/track:picture', '""', label=True)
-    path = tmp_path / 'sheet.txt'
-    path.write_text(text)
-    return session, sheet, path
+No pytest or behavioral suite was run per task constraints; Runtime execution remains for protected review/central testing.
 
+Evidence: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/evidence/`
 
-def seed(runtime):
-    runtime.session().commit_many([
-        command('track.create', 'parent', {'row': {'id': 'picture', 'kind': 'visual', 'opaque': [None, True, 1]}}),
-        label('Old'),
-        command('clip.add', 'parent', {'row': {'id': 'title', 'clipType': 'am-type', 'track': 'picture',
-            'at': .017, 'hold': 1.013, 'params': {'text': 'Original', 'opaque': {'keep': [None, False]}},
-            'opaque': [None, False, 1], 'transition': {'type': 'crossfade', 'duration': .25}}}),
-    ])
+Consulted rehearsal sources: `handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml` and `agt-F-rehearsal-rollup-2311.md`.
 
+Commit message and `DONE` marker created.
+tokens used
+353,869
+## Report
 
-def raw():
-    return [command('clip.move', REF, {'on': 3.017}),
-            command('clip.set', REF, {'values': {'hold': 2.013}, 'clear': ['transition']}),
-            command('clip.set-params', REF, {'values': {'text': ''}, 'clear': []}), label('')]
+Implemented D86 parent-media migration in the sole permitted test file.
 
+- Replaced retired historical fixture setup with current Runtime bootstrap/native commits.
+- Added exact `created` claims for parent media births.
+- Added full C0 request fields: label, steps, merge, reads, rationale, group_id.
+- Preserved all 10 test-function ASTs and exact 20-selector manifest.
+- No skips, xfails, weakened assertions, or other files changed.
 
-def tiny_cut_parent(service, project):
-    """Build the saved cut-owned parent from the existing tiny sheet fixture."""
-    source = json.loads((Path(__file__).parents[1] / 'fixtures' / 'timeline_editing' / 'tiny.json').read_text())
-    timeline = source['shots']['B']['internal_timeline']
-    media_ids = {}
-    for asset in ('P', 'Q'):
-        result = service.ingest(
-            project, f'native-sheet-cut-{asset}'.encode(), media_type='application/octet-stream',
-            original_name=f'native-sheet-cut-{asset}', idempotency_key=f'native-sheet-cut-media-{asset}',
-        )
-        media_ids[asset] = result['data']['object_id']
+Checks passed:
 
-    clips = copy.deepcopy(timeline['clips'])
-    registry = copy.deepcopy(timeline['registry'])
+- `py_compile` — exit 0
+- Ruff — exit 0
+- Mypy — exit 0
+- `git diff --check` — exit 0
 
+No pytest or behavioral suite was run per task constraints; Runtime execution remains for protected review/central testing.
+
+Evidence: `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-media-2343/evidence/`
+
+Consulted rehearsal sources: `handoff-agt-F-core-rehearsal-2234-OWN-REHEARSAL-SUITE.xml` and `agt-F-rehearsal-rollup-2311.md`.
+
+Commit message and `DONE` marker created.
