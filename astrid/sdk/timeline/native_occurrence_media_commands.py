@@ -143,7 +143,7 @@ def _registry(ctx, owner, pin, kind, *, create=False, alias=None):
     return ref
 
 
-def _clip(ctx, owner, row, limit, kind, verified, *, raw_window=False):
+def _clip(ctx, owner, row, limit, kind, verified, *, raw_window=False, bound_tracks=None):
     clip_type = row.get('clipType')
     if ((clip_type not in ('media', kind) and not (kind == 'image' and clip_type == 'hold'))
             or not isinstance(row.get('asset'), str)):
@@ -191,7 +191,14 @@ def _clip(ctx, owner, row, limit, kind, verified, *, raw_window=False):
     if (not isinstance(value, dict) or value.get('kind') != 'visual'
             or value.get('role', 'output') != 'output' or not active(value)):
         raise CommandError('media edit requires an active raw visual child track')
-    ctx.bind('media.track', track)
+    # The same-alias validation loop performs no writes. Within that one
+    # command input, an exact scoped ref and observed row share the same
+    # physical revision, owners and evaluation boundary after authentication.
+    captured = {'ref': track, 'state': ctx.state.get(track, [])}
+    if bound_tracks is None or not any(equal(captured, prior) for prior in bound_tracks):
+        ctx.bind('media.track', track)
+        if bound_tracks is not None:
+            bound_tracks.append(captured)
 
 
 def add_media(ctx, command):
@@ -243,10 +250,12 @@ def _swap(ctx, command, owner, limit):
         # every clip consuming the alias before updating its bounded mirrors.
         members = ctx.select('collection.clips', owner)
         affected = []
+        bound_tracks = []
         for member in members:
             candidate = ctx.read(member)
             if isinstance(candidate, dict) and candidate.get('asset') == alias:
-                _clip(ctx, owner, candidate, limit, kind, [previous, value], raw_window=owner == 'parent')
+                _clip(ctx, owner, candidate, limit, kind, [previous, value],
+                      raw_window=owner == 'parent', bound_tracks=bound_tracks)
                 affected.append(member)
         if not affected:
             raise CommandError('media alias has no affected consumers', kind='identity_conflict')
