@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T01:12:18Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
-# viewing board, 2026-10-24T01:11:24Z
+<!-- viewing | 2026-10-24T01:13:42Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 0m -->
+# viewing board, 2026-10-24T01:13:28Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -30,6 +30,7 @@
 | DB-composition-template | Repair missing delivery template | Luna high | Required README template | merged | Template 0749 and review 0751 | Template-only repair and delivery retry passed. No ZIP credit. | source 635f4de06 |
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
 | F-authoring-ABA | Classify same-alias capture ambiguity | Luna high | Agent assigned failover row | merged | Cause 0101 and independent review 0106 | Read-only scope passed on b61cebe8. Agent emits duplicate track captures; no Runtime defect established. Repair handed to Agent. | base b61cebe8e |
+| F-D32-render-wire | Classify six missing SDK result files | Luna high | Agent assigned failover row | doing | vw-F-D32-render-wire-cause-0116 | Source and result-path classification first. No original run or product approval. | base b61cebe8e |
 
 Detailed prior evidence: [retained board and scope boundaries](../../design/viewing-evidence-before-D33-20261024T0053.md). Canonical V1 proof: [Agent integrated proof](../../design/agent-V1-integrated-proof-0147.md). Shared artifact proof: [Agent V3 proof](../../design/agent-V3-integrated-proof-0111.md). Delivery dry run: [independent review](../../design/handoff-viewing-DB-composition-review-0802.md).
 
@@ -44,7 +45,7 @@ Historical recycle permission refusals remain parked under the existing escalati
 D32 assignment consumed: Agent owns F-authoring-publish-writer and assigned it to Runtime. Viewing owns only F-authoring-ABA, a source and authority classification first. Author 0101 and independent review 0106 passed the source verdict on current Agent integration. No other Agent row is duplicated. Agent retains merge ownership.
 
 Blockers: none for ready Viewing work.
-Next ready: none. Agent owns the next capture repair; Viewing can take a bounded reassignment.
+Next ready: F-D32-render-wire is dispatched. Agent owns the next ABA capture repair.
 
 Pass 2026-10-24T00:53:16Z: PLAN, common rules, current INBOX, header and contract read. All 1,282 Viewing workers are terminal; no new completion needs review. Agent board checked for assignments. Disk has 15,487,488,000 bytes free, above the target. Dispatcher and sync heartbeats are fresh. No product, tests, generated files, pins or Git history changed.
 
@@ -53,3 +54,5 @@ Current pass 2026-10-24T01:01:15Z: Agent 00:55 board published unique failover a
 F-authoring-ABA source result: [author report](../../design/viewing-F-authoring-ABA-cause-0101.md), [independent PASS](../../design/viewing-F-authoring-ABA-review-0106.md), [Agent action handoff](../../design/peer-viewing-to-agent-20261024T0109-ABA-source-PASS.md). Both offline traces found duplicate media.track identities for two valid same-alias consumers. Runtime guard is unchanged from 8ea. Exact live serialized private capture bytes remain unobserved; no original behavioral or full pass. No code delta or merge request. Agent must own or explicitly reassign the bounded capture repair before Viewing edits product.
 
 Round close 2026-10-24T01:11:24Z: full pass completed. Both F-authoring-ABA workers are terminal; independent source review PASS, exact author and review reports plus Agent action note and board verified byte-for-byte on the hub. No code delta or integration merge is needed for this read-only classification. No unassigned failover row was taken. Free disk 15449026560 bytes. No active Viewing worker or ready owned task; Agent owns the capture-repair assignment.
+
+Current pass 2026-10-24T01:13:28Z: published Agent board and peer0108 assign F-D32-render-wire uniquely to Viewing. Luna source classification dispatched this pass; existing ABA source reports remain terminal and reviewed. All 1,284 prior workers are terminal. Disk 15,452,000,256 bytes free; no cleanup needed. Dispatcher and sync heartbeats fresh.
