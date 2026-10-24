@@ -4,6 +4,8 @@
 
 The published setup export accounts for all 187 unique errored node IDs. The literal exception families sum exactly to 187:
 
+The retained checkpoint summary was **17,335 passed, 288 failed, 187 errored (all setup), and 4 skipped** on Agent `9cd3dbe865a941c052bda04ae0d61306d18f8f26` with Runtime `45c3a7f476e1c5f74fafc15956a58b9871eee21f`. These are historical reported counts, not a current working-tree full-suite claim or retrospective closure of the seven missing failure lines.
+
 | Cause | Classification | Owner | Count |
 | --- | --- | --- | ---: |
 | `external_pack_sources` import missing on Runtime `45c3a7f4` | other: Runtime pin tuple mismatch | Runtime pin/tuple owner | 47 |
@@ -18,13 +20,13 @@ Each record in [farm187-setup-causes.json](farm187-setup-causes.json) retains th
 
 ## Evidence and limits
 
-- TSV: 187 rows and 187 unique IDs; exact set match with the published original 187-line errored-ID file; manifest reports 187 listed/found and zero unknown.
+- TSV: 187 rows and 187 unique IDs; exact set match with the published original 187-line errored-ID file; manifest reports 187 listed/found and zero unknown. Every per-node manifest line/byte offset maps to the JSON and CSV row, and the JSON/CSV exports have exact 187-record mapped-field parity.
 - The raw farm log is not local. Its SHA-256 `06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06` is retained as farm-reported only. Excerpts come from the published TSV and offsets from the published extract manifest; no raw-log verification is claimed.
 - The seven failed-summary lines with no `FAILED` node line remain unidentified and are neither invented nor assigned here.
 - Exact PASS IDs are unavailable: no JUnit artifact exists and the quiet log lists failures/errors only. Open-node PASS credit is zero; a missing ID is not treated as a pass.
 - No Node/runtime/provision/process/environment/network/cache probe, new test, or full run was performed.
 
-The 47 import failures are deliberately not labelled generic environment failures. Read-only Runtime tree inspection found no `runtime_protocol/external_pack_sources.py` at `45c3a7f476e1c5f74fafc15956a58b9871eee21f`, while it is present at `1d9ddba546f8fb1300f55ff62607ed492719cbaa` and `f3208b26b53c4d7053e5464eaa7c5e15b1505812`; this supports the tuple-mismatch owner assignment.
+The 47 import failures are deliberately not labelled generic environment failures. Read-only Runtime tree inspection found no `runtime_protocol/external_pack_sources.py` at `45c3a7f476e1c5f74fafc15956a58b9871eee21f`, while the exact same file is present at `1d9ddba546f8fb1300f55ff62607ed492719cbaa` and `f3208b26b53c4d7053e5464eaa7c5e15b1505812` (Git blob `0a5bdbbebeb9c00043115b44bede0ae53e98aa44`, byte SHA-256 `8931d2ae530ff1d6eccbb28dadec4349641fd4e1c19f231dba2616b93be2234e`); this supports the tuple-mismatch owner assignment.
 
 ## Contract boundary
 

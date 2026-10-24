@@ -5,8 +5,24 @@
     "test_id": "agent-full-farm-1024050351-26511",
     "agent_commit": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
     "agent_tree": "57f0231da0d7904ecd8778169973d6384e0ae141",
-    "runtime_commit": "45c3a7f4",
+    "runtime_commit": "45c3a7f476e1c5f74fafc15956a58b9871eee21f",
+    "runtime_tree": "f51124b7b5b37a73a3d660e34b3f543517f849ee",
     "phase": "setup",
+    "reported_checkpoint": {
+      "passed": 17335,
+      "failed": 288,
+      "errored": 187,
+      "skipped": 4,
+      "scope": "historical non-gate checkpoint on Agent 9cd3dbe8 and Runtime 45c3a7f4",
+      "source": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/farm-agent-full-checkpoint-20261024T0555Z.md",
+        "bytes": 5191,
+        "sha256": "59ad4cf1593e97823600f152a35af3b94fb8f529a663df8e783038f20eed7760",
+        "verification": "published farm report retained; no local rerun or raw-log verification"
+      },
+      "current_working_full_claim": false,
+      "retrospective_count_closure": false
+    },
     "raw_log": {
       "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-full-farm-1024050351-26511/log.txt",
       "sha256": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
@@ -36,6 +52,12 @@
       "sha256": "0d63c121c5c9f526eb89b86816a56d444d00c09055ad8cd4ce0d6ccf1d176125",
       "lines": 187,
       "unique_ids": 187
+    },
+    "published_environment_snapshot": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-farm-env-snapshot-0626.json",
+      "bytes": 5473,
+      "sha256": "ba97f5d36eb00ed5cfeda5da72e01a4e676bca6de94752c40430ea836d4e9fa0",
+      "verification": "published environment packet; not a current full-suite or current-Agent qualification"
     }
   },
   "validation": {
@@ -48,6 +70,17 @@
     "exact_id_set_match": true,
     "all_phase_setup": true,
     "counts_sum": 187,
+    "json_csv_parity": {
+      "json_records": 187,
+      "csv_records": 187,
+      "id_set_match": true,
+      "mapped_fields_match": true
+    },
+    "per_node_excerpt_offset_mapping": {
+      "manifest_records": 187,
+      "json_records_matching_manifest": 187,
+      "csv_records_matching_manifest": 187
+    },
     "category_counts": {
       "runtime_pin_tuple_mismatch": 47,
       "missing_composition14_runtime": 3,
@@ -71,12 +104,16 @@
       "revision": "1d9ddba546f8fb1300f55ff62607ed492719cbaa",
       "path_checked": "runtime_protocol/external_pack_sources.py",
       "present": true,
+      "git_blob_sha1": "0a5bdbbebeb9c00043115b44bede0ae53e98aa44",
+      "blob_sha256": "8931d2ae530ff1d6eccbb28dadec4349641fd4e1c19f231dba2616b93be2234e",
       "basis": "read-only git tree inspection"
     },
     "runtime_f320": {
       "revision": "f3208b26b53c4d7053e5464eaa7c5e15b1505812",
       "path_checked": "runtime_protocol/external_pack_sources.py",
       "present": true,
+      "git_blob_sha1": "0a5bdbbebeb9c00043115b44bede0ae53e98aa44",
+      "blob_sha256": "8931d2ae530ff1d6eccbb28dadec4349641fd4e1c19f231dba2616b93be2234e",
       "basis": "read-only git tree inspection"
     },
     "conclusion": "The 47 external_pack_sources rows are tagged as a Runtime pin tuple mismatch (other), not silently classified as generic environment failures."
