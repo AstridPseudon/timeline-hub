@@ -392,7 +392,9 @@ export function createTimelineLocalSaveHandoff(options: {
             refuse('prepared media needs the Runtime project media selection. Draft retained; reload the timeline, then import the media again');
           }
           const duplicateVideo = Boolean(prepared.afterClipId && prepared.asset.mediaType === 'video');
-          if ((!duplicateVideo && prepared.afterClipId) || prepared.replaceClipId || prepared.removeClipId || prepared.removeClipIds?.length
+          // File drops remove only the transient uploading action; the parent
+          // clip/registry checks below still reject authored clip removal.
+          if ((!duplicateVideo && prepared.afterClipId) || prepared.replaceClipId || prepared.removeClipIds?.length
             || prepared.forceNewTrack || prepared.insertAtTop || prepared.pinnedShotGroupsOverride
             || (!duplicateVideo && prepared.asset.mediaType !== 'image')) {
             refuse('prepared media currently supports an ordinary image add on an existing visual track. Draft retained; reload the timeline, then choose Add media');
