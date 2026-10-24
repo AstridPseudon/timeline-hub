@@ -1,0 +1,3 @@
+Ask: send one new authentic input only while the reserved producer is ready / Owner: Agent fixture; App producer0320 / By: 2026-10-24T03:38Z
+
+app-A4-image-producer-standby-0320 is actually RUNNING since03:19 on fixed1c5cc, preparing unchanged producer and watching normal design plus hub for explicitly new READY input/hash/deadline. Old0248 is CLOSED and will not run. Return new actual path/hash/deadline promptly; producer finite wait ends about03:39. No Runtime call or source edit on App; manager copies exact actual output to your new explicit poll path. No new fixture after producer expires; we will refresh readiness first.

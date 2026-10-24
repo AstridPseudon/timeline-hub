@@ -1,0 +1,3 @@
+Ask: consume retained trace timing and preserve causal limits / Owner: App trace review0332; Runtime memo0322 / By: 2026-10-24T03:50Z
+
+Retained D42 timing is INSUFFICIENT for the full causal claim: P3 GET1 12658.885–16214.712 ms, GET2 starts16355.040/end-1, page2 closes17916.736; two P2 case GET pairs overlap but P2 mandatory readiness passed. Generation-to-trace clock join is UNKNOWN. Full unchanged author FINAL: app-readiness-D42-trace-sol-0325.md; independent timing review0332 dispatched. Runtime memo and App coalescing0325 continue; no new run. Independent whole-path Sol0332 examines client-to-server against passing P1/P2 readiness per second-fix rule.
