@@ -20,11 +20,10 @@ Installed-Chrome follow-up URL: `http://127.0.0.1:2222/tools/video-editor?localP
 > and its fixtures were deleted, so every Runaway row, the 566-item lane and captures 17–21 are historical;
 > the `runawayTimelineProject` and `timelineOverlayCanary` URL parameters named below are no longer read;
 > `transcriptLaneFixture` is still read (`VideoEditorPage.tsx`, only in `--mode test`, the mode Playwright
-> starts the dev server in) and drives the transcript-lane specs (`caption-render-export.spec.ts`,
-> `transcript-chip-hit-target.spec.ts`, `extension-performance-budget.spec.ts`, `data-lane-viewport.spec.ts`);
+> starts the dev server in) and drives the transcript-lane specs (`transcript-chip-hit-target.spec.ts`, `extension-performance-budget.spec.ts`, `data-lane-viewport.spec.ts`);
 > and the marker-pagination browser cases were folded into `shell-responsive-overflow.spec.ts` (captures
-> 25–27 are now the shell captures). `caption-render-export.spec.ts` still exists as the caption MP4 export
-> proof; it is renderer-owned, so no Playwright project in this repo collects it. The dev Scene Phase Markers
+> 25–27 are now the shell captures). `caption-render-export.spec.ts` (the caption MP4 export proof) was removed
+> with the Transcript Caption Foundry extension in commit aa6683590, so no Playwright project in this repo collects it. The dev Scene Phase Markers
 > and Transcript Caption Foundry extensions (`dev/scene-phase-markers/`, `dev/transcript-lane/extension.ts`) were
 > deleted on 2026-10-21 (unit tests only); test paths in the commands below that name them are historical, and the
 > lane-registration coverage now lives in `data-kinds/dataKindLaneCanvas.integration.test.tsx`.
@@ -133,7 +132,7 @@ The accepted shell baseline changes are intentional layout corrections rather th
 | Production parent/child surface removal | Built-artifact/runtime matrix PASS; actual signed-in production surfaces remain BLOCKED on production access. Exercise the same artifact with host-off, Transcript-off, and Runaway-off same-origin configs and prove UI/commands disappear. |
 | Real Render and export in user Chrome | PASS twice in the installed development session with fresh MP4 blob/download results and zero console errors on the second pass. Repeat on the frozen candidate and retain the signed artifact before release. |
 | Final Chrome console/page-error audit | Local installed-Chrome development journey PASS; a final signed-in production run must also be clean. |
-| Microsoft Edge | BLOCKED by missing browser availability. Install Edge and run the opt-in `edge-stable` project; Chromium/Chrome evidence is not presented as an Edge substitute. |
+| Microsoft Edge | Not covered: there is no Edge project (no job has an Edge binary). Chromium/Chrome evidence is not presented as an Edge substitute. |
 
 ## Automated evidence
 
@@ -166,7 +165,7 @@ Result: PASS under Node v20.19.4; 8 tests in 1.4m; zero unexpected page errors/c
 PLAYWRIGHT_OUTPUT_DIR=artifacts/playwright/chrome-acceptance-bkey-fixed-isolated ... extension-overlays.spec.ts --grep "B key marks"
 Result: PASS under Node v20.19.4; 1/1 in 38.9 s
 
-PLAYWRIGHT_OUTPUT_DIR=artifacts/playwright/chrome-acceptance-caption-bkey-fixed-sequence ... caption-render-export.spec.ts extension-overlays.spec.ts --grep "renders the materialized|B key marks"
+PLAYWRIGHT_OUTPUT_DIR=artifacts/playwright/chrome-acceptance-caption-bkey-fixed-sequence ... caption-render-export.spec.ts extension-overlays.spec.ts --grep "renders the materialized|B key marks" (historical: `caption-render-export.spec.ts` was removed in aa6683590)
 Result: PASS under Node v20.19.4; 2/2 in 53.2 s, including caption-render → B-key ordering
 
 PLAYWRIGHT_OUTPUT_DIR=artifacts/playwright/chrome-acceptance-phone-overlay-repeat ... extension-overlays.spec.ts --grep "touch marker drag and disable-mid-drag on phone"

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { shallow } from 'zustand/shallow';
@@ -29,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectSe
 // Import from new modules
 import { STATUS_GROUPS, type FilterGroup } from './constants';
 import { PaginationControls } from './components/PaginationControls';
+import { TasksPaneSurface, TasksPaneChatSlot } from './components/TasksPaneSurface';
 import { useTasksLightbox } from './hooks/useTasksLightbox';
 import { useShotActions } from './hooks/useShotActions';
 import { useTasksPaneController } from './hooks/useTasksPaneController';
@@ -44,6 +45,9 @@ import { useSetting } from '@/shared/settings/useSetting';
 import { useAppEventListener } from '@/shared/lib/typedEvents';
 
 type ExpandedHalf = 'chat' | null;
+
+/** How long the temporary history peek survives the pointer or focus leaving it. */
+const RUNTIME_PEEK_CLOSE_GRACE_MS = 150;
 
 const TasksPaneComponent: React.FC = () => {
   useRenderBudget('TasksPane', 5);
@@ -212,6 +216,7 @@ const TasksPaneComponent: React.FC = () => {
     : !isToolRoute || isTasksPinned || isTasksPeeking;
   const toggleTasksPinned = () => setExpandedHalf(isTasksPinned ? 'chat' : null);
   const toggleRuntimeHistoryPinned = () => {
+    cancelPeekClose();
     const nextPinned = !runtimeHistoryPinned;
     setRuntimeHistoryPinned(nextPinned);
     if (nextPinned) setRuntimeHistoryOpen(true);
@@ -227,16 +232,29 @@ const TasksPaneComponent: React.FC = () => {
     if (latestTask) handleFilterChange(runtimeTaskStatusGroup(latestTask));
     setRuntimeHistoryOpen(true);
   };
+  // The temporary peek closes a beat after the pointer or focus leaves the dock-and-history
+  // container, so crossing a gap or a diagonal to the inspector does not drop it.
+  const peekCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelPeekClose = useCallback(() => {
+    if (peekCloseTimer.current === null) return;
+    clearTimeout(peekCloseTimer.current);
+    peekCloseTimer.current = null;
+  }, []);
+  useEffect(() => cancelPeekClose, [cancelPeekClose]);
   const leaveTemporaryRuntimeHistory = (event: React.MouseEvent | React.FocusEvent) => {
     if (runtimeHistoryPinned) return;
     const next = event.relatedTarget;
+    if (event.type === 'blur' && !(next instanceof Element)) return;
+    cancelPeekClose();
     if (next instanceof Element && (
-      next.closest('[data-runtime-activity-dock]')
-      || next.closest('[data-task-peek-surface="tasks"]')
+      next.closest('[data-runtime-peek-container]')
       || next.closest('[data-activity-inspector]')
       || isElementWithinKnownOverlay(next)
     )) return;
-    setRuntimeHistoryOpen(false);
+    peekCloseTimer.current = setTimeout(() => {
+      peekCloseTimer.current = null;
+      setRuntimeHistoryOpen(false);
+    }, RUNTIME_PEEK_CLOSE_GRACE_MS);
   };
   useEffect(() => { setIsTasksPeeking(false); }, [expandedHalf, isOpen]);
   useEffect(() => { setAgentSessionSelectorOpen(false); }, [pathname, runtimeProjectId]);
@@ -320,14 +338,8 @@ const TasksPaneComponent: React.FC = () => {
           zIndex: UI_Z_LAYERS.TASKS_PANE_CONTENT,
         }}
       >
-        <div
-          {...paneProps}
-          data-tasks-pane="true"
-          data-scroll-lock-scrollable="true"
-          className={cn(
-            'absolute top-0 right-0 h-full w-full bg-sidebar/95 border-l border-sidebar-border text-sidebar-foreground shadow-xl transform transition-transform duration-300 ease-smooth flex flex-col pointer-events-auto',
-            transformClass
-          )}
+        <TasksPaneSurface {...paneProps}
+          className={cn('absolute top-0 right-0 transform transition-transform duration-300 ease-smooth', transformClass)}
         >
           {/* The pane-open-transition pointer-events gate is applied only to
               the tasks half (the original gated content). The chat half is the
@@ -340,6 +352,14 @@ const TasksPaneComponent: React.FC = () => {
               if (event.target instanceof Element && !event.target.closest('[data-task-peek-surface]') && !isElementWithinKnownOverlay(event.target)) setIsTasksPeeking(false);
             }}
           >
+            <div
+              className="contents"
+              data-runtime-peek-container={isRuntimeActivityDock ? 'true' : undefined}
+              onMouseEnter={isRuntimeActivityDock ? cancelPeekClose : undefined}
+              onFocus={isRuntimeActivityDock ? cancelPeekClose : undefined}
+              onMouseLeave={isRuntimeActivityDock ? leaveTemporaryRuntimeHistory : undefined}
+              onBlur={isRuntimeActivityDock ? leaveTemporaryRuntimeHistory : undefined}
+            >
             {isRuntimeActivityDock && runtimeProjectId ? (
               <RuntimeActivityDock
                 projectId={runtimeProjectId}
@@ -353,7 +373,6 @@ const TasksPaneComponent: React.FC = () => {
                 isHistoryOpen={runtimeHistoryOpen}
                 onTogglePinned={toggleRuntimeHistoryPinned}
                 onToggleHistory={toggleRuntimeHistoryOpen}
-                onTemporaryHistoryLeave={leaveTemporaryRuntimeHistory}
                 onOpenHistory={() => {
                   const latestTask = [...runtimeActivityTasks].sort((left, right) =>
                     Date.parse(right.updated_at) - Date.parse(left.updated_at),
@@ -426,15 +445,9 @@ const TasksPaneComponent: React.FC = () => {
             <div
               data-task-peek-surface="tasks"
               onMouseEnter={() => { if (compactTasks) setIsTasksPeeking(true); }}
-              onMouseLeave={(event) => {
-                leaveTaskPeek(event);
-                if (isRuntimeActivityDock) leaveTemporaryRuntimeHistory(event);
-              }}
+              onMouseLeave={leaveTaskPeek}
               onFocus={() => { if (compactTasks) setIsTasksPeeking(true); }}
-              onBlur={(event) => {
-                leaveTaskPeek(event);
-                if (isRuntimeActivityDock) leaveTemporaryRuntimeHistory(event);
-              }}
+              onBlur={leaveTaskPeek}
               className={cn(
               'min-h-0 flex flex-col overflow-hidden',
               isToolRoute
@@ -597,7 +610,9 @@ const TasksPaneComponent: React.FC = () => {
                     tasks={runtimeTaskData?.tasks ?? []}
                     isLoading={isPaginatedLoading}
                     error={runtimeTaskError}
-                    actionError={runtimeTaskActionError}
+                    actionFailures={runtimeTaskActions.actionFailures}
+                    exportedTo={runtimeTaskActions.exportedTo}
+                    onDismissActionError={runtimeTaskActions.dismissActionError}
                     onCancelTask={runtimeTaskActions.cancelTask}
                     onRetryTask={runtimeTaskActions.retryTask}
                     isTaskActionPending={runtimeTaskActions.isTaskActionPending}
@@ -635,25 +650,18 @@ const TasksPaneComponent: React.FC = () => {
             )}
             </div>
             )}
+            </div>
             {/* Chat remains mounted while tasks peek, pin, or collapse. */}
             {showChatHalf && (
-              <div
-                className={cn(
-                  // bg sits on the wrapper, NOT inside AgentChatPanel, so the
-                  // pane bg → chat bg transition happens precisely at the
-                  // border-t-2 divider line.
-                  'overflow-hidden border-t-2 border-sidebar-border relative bg-background/60',
-                  'flex-1 min-h-0'
-                )}
-              >
+              <TasksPaneChatSlot>
                 <AgentChatPanel
                   isExpanded={!showTasksHalf}
                   onSessionSelectorOpenChange={setAgentSessionSelectorOpen}
                 />
-              </div>
+              </TasksPaneChatSlot>
             )}
           </div>
-        </div>
+        </TasksPaneSurface>
       </div>
 
       {/* Centralized MediaLightbox */}

@@ -12,27 +12,32 @@ export function TourMedia({ slot, kind, className, playing = false, poster }: {
   slot: EditorTourMediaSlot;
   kind: TourMediaKind;
   className?: string;
-  /** Videos only: play muted and loop (otherwise they hold their first frame). */
+  /** Videos only: play muted; pausing or reaching the end holds the current frame. */
   playing?: boolean;
   /** Videos only: shown until the video has a frame (its source still). */
   poster?: string;
 }) {
   const fill = cn('absolute inset-0 h-full w-full object-cover', className);
   if (!slot.url) return <ValleyArt faceted={kind === 'frame'} className={fill} />;
-  if (kind === 'video') return <TourVideo url={slot.url} poster={poster} playing={playing} className={fill} />;
+  if (kind === 'video') return <TourVideo end={slot.previewDurationSeconds} url={slot.url} poster={poster} playing={playing} className={fill} />;
   return <img className={fill} src={slot.url} alt="" draggable={false} decoding="async" />;
 }
 
-function TourVideo({ url, poster, playing, className }: { url: string; poster?: string; playing: boolean; className: string }) {
+function TourVideo({ url, poster, playing, className, end }: { end?: number; url: string; poster?: string; playing: boolean; className: string }) {
   const ref = useRef<HTMLVideoElement>(null);
   useEffect(() => {
     const video = ref.current;
     if (!video) return;
-    if (!playing) return video.pause();
+    if (!playing || video.ended || (end !== undefined && video.currentTime >= end)) return video.pause();
     // Autoplay can be refused (a muted video rarely is); the first frame is a fine resting state.
     void video.play()?.catch(() => undefined);
-  }, [playing]);
-  return <video ref={ref} className={className} src={url} poster={poster} muted playsInline loop preload="auto" aria-hidden="true" />;
+  }, [playing, end]);
+  return <video ref={ref} className={className} src={url} poster={poster} muted playsInline onTimeUpdate={(event) => {
+    if (end && event.currentTarget.currentTime >= end) {
+      event.currentTarget.pause();
+      if (event.currentTarget.currentTime > end) event.currentTarget.currentTime = end;
+    }
+  }} preload="auto" aria-hidden="true" />;
 }
 
 function ValleyArt({ faceted, className }: { faceted: boolean; className: string }) {

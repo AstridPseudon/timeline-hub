@@ -120,14 +120,10 @@ const runtimeFactory: ProviderFactory = async (seed) => {
 
 describe('RuntimeDataProvider compatibility (runtimeFixture)', () => {
   runProviderCompatibilitySuite(runtimeFactory, {
-    // RuntimeDataProvider has no checkpoint API: history is Runtime
-    // composition-revisions (dataProvider.test.ts "loads project-scoped
-    // canonical revisions and restores through a current-head CAS").
-    skipCheckpoints: true,
     timelineId: TIMELINE_ID,
-    skipRegisterAsset: false,
     // Runtime treats `config.output` as host-derived: saves drop it and loads
     // re-materialise defaults (dataProvider.ts saveTimelineInOrder).
     derivedOutputOnSave: true,
+    checkpoints: false,
   });
 });

@@ -83,33 +83,29 @@ export type ProviderFactory = (
 export function runProviderCompatibilitySuite(
   factory: ProviderFactory,
   options: {
-    /** If true, the provider does not support saveCheckpoint / loadCheckpoints. */
-    skipCheckpoints?: boolean;
     /** If true, the provider's saveTimeline ignores expectedVersion (Astrid). */
     versionConflictIsSoft?: boolean;
     /** Timeline ID to use for tests. Defaults to 'compat-test-timeline'. */
     timelineId?: string;
-    /** If true, provider doesn't support registerAsset. */
-    skipRegisterAsset?: boolean;
     /**
      * If true, save/load comparisons ignore `config.output`: Astrid treats
      * render output as host-derived state and intentionally omits it from the
      * persisted source lane, then re-materializes defaults on load.
      */
     derivedOutputOnSave?: boolean;
-    /** If true, the provider does not persist data-lane bundles yet (e.g. bridge until V2-B6). */
-    skipBundles?: boolean;
-    skipMissingTimelineTests?: boolean;
-  } = {},
+    /**
+     * Whether the provider under test implements the optional checkpoint pair
+     * (saveCheckpoint + loadCheckpoints). Declared by each caller, never read
+     * from the provider, so a provider that loses the pair fails the suite.
+     */
+    checkpoints: boolean;
+  },
 ): void {
   const {
-    skipCheckpoints = false,
     versionConflictIsSoft = false,
     timelineId: defaultTimelineId = 'compat-test-timeline',
-    skipRegisterAsset = false,
     derivedOutputOnSave = false,
-    skipMissingTimelineTests = false, // legacy alias removed; see skipBundles
-    skipBundles = false,
+    checkpoints: expectsCheckpoints,
   } = options;
 
   const tid = defaultTimelineId;
@@ -296,8 +292,6 @@ export function runProviderCompatibilitySuite(
 
   describe('diagnostics: error types', () => {
     it('throws TimelineNotFoundError for missing timelines on loadTimeline', async () => {
-      if (skipMissingTimelineTests) return;
-
       const provider = await factory();
 
       await expect(
@@ -306,8 +300,6 @@ export function runProviderCompatibilitySuite(
     });
 
     it('TimelineNotFoundError has code timeline_not_found', async () => {
-      if (skipMissingTimelineTests) return;
-
       const provider = await factory();
 
       try {
@@ -332,8 +324,6 @@ export function runProviderCompatibilitySuite(
     );
 
     it('saveTimeline throws TimelineNotFoundError for missing timelines', async () => {
-      if (skipMissingTimelineTests) return;
-
       const provider = await factory();
 
       await expect(
@@ -495,56 +485,114 @@ export function runProviderCompatibilitySuite(
     });
   });
 
-  if (!skipBundles) {
-    const makeBundleItem = (overrides: Record<string, unknown> = {}) => ({
-      id: 'assetA:src:0',
-      shape: 'interval',
-      domain: 'source_seconds',
-      extent: { start: 0, end: 1.5 },
-      schemaRef: 'astrid.transcript_segment/v1',
-      payload: { text: 'hello' },
-      sourceArtifactRef: { assetId: 'assetA' },
-      provenance: { adapterId: 'astrid.adaptTranscript', adapterVersion: '1' },
-      ...overrides,
-    });
-    const makeBundleEnvelope = (
-      overrides: Record<string, unknown> = {},
-    ): TimelineBundleEnvelope => ({
-      schema_version: 1,
-      itemsBySchemaRef: {
-        'astrid.transcript_segment/v1': [makeBundleItem()],
-      },
-      ...overrides,
-    }) as TimelineBundleEnvelope;
+  const makeBundleItem = (overrides: Record<string, unknown> = {}) => ({
+    id: 'assetA:src:0',
+    shape: 'interval',
+    domain: 'source_seconds',
+    extent: { start: 0, end: 1.5 },
+    schemaRef: 'astrid.transcript_segment/v1',
+    payload: { text: 'hello' },
+    sourceArtifactRef: { assetId: 'assetA' },
+    provenance: { adapterId: 'astrid.adaptTranscript', adapterVersion: '1' },
+    ...overrides,
+  });
+  const makeBundleEnvelope = (
+    overrides: Record<string, unknown> = {},
+  ): TimelineBundleEnvelope => ({
+    schema_version: 1,
+    itemsBySchemaRef: {
+      'astrid.transcript_segment/v1': [makeBundleItem()],
+    },
+    ...overrides,
+  }) as TimelineBundleEnvelope;
 
-    const bundleA = makeBundleEnvelope();
-    const bundleB = makeBundleEnvelope({
-      itemsBySchemaRef: {
-        'astrid.transcript_segment/v1': [
-          makeBundleItem({ payload: { text: 'second' } }),
-        ],
-      },
-    });
+  const bundleA = makeBundleEnvelope();
+  const bundleB = makeBundleEnvelope({
+    itemsBySchemaRef: {
+      'astrid.transcript_segment/v1': [
+        makeBundleItem({ payload: { text: 'second' } }),
+      ],
+    },
+  });
 
-    describe('data bundle persistence (optional contract)', () => {
-      it('saveTimeline with a bundle persists it atomically and reloads deep-equal', async () => {
-        const provider = await factory({
-          timelineId: tid,
-          config: config1,
-          configVersion: 1,
-        });
-
-        parseTimelineBundle(bundleA); // fixture sanity: must be a valid envelope
-        const v2 = await provider.saveTimeline(tid, config2, 1, registry2, bundleA);
-        expect(v2).toBe(2);
-
-        const loaded = await provider.loadTimeline(tid);
-        expect(loaded.configVersion).toBe(2);
-        // `?? null`: providers may normalize an absent bundle to null.
-        expect(loaded.bundle ?? null).toEqual(bundleA);
+  describe('data bundle persistence (optional contract)', () => {
+    it('saveTimeline with a bundle persists it atomically and reloads deep-equal', async () => {
+      const provider = await factory({
+        timelineId: tid,
+        config: config1,
+        configVersion: 1,
       });
 
-      it('saving WITHOUT a bundle argument preserves the previously persisted bundle', async () => {
+      parseTimelineBundle(bundleA); // fixture sanity: must be a valid envelope
+      const v2 = await provider.saveTimeline(tid, config2, 1, registry2, bundleA);
+      expect(v2).toBe(2);
+
+      const loaded = await provider.loadTimeline(tid);
+      expect(loaded.configVersion).toBe(2);
+      // `?? null`: providers may normalize an absent bundle to null.
+      expect(loaded.bundle ?? null).toEqual(bundleA);
+    });
+
+    it('saving WITHOUT a bundle argument preserves the previously persisted bundle', async () => {
+      const provider = await factory({
+        timelineId: tid,
+        config: config1,
+        configVersion: 1,
+      });
+
+      await provider.saveTimeline(tid, config2, 1, registry2, bundleA);
+      await provider.saveTimeline(tid, config3, 2);
+
+      const loaded = await provider.loadTimeline(tid);
+      expect(loaded.bundle ?? null).toEqual(bundleA);
+    });
+
+    it('an explicit null bundle clears the persisted bundle', async () => {
+      const provider = await factory({
+        timelineId: tid,
+        config: config1,
+        configVersion: 1,
+      });
+
+      await provider.saveTimeline(tid, config2, 1, registry2, bundleA);
+      await provider.saveTimeline(tid, buildConfig(), 2, undefined, null);
+
+      const loaded = await provider.loadTimeline(tid);
+      expect(loaded.bundle ?? null).toBeNull();
+    });
+
+    it('a malformed bundle fails the whole save atomically (CAS)', async () => {
+      const provider = await factory({
+        timelineId: tid,
+        config: config1,
+        configVersion: 1,
+        registry: registry1,
+      });
+
+      const before = await provider.loadTimeline(tid);
+      const registryBefore = await provider.loadAssetRegistry(tid);
+
+      await expect(
+        provider.saveTimeline(
+          tid,
+          buildConfig({
+            clips: [{ id: 'clip-x', clipType: 'hold', track: 'V1', at: 0, hold: 9 }] as any,
+          }),
+          1,
+          { assets: {} } as AssetRegistry,
+          { ...bundleA, schema_version: 99 } as unknown as TimelineBundleEnvelope,
+        ),
+      ).rejects.toBeInstanceOf(TimelineBundleParseError);
+
+      const after = await provider.loadTimeline(tid);
+      expect(after.configVersion).toBe(1);
+      expect(after.config).toMatchObject(before.config);
+      expect(after.bundle ?? null).toEqual(before.bundle ?? null);
+      expect(await provider.loadAssetRegistry(tid)).toEqual(registryBefore);
+    });
+
+    if (!versionConflictIsSoft) {
+      it('stale expectedVersion conflicts even when a valid bundle is attached', async () => {
         const provider = await factory({
           timelineId: tid,
           config: config1,
@@ -552,76 +600,16 @@ export function runProviderCompatibilitySuite(
         });
 
         await provider.saveTimeline(tid, config2, 1, registry2, bundleA);
-        await provider.saveTimeline(tid, config3, 2);
-
-        const loaded = await provider.loadTimeline(tid);
-        expect(loaded.bundle ?? null).toEqual(bundleA);
-      });
-
-      it('an explicit null bundle clears the persisted bundle', async () => {
-        const provider = await factory({
-          timelineId: tid,
-          config: config1,
-          configVersion: 1,
-        });
-
-        await provider.saveTimeline(tid, config2, 1, registry2, bundleA);
-        await provider.saveTimeline(tid, buildConfig(), 2, undefined, null);
-
-        const loaded = await provider.loadTimeline(tid);
-        expect(loaded.bundle ?? null).toBeNull();
-      });
-
-      it('a malformed bundle fails the whole save atomically (CAS)', async () => {
-        const provider = await factory({
-          timelineId: tid,
-          config: config1,
-          configVersion: 1,
-          registry: registry1,
-        });
-
-        const before = await provider.loadTimeline(tid);
-        const registryBefore = await provider.loadAssetRegistry(tid);
 
         await expect(
-          provider.saveTimeline(
-            tid,
-            buildConfig({
-              clips: [{ id: 'clip-x', clipType: 'hold', track: 'V1', at: 0, hold: 9 }] as any,
-            }),
-            1,
-            { assets: {} } as AssetRegistry,
-            { ...bundleA, schema_version: 99 } as unknown as TimelineBundleEnvelope,
-          ),
-        ).rejects.toBeInstanceOf(TimelineBundleParseError);
+          provider.saveTimeline(tid, config3, 1, undefined, bundleB),
+        ).rejects.toBeInstanceOf(TimelineVersionConflictError);
 
-        const after = await provider.loadTimeline(tid);
-        expect(after.configVersion).toBe(1);
-        expect(after.config).toMatchObject(before.config);
-        expect(after.bundle ?? null).toEqual(before.bundle ?? null);
-        expect(await provider.loadAssetRegistry(tid)).toEqual(registryBefore);
+        const loaded = await provider.loadTimeline(tid);
+        expect(loaded.bundle ?? null).toEqual(bundleA);
       });
-
-      if (!versionConflictIsSoft) {
-        it('stale expectedVersion conflicts even when a valid bundle is attached', async () => {
-          const provider = await factory({
-            timelineId: tid,
-            config: config1,
-            configVersion: 1,
-          });
-
-          await provider.saveTimeline(tid, config2, 1, registry2, bundleA);
-
-          await expect(
-            provider.saveTimeline(tid, config3, 1, undefined, bundleB),
-          ).rejects.toBeInstanceOf(TimelineVersionConflictError);
-
-          const loaded = await provider.loadTimeline(tid);
-          expect(loaded.bundle ?? null).toEqual(bundleA);
-        });
-      }
-    });
-  }
+    }
+  });
 
 
   // ── Extension requirements (stored via config) ────────────────────────────
@@ -679,36 +667,26 @@ export function runProviderCompatibilitySuite(
 
   // ── Checkpoints (optional) ─────────────────────────────────────────────────
 
-  if (!skipCheckpoints) {
-    describe('checkpoints (optional contract)', () => {
-      it('has saveCheckpoint and loadCheckpoints methods', async () => {
-        const provider = await factory({
-          timelineId: tid,
-          config: config1,
-          configVersion: 1,
-        });
+  describe('checkpoints (optional contract)', () => {
+    // The caller declares the capability. The first case asserts the provider matches the declaration; the
+    // save/load cases are registered only for providers declared to have checkpoints.
+    const seeded = () => factory({ timelineId: tid, config: config1, configVersion: 1 });
 
-        // These methods are optional on the interface
-        if (typeof (provider as any).saveCheckpoint === 'function') {
-          expect(typeof (provider as any).saveCheckpoint).toBe('function');
-        }
-        if (typeof (provider as any).loadCheckpoints === 'function') {
-          expect(typeof (provider as any).loadCheckpoints).toBe('function');
-        }
-      });
+    it(`matches the declared checkpoint capability (${expectsCheckpoints ? 'present' : 'absent'})`, async () => {
+      const provider = await seeded();
+      if (expectsCheckpoints) {
+        expect(typeof provider.saveCheckpoint).toBe('function');
+        expect(typeof provider.loadCheckpoints).toBe('function');
+      } else {
+        expect(provider.saveCheckpoint).toBeUndefined();
+        expect(provider.loadCheckpoints).toBeUndefined();
+      }
+    });
 
+    if (expectsCheckpoints) {
       it('saveCheckpoint returns a truthy checkpoint ID', async () => {
-        const provider = await factory({
-          timelineId: tid,
-          config: config1,
-          configVersion: 1,
-        });
-
-        if (typeof (provider as any).saveCheckpoint !== 'function') {
-          return; // Not supported, skip
-        }
-
-        const checkpointId = await (provider as any).saveCheckpoint(tid, {
+        const provider = await seeded();
+        const checkpointId = await provider.saveCheckpoint!(tid, {
           timelineId: tid,
           config: config1,
           createdAt: new Date('2026-06-20T00:00:00.000Z').toISOString(),
@@ -722,62 +700,47 @@ export function runProviderCompatibilitySuite(
       });
 
       it('loadCheckpoints returns an array', async () => {
-        const provider = await factory({
-          timelineId: tid,
-          config: config1,
-          configVersion: 1,
-        });
-
-        if (typeof (provider as any).loadCheckpoints !== 'function') {
-          return; // Not supported, skip
-        }
-
-        const checkpoints = await (provider as any).loadCheckpoints(tid);
+        const provider = await seeded();
+        const checkpoints = await provider.loadCheckpoints!(tid);
         expect(Array.isArray(checkpoints)).toBe(true);
       });
-    });
-  }
+    }
+  });
 
   // ── registerAsset (optional) ──────────────────────────────────────────────
 
-  if (!skipRegisterAsset) {
-    describe('registerAsset', () => {
-      it('has registerAsset method', async () => {
-        const provider = await factory({
-          timelineId: tid,
-          config: config1,
-          configVersion: 1,
-        });
-
-        if (typeof (provider as any).registerAsset === 'function') {
-          expect(typeof (provider as any).registerAsset).toBe('function');
-        }
+  describe('registerAsset', () => {
+    it('has registerAsset method', async () => {
+      const provider = await factory({
+        timelineId: tid,
+        config: config1,
+        configVersion: 1,
       });
 
-      it('registerAsset adds an asset to the registry', async () => {
-        const provider = await factory({
-          timelineId: tid,
-          config: config1,
-          configVersion: 1,
-          registry: registry1,
-        });
-
-        if (typeof (provider as any).registerAsset !== 'function') {
-          return; // Not supported, skip
-        }
-
-        await (provider as any).registerAsset(tid, 'asset-new', {
-          file: 'audio/voice.wav',
-          type: 'audio/wav',
-          duration: 2.5,
-        });
-
-        const registry = await provider.loadAssetRegistry(tid);
-        expect(registry.assets['asset-new']).toBeDefined();
-        expect(registry.assets['asset-new'].file).toBe('audio/voice.wav');
-      });
+      expect(typeof (provider as any).registerAsset).toBe('function');
     });
-  }
+
+    it('registerAsset adds an asset to the registry', async () => {
+      const provider = await factory({
+        timelineId: tid,
+        config: config1,
+        configVersion: 1,
+        registry: registry1,
+      });
+
+      expect(typeof (provider as any).registerAsset).toBe('function');
+
+      await (provider as any).registerAsset(tid, 'asset-new', {
+        file: 'audio/voice.wav',
+        type: 'audio/wav',
+        duration: 2.5,
+      });
+
+      const registry = await provider.loadAssetRegistry(tid);
+      expect(registry.assets['asset-new']).toBeDefined();
+      expect(registry.assets['asset-new'].file).toBe('audio/voice.wav');
+    });
+  });
 
   // ── resolveAssetUrl (optional but common) ──────────────────────────────────
 

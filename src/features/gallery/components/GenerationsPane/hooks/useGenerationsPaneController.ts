@@ -461,7 +461,16 @@ export const useGenerationsPaneController = () => {
     navigate(withRuntimeDocumentParams(TOOL_ROUTES.IMAGE_GENERATION, location.search));
   }, [location.search, navigate, setIsGenerationsPaneLocked]);
 
+  // The gallery lists the route's project, but an add lands in the selected editor, which can be another project's
+  // (a dialog). The Runtime refuses an object another project owns, so that add is refused here instead of sent.
+  const addTargetProjectMismatch = Boolean(
+    selectedEditor?.projectId
+    && resolvedGalleryProject.projectId
+    && selectedEditor.projectId !== resolvedGalleryProject.projectId,
+  );
+
   const handleAddGenerationToTimeline = useCallback((generationId: string) => {
+    if (addTargetProjectMismatch) return;
     const nextSearch = new URLSearchParams(location.search);
     nextSearch.set(ADD_GENERATION_QUERY_PARAM, generationId);
     nextSearch.delete(ADD_GENERATION_PROJECT_PARAM);
@@ -471,7 +480,7 @@ export const useGenerationsPaneController = () => {
       nextSearch.set(ADD_GENERATION_TIMELINE_PARAM, selectedEditor.timelineId);
     }
     navigate({ pathname: location.pathname, search: `?${nextSearch.toString()}` });
-  }, [location.pathname, location.search, navigate, selectedEditor?.projectId, selectedEditor?.timelineId]);
+  }, [addTargetProjectMismatch, location.pathname, location.search, navigate, selectedEditor?.projectId, selectedEditor?.timelineId]);
 
   useRenderLogger('GenerationsPane', {
     page: generationData.page,
@@ -536,6 +545,7 @@ export const useGenerationsPaneController = () => {
     navigation: {
       handleNavigateToImageGeneration,
       handleAddGenerationToTimeline,
+      addTargetProjectMismatch,
       isVideoEditorShellActive,
     },
   };

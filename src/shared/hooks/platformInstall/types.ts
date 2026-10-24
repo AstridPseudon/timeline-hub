@@ -3,6 +3,11 @@ export interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+/** index.html keeps the install offer Chrome makes at page load, before the app's listener exists. */
+export interface WindowWithInstallPrompt extends Window {
+  __astridInstallPrompt?: BeforeInstallPromptEvent;
+}
+
 export interface NavigatorWithExtensions extends Navigator {
   standalone?: boolean;
   getInstalledRelatedApps?: () => Promise<Array<{ platform: string; url?: string; id?: string }>>;

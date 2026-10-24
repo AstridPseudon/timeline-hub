@@ -1,4 +1,3 @@
-import { buildEditorTourRecord, recordEditorTour } from './tourRecord';
 import { EDITOR_TOUR_ANCHORS, editorTourSelector } from '../anchors';
 import {
   exitEditorTour,
@@ -18,6 +17,13 @@ import {
  */
 
 const LAST_ACT = 3;
+
+// A browser-only host owns its handoff instead of writing Runtime tour records.
+let browserTourFinish: (() => void) | null = null;
+export function registerBrowserTourFinish(finish: () => void): () => void {
+  browserTourFinish = finish;
+  return () => { if (browserTourFinish === finish) browserTourFinish = null; };
+}
 
 /** Whether the parts that present the current beat have finished animating. */
 export function isEditorTourBeatReady({ beat, ready }: EditorTourState): boolean {
@@ -84,13 +90,18 @@ export function backEditorTour(): void {
 
 /**
  * Esc, Skip, leaving the page, and the end of the feedback card: leave the tour and hand the user their own chat.
- * Ending at the finale or feedback card is "completed"; ending anywhere earlier is "skipped". Either is recorded with where it ended.
  */
 export function finishEditorTour(): void {
-  const { status, act, beat } = getEditorTourState();
+  const { status } = getEditorTourState();
   if (status !== 'running') return;
+  const handoff = browserTourFinish;
+  // Persist the next phase before subscribers unmount the tour.
+  if (handoff) {
+    handoff();
+    exitEditorTour();
+    return;
+  }
   exitEditorTour();
-  void recordEditorTour(buildEditorTourRecord(beat === 'finale' || beat === 'feedback' ? 'completed' : 'skipped', act, beat));
   focusRealComposer();
 }
 

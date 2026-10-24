@@ -1054,7 +1054,7 @@ function AvailableAgentChatPanel({
             onOpenChange={(open) => setHeaderOverlayOpen('model', open)}
           />
         </div>
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex h-7 shrink-0 items-center gap-1">
           {isProcessing && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" aria-hidden="true" />}
           {showKillSwitch && (
             <Button

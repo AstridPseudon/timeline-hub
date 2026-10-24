@@ -9,7 +9,11 @@
 
     <!-- Web App Manifest for PWA -->
     <link rel="manifest" href="/manifest.json" />
-    
+    <!-- Chrome offers the install once, as the page loads; the run-mode choice asks after the tour. Keep the offer for signals.ts. -->
+    <script>
+      window.addEventListener('beforeinstallprompt', function (event) { event.preventDefault(); window.__astridInstallPrompt = event; });
+    </script>
+
     <!-- PWA Meta Tags -->
     <!-- The page paper; the public pages and the app then keep it in step with their own background. -->
     <meta name="theme-color" content="#f7f4ed" />
@@ -115,6 +119,8 @@
       })();
     </script>
     <style>
+      /* Shared loading-mink frame width, in CSS pixels at every display density. */
+      :root { --astrid-loading-mink-width: 90; }
       body { margin: 0; background-color: var(--boot-background, #faf8f5); }
       #boot {
         position: fixed; inset: 0; z-index: 2147483647; pointer-events: none;
@@ -126,15 +132,13 @@
       }
       #boot.boot-done .boot-paper, #boot.boot-flying .boot-paper { opacity: 0; }
       #boot.boot-flying .boot-paper { transition-duration: 360ms; }
-      /* MinkRunner (src/shared/components/MinkRunner): 11 frames of 81x44 at 770ms a cycle. The
-         scale keeps each frame a whole number of device pixels wide (180), so the stepped strip
-         never lands between pixels. */
+      /* MinkRunner (src/shared/components/MinkRunner): 11 frames of 81x44 at 770ms a cycle.
+         Share its 90 CSS-pixel frame width so the boot-to-panel handoff never changes size. */
       .boot-mink {
-        --s: calc(20 / 9); position: relative; display: grid; justify-items: center; gap: calc(1px * var(--s));
+        --s: calc(var(--astrid-loading-mink-width, 90) / 81); position: relative; display: grid; justify-items: center; gap: calc(1px * var(--s));
         animation: boot-mink-in 400ms ease-out 300ms backwards;
         transition: opacity 120ms ease-out, transform 120ms ease-out;
       }
-      @media (min-resolution: 2dppx) { .boot-mink { --s: calc(10 / 9); } }
       /* A mink still waiting out its delay stays hidden (the paused animation holds its first frame). */
       #boot.boot-done .boot-mink { opacity: 0; transform: translateX(calc(6px * var(--s))); animation-play-state: paused; }
       #boot.boot-landed .boot-mink { opacity: 0; transition: opacity 180ms ease-out; }
@@ -189,26 +193,56 @@
     <div id="boot" aria-hidden="true"><div class="boot-paper"></div><div class="boot-mink"><span class="boot-mink-flight-y"><span class="boot-mink-flight-x"><span class="boot-mink-wipe"><span class="boot-mink-unwipe"><span class="boot-mink-window"><span class="boot-mink-strip"></span></span></span></span></span></span><span class="boot-mink-ground"><span></span></span></div></div>
     <div id="root"></div>
     <script type="module" src="/src/app/main.tsx"></script>
-    
-    <!-- Service Worker Registration for PWA -->
-    <script type="module">
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          if (import.meta.env.DEV) {
-            const appWorkerUrl = new URL('/sw.js', window.location.href).href;
-            Promise.all([
-              navigator.serviceWorker.getRegistrations()
-                .then((registrations) => Promise.all(registrations
-                  .filter((registration) => [registration.active, registration.waiting, registration.installing]
-                    .some((worker) => worker?.scriptURL === appWorkerUrl))
-                  .map((registration) => registration.unregister()))),
-              'caches' in window ? caches.delete('astrid-v4') : Promise.resolve(),
-            ]).catch(() => { /* dev cleanup is best effort */ });
-            return;
-          }
+    <script>
+      // Vite strips attributes (an id) from the built entry tag, so match it by being the module script.
+      // Resource load errors do not bubble, hence the capture phase.
+      window.addEventListener('error', function (event) {
+        var target = event.target;
+        if (!target || target.tagName !== 'SCRIPT' || target.type !== 'module') return;
+        var root = document.getElementById('root');
+        var boot = document.getElementById('boot');
+        if (boot) boot.remove();
+        var message = document.createElement('main');
+        var content = document.createElement('div');
+        var icon = document.createElement('img');
+        var title = document.createElement('h1');
+        var detail = document.createElement('p');
+        var link = document.createElement('a');
+        // Shown before the app's CSS loads: keep in step with showFailureCard in src/app/main.tsx
+        message.setAttribute('role', 'alert');
+        message.style.cssText = 'min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;text-align:center;color:var(--boot-ink,#2b2724);font-family:Inter,system-ui,-apple-system,sans-serif';
+        content.style.maxWidth = '420px';
+        icon.src = '/astrid-app-icon-192.png';
+        icon.alt = '';
+        icon.width = 76;
+        icon.height = 76;
+        icon.style.cssText = 'display:block;margin:0 auto';
+        title.textContent = 'Astrid could not load';
+        title.style.cssText = "margin:10px 0 4px;font:400 25px/1.2 Georgia,'Times New Roman',serif";
+        detail.textContent = 'Check your connection, then reload.';
+        detail.style.cssText = 'margin:0 0 16px;font-size:14px;line-height:24px;opacity:.72';
+        link.textContent = 'Reload';
+        link.href = window.location.href;
+        link.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 28px;border-radius:12px;background:var(--boot-ink,#2b2724);color:var(--boot-background,#faf8f5);font-size:14px;font-weight:500;text-decoration:none';
+        content.append(icon, title, detail, link);
+        message.append(content);
+        root.replaceChildren(message);
+      }, true);
 
-          navigator.serviceWorker.register('/sw.js').catch(() => { /* silent */ });
-        });
+      if ('serviceWorker' in navigator) {
+        var appWorkerUrl = new URL('/sw.js', window.location.href).href;
+        navigator.serviceWorker.getRegistrations().then(function (registrations) {
+          return Promise.all(registrations.filter(function (registration) {
+            return [registration.active, registration.waiting, registration.installing]
+              .some(function (worker) { return worker && worker.scriptURL === appWorkerUrl; });
+          }).map(function (registration) { return registration.unregister(); }));
+        }).catch(function () {});
+      }
+      if ('caches' in window) {
+        caches.keys().then(function (names) {
+          return Promise.all(names.filter(function (name) { return name.indexOf('astrid-') === 0; })
+            .map(function (name) { return caches.delete(name); }));
+        }).catch(function () {});
       }
     </script>
   </body>

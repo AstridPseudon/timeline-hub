@@ -306,6 +306,7 @@ vi.mock(
           project,
           projectsQuery: {
             data: listed ?? undefined,
+            isSuccess: listed !== null && !override.projectsError,
             isLoading: listPending,
             isFetching: listPending,
             error: override.projectsError,
@@ -1210,12 +1211,28 @@ describe("VideoEditorPage", () => {
     expect(await screen.findByText("No projects yet")).toBeInTheDocument();
     expect(screen.getByText("Expected to see your work? It may be in another Astrid folder on this computer.")).toBeInTheDocument();
     expect(screen.getByText("Find my work")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Take the editor tour" })).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "New project" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("combobox", { name: "Select project" }),
     ).toHaveTextContent("Select project");
+  });
+
+  it("does not offer the tour for a nonempty or failed project discovery result", async () => {
+    const nonempty = renderPage("/tools/video-editor");
+    expect(await screen.findByRole("combobox", { name: "Select project" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Take the editor tour" })).toBeNull();
+    nonempty.unmount();
+
+    state.discovery.projects = [];
+    state.runtimeDiscovery.omitRuntimeProject = true;
+    state.runtimeDiscovery.projectsError = new Error("Runtime busy");
+    state.runtimeDiscovery.retainDiscoveryDataOnError = true;
+    renderPage("/tools/video-editor");
+    expect((await screen.findAllByText("Runtime busy")).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: "Take the editor tour" })).toBeNull();
   });
 
   it("keeps canonical Runtime identity and full live editor context when a timeline is present", async () => {
@@ -2016,30 +2033,6 @@ describe("VideoEditorPage", () => {
 
       act(() => exitEditorTour());
       await waitFor(() => expect(screen.queryByTestId("tour-overlay")).toBeNull());
-    });
-  });
-
-  describe("editor tour trigger", () => {
-    const USER_ENTRY = "/tools/video-editor?project=project-r&timeline=timeline-r";
-
-    afterEach(() => {
-      exitEditorTour();
-    });
-
-    it("starts the tour on the first mount with the user's selection, and never again once seen", async () => {
-      window.localStorage.removeItem(STORAGE_KEYS.EDITOR_TOUR_SEEN);
-      const first = renderPage(USER_ENTRY);
-      expect(await screen.findByTestId("tour-driver")).toBeInTheDocument();
-      expect(getEditorTourState().status).toBe("running");
-      expect(window.localStorage.getItem(STORAGE_KEYS.EDITOR_TOUR_SEEN)).not.toBeNull();
-
-      act(() => exitEditorTour());
-      await waitFor(() => expect(screen.queryByTestId("tour-driver")).toBeNull());
-      first.unmount();
-
-      renderPage(USER_ENTRY);
-      await screen.findByTestId("video-editor-provider");
-      expect(getEditorTourState().status).toBe("idle");
     });
   });
 

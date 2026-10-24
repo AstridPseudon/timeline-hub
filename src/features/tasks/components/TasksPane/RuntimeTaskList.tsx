@@ -1,19 +1,18 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import type { Task as RuntimeTask } from '@/integrations/runtime/generated.ts';
-import {
-  runtimeTaskIsCancellable,
-  runtimeTaskIsSelectedTimelineRender,
-  runtimeTaskIsRetryable,
-  type RuntimeTaskAction,
-} from './hooks/useRuntimeTasks';
-import { runtimeTaskLabel, runtimeTaskStateLabel } from './activityPresentation';
+import type { RuntimeTaskAction, RuntimeTaskActionFailure } from './hooks/useRuntimeTasks';
+import { RuntimeTaskGroup } from './RuntimeTaskGroup';
+import { RuntimeTaskRow, type RuntimeTaskRowActions } from './RuntimeTaskRow';
+import { sectionRuntimeTasks } from './runtimeTaskGroups';
 
 interface RuntimeTaskListProps {
   tasks: RuntimeTask[];
   isLoading: boolean;
   error: Error | null;
-  actionError: Error | null;
+  actionFailures: Record<string, RuntimeTaskActionFailure>;
+  exportedTo: Record<string, { label: string; title: string }>;
+  onDismissActionError: (taskId: string) => void;
   onCancelTask: (taskId: string) => void;
   onRetryTask: (taskId: string) => void;
   isTaskActionPending: (taskId: string, action: RuntimeTaskAction) => boolean;
@@ -23,135 +22,40 @@ interface RuntimeTaskListProps {
   onInspectTask: (taskId: string, anchor: { top: number; right: number }) => void;
 }
 
-function RuntimeTaskItem({
-  task,
-  onCancelTask,
-  onRetryTask,
-  isTaskActionPending,
-  timelineId,
-  onExportManagedOutput,
-  isExportTaskPending,
-  onInspectTask,
-}: Omit<RuntimeTaskListProps, 'tasks' | 'isLoading' | 'error' | 'actionError'> & { task: RuntimeTask }) {
-  const cancelPending = isTaskActionPending(task.task_id, 'cancel');
-  const retryPending = isTaskActionPending(task.task_id, 'retry');
-  const exportPending = isExportTaskPending(task.task_id);
-  const canExport = runtimeTaskIsSelectedTimelineRender(task, timelineId);
+export function RuntimeTaskList({ tasks, isLoading, error, ...actions }: RuntimeTaskListProps) {
+  const [showOlder, setShowOlder] = useState(false);
+  const sections = useMemo(() => sectionRuntimeTasks(tasks, actions.timelineId), [tasks, actions.timelineId]);
 
-  return (
-    <article
-      className="rounded-md border border-border bg-card/60 p-3 text-xs text-card-foreground"
-      data-runtime-task-row="true"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1">
-          <div className="font-medium text-card-foreground">{runtimeTaskLabel(task)}</div>
-          <div className="text-muted-foreground/80">{runtimeTaskStateLabel(task.state)}</div>
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(event) => {
-              const row = event.currentTarget.closest<HTMLElement>('[data-runtime-task-row]');
-              const rect = row?.getBoundingClientRect() ?? event.currentTarget.getBoundingClientRect();
-              onInspectTask(task.task_id, { top: rect.top, right: rect.right });
-            }}
-            aria-label={`Inspect ${runtimeTaskLabel(task)} activity`}
-            className="px-2 py-0.5"
-          >
-            Inspect
-          </Button>
-          {canExport && timelineId && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onExportManagedOutput(task.task_id, timelineId)}
-              disabled={cancelPending || retryPending || exportPending}
-              aria-label={`Export ${runtimeTaskLabel(task)} result`}
-              className="px-2 py-0.5 text-emerald-400 hover:bg-emerald-900/20 hover:text-emerald-300"
-            >
-              {exportPending ? 'Exporting…' : 'Export managed output'}
-            </Button>
-          )}
-          {runtimeTaskIsCancellable(task) && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onCancelTask(task.task_id)}
-              disabled={cancelPending || retryPending}
-              aria-label={`Cancel ${runtimeTaskLabel(task)}`}
-              className="px-2 py-0.5 text-red-400 hover:bg-red-900/20 hover:text-red-300"
-            >
-              {cancelPending ? 'Cancelling…' : 'Cancel'}
-            </Button>
-          )}
-          {runtimeTaskIsRetryable(task) && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onRetryTask(task.task_id)}
-              disabled={cancelPending || retryPending}
-              aria-label={`Retry ${runtimeTaskLabel(task)}`}
-              className="px-2 py-0.5 text-blue-400 hover:bg-blue-900/20 hover:text-blue-300"
-            >
-              {retryPending ? 'Retrying…' : 'Retry'}
-            </Button>
-          )}
-        </div>
-      </div>
-    </article>
-  );
-}
-
-export function RuntimeTaskList({
-  tasks,
-  isLoading,
-  error,
-  actionError,
-  onCancelTask,
-  onRetryTask,
-  isTaskActionPending,
-  timelineId,
-  onExportManagedOutput,
-  isExportTaskPending,
-  onInspectTask,
-}: RuntimeTaskListProps) {
   if (error) {
     return (
-      <div className="p-4 text-sm text-red-300" role="alert" data-runtime-task-error="true">
-        Runtime task reads failed: {error.message}
+      <div className="p-4 text-sm text-destructive" role="alert" data-runtime-task-error="true">
+        Couldn't load tasks: {error.message}
       </div>
     );
   }
 
   if (isLoading && tasks.length === 0) {
-    return <div className="p-4 text-sm text-muted-foreground">Loading Runtime tasks…</div>;
+    return <div className="p-4 text-sm text-muted-foreground">Loading tasks…</div>;
   }
 
+  if (tasks.length === 0) {
+    return <p className="p-4 text-center text-sm text-muted-foreground">No tasks yet</p>;
+  }
+
+  const rowActions: RuntimeTaskRowActions = actions;
+  const { active, failed, recent, older } = sections;
   return (
-    <div className="space-y-2 p-4 text-sidebar-foreground" data-runtime-task-list="true">
-      {actionError && (
-        <div className="rounded-md border border-red-800/80 bg-red-950/30 p-3 text-sm text-red-300" role="alert">
-          Runtime task action failed: {actionError.message}
-        </div>
-      )}
-      {tasks.length === 0 ? (
-        <p className="text-center text-sm text-muted-foreground">No tasks yet</p>
-      ) : (
-        tasks.map((task) => (
-          <RuntimeTaskItem
-            key={task.task_id}
-            task={task}
-            onCancelTask={onCancelTask}
-            onRetryTask={onRetryTask}
-            isTaskActionPending={isTaskActionPending}
-            timelineId={timelineId}
-            onExportManagedOutput={onExportManagedOutput}
-            isExportTaskPending={isExportTaskPending}
-            onInspectTask={onInspectTask}
-          />
-        ))
+    <div className="space-y-1 p-4 text-sidebar-foreground" data-runtime-task-list="true">
+      {active.map((task) => <RuntimeTaskRow key={task.task_id} task={task} actions={rowActions} />)}
+      {failed.map((group) => <RuntimeTaskGroup key={group.key} group={group} actions={rowActions} />)}
+      {recent.map((group) => <RuntimeTaskGroup key={group.key} group={group} actions={rowActions} />)}
+      {older.length > 0 && (
+        <>
+          {showOlder && older.map((group) => <RuntimeTaskGroup key={group.key} group={group} actions={rowActions} />)}
+          <Button variant="ghost" size="sm" className="w-full text-muted-foreground" onClick={() => setShowOlder((open) => !open)}>
+            {showOlder ? 'Hide older' : `Show ${older.length} older`}
+          </Button>
+        </>
       )}
     </div>
   );

@@ -2,18 +2,19 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, Copy } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard.ts';
-import { agentInstructions, installCommand, RUNTIME_CONNECTION_COPY, UPDATE_ROUTES, withCommandShell, type CommandMode } from './copy.ts';
+import { agentInstructions, installCommand, RUNTIME_CONNECTION_COPY, UPDATE_ROUTES, withCommandShell, type CommandMode, type WindowMode } from './copy.ts';
 
 export interface CopyInstallCommandProps {
   /** `install` for setup/repair and `update` for an incompatible Astrid. */
   readonly mode?: CommandMode;
+  readonly windowMode?: WindowMode;
 }
 
 type CopyStatus = 'idle' | 'copied' | 'failed';
 const COPIED_MS = 2000;
 
 /** Each action owns its feedback so copying a command cannot claim the agent brief was copied. */
-function useCopyAction(text: string) {
+export function useCopyAction(text: string) {
   const [status, setStatus] = useState<CopyStatus>('idle');
   const resetRef = useRef<number | null>(null);
   useEffect(() => () => {
@@ -31,7 +32,7 @@ function useCopyAction(text: string) {
   return { status, copy };
 }
 
-function CopyFallback({ text, label }: { text: string; label: string }) {
+export function CopyFallback({ text, label }: { text: string; label: string }) {
   const fieldRef = useRef<HTMLTextAreaElement>(null);
   useEffect(() => { fieldRef.current?.select(); }, [text]);
   return (
@@ -54,9 +55,9 @@ function CopyFallback({ text, label }: { text: string; label: string }) {
  * Agent handoff first, as the one primary action; the manual command is the quiet alternative under it, with its own
  * copy action. Nothing else: the card around it says what the instructions are for.
  */
-export function CopyInstallCommand({ mode = 'install' }: CopyInstallCommandProps) {
+export function CopyInstallCommand({ mode = 'install', windowMode = 'browser-tab' }: CopyInstallCommandProps) {
   const copy = RUNTIME_CONNECTION_COPY.agent;
-  const instructions = agentInstructions(mode, window.location.origin);
+  const instructions = agentInstructions(mode, window.location.origin, windowMode);
   const command = installCommand(mode);
   const agentCopy = useCopyAction(instructions);
   const commandCopy = useCopyAction(command);

@@ -39,13 +39,14 @@ vi.mock('@/migrations/astridRenameBrowserMigration.ts', () => ({
 describe('main entry bootstrap order', () => {
   beforeEach(() => {
     vi.resetModules();
+    localStorage.clear();
     bootstrapMocks.initializeVideoEditorExtensionRuntime.mockReset();
     bootstrapMocks.initializeWorkspaceRuntimeIdentity.mockReset();
     bootstrapMocks.migrateAstridBrowserStorage.mockReset();
     bootstrapMocks.renderApp.mockReset();
     document.body.replaceChildren();
     // The web root is the public landing entry; the app bootstrap only runs on an app route.
-    window.history.replaceState({}, '', '/tools/video-editor?localTest=1');
+    window.history.replaceState({}, '', '/tools/video-editor?localProject=demo');
   });
 
   it('installs the extension runtime before awaiting identity and rendering the app', async () => {

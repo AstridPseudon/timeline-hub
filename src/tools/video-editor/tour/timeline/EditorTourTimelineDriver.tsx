@@ -3,6 +3,7 @@ import {
   editorTourStage,
   getEditorTourState,
   markEditorTourReady,
+  startEditorTour,
   useEditorTour,
   type EditorTourStage,
 } from '@/shared/state/editorTourStore.ts';
@@ -12,19 +13,22 @@ import {
   useTimelineOpsFromStore,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { requestCenterTimelineClip } from '@/tools/video-editor/lib/timeline-viewport-events.ts';
-import { editorTourTrackSelector } from '@/tools/video-editor/tour/anchors.ts';
+import { editorTourSelector, editorTourTrackSelector } from '@/tools/video-editor/tour/anchors.ts';
+import { useTourMediaWarmup } from './useTourMediaWarmup.ts';
+import { EDITOR_TOUR_MEDIA } from '../tourMedia.ts';
 import { loadTourLiveScene, TOUR_SCENE_SOURCE_FROM } from './tourSceneSource.ts';
-import { createEditorTourStagePatch, createEditorTourStageRemovalPatch, tourStageFocusClipId, tourTrackOrder } from './tourStages.ts';
+import { createEditorTourStagePatch, createEditorTourStageRemovalPatch, tourStageFocusClipId, tourTrackOrder, TOUR_ANCHORS, TOUR_CLIP_IDS } from './tourStages.ts';
 
 const SceneSurface = lazy(() => import('@astrid/packs/rendering/ui/threejs-live-editor/SceneSurface')
   .then((module) => ({ default: module.SceneSurface })));
 
 const RENDER_WAIT_MS = 3000;
+export const TOUR_ANCHOR_DWELL_MS = 1200;
 const WARMUP_GIVE_UP_MS = 8000;
-/** The longest `land` waits for the visible scene's first painted frame before showing the card over it anyway. */
-const SCENE_READY_GIVE_UP_MS = 8000;
+/** A slow first frame gets recovery UI, never permission to advance an unpainted scene. */
+const SCENE_PREPARING_NOTICE_MS = 8000;
 /** The visible live scene reports its phase on this element (the warm-up's `onReady` is the same signal). */
-const SCENE_READY_SELECTOR = '[data-testid="astrid-live-scene-entry"][data-phase="ready"]';
+const SCENE_SELECTOR = '[data-testid="astrid-live-scene-entry"]';
 
 function nextFrame(): Promise<void> {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
@@ -34,6 +38,48 @@ function nextFrame(): Promise<void> {
 async function waitFor(check: () => boolean, timeoutMs: number, isCancelled: () => boolean): Promise<void> {
   const deadline = performance.now() + timeoutMs;
   while (!isCancelled() && !check() && performance.now() < deadline) await nextFrame();
+}
+
+/** Only the real preview's acknowledged opening frame can release stage 1 playback.
+ * The warm-up and timeline thumbnails own separate iframes/GPU contexts, and cannot vouch for it. */
+async function waitForTourSceneFrame(
+  revision: unknown,
+  isCancelled: () => boolean,
+  onPreparing: (state: 'waiting' | 'error') => void,
+): Promise<boolean> {
+  const noticeAt = performance.now() + SCENE_PREPARING_NOTICE_MS;
+  const openingTime = TOUR_SCENE_SOURCE_FROM.toFixed(3);
+  while (!isCancelled()) {
+    const preview = document.querySelector(editorTourSelector('preview'));
+    const scene = [...(preview?.querySelectorAll<HTMLElement>(SCENE_SELECTOR) ?? [])]
+      .find(element => element.dataset.desiredRevision === revision);
+    if (scene?.dataset.phase === 'ready'
+      && scene.dataset.displayedRevision === revision
+      && scene.dataset.desiredTime === openingTime
+      && scene.dataset.sourceTime === openingTime) return true;
+    if (scene?.dataset.phase === 'error') onPreparing('error');
+    else if (performance.now() >= noticeAt) onPreparing('waiting');
+    await nextFrame();
+  }
+  return false;
+}
+
+/** A timeline row may mount before the paused player's debounced composition and decoder. */
+async function waitForTourVideoFrame(frame: number | undefined, isCancelled: () => boolean): Promise<boolean> {
+  const expectedSrc = new URL(EDITOR_TOUR_MEDIA.video.url, document.baseURI).href;
+  while (!isCancelled()) {
+    const preview = document.querySelector(editorTourSelector('preview'));
+    const ready = [...(preview?.querySelectorAll<HTMLElement>('[data-preview-decoded-frame="true"]') ?? [])].some((element) => {
+      const src = element.dataset.previewMediaSrc;
+      return src && new URL(src, document.baseURI).href === expectedSrc
+        && (frame === undefined || element.dataset.previewPresentedFrame === String(frame));
+    });
+    if (ready) return true;
+    // No timeout fallthrough: playing an unready composition exposes the world underneath.
+    // The decoder owns load errors/retry. Back, Skip and leaving the tour cancel this wait.
+    await nextFrame();
+  }
+  return false;
 }
 
 /**
@@ -62,10 +108,11 @@ function SceneWarmup({ liveScene, onWarm }: { liveScene: Record<string, unknown>
 /**
  * Lives inside the tour's editor and takes the demo timeline to the tour's stage through the editor's
  * own ops (`track.add`, `clip.add`, `clip.update`), then presents it: scroll the new row into view,
- * and on each `land` beat play the 10 s from the start (act 2 holds on its start frame instead).
+ * and on each `land` beat play the 14 s from the start (act 2 presents each reference frame, then holds the last).
  * Reports `ready.timeline` per beat.
  */
 export function EditorTourTimelineDriver() {
+  useTourMediaWarmup();
   const runId = useEditorTour((state) => state.runId);
   const act = useEditorTour((state) => state.act);
   const beat = useEditorTour((state) => state.beat);
@@ -76,15 +123,22 @@ export function EditorTourTimelineDriver() {
   const [appliedStage, setAppliedStage] = useState<EditorTourStage>(0);
   const [liveScene, setLiveScene] = useState<Record<string, unknown> | null>(null);
   const [warm, setWarm] = useState(false);
+  const [sceneLoadAttempt, setSceneLoadAttempt] = useState(0);
+  const [sceneLoadError, setSceneLoadError] = useState(false);
+  const [scenePreparing, setScenePreparing] = useState<'waiting' | 'error' | null>(null);
   const [retry, setRetry] = useState(0);
   const applying = useRef(false);
 
   // The world loads as soon as the tour mounts, well before the first `land` beat needs it.
   useEffect(() => {
     let active = true;
-    loadTourLiveScene().then((scene) => { if (active) setLiveScene(scene); }, () => undefined);
+    setSceneLoadError(false);
+    loadTourLiveScene().then(
+      (scene) => { if (active) setLiveScene(scene); },
+      () => { if (active) setSceneLoadError(true); },
+    );
     return () => { active = false; };
-  }, []);
+  }, [sceneLoadAttempt]);
 
   useEffect(() => {
     if (!loaded || !ops || applying.current) return;
@@ -127,7 +181,11 @@ export function EditorTourTimelineDriver() {
   useEffect(() => {
     if (!loaded || appliedStage !== stage) return;
     let cancelled = false;
-    const isCancelled = () => cancelled;
+    const skippedAtStart = getEditorTourState().skipAnimation;
+    const isCancelled = () => {
+      const current = getEditorTourState();
+      return cancelled || current.status !== 'running' || current.runId !== runId || current.act !== act || current.beat !== beat;
+    };
     void (async () => {
       if (beat === 'respond' && act === 1 && !instant) await waitFor(() => warm, WARMUP_GIVE_UP_MS, isCancelled);
       if (beat === 'land') {
@@ -137,29 +195,66 @@ export function EditorTourTimelineDriver() {
           RENDER_WAIT_MS,
           isCancelled,
         );
-        const focusClipId = tourStageFocusClipId(stage);
-        if (focusClipId) requestCenterTimelineClip(focusClipId);
+        if (isCancelled()) return;
         await waitFor(() => previewRef.current !== null, RENDER_WAIT_MS, isCancelled);
-        // Pause before seeking: a seek issued while the previous act is still playing doesn't stick.
+        if (isCancelled()) return;
+        // Pause before seeking so an earlier act's playback cannot overwrite the new position.
         previewRef.current?.pause();
-        previewRef.current?.seek(0);
-        // The scene lands first: hold at 0 until its first frame is painted (an Enter during the wait skips it),
-        // so the card never shows over an empty preview and the moonrise plays from its start.
-        if (act === 1 && !instant) {
+        if (act === 2) {
           const skipped = getEditorTourState().skipAnimation;
-          await waitFor(
-            () => document.querySelector(SCENE_READY_SELECTOR) !== null || getEditorTourState().skipAnimation !== skipped,
-            SCENE_READY_GIVE_UP_MS,
-            isCancelled,
-          );
+          const anchors = instant ? [TOUR_ANCHORS.length - 1] : TOUR_ANCHORS.map((_, index) => index);
+          for (const index of anchors) {
+            if (isCancelled() || getEditorTourState().skipAnimation !== skipped) break;
+            requestCenterTimelineClip(TOUR_CLIP_IDS.stills[index]);
+            previewRef.current?.seek(TOUR_ANCHORS[index].at);
+            if (!instant) await waitFor(
+              () => getEditorTourState().skipAnimation !== skipped,
+              TOUR_ANCHOR_DWELL_MS,
+              isCancelled,
+            );
+          }
+        } else {
+          const focusClipId = tourStageFocusClipId(stage);
+          if (focusClipId) requestCenterTimelineClip(focusClipId);
+          if (act === 3) {
+            const videoWaitCancelled = () => isCancelled() || getEditorTourState().skipAnimation !== skippedAtStart;
+            // Keep the last reference frame underneath while H3 mounts and draws at the current
+            // playhead. Only then seek the new composition, whose canvas retains its last picture.
+            if (await waitForTourVideoFrame(undefined, videoWaitCancelled) && !videoWaitCancelled()) {
+              previewRef.current?.seek(0);
+              if (await waitForTourVideoFrame(0, videoWaitCancelled) && !videoWaitCancelled()) previewRef.current?.play();
+            }
+            if (!isCancelled()) markEditorTourReady('timeline');
+            return;
+          }
+          previewRef.current?.seek(0);
+          if (act === 1) {
+            setScenePreparing(null);
+            const sceneWaitCancelled = () => isCancelled() || getEditorTourState().skipAnimation !== skippedAtStart;
+            const painted = await waitForTourSceneFrame(liveScene?.revision, sceneWaitCancelled, setScenePreparing);
+            // Skipping an animation may advance the card, but must not run an unready scene clock.
+            // Back/instant entry still needs the actual opening frame before it can autoplay.
+            if (painted && !sceneWaitCancelled()) previewRef.current?.play();
+            if (!isCancelled()) setScenePreparing(null);
+          } else if (!isCancelled()) previewRef.current?.play();
         }
-        // Act 2's result is the start frame, which holds for the first second only: stay on it, paused.
-        if (act !== 2) previewRef.current?.play();
       }
-      if (!cancelled) markEditorTourReady('timeline');
+      if (!isCancelled()) markEditorTourReady('timeline');
     })();
     return () => { cancelled = true; };
-  }, [runId, act, beat, stage, appliedStage, loaded, warm, instant, previewRef]);
+  }, [runId, act, beat, stage, appliedStage, loaded, warm, instant, previewRef, liveScene]);
 
+  if (sceneLoadError) return (
+    <div role="alert" className="fixed bottom-6 left-1/2 z-[2147483647] flex -translate-x-1/2 items-center gap-3 rounded-lg border bg-background p-4 text-sm text-foreground shadow-lg">
+      <span>The Lantern Valley demo could not load. Check your connection and try again.</span>
+      <button type="button" className="shrink-0 rounded-md bg-primary px-3 py-2 text-primary-foreground" onClick={() => setSceneLoadAttempt((count) => count + 1)}>Retry demo</button>
+    </div>
+  );
+  if (scenePreparing && act === 1 && beat === 'land') return (
+    <div role={scenePreparing === 'error' ? 'alert' : 'status'} className="fixed bottom-6 left-1/2 z-[2147483647] flex -translate-x-1/2 items-center gap-3 rounded-lg border bg-background p-4 text-sm text-foreground shadow-lg">
+      <span>{scenePreparing === 'error' ? 'The 3D world could not render.' : 'Preparing the 3D world. Playback will start when its first frame is ready.'}</span>
+      <button type="button" className="shrink-0 rounded-md bg-primary px-3 py-2 text-primary-foreground" onClick={() => { setScenePreparing(null); startEditorTour(); }}>Restart demo</button>
+    </div>
+  );
   return warming && liveScene ? <SceneWarmup liveScene={liveScene} onWarm={() => setWarm(true)} /> : null;
 }

@@ -1,7 +1,7 @@
 import type { CommitRequest } from '@/integrations/runtime/timeline-commit-types.ts';
 import { ApiError } from '@/integrations/runtime/generated.ts';
 import { classifyRuntimeCommitFailure } from '@/integrations/runtime/client.ts';
-import { SCHEMA_DIGEST } from '@/integrations/runtime/generated-contract-metadata.ts';
+import { supportsFullV2Commit } from '@/integrations/runtime/contract-metadata.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
 import { documentPatchIntent } from './documentPatchIntent.ts';
 import {
@@ -157,7 +157,7 @@ export async function createLocalSaveSession(options: Options) {
         }
         const save = saveOf(record.intents[0].payload);
         // Activate only with the normal official full-v2 generated contract.
-        const fullV2 = String(SCHEMA_DIGEST) === 'sha256:35c2d9c5e0b51ab8d8b7a4f4dbafbdfcb13d232d7bd22fff21cf73e250398d4c';
+        const fullV2 = supportsFullV2Commit();
         if ((!save.commands && !(fullV2 && save.documentIntent))
           || (!fullV2 && save.commands?.some((command) => command.op === 'doc.patch'))) { publish('blocked', dtoGap); return; }
         publish('saving');

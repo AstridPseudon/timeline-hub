@@ -16,6 +16,8 @@ import {
 import { runtimeTaskLabel, runtimeTaskModality, runtimeTaskProgress, runtimeTaskStateLabel } from './activityPresentation';
 
 const MAX_VISIBLE_ROWS = 3;
+/** How long an unpinned inspector survives the pointer crossing a gap. */
+const INSPECTOR_HIDE_GRACE_MS = 150;
 const INSPECTOR_WIDTH = 344;
 
 export interface RuntimeTaskInspectionRequest {
@@ -35,7 +37,6 @@ interface RuntimeActivityDockProps {
   isHistoryOpen: boolean;
   onTogglePinned: () => void;
   onToggleHistory: () => void;
-  onTemporaryHistoryLeave: (event: React.MouseEvent | React.FocusEvent) => void;
   onOpenHistory: () => void;
   onCancelTask: (taskId: string) => void;
   onRetryTask: (taskId: string) => void;
@@ -140,6 +141,8 @@ function TaskModalityIcon({ task }: { task: RuntimeTask }) {
 
 function ActivityTaskInspector({
   task,
+  onHoverEnter,
+  onHoverLeave,
   projectId,
   allTasks,
   pinned,
@@ -154,6 +157,8 @@ function ActivityTaskInspector({
   isExportTaskPending,
 }: {
   task: RuntimeTask;
+  onHoverEnter: () => void;
+  onHoverLeave: (event: React.MouseEvent) => void;
   projectId: string;
   allTasks: RuntimeTask[];
   pinned: boolean;
@@ -234,9 +239,8 @@ function ActivityTaskInspector({
       aria-label={`${runtimeTaskLabel(task)} activity details`}
       data-activity-inspector="true"
       data-pinned={String(pinned)}
-      onMouseLeave={(event) => {
-        if (!pinned && !(event.relatedTarget instanceof Element && event.relatedTarget.closest('[data-activity-task-row]'))) onClose();
-      }}
+      onMouseEnter={onHoverEnter}
+      onMouseLeave={onHoverLeave}
     >
       <div className="flex items-start justify-between gap-3 border-b border-border/70 bg-amber-50/70 px-3 py-2 dark:bg-amber-950/30">
         <div className="min-w-0">
@@ -292,7 +296,7 @@ function ActivityTaskInspector({
 
 export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
   const {
-    projectId, timelineId, tasks, links, isLoading, error, actionError, isPinned, isHistoryOpen, onTogglePinned, onToggleHistory, onTemporaryHistoryLeave, onOpenHistory,
+    projectId, timelineId, tasks, links, isLoading, error, actionError, isPinned, isHistoryOpen, onTogglePinned, onToggleHistory, onOpenHistory,
     onCancelTask, onRetryTask, isTaskActionPending, onExportManagedOutput, isExportTaskPending,
     requestedTaskInspection, onTaskInspectionRequestHandled,
   } = props;
@@ -365,19 +369,34 @@ export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
   }, [selectedTaskId]);
 
   const showTask = (taskId: string, intentional = false) => {
+    cancelHide();
     if (pinned && !intentional && taskId !== selectedTask?.task_id) return;
     setSelectedTaskId(taskId);
     updatePosition(taskId);
   };
+  // A row or inspector hides a beat after the pointer leaves, so crossing the gap between them
+  // (or a diagonal) keeps the inspector; entering either one cancels the hide.
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelHide = useCallback(() => {
+    if (hideTimer.current === null) return;
+    clearTimeout(hideTimer.current);
+    hideTimer.current = null;
+  }, []);
+  useEffect(() => cancelHide, [cancelHide]);
   const hideUnpinned = (event: React.MouseEvent | React.FocusEvent) => {
     if (pinned) return;
+    cancelHide();
     if (event.relatedTarget instanceof Element && (
       event.relatedTarget.closest('[data-activity-inspector]')
       || event.relatedTarget.closest('[data-activity-task-row]')
     )) return;
-    setSelectedTaskId(null);
+    hideTimer.current = setTimeout(() => {
+      hideTimer.current = null;
+      setSelectedTaskId(null);
+    }, INSPECTOR_HIDE_GRACE_MS);
   };
   const toggleTaskPin = () => {
+    cancelHide();
     if (!selectedTask) return;
     setPinnedTaskId((current) => current === selectedTask.task_id ? null : selectedTask.task_id);
   };
@@ -404,7 +423,7 @@ export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
     };
   }, [selectedTaskId, pinned, closeInspector]);
 
-  return <section className="mx-2 my-1 overflow-visible rounded-lg border border-amber-300/70 bg-amber-50/75 text-amber-950 shadow-sm dark:border-amber-800/70 dark:bg-amber-950/25 dark:text-amber-50" data-runtime-activity-dock="true" onMouseLeave={onTemporaryHistoryLeave} onBlur={onTemporaryHistoryLeave}>
+  return <div className="px-2 py-1" data-runtime-activity-dock-frame="true"><section className="overflow-visible rounded-lg border border-amber-300/70 bg-amber-50/75 text-amber-950 shadow-sm dark:border-amber-800/70 dark:bg-amber-950/25 dark:text-amber-50" data-runtime-activity-dock="true">
     <header className="flex h-[38px] items-center justify-between gap-2 px-2.5" aria-label="Runtime activity">
       <div className="flex min-w-0 items-center gap-2">
         <Activity className="h-3.5 w-3.5 shrink-0 text-amber-700 dark:text-amber-300" aria-hidden="true" />
@@ -457,7 +476,7 @@ export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
           onMouseLeave={hideUnpinned}
           onFocus={() => showTask(task.task_id)}
           onBlur={hideUnpinned}
-          onClick={() => { showTask(task.task_id, true); setPinnedTaskId((current) => current === task.task_id ? null : task.task_id); }}
+          onClick={() => { cancelHide(); showTask(task.task_id, true); setPinnedTaskId((current) => current === task.task_id ? null : task.task_id); }}
         >
           <TaskModalityIcon task={task} />
           {task.state === 'running' && <Loader2 className="h-3 w-3 shrink-0 animate-spin text-amber-600/80 dark:text-amber-300/80" aria-hidden="true" />}
@@ -472,6 +491,8 @@ export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
     {selectedTask && <ActivityTaskInspector
       key={`${projectId}:${selectedTask.task_id}`}
       task={selectedTask}
+      onHoverEnter={cancelHide}
+      onHoverLeave={hideUnpinned}
       projectId={projectId}
       allTasks={tasks}
       pinned={pinned}
@@ -485,5 +506,5 @@ export function RuntimeActivityDock(props: RuntimeActivityDockProps) {
       onExportManagedOutput={onExportManagedOutput}
       isExportTaskPending={isExportTaskPending}
     />}
-  </section>;
+  </section></div>;
 }

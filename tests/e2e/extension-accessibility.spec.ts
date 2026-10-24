@@ -4,6 +4,7 @@ import {
   TIMELINE_SLUG,
   editorPath,
   resetFakeRuntimeBaseline,
+  isAbsentWorldLibraryRead,
 } from './timeline/support';
 
 const EDITOR_URL = editorPath({ params: { transcriptLaneFixture: '1' } });
@@ -24,7 +25,7 @@ function collectIssues(page: Page): string[] {
     }
   });
   page.on('response', (response) => {
-    if (response.status() >= 400) {
+    if (response.status() >= 400 && !isAbsentWorldLibraryRead(response)) {
       issues.push(`[http ${response.status()}] ${response.url()}`);
     }
   });
@@ -67,7 +68,8 @@ async function openExtensionsPanel(page: Page): Promise<Locator> {
   await expect(inventory.locator('[data-video-editor-built-in-extension]')).toHaveCount(EXTENSION_COUNT);
   // The dialog zooms in on open, so a box measured mid-animation is scaled (23.99 px for a 24 px
   // control). Target sizes are measured only once every animation has finished.
-  await page.evaluate(() => Promise.all(document.getAnimations().map((animation) => animation.finished)));
+  // A cancelled animation (a transition replaced by the next one) rejects `finished` with AbortError; it is over.
+  await page.evaluate(() => Promise.all(document.getAnimations().map((animation) => animation.finished.catch(() => undefined))));
   return inventory;
 }
 

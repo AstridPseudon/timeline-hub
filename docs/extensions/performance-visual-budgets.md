@@ -64,7 +64,8 @@ Visual regression uses three complementary gates:
 - The cross-browser/accessibility suites retain screenshots for the composed
   transcript lane, responsive controls, 200% content zoom, and reduced motion.
   The caption export proof (`tests/e2e/timeline/caption-render-export.spec.ts`)
-  validates the rendered MP4 and asserts that the render emits no font-stretch
+  was removed with the Transcript Caption Foundry extension in commit aa6683590;
+  it used to validate the rendered MP4 and assert that the render emitted no font-stretch
   warnings; signed human acceptance still owns typography, shaping, and
   legibility judgment over real footage.
 

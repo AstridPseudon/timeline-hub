@@ -3,6 +3,7 @@ import { dirname, isAbsolute, join, resolve, win32 } from 'node:path';
 import { parseEnv } from 'node:util';
 
 const VITE_ENTRY_RE = /^index-[A-Za-z0-9_-]+\.js$/;
+export const LOCAL_EDITOR_PORT = '5180';
 
 export const LOCAL_RUNTIME_ENV_KEYS = Object.freeze([
   'ASTRID_RUNTIME_DATA_ROOT', 'ASTRID_SUPPORT_ROOT', 'ASTRID_WORKSPACE_DISCOVERY',
@@ -105,7 +106,7 @@ export function parseDevLocalWorkspaceArgs(args, env = {}) {
 }
 
 /** Resolve the Runtime CLI invocation without a shell, preserving explicit Python selection. */
-export function resolveRuntimeCommand({ runtimeCheckout, runtimePython, platform = process.platform, exists = existsSync } = {}) {
+export function resolveRuntimeCommand({ runtimeCheckout, runtimePython, dataRoot, sourceManifest, platform = process.platform, exists = existsSync } = {}) {
   const checkout = runtimeCheckout?.trim();
   const python = runtimePython?.trim();
   if (python) {
@@ -124,6 +125,22 @@ export function resolveRuntimeCommand({ runtimeCheckout, runtimePython, platform
       throw new Error(`Runtime checkout has no .venv/${scriptsDirectory}/${executable}: ${checkoutPython}; set ASTRID_RUNTIME_PYTHON to an explicit Python executable`);
     }
     return { command: checkoutPython, args: ['-m', 'astrid_runtime.cli'], cwd: checkout };
+  }
+  // The official installer keeps Python off PATH and records it in the Runtime's source profile.
+  const paths = platform === 'win32' ? win32 : { join, isAbsolute };
+  const profilePath = sourceManifest || (dataRoot && paths.join(dataRoot, 'runtime', 'source-profiles', 'astrid.json'));
+  if (profilePath && exists(profilePath)) {
+    const profile = JSON.parse(readFileSync(profilePath, 'utf8'));
+    const environment = profile.runtime_environment;
+    if (profile.profile !== 'astrid' || (environment != null
+      && (typeof environment !== 'string' || !paths.isAbsolute(environment)))) {
+      throw new Error(`Runtime source profile has no absolute Astrid Python environment: ${profilePath}; rerun the official installer to repair it`);
+    }
+    if (environment != null) {
+      const installedPython = paths.join(environment, platform === 'win32' ? 'Scripts' : 'bin', platform === 'win32' ? 'python.exe' : 'python');
+      if (!exists(installedPython)) throw new Error(`Installed Runtime Python is missing: ${installedPython}; rerun the official installer to repair it`);
+      return { command: installedPython, args: ['-m', 'astrid_runtime.cli'] };
+    }
   }
   return { command: 'astrid-runtime', args: [], cwd: undefined };
 }
@@ -211,6 +228,18 @@ export function viteChildArgs(options) {
 export function resolveRuntimeDataRoot({ platform = process.platform, env = process.env, home }) {
   const path = platform === 'win32' ? win32 : undefined;
   const pathJoin = path?.join ?? join;
+  const programParent = platform === 'win32'
+    ? env.LOCALAPPDATA || pathJoin(home, 'AppData', 'Local')
+    : platform === 'linux' ? env.XDG_DATA_HOME || pathJoin(home, '.local', 'share') : pathJoin(home, '.local', 'share');
+  const selection = pathJoin(programParent, 'astrid-install.json');
+  if (existsSync(selection)) {
+    const installed = JSON.parse(readFileSync(selection, 'utf8'));
+    if (installed.owner !== 'haus.astrid.runtime' || typeof installed.data_root !== 'string'
+      || !(path?.isAbsolute ?? isAbsolute)(installed.data_root)) {
+      throw new Error(`Invalid Astrid installation record: ${selection}; rerun the official installer to repair it`);
+    }
+    return installed.data_root;
+  }
   if (platform === 'win32') return pathJoin(env.LOCALAPPDATA || pathJoin(home, 'AppData', 'Local'), 'Astrid Runtime');
   if (platform === 'darwin') return pathJoin(home, 'Library', 'Application Support', 'Astrid Runtime');
   return pathJoin(env.XDG_DATA_HOME || pathJoin(home, '.local', 'share'), 'astrid-runtime');

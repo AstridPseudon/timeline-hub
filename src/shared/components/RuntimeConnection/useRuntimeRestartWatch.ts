@@ -10,25 +10,32 @@ import { runtimeApiBase } from '@/integrations/runtime/connection.ts';
  * credential now names another identity) is Astrid changed under the page. Both are sticky: once seen, the page keeps its
  * drafts and waits for Reload.
  *
- * Two readings in a row that fail are `stopped`. A failed reading is a network error (nothing answers, about 6 seconds),
- * a 503 that is not an identity change (the Runtime's door answers but the Runtime is not ready), or any other
- * answer that is not ok. That one is not sticky: a reading with the same instance clears it, and a new instance is a
- * restart. An ok answer that names no instance is not a restart and changes nothing.
+ * Two readings in a row that fail are `stopped`. A failed reading is a network error (nothing is there: refused or
+ * unreachable), a 503 that is not an identity change (the Runtime's door answers but the Runtime is not ready), or any
+ * other answer that is not ok. A reading that times out is different: the port took the request and did not answer in
+ * time, which is a loaded machine, not a missing Astrid. It never counts toward `stopped`; two in a row are `busy`, a
+ * calm card that Astrid is still running. A slow reading also ends a streak of failures, and a failure ends a streak of
+ * slow readings: each streak counts only readings that agree. Neither state is sticky: a reading with the same
+ * instance clears it, and a new instance is a restart. A slow reading while `stopped` is `busy` at once, since the
+ * port is answering again. An ok answer that names no instance is not a restart and changes nothing.
  */
 
-export type RuntimeRestartStatus = 'ok' | 'stopped' | 'restarted' | 'realm_changed';
+export type RuntimeRestartStatus = 'ok' | 'busy' | 'stopped' | 'restarted' | 'realm_changed';
 
 const RESTART_CHECK_INTERVAL_MS = 3000;
 
 /** Failed readings in a row before the page says Astrid stopped: one dropped request is not a stop. */
 const FAILURES_BEFORE_STOPPED = 2;
-/** A health request that has not answered by now counts as a failed reading. */
+/** Slow readings in a row before the page says Astrid is busy. */
+const SLOW_BEFORE_BUSY = 2;
+/** A health request that has not answered by now counts as a slow reading. */
 const HEALTH_TIMEOUT_MS = 3000;
 
 type HealthReading =
   | { kind: 'instance'; instanceId: string }
   | { kind: 'realm_changed' }
   | { kind: 'unreachable' }
+  | { kind: 'slow' }
   | { kind: 'unknown' };
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
@@ -43,12 +50,17 @@ async function readJson(response: Response): Promise<unknown> {
 
 async function readHealth(fetchImpl: FetchLike): Promise<HealthReading> {
   let response: Response;
+  let timedOut = false;
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), HEALTH_TIMEOUT_MS);
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, HEALTH_TIMEOUT_MS);
   try {
     response = await fetchImpl(`${runtimeApiBase()}/v1/health`, { cache: 'no-store', signal: controller.signal });
   } catch {
-    return { kind: 'unreachable' };
+    // Only our own abort timer makes this slow; a rejected fetch with no timeout is a refused or unreachable port.
+    return timedOut ? { kind: 'slow' } : { kind: 'unreachable' };
   } finally {
     clearTimeout(timer);
   }
@@ -81,6 +93,7 @@ export function useRuntimeRestartWatch(
     let stopped = false;
     let inFlight = false;
     let failures = 0;
+    let slows = 0;
     const check = async () => {
       if (inFlight) return;
       inFlight = true;
@@ -89,16 +102,27 @@ export function useRuntimeRestartWatch(
         if (stopped) return;
         if (reading.kind === 'unreachable') {
           failures += 1;
-          if (failures >= FAILURES_BEFORE_STOPPED) setStatus((current) => (current === 'ok' ? 'stopped' : current));
+          slows = 0;
+          if (failures >= FAILURES_BEFORE_STOPPED) setStatus((current) => (current === 'ok' || current === 'busy' ? 'stopped' : current));
+          return;
+        }
+        if (reading.kind === 'slow') {
+          slows += 1;
+          failures = 0;
+          setStatus((current) => {
+            if (current === 'stopped') return 'busy';
+            return current === 'ok' && slows >= SLOW_BEFORE_BUSY ? 'busy' : current;
+          });
           return;
         }
         failures = 0;
+        slows = 0;
         if (reading.kind === 'realm_changed') {
           setStatus('realm_changed');
         } else if (reading.kind === 'instance') {
           if (baselineRef.current === null) baselineRef.current = reading.instanceId;
           if (reading.instanceId !== baselineRef.current) setStatus('restarted');
-          else setStatus((current) => (current === 'stopped' ? 'ok' : current));
+          else setStatus((current) => (current === 'stopped' || current === 'busy' ? 'ok' : current));
         }
       } finally {
         inFlight = false;
@@ -142,6 +166,8 @@ export function useOnAstridAnswers(
       try {
         const reading = await readHealth(fetchImpl);
         if (disposed) return;
+        // A slow reading says nothing new about whether Astrid answers: the port is there, the answer is late.
+        if (reading.kind === 'slow') return;
         const nowAnswering = reading.kind === 'instance' || reading.kind === 'unknown';
         const started = nowAnswering && answering === false;
         answering = nowAnswering;

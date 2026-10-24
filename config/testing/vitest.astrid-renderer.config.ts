@@ -25,6 +25,8 @@ export default defineConfig({
     alias: {
       ...baseAliases,
       '@remotion/three': path.resolve(__dirname, '../../node_modules/@remotion/three'),
+      // Astrid's composition sits outside this repo and installs nothing here: resolve its bare `three` to the one App copy.
+      three: path.resolve(__dirname, '../../node_modules/three'),
     },
   },
   test: {

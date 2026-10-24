@@ -1,13 +1,25 @@
 import React from 'react';
+import { Button } from '@/shared/components/ui/button';
+import { EditorCard, EditorCardPage } from '@/shared/components/RuntimeConnection/EditorCard.tsx';
 import { reportErrorBoundaryCatch } from '@/shared/lib/errorHandling/recoverableError';
+
+/** True for the failures a stale hashed chunk produces after a redeploy. */
+export function isChunkLoadError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? '');
+  return (
+    message.includes('Failed to fetch dynamically imported module') ||
+    message.includes('Loading chunk') ||
+    message.includes('ChunkLoadError') ||
+    message.includes('MIME type')
+  );
+}
 
 interface ChunkLoadErrorBoundaryState {
   hasError: boolean;
 }
 
 /**
- * Error boundary that catches chunk load failures (from lazy imports after deployment)
- * and auto-reloads the page to get fresh assets.
+ * Error boundary that gives users a way out when a lazy chunk fails to load.
  *
  * This handles the common scenario where:
  * 1. User has cached old JS that references old chunk hashes
@@ -32,13 +44,7 @@ export class ChunkLoadErrorBoundary extends React.Component<
 
   static getDerivedStateFromError(error: Error): ChunkLoadErrorBoundaryState {
     // Check if it's a chunk load error
-    const isChunkError =
-      error.message.includes('Failed to fetch dynamically imported module') ||
-      error.message.includes('Loading chunk') ||
-      error.message.includes('ChunkLoadError') ||
-      error.message.includes('MIME type');
-
-    if (isChunkError) {
+    if (isChunkLoadError(error)) {
       return { hasError: true };
     }
 
@@ -50,21 +56,18 @@ export class ChunkLoadErrorBoundary extends React.Component<
     reportErrorBoundaryCatch({
       context: 'ChunkLoadErrorBoundary.componentDidCatch',
       error,
-      recoveryAction: 'reload',
+      recoveryAction: 'fallback',
     });
-    // Small delay to ensure the error boundary renders before reload
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
   }
 
   render() {
     if (this.state.hasError) {
-      // Brief message shown before auto-reload
       return (
-        <div className="flex items-center justify-center p-4 text-sm text-muted-foreground">
-          Updating...
-        </div>
+        <EditorCardPage>
+          <EditorCard title="Astrid was updated" sentence="Reload to get the new version.">
+            <Button className="h-11 w-full rounded-xl" onClick={() => window.location.reload()} type="button">Reload</Button>
+          </EditorCard>
+        </EditorCardPage>
       );
     }
 

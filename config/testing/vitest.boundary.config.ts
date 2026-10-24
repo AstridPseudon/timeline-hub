@@ -1,3 +1,4 @@
+import SkipGuardReporter from './skipGuardReporter';
 import { defineConfig } from 'vitest/config';
 import path from 'path';
 
@@ -39,6 +40,8 @@ export default defineConfig({
   },
   test: {
     globals: true,
+    allowOnly: false,
+    reporters: ['default', new SkipGuardReporter()],
     environment: 'jsdom',
     include: ['src/sdk/__tests__/*.test.{ts,tsx}'],
     setupFiles: [path.resolve(projectRoot, 'src/test/setup.ts')],

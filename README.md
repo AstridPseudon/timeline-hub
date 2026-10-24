@@ -2,9 +2,45 @@
 
 The public app is at [astrid.haus](https://astrid.haus/). This repository contains the developer source for the web app.
 
+## Run Astrid fully on your computer
+
+Use this route to change the editor itself. The editor runs from source, with live updates when you edit it. Once dependencies are installed, it can open offline; online models and providers still need internet.
+
+First install or repair Astrid with the official installer. Read the script before running it. It keeps existing projects, media, credentials and agent instructions.
+
+macOS or Linux, in Terminal:
+
+```sh
+curl -fsSL https://astrid.haus/install | sh
+```
+
+Windows, in PowerShell:
+
+```powershell
+irm https://astrid.haus/install.ps1 | iex
+```
+
+Install Git and Node.js **20.19 or newer in the Node 20 release line**, then run these commands in Terminal or PowerShell:
+
+```sh
+git clone https://github.com/banodoco/astrid-app.git
+cd astrid-app
+npx -y npm@11 ci
+npm run dev:local
+```
+
+Open **http://127.0.0.1:5180/tools/video-editor?connect=1** and confirm it shows Connected. Keep the terminal open. The launcher checks the Runtime's identity and compatibility, then proxies the editor's requests on the same address. Credentials stay in the local server; the browser needs no local-network permission. The existing Runtime door remains available to astrid.haus on the same computer.
+
+- **Start later:** in this clone, run `npm run dev:local`. The launcher attaches to the installed Runtime or starts it using its recorded Python environment. If it asks for a repair, rerun the official installer.
+- **Stop:** press Ctrl+C in that terminal. It stops the editor and its proxy, and any Runtime it started. A Runtime already running through the installer's login service keeps running, so astrid.haus remains usable.
+- **Update the editor:** stop it, save or commit your source changes, then run `git pull --ff-only origin main`, `npx -y npm@11 ci` and `npm run dev:local`. If Git reports a conflict or divergence, keep your changes and resolve it before continuing.
+- **Update the Runtime and agent:** use the [official update command](https://github.com/banodoco/astrid-agent/blob/main/docs/setup/troubleshooting.md#update-astrid), then restart the editor. Never delete the workspace to resolve a version mismatch.
+
+Your clone is the editor's code. Edit it while the dev server runs to see changes through Vite's normal development workflow. If port 5180 is occupied, the launcher reports it; stop the program that owns it before starting Astrid.
+
 ## Develop the app
 
-Use Node.js 20.19 or newer and install the repository's dependencies. Start the app with a compatible `astrid-runtime` available on `PATH`:
+Use Node.js 20.19 or newer in the Node 20 release line and install the repository's dependencies. Start the app with an official Astrid installation, or a compatible `astrid-runtime` available on `PATH`:
 
 ```sh
 npm install
