@@ -36,7 +36,10 @@ def _installed_runtime_root() -> Path | None:
         return None
     if runtime_module is None:
         runtime_module = importlib.import_module("runtime_protocol")
-    installed_root = Path(runtime_module.__file__).resolve().parents[1]
+    runtime_origin = runtime_module.__file__
+    if not isinstance(runtime_origin, str) or not runtime_origin:
+        raise AssertionError("runtime_protocol has no source origin")
+    installed_root = Path(runtime_origin).resolve().parents[1]
     if installed_root.name not in {"site-packages", "dist-packages"}:
         return None
 
@@ -109,17 +112,23 @@ def _runtime_fixture(name: str) -> Any:
         tests.__path__.insert(0, runtime_tests)
     for dependency in _RUNTIME_FIXTURE_DIGESTS:
         dependency_module = sys.modules.get(f"tests.{dependency}")
-        if (dependency_module is not None
-                and Path(dependency_module.__file__).resolve() != tests_root / f"{dependency}.py"):
-            raise AssertionError(
-                f"Runtime fixture dependency imported from an unexpected path: {dependency_module.__file__}"
-            )
+        if dependency_module is not None:
+            dependency_origin = dependency_module.__file__
+            if not isinstance(dependency_origin, str) or not dependency_origin:
+                raise AssertionError(f"Runtime fixture dependency has no source origin: {dependency}")
+            if Path(dependency_origin).resolve() != tests_root / f"{dependency}.py":
+                raise AssertionError(
+                    f"Runtime fixture dependency imported from an unexpected path: {dependency_origin}"
+                )
     module_name = f"tests.{name}"
     module = sys.modules.get(module_name)
     if module is None:
         module = importlib.import_module(module_name)
-    if Path(module.__file__).resolve() != path:
-        raise AssertionError(f"Runtime fixture imported from an unexpected path: {module.__file__}")
+    module_origin = module.__file__
+    if not isinstance(module_origin, str) or not module_origin:
+        raise AssertionError(f"Runtime fixture has no source origin: {module_name}")
+    if Path(module_origin).resolve() != path:
+        raise AssertionError(f"Runtime fixture imported from an unexpected path: {module_origin}")
     return module
 
 
