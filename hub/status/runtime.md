@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T09:42:10Z | dispatcher heartbeat 3s | live 3 (sol 0, luna 3, other 0) | busy30 12 | status age 2m -->
-# runtime board, 2026-10-24T09:34:00Z
+<!-- main | 2026-10-24T09:45:01Z | dispatcher heartbeat 9s | live 5 (sol 1, luna 4, other 0) | busy30 13 | status age 1m -->
+# runtime board, 2026-10-24T09:43:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -85,7 +85,7 @@
 | OPS-Agent-current-child | Qualify changed Agent source child | Dispatcher / Agent Luna | Reviewed installed RECORD correction | blocked:runtime | final-0c2c-becfe; harness 0820 | Bootstrap and all installs passed. Final installed RECORD validation refused. Runtime return 0848 is active; no child READY. | Agent 0c2c / Runtime becfe |
 | OPS-Farm-current-child | Qualify Farm checkpoint child | Farm lead / Runtime Luna | Correct required imports | blocked:runtime | Actual preflight 0900 | Runtime and Agent isolated imports pass. Full row refuses shared schema; Runtime package absence is unconfirmed. Source and whole path 0906 are assigned. | Agent 9cd / Runtime 1d9 |
 
-| OPS-child-verifier-numpy-RECORD | Authenticate complete installed inventory | HARD Sol / Luna | Final independent security PASS | doing | Sol0923; whole path0925; review0903 FAIL | 84 controls pass; inventory attacks failed. Sol0923 owns complete inventory; source uninstalled. [Review](../../design/runtime-verifier-security-review-0903.md). | ffb926 held |
+| OPS-child-verifier-numpy-RECORD | Authenticate complete installed inventory | HARD Sol / Luna | Final independent security PASS | doing | Sol0943; inventory review0943 | 22 new controls pass;91 total pass,15 reserve-related failures. Bootstrap authority wiring Sol0943 is active. [Source](../../design/runtime-inventory-sol-0923.md). | 1d3b123ee held |
 
 | R2r-provider-completion | Classify post-provider replay failure | HARD Sol / Luna | Independent source review passed | merged | Author0915; review0923 PASS | Bounded source assessment passed; original cause UNKNOWN. Nine author controls passed; temporary JUnit lost. [Review](../../design/runtime-provider-completion-review-0923.md). | Runtime becfe unchanged |
 
@@ -114,6 +114,6 @@ Agent census: official 263 closed / 4 open of 267, independently reviewed 0827 a
 
 Blockers: Farm and Runtime lead — Agent provenance0918 and independent0922 are complete. Exact schema242f source remains absent; lead fetch0918 owns the missing object. Five-wheel input0932 is active. Preflight stays held.
 Blockers: App — header P2/P3 GO precedes U3b home, D39 adoption and final tuple qualification.
-Blockers: Runtime — independent0903 failed cumulative security despite84 passing controls: foreign package and unowned executable accepted. Sol0923 owns inventory correction; no installation or changed child released.
-Next ready: Sol inventory0923 and five-wheel publisher0940 are active. Whole-path0925 and corrected distribution facts0928 are complete. Schema implementation resumes after authenticated input and serialized maker source. No unassigned ready task.
+Blockers: Runtime — independent0903 failed cumulative security despite84 passing controls: foreign package and unowned executable accepted. Sol0943 owns bootstrap and activation authority after inventory0923. Independent review0943 is active. No installation or changed child released.
+Next ready: Sol bootstrap0943, inventory review0943 and five-wheel publisher0940 are active. Whole-path0925 and corrected distribution facts0928 are complete. Schema implementation resumes after authenticated input and serialized maker source. No unassigned ready task.
 Later: D47 memo and capsule remain held until after delivery. D34 threshold crossed at8257409024 bytes free; only three historic non-KEEP Runtime trees remain and all are dirty. Prior cleanup/process/retirement refusals stay stopped. V4,D14,D23,D31,D37 dispositions remain unchanged.

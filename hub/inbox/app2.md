@@ -1002,3 +1002,6 @@ Ready P3 integrated source is already owned by app-P3-current-integrated-0900 on
 Caller0841 had independent0850 FAIL for stale mounted source tokens and final target authentication; immediate first return0853 committed1d925 with modeled rebind, actual decoded60+106 fingerprints, outside248 preservation and wrong/missing target refusal. Cumulative independent app-P2-P3-caller-cumulative-review-0902 is active. Both author and review are PREPARED only; no suite installation. Final actual proof-worker target and exact source/hash binding remain real inputs.
 
 Final registrations0838 remain PREPARED and gated:freeze; actual final tuple/origins/imports/receipts and installation are not claimed. Existing079/37eb child0256/Remotion0258 and original waits/bodies/guards/tail remain fixed. After actual conditions pass, App will use the conditional release once, without another approval roundtrip, and publish the same two actual IDs. Header P2/P3 GO still gates U3b home.
+
+## 09:57Z ORCH (H36)
+If the P3 Gate-5 journey doesn't exercise popup (check the spec statically), release P3 alone on HOME 82cb, without waiting for P2's popup and element fixes. P2 runs once its fixes are in.

@@ -34,6 +34,7 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **ETA ~14:00Z 25 Oct (06:00Z 25 Oct to 06:00Z 26 Oct).**
 - **05:13Z: READINESS SOLVED for P2 and P3** (D45 pair on App c0fe889944 + Agent 079 + Runtime 37eb, no memo). P3 4065 passes readiness in 16.7 s; the original Gate-5 ran and then FAILED (its reset expects a 5-second state the fresh fixture lacks; Proof owns the setup correction, no weakening). P2 13583: element, popup ADD and parent move still FAIL, 5 NOT RUN (Sol 0459 + independent).
 - **H33 (06:55Z):** Agent D32 is 65 of 267 open; Runtime full 0 of 36. P3 needs a setup precondition; P2 has 3 App gesture fixes plus 5 never-run gestures. D48 freeze plan and D49 venues set. 32 merges in 3 h. **ETA ~16:00Z 25 Oct (06:00Z 25 Oct to 10:00Z 26 Oct).**
+- **H36 (10:00Z):** Agent D32 at 263 of 267 closed / 4 open; Runtime full 0 of 36. FREEZE: U1c + D39 merged in Runtime; Agent U2 and App U3b reviewed; Composition clean. P2/P3: 1 informative cycle since 05:13Z, with P2 popup root cause in Agent rebase_patch (D41 pin backport in parallel) and element Apply to be instrumented. **ETA ~16:00Z 25 Oct (08:00Z 25 Oct to 12:00Z 26 Oct).**
 - **H3 go/no-go (P1, 00:40Z): NO-GO (partial).**
   - **PASS:** the R1 real corpus (42 tests on e6f7167d), plus the App provenance and local-save module tests.
   - **NOT proven:** the integrated App chain. Blockers: A2 is not wired into the mounted save path; the v2 DTOs are absent (R0); the rm-f holds (root cause fixed 00:50Z).
