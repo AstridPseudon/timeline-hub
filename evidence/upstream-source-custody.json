@@ -1,0 +1,21 @@
+{
+  "agent_head": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+  "agent_parents": [
+    "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "39dda14913702e572197d511ad483ae0f20bf5b1",
+    "0d5d16af6f83d595144d21ea1cef2b5a468b9836"
+  ],
+  "agent_status": "",
+  "agent_tree": "a81a8c7f262e4416dcdefc0720fd760e026d766b",
+  "existing_venv": "/home/user/work/venv-agent",
+  "junit_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D60-snapshot-return-1342/evidence/upstream-full-9244377.xml",
+  "module_origin_guards_retained_in_row": true,
+  "node_version": "v20.19.4",
+  "profile": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110",
+  "row_sha256": "29bf758c29248e50e3d588f0f46702577c6e6dab548f29c2d87f667d852e3eb5",
+  "runtime_head": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+  "runtime_status": "",
+  "runtime_tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89",
+  "service_request_made": false,
+  "snapshot_has_no_worktree_path_dependency": true
+}

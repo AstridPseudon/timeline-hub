@@ -1,0 +1,58 @@
+{
+  "schema": "timeline.agent.d54.count-assertions.return-1343.v1",
+  "task": "agt-F-core-counts-return-1343",
+  "counts": {
+    "total": 276,
+    "scope": {
+      "core": 159,
+      "noncore": 117
+    },
+    "qualification": {
+      "qualified_PASS": 162,
+      "open": 112,
+      "approved_deferred": 2
+    },
+    "qualification_by_scope": {
+      "core": {
+        "PASS": 152,
+        "OPEN": 5,
+        "DEFERRED": 2
+      },
+      "non-core": {
+        "PASS": 10,
+        "OPEN": 107,
+        "DEFERRED": 0
+      }
+    },
+    "category": {
+      "UNPROVEN": 196,
+      "env": 78,
+      "deferred": 2
+    },
+    "category_by_scope": {
+      "core": {
+        "UNPROVEN": 157,
+        "deferred": 2
+      },
+      "non-core": {
+        "UNPROVEN": 39,
+        "env": 78
+      }
+    }
+  },
+  "assertions": {
+    "all_276_unique_orders": true,
+    "all_276_unique_node_ids": true,
+    "orders_exact_1_through_276": true,
+    "scope_sum_159_plus_117": true,
+    "qualification_sum_162_plus_112_plus_2": true,
+    "core_sum_152_plus_5_plus_2": true,
+    "noncore_sum_10_plus_107": true,
+    "category_sum_78_plus_2_plus_196": true,
+    "current_core_xml_membership_exact": true,
+    "current_core_parameters_preserved": true,
+    "current_failures_not_qualified_pass": true,
+    "deferred_not_counted_as_pass": true,
+    "source_controls_outside_old276_not_credited": true
+  }
+}

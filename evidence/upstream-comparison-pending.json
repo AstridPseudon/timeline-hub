@@ -1,0 +1,25 @@
+{
+  "schema": "timeline.agent.d54.upstream-comparison-pending.v1",
+  "service_id": "agt-F-D60-baseline-amend-1336-full-upstream-final-9244377-1024135120-1621",
+  "observed_at_utc": "2026-10-24T14:31:53Z",
+  "request": "full-upstream-final-9244377",
+  "source_head": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+  "source_tree": "a81a8c7f262e4416dcdefc0720fd760e026d766b",
+  "runtime_head": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+  "runtime_tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89",
+  "service_status": "running",
+  "terminal": false,
+  "exit_file": null,
+  "summary_file": null,
+  "junit_destination": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D60-snapshot-return-1342/evidence/upstream-full-9244377.xml",
+  "junit_present": false,
+  "target_nodes": 276,
+  "target_scope": {
+    "core": 159,
+    "noncore": 117
+  },
+  "comparison_status": "PENDING_UNKNOWN",
+  "per_node_status": "UNKNOWN_FOR_ALL_276_UNTIL_TERMINAL_XML",
+  "regression_count": null,
+  "reason": "The sanctioned service was still running at the bounded stop; no terminal XML, exit code, or summary was available. Missing upstream selectors and summary-only data must not be treated as PASS."
+}

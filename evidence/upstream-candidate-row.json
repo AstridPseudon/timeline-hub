@@ -1,0 +1,14 @@
+{
+  "custody_guard": "exact direct source history or exact one-parent service snapshot whose sole parent is source; same tree and existing clean/module/environment/runtime/profile guards",
+  "junit_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D60-snapshot-return-1342/evidence/upstream-full-9244377.xml",
+  "row_bytes": 4580,
+  "row_index_1based": 21,
+  "row_key": "agent full-upstream-final-9244377",
+  "row_sha256": "29bf758c29248e50e3d588f0f46702577c6e6dab548f29c2d87f667d852e3eb5",
+  "source_head": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+  "source_parents": [
+    "39dda14913702e572197d511ad483ae0f20bf5b1",
+    "0d5d16af6f83d595144d21ea1cef2b5a468b9836"
+  ],
+  "source_tree": "a81a8c7f262e4416dcdefc0720fd760e026d766b"
+}
