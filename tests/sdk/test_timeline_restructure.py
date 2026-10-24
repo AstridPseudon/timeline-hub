@@ -275,6 +275,26 @@ def test_three_way_merge_works_on_the_stored_form(restructure_runtime):
     assert any("bed" in line for line in conflicts)  # the same film-level clip changed on both sides refuses
 
 
+def test_three_way_merge_works_on_the_stored_form_r4_original():
+    base = published(split(flat_film()))
+    mine = Checkout(copy.deepcopy(base))
+    mine.clip("late").data["hold"] = 1.5
+    mine.clip("bed").data["volume"] = 0.9
+    candidate = mine.stored_document()
+    head = copy.deepcopy(base)
+    first = head["shots"][head["placements"][0]["shot_id"]]
+    first["internal_timeline"]["clips"][0]["hold"] = 3.9  # someone else touched a different clip in another chapter
+    merged, conflicts = three_way(base, head, candidate)  # noqa: F821 -- retired upstream route remains visible
+    assert conflicts == []
+    by_id = {c["id"]: c for s in merged["shots"].values() for c in s["internal_timeline"]["clips"]}
+    assert by_id["late"]["hold"] == 1.5 and by_id["p1"]["hold"] == 3.9
+    assert next(c for c in merged["parent"]["clips"] if c["id"] == "bed")["volume"] == 0.9
+    theirs = copy.deepcopy(base)
+    next(c for c in theirs["parent"]["clips"] if c["id"] == "bed")["volume"] = 0.1
+    _, conflicts = three_way(base, theirs, candidate)  # noqa: F821 -- retired upstream route remains visible
+    assert any("bed" in line for line in conflicts)
+
+
 def test_restructure_refuses_what_would_change_the_render():
     flat = flat_film()
     good = split(flat)
@@ -814,6 +834,38 @@ def test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chapter(saved_s
     assert [doc["shots"][s]["payload"]["name"] for s in shot_ids] == ["01 ONE", "02 TWO", "03 THREE"]
     assert len({r["occurrence_id"] for r in doc["placements"]}) == 3
     assert [call['op'] for call in bodies[0]['commands']] == ['timeline.duplicate']
+
+
+def test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chapter_r4_original(monkeypatch):
+    """A chapter film is read flat; duplicating must copy its stored form (a shot per chapter), not the one flat
+    shot, or the copy is stored as a single shot and every chapter reads back with the same shot id."""
+    from types import SimpleNamespace
+
+    from astrid.sdk import timeline_duplicate as td
+
+    stored = published(split(flat_film()))
+    assert len(stored["placements"]) == 3
+    src = Checkout(flatten(copy.deepcopy(stored)))
+    assert len(src.bundle["shots"]) == 1 and STRUCTURE_KEY in src.bundle
+    empty = flat_film()
+    empty["timeline_id"] = "dup"
+    dst = Checkout(empty)
+    for tl in (src, dst):  # the toy film has no real media identities; validity is not what this test is about
+        tl.check = lambda: SimpleNamespace(valid=True, blocking=[], problems=[])
+    opened = {"t": src, "dup": dst}
+    monkeypatch.setattr(td.Checkout, "open", classmethod(lambda cls, p, t, client=None, revision_id=None: opened[t]))
+    stored_docs = []
+    monkeypatch.setattr(td.Checkout, "publish", lambda self, *a, **k: stored_docs.append(self.stored_document()) or {})
+    client = SimpleNamespace(timelines=SimpleNamespace(
+        create_empty=lambda **kw: SimpleNamespace(ok=True, data={"timeline_id": "dup"}),
+        archive=lambda *a: SimpleNamespace(ok=True)))
+    out = td._duplicate(client, "p", "t", slug="dup", name=None, revision_id=None)
+    doc = stored_docs[0]
+    shot_ids = [r["shot_id"] for r in doc["placements"]]
+    assert out["shots"] == 3 and len(set(shot_ids)) == 3 and set(shot_ids) == set(doc["shots"])
+    assert all(s.startswith("dup-") for s in shot_ids)
+    assert [doc["shots"][s]["payload"]["name"] for s in shot_ids] == ["01 ONE", "02 TWO", "03 THREE"]
+    assert len({r["occurrence_id"] for r in doc["placements"]}) == 3
 
 
 def test_duplicate_guard_refuses_a_copy_that_collapses_shots_and_keeps_a_repeated_shot_repeated():
