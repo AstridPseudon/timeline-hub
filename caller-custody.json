@@ -2,13 +2,13 @@
   "status": "PREPARED",
   "run_authorization": "NOT_GRANTED",
   "artifact": {
-    "branch": "tl/app-P2-P3-D41-caller-return-sol-0950",
-    "purpose": "prepare the existing qualified caller for one genuine D41 Agent079 backport",
+    "branch": "tl/app-P2-D41-actual-custody-prep-1020",
+    "purpose": "prepare the existing qualified caller for one genuine D41 Agent333 P2 backport",
     "original_run": false,
     "caller_artifacts_only": ["caller-publication.py", "caller-custody.json"]
   },
   "qualified_caller_0623": {
-    "artifact_commit": "d54582a08c6ad0453742523a3ec374dd321ce477",
+    "artifact_commit": "1f82e4b6d86918177f1ec9ddf5747f037f94084f",
     "app_source": "66354161950d1e747965c095ea97b881d2592708",
     "app_tree": "9a37265f0286128df7e6240a9df9877d959474af",
     "app_parent": "b2380539c5545661954d2794976631312ee1d939",
@@ -22,15 +22,15 @@
   },
   "existing_suite_rows": {
     "full-e2e-three-products": {
-      "installed_sha256": "23fba456948b68f04e14ec0cf1659f27071c6cd00d6b6fa05d579476842f5b97"
+      "installed_sha256": "1fe55269347c878c986263b93afedccd6a198952d61858794ce84f0304f01fd1"
     },
     "ap2-P3-gate5-h6-0348": {
-      "installed_sha256": "84e0e7d3b296fc55c202e3e2ddbbcaafd0da66626a5beb538a4d012dbea80f9"
+      "installed_sha256": "4ae8ae786cefd6be2aedb901a539fe81eb77a299ae4c246a8cd31c429440798d"
     },
-    "outside_rows": 248,
-    "outside_bytes": 466341,
-    "outside_sha256": "b33d30918d6e2ae039dfa296bc75b1e0b2674828b53f07a16ee029933d5ad734",
-    "draft_sha256": "PENDING_FINAL_SOURCE_REDERIVATION"
+    "outside_rows": 247,
+    "outside_bytes": 465609,
+    "outside_sha256": "9acf76fafd09c0e4ecd89be6288402f8557dcb17c3a70f492ce9ae56d241e2e8",
+    "draft_sha256": "f883921b07137bb1331756f2f7ec418234def01efc352458da761d7cc038f776"
   },
   "wire_fields": {
     "request": [
@@ -68,7 +68,7 @@
     "backend_execution": "not run"
   },
   "source_rederivation": {
-    "final_manifest": "required explicit input TIMELINE_FINAL_SOURCE_MANIFEST",
+    "final_manifest": "optional until the final App pure-product join is independently qualified",
     "dispatcher_authorization": {
       "worker": "required existing ORCH/workers/<worker>/meta identity",
       "branch": "must be tl/<worker> and match the dispatched clean checkout",
@@ -106,36 +106,63 @@
     "no_obsolete_hash_reuse": true
   },
   "d41_agent_rebinding": {
-    "manifest_env": "TIMELINE_D41_AGENT_MANIFEST",
-    "status": "PENDING",
-    "qualified_source": null,
-    "qualification_gate": "An independently reviewed exact source/tree/079 parent/worker/branch/base/checkout and git binary delta SHA256 must be bound here by a reviewed caller update; manifest self-PASS cannot supply qualification.",
+    "manifest_env": "TIMELINE_D41_AGENT_MANIFEST (optional exact-input assertion)",
+    "status": "PREPARED",
+    "qualified_source": {
+      "source": "333b44b1a1b8be72d4d101391b7636c508419109",
+      "tree": "1094bf3662c785e4b21eddf7e3ae980da79b1af1",
+      "parent": "079580ca46af77e0292d49dc34386b25c8391f99",
+      "checkout": "/home/user/work/wt/agt-pin-333b44b1",
+      "source_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-333b44b1a1b8be72d4d101391b7636c508419109",
+      "source_receipt_sha256": "fad9e905e1ebf658215887dd84ad01e7ed2014366d0fbaecf56b3a6fa5388d96",
+      "delta_sha256": "ad0dfa1a0fac08dae219af90ea527b9d9f6cfdadc4254086d2bc70f227b13a80",
+      "review": "PASS",
+      "review_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-R1-popup-079-backport-review-0955.md",
+      "reviewed_hunk_lines": 18,
+      "reviewed_test_lines": 234,
+      "protected_blob_count": 3418
+    },
+    "qualification_gate": "The exact independently reviewed 333b source, sole 079 parent, normal checkout receipt, delta, and protected-tree comparison must remain authentic; an optional manifest may only assert this tuple.",
     "receipt_origins": {
-      "source": "ORCH/workers/<worker>/meta plus exact ORCH/queue/done/<worker> dispatch record and qualified source binding",
+      "source": "exact ORCH/queue/done/checkout-agent-<fullSHA> normal source carrier receipt plus clean detached checkout",
       "maker": "ORCH/queue/done/childvenv-<child>, strict final maker success fields",
       "provision": "ORCH/tests/provision/<child>.txt, equal to registered report and child .provision-report",
       "import": "keyed child .astrid-import-origins, equal to provision section and exact physical installed paths",
       "child": "existing bench-store identity-derived key, owned entry and named registration; no new key format"
     },
     "tuple": {
-      "source": "PENDING",
-      "tree": "PENDING",
-      "parent": "PENDING",
-      "checkout": "PENDING",
+      "source": "333b44b1a1b8be72d4d101391b7636c508419109",
+      "tree": "1094bf3662c785e4b21eddf7e3ae980da79b1af1",
+      "parent": "079580ca46af77e0292d49dc34386b25c8391f99",
+      "checkout": "/home/user/work/wt/agt-pin-333b44b1",
       "runtime": "37eb6c7bdb79dcae2523883e66b5cea5be721ffd",
       "runtime_tree": "be4114705127f9ee9e86b26cd6de3f467e771c01",
       "runtime_checkout": "/home/user/work/wt/rt-pin-37eb6c7b",
-      "child": "PENDING",
-      "child_key": "PENDING",
-      "child_root": "PENDING",
+      "child": "venv-agent-child-app-popup-333b-37eb-1016",
+      "child_key": "188546b73edd84d90d8d5c321b63b3278eaec80d0050e1b63cea4be298302321",
+      "child_root": "/home/user/work/bench-store/entries/child-188546b73edd84d90d8d5c321b63b3278eaec80d0050e1b63cea4be298302321",
       "remotion": "agent-remotion-app-ready-079-37eb-0258",
       "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db",
       "remotion_root": "/home/user/work/bench-store/entries/runtime-5ca5c561b7be7069051ac8769432cc1edf29060bed39384cd3c4ecab1736e690"
     },
+    "child_receipts": {
+      "maker": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/childvenv-venv-agent-child-app-popup-333b-37eb-1016",
+        "sha256": "b009028c010c7dfd1abfac5b04368bff4d0b8ed3aff62bfcd93d7da967c9a6f9"
+      },
+      "provision": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/provision/venv-agent-child-app-popup-333b-37eb-1016.txt",
+        "sha256": "57e5eacfb1b12f12b64858dccf5cbba40a087f9e062cded024234bb1a621efeb"
+      },
+      "import": {
+        "path": "/home/user/work/bench-store/entries/child-188546b73edd84d90d8d5c321b63b3278eaec80d0050e1b63cea4be298302321/.astrid-import-origins",
+        "sha256": "1135edfc5da73e3c47306279546cb6f34658ef8ba2429b08529b897af051dd56"
+      }
+    },
     "required": [
       "full Agent source/tree/parent SHA and separate clean dispatched checkout",
-      "dispatcher worker/base/branch metadata, actual dispatch origin, and hashed metadata receipt",
-      "exact independently reviewed nonempty 079 backport delta and read-only source checkout",
+      "exact normal checkout-agent source carrier receipt and clean detached checkout",
+      "exact independently reviewed nonempty 079-parent backport delta and exact source checkout",
       "independent review PASS",
       "Runtime37eb checkout/tree and exact four canonical client hashes",
       "exact Runtime37eb backend hash set and digest",
@@ -143,9 +170,9 @@
       "explicit unchanged Remotion0258 checkout/tree and authenticated graph reuse"
     ],
     "replacement_scope": [
-      "decoded P2/P3 Agent source SHA",
-      "decoded P2/P3 Agent checkout",
-      "decoded P2/P3 child registration"
+      "decoded P2 Agent source SHA",
+      "decoded P2 Agent checkout",
+      "decoded P2 child registration"
     ],
     "retained_legacy": {
       "agent": "079580ca46af77e0292d49dc34386b25c8391f99",
@@ -153,7 +180,7 @@
       "meaning": "historical qualified path only; never relabeled as the D41 source or child"
     },
     "fail_closed": [
-      "unknown or missing manifest or independently reviewed source/delta qualification",
+      "wrong or missing exact source/receipt/review qualification",
       "wrong source/tree/exact079parent/base/checkout or arbitrary unreviewed delta",
       "wrong Runtime/client/backend bytes",
       "forged, missing, changed, or mismatched maker/provision/import receipt",
@@ -190,11 +217,9 @@
     "actual final reviewed joined source SHA/tree/parent",
     "source fingerprints and spec/body hashes rederived from that tree",
     "independent review PASS for the joined source",
-    "actual D41 Agent source/tree/parent/client/backend SHA tuple and dispatched checkout",
-    "genuine D41 maker/provision/import receipts and a new keyed child",
+    "final App pure-product joined source/tree/parent and rederived source/body checksums",
     "separate read-only pure final-integrated proof-worker target",
-    "existing dispatcher worker metadata, branch/base identity, and hashed immutable source receipt",
     "normal-service single-parent same-tree snapshot authorization",
-    "integrated P2/P3 proof and actual daemon identity"
+    "integrated P2 proof and actual daemon identity"
   ]
 }

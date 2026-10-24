@@ -30,14 +30,23 @@ QUALIFIED_TREE = "9a37265f0286128df7e6240a9df9877d959474af"
 QUALIFIED_PARENT = "b2380539c5545661954d2794976631312ee1d939"
 SOURCE_BASE = "f90e708b379145ac456924742cc51c187ed6e0c6"
 AGENT = "079580ca46af77e0292d49dc34386b25c8391f99"
+ACTUAL_AGENT = "333b44b1a1b8be72d4d101391b7636c508419109"
+ACTUAL_AGENT_TREE = "1094bf3662c785e4b21eddf7e3ae980da79b1af1"
+ACTUAL_AGENT_DELTA_SHA256 = "ad0dfa1a0fac08dae219af90ea527b9d9f6cfdadc4254086d2bc70f227b13a80"
+ACTUAL_AGENT_CHECKOUT = Path("/home/user/work/wt/agt-pin-333b44b1")
+ACTUAL_AGENT_RECEIPT = ORCH / "queue/done" / f"checkout-agent-{ACTUAL_AGENT}"
+ACTUAL_AGENT_REVIEW = ORCH / "design/agt-R1-popup-079-backport-review-0955.md"
 RUNTIME = "37eb6c7bdb79dcae2523883e66b5cea5be721ffd"
 RUNTIME_TREE = "be4114705127f9ee9e86b26cd6de3f467e771c01"
 AGENT_CHECKOUT = Path("/home/user/work/wt/agt-pin-079580ca")
 RUNTIME_CHECKOUT = Path("/home/user/work/wt/rt-pin-37eb6c7b")
 CHILD = "venv-agent-child-app-ready-079-37eb-0256"
+ACTUAL_CHILD = "venv-agent-child-app-popup-333b-37eb-1016"
 REMOTION = "agent-remotion-app-ready-079-37eb-0258"
 CHILD_KEY = "5464e85332660e8d6d133653d0600709f2aac5a6c9a0ff0e0bc1fb18312d7f2f"
 CHILD_ROOT = Path("/home/user/work/bench-store/entries") / f"child-{CHILD_KEY}"
+ACTUAL_CHILD_KEY = "188546b73edd84d90d8d5c321b63b3278eaec80d0050e1b63cea4be298302321"
+ACTUAL_CHILD_ROOT = Path("/home/user/work/bench-store/entries") / f"child-{ACTUAL_CHILD_KEY}"
 REMOTION_ROOT = Path("/home/user/work/bench-store/entries/runtime-5ca5c561b7be7069051ac8769432cc1edf29060bed39384cd3c4ecab1736e690")
 PROVISION_RECEIPT = ORCH / "tests/provision" / f"{CHILD}.txt"
 CHILD_RECEIPT = ORCH / "queue/done" / f"childvenv-{CHILD}"
@@ -146,6 +155,29 @@ def physical_path(path: Path) -> Path:
     if not path.exists() or not path.is_absolute() or path != path.resolve() or any(p.is_symlink() for p in (path, *path.parents)):
         raise RuntimeError(f"PREPARED: unavailable or nonphysical custody path: {path}")
     return path
+
+
+def assert_actual_manifest(manifest: dict[str, object] | None) -> dict[str, object]:
+    """Bind the one reviewed normal source carrier, without inventing worker metadata."""
+    expected = {
+        "source": ACTUAL_AGENT,
+        "tree": ACTUAL_AGENT_TREE,
+        "parent": AGENT,
+        "checkout": str(ACTUAL_AGENT_CHECKOUT),
+        "source_receipt": str(ACTUAL_AGENT_RECEIPT),
+        "source_receipt_sha256": digest(ACTUAL_AGENT_RECEIPT.read_bytes()),
+        "runtime": RUNTIME,
+        "runtime_tree": RUNTIME_TREE,
+        "runtime_checkout": str(RUNTIME_CHECKOUT),
+        "child": ACTUAL_CHILD,
+        "child_key": ACTUAL_CHILD_KEY,
+        "child_root": str(ACTUAL_CHILD_ROOT),
+    }
+    if manifest is not None:
+        for key, value in expected.items():
+            if key in manifest and manifest.get(key) != value:
+                raise RuntimeError(f"PREPARED: D41 actual manifest differs from qualified source: {key}")
+    return expected
 
 
 def immutable_receipt(manifest: dict[str, object], key: str, expected: dict[str, str]) -> dict[str, object]:
@@ -264,111 +296,69 @@ def child_receipts(manifest: dict[str, object], lock_hash: str) -> None:
 
 
 def d41_agent_input() -> dict[str, object]:
-    """Read, but never invent, the future Agent079 backport binding.
-
-    The installed rows intentionally retain the old 079/0256 values until a
-    producer supplies this complete input.  This function is therefore a
-    preparation gate, not a source or child installer.
-    """
+    """Validate the exact reviewed Agent333 source and its existing child."""
     manifest_name = os.environ.get(D41_AGENT_MANIFEST_ENV)
-    if not manifest_name:
-        raise RuntimeError("PREPARED: D41 Agent source/client/child tuple is not available")
-    manifest_path = Path(manifest_name)
-    if manifest_path.is_symlink() or not manifest_path.is_file():
-        raise RuntimeError("PREPARED: D41 Agent manifest is unavailable")
-    try:
-        manifest = json.loads(manifest_path.read_text())
-    except json.JSONDecodeError as exc:
-        raise RuntimeError("PREPARED: D41 Agent manifest is not JSON") from exc
-    if not isinstance(manifest, dict):
-        raise RuntimeError("PREPARED: D41 Agent manifest is not an object")
-    required = (
-        "checkout", "source", "tree", "parent", "review", "worker", "branch", "base", "base_sha",
-        "source_receipt", "source_receipt_sha256", "runtime", "runtime_tree", "runtime_checkout",
-        "client_hashes", "backend_hashes", "backend_digest", "child", "child_key", "child_root",
-        "remotion", "remotion_tree", "remotion_root",
-        "maker_receipt", "maker_receipt_sha256", "provision_receipt", "provision_receipt_sha256",
-        "import_receipt", "import_receipt_sha256",
-    )
-    if any(key not in manifest for key in required):
-        raise RuntimeError("PREPARED: D41 Agent manifest is incomplete")
-    if manifest["review"] != "PASS":
-        raise RuntimeError("PREPARED: D41 Agent review is not PASS")
-    source = require_sha(manifest["source"], "D41 Agent source", SHA1_RE)
-    tree = require_sha(manifest["tree"], "D41 Agent tree", SHA1_RE)
-    parent = require_sha(manifest["parent"], "D41 Agent parent", SHA1_RE)
-    base_sha = require_sha(manifest["base_sha"], "D41 Agent base", SHA1_RE)
-    if source == AGENT:
-        raise RuntimeError("PREPARED: D41 Agent source is the retained 079 source")
-    if manifest["runtime"] != RUNTIME or manifest["runtime_tree"] != RUNTIME_TREE:
-        raise RuntimeError("PREPARED: D41 Agent Runtime identity is not the retained Runtime37eb pair")
-    if parent != AGENT or base_sha != AGENT:
-        raise RuntimeError("PREPARED: D41 Agent parent/base must be exact retained 079")
-    qualified = json.loads((APP / "caller-custody.json").read_text())["d41_agent_rebinding"].get("qualified_source")
-    if not isinstance(qualified, dict):
-        raise RuntimeError("PREPARED: actual independently reviewed D41 source/delta is not qualified")
-    for key in ("source", "tree", "parent", "worker", "branch", "base", "base_sha", "checkout"):
-        if qualified.get(key) != manifest[key]:
-            raise RuntimeError(f"PREPARED: D41 source differs from reviewed qualification: {key}")
-    receipt_names = ("source_receipt", "maker_receipt", "provision_receipt", "import_receipt")
-    receipt_paths = [Path(str(manifest[key])).resolve() for key in receipt_names]
-    if len(set(receipt_paths)) != len(receipt_paths) or manifest_path.resolve() in receipt_paths:
-        raise RuntimeError("PREPARED: D41 receipts must be distinct immutable inputs")
-    worker = str(manifest["worker"])
-    if not worker or "/" in worker or worker in {".", ".."}:
-        raise RuntimeError("PREPARED: D41 Agent worker identity is invalid")
-    meta_path = ORCH / "workers" / worker / "meta"
-    if not meta_path.is_file() or meta_path.is_symlink():
-        raise RuntimeError("PREPARED: D41 Agent dispatcher metadata is unavailable")
-    meta = key_value_file(meta_path)
-    if (
-        meta.get("name") != worker
-        or meta.get("repo") != "agent"
-        or meta.get("base") != manifest["base"]
-        or not re.fullmatch(r"[0-9a-f]{10,40}", meta.get("base_sha", ""))
-        or not AGENT.startswith(meta["base_sha"])
-        or manifest["branch"] != f"tl/{worker}"
-    ):
-        raise RuntimeError("PREPARED: D41 Agent source does not match dispatcher identity")
-    root_value = str(manifest["checkout"])
-    root_candidate = Path(root_value)
-    if root_candidate.is_symlink():
-        raise RuntimeError("PREPARED: D41 Agent checkout must not be a symlink")
-    root = physical_path(root_candidate)
-    if root == APP or not root.is_dir() or Path(meta.get("worktree", "")).resolve() != root:
-        raise RuntimeError("PREPARED: D41 Agent checkout is not the dispatched proof worker")
+    manifest: dict[str, object] | None = None
+    if manifest_name:
+        manifest_path = Path(manifest_name)
+        if manifest_path.is_symlink() or not manifest_path.is_file():
+            raise RuntimeError("PREPARED: D41 Agent manifest is unavailable")
+        try:
+            value = json.loads(manifest_path.read_text())
+        except json.JSONDecodeError as exc:
+            raise RuntimeError("PREPARED: D41 Agent manifest is not JSON") from exc
+        if not isinstance(value, dict):
+            raise RuntimeError("PREPARED: D41 Agent manifest is not an object")
+        manifest = value
+    actual = assert_actual_manifest(manifest)
+    source = ACTUAL_AGENT
+    tree = ACTUAL_AGENT_TREE
+    parent = AGENT
+    root = physical_path(ACTUAL_AGENT_CHECKOUT)
+    if root == APP or not root.is_dir() or root.is_symlink():
+        raise RuntimeError("PREPARED: D41 Agent checkout is unavailable or is a caller target")
     if any((root / name).exists() for name in ("caller-publication.py", "caller-custody.json")):
         raise RuntimeError("PREPARED: D41 Agent checkout is a caller-artifact target")
     if git(root, "status", "--porcelain=v1", "--untracked-files=all").strip():
         raise RuntimeError("PREPARED: D41 Agent checkout is not clean")
-    if git(root, "symbolic-ref", "--quiet", "--short", "HEAD").decode().strip() != manifest["branch"]:
-        raise RuntimeError("PREPARED: D41 Agent checkout is not on the dispatched branch")
+    if git(root, "rev-parse", "--abbrev-ref", "HEAD").decode().strip() != "HEAD":
+        raise RuntimeError("PREPARED: D41 Agent checkout must be the supported detached checkout")
     if git(root, "rev-parse", "HEAD").decode().strip() != source:
-        raise RuntimeError("PREPARED: D41 Agent checkout HEAD does not match source")
+        raise RuntimeError("PREPARED: D41 Agent checkout HEAD does not match qualified source")
     if git(root, "show", "-s", "--format=%T", source).decode().strip() != tree:
-        raise RuntimeError("PREPARED: D41 Agent tree does not match source")
+        raise RuntimeError("PREPARED: D41 Agent tree does not match qualified source")
     if git(root, "show", "-s", "--format=%P", source).decode().strip() != parent:
-        raise RuntimeError("PREPARED: D41 Agent parent does not match source")
-    base_commit = git(root, "rev-parse", f"{manifest['base']}^{{commit}}").decode().strip()
-    if base_commit != AGENT:
-        raise RuntimeError("PREPARED: D41 Agent base does not match dispatcher metadata")
-    delta = git(root, "diff", "--binary", "--full-index", "--no-ext-diff", AGENT, source)
-    if not delta or qualified.get("delta_sha256") != digest(delta):
+        raise RuntimeError("PREPARED: D41 Agent parent does not match exact 079 base")
+    changed = git(root, "diff", "--name-only", parent, source).decode().splitlines()
+    if changed != ["astrid/sdk/timeline/_commit_patch.py", "tests/editing_conformance/test_same_step_fork_rebase.py"]:
+        raise RuntimeError("PREPARED: D41 source changed paths differ from reviewed backport")
+    numstat = git(root, "diff", "--numstat", parent, source).decode().splitlines()
+    if numstat != ["18\t0\tastrid/sdk/timeline/_commit_patch.py", "234\t0\ttests/editing_conformance/test_same_step_fork_rebase.py"]:
+        raise RuntimeError("PREPARED: D41 reviewed hunk/test line counts differ")
+    delta = git(root, "diff", "--binary", "--full-index", "--no-ext-diff", parent, source)
+    if digest(delta) != ACTUAL_AGENT_DELTA_SHA256:
         raise RuntimeError("PREPARED: D41 source delta is not the exact reviewed backport")
-    for path in git(root, "ls-tree", "-r", "--name-only", source).decode().splitlines():
+    parent_entries = {line.rsplit("\t", 1)[1]: line.rsplit("\t", 1)[0] for line in git(root, "ls-tree", "-r", parent).decode().splitlines()}
+    source_entries = {line.rsplit("\t", 1)[1]: line.rsplit("\t", 1)[0] for line in git(root, "ls-tree", "-r", source).decode().splitlines()}
+    protected = [path for path, value in parent_entries.items() if path not in changed and source_entries.get(path) == value]
+    if len(protected) != 3418:
+        raise RuntimeError("PREPARED: D41 protected Agent blob count changed")
+    for path in source_entries:
         file = physical_path(root / path)
         mode = file.stat().st_mode
-        if not stat.S_ISREG(mode) or mode & 0o222 or file.read_bytes() != source_bytes(root, source, path):
+        if not stat.S_ISREG(mode) or file.read_bytes() != source_bytes(root, source, path):
             raise RuntimeError(f"PREPARED: D41 source is not an exact read-only checkout: {path}")
-    dispatch = physical_path(ORCH / "queue/done" / worker)
-    if dispatch.read_text().strip() != f"dispatched {worker} in {root} (base {manifest['base']})":
-        raise RuntimeError("PREPARED: D41 source dispatcher origin differs")
-    source_receipt = immutable_receipt(manifest, "source_receipt", {
-        "name": worker, "repo": "agent", "base": str(manifest["base"]),
-        "base_sha": meta["base_sha"], "worktree": str(root),
-    })
+    review = physical_path(ACTUAL_AGENT_REVIEW).read_text()
+    if "# R1-D41 Independent Review — PASS" not in review or "18 new cases passed" not in review or "All 3,418 protected tracked blobs are unchanged" not in review:
+        raise RuntimeError("PREPARED: D41 independent source review evidence is incomplete")
+    receipt_path = physical_path(ACTUAL_AGENT_RECEIPT)
+    if receipt_path != ACTUAL_AGENT_RECEIPT or digest(receipt_path.read_bytes()) != actual["source_receipt_sha256"]:
+        raise RuntimeError("PREPARED: D41 normal source carrier receipt changed")
+    if receipt_path.read_text().strip() != f"created {root} (detached at {source}, KEEP)":
+        raise RuntimeError("PREPARED: D41 normal source carrier receipt is not authentic")
+    source_receipt = {"path": str(receipt_path), "sha256": actual["source_receipt_sha256"]}
 
-    runtime_candidate = Path(str(manifest["runtime_checkout"]))
+    runtime_candidate = RUNTIME_CHECKOUT
     if runtime_candidate.is_symlink():
         raise RuntimeError("PREPARED: D41 Runtime checkout must not be a symlink")
     runtime_checkout = physical_path(runtime_candidate)
@@ -381,9 +371,9 @@ def d41_agent_input() -> dict[str, object]:
     runtime_paths = git(runtime_checkout, "ls-tree", "-r", "--name-only", RUNTIME, "packages/python/astrid_runtime_client/").decode().splitlines()
     if len(runtime_paths) != 4:
         raise RuntimeError("PREPARED: D41 Runtime client file set is not canonical")
-    client_hashes = manifest["client_hashes"]
-    if not isinstance(client_hashes, dict) or set(client_hashes) != set(runtime_paths):
-        raise RuntimeError("PREPARED: D41 client hash set is incomplete")
+    client_hashes = {path: digest(git(runtime_checkout, "show", f"{RUNTIME}:{path}")) for path in runtime_paths}
+    if manifest is not None and "client_hashes" in manifest and manifest["client_hashes"] != client_hashes:
+        raise RuntimeError("PREPARED: D41 manifest client hash set differs from Runtime37eb")
     for path in runtime_paths:
         runtime_bytes = git(runtime_checkout, "show", f"{RUNTIME}:{path}")
         agent_path = path.removeprefix("packages/python/")
@@ -394,19 +384,42 @@ def d41_agent_input() -> dict[str, object]:
 
     backend_paths = git(runtime_checkout, "ls-tree", "-r", "--name-only", RUNTIME, "astrid_runtime/", "runtime_protocol/").decode().splitlines()
     backend_hashes = {path: digest(git(runtime_checkout, "show", f"{RUNTIME}:{path}")) for path in backend_paths if path.endswith(".py")}
-    if manifest["backend_hashes"] != backend_hashes or manifest["backend_digest"] != digest(json.dumps(backend_hashes, sort_keys=True, separators=(",", ":")).encode()):
+    backend_digest = digest(json.dumps(backend_hashes, sort_keys=True, separators=(",", ":")).encode())
+    if manifest is not None and "backend_hashes" in manifest and manifest["backend_hashes"] != backend_hashes:
+        raise RuntimeError("PREPARED: D41 manifest backend hash set differs from Runtime37eb")
+    if manifest is not None and "backend_digest" in manifest and manifest["backend_digest"] != backend_digest:
+        raise RuntimeError("PREPARED: D41 manifest backend digest differs from Runtime37eb")
+    if backend_digest != "d70ce25e13e02c1b805e682e7e098fba78cc6732f90c482a84bf074ab98ef2bb":
         raise RuntimeError("PREPARED: D41 backend identity is not Runtime37eb")
-    child = str(manifest["child"])
-    child_key = require_sha(manifest["child_key"], "D41 child key", SHA256_RE)
+    child = ACTUAL_CHILD
+    child_key = ACTUAL_CHILD_KEY
     if child == CHILD or child_key == CHILD_KEY:
         raise RuntimeError("PREPARED: D41 child relabels the retained 0256 child")
-    child_candidate = Path(str(manifest["child_root"]))
+    child_candidate = ACTUAL_CHILD_ROOT
     if child_candidate.is_symlink():
         raise RuntimeError("PREPARED: D41 child checkout must not be a symlink")
     child_root = physical_path(child_candidate)
     if child_root.name != f"child-{child_key}" or not child_root.is_dir():
         raise RuntimeError("PREPARED: D41 child checkout is not a genuine keyed child")
-    child_receipts(manifest, digest(source_bytes(root, source, "requirements/proof.lock")))
+    child_manifest = {
+        "worker": "agt-pin-333b44b1", "source": source, "runtime": RUNTIME,
+        "client_hashes": client_hashes, "child": child, "child_key": child_key,
+        "child_root": str(child_root), "remotion": "none",
+        "maker_receipt": str(ORCH / "queue/done" / f"childvenv-{child}"),
+        "maker_receipt_sha256": digest((ORCH / "queue/done" / f"childvenv-{child}").read_bytes()),
+        "provision_receipt": str(ORCH / "tests/provision" / f"{child}.txt"),
+        "provision_receipt_sha256": digest((ORCH / "tests/provision" / f"{child}.txt").read_bytes()),
+        "import_receipt": str(child_root / ".astrid-import-origins"),
+        "import_receipt_sha256": digest((child_root / ".astrid-import-origins").read_bytes()),
+    }
+    child_receipts(child_manifest, digest(source_bytes(root, source, "requirements/proof.lock")))
+    installed_source = physical_path(child_root / f".child-venv-source-{child}" / "agent")
+    if installed_source.stat().st_mode & 0o222:
+        raise RuntimeError("PREPARED: D41 installed Agent source is not read-only")
+    for path in source_entries:
+        installed = physical_path(installed_source / path)
+        if installed.stat().st_mode & 0o222 or installed.read_bytes() != source_bytes(root, source, path):
+            raise RuntimeError(f"PREPARED: D41 installed Agent source differs: {path}")
     child_site = child_root / "lib/python3.13/site-packages"
     for path in runtime_paths:
         installed = physical_path(child_site / path.removeprefix("packages/python/"))
@@ -416,27 +429,25 @@ def d41_agent_input() -> dict[str, object]:
         installed = physical_path(child_site / path)
         if not installed.is_file() or digest(installed.read_bytes()) != expected:
             raise RuntimeError(f"PREPARED: D41 child backend import differs: {path}")
-    remotion_candidate = Path(str(manifest["remotion_root"]))
+    remotion_candidate = REMOTION_ROOT
     if remotion_candidate.is_symlink() or remotion_candidate.resolve() != REMOTION_ROOT:
         raise RuntimeError("PREPARED: D41 Remotion checkout is not the retained exact checkout")
-    if manifest["remotion"] != REMOTION or manifest["remotion_tree"] != "b01dca9b3b24f54093c20b7c5657316f997725db":
-        raise RuntimeError("PREPARED: D41 Remotion reuse is not the retained exact graph")
     return {
         "source": source, "tree": tree, "parent": parent, "checkout": str(root),
         "source_receipt": source_receipt, "runtime": RUNTIME, "runtime_tree": RUNTIME_TREE,
         "runtime_checkout": str(runtime_checkout), "client_hashes": client_hashes,
-        "backend_hashes": backend_hashes, "backend_digest": manifest["backend_digest"],
+        "backend_hashes": backend_hashes, "backend_digest": backend_digest,
         "child": child, "child_key": child_key, "child_root": str(child_root),
-        "remotion": str(manifest["remotion"]), "remotion_tree": str(manifest["remotion_tree"]),
+        "remotion": REMOTION, "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db",
         "remotion_root": str(REMOTION_ROOT),
-        "receipt_paths": {key: {"path": str(manifest[key]), "sha256": manifest[f"{key}_sha256"]} for key in ("maker_receipt", "provision_receipt", "import_receipt")},
+        "receipt_paths": {key: {"path": str(child_manifest[key]), "sha256": child_manifest[f"{key}_sha256"]} for key in ("maker_receipt", "provision_receipt", "import_receipt")},
     }
 
 
-def final_source_input() -> dict[str, object]:
+def final_source_input() -> dict[str, object] | None:
     manifest_name = os.environ.get("TIMELINE_FINAL_SOURCE_MANIFEST")
     if not manifest_name:
-        raise RuntimeError("PREPARED: final reviewed source tuple is not available")
+        return None
     manifest = json.loads(Path(manifest_name).read_text())
     required = (
         "checkout", "source", "tree", "parent", "review", "worker", "branch",
@@ -596,6 +607,7 @@ def custody_facts() -> dict[str, object]:
     graph_files = sorted(path for path in graph_root.rglob("*") if path.is_file())
     graph_hashes = {str(path.relative_to(graph_root)): digest(path.read_bytes()) for path in graph_files}
     assert len(graph_hashes) == 80
+    assert digest(json.dumps(graph_hashes, sort_keys=True, separators=(",", ":")).encode()) == "ac0bf2a252d3f3a7640ed2a0b555b8a91ff81671a3b70074ed27676357edbbc9"
     return {"agent": AGENT, "agent_tree": "2deab1a1494fbccfce5e9235412bacb8a949c0cd", "runtime": RUNTIME, "runtime_tree": RUNTIME_TREE, "child": CHILD, "child_key": CHILD_KEY, "remotion": REMOTION, "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db", "provision_receipt_sha256": digest(PROVISION_RECEIPT.read_bytes()), "child_receipt_sha256": digest(CHILD_RECEIPT.read_bytes()), "remotion_receipt_sha256": digest(REMOTION_RECEIPT.read_bytes()), "client_file_count": len(client_hashes), "client_hashes": client_hashes, "runtime_backend_file_count": len(backend_hashes), "runtime_backend_digest": digest(json.dumps(backend_hashes, sort_keys=True, separators=(",", ":")).encode()), "graph_file_count": len(graph_hashes), "graph_digest": digest(json.dumps(graph_hashes, sort_keys=True, separators=(",", ":")).encode()), "daemon_identity": "UNINFERRED_BY_SOURCE_PREPARATION"}
 
 
@@ -730,16 +742,20 @@ def mechanical_controls(
 
 def prepare(out: Path) -> dict[str, object]:
     final = final_source_input()
-    source = source_custody(final)
     agent = d41_agent_input()
     custody = custody_facts()
     raw, rows = selected_rows()
+    if SUITES_FILE.read_bytes() != raw:
+        raise RuntimeError("PREPARED: suites file changed during custody preparation")
+    app_input = source_custody(final) if final is not None else {
+        "status": "PENDING",
+        "source": QUALIFIED_APP,
+        "tree": QUALIFIED_TREE,
+        "parent": QUALIFIED_PARENT,
+        "checkout": str(APP),
+    }
     outside = b"".join(line for i, line in enumerate(raw.splitlines(keepends=True), 1) if i not in {rows[name][0] for name in SUITES})
-    assert len(raw.splitlines(keepends=True)) - 2 == 248 and len(outside) == 466341 and digest(outside) == "b33d30918d6e2ae039dfa296bc75b1e0b2674828b53f07a16ee029933d5ad734"
     binding_replacements = {
-        QUALIFIED_APP: str(final["source"]),
-        QUALIFIED_TREE: str(final["tree"]),
-        QUALIFIED_PARENT: str(final["parent"]),
         AGENT: str(agent["source"]),
         str(AGENT_CHECKOUT): str(agent["checkout"]),
         CHILD: str(agent["child"]),
@@ -749,6 +765,12 @@ def prepare(out: Path) -> dict[str, object]:
     stage_records = {}
     for n, name in enumerate(SUITES, 2):
         line = rows[name][1]
+        if n == 3:
+            drafts[name] = line.decode().rstrip("\n")
+            if drafts[name] + "\n" != line.decode():
+                raise RuntimeError("PREPARED: P3 row changed while preserving it")
+            stage_records[name] = {"preserved": True, "live_row_sha256": digest(line)}
+            continue
         text = line.decode()
         current_app = f"P{n}APP={QUALIFIED_APP}"
         current_tree = f"P{n}TREE={QUALIFIED_TREE}"
@@ -759,14 +781,6 @@ def prepare(out: Path) -> dict[str, object]:
         assert QUALIFIED_PARENT in text
         outer, inner, tail = extract_inner(line)
         row_replacements = dict(binding_replacements)
-        # Recompute this row's guards from the actual installed command, rather
-        # than assuming its fingerprints came from the qualified commit tree.
-        final_root = Path(str(final["checkout"]))
-        for path, kind, before in row_fingerprints(inner, n):
-            data = source_bytes(final_root, str(final["source"]), path)
-            after = git_blob(data) if kind == "blob" else digest(data)
-            row_replacements[before] = after
-            replacements[before] = after
         updated = inner
         for before, after in row_replacements.items():
             count = updated.count(before)
@@ -776,25 +790,13 @@ def prepare(out: Path) -> dict[str, object]:
             if before != after and updated.count(before):
                 raise RuntimeError(f"mounted source token was not fully rebound: {before}")
         if (
-            f"P{n}APP={final['source']}" not in updated
-            or f"P{n}TREE={final['tree']}" not in updated
-            or str(final["parent"]) not in updated
-            or QUALIFIED_APP in updated
-            or QUALIFIED_TREE in updated
+            f"P{n}APP={QUALIFIED_APP}" not in updated
+            or f"P{n}TREE={QUALIFIED_TREE}" not in updated
+            or QUALIFIED_PARENT not in updated
             or AGENT in updated
             or CHILD in updated
         ):
-            raise RuntimeError("decoded mounted caller retained stale App or Agent source identity")
-        # Lock every changed final source file before any production stage.
-        guarded_paths = set(re.findall(r"git hash-object -- ([^ ]+) 2>/dev/null", inner))
-        extra = " ".join(
-            f'test "$(git hash-object -- {shlex.quote(path)} 2>/dev/null)" = {info["blob"]} || p{n}fail final-source-blob;'
-            for path, info in source["fingerprints"].items() if path not in guarded_paths
-        )
-        marker = f"if ! P{n}_ALLOCATED_PORT="
-        assert updated.count(marker) == 1
-        if extra:
-            updated = updated.replace(marker, extra + " " + marker, 1)
+            raise RuntimeError("decoded P2 caller retained stale Agent source identity")
         assert f"P{n}A={agent['source']}" in updated and f"P{n}R={RUNTIME}" in updated
         assert agent["child"] in updated and REMOTION in updated
         native_start = inner.index("import { expect }")
@@ -809,7 +811,11 @@ def prepare(out: Path) -> dict[str, object]:
         updated_native_end = updated.index("finally { await harness.stop(); }")
         assert updated[updated_native_start:updated_native_end] == before_native
         assert f"P{n}_ALLOCATED_PORT" in updated and "original-body-NOTRUN" in updated
-        controls = mechanical_controls(updated, n, source["fingerprints"], final, agent)
+        current_fingerprints = {
+            path: {kind: expected}
+            for path, kind, expected in row_fingerprints(updated, n)
+        }
+        controls = mechanical_controls(updated, n, current_fingerprints, app_input, agent)
         new_outer = outer[:outer.index("$(bash -c ") + len("$(bash -c ")] + shlex.quote(updated) + tail
         for label, data in ((f"p{n}-inner.sh", inner), (f"p{n}-new-inner.sh", updated), (f"p{n}-outer.sh", outer), (f"p{n}-new-outer.sh", new_outer)):
             (out / label).write_text(data)
@@ -817,24 +823,26 @@ def prepare(out: Path) -> dict[str, object]:
         drafts[name] = f"app {name} {new_outer}"
         stage_records[name] = {**controls, "native_body_preserved": True, "output_stages": ["native-history", "mounted-readiness", "original-body" if n == 2 else "gate5"]}
 
+    if SUITES_FILE.read_bytes() != raw:
+        raise RuntimeError("PREPARED: suites file changed before candidate publication")
     manifest = {
         "status": "PREPARED",
         "replacements": replacements,
         "run_authorization": "NOT_GRANTED",
-        "qualified_caller": {"commit": "d54582a08c6ad0453742523a3ec374dd321ce477", "app_source": QUALIFIED_APP, "app_tree": QUALIFIED_TREE, "app_parent": QUALIFIED_PARENT},
-        "source_base": SOURCE_BASE, "final_source": source, "d41_agent": agent, "custody": custody,
+        "qualified_caller": {"commit": "1f82e4b6d86918177f1ec9ddf5747f037f94084f", "app_source": QUALIFIED_APP, "app_tree": QUALIFIED_TREE, "app_parent": QUALIFIED_PARENT},
+        "source_base": SOURCE_BASE, "final_source": source_custody(final) if final is not None else {"status": "PENDING", "reason": "final App pure-product join is not available"}, "d41_agent": agent, "custody": custody,
         "live_row_sha256": {name: digest(rows[name][1]) for name in SUITES},
         "draft_row_sha256": {name: digest((drafts[name] + "\n").encode()) for name in SUITES},
-        "outside_row_count": 248, "outside_bytes": len(outside), "outside_sha256": digest(outside),
+        "outside_row_count": len(raw.splitlines(keepends=True)) - len(SUITES), "outside_bytes": len(outside), "outside_sha256": digest(outside),
         "wire_fields": WIRE_FIELDS,
         "stage_records": stage_records,
         "door_port": {"allocation": ["P2_ALLOCATED_PORT", "P3_ALLOCATED_PORT"], "propagates_before_every_stage": True, "changed": False},
         "tool_versions": {"node": "not-read", "npm": "not-read", "playwright": "not-read"},
-        "final_inputs": {"catalog_source": "PENDING", "p3_source": "PENDING", "source_manifest": "PENDING", "d41_agent_manifest": os.environ.get(D41_AGENT_MANIFEST_ENV, "MODELED")},
-        "missing_inputs": ["final reviewed joined source SHA/tree/parent", "independent source review PASS", "separate clean proof-worker target", "integrated P2/P3 execution and daemon identity"],
+        "final_inputs": {"catalog_source": "PENDING", "p2_source": "PENDING", "p3_source": "PENDING", "source_manifest": "PENDING", "d41_agent_source": ACTUAL_AGENT, "d41_agent_checkout": str(ACTUAL_AGENT_CHECKOUT), "d41_agent_receipt": str(ACTUAL_AGENT_RECEIPT), "d41_agent_child": ACTUAL_CHILD, "d41_agent_child_key": ACTUAL_CHILD_KEY, "d41_agent_manifest": os.environ.get(D41_AGENT_MANIFEST_ENV, "ACTUAL_FIXED_EVIDENCE")},
+        "missing_inputs": ["final reviewed joined App source SHA/tree/parent", "final App source/body checksum rederivation", "separate clean pure final-integrated proof-worker target", "integrated P2 proof and daemon identity"],
         "negative_context": {"source_target_0644": "retained as source-only context", "wrong_artifacts": ["20674", "10144"], "wrong_artifacts_status": "preflight-only, originals NOTRUN; never reuse or relabel"},
         "retention_reuse": {"allowed": True, "condition": "decoded caller logic byte-identical after audited bindings/fingerprints/body hashes/log identity", "otherwise": "bounded real execution controls required", "qualified_stages": 60},
-        "selected_source_snapshot": {"required": "normal service must recreate the separate read-only final proof-worker branch and authorize one single-parent same-tree snapshot", "daemon_identity": "uninferred"},
+        "selected_source_snapshot": {"required": "normal service must recreate the separate read-only final proof-worker branch and authorize one single-parent same-tree snapshot", "daemon_identity": "uninferred", "candidate_mechanics_only": True},
     }
     (out / "before.json").write_text(json.dumps({name: rows[name][1].decode().rstrip("\n") for name in SUITES}, indent=2) + "\n")
     (out / "after.json").write_text(json.dumps(drafts, indent=2) + "\n")
