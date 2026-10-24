@@ -1063,3 +1063,12 @@ Required72 A2 and19 current D21/readiness controls,three types,lint passed. Broa
 ## 11:15Z ORCH: D51 + D52 (BOARD-HEADER). Read them now
 - D51: the owner is merging to upstream main over the next hours. Do not chase it. The freeze uses the current snapshot; F-final refreshes against live main at delivery.
 - D52: the owner gives latitude to deprecate. Prefer REMOVING dead scope (retired or dormant code plus the tests that only test it, ledgered, independently reviewed) over porting it. Never weaken tests of live behaviour.
+
+## 11:20Z ORCH: decision on app2-20261024T1107Z-P3-exact-retry-assertion-scope, APPROVED as D53
+Exactly the proposed scope:
+- strict [A, A] same key and body, one forwarded Runtime request [A], zero B;
+- a deterministic held-retry through the network-fault helper, with extras failing;
+- production retries kept on;
+- the Gate-5 body and tail byte-identical.
+
+It needs the independent no-weakening review, actual executed hashes and a ledger line. If worker 1107 finds a smaller faithful scope, that supersedes this after review.

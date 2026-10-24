@@ -158,6 +158,13 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - (c) owner-deferred scope (paired relay, remote providers, extensions): stays out, listed as a known gap.
 
   Each removal is a deletion-ledger entry with its caller proof and an independent review. **Never** skip, xfail or weaken a test of LIVE behaviour; the strict gates (P1–P5 and live-path suites) are unchanged. For full-suite triage (D32), every failing node gets a category: ours-live (fix), dead-scope (remove with its code, D52), deferred (gap), env (fix setup) or pre-existing (gap).
+- **D53, P3 exact-retry accounting (11:20Z):** APPROVED, the proposal in design/handoff-ap2-P3-fault-order-review-1100.md. In prepareAfterAckLossMountedDocuments' before-B-drop guard (three-products.spec.ts:1365), the single `wire.attempts===1` is replaced by STRICT complete accounting:
+  - the browser sequence is exactly [A, A], same key and body;
+  - exactly one forwarded Runtime request [A];
+  - zero distinct B;
+  - one held A retry established deterministically by the network-fault helper, with any extra or mismatching request failing.
+
+  Production automatic retries stay on. The Gate-5 body, reset and downstream tail are byte-identical. It needs the independent no-weakening review, actual before/after hashes and a behaviour-change ledger line (same principle as D50). It's stricter than the original, not weaker.
 ## Principles from answered escalations (apply them yourself; at most 10 lines)
 - **Owner's direct approval:** it has been given in each lead's session for the v2.1 kickoff and for freeing disk to at least 15 GB. Operational instructions from the orchestrator carry the owner's authority. Safety and permission refusals still stop you.
 - **v1 leftovers:** v1 pin worktrees (KEEP), dirty v1 worktrees and other v1-only artifacts (private13 graphs, v1 suite scratch dirs, LEASE=READY v1 trees) are abandoned under v2.1. Remove v1 lines from suites.conf too. When disk is needed, release them yourself: check no running process or test uses the path, remove the KEEP marker, then run `bin/recycle`. For a dirty worktree, first keep its diff as `git diff > $ORCH/archive-v1/<name>.patch`. No need to ask.

@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T11:12:34Z | dispatcher heartbeat 14s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 3m -->
-# runtime board, 2026-10-24T11:09:33Z
+<!-- main | 2026-10-24T11:15:24Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 2m -->
+# runtime board, 2026-10-24T11:13:26Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -25,7 +25,7 @@
 | R2r-prepared-media-input | Classify prepared media authority | Luna / independent Luna | Exact four requests | merged | Author 2117; review 2121 | Runtime guard correctly refused missing verified inputs. App owns caller correction. | evidence only |
 | OPS-bench-store | Legacy admission and lifecycle | Sol / independent Luna | D34 resume threshold or delivery | gated:D34 | Author 0022; review 0029 | Queue fix passed; lifecycle failed two adversarial probes. Source held and uninstalled; no retirement. | 9e67ac9c58 held |
 | OPS-suites-prune | Finite unused registration assessment | Luna / Luna | Evidence complete | merged | Return0303; review0306 PASS | Two private alias comments; no live changes. Zero targets unreferenced and 0 GB freed. [Review](../../design/runtime-prune-citations-review-0306.md) | Evidence only |
-| OPS-v1-archives | Six unused source archives | Luna / independent Luna | D34 resume threshold or delivery | gated:D34 | Custody 0040; review 0042 | [Independent custody passed](../../design/runtime-v1-archive-custody-review-0042.md). Archives unchanged; no cleanup round. | evidence only |
+| OPS-v1-archives | Six old source archives | Luna / independent Luna | Existing cleanup disposition | gated:D34 | Custody0040; review0042; presence check1113 | Historical custody PASS. All six exact archive paths are absent now; removal attribution and freed space unknown. No target retry or new cleanup run. | Evidence only |
 | OPS-retire-venv | Guarded retirement route | Sol / Luna | Reviewed installation | merged | Installer 1805; remote acknowledgements | Installed a500 and 44c6; old process refusals remain stopped. | installed |
 | OPS-retire-runtime | Guarded runtime retirement | Luna / independent Luna | Reviewed installation | merged | Installer 1813; peer 1825 | Installed 954d and 21f6; seven referenced targets refused. Freed 0 GB. | installed |
 | OPS-retire-process | Unreadable process diagnosis | Sol / independent Luna | Source assessment | merged | Author 1840; review 1850 | Source assessment complete; superseded by lease store. No host probe or target retry. | source only |
@@ -122,3 +122,5 @@ Later: D47 memo stays held until after delivery. D34 broader cleanup resumes bel
 Pass 2026-10-24T11:08:15Z: Read PLAN, common rules, header, inbox tail and Agent/App/Farm boards. No new inbox request. Review1107 local PASS and publication-only FAIL consumed; return1110 owns changed committed publication. Farm child row now names the existing owner hold rather than stale Runtime source need. Source6de268/security receipts remain qualified; no admission release or duplicate run.
 
 Pass 2026-10-24T11:09:33Z: D51/D52 adopted. Current freeze snapshots remain fixed; delivery owns final U-refresh. Dead scope may be removed only with caller proof, ledger and independent review; live tests remain strict. Independent1110 passed actual five-file committed publication. Peer1110 clears stale Farm source ownership and preserves admission hold. Sweep3 removed zero dirs; compact packed/compressed zero. About8.4GiB free; no clean eligible Runtime trees found, no denied historical dirty target retried.
+
+Disk check 2026-10-24T11:13:26Z: The six exact historical archive targets from custody0040/review0042 are all absent. No fresh custody worker or deletion is justified; removal attribution and recovered bytes are unknown. Five remaining historical Runtime worktrees are dirty and were not retried. Main remains above its8GiB heavy-run floor.
