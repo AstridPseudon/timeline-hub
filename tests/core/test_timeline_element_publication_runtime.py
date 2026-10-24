@@ -248,7 +248,7 @@ def test_element_only_retained_declaration_survives_removal_restart_and_replay(
                                                values={'label': 'Newer'})]), 'concurrent-label')
     reads.clear()
     replayed = case.submit(replay_body, 'replay-element-only')
-    assert replayed['data']['status'] == 'rebased'
+    assert replayed['data']['status'] == 'merged'
     replayed_document = replayed['data']['canonical_document']
     replayed_state = State(commit.bundle_from_document(replayed_document))
     assert replayed_state.entity(ref) == {**row, 'elementRef': selected}
