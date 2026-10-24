@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T01:50:04Z | dispatcher heartbeat 11s | live 5 (sol 0, luna 5, other 0) | busy30 24 | status age 0m -->
+<!-- agent | 2026-10-24T01:52:39Z | dispatcher heartbeat 14s | live 4 (sol 0, luna 4, other 0) | busy30 24 | status age 2m -->
 # agent board, 2026-10-24T01:49:51Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -26,7 +26,7 @@
 | F-render-startup | Avoid unused transition-catalog scans | Luna | Source cause 0045 | merged | agt-F-transition-fixture-integrated-0126 | Actual 940b: 116 controls passed. Exact reviewed source retained both catalog authority guards. | 2b2c1a02f |
 | F-external-roots | Authenticate installed external roots | Sol | Runtime private source authority | blocked:runtime | Runtime review 0125; Sol 0134 | Runtime observed bytes but lacks authenticated origin/definition admission. Runtime escalation 0143 owns scope; no trust waiver. | candidates held |
 | F-env-86 | Original installed-child cohort | Luna | External pack fix | blocked:agent | Services 11789 and 19627 | 69 cases passed, then 16 supported source invocations passed. One external-pack positive remains open. | c36 scope |
-| F-render-21 | Original rendering timeout | Luna | Supported current child invocation | doing | agt-F-timeout-harness-return-0148 | Service 4004 failed missing Runtime import: preflight used child but body used source-only parent. D18 harness return active. | 521c source |
+| F-render-21 | Original rendering timeout | Luna | Supported current child invocation | doing | Service render-timeout-return-0148 | D18 return now uses admitted current child for body and postflight. One meaningful original service queued; 4004 failure retained. | 521c source |
 | F-env-misc | D13, installers and bootstrap | Luna | Exact installed inputs | merged | agt-F-D13-wheel-input-0039 | Three original environment cases plus D13 passed. Exact c36 wheel matched installed payloads; wheel itself was temporary. | harness only |
 | F-CLI | CLI census, generation and motion fixture | Luna | G5 | merged | agt-F-CLI-integrated-0012 | Eight integrated cases and 32 subtests passed; reviewed generation and fixture changes only. | 43bbb / ff5dd |
 | F-observer | Nested pytest plugin isolation | Luna | G5 full | merged | agt-F-observer-harness-2355 | 25 original guard cases passed. Test bodies remain unchanged. | c8459e9f8 |
