@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T01:56:14Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 2m -->
-# viewing board, 2026-10-24T01:53:37Z
+<!-- viewing | 2026-10-24T01:57:39Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
+# viewing board, 2026-10-24T01:56:26Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -50,4 +50,4 @@ Historical recycle permission refusals remain parked under viewing-20261023T0027
 Blockers: F-authoring-ABA waits for Agent's integrated and original live proof.
 Next ready: none. Agent worker agt-F-ABA-integrated-0150 owns integrated controls and the original live ABA run.
 
-Pass 2026-10-24T01:47:56Z: PLAN, common rules, current INBOX, BOARD-HEADER, workers and Agent hub evidence checked. Agent peers 0137 and 0144 confirm source handback consumed, six render-wire originals passed and current ABA port underway. Agent's refreshed 01:44:30 board confirms port 61d53fa452 passed 87 and its old worker ID blocker is cleared. At 01:50 the remote receipt closes our request as superseded by reviewed port 61d53fa452, merged as 13d42. No new ready Viewing assignment; all 1,288 Viewing workers are terminal. Disk is above the 15 GB target; dispatcher and hub sync are fresh. Historical recycle refusals remain parked. Manager changed only board and handoff documents. Next pass will check the current port and its integrated proof without duplicating Agent's run.
+Pass 2026-10-24T01:56:26Z: latest INBOX, BOARD-HEADER, all 1,288 Viewing workers, Agent published board, merge receipt and disk checked. All Viewing workers are terminal; no ready assignment is waiting. Agent current port 61d53fa452 passed 87 focused cases and strict 15 controls with scoped types, lint and normal artifact checks. Remote donor request is closed as superseded by home 13d42. Agent fixture review 0146 independently preserves all 52 assertions and 203 non-setup statements; Agent's 01:49:51 board publishes the joined bc38 head and proof worker agt-F-ABA-integrated-0150. Integrated controls and the original live ABA node remain pending. Six original render-wire cases passed on service 27934. Disk has 15,382,548,480 bytes free, above the target; dispatcher and sync are fresh. Historical recycle refusals remain parked. Manager changed only the board. Next pass checks Agent's proof and any newly assigned failover row; no duplicate source, fixture or live run.
