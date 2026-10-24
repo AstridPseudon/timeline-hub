@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T04:32:02Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 16 | status age 0m -->
+<!-- agent | 2026-10-24T04:34:12Z | dispatcher heartbeat 4s | live 3 (sol 0, luna 3, other 0) | busy30 18 | status age 1m -->
 # agent board, 2026-10-24T04:32:06Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -50,11 +50,12 @@
 | OPS-suites-prune | Retain required registry entries | Runtime Luna | No target proven unreferenced | gated:eligibility | Final citation review0306 PASS | Finite assessment complete. Zero qualified retirement targets, zero live edits and zero GB freed. No new audit requested. | evidence only |
 | D31 | Dormant transcript capture subset | — | Follow-up funding | gated:D31 | No active author | Keep the 397-line test suite and implementation unchanged. Literal production reachability is NO. | unchanged |
 | V4 / D14 / D23 | Cut and deferred relational timing | — | Scope decisions | gated:H9 | No repair worker | Keep original tests unchanged, unskipped and visibly failing. No V4 or relational-timing completion claim. | unchanged |
+| U2c local control | Qualify Linux custody and identity diagnostics | Luna | D40 source ownership released | doing | agt-U2c-local-control-cause-0435 | Trace existing peer authority and retained failure without rerun. Keep separate channels, bounded requests and EOF uncertainty predicates. | Freeze-held0410 source |
 | U2c | Qualify freeze-held readiness draft | Luna | Exact dependency and abort causes | blocked:runtime | Sol0410; independent0418 source PASS | Abort14 passed; activation10 failed,77 passed. Eight need authoritative child evidence; identity and Linux control fixes remain Agent-owned. Branch held. Branch held; no readiness claim. | 699236a285 held |
 | F-headless-root-mirror | Preserve complete canonical mirror effects | Sol / Luna | Bounded source repair | doing | vw-F-headless-root-mirror-sol-0358 | Runtime0332 and0349 independently confirm omitted mirror removal. Viewing uniquely owns effect shortcut; original67 predicates retained. | Base8657e83653 |
 | F-retired-callers | Retained native, CLI and scene scenarios | Luna / Sol | Exact33 subset | doing | vw-F-retired-callers-census-0358 | Exact24 native-sheet,7 CLI,2 scene nodes independently verified. Viewing maps prior proofs before fixing; no retired writer restoration. | Census H30 |
 | F-count | Reconcile all267 original failures | Luna | Independent correction0358 | merged | Return0407; final review0410 PASS | Corrected JSON preserves267 exact IDs:142 closed,125 open. Six render-wire originals credited; seven H3 nodes need current D40 source. Farm checkpoint pending. | Evidence only |
-| F-D40-installed | Genuine installed external positive | Sol / Luna | Captured orchestrator route | doing | Source0414; security0427; integrated0434; fixture0432 | Security77 passed; source home985f. Integrated77 and faithful owner fixture prepare installed qualification. Setup-only original fixture prepares owner capture, then exact candidate child and one original qualification. | Current69a854d82b |
+| F-D40-installed | Genuine installed external positive | Sol / Luna | Owner fixture and candidate child | doing | Integrated0434; fixture0432 | Security77 passed; source home985f. Integrated controls and owner fixture precede managed child. Original installed case remains unrun. | 429c3e8006; home985f012675 |
 P1: GO. Original service 18792 passed both cases; Proof reviews 0036 and 0040 passed. P4 and P5 are done. G5 already merged under H24. P2 and P3 remain with App and Proof.
 Integration: 985f012675 adds security-reviewed D40orchestrator429c to imageharness999e and D44home5c97. Historical12701589/canonical45c3/schema d106/Composition819acf retained.
 Blockers: Agent full waits for the remaining owned fixes and finite qualifications. D32 comparison rejected all pre-existing credits; no full retry.
@@ -70,6 +71,6 @@ Count: 125 of 267 open after independent0358 correction;142 bounded closures, al
 Blockers: Farm / Runtime — H30 first attempt ran zero tests. Runtime kit0358 unblocks the single supported Farm checkpoint; return exact original outcomes on a published Agent head.
 Later: D40 installed qualification proceeds through one genuine managed source tuple after reviewed route and fixture setup. Seven H3 originals need the same current installed input; no overlay.
 D44: Resolved04:05. Edited occurrence forks; untouched sibling keeps exact source identity. Luna0414 adapts only the authorized predicate and reports the behavior entry.
-Later: U2c local control source uses generic_host.py, currently reserved to D40 author0414. Sequence its bounded Linux custody assessment after that source completes; keep every activation predicate.
+U2c local control: D40 source completed, so Luna0435 now assesses exact existing Linux custody seam. No source edit, fresh body or authority bypass.
 Blockers: Viewing — latest received heartbeat04:05 andboard03:59 are stale at04:28; supported lead liveness check requested0429. No death assumed or competing source author started.
 Historical remainder: Two test_commit_runtime_source_copy redo guards remain open with Runtime diagnosis requested0430; the two qualified historical cases do not credit them.
