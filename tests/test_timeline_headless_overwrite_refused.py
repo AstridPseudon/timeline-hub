@@ -7,7 +7,9 @@ the removed stale-head/content predicates. Positives use bootstrap and commits.
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -103,6 +105,11 @@ def _commit(runtime, project, key, *, base, replacement):
         "created": ["parent/asset:a", "parent/clip:edited"],
         "args": {"changes": changes},
     }
+    media_id = replacement["registry"]["assets"]["a"]["object_id"]
+    admission = {
+        "schema_version": 1, "op": "media.admit", "version": "1", "select": None,
+        "args": {"inputs": [{"pin": {"media_id": media_id, "content_digest": media_id}}]},
+    }
     return runtime.commit_timeline(
         project,
         "main",
@@ -112,7 +119,7 @@ def _commit(runtime, project, key, *, base, replacement):
             "timeline_id": "main",
             "base_revision_id": base["head_revision_id"] if "head_revision_id" in base else base["revision_id"],
             "base_publication_id": base["head_publication_id"] if "head_publication_id" in base else base["publication_id"],
-            "commands": [command],
+            "commands": [command, admission],
             "label": "Headless publication probe",
             "steps": [{
                 "id": "headless-probe",
@@ -121,6 +128,14 @@ def _commit(runtime, project, key, *, base, replacement):
                 "tags": ["headless"],
                 "command_ordinals": [0],
                 "patch": copy.deepcopy(changes),
+                "reads": [],
+            }, {
+                "id": "headless-media",
+                "label": "Capture authored raw media",
+                "intent": "verify the authored media through Runtime",
+                "tags": ["headless"],
+                "command_ordinals": [1],
+                "patch": [],
                 "reads": [],
             }],
             "merge": "fields",
@@ -269,17 +284,37 @@ def test_genuinely_empty_headless_timeline_still_accepts_expected_head_null(serv
 
 def test_cas_correct_republish_after_reading_the_head_is_accepted(service):
     runtime, project = service
+    media = subprocess.run(
+        ["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "color=c=blue:s=16x16:r=10",
+         "-t", "3", "-an", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+         "-movflags", "+frag_keyframe+empty_moov", "-f", "mp4", "pipe:1"],
+        check=True, stdout=subprocess.PIPE,
+    ).stdout
+    ingested = runtime.ingest(project, media, media_type="video/mp4", idempotency_key="authored-media")
+    media_id = ingested["data"]["object_id"]
+    assert media_id == "sha256:" + hashlib.sha256(media).hexdigest()
+    assert runtime.cas.read(media_id.removeprefix("sha256:")) == media
+    # Only the positive fixture substitutes Runtime's genuine CAS identity.
+    # Historical shells and legacy requests keep the original literal "x".
+    expected = copy.deepcopy(AUTHORED)
+    assert expected["registry"]["assets"]["a"]["object_id"] == "x"
+    expected["registry"]["assets"]["a"]["object_id"] = media_id
+    original = copy.deepcopy(expected)
+    original["registry"]["assets"]["a"]["object_id"] = "x"
+    assert json.dumps(original) == json.dumps(AUTHORED)
     first = runtime.create_timeline(project, "main", idempotency_key="repair-cas")
     head = runtime.get_project_timeline(project, "main")
     assert {"revision_id": head["head_revision_id"], "publication_id": head["head_publication_id"]} == {
         "revision_id": first["data"]["head_revision_id"],
         "publication_id": first["data"]["head_publication_id"],
     }
-    again = _commit(runtime, project, "second", base=head, replacement=AUTHORED)
+    again = _commit(runtime, project, "second", base=head, replacement=expected)
     assert again["data"]["status"] == "accepted"
     assert again["data"]["previous_revision_id"] == first["data"]["head_revision_id"]
     assert again["data"]["previous_publication_id"] == first["data"]["head_publication_id"]
-    assert again["data"]["canonical_document"]["parent_revision"]["payload"] == AUTHORED
+    actual = again["data"]["canonical_document"]["parent_revision"]["payload"]
+    assert actual == expected
+    assert canonical_json(actual) == canonical_json(expected)
     assert again["receipt"]["result"] == again["data"]
     history = runtime.list_timeline_commits(project, "main", authorize=lambda: None)["items"]
     entry = next(item for item in history if item["publication_id"] == again["receipt"]["receipt_id"])
@@ -305,12 +340,36 @@ def test_cas_correct_republish_after_reading_the_head_is_accepted(service):
         project, "main", again["data"]["accepted_revision_id"]
     )
     assert closure == again["data"]["canonical_document"]
+    assert closure["dependency_manifest"]["media"] == [
+        {"media_id": media_id, "content_digest": media_id},
+    ]
+    assert closure["shot_revisions"] == closure["internal_timeline_revisions"] == []
     assert runtime.store.conn.execute(
         "SELECT content_digest, commit_manifest_json FROM parent_composition_revisions WHERE id=?",
         (again["data"]["accepted_revision_id"],),
     ).fetchone()["content_digest"] == again["data"]["canonical_document"]["parent_revision"]["content_digest"]
-    assert _commit(runtime, project, "second", base=head, replacement=AUTHORED) == again
+    before = _dump(runtime)
+    assert _commit(runtime, project, "second", base=head, replacement=expected) == again
+    assert _dump(runtime) == before
     assert runtime.__dict__["test_provider"].calls == 1
+    runtime.close()
+    reloaded = RuntimeService(runtime.store.root)
+    try:
+        provider = CountingProvider(load_timeline_commit_provider("astrid"))
+        setattr(reloaded, "test_provider", provider)
+        reloaded.register_timeline_commit_provider(provider)
+        reloaded_head = reloaded.get_project_timeline(project, "main")
+        assert reloaded_head["head_revision_id"] == again["data"]["accepted_revision_id"]
+        assert reloaded_head["head_publication_id"] == again["receipt"]["receipt_id"]
+        assert reloaded._timeline_commits()[0].revision_closure(
+            project, "main", reloaded_head["head_revision_id"]
+        ) == closure
+        before = _dump(reloaded)
+        assert _commit(reloaded, project, "second", base=head, replacement=expected) == again
+        assert _dump(reloaded) == before
+        assert provider.calls == 0
+    finally:
+        reloaded.close()
 
 
 def test_fresh_creation_is_unchanged(service):
