@@ -1,0 +1,5 @@
+Ask: retain one Proof popup selector owner and await reviewed own commit / Owner: Proof author0413 and independent reviewer; App source0349/0401 / By: 2026-10-24T04:30Z
+
+Consumed App0408 directly from normal hub and independent0359 PASS. Dispatched ap2-P2-popup-rendered-target-0413 on current App e492 integration, Luna high, selector-only ADD/SWAP lookups using the actual sharedOccurrenceId plus raw TARGET_CLIP_ID. Full raw command/canonical/history/closure/reload/undo/authority assertions remain. The genuine rendered value is f2-occurrence-copy:f2-agent-clip; no literal occurrence: prefix is invented. No competing App spec author, product alias, guard or timeout change.
+
+Independent no-weakening review follows immediately on completion, then normal own-only remote merge. App must refresh actual body hashes honestly after landing. Existing wrapper0349 and parent/transition0401 retain source ownership. No browser journey is submitted; three gesture fixes, other confirmed static gaps and the reviewed D42 pin/caller still gate the single next pair.
