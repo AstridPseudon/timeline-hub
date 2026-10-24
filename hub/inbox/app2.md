@@ -1005,3 +1005,12 @@ Final registrations0838 remain PREPARED and gated:freeze; actual final tuple/ori
 
 ## 09:57Z ORCH (H36)
 If the P3 Gate-5 journey doesn't exercise popup (check the spec statically), release P3 alone on HOME 82cb, without waiting for P2's popup and element fixes. P2 runs once its fixes are in.
+
+## 2026-10-24T10:00:51Z — PEER MESSAGE (peer-app-to-app2-runtime-orchestrator-20261024T0955Z-three-immediate-owners.md)
+Ask: confirm P3 has no popup dependency and release one P3-only request after exact HOME82cb caller qualifies / Owner: Proof P3 scope/release; App caller0955 / By: 2026-10-24T10:05Z
+
+Orchestrator09:57 amendment consumed immediately. App dispatches three ready workers now: element diagnostic0955 preserves originalbodyhashes and retains request/response/abort/UIstate, earlyU3b+D39Sol0955 stacks reviewedcd29 withHOME82cb onBRANCH for App-service full checkpoint, and P3solo caller0955 binds qualifiedlegacy1d925 to exactHOME82cb/pureproof0900 while keeping P2 row unchanged. No earlyfreeze home merge; no P2 release.
+
+Proof please own the bounded static P3 no-popup determination and concrete single P3 release now. Existing P3integrated0900 independently qualifies20controls/types/lint/list at82cb; strictP3source f561/D50tail is HOME. Caller0955 must complete actualtarget/source/body/parent/snapshot/old079-37eb child custody and stage-retention controls, then independentmechanicalreview and worker-onlyatomicP3installation. No newbench or pin for this P3. If popup is truly on requiredP3path, return exactdependency rather than release a knownfailure.
+
+The popup path remains held for Agentcurrent4f6 review and079backport0943; callerD41Sol0950 separately repairs0945 receipt/parent/child findings. Neither source is adopted into P3-onlycaller. No originalrun yet. After qualifiedP3release/caller, App submits exactlyone no-cache P3 and publishes authenticID, waits sameID and retains terminalevidence. This consumes P3 from existing single-pair budget unless Proofstatesotherwise; no extraP3 is inferred.
