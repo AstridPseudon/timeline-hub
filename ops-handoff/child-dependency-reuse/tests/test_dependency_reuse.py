@@ -451,7 +451,13 @@ def write_record(site: Path, metadata: str, files: dict[str, bytes]) -> None:
         writer.writerow([metadata + "/RECORD", "", ""])
 
 
-def installed_dependency_fixture(tmp_path: Path, *, script: bytes | None = None):
+def installed_dependency_fixture(
+    tmp_path: Path,
+    *,
+    script: bytes | None = None,
+    console_script: str = "seed-tool = seedpkg:main",
+    reported_record: str = "seedpkg-1.0.0.dist-info/RECORD",
+):
     helper = load_helper("installed_dependency_fixture", VERIFY)
     root = tmp_path / "child"
     site = root / "lib/python3.13/site-packages"
@@ -460,7 +466,7 @@ def installed_dependency_fixture(tmp_path: Path, *, script: bytes | None = None)
     artifact = wheel(
         wheelhouse,
         "seedpkg-1.0.0-py3-none-any.whl",
-        console_script="seed-tool = seedpkg:main",
+        console_script=console_script,
     )
     data = artifact.read_bytes()
     with zipfile.ZipFile(artifact) as archive:
@@ -503,7 +509,8 @@ def installed_dependency_fixture(tmp_path: Path, *, script: bytes | None = None)
         def __init__(self) -> None:
             self.metadata = {"Name": "seedpkg"}
             self.version = "1.0.0"
-            self.files = [Path("seedpkg-1.0.0.dist-info/RECORD")]
+            self._path = record.parent
+            self.files = [Path(reported_record)]
 
     helper.md.distributions = lambda path: [Distribution()]
     return helper, root, data
@@ -523,6 +530,58 @@ def test_installed_console_script_record_is_oldred_newgreen(tmp_path: Path) -> N
 def test_installed_console_script_negatives_remain_strict(tmp_path: Path) -> None:
     helper, root, data = installed_dependency_fixture(tmp_path, script=b"forged\n")
     with pytest.raises(SystemExit, match="generated dependency script"):
+        helper.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
+
+
+@pytest.mark.parametrize(
+    "target",
+    ["seedpkg:main:bad", "seedpkg", "seedpkg:", "seedpkg:main extra", "seedpkg:main [broken"],
+)
+def test_installed_console_script_target_matches_distlib_grammar(
+    tmp_path: Path, target: str
+) -> None:
+    helper, root, data = installed_dependency_fixture(
+        tmp_path, console_script=f"seed-tool = {target}"
+    )
+    with pytest.raises(SystemExit, match="malformed console entry-point target"):
+        helper.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
+
+
+def test_installed_record_owner_is_validated_before_record_read(tmp_path: Path, monkeypatch) -> None:
+    outside = tmp_path / "outside.dist-info"
+    outside.mkdir()
+    (outside / "RECORD").write_text("seedpkg-1.0.0.dist-info/RECORD,,\n")
+    helper, root, data = installed_dependency_fixture(
+        tmp_path, reported_record="../../../../outside.dist-info/RECORD"
+    )
+    opened: list[Path] = []
+    captured = helper.captured_bytes
+
+    def observe(path: Path) -> bytes:
+        opened.append(path)
+        return captured(path)
+
+    monkeypatch.setattr(helper, "captured_bytes", observe)
+    with pytest.raises(SystemExit, match="unsafe dependency RECORD ownership"):
+        helper.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
+    assert outside / "RECORD" not in opened
+
+
+def test_installed_record_owner_rejects_another_in_child_metadata_dir(tmp_path: Path) -> None:
+    helper, root, data = installed_dependency_fixture(
+        tmp_path, reported_record="other-1.0.0.dist-info/RECORD"
+    )
+    with pytest.raises(SystemExit, match="not owned by distribution"):
+        helper.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
+
+
+def test_installed_record_path_rejects_metadata_symlink(tmp_path: Path) -> None:
+    helper, root, data = installed_dependency_fixture(
+        tmp_path, reported_record="linked.dist-info/RECORD"
+    )
+    site = root / "lib/python3.13/site-packages"
+    (site / "linked.dist-info").symlink_to(site / "seedpkg-1.0.0.dist-info", target_is_directory=True)
+    with pytest.raises(SystemExit, match="symlinked dependency RECORD"):
         helper.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
 
 
@@ -711,6 +770,14 @@ def test_real_maker_keeps_unseeded_store_compatibility(tmp_path: Path) -> None:
     retain_caller_evidence("unseeded-store-reuse", result)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "reused child venv path=" in result.stdout
+
+
+def test_real_maker_rechecks_seeded_store_reuse_without_new_wheelhouse(tmp_path: Path) -> None:
+    env, args, _ = retained_fixture(tmp_path, managed=True, provenance="forged-record")
+    result = subprocess.run([str(MAKER), *args], env=env, text=True, capture_output=True, check=False)
+    retain_caller_evidence("seeded-store-without-new-input", result)
+    assert result.returncode != 0
+    assert "status=passed" not in result.stdout
 
 
 def test_real_maker_failure_evidence_survives_store_rollback(tmp_path: Path) -> None:

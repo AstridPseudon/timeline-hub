@@ -3,17 +3,17 @@
   "base_runtime": "33fc06bbd5b0a778517ac6f7c161b2a556ab80c4",
   "lock_sha256": "236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778",
   "live_baseline": {
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv": "6b3e34f9d8abecb7dd0a62f448e8863a76271d273815e1ec82e6c25f94665dbd",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv": "e4c0a9cb09f2e938c880970dcbc054eb0aa866e12af499d258e1d450589bc978",
     "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv": "08f1b00a716456ba328ff42ee96f3df60d0dfa5470b36eeafb5d299b3df22fde",
     "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py": "ba31adcf5dfbad179dfe08b048c48052cee2083026ec62790659c8cdbbc903bd"
   },
   "candidate_sha256": {
     "candidate/bench_store.py": "ba31adcf5dfbad179dfe08b048c48052cee2083026ec62790659c8cdbbc903bd",
-    "candidate/make-child-venv.baseline": "6b3e34f9d8abecb7dd0a62f448e8863a76271d273815e1ec82e6c25f94665dbd",
-    "candidate/make-child-venv": "cc1b792d2245b04f6b412590901843b272cedccfa0c6fd37afd8fb17431dafea",
+    "candidate/make-child-venv.baseline": "e4c0a9cb09f2e938c880970dcbc054eb0aa866e12af499d258e1d450589bc978",
+    "candidate/make-child-venv": "39ddfe1b4f6c7b0dd88a29a453b9debd82005dcfb0040f92f1a093a2552f64e6",
     "candidate/request-child-venv": "08f1b00a716456ba328ff42ee96f3df60d0dfa5470b36eeafb5d299b3df22fde",
-    "candidate/verify_dependency_seed.py": "f552061fd6b16b9032d9c9ce903abc2485b966649a8e2c19899153dde0d4effc",
-    "tests/test_dependency_reuse.py": "907ee9a19e918f171dbabd076367488ad1d64a72899106c6de303e3f4285232b",
-    "README.md": "2e8ed5c1b6affdd40c843dfd2299d78aacc220303606151bdaeca74db45e3db5"
+    "candidate/verify_dependency_seed.py": "61f7a832a7b01e9168b0200302fadebb630b8686dd9844dbaef6f6f989d255a4",
+    "tests/test_dependency_reuse.py": "40dd86be3bdcdb690d0e79dae46943a70655c3c7aebb21e14caa36036d50d415",
+    "README.md": "c4fb2c65d23362c4a0e0362957b34120787573d408c5b4c23eb6ab48d6ad2c34"
   }
 }

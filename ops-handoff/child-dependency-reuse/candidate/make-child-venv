@@ -21,7 +21,7 @@ PIP_NETWORK_TIMEOUT_SECONDS=${CHILD_VENV_PIP_NETWORK_TIMEOUT_SECONDS:-30}
 PIP_RETRIES=${CHILD_VENV_PIP_RETRIES:-2}
 REQUIREMENTS_PATH=${CHILD_VENV_REQUIREMENTS_PATH:-requirements/proof.lock}
 EXPECTED_PROOF_LOCK_SHA256=236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778
-VERIFIER_SHA256=f552061fd6b16b9032d9c9ce903abc2485b966649a8e2c19899153dde0d4effc
+VERIFIER_SHA256=61f7a832a7b01e9168b0200302fadebb630b8686dd9844dbaef6f6f989d255a4
 DEPENDENCY_SEED=
 SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
 
@@ -307,10 +307,14 @@ def verify(path):
             raise RuntimeError('retained child source/client marker mismatch: ' + marker)
     subprocess.run(['python3', '-I', '-', str(path), client, checkout, agent,
                     runtime_checkout, backend, work, python], input=verifier, text=True, check=True)
-    if dependency_seed:
-        # Authenticate retained ORIGINAL wheels before executing this child.
+    retained_seed = retained / '.dependency-wheelhouse'
+    if dependency_seed or retained_seed.exists() or retained_seed.is_symlink():
+        if not retained_seed.is_dir() or retained_seed.is_symlink():
+            raise RuntimeError('seeded child reuse requires Store custody and retained original wheels')
+        # Authenticate retained ORIGINAL wheels before executing this child,
+        # including a seeded entry reused without a new wheelhouse argument.
         subprocess.run([python, '-I', str(pathlib.Path(script).parent / 'verify_dependency_seed.py'),
-                        str(retained / '.dependency-wheelhouse'), '-', '--committed-lock', checkout,
+                        str(retained_seed), '-', '--committed-lock', checkout,
                         agent, requirements, lock, '--installed', str(retained)], check=True,
                        timeout=int(os.environ.get('CHILD_VENV_LOCAL_TIMEOUT_SECONDS', '600')))
     # Re-run the existing freeze identity verifier at the verified final path.

@@ -29,6 +29,11 @@ from packaging.utils import (
     parse_wheel_filename,
 )
 
+ENTRY_POINT_TARGET = re.compile(
+    r"\A(?P<module>\w+(?:\.\w+)*):(?P<function>\w+(?:\.\w+)*)"
+    r"(?:\s*\[\s*[\w-]+(?:=\w+)?(?:,\s*[\w-]+(?:=\w+)?)*\s*\])?\Z"
+)
+
 
 def fail(message: str) -> "NoReturn":
     raise SystemExit(f"REFUSED: dependency seed: {message}")
@@ -176,6 +181,54 @@ def write_snapshot(snapshot: Path, requirements: bytes, artifacts: dict[str, byt
         fail(f"cannot create immutable snapshot: {exc}")
 
 
+def validated_record_path(root: Path, site: Path, dist: object, record: str, name: str) -> Path:
+    pure = PurePosixPath(record)
+    if (
+        not record
+        or "\\" in record
+        or "\x00" in record
+        or pure.is_absolute()
+        or str(pure) != record
+        or ".." in pure.parts
+    ):
+        fail(f"unsafe dependency RECORD ownership: {name}")
+    path = site / record
+    resolved = path.resolve()
+    if not resolved.is_relative_to(root):
+        fail(f"dependency RECORD escapes child: {name}")
+    cursor = site
+    for part in pure.parts:
+        cursor /= part
+        if cursor.is_symlink():
+            fail(f"symlinked dependency RECORD: {name}")
+    dist_path = getattr(dist, "_path", None)
+    if not isinstance(dist_path, Path) or not dist_path.is_absolute() or dist_path.is_symlink():
+        fail(f"dependency RECORD ownership is unavailable: {name}")
+    if dist_path != dist_path.resolve():
+        fail(f"dependency RECORD owner is not physical: {name}")
+    dist_resolved = dist_path.resolve()
+    if not dist_path.is_relative_to(site) or not dist_resolved.is_relative_to(root):
+        fail(f"dependency RECORD owner escapes child: {name}")
+    try:
+        dist_rel = dist_path.relative_to(site)
+    except ValueError:
+        fail(f"dependency RECORD owner escapes site-packages: {name}")
+    owner_cursor = site
+    for part in dist_rel.parts:
+        owner_cursor /= part
+        if owner_cursor.is_symlink():
+            fail(f"symlinked dependency RECORD owner: {name}")
+    if resolved != dist_resolved / "RECORD":
+        fail(f"dependency RECORD is not owned by distribution: {name}")
+    try:
+        info = path.stat(follow_symlinks=False)
+    except OSError as exc:
+        fail(f"cannot stat dependency RECORD: {name}: {exc}")
+    if not stat.S_ISREG(info.st_mode):
+        fail(f"dependency RECORD is not a regular file: {name}")
+    return path
+
+
 def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
     """Compare installed bytes to authenticated original wheels, not RECORD claims."""
     sites = list((root / "lib").glob("python*/site-packages"))
@@ -232,12 +285,15 @@ def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
                     or script_name in {".", ".."}
                 ):
                     fail(f"unsafe console entry-point name: {name}:{script_name!r}")
-                target = target.partition("[")[0].strip()
-                module, separator, function = target.partition(":")
-                if not separator or not module or not function:
+                match = ENTRY_POINT_TARGET.fullmatch(target)
+                if match is None:
                     fail(f"malformed console entry-point target: {name}:{script_name}")
+                module = match.group("module")
+                function = match.group("function")
                 script_path = root / "bin" / script_name
                 rel = str(Path(os.path.relpath(script_path, site)))
+                if rel in generated_scripts:
+                    fail(f"duplicate console entry-point script: {name}:{script_name}")
                 generated_scripts[rel] = (
                     f"#!{root / 'bin/python'}\n"
                     "import sys\n"
@@ -248,7 +304,8 @@ def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
                 ).encode()
         rows: set[str] = set()
         physical_rows: set[str] = set()
-        for row in csv.reader(io.StringIO(captured_bytes(site / record).decode()), strict=True):
+        record_path = validated_record_path(root, site, dist, record, name)
+        for row in csv.reader(io.StringIO(captured_bytes(record_path).decode()), strict=True):
             if len(row) != 3:
                 fail(f"malformed dependency RECORD: {name}")
             rel, encoded, size = row
