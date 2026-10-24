@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T15:48:57Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# app2 board, 2026-10-24T15:48Z
+<!-- app2 | 2026-10-24T15:51:25Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-24T15:50Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -51,7 +51,7 @@
 | F-final-host | Prepare App-host final proof routes | App Luna; independent Luna | Source recipe qualified; final inputs pending | merged | Return0754; independent0758 PASS | Actual tools, locks, maker argv and existing routes qualify. Missing P4/P5 registrations and final tuple remain explicit. | Source preparation only |
 | F-final-registrations | Retain historical App host preparation | App Luna | D59 venues supersede App host | gated:D59-venues | Draft0834; review0838; App1314 board | Historical source preparation only. P4 now Agent service; P5 main service. No duplicate App registration or new host worker owed. | Draft only |
 | F-App-early | Track D49 App checkpoint | App service; Luna | Same actual16138 terminal | blocked:app | App producer1227; repairs HOME | FAIL exit1 in1665s: Vitest19251 pass; Node257 pass,38 fail,26 skip. App owns categories and repairs; no final GO. | Tree3311 / HOMEd993 |
-| F-App-current | Refreshed full8158 and schema release | App Luna; release owner | D62 generated; consumer adoption and one pin | blocked:app | App1539; Agent1536; D65 and D66 | FAIL19256 PASS/1 installer schema FAIL; Node NOTRUN. Runtime8b32 ready. Normal consumers precede one tuple pin and strict guard PASS. | Appbe98 / Runtime8b32 |
+| F-App-current | Refreshed full8158 and schema release | App Luna; release owner | D62 consumers merged; one pin and proof | blocked:app | App1539 HOME; Agent1536 HOME; D65 | Historical8158 has one installer schema FAIL; Node NOTRUN. Normal D62 consumers now HOME95cf and5777. One tuple pin and strict guard PASS remain. | App95cf / Agent5777 / Runtime8b32 |
 | F-final-gates | Rerun final P1 to P5 | Lane services; App verdicts | D59 final cut | gated:D59-cut | App1528; Agent1525; Runtime HOME8b32 | D66 green P1 releases P2/P3 in parallel. Final cut, original P1 to P5 and zero-regression clearance remain unqualified. | Final tuple pending |
 | A4-source | Zero reachable legacy film writers | App; independent Luna | Census0438 and review0444 | merged | App0438 and0444 | Source-only end state qualified; D31/D37 retained subset unchanged. Same head523 tests, three types and lint passed. | c0fe |
 
@@ -64,7 +64,7 @@
 
 D56.4: Proof is folded into App. The single complete handoff is [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md). All in-flight items are complete, including independent caller1213 PASS. No new Proof dispatch, old tuple run or product merge is owed. The manager loop remains alive for new orchestrator instructions.
 
-live 0 / cap 4; ready-undispatched 0. Copied dispatcher header: <!-- app2 | 2026-10-24T15:46:39Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 7m --> D56.4 stand-down remains binding; App owns transferred rows.
+live 0 / cap 4; ready-undispatched 0. All1313 Proof workers done. Latest copied dispatcher15:48:57Z reports0live. D56.4 stand-down remains binding; App owns transferred rows.
 
 core open: 4 final proof gates P1 to P4 remain unqualified on final heads. Execution transferred to App for P1/P2/P3 and Agent for P4. All eight original P2 gestures are CORE under D55b. Historical passes do not qualify final heads.
 regressions: App8158 retains one confirmed installer/schema regression, visibly pending D62 regeneration under D66; exact tuple manifest pins follow once, with strict guard. Agent actual d27b PASS16 closes its named env regression. D67 removes D13 installed-tuple UNKNOWN from core blockers; six Agent fork/forward cases remain. No final zero-regression clearance.
@@ -91,11 +91,11 @@ Historical23809/9310 remain separate NO-GO: P2 exit1/463 seconds,three failed/fi
 
 D45 six older diagnostics are NOT RETAINED; creation/loss unproved. Synthetic P3 f182af and current3896 synthetic1bc3 are same-tree authorized snapshots; P2 historical synthetic identity and actual daemon attribution stay UNKNOWN. Source-preflight20674/10144 were wrong artifact targets, each exit2/6 seconds and all originalsNOTRUN. No failed run was relabelled or resubmitted.
 
-Final gates: latest App dispatcher15:40 reports normal D66 stack boot after6GB heap, then native seed refusal867f versus Agent4118. Sole Sol1528 continues; no P1 green or new P2/P3 original result is published. App normal8b32 adoption1539 is active; Agent15:36 names vendor1536 plus mapping1533, then actual-home six originals. Runtime15:35 has qualified HOME8b32 and paired412PASS; producer dependency cleared. App already sent the urgent Agent adoption peer. D66 green P1 releases parallel P2/P3 without verdict-review wait. D65 pins once after actual consumer adoption. D68 App upstream3881 merge proceeds parallel with boot and must be in the cut. Final P1-P5 remain unqualified.
+Final gates: App dispatcher15:43 and Agent15:44 now clear the native seed schema dependency. Normal consumers are HOME App95cf and Agent5777 on Runtime8b32. App has merged95cf forward into sole plain-launch Sol1528, which continues unchanged P1 control. P2/P3 release in parallel immediately on green P1 without verdict-review wait. Agent actual-home six-original proof1540 is active; P4/core harness1542 and reverse scope1539 are assigned. D65 tool is mergeddaa6; one manifest pin and strict installer proof remain App-owned. D68 true upstream3881 merge1543 runs parallel with boot. No final P1-P5 GO is published.
 
-Blockers: App launch — D66 stack boots, but native seed refuses Runtime867f versus Agent4118. Agent1536 normal adoption and mapping1533 own the dependency; App Sol1528 continues toward green P1, then parallel P2/P3. App1539 owns its normal adoption and subsequent one-tuple manifest pin.
+Blockers: App — native schema dependency cleared by actual HOME95cf/5777 adoption. Sole Sol1528 owns current P1 control, then immediate parallel P2/P3. D65 one tuple manifest pin and strict installer proof remain App-owned; no Runtime source wait.
 
-Next ready: None for Proof under D56.4. Existing App and Agent workers own normal D62 adoption, then P1 control and immediate parallel P2/P3. App owns D68 upstream merge in parallel. No new Proof collector, run, review or pin worker is owed.
+Next ready: None for Proof under D56.4. App1528 owns P1 control and parallel P2/P3; App1543 owns D68 merge. Agent1540 owns actual-home six originals;1542 owns P4/core preparation. No new Proof worker, collector, run, review or pin is owed.
 
 Later: D34 legacy accounting remains UNKNOWN; no duplicate audit owed. D47 memo/capsule remains deferred and unmerged with nine attacks. D46 U2c stays closed until final freeze join. D14/D23 relational timing cases and frozen34e/d106/819acf remain unchanged. Historical App P4/P5 installation is superseded by D59 venues; F-final execution is gated:D59-cut. D52 allows caller-proven dead code/exclusive-test removal with independent review; all original live gates remain strict.
 
@@ -123,9 +123,9 @@ D67: Agent D13 installed-native preflight is NEW-OURS and lacks genuine deployme
 
 D68: Header15:45 assigns one true forward merge of App upstream3881e9440 in parallel with D66 boot. P2/P3 use whichever App head is integrated when boot passes; final cut requires that merge. Later upstream is frozen for gating; F-final uses fresh main under D51 with source-overlap checks. Runtime, Agent and Composition upstream tips are unchanged. App owns source and merge; no Proof dispatch.
 
-Disk: 8224301056 bytes free at 2026-10-24T15:48Z. All1313 Proof workers done, no running markers. Three remaining Proof trees have worker KEEP markers; no eligible non-KEEP Proof tree. Prior cleanup, compact and locked-v1 refusals remain stopped; no alternate route launched.
+Disk: 8223961088 bytes free at2026-10-24T15:48:41Z. All1313 Proof workers done. Three remaining Proof worktrees have KEEP markers; no eligible non-KEEP Proof tree. Prior cleanup, compact and locked-v1 refusals remain stopped; no alternate route launched.
 
-Pass 2026-10-24T15:48Z: Completed a ten-minute monitoring interval after restart. PLAN read first; common rules, contract and header consulted through D68. Inbox unchanged790277 bytes. bin/workers confirms all1313 done. Rechecked blocked rows against latest actual hub App dispatcher15:40, Agent15:36 and Runtime15:35 boards. D66 stack now boots; genuine867f/4118 native schema refusal awaits already-owned normal Agent1536 adoption and mapping1533. App1539 owns its home rebind. Runtime8b32 producer dependency is clear and its direct owner handoffs already exist; no duplicate peer needed. F-App-current relabelled blocked:app because regeneration is complete and actual consumers/pin remain. D68 upstream App3881 merge is App-owned in parallel with launch; gating upstream is frozen thereafter. D56.4 remains binding. No new Proof assignment, duplicate run, peer note, product edit, Git mutation or refused cleanup route. STATUS is the harness restart point.
+Pass 2026-10-24T15:50Z: PLAN read first, then common rules, inbox, contract and header throughD68. Inbox unchanged790277 bytes; bin/workers reports all1313 done. Actual hub boards at/home/user/timeline-hub/hub/status clear both normal D62 consumer dependencies: App95cf and Agent5777 are HOME. Updated the transferred source wait immediately; remaining App P1/P2/P3 and installer proof remain blocked:app. Agent actual-six1540 is active. D68 upstream merge1543 is assigned parallel with boot. No duplicate peer, Proof dispatch, product edit, Git mutation or refused cleanup route. Monitoring continues for the ten-minute interval; STATUS remains the harness restart point.
 
 Inbox read through790277 bytes. Completed D56.4 handoff remains current. The manager harness can restart from this STATUS and INBOX; no new Proof dispatch is owed.
 
