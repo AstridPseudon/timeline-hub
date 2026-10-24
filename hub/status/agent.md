@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T08:18:10Z | dispatcher heartbeat 4s | live 3 (sol 1, luna 2, other 0) | busy30 33 | status age 0m -->
+<!-- agent | 2026-10-24T08:20:37Z | dispatcher heartbeat 12s | live 3 (sol 1, luna 2, other 0) | busy30 32 | status age 0m -->
 # agent board, 2026-10-24T08:16:12Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -110,7 +110,7 @@
 
 | F-farm final custody review | Verify all31field CSV/JSON mappings | Luna | Complete independent review passed | merged | Sol0752; independent0759 PASS | All96IDs and2976cells match;80environment,1regression,15unknown. Genuinepriorproof scopes retained; no passcredit. | JSON9b9bc96b |
 
-| U2 duck seed | Correct canonical seed mirrors | Sol / Luna | Independent fixture review | review | Independent 0814 PASS; normal merge next | One fixture line and all 17 assertions preserved. Separate G4 media source repair is active. | Fixture only |
+| U2 duck seed | Correct canonical seed mirrors | Sol / Luna | Independent fixture review | merged | Independent 0814 PASS; home 1072 | One fixture line and all 17 assertions preserved. Separate G4 media source repair is active. | Fixture only |
 | D39 wire idempotency | Assert transmitted stable key | Sol / Luna | Independent review passed | merged | Author 0801; review 0809 PASS | 27 cases passed; missing and wrong actual headers fail exact assertion. | b070649578 |
 
 | U2 D18 loader | Preserve generated package context | Luna | Integrated proof | review | Author 0803; review 0810 PASS | 142 functions, 624 assertions and six five-second waits retained. Merged b4c7; joined proof active. | b4c700166c |
@@ -122,13 +122,17 @@
 | OPS wheel result review | Verify actual input and new kit receipt | Luna | Reviewed b330 helper | merged | agt-OPS-real-wheel-review-0814 PASS | All 67 original wheels and all four received kit files independently verified. Bootstrap unverified. | Lock 236d unchanged |
 
 | F count giant home | Credit one exact qualified original | Sol | Independent result 0814 PASS | doing | agt-F-count-giant-home-sol-0818 | Candidate 263 closed / 4 open; official remains 262 / 5 until package review. | Evidence only |
+| OPS current child | Create one exact source child with authentic wheels | Dispatcher | Actual input and received kit PASS | doing | venv-agent-child-final-0c2c-becfe | Normal source carriers and lock-authenticated 67 wheels supplied. No readiness claim. | Agent 0c2c / Runtime becfe |
+| F harness tuple | Bind both reviewed runners to the shared candidate | Luna | Candidate request accepted | doing | agt-F-harness-final-tuple-0820 | Existing assertions, timeouts and custody checks preserved; no original body. | Current home |
+| F ABA row review | Review exact source and snapshot serialization | Luna | Completed staged row | review | agt-F-ABA-row-review-0821 | No original, preflight or realm execution; first-use Runtime selection challenged. | Row 290bd2bf |
+
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
-Integration: 0c2c28da4f includes reviewed U2 d01, docs a8f4, canonical D39 3c8f, D18 b4c7 and current-only ABA join. Integrated source qualification 0816 is running.
+Integration: 107284b521 adds independently reviewed duck mirror fixture above 0c2c28da4f. The 0c2c tuple includes reviewed U2 d01, docs a8f4, canonical D39 3c8f, D18 b4c7 and current-only ABA join. Integrated source qualification 0816 is running.
 Count: Official 262 closed / 5 open of 267, independent 0759 PASS. Census SHA 286047a522d61e57f8c46bb655d63d96bd82fd21e6f597fa72a2e017b2552eb2. Giant original passed at home; independent result 0814 precedes any count delta.
 Open originals: discovery support; generic harvest/reopen; D23 helper word-second; D23 moved-head restart; giant rationale pending result review. All original records and historical challenges retained.
 Farm: Checkpoint 26511 remains 17,335 passed, 288 failed, 187 setup errors and 4 skips on Agent 9cd / Runtime 45c3. Independently reviewed 96-node packet: 80 environment, 1 docs regression and 15 unknown. Setup packet: 140 environment and 47 tuple mismatches. No new Farm pass credit.
 Blockers: Farm lead and Runtime — sanitized full-suite children cannot import Runtime. Runtime source 0803 owns the managed child packet; no corrected checkpoint before real preflight PASS.
-Blockers: Agent child — exact source checkout is queued for one changed candidate. Actual wheel input and received kit independently pass; bootstrap remains unverified.
+Blockers: Agent child — one changed candidate final-0c2c-becfe is queued with independently qualified original wheels and received kit. Await actual maker result; bootstrap unverified.
 Runtime: Producer becfe is independently qualified and all 15 Agent mappings now match. Shared authority is qualified on 460c and its exact-auth descendant becfe. Runtime has all 36 original failures closed at recorded scopes.
 App: Complete IMAGE 0554 and independent 0636 PASS retained at direct RuntimeService scope. No additional producer or realm; no inferred original-node credit.
 D48: Upstream 25359 merged via reviewed source ccf87 and normal d01. Restored predicates retained. D18 loader merged after independent PASS; duck scenario remains open under unique G4 source owner 0814.
@@ -137,5 +141,5 @@ D49 venue: Agent final full on Farm after a zero-setup-error checkpoint. Fallbac
 Safety: Prior Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
 Disk: About 11 GB free. Read-only eligibility check found no clean, unprotected, finished Agent worktree already merged to recycle. Held cleanup and registry targets remain held; light work continues.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred. D46 U2c closed and folded into the freeze; relay and remote providers stay deferred and fail-closed. D47 memo held.
-Next ready: All independent ready work dispatched. Review completions trigger normal merges, exact accounting and one managed original qualification.
+Next ready: Exact tuple runner binding 0820 and ABA row review 0821 queued; giant count package 0818 active. All independent ready work dispatched. Review completions trigger normal merges, exact accounting and one managed original qualification.
 Evidence: [D39 review](../../design/agt-D39-header-review-0809.md), [ABA review](../../design/agt-F-ABA-cumulative-review-0809.md), [wheel input](../../design/agt-OPS-real-wheel-qualify-0810.md), [Farm checkpoint](../../design/farm-agent-full-checkpoint-20261024T0555Z.md).
