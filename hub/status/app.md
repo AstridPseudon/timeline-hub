@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T19:46:42Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 0m -->
+<!-- app | 2026-10-24T19:50:15Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 1m -->
 # app board, 2026-10-24T19:46Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -51,7 +51,7 @@
 | P3-current | Corrected both-mount original Gate5 | Luna; Service | Preflight20128 PASS | review | Actual26908; producer1855 | Exit1/471s; readiness PASS, original FAIL at1773: expected fourth recovery observation, actual3. Downstream tail unproved. | App3c29 |
 | P3-26908-cause | Trace fourth recovery observation | HARD Sol PLAN A2 | Actual26908 and independent1905 | merged | app-A2-P3-recovery-current-sol-1910 | Intermediate page closed at Loadingproject before retry; no production defect proven. Review-only stronger poll proposal;269mounted controls/types/lint PASS. | Proposal only |
 | P3-intermediate | Observe intermediate recovery before close | Luna | Independent1920 PASS | merged | app-P3-intermediate-clean-apply-1925 | Exact one addition, protected hash736fd381 matches reviewed proposal; three fault controls and list15 PASS. Alias runner environment error retained. | e771ce1426 |
-| P3-intermediate-run | Qualify stronger recovery observation | Luna; Service | D74a floor6GB | review | Actual14240; verdict1948 | Readiness1 PASS; original FAIL at1820 recorded B command fields differ. Both mount recovery reached; downstream history and undo unproved. | App f6a21c28 |
+| P3-intermediate-run | Qualify stronger recovery observation | Luna; Service | D74a floor6GB | review | Actual14240; verdict1948 | Independent1948 confirms readiness1 PASS/original FAIL. Both mounts strict5/3 passed; B record comparison1820 fails. No downstream history or undo credit. | App f6a21c28 |
 | P3-recorded-command | Compare request and authoritative record | Luna | Actual14240 new boundary | doing | app-P3-14240-recorded-command-shape-1948 | Contract and exact producer classification; review only strict proposal if oracle wrong. No protected edit before qualification. | Source unchanged |
 | P3-26908-path | Independent verdict and full path | Luna | Producer1855 final | merged | app-P3-26908-verdict-wholepath-1905 | Gate FAIL; manifest/hash/snapshot PASS. Recovery product equals passingP131083; missing fourth cause remains bounded, no new count inferred. | Evidence only |
 
@@ -76,16 +76,16 @@ Integration: App e771 adds independently reviewed intermediate recovery readines
 core open: 9 original gesture cases, eight P2 plus one P3. P1 original2 PASS and independent1616 PASS at its recorded tuple.
 regressions: 0 confirmed open App source findings. D69 all four restorations home and final1704 PASS; original gates remain open.
 
-Blockers: Runtime native seed execution — unique Sol1924 interprets actual128 prefix now received. No App input remains pending; real pending request capture seam handback required before meaningful P2.
+Blockers: Runtime native capture — observer scope1932 and native watchdog1935 are sole source owners. App input complete; actual home handback precedes ONE meaningful D78 live element. Prior cause and actual Python frame unknown.
 
 Blockers: P3 authoritative command envelope — actual14240 reaches both recovery mounts then fails exact B record equality. Narrow Luna1948 and independent verdict1948 own classification; no product cause or oracle weakening inferred.
 Blockers: Final cut — all eight P2 and one P3 core cases remain unqualified. Runtime coordinates final suites and ZIP after current gate proof.
 Next ready: Runtime observer1932 and watchdog1935 home handback precede ONE meaningful D78. App redundant1941 stopped. P3 actual14240 terminal; independent1948 verdict and narrow envelope1948 proposal active. No unchanged P3 rerun.
 
-live 2 / cap 4; ready-undispatched 0. Latest published dispatcher header19:42 records2 Luna. Criticalcapture1941 dispatched at7.66GB; P3 producer1933 ending and cleanup1939 active. Gate14240 already running. D74a gates use6GB floor; noncritical originals remain held.
+live 2 / cap 4; ready-undispatched 0. Latest published dispatcher header19:43 records2 Luna. Verdict1948 now complete; narrow command shape1948 active. Runtime1935 owns native watchdog, App awaits home input. No duplicate adapter or new original.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
 Disk: Current8.28GB after finished worker recycling and six stale pins released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
-Inbox consumed through1675697 bytes, including Agent1915 adoption homee39de and Runtime1920 capture request. Owner boards Runtime19:18 and Agent19:16 rechecked: popup87bc and cost e89 are home; original P2 source outcomes remain unqualified. Peer1934 closes App capture disposition at honest limits.
+Inbox consumed through1678892 bytes, including Agent1915 adoption homee39de and Runtime1920 capture request. Owner boards Runtime19:18 and Agent19:16 rechecked: popup87bc and cost e89 are home; original P2 source outcomes remain unqualified. Peer1934 closes App capture disposition at honest limits.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
