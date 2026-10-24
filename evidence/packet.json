@@ -1,0 +1,113 @@
+{
+  "schema": "timeline/child-timeout-evidence/v1",
+  "purpose": "Finite read-only handback for Runtime peer 0634; no product or installed-state mutation.",
+  "source_policy": {
+    "reads": [
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/refused/childvenv-venv-agent-child-discovery-bb50-f320",
+      "/home/user/work/bench-store/staging/0bcc6008719fe01398d87ff8bc8fda979075358b2a74ec1f677a0f7475c8a5eb (named files only)",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/provision/venv-agent-child-d40-ba8f-f320.txt",
+      "/home/user/work/bench-store/entries/child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9 (named metadata and RECORD files only)"
+    ],
+    "not_done": ["network", "package install", "provision retry", "interpreter import", "audit", "probe", "process", "build", "broad tmp/bench scan"]
+  },
+  "failed_normal_candidate": {
+    "queue_receipt": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/refused/childvenv-venv-agent-child-discovery-bb50-f320",
+      "evidence_file": "raw/failed-receipt.txt",
+      "sha256": "4117623f4d457e3b17d2183fd4b9de2c2f8528eb4e61ba17859dbb1cd464b6cc",
+      "bytes": 15765
+    },
+    "request_name": "venv-agent-child-discovery-bb50-f320",
+    "outcome": "refused",
+    "stage": "pinned-requirements",
+    "stage_started": "2026-10-24T06:01:18Z",
+    "stage_failed": "2026-10-24T06:11:18Z",
+    "budget_seconds": 600,
+    "elapsed_seconds": 600,
+    "return_code": 124,
+    "agent_sha": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+    "runtime_sha": "f3208b26b53c4d7053e5464eaa7c5e15b1505812",
+    "requirements_path": "requirements/proof.lock",
+    "requirements_lock_sha256": "236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778",
+    "carrier": {
+      "profile": "agent-remotion-v3-819acf-1110",
+      "runtime_checkout": "/home/user/work/wt/rt-pin-f3208b26",
+      "client_identity_sha256": "10fc7e77b3ab381df46108b68ead23864d2f679fa069b41d113629efc1135a9e",
+      "client_identity": {
+        "packages/python/astrid_runtime_client/__init__.py": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
+        "packages/python/astrid_runtime_client/contract_metadata.py": "a79b2e12de96ec8f2c4bf7b6811ccb3538baf18ca839172f7a3d7bf525029aae",
+        "packages/python/astrid_runtime_client/generated.py": "9b5686c388347108898956c3475b16960e2434d64adcefcc71a26fc269cdd904",
+        "packages/python/astrid_runtime_client/timeline_commit_types.py": "88c67d9eb650b445b8ad04c9011c1f44f1ec5e9f72a4a733050515de7ec0b616"
+      }
+    },
+    "partial_path": {
+      "path": "/home/user/work/bench-store/staging/0bcc6008719fe01398d87ff8bc8fda979075358b2a74ec1f677a0f7475c8a5eb",
+      "exists": false,
+      "named_files": {
+        ".provision-failure": "absent",
+        ".provision-report": "absent",
+        "pip.log": "absent",
+        "pip.log.txt": "absent",
+        ".pip.log": "absent",
+        ".pip-log.txt": "absent"
+      },
+      "pip_q_progress": "absent",
+      "scope_note": "Only the named path/files were checked; no cause is inferred from absence."
+    }
+  },
+  "existing_genuine_d40_child": {
+    "qualification_receipt": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/provision/venv-agent-child-d40-ba8f-f320.txt",
+      "evidence_file": "raw/d40-receipt.txt",
+      "sha256": "e8b01d8b47d27054e5976ccef2b019cbcb689192557cec9c603697ee92ca335c",
+      "bytes": 3311,
+      "status": "passed"
+    },
+    "entry": {
+      "path": "/home/user/work/bench-store/entries/child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9",
+      "key": "3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9",
+      "custody_file": "raw/.bench-owner.json",
+      "custody_file_sha256": "7ee0374f2a591fdf0647a4e9eb9fb0d35e874f1d789f5a46e20b8f248a5cc7a9",
+      "custody_identity": {
+        "component": "child",
+        "owner": "bd8a2e449f4547028c2f92c9c6aa7902"
+      }
+    },
+    "tuple": {
+      "agent_sha": "ba8f0bc8bebf6d0e9a8143fed80d31f846cd5b95",
+      "runtime_sha": "f3208b26b53c4d7053e5464eaa7c5e15b1505812",
+      "requirements_lock_sha256": "236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778",
+      "carrier_profile": "agent-remotion-v3-819acf-1110",
+      "client_identity_sha256": "10fc7e77b3ab381df46108b68ead23864d2f679fa069b41d113629efc1135a9e",
+      "client_identity_marker_sha256": "da2728a6903be1c676de1ed954a3ecea589b698a6d205f436457efdf368069e9"
+    },
+    "markers": {
+      ".astrid-source-commit": {"source": "raw/.astrid-source-commit", "sha256": "988ed0c408ae2d4ebe93bdd8771f5224faebd55edb703df831588946bb3661df", "bytes": 41, "value": "ba8f0bc8bebf6d0e9a8143fed80d31f846cd5b95\\n"},
+      ".astrid-runtime-source-commit": {"source": "raw/.astrid-runtime-source-commit", "sha256": "69fbc28efe1d54f128eca748066dd4fb2d6a82af4329285505a035b161ee13e1", "bytes": 41, "value": "f3208b26b53c4d7053e5464eaa7c5e15b1505812\\n"},
+      ".astrid-runtime-client-identity": {"source": "raw/.astrid-runtime-client-identity", "sha256": "da2728a6903be1c676de1ed954a3ecea589b698a6d205f436457efdf368069e9", "bytes": 483},
+      ".astrid-import-origins": {"source": "raw/.astrid-import-origins", "sha256": "d05cb058feb07c01cfa25cd4b5373e7cd260da4a82ca903018d7ac4406b871bd", "bytes": 714}
+    },
+    "provision_report": "provision-report.safe.json",
+    "records": {
+      "astrid": {"original_path": "/home/user/work/bench-store/entries/child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9/lib/python3.13/site-packages/astrid-0.1.0.dist-info/RECORD", "source": "records/astrid-0.1.0.dist-info.RECORD.csv", "sha256": "bf4fc7e0e0cd99fb88a0f79d6b1b8ffbef7842af52100e034987871872c85ca5", "bytes": 222604, "csv_columns": 3, "rows": 2393, "blank_hash_rows": 950},
+      "astrid-runtime": {"original_path": "/home/user/work/bench-store/entries/child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9/lib/python3.13/site-packages/astrid_runtime-0.1.0.dist-info/RECORD", "source": "records/astrid_runtime-0.1.0.dist-info.RECORD.csv", "sha256": "2479a0bdec91d809a18e3e0b4d47b73d7cfc5e2d62de89e7ad5458237394c018", "bytes": 13388, "csv_columns": 3, "rows": 170, "blank_hash_rows": 80}
+    }
+  },
+  "tuple_consistency": {
+    "failed_runtime_equals_existing_runtime": true,
+    "failed_lock_equals_existing_lock": true,
+    "failed_client_carriers_match_existing_client_tuple": true,
+    "failed_agent_differs_from_existing_agent": true,
+    "old_child_qualifies_new_agent": false,
+    "different_tuple_c886_c36_abd47_used_as_stand_in": false
+  },
+  "wire_claim_scope": {
+    "production_caller": "not evaluated; this is evidence-only and makes no product change",
+    "v2_request_reply_fields": "not claimed or tested by this packet; no narrower test is presented as full wire coverage"
+  },
+  "verification": {
+    "method": "Python standard library only: pathlib, hashlib, json, csv",
+    "checks": ["JSON schema/shape", "CSV parse and three-column RECORD rows", "SHA-256 exact-byte hashes", "marker/receipt/tuple consistency"],
+    "source_and_evidence_files_unchanged": true
+  }
+}

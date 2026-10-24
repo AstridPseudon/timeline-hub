@@ -1,0 +1,37 @@
+{
+  "schema": "timeline/child-timeout-evidence/provision-report-safe/v1",
+  "source": {
+    "path": "/home/user/work/bench-store/entries/child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9/.provision-report",
+    "sha256": "e8b01d8b47d27054e5976ccef2b019cbcb689192557cec9c603697ee92ca335c",
+    "bytes": 3311
+  },
+  "allowlisted_fields": {
+    "status": "passed",
+    "agent_sha": "ba8f0bc8bebf6d0e9a8143fed80d31f846cd5b95",
+    "runtime_sha": "f3208b26b53c4d7053e5464eaa7c5e15b1505812",
+    "runtime_client_identity_sha256": "10fc7e77b3ab381df46108b68ead23864d2f679fa069b41d113629efc1135a9e",
+    "requirements_path": "requirements/proof.lock",
+    "requirements_lock_sha256": "236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778",
+    "installed_import_origins_file": "raw/.astrid-import-origins",
+    "installed_distribution_metadata": [
+      {
+        "name": "astrid",
+        "version": "0.1.0",
+        "provenance": "directory",
+        "direct_url": "file:///home/user/work/bench-store/entries/child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9/.child-venv-source-venv-agent-child-d40-ba8f-f320/agent"
+      },
+      {
+        "name": "astrid-runtime",
+        "version": "0.1.0",
+        "provenance": "directory",
+        "direct_url": "file:///home/user/work/bench-store/entries/child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9/.child-venv-source-venv-agent-child-d40-ba8f-f320/runtime"
+      }
+    ]
+  },
+  "redaction": {
+    "original_preserved": false,
+    "original_sha256_and_size_preserved": true,
+    "omitted_sections": ["pip_freeze"],
+    "credentials_or_index_urls": "none observed in the allowlisted fields; no environment or pip configuration was read or copied"
+  }
+}
