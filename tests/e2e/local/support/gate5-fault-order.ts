@@ -7,6 +7,7 @@ export type Gate5FaultOrderAction =
   | 'initial'
   | 'stage-automatic-retry'
   | 'forward-dependent-or-recovery'
+  | 'reject-early-dependent'
   | 'reject-unexpected-duplicate';
 
 /**
@@ -23,6 +24,7 @@ export function classifyGate5FaultOrder(input: {
 }): Gate5FaultOrderAction {
   if (!input.initial) return 'initial';
   const exactReplay = input.initial.body === input.candidate.body && input.initial.key === input.candidate.key;
+  if (!exactReplay && !input.recoveryForwarded) return 'reject-early-dependent';
   if (!exactReplay) return 'forward-dependent-or-recovery';
   if (!input.automaticRetryStaged) return 'stage-automatic-retry';
   if (!input.recoveryForwarded) return 'forward-dependent-or-recovery';

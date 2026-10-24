@@ -40,7 +40,7 @@ import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditComm
 import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
 import { centreCell, gridDifference, letterbox, matches, pictureGrid, MATCH, type GridDifference, type PictureGrid, type Rect } from './support/pictures.ts';
 import { assertGate5ResetPrecondition } from './support/gate5-reset-precondition.ts';
-import { classifyGate5FaultOrder, type Gate5CommitIdentity } from './support/gate5-fault-order.ts';
+import { classifyGate5FaultOrder, sameGate5CommitIdentity, type Gate5CommitIdentity } from './support/gate5-fault-order.ts';
 
 /** A hang ceiling for one wait (R-10): many times the usual time, never a budget. */
 const CEILING = { timeout: 90_000 };
@@ -785,37 +785,39 @@ interface CommitPost {
 
 async function faultFirstCommit(page: Page) {
   const posts: CommitPost[] = [];
+  const forwarded: Array<{ identity: Gate5CommitIdentity; response: unknown }> = [];
+  const observed: Gate5CommitIdentity[] = [];
   const stagedRetries: Gate5CommitIdentity[] = [];
   const legacy: string[] = [];
   let held: Route | undefined;
+  let stagedRoute: Route | undefined;
+  let stagedPage: Page | undefined;
   let stagedResolve!: () => void;
   const stagedReady = new Promise<void>((resolve) => { stagedResolve = resolve; });
   let initial: Gate5CommitIdentity | undefined;
   let recoveryForwarded = false;
-  let attempts = 0;
+  const MAX_OBSERVED_ATTEMPTS = 16;
   const observe = (target: Page) => {
     target.on('request', (request) => {
       if (request.method() === 'POST' && SAVES.test(new URL(request.url()).pathname)) legacy.push(request.url());
     });
   };
-  const intercept = async (route: Route) => {
-    const request = route.request();
-    if (request.method() !== 'POST') return route.fallback();
-    const identity: Gate5CommitIdentity = { body: request.postData()!, key: request.headers()['idempotency-key'] };
-    const action = classifyGate5FaultOrder({ initial, candidate: identity,
-      automaticRetryStaged: stagedRetries.length > 0, recoveryForwarded });
-    if (action === 'reject-unexpected-duplicate') {
-      await route.abort('failed');
-      throw new Error('Gate5 fault control refused an unexpected duplicate exact retry');
+  const abortStagedRetry = async (errorCode: 'failed' | 'connectionreset' | 'connectionclosed' = 'failed') => {
+    const route = stagedRoute;
+    const target = stagedPage;
+    stagedRoute = undefined;
+    stagedPage = undefined;
+    if (!route) return;
+    try {
+      await route.abort(errorCode);
+    } catch (error) {
+      // Navigation and page close can terminate a route before its explicit abort runs.
+      // Preserve the lifecycle state in that case; an open page must still surface a real
+      // route-lifecycle failure instead of silently losing the staged request.
+      if (target && !target.isClosed()) throw error;
     }
-    if (action === 'stage-automatic-retry') {
-      stagedRetries.push(identity);
-      stagedResolve();
-      return;
-    }
-    if (!initial) initial = identity;
-    if (stagedRetries.length > 0 && identity.body === stagedRetries[0].body && identity.key === stagedRetries[0].key) recoveryForwarded = true;
-    attempts++;
+  };
+  const forward = async (route: Route, request: Request, identity: Gate5CommitIdentity) => {
     const response = await route.fetch({ maxRetries: 0 });
     const post: CommitPost = {
       method: request.method(), path: new URL(request.url()).pathname.replace(/^\/api\/runtime/, ''),
@@ -823,10 +825,63 @@ async function faultFirstCommit(page: Page) {
       status: response.status(), response: await response.json(),
     };
     posts.push(post);
+    forwarded.push({ identity, response: post.response });
+    if (stagedRetries.length > 0 && sameGate5CommitIdentity(identity, stagedRetries[0])) recoveryForwarded = true;
     if (posts.length === 1) held = route;
     else await route.fulfill({ response });
   };
-  const attach = async (target: Page) => { observe(target); await target.route(COMMITS, intercept); };
+  const releaseStagedRetry = async () => {
+    const route = stagedRoute;
+    const target = stagedPage;
+    if (!route || !target || target.isClosed()) throw new Error('Gate5 fault control has no staged retry to release');
+    stagedRoute = undefined;
+    stagedPage = undefined;
+    await forward(route, route.request(), {
+      body: route.request().postData()!, key: route.request().headers()['idempotency-key'],
+    });
+  };
+  const intercept = async (target: Page, route: Route) => {
+    const request = route.request();
+    if (request.method() !== 'POST') return route.fallback();
+    const identity: Gate5CommitIdentity = { body: request.postData()!, key: request.headers()['idempotency-key'] };
+    if (observed.length >= MAX_OBSERVED_ATTEMPTS) {
+      await route.abort('failed');
+      throw new Error(`Gate5 fault control observed more than ${MAX_OBSERVED_ATTEMPTS} commit POST attempts`);
+    }
+    observed.push(identity);
+    const action = classifyGate5FaultOrder({ initial, candidate: identity,
+      automaticRetryStaged: stagedRetries.length > 0, recoveryForwarded });
+    if (action === 'reject-unexpected-duplicate' || action === 'reject-early-dependent') {
+      await route.abort('failed');
+      throw new Error(`Gate5 fault control refused ${action === 'reject-early-dependent' ? 'early dependent or mismatching' : 'unexpected duplicate exact'} request`);
+    }
+    if (action === 'stage-automatic-retry') {
+      if (stagedRoute) {
+        await route.abort('failed');
+        throw new Error('Gate5 fault control already has a staged automatic retry');
+      }
+      stagedRetries.push(identity);
+      stagedRoute = route;
+      stagedPage = target;
+      stagedResolve();
+      return;
+    }
+    if (!initial) initial = identity;
+    if (stagedRoute && stagedRetries.length > 0 && sameGate5CommitIdentity(identity, stagedRetries[0])) await abortStagedRetry();
+    await forward(route, request, identity);
+  };
+  const attach = async (target: Page) => {
+    if (stagedPage && stagedPage !== target) await abortStagedRetry('connectionclosed');
+    observe(target);
+    target.once('close', () => { void abortStagedRetry('connectionclosed'); });
+    target.on('requestfailed', (request) => {
+      if (stagedRoute?.request() === request) {
+        stagedRoute = undefined;
+        stagedPage = undefined;
+      }
+    });
+    await target.route(COMMITS, (route) => intercept(target, route));
+  };
   const waitForStagedRetry = async () => {
     if (stagedRetries.length === 0) await new Promise<void>((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error('Automatic A retry was not staged')), CEILING.timeout);
@@ -836,9 +891,12 @@ async function faultFirstCommit(page: Page) {
   };
   await attach(page);
   return {
-    posts, stagedRetries, legacy, attach,
-    get attempts() { return attempts; },
+    posts, forwarded, observed, stagedRetries, legacy, attach,
+    get attempts() { return observed.length; },
+    get forwardedAttempts() { return posts.length; },
     waitForStagedRetry,
+    releaseStagedRetry,
+    abortStagedRetry,
     async loseAck() {
       if (!held) throw new Error('No durably accepted response to lose');
       await held.abort('connectionreset');
