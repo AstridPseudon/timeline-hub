@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T13:17:43Z | dispatcher heartbeat 4s | live 3 (sol 1, luna 2, other 0) | busy30 26 | status age 0m -->
-# app board, 2026-10-24T13:14Z
+<!-- app | 2026-10-24T13:20:56Z | dispatcher heartbeat 1s | live 2 (sol 1, luna 1, other 0) | busy30 21 | status age 1m -->
+# app board, 2026-10-24T13:19Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -22,16 +22,16 @@
 | P2-popup-track | Keep selected popup target track | Luna; independent review | Review1246 PASS79 | merged | Author1240; review1246 | Mounted pointer selection RED to GREEN;79 tests, three types and lint pass. | 450f3080ec |
 | P2-parent-receipt | Use authoritative receipt publication | Luna; protected review | D58 and C0 envelope | merged | Author1240; review1245 | C0 section4 cited. Request key remains idempotency; receipt ID joins history/head/inverse. | 0971c645ba |
 | P2-swap | Qualify popup receipt joins and SWAP | Luna; protected review | Review1257 PASS | merged | Author1246; review1257 | Both case bodies exact; real identity negatives, semantic7, three types and lint PASS. | bbed290db3 |
-| P2-register | Complete real identity control | Luna; protected review | Cumulative1309 PASS | merging | app-P2-register-positive-return-1303 | UUID key and txn receipt positive/negatives PASS3; semantic25, three types/lint/list8 PASS. | dbbaa7b54a |
+| P2-register | Complete real identity control | Luna; protected review | Cumulative1309 PASS | merged | Author1303; review1309 | UUID key and txn receipt positive/negatives PASS3; semantic25, three types/lint/list8 PASS. | 1da6cbd924 |
 | P2-single-clear | Precheck single transition clear | Luna | Current source | merged | app-P2-single-transition-precheck-1248 | SOURCE-READY;93 plus36 plus5 controls pass. No source delta or live gesture credit. | Report only |
 | P2-bulk-clear | Precheck bulk transition clear | Luna | Current source | merged | app-P2-bulk-transition-precheck-1248 | SOURCE-READY;81 plus27 plus3 pass. Shared receipt issue is now HOME; no source delta. | Report only |
-| P2-placement | Qualify automatic placement receipt joins | Luna; protected review | Own1257 PASS; register helper | blocked:app | Author1248; review1257 |118 neighbors PASS. Full composition follows register cumulative1309; no extra source decision. | d5e9deba61 |
+| P2-placement | Qualify automatic placement receipt joins | Luna; protected review | Own1257 PASS; register HOME | merged | Author1248; review1257 | Case delta118 neighbors PASS; normal merge composed shared register helper. Actual joined proof next. | 6ab5938d34 |
 | P2-element | Qualify real serialized Apply sampler | Luna; custody review | Return1309 PASS28+97 | review | app-P2-element-cumulative-review-1315 | Actual callback self-contained; VM serialized-function proof, enums and strict receipt joins. | Branch1309 |
 | P3-D53 | Strict retry accounting and current ledger | Luna; independent review | D53 approved | merged | Author1123; review1126; integrated1143 | 23 controls,three types/lint; observed[A,A],forwarded[A],zeroB. Original reset and tail exact. | 602f8b1f58 |
 | F-caller | Authenticate protected current caller | Sol; HARD custody design | Review1302 missing three guards | doing | app-F-caller-protected-return-sol-1307 | Native/body preservation, complete reply inventory, all15 cross-repo bindings. Existing13 negatives PASS. | Continuec5525 |
-| F-caller-path | Challenge remaining caller architecture | Independent Luna | Repeated custody review failure | doing | app-F-caller-whole-path-1307 | Bounded source-to-decoder-to-service check. Reuse1245; no duplicate environment inventory. | c5525bffa6 |
+| F-caller-path | Challenge remaining caller architecture | Independent Luna | Repeated custody review failure | merged | app-F-caller-whole-path-1307 | Three actual guard gaps confirmed; production mounted path structurally PASS. Guidance with Sol1307. | Report only |
 | F-inputs | Qualify existing working service recipe | Luna; custody review | Actual source and custody PASS | merged | Recipe1304; review1309 | Normal venv origins/current client/artifacts/Remotion/graph PASS; no child, overlay or live daemon claim. | ed81088ed8 |
-| F-service-binding | Adapt existing working service environment | Luna; custody review next | Recipe1304 and review1309 | doing | app-F-working-venv-binding-1313 | Exact child-only environment adaptation; preserve all native/readiness/original stages. No registry edit. | Branch1313 |
+| F-service-binding | Adapt existing working service environment | Luna; custody review | Author1313 bounded controls PASS | review | app-F-working-binding-review-1319 | Actual decoded child-only block adaptation; final sequential caller join follows review. No registry edit. | bea3081a84 |
 | F-App-full | Corrected App checkpoint terminal | App service; Luna producer | Same actual16138 | merged | Terminal producer1227 | FAIL exit1/1665s. Vitest19251PASS;Node257PASS38FAIL26SKIP. Final full GO remains open. | 5a9ff97cf0 |
 | F-core-map | Map App core suites and old failures | Luna | D54/D54a | merged | Return1233 | Historical19570 groups fixed or D52 removed. Home upstream behavior UNKNOWN; no false pre-existing claim. | cca3deb361 |
 | F-offline | Repair verifier schema references | Luna; security review | Review1238 PASS33 | merged | Author1235; review1238 | 33 unchanged security cases pass. Namespace repair retains strict unknown-resource and reference guards. | 73aa558266 |
@@ -41,16 +41,16 @@
 | F-P4-P5-host | Retain historical App host preparation | Luna | D59 venues supersede App host | gated:D59-venues | Draft0834; review0838 | P4 now Agent service; P5 main service. No duplicate App registration or new host task. | Source draft only |
 | F-final | Final P1–P5 and core suites | Lane services; App verdicts | D59 cut | gated:D59-cut | App P1/P2/P3; Runtime coordinates | Current cycles run now; final cut requires all lanes core0/regressions0 plus P2/P3 PASS on those heads. | Cut pending |
 
-Integration:bbed290db3a062fc9282940f580c14cf701cfbf8. U3b and D39 are HOME atd993; later reviewed transcript, diagnostic, verifier, release and quality corrections are integrated. D59 current integrated heads every cycle; no wait for unrelated Agent repairs, D41 backports or old pinned runs.
+Integration:6ab5938d34d75fe9f90f4c21f2518dfd1b6e847d. U3b and D39 are HOME atd993; later reviewed transcript, diagnostic, verifier, release and quality corrections are integrated. D59 current integrated heads every cycle; no wait for unrelated Agent repairs, D41 backports or old pinned runs.
 
-live 4 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T13:14:14Z | dispatcher heartbeat 8s | live 4 (sol 1, luna 3, other 0) | busy30 26 | status age 3m --> Sol1307 has a HARD custody reason; all other live tasks are Luna.
+live 3 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T13:17:43Z | dispatcher heartbeat 4s | live 3 (sol 1, luna 2, other 0) | busy30 26 | status age 0m --> Sol1307 has a HARD custody reason; other active rows use Luna.
 
 core open:9 final App gate cases unqualified,8 P2 and1 P3. D55b accepts all eight P2 as core. Historical16138 Vitest had0 failures; final core full and final P1–P5 remain required.
 
-regressions:36 historical Node failures have source fixes HOME:33 verifier,1 marker fixture,2 release. Two ssh-keygen failures are ENV. Zero known unassigned source fix; current integrated full must confirm closure.
+regressions:34 confirmed verifier/marker source fixes HOME. Two release nodes have restored source with one subprocess environment limit; current integrated full must confirm all36. Two ssh-keygen nodes remain ENV.
 
-Blockers: App — Sol1307 repairs three actual caller custody gaps. Element callback first return1309 and register cumulative1309 complete protected source; then joined proof.
-Blockers: Existing service binding — actual recipe and custody PASS. Luna1313 adapts only historical child-specific preflight to this qualified normal working-venv route; no Agent repair wait.
+Blockers: App — Sol1307 repairs actual caller custody gaps. Apply cumulative1315 completes protected source; joined proof and one final caller/working-binding composition then installation follow.
+Blockers: Existing service binding — recipe1304/custody1309 PASS. Adapterbea308 is in custody1319 review; caller join will authenticate selected current tuple and preserve original stages.
 Blockers: Owner admission — historical403 and automatic access refusal remain stopped. No alternate schema, child, overlay or receipt route.
 Next ready: Immediately review completed element changes, merge exact PASS packets, qualify joined source and bind/install current-head callers. D59 P2/P3 follow dry preflight; no further release handshake.
 
@@ -64,4 +64,4 @@ Disk: about11GB free. Recycled committed finished1036 and1146; kit automatic rec
 
 Evidence: [all eight core](../../design/app-P2-core-classification-1222.md), [App11933 verdict](../../design/app-P2-11933-verdict-1222.md), [actual16138 terminal](../../design/app-F-16138-terminal-1227.md), [current source owners](../../design/peer-app-to-runtime-orchestrator-app2-20261024T1240-full-terminal-and-source-owners.md), [existing inputs](../../design/peer-app-to-agent-runtime-orchestrator-20261024T1244-existing-final-service-inputs.md), [caller review FAIL](../../design/app-F-final-caller-custody-review-1238.md).
 
-Inbox consumed1519181 bytes through Runtime1253 main bench handback. Proof open rows were adopted; its only in-flight whole path1215 is complete and reused. No duplicate audit or original requested. Later: final integrated App full and P1–P5, then Runtime final build/ZIP. D51 delivery refresh stays separate; D47 memo and D46 remote custody remain deferred.
+Inbox consumed1522740 bytes through Agent1301 counts and existing-input owner handback. Proof open rows were adopted; its only in-flight whole path1215 is complete and reused. No duplicate audit or original requested. Later: final integrated App full and P1–P5, then Runtime final build/ZIP. D51 delivery refresh stays separate; D47 memo and D46 remote custody remain deferred.
