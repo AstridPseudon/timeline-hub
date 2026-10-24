@@ -494,10 +494,17 @@ export function analyzeVisualSeams(
   const guardFrames = Math.max(0, Math.floor(requestedGuardFrames ?? 2));
   const spans = buildSpans(config);
   const owners = visualSeamOwners(config, true);
-  const ownerClips = new Map(config.clips.map(clip => [clip.id, clip]));
   const ownerTracks = trackMap(config);
   const opaqueSpans = owners.filter(o => o.disclosure.opaque.length > 0)
-    .filter(o => { const c = ownerClips.get(o.clipId); return c !== undefined && coversFrame(c, ownerTracks.get(c.track), config); })
+    // Clip-local effects inherit their host clip's coverage. Occurrence-wide
+    // effects reuse a child clipId but have independent track/geometry, so
+    // classify those disclosed owners directly.
+    .filter(o => {
+      const host = o.path.includes('clip') ? config.clips.find(clip => clip.id === o.clipId) : undefined;
+      return host
+        ? coversFrame(host, ownerTracks.get(host.track), config)
+        : coversFrame(o.clip as ResolvedTimelineClip, ownerTracks.get(String(o.clip.track ?? '')), config);
+    })
     .sort((a, b) => a.startFrame - b.startFrame || a.clipId.localeCompare(b.clipId));
   const cues = buildCues(spans, owners).sort((left, right) => left.frame - right.frame);
   const opaqueElements = opaqueSpans.map(opaqueElement);
