@@ -18,6 +18,7 @@ type Snapshot = {
 	_catalogModel: string | null;
 	_hiddenProviderIds: string[];
 	_needsSignInProviderIds: string[];
+	_oauthProviderIds: string[];
 };
 
 async function makeSnapshot(ctx: any, settings: any): Promise<Snapshot> {
@@ -74,6 +75,7 @@ async function makeSnapshot(ctx: any, settings: any): Promise<Snapshot> {
 		providers,
 		_catalogModel: allModels[0] ? `${allModels[0].provider}/${allModels[0].id}` : null,
 		_hiddenProviderIds: [...hiddenProviderIds].sort((a, b) => a.localeCompare(b)),
+		_oauthProviderIds: oauthProviders.map((provider: any) => provider.id),
 		_needsSignInProviderIds: [...providerIds].filter(id =>
 			allModels.some((model: any) => model.provider === id) &&
 			!allModels.some((model: any) => model.provider === id && registry.hasConfiguredAuth(model)),

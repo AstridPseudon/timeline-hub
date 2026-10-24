@@ -324,6 +324,8 @@ def _merge_login_providers(omp_bin: str, snapshot: dict[str, Any]) -> None:
     """Ask OMP's host for login entries, including extension-only providers."""
     catalog_model = snapshot.pop("_catalogModel", None)
     hidden = set(snapshot.pop("_hiddenProviderIds", []))
+    oauth = set(snapshot.pop("_oauthProviderIds", []))
+    local = {"ollama", "lm-studio", "llama-cpp", "vllm"}
     command = [omp_bin, "--mode", "rpc", "--no-session", "--no-tools", "--no-lsp", "--no-pty",
                "--no-skills", "--no-rules"]
     if catalog_model:
@@ -355,6 +357,7 @@ def _merge_login_providers(omp_bin: str, snapshot: dict[str, Any]) -> None:
                 "reason": "no_available_models" if login["authenticated"] else "needs_sign_in",
             })
             provider.update(name=login["name"], signedIn=provider.get("signedIn", False) or login["authenticated"])
+            provider["login"] = "oauth" if login["id"] in oauth else "local" if login["id"] in local else "api-key"
             provider["usable"] = bool(provider["models"])
             if provider["usable"]:
                 provider.pop("reason", None)
@@ -363,6 +366,14 @@ def _merge_login_providers(omp_bin: str, snapshot: dict[str, Any]) -> None:
             else:
                 provider.setdefault("reason", "no_available_models")
         snapshot["providers"] = sorted(providers.values(), key=lambda provider: provider["id"])
+        for provider in snapshot["providers"]:
+            if provider["id"] in oauth:
+                provider["login"] = "oauth"
+            elif provider["id"] in local:
+                provider["login"] = "local"
+            if provider["id"] == "openrouter":
+                provider["recommended"] = True
+            provider["reason"] = (provider.get("reason") or "no_available_models") if not provider["usable"] else None
         return
     raise ValueError("OMP did not return its sign-in providers")
 

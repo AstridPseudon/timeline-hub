@@ -18,6 +18,7 @@ const catalog = {
   providers: [
     {
       id: 'openai', name: 'OpenAI', signedIn: true,
+      usable: true, reason: null, login: 'oauth',
       models: [{ id: 'gpt-4.1', name: 'GPT 4.1', selector: 'openai/gpt-4.1' }],
       usage: [{ fetchedAt: 123, limits: [{
         label: 'Monthly', amount: { unit: 'tokens', used: 20, limit: 100, remaining: 80, usedFraction: 0.2, remainingFraction: 0.8 },
@@ -26,8 +27,13 @@ const catalog = {
     },
     {
       id: 'local', name: 'Local models', signedIn: false,
+      usable: true, reason: null, login: 'local',
       models: [{ id: 'llama', name: 'Llama', selector: 'local/llama' }],
     },
+    { id: 'openrouter', name: 'OpenRouter', signedIn: false, usable: false,
+      reason: 'needs_sign_in', login: 'api-key', recommended: true, models: [] },
+    { id: 'unknown', name: 'Unknown', signedIn: false, usable: false,
+      reason: 'no_available_models', models: [] },
   ],
 };
 
@@ -71,9 +77,15 @@ test('agent model catalog maps the CLI response to the safe ACP projection and p
       providers: [
         {
           id: 'openai', name: 'OpenAI', signedIn: true, models: [{ id: 'gpt-4.1', name: 'GPT 4.1' }],
+          usable: true, reason: null, login: 'oauth',
           usage: { limits: [{ unit: 'tokens', used: 20, limit: 100, remaining: 80, usedFraction: 0.2, remainingFraction: 0.8, durationMs: 2_592_000_000, resetsAt: 456, status: 'warning' }] },
         },
-        { id: 'local', name: 'Local models', signedIn: false, models: [{ id: 'llama', name: 'Llama' }] },
+        { id: 'local', name: 'Local models', signedIn: false, usable: true, reason: null,
+          login: 'local', models: [{ id: 'llama', name: 'Llama' }] },
+        { id: 'openrouter', name: 'OpenRouter', signedIn: false, usable: false,
+          reason: 'needs_sign_in', login: 'api-key', recommended: true, models: [] },
+        { id: 'unknown', name: 'Unknown', signedIn: false, usable: false,
+          reason: 'no_available_models', models: [] },
       ],
       currentModel: 'openai/retired-model',
     });
