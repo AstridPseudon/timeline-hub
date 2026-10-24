@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T19:29:36Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 0m -->
-# agent board, 2026-10-24T19:29:00Z
+<!-- agent | 2026-10-24T19:32:21Z | dispatcher heartbeat 8s | live 2 (sol 0, luna 2, other 0) | busy30 5 | status age 0m -->
+# agent board, 2026-10-24T19:32:24Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -129,6 +129,7 @@
 | D80 popup owner | Adopt qualified shared-owner producer | Runtime Sol / Agent Luna | Normal home and source exact | merged | agt-U4a-D80-owner-adopt-1908 PASS | Only lock provenance;15 mappings and protected ASTs exact. Author22PASS; home tree equals tested branch. [Proof](../../design/handoff-agt-U4a-D80-owner-adopt-1908-report.md) | Homee39de26fce / Runtime87bc |
 | U4a finite-walk provenance | Adopt qualified cost successor normally | Luna | Normal home merge complete | merged | agt-U4a-finite-walk-adopt-1926 PASS | Actual3b2 adopts reviewed e89; only lock provenance changed,15 mappings/schema exact. All normal tool checks PASS. | Home3b2db4bdf9 |
 | R2 PARAM current carrier | Prepare exact reviewed PARAM source | Luna | Four-original proof1929 | review | agt-R2-param-current-carrier-1925 | Exact two donor blobs;99 controls PASS49.74s, static/preservation PASS. Prepared only; no original or merge credit. | Branch retained |
+| R2 e89 whole path | Compare failing and passing history paths | Luna | Meaningful e89 original outcomes | doing | agt-R2-e89-wholepath-1932 queued | Readonly complete client-to-server source and retained passing comparisons. No new bodies or source edits; provisional failures await terminal XML. | Evidence pending |
 Integration: Agent3b2db4bdf9 normally adopts qualified Runtime e89eb/f51e cost successor; all15 canonical bytes/schema unchanged. PARAM exact donor2 prepared1925 and meaningful four-original proof1929 queued; no source merge yet.
 core open: 5 = P4 ten-note1, held PARAM originals2, restart timeouts2. Exact home1844 five-original PASS closes four no-op variants and selected-schema inverse. D77 installed render remains cut-blocking separately.
 regressions: D71 leak and CLI terminal predicates qualified. D77a installed rendering is a presumed regression and remains cut blocking with Runtime Sol 1758. No scope waiver inferred from unknown upstream runtime outcome.
@@ -136,10 +137,10 @@ D69/D72: exact 47 membership retained. Audit 178: 167 cleared, 9 cited, 2 restor
 Gates: P1/P2/P3 App. P4 16328 FAIL 1 PASS 2; independent verdict 1744 complete. Exact four repo tuple and unchanged 45 second budget retained. No original repeated before meaningful reviewed source.
 D60 baseline: upstream 924 terminal 12396 PASS, 91 FAIL, 14 errors, 16 skips, 566 subtests. Exact 276 split 199 NEW-OURS and 77 counterparts; external mutable Runtime scope disclosed. D67 is unchanged env gap; D23 timing deferred.
 Admission: D56 ends Farm/schema venue work. All prior access, safety and stale pin cleanup refusals remain stopped. No child, source substitute, KEEP release or installed-record relabel.
-Disk: 9.63 GB free; cap6. No ended clean non-KEEP Agent worktree remains. Sweep3 and compact are running through guarded tools. Refused KEEP and pin trees untouched.
+Disk: 9.53 GB free; cap6. No ended clean non-KEEP Agent worktree remains. Compact packed0 and compressed21 old logs. Sweep3 running; refused KEEP/pin trees untouched.
 Blockers: Agent — held PARAM candidate awaits meaningful Runtime history-cost repair; original two still FAIL. Final core and genuine installed-render bodies remain gated by D59.
 Blockers: Agent — adoption1926 precedes four-original R2 qualification and P4 D73. Runtime security1910 and normal e89 are released; no remaining Runtime source publication blocker.
 Next ready: four-original proof1929 on actual3b2/e89 plus exact PARAM donor2, then D73 P4 three. One timing-proof slot. Final core and installed render stay cut-gated.
-live 0 / cap 6; queued 1; ready-undispatched 0. Normal adoption home3b2 complete; prepared PARAM controls99 PASS. Luna four-original heavy1929 queued. P4 waits only this timing slot.
+live 1 / cap 6; queued 1; ready-undispatched 0. R2 heavy1929 runs once, provisional2 failures; independent readonly wholepath1932 queued at once. P4 waits timing slot only.
 Inbox consumed through Runtime1901 D80 return; actual Runtime e89 and hub Runtime19:11/App19:13 boards checked19:23. Peer1923 requests existing final review bytes. No source approval inferred from merge alone.
 D79 later: Luna1831 bounded inventory complete, no qualifying full accepted record/context survived. Runtime corpus input requested in peer1838. Non-gating, no test or fixture fabricated and no body run.
