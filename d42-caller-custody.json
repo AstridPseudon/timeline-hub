@@ -1,0 +1,30 @@
+{
+  "status": "PREPARED_ONLY",
+  "app_source": "c0fe88994405fd517b58473c14678a0d1b73056d",
+  "app_tree": "8e3ef15ee5f7c08381d8dc9efb38b5c98845466d",
+  "app_parent": "bad9a84fea2b1dddfb4f467e4108f28d3eadf2ff 19ac2b0ddcef00e1b2627aa1dd1e19c4bafb4b2f",
+  "source_anchors": {
+    "element-join-e492": "e492d963ba51e037d25ad667b857c1fe592ef384",
+    "element-handoff-f90": "f90e708b379145ac456924742cc51c187ed6e0c6",
+    "parent-current-19c": "19c4839d81f83aa6b6ef2a9f2d895d10140a27a6",
+    "popup-binding-bad9": "bad9a84fea2b1dddfb4f467e4108f28d3eadf2ff",
+    "single-child-c0fe": "c0fe88994405fd517b58473c14678a0d1b73056d"
+  },
+  "changed_file_fingerprint_count": 22,
+  "changed_file_fingerprint_sha256": "c43da1437413556bc9e4c3ab4152c1ff56a7563cbbe72d31f932ab63bb952188",
+  "protected_files": {
+    "tests/e2e/local/three-products.spec.ts": "37caf28577d42fbe98afd2320dffa3c72e6e74b1",
+    "tests/e2e/local/three-products.p2-tour.spec.ts": "45a8088fafd72a462409e444c0294e8a35682a0f",
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "836d144bc0e3bbd8f1677d23e96385bcd8127daa",
+    "tests/e2e/local/three-products.p2-popup.spec.ts": "8072fcee4da01fc5dc39852c645af959251ae153"
+  },
+  "body_guard_sha256": {
+    "p1-chain": "2096b2388a23a10d3890f96d7b2bfda988409dc479d8ba57a404947262da2876",
+    "gate5": "dcdcca43045ee8db02b195a836897857df6c2fad926dd1c8add28d9abaa6f67e",
+    "p2-tour": "6162efe20a403191c9833025599c15ec7d665cf1793ef1969adc28da9b428248",
+    "p2-elements": "e6b167d6db27d50553b20be7c040acd2b14138cac4559388656f38aa2c309e30",
+    "popup-add": "8210dccc8e5d63bab811291de80a91970f7aec2d0b6194e511c20d018474abc1",
+    "popup-swap": "e66926998e182b65d877182eda1ab48357c4823abc4f98bd1ada31b92f08c6b0"
+  },
+  "popup_delta": "adf39c533adec77e55e11a61ca79a821a9752c59: exactly two reviewed ADD/SWAP selectors"
+}
