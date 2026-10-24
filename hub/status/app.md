@@ -1,10 +1,11 @@
-<!-- app | 2026-10-24T13:30:39Z | dispatcher heartbeat 6s | live 4 (sol 0, luna 4, other 0) | busy30 22 | status age 6m -->
-# app board, 2026-10-24T13:24Z
+<!-- app | 2026-10-24T13:33:59Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 18 | status age 2m -->
+# app board, 2026-10-24T13:31Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Original upstream baseline | Luna | Upstream main | merged | Joined review r3 | Original reviewed baseline integrated. | 22bfe5349 |
 | U3b | Merge current upstream editor | Sol; Luna review | D56 merge now | merged | Join1146; review1157 | Normal home equals reviewed5a9ff tree. Upstream snapshot2a288 retained under D51. | d99396bca7 |
+| U3-final | Merge completed owner upstream once | Luna; core review next | D60 lead fetch09c844 verified | doing | app-U3-final-upstream-1330 | Sanctioned merge-forward13:30 clean,18 staged paths. Actual MERGE_HEAD09c844; author targeted checks running. | Base971a; true merge |
 | U4p | Adopt final D39 client and schema | Sol; Luna review | U3b and producerbecfe | merged | Tool1005; caller1022; review1157 | Normal tools;79 producer and14 consumer artifacts exact. | d99396bca7 |
 | A2 | Production save funnel | Sol; Luna review | C0 and U3 | merged | Authors; integrated1036 | Dependent outbox saves and authoritative reply handling integrated. Final gate remains open. | Current home |
 | A3 | Popup placement element asset saves | Luna; Sol after failures | A2 | merged | Source reviews; joined1036 | Mounted save routes integrated. Popup target source repair and final gesture proof remain. | Current home |
@@ -14,8 +15,8 @@
 | A4-transcript | Remove exclusive dormant capture pair | Luna; review | Census1205 and review1217 | merged | Author1210; integrated1232 | Exact two-file deletion.50 live neighbors and three types PASS; current worker ledger copied1233. | cca3deb361 |
 | P1 | Original mixed chain | App service; Proof | Historical tuple | merged | Actual18792; reviews0036/0040 | Historical GO. Final integrated tuple rerun remains required. | Appf8;Agent787;Runtime2a9 |
 | IMAGE | Genuine image acceptance and undo | Agent; independent Luna | Reviewed forwarding repair | merged | 0554; review0636 | Direct RuntimeService witness passed. No HTTP or broader final gate credit. | App1c5cc;Agent2007 |
-| P2 | Eight original gesture tour | App service; independent verdict | D59 current heads and source/caller guards | blocked:app | Case reviews; caller1302 | D55b all eight CORE.11933 historical NO-GO0/3/5. Run current heads without waiting Agent repairs. | Current source |
-| P3 | Original Gate5 journey | App service; independent verdict | D59 current heads and source/caller guards | blocked:app | Caller1302; input1257 | D53 source and ledger pass. Current heads each cycle; final cut is later. | Current source |
+| P2 | Eight original gesture tour | App service; independent verdict | D60 refreshed head and caller | blocked:app | U3-final1330; caller1327/1330 | All eight CORE. Run refreshed current heads after actual dry preflight; no unrelated Agent repair wait. | Refresh pending |
+| P3 | Original Gate5 journey | App service; independent verdict | D60 refreshed head and caller | blocked:app | U3-final1330; caller1327/1330 | D53 source and ledger pass. Current heads each cycle; final cut is later. No old-tuple retry. | Refresh pending |
 | P2-core | Classify all eight gestures | Luna; orchestrator decision | D55b accepted12:40 | merged | Worker1222; orchestrator D55b | All eight CORE. Published before deadline; no behavior cut. | Report only |
 | P2-11933 | Independent historical signal verdict | Independent Luna | Same retained ID | merged | App1222; prior Proof1213 | NO-GO0/3/5. Native/history/readiness passed; H36 safe bytes exact. Actual server outcome unknown. | Historicald6ed |
 | P2-diagnostic | Retain terminal lifecycle through teardown | Sol; custody review | Review1235 PASS | merged | Author1214; port1235; review1235 | 26 diagnostics,97 mounted tests,types/lint pass. Late terminal events and final attachment retained. | fbf5bfeafd |
@@ -27,12 +28,12 @@
 | P2-bulk-clear | Precheck bulk transition clear | Luna | Current source | merged | app-P2-bulk-transition-precheck-1248 | SOURCE-READY;81 plus27 plus3 pass. Shared receipt issue is now HOME; no source delta. | Report only |
 | P2-placement | Qualify automatic placement receipt joins | Luna; protected review | Own1257 PASS; register HOME | merged | Author1248; review1257 | Case delta118 neighbors PASS; normal merge composed shared register helper. Actual joined proof next. | 6ab5938d34 |
 | P2-element | Qualify real serialized Apply sampler | Luna; custody review | Cumulative1315 PASS | merged | Author1309; review1315 |28 diagnostics,97 mounted, three types/lint PASS. Real serialized callback and receipt case retain strict guards. | 971a29e198 |
-| P2-P3-joined | Qualify current integrated pure source | Luna; read-only | All source packets HOME | doing | app-P2-P3-current-pure-proof-1322 | Deduplicated mounted/oracle/diagnostic/Gate5 checks, current source hashes and qualified D58 ledger rows. | 971a29e198 |
+| P2-P3-joined | Qualify pre-refresh integrated checkpoint | Luna; read-only | D58 packets HOME; D60 next | doing | app-P2-P3-current-pure-proof-1322 |704 Vitest PASS; oracle/types/hash/ledger finishing. D60 rerun binds refreshed source after upstream merge. | 971a29e198 |
 | P3-D53 | Strict retry accounting and current ledger | Luna; independent review | D53 approved | merged | Author1123; review1126; integrated1143 | 23 controls,three types/lint; observed[A,A],forwarded[A],zeroB. Original reset and tail exact. | 602f8b1f58 |
-| F-caller | Authenticate protected current caller | Sol; HARD custody design | Review1302 missing three guards | doing | app-F-caller-protected-return-sol-1307 | Native/body preservation, complete reply inventory, all15 cross-repo bindings. Existing13 negatives PASS. | Continuec5525 |
+| F-caller | Authenticate protected current caller | Sol; independent Luna review | Author1307 PASS20 attacks | review | app-F-protected-caller-review-1327 | Exact protected bytes,51 request/133 reply fields, all14 App/15 Agent mappings enforced. No live install. | 434feb92d3 |
 | F-caller-path | Challenge remaining caller architecture | Independent Luna | Repeated custody review failure | merged | app-F-caller-whole-path-1307 | Three actual guard gaps confirmed; production mounted path structurally PASS. Guidance with Sol1307. | Report only |
 | F-inputs | Qualify existing working service recipe | Luna; custody review | Actual source and custody PASS | merged | Recipe1304; review1309 | Normal venv origins/current client/artifacts/Remotion/graph PASS; no child, overlay or live daemon claim. | ed81088ed8 |
-| F-service-binding | Repair exact environment binding adapter | Luna; custody review next | Review1319 FAIL module gaps | doing | app-F-working-binding-return-1323 | Enforce unique block, approved protected bytes, exact refs/parents/client, and real Runtime interpreter use. | Continuebea308 |
+| F-service-binding | Qualify exact environment adapter | Luna; custody review | Return1323 normal/-O PASS | review | app-F-working-binding-cumulative-1330 | Exact template/boundary/protected/ref/parent/client checks and consumed Runtime interpreter; caller join pending. | d387ab1ec6 |
 | F-App-full | Corrected App checkpoint terminal | App service; Luna producer | Same actual16138 | merged | Terminal producer1227 | FAIL exit1/1665s. Vitest19251PASS;Node257PASS38FAIL26SKIP. Final full GO remains open. | 5a9ff97cf0 |
 | F-core-map | Map App core suites and old failures | Luna | D54/D54a | merged | Return1233 | Historical19570 groups fixed or D52 removed. Home upstream behavior UNKNOWN; no false pre-existing claim. | cca3deb361 |
 | F-offline | Repair verifier schema references | Luna; security review | Review1238 PASS33 | merged | Author1235; review1238 | 33 unchanged security cases pass. Namespace repair retains strict unknown-resource and reference guards. | 73aa558266 |
@@ -44,16 +45,16 @@
 
 Integration:971a29e198c3e384795731f79e39c096abd58845. U3b and D39 are HOME atd993; later reviewed transcript, diagnostic, verifier, release and quality corrections are integrated. D59 current integrated heads every cycle; no wait for unrelated Agent repairs, D41 backports or old pinned runs.
 
-live 3 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T13:24:07Z | dispatcher heartbeat 7s | live 3 (sol 1, luna 2, other 0) | busy30 22 | status age 4m --> Sol1307 has a HARD custody reason; remaining independent ready rows use Luna.
+live 4 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T13:30:39Z | dispatcher heartbeat 6s | live 4 (sol 0, luna 4, other 0) | busy30 22 | status age 6m --> All newly ready rows dispatched; current review and U3 author workers use Luna.
 
 core open:9 final App gate cases unqualified,8 P2 and1 P3. D55b accepts all eight P2 as core. Historical16138 Vitest had0 failures; final core full and final P1–P5 remain required.
 
 regressions:34 confirmed verifier/marker source fixes HOME. Two release nodes have restored source with one subprocess environment limit; current integrated full must confirm all36. Two ssh-keygen nodes remain ENV.
 
-Blockers: App — all reviewed gesture source is HOME. Pure joined proof1322 and Sol1307 caller guards finish in parallel; environment adapter first return1323 then one actual join/review/install.
-Blockers: Existing service binding — recipe/custody PASS; adapter review1319 found exact boundary/byte/ref/mapping/interpreter gaps. Sole Luna1323 repairs them; no new source admission or Agent repair wait.
+Blockers: App — D60 U3-final1330 true upstream merge applied cleanly, author checks active. Then core review/normal home merge and refresh source/caller binding. No product source fix remains unowned.
+Blockers: Existing service binding — actual normal recipe/custody PASS. Protected caller434feb review1327 and environment adapterd387 review1330 are parallel; one sequential join follows both PASS on refreshed source.
 Blockers: Owner admission — historical403 and automatic access refusal remain stopped. No alternate schema, child, overlay or receipt route.
-Next ready: Immediately review completed element changes, merge exact PASS packets, qualify joined source and bind/install current-head callers. D59 P2/P3 follow dry preflight; no further release handshake.
+Next ready: Consume pure1322 and caller1327/adapter1330. Review U3-final after author checks, normal merge, refresh authentic tuple/source proof, join exact caller modules, dry first, independent mechanical review and worker-only install, then P2/P3.
 
 Historical signals: P2 actual11933 exit1/469s,0PASS3FAIL5NOTRUN; native/history/readiness passed. Actual element request was pending with no observed response or terminal outcome. P3 actual3896 exit1/268s reached predecessor/reset,A acceptance,ACK loss and exact A retry; B/restart/undo tail not reached. P226414 was stale-source preflight-only,all originalsNOTRUN. Earlier source-admission20674/10144 and D45/D41 failures retain their original limits. No signal is relabeled final GO.
 
@@ -61,8 +62,8 @@ Delivery: D52 proven dormant parent,track,transcript and executor scope is remov
 
 Safety: Prior denied cleanup,compact,graph,publication and source-access routes remain stopped. Managers write only boards,briefs and qualified shared reports. Workers own all product,test,generated,pin and Git changes. No upstream push.
 
-Disk: about11GB free. Recycled committed finished1036 and1146; kit automatic recycling remains active. Supported sweep3 is running; prior refused compact and dirty historical cleanup paths are untouched. Heavy stop line8GB.
+Disk: about12GB free. Recycled committed finished1036 and1146; kit automatic recycling remains active. Supported sweep3 is running; prior refused compact and dirty historical cleanup paths are untouched. Heavy stop line8GB.
 
 Evidence: [all eight core](../../design/app-P2-core-classification-1222.md), [App11933 verdict](../../design/app-P2-11933-verdict-1222.md), [actual16138 terminal](../../design/app-F-16138-terminal-1227.md), [current source owners](../../design/peer-app-to-runtime-orchestrator-app2-20261024T1240-full-terminal-and-source-owners.md), [existing inputs](../../design/peer-app-to-agent-runtime-orchestrator-20261024T1244-existing-final-service-inputs.md), [caller review FAIL](../../design/app-F-final-caller-custody-review-1238.md).
 
-Inbox consumed1522740 bytes through Agent1305 existing-service input packet. Proof open rows were adopted; its only in-flight whole path1215 is complete and reused. No duplicate audit or original requested. Later: final integrated App full and P1–P5, then Runtime final build/ZIP. D51 delivery refresh stays separate; D47 memo and D46 remote custody remain deferred.
+Inbox consumed1524237 bytes through D60 lead13:28 and Agent1305 continuation. Proof open rows were adopted; its only in-flight whole path1215 is complete and reused. No duplicate audit or original requested. Later: final integrated App full and P1–P5, then Runtime final build/ZIP. D60 owner pushes complete: lead fetched exact09c844 and one true U3-final merge is active. P2/P3 use refreshed head. D47 memo and D46 remote custody remain deferred.
