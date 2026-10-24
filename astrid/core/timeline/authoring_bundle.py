@@ -1852,7 +1852,7 @@ def publish_authoring_candidate(
 
     summary = authoring_change_summary(candidate, media_imports=media_imports)
     publication = compilation.publication
-    request = authoring_commit_request(candidate, writer)
+    request = authoring_commit_request(candidate, writer, compilation=compilation)
     envelope = writer.commit_timeline(
         publication["project_id"],
         publication["timeline_id"],
@@ -1865,6 +1865,8 @@ def publish_authoring_candidate(
     document = result['canonical_document']
     result.update(new_head=result['accepted_revision_id'], old_head=result['previous_revision_id'],
                   dependency_manifest=document['dependency_manifest'])
+    if isinstance(envelope, Mapping) and 'data' in envelope:
+        result['data'] = _copy(result)
     if isinstance(envelope, Mapping) and 'receipt' in envelope:
         result['receipt'] = _copy(envelope['receipt'])
     return {
