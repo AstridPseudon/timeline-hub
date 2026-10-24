@@ -134,6 +134,94 @@ function savedDocument(record: OutboxRecord): CanonicalDocument {
 }
 
 describe('shot popup A3 save ingress', () => {
+  it('captures dependent popup edits into the persisted owner before any flush or legacy save', async () => {
+    const h = harness();
+    const provider = h.mount();
+    const legacy = vi.spyOn(provider, 'saveTimeline');
+    const first = h.add();
+    const dependent = { ...first, clips: first.clips.map(clip => clip.id === 'popup-added-a3'
+      ? { ...clip, label: 'Captured dependent' } : clip) };
+    try {
+      const captured = provider.localDocumentSave!.capture({ head: { projectId: scope.projectId, timelineId: scope.timelineId,
+        headRevisionId: h.initial.head.revisionId, headPublicationId: h.initial.head.publicationId }, config: first, registry: (await provider.loadAssetRegistry()) });
+      first.clips.at(-1)!.id = 'mutated-after-capture';
+      await captured;
+      await provider.localDocumentSave!.capture({ head: { projectId: scope.projectId, timelineId: scope.timelineId,
+        headRevisionId: h.initial.head.revisionId, headPublicationId: h.initial.head.publicationId }, config: dependent, registry: (await provider.loadAssetRegistry()) });
+      const [record] = await h.records();
+      expect(record.intents).toHaveLength(2);
+      expect(record.intents[0].basis).toEqual({ head: h.initial.head });
+      expect(record.intents[1].basis).toEqual({ after: record.intents[0].id });
+      const document = savedDocument(record);
+      expect(document.parent_revision).toEqual(h.before.parent_revision);
+      expect(document.shot_revisions).toEqual(h.before.shot_revisions);
+      expect(document.dependency_manifest).toEqual(h.before.dependency_manifest);
+      expect(JSON.stringify(record)).toContain('popup-added-a3');
+      expect(JSON.stringify(record)).not.toContain('mutated-after-capture');
+      expect(h.send).not.toHaveBeenCalled();
+      h.send.mockImplementation(async (request, key) => h.reply(request, key, savedDocument((await h.records())[0])));
+      await provider.localDocumentSave!.flush();
+      expect(h.send).toHaveBeenCalledTimes(2);
+      expect(h.send.mock.calls[1][0]).toMatchObject({ base_revision_id: 'rev-a3-accepted', base_publication_id: 'pub-a3-accepted' });
+      expect(h.send.mock.calls[1][0].commands[0].args.changes).toEqual([{ op: 'set', ref: internalRef,
+        path: ['clips', 'id:popup-added-a3', 'label'], before: { state: 'absent' }, value: 'Captured dependent' }]);
+      expect(legacy).not.toHaveBeenCalled();
+    } finally { await provider.dispose(); }
+  });
+
+  it.each(['missing', 'project', 'timeline', 'revision', 'publication'] as const)(
+    'refuses a %s source head before popup outbox admission', async (kind) => {
+      const h = harness();
+      const provider = h.mount();
+      const head = { projectId: scope.projectId, timelineId: scope.timelineId,
+        headRevisionId: h.initial.head.revisionId, headPublicationId: h.initial.head.publicationId };
+      if (kind === 'project') head.projectId = 'another-project';
+      if (kind === 'timeline') head.timelineId = 'another-timeline';
+      if (kind === 'revision') head.headRevisionId = 'another-revision';
+      if (kind === 'publication') head.headPublicationId = 'another-publication';
+      try {
+        await expect(provider.localDocumentSave!.capture({ config: h.add(),
+          registry: await provider.loadAssetRegistry(), head: kind === 'missing' ? undefined : head }))
+          .rejects.toThrow('Popup canonical head changed during capture');
+        expect((await h.records()).flatMap(record => record.intents)).toEqual([]);
+        expect(h.send).not.toHaveBeenCalled();
+        expect(h.oldPublish).not.toHaveBeenCalled();
+      } finally { await provider.dispose(); }
+    },
+  );
+
+  it.each(['scope', 'projection'] as const)('refuses an unbound %s despite a matching parent head', async (kind) => {
+    const h = harness();
+    if (kind === 'scope') {
+      (h.before.parent_revision.payload.occurrences as Array<Record<string, unknown>>)[0].occurrence_id = 'another-occurrence';
+    } else {
+      h.before.internal_timeline_revisions[0].content_digest = 'sha256:another-physical-image';
+      h.before.dependency_manifest.internal_timelines[0].content_digest = 'sha256:another-physical-image';
+    }
+    const provider = h.mount();
+    try {
+      await expect(provider.localDocumentSave!.capture({ config: h.add(), registry: await provider.loadAssetRegistry(),
+        head: { projectId: scope.projectId, timelineId: scope.timelineId,
+          headRevisionId: h.initial.head.revisionId, headPublicationId: h.initial.head.publicationId } }))
+        .rejects.toThrow(kind === 'scope' ? 'unique physical occurrence binding' : 'verified physical closure pin');
+      expect((await h.records()).flatMap(record => record.intents)).toEqual([]);
+      expect(h.send).not.toHaveBeenCalled();
+      expect(h.oldPublish).not.toHaveBeenCalled();
+    } finally { await provider.dispose(); }
+  });
+
+  it('retains a popup edit with a concrete basis need when the verified publication pin is missing', async () => {
+    const h = harness();
+    h.initial.head.publicationId = '';
+    const provider = h.mount();
+    try {
+      await expect(provider.localDocumentSave!.capture({ config: h.add(), registry: await provider.loadAssetRegistry() }))
+        .rejects.toThrow('needs the original verified parent, shot and internal closure with revision and publication pins');
+      expect(h.send).not.toHaveBeenCalled();
+      expect(await h.records()).toEqual([]);
+    } finally { await provider.dispose().catch(() => {}); }
+  });
+
   it.each(['add', 'swap'] as const)('preserves the real Runtime provider receiver for shared media %s', async (kind) => {
     const before = canonicalDocument();
     const occurrences = before.parent_revision.payload.occurrences as Array<Record<string, unknown>>;

@@ -1,5 +1,6 @@
 import { getTimelineDurationInFrames } from '@/tools/video-editor/lib/config-utils.ts';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { TimelinePersistenceHandoffContext } from '@/tools/video-editor/hooks/timelineLocalSaveHandoff.ts';
 import type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import { AlertCircle, Film } from 'lucide-react';
@@ -587,6 +588,8 @@ export function ShotTimelinePreview({
   dataProvider?.setPublishCallback(handleCanonicalCompositionPublished);
   const canEdit = shotCompositionAdapter?.publish !== undefined;
   const shotTimelineId = shotTimelineSessionId(currentComposition.parentDocumentId, occurrenceId, editorSessionToken);
+  const persistenceBinding = useMemo(() => dataProvider?.bindLocalDocumentSave(shotTimelineId),
+    [dataProvider, shotTimelineId]);
   if (freshHeadStatus === 'loading') {
     return <section data-shot-timeline-preview="true" data-shot-timeline-status="loading" aria-label="Shot timeline">Loading current shot timeline…</section>;
   }
@@ -637,27 +640,29 @@ export function ShotTimelinePreview({
         </div>
       </div>
 
-      <VideoEditorProvider
-        dataProvider={dataProvider!}
-        projectId={currentComposition.projectId}
-        projectSlug={currentComposition.projectId}
-        timelineId={shotTimelineId}
-        timelineName="Shot timeline"
-        userId={null}
-        timelineEditability={timelineEditability}
-        extensionHostEnabled={false}
-        onSaveStatusChange={handleSaveStatusChange}
-        initialTimelineData={initialTimelineData}
-      >
-        <ShotTimelineEditorSurface
-          config={projection.config}
-          hardDurationSeconds={hardDurationSeconds}
-          occurrenceId={occurrenceId}
-          parentDocumentId={currentComposition.parentDocumentId}
-          editorHeadState={editorHeadStateRef}
-          onActiveConfigChange={handleActiveConfigChange}
-        />
-      </VideoEditorProvider>
+      <TimelinePersistenceHandoffContext.Provider value={persistenceBinding}>
+        <VideoEditorProvider
+          dataProvider={dataProvider!}
+          projectId={currentComposition.projectId}
+          projectSlug={currentComposition.projectId}
+          timelineId={shotTimelineId}
+          timelineName="Shot timeline"
+          userId={null}
+          timelineEditability={timelineEditability}
+          extensionHostEnabled={false}
+          onSaveStatusChange={handleSaveStatusChange}
+          initialTimelineData={initialTimelineData}
+        >
+          <ShotTimelineEditorSurface
+            config={projection.config}
+            hardDurationSeconds={hardDurationSeconds}
+            occurrenceId={occurrenceId}
+            parentDocumentId={currentComposition.parentDocumentId}
+            editorHeadState={editorHeadStateRef}
+            onActiveConfigChange={handleActiveConfigChange}
+          />
+        </VideoEditorProvider>
+      </TimelinePersistenceHandoffContext.Provider>
     </section>
   );
 }
