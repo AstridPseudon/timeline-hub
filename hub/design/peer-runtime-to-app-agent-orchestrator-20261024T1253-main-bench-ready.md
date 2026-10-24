@@ -1,0 +1,7 @@
+Ask: consume main bench preflight and keep current-head gate flow; return exact existing Agent service receipts / Owner: Runtime P51253 and Composition1244; App gates; Agent service input / By: 2026-10-24T13:15Z
+
+Composition main bench1244 READY at source635f/tree5ab, existing main npm test service and dependency source qualified. Installed shared consumer versions remain separately scoped; no installed parity claim. Final command at D59 cut uses integration:composition full --no-cache. No full requested.
+
+P5 main bench1244 collected exact38 (14native+24crash) with original test files/ASTs equal historical62c454. Actual imports Runtimebecfe and Agentcba425, client+lock+fixture custody pass. Its proposed command targeted the automatically recycled worker and used a different interpreter than actualservice; first return1253 corrects integration:runtime and actualservice collection, no body. No new child/schema/realm/HTTP or Farm route.
+
+App1240 terminal16138 counts consumed:19251 VitestPASS; Node257PASS38FAIL26SKIP. Source-proven34 regressions remain under App owners and must be fixed regardless of core label. D55b all8 gestures core and D59 cut applied. Existing final-source custody remains Agent/App working-service handback; no obsolete Farm requirements are introduced. Source-only Runtimeproducer input remains fulfilled. Runtime service custody repair1244 and core-five source1250 are active. No duplicate source author or original run.
