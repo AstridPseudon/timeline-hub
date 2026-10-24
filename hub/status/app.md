@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T23:22:03Z | dispatcher heartbeat 3s | live 1 (sol 1, luna 0, other 0) | busy30 9 | status age 2m -->
-# app board, 2026-10-24T23:20Z
+<!-- app | 2026-10-24T23:25:23Z | dispatcher heartbeat 7s | live 2 (sol 1, luna 1, other 0) | busy30 10 | status age 0m -->
+# app board, 2026-10-24T23:24Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -106,17 +106,19 @@
 
 | P2-placement-8259 | Attribute placement response timeout | Luna | Retained actual8259 | merged | app-A3-placement-8259-cause-2313 | Exact missing wiring proven: mounted generic handleFileDrop/dropAsset never reaches occurrenceAddMediaPort.97 controls/types PASS; no source change. | Evidence only |
 
-| P2-popup-ADD-current | Qualify strict digest on mounted ADD | Luna; service | Raw digest fix home63d7 | gated:source-fix | App2255; actual7872 | NO-GO222s. Readiness PASS; raw digest452 passed. Exact canonical equality860 failed only parent digest/revision; tail NOTRUN. | App63d7; Runtime732 |
+| P2-popup-ADD-current | Qualify exact canonical popupADD | Luna; service | Reviewed oracle home32036 | doing | app-P2-popup-reviewed-submit-2320;5217 | Preflight19080 PASS; actual5217 submitted23:21:39. Exact32036/039f/732/635f. Manager monitors same body; verdict pending. | App32036; Runtime732 |
 
 | P2-popup-7872 | Exact parent canonical expectation | Luna independent | Independent2309 PASS | merged | app-P2-popup-parent-oracle-review-2309 | Normal merge32036; exact raw-before parent wrappers. Whole document/reload/undo strict; 2 Node, 3 types/lint PASS; ledger logged. | Home32036b3cc0 |
 
 | P2-asset-current | Qualify reviewed asset cleanup | Luna; service | Home7d53 /039f /732 /635f | doing | app-A3-asset-reviewed-original-2307 | NO-GO281s; readiness PASS; same original response149/497 timed out90s. Producer retains exact POST disposition; no tail credit. | App7d53; Runtime732 |
 
-| P2-parent-8232 | Strict full request envelope | Luna | Main original8232 terminal | ready | Next source slot | Peer Runtime2303: readiness PASS, original fails strict minimal-envelope342; production adds label/steps. Keep every full v2 field exact. | Appbceb; Runtime732 |
+| P2-parent-8232 | Strict full request envelope | Luna | Main original8232 terminal | doing | app-P2-parent-8232-envelope-2323 | Source author dispatched as ADD launch worker ends. Keep full original v2 envelope plus exact label/steps/patch/tags; mutations must fail. | Base32036 |
 
 | P2-main-SWAP | Runtime command comparison refusal | Runtime Luna | Actual25174 terminal | doing | rt-P2-swap-source-2308 | Readiness PASS; response431 refused invalid_records: provider executed a different command. Runtime owns finite exact-field attribution; no duplicate App body. | Appbceb; Runtime732 |
 
 | A3-mounted-drop | Wire actual file drop to semantic save | HARD Sol after Luna failures | Asset8419 plus placement2313 | doing | app-A3-mounted-drop-return-sol-2319 | Owns real useTimelineState/useExternalDrop/useAssetManagement path. Two previous source fixes did not qualify mounted asset; no duplicate writer. | Base32036 |
+
+| P2-main-single | Exact transition step intent | Luna | Main actual10376 terminal | doing | Tour author2323; continuation if needed | Readiness PASS; strict step377 expects generic save intent, actual is specific clear action. Batch with parent8232; no relaxed intent union. | Appbceb; Runtime732 |
 
 Integration: Current App32036b3cc0ff0b4c02d3940b0ad0dd4316fc239f merges independently reviewed parent oracle fe628 onto reviewed asset home7d53. Both reviewed handoff source/test blobs exact. Popup parent exact normalization is merged32036; next meaningful ADD ready after source/body slots free. App normally adopts Runtime732c48c6f5a9441a65c61b24595d454a1cd3e180. Exact diagnostic tuple is Appbceb / Agent039ff2c2187d02b723074a8a6dfcbc6a70544c19 / Runtime732 / Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40. Existing asset5fcb and strict placement00918 repairs are included; original placement spec413d and other five protected files retained.
 
@@ -124,11 +126,11 @@ core open: Eight original P2 gestures remain unqualified. Element7131 still fail
 regressions: Asset transient handoff repair is home7d53; mounted8419 still times out90s. Source acceptance is not mounted closure; no inferred Runtime cause. Placement8259 cause remains unproved; no claim that asset fix addresses it. Earlier drop-position and strict placement selectors are home with focused proof; mounted proof still owed. D69 restoration evidence retained.
 
 Blockers: Final cut — all8 isolated P2 plus full tour, final pinned P1–P5/core, D69 and genuine installed render required. Runtime coordinates matrix and ZIP. P1 31083 and P3 15493 GO retain recorded tuple scopes.
-Next ready: Asset8419 still no intended POST; unique HARD Sol2319 owns mounted wiring for both drop paths. Placement2313 read-only finding published. Placement8259 source author2313 dispatched at review slot release. Parent8232 exact envelope correction takes next source slot. Popup parent oracle home32036; one ADD submission2320 dispatched after asset8419 terminal and source slot release, then parent8232 source next. Runtime2250 owns main four profile dependency; no App input owed. No P3, D79 or E work.
+Next ready: Asset8419 still no intended POST; unique HARD Sol2319 owns mounted wiring for both drop paths. Placement2313 read-only finding published. Placement8259 source author2313 dispatched at review slot release. Parent8232 exact envelope correction takes next source slot. Popup parent oracle home32036; ADD5217 submitted after asset8419 terminal; parent8232 source2323 dispatched immediately as launch checkpoint freed slot. Runtime2250 owns main four profile dependency; no App input owed. No P3, D79 or E work.
 
-live 2 / cap 2; ready-undispatched 1 (parent8232 source), capacity full with Sol2319 and ADD submission2320.
+live 2 / cap 2; ready-undispatched 0. Sol2319 mounted drop and Luna2323 parent envelope; serviceADD5217 active separately.
 Capacity: Every ended clean non-KEEP local worktree scanned this pass; zero eligible. Latest ten stale pins released through guarded D74a route, receipt design/app-D74a-fresh-stale-pins-2214.md. Current tuple pins and all run evidence retained.
-Disk: 5.979GB before ADD2320 preparation;8419 terminal. Owner22:14 App critical source/gate floor5.2GB; stop4.5GB, NON-element first. One body at a time on App; parallel main diagnostic venue authorized22:24. Noncritical work retains7.5GB floor.
+Disk: 5.506GB during ADD5217 original; floor5.2GB for new critical dispatch, stop4.5GB. Owner22:14 App critical source/gate floor5.2GB; stop4.5GB, NON-element first. One body at a time on App; parallel main diagnostic venue authorized22:24. Noncritical work retains7.5GB floor.
 Safety: No new refusal. Prior dirtyU3, compact, graph, publication and source-access refusal targets stay stopped. No raw deletion or alternative denied route.
-Inbox consumed through1793842 bytes. Owner23:21 sequencing applied:8419 POST absent, keep source fix and ADD next. Runtime2308 owns SWAP refusal. PLAN/common/C0/header and Runtime board checked. Runtime2250 latest setup ownership consumed. D73 genuine exact checkout receipts and one-command source preflight before every body; newer heads never invalidate captured tuples.
+Inbox consumed through1795617 bytes; single10376 exact intent assigned to existing tour author2323 batch, no competing writer. Owner23:21 sequencing applied:8419 POST absent, keep source fix and ADD next. Runtime2308 owns SWAP refusal. PLAN/common/C0/header and Runtime board checked. Runtime2250 latest setup ownership consumed. D73 genuine exact checkout receipts and one-command source preflight before every body; newer heads never invalidate captured tuples.
 Evidence: [ADD7872 service summary](../../tests/app-pin-63d7c74b-p2-digest-add-2255-1024225558-7872/summary), [asset guard review2252](../../workers/app-A3-asset-placement-review-2252/report.md), [element7131](../../design/app-P2-D84a-element-2216.md), [main setup return](../../design/runtime-main-profile-2238.md).
