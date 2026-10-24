@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T05:57:47Z | dispatcher heartbeat 6s | live 3 (sol 0, luna 3, other 0) | busy30 11 | status age 0m -->
-# runtime board, 2026-10-24T05:57:24Z
+<!-- main | 2026-10-24T06:00:19Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 0m -->
+# runtime board, 2026-10-24T05:59:48Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -55,7 +55,7 @@
 | F-helper-sequential | Classify helper replay-map refusal | Agent Sol / Luna | Integrated proof complete | merged | Agent184dc; review0224; integrated0232 | Actual Agent 8a8d passed 12 focused cases and static, vendor and artifact checks. Both original variants passed on reviewed source. | Agent184dc20a70 |
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Current installed qualification passed | merged | Agent0508; independent0517 PASS | Exact seven originals passed on managed child 3b5c, Agent ba8f and Runtime f320. Current 9cd relevant sources and test AST match. | Managed child 3b5c |
-| OPS-farm-agent-full | Prepare supported farm full-suite setup | Sol / Luna | Checkpoint result | doing | Review 0423 PASS; Farm 0503 | Test agent-full-farm-1024050351-26511 reached about 70% at 05:29 on Agent 9cd, tree 57f0231d. Setup complete; result pending. | c9a58f3d2 packet |
+| OPS-farm-agent-full | Correct farm full-suite environment | Luna / Luna | Normal environment and source custody | doing | Prior 0423; Farm 26511; v2 author 0600 | Checkpoint: 17,335 passed; 288 failed; 187 setup errors. Node, peers and import/source gaps are owned. [Result](../../design/farm-agent-full-checkpoint-20261024T0555Z.md) | Prior c9a58 packet |
 | R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Integrated proof passed | merged | Review 0405; integrated 0413 PASS | 13 standalone cases and 243 controls passed; 74 configured deselections. [Proof](../../design/runtime-historical-image-integrated-0413.md) | 2b49da8d6 / 2e96c68c |
 | R-D42-history-memo | Harden verified replay memo | Sol / Luna | Post-delivery scope under D47 | gated:D47 | Design0448; review0454 PASS | Deferred by D47. No stable validation boundary; nine state attacks remain open. Source stays unmerged. | Tests 6c6bb375; source held |
 | R-D42-proof-pin | Preserve a compatible future memo pin | Sol / Luna | Post-delivery safe memo under D47 | gated:D47 | No active pin author | D45: next P2/P3 uses existing37eb without memo. Prior unsafe backport stays held; no new checkout needed. | Earlier backport held |
@@ -76,7 +76,7 @@ Runtime integration is 1d9ddba54, tree f56c396c4495. The merge adds only the rev
 D47 defers the memo and validation capsule until after delivery. Held source remains unmerged. D45 and D46 keep the next pair on existing 37eb and Agent 079 with reviewed App fixes.
 
 P2/P3: D45 pair is terminal. Both reached readiness on App c0fe / Agent 079 / Runtime 37eb. P2 has three failures and five not run; P3 failed inside Gate5. App and Proof own diagnosis and verdict; no repeat here.
-Farm: supported setup is complete. Worker tf-agent-full-farm-0503 runs test agent-full-farm-1024050351-26511, about 70% complete at 05:29. The actual Agent subject is 9cd3dbe8, tree 57f0231d, rather than the earlier selected 8657. This is one non-gate checkpoint; final result and custody remain pending.
+Farm: checkpoint agent-full-farm-1024050351-26511 ended on Agent9cd/tree57f0231d and Runtime45c3: 17,335 passed, 288 failed, 187 setup errors and four skips. No JUnit; seven failures are missing from the failed-line list. The v2 author owns Node20, Remotion peers and source/import setup; no new full is requested before reviewed supported installation.
 Blockers: Freeze — D39 generated candidate fe637 passed independent review; final generation and Agent/App adoption wait for freeze.
 
 Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held until freeze.
@@ -87,4 +87,4 @@ Later: D46 closes U2c; no new relay or provider custody backend. Its upstream co
 
 Blockers: Agent — CLI remainder needs supported adapter facts or explicit product ownership; fixture-only work cannot prove C0.
 
-Next ready: None waiting. Three Luna 0557 workers own D09, restructure and normal publication remainders. Consume results and dispatch independent reviews. CLI source handback waits Agent. Farm checkpoint 26511 is active; freeze and delivery holds remain.
+Next ready: None waiting. Three Luna 0557 workers own D09, restructure and normal publication remainders. Consume results and dispatch independent reviews. CLI source handback waits Agent. Farm v2 environment packet is active; freeze and delivery holds remain.

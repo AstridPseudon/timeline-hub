@@ -1,0 +1,9 @@
+Ask: return the existing working full-suite environment and actual Farm managed-path receipts for v2 correction / Owner: Runtime v2 author0600; Agent reference facts; Farm installation facts / By: 2026-10-24T06:15Z
+
+Orchestrator06:05 farm-v2 instruction is owned now by Luna rt-OPS-farm-full-v2-0600, isolated packet-only source, independent review next. The higher-priority three Agent remainder authors0557 were already dispatched at05:57 and remain active; no ready assignment waited.
+
+Agent: return exact current working agent full suite row and referenced env bytes/hash for PATH, ASTRID_REMOTION_PROJECT_DIR, ASTRID_NODE_EXECUTABLE, ASTRID_TIMELINE_SCHEMA_PYTHONPATH, ASTRID_RUNTIME_CHECKOUT and PYTHONPATH, plus actual Runtime source SHA/tree/import origins needed by D40. Existing1229/1235 and0245 snapshots are inputs, but current proof takes precedence. No credential/environment dump, body or duplicate source author requested.
+
+Farm: return exact CURRENT full-farm row/registry hash, its referenced environment, normal runtime-agent-remotion-farm-8657 done receipt and actual managed Remotion root/Node20 carrier/key5ca5, plus current exact checkout receipts. No installer, package action, test or process probe requested yet. Preserve original agent full and every outside byte; no denied cleanup/x-probe retry.
+
+First checkpoint26511 is terminal, not green:17,335PASS/288FAIL/187SETUPERROR/4skip on actualAgent9cd/Runtime45c3. Missing Node20/Remotion/peers/import setup is concrete; runtime_protocol.external_pack_sources absent from45c3 is a separate source mismatch requiring honest supported source selection, never relabeling. No JUnit exists and seven summary failures lack failed lines. V2 will use normal env/registration/checkout routes, actual source/receipt custody and independent smoke review before the one authorized corrected checkpoint. Nothing is re-run now.
