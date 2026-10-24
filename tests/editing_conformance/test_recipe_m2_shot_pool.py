@@ -11,31 +11,223 @@ from jsonschema import Draft202012Validator
 from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline.commands import execute as _execute
 from astrid.sdk.timeline.commands import operations, validate_command
-from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.native_auto_placement import auto_place_shared, unplace_shared
 from astrid.sdk.timeline.native_shot_pool_commands import POOL, capture_shot_pool
 from astrid.sdk.timeline.rebase import replay
 from tests.editing_conformance.fixture_loader import load_fixture
-from tests.editing_conformance.m2_authenticated_redo import AuthenticatedRedo
 from tests.editing_conformance.test_recipe_m1_commands import inverse as _inverse
 from tests.editing_conformance.test_recipe_m1_commands import later
-from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm, inputs
+from tests.editing_conformance.test_recipe_occurrence_media import inputs
 from tests.sdk.test_timeline_commit_provider import (
     inverse as inverse_call,
 )
-from tests.sdk.test_timeline_commit_provider import (
-    runtime_abi,  # noqa: F401 -- autouse detached ABI fixture
-)
 
-_AUTHENTICATED_REDO = AuthenticatedRedo(_execute, _inverse)
-execute = _AUTHENTICATED_REDO.execute
-inverse = _AUTHENTICATED_REDO.inverse
-accepted_boundaries = _AUTHENTICATED_REDO.accepted_boundaries
+execute = _execute
+inverse = _inverse
 
 OWNER = 'occurrence:occ-a'
 SOURCE = OWNER + '/source'
 FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_shot_pool.json'
 SCHEMA = Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json'
+
+
+class GenuineTimeline:
+    """A current Runtime commitTimeline caller for the pool recipes."""
+
+    def __init__(self, service, project, authorize, document, pins, verified):
+        self.service = service
+        self.project = project
+        self.authorize = authorize
+        self.document = document
+        self.pins = pins
+        self.verified = verified
+        self.calls = 0
+
+    @classmethod
+    def create(cls, tmp_path, monkeypatch, kind):
+        from tests.helpers.runtime import use_runtime
+
+        runtime = use_runtime()
+        monkeypatch.syspath_prepend(str(runtime / 'tests'))
+        from runtime_protocol.auth import CredentialStore
+        from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+        from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
+
+        from tests.editing_conformance.test_commit_runtime_occurrence_media import _create_fixture
+        from tests.sdk.test_timeline_commit_provider_document import MEDIA
+
+        names = ('old', 'new', 'pool-b', 'pool-c')
+
+        def effect(project):
+            result = _effect(project, groups=[{'group_key': 'main', 'selectors': [
+                {'selector': name, 'ordinal': index, 'variant_key': name, 'output_port': kind}
+                for index, name in enumerate(names)]}])
+            result['payload']['metadata']['params'] = {'duration_seconds': 6} if kind == 'video' else {}
+            return result
+
+        service, project, task, attempt, admitted = _fixture(tmp_path, effect_factory=effect)
+        project = project['id']
+        credentials = CredentialStore(tmp_path / 'credentials')
+        token, _ = credentials.provision('pool-editor', ['projects:read', 'projects:write'])
+
+        def authorize():
+            return credentials.require(token, 'projects:write')
+
+        try:
+            outputs = [_output(name.encode(), output_port=kind, group_key='main', variant_key=name,
+                               ordinal=index, filename=name + ('.mp4' if kind == 'video' else '.png'),
+                               media_type=kind + ('/mp4' if kind == 'video' else '/png'))
+                       for index, name in enumerate(names)]
+            _settle(service, attempt, outputs, effect=admitted)
+            associations = service.managed_outputs(task['task']['id'])
+            selected = {}
+            aliases = {'old': 'picture', 'new': 'reserved-new', 'pool-b': 'pool-b', 'pool-c': 'pool-c'}
+            for association in associations:
+                canonical = service.get_project_media_selection(project, {
+                    'association_id': association['association_id'],
+                    'object_id': association['object_id'],
+                    'version': association['lifecycle']['version'],
+                }, authorize=authorize)
+                alias = aliases[association['variant_key']]
+                selected[alias] = service.get_project_media_selection(project, {
+                    'asset': alias, 'generation_id': canonical['generation_id'],
+                    'variant_id': canonical['variant_id'],
+                }, authorize=authorize)
+            old = selected['picture']
+            verified = [service.get_project_verified_media(project, selected[name], authorize=authorize)
+                        for name in ('picture', 'reserved-new', 'pool-b', 'pool-c')]
+            pins = [verified[index]['selection'] for index in range(1, 4)]
+            document, _, _, _ = inputs(kind)
+
+            def replace(value):
+                if value == MEDIA:
+                    return old['object_id']
+                if isinstance(value, dict):
+                    return {key: replace(child) for key, child in value.items()}
+                if isinstance(value, list):
+                    return [replace(child) for child in value]
+                return value
+
+            document = replace(document)
+            document.update(project_id=project, timeline_id='film')
+            document['internal_timeline_revisions'][0]['timeline_id'] = 'film'
+            for image in [document['parent_revision'], *document['shot_revisions'],
+                          *document['internal_timeline_revisions']]:
+                image['content_digest'] = _digest(image['payload'])
+            document['dependency_manifest']['media'] = [
+                {'media_id': old['object_id'], 'content_digest': old['object_id']}]
+            for payload in (document['parent_revision']['payload'],
+                            document['internal_timeline_revisions'][0]['payload']):
+                binding = payload.get('registry', {}).get('assets', {}).get('picture')
+                if binding is not None:
+                    binding.update(media_id=old['object_id'], generationId=old['generation_id'],
+                                   variantId=old['variant_id'])
+            service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
+            service.create_timeline(project, 'film', idempotency_key='pool-bootstrap')
+            _create_fixture(service, project, document, old, authorize=authorize)
+            document = cls._document(service, project, 'film')
+            return cls(service, project, authorize, document, pins, verified)
+        except Exception:
+            service.close()
+            raise
+
+    @staticmethod
+    def _document(service, project, timeline):
+        head = service.get_project_timeline(project, timeline)
+        parent = service.get_project_parent_composition_revision(project, timeline, head['head_revision_id'])
+        occurrences = parent['payload'].get('occurrences', [])
+        shots, internals = {}, {}
+        for occurrence in occurrences:
+            shot = service.get_project_shot_revision(project, occurrence['shot_id'],
+                                                     occurrence['shot_revision_id'])
+            shots[(shot['shot_id'], shot['revision_id'])] = shot
+            internal = service.get_project_timeline_revision(
+                project, timeline, shot['internal_timeline_revision_id'])
+            internals[(internal['timeline_id'], internal['revision_id'])] = internal
+        return {'schema_version': 1, 'project_id': project, 'timeline_id': timeline,
+                'parent_revision': parent, 'shot_revisions': list(shots.values()),
+                'internal_timeline_revisions': list(internals.values()),
+                'dependency_manifest': parent['dependency_manifest']}
+
+    def body(self, commands, label):
+        head = self.service.get_project_timeline(self.project, 'film')
+        steps = [{'id': str(index), 'label': label, 'intent': 'M2 shot pool', 'tags': ['shot.pool'],
+                  'command_ordinals': [index],
+                  'patch': copy.deepcopy(command.get('args', {}).get('changes', [])), 'reads': []}
+                 for index, command in enumerate(commands)]
+        return {'api_version': 1, 'project_id': self.project, 'timeline_id': 'film',
+                'base_revision_id': head['head_revision_id'],
+                'base_publication_id': head['head_publication_id'], 'commands': commands,
+                'label': label, 'steps': steps, 'merge': 'atomic', 'reads': [], 'dry_run': False,
+                'source': {'via': 'python'}, 'rationale': 'M2 shot pool recipe', 'group_id': label}
+
+    def call(self, commands, label='shot-pool'):
+        self.calls += 1
+        result = self.service.commit_timeline(
+            self.project, 'film', self.body(commands, label),
+            idempotency_key=label + '-' + str(self.calls), publisher='pool-editor',
+            invocation_path=f'/v1/projects/{self.project}/timelines/film/commit',
+            authorize=self.authorize)
+        self.document = result['data']['canonical_document']
+        return result
+
+    def seed_pooled(self, *, full=False):
+        from astrid.sdk.timeline._command_state import present
+
+        bundle = bundle_from_document(self.document)
+        occurrence = State(bundle).occurrence(OWNER)
+        duration = occurrence['duration_ms']
+        duration_command = {'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+                            'args': {'changes': [{'op': 'set', 'ref': OWNER,
+                                                  'path': ['duration_ms'],
+                                                  'before': present(duration), 'value': 20000}]}}
+        self.call([duration_command], 'pool-duration')
+        order = (1, 0, 2) if full else ()
+        for index in order:
+            pin = self.pins[index]
+            bundle = bundle_from_document(self.document)
+            command = capture_shot_pool(bundle, OWNER, 'add', pin, ownership='occurrence',
+                                        verified_media=self.verified)
+            self.call([command], 'pool-seed-' + str(index))
+        return bundle_from_document(self.document)
+
+    def accepted_boundaries(self, records, before, after, commands):
+        from astrid.sdk.timeline._collections import AcceptedRecords
+        from astrid.sdk.timeline._commit_patch import inverse_address_resolver
+
+        created = self.call(commands, 'pool-redo-source')
+        if records and records[0]['command']['op'] == 'timeline.inverse':
+            self.call([inverse_call([created['receipt']['receipt_id']])], 'pool-redo-source-undo')
+        item = self.service.list_timeline_commits(
+            self.project, 'film', limit=100, authorize=self.authorize)['items'][-1]
+        history = {entry['publication_id']: entry for entry in self.service.list_timeline_commits(
+            self.project, 'film', limit=100, authorize=self.authorize)['items']}
+
+        def boundary(entry):
+            previous = history[entry['previous']['publication_id']]
+            return (bundle_from_document(previous['receipt']['result']['canonical_document']),
+                    bundle_from_document(entry['receipt']['result']['canonical_document']))
+
+        accepted = AcceptedRecords([item], item['records']['commands'], boundary)
+        accepted.address_resolver = inverse_address_resolver(
+            [item], after, load_boundary=boundary, load_history=history.__getitem__)
+        return accepted
+
+    def close(self):
+        self.service.close()
+
+
+@pytest.fixture
+def genuine_runtime(request, tmp_path, monkeypatch):
+    parameters = getattr(request.node, 'callspec', None)
+    values = parameters.params if parameters is not None else {}
+    kind = values.get('kind', 'image')
+    context = GenuineTimeline.create(tmp_path, monkeypatch, kind)
+    try:
+        yield context
+    finally:
+        context.close()
 
 
 def pins(kind='image'):
@@ -56,8 +248,13 @@ def pool(bundle):
     return State(bundle).config(OWNER)['app']['astrid']['pool']
 
 
-def build(name):
-    document, _, [a, b, c], verified = pins()
+def build(name, context=None):
+    if context is None:
+        document, _, [a, b, c], verified = pins()
+    else:
+        document = copy.deepcopy(context.document)
+        a, b, c = copy.deepcopy(context.pins)
+        verified = copy.deepcopy(context.verified)
     bundle = bundle_from_document(document)
     if name == 'add-first':
         return document, bundle, 'add', a, verified
@@ -80,8 +277,9 @@ def test_portable_goldens(name):
 
 
 @pytest.mark.parametrize('name', CASES)
-def test_exact_capture_replay_inverse_and_redo(name):
-    _, bundle, action, pin, verified = build(name)
+@pytest.mark.integration
+def test_exact_capture_replay_inverse_and_redo(name, genuine_runtime):
+    _, bundle, action, pin, verified = build(name, genuine_runtime)
     before = copy.deepcopy(bundle)
     command, plan = step(bundle, action, pin, verified)
     validate_command(command)
@@ -91,7 +289,8 @@ def test_exact_capture_replay_inverse_and_redo(name):
     assert replay(plan, bundle, verified_media=verified).records == plan.records
     undone = inverse(plan.bundle, plan.records)
     assert undone.bundle == before
-    redone = inverse(undone.bundle, accepted_boundaries(undone.records, plan.bundle, undone.bundle))
+    redone = inverse(undone.bundle, genuine_runtime.accepted_boundaries(
+        undone.records, plan.bundle, undone.bundle, [command]))
     assert redone.bundle == plan.bundle
 
 
@@ -238,30 +437,47 @@ def test_disjoint_edits_rebase_and_retain_the_original_capture():
     assert inverse(rebased.bundle, rebased.records).bundle == head
 
 
-def test_provider_accepts_add_and_remove_with_exact_undo_and_redo():
-    document, _, [a, *_], verified = pins()
-    realm = MediaRealm(document, verified)
+@pytest.mark.integration
+def test_provider_accepts_add_and_remove_with_exact_undo_and_redo(genuine_runtime):
+    document = copy.deepcopy(genuine_runtime.document)
+    a = copy.deepcopy(genuine_runtime.pins[0])
+    verified = copy.deepcopy(genuine_runtime.verified)
+    realm = genuine_runtime
     added = realm.call([capture_shot_pool(bundle_from_document(document), OWNER, 'add', a,
-                                          ownership='occurrence', verified_media=verified)])
+                                          ownership='occurrence', verified_media=verified)], 'pool-add')
     after = added['data']['canonical_document']
     assert pool(bundle_from_document(after)) == ['reserved-new']
     removal = capture_shot_pool(bundle_from_document(after), OWNER, 'remove', a, ownership='occurrence',
                                 verified_media=verified)
-    removed = realm.call([removal])
+    removed = realm.call([removal], 'pool-remove')
     assert pool(bundle_from_document(removed['data']['canonical_document'])) == []
-    undo = realm.call([inverse_call([removed['receipt']['receipt_id']])])
+    undo = realm.call([inverse_call([removed['receipt']['receipt_id']])], 'pool-remove-undo')
     assert undo['data']['canonical_document'] == after
-    redo = realm.call([inverse_call([undo['receipt']['receipt_id']])])
+    redo = realm.call([inverse_call([undo['receipt']['receipt_id']])], 'pool-remove-redo')
     assert redo['data']['canonical_document'] == removed['data']['canonical_document']
 
 
-def pooled_case():
-    document, _, [a, *_], verified = pins()
-    bundle = bundle_from_document(document)
-    State(bundle).occurrence(OWNER)['duration_ms'] = 20000
-    result = auto_place_shared(bundle, OWNER, 'placed', a, ownership='occurrence', verified_media=verified,
-                               pooled=True)
-    return document, execute(bundle, result['commands'], verified_media=verified).bundle, a, verified
+def pooled_case(context=None, *, full=False):
+    if context is None:
+        document, _, [a, *_], verified = pins()
+        bundle = bundle_from_document(document)
+        State(bundle).occurrence(OWNER)['duration_ms'] = 20000
+        result = auto_place_shared(bundle, OWNER, 'placed', a, ownership='occurrence',
+                                   verified_media=verified, pooled=True)
+        bundle = execute(bundle, result['commands'], verified_media=verified).bundle
+    else:
+        context.seed_pooled(full=full)
+        document = copy.deepcopy(context.document)
+        bundle = bundle_from_document(document)
+        a = copy.deepcopy(context.pins[0])
+        verified = copy.deepcopy(context.verified)
+        if not full:
+            result = auto_place_shared(bundle, OWNER, 'placed', a, ownership='occurrence',
+                                       verified_media=verified, pooled=True)
+            context.call(result['commands'], 'pool-primary')
+            document = copy.deepcopy(context.document)
+            bundle = bundle_from_document(document)
+    return document, bundle, a, verified
 
 
 def test_a_null_frame_pools_without_a_clip_and_refuses_a_frame_or_anchor():
@@ -276,12 +492,9 @@ def test_a_null_frame_pools_without_a_clip_and_refuses_a_frame_or_anchor():
 
 
 @pytest.mark.parametrize('kind', ['image', 'video'])
-def test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one(kind):
-    document, _, [a, b, c], verified = pins(kind)
-    pooled = bundle_from_document(document)
-    State(pooled).occurrence(OWNER)['duration_ms'] = 20000
-    for pin in (b, a, c):
-        pooled = step(pooled, 'add', pin, verified)[1].bundle
+@pytest.mark.integration
+def test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one(kind, genuine_runtime):
+    document, pooled, a, verified = pooled_case(genuine_runtime, full=True)
     assert pool(pooled) == ['pool-b', 'reserved-new', 'pool-c']
     before = copy.deepcopy(pooled)
     result = auto_place_shared(pooled, 'occurrence:occ-a', 'placed', a, ownership='occurrence',
@@ -296,21 +509,23 @@ def test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one(kind):
     assert replay(plan, pooled, verified_media=verified).records == plan.records
     undone = inverse(plan.bundle, plan.records)
     assert undone.bundle == before
-    redone = inverse(undone.bundle, accepted_boundaries(undone.records, plan.bundle, undone.bundle))
+    redone = inverse(undone.bundle, genuine_runtime.accepted_boundaries(
+        undone.records, plan.bundle, undone.bundle, result['commands']))
     assert redone.bundle == plan.bundle
 
 
-def test_promotion_and_keep_as_pooled_round_trip_through_the_provider():
-    _, pooled, a, verified = pooled_case()
-    realm = MediaRealm(document_from_bundle(pooled), verified)
+@pytest.mark.integration
+def test_promotion_and_keep_as_pooled_round_trip_through_the_provider(genuine_runtime):
+    _, pooled, a, verified = pooled_case(genuine_runtime)
+    realm = genuine_runtime
     promoted = realm.call(auto_place_shared(pooled, OWNER, 'placed', a, ownership='occurrence',
-                                            verified_media=verified)['commands'])
+                                            verified_media=verified)['commands'], 'promotion')
     placed = bundle_from_document(promoted['data']['canonical_document'])
     assert pool(placed) == []
     kept = realm.call(unplace_shared(placed, OWNER, 'placed', ownership='occurrence', keep_as_pooled=True,
-                                     media=a, verified_media=verified)['commands'])
+                                     media=a, verified_media=verified)['commands'], 'keep-pooled')
     assert pool(bundle_from_document(kept['data']['canonical_document'])) == ['reserved-new']
-    undo = realm.call([inverse_call([kept['receipt']['receipt_id']])])
+    undo = realm.call([inverse_call([kept['receipt']['receipt_id']])], 'keep-pooled-undo')
     assert undo['data']['canonical_document'] == promoted['data']['canonical_document']
 
 
