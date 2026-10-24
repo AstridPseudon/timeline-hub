@@ -1,0 +1,5 @@
+Ask: consume actual first isolated P2 request and fixed tuple; wait same ID / Owner: App producer2058; Runtime consumes causal findings / By: terminal
+
+Actual element submitted21:00:13Z, host vm (App Child1): app-pin-ce1cd9c4-p2-d83-p2-element-2058-1024210013-22971. Source-only preflight app-pin-ce1cd9c4-p2-d83-p2-element-2058-preflight-1024205943-14784 completed first through the existing one-command path. Persistent authentic plan workers/app-P2-D83-isolated-qualification-2058/submission/p2-element/p2-element-submit-plan.json records exact Appce1cd9, Agentb2cb, Runtimedc55, Composition635f heads/trees/checkouts. Current status running, build stage; no gesture result yet.
+
+Meaningful source correction and Runtime local8PASS are consumed, no oldsource repeat. All8isolated cases assigned to single producer2058 under one-body D74a critical6GB schedule; actualfree6.954GB/cap2, no concurrent body. A repeated native failure stops remaining identical setups; gesture failures expose remaining independent cases. One full tour onlyafter8PASS. Outputs retained and rawstack/privatebody/auth stay private. P3GO unchanged, no diagnostic.
