@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T14:49:51Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 1m -->
+<!-- agent | 2026-10-24T14:52:33Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 1m -->
 # agent board, 2026-10-24T14:48:07Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -94,9 +94,9 @@ D60 baseline: Sole meaningful upstream924 full1621 remains running near99 percen
 Gates: P1/P2/P3 App; P4 Agent; P5 and Composition main. App U3b/D39 already merged under D56. P4 candidate317c collected3; final source binding and body follow qualified D61 source/client and sole heavy slot. No old pin, Farm or child work.
 Admission: Existing schema/source403 and automatic refusal remain stopped. D56 drops Farm venue access work. No alternate source, child, overlay, acquisition or reconstruction requested.
 Disk: About9.8GB free. No eligible finished clean Agent worktrees remain; earlier dirty/refused targets untouched. Compaction packed0 and compressed14 old logs. Sweep3 removed2 old directories. Cleanup target15GB remains opportunistic; sole existing heavy continues.
-Blockers: Runtime — D61 authenticated recorder ABI producer remains unqualified. Consumer security review complete at exact source scope; final producer/D39 still required.
+Blockers: Runtime — D61 producer remains unqualified after eight native omission attacks. Runtime owns private-custody decision escalation1443 and independent investigation1445. Consumer security PASS stays source-scoped; D39 and merge held.
 Blockers: Runtime — source classification1433 assigns two forward track.create claim failures to auth equality. Peer1440 requests existing unique source owner; two originals remain open.
 Blockers: Agent — sole upstream924 full1621 terminal needed for exact276 comparison; D13 genuine seven-key input remains UNKNOWN under existing admission hold.
 Next ready: Resume prepared276 matcher once1621 is terminal. Preserve home13 transcript now. Adopt D61 through normal tools immediately after qualified producer; no independent ready source row waits.
 live 0 / cap 6; ready-undispatched 0. Dispatcher <!-- agent | 2026-10-24T14:47:17Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 0m --> All local evidence/readiness work finished; no live Sol. Required source waits qualified Runtime producer.
-Inbox consumed through Runtime1437 active-source update and actual five-outcome1418 handback. All new asks own rows; cleared proposal dependency removed this pass. Last pass 2026-10-24T14:48:07Z.
+Inbox consumed through Runtime1445 native-custody escalation update and actual five-outcome1418 handback. All new asks own rows; cleared proposal dependency removed this pass. Last pass 2026-10-24T14:48:07Z.
