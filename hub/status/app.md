@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T00:54:35Z | dispatcher heartbeat 4s | live 4 (sol 1, luna 3, other 0) | busy30 15 | status age 2m -->
-# app board, 2026-10-24T00:55Z
+<!-- app | 2026-10-24T00:57:02Z | dispatcher heartbeat 11s | live 6 (sol 2, luna 4, other 0) | busy30 19 | status age 0m -->
+# app board, 2026-10-24T01:02Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -8,8 +8,8 @@
 | A2 | Production save funnel | Sol; Luna review | C0 and U3 | merged | app-A2-final-composed-review-r7 | Original P1 chain passed on pinned f8. Latest bootstrap fix is listed below. | 9eda8e907 |
 | A3 | Popup, placement and asset saves | Sol; Luna review | A2 | merged | App and Proof workers | Source qualifications passed. P2 live gesture proof remains pending. | See linked proofs |
 | P1 | Original mixed chain | App runner; Proof review | Resolved | merged | Test 18792; Proof 0036 and 0040 | GO at 00:43. Both cases passed; exit 0, 141 seconds. Fixed App f8 / Agent 787 / Runtime 2a9. | f8b15af0a6 |
-| A4 | Executor and capture retirement | Luna | P1 GO: resolved | doing | app-A4-executor-retirement-0051 | Reviewed port and witness cuts merged. Remaining executor removal is being authored; behavioral assertions stay. | 7135ac722a |
-| A4-reviewed-stack | Ports and mounted witnesses | Luna | P1 GO: resolved | merged | app-A4-integrated-0053 | 6e04, da7f25, 001145 and cf05 each had independent PASS. Integrated checks are running. | 7135ac722a |
+| A4 | Executor and capture retirement | Luna | P1 GO: resolved | doing | app-A4-retirement-sol-0102 | Luna 0051 produced only a type cut on the old base. Current ports are removed. Sol is authoring the remaining retirement; assertions stay. | 7135ac722a |
+| A4-reviewed-stack | Ports and mounted witnesses | Luna | P1 GO: resolved | merged | app-A4-mounted-fixture-return-0059 | 6e04, da7f25, 001145 and cf05 each had independent PASS. Integrated checks found six old fixtures missing media selection. Return 0059 is fixing setup; guards stay. | 7135ac722a |
 | A2-bootstrap-fix | Restart cancelled bootstrap | Sol; Luna review | Resolved | merged | app-A2-basis-cancel-repro-sol-0029 | [326 tests, three typechecks and lint passed.](/home/user/timeline-hub/hub/design/app-A2-bootstrap-integrated-0046.md) | 804134d747 |
 | readiness-after-bootstrap | Shared P2/P3 readiness failure | Sol; Luna review | Fixed source and caller checks | doing | app-P2-P3-fixed-source-caller-sol-0053 | Cleanup left started=true after cancellation. Fixed and reviewed. Historical trigger remains unknown; one changed run is authorised. | 42db156ede |
 | P-door-port-alloc | Allocate door port per run | Luna; D21 | Resolved | merged | app-P2-P3-door-allocation-0039 | [Node 20 allocation, shared stage value and failure checks passed.](/home/user/timeline-hub/hub/design/app-P2-P3-door-allocation-0039.md) | Harness rows only |
@@ -23,7 +23,7 @@
 | F-App-full | Full suite before retirement | Test service; Luna review | Resolved for historical head | merged | app-F-D19-current-full-1230 | 18,819 tests passed on exact 12ef. A final qualification follows actual retirement and freeze. | 12ef320545 |
 
 Blockers: App awaits Agent’s new live image input before executing the reserved producer once.
-Blockers: Proof awaits caller 0053 before the one authorised changed P2/P3 run on App’s service.
+Blockers: Proof awaits caller 0053 before the one authorised changed P2/P3 run on App’s service. Node 20 hook check 0103 is running.
 Blockers: U3b awaits P2/P3 and the final freeze.
 Next ready: Complete caller 0053, run once under Proof ownership, review executor cut 0051, and execute the new image producer when input arrives.
 Integration: 7135ac722a. The next readiness run stays fixed on 804134d747; no source-head chase.
