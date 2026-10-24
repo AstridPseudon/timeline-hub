@@ -1,5 +1,5 @@
 import { persistedTranscriptItems } from '../data/typed/projectTranscript.ts';
-import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { isInteractionActive, onInteractionEnd, type InteractionStateRef } from '@/tools/video-editor/lib/interaction-state.ts';
 import { TimelineEventBus } from '@/tools/video-editor/hooks/useTimelineEventBus.ts';
@@ -36,7 +36,7 @@ import type { AssetRegistry, TimelineConfig } from '@/tools/video-editor/types/i
 import type { CommitDataOptions, ScheduleSaveFn } from '@/tools/video-editor/hooks/useTimelineCommit.ts';
 import { generateUUID } from '@/shared/lib/taskCreation/ids.ts';
 import { emitTimelineSaveDiagnostic, isTimelineDiagnosticsEnabled } from '@/tools/video-editor/lib/timeline-diagnostics.ts';
-import type { TimelineGestureReadBasis, TimelineLocalSaveHandoff } from './timelineLocalSaveHandoff.ts';
+import { TimelinePersistenceHandoffContext, type TimelineGestureReadBasis, type TimelinePersistenceHandoff } from './timelineLocalSaveHandoff.ts';
 
 export type SaveStatus = 'saved' | 'saving' | 'dirty' | 'retrying' | 'error';
 
@@ -104,7 +104,7 @@ interface UseTimelinePersistenceOptions {
   interactionStateRef: InteractionStateRef;
   onCanonicalReloadStart?: () => void;
   /** Original verified assembly and its durable local-document session. */
-  localDocumentSave?: TimelineLocalSaveHandoff;
+  localDocumentSave?: TimelinePersistenceHandoff;
   /** Actual hook owner, inspected only by the opt-in diagnostic projection. */
   diagnosticOwner?: { generation: number; closed: boolean; session?: unknown };
 }
@@ -125,7 +125,7 @@ export class TimelineSaveBarrierError extends Error {
 interface PersistenceSession {
   identity: object;
   provider: DataProvider;
-  localDocumentSave?: TimelineLocalSaveHandoff;
+  localDocumentSave?: TimelinePersistenceHandoff;
   timelineId: string;
   dataRef: MutableRefObject<TimelineData | null>;
   editSeqRef: MutableRefObject<number>;
@@ -253,9 +253,11 @@ export function useTimelinePersistence({
   lastSavedSignatureRef,
   interactionStateRef,
   onCanonicalReloadStart,
-  localDocumentSave,
+  localDocumentSave: suppliedLocalDocumentSave,
   diagnosticOwner,
 }: UseTimelinePersistenceOptions): UseTimelinePersistenceResult {
+  const scopedLocalDocumentSave = useContext(TimelinePersistenceHandoffContext);
+  const localDocumentSave = suppliedLocalDocumentSave ?? scopedLocalDocumentSave;
   const fallbackHeadRevisionRef = useRef(dataRef.current?.head);
   const headRevisionRef = suppliedHeadRevisionRef ?? fallbackHeadRevisionRef;
   const persistenceEnabled = isDataProviderPersistenceEnabled(provider);
@@ -406,7 +408,7 @@ export function useTimelinePersistence({
       bundle?: TimelineBundleEnvelope | null;
       attemptProvider: DataProvider;
       attemptTimelineId: string;
-      documentSave?: TimelineLocalSaveHandoff;
+      documentSave?: TimelinePersistenceHandoff;
     }) => {
       attemptProvider.setShotTimelineTraceId?.(traceId);
       const saved: Promise<number | TimelineSaveReceipt> = documentSave ? documentSave.flush() : attemptProvider.saveTimelineAtHead

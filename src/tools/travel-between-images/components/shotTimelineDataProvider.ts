@@ -2,7 +2,7 @@ import {
   projectedClipCounterparts,
   verifiedRetainedRawClipIds,
 } from '@/tools/video-editor/lib/serialize.ts';
-import { TimelineVersionConflictError, type DataProvider, type TimelineCommandBasis } from '@/tools/video-editor/data/DataProvider.ts';
+import { TimelineVersionConflictError, type DataProvider, type TimelineAcceptedIdentity, type TimelineCommandBasis } from '@/tools/video-editor/data/DataProvider.ts';
 import type {
   LoadedTimeline,
 } from '@/tools/video-editor/data/DataProvider.ts';
@@ -33,6 +33,7 @@ import {
   updateCanonicalShotTimeline,
 } from '@/tools/video-editor/data/shotCompositionEditor.ts';
 import { createLocalSaveSession, type LocalSave, type LocalSaveSession, type LocalSaveState } from '@/tools/video-editor/commands/localSaveSession.ts';
+import type { TimelinePersistenceHandoff } from '@/tools/video-editor/hooks/timelineLocalSaveHandoff.ts';
 import type { CanonicalDocument, CommitRequest } from '@/integrations/runtime/timeline-commit-types.ts';
 import { toOutboxJson, type OutboxJson } from '@/tools/video-editor/commands/commitOutbox.ts';
 import type {
@@ -283,6 +284,7 @@ type PendingCanonicalPublication = {
 type ShotTimelineDataProvider = DataProvider & {
   getProjectMediaSelection?: (query: MediaSelectionQuery) => Promise<MediaSelection>;
   getProjectVerifiedMedia?: (selection: MediaSelection) => Promise<VerifiedMedia>;
+  localDocumentSave?: TimelinePersistenceHandoff;
   timelineQueryIdentity: string;
   setPublishCallback: (callback?: (
     composition: PreparedShotComposition,
@@ -601,6 +603,7 @@ function popupDocumentPatchIntent(
   occurrenceId: string,
   label: string,
   step: { id: string; label: string; intent: string; tags: string[] },
+  head: TimelineAcceptedIdentity,
 ): OutboxJson {
   const beforeJson = toOutboxJson(before);
   const afterJson = toOutboxJson(edit.document);
@@ -636,9 +639,7 @@ function popupDocumentPatchIntent(
       owner, skipRegistryMirror);
   }
   if (!changes.length) throw new Error('Popup save has no authored changes');
-  return toOutboxJson({ kind: 'document-patch-intent', basis: { head: {
-    revisionId: before.parent_revision.revision_id, publicationId: 'popup-session-basis',
-  } }, before: beforeJson, after: afterJson, roots: edit.roots, label, step: { ...step, reads: edit.reads }, changes, created, merge: 'atomic', reads: edit.reads });
+  return toOutboxJson({ kind: 'document-patch-intent', basis: { head }, before: beforeJson, after: afterJson, roots: edit.roots, label, step: { ...step, reads: edit.reads }, changes, created, merge: 'atomic', reads: edit.reads });
 }
 
 function hasPopupStructuralChange(before: CanonicalDocument, after: CanonicalDocument): boolean {
@@ -925,6 +926,7 @@ export function createShotTimelineDataProvider(
   let draftGeneration = initialDraftGeneration;
   let draftDirty = false;
   let pendingPublishes = 0;
+  let localSaveHead: TimelineAcceptedIdentity | undefined;
   let localSaveSessionPromise: Promise<LocalSaveSession> | undefined;
   let pendingLocalSaveSignature: string | null = null;
   let localSaveSource: { config: TimelineConfig; registry: unknown } | undefined;
@@ -937,6 +939,7 @@ export function createShotTimelineDataProvider(
     throw new Error('Popup A2 save requires the existing command-basis, identity, and commit transport seam');
   }
   const prepareCanonicalSave = (basis: TimelineCommandBasis) => {
+    localSaveHead = basis.head;
     if (!shotCompositionAdapter || !basis.graph) throw new Error('Popup A2 save received no accepted canonical closure');
     const published = shotCompositionAdapter.prepare(basis.graph);
     const occurrence = published.occurrences.find((value) => value.occurrenceId === occurrenceId);
@@ -973,11 +976,13 @@ export function createShotTimelineDataProvider(
         timelineDataProvider!.loadTimelineCommandBasis!(composition.parentDocumentId),
         timelineDataProvider!.getRecoverableIdentity!(),
       ]);
-      if (initial.head.revisionId !== composition.headRevisionId
+      if (!initial.head.publicationId || initial.canonicalDocument.parent_revision.revision_id !== initial.head.revisionId
+        || initial.head.revisionId !== composition.headRevisionId
         || initial.canonicalDocument.project_id !== composition.projectId
         || initial.canonicalDocument.timeline_id !== composition.parentDocumentId) {
-        throw new Error('Popup A2 save requires the original verified canonical closure');
+        throw new TimelineVersionConflictError('Popup A2 save needs the original verified parent, shot and internal closure with revision and publication pins; draft retained');
       }
+      localSaveHead = initial.head;
       return createLocalSaveSession({
         scope: { ...identity, projectId: composition.projectId, timelineId: composition.parentDocumentId },
         initial,
@@ -991,9 +996,120 @@ export function createShotTimelineDataProvider(
         }),
       });
     })();
+    void localSaveSessionPromise.catch(() => {});
   }
 
+  let captureChain: Promise<void> = Promise.resolve();
+  let capturedExpectedHeadRevisionId = composition.headRevisionId;
+  const localDocumentSave: TimelinePersistenceHandoff | undefined = localSaveEnabled ? {
+    async capture(source) {
+      const { config: nextConfig, registry: nextRegistry, head } = structuredClone(source);
+      assertEditorHeadIsCurrent();
+      const rawComposition = composition;
+      capturedExpectedHeadRevisionId = canonicalBase.headRevisionId;
+      captureChain = captureChain.then(async () => {
+        if (!shotCompositionAdapter) throw new Error('Popup A2 save requires the validated canonical composition adapter');
+        const session = await localSaveSessionPromise!;
+        assertEditorHeadIsCurrent();
+        if (canonicalBase.headRevisionId !== rawComposition.headRevisionId
+          || (head && (head.projectId !== rawComposition.projectId
+            || head.timelineId !== rawComposition.parentDocumentId
+            || head.headRevisionId !== rawComposition.headRevisionId
+            || head.headPublicationId !== localSaveHead?.publicationId))) {
+          throw new TimelineVersionConflictError('Popup canonical head changed during capture; draft retained');
+        }
+        const draftRegistry = nextRegistry ?? registry;
+        const before = session.getDocument() as unknown as CanonicalDocument;
+        const signature = stableStringify({ config: nextConfig, registry: draftRegistry });
+        if (session.getState().status !== 'retry' || pendingLocalSaveSignature !== signature) {
+          const step = {
+            id: globalThis.crypto?.randomUUID?.() ?? `popup-edit-${Date.now()}`,
+            label: 'Edit shot timeline',
+            intent: 'Save shot-local timeline changes',
+            tags: ['shot-popup'],
+          };
+          const sharedCommands = await sharedPopupMediaCommands(
+            before,
+            nextConfig,
+            draftRegistry,
+            localSaveSource?.registry ?? registry,
+            rawComposition,
+            occurrenceId,
+            timelineDataProvider!,
+          );
+          if (sharedCommands) {
+            await session.append({
+              before: toOutboxJson(before),
+              after: toOutboxJson(before),
+              label: 'Edit shot timeline',
+              commands: sharedCommands.commands,
+            });
+          } else {
+            const edit = popupDocumentAfter(
+              before,
+              nextConfig,
+              localSaveSource?.config ?? timelineConfig,
+              nextRegistry && !sameJson(nextRegistry, localSaveSource?.registry ?? registry) ? draftRegistry : undefined,
+              localSaveSource?.registry ?? registry,
+              rawComposition,
+              occurrenceId,
+            );
+            if (hasPopupStructuralChange(before, edit.document)) {
+              const intent = popupDocumentPatchIntent(before, edit, occurrenceId, 'Edit shot timeline', step, localSaveHead!);
+              const intentObject = intent as unknown as Record<string, unknown>;
+              const command: CommitRequest['commands'][number] = {
+                schema_version: 1 as const,
+                op: 'doc.patch',
+                version: '1',
+                select: null,
+                created: intentObject.created as string[],
+                args: { changes: toOutboxJson(intentObject.changes) },
+              };
+              const save: LocalSave & { documentIntent: OutboxJson } = {
+                before: toOutboxJson(before),
+                after: toOutboxJson(edit.document),
+                label: 'Edit shot timeline',
+                commands: [command],
+                documentIntent: intent,
+              };
+              await session.append(save);
+            } else {
+              await session.appendDocument({
+                before,
+                after: edit.document,
+                roots: edit.roots,
+                label: 'Edit shot timeline',
+                step: { ...step, reads: edit.reads },
+                reads: edit.reads,
+                merge: 'atomic',
+              });
+            }
+          }
+          pendingLocalSaveSignature = signature;
+          localSaveSource = structuredClone({ config: nextConfig, registry: draftRegistry });
+        }
+      });
+      return captureChain;
+    },
+    async flush() {
+      const publicationGeneration = draftGeneration;
+      const expectedHeadRevisionId = capturedExpectedHeadRevisionId;
+      assertEditorHeadIsCurrent();
+      await captureChain;
+      const session = await localSaveSessionPromise!;
+      const basis = await flushLocalSaves(session);
+      prepareCanonicalSave(basis)();
+      pendingLocalSaveSignature = null;
+      pendingPublication = null;
+      publishCallback?.(composition, publicationGeneration, expectedHeadRevisionId);
+      configVersion += 1;
+      return { configVersion, head: { projectId: composition.projectId, timelineId: composition.parentDocumentId,
+        headRevisionId: basis.head.revisionId, headPublicationId: basis.head.publicationId } };
+    },
+  } : undefined;
+
   const provider: ShotTimelineDataProvider = {
+    localDocumentSave,
     get timelineQueryIdentity() {
       return timelineQueryIdentity;
     },
@@ -1139,85 +1255,9 @@ export function createShotTimelineDataProvider(
       const rawComposition = composition;
       const draftRegistry = nextRegistry ?? registry;
       assertEditorHeadIsCurrent();
-      if (localSaveEnabled) {
-        if (!shotCompositionAdapter) throw new Error('Popup A2 save requires the validated canonical composition adapter');
-        const session = await localSaveSessionPromise!;
-        const before = session.getDocument() as unknown as CanonicalDocument;
-        const signature = stableStringify({ config: nextConfig, registry: draftRegistry });
-        if (session.getState().status !== 'retry' || pendingLocalSaveSignature !== signature) {
-          const step = {
-            id: globalThis.crypto?.randomUUID?.() ?? `popup-edit-${Date.now()}`,
-            label: 'Edit shot timeline',
-            intent: 'Save shot-local timeline changes',
-            tags: ['shot-popup'],
-          };
-          const sharedCommands = await sharedPopupMediaCommands(
-            before,
-            nextConfig,
-            draftRegistry,
-            localSaveSource?.registry ?? registry,
-            rawComposition,
-            occurrenceId,
-            timelineDataProvider!,
-          );
-          if (sharedCommands) {
-            await session.append({
-              before: toOutboxJson(before),
-              after: toOutboxJson(before),
-              label: 'Edit shot timeline',
-              commands: sharedCommands.commands,
-            });
-          } else {
-            const edit = popupDocumentAfter(
-              before,
-              nextConfig,
-              localSaveSource?.config ?? timelineConfig,
-              nextRegistry && !sameJson(nextRegistry, localSaveSource?.registry ?? registry) ? draftRegistry : undefined,
-              localSaveSource?.registry ?? registry,
-              rawComposition,
-              occurrenceId,
-            );
-            if (hasPopupStructuralChange(before, edit.document)) {
-            const intent = popupDocumentPatchIntent(before, edit, occurrenceId, 'Edit shot timeline', step);
-            const intentObject = intent as unknown as Record<string, unknown>;
-            const command: CommitRequest['commands'][number] = {
-              schema_version: 1 as const,
-              op: 'doc.patch',
-              version: '1',
-              select: null,
-              created: intentObject.created as string[],
-              args: { changes: toOutboxJson(intentObject.changes) },
-            };
-            const save: LocalSave & { documentIntent: OutboxJson } = {
-              before: toOutboxJson(before),
-              after: toOutboxJson(edit.document),
-              label: 'Edit shot timeline',
-              commands: [command],
-              documentIntent: intent,
-            };
-            await session.append(save);
-            } else {
-              await session.appendDocument({
-                before,
-                after: edit.document,
-                roots: edit.roots,
-                label: 'Edit shot timeline',
-                step: { ...step, reads: edit.reads },
-                reads: edit.reads,
-                merge: 'atomic',
-              });
-            }
-          }
-          pendingLocalSaveSignature = signature;
-          localSaveSource = structuredClone({ config: nextConfig, registry: draftRegistry });
-        }
-        const basis = await flushLocalSaves(session);
-        prepareCanonicalSave(basis)();
-        pendingLocalSaveSignature = null;
-        pendingPublication = null;
-        publishCallback?.(composition, publicationGeneration, before.parent_revision.revision_id);
-        configVersion += 1;
-        return configVersion;
+      if (localDocumentSave) {
+        await localDocumentSave.capture({ config: nextConfig, registry: draftRegistry });
+        return (await localDocumentSave.flush()).configVersion;
       }
       if (!shotCompositionAdapter?.publish) {
         throw new Error('The canonical shot-composition provider is read-only');

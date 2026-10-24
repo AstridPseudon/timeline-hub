@@ -1,3 +1,4 @@
+import { createContext } from 'react';
 import type { CanonicalDocument, CommitRequest, EditCommand, HistoryPage } from '@/integrations/runtime/timeline-commit-types.ts';
 import type { LocalSaveSession } from '../commands/localSaveSession.ts';
 import { toOutboxJson, type OutboxJson } from '../commands/commitOutbox.ts';
@@ -39,6 +40,10 @@ export interface TimelineLocalSaveHandoff {
   undo(): Promise<void>;
   redo(): Promise<void>;
 }
+
+/** Scoped editors supply their own verified physical-image join and durable owner. */
+export type TimelinePersistenceHandoff = Pick<TimelineLocalSaveHandoff, 'capture' | 'flush'>;
+export const TimelinePersistenceHandoffContext = createContext<TimelinePersistenceHandoff | undefined>(undefined);
 
 const same = (a: unknown, b: unknown) => a === undefined || b === undefined
   ? a === b : canonicalJsonStringify(a) === canonicalJsonStringify(b);
