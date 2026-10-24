@@ -718,7 +718,7 @@ def _check_reservations(port, plan, current, rejected, base):
     def boundary(revision):
         return _load(port, context, revision)
 
-    def restore_native_fork(state, record, write, accepted_base, requested_base):
+    def restore_native_fork(state, record, write, accepted_base, requested_base, recorder_abi):
         """Retain the native fork proof while replaying an accepted birth."""
         command = record.get('command')
         if (not isinstance(command, Mapping)
@@ -835,6 +835,8 @@ def _check_reservations(port, plan, current, rejected, base):
         # ABI-1 native captures predate physical enrichment. Only the complete
         # native record shape may use that proof; mixed physical facts fail closed.
         native = bindings == native_bindings
+        _require(not native or recorder_abi != 2,
+                 'ABI2 fork bindings cannot use legacy allocation proof')
         if not native:
             # Every native role must retain its physical input proof. Checking
             # only the two fork roles admits partially stripped v2 records.
@@ -880,7 +882,8 @@ def _check_reservations(port, plan, current, rejected, base):
                 'source_revision_id': source_revision_id,
                 'occurrence_id': identity, 'shot_id': destination})
 
-    def scan(records, bundle, *, ordinary=False, output=None, accepted_base, requested_base):
+    def scan(records, bundle, *, ordinary=False, output=None, accepted_base, requested_base,
+             recorder_abi=None):
         state = State(bundle)
         reserved.update(_reservation_refs(state))
         for record in records:
@@ -926,7 +929,8 @@ def _check_reservations(port, plan, current, rejected, base):
                         write['ref'], kind=root[0], owner=created['owner'],
                         value=write['after']['value'], restoring=True)
                     if root[0] == 'shot':
-                        restore_native_fork(state, record, write, accepted_base, requested_base)
+                        restore_native_fork(state, record, write, accepted_base, requested_base,
+                                            recorder_abi)
                 else:
                     state.set(write['ref'], write['path'], write['after'])
                 if write['ref'] == 'timeline':
@@ -949,10 +953,16 @@ def _check_reservations(port, plan, current, rejected, base):
                 # recorded edge supplies its authenticated original boundary.
                 continue
             recorded = True
+            # Only Runtime's authenticated history entry supplies capture custody.
+            # Pre-change entries have no field; explicit malformed values fail closed.
+            recorder_abi = entry.get('recorder_abi', 1)
+            _require(type(recorder_abi) is int and recorder_abi in (1, 2),
+                     'invalid authenticated recorder ABI')
             records = _records([entry], rejected, base, current)
             _require(entry.get('previous') is not None, 'missing original identity boundary')
             scan(records, boundary(entry['previous']['revision_id']),
                  output=boundary(entry['revision_id']), accepted_base=entry['previous'],
+                 recorder_abi=recorder_abi,
                  requested_base={key: entry['receipt']['result']['base_' + key]
                                  for key in ('revision_id', 'publication_id')})
             reserved.update(_reservation_refs(State(boundary(entry['revision_id']))))
