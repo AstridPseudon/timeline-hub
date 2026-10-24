@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T07:49:32Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 0m -->
-# runtime board, 2026-10-24T07:49:11Z
+<!-- main | 2026-10-24T07:52:14Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 14 | status age 1m -->
+# runtime board, 2026-10-24T07:51:16Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -77,7 +77,7 @@
 | FREEZE | Coordinate final tuple and proofs | Runtime manager | D48 and D49 | doing | Runtime 0721; Agent 0702; App 0707 | U1c and D39 merged. Agent U2 repairs0713 and App GO remain pending. Farm lead owns the normal request after the role decision. | Runtime becfe6db8 |
 | OPS-child-observability | Retain bounded maker failure evidence | Luna | Independent installed proof passed | merged | Review 0730; installed 0735; live 0739 PASS | All four live, publication and committed copies match reviewed bytes. Real child and bootstrap remain unqualified. | 33fc06bbd installed |
 | OPS-wheel-acquisition | Verify normal original-wheel acquisition | Luna | Independent source review passed | merged | Author 0743; review 0747 PASS; Agent 0733 | Standard hash-locked pip operation qualified from source. Input must survive maker snapshot; no actual wheels or child credit. | Source facts only |
-| R-commit-response | Classify mutation response work | Luna | Independent source review | review | Author 0745; review 0750 | Pinned source repeats checks across authority boundaries. Actual latency and daemon unknown; no implementation justified. | Read only |
+| R-commit-response | Correct mutation source call counts | Luna | First factual correction | doing | Review 0750; return 0755 | Initial path validates three times; CAS retries twice. Other boundary facts pass. No latency conclusion or producer change. | Read only |
 | OPS-wheel-layout | Match legitimate wheel metadata names | Luna | Exact original artifact cause | doing | rt-OPS-wheel-layout-fix-0752; Agent review 0740 | Real jaraco.classes wheel exposes dotted dist-info mismatch. Preserve wheel hashes and all archive/metadata/Store guards. | Base reviewed 33fc |
 
 Runtime full: 0 of 36 original failures open; exact integrated proofs and independent accounting remain recorded above. No new full-suite PASS. Current producer is becfe6db88b2cc034dba3fafa6c050117cdf2b06 after normal U1c and D39 merges. Readonly integrated worker0721 passed409 cases on this exact head; source reviews0703 and0710 remain PASS. Shared inverse source is separately qualified on460c by177 Runtime cases and six shared/source-copy controls, with no original ABA or HTTP credit.
@@ -86,7 +86,7 @@ FREEZE sequence under D48 and D49:
 - Runtime: U1c merged46eb; D39 mergedbecfe6; exact integrated proof0721 passed409; inventory/result review0727 SOURCE/RESULT PASS; current consumer adoption remains unqualified.
 - Agent: repaired joined5783 retains real25359 and home3f7 ancestry. Duck135 and restored coverage reviews passed; HARD Sol0738 now reviews cumulative source. Branch-only normal D39 preparation0738 runs in parallel; home waits reviews. Normal D39 adoption follows reviewed U2 home and exact producer handoff.
 - App: U3b first return6f2eb7e passed695 targeted plus Gate5/types/lint. Independent review found undefined renderingElements; HARD Sol0731 owns that repair and provenance checks. Merge remains gated on header P2/P3 GO, then D39 adoption.
-- Composition: live67b8 is unchanged; no upstream merge required. Viewing owns its qualification.
+- Composition: unchanged67b8 baseline; Viewing readonlyfreeze check0746 verifies live upstream and full-service readiness. Its checkpoint follows preflight; final full is on Viewing service.
 - Final tuple qualification precedes P1–P5 on App service with Proof verdict, final full suites, then Farm build and ZIP.
 - Full venues: Runtime main service; Agent Farm after zero-setup-error checkpoint, fallback Agent service after dependency qualification; App App service; Composition Viewing service.
 
@@ -102,8 +102,8 @@ D34: main has about9 GiB free at07:17. No main disk work per the explicit orches
 
 Blockers: Farm — lead request succeeded with verified reuse key5ca5; reviewed row installer0738 and genuine parent plus sanitized-child preflight remain pending. No checkpoint before PASS.
 Blockers: Agent and App — reviewed U2 home, D39 consumer adoption and header P2/P3 GO are still needed for the final tuple.
-Blockers: Agent artifacts — installed reviewed route is published; actual received-kit receipt, original lock-authenticated wheels and bootstrap remain needed.
-Next ready: No unassigned ready Runtime task. Wheel source review0747 passed; response source review0750 is dispatched. Live/publication review0739 passed. Agent owns real artifacts; normal publication is qualified; Agent owns actual received-kit and artifact input.
+Blockers: Runtime kit — Agent independently verified all67 original wheel hashes and identities; legitimate dotted metadata naming needs verifier0752 repair, security review and installer. No child retry yet.
+Next ready: No unassigned ready Runtime task. Wheel source review0747 passed. Wheel layout0752 and response factual return0755 are dispatched. Live/publication review0739 passed. Agent owns real artifacts; normal publication is qualified; Agent owns actual received-kit and artifact input.
 Later: Viewing owns the original ABA joined-source verdict. Runtime shared-auth handoff0715 is complete; no competing Runtime author or original body. D34 disk work and D47 memo resume only under their stated conditions.
 
 Later: Agent peer0714 classifies the separate moved-head persistence original as existing D23 child-word scope. It remains unchanged and visibly open; no new journal/publish repair or duplicate body. This does not alter the two Runtime fixture selectors.
@@ -121,3 +121,7 @@ KIT CHANGE: reviewed four-file kit installed on main, source33fc. Shared publica
 Peer0740 consumed: Agent unique wheelhouse-input0733 already owns actual bounded locked pip download, with no newchild. Runtime0743/0747 are source-only operation facts/review and do not compete. Farm187 setup classification independently0728 accounts140 environment observations and47 missing-D40 tuple errors; no new checkpoint or inferred pass credit.
 
 New real input: Agent0733 downloaded67 original locked wheels,99MB,rc0. Current verifier refuses jaraco.classes metadata directory spelling. Runtime0752 owns narrow source correction; Agent0740 owns actual input review. No newchild, wheel rewrite or duplicate download. Earlier reviewed route remains installed but this real set is unqualified.
+
+New input0744: Agent independent0740 validates all67 original wheels against exact lock, no hash/tag/version/METADATA/RECORD mismatch; sole refusal is jaraco.classes dotted dist-info spelling. Runtime0752 owns narrow correction. No repeat download.
+
+Farm0745 exact denial evidence: manager/worker command forms hit the Farm session approval layer; Runtime performed no retry. Orchestrator assigned the existing Farm lead role; normal request returned verifiedreuse5ca5 and row0738 replaced onlyline161 with outside bytes unchanged. Genuine preflight0747 now runs.
