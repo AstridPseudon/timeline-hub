@@ -571,6 +571,10 @@ export class AstridRuntimeClient {
     return this.withSession(() => this.client.getProject(projectId));
   }
 
+  async selectProject(projectId: string, scope: 'workspace' | 'user' = 'workspace'): Promise<MutationResult<Record<string, unknown>>> {
+    return this.withMutation(() => this.client.selectProject(projectId, scope, idempotencyKey()));
+  }
+
   async createProject(
     name: string,
     idempotencyKey: string,

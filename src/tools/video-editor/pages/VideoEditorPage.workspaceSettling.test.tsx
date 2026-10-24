@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useSearchParams } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RUNTIME_REQUEST_WAIT_MS } from '@/integrations/runtime/useRuntimeRequestWait.ts';
 import VideoEditorPage from './VideoEditorPage.tsx';
@@ -15,6 +15,7 @@ const harness = vi.hoisted(() => ({
   projects: undefined as Array<Record<string, unknown>> | undefined,
   timelines: undefined as Array<Record<string, unknown>> | undefined,
   reconnect: vi.fn(),
+  selectProject: vi.fn(async () => undefined),
   disabledIds: new Set<string>(),
 }));
 
@@ -104,7 +105,7 @@ vi.mock('@/shared/components/RuntimeConnection/EmptyWorkspaceGuidance.tsx', () =
 vi.mock('@/shared/components/RuntimeConnection/RuntimeConnectorRecoveryBanner.tsx', () => ({
   RuntimeConnectorRecoveryBanner: ({ onRetry }: { onRetry: () => void }) => <button onClick={onRetry}>Retry Runtime connection</button>,
 }));
-vi.mock('@/integrations/runtime/client.ts', () => ({ AstridRuntimeClient: class {}, RuntimeUnavailableError: class extends Error {}, RuntimeAuthenticationError: class extends Error {} }));
+vi.mock('@/integrations/runtime/client.ts', () => ({ AstridRuntimeClient: class { selectProject = harness.selectProject; }, RuntimeUnavailableError: class extends Error {}, RuntimeAuthenticationError: class extends Error {} }));
 vi.mock('@/integrations/runtime/createDefaultTimeline.ts', () => ({ ensureProjectHasTimeline: vi.fn(), createCanonicalTimeline: vi.fn() }));
 vi.mock('@/integrations/runtime/generated.ts', () => ({ ApiError: class extends Error {} }));
 vi.mock('@/integrations/runtime/connection.ts', () => ({ runtimeOrigin: () => null }));
@@ -113,8 +114,22 @@ vi.mock('@/shared/components/ui/toast.tsx', () => ({ toast: { success: vi.fn(), 
 
 function PageHarness({ entry }: { entry: string }) {
   return <MemoryRouter initialEntries={[entry]} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-    <VideoEditorPage />
+    <PageWithProjectSwitch />
   </MemoryRouter>;
+}
+
+function PageWithProjectSwitch() {
+  const [, setRenderCount] = React.useState(0);
+  const [searchParams, updateSearchParams] = useSearchParams();
+  return <>
+    <button onClick={() => setRenderCount(value => value + 1)}>Rerender</button>
+    <button onClick={() => updateSearchParams(current => {
+      const next = new URLSearchParams(current);
+      next.set('project', searchParams.get('project') === 'project-1' ? 'project-2' : 'project-1');
+      return next;
+    }, { replace: true })}>Switch project</button>
+    <VideoEditorPage />
+  </>;
 }
 
 describe('VideoEditorPage workspace settling', () => {
@@ -127,6 +142,8 @@ describe('VideoEditorPage workspace settling', () => {
     harness.projects = undefined;
     harness.timelines = undefined;
     harness.reconnect.mockClear();
+    harness.selectProject.mockReset();
+    harness.selectProject.mockResolvedValue(undefined);
     vi.mocked(assertNativeEditorConnection).mockClear();
   });
   afterEach(() => {
@@ -168,6 +185,46 @@ describe('VideoEditorPage workspace settling', () => {
     expect(screen.getByTestId('video-editor-provider')).toBeInTheDocument();
     expect(screen.getByText('Editor mounted')).toBeInTheDocument();
     expect(document.querySelector('[data-boot-hold]')).toBeNull();
+  });
+
+  it('selects a verified editor project once with workspace scope and selects again after switching projects', async () => {
+    harness.mode = 'timelines';
+    harness.projectsPending = false;
+    harness.projects = [
+      { project_id: 'project-1', slug: 'project-1', name: 'Project One', metadata: {} },
+      { project_id: 'project-2', slug: 'project-2', name: 'Project Two', metadata: {} },
+    ];
+    harness.timelines = [{ timeline_id: 'timeline-1', name: 'Main', slug: 'main' }];
+    render(<PageHarness entry="/tools/video-editor?project=project-1&timeline=timeline-1" />);
+
+    act(() => vi.advanceTimersByTime(500));
+    await act(async () => Promise.resolve());
+    expect(harness.selectProject).toHaveBeenCalledOnce();
+    expect(harness.selectProject).toHaveBeenLastCalledWith('project-1', 'workspace');
+    fireEvent.click(screen.getByRole('button', { name: 'Rerender' }));
+    act(() => vi.advanceTimersByTime(500));
+    expect(harness.selectProject).toHaveBeenCalledOnce();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Switch project' }));
+    act(() => vi.advanceTimersByTime(500));
+    await act(async () => Promise.resolve());
+    expect(harness.selectProject).toHaveBeenCalledTimes(2);
+    expect(harness.selectProject).toHaveBeenLastCalledWith('project-2', 'workspace');
+  });
+
+  it('keeps the editor working when runtime project selection fails', async () => {
+    harness.mode = 'timelines';
+    harness.projectsPending = false;
+    harness.projects = [{ project_id: 'project-1', slug: 'project-1', name: 'Project One', metadata: {} }];
+    harness.timelines = [{ timeline_id: 'timeline-1', name: 'Main', slug: 'main' }];
+    harness.selectProject.mockRejectedValueOnce(new Error('runtime unavailable'));
+    render(<PageHarness entry="/tools/video-editor?project=project-1&timeline=timeline-1" />);
+
+    act(() => vi.advanceTimersByTime(500));
+    await act(async () => Promise.resolve());
+    expect(harness.selectProject).toHaveBeenCalledOnce();
+    expect(screen.getByText('Editor mounted')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('routes a discovery-error banner retry through cancellable discovery', async () => {

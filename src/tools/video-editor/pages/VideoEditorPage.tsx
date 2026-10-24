@@ -246,6 +246,8 @@ export default function VideoEditorPage() {
   const timelines = runtimeDiscovery.timelinesQuery.data;
   const selectedProject = runtimeDiscovery.project;
   const selectedTimeline = timelines?.find(t => t.timeline_id === timelineId) ?? null;
+  const discoveryError = runtimeDiscovery.projectsQuery.error ?? runtimeDiscovery.timelinesQuery.error;
+  const canSelectRuntimeProject = !!selectedProject && !discoveryError;
 
   useEffect(() => {
     if (projectId || timelineId || !projects || runtimeDiscovery.projectsQuery.error) return;
@@ -346,6 +348,16 @@ export default function VideoEditorPage() {
 
   const tourSelection = useEditorTourSelection();
   const tourHeader = tourSelection ? tourHeaderProps() : null;
+  const lastSelectedRuntimeProject = useRef<string | null>(null);
+  useEffect(() => {
+    if (!canSelectRuntimeProject || !projectId || tourSelection || lastSelectedRuntimeProject.current === projectId) return;
+    const timeout = window.setTimeout(() => {
+      if (lastSelectedRuntimeProject.current === projectId) return;
+      lastSelectedRuntimeProject.current = projectId;
+      void new AstridRuntimeClient().selectProject(projectId, "workspace").catch(() => undefined);
+    }, 500);
+    return () => window.clearTimeout(timeout);
+  }, [projectId, canSelectRuntimeProject, tourSelection]);
   // Register explicit replays; first-run welcome already finished before this editor opens.
   useEditorTourHost();
   const providerSelection = tourSelection ?? userProviderSelection;
@@ -819,7 +831,6 @@ export default function VideoEditorPage() {
     />
   ) : null;
 
-  const discoveryError = runtimeDiscovery.projectsQuery.error ?? runtimeDiscovery.timelinesQuery.error;
   const recoveryError = runtimeConnectorError ?? discoveryError;
   const connectionFailed = !!(recoveryError || nativeRecoveryError);
   return (
