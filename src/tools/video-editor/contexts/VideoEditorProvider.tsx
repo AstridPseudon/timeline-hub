@@ -27,6 +27,9 @@ import { useAstridShotsHost } from '@/tools/video-editor/adapters/app/useAstridS
 import { playedShotComposition } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
 import type { PreparedShotComposition } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
+import type { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
+import type { MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
+import { createTimelineCommands } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import {
   VideoEditorRuntimeProvider,
@@ -454,6 +457,10 @@ export function VideoEditorRuntimeContent({
 }) {
   const runtime = useVideoEditorRuntime();
   const { store, editor, chrome, transcriptHost } = sync;
+  const commands = useMemo(() => createTimelineCommands(store, {
+    timelineEditability: runtime.timelineEditability,
+    preparedMediaRequiresSelection: Boolean(runtime.provider.commitTimeline),
+  }), [store, runtime.timelineEditability, runtime.provider.commitTimeline]);
   useEffect(() => {
     const pending = store.getState().pendingWorkRegistry;
     if (!pending || !onPendingWorkChange) return;
@@ -578,7 +585,33 @@ export function VideoEditorRuntimeContent({
             processed.push(generationId);
             continue;
           }
+          let mediaSelection: MediaSelection | undefined;
+          if (runtime.provider.commitTimeline) {
+            const provider = runtime.provider as DataProvider & Partial<Pick<RuntimeDataProvider, 'getProjectMediaSelection'>>;
+            const variantId = generation.primary_variant_id;
+            try {
+              if (!runtime.project.projectId || !variantId || !provider.getProjectMediaSelection) {
+                throw new Error('Could not resolve the Runtime project media selection. Import the media again.');
+              }
+              mediaSelection = await provider.getProjectMediaSelection(runtime.project.projectId, {
+                asset: variantId,
+                generation_id: generation.id,
+                variant_id: variantId,
+              });
+              if (mediaSelection.asset !== variantId || mediaSelection.generation_id !== generation.id
+                || mediaSelection.variant_id !== variantId || mediaSelection.object_id !== generation.media_id) {
+                throw new Error('Runtime media selection does not match the loaded generation. Import the media again.');
+              }
+            } catch (error) {
+              if (!mountedRef.current) break;
+              runtime.toast.error(error instanceof Error ? error.message : 'Could not resolve the Runtime project media selection');
+              processed.push(generationId);
+              continue;
+            }
+            if (!mountedRef.current) break;
+          }
           const registrationPlan = planGenerationAssetRegistration({
+            ...(mediaSelection ? { assetId: mediaSelection.asset, variantId: mediaSelection.variant_id } : {}),
             generationId: generation.id,
             mediaId: generation.media_id,
             variantType: generation.type === 'video' ? 'video' : 'image',
@@ -608,36 +641,20 @@ export function VideoEditorRuntimeContent({
             (max, clip) => Math.max(max, clip.at + getClipTimelineDuration(clip)),
             0,
           );
-          const preparedCommand = {
-            type: 'place-prepared-media',
-            payload: {
-              asset: {
-                assetKey: registrationPlan.assetId,
-                mediaType,
-                durationSeconds: registrationPlan.assetEntry.duration ?? null,
-                entry: registrationPlan.assetEntry,
-                source: 'registered',
-              },
-              at: timelineEnd,
-              selectedTrackId: editorForDrop.selectedTrackId,
+          const placed = commands.addClip({
+            preparedAsset: {
+              assetKey: registrationPlan.assetId,
+              mediaType,
+              durationSeconds: registrationPlan.assetEntry.duration ?? null,
+              entry: registrationPlan.assetEntry,
+              source: 'registered',
+              ...(mediaSelection ? { mediaSelection } : {}),
             },
-          } as const;
-          const preview = editorForDrop.commands.dryRun(preparedCommand);
-          if (preview.status === 'rejected') {
-            console.error('[video-editor] Staged generation asset could not be planned', { assetKey: registrationPlan.assetId });
-            runtime.toast.error(preview.errors[0]?.message ?? 'Could not place asset');
-            processed.push(generationId);
-            continue;
-          }
-          const detail = preview.commandResults[0]?.detail;
-          const placed = editorForDrop.commands.apply(preparedCommand, {
-            semantic: true,
-            selectedClipId: typeof detail?.clipId === 'string' ? detail.clipId : undefined,
-            selectedTrackId: typeof detail?.trackId === 'string' ? detail.trackId : editorForDrop.selectedTrackId,
+            time: timelineEnd,
           });
-          if (placed.status === 'rejected') {
+          if (!placed.ok) {
             console.error('[video-editor] Staged generation asset could not be placed', { assetKey: registrationPlan.assetId });
-            runtime.toast.error(placed.errors[0]?.message ?? 'Could not place asset');
+            runtime.toast.error(placed.error.message);
           }
           processed.push(generationId);
           // Allow React to commit the clip before the next iteration reads clips.
@@ -662,7 +679,7 @@ export function VideoEditorRuntimeContent({
         drainInFlightRef.current = false;
       }
     })();
-  }, [editor.isLoading, isActiveInstance, pendingAddGenerationId, runtime.mediaLightbox, runtime.toast, runtime.timelineId, runtime.project.projectId, searchParams, setSearchParams, store]);
+  }, [commands, editor.isLoading, isActiveInstance, pendingAddGenerationId, runtime.mediaLightbox, runtime.provider, runtime.toast, runtime.timelineId, runtime.project.projectId, searchParams, setSearchParams, store]);
 
   const [lightboxAssetKey, setLightboxAssetKey] = useState<string | null>(null);
   const [lightboxClipId, setLightboxClipId] = useState<string | null>(null);
