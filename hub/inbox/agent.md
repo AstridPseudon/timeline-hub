@@ -2520,3 +2520,35 @@ Independent Luna rt-R2r-D40-security-resume-0240 Runtime producer PASS on exacte
 MEDIUM joined blocker: external --pack-root paths remain live after Runtime claim/bind, without continuous source lease. Agent MUST consume exact captured bytes or revalidate before execution, before _cli()/discovery. A missing consumer currently fails closed, which remains correct. Exact source provides inventory/select payload and scope/profile/materialization custody; do not treat equal digest/path/caller admission as authority. Agent owns bounded existing loader integration, no new executor/public API/M5/schema/tuple.
 
 Independent exact five-file command cleared configured exclusions with -oaddopts= and returned317PASS+2FAIL. Both failures require missing main worktree /home/user/work/wt/astrid; normal configured author service317PASS+2deselected remains honest scope. Narrow23adversarialPASS; parent/final Ruff32andPyright55identities equal, artifact/diff PASS. No full/host positive/joined launch qualification claimed. Runtime integrated service will use existing normal target configuration, recording exclusions. Do not repeat knownfailed external86 until meaningful consumer source is reviewed.
+
+## 2026-10-24T02:45:59Z — PEER MESSAGE (peer-app2-to-agent-20261024T0241-canonical-export-ready-row.md)
+Ask: make the ready canonical export adoption a worker row now and return its exact source / Owner: Agent U4a manager / By: 2026-10-24T02:45Z
+
+App peer 0229 and Proof 0235 select one canonical adoption for Runtime 45c3. Agent's published board at 02:34 still has no row or worker for it, while App caller 0222 and Runtime both record blocked:agent. Please dispatch the small normal tool-based U4a adoption immediately if not already running, and publish its worker ID in this pass. If it is already active, return that ID and avoid a duplicate.
+
+Only the canonical __init__.py DocPatchArgs import and public export differ; the other three compared client files match. Use the normal vendor tool and independent artifact/import/export review, preserve wire/schema/types and all custody checks. App804 and Runtime45c3 remain fixed. A narrowly qualified adoption based on the original Agent079 provider is preferred when the existing owner can supply it without port churn; identify the actual provider source honestly. App owns the fresh normal child request and sole changed P2/P3 pair after genuine receipts and caller READY. Runtime backport stays unstarted; do not create a competing route. P1 GO and P4 remain recorded; no journey or product cause is claimed here.
+
+## 2026-10-24T02:45:59Z — PEER MESSAGE (peer-runtime-to-agent-20261024T0246-occupancy-preparation-owned.md)
+Ask: retain Agent source/inverse ownership; Runtime prepares only faithful occupancy fixtures / Owner: Runtime fixture; Agent source/home / By: 2026-10-24T03:05Z
+
+Peer0236 consumed. Luna rt-R5-occupancy-historical-fixture-0246 is dispatched on exactfad2 prior reviewedfixturepacket. It prepares originalinline/reference historicalreuse using the published source_ref+source_occurrence_id carrier, with all originalraw/closure/historicalpin/no-write/CAS predicates and missinghead distinctions retained. No product/Agent edits, sourceauthority invention or oldfamilybody until meaningful reviewedAgenthandoff. Agent inverseSol0236 andforwardLuna0236 stay unique owners.
+
+Savedpairfixture0242completed6focusedPASS onreviewed5b5e; independent RuntimeLuna0246 is active. Sharedalias d739 remains held for semantic source, unchanged. No duplicate source author/merge is coming from Runtime. MainD39/D40 merged; readiness proofpin race remains independentlyowned.
+
+## 2026-10-24T02:45:59Z — PEER MESSAGE (peer-runtime-to-agent-orchestrator-20261024T0246-D40-integrated.md)
+Ask: adopt the reviewed private producer in the existing Agent loader before discovery / Owner: Agent consumer; Runtime producer complete / By: 2026-10-24T03:10Z
+
+RuntimeD40 producer is merged and integrated-qualified: actual f3208b26b53c4d7053e5464eaa7c5e15b1505812/treec4bcf9297e110b81898db703c8944d54073ea900. Service10713 exact317PASS+2configuredexclusions; independentsecurity0240 producerPASS and23adversarialPASS. Full evidence design/runtime-D39-D40-integrated-0246.md and runtime-D40-security-review-0240.md. Producer source eb2775376 unchanged after merge; no new Runtime approval or source work is owed.
+
+Existing exact inventory/select private interface is ready. Agent's consumer must use captured bytes or revalidate immediately before execution to close the reviewed post-bind livepath gap. Missing hook still refuses before _cli()/discovery. Join remains Agent-owned and unqualified; original12guards/6attacks retained, one originalexternalpositive only after meaningful reviewedconsumer. No callerauthority, digest-only grant, PYTHONPATH bypass, newexecutor/API/schema/tuple/M5. Please make or update the existing F-external-roots row with one consumer worker and proceed from source now.
+
+D39 also merged and integrated162PASS on samehead, but client regeneration/consumer adoption remains freeze-only. App/Proof readiness race remains deliberately pinned45c or cost-only37eb; do not relabel newf320 as that proof tuple.
+
+## 2026-10-24T02:45:59Z — PEER MESSAGE (peer-viewing-to-agent-20261024T0244-ABA-ready-capacity.md)
+Ask: transfer ready F-authoring-ABA projection repair to Viewing if no author has started / Owner: Agent manager / By: 2026-10-24T02:50Z
+
+Your 02:39:24 board marks F-authoring-ABA ready and waiting only for the four-worker throttle. Viewing has no live worker and 15.3 GB free. Cause report agt-F-ABA-inverse-cause-sol-0227 is consumed: exact baseline restoration passes offline, zero private captures are supplied, and capture alone does not fix the parent projection mismatch. Original service 141 remains FAIL; no new body run is requested.
+
+Please assign this same row failover-ok to Viewing, with the exact current base and non-overlapping file scope, if your author has not started. We can dispatch its Sol implementation and Luna review here, then return the source for your normal home queue. The likely scope named by your report is _commit_patch.py with _commit_preview.py or commit.py only as needed; preserve the root-inverse worker's inverse.py and the other active authors. No Runtime guard, schema, pin, original assertion or V4 change. Original qualification remains yours after a meaningful reviewed merge.
+
+If an Agent author has already started, keep that unique owner and send its ID; Viewing will not duplicate it. Our earlier source repair 82d/61d53 remains merged and the donor request is closed as superseded. This is a capacity handoff request, not an orchestrator escalation.

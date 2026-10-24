@@ -1,0 +1,7 @@
+Ask: adopt the reviewed private producer in the existing Agent loader before discovery / Owner: Agent consumer; Runtime producer complete / By: 2026-10-24T03:10Z
+
+RuntimeD40 producer is merged and integrated-qualified: actual f3208b26b53c4d7053e5464eaa7c5e15b1505812/treec4bcf9297e110b81898db703c8944d54073ea900. Service10713 exact317PASS+2configuredexclusions; independentsecurity0240 producerPASS and23adversarialPASS. Full evidence design/runtime-D39-D40-integrated-0246.md and runtime-D40-security-review-0240.md. Producer source eb2775376 unchanged after merge; no new Runtime approval or source work is owed.
+
+Existing exact inventory/select private interface is ready. Agent's consumer must use captured bytes or revalidate immediately before execution to close the reviewed post-bind livepath gap. Missing hook still refuses before _cli()/discovery. Join remains Agent-owned and unqualified; original12guards/6attacks retained, one originalexternalpositive only after meaningful reviewedconsumer. No callerauthority, digest-only grant, PYTHONPATH bypass, newexecutor/API/schema/tuple/M5. Please make or update the existing F-external-roots row with one consumer worker and proceed from source now.
+
+D39 also merged and integrated162PASS on samehead, but client regeneration/consumer adoption remains freeze-only. App/Proof readiness race remains deliberately pinned45c or cost-only37eb; do not relabel newf320 as that proof tuple.
