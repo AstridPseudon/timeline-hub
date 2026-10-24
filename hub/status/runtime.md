@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T20:49:24Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 5m -->
-# runtime board, 2026-10-24T20:44:15Z
+<!-- main | 2026-10-24T20:52:25Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 0m -->
+# runtime board, 2026-10-24T20:52:05Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -81,7 +81,7 @@
 | R-P4-history-cost | Preserve finite walk snapshots | Luna / Sol | Actual integrated receipt passed | merged | Review1910; home1919 PASS | Exact e89eb: 173 focused plus12 historical PASS; source exact f51e. Three pairs gain5.69% wall. Original45s gate stays open. | e89eb8c7d / f51e29658 |
 | R-P2-popup-422 | Project genuine fork-created shot roots | Luna | App current P2 proof | merged | Security1658; integrated1704 PASS | Actualb318:4 PASS0.16s, exact reviewedsource; forgedowner/sibling/source refused. App original stillpending. [Proof](../../design/rt-P2-popup-integrated-1704.md) | b318a8ec4 /88b9cf6 |
 | R-P2-popup-observation | Attribute popup physical observation refusal | Luna | Source finding complete | merged | rt-P2-popup-observation-1638 | Runtime created-child projection lacks fork-created shot roots.2Runtime+8Agent comparators PASS; source cause only. | Source unchanged |
-| R-P2-element-docpatch-hang | Attribute native seed wait locally | HARD Sol | Actual14383 input complete | doing | rt-D83-seed-service-sol-2040 | Real stack captured; six native seeds timed out before gestures. Local daemon loop owns wait versus compute; no common cause proved. | Captured44917 |
+| R-P2-element-docpatch-hang | Qualify original element after source repair | Sol / App service | Released dc55 normal adoption | blocked:app | App isolated gesture next | Meaningful reviewed source released; reduced native loop8PASS. Original fullmedia seed and element gesture remain unproved. | Runtime dc55 |
 | U1-D69-marker-scope | Preserve mixed-route live catalog predicates | Luna | Actual integrated proof passed | merged | Citations1702; integrated1708 PASS | Actual2c1:9 PASS9s; exact approvedledgerappendix published once, outsidebytes intact. [Proof](../../design/rt-U1-D69-phase-integrated-1708.md) | ea3bca10d /925a7dd |
 | U1-D69-restore-guard | Restore two skip guard originals | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 |
 | U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 /bb022 |
@@ -146,7 +146,7 @@
 | D79-hung-stack-kit | Capture pending request stacks | Luna / App | Actual capture | blocked:app | App stackwire1859 HOME7098; live1856 | Runtime7e857 routes output; App shipping helper20 controls PASS. Actual13100 captured before helper home; supervised dump still unproved. | Runtime7e857 / App7098 |
 | R-P4-inverse-profile | Measure distinct inverse traversal | Agent Luna | Authentic finite receipt complete | merged | agt-R2-history-cost-measure-1850 | Genuine new v2 restore passed in 6.87s; 258 history, 254 verify and 6299 JSON calls. Authentic profile and XML; raw log and script loss disclosed. | Evidence a70f69 |
 
-| D80-seed-timeouts | Attribute six native seed timeouts | HARD Sol | D83 local reproduction | doing | rt-D83-seed-service-sol-2040 | All six stop before gestures. Actual4206B dump qualified; request identity still uncertain under cap1. | Capture44917 |
+| D80-seed-timeouts | Compare genuine native daemon controls | Sol / Luna | Exact candidate proof complete | merged | Sol2040; Luna2049 | Exact dc55 reduced loop8PASS84.30s. Olde745 7PASS1FAIL145s retained. All targets accepted; fullmedia/finalpatch omitted. [Proof](../../design/runtime-D83-dc55-local-2049.md) | dc55b8bc6 |
 | D80-selector-accounting | Preserve popup case inventory | Luna | Authentic XML and AST map | merged | rt-P2-D80-selector-accounting-1915 | 23 unique Runtime cases: eight preserved plus 15 new. Earlier 27 included four authority-file neighbors. No behavior dropped. | Source unchanged |
 | D78-App-donor | Retain overlapping helper candidate | Luna | Sole App shipping owner1859 | gated:App-shipping | rt-D78-app-stack-activation-1908 | Donor six controls PASS; never merge beside App1859 HOME7098. No actual live capture inferred. | Held donor |
 
@@ -178,18 +178,20 @@ FREEZE D59/D66/D83: P1 current31083 readiness1/original2 PASS. P2 original22847 
 Venues: App P1/P2/P3, Agent P4, main P5/Composition. D73 captures four exact SHAs once with checkout receipts. Newer home does not invalidate a run. D83 NO-GO gets brief automatic summary; GO keeps one independent verdict. No duplicate diagnostic service body.
 D65 delivery: Runtime merge, Agent merge, authentic App manifest command/digest equality, then App merge. Installed v2 docs and D67 bindings retained. Final candidate remains cut-gated.
 
-Blockers: Runtime D83 seed — resumeSol2040 registers the ordinary named service and runs prepared real-daemon controls. PriorSol2031 could not run private absolute path through targeted. No safety denial or App source wait.
+Blockers: App original seed/element — exactdc55 local8PASS and all source/security receipts released. App normal adoption and isolated P2 gestures own actual fullmedia/element qualification. No Runtime source input owed.
 Blockers: Agent originals — Runtime dc55 normal merge/security2037 PASS complete. Agent2028 owns normal adoption and one batch of P4three plus retained R2four. All five original scopes stay open until actual proof.
 Blockers: App popup original — reviewed87bc actual23 Runtime plus4 Agent PASS. Meaningful App isolated gesture qualification remains owed after D83 fix.
 Blockers: Final cut — lane core0/regressions0, eight P2, final tuple reruns, D69 and genuine installed render required. Current P3 GO qualifies only recorded tuple. No build before cut.
-Next ready: Finish seed off/on current-source comparison; Agent adopts qualified dc55 and runs its prepared original batch once. App next isolated gesture follows meaningful local seed qualification. No E/D79 follow-up until ZIP.
+Next ready: Agent adopts qualified dc55 and runs prepared original batch once. App captures current tuple and starts isolated P2 gestures. Runtime consumes same-ID results, no duplicate authors or runs. No E/D79 follow-up until ZIP.
 Later: D79 has no complete authentic accepted record/history/context; paused D83. E1/E3 designs delivered before pause, no further work until ZIP. E2 Agent design complete. D47 memo/proof pins post-delivery,nine attacks open. V4 cut; D14/D23 deferred; D34 cleanup held. D62 submit completeness remains known gap.
 Admission: D56 Farm/schema access stopped. Original403/access refusals and historical denied cleanup/process/retirement targets untouched. D67 D13 gap unchanged. App dirtyU3 guard refusals stay stopped.
-Disk: 8693473280 available bytes at20:33, about8.10GiB; cap4. Ended trees auto recycle. Five prior dirty old Runtime trees remain ineligible; no retry. Recorded global sweep/compact permission limits untouched.
+Disk: 8693473280 available bytes at20:33, about8.10GiB; cap4. Ended trees auto recycle. Three prior dirty old Runtime trees remain ineligible; no retry. Recorded global sweep/compact permission limits untouched.
 
-live 1 / cap 4; ready-undispatched 0 critical local. SeedSol2040 active; securityLuna2037 completed and normal source merged. Observer service complete; no E/D79 worker live.
+live 0 / cap 4; ready-undispatched 0 critical local. Source/security/observer/local control work complete. Cross-lane original submitters own next ready work; no E/D79 follow-up. Observer service complete; no E/D79 worker live.
 Pass 2026-10-24T20:30:32Z: D83 source and local reproduction dispatched. Independent schema security2018 PASS258 consumed; exact cleanup2018 merged normal e745. Actual14383 capture wait cleared. Observer2019 exact service acceptance and integrated receipt2035 PASS consumed; normal4351. P315493 independent2024 GO consumed. Seed execution ordinary registration blocker assigned2040; history2031 source complete/security2037 active. No gate or cut closure. Prior refusals untouched.
 
 D83(1b) explicit: HARD Sol rt-D83-history-path-sol-2031 COMPLETED at20:36, source report published, security2037 active. Two original Sol questions were dispatched together; do not infer missing second Sol from current live count. App2026 correlates dump to successful request1; SDK30s timed out request2, outer120s did not fire.
 
 Current20:44: security2037 PASS and normal dc55 consumed. Native control oldobserver N4 ON timed out45s, seven other variants passed. Stack is observer request lookup/jsonschema path, not measured lock blocking. Seed2040 checks corrected source; original14383 common-cause limits remain.
+
+Pass 2026-10-24T20:52:05Z: exactcombineddc55 local8PASS consumed and published with actualXML. Source/security release complete; Agent batch and App isolated gestures ready. All8original P2 and fiveAgenthistory scopes still open. No original or finalcut credit from reducedcontrol. No eligible clean ended Runtime tree; prior refusedcleanup untouched.
