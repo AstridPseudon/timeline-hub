@@ -29,8 +29,9 @@ def container(owner, kind):
         ('config' if owner == 'parent' else 'source', kind + 's'))
 
 
-def _identity(value):
-    return isinstance(value, str) and bool(value) and '/' not in value and '::' not in value
+def _identity(value, *, literal=False):
+    return (isinstance(value, str) and bool(value)
+            and (literal or '/' not in value and '::' not in value))
 
 
 def shape(state, owner, kind):
@@ -91,7 +92,7 @@ def rows(state, owner, kind, *, check_mirrors=True):
     return result
 
 
-def order(state, owner, kind, *, check_mirrors=True):
+def order(state, owner, kind, *, check_mirrors=True, literal=False):
     collection = rows(state, owner, kind, check_mirrors=check_mirrors)
     if kind == 'shot':
         identities = list(collection)
@@ -104,14 +105,14 @@ def order(state, owner, kind, *, check_mirrors=True):
     else:
         key = 'occurrence_id' if kind == 'occurrence' else 'id'
         identities = [row.get(key) if isinstance(row, dict) else None for row in collection]
-    if any(not _identity(identity) for identity in identities) or len(set(identities)) != len(identities):
+    if any(not _identity(identity, literal=literal) for identity in identities) or len(set(identities)) != len(identities):
         raise CommandError('missing or ambiguous collection identity', kind='identity_conflict', ref=owner)
     prefix = kind + ':' if kind in ('occurrence', 'shot') else owner + '/' + kind + ':'
     return [prefix + identity for identity in identities]
 
 
-def arrange(state, owner, kind, expected):
-    current = order(state, owner, kind, check_mirrors=False)
+def arrange(state, owner, kind, expected, *, literal=False):
+    current = order(state, owner, kind, check_mirrors=False, literal=literal)
     if len(expected) != len(set(expected)) or set(current) != set(expected):
         raise CommandError('restoration membership differs from historical order',
                            kind='selection_changed', ref=owner)

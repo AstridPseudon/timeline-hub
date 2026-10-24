@@ -25,7 +25,12 @@ from ._command_state import (
     root_identity,
 )
 from ._recording import Recording, guard, selection
-from ._root_inverse import arrange_restored, clip_cache_stages, occurrence_orders, recover_source
+from ._root_inverse import (
+    arrange_restored,
+    clip_cache_stages,
+    occurrence_orders,
+    recover_source,
+)
 
 
 def _inverse_item_path(state, ref, path, records):
@@ -982,7 +987,7 @@ def _stage_restoration_orders(records, record):
         if image.get('state') != 'present' or not isinstance(image.get('value'), list):
             raise CommandError('inverse stage order is unavailable', kind='history_unavailable')
         result.append(order(State({'parent': {'clips': image['value'],
-                                             'config': {'clips': image['value']}}}), 'parent', 'clip'))
+                                             'config': {'clips': image['value']}}}), 'parent', 'clip', literal=True))
     result_orders[('parent', 'clip')] = tuple(result)
     return result_orders
 
@@ -1139,7 +1144,7 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
                 for (owner, kind), (_, expected) in stage_orders.items():
                     actual = (None if owner == 'parent' and kind == 'clip'
                               and ctx.state.get('parent', ['clips']) == ABSENT and expected is None
-                              else order(ctx.state, owner, kind))
+                              else order(ctx.state, owner, kind, literal=True))
                     if actual != expected:
                         raise CommandError('inverse stage membership/order changed',
                                            kind='selection_changed', ref=owner)
@@ -1151,7 +1156,7 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
                     guard(ctx.state, 'parent', ['clips'], ABSENT, kind='history_unavailable')
                     continue
                 if ctx.state.entity(owner, optional=True) is not None:
-                    arrange(ctx.state, owner, kind, original)
+                    arrange(ctx.state, owner, kind, original, literal=True)
             arrange_restored(ctx.state, record, root_orders.get(id(record)))
             ctx.compile_mirrors()
         from ._root_inverse import restore_root_baselines
@@ -1164,7 +1169,7 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
             live = {'occurrence:' + row['occurrence_id'] for row in ctx.state.bundle['placements']}
             for ref in touched - {'parent', 'timeline'}:
                 physical.owners[ref] = [(owner, local) for owner, local in physical.owners[ref] if owner in live]
-                remember(physical, ref)
+                remember(physical, ref, only_if_needed=True)
         ctx.inverse_stages.append((stage_before, copy.deepcopy(ctx.state.bundle)))
         ctx.inverse_effects.append(commands[0].get('_inverse_effects') if len(commands) == 1 else None)
         if step_id is not None:
