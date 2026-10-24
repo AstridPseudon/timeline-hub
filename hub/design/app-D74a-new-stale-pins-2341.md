@@ -3,3 +3,5 @@ D74a mechanical release: app-pin-32036b3c and app-pin-7d53ba28 were clean detach
 Removed the two named KEEP markers, then normal bin/recycle succeeded for each. Branches and all test outputs retained. Previously refused dirtyU3, orphan, compact and other cleanup targets untouched. Free5590077440bytes after release at about23:41Z.
 
 23:45Z additional newly stale pins passed the same current-head, pending/running queue/test, lease and actual process-use checks with zero unreadable processes: app-pin-63d7c74b, app-pin-bceb0350, app-pin-bcb6536f, agt-pin-840a58a7. All relevant originals terminal; current/new def3/039f/732/635f tuple retained. Named KEEP release then normal bin/recycle succeeded for all four. No refused target retried, all outputs/branches retained. Free6282280960bytes after release.
+
+23:54Z app-pin-def3fb17 became stale only after actual12239 terminal. Full current-head/active-test/queue/lease/process checks clear, zero unreadable processes; named KEEP release and bin/recycle succeeded. Actual12239 private evidence/branch retained. Current364f source and immutable039f/732/635f retained. No prior refused target touched.
