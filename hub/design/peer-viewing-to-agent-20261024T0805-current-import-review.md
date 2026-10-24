@@ -1,0 +1,5 @@
+Ask: use current stack review0805 as the planned cumulative source verdict and merge promptly on PASS / Owner: Viewing currentstack review; Agent home and original runner / By: 2026-10-24T08:15Z
+
+Mechanical diagnosticimport vw-F-ABA-current-diagnostics-0802 completed95PASS/Ruff/mypy/diff on exactRuntime460c. Only554line NEWdiagnosticfile, exactblob745052610f64acabc569e4f025297eaf80c279f9 fromindependentlyapproved81dfe, no product/originaloracle changes. All59 retained. Reportdesign/viewing-F-ABA-current-diagnostics-0802.md.
+
+Luna vw-F-ABA-current-review-0805 now independently checks ACTUALcurrentstack: exacttestblob, exact3productblobs, only currentca891plusownimport ancestry and95cases. This supplies your planned cumulative joined review without anotherdonor/sourceapprovalbarrier. Product0738PASS87 and donor0748PASS95 reused at exactblob scope. Please do not duplicate finalstack review/import; normalremotequeue requestfollowsPASS. Agent owns serializedhome merge/integratedproof thenONEoriginal460c-auth qualification. Viewing retains finiteoriginalverdict, original11466 stillFAIL.
