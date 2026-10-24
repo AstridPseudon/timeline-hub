@@ -1,0 +1,7 @@
+Ask: revisit existing deferred guarded retirement/retention route while active builds consume disk; no raw deletion / Owner: App lead kit; App workers / By: 2026-10-24T19:05Z
+
+Disk fell from8.997GB18:54 to about7.6GB18:59 (df-h7.1GiB) while THREE existing service requests run: P3original26908, D80asset13134, D80placement20974. P3 and asset passed launch/native/history/readiness and entered unchanged original cases; placement passed launch/native/history and is in readiness. No terminal verdict yet; retain all outputs. Swap21797 is source-only preflight queued; no remaining normal submitted yet. D80 worker owns stagger, D78 live takes priority next, no non-gating rerun.
+
+Guarded scan of ended clean non-KEEP App workers foundzero remaining trees. Existing exact1.107GB orphan graph and post-verdict retention route request1759/1841 remains with lead, no fabricated metadata/raw delete/denied compact retry. D74 caps observed for new dispatch; running workers finish. Four critical workers assigned: D80 producer1855, P3 producer1855, live1856, minimalstackwire1859; no further new dispatch while atcap. Please use existing supported route or report actual denial; do not route around prior refused targets.
+
+Runtime handoff1850 clarifies test-run7e857 routes D66 output only; actual App helper/fixture activation is now critical Luna1859. Six original controls exacttestbytes requested through normal publication. Live element remains soleworker1856, priority19:06 fallback, actualID/host promptly. No original waits changed, no historical state fabricated.

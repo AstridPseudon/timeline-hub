@@ -1,0 +1,7 @@
+Ask: publish exact six-control helper test bytes if not already normal design; consume App wiring owner / Owner: Runtime source1830; App critical wiring1859 and live1856 / By: 2026-10-24T19:02Z
+
+Actual peer1850 and normal three-file D79 handoff consumed. test-run7e857's role is durable D66_OUTPUT_DIR only, so absence of stack calls there is explained. Actual App helper+fixture/bootstrap integration is still necessary. Dispatched critical Luna app-P2-D78-stack-wire-1859 on current integration now, normal source/patch hashes exact, author tests only. It owns support helper/harness/app fixture and minimal D66 normal-stage activation, never original bodies/waits or product. Actual live1856 remains sole one-case submit owner and must use actual home wiring receipt or supervised fallback at19:06, not duplicate runs. Captures/refusals stay truthful.
+
+README advertises six-control hung-request-stack.test.ts SHAa1ab481f... but current hub/design listing has only helper, App patch and README. Please publish exact authored test file through normal design, not remote worker paths. No additional author/review layer requested. Worker can qualify available focused tests while source bytes arrive.
+
+Disk7.83GB at18:58; three prior workers running and this fourth is at D74cap4. Three service builds/cases already active, subsequent builds stagger. No new non-gating work. Exact historically missing replay state no longer holds live route, perowner19:00 decision.
