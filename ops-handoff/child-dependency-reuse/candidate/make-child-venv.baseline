@@ -3,6 +3,7 @@
 # The fourth argument remains the optional Remotion graph used for suite substitution.
 # Explicit source carrier: ... --source-carrier AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA
 set -u -o pipefail
+ORIGINAL_ARGS=("$@")
 
 O=${CHILD_VENV_ORCH_ROOT:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch}
 A=${CHILD_VENV_AGENT_CHECKOUT:-/home/user/work/agent}
@@ -19,6 +20,10 @@ KILL_AFTER_SECONDS=${CHILD_VENV_KILL_AFTER_SECONDS:-30}
 PIP_NETWORK_TIMEOUT_SECONDS=${CHILD_VENV_PIP_NETWORK_TIMEOUT_SECONDS:-30}
 PIP_RETRIES=${CHILD_VENV_PIP_RETRIES:-2}
 REQUIREMENTS_PATH=${CHILD_VENV_REQUIREMENTS_PATH:-requirements/proof.lock}
+EXPECTED_PROOF_LOCK_SHA256=236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778
+VERIFIER_SHA256=8f95cdaee258b87dde8e859e99fb955e9cde91dfeec9e7191f4837a5ced6714f
+DEPENDENCY_SEED=
+SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
 
 case "$O:$W" in
   /*:/*) ;;
@@ -38,12 +43,27 @@ case "$N" in
 esac
 [[ "$N" =~ ^venv-agent-child-[a-z0-9-]+$ ]] || { echo 'REFUSED: invalid child name'; exit 2; }
 [[ "$S" =~ ^[0-9a-f]{40}$ ]] || { echo 'REFUSED: exact Agent commit required'; exit 2; }
-if [ "$#" -eq 8 ] && [ "$5" = --source-carrier ]; then
-  A=$6; R=$7; RUNTIME_SHA=$8
-elif [ "$#" -gt 4 ]; then
-  echo 'REFUSED: call shape is NAME AGENT_SHA [BASE_SUITE REMOTION_GRAPH] [--source-carrier AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA]' >&2
-  exit 2
-fi
+shift 2
+BS=
+RT=
+if [ "$#" -gt 0 ] && [[ "$1" != --* ]]; then BS=$1; shift; fi
+if [ "$#" -gt 0 ] && [[ "$1" != --* ]]; then RT=$1; shift; fi
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --source-carrier)
+      [ "$#" -ge 4 ] || { echo 'REFUSED: source carrier requires Agent checkout, Runtime checkout and Runtime SHA' >&2; exit 2; }
+      A=$2; R=$3; RUNTIME_SHA=$4; shift 4
+      ;;
+    --dependency-wheelhouse)
+      [ "$#" -ge 2 ] || { echo 'REFUSED: dependency wheelhouse path is missing' >&2; exit 2; }
+      DEPENDENCY_SEED=$2; shift 2
+      ;;
+    *)
+      echo 'REFUSED: unknown child venv option' >&2
+      exit 2
+      ;;
+  esac
+done
 case "$A:$R" in /*:/*) ;; *) echo 'REFUSED: source checkouts must be absolute' >&2; exit 2;; esac
 [[ "$A" =~ ^/[A-Za-z0-9._/-]+$ && "$R" =~ ^/[A-Za-z0-9._/-]+$ ]] || { echo 'REFUSED: source checkout path contains unsafe characters' >&2; exit 2; }
 [ "$A" = "$(readlink -e -- "$A" 2>/dev/null)" ] || { echo 'REFUSED: Agent checkout path is missing or symlinked' >&2; exit 2; }
@@ -70,19 +90,21 @@ if [ -e "$W/$N" ] || [ -L "$W/$N" ]; then
   SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
   REQUESTER=$SCRIPT_DIR/request-child-venv
   [ -f "$REQUESTER" ] || REQUESTER=$SCRIPT_DIR/request-child-venv.sh
-  CHILD_VENV_REUSE_ONLY=1 CHILD_VENV_REUSE_TARGET="$W/$N" "$REQUESTER" "$@"
+  CHILD_VENV_REUSE_ONLY=1 CHILD_VENV_REUSE_TARGET="$W/$N" "$REQUESTER" "${ORIGINAL_ARGS[@]}"
   exit "$?"
 fi
 
 failure() {
   rc=$1
   stage=$2
+  elapsed_seconds=$((SECONDS - STAGE_STARTED))
   if [ -d "$T" ]; then
-    printf 'status=failed\nstage=%s\nrc=%s\nagent_sha=%s\nruntime_sha=%s\npartial=%s\nsource=%s\n' \
-      "$stage" "$rc" "$S" "${RUNTIME_SHA:-unknown}" "$T" "$SRC" > "$T/.provision-failure"
+    printf 'status=failed\nstage=%s\nrc=%s\nelapsed_seconds=%s\nagent_sha=%s\nruntime_sha=%s\nrequirements_path=%s\nlock_sha256=%s\ndiagnostic=stage-command-failed\n' \
+      "$stage" "$rc" "$elapsed_seconds" "$S" "${RUNTIME_SHA:-unknown}" "$REQUIREMENTS_PATH" "$LOCK_SHA" > "$T/.provision-failure"
+    chmod 600 "$T/.provision-failure"
   fi
-  printf '%s child-venv FAILED stage=%s rc=%s name=%s agent=%s runtime=%s partial=%s source=%s\n' \
-    "$(date -u +%FT%TZ)" "$stage" "$rc" "$N" "$S" "${RUNTIME_SHA:-unknown}" "$T" "$SRC" >&2
+  printf '%s child-venv FAILED stage=%s rc=%s name=%s agent=%s runtime=%s elapsed_seconds=%s\n' \
+    "$(date -u +%FT%TZ)" "$stage" "$rc" "$N" "$S" "${RUNTIME_SHA:-unknown}" "$elapsed_seconds" >&2
   exit "$rc"
 }
 
@@ -91,10 +113,13 @@ run_stage() {
   budget=$2
   shift 2
   CURRENT_STAGE=$stage
+  STAGE_STARTED=$SECONDS
   progress "stage=$stage start budget=${budget}s"
   # Do not use foreground mode: it deliberately leaves descendants outside the
   # timeout's process-group termination and can wedge the inline dispatcher.
-  CHILD_VENV_STAGE=$stage "$TIMEOUT_BIN" --kill-after="$KILL_AFTER_SECONDS" "$budget" "$@"
+  # Stage output can contain credentials or index URLs.  The permanent
+  # failure marker records only the allowlisted fields above.
+  CHILD_VENV_STAGE=$stage "$TIMEOUT_BIN" --kill-after="$KILL_AFTER_SECONDS" "$budget" "$@" >/dev/null 2>&1
   rc=$?
   if [ "$rc" -ne 0 ]; then
     failure "$rc" "$stage"
@@ -110,6 +135,14 @@ done
 for path in "$W" "$A" "$R" "$O/tests"; do
   [ -d "$path" ] || missing+=("directory:$path")
 done
+[ -z "$DEPENDENCY_SEED" ] || {
+  [ "$DEPENDENCY_SEED" = "$(readlink -e -- "$DEPENDENCY_SEED" 2>/dev/null)" ] || missing+=("physical dependency wheelhouse:$DEPENDENCY_SEED")
+  [ -d "$DEPENDENCY_SEED" ] || missing+=("directory:$DEPENDENCY_SEED")
+  [ -f "$SCRIPT_DIR/verify_dependency_seed.py" ] || missing+=("dependency seed verifier:$SCRIPT_DIR/verify_dependency_seed.py")
+  [ ! -L "$SCRIPT_DIR/verify_dependency_seed.py" ] || missing+=("symlinked dependency seed verifier")
+  [ "$SCRIPT_DIR/verify_dependency_seed.py" = "$(readlink -e -- "$SCRIPT_DIR/verify_dependency_seed.py" 2>/dev/null)" ] || missing+=("non-physical dependency seed verifier")
+  [ "$(sha256sum "$SCRIPT_DIR/verify_dependency_seed.py" 2>/dev/null | cut -d' ' -f1)" = "$VERIFIER_SHA256" ] || missing+=("untrusted dependency seed verifier")
+}
 [ -w "$O/tests" ] || missing+=("writable:$O/tests")
 check() { "$@" >/dev/null 2>&1 || missing+=("$*"); }
 check git -C "$A" rev-parse --is-inside-work-tree
@@ -142,6 +175,10 @@ if [ "${#missing[@]}" -ne 0 ]; then
   printf 'missing_prerequisite=%s\n' "${missing[@]}" >&2
   exit 2
 fi
+if [ -n "$DEPENDENCY_SEED" ] && [ "$LOCK_SHA" != "$EXPECTED_PROOF_LOCK_SHA256" ]; then
+  echo "REFUSED: dependency seed requires approved proof.lock SHA-256 $EXPECTED_PROOF_LOCK_SHA256" >&2
+  exit 2
+fi
 progress "source agent=$S runtime=$RUNTIME_SHA requirements=$REQUIREMENTS_PATH lock_sha256=$LOCK_SHA"
 
 # D21c retains exact backend custody alongside Agent and generated client identity.
@@ -154,10 +191,10 @@ done)
 
 STORE_HELPER=$O/bin/bench_store.py
 [ -f "$STORE_HELPER" ] && [ ! -L "$STORE_HELPER" ] || { echo 'REFUSED: bench store helper unavailable' >&2; exit 2; }
-export STORE_CONTEXT="$(declare -p O A R W PYTHON TIMEOUT_BIN PIP_TIMEOUT_SECONDS LOCAL_TIMEOUT_SECONDS FREEZE_TIMEOUT_SECONDS BUILD_TIMEOUT_SECONDS KILL_AFTER_SECONDS PIP_NETWORK_TIMEOUT_SECONDS PIP_RETRIES REQUIREMENTS_PATH N S BS RT RUNTIME_SHA CLIENT_IDENTITY LOCK_SHA; declare -f failure run_stage progress source_state)"
-python3 -I - "$0" "$STORE_HELPER" "$W/bench-store" "$O/tests" "$N" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$A" "$R" "$W" "$PYTHON" "$BS" "$RT" "$REQUIREMENTS_PATH" "$LOCK_SHA" <<'STORE_PY'
-import hashlib, importlib.util, os, pathlib, shlex, subprocess, sys
-script, helper, root, tests, name, agent, backend, client, checkout, runtime_checkout, work, python, base_suite, remotion, requirements, lock = sys.argv[1:]
+export STORE_CONTEXT="$(declare -p O A R W PYTHON TIMEOUT_BIN PIP_TIMEOUT_SECONDS LOCAL_TIMEOUT_SECONDS FREEZE_TIMEOUT_SECONDS BUILD_TIMEOUT_SECONDS KILL_AFTER_SECONDS PIP_NETWORK_TIMEOUT_SECONDS PIP_RETRIES REQUIREMENTS_PATH N S BS RT RUNTIME_SHA CLIENT_IDENTITY LOCK_SHA DEPENDENCY_SEED SCRIPT_DIR; declare -f failure run_stage progress source_state)"
+python3 -I - "$0" "$STORE_HELPER" "$W/bench-store" "$O/tests" "$N" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$A" "$R" "$W" "$PYTHON" "$BS" "$RT" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$DEPENDENCY_SEED" <<'STORE_PY'
+import hashlib, importlib.util, os, pathlib, re, shlex, stat, subprocess, sys
+script, helper, root, tests, name, agent, backend, client, checkout, runtime_checkout, work, python, base_suite, remotion, requirements, lock, dependency_seed = sys.argv[1:]
 sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location('bench_store', helper)
 module = importlib.util.module_from_spec(spec)
@@ -203,10 +240,61 @@ def success_receipt(entry, report):
 identity = {'agent_sha': agent, 'backend_sha': backend,
             'client_tuple': dict(line.split('=', 1) for line in client.splitlines())}
 def build(stage, final):
+    build.failure_evidence = None
+    build.failure_recorded = False
     setup = 'T=$1; D=$2; RUN_ID=store; SRC=$T/.child-venv-source-$N; REPORT_DIR=$T; REPORT_TMP=$T/.provision-report; F=$REPORT_TMP; mkdir -p "$SRC"\n'
-    subprocess.run(['timeout', '--kill-after=30', os.environ.get('CHILD_VENV_BUILD_TIMEOUT_SECONDS', '3600'),
-                    'bash', '-u', '-o', 'pipefail', '-c', context + '\n' + setup + body,
-                    'store-child', str(stage), str(final)], check=True)
+    try:
+        subprocess.run(['timeout', '--kill-after=30', os.environ.get('CHILD_VENV_BUILD_TIMEOUT_SECONDS', '3600'),
+                        'bash', '-u', '-o', 'pipefail', '-c', context + '\n' + setup + body,
+                        'store-child', str(stage), str(final)], check=True)
+    except subprocess.CalledProcessError:
+        marker = stage / '.provision-failure'
+        fd = os.open(marker, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        try:
+            info = os.fstat(fd)
+            if not (stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid()
+                    and info.st_nlink == 1 and info.st_size <= 8192
+                    and not info.st_mode & 0o077):
+                raise RuntimeError('unsafe child failure marker')
+            raw = os.read(fd, 8193)
+        finally:
+            os.close(fd)
+        if len(raw) > 8192:
+            raise RuntimeError('child failure marker exceeds size limit')
+        try:
+            lines = raw.decode('utf-8').splitlines()
+        except UnicodeDecodeError as error:
+            raise RuntimeError('child failure marker is not UTF-8') from error
+        allowed = {
+            'status', 'stage', 'rc', 'elapsed_seconds', 'agent_sha', 'runtime_sha',
+            'requirements_path', 'lock_sha256', 'diagnostic',
+        }
+        values = {}
+        for line in lines:
+            key, separator, value = line.partition('=')
+            if not separator or key in values or key not in allowed:
+                raise RuntimeError('child failure marker schema')
+            values[key] = value
+        if set(values) != allowed or values['status'] != 'failed':
+            raise RuntimeError('child failure marker fields')
+        if not re.fullmatch('[a-z0-9-]{1,64}', values['stage']):
+            raise RuntimeError('child failure marker stage')
+        if not re.fullmatch('[0-9]{1,5}', values['rc']):
+            raise RuntimeError('child failure marker return code')
+        if not re.fullmatch('[0-9]{1,6}', values['elapsed_seconds']):
+            raise RuntimeError('child failure marker timing')
+        if not re.fullmatch('[0-9a-f]{40}', values['agent_sha']):
+            raise RuntimeError('child failure marker Agent identity')
+        if not re.fullmatch('[0-9a-f]{40}', values['runtime_sha']):
+            raise RuntimeError('child failure marker Runtime identity')
+        if values['requirements_path'] != requirements or not re.fullmatch('[0-9a-f]{64}', values['lock_sha256']):
+            raise RuntimeError('child failure marker lock identity')
+        if values['diagnostic'] != 'stage-command-failed':
+            raise RuntimeError('child failure marker diagnostic')
+        build.failure_evidence = '\n'.join(f'{key}={values[key]}' for key in (
+            'status', 'stage', 'rc', 'elapsed_seconds', 'agent_sha', 'runtime_sha',
+            'requirements_path', 'lock_sha256', 'diagnostic')) + '\n'
+        raise
 def seal(path):
     subprocess.run(['timeout', '--kill-after=30', os.environ.get('CHILD_VENV_LOCAL_TIMEOUT_SECONDS', '600'),
                     'chmod', '-R', 'a-w', str(path)], check=True)
@@ -219,6 +307,12 @@ def verify(path):
             raise RuntimeError('retained child source/client marker mismatch: ' + marker)
     subprocess.run(['python3', '-I', '-', str(path), client, checkout, agent,
                     runtime_checkout, backend, work, python], input=verifier, text=True, check=True)
+    if dependency_seed:
+        # Authenticate retained ORIGINAL wheels before executing this child.
+        subprocess.run([python, '-I', str(pathlib.Path(script).parent / 'verify_dependency_seed.py'),
+                        str(retained / '.dependency-wheelhouse'), '-', '--committed-lock', checkout,
+                        agent, requirements, lock, '--installed', str(retained)], check=True,
+                       timeout=int(os.environ.get('CHILD_VENV_LOCAL_TIMEOUT_SECONDS', '600')))
     # Re-run the existing freeze identity verifier at the verified final path.
     data = report_bytes(retained)
     identity_script = source.split("\nIDENTITY_SCRIPT=" + "'", 1)[1].split("'\nrun_stage", 1)[0]
@@ -251,10 +345,16 @@ def registration(path, final, reused):
     return {'name': name, 'env': '', 'suite': suite, 'requires': [], 'require_names': requires,
             'report': data.decode('utf-8')}
 try:
-    entry = store.ensure('child', identity, registration, build, verify, seal=seal)
+    entry = store.ensure('child', identity, registration, build, verify, seal=seal,
+                         failure_name=name)
     receipt = success_receipt(entry, verified_reports[entry['path']])
 except Exception as error:
-    print('REFUSED: bench store: ' + str(error), file=sys.stderr)
+    if getattr(build, 'failure_recorded', False):
+        print('REFUSED: bench store: child build failed; bounded evidence retained', file=sys.stderr)
+    elif getattr(build, 'failure_evidence', None) is not None:
+        print('REFUSED: bench store: child build failed; bounded evidence refused', file=sys.stderr)
+    else:
+        print('REFUSED: bench store: ' + str(error), file=sys.stderr)
     sys.exit(2)
 print(receipt)
 STORE_PY
@@ -272,7 +372,15 @@ REQ=$T/.provision-requirements.txt
 run_stage filter-requirements "$LOCAL_TIMEOUT_SECONDS" bash -c \
   'set -o pipefail; git -C "$1" show "$2:$3" | grep -v -e "^astrid @" -e "^pip==" -e "^setuptools==" -e "^wheel==" > "$4"' \
   _ "$A" "$S" "$REQUIREMENTS_PATH" "$REQ"
-run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps -r "$REQ"
+if [ -n "$DEPENDENCY_SEED" ]; then
+  SEED_SNAPSHOT=$T/.dependency-wheelhouse
+  run_stage verify-dependency-seed "$LOCAL_TIMEOUT_SECONDS" "$P" -I "$SCRIPT_DIR/verify_dependency_seed.py" "$DEPENDENCY_SEED" - "$SEED_SNAPSHOT" --committed-lock "$A" "$S" "$REQUIREMENTS_PATH" "$LOCK_SHA"
+fi
+if [ -n "$DEPENDENCY_SEED" ]; then
+  run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$P" -I "$SCRIPT_DIR/verify_dependency_seed.py" "$SEED_SNAPSHOT" - --committed-lock "$A" "$S" "$REQUIREMENTS_PATH" "$LOCK_SHA" --install "${PIP_ARGS[@]}"
+else
+  run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps -r "$REQ"
+fi
 
 AGENT_SRC=$SRC/agent
 RUNTIME_SRC=$SRC/runtime

@@ -153,6 +153,79 @@ def test_seed_rejects_archive_identity_or_unsafe_contents(
     assert "REFUSED: dependency seed:" in result.stderr
 
 
+@pytest.mark.parametrize("metadata_name", ["jaraco.classes", "jaraco_classes", "jaraco-classes"])
+def test_dotted_distribution_metadata_layout_is_standardized_narrowly(
+    tmp_path: Path, metadata_name: str
+) -> None:
+    """The observed dotted jaraco.classes layout is oldRED and now newGREEN."""
+    wheelhouse = tmp_path / "wheelhouse"
+    wheelhouse.mkdir()
+    artifact = wheel(
+        wheelhouse,
+        "jaraco.classes-3.4.0-py3-none-any.whl",
+        internal_name=metadata_name,
+        internal_version="3.4.0",
+    )
+    requirements = tmp_path / "requirements.txt"
+    requirements.write_text(
+        f"jaraco.classes==3.4.0 --hash=sha256:{hashlib.sha256(artifact.read_bytes()).hexdigest()}\n"
+    )
+    result = run_verify(wheelhouse, requirements)
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize(
+    ("metadata_name", "metadata_version"),
+    [("jaraco.classes", "3.4.1"), ("other-package", "3.4.0")],
+)
+def test_dotted_distribution_layout_rejects_wrong_complete_identity(
+    tmp_path: Path, metadata_name: str, metadata_version: str
+) -> None:
+    wheelhouse = tmp_path / "wheelhouse"
+    wheelhouse.mkdir()
+    artifact = wheel(
+        wheelhouse,
+        "jaraco.classes-3.4.0-py3-none-any.whl",
+        internal_name=metadata_name,
+        internal_version=metadata_version,
+    )
+    requirements = tmp_path / "requirements.txt"
+    requirements.write_text(
+        f"jaraco.classes==3.4.0 --hash=sha256:{hashlib.sha256(artifact.read_bytes()).hexdigest()}\n"
+    )
+    result = run_verify(wheelhouse, requirements)
+    assert result.returncode != 0
+    assert "metadata directory" in result.stderr
+
+
+@pytest.mark.parametrize("mutation", ["multiple-metadata", "path-traversal", "hash-mutation"])
+def test_dotted_distribution_layout_keeps_archive_and_hash_guards(
+    tmp_path: Path, mutation: str
+) -> None:
+    wheelhouse = tmp_path / "wheelhouse"
+    wheelhouse.mkdir()
+    artifact = wheel(
+        wheelhouse,
+        "jaraco.classes-3.4.0-py3-none-any.whl",
+        internal_name="jaraco.classes",
+        internal_version="3.4.0",
+        unsafe_member="../escape.txt" if mutation == "path-traversal" else None,
+    )
+    if mutation == "multiple-metadata":
+        with zipfile.ZipFile(artifact, "a") as archive:
+            archive.writestr(
+                "jaraco_classes-3.4.0.dist-info/METADATA",
+                "Name: jaraco.classes\nVersion: 3.4.0\n",
+            )
+    requirements = tmp_path / "requirements.txt"
+    lock(requirements, artifact)
+    if mutation == "hash-mutation":
+        artifact.write_bytes(artifact.read_bytes() + b"mutation")
+    result = run_verify(wheelhouse, requirements)
+    assert result.returncode != 0
+    assert "REFUSED: dependency seed:" in result.stderr
+
+
 @pytest.mark.parametrize("requirement", ["seedpkg>=1.0.0", "seedpkg==1.*", "seedpkg~=1.0"])
 def test_seed_rejects_non_exact_lock_pin(tmp_path: Path, requirement: str) -> None:
     wheelhouse = tmp_path / "wheelhouse"

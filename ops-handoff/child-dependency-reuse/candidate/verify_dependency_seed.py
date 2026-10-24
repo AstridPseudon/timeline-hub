@@ -115,12 +115,24 @@ def archive_identity(data: bytes, display_name: str, filename_name: str, filenam
                     fail(f"wheel contains an unsafe archive member: {display_name}:{name}")
                 if pure.is_absolute():
                     fail(f"wheel contains an absolute archive path: {display_name}:{name}")
-            expected = f"{canonicalize_name(filename_name).replace('-', '_')}-{filename_version}.dist-info"
-            metadata_dirs = {name.split("/", 1)[0] for name in names if ".dist-info/" in name}
-            if metadata_dirs != {expected}:
+            metadata_dirs = {
+                name.split("/", 1)[0]
+                for name in names
+                if "/" in name and name.split("/", 1)[0].endswith(".dist-info")
+            }
+            if len(metadata_dirs) != 1:
                 fail(f"wheel metadata directory does not match filename: {display_name}")
-            metadata = email.message_from_bytes(archive.read(f"{expected}/METADATA"))
-            wheel_metadata = email.message_from_bytes(archive.read(f"{expected}/WHEEL"))
+            metadata_dir = next(iter(metadata_dirs))
+            metadata_stem = metadata_dir.removesuffix(".dist-info")
+            metadata_name, separator, metadata_version = metadata_stem.rpartition("-")
+            if (
+                not separator
+                or canonicalize_name(metadata_name, validate=True) != canonicalize_name(filename_name)
+                or metadata_version != filename_version
+            ):
+                fail(f"wheel metadata directory does not match filename: {display_name}")
+            metadata = email.message_from_bytes(archive.read(f"{metadata_dir}/METADATA"))
+            wheel_metadata = email.message_from_bytes(archive.read(f"{metadata_dir}/WHEEL"))
             if canonicalize_name(metadata.get("Name", "")) != canonicalize_name(filename_name):
                 fail(f"wheel METADATA name does not match filename: {display_name}")
             if metadata.get("Version", "") != filename_version:
