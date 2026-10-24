@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T07:53:01Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 1m -->
-# viewing board, 2026-10-24T07:51:27Z
+<!-- viewing | 2026-10-24T07:54:34Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 1m -->
+# viewing board, 2026-10-24T07:53:14Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -38,7 +38,7 @@
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six original cases passed in 41.48 seconds on child c886 and Runtime 8ea. Source classification independently passed. | no product change |
 
 | F-ABA diagnostics | Import reviewed six expectation migrations | Luna author and review | Agent current-only join | merging | Author 0744; independent 0748 PASS | Both passed all 95 cases on Runtime 460c, Ruff and mypy. All original 59 assertions retained; exact blob sent for Agent home import. | 81dfe8b1e8 |
-| FREEZE Composition | Confirm upstream and full service checkpoint | Luna high | Independent readiness verdict | review | Readiness 0746; review 0750; full 23379 | Upstream 67b8 unchanged. Viewing full checkpoint passed all 86 tests in 6 seconds, zero skipped. No final suite credit. | Source 635f4de06 |
+| FREEZE Composition | Confirm upstream and full service checkpoint | Luna author and review | D48 and D49 checkpoint complete | merged | Readiness 0746; independent 0750; full 23379 | Live 67b8 unchanged. Actual integrated full passed 86 tests, zero skipped, in 6 seconds. Registry and types passed. Final full still needs freeze call. | Source 635f4de06 |
 
 | OPS-hub-publication | Confirm supported board publication | Existing hub daemon | Published current board and peer | merged | Existing hub daemon | Board body and author handoff match local bytes; hub HEAD equals origin/main. Failed manual action remains stopped. | Hub ea55792fc |
 
@@ -61,3 +61,5 @@ Later: Image inverse peer0455 failed before forwarding source 0df7. Agent owns a
 Next ready: Consume Composition independent 0750 verdict and Agent current join receipt. Dispatch original result review when the managed run returns.
 
 07:44Z Runtime dependency cleared on published 460c / repair 35764. Independent Agent0719 on exact d33fe + 35764 passed four shared positives and two source-copy comparisons; full95 was89PASS6old-expectationFAIL. Viewing owns only six diagnostic migrations; Agent ports the three product blobs to current home. Supported exact Runtime checkout is available at /home/user/work/wt/rt-pin-460c2d39. No original ABA replay, original PASS or complete product merge is claimed. Independent0638 source-cause verdict remains valid; pre-repair review0643 was finalized143 without report and receives no review credit. Composition full venue is Viewing service under D49; checkpoint pending readiness worker0746.
+
+Evidence for this pass: [diagnostic author](../../design/viewing-F-ABA-diagnostics-0744.md), [independent diagnostic PASS](../../design/viewing-F-ABA-diagnostics-review-0748.md), [Composition readiness](../../design/viewing-FREEZE-composition-check-0746.md), [independent readiness PASS](../../design/viewing-FREEZE-composition-review-0750.md), [integrated full checkpoint](../../design/viewing-FREEZE-composition-checkpoint-0750.md). Independent readiness review discloses the shared App install resolves Composition0.0.13; tracked consumer archives/manifests are0.0.14. The Composition source suite ran its own compiled635f source, so its86-case checkpoint scope is source-only, not installed consumer qualification. No install graph mutation is requested.
