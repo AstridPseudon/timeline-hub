@@ -9,10 +9,23 @@ from __future__ import annotations
 import atexit
 import importlib.util
 import os
+import sys
 from pathlib import Path
 
 
 _capture = None
+
+
+def _is_runtime_cli_start() -> bool:
+    """Select the normal Runtime CLI daemon from Python's ``-m`` argv seam.
+
+    ``sitecustomize`` runs before ``runpy`` has installed the module name, so
+    Python exposes ``['-m', 'start', ...]`` here for
+    ``python -m runtime_protocol.cli start ...``.  The actual Runtime server
+    worker is then a ThreadingHTTPServer thread in this daemon process; the
+    qualified helper carries its trace hook to that thread.
+    """
+    return len(sys.argv) >= 2 and sys.argv[0] == "-m" and sys.argv[1] == "start"
 
 
 def _start_capture() -> None:
@@ -42,7 +55,7 @@ def _start_capture() -> None:
         os.environ.pop(key, None)
 
 
-if os.environ.get("ASTRID_P2_COMMIT_PHASE_CAPTURE") == "1":
+if os.environ.get("ASTRID_P2_COMMIT_PHASE_CAPTURE") == "1" and _is_runtime_cli_start():
     try:
         _start_capture()
     except BaseException:
