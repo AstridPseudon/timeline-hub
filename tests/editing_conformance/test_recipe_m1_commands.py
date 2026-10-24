@@ -12,6 +12,7 @@ from astrid.core.timeline.authoring_bundle import (
     compile_authoring_candidate,
     open_authoring_bundle,
 )
+from astrid.sdk.timeline import capture as capture_module
 from astrid.sdk.timeline._command_state import (
     ABSENT,
     CommandError,
@@ -21,15 +22,15 @@ from astrid.sdk.timeline._command_state import (
     overlaps,
     present,
 )
-from astrid.sdk.timeline import capture as capture_module
 from astrid.sdk.timeline.capture import capture_move, capture_track_create
 from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.rebase import replay
 from tests.editing_conformance.staging_recipes import (
     install_staging_operations,
     staged_move,
 )
-from tests.timeline.test_authoring_bundle import _closure, _digest
+from tests.timeline.test_authoring_bundle import _closure, _digest, _runtime_document
 
 FIXTURES = Path(__file__).parent / 'fixtures'
 
@@ -47,7 +48,7 @@ def bundle(*, shared=True, app='missing', fps=30):
         parent['payload']['config']['clips'][0]['app'] = copy.deepcopy(app)
     for image in [parent, *shots, *internals]:
         image['content_digest'] = _digest(image['payload'])
-    return open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
+    return bundle_from_document(_runtime_document(parent, shots, internals))
 
 
 def clip(bundle, ref='parent/clip:direct'):
@@ -621,6 +622,51 @@ def accepted_boundaries(records, before, after):
     entry = {'records': {'commands': records,
                          'undo_of': records[0]['command']['args']['publications']}}
     return AcceptedRecords([entry], records, lambda _: (before, after))
+
+
+def compiled_document_patch(before, after, label):
+    from astrid.sdk.timeline.emitter import emit_document_commands
+    from astrid.sdk.timeline.validation import validate_final_candidate
+
+    commands = emit_document_commands(before, after)
+    request = {
+        'api_version': 1, 'project_id': before['project_id'], 'timeline_id': before['timeline_id'],
+        'base_revision_id': before['base_parent']['revision_id'],
+        'base_publication_id': 'compiler-input', 'commands': commands, 'label': label,
+        'steps': [{'id': 'edit', 'label': label, 'intent': 'Preserve surviving rows', 'tags': [],
+                   'command_ordinals': list(range(len(commands))), 'reads': [],
+                   'patch': [change for command in commands for change in command['args']['changes']]}],
+        'merge': 'fields', 'reads': [], 'dry_run': False, 'source': {'via': 'python'},
+        'rationale': 'M1 collection guard regression', 'group_id': 'm1-collection',
+    }
+    plan = execute(before, commands, commit_request=request,
+                   evaluated_head={'revision_id': request['base_revision_id'],
+                                   'publication_id': request['base_publication_id']})
+    validate_final_candidate(plan.bundle, baseline=before)
+    return plan
+
+
+def test_doc_patch_removal_allows_later_surviving_row_edit():
+    from astrid.sdk.timeline.commit import document_from_bundle
+    from astrid.sdk.timeline.inverse import check_intervening
+    from tests.sdk.test_timeline_commit_provider_document import document_fixture
+
+    original = bundle_from_document(document_fixture())
+    candidate = copy.deepcopy(original)
+    candidate['parent']['clips'].pop(0)
+    candidate['parent']['config']['clips'] = copy.deepcopy(candidate['parent']['clips'])
+    removed = compiled_document_patch(original, candidate, 'Remove first clip')
+    peer_before = bundle_from_document(document_from_bundle(removed.bundle))
+    head = copy.deepcopy(peer_before)
+    clip(head, 'parent/clip:clip-b')['app']['org.example']['literal'] = 'later author'
+    head['parent']['config']['clips'] = copy.deepcopy(head['parent']['clips'])
+    later_plan = compiled_document_patch(peer_before, head, 'Edit surviving row')
+
+    # Exercise the production inverse guard with compiler-generated captures;
+    # neither plan is represented as authenticated accepted history.
+    check_intervening(removed.records, later_plan.records,
+                      state=State(later_plan.bundle), include_dependents=True)
+    assert later_plan.bundle == head
 
 
 @pytest.mark.parametrize('owner', ['parent', 'occurrence:occ-1'])
