@@ -88,6 +88,7 @@ interface SetupResult {
   saveTimeline: ReturnType<typeof vi.fn>;
   poll: (data: TimelineData) => void;
   toast: { error: ReturnType<typeof vi.fn>; success: ReturnType<typeof vi.fn> };
+  rerenderRuntime: (changes: Partial<VideoEditorRuntimeContextValue>) => void;
 }
 
 function setup(
@@ -159,7 +160,10 @@ function setup(
     },
     { wrapper },
   );
-  return { hook, saveTimeline, toast, poll(data) {
+  return { hook, saveTimeline, toast, rerenderRuntime(changes) {
+    Object.assign(runtime, changes);
+    hook.rerender();
+  }, poll(data) {
     queries.timelineQuery.data = data;
     hook.rerender();
   } };
@@ -1262,9 +1266,10 @@ describe('useTimelineSave — recovered draft durability', () => {
     }
   });
 
-  it.each(['accepted', 'merged', 'conflict', 'invalid', 'restart', 'dependent', 'merged dependent', 'late reply', 'strict'] as const)(
+  it.each(['accepted', 'merged', 'conflict', 'invalid', 'restart', 'restart after cleanup', 'dependent', 'merged dependent', 'late reply', 'strict'] as const)(
     'the production caller uses it: mounted local document %s', async (outcome) => {
       const dependent = outcome === 'dependent' || outcome === 'merged dependent';
+      const restart = outcome === 'restart' || outcome === 'restart after cleanup';
       const locks = new Set<string>();
       const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
       Object.defineProperty(navigator, 'locks', { configurable: true, value: {
@@ -1300,7 +1305,7 @@ describe('useTimelineSave — recovered draft durability', () => {
       }
       if (outcome === 'conflict' || outcome === 'invalid') send.mockRejectedValueOnce(new ApiError(
         outcome === 'conflict' ? 409 : 422, outcome, 'Retain original intent', '', { status: outcome, path: ['output'], hint: 'Read latest' }));
-      if (outcome === 'restart') send.mockRejectedValueOnce(new Error('Lost acknowledgement'));
+      if (restart) send.mockRejectedValueOnce(new Error('Lost acknowledgement'));
       const original = { data, loadBasis: vi.fn(async () => initial), strict: outcome === 'strict', capabilities: {
         commitTimeline: send, getRecoverableIdentity: vi.fn(async () => ({ actorId: 'actor', realmId: 'realm' })),
       } };
@@ -1342,7 +1347,7 @@ describe('useTimelineSave — recovered draft durability', () => {
           await act(async () => { acknowledge(); await Promise.resolve(); });
         }
         const flushing = act(async () => {
-          if (outcome === 'conflict' || outcome === 'invalid' || outcome === 'restart') {
+          if (outcome === 'conflict' || outcome === 'invalid' || restart) {
             await expect(harness.hook.result.current.flushPendingSave()).rejects.toThrow();
           } else await harness.hook.result.current.flushPendingSave();
         });
@@ -1359,17 +1364,28 @@ describe('useTimelineSave — recovered draft durability', () => {
           expect(stored.intents).toHaveLength(1);
           expect(harness.hook.result.current.dataRef.current?.config.output.file).toBe(config.output.file);
           expect(harness.hook.result.current.localSaveState?.status).toBe('conflict');
-        } else if (outcome === 'restart') {
+        } else if (restart) {
           const exact = structuredClone(send.mock.calls[0]);
           const pending = structuredClone(stored.pending?.request);
           harness.hook.unmount();
           await vi.waitFor(() => expect(locks.size).toBe(0));
+          let finishRead: (() => void) | undefined;
+          if (outcome === 'restart after cleanup') original.loadBasis.mockImplementationOnce(() => new Promise(resolve => {
+            finishRead = () => resolve(initial);
+          }));
           const recovered = setup(async () => { throw new Error('Legacy save must not be called'); }, undefined, original);
           try {
+            if (finishRead) act(() => recovered.rerenderRuntime({ assetResolver: { resolveAssetUrl: async file => file } }));
             await vi.waitFor(() => expect(recovered.hook.result.current.localSaveState?.status).toBe('saved'));
+            if (finishRead) await act(async () => { finishRead!(); });
             expect(send.mock.calls[1]).toEqual(exact);
             expect(JSON.stringify(send.mock.calls[1][0])).toBe(pending?.body);
             expect(recovered.hook.result.current.dataRef.current?.head?.headRevisionId).toBe('r1');
+            expect(recovered.hook.result.current.localSaveState?.ownerId).toBe(stored.ownerId);
+            const [replayed] = await createCommitOutbox().list(scope);
+            expect(replayed.pending).toBeUndefined();
+            expect(replayed.intents).toEqual([]);
+            expect(replayed.generation).toBeGreaterThan(stored.generation);
           } finally { recovered.hook.unmount(); }
         } else {
           expect(stored.intents).toHaveLength(0);
@@ -1389,6 +1405,171 @@ describe('useTimelineSave — recovered draft durability', () => {
         else Reflect.deleteProperty(navigator, 'locks');
       }
     });
+
+  it.each(['basis', 'identity', 'basis failure', 'identity failure', 'claim', 'claim failure'] as const)(
+    'restarts a cancelled pending verified read for the same mounted owner (%s)', async (boundary) => {
+    // Deferred provider responses and Web Locks stand in for browser I/O; the
+    // hook, verified closure, session and IndexedDB outbox are production code.
+    const duringClaim = boundary.startsWith('claim');
+    let finishClaim!: () => void;
+    let claimActive = false;
+    const claimGate = new Promise<void>((resolve, reject) => {
+      finishClaim = () => boundary === 'claim failure' ? reject(new Error('Superseded claim failed')) : resolve();
+    });
+    // Observe the rejection immediately even when this boundary uses no gate.
+    void claimGate.catch(() => {});
+    const request = vi.fn(async (_name: string, _options: unknown, work: (lock: object) => Promise<unknown>) => {
+      expect(claimActive).toBe(false);
+      if (duringClaim && request.mock.calls.length === 1) await claimGate;
+      claimActive = true;
+      try { return await work({}); } finally { claimActive = false; }
+    });
+    const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
+    Object.defineProperty(navigator, 'locks', { configurable: true, value: {
+      request,
+    } });
+    const scope = { realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-1' };
+    const head = { projectId: scope.projectId, timelineId: scope.timelineId, headRevisionId: 'r0', headPublicationId: 'p0' };
+    const config = createDefaultTimelineConfig();
+    const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' },
+      { timelineId: scope.timelineId }).data.canonical_document;
+    document.parent_revision.payload = { config, clips: [], registry: { assets: {} }, occurrences: [] };
+    document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
+    const initial = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
+    const data = await buildTimelineData(config, { assets: {} }, undefined, 1, undefined, head);
+    const duringIdentity = boundary.startsWith('identity');
+    let finishRead!: () => void;
+    const loadBasis = vi.fn(async () => initial);
+    const identity = vi.fn(async () => ({ realmId: scope.realmId, actorId: scope.actorId }));
+    if (duringIdentity) identity.mockImplementationOnce(() => new Promise((resolve, reject) => {
+      finishRead = () => boundary.endsWith('failure') ? reject(new Error('Superseded identity failed'))
+        : resolve({ realmId: 'stale-realm', actorId: 'stale-actor' });
+    }));
+    else if (!duringClaim) loadBasis.mockImplementationOnce(() => new Promise((resolve, reject) => {
+      finishRead = () => boundary.endsWith('failure') ? reject(new Error('Superseded history failed')) : resolve(initial);
+    }));
+    const send = vi.fn();
+    const harness = setup(async () => { throw new Error('No legacy save'); }, undefined, { data, loadBasis,
+      capabilities: { getRecoverableIdentity: identity, commitTimeline: send } });
+    try {
+      if (duringClaim) await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(1));
+      else if (duringIdentity) await vi.waitFor(() => expect(identity).toHaveBeenCalledTimes(1));
+      else expect(harness.hook.result.current.originalLocalSaveBasis).toEqual({ status: 'loading' });
+      expect(await createCommitOutbox().list(scope)).toEqual([]);
+      const handoff = harness.hook.result.current.localDocumentSave!;
+      const changed = { config: { ...config, output: { ...config.output, file: 'restarted.mp4' } }, registry: data.registry, head };
+      const staleCapture = handoff.capture(changed).then(() => 'captured', () => 'rejected');
+      // Replacing a context resolver legitimately cleans up and reruns the
+      // effect without replacing the provider/timeline owner. This is a
+      // controlled trigger, not an attribution of the historical P2 cleanup.
+      act(() => harness.rerenderRuntime({ assetResolver: { resolveAssetUrl: async file => file } }));
+      expect(harness.hook.result.current.localDocumentSave).toBe(handoff);
+      if (duringClaim) {
+        await flush();
+        expect(request).toHaveBeenCalledTimes(1);
+        expect(harness.hook.result.current.localSaveState?.ownerId).toBeUndefined();
+        await act(async () => { finishClaim(); });
+      }
+      await vi.waitFor(() => expect(harness.hook.result.current.localSaveState?.ownerId).toBeTruthy(), { timeout: 1000 });
+      const currentState = harness.hook.result.current.localSaveState;
+      await act(async () => { if (!duringClaim) finishRead(); expect(await staleCapture).toBe('rejected'); });
+      expect(harness.hook.result.current.localSaveState).toEqual(currentState);
+      expect(loadBasis).toHaveBeenCalledTimes(2);
+      expect(identity).toHaveBeenCalledTimes(duringIdentity || duringClaim ? 2 : 1);
+      expect(await createCommitOutbox().list({ ...scope, realmId: 'stale-realm', actorId: 'stale-actor' })).toEqual([]);
+      expect(harness.hook.result.current.originalLocalSaveBasis).toMatchObject({ status: 'ready', value: { initial } });
+      const owners = await createCommitOutbox().list(scope);
+      expect(owners).toHaveLength(boundary === 'claim' ? 2 : 1);
+      const currentOwner = owners.find(owner => owner.ownerId === harness.hook.result.current.localSaveState?.ownerId)!;
+      expect(currentOwner).toBeDefined();
+      expect(owners.every(owner => owner.intents.length === 0)).toBe(true);
+      await act(async () => { await handoff.capture(changed); });
+      const captured = (await createCommitOutbox().list(scope)).find(owner => owner.ownerId === currentOwner.ownerId)!;
+      expect(captured.ownerId).toBe(currentOwner.ownerId);
+      expect(captured.intents).toHaveLength(1);
+      expect(captured.intents[0].payload).toMatchObject({ before: document, after: { parent_revision: { payload: {
+        config: { output: { file: 'restarted.mp4' } },
+      } } } });
+      expect(send).not.toHaveBeenCalled();
+      expect(harness.saveTimeline).not.toHaveBeenCalled();
+    } finally {
+      harness.hook.unmount();
+      if (descriptor) Object.defineProperty(navigator, 'locks', descriptor);
+      else Reflect.deleteProperty(navigator, 'locks');
+    }
+  });
+
+  it.each(['unmount', 'scope', 'head', 'basis failure', 'identity failure', 'closure mismatch'] as const)(
+    'does not let a cancelled bootstrap claim or overwrite its replacement (%s)', async (boundary) => {
+    const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
+    Object.defineProperty(navigator, 'locks', { configurable: true, value: {
+      request: async (_name: string, _options: unknown, work: (lock: object) => Promise<unknown>) => work({}),
+    } });
+    const scope = { realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-1' };
+    const head = { projectId: scope.projectId, timelineId: scope.timelineId, headRevisionId: 'r0', headPublicationId: 'p0' };
+    const config = createDefaultTimelineConfig();
+    const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' },
+      { timelineId: scope.timelineId }).data.canonical_document;
+    document.parent_revision.payload = { config, clips: [], registry: { assets: {} }, occurrences: [] };
+    document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
+    const initial = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
+    const data = await buildTimelineData(config, { assets: {} }, undefined, 1, undefined, head);
+    const nextScope = { ...scope, timelineId: boundary === 'scope' ? 'timeline-2' : scope.timelineId };
+    const nextHead = { ...head, timelineId: nextScope.timelineId,
+      headRevisionId: boundary === 'head' ? 'r1' : 'r0', headPublicationId: boundary === 'head' ? 'p1' : 'p0' };
+    const nextDocument = structuredClone(document);
+    nextDocument.timeline_id = nextScope.timelineId;
+    nextDocument.parent_revision.revision_id = nextHead.headRevisionId;
+    if (boundary === 'closure mismatch') nextDocument.parent_revision.payload.config.output.file = 'unverified.mp4';
+    nextDocument.parent_revision.content_digest = fixtureDigest(nextDocument.parent_revision.payload);
+    const next = { head: { revisionId: nextHead.headRevisionId, publicationId: nextHead.headPublicationId }, canonicalDocument: nextDocument };
+    const nextData = await buildTimelineData(config, data.registry, undefined, 1, undefined, nextHead);
+    let finishRead!: (value: typeof initial) => void;
+    const loadBasis = vi.fn(async () => next).mockImplementationOnce(() => new Promise(resolve => { finishRead = resolve; }));
+    if (boundary === 'basis failure') loadBasis.mockRejectedValueOnce(new Error('Current history failed'));
+    const identity = vi.fn(async () => ({ realmId: scope.realmId, actorId: scope.actorId }));
+    if (boundary === 'identity failure') identity.mockRejectedValueOnce(new Error('Current identity failed'));
+    const send = vi.fn();
+    const harness = setup(async () => { throw new Error('No legacy save'); }, undefined, { data, loadBasis,
+      capabilities: { getRecoverableIdentity: identity, commitTimeline: send } });
+    try {
+      const oldHandoff = harness.hook.result.current.localDocumentSave!;
+      const staleCapture = oldHandoff.capture({ config, registry: data.registry, head }).then(() => 'captured', () => 'rejected');
+      if (boundary === 'unmount') harness.hook.unmount();
+      else act(() => {
+        if (boundary === 'scope' || boundary === 'head') harness.hook.result.current.commitData(nextData,
+          { save: false, skipHistory: true, updateLastSavedSignature: true });
+        harness.rerenderRuntime({ timelineId: nextScope.timelineId, assetResolver: { resolveAssetUrl: async file => file } });
+      });
+      if (boundary === 'scope' || boundary === 'head') {
+        await vi.waitFor(() => expect(harness.hook.result.current.localSaveState?.ownerId).toBeTruthy());
+      } else if (boundary !== 'unmount') {
+        await vi.waitFor(() => expect(harness.hook.result.current.localSaveState?.status).toBe('error'));
+      }
+      const replacement = harness.hook.result.current.localSaveState;
+      await act(async () => { finishRead(initial); expect(await staleCapture).toBe('rejected'); });
+      expect(harness.hook.result.current.localSaveState).toEqual(replacement);
+      if (boundary === 'scope' || boundary === 'head') {
+        expect(harness.hook.result.current.originalLocalSaveBasis).toMatchObject({ status: 'ready', value: { initial: next } });
+        expect(harness.hook.result.current.dataRef.current?.head).toEqual(nextHead);
+        const owners = await createCommitOutbox().list(nextScope);
+        expect(owners).toHaveLength(1);
+        expect(owners[0].ownerId).toBe(replacement?.ownerId);
+        expect(owners[0].intents).toEqual([]);
+        expect(identity).toHaveBeenCalledTimes(1);
+        if (boundary === 'scope') expect(await createCommitOutbox().list(scope)).toEqual([]);
+      } else {
+        expect(await createCommitOutbox().list(scope)).toEqual([]);
+        expect(identity).toHaveBeenCalledTimes(boundary === 'identity failure' ? 1 : 0);
+      }
+      expect(send).not.toHaveBeenCalled();
+      expect(harness.saveTimeline).not.toHaveBeenCalled();
+    } finally {
+      harness.hook.unmount();
+      if (descriptor) Object.defineProperty(navigator, 'locks', descriptor);
+      else Reflect.deleteProperty(navigator, 'locks');
+    }
+  });
 
   it.each(['original', 'head moved', 'edited during read'])('stages the original verified closure in the real mounted hook (%s)', async (kind) => {
     const head = { projectId: 'project-commit', timelineId: 'timeline-1', headRevisionId: 'r0', headPublicationId: 'p0' };
