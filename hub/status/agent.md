@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T15:22:30Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 2m -->
-# agent board, 2026-10-24T15:20:04Z
+<!-- agent | 2026-10-24T15:25:15Z | dispatcher heartbeat 8s | live 2 (sol 0, luna 2, other 0) | busy30 12 | status age 0m -->
+# agent board, 2026-10-24T15:24:58Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -97,6 +97,10 @@
 
 | F D63 final rollup | Fold corrected exact276 categories | Luna | Existing evidence only | merged | agt-F-D63-final-rollup-1517 | Exact276:199 NEW-OURS,77 counterparts.7 pre-existing causes qualified;59 cause-open. Published rollup predates actual181 PASS; board overlays it. | Evidence only |
 
+| F core service candidate | Prepare existing-service core invocation | Luna | Final producer body held | doing | agt-F-core-service-prepare-1525 | Use1443 exact broad inventory and working full service shape. Candidate only; preflight and stub controls, no bodies or registry install. | Currentd27b / e68 |
+
+| F D63 different causes | Resolve four retained cause exceptions | Luna | Existing evidence only | doing | agt-F-D63-different-causes-1528 | Orders5,49,50,51 differ from upstream; inspect retained causes and current receipts only. No66-case repeat or original bodies. | Evidence only |
+
 Integration: Agentd27b6601e5 includes U2 final924, normal e68 vendor adoption and independently reviewed legacy inverse plus environment key fix. Proposal inverse actual-home13 passed. D61 consumer9460a443 retains all three reviewed donor blobs, held for qualified Runtime producer then normal D39 and current-home qualification. No generated code or lock edited by manager.
 core open: 7 tracked: four D61 fork checkpoint failures, one genuine D13 input UNKNOWN, two forward-provider originals outside276. Proposal inverse now closed by actual-home13. Two D23 timing originals remain unchanged visibly failing and deferred. Final tuple proof remains pending.
 regressions: 0 currently open at named qualified scope; order181 proven regression repaired and actual d27b PASS16. Nine other upstream-PASS contrasts retain current PASS but need final cut confirmation. Exact276 now163 PASS111 open2 deferred; no final zero-regression closure claim.
@@ -104,9 +108,9 @@ D60 baseline: Upstream924 full1621 terminal FAIL:12396 passed91 failed14 errors1
 Gates: P1/P2/P3 App; P4 Agent; P5 and Composition main. App U3b/D39 already merged under D56. P4 candidate317c collected3; final source binding and body follow qualified D61 source/client and sole heavy slot. No old pin, Farm or child work.
 Admission: Existing schema/source403 and automatic refusal remain stopped. D56 drops Farm venue access work. No alternate source, child, overlay, acquisition or reconstruction requested.
 Disk: About9.4GB free; cap6. Sweep3 removed0, compact packed0 and compressed4 old logs. No eligible finished clean tree; prior refused targets untouched. Target15GB is opportunistic, heavy stop floor8GB.
-Blockers: Runtime — D62 resolves private custody: accept-time record classification only, authenticated persisted ABI and normal regeneration. Runtime implementation/security remain owed; Agent consumer and D39 adopt on qualification.
+Blockers: Runtime — D62 resolves private custody: accept-time record classification only, authenticated persisted ABI and normal regeneration. Joined Runtime e02f completed411 PASS/one old-consumer FAIL; security1511 active. Agent consumer and D39 adopt on qualification.
 Blockers: Runtime — forward-created Sol1450 owns auth.py and the two exact ABI1 failures. Producer Sol1450 owns store/port; wire Luna1447 owns schema/generation. Source qualification and actual Agent proof remain pending.
 Blockers: Agent — D13 genuine seven-key input remains UNKNOWN under existing admission hold. D63 rollup complete; no remaining local source fix unassigned.
 Next ready: Adopt qualified Runtime D62 producer through normal D39 and reviewed consumer, then one actual-home six-original proof and final P4/core. Remaining Runtime source/security owns the readiness boundary.
-live 0 / cap 6; ready-undispatched 0. Both Luna1517 and1518 finished. Runtime producer/security pending; no live Sol.
+live 2 / cap 6; ready-undispatched 0. Luna1525 prepares core service; Luna1528 handles four D63 exceptions. Runtime e02f security1511 pending. No live Sol.
 Inbox consumed through Runtime1505 source join and D63. Producer still unqualified; consumer remains held. Last pass 2026-10-24T15:20:04Z.
