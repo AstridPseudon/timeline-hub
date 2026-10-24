@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T20:20:03Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 2m -->
-# agent board, 2026-10-24T20:17:52Z
+<!-- agent | 2026-10-24T20:22:54Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 0m -->
+# agent board, 2026-10-24T20:22:28Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -140,10 +140,10 @@ D69/D72: exact47 membership retained. Audit178:167 cleared,9 cited,2 restored. C
 Gates: P4 actual14690 diagnostic FAIL1/PASS2: CLI/sheet2.821s, ten-note45.407s at first undo, conflict/rerun9.630s. Exact3b2/e89/e771/635f retained. cProfile overhead uncalibrated; no unprofiled gate credit.
 D60 baseline: upstream924 terminal12396 PASS,91 FAIL,14 errors,16 skips,566 subtests. Exact276 split199 NEW-OURS/77 counterparts; mutable external Runtime scope disclosed. D67 env and D23 deferrals unchanged.
 Admission: D56 Farm/schema venue stand-down and prior source/access/cleanup refusals remain stopped. No source substitute, child, KEEP release or installed-record relabel.
-Disk: 8941MiB free; cap6. Sweep3 removed0; compact packed0 and gzipped2 old logs. No ended clean non-KEEP Agent tree remains; dirty old and refused KEEP/pin targets untouched.
+Disk: About8.8GiB free; cap6. Sweep3 removed0; compact packed0 and gzipped2 old logs at20:01. Ended clean workers auto recycled; dirty old and refused KEEP/pin targets untouched.
 Blockers: Runtime — D83 assigns likely shared wait defect to existing Runtime Sol owners. Agent adds no diagnosis. P4, PARAM and restart originals stay open until qualified home fix and normal adoption.
 Blockers: Final cut — final core and genuine installed render remain D59 gated. P4 evidence verdict1956 is PASS; original gate remains open pending Runtime measured correction.
-Next ready: D83 qualified Runtime fix publication -> normal D39 adoption -> originals once. Review only protected tests, core source and security/custody; E2 paused after existing design completion.
+Next ready: D83 qualified Runtime fix publication -> normal D39 adoption -> originals once. Runtime Sol2004 owns measured repair; App14383 capture submitted. E2 further work paused until ZIP.
 live 0 / cap 6; ready-undispatched 0 local. D83 critical Runtime owners active; Agent waits published fix, then normal adoption and one original proof. E2 further work paused until ZIP.
 Inbox consumed through 1073706 bytes including D83 speed-up20:17. Existing E2 design finished20:13 before pause arrived; no live E2 or new diagnosis. Fix adoption/originals are next.
 D79 later: Inventory1831 complete; no full accepted record/context survived. Existing non-gating input request retained. No fixture or test fabricated.
