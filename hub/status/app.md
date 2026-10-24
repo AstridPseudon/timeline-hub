@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T17:12:56Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 18 | status age 2m -->
-# app board, 2026-10-24T17:11Z
+<!-- app | 2026-10-24T17:16:45Z | dispatcher heartbeat 12s | live 3 (sol 1, luna 2, other 0) | busy30 21 | status age 0m -->
+# app board, 2026-10-24T17:15Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -12,7 +12,7 @@
 | U4p-D62 | Authenticated history ABI adoption | Luna | Runtime8b32 | merged | Home1539; composed1553 | Normal14 mappings exact; generatedschema867f and original TS proof retained. | 95cfbf216f |
 | A2 | Production dependent save funnel | Sol; Luna review | C0 and U3 | merged | Authors; integrated1036 | Local dependent saves and authoritative replies integrated. Current original gate remains open. | Current home |
 | A3 | Popup placement element asset saves | Luna; Sol after failures | A2 | merged | Source authors and reviews | All mounted routes and current repairs home; final eight gestures unqualified. | Current home |
-| A4 | Reachable executor retirement | Luna; review | Historical P1 GO | merged | Census0438; review0444 | Zero reachable legacy film writers; live controls retained. | c0fe889944 |
+| A4 | Reachable executor retirement | Luna; review | Historical P1 GO | merged | Census0438; review0444 | Zero reachable legacy film writers; live 5 / cap 6; ready-undispatched 0. Recovery Sol1713, independent verdict/path1713, D73 return1713, provenance return1714, phase wire1715 active. Original26907 terminal; no duplicate request.
 | A4-D52 | Proven dormant deletions | Luna; review | Current caller census | merged | Authors1118/1210; reviews1121/1232 | Parent/track and exclusive transcript pairs deleted;85/50live neighbors/types PASS. Live session restored. | 2e3c8f/cca3deb |
 | P1 | Historical mixed chain | Service; independent Luna | Historical tuple | merged | Actual18792; reviews0036/0040 | Historical GO only; current control13564 failed initial split. | Appf8;Agent787;Runtime2a9 |
 | P2 | Eight original core gestures | Service; independent Luna | D66 amended 16:13 | review | Actual25943; verdict1625 | Exit 1 in 463 seconds: readiness PASS; originals 0 PASS, 3 FAIL, 5 NOTRUN. | App1540b3f12e |
@@ -77,13 +77,16 @@
 
 | P3-D70-preflight | Preserve zero-body source refusal | App service | Agent advanced before start | merged | Actual 31887 | Exit1/3s source-selection; Agent now a60f, exact checkout missing. Originals all NOTRUN. Normal checkout queued. | App aaddaf12d2 |
 
-| P3-D70-current | Current original after source preparation | App service; Luna verdict | Current routes ready | doing | Actual 26907 | One original request17:03:52Z after immediate current-head/route checks. a60f/5c1a source snapshots, exact D70 a646. | App c3d79ef88a |
+| P3-D70-current | Current original after intent correction | App service; Luna verdict | Captured a60f and 5c1 | review | Actual 26907; verdict1713 | Exit1 in470s; readiness PASS, original FAIL at Recover saved edits button after reopen. Later tail unproved. | c3d79 tree6576 |
 | D69-home-final | Qualify all restored upstream cases | Luna | All four restorations home | merged | app-U3-D69-home-and-preflight-1704 | PASS 41 placement and reused 113 controls/types. Audit 1403 cleared, 67 cited, 4 restored, 0 remaining. 31887 preflight NO-GO. | c3d79ef88a |
 
-| U4p-popup-current | Adopt current popup Runtime provenance | Luna | Qualified Runtime b318 home | doing | app-U4p-popup-current-adopt-1711 | Normal tools only; exact 14 mappings and strict skew, updater, schema checks. Capture actual normal heads once. | Current 2c1bf Runtime |
-| Current-ledger | Correct actual home ledger receipts | Luna | Qualified D69 and D70 | doing | app-ledger-current-receipts-1709 | Finite read-only worker returns exact current rows; no product or original run. | 281c9f1cf9 |
-| P-D73 | Pin four repos once at submit | Luna | D73 exact request SHAs | doing | app-P-D73-exact-submit-1709 | Capture once, exact checkout receipts before request; moving normal home cannot invalidate run. Author controls pending. | Route 348c base |
-| P2-element-observer | Wire Runtime safe phases | Luna | Runtime observer handback | blocked:runtime | Runtime rt-P2-element-phase-1700; App next | Own normal launcher wiring after qualified opt-in seam; no duplicate body or collector. | No source fix |
+| U4p-popup-current | Adopt current popup Runtime provenance | Luna | Actual Runtime 2c1 home | doing | Author1711; return1714 | Old b318 input mismatch is ordinary current-source issue. Return uses captured actual normal source and normal tools. | No metadata change yet |
+| Current-ledger | Correct actual home ledger receipts | Luna | Qualified D69 and D70 | merged | app-ledger-current-receipts-1709 | Exact worker D69, D70 and P2 publication paragraphs copied; actual home/hash receipts, no live GO. | c3d79 source receipts |
+| P-D73 | Pin four repos once at submit | Luna | D73 exact request SHAs | doing | Author1709; return1713 | Pure8 and collection PASS; real env path lookup defect held. First return proves actual entry before home. | Unmerged author1709 |
+| P2-element-observer | Wire Runtime safe phases | Luna | Runtime 2c1 helper home | doing | app-P2-safe-phase-wire-1715 | Small harness bootstrap uses exact Runtime helper and private bounded sink. ONE focused body remains unspent. | Runtime 04de source |
+
+| P3-recovery | Repair exact reopened recovery control | HARD Sol PLAN A2 | Actual26907 terminal | doing | app-A2-P3-recovery-sol-1713 | Real mounted old RED required; no original expectation or timeout edits. Independent path in parallel. | Current281c base |
+| P3-26907-verdict | Judge captured run and recovery path | Luna | Same-ID terminal facts | doing | app-P3-26907-verdict-path-1713 | Manifest, XML, protected hashes and reached stages; compare passing P1 through client and server. | Captured tuple only |
 
 Integration: App c3d79ef88a includes independently reviewed placement repair over aaddaf. Earlier aaddaf includes approved D70 expectation and normal release9e1f over stable-source19795 and a2a6. Earlier a2a6 includes parent reads, voice, fullscreen, normal current Runtime provenance7f3d and strict P3 history9f4 over1540. Frozen upstream 3881, D62 normal client, D65 strict schema and D66 plain launcher retained. Original case bodies/reset/tail unchanged; D70 approved fullspec95d9→a646 and P2 exact reads helper are logged and independently reviewed. Current P1 26312 is independently GREEN at its recorded App1540/Agent9502/Runtime8b32 tuple; never relabelled after source movement.
 
@@ -92,9 +95,9 @@ live 3 / cap 6; ready-undispatched 0. D73 exact submit, ledger receipts 1709 and
 core open: 9 active gesture cases (8 P2 plus 1 P3). Current P1 original 2 PASS and independent 1616 PASS at recorded tuple. All eight P2 are CORE; current P2 25943 is 0 PASS, 3 FAIL, 5 NOTRUN. Current P3 10033 NO-GO; meaningful changed 4858 failed at a new setup intent boundary and Agent tuple drift, independent verdict active.
 regressions: 0 confirmed open source findings after placementc3d independent1657PASS. Final integrated D69 qualifier1704 PASS: 1403 cleared, 67 cited, 4 restored and 0 remaining; all known restored source cases home. Voice/fullscreen fixes home and integrated1643 PASS. All restored bodies and original protected cases retained.
 
-Blockers: App — Current P3 26907 running after readiness PASS; same-ID verdict dispatches on terminal. D73 author and current ledger receipt worker 1709 active; D69 qualifier 1704 PASS.
+Blockers: App — Current P3 26907 fails reopened recovery control; Sol1713 and independent1713 own it. D73 actual entry return, normal metadata return and element bootstrap active.
 D70 decision: APPROVED16:55 via lead16:54, condition independent1643PASS met. Exact one-line author1655 dispatched immediately; no decision blocker remains.
-Blockers: Runtime — Popup security1658 PASS and HOMEb318 clear source wait. Safe element phase observer1700 active; App wiring waits exact handback. Historical phase input closed as UNAVAILABLE.
+Blockers: Runtime — No source input owed for popup or observer. Runtime helper HOME2c1 consumed by App1715; Runtime still owns eventual execution/store diagnosis from real phase result.
 Blockers: Final cut — Current P2/P3 and D69 placement restoration remain open. Normal producer adoption home; Runtime owns final proofs/build/ZIP.
 
 Historical signals: P1 26312 exit0/237s readiness1/original2 PASS; P2 25943 exit1/463s readiness PASS, originals 0 PASS/3 FAIL/5 NOTRUN; P3 10033 exit1/286s readiness PASS, fails history oracle before original reset. Exact terminal IDs and independent verdicts retained. Earlier 11933, 3896, 26414 and 12541/1689 remain their recorded historical scopes.
@@ -107,5 +110,5 @@ Disk: About 10 GB free, cap 6; heavy stop 8 GB. Automatic recycle active; no eli
 
 Evidence: [P3 independent strict history review](../../design/app-P3-history-review-1626.md), [P2 same-ID verdict](../../design/app-P2-25943-verdict-1625.md), [current P1 independent verdict](../../design/app-P1-26312-current-verdict-1616.md), [current composed source qualification](../../design/app-F-current-join-proof-1553.md), [all eight core](../../design/app-P2-core-classification-1222.md).
 
-Inbox consumed through 1579693 bytes. D73 owner relay consumed: exact four-repo request SHAs, no current-home re-resolution; source movement during a run is not invalidation. D72 behavior rule consumed; App final D69 worker already owns all four restorations.  Runtime and Agent boards rechecked from /home/user/timeline-hub/hub/status: Runtime bc227 inverse auth fix is home with unchanged wire/schema; App normal provenance 1635 ready and dispatched. No source/adoption decision owed. Agent inverse original now PASS1 at its current proof; Agent/Runtime own remaining P4 repairs. Runtime D69 policy nowhome5c1a; normal current checkout queued, no wire change inferred.
+Inbox consumed through 1580217 bytes. D73 owner relay consumed: exact four-repo request SHAs, no current-home re-resolution; source movement during a run is not invalidation. D72 behavior rule consumed; App final D69 worker already owns all four restorations.  Runtime and Agent boards rechecked from /home/user/timeline-hub/hub/status: Runtime bc227 inverse auth fix is home with unchanged wire/schema; App normal provenance 1635 ready and dispatched. No source/adoption decision owed. Agent inverse original now PASS1 at its current proof; Agent/Runtime own remaining P4 repairs. Runtime D69 policy nowhome5c1a; normal current checkout queued, no wire change inferred.
 Next ready: consume author/review returns, merge qualified disjoint fixes immediately; review parent reads on completion; same-ID P3 verdict on terminal.
