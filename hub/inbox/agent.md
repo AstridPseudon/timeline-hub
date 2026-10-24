@@ -2379,3 +2379,18 @@ D69 checker1629 actual29PASS; independent1628 found two other upstream checker p
   - **The hydration unit test** (`test_clean_bundle_hydration_authenticates_exact_pair_without_pending_commands`) is ours. If it asserts the cache's LOCATION inside source_mapping, re-point it to the private channel with the same strength (exact pair present; wrong pair refused). That counts as an expectation change, so it needs independent review and a behaviour-change log entry. Its behaviour must not get weaker.
   - **Owner:** Agent's HARD Sol (1639 continuation), then one independent security review (custody), then an unchanged P4 rerun.
   - **The 2 repeated-source-copy redo failures** (test_commit_runtime_source_copy.py:335) are a separate Luna classification, as Agent assigned. If they started failing because of a change of ours, D54a applies.
+
+## 2026-10-24T17:05Z ORCHESTRATOR: D72 amends D69 (behaviour, not interfaces); applies to every lane's reverse diff
+- **D72, restored upstream tests that hit retired interfaces (17:05Z), deciding escalation agent-20261024T1654Z-D69-restores-vs-retired-contracts:** D69 amended. **The regression guard protects BEHAVIOUR, not internal interfaces.** For each family:
+  1. **Retired by the approved plan (G5/R5: separate publish and its CLI subcommand, `publish_bundle`, `store.three_way`, merger, native subparsers, old writer routes, `WorkspaceClient.publish_parent_composition`'s retired route):** these go to the **deletion ledger**, citing the G5/R5 row and D52.
+     - Each entry MUST name the CURRENT test that covers the replacement behaviour: publish → commit through Runtime; three_way conflict diagnostics → Runtime conflict reply; idempotency/CAS/clean-copy/output → the commit equivalents.
+     - Where no current test covers a user-visible capability the old test proved (idempotency, CAS/conflict, clean-copy, terminal output), add ONE targeted test on the current API (Luna). No resurrected writers, no aliases.
+     - The retired user-facing CLI commands go into the ZIP README migration notes and the owner update.
+  2. **Live behaviour whose body calls a removed INTERNAL helper** (7 element cases monkeypatching `resolve_admitted_element`/direct publisher, 2 approval cases using the old promotion writer, 2 create-empty cases via `publish_parent_composition`, the generic-host `_publish_assembled_timeline` case): **faithful migration.**
+     - Rewire ONLY setup/caller to the current API (TimelineSession/Runtime bootstrap, the commit path).
+     - Keep every behavioural assertion: same inputs, same observable outputs.
+     - Run the D69 mechanical check (no assertion removed or loosened), then one independent review, then a "migrated upstream test" log entry.
+     - A migrated test that then fails is a regression: fix the product.
+  3. **Rendering/input (4):** the 2 sliced-clock/null-window cases migrate to the approved native FrameWindow contract with equivalent frame-coverage assertions, citing that decision. The generic-host case follows (2). The installer schema case migrates to the approved local Composition/Runtime schema (D65 principle).
+  4. **The possible live duplicate (chapter admission, owner 1653) and the 2 CLI output regressions (candidate 81a261):** product fixes, already moving.
+  - **Batching:** run this as parallel Luna rows (CLI / SDK / core / render), each with one independent review. Report per family: ledgered+covered / migrated / fixed. This must finish before the cut.

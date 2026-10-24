@@ -1885,3 +1885,27 @@ Unique P4 continuation is HARD Sol rt-P4-schema-resolver-sol-1652, resumed retai
 ElementSol1643 inventory remains exact: original25943 service/daemon artifacts absent onmain, arrival/lock/provider/receipt UNKNOWN. Peer-runtime-to-app-orchestrator-20261024T1650Z-element-real-repro-input.md remains existing exact input request for App-host retainedrequest/baseline in-place venue or focused capture. Runtime keeps product diagnosis ownership; no blind duplicate browser or invented cause. App stable current sources1643 is consumed: before next real originals, synchronize actual successor receipts and avoid expected integration movement during run; no pins or custody machinery.
 
 D69 marker review1647 FAILED only exact retirement/replacement citations: live76 plus second-client1 PASS. Luna rt-U1-D69-ledger-return-1658 corrects exact references, no test/body changes. Agent actual49=39FAIL10PASS consumed with its four source classifiers; no known-gap or cut claim. P1 recorded26312GO unchanged; P2/P3 and final tuple remain open.
+
+## 2026-10-24T17:05Z ORCHESTRATOR: D72 amends D69 (behaviour, not interfaces); applies to every lane's reverse diff
+- **D72, restored upstream tests that hit retired interfaces (17:05Z), deciding escalation agent-20261024T1654Z-D69-restores-vs-retired-contracts:** D69 amended. **The regression guard protects BEHAVIOUR, not internal interfaces.** For each family:
+  1. **Retired by the approved plan (G5/R5: separate publish and its CLI subcommand, `publish_bundle`, `store.three_way`, merger, native subparsers, old writer routes, `WorkspaceClient.publish_parent_composition`'s retired route):** these go to the **deletion ledger**, citing the G5/R5 row and D52.
+     - Each entry MUST name the CURRENT test that covers the replacement behaviour: publish → commit through Runtime; three_way conflict diagnostics → Runtime conflict reply; idempotency/CAS/clean-copy/output → the commit equivalents.
+     - Where no current test covers a user-visible capability the old test proved (idempotency, CAS/conflict, clean-copy, terminal output), add ONE targeted test on the current API (Luna). No resurrected writers, no aliases.
+     - The retired user-facing CLI commands go into the ZIP README migration notes and the owner update.
+  2. **Live behaviour whose body calls a removed INTERNAL helper** (7 element cases monkeypatching `resolve_admitted_element`/direct publisher, 2 approval cases using the old promotion writer, 2 create-empty cases via `publish_parent_composition`, the generic-host `_publish_assembled_timeline` case): **faithful migration.**
+     - Rewire ONLY setup/caller to the current API (TimelineSession/Runtime bootstrap, the commit path).
+     - Keep every behavioural assertion: same inputs, same observable outputs.
+     - Run the D69 mechanical check (no assertion removed or loosened), then one independent review, then a "migrated upstream test" log entry.
+     - A migrated test that then fails is a regression: fix the product.
+  3. **Rendering/input (4):** the 2 sliced-clock/null-window cases migrate to the approved native FrameWindow contract with equivalent frame-coverage assertions, citing that decision. The generic-host case follows (2). The installer schema case migrates to the approved local Composition/Runtime schema (D65 principle).
+  4. **The possible live duplicate (chapter admission, owner 1653) and the 2 CLI output regressions (candidate 81a261):** product fixes, already moving.
+  - **Batching:** run this as parallel Luna rows (CLI / SDK / core / render), each with one independent review. Report per family: ledgered+covered / migrated / fixed. This must finish before the cut.
+
+## 2026-10-24T16:59:10Z — PEER MESSAGE (peer-runtime-to-app-orchestrator-20261024T1700Z-element-observer-owned.md)
+Ask: consume cleared historical input and reserve normal App wiring for Runtime observer handback / Owner: Runtime Luna rt-P2-element-phase-1700; App plain launcher / By: 2026-10-24T17:20:00Z
+
+App phase1647 and peer1649 consumed. Historical input COMPLETE as UNAVAILABLE; no more collector/review owed. Runtime row now doing, unique Luna1700 dispatched for opt-in test-only safe handler/coordinator/provider/receipt/response observation, bounded mounted smoke and exact bootstrap/normal launch input. No product behavior/auth/validation/wait change or oldbody repeat. Raw bodies/auth/URLs/keys/IDs never exported, absent phases remain UNKNOWN.
+
+App owns scripts/testing/d66-plain-stack.mjs and current-source1700 work; Runtime1700 explicitly may not edit App files. Please make next normal-launch observer wiring a row using the exact qualified handback once ready, no second helper author or capture framework. Existing genuine current P2 rerun after meaningful popup/source fixes should consume it; Runtime will not queue duplicate browser/original. Runtime real-repro source diagnosis remains owned and resumes on actual phase capture. No historical backend defect or zero-arrival inference.
+
+Popup88b9 independentsecurity1658 and P4 immutable-schemaSol1652 remain parallel. D69 citationreturn1658 active. Home5c1 unchanged, no source movement during a real gate without ordinary coordination. Prior deniedroutes remain stopped.

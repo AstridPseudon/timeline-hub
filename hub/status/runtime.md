@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T16:59:10Z | dispatcher heartbeat 7s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 2m -->
-# runtime board, 2026-10-24T16:57:06Z
+<!-- main | 2026-10-24T17:02:13Z | dispatcher heartbeat 8s | live 3 (sol 1, luna 2, other 0) | busy30 16 | status age 1m -->
+# runtime board, 2026-10-24T17:00:20Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -81,7 +81,7 @@
 | R-P4-history-cost | Reduce historical validation cost | HARD Sol after Luna | Exact immutable schema semantics | doing | rt-P4-schema-resolver-sol-1652 | Resume6bba profile; only shared schema resolver file, auth read-only. Every value fully validated afresh; no history/result memo or45s change. | 6bba WIP preserved |
 | R-P2-popup-422 | Project genuine fork-created shot roots | Luna | Independent security review | review | Author1643; security1658 | Candidate88b9:7 focused,228 auth,18 Agent PASS. Review challenges every physical/source/range guard. [Report](../../design/rt-P2-popup-auth-1643.md) | 88b9cf6b8 held |
 | R-P2-popup-observation | Attribute popup physical observation refusal | Luna | Source finding complete | merged | rt-P2-popup-observation-1638 | Runtime created-child projection lacks fork-created shot roots.2Runtime+8Agent comparators PASS; source cause only. | Source unchanged |
-| R-P2-element-docpatch-hang | Count and reproduce element request wait | HARD Sol requested by ORCH | App in-place request/baseline venue | blocked:app | rt-P2-element-sol-1643 | Actual25943 logs absent onmain; door audit response-only. Arrival/lock/provider/receipt UNKNOWN. Peer1650 asks real App-host repro input. | No product fix |
+| R-P2-element-docpatch-hang | Observe actual server request phases | Sol / Luna | Safe next-run harness observation | doing | Sol1643; phase Luna1700 | App historical phase input COMPLETE as UNAVAILABLE. Small opt-in test helper now owned; actual arrival/lock/provider/receipt UNKNOWN. | No product fix |
 | U1-D69-marker-scope | Preserve mixed-route live catalog predicates | Luna | Correct exact citations | doing | Author1638; review1647; return1658 | Review FAIL:76 catalog/refusal plus second-client1 PASS; exact retired and revision mappings owed. [Review](../../design/rt-U1-D69-markers-review-1647.md) | 925a7dd held |
 | U1-D69-restore-guard | Restore two skip guard originals | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 |
 | U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 /bb022 |
@@ -145,19 +145,21 @@ Venues: P1/P2/P3 App service and verdicts; P4 Agent service; P5 and Composition 
 D65 delivery: owner Runtime merge, Agent merge, authentic App update-manifest with generated digest equality, then App merge. Qualified command/docs and D67 exact13env/7key postinstall appendix stay installed; actual final outcomes PENDING. Independent coherent84Python+TS/D68 finalcandidate1621PASS stays private untilcut.
 
 Blockers: Runtime popup — author88b9 complete; independent Luna security1658 active before merge. Every authenticated physical/source/owner/range guard retained.
-Blockers: App element venue — RuntimeSol1643 log inventory found exact25943 artifacts absent; arrival/lock/provider/receipt UNKNOWN. Peer1650 asks App-host retainedfacts/in-place baseline for authorized realrepro.
+Blockers: Runtime element — App retained-phase input COMPLETE as UNAVAILABLE. Luna1700 owns opt-in server-phase observer and mounted smoke; App wires next meaningful run. No historical backend cause claimed.
 Blockers: Runtime P4 — original ten-note45s timeout; HARD Sol1652 resumes6bba for immutable-schema resolver work in validation.py only. Every value fully validated; D47 history/result memo held.
 Blockers: Runtime D69 — policy integrated29 PASS. Mixed-marker review1647 FAIL on exact replacement citations; first return1658 owns evidence correction. Live76 plus second-client1 PASS retained.
-Blockers: App — changed P34858 intent correction and stable current sources owned. P1 recordedGO; no duplicate P2/P3. Existing element real reproduction input remains peer1650, Runtime source ownership retained.
+Blockers: App — changed P34858 intent correction and stable current sources owned. P1 recordedGO; no duplicate P2/P3. Runtime1700 owns safe next-run phase capture; App owns normal launch wiring.
 Blockers: Final delivery — all active lanes need core0/regressions0 plus current P2/P3 and D69 completion. Agent newly reports39 restored-node failures; four classifiers own them. No cut/proofs/build/ZIP.
-Next ready: consume popup security1658, D69 citation return1658 and P4 Sol1652. Element reproduction depends on App-host retained input. No ready local row waiting.
+Next ready: consume popup security1658, D69 citation return1658 and P4 Sol1652. Element1700 next-run safe observation active; historical phase unavailable. No ready local row waiting.
 
 Later: D47 memo and proof pins remain post-delivery; nine state attacks open. V4 cut; D14/D23 deferred unchanged. D34 broader cleanup remains held. D62 submit completeness is an explicit known gap in the Runtime behavior-change ledger.
 
 Admission: D56 stops Farm and schema-access work. Exact403 and automatic access refusal stay stopped; no alternate source/child/overlay/acquisition route. Kit6de installed/publication/Agent receipt allPASS; no new input or child authority inferred. Prior denied cleanup/process/retirement targets stay stopped. D67 D13 is an env known gap, not an owner-action or permission blocker.
 
-Disk: about8.6GB, above main8GB heavy floor. Sweep3 freed0; compact packed0/compressed0. Finished worktrees automatically recycle; no old refused target retried.
+Disk: about8.3GB, above main8GB heavy floor. Sweep3 freed0; compact packed0/compressed0. Finished worktrees automatically recycle; no old refused target retried.
 
-live 3 / cap 4; ready-undispatched 0. HARD Sol1652 schema resolver; Luna1658 popup security and D69 citation return. Two initial relative-brief dispatch errors corrected with absolute paths.
+live 4 / cap 4; ready-undispatched 0. HARD Sol1652 schema resolver; Luna1658 popup security and D69 citations; Luna1700 safe element-phase observer. Absolute brief paths accepted.
 
 Pass 2026-10-24T16:57:06Z: New Agent actual49 failures consumed with its four disjoint source classifiers. Popup author88b9 complete -> independent security1658 dispatched. D69 review1647 FAIL only citations -> return1658 dispatched. P4Sol1652 active; element phase still UNKNOWN pending App-host input. Source remains5c1 and no originals duplicated.
+
+Pass 2026-10-24T17:00:20Z: App1649 completes historical element phase input as UNAVAILABLE. Cleared blockedApp immediately; unique Luna1700 implements bounded opt-in test-only observation and actual mounted smoke. No original or product guard edit. Four ready rows dispatched undercap4.
