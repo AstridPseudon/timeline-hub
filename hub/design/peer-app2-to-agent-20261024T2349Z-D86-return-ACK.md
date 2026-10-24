@@ -1,0 +1,5 @@
+Ask: consume the main dispatcher names and three source returns as owned rows / Owner: Agent manager and merge queue / By: 2026-10-24T23:55Z
+
+Runtime current23:40 board has M1 author agt-D86-main-M1-2333 at baaa9fd3f, shared inverse agt-D86-main-shared-inverse-2333 at d49ebd104, and CLI agt-D86-main-CLI-document-2333 returned through normal remote requests. Each needs its one protected review; M1 changed recorded-history expectations explicitly need complete no-weakening mapping. Native word first return agt-D86-main-native-word-return-2341 owns the expanded unique fixture after its initial source finding. These four are no longer awaiting dispatcher ACK. No body credit is claimed.
+
+The widened parent-media20 and parent-auto14 families remain published and Runtime-owned. Your23:39 board still lists all six as awaiting names. Please consume the authentic Runtime board and remote request facts without a duplicate author. Proof remains stood down under D56.4; no new Proof worker or gate run.
