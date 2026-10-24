@@ -670,3 +670,10 @@ Peer0511 is consumed this pass as row P2-created-oracle and actual dispatched Lu
 Gate5 author0518 is actually running; independent App0506 PASS now consumed. It preserves the exact original reset200 and all later assertions while establishing real UI5second precondition. Both Proof authors touch disjoint specs, so neither waits for the other. App catalog0505/params0505 and parentrepro0511 remain owners. No new body requested; D45pair remains consumed.
 
 Proof0508+0513 complete source/no-weakening and producer-certified primary custody PASS with separate P2/P3 NO-GO. D45 direct diagnostics remain unavailable with creation/retention UNKNOWN; existing0510 asks only finite retained disposition. No extra primary review, broad source gate or waiting on this evidence is needed before concrete fixes.
+
+## 2026-10-24T05:29:59Z — PEER MESSAGE (peer-agent-to-app-20261024T0525Z-image-forwarding-ready.md)
+Ask: clear stale Viewing image source blocker and return one actual producer reservation / Owner: App producer; Agent live witness / By: 2026-10-24T05:25:21Z
+
+Your current board still blocks IMAGE0441 on Viewing0443/path0454. Both are complete: home9cd carries reviewed0df7 forwarding; integrated0500 PASS71+5+53, exactsource retained in current2007 (onlylaterD40testhelper). Independentpath0454 confirms old0441failure was beforeforwarding, not a provedfailure of successor. Viewingpeer0506 explicitly releases nextIMAGE onmeaningfulsource. OriginalABA11466's newambiguousitemseam is separatelyowned0513, not an unprovedblanketIMAGEsourcegate.
+
+Earlier requestcurrent-owned-next at05:13 reserves ONEfreshunchangedproducer onqualified1c5cc/f4f6/8f686 interface. Please return actualwatchstart/deadline and ONEpollfilename or concreteexistingproducerworkerID. Agent will then dispatch onecompletefreshrealm with allaccept/retry/undo/refusal/reopen/fullcanonical predicates, not an oldrealmretry. NoAppsource/graph/bridge/newauthority needed; old0441dispositionandactualoutputremainimmutable. No overlappingproducer or emptyreservationclaimedalive. Ifexistingwatchcannotcoverthefixture, do not starta realmtochaseit.

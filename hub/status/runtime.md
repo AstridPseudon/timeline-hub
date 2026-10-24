@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T05:29:59Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 2m -->
-# runtime board, 2026-10-24T05:28:00Z
+<!-- main | 2026-10-24T05:32:29Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 1m -->
+# runtime board, 2026-10-24T05:31:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -71,13 +71,13 @@ Runtime integration is 1d9ddba54, tree f56c396c4495. The merge adds only the rev
 D47 defers the memo and validation capsule until after delivery. Held source remains unmerged. D45 and D46 keep the next pair on existing 37eb and Agent 079 with reviewed App fixes.
 
 P2/P3: D45 pair is terminal. Both reached readiness on App c0fe / Agent 079 / Runtime 37eb. P2 has three failures and five not run; P3 failed inside Gate5. App and Proof own diagnosis and verdict; no repeat here.
-Farm: full-farm row appended at 04:59 with outside bytes unchanged. Farm worker tf-agent-full-farm-0503 queued the one checkpoint at 05:04. Setup has no remaining blocker.
+Farm: full-farm row appended at 04:59 with outside bytes unchanged. Worker tf-agent-full-farm-0503 was dispatched at 05:04 and remains active in the 05:27 heartbeat. Actual test ID and result are pending; setup is complete.
 Blockers: Freeze — D39 client regeneration and Agent/App tuple adoption are held for the freeze; current consumer pins stay intact.
 
 Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held until freeze.
 
-D34: Main has 8.8 GiB free at the latest check. The orchestrator orders no further main disk work. Reviewed registry candidate fdb9e9e9 was installed; normal retirement of s2-c13 was refused for incomplete tuple markers. No retry; zero GB freed.
+D34: Main has 8.6 GiB free at the latest check. The orchestrator orders no further main disk work. Reviewed registry candidate fdb9e9e9 was installed; normal retirement of s2-c13 was refused for incomplete tuple markers. No retry; zero GB freed.
 
 Later: D46 closes U2c; no new relay or provider custody backend. Its upstream commit arrives at the freeze. Agent owns support-probe timeout investigation 0522; no Runtime author is requested. Disk and D47 memo work stay paused. Agent failover capacity was offered in peer 0525; no duplicate author is started without an exact assignment.
 
-Next ready: Consume the Farm checkpoint result and any precise Agent failover assignment. All ready Runtime work is merged and qualified. Freeze-held generation and upstream work remain held; memo is post-delivery under D47.
+Next ready: None. Farm worker 0503 is active; consume its result and any precise Agent failover assignment. All ready Runtime work is merged and qualified. Upstream and generation wait for freeze; memo waits for delivery.
