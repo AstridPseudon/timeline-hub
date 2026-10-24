@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T03:03:09Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# app2 board, 2026-10-24T03:03Z
+<!-- app2 | 2026-10-24T03:05:03Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-24T03:04Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | P1 | Original mounted mixed chain | App Sol/Luna; Proof Luna | Complete on pinned tuple | merged | App run 18792; Proof reviews 0036 and 0040 | P1 RESULT GO. Exit 0, 141s; 2 passed in 56.3s. Source review and result custody passed. Freeze reruns all gates. | App f8b15af0a6; Agent 78738040; Runtime 2a9e347f |
@@ -7,7 +7,7 @@
 | P1-corpus | Real-document roundtrip and merge | Luna | Complete | merged | Corpus 1348 | 49 passed; 15 fixtures and 11 inputs. Direct provider scope; mounted chain has separate GO. | e6 / 9729 |
 | P1-seed | Full native atomic bootstrap | Sol; Luna review | Complete | merged | Common 0618; seed 2d7; Runtime a00e | All 21 native assertions and history passed in run 18792. Runtime 2a9 integrated proof: 67 passed. | App 12ef; Runtime 2a9 |
 | P1-diagnostics | Safe files and source guard codes | Sol/Luna | Source reviewed and merged | merged | Reviews 1945 and 2118; App WorkerInfo 2238 | Real emitter, serialized listener and failure file passed; cap 32 retains critical events. Failure-only files were not created on successful 18792. | b221 / 6ecc / def457 / f890 |
-| readiness-after-bootstrap | Adopt the qualified D41 history fix | Runtime Sol; Luna review; Proof verdict | App child and caller custody | blocked:app | Runtime 0241; review 0245 PASS; App caller 0250 | Exact backport source passed 145 with Agent4151; old Agent079 transcript failure retained. Client/OpenAPI bytes unchanged. | Runtime proof pin 37eb6c7bd |
+| readiness-after-bootstrap | Adopt the qualified D41 history fix | Runtime Sol; Luna review; Proof verdict | Matching Remotion registration and caller | doing | Runtime 0241; review 0245 PASS; App caller 0250 | Exact backport source passed 145 with Agent4151; old Agent079 transcript failure retained. Client/OpenAPI bytes unchanged. | Runtime proof pin 37eb6c7bd |
 | readiness-client-link | Compare P1 and native seed history | App Sol; Luna review | Complete retained comparison | merged | App Sol0121; independent Luna0128 | Both fresh targets have two entries. Native seed has 21 commands and child closure. Browser request counts unknown; deadline cause unproved. | Report only |
 | P2 | Original eight gestures on App service | App service; Proof verdict | Qualified D41 child and caller | doing | App caller Sol 0250; Proof audit draft 0220 | Source READY: Runtime37eb independent145 passed. App079 native and caller qualification remain. Prior eight originals NOT RUN. | App804; Agent079; Runtime37eb |
 | P2-custody | Actual 18800 lifecycle file | Proof Luna | Complete finite audit | merged | ap2-P2-18800-direct-custody-0032 | PASS: 10,665 bytes, six real records, schema/security/roundtrip/writer and Node 12+7. Cancellation at 679ms; trigger and history completion unknown. | Report only |
@@ -21,7 +21,7 @@
 
 P1 RESULT GO. BOARD-HEADER records it at 00:43Z; D35 is satisfied. Original run18792 passed both cases on Appf8b15af0, Agent78738040 and Runtime2a9e347f. P4 is done. G5 is done. P2/P3 remain open; all final freeze gates and original tails must run again on final heads.
 
-Blockers: App caller 0250 needs genuine child custody and exact caller qualification on the independently reviewed D41 proof pin 37eb.
+Blockers: App caller 0250 needs matching Remotion registration 0258 and final caller qualification; exact child 0256 already passed.
 Blockers: Farm F-final waits for remaining deletions, upstream freeze and P2/P3 proof. Agent owns its D32 full-suite classification and repairs.
 
 Readiness: Runtime source0155 reduces repeated authentication from three calls to one within the same locked read, without a persistent cache or removed guard. Independent0212 passed145 targeted tests, parent RED/candidate GREEN and all security controls; only three diagnostic whitespace lines failed. Evidence-only return0203 and independent0205 now PASS cumulatively, preserving the original capture losslessly. Normal merge landed at45c3a7f47, exactly the reviewed tree; integrated0210 PASS145 in57.84s, zero skips or deselections, on Runtime45c3 with Agent4151. Parent native direct/door5.715/5.944 seconds became1.885/2.010; P1~0.9 became~0.35. These observations do not prove historical browser deadline causality. [Author](../../design/runtime-readiness-auth-cost-author-0155.md), [initial review](../../design/runtime-readiness-auth-cost-review-0212.md), [cumulative review](../../design/runtime-readiness-evidence-review-0205.md).
@@ -49,3 +49,5 @@ Disk 02:58: 8,822,882,304 bytes available. No eligible non-KEEP worktree; suppor
 Event03:00Z: App0251 asks for the exact4151/backport proof that independent0245 has already completed145PASS. Peer0300 sends the actual existing source and final report; no duplicate producer proof needed. ActualApp caller may explicitly select4151 for the inherited079 transcript requirement, with new honest keyed child/receipt. Source identities remain distinct from failed45c3canonical mismatch.
 
 Event03:03Z: App0257 has normal exact37ebcheckout and actual079/37eb child0256 queued02:56; caller0250 live, no journey yet. Agent0301 canonicalHOMEfb4 is reviewed64targeted/artifact/qualityPASS, current8a8dprovider ancestry explicitly distinct from079. Peer0303 consumes that ready source as fallback and asks App to finish its alreadyactiveD41custody; firstqualified tuple stillgetsonepairtotal. Later: retain Agentfb4/Runtime45c3 canonical fallback; no competing provision or second pair requested.
+
+Event03:04Z: H6 App board recheck clears child/source dependency. Exact37eb child0256 passed with installed backend custody; App source wait cleared and shared readiness row nowdoing. Matching Remotion registration0258 is queued; solecaller0250 completes actual controls. No journey IDs yet. Agent0259 canonicalHOME peer is the same reviewed fallback already recorded.
