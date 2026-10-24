@@ -12,16 +12,20 @@ from pathlib import Path
 
 import pytest
 
+from astrid.core.timeline.authoring_bundle import open_authoring_bundle, publish_authoring_candidate
 from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
 from astrid.packs.timeline.cli import build_parser
 from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline._track_commands import capture_track_set
-from astrid.sdk.timeline.capture import capture_move
+from astrid.sdk.timeline.capture import capture_move, capture_track_create
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.emitter import emit_document_commands
+from astrid.sdk.timeline.native_initialize import capture_initialize
+from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
 from astrid.sdk.timeline.native_occurrence_fork import capture_occurrence_fork
+from astrid.sdk.timeline.native_occurrence_shared import foreign_shared_command
 from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
 from astrid.sdk.timeline_checkout import Checkout
 from astrid.sdk.timeline_editing import add_track
@@ -31,7 +35,6 @@ from tests.editing_conformance import test_native_batch_ingress
 from tests.editing_conformance.test_native_batch_ingress import command, label
 from tests.editing_conformance.test_native_sheet_current import property_cell
 from tests.editing_conformance.test_recipe_clip_scalar_fields import app_closure
-from tests.helpers.trusted_seed import seed_trusted_parent
 from tests.sdk.test_timeline_sheet_native import edit_cell, remove_row
 
 pytestmark = pytest.mark.integration
@@ -123,11 +126,69 @@ def tiny_cut_parent(service, project):
     }
 
 
+def _public_document(service, project, timeline):
+    """Read one exact Runtime closure through the public revision APIs."""
+    page = service.list_timeline_commits(project, timeline, limit=1, authorize=lambda: None)
+    head = page['head']
+    parent = service.get_project_parent_composition_revision(project, timeline, head['revision_id'])
+    document = {
+        'schema_version': 1,
+        'project_id': project,
+        'timeline_id': timeline,
+        'parent_revision': {key: parent[key] for key in ('revision_id', 'content_digest', 'payload')},
+        'shot_revisions': [],
+        'internal_timeline_revisions': [],
+        'dependency_manifest': parent['dependency_manifest'],
+    }
+    for pin in parent['dependency_manifest']['shots']:
+        image = service.get_project_shot_revision(project, pin['shot_id'], pin['revision_id'])
+        document['shot_revisions'].append({key: image[key] for key in (
+            'revision_id', 'shot_id', 'internal_timeline_revision_id', 'content_digest', 'payload')})
+    for pin in parent['dependency_manifest']['internal_timelines']:
+        image = service.get_project_timeline_revision(project, pin['timeline_id'], pin['revision_id'])
+        document['internal_timeline_revisions'].append({key: image[key] for key in (
+            'revision_id', 'timeline_id', 'content_digest', 'payload')})
+    return document, head
+
+
+def _publish_current_candidate(runtime, timeline, payload, shots, internals, *, key):
+    """Publish a detached closure through the current v2 Runtime caller."""
+    service = runtime.service()
+    current, head = _public_document(service, runtime.project, timeline)
+    target_parent = {
+        'project_id': runtime.project,
+        'timeline_id': timeline,
+        'revision_id': current['parent_revision']['revision_id'],
+        'content_digest': _digest(payload),
+        'payload': copy.deepcopy(payload),
+    }
+    candidate = open_authoring_bundle(
+        target_parent, shot_revisions=shots, internal_timeline_revisions=internals,
+    )
+    candidate['base_parent'] = {
+        'revision_id': current['parent_revision']['revision_id'],
+        'content_digest': current['parent_revision']['content_digest'],
+    }
+    candidate['base_parent_payload'] = copy.deepcopy(current['parent_revision']['payload'])
+    writer = runtime.client().timelines._client
+    publication = publish_authoring_candidate(candidate, writer, idempotency_key=key)['publication']
+    assert publication['accepted_revision_id'] == publication['canonical_document']['parent_revision']['revision_id']
+    assert publication['previous_revision_id'] == head['revision_id']
+    return publication
+
+
+def _seed_authoring_document(runtime, document, *, key):
+    payload = copy.deepcopy(document['parent_composition'])
+    payload.setdefault('occurrences', [])
+    return _publish_current_candidate(runtime, 'film', payload, document['shot_revisions'],
+                                      document['internal_timeline_revisions'], key=key)
+
+
 def seed_tiny_cut_parent(runtime):
     document = tiny_cut_parent(runtime.service(), runtime.project)
     target = copy.deepcopy(next(row for row in document['parent_composition']['clips']
                                if row['id'] == 'b-type'))
-    receipt = seed_trusted_parent(runtime.service(), document, idempotency_key='native-sheet-cut-parent')
+    receipt = _seed_authoring_document(runtime, document, key='native-sheet-cut-parent')
     return document, target, receipt
 
 
@@ -140,7 +201,7 @@ def seed_labeled_tiny_cut_parent(runtime):
     clip = next(row for row in payload['clips'] if row['id'] == 'b-plate')
     clip['opaque'] = {'source_token': ['fixture', None, False, 7]}
     payload['config']['clips'] = copy.deepcopy(payload['clips'])
-    receipt = seed_trusted_parent(runtime.service(), document, idempotency_key='native-sheet-label-parent')
+    receipt = _seed_authoring_document(runtime, document, key='native-sheet-label-parent')
     return document, receipt
 
 
@@ -153,7 +214,7 @@ def seed_rational_tiny_cut_parent(runtime):
     target['hold'] = RATIONAL_LATTICE_SECONDS
     target['opaque'] = {'retained_source': ['fixture', None, False, 7]}
     payload['config']['clips'] = copy.deepcopy(payload['clips'])
-    receipt = seed_trusted_parent(runtime.service(), document, idempotency_key='native-sheet-rational-parent')
+    receipt = _seed_authoring_document(runtime, document, key='native-sheet-rational-parent')
     return document, receipt
 
 
@@ -170,7 +231,7 @@ def _replace_media_ids(value, replacements):
 
 
 def seed_shared_occurrence_parent(runtime, *, prepare=None, identity_scope=None):
-    """Seed the existing shared-source App closure at the real Runtime boundary."""
+    """Seed the existing shared-source App closure through current Runtime commits."""
     parent, shots, internals = app_closure()
     project = runtime.project
     media_ids = set()
@@ -199,7 +260,6 @@ def seed_shared_occurrence_parent(runtime, *, prepare=None, identity_scope=None)
     _replace_media_ids(shots, replacements)
     _replace_media_ids(internals, replacements)
 
-    parent_revision_id = 'native-sheet-connected-occurrence-parent'
     if identity_scope is not None:
         shot = shots[0]
         old_shot_id = shot['shot_id']
@@ -219,30 +279,126 @@ def seed_shared_occurrence_parent(runtime, *, prepare=None, identity_scope=None)
         shot['payload']['internal_timeline_revision_id'] = internal_revision_id
         internal = next(item for item in internals if item['revision_id'] == old_internal_revision_id)
         internal['revision_id'] = internal_revision_id
-        parent_revision_id = f'{identity_scope}-parent-revision'
 
     if prepare is not None:
         prepare(parent, shots, internals)
 
-    parent['project_id'] = project
-    parent['timeline_id'] = 'film'
-    for image in [*shots, *internals]:
-        image['project_id'] = project
-    for image in internals:
-        image['timeline_id'] = 'film'
-    document = {
-        'project_id': project,
-        'timeline_id': 'film',
-        'expected_head': None,
-        'parent_revision_id': parent_revision_id,
-        'parent_composition': parent['payload'],
-        'shot_revisions': shots,
-        'internal_timeline_revisions': internals,
+    # First create the source occurrence with the semantic birth command.  The
+    # following authoring publication only changes authored fields; Runtime
+    # keeps the occurrence/child identities and the immutable source authority.
+    source_timeline = f'native-sheet-source-{runtime.project}'
+    runtime.service().create_timeline(project, source_timeline, idempotency_key='native-sheet-source-bootstrap')
+    source_session = TimelineSession.open(project, source_timeline, client=runtime.client())
+    source_bundle = source_session._capture_bundle(source_session._state())
+    source_commands = []
+
+    def append_source(command_value):
+        nonlocal source_bundle
+        source_commands.append(command_value)
+        source_bundle = execute(source_bundle, [command_value]).bundle
+
+    source_payload = parent['payload']
+    append_source(capture_initialize(
+        source_bundle, name='Shared source', slug='shared-source',
+        output=copy.deepcopy(source_payload['config']['output']),
+    ))
+    for track in source_payload['config']['tracks']:
+        append_source(capture_track_create(source_bundle, 'parent', track))
+    source_occurrence = parent['payload']['occurrences'][0]
+    source_shot = shots[0]
+    append_source(capture_occurrence_create(
+        source_bundle, source_occurrence['occurrence_id'], source_occurrence['shot_id'],
+        name=source_shot['payload'].get('name', 'Shared source'), track=source_occurrence['track'],
+        on=source_occurrence['placement']['start_ms'] / 1000,
+        duration=source_occurrence['duration_ms'] / 1000,
+    ))
+    source_owner = 'occurrence:' + source_occurrence['occurrence_id']
+    for track in internals[0]['payload']['tracks']:
+        append_source(capture_track_create(source_bundle, source_owner, track))
+    source_session.commit_many(
+        source_commands, idempotency_key='native-sheet-source-semantic',
+        via='python', label='NativeSheet shared-source setup', merge='atomic',
+    )
+
+    source_current, _source_head = _public_document(runtime.service(), project, source_timeline)
+    actual_occurrence = source_current['parent_revision']['payload']['occurrences'][0]
+    actual_shot = source_current['shot_revisions'][0]
+    actual_internal = source_current['internal_timeline_revisions'][0]
+    source_parent_payload = copy.deepcopy(parent['payload'])
+    source_parent_payload['occurrences'] = [copy.deepcopy(source_occurrence)]
+    source_parent_payload['occurrences'][0].update(
+        shot_id=actual_occurrence['shot_id'], shot_revision_id=actual_occurrence['shot_revision_id'],
+    )
+    source_shot_image = copy.deepcopy(source_shot)
+    source_shot_image.update(
+        project_id=project, timeline_id=source_timeline, revision_id=actual_shot['revision_id'],
+        internal_timeline_revision_id=actual_internal['revision_id'],
+        content_digest=_digest(source_shot_image['payload']),
+    )
+    source_internal_image = copy.deepcopy(internals[0])
+    source_internal_image.update(
+        project_id=project, timeline_id=source_timeline, revision_id=actual_internal['revision_id'],
+        content_digest=_digest(source_internal_image['payload']),
+    )
+    source_parent_payload['occurrences'][0]['shot_revision_id'] = source_shot_image['revision_id']
+    source_parent_payload['occurrences'][0]['shot_id'] = source_shot_image['shot_id']
+    _publish_current_candidate(
+        runtime, source_timeline, source_parent_payload, [source_shot_image], [source_internal_image],
+        key='native-sheet-source-authoring',
+    )
+    source_saved, source_head = _public_document(runtime.service(), project, source_timeline)
+    source_ref = {
+        'project_id': project, 'timeline_id': source_timeline,
+        'revision_id': source_saved['parent_revision']['revision_id'],
+        'publication_id': source_head['publication_id'],
+        'content_digest': source_saved['parent_revision']['content_digest'],
     }
-    seed_key = (f'{identity_scope}-seed' if identity_scope is not None
-                else 'native-sheet-connected-occurrence-parent')
-    receipt = seed_trusted_parent(runtime.service(), document, idempotency_key=seed_key)
-    return document, receipt
+
+    # Materialize the destination lanes, then place both occurrences through
+    # the authenticated foreign-source semantic command.
+    destination = runtime.session(name='connected-occurrence-skeleton')
+    destination_bundle = destination._capture_bundle(destination._state())
+    track_commands = [capture_track_create(destination_bundle, 'parent', row)
+                      for row in parent['payload']['config']['tracks']]
+    destination.commit_many(
+        track_commands, idempotency_key='native-sheet-destination-skeleton',
+        via='python', label='NativeSheet destination setup', merge='atomic',
+    )
+    foreign_commands = [
+        foreign_shared_command(source_ref, source_occurrence['occurrence_id'], occurrence_id, on=on)
+        for occurrence_id, on in (('f2-occurrence', 0), ('shared-sibling', 20))
+    ]
+    placed = destination.commit_many(
+        foreign_commands, idempotency_key='native-sheet-connected-occurrence-parent',
+        via='python', label='NativeSheet shared occurrence setup', merge='atomic',
+    )
+
+    current, _head = _public_document(runtime.service(), project, 'film')
+    target_parent = copy.deepcopy(parent['payload'])
+    current_rows = {row['occurrence_id']: row for row in current['parent_revision']['payload']['occurrences']}
+    target_parent['occurrences'] = []
+    for row in parent['payload']['occurrences']:
+        target = copy.deepcopy(row)
+        target.update({key: current_rows[row['occurrence_id']][key]
+                      for key in ('shot_id', 'shot_revision_id') if key in current_rows[row['occurrence_id']]})
+        target_parent['occurrences'].append(target)
+    current_shots = copy.deepcopy(current['shot_revisions'])
+    current_internals = copy.deepcopy(current['internal_timeline_revisions'])
+    publication = _publish_current_candidate(
+        runtime, 'film', target_parent, current_shots, current_internals,
+        key=(f'{identity_scope}-seed' if identity_scope is not None
+             else 'native-sheet-connected-occurrence-authoring'),
+    )
+    final_document = publication['canonical_document']
+    document = {
+        'project_id': project, 'timeline_id': 'film', 'expected_head': None,
+        'parent_revision_id': final_document['parent_revision']['revision_id'],
+        'parent_composition': final_document['parent_revision']['payload'],
+        'shot_revisions': final_document['shot_revisions'],
+        'internal_timeline_revisions': final_document['internal_timeline_revisions'],
+    }
+    assert placed['data']['status'] in {'accepted', 'merged', 'rebased'}
+    return document, publication
 
 
 def seed_document_diff_parent(runtime):
