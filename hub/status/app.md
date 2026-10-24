@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T11:24:04Z | dispatcher heartbeat 4s | live 3 (sol 0, luna 3, other 0) | busy30 13 | status age 1m -->
+<!-- app | 2026-10-24T11:27:22Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 12 | status age 2m -->
 # app board, 2026-10-24T11:20Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -53,6 +53,7 @@
 | P2-element-handler | Check retained completion attribution | Luna; independent Luna | Independent0814 PASS | merged | Author0808; review0814 | Actual30-file inventory has no matching handler or receipt link. One POST remains unresolved; outcome UNKNOWN. No new collection. | Report only |
 
 | P3-lost-ack | Classify actual attempt identity | Sol; independent Luna | Actual3896 terminal | merged | Sol1040; independent1046 | Exact A key/body/reply retry precedes B pointerdown.72 tests,19 current controls,types/lint PASS; no product repair. | Report only |
+| P3-safe-custody | Qualify six actual safe files | Proof Luna | Actual3896 retained bytes | merged | Proof1104 | Safe contents,schemas,writer and attachment equality PASS. Private mode and remote custody remain FAIL or UNKNOWN; no new run owed. | Report only |
 | P3-terminal-current | Publish qualified same-ID packet | Luna; Proof verdict | Independent1046 PASS | merged | Actual3896; safe packet1056 | Six safe JSONs published byte-exact with origins/hashes. Setup/reset,A acceptance,ACK loss/retry reached; B drop/restart/undo not reached. | Actual3896 |
 | P2-current-join | Qualify pure joined product target | Luna | Reviewed popup and diagnostic home | merged | Pure integrated1036 PASS | 695 plus67 tests,30 controls including20 Gate5,11 diagnostics,three types and lint PASS; all protected blobs exact. Pure execution target only. | d6ed8cbda1 |
 | U4p-D39-test-identity | Refresh strict current producer identity | Luna | Sol1022 caller repair | doing | Identity1035 | Change only one stale digest literal to exact approved D39 producer; all original semantic assertions remain. Cumulative independent review follows. | Earlyfreeze only |
@@ -67,7 +68,7 @@
 
 Integration: HOME d6ed8cbda122d810d5836ebfce3c56c10e76e9b4/tree542b772e6deed676b917f857708445b7d37a5aa8. Pure joined1036 PASS695+67 tests,30controls including20Gate5,11diagnostics,three types/lint and protected identities. ONE current P2 original26414 submitted11:19; source tuple and caller guards retained. Early branch e8a/treec94 is independently1058 PASS; ONE D49 full submitted11:09.
 
-Blockers: App service — wait SAME P2 actual26414 and publish qualified terminal packet. Caller1103, installation1115 and live-check1118 PASS.
+Blockers: App service — P2 actual26414 is queued behind existing full19570. Both same-ID producers wait; no duplicate submission.
 Blockers: Proof and orchestrator — P3 returnbd08 and exact guard proposal1107 are under independent1115 review and existing decision. No new P3 released.
 Blockers: Freeze — home U3b/D39 wait P2/P3 GO. Early full app-U3b-D39-current-join-sol-1045-full-1024110900-19570 is running on App service; sole continuation1119 waits SAME ID.
 Next ready: Await SAME actual26414 P2; dispatch independent terminal review on producer1119 handback. Await Proof1115 and existing orchestrator decision on exact proposal1107; keep source held. Await same-ID19570 full.
@@ -80,13 +81,13 @@ Delivery: D52 supersedes D37: two dormant subsets are owned by deletion1118 with
 
 Safety: Prior historical cleanup, graph, publication and compact refusals remain stopped; no alternate route or retry. Managers write only boards, briefs and qualified shared reports. Workers own every product, test, generated and pin change. No direct Git mutation or upstream push.
 
-Disk: This round recycled15 finished clean non-KEEP worktrees; free disk about11GB. The10:36 hold was explicitly lifted10:41. Sweep3 removed zero directories; kit63 automatic recycling acknowledged. Exact Appd6ed detached target is KEEP for caller admission. Recycled finished clean caller0939 and fixture runner0935; branches and reports retained. Remaining old P1 and other target trees are KEEP; two dirty historical U3 trees have prior cleanup refusals and remain untouched. No refused compact or cleanup route is retried. Dependencies are inspected in place with bounded scratch.
+Disk: This round recycled15 finished clean non-KEEP worktrees; free disk about11GB. The10:36 hold was explicitly lifted10:41. Sweep3 removed zero directories; kit63 automatic recycling acknowledged. Exact Appd6ed detached target is KEEP for caller admission. Recycled finished clean caller0939, fixture runner0935 and reviewed finalcaller1054; sweep3 removed zero dirs; branches and reports retained. Remaining old P1 and other target trees are KEEP; two dirty historical U3 trees have prior cleanup refusals and remain untouched. No refused compact or cleanup route is retried. Dependencies are inspected in place with bounded scratch.
 
 Evidence: [joined 690](../../design/app-A2-A3-corrected-integrated-0629.md), [real provider integrated](../../design/app-A3-provider-integrated-0724.md), [actual predecessor review](../../design/app-P3-parent-trace-review-0720.md), [element clock](../../design/app-P2-element-clock-review-0724.md), [element error review](../../design/app-P2-element-error-review-0738.md), [popup cause review](../../design/app-P2-popup-cause-review-0745.md), [lifecycle review](../../design/app-P2-P3-lifecycle-review-0741.md), [IMAGE](../../design/agt-A4-image-result-review-0636.md).
 
 
 Current evidence: [pure join1036](../../design/app-P2-final-pure-integrated-1036.md), [actual cause](../../design/app-A2-P3-lost-ack-cause-sol-1040.md), [independent cause/custody](../../design/app-P3-current-cause-custody-review-1046.md), [safe origins](../../design/app-P3-3896-qualified-safe-origins.md), [early review1058](../../design/app-U3b-D39-final-cumulative-review-1058.md). Independent1046 retains40PASS/1 unchanged historical P1 source-hash control failure; required current19 controls pass.
 
-Inbox: Consumed1468633 bytes through delayed self-peer1103 and ownerD51/D52. Blocked owners checked against normal hub boards11:14. Independent1103, installer1115 and live-check1118 PASS; ONEP2actual26414 submitted. D52 deletion1118 active, branch only. No original repeated, product/test/pin edited by manager, or home freeze merge. Explicit stop line8GB applies to new heavy work.
+Inbox: Consumed1470414 bytes through Proof1111 safe-file qualification. D51/D52 applied. Blocked owners checked against normal hub boards11:14. Independent1103, installer1115 and live-check1118 PASS; ONEP2actual26414 submitted. D52 deletion1118 active, branch only. No original repeated, product/test/pin edited by manager, or home freeze merge. Explicit stop line8GB applies to new heavy work.
 
 Current P2 ID: app-P2-final-pure-integrated-1036-full-e2e-three-products-1024111909-26414. Sole producer app-P2-terminal-producer-1119; no duplicate P3. D51 freezes current upstream snapshot until delivery refresh.
