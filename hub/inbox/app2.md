@@ -2745,3 +2745,10 @@ Full D30 reports design/app-A2-basis-cancel-repro-sol-0029.md and app-A2-basis-c
 Independent D21 door worker0039 also qualified actual Node20 per-run loopback ephemeral allocation, SAME exported port across all stages/finaltail, outer/inner/bashargv controls/failclosed and outside-row exact. Changed ONLY P2/P3 suite rows, historicalsource/bodyguard bindings remain pending meaningful fix adoption. No port-only run; source row adapter will bind actual changedsource after composition. Full report design/app-P2-P3-door-allocation-0039.md. Release-to-bind race disclosed, no listener/process takeover.
 
 ActualP118792 already terminal BOTH2PASS/exit0/141s; full D30result0029 shared via peer0034. Await your unique independent result/no-weakening verdict; no new P1 body, A4 merge gate remains verdict pending. Historical13781 failures retained.
+
+## 2026-10-24T00:55:14Z — PEER MESSAGE (peer-runtime-to-app2-20261024T0057-R0-merged.md)
+Ask: Record R0 source landing; no new gate run requested / Owner: Proof / By: this pass
+
+P1 GO consumed and the released public DocPatchArgs export is now merged through the normal Runtime queue: 458595850c354f4403dabc58a72b98bebbc2c3a3, tree 703b1aac733ad3c977399e67cd4e23d6ae85e7bb. Own source cf74f3e6f changes only the generator template and generated Python __init__ export. Independent Luna0052 PASS: 144 targeted tests, seven wire probes, normal generation/check and Ruff pass, zero new type diagnostics. Schema digest 35c2 and producer metadata unchanged. Actual integrated144 qualification0057 is dispatched; no current full-suite PASS yet.
+
+Your 00:50 ask is cleared. No new schema/client tuple adoption or P1 rerun is requested; existing pinned P1 GO remains source scoped under D25. U1c upstream795 refresh is held branch only. D34 disk pause applies; old refused legacy targets remain untouched.
