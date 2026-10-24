@@ -1794,8 +1794,13 @@ def _fork_owner_before(boundary, record, occurrence_ref, owner_row, identity_sco
     source_reads = [read for read in record.get("reads", [])
                     if read.get("ref") == occurrence_ref + "/shot"
                     and read.get("path") == ["shot_id"]]
-    if not owner_reads and not source_reads:
+    if identity_scope is None:
+        require(not owner_reads and not source_reads,
+                "provider created shot owner lacks an authenticated identity scope")
         return owner_row.get("shot_id")
+    require(isinstance(identity_scope, tuple) and len(identity_scope) == 2
+            and all(isinstance(value, str) and value for value in identity_scope),
+            "provider created shot owner lacks an authenticated identity scope")
     require(len(owner_reads) == 1 and len(source_reads) == 1,
             "provider created shot owner lacks its authenticated source projection")
     owner_state = owner_reads[0].get("state", {})
@@ -1987,7 +1992,9 @@ def _project_created_child(boundary, record, following, accepted, identity_scope
             accepted_payload = accepted_shot.get("payload")
             require(isinstance(accepted_payload, dict)
                     and {key: value for key, value in accepted_payload.items()
-                         if key != "internal_timeline_revision_id"} == authored_shot,
+                         if key != "internal_timeline_revision_id"}
+                    == {key: value for key, value in authored_shot.items()
+                        if key != "internal_timeline_revision_id"},
                     "provider created occurrence accepted shot is not its authored allocation")
             projected_parent = copy.deepcopy(boundary["parent"]["payload"])
             if fork:
@@ -2055,6 +2062,28 @@ def _project_created_child(boundary, record, following, accepted, identity_scope
         projected_roots.add(occurrence_ref)
         if fork:
             projected_roots.add(occurrence_ref + "/shot_id")
+            source_reads = [read for read in record.get("reads", [])
+                            if read.get("ref") == occurrence_ref + "/shot"
+                            and read.get("path") == ["shot_id"]]
+            source_shot_ref = "shot-revision:" + str(owner_row.get("shot_revision_id"))
+            source_shot = boundary.get(source_shot_ref)
+            if source_reads and source_shot is not None:
+                source_internal_id = source_shot.get("internal_timeline_revision_id")
+                require(isinstance(source_internal_id, str),
+                        "provider fork source closure lacks its authenticated internal timeline")
+                sibling = any(row.get("occurrence_id") != occurrence_ref.partition(":")[2]
+                              and row.get("shot_revision_id") == owner_row.get("shot_revision_id")
+                              for row in payload.get("occurrences", []))
+                retained = source_shot_ref in accepted
+                require(not (sibling and not retained),
+                        "provider fork source closure differs from its authenticated siblings")
+                if not sibling and not retained:
+                    boundary.pop(source_shot_ref, None)
+                    source_internal_ref = "internal-revision:" + str(source_internal_id)
+                    if not any(image.get("internal_timeline_revision_id") == source_internal_id
+                               for ref, image in boundary.items()
+                               if ref.startswith("shot-revision:")):
+                        boundary.pop(source_internal_ref, None)
     return projected_roots
 
 
