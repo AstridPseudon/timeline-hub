@@ -25,11 +25,11 @@
     "agent": {
       "checkout": "/home/user/work/agent",
       "ref": "tl/integration",
-      "source": "68e82c0c2ce621f43ae73aa05fce0d1d0f47a677",
-      "tree": "aa62e96c1231de41cee32c5388592c99ae04345f",
+      "source": "d27b6601e56b19334c9534338ce1f3ac80e85fc7",
+      "tree": "2449edb7729b2de0fa57093b788fa0f13058ae4a",
       "parents": [
-        "5492fc80414c53c77585844a25fd8a94107c71fa",
-        "b9d7618f92399fdf0d33a72857ada058c028ba66"
+        "68e82c0c2ce621f43ae73aa05fce0d1d0f47a677",
+        "2a8fbc6c2bc05ba965bdfc0f3e421d123e2048a0"
       ]
     },
     "runtime": {
@@ -105,12 +105,19 @@
     "package_sha256": "3dbcfbf7f63c084a8e571cba4e584fcd4e53e37aeadc6ece4e74ed8ec279d723",
     "node": "v20.19.4",
     "npm": "10.8.2",
-    "composition_version": "0.0.14"
+    "composition_version": "0.0.14",
+    "project": "/home/user/work/bench-store/entries/runtime-5ca5c561b7be7069051ac8769432cc1edf29060bed39384cd3c4ecab1736e690",
+    "bench_files": {
+      "package.json": "3dbcfbf7f63c084a8e571cba4e584fcd4e53e37aeadc6ece4e74ed8ec279d723",
+      "package-lock.json": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+      "node_modules/.package-lock.json": "7c9bc0496dec4c2b3545086a11614eb4e7cb8421951f5470f58d5c260aa314ae",
+      ".astrid-remotion-tree": "24d47568fb3b5a449895014920b24e2c40d71e8bd2b41a60a68831be5bd156f2"
+    }
   },
   "composition": {
     "artifact": "/home/user/work/app/vendor/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz",
     "artifact_sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
-    "graph": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/node_modules/@banodoco/timeline-composition",
+    "graph": "/home/user/work/bench-store/entries/runtime-5ca5c561b7be7069051ac8769432cc1edf29060bed39384cd3c4ecab1736e690/node_modules/@banodoco/timeline-composition",
     "version": "0.0.14",
     "file_count": 80,
     "file_map_sha256": "ac0bf2a252d3f3a7640ed2a0b555b8a91ff81671a3b70074ed27676357edbbc9",
@@ -156,7 +163,25 @@
     "mode": "source-mode",
     "submitted": false,
     "service": "NOT_RUN",
-    "next_step": "run the emitted shell once after final shared launch review"
+    "next_step": "Repair the existing consumed Agent child schema and App installed Composition graph through their owning lanes; repeat source admission, then authorize/verify the fresh private dist build and original journey.",
+    "pending": [
+      {
+        "seam": "Agent child schema",
+        "expected_sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+        "observed_sha256": "5592a6bb4376b9b9b84d66897b17f058eed5f0176d3c9ead262e19283fc86f25",
+        "reason": "AstridCli.env() omits ASTRID_TIMELINE_SCHEMA_PYTHONPATH; no parent-only source selection repairs this child."
+      },
+      {
+        "seam": "App build Composition dependency",
+        "expected_file_map_sha256": "ac0bf2a252d3f3a7640ed2a0b555b8a91ff81671a3b70074ed27676357edbbc9",
+        "observed_file_map_sha256": "ee6d63298973c139dca32ab89ec9fb1b22fbf3d883960d8bc807c17d3a1ef887",
+        "reason": "App/node_modules resolves a different Composition graph from the pinned artifact; installs/overlays are outside this task."
+      },
+      {
+        "seam": "actual fresh dist build and original journey",
+        "status": "NOT_RUN"
+      }
+    ]
   },
   "wire_contract": {
     "route": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
@@ -181,6 +206,24 @@
     "split -> trim new ID -> Agent edit -> lost ACK -> restart",
     "accepted, merged, and refused replies",
     "history, legacy-route, timeout, and diagnostic stage-file guards",
-    "guarded-undo reply field and exact body preservation"
-  ]
+    "guarded-undo reply field only; the unchanged two cases do not exercise undo"
+  ],
+  "schema": {
+    "pythonpath": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+    "origin": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py",
+    "files": {
+      "banodoco_timeline_schema/__init__.py": "0760fca0b4ea29ca384932eb2291044acc6b9b62e12153b7480d2e354cef845c",
+      "banodoco_timeline_schema/generated.py": "da74eae27fafc8e8410b96c99cec0652f54343fa7b975ec315295d644ea6ae63",
+      "banodoco_timeline_schema/materialize.py": "3f1fdbf19b1d718814999e2eaf6af7f6ac8235e8e6c867027b3f79ecbd66b5dc",
+      "banodoco_timeline_schema/theme.py": "bd5d1277ca8985b897ce6bcf1d9d9d3a475182140d2a1059efa9533c10babf80",
+      "banodoco_timeline_schema/timeline.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+      "banodoco_timeline_schema/validate.py": "e2770d1242a87d96f9d8850472b44cc8419fc4c0147b81c88af68e563bb4e3a8"
+    },
+    "authority": "App vendored source and runtime.lock.json; installed Agent child must match, even though AstridCli.env drops the parent schema setting"
+  },
+  "dist": {
+    "policy": "fresh-build-only",
+    "relative": "environment/dist",
+    "status": "NOT_BUILT"
+  }
 }

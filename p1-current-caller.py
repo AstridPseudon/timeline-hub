@@ -12,6 +12,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -44,17 +45,6 @@ P1_TARGET = (
     "--",
     P1_BODY_RELATIVE,
 )
-FORBIDDEN_SHELL_TEXT = (
-    "npm install",
-    "npm ci",
-    "pip install",
-    "git push",
-    "git reset",
-    "git checkout",
-    "rm -rf",
-    "curl ",
-    "wget ",
-)
 
 
 class PreparedError(RuntimeError):
@@ -75,13 +65,23 @@ def sha256_file(path: Path) -> str:
     return sha256_bytes(path.read_bytes())
 
 
+def file_map(root: Path) -> dict[str, str]:
+    require(root.is_dir() and root.resolve() == root and not root.is_symlink(), f"physical directory required: {root}")
+    files = {}
+    for path in root.rglob("*"):
+        require(not path.is_symlink(), f"aliased graph input: {path}")
+        if path.is_file() and path.suffix != ".pyc" and "__pycache__" not in path.parts:
+            files[path.relative_to(root).as_posix()] = sha256_file(path)
+    return files
+
+
 def canonical_sha(value: Any) -> str:
     return sha256_bytes(json.dumps(value, sort_keys=True, separators=(",", ":")).encode())
 
 
 def git(root: Path, *args: str) -> str:
     result = subprocess.run(
-        ["git", "-C", str(root), *args],
+        ["/usr/bin/git", "-C", str(root), *args],
         check=False,
         capture_output=True,
         text=True,
@@ -123,6 +123,12 @@ def expected_for_negative(facts: dict[str, Any], name: str | None) -> dict[str, 
         value["interpreters"]["runtime"]["python"] = "/forged/python"
     elif name == "graph":
         value["composition"]["file_map_sha256"] = "0" * 64
+    elif name == "wrongschema":
+        value["schema"]["files"]["banodoco_timeline_schema/timeline.schema.json"] = "0" * 64
+    elif name == "bench":
+        value["remotion"]["project"] = "/forged/remotion"
+    elif name == "dist":
+        value["dist"]["policy"] = "reuse-existing-build"
     elif name == "target":
         value["target"]["command"] = ["forged-target"]
     elif name == "body":
@@ -167,6 +173,7 @@ def assert_source_snapshot(facts: dict[str, Any]) -> None:
 def assert_integration(label: str, root: Path, facts: dict[str, Any]) -> None:
     require(root.is_dir() and not root.is_symlink() and root.resolve() == root, f"{label} checkout unavailable")
     expected = facts["integrations"][label.lower()]
+    require(expected["checkout"] == str(root) and expected["ref"] == NORMAL_REF, f"{label} source origin changed")
     require(git(root, "rev-parse", "--show-toplevel") == str(root), f"{label} checkout root changed")
     require(git(root, "symbolic-ref", "--short", "HEAD") == NORMAL_REF, f"{label} ref changed")
     require(git(root, "rev-parse", f"refs/heads/{NORMAL_REF}") == expected["source"], f"{label} normal ref moved")
@@ -177,7 +184,7 @@ def assert_integration(label: str, root: Path, facts: dict[str, Any]) -> None:
 
 
 def assert_locks(facts: dict[str, Any]) -> None:
-    for label, root in (("app", HERE), ("agent", AGENT)):
+    for label, root in (("app", APP), ("agent", AGENT)):
         path = root / "runtime.lock.json"
         value = json.loads(path.read_text(encoding="utf-8"))
         expected = facts["locks"][label]
@@ -186,6 +193,10 @@ def assert_locks(facts: dict[str, Any]) -> None:
         require(value["source_commit"] == facts["integrations"]["runtime"]["source"], f"{label} lock producer changed")
         require(value["producer_version"] == expected["producer_version"], f"{label} producer version changed")
         require(len(value["files"]) == expected["file_count"], f"{label} lock mapping count changed")
+        for relative, item in value["files"].items():
+            digest = item["sha256"].removeprefix("sha256:")
+            require(sha256_file(root / relative) == digest, f"{label} consumed lock file changed: {relative}")
+            require(sha256_file(RUNTIME / item["from"]) == digest, f"{label} producer lock file changed: {relative}")
 
 
 def assert_clients(facts: dict[str, Any]) -> None:
@@ -242,18 +253,46 @@ def assert_artifacts(facts: dict[str, Any]) -> None:
     )
     require(node.returncode == 0 and node.stdout.strip() == remotion["node"], "Remotion Node changed")
     require(npm.returncode == 0 and npm.stdout.strip() == remotion["npm"], "Remotion npm changed")
+    require(remotion["project"] == str(REMOTION_PROJECT), "consumed Remotion bench changed")
+    require(REMOTION_PROJECT.resolve() == REMOTION_PROJECT and not REMOTION_PROJECT.is_symlink(), "Remotion bench is aliased")
+    for relative in git(AGENT, "ls-tree", "-r", "--name-only", "HEAD:remotion").splitlines():
+        require(sha256_file(REMOTION_PROJECT / relative) == sha256_file(AGENT / "remotion" / relative), f"consumed Remotion source changed: {relative}")
+    for relative, digest in remotion["bench_files"].items():
+        require(sha256_file(REMOTION_PROJECT / relative) == digest, f"consumed Remotion input changed: {relative}")
     for path_text, digest in facts["runtime_artifacts"].items():
         require(sha256_file(Path(path_text)) == digest, f"Runtime artifact changed: {path_text}")
     composition = facts["composition"]
     require(sha256_file(Path(composition["artifact"])) == composition["artifact_sha256"], "Composition artifact changed")
     graph = Path(composition["graph"])
+    require(graph == REMOTION_PROJECT / "node_modules/@banodoco/timeline-composition", "Composition graph is not the consumed bench graph")
     require(graph.is_dir() and not graph.is_symlink() and graph.resolve() == graph, "approved Composition graph unavailable")
-    files = {str(path.relative_to(graph)): sha256_file(path) for path in graph.rglob("*") if path.is_file() and not path.is_symlink()}
+    files = file_map(graph)
     require(len(files) == composition["file_count"], "Composition graph file count changed")
     require(canonical_sha(files) == composition["file_map_sha256"], "Composition graph bytes changed")
     package = graph / "package.json"
     require(sha256_file(package) == composition["package_sha256"], "Composition package changed")
     require(json.loads(package.read_text(encoding="utf-8"))["version"] == composition["version"], "Composition version changed")
+    app_graph = APP / "node_modules/@banodoco/timeline-composition"
+    require(file_map(app_graph) == files, "consumed App Composition graph differs from authenticated artifact; existing node_modules is stale")
+
+
+def assert_schema(facts: dict[str, Any]) -> None:
+    schema = facts["schema"]
+    root = Path(schema["pythonpath"])
+    require(root == Path("/home/user/work/venv-agent/lib/python3.13/site-packages"), "consumed schema root changed")
+    require(set(schema["files"]) == {
+        f"banodoco_timeline_schema/{name}" for name in (
+            "__init__.py", "generated.py", "materialize.py", "theme.py", "timeline.schema.json", "validate.py",
+        )
+    }, "consumed schema file closure changed")
+    require(schema["files"]["banodoco_timeline_schema/timeline.schema.json"] == facts["clients"]["files"]["vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json"], "consumed schema contract changed")
+    # AstridCli.env() drops the outer schema setting. Both consumers must agree;
+    # selecting a vendored root only in the parent cannot repair that child.
+    actual = probe(AGENT_PYTHON, f"{AGENT}:{RUNTIME}", ["banodoco_timeline_schema"])
+    require(actual["imports"]["banodoco_timeline_schema"] == schema["origin"], "consumed Agent child schema origin changed")
+    for relative, digest in schema["files"].items():
+        require(sha256_file(APP / "vendor/timeline-schema/python" / relative) == digest, f"authoritative schema input changed: {relative}")
+        require(sha256_file(root / relative) == digest, f"consumed schema differs from authenticated vendored schema: {relative}")
 
 
 def assert_spec(facts: dict[str, Any]) -> None:
@@ -274,6 +313,7 @@ def assert_target(facts: dict[str, Any]) -> None:
     require(target["source_ref"] == APP_TARGET_REF, "execution target ref changed")
     require(target["source_commit"] == source["commit"], "execution target commit changed")
     require(target["source_tree"] == source["tree"], "execution target tree changed")
+    require(target["command"] == list(P1_TARGET), "execution target changed")
     require(target["route"] == "mounted App -> persisted outbox -> generated commitTimeline", "execution route changed")
 
 
@@ -295,7 +335,7 @@ def assert_wire(facts: dict[str, Any]) -> None:
     require(set(wire["statuses"]) >= {"accepted", "merged", "conflict", "invalid", "dryrun"}, "reply statuses incomplete")
 
 
-def validate(facts: dict[str, Any], negative: str | None = None) -> None:
+def validate(facts: dict[str, Any]) -> None:
     require(not facts.get("poison_marker"), "poison marker refused")
     require(facts["target"]["command"] == list(P1_TARGET), "execution target changed")
     assert_source_snapshot(facts)
@@ -304,6 +344,7 @@ def validate(facts: dict[str, Any], negative: str | None = None) -> None:
     assert_locks(facts)
     assert_clients(facts)
     assert_interpreters(facts)
+    assert_schema(facts)
     assert_artifacts(facts)
     assert_spec(facts)
     assert_target(facts)
@@ -311,10 +352,38 @@ def validate(facts: dict[str, Any], negative: str | None = None) -> None:
     require(facts["chronology"]["future_snapshot_required"] is False, "future snapshot requirement is not allowed")
     require(facts["chronology"]["historical_caller_reused"] is False, "historical caller reuse is refused")
     require(facts["execution"]["submitted"] is False, "submission is outside this preparation")
-    require(facts["stages"]["source"]["files"], "source stage destinations are incomplete")
-    require(facts["stages"]["environment"]["files"], "environment stage destinations are incomplete")
-    require(facts["stages"]["original"]["files"], "original stage destinations are incomplete")
-    require(negative is None, "negative mutation was not refused")
+    require(facts["stages"]["root"] == "/tmp/timeline-p1-current-caller", "stage root changed")
+    require(facts["stages"]["source"]["files"] == ["commit", "tree", "parents"], "source stage destinations are incomplete")
+    require(facts["stages"]["environment"]["files"] == ["integration-heads", "body"], "environment stage destinations are incomplete")
+    require(facts["stages"]["original"]["files"] == ["stdout.log", "stderr.log", "status", "playwright-output"], "original stage destinations are incomplete")
+    require(facts["dist"] == {"policy": "fresh-build-only", "relative": "environment/dist", "status": "NOT_BUILT"}, "dist must be built fresh from selected App source")
+
+
+def consumed_environment(facts: dict[str, Any]) -> dict[str, str]:
+    # Existing sharedlaunch52966 source-mode interfaces; no installed-child claim.
+    return {
+        "PATH": f"{REMOTION_NODE.parent}:{APP}/node_modules/.bin:/usr/bin:/bin",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "PYTHONPATH": f"{APP}:{RUNTIME}:{AGENT}",
+        "ASTRID_CHECKOUT": str(AGENT),
+        "ASTRID_PYTHON": str(AGENT_PYTHON),
+        "ASTRID_AGENT_PYTHON": str(AGENT_PYTHON),
+        "ASTRID_RUNTIME_CHECKOUT": str(RUNTIME),
+        "ASTRID_RUNTIME_PYTHON": str(RUNTIME_PYTHON),
+        "ASTRID_REMOTION_PROJECT_DIR": str(REMOTION_PROJECT),
+        "ASTRID_NODE_EXECUTABLE": str(REMOTION_NODE),
+        "ASTRID_TIMELINE_SCHEMA_PYTHONPATH": facts["schema"]["pythonpath"],
+        "TIMELINE_BUNDLE_AGENT_HEAD": facts["integrations"]["agent"]["source"],
+        "TIMELINE_BUNDLE_RUNTIME_HEAD": facts["integrations"]["runtime"]["source"],
+    }
+
+
+def assert_consumed_environment(facts: dict[str, Any], dist: str | None = None) -> None:
+    for key, expected in consumed_environment(facts).items():
+        require(os.environ.get(key) == expected, f"consumed environment changed: {key}")
+    for key in ("NODE_PATH", "NODE_OPTIONS", "PYTHONHOME", "PYTHONSTARTUP", "LD_PRELOAD", "LD_LIBRARY_PATH"):
+        require(key not in os.environ, f"poison environment: {key}")
+    require(os.environ.get("ASTRID_APP_DIRECT_DIST") == dist, "consumed dist selection changed")
 
 
 def shell(facts: dict[str, Any]) -> str:
@@ -328,10 +397,35 @@ def shell(facts: dict[str, Any]) -> str:
     runtime_parents = " ".join(runtime["parents"])
     interpreter = facts["interpreters"]
     composition = facts["composition"]
+    # Embed the same readonly checks used by preparation, as sharedlaunch52966
+    # does. The emitted caller never depends on this worker file surviving.
+    checks = Path(__file__).read_text(encoding="utf-8").split("\ndef shell(", 1)[0]
+    boundary_code = (
+        "import json,sys\nn={'__name__':'p1_boundary','__file__':'/p1-current-caller.py'}\n"
+        f"exec({checks!r},n)\nf=json.loads(sys.argv[1])\n"
+        "try:\n"
+        " n['assert_consumed_environment'](f, sys.argv[2] if len(sys.argv)>2 else None)\n"
+        " n['validate'](f)\n"
+        "except (RuntimeError, OSError, ValueError) as e:\n"
+        " print('P1 source/environment refused: '+str(e),file=sys.stderr)\n"
+        " sys.exit(2)\n"
+    )
+    boundary = f'"${{P1_ENV[@]}}" /usr/bin/python3 -c {q(boundary_code)} {q(json.dumps(facts, separators=(",", ":")))}'
+    build_code = (
+        "import {build} from 'vite'; "
+        "import {resolveHostedRuntimeOrigin} from './scripts/hosted-build-origin.mjs'; "
+        "process.env.VITE_RUNTIME_ORIGIN=resolveHostedRuntimeOrigin(); "
+        "for (const k of ['ACTOR','REALM','INSTANCE']) process.env['VITE_WORKSPACE_RUNTIME_EXPECTED_'+k+'_ID']=''; "
+        "await build({configFile:'config/vite/vite.config.ts',cacheDir:process.argv[2],"
+        "build:{outDir:process.argv[1],emptyOutDir:false}});"
+    )
     graph_code = (
         "import hashlib,json,sys; from pathlib import Path; "
-        "p=Path(sys.argv[1]); f={str(x.relative_to(p)):hashlib.sha256(x.read_bytes()).hexdigest() "
-        "for x in p.rglob('*') if x.is_file() and not x.is_symlink()}; "
+        "p=Path(sys.argv[1]); paths=list(p.rglob('*')); "
+        "bad=[x for x in paths if x.is_symlink()]; "
+        "bad and sys.exit('aliased graph input'); "
+        "f={str(x.relative_to(p)):hashlib.sha256(x.read_bytes()).hexdigest() "
+        "for x in paths if x.is_file()}; "
         "print(len(f),hashlib.sha256(json.dumps(f,sort_keys=True,separators=(',',':')).encode()).hexdigest())"
     )
     probe_code = (
@@ -349,6 +443,12 @@ def shell(facts: dict[str, Any]) -> str:
     lines = [
         "#!/usr/bin/env bash",
         "set -euo pipefail",
+        "export PATH=/usr/bin:/bin",
+        "# PREPARED only: current consumed schema/App graph may refuse admission.",
+        "# No old dist is accepted; the original journey follows a fresh build.",
+        'for key in NODE_PATH NODE_OPTIONS PYTHONHOME PYTHONPATH PYTHONSTARTUP LD_PRELOAD LD_LIBRARY_PATH BASH_ENV ENV; do test -z "${!key+x}" || { echo "P1 poison environment: $key" >&2; exit 2; }; done',
+        "P1_ENV=(env -i " + " ".join(q(f"{key}={value}") for key, value in consumed_environment(facts).items()) + ")",
+        boundary,
         "",
         "# PREPARED: authenticate the stable source tuple, retain source-only records,",
         "# then invoke the unchanged two-case P1 script as the final command.",
@@ -437,10 +537,11 @@ def shell(facts: dict[str, Any]) -> str:
         'case "$P1_RUN_ID" in ""|*[!A-Za-z0-9._-]*) fail stage-run-id ;; esac',
         'test -d "$P1_STAGE_ROOT" || fail stage-root-missing',
         'test ! -L "$P1_STAGE_ROOT" || fail stage-root-symlink',
-        'mkdir -p "$P1_STAGE_ROOT/$P1_RUN_ID"',
+        'test "$(readlink -f "$P1_STAGE_ROOT")" = "$P1_STAGE_ROOT" || fail stage-root-alias',
+        'mkdir "$P1_STAGE_ROOT/$P1_RUN_ID" || fail stale-run-stage',
         'P1_RUN_ROOT="$P1_STAGE_ROOT/$P1_RUN_ID"',
         'test ! -L "$P1_RUN_ROOT" || fail stage-run-symlink',
-        'for stage in source environment original; do mkdir -p "$P1_RUN_ROOT/$stage"; test -d "$P1_RUN_ROOT/$stage" || fail stage-$stage-destination; done',
+        'for stage in source environment original; do mkdir "$P1_RUN_ROOT/$stage"; test -d "$P1_RUN_ROOT/$stage" && test ! -L "$P1_RUN_ROOT/$stage" || fail stage-$stage-destination; done',
         'test ! -e "$P1_RUN_ROOT/source/commit" || test "$(cat "$P1_RUN_ROOT/source/commit")" = "$EXPECTED_APP" || fail stale-source-stage',
         'printf "%s\\n" "$EXPECTED_APP" > "$P1_RUN_ROOT/source/commit"',
         'printf "%s\\n" "$EXPECTED_APP_TREE" > "$P1_RUN_ROOT/source/tree"',
@@ -449,17 +550,28 @@ def shell(facts: dict[str, Any]) -> str:
         'printf "%s\\n" "$EXPECTED_BODY_SHA" > "$P1_RUN_ROOT/environment/body"',
         'PLAYWRIGHT_OUTPUT_DIR="$P1_RUN_ROOT/original/playwright-output"',
         'mkdir -p "$PLAYWRIGHT_OUTPUT_DIR"',
+        'P1_DIST="$P1_RUN_ROOT/environment/dist"',
+        'test ! -e "$P1_DIST" && test ! -L "$P1_DIST" || fail stale-dist',
+        'mkdir "$P1_RUN_ROOT/environment/home" "$P1_RUN_ROOT/environment/tmp"',
+        'P1_ENV+=("HOME=$P1_RUN_ROOT/environment/home" "TMPDIR=$P1_RUN_ROOT/environment/tmp" "ASTRID_APP_DIRECT_DIST=$P1_DIST" "PLAYWRIGHT_OUTPUT_DIR=$PLAYWRIGHT_OUTPUT_DIR")',
         'cd "$APP_ROOT"',
+        f'test "$(pwd -P)" = {q(str(APP))} || fail execution-cwd',
+        ': TIMELINE_P1_SOURCE_ENVIRONMENT_ADMITTED',
+        '# NOT RUN during preparation: build into an absent private destination.',
+        f'"${{P1_ENV[@]}}" "$REMOTION_NODE" --input-type=module -e {q(build_code)} "$P1_DIST" "$P1_RUN_ROOT/environment/vite-cache" >"$P1_RUN_ROOT/environment/build.stdout.log" 2>"$P1_RUN_ROOT/environment/build.stderr.log" || fail fresh-dist-build',
+        boundary + ' "$P1_DIST"',
+        'test -f "$P1_DIST/index.html" && test ! -L "$P1_DIST/index.html" || fail missing-built-dist',
+        'test "$(readlink -f "$P1_DIST")" = "$P1_DIST" || fail built-dist-alias',
+        'env -i PATH=/usr/bin:/bin PYTHONDONTWRITEBYTECODE=1 /usr/bin/python3 -c ' + q(graph_code) + ' "$P1_DIST" > "$P1_RUN_ROOT/environment/dist.sha256"',
+        'test "$(env -i PATH=/usr/bin:/bin PYTHONDONTWRITEBYTECODE=1 /usr/bin/python3 -c ' + q(graph_code) + ' "$P1_DIST")" = "$(cat "$P1_RUN_ROOT/environment/dist.sha256")" || fail changed-built-dist',
         'set +e',
-        f'env -u NODE_PATH -u PYTHONHOME ASTRID_CHECKOUT="$AGENT_ROOT" ASTRID_PYTHON={q(str(AGENT_PYTHON))} ASTRID_RUNTIME_CHECKOUT="$RUNTIME_ROOT" ASTRID_RUNTIME_PYTHON={q(str(RUNTIME_PYTHON))} ASTRID_REMOTION_PROJECT_DIR={q(str(REMOTION_PROJECT))} ASTRID_NODE_EXECUTABLE="$REMOTION_NODE" ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages TIMELINE_BUNDLE_AGENT_HEAD="$EXPECTED_AGENT" TIMELINE_BUNDLE_RUNTIME_HEAD="$EXPECTED_RUNTIME" PYTHONPATH="$APP_ROOT:$RUNTIME_ROOT:$AGENT_ROOT" PATH="$REMOTION_NODE_DIR:$APP_ROOT/node_modules/.bin:/usr/bin:/bin" PLAYWRIGHT_OUTPUT_DIR="$PLAYWRIGHT_OUTPUT_DIR" {" ".join(q(item) for item in P1_TARGET)} >"$P1_RUN_ROOT/original/stdout.log" 2>"$P1_RUN_ROOT/original/stderr.log"',
+        f'"${{P1_ENV[@]}}" {" ".join(q(item) for item in P1_TARGET)} >"$P1_RUN_ROOT/original/stdout.log" 2>"$P1_RUN_ROOT/original/stderr.log"',
         'P1_STATUS=$?',
         'set -e',
         'printf "%s\\n" "$P1_STATUS" > "$P1_RUN_ROOT/original/status"',
         'exit "$P1_STATUS"',
     ])
     script = "\n".join(lines) + "\n"
-    for forbidden in FORBIDDEN_SHELL_TEXT:
-        require(forbidden not in script, f"forbidden shell text: {forbidden}")
     return script
 
 
@@ -468,7 +580,7 @@ def main() -> int:
     parser.add_argument("--dry-source", action="store_true", help="authenticate sources and emit the unrun shell")
     parser.add_argument(
         "--negative",
-        choices=("wrong-source", "wrongsource", "tree", "parent", "parents", "lock", "locks", "clients", "import", "interpreters", "graph", "target", "body", "stage", "missing-stage", "stale-stage", "poison"),
+        choices=("wrong-source", "wrongsource", "tree", "parent", "parents", "lock", "locks", "clients", "import", "interpreters", "graph", "wrongschema", "bench", "dist", "target", "body", "stage", "missing-stage", "stale-stage", "poison"),
         help="exercise one refusal control",
     )
     args = parser.parse_args()
@@ -477,7 +589,14 @@ def main() -> int:
     facts = load_facts()
     candidate = expected_for_negative(facts, args.negative)
     try:
-        validate(candidate, args.negative)
+        # A refusal on a broken baseline is not evidence for a negative control.
+        if args.negative is not None:
+            validate(facts)
+    except PreparedError as exc:
+        print(f"CONTROL_BASELINE_REFUSED: {exc}", file=sys.stderr)
+        return 2
+    try:
+        validate(candidate)
         output = shell(candidate)
     except PreparedError as exc:
         if args.negative is not None:
