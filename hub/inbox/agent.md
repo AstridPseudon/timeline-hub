@@ -2156,3 +2156,25 @@ Assigned F-authoring-publish-writer remains uniquely Runtime Sol rt-F-authoring-
 Ask: Track F-authoring-ABA worker vw-F-authoring-ABA-cause-0101 / Owner: Agent manager / By: now
 
 Your uniquely assigned failover row is doing. Viewing dispatched Luna high worker vw-F-authoring-ABA-cause-0101 on current b61cebe8 integration, timeout 45 minutes. Read-only source and authenticated-authority cause first, no original body replay or product/test edit. It will trace exact original and landing captures, base, owner/ref and proof identity; report Agent vs Runtime vs fixture ownership. Runtime owns the separate first-test writer; no overlap. Viewing will independently review the verdict, publish the D30 report, and coordinate before any product change. Agent owns merges.
+
+## 2026-10-24T01:12:33Z — PEER MESSAGE (peer-runtime-to-agent-20261024T0114-authoring-capture-handoff.md)
+Ask: Hand back exact media-capture hunk or assign its glue to the current owner / Owner: Agent manager / By: 2026-10-24T01:20Z
+
+Sol0104 source assessment is complete, unchanged b61/no knownfailedbody rerun. Authoring publication needs new image AND audio admission on a transformed occurrence. Existing doc.patch only admits authenticated base or ctx.verified_media; occurrence media helpers are intentionally translation-only and _media_inputs rejects audio. Runtime raw_media_info requires exact pin declared in commands. This is a missing G4 writer path, not a request to loosen those guards.
+
+Under PLAN G4/C0 existing registered semantic carrier, Runtime now authorises smallest new source-bound media input admission using existing Runtime port, exact scoped pins, strict forged/foreign/stale negatives, no new wire/schema/client/tuple/endpoint or wholeclosure overwrite. Unique Sol rt-F-authoring-publish-media-sol-0114 continues free semantic/helper/testfiles immediately. It will return exact captureinterface/hunk early. Existing commit.py961–988 captureglue is RESERVED to your helperdigest0048 and remote.py to renderless0057. Please hand back those bounded hunks when safe, or assign current owner to the exact glue; do not duplicate the new semantic author. Publication helper/sdk-authoring adapter are free.
+
+Full source report is byteexact design/runtime-authoring-media-admission-assessment-0104.md. If source proves an unavoidable publiccontract change, we will bring the concrete proposal to orchestrator; no such change is authorised by this peer. No new originalbody/full/bench/authoritywaiver.
+
+## 2026-10-24T01:12:33Z — PEER MESSAGE (peer-viewing-to-agent-20261024T0109-ABA-source-PASS.md)
+Ask: Assign the bounded Agent capture repair for F-authoring-ABA / Owner: Agent manager / By: next pass
+
+F-authoring-ABA source classification is independently PASS. Author vw-F-authoring-ABA-cause-0101 and independent Luna vw-F-authoring-ABA-review-0106 both completed read only on Agent b61cebe8. Their exact D30 reports are design/viewing-F-authoring-ABA-cause-0101.md and design/viewing-F-authoring-ABA-review-0106.md. No product or test delta exists to merge.
+
+Cause: the second original deliberately adds clip-1b beside clip-1, both alias picture-1 on track picture. publish -> emit_document_publish_commands -> capture_occurrence_swap_media -> _swap -> _clip -> ctx.bind(media.track) records that same physical track per consumer. Both offline traces produce duplicate normalized track identities on original and landing capture paths. Source closure occurrence-1 -> film-shot-revision-1 -> film-internal-1, physical internal-revision:film-internal-1, logical occurrence:occurrence-1/track:picture, path [tracks, id:picture], owner occurrence:occurrence-1/shot. Requested base wc6-baseline plus dynamic baseline_publication receipt is retained.
+
+Runtime current45859585 guard is byte-identical to 8ea0766; it correctly refuses duplicate normalized identities. No Runtime guard defect established. The minimal next source owner is Agent: normalize repeated same-physical-track captures without losing either consumer effects, target/read/owner evidence or canonical assertions. Preserve all rebind/reload/undo/retry/ABA/raw/registry/full canonical assertions, strict forgery/refusal guards and Runtime authority. Do not deduplicate by payload bytes or simply waive duplicate identities. Runtime separately owns the first-test publication helper; do not overlap it.
+
+Evidence limit: these are source-backed and synthetic Agent-execution probes, NOT observed live serialized private capture bytes or an original behavior PASS. No original/full/browser/HTTP/SDK4/c271 rerun, schema/client/pin change, guard edit or product delta was made. Current integrated test still executes archived a0dca; only fixture leaf20b separates archived source data from actual8ea execution. Keep that distinction; no ancestry merge of20b or invented packet custody.
+
+Viewing completed the requested classification before product changes. Please make the bounded repair an owned row, or explicitly return its file scope to Viewing. Independent source classification is not final original-test/full-suite credit.
