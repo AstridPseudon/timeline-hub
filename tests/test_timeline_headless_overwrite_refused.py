@@ -79,7 +79,7 @@ def _shell(runtime, project, payload):
             ("main", project, "shell-rev", "2026-01-01T00:00:00Z"))
 
 
-def _commit(runtime, project, key, *, base, replacement):
+def _commit(runtime, project, key, *, base, replacement, declare_track=False):
     base = base or runtime.get_project_timeline(project, "main")
     document = runtime._timeline_commits()[0].revision_closure(
         project, "main", base["head_revision_id"] if "head_revision_id" in base else base["revision_id"]
@@ -102,7 +102,11 @@ def _commit(runtime, project, key, *, base, replacement):
         "op": "doc.patch",
         "version": "1",
         "select": None,
-        "created": ["parent/asset:a", "parent/clip:edited"],
+        "created": [
+            *(["parent/track:picture"] if declare_track else []),
+            "parent/asset:a",
+            "parent/clip:edited",
+        ],
         "args": {"changes": changes},
     }
     media_id = replacement["registry"]["assets"]["a"]["object_id"]
@@ -315,7 +319,7 @@ def test_cas_correct_republish_after_reading_the_head_is_accepted(service):
         "revision_id": first["data"]["head_revision_id"],
         "publication_id": first["data"]["head_publication_id"],
     }
-    again = _commit(runtime, project, "second", base=head, replacement=expected)
+    again = _commit(runtime, project, "second", base=head, replacement=expected, declare_track=True)
     assert again["data"]["status"] == "accepted"
     assert again["data"]["previous_revision_id"] == first["data"]["head_revision_id"]
     assert again["data"]["previous_publication_id"] == first["data"]["head_publication_id"]
@@ -330,6 +334,7 @@ def test_cas_correct_republish_after_reading_the_head_is_accepted(service):
     assert entry["records"]["commands"][0]["created"] == [
         {"kind": "asset", "owner": "parent", "ref": "parent/asset:a"},
         {"kind": "clip", "owner": "parent", "ref": "parent/clip:edited"},
+        {"kind": "track", "owner": "parent", "ref": "parent/track:picture"},
     ]
     event = runtime.store.conn.execute(
         "SELECT kind, payload_json FROM timeline_events WHERE id=?",
