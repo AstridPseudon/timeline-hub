@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T22:53:55Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 4m -->
-# agent board, 2026-10-24T22:49:28Z
+<!-- agent | 2026-10-24T22:57:22Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 1m -->
+# agent board, 2026-10-24T22:55:34Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -152,9 +152,9 @@ Tuple: Agentc2a63 /Runtime732c /App5fcb9ad5cf /Composition635f captured once wit
 Evidence: [Current XML](../../design/handoff-agt-D84a-29429-five.xml), [log](../../design/handoff-agt-D84a-29429-service.log), [tuple](../../design/handoff-agt-D84a-29429-tuple.manifest), [timings](../../design/handoff-agt-D84a-29429-outcomes.tsv), [report](../../design/agt-P4-R2-D84a-five-2214.md). All published byte-exact. Prior6749/1960 evidence and31062 zero-body setup remain immutable.
 D69/D72: Exact 47 restored membership and 178 audit retained; named family proofs complete. D60 upstream 924 full remains FAIL: 12396 pass, 91 fail, 14 errors. Exact 276 accounting, D67 environment gap and both D23 deferrals stay separate.
 Admission: Historical safety, access and cleanup refusals remain stopped. No denied pin release, fabricated installed tuple, child, Farm or schema route. E2 and D79 paused until after ZIP.
-Disk: 7827361792 bytes free, 7.29 GiB; cap2, critical6GBfloor. Sweep3 removed0; compact packed0/gzipped1 last pass. Latest finished handoff has no tree; refused pins and dirty G2 untouched.
+Disk: 7734444032 bytes free, 7.20 GiB; cap2, critical6GBfloor. No eligible ended clean non-KEEP tree. Prior sweep3 removed0; compact packed0/gzipped1. Refused pins and dirty G2 untouched.
 Blockers: Runtime P4 source — rt-R2-fresh-assembly-sol-2240 owns measured fresh recursive input assembly before memo lookup. Prior2231 made no fix. Ten-note remains45.314s FAIL; Agent waits meaningful reviewed release only.
 Blockers: Final cut — final pinned P1–P5 and core proofs plus genuine installed render remain D59 gated. Existing GO qualifies only its recorded tuple.
 Next ready: Core23499 terminal -> exact D54a failure classification and core or regression fixes. Released Runtime successor -> normal adoption, then ten-note-only qualification after current heavy body.
 live 1 / cap 2; ready-undispatched 0. Luna2234 and service23499 run full-core rehearsal. Matrix2236 handoff published. RuntimeSol2240 owns P4 repair; R2 source/proof waits cleared. FinalD59/E2/D79 holds remain.
-Inbox consumed through 1137450 bytes. Pass 2026-10-24T22:49:28Z: consumed Runtime2241/2243 exact R2 closure and sole fresh-assembly source owner2240. PARAM and restart rows now merged at named current-home scope; finalmatrix still owed. Rehearsal23499 running, no classification/result yet. No original/profile/diagnosis duplicate or extra security stage.
+Inbox consumed through 1137450 bytes. Pass 2026-10-24T22:55:34Z: inbox/header and Runtime source owner board checked. Runtime2240 has finite oldRED/newGREEN but no qualified release; P4 remains blocked only there. Core23499 still running; exact category counts await terminal. Matrix2236 handoff done. No ready Agent row left waiting, no repeated body or extra diagnosis.
