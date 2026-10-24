@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T02:59:12Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# viewing board, 2026-10-24T02:56:49Z
+<!-- viewing | 2026-10-24T03:00:41Z | dispatcher heartbeat 1s | live 1 (sol 1, luna 0, other 0) | busy30 1 | status age 1m -->
+# viewing board, 2026-10-24T02:59:17Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -29,7 +29,7 @@
 | DB-composition-dry | Fresh clone delivery dry run | Luna high | Orchestrator request | merged | First return 0757 and review 0802 | All 120 source files, controlled archive payload, registry, types and callers independently passed. | source 635f4de06 |
 | DB-composition-template | Repair missing delivery template | Luna high | Required README template | merged | Template 0749 and review 0751 | Template-only repair and delivery retry passed. No ZIP credit. | source 635f4de06 |
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
-| F-authoring-ABA | Complete authenticated undo capture and projection | Sol author and Luna review | Agent assignment or projection repair | blocked:agent | Agent author pending; Viewing capacity note 0244 | Cause 0227 complete: exact baseline restored offline, but private capture and parent projection fail. Original service 141 remains failed. | source 61d53; oracle c70c4665b2 |
+| F-authoring-ABA | Complete authenticated undo capture and projection | Sol author; Luna review next | Agent transfer 0257 | doing | vw-F-authoring-ABA-projection-sol-0300 | Cause 0227 complete. Joined projection and capture implementation assigned; original service 141 remains failed. | Base 8a8dbf2d |
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six original cases passed in 41.48 seconds on child c886 and Runtime 8ea. Source classification independently passed. | no product change |
 
 | OPS-hub-publication | Restore supported board publication | Manager | Permission boundary | blocked:orchestrator | No worker | Hub sync hit read-only Git config; attempt stopped. Publication unconfirmed. | No product change |
@@ -48,9 +48,9 @@ F-D32-render-wire classification and owner qualification are complete. [Author 0
 
 Historical recycle permission refusals remain parked under viewing-20261023T002713Z-recycle-b70-permission-refusal.md. No retry or alternate deletion.
 
-Blockers: F-authoring-ABA awaits Agent author assignment or a reviewed projection repair; capacity offers 0244 and 0255 are pending.
+Blockers: Agent owns the current source port and one original ABA qualification after Viewing source and independent review pass.
 Blockers: Orchestrator must resolve supported hub publication after the read-only Git configuration failure; see the linked escalation.
-Next ready: none assigned. Dispatch F-authoring-ABA here if Agent transfers the ready projection repair; otherwise retain its unique home author.
+Next ready: independent Luna review after vw-F-authoring-ABA-projection-sol-0300 completes.
 
 
 
@@ -66,3 +66,6 @@ V1, V3 and six original render-wire results remain complete on their recorded pr
 Current oracle evidence: [author 0208](/home/user/timeline-hub/hub/design/agt-F-ABA-oracle-sol-0208.md), [independent PASS 0224](/home/user/timeline-hub/hub/design/agt-F-ABA-oracle-review-0224.md), and [harness candidate 0224](/home/user/timeline-hub/hub/design/agt-OPS-ABA-suite-0224.md). The [Agent board](/home/user/timeline-hub/hub/status/agent.md) records original service 141 failed at undo. [Cause 0227](/home/user/timeline-hub/hub/design/agt-F-ABA-inverse-cause-sol-0227.md) is complete; a projection implementation is ready and waiting for an author slot. The original behavior remains unqualified.
 
 Permission handoff 2026-10-24T02:56:49Z: The supported hub sync attempt hit `error: could not lock config file .git/config: Read-only file system` and was interrupted with exit 130. No retry or alternative write route. Local board and capacity peer 0255 remain reviewable; remote publication is unconfirmed. [Permission escalation](../../escalations/viewing-20261024T025649Z-hub-sync-read-only.md). No product or test changes. Stop this publication action pending owner resolution.
+
+
+Current pass 2026-10-24T02:59:17Z: Agent transfer0257 is received and applied. F-authoring-ABA is doing with unique Sol author vw-F-authoring-ABA-projection-sol-0300 on assigned8a8; no competing author. Source scope is stage projection/capture plus a new focused test; Agent inverse/timing, Runtime fixture/native-carrier and original behavior ownership remain intact. All prior1288 Viewing workers are done. Disk15.3GB is above target. Hub publication remains stopped under the existing permission escalation; no retry. Local handoff: [author assignment](../../design/peer-viewing-to-agent-20261024T0300-ABA-author.md). Earlier waiting notes above are superseded by this explicit transfer.
