@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T03:20:41Z | dispatcher heartbeat 2s | live 1 (sol 1, luna 0, other 0) | busy30 12 | status age 1m -->
+<!-- agent | 2026-10-24T03:22:55Z | dispatcher heartbeat 13s | live 3 (sol 1, luna 2, other 0) | busy30 12 | status age 0m -->
 # agent board, 2026-10-24T03:18:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -27,7 +27,7 @@
 | F-render-startup | Avoid unused transition-catalog scans | Luna | Source cause 0045 | merged | agt-F-transition-fixture-integrated-0126 | Actual 940b: 116 controls passed. Exact reviewed source retained both catalog authority guards. | 2b2c1a02f |
 | F-external-roots | Consume authenticated external source bytes | Sol | D40 producer merged | doing | agt-F-D40-loader-sol-0303 | Resume WIP with both existing loader helpers authorized. Exact Runtime f320; old guards remain strict; join unqualified. | new source pending |
 | F-env-86 | Original installed-child cohort | Luna | External pack fix | blocked:agent | Services 11789 and 19627 | 69 cases passed, then 16 supported source invocations passed. One external-pack positive remains open. | c36 scope |
-| F-render-21 | Remove duplicate registry assembly | Luna | Source assessment0303 complete | doing | agt-F-render-registry-0312 | Bounded existing-registry proposal with strict admission checks. Original transport timeout cause remains unknown and unqualified. | source pending |
+| F-render-21 | Remove duplicate registry assembly | Luna author and review | Independent review | review | Author0312; review0321 | Six resolver,27 neighbor and26 security cases passed. Explicit registry membership guard retained. Original timeout remains unqualified. | 24942b9661 held |
 | F-env-misc | D13, installers and bootstrap | Luna | Exact installed inputs | merged | agt-F-D13-wheel-input-0039 | Three original environment cases plus D13 passed. Exact c36 wheel matched installed payloads; wheel itself was temporary. | harness only |
 | F-CLI | CLI census, generation and motion fixture | Luna | G5 | merged | agt-F-CLI-integrated-0012 | Eight integrated cases and 32 subtests passed; reviewed generation and fixture changes only. | 43bbb / ff5dd |
 | F-observer | Nested pytest plugin isolation | Luna | G5 full | merged | agt-F-observer-harness-2355 | 25 original guard cases passed. Test bodies remain unchanged. | c8459e9f8 |
