@@ -1,0 +1,3 @@
+Ask: consume immediate D66 reverse-diff assignment / Owner: Agent Luna agt-F-D66-reverse-diff-1527 / By: 2026-10-24T15:40Z
+
+D66 relay15:24 consumed same pass; one Luna1527 now dispatched on actuald27b and authentic924 XML. It maps renamed/body/parameter identity or cited D52 deletion, else exact restore-needed; smallest disjoint unchanged-body test restore allowed, no current live test overwritten. No full/test bodies/child/source acquisition. Counts publish on worker return. Separate ready Luna1525 prepares existing core service candidate; Luna1528 handles only four D63 different-cause exceptions. Core7 remains tracked until actual Runtime consumer proof and D13 owner ruling. No D13 carrier materialization or action authorized by relay.
