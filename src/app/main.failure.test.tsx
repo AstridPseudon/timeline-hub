@@ -57,7 +57,8 @@ describe('main startup failures', () => {
     expect(root.querySelector('button')?.textContent).toBe('Reload');
   });
 
-  it('clears the reload guard only after a successful render', async () => {
+  it('clears the reload guard only after a render that stays free of chunk failures', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout'] });
     sessionStorage.setItem('astrid:preload-reloaded', '1');
     localStorage.setItem('astrid:welcome-v1', 'complete');
     boot.migrate.mockResolvedValue({ success: true });
@@ -66,8 +67,29 @@ describe('main startup failures', () => {
 
     await import('@/app/main');
     await vi.waitFor(() => expect(document.querySelector('#root section')).not.toBeNull());
+    // First paint is not enough: a still-missing lazy chunk fails right after the shell renders.
+    expect(sessionStorage.getItem('astrid:preload-reloaded')).toBe('1');
+    vi.advanceTimersByTime(10_000);
     expect(sessionStorage.getItem('astrid:preload-reloaded')).toBeNull();
     expect(boot.release).toHaveBeenCalledOnce();
+    vi.useRealTimers();
+  });
+
+  it('keeps the reload guard when a chunk fails right after the shell renders (no reload loop)', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout'] });
+    sessionStorage.setItem('astrid:preload-reloaded', '1');
+    localStorage.setItem('astrid:welcome-v1', 'complete');
+    boot.migrate.mockResolvedValue({ success: true });
+    boot.renderApp.mockImplementation((root: HTMLElement) => root.append(document.createElement('section')));
+    window.history.replaceState({}, '', '/tools/video-editor?localTest=1');
+
+    await import('@/app/main');
+    await vi.waitFor(() => expect(document.querySelector('#root section')).not.toBeNull());
+    window.dispatchEvent(new Event('vite:preloadError', { cancelable: true }));
+    vi.advanceTimersByTime(10_000);
+    expect(sessionStorage.getItem('astrid:preload-reloaded')).toBe('1');
+    expect(reload).not.toHaveBeenCalled();
+    vi.useRealTimers();
   });
 
   it('reloads once on vite:preloadError and never loops', async () => {

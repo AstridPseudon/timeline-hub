@@ -188,9 +188,13 @@
   <body>
     <div id="boot" aria-hidden="true"><div class="boot-paper"></div><div class="boot-mink"><span class="boot-mink-flight-y"><span class="boot-mink-flight-x"><span class="boot-mink-wipe"><span class="boot-mink-unwipe"><span class="boot-mink-window"><span class="boot-mink-strip"></span></span></span></span></span></span><span class="boot-mink-ground"><span></span></span></div></div>
     <div id="root"></div>
-    <script id="app-entry" type="module" src="/src/app/main.tsx"></script>
+    <script type="module" src="/src/app/main.tsx"></script>
     <script>
-      document.getElementById('app-entry').addEventListener('error', function () {
+      // Vite strips attributes (an id) from the built entry tag, so match it by being the module script.
+      // Resource load errors do not bubble, hence the capture phase.
+      window.addEventListener('error', function (event) {
+        var target = event.target;
+        if (!target || target.tagName !== 'SCRIPT' || target.type !== 'module') return;
         var root = document.getElementById('root');
         var boot = document.getElementById('boot');
         if (boot) boot.remove();
@@ -205,7 +209,7 @@
         link.href = window.location.href;
         message.append(title, link);
         root.replaceChildren(message);
-      });
+      }, true);
 
       if ('serviceWorker' in navigator) {
         var appWorkerUrl = new URL('/sw.js', window.location.href).href;

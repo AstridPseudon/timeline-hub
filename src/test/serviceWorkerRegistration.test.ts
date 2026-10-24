@@ -8,7 +8,7 @@ const cleanupScript = [...indexHtml.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/scri
   .find(([, attributes, source]) => !attributes.includes('src') && source.includes('getRegistrations'))?.[2];
 function runCleanupScript(withServiceWorker: boolean) {
   if (!cleanupScript) throw new Error('Service worker cleanup script not found');
-  const dom = new JSDOM('<div id="boot"></div><div id="root"></div><script id="app-entry"></script>', {
+  const dom = new JSDOM('<div id="boot"></div><div id="root"></div><script type="module" src="/assets/index-abc.js"></script>', {
     url: 'http://localhost/tools/video-editor',
     runScripts: 'outside-only',
   });
@@ -59,7 +59,7 @@ describe('service worker retirement', () => {
 
   it('shows the entry-load fallback and releases the boot layer from the script error event', () => {
     const { dom, browser } = runCleanupScript(false);
-    const entry = browser.document.getElementById('app-entry')!;
+    const entry = browser.document.querySelector('script[type="module"]')!;
     entry.dispatchEvent(new browser.Event('error'));
     expect(browser.document.getElementById('root')?.textContent).toContain('Astrid could not load');
     expect(browser.document.querySelector('#root a')?.getAttribute('href')).toBe(browser.location.href);

@@ -45,24 +45,33 @@ async function main(): Promise<void> {
 }
 
 const PRELOAD_RELOAD_FLAG = 'astrid:preload-reloaded';
+/** A render counts as a good boot only if it stays free of chunk failures this long. */
+const PRELOAD_GUARD_SETTLE_MS = 10_000;
+let preloadErrorSeen = false;
 
-/** Keep the reload guard only until a successful render has committed to the page. */
+/**
+ * Keep the reload guard until the render has committed AND stayed free of chunk-load failures for a
+ * settle period. Clearing at first paint would loop: a lazy chunk that is still missing fails right
+ * after the shell renders, so each reload would clear the guard and reload again.
+ */
 function clearPreloadReloadAfterRender(rootElement: HTMLElement): void {
-  let observer: MutationObserver | undefined;
   const existingChildren = new Set(rootElement.children);
+  const observer = new MutationObserver(() => clear());
   const clear = () => {
     const renderedApp = [...rootElement.children].some(
       (child) => !existingChildren.has(child) && child.getAttribute('role') !== 'alert',
     );
     if (!renderedApp) return;
-    observer?.disconnect();
-    try {
-      sessionStorage.removeItem(PRELOAD_RELOAD_FLAG);
-    } catch {
-      // Storage can be unavailable; the current page is still usable.
-    }
+    observer.disconnect();
+    window.setTimeout(() => {
+      if (preloadErrorSeen) return;
+      try {
+        sessionStorage.removeItem(PRELOAD_RELOAD_FLAG);
+      } catch {
+        // Storage can be unavailable; the current page is still usable.
+      }
+    }, PRELOAD_GUARD_SETTLE_MS);
   };
-  observer = new MutationObserver(clear);
   observer.observe(rootElement, { childList: true, subtree: true });
   clear();
 }
@@ -72,6 +81,7 @@ function clearPreloadReloadAfterRender(rootElement: HTMLElement): void {
  * chunk that is still missing after the reload from looping; then the error reaches the error boundary.
  */
 function handlePreloadError(event: Event): void {
+  preloadErrorSeen = true;
   try {
     if (sessionStorage.getItem(PRELOAD_RELOAD_FLAG)) return;
     sessionStorage.setItem(PRELOAD_RELOAD_FLAG, '1');
