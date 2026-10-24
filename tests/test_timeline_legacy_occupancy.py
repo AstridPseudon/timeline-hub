@@ -216,11 +216,12 @@ def _patch_shot(service, commits, project, timeline, *, name, key):
     ), body
 
 
-def _assert_refusal(error, *, reason=None, status=409):
-    assert error.value.status == status
-    assert error.value.details["status"] in {"conflict", "refused"}
-    if reason is not None:
-        assert error.value.details["reason"] == reason
+def _assert_legacy_guard(error, reason="destination_occupied"):
+    assert error.value.as_dict() == {
+        "code": "conflict", "message": reason,
+        "details": {"status": "refused", "reason": reason,
+                     "base": None, "current": None, "conflicts": []},
+    }
 
 
 def _seed_collision(service, commits, project, *, foreign=False, archived=False):
@@ -241,11 +242,17 @@ def test_legacy_publication_refuses_unrelated_destination_before_any_write(
         _seed_collision(service, commits, project, foreign=foreign, archived=archived)
         body = _candidate(service, commits, project, "target")
         before = tuple(_conn(service).iterdump())
-        with _validation_no_writes(service), pytest.raises(RuntimeErrorBase) as error:
-            service.commit_timeline(project, "target", body, idempotency_key="intruder",
-                                    publisher="occupancy-test", invocation_path=route_path(project, "target"),
-                                    authorize=lambda: None)
-        _assert_refusal(error, reason="destination_occupied")
+        owner_project = _conn(service).execute(
+            "SELECT project_id FROM timelines WHERE id='owner'"
+        ).fetchone()[0]
+        owner_head = _head(service, owner_project, "owner")
+        for _ in range(2):
+            with _validation_no_writes(service), pytest.raises(RuntimeErrorBase) as error:
+                service.commit_timeline(project, "target", body, idempotency_key="intruder",
+                                        publisher="occupancy-test", invocation_path=route_path(project, "target"),
+                                        authorize=lambda: None)
+            _assert_legacy_guard(error)
+            assert _head(service, owner_project, "owner") == owner_head
         assert tuple(_conn(service).iterdump()) == before
         assert _conn(service).execute("SELECT name FROM project_shots WHERE id='shot-1'").fetchone()[0] == "KEEP OWNER NAME"
         assert _conn(service).execute("SELECT COUNT(*) FROM shot_items WHERE id='keep-owner-item'").fetchone()[0] == 1
@@ -309,11 +316,13 @@ def test_legacy_occupied_destination_without_shot_head_is_not_adopted(
             "Existing head" if existing else "New head"
         )
         before = tuple(_conn(service).iterdump())
+        head = _head(service, project, "main")
         with _validation_no_writes(service), pytest.raises(RuntimeErrorBase) as error:
             service.commit_timeline(project, "main", body, idempotency_key="missing-head",
                                     publisher="occupancy-test", invocation_path=route_path(project, "main"),
                                     authorize=lambda: None)
-        _assert_refusal(error, reason="destination_occupied")
+        _assert_legacy_guard(error)
+        assert _head(service, project, "main") == head
         assert tuple(_conn(service).iterdump()) == before
     finally:
         service.close()
@@ -328,6 +337,12 @@ def test_legacy_current_closure_update_and_exact_retry_precede_live_checks(tmp_p
         _seed_occupied(service, commits, project, "main")
         accepted, body = _patch_shot(service, commits, project, "main", name="Updated own shot", key="second")
         assert accepted["data"]["status"] == "accepted"
+        assert accepted["data"]["base_revision_id"] == body["base_revision_id"]
+        assert accepted["data"]["base_publication_id"] == body["base_publication_id"]
+        assert accepted["data"]["previous_revision_id"] == body["base_revision_id"]
+        assert accepted["data"]["previous_publication_id"] == body["base_publication_id"]
+        assert accepted["data"]["rebased_onto"] is None
+        assert accepted["receipt"]["result"] == accepted["data"]
         revision = next(row["revision_id"] for row in accepted["data"]["canonical_document"]["shot_revisions"]
                         if row["shot_id"] == "shot-1")
         assert service.get_project_shot_revision(project, "shot-1", revision)["payload"]["name"] == "Updated own shot"
@@ -342,7 +357,20 @@ def test_legacy_current_closure_update_and_exact_retry_precede_live_checks(tmp_p
             service.commit_timeline(project, "main", body, idempotency_key="different-key",
                                     publisher="occupancy-test", invocation_path=route_path(project, "main"),
                                     authorize=lambda: None)
-        _assert_refusal(error, reason="value_conflict")
+        assert error.value.code == "conflict"
+        assert error.value.message == "intervening publication changed a guarded address"
+        details = error.value.details or {}
+        assert details["status"] == "conflict"
+        assert details["reason"] == details["code"] == "value_conflict"
+        assert details["path"] == ["name"]
+        assert details["base"] == {
+            "revision_id": body["base_revision_id"],
+            "publication_id": body["base_publication_id"],
+        }
+        assert details["current"] == _head(service, project, "main")
+        assert len(details["conflicts"]) == 1
+        assert details["conflicts"][0]["kind"] == "value_conflict"
+        assert details["conflicts"][0]["path"] == ["name"]
     finally:
         service.close()
 
@@ -366,25 +394,46 @@ def test_legacy_current_destination_requires_verified_current_closure(tmp_path, 
             revision = _head(service, project, "main")["revision_id"]
             _conn(service).execute("UPDATE parent_composition_revisions SET content_digest=? WHERE id=?", ("sha256:" + "0" * 64, revision))
         elif tamper == "projection":
-            _conn(service).execute("UPDATE project_shots SET name='unaccounted' WHERE id='shot-1'")
-            body = _candidate(service, commits, project, "target")
+            body = _patch_shot_body(service, commits, project, "main", name="Unverified", key="tampered")
+            foreign_project = service.create_project({"slug": "projection-owner", "name": "Projection owner"})["id"]
+            _conn(service).execute(
+                "UPDATE project_shots SET name='unaccounted', project_id=? WHERE id='shot-1'",
+                (foreign_project,),
+            )
         else:
             from astrid.sdk.timeline.native_occurrence_delete import capture_occurrence_delete
 
             _submit(service, project, "main", [capture_occurrence_delete(
                 _bundle(commits, service, project, "main"), "occurrence:occ-1")], "removed")
-            body = _candidate(service, commits, project, "target")
+            body = _candidate(service, commits, project, "main")
         before = tuple(_conn(service).iterdump())
         with _validation_no_writes(service), pytest.raises(RuntimeErrorBase) as error:
-            timeline = "target" if tamper in {"projection", "removed"} else "main"
-            service.commit_timeline(project, timeline, body, idempotency_key="tampered",
-                                    publisher="occupancy-test", invocation_path=route_path(project, timeline),
+            service.commit_timeline(project, "main", body, idempotency_key="tampered",
+                                    publisher="occupancy-test", invocation_path=route_path(project, "main"),
                                     authorize=lambda: None)
-        _assert_refusal(
-            error,
-            reason=("destination_occupied" if tamper in {"projection", "removed"} else "invalid_closure" if tamper == "digest" else None),
-            status=422 if tamper == "digest" else 409,
-        )
+        if tamper in {"receipt", "occurrence", "projection", "removed"}:
+            if tamper in {"receipt", "occurrence", "projection"}:
+                if tamper in {"receipt", "occurrence"}:
+                    _assert_legacy_guard(error, "history_unavailable")
+                else:
+                    assert error.value.as_dict() == {
+                        "code": "protocol_error", "message": "accepted commit record is corrupt",
+                    }
+            else:
+                assert error.value.code == "conflict"
+                assert error.value.message == "created identity was already reserved"
+                details = error.value.details or {}
+                assert details["status"] == "conflict"
+                assert details["reason"] == details["code"] == "identity_collision"
+                assert details["path"] == []
+                assert len(details["conflicts"]) == 1
+                assert details["conflicts"][0]["kind"] == "identity_collision"
+        else:
+            assert error.value.as_dict() == {
+                "code": "validation_error", "message": "revision content digest mismatch",
+                "details": {"status": "refused", "reason": "invalid_closure",
+                             "base": None, "current": None, "conflicts": []},
+            }
         assert tuple(_conn(service).iterdump()) == before
     finally:
         service.close()
@@ -398,40 +447,59 @@ def test_legacy_historical_reuse_keeps_newer_global_shot_head(tmp_path, occupanc
         commits = _commits(service)
         commits.bootstrap(project, "main", authorize=lambda: None)
         _seed_occupied(service, commits, project, "main")
-        source_head = _head(service, project, "main")
         source_document = _document(commits, project, "main", service)
         assert source_document is not None
-        source_parent = source_document["parent_revision"]
-        assert source_parent is not None
-        _prepare_timeline(service, commits, project, "other")
-        from astrid.sdk.timeline.native_timeline_duplicate import copy_command
-
-        duplicate = copy_command({
-            "project_id": project, "timeline_id": "main", "revision_id": source_head["revision_id"],
-            "publication_id": source_head["publication_id"],
-            "content_digest": source_parent["content_digest"],
-        }, {"shot-1": "linked-shot"}, {"occ-1": "linked-occurrence"})
-        copied, _ = _submit(service, project, "other", [duplicate], "historical-copy")
-        assert copied["data"]["status"] == "accepted"
-        _patch_shot(service, commits, project, "main", name="NEWER GLOBAL SHOT", key="newer")
-        newer_head_row = _conn(service).execute(
+        source_shots = copy.deepcopy(source_document["shot_revisions"])
+        source_internals = copy.deepcopy(source_document["internal_timeline_revisions"])
+        shot = source_shots[0]
+        internal = source_internals[0]
+        newer_tracks = copy.deepcopy(internal["payload"]["tracks"])
+        assert newer_tracks
+        newer_tracks[0]["label"] = "newer global track"
+        changes = [
+            {"op": "set", "ref": "shot:shot-1", "path": ["name"],
+             "before": {"state": "present", "value": shot["payload"]["name"]},
+             "value": "NEWER GLOBAL SHOT"},
+            {"op": "set", "ref": "internal-revision:" + internal["revision_id"], "path": ["tracks"],
+             "before": {"state": "present", "value": internal["payload"]["tracks"]},
+             "value": newer_tracks},
+        ]
+        reads = [{"kind": "field", "ref": change["ref"], "path": change["path"],
+                  "state": change["before"]} for change in changes]
+        newer_command = {"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+                         "args": {"changes": changes}}
+        newer_steps = [{"id": "newer", "label": "Update current closure", "intent": "Update closure",
+                        "tags": ["occupancy"], "command_ordinals": [0], "patch": changes, "reads": reads}]
+        newer_body = _body(service, project, "main", [newer_command], "newer",
+                           steps=newer_steps, reads=reads, label="newer")
+        newer = service.commit_timeline(
+            project, "main", newer_body, idempotency_key="newer", publisher="occupancy-test",
+            invocation_path=route_path(project, "main"), authorize=lambda: None,
+        )
+        newer_receipt = newer["receipt"]["receipt_id"]
+        newer_head = _conn(service).execute(
             "SELECT revision_id FROM shot_revision_heads WHERE shot_id='shot-1'"
-        ).fetchone()
-        assert newer_head_row is not None
-        newer_head = newer_head_row[0]
-        _prepare_timeline(service, commits, project, "historical")
-        historical = copy_command({
-            "project_id": project, "timeline_id": "main", "revision_id": source_head["revision_id"],
-            "publication_id": source_head["publication_id"],
-            "content_digest": source_parent["content_digest"],
-        }, {"shot-1": "historical-shot"}, {"occ-1": "historical-occurrence"})
-        # Both legacy forms now resolve through the same authenticated source_ref;
-        # keep them as separate commits so each retained scenario exercises it.
-        result, _ = _submit(service, project, "historical", [historical],
-                            "historical-reuse-" + str(inline),
-                            label="historical inline" if inline else "historical referenced")
+        ).fetchone()[0]
+        assert newer_head != source_shots[0]["revision_id"]
+        inverse = {"schema_version": 1, "op": "timeline.inverse", "version": "1", "select": None,
+                   "args": {"publications": [newer_receipt]}}
+        if inline:
+            inverse["args"]["steps"] = {newer_receipt: ["newer"]}
+        result, body = _submit(service, project, "main", [inverse],
+                               "historical-reuse-" + str(inline),
+                               label="historical inline" if inline else "historical referenced")
         assert result["data"]["status"] == "accepted"
         assert _conn(service).execute("SELECT revision_id FROM shot_revision_heads WHERE shot_id='shot-1'").fetchone()[0] == newer_head
-        assert result["data"]["canonical_document"]["shot_revisions"][0]["shot_id"] == "historical-shot"
+        assert result["data"]["canonical_document"]["shot_revisions"] == source_shots
+        assert result["data"]["canonical_document"]["internal_timeline_revisions"] == source_internals
+        assert result["data"]["canonical_document"]["shot_revisions"][0]["shot_id"] == "shot-1"
+        assert result["data"]["steps"][0]["patch"]
+        if inline:
+            assert body["commands"][0]["args"]["steps"] == {newer_receipt: ["newer"]}
+        else:
+            assert "steps" not in body["commands"][0]["args"]
+        assert commits.history_entry(project, "main", result["receipt"]["receipt_id"])["records"]["undo_steps"] == (
+            {newer_receipt: ["newer"]} if inline else None
+        )
     finally:
         service.close()
