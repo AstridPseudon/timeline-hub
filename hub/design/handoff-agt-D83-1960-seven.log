@@ -1,0 +1,862 @@
+.+++++++++++++++++++++++++++++++++++ Timeout ++++++++++++++++++++++++++++++++++++
+~~~~~~~~~~~~~~ Stack of astrid-runtime-protocol (139868342552256) ~~~~~~~~~~~~~~
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
++++++++++++++++++++++++++++++++++++ Timeout ++++++++++++++++++++++++++++++++++++
+F.FF..                                                                   [100%]
+=================================== FAILURES ===================================
+_____________ test_http_ten_note_commit_per_step_inverse_and_redo ______________
+
+runtime = namespace(calls=[(b'{"api_version":1,"project_id":"0ff6ec72abc34db9a5bde90745408512","timeline_id":"film","base_revisi...e962449e8f50c2628faecbf8'}, path=PosixPath('/tmp/pytest-of-root/pytest-0/test_http_ten_note_commit_per_0/outbox.json'))
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/test_http_ten_note_commit_per_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f35a365ead0>
+
+    def test_http_ten_note_commit_per_step_inverse_and_redo(runtime, tmp_path, capsys):
+        seeded = _seed_original(runtime)
+        opened = timeline.open(
+            runtime.project, "film", client=runtime.client(),
+            outbox_path=tmp_path / "ten-note-open.json",
+        )
+        original = copy.deepcopy(opened.bundle)
+        assert _note_values(original) == {}
+        assert len(original["placements"]) == 2
+        assert "_runtime_document" not in original["source_mapping"]
+        base_head = {
+            "revision_id": seeded["data"]["accepted_revision_id"],
+            "publication_id": seeded["receipt"]["receipt_id"],
+        }
+        assert opened.head == base_head
+        base_read = runtime.client().timelines.open_bundle(
+            runtime.project, "film", revision_id=base_head["revision_id"],
+            publication_id=base_head["publication_id"],
+        )
+        assert base_read.ok
+        authenticated_base = base_read.data["bundle"]
+        canonical = authenticated_base["source_mapping"]["_runtime_document"]
+        assert authenticated_base == {
+            **original,
+            "source_mapping": {**original["source_mapping"], "_runtime_document": canonical},
+            "base_parent": {**original["base_parent"], "publication_id": base_head["publication_id"]},
+        }
+        assert base_read.data["project_id"] == runtime.project
+        assert base_read.data["timeline_id"] == "film"
+        assert base_read.data["revision_id"] == base_head["revision_id"]
+        assert base_read.data["is_current_head"] is True
+        assert canonical["parent_revision"]["revision_id"] == base_head["revision_id"]
+        assert set(canonical) == {
+            "schema_version", "project_id", "timeline_id", "parent_revision",
+            "shot_revisions", "internal_timeline_revisions", "dependency_manifest",
+        }
+        assert canonical["schema_version"] == 1
+        assert canonical["project_id"] == runtime.project
+        assert canonical["timeline_id"] == "film"
+        canonical_parent = canonical["parent_revision"]
+        physical_occurrences = canonical_parent["payload"]["occurrences"]
+        assert [(row["occurrence_id"], row["shot_id"], row["shot_revision_id"])
+                for row in physical_occurrences] == [
+            ("occ-a", "chapter-shot", "shot-1"),
+            ("occ-b", "chapter-shot", "shot-1"),
+        ]
+        source_fixture = document_fixture(shared=True)
+        source_parent = source_fixture["parent_revision"]["payload"]
+        source_shot = source_fixture["shot_revisions"][0]["payload"]
+        source_internal = source_fixture["internal_timeline_revisions"][0]["payload"]
+        assert physical_occurrences == source_parent["occurrences"]
+        assert canonical_parent["payload"]["unknown"] == source_parent["unknown"]
+        assert canonical_parent["payload"]["config"]["opaque"] == source_parent["config"]["opaque"]
+    
+        physical_shots = canonical["shot_revisions"]
+        physical_internals = canonical["internal_timeline_revisions"]
+        assert [(row["shot_id"], row["revision_id"])
+                for row in physical_shots] == [("chapter-shot", "shot-1")]
+        assert [(row["timeline_id"], row["revision_id"])
+                for row in physical_internals] == [("chapter-1", "internal-1")]
+        physical_shot = physical_shots[0]
+        physical_internal = physical_internals[0]
+        assert physical_shot["internal_timeline_revision_id"] == "internal-1"
+        assert physical_shot["payload"]["internal_timeline_revision_id"] == "internal-1"
+        assert physical_shot["payload"]["items"][0]["item_id"] == "item-1"
+        assert physical_shot["payload"]["unknown"] == source_shot["unknown"]
+        assert physical_internal["payload"]["unknown"] == source_internal["unknown"]
+        assert physical_internal["payload"]["source_window"] == source_internal["source_window"]
+        media_refs = [
+            canonical_parent["payload"]["registry"]["assets"]["picture"]["media_id"],
+            physical_shot["payload"]["items"][0]["media_id"],
+            physical_internal["payload"]["registry"]["assets"]["picture"]["media_id"],
+        ]
+        assert len(set(media_refs)) == 1
+        media_id = media_refs[0]
+        assert canonical["dependency_manifest"]["media"] == [
+            {"media_id": media_id, "content_digest": media_id}
+        ]
+        assert canonical_parent["content_digest"] == _digest(canonical_parent["payload"])
+        assert physical_shot["content_digest"] == _digest(physical_shot["payload"])
+        assert physical_internal["content_digest"] == _digest(physical_internal["payload"])
+        assert canonical["dependency_manifest"]["shots"] == [{
+            "shot_id": "chapter-shot", "revision_id": "shot-1",
+            "internal_timeline_revision_id": "internal-1",
+            "content_digest": physical_shot["content_digest"],
+        }]
+        assert canonical["dependency_manifest"]["internal_timelines"] == [{
+            "timeline_id": "chapter-1", "revision_id": "internal-1",
+            "content_digest": physical_internal["content_digest"],
+        }]
+    
+        source_mapping = original["source_mapping"]
+        working_aliases = [placement["shot_id"] for placement in original["placements"]]
+        assert len(working_aliases) == len(set(working_aliases)) == 2
+        assert set(source_mapping["placements"]) == {
+            row["occurrence_id"] for row in physical_occurrences
+        }
+        assert set(source_mapping["shots"]) == set(working_aliases)
+        for physical_occurrence, placement in zip(physical_occurrences, original["placements"]):
+            assert source_mapping["placements"][physical_occurrence["occurrence_id"]] == placement
+            source = source_mapping["shots"][placement["shot_id"]]
+            assert (source["shot_id"], source["revision_id"]) == (
+                physical_occurrence["shot_id"], physical_occurrence["shot_revision_id"]
+            )
+            assert (source["internal_timeline_id"], source["internal_timeline_revision_id"]) == (
+                physical_internal["timeline_id"], physical_shot["internal_timeline_revision_id"]
+            )
+            assert source["content_digest"] == physical_shot["content_digest"]
+            assert source["internal_timeline_content_digest"] == physical_internal["content_digest"]
+        assert next(row for row in original["parent"]["clips"] if row["id"] == "clip-b")["at"] == 5
+    
+        for note in _notes():
+            before = copy.deepcopy(opened.bundle)
+            after = copy.deepcopy(before)
+            for clips in (after["parent"]["clips"], after["parent"]["config"]["clips"]):
+                clip = next(row for row in clips if row["id"] == "clip-a")
+                clip["app"]["org.example"]["p4_note"][note["id"]] = note["text"]
+            commands = emit_document_commands(before, after)
+            assert len(commands) == 1
+            assert commands[0]["args"]["changes"] == [{
+                "op": "set", "ref": "parent", "path": [*NOTE_PATH_PREFIX, note["id"]],
+                "before": {"state": "absent"}, "value": note["text"],
+            }]
+            opened.command(
+                commands[0], label=note["id"], intent=note["text"], tags=["review"], reads=[]
+            )
+    
+        result = opened.commit("Add ten review notes", merge="fields", reads=[],
+                               idempotency_key="p4-ten-note-commit")
+        data = result["data"]
+        receipt = result["receipt"]
+        assert data["status"] == "accepted"
+        assert len(runtime.calls) == 1
+        request = json.loads(runtime.calls[0][0])
+        assert runtime.calls[0][1] == "p4-ten-note-commit"
+        assert request["api_version"] == 1
+        assert {key: request[key] for key in (
+            "project_id", "timeline_id", "base_revision_id", "base_publication_id",
+        )} == {
+            "project_id": runtime.project,
+            "timeline_id": "film",
+            "base_revision_id": original["base_parent"]["revision_id"],
+            "base_publication_id": seeded["receipt"]["receipt_id"],
+        }
+        assert len(request["commands"]) == len(request["steps"]) == 10
+        assert request["label"] == "Add ten review notes"
+        assert request["merge"] == "fields"
+        assert request["reads"] == []
+        assert request["dry_run"] is False
+        assert request["source"] == {"via": "python"}
+        for command, step, note in zip(request["commands"], request["steps"], _notes()):
+            assert command["op"] == "doc.patch"
+            assert step == {
+                "id": f"step-{note['ordinal'] + 1}", "label": note["id"], "intent": note["text"],
+                "tags": ["review"], "command_ordinals": [note["ordinal"]],
+                "patch": command["args"]["changes"], "reads": [],
+            }
+    
+        expected_plan = execute(
+            bundle_from_document(canonical), request["commands"],
+            commit_request=request, evaluated_head=base_head,
+        )
+        assert expected_plan.bundle["source_mapping"] == authenticated_base["source_mapping"]
+        assert data["canonical_document"] == document_from_bundle(expected_plan.bundle)
+    
+        assert data["merge_mode"] == "fields"
+        for key in (
+            "canonical_document", "document_digest", "accepted_revision_id", "commands",
+            "id_map", "steps", "merge_mode", "previous_revision_id",
+            "previous_publication_id", "rebased_onto", "publisher",
+            "provider_version", "compiler_version",
+        ):
+            assert key in data
+        assert data["document_digest"] == _digest(data["canonical_document"])
+        assert data["accepted_revision_id"] == data["canonical_document"]["parent_revision"]["revision_id"]
+        assert data["accepted_publication_id"] == receipt["receipt_id"]
+        assert data["previous_revision_id"] == base_head["revision_id"]
+        assert data["previous_publication_id"] == base_head["publication_id"]
+        assert data["id_map"] == {}
+        assert data["rebased_onto"] is None
+        assert data["publisher"]
+        assert data["commands"] == [record["command"] for record in expected_plan.records]
+        for submitted, record in zip(request["commands"], expected_plan.records):
+            assert {key: record["command"][key] for key in submitted} == submitted
+        assert data["steps"] == expected_plan.steps
+        assert len(data["steps"]) == 10
+        for step, note in zip(data["steps"], _notes()):
+            _assert_step_patch(step, note)
+        assert receipt["receipt_id"]
+        assert receipt["command_kind"] == "timeline.commit"
+        landed = bundle_from_document(data["canonical_document"])
+        assert landed["source_mapping"] == {
+            **original["source_mapping"], "_runtime_document": data["canonical_document"],
+        }
+        assert _note_values(landed) == {note["id"]: note["text"] for note in _notes()}
+        assert _without_notes(landed) == _without_notes(original)
+    
+        show_code, shown = _run_cli(
+            runtime, capsys, "show", "film", "--published",
+            "--revision-id", data["accepted_revision_id"],
+        )
+        assert show_code == 0 and shown["ok"] is True
+        assert any(row["clip_id"] == "clip-a" and row["start"] == 1 for row in shown["data"]["rows"])
+        history_code, history = _run_cli(runtime, capsys, "history", "film", "--limit", "50")
+        assert history_code == 0 and history["ok"] is True
+        revision = next(
+            item for item in history["data"]["revisions"]
+            if item["id"] == data["accepted_revision_id"]
+        )
+        assert revision["message"] == "Add ten review notes"
+        raw_history = runtime.client().timelines.history(runtime.project, "film", limit=50)
+        assert raw_history.ok
+        stored = next(item for item in raw_history.data["items"] if item["publication_id"] == receipt["receipt_id"])
+        assert stored["label"] == "Add ten review notes"
+        assert stored["publisher"]
+        assert stored["merge_mode"] == "fields"
+        assert stored["records"]["schema_version"] == 1
+        assert stored["records"]["commands"] == expected_plan.records
+        assert stored["records"]["steps"] == expected_plan.steps
+        assert stored["records"]["label"] == expected_plan.label
+        assert stored["records"]["merge_mode"] == expected_plan.merge_mode
+        assert stored["records"]["undo_of"] == []
+        assert stored["records"]["restored_from"] is None
+        assert stored["records"]["undo_steps"] is None
+        assert len(stored["steps"]) == 10
+        for step, note in zip(stored["steps"], _notes()):
+            _assert_step_patch(step, note)
+    
+        runtime.restart()
+        reloaded = timeline.open(
+            runtime.project, "film", client=runtime.client(),
+            outbox_path=tmp_path / "ten-note-reloaded.json",
+        )
+        assert "_runtime_document" not in reloaded.bundle["source_mapping"]
+        for note in _notes():
+            step_id = f"step-{note['ordinal'] + 1}"
+            session = reloaded.session
+>           undo = session.undo(
+                [receipt["receipt_id"]],
+                steps={receipt["receipt_id"]: [step_id]},
+                idempotency_key=f"p4-ten-note-undo-{note['id']}",
+            )
+
+tests/editing_conformance/test_p4_ten_note_v2_runtime.py:431: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/sdk/timeline/sync.py:462: in undo
+    return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via, prepare=prepare)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/sync.py:556: in _flush
+    result = _response(self.client.timelines.commit(
+astrid/sdk/_remote_timeline.py:248: in commit
+    return self._typed(
+astrid/sdk/remote.py:356: in _typed
+    value = self._client.commit_timeline(*args, **kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/workspace_client.py:494: in commit_timeline
+    return self._call_generated(
+astrid/sdk/workspace_client.py:290: in _call_generated
+    value = generated(*args, **kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid_runtime_client/generated.py:965: in commit_timeline
+    return self._commit_response(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines/{_path_part(timeline_id)}/commit", body=body, headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2], preview=request.get("dry_run", False))
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid_runtime_client/generated.py:656: in _request
+    status, response_headers, response_body = self._transport(method, path, request_headers, body)
+                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/editing_conformance/test_native_batch_ingress.py:76: in transport
+    RuntimeHandler(sock, ('127.0.0.1', 1), server)
+/usr/lib/python3.13/socketserver.py:766: in __init__
+    self.handle()
+/usr/lib/python3.13/http/server.py:451: in handle
+    self.handle_one_request()
+/usr/lib/python3.13/http/server.py:439: in handle_one_request
+    method()
+../rt-pin-dc55b8bc/runtime_protocol/server.py:1238: in do_POST
+    self._dispatch()
+../rt-pin-dc55b8bc/runtime_protocol/server.py:1203: in _dispatch
+    self._route()
+../rt-pin-dc55b8bc/runtime_protocol/server.py:523: in _route
+    return self._timeline_commit(path[2], path[4], path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/server.py:311: in _timeline_commit
+    return self._send(200, commit(
+../rt-pin-dc55b8bc/runtime_protocol/service.py:2444: in commit_timeline
+    return self._execute_timeline_commit(
+../rt-pin-dc55b8bc/runtime_protocol/service.py:2499: in _execute_timeline_commit
+    outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_execution.py:105: in execute
+    raise error
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_execution.py:87: in execute
+    outcome = detached(provider.commit(provider_context, port))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/commit.py:1253: in commit
+    targets = [port.history_entry(publication) for publication in undo_of]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_port.py:246: in history_entry
+    return self._read(lambda: self._ancestor(publication_id))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_port.py:215: in _read
+    return copy.deepcopy(call())
+                         ^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_port.py:246: in <lambda>
+    return self._read(lambda: self._ancestor(publication_id))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_port.py:233: in _ancestor
+    entry = self.__store.history_entry(self.__project, self.__timeline, current["publication_id"])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:460: in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:254: in _verify_accepted
+    history = self._inverse_stage_history(edge["project_id"], edge["timeline_id"], records,
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:872: in _inverse_stage_history
+    return {publication: self.history_entry(project, timeline, publication, allow_archived=allow_archived)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:460: in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:261: in _verify_accepted
+    replay_request, prepared, sequential = self._historical_sequential(
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:331: in _historical_sequential
+    validate_commit_value(prepared, "PreparedCommit")
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_validation.py:173: in validate_commit_value
+    _validator(definition).validate(value)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:449: in validate
+    for error in self.iter_errors(*args, **kwargs):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:383: in iter_errors
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:296: in properties
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:296: in properties
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:78: in items
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:296: in properties
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:296: in properties
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:423: in descend
+    evolved = self.evolve(schema=schema, _resolver=resolver)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_validation.py:125: in reuse
+    child = evolve(self, **changes)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:347: in evolve
+    return NewValidator(**changes)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <[AttributeError("'jsonschema.validators.create.<locals>.Validator' object has no attribute 'schema'") raised in repr()] Validator object at 0x7f35a3032570>
+schema = {'const': 1, 'type': 'integer'}, resolver = None, format_checker = None
+
+>   def __init__(self, schema, resolver=attr_dict['_ref_resolver'].default, format_checker=attr_dict['format_checker'].default, *, registry=attr_dict['_registry'].default, _resolver=attr_dict['_resolver'].default):
+E   Failed: Timeout (>45.0s) from pytest-timeout.
+
+<attrs generated methods jsonschema.validators.create.<locals>.Validator>:26: Failed
+__ test_public_helper_restart_exact_retry_later_head_inverse_redo[False-None] __
+
+retained_pack = namespace(service=<runtime_protocol.service.RuntimeService object at 0x7f35a384a470>, project='2a99bb3a016f410fa4a3868...t reveal.'}, artifact_root=PosixPath('/tmp/pytest-of-root/pytest-0/test_public_helper_restart_exa0/build-cache/realm'))
+helper_client = namespace(connect=<function helper_client.<locals>.connect at 0x7f35a0cbb100>, calls=[(b'{"api_version":1,"project_id"...456fe4')], lost_ack=[False], before_submit=[None], outbox=<function helper_client.<locals>.<lambda> at 0x7f359ae0d4e0>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f35a3317f00>
+same_revision = False, key = None
+
+    @pytest.mark.parametrize('key', [None, 'public-element'])
+    @pytest.mark.parametrize('same_revision', [False, True])
+    def test_public_helper_restart_exact_retry_later_head_inverse_redo(
+            retained_pack, helper_client, monkeypatch, same_revision, key):
+        import json
+    
+        from runtime_protocol.errors import RuntimeErrorBase
+        from runtime_protocol.service import RuntimeService
+    
+        from astrid.sdk.timeline_elements import update_parent_element
+    
+        case, client = retained_pack, helper_client
+        original = copy.deepcopy(case.bundle()['source_mapping']['_runtime_document'])
+        before = copy.deepcopy(State(case.bundle()).entity(REF))
+        selected = case.selected
+        if not same_revision:
+            case.definition['schema']['properties']['seed']['maximum'] = 20
+            case.path.write_text(yaml.safe_dump(case.definition))
+            admission = packs.admit_project_pack('realm', case.project)
+            selected = {k: admission['elements'][0]['descriptor'][k] for k in ('id', 'kind', 'packId', 'revision')}
+        expected = case.head()['revision_id']
+        kwargs = dict(realm='realm', clip_id='effect', element=selected, expected_head=expected,
+                      duration=6, params={'seed': 8, 'opaque': {'keep': [None, False, {}]}},
+                      clear_params=['future'], idempotency_key=key)
+        client.lost_ack[0] = True
+        failed = update_parent_element(client.connect(), case.project, 'film', **kwargs)
+        assert not failed.ok
+        flight = json.loads(client.outbox().read_bytes())['flight']
+        assert flight['key'] == (key or failed.idempotency_key)
+        request = json.loads(flight['body'])
+        assert [call['op'] for call in request['commands']] == (
+            ['clip.set', 'clip.set-params'] if same_revision else
+            ['clip.set-element', 'clip.set', 'clip.set-params'])
+        if not same_revision:
+            assert request['commands'][0]['selections'] == [{
+                'key': 'element.targets', 'query_version': 1, 'owner': 'parent',
+                'members': [REF], 'order': [REF], 'boundaries': [REF], 'policy': 'guard-membership'}]
+        assert request['commands'][-1]['bindings']['scalar.target'] == REF
+        assert request['commands'][-1]['bindings']['params.element'] == REF
+        for changed in ({'duration': 7}, {'idempotency_key': 'another-key'},
+                        {'clip_id': 'missing'}, {'expected_head': 'another-head'}):
+            refused = update_parent_element(client.connect(), case.project, 'film', **{**kwargs, **changed})
+            assert not refused.ok and len(client.calls) == 1
+            assert json.loads(client.outbox().read_bytes())['flight'] == flight
+        accepted = case.submit(request, flight['key'])
+        pin = request['commands'][-1]['args']['schema_source']
+        document = accepted['data']['canonical_document']
+        row = State(commit.bundle_from_document(document)).entity(REF)
+        assert row == {**before, 'elementRef': selected, 'hold': 6,
+                       'params': {'seed': 8, 'opaque': {'keep': [None, False, {}]}}}
+        # Advance both the timeline and the declaration, then remove current selection.
+        case.submit(case.request([capture_track_set(case.bundle(), 'parent/track:picture',
+                                                   values={'label': 'Later'})]), 'later-head')
+        case.definition['schema']['properties']['seed']['maximum'] = 30
+        case.path.write_text(yaml.safe_dump(case.definition))
+        packs.admit_project_pack('realm', case.project)
+        current = case.service.get_document(case.project, pin['document_id'])
+        assert current['version'] > pin['version']
+        case.service.update_document(case.project, pin['document_id'], {
+            'expected_version': current['version'], 'content': {**current['content'], 'admissions': []}},
+            idempotency_key='remove-helper-selection')
+        shutil.rmtree(case.source_root)
+        shutil.rmtree(case.artifact_root)
+        case.service.close()
+        case.service = RuntimeService(case.root)
+        case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+        later = case.head()
+    
+        def forbidden(*a, **kw):
+            pytest.fail('helper recaptured original intent, read current admission, or called legacy writer')
+    
+        with monkeypatch.context() as retry:
+            retry.setattr('astrid.sdk.timeline_elements.execute', forbidden)
+            retry.setattr('astrid.sdk.timeline_elements._read_document', forbidden)
+            retry.setattr(commands, 'execute', forbidden)
+            result = update_parent_element(client.connect(), case.project, 'film', **kwargs)
+            assert result.ok, result.error
+            assert client.calls == [(flight['body'].encode(), flight['key'])] * 2
+            assert result.receipt.as_dict() == accepted['receipt']
+            assert result.data['new_head'] == accepted['data']['accepted_revision_id']
+            assert result.data['before'] == {'element': before['elementRef'], 'duration': 2,
+                                              'params': before['params']}
+            assert json.loads(client.outbox().read_bytes())['flight'] is None
+            assert json.loads(client.outbox().read_bytes())['pending'] == []
+            # Acknowledged invocation uses accepted Runtime history, never recapture.
+            kwargs['idempotency_key'] = flight['key']
+            again = update_parent_element(client.connect(), case.project, 'film', **kwargs)
+            assert again == result and len(client.calls) == 2
+            changed = update_parent_element(client.connect(), case.project, 'film', **{**kwargs, 'duration': 7})
+            assert not changed.ok and len(client.calls) == 2
+        assert case.head() == later
+        undone = case.submit(case.request([inverse(result.receipt.receipt_id)]), 'undo-helper')
+        restored = State(commit.bundle_from_document(undone['data']['canonical_document']))
+        assert restored.entity(REF) == before
+        assert restored.entity('parent/track:picture')['label'] == 'Later'
+        expected_pins = [case.pin] if pin == case.pin else [case.pin, pin]
+        assert undone['data']['canonical_document']['dependency_manifest']['documents'] == expected_pins
+        redone = case.submit(case.request([inverse(undone['receipt']['receipt_id'])]), 'redo-helper')
+        redone_state = State(commit.bundle_from_document(redone['data']['canonical_document']))
+        assert redone_state.entity(REF) == row
+        assert redone['data']['canonical_document']['shot_revisions'] == original['shot_revisions']
+        assert redone['data']['canonical_document']['internal_timeline_revisions'] == original['internal_timeline_revisions']
+        head = case.head()
+        with pytest.raises(RuntimeErrorBase) as error:
+>           case.submit(case.request([inverse(result.receipt.receipt_id)]), 'helper-aba')
+
+tests/core/test_timeline_element_publication_runtime.py:557: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/sdk/test_timeline_selected_schema_runtime.py:181: in submit
+    return case.service.commit_timeline(
+../rt-pin-dc55b8bc/runtime_protocol/service.py:2444: in commit_timeline
+    return self._execute_timeline_commit(
+../rt-pin-dc55b8bc/runtime_protocol/service.py:2499: in _execute_timeline_commit
+    outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_execution.py:105: in execute
+    raise error
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_execution.py:87: in execute
+    outcome = detached(provider.commit(provider_context, port))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/commit.py:1260: in commit
+    _load(port, context, target["revision_id"])
+astrid/sdk/timeline/commit.py:433: in _load
+    document = port.revision_closure(revision)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_port.py:285: in revision_closure
+    return self._read(read)
+           ^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_port.py:215: in _read
+    return copy.deepcopy(call())
+                         ^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_port.py:271: in read
+    entry = self._ancestor(cursor["publication_id"])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_port.py:233: in _ancestor
+    entry = self.__store.history_entry(self.__project, self.__timeline, current["publication_id"])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:460: in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:254: in _verify_accepted
+    history = self._inverse_stage_history(edge["project_id"], edge["timeline_id"], records,
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:872: in _inverse_stage_history
+    return {publication: self.history_entry(project, timeline, publication, allow_archived=allow_archived)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:460: in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:269: in _verify_accepted
+    validate(replay_request, prepared, source, original, continuations, history, sequential=sequential)
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_auth.py:2850: in validate
+    validate_step(request, records, step, boundary, batch_reads, continuations, command_inputs, sequential)
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_auth.py:403: in validate_step
+    require(covers(dependencies, capture), "provider dependency union omits a captured read")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_auth.py:224: in covers
+    if value_equal(dependency, read):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_producer.py:67: in value_equal
+    return left.keys() == right.keys() and all(value_equal(value, right[key]) for key, value in left.items())
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_producer.py:67: in <genexpr>
+    return left.keys() == right.keys() and all(value_equal(value, right[key]) for key, value in left.items())
+                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+left = ['config', 'clips', 'id:effect', 'asset_id']
+right = ['config', 'clips', 'id:effect', 'asset_id']
+
+    def value_equal(left, right):
+        """JSON recipe equality: numeric value, distinct booleans, exact structure."""
+        if type(left) in (int, float) and type(right) in (int, float):
+            return (type(left) is int or math.isfinite(left)) and (type(right) is int or math.isfinite(right)) and left == right
+        if type(left) is not type(right):
+            return False
+        if isinstance(left, dict):
+            return left.keys() == right.keys() and all(value_equal(value, right[key]) for key, value in left.items())
+        if isinstance(left, list):
+>           return len(left) == len(right) and all(value_equal(a, b) for a, b in zip(left, right))
+                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: Timeout (>45.0s) from pytest-timeout.
+
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_producer.py:69: Failed
+_ test_public_helper_restart_exact_retry_later_head_inverse_redo[False-public-element] _
+
+retained_pack = namespace(service=<runtime_protocol.service.RuntimeService object at 0x7f35a32dde10>, project='ef6bd6cc3d514777902668b...t reveal.'}, artifact_root=PosixPath('/tmp/pytest-of-root/pytest-0/test_public_helper_restart_exa1/build-cache/realm'))
+helper_client = namespace(connect=<function helper_client.<locals>.connect at 0x7f35a117b7e0>, calls=[(b'{"api_version":1,"project_id"...lement')], lost_ack=[False], before_submit=[None], outbox=<function helper_client.<locals>.<lambda> at 0x7f35a117ad40>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f35a3297050>
+same_revision = False, key = 'public-element'
+
+    @pytest.mark.parametrize('key', [None, 'public-element'])
+    @pytest.mark.parametrize('same_revision', [False, True])
+    def test_public_helper_restart_exact_retry_later_head_inverse_redo(
+            retained_pack, helper_client, monkeypatch, same_revision, key):
+        import json
+    
+        from runtime_protocol.errors import RuntimeErrorBase
+        from runtime_protocol.service import RuntimeService
+    
+        from astrid.sdk.timeline_elements import update_parent_element
+    
+        case, client = retained_pack, helper_client
+        original = copy.deepcopy(case.bundle()['source_mapping']['_runtime_document'])
+        before = copy.deepcopy(State(case.bundle()).entity(REF))
+        selected = case.selected
+        if not same_revision:
+            case.definition['schema']['properties']['seed']['maximum'] = 20
+            case.path.write_text(yaml.safe_dump(case.definition))
+            admission = packs.admit_project_pack('realm', case.project)
+            selected = {k: admission['elements'][0]['descriptor'][k] for k in ('id', 'kind', 'packId', 'revision')}
+        expected = case.head()['revision_id']
+        kwargs = dict(realm='realm', clip_id='effect', element=selected, expected_head=expected,
+                      duration=6, params={'seed': 8, 'opaque': {'keep': [None, False, {}]}},
+                      clear_params=['future'], idempotency_key=key)
+        client.lost_ack[0] = True
+        failed = update_parent_element(client.connect(), case.project, 'film', **kwargs)
+        assert not failed.ok
+        flight = json.loads(client.outbox().read_bytes())['flight']
+        assert flight['key'] == (key or failed.idempotency_key)
+        request = json.loads(flight['body'])
+        assert [call['op'] for call in request['commands']] == (
+            ['clip.set', 'clip.set-params'] if same_revision else
+            ['clip.set-element', 'clip.set', 'clip.set-params'])
+        if not same_revision:
+            assert request['commands'][0]['selections'] == [{
+                'key': 'element.targets', 'query_version': 1, 'owner': 'parent',
+                'members': [REF], 'order': [REF], 'boundaries': [REF], 'policy': 'guard-membership'}]
+        assert request['commands'][-1]['bindings']['scalar.target'] == REF
+        assert request['commands'][-1]['bindings']['params.element'] == REF
+        for changed in ({'duration': 7}, {'idempotency_key': 'another-key'},
+                        {'clip_id': 'missing'}, {'expected_head': 'another-head'}):
+            refused = update_parent_element(client.connect(), case.project, 'film', **{**kwargs, **changed})
+            assert not refused.ok and len(client.calls) == 1
+            assert json.loads(client.outbox().read_bytes())['flight'] == flight
+        accepted = case.submit(request, flight['key'])
+        pin = request['commands'][-1]['args']['schema_source']
+        document = accepted['data']['canonical_document']
+        row = State(commit.bundle_from_document(document)).entity(REF)
+        assert row == {**before, 'elementRef': selected, 'hold': 6,
+                       'params': {'seed': 8, 'opaque': {'keep': [None, False, {}]}}}
+        # Advance both the timeline and the declaration, then remove current selection.
+        case.submit(case.request([capture_track_set(case.bundle(), 'parent/track:picture',
+                                                   values={'label': 'Later'})]), 'later-head')
+        case.definition['schema']['properties']['seed']['maximum'] = 30
+        case.path.write_text(yaml.safe_dump(case.definition))
+        packs.admit_project_pack('realm', case.project)
+        current = case.service.get_document(case.project, pin['document_id'])
+        assert current['version'] > pin['version']
+        case.service.update_document(case.project, pin['document_id'], {
+            'expected_version': current['version'], 'content': {**current['content'], 'admissions': []}},
+            idempotency_key='remove-helper-selection')
+        shutil.rmtree(case.source_root)
+        shutil.rmtree(case.artifact_root)
+        case.service.close()
+        case.service = RuntimeService(case.root)
+        case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+        later = case.head()
+    
+        def forbidden(*a, **kw):
+            pytest.fail('helper recaptured original intent, read current admission, or called legacy writer')
+    
+        with monkeypatch.context() as retry:
+            retry.setattr('astrid.sdk.timeline_elements.execute', forbidden)
+            retry.setattr('astrid.sdk.timeline_elements._read_document', forbidden)
+            retry.setattr(commands, 'execute', forbidden)
+            result = update_parent_element(client.connect(), case.project, 'film', **kwargs)
+            assert result.ok, result.error
+            assert client.calls == [(flight['body'].encode(), flight['key'])] * 2
+            assert result.receipt.as_dict() == accepted['receipt']
+            assert result.data['new_head'] == accepted['data']['accepted_revision_id']
+            assert result.data['before'] == {'element': before['elementRef'], 'duration': 2,
+                                              'params': before['params']}
+            assert json.loads(client.outbox().read_bytes())['flight'] is None
+            assert json.loads(client.outbox().read_bytes())['pending'] == []
+            # Acknowledged invocation uses accepted Runtime history, never recapture.
+            kwargs['idempotency_key'] = flight['key']
+            again = update_parent_element(client.connect(), case.project, 'film', **kwargs)
+            assert again == result and len(client.calls) == 2
+            changed = update_parent_element(client.connect(), case.project, 'film', **{**kwargs, 'duration': 7})
+            assert not changed.ok and len(client.calls) == 2
+        assert case.head() == later
+        undone = case.submit(case.request([inverse(result.receipt.receipt_id)]), 'undo-helper')
+        restored = State(commit.bundle_from_document(undone['data']['canonical_document']))
+        assert restored.entity(REF) == before
+        assert restored.entity('parent/track:picture')['label'] == 'Later'
+        expected_pins = [case.pin] if pin == case.pin else [case.pin, pin]
+        assert undone['data']['canonical_document']['dependency_manifest']['documents'] == expected_pins
+        redone = case.submit(case.request([inverse(undone['receipt']['receipt_id'])]), 'redo-helper')
+        redone_state = State(commit.bundle_from_document(redone['data']['canonical_document']))
+        assert redone_state.entity(REF) == row
+        assert redone['data']['canonical_document']['shot_revisions'] == original['shot_revisions']
+        assert redone['data']['canonical_document']['internal_timeline_revisions'] == original['internal_timeline_revisions']
+        head = case.head()
+        with pytest.raises(RuntimeErrorBase) as error:
+>           case.submit(case.request([inverse(result.receipt.receipt_id)]), 'helper-aba')
+
+tests/core/test_timeline_element_publication_runtime.py:557: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/sdk/test_timeline_selected_schema_runtime.py:181: in submit
+    return case.service.commit_timeline(
+../rt-pin-dc55b8bc/runtime_protocol/service.py:2444: in commit_timeline
+    return self._execute_timeline_commit(
+../rt-pin-dc55b8bc/runtime_protocol/service.py:2499: in _execute_timeline_commit
+    outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_execution.py:105: in execute
+    raise error
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_execution.py:87: in execute
+    outcome = detached(provider.commit(provider_context, port))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/commit.py:1260: in commit
+    _load(port, context, target["revision_id"])
+astrid/sdk/timeline/commit.py:433: in _load
+    document = port.revision_closure(revision)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_port.py:285: in revision_closure
+    return self._read(read)
+           ^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_port.py:215: in _read
+    return copy.deepcopy(call())
+                         ^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_port.py:268: in read
+    current = self.head()
+              ^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_port.py:222: in head
+    return self._read(read)
+           ^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_port.py:215: in _read
+    return copy.deepcopy(call())
+                         ^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_port.py:219: in read
+    pin = self.__store.head(self.__project, self.__timeline)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:405: in head
+    return self._head_entry(project_id, timeline_id)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:414: in _head_entry
+    entry = self.history_entry(project_id, timeline_id, row["publication_id"])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:460: in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:254: in _verify_accepted
+    history = self._inverse_stage_history(edge["project_id"], edge["timeline_id"], records,
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:872: in _inverse_stage_history
+    return {publication: self.history_entry(project, timeline, publication, allow_archived=allow_archived)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:460: in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:254: in _verify_accepted
+    history = self._inverse_stage_history(edge["project_id"], edge["timeline_id"], records,
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:872: in _inverse_stage_history
+    return {publication: self.history_entry(project, timeline, publication, allow_archived=allow_archived)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:460: in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_store.py:303: in _verify_accepted
+    metadata_digest=digest(metadata))
+                    ^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/timeline_commit_validation.py:55: in digest
+    return "sha256:" + hashlib.sha256(canonical_json(value).encode()).hexdigest()
+                                      ^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-dc55b8bc/runtime_protocol/util.py:25: in canonical_json
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/json/__init__.py:242: in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+/usr/lib/python3.13/json/encoder.py:202: in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.encoder.JSONEncoder object at 0x7f35a4588170>
+o = {'_sequential_execution': {'capture': {'context': {'idempotency_key': 'public-element', 'invocation': {'body': {'api_v...9f62de298fca00e1fea2f99d24fd674ac5'}, ...}}, 'label': 'Update element', 'merge': 'fields', 'merge_mode': 'fields', ...}
+_one_shot = True
+
+    def iterencode(self, o, _one_shot=False):
+        """Encode the given object and yield each string
+        representation as available.
+    
+        For example::
+    
+            for chunk in JSONEncoder().iterencode(bigobject):
+                mysocket.write(chunk)
+    
+        """
+        if self.check_circular:
+            markers = {}
+        else:
+            markers = None
+        if self.ensure_ascii:
+            _encoder = encode_basestring_ascii
+        else:
+            _encoder = encode_basestring
+    
+        def floatstr(o, allow_nan=self.allow_nan,
+                _repr=float.__repr__, _inf=INFINITY, _neginf=-INFINITY):
+            # Check for specials.  Note that this type of test is processor
+            # and/or platform-specific, so do tests which don't depend on the
+            # internals.
+    
+            if o != o:
+                text = 'NaN'
+            elif o == _inf:
+                text = 'Infinity'
+            elif o == _neginf:
+                text = '-Infinity'
+            else:
+                return _repr(o)
+    
+            if not allow_nan:
+                raise ValueError(
+                    "Out of range float values are not JSON compliant: " +
+                    repr(o))
+    
+            return text
+    
+    
+        if self.indent is None or isinstance(self.indent, str):
+            indent = self.indent
+        else:
+            indent = ' ' * self.indent
+        if _one_shot and c_make_encoder is not None:
+            _iterencode = c_make_encoder(
+                markers, self.default, _encoder, indent,
+                self.key_separator, self.item_separator, self.sort_keys,
+                self.skipkeys, self.allow_nan)
+        else:
+            _iterencode = _make_iterencode(
+                markers, self.default, _encoder, indent, floatstr,
+                self.key_separator, self.item_separator, self.sort_keys,
+                self.skipkeys, _one_shot)
+>       return _iterencode(o, 0)
+               ^^^^^^^^^^^^^^^^^
+E       Failed: Timeout (>45.0s) from pytest-timeout.
+
+/usr/lib/python3.13/json/encoder.py:263: Failed
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_p4_ten_note_v2_runtime.py::test_http_ten_note_commit_per_step_inverse_and_redo
+FAILED tests/core/test_timeline_element_publication_runtime.py::test_public_helper_restart_exact_retry_later_head_inverse_redo[False-None]
+FAILED tests/core/test_timeline_element_publication_runtime.py::test_public_helper_restart_exact_retry_later_head_inverse_redo[False-public-element]
+3 failed, 4 passed in 236.51s (0:03:56)
