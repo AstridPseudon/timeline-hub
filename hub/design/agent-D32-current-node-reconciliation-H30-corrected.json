@@ -20,33 +20,33 @@
     "current_integrated_tree": "57f0231da0d7904ecd8778169973d6384e0ae141",
     "requested_base_head": "8657e83653f48c935f52f209516456bcb5a36282",
     "current_integration_is_three_commits_past_requested_base": true,
-    "current_source_identity_policy": "Source merge alone grants zero original behavior credit; every node retains its exact original pytest ID/body/assertion mapping. The 0500 delta credits only exact mapped nodes."
+    "current_source_identity_policy": "Source merge alone grants zero original behavior credit; every node retains its exact original pytest ID/body/assertion mapping. The 0500, 0508, and inverse22 deltas credit only exact mapped nodes."
   },
   "reconciliation": {
     "exact_unique_entries": 267,
     "exact_unique_ids": 267,
     "exact_unique_phase_rows": 267,
     "counts": {
-      "proven_passed": 172,
-      "active_owner": 95,
+      "proven_passed": 201,
+      "active_owner": 66,
       "deferred_cut_visible": 0,
       "genuinely_unowned": 0
     },
     "pass_count_is_enumerated_node_membership_not_author_named_total": true,
     "deferred_cut_visible_scope_is_separate_from_node_pass_credit": true,
-    "assigned_source_gaps": 7,
+    "assigned_source_gaps": 0,
     "unassigned_minimum_source_gaps": 0,
     "owner_status_does_not_credit_passes": true,
     "all_tags_ours": true,
-    "confirmed_closed_ids": 172,
-    "open_ids": 95,
-    "held_or_unknown_ids": 95,
-    "newly_confirmed_closed_since_0118": 36,
+    "confirmed_closed_ids": 201,
+    "open_ids": 66,
+    "held_or_unknown_ids": 66,
+    "newly_confirmed_closed_since_0118": 65,
     "current_head_full267_pass": false,
     "full_checkpoint": "pending; no authorized Farm result tree was available; do not assume forthcoming PASS",
     "effective_owner_counts_active": {
-      "Agent": 82,
-      "Runtime": 9,
+      "Agent": 60,
+      "Runtime": 2,
       "Viewing": 4
     },
     "active_family_counts": {
@@ -54,10 +54,10 @@
       "CLI FakeCheckout fixture": 3,
       "D09 installed-profile setup": 3,
       "Execution/rendering/pack remainder": 1,
-      "Isolated Agent child import fence": 7,
-      "Occurrence-media inverse fixture": 22,
+      "Isolated Agent child import fence": 0,
+      "Occurrence-media inverse fixture": 0,
       "Other task-specific unconfirmed": 5,
-      "Rendering missing result file": 6,
+      "Rendering missing result file": 0,
       "Retired CLI/native route or stale caller": 0,
       "Runtime child import / OPS": 2
     },
@@ -341,6 +341,167 @@
       "mapping": "evidence/agent-D32-current-node-reconciliation-H30-delta.csv",
       "identity_basis": "Current HOME 9cd, reviewed caller bodies/scenarios, exact source function/body mapping, and production caller trace. No aggregate count is used.",
       "credit_limit": "Bounded to the exact 30 mapped original nodes; no credit for the three track-label rows or the unmapped 71/5 results."
+    },
+    "h3_current_0508": {
+      "result": "7 passed; 0 failed/errors/skipped/xfail/xpass/deselected",
+      "service": "agt-F-h3-current-qualified-0508; independently reviewed by agt-F-h3-result-review-0517",
+      "head": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
+      "tree": "57f0231da0d7904ecd8778169973d6384e0ae141",
+      "installed_child": "child3b5c",
+      "agent_pin": "ba8f0bc8bebf6d0e9a8143fed80d31f846cd5b95",
+      "runtime_pin": "f3208b26b53c4d7053e5464eaa7c5e15b1505812",
+      "exact_node_ids": [
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]",
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]",
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]",
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]",
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]",
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]"
+      ],
+      "node_phase": "exact nodeid,call",
+      "command": "child/bin/python -I -m pytest -q -o addopts= -p no:cacheprovider tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard",
+      "production_caller": "generic_host.main -> _install_host_vibecomfy_import_root() -> GenericPackHost",
+      "source_identity": {
+        "current_home": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
+        "current_tree": "57f0231da0d7904ecd8778169973d6384e0ae141",
+        "relevant_current_source_sha256": "242ce54e59367aae0af8ac51b70d286f9fae7b8b29a5ab3b78920eeba91dd815",
+        "installed_relevant_source_sha256": "242ce54e59367aae0af8ac51b70d286f9fae7b8b29a5ab3b78920eeba91dd815",
+        "target_body_ast_sha256": "ae56aaf49eb0d3c7488405a2c930fc097a7789fecf06ec3ca349b3a38c04197c",
+        "installed_only_origins_verified": true,
+        "pythonpath_absent": true
+      },
+      "receipt_sha256": "e8b01d8b47d27054e5976ccef2b019cbcb689192557cec9c603697ee92ca335c",
+      "pytest_log_sha256": "d3a4d6f00d0784306e663637d8e4d4733d439fbaf7f9a2442b29b91555a7a6ce",
+      "junit_sha256": "3a29da305ce360a91d9e680b036e01e80c8d59b8c41a0acfe0c97a055154a0db",
+      "credit_limit": "Exact seven current original nodes only; historical 0137 is not retroactively relabeled."
+    },
+    "inverse22_current_0537": {
+      "result": "22 passed in 3.55s; 0 failed/errors/skipped/xfail/xpass/deselected",
+      "qualifier": "agt-F-inverse22-qualified-0537",
+      "independent_review": "agt-F-inverse22-result-review-0550",
+      "agent_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+      "agent_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+      "runtime_head": "2b49da8d6d8dbb8245a1a7cc8d7eee7d3bdaae65",
+      "runtime_tree": "40eb05d5a51b8d7b31cbfad8a38afeb3318fbd44",
+      "source_mode": true,
+      "installed_source_claim": false,
+      "before_after_custody": {
+        "agent_status": "clean before and after; git diff --check passed",
+        "runtime_status": "clean before and after",
+        "agent_import_root": "/home/user/work/wt/agt-F-inverse22-qualified-0537",
+        "runtime_import_root": "/home/user/work/wt/rt-pin-2b49da8d",
+        "source_mode_imports_identical_before_after": true
+      },
+      "source_identity": {
+        "original_fullc36_head": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+        "original_fullc36_tree": "50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92",
+        "original_source_file_sha256": "1dc677be9aecb97c1d401691af70269c9cf80e9c1e697b645fa8807008a5977c",
+        "current_agent_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "current_relevant_source_hashes": {
+          "astrid/sdk/timeline/_commit_patch.py": "c12b641754dff344e01824379b117304ee78259743c3c3b057fb22301e404238",
+          "astrid/sdk/timeline/_step_undo.py": "bebedf56a16ac6677305dbb1bbc2ddcf590e4eff76f9b60224f4518595767ed1",
+          "astrid/sdk/timeline/_collections.py": "8884266df20d4d597befaac51d72114d7a3ff03ac0e58c01749e889c3b99bbc5"
+        },
+        "function_ast_identity": {
+          "test_corrupt_media_boundary_refuses": {
+            "current_line": 218,
+            "original_line": 205,
+            "ast_equal": true,
+            "body_ast_sha256": "a9f85a32f3758ccfc2a3257512cc217f1d68d44249470c84ebc0d1237cc92432"
+          },
+          "test_retained_document_scope_is_required_before_removing_media": {
+            "current_line": 269,
+            "original_line": 256,
+            "ast_equal": true,
+            "body_ast_sha256": "4ca63e9d318424e3142805bd07d5d73fc6c9b92585aca2c89d18dff84b7bc58c"
+          }
+        },
+        "fixture_diff_scope": [
+          "two imports: inverse_address_resolver and select_inverse_records",
+          "accepted_records helper only"
+        ],
+        "helper_authority": [
+          "normalizes actual realm entries and accepted command records",
+          "loads actual revision-boundary documents and publication history",
+          "uses inverse_address_resolver and select_inverse_records"
+        ],
+        "original_predicates_preserved_and_executed": {
+          "corruption_cases": 16,
+          "retained_scope_cases": 6
+        }
+      },
+      "exact_node_ids": [
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-digest]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-document-pin]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-extra-pin]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-foreign]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-missing]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-payload]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-revision]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-writes]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-digest]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-document-pin]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-extra-pin]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-foreign]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-missing]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-payload]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-revision]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-writes]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-dependent]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-disjoint]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-missing]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-dependent]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-disjoint]",
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-missing]"
+      ],
+      "node_phase": "exact nodeid,call",
+      "qualification_command": "PYTHONPATH=\"$PWD:/home/user/work/wt/rt-pin-2b49da8d\" ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-2b49da8d /home/user/work/venv-agent/bin/python -m pytest -q -oaddopts= -pno:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media --junitxml=\"${TMPDIR}/inverse22.xml\"",
+      "junit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-inverse22-qualified-0537/evidence/inverse22.xml",
+      "junit_sha256": "ba30c90c395eda8e531498ebdcbdac25e0407147d6ad78c404c58f3c56d1426a",
+      "pytest_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-inverse22-qualified-0537/evidence/inverse22.log",
+      "pytest_log_sha256": "3c1f4990a6d304c6b2a2a39f427ca6d26488d4d4246b0f9d46c372db9bab2874",
+      "qualification_report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-inverse22-qualified-0537/evidence/inverse22-review.md",
+      "qualification_report_sha256": "2f1e6aef6426a71ffba29d0311c04d48bcc2319d86fd84a660db4fc683ac6ea1",
+      "negative_controls": "All corruption and retained-scope predicates reached their protected boundary assertions.",
+      "credit_limit": "Credit is limited to these exact 22 original call nodes. Do not infer credit from the prior 47/186/56 aggregate totals, source-copy selectors, installed-package claims, or any unenumerated neighbor/body rerun."
+    },
+    "inverse22_result_review_0550": {
+      "result": "Independent PASS review of the bounded qualification; all 22 exact original nodes receive credit.",
+      "reviewer": "agt-F-inverse22-result-review-0550",
+      "qualification_ref": "inverse22_current_0537",
+      "exact_mapping": {
+        "corruption": 16,
+        "retained_scope": 6,
+        "phase": "call",
+        "lane": "Agent"
+      },
+      "custody": {
+        "agent_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "agent_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "runtime_head": "2b49da8d6d8dbb8245a1a7cc8d7eee7d3bdaae65",
+        "runtime_tree": "40eb05d5a51b8d7b31cbfad8a38afeb3318fbd44",
+        "source_mode_imports_identical_before_after": true
+      },
+      "function_ast_identity": {
+        "fullc36_head": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+        "original_source_file_sha256": "1dc677be9aecb97c1d401691af70269c9cf80e9c1e697b645fa8807008a5977c",
+        "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "corruption_ast_sha256": "a9f85a32f3758ccfc2a3257512cc217f1d68d44249470c84ebc0d1237cc92432",
+        "retained_scope_ast_sha256": "4ca63e9d318424e3142805bd07d5d73fc6c9b92585aca2c89d18dff84b7bc58c",
+        "changed_regions": [
+          "two imports",
+          "accepted_records helper"
+        ]
+      },
+      "result_artifacts": {
+        "junit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-inverse22-qualified-0537/evidence/inverse22.xml",
+        "junit_sha256": "ba30c90c395eda8e531498ebdcbdac25e0407147d6ad78c404c58f3c56d1426a",
+        "pytest_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-inverse22-qualified-0537/evidence/inverse22.log",
+        "pytest_log_sha256": "3c1f4990a6d304c6b2a2a39f427ca6d26488d4d4246b0f9d46c372db9bab2874"
+      },
+      "no_aggregate_credit": "No credit from aggregate 47/186/56 results; no source-copy, installed-package, D40, or unrelated prior credit.",
+      "credit_limit": "Credit is limited to these exact 22 original call nodes. Do not infer credit from the prior 47/186/56 aggregate totals, source-copy selectors, installed-package claims, or any unenumerated neighbor/body rerun."
     }
   },
   "unowned_gaps": {},
@@ -3310,7 +3471,7 @@
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-digest]",
@@ -3323,20 +3484,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "a9f85a32f3758ccfc2a3257512cc217f1d68d44249470c84ebc0d1237cc92432"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-document-pin]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-document-pin]",
@@ -3349,20 +3520,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "a9f85a32f3758ccfc2a3257512cc217f1d68d44249470c84ebc0d1237cc92432"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-extra-pin]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-extra-pin]",
@@ -3375,20 +3556,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "a9f85a32f3758ccfc2a3257512cc217f1d68d44249470c84ebc0d1237cc92432"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-foreign]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-foreign]",
@@ -3401,20 +3592,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "a9f85a32f3758ccfc2a3257512cc217f1d68d44249470c84ebc0d1237cc92432"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-missing]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-missing]",
@@ -3427,20 +3628,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "a9f85a32f3758ccfc2a3257512cc217f1d68d44249470c84ebc0d1237cc92432"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-payload]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-payload]",
@@ -3453,20 +3664,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "a9f85a32f3758ccfc2a3257512cc217f1d68d44249470c84ebc0d1237cc92432"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-revision]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-revision]",
@@ -3479,20 +3700,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "a9f85a32f3758ccfc2a3257512cc217f1d68d44249470c84ebc0d1237cc92432"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-writes]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-writes]",
@@ -3505,20 +3736,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "a9f85a32f3758ccfc2a3257512cc217f1d68d44249470c84ebc0d1237cc92432"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-digest]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-digest]",
@@ -3531,20 +3772,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "a9f85a32f3758ccfc2a3257512cc217f1d68d44249470c84ebc0d1237cc92432"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-document-pin]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-document-pin]",
@@ -3557,20 +3808,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "a9f85a32f3758ccfc2a3257512cc217f1d68d44249470c84ebc0d1237cc92432"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-extra-pin]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-extra-pin]",
@@ -3583,20 +3844,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "a9f85a32f3758ccfc2a3257512cc217f1d68d44249470c84ebc0d1237cc92432"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-foreign]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-foreign]",
@@ -3609,20 +3880,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "a9f85a32f3758ccfc2a3257512cc217f1d68d44249470c84ebc0d1237cc92432"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-missing]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-missing]",
@@ -3635,20 +3916,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "a9f85a32f3758ccfc2a3257512cc217f1d68d44249470c84ebc0d1237cc92432"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-payload]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-payload]",
@@ -3661,20 +3952,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "a9f85a32f3758ccfc2a3257512cc217f1d68d44249470c84ebc0d1237cc92432"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-revision]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-revision]",
@@ -3687,20 +3988,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "a9f85a32f3758ccfc2a3257512cc217f1d68d44249470c84ebc0d1237cc92432"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-writes]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-writes]",
@@ -3713,20 +4024,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "a9f85a32f3758ccfc2a3257512cc217f1d68d44249470c84ebc0d1237cc92432"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-dependent]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-dependent]",
@@ -3739,20 +4060,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "4ca63e9d318424e3142805bd07d5d73fc6c9b92585aca2c89d18dff84b7bc58c"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-disjoint]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-disjoint]",
@@ -3765,20 +4096,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "4ca63e9d318424e3142805bd07d5d73fc6c9b92585aca2c89d18dff84b7bc58c"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-missing]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-missing]",
@@ -3791,20 +4132,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "4ca63e9d318424e3142805bd07d5d73fc6c9b92585aca2c89d18dff84b7bc58c"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-dependent]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-dependent]",
@@ -3817,20 +4168,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "4ca63e9d318424e3142805bd07d5d73fc6c9b92585aca2c89d18dff84b7bc58c"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-disjoint]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-disjoint]",
@@ -3843,20 +4204,30 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "4ca63e9d318424e3142805bd07d5d73fc6c9b92585aca2c89d18dff84b7bc58c"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-missing]",
       "phase": "call",
       "family": "Occurrence-media inverse fixture",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Authenticated occurrence-media fixture is explicitly owned.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-missing]",
@@ -3869,13 +4240,23 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_post_0118_inverse22",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact current source-mode qualification and independent result review pass; credit is limited to this original node.",
+        "post_0118_evidence_refs": [
+          "inverse22_current_0537",
+          "inverse22_result_review_0550"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+        "body_ast_sha256": "4ca63e9d318424e3142805bd07d5d73fc6c9b92585aca2c89d18dff84b7bc58c"
+      },
+      "proof_refs": [
+        "inverse22_current_0537",
+        "inverse22_result_review_0550"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/integrations/test_d09_managed_scene_only.py::test_public_checkout_check_uses_retained_managed_scene_result",
@@ -3960,14 +4341,14 @@
       "phase": "call",
       "family": "Isolated Agent child import fence",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-ISOLATED-IMPORT-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "status": "proven_passed",
+      "reason": "Exact current H3 proof passed on the qualified installed child; historical 0137 remains separately recorded.",
       "owner_ref": "runtime_h3_import_0118",
       "proof_refs": [
-        "h3_import_0137"
+        "h3_import_0137",
+        "h3_current_0508"
       ],
-      "proof_status": "historical_exact_pass_not_current",
+      "proof_status": "exact_current_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/packs/h3_av/test_character_swap_cpu_boundary.py",
@@ -3977,15 +4358,16 @@
       },
       "effective_owner": "Runtime",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "Historical exact selector passed in service 0137, but D40 changed runner.py, generic_host.py and generic_host_worker.py afterward; current-source requalification is required.",
+        "classification": "confirmed_closed_post_0118_at_0508",
+        "current_head": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
+        "current_tree": "57f0231da0d7904ecd8778169973d6384e0ae141",
+        "prior_open_disposition": "Historical exact 0137 pass was not current credit because D40 source drift required requalification.",
         "post_0118_evidence_refs": [
-          "agt-F-h3-env-0137",
-          "4745f956a3:D40-source-drift"
+          "h3_import_0137",
+          "h3_current_0508"
         ],
-        "qualifying_original_behavior_credit": false
+        "note": "All seven exact original IDs passed once on genuine child3b5c (Agent ba8f0bc8, Runtime f3208b26); relevant production bytes and target AST body match current HOME 9cd. Production caller reaches the installed guard before GenericPackHost construction.",
+        "qualifying_original_behavior_credit": true
       },
       "owner": "Runtime"
     },
@@ -3994,14 +4376,14 @@
       "phase": "call",
       "family": "Isolated Agent child import fence",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-ISOLATED-IMPORT-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "status": "proven_passed",
+      "reason": "Exact current H3 proof passed on the qualified installed child; historical 0137 remains separately recorded.",
       "owner_ref": "runtime_h3_import_0118",
       "proof_refs": [
-        "h3_import_0137"
+        "h3_import_0137",
+        "h3_current_0508"
       ],
-      "proof_status": "historical_exact_pass_not_current",
+      "proof_status": "exact_current_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/packs/h3_av/test_character_swap_cpu_boundary.py",
@@ -4011,15 +4393,16 @@
       },
       "effective_owner": "Runtime",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "Historical exact selector passed in service 0137, but D40 changed runner.py, generic_host.py and generic_host_worker.py afterward; current-source requalification is required.",
+        "classification": "confirmed_closed_post_0118_at_0508",
+        "current_head": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
+        "current_tree": "57f0231da0d7904ecd8778169973d6384e0ae141",
+        "prior_open_disposition": "Historical exact 0137 pass was not current credit because D40 source drift required requalification.",
         "post_0118_evidence_refs": [
-          "agt-F-h3-env-0137",
-          "4745f956a3:D40-source-drift"
+          "h3_import_0137",
+          "h3_current_0508"
         ],
-        "qualifying_original_behavior_credit": false
+        "note": "All seven exact original IDs passed once on genuine child3b5c (Agent ba8f0bc8, Runtime f3208b26); relevant production bytes and target AST body match current HOME 9cd. Production caller reaches the installed guard before GenericPackHost construction.",
+        "qualifying_original_behavior_credit": true
       },
       "owner": "Runtime"
     },
@@ -4028,14 +4411,14 @@
       "phase": "call",
       "family": "Isolated Agent child import fence",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-ISOLATED-IMPORT-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "status": "proven_passed",
+      "reason": "Exact current H3 proof passed on the qualified installed child; historical 0137 remains separately recorded.",
       "owner_ref": "runtime_h3_import_0118",
       "proof_refs": [
-        "h3_import_0137"
+        "h3_import_0137",
+        "h3_current_0508"
       ],
-      "proof_status": "historical_exact_pass_not_current",
+      "proof_status": "exact_current_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/packs/h3_av/test_character_swap_cpu_boundary.py",
@@ -4045,15 +4428,16 @@
       },
       "effective_owner": "Runtime",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "Historical exact selector passed in service 0137, but D40 changed runner.py, generic_host.py and generic_host_worker.py afterward; current-source requalification is required.",
+        "classification": "confirmed_closed_post_0118_at_0508",
+        "current_head": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
+        "current_tree": "57f0231da0d7904ecd8778169973d6384e0ae141",
+        "prior_open_disposition": "Historical exact 0137 pass was not current credit because D40 source drift required requalification.",
         "post_0118_evidence_refs": [
-          "agt-F-h3-env-0137",
-          "4745f956a3:D40-source-drift"
+          "h3_import_0137",
+          "h3_current_0508"
         ],
-        "qualifying_original_behavior_credit": false
+        "note": "All seven exact original IDs passed once on genuine child3b5c (Agent ba8f0bc8, Runtime f3208b26); relevant production bytes and target AST body match current HOME 9cd. Production caller reaches the installed guard before GenericPackHost construction.",
+        "qualifying_original_behavior_credit": true
       },
       "owner": "Runtime"
     },
@@ -4062,14 +4446,14 @@
       "phase": "call",
       "family": "Isolated Agent child import fence",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-ISOLATED-IMPORT-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "status": "proven_passed",
+      "reason": "Exact current H3 proof passed on the qualified installed child; historical 0137 remains separately recorded.",
       "owner_ref": "runtime_h3_import_0118",
       "proof_refs": [
-        "h3_import_0137"
+        "h3_import_0137",
+        "h3_current_0508"
       ],
-      "proof_status": "historical_exact_pass_not_current",
+      "proof_status": "exact_current_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/packs/h3_av/test_character_swap_cpu_boundary.py",
@@ -4079,15 +4463,16 @@
       },
       "effective_owner": "Runtime",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "Historical exact selector passed in service 0137, but D40 changed runner.py, generic_host.py and generic_host_worker.py afterward; current-source requalification is required.",
+        "classification": "confirmed_closed_post_0118_at_0508",
+        "current_head": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
+        "current_tree": "57f0231da0d7904ecd8778169973d6384e0ae141",
+        "prior_open_disposition": "Historical exact 0137 pass was not current credit because D40 source drift required requalification.",
         "post_0118_evidence_refs": [
-          "agt-F-h3-env-0137",
-          "4745f956a3:D40-source-drift"
+          "h3_import_0137",
+          "h3_current_0508"
         ],
-        "qualifying_original_behavior_credit": false
+        "note": "All seven exact original IDs passed once on genuine child3b5c (Agent ba8f0bc8, Runtime f3208b26); relevant production bytes and target AST body match current HOME 9cd. Production caller reaches the installed guard before GenericPackHost construction.",
+        "qualifying_original_behavior_credit": true
       },
       "owner": "Runtime"
     },
@@ -4096,14 +4481,14 @@
       "phase": "call",
       "family": "Isolated Agent child import fence",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-ISOLATED-IMPORT-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "status": "proven_passed",
+      "reason": "Exact current H3 proof passed on the qualified installed child; historical 0137 remains separately recorded.",
       "owner_ref": "runtime_h3_import_0118",
       "proof_refs": [
-        "h3_import_0137"
+        "h3_import_0137",
+        "h3_current_0508"
       ],
-      "proof_status": "historical_exact_pass_not_current",
+      "proof_status": "exact_current_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/packs/h3_av/test_character_swap_cpu_boundary.py",
@@ -4113,15 +4498,16 @@
       },
       "effective_owner": "Runtime",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "Historical exact selector passed in service 0137, but D40 changed runner.py, generic_host.py and generic_host_worker.py afterward; current-source requalification is required.",
+        "classification": "confirmed_closed_post_0118_at_0508",
+        "current_head": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
+        "current_tree": "57f0231da0d7904ecd8778169973d6384e0ae141",
+        "prior_open_disposition": "Historical exact 0137 pass was not current credit because D40 source drift required requalification.",
         "post_0118_evidence_refs": [
-          "agt-F-h3-env-0137",
-          "4745f956a3:D40-source-drift"
+          "h3_import_0137",
+          "h3_current_0508"
         ],
-        "qualifying_original_behavior_credit": false
+        "note": "All seven exact original IDs passed once on genuine child3b5c (Agent ba8f0bc8, Runtime f3208b26); relevant production bytes and target AST body match current HOME 9cd. Production caller reaches the installed guard before GenericPackHost construction.",
+        "qualifying_original_behavior_credit": true
       },
       "owner": "Runtime"
     },
@@ -4130,14 +4516,14 @@
       "phase": "call",
       "family": "Isolated Agent child import fence",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-ISOLATED-IMPORT-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "status": "proven_passed",
+      "reason": "Exact current H3 proof passed on the qualified installed child; historical 0137 remains separately recorded.",
       "owner_ref": "runtime_h3_import_0118",
       "proof_refs": [
-        "h3_import_0137"
+        "h3_import_0137",
+        "h3_current_0508"
       ],
-      "proof_status": "historical_exact_pass_not_current",
+      "proof_status": "exact_current_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/packs/h3_av/test_character_swap_cpu_boundary.py",
@@ -4147,15 +4533,16 @@
       },
       "effective_owner": "Runtime",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "Historical exact selector passed in service 0137, but D40 changed runner.py, generic_host.py and generic_host_worker.py afterward; current-source requalification is required.",
+        "classification": "confirmed_closed_post_0118_at_0508",
+        "current_head": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
+        "current_tree": "57f0231da0d7904ecd8778169973d6384e0ae141",
+        "prior_open_disposition": "Historical exact 0137 pass was not current credit because D40 source drift required requalification.",
         "post_0118_evidence_refs": [
-          "agt-F-h3-env-0137",
-          "4745f956a3:D40-source-drift"
+          "h3_import_0137",
+          "h3_current_0508"
         ],
-        "qualifying_original_behavior_credit": false
+        "note": "All seven exact original IDs passed once on genuine child3b5c (Agent ba8f0bc8, Runtime f3208b26); relevant production bytes and target AST body match current HOME 9cd. Production caller reaches the installed guard before GenericPackHost construction.",
+        "qualifying_original_behavior_credit": true
       },
       "owner": "Runtime"
     },
@@ -4164,14 +4551,14 @@
       "phase": "call",
       "family": "Isolated Agent child import fence",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-ISOLATED-IMPORT-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "status": "proven_passed",
+      "reason": "Exact current H3 proof passed on the qualified installed child; historical 0137 remains separately recorded.",
       "owner_ref": "runtime_h3_import_0118",
       "proof_refs": [
-        "h3_import_0137"
+        "h3_import_0137",
+        "h3_current_0508"
       ],
-      "proof_status": "historical_exact_pass_not_current",
+      "proof_status": "exact_current_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/packs/h3_av/test_character_swap_cpu_boundary.py",
@@ -4181,15 +4568,16 @@
       },
       "effective_owner": "Runtime",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "Historical exact selector passed in service 0137, but D40 changed runner.py, generic_host.py and generic_host_worker.py afterward; current-source requalification is required.",
+        "classification": "confirmed_closed_post_0118_at_0508",
+        "current_head": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
+        "current_tree": "57f0231da0d7904ecd8778169973d6384e0ae141",
+        "prior_open_disposition": "Historical exact 0137 pass was not current credit because D40 source drift required requalification.",
         "post_0118_evidence_refs": [
-          "agt-F-h3-env-0137",
-          "4745f956a3:D40-source-drift"
+          "h3_import_0137",
+          "h3_current_0508"
         ],
-        "qualifying_original_behavior_credit": false
+        "note": "All seven exact original IDs passed once on genuine child3b5c (Agent ba8f0bc8, Runtime f3208b26); relevant production bytes and target AST body match current HOME 9cd. Production caller reaches the installed guard before GenericPackHost construction.",
+        "qualifying_original_behavior_credit": true
       },
       "owner": "Runtime"
     },
@@ -8285,8 +8673,8 @@
       {
         "owner_ref": "runtime_h3_import_0118",
         "owner": "Runtime",
-        "classification": "assigned_source_gap",
-        "proof_ref": null,
+        "classification": "post_0118_exact_current_proof",
+        "proof_ref": "h3_current_0508",
         "node_count": 7,
         "exact_node_ids": [
           "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
@@ -8297,7 +8685,7 @@
           "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]",
           "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]"
         ],
-        "note": "source gap only; no product author"
+        "note": "Exact seven current original IDs passed on child3b5c; historical 0137 remains separate. No product author."
       },
       {
         "owner_ref": "viewing_retained_callers_0500",
@@ -8338,6 +8726,39 @@
           "tests/sdk/test_scene_dispatch_contract.py::test_scene_request_and_sdk_admission_keep_certified_source[True]"
         ],
         "note": "Current HOME 9cd proof mapped through viewing_0444_mapping; 24 Sheet, 4 CLI, 2 Scene. Three track-label rows remain separate and open."
+      },
+      {
+        "owner_ref": "inverse22_0537",
+        "owner": "Agent",
+        "classification": "post_0118_exact_current_proof",
+        "proof_ref": "inverse22_current_0537",
+        "independent_review_ref": "inverse22_result_review_0550",
+        "node_count": 22,
+        "exact_node_ids": [
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-digest]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-document-pin]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-extra-pin]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-foreign]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-missing]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-payload]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-revision]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-writes]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-digest]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-document-pin]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-extra-pin]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-foreign]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-missing]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-payload]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-revision]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-writes]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-dependent]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-disjoint]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-missing]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-dependent]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-disjoint]",
+          "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-missing]"
+        ],
+        "note": "Exact 22 occurrence-media inverse originals: 16 corruption and 6 retained-scope call rows; current source-mode proof and independent 0550 result review. No aggregate credit."
       }
     ],
     "manager_additional_owners": [
@@ -8392,26 +8813,7 @@
       }
     ]
   },
-  "assigned_source_gaps": {
-    "RUNTIME-H3-IMPORT-0118": {
-      "description": "Seven isolated character_swap_cpu_boundary import-source nodes have a Runtime 0118 owner; no qualifying proof/result exists yet and no Agent product author is assigned.",
-      "owner_ref": "runtime_h3_import_0118",
-      "files": [
-        "tests/packs/h3_av/test_character_swap_cpu_boundary.py"
-      ],
-      "nodes": [
-        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
-        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]",
-        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]",
-        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]",
-        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]",
-        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]",
-        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]"
-      ],
-      "acceptance_command": "Exact seven-node pytest command from the retained D32 reconciliation gap; source attribution first, then finite targeted proof on the qualified checkout.",
-      "proof_status": "missing"
-    }
-  },
+  "assigned_source_gaps": {},
   "h30_viewing_failover": {
     "owner": "Viewing",
     "home_merge_owner": "Agent",
@@ -8536,25 +8938,41 @@
       "mapping_ref": "viewing_0444_mapping",
       "original_node_credit": 30,
       "excluded_track_labels": 3
+    },
+    "inverse22_current_0537": {
+      "source_agent_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+      "source_agent_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+      "runtime_pin": "2b49da8d6d8dbb8245a1a7cc8d7eee7d3bdaae65",
+      "result": "22 passed in 3.55s; exact 16 corruption + 6 retained-scope originals",
+      "proof_ref": "inverse22_current_0537",
+      "independent_review_ref": "inverse22_result_review_0550",
+      "exact_node_count": 22,
+      "original_node_credit": 22,
+      "source_mode_not_installed_claim": true,
+      "aggregate_47_186_56_credit": 0
     }
   },
   "known_scopes_and_limits": [
     "All 267 D32 tags remain ours; zero upstream/pre-existing credit is admitted.",
-    "Confirmed closed means the 136 exact baseline proof records, six exact current render-wire records, and the 30 exact retained-caller IDs mapped and passed on HOME 9cd.",
-    "All 95 remaining active IDs are open/held/unknown for current qualification, with current lane owners enumerated above; owner assignment is not pass credit.",
+    "Historical baseline identity is preserved: the original 172 closed / 95 open baseline remains unchanged. The 0550 package snapshot is retained only as historical 179 closed / 88 open metadata context; cumulative current qualification now adds these exact 22 inverse originals for 201 closed / 66 open.",
+    "The current census has 66 remaining active IDs open/held/unknown for qualification, with current lane owners enumerated above; owner assignment is not pass credit.",
     "Aggregate neighbor totals, source-only, mock, candidate, installed-positive absence, stale failures, and wrapper-only fixes receive zero original behavior credit.",
-    "The seven exact H3 selectors remain open pending the current-source proof; 0508 is not credited here. The renderer support timeout 0509 is pending and not credited.",
-    "The 71+5 integrated result context is not used as unnamed node credit; only the exact 30 retained-caller mapping is closed.",
-    "No current full267 PASS or authorized Farm checkpoint result was found; checkpoint remains pending."
+    "The seven exact H3 selectors are current-qualified and closed by h3_current_0508; historical h3_import_0137 remains historical and is not relabeled. The renderer support timeout 0509 is pending and not credited.",
+    "The exact 22 occurrence-media inverse selectors are current-qualified by inverse22_current_0537 and independently PASS-reviewed by inverse22_result_review_0550: 16 corruption and six retained-scope call rows. Their helper authority uses actual realm history/boundaries and real inverse resolvers; no predicate was weakened.",
+    "The exact 22 inverse rows are the only new status changes in this update. Do not infer credit from prior 47/186/56 aggregate results, source-copy selectors, installed-package claims, or unenumerated body/neighbor reruns.",
+    "The 0550 metadata correction remains explicitly cumulative historical context only: it corrected H3 metadata and external hashes, preserved all 267 nodes and the exact 37-row mapping, and did not itself add inverse22 credit. Its 179/88 count is not the final current count.",
+    "No current full267 PASS or authorized Farm checkpoint result was found; checkpoint remains pending.",
+    "D40 custody remains open, as do the three track-label rows, ABA-11466, IMAGE inverse, renderer timeout 0509, and Farm checkpoint. Source-copy selectors absent from the 267-node census receive zero credit.",
+    "This bounded fixture count does not claim the v2 production caller/wire-contract acceptance, including the complete request/reply shape; no product, test, schema, client, pin, or M5 change was made."
   ],
   "correction": {
     "basis": "Independent H30 census review after FAIL0358",
     "review_artifact": "workers/agt-F-census-review-0358/evidence/h30-reconciliation-review.json",
     "corrected_counts": {
       "total": 267,
-      "closed": 172,
-      "open": 95,
-      "held_or_unknown": 95
+      "closed": 201,
+      "open": 66,
+      "held_or_unknown": 66
     },
     "newly_credited_ids": [
       "tests/core/rendering/test_conformance.py::test_attachment_wire_parity",
@@ -8592,11 +9010,43 @@
       "tests/packs/timeline/test_cli_native.py::test_cli_native_track_selector_is_parent_scoped",
       "tests/packs/timeline/test_cli_native.py::test_help_exposes_native_entry_and_explicit_legacy_working_copy",
       "tests/sdk/test_scene_dispatch_contract.py::test_scene_request_and_sdk_admission_keep_certified_source[False]",
-      "tests/sdk/test_scene_dispatch_contract.py::test_scene_request_and_sdk_admission_keep_certified_source[True]"
+      "tests/sdk/test_scene_dispatch_contract.py::test_scene_request_and_sdk_admission_keep_certified_source[True]",
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]",
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]",
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]",
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]",
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]",
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-digest]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-document-pin]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-extra-pin]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-foreign]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-missing]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-payload]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-revision]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-writes]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-digest]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-document-pin]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-extra-pin]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-foreign]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-missing]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-payload]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-revision]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-writes]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-dependent]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-disjoint]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-missing]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-dependent]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-disjoint]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-missing]"
     ],
     "newly_credited_proof_refs": [
       "render_wire_27934",
-      "integrated_0500"
+      "integrated_0500",
+      "h3_current_0508",
+      "inverse22_current_0537",
+      "inverse22_result_review_0550"
     ],
     "historical_open_ids": [
       "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
@@ -8649,7 +9099,49 @@
     "newly_confirmed_closed_at_0500_proof_refs": [
       "integrated_0500",
       "viewing_0444_mapping"
-    ]
+    ],
+    "newly_confirmed_closed_at_0508": [
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]",
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]",
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]",
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]",
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]",
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]"
+    ],
+    "newly_confirmed_closed_at_0508_proof_refs": [
+      "h3_current_0508"
+    ],
+    "newly_confirmed_closed_at_0537_inverse22": [
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-digest]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-document-pin]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-extra-pin]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-foreign]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-missing]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-payload]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-revision]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-writes]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-digest]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-document-pin]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-extra-pin]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-foreign]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-missing]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-payload]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-revision]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-writes]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-dependent]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-disjoint]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-missing]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-dependent]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-disjoint]",
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-missing]"
+    ],
+    "newly_confirmed_closed_at_0537_inverse22_proof_refs": [
+      "inverse22_current_0537",
+      "inverse22_result_review_0550"
+    ],
+    "cumulative_0550_metadata_fix_disposition": "The 0550 package correction was metadata-only: it reconciled the seven H3 current-qualified nodes, preserved the historical 172/95 baseline and exact 37-row mapping, and produced artifact SHA c70b6627e6fe4cd7f6d900e0bcb99168dd8e56a4269ad8d88e12b07eec272268. It remains historical 179/88 package context here; it is not new behavior credit or a node-status change.",
+    "current_cumulative_disposition": "Cumulative current qualification is 201 closed / 66 open: the 0550 historical 179/88 package snapshot plus these exact 22 inverse rows."
   },
-  "owner_registry_note": "H30 current ownership is Viewing for the retained-caller delta and six render-wire rows, Runtime for the seven H3 source-drift rows, and Agent for Agent-home rows. Historical worker labels are not active authors. The three track-label rows remain separate."
+  "owner_registry_note": "H30 current ownership is Viewing for the retained-caller delta and six render-wire rows, Runtime for the seven H3 source-drift rows, and Agent for Agent-home rows. Historical worker labels are not active authors. The three track-label rows remain separate. The seven H3 import-source rows and the exact 22 occurrence-media inverse rows are current-qualified; source-copy selectors were checked and are absent from the 267-node census."
 }
