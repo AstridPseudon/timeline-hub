@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import importlib.util
 import shutil
-import sys
 from dataclasses import dataclass
 from typing import Any
 
@@ -176,7 +175,6 @@ def check_local_generation_readiness(
         )
 
     if not _module_available("vibecomfy"):
-        python = python_executable or sys.executable
         return LocalGenerationReadiness(
             ready=False,
             reason=(
@@ -184,13 +182,14 @@ def check_local_generation_readiness(
                 "it is not installed in the Python environment Astrid is using"
             ),
             recovery_command=(
-                f"{python} -m pip install vibecomfy && "
-                f"{python} -m vibecomfy --help"
+                "VibeComfy ships with Astrid; if it is missing, run the normal Astrid update "
+                "in a terminal outside chat: "
+                "curl -fsSL https://astrid.haus/install | sh -s -- --update (macOS/Linux); "
+                "Windows PowerShell: & ([scriptblock]::Create((irm https://astrid.haus/install.ps1))) --update"
             ),
         )
 
     if not _comfyui_runtime_available():
-        python = python_executable or sys.executable
         return LocalGenerationReadiness(
             ready=False,
             reason=(
@@ -198,8 +197,8 @@ def check_local_generation_readiness(
                 "or the 'comfyui' CLI); neither is installed or discoverable"
             ),
             recovery_command=(
-                f"{python} -m pip install 'vibecomfy[comfy]' && "
-                "comfyui --help"
+                "start your existing ComfyUI and use vibecomfy.run with its local server URL; "
+                "see the VibeComfy skill for setup"
             ),
         )
 

@@ -17,6 +17,8 @@ from pathlib import Path
 from runtime_protocol import platform
 from runtime_protocol.door import DEFAULT_DOOR_PORT
 
+from ..core.generation.vibecomfy_dependency import VIBECOMFY_ENGINE_REVISION
+
 from .core import (
     BackupSpaceError,
     VerificationError,
@@ -365,6 +367,9 @@ class Backend:
                 copy_support(item, target)
 
     def stage(self, manifest: dict, root: Path, data: Path) -> Version:
+        # Older release manifests omit this source. Record the effective pin
+        # alongside the other sources without changing the caller's document.
+        manifest = {**manifest, "vibecomfy": manifest.get("vibecomfy", {"sha": VIBECOMFY_ENGINE_REVISION})}
         if self.run([self.uv, "--version"]).split()[1] != manifest["tools"]["uv"]["version"]:
             raise ValueError("The installer needs the manifest's pinned uv.")
         folder = root / "versions" / new_version_id(manifest)
@@ -373,13 +378,15 @@ class Backend:
                        **({"repo": manifest["agent"]["repo"]} if "repo" in manifest["agent"] else {}))
         runtime = source("runtime", manifest["runtime"]["sha"], folder / "r",
                          **({"repo": manifest["runtime"]["repo"]} if "repo" in manifest["runtime"] else {}))
+        vibecomfy = source("vibecomfy", manifest["vibecomfy"]["sha"], folder / "v",
+                          **({"repo": manifest["vibecomfy"]["repo"]} if "repo" in manifest["vibecomfy"] else {}))
         environment = folder / "py"
         self.run([self.uv, "venv", "--python", manifest["tools"]["python"]["version"], environment])
         python = venv_python(environment)
         self.run([self.uv, "pip", "install", "--python", python, "--require-hashes",
                   "-r", agent / "requirements" / "runtime.lock"])
         self.run([self.uv, "pip", "install", "--python", python, "--no-deps", runtime,
-                  runtime / "packages" / "python", agent])
+                  runtime / "packages" / "python", agent, vibecomfy])
         env = install_tools(manifest, folder / "tools", platform_target(), self.run)
         prior = current(root) or self.existing(data)
         env.update({"ASTRID_RUNTIME_DATA_ROOT": str(data),
