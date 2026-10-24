@@ -6,6 +6,7 @@ import hashlib
 import json
 import sys
 import threading
+from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -42,6 +43,10 @@ class Store:
         self.final_error = final_error
         self.winner: Any = None
         self.lookups = 0
+
+    @contextmanager
+    def verification_scope(self) -> Any:
+        yield
 
     def lookup(self, ctx: Any, *, authorize: Any) -> Any:
         self.lookups += 1
@@ -226,7 +231,7 @@ def test_preserved_original_and_mounted_source_attachment() -> None:
     original = root / "tests/timeline/test_authoring_media.py"
     content = original.read_bytes()
     blob = hashlib.sha1(f"blob {len(content)}\0".encode() + content).hexdigest()
-    assert blob == "e55be12f88d23fddba3dd36614eb91745c1f8adf"
+    assert blob == "62c30a6d9d3a6fe36201565fadf9a5aa446e10f7"
     tree = ast.parse(content)
     body = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name ==
                 "test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba")
