@@ -26,6 +26,12 @@ DOC_PATCH_SAMPLE = {
 }
 
 PROVIDER_ONLY_ARGS = {
+    'media.admit': {
+        'inputs': [{'pin': {
+            'media_id': 'sha256:' + '0' * 64,
+            'content_digest': 'sha256:' + '0' * 64,
+        }}],
+    },
     'timeline.duplicate': {
         'source_ref': {
             'project_id': 'source-project',
@@ -91,7 +97,8 @@ def test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden
                 'schema_version': 1,
                 'op': op,
                 'version': '1',
-                'select': ('parent' if op == 'timeline.duplicate' else
+                'select': (None if op == 'media.admit' else
+                           'parent' if op == 'timeline.duplicate' else
                            'occurrence:occ-0'),
                 'args': copy.deepcopy(PROVIDER_ONLY_ARGS[op]),
             }
