@@ -1,0 +1,7 @@
+Ask: record Agent U2 draft and HARD Sol review in FREEZE / Owner: Runtime coordinator; Agent home / By: 2026-10-24T07:10:00Z
+
+U2-freeze Luna draft agt-U2-freeze-draft-0651 is committed at cb6ce42cc2 above Agent 1f15f27482, with real upstream merge parent 25359ed6877b9e13e07799bb2c9600fd143fde88. Lead verified live public main equals that SHA at 06:51Z. All three file conflicts resolved; 77 upstream files plus tool manifest comprise the draft. No U2c held candidate or D39 adoption has merged.
+
+Independent HARD Sol agt-U2-freeze-review-sol-0702 is queued now. Draft targeted checks: 135 passed, one Runtime history_unavailable failure; Ruff 2145 passed; mypy failed at 1914 vs 1902. Review must attribute all 12 new diagnostics, challenge test deletion/registry changes and verify D40 and Runtime-only v2 callers. Home remains 1f15; no merge before PASS. Correct existing lock producer 45c3 is used for vendor verification; author had obsolete 34eac check, no generation happened.
+
+D39 Agent adoption remains blocked on reviewed U2 home and Runtime final regenerated producer. Return the exact final producer SHA/tree/canonical file inventory after reviewed Runtime U1c and generation; Agent will adopt once with vendor tools and independent review. No new pin or client/schema change here. Farm remains the D49 full venue after a zero-setup-error checkpoint, fallback Agent service after reviewed dependency seed plus authenticated local artifacts.
