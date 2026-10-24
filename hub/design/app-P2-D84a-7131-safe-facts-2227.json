@@ -1,0 +1,166 @@
+{
+  "report": "P2 D84a finite existing evidence handoff",
+  "scope": "safe request-correlated facts only; not a NO-GO verdict and not causal diagnosis",
+  "source": {
+    "app_head": "bceb0350326f22beefdde5c5ba275412bb09b419",
+    "agent_head": "039ff2c2187d02b723074a8a6dfcbc6a70544c19",
+    "runtime_head": "732c48c6f5a9441a65c61b24595d454a1cd3e180",
+    "composition_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "app_tree": "46ad4dde505a376e22026c3377615a5fca05a55e",
+    "agent_tree": "4e40d897bb1bbbcb8e7ec63f9916c5600deae8cd",
+    "runtime_tree": "7ed0559c6f0a05954427cc668e303b6cd2f51586",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "test_sha256_before_after": {
+      "p2_element_spec": "413d314d5788021bd54ae29e03813bfac91e279d5e038d6108cbb3ae18fa4133",
+      "readiness_spec": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593"
+    }
+  },
+  "outcome": {
+    "element_test": "FAIL",
+    "element_test_duration_s": 22.517,
+    "element_assertion_budget_ms": 5000,
+    "readiness": "PASS",
+    "readiness_duration_s": 9.19,
+    "service_summary_s": 172,
+    "manifest_wall_window_s": 167.460,
+    "eventual_element_outcome": "UNKNOWN"
+  },
+  "runtime_phase_capture": {
+    "jsonl_records_including_summaries": 123,
+    "phase_records": 120,
+    "summary_records": 3,
+    "truncated": false,
+    "ordinals": [
+      {
+        "ordinal": 1,
+        "phase_records": 44,
+        "logical_phase_counts": {
+          "handler_entry": 1,
+          "authorization": 14,
+          "coordinator_admission": 1,
+          "coordinator_lock": 1,
+          "provider": 1,
+          "accept": 1,
+          "receipt": 1,
+          "http_response": 2
+        },
+        "start_ms": 2033.958,
+        "end_ms": 3943.195,
+        "duration_ms": 1909.237,
+        "last_phase": "http_response",
+        "terminal_observation": "accept, receipt, and HTTP response observed"
+      },
+      {
+        "ordinal": 2,
+        "phase_records": 62,
+        "logical_phase_counts": {
+          "handler_entry": 1,
+          "authorization": 23,
+          "coordinator_admission": 1,
+          "coordinator_lock": 1,
+          "provider": 1,
+          "accept": 1,
+          "receipt": 1,
+          "http_response": 2
+        },
+        "start_ms": 8011.979,
+        "end_ms": 25263.330,
+        "duration_ms": 17251.351,
+        "last_phase": "http_response",
+        "terminal_observation": "accept, receipt, and HTTP response observed"
+      },
+      {
+        "ordinal": 3,
+        "phase_records": 14,
+        "logical_phase_counts": {
+          "handler_entry": 1,
+          "authorization": 5,
+          "coordinator_admission": 1,
+          "coordinator_lock": 1,
+          "provider": 1,
+          "accept": 0,
+          "receipt": 0,
+          "http_response": 0
+        },
+        "start_ms": 42348.593,
+        "end_ms": 42471.211,
+        "duration_ms": 122.618,
+        "last_phase": "authorization",
+        "terminal_observation": "provider observed; accept, receipt, and HTTP response not observed"
+      }
+    ]
+  },
+  "element_correlation": {
+    "element_ordinal": 3,
+    "basis": "the retained p2-element diagnostic is the sole scoped-commit/apply lifecycle and the incomplete Runtime phase ordinal is 3",
+    "correlation": "apply-1",
+    "request_kind": "scoped-commit",
+    "diagnostic": {
+      "test_outcome": "failed",
+      "page_closed": true,
+      "response_status": "UNKNOWN",
+      "response": "none",
+      "terminal": "pending",
+      "request_started_ms": 36433,
+      "test_outcome_ms": 41045,
+      "teardown_start_ms": 41072,
+      "page_close_ms": 41087
+    },
+    "app_transport_metadata": {
+      "retained_request_metadata_files": 58,
+      "terminal_counts": {
+        "response": 51,
+        "failed": 2,
+        "abort": 5
+      },
+      "ordinal_3_terminal": "response",
+      "ordinal_3_elapsed_ms": 46,
+      "ordinal_3_status_or_body": "not retained"
+    }
+  },
+  "dump_and_private_stack": {
+    "phase_jsonl": {
+      "bytes": 14376,
+      "mode": "0600",
+      "sha256": "1856981624e20d669028f39a16b92e53a764bdc7a5a0d9da50304fcd7caee194"
+    },
+    "private_stack_dump": {
+      "bytes": 5868,
+      "mode": "0600",
+      "sha256": "e45bf1c3d586cc38a4967794c7ac62500b4fcdf74739b8e64dc26344055336f6",
+      "threads": 5,
+      "observed_frames": 60
+    },
+    "element_diagnostic": {
+      "bytes": 2344,
+      "mode": "0600",
+      "sha256": "5281af9b141c09bce9d73370e0de74746efc73768c4c716f6a0f2c2cceeda84a"
+    },
+    "ordinal_3_terminal_metadata": {
+      "bytes": 201,
+      "mode": "0600",
+      "sha256": "b2b8319d9877942a8e35ecbbddb22b0866431621ff72754c067a461654ebed28"
+    }
+  },
+  "safe_frame": {
+    "provider_frame": "astrid/sdk/timeline/commands.py:137 validate_command",
+    "call_chain": [
+      "astrid/sdk/timeline/commands.py:223 execute",
+      "astrid/sdk/timeline/commit.py:1331 commit",
+      "runtime_protocol/timeline_commit_execution.py:91 _execute",
+      "runtime_protocol/timeline_commit_execution.py:71 execute",
+      "runtime_protocol/service.py:2499 _execute_timeline_commit",
+      "runtime_protocol/service.py:2444 commit_timeline"
+    ],
+    "comparison_to_previous_exact_provider_history_boundary": "UNKNOWN: the prior handoff is formatting-only by instruction, and no previous boundary is present in the allowed same-ID retained sources"
+  },
+  "limits_and_nonclaims": [
+    "Ordinals 1 and 2 are the earlier completed/seed-control side of this retained run; they are not evidence that the element request completed.",
+    "Ordinal 3 is the element-correlated request; the Runtime phase capture has no accept, receipt, or HTTP-response observation for it.",
+    "The App transport terminal marker for ordinal 3 is an observation of transport termination only; no response status or body is retained.",
+    "The phase capture reports truncated=false; this is missing terminal observation, not a phase-budget truncation.",
+    "No element payload dump is retained in the allowed sources. The private stack and metadata remain private and are not reproduced here.",
+    "The 5 s UI, 30 s SDK, and 120 s outer limits were not proven reached by these retained facts.",
+    "No causal closure, Runtime product diagnosis, NO-GO verdict, raw stack, body, credential, key, URL, or identifier is exported."
+  ]
+}
