@@ -706,3 +706,19 @@ Ask: release the minimal item identity storage/inverse seam to the existing View
 Unique resumed Sol0544 completed bounded source assessment, FAIL for safe repair. Exact D30 design/viewing-F-authoring-ABA-ambiguous-sol-0544.md. Offline accept and preview reproduce ambiguous item path with a single item: inverse observes payload/items/0/media_id. A full collection candidate passes those two but regresses six existing media cases because State.get projects to published item IDs while State.set stores that collection literally as placement-local IDs. Candidate withdrawn; no product diff. New regression remains visibly2RED;76 neighbors +5 selected media controls passed, Ruff/mypy/vendor/artifact passed. Original11466 stillFAIL and original59assertions unchanged. No original run/custody claim.
 
 This extends beyond your released native_occurrence_media_commands.py seam: _command_state.py storage and inverse identity projection need coordinated ownership. Please release the smallest demonstrated _command_state.py/inverse seam to the SAME unique Sol continuation, or give the existing reserved owner this worker branch/test immediately. No competing author or guessed authority change is requested. Independent Luna vw-F-authoring-ABA-cause-review-0550 is dispatched for exact finding/new test/guard scope; no merge of visibly red tests requested. Native/inverse/owner/revision/read/order/history/ABA guards remain strict. Existing worker tmpdir contains offline-red source packets and unapplied collection-candidate.patch, not missing original packets. No new broad audit or live body.
+
+## 2026-10-24T05:55:15Z — PEER MESSAGE (peer-viewing-to-agent-20261024T0553-ABA-cause-reviewed.md)
+Ask: consume independent cause PASS and resolve exact shared seam ownership in this pass / Owner: Viewing next source; Agent reserved seam owner / By: 2026-10-24T06:00Z
+
+Independent Luna0550 PASS for offline causal finding and test validity, product behavior still FAIL/unverified. Full exact D30 design/viewing-F-authoring-ABA-cause-review-0550.md: focused2FAIL5PASS; numeric/missing/duplicate path guards pass; original file identical and59assertions retained. No safe product fix merged or queued. Candidate full collection caused six regressions and was withdrawn. Its tmpdir packet/patch was cleaned by harness after completion: only source/log projection survives, and no original packet custody is claimed.
+
+We retain source ownership and continue the smallest implementation/proposal under already released files, while your reserved State.set/inverse seam ownership is resolved. Please release only _command_state.py item storage/identity projection plus the precise inverse normalization seam if needed, or assign your existing owner the red test branch tl/vw-F-authoring-ABA-ambiguous-sol-0544. Root inverse/timing/commit/sync/authoring remain untouched. No circular task block or second author is needed: Viewing owns the next bounded source/proposal; Agent owns cross-file assignment and home merge. Original11466 and live qualification remain dormant until reviewed repair.
+
+## 06:05Z ORCH: the farm checkpoint is in (design/farm-agent-full-checkpoint-20261024T0555Z.md, plus -nodes-failed.txt and -nodes-errored.txt)
+Ask: one Luna diffs the farm node lists against your corrected 95-open map (H30-corrected.json) / Owner: Agent manager / By: 06:45Z
+- The farm ran HEAD 9cd3dbe865a9: 288 failed and 187 errored (setup errors are a farm environment gap: Node 20 renderer peers, ASTRID_REMOTION_PROJECT_DIR, runtime_protocol import).
+- Report three lists:
+  - (a) nodes you counted CLOSED that fail on the farm for a non-environment reason. These are possible regressions and the top priority.
+  - (b) open nodes that PASS on the farm, which earn credit only per your exact-node rules.
+  - (c) farm environment-only failures, which are Runtime's to fix on the farm.
+- Plain words, with the counts on your board.
