@@ -166,7 +166,7 @@ def test_unready_capability_rejected_before_any_ledger_rows(tmp_path):
             "capability_id": "acceptance.gpu",
             "status": "unavailable",
             "reason": "gpu_not_configured",
-            "next_action": "wait for capability readiness and retry",
+            "next_action": "fix: gpu_not_configured; run `astrid doctor --json`, then retry",
         }
         after = daemon.service.store.conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0]
         assert before == after == 0

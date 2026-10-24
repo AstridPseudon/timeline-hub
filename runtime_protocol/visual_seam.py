@@ -11,24 +11,68 @@ import hashlib
 import json
 import math
 from collections import ChainMap, defaultdict
+from itertools import pairwise
 
 from .errors import ConflictError, NotFoundError, ValidationError
+from .seam_intent import (
+    boundary_intent_owners,
+    intent_context,
+    opaque_activation_cues,
+    pause_covers,
+    relevant_intent_owners,
+)
+from .seam_intent import cue_identity as portable_cue_identity
 from .util import canonical_json
-from .visual_boundary import VERSION, DISCLOSURE_VERSION, boundary_report, finite, js_round, transition_frames
-from .seam_intent import (boundary_intent_owners, intent_context, cue_identity as portable_cue_identity,
-                          pause_covers, relevant_intent_owners, opaque_activation_cues)
+from .visual_boundary import (
+    DISCLOSURE_VERSION,
+    VERSION,
+    boundary_report,
+    finite,
+    js_round,
+    transition_frames,
+)
 
 MAX_METADATA_CLIPS = 20_000
 AUXILIARY = frozenset({"end-spanning-layer", "effect-layer", "frame-overlay", "text"})
 PICTURE = frozenset({"media", "hold", "video", "image", "animated-media-transform", "haus.astrid.liveScene"})
+MEDIA_CLIP_TYPES = frozenset({"media", "video", "image"})
 
 
-def picture_clip(clip, track, *, declared=False):
+def covers_frame(clip, track, config):
+    """Mirror the editor's coversFrame; unknown geometry is not a picture claim.
+
+    Declared picture lanes explicitly opt custom renderers into this check.
+    Aggregate child picture presence (picture_clip) remains independent.
+    """
+    if track.get("kind") != "visual" or track.get("role") == "source":
+        return False
+    policy = (config.get("app") or {}).get("visualSeamContract") or {}
+    declared = policy.get("pictureTracks")
+    declared = declared if isinstance(declared, list) else []
+    kind = clip.get("clipType")
+    kind = kind if isinstance(kind, str) and kind.strip() else "media"
+    asset = clip.get("asset")
+    if track.get("id") not in declared and not (kind in MEDIA_CLIP_TYPES and isinstance(asset, str) and asset.strip()):
+        return False
+    if finite(clip.get("opacity"), 1) < 1 or finite(track.get("opacity"), 1) < 1:
+        return False
+    resolution = str((config.get("output") or {}).get("resolution", "")).split("x")
+    for index, dimension in enumerate(("width", "height")):
+        try:
+            size = float(resolution[index]) if resolution[index].strip() else 0
+        except (ValueError, IndexError):
+            size = 0
+        value = finite(clip.get(dimension), None)
+        if value is not None and not math.isnan(size) and size and value < size:
+            return False
+    return True
+
+
+def picture_clip(clip, track):
     """A visual lane may carry a custom renderer's opaque picture clips.
 
-    Unknown types count as picture on visual tracks without requiring a
-    pictureTracks declaration. Known auxiliary types and source/audio lanes
-    cannot supply picture coverage. Timing disclosure remains independent,
+    Unknown types count as picture on visual tracks. Known auxiliary types and
+    source/audio lanes cannot supply picture coverage. Timing disclosure remains independent,
     including for custom picture.
     """
     kind = clip.get("clipType", clip.get("clip_type", "media"))
@@ -157,12 +201,11 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
     policy = (config.get("app") or {}).get("visualSeamContract") or {}
     tracks = {t["id"]: t for t in config.get("tracks", []) if isinstance(t, dict) and "id" in t}
     explicit = policy.get("continuityTracks")
-    picture_tracks = policy.get("pictureTracks")
-    picture_tracks = set(picture_tracks) if isinstance(picture_tracks, list) else set()
-    continuity = set(explicit) if isinstance(explicit, list) else {k for k, t in tracks.items() if t.get("kind") == "visual"}
-    # Canonical occurrence tracks are explicit editorial picture lanes.
-    if explicit is None:
-        continuity.update(o["track"] for o in parent.get("occurrences", []))
+    authored_continuity = isinstance(explicit, list)
+    continuity = {t for t in explicit if isinstance(t, str)} if authored_continuity else set()
+    # Preserve aggregate picture presence even for older occurrence lanes with
+    # no definition. Full-frame continuity still requires a visual definition.
+    picture_lanes = continuity if authored_continuity else {o["track"] for o in parent.get("occurrences", [])}
     spans, occurrences, structural = [], [], []
     render_config = copy.deepcopy(config) if materialize else None
     render_registry = copy.deepcopy(parent.get("registry", {})) if materialize else None
@@ -175,7 +218,7 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
     next_start = {}
     for group in occurrence_groups.values():
         ordered = sorted(group, key=lambda o: seconds(o, "at", finite(o.get("placement", {}).get("start_ms"), 0) / 1000))
-        for a, b in zip(ordered, ordered[1:]):
+        for a, b in pairwise(ordered):
             next_start[a["occurrence_id"]] = seconds(b, "at", finite(b.get("placement", {}).get("start_ms"), 0) / 1000)
 
     def add(raw, registry, path, *, offset=0, bound=None, inherited_speed=1, inherited_track=None, source_offset=0, inherited_gain=1, muted=False, render=True, track_definitions=None):
@@ -195,16 +238,27 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
         duration = clip_seconds(clip, (bound[1] - offset) * clip["speed"] if bound else 0, speed=clip["speed"])
         track = clip.get("track", inherited_track or "video")
         definition = (track_definitions if track_definitions is not None else tracks).get(track, {})
-        primary = render and (track in continuity or definition.get("kind") == "visual") and picture_clip(
-            clip, definition, declared=track in picture_tracks)
+        # Canonical child clips may carry the schema's asset_id spelling. Resolve
+        # that reference before coverage classification so media aliases retain
+        # the same full-frame semantics as clips already normalized to asset.
+        asset_key = clip.get("asset")
+        if not isinstance(asset_key, str) or not asset_key.strip():
+            asset_id = clip.get("asset_id")
+            if isinstance(asset_id, str) and asset_id.strip():
+                asset_key = asset_id
+                clip["asset"] = asset_id
+        primary = render and (track in picture_lanes or definition.get("kind") == "visual") and picture_clip(clip, definition)
+        covered = render and covers_frame(clip, definition, config)
+        if not authored_continuity and primary and covered:
+            continuity.add(track)
         if at < 0 or offset + at < 0:
-            structural.append({"code": "boundary/negative-start", "path": path})
+            structural.append({"code": "boundary/negative-start", "path": path, "frame": js_round((offset + at) * fps)})
         raw_start = js_round((offset + at) * fps)
         raw_end = raw_start + max(1, js_round(duration * fps))
         start, end = raw_start, raw_end
         if bound:
             lower, upper = js_round(bound[0] * fps), js_round(bound[1] * fps)
-            if primary and (raw_start < lower or raw_end > upper):
+            if primary and covered and (raw_start < lower or raw_end > upper):
                 structural.append({"code": "boundary/owner-overhang", "path": path, "startFrame": raw_start, "endFrame": raw_end, "ownerEndFrame": upper})
             start, end = max(start, lower), min(end, upper)
         if end <= start:
@@ -221,13 +275,12 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
         if "to" in clip or "to_ms" in clip:
             clip["to"] = seconds(raw, "to") + source_offset
             clip.pop("to_ms", None)
-        asset_key = clip.get("asset", clip.get("asset_id"))
         asset = (registry.get("assets") or {}).get(asset_key, {})
         source = next((asset[k] for k in ("content_sha256", "object_id", "media_id", "digest", "file") if isinstance(asset.get(k), str)), None)
         disclosure = boundary_report({"clip": clip, "params": clip.get("params", {}), "fps": fps, "startFrame": start, "endFrame": end,
                                       "originFrame": raw_start, "path": path, "source": source, "sourceType": asset.get("type", "")})
         spans.append({"path": path, "track": track, "startFrame": start, "endFrame": end, "rawStartFrame": raw_start, "rawEndFrame": raw_end,
-                      "primary": primary, "source": source, "clip": clip, "disclosure": disclosure})
+                      "primary": primary, "coversFrame": covered, "source": source, "clip": clip, "disclosure": disclosure})
         # Materialization is deliberately outside metadata evaluator timing.
         if not materialize or not render:
             rendered = None
@@ -262,7 +315,7 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
             effect_path = path + ["effect", str(effect_clip["id"])]
             d = boundary_report({"clip": effect_clip, "fps": fps, "startFrame": start, "endFrame": end, "originFrame": raw_start, "path": effect_path, "source": source})
             spans.append({"path": effect_path, "track": track, "startFrame": start, "endFrame": end, "rawStartFrame": raw_start, "rawEndFrame": raw_end,
-                          "primary": False, "source": source, "clip": effect_clip, "disclosure": d})
+                          "primary": False, "coversFrame": covered, "source": source, "clip": effect_clip, "disclosure": d})
 
     for raw in parent_clips(parent):
         add(raw, parent.get("registry", {}), ["parent", timeline_id, "clip", str(raw.get("id", "?"))])
@@ -304,9 +357,9 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
         end = min(offset + extent, next_start.get(o["occurrence_id"], offset + extent))
         path = ["parent", timeline_id, "occurrence", o["occurrence_id"]]
         occurrences.append({"path": path, "track": o["track"], "startFrame": js_round(offset * fps), "endFrame": js_round(end * fps),
-                            "rawEndFrame": js_round((offset + extent) * fps), "clip": o, "source": o["shot_revision_id"], "primary": o["track"] in continuity})
+                            "rawEndFrame": js_round((offset + extent) * fps), "clip": o, "source": o["shot_revision_id"], "primary": False})
         if offset < 0 or end <= offset:
-            structural.append({"code": "boundary/invalid-occurrence", "path": path})
+            structural.append({"code": "boundary/invalid-occurrence", "path": path, "frame": js_round(offset * fps)})
         source_offset = o.get("source_offset", o.get("source_offset_ms", 0))
         if isinstance(source_offset, dict):
             source_offset = source_offset.get("start", 0)
@@ -320,13 +373,24 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
                     render_config.setdefault("tracks", []).append(copy.deepcopy(t))
                     known_tracks.add(t.get("id"))
         for c in clips:
-            track = c.get("track", o["track"])
-            definition = child_tracks.get(track, {})
-            if explicit is None and definition.get("kind") == "visual" and picture_clip(c, definition, declared=track in picture_tracks):
-                continuity.add(track)
             add(c, child_registry, path + ["clip", str(c.get("id", "?"))], offset=offset, bound=(offset, end), inherited_speed=inherited_speed,
                 inherited_track=o["track"], source_offset=source_offset, inherited_gain=o.get("gain", 1), muted=o.get("muted", o.get("mute", False)),
                 track_definitions=child_tracks)
+        # An overlay-only occurrence cannot create a picture-lane seam either.
+        full_frame_pictures = [s for s in spans[span_begin:] if s["primary"] and s["coversFrame"]]
+        occurrence_picture = bool(full_frame_pictures)
+        if not authored_continuity and occurrence_picture:
+            continuity.add(o["track"])
+        occurrences[-1]["primary"] = occurrence_picture and o["track"] in continuity
+        if occurrence_picture:
+            # Overlay tails can extend a rendered occurrence, but cannot extend
+            # its base picture into the next cut. Preserve the render bounds.
+            first = min(full_frame_pictures, key=lambda s: s["startFrame"])
+            last = max(full_frame_pictures, key=lambda s: s["rawEndFrame"])
+            occurrences[-1]["pictureSpan"] = {
+                "startFrame": first["startFrame"], "endFrame": max(s["endFrame"] for s in full_frame_pictures),
+                "rawEndFrame": last["rawEndFrame"], "firstPath": first["path"], "lastPath": last["path"],
+            }
         # Occurrence ownership cannot stand in for picture output. Verify the
         # union of its child picture spans, including leading and trailing holes.
         pictures = sorted((s for s in spans[span_begin:] if s["primary"]), key=lambda s: s["startFrame"])
@@ -385,11 +449,11 @@ def analyze_normalized(metadata):
     candidates = defaultdict(list)
     groups = defaultdict(list)
     for s in spans:
-        if s["primary"] and s["track"] in metadata["continuity"]:
+        if s["primary"] and s["coversFrame"] and s["track"] in metadata["continuity"]:
             groups[(s["track"], tuple(s["path"][:4]) if "occurrence" in s["path"] else ("parent",))].append(s)
     for o in metadata["occurrences"]:
         if o["primary"]:
-            groups[(o["track"], ("parent",))].append(o)
+            groups[(o["track"], ("parent",))].append({**o, **o["pictureSpan"]})
     for (track, _), rows in groups.items():
         ordered = sorted(rows, key=lambda s: (s["startFrame"], s["endFrame"]))
         furthest = None
@@ -401,19 +465,22 @@ def analyze_normalized(metadata):
                 valid_transition = _transition(a, b, fps)
                 pause = pause_covers(policy.get("gaps"), track, a["endFrame"], frame)
                 if gap < 0 and not valid_transition:
-                    issues.append({"code": "boundary/overlap", "frame": frame, "paths": [a["path"], b["path"]], "frames": -gap})
+                    issues.append({"code": "boundary/overlap", "frame": frame, "track": track,
+                                   "paths": [a.get("lastPath", a["path"]), b.get("firstPath", b["path"])], "frames": -gap})
                 elif gap > 0 and not pause:
-                    issues.append({"code": "boundary/gap", "frame": frame, "paths": [a["path"], b["path"]], "frames": gap})
+                    issues.append({"code": "boundary/gap", "frame": frame, "track": track,
+                                   "paths": [a.get("lastPath", a["path"]), b.get("firstPath", b["path"])], "frames": gap})
                 candidates[frame].extend([a, b])
             if furthest is None or b["rawEndFrame"] > furthest["rawEndFrame"]:
                 furthest = b
     cues = []
     for s in spans:
-        cues.extend(s["disclosure"]["cues"])
-    cues.extend(opaque_activation_cues(spans, candidates))
+        cues.extend(c for c in s["disclosure"]["cues"]
+                    if not (s["disclosure"]["opaque"] and not s["coversFrame"] and c["kind"] == "activation"))
+    cues.extend(opaque_activation_cues([s for s in spans if s["coversFrame"]], candidates))
     cues.sort(key=lambda c: (c["frame"], cue_identity(c)))
     frames = [c["frame"] for c in cues]
-    opaque = sorted((s for s in spans if s["disclosure"]["opaque"]), key=lambda s: s["startFrame"])
+    opaque = sorted((s for s in spans if s["coversFrame"] and s["disclosure"]["opaque"]), key=lambda s: s["startFrame"])
     live_opaque, cursor, boundaries = {}, 0, []
     portable_boundaries = boundary_intent_owners(spans)
     fingerprints = {}
