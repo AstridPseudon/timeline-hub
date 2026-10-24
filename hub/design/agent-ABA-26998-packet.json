@@ -1,0 +1,36 @@
+{
+  "test_id": "agt-F-final-source-join-0816-authoring-current-becfe-nodes-1024083505-26998",
+  "scope": "setup failed before collection; no original body ran",
+  "files": [
+    {
+      "source": "tests/agt-F-final-source-join-0816-authoring-current-becfe-nodes-1024083505-26998/request",
+      "published": "design/agent-ABA-26998-request",
+      "bytes": 248,
+      "sha256": "727f677b7783fd7ebcaa2ab7409390e09ce9d143b2c09f8efd1bb1c63562fef8"
+    },
+    {
+      "source": "tests/agt-F-final-source-join-0816-authoring-current-becfe-nodes-1024083505-26998/log.txt",
+      "published": "design/agent-ABA-26998-log-txt",
+      "bytes": 1412,
+      "sha256": "f0ae1a7f9bb2b9d3285325a0276c94aad78ed9b98a7cea81b15ccb50a5cc9f57"
+    },
+    {
+      "source": "tests/agt-F-final-source-join-0816-authoring-current-becfe-nodes-1024083505-26998/summary",
+      "published": "design/agent-ABA-26998-summary",
+      "bytes": 7569,
+      "sha256": "662e56f0818781dfc10e2a689f00b3a2fdf86347042727302cfb5ced80d8d8b3"
+    },
+    {
+      "source": "tests/agt-F-final-source-join-0816-authoring-current-becfe-nodes-1024083505-26998/status",
+      "published": "design/agent-ABA-26998-status",
+      "bytes": 5,
+      "sha256": "2056a28ea38a000f3a3328cb7fabe330638d3258affe1a869e3f92986222d997"
+    },
+    {
+      "source": "tests/agt-F-final-source-join-0816-authoring-current-becfe-nodes-1024083505-26998/exit",
+      "published": "design/agent-ABA-26998-exit",
+      "bytes": 2,
+      "sha256": "7de1555df0c2700329e815b93b32c571c3ea54dc967b89e81ab73b9972b72d1d"
+    }
+  ]
+}

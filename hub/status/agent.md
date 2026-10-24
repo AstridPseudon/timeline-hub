@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T08:40:16Z | dispatcher heartbeat 14s | live 3 (sol 1, luna 2, other 0) | busy30 28 | status age 7m -->
-# agent board, 2026-10-24T08:32:35Z
+<!-- agent | 2026-10-24T08:42:45Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 25 | status age 1m -->
+# agent board, 2026-10-24T08:40:52Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -41,7 +41,7 @@
 | F-G4-occupancy | Faithful historical shared placement | Sol / Luna | Runtime image diagnosis | merged | Qualification0424; review0430 PASS | Last-owner and production session passed2 in14.05s onRuntime2b49. Two separate source-copy redo guards remain unqualified; no Runtime family credit. | 12701589ab; home9f2da582a6 |
 | F-authoring-neighbors | Restore seven publication behaviors | Luna | First home qualification | merged | Port0256; integrated0302 PASS | Actual66d:60 passed in6.41s, stable home origins and clean tree. Eleven migrations,seven original neighbors and42 reorder/history controls. | 66d85b5db8 |
 | F-authoring shared alias | Preserve untouched sibling identity under D44 | Luna | Explicit scope decision D44 | merged | Author0414; independent0418 PASS | Original1 passed in4.96s; other10 predicates byte-identical. Exact edited fork and untouched source pins verified; D44 behavior entered in authored deletion ledger. | 5d3a147bcc; home5c97e35b05 |
-| F-authoring-ABA | Complete guarded undo and ABA | Sol / Luna | Integrated source proof | doing | Cumulative 0809 PASS; integrated 0816 | Current four-file join merged 0c2c. Original 11466 remains failed pending one managed run. | 0c2c28da4f |
+| F-authoring-ABA | Complete guarded undo and ABA | Sol / Luna | Integrated source proof | doing | Source 0823 PASS; row Sol 0839 | Service 26998 failed before collection due environment scope. No original body ran; 59 assertions unchanged. | 0c2c28da4f |
 | F-D32-render-wire | Six original SDK wire results | Luna / service | Existing installed child | merged | Service 27934 | Six original cases passed in 41.48s; body hashes, 19 source identities, import origins and read-only profile retained. | 521c source |
 | F-helper-sequential | Repair sequential replay map | Sol / Luna | Integrated proof passed | merged | Source184dc; review0224; integrated0232 | Actual8a8d:12focused, Ruff2145 and mypy1909 passed; vendor/artifact passed. Original True and False passed on exact reviewed source. | 184dc20a70 |
 | F-D32-h3-import | Seven guards on current installed child | Luna | Independent result review passed | merged | Qualified0508; review0517 PASS | Seven originals passed once on child3b5c; installedba8f and current9cd relevant bytes match. Exact scope retained for next count delta. | Source9cd; installedba8f |
@@ -116,18 +116,24 @@
 | U2 D18 loader | Preserve generated package context | Luna | Integrated proof | merged | Review 0810; joined 0816/0823 PASS | Merged loader and exact capacity original pass at source scope. All 624 assertions retained. | b4c700166c |
 
 | OPS received kit | Verify kit receipt and jaraco facts | Luna | Independent finite result review | merged | Independent 0814 PASS | New helper b8b5 and maker e4c0 match live, normal publication and committed hub. Requester and Store unchanged. | Evidence only |
-| G4 media admission | Connect ordinary publish to verified inputs | Luna | Existing authentic admission path | review | Independent 0823 PASS; home 0832 | Source merged 0ff3 after 14 new/normal and 32 media controls; exact home proof running. | 0ff3d103fb |
+| G4 media admission | Connect ordinary publish to verified inputs | Luna | Existing authentic admission path | merged | Source 0823 PASS; home 0832 PASS20 | Authoritative public admission, retry and foreign no-write work on integrated home; original managed duck remains separate. | 0ff3d103fb |
 | F joined source | Qualify U2, D39, D18 and ABA together | Luna | Reviewed normal home merges | merged | Joined 0816; independent 0823 PASS | 123 cases, all 15 mappings, 50 auth blobs, Ruff2145 and mypy1902 pass on exact home 0c2c. | 0c2c28da4f |
-| F ABA managed row | Bind original to repaired Runtime source | Luna | Integrated proof before execution | review | Independent 0829 PASS; install 0832 | Fixed target 0c2 and strict Runtime cleanliness/auth hash guards pass. Installer runs no body. | No body run |
+| F ABA managed row | Bind original to repaired Runtime source | Luna | Integrated proof before execution | review | Sol 0839; independent whole path 0839 | Installed row passed preflight but pytest ran outside env. Service exit4 before collection; literal source guards remain strict. | No body run |
 | OPS wheel result review | Verify actual input and new kit receipt | Luna | Reviewed b330 helper | merged | agt-OPS-real-wheel-review-0814 PASS | All 67 original wheels and all four received kit files independently verified. Bootstrap unverified. | Lock 236d unchanged |
 
 | F count giant home | Credit one exact qualified original | Sol | Independent result 0814 PASS | merged | Author 0818; independent 0827 PASS | Official 263 closed / 4 open. All 266 other records unchanged; 123 mappings. | e13d65ba |
 | OPS current child | Create one exact source child with authentic wheels | Dispatcher | Runtime installed RECORD source | blocked:runtime | Normal maker refused 08:19:32 | All installs completed; final installed-byte check refused NumPy RECORD layout. Receipt retained. No retry. | Agent 0c2c / Runtime becfe |
 | F harness tuple | Bind both reviewed runners to the shared candidate | Luna | Candidate request accepted | merged | Review 0825; integrated 0829 PASS | Exact two runner blobs merged 05e7. Assertions and watchdogs retained; originals blocked by child verifier. | 05e7b22035 |
-| F ABA row review | Review exact source and snapshot serialization | Luna | Completed staged row | review | Independent 0829 PASS; install 0832 | Fixed target 0c2 and strict Runtime cleanliness/auth hash guards pass. Installer runs no body. | Row 290bd2bf |
+| F ABA row review | Review exact source and snapshot serialization | Luna | Completed staged row | review | Sol 0839; independent whole path 0839 | Installed row passed preflight but pytest ran outside env. Service exit4 before collection; literal source guards remain strict. | Row 290bd2bf |
 
-| G4 home proof | Qualify reviewed admission on integrated source | Luna | Normal merge 0ff3 | doing | agt-G4-media-home-0832 | Exact 20 targeted cases and finite duck row preparation; no managed original yet. | 0ff3d103fb |
-| F ABA row install | Append the exact reviewed managed row | Luna | Independent corrected row PASS | doing | agt-F-ABA-row-install-0832 | One row only; preserve outside bytes. Original requested after installer receipt. | Row only |
+| G4 home proof | Qualify reviewed admission on integrated source | Luna | Normal merge 0ff3 | review | Author 0832 PASS20; result review 0840 | Actual home 0ff3 and static baselines pass. Managed duck needs a matching current installed child. | 0ff3d103fb |
+| F ABA row install | Append the exact reviewed managed row | Luna | Independent corrected row PASS | review | Sol 0839; independent whole path 0839 | Installed row passed preflight but pytest ran outside env. Service exit4 before collection; literal source guards remain strict. | Row only |
+
+| F ABA service environment | Keep preflight and pytest in the same environment | Sol / Luna | Actual setup failure 26998 | doing | Sol 0839; whole path 0839 | No original body ran. Correct argv and environment scope before another service request. | Staged row only |
+| OPS NumPy whole path | Trace original wheel through installed verification | Luna | Failed normal candidate | doing | agt-OPS-numpy-whole-path-0840 | Source-only investigation; actual failed installed rows are absent. Runtime owns implementation. | Runtime b330 |
+| F Farm unknown causes | Resolve fifteen retained failure causes | Luna | Exact Farm extracts available | doing | agt-F-farm15-causes-0834 | Existing 96-node packet is 80 environment, 1 regression, 15 unknown. No full rerun or count credit. | Evidence only |
+| F final G4 runner tuple | Share one future child across three scenarios | Luna | Reviewed final source 0ff3 | doing | agt-F-harness-G4-tuple-0842 | Bind runners to 0ff3/becfe; no candidate request before meaningful verifier repair. | Source carrier queued |
+| U2 duck acceptance | Qualify the original managed music workflow | Luna | Exact G4 installed child | blocked:runtime | Home 0832; result review 0840 | Product source has 20 passes. Original 17 assertions unchanged; managed body remains held. | 0ff3d103fb |
 
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
 Integration: 0ff3d103fb adds independently reviewed G4 media admission above runner binding 05e7 and duck fixture 1072. Earlier exact 0c2 tuple independently passed 123 checks and static baselines; G4 home proof 0832 is active.
@@ -144,5 +150,5 @@ D49 venue: Agent final full on Farm after a zero-setup-error checkpoint. Fallbac
 Safety: Prior Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
 Disk: About 11 GB free. Read-only eligibility check found no clean, unprotected, finished Agent worktree already merged to recycle. Held cleanup and registry targets remain held; light work continues.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred. D46 U2c closed and folded into the freeze; relay and remote providers stay deferred and fail-closed. D47 memo held.
-Next ready: G4 home proof 0832 and ABA row installer 0832 active. Runtime owns the requested installed RECORD repair; two originals remain blocked on it. No independent ready row waiting. Review completions trigger normal merges, exact accounting and one managed original qualification.
+Next ready: Sol ABA row fix 0839 and independent whole path, G4 result review 0840, NumPy whole path 0840, final runner rebinding 0842 and Farm 15 unknown causes 0834 are active. No ready work waiting. Review completions trigger normal merges, exact accounting and one managed original qualification.
 Evidence: [D39 review](../../design/agt-D39-header-review-0809.md), [ABA review](../../design/agt-F-ABA-cumulative-review-0809.md), [wheel input](../../design/agt-OPS-real-wheel-qualify-0810.md), [Farm checkpoint](../../design/farm-agent-full-checkpoint-20261024T0555Z.md).
