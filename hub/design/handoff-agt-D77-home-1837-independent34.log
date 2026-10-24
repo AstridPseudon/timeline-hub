@@ -1,0 +1,11 @@
+COMMAND: PYTHONPATH="$PWD:/home/user/work/wt/rt-pin-327da207:/home/user/work/wt/rt-pin-327da207/packages/python" ASTRID_RUNTIME_CHECKOUT="/home/user/work/wt/rt-pin-327da207" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest tests/core/rendering/test_local_schema.py tests/test_installer_bootstrap_schema.py tests/stage1/test_cold_launch_autobootstrap.py::test_source_profile_provisions_explicit_render_runtime tests/packs/rendering/test_render_export_task_adapter.py -q -oaddopts= -pno:cacheprovider --timeout=45 --junitxml="$XML" -k 'foreign_origin or bad_integrity or writable_inputs or foreign_owner or invalid_schema or foreign_ref or missing_ref or nonfinite or canonical_reader or strict_probe or rejects_changed_canonical_authority or refuses_foreign_schema_origin or rejects_changed_installed_content or schema_import_archive_absence_to_presence or rejects_mutation_during_read or refuses_a_nonisolated_interpreter'
+..................................                                       [100%]
+=============================== warnings summary ===============================
+tests/packs/rendering/test_render_export_task_adapter.py: 10 warnings
+  /home/user/work/wt/agt-D77-home-1837/tests/packs/rendering/test_render_export_task_adapter.py:64: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(runtime)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+134 tests left out by --splits/-k/--deselect (run by other shards or excluded by name)
+34 passed, 134 deselected, 10 warnings in 2.71s
+EXIT: 0

@@ -1,0 +1,8 @@
+..........                                                               [100%]
+=============================== warnings summary ===============================
+tests/sdk/test_element_inverse_source_retention.py::test_inverse_loads_original_object_after_readmission_and_restart
+  tests/sdk/test_element_inverse_source_retention.py:43: PytestWarning: record_property is incompatible with junit_family 'xunit2' (use 'legacy' or 'xunit1')
+    def test_inverse_loads_original_object_after_readmission_and_restart(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+10 passed, 1 warning in 10.82s

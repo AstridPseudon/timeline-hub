@@ -1,0 +1,10 @@
+COMMAND: PYTHONPATH="$PWD:/home/user/work/wt/rt-pin-327da207:/home/user/work/wt/rt-pin-327da207/packages/python" ASTRID_RUNTIME_CHECKOUT="/home/user/work/wt/rt-pin-327da207" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest tests/test_installer_bootstrap_schema.py::test_staged_canonical_schema_reaches_strict_consumer tests/packs/rendering/test_render_export_task_adapter.py::test_registry_readiness_qualifies_actual_canonical_transport_projection -q -oaddopts= -pno:cacheprovider --timeout=45 --junitxml="$XML"
+..                                                                       [100%]
+=============================== warnings summary ===============================
+tests/packs/rendering/test_render_export_task_adapter.py::test_registry_readiness_qualifies_actual_canonical_transport_projection
+  /home/user/work/wt/agt-D77-home-1837/tests/packs/rendering/test_render_export_task_adapter.py:64: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+    archive.extractall(runtime)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2 passed, 1 warning in 1.34s
+EXIT: 0

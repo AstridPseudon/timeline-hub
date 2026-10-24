@@ -1,0 +1,5 @@
+git diff --check: PASS (empty output)
+agent worktree before qualification: clean
+agent worktree after qualification: clean (no tracked product/test changes)
+runtime worktree: clean
+shared ledger rows: exactly one R2-source-retention-original and exactly one D76-duplicate-original

@@ -1,0 +1,12 @@
+source_added_blob_exact_current_vs_author062261=True
+source_selected_original_ast_current_vs_source_parent=True
+source_selected_original_ast_current_vs_source_author=True
+source_selected_original_assert_count=8
+duplicate_reviewed_blob_exact_current_vs_author627743=True
+duplicate_original_assertions_current_vs_review_parent=True
+duplicate_original_assertions_current_vs_review_author=True
+duplicate_original_assert_count=6
+source_original_credit=test_native_retained_schema_replay_inverse_reload_and_exact_retry only
+duplicate_original_credit=test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chapter_r4_original only
+duplicate_original_assertions=1 len(stored placements)==3; 2 len(src.bundle shots)==1 and STRUCTURE_KEY in src.bundle; 3 out shots==3 and distinct shot IDs equal doc shots; 4 all IDs start dup-; 5 ordered names are 01 ONE,02 TWO,03 THREE; 6 occurrence IDs are distinct
+source_refusal_cases=wrong-pin,wrong-scope,different-object; each passed its no-write refusal predicate

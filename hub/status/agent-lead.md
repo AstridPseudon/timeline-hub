@@ -1,1 +1,1 @@
-2026-10-24T17:41:09Z agent lead: daemons up, heartbeat fresh, 6 workers running (cap 4 after disk dip to 8.2G; 0 ready), board 17:31Z (12 doing/22 review), core open 2 (original P4 gates), D71 fix merged, upstream tip 924437716 unchanged, no stuck-DONE, disk 8.2G; pin release awaiting owner permission
+2026-10-24T18:15:44Z agent lead: daemons up, heartbeat fresh, live 4/cap 4 (1 ready waits cap), board 18:02Z (11 doing/25 review), core open 22 tracked (D72/CLI/R2 cases), upstream tip 924437716 unchanged, no stuck-DONE, disk 8.4G; pin release awaiting owner

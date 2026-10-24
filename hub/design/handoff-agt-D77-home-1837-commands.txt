@@ -1,0 +1,37 @@
+# D77a exact commands and exits
+
+## Source/home custody
+
+git rev-parse HEAD
+# a86e4ae79ee34ea509dcf92f30da6cdcca98156c
+
+git rev-parse HEAD^{tree}
+# f6664b44289647cf09f824cd648d028b5ca30cd5
+
+git merge-base --is-ancestor dfea1e17b7ed227b73bcb06aa9b334f9edc2fb5d HEAD
+# exit 0
+
+git diff --exit-code dfea1e17b7ed227b73bcb06aa9b334f9edc2fb5d HEAD -- astrid/core/rendering/_local_schema.py astrid/core/rendering/remotion_runtime.py astrid/sdk/host_bootstrap.py docs/reference/env-vars.md docs/reference/render-adapter.md tests/core/rendering/test_local_schema.py tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_render_export_task_adapter.py tests/stage1/test_cold_launch_autobootstrap.py tests/test_installer_bootstrap_schema.py
+# exit 0; all ten integrated blobs equal the reviewed source blobs
+
+## Independent 34-case qualification
+
+PYTHONPATH="$PWD:/home/user/work/wt/rt-pin-327da207:/home/user/work/wt/rt-pin-327da207/packages/python" ASTRID_RUNTIME_CHECKOUT="/home/user/work/wt/rt-pin-327da207" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest tests/core/rendering/test_local_schema.py tests/test_installer_bootstrap_schema.py tests/stage1/test_cold_launch_autobootstrap.py::test_source_profile_provisions_explicit_render_runtime tests/packs/rendering/test_render_export_task_adapter.py -q -oaddopts= -pno:cacheprovider --timeout=45 --junitxml=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D77-home-1837/evidence/d77a-independent34-runtime327da.xml -k 'foreign_origin or bad_integrity or writable_inputs or foreign_owner or invalid_schema or foreign_ref or missing_ref or nonfinite or canonical_reader or strict_probe or rejects_changed_canonical_authority or refuses_foreign_schema_origin or rejects_changed_installed_content or schema_import_archive_absence_to_presence or rejects_mutation_during_read or refuses_a_nonisolated_interpreter'
+# 34 passed, 134 deselected, 10 warnings; exit 0
+# XML SHA-256 445a38ab4ec2fb0b41e7eb32d840c564e085bf4131f8127b108f494fd39bef11
+
+## Positive probes
+
+PYTHONPATH="$PWD:/home/user/work/wt/rt-pin-327da207:/home/user/work/wt/rt-pin-327da207/packages/python" ASTRID_RUNTIME_CHECKOUT="/home/user/work/wt/rt-pin-327da207" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest tests/test_installer_bootstrap_schema.py::test_staged_canonical_schema_reaches_strict_consumer tests/packs/rendering/test_render_export_task_adapter.py::test_registry_readiness_qualifies_actual_canonical_transport_projection -q -oaddopts= -pno:cacheprovider --timeout=45 --junitxml=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D77-home-1837/evidence/d77a-positive-probes-runtime327da.xml
+# 2 passed, 1 warning; exit 0
+# XML SHA-256 1f10177607f82270606236c1b35ba0eac3282ae5d9f87b25e7f90963b58e08bb
+
+## Static check
+
+git diff --check
+# exit 0
+
+## Reviewed reuse (not rerun)
+
+# rt-D77-consumer-security-1818.md exact source packet: 228 passed, 66 warnings; 34 passed, 134 deselected, 10 warnings; 197 shared dependency hashes unchanged.
+# Existing R2/C0 receipt: workers/agt-R2-reply-home-1827/report.md and evidence/handoff-agt-R2-reply-home-1827-test.xml; no rerun.
