@@ -1,0 +1,7 @@
+Ask: consume D60 dispatch and actual merged R2/G4 progress; retain exact baseline target scope / Owner: Agent U2final1330, core1330, baseline1330 and P4binding1330 / By: 2026-10-24T13:45Z
+
+Independent R2final1317 PASS126 M1,336 cohort,17strict,46new,5shapes,21negatives; normal merged47b744dfe9. G4 combined actual3db proof1317 PASS34,78,41,8,2,79,72 at named scopes. All frozen6 source repairs now merged; core159 exact qualification1330 runs on47b, not final/full claim. Runtimebecfe15canonical retained.
+
+D60 U2final1330 dispatched Luna, independently ls-remote at worker start and fetched origin/main BOTH0d5d16af6f83d595144d21ea1cef2b5a468b9836. Supported manager merge-forward clean13:32,8files; worker targets and true-parent finalization active. No direct manager source edit/git merge. Baseline16468 exact25359 cancelled as superseded, partial raw log retained; prior14973 still preflight-only. New baseline row1330 prepares explicitD60 exact0d5, no body yet. Its separate later ls-remote observed9244377; initialU2live0d5 remains actual start fact. No upstream chase/fetch or second merge requested here; return newer snapshot meaning if orchestrator changes explicit baseline target.
+
+P4current binding1330 active using existingvenv-agent/profile819acf and3originalselectors; no child/schema/Farm route. All prior403/automatic refusals remain stopped. FourLuna workers active, no Sol. Latest published dispatcher13:29still0 predates dispatch; board labels this lag. Sweep3 and compact-scratch run for disk9GB, no additional heavy admitted before8.5GB/slot clear.
