@@ -1,0 +1,100 @@
+P3 recovery proposal v2 evidence
+================================
+
+Decision
+--------
+PROPOSAL READY FOR ORCH DECISION; source was not applied.
+
+This v2 corrects the independent-1731 FAIL without reviving the rejected v1
+patch. The Runtime is restarted before the replacement page is opened. The
+real route observer is attached and armed before openApp can mount the sole
+owner and trigger production automatic recovery. The held retry therefore
+retains the request URL allocated by the restarted Runtime; the proposal
+asserts that origin against harness.runtimeUrl. No button click, manual
+recovery action, URL rewrite, fake owner/state, ignored attempt, retry
+suppression, or weakened guard is introduced.
+
+The artifact is not a production PASS. ORCH decision and an independent
+reviewer PASS are still required before applying it and running the real gate.
+No original P3 repeat, browser run, Runtime service run, full suite, trace
+export, or original source edit was performed.
+
+Artifacts
+---------
+- proposed-v2.patch: complete minimal patch against the protected original.
+- proposal-evidence.txt: this evidence and final decision text.
+- No fullproposal.md was created; this committed artifact is intentionally
+  limited to the two requested files.
+
+Protected source and virtual-after hashes
+------------------------------------------
+- Full source before: a6468188ff21c4fd8bd397ff242b0260ee92ab6f2f90ac94786973eaf3c1e99a
+- Full virtual after: fe8a4666b73c8529dbafa813cf30ee289991093a22b0bd1499c7b1cea311b4b3
+- faultFirstCommit before: 0ac6ab0f91cfc9fee0136ec90f408584e2a7755f245b7aea2f85f06c8c316c31
+- faultFirstCommit virtual after: fff97e9377fb6eae2d08a948a17d1af9055063ee58efad3b3fd763d1db416286
+- P3 restart/recovery block before: 119b31fefb43b2d42f79f055e92bdf6de51bb800ea0273b104c235030754b9ba
+- P3 restart/recovery block virtual after: f90fcde5ee573782a03e06e9d8f1334aa27fe46cabe1797368a9a50b4ab690f3
+- proposed-v2.patch: 16758b68c4089a0f61f008b6cb51fd1bd9e1895706c825fc8ebcdc8168847f14
+
+Predicate map
+-------------
+- Protected original: full source hash remains the actual a646... hash above;
+  the worktree source file is unchanged.
+- Restart ordering: originBeforeRestart is captured, restartRuntime() runs,
+  the new origin is asserted different, then a new page is created and the
+  observer is armed before openApp.
+- Real automatic retry: production mount is the only trigger after arm; the
+  old fixture-only Recover saved edits selector/click is removed.
+- Exact A identity: observed[0], observed[1], and observed[2] are required to
+  have the same body and idempotency key. Existing posts[1] body/key and reply
+  equality assertions remain unchanged.
+- New origin: observedOrigins[2] and observedOrigins[3] must equal the new
+  harness.runtimeUrl and observedOrigins[2] must differ from the old origin.
+  route.fetch() uses the captured request unchanged; no destination rewrite is
+  possible in the patch.
+- Observed versus forwarded: the journey requires four observed POSTs and
+  three forwarded posts. The first retry is held/aborted on the stale page;
+  the post-restart exact A is held, released, and only then may dependent B
+  forward.
+- A/B order and dependency: existing exact requestB, owner intent basis,
+  command, reads, bindings, key, base pin, merged status, publisher, and
+  previous-publication assertions remain in place. B cannot be observed before
+  the held post-restart A is released.
+- Runtime lifecycle: existing same-realm/new-runtime-instance assertions
+  remain and now occur before release of the post-restart retry.
+- Data/accounting: existing canonical document, transition, independent
+  Agent publication, history, immutable closure, preview, Agent readback,
+  opaque data, legacy-route, guarded undo, reset, and original wait assertions
+  remain unchanged.
+- Negative guards: private controls exercise wrong body, wrong key, B behind A,
+  and duplicate A after recovery; all are refused by the real classifier path.
+
+Validation
+----------
+- git apply --whitespace=error --check proposed-v2.patch: PASS.
+- Protected source status check: PASS; no source/test/helper/product file was
+  changed in this worktree.
+- Node20 ESLint on the virtual patched file via stdin with the real filename:
+  PASS, zero warnings/errors.
+- Node20 TypeScript language-service comparison using the repository
+  tsconfig, comparing protected and virtual file diagnostics: PASS; baseline
+  23 diagnostics, virtual 23 diagnostics, 0 new diagnostics.
+- A direct isolated tsc -p check of the private overlay was not counted: that
+  overlay lacks the repository's Vite/editor virtual-module wiring and reports
+  unrelated missing-module/baseline errors. The language-service comparison
+  above uses the repository tsconfig and is the scoped type result.
+- Node20 existing focused controls:
+  /opt/node20/bin/node --import tsx --test tests/e2e/local/support/gate5-fault-order.test.mjs
+  PASS, 3/3.
+- Node20 private pure lifecycle controls:
+  /opt/node20/bin/node --import tsx $TMPDIR/p3-v2-schedule-controls.mjs
+  PASS, fast and slow schedules 2/2; wrong-body, wrong-key, B-behind-A, and
+  duplicate-A negative schedules 4/4.
+- No production source application, original P3 rerun, browser/service/full
+  suite, or live Runtime evidence is claimed.
+
+Recommended next step
+----------------------
+Have ORCH and an independent reviewer inspect proposed-v2.patch and the
+predicate map. Only after both PASS should the caller apply the patch to the
+protected source and obtain the real post-restart/new-origin P3 result.
