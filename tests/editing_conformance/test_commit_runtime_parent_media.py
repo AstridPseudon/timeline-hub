@@ -298,8 +298,24 @@ def foreign_pin(editing):
     task = service.create_task({
         'capability_id': CAPABILITY, 'capability_digest': 'sha256:' + hashlib.sha256(CAPABILITY.encode()).hexdigest(),
         'project': project, 'settlement_effect': effect, 'idempotency_key': 'foreign-task'})
-    attempt = service.claim_next({'executor_id': 'publish-worker', 'capability_ids': [CAPABILITY],
-        'runtime_epoch': service.health()['runtime_epoch']}, idempotency_key='foreign-claim')
+    epoch = service.health()['runtime_epoch']
+    claim_body = {'executor_id': 'publish-worker', 'capability_ids': [CAPABILITY],
+                  'runtime_epoch': epoch}
+    attempt = service.claim_next(claim_body, idempotency_key='foreign-claim')
+    assert isinstance(attempt, dict), ('foreign task claim returned no result', attempt)
+    if 'attempt_id' not in attempt:
+        task_result = attempt.get('task')
+        waiting_reason = attempt.get('waiting_reason') or (
+            task_result.get('waiting_reason') if isinstance(task_result, dict) else None)
+        assert waiting_reason == 'waiting_for_worker', (
+            'foreign task was not admitted to the registered executor', attempt)
+        refreshed = service.register_executor(
+            {'executor_id': 'publish-worker', 'capabilities': [CAPABILITY], 'runtime_epoch': epoch},
+            idempotency_key='foreign-executor-refresh')
+        assert refreshed['executor_id'] == 'publish-worker'
+        attempt = service.claim_next(claim_body, idempotency_key='foreign-claim-after-refresh')
+    assert attempt.get('attempt_id'), ('foreign task claim did not return an attempt', attempt)
+    assert attempt['project_id'] == project
     _settle(service, attempt, [_output(('foreign-' + name).encode(), output_port=editing.kind,
         group_key='main', variant_key=name, ordinal=index,
         filename=name + ('.mp4' if editing.kind == 'video' else '.png'),
@@ -309,6 +325,16 @@ def foreign_pin(editing):
     return service.get_project_media_selection(project, {
         'association_id': association['association_id'], 'object_id': association['object_id'],
         'version': association['lifecycle']['version']}, authorize=editing.authorize)
+
+
+def test_foreign_pin_refreshes_stale_registered_executor(editing):
+    # The live witness can wait past Runtime's executor-liveness window while
+    # the existing registered worker remains the authorized fixture owner.
+    editing.service.store.conn.execute(
+        "UPDATE executors SET last_seen_at=? WHERE id=?",
+        ('2000-01-01T00:00:00+00:00', 'publish-worker'))
+    selection = foreign_pin(editing)
+    assert selection['object_id'].startswith('sha256:')
 
 
 @pytest.mark.parametrize('damage', ['foreign', 'binding', 'fingerprint', 'stale', 'occupied-row', 'occupied-alias'])
