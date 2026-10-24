@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync, realpathSync, statSync } from 'node:fs';
+import { closeSync, existsSync, fsyncSync, mkdirSync, openSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, writeFileSync, realpathSync } from 'node:fs';
 import { createServer } from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -219,15 +219,15 @@ export function captureSubmitPins(paths = normalHomes) {
   return pins;
 }
 
-export function buildSubmitPlan({ name, target, paths = normalHomes } = {}) {
+export function buildSubmitPlan({ name, target, paths = normalHomes, checkoutRoot = '/home/user/work/wt', receiptRoot = path.join(orch, 'queue', 'done') } = {}) {
   assert(suites[name], 'choose p1, p2, p2-element or p3');
   if (target?.startsWith('integration:')) throw new Error('D66 submit requires the stable exact App checkout target');
   const pins = captureSubmitPins(paths);
-  const checkouts = Object.fromEntries(sourceRoles.map((role) => [role, exactCheckoutPath(role, pins[role].head)]));
+  const checkouts = Object.fromEntries(sourceRoles.map((role) => [role, exactCheckoutPath(role, pins[role].head, checkoutRoot)]));
   const checkoutRequests = sourceRoles.map((role) => ({
     role, head: pins[role].head, checkout: checkouts[role],
     command: [path.join(orch, 'bin', 'request-checkout'), role, pins[role].head, `D66 exact ${role} source`],
-    receipt: receiptPath(role, pins[role].head),
+    receipt: path.join(receiptRoot, `checkout-${role}-${pins[role].head}`),
   }));
   return { name, target, pins, checkouts, checkoutRequests };
 }
@@ -245,6 +245,53 @@ export function serviceRecipe({ name, pins, checkouts, preflight = false }) {
     `D66_${role.toUpperCase()}_CHECKOUT=${shellQuote(checkouts[role])}`,
   ]);
   return `${env.join(' ')} ${shellQuote(node)} --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs ${shellQuote(name)}${preflight ? ' --preflight' : ''}`;
+}
+
+function bytesEqual(left, right) {
+  return Buffer.compare(Buffer.from(left), Buffer.from(right)) === 0;
+}
+
+function appendRegistryRows(before, rows) {
+  const insertion = `${before.length > 0 && before.at(-1) !== 10 ? '\n' : ''}${rows.join('\n')}\n`;
+  return Buffer.concat([Buffer.from(before), Buffer.from(insertion)]);
+}
+
+/** Add only the requested rows, retaining every existing registry byte verbatim. */
+export function registerSubmitRecipes({ registryPath, rows, readRegistry = () => readFileSync(registryPath),
+  writeRegistry = atomicReplace, beforeCommit = () => {} }) {
+  assert(path.isAbsolute(registryPath), 'D73 suite registry must be an absolute path');
+  assert(Array.isArray(rows) && rows.length === 2, 'D73 requires preflight and normal suite rows');
+  const names = rows.map((row) => row.trim().split(/\s+/, 3)[1]);
+  assert(names.every(Boolean) && new Set(names).size === names.length, 'D73 suite rows must have unique names');
+  const before = Buffer.from(readRegistry());
+  const existing = new Set(before.toString('utf8').split('\n')
+    .filter((line) => line.trim() && !line.trimStart().startsWith('#'))
+    .map((line) => line.trim().split(/\s+/, 3)[1]).filter(Boolean));
+  for (const name of names) {
+    if (existing.has(name)) throw new Error(`D73 suite registry already contains ${name}; resume the existing submit plan`);
+  }
+  const after = appendRegistryRows(before, rows);
+  beforeCommit();
+  if (!bytesEqual(before, readRegistry())) throw new Error('D73 suite registry changed concurrently; refusing to queue');
+  writeRegistry(registryPath, after);
+  return { names, before, after };
+}
+
+function atomicReplace(file, bytes) {
+  const temporary = `${file}.d73-${process.pid}-${Date.now()}.tmp`;
+  let descriptor;
+  try {
+    descriptor = openSync(temporary, 'wx', 0o600);
+    writeFileSync(descriptor, bytes);
+    fsyncSync(descriptor);
+    closeSync(descriptor);
+    descriptor = undefined;
+    renameSync(temporary, file);
+  } catch (error) {
+    if (descriptor !== undefined) closeSync(descriptor);
+    try { unlinkSync(temporary); } catch {}
+    throw error;
+  }
 }
 
 export function receiptCheckout(receipt, role, head) {
@@ -295,18 +342,158 @@ export async function waitForSubmitReceipts(plan, { waitMs = 300_000, pollMs = 2
   return resolved;
 }
 
-async function submit(name) {
-  const target = process.env.D66_SUBMIT_TARGET;
-  const suiteName = process.env.D66_SUBMIT_SUITE ?? `d66-${name}-exact-submit`;
-  const plan = buildSubmitPlan({ name, target });
-  for (const request of plan.checkoutRequests) execFileSync(request.command[0], request.command.slice(1), { stdio: 'inherit' });
-  const checkouts = await waitForSubmitReceipts(plan, { waitMs: Number(process.env.D66_CHECKOUT_WAIT_MS ?? 300_000) });
-  const serviceTarget = appCheckoutTarget(checkouts.app, plan.pins.app.head, { target });
-  const recipe = serviceRecipe({ name, pins: plan.pins, checkouts });
-  console.log(`D66 exact preflight recipe (register as ${suiteName}-preflight): ${recipe} --preflight`);
-  console.log(`D66 exact service recipe (register as ${suiteName}): ${recipe}`);
-  console.log(`Submit preflight first: ${path.join(orch, 'bin', 'request-test')} ${serviceTarget} ${suiteName}-preflight`);
-  console.log(`After preflight passes, submit the same captured inputs: ${path.join(orch, 'bin', 'request-test')} ${serviceTarget} ${suiteName}`);
+function submitOutput(name, env) {
+  return env.D66_OUTPUT_DIR ?? path.join(env.TMPDIR ?? '/tmp', `d66-${name}`);
+}
+
+function submitPlanPath(name, env) {
+  return env.D66_SUBMIT_PLAN_PATH ?? path.join(submitOutput(name, env), `${name}-submit-plan.json`);
+}
+
+function readSubmitArtifact(file) {
+  if (!existsSync(file)) return null;
+  try { return JSON.parse(readFileSync(file, 'utf8')); } catch (error) {
+    throw new Error(`D73 submit plan is unreadable at ${file}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+function saveSubmitArtifact(file, artifact) {
+  mkdirSync(path.dirname(file), { recursive: true });
+  writeFileSync(file, `${JSON.stringify(artifact, null, 2)}\n`);
+}
+
+function commandResult(file, args) {
+  const result = spawn(file, args, { encoding: 'utf8' });
+  return new Promise((resolve, reject) => {
+    let stdout = '';
+    let stderr = '';
+    result.stdout?.on('data', (chunk) => { stdout += chunk; });
+    result.stderr?.on('data', (chunk) => { stderr += chunk; });
+    result.once('error', reject);
+    result.once('close', (status, signal) => resolve({ status: status ?? (signal ? 128 : 1), stdout, stderr }));
+  });
+}
+
+function resultId(result) {
+  const text = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
+  const testLine = text.match(/(?:^|\n)TEST\s+([A-Za-z0-9_.-]+)/);
+  if (testLine) return { id: testLine[1], resultDir: path.join(orch, 'tests', testLine[1]) };
+  const directory = text.match(/(?:^|\/)tests\/([A-Za-z0-9_.-]+)\/?(?:\n|$)/);
+  if (directory) return { id: directory[1], resultDir: path.join(orch, 'tests', directory[1]) };
+  throw new Error(`D73 request-test did not return a result ID: ${text.trim()}`);
+}
+
+function terminalStatus(resultDir, readStatus = (file) => readFileSync(path.join(file, 'status'), 'utf8').trim()) {
+  let status;
+  try { status = readStatus(resultDir); } catch { throw new Error(`D73 preflight result status is UNKNOWN: ${resultDir}`); }
+  if (!['pass', 'fail', 'timeout', 'error', 'cancelled'].includes(status)) {
+    throw new Error(`D73 preflight result status is UNKNOWN: ${status || '(empty)'}`);
+  }
+  return status;
+}
+
+async function waitForPreflight({ id, resultDir }, { runWait, readStatus, waitArgs = [] } = {}) {
+  const wait = runWait ?? ((args) => commandResult(path.join(orch, 'bin', 'wait-test'), args));
+  for (;;) {
+    const result = await wait([id, ...waitArgs]);
+    if (result.status === 124) {
+      let observed;
+      try { observed = (readStatus ?? ((file) => readFileSync(path.join(file, 'status'), 'utf8').trim()))(resultDir); } catch {
+        throw new Error(`D73 preflight result status is UNKNOWN: ${resultDir}`);
+      }
+      if (['fail', 'timeout', 'error', 'cancelled'].includes(observed)) {
+        throw new Error(`D73 preflight refused: wait-test exit=124 status=${observed}`);
+      }
+      continue;
+    }
+    const status = terminalStatus(resultDir, readStatus);
+    if (result.status !== 0 || status !== 'pass') {
+      throw new Error(`D73 preflight refused: wait-test exit=${result.status} status=${status}`);
+    }
+    return { id, resultDir, status };
+  }
+}
+
+function pinnedEnvironment(plan) {
+  return Object.fromEntries(sourceRoles.flatMap((role) => [
+    [`D66_${role.toUpperCase()}_SHA`, plan.pins[role].head],
+    [`D66_${role.toUpperCase()}_TREE`, plan.pins[role].tree],
+    [`D66_${role.toUpperCase()}_CHECKOUT`, plan.checkouts[role]],
+  ]));
+}
+
+function submitSuiteNames(name, pins, env) {
+  const normal = env.D66_SUBMIT_SUITE?.trim() || `d73-${name}-${pins.app.head.slice(0, 8)}-submit`;
+  return { normal, preflight: `${normal}-preflight` };
+}
+
+function submitPlainPlan(artifact) {
+  return [
+    `D73 submit PASS preflight_id=${artifact.preflight.id} normal_id=${artifact.normal.id}`,
+    `D73 plan: ${path.join(orch, 'bin', 'request-test')} ${artifact.target} ${artifact.suites.preflight} --no-cache`,
+    `D73 plan: ${path.join(orch, 'bin', 'wait-test')} ${artifact.preflight.id}`,
+    `D73 plan: ${path.join(orch, 'bin', 'request-test')} ${artifact.target} ${artifact.suites.normal} --no-cache`,
+  ].join('\n');
+}
+
+export async function submit(name, { env = process.env, homes = normalHomes, appRoot = root,
+  registryPath = env.D66_SUITE_REGISTRY ?? path.join(orch, 'tests', 'suites.conf'), receiptRoot = path.join(orch, 'queue', 'done'),
+  workerRoot = path.join(orch, 'workers'), checkoutRoot = env.D66_CHECKOUT_ROOT ?? '/home/user/work/wt', runCommand = commandResult, runWait, readStatus,
+  beforeRegistryCommit = () => {} } = {}) {
+  const artifactPath = submitPlanPath(name, env);
+  const prior = readSubmitArtifact(artifactPath);
+  if (prior) {
+    assert.equal(prior.suite, name, `D73 submit plan suite mismatch: ${artifactPath}`);
+    if (prior.normal) { console.log(submitPlainPlan(prior)); return prior; }
+    if (!prior.preflight) {
+      const queued = await runCommand(path.join(orch, 'bin', 'request-test'), [prior.target, prior.suites.preflight, '--no-cache']);
+      if (queued.status !== 0) throw new Error(`D73 preflight request refused: exit=${queued.status}`);
+      prior.preflight = resultId(queued);
+      saveSubmitArtifact(artifactPath, prior);
+    }
+    const waited = await waitForPreflight(prior.preflight, { runWait, readStatus });
+    prior.preflight = waited;
+    const normalResult = await runCommand(path.join(orch, 'bin', 'request-test'), [prior.target, prior.suites.normal, '--no-cache']);
+    if (normalResult.status !== 0) throw new Error(`D73 normal request refused: exit=${normalResult.status}`);
+    prior.normal = resultId(normalResult);
+    saveSubmitArtifact(artifactPath, prior);
+    console.log(submitPlainPlan(prior));
+    return prior;
+  }
+
+  const target = env.D66_SUBMIT_TARGET?.trim();
+  const plan = buildSubmitPlan({ name, target, paths: homes, checkoutRoot, receiptRoot });
+  for (const request of plan.checkoutRequests) {
+    const result = await runCommand(request.command[0], request.command.slice(1));
+    if (result.status !== 0) throw new Error(`D73 ${request.role} request-checkout refused: exit=${result.status}`);
+  }
+  const checkouts = await waitForSubmitReceipts(plan, { waitMs: Number(env.D66_CHECKOUT_WAIT_MS ?? 300_000) });
+  plan.checkouts = checkouts;
+  const exactEnv = { ...env, ...pinnedEnvironment(plan) };
+  const preflight = preflightSources(exactEnv, homes, appRoot, { receiptRoot, workerRoot });
+  const serviceTarget = appCheckoutTarget(checkouts.app, plan.pins.app.head, { target: target || preflight.target, workerRoot });
+  const suitesForSubmit = submitSuiteNames(name, plan.pins, env);
+  const recipes = {
+    preflight: serviceRecipe({ name, pins: plan.pins, checkouts, preflight: true }),
+    normal: serviceRecipe({ name, pins: plan.pins, checkouts }),
+  };
+  const rows = [`app ${suitesForSubmit.preflight} ${recipes.preflight}`, `app ${suitesForSubmit.normal} ${recipes.normal}`];
+  registerSubmitRecipes({ registryPath, rows, beforeCommit: beforeRegistryCommit });
+  const artifact = { version: 1, suite: name, pins: plan.pins, checkouts, target: serviceTarget,
+    suites: suitesForSubmit, recipes, preflight: null, normal: null };
+  saveSubmitArtifact(artifactPath, artifact);
+
+  const preflightResult = await runCommand(path.join(orch, 'bin', 'request-test'), [serviceTarget, suitesForSubmit.preflight, '--no-cache']);
+  if (preflightResult.status !== 0) throw new Error(`D73 preflight request refused: exit=${preflightResult.status}`);
+  artifact.preflight = resultId(preflightResult);
+  saveSubmitArtifact(artifactPath, artifact);
+  await waitForPreflight(artifact.preflight, { runWait, readStatus });
+  const normalResult = await runCommand(path.join(orch, 'bin', 'request-test'), [serviceTarget, suitesForSubmit.normal, '--no-cache']);
+  if (normalResult.status !== 0) throw new Error(`D73 normal request refused: exit=${normalResult.status}`);
+  artifact.normal = resultId(normalResult);
+  saveSubmitArtifact(artifactPath, artifact);
+  console.log(submitPlainPlan(artifact));
+  return artifact;
 }
 
 export async function main(sourceOptions = {}) {

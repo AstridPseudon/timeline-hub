@@ -4,7 +4,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { appCheckoutTarget, buildSubmitPlan, captureSubmitPins, exactCheckoutPath, preflightSources, receiptCheckout, selectPinnedSources, serviceRecipe, validatePinnedSource, validatePinnedSources, validateSelectedSource, waitForSubmitReceipts } from './d66-plain-stack.mjs';
+import { appCheckoutTarget, buildSubmitPlan, captureSubmitPins, exactCheckoutPath, preflightSources, receiptCheckout, registerSubmitRecipes, selectPinnedSources, serviceRecipe, submit, validatePinnedSource, validatePinnedSources, validateSelectedSource, waitForSubmitReceipts } from './d66-plain-stack.mjs';
 
 const state = (overrides = {}) => ({
   root: '/snapshot/agent', head: 'a'.repeat(40), tree: 'b'.repeat(40), branch: null, dirty: false, ...overrides,
@@ -295,4 +295,89 @@ test('D73 preflight entrypoint records actual snapshot separately and stops befo
   const poisonedRun = invoke({ ...f.env, D66_RUNTIME_SHA: '' }, 'run');
   assert.equal(poisonedRun.status, 1);
   assert.match(poisonedRun.stderr, /runtime SHA must be a full 40-character SHA/);
+});
+
+function submitIo(f, waitStatuses = ['pass']) {
+  const calls = [];
+  let requestNumber = 0;
+  let waitNumber = 0;
+  const runCommand = async (file, args) => {
+    calls.push({ type: path.basename(file), args });
+    if (file.endsWith('request-test')) {
+      requestNumber += 1;
+      const id = `${args[1]}-${requestNumber}`;
+      return { status: 0, stdout: `${f.base}/tests/${id}/\n`, stderr: '' };
+    }
+    return { status: 0, stdout: '', stderr: '' };
+  };
+  const runWait = async (args) => {
+    calls.push({ type: 'wait-test', args });
+    const status = waitStatuses[Math.min(waitNumber++, waitStatuses.length - 1)];
+    return { status: status === 'timeout' ? 124 : status === 'pass' ? 0 : 1, stdout: '', stderr: '' };
+  };
+  return { calls, runCommand, runWait, readStatus: () => waitStatuses.at(-1) };
+}
+
+test('D73 --submit queues one preflight, waits it, then one normal request with the same tuple', async () => {
+  const f = serviceFixture();
+  const registryPath = path.join(f.base, 'suites.conf');
+  const artifactPath = path.join(f.base, 'submit-plan.json');
+  const original = Buffer.from('app existing-suite existing-command\n# preserve this comment\n');
+  writeFileSync(registryPath, original);
+  const io = submitIo(f);
+  const order = [];
+  const env = { ...f.env, D66_SUBMIT_SUITE: 'd73-submit-fixture', D66_OUTPUT_DIR: f.base };
+  const options = { env, homes: f.homes, appRoot: f.snapshot, receiptRoot: f.receiptRoot,
+    workerRoot: f.workerRoot, checkoutRoot: f.base, registryPath, runCommand: async (file, args) => {
+      order.push(['command', path.basename(file), ...args]);
+      return io.runCommand(file, args);
+    }, runWait: async (args) => { order.push(['wait', ...args]); return io.runWait(args); }, readStatus: io.readStatus };
+  const result = await submit('p1', options);
+  assert.equal(result.preflight.id, 'd73-submit-fixture-preflight-1');
+  assert.equal(result.normal.id, 'd73-submit-fixture-2');
+  assert.deepEqual(order.slice(0, 6).map((entry) => entry[0]), ['command', 'command', 'command', 'command', 'command', 'wait']);
+  assert.deepEqual(order.slice(-2).map((entry) => entry[0]), ['wait', 'command']);
+  assert.deepEqual(order.at(-1).slice(2), [f.target, 'd73-submit-fixture', '--no-cache']);
+  const registered = readFileSync(registryPath);
+  assert.ok(registered.subarray(0, original.length).equals(original));
+  assert.match(registered.toString(), /app d73-submit-fixture-preflight .* --preflight\napp d73-submit-fixture /s);
+  assert.doesNotMatch(registered.toString(), /\$\{node\}/);
+
+  const beforeRetry = order.length;
+  await submit('p1', options);
+  assert.equal(order.length, beforeRetry, 'a completed plan must not queue another original');
+});
+
+test('D73 --submit stops after a refused preflight and never queues the normal body', async () => {
+  const f = serviceFixture();
+  const registryPath = path.join(f.base, 'suites.conf');
+  writeFileSync(registryPath, 'app existing-suite existing-command\n');
+  const io = submitIo(f, ['fail']);
+  const env = { ...f.env, D66_SUBMIT_SUITE: 'd73-submit-refused', D66_OUTPUT_DIR: f.base };
+  await assert.rejects(() => submit('p1', { env, homes: f.homes, appRoot: f.snapshot, receiptRoot: f.receiptRoot,
+    workerRoot: f.workerRoot, checkoutRoot: f.base, registryPath, runCommand: io.runCommand, runWait: io.runWait, readStatus: io.readStatus }), /preflight refused/);
+  assert.equal(io.calls.filter((call) => call.type === 'request-test').length, 1);
+  assert.equal(io.calls.filter((call) => call.type === 'request-test' && call.args[1] === 'd73-submit-refused').length, 0);
+});
+
+test('D73 timeout resumes the same preflight ID without duplicating either request', async () => {
+  const f = serviceFixture();
+  const registryPath = path.join(f.base, 'suites.conf');
+  writeFileSync(registryPath, 'app existing-suite existing-command\n');
+  const io = submitIo(f, ['timeout', 'pass']);
+  const env = { ...f.env, D66_SUBMIT_SUITE: 'd73-submit-timeout', D66_OUTPUT_DIR: f.base };
+  const result = await submit('p1', { env, homes: f.homes, appRoot: f.snapshot, receiptRoot: f.receiptRoot,
+    workerRoot: f.workerRoot, checkoutRoot: f.base, registryPath, runCommand: io.runCommand, runWait: io.runWait, readStatus: io.readStatus });
+  const waits = io.calls.filter((call) => call.type === 'wait-test');
+  assert.deepEqual(waits.map((call) => call.args), [['d73-submit-timeout-preflight-1'], ['d73-submit-timeout-preflight-1']]);
+  assert.equal(io.calls.filter((call) => call.type === 'request-test').length, 2);
+  assert.equal(result.normal.id, 'd73-submit-timeout-2');
+});
+
+test('D73 registry registration refuses a concurrent outside-byte change', () => {
+  const base = Buffer.from('app old old-command\n');
+  let reads = 0;
+  assert.throws(() => registerSubmitRecipes({ registryPath: '/tmp/d73-registry-fixture', rows: [
+    'app d73-preflight preflight-command', 'app d73-normal normal-command'],
+  readRegistry: () => (reads++ === 0 ? base : Buffer.from(`${base}app concurrent changed\n`)), writeRegistry: () => assert.fail('must not write after a concurrent change') }), /changed concurrently/);
 });
