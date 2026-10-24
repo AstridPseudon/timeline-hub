@@ -1,0 +1,7 @@
+--- receipt and checkout verification ---
+created /home/user/work/wt/agt-pin-197d780d (detached at 197d780dca51949605c02352e7d1089a087aaa11, KEEP)
+created /home/user/work/wt/rt-pin-bc04caa2 (detached at bc04caa23f4b503fc55e49769ead20677904702a, KEEP)
+created /home/user/work/wt/app-pin-245742dc (detached at 245742dc778977a8404be2d1a7bc3b8721267416, KEEP)
+exists: /home/user/work/wt/vw-pin-635f4de0 at 635f4de06fda22a85fc2e4cfc764d0153a4c9f40
+agent expected=197d780dca51949605c02352e7d1089a087aaa11 actual=197d780dca51949605c02352e7d1089a087aaa11 tree=9deb9f157f5af433a884d5153c06e3a5223af7ef parents=197d780dca51949605c02352e7d1089a087aaa11\ 5fc1f300fb4fe5913a7bdc990b1f531402c2f258 status='' path=/home/user/work/wt/agt-pin-197d780d
+runtime expected=bc04caa23f4b503fc55e49769ead20677904702 actual=bc04caa23f4b503fc55e49769ead20677904702a tree=fa696b342468ae191735409822fa3c7c66f8a590 parents=bc04caa23f4b503fc55e49769ead20677904702a\ dc55b8bc6e638acd9e5031ff6b51b50cd2e2b63c\ 1fa23066f6f07ac6523cc8d39123ae02f1c2bfc4 status='' path=/home/user/work/wt/rt-pin-bc04caa2

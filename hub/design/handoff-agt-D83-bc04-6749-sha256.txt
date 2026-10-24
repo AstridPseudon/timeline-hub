@@ -1,0 +1,7 @@
+b1bd7883705652cdaa74d7ef1b358940e110fec8df61b8f0e669a2abe3729395  handoff-agt-D83-bc04-6749-five.xml
+fbffbd127427bb93fb6139219e5f9a33214f9be0c83272cd8b1cd0c0ca6f7fc5  handoff-agt-D83-bc04-6749-service.log
+4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865  handoff-agt-D83-bc04-6749-service.exit
+2aa494a7f38a6aa79f23995a6bb433605d8eab7eb199fadefd5d20876295b8d0  handoff-agt-D83-bc04-6749-tuple.manifest
+f2a53a75b51609ad0acb6079aab51252d2dc370d4706facf3a81c30942dd43f0  handoff-agt-D83-bc04-6749-checkouts.txt
+350df5eeb786577afe392819116d475e846ed6c463c5e16e6649efffd34d79de  handoff-agt-D83-bc04-6749-preflight.txt
+732cfe006ad382f2bb232cdb4c9514d515eb2071ac0bc4ccee99db234c7930ef  handoff-agt-D83-bc04-6749-zero-body.txt
