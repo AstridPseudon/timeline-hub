@@ -16,12 +16,12 @@ monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7efe938f29e0>
             commits.history_entry(service.test_project, "main", row[0]) for row in publications]}
         calls = Counter()
         original = commits._verify_accepted
-    
+
         def verify(row, edge, **kwargs):
             assert service.store._mutex._is_owned()
             calls[edge["publication_id"]] += 1
             return original(row, edge, **kwargs)
-    
+
         monkeypatch.setattr(commits, "_verify_accepted", verify)
         before = rows(service)
         actual = listed(service, limit=50)
@@ -30,7 +30,7 @@ monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7efe938f29e0>
         assert actual["items"][-1]["receipt"]["result"]["canonical_document"] == accepted["data"]["canonical_document"]
 >       assert calls == {accepted["receipt"]["receipt_id"]: 1}
 E       AssertionError: assert Counter({'txn...5ddd483e': 3}) == {'txn-9478dbd...65ddd483e': 1}
-E         
+E
 E         Differing items:
 E         {'txn-9478dbd9ab454698828b09365ddd483e': 3} != {'txn-9478dbd9ab454698828b09365ddd483e': 1}
 E         Use -v to get more diff
