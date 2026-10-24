@@ -12,7 +12,7 @@ Open rows and state:
 | P2-11933-whole-path | Proof1215 FINAL,no tracked changes. Popup selection source defect and parent receipt oracle defect proved. | Full report1215 linked below; App authors and reviews corrections. |
 | P2-11933-popup-track | Proven stale selectedTrackId source defect1215; actual request bytes UNKNOWN. | App owns mounted repair and independent review. Preserve intendedV2 and complete tails. |
 | P2-11933-parent-receipt | Proven oracle defect1215: idempotency key differs from authoritative txn receipt. | App authors strict receipt/publication joins and independent review; key remains for idempotency. |
-| P3-D53-caller | App1206 authored47ca. Fresh read-only1213 follows actual dry preflight; result pending. | Finish independent review,then reuse only for final tuple. Prior forged-input FAIL remains recorded. |
+| P3-D53-caller | Fresh read-only1213 FINAL PASS47ca: real dryguard,117guards,optimized mode and identity attacks PASS. | Caller/source custody only. Rebind final tuple before any actual P3. No old-tuple run or live GO. |
 | P3-D53-integrated | COMPLETE. Own2357 is HOME602f. Independent1126 and actual Proof1148 PASS23controls,three types,lint,list15,donor/D52 composition. | No extra Proof source approval. App pure1143 also PASS and ledger requirement already met. |
 | P3-D53-ledger | COMPLETE. Existing App worker line has actual before/after hashes,MERGED602f,integratedPASS. Proof1154 corrects original-counter wording. | Fuller eight-column row optional; no duplicate ledger or generated-file edit. |
 | F-final-registrations | Draft0834/cumulative0838 PREPARED only. ExactP4 three nodes and P5 fourteen/twenty-four registrations,not installed. | App adopts actual final tuple,origins,child/import receipts and final guarded installation. |
@@ -55,3 +55,9 @@ Full header D54–D56 is now read directly:
 - Runtime on main owns F-final/ZIP via existing delivery tools and fresh upstream clones. Farm stands down; no more farm venue work.
 - App owns P2/P3 independent verdicts. Security/custody, protected expectations and core product changes retain independent review underD56.2.
 - Source-only preparation is not live gate credit. All live behavior remains strict.
+
+Final drain update local12:26Z:
+- Fresh App read-only callerreview1213 is FINAL PASS on47ca6f2c290ef36c6c7bd19db8b0dd5a2ee0a5ce. Actual normal dryguard2.489seconds and optimized3.043seconds,117guards,all forged/mismatched source/identity/registry controls refused. Full report: design/app-P3-D53-final-readonly-review-1213.md. Source/caller custody PASS only; no install or liveP3 GO. This completes the last in-flight review named by the lead.
+- All local Proof workers are complete, read-only results copied byte-exact, normal worktree recycling complete. There is no product/test branch awaiting a Proof merge.
+- Manager byte check confirms published safe Apply file1260bytes/full08509524...8533a4 matches producer1207. This is an integrity observation, not a new independent semantic custody audit.
+- D56.4 stand-down follows completed in-flight items and this single handoff. No new Proof dispatches occurred after it. App owns open rows,all source/oracle authors and reviews,final integrations/core classification,and P2/P3 verdicts. No final GO is claimed. D54 final P1–P5/core suites remain required.
