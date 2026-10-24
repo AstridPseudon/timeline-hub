@@ -1,5 +1,6 @@
 /** Astrid metadata adapter; OMP owns registries and model-role persistence. */
 import { writeFileSync } from "node:fs";
+import { cfgDisabledProviders } from "@oh-my-pi/pi-coding-agent/config/model-settings";
 import { Settings } from "@oh-my-pi/pi-coding-agent/config/settings";
 import {
 	getModelMatchPreferences,
@@ -28,7 +29,7 @@ async function makeSnapshot(ctx: any, settings: any): Promise<Snapshot> {
 		.filter((model: any) => registry.hasConfiguredAuth(model));
 	const oauthProviders = getOAuthProviders();
 	const oauthById = new Map(oauthProviders.map((provider: any) => [provider.id, provider]));
-	const disabled = new Set<string>(settings.get("disabledProviders") ?? []);
+	const disabled = new Set<string>(cfgDisabledProviders.get(settings) ?? []);
 	const hiddenProviderIds = new Set(disabled);
 	for (const oauth of oauthProviders as any[]) {
 		if (oauth.storeCredentialsAs && disabled.has(oauth.storeCredentialsAs)) hiddenProviderIds.add(oauth.id);

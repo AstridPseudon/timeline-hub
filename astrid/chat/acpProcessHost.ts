@@ -455,8 +455,12 @@ export class AcpProcessHost {
     this.pending.delete(response.id);
     if (response.error) {
       const details = asRecord(response.error.data)?.details;
+      const reason = typeof details === 'string' ? details : response.error.message;
+      const recovery = (pending.method === 'session/load' || pending.method === 'session/resume')
+        && reason.startsWith('Could not restore model ')
+        ? ' This chat\'s saved model is unavailable. Start a new chat.' : '';
       pending.reject(new AcpProcessHostError(
-        `ACP request "${pending.method}" failed: ${typeof details === 'string' ? details : response.error.message}`,
+        `ACP request "${pending.method}" failed: ${reason}${recovery}`,
         { code: 'acp_transport', method: pending.method, requestId: response.id },
       ));
       return;

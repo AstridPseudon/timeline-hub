@@ -1,45 +1,62 @@
 # Land and select the fixed OMP producer
 
-The delivery bundle contains the corrected OMP fork commit as a Git bundle. Push that exact commit to `peteromallet/oh-my-pi`, select its full SHA in the app manifest, and verify GitHub serves it before deploying the app. The app deployment is gated on the commit being available on GitHub. As with the selected Agent and Runtime commits, this fork commit must be available on GitHub before the app deploys. The configured-session-folder listing and recovery gap remains open until both the producer is pushed and the app manifest selects it.
+Astrid defaults to `@oh-my-pi/pi-coding-agent@18.12.6`. The npm release still
+has the configured-session-folder listing and recovery gap. The reviewed fork
+ports `9e282751c0059e37d2f6fbc14ffa0b450710bd23` onto upstream `v18.12.6`
+(`45c35e40c46166dc726ccc52f5d27f40f2449f99`). It preserves explicit stores for
+ACP list, load, resume and fork, and keeps legacy string message history readable.
 
-The fixed commit is `9e282751c0059e37d2f6fbc14ffa0b450710bd23`, based on `9962a46db1e8340320a0f2fb276964f957985505`, with tree `2074d7a2e26cc954b5cf3d77e91f3efbb25ad34f`. The bundle is `omp-fork.bundle`; its advertised ref is `refs/heads/lead/omppin`. It preserves the reviewed commit ID and metadata.
+The delivery artifact is `omp-fork-18.12.6.bundle`, advertising
+`refs/heads/astrid/18.12.6`. Release owners must push the exact bundled commit to
+`peteromallet/oh-my-pi`, select its full SHA in the app manifest, and verify GitHub
+serves it before deploying the app. This gate also applies to the selected Agent
+and Runtime commits. Astrid never patches the selected producer during install.
 
 ## Push the bundled commit
 
-Use a clean clone of `peteromallet/oh-my-pi` that contains base commit `9962a46db1e8340320a0f2fb276964f957985505`; the bundle has that commit as a prerequisite. Confirm the bundle ref, fetch it, and verify the exact commit and tree:
+In a clean clone containing upstream `v18.12.6`, inspect and fetch the bundle:
 
 ```sh
-git bundle list-heads /path/to/omp-fork.bundle
-git fetch /path/to/omp-fork.bundle refs/heads/lead/omppin:refs/heads/astrid-acp-session-fix
-git show -s --format='%H%n%T' 9e282751c0059e37d2f6fbc14ffa0b450710bd23
+git bundle verify /path/to/omp-fork-18.12.6.bundle
+git bundle list-heads /path/to/omp-fork-18.12.6.bundle
+git fetch /path/to/omp-fork-18.12.6.bundle refs/heads/astrid/18.12.6:refs/heads/astrid/18.12.6
+git show -s --format='%H%n%T%n%P' astrid/18.12.6
+git diff v18.12.6 astrid/18.12.6 -- packages/coding-agent
 ```
 
-The first command must show `9e282751c0059e37d2f6fbc14ffa0b450710bd23 refs/heads/lead/omppin`; the final command must show the commit and tree listed above. Then push the same commit ID:
+Verify the advertised SHA matches the fetched commit, its parent is the upstream
+tag above, and its diff contains only the session-store fix, regression tests,
+fixtures and changelog. Then push that commit unchanged:
 
 ```sh
-git push origin 9e282751c0059e37d2f6fbc14ffa0b450710bd23:refs/heads/astrid-acp-session-fix
+git push origin astrid/18.12.6:refs/heads/astrid/18.12.6
 ```
 
-Verify the commit is available from GitHub before changing or deploying the app. Do not cherry-pick or amend it: the app pin and delivered bundle must resolve to the same commit ID.
+Verify GitHub serves that full SHA before selecting or deploying it. Do not
+cherry-pick or amend the delivered commit: the manifest and bundle must resolve
+to the same commit ID.
 
 ## Select the landed producer
 
-`tools.omp.source` is the only authoritative OMP source field. Set it to the full commit SHA:
+`tools.omp.source` is the only authoritative OMP source field. Set it to an object
+with `repo: "https://github.com/peteromallet/oh-my-pi"` and `sha` equal to the
+full 40-character commit SHA printed above. Keep the app deployment gate closed
+until GitHub serves that commit and the manifest selects it.
 
-```json
-"omp": {
-  "source": {
-    "repo": "https://github.com/peteromallet/oh-my-pi",
-    "sha": "9e282751c0059e37d2f6fbc14ffa0b450710bd23"
-  }
-}
-```
-
-Keep the app deployment gate closed until GitHub serves that commit and the app manifest contains this exact SHA. After the pinned source is deployed, run the update journey and check that conversations list and reopen after a cold restart, including configured external session stores and old OMP12 history. Remove the published-default known-gap note from `docs/testing/TESTING.md` only after these checks pass.
+After deployment, run the update journey and check that conversations list and
+reopen after a cold restart, including configured external stores and old OMP12
+history. Remove the published-default known-gap note from
+`docs/testing/TESTING.md` only after those checks pass. A saved model that no
+longer resolves is rejected by 18.12.6; Astrid tells the user to start a new chat
+and retains the saved transcript.
 
 ## Reproduce the focused native ACP tests
 
-Use Bun **1.3.14**. The reviewed fork uses the unchanged frozen Bun lock with SHA256 `f08eab1fd7e0519e8b131697d6a35815fd71d9b0a61a8d70cc57b499bcba53ee` and native ABI **17.4.0**. In a clean checkout of the fetched commit, prepare the workspace and generated tool views, then check the lock:
+Use Bun **1.3.14**. The frozen lock SHA256 is
+`6e330e18ca780dfccd6b6161818c204155f4c2cefce482bfead3e8315406a048`;
+the native release is **18.12.6**, reported by `__piNativesBuildVersion()`.
+Prepare a scratch HOME and `PI_CODING_AGENT_DIR` before running the CLI. In the
+fetched checkout, install and generate the tool views:
 
 ```sh
 bun install --frozen-lockfile --ignore-scripts --omit optional
@@ -47,20 +64,35 @@ bun run gen:tool-views
 sha256sum bun.lock
 ```
 
-Install matching native leaves before the real CLI tests. This Linux x64 example uses the integrity-pinned 17.4.0 archive. Other platform archive pins are in `QUALIFICATION.json`; native macOS and Windows were not executed in this qualification.
+Install matching native leaves before real CLI tests. The Linux x64 archive is
+pinned below; every supported target's URL, SHA256, SRI and filenames are in
+`astrid/installer/omp/recipe.json` in the agent repository.
 
 ```sh
 native_scratch="$(mktemp -d)"
-curl -fsSL https://registry.npmjs.org/@oh-my-pi/pi-natives-linux-x64/-/pi-natives-linux-x64-17.4.0.tgz -o "$native_scratch/native.tgz"
-printf '%s  %s\n' f380a65df2a2487b010314872b0d543dbbdc204a97b60551c4aaa5bf0f2dbd2b "$native_scratch/native.tgz" | sha256sum -c -
+curl -fsSL https://registry.npmjs.org/@oh-my-pi/pi-natives-linux-x64/-/pi-natives-linux-x64-18.12.6.tgz -o "$native_scratch/native.tgz"
+printf '%s  %s\n' 16c79fdc9783c7eb08ffd48867771eae792f6c0377a5eb5fc5ebb5e84ac5e931 "$native_scratch/native.tgz" | sha256sum -c -
 tar -xzf "$native_scratch/native.tgz" -C "$native_scratch"
 mkdir -p packages/natives/native
 cp "$native_scratch/package/pi_natives.linux-x64-baseline.node" "$native_scratch/package/pi_natives.linux-x64-modern.node" packages/natives/native/
 rm -rf "$native_scratch"
 bun test packages/coding-agent/test/acp-agent.test.ts packages/coding-agent/test/acp-session-dir-cli.test.ts
+bun test ./packages/coding-agent/test/acp-*.test.ts
 sha256sum bun.lock
 ```
 
-The latest run passed **67 tests, 0 failed, 316 assertions across two files in 12.58s**. Both lock checks must retain the hash above. `QUALIFICATION.json` and `native-acp-session-tests.log` contain the run metadata and focused output. This qualification covers the stated native ACP/session tests; it does not claim the unrelated full-fork type/conformance gates, which have documented pre-existing optional-dependency/branding failures.
+Both lock checks must retain the hash above. The former 17.4.0 producer's
+qualification does not qualify this release, GitHub availability, or a deployed
+manifest. Native macOS and Windows require separate qualification.
 
-The live installer qualification also used this exact producer commit locally. It does not certify GitHub availability or the deployed app manifest; see the lead-agent installer report and its per-action evidence for reproduction details.
+To refresh the build recipe from a reviewed commit, run in the agent checkout:
+
+```sh
+python scripts/refresh_omp_recipe.py --producer-repo /path/to/oh-my-pi \
+  --candidate astrid/18.12.6 --version 18.12.6 --bun-version 1.3.14 \
+  --cache /path/to/native-archives
+```
+
+The script emits the installer's build closure only. It verifies native archives
+against registry SRI and records their SHA256; it does not generate a downstream
+patch or select the user's producer.

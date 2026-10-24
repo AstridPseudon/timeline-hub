@@ -343,7 +343,7 @@ def test_windows_handoffs_wait_and_propagate_child_exit(monkeypatch, route):
     assert captured["kwargs"] == {"env": None, "check": False}
     assert signal.getsignal(signal.SIGINT) is previous_handler
     if route == "onboard":
-        assert captured["argv"] == [executable, "onboard"]
+        assert captured["argv"] == [executable, "setup"]
     else:
         assert captured["argv"][-2:] == ["--print", message]
         if route == "packaged":
@@ -352,3 +352,21 @@ def test_windows_handoffs_wait_and_propagate_child_exit(monkeypatch, route):
             assert captured["argv"][:3] == [executable, "run", "astrid"]
         prompt = captured["argv"][captured["argv"].index("--append-system-prompt") + 1]
         assert 'extra "quoted" guidance' in prompt
+
+
+@pytest.mark.parametrize("output,returncode,supported", [
+    (b"Run onboarding setup or install dependencies for optional features", 0, True),
+    (b"Run onboarding setup or install dependencies for optional features", 1, False),
+    (b"Install optional Python dependencies", 0, False),
+    (b"Unknown command: setup", 0, False),
+])
+def test_onboard_checks_for_the_provider_setup_command(monkeypatch, output, returncode, supported):
+    calls = []
+
+    def run(argv, **kwargs):
+        calls.append(argv)
+        return subprocess.CompletedProcess(argv, returncode, stdout=output, stderr=b"")
+
+    monkeypatch.setattr(omp_agent.subprocess, "run", run)
+    assert omp_agent._omp_supports_onboard("/selected/omp") is supported
+    assert calls == [["/selected/omp", "setup", "--help"]]
