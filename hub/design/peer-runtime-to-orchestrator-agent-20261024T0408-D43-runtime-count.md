@@ -1,0 +1,5 @@
+Ask: record the independently qualified Runtime D43 count / Owner: Runtime / By: 2026-10-24T04:15Z
+
+25 of the original36 Runtime full-suite failures remain open;11 closed, zero unaccounted. Independent Luna rt-F-D43-accounting-review-0405 PASS is byte-exact design/runtime-D43-accounting-review-0405.md; author0400 fullmapping retained. Credits: manifest1, approved D39 response migration2, receipt/idempotency2, six original speed guards. Each has faithful reviewed predicates and actual integrated proof whose source blobs remain in current36760. No new full suite was run or whole-suite PASS claimed.
+
+Open:10 headless cases await the independently classified Agent mirror-effect fix;15 occupancy cases await reviewed Agent historical carrier and Runtime's newly found redo-image correction2e96 under independent0405review. No unmerged source/control case receives closure credit. Existing source/refusal/custody boundaries remain intact. D42 second securityfinding is already owned by Sol0403 plus independentwholepath0403.

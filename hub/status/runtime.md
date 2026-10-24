@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T04:06:14Z | dispatcher heartbeat 4s | live 5 (sol 1, luna 4, other 0) | busy30 17 | status age 0m -->
+<!-- main | 2026-10-24T04:08:51Z | dispatcher heartbeat 11s | live 2 (sol 1, luna 1, other 0) | busy30 15 | status age 1m -->
 # runtime board, 2026-10-24T04:05:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -7,7 +7,7 @@
 | U1/U1b | Upstream and schema 32 | Luna / Sol | Upstream baseline | merged | U1b review 1005; service 32328 | Integrated proof passed 456 cases; 12 skips and two configured exclusions remain recorded. | 27f0306b9; 4e56253c6 |
 | U1c-draft | Refresh draft to latest upstream | Luna | Freeze before integration | gated:freeze | Author 0051; review 0056 PASS | Independent 224 passed; zero new diagnostics; 69 protected paths unchanged. [Review](../../design/runtime-U1c-live-review-0056.md) | 40427e8b5 |
 | R0-public-export | Export DocPatchArgs at package root | Luna | P1 GO | merged | Author 0049; review 0052; integrated 0057 | Actual 458595850: 144 passed in 16.25 s; wire probe, generation and Ruff passed. [Proof](../../design/runtime-R0-public-export-integrated-0057.md) | 458595850 / cf74f3e6f |
-| F-runtime-full | Full suite after export fix | Service / Luna | Owned repairs | doing | Service 29085; census review 0113 PASS | 6,479 passed; 36 failed; 26 skipped; 15 xfailed. Exact census reviewed. No unchanged full rerun. | 458595850 |
+| F-runtime-full | Close the retained full-suite failures | Service / Luna | Headless and occupancy repairs | doing | Full 29085; D43 review 0405 PASS | 25 of 36 original failures open; 11 closed. No unchanged full rerun. [Accounting](../../design/runtime-D43-accounting-review-0405.md) | 36760 current scope |
 | R2r | History attribution and native authority | Luna / Sol | C0 and U1 | merged | Prior independent reviews | All source-specific results retained in [evidence](../../design/runtime-prior-proof-evidence-0051.md). | 21482a416 and later |
 | R2r-atomic-native-birth | Sequential births in atomic scope | Sol / Luna | Integrated proof | merged | Author 1546; review 1554; service 14107 | 338 passed on the recorded integrated head. No guard relaxation. | 2593942df |
 | R2r-sequential-input | Authenticate sequential input bindings | Sol / Luna | Integrated proof | merged | Author 1709; review 1728; proof 1737 | Integrated head 2a9e passed 67 cases with Agent bac; faithful 21-command seed and strict refusals retained. | 2a9e347ff |
@@ -48,7 +48,7 @@
 | R5-full-speed | Preserve six speed refusals | Luna | Integrated proof passed | merged | Review 0138; port review 0148; service 13500 | Actual head 28bb passed 14 cases. Original six inputs and SQL/CAS checks retained; no new type diagnostics. | 4e983cebc / 0e28e6261 |
 | R5-full-receipt-key | Preserve receipt and key guards | Luna | Integrated proof passed | merged | Reviews 0138 and 0148; integrated 0157 | Actual head 28bb passed both cases with explicit Agent source path. All receipt and replay equalities retained. | 28bb65668 / b57ab2331 |
 | R5-full-conformance | Declare actual retired-route errors | Sol / Luna | Integrated source proof complete | merged | Final review0242; integrated19379 | Actual head f320 passed 162 cases. Three generation checks deferred to freeze. [Proof](../../design/runtime-D39-D40-integrated-0246.md) | a7a2fe6a5 |
-| F-full-census-review | Reconcile exact open full-suite nodes | Luna independent | D43 accounting review | review | Author 0400; review 0405 | Author counts 25 of 36 failures open; 11 exact original-node credits await independent review. | Evidence only |
+| F-full-census-review | Reconcile exact open full-suite nodes | Luna independent | Evidence complete | merged | Author 0400; review 0405 PASS | 11 closed; 25 open; zero unaccounted. [Review](../../design/runtime-D43-accounting-review-0405.md) | Evidence only |
 | R2r-external-pack-source | Bind external pack authority | Sol / Luna | Runtime producer proof complete | merged | Security0240; integrated10713 | Actual head f320 passed 317 cases; two configured exclusions. Agent owns consumer proof. [Proof](../../design/runtime-D39-D40-integrated-0246.md) | f3208b26b / eb2775376 |
 | R-readiness-commits-hang | Reduce authenticated history cost | Sol / Luna | Integrated proof passed | merged | Source 0212; final 0205; proof 0210 | Actual head 45c3 passed 145 cases with Agent 4151, no skips. Historical cause unknown. [Proof](../../design/runtime-readiness-integrated-0210.md) | 45c3a7f47 |
 | R-readiness-compatible | Cost-only proof pin on old client | Sol / Luna | Freeze adoption | gated:freeze | Author0241; reviews0245 and0302 | Exact Agent 4151 archive passed 145 cases in 60.12 seconds. App child and caller qualified; proof pin only. | 37eb6c7bd |
@@ -68,7 +68,7 @@ Runtime integration is 36760ee0ad, tree 11389911c2ee. Foreign retirement passed 
 The earlier history cost fix passed 145 cases on exact head 45c3 with Agent 4151. Compatible proof pin 37eb remains separate from integration. The D42 memo is held after a security failure; Sol 0346 owns its correction. Current wire shapes and consumer pins remain unchanged. No final full-suite pass is claimed.
 
 Blockers: App / Proof — P3 3362 failed before Gate5. P2 12221 passed readiness; three gestures failed, five not run. App owns causes and D42 coalescing; no repeat before qualified pin.
-Blockers: Runtime — Full 29085 had 36 failures. D43 author counts 25 open and 11 closed; independent 0405 reviews exact-node credits. Headless and occupancy families remain open. No full rerun.
+Blockers: Runtime — 25 of 36 original full-suite failures remain open: 10 headless and 15 occupancy. Independent D43 review 0405 passed all exact-node credits. No full rerun.
 Blockers: Freeze — D39 client regeneration and Agent/App tuple adoption are held for the freeze; current consumer pins stay intact.
 Blockers: Runtime — D42 review 0357 demonstrated a mutable closure bypass. Sol 0403 owns correction; independent whole-path audit 0403 runs in parallel. No pin release.
 Blockers: Agent — D40 consumer merged on 4745 after independent 32-control review. Integrated and installed qualifications remain Agent-owned; no Runtime producer action owed.
