@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T03:13:05Z | dispatcher heartbeat 7s | live 2 (sol 1, luna 1, other 0) | busy30 22 | status age 0m -->
-# app board, 2026-10-24T03:12Z
+<!-- app | 2026-10-24T03:15:31Z | dispatcher heartbeat 0s | live 1 (sol 1, luna 0, other 0) | busy30 19 | status age 0m -->
+# app board, 2026-10-24T03:14Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -16,10 +16,10 @@
 | A4-dormant-scope | Record dormant raw and track subsets | Luna | D37 applied | merged | app-A4-D37-wording-0222 | Both exact worker records copied into existing App and combined ledgers. Implementations and tests unchanged. | Documentation only |
 | A4-reviewed-stack | Ports and mounted witnesses | Luna | Review 0105 and integrated 0115 PASS | merged | app-A4-mounted-fixture-return-0059 | Independent and integrated 111 plus 33 tests passed on exact93d487. Types/lint passed; mocked authority limit retained. | 93d48799a2 |
 | A2-bootstrap-fix | Restart cancelled bootstrap | Sol; Luna review | Resolved | merged | app-A2-basis-cancel-repro-sol-0029 | [326 tests, three typechecks and lint passed.](/home/user/timeline-hub/hub/design/app-A2-bootstrap-integrated-0046.md) | 804134d747 |
-| readiness-after-bootstrap | Bind qualified Runtime history fix | Sol; Luna review | Changed pair result | doing | App caller Sol 0250; P2 12221 and P3 3362 | Caller READY with 24 plus 28 plus 4 controls. Exact child and Remotion receipts passed. P3 3362 failed exit2/147s before Gate5. P2 12221 still running. Exact causal analysis assigned; no new run. | Runtime proof pin 37eb6c7bdb |
+| readiness-after-bootstrap | Bind qualified Runtime history fix | Sol; Luna review | Changed pair result | doing | App cause Sol 0309; P2 12221 and P3 3362 | P2 passed readiness then failed three original cases; five not run. P3 failed at outbox-read before Gate5. Causal source report active; no repeat. | Runtime proof pin 37eb6c7bdb |
 | P-door-port-alloc | Allocate door port per run | Luna; D21 | Resolved | merged | app-P2-P3-door-allocation-0039 | [Node 20 allocation, shared stage value and failure checks passed.](/home/user/timeline-hub/hub/design/app-P2-P3-door-allocation-0039.md) | Harness rows only |
 | readiness-upstream-check | Check f38e candidate | Sol; Luna review | Review 0057 PASS | merged | App Sol 0046; Luna 0057 | No census or attempt-root signature supports attribution. Exact patch is unavailable locally; historical cause remains unknown. | Report only |
-| P2 | Eight original gesture cases | App service; Proof verdict | Changed pair terminal result | doing | app-readiness-D41-caller-sol-0250; test 12221 | Submitted 03:04:27 on App804, Agent079 and Runtime37eb. One released no-cache run; original eight remain required. | App 804134d747 |
+| P2 | Eight original gesture cases | App service; Proof verdict | Changed pair terminal result | doing | app-readiness-D41-caller-sol-0250; test 12221 | FAIL exit1/501s. Mandatory readiness passed; three original tests failed and five not run. Producer0307 qualifies exact case boundaries. | App 804134d747 |
 | P3 | Original Gate-5 journey | App service; Proof verdict | Changed pair terminal result | doing | app-readiness-D41-caller-sol-0250; test 3362 | Submitted 03:04:27 on App804, Agent079 and Runtime37eb. FAIL exit2/147s at mandatory readiness leaf. Original Gate-5 NOT RUN; cause Sol0309 and producer0307 assigned. | App 804134d747 |
 | A2-parent-media-closure | Preserve untouched child closure | Sol; Luna review | Resolved | merged | app-A2-parent-media-integrated-0035 | [299 tests, types, lint and external producer passed.](/home/user/timeline-hub/hub/design/app-A2-parent-media-integrated-0035.md) | 1b0428db7d |
 | A2-image-created | Declare genuine image creations | Sol; Luna review | Review 0133 PASS | merged | app-A2-image-created-sol-0126 | Independent 261 tests and producer 28, three types and lint passed. Clip and new authored registry alias claims match provider. Joined proof 0150 passed 448 tests, three types and lint. | b3a84dea71 / 1c5cc47bf6 |
@@ -55,7 +55,7 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 
 | A4-reachable-census | Check current fallback writer reachability | Luna | Current merged cuts | merged | app-A4-current-reachable-census-0300 | One reachable element adapter writer found; Sol0306 assigned. Executor and legacy protocol paths have no production value caller. | Current integration |
 
-| A2-element-writer | Move registered element adapter saves to A2 | Sol; Luna review | Census 0300 | doing | app-A2-element-writer-sol-0306 | Mounted agent-chat element adapter still calls saveTimelineAtHead. Preserve original authority, head, registry and closure on the current outbox. | Current integration |
+| A2-element-writer | Move registered element adapter saves to A2 | Sol; Luna review | Census 0300 | doing | app-A2-element-handoff-sol-0314 | Prior scope confirmed missing parent-element basis on child documents. Scope expanded to existing handoff/hooks; preserve original full head and closure. | Current integration |
 | A4-protocol-joined | Qualify merged protocol packets | Luna | Three reviewed merges | merged | app-A4-protocol-joined-proof-0306 | Exact a645 passed 139 tests, three typechecks, lint and donor identities. Remaining 35 original declarations unchanged; failed packets unmerged. | a64587176d |
 
 | P2-P3-result-handoff | Publish same-ID changed-pair evidence | Luna | Actual terminal artifacts | doing | app-P2-P3-D41-result-handoff-0307 | Producer reads actual 12221 and 3362 only, qualifies safe files and source custody. Proof owns independent gate verdict. | App804 / Agent079 / Runtime37eb |
@@ -63,7 +63,7 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 | readiness-D41-cause | Classify changed-pair readiness failure | Sol; Luna review | Actual retained artifacts | doing | app-readiness-D41-cause-sol-0309 | P3 failed before Gate5; P2 still running. Named independent reviewer 0309 follows; no new body or source fix without evidence. | App804 / Agent079 / Runtime37eb |
 
 Blockers: U3b awaits P2/P3 and the final freeze.
-Blockers: App and Proof await terminal results for the single changed P2 12221 and P3 3362 pair. No repeat request; Proof owns verdict.
+Blockers: App producer0307 and causeSol0309 classify terminal P2 12221 and P3 3362. P2 passed readiness; P3 did not. No new run; Proof owns verdict.
 
 Next ready: Publish changed-pair evidence, classify the exact failed readiness boundary, and finish the reachable element adapter migration. D37 dormant originals stay unchanged.
 Integration: a64587176d. Current recovery packet passed 106 tests, three types and lint before its exact merge. Exports and lifecycle joined proof passed 108 plus 105 tests, three types, lint and governance. Historical joined proof 0150 remains bound to 1c5cc47bf6.
