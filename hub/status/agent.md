@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T07:43:04Z | dispatcher heartbeat 3s | live 3 (sol 0, luna 3, other 0) | busy30 23 | status age 2m -->
-# agent board, 2026-10-24T07:40:00Z
+<!-- agent | 2026-10-24T07:45:26Z | dispatcher heartbeat 5s | live 2 (sol 1, luna 1, other 0) | busy30 25 | status age 1m -->
+# agent board, 2026-10-24T07:45:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -101,18 +101,21 @@
 | U2 deleted coverage | Restore deleted behavior and corruption checks | Luna | Joined U2 qualification | review | Author 0713; independent 0721 PASS | All required predicates restored beside upstream controls. Collection104, six light controls and Ruff pass; external scenario execution remains unverified. | 4c7007aace |
 | U2 boundary coverage | Restore deadlines and identity predicates | Luna | Joined U2 qualification | review | Author 0713; independent 0721 PASS | Literal deadlines and complete identity/frame predicates restored. Collection632, compile and static checks pass; D46 remains fail-closed. | 4ea033e2c8 |
 
-| U2 joined repair | Review repaired upstream and current home union | Luna / Sol | HARD review and managed proof | review | Author0728; Sol0738 | Real upstream25359 and home3f7 ancestry; joined Ruff2145 and mypy1902 pass. Full cumulative independent review active. | 5783ae65c2 |
+| U2 joined repair | Review repaired upstream and current home union | Luna / Sol | HARD review and managed proof | review | Author0728; Sol0738 FAIL; Sol0745 | Union/static gates pass. Three effective coverage gaps remain: one wait, unreachable claim refusal and obsolete abortfixture; Sol0745 owns repair. | 5783ae65c2 |
 | F-farm setup causes | Classify all 187 exact setup errors | Luna | Independent evidence review passed | merged | Author0721; independent0728 PASS | All187 exact IDs:140 environment observations and47 Runtime tuple mismatches. JSON/CSV/source parity pass; raw SHA Farm reported only. | Evidence only |
 | F-ABA current port | Review exact current item source port | Sol / Luna | Viewing diagnostic migration and review | review | Author0725; independent0738 PASS | Independent exact3file port PASS87, zero new static errors. Branch held until Viewing diagnostics join and cumulative review passes. | ca8915f23d |
 
-| U2 managed row | Bind exact136 tests to reviewed joined source | Luna | Independent row review | review | Author0738; independent0742 | Row pins joined5783,Runtime1d9 and source hashes; syntax/collection136 and135 controls pass. Managed workflow unrun. | Artifact only |
-| U2 HARD review | Independently review cumulative freeze repairs | Sol | Reviewed joined source | doing | agt-U2-freeze-joined-review-sol-0738 | Full predicate, custody and static audit; original0702 failures must all clear. | Base5783 |
+| U2 managed row | Bind exact136 tests to reviewed joined source | Luna | Independent row review | review | Author0738; independent0742 PASS | Exact rowhash77115b7c independently passed; installed normalservice row. Sole136 workflow request queued; no broad retry. | Artifact only |
+| U2 HARD review | Independently review cumulative freeze repairs | Sol | Three fixture corrections | review | Sol0738 FAIL; finalrepair0745 | Exact union and productioncustody preserved; effective deadline/claim/abort coverage incomplete. No home merge. | Base5783 |
 | D39 preparation | Adopt final Runtime producer on U2 branch | Luna | Reviewed U2 home before merge | doing | agt-D39-adoption-prepare-0738 | Exact producerbecfe; normal vendor tools only. Runtime409 source/result reviewed0727; temporary JUnit loss retained. | Branch only |
 | F-ABA diagnostics | Migrate six stale diagnostic expectations | Viewing Luna | Qualified Runtime460c published | ready | Viewing peer0740 assigned | Existing test-only ownership; current productca891 and joined review0719 supplied. Original59 assertions unchanged. | No original rerun |
 | OPS-wheel artifacts | Qualify genuine lock-authenticated original wheels | Luna | Runtime verifier layout correction | review | Author0733; independent0740 | 67 original wheels acquired,99MB; verifier rejects dotted jaraco.classes metadata. Independent0740 active; no qualified child input. | Lock236d unchanged |
 
 | F-giant rationale | Correct stale current source line count | Luna | Independent current source challenge | doing | agt-F-giant-rationale-0742 | Farm96 review confirms current14313 versus claimed13998. Exact original docs contract remains unchanged; minimal correction dispatched. | Home3f7 |
 | F-farm prior proofs | Repair all96 prior closure references | Luna | First return from review0733 | doing | agt-F-farm96-return-0742 | Preserve80env/1regression/15unknown; actual prior qualified proof and scope required per node. No new count credit. | Evidence only |
+
+| U2 final fixtures | Restore effective refusal and bounded waits | Sol | Second cumulative coverage failure | doing | agt-U2-boundary-final-sol-0745 | Only2testfiles; no productioncustody changes. Three precise findings must clear. | Base5783 |
+| U2 whole path | Audit activation and retained-handle abort | Luna | Independent second-failure investigation | doing | agt-U2-boundary-whole-path-0745 | Read-only path audit compares passingguards; no duplicate source or body. | Base5783 |
 
 P1: GO recorded. P4 and P5 done. G5 merged under H24. App and Proof retain P2/P3 ownership.
 Integration: 3f7e63b0cf adds reviewed persistence fixture848b above the exact d566 harness union. Runtime owns two-original home proof; no original count is inferred from merge. Harness integrated0706 remains scoped staticPASS.
