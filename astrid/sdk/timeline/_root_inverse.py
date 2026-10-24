@@ -170,6 +170,10 @@ def restore_root_baselines(state, records, publication, commands):
 
     entry = next(entry for entry in records.entries if entry['publication_id'] == publication)
     before, after = records.load_boundary(entry)
+    local_roots = set(before['shots'])
+    before, after = copy.deepcopy(before), copy.deepcopy(after)
+    normalize_root_inputs(before, entry['records']['commands'])
+    normalize_root_inputs(after, entry['records']['commands'])
     for record in commands:
         if record['command']['op'] != 'timeline.inverse' or '_inverse_effects' not in record:
             continue
@@ -219,8 +223,16 @@ def restore_root_baselines(state, records, publication, commands):
                     or ('_inverse_stage' not in record
                         and not state.matches(write['ref'], [], write['before']))):
                 raise CommandError('restored root differs from accepted source', kind='history_unavailable')
-            state.bundle['shots'][identity] = _RestoredShot(
-                shot, copy.deepcopy(before['source_mapping']['_runtime_document']))
+            if identity not in local_roots:
+                # Shared physical roots have no occurrence-local restored
+                # baseline. Keep their authenticated native creation so the
+                # compiler emits the same shared immutable image again.
+                if (shot.get('_created') is not True
+                        or identity in state.bundle['source_mapping']['shots']):
+                    raise CommandError('restored shared root source changed', kind='history_unavailable')
+            else:
+                state.bundle['shots'][identity] = _RestoredShot(
+                    shot, copy.deepcopy(before['source_mapping']['_runtime_document']))
 
 
 def occurrence_orders(state, records, changes):
