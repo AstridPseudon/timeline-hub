@@ -387,7 +387,16 @@ def test_forced_caption_uses_server_owned_executable_routing_and_isolation(
     (fake_bin / "ffprobe").write_text(
         f"#!/bin/sh\nexec {shlex.quote(real_ffprobe)} \"$@\"\n", encoding="utf-8"
     )
-    for executable in (trusted_node, fake_bin / "npx", fake_bin / "ffprobe"):
+    # The executor re-checks the configured VibeComfy checkout's revision with
+    # ``git`` from PATH (vibecomfy_dependency.configured_vibecomfy_checkout), so a
+    # deployment-shaped PATH must still expose git.
+    real_git = shutil.which("git")
+    if real_git is None:
+        pytest.fail("the installed git binary is required for this integration test")
+    (fake_bin / "git").write_text(
+        f"#!/bin/sh\nexec {shlex.quote(real_git)} \"$@\"\n", encoding="utf-8"
+    )
+    for executable in (trusted_node, fake_bin / "npx", fake_bin / "ffprobe", fake_bin / "git"):
         executable.chmod(0o755)
     monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(runtime))
     monkeypatch.setenv(NODE_EXECUTABLE_ENV, str(trusted_node))

@@ -28,19 +28,63 @@ from astrid_runtime_client import ApiError, WorkspaceClient
 pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
 
 
+_UPLOAD_BINDING = dict(run_id="run-1", task_id="task-1", attempt_id="attempt-1", lease_id="lease-1", fence=1)
+
+
+def _claimed_client(ingest_object=None) -> RuntimeProtocolClient:
+    """A Runtime client with only the state upload needs: its executor and the claimed attempt's epoch."""
+    client = object.__new__(RuntimeProtocolClient)
+    client.generated = SimpleNamespace(ingest_object=ingest_object, health=lambda: SimpleNamespace(runtime_epoch=7))
+    client.executor_id = "executor-1"
+    client._attempt_runtime_epochs = {"attempt-1": 7}
+    return client
+
+
 @pytest.mark.parametrize("project_id", [None, "existing-project"])
-@pytest.mark.parametrize("inline", [False, True])
-def test_output_publication_uses_canonical_cas_with_optional_project(
-    tmp_path: Path, project_id: str | None, inline: bool,
+def test_output_publication_uploads_through_the_attempt_bound_canonical_cas(
+    tmp_path: Path, project_id: str | None,
 ) -> None:
     calls = []
     def ingest_object(data, **kwargs):
         calls.append((data, kwargs))
         return SimpleNamespace(digest="sha256:" + hashlib.sha256(data).hexdigest(), size=len(data))
 
-    client = object.__new__(RuntimeProtocolClient)
-    client.generated = SimpleNamespace(ingest_object=ingest_object)
-    client.INLINE_SETTLEMENT_OUTPUTS = inline
+    client = _claimed_client(ingest_object)
+    client.INLINE_SETTLEMENT_OUTPUTS = False
+    host = GenericPackHost(pack_roots=[], client=client)
+    path = tmp_path / "results.json"
+    path.write_text('{"results": []}')
+    outputs = host._upload_outputs(
+        [{"name": "results", "path": str(path), "artifact_type": "application/json"}],
+        project_id=project_id, **_UPLOAD_BINDING,
+    )
+    assert len(calls) == 1
+    assert calls[0][0] == path.read_bytes()
+    kwargs = calls[0][1]
+    assert kwargs["media_type"] == "application/json" and kwargs["filename"] == "results.json"
+    # The project travels inside the provenance binding, never as a separate ingest argument.
+    assert "project_id" not in kwargs
+    assert kwargs["upload_binding"] == {
+        "project_id": project_id, "run_id": "run-1", "task_id": "task-1", "attempt_id": "attempt-1",
+        "executor_id": "executor-1", "lease_id": "lease-1", "fence": 1, "runtime_epoch": 7,
+        "output_key": "results", "output_port": "results", "filename": "results.json",
+        "digest": "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest(),
+        "size": path.stat().st_size, "media_type": "application/json",
+    }
+    assert outputs == [{
+        "name": "results", "kind": "object", "filename": "results.json", "media_type": "application/json",
+        "digest": "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest(),
+        "size": path.stat().st_size,
+    }]
+
+
+@pytest.mark.parametrize("project_id", [None, "existing-project"])
+def test_output_publication_inlines_small_outputs_when_the_attempt_has_no_upload_binding(
+    tmp_path: Path, project_id: str | None,
+) -> None:
+    import base64
+    client = _claimed_client(lambda *_args, **_kwargs: pytest.fail("an unbound attempt cannot upload"))
+    client.INLINE_SETTLEMENT_OUTPUTS = True
     host = GenericPackHost(pack_roots=[], client=client)
     path = tmp_path / "results.json"
     path.write_text('{"results": []}')
@@ -48,17 +92,9 @@ def test_output_publication_uses_canonical_cas_with_optional_project(
         [{"name": "results", "path": str(path), "artifact_type": "application/json"}],
         project_id=project_id,
     )
-    if inline:
-        import base64
-        assert calls == []
-        assert base64.b64decode(outputs[0].pop("data_base64")) == path.read_bytes()
-    else:
-        assert len(calls) == 1
-        assert calls[0][0] == path.read_bytes()
-        assert calls[0][1]["media_type"] == "application/json"
-        assert "project_id" not in calls[0][1]
+    assert base64.b64decode(outputs[0].pop("data_base64")) == path.read_bytes()
     assert outputs == [{
-        "name": "results", "kind": "object", "media_type": "application/json",
+        "name": "results", "kind": "object", "filename": "results.json", "media_type": "application/json",
         "digest": "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest(),
         "size": path.stat().st_size,
     }]
@@ -66,9 +102,12 @@ def test_output_publication_uses_canonical_cas_with_optional_project(
 
 @pytest.mark.parametrize("project_id", ["", "  ", 7])
 def test_output_publication_rejects_malformed_project(tmp_path: Path, project_id) -> None:
-    client = object.__new__(RuntimeProtocolClient)
+    client = _claimed_client()
     with pytest.raises(HostError, match="non-empty string or None"):
-        client.upload_object(tmp_path / "unused", project_id=project_id, media_type="text/plain")
+        client.upload_object(
+            tmp_path / "unused", project_id=project_id, media_type="text/plain", filename="unused",
+            output_key="results", output_port="results", **_UPLOAD_BINDING,
+        )
 
 
 class _TaskRuntime:
@@ -210,8 +249,8 @@ def test_external_pack_command_imports_from_its_admitted_pack_root(
         host = GenericPackHost(
             pack_roots=[pack_root],
             attempt_root=tmp_path / "attempt",
-            client=RuntimeProtocolClient(daemon.endpoint, daemon.token),
-            executor_id="provider-fixture-host",
+            client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),
+            executor_id="astrid-pack-host",
         )
         record = host.discover()[0]
         assert record.definition.metadata["source_pack"] == "fixture_provider"
@@ -339,8 +378,8 @@ def test_unready_external_provider_is_not_claimed_by_runtime(tmp_path: Path, rea
             pack_roots=[pack_root],
             attempt_root=tmp_path / "attempt",
             credential_source={},
-            client=RuntimeProtocolClient(daemon.endpoint, daemon.token),
-            executor_id="provider-host",
+            client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),
+            executor_id="astrid-pack-host",
         )
         record = host.discover()[0]
         registration = host.register()
@@ -699,7 +738,7 @@ def test_clean_pinned_hivemind_pack_publishes_through_real_runtime(tmp_path: Pat
         runtime_host = GenericPackHost(
             pack_roots=[pack_root], attempt_root=tmp_path / "attempt-runtime",
             credential_source={"HIVEMIND_ANON_KEY": "fixture-key"},
-            client=RuntimeProtocolClient(daemon.endpoint, daemon.token), executor_id="hivemind-host",
+            client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token), executor_id="astrid-pack-host",
         )
         registration = runtime_host.register()
         capability = next(

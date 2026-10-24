@@ -929,7 +929,9 @@ def test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task(tm
         assert result["timeline_version"] == 2
         assert service.store.conn.execute("SELECT COUNT(*) FROM tasks WHERE capability=?", (render_cap,)).fetchone()[0] == 1
         render = service.task(result["render_task_id"])["task"]
-        assert render["spec"]["spec"]["inputs"]["timeline_snapshot"]["config"] == proposal["timeline"]
+        snapshot_ref = render["spec"]["spec"]["inputs"]["timeline_snapshot_ref"]
+        snapshot = json.loads(service.object(snapshot_ref["digest"])[1])
+        assert snapshot["config"] == proposal["timeline"]
         assert render["spec"]["spec"]["inputs"]["expected_version"] == 2
         # The checkpoint admits the ordinary public renderer; the next worker
         # claim therefore sees rendering.render without a stitch-specific task.

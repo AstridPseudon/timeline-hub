@@ -49,6 +49,42 @@ from pathlib import Path
 BACKEND_ID = "hyperframes.renderer"
 _BACKEND_VERSION = "1.0.0"
 _HYPERFRAMES_PIN = "0.7.107"
+_MIN_NODE_MAJOR = 22
+
+
+def find_node22() -> str | None:
+    """Return a ``node`` executable >= 22 (HyperFrames' requirement), or None.
+
+    The lane's PATH node is the repo's pinned Node (``.node-version``, which
+    Remotion requires), so HyperFrames looks for its own: every ``node`` on
+    PATH, then the GitHub runner tool cache (a second ``actions/setup-node``
+    step leaves Node 22 there), then nvm versions.
+    """
+    candidates: list[str] = []
+    for entry in os.environ.get("PATH", "").split(os.pathsep):
+        if entry and (Path(entry) / "node").is_file():
+            candidates.append(str(Path(entry) / "node"))
+    roots = [os.environ.get("RUNNER_TOOL_CACHE"), "/opt/hostedtoolcache"]
+    for root in roots:
+        if root:
+            candidates.extend(
+                str(path) for path in sorted(Path(root).glob("node/*/*/bin/node"), reverse=True)
+            )
+    nvm = Path.home() / ".nvm" / "versions" / "node"
+    if nvm.is_dir():
+        candidates.extend(
+            str(path / "bin" / "node") for path in sorted(nvm.iterdir(), reverse=True)
+        )
+    for node in dict.fromkeys(candidates):
+        try:
+            version = subprocess.run(
+                [node, "--version"], capture_output=True, text=True, check=False
+            ).stdout.strip()
+            if int(version.lstrip("v").split(".")[0]) >= _MIN_NODE_MAJOR:
+                return node
+        except (OSError, ValueError, IndexError):
+            continue
+    return None
 
 _PROFILE = {
     "width": 640,
@@ -566,6 +602,17 @@ def _run(verb: str, request: dict, request_path: Path, result_path: Path) -> int
     output_path = out_dir / output_name
 
     env = dict(os.environ)
+    node22 = find_node22()
+    if node22 is None:
+        _error(
+            result_path,
+            "internal",
+            "hyperframes requires node >= 22, which was not found",
+            recovery_command="install node 22+",
+        )
+        return 0
+    # npx must resolve Node 22 for the hyperframes CLI only; the lane's PATH keeps its pinned Node.
+    env["PATH"] = str(Path(node22).resolve().parent) + os.pathsep + env.get("PATH", "")
     env.setdefault("NODE_OPTIONS", "--max-old-space-size=2048")
     completed = subprocess.run(
         [

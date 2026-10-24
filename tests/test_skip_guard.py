@@ -98,6 +98,13 @@ def test_a_declared_platform_skip_passes_and_is_listed_by_test_id(run) -> None:
     ])
 
 
+def test_skips_of_a_lane_no_ci_job_runs_are_listed_under_their_own_header(run) -> None:
+    result = run("import pytest\n\n@pytest.mark.windows_native\ndef test_x():\n    assert False\n\ndef test_y():\n    pass\n")
+    assert result.ret == 0
+    if sys.platform != "win32":  # on Windows the lane's tests run, so nothing is skipped or listed
+        result.stdout.fnmatch_lines(["*NOT RUN BY ANY CI JOB (1)*", "  NO CI test_case.py::test_x: [[]windows_native] Windows is not supported yet*"])
+
+
 def test_a_declared_dependency_skip_passes_where_no_job_provides_it_and_is_listed(run) -> None:
     result = run("import pytest\n\n@pytest.mark.ffmpeg\ndef test_x():\n    pass\n\ndef test_y():\n    pass\n", bare_path_env=True)
     assert result.ret == 0
@@ -140,19 +147,19 @@ def test_a_run_in_which_every_test_is_skipped_or_deselected_fails(run) -> None:
 
 
 def test_a_module_of_a_deselected_lane_is_not_imported_unless_a_test_in_it_names_a_selected_lane(run, pytester: pytest.Pytester) -> None:
-    pytester.makepyfile(test_other="import pytest\n\npytestmark = pytest.mark.integration\nimport astrid_no_such_second_checkout\n\ndef test_z():\n    pass\n")
-    pytester.makepyfile(test_both="import pytest\n\npytestmark = pytest.mark.integration\n\n@pytest.mark.opt_in\ndef test_w():\n    pass\n")
-    result = run("def test_x():\n    pass\n", "-m", "opt_in or not integration")
-    assert result.ret == 0, result.stdout.str()  # test_other.py (integration only) was never imported; test_both.py was, and its opt_in test ran
+    pytester.makepyfile(test_other="import pytest\n\npytestmark = pytest.mark.workstation\nimport astrid_no_such_second_checkout\n\ndef test_z():\n    pass\n")
+    pytester.makepyfile(test_both="import pytest\n\npytestmark = pytest.mark.workstation\n\n@pytest.mark.gpu\ndef test_w():\n    pass\n")
+    result = run("def test_x():\n    pass\n", "-m", "gpu or not workstation")
+    assert result.ret == 0, result.stdout.str()  # test_other.py (workstation only) was never imported; test_both.py was, and its gpu test ran
     result.stdout.fnmatch_lines(["*2 passed*"])
 
 
 def test_tests_deselected_by_a_lane_are_named_under_a_header_that_says_who_runs_the_lane(run) -> None:
-    result = run("import pytest\n\n@pytest.mark.opt_in\ndef test_manual():\n    pass\n\n@pytest.mark.remotion\ndef test_heavy():\n    pass\n\ndef test_x():\n    pass\n", "-m", "not opt_in and not remotion")
+    result = run("import pytest\n\n@pytest.mark.gpu\ndef test_manual():\n    pass\n\n@pytest.mark.remotion\ndef test_heavy():\n    pass\n\ndef test_x():\n    pass\n", "-m", "not gpu and not remotion")
     assert result.ret == 0
     result.stdout.fnmatch_lines([
         "*left out of this run by lane (2 entries)*",
-        "[[]opt_in] NO CI job runs this lane*",
+        "[[]gpu] NO CI job runs this lane*",
         "  DESELECTED test_case.py::test_manual",
         f"[[]remotion] run by CI job {lanes.DARWIN}",
         "  DESELECTED test_case.py::test_heavy",
@@ -160,10 +167,10 @@ def test_tests_deselected_by_a_lane_are_named_under_a_header_that_says_who_runs_
 
 
 def test_a_module_not_imported_because_of_its_lane_is_named_with_the_lane(run, pytester: pytest.Pytester) -> None:
-    pytester.makepyfile(test_hidden="import pytest\n\npytestmark = pytest.mark.integration\n\ndef test_z():\n    pass\n")
-    result = run("def test_x():\n    pass\n", "-m", "not integration")
+    pytester.makepyfile(test_hidden="import pytest\n\npytestmark = pytest.mark.workstation\n\ndef test_z():\n    pass\n")
+    result = run("def test_x():\n    pass\n", "-m", "not workstation")
     assert result.ret == 0
-    result.stdout.fnmatch_lines(["[[]integration] NO CI job runs this lane*", "  NOT IMPORTED test_hidden.py *"])
+    result.stdout.fnmatch_lines(["[[]workstation] NO CI job runs this lane*", "  NOT IMPORTED test_hidden.py *"])
 
 
 def test_a_run_with_nothing_left_out_prints_no_report(run) -> None:
@@ -200,9 +207,9 @@ def test_a_test_removed_by_name_is_counted_and_not_attributed_to_its_lane(run) -
 
 
 def test_a_test_in_two_lanes_is_attributed_only_to_the_lane_that_makes_the_expression_false(run) -> None:
-    result = run("import pytest\n\n@pytest.mark.opt_in\n@pytest.mark.node\ndef test_both():\n    pass\n\ndef test_x():\n    pass\n", "-m", "not opt_in")
+    result = run("import pytest\n\n@pytest.mark.gpu\n@pytest.mark.node\ndef test_both():\n    pass\n\ndef test_x():\n    pass\n", "-m", "not gpu")
     assert result.ret == 0
-    result.stdout.fnmatch_lines(["*left out of this run by lane (1 entries)*", "[[]opt_in] NO CI job runs this lane*", "  DESELECTED test_case.py::test_both"])
+    result.stdout.fnmatch_lines(["*left out of this run by lane (1 entries)*", "[[]gpu] NO CI job runs this lane*", "  DESELECTED test_case.py::test_both"])
     assert "[node]" not in result.stdout.str()
 
 

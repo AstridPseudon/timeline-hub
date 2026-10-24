@@ -85,7 +85,7 @@ def test_generation_publication_resolves_project_slug_once():
     assert captured["settlement_effect"]["target_id"] == "canonical-id"
 
 
-@pytest.mark.opt_in  # needs the macOS Codex CLI; no CI job has it
+@pytest.mark.codex_cli
 def test_codex_native_binary_starts_in_host_sandbox(tmp_path):
     if sys.platform != "darwin" or not shutil.which("codex"):
         unavailable("requires macOS and the Codex CLI on PATH")

@@ -72,3 +72,23 @@ def test_frame_focus_command_preserves_exact_integer_frame():
     command = navigation["frames"][0]["actions"]["focus_command"]
     assert "--frame 2500" in command
     assert "--at" not in command
+
+
+def _clip_labels(*clips):
+    snapshot = {
+        "project_slug": "demo", "timeline_id": "tl", "render_run_id": "run", "video_digest": "sha256:" + "a" * 64,
+        "fps_rational": [24, 1], "duration_frames": 48, "tracks": [], "scripts": [],
+        "clips": [{"track": "v1", "start_frame": 0, "end_frame": 24, **clip} for clip in clips],
+    }
+    navigation = build_inspector_navigation(snapshot, [])
+    return {record["clip_id"]: record["label"] for record in navigation["clips"]}
+
+
+def test_a_clip_is_named_by_label_then_media_name_then_id():
+    labels = _clip_labels(
+        {"id": "clip-a", "label": "Opening shot", "asset_name": "beach.mp4"},
+        {"id": "clip-b", "asset_name": "beach.mp4"},
+        {"id": "clip-c", "source": {"name": "waves.mov"}},
+        {"id": "clip-d"},
+    )
+    assert labels == {"clip-a": "Opening shot", "clip-b": "beach.mp4", "clip-c": "waves.mov", "clip-d": "clip-d"}

@@ -9,7 +9,8 @@ marker that has the lane's name (``@pytest.mark.ffmpeg``, ``@pytest.mark.posix_n
   dependency is missing the test is skipped and the skip is declared, EXCEPT in a job that is meant to
   provide it (the job's ``ASTRID_CI_JOB`` is in the lane's ``jobs``), and in a lane the run selected by
   name (``default_off``): there a missing dependency is a failure.
-* ``manual``: needs something no CI job has (a second checkout, credentials, opt-in). Always ``default_off``,
+* ``scheduled``: needs nothing the other lanes do not name; too slow for every push, so a scheduled job runs it.
+* ``manual``: needs something no CI job has (credentials, a GPU, the owner's workstation files). Always ``default_off``,
   so the default run deselects these tests; running one by hand with ``-m`` fails, never skips, when its
   dependency is missing.
 
@@ -50,12 +51,25 @@ FD_LEAK_ALLOWANCE = 64
 REPO = Path(__file__).resolve().parents[1]
 
 UBUNTU = "unit-shard-ubuntu-latest"
-WINDOWS = "unit-shard-windows-latest"
+NO_WINDOWS_CI = "Windows is not supported yet; no Windows CI job until Windows support is real work"
 DARWIN = "darwin-native"
+INTEGRATION = "lanes-integration"  # .github/workflows/lanes.yml
+OPT_IN = "lanes-opt-in"  # .github/workflows/lanes.yml
+INSTALLED = "lanes-installed"  # .github/workflows/lanes.yml
 
 
 def has_media_tools() -> bool:
     return bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
+
+
+def has_runtime() -> bool:
+    from tests.helpers.runtime import locate_runtime
+
+    return locate_runtime() is not None
+
+
+def has_codex() -> bool:
+    return bool(shutil.which("codex"))
 
 
 def has_font() -> bool:
@@ -73,18 +87,38 @@ def has_remotion() -> bool:
     return bool(shutil.which("node")) and (REPO / "remotion" / "node_modules").is_dir() and has_media_tools()
 
 
+def has_installed_astrid() -> bool:
+    """A non-editable Astrid in this interpreter's site-packages, the installed host profile, and a provisioned Remotion project.
+
+    This is what tests/helpers/h3_cpu_runtime.py binds to: ``_INSTALLED_EXECUTION_ROOT`` is the interpreter's purelib, and
+    ``ASTRID_HOST_EXECUTION_PROFILE=installed`` puts it first on sys.path so ``astrid`` resolves there, not to the checkout.
+    """
+    import sysconfig
+
+    installed = Path(sysconfig.get_path("purelib")) / "astrid" / "__init__.py"
+    project = os.environ.get("ASTRID_REMOTION_PROJECT_DIR", "")
+    return (
+        installed.is_file()
+        and os.environ.get("ASTRID_HOST_EXECUTION_PROFILE") == "installed"
+        and bool(project)
+        and (Path(project) / "node_modules").is_dir()
+        and has_media_tools()
+    )
+
+
 @dataclass(frozen=True)
 class Lane:
-    kind: str  # "platform" | "dependency" | "manual"
+    kind: str  # "platform" | "dependency" | "scheduled" | "manual"
     reason: str
     available: Callable[[], bool]
     jobs: tuple[str, ...] = ()  # the CI jobs (ASTRID_CI_JOB) that run these tests where `available` holds
     default_off: bool = False  # deselected by addopts; a run that selects the lane must find its dependency
     provision: str = ""  # text each job in `jobs` must contain to provide the dependency
+    no_ci: str = ""  # a plain reason no CI job runs this lane (then `jobs` is empty); the one alternative to a job, besides kind "manual"
 
     @property
     def requires_dependency(self) -> bool:
-        return self.kind != "platform"
+        return self.kind in ("dependency", "manual")
 
 
 def _never() -> bool:
@@ -95,10 +129,10 @@ LANES: dict[str, Lane] = {
     "posix_native": Lane("platform", "needs POSIX-only process or file descriptor APIs", lambda: os.name == "posix", (UBUNTU,)),
     "non_root": Lane("platform", "needs a non-root user (chmod 000 does not block root)", lambda: not hasattr(os, "geteuid") or os.geteuid() != 0, (UBUNTU,)),
     "linux_native": Lane("platform", "needs Linux-only /proc or pidfd APIs", lambda: sys.platform.startswith("linux"), (UBUNTU,)),
-    "windows_native": Lane("platform", "needs native Windows APIs", lambda: sys.platform == "win32", (WINDOWS,)),
+    "windows_native": Lane("platform", "needs native Windows APIs", lambda: sys.platform == "win32", no_ci=NO_WINDOWS_CI),
     "darwin_native": Lane("platform", "needs native macOS APIs", lambda: sys.platform == "darwin", (DARWIN,), default_off=True),
-    "ffmpeg": Lane("dependency", "needs ffmpeg and ffprobe on PATH", has_media_tools, (UBUNTU, WINDOWS), provision="ffmpeg"),
-    "node": Lane("dependency", "needs Node on PATH", lambda: bool(shutil.which("node")), (UBUNTU, WINDOWS), provision="setup-node"),
+    "ffmpeg": Lane("dependency", "needs ffmpeg and ffprobe on PATH", has_media_tools, (UBUNTU,), provision="ffmpeg"),
+    "node": Lane("dependency", "needs Node on PATH", lambda: bool(shutil.which("node")), (UBUNTU,), provision="setup-node"),
     "font": Lane("dependency", "needs a system TTF font (DejaVu Sans on Linux, Arial on macOS)", has_font, (UBUNTU,), provision="fonts-dejavu-core"),
     "chrome": Lane(
         "dependency", "needs the provisioned Remotion headless Chromium (npx remotion browser ensure)", has_chrome,
@@ -108,9 +142,27 @@ LANES: dict[str, Lane] = {
         "dependency", "needs Node, ffmpeg and the Remotion install (npm ci --prefix remotion)", has_remotion,
         (DARWIN,), default_off=True, provision="npm ci --prefix remotion",
     ),
-    "integration": Lane("manual", "needs a long-lived subprocess, a second checkout (Runtime, VibeComfy) or the network; no CI job", _never, default_off=True),
-    "live": Lane("manual", "needs real provider credentials; no CI job", _never, default_off=True),
-    "opt_in": Lane("manual", "explicitly opt-in (an environment variable or a GPU); no CI job", _never, default_off=True),
+    "integration": Lane(
+        "dependency", "needs a real Runtime checkout (ASTRID_RUNTIME_CHECKOUT) and, per test, VibeComfy at its pin, the Remotion install, ffmpeg or the network",
+        has_runtime, (INTEGRATION,), default_off=True, provision="astrid-runtime",
+    ),
+    "installed": Lane(
+        "dependency",
+        "needs a non-editable Astrid wheel in the interpreter's site-packages (ASTRID_HOST_EXECUTION_PROFILE=installed) and a provisioned Remotion project (ASTRID_REMOTION_PROJECT_DIR)",
+        has_installed_astrid, (INSTALLED,), default_off=True, provision="installed-venv",
+    ),
+    "opt_in": Lane(
+        "scheduled", "slow tests the per-push run leaves to the nightly lanes workflow (the Runtime checkout, VibeComfy, ffmpeg and the Remotion install)",
+        lambda: True, (OPT_IN,), default_off=True, provision="npx remotion browser ensure",
+    ),
+    "codex_cli": Lane(
+        "dependency", "needs the macOS Codex CLI on PATH (npm install -g @openai/codex)", has_codex,
+        (DARWIN,), default_off=True, provision="@openai/codex",
+    ),
+    "workstation": Lane("manual", "needs files only the owner's workstation holds (untracked runner scripts, local run output, saved acceptance artifacts, approved readiness profiles); no CI job", _never, default_off=True),
+    "app_checkout": Lane("manual", "needs a banodoco/astrid-app checkout with npm ci done (ASTRID_APP_CHECKOUT), unpinned until the owner picks a commit; no CI job", _never, default_off=True),
+    "omp": Lane("manual", "needs an OMP source checkout (ASTRID_OMP_TEST_PACKAGE_ROOT) and Bun; no CI job", _never, default_off=True),
+    "gpu": Lane("manual", "needs ComfyUI with model weights on a GPU machine; no CI job", _never, default_off=True),
 }
 DEFAULT_OFF = tuple(name for name, lane in LANES.items() if lane.default_off)
 DECLARED = re.compile(r"\[declared:([a-z_]+)\]")
@@ -255,6 +307,11 @@ class _SkipGuard:
             terminalreporter.write_sep("-", f"declared skips ({len(self.declared)})")
             for nodeid, name, reason in sorted(self.declared):
                 terminalreporter.write_line(f"SKIPPED [{name}] {nodeid}: {reason}")
+            no_ci = sorted((nodeid, name) for nodeid, name, _ in self.declared if LANES[name].no_ci)
+            if no_ci:
+                terminalreporter.write_sep("-", f"NOT RUN BY ANY CI JOB ({len(no_ci)})")
+                for nodeid, name in no_ci:
+                    terminalreporter.write_line(f"  NO CI {nodeid}: [{name}] {LANES[name].no_ci}")
         self._report_left_out(terminalreporter)
 
     def _report_left_out(self, terminalreporter) -> None:
@@ -348,6 +405,8 @@ def lane_runner(lane: str) -> str:
     jobs = LANES[lane].jobs
     if jobs:
         return "run by CI job " + ", ".join(jobs)
+    if LANES[lane].no_ci:
+        return f"NO CI job runs this lane ({LANES[lane].no_ci})"
     return f"NO CI job runs this lane ({LANES[lane].kind}: run it by hand with -m {lane})"
 
 

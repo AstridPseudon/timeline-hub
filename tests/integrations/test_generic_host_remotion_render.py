@@ -1,14 +1,14 @@
 """GenericPackHost acceptance for the real Remotion render capability.
 
-The test is intentionally opt-in through a provisioned dependency tree.  A
-normal source checkout does not carry ``remotion/node_modules``; when the
-tree is available, the test copies it into the temporary workspace so the
-host's preflight and the Remotion CLI both see an owned runtime.
+The test renders with the repository's own provisioned Remotion install
+(``npm ci --prefix remotion``, which the lanes workflow runs) and the launch-owned
+validation the host bootstrap normally issues (tests/helpers/remotion_validation.py).
 """
 
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import os
 import shutil
@@ -18,16 +18,20 @@ from pathlib import Path
 
 import pytest
 
-from tests.lanes import unavailable
+from astrid.core.env_vars import (
+    ASTRID_REMOTION_VALIDATION_LAUNCH,
+    ASTRID_REMOTION_VALIDATION_PATH,
+    ASTRID_REMOTION_VALIDATION_ROLE,
+    ASTRID_REMOTION_VALIDATION_SHA256,
+)
+from astrid.sdk.host_bootstrap import _prepare_render_validation
+from tests.helpers.remotion_validation import remotion_install_problems
+from tests.packs.rendering._helpers import _execution_env
 
 ROOT = Path(__file__).resolve().parents[2]
-SCHEMA_ROOT = ROOT.parent / "astrid-app" / "vendor" / "timeline-schema" / "python"
-DEPENDENCY_ROOT = Path(
-    os.environ.get(
-        "ASTRID_TEST_REMOTION_DEPENDENCY_ROOT",
-        str(ROOT.parent / "Astrid-beta-convergence" / "remotion" / "node_modules"),
-    )
-).expanduser()
+# The pinned timeline-schema dependency is installed with the dev extras; its install root is the schema root.
+SCHEMA_ROOT = Path(importlib.util.find_spec("banodoco_timeline_schema").origin).resolve().parent.parent
+REMOTION = ROOT / "remotion"
 
 from astrid.core.execution.generic_host import (  # noqa: E402
     GenericPackHost,
@@ -46,12 +50,6 @@ from astrid.sdk.host_bootstrap import PACK_HOST_ACTOR  # noqa: E402
 from astrid_runtime_client import WorkspaceClient  # noqa: E402
 
 pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
-
-
-@pytest.fixture(autouse=True)
-def _remotion_dependency_root() -> None:
-    if not DEPENDENCY_ROOT.is_dir():
-        unavailable("provisioned Remotion dependency root is unavailable; set ASTRID_TEST_REMOTION_DEPENDENCY_ROOT")
 
 
 def _make_media(root: Path) -> tuple[Path, Path]:
@@ -167,182 +165,50 @@ def _make_media(root: Path) -> tuple[Path, Path]:
     return timeline_path, media / "assets.json"
 
 
-def _prepare_remotion_fixture(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> tuple[Path, Path, Path, Path]:
-    configured_node = os.environ.get("ASTRID_NODE_EXECUTABLE")
-    node = Path(configured_node).expanduser() if configured_node else None
-    if node is None:
-        discovered_node = shutil.which("node")
-        node = Path(discovered_node) if discovered_node else None
-    if (
-        node is None
-        or not node.is_file()
-        or not os.access(node, os.X_OK)
-        or shutil.which("ffmpeg") is None
-    ):
-        unavailable("node and ffmpeg are required for the Remotion acceptance fixture")
-    monkeypatch.setenv(
-        "ASTRID_NODE_EXECUTABLE",
-        configured_node if configured_node else str(node.resolve()),
-    )
+@pytest.fixture
+def remotion_launch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """The provisioned Remotion install plus the launch-owned validation its runtime requires."""
 
-    schema_env = "ASTRID_TIMELINE_SCHEMA_PYTHONPATH"
-    configured_schema = os.environ.get(schema_env)
-    if configured_schema:
-        schema_pythonpath = configured_schema
-        schema_root = Path(configured_schema).expanduser()
-    else:
-        try:
-            import banodoco_timeline_schema
-        except ImportError as exc:
-            pytest.fail(
-                "the Remotion acceptance fixture needs the installed "
-                "banodoco_timeline_schema package or "
-                f"{schema_env}: {exc}"
-            )
-        schema_root = Path(banodoco_timeline_schema.__file__).parent.parent
-        schema_pythonpath = str(schema_root)
-        monkeypatch.setenv(schema_env, schema_pythonpath)
-    if not (schema_root / "banodoco_timeline_schema" / "__init__.py").is_file():
+    problems = remotion_install_problems()
+    if problems:
         pytest.fail(
-            f"{schema_env} does not contain the installed timeline schema: "
-            f"{schema_pythonpath}"
+            "a real render needs the provisioned Remotion install (`npm ci --prefix remotion`): " + "; ".join(problems),
+            pytrace=False,
         )
-
-    caller_pythonpath = os.environ.get("PYTHONPATH")
-    pythonpath = [str(ROOT), schema_pythonpath]
-    if caller_pythonpath:
-        pythonpath.append(caller_pythonpath)
-    monkeypatch.setenv(
-        "PYTHONPATH",
-        os.pathsep.join(pythonpath),
-    )
-
-    workspace = tmp_path / "workspace"
-    shutil.copytree(
-        ROOT / "astrid",
-        workspace / "astrid",
-        symlinks=True,
-        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
-    )
-    remotion = workspace / "remotion"
-    shutil.copytree(
-        ROOT / "remotion",
-        remotion,
-        ignore=shutil.ignore_patterns("node_modules"),
-    )
-    shutil.copytree(
-        DEPENDENCY_ROOT,
-        remotion / "node_modules",
-        symlinks=True,
-        copy_function=shutil.copy2,
-    )
-    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(remotion.resolve()))
-    pack_root = workspace / "astrid" / "packs"
-    monkeypatch.setenv("ASTRID_PACKS_PATH", str(pack_root.resolve()))
-    # The real host launch owns this validation.  Keep its artifact private to
-    # the fixture instead of borrowing readiness from another Remotion root.
-    for name in (
-        "PYTHONUSERBASE",
-        "PYTHONNOUSERSITE",
-        "PYTHONSAFEPATH",
-        "PYTHONPLATLIBDIR",
-        "PYTHONCASEOK",
-        "PYTHONUTF8",
-        "PYTHONCOERCECLOCALE",
-        "PYTHONSTARTUP",
-        "PYTHONPYCACHEPREFIX",
-        "PYTHONEXECUTABLE",
-        "__PYVENV_LAUNCHER__",
-        "PYTHONHOME",
-        "NODE_OPTIONS",
-        "NODE_PATH",
-        "NODE_ICU_DATA",
-        "OPENSSL_CONF",
-    ):
-        monkeypatch.delenv(name, raising=False)
-    for name in tuple(os.environ):
-        if name.startswith(("DYLD_", "LD_")):
-            monkeypatch.delenv(name, raising=False)
-    interactive_git = {
-        "GIT_EDITOR",
-        "GIT_SEQUENCE_EDITOR",
-        "GIT_PAGER",
-        "GIT_TERMINAL_PROMPT",
-        "GIT_ASKPASS",
-        "GIT_SSH",
-        "GIT_SSH_COMMAND",
-        "GIT_SSH_VARIANT",
-        "GIT_MERGE_AUTOEDIT",
-        "GIT_AUTHOR_NAME",
-        "GIT_AUTHOR_EMAIL",
-        "GIT_COMMITTER_NAME",
-        "GIT_COMMITTER_EMAIL",
-    }
-    for name in tuple(os.environ):
-        if name.startswith("GIT_") and name not in interactive_git:
-            monkeypatch.delenv(name, raising=False)
-    from astrid.sdk.host_bootstrap import _prepare_render_validation
-
-    validation_env = dict(os.environ)
-    _prepare_render_validation(
-        ROOT,
-        validation_env,
-        tmp_path / "support",
-        sys.executable,
-        pack_roots=(pack_root,),
-    )
-    for name in (
-        "ASTRID_REMOTION_VALIDATION_PATH",
-        "ASTRID_REMOTION_VALIDATION_SHA256",
-        "ASTRID_REMOTION_VALIDATION_LAUNCH",
-        "ASTRID_REMOTION_VALIDATION_ROLE",
-    ):
-        monkeypatch.setenv(name, validation_env[name])
-    timeline_path, assets_path = _make_media(workspace)
-    return workspace, remotion, timeline_path, assets_path
+    node = shutil.which("node")
+    monkeypatch.setenv("ASTRID_NODE_EXECUTABLE", str(Path(node).resolve()))
+    monkeypatch.setenv("ASTRID_TIMELINE_SCHEMA_PYTHONPATH", str(SCHEMA_ROOT))
+    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(REMOTION.resolve()))
+    with _execution_env():
+        # The host bootstrap's own launch transaction: it validates the host and the worker contexts it spawns.
+        env = dict(os.environ)
+        launch = _prepare_render_validation(
+            ROOT, env, tmp_path / "support", sys.executable, (ROOT / "astrid" / "packs" / "rendering",)
+        )
+        assert launch is not None
+        # This process stands in for the launched host: it carries exactly the environment the launch prepared,
+        # so the loader keys a CI shell exports (setup-python sets LD_LIBRARY_PATH) that the launch dropped go too.
+        for name in [key for key in os.environ if key not in env and key.startswith(("DYLD_", "LD_"))]:
+            monkeypatch.delenv(name)
+        for name in (
+            ASTRID_REMOTION_VALIDATION_PATH,
+            ASTRID_REMOTION_VALIDATION_SHA256,
+            ASTRID_REMOTION_VALIDATION_LAUNCH,
+            ASTRID_REMOTION_VALIDATION_ROLE,
+        ):
+            monkeypatch.setenv(name, env[name])
+        yield REMOTION
 
 
 def test_generic_host_remotion_register_claim_execute_settle_and_cas(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, real_runtime
+    tmp_path: Path, real_runtime, remotion_launch: Path
 ) -> None:
-    node = shutil.which("node")
-    if node is None or shutil.which("ffmpeg") is None:
-        unavailable("node and ffmpeg are required for the Remotion acceptance render")
-    monkeypatch.setenv("ASTRID_NODE_EXECUTABLE", str(Path(node).resolve()))
-    monkeypatch.setenv("ASTRID_TIMELINE_SCHEMA_PYTHONPATH", str(SCHEMA_ROOT))
-    monkeypatch.setenv(
-        "PYTHONPATH",
-        os.pathsep.join(
-            str(path)
-            for path in (ROOT, SCHEMA_ROOT)
-        ),
-    )
-
+    remotion = remotion_launch
     workspace = tmp_path / "workspace"
-    shutil.copytree(
-        ROOT / "astrid",
-        workspace / "astrid",
-        symlinks=True,
-        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
-    )
-    remotion = workspace / "remotion"
-    shutil.copytree(
-        ROOT / "remotion",
-        remotion,
-        ignore=shutil.ignore_patterns("node_modules"),
-    )
-    shutil.copytree(
-        DEPENDENCY_ROOT,
-        remotion / "node_modules",
-        symlinks=True,
-        copy_function=os.link,
-    )
-    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(remotion.resolve()))
+    workspace.mkdir()
     timeline_path, assets_path = _make_media(workspace)
 
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     try:
         generated = WorkspaceClient(daemon.endpoint, daemon.token)
         generated.handshake(
@@ -381,16 +247,32 @@ def test_generic_host_remotion_register_claim_execute_settle_and_cas(
             assert isinstance(object_id, str) and isinstance(digest, str)
             input_object_ids.append(object_id)
             registry["assets"][key]["media_id"] = object_id
-        registry["assets"][key]["content_sha256"] = digest.removeprefix("sha256:")
+            registry["assets"][key]["content_sha256"] = digest.removeprefix("sha256:")
         assets_path.write_text(json.dumps(registry), encoding="utf-8")
-        pack = workspace / "astrid" / "packs" / "rendering" / "executors" / "render"
+        # File inputs reach the executor only as managed Runtime objects, never as caller-local paths.
+        managed: dict[str, dict[str, str]] = {}
+        for name, path in (("timeline", timeline_path), ("assets_registry", assets_path)):
+            imported = generated.ingest_project_object(
+                project_id,
+                path.read_bytes(),
+                media_type="application/json",
+                idempotency_key=f"generic-remotion-{name}",
+                filename=path.name,
+            )
+            object_id = imported.get("object_id") if isinstance(imported, dict) else getattr(imported, "object_id", None)
+            digest = imported.get("digest") if isinstance(imported, dict) else getattr(imported, "digest", None)
+            assert isinstance(object_id, str) and isinstance(digest, str)
+            input_object_ids.append(object_id)
+            managed[name] = {"object_id": object_id, "digest": digest}
+        pack = ROOT / "astrid" / "packs" / "rendering"
+        host_client = RuntimeProtocolClient(daemon.endpoint, daemon.worker_token)
         host = GenericPackHost(
             pack_roots=[pack],
-            client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),
+            client=host_client,
             executor_id="astrid-pack-host",
             attempt_root=tmp_path / "attempt",
         )
-        record = host.discover()[0]
+        record = next(r for r in host.discover() if r.id == "rendering.render")
         host.preflight(record.id)
         assert host.capabilities[record.id].ready is True
 
@@ -399,18 +281,15 @@ def test_generic_host_remotion_register_claim_execute_settle_and_cas(
 
         spec = {
             "inputs": {
-                "timeline": str(timeline_path),
-                "timeline_ref": "timeline-generic-remotion",
-                "assets_registry": str(assets_path),
+                "timeline": managed["timeline"],
+                "assets_registry": managed["assets_registry"],
                 "selector": "rendering.remotion",
-                "backend_config": json.dumps(
-                    {
-                        "rendering.remotion": {
-                            "project_dir": str(remotion),
-                            "composition_id": "TimelineComposition",
-                        }
+                "backend_config": {
+                    "rendering.remotion": {
+                        "project_dir": str(remotion),
+                        "composition_id": "TimelineComposition",
                     }
-                ),
+                },
                 "output_name": "generic.mp4",
             }
         }
@@ -422,17 +301,21 @@ def test_generic_host_remotion_register_claim_execute_settle_and_cas(
             project_id=project_id,
             spec=spec,
         )
-        claim = generated.claim_task(
+        # The host's own client claims, so it records the attempt's Runtime epoch that run_task fences on.
+        claim = host_client.claim_next(
             executor_id="astrid-pack-host",
             capability_ids=[record.id],
             idempotency_key="generic-remotion-claim",
-            runtime_epoch=generated.health().runtime_epoch,
         )
         assert claim is not None and claim["task_id"] == task.task_id
 
+        # The task document the claim loop hands run_task also carries the run and the Runtime epoch.
+        claimed_task = host_client.task(task.task_id)
         settled = host.run_task(
             {
                 "task": {
+                    "run_id": claimed_task.run_id,
+                    "runtime_epoch": getattr(claimed_task, "runtime_epoch", None) or claim["runtime_epoch"],
                     "id": task.task_id,
                     "capability": record.id,
                     "spec": claim.spec,

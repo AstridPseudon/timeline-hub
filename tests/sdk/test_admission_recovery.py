@@ -12,7 +12,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from tests.helpers.runtime import use_runtime
+from tests.helpers.runtime import executor_token, use_runtime
 
 # Reuse the current Runtime; never bootstrap providers.
 pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
@@ -52,6 +52,13 @@ def _connect(daemon):
     assert Path(sys.modules[type(transport._generated).__module__].__file__) == _generated_path
     transport.handshake("receipt-test", "1", ["projects:read", "projects:write", "tasks:read", "tasks:write"])
     return SimpleNamespace(tasks=RemoteTasks(transport), _transport=transport)
+
+
+def _worker(daemon, executor_id):
+    token = executor_token(daemon, executor_id)
+    worker = WorkspaceClient(daemon.endpoint, token)
+    worker._generated = _current_generated.WorkspaceClient(daemon.endpoint, token)
+    return worker
 
 
 @pytest.fixture
@@ -320,12 +327,11 @@ def test_new_sdk_render_invocation_after_failed_runtime_task_is_admitted(runtime
     first = invocation.invoke(render_id, **kwargs)
     assert first.ok and first.kernel_task_id
 
-    worker = WorkspaceClient(runtime.daemon.endpoint, runtime.daemon.worker_token)
-    worker._generated = _current_generated.WorkspaceClient(runtime.daemon.endpoint, runtime.daemon.worker_token)
-    worker.register_executor({
+    runtime.client._transport.register_executor({
         "executor_id": "fixture-renderer", "protocol": "workspace.v1", "resource_keys": [],
         "capabilities": [{"capability_id": render_id, "definition_digest": DIGEST, "status": "ready"}],
     }, idempotency_key="register-fixture-renderer")
+    worker = _worker(runtime.daemon, "fixture-renderer")
     attempt = worker.claim_task(
         executor_id="fixture-renderer", capability_ids=[render_id], idempotency_key="claim-first-render",
     )
@@ -409,8 +415,7 @@ def test_response_loss_then_fake_execution_and_resume_runs_once(runtime, tmp_pat
         first = invocation.invoke(CAPABILITY, **kwargs)
         assert not first.ok
     assert json.loads(path.read_text())["locator"] is None
-    worker = WorkspaceClient(runtime.daemon.endpoint, runtime.daemon.worker_token)
-    worker._generated = _current_generated.WorkspaceClient(runtime.daemon.endpoint, runtime.daemon.worker_token)
+    worker = _worker(runtime.daemon, "fake-worker")
     attempt = worker.claim_task(executor_id="fake-worker", capability_ids=[CAPABILITY], idempotency_key="fake-claim")
     assert attempt and attempt["task_id"]
     executions = []

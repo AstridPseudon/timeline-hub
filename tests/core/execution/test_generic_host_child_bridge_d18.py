@@ -1,6 +1,6 @@
 """D18 offline proof: local sockets, disposable Runtime realm, fake CAS bytes.
 
-Set ASTRID_D18_RUNTIME_SOURCE to the audited Runtime worktree. Its canonical
+The Runtime checkout from tests.helpers.runtime is the audited source. Its canonical
 client is loaded under a private module name; no vendored source is replaced.
 ASTRID_D18_USE_VENDORED_CLIENT=1 retains the normal host-created client class
 and substitutes only its offline transport after the B01 vendor sync.
@@ -31,7 +31,7 @@ from astrid.core.execution.generic_host import GenericPackHost, HostError, Runti
 from astrid.sdk._child_bridge import ChildBridge, _BridgeRejected
 from astrid.sdk.execution_request import normalize_execution_request
 from astrid_runtime_client import ApiError, WorkspaceClient
-from tests.lanes import unavailable
+from tests.helpers.runtime import runtime_checkout
 
 # The Runtime realm these proofs run against is a second checkout (tests/lanes.py).
 INTEGRATION_FIXTURES = ("world",)
@@ -961,10 +961,7 @@ def test_discovery_selected_association_filter_acquires_only_selected_object(dis
 
 @pytest.fixture
 def world(tmp_path, monkeypatch):
-    source = os.environ.get("ASTRID_D18_RUNTIME_SOURCE")
-    if not source:
-        unavailable("set ASTRID_D18_RUNTIME_SOURCE to the audited Runtime worktree")
-    source = Path(source)
+    source = runtime_checkout()
     monkeypatch.syspath_prepend(str(source))
     monkeypatch.setenv("ASTRID_SOURCE_STATE", str(tmp_path / "absent.json"))
     monkeypatch.delenv("ASTRID_PACKS_PATH", raising=False)
@@ -1153,9 +1150,11 @@ def request(world, *, key="child", value="scalar", descriptors=None, request_id=
 def serve_one(world, *, ready=None):
     """Independent host instance serves the same target/registered executor."""
     host = GenericPackHost(pack_roots=[world.root], client=world.client, executor_id="worker", max_concurrency=2)
-    host.discover()
-    if ready is not None:
-        ready.set()
+    try:
+        host.discover()
+    finally:
+        if ready is not None:
+            ready.set()  # waiters wake either way; a discovery error surfaces through the future
     deadline = time.monotonic() + 4
     while time.monotonic() < deadline:
         with world.lock:

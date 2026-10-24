@@ -1,5 +1,6 @@
-# Default run per push (testing plan UA.1). The heavy lanes (integration, darwin_native, live, opt_in;
-# tests/lanes.py) have no scheduled run yet: they run only on request, locally (testing plan, Owned debt).
+# Default run per push (testing plan UA.1). The heavy lanes run elsewhere: darwin_native, remotion, chrome and codex_cli
+# in the darwin-native job below; integration and opt_in nightly in .github/workflows/lanes.yml. The lanes with no job
+# (workstation, omp, gpu, app_checkout) are listed by name at the end of every run (tests/lanes.py).
 name: CI
 
 on:
@@ -51,15 +52,13 @@ jobs:
   unit-shard:
     name: unit shard ${{ matrix.group }} / 8 (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    # Windows port in progress: feat/runtime-portable
-    continue-on-error: ${{ matrix.os == 'windows-latest' }}
     env:
       # The test run's skip registry (tests/lanes.py) reads this: a lane this job provides fails, not skips, when its dependency is missing.
       ASTRID_CI_JOB: unit-shard-${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
         group: [1, 2, 3, 4, 5, 6, 7, 8]
 
     steps:
@@ -87,10 +86,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg fonts-dejavu-core
         shell: bash
-
-      - name: Install system media tools (Windows)
-        if: runner.os == 'Windows'
-        run: choco install ffmpeg --no-progress
 
       - name: Install package with dev extras
         run: python -m pip install -e '.[dev]'
@@ -125,9 +120,22 @@ jobs:
     runs-on: macos-latest
     env:
       ASTRID_CI_JOB: darwin-native
+      # A test in both the integration and a darwin lane starts real Runtime daemons from this checkout (tests/helpers/runtime.py).
+      ASTRID_RUNTIME_CHECKOUT: ${{ github.workspace }}/astrid-runtime
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Read the pinned Runtime commit
+        id: runtime-pin
+        run: echo "commit=$(python3 -c 'import json; print(json.load(open("runtime.lock.json"))["source_commit"])')" >> "$GITHUB_OUTPUT"
+
+      - name: Check out the Runtime (astrid-runtime)
+        uses: actions/checkout@v4
+        with:
+          repository: banodoco/astrid-runtime
+          ref: ${{ steps.runtime-pin.outputs.commit }}
+          path: astrid-runtime
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -154,16 +162,19 @@ jobs:
       - name: Install package with dev extras
         run: python -m pip install -e '.[dev]'
 
-      - name: Install the pinned Runtime and client
-        run: python scripts/ci_install_runtime.py
+      - name: Install the Runtime and client from the checkout
+        run: python -m pip install --no-deps -e ./astrid-runtime -e ./astrid-runtime/packages/python
 
       - name: Provision the Remotion browser
         run: npx remotion browser ensure
         working-directory: remotion
 
-      # The lanes the default run deselects and only this job provides: native macOS, the Remotion install, headless Chromium.
+      - name: Install the Codex CLI (the codex_cli lane starts its native binary in the host sandbox)
+        run: npm install -g @openai/codex@0.163.0
+
+      # The lanes the default run deselects and only this job provides: native macOS, the Remotion install, headless Chromium, the Codex CLI.
       - name: Darwin native, Remotion and browser tests
-        run: python -m pytest -q -m "darwin_native or remotion or chrome"
+        run: python -m pytest -q -m "darwin_native or remotion or chrome or codex_cli"
 
   # Release wheel (testing plan R-1: kept from the old m8 artifact job). Hashed build tools, one wheel,
   # installed with only the hashed runtime lock, and the toolchain recorded next to it. It is also the

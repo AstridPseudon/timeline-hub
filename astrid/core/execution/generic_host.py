@@ -195,6 +195,15 @@ if TYPE_CHECKING:
     from astrid.core.execution.orchestrator.schema import OrchestratorDefinition
 
 
+def _remotion_readiness_message(exc: BaseException) -> str:
+    """Plain-language readiness failure that keeps the underlying reason."""
+    reason = str(exc).strip() or type(exc).__name__
+    message = f"worker Remotion readiness context is unavailable: {reason}"
+    if "registry corpus changed" in reason:
+        message += "; restart Astrid to re-bind it"
+    return message
+
+
 class HostError(RuntimeError):
     """A controlled host-side error suitable for a worker diagnostic."""
 
@@ -1543,7 +1552,12 @@ def _install_host_vibecomfy_import_root() -> Path | None:
                 raise HostError("installed host has a conflicting cached VibeComfy origin")
     existing = importlib.util.find_spec("vibecomfy")
     expected = package / "__init__.py"
-    if existing is not None and (not existing.origin or Path(existing.origin) != expected):
+    # A bare namespace directory (no code; VibeComfy's own data-files install leaves one in
+    # site-packages) cannot shadow the attested regular package, which wins on resolution and
+    # is verified below. Any other resolution is a conflicting dependency.
+    namespace_only = existing is not None and existing.loader is None and existing.origin is None
+    if existing is not None and not namespace_only and (
+            not existing.origin or Path(existing.origin) != expected):
         raise HostError("installed host has a conflicting VibeComfy package resolution")
     products = _host_product_import_origins()
     original_path = sys.path[:]
@@ -8049,7 +8063,7 @@ class GenericPackHost:
                 _validated_runtime(Path(env[ASTRID_REMOTION_PROJECT_DIR]), environment=readiness_env)
             except Exception as exc:
                 secrets.clear()
-                raise HostError("worker Remotion readiness context is unavailable") from exc
+                raise HostError(_remotion_readiness_message(exc)) from exc
         return env, secrets
 
     @staticmethod
@@ -14050,7 +14064,10 @@ def _cli_impl(managed_shutdowns: list[_ManagedStdinShutdown]) -> int:
 
     _emit_startup_phase("startup_identity_done")
     output_root = os.environ.get("ASTRID_OUTPUT_ROOT")
-    if activation is not None and activation.get("acceptance_mode") == _ACTIVATION_BOOTSTRAP_MODE:
+    # An owner-activated host (provider bootstrap or a machine's Runtime acceptance receipt) allocates its
+    # attempts under the output root the owner independently observes (host_bootstrap observe_ready).
+    if (preparation is None and activation is not None
+            and activation.get("acceptance_mode") in {_ACTIVATION_BOOTSTRAP_MODE, _ACTIVATION_RECEIPT_MODE}):
         if not output_root or not Path(output_root).is_absolute() or Path(output_root).is_symlink():
             parser.error("activated host requires an absolute non-symlink output root")
         if args.attempt_root or args.attempt_base:

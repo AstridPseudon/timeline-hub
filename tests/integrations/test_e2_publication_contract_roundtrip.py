@@ -106,7 +106,7 @@ def _write_pack(root: Path) -> Path:
 
 def test_publication_contract_producer_upload_fenced_settlement_roundtrip(tmp_path: Path, real_runtime) -> None:
     pack_root = _write_pack(tmp_path / "publication-pack")
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     host: GenericPackHost | None = None
     try:
         owner = WorkspaceClient(daemon.endpoint, daemon.token)
@@ -117,6 +117,8 @@ def test_publication_contract_producer_upload_fenced_settlement_roundtrip(tmp_pa
         # The RRP host keeps inline settlement as its safe default.  This
         # bounded proof selects its existing object-upload branch so the
         # Runtime ingest HTTP call is part of the observed producer seam.
+        # Transport media types are MIME (the manifest travels as application/json); the
+        # metadata/result-manifest artifact type stays internal to the capability definition.
         worker.INLINE_SETTLEMENT_OUTPUTS = False
         uploads: list[tuple[str, dict[str, Any]]] = []
         real_upload = worker.upload_object
@@ -165,7 +167,7 @@ def test_publication_contract_producer_upload_fenced_settlement_roundtrip(tmp_pa
         assert set(uploads_by_filename) == {FIXTURE_FILENAME, MANIFEST_FILENAME}
         for filename, media_type, output_port in (
             (FIXTURE_FILENAME, "video/mp4", "video"),
-            (MANIFEST_FILENAME, "metadata/result-manifest", "manifest"),
+            (MANIFEST_FILENAME, "application/json", "manifest"),
         ):
             upload_kwargs = uploads_by_filename[filename]
             assert upload_kwargs["project_id"] is None
@@ -190,7 +192,7 @@ def test_publication_contract_producer_upload_fenced_settlement_roundtrip(tmp_pa
         assert settled["coverage"] == SOURCE_COVERAGE
         assert settled_manifest["digest"] == expected_manifest_digest
         assert settled_manifest["filename"] == MANIFEST_FILENAME
-        assert settled_manifest["media_type"] == "metadata/result-manifest"
+        assert settled_manifest["media_type"] == "application/json"
         assert settled_manifest["size"] == len(MANIFEST_BYTES)
         assert settled_manifest["role"] == "auxiliary"
         assert settled_manifest["is_primary"] is False
@@ -205,7 +207,7 @@ def test_publication_contract_producer_upload_fenced_settlement_roundtrip(tmp_pa
         assert set(managed_by_filename) == {FIXTURE_FILENAME, MANIFEST_FILENAME}
         for filename, digest, media_type, role, primary, durability, size in (
             (FIXTURE_FILENAME, expected_digest, "video/mp4", "result", True, "durable", len(FIXTURE_BYTES)),
-            (MANIFEST_FILENAME, expected_manifest_digest, "metadata/result-manifest", "auxiliary", False, "temporary", len(MANIFEST_BYTES)),
+            (MANIFEST_FILENAME, expected_manifest_digest, "application/json", "auxiliary", False, "temporary", len(MANIFEST_BYTES)),
         ):
             managed = managed_by_filename[filename]
             reread = owner.get_managed_output(managed.association_id)

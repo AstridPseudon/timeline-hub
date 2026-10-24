@@ -17,13 +17,13 @@ import yaml
 from tests import lanes
 
 REPO = Path(__file__).resolve().parents[1]
-WORKFLOW = yaml.safe_load((REPO / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8"))
+WORKFLOWS = [yaml.safe_load((REPO / ".github" / "workflows" / name).read_text(encoding="utf-8")) for name in ("ci.yml", "lanes.yml")]
 
 
 def _jobs_by_name() -> dict[str, dict]:
     """CI jobs keyed by the ASTRID_CI_JOB they set, a matrix job expanded to one entry per OS."""
     found: dict[str, dict] = {}
-    for job in WORKFLOW["jobs"].values():
+    for job in (job for workflow in WORKFLOWS for job in workflow["jobs"].values()):
         name = (job.get("env") or {}).get("ASTRID_CI_JOB")
         if not name:
             continue
@@ -56,8 +56,10 @@ def test_every_lane_is_manual_or_run_by_a_ci_job() -> None:
     for name, lane in lanes.LANES.items():
         if lane.kind == "manual":
             assert not lane.jobs and lane.default_off, f"{name}: a manual lane has no CI job and is deselected by default"
+        elif lane.no_ci:
+            assert not lane.jobs, f"{name} says no CI job runs it but names {lane.jobs}"
         else:
-            assert lane.jobs, f"{name} is declared but no CI job runs it: give it a job or make it a manual lane"
+            assert lane.jobs, f"{name} is declared but no CI job runs it: give it a job, a no_ci reason, or make it a manual lane"
 
 
 @pytest.mark.parametrize("name", [name for name, lane in lanes.LANES.items() if lane.jobs])
@@ -67,7 +69,7 @@ def test_the_jobs_of_a_lane_provision_and_select_it(name: str) -> None:
     for job_name in lane.jobs:
         assert job_name in jobs, f"{name}: no CI job sets ASTRID_CI_JOB={job_name}"
         job = jobs[job_name]
-        assert lane.provision in yaml.safe_dump(job) or lane.kind == "platform", f"{name}: {job_name} does not provision {lane.provision!r}"
+        assert lane.provision in yaml.safe_dump(job), f"{name}: {job_name} does not provision {lane.provision!r}"
         commands = _pytest_commands(job)
         assert commands, f"{job_name} runs no pytest"
         if lane.default_off:
