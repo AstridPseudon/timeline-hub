@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T05:10:45Z | dispatcher heartbeat 14s | live 2 (sol 1, luna 1, other 0) | busy30 15 | status age 3m -->
-# app board, 2026-10-24T05:06Z
+<!-- app | 2026-10-24T05:13:31Z | dispatcher heartbeat 10s | live 4 (sol 2, luna 2, other 0) | busy30 16 | status age 0m -->
+# app board, 2026-10-24T05:11Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -69,12 +69,17 @@
 | P2-D45-element-cause | Classify actual element failure | Sol | Independent0459 source PASS | merged | app-P2-D45-element-cause-sol-0459 | Confirmed: real catalog caller never captures its adapter turn. Refusal occurs before save and POST. Repair0505 assigned. | c0fe /079 /37eb |
 | P2-D45-whole-path | Independently investigate client to server | Luna | Independent source audit complete | merged | app-P2-D45-whole-path-review-0459 | Confirms catalog capture defect and a separate missing basis for parameter saves. Bounded authors0505 assigned. | c0fe /079 /37eb |
 
-| P3-D45-original-cause | Classify actual Gate5 failure | Sol; independent Luna | Independent cause review0506 | review | app-P3-D45-original-cause-sol-0501 | Author finds reset5-to0 against freshclip0; zero POSTs. Proof setup owner requested; independent0506 reviews causal limits. | c0fe /079 /37eb |
+| P3-D45-original-cause | Classify actual Gate5 failure | Sol; independent Luna | Independent0506 PASS | merged | app-P3-D45-original-cause-sol-0501 | Confirmed reset5-to0 against fresh clip0; zero POSTs. Proof owns setup correction; all later original stages unrun. | c0fe /079 /37eb |
 
 | A3-catalog-capture | Capture real catalog Apply turn | Luna | Sol and independent0459 findings | doing | app-A3-catalog-capture-0505 | Real mounted panel RED/GREEN and stale head refusal required. Existing adapter guards remain strict. | Currentc0fe base |
 | A2-element-params | Preserve parameter edit ownership basis | Sol | Independent0459 source finding | doing | app-A2-element-params-sol-0505 | Faithful callback RED required before fix. Separate files from catalog capture; no ownership waiver. | Currentc0fe base |
-| P2-D45-popup-shape | Classify popup command assertion | Luna | Actual closed13583 popup artifacts | doing | app-P2-D45-popup-shape-0505 | Product versus oracle classification only. No source or body edit; Proof owns any oracle adaptation. | Currentc0fe |
-| P2-D45-parent-cause | Classify actual parent move timeout | Sol | Actual closed13583 parent artifacts | doing | app-P2-D45-parent-cause-sol-0505 | Find exact gesture to outbox to response boundary. No presumed Runtime cost or repeated body. | Currentc0fe |
+| P2-D45-popup-shape | Classify popup command assertion | Luna; independent Luna | Causal review0511 | review | app-P2-D45-popup-shape-0505 | Actual V3 is absent from raw child; provider422 is correct. Planner repair0511 and separate Proof created-claim oracle ask assigned. | Currentc0fe |
+| P2-D45-parent-cause | Classify actual parent move timeout | Sol; independent Luna | Causal review0511 | review | app-P2-D45-parent-cause-sol-0505 | Local move0-to5, zero POSTs; exact internal boundary unknown. Offline mounted reproduction0511 assigned. | Currentc0fe |
+
+| A3-popup-raw-track | Preserve captured raw popup ADD track | Luna | Concrete popup cause0505 | doing | app-A3-popup-raw-track-0511 | OccupiedV2 RED/GREEN and real caller policy required; ordinary parent planning stays intact. | Currentc0fe base |
+| P2-D45-cause-review | Review popup and parent causal limits | Luna | Two complete0505 reports | doing | app-P2-D45-popup-parent-cause-review-0511 | Independently checks product track cause and precise parent UNKNOWN; no broad duplicate extractor. | Currentc0fe |
+| A2-parent-mounted-repro | Reproduce real move scheduling boundary | Sol | Parent internal boundary unknown | doing | app-A2-parent-mounted-repro-sol-0511 | Offline production pointer and owner/capture/session path. No existing source edit or new original. | Currentc0fe |
+| P2-popup-created-oracle | Assert exact required created claims | Proof Luna | C0 claims and popup cause0505 | blocked:app2 | Proof owner requested0511 | Keep all original command, media, closure and undo assertions; independent no-weakening required. | Request only |
 
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes.
 Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397-line, 40-assertion test, plus required helpers, under D31.
@@ -82,7 +87,7 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 Integration: c0fe889944 contains all reviewed App fixes. Joined0438 passed523 tests, three types and lint; independent A4census0444 passed.
 Later: Runtime D42 remains security held. D45 releases the next pair on existing37eb plus current App; no unsafe memo adoption.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
-Next ready: Catalog and parameter repairs0505, popup and parent diagnoses0505, independent P3 cause0506 and Proof setup correction. No repeated pair.
+Next ready: Catalog and params0505; popup planner0511; parent reproduction0511; Proof reset and created-claim oracle corrections. No repeated pair.
 Disk: About11 GB available. Sweep0441 removed zero directories; freed0 GB. No new eligible non-KEEP tree. Earlier dirty U3 and compact refusals remain stopped.
 
 Lead: D45 pair is terminal: P213583 failed3 with5 not run; P34065 failed original Gate5 after readiness passed. Full packet and causal owners are in peer0504.
