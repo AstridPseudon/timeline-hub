@@ -20,8 +20,6 @@ import sys
 ROOT = Path(__file__).resolve().parent
 ORCH = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch")
 SUITES = ORCH / "tests" / "suites.conf"
-RECIPE_COMMIT = "ed81088ed8a70c2c2f4a5f5d3be6636e9e17212e"
-RECIPE_REPO = Path("/home/user/banodoco/reigh-app")
 
 
 def module():
@@ -33,36 +31,19 @@ def module():
     return value
 
 
-def recipe() -> dict:
-    local = ROOT / "current-service-inputs.json"
-    if local.is_file():
-        value = json.loads(local.read_text(encoding="utf-8"))
-    else:
-        value = json.loads(subprocess.check_output(
-            ["git", "-C", str(RECIPE_REPO), "show", f"{RECIPE_COMMIT}:current-service-inputs.json"],
-            text=True,
-        ))
-    # The historical recipe is evidence for the immutable bench inputs only.
-    # Source identity is refreshed from the current clean integration roots;
-    # the adapter then authenticates it against its frozen D59 tuple.
-    for role, checkout in (("app", "/home/user/work/app"), ("agent", "/home/user/work/agent"), ("runtime", "/home/user/work/runtime")):
-        head = subprocess.check_output(["git", "-C", checkout, "rev-parse", "HEAD"], text=True).strip()
-        tree = subprocess.check_output(["git", "-C", checkout, "show", "-s", "--format=%T", head], text=True).strip()
-        parents = subprocess.check_output(["git", "-C", checkout, "show", "-s", "--format=%P", head], text=True).strip().split()
-        value["source"][role] = {
-            **value["source"][role],
-            "ref": "tl/integration",
-            "head": head,
-            "tree": tree,
-            "parents": parents,
-        }
-    value["environment"] = {
-        "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion.env",
-        "ASTRID_REMOTION_PROJECT_DIR": "/home/user/work/runtimes/agent-remotion",
-        "ASTRID_NODE_EXECUTABLE": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
-        "ASTRID_TIMELINE_SCHEMA_PYTHONPATH": "/home/user/work/venv-agent/lib/python3.13/site-packages",
-    }
+def service_inputs():
+    spec = importlib.util.spec_from_file_location("current_service_inputs", ROOT / "current-service-inputs.py")
+    if spec is None or spec.loader is None:
+        raise RuntimeError("current-service-inputs.py is unavailable")
+    value = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(value)
     return value
+
+
+def recipe() -> dict:
+    inputs = service_inputs()
+    value = json.loads(inputs.read_text(inputs.RECIPE_PATH))
+    return inputs.authenticate_current(value)
 
 
 def rows() -> dict[str, tuple[str, str]]:

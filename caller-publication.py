@@ -619,9 +619,13 @@ def bind_runtime_launches(text: str, name: str) -> str:
     """Route Runtime launches through the adapter's distinct interpreter."""
 
     literal = 'ASTRID_RUNTIME_PYTHON="$CPY"'
-    expected = 2 if name == P2_SUITE else 3
+    expected = 1 if name == P2_SUITE else 2
     require(text.count(literal) == expected, f"{name} Runtime launch binding inventory changed")
-    return text.replace(literal, 'ASTRID_RUNTIME_PYTHON="$RCPY"')
+    export_literal = 'ASTRID_RUNTIME_PYTHON "$CPY"'
+    require(text.count(export_literal) == 1, f"{name} Runtime export binding inventory changed")
+    return text.replace(literal, 'ASTRID_RUNTIME_PYTHON="$RCPY"').replace(
+        export_literal, 'ASTRID_RUNTIME_PYTHON "$RCPY"'
+    )
 
 
 def compare_bindings(template: str, candidate: str, edits: list[tuple[int, int, str]], label: str) -> None:
@@ -1015,7 +1019,7 @@ def prepare() -> dict[str, Any]:
         syntax = syntax_check(candidate_outer, rebound, tmp, name)
         candidates[name] = {
             "source_row_sha256": registry["rows"][name]["sha256"],
-            "rebound": old,
+            "rebound": rebound,
             "preservation": preservation,
             "syntax": syntax,
             "wrapper": wrapper_check(candidate_outer, rebound, name),
@@ -1036,6 +1040,11 @@ def prepare() -> dict[str, Any]:
         "run_authorization": "D59_CURRENT_HEADS",
         "authority": "D59 authorizes existing-bench current-head runs; no separate coordinator permission, future snapshot, or final terminal receipt is a pre-run requirement.",
         "execution": "NOT_RUN",
+        "commands": {
+            "refresh": "PYTHONDONTWRITEBYTECODE=1 python3 current-service-inputs.py --refresh",
+            "prepare": "PYTHONDONTWRITEBYTECODE=1 python3 caller-publication.py",
+            "prepare_optimized": "PYTHONDONTWRITEBYTECODE=1 python3 -O caller-publication.py",
+        },
         "source": source,
         "agent": agent,
         "runtime": runtime,
@@ -1063,6 +1072,14 @@ def prepare() -> dict[str, Any]:
             "native_and_encoded_stage_bytes": "authenticated unchanged against approved templates",
         },
         "wire_fields": wire,
+        "counts": {
+            "request_fields": wire["request"]["count"],
+            "reply_history_fields": wire["reply_history"]["count"],
+            "runtime_app_mappings": bindings["app_consumer"]["file_count"],
+            "runtime_agent_mappings": bindings["agent_consumer"]["file_count"],
+            "p2_cases": 8,
+            "p3_stages": 1,
+        },
         "required_custody": custody,
         "readiness": {"status": "SOURCE_PREPARED_ENVIRONMENT_AUTHENTICATED", "owner": "normal existing-service recipe 1304",
                       "reason": "The actual normal working-service inputs are authenticated read-only; this artifact does not start or execute the service.",
@@ -1078,6 +1095,7 @@ def prepare() -> dict[str, Any]:
         "tmpdir": str(tmp),
     }
     (tmp / "caller-custody.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+    (ARTIFACT / "caller-custody.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
     print(json.dumps(result, indent=2, sort_keys=True))
     return result
 

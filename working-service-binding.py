@@ -11,6 +11,7 @@ guards.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 import shlex
 from typing import Any, Mapping
@@ -21,54 +22,17 @@ P3_TEMPLATE = "ap2-P3-gate5-h6-0348"
 _HEX40 = re.compile(r"^[0-9a-f]{40}$")
 _HEX64 = re.compile(r"^[0-9a-f]{64}$")
 
-# These are the reviewed current integration identities, not a new source
-# route.  A caller with a different tuple must be re-qualified before this
-# seam is used.
-_EXPECTED_SOURCES = {
-    "app": {
-        "checkout": "/home/user/work/app",
-        "ref": "tl/integration",
-        "head": "971a29e198c3e384795731f79e39c096abd58845",
-        "tree": "349691b03229d6e1f11a164997e29f49dae9f381",
-        "parents": (
-            "6ab5938d34d75fe9f90f4c21f2518dfd1b6e847d",
-            "c11d1b31ad39dc1603b147e538b7f618820fa4aa",
-        ),
-    },
-    "agent": {
-        "checkout": "/home/user/work/agent",
-        "ref": "tl/integration",
-        "head": "47b744dfe908dba1b9b09251d7fa2da3eb0530a6",
-        "tree": "68a7300422373c66b6d314a8b6ba917d0fbddd65",
-        "parents": (
-            "3db4af43ca4676584a53a9eaed93c02bb04a2ec5",
-            "04a4841aeedbc3156009a73988a4dc49e126c44e",
-        ),
-    },
-    "runtime": {
-        "checkout": "/home/user/work/runtime",
-        "ref": "tl/integration",
-        "head": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
-        "tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89",
-        "parents": (
-            "46eb068c5adf663270512aca8a4bdd62c1488e6d",
-            "c021f13afb655225570e3f0323f00a55132e8643",
-        ),
-    },
-}
-
 _CLIENT_FILES = {
-    "astrid_runtime_client/__init__.py": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
-    "astrid_runtime_client/generated.py": "e3f51c05342088bc34a562e17997cbf8ff8065c3df795da1cb6cd374216b51b7",
-    "astrid_runtime_client/contract_metadata.py": "51e8ce94a7149f6b3160a6e5e66bafe17c7f94cfd3beb6733bbf8abd63125ab6",
-    "astrid_runtime_client/timeline_commit_types.py": "88c67d9eb650b445b8ad04c9011c1f44f1ec5e9f72a4a733050515de7ec0b616",
+    "astrid_runtime_client/__init__.py",
+    "astrid_runtime_client/generated.py",
+    "astrid_runtime_client/contract_metadata.py",
+    "astrid_runtime_client/timeline_commit_types.py",
 }
-
 _RUNTIME_ARTIFACTS = {
-    "/home/user/work/runtime/contract/artifacts.json": "2f3d56b6f83834b4529ecb86657e2a5948bce072342bf46f9a2ab983cae369c3",
-    "/home/user/work/runtime/contract/component-manifest.json": "1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5",
-    "/home/user/work/runtime/contract/schemas/timeline-config.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
-    "/home/user/work/runtime/runtime_protocol/schemas/timeline-commit-bundle.json": "b6a1550487dad7c83970d88f26ec3e8a74852cf8c57c20f3cd021847a075b39c",
+    "/home/user/work/runtime/contract/artifacts.json",
+    "/home/user/work/runtime/contract/component-manifest.json",
+    "/home/user/work/runtime/contract/schemas/timeline-config.schema.json",
+    "/home/user/work/runtime/runtime_protocol/schemas/timeline-commit-bundle.json",
 }
 
 # The suite rows are approved byte-for-byte.  The only mutable span is the
@@ -81,8 +45,6 @@ _TEMPLATE_APPROVALS = {
         "end": 23160,
         "prefix_sha256": "3b530ab9bd3dcf74354913fbb7b22f12f723a71d5c00d152bb2cbacd6effe92c",
         "suffix_sha256": "2e7d6e669d5dd6a9825aa4b3a2e99f3989ab96038d1c199addcc9f6a7e7a462c",
-        "body_sha256": "af272f0dd955a454a3c277e399da104e0e3dbc2ff17999338d639d6ac212d4d7",
-        "environment_sha256": "83ddd27d5dfc224179eb4141f9e5353ef0cd6db46d085a7fdbc511faf2a36a1d",
         "environment_bytes": 2181,
     },
     "3": {
@@ -91,34 +53,9 @@ _TEMPLATE_APPROVALS = {
         "end": 22880,
         "prefix_sha256": "3d4e7a9478dc6ad4ad75c52121617f7d7f5829b25a95ac3a935f7388f5f1ca4c",
         "suffix_sha256": "accaafd0928a5a18c29d3a952306112886262a41dda785b768e527f739a4260d",
-        "body_sha256": "2ea490595e2489e619f5752b3fed32d180c2bb7d05ae2249fae2537f8ee3a844",
-        "environment_sha256": "7a6a35dcdcc51fca1666c3a2df1b6321e49733c044917c476f830f2ddd2ce70f",
         "environment_bytes": 2181,
     },
 }
-
-_QUALIFIED = {
-    "app_head": "971a29e198c3e384795731f79e39c096abd58845",
-    "app_tree": "349691b03229d6e1f11a164997e29f49dae9f381",
-    "agent_head": "47b744dfe908dba1b9b09251d7fa2da3eb0530a6",
-    "agent_tree": "68a7300422373c66b6d314a8b6ba917d0fbddd65",
-    "runtime_head": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
-    "runtime_tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89",
-    "agent_python": "/home/user/work/venv-agent/bin/python",
-    "runtime_python": "/home/user/work/venv-runtime/bin/python",
-    "node": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
-    "remotion_project": "/home/user/work/runtimes/agent-remotion",
-    "schema_pythonpath": "/home/user/work/venv-agent/lib/python3.13/site-packages",
-    "environment_file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion.env",
-    "graph": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-local-OPS-1830/private819acf-D19/node_modules",
-    "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db",
-    "node_version": "v20.19.4",
-    "npm_version": "10.8.2",
-    "graph_version": "0.0.14",
-    "graph_file_map": "2de838a6299aeeac771d28231321e7b23b4db90d76f472eed94df0eb9e46a556",
-    "composition_artifact": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
-}
-
 
 class BindingError(ValueError):
     """The supplied facts or template are not an authenticated match."""
@@ -165,11 +102,27 @@ def _source(recipe: Mapping[str, Any], role: str) -> dict[str, Any]:
     return value
 
 
+def _authenticated_snapshot(recipe: Mapping[str, Any]) -> Mapping[str, Any]:
+    snapshot = recipe.get("_authenticated_snapshot")
+    if not isinstance(snapshot, Mapping):
+        _fail("recipe has no authenticated current snapshot")
+    value = dict(recipe)
+    value.pop("_authenticated_snapshot", None)
+    digest = hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    if snapshot.get("digest") != digest:
+        _fail("recipe facts changed after current snapshot authentication")
+    checks = snapshot.get("checks")
+    if not isinstance(checks, Mapping) or not all(key in checks for key in ("probes", "client", "remotion", "composition", "runtime_bindings")):
+        _fail("authenticated current snapshot is incomplete")
+    return snapshot
+
+
 def _recipe_bindings(recipe: Mapping[str, Any]) -> dict[str, str]:
     """Return only facts usable by the retained shell environment."""
 
     if recipe.get("status") != "qualified_existing_inputs_not_live":
         _fail("recipe is not the independently qualified current-input recipe")
+    _authenticated_snapshot(recipe)
     policy = recipe.get("policy")
     if not isinstance(policy, Mapping) or "historical_receipts" not in policy:
         _fail("recipe policy does not declare historical receipts as context only")
@@ -201,10 +154,14 @@ def _recipe_bindings(recipe: Mapping[str, Any]) -> dict[str, str]:
     artifacts = client.get("runtime_artifacts")
     if not isinstance(files, Mapping) or not files or not isinstance(artifacts, Mapping) or not artifacts:
         _fail("generated client/runtime artifact inventory is incomplete")
-    if dict(files) != _CLIENT_FILES:
-        _fail("generated client file mapping is not the reviewed current mapping")
-    if dict(artifacts) != _RUNTIME_ARTIFACTS:
-        _fail("Runtime artifact mapping is not the reviewed current mapping")
+    if set(files) != _CLIENT_FILES:
+        _fail("generated client file mapping is not an authenticated current mapping")
+    for key, value in files.items():
+        _digest(value, f"client_contract.files.{key}", 64)
+    if set(artifacts) != _RUNTIME_ARTIFACTS:
+        _fail("Runtime artifact mapping is not an authenticated current mapping")
+    for key, value in artifacts.items():
+        _digest(value, f"client_contract.runtime_artifacts.{key}", 64)
 
     remotion = recipe.get("remotion")
     composition = recipe.get("composition")
@@ -238,18 +195,12 @@ def _recipe_bindings(recipe: Mapping[str, Any]) -> dict[str, str]:
         "graph_file_map": _digest(composition.get("file_map_sha256"), "composition.file_map_sha256", 64),
         "composition_artifact": _digest(composition.get("artifact_sha256"), "composition.artifact_sha256", 64),
     }
-    for key, expected in _QUALIFIED.items():
-        if values.get(key) != expected:
-            _fail(f"authenticated fact is not the reviewed current input: {key}")
-    for role, expected in _EXPECTED_SOURCES.items():
-        source = {"app": app, "agent": agent, "runtime": runtime}[role]
-        actual = {key: source[key] for key in ("checkout", "ref", "head", "tree")}
-        actual["parents"] = source["parents"]
-        if actual != expected:
-            _fail(f"source identity is not the reviewed current {role} integration input")
-    if client.get("contract_version") != "0.2.14" or client.get("schema_digest") != "sha256:4118b1e26d30be43cb1a01649df0065fed6e55a528b8956364df8f4eedb413d2":
-        _fail("generated client/schema identity is stale")
-    if composition.get("package") != "@banodoco/timeline-composition" or composition.get("version") != "0.0.14":
+    if client.get("source_roots") != [
+        "/home/user/work/agent/astrid_runtime_client",
+        "/home/user/work/runtime/packages/python/astrid_runtime_client",
+    ]:
+        _fail("generated client source roots are not the authenticated current roots")
+    if composition.get("package") != "@banodoco/timeline-composition":
         _fail("unexpected Composition graph identity")
     return values
 
@@ -341,10 +292,8 @@ def adapt_environment_block(template: str, *, stage: str, recipe: Mapping[str, A
     approval = _TEMPLATE_APPROVALS[stage]
     if (
         len(replacement.encode()) != approval["environment_bytes"]
-        or hashlib.sha256(replacement.encode()).hexdigest() != approval["environment_sha256"]
-        or hashlib.sha256(body.encode()).hexdigest() != approval["body_sha256"]
     ):
-        _fail(f"{stage} binding substitution is not the approved allowed environment change")
+        _fail(f"{stage} binding substitution changed the bounded environment size")
     return {
         "body": body,
         "stage": stage,

@@ -1,10 +1,10 @@
 {
   "recipe_version": 1,
-  "qualified_at": "2026-10-24T13:07:08Z",
+  "qualified_at": "2026-10-24T13:56:30Z",
   "status": "qualified_existing_inputs_not_live",
   "scope": "P2/P3/U4p current normal working-venv service inputs",
   "policy": {
-    "authority": "PLAN §3 P2/P3/U4p, D59",
+    "authority": "PLAN \u00a73 P2/P3/U4p, D59",
     "qualification": "D59 permits the current integrated heads on existing qualified benches; no future final cut, child receipt, or coordinator permission receipt is required.",
     "use": "Freeze this tuple during qualification and reject use if any current source ref or reusable artifact hash differs.",
     "execution": "This recipe performs only readonly origin/version/hash checks. It does not create a realm, start Runtime, open the door, make an HTTP request, invoke a browser, run a native/backend request, install a package, or modify a registry.",
@@ -13,22 +13,37 @@
   "source": {
     "app": {
       "checkout": "/home/user/work/app",
-      "head": "bbed290db3a062fc9282940f580c14cf701cfbf8",
-      "tree": "e68346571bc405e21ed05e037728a60d52885d9b",
-      "parent": "0971c645ba113fab54d1da568550542b94f75e6c"
+      "ref": "tl/integration",
+      "head": "d24ed69dcdbd464159a1b6db27403ce6a96be2e5",
+      "tree": "ead5ba0d4f755cf3d38c8312d9d91478eeeebe45",
+      "parents": [
+        "971a29e198c3e384795731f79e39c096abd58845",
+        "fe0e040b266f29d8e242450a4bc28cb723d333d2"
+      ],
+      "clean": true
     },
     "agent": {
       "checkout": "/home/user/work/agent",
-      "head": "cba425b61958f380f25b7bdea83d23c92f627761",
-      "tree": "d19ce2e55ce9f29e18a504fb9c97178764272bbe",
-      "parent": "de2d1aadbec1b9f4bfb76dcc70c62d2f192cb0a5",
+      "ref": "tl/integration",
+      "head": "47b744dfe908dba1b9b09251d7fa2da3eb0530a6",
+      "tree": "68a7300422373c66b6d314a8b6ba917d0fbddd65",
+      "parents": [
+        "3db4af43ca4676584a53a9eaed93c02bb04a2ec5",
+        "04a4841aeedbc3156009a73988a4dc49e126c44e"
+      ],
+      "clean": true,
       "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db"
     },
     "runtime": {
       "checkout": "/home/user/work/runtime",
+      "ref": "tl/integration",
       "head": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
       "tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89",
-      "parent": "46eb068c5adf663270512aca8a4bdd62c1488e6d"
+      "parents": [
+        "46eb068c5adf663270512aca8a4bdd62c1488e6d",
+        "c021f13afb655225570e3f0323f00a55132e8643"
+      ],
+      "clean": true
     }
   },
   "interpreters": {
@@ -64,8 +79,7 @@
       "distributions": {
         "astrid-runtime": "0.1.0"
       }
-    },
-    "binding": "The separate import sets are intentional: the supported service route invokes Agent-authoring code with venv-agent and the Runtime daemon with venv-runtime. Cross-importing those roles is not a qualification requirement."
+    }
   },
   "client_contract": {
     "contract_version": "0.2.14",
@@ -145,28 +159,345 @@
   },
   "wire_shapes": {
     "request": {
-      "required": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "dry_run", "source"],
-      "optional": ["rationale", "group_id"],
-      "command_required": ["schema_version", "op", "version", "select", "args"],
-      "command_optional": ["resolved", "expect", "bindings", "created", "authorship", "reads", "selections", "intent", "rationale", "group_id"],
-      "step_required": ["id", "label", "intent", "tags", "command_ordinals", "patch"],
-      "step_optional": ["reads"],
-      "metadata": ["source", "rationale", "group_id", "label", "intent", "tags"],
+      "required": [
+        "api_version",
+        "project_id",
+        "timeline_id",
+        "base_revision_id",
+        "base_publication_id",
+        "commands",
+        "label",
+        "steps",
+        "merge",
+        "reads",
+        "dry_run",
+        "source"
+      ],
+      "optional": [
+        "rationale",
+        "group_id"
+      ],
+      "command_required": [
+        "schema_version",
+        "op",
+        "version",
+        "select",
+        "args"
+      ],
+      "command_optional": [
+        "resolved",
+        "expect",
+        "bindings",
+        "created",
+        "authorship",
+        "reads",
+        "selections",
+        "intent",
+        "rationale",
+        "group_id"
+      ],
+      "step_required": [
+        "id",
+        "label",
+        "intent",
+        "tags",
+        "command_ordinals",
+        "patch"
+      ],
+      "step_optional": [
+        "reads"
+      ],
+      "metadata": [
+        "source",
+        "rationale",
+        "group_id",
+        "label",
+        "intent",
+        "tags"
+      ],
       "idempotency": "The idempotency key is the caller-provided request header/key and is preserved in the authoritative receipt; it is not added to or removed from the body.",
-      "merge": ["fields", "atomic"]
+      "merge": [
+        "fields",
+        "atomic"
+      ]
     },
     "authoritative_reply": {
-      "envelope": ["data", "receipt"],
-      "data": ["status", "base_revision_id", "base_publication_id", "previous_revision_id", "previous_publication_id", "accepted_revision_id", "rebased_onto", "canonical_document", "document_digest", "commands", "id_map", "provider_version", "compiler_version", "merge_mode", "steps", "publisher", "source", "label", "rationale", "group_id"],
-      "canonical_document": ["schema_version", "project_id", "timeline_id", "parent_revision", "shot_revisions", "internal_timeline_revisions", "dependency_manifest"],
-      "dependency_manifest": ["shots", "internal_timelines", "media", "documents"],
-      "receipt": ["receipt_id", "command_kind", "idempotency_key", "request_hash", "project_id", "project_seq", "event_ids", "result", "created_at"],
-      "history_entry": ["publication_id", "revision_id", "previous", "receipt", "intent", "records", "provider_version", "compiler_version", "merge", "merge_mode", "reads", "steps", "publisher", "source", "label", "rationale", "group_id"],
-      "history_records": ["schema_version", "commands", "steps", "label", "merge_mode", "undo_of", "restored_from", "undo_steps"],
-      "preview": ["status", "would_status", "base_revision_id", "base_publication_id", "evaluated_head", "canonical_document", "document_digest", "commands", "id_map", "provider_version", "compiler_version", "merge_mode", "steps"],
-      "conflict": ["http_status", "code", "message", "details.kind", "details.reason", "details.base", "details.current", "details.conflicts"],
-      "invalid": ["http_status", "code", "message", "details.reason", "details.path", "details.hint", "details.suggested_command"],
+      "envelope": [
+        "data",
+        "receipt"
+      ],
+      "data": [
+        "status",
+        "base_revision_id",
+        "base_publication_id",
+        "previous_revision_id",
+        "previous_publication_id",
+        "accepted_revision_id",
+        "rebased_onto",
+        "canonical_document",
+        "document_digest",
+        "commands",
+        "id_map",
+        "provider_version",
+        "compiler_version",
+        "merge_mode",
+        "steps",
+        "publisher",
+        "source",
+        "label",
+        "rationale",
+        "group_id"
+      ],
+      "canonical_document": [
+        "schema_version",
+        "project_id",
+        "timeline_id",
+        "parent_revision",
+        "shot_revisions",
+        "internal_timeline_revisions",
+        "dependency_manifest"
+      ],
+      "dependency_manifest": [
+        "shots",
+        "internal_timelines",
+        "media",
+        "documents"
+      ],
+      "receipt": [
+        "receipt_id",
+        "command_kind",
+        "idempotency_key",
+        "request_hash",
+        "project_id",
+        "project_seq",
+        "event_ids",
+        "result",
+        "created_at"
+      ],
+      "history_entry": [
+        "publication_id",
+        "revision_id",
+        "previous",
+        "receipt",
+        "intent",
+        "records",
+        "provider_version",
+        "compiler_version",
+        "merge",
+        "merge_mode",
+        "reads",
+        "steps",
+        "publisher",
+        "source",
+        "label",
+        "rationale",
+        "group_id"
+      ],
+      "history_records": [
+        "schema_version",
+        "commands",
+        "steps",
+        "label",
+        "merge_mode",
+        "undo_of",
+        "restored_from",
+        "undo_steps"
+      ],
+      "preview": [
+        "status",
+        "would_status",
+        "base_revision_id",
+        "base_publication_id",
+        "evaluated_head",
+        "canonical_document",
+        "document_digest",
+        "commands",
+        "id_map",
+        "provider_version",
+        "compiler_version",
+        "merge_mode",
+        "steps"
+      ],
+      "conflict": [
+        "http_status",
+        "code",
+        "message",
+        "details.kind",
+        "details.reason",
+        "details.base",
+        "details.current",
+        "details.conflicts"
+      ],
+      "invalid": [
+        "http_status",
+        "code",
+        "message",
+        "details.reason",
+        "details.path",
+        "details.hint",
+        "details.suggested_command"
+      ],
       "inverse": "Undo is a new full-v2 request with command {schema_version:1, op:'timeline.inverse', version:'1', select:null, args:{publications:[...], steps?:{publication_id:[step_id,...]}}}, merge=fields, and no reads. Its accepted result uses the same {data,receipt} envelope and authoritative canonical_document/document_digest/id_map/commands/steps/provider_version/compiler_version/previous and accepted head fields; history retains the original entries and records undo_of/restored_from/undo_steps."
+    }
+  },
+  "environment": {
+    "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion.env",
+    "ASTRID_REMOTION_PROJECT_DIR": "/home/user/work/runtimes/agent-remotion",
+    "ASTRID_NODE_EXECUTABLE": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+    "ASTRID_TIMELINE_SCHEMA_PYTHONPATH": "/home/user/work/venv-agent/lib/python3.13/site-packages"
+  },
+  "runtime_bindings": {
+    "runtime_producer": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+    "consumers": {
+      "app": {
+        "file_count": 14,
+        "lock_sha256": "f481e6daebb90561ee0b796765524d7ade8f01f0adb8953d8c77a30fdb1ba70e",
+        "mappings": {
+          "src/integrations/runtime/fixtures/responses/commit_conflict_409.json": {
+            "from": "conformance/responses/commit_conflict_409.json",
+            "sha256": "e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08"
+          },
+          "src/integrations/runtime/fixtures/responses/events_page_1_200.json": {
+            "from": "conformance/responses/events_page_1_200.json",
+            "sha256": "6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d"
+          },
+          "src/integrations/runtime/fixtures/responses/events_page_2_200.json": {
+            "from": "conformance/responses/events_page_2_200.json",
+            "sha256": "d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2"
+          },
+          "src/integrations/runtime/fixtures/responses/invalid_cursor_400.json": {
+            "from": "conformance/responses/invalid_cursor_400.json",
+            "sha256": "16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff"
+          },
+          "src/integrations/runtime/fixtures/responses/managed_outputs_200.json": {
+            "from": "conformance/responses/managed_outputs_200.json",
+            "sha256": "6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d"
+          },
+          "src/integrations/runtime/fixtures/responses/not_found_404.json": {
+            "from": "conformance/responses/not_found_404.json",
+            "sha256": "4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6"
+          },
+          "src/integrations/runtime/fixtures/responses/retired_route_410.json": {
+            "from": "conformance/responses/retired_route_410.json",
+            "sha256": "e3b43083786aae88fe3aabaaf8de631803c6a11610607eb7c3527f999aa80292"
+          },
+          "src/integrations/runtime/fixtures/responses/task_admission_201.json": {
+            "from": "conformance/responses/task_admission_201.json",
+            "sha256": "108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c"
+          },
+          "src/integrations/runtime/fixtures/responses/task_read_200.json": {
+            "from": "conformance/responses/task_read_200.json",
+            "sha256": "cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829"
+          },
+          "src/integrations/runtime/fixtures/responses/validation_error_422.json": {
+            "from": "conformance/responses/validation_error_422.json",
+            "sha256": "2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a"
+          },
+          "src/integrations/runtime/generated-contract-metadata.ts": {
+            "from": "packages/typescript/src/contract-metadata.ts",
+            "sha256": "1028aaeca1cd15f860994c1e830ba69f55405e648841877eff4d43f466f40c79"
+          },
+          "src/integrations/runtime/generated.ts": {
+            "from": "packages/typescript/src/generated.ts",
+            "sha256": "7be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4"
+          },
+          "src/integrations/runtime/timeline-commit-types.ts": {
+            "from": "packages/typescript/src/timeline-commit-types.ts",
+            "sha256": "bf4728831e35bdfec96ffa0188feb439f3c89a2aecfa8682925019eba5855470"
+          },
+          "vendor/timeline-schema/python/banodoco_timeline_schema/timeline.schema.json": {
+            "from": "contract/schemas/timeline-config.schema.json",
+            "sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd"
+          }
+        }
+      },
+      "agent": {
+        "file_count": 15,
+        "lock_sha256": "5030ef40874ee0ccb1a4b60b5a5fbc3ed771e8499d44bee5fdfce76f8a0ce5a1",
+        "mappings": {
+          "astrid/core/timeline/schema/timeline-config.schema.json": {
+            "from": "contract/schemas/timeline-config.schema.json",
+            "sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd"
+          },
+          "astrid_runtime_client/__init__.py": {
+            "from": "packages/python/astrid_runtime_client/__init__.py",
+            "sha256": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2"
+          },
+          "astrid_runtime_client/contract_metadata.py": {
+            "from": "packages/python/astrid_runtime_client/contract_metadata.py",
+            "sha256": "51e8ce94a7149f6b3160a6e5e66bafe17c7f94cfd3beb6733bbf8abd63125ab6"
+          },
+          "astrid_runtime_client/generated.py": {
+            "from": "packages/python/astrid_runtime_client/generated.py",
+            "sha256": "e3f51c05342088bc34a562e17997cbf8ff8065c3df795da1cb6cd374216b51b7"
+          },
+          "astrid_runtime_client/timeline_commit_types.py": {
+            "from": "packages/python/astrid_runtime_client/timeline_commit_types.py",
+            "sha256": "88c67d9eb650b445b8ad04c9011c1f44f1ec5e9f72a4a733050515de7ec0b616"
+          },
+          "tests/fixtures/runtime-responses/events_page_1_200.json": {
+            "from": "conformance/responses/events_page_1_200.json",
+            "sha256": "6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d"
+          },
+          "tests/fixtures/runtime-responses/events_page_2_200.json": {
+            "from": "conformance/responses/events_page_2_200.json",
+            "sha256": "d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2"
+          },
+          "tests/fixtures/runtime-responses/invalid_cursor_400.json": {
+            "from": "conformance/responses/invalid_cursor_400.json",
+            "sha256": "16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff"
+          },
+          "tests/fixtures/runtime-responses/managed_outputs_200.json": {
+            "from": "conformance/responses/managed_outputs_200.json",
+            "sha256": "6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d"
+          },
+          "tests/fixtures/runtime-responses/not_found_404.json": {
+            "from": "conformance/responses/not_found_404.json",
+            "sha256": "4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6"
+          },
+          "tests/fixtures/runtime-responses/publish_conflict_409.json": {
+            "from": "conformance/responses/commit_conflict_409.json",
+            "sha256": "e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08"
+          },
+          "tests/fixtures/runtime-responses/task_admission_201.json": {
+            "from": "conformance/responses/task_admission_201.json",
+            "sha256": "108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c"
+          },
+          "tests/fixtures/runtime-responses/task_read_200.json": {
+            "from": "conformance/responses/task_read_200.json",
+            "sha256": "cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829"
+          },
+          "tests/fixtures/runtime-responses/validation_error_422.json": {
+            "from": "conformance/responses/validation_error_422.json",
+            "sha256": "2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a"
+          },
+          "tests/fixtures/visual-boundary-v1.json": {
+            "from": "conformance/fixtures/visual-boundary-v1.json",
+            "sha256": "1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55"
+          }
+        }
+      }
+    },
+    "producer_files": {
+      "conformance/responses/commit_conflict_409.json": "e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08",
+      "conformance/responses/events_page_1_200.json": "6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d",
+      "conformance/responses/events_page_2_200.json": "d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2",
+      "conformance/responses/invalid_cursor_400.json": "16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff",
+      "conformance/responses/managed_outputs_200.json": "6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d",
+      "conformance/responses/not_found_404.json": "4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6",
+      "conformance/responses/retired_route_410.json": "e3b43083786aae88fe3aabaaf8de631803c6a11610607eb7c3527f999aa80292",
+      "conformance/responses/task_admission_201.json": "108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c",
+      "conformance/responses/task_read_200.json": "cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829",
+      "conformance/responses/validation_error_422.json": "2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a",
+      "packages/typescript/src/contract-metadata.ts": "1028aaeca1cd15f860994c1e830ba69f55405e648841877eff4d43f466f40c79",
+      "packages/typescript/src/generated.ts": "7be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4",
+      "packages/typescript/src/timeline-commit-types.ts": "bf4728831e35bdfec96ffa0188feb439f3c89a2aecfa8682925019eba5855470",
+      "contract/schemas/timeline-config.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+      "packages/python/astrid_runtime_client/__init__.py": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
+      "packages/python/astrid_runtime_client/contract_metadata.py": "51e8ce94a7149f6b3160a6e5e66bafe17c7f94cfd3beb6733bbf8abd63125ab6",
+      "packages/python/astrid_runtime_client/generated.py": "e3f51c05342088bc34a562e17997cbf8ff8065c3df795da1cb6cd374216b51b7",
+      "packages/python/astrid_runtime_client/timeline_commit_types.py": "88c67d9eb650b445b8ad04c9011c1f44f1ec5e9f72a4a733050515de7ec0b616",
+      "conformance/fixtures/visual-boundary-v1.json": "1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55"
     }
   }
 }
