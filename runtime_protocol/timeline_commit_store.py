@@ -11,6 +11,9 @@ import hashlib
 import json
 import re
 from collections import OrderedDict
+from importlib import import_module
+from operator import methodcaller
+from types import FunctionType
 
 from .errors import ConflictError, ProtocolError, ValidationError
 from .idempotency import command_result
@@ -21,10 +24,93 @@ from .util import canonical_json, new_id, now
 _METADATA = ("source", "label", "rationale", "group_id")
 _PRIVATE_EXECUTION = "_sequential_execution"
 # Bump when the deterministic replay implementation changes.
-_REPLAY_VALIDATOR_VERSION = 1
+_REPLAY_VALIDATOR_VERSION = 3
 _REPLAY_MEMO_LIMIT = 256
 _DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
 _TEXT_BINDING_REF = re.compile(r"occurrence:([^/]+)/text-binding:(prompt|voiceover_script|transcript)(?::([a-z][a-z0-9-]{0,63}))?\Z")
+
+
+def _replay_validation_dependencies(auth, validation):
+    """Snapshot the replay helper namespaces and the actual cached schemas.
+
+    A top-level function identity says nothing about its mutable globals.
+    Scan the bounded implementation namespaces, without walking bytecode or
+    caller documents. Keep callable references as well as their code so that
+    replacement, in-place code changes and object-id reuse cannot hide a miss.
+    """
+    from . import timeline_commit_producer as producer
+    from . import util
+
+    validators = import_module("jsonschema.validators")
+    core = import_module("referencing._core")
+    schema_helpers = tuple(import_module(name) for name in (
+        "jsonschema._keywords", "jsonschema._legacy_keywords", "jsonschema._types",
+        "jsonschema._utils", "referencing.jsonschema",
+    ))
+
+    def defaults(value):
+        if isinstance(value, (tuple, list)):
+            return tuple(defaults(item) for item in value)
+        if isinstance(value, dict):
+            return tuple((key, defaults(item)) for key, item in value.items())
+        return value
+
+    def implementation(value):
+        if isinstance(value, FunctionType):
+            return (value, value.__code__, defaults(value.__defaults__), defaults(value.__kwdefaults__))
+        if hasattr(value, "__wrapped__"):
+            return (value, implementation(value.__wrapped__))
+        if isinstance(value, (staticmethod, classmethod)):
+            return implementation(value.__func__)
+        # Callable instances can carry arbitrary mutable validation state.
+        # They remain supported, but must run on every read.
+        if callable(value) and not isinstance(value, (type, type(len), methodcaller)):
+            raise TypeError("stateful replay callable")
+        return value
+
+    def namespace(module):
+        if module in (auth, validation) and any(
+                isinstance(value, type) and not issubclass(value, Exception)
+                for name, value in vars(module).items() if not name.startswith("__")):
+            raise TypeError("custom replay callable class")
+        return tuple((name, implementation(value)) for name, value in vars(module).items()
+                     if (isinstance(module, type) or not name.startswith("__")) and callable(value)
+                     and (module in (auth, validation) or isinstance(
+                         value, (FunctionType, type, staticmethod, classmethod, methodcaller))))
+
+    registries = {}
+
+    def registry_state(registry):
+        if id(registry) not in registries:
+            registries[id(registry)] = (
+                registry, implementation(registry._retrieve),
+                digest({uri: resource.contents for uri, resource in registry.items()}),
+            )
+        return registries[id(registry)]
+
+    bundle, registry = validation._schema_resources()
+    schemas = [digest(bundle), registry_state(registry)]
+    for definition in ("CommitContext", "PreparedCommit", "CanonicalDocument", "Recorder"):
+        validator = validation._validator(definition)
+        if validator.format_checker is not None or validator._ref_resolver is not None:
+            raise TypeError("stateful schema validator")
+        kind = type(validator)
+        schemas.append((
+            kind, namespace(kind), digest(validator.schema), registry_state(validator._registry),
+            tuple((name, implementation(check)) for name, check in kind.VALIDATORS.items()),
+            tuple((name, implementation(check)) for name, check in kind.TYPE_CHECKER._type_checkers.items()),
+            tuple((implementation(check), name, digest(schema)) for check, name, schema in validator._validators),
+        ))
+    return (
+        tuple(namespace(module) for module in (auth, validation, validators, core, *schema_helpers,
+              core.Registry, core.Resource, core.Resolver, core.Specification,
+              validators.Draft202012Validator.TYPE_CHECKER.__class__)),
+        auth._TEXT_BINDING_REF,
+        implementation(producer.value_equal), implementation(util.canonical_json),
+        implementation(auth.copy.deepcopy), implementation(producer.math.isfinite),
+        implementation(auth.re.fullmatch), implementation(util.json.dumps), implementation(auth.hashlib.sha256),
+        tuple(schemas),
+    )
 
 
 def reject(reason, message=None, *, status=409):
@@ -324,10 +410,13 @@ class TimelineCommitStore:
             dict(row), dict(edge), realm[0], allow_archived, request, prepared, source, original,
             {ref: sorted(successors) for ref, successors in continuations.items()}, history, capture,
         ]).encode()).digest()
-        key = (content, _REPLAY_VALIDATOR_VERSION, digest(validation._schema_resources()[0]),
-               auth.validate, auth.validate_sequential_capture, auth.sequential_proof_required,
-               auth.validate_commit_value, validation.validate_commit_value, validation._validator)
-        if key in self._replay_memo:
+        try:
+            dependencies = _replay_validation_dependencies(auth, validation)
+        except TypeError:
+            # Unknown stateful callables cannot establish a reusable version.
+            dependencies = None
+        key = (content, _REPLAY_VALIDATOR_VERSION)
+        if dependencies is not None and self._replay_memo.get(key) == dependencies:
             self._replay_memo.move_to_end(key)
             return
         sequential = None
@@ -341,7 +430,9 @@ class TimelineCommitStore:
             raise ValueError("historical sequential proof is missing")
         auth.validate(request, prepared, source, original, continuations, history, sequential=sequential)
         # Retain no caller-owned values and never cache a failed verification.
-        self._replay_memo[key] = None
+        if dependencies is None:
+            return
+        self._replay_memo[key] = dependencies
         if len(self._replay_memo) > _REPLAY_MEMO_LIMIT:
             self._replay_memo.popitem(last=False)
 
