@@ -290,6 +290,8 @@ export function serviceRecipe({ name, pins, checkouts, preflight = false }) {
     `D66_${role.toUpperCase()}_TREE=${shellQuote(pins[role].tree)}`,
     `D66_${role.toUpperCase()}_CHECKOUT=${shellQuote(checkouts[role])}`,
   ]);
+  const watchdogSeconds = name === 'p2-element' ? '2' : name === 'p2' ? '20' : '';
+  env.push(`ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS=${shellQuote(watchdogSeconds)}`);
   return `${env.join(' ')} ${shellQuote(node)} --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs ${shellQuote(name)}${preflight ? ' --preflight' : ''}`;
 }
 

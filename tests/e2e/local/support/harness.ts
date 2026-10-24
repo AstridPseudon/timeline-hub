@@ -658,6 +658,8 @@ export class DirectHarness {
       env.ASTRID_P2_COMMIT_PHASE_CAPTURE = '1';
       env.ASTRID_P2_COMMIT_PHASE_CAPTURE_SINK = captureSink;
       env.ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER = config.helper;
+      const watchdogSeconds = process.env.ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS?.trim();
+      if (watchdogSeconds) env.ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS = watchdogSeconds;
     }
     return env;
   }
