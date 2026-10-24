@@ -339,7 +339,7 @@ def test_some_declared_job_runs_automatically() -> None:
     problems = [
         f"{entry.name}: its jobs {entry.ci} are triggered only by {sorted(set().union(*(jobs[j].triggers for j in entry.ci)))}"
         for entry in SKIP_REGISTRY.values()
-        if not AUTOMATIC_TRIGGERS & set().union(*(jobs[j].triggers for j in entry.ci))
+        if entry.ci and not AUTOMATIC_TRIGGERS & set().union(*(jobs[j].triggers for j in entry.ci))
     ]
     assert not problems, "\n".join(problems)
 
@@ -347,10 +347,12 @@ def test_some_declared_job_runs_automatically() -> None:
 def test_blocking_says_whether_any_job_that_runs_the_test_can_fail_ci() -> None:
     jobs, uses, problems = _jobs(), _uses(), []
     for entry in SKIP_REGISTRY.values():
+        if entry.no_ci:
+            continue  # no job runs it; there is nothing to be blocking
         pairs = {
-            (name, os_key): jobs[name].oses[os_key]
+            (name, os_key): blocking
             for name in entry.ci
-            for os_key in _running(entry, jobs[name], uses[entry.name])
+            for os_key, blocking in _running_blocking(entry, jobs[name], uses[entry.name]).items()
         }
         computed = any(pairs.values())
         if computed != entry.blocking:
