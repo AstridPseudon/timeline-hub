@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T19:09:43Z | dispatcher heartbeat 15s | live 3 (sol 0, luna 3, other 0) | busy30 12 | status age 0m -->
-# runtime board, 2026-10-24T19:08:58Z
+<!-- main | 2026-10-24T19:12:55Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 1m -->
+# runtime board, 2026-10-24T19:11:28Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -159,14 +159,15 @@ Blockers: D78 live capture — App1856 owns one focused body. Test-run7e857 only
 Blockers: Runtime P4 cost — return1900 restores eager snapshot semantics, 173+12PASS and three paired5.69%wall/6.09%userCPU gain. Final security1910 active. All original45s tails open; D47 held.
 Blockers: Runtime popup original — normal87bc contains cumulative security-PASS carrier. Home1908 proves genuine fork/add plus four range originals; App owns meaningful original qualification after source handback.
 Blockers: Final cut — all lanes core0/regressions0 plus current P2/P3 and D69 completion required. No final proof/build before cut.
-Next ready: consume critical returns and D79 installer; no replacement D79 under D80. D78 App focused live element with supervised stacks requestedNOW; no historical-state wait, deadline19:50Z.
+Next ready: consume three critical returns. D78 short5s pending window needs an earlier owned dump than default20s; App manual venue asked1911. No original wait change or duplicate body. Deadline19:50Z.
 Later: D79 corpus missing complete authentic accepted record/history/context; Agent1831 inventory found none. D80 holds Runtime corpus, no synthetic fixture or new original. D47 safe memo/proof pins post-delivery; nine state attacks open. V4 cut; D14/D23 deferred. D34 broader cleanup held. D62 submit completeness remains explicit known gap.
 Admission: D56 Farm/schema-access stopped. Exact403 and auto access refusal remain stopped; no alternate acquisition/child/overlay route. Historical denied cleanup/process/retirement targets remain stopped. D67 D13 stays unchanged env gap.
-Disk: About8GB/cap4. Finished current trees recycled automatically; only three prior dirty refused v1 trees remain eligible by age and are not retried. Sweep3 removed0; compact packed0, compressed1 old log and0 test outputs. About8GB free. No alternate deletion.
+Disk: About7.7GB, cap4. Finished current trees recycled automatically; three prior dirty refused v1 trees stay untouched. Sweep3 removed0; compact packed0 and compressed1 old log. No alternate deletion.
 
 live 3 / cap 4; ready-undispatched 0 critical. Popup home Luna1908, D78 App activation Luna1908 and P4 final security Luna1910 active. D78 actual App body sole1856; D80 corpus hold remains.
 
 
 
 
-Pass 2026-10-24T19:08:58Z: P4 firstreturn1900 completed eagerchildsnapshot repair, meaningful synchronizedmutation regression, final173+12PASS and threepaired5.69%wall/6.09%userCPU gain. Independent finalLuna1910 dispatched immediately on retainedbranch. Popuphome1908 and D78Appactivation1908 active; originalgates remain open.
+
+Pass 2026-10-24T19:11:28Z: Three active critical workers show fresh progress. D78 default20s cannot imply capture before original5s teardown; App1911 asks actual owned in-window manual stacks, all original waits unchanged. Sourceactivation1908 remains unique. Popup normal87bc and P4 sourceheld; no cut/gate/body duplicate.
