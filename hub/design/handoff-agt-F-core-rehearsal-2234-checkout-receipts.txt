@@ -1,0 +1,32 @@
+captured_utc=2026-10-24T22:36:56Z
+[agent]
+path=/home/user/work/agent
+sha=7c485e5b612a31a9b4f6e9a67163612a4a3313d4
+tree=742a1195e33b1b94cbd7d817c5b4d8167c4a20d5
+parents=7c485e5b612a31a9b4f6e9a67163612a4a3313d4 039ff2c2187d02b723074a8a6dfcbc6a70544c19 c2a63bbee9369b84bec7f4bfec06f447df02c27b
+origin=https://github.com/peteromallet/astrid-agent
+status_bytes=0
+[runtime]
+path=/home/user/work/runtime
+sha=732c48c6f5a9441a65c61b24595d454a1cd3e180
+tree=7ed0559c6f0a05954427cc668e303b6cd2f51586
+parents=732c48c6f5a9441a65c61b24595d454a1cd3e180 61a16a2218ce49cfbbceaaba91c8c6a55e146474 beb1dafbd762d0725c8137579de3d2cba1031f60
+origin=https://github.com/banodoco/banodoco-workspace-runtime
+status_bytes=0
+[app]
+path=/home/user/work/app
+sha=bceb0350326f22beefdde5c5ba275412bb09b419
+tree=46ad4dde505a376e22026c3377615a5fca05a55e
+parents=bceb0350326f22beefdde5c5ba275412bb09b419 5fcb9ad5cf8af93709d682ab994bcdb1af207f07 36f66be727deb3062eed63948160905df74c42c4
+origin=https://github.com/banodoco/reigh-app
+status_bytes=0
+[composition]
+path=/home/user/work/composition
+sha=635f4de06fda22a85fc2e4cfc764d0153a4c9f40
+tree=5ab5191a296980a0a6bcd1178ab6902d6478a148
+parents=635f4de06fda22a85fc2e4cfc764d0153a4c9f40 7a95a40b07ea0d273e17afb69dbc3456b603f2bc c05fdb171fe37c1d5817a060ecb716a329ee821a
+origin=https://github.com/peteromallet/timeline-composition
+status_bytes=0
+node_version=v20.19.4
+python=Python 3.13.16
+disk=/dev/vda       270553174016 33466306560 8133234688      81% /

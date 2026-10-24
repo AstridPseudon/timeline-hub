@@ -1,0 +1,10 @@
+bad_nodes=550
+core_scope_bad_nodes=550
+known P4 ten-note=1
+environment=1
+explicit deferred=1
+uncertain cause=547
+proven regression=0
+proven pre-existing=0
+approved dead scope=0
+classification_note=core_scope is the selected rehearsal scope; cause categories are mutually exclusive. Known P4 is separately reported per task.

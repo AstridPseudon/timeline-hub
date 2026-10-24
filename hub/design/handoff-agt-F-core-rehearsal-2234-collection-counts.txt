@@ -1,0 +1,5 @@
+total_nodes=9263
+total_files=408
+p4_original_nodes=3
+d13_nodes=1
+d23_nodes=2

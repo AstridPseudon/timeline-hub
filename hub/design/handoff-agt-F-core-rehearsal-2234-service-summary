@@ -1,0 +1,64 @@
+test agent-OWN-REHEARSAL-SUITE-1024224113-23499: fail exit=1 in 1261s — OWN-REHEARSAL-SUITE on integration:agent (agent tree 742a1195e33b1b94cbd7d817c5b4d8167c4a20d5)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 P4_D73_MANIFEST=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-core-rehearsal-2234/own-rehearsal.manifest P4_D73_EVIDENCE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-core-rehearsal-2234/evidence P4_D73_REQUEST_ID=own-rehearsal-corrected /bin/bash --noprofile --norc -c 'set -eu; test "$(git -C /home/user/work/agent remote get-url origin)" = https://github.com/peteromallet/astrid-agent; test "$(git -C /home/user/work/runtime remote get-url origin)" = https://github.com/banodoco/banodoco-workspace-runtime; test "$(git -C /home/user/work/app remote get-url origin)" = https://github.com/banodoco/reigh-app; test "$(git -C /home/user/work/composition remote get-url origin)" = https://github.com/peteromallet/timeline-composition; exec /home/user/work/agent/tools/p4-d73-pinned-launch.sh "$P4_D73_MANIFEST" run -- -m pytest -q -n 3 -o addopts= -p no:cacheprovider --timeout=45 --junitxml="$P4_D73_EVIDENCE/OWN-REHEARSAL-SUITE.xml" tests/editing_conformance tests/sdk tests/timeline tests/core/timeline tests/core/test_timeline_element_orphan_cleanup.py tests/core/test_timeline_element_publication.py tests/core/test_timeline_element_publication_runtime.py tests/core/rendering/test_timeline_visualize_cli_grammar.py tests/core/rendering/test_local_schema.py tests/packs/timeline tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_live_scene_composition.py tests/packs/rendering/test_render_export_task_adapter.py tests/packs/rendering/test_timeline_filmstrip_cards.py tests/packs/rendering/test_timeline_filmstrip_execution.py tests/packs/video_editing/test_runtime_publication_chain.py tests/stage1/test_cold_launch_autobootstrap.py tests/test_installer_schema.py tests/test_installer_sources.py tests/test_installer_bootstrap_schema.py tests/test_timeline_clip_replacement.py tests/v10/test_timelines_create.py'
+counts: 308 failed, 8713 passed, 86 warnings, 242 errors, 173 subtests passed in 1256.11s (0:20:56) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-OWN-REHEARSAL-SUITE-1024224113-23499/log.txt ---
+ERROR tests/editing_conformance/test_settled_proposal_contract.py::test_tampered_artifact_refuses_original_pin[True-True]
+ERROR tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_asset_clear_lost_ack_reload_retry_undo
+ERROR tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_transition_clear_lost_ack_reload_retry_undo
+ERROR tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_trim_stale_rebase_lost_ack_reload_retry_undo
+ERROR tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_split_stale_rebase_lost_ack_reload_retry_undo
+ERROR tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_delete_stale_rebase_lost_ack_reload_retry_undo
+ERROR tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_ambiguous_owner_and_mixed_edits_keep_original_draft
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[None]
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[physical_ref]
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[owners]
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[revision_id]
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[content_digest]
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[path]
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[base_revision_id]
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[base_publication_id]
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[evaluated_head]
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[step_id]
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[command_ordinal]
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[phase]
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[boundary_extra]
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[boundary_missing]
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[missing_image]
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[extra_image]
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[stripped_image]
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[source]
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[element]
+ERROR tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically[object]
+ERROR tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden
+ERROR tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden
+ERROR tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows
+ERROR tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]
+ERROR tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]
+ERROR tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]
+ERROR tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]
+ERROR tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]
+ERROR tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]
+ERROR tests/sdk/test_timeline_numeric_revision_runtime.py::test_native_params_exact_values_history_reload_retry_and_inverse[2-2.0]
+ERROR tests/sdk/test_timeline_numeric_revision_runtime.py::test_native_params_exact_values_history_reload_retry_and_inverse[1-True]
+ERROR tests/sdk/test_timeline_numeric_revision_runtime.py::test_native_params_exact_values_history_reload_retry_and_inverse[True-1]
+ERROR tests/sdk/test_timeline_numeric_revision_runtime.py::test_native_params_exact_values_history_reload_retry_and_inverse[2-2]
+ERROR tests/sdk/test_timeline_numeric_revision_runtime.py::test_native_params_exact_values_history_reload_retry_and_inverse[2.0-2.0]
+ERROR tests/sdk/test_timeline_numeric_revision_runtime.py::test_native_params_exact_values_history_reload_retry_and_inverse[True-True]
+ERROR tests/sdk/test_timeline_numeric_revision_runtime.py::test_native_original_value_guards_keep_numeric_equivalence_and_bool_distinction[2-2.0-True]
+ERROR tests/sdk/test_timeline_numeric_revision_runtime.py::test_native_original_value_guards_keep_numeric_equivalence_and_bool_distinction[1-True-False]
+ERROR tests/sdk/test_timeline_numeric_revision_runtime.py::test_native_original_value_guards_keep_numeric_equivalence_and_bool_distinction[True-1-False]
+ERROR tests/sdk/test_timeline_selected_schema_runtime.py::test_http_attached_selected_param_retains_original_pin_after_v2_removal_restart
+ERROR tests/packs/rendering/test_live_scene_composition.py::test_real_render_scene_window_audio_and_overlay
+ERROR tests/test_installer_sources.py::test_local_sources_materialize_only_the_pinned_commit[agent-False]
+ERROR tests/test_installer_sources.py::test_local_sources_materialize_only_the_pinned_commit[agent-True]
+ERROR tests/test_installer_sources.py::test_local_sources_materialize_only_the_pinned_commit[vibecomfy-False]
+ERROR tests/test_installer_sources.py::test_local_sources_materialize_only_the_pinned_commit[vibecomfy-True]
+ERROR tests/test_installer_sources.py::test_local_source_requires_an_available_commit_object[missing]
+ERROR tests/test_installer_sources.py::test_local_source_requires_an_available_commit_object[tree]
+ERROR tests/test_installer_sources.py::test_local_source_requires_an_available_commit_object[tag]
+ERROR tests/test_installer_sources.py::test_local_source_rejects_tracked_links_and_submodules[120000]
+ERROR tests/test_installer_sources.py::test_local_source_rejects_tracked_links_and_submodules[160000]
+ERROR tests/test_installer_sources.py::test_local_source_reports_missing_git
+ERROR tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_host_executes_authoring_and_final_render
+ERROR tests/test_installer_sources.py::test_local_source_cleans_failed_extraction
+308 failed, 8713 passed, 86 warnings, 242 errors, 173 subtests passed in 1256.11s (0:20:56)

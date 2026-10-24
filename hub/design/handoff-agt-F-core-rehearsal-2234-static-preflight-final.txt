@@ -1,0 +1,36 @@
+$ bash -n tools/p4-d73-pinned-launch.sh
+exit=0
+$ python AST/compile tools/install_p4_launcher.py
+ast_compile=0
+$ git diff --check
+exit=0
+$ ruff check --no-cache tools/install_p4_launcher.py
+tools/install_p4_launcher.py:3:1: I001 [*] Import block is un-sorted or un-formatted
+   |
+ 1 |   """CAS-install the owned rehearsal row without touching other suites."""
+ 2 |
+ 3 | / from __future__ import annotations
+ 4 | |
+ 5 | | import datetime
+ 6 | | import fcntl
+ 7 | | import hashlib
+ 8 | | import os
+ 9 | | import stat
+10 | | import sys
+11 | | import tempfile
+12 | | from pathlib import Path
+   | |________________________^ I001
+   |
+   = help: Organize imports
+
+Found 1 error.
+[*] 1 fixable with the `--fix` option.
+exit=1
+$ mypy --cache-dir=<tmp> tools/install_p4_launcher.py
+tools/install_p4_launcher.py:40: error: Argument 1 to "add" of "set" has
+incompatible type "tuple[bytes, ...]"; expected "tuple[bytes, bytes]" 
+[arg-type]
+                found.add(key)
+                          ^~~
+Found 1 error in 1 file (checked 1 source file)
+exit=1
