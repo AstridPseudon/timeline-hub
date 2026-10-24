@@ -1100,7 +1100,7 @@ class RuntimeCommitService:
             resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
                                               context=context, through=base)
             from .native_occurrence_shared import resolve_source
-            resolve_inputs = resolve_source(port, resolve_inputs)
+            resolve_inputs = resolve_source(port, resolve_inputs, inverse_records)
             original = execute(bundle, execution_calls, inverse_records=inverse_records,
                                intervening_records=inverse_intervening, closures=closures,
                                verified_media=verified_media, realm_id=context['realm_id'],
@@ -1130,7 +1130,7 @@ class RuntimeCommitService:
                                              inverse_sources=inverse_sources)
                     resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
                                                       context=context, through=current)
-                    resolve_inputs = resolve_source(port, resolve_inputs)
+                    resolve_inputs = resolve_source(port, resolve_inputs, inverse_records)
                     if undo_of or any(call['op'] == 'doc.patch' for call in calls) or any(
                             key in request for key in ('merge', 'reads', 'steps')):
                         _records(entries, CommitRejected, base, current)

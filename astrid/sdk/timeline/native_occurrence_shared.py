@@ -20,7 +20,72 @@ PARAMETERS = {
 }
 
 
-def resolve_source(port, resolver):
+def _historical_sources(port, records, ancestors=()):
+    """Follow selected accepted inverse stages back to their foreign births."""
+    from ._collections import AcceptedRecords
+    from ._step_undo import entry_records, select_inverse_records, validate_nested_history
+
+    if not isinstance(records, AcceptedRecords):
+        if records:
+            raise CommandError('shared inverse requires accepted history', kind='history_unavailable')
+        return []
+    result = []
+    for entry in records.entries:
+        publication = entry['publication_id']
+        if publication in ancestors:
+            raise CommandError('cyclic shared source history', kind='history_unavailable')
+        validate_nested_history(entry, port.history_entry)
+        for record in entry_records(records, entry):
+            command = record['command']
+            if command['op'] == 'occurrence.place-shared' and 'source_ref' in command['args']:
+                result.append((record, records.load_boundary(entry)[1]))
+            elif command['op'] == 'timeline.inverse':
+                entries = [port.history_entry(identity) for identity in command['args']['publications']]
+                if any(source.get('publication_id') != identity or source.get('intent') != 'recorded'
+                       for identity, source in zip(command['args']['publications'], entries)):
+                    raise CommandError('shared source differs from accepted history', kind='history_unavailable')
+                accepted = AcceptedRecords(entries, [item for source in entries
+                    for item in source['records']['commands']], records.load_boundary)
+                selected = select_inverse_records(accepted, command['args'].get('steps'))
+                result.extend(_historical_sources(port, selected, (*ancestors, publication)))
+    return result
+
+
+def _guard_historical_source(record, output, document, row):
+    """The accepted birth fixes the owner, source claim and immutable images."""
+    from .commit import document_from_bundle
+
+    args = record['command']['args']
+    owner = 'occurrence:' + args['occurrence_id']
+    claim = {key: args[key] for key in ('source_ref', 'source_occurrence_id')}
+    accepted = document_from_bundle(output)
+    placed = [item for item in accepted['parent_revision']['payload']['occurrences']
+              if item['occurrence_id'] == args['occurrence_id']]
+    if (record['command']['select'] != 'parent'
+            or record['created'] != [{'ref': owner, 'kind': 'occurrence', 'owner': 'parent'}]
+            or [dep['pin'] for dep in record['dependencies'] if dep['key'] == 'shared.foreign'] != [claim]
+            or [dep['pin'] for dep in record['dependencies'] if dep['key'] == 'shared.shot'] != [
+                {'shot_id': row['shot_id'], 'revision_id': row['shot_revision_id']}]
+            or len(placed) != 1
+            or (placed[0]['shot_id'], placed[0]['shot_revision_id']) != (row['shot_id'], row['shot_revision_id'])
+            or not any(write['ref'] == owner and not write['path']
+                       and write['before'] == {'state': 'absent'}
+                       and write['after']['state'] == 'present'
+                       and write['after']['value']['occurrence_id'] == args['occurrence_id']
+                       and write['after']['value']['shot_id'] == row['shot_id']
+                       for write in record['writes'])):
+        raise CommandError('shared birth differs from accepted source', kind='history_unavailable')
+    shot = next(image for image in document['shot_revisions']
+                if (image['shot_id'], image['revision_id']) == (row['shot_id'], row['shot_revision_id']))
+    internal = next(image for image in document['internal_timeline_revisions']
+                    if image['revision_id'] == shot['internal_timeline_revision_id'])
+    if (shot not in accepted['shot_revisions'] or internal not in accepted['internal_timeline_revisions']
+            or any([dep['pin'] for dep in record['dependencies'] if dep['key'] == 'shared.' + key]
+                   != document['dependency_manifest'][key] for key in ('media', 'documents'))):
+        raise CommandError('shared physical pins differ from accepted source', kind='history_unavailable')
+
+
+def resolve_source(port, resolver, inverse_records=()):
     """Capture foreign authority through the same private port as duplication."""
     from .native_timeline_duplicate import resolve_source as resolve_duplicate
 
@@ -33,9 +98,12 @@ def resolve_source(port, resolver):
         command = ctx.record['command']
         claims = []
         if command['op'] == 'occurrence.place-shared' and 'source_ref' in command['args']:
-            claims.append(command['args'])
+            claims.append((command['args'], None, None))
+        elif command['op'] == 'timeline.inverse':
+            claims.extend((record['command']['args'], record, output)
+                          for record, output in _historical_sources(port, inverse_records))
         ctx.shared_sources = []
-        for claim in claims:
+        for claim, record, output in claims:
             ref = claim['source_ref']
             document = port.source_revision_closure(copy.deepcopy(ref))
             source = bundle_from_document(document)
@@ -49,6 +117,8 @@ def resolve_source(port, resolver):
             if len(matches) != 1:
                 raise CommandError('shared source occurrence is missing or ambiguous', kind='identity_conflict')
             row = matches[0]
+            if record is not None:
+                _guard_historical_source(record, output, document, row)
             exact = port.shot_closure(row['shot_id'], row['shot_revision_id'])
             shot = next(image for image in document['shot_revisions']
                         if (image['shot_id'], image['revision_id']) ==
@@ -63,6 +133,9 @@ def resolve_source(port, resolver):
                 if captured not in inputs:
                     inputs.append(captured)
             ctx.shared_sources.append((claim, source, row))
+            if record is not None:
+                ctx.dependency('shared.foreign', 'authority', {
+                    key: copy.deepcopy(claim[key]) for key in ('source_ref', 'source_occurrence_id')})
         return inputs
 
     return resolve
@@ -144,7 +217,9 @@ def _place_foreign(ctx, command):
         for pin in document['dependency_manifest'][key]:
             if pin not in manifest[key]:
                 manifest[key].append(copy.deepcopy(pin))
-            ctx.dependency('shared.' + key, 'media' if key == 'media' else 'source', pin)
+            kind = ('media' if key == 'media' else
+                    'transcript' if pin['document_id'].startswith('transcript:') else 'source')
+            ctx.dependency('shared.' + key, kind, pin)
     captures = mapping.setdefault('pinned_documents', [])
     for capture in source['source_mapping'].get('pinned_documents', []):
         if capture not in captures:
@@ -200,7 +275,7 @@ def prepare_shared_inverse(ctx, records):
     load_boundary = records.load_boundary
     sources = {binding['ref'] for record in records for binding in record['bindings']
                if binding['key'] == 'shared.source'}
-    foreign = any(record['command']['op'] == 'occurrence.place-shared'
+    foreign = bool(getattr(ctx, 'shared_sources', [])) or any(record['command']['op'] == 'occurrence.place-shared'
                   and 'source_ref' in record['command']['args'] for record in records)
     if not sources and not foreign:
         return
