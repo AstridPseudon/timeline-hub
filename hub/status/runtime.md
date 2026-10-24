@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T03:51:04Z | dispatcher heartbeat 11s | live 2 (sol 1, luna 1, other 0) | busy30 12 | status age 0m -->
-# runtime board, 2026-10-24T03:49:00Z
+<!-- main | 2026-10-24T03:53:28Z | dispatcher heartbeat 5s | live 2 (sol 2, luna 0, other 0) | busy30 12 | status age 1m -->
+# runtime board, 2026-10-24T03:53:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -43,7 +43,7 @@
 | F-authoring-seed-fixture | Preserve shared alias compiler case | Sol / Luna | Agent reply qualification | blocked:agent | Runtime 0303 and 0313 PASS; Agent 0337 | Source landed; faithful original reached publication, then reply key failed. Agent owns first return. | 8f9a6acc7; Agent 8f5c |
 | OPS-manifest-restore | Restore accidental generated manifest write | Luna | Exact main file identity | merged | Restore 0110; independent 0113 PASS | Exact tracked hash restored; main cleanliness and byte equality independently verified. | HEAD 458595850 |
 | R0-public-export-manifest | Refresh generated artifact hash | Luna | Integrated verification passed | merged | Author 0111; review 0115; integrated 0128 | Actual head db11 passed 74 cases and generation checks; 77 of 78 entries unchanged. [Proof](../../design/runtime-R0-manifest-integrated-0128.md) | db11ea829 / 8a742b1c2 |
-| R5-full-headless | Preserve headless acceptance and retry | Sol / Luna | Agent authoritative effect fix | blocked:agent | Cause 0332; independent 0349; Agent requested | 12 cases passed; one failed. First patch after bootstrap omits a mirror removal in Agent effects. [Cause](../../design/runtime-headless-effect-cause-0332.md) | ddaa6aed held |
+| R5-full-headless | Preserve headless acceptance and retry | Sol / Luna | Agent authoritative effect fix | blocked:agent | Cause 0332; review 0349 PASS; Agent requested | 12 cases passed; one failed. First patch after bootstrap omits a mirror removal in Agent effects. [Cause](../../design/runtime-headless-effect-cause-0332.md) | ddaa6aed held |
 | R5-full-occupancy | Preserve fifteen occupancy scenarios | Sol / Luna | Agent semantic redo source | blocked:agent | Author0313; review0317 PASS | Static preparation passed: all 65 original predicates and 16 scenarios retained. [Review](../../design/runtime-occupancy-faithful-review-0317.md) | 3441bc34 held |
 | R5-full-speed | Preserve six speed refusals | Luna | Integrated proof passed | merged | Review 0138; port review 0148; service 13500 | Actual head 28bb passed 14 cases. Original six inputs and SQL/CAS checks retained; no new type diagnostics. | 4e983cebc / 0e28e6261 |
 | R5-full-receipt-key | Preserve receipt and key guards | Luna | Integrated proof passed | merged | Reviews 0138 and 0148; integrated 0157 | Actual head 28bb passed both cases with explicit Agent source path. All receipt and replay equalities retained. | 28bb65668 / b57ab2331 |
@@ -56,6 +56,7 @@
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Agent existing child qualified | merged | Source 0125; review 0132; Agent 0137 | Exact seven cases passed in 3.60 seconds on existing child c886; wrong-tree control refused. Source and body identities retained. | Source 521c888; installed c36 |
 
+| R2r-historical-image | Classify current inverse image mismatch | Sol / Luna | Exact Agent 12701589 source | doing | rt-R2r-historical-image-sol-0353 | Original last-owner case fails on Runtime 36760. Compare actual native and effect images; no bug attribution yet. | 36760 base |
 | R-D42-history-memo | Memoize complete verified replay inputs | Sol / Luna | Validator correction | doing | Source 0330; review 0339 FAIL; return 0346 | 304 passed; helper replacement bypass blocks release. [Review](../../design/runtime-D42-security-review-0339.md) | 35320a9e held |
 | R-D42-proof-pin | Backport memo onto compatible proof pin | Sol / Luna | Corrected source and review | blocked:runtime | Backport 0339 returned BLOCKED | 145 plus 135 passed; helper bypass reproduced. Ten imported later guards also fail on unchanged parent. | 37eb base; candidate held |
 | R-D42-HTTP | Cold, warm and concurrent native21 GET | Luna | Corrected reviewed proof pin | blocked:runtime | HTTP 0344 stop requested | Preparation retained. Release needs cold, warm and two concurrent HTTP timings on exact committed pin. | Await corrected pin |
