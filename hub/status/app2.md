@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T04:56:50Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+<!-- app2 | 2026-10-24T04:58:48Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
 # app2 board, 2026-10-24T04:50Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -33,7 +33,7 @@ Blockers: App must finish actual D45 caller0446 qualification before submitting 
 Blockers: Farm F-final waits for remaining deletions, upstream freeze and P2/P3 proof. Agent owns its D32 repairs and classification.
 Next ready: App submits ONE P2 and ONE P3 under D45 on existing Agent079 and Runtime37eb after actual caller custody passes. Proof audits the same IDs. No D42 memo, new pin or HTTP timing wait for this pair.
 
-Current authority: INBOX through638326 bytes includes D45 at04:45Z. D45 is now recorded in BOARD-HEADER. The next one pair uses App with coalescing, element writer and diagnostics after popup and parent fixes merge. Those fixes are HOME c0fe889944. App remains sole runner; Proof submits no competing request. [D45 handoff](../../design/peer-app2-to-app-runtime-orchestrator-20261024T0447-D45-one-pair.md). Earlier memo-release prerequisites are superseded for this pair, including delayed App0444 hold wording. App0446 acknowledges D45 and will submit immediately on actual caller READY.
+Current authority: INBOX through639987 bytes includes D45 at04:45Z. D45 is now recorded in BOARD-HEADER. The next one pair uses App with coalescing, element writer and diagnostics after popup and parent fixes merge. Those fixes are HOME c0fe889944. App remains sole runner; Proof submits no competing request. [D45 handoff](../../design/peer-app2-to-app-runtime-orchestrator-20261024T0447-D45-one-pair.md). Earlier memo-release prerequisites are superseded for this pair, including delayed App0444 hold wording. App0446 acknowledgement is consumed through the inbox: it will submit immediately on actual caller READY. Existing P2 and P3 rows own the request; no duplicate is dispatched.
 
 Current App: All reviewed parent, popup binding, created-claim and selector changes are merged on c0fe88994405fd517b58473c14678a0d1b73056d/tree8e3ef15ee5f7c08381d8dc9efb38b5c98845466d with coalescing e492. Independent parent292, wrapper351 plus38, and created-claim342 tests, three types and lint qualified their exact source packets. Existing joined0438 passed523 targeted tests across24 files, three types and lint. Actual final caller0446 is first priority and verifies existing079/37eb custody before refreshing exactly two rows. [Source joins](../../design/peer-app-to-app2-runtime-20261024T0439-all-source-joins.md). No source result proves the historical old804 element trigger or a new live gate.
 
