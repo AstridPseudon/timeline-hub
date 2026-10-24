@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import importlib
 import json
 from pathlib import Path
+from typing import cast
 import urllib.error
 import urllib.request
 
@@ -150,16 +152,67 @@ def test_bootstrap_rolls_back_new_realm_after_handoff_failure(tmp_path: Path) ->
     assert not paths.instance_lock_path.exists()
 
 
-def test_http_target_mutations_require_idempotency_key(tmp_path: Path) -> None:
+def test_http_target_mutations_require_idempotency_key(tmp_path: Path, astrid_importable) -> None:
     RealmStore.initialize(tmp_path / "realm").close()
-    daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+    daemon = RuntimeDaemon(
+        tmp_path / "realm", support_root=tmp_path / "support", authoring_profile="astrid",
+    ).start()
     try:
+        assert daemon.service is not None
         client = WorkspaceClient(daemon.endpoint, daemon.token)
         project = client.create_project("Strict mutation", idempotency_key="strict-project")
         client.create_timeline(project.project_id, "strict-timeline", idempotency_key="strict-timeline")
+
+        open_authoring_bundle = getattr(
+            importlib.import_module("astrid.core.timeline.authoring_bundle"), "open_authoring_bundle",
+        )
+        capture_track_create = getattr(
+            importlib.import_module("astrid.sdk.timeline.capture"), "capture_track_create",
+        )
+        from astrid_runtime_client.timeline_commit_types import CommitAcceptedMutation, CommitRequest
+
+        page = client.list_timeline_commits(project.project_id, "strict-timeline", limit=10)
+        parent = client.get_project_parent_composition_revision(
+            project.project_id, "strict-timeline", page["head"]["revision_id"],
+        )
+        bundle = open_authoring_bundle(parent, shot_revisions=[], internal_timeline_revisions=[])
+        command = capture_track_create(
+            bundle, "parent", {"id": "picture", "kind": "visual", "role": "output", "opaque": [None, False]},
+        )
+        commit_body = cast(CommitRequest, {
+            "api_version": 1, "project_id": project.project_id, "timeline_id": "strict-timeline",
+            "base_revision_id": page["head"]["revision_id"],
+            "base_publication_id": page["head"]["publication_id"], "commands": [command],
+        })
+
+        connection = daemon.service.store.conn
+        assert connection is not None
+        before = tuple(connection.iterdump())
+        missing_commit_key = urllib.request.Request(
+            f"{daemon.endpoint}/v1/projects/{project.project_id}/timelines/strict-timeline/commit",
+            data=json.dumps(commit_body).encode(), method="POST",
+            headers={"Authorization": f"Bearer {daemon.token}", "Content-Type": "application/json"},
+        )
+        with pytest.raises(urllib.error.HTTPError) as error:
+            urllib.request.urlopen(missing_commit_key)
+        assert error.value.code == 400
+        assert json.loads(error.value.read())["code"] == "protocol_error"
+        assert tuple(connection.iterdump()) == before
+
+        accepted = cast(CommitAcceptedMutation, client.commit_timeline(
+            project.project_id, "strict-timeline", commit_body, idempotency_key="strict-commit",
+        ))
+        assert accepted["data"]["status"] == "accepted"
+        assert accepted["receipt"]["command_kind"] == "timeline.commit"
+        before = tuple(connection.iterdump())
+        assert client.commit_timeline(
+            project.project_id, "strict-timeline", commit_body, idempotency_key="strict-commit",
+        ) == accepted
+        assert tuple(connection.iterdump()) == before
+
         request = urllib.request.Request(
-            f"{daemon.endpoint}/v1/timelines/strict-timeline",
-            data=json.dumps({"expected_version": 1, "shots": []}).encode(),
+            f"{daemon.endpoint}/v1/projects/{project.project_id}/timelines/strict-timeline",
+            data=json.dumps({"name": "Strict renamed"}).encode(),
             method="PATCH",
             headers={"Authorization": f"Bearer {daemon.token}", "Content-Type": "application/json"},
         )
@@ -167,5 +220,21 @@ def test_http_target_mutations_require_idempotency_key(tmp_path: Path) -> None:
             urllib.request.urlopen(request)
         assert error.value.code == 400
         assert json.loads(error.value.read())["code"] == "protocol_error"
+
+        before = tuple(connection.iterdump())
+        retired = urllib.request.Request(
+            f"{daemon.endpoint}/v1/timelines/strict-timeline",
+            data=json.dumps({"expected_version": 1, "shots": []}).encode(),
+            method="PATCH",
+            headers={
+                "Authorization": f"Bearer {daemon.token}",
+                "Content-Type": "application/json", "Idempotency-Key": "retired-route",
+            },
+        )
+        with pytest.raises(urllib.error.HTTPError) as error:
+            urllib.request.urlopen(retired)
+        assert error.value.code == 410
+        assert json.loads(error.value.read())["code"] == "retired_route"
+        assert tuple(connection.iterdump()) == before
     finally:
         daemon.stop()
