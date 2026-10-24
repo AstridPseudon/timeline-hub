@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T04:23:24Z | dispatcher heartbeat 9s | live 2 (sol 0, luna 2, other 0) | busy30 18 | status age 0m -->
+<!-- agent | 2026-10-24T04:25:33Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 19 | status age 0m -->
 # agent board, 2026-10-24T04:21:10Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -46,7 +46,7 @@
 | F-D32-h3-import | Seven isolated child-import cases | Luna | Existing installed child | merged | agt-F-h3-env-0137 | All seven original fault cases passed in 3.60s; preflight/postflight, body and source identities retained. | 521c source |
 | F-ruff-baseline | Tighten static baselines | Luna | Exact reviewed tree | merged | Review0218; D38 remainder0228 | Actual10d2 tree exactly reviewedc836: Ruff2145 and mypy1909 makegates PASS. Remainder mypy timeout disclosed, no repeat. | c8360b3732 |
 | A4 IMAGE | Complete accepted image witness | Luna | Actual App producer readiness | blocked:app | Foreign0348; review0354; integrated0412 PASS | Actual69a:17 fixture and7 authority controls pass; live0330 accepted and retried. Full inverse/reopen/refusals remain unrun. Parent20 failures stay ours. | a1036f9e8d; home69a854d82b |
-| A4 image harness | Correct project argument after undo | Luna | Source preflight before new fixture | review | Author0420; review0424 | Post-undo head lookup passes fixture object instead of project ID. One argument correction, all witness predicates retained; no new realm. | Base69a854d82b |
+| A4 image harness | Correct project argument after undo | Luna | Source preflight before new fixture | merging | Author0420; independent0424 PASS | Post-undo head lookup passes fixture object instead of project ID. One argument correction, all witness predicates retained; no new realm. | Base69a854d82b |
 | OPS-suites-prune | Retain required registry entries | Runtime Luna | No target proven unreferenced | gated:eligibility | Final citation review0306 PASS | Finite assessment complete. Zero qualified retirement targets, zero live edits and zero GB freed. No new audit requested. | evidence only |
 | D31 | Dormant transcript capture subset | — | Follow-up funding | gated:D31 | No active author | Keep the 397-line test suite and implementation unchanged. Literal production reachability is NO. | unchanged |
 | V4 / D14 / D23 | Cut and deferred relational timing | — | Scope decisions | gated:H9 | No repair worker | Keep original tests unchanged, unskipped and visibly failing. No V4 or relational-timing completion claim. | unchanged |
@@ -54,7 +54,7 @@
 | F-headless-root-mirror | Preserve complete canonical mirror effects | Sol / Luna | Bounded source repair | doing | vw-F-headless-root-mirror-sol-0358 | Runtime0332 and0349 independently confirm omitted mirror removal. Viewing uniquely owns effect shortcut; original67 predicates retained. | Base8657e83653 |
 | F-retired-callers | Retained native, CLI and scene scenarios | Luna / Sol | Exact33 subset | doing | vw-F-retired-callers-census-0358 | Exact24 native-sheet,7 CLI,2 scene nodes independently verified. Viewing maps prior proofs before fixing; no retired writer restoration. | Census H30 |
 | F-count | Reconcile all267 original failures | Luna | Independent correction0358 | merged | Return0407; final review0410 PASS | Corrected JSON preserves267 exact IDs:142 closed,125 open. Six render-wire originals credited; seven H3 nodes need current D40 source. Farm checkpoint pending. | Evidence only |
-| F-D40-installed | Genuine installed external positive | Sol / Luna | Captured orchestrator route | doing | agt-F-D40-orchestrator-sol-0414 | Review0407 found original orchestrator invocation lacks captured-source forwarding. Sol classifies and fixes existing route; managed child waits for source. | Current69a854d82b |
+| F-D40-installed | Genuine installed external positive | Sol / Luna | Captured orchestrator route | review | Author0414; security0427 | Existing orchestrator route repaired:77 source controls pass, old source RED. Security review checks captured imports and authority; installed original remains open. | Current69a854d82b |
 P1: GO. Original service 18792 passed both cases; Proof reviews 0036 and 0040 passed. P4 and P5 are done. G5 already merged under H24. P2 and P3 remain with App and Proof.
 Integration: 5c97e35b05 has exact whole treec5806d2f reviewed under D44; original1PASS reused by exact tree identity. Image69a integrated24PASS. Canonical45c3 client, schema d106 and Composition819acf unchanged.
 Blockers: Agent full waits for the remaining owned fixes and finite qualifications. D32 comparison rejected all pre-existing credits; no full retry.
