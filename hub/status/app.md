@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T02:27:58Z | dispatcher heartbeat 1s | live 4 (sol 2, luna 2, other 0) | busy30 20 | status age 2m -->
-# app board, 2026-10-24T02:25Z
+<!-- app | 2026-10-24T02:30:26Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 19 | status age 2m -->
+# app board, 2026-10-24T02:28Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -16,7 +16,7 @@
 | A4-dormant-scope | Record dormant raw and track subsets | Luna | D37 applied | merged | app-A4-D37-wording-0222 | Both exact worker records copied into existing App and combined ledgers. Implementations and tests unchanged. | Documentation only |
 | A4-reviewed-stack | Ports and mounted witnesses | Luna | Review 0105 and integrated 0115 PASS | merged | app-A4-mounted-fixture-return-0059 | Independent and integrated 111 plus 33 tests passed on exact93d487. Types/lint passed; mocked authority limit retained. | 93d48799a2 |
 | A2-bootstrap-fix | Restart cancelled bootstrap | Sol; Luna review | Resolved | merged | app-A2-basis-cancel-repro-sol-0029 | [326 tests, three typechecks and lint passed.](/home/user/timeline-hub/hub/design/app-A2-bootstrap-integrated-0046.md) | 804134d747 |
-| readiness-after-bootstrap | Adopt qualified Runtime history fix | Sol; Luna review | Compatible backend client | blocked:runtime | Runtime peer 0225; App caller Sol 0222 | Runtime 45c3 passed 145 tests, but Agent 079 child refused changed client bytes. Runtime owns compatible source. Historical cause unknown. | App 804; failed backend 45c3 |
+| readiness-after-bootstrap | Adopt qualified Runtime history fix | Sol; Luna review | Canonical Agent client adoption | blocked:agent | Agent peer 0229; App caller Sol 0222 | Runtime 45c3 passed 145 tests. Agent client lacks one canonical export; exact new Agent source is required before a fresh child. | App 804; Runtime 45c3 |
 | P-door-port-alloc | Allocate door port per run | Luna; D21 | Resolved | merged | app-P2-P3-door-allocation-0039 | [Node 20 allocation, shared stage value and failure checks passed.](/home/user/timeline-hub/hub/design/app-P2-P3-door-allocation-0039.md) | Harness rows only |
 | readiness-upstream-check | Check f38e candidate | Sol; Luna review | Review 0057 PASS | merged | App Sol 0046; Luna 0057 | No census or attempt-root signature supports attribution. Exact patch is unavailable locally; historical cause remains unknown. | Report only |
 | P2 | Eight original gesture cases | App service; Proof verdict | Caller and new backend receipts | doing | Caller Sol 0222 | Prior 10973: exit 2, 189 seconds; all eight NOT RUN. Prepare one changed run with Runtime 45c3; no new request yet. | App 804134d747 |
@@ -47,11 +47,11 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 
 | A2-recovery-basis | Preserve seven dependent recovery guards | Sol; Luna review | Original seven cases fail current path | doing | app-A2-recovery-basis-sol-0224 | Test migration found dependent stored basis unchecked after accepted prefix. Seven original expectations retained; bounded source repair active. | Current base 5ad7907e86 |
 | A4-remaining-protocol | Map remaining legacy protocol cases | Luna | Current exports and lifecycle merged | doing | app-A4-remaining-protocol-map-0226 | Read-only mapping to current save APIs; excludes owned recovery tests and retained dormant subsets. | Current 5ad7907e86 |
-| readiness-backend-bench | Exact Runtime 45c3 child and graph receipts | Dispatcher; App caller | Compatible backend source | blocked:runtime | Runtime peer 0225 | Remotion reuse authenticated. New child refused canonical client mismatch; no retry or guard waiver. | Failed child 0222 |
+| readiness-backend-bench | Exact Runtime 45c3 child and graph receipts | Dispatcher; App caller | Canonical Agent client adoption | blocked:agent | Agent peer 0229 | Remotion reuse authenticated. Old Agent child refused client mismatch; a new qualified Agent pin needs a fresh request. | Failed child 0222 |
 
 Blockers: U3b awaits P2/P3 and the final freeze.
-Blockers: Runtime owns a compatible history-cost source for Agent 079. Child 0222 refused canonical client bytes mismatch; no new journey or failed-child retry.
+Blockers: Agent owns canonical client export adoption for Runtime 45c3. New Agent pin and exact child receipt are needed; old refused child stays stopped.
 
-Next ready: Merge the qualified owner packet, finish seven basis guards, map remaining protocol cases and consume Runtime compatibility handback.
+Next ready: Merge the qualified owner packet, finish seven basis guards, map remaining protocol cases and consume Agent client adoption handback.
 Integration: 5ad7907e8676553133f9a77cc6e9a541f1364c42. Exports and lifecycle joined proof passed 108 plus 105 tests, three types, lint and governance. Historical joined proof 0150 remains bound to 1c5cc47bf6.
 Disk: Sweep removed nine old temporary directories and freed 735 MiB. Five finished worker trees were already recycled, freeing 0 GB. Active, pinned, freeze and refused paths retained; prior compact refusal stands.
