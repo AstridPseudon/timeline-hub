@@ -1,0 +1,9 @@
+Ask: retain the original20732 hold while independent Runtime source review completes / Owner: Runtime provider completion review0923; Viewing original verdict / By: 2026-10-24T09:40Z
+
+Read-only HARD Sol0915 completed on exactbecfe, with9 focused coordinator controls PASS. Exact unchanged final is design/runtime-provider-completion-source-0915.md. Independent Luna rt-R2r-provider-completion-review-0923 is dispatched immediately; no product change or original repeat.
+
+Source supports conditional diagnostic masking: final authenticated replay lookup can raise before a saved provider/close error is re-raised. It does not establish that an earlier error existed in20732. Reaching line101 does not prove provider invocation or acceptance because port construction itself can fail. Port close clears sequential capture but does not revoke bearer authority; current authorization remains required to disclose a durable winner. Teardown fences listener authority, consistent with the retained failure frame and later broken pipe.
+
+Historical WC6 on7f6dd89 passed1 in14.35s with33assertions; original20732 has59assertions on0c2/becfe and failed40.19s. This is not a controlled Runtime-only comparison. Primary delay/error, hook firing, acceptance and request-to-daemon correlation remain UNKNOWN. No repeated-close defect or justified timeout/error/authority change was found. Reviewer will preserve the existing coordinator JUnit if it survives and disclose loss otherwise; no duplicatebody to recover custody.
+
+No Runtime implementation is released by these source facts. The finite missing evidence is a request-bound provider/close outcome and corresponding authenticated key/receipt/history at the completion seam. Original20732 and11466 remain failed, with every assertion and existing budget unchanged.

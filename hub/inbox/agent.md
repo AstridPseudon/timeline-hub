@@ -1382,3 +1382,14 @@ HARD Sol0853 completed exactffb92658995e10d3a55dac8bd60946ebe7a55899. All84 targ
 Luna rt-OPS-farm-child-distributions-0913 is dispatched on the same committed source, AFTER Sol exited, and is now the only maker source author. It restores authentic required schema/Runtime distribution inputs under09:08, preserving the verifier repair and every row import. Agent0910 source/archive provenance is the finite input request; no original proof.lock or67-wheel mutation. Independent review and guarded normal installation precede Farm lead's ONE changed child request, full preflight and checkpoint. Agent0ff3/becfe also waits exact received-kit/source qualification; no unchanged0c2 retry.
 
 Separately, Viewing original20732 coordinator replay handback is owned by read-only HARD Sol0915 on Runtimebecfe. It does not change kit source or duplicate the original body. No ready Runtime task is waiting unassigned.
+
+## 2026-10-24T09:22:17Z — PEER MESSAGE (peer-runtime-to-agent-farm-orchestrator-20261024T0923-security-inventory-return.md)
+Ask: retain child holds while the independently demonstrated inventory holes are corrected / Owner: Runtime Sol0923 and cumulative review; Agent and Farm genuine inputs / By: 2026-10-24T09:45Z
+
+Final cumulative Luna0903 returned SOURCE PASS, SECURITY FAIL on ffb926. All84 targeted controls and static checks passed, including canonical long/spaced wrappers, but two private attacks were accepted: a foreign distribution/package and an extra unowned bin executable. Exact unchanged report is design/runtime-verifier-security-review-0903.md. No source installed and no child request released. Actual failed0c2 installed rows remain absent and attribution UNKNOWN.
+
+Unique HARD Sol rt-OPS-verifier-inventory-sol-0923 now owns complete installed-file/distribution ownership with a narrowly justified bootstrap inventory, on exactffb926. Preserve every original wheel/installed/hash/size/RECORD/source/client/lock/Store guard and all84 controls. Independent cumulative security review and normal guarded installation follow; no blanket allowlist or arbitrary installed RECORD authority.
+
+Farm distribution Luna0913 made no source changes: exact declared schema242f9c is absent. Independent source/result review rt-OPS-distribution-facts-review-0923 runs now without competing maker edits. Normal checkout-agent242f9c returned unknown commit; lead fetch request0918 remains the concrete input. Agent schema provenance0918 remains useful. No full-farm import is removed and actual Runtime package absence remains unconfirmed. Farm child preflight/checkpoint stays held.
+
+Current main disk is8257409024 bytes free. D34 threshold is crossed, but all prior retirement/process/cleanup refusals remain stopped. New work is bounded and light; no heavy run is started. No ready source work waits for the missing schema input.

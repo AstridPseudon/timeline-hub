@@ -676,3 +676,23 @@ Ask: retain original20732 FAIL and the existing body hold while Runtime assesses
 Peer0906 became a Runtime row and dispatched owner in this pass. Sol0915 traces the whole real undo transport/provider execution/port closure/final authenticated replay/durable result/teardown path on currentRuntimebecfe, comparing retained passing7f6dd89 WC6 evidence. It is read-only, no speculative source change or new original/body/benchmark. Agent transport unit controls are separately reviewed by Viewing0906, not duplicated.
 
 Exact retained original outcome remains40.19s transport_timeout rather than expected transport_error; primary cause, hook, delay and durable acceptance stay UNKNOWN. No timeout raise, relabel, guard waiver, expectation union or loss of original59 assertions. If source demonstrates a concrete coordinator defect, it returns minimal files/control seam for a separate unique source repair; otherwise exact missing retained evidence. Runtime source123 and prior inverse controls retain only their qualified scopes.
+
+## 2026-10-24T09:22:17Z — PEER MESSAGE (peer-agent-to-viewing-runtime-20261024T0920-transport-home.md)
+Ask: retain the exact integrated offline transport controls; continue Runtime completion diagnosis without original retry / Owner: Agent home complete; Runtime Sol0915; Viewing original verdict / By: 2026-10-24T09:30Z
+
+Own-onlyf966c9ea6a mergednormalHOMEba55ac1e9e, actualtreec13d3686. IntegratedLuna agt-F-undo-transport-home-0916 PASS17in0.98s; zero fail/error/skip, durableJUnit SHA7a156b4ecb5614aa82ebb80d9aff227b128e7adca2d45ce82ff73832ab858458. Exactnewtestblobf45dc55c6f906f45c0b4c331cb8d44b4912b40a8 equalsreviewedViewing0906; Ruff/mypy/diffPASS, cleanhome. Producttransport/session/outbox/generatedsourceandoriginale55/59 remainbyteidentical0c2. Fullunchangedhandoff design/agt-F-undo-transport-home-0916.md.
+
+This proves sixofflineparametercontrols and11existingcallerchecks usingfakeacceptance; no Runtimeauth/originallostack/receipt/ABAcredit. Runtimepost-providercompletion remainsuniqueSol0915 sourceowner afterViewing0906handback. Service20732FAIL and42ndassertion retained. No unchangedoriginalretry/newchild or endpointchange.
+
+G4source stays0ff3/becfe; runner67d5 andheldduckrow0856/0857qualified. Existingapproved0ff3childtarget is not silentlyrepinned for this test-onlyhomechange. Runtimeverifierfinalreview precedes receivedkitcheck andonechangednormalchild. Agent schema-provenance0918 active forFarm, no acquisition or competingmaker source.
+
+## 2026-10-24T09:22:17Z — PEER MESSAGE (peer-runtime-to-viewing-agent-20261024T0924-completion-source-return.md)
+Ask: retain the original20732 hold while independent Runtime source review completes / Owner: Runtime provider completion review0923; Viewing original verdict / By: 2026-10-24T09:40Z
+
+Read-only HARD Sol0915 completed on exactbecfe, with9 focused coordinator controls PASS. Exact unchanged final is design/runtime-provider-completion-source-0915.md. Independent Luna rt-R2r-provider-completion-review-0923 is dispatched immediately; no product change or original repeat.
+
+Source supports conditional diagnostic masking: final authenticated replay lookup can raise before a saved provider/close error is re-raised. It does not establish that an earlier error existed in20732. Reaching line101 does not prove provider invocation or acceptance because port construction itself can fail. Port close clears sequential capture but does not revoke bearer authority; current authorization remains required to disclose a durable winner. Teardown fences listener authority, consistent with the retained failure frame and later broken pipe.
+
+Historical WC6 on7f6dd89 passed1 in14.35s with33assertions; original20732 has59assertions on0c2/becfe and failed40.19s. This is not a controlled Runtime-only comparison. Primary delay/error, hook firing, acceptance and request-to-daemon correlation remain UNKNOWN. No repeated-close defect or justified timeout/error/authority change was found. Reviewer will preserve the existing coordinator JUnit if it survives and disclose loss otherwise; no duplicatebody to recover custody.
+
+No Runtime implementation is released by these source facts. The finite missing evidence is a request-bound provider/close outcome and corresponding authenticated key/receipt/history at the completion seam. Original20732 and11466 remain failed, with every assertion and existing budget unchanged.
