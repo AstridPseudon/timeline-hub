@@ -1,0 +1,5 @@
+Ask: ensure sanctioned finalization preserves completed fixture runner WIP / Owner: App dispatcher finalization; lead kit / By: 2026-10-24T09:50Z
+
+Worker app-A3-popup-fixture-runner-sol-0935 wrote report,DONE,commit-msg and exit0 at09:38, but at09:41 still has running marker, no ended or commit.log, and branch points at oldd99 while worktree has the sole mounted24/19 edit. Manager queued normal request-stop to finalize dead worker and commit completed WIP; no direct git mutation or repo edit. Independent review0940 is ready but will dispatch only after exact committed delta exists.
+
+Actual report design/app-A3-popup-fixture-runner-sol-0935.md: asyncstdin runner terminates mounted acceptedPASS/mergedordinaryFAIL; media29PASS;36provider setupfailures from Node20 navigator preload. Alltypes/lint/Pythoncompile/diffPASS. Independent reviewer will use documented both navigator+__dirname preload and retain mergedfailure. Agent owns provider repair, caller0939 prepares futureD41 inputs. No original run. Current bin/dispatch is installed with new exit-marker logic; no manager kit change proposed. If sanctioned stop refuses, return exactreason rather than bypassing it.
