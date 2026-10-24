@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T03:18:10Z | dispatcher heartbeat 6s | live 2 (sol 2, luna 0, other 0) | busy30 21 | status age 1m -->
-# app board, 2026-10-24T03:16Z
+<!-- app | 2026-10-24T03:20:46Z | dispatcher heartbeat 11s | live 3 (sol 2, luna 1, other 0) | busy30 20 | status age 0m -->
+# app board, 2026-10-24T03:20Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -23,7 +23,7 @@
 | P3 | Original Gate-5 journey | App service; Proof verdict | Changed pair terminal result | doing | app-readiness-D41-caller-sol-0250; test 3362 | Submitted 03:04:27 on App804, Agent079 and Runtime37eb. FAIL exit2/147s at mandatory readiness leaf. Original Gate-5 NOT RUN; cause Sol0309 and producer0307 assigned. | App 804134d747 |
 | A2-parent-media-closure | Preserve untouched child closure | Sol; Luna review | Resolved | merged | app-A2-parent-media-integrated-0035 | [299 tests, types, lint and external producer passed.](/home/user/timeline-hub/hub/design/app-A2-parent-media-integrated-0035.md) | 1b0428db7d |
 | A2-image-created | Declare genuine image creations | Sol; Luna review | Review 0133 PASS | merged | app-A2-image-created-sol-0126 | Independent 261 tests and producer 28, three types and lint passed. Clip and new authored registry alias claims match provider. Joined proof 0150 passed 448 tests, three types and lint. | b3a84dea71 / 1c5cc47bf6 |
-| A4-image-live | New authenticated image witness | App producer; Agent fixture | Agent boundary classification | doing | Agent witness 0154 | Request reached Runtime before deadline and has an accepted response. A later command-equality assertion failed; reopen and inverse remain unproven. | Fixed 1c5cc47bf6 |
+| A4-image-live | Complete source-bound image witness | Luna producer; Agent fixture | Fresh actual input and deadline | doing | app-A4-image-producer-standby-0320 | Agent0248 input deadline 03:14:38 expired before latest peer was consumed. Old acceptance retained; unchanged producer reserved for valid new handoff. | Fixed 1c5cc47bf6 |
 | A2-video-caller | Normalized video duplication | Sol; Luna review | Resolved | merged | app-A2-video-integrated-2350 | 217 integrated tests and three typechecks passed. Agent provider is merged; no old raw-positive parity claim. | a714a4cc11 |
 | U3b-draft | Final upstream composition | Sol; Luna review | P2/P3 and final freeze | gated:freeze | app-U3b-current-join-2053 | Reviewed branch stays isolated. Refresh live upstream refs at freeze; do not merge during pinned proof. | Branch only |
 | F-App-full | Full suite before retirement | Test service; Luna review | Resolved for historical head | merged | app-F-D19-current-full-1230 | 18,819 tests passed on exact 12ef. A final qualification follows actual retirement and freeze. | 12ef320545 |
@@ -60,9 +60,11 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 
 | P2-P3-result-handoff | Publish same-ID changed-pair evidence | Luna | Actual terminal artifacts | merged | app-P2-P3-D41-result-handoff-0307 | Terminal P2 three failed, five not run; P3 Gate5 not run. Full producer and three qualified P3 safe files published for Proof. | App804 / Agent079 / Runtime37eb |
 
-| readiness-D41-cause | Classify changed-pair readiness failure | Sol; Luna review | Actual retained artifacts | doing | app-readiness-D41-cause-sol-0309 | P3 first history completed in 3.56 seconds; later immutable/history reads unfinished in trace. Exact await and trigger unknown. Independent review0309 queued. | App804 / Agent079 / Runtime37eb |
+| readiness-D41-cause | Classify changed-pair readiness failure | Sol; Luna review | Actual retained artifacts | doing | app-readiness-D41-cause-sol-0309 | Independent0309 PASS with corrections: P3 outbox unknown before connected/fresh-owner checks. First history 3.56 seconds; exact later await and trigger unknown. | App804 / Agent079 / Runtime37eb |
 
 | readiness-phase-diagnostics | Correlate exact bootstrap read phases | Sol; Luna review | Retained cause report 0309 | doing | app-readiness-phase-diagnostics-sol-0318 | Narrow safe dependency-change and generation-linked loader phases; preserve behavior, waits, bodies and cap. No actual run authorised. | Fixed App804 branch |
+
+| P2-gesture-causes | Classify three actual gesture failures | Luna | Retained P2 12221 artifacts | doing | app-P2-D41-gesture-cause-0322 | Element capture refused; popup ADD and parent move waited for responses. Read-only actual boundaries; no competing element author or rerun. | Fixed App804 / Agent079 / Runtime37eb |
 
 Blockers: U3b awaits P2/P3 and the final freeze.
 Blockers: App causal review0309 and Proof verdict review classify terminal P2 12221 and P3 3362. Exact P3 unresolved await remains unknown; no repeat run.
