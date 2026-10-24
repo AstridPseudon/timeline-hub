@@ -124,11 +124,11 @@ def _input_read_state(state, read, record, records):
                         and state.bundle['shots'][shot].get('_created') is True
                         and any(write['ref'] == 'shot:' + shot and not write['path']
                                 and write['after'] == ABSENT and write['before'] != ABSENT
-                                and equal(write['before'], state.get(write['ref'], []))
-                                and equal(write['before'], State(before).get(write['ref'], []))
-                                for write in record['writes'])):
+                                for write in record['writes'])
+                        and equal(state.get('shot:' + shot, []), State(before).get('shot:' + shot, []))):
                     # Redo has recreated this exact recorded root, but has no
-                    # compiler source yet. Its accepted input owns the codec.
+                    # compiler source yet. Earlier native writes may precede
+                    # its deletion; the accepted input owns this read's codec.
                     sources = {**sources, shot: source}
                 if source is not None and equal(source, sources.get(shot)):
                     # This is a read-only codec view, not the compiler baseline.
