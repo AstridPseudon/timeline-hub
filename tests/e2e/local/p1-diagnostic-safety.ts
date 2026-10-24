@@ -34,7 +34,7 @@ export const MOUNTED_DIAGNOSTIC_ERROR_CLASSES = ['TimelineVersionConflictError',
 
 export const MOUNTED_DIAGNOSTIC_PHASES = [
   'schedule', 'capture-called', 'capture-resolved', 'capture-rejected', 'owner-init', 'owner-closed',
-  'owner-retired', 'lifecycle-cancel', 'basis-read', 'basis-ready', 'basis-unavailable', 'basis-error',
+  'basis-operation', 'basis-dependencies-committed', 'owner-retired', 'lifecycle-cancel', 'basis-read', 'basis-ready', 'basis-unavailable', 'basis-error',
   'identity-read', 'session-created', 'session-recovered', 'session-changed', 'adoption-start',
   'adoption-complete', 'adopted-read', 'handoff-ready', 'owner-error',
 ] as const;
@@ -47,7 +47,7 @@ const MOUNTED_DIAGNOSTIC_FIELDS = [
   'version', 'sequence', 'time', 'phase', 'projectId', 'timelineId', 'clipId', 'ownerAlias', 'generation',
   'sessionPresent', 'closed', 'current', 'identityPresent', 'scopeMatched', 'mountedHead', 'originalHead',
   'basisStatus', 'gestureKind', 'patch', 'mountedClip', 'sourceClip', 'gestureClip', 'originalClip', 'status',
-  'ownerPresent', 'recoverableOwnerCount', 'intentsPendingCount', 'errorStage', 'errorCode', 'errorClass',
+  'ownerPresent', 'recoverableOwnerCount', 'intentsPendingCount', 'errorStage', 'errorCode', 'errorClass', 'dependencyBaselinePresent', 'providerChanged', 'timelineChanged', 'headChanged', 'dataRefChanged', 'editSeqRefChanged', 'adoptionChanged', 'ownerChanged', 'resolverChanged', 'localSaveChanged', 'basisReadOrdinal', 'operation', 'operationOrdinal', 'operationState',
 ] as const;
 const MOUNTED_DIAGNOSTIC_NUMERIC_FIELDS = ['from', 'to', 'at', 'hold', 'speed'] as const;
 const MOUNTED_DIAGNOSTIC_STATES = ['present', 'absent', 'null', 'UNKNOWN'] as const;
@@ -155,6 +155,10 @@ function mountedNumericRecord(value: unknown): Record<string, unknown> {
 function mountedRecordField(detail: object, key: typeof MOUNTED_DIAGNOSTIC_FIELDS[number], phase: string): unknown {
   const field = mountedOwnData(detail, key);
   if (key === 'version') return 1;
+  if (key === 'dependencyBaselinePresent' || key === 'providerChanged' || key === 'timelineChanged' || key === 'headChanged' || key === 'dataRefChanged' || key === 'editSeqRefChanged' || key === 'adoptionChanged' || key === 'ownerChanged' || key === 'resolverChanged' || key === 'localSaveChanged') return mountedSafeBoolean(field.value);
+  if (key === 'basisReadOrdinal' || key === 'operationOrdinal') return mountedSafeNonNegativeInteger(field.value);
+  if (key === 'operation') return typeof field.value === 'string' && ['loader', 'history', 'parent', 'shot', 'internal'].includes(field.value) ? field.value : UNKNOWN;
+  if (key === 'operationState') return typeof field.value === 'string' && ['start', 'end', 'refused'].includes(field.value) ? field.value : UNKNOWN;
   if (key === 'phase') return field.present && typeof field.value === 'string' && MOUNTED_DIAGNOSTIC_PHASE_SET.has(field.value) ? field.value : UNKNOWN;
   if (key === 'projectId' || key === 'timelineId' || key === 'clipId') return field.present ? mountedSafeId(field.value) : UNKNOWN;
   if (key === 'mountedHead' || key === 'originalHead') return mountedHead(field.present ? field.value : undefined);
@@ -199,13 +203,13 @@ export function mountedDiagnosticInitScript(options: { buffer: string; maxRecord
         return descriptor && 'value' in descriptor ? { present: true, value: descriptor.value } : { present: false };
       } catch { return { present: false }; }
     };
-    const phases = new Set(['schedule', 'capture-called', 'capture-resolved', 'capture-rejected', 'owner-init', 'owner-closed', 'owner-retired', 'lifecycle-cancel', 'basis-read', 'basis-ready', 'basis-unavailable', 'basis-error', 'identity-read', 'session-created', 'session-recovered', 'session-changed', 'adoption-start', 'adoption-complete', 'adopted-read', 'handoff-ready', 'owner-error']);
+    const phases = new Set(['schedule', 'capture-called', 'capture-resolved', 'capture-rejected', 'owner-init', 'owner-closed', 'basis-operation', 'basis-dependencies-committed', 'owner-retired', 'lifecycle-cancel', 'basis-read', 'basis-ready', 'basis-unavailable', 'basis-error', 'identity-read', 'session-created', 'session-recovered', 'session-changed', 'adoption-start', 'adoption-complete', 'adopted-read', 'handoff-ready', 'owner-error']);
     const numericFields = ['from', 'to', 'at', 'hold', 'speed'];
     const states = new Set(['present', 'absent', 'null', 'UNKNOWN']);
     const errorCodes = new Set(['original-head-unavailable', 'capture-source-head-unavailable', 'capture-input-head-unavailable', 'source-parent-unavailable', 'source-parent-mismatch', 'source-clip-identity', 'source-track-identity', 'source-bundle-mismatch', 'original-read-unavailable', 'authored-collection-unavailable', 'authored-binding-ambiguous', 'authored-identity-unavailable', 'display-container-unbound', 'trim-binding-mismatch', 'explicit-clear-unavailable', 'display-value-unbound', 'child-ownership-unavailable', 'local-document-changed', 'parent-mirror-mismatch', 'gesture-basis-mismatch', 'gesture-clips-unavailable', 'gesture-clip-ambiguous', 'gesture-registry-unavailable', 'registry-mirror-mismatch', 'split-time-unavailable', 'move-track-mismatch', 'move-tracks-unavailable', 'move-track-ambiguous', 'move-routing-unavailable', 'trim-operands-unavailable', 'capture-owner-unavailable', 'capture-owner-replaced', 'owner-original-read-invalidated', 'owner-identity-invalidated', 'owner-retirement-invalidated', 'owner-claim-invalidated', 'owner-recovery-ambiguous', 'owner-history-invalidated']);
     const errorClasses = new Set(['TimelineVersionConflictError', 'Error']);
     const priorityPhases = new Set(['capture-rejected', 'basis-error', 'owner-error']);
-    const fields = ['version', 'sequence', 'time', 'phase', 'projectId', 'timelineId', 'clipId', 'ownerAlias', 'generation', 'sessionPresent', 'closed', 'current', 'identityPresent', 'scopeMatched', 'mountedHead', 'originalHead', 'basisStatus', 'gestureKind', 'patch', 'mountedClip', 'sourceClip', 'gestureClip', 'originalClip', 'status', 'ownerPresent', 'recoverableOwnerCount', 'intentsPendingCount', 'errorStage', 'errorCode', 'errorClass'];
+    const fields = ['version', 'sequence', 'time', 'phase', 'projectId', 'timelineId', 'clipId', 'ownerAlias', 'generation', 'sessionPresent', 'closed', 'current', 'identityPresent', 'scopeMatched', 'mountedHead', 'originalHead', 'basisStatus', 'gestureKind', 'patch', 'mountedClip', 'sourceClip', 'gestureClip', 'originalClip', 'status', 'ownerPresent', 'recoverableOwnerCount', 'intentsPendingCount', 'errorStage', 'errorCode', 'errorClass', 'dependencyBaselinePresent', 'providerChanged', 'timelineChanged', 'headChanged', 'dataRefChanged', 'editSeqRefChanged', 'adoptionChanged', 'ownerChanged', 'resolverChanged', 'localSaveChanged', 'basisReadOrdinal', 'operation', 'operationOrdinal', 'operationState'];
     const unknown = 'UNKNOWN';
     const id = (value: unknown) => value === null ? null : typeof value === 'string' && value.length > 0 && value.length <= 160 && /^[a-zA-Z0-9_.:-]+$/.test(value) && !/^[a-z][a-z\d+.-]*:\/\//i.test(value) ? value : unknown;
     const number = (value: unknown, integer = false) => typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 1_000_000_000 && (!integer || Number.isInteger(value)) ? value : unknown;
@@ -245,6 +249,10 @@ export function mountedDiagnosticInitScript(options: { buffer: string; maxRecord
       for (const key of fields) {
         const field = own(detail, key); const value = field.value;
         if (key === 'version') result[key] = 1;
+        else if (key === 'dependencyBaselinePresent' || key === 'providerChanged' || key === 'timelineChanged' || key === 'headChanged' || key === 'dataRefChanged' || key === 'editSeqRefChanged' || key === 'adoptionChanged' || key === 'ownerChanged' || key === 'resolverChanged' || key === 'localSaveChanged') result[key] = boolean(value);
+        else if (key === 'basisReadOrdinal' || key === 'operationOrdinal') result[key] = nonNegative(value);
+        else if (key === 'operation') result[key] = typeof value === 'string' && ['loader', 'history', 'parent', 'shot', 'internal'].includes(value) ? value : unknown;
+        else if (key === 'operationState') result[key] = typeof value === 'string' && ['start', 'end', 'refused'].includes(value) ? value : unknown;
         else if (key === 'phase') result[key] = phase.value;
         else if (key === 'projectId' || key === 'timelineId' || key === 'clipId') result[key] = field.present ? id(value) : unknown;
         else if (key === 'mountedHead' || key === 'originalHead') result[key] = head(field.present ? value : undefined);
@@ -382,7 +390,7 @@ const DIAGNOSTIC_PRIMITIVES = new Set([
   'version', 'scope', 'sequence', 'time', 'ownerAlias', 'sessionState', 'start', 'resolve', 'reject', 'code', 'class', 'stage',
   'from', 'to', 'at', 'hold', 'speed', 'fromState', 'toState', 'atState', 'holdState', 'speedState',
   'generation', 'sessionPresent', 'closed', 'current', 'identityPresent', 'scopeMatched', 'basisStatus', 'gestureKind',
-  'status', 'ownerPresent', 'recoverableOwnerCount', 'intentsPendingCount', 'errorStage', 'errorCode', 'errorClass',
+  'status', 'ownerPresent', 'recoverableOwnerCount', 'intentsPendingCount', 'errorStage', 'errorCode', 'errorClass', 'dependencyBaselinePresent', 'providerChanged', 'timelineChanged', 'headChanged', 'dataRefChanged', 'editSeqRefChanged', 'adoptionChanged', 'ownerChanged', 'resolverChanged', 'localSaveChanged', 'basisReadOrdinal', 'operation', 'operationOrdinal', 'operationState',
   'schemaVersion', 'expectedStatus', 'capturedAt', 'durationMs', 'cappedConsole', 'captureResolution', 'sourceAsset', 'present', 'bytes', 'sameAsPrevious', 'sameAsIndex',
 ]);
 

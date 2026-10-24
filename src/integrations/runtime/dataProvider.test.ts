@@ -1842,3 +1842,50 @@ describe('current App preservation pending acknowledgements', () => {
     expect(isOwnUnacknowledgedSaveError(new TimelineVersionConflictError('Another editor changed the timeline'))).toBe(false);
   });
 });
+
+describe('verified basis loader diagnostics', () => {
+  it.each(['complete', 'history', 'parent', 'shot', 'internal', 'listener'] as const)(
+    'observes exact immutable closure order without changing calls or faults (%s)', async boundary => {
+      const { withTimelineBasisDiagnostics } = await import('@/tools/video-editor/lib/timeline-basis-diagnostics.ts');
+      const fixture = runtimeFixture();
+      const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
+        { revision_id: 'r0', publication_id: 'p0' }, { projectId: PROJECT_ID, timelineId: TIMELINE_ID, children: true }).data.canonical_document;
+      const fault = Object.freeze(new Error('private provider fault'));
+      const calls: string[] = [];
+      const observations: Array<{ operation: string; operationOrdinal: number; operationState: string }> = [];
+      const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: async (...args) => {
+        const [, path] = args;
+        const operation = path.includes('/commits?') ? 'history' : path.includes('/composition-revisions/') ? 'parent'
+          : path.includes('/shots/') ? 'shot' : path.includes('/revisions/') ? 'internal' : undefined;
+        if (!operation) return fixture.transport(...args);
+        calls.push(operation);
+        if (operation === boundary) throw fault;
+        const value = operation === 'history' ? { items: [], next_cursor: null, head: { revision_id: 'r0', publication_id: 'p0' } }
+          : operation === 'parent' ? { ...document.parent_revision, project_id: PROJECT_ID, timeline_id: TIMELINE_ID, dependency_manifest: document.dependency_manifest }
+          : operation === 'shot' ? { ...document.shot_revisions[0], project_id: PROJECT_ID, timeline_id: 'shot-1' }
+          : { ...document.internal_timeline_revisions[0], project_id: PROJECT_ID };
+        return { status: 200, headers: {}, body: json(value) };
+      } });
+      const read = withTimelineBasisDiagnostics(provider, observation => {
+        observations.push(observation);
+        if (boundary === 'listener') throw new Error('listener failure');
+      }, () => provider.loadTimelineCommandBasis(TIMELINE_ID));
+      if (boundary === 'complete' || boundary === 'listener') {
+        expect((await read).canonicalDocument).toEqual(document);
+        expect(calls).toEqual(['history', 'parent', 'shot', 'internal']);
+        expect(observations.map(({ operation, operationState }) => `${operation}:${operationState}`)).toEqual([
+          'loader:start', 'history:start', 'history:end', 'parent:start', 'parent:end',
+          'shot:start', 'shot:end', 'internal:start', 'internal:end', 'loader:end',
+        ]);
+      } else {
+        await expect(read).rejects.toBe(fault);
+        expect(calls).toEqual(['history', 'parent', 'shot', 'internal'].slice(0, ['history', 'parent', 'shot', 'internal'].indexOf(boundary) + 1));
+        expect(observations.slice(-2).map(({ operation, operationState }) => `${operation}:${operationState}`))
+          .toEqual([`${boundary}:refused`, 'loader:refused']);
+      }
+      for (const start of observations.filter(item => item.operationState === 'start')) {
+        expect(observations.filter(item => item.operationOrdinal === start.operationOrdinal)).toHaveLength(2);
+      }
+      expect(JSON.stringify(observations)).not.toContain('private');
+    });
+});

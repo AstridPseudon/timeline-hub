@@ -94,10 +94,10 @@ interface SetupResult {
 function setup(
   saveTimelineImpl: DataProvider['saveTimeline'],
   timelineEditability?: TimelineEditability,
-  original?: { data: TimelineData; loadBasis: DataProvider['loadTimelineCommandBasis']; capabilities?: Partial<DataProvider>; strict?: boolean; mediaControls?: boolean; mediaAfterClipId?: string; mediaTime?: () => number },
+  original?: { data: TimelineData; loadBasis: DataProvider['loadTimelineCommandBasis']; capabilities?: Partial<DataProvider>; strict?: boolean; mediaControls?: boolean; mediaAfterClipId?: string; mediaTime?: () => number; provider?: DataProvider; suspend?: () => Promise<void> | undefined },
 ): SetupResult {
   const saveTimeline = vi.fn(saveTimelineImpl);
-  const provider: DataProvider = {
+  const provider: DataProvider = original?.provider ?? {
     persistenceEnabled: true,
     loadTimeline: vi.fn(async () => ({ config: createDefaultTimelineConfig(), configVersion: 1 })),
     loadAssetRegistry: vi.fn(async () => ({ assets: {} })),
@@ -133,7 +133,7 @@ function setup(
     <QueryClientProvider client={queryClient}>
       <VideoEditorRuntimeProvider value={runtime}>
         <TimelineStoreProvider store={store}>
-          {original?.strict ? <React.StrictMode>{children}</React.StrictMode> : children}
+          {original?.strict ? <React.StrictMode>{children}</React.StrictMode> : original?.suspend ? <React.Suspense fallback={null}>{children}</React.Suspense> : children}
           {original?.mediaControls ? <ShotTimelineMediaControls occurrenceId="occ-1" parentDocumentId="timeline-1" /> : null}
         </TimelineStoreProvider>
       </VideoEditorRuntimeProvider>
@@ -156,6 +156,8 @@ function setup(
           playback: { ...state.playback, currentTime: original.mediaTime?.() ?? 1.25 },
         });
       }, [save.data, save.saveStatus]);
+      const suspended = original?.suspend?.();
+      if (suspended) throw suspended;
       return { ...save, history };
     },
     { wrapper },
@@ -1850,6 +1852,95 @@ describe('useTimelineSave mounted save diagnostics', () => {
     vi.stubGlobal('__timelineSaveDiagnosticsEnabled', true);
   });
   afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); vi.unstubAllGlobals(); });
+
+  it('joins delayed production history and immutable completion to the cancelled generation and committed resolver change', async () => {
+    const locksDescriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
+    Object.defineProperty(navigator, 'locks', { configurable: true, value: {
+      request: async (_name: string, _options: unknown, work: (lock: object) => Promise<unknown>) => work({}),
+    } });
+    const fixture = runtimeFixture();
+    const projectId = 'project-commit';
+    const timelineId = 'timeline-1';
+    const config = createDefaultTimelineConfig();
+    const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
+      { revision_id: 'r0', publication_id: 'p0' }, { projectId, timelineId }).data.canonical_document;
+    document.parent_revision.payload = { config, clips: [], occurrences: [], registry: { assets: {} } };
+    document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
+    let releaseHistory!: () => void;
+    let releaseParent!: () => void;
+    const historyGate = new Promise<void>(resolve => { releaseHistory = resolve; });
+    const parentGate = new Promise<void>(resolve => { releaseParent = resolve; });
+    let histories = 0;
+    let parents = 0;
+    const records: Array<Record<string, unknown>> = [];
+    const listener = (event: Event) => records.push((event as CustomEvent).detail);
+    window.addEventListener('timeline:save-diagnostic', listener);
+    const provider = new RuntimeDataProvider({ projectId, transport: async (...args) => {
+      const [, path] = args;
+      if (path.includes('/commits?')) {
+        if (++histories === 1) await historyGate;
+        return { status: 200, headers: {}, body: json({ items: [], next_cursor: null, head: { revision_id: 'r0', publication_id: 'p0' } }) };
+      }
+      if (path.includes('/composition-revisions/')) {
+        if (++parents === 1) await parentGate;
+        return { status: 200, headers: {}, body: json({ ...document.parent_revision,
+          project_id: projectId, timeline_id: timelineId, dependency_manifest: document.dependency_manifest }) };
+      }
+      return fixture.transport(...args);
+    } });
+    const data = await buildTimelineData(config, { assets: {} }, undefined, 1, undefined,
+      { projectId, timelineId, headRevisionId: 'r0', headPublicationId: 'p0' });
+    let abortRender = false;
+    const pendingRender = new Promise<void>(() => {});
+    const harness = setup(async () => { throw new Error('No snapshot save'); }, undefined,
+      { data, provider, loadBasis: provider.loadTimelineCommandBasis.bind(provider), suspend: () => abortRender ? pendingRender : undefined });
+    try {
+      await vi.waitFor(() => expect(histories).toBe(1));
+      const first = records.find(record => record.phase === 'basis-read')!;
+      const beforeAbortedRender = records.length;
+      abortRender = true;
+      act(() => harness.rerenderRuntime({ assetResolver: { resolveAssetUrl: async file => file } }));
+      expect(records).toHaveLength(beforeAbortedRender);
+      expect(histories).toBe(1);
+      abortRender = false;
+      act(() => harness.rerenderRuntime({ assetResolver: { resolveAssetUrl: async file => file } }));
+      await vi.waitFor(() => expect(histories).toBe(2));
+      await vi.waitFor(() => expect(parents).toBe(1));
+      const second = records.filter(record => record.phase === 'basis-read')[1];
+      expect(second.ownerAlias).toBe(first.ownerAlias);
+      expect(second.generation).not.toBe(first.generation);
+      expect(second.basisReadOrdinal).not.toBe(first.basisReadOrdinal);
+      const changes = records.filter(record => record.phase === 'basis-dependencies-committed');
+      expect(changes[0]).toMatchObject({ dependencyBaselinePresent: false, resolverChanged: 'UNKNOWN' });
+      expect(changes[1]).toMatchObject({ dependencyBaselinePresent: true, resolverChanged: true,
+        providerChanged: false, timelineChanged: false, headChanged: false, dataRefChanged: false,
+        editSeqRefChanged: false, adoptionChanged: false, ownerChanged: false, localSaveChanged: false });
+      expect(records.find(record => record.phase === 'lifecycle-cancel')).toMatchObject({ generation: first.generation, basisReadOrdinal: first.basisReadOrdinal });
+      await act(async () => { releaseHistory(); });
+      await vi.waitFor(() => expect(records.some(record => record.operation === 'parent' && record.basisReadOrdinal === first.basisReadOrdinal)).toBe(true));
+      await act(async () => { releaseParent(); });
+      await vi.waitFor(() => expect(harness.hook.result.current.originalLocalSaveBasis?.status).toBe('ready'));
+      await vi.waitFor(() => expect(harness.hook.result.current.localSaveState).toMatchObject({ ownerId: expect.any(String) }));
+      expect(records.find(record => record.phase === 'handoff-ready')).toMatchObject({ ownerAlias: second.ownerAlias, generation: second.generation });
+      for (const read of [first, second]) {
+        const phases = records.filter(record => record.phase === 'basis-operation' && record.basisReadOrdinal === read.basisReadOrdinal);
+        expect(phases.map(record => `${record.operation}:${record.operationState}`)).toEqual([
+          'loader:start', 'history:start', 'history:end', 'parent:start', 'parent:end', 'loader:end',
+        ]);
+        expect(phases.every(record => record.ownerAlias === read.ownerAlias && record.generation === read.generation)).toBe(true);
+      }
+      expect(records.find(record => record.operation === 'loader' && record.operationState === 'end' && record.basisReadOrdinal === first.basisReadOrdinal)).toMatchObject({ current: false });
+      expect(histories).toBe(2);
+      // The existing provider coalesces the two simultaneous immutable reads.
+      expect(parents).toBe(1);
+      expect(harness.saveTimeline).not.toHaveBeenCalled();
+    } finally {
+      releaseHistory(); releaseParent(); harness.hook.unmount();
+      window.removeEventListener('timeline:save-diagnostic', listener);
+      if (locksDescriptor) Object.defineProperty(navigator, 'locks', locksDescriptor);
+      else Reflect.deleteProperty(navigator, 'locks');
+    }
+  });
 
   it.each(['resolved', 'rejected'] as const)('observes real mounted capture %s and preserves basis/adoption order', async (outcome) => {
     const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');

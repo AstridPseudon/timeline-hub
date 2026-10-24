@@ -1,3 +1,4 @@
+import { withTimelineBasisDiagnostics } from '../lib/timeline-basis-diagnostics.ts';
 import { persistedTranscriptItems } from '../data/typed/projectTranscript.ts';
 import type { RegistrationSaveOwner } from './timeline-state-types.ts';
 import {
@@ -149,7 +150,26 @@ export function useTimelineSave(
   }, [localOwner]);
   const { dataRef: localDataRef, editSeqRef: localEditSeqRef, commitData: adoptCanonicalData } = commit;
   const originalHeadKey = canonicalJsonStringify(commit.data?.head ?? null);
+  // Updated only after commit. A suspended/aborted render cannot supply a
+  // dependency-change claim. Cleanup alone cannot distinguish unmount from
+  // replacement; the next committed effect supplies that observation.
+  const committedBasisDependencies = useRef<readonly unknown[] | null>(null);
+  const basisReadOrdinal = useRef(0);
   useEffect(() => {
+    const dependencies = [provider, timelineId, originalHeadKey, localDataRef, localEditSeqRef, adoptCanonicalData, localOwner, resolveAssetUrl, usesLocalDocumentSave];
+    const previous = committedBasisDependencies.current;
+    committedBasisDependencies.current = dependencies;
+    emitTimelineSaveDiagnostic('basis-dependencies-committed', () => ({ owner: localOwner,
+      generation: localOwner.generation, dependencyBaselinePresent: previous !== null,
+      providerChanged: previous ? !Object.is(previous[0], provider) : undefined,
+      timelineChanged: previous ? !Object.is(previous[1], timelineId) : undefined,
+      headChanged: previous ? !Object.is(previous[2], originalHeadKey) : undefined,
+      dataRefChanged: previous ? !Object.is(previous[3], localDataRef) : undefined,
+      editSeqRefChanged: previous ? !Object.is(previous[4], localEditSeqRef) : undefined,
+      adoptionChanged: previous ? !Object.is(previous[5], adoptCanonicalData) : undefined,
+      ownerChanged: previous ? !Object.is(previous[6], localOwner) : undefined,
+      resolverChanged: previous ? !Object.is(previous[7], resolveAssetUrl) : undefined,
+      localSaveChanged: previous ? !Object.is(previous[8], usesLocalDocumentSave) : undefined }));
     let previousDisposal = localOwner.retirement;
     let sessionCreation: Promise<LocalSaveSession> | undefined;
     if (localOwner.started) {
@@ -181,26 +201,32 @@ export function useTimelineSave(
       return;
     }
     setOriginalLocalSaveBasis({ status: 'loading' });
+    const readGeneration = localOwner.generation;
+    const readOrdinal = ++basisReadOrdinal.current;
     emitTimelineSaveDiagnostic('basis-read', () => ({ owner: localOwner, timelineId,
-      mounted: original, basisStatus: 'loading', generation: localOwner.generation }));
-    const originalRead = readTimelineOriginalSaveBasis(provider, timelineId, {
+      basisReadOrdinal: readOrdinal, mounted: original, basisStatus: 'loading', generation: readGeneration }));
+    const originalRead = withTimelineBasisDiagnostics(provider, observation => {
+      emitTimelineSaveDiagnostic('basis-operation', () => ({ ...observation, owner: localOwner,
+        generation: readGeneration, basisReadOrdinal: readOrdinal,
+        current: !cancelled && !localOwner.closed && readGeneration === localOwner.generation }));
+    }, () => readTimelineOriginalSaveBasis(provider, timelineId, {
       config: original.config, registry: original.registry, head: original.head,
       ...(original.sourceItemsBySchemaRef !== undefined ? { bundle: {
         schema_version: 1, itemsBySchemaRef: persistedTranscriptItems(original.sourceItemsBySchemaRef),
         ...(original.transcriptReferences ? { transcriptReferences: original.transcriptReferences } : {}),
       } } : {}),
-    });
+    }));
     void originalRead.then((value) => {
       if (cancelled) return;
       emitTimelineSaveDiagnostic(() => localEditSeqRef.current === editSeq ? 'basis-ready' : 'basis-unavailable', () => ({
         owner: localOwner, timelineId, mounted: localDataRef.current, basis: value,
-        basisStatus: localEditSeqRef.current === editSeq ? 'ready' : 'unavailable', generation: localOwner.generation }));
+        basisStatus: localEditSeqRef.current === editSeq ? 'ready' : 'unavailable', generation: readGeneration, basisReadOrdinal: readOrdinal }));
       setOriginalLocalSaveBasis(localEditSeqRef.current === editSeq
         ? { status: 'ready', value }
         : { status: 'unavailable', reason: 'Local edits preceded completion of the original verified read' });
     }).catch((error: unknown) => {
       emitTimelineSaveDiagnostic('basis-error', () => ({ error, owner: localOwner, timelineId,
-        mounted: localDataRef.current, basisStatus: 'error', closed: localOwner.closed, current: !cancelled }));
+        mounted: localDataRef.current, basisStatus: 'error', generation: readGeneration, basisReadOrdinal: readOrdinal, closed: localOwner.closed, current: !cancelled }));
       if (!cancelled) setOriginalLocalSaveBasis({ status: 'unavailable', reason: error instanceof Error ? error.message : String(error) });
     });
     if (usesLocalDocumentSave) {
@@ -311,7 +337,7 @@ export function useTimelineSave(
         localOwner.retirement = sessionCreation?.then(session => session.dispose(), () => {}) ?? previousDisposal;
       }
       emitTimelineSaveDiagnostic('lifecycle-cancel', () => ({ owner: localOwner, timelineId,
-        closed: localOwner.closed, generation: localOwner.generation, sessionPresent: Boolean(localOwner.session) }));
+        closed: localOwner.closed, generation: readGeneration, basisReadOrdinal: readOrdinal, sessionPresent: Boolean(localOwner.session) }));
     };
   }, [provider, timelineId, originalHeadKey, localDataRef, localEditSeqRef, adoptCanonicalData, localOwner, resolveAssetUrl, usesLocalDocumentSave]);
   const persistence = useTimelinePersistence({

@@ -118,4 +118,21 @@ describe('timeline save diagnostic projection', () => {
     Object.defineProperty(window, '__timelineSaveDiagnosticsEnabled', { configurable: true, get() { throw new Error('flag'); } });
     expect(markTimelineSaveRejection(error, 'capture-owner-unavailable')).toBe(error);
   });
+  it('emits only finite basis operation enums, counters and strict dependency booleans', () => {
+    vi.stubGlobal('__timelineSaveDiagnosticsEnabled', true);
+    const dispatch = vi.spyOn(window, 'dispatchEvent').mockReturnValue(true);
+    emitTimelineSaveDiagnostic('basis-operation', () => ({ owner: {}, generation: 0, basisReadOrdinal: 1,
+      operationOrdinal: 2, operation: 'internal', operationState: 'refused', resolverChanged: false,
+      providerChanged: 'true', error: new Error('private provider error') }));
+    const detail = (dispatch.mock.lastCall![0] as CustomEvent).detail;
+    expect(detail).toMatchObject({ phase: 'basis-operation', basisReadOrdinal: 1, operationOrdinal: 2,
+      operation: 'internal', operationState: 'refused', resolverChanged: false, providerChanged: 'UNKNOWN',
+      errorCode: 'UNKNOWN', errorClass: 'UNKNOWN' });
+    expect(JSON.stringify(detail)).not.toContain('private');
+    emitTimelineSaveDiagnostic('basis-operation', () => ({ operation: 'https://private', operationState: 'private',
+      basisReadOrdinal: Infinity, operationOrdinal: -1, resolverChanged: 1 }));
+    expect((dispatch.mock.lastCall![0] as CustomEvent).detail).toMatchObject({ operation: 'UNKNOWN',
+      operationState: 'UNKNOWN', basisReadOrdinal: 'UNKNOWN', operationOrdinal: 'UNKNOWN', resolverChanged: 'UNKNOWN' });
+  });
+
 });
