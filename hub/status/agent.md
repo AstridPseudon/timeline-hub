@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T15:14:16Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 6m -->
-# agent board, 2026-10-24T15:08:16Z
+<!-- agent | 2026-10-24T15:17:03Z | dispatcher heartbeat 14s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 0m -->
+# agent board, 2026-10-24T15:16:04Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -91,20 +91,22 @@
 | F paired cause B | Qualify second33 matched failure causes | Luna | Existing paired causes | merged | Cause B1458 | Seven historical environment causes qualified at exact scope;26 remain unverified. Current seven PASS receipts preserved. No bodies run. | Evidence only |
 | F baseline Runtime custody | Correct external Runtime source scope | Luna | Source correction complete | merged | Return1459 PASS | Launchbecfe preflight genuine; mutable origin later e68. Timeline/auth/wire blobs exact; service/store changed. Full-run Runtime isolation unproved. | Agent924 outcomes retained |
 
-| F D63 new ours | Check201 upstream-missing names once | Luna | Correct two real counterparts | review | Rename1503; return1508 | Two upstream PASS counterparts found. Return moves129/181 out of NEW-OURS;199 remainder follows D63. Current PASS preserved;181 candidate separate. | Evidence only |
+| F D63 new ours | Classify missing names with exact counterparts | Luna | Corrected return complete | merged | Rename1503; return1508 | 199 NEW-OURS and two authenticated counterparts. Order129 already PASS;181 source fix reviewed. Counts rollup1517 active. | Evidence only |
 
-| F D63 env catalogue | Qualify upstream PASS versus current source | Luna | Original181 current proof | doing | Current1508 | Same body and function upstream PASS; old checkpoint FAIL. Targeted current case now; fix smallest production defect if still red, never weaken test. | Current68e82 |
+| F D63 env catalogue | Use catalogued invocation key | Luna / Luna | Actual integrated proof | review | Author1508; security1513; home1518 | Reviewed target1 and guard15 PASS; merged d27b. Exact actual-home16 proof1518 active. Key/default/refusal unchanged; zero new static. | Homed27b6601e5 |
+
+| F D63 final rollup | Fold corrected exact276 categories | Luna | Existing evidence only | doing | agt-F-D63-final-rollup-1517 | Combine199 NEW-OURS,77 counterparts, paired causes and current receipts; no test bodies or source changes. | Evidence only |
 
 Integration: Agent68e82c0c2c includes U2 final924, normal e68 vendor adoption and independently reviewed legacy inverse fix. Proposal inverse actual-home13 passed. D61 consumer9460a443 retains all three reviewed donor blobs, held for qualified Runtime producer then normal D39 and current-home qualification. No generated code or lock edited by manager.
 core open: 7 tracked: four D61 fork checkpoint failures, one genuine D13 input UNKNOWN, two forward-provider originals outside276. Proposal inverse now closed by actual-home13. Two D23 timing originals remain unchanged visibly failing and deferred. Final tuple proof remains pending.
-regressions: 0 proven; one current candidate181 assigned to Luna1508; env78, deferred2, pre-existing0, dead-scope0, unproven196. Missing upstream comparisons remain UNKNOWN. Exact276 accounting remains162 PASS112 open2deferred at47b scope, with current failures overriding older receipts. Historical267 remains263 closed4open, separate from terminal full9758 FAIL.
-D60 baseline: Upstream924 full1621 terminal FAIL:12396 passed91 failed14 errors16 skipped566 subtests in3563.50s. Exact276 comparison1452 completed:75 matches (66 FAIL9 PASS),201 absent UNKNOWN. Eight historical PASS contrasts now qualify current PASS; one current contrast is explicit D23 deferred. No current regression proved. Two disjoint workers1458 qualify retained paired causes; Runtime external-scope correction1459 is active because launch metadata is not immutable run custody.
+regressions: 1 current source regression found at order181 and repaired on candidate2a8f; independent1513 PASS1+15, home proof pending. Nine other current PASS contrasts need cut confirmation. D63 final category rollup1517 active; no zero-regression closure yet.
+D60 baseline: Upstream924 full1621 terminal FAIL:12396 passed91 failed14 errors16 skips566 subtests. Corrected D63 comparison:77 counterparts (66 FAIL11 PASS),199 NEW-OURS. Missing selectors follow core rule; paired tracebacks retain exact limits. External Runtimebecfe launch later e68 is disclosed.
 Gates: P1/P2/P3 App; P4 Agent; P5 and Composition main. App U3b/D39 already merged under D56. P4 candidate317c collected3; final source binding and body follow qualified D61 source/client and sole heavy slot. No old pin, Farm or child work.
 Admission: Existing schema/source403 and automatic refusal remain stopped. D56 drops Farm venue access work. No alternate source, child, overlay, acquisition or reconstruction requested.
-Disk: About9.8GB free. No eligible finished clean Agent worktrees remain; earlier dirty/refused targets untouched. Compaction packed0 and compressed14 old logs. Sweep3 removed2 old directories. Cleanup target15GB remains opportunistic; sole existing heavy continues.
+Disk: About9.4GB free; cap6. Sweep3 and lossless compact-scratch active. Three remaining finished trees inspected previously held or dirty; no refused cleanup target retried. Target15GB is opportunistic; heavy stop floor8GB per latest header.
 Blockers: Runtime — D62 resolves private custody: accept-time record classification only, authenticated persisted ABI and normal regeneration. Runtime implementation/security remain owed; Agent consumer and D39 adopt on qualification.
 Blockers: Runtime — forward-created Sol1450 owns auth.py and the two exact ABI1 failures. Producer Sol1450 owns store/port; wire Luna1447 owns schema/generation. Source qualification and actual Agent proof remain pending.
-Blockers: Agent — D63 correction1508 excludes two actual upstream counterparts from new-ours. Candidate181 has targeted current proof/fix1508. D13 genuine seven-key input remains UNKNOWN under existing admission hold.
-Next ready: Consume D63 correction and current181 proof1508. Merge any qualified source fix promptly. Adopt qualified D62 producer through normal tools and current consumer, then final P4/full.
-live 1 / cap 6; ready-undispatched 0. Dispatcher <!-- agent | 2026-10-24T15:06:01Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 2m --> Two Luna1508 follow-ups queued immediately; no live Sol.
-Inbox consumed through D63 and Runtime1459 wire PASS; producer authority remains held. Last pass 2026-10-24T15:08:16Z.
+Blockers: Agent — D13 genuine seven-key input remains UNKNOWN under existing admission hold. D63 environment source fix reviewed and merging; final rollup1517 owns remaining counts.
+Next ready: Qualify actual home env key fix after merge. Consume D63 rollup1517. Adopt qualified Runtime D62 producer through normal D39 and reviewed consumer, then actual-home six originals and final P4/core.
+live 2 / cap 6; ready-undispatched 0. Luna rollup1517 and actual-home1518 active; security1513 completed PASS. No active Sol.
+Inbox consumed through Runtime1505 exact source join and D63. Qualified producer still owed; final consumer remains held. Last pass 2026-10-24T15:16:04Z.
