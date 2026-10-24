@@ -987,6 +987,14 @@ def _materialization_sites(entry, old_images, old_rows, new_images, new_rows, re
                                 if binding.get('key') == 'commit.effect' and binding.get('physical_ref') == ref
                                 and binding.get('path') == [] and start <= binding.get('effect_ordinal', -1) < end
                                 and binding.get('boundary', {}).get('side') == side]
+                        # An unchanged retained pin has no root-write effect.
+                        # Reattachment reuses that exact physical identity, never
+                        # another root with equal payload bytes.
+                        if (not pins and ref in old_images and ref in new_images
+                                and equal(old_images[ref], new_images[ref])
+                                and not any(effect['ref'] == ref and not effect['path']
+                                            for effect in step['patch'][start:end])):
+                            continue
                         if not pins or any(
                                 binding.get('ref') != ref or binding.get('revision_id') != images[ref]['revision_id']
                                 or binding.get('content_digest') != images[ref]['content_digest']
