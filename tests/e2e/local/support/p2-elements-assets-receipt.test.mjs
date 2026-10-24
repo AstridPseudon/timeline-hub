@@ -30,9 +30,15 @@ const command = {
   args: { changes: [{ op: 'set', ref: 'parent', path: ['clips', 'id:clip-1', 'at'], before: { state: 'present', value: 0 }, value: 5 }] },
 };
 const step = { id: 'step-1', label: 'Edit timeline', intent: 'Edit timeline', tags: [], command_ordinals: [0], patch: command.args.changes };
+const requestId1 = '6d8f4e2a-7c41-4b9e-8d03-5a6f1c2e7b90';
+const requestId2 = 'b1c2d3e4-f567-4890-ab12-cd34ef567890';
+const receiptId1 = 'txn-9a7b6c5d4e3f2a10b9c8d7e6f5a40321';
+const receiptId2 = 'txn-1234567890abcdef1234567890abcdef';
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const receiptPattern = /^txn-[0-9a-f]{32}$/i;
 
-function acceptedPost({ requestKey = 'request-1', publication = 'publication-1', revision = 'revision-1', baseRevision = 'revision-0', basePublication = 'publication-0', inverse = false } = {}) {
-  const acceptedCommand = inverse ? { schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: ['publication-1'] } } : command;
+function acceptedPost({ requestKey = requestId1, publication = receiptId1, revision = 'revision-1', baseRevision = 'revision-0', basePublication = 'publication-0', inverse = false } = {}) {
+  const acceptedCommand = inverse ? { schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [basePublication] } } : command;
   const acceptedStep = inverse ? { ...step, patch: [] } : step;
   const data = {
     status: 'accepted',
@@ -98,6 +104,9 @@ function historyFor(post, { publication = post.json.receipt.receipt_id, receipt 
 
 test('actual accepted helper preserves distinct publication and idempotency identities', () => {
   const post = acceptedPost();
+  assert.match(post.key, uuidPattern);
+  assert.match(post.json.receipt.receipt_id, receiptPattern);
+  assert.notEqual(post.key, post.json.receipt.receipt_id);
   assert.doesNotThrow(() => helpers.assertAcceptedReply(post, { revision_id: 'revision-0', publication_id: 'publication-0' }));
   assert.throws(() => helpers.assertAcceptedReply({ ...post, json: { ...post.json, receipt: { ...post.json.receipt, receipt_id: post.key } } }, { revision_id: 'revision-0', publication_id: 'publication-0' }));
   assert.throws(() => helpers.assertAcceptedReply({ ...post, json: { ...post.json, receipt: { ...post.json.receipt, idempotency_key: 'wrong-request' } } }, { revision_id: 'revision-0', publication_id: 'publication-0' }));
@@ -114,10 +123,11 @@ test('actual history helper joins by authoritative publication and guards the he
 
 test('actual undo history helper joins both inverse and target by receipt publication', () => {
   const target = acceptedPost();
-  const undo = acceptedPost({ requestKey: 'request-2', publication: 'publication-2', revision: 'revision-2', baseRevision: 'revision-1', basePublication: 'publication-1', inverse: true });
-  const page = historyFor(undo, { undoOf: ['publication-1'], undoSteps: null });
+  const targetPublication = target.json.receipt.receipt_id;
+  const undo = acceptedPost({ requestKey: requestId2, publication: receiptId2, revision: 'revision-2', baseRevision: 'revision-1', basePublication: targetPublication, inverse: true });
+  const page = historyFor(undo, { undoOf: [targetPublication], undoSteps: null });
   assert.doesNotThrow(() => helpers.assertUndoHistoryEntry(page, undo, target));
-  assert.throws(() => helpers.assertUndoHistoryEntry(historyFor(undo, { publication: undo.key, undoOf: ['publication-1'], undoSteps: null }), undo, target));
+  assert.throws(() => helpers.assertUndoHistoryEntry(historyFor(undo, { publication: undo.key, undoOf: [targetPublication], undoSteps: null }), undo, target));
   assert.throws(() => helpers.assertUndoHistoryEntry(historyFor(undo, { undoOf: [target.key], undoSteps: null }), undo, target));
-  assert.throws(() => helpers.assertUndoHistoryEntry(historyFor(undo, { undoOf: ['publication-1'] }), undo, target));
+  assert.throws(() => helpers.assertUndoHistoryEntry(historyFor(undo, { undoOf: [targetPublication] }), undo, target));
 });
