@@ -106,7 +106,7 @@ export function parseDevLocalWorkspaceArgs(args, env = {}) {
 }
 
 /** Resolve the Runtime CLI invocation without a shell, preserving explicit Python selection. */
-export function resolveRuntimeCommand({ runtimeCheckout, runtimePython, dataRoot, sourceManifest, platform = process.platform, exists = existsSync } = {}) {
+export function resolveRuntimeCommand({ runtimeCheckout, runtimePython, astridCheckout, dataRoot, sourceManifest, platform = process.platform, exists = existsSync } = {}) {
   const checkout = runtimeCheckout?.trim();
   const python = runtimePython?.trim();
   if (python) {
@@ -120,7 +120,14 @@ export function resolveRuntimeCommand({ runtimeCheckout, runtimePython, dataRoot
     const path = platform === 'win32' ? win32 : undefined;
     const scriptsDirectory = platform === 'win32' ? 'Scripts' : 'bin';
     const executable = platform === 'win32' ? 'python.exe' : 'python';
-    const checkoutPython = (path?.join ?? join)(checkout, '.venv', scriptsDirectory, executable);
+    const venvPython = (root) => (path?.join ?? join)(root, '.venv', scriptsDirectory, executable);
+    // An installation shares one environment between agent and Runtime, so the
+    // selected Astrid checkout's venv also holds the generated Runtime client.
+    const astridPython = astridCheckout?.trim() ? venvPython(astridCheckout.trim()) : null;
+    if (astridPython && exists(astridPython)) {
+      return { command: astridPython, args: ['-m', 'astrid_runtime.cli'], cwd: checkout };
+    }
+    const checkoutPython = venvPython(checkout);
     if (!exists(checkoutPython)) {
       throw new Error(`Runtime checkout has no .venv/${scriptsDirectory}/${executable}: ${checkoutPython}; set ASTRID_RUNTIME_PYTHON to an explicit Python executable`);
     }
