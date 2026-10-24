@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T09:55:50Z | dispatcher heartbeat 10s | live 6 (sol 2, luna 4, other 0) | busy30 10 | status age 0m -->
-# app board, 2026-10-24T09:57Z
+<!-- app | 2026-10-24T10:00:24Z | dispatcher heartbeat 12s | live 4 (sol 2, luna 2, other 0) | busy30 9 | status age 4m -->
+# app board, 2026-10-24T09:56Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -21,7 +21,7 @@
 | P2-P3-D41-caller | Prepare source-required Agent backport inputs | Sol; independent Luna | Review0945 FAIL; real pin pending | doing | Luna0939; review0945; Sol0950 | Receipt substring, parent and child binding gaps found. Sol first return closes exact witnesses. No rows installed; old caller0902 intact. | b2f7113cc2 held |
 | P2-element-diagnostic | Retain Apply transport and UI stages | Luna | Orchestrator09:57 | doing | app-P2-element-retained-diagnostic-0955 | Add safe retained events through real fixture, original bodies hash-locked. Review before next P2. | Base82cb |
 | P3-solo | Qualify P3-only current caller | Luna; Proof release | HOME82cb; old custody | doing | app-P3-solo-caller-0955 | Bind legacy1d925 to pure proof0900; preserve P2 row. Proof no-popup determination and release requested. | Base1d925 |
-| U3b-D39-early | Stack current fixes and D39 on branch | Sol; Luna review | Orchestrator D48 amendment09:57 | doing | app-U3b-D39-early-stack-sol-0955 | Stack reviewedcd29 withHOME82cb, normal D39 generation. App full checkpoint after source review; no home merge. | Draft branch only |
+| U3b-D39-early | Stack current fixes and D39 on branch | Sol; Luna review | Orchestrator D48 amendment09:57 | doing | app-U3b-D39-early-stack-sol-0955 | Manager merge-forward82cb into reviewedcd29 is conflict-free. Normal D39 generation active; service full checkpoint follows review. No home merge. | Draft branch only |
 | P2-P3-current-packet | Publish same-ID terminal evidence | Luna; Proof review | Actual retained files | merged | Producer return 0707; Proof 0717 | Eight safe files published byte-exact with origin paths and hashes. Actual daemon and P2 synthetic snapshot identity remain unknown. | Source 663 |
 | P2-P3-lifecycle-custody | Verify retained lifecycle bytes | Luna; independent Luna | Independent 0741 PASS | merged | Producer 0733; review 0741 | Originals, copies and attachments are 224 bytes with LF. Exact selected writer matches. Prior 225/no-LF claim contradicted. | Same immutable files |
 | P3-parent-path | Prove actual predecessor dispatch | Sol; independent Luna | Independent 0720 PASS | merged | Sol 0714; review 0720 | One POST 200 accepted; guarded doc.patch moves 0 to 5 with 25 request/step reads. Canonical 5 and history 2 to 3. | Report only |
@@ -70,4 +70,4 @@ Disk: Sweep3 removed zero directories; about11.4 GB free. No eligible finished c
 
 Evidence: [joined 690](../../design/app-A2-A3-corrected-integrated-0629.md), [real provider integrated](../../design/app-A3-provider-integrated-0724.md), [actual predecessor review](../../design/app-P3-parent-trace-review-0720.md), [element clock](../../design/app-P2-element-clock-review-0724.md), [element error review](../../design/app-P2-element-error-review-0738.md), [popup cause review](../../design/app-P2-popup-cause-review-0745.md), [lifecycle review](../../design/app-P2-P3-lifecycle-review-0741.md), [IMAGE](../../design/agt-A4-image-result-review-0636.md).
 
-Pass 2026-10-24T09:57Z: INBOX consumed through1425088 bytes, including orchestrator09:57 three asks. All three became owned rows and dispatches immediately. Earlyfreeze waits manager merge-forward once worktree exists. P3solo starts from qualified1d925, not failedD41package; no popup pin dependency is assumed. Proof no-popup assessment and oneP3-only release requested0955. Header home-merge condition stays intact.
+Pass 2026-10-24T09:57Z: INBOX consumed through1426469 bytes, including orchestrator09:57 three asks. All three became owned rows and dispatches immediately. Sanctioned earlyfreeze merge-forward completed conflict-free; actual U3b source retains all current82cb fixes. P3solo starts from qualified1d925, not failedD41package; no popup pin dependency is assumed. Proof no-popup assessment and oneP3-only release requested0955. Header home-merge condition stays intact.
