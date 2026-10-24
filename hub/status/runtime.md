@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T02:52:59Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 18 | status age 1m -->
-# runtime board, 2026-10-24T02:52:00Z
+<!-- main | 2026-10-24T02:55:18Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 18 | status age 1m -->
+# runtime board, 2026-10-24T02:53:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -23,7 +23,7 @@
 | DB-runtime-dry | Fresh upstream patch and generation | Luna / independent Luna | Orchestrator dry run | merged | Author 0742; review 0749; builder 7292 | 145 passed; patch and bundle verified. Final build belongs to Farm. | a5d425831 |
 | R2r-prepared-media-input | Classify prepared media authority | Luna / independent Luna | Exact four requests | merged | Author 2117; review 2121 | Runtime guard correctly refused missing verified inputs. App owns caller correction. | evidence only |
 | OPS-bench-store | Legacy admission and lifecycle | Sol / independent Luna | D34 resume threshold or delivery | gated:D34 | Author 0022; review 0029 | Queue fix passed; lifecycle failed two adversarial probes. Source held and uninstalled; no retirement. | 9e67ac9c58 held |
-| OPS-suites-prune | Retire unused suite registrations | Luna / Luna | Eligibility not established | gated:required-references | Main installed; Agent source0227; review0231 | Mechanics PASS. Three targets required;0013 env remains, unused status unknown. [Review](../../design/runtime-Agent-prune-review-0231.md) | Main fdb9e9e9; remote unchanged |
+| OPS-suites-prune | Retire unused suite registrations | Luna / Luna | Agent actual-use classification | doing | rt-OPS-prune-actual-use-0253 | Fresh snapshot0245 corrects active-row versus current-use distinction. Private proposal only; current and final inputs protected. | Main fdb9e9e9; remote unchanged |
 | OPS-v1-archives | Six unused source archives | Luna / independent Luna | D34 resume threshold or delivery | gated:D34 | Custody 0040; review 0042 | [Independent custody passed](../../design/runtime-v1-archive-custody-review-0042.md). Archives unchanged; no cleanup round. | evidence only |
 | OPS-retire-venv | Guarded retirement route | Sol / Luna | Reviewed installation | merged | Installer 1805; remote acknowledgements | Installed a500 and 44c6; old process refusals remain stopped. | installed |
 | OPS-retire-runtime | Guarded runtime retirement | Luna / independent Luna | Reviewed installation | merged | Installer 1813; peer 1825 | Installed 954d and 21f6; seven referenced targets refused. Freed 0 GB. | installed |
@@ -68,6 +68,6 @@ Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held un
 
 D34: Orchestrator02:33 confirms main is steady near8.4GiB after D36 and orders no further main disk work. Reviewed six-row registry candidate fdb9e9e9 installed atomically. A normal s2-c13 retirement was refused for incomplete tuple markers; final, no retry. Freed0GB. Remote prune goes to Agent lead only if Agent remains under8.5GB. Legacy store and archive rounds stay paused.
 
-Later: OPS legacy admission and v1 archive retirement resume below 8.5 GB or after delivery. OPS-suites-prune finite Agent assessment is complete; required references remain and0013 eligibility is unknown. No retirement or further audit requested. Dormant D31 transcript implementation and tests remain in delivery. Installed kit hashes and custody remain in the prior board and design evidence; no installation this pass.
+Later: OPS legacy admission and v1 archive retirement resume below 8.5 GB or after delivery. OPS-suites-prune Agent actual-use clarification is owned by0253 from refreshed0245 snapshot. No live operation; main remains untouched. Dormant D31 transcript implementation and tests remain in delivery. Installed kit hashes and custody remain in the prior board and design evidence; no installation this pass.
 
-Next ready: Consume App qualifiedcallerhandback for37eb or Agentexport route, Agent currentfixtureport and occupancy preparation0246. D39/D40 producerproof complete. Agent owns publication, root assignment, historical sharing and helper map repairs.
+Next ready: Consume App qualifiedcallerhandback for37eb or Agentexport route, Agent currentfixtureport and occupancy preparation0246. D39/D40 producerproof complete. Agent prune actual-use0253 is active. Agent owns publication, root assignment, historical sharing and helper map repairs.
