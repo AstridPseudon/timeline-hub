@@ -2532,19 +2532,7 @@ class RuntimeService:
             with self.store._mutex:
                 check()
                 self._ensure_timeline_commit_baseline(commits, project_id, timeline_id, check)
-                # The store's opaque cursor includes the original fixed head.
-                if cursor is None:
-                    through = commits.head(project_id, timeline_id)
-                else:
-                    try:
-                        decoded = json.loads(base64.urlsafe_b64decode(cursor.encode()))
-                        scope = decoded["scope"]
-                        if scope[:2] != [project_id, timeline_id] or scope[3] is not None:
-                            raise ValueError()
-                        through = scope[2]
-                    except (ValueError, KeyError, TypeError, IndexError) as exc:
-                        raise ValidationError("invalid commit history cursor") from exc
-                return commits.history(project_id, timeline_id, through, cursor=cursor, limit=limit)
+                return commits._read_history(project_id, timeline_id, cursor=cursor, limit=limit)
         except CommitRejected as exc:
             raise public_failure(exc.failure) from exc
 

@@ -393,6 +393,9 @@ class TimelineCommitStore:
         return detached({"data": data, "receipt": receipt})
 
     def head(self, project_id, timeline_id):
+        return self._head_entry(project_id, timeline_id)[0]
+
+    def _head_entry(self, project_id, timeline_id):
         with self.store._mutex:
             self._membership(project_id, timeline_id)
             row = self.conn.execute("SELECT revision_id, publication_id FROM parent_composition_heads "
@@ -425,7 +428,7 @@ class TimelineCommitStore:
                                       "details": {"base": None, "current": None, "conflicts": [], **exc.details}}) from exc
             except (KeyError, TypeError, ValueError, IndexError):
                 reject("history_unavailable", "timeline catalog facts are corrupt")
-            return dict(row)
+            return dict(row), entry
 
     def history_entry(self, project_id, timeline_id, publication_id, *, allow_archived=False):
         with self.store._mutex:
@@ -462,47 +465,74 @@ class TimelineCommitStore:
                 entry["steps"] = records["steps"]
             return entry
 
+    def _read_history(self, project_id, timeline_id, *, cursor, limit):
+        # Keep the authenticated head entry local to this one locked read. Its
+        # receipt, events, source and execution proof have all been verified;
+        # neither another request nor a mutation can reuse this entry.
+        with self.store._mutex:
+            if cursor is None:
+                through, bound = self._head_entry(project_id, timeline_id)
+            else:
+                try:
+                    decoded = json.loads(base64.urlsafe_b64decode(cursor.encode()))
+                    scope = decoded["scope"]
+                    if scope[:2] != [project_id, timeline_id] or scope[3] is not None:
+                        raise ValueError()
+                    through = scope[2]
+                except (ValueError, KeyError, TypeError, IndexError) as exc:
+                    raise ValidationError("invalid commit history cursor") from exc
+                bound = self.history_entry(project_id, timeline_id, through["publication_id"])
+            return self._history_page(project_id, timeline_id, through, bound, cursor=cursor, limit=limit)
+
     def history(self, project_id, timeline_id, through, after_publication_id=None, cursor=None, limit=100):
         if type(limit) is not int or not 1 <= limit <= 200:
             raise ValidationError("history limit must be 1–200")
         with self.store._mutex:
             bound = self.history_entry(project_id, timeline_id, through["publication_id"])
-            if bound["revision_id"] != through["revision_id"]:
+            return self._history_page(project_id, timeline_id, through, bound,
+                                      after_publication_id=after_publication_id, cursor=cursor, limit=limit)
+
+    def _history_page(self, project_id, timeline_id, through, bound, *,
+                      after_publication_id=None, cursor=None, limit):
+        if bound["revision_id"] != through["revision_id"]:
+            reject("history_unavailable")
+        after = self.history_entry(project_id, timeline_id, after_publication_id) if after_publication_id else None
+        low = after["receipt"]["project_seq"][0] if after else 0
+        high = bound["receipt"]["project_seq"][0]
+        cursor_scope = [project_id, timeline_id, through, after_publication_id]
+        start = low
+        if cursor is not None:
+            try:
+                decoded = json.loads(base64.urlsafe_b64decode(cursor.encode()))
+                if decoded["scope"] != cursor_scope or type(decoded["seq"]) is not int or not low < decoded["seq"] <= high:
+                    raise ValueError()
+                start = decoded["seq"]
+            except (ValueError, KeyError, TypeError) as exc:
+                raise ValidationError("invalid history cursor") from exc
+        if low > high:
+            reject("history_unavailable")
+        rows = self.conn.execute("SELECT publication_id FROM timeline_commit_history WHERE project_id=? AND timeline_id=? "
+                                 "AND project_seq>? AND project_seq<=? ORDER BY project_seq LIMIT ?",
+                                 (project_id, timeline_id, start, high, limit + 1)).fetchall()
+        # The bound is the exact entry authenticated in this locked read, not
+        # another publication or closure with coincidentally equal bytes.
+        items = [bound if row[0] == bound["publication_id"] else
+                 self.history_entry(project_id, timeline_id, row[0]) for row in rows[:limit]]
+        previous = self.conn.execute("SELECT publication_id, revision_id FROM timeline_commit_history WHERE project_id=? "
+                                    "AND timeline_id=? AND project_seq<=? ORDER BY project_seq DESC LIMIT 1",
+                                    (project_id, timeline_id, start)).fetchone()
+        expected = dict(previous) if previous else None
+        for entry in items:
+            if entry["previous"] != expected:
                 reject("history_unavailable")
-            after = self.history_entry(project_id, timeline_id, after_publication_id) if after_publication_id else None
-            low = after["receipt"]["project_seq"][0] if after else 0
-            high = bound["receipt"]["project_seq"][0]
-            cursor_scope = [project_id, timeline_id, through, after_publication_id]
-            start = low
-            if cursor is not None:
-                try:
-                    decoded = json.loads(base64.urlsafe_b64decode(cursor.encode()))
-                    if decoded["scope"] != cursor_scope or type(decoded["seq"]) is not int or not low < decoded["seq"] <= high:
-                        raise ValueError()
-                    start = decoded["seq"]
-                except (ValueError, KeyError, TypeError) as exc:
-                    raise ValidationError("invalid history cursor") from exc
-            if low > high:
-                reject("history_unavailable")
-            rows = self.conn.execute("SELECT publication_id FROM timeline_commit_history WHERE project_id=? AND timeline_id=? "
-                                     "AND project_seq>? AND project_seq<=? ORDER BY project_seq LIMIT ?",
-                                     (project_id, timeline_id, start, high, limit + 1)).fetchall()
-            items = [self.history_entry(project_id, timeline_id, row[0]) for row in rows[:limit]]
-            previous = self.conn.execute("SELECT publication_id, revision_id FROM timeline_commit_history WHERE project_id=? "
-                                        "AND timeline_id=? AND project_seq<=? ORDER BY project_seq DESC LIMIT 1",
-                                        (project_id, timeline_id, start)).fetchone()
-            expected = dict(previous) if previous else None
-            for entry in items:
-                if entry["previous"] != expected:
-                    reject("history_unavailable")
-                expected = {"publication_id": entry["publication_id"], "revision_id": entry["revision_id"]}
-            if len(rows) <= limit and expected != through:
-                reject("history_unavailable")
-            next_cursor = None
-            if len(rows) > limit:
-                next_cursor = base64.urlsafe_b64encode(canonical_json({"scope": cursor_scope,
-                    "seq": items[-1]["receipt"]["project_seq"][0]}).encode()).decode()
-            return {"items": items, "next_cursor": next_cursor, "head": detached(through)}
+            expected = {"publication_id": entry["publication_id"], "revision_id": entry["revision_id"]}
+        if len(rows) <= limit and expected != through:
+            reject("history_unavailable")
+        next_cursor = None
+        if len(rows) > limit:
+            next_cursor = base64.urlsafe_b64encode(canonical_json({"scope": cursor_scope,
+                "seq": items[-1]["receipt"]["project_seq"][0]}).encode()).decode()
+        return {"items": items, "next_cursor": next_cursor, "head": detached(through)}
 
     def revision_closure(self, project_id, timeline_id, revision_id, *, allow_archived=False):
         with self.store._mutex:
