@@ -1,0 +1,400 @@
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-71-            ("shot-revision:shot", "shot-revision:copy-shot", "internal-revision:internal", "internal-revision:copy-internal"),
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-72-            ("internal-revision:internal", "internal-revision:copy-internal", "shot-revision:shot", "shot-revision:copy-shot")):
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-73-        bindings.append({"key": "commit.materialization", "ref": old, "physical_ref": old,
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-74-            "revision_id": before[old]["revision_id"], "content_digest": before[old]["content_digest"],
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py:75:            "successor": new, "owner": owner, "owners": [owner, "occurrence:b/shot"],
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-76-            "edge_before": sibling_old, "edge_after": sibling_new, "step_id": "edit",
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-77-            "policy": "fixed", "dependencies": [], "boundary": attribution})
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-78-
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-79-    def pins(patches, input_images, output_images):
+--
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-91-    entry = {"publication_id": "publication", "intent": "recorded", "previous": attribution["evaluated_head"],
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-92-             "receipt": {"receipt_id": "publication", "result": {"canonical_document": source,
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-93-                 "document_digest": digest(source), "base_revision_id": "parent", "base_publication_id": "bootstrap"}},
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-94-             "records": {"steps": [step], "commands": [{"ordinal": 0,
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py:95:                 "command": {"op": "occurrence.swap-media"}, "writes": writes,
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-96-                 "bindings": bindings + pins(effects, before, after), "derived_writes": []}]}}
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-97-    inverse_writes = [{**copy.deepcopy(write), "before": write["after"], "after": write["before"]}
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-98-                      for write in reversed(writes)]
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-99-    if native_items:
+--
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-122-    original = history["publication"]["records"]["commands"][0]
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-123-    if damage == "mapping":
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-124-        command["writes"][1 if native_items else 0]["path"][2 if native_items else -1] = "item_id:foreign"
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-125-    elif damage == "owner":
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py:126:        original["bindings"][0]["owners"] = ["occurrence:a/shot", "occurrence:foreign/shot"]
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-127-    elif damage in {"revision", "digest"}:
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-128-        original["bindings"][0]["revision_id" if damage == "revision" else "content_digest"] = "foreign"
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-129-    elif damage == "source-command":
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-130-        command["bindings"][0]["boundary"]["command_ordinals"] = [1]
+--
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-145-        command["bindings"][0]["boundary"]["effect_range"][1] += 1
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-146-    elif damage == "effect-value":
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-147-        step["patch"][0]["value"] = "foreign"
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-148-    elif damage == "foreign-write":
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py:149:        command["writes"][0]["ref"] = "occurrence:b/clip:clip"
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-150-    elif damage == "history":
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-151-        history["publication"]["receipt"]["receipt_id"] = "foreign"
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-152-    elif damage == "equal-byte-retarget":
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-153-        before["shot-revision:copy-shot"]["revision_id"] = "unproven"
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-154-    elif damage == "sibling":
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py:155:        after["parent"]["payload"]["occurrences"][1]["shot_id"] = "foreign"
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-156-
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-157-    def verify():
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-158-        assert _inverse_stage_ranges(step, records, history)
+/home/user/work/runtime/tests/test_timeline_shared_inverse_authority.py-159-        return _inverse_stage_boundaries(before, after, step, records, after, before, history)
+--
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-18-    source_root: Path
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-19-    duplicate_root: Path
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-20-    project_id: str
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-21-    timeline_id: str
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py:22:    parent_revision_id: str
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-23-    media_ids: tuple[str, ...]
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py:24:    transcript_document_id: str
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-25-    text_binding_id: str
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-26-
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-27-
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-28-def build_film_fixture(tmp_path: Path) -> FilmFixture:
+--
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-37-        source_root=captured.copy_roots[0],
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-38-        duplicate_root=captured.copy_roots[1],
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-39-        project_id=pins["project_id"],
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-40-        timeline_id=pins["timeline_id"],
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py:41:        parent_revision_id=pins["parent_revision_id"],
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-42-        media_ids=pins["media_ids"],
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py:43:        transcript_document_id=pins["transcript_document_id"],
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-44-        text_binding_id=pins["text_binding_id"],
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-45-    )
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-46-
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-47-
+--
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-52-
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-53-def fixture_facts(service: RuntimeService, fixture: FilmFixture) -> dict:
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-54-    """Return small API/read facts used by tests and handoff documentation."""
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-55-    parent = service.get_project_parent_composition_revision(
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py:56:        fixture.project_id, fixture.timeline_id, fixture.parent_revision_id
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-57-    )
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py:58:    transcript = service.get_document(fixture.project_id, fixture.transcript_document_id)
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-59-    binding = service.get_project_shot_text_binding(fixture.project_id, fixture.text_binding_id)
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-60-    return {
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-61-        "parent": parent,
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py:62:        "transcript": transcript,
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-63-        "binding": binding,
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-64-        "realm_id": service.store.realm["id"],
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-65-        "cas_ids": tuple(sorted(fixture.media_ids)),
+/home/user/work/runtime/tests/timeline_commit_film_fixture.py-66-    }
+--
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-21-@pytest.fixture
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-22-def recorder(tmp_path, astrid_importable):
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-23-    from astrid.sdk.timeline.capture import capture_track_create
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-24-    from astrid.sdk.timeline.commit import bundle_from_document
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py:25:    from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py:26:    from astrid.sdk.timeline.native_occurrence_fork import capture_occurrence_fork
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-27-
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-28-    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-29-
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-30-    root = tmp_path / "recorder-realm"
+--
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-45-                "base_revision_id": head["revision_id"], "base_publication_id": head["publication_id"],
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-46-                "commands": [command], "source": {"via": "python"}, "dry_run": False}
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-47-        if modern:
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-48-            body.update(label="Fork", merge="fields", reads=[], steps=[{
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py:49:                "id": "fork", "label": "Fork", "intent": "Fork occurrence", "tags": [],
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-50-                "command_ordinals": [0], "patch": [], "reads": []}])
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-51-        return body
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-52-
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-53-    def publish(body, key):
+--
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-56-
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-57-    try:
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-58-        track = capture_track_create(bundle_from_document(document()), "parent", {"id": "picture", "kind": "visual"})
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-59-        publish(request(track, False), "track")
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py:60:        birth = capture_occurrence_create(bundle_from_document(document()), "opening", "source-shot",
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-61-                                          name="Opening", track="picture", on=0, duration=5)
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-62-        publish(request(birth, False), "birth")
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-63-
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-64-        def fork(modern):
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py:65:            command = capture_occurrence_fork(bundle_from_document(document()), "occurrence:opening", "fork-shot")
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-66-            return request(command, modern)
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-67-
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-68-        yield runtime, project, fork, publish
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-69-    finally:
+--
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-119-
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-120-    def attack(port, prepared):
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-121-        value = copy.deepcopy(prepared)
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-122-        record = value["records"]["commands"][0]
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py:123:        assert record["command"]["op"] == "occurrence.fork"
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-124-        assert any("physical_ref" in binding for binding in record["bindings"])
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-125-        legacy_keys = {"key", "ref", "policy", "dependencies"}
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-126-        record["bindings"] = [
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-127-            {key: item for key, item in binding.items() if key in legacy_keys}
+--
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-211-    head = commits.head(project, "film")
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-212-    before = commits.history(project, "film", head)
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-213-    recorded = [entry for entry in before["items"] if entry["intent"] == "recorded"]
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-214-    assert [entry["records"]["commands"][0]["command"]["op"] for entry in recorded] == [
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py:215:        "track.create", "occurrence.create"]
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-216-    assert all(entry.get("recorder_abi", 1) == 1 for entry in recorded)
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-217-    assert all(entry["source"] == {"via": "python"} for entry in recorded)
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-218-    root = runtime.store.root
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-219-    runtime.close()
+--
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-228-    runtime, project, _fork, _publish = recorder
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-229-    commits = runtime._timeline_commits()[0]
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-230-    publication = commits.head(project, "film")["publication_id"]
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-231-    entry = commits.history_entry(project, "film", publication)
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py:232:    assert entry["records"]["commands"][0]["command"]["op"] == "occurrence.create"
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-233-    assert entry["recorder_abi"] == 1
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-234-    metadata = json.loads(runtime.store.conn.execute(
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-235-        "SELECT metadata_json FROM timeline_commit_history WHERE publication_id=?", (publication,),
+/home/user/work/runtime/tests/test_timeline_recorder_abi_authority.py-236-    ).fetchone()[0])
+--
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py-2-from runtime_protocol.timeline_inspection import _attach_render_timing, _render_timing_context
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py-3-
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py-4-
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py-5-def test_child_audio_track_collision_keeps_parent_visual_dispatch_and_controls():
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py:6:    occurrence = {'occurrence_id': 'occ', 'shot_id': 'shot', 'internal_timeline_revision_id': 'child',
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py-7-                  'start': [10, 1], 'duration': [2, 1],
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py-8-                  'speed': 1, 'source_offset': 0, 'track_id': 'placement', 'mute': True, 'gain': .01}
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py:9:    child = {'id': 'sound', 'clipType': 'audio', 'track': 'shared', 'at': 0, 'hold': 2,
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py-10-             'volume': .5, 'opacity': .6, 'params': {'fadeIn': 1}}
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py-11-    child_track = {'id': 'shared', 'kind': 'audio', 'muted': True, 'volume': .1}
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py-12-    projected = [{'clip_id': 'sound', 'authored_fields': child.copy(), 'track': child_track.copy(),
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py-13-                  'track_ref': {'scope': 'internal_timeline', 'scope_id': 'child', 'track_id': 'shared'}}]
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py-14-    parent_track = {'id': 'shared', 'kind': 'visual', 'opacity': .3, 'volume': .4, 'muted': False,
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py-15-                    'blendMode': 'screen', 'app': {'ignored': 'parent extensions'}}
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py:16:    _attach_render_timing(projected, [child], occurrence, {'assets': {}})
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py-17-    context = _render_timing_context({'output': {'fps': 30}}, [parent_track], [],
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py:18:                                     [(occurrence, projected)], transition_free=True)
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py-19-    assert context['status'] == 'complete'
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py-20-    assert context['tracks'] == [{key: value for key, value in parent_track.items() if key != 'app'}]
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py-21-    assert projected[0]['track'] == child_track
+/home/user/work/runtime/tests/test_timeline_dispatch_context.py-22-    assert projected[0]['authored_fields']['params']['fadeIn'] == 1
+--
+/home/user/work/runtime/tests/test_t4_replacement_foundation.py-54-    finally:
+/home/user/work/runtime/tests/test_t4_replacement_foundation.py-55-        daemon.stop()
+/home/user/work/runtime/tests/test_t4_replacement_foundation.py-56-
+/home/user/work/runtime/tests/test_t4_replacement_foundation.py-57-
+/home/user/work/runtime/tests/test_t4_replacement_foundation.py:58:def test_verified_candidate_activation_discards_superseded_root_by_default(tmp_path):
+/home/user/work/runtime/tests/test_t4_replacement_foundation.py-59-    active_root = tmp_path / "active"
+/home/user/work/runtime/tests/test_t4_replacement_foundation.py-60-    support_root = tmp_path / "support"
+/home/user/work/runtime/tests/test_t4_replacement_foundation.py-61-    _fresh(active_root)
+/home/user/work/runtime/tests/test_t4_replacement_foundation.py-62-    daemon = RuntimeDaemon(active_root, support_root=support_root).start()
+--
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-2-
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-3-The first test uses a deliberately labelled provider at the Runtime boundary:
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-4-it accepts through ``RequestCommitPort`` and never writes SQLite itself.  The
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-5-second test reads a genuine schema-31 backup and changes only its mutable
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py:6:transcript source, proving that the historical text binding remains the pin.
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-7-"""
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-8-from __future__ import annotations
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-9-
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-10-from copy import deepcopy
+--
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-28-
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-29-    def commit(self, context, port):
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-30-        head = port.head()
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-31-        document = port.revision_closure(head["revision_id"])
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py:32:        payload = document["parent_revision"]["payload"]
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-33-        payload.setdefault("config", {})["read_fixture_marker"] = "accepted"
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py:34:        document["parent_revision"]["revision_id"] = "read-fixture-v1"
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py:35:        document["parent_revision"]["content_digest"] = digest(payload)
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-36-        command = context["request"]["commands"][0]
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-37-        record = {
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-38-            "ordinal": 0,
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-39-            "command": command,
+--
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-150-    fixture = build_film_fixture(tmp_path)
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-151-    service = RuntimeService(fixture.duplicate_root)
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-152-    try:
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-153-        parent = service.get_project_parent_composition_revision(
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py:154:            fixture.project_id, fixture.timeline_id, fixture.parent_revision_id
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-155-        )
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-156-        shot_revision = service.get_project_shot_revision(
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-157-            fixture.project_id, "shot-1", "film-shot-revision-1"
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-158-        )
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-159-        internal_revision = service.get_project_timeline_revision(
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-160-            fixture.project_id, fixture.timeline_id, "film-internal-1"
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-161-        )
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-162-        original_document = service.get_document(
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py:163:            fixture.project_id, fixture.transcript_document_id
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-164-        )
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-165-        binding = service.get_project_shot_text_binding(
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-166-            fixture.project_id, fixture.text_binding_id
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-167-        )
+--
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-173-
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-174-        assert {item["object_id"] for item in objects} == set(fixture.media_ids)
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-175-        assert reference["metadata"] == {"fixture": "schema31/pre-cut80973d3"}
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-176-        assert reference["media_references"][1]["metadata"] == {"shot_id": "shot-1"}
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py:177:        assert shot["metadata"]["transcript_anchor"]["word_id"] == "word-1"
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py:178:        assert parent["payload"]["occurrences"][0]["shot_revision_id"] == shot_revision["revision_id"]
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-179-        assert shot_revision["internal_timeline_revision_id"] == internal_revision["revision_id"]
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-180-        assert binding["media_id"] in fixture.media_ids
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-181-
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-182-        changed = deepcopy(original_document["content"])
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-183-        changed["segments"][0]["text"] = "MUTATED SOURCE"
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-184-        service.update_document(
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-185-            fixture.project_id,
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py:186:            fixture.transcript_document_id,
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-187-            {"expected_version": original_document["version"], "content": changed},
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-188-            idempotency_key="mutate-source-only",
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-189-        )
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py:190:        current_source = service.get_document(fixture.project_id, fixture.transcript_document_id)
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-191-        shown = service.inspect_timeline(
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-192-            fixture.project_id,
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-193-            fixture.timeline_id,
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py:194:            {"revision_id": fixture.parent_revision_id, "occurrence": "occurrence-1"},
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-195-        )
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py:196:        pinned_binding = shown["selected"][0]["occurrence"]["text_bindings"][0]
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-197-
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-198-        assert current_source["content"]["segments"][0]["text"] == "MUTATED SOURCE"
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-199-        assert pinned_binding["media_id"] == binding["media_id"]
+/home/user/work/runtime/tests/test_timeline_reads_after_cut.py-200-        assert pinned_binding["text"] == "Open on the river"
+--
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-88-    head = port.head()
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-89-    source = port.revision_closure(head["revision_id"])
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-90-    document = copy.deepcopy(source)
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-91-    change = copy.deepcopy(request["commands"][0]["args"]["changes"][0])
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:92:    parent = document["parent_revision"]
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-93-    parent["payload"]["meta"] = copy.deepcopy(change["value"])
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-94-    parent["revision_id"] = "annotated-" + context["idempotency_key"]
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-95-    parent["content_digest"] = digest(parent["payload"])
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-96-    step = {**copy.deepcopy(request["steps"][0]), "patch": [change],
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-97-            "dependencies": copy.deepcopy(request.get("reads", []))}
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-98-    step["dependencies"].extend(copy.deepcopy(step.get("reads", [])))
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-99-    binding = {"key": "doc.patch:0", "ref": "parent", "physical_ref": "parent",
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:100:               "revision_id": source["parent_revision"]["revision_id"],
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:101:               "content_digest": source["parent_revision"]["content_digest"],
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-102-               "policy": "fixed", "dependencies": [], "path": change["path"], "change": change,
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-103-               "write_range": [0, 1], "command_ordinal": 0, "change_ordinal": 0, "phase": "input",
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-104-               "boundary": {"base_revision_id": request["base_revision_id"],
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-105-                            "base_publication_id": request["base_publication_id"], "evaluated_head": head,
+--
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-163-    def mutate(value):
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-164-        record = value["records"]["commands"][0]
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-165-        binding = {key: copy.deepcopy(record["bindings"][0][key]) for key in (
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-166-            "ref", "physical_ref", "policy", "dependencies", "boundary", "path")}
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:167:        parent = value["canonical_document"]["parent_revision"]
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-168-        binding.update(key="commit.effect", revision_id="projected-parent", content_digest=parent["content_digest"],
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-169-                       effect_ordinal=0, step_id="note")
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-170-        binding["boundary"].update(phase="effect", side="after")
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-171-        if bad_pin == "digest":
+--
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-224-            binding["change"]["value"] = {"forged": True}
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-225-        elif mutation == "outside_write_range":
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-226-            binding["write_range"] = [0, 2]
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-227-        elif mutation == "output_image_as_input":
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:228:            binding.update({key: value["canonical_document"]["parent_revision"][key]
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-229-                            for key in ("revision_id", "content_digest")})
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-230-    provider(service, mutate)
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-231-    submitted = body(service)
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-232-    submitted["dry_run"] = dry_run
+--
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-237-    assert rows(service) == before
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-238-
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-239-
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-240-@pytest.mark.parametrize("alias", [
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:241:    "occurrence:missing/text-binding:voiceover_script",
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:242:    "occurrence:occurrence-1/text-binding:voiceover_script:forged",
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:243:    "occurrence:occurrence-1/collection:forged",
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-244-])
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-245-def test_native_text_alias_refusals_are_atomic(service, alias):
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-246-    def mutate(value):
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-247-        value["records"]["commands"][0]["bindings"][0].update(
+--
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-256-
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-257-
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-258-def test_native_text_alias_duplicate_slot_is_ambiguous():
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-259-    boundary = {
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:260:        "parent": {"payload": {"occurrences": [{
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:261:            "occurrence_id": "occ-1", "shot_revision_id": "shot-r1",
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-262-        }]}},
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-263-        "shot-revision:shot-r1": {"revision_id": "shot-r1", "content_digest": "digest",
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-264-                                   "payload": {"text_bindings": [
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-265-                                       {"kind": "prompt", "slot": "hero"},
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-266-                                       {"kind": "prompt", "slot": "hero"},
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-267-                                   ]}},
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-268-    }
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-269-    with pytest.raises(CommitRejected):
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:270:        site(boundary, "occurrence:occ-1/text-binding:prompt:hero", [])
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-271-
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-272-
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-273-@pytest.mark.parametrize(("alias", "path", "expected"), [
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-274-    ("parent/source", ["source_window"], ("parent", ["config", "source_window"])),
+--
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-313-    assert result["data"]["status"] == "accepted"
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-314-
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-315-
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-316-def test_materialization_turnover_requires_the_captured_physical_owner():
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:317:    boundary = {"parent": {"payload": {"occurrences": [{
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:318:        "occurrence_id": "occ-1", "shot_id": "shot-1", "shot_revision_id": "old",
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-319-    }]}}, "shot-revision:old": {"payload": {}}}
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-320-    effects = [{"op": "set", "ref": "shot-revision:new", "path": [],
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-321-                "before": {"state": "absent"},
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-322-                "value": {"internal_timeline_revision_id": "internal-new",
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-323-                          "text_bindings": [{"shot_id": "shot-1"}]}},
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-324-               {"op": "set", "ref": "parent",
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:325:                "path": ["occurrences", "occurrence_id:occ-1", "shot_revision_id"],
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-326-                "before": {"state": "present", "value": "old"}, "value": "new"}]
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-327-    assert _coherent_materialization(boundary, effects[1], effects)
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-328-    forged = copy.deepcopy(effects)
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-329-    forged[0]["value"]["text_bindings"][0]["shot_id"] = "shot-foreign"
+--
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-397-                               "patch": [submitted["steps"][0]["patch"][0], change]}]
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-398-
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-399-    def execute(context, port):
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-400-        value = candidate(context, port)
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:401:        first_image = copy.deepcopy(value["canonical_document"]["parent_revision"])
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-402-        first_image["revision_id"] = "intermediate-parent"
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-403-        first_binding = value["records"]["commands"][0]["bindings"][0]
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-404-        effect_binding = {key: copy.deepcopy(first_binding[key]) for key in (
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-405-            "ref", "physical_ref", "policy", "dependencies", "boundary", "path")}
+--
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-422-        if same_step:
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-423-            value["records"]["steps"][0].update(patch=submitted["steps"][0]["patch"], dependencies=[batch_read, step_read])
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-424-        else:
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-425-            value["records"]["steps"].append({**submitted["steps"][1], "dependencies": [batch_read, step_read]})
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:426:        parent = value["canonical_document"]["parent_revision"]
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-427-        parent["payload"]["meta"]["org.example.timeline"]["note"] = "ending"
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-428-        parent["revision_id"] = "sequential-parent"
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-429-        parent["content_digest"] = digest(parent["payload"])
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-430-        value["document_digest"] = digest(value["canonical_document"])
+--
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-441-        assert commit(service, submitted) == result
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-442-
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-443-
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-444-def test_sequential_created_child_boundary_uses_the_native_birth_not_future_output():
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:445:    parent = {"config": {"output": {"fps": 24}}, "occurrences": []}
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-446-    boundary = {"parent": {"revision_id": "base-parent", "content_digest": digest(parent),
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-447-                            "payload": parent}}
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-448-    shot_payload = {"name": "Opening", "items": []}
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-449-    internal_payload = {"output": {"fps": 24}, "tracks": [], "clips": [], "registry": {"assets": {}}}
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:450:    occurrence = {"occurrence_id": "occ-new", "shot_id": "shot-new", "track": "picture",
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-451-                  "placement": {"start_ms": 0}, "duration_ms": 1000, "source_offset": 0,
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-452-                  "speed": 1, "gain": 1}
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-453-    canonical_shot = {**shot_payload, "internal_timeline_revision_id": "internal-new"}
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-454-    accepted = {
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-455-        "parent": {"revision_id": "accepted-parent",
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:456:                    "content_digest": digest({**parent, "occurrences": [{**occurrence,
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-457-                                                                            "shot_revision_id": "shot-new-r1"}]}),
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:458:                    "payload": {**parent, "occurrences": [{**occurrence,
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-459-                                                               "shot_revision_id": "shot-new-r1"}]}},
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-460-        "shot-revision:shot-new-r1": {"shot_id": "shot-new", "revision_id": "shot-new-r1",
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-461-                                       "internal_timeline_revision_id": "internal-new",
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-462-                                       "payload": canonical_shot, "content_digest": digest(canonical_shot)},
+--
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-468-        "writes": [
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-469-            {"ref": "shot:shot-new", "path": [], "before": {"state": "absent"},
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-470-             "after": {"state": "present", "value": {"payload": shot_payload,
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-471-                                                        "internal_timeline": internal_payload}}},
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:472:            {"ref": "occurrence:occ-new", "path": [], "before": {"state": "absent"},
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:473:             "after": {"state": "present", "value": occurrence}},
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-474-        ],
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-475-        "derived_writes": [],
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-476-        "created": [{"ref": "shot:shot-new", "kind": "shot", "owner": None},
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:477:                    {"ref": "occurrence:occ-new", "kind": "occurrence", "owner": "parent"}],
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py-478-    }
+/home/user/work/runtime/tests/test_timeline_commit_authentication.py:479:    next_record = {"writes": [], "reads": [{"ref": "occurrence:occ-new/source", "path": ["output", "fps"],
+

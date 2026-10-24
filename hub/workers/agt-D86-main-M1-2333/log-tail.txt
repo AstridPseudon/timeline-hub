@@ -1,0 +1,400 @@
+             "dry_run": False, "source": {"via": "test"}, "rationale": "M1 auto fixture",
+             "steps": [{"id": "auto-baseline", "label": "Auto placement baseline",
+                        "intent": "Prepare auto placement", "tags": ["integration"],
+                        "command_ordinals": list(range(len(commands))),
+                        "patch": [change for command in commands for change in command["args"]["changes"]],
+                        "reads": []}]},
+            idempotency_key="auto-baseline", publisher="owner",
+            invocation_path=f"/v1/projects/{fixture.project_id}/timelines/{fixture.timeline_id}/commit",
+            authorize=lambda: None,
+        )
+        parent = service.get_project_parent_composition_revision(
+            fixture.project_id, fixture.timeline_id, head["head_revision_id"])["payload"]
+        parent = service._timeline_commits()[0].revision_closure(
+            fixture.project_id, fixture.timeline_id,
+            service.get_project_timeline(fixture.project_id, fixture.timeline_id)["head_revision_id"],
+        )["parent_revision"]["payload"]
+    finally:
+        service.close()
+    return fixture, parent
+
+
+@pytest.fixture
+def auto_renderer_off(auto_film, monkeypatch):
+    _disable_scene(monkeypatch)
+
+
+def _disable_scene(monkeypatch):
+    class NoSceneImports:
+        def find_spec(self, fullname, path=None, target=None):
+            if (fullname.startswith(("composition", "remotion",
+            if (fullname.startswith(("composition", "remotion",
+                                     "astrid.sdk.authoring_render_preview",
+                                     "astrid.core.timeline.compatibility"))
+                    or ".scene" in fullname):
+                raise AssertionError("commit imported scene evaluation: " + fullname)
+
+    monkeypatch.setattr(sys, "meta_path", [NoSceneImports(), *sys.meta_path])
+
+    def unavailable(*args, **kwargs):
+        raise AssertionError("commit evaluated a scene with the renderer off")
+
+    import runtime_protocol.service as service_module
+    import runtime_protocol.visual_seam as visual_seam
+
+    # The neutral film seed predates this tripwire. Actual commits, all exact
+    # reads and inverse stay under it, including the restarted provider.
+    monkeypatch.setattr(service_module, "evaluate_closure", unavailable)
+    monkeypatch.setattr(visual_seam, "evaluate_closure", unavailable)
+
+
+@pytest.fixture
+def wire(renderer_off, monkeypatch):
+    from runtime_protocol.server import RuntimeHandler
+
+    original = RuntimeHandler._send
+    observed = []
+    lose = set()
+
+    def send(handler, status, payload=None, **kwargs):
+        if (handler.command == "POST" and handler.path.endswith("/commit")
+                and getattr(handler, "_defer_response", False)):
+            key = handler.headers["Idempotency-Key"]
+            observed.append({"path": handler.path, "key": key,
+                             "body": handler._prefetched_body,
+                             "status": status, "response": copy.deepcopy(payload)})
+            if status == 200 and key in lose:
+                # commit_timeline has returned its durable real acceptance.
+                # Close before any HTTP response bytes; the generated transport
+                # must report ambiguity and the actual SDK must retain flight.
+                lose.remove(key)
+                raise ConnectionError("M1 injected lost ACK after durable acceptance")
+        return original(handler, status, payload, **kwargs)
+
+    monkeypatch.setattr(RuntimeHandler, "_send", send)
+    return observed, lose
+
+
+def open_client(daemon, *, actor="owner", credential=None, realm=None):
+    from astrid.sdk.client import AstridClient
+
+    return AstridClient.open(
+        endpoint=daemon.endpoint, credential=credential or daemon.credential_path,
+        realm_id=realm or daemon.service.realm["id"], actor_id=actor,
+        client_name="m1-commit-journey", client_version="1", protocol_version="workspace.v1",
+    )
+
+
+def history(client, fixture):
+    result = client.timelines.history(fixture.project_id, fixture.timeline_id, limit=100)
+    assert result.ok, result.as_dict()
+    return result.data
+
+
+def cli(client, fixture, capsys, *args):
+    from astrid.packs.timeline.cli import build_parser
+
+    parsed = build_parser(client).parse_args([
+        *args, "--project", fixture.project_id, "--json",
+    ])
+    code = parsed.handler(parsed)
+    output = capsys.readouterr()
+    value = json.loads(output.out)
+    assert code == 0, (code, value, output.err)
+    assert value["ok"], value
+    return value
+
+
+def parent_of(result):
+    return result["data"]["canonical_document"]["parent_revision"]["payload"]
+
+
+def assert_move(before, after, clip_id, on):
+    expected = copy.deepcopy(before)
+    clip = next(row for row in expected["clips"] if row["id"] == clip_id)
+    clip["at"] = on
+    app = clip.setdefault("app", {})
+    authored = app.setdefault("astrid", {})
+    for container in (app, authored):
+        for key in ("on", "until", "until_film_end"):
+            container.pop(key, None)
+    authored.update(fixed_start=True, **{"for": 5.5})
+    expected["config"]["clips"] = copy.deepcopy(expected["clips"])
+    assert after == expected
+
+
+def assert_readback(client, fixture, accepted):
+    from astrid.core.timeline.authoring_bundle import open_authoring_bundle
+
+    data, receipt = accepted["data"], accepted["receipt"]
+    revision = data["accepted_revision_id"]
+    document = data["canonical_document"]
+92:            idempotency_key="m1-journey-baseline",
+134:            fixture.project_id, fixture.timeline_id, "m1-journey-baseline")["payload"]
+136:            fixture.project_id, fixture.timeline_id, "m1-journey-baseline")
+152:             "steps": [{"id": "auto-baseline", "label": "Auto placement baseline",
+157:            idempotency_key="auto-baseline", publisher="owner",
+338:    assert all(row["intent"] == "legacy_unknown" and row["records"] is None
+564:        assert inspection["revision_id"] == "m1-journey-baseline"
+
+exec
+/bin/bash -lc "nl -ba tests/editing_conformance/test_commit_runtime_m1.py | sed -n '165,205p;325,350p;550,575p'" in /home/user/work/wt/agt-D86-main-M1-2333
+ succeeded in 41ms:
+   165	            service.get_project_timeline(fixture.project_id, fixture.timeline_id)["head_revision_id"],
+   166	        )["parent_revision"]["payload"]
+   167	    finally:
+   168	        service.close()
+   169	    return fixture, parent
+   170	
+   171	
+   172	@pytest.fixture
+   173	def auto_renderer_off(auto_film, monkeypatch):
+   174	    _disable_scene(monkeypatch)
+   175	
+   176	
+   177	def _disable_scene(monkeypatch):
+   178	    class NoSceneImports:
+   179	        def find_spec(self, fullname, path=None, target=None):
+   180	            if (fullname.startswith(("composition", "remotion",
+   181	                                     "astrid.sdk.authoring_render_preview",
+   182	                                     "astrid.core.timeline.compatibility"))
+   183	                    or ".scene" in fullname):
+   184	                raise AssertionError("commit imported scene evaluation: " + fullname)
+   185	
+   186	    monkeypatch.setattr(sys, "meta_path", [NoSceneImports(), *sys.meta_path])
+   187	
+   188	    def unavailable(*args, **kwargs):
+   189	        raise AssertionError("commit evaluated a scene with the renderer off")
+   190	
+   191	    import runtime_protocol.service as service_module
+   192	    import runtime_protocol.visual_seam as visual_seam
+   193	
+   194	    # The neutral film seed predates this tripwire. Actual commits, all exact
+   195	    # reads and inverse stay under it, including the restarted provider.
+   196	    monkeypatch.setattr(service_module, "evaluate_closure", unavailable)
+   197	    monkeypatch.setattr(visual_seam, "evaluate_closure", unavailable)
+   198	
+   199	
+   200	@pytest.fixture
+   201	def wire(renderer_off, monkeypatch):
+   202	    from runtime_protocol.server import RuntimeHandler
+   203	
+   204	    original = RuntimeHandler._send
+   205	    observed = []
+   325	    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "client-data"))
+   326	    observed, lose = wire
+   327	    support = tmp_path / "support"
+   328	
+   329	    def start(port=0):
+   330	        return real_runtime(fixture.duplicate_root, support_root=support,
+   331	                            port=port, authoring_profile="astrid")
+   332	
+   333	    daemon = start()
+   334	    client = open_client(daemon)
+   335	    base_history = history(client, fixture)
+   336	    assert len(base_history["items"]) == 2
+   337	    assert base_history["items"][-1]["receipt"] == baseline["receipt"]
+   338	    assert all(row["intent"] == "legacy_unknown" and row["records"] is None
+   339	               for row in base_history["items"])
+   340	
+   341	    moved = cli(client, fixture, capsys, "edit", "move", fixture.timeline_id,
+   342	                "--clip", "parent/clip:music-bed", "--on", "1")
+   343	    assert_move(original_parent, parent_of(moved), "music-bed", 1)
+   344	    assert observed[-1]["response"]["data"]["canonical_document"] == moved["data"]["canonical_document"]
+   345	    assert json.loads(observed[-1]["body"])["source"] == {"via": "cli"}
+   346	    assert_readback(client, fixture, moved)
+   347	
+   348	    outbox = tmp_path / "python-outbox.json"
+   349	    session = TimelineSession.open(fixture.project_id, fixture.timeline_id,
+   350	                                   client=client, outbox_path=outbox)
+   550	    writer, _ = daemon.credentials.provision("view-writer", ["projects:write"])
+   551	    transport = WorkspaceClient(daemon.endpoint, reader)
+   552	
+   553	    def no_ingest(*args, **kwargs):
+   554	        pytest.fail("read-only view request reached persistence")
+   555	
+   556	    with monkeypatch.context() as denied:
+   557	        denied.setattr(daemon.service, "ingest", no_ingest)
+   558	        with pytest.raises(WorkspaceClientError) as error:
+   559	            transport.create_timeline_view(fixture.project_id, fixture.timeline_id,
+   560	                                            {"formats": ["md"]}, idempotency_key="reader-view")
+   561	        assert error.value.status == 401
+   562	        inspection = transport.inspect_timeline(fixture.project_id, fixture.timeline_id,
+   563	                                                 {"formats": ["md"]})
+   564	        assert inspection["revision_id"] == "m1-journey-baseline"
+   565	    result = WorkspaceClient(daemon.endpoint, writer).create_timeline_view(
+   566	        fixture.project_id, fixture.timeline_id, {"formats": ["md"]}, idempotency_key="writer-view")
+   567	    assert result["inspection"] == inspection
+   568	    assert "md" in result["artifacts"]
+   569	
+   570	
+   571	@pytest.mark.parametrize("kind", ["image", "video"])
+   572	@pytest.mark.parametrize("mode", ["anchor", "fallback", "shared"])
+   573	def test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo(
+   574	    auto_film, auto_renderer_off, real_runtime, tmp_path, kind, mode,
+   575	):
+
+exec
+/bin/bash -lc "rg -n -C 4 'def open_authoring_bundle|parent\\[\"config\"\\]|config.*clips' astrid/core/timeline/authoring_bundle.py | head -160 && sed -n '620,760p' astrid/core/timeline/authoring_bundle.py" in /home/user/work/wt/agt-D86-main-M1-2333
+ succeeded in 300ms:
+92-            "when a mirrored shot item changes, its media_id must resolve to the same immutable object"
+93-        ),
+94-        "capabilities": {
+95-            "parent": {
+96:                "editable": ["config", "clips", "registry", "layout", "extension_fields"],
+97-                "derived": ["occurrences"],
+98-            },
+99-            "placement": {
+100-                "editable": [
+--
+358-    result = _remap_known_item_references(result, remap)
+359-    return result, remap
+360-
+361-
+362:def open_authoring_bundle(
+363-    parent_revision: Mapping[str, Any],
+364-    *,
+365-    shot_revisions: Sequence[Mapping[str, Any]] | Mapping[str, Mapping[str, Any]],
+366-    internal_timeline_revisions: Sequence[Mapping[str, Any]] | Mapping[str, Mapping[str, Any]],
+    return _clip_selected_media(candidate_clip, candidate_for_media, path)
+
+
+def _asset_authority(value: Any) -> dict[str, Mapping[str, Any]]:
+    """Collect closed source asset entries without changing authored payloads."""
+
+    result: dict[str, Mapping[str, Any]] = {}
+
+    def walk(node: Any) -> None:
+        if not isinstance(node, Mapping):
+            if isinstance(node, list):
+                for child in node:
+                    walk(child)
+            return
+        registry = node.get("registry")
+        if isinstance(registry, Mapping) and isinstance(registry.get("assets"), Mapping):
+            for key, entry in registry["assets"].items():
+                if isinstance(key, str) and isinstance(entry, Mapping):
+                    result.setdefault(key, entry)
+        for child in node.values():
+            walk(child)
+
+    walk(value)
+    return result
+
+
+def _effective_parent_assets(payload: Mapping[str, Any]) -> dict[str, Mapping[str, Any]]:
+    """Resolve the one parent registry namespace used by validation/rendering."""
+    try:
+        registry = effective_parent_registry(payload)
+    except ParentRegistryError as exc:
+        raise AuthoringBundleError(f"candidate.{exc}") from exc
+    selected = registry.get("assets", {})
+    return {
+        str(key): value
+        for key, value in (selected.items() if isinstance(selected, Mapping) else ())
+        if isinstance(key, str) and isinstance(value, Mapping)
+    }
+
+
+def _with_source_asset_authority(
+    internal: Mapping[str, Any], source_assets: Mapping[str, Mapping[str, Any]] | None
+) -> Mapping[str, Any]:
+    """Return a validation-only registry view with source entries as fallback."""
+
+    if not source_assets:
+        return internal
+    local_registry = internal.get("registry", {})
+    local_assets = local_registry.get("assets", {}) if isinstance(local_registry, Mapping) else {}
+    merged_assets = dict(source_assets)
+    if isinstance(local_assets, Mapping):
+        merged_assets.update(local_assets)
+    merged_registry = dict(local_registry) if isinstance(local_registry, Mapping) else {}
+    merged_registry["assets"] = merged_assets
+    result = dict(internal)
+    result["registry"] = merged_registry
+    return result
+
+
+def _assert_shot_edit_supported(
+    base: Mapping[str, Any], candidate: Mapping[str, Any], *, path: str
+) -> set[str]:
+    """Validate a complete shot payload while retaining arbitrary extensions.
+
+    Shot payloads are Runtime-owned JSON, so the adapter must not maintain a
+    second closed schema.  We do enforce the identities which the Runtime
+    uses to resolve media and references, while allowing ordinary metadata,
+    item insertion/removal, and opaque fields to round-trip unchanged.
+    """
+
+    del base  # The candidate is checked as a complete authored value below.
+    candidate_items = candidate.get("items", [])
+    if not isinstance(candidate_items, list):
+        raise AuthoringBundleError(f"{path}.items must be a list")
+    seen_items: set[str] = set()
+    changed: set[str] = set()
+    for index, raw_candidate in enumerate(candidate_items):
+        item = dict(_mapping(raw_candidate, f"{path}.items[{index}]"))
+        item_id = _string(
+            item.get("item_id", item.get("id")), f"{path}.items[{index}].item_id"
+        )
+        if item_id in seen_items:
+            raise AuthoringBundleError(f"{path}.items contains duplicate item identity {item_id!r}")
+        seen_items.add(item_id)
+        if "media_id" in item:
+            changed.add(_media_identity(item["media_id"], f"{path}.items[{index}].media_id"))
+    return changed
+
+
+def _assert_internal_edit_supported(
+    base: Mapping[str, Any], candidate: Mapping[str, Any], *, path: str,
+    source_assets: Mapping[str, Mapping[str, Any]] | None = None,
+    preserve_legacy_missing: bool = False,
+) -> set[str]:
+    """Admit authored timeline edits while validating media selectors.
+
+    Tracks, clips, effects, audio, layout, and extension fields are all
+    authored Runtime payload.  Structural changes are therefore safe to carry
+    through this lossless adapter; the checks here only reject malformed or
+    dangling identity/media references before the existing Runtime boundary.
+    """
+
+    base_clips = base.get("clips", [])
+    if not isinstance(base_clips, list):
+        raise AuthoringBundleError(f"{path}.base.clips must be a list")
+    base_by_id = {
+        _string(_mapping(raw, f"{path}.base.clips[{index}]").get("id"),
+                f"{path}.base.clips[{index}].id"): _mapping(raw, f"{path}.base.clips[{index}]")
+        for index, raw in enumerate(base_clips)
+    }
+    candidate_for_media = _with_source_asset_authority(candidate, source_assets)
+    candidate_clips = candidate.get("clips", [])
+    if not isinstance(candidate_clips, list):
+        raise AuthoringBundleError(f"{path}.clips must be a list")
+    seen_clip_ids: set[str] = set()
+    changed_media: set[str] = set()
+    selected_asset_keys: set[str] = set()
+    for index, raw_candidate in enumerate(candidate_clips):
+        candidate_clip = dict(_mapping(raw_candidate, f"{path}.clips[{index}]"))
+        clip_id = _string(candidate_clip.get("id"), f"{path}.clips[{index}].id")
+        if clip_id in seen_clip_ids:
+            raise AuthoringBundleError(f"{path}.clips contains duplicate id {clip_id!r}")
+        seen_clip_ids.add(clip_id)
+        selector_key = next((key for key in _MEDIA_SELECTOR_KEYS if key in candidate_clip), None)
+        if selector_key is None:
+            continue  # Text/effect/placeholder clips may intentionally have no media.
+        base_clip = base_by_id.get(clip_id)
+        changed_media_id: str | None
+        if base_clip is None:
+            changed_media_id = _clip_selected_media(
+                candidate_clip, candidate_for_media, f"{path}.clips[{index}]"
+            )
+        else:
+            changed_media_id = _clip_selected_media_for_edit(
+                base_clip, candidate_clip, base, candidate, f"{path}.clips[{index}]", source_assets,
+                preserve_legacy_missing,
+            )
+        if changed_media_id is not None:
+            changed_media.add(changed_media_id)
+            if selector_key in {"asset", "asset_id"}:
+                selected_asset_keys.add(str(candidate_clip[selector_key]))
+

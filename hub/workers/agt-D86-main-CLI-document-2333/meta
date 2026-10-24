@@ -1,0 +1,9 @@
+name=agt-D86-main-CLI-document-2333
+repo=agent
+base=5d4ae93c833cc1adee109b28405276210165c0db
+base_sha=5d4ae93c83
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-D86-main-CLI-document-2333
+started=2026-10-24T23:33:20Z

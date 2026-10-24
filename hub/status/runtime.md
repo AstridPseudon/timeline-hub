@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T23:32:32Z | dispatcher heartbeat 1s | live 2 (sol 1, luna 1, other 0) | busy30 8 | status age 0m -->
+<!-- main | 2026-10-24T23:36:11Z | dispatcher heartbeat 7s | live 1 (sol 1, luna 0, other 0) | busy30 8 | status age 2m -->
 # runtime board, 2026-10-24T23:31:16Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -206,7 +206,12 @@
 | F-provider-ABI20 | Migrate selected-PARAM real provider setup | Luna | Normal remote Agent merge receipt | merging | Author2316; independent2322 PASS | Exact21, reverse21 and13 neighbor/order controls PASS; original AST/matrix exact. [Review](../../design/runtime-Agent-ABI20-review-2322.md) | 2378867874 |
 | P2-transition-bulk | Qualify exact clear display value | App source requested | Actual2773 original reached | blocked:app | Main2250; App requested | Original expects None; actual select displays __none__. Exact retained-data attribution required; no oracle change inferred. | Exact bceb/039f/732/635f |
 
-| D86-Agent-families | Host disjoint Agent family authors | Luna | Agent named family list and files | blocked:agent | Runtime dispatch owner | D86 widened to6 Agent authors, subject to6 total source cap and Runtime priority. agt-D86-main-families.md absent in current hub. No duplicate reservation. | Agent local5d4ae93 |
+| D86-Agent-families | Host disjoint Agent family authors | Luna | Named list received and dispatched | doing | Four agt-D86-main workers2333 | All74 assigned nodes: M1 10,shared inverse10,native word46,CLI8. Source/AST/statics only; one later main affected-node batch. | Agent5d4ae93 base |
+
+| D86-M1-outbox | Migrate ten outbox setup cases | Luna | Agent reserved one test file | doing | agt-D86-main-M1-2333 | Source-only; all ten original predicates and parameters retained. No body; Agent protected review then normal remote merge. | Agent5d4ae93 |
+| D86-shared-inverse | Migrate ten shared inverse cases | Luna | Agent reserved one test file | doing | agt-D86-main-shared-inverse-2333 | Source-only; no synthetic accepted history or retired publisher. One later affected-node batch. | Agent5d4ae93 |
+| D86-native-word | Migrate46 native word setup cases | Luna | Agent reserved two test files | doing | agt-D86-main-native-word-2333 | Source-only; word references and inverse/ABA assertions retained. No per-family pytest/body. | Agent5d4ae93 |
+| D86-CLI-document | Migrate eight document CLI cases | Luna | Agent reserved one test file | doing | agt-D86-main-CLI-document-2333 | Source-only; genuine current commit caller and every CLI assertion retained. One later main batch. | Agent5d4ae93 |
 
 Runtime producer: RELEASED 732c48c6f5a9441a65c61b24595d454a1cd3e180, tree 7ed0559c6f0a05954427cc668e303b6cd2f51586. Canonical 15 files and schema867f unchanged. [Release](../../design/runtime-D84a-release-2205.md).
 
@@ -225,7 +230,7 @@ Delivery: Runtime merge, Agent merge, authentic App manifest command with schema
 Later: E1/E3, AgentE2 and D79 paused until ZIP. D42 cross-request memo held; V4 cut, D14/D23 deferred; unsafe D34 cleanup held. D56 Farm/schema access stopped. All historical safety/access/cleanup/process refusals remain stopped.
 Disk: 7366033408 available bytes at23:18; cap2. No new noncritical dispatch. Finished2250/2308/2304 were automatically recycled; existing evidence and branches retained. Cleanup checks continue through guarded routes.
 
-live 2 / cap 6 source; ready-undispatched 0. D85 applied above6.5GB: Sol2330 source plus Luna2330 wholepath queued now; ABI20 reviewedPASS remote merge pending. Heavy cap2 with one body below7.5GB; rehearsal noncritical held below8.5GB.
+live 6 / cap 6 source; ready-undispatched 0. Runtime Sol2330 and wholepath2330 plus FOUR Agent D86 source families2333. No per-family bodies. ABI20 remote merge pending. Heavy cap2 with one body below7.5GB; rehearsal noncritical held below8.5GB.
 Pass 2026-10-24T22:50:16Z: Read PLAN/common, header through H49, inbox through605296 bytes, App/Agent actual boards and dispatcher returns. Consumed2238 setup result and dispatched2250 immediately. Published exact report and peer2250. Actual Agent7c48 four R2 closure retained; no stale Agent input blocker. No duplicate original, product edits by manager or denied route.
 
 Intake 2026-10-24T22:51:20Z: consumed inbox through605296 bytes. App2240 delayed main-READY note is already fulfilled by2232/2238/2250; no stale App need gate. Agent2242 handoff dispatched immediately to2252; no registry/body. No new source release.
@@ -261,3 +266,5 @@ Intake 2026-10-24T23:27:07Z: ABI20 independent2322 PASS21 plus reverse21 and13 o
 Pass 2026-10-24T23:31:16Z: independent2319 FINALFAIL consumed immediately; exact report preserved. Secondsecurityfailure escalated to HARD Sol2330 on SAME7627 branch and independent readonly client-to-provider/store wholepath2330 in parallel, per second-failed-fix rule. No merge/adoption/original, old732 remains released. App2320/2323 consumed: asset8419 intendedPOSTabsent, unique AppSol2319 repairs mounted drops; ADD5217 current body and parent envelope2323 active. No Runtimecause inferred for noPOST. D86 list still absent; no duplicate source ownership. Inbox through617951 bytes.
 
 D86 widened intake 2026-10-24T23:31Z: main accepts up to6 Agent family authors and owns affected-node qualification batch through main test service, not finalD59. Current two critical Runtime owners retain priority; four immediate source slots available under D85 cap6. Named family list remains absent, blocked:agent. No body submitted or source invented. Inbox through618248 bytes.
+
+D86 ready intake 2026-10-24T23:33Z: authoritative four-family list arrived normalhub; copied byte-exact and immediately dispatched all4 agt-prefix Luna authors on exact5d4ae93. Total74 affected nodes, five disjoint files, excludes ABI20/occurrence48/WC6. NOpytest/body per D85; compile/AST/statics only. Agent owns protected reviews/normal remote merges; latest D86 moves ONE later batched node qualification to main service. Two Runtime critical owners retained; source live6/cap6, readyundispatched0.
