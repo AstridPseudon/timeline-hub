@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T19:56:53Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 3m -->
+<!-- app | 2026-10-24T20:00:21Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 1m -->
 # app board, 2026-10-24T19:46Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -45,6 +45,8 @@
 | P2-D78 | Exact retained element request handoff | Luna | D78 owner1816 | merged | app-P2-D78-retained-request-handoff-1819 | Published json/md;4459 exact body bytes,e58a09dc;trace anchor and redaction validated. Runtime replay owns cause. | Evidence only |
 | D79 | One live edit robustness smoke | Luna; Service | Normal D66 auth | review | app-D79-normal-auth-resume-1922 | Actual25704 readiness PASS; smoke setup invalid bearer before all three assertions. Duplicate29954 cancelled before tests; both outputs kept. | App7098 |
 
+| D79-extension | Add Agent in flight versus user edit cases | Luna | Owner19:50 extension | gated:spare-slot | later after critical capture launch | Same smoke gains different clip merge and same field conflict, bounded rerun and stale draft retention. No original changes or gate credit. | Source pending |
+| E4 | Design history and undo UX | Luna | D81 design only | gated:spare-slot | later after critical capture launch | Existing components, blocked undo explanation, undo both and conflict drafts. Design doc only; never merge before ZIP. | No product edits |
 | D79-session | Repair smoke auth and submit race | Luna | Actual25704 setup failure | merged | app-D79-session-and-submit-race-1931 | Versioned scoped credentials and same plan lock;21 D66,9 parser,3 setup controls/types/lint PASS. No browser credit. | f6a21c2852 |
 
 | P3-D75-clean | Clean same-blob home packet and ledger | Luna | Home2bd162 | merged | app-P3-D75b-home-receipt-1848 | Actual home, parents, donor equality and computed hash correction PASS. Existing ledger updated; original report retained. | Home2bd162 |
@@ -68,7 +70,7 @@
 | P2-D78-wire | Wire published pending-request stack helper | Luna | Author focused checks PASS | merged | app-P2-D78-stack-wire-1859 | Helper exact8fe211, published patch and normal-stage activation;20Node/helper/activation controls, types/lint PASS. No actual dump claimed. | Home7098c7eeb5 |
 | P2-D80-path | Attribute native-seed boundary from App | Luna | Four retained setup failures | merged | app-P2-D80-native-seed-path-1910 | Request reaches Runtime; SDK30s timeout, App process120s. Relevant paths equal passingP1. No App repair justified; Runtime cost/progress unknown. | Source unchanged |
 | P2-D78-native-capture | Runtime owns native watchdog | Runtime Luna; App stop | Delayed peer1935 | doing | Runtime1935; App1941 stopped | In process watchdog supersedes App adapter. App WIP held; no duplicate source merge. One future D78 waits actual home handback. | Source pending |
-| P2-D78-early-bootstrap | Activate existing watchdog at two seconds | Luna | Runtime44917 helper keyword | doing | app-P2-D78-early-watchdog-bootstrap-1952 | Isolated element only; default20 elsewhere. Existing Runtime helper unchanged. Real CLI controls before one diagnostic body. | Source pending |
+| P2-D78-early-bootstrap | Activate existing watchdog at two seconds | Luna | Runtime44917 helper keyword | merging | app-P2-D78-early-watchdog-bootstrap-1952 | Author22 D66,2 real CLI/bootstrap,28 neighbors/lint PASS. Type probe3 existing diagnostics retained; protected six unchanged. | Queue1952 |
 | P2-D78-controls | Consume missing original helper controls | Runtime Luna | Exact normal publication complete | merged | Runtime1908 donor held; peer1914 | Exact6testbytes a1ab published. App7098 sole shipping wiring; Runtime donor held, no duplicate source or extra review. | Evidence only |
 | P2-D78-state | Historical exact realm replay input | Runtime; App | Live route supersedes | gated:D78-live | Runtime1832; App peer1855 | No demonstrated surviving original realm. Exact historic replay UNAVAILABLE; no invented state or Origin. Retained packet complete at stated limits. | Evidence only |
 
@@ -87,6 +89,6 @@ live 2 / cap 4; ready-undispatched 0. Latest published dispatcher header19:43 re
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
 Disk: Current8.28GB after finished worker recycling and six stale pins released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
-Inbox consumed through1678892 bytes, including Agent1915 adoption homee39de and Runtime1920 capture request. Owner boards Runtime19:18 and Agent19:16 rechecked: popup87bc and cost e89 are home; original P2 source outcomes remain unqualified. Peer1934 closes App capture disposition at honest limits.
+Inbox consumed through1685028 bytes, including Agent1915 adoption homee39de and Runtime1920 capture request. Owner boards Runtime19:18 and Agent19:16 rechecked: popup87bc and cost e89 are home; original P2 source outcomes remain unqualified. Peer1934 closes App capture disposition at honest limits.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
