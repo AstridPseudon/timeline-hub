@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T16:53:03Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 1m -->
+<!-- main | 2026-10-24T16:56:04Z | dispatcher heartbeat 1s | live 1 (sol 1, luna 0, other 0) | busy30 16 | status age 2m -->
 # runtime board, 2026-10-24T16:51:34Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -78,7 +78,7 @@
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
 | F-D52-core-five | Map five named actual home outcomes | Luna | Authentic XML and map verified | merged | Receipt 1418 PASS | All five named cases PASS on actual47b/becfe. Current four fork failures are distinct. [Receipt](../../design/rt-F-D52-core-five-receipt-1418.md) | Agent 47b |
 | U1-D69-test-audit | Preserve upstream test predicates | Luna | Seven restorations before cut | merged | rt-U1-D69-test-audit-1603 | Missing16:9 mapped,7 restore. Changed129:75 clear,54 cited. Two skip markers cited;12 dynamic scopes explicit. [Audit](../../design/rt-U1-D69-test-audit-1603.md) | Source facts only |
-| R-P4-history-cost | Reduce historical validation cost | Sol after Luna | Real caller cost evidence | doing | Profiles1625/1635; Sol1643 continuation | Profile WIP6bba preserved, no product fix justified. Shared request owner1643 continues real caller facts; all checks and45s retained. | 6bba tests held |
+| R-P4-history-cost | Reduce historical validation cost | HARD Sol after Luna | Exact immutable schema semantics | doing | rt-P4-schema-resolver-sol-1652 | Resume6bba profile; only shared schema resolver file, auth read-only. Every value fully validated afresh; no history/result memo or45s change. | 6bba WIP preserved |
 | R-P2-popup-422 | Project genuine fork-created shot roots | Luna | Independent security review | doing | rt-P2-popup-auth-1643 | Faithful fork then ADD source correction; first attribute introduction before D62. Preserve every physical observation and pin. | Author active |
 | R-P2-popup-observation | Attribute popup physical observation refusal | Luna | Source finding complete | merged | rt-P2-popup-observation-1638 | Runtime created-child projection lacks fork-created shot roots.2Runtime+8Agent comparators PASS; source cause only. | Source unchanged |
 | R-P2-element-docpatch-hang | Count and reproduce element request wait | HARD Sol requested by ORCH | App in-place request/baseline venue | blocked:app | rt-P2-element-sol-1643 | Actual25943 logs absent onmain; door audit response-only. Arrival/lock/provider/receipt UNKNOWN. Peer1650 asks real App-host repro input. | No product fix |
@@ -215,3 +215,5 @@ Pass 2026-10-24T16:45:45Z: Agent inverse actual1PASS consumed and blocker cleare
 Pass 2026-10-24T16:47:31Z: exact integrated policy1644 PASS29/12.67s noerrors/skips closes skip-policy regression, normalhome5c1 exactreviewedsource. Mixedmarker1638 author6PASS -> independentprotectedreview1647 dispatched. New Agent singleP4 downstreamcache failure has uniqueAgentSol1639; no Runtimebody/correction guessed. PopupLuna and elementSol1643 continue.
 
 Pass 2026-10-24T16:51:34Z: elementSol1643 finishes required first log inventory: actualApp25943 artifacts absent, response-onlyaudit cannotcountpendingarrivals. Explicit phaseUNKNOWN; no productfix or blindbody. Peer1650 asks concreteApphost in-place packet/normalvenue or onefocusedcapture, Runtimekeepssourcefixownership. Popupauthor and markerreview continue.
+
+Pass 2026-10-24T16:52Z: P4 remains independent of missingApp elementlogs. HARD Sol1652 resumes retained6bba profile for one bounded immutable-schema resolver strategy, validation.py only; popupLuna alone ownsauth. D47 validated-results/historymemo remainsheld. Elementrealrepro in-place venue requestedApppeer1650.
