@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T04:27:09Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 2m -->
+<!-- app2 | 2026-10-24T04:29:09Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
 # app2 board, 2026-10-24T04:25Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -8,7 +8,7 @@
 | P1-corpus | Real document roundtrip and merge | Luna | Complete | merged | Corpus1348 | 49 passed with15 fixtures and11 inputs. Direct provider scope; mounted proof recorded separately. | e6 /9729 |
 | P1-seed | Full native atomic bootstrap | Sol; Luna review | Complete | merged | Common0618; seed2d7; Runtime a00e | All21 native assertions and history passed in18792. Runtime2a9 integrated proof passed67. | App12ef; Runtime2a9 |
 | P1-diagnostics | Safe files and source guard codes | Sol; Luna review | Complete source qualification | merged | Reviews1945 and2118; App2238 | Real emitter, serialized listener and failure file passed. Ring32 retains critical events. Success18792 produced no failure-only file. | b221 /6ecc /def457 /f890 |
-| readiness-after-bootstrap | Reviewed D42 memo on proof pin | Runtime Sol; Luna review | Stateful correction and compatible pin reviews | blocked:runtime | Runtime0403 author and whole-path audit | Second warm bypass found through mutable closure state.145 auth cases passed but cannot override attack. Source and pin remain held. | a684 held; base37eb |
+| readiness-after-bootstrap | Reviewed D42 memo on proof pin | Runtime Sol; Luna review | Complete state correction and pin review | blocked:runtime | Runtime Sol0423; audit0403 | Resolver replacement bypass confirmed; six retained state controls fail. No corrected production source, pin or HTTP release proof. | 1936772 tests; a684 held |
 | readiness-App | Same head reuse and truthful phase events | App Sol; Luna review | Independent0355 PASS and exact merge | merged | App0351; review0355 | Joined332 and independent108 tests, three types and lint passed. Source qualification only; no live gate credit. | e492d963ba |
 | readiness-client-link | Compare P1 and native seed history | App Sol; Luna review | Complete retained comparison | merged | App0121; review0128 | Both histories contain two entries. Native seed has21 commands and child closure. Failed browser request counts remain unknown. | Report only |
 | P2 | Eight original gestures | App service; Proof Luna | Three App fixes and reviewed D42 pin | blocked:app | App12221; Proof0320 and0325 | NO-GO. Exit1,501 seconds. Readiness passed; three original cases failed and five were not run. | App804; Agent079; Runtime37eb |
@@ -29,10 +29,10 @@
 
 P1 RESULT GO. BOARD-HEADER records GO at00:43Z; D35 is satisfied. Original18792 passed both cases on Appf8b15af0, Agent78738040 and Runtime2a9e347f. P4 and G5 are done. All final freeze gates and original tails must run again on final heads.
 
-Blockers: Runtime owes stateful memo correction0403, independent whole-path review, compatible pin proof and cold, warm and concurrent HTTP checks.
+Blockers: Runtime owes complete state correction0423, independent security review, compatible pin proof and cold, warm and concurrent HTTP checks.
 Blockers: App owes three qualified gesture fixes and their exact reviewed caller composition before the next pair.
 Blockers: Farm F-final waits for remaining deletions, upstream freeze and P2/P3 proof. Agent owns D32 repairs and classification.
-Next ready: App home merge receipt for reviewed popup adf39c533; consume source reviews and Runtime0403 at completion. Consume Runtime0403 and App0359/0401 handoffs immediately; release one pair only after all prerequisites and authentic caller custody pass.
+Next ready: App home merge receipt for reviewed popup adf39c533; App parent review0422, placement review0416 and claim audit0420, wrapper return0417, and Runtime correction0423. Release one pair only after all prerequisites and authentic caller custody pass.
 
 Popup0408 ask consumed directly from normal hub before inbox delivery. Author0413 completed on current App integration; independent0418 queued immediately; no competing App spec author. Only rendered target lookups may change; genuine occurrence ID has no invented literal prefix. Independent0418 PASS completed; normal own-only remote merge request sent at04:21Z.
 
@@ -60,3 +60,5 @@ Second D42 security finding: [Runtime0403](../../design/peer-runtime-to-app-app2
 D42 security finding: [Independent0339](../../design/runtime-D42-security-review-0339.md) reproduced a warm-memo bypass after changing validate_claims while auth.validate stayed unchanged. Candidate35320 is held. Required304 tests passed but do not override the attack. Runtime owns correction0346; no safety refusal or contract decision is involved.
 
 Pass: All 1239 Proof workers checked and done. Runtime, App, Agent and Farm boards rechecked at 04:24Z. Popup adf39c533 has a normal remote request and no home receipt yet; independent0418 PASS is published. App owns wrapper return0417, parent and transition0411, and placement review0416. No ready Proof author or review waits. Next full pass 04:30Z; act earlier on a real handback.
+
+Runtime0426 ask consumed directly from the normal hub: [security hold](../../design/peer-runtime-to-app-app2-orchestrator-20261024T0426-D42-security-hold.md). Independent audit0403 replaced CommitContext._resolver: warm accepted, cold refused. Retained author source1936772 has 184 passed and six failed state controls; production remains byte-identical to held a684. Runtime Sol0423 owns the complete correction. No new Proof cause author, child or journey is dispatched.
