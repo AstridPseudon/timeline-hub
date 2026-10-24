@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import { readFileSync } from 'node:fs';
-import test from 'node:test';
+import test, { before } from 'node:test';
 import { createFakeIndexedDB } from 'fake-indexeddb';
 import ts from 'typescript';
+import { acceptedCommit, fixtureDigest } from '../../../../src/integrations/runtime/__tests__/timelineCommitFixture.ts';
+import { createLocalSaveSession } from '../../../../src/tools/video-editor/commands/localSaveSession.ts';
 import { createCommitOutbox } from '../../../../src/tools/video-editor/commands/commitOutbox.ts';
 import { dragTimelineClip } from './app.ts';
 import { assertGate5ResetPrecondition, expectedGate5MoveReads } from './gate5-reset-precondition.ts';
@@ -25,42 +27,130 @@ const preGestureParent = {
   ],
   registry: { assets: { 'f2-app': { file: 'f2-app.png', type: 'image/png' }, 'f2-video': { file: 'f2-video.mp4', type: 'video/mp4' } } },
 };
-const preGestureDocument = { parent_revision: { payload: preGestureParent } };
-const reads = expectedGate5MoveReads({ preGestureDocument, clipId, expectedTrackId: trackId });
-const command = { schema_version: 1, op: 'doc.patch', version: '1', select: null, created: [], args: { changes } };
-const request = {
-  api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
-  base_revision_id: base.revisionId,
-  base_publication_id: base.publicationId,
-  commands: [command], label: 'Edit timeline', steps: [{ id: 'setup-step', label: 'Edit timeline', intent: `Move ${clipId} on ${trackId}`, tags: [], command_ordinals: [0], patch: changes, reads }],
-  merge: 'fields', reads, dry_run: false, source: { via: 'app' },
-};
-const responseCommand = { ...command, intent: {}, resolved: [], expect: {}, authorship: {}, reads: [], selections: {}, bindings: {}, created: [] };
-const data = {
-  status: 'accepted', base_revision_id: base.revisionId, base_publication_id: base.publicationId,
-  previous_revision_id: base.revisionId, previous_publication_id: base.publicationId,
-  accepted_revision_id: 'revision-after', rebased_onto: null, commands: [responseCommand], document_digest: 'sha256:document', id_map: {},
-  provider_version: 'provider-v2', compiler_version: 'compiler-v2', publisher: 'publisher-v2', merge_mode: 'fields', label: request.label, source: request.source,
-  steps: [{ ...request.steps[0], patch: [{ ...changes[0], path: ['config', ...changes[0].path] }], dependencies: [] }],
-  canonical_document: { schema_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
-    parent_revision: { revision_id: 'revision-after', content_digest: 'sha256:parent', payload: { ...preGestureParent,
-      clips: [{ ...preGestureParent.clips[0], at: 5 }, preGestureParent.clips[1]] } },
-    shot_revisions: [], internal_timeline_revisions: [], dependency_manifest: { shots: [], internal_timelines: [], media: [], documents: [] } },
-};
-const response = { data, receipt: { receipt_id: 'publication-after', command_kind: 'timeline.commit', idempotency_key: 'setup-key', request_hash: 'hash', project_id: scope.projectId, project_seq: [1, 1], event_ids: ['event-1'], result: data } };
-const acceptedValue = { response, accepted: { revisionId: 'revision-after', publicationId: 'publication-after' },
-  canonicalDocument: data.canonical_document, receipt: response.receipt, graph: {} };
-const settled = [{ scope: { realmId: 'realm', actorId: 'actor', ...scope }, ownerId: 'owner-setup', generation: 1,
-  pending: undefined, intents: [], accepted: { intentId: 'setup-intent', head: { revisionId: 'revision-after', publicationId: 'publication-after' }, value: acceptedValue } }];
-const authoritativeHead = { revision_id: 'revision-after', publication_id: 'publication-after' };
-const authoritativeRevision = { project_id: scope.projectId, timeline_id: scope.timelineId, revision_id: 'revision-after', payload: { config: { clips: [{ id: clipId, at: 5 }] }, clips: [{ id: clipId, at: 5 }] } };
-const valid = {
-  request, requestIdentity: request, responseRequest: request, requestIdempotencyKey: 'setup-key', expectedOwnerId: 'owner-setup', preGestureDocument,
-  responseStatus: 200, responseBody: response, expectedBase: base, expectedScope: scope,
-  clipId, expectedTrackId: trackId, expectedPreviousPosition: 0, expectedPosition: 5, settledOutboxes: settled, authoritativeHead, authoritativeRevision,
-};
+// Reuse the documented full DTO/closure fixture, including opaque children.
+const template = acceptedCommit({ revision_id: base.revisionId, publication_id: base.publicationId },
+  { revision_id: base.revisionId, publication_id: base.publicationId }, { ...scope, children: true });
+const preGestureDocument = structuredClone(template.data.canonical_document);
+preGestureDocument.parent_revision.payload = { ...preGestureDocument.parent_revision.payload, ...preGestureParent };
+preGestureDocument.parent_revision.content_digest = fixtureDigest(preGestureDocument.parent_revision.payload);
+const moved = structuredClone(preGestureDocument);
+moved.parent_revision.payload.clips[0].at = 5;
+
+// Execute the actual mounted read planner slice, without loading its browser-only
+// virtual modules. Geometry, provider replies and UI assembly remain mocked.
+const handoffSource = readFileSync(new URL('../../../../src/tools/video-editor/hooks/timelineLocalSaveHandoff.ts', import.meta.url), 'utf8');
+const plannerStart = handoffSource.lastIndexOf('          const read =', handoffSource.indexOf('          reads = timingReads(clip);'));
+const plannerEnd = handoffSource.indexOf('          } else if (!Object.keys(gestureBasis.patch)', plannerStart);
+assert.ok(plannerStart > 0 && plannerEnd > plannerStart);
+const planner = ts.transpileModule('let reads;\n' + handoffSource.slice(plannerStart, plannerEnd) + '\n}\nreturn reads;',
+  { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText;
+const reads = new Function('config', 'parent', 'clips', 'clipPath', 'clip', 'gestureBasis', 'authoredJson', 'object', 'refuse', planner)(
+  preGestureParent.config, preGestureParent, preGestureParent.clips, ['clips'], preGestureParent.clips[0], { kind: 'move', clipId, trackId },
+  structuredClone, value => !!value && typeof value === 'object' && !Array.isArray(value), message => { throw new Error(message); });
+assert.equal(reads.length, 25);
+assert.deepEqual(reads, expectedGate5MoveReads({ preGestureDocument, clipId, expectedTrackId: trackId }));
+
+// Build and persist the request with the actual document encoder/save session.
+// No transport runs: send captures its input then reports an offline lost ACK.
+const ownerScope = { realmId: 'realm', actorId: 'actor', ...scope };
+const nativeRef = `parent/clip:${clipId}`;
+const nativeRead = { ref: nativeRef, path: ['at'], state: { state: 'present', value: 0 } };
+let request, durableKey, command, data, response, acceptedValue, settled, authoritativeHead, authoritativeRevision, valid, authoritativeHistory;
+before(async () => {
+  const initial = { head: base, canonicalDocument: preGestureDocument };
+  const sourceOutboxes = createCommitOutbox({ indexedDB: createFakeIndexedDB(), exclusiveLock: async (_name, work) => work() });
+  const sourceSession = await createLocalSaveSession({ scope: ownerScope, initial, document: preGestureDocument,
+    outboxes: sourceOutboxes, loadLatest: async () => initial, changed() {},
+    prepareDisplay: async (_basis, document) => ({ document, adopt() {} }),
+    send: async (body, key) => { request = body; durableKey = key; throw new Error('offline control ACK loss'); } });
+  await sourceSession.appendDocument({ before: preGestureDocument, after: moved,
+    roots: [{ ref: 'parent', revisionId: base.revisionId, contentDigest: preGestureDocument.parent_revision.content_digest }],
+    label: 'Edit timeline', step: { id: 'setup-step', label: 'Edit timeline', intent: `Move ${clipId} on ${trackId}`, tags: [], reads },
+    merge: 'fields', reads });
+  await assert.rejects(sourceSession.flush());
+  assert.ok(request && durableKey);
+  await sourceSession.dispose();
+  command = request.commands[0];
+  assert.deepEqual(command.args.changes, changes);
+  // Provider projection follows commands.py/Recording.finish, not a simplified
+  // presence-only reply. Runtime is still a double; this is source/control proof.
+  const responseCommand = { ...command, intent: {}, resolved: [], expect: { [`${nativeRef}::at`]: nativeRead.state },
+    authorship: { [`${nativeRef}::at`]: 'direct' }, reads: [nativeRead], selections: [], bindings: {} };
+  const canonicalDocument = structuredClone(moved);
+  canonicalDocument.parent_revision.revision_id = 'revision-after';
+  canonicalDocument.parent_revision.content_digest = fixtureDigest(canonicalDocument.parent_revision.payload);
+  const normalizedReads = reads.map(read => ({ ...read, path: read.path[0] === 'clips' ? ['config', ...read.path] : read.path }));
+  const dependencies = [...normalizedReads, ...normalizedReads];
+  const acceptedStep = { ...request.steps[0], patch: [{ ...changes[0], path: ['config', ...changes[0].path] }], dependencies };
+  data = { ...template.data, accepted_revision_id: 'revision-after', commands: [responseCommand],
+    canonical_document: canonicalDocument, document_digest: fixtureDigest(canonicalDocument),
+    provider_version: 'astrid-v1', compiler_version: 'authoring-bundle-1',
+    publisher: ownerScope.actorId, merge_mode: 'fields', label: request.label, source: request.source, steps: [acceptedStep] };
+  response = { data, receipt: { ...template.receipt, receipt_id: 'publication-after', idempotency_key: durableKey,
+    request_hash: fixtureDigest({ operation: 'commitTimeline', path: `/v1/projects/${scope.projectId}/timelines/${scope.timelineId}/commit`,
+      publisher: ownerScope.actorId, request }).slice(7), result: data } };
+  const boundary = { base_revision_id: base.revisionId, base_publication_id: base.publicationId,
+    evaluated_head: { revision_id: base.revisionId, publication_id: base.publicationId }, step_id: request.steps[0].id, command_ordinal: 0, phase: 'input' };
+  const readBindings = ['batch-read', 'input'].flatMap(phase => normalizedReads.map(read => ({
+    ref: 'parent', physical_ref: 'parent', revision_id: base.revisionId, content_digest: preGestureDocument.parent_revision.content_digest,
+    boundary: { ...boundary, phase }, key: 'commit.read', policy: 'fixed', dependencies: [], path: read.path, dependency: read,
+  })));
+  const recordReads = [];
+  for (const read of normalizedReads) {
+    if (read.kind === 'collection') continue;
+    const path = read.path;
+    const native = path[1] === 'clips' || path[1] === 'tracks'
+      ? { ref: `parent/${path[1] === 'clips' ? 'clip' : 'track'}:${path[2].slice(3)}`, path: path.slice(3), state: read.state }
+      : { ref: 'parent', path: path[1] === 'registry' ? path.slice(1) : path, state: read.state };
+    if (!recordReads.some(prior => JSON.stringify(prior) === JSON.stringify(native))) recordReads.push(native);
+  }
+  const authoredPath = ['config', ...changes[0].path];
+  const record = { ordinal: 0, command: responseCommand,
+    writes: [{ ref: nativeRef, path: ['at'], before: nativeRead.state, after: { state: 'present', value: 5 } }],
+    reads: recordReads, selections: [], bindings: [...readBindings,
+      { ref: 'parent', physical_ref: 'parent', revision_id: base.revisionId, content_digest: preGestureDocument.parent_revision.content_digest,
+        boundary: { ...boundary, change_ordinal: 0 }, key: 'doc.patch:0', policy: 'fixed', dependencies: [], path: authoredPath, change: changes[0], write_range: [0, 1] },
+      ...[['before', preGestureDocument.parent_revision], ['after', canonicalDocument.parent_revision]].map(([side, image]) => ({
+        ref: 'parent', physical_ref: 'parent', revision_id: image.revision_id, content_digest: image.content_digest,
+        boundary: { ...boundary, phase: 'effect', side }, key: 'commit.effect', policy: 'fixed', dependencies: [],
+        path: authoredPath, step_id: request.steps[0].id, effect_ordinal: 0,
+      }))], created: [], dependencies: [], derived_writes: [] };
+  authoritativeHistory = { publication_id: 'publication-after', revision_id: 'revision-after',
+    previous: { revision_id: base.revisionId, publication_id: base.publicationId }, receipt: response.receipt, intent: 'recorded',
+    provider_version: data.provider_version, compiler_version: data.compiler_version, publisher: ownerScope.actorId,
+    source: request.source, label: request.label, merge: request.merge, merge_mode: data.merge_mode, reads, steps: data.steps,
+    records: { schema_version: 1, commands: [record], undo_of: [], restored_from: null, undo_steps: null,
+      label: request.label, merge_mode: data.merge_mode, steps: data.steps } };
+  acceptedValue = { response, accepted: { revisionId: 'revision-after', publicationId: 'publication-after' },
+    canonicalDocument: data.canonical_document, receipt: response.receipt, graph: {} };
+  settled = [{ scope: ownerScope, ownerId: 'owner-setup', generation: 1,
+    pending: undefined, intents: [], accepted: { intentId: 'setup-intent', head: acceptedValue.accepted, value: acceptedValue } }];
+  authoritativeHead = { revision_id: 'revision-after', publication_id: 'publication-after' };
+  authoritativeRevision = { ...scope, project_id: scope.projectId, timeline_id: scope.timelineId,
+    revision_id: 'revision-after', payload: canonicalDocument.parent_revision.payload };
+  valid = {
+    request, requestIdentity: request, responseRequest: request, requestIdempotencyKey: durableKey,
+    expectedOwnerId: 'owner-setup', expectedOwnerScope: ownerScope, authoritativeHistory, preGestureDocument,
+    responseStatus: 200, responseBody: response, expectedBase: base, expectedScope: scope,
+    clipId, expectedTrackId: trackId, expectedPreviousPosition: 0, expectedPosition: 5, settledOutboxes: settled, authoritativeHead, authoritativeRevision,
+  };
+});
 
 const responseFor = (nextData) => ({ ...response, data: nextData, receipt: { ...response.receipt, result: nextData } });
+
+// Keep the forged acceptance internally correlated, so negatives exercise the
+// qualification oracle rather than merely disagreeing with the outbox double.
+function inputWithReply(reply) {
+  const input = structuredClone(valid);
+  input.responseBody = reply;
+  const value = input.settledOutboxes[0].accepted.value;
+  value.response = reply;
+  value.receipt = reply.receipt;
+  value.canonicalDocument = reply.data.canonical_document;
+  input.authoritativeHistory.receipt = reply.receipt;
+  input.requestIdentity = input.responseRequest = request;
+  return input;
+}
 
 test('Gate5 requires the real 0→5 response before the original reset', () => {
   assert.doesNotThrow(() => assertGate5ResetPrecondition(valid));
@@ -209,6 +299,12 @@ test('Gate5 refuses an authentic-looking setup with wrong before/value, readset,
   const wrongStateReads = [{ ...reads[0], state: { state: 'present', value: 1 } }, ...reads.slice(1)];
   assert.throws(() => assertGate5ResetPrecondition({ ...valid, request: { ...request, reads: wrongStateReads,
     steps: [{ ...request.steps[0], reads: wrongStateReads }] } }), /move read dependencies/);
+  for (const mutation of [{ path: ['clips', `id:${clipId}`, 'from'] }, { state: { state: 'absent' } },
+    { state: { state: 'present', value: clipId, foreign: true } }]) {
+    const wrong = [{ ...reads[0], ...mutation }, ...reads.slice(1)];
+    assert.throws(() => assertGate5ResetPrecondition({ ...valid, request: { ...request, reads: wrong,
+      steps: [{ ...request.steps[0], reads: wrong }] } }), /move read dependencies/);
+  }
   assert.throws(() => assertGate5ResetPrecondition({ ...valid, request: {
     ...request, steps: [{ ...request.steps[0], intent: 'Save local editor changes' }],
   } }), /step claims/);
@@ -222,6 +318,108 @@ test('Gate5 binds the settled owner to scope, identity, accepted head, receipt, 
     value: { ...settled[0].accepted.value, receipt: { ...settled[0].accepted.value.receipt, idempotency_key: 'wrong-key' } } } }] }), /owner receipt/);
   assert.throws(() => assertGate5ResetPrecondition({ ...valid, settledOutboxes: [{ ...settled[0], accepted: { ...settled[0].accepted,
     value: { ...settled[0].accepted.value, receipt: { ...settled[0].accepted.value.receipt, receipt_id: 'wrong-receipt' } } } }] }), /owner receipt/);
+});
+
+test('the actual opening boundary returns the fresh scoped owner with an older settled owner first', async () => {
+  const spec = readFileSync(new URL('../three-products.spec.ts', import.meta.url), 'utf8');
+  const start = spec.indexOf('async function openCommandTimeline(');
+  const end = spec.indexOf('\nasync function prepareDependentMoves(', start);
+  const compiled = ts.transpileModule(spec.slice(start, end) + '\nreturn openCommandTimeline(page, harness, seed);',
+    { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText;
+  const old = { ...settled[0], ownerId: 'historical-owner' };
+  let opened = false;
+  const check = value => ({ toHaveLength: count => assert.equal(value.length, count) });
+  check.poll = callback => ({ toMatchObject: async () => assert.equal((await callback()).ready, true) });
+  const run = new (Object.getPrototypeOf(async () => {}).constructor)(
+    'page', 'harness', 'seed', 'ASTRID_PYTHON', 'CEILING', 'commandOutboxes', 'openApp', 'expectConnected', 'openSeededTimeline', 'expect', compiled);
+  const claimed = await run({ url: () => 'https://offline.invalid/', getByTestId: () => ({ allTextContents: async () => [] }) },
+    { origin: 'https://offline.invalid', seed: scope, enableTimelineAuthoring: async () => {} }, scope, 'offline-python', {},
+    async () => opened ? [old, settled[0]] : [old], async () => { opened = true; }, async () => {}, async () => {}, check);
+  assert.deepEqual(claimed, { ownerId: settled[0].ownerId, scope: ownerScope });
+  assert.ok(spec.includes('const preconditionOwner = await openCommandTimeline(page, harness, seed3);'));
+  assert.ok(spec.includes('expectedOwnerScope: preconditionOwner.scope'));
+  assert.throws(() => assertGate5ResetPrecondition({ ...valid, expectedOwnerId: claimed.ownerId, settledOutboxes: [old] }), /owner identity/);
+  assert.doesNotThrow(() => assertGate5ResetPrecondition({ ...valid, expectedOwnerId: claimed.ownerId,
+    settledOutboxes: [old, settled[0]].filter(owner => owner.ownerId === claimed.ownerId) }));
+});
+
+test('Gate5 refuses missing, extra, or wrong normalized command claims and accepted steps', () => {
+  for (const field of ['intent', 'resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created']) {
+    const extra = structuredClone(data);
+    extra.commands[0][field] = Array.isArray(extra.commands[0][field]) ? [...extra.commands[0][field], 'foreign'] : { ...extra.commands[0][field], foreign: true };
+    assert.throws(() => assertGate5ResetPrecondition(inputWithReply(responseFor(extra))), /response command/);
+    const missing = structuredClone(data);
+    delete missing.commands[0][field];
+    assert.throws(() => assertGate5ResetPrecondition(inputWithReply(responseFor(missing))), /response command/);
+  }
+  for (const [field, wrong] of [['id', 'other-step'], ['label', 'Other'], ['intent', 'Other'], ['tags', ['other']],
+    ['command_ordinals', [1]], ['patch', []], ['reads', []], ['dependencies', []]]) {
+    for (const remove of [false, true]) {
+      const next = structuredClone(data);
+      if (remove) delete next.steps[0][field];
+      else next.steps[0][field] = wrong;
+      assert.throws(() => assertGate5ResetPrecondition(inputWithReply(responseFor(next))), /response step/);
+    }
+  }
+  const wrong = structuredClone(data);
+  wrong.commands[0].expect[`${nativeRef}::at`].value = 1;
+  assert.throws(() => assertGate5ResetPrecondition(inputWithReply(responseFor(wrong))), /response command claims/);
+});
+
+test('Gate5 rejects arbitrary transport keys and forged receipt correlation', () => {
+  for (const path of [[], ['data'], ['receipt'], ['data', 'commands', 0], ['data', 'steps', 0],
+    ['data', 'commands', 0, 'args'], ['data', 'commands', 0, 'args', 'changes', 0]]) {
+    const next = structuredClone(response);
+    let target = next;
+    for (const token of path) target = target[token];
+    target.foreign = true;
+    next.receipt.result = next.data;
+    assert.throws(() => assertGate5ResetPrecondition(inputWithReply(next)), /keys mismatch|response command|step claims/);
+  }
+  for (const [key, value] of [['created_at', 'invalid'], ['request_hash', '0'.repeat(64)], ['project_seq', [2, 1]],
+    ['event_ids', []]]) {
+    const next = structuredClone(response);
+    next.receipt[key] = value;
+    assert.throws(() => assertGate5ResetPrecondition(inputWithReply(next)), /receipt/);
+    delete next.receipt[key];
+    assert.throws(() => assertGate5ResetPrecondition(inputWithReply(next)), /receipt keys/);
+  }
+  for (const path of [[], ['commands', 0], ['commands', 0, 'args'], ['steps', 0]]) {
+    const next = structuredClone(request);
+    let target = next;
+    for (const token of path) target = target[token];
+    target.foreign = true;
+    assert.throws(() => assertGate5ResetPrecondition({ ...valid, request: next }), /keys/);
+  }
+});
+
+test('Gate5 checks full canonical closure, digest, history records, effects, dependencies and undo metadata', () => {
+  for (const mutate of [
+    value => { value.canonical_document.shot_revisions[0].payload.metadata.extension.nested[0] = false; },
+    value => { value.document_digest = 'sha256:' + '0'.repeat(64); },
+    value => { value.id_map.foreign = 'id'; },
+    value => { value.publisher = 'other-actor'; },
+  ]) {
+    const next = structuredClone(data);
+    mutate(next);
+    assert.throws(() => assertGate5ResetPrecondition(inputWithReply(responseFor(next))), /canonical closure|document digest|id map|publisher/);
+  }
+  for (const mutate of [
+    entry => { entry.foreign = true; }, entry => { entry.records.foreign = true; },
+    entry => { entry.records.commands[0].foreign = true; },
+    entry => { entry.records.commands[0].bindings[0].boundary.foreign = true; },
+    entry => { entry.records.commands[0].writes[0].after.value = 4; },
+    entry => { entry.records.commands[0].reads[0].state.value = 'other-clip'; },
+    entry => { entry.records.commands[0].bindings[0].revision_id = 'stale'; },
+    entry => { entry.steps[0].dependencies[0].state.value = 'other-clip'; },
+    entry => { entry.records.undo_of = ['other-publication']; },
+    entry => { delete entry.records.undo_steps; },
+    entry => { entry.receipt.idempotency_key = 'wrong-key'; },
+  ]) {
+    const next = structuredClone(authoritativeHistory);
+    mutate(next);
+    assert.throws(() => assertGate5ResetPrecondition({ ...valid, authoritativeHistory: next }), /authoritative history/);
+  }
 });
 
 test('the actual Gate5 setup listens before the real drag helper drops, and ignores another POST reply', async () => {

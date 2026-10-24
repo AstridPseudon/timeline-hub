@@ -1274,6 +1274,11 @@ async function openCommandTimeline(page: Page, harness: DirectHarness, seed: Thr
       !previous.some((old) => old.ownerId === owner.ownerId) && !owner.pending && !owner.intents.length),
     notice: await page.getByTestId('timeline-command-recovery').allTextContents(),
   }), { ...CEILING, message: 'the mounted editor must claim a new durable command owner before the gesture' }).toMatchObject({ ready: true });
+  const fresh = (await commandOutboxes(page, seed.timelineId)).filter((owner) =>
+    owner.scope.projectId === harness.seed.projectId && owner.scope.timelineId === seed.timelineId
+      && !previous.some((old) => old.ownerId === owner.ownerId) && !owner.pending && !owner.intents.length);
+  expect(fresh, 'exactly one fresh scoped owner must have been claimed').toHaveLength(1);
+  return { ownerId: fresh[0].ownerId, scope: fresh[0].scope };
 }
 
 async function prepareDependentMoves(page: Page, harness: DirectHarness, seed: ThreeProductsSeed, beforeBDrop?: (a: CommitAcceptedMutation) => Promise<void>) {
@@ -1535,13 +1540,9 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   const sniff = new TokenSniff(secretsOf(harness, astrid));
   sniff.attach(page);
   let c!: CommitAcceptedMutation;
-  await openCommandTimeline(page, harness, seed3);
+  const preconditionOwner = await openCommandTimeline(page, harness, seed3);
   const preconditionBase = await history(harness, seed3);
   const preGestureDocument = await canonicalDocumentAt(harness, seed3, preconditionBase.head.revision_id);
-  const preconditionOwner = (await commandOutboxes(page, seed3.timelineId)).find((owner) =>
-    owner.scope.projectId === harness.seed.projectId && owner.scope.timelineId === seed3.timelineId
-      && !owner.pending && owner.intents.length === 0);
-  if (!preconditionOwner) throw new Error('Gate5 precondition fresh owner is missing');
   const preconditionRequest = page.waitForRequest((request) => {
     if (request.method() !== 'POST' || new URL(request.url()).pathname !== `/api/runtime${timelineBase(harness, seed3)}/commit`) return false;
     const body = request.postDataJSON() as Record<string, any>;
@@ -1585,7 +1586,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
     body: setupRequest.postData()!, key: setupRequest.headers()['idempotency-key'],
     status: setupResponse.status(), response: setupBody,
   };
-  await expectV2History(harness, seed3, setupPost, 'accepted');
+  const setupHistory = await expectV2History(harness, seed3, setupPost, 'accepted');
   const setupData = (setupBody as CommitAcceptedMutation).data;
   const authoritativeHead = (await history(harness, seed3)).head;
   const authoritativeRevision = await revisionBody(harness, setupData.accepted_revision_id);
@@ -1594,7 +1595,8 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
     requestIdempotencyKey: setupRequest.headers()['idempotency-key'], responseStatus: setupResponse.status(), responseBody: setupBody,
     expectedBase: { revisionId: preconditionBase.head.revision_id, publicationId: preconditionBase.head.publication_id },
     expectedScope: { projectId: harness.seed.projectId, timelineId: seed3.timelineId },
-    expectedOwnerId: preconditionOwner.ownerId, preGestureDocument,
+    expectedOwnerId: preconditionOwner.ownerId, expectedOwnerScope: preconditionOwner.scope, preGestureDocument,
+    authoritativeHistory: setupHistory,
     clipId: seed3.appClipId, expectedTrackId: 'V1', expectedPreviousPosition: 0, expectedPosition: 5,
     settledOutboxes: (await commandOutboxes(page, seed3.timelineId)).filter((owner) => owner.ownerId === preconditionOwner.ownerId),
     authoritativeHead, authoritativeRevision,
