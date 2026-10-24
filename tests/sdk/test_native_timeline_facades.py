@@ -6,6 +6,8 @@ from astrid.sdk.contracts import DomainResult
 from astrid.sdk.remote import RemoteTimelines
 from astrid.sdk.workspace_client import WorkspaceClientError
 
+pytest_plugins = ("tests.sdk.test_scene_save_core",)
+
 
 class _NativeTransport:
     def __init__(self) -> None:
@@ -235,6 +237,21 @@ def test_remote_open_composition_uses_runtime_inspection_authority() -> None:
             "occurrence": "occ-1",
         }
     )]
+
+
+def test_remote_open_composition_is_renderer_free(request) -> None:
+    request.getfixturevalue("no_renderer")
+    result = RemoteTimelines(_NativeTransport()).open_composition("project-1", "main")
+
+    assert result.ok
+    assert result.data["summary"]["revision_id"] == "rev-7"
+    assert result.data["clips"] == [{
+        "clip_id": "clip-1",
+        "track_id": "picture",
+        "occurrence_id": "occ-1",
+        "shot_id": "shot-1",
+        "track": "picture",
+    }]
 
 
 def test_remote_show_is_canonical_current_head_alias() -> None:
