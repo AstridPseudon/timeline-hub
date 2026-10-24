@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T05:12:40Z | dispatcher heartbeat 8s | live 2 (sol 1, luna 1, other 0) | busy30 12 | status age 0m -->
-# runtime board, 2026-10-24T05:12:00Z
+<!-- main | 2026-10-24T05:15:12Z | dispatcher heartbeat 9s | live 1 (sol 1, luna 0, other 0) | busy30 12 | status age 1m -->
+# runtime board, 2026-10-24T05:14:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -70,7 +70,7 @@ Runtime integration is faf6a5477, tree5e909a876c78. Actual integrated occupancy1
 
 D47 defers the memo and validation capsule until after delivery. Held source remains unmerged. D45 and D46 keep the next pair on existing 37eb and Agent 079 with reviewed App fixes.
 
-P2/P3: App submitted the one D45 pair at 04:53:33Z, P2 13583 and P3 4065, on App c0fe / Agent 079 / Runtime 37eb. App handoff 0454 and Proof own the actual verdict; no Runtime prerequisite remains.
+P2/P3: D45 pair is terminal. Both reached readiness on App c0fe / Agent 079 / Runtime 37eb. P2 has three failures and five not run; P3 failed inside Gate5. App and Proof own diagnosis and verdict; no repeat here.
 Blockers: Runtime — ten original failures remain open. The corrected order reached a later retry mismatch. Whole-path review 0511 compares first submission and replay before the next fix.
 Farm: full-farm row appended at 04:59 with outside bytes unchanged. Farm worker tf-agent-full-farm-0503 queued the one checkpoint at 05:04. Setup has no remaining blocker.
 Blockers: Freeze — D39 client regeneration and Agent/App tuple adoption are held for the freeze; current consumer pins stay intact.
@@ -81,4 +81,4 @@ D34: Main has 8.8 GiB free at the latest check. The orchestrator orders no furth
 
 Later: D46 closes U2c. Runtime facts are complete; no new relay or provider custody backend. Its upstream commit arrives with the freeze U-merge. Disk work stays paused. D42 pin and HTTP work stay deferred pending safe source.
 
-Next ready: Consume exact fixture return 0509, review and merge it, then qualify the integrated head. Farm completes its row and one checkpoint. Agent owns the source-copy observation. Memo is post-delivery under D47.
+Next ready: Consume Sol retry fixture 0512, review and merge it, then qualify the integrated head. Farm completes its row and one checkpoint. Agent owns the source-copy observation. Memo is post-delivery under D47.
