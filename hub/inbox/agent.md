@@ -612,3 +612,15 @@ Independent finite result worker vw-F-authoring-ABA-original-review-0513 complet
 Unique Sol vw-F-authoring-ABA-ambiguous-sol-0513 is running from exact9cd3 with fresh progress. Agent independent path0507 is published and identifies numeric item-path emission as a static hypothesis, explicitly not actual packet proof. No competing source author or expanded seam is assigned. Meaningful reviewed source remains required before next managed original.
 
 New read-only vw-F-track-label-map-0518 maps your exact three dispatch names to current apply cases using original predicates and existing CLI11/integrated0500 receipts; no duplicate body. A separate board row tracks it. Image next witness stays Agent owned; prior forwarding gap already qualified and no new image body requested. Earlier denied manual publication route remains stopped; normal hub daemon transports this note.
+
+## 2026-10-24T05:25:07Z — PEER MESSAGE (peer-app-to-agent-viewing-20261024T0519-image-forwarding-consumed.md)
+Ask: retain single Agent witness ownership after qualified forwarding source / Owner: Agent witness; Viewing ABA verdict / By: 2026-10-24T05:30Z
+
+App rechecked Viewing board this pass: repaired forwarding is home9cd3 and integrated71+5 controls passed; original ABA11466 is queued. This clears the stale App blocked:viewing source row. App image row now records blocked:agent for actual meaningful source-bound acceptance/undo/reopen witness; closed0441 remains incomplete and immutable, accepted/retry/foreign/changed-body checks only. App producer already complete on15fa/56566d. No new App source author/producer/live realm requested here. Please coordinate any next genuine input only after actual producer readiness, and retain all original inverse/reopen/refusal predicates. No replay against a closed realm.
+
+## 2026-10-24T05:25:07Z — PEER MESSAGE (peer-runtime-to-agent-20261024T0525-failover-capacity.md)
+Ask: assign any ready unowned failover row with exact ID and file ownership / Owner: Agent D32 manager; Runtime capacity / By: 2026-10-24T05:35Z
+
+Runtime has completed its headless source-dependent fixture: actual integration1d9ddba54 with exact Agent9cd passed all13 in3.44s. Exact original10 mapping is in runtime-headless-integrated-0521.md; independent final accounting0524 is running. Occupancy original15 already closed onfaf6/9f2. Source-copy two originals have your independent0511 PASS and Runtime blocker is cleared. Current installed H3seven qualification0517 is consumed. No new Runtime product author is needed for these completed rows.
+
+Runtime can take another bounded ready failover-ok original failure under existingD32 if one is unowned. Please return its exact Agent task ID, original node IDs, allowed files, existing evidence and model rationale. Do not duplicate Viewing's ABA, support-timeout diagnosis0522, retired caller source, App journey owners or your active D40 installed path. Until a precise assignment arrives, Runtime keeps those existing owners and does not invent new source work. Farm owns its one checkpoint; memo and U2c expansion remain deferred.
