@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T15:47:19Z | dispatcher heartbeat 0s | live 2 (sol 1, luna 1, other 0) | busy30 9 | status age 2m -->
+<!-- app | 2026-10-24T15:50:40Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 1m -->
 # app board, 2026-10-24T15:33Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -44,7 +44,7 @@
 | P3-current-verdict | Judge same-ID preflight failure | Luna | Producer 1435 terminal | merged | Verdict 1438 NO-GO | Exact 1689: exit 2 in 1 second; 0 PASS, 0 product FAIL, Gate5 NOTRUN. All original stages unrun; source matches pure target. | Current be98 |
 | F-node-current | Verify prior Node regressions | Luna | Refreshed home tree | merged | Node1345 PASS36; ENV2 | 33 verifier,marker guard and both release nodes pass. Two extension SSH setup failures remain explicit. | d24ed69dcd |
 | F-visual-seam | Qualify shared upstream seam fixture | Luna | Final Runtime fixture identity | merged | Fixture1356 PASS; exact e68 blob | All10 cases pass on App d24. Actual Runtime e68 fixture equals qualified f69 blob; no copies or source edits. | App d24; Runtime e68 |
-| F-install-schema | Align installer schema after D62 | Luna | Actual App and Agent D62 homes | doing | app-D65-final-manifest-pin-1545 | Both homes now adopted. Existing guarded tool writes tuple pins once; unchanged strict skew test must pass. | App95cf; Agent5777 |
+| F-install-schema | Align installer schema after D62 | Luna | First pin authored; stale new fixture | doing | Pin1545; return1548 | Exact tuple pins plus strict skew2/schema2 PASS. Updater Node3/4: new fixture hardcodes4118. First return fixes fixture; guard stays strict. | Pin branch1545 |
 | F-current-full | Full checkpoint on refreshed source | Luna; App service | Actual be98 pure source | merged | Producer1446; actual8158 FAIL | Exit1/1203s. Vitest19256 PASS/1 FAIL installer schema. Node NOTRUN after Vitest short-circuit. Source and full parents verified. | be98aac54e |
 | F-App-full | Corrected App checkpoint terminal | App service; Luna producer | Same actual16138 | merged | Terminal producer1227 | FAIL exit1/1665s. Vitest19251PASS;Node257PASS38FAIL26SKIP. Final full GO remains open. | 5a9ff97cf0 |
 | F-core-map | Map App core suites and old failures | Luna | D54/D54a | merged | Return1233 | Historical19570 groups fixed or D52 removed. Home upstream behavior UNKNOWN; no false pre-existing claim. | cca3deb361 |
@@ -59,9 +59,9 @@
 | U4p-D62 | Adopt recorder ABI history producer | Luna | Actual producer8b32; author PASS | merged | Home1539 PASS | Normal sync/vendor/schema2/artifacts PASS. Fourteen mappings exact; tested TS blobs retained. Actual App home95cf. | 95cfbf216f |
 
 | D65-tool | Prepare tuple manifest command | Luna | Author tests PASS; D56 | merged | app-D65-manifest-tool-1534 | Four tests, help/plan, syntax and diff PASS. update-manifest command sent to Runtime. Actual pin waits D62 adoption. | daa6a68062 |
-| P1-current-run | Plain original control | App service; Sol launch | D66 normal stack | doing | Plain Sol1528 | Original two cases unchanged; actual service control precedes P2/P3. Plain manifest and JUnit required. | Current heads |
+| P1-current-run | Plain original control | App service; Sol launch | Actual normal launch GREEN | doing | Actual13564; plain Sol1528 | Exact ID app-D66-plain-stack-sol-1528-d66-plain-p1-three-products-1024154715-13564. Wait same ID; green releases P2/P3 immediately. | App adopted95cf tree |
 
-| U3-D68 | Final upstream connection refresh | Luna | Authorized exact3881 upstream | doing | app-U3-D68-upstream-final-1543 | True merge-forward once; keep upstream and all own live tests. Parallel D66 boot; no service hold. | Upstream3881 |
+| U3-D68 | Final upstream connection refresh | Luna | Author289 PASS; clean real merge | merging | app-U3-D68-upstream-final-1543 | True3881 merge,41 paths,no conflicts. Fifteen files289 tests,app/node types,lint PASS. Generic browser runner error retained. | Upstream3881 |
 
 Integration: be98aac54e275282467d85f79d3beb4665416039, tree 2839c7e7841d1c0897fd8e7c12f0c848d94e3979. Normal tool adoption 94d89 is merged; only runtime.lock.json differs from qualified d24ed. All 14 mapped artifacts are unchanged and match actual Runtime e68. U3-final includes exact upstream 09c844 and retains all mapped live tests. Source qualification 1409 passes 67 mounted controls on actual Agent 47b / Runtime e68.
 
@@ -89,6 +89,6 @@ Current actual requests: [P2 12541](../../tests/app-P2-P3-e68-current-pure-targe
 
 Current full request: [App full 8158](../../tests/app-P2-P3-e68-current-pure-target-1409-full-1024144535-8158/request). Base be98/tree2839; exact pure1409 target. This is the one current refreshed checkpoint; historical16138 stays separate.
 
-Blockers: App — D66 normal boot now has current Agent5777 and App95cf D62 clients. Sol1528 owns control P1; P2/P3 parallel immediately on green.
+Blockers: App service — normal launch GREEN; sole actual P1 control13564 submitted15:47:15. Wait same ID. P2/P3 parallel immediately on green, no verdict wait.
 Blockers: App — D65 manifest pin1545 runs now after actual App95cf and Agent5777 D62 homes. Release decision cleared; strict schema regression remains until proof.
 Next ready: Consume D66 boot commands or exact P1 ID; submit/wait P1 once, then P2/P3 parallel on green. Merge normal D62 adoption after producer handback.
