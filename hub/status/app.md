@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T11:20:49Z | dispatcher heartbeat 8s | live 3 (sol 0, luna 3, other 0) | busy30 13 | status age 0m -->
+<!-- app | 2026-10-24T11:24:04Z | dispatcher heartbeat 4s | live 3 (sol 0, luna 3, other 0) | busy30 13 | status age 1m -->
 # app board, 2026-10-24T11:20Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -9,7 +9,7 @@
 | A3 | Popup, placement and asset saves | Sol; Luna review | A2 | merged | App source and reviews | Source and mounted caller qualifications passed; original P2 live acceptance remains open. | Current production 9b810 |
 | A4 | Reachable executor retirement | Luna; independent review | P1 GO and D31/D37 | merged | Census 0438; review 0444 | Zero reachable legacy film writers; exact source passed 523 tests, three types and lint. Dormant exceptions retained. | c0fe889944 |
 | P1 | Original mixed chain | App service; Proof | Original two cases | merged | Test 18792; Proof 0036/0040 | GO 00:43: two cases passed, exit 0 in 141 seconds. Exact historical tuple only; final freeze reruns. | App f8; Agent 787; Runtime 2a9 |
-| A4-dormant-scope | Keep dormant behavioral subsets | Luna | D31 and D37 | merged | Census 0042 and ledger workers | Raw birth, same-order track and transcript implementations/tests unchanged. Existing ledgers list follow-up owner review. | Documentation only |
+| A4-dormant-scope | Historical dormant retention | Luna | D31; D52 supersedes D37 | merged | Census0042; current removal1118 | Original D37 retention qualified. D52 now removes raw birth and same-order track; transcript remains under D31. | Historical scope |
 | A4-image-live | Genuine image acceptance and undo | Agent; independent Luna | Meaningful forwarding repair | merged | IMAGE 0554; review 0636 | Acceptance, retries, refusals, inverse, history and reopen restore PASS. Direct RuntimeService scope; no HTTP or broader gate credit. | App 1c5cc; Agent 2007; Runtime 8ea |
 | readiness-after-bootstrap | Qualify actual readiness leaves | App service; Proof | D45 current caller | merged | D45 producer; Proof 0508 | Both readiness leaves passed. P3 16.7 seconds; subsequent gesture/setup failures are separate. Historical causes stay bounded. | c0fe; 079; 37eb |
 | A2-A3-real-path-proof | Qualify combined mounted repairs | Luna | Independent source reviews | merged | Integrated 0629 | 27 files, 690 tests, Gate5 12 controls, three types and lint PASS. Exact tree equals reviewed 663; no browser credit. | 9b810408cc |
@@ -59,18 +59,18 @@
 
 | P2-final-caller | Bind only P2 to pure target | Luna; independent Luna | Independent1103 PASS | merged | Author1054; review1103 | Complete caller PASS: 60 guards,14 negative controls,actual receipt and source. P3 and247 outsiders exact. Source preparation only. | ae17a48c3a |
 | P2-only-install | Install reviewed P2 row | Luna | Review1103 PASS | merged | app-P2-only-install-1115 | Atomic write and readback PASS. P2 row11b2eebf; P3 and247 outsiders unchanged. | Config only |
-| P3-fault-order | Preserve strict recovery ordering | Proof Luna; independent Luna | Independent1100 FAIL | blocked:app2 | Source1053; review1100 | Candidate hides observed A retry from attempts. Route lifecycle controls are incomplete. Held; Proof owns exact scope proposal. No repeat released. | 32ba166b6 held |
+| P3-fault-order | Preserve strict recovery ordering | Proof Luna; independent Luna | Exact guard proposal1107 | blocked:app2 | Return1107; independent1115 | 32ba review FAIL preserved. Returnbd08 counts observed retries; exact protected assertion proposal awaits review and decision. No repeat released. | bd08e4c310 held |
 
-| A4-D52 | Delete two proven dormant subsets | Luna; independent review next | Owner D52 supersedes D37 | doing | app-A4-D52-dormant-delete-1118 | Verify no live callers, delete four named files, preserve live behavior tests. Branch only; no merge during P2. | Pending |
+| A4-D52 | Delete two proven dormant subsets | Luna; independent Luna | Owner D52 supersedes D37 | review | Author1118; independent1121 | Four dormant files deleted; no production callers;49 tests and three types PASS. Independent review then ledger. Held during P2. | f00ee693aa |
 | P2-D52-live-check | Classify five unreached gestures | Luna | Owner11:15 request | merged | app-P2-D52-live-gesture-check-1118 | All five source-live; no dead or deferred cut. All eight originals retained. No browser credit. | Exact d6ed |
 | F-App-early | Run D49 branch full checkpoint | App service; Luna producer | Independent1058 PASS | doing | Actual19570; continuation1119 | ONE no-cache full submitted11:09 on exacte8a/treec94. Wait SAME ID including124. No final tuple or home GO. | e8a593e1d3 |
 
 Integration: HOME d6ed8cbda122d810d5836ebfce3c56c10e76e9b4/tree542b772e6deed676b917f857708445b7d37a5aa8. Pure joined1036 PASS695+67 tests,30controls including20Gate5,11diagnostics,three types/lint and protected identities. ONE current P2 original26414 submitted11:19; source tuple and caller guards retained. Early branch e8a/treec94 is independently1058 PASS; ONE D49 full submitted11:09.
 
 Blockers: App service — wait SAME P2 actual26414 and publish qualified terminal packet. Caller1103, installation1115 and live-check1118 PASS.
-Blockers: Proof — independent1100 FAIL holds P3 candidate32ba. Hidden retry accounting needs the existing Proof scope decision route; no new P3 released.
+Blockers: Proof and orchestrator — P3 returnbd08 and exact guard proposal1107 are under independent1115 review and existing decision. No new P3 released.
 Blockers: Freeze — home U3b/D39 wait P2/P3 GO. Early full app-U3b-D39-current-join-sol-1045-full-1024110900-19570 is running on App service; sole continuation1119 waits SAME ID.
-Next ready: Await SAME actual26414 P2; dispatch independent terminal review on producer1119 handback. Await Proof return or scope decision after1100 FAIL; keep candidate held. Await same-ID19570 full.
+Next ready: Await SAME actual26414 P2; dispatch independent terminal review on producer1119 handback. Await Proof1115 and existing orchestrator decision on exact proposal1107; keep source held. Await same-ID19570 full.
 
 Later: Final P1–P5 run on App service with Proof verdict after final tuple qualification, then D49 full suites and Farm F-final/ZIP. No duplicate farm or Proof run. D47 memo/capsule stays deferred and held unmerged. D46 U2c draft stays closed. D14/D23 deferred relational timing cases retain their original assertions and failures.
 
