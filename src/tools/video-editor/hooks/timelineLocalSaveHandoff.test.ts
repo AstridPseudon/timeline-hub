@@ -25,17 +25,17 @@ vi.mock('@/integrations/runtime/generated-contract-metadata.ts', async (importOr
 
 afterEach(() => { contractFixture.digest = 'sha256:unsupported-test-fixture'; vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
-async function environment(children = false, raw = false, rawIds = ['authored'], rawApp?: Record<string, unknown>, asset?: { key: string; registry: AssetRegistry; mirror?: boolean | Record<string, unknown>; rawRegistry?: Record<string, unknown> }, topLevel = false) {
+async function environment(children = false, raw = false, rawIds = ['authored'], rawApp?: Record<string, unknown>, asset?: { key: string; registry: AssetRegistry; mirror?: boolean | Record<string, unknown>; rawRegistry?: Record<string, unknown> }, topLevel = false, transitions: boolean | 'null' = false, pinned = false) {
   const head = { projectId: 'project-commit', timelineId: 'timeline-commit', headRevisionId: 'r0', headPublicationId: 'p0' };
   let source: TimelineSaveSource = { config: createDefaultTimelineConfig(), registry: asset?.registry ?? { assets: {} }, head };
   const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' }, { children }).data.canonical_document;
   const { output: _derived, ...config } = source.config;
   document.parent_revision.payload = { ...document.parent_revision.payload, config, clips: [], registry: source.registry };
   if (raw) {
-    const authored = { ...config, output: { resolution: null, file: null, opaque: { keep: null } }, pinnedShotGroups: null,
+    const authored = { ...config, output: { resolution: null, file: null, opaque: { keep: null } }, pinnedShotGroups: pinned ? [{ shotId: 'shot-1', trackId: 'V1', clipIds: ['authored'] }] : null,
       ...Object.fromEntries([['__proto__', { keep: null }], ['constructor', null]]),
       opaque: { keep: [null, false] }, clips: rawIds.map((id, index) => ({ id, track: 'V1', at: index * 2, hold: 2, clipType: null,
-        opaque: { keep: null }, ...(rawApp ? { app: rawApp } : {}), ...(asset ? { asset: asset.key } : {}) })) };
+        opaque: { keep: null }, ...(transitions && index < 2 ? { transition: transitions === 'null' ? null : { type: 'crossfade', duration: 0.5, opaque: null } } : {}), ...(rawApp ? { app: rawApp } : {}), ...(asset ? { asset: asset.key } : {}) })) };
     document.parent_revision.payload.config = authored;
     if (asset?.mirror) document.parent_revision.payload.config.registry = structuredClone(asset.mirror === true ? source.registry : asset.mirror);
     document.parent_revision.payload.clips = structuredClone(authored.clips);
@@ -156,6 +156,85 @@ describe('upstream local document handoff', () => {
       await env.session.dispose();
     }
     expect(outcomes[1]).toEqual(outcomes[0]);
+  });
+
+  it.each([false, true])('clears only selected parent transitions with full child closure (topLevel=%s)', async (topLevel) => {
+    contractFixture.digest = CURRENT_V2_DIGEST;
+    const env = await environment(true, true, ['authored', 'sibling', 'untouched'], undefined, undefined, topLevel, true);
+    const before = structuredClone(env.initial.canonicalDocument);
+    const next = structuredClone(env.source);
+    next.config.clips = next.config.clips.map(clip => clip.id === 'untouched' ? clip : { ...clip, transition: undefined });
+    await env.handoff.capture(next, { kind: 'transition-clear', clipId: 'authored', clipIds: ['authored', 'sibling'],
+      config: env.source.config, registry: env.source.registry });
+    const [stored] = await env.outboxes.list(env.scope);
+    expect(stored.intents).toHaveLength(1);
+    const intent = stored.intents[0].payload.documentIntent as { reads: unknown[]; step: { reads: unknown[] } };
+    expect(intent).toMatchObject({ merge: 'fields', roots: [{ ref: 'parent' }] });
+    const after = structuredClone(before);
+    for (const key of ['authored', 'sibling']) {
+      for (const list of [after.parent_revision.payload.clips, after.parent_revision.payload.config.clips]) {
+        if (Array.isArray(list)) delete (list.find(row => row.id === key) as Record<string, unknown>).transition;
+      }
+    }
+    expect(env.session.getDocument()).toEqual(after);
+    expect(intent.reads).toContainEqual({ kind: 'field', ref: 'parent',
+      path: [...(topLevel ? [] : ['config']), 'clips', 'id:authored', 'transition'],
+      state: { state: 'present', value: { type: 'crossfade', duration: 0.5, opaque: null } } });
+    expect(intent.step.reads).toEqual(intent.reads);
+    await env.session.dispose();
+  });
+
+  it('removes selected raw null transitions and keeps absent transitions absent across dependent clears', async () => {
+    const env = await environment(true, true, ['authored', 'sibling', 'untouched'], undefined, undefined, true, 'null');
+    const next = structuredClone(env.source);
+    delete next.config.clips[0].transition;
+    await env.handoff.capture(next, { kind: 'transition-clear', clipId: 'authored', clipIds: ['authored'],
+      config: env.source.config, registry: env.source.registry });
+    const expected = structuredClone(env.initial.canonicalDocument);
+    delete (expected.parent_revision.payload.clips as Array<Record<string, unknown>>)[0].transition;
+    expect(env.session.getDocument()).toEqual(expected);
+    const absent = structuredClone(next);
+    await env.handoff.capture(absent, { kind: 'transition-clear', clipId: 'untouched', clipIds: ['untouched'],
+      config: next.config, registry: next.registry });
+    expect(env.session.getDocument()).toEqual(expected);
+    expect((await env.outboxes.list(env.scope))[0].intents).toHaveLength(1);
+    await env.session.dispose();
+  });
+
+  for (const kind of ['move', 'transition-clear'] as const) {
+    it.each(['sibling', 'track', 'registry', 'bundle', 'output', 'opaque', 'child', 'stale', 'pinned'] as const)(
+      `refuses ${kind} carrying an unrelated %s change or selection`, async changed => {
+        const env = await environment(true, true, ['authored', 'sibling'], undefined, undefined, false, true, changed === 'pinned');
+        const next = structuredClone(env.source);
+        const basis = structuredClone({ kind, clipId: 'authored', clipIds: ['authored'], trackId: 'V1',
+          config: env.source.config, registry: env.source.registry });
+        if (kind === 'move') next.config.clips[0].at = 5;
+        else next.config.clips[0].transition = undefined;
+        if (changed === 'sibling') next.config.clips[1].at = 7;
+        if (changed === 'track') next.config.tracks![0].label = 'unexpected';
+        if (changed === 'registry') next.registry.assets.unrelated = { file: 'unexpected.png' };
+        if (changed === 'bundle') next.bundle = { schema_version: 1, itemsBySchemaRef: {} };
+        if (changed === 'output') next.config.output.fps = 60;
+        if (changed === 'opaque') Object.assign(next.config.clips[0], { opaque: { keep: false } });
+        if (changed === 'child') { basis.clipId = 'child-title'; basis.clipIds = ['child-title']; }
+        if (changed === 'stale') basis.config.clips[0].at = 12;
+        await expect(env.handoff.capture(next, basis)).rejects.toBeInstanceOf(TimelineVersionConflictError);
+        expect(env.session.getDocument()).toEqual(env.initial.canonicalDocument);
+        expect((await env.outboxes.list(env.scope))[0].intents).toEqual([]);
+        expect(env.send).not.toHaveBeenCalled();
+        await env.session.dispose();
+      });
+  }
+
+  it.each([[], ['authored', 'authored'], ['sibling'], ['authored', 'child-title']].map(clipIds => ({ clipIds })))('refuses an ambiguous transition clear selection $clipIds', async ({ clipIds }) => {
+    const env = await environment(true, true, ['authored', 'sibling'], undefined, undefined, false, true);
+    const next = structuredClone(env.source);
+    next.config.clips[0].transition = undefined;
+    await expect(env.handoff.capture(next, { kind: 'transition-clear', clipId: 'authored', clipIds,
+      config: env.source.config, registry: env.source.registry })).rejects.toThrow('authored parent binding');
+    expect(env.session.getDocument()).toEqual(env.initial.canonicalDocument);
+    expect((await env.outboxes.list(env.scope))[0].intents).toEqual([]);
+    await env.session.dispose();
   });
 
   it('persists original parent move reads and sends the exact dependent request after lost ACK and restart', async () => {
