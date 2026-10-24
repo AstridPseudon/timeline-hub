@@ -1,0 +1,12 @@
+REBASE_REF=internal-revision:authoring-timeline-revision-ab89ebff25525e673bc396b835e6d49bb7784a58288849f89d7206c96af87e35
+Traceback (most recent call last):
+  File "/tmp/w-5f9afe2e50/popup079/popupAuthorityFixture.py", line 53, in <module>
+    bindings = rebase_patch(original, [entry], landing, load_boundary=lambda _: (bundle, landing))
+  File "/home/user/work/wt/agt-R1-popup-079-source-0930/astrid/sdk/timeline/_commit_patch.py", line 875, in rebase_patch
+    guard['ref'] = guarded_ref(guard['ref'])
+                   ~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/home/user/work/wt/agt-R1-popup-079-source-0930/astrid/sdk/timeline/_commit_patch.py", line 817, in guarded_ref
+    return continuation(ref)
+  File "/home/user/work/wt/agt-R1-popup-079-source-0930/astrid/sdk/timeline/_commit_patch.py", line 808, in continuation
+    raise CommandError('bound image has no unique authenticated successor', kind='binding_changed', ref=ref)
+astrid.sdk.timeline._command_state.CommandError: bound image has no unique authenticated successor

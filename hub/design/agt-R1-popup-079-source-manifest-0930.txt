@@ -1,0 +1,26 @@
+selected Agent source
+079580ca46af77e0292d49dc34386b25c8391f99
+selected Agent origin
+079580ca46af77e0292d49dc34386b25c8391f99 6531622c8f198c3efb509217e303fcad0126c47b d1d41c4056f509ce24af916ee20b7b683ac8f8f1 Merge tl/agt-R2-authenticated-legacy-restore-sol-1704
+astrid/sdk/timeline/commands.py sha256 9858390bbced10eb2ca1112dcbd16d092a12c34f5a3eebcf2ed218fe087ff6a2
+astrid/sdk/timeline/commands.py git-blob d349ebd4afc1764fa5db2f464ff234ce6c146b89
+astrid/sdk/timeline/commit.py sha256 f4272228f5c663d2f586aa5cc4f8ef2486aad4e4d38ca99e9433b6a991e53dbd
+astrid/sdk/timeline/commit.py git-blob 86be6ff6e7c79621335f880fa22587820cf09672
+astrid/sdk/timeline/_commit_patch.py sha256 b971050c92b14304bbc037ed775ddb7ddfa6cf5a233cd2075f92ba68725c3163
+astrid/sdk/timeline/_commit_patch.py git-blob b91222b9c933b7107a334d153b68ca2f44d2b944
+astrid/sdk/timeline/_commit_preview.py sha256 70ad40a78248805bee83fe0261145b7e0c3b470ebb770f5f78526900a42dfce5
+astrid/sdk/timeline/_commit_preview.py git-blob 514ecfb5219b5d1e90b154936efae9544f82eee2
+astrid/sdk/timeline/validation.py sha256 dc3305e24bcad677c6573c5bdd8557e2a60d72dd9eedd03c307f8c8a78bf8fbc
+astrid/sdk/timeline/validation.py git-blob 7a893c63553b3294e6db047636151ae031f315d2
+astrid/sdk/timeline/native_occurrence_create.py sha256 962016ffdba404dfd88ed4fbf62bd4882e96e42038a0548549a0cf727ef25d22
+astrid/sdk/timeline/native_occurrence_create.py git-blob 0b98d05acaec55c353ad9ec58d5b8b038dc7ba31
+donor App commit
+d99fd1a0bc9fc3112219415159eaec87494a09b6 82cb5c0005df7abe0fcb8673f7be192a6c9e9183 test(app): derive A3 popup responses from provider execution (A3-0846)
+donor fixture blob
+bb4467f0a17a0ba5e01ab325cd2be68e08dcc60b
+donor mounted test blob
+241af6d33c240d56b357017ed8727f6daa03b44c
+probe accepted exit 0; donor fixture assertions completed
+probe merged exit 1; CommandError kind=binding_changed
+probe merged ref=internal-revision:authoring-timeline-revision-ab89ebff25525e673bc396b835e6d49bb7784a58288849f89d7206c96af87e35
+probe mode=offline; no Runtime service/database/HTTP/browser/full suite
