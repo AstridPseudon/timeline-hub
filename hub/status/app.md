@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T09:43:38Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 5 | status age 1m -->
-# app board, 2026-10-24T09:42Z
+<!-- app | 2026-10-24T09:46:44Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 6 | status age 1m -->
+# app board, 2026-10-24T09:45Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -18,7 +18,7 @@
 | P2 | Eight original gesture cases | App service; Proof verdict | Current pair terminal | blocked:app | Actual 23809; source owners below | Three failed, five not run; exit 1 in 463 seconds. Element response unknown, popup local refusal, parent request oracle mismatch. | Selected 663; HOME 9b810 |
 | P3 | Original Gate5 journey | App service; Proof verdict | Final source and caller proof | blocked:app | Actual9310; setupHOME82cb | Exit 1 in 307 seconds. Readiness passed 41.4 seconds; one accepted predecessor POST missed by clip.move predicate. Original tail unrun. | Selected 663; HOME 9b810 |
 | P2-P3-next-caller | Bind prepared caller after product join | Luna; independent Luna | Cumulative0902 PASS; final source pending | blocked:app | Return0853; cumulative0902 | PREPARED only. Actual decoded source and forged-target controls pass;248 rows preserved. Final pure proof target and source hashes remain inputs. No rows installed. | 1d92503b4c |
-| P2-P3-D41-caller | Prepare source-required Agent backport inputs | Luna | Prepared caller0902; real pin pending | doing | app-P2-P3-D41-caller-prep-0939 | Actual nested caller binding and receipt refusal controls only. No rows, provision or final source claimed. Runtime37eb remains fixed. | Base1d925 |
+| P2-P3-D41-caller | Prepare source-required Agent backport inputs | Luna; independent Luna | Prepared caller0902; real pin pending | review | Author0939; review0945 | Author preparation passes; two nested rows and248 outsiders preserved. Review challenges genuine source and receipt refusal. No rows installed. | b2f7113cc2 |
 | P2-P3-current-packet | Publish same-ID terminal evidence | Luna; Proof review | Actual retained files | merged | Producer return 0707; Proof 0717 | Eight safe files published byte-exact with origin paths and hashes. Actual daemon and P2 synthetic snapshot identity remain unknown. | Source 663 |
 | P2-P3-lifecycle-custody | Verify retained lifecycle bytes | Luna; independent Luna | Independent 0741 PASS | merged | Producer 0733; review 0741 | Originals, copies and attachments are 224 bytes with LF. Exact selected writer matches. Prior 225/no-LF claim contradicted. | Same immutable files |
 | P3-parent-path | Prove actual predecessor dispatch | Sol; independent Luna | Independent 0720 PASS | merged | Sol 0714; review 0720 | One POST 200 accepted; guarded doc.patch moves 0 to 5 with 25 request/step reads. Canonical 5 and history 2 to 3. | Report only |
@@ -53,7 +53,7 @@ Integration: HOME82cb5c0005df7abe0fcb8673f7be192a6c9e9183 unchanged. P3 integrat
 Blockers: Agent — confirmed popup continuation needs reviewed source repair and qualified D41 backport. Coherent079 independent review0935 active; no new pin released.
 Blockers: App — runner0940 review and coherent provider green precede source merge, joined proof and actual caller. Runner finalization cleared at5bafd247e8.
 Blockers: Freeze — App U3b home waits header P2/P3 GO, then D39 adoption and actual final tuple qualification. Runtime coordinates FREEZE.
-Next ready: Runner0940 review and caller0939 active; AgentSol0928 repair active. P3 integrated0900 and caller cumulative0902 PASS are published. After popup PASS, merge exact source, qualify joined head, bind final caller, then use conditional release0850 once.
+Next ready: Runner0940 and caller0945 reviews active; AgentSol0928 repair active. P3 integrated0900 and caller cumulative0902 PASS are published. After popup PASS, merge exact source, qualify joined head, bind final caller, then use conditional release0850 once.
 
 Later: Final P1–P5 run on App service with Proof verdict after final tuple qualification, then D49 full suites and Farm F-final/ZIP. No duplicate farm or Proof run. D47 memo/capsule stays deferred and held unmerged. D46 U2c draft stays closed. D14/D23 deferred relational timing cases retain their original assertions and failures.
 
@@ -67,4 +67,4 @@ Disk: Sweep3 removed zero directories; about11.4 GB free. No eligible finished c
 
 Evidence: [joined 690](../../design/app-A2-A3-corrected-integrated-0629.md), [real provider integrated](../../design/app-A3-provider-integrated-0724.md), [actual predecessor review](../../design/app-P3-parent-trace-review-0720.md), [element clock](../../design/app-P2-element-clock-review-0724.md), [element error review](../../design/app-P2-element-error-review-0738.md), [popup cause review](../../design/app-P2-popup-cause-review-0745.md), [lifecycle review](../../design/app-P2-P3-lifecycle-review-0741.md), [IMAGE](../../design/agt-A4-image-result-review-0636.md).
 
-Pass 2026-10-24T09:42Z: INBOX consumed through1421160 bytes including Agent0928/0930 source-owner notes, answered in0935 peer. Header unchanged. Normal request-stop finalized Sol0935 WIP as5bafd247e8; independent0940 queued immediately on that exact commit. No direct git mutation. Caller0939 prepares D41 identity inputs without installation. Agent now owns current repair and coherent079 review. No original pair or source merge.
+Pass 2026-10-24T09:45Z: INBOX consumed through1421160 bytes. Header unchanged. Runner0940 and new D41 caller0945 independent reviews are active on exact committed branches. Two successful source workers lacked harness finalization; normal request-stop preserved each WIP as5bafd andb2f711. Finite kit-source finding sent to lead/Runtime0945, no manager kit edit. Agent source repair0928 and coherent079 independent0935 remain active. No source merge, provision or original pair.
