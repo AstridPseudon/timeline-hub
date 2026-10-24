@@ -49,14 +49,16 @@ for d in $O/workers/*/; do
   [ $(( $(date +%s) - $(stat -c %Y $d/running) )) -lt 300 ] && continue  # just launched; give it time
   if [ -f $d/DONE ] || [ -f $d/BLOCKED ]; then   # worker finished (wrote DONE/BLOCKED) but its wrapper died before writing exit/ended (00:57Z app): finalize, not a death
     $O/bin/stop-worker $w "finished; wrapper ended before its exit marker (ensure-daemons)" >/dev/null 2>&1; fin="$fin $w"; continue; fi
-  $O/bin/stop-worker $w "died in container restart (ensure-daemons)" >/dev/null 2>&1   # finalizes the orphan: commits WIP to tl/<worker>
+  up=$(awk '{printf "%d", $1/60}' /proc/uptime); why="process ended without DONE/exit marker (uptime ${up}m)"; [ "$up" -lt 30 ] && why="died in container restart (uptime ${up}m)"
+  { date -u +%FT%TZ; echo "reason: $why"; ls -la --time-style=+%H:%M:%S $d; ps -eo pid,ppid,etime,args | grep -F -e "$w" -e "$wt" | grep -v grep; tail -5 $d/log.txt 2>/dev/null; } > $d/orphan-evidence.txt 2>&1   # 05:48Z LOOPS #52: keep evidence for diagnosis
+  $O/bin/stop-worker $w "$why (ensure-daemons)" >/dev/null 2>&1   # finalizes the orphan: commits WIP to tl/<worker>
   dead="$dead $w"
 done
 if [ -n "$dead" ]; then
   if grep -qE "^MERGE-ONLY lanes:.*\b$A\b" $O/design/BOARD-HEADER.md 2>/dev/null; then   # lane machine cannot keep workers alive (07:20Z app): failover lane owns them
-    printf '\n## ensure-daemons %s: workers died (container restart)\nThis lane is MERGE-ONLY (BOARD-HEADER): do NOT re-dispatch these here. The failover lane owns them (resume from tl/<worker>):%s\n' "$(date -u +%FT%TZ)" "$dead" >> $O/managers/$A/INBOX.md
+    printf '\n## ensure-daemons %s: workers ended without a finish marker (see workers/<name>/orphan-evidence.txt)\nThis lane is MERGE-ONLY (BOARD-HEADER): do NOT re-dispatch these here. The failover lane owns them (resume from tl/<worker>):%s\n' "$(date -u +%FT%TZ)" "$dead" >> $O/managers/$A/INBOX.md
   else
-    printf '\n## ensure-daemons %s: workers died (container restart)\nRe-dispatch fresh (on the same branch with `--base tl/<worker>` if it has commits):%s\n' "$(date -u +%FT%TZ)" "$dead" >> $O/managers/$A/INBOX.md
+    printf '\n## ensure-daemons %s: workers ended without a finish marker (see workers/<name>/orphan-evidence.txt)\nRe-dispatch fresh (on the same branch with `--base tl/<worker>` if it has commits):%s\n' "$(date -u +%FT%TZ)" "$dead" >> $O/managers/$A/INBOX.md
   fi
 fi
 [ -n "$fin" ] && mgr="$mgr FINALIZED (finished, wrapper left no exit marker; not a death, do not re-dispatch):$fin"
