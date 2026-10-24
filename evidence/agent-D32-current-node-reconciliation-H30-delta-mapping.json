@@ -1,7 +1,7 @@
 {
   "schema": "timeline.d32.current-node-reconciliation.delta-mapping.v1",
   "base_artifact": "evidence/agent-D32-current-node-reconciliation-H30-corrected.json",
-  "base_artifact_sha256": "286047a522d61e57f8c46bb655d63d96bd82fd21e6f597fa72a2e017b2552eb2",
+  "base_artifact_sha256": "e13d65bad98c46f90ab9dd037ae9b20d2c99a650c3db6827b65d4d542a1b24a0",
   "base_artifact_sha256_meaning": "SHA-256 of final corrected census bytes, computed after last census write; no embedded self hash.",
   "actual_home": {
     "head": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
@@ -2351,6 +2351,25 @@
       "proof_ref": "persistence_integrated0733_review0736",
       "credit": "confirmed_closed",
       "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale",
+      "current_node_id": "tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_giant_file_inventory_matches_rationale",
+      "current_function": "test_giant_file_inventory_matches_rationale",
+      "function_renamed": "no",
+      "current_function_line": "955",
+      "original_body_ast_sha256": "1a11408dfaacf2351fdd57bceea1181c725795b6c0794ac86e5b37e515708efc",
+      "current_body_ast_sha256": "1a11408dfaacf2351fdd57bceea1181c725795b6c0794ac86e5b37e515708efc",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "47fa16bf4b721e1f7cb0fb7e6e14bbf5978efb5a382fed593564bc651d4d32da",
+      "current_source_file_sha256": "47fa16bf4b721e1f7cb0fb7e6e14bbf5978efb5a382fed593564bc651d4d32da",
+      "scenario_mapping": "Only the exact original giant-file inventory/docs test is qualified on Agent a8f4c057/tree12d929 and Runtime becfe/tree7edc, with independently reviewed durable one-test XML. Relevant source/test/rationale/path-helper blobs equal HOME0c2; this equality is not a new execution on HOME0c2 or any later head. No whole-tuple, full-suite, installed, HTTP, v2 wire, receipt, production-caller, neighbor, D18-loader or duck qualification. Prior Farm regression, direct old RED and restart-challenged history remain historical; no other original receives credit.",
+      "proof_ref": "giant_home0809_review0814",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     }
   ],
   "non_credit_dispositions": [
@@ -3332,5 +3351,157 @@
     "historical_metadata_policy": "current_challenge0705/current_challenge_mapping, earlier counts/proofs/coverage and their pending-at-author-time wording are preserved historical snapshots; independent0715 PASS establishes the base. This section alone supplies0750 current applicability. Prior mapped evidence retains its original qualified source/import scope.",
     "farm_limits": "Frozen Farm26511 Runtime45c tuple: 96 failures classified80 environment/1 regression/15 unknown, not current retrospective passes. Only direct current giant-file/docs original is reopened here; other95 unchanged. full25691 FAIL retained; no current full267 PASS.",
     "raw_result_limit": "Independent0736 checked XML SHA, exactly the two named original selectors passing, all ten body/assertion pairs, fixture and relevant production blobs, module origins and clean trees. Peer0739 names both exact originals. Primary/independent reports are read and hashed locally; raw XML and qualification.md/review.md are not present locally. No claim of local raw XML parsing or rehashing; digest is reported and independently verified0736."
+  },
+  "giant_home_mapping0818": {
+    "status": "CANDIDATE; independent cumulative package review PASS pending",
+    "task": "agt-F-count-giant-home-sol-0818",
+    "base_commit": "82025e10b8d059e2c2fadeeebb6c78fc410a8a7f",
+    "base_census_sha256": "286047a522d61e57f8c46bb655d63d96bd82fd21e6f597fa72a2e017b2552eb2",
+    "base_independent_review": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-count-persistence-review-0759/report.md",
+      "sha256": "28c14132a4a2623e37fb4d1d22c2371bf2b75372c8e47227040339da78663c00"
+    },
+    "historical_base_counts": {
+      "total": 267,
+      "closed": 262,
+      "open": 5,
+      "mappings": 122
+    },
+    "delta": {
+      "newly_closed": [
+        "tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale"
+      ],
+      "reopened": [],
+      "net_closed": 1
+    },
+    "counts": {
+      "total": 267,
+      "closed": 263,
+      "open": 4
+    },
+    "active_owner_counts": {
+      "Agent": 4
+    },
+    "active_family_counts": {
+      "Agent SDK / timeline unconfirmed": 2,
+      "CLI FakeCheckout fixture": 0,
+      "D09 installed-profile setup": 0,
+      "Execution/rendering/pack remainder": 1,
+      "Isolated Agent child import fence": 0,
+      "Occurrence-media inverse fixture": 0,
+      "Other task-specific unconfirmed": 0,
+      "Rendering missing result file": 0,
+      "Retired CLI/native route or stale caller": 0,
+      "Runtime child import / OPS": 1,
+      "CLI/manifest/current-surface": 0
+    },
+    "remaining_exact_original_node_ids": [
+      "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]",
+      "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head",
+      "tests/test_generic_host.py::test_structure_pack_members_survive_harvest_cleanup_and_reopen"
+    ],
+    "qualification_tuple": {
+      "agent_head": "a8f4c05719c2e1848c5f24adc1fbb17655f77eec",
+      "agent_tree": "12d92980eb0d900a0fa976ae49344f95d6bf4b5e",
+      "runtime_head": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+      "runtime_tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89"
+    },
+    "relevant_home": {
+      "head": "0c2c28da4f9733a1becc134f95219ae3079fc50e",
+      "tree": "4ce9de35768c75d38db16882423313fb5047eb5f",
+      "source_comparison": {
+        "astrid/core/execution/generic_host.py": {
+          "qualified_ref": "a8f4c05719c2e1848c5f24adc1fbb17655f77eec",
+          "home_ref": "0c2c28da4f9733a1becc134f95219ae3079fc50e",
+          "qualified_git_blob": "36b8e5ee579f96ee7c62d70887509b5b534e6345",
+          "home_git_blob": "36b8e5ee579f96ee7c62d70887509b5b534e6345",
+          "sha256": "9a0d3f8e987c043e4dfdb7912e63b228fc6dfeec41d573d92ff31bf4ec8cd11b",
+          "physical_newlines": 14330,
+          "equal": true
+        },
+        "docs/giant-file-rationale.md": {
+          "qualified_ref": "a8f4c05719c2e1848c5f24adc1fbb17655f77eec",
+          "home_ref": "0c2c28da4f9733a1becc134f95219ae3079fc50e",
+          "qualified_git_blob": "88b399d3b03cbac6a22d5814e77ae664aaa3cfe5",
+          "home_git_blob": "88b399d3b03cbac6a22d5814e77ae664aaa3cfe5",
+          "sha256": "6d31c9c62f518259541e7fbfc2991877116af0a4e41cac1aa8b3cad0fa2963e9",
+          "physical_newlines": 72,
+          "equal": true
+        },
+        "tests/test_structure_contracts.py": {
+          "qualified_ref": "a8f4c05719c2e1848c5f24adc1fbb17655f77eec",
+          "home_ref": "0c2c28da4f9733a1becc134f95219ae3079fc50e",
+          "qualified_git_blob": "3e53b5037e88968c3b62a24557918f2f13773f4d",
+          "home_git_blob": "3e53b5037e88968c3b62a24557918f2f13773f4d",
+          "sha256": "47fa16bf4b721e1f7cb0fb7e6e14bbf5978efb5a382fed593564bc651d4d32da",
+          "physical_newlines": 1170,
+          "equal": true
+        },
+        "astrid/core/foundation/paths.py": {
+          "qualified_ref": "a8f4c05719c2e1848c5f24adc1fbb17655f77eec",
+          "home_ref": "0c2c28da4f9733a1becc134f95219ae3079fc50e",
+          "qualified_git_blob": "4605760303dedab615755862aa1d050eac3bebb3",
+          "home_git_blob": "4605760303dedab615755862aa1d050eac3bebb3",
+          "sha256": "76cefc679b04428b029fac5d5ce961b1164cf217d50dcd7c365c5ce710a184fb",
+          "physical_newlines": 50,
+          "equal": true
+        }
+      },
+      "execution_on_this_home_claimed": false
+    },
+    "proof_ref": "giant_home0809_review0814",
+    "retained_sources": {
+      "actual_home0809": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-giant-home-0809.md",
+        "sha256": "8306c447fb9b6c84bc4e4f5f5ac823bc59db4183b72e21d05847beb940f9eee8"
+      },
+      "independent0814": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-giant-result-review-0814/report.md",
+        "sha256": "2ab4e013bebbd5b94a16e18092a3f94205260982321e76c031693e6d445e84be"
+      },
+      "qualification0809": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-giant-home-0809/evidence/qualification.json",
+        "sha256": "af357fee4e133f358b78e2466466e7981644d80db182bf781162fccf5b3a7eb9"
+      },
+      "junit0809": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-giant-home-0809/evidence/giant-file-inventory.junit.xml",
+        "sha256": "40ddb1e0b0ed8588af335ea156333133941128dd861eeaf24e394923ab492a65"
+      },
+      "base_independent0759": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-count-persistence-review-0759/report.md",
+        "sha256": "28c14132a4a2623e37fb4d1d22c2371bf2b75372c8e47227040339da78663c00"
+      }
+    },
+    "mapping_inventory": {
+      "total_rows": 123,
+      "current_confirmed_closed_rows": 122,
+      "current_unique_original_ids": 122,
+      "historical_challenged_rows": 1,
+      "all_unique_original_ids": 122,
+      "unchanged_prior_rows": 122,
+      "appended_current_rows": 1
+    },
+    "proof_inventory": {
+      "total": 51,
+      "unchanged_prior_records": 50,
+      "new_scoped_pass_records": 1,
+      "distinct_proof_refs_on_current_closed_nodes": 49
+    },
+    "preservation": {
+      "unchanged_other_node_records": 266,
+      "all_original_ids_phases_tags_preserved": true,
+      "phases": {
+        "call": 262,
+        "setup": 5
+      },
+      "unchanged_prior_proof_records": 50,
+      "unchanged_prior_coverage_entries": 50,
+      "unchanged_prior_mapping_rows": 122,
+      "complete_CONTRACTINVENTORY": "unchanged; the production caller uses it remains required"
+    },
+    "historical_metadata_policy": "All0750 and older snapshot/proof/coverage/mapping values remain historical and unchanged. Independent0759 PASS establishes262/5 base. This0818 section supplies the sole new current applicability for giant. Old Farm, old direct RED and restart challenged history remain retained.",
+    "remaining_limits": "Support discovery and generic reopen unqualified; helper wordsecond and persistence moved-head remain D23 deferred, unchanged/open. All267 remain ours. No other original credit.",
+    "scope": "Only the exact original giant-file inventory/docs test is qualified on Agent a8f4c057/tree12d929 and Runtime becfe/tree7edc, with independently reviewed durable one-test XML. Relevant source/test/rationale/path-helper blobs equal HOME0c2; this equality is not a new execution on HOME0c2 or any later head. No whole-tuple, full-suite, installed, HTTP, v2 wire, receipt, production-caller, neighbor, D18-loader or duck qualification. Prior Farm regression, direct old RED and restart-challenged history remain historical; no other original receives credit."
   }
 }
