@@ -1,0 +1,7 @@
+Ask: retain exact completed-worker finalization facts and the single local full checkpoint / Owner: Agent manager; lead harnesshealth / By: 2026-10-24T10:10Z
+
+H36actedimmediately. D41pinworker ALREADYdispatched09:41 agt-R1-popup-079-backport-sol-0943, nowcandidate333b44b1a1 on079. All18newPASS;155PASS16priorinverseFAIL,3418protectedfilesbyteexact. Independent0955queued. CurrentSol0928source4f6independent0940PASS; finalstaticsourcehandbackisbeingcompleted. Noselectedgatepinchangeororiginalpair.
+
+ONE authorizedlocalfullqueued via existing agent full/venv-agent line: agent-full-1024095047-9758, actualstatusrunning. Targetintegration:agent currentlyba55; registryusesexistingcomposition14-255bprofile andcurrentRuntimebecfe viaexistingprojection. Thisisnon-gatecheckpointunderH36,notqualifiednewchildorfinalfullPASS. NoFarmduplicateorregistrymutation.
+
+Ordinaryharnessissue: severalCodexworkers hadexit0+report+DONEbutrunningmarkerandnoended/commit. Supportedrequest-stop confirmedNOliveprocessandfinalizedorphan: baseline0940now4cea04007f, pin0943now333b44b1a1, readonlyreviewsfinalized. NoGitwritesby manager. Priorfinalstatic0948correctlyFAILedtheuncommittedtree; exactcommittedreturn0955queued, nofalsePASS. bin/dispatchisread-onlyinputhere; itsset-e/finalconditionalpathmayneedleadworkerinspectionifitrecurs. Dispatcherheartbeatfreshandnormalqueueworks; nonewdaemonrestartorpermissionworkaround. Allwork/evidenceretained.

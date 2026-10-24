@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T09:51:05Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 12 | status age 3m -->
-# agent board, 2026-10-24T09:47:46Z
+<!-- agent | 2026-10-24T09:54:16Z | dispatcher heartbeat 10s | live 4 (sol 0, luna 4, other 0) | busy30 13 | status age 1m -->
+# agent board, 2026-10-24T09:53:02Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -118,7 +118,7 @@
 | OPS received kit | Verify kit receipt and jaraco facts | Luna | Independent finite result review | merged | Independent 0814 PASS | New helper b8b5 and maker e4c0 match live, normal publication and committed hub. Requester and Store unchanged. | Evidence only |
 | G4 media admission | Connect ordinary publish to verified inputs | Luna | Existing authentic admission path | merged | Source 0823 PASS; home 0832 PASS20 | Authoritative public admission, retry and foreign no-write work on integrated home; original managed duck remains separate. | 0ff3d103fb |
 | F joined source | Qualify U2, D39, D18 and ABA together | Luna | Reviewed normal home merges | merged | Joined 0816; independent 0823 PASS | 123 cases, all 15 mappings, 50 auth blobs, Ruff2145 and mypy1902 pass on exact home 0c2c. | 0c2c28da4f |
-| F ABA managed row | Review meaningful request capture seam | Luna / Luna | Capture proposal 0938 | review | Author 0938; independent 0945 | No retained request record. Proposed hook capture needs sufficiency and timing review. Original remains held; due 10:00. | Source 0c2; Runtime becfe |
+| F ABA managed row | Prepare meaningful completion capture | Viewing Sol / Luna | Agent recovery complete | blocked:viewing | Viewing Sol 0937; Agent 0945 FAIL | No retained record. Agent-only hook proposal rejected; exact coordinator coverage handed to unique Viewing owner. Original held. | Source 0c2; Runtime becfe |
 | OPS wheel result review | Verify actual input and new kit receipt | Luna | Reviewed b330 helper | merged | agt-OPS-real-wheel-review-0814 PASS | All 67 original wheels and all four received kit files independently verified. Bootstrap unverified. | Lock 236d unchanged |
 
 | F count giant home | Credit one exact qualified original | Sol | Independent result 0814 PASS | merged | Author 0818; independent 0827 PASS | Official 263 closed / 4 open. All 266 other records unchanged; 123 mappings. | e13d65ba |
@@ -143,11 +143,13 @@
 
 | R1 popup gate source | Qualify coherent selected 079 provider | Luna / Luna | Complete independent verdict | merged | Author 0930; independent 0935 FAIL | Legitimate accepted passes; disjoint merge fails. Source custody verified on full 079. No HTTP or journey claim. | Selected 079 unchanged |
 
-| R1 popup pin repair | Preserve gate client bytes with source fix | Sol / Luna | 079 failure reviewed; source in review | doing | agt-R1-popup-079-backport-sol-0943 | Draft D41 branch from 079 now; qualify exact client and schema bytes. No selected pin changes before review. | Base 079; source 4f6 |
+| R1 popup pin repair | Preserve gate client bytes with source fix | Sol / Luna | Independent actual source review | review | Author 0943; independent 0955 | 18 new pass; 155 pass and 16 prior failures. All 3418 protected files unchanged. Branch only; no selected pin change. | 333b44b1a1 on 079 |
 
-| R1 static gates | Tighten exact static baseline | Luna / Luna | Source 4f6 independently passed | review | Author 0940; independent 0948 | Parent and current both 2143; zero new diagnostics. Normal generated baseline and strict mypy pass; cumulative review due 10:05. | Baseline branch 0940 |
+| R1 static gates | Tighten exact static baseline | Luna / Luna | Actual committed baseline | review | Author 0940; return 0955 | Premature 0948 correctly failed uncommitted tree. Normal orphan finalization produced 4cea; exact return review queued. | 4cea04007f |
 
 | F provider undo | Classify six existing source failures | Luna | Exact before and after packets | doing | agt-F-provider-undo-classify-0952 | Four provider and two recipe undo cases fail on base and candidate. Outside original 267 map; no count change. Due 10:15. | Home ba55; source 4f6 |
+
+| F local checkpoint | Qualify D49 fallback on existing service | Service | H36 owner instruction | doing | agent-full-1024095047-9758 | One full queued on working venv-agent registration; running. Exact ba55 snapshot, current Runtime and existing renderer profile. | Home ba55 |
 
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
 Integration: ba55ac1e9e adds only reviewed offline transport tests, integrated0916 PASS17. Runner67d5 static PASS; product0ff3 independently20PASS; earlier0c2 joined123 retains its scope. Original20732 failed at lost-ack error code.
@@ -160,7 +162,7 @@ Runtime: Producer becfe is independently qualified and all 15 Agent mappings now
 App: Complete IMAGE 0554 and independent 0636 PASS retained at direct RuntimeService scope. No additional producer or realm; no inferred original-node credit.
 D48: Upstream 25359 merged via reviewed source ccf87 and normal d01. Restored predicates retained. D18 loader merged after independent PASS; duck scenario remains open under unique G4 source owner 0814.
 D39: Canonical adoption is integrated-qualified on exact 0c2 with all 15 mappings. Actual wire-key negative controls remain strict. Final three-lane tuple and gate proofs remain unqualified.
-D49 venue: Agent final full on Farm after a zero-setup-error checkpoint. Fallback is Agent service after actual dependency and child qualification. No final full requested.
+D49 venue: Farm still requires zero setup errors. H36 explicitly authorizes local fallback checkpoint9758 on existing venv-agent full row; it is running. No final gate claim.
 Safety: Prior Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
 Disk: About11 GB free. Fresh read-only check found one remaining finished non-KEEP Agent tree; it is dirty. No eligible clean merged tree to recycle. Prior cleanup refusals remain stopped; light work proceeds.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred. D46 U2c closed and folded into the freeze; relay and remote providers stay deferred and fail-closed. D47 memo held.
