@@ -341,21 +341,146 @@ function assertRequestV2(post: CommitPost, before: HeadPin, modern = true): void
   expect(post.body.source).toEqual({ via: 'app' });
 }
 
-function assertDocumentPatchRequest(body: CommitRequest, changes: unknown[]): void {
+function assertDocumentPatchRequest(body: CommitRequest, changes: unknown[], created?: string[], intent = 'Save local editor changes'): void {
   expect(body.commands).toEqual([{
     schema_version: 1,
     op: 'doc.patch',
     version: '1',
     select: null,
+    ...(created === undefined ? {} : { created }),
     args: { changes },
   }]);
   expect(body.steps).toHaveLength(1);
   expect(body.steps![0]).toMatchObject({
     label: 'Edit timeline',
-    intent: 'Save local editor changes',
+    intent,
     tags: [],
     command_ordinals: [0],
     patch: changes,
+  });
+}
+
+function assertParentMoveRequestV2(
+  post: CommitPost,
+  before: HeadPin,
+  original: CanonicalDocument,
+  clipId: string,
+  targetAt: number,
+): void {
+  expect(post.key).toBeTruthy();
+  const payload = original.parent_revision.payload as unknown as JsonObject;
+  const config = payload.config as JsonObject;
+  const clips = config.clips as Array<JsonObject>;
+  const selected = clips.find((clip) => clip.id === clipId);
+  expect(selected, `parent move source clip ${clipId}`).toBeTruthy();
+  const trackId = String(selected!.track);
+  const read = (value: JsonObject, key: string, path: string[]): JsonObject => ({
+    kind: 'field', ref: 'parent', path: [...path, key],
+    state: Object.hasOwn(value, key) ? { state: 'present', value: value[key] } : { state: 'absent' },
+  });
+  const readPath = (value: JsonObject, keys: string[], path: string[]): JsonObject => {
+    const [key, ...rest] = keys;
+    return rest.length && value[key] && typeof value[key] === 'object' && !Array.isArray(value[key])
+      ? readPath(value[key] as JsonObject, rest, [...path, key]) : read(value, key, path);
+  };
+  const clipPath = ['config', 'clips'];
+  const timingReads = (item: JsonObject): JsonObject[] => ['id', 'track', 'at', 'clipType', 'hold', 'from', 'to', 'speed', 'asset']
+    .map((key) => read(item, key, [...clipPath, `id:${String(item.id)}`]));
+  const reads = timingReads(selected!);
+  reads.push(readPath(config, ['output', 'fps'], ['config']));
+  const registry = payload.registry as JsonObject;
+  const assetRead = (item: JsonObject): void => {
+    if (typeof item.asset === 'string') reads.push(readPath(registry, ['assets', item.asset], ['config', 'registry']));
+  };
+  assetRead(selected!);
+  const tracks = config.tracks as Array<JsonObject>;
+  const track = tracks.find((row) => row.id === trackId);
+  expect(track, `parent move source track ${trackId}`).toBeTruthy();
+  reads.push(read(track!, 'kind', ['config', 'tracks', `id:${trackId}`]));
+  reads.push(read(config, 'pinnedShotGroups', ['config']));
+  const order = clips.map((clip) => String(clip.id));
+  reads.push({ kind: 'collection', ref: 'parent', path: clipPath, members: [...order].sort(), order });
+  for (const sibling of clips) {
+    if (sibling.id === clipId) continue;
+    reads.push(read(sibling, 'track', [...clipPath, `id:${String(sibling.id)}`]));
+    if (sibling.track === trackId) {
+      reads.push(...timingReads(sibling));
+      assetRead(sibling);
+    }
+  }
+  const changes = [{
+    op: 'set', ref: 'parent', path: ['clips', `id:${clipId}`, 'at'],
+    before: { state: 'present', value: selected!.at }, value: targetAt,
+  }];
+  expect(post.body).toEqual({
+    api_version: 1,
+    project_id: expect.any(String),
+    timeline_id: expect.any(String),
+    base_revision_id: before.revision_id,
+    base_publication_id: before.publication_id,
+    commands: [{ schema_version: 1, op: 'doc.patch', version: '1', select: null, created: [], args: { changes } }],
+    label: 'Edit timeline',
+    steps: [{
+      id: expect.any(String), label: 'Edit timeline', intent: `Move ${clipId} on ${trackId}`, tags: [],
+      command_ordinals: [0], patch: changes, reads,
+    }],
+    merge: 'fields', reads, dry_run: false, source: { via: 'app' },
+  });
+}
+
+function assertTransitionRequestV2(
+  post: CommitPost,
+  before: HeadPin,
+  original: CanonicalDocument,
+  ids: string[],
+  changes: unknown[],
+): void {
+  expect(post.key).toBeTruthy();
+  const payload = original.parent_revision.payload as unknown as JsonObject;
+  const config = payload.config as JsonObject;
+  const clips = config.clips as Array<JsonObject>;
+  const reads = ids.flatMap((id) => {
+    const clip = clips.find((candidate) => candidate.id === id);
+    expect(clip, `transition source clip ${id}`).toBeTruthy();
+    return ['id', 'transition'].map((key) => ({
+      kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${id}`, key],
+      state: Object.hasOwn(clip!, key) ? { state: 'present', value: clip![key] } : { state: 'absent' },
+    }));
+  });
+  reads.push({
+    kind: 'field', ref: 'parent', path: ['config', 'pinnedShotGroups'],
+    state: Object.hasOwn(config, 'pinnedShotGroups')
+      ? { state: 'present', value: config.pinnedShotGroups } : { state: 'absent' },
+  });
+
+  expect(post.body).toEqual({
+    api_version: 1,
+    project_id: original.project_id,
+    timeline_id: original.timeline_id,
+    base_revision_id: before.revision_id,
+    base_publication_id: before.publication_id,
+    commands: [{
+      schema_version: 1,
+      op: 'doc.patch',
+      version: '1',
+      select: null,
+      created: [],
+      args: { changes },
+    }],
+    label: 'Edit timeline',
+    steps: [{
+      id: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/),
+      label: 'Edit timeline',
+      intent: `Clear transitions: ${ids.join(', ')}`,
+      tags: [],
+      command_ordinals: [0],
+      patch: changes,
+      reads,
+    }],
+    merge: 'fields',
+    reads,
+    dry_run: false,
+    source: { via: 'app' },
   });
 }
 
@@ -510,10 +635,11 @@ async function proveGestureAndUndo(
   assertCommands: (body: CommitRequest) => void,
   assertAfter: (after: CanonicalDocument) => void,
   assertUndo: (undone: CanonicalDocument) => void,
+  assertRequest: (post: CommitPost, before: HeadPin) => void = (post, head) => assertRequestV2(post, head),
 ): Promise<void> {
   assertCanonicalClosure(original, harness, seed);
   const post = await commitFromGesture(page, wire, gesture);
-  assertRequestV2(post, before.head);
+  assertRequest(post, before.head);
   assertCommands(post.body);
   const result = assertReplyShape(post, before.head);
   const after = result.data.canonical_document;
@@ -587,9 +713,10 @@ test('P2 mounted single parent move: v2 commit, exact field delta, reload and gu
       path: ['clips', `id:${seed3.appClipId}`, 'at'],
       before: { state: 'present', value: from },
       value: 5,
-    }]),
+    }], [], `Move ${seed3.appClipId} on ${String(clipById(original, seed3.appClipId).track)}`),
     (after) => expect(clipById(after, seed3.appClipId).at).toBe(5),
-    (undone) => expect(clipById(undone, seed3.appClipId).at).toBe(from));
+    (undone) => expect(clipById(undone, seed3.appClipId).at).toBe(from),
+    (post, head) => assertParentMoveRequestV2(post, head, original, seed3.appClipId, 5));
 });
 
 test('P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo', async ({ page, harness, seed3 }) => {
@@ -597,17 +724,19 @@ test('P2 mounted transition None single: raw clear preserves opaque data/order a
   const wire = wireFor(page);
   const before = await history(harness, seed3);
   const original = await canonicalDocumentAt(harness, seed3, before.head.revision_id);
+  const changes = [{
+    op: 'remove',
+    ref: 'parent',
+    path: ['clips', `id:${seed3.transitionClipId}`, 'transition'],
+    before: { state: 'present', value: clipById(original, seed3.transitionClipId).transition },
+  }];
   await proveGestureAndUndo(page, harness, seed3, wire, before, original,
     () => clearTransition(page, seed3.transitionClipId),
     [seed3.transitionClipId], ['transition'],
-    (body) => assertDocumentPatchRequest(body, [{
-      op: 'remove',
-      ref: 'parent',
-      path: ['clips', `id:${seed3.transitionClipId}`, 'transition'],
-      before: { state: 'present', value: clipById(original, seed3.transitionClipId).transition },
-    }]),
+    (body) => assertDocumentPatchRequest(body, changes, []),
     (after) => assertRawTransitionCleared(original, after, [seed3.transitionClipId]),
-    (undone) => expect(clipById(undone, seed3.transitionClipId).transition).toEqual(clipById(original, seed3.transitionClipId).transition));
+    (undone) => expect(clipById(undone, seed3.transitionClipId).transition).toEqual(clipById(original, seed3.transitionClipId).transition),
+    (post, head) => assertTransitionRequestV2(post, head, original, [seed3.transitionClipId], changes));
 });
 
 test('P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo', async ({ page, harness, seed3 }) => {
@@ -616,16 +745,18 @@ test('P2 mounted transition None bulk: atomic raw clears preserve unknown fields
   const before = await history(harness, seed3);
   const original = await canonicalDocumentAt(harness, seed3, before.head.revision_id);
   const ids = [seed3.appClipId, seed3.transitionClipId];
+  const changes = ids.map((id) => ({
+    op: 'remove',
+    ref: 'parent',
+    path: ['clips', `id:${id}`, 'transition'],
+    before: { state: 'present', value: clipById(original, id).transition },
+  }));
   await proveGestureAndUndo(page, harness, seed3, wire, before, original,
     () => clearTransitionBulk(page, seed3), ids, ['transition'],
-    (body) => assertDocumentPatchRequest(body, ids.map((id) => ({
-      op: 'remove',
-      ref: 'parent',
-      path: ['clips', `id:${id}`, 'transition'],
-      before: { state: 'present', value: clipById(original, id).transition },
-    }))),
+    (body) => assertDocumentPatchRequest(body, changes, []),
     (after) => assertRawTransitionCleared(original, after, ids),
     (undone) => {
       for (const id of ids) expect(clipById(undone, id).transition).toEqual(clipById(original, id).transition);
-    });
+    },
+    (post, head) => assertTransitionRequestV2(post, head, original, ids, changes));
 });

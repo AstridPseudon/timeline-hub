@@ -212,6 +212,53 @@ describe('mounted prepared-media command persistence', () => {
     });
   });
 
+  it('retains the prepared-media refusal diagnostic on the mounted command result', async () => {
+    const current = await buildTimelineData(authoredConfig(), {
+      assets: {
+        'asset-source': { file: 'source.mp4', type: 'video/mp4' },
+        'asset-peer': { file: 'peer.png', type: 'image/png' },
+      },
+    });
+    const baseStore = createTimelineStore();
+    const applyEdit = vi.fn();
+    const store = createTimelineStore({
+      data: {
+        ...baseStore.getState().data,
+        data: current,
+        resolvedConfig: current.resolvedConfig,
+        selectedTrackId: 'V1',
+        dataRef: { current },
+      },
+      ops: {
+        ...baseStore.getState().ops,
+        applyEdit,
+      },
+    });
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <TimelineStoreProvider store={store}>{children}</TimelineStoreProvider>
+    );
+    const mounted = renderHook(() => useTimelineCommandsService(), { wrapper });
+
+    const response = mounted.result.current.addClip({
+      preparedAsset: {
+        assetKey: 'asset-new', mediaType: 'image', durationSeconds: 2,
+        entry: { file: 'new.png', type: 'image/png' }, source: 'registered',
+      },
+      time: 0,
+      replaceClipId: 'missing-clip',
+    });
+
+    expect(response).toEqual({
+      ok: false,
+      error: {
+        code: 'mutation_failed',
+        message: 'Failed to place the prepared asset on the timeline.',
+        diagnostic: { stage: 'placement', reason: 'invalid-placement', fieldCategory: 'placement' },
+      },
+    });
+    expect(applyEdit).not.toHaveBeenCalled();
+  });
+
   it('preserves an occupied captured V2 through the mounted command service and A2 outbox', async () => {
     const config = authoredConfig();
     const document = authoredDocument(config);
