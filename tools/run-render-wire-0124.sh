@@ -20,10 +20,12 @@ PROFILE=/home/user/work/runtimes/agent-remotion-v3-819acf-1110
 NODE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node
 SCHEMA=/home/user/work/venv-agent/lib/python3.13/site-packages
 INDEX=/home/user/work/bench-store/index.json
-BASE_AGENT=92baf961275baa42514bc120351ea512bfbe6e6b
 RUNTIME_PIN=8ea0766f5e9fb23cea26c7398770a8aaac06b258
 RUNTIME_TREE=6047ac3033c3594b8f83db3afd8bb2c47cafa6d6
 AGENT_PIN=c36ca8c94b695b0e25b7d42c89f194661f187423
+# The test service creates an ephemeral metadata commit while snapshotting;
+# the normal suite row supplies the finalized immutable source tree.
+: "${EXPECTED_SOURCE_TREE:?set EXPECTED_SOURCE_TREE to the finalized source tree}"
 ARCHIVE_SHA=819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234
 LOCK_SHA=f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d
 REGISTRY_STATE_SHA=d609b44b37d724358a33405e9d8539008fd1ac30bc2f0d9746575c3fbadaac96
@@ -32,7 +34,8 @@ REGISTRY_EFFECTS_SHA=127e5653e0c66993726f8334b9f4ac122d24cdfbaa9e70cdaa142189afc
 REGISTRY_TRANSITIONS_SHA=c46d6bbd88712e775812867ec1cbe6de67473664775266c5a0b9317344ceb989
 ARCHIVE="$PROFILE/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz"
 
-export CHILD CHILD_SOURCE RUNTIME PROFILE NODE SCHEMA INDEX BASE_AGENT RUNTIME_PIN RUNTIME_TREE AGENT_PIN
+export CHILD CHILD_SOURCE RUNTIME PROFILE NODE SCHEMA INDEX RUNTIME_PIN RUNTIME_TREE AGENT_PIN
+export EXPECTED_SOURCE_TREE
 export ARCHIVE_SHA LOCK_SHA ARCHIVE
 export REGISTRY_STATE_SHA REGISTRY_ANIMATIONS_SHA REGISTRY_EFFECTS_SHA REGISTRY_TRANSITIONS_SHA
 export HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONDONTWRITEBYTECODE=1
@@ -103,7 +106,12 @@ def git(*args: str, cwd: Path = root) -> str:
     return subprocess.check_output(["git", *args], cwd=cwd, text=True).strip()
 
 def git_status(cwd: Path):
-    return [line for line in git("status", "--porcelain", "--untracked-files=all", cwd=cwd).splitlines() if line]
+    output = subprocess.check_output(
+        ["git", "status", "--porcelain", "--untracked-files=all"],
+        cwd=cwd,
+        text=True,
+    )
+    return [line for line in output.splitlines() if line]
 
 def git_identity():
     head = git("rev-parse", "HEAD")
@@ -113,12 +121,20 @@ def git_identity():
     changed = []
     for line in git_status(root):
         changed.append(line[3:] if len(line) >= 3 else line)
-    assert head == os.environ["BASE_AGENT"] or parent == os.environ["BASE_AGENT"], {
+    assert tree == os.environ["EXPECTED_SOURCE_TREE"], {
+        "tree": tree,
+        "expected_tree": os.environ["EXPECTED_SOURCE_TREE"],
         "head": head,
         "parent": parent,
     }
     assert set(changed) <= allowed, changed
-    return {"head": head, "parent": parent, "tree": tree, "allowed_harness_changes": changed}
+    return {
+        "head": head,
+        "parent": parent,
+        "tree": tree,
+        "expected_tree": os.environ["EXPECTED_SOURCE_TREE"],
+        "allowed_harness_changes": changed,
+    }
 
 def runtime_identity():
     assert git("rev-parse", "HEAD", cwd=runtime) == os.environ["RUNTIME_PIN"]
@@ -142,11 +158,20 @@ def source_files():
 
 def source_equality():
     paths = source_files()
+    assert set(paths) == set(EXPECTED_SOURCE_HASHES), {
+        "expected_paths": sorted(EXPECTED_SOURCE_HASHES),
+        "actual_paths": sorted(paths),
+    }
     rows = {}
     for rel in paths:
         current, installed = root / rel, child_source / rel
         assert current.is_file() and installed.is_file(), rel
         current_sha, installed_sha = digest(current), digest(installed)
+        assert current_sha == EXPECTED_SOURCE_HASHES[rel], {
+            "path": rel,
+            "current": current_sha,
+            "expected": EXPECTED_SOURCE_HASHES[rel],
+        }
         rows[rel] = {"current": current_sha, "installed_c36": installed_sha, "equal": current_sha == installed_sha}
         assert current_sha == installed_sha, rel
     return {"files": len(rows), "paths": rows}
@@ -159,6 +184,37 @@ BODY_NAMES = [
     "test_attachment_wire_parity",
     "test_intentional_failure_wire_parity",
 ]
+
+EXPECTED_SOURCE_HASHES = {
+    "astrid/sdk/rendering.py": "b5062e7afc9c58144ea679932778fb8aa2cc5777f9ae00d8b0acd1b0727b6c3b",
+    "astrid/core/foundation/atomic_io.py": "c4bdb016691fb44c6b04c85293256bb0c83d75702c7a96a54d8b1031e2d05c41",
+    "astrid/core/subprocess_env.py": "ae1aefbdec52e7db70b2ddfe7b2f75698bfc5aece1b5506030bc30569a3ee42b",
+    "astrid/core/rendering/__init__.py": "60ae7e82ceba146d8aad237641ebbc43dce39797aec64fa5595a14ca919c2906",
+    "astrid/core/rendering/transport.py": "58a7aaa59ff744876be1eccd9ef94b16304d3270c02163d0829894f86f6ff4af",
+    "tests/core/rendering/test_conformance.py": "0432b08e11c18db61e68fac747dad9e7a44f59cf42297a8aa15f071ba59d3a46",
+    "tests/fixtures/renderer_packs/sdk/_shared.py": "d1619cec5966a221265fcad1ef8f017cbd403b3479daae390ac477fd1a94001a",
+    "tests/fixtures/renderer_packs/sdk/pack.yaml": "712f40e9b481466dadfd1e3d013e0794749a1c46b25da36dccfac06f5e4b98bf",
+    "tests/fixtures/renderer_packs/sdk/render.py": "b700b87e4fa7354903c78c1e1e9f33b7dcb35c196cc92083cb33668adb5da0ed",
+    "tests/fixtures/renderer_packs/sdk/renderer.yaml": "5729fcf9114a9a0a7020da4251669a6bab577b3cf3632152692489b9656c4551",
+    "tests/fixtures/renderer_packs/sdk/requests/attachment-render.json": "a5ea55e380ed2464711277d5d59ebfe348860ae3d24ec892d589bf82c91d43dc",
+    "tests/fixtures/renderer_packs/sdk/requests/failure-render.json": "7e4c0bff491c02617cb177352f563faaf06b08383cfb1032754e4d7a41226556",
+    "tests/fixtures/renderer_packs/sdk/requests/minimal-render.json": "60319459e28eba72f8840ea7da1374f61dd25aa19aa3c8f7133b7984d1e7a529",
+    "tests/fixtures/renderer_packs/sdk/requests/no-audio-render.json": "7a14ea994902543adad0d6b403706a711f102c021680830ee71aba7c4cc10d2f",
+    "tests/fixtures/renderer_packs/sdk/requests/passthrough-render.json": "40a036daa19880a38a21d906cf2fd6590ae967821757078769d2edfc91661670",
+    "tests/fixtures/renderer_packs/sdk/requests/support-supported.json": "cfd8fcb89ba22cd00ce1aef93eeb2b613d5566e5ec81683ceb94a0165bd23090",
+    "tests/fixtures/renderer_packs/sdk/requests/support-window.json": "d9280bd06ab7725e9f2b761009bf96cdc2fc9dab29b8bd994c833f1e57e8ed8d",
+    "tests/fixtures/renderer_packs/sdk/requests/timeline.json": "b343b1b11403bcc5d43fe75a0b9830d04702afb994a64b77ccd76e36f84aecc9",
+    "tests/fixtures/renderer_packs/sdk/sdk_render.py": "e8dd07599e43df2177b1ffe5e5093e08c2616e935dcf8f3c4d8d311bb7136489",
+}
+
+EXPECTED_BODY_HASHES = {
+    "test_minimal_render_wire_parity": "cb659a0fe30943ef07c5bdee368330a86304422092a2f0b65b98d6e7064d430d",
+    "test_request_sensitive_support_wire_parity": "54e9b5f46d83fd2440068b28d7dbc5cac0bc72b04943baab4992e1047c1a9d18",
+    "test_passthrough_audio_wire_parity": "f145a787709fc4b5d52ad81c29db9e1d6f49c91a8476912baa3c353be704dad7",
+    "test_no_audio_wire_parity": "cbb299e0754ac4de36722c7a6cd730afdd2a59195117028315bbc7f8854ab43f",
+    "test_attachment_wire_parity": "9167b658f64137361068fa332b3d60fb0415cd0666fb72cadb38974d5410f689",
+    "test_intentional_failure_wire_parity": "d1f3bc531d6995feaa1cb193fc994c99f40fd29ad65fa24060fd5729d67c3fe3",
+}
 
 def body_hashes(path: Path):
     tree = ast.parse(path.read_text(), filename=str(path))
@@ -173,6 +229,7 @@ def body_hashes(path: Path):
 def six_body_hashes():
     current = body_hashes(root / "tests/core/rendering/test_conformance.py")
     installed = body_hashes(child_source / "tests/core/rendering/test_conformance.py")
+    assert current == EXPECTED_BODY_HASHES
     assert current == installed
     return {name: {"current": current[name], "installed_c36": installed[name]} for name in BODY_NAMES}
 
