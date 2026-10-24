@@ -40,6 +40,7 @@ import type { CanonicalDocument, CommitAcceptedMutation, CommitRequest, EditComm
 import { ASTRID_PYTHON, AstridCli, astridUnavailableReason, contractDigest, realmDisagreements, revisionSet, type AstridCall, type AstridIdentity } from './support/astrid.ts';
 import { centreCell, gridDifference, letterbox, matches, pictureGrid, MATCH, type GridDifference, type PictureGrid, type Rect } from './support/pictures.ts';
 import { assertGate5ResetPrecondition } from './support/gate5-reset-precondition.ts';
+import { classifyGate5FaultOrder, type Gate5CommitIdentity } from './support/gate5-fault-order.ts';
 
 /** A hang ceiling for one wait (R-10): many times the usual time, never a budget. */
 const CEILING = { timeout: 90_000 };
@@ -784,8 +785,13 @@ interface CommitPost {
 
 async function faultFirstCommit(page: Page) {
   const posts: CommitPost[] = [];
+  const stagedRetries: Gate5CommitIdentity[] = [];
   const legacy: string[] = [];
   let held: Route | undefined;
+  let stagedResolve!: () => void;
+  const stagedReady = new Promise<void>((resolve) => { stagedResolve = resolve; });
+  let initial: Gate5CommitIdentity | undefined;
+  let recoveryForwarded = false;
   let attempts = 0;
   const observe = (target: Page) => {
     target.on('request', (request) => {
@@ -795,6 +801,20 @@ async function faultFirstCommit(page: Page) {
   const intercept = async (route: Route) => {
     const request = route.request();
     if (request.method() !== 'POST') return route.fallback();
+    const identity: Gate5CommitIdentity = { body: request.postData()!, key: request.headers()['idempotency-key'] };
+    const action = classifyGate5FaultOrder({ initial, candidate: identity,
+      automaticRetryStaged: stagedRetries.length > 0, recoveryForwarded });
+    if (action === 'reject-unexpected-duplicate') {
+      await route.abort('failed');
+      throw new Error('Gate5 fault control refused an unexpected duplicate exact retry');
+    }
+    if (action === 'stage-automatic-retry') {
+      stagedRetries.push(identity);
+      stagedResolve();
+      return;
+    }
+    if (!initial) initial = identity;
+    if (stagedRetries.length > 0 && identity.body === stagedRetries[0].body && identity.key === stagedRetries[0].key) recoveryForwarded = true;
     attempts++;
     const response = await route.fetch({ maxRetries: 0 });
     const post: CommitPost = {
@@ -807,14 +827,23 @@ async function faultFirstCommit(page: Page) {
     else await route.fulfill({ response });
   };
   const attach = async (target: Page) => { observe(target); await target.route(COMMITS, intercept); };
+  const waitForStagedRetry = async () => {
+    if (stagedRetries.length === 0) await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('Automatic A retry was not staged')), CEILING.timeout);
+      void stagedReady.then(() => { clearTimeout(timer); resolve(); });
+    });
+    return stagedRetries[0];
+  };
   await attach(page);
   return {
-    posts, legacy, attach,
+    posts, stagedRetries, legacy, attach,
     get attempts() { return attempts; },
+    waitForStagedRetry,
     async loseAck() {
       if (!held) throw new Error('No durably accepted response to lose');
       await held.abort('connectionreset');
       held = undefined;
+      await waitForStagedRetry();
     },
   };
 }
