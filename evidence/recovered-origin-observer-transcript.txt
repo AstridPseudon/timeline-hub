@@ -1,0 +1,58 @@
+RECOVERY STATUS: INCOMPLETE; NOT THE OBSERVER SOURCE
+
+This file is a literal transcription of the retained 0520 log bytes that
+mention the temporary observer. It is separately labelled because it must not
+be mistaken for recovered origin_observer.py source. The patch body that
+created /tmp/w-abe5e1a0d0/origin_observer.py is not present in the retained
+transcript.
+
+PROVENANCE
+  source: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D40-integrated-installed-0520/log.txt
+  source_sha256: c5ed5bf55e50de1b0851063339d289c9c4283641aa14318c97020b4f27c55c3e
+  retained_evidence_sha256: 77bddf5b34c107a53a518823e4faf42a6d373646636a1931596454d069af495f
+  source_ranges: 6407-6410, 6436-6440, 6504-6511, 6518-6523, 6553, 6600, 6810-6813
+  source_file_hash: unavailable; /tmp/w-abe5e1a0d0/origin_observer.py no longer exists
+  original_source_hash_verification: not possible
+
+LITERAL LOG BYTES: lines 6407-6410
+Failed to write file /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D40-integrated-installed-0520/tmpdir/origin_observer.py
+
+patch: failed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D40-integrated-installed-0520/tmpdir/origin_observer.py
+
+LITERAL LOG BYTES: lines 6436-6440
+apply patch
+patch: completed
+/tmp/w-abe5e1a0d0/origin_observer.py
+exec
+/bin/bash -lc 'CHILD=/home/user/work/bench-store/entries/child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9; env -i HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/bin:/bin ASTRID_HOST_EXECUTION_PROFILE=installed ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-v3-819acf-1110 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-v3-819acf-1110/node_modules "$CHILD/bin/python" -P -m pytest --collect-only -q --import-mode=importlib -oaddopts= -p no:cacheprovider -p /tmp/w-abe5e1a0d0/origin_observer.py --rootdir="$PWD" tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack' in /home/user/work/wt/agt-F-D40-integrated-installed-0520
+
+LITERAL LOG BYTES: lines 6504-6511
+apply patch
+patch: completed
+/tmp/w-abe5e1a0d0/origin_observer.py
+apply patch
+patch: completed
+/tmp/w-abe5e1a0d0/origin_observer.py
+exec
+/bin/bash -lc 'CHILD=/home/user/work/bench-store/entries/child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9; env -i HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/bin:/bin ASTRID_HOST_EXECUTION_PROFILE=installed ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-v3-819acf-1110 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-v3-819acf-1110/node_modules "$CHILD/bin/python" -P -m pytest --collect-only -q --import-mode=importlib -oaddopts= -p no:cacheprovider -p origin_observer --rootdir="$PWD" tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack' in /home/user/work/wt/agt-F-D40-integrated-installed-0520
+
+LITERAL LOG BYTES: lines 6518-6523
+The read-only collection probe succeeded with the exact selector and child interpreter. Pytest’s `importlib` mode collected the worktree test without importing product modules from the worktree; the only `PYTHONPATH` entry is the temporary observer plugin, not a production overlay. I’m proceeding with the one permitted body execution now, preserving the original test bytes and all three assertions.
+exec
+/bin/bash -lc 'CHILD=/home/user/work/bench-store/entries/child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9; env -i HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/bin:/bin ASTRID_HOST_EXECUTION_PROFILE=installed ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-v3-819acf-1110 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-v3-819acf-1110/node_modules "$CHILD/bin/python" -P -m pytest -q --import-mode=importlib -oaddopts= -p no:cacheprovider --timeout=60 --tb=short -p origin_observer --rootdir="$PWD" tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack' in /home/user/work/wt/agt-F-D40-integrated-installed-0520
+ succeeded in 4181ms:
+.                                                                        [100%]
+1 passed in 3.32s
+
+LITERAL LOG BYTES: lines 6553
+The single original body passed (`1 passed in 3.32s`) and the worktree remains clean. One limitation emerged: pytest captured the observer’s post-call print because the run intentionally retained normal capture, so that print was not emitted into the shell log. I will not rerun the body. I’m now producing durable post-run custody evidence from the unchanged source, child markers, retained fixture directory, and exact command result, explicitly distinguishing directly observed values from values recoverable from the test’s retained fixture/assertion boundary.
+
+LITERAL LOG BYTES: line 6600
+  "command": "env -i HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/w-abe5e1a0d0 PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/bin:/bin ASTRID_HOST_EXECUTION_PROFILE=installed ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-v3-819acf-1110 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-v3-819acf-1110/node_modules <child>/bin/python -P -m pytest -q --import-mode=importlib -oaddopts= -p no:cacheprovider --timeout=60 --tb=short -p origin_observer --rootdir=<worktree> tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack",
+
+LITERAL LOG BYTES: lines 6810-6813
+    "asserted_imported_from_expression": "os.path.dirname(__file__)",
+    "direct_stdout_observation": false,
+    "imported_from_value_recoverable_from_retained_fixture": "/tmp/pytest-of-root/pytest-5/test_generic_host_runs_externa0/external_pack/external_pkg",
+    "note": "The body passed and asserted module_root was present in result.outputs['imported_from']; normal pytest capture retained the observer print, so the value is recorded from the retained fixture path and source expression, not claimed as separately stdout-observed.",

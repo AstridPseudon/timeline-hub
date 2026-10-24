@@ -1,0 +1,56 @@
+{
+  "schema": "timeline/d40-installed-original-custody-return/v1",
+  "classification": "FAIL_COMPLETE_CUSTODY_ORIGINAL_PASS_WITH_EVIDENCE_CAVEAT",
+  "scope": "retained-evidence-only; no body rerun and no new probe",
+  "source_artifacts": {
+    "original_worker_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D40-integrated-installed-0520/log.txt",
+    "original_worker_log_sha256": "c5ed5bf55e50de1b0851063339d289c9c4283641aa14318c97020b4f27c55c3e",
+    "original_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D40-integrated-installed-0520/evidence/d40-installed-original-positive.json",
+    "original_evidence_sha256": "77bddf5b34c107a53a518823e4faf42a6d373646636a1931596454d069af495f",
+    "recovered_transcript": "evidence/recovered-origin-observer-transcript.txt",
+    "recovered_source_sha256": null,
+    "recovered_source_status": "not_recovered; source patch body absent from retained transcript and temporary file is absent"
+  },
+  "retained_original_result": {
+    "selector": "tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack",
+    "body_attempts": 1,
+    "exit_code": 0,
+    "summary": "1 passed in 3.32s",
+    "assertion_count": 3,
+    "imported_from_direct_stdout_observation": false,
+    "imported_from_value": "not_directly_observed; retained evidence records a value recoverable from the fixture/source expression",
+    "original_body_and_installed_maps": "preserved by the immutable 0520 artifact; not rerun here"
+  },
+  "observer_custody": {
+    "temporary_path": "/tmp/w-abe5e1a0d0/origin_observer.py",
+    "temporary_path_exists_at_review": false,
+    "temporary_pytest_plugin_path_in_command": true,
+    "pytest_hook_implementation": "unknown",
+    "invoke_return_forwarding": "unknown",
+    "exception_forwarding": "unknown",
+    "argument_forwarding": "unknown",
+    "observer_mutation_or_bypass": "unknown",
+    "observer_source_origins": "unknown",
+    "observer_source_hash_verification": "not possible"
+  },
+  "bounded_behavior_conclusion": {
+    "complete_custody_qualification": false,
+    "original_behavior_credit": "PASS_WITH_EXPLICIT_NON_DIRECT_OUTPUT_CAVEAT",
+    "reason": "The original three assertions and installed production origin maps are retained, but the observer implementation is unavailable; therefore wrapper forwarding, mutation absence, hook behavior, and any observer-reported source origin cannot be established.",
+    "production_caller": "Prior 0526 review records installed GenericPackHost.admit -> invoke_capability -> subprocess worker as the normal caller; this return adds no new observation and does not independently validate observer behavior."
+  },
+  "contract_review": {
+    "plan_section": "PLAN.md §3",
+    "runtime_contract": "/home/user/work/runtime/contract/commit-v2.md",
+    "required_request_fields_seen_in_contract": [
+      "api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "dry_run", "source", "Idempotency-Key"
+    ],
+    "required_reply_families_seen_in_contract": ["accepted", "merged", "conflict", "invalid", "preview"],
+    "note": "The requested design/commit-v2.md paths were absent; Runtime contract fallback was read. No contract or product claim was changed."
+  },
+  "next_authorized_qualification": {
+    "execute_now": false,
+    "proposal": "Create one fresh private observer plugin in the live qualification TMPDIR; persist its exact source bytes and SHA-256 to durable evidence before execution; prove by AST/source inspection that the installed invoke boundary wrapper forwards identical args and return values and re-raises identical exceptions, and that it does not alter pack/source resolution. Capture before/after installed module-origin maps plus the direct invoke return and source-origin fields with pytest capture disabled for the observer record. Run the unchanged original selector exactly once under the same installed child/profile, then preserve stdout/stderr, plugin hash, command, and result in durable evidence.",
+    "constraints": ["no production source/test/fixture edits", "no installed edits or metadata aliases", "no body retry if the qualification fails", "stop on safety/classifier refusal"]
+  }
+}
