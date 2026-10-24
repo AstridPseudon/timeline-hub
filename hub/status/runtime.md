@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T14:00:31Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 7m -->
-# runtime board, 2026-10-24T13:41:17Z
+<!-- main | 2026-10-24T14:03:37Z | dispatcher heartbeat 9s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 2m -->
+# runtime board, 2026-10-24T14:00:37Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -76,13 +76,14 @@
 | R2r-shared-inverse-auth | Verify shared inverse source identities | Sol / Luna | Integrated source proof passed | merged | Author 0647; review 0701; integrated 0711 | Actual460c passed177 plus six shared/source-copy controls on exact Agent d33fe archive. No original ABA or HTTP credit. | 460c2d397 / 35764ce10 |
 | F-D52-shot-set | Preserve 17 live shot-set cases | Luna | Actual Agent home proof PASS | merged | Author1139; review1143; home1156 | Actualaff339 passed61 in4.04s; durable XML and original14 test ASTs exact. All17 assigned cases included. | 3b8dc8a345 / aff3391061 |
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
-| F-D52-core-five | Map retained five to current home proof | Luna | Agent47b home source merged | doing | rt-F-D52-core-five-home-1353 | H6 clears stale nullmirror wait; compare actual named152 PASS without body repeat. Held e5fa proof remains scoped. | Agent47b |
-| U1d-final | Join final owner upstream | Luna | Core and protected delta review | review | Author1329; core review1346 | True mergef69;440 passed,9skip,2existingxfail. Raw exit1 retained; no wire/client byte delta. | f69ad5813 held |
-| U1d-visual-source | Resolve visual policy and source | Luna | Independent union review | review | Author1331; review1333 | Focused17 and shared10 passed; old broader37 failures remain unqualified. | Own source committed |
-| U1d-visual-tests | Restore both live FPS test cases | Luna | Final joined port and review | review | First return1338; review1333 | Incoming41 preserved plus2 restored FPS cases;8 exact cases passed. Final join must retain v2 fixture migration. | 640db1049 |
-| U1d-visual-review | Check both source and protected tests | Luna | Exact source and test union | review | rt-U1d-visual-review-1333 | SOURCE PASS; TEST FAIL for two omitted live FPS cases. First return active. | Read only |
-| U1d-tests-join | Preserve v2 fixture and live FPS cases | Luna | Exact true mergef69 | doing | rt-U1d-tests-join-1346 | Add only2 restored functions to current v2 fixture;95 visual cases expected. | Basef69 |
-| U1d-core-review | Verify daemon and upstream core union | Luna | Committed true mergef69 | review | rt-U1d-core-review-1346 | Authenticate producer and raw skip-policy limits; protected tests reviewed separately. | Read only |
+| F-D52-core-five | Map five named actual home outcomes | Luna | Agent XML and map publication | blocked:agent | Home comparison 1353 | Five identities match; current four fork failures differ. Actual XML and map absent. [Report](../../design/rt-F-D52-core-five-home-1353.md) | Agent 47b |
+| U1d-final | Join final owner upstream | Luna | Actual integrated qualification | doing | Integrated 1401; reviews 1346/1351 | HOME e68 includes true d4 merge. Core review passed 282 plus 50; protected 95 passed. Wire unchanged; no D39 regeneration. | e68cf2316 |
+| U1d-visual-source | Preserve upstream visual source | Luna | Source review passed | merged | Author 1331; review 1333 | Reviewed source is in actual e68. Integrated visual qualification running with the targeted union. | 9db3 / e68 |
+| U1d-visual-tests | Keep both live FPS families | Luna | Independent protected proof passed | merged | Restore 1338; review 1351 | Both restored tests and all incoming cases retained. Exact candidate 60e passed 95 with raw exit 0. | 60e / e68 |
+| U1d-visual-review | Review source and protected union | Luna | Final joined source | merged | Review 1333; final 1351 | Initial omitted tests failure resolved. Final 95 passed; pre-merge local and incoming predicates mapped. | Read only |
+| U1d-tests-join | Join v2 fixture and FPS cases | Luna | Normal home receipt | merged | Join 1346; protected 1351 | Only 18 added lines above true f69. Current Runtime home tree equals reviewed 60e candidate. | 60e / e68 |
+| U1d-core-review | Review core and upstream union | Luna | True two-parent merge | merged | Review 1346 PASS | Core authority and daemon union passed. No new normalized Ruff/Pyright diagnostics; existing 2 strict xfail policy exits disclosed. | f69ad5813 |
+| U1d-producer-handback | Return fixture and producer inventory | Luna | Actual e68 home | doing | rt-U1d-handoff-1401 | Canonical bytes unchanged. Exact fixture and manifest hashes plus consumer source binding facts pending. | e68cf2316 |
 | FREEZE | Reach final tuple cut | Runtime manager | D59 cut | doing | Lane owners; main benches1244 | Runtime0core/0regressions; Agent51core at refresh1254; App9gate cases,36regression repairs home awaiting proof. Cut requires all lanes0/0 plus current P2/P3 PASS. | Runtime becfe6db8 |
 | F-final | Main delivery build and ZIP | Luna | D59 cut and final proofs | doing | Builder1233; docs1229; service1244 | Builder and v2 prose installed. Durable service helper repair active; live-main refresh and final build wait qualified cut and proofs. | No delivery artifact |
 | F-final-builder | Put verifier clones in TMPDIR | Luna / Luna | Exact installed proof complete | merged | Review1229; installed1233 PASS | f25d atomically installed0755, old script backed up. Installed smoke and integrity checks passed; no real build. | f25dfab1 installed |
@@ -114,7 +115,7 @@
 
 Runtime full: Zero of the 36 original failures remain open at their retained integrated scopes. This is historical scoped accounting, not a new full-suite PASS. Runtime producer becfe6db88b2cc034dba3fafa6c050117cdf2b06 is merged and independently qualified after 409 targeted passes. Loss of its temporary JUnit remains disclosed. [Producer review](../../design/runtime-freeze-result-review-0727.md).
 
-FREEZE under D59: D60 final Runtime upstreamd4f496 refresh active; prior upstream/D39 homebecfe; Agent/App U/D39 home. Candidate P2/P3 cycles use current integration while unrelated Agent repairs continue. Cut requires every active lane0core/0regressions plus P2/P3 PASS on those heads. Runtime retains0/0. Agent board1347 reports5core open after actualhome47b:152requiredPASS,4forkFAIL,1managedD13unknown. Exact rollup1338 active. Scope159core/117noncore; categories env78/deferred1/unproven197, with0proven regressions. App reports9gate cases unqualified;36 Node regression repairs are now HOME but final proof has not run. No cut or final gate PASS. D51 delivery-time live-main refresh per repo remains.
+FREEZE under D59: D60 final Runtime upstream d4f496 merged as home e68; integrated qualification active; original D39 bytes unchanged; Agent/App U/D39 home. Candidate P2/P3 cycles use current integration while unrelated Agent repairs continue. Cut requires every active lane0core/0regressions plus P2/P3 PASS on those heads. Runtime retains0/0. Agent board1347 reports5core open after actualhome47b:152requiredPASS,4forkFAIL,1managedD13unknown. Exact rollup1338 active. Scope159core/117noncore; categories env78/deferred1/unproven197, with0proven regressions. App reports 9 gate cases unqualified; actual refreshed-tree proof closes 36 Node regressions, with 2 SSH environment failures retained. No cut or final gate PASS. D51 delivery-time live-main refresh per repo remains.
 
 Venues: P1/P2/P3 on App service with App verdicts; P4 on Agent service; P5 and Composition on main. Product change in X reruns P1–P5 plus X core suite; harness/test change reruns the affected gate. Main P5 and Composition bench preflights1244 are active on existing qualified inputs. Farm/schema access stay stopped, with no new child or alternate denied-source route. Viewing stands down. All8 original P2 gestures remain core. Runtime owns final build and ZIP after cut and required proofs.
 
@@ -135,18 +136,18 @@ Historical pinned proof (D56 retires further pinned runs): P1 remains historical
 Provider completion: Runtime 0915 and independent 0923 retain original cause, hook firing, durable acceptance and request correlation UNKNOWN. Nine controls passed; temporary JUnit loss remains disclosed. Original 20732/11466 remain failed and all 59 predicates unchanged. Viewing capture source 30cf passed independent 19; Agent owns home and runner wiring. No new Runtime source or original body is requested. [Source review](../../design/runtime-provider-completion-review-0923.md).
 
 KIT CHANGE: delivery-build f25dfab1 installed and qualified. Final service3309e33 independent1310 SOURCE PASS; actual lock,15 mappings and candidate guards qualified. Install waits D59 tuple.
-Blockers: D60 — Runtime U1d joins final upstreamd4f496 first; exact contract delta determines consumer regeneration.
+Blockers: Runtime — D60 home e68 is merged; actual integrated targeted qualification 1400 and exact producer handback 1401 are active. No D39 regeneration required.
 Blockers: Final delivery — D59 cut requires every active lane0core/0regressions plus current P2/P3 PASS, then required final proofs and D51 live-main refresh.
 Blockers: App — existing Agent service-input handback1305 is complete. Actual App-host current caller/bench qualification remains App-owned; installed-child identity stays UNKNOWN, no new provision inferred.
-Blockers: Agent — current core open5 after home47b; four fork failures and one managedD13 unknown remain Agent-owned. Runtime1353 maps its retained5 to named actual-home proof.
-Next ready: Finish main1329 targeted proof, preserve its v2 fixture and port only restored FPS functions from640db. Independent full join review then merge; final contract delta determines D39 handback.
+Blockers: Agent — core open 5 remains owner scope. Runtime five-outcome mapping needs existing actual-home1330 XML and map published; peer sent this pass.
+Next ready: Consume e68 integrated qualification and exact producer handback, then return current fixture inventory to App. Agent supplies existing named five-case XML; no duplicate body.
 
 Later: D47 memo and proof-pin work stay post-delivery; nine state attacks open. D34 broader cleanup held above8.5GB or until delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 cut; D14/D23 deferred unchanged. D52 removals require caller proof; live tests stay strict.
 
 Disk: About8.5GB free, above main8GB heavy floor. Five old v1 trees refused recycle as dirty; no forced removal. Sweep3 removed0. Compaction packed0 and compressed0 logs; no refused target retried.
 
-Pass 2026-10-24T13:41:17Z: D60 keep-both test rule consumed. Independent1333 passedsource but failedtwo omittedliveFPS tests. Firstreturn1338 restoredboth and passed8cases. Main1329 migratedvisualfixture via v2 and passed87visualcases; fulltargetedrerunactive. No cut or merge yet.
+Pass 2026-10-24T14:00:37Z: D60 actual home e68 consumed. Core review1346 and protected1351 PASS. Dispatched Luna integrated1400 and producer handback1400. App d24ed home and regression0 consumed. Five outcome mapping blocked only on authentic Agent XML/map; peer sent. No cut or final gate PASS.
 
-live 1 / cap 4; ready-undispatched 0. Dispatcher header: <!-- main | 2026-10-24T13:39:49Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 2m -->
+live pending dispatcher / cap 4; ready-undispatched 0. Two Luna workers queued; dispatcher count refresh follows.
 
-Sol exception: All three live Runtime workers are Luna. Semantic core conflict would justify HARD Sol only if a precise nonmechanical conflict is established.
+Sol exception: No Sol worker dispatched this pass.
