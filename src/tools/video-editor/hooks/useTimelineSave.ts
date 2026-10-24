@@ -1,3 +1,4 @@
+import type { ElementTimelineRoutes, ElementTimelineDocument } from '../runtime/element-adapter.ts';
 import { persistedTranscriptItems } from '../data/typed/projectTranscript.ts';
 import type { RegistrationSaveOwner } from './timeline-state-types.ts';
 import {
@@ -641,7 +642,67 @@ export function useTimelineSave(
   }), [captureSaveTarget, flushSaveTarget, discardUncommittedSaveTarget, patchRegistryOwned,
     ownsRegistryMutation, canRollbackRegistryMutation, rollbackRegistryMutation]);
 
+  const { dataRef: elementDataRef, commitData: commitElementData } = commit;
+  const { canonicalReloadInProgressRef: elementReloadRef, isConflictExhaustedRef: elementConflictRef,
+    flushPendingSave: flushElementSave } = persistence;
+  const elementTimelineRoutes = useMemo<ElementTimelineRoutes>(() => {
+    const currentDocument = (): ElementTimelineDocument => {
+      const current = elementDataRef.current;
+      if (!current) throw new TimelineVersionConflictError('Timeline is not loaded');
+      return structuredClone({ config: current.config, registry: current.registry,
+        config_version: configVersionRef.current, head: current.head,
+        ...(current.sourceItemsBySchemaRef === undefined ? {} : { bundle: { schema_version: 1,
+          itemsBySchemaRef: persistedTranscriptItems(current.sourceItemsBySchemaRef),
+          ...(current.transcriptReferences ? { transcriptReferences: current.transcriptReferences } : {}) } }) });
+    };
+    return {
+      getGeneration: () => canonicalJsonStringify(currentDocument()),
+      async get(id) {
+        if (id !== timelineId) throw new TimelineVersionConflictError('Element timeline scope changed');
+        return currentDocument();
+      },
+      async save(id, input) {
+        const original = structuredClone(input.original);
+        const checkCurrent = () => {
+          input.assertAuthority?.();
+          const permission = timelineEditability?.checkTimeline?.();
+          if (id !== timelineId || permission?.allowed === false || elementReloadRef.current
+            || elementConflictRef.current || !original
+            || canonicalJsonStringify(currentDocument()) !== canonicalJsonStringify(original)
+            || input.expectedVersion !== original.config_version
+            || canonicalJsonStringify(input.expectedHead ?? null) !== canonicalJsonStringify(original.head ?? null)) {
+            throw new TimelineVersionConflictError('Element original local document changed; draft retained');
+          }
+        };
+        checkCurrent();
+        if (!input.operation || !input.context) throw new TimelineVersionConflictError('Element causal input is unavailable');
+        const config = input.config as TimelineConfig;
+        const registry = input.registry as AssetRegistry;
+        if (localDocumentSave) {
+          const handoff = await localOwner.ready;
+          if (!handoff || localOwner.closed) throw new TimelineVersionConflictError('Element local save owner was replaced');
+          checkCurrent();
+          await handoff.capture({ config, registry, head: input.expectedHead, bundle: input.bundle }, {
+            kind: 'element', config: original!.config as TimelineConfig, registry: original!.registry as AssetRegistry,
+            clipId: 'clip_id' in input.operation ? input.operation.clip_id ?? '' : '', operation: input.operation, context: input.context,
+          });
+          await handoff.flush();
+        } else {
+          const next = await buildTimelineData(config, registry, resolveAssetUrl, input.expectedVersion,
+            input.bundle?.itemsBySchemaRef, input.expectedHead, input.bundle?.transcriptReferences);
+          checkCurrent();
+          commitElementData(next, { save: true });
+          await flushElementSave();
+        }
+        return currentDocument();
+      },
+    };
+  }, [elementDataRef, commitElementData, timelineId, timelineEditability, localDocumentSave,
+    localOwner, elementReloadRef,
+    elementConflictRef, flushElementSave, resolveAssetUrl]);
+
   return {
+    elementTimelineRoutes,
     localDocumentSave,
     localSaveState,
     originalLocalSaveBasis,

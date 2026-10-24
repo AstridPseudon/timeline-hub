@@ -270,7 +270,7 @@ export interface TimelinePlaybackContextValue {
 
 export interface UseTimelineStateResult {
   store: TimelineStoreApi;
-  editor: TimelineEditorContextValue;
+  editor: TimelineEditorContextValue & { elementTimelineRoutes?: import('../runtime/element-adapter.ts').ElementTimelineRoutes };
   editorData: TimelineEditorDataContextValue;
   editorOps: TimelineEditorOpsContextValue;
   chrome: TimelineChromeContextValue;
