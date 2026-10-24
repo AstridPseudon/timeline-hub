@@ -143,6 +143,8 @@ def test_ir_executors_are_manifested_without_growing_the_gateway() -> None:
         "workflow_inputs",
     }
     assert {item.name for item in run_manifest.inputs} == {
+        "comfy_url",
+        "comfy_output_dir",
         "workflow",
         "python",
         "companion",

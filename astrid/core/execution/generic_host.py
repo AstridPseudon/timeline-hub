@@ -497,6 +497,36 @@ class _ManagedTaskAdapter:
         return {"ok": True, "released": True, "reason": reason}
 
 
+class _ManagedLocalServerTaskAdapter(_ManagedTaskAdapter):
+    """Plain task lifecycle, with prompt containment and no GPU residency control."""
+
+    def __init__(self, cancel_signal, *, url: str, destination: Path, process_census=None):
+        super().__init__(cancel_signal, process_census=process_census)
+        self.url = url
+        self.destination = destination
+
+    def _cleanup(self) -> None:
+        from astrid.packs.vibecomfy.local_server import cleanup_prompts
+
+        cleanup_prompts(self.url, self.destination)
+
+    def cancel(self, *, reason: str) -> dict[str, Any]:
+        self._cancel_signal.set()
+        self._cleanup()
+        return super().cancel(reason=reason)
+
+    def fence(self, *, reason: str) -> dict[str, Any]:
+        result = super().fence(reason=reason)
+        self._cleanup()
+        return result
+
+    def release(self, *, reason: str) -> dict[str, Any]:
+        # Release follows child teardown even on a crash/SIGKILL. Repeat the
+        # journal read here to catch acceptance racing an earlier cancel.
+        self._cleanup()
+        return super().release(reason=reason)
+
+
 class _ManagedVibeSessionAdapter:
     """Bridge the manager lifecycle to the reviewed checkout adapter."""
 
@@ -1935,7 +1965,7 @@ def _resolve_credential_value(
     return value or None
 
 
-def _network_policy(record: "CapabilityRecord") -> dict[str, Any] | None:
+def _network_policy(record: "CapabilityRecord", inputs: Mapping[str, Any] | None = None) -> dict[str, Any] | None:
     """Read the optional bounded network policy from the manifest/matrix."""
     raw = record.definition.metadata.get("network_policy")
     if raw is None:
@@ -1944,7 +1974,15 @@ def _network_policy(record: "CapabilityRecord") -> dict[str, Any] | None:
         return None
     if not isinstance(raw, Mapping):
         raise HostError(f"network_policy for {record.id!r} must be an object")
-    return {str(key): value for key, value in raw.items()}
+    policy = {str(key): value for key, value in raw.items()}
+    if record.id == "vibecomfy.run" and inputs and inputs.get("comfy_url"):
+        from astrid.packs.vibecomfy.local_server import validate_comfy_url
+
+        url = validate_comfy_url(inputs["comfy_url"])
+        policy = {"allowed_protocols": ["dns", "tcp"],
+                  "allowed_destinations": [url.removeprefix("http://")],
+                  "allow_redirects": False}
+    return policy
 
 
 def _provider_routes(record: "CapabilityRecord", inputs: Mapping[str, Any] | None = None) -> tuple[str, ...]:
@@ -8052,7 +8090,7 @@ class GenericPackHost:
         # VibeComfy output root. Keep the task's generated spool inside that
         # attested root instead of handing the child an arbitrary attempt
         # directory, which the adapter must correctly reject.
-        if record.id == "vibecomfy.run":
+        if record.id == "vibecomfy.run" and not inputs.get("comfy_url"):
             profile = _read_readiness_profile_document()
             launch = profile.get("launch") if isinstance(profile, Mapping) else None
             profile_output_root = launch.get("output_root") if isinstance(launch, Mapping) else None
@@ -8141,6 +8179,10 @@ class GenericPackHost:
             admission=admission,
             network_broker=network_broker,
             readiness_worker_kind='command',
+            network_policy=(
+                _network_policy(record, inputs)
+                if record.id == "vibecomfy.run" and inputs.get("comfy_url") else None
+            ),
             allow_runtime_connection=allow_runtime_connection and child_bridge is None,
             explicit_env={
                 "PYTHONPATH": os.pathsep.join((package_parent, *_dependency_pythonpath())),
@@ -9338,6 +9380,19 @@ class GenericPackHost:
                     if port.type == "file"
                 ),
             )
+            if capability_id == "vibecomfy.run" and inputs.get("comfy_url"):
+                from astrid.packs.vibecomfy.local_server import validate_comfy_url, validate_output_directory
+
+                if readiness_profile is not None or inputs.get("source_video"):
+                    raise HostError("local_server cannot use a readiness profile or source_video")
+                inputs["comfy_url"] = validate_comfy_url(inputs["comfy_url"])
+                if inputs.get("comfy_output_dir"):
+                    inputs["comfy_output_dir"] = validate_output_directory(inputs["comfy_output_dir"], root)
+                network_admission["allowed_routes"] = _network_policy(record, inputs)["allowed_destinations"]
+                managed_adapter = _ManagedLocalServerTaskAdapter(
+                    cancel_signal, url=inputs["comfy_url"], destination=root / "outputs",
+                    process_census=lambda: bool(self._active_processes),
+                )
             if renderer_selection is not None and not inputs.get("selector"):
                 # The child never relies on its own default renderer.
                 inputs["selector"] = renderer_selection["selector"]
