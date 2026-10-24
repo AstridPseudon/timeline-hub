@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T07:32:03Z | dispatcher heartbeat 12s | live 1 (sol 1, luna 0, other 0) | busy30 17 | status age 0m -->
+<!-- app | 2026-10-24T07:35:15Z | dispatcher heartbeat 8s | live 1 (sol 1, luna 0, other 0) | busy30 17 | status age 0m -->
 # app board, 2026-10-24T07:28Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -103,6 +103,9 @@
 | P2-element-response | Classify retained post-POST error | Luna | Finite source report complete | review | Error audit 0726; review next | Console 503 belongs unrelated ACP chat read. Commit has no captured response, abort or failure completion. Backend outcome unknown. | Report only |
 | P2-runtime-cost | Assess mutation response source path | Runtime source | App timing and source facts | blocked:runtime | Runtime peer requested 0726 | Bounded source assessment only; no benchmark, new producer or deferred memo work. Historical backend outcome unknown. | Runtime 37eb |
 
+| P2-popup-pending | Locate real popup pre-transport boundary | Luna | Actual retained popup trace | doing | app-P2-popup-pending-path-0733 | Source-only map was inconclusive. Inspect same-case requests, owner phases, UI refusals and safe error categories. No speculative repair. | Source 9b810 |
+| P2-P3-lifecycle-custody | Explain retained lifecycle newline | Luna producer return | Proof direct custody 0717 | doing | app-P2-P3-lifecycle-custody-0733 | Retained and published bytes match at 224; current writer emits 225 with LF. Exact generation origin remains to qualify. | Same immutable files |
+
 Integration: HOME 38b29b5e29, tree 4561b53e00, equals reviewed provider-controls tree 2056c7c0. It adds one test file to prior 9b810; production source and original spec bodies remain exact selected 663. Product baseline tree 9a37265f0286128df7e6240a9df9877d959474af remains the current pinned journey subject.
 
 Next ready: Review source or draft packets as they finish. Sol 0707 and independent trace 0707 investigate original-page waits. Proof owns strict oracle and P3 setup corrections.
@@ -138,3 +141,5 @@ Pass 07:05Z: PLAN, COMMON, header D48/D49 and terminal reports read. Published e
 2026-10-24T07:28Z: Integrated provider controls pass three of three on exact HOME38b29b5e29, whole-tree equal to independently reviewed2056c7c0. Independent clock review0724 PASS confirms post-POST wait and explicit absent response/page-close evidence. U3b target return and whole-draft audit remain active.
 
 07:31Z: U3b first return passes695 plus12 and all static checks; independent source audit exposes renderer config load defect. Sol0731 assigned after Luna failure. Element console event is unrelated ACP chat503; no commit outcome inferred. No original rerun or producer change.
+
+07:33Z: Proof lifecycle LF discrepancy assigned finite producer return0733; no byte rewriting. Popup same-case investigation0733 is the actual current owner. Normal hub already contains independently qualified P3 count and exact origin mappings. No duplicate extractor or original run.
