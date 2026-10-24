@@ -962,23 +962,23 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     changes = publication['data']['commands'][1]['args']['changes']
     raw_internal = next(
         row for row in baseline['internal_timeline_revisions']
-        if row['revision_id'] == checkout_shot['internal_timeline_revision_id']
+        if row['revision_id'] == checkout_shot['internal_timeline']['revision_id']
     )
     raw_before = next(
         row for row in raw_internal['payload']['clips']
         if row['id'] == 'clip-1'
     )
-    authenticated_before = next(
+    working_before = next(
         row for row in base_bundle['shots'][first_id]['internal_timeline']['clips']
         if row['id'] == 'clip-1'
     )
-    assert authenticated_before['hold'] == raw_before['hold']
+    assert working_before == raw_before
     assert [(change['op'], change['path'], change['before'], change['value'])
             for change in changes] == [
         ('set', ['clips', 'id:clip-1', 'at'],
          {'state': 'present', 'value': 0}, 0.125),
         ('set', ['clips', 'id:clip-1', 'hold'],
-         {'state': 'present', 'value': authenticated_before['hold']}, 0.75),
+         {'state': 'present', 'value': working_before['hold']}, 0.75),
     ]
     assert changes[0]['ref'] == changes[1]['ref']
     published_document = publication['data']['canonical_document']
