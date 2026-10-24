@@ -2,9 +2,9 @@ import { AstridRuntimeClient } from "@/integrations/runtime/client.ts";
 import { astridBase } from "@/integrations/runtime/connection.ts";
 
 /** Both editor transports must negotiate the same existing Runtime authority. */
-export async function assertNativeEditorConnection(): Promise<void> {
-  const persistence = new AstridRuntimeClient({ readOnly: true });
-  const discovery = new AstridRuntimeClient({ baseUrl: astridBase(), readOnly: true });
+export async function assertNativeEditorConnection(signal?: AbortSignal): Promise<void> {
+  const persistence = new AstridRuntimeClient({ readOnly: true, signal });
+  const discovery = new AstridRuntimeClient({ baseUrl: astridBase(), readOnly: true, signal });
   const [runtime, workspace] = await Promise.all([
     persistence.ensureSession(),
     discovery.ensureSession(),

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/shared/components/ui/button.tsx';
+import { useRuntimeRequestWait } from '@/integrations/runtime/useRuntimeRequestWait.ts';
 import { prepareStarterProject, type StarterProjectSelection } from './prepareStarterProject.ts';
 
 export const PENDING_STARTER_PROJECT_KEY = 'astrid:onboarding:pending-project-v1';
@@ -39,32 +40,43 @@ export function StarterProjectHandoff({ onReady, onContinueWithoutProject }: {
   const [error, setError] = useState<string | null>(null);
   const onReadyRef = useRef(onReady);
   onReadyRef.current = onReady;
-  const pending = useRef<Promise<StarterProjectSelection> | null>(null);
+  const pending = useRef<{ controller: AbortController; result: Promise<StarterProjectSelection> } | null>(null);
+  const stillWaiting = useRuntimeRequestWait(!error, attempt);
   useEffect(() => {
     let active = true;
-    pending.current ??= prepareStarterProject({ intentId, preferredProjectId: preferredProject() });
-    void pending.current.then(selection => {
-      if (!active) return;
+    if (!pending.current) {
+      const controller = new AbortController();
+      pending.current = { controller, result: prepareStarterProject({
+        intentId, preferredProjectId: preferredProject(), signal: controller.signal,
+      }) };
+    }
+    const current = pending.current;
+    void current.result.then(selection => {
+      if (!active || pending.current !== current) return;
       onReadyRef.current(selection);
       finishIntent(intentId);
     }, reason => {
-      if (active) setError(reason instanceof Error ? reason.message : 'Please retry project setup.');
+      if (active && pending.current === current) setError(reason instanceof Error ? reason.message : 'Please retry project setup.');
     });
     return () => { active = false; };
   }, [attempt, intentId]);
-  const retry = () => {
+  const cancelAttempt = () => {
+    pending.current?.controller.abort();
     pending.current = null;
+  };
+  const retry = () => {
+    cancelAttempt();
     setError(null);
     setAttempt(value => value + 1);
   };
   return <main className="flex min-h-screen items-center justify-center px-6">
     <div className="max-w-md space-y-4 text-center">
-      <h1 className="text-2xl font-semibold">{error ? 'Couldn’t open your project' : 'Opening your project…'}</h1>
-      {error ? <>
-        <p role="alert" className="text-sm text-muted-foreground">{error}</p>
+      <h1 className="text-2xl font-semibold">{error ? 'Couldn’t open your project' : stillWaiting ? 'Still getting your project ready' : 'Opening your project…'}</h1>
+      {error || stillWaiting ? <>
+        <p role={error ? 'alert' : 'status'} className="text-sm text-muted-foreground">{error ?? 'Astrid is taking longer than usual to answer. You can keep waiting or retry.'}</p>
         <div className="flex flex-wrap justify-center gap-3">
           <Button onClick={retry}>Retry project setup</Button>
-          {onContinueWithoutProject && <Button variant="outline" onClick={onContinueWithoutProject}>Open editor</Button>}
+          {onContinueWithoutProject && <Button variant="outline" onClick={() => { cancelAttempt(); onContinueWithoutProject(); }}>Open editor</Button>}
         </div>
       </> : <p role="status" className="text-sm text-muted-foreground">Your Runtime is connected. We’re getting your project ready.</p>}
     </div>

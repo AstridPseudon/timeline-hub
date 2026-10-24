@@ -42,15 +42,19 @@ async function readTimelines(client: AstridRuntimeClient, projectId: string): Pr
 export async function prepareStarterProject({
   intentId,
   preferredProjectId,
-  client = new AstridRuntimeClient(),
+  signal,
+  client = new AstridRuntimeClient({ signal }),
 }: {
   intentId: string;
   preferredProjectId?: string | null;
   client?: AstridRuntimeClient;
+  signal?: AbortSignal;
 }): Promise<StarterProjectSelection> {
+  signal?.throwIfAborted();
   if (!/^[a-zA-Z0-9-]{1,80}$/.test(intentId)) throw new Error('Invalid project setup request.');
   // Never convert discovery failure into an empty workspace.
   const discovered = await client.listProjects();
+  signal?.throwIfAborted();
   if (discovered.some(project => !validProject(project))) {
     throw new Error('Runtime returned invalid projects. Retry to refresh the workspace.');
   }
@@ -59,6 +63,7 @@ export async function prepareStarterProject({
   if (!project && projects.length) {
     const selected = existingProject(projects, preferredProjectId)!;
     const timelines = await readTimelines(client, selected.project_id);
+    signal?.throwIfAborted();
     // Existing work is read-only here, including an existing project with no timeline yet.
     return { projectId: selected.project_id, timelineId: chooseRuntimeTimeline(selected, timelines)?.timeline_id ?? null };
   }
@@ -72,9 +77,12 @@ export async function prepareStarterProject({
         [STARTER_PROJECT_INTENT_METADATA]: intentId,
       });
   }
+  signal?.throwIfAborted();
   if (!validProject(project)) throw new Error('Runtime did not confirm the new project. Retry to refresh the workspace.');
   const timelineId = await ensureProjectHasTimeline(project.project_id, client);
+  signal?.throwIfAborted();
   const timelines = await readTimelines(client, project.project_id);
+  signal?.throwIfAborted();
   if (!timelines.some(timeline => timeline.timeline_id === timelineId && timeline.head_revision_id)) {
     throw new Error('Your project was created, but its timeline is not ready yet. Retry to finish setup.');
   }

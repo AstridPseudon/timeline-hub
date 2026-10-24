@@ -218,9 +218,10 @@ export class AstridRuntimeClient {
   private readonly workspaceClients = new Map<string, WorkspaceClient>();
   private expectedIdentity: RuntimeIdentityBinding | undefined;
   /** A default client with no pinned launch binding adopts the page's runtime config on its first session. */
-  private readonly usesRuntimeConfig: boolean;
+  private usesRuntimeConfig: boolean;
   private readonly readOnly: boolean;
-  private discoveryIdentity: RuntimeIdentityBinding | undefined;
+  private discoveryBinding: { identity?: RuntimeIdentityBinding } = {};
+  private readonly signal: AbortSignal | undefined;
   /** A status-only session can read the workspace while its cold Runtime is degraded. */
   private statusSession: Promise<RuntimeSession> | null = null;
   private readonly identityStore: ObservedRuntimeIdentities;
@@ -233,6 +234,8 @@ export class AstridRuntimeClient {
     readOnly?: boolean;
     /** Observation store; the browser shares one per page, an injected transport (tests/CLI) gets its own. */
     identityStore?: ObservedRuntimeIdentities;
+    /** Cancel this caller's requests without cancelling a shared browser session. */
+    signal?: AbortSignal;
   } = {}) {
     this.identityStore = options.identityStore ?? (options.transport || options.readOnly ? new Map() : observedRuntimeIdentities);
     this.pinnedBaseUrl = options.baseUrl;
@@ -244,7 +247,8 @@ export class AstridRuntimeClient {
     // A token is accepted for direct test/CLI clients, but is never persisted.
     this.token = options.token;
     this.transport = options.transport;
-    this.ownSlot = options.token || options.transport || options.identityStore
+    this.signal = options.signal;
+    this.ownSlot = options.token || options.transport || options.identityStore || options.signal
       ? { current: null, inflight: new Map() }
       : undefined;
   }
@@ -257,7 +261,36 @@ export class AstridRuntimeClient {
   private get client(): WorkspaceClient {
     const base = this.baseUrl;
     let client = this.workspaceClients.get(base);
-    if (!client) this.workspaceClients.set(base, client = new WorkspaceClient(base, this.token, this.transport));
+    if (!client) {
+      const signal = this.signal;
+      const transport: Transport | undefined = signal ? async (method, path, headers, body) => {
+        signal.throwIfAborted();
+        if (this.transport) {
+          const response = await this.transport(method, path, headers, body);
+          signal.throwIfAborted();
+          return response;
+        }
+        const response = await fetch(`${base.replace(/\/$/, '')}${path}`, {
+          method, headers, body: body as BodyInit | undefined, signal,
+        });
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        signal.throwIfAborted();
+        return { status: response.status, headers: Object.fromEntries(response.headers), body: bytes };
+      } : this.transport;
+      this.workspaceClients.set(base, client = new WorkspaceClient(base, this.token, transport));
+    }
+    return client;
+  }
+
+  /** A cancellable attempt keeps identity fences but never joins another attempt's in-flight reads. */
+  withSignal(signal: AbortSignal): AstridRuntimeClient {
+    const client = new AstridRuntimeClient({
+      baseUrl: this.pinnedBaseUrl, token: this.token, transport: this.transport,
+      expectedIdentity: this.expectedIdentity, readOnly: this.readOnly,
+      identityStore: this.identityStore, signal,
+    });
+    client.usesRuntimeConfig = this.usesRuntimeConfig;
+    client.discoveryBinding = this.discoveryBinding;
     return client;
   }
 
@@ -352,23 +385,26 @@ export class AstridRuntimeClient {
   }
 
   async ensureSession(): Promise<RuntimeSession> {
+    this.signal?.throwIfAborted();
     // Every ad hoc client must receive the same page binding, including clients
     // that join a session opened by another instance.
     if (this.usesRuntimeConfig) {
       if (this.readOnly && runtimeOrigin() === '') {
         // Catalogs follow the proxy's current discovery, independently of the
         // launch binding held by timeline writers with drafts in memory.
-        const identity = await loadWorkspaceRuntimeConfig(this.expectedIdentity);
-        if (this.discoveryIdentity && identity
-          && (identity.actorId !== this.discoveryIdentity.actorId || identity.realmId !== this.discoveryIdentity.realmId)) {
+        const identity = await loadWorkspaceRuntimeConfig(this.expectedIdentity, globalThis.fetch, this.signal);
+        this.signal?.throwIfAborted();
+        if (this.discoveryBinding.identity && identity
+          && (identity.actorId !== this.discoveryBinding.identity.actorId || identity.realmId !== this.discoveryBinding.identity.realmId)) {
           throw new RuntimeCompatibilityError('Runtime discovery changed the selected actor or realm', this.baseUrl);
         }
-        this.discoveryIdentity ??= identity;
+        this.discoveryBinding.identity ??= identity;
         this.expectedIdentity = identity;
       } else {
         this.expectedIdentity = await initializeWorkspaceRuntimeIdentity();
       }
     }
+    this.signal?.throwIfAborted();
     const slot = this.slot;
     if (!slot.current) {
       const opening: Promise<RuntimeSession> = this.openSession().catch((error) => {
@@ -501,6 +537,7 @@ export class AstridRuntimeClient {
     } catch (error) {
       // A restart can happen between reading discovery and reaching the proxy.
       // Retry a catalog read once with fresh discovery and a new handshake.
+      this.signal?.throwIfAborted();
       if (this.readOnly && this.usesRuntimeConfig && runtimeOrigin() === ''
         && (error instanceof TypeError || error instanceof RuntimeUnavailableError
           || error instanceof RuntimeAuthenticationError
