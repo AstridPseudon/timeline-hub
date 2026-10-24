@@ -1,0 +1,33 @@
+{
+  "status": "proposed_only_not_applied; exact native-source custody contract unresolved",
+  "selected_mode": "Runtime may select the validation regime from the sealed request controls; this does not prove emitted recorder coverage.",
+  "missing_private_result": "An independently sourced digest of the complete native execution record projection for the exact sealed context and evaluated head. No abi flag is needed: mode is selected by Runtime.",
+  "minimal_value_example": "digest({context: sealed_context, evaluated_head: execution_head, native_records: complete_native_projection})",
+  "native_projection": [
+    "ordered commands and core command identity",
+    "all native reads and tagged observations",
+    "all selections including membership/order/owner/boundaries",
+    "all native bindings (key/ref/policy/dependencies)",
+    "all authored writes",
+    "all derived writes and cause ordinals",
+    "all created facts",
+    "all dependencies"
+  ],
+  "trusted_source_required": "Must be returned from the registered semantic executor/validator under Runtime-owned invocation/custody, independently of the provider-assembled PreparedCommit and replaceable capture JSON. Adding a caller/provider-supplied digest to the existing carrier does not establish this property.",
+  "source_seam": "Agent commands.execute returns a complete Plan after Recording.finish / CommitPatch.finish; commit.py constructs prepared_records and PreparedCommit later for each original/landing attempt. The native result must be retained before mutable prepared assembly; current private captures are serialized copies assembled after it.",
+  "runtime_seam": "RequestCommitPort._validate_sequential_execution -> TimelineCommitStore._validate -> timeline_commit_auth.validate. Native projection equality must be checked against the independent expected result before the server can return a validated recorder_abi=2 result to _publish.",
+  "runtime_validation_still_required": [
+    "exact native expected projection match",
+    "all native bindings physically enriched, with authenticated inverse.stage exceptions",
+    "every patch change and declared read including timeline expansion",
+    "complete commit.effect ordinal/path/before-after side set",
+    "complete source/successor materialization pairs and owner edges",
+    "complete atomic touched-scope bindings and dependency union",
+    "exact sealed request/context, accepted records and closure validation"
+  ],
+  "exact_unresolved_decision": "Authorize and define the provenance/custody of a complete native executor result in the existing private execution ABI for EVERY v2 invocation (including a single semantic command), with exact retry/rebase attempt replacement rules. The current optional original/landing JSON is not such an independently sourced result. This task makes no new callback, public flag, sidechannel, backend, or Agent change.",
+  "why_not_existing_schema_permission": "The D61 optional HistoryEntry enum and accepted-event/metadata slots are already authorized. They are not the blocker; publishing 2 without the independent native expectation would certify the eight accepted omission attacks.",
+  "prospective_history_slot": "HistoryEntry.recorder_abi; timeline_commit_history.metadata_json.recorder_abi paired with accepted hashed event payload.recorder_abi and exact records_digest/request identity; both absent legacy fallback only.",
+  "agent_handoff": "Actual supported genuine legacy acceptance control uses track.create then occurrence.create, with authentic history and restart equality. Legacy occurrence.fork still fails the current Agent reservation checker; its original passing expectation remains unchanged. Eight exact raw-v2 request/record/capture/actual-response packets are retained for manager relay to Agent1354/1417.",
+  "independent_review": "1422 security design review read; no exact-product security PASS or producer/source qualification claimed."
+}

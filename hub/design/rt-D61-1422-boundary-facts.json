@@ -1,0 +1,242 @@
+{
+  "runtime_base": "4386016c01474fc09b037c80edc1a36b51c1262e",
+  "agent_source": "68e82c0c2ce621f43ae73aa05fce0d1d0f47a677",
+  "held_1410_controls_preserved_as_exact_prefix": true,
+  "test_timeline_commit_v2_py_exists": false,
+  "tests": {
+    "recorder-abi.xml": {
+      "tests.test_timeline_recorder_abi_authority": {
+        "failed": 12,
+        "passed": 22
+      },
+      "tests.test_timeline_commit_authentication": {
+        "passed": 114
+      },
+      "tests.test_timeline_commit_sequential_verifier": {
+        "passed": 67
+      },
+      "tests.test_timeline_commit_port": {
+        "passed": 94
+      },
+      "tests.test_timeline_history_authenticated_read": {
+        "passed": 15
+      },
+      "tests.test_timeline_history_boundaries": {
+        "passed": 4
+      }
+    },
+    "recorder-abi-final.xml": {
+      "tests.test_timeline_recorder_abi_authority": {
+        "failed": 12,
+        "passed": 23
+      }
+    },
+    "coverage-packets.xml": {
+      "tests.test_timeline_recorder_abi_authority": {
+        "failed": 8
+      }
+    }
+  },
+  "actual_attack_packets": [
+    {
+      "packet": "test_complete_native_coverage_cannot_be_inferred_from_remaining_physical_bindings-fork.source-False.json",
+      "sha256": "1dbd8f3d1355667f5158813ae82d67355c2dd529f26a934182a1494a1d1df905",
+      "actual_status": "accepted",
+      "request_command_fields": [
+        "args",
+        "created",
+        "intent",
+        "op",
+        "schema_version",
+        "select",
+        "version"
+      ],
+      "native_bindings": [
+        "collection.owner:collection.clips",
+        "collection.owner:collection.tracks",
+        "fork.owner"
+      ],
+      "all_remaining_bindings_physical": true,
+      "effect_binding_count": 8,
+      "read_count": 9,
+      "selection_count": 2,
+      "has_private_capture": false
+    },
+    {
+      "packet": "test_complete_native_coverage_cannot_be_inferred_from_remaining_physical_bindings-fork.source-True.json",
+      "sha256": "337d3d76fd3b8fbddda5c47d82b2eb96673f1d80f9b5cd179304600b8e18be92",
+      "actual_status": "accepted",
+      "request_command_fields": [
+        "args",
+        "created",
+        "intent",
+        "op",
+        "schema_version",
+        "select",
+        "version"
+      ],
+      "native_bindings": [
+        "collection.owner:collection.clips",
+        "collection.owner:collection.tracks",
+        "fork.owner"
+      ],
+      "all_remaining_bindings_physical": true,
+      "effect_binding_count": 8,
+      "read_count": 9,
+      "selection_count": 2,
+      "has_private_capture": true
+    },
+    {
+      "packet": "test_complete_native_coverage_cannot_be_inferred_from_remaining_physical_bindings-native_bindings-False.json",
+      "sha256": "3279b3a0de00b4697cbb70a75c7b4e937a157bc2685680d8d6adbc8d0f094107",
+      "actual_status": "accepted",
+      "request_command_fields": [
+        "args",
+        "created",
+        "intent",
+        "op",
+        "schema_version",
+        "select",
+        "version"
+      ],
+      "native_bindings": [],
+      "all_remaining_bindings_physical": true,
+      "effect_binding_count": 8,
+      "read_count": 9,
+      "selection_count": 2,
+      "has_private_capture": false
+    },
+    {
+      "packet": "test_complete_native_coverage_cannot_be_inferred_from_remaining_physical_bindings-native_bindings-True.json",
+      "sha256": "0cd4b00ab2fa049cb87b959781a154c1daece97a31533ecd81f8b0c243bc8cf6",
+      "actual_status": "accepted",
+      "request_command_fields": [
+        "args",
+        "created",
+        "intent",
+        "op",
+        "schema_version",
+        "select",
+        "version"
+      ],
+      "native_bindings": [],
+      "all_remaining_bindings_physical": true,
+      "effect_binding_count": 8,
+      "read_count": 9,
+      "selection_count": 2,
+      "has_private_capture": true
+    },
+    {
+      "packet": "test_complete_native_coverage_cannot_be_inferred_from_remaining_physical_bindings-reads-False.json",
+      "sha256": "92e2e07cdaebd078f4cd535f1d58a0f6a5099af1a821e9ad9498df458656ee58",
+      "actual_status": "accepted",
+      "request_command_fields": [
+        "args",
+        "created",
+        "intent",
+        "op",
+        "schema_version",
+        "select",
+        "version"
+      ],
+      "native_bindings": [
+        "collection.owner:collection.clips",
+        "collection.owner:collection.tracks",
+        "fork.source",
+        "fork.owner"
+      ],
+      "all_remaining_bindings_physical": true,
+      "effect_binding_count": 8,
+      "read_count": 0,
+      "selection_count": 2,
+      "has_private_capture": false
+    },
+    {
+      "packet": "test_complete_native_coverage_cannot_be_inferred_from_remaining_physical_bindings-reads-True.json",
+      "sha256": "f8a43f49f33852809926d744456a460f73ca05f5bdce902b1fd2a2f088db56ed",
+      "actual_status": "accepted",
+      "request_command_fields": [
+        "args",
+        "created",
+        "intent",
+        "op",
+        "schema_version",
+        "select",
+        "version"
+      ],
+      "native_bindings": [
+        "collection.owner:collection.clips",
+        "collection.owner:collection.tracks",
+        "fork.source",
+        "fork.owner"
+      ],
+      "all_remaining_bindings_physical": true,
+      "effect_binding_count": 8,
+      "read_count": 0,
+      "selection_count": 2,
+      "has_private_capture": true
+    },
+    {
+      "packet": "test_complete_native_coverage_cannot_be_inferred_from_remaining_physical_bindings-selections-False.json",
+      "sha256": "b2abdbc22ef32e8bbfab22a6101d7396bb0bd3fcc2e1a97f90bd74570d9413b1",
+      "actual_status": "accepted",
+      "request_command_fields": [
+        "args",
+        "created",
+        "intent",
+        "op",
+        "schema_version",
+        "select",
+        "version"
+      ],
+      "native_bindings": [
+        "collection.owner:collection.clips",
+        "collection.owner:collection.tracks",
+        "fork.source",
+        "fork.owner"
+      ],
+      "all_remaining_bindings_physical": true,
+      "effect_binding_count": 8,
+      "read_count": 9,
+      "selection_count": 0,
+      "has_private_capture": false
+    },
+    {
+      "packet": "test_complete_native_coverage_cannot_be_inferred_from_remaining_physical_bindings-selections-True.json",
+      "sha256": "10aa59f6b5f935830c1f6ec383e8b8b710d7b76afbb8770a70f747a36bf47fe0",
+      "actual_status": "accepted",
+      "request_command_fields": [
+        "args",
+        "created",
+        "intent",
+        "op",
+        "schema_version",
+        "select",
+        "version"
+      ],
+      "native_bindings": [
+        "collection.owner:collection.clips",
+        "collection.owner:collection.tracks",
+        "fork.source",
+        "fork.owner"
+      ],
+      "all_remaining_bindings_physical": true,
+      "effect_binding_count": 8,
+      "read_count": 9,
+      "selection_count": 0,
+      "has_private_capture": true
+    }
+  ],
+  "implemented": "Fail closed on injected recorder_abi in existing accepted-edge metadata; no recorder mode writer or complete-coverage certificate introduced.",
+  "unqualified": [
+    "D61 ABI2 producer/persistence",
+    "HistoryEntry additive enum and normal regeneration",
+    "merged landing",
+    "new mode-pair replay",
+    "Agent consumer source qualification",
+    "independent exact-product security review",
+    "HTTP/browser/gates"
+  ],
+  "test_run_deviation": "The combined direct run inadvertently included tests/test_timeline_history_boundaries.py (4 localhost HTTP tests). They passed; this is not service-issued HTTP or gate qualification. No further HTTP run requested.",
+  "source_contract_gap": "The sealed raw semantic request omits native capture claims. Runtime sees no declarative expected native read/selection/binding set. Complete effect coverage and all remaining physical bindings do not establish that native set; a coordinated rewrite of both current private carrier executions also accepts."
+}
