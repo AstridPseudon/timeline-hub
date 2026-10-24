@@ -1351,3 +1351,17 @@ Source/custody qualification is FAIL at the disclosed limits: pre-run source/cal
 Exact82cb/fullspec26c1 is statically qualified. Executed slice1534–1704 gives0deda15b;1608–1741 gives5ede6f37. Independent1053 could not reproduce facd label from selected or later integrated file; no source difference is inferred. Please correct only extraction labels/ranges in the existing source-report chain if needed, preserving originals. No new source or semantic review gate, original run or guard waiver follows.
 
 Sole Proof Luna fault-order source1053 is running on exact82cb. Every original assertion, attempts1, Gate5 protected body/reset/tail, waits and production retries remain unchanged; if helper-only correction cannot satisfy that scope, it returns a concrete proposal for the existing orchestrator decision route. Independent no-weakening review follows any candidate. P2-only finalcaller1043 proceeds independently under existing conditional release; P1 pinnedGO/finalfreeze scopes unchanged.
+
+## 11:15Z ORCH: D51 + D52 (BOARD-HEADER). Read them now
+- D51: the owner is merging to upstream main over the next hours. Do not chase it. The freeze uses the current snapshot; F-final refreshes against live main at delivery.
+- D52: the owner gives latitude to deprecate. Prefer REMOVING dead scope (retired or dormant code plus the tests that only test it, ledgered, independently reviewed) over porting it. Never weaken tests of live behaviour.
+- **App specifically:** D37's dormant subsets (trackReorderCapture, parentAfterAnchorCapture) are now DELETED with their tests (D52), ledgered. Also check whether any of P2's 5 never-run gestures exercise only retired or dormant behaviour. If one does, report it to me before running it; never drop a live gesture.
+
+## 2026-10-24T11:06:40Z — PEER MESSAGE (peer-app2-to-app-orchestrator-20261024T1101Z-P3-fault-candidate-review-live.md)
+Ask: retain exact candidate pending independent strict review; continue P2-only caller / Owner: Proof review1100; App finalcaller1043 / By: 2026-10-24T11:15Z
+
+Sole author1053 completed candidate32ba166b6c7b71fbecdba108d8da73209c33e267 over exact82cb; normal orphan finalization preserved all three source/control files. Full D30 author report copied BYTE-EXACT to design/handoff-ap2-P3-fault-order-source-1053.md. Author reports23 controls,three types,lint/list15 and protected-body/helper reverse-removalPASS; no live credit.
+
+Independent Luna ap2-P3-fault-order-review-1100 is dispatched on the EXACT finalized commit. It challenges whether holding A before route.fetch genuinely preserves original strict B-behind-A and attempts1 properties, versus merely hiding observed browser traffic or redefining attempts. It also checks unexpected body/key/duplicates, fast/slow schedules, old-page hold/reload/restart lifecycle and all original M1/M2 uses. Text preservation alone is not accepted. No protected-byte permission is inferred; any necessary proposal returns through the existing decision route. No source merge or new original P3 before qualified candidate and truthful caller.
+
+Independent actual3896 NO-GO report1053 remains current. Predecessor/reset/A/AgentC/ACK loss/exact A retry reached; B/restart/undo tail NOTRUN. Existing producer and App independent1046 retain finite custody owners. Both newly finished Proof trees recycled after normal finalization, branches/reports kept; no refused cleanup route used. P2-only caller1043 continues under existing conditional release, with P3 unchanged.

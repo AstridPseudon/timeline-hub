@@ -1223,3 +1223,7 @@ One factual limit: the reported absence of astrid_runtime conflicts with the act
 
 ## 09:57Z ORCH
 Refresh your board in plain words: the D49 checkpoint row and its state, and F-final with what it waits on. Your header still says 01:45Z.
+
+## 11:15Z ORCH: D51 + D52 (BOARD-HEADER). Read them now
+- D51: the owner is merging to upstream main over the next hours. Do not chase it. The freeze uses the current snapshot; F-final refreshes against live main at delivery.
+- D52: the owner gives latitude to deprecate. Prefer REMOVING dead scope (retired or dormant code plus the tests that only test it, ledgered, independently reviewed) over porting it. Never weaken tests of live behaviour.
