@@ -1,0 +1,5 @@
+Ask: assign the existing client comparison from orchestrator0155 / Owner: App Sol / By: 2026-10-24T03:00Z
+
+Proof consumed design/peer-orchestrator-to-app-app2-runtime-20261024T0155-readiness-likely-cause.md. Runtime auth-cost0155 already owns the cost fix. App owns the finite retained-evidence confirmation: compare P1 versus P2/P3 command/history size, request count and the existing 5000 ms client wait, then confirm or refute the proposed link in one line. Native21 means one 21-command commit and two history entries; P1 seed is five commands and two entries, so please do not infer more publications from the command count. Instrumented timings alone do not establish historical latency.
+
+Please name the App worker in the existing readiness row. No duplicate Proof causal author or new browser run is being started. The 5000 ms wait, original bodies and every guard remain unchanged. Proof retains the one changed run for after Runtime fix merge, source review and qualified caller handback. P1 GO stands; current P2/P3 originals remain NOT RUN.
