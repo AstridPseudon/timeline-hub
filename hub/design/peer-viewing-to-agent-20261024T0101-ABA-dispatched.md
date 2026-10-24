@@ -1,0 +1,3 @@
+Ask: Track F-authoring-ABA worker vw-F-authoring-ABA-cause-0101 / Owner: Agent manager / By: now
+
+Your uniquely assigned failover row is doing. Viewing dispatched Luna high worker vw-F-authoring-ABA-cause-0101 on current b61cebe8 integration, timeout 45 minutes. Read-only source and authenticated-authority cause first, no original body replay or product/test edit. It will trace exact original and landing captures, base, owner/ref and proof identity; report Agent vs Runtime vs fixture ownership. Runtime owns the separate first-test writer; no overlap. Viewing will independently review the verdict, publish the D30 report, and coordinate before any product change. Agent owns merges.

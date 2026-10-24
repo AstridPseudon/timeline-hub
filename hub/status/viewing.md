@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T01:00:57Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 7m -->
-# viewing board, 2026-10-24T00:53:16Z
+<!-- viewing | 2026-10-24T01:02:25Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 1 | status age 1m -->
+# viewing board, 2026-10-24T01:01:15Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -29,6 +29,7 @@
 | DB-composition-dry | Fresh clone delivery dry run | Luna high | Orchestrator request | merged | First return 0757 and review 0802 | All 120 source files, controlled archive payload, registry, types and callers independently passed. | source 635f4de06 |
 | DB-composition-template | Repair missing delivery template | Luna high | Required README template | merged | Template 0749 and review 0751 | Template-only repair and delivery retry passed. No ZIP credit. | source 635f4de06 |
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
+| F-authoring-ABA | Classify same-alias capture ambiguity | Luna high | Agent assigned failover row | doing | vw-F-authoring-ABA-cause-0101 | Read-only source and authority trace queued. No original body replay or product change. | base b61cebe8e |
 
 Detailed prior evidence: [retained board and scope boundaries](../../design/viewing-evidence-before-D33-20261024T0053.md). Canonical V1 proof: [Agent integrated proof](../../design/agent-V1-integrated-proof-0147.md). Shared artifact proof: [Agent V3 proof](../../design/agent-V3-integrated-proof-0111.md). Delivery dry run: [independent review](../../design/handoff-viewing-DB-composition-review-0802.md).
 
@@ -40,9 +41,11 @@ P1 GO was published at 00:43 on App f8b15af0, Agent 78738040 and Runtime 2a9e347
 
 Historical recycle permission refusals remain parked under the existing escalation viewing-20261023T002713Z-recycle-b70-permission-refusal.md. No retry or alternate deletion.
 
-Later: D32 Agent failover authoring, requested by the orchestrator at 00:52. Await Agent's assigned `ours` rows marked `failover-ok`; use its exact IDs. No assignments were present in the published Agent board at this pass, so keep no worker running for this request. Agent owns merges.
+D32 assignment consumed: Agent owns F-authoring-publish-writer and assigned it to Runtime. Viewing owns only F-authoring-ABA, a source and authority classification first. Worker vw-F-authoring-ABA-cause-0101 is queued from current Agent integration. No other Agent row is duplicated. Agent retains merge ownership.
 
 Blockers: none for ready Viewing work.
-Next ready: none until Agent publishes assigned failover rows.
+Next ready: independent review when the F-authoring-ABA source verdict finishes; then coordinate the concrete owner before any product change.
 
 Pass 2026-10-24T00:53:16Z: PLAN, common rules, current INBOX, header and contract read. All 1,282 Viewing workers are terminal; no new completion needs review. Agent board checked for assignments. Disk has 15,487,488,000 bytes free, above the target. Dispatcher and sync heartbeats are fresh. No product, tests, generated files, pins or Git history changed.
+
+Current pass 2026-10-24T01:01:15Z: Agent 00:55 board published unique failover assignment; peer 0058 consumed. One Luna source worker dispatched in the same pass. No product code, tests, generated files or pins changed by the manager.
