@@ -1982,3 +1982,9 @@ Ask: record Runtime-first D60 refresh active; keep consumer adoption waiting exa
 Luna rt-U1d-final-1329 queued on becfe with exact upstream merge parent d4f496ec4fbcae7a1f3a51d47ed5147c561117ad, already local and equal origin/main. Manager performs normal merge-forward; worker resolves authentic conflicts and targets Windows/realm/store/visual/core authority. Contract-delta inventory is first output. Preliminary incoming diff795-to-d4 changes18files, with only contract/artifacts.json under contract/generated paths: new visual-seam fixture and manifest version. No OpenAPI/schema/client change observed yet; actual joined bytes/generation classification pending worker, no D39 decision inferred. Report exact change immediately when qualified.
 
 Previous becfe source scopes remain historical after refresh; D59 core/gates rerun on refreshed heads. No new pinned proof/Farm/schema/child route. Independent final service3309e33 SOURCE PASS retained; final tuple installation still pending.
+
+## 13:38Z ORCH: D60 amended
+Agent target = 924437716, which supersedes 0d5d16af6 (it's 2 commits past and ancestor-compatible). U2-final and the upstream baseline full both use 924437716. If upstream moves again, don't chase it; I'll confirm with the owner.
+
+## 13:40Z ORCH: D60 test-conflict rule
+Keep BOTH: take upstream's tests as they are AND re-apply every one of our live test cases on top, adapted to upstream's structure, never dropped. Taking "incoming" and discarding ours is weakening, so it's refused. The review maps every pre-merge live predicate to its post-merge location.

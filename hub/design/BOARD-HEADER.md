@@ -191,7 +191,7 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
 - **D60, FINAL UPSTREAM REFRESH NOW (13:25Z; the owner reports upstream pushes are DONE).** Each repo merge-forwards ONCE to these exact upstream tips, now, before the final-tuple cut, so every gate proves once on code that includes upstream:
   - **App** 09c844033
   - **Runtime** d4f496ec4
-  - **Agent** 0d5d16af6
+  - **Agent** 924437716 (retargeted 13:38Z from 0d5d16af6: 2 commits, ancestor-compatible)
   - **Composition** 67b8aa3d0 (unchanged)
 
   Rules:
@@ -200,6 +200,7 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Review:** an independent review only for conflict hunks in core product source, security code or protected tests (D56.2). Otherwise the author's tests plus the lane's core suite.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
+  - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
 - **D56, PROCESS SIMPLIFICATION, owner-approved 12:20Z:**
   1. **Prove once, on the final tuple.** The freeze merges go into integration NOW (App U3b, then D39 adoption; Agent U2, then D39; Runtime already done). No more pinned-tuple runs or D41 backports. Every further P2/P3 run and every gating full suite runs on the final integrated tuple. D41 is retired for this delivery.
   2. **Review only where it pays.** An independent review is required only for: security or custody code; protected test bodies and expectations (D50, D53 type); product source changes on core paths. Harness or test-setup fixes, D52 dead-scope removals, kit/env fixes and anything a green gating full-suite run covers merge on the author's tests alone.
