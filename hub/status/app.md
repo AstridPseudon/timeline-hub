@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T06:16:29Z | dispatcher heartbeat 4s | live 3 (sol 2, luna 1, other 0) | busy30 12 | status age 0m -->
+<!-- app | 2026-10-24T06:19:44Z | dispatcher heartbeat 4s | live 1 (sol 1, luna 0, other 0) | busy30 10 | status age 0m -->
 # app board, 2026-10-24T06:10Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -76,13 +76,13 @@
 | P2-popup-created-oracle | Assert exact required created claims | Proof Luna; independent review | Review 0526 PASS; home merge | merged | ap2-P2-created-claims-oracle-0521 | Exact ordered asset and clip refs; all other bytes retained. Home merge receipt 5f43 confirmed. Live P2 remains open. | 2972a7c4c / 5f43d9e86a |
 | P2-five-current-paths | Recheck five original never-run paths | Luna; independent Luna | Review 0525 PASS | merged | app-P2-current-path-repro-review-0525 | All five real selectors and mounted paths confirmed. No prior static gap remains. Browser upload, dispatch, reload and undo stay unknown. | Report only |
 | A2-parent-materialization | Preserve untouched move data and basis | Sol; Luna review | Reviews 0536 and 0545 PASS | merged | app-A2-parent-materialization-sol-0525 | Reviewed packet is HOME. Mounted ready and delayed owner requests passed; 273 plus 161 tests, three types and lint. Integrated joined proof follows source merges. | 5e242c64e3 / 7551bb2146 |
-| P2-P3-stage-retention | Preserve earlier stage diagnostic files | Sol; D21 | PREP0600 complete; all source HOME | doing | app-A2-final-retained-caller-sol-0609 | Final caller binds b238 catalog and P3 setup with retained stage roots and authentic existing tuple. No service request authorized. | Source b2380539c5 |
-| App-current-real-path-proof | Qualify all final mounted caller repairs | Luna | Timing interaction repair | blocked:app | app-A2-A3-current-joined-proof-0609 | On b238: 685 passed, one unchanged media timing positive failed. P3 controls passed12. Readonly classification and final types/lint continue. | b2380539c5 |
+| P2-P3-stage-retention | Preserve earlier stage diagnostic files | Sol; D21 | Caller controls complete; source held | blocked:app | app-A2-final-retained-caller-sol-0609 | READYcaller on held b238: 60 controls and six real browser-free stages retained files. Corrected source rebind remains; no request submitted. | Source b2380539c5 |
+| App-current-real-path-proof | Qualify all final mounted caller repairs | Luna | Timing interaction repair | blocked:app | app-A2-A3-current-joined-proof-0609 | On b238: 685 passed, one unchanged media timing positive failed. P3 controls12, three types, lint and donor26 passed. Pre-existing label is not adopted. | b2380539c5 |
 
 | A2-media-timing-join | Preserve prepared media canonical timing | Sol; independent review next | Joined0609 original RED | doing | app-A2-media-timing-join-sol-0616 | Exact unchanged at_ms media case returned null on combined source. Minimal production repair and original RED/GREEN required; no test waiver. | Base b2380539c5 |
 Integration: b2380539c5545661954d2794976631312ee1d939 joins every reviewed repair: catalog a63 plus3393 plus172033, P3 setupbb5ee, parameter1d9 plus9b5, popup03f98 plusfa59, parent5e242 and oracle2972.
 
-Next ready: Timing interaction Sol0616 queued; independent joined0609 finishes remaining checks. Finalcaller0609 may finish held b238 preparation. Proof owns pair release; no request submitted.
+Next ready: Timing interaction Sol0616 queued; independent joined0609 finishes remaining checks. Finalcaller0609 is READY on held b238, with 60 controls and six-stage retention PASS; corrected source rebind remains. Proof owns pair release; no request submitted.
 Blockers: App — one media timing interaction fails the joined proof. Sol0616 repairs it; final caller cannot release a journey before corrected proof.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
 
