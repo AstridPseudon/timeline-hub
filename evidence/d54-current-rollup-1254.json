@@ -1,0 +1,3670 @@
+{
+  "schema": "timeline.agent.d54.current-rollup.v1",
+  "task": "agt-F-D54-current-rollup-1254",
+  "read_only": true,
+  "source_audit": true,
+  "control_inputs": {
+    "plan": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+    "board_header": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/BOARD-HEADER.md",
+    "contract": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/commit-v2.md",
+    "base": "tl/integration",
+    "predecessor": "agt-F-D54-rollup-1242"
+  },
+  "inputs": [
+    {
+      "name": "rollup1242",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D54-rollup-1242/evidence/d54-d57-final-classification-rollup.json",
+      "sha256": "37b2c18dbf5778258613ae75c1ac7b504a2f031fb80c5d5226baf205f7b98273"
+    },
+    {
+      "name": "bootstrap-env1242",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D54-bootstrap-env-1242/evidence/agt-F-D54-bootstrap-env-1242.json",
+      "sha256": "d52e5fbb854e87bf4ac2e1a506d4587866457dac541e16b2b4d98f9322c94221"
+    },
+    {
+      "name": "actual-home1242",
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-native-census-home-1242/evidence/twelve.xml",
+      "sha256": "28a19b0e4b45a0efc99c7ffe76d24bee8733e13f7a6a0d19fbb992474cf1cee3"
+    }
+  ],
+  "counts": {
+    "total": 276,
+    "core": 159,
+    "non-core": 117,
+    "current_qualified": {
+      "total": 118,
+      "core": 108,
+      "non-core": 10
+    },
+    "current_open": {
+      "total": 158,
+      "core": 51,
+      "non-core": 107
+    },
+    "disposition": {
+      "UNPROVEN": 197,
+      "deferred": 1,
+      "env": 78
+    },
+    "open_disposition": {
+      "UNPROVEN": 79,
+      "deferred": 1,
+      "env": 78
+    },
+    "proven_regressions": 0,
+    "unproven_regression_candidates": 197,
+    "original_terminal_status": {
+      "total": 276,
+      "failed": 231,
+      "error": 45,
+      "historical_distinct": 267
+    }
+  },
+  "packages": {
+    "bootstrap": {
+      "selected": 42,
+      "core": 0,
+      "non-core": 42,
+      "qualified": 0,
+      "open": 42,
+      "disposition": {
+        "UNPROVEN": 24,
+        "env": 18
+      }
+    },
+    "helpers": {
+      "selected": 23,
+      "core": 23,
+      "non-core": 0,
+      "qualified": 20,
+      "open": 3,
+      "disposition": {
+        "UNPROVEN": 22,
+        "deferred": 1
+      }
+    },
+    "media": {
+      "selected": 66,
+      "core": 66,
+      "non-core": 0,
+      "qualified": 61,
+      "open": 5,
+      "disposition": {
+        "UNPROVEN": 66
+      }
+    },
+    "other": {
+      "selected": 40,
+      "core": 10,
+      "non-core": 30,
+      "qualified": 16,
+      "open": 24,
+      "disposition": {
+        "UNPROVEN": 25,
+        "env": 15
+      }
+    },
+    "provider": {
+      "selected": 60,
+      "core": 60,
+      "non-core": 0,
+      "qualified": 21,
+      "open": 39,
+      "disposition": {
+        "UNPROVEN": 60
+      }
+    },
+    "setup": {
+      "selected": 45,
+      "core": 0,
+      "non-core": 45,
+      "qualified": 0,
+      "open": 45,
+      "disposition": {
+        "env": 45
+      }
+    }
+  },
+  "fold_accounting": {
+    "predecessor_current_qualified": 106,
+    "predecessor_open": {
+      "total": 170,
+      "core": 56,
+      "non-core": 114
+    },
+    "actual_home_1242": {
+      "selected": 12,
+      "new_qualified": 12,
+      "core": 5,
+      "non-core": 7,
+      "duplicate_credit": 0
+    },
+    "bootstrap_env_1242": {
+      "selected": 42,
+      "env": 18,
+      "UNPROVEN": 24,
+      "new_node_credit": 0,
+      "duplicate_credit": 0
+    },
+    "retained_environment_subset": {
+      "total": 33,
+      "components": {
+        "bootstrap_exact_env": 18,
+        "bootstrap_local_outside_exact_selection": 15
+      },
+      "counted_once": true
+    },
+    "result": "118 qualified; 51 core open; 107 non-core open; 158 open."
+  },
+  "receipt_intersections": [
+    {
+      "id": "shot-set1156",
+      "mode": "integrated_source",
+      "qualifies_current": true,
+      "reported_result_counts": {
+        "passed": 61
+      },
+      "matched_count": 17,
+      "qualified_count": 17,
+      "source": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-shot-set-integrated-1156/evidence/shot.xml",
+          "sha256": "50f76a0c8b27db685829d267f8f1c8222e828578218c0edaabc6ea4a70aa0f08"
+        }
+      ],
+      "note": "Current Agent/Runtime source-mode receipt; no full/gate/HTTP/ABA credit."
+    },
+    {
+      "id": "occurrence-delete1141",
+      "mode": "integrated_source",
+      "qualifies_current": true,
+      "reported_result_counts": {
+        "passed": 19
+      },
+      "matched_count": 19,
+      "qualified_count": 19,
+      "source": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-F-D52-occurrence-delete-1139-pre-change-assigned.xml",
+          "sha256": "b74a9ff3ea81867201297825293191ec9ec0c05d5b38226835b2e8bfcd8bd247"
+        }
+      ],
+      "note": "Current source-mode Agent/Runtime receipt; production caller review retained; no HTTP/installed/browser/full credit."
+    },
+    {
+      "id": "open-session1153",
+      "mode": "integrated_source",
+      "qualifies_current": true,
+      "reported_result_counts": {
+        "passed": 42
+      },
+      "matched_count": 19,
+      "qualified_count": 19,
+      "source": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-open-integrated-1153/evidence/open.xml",
+          "sha256": "90a509651d17c54d869f7a01f78b6526c403c1065c5630f85075f5a813b36f84"
+        }
+      ],
+      "note": "Current source-mode full-v2 request/open receipt; no full/gate/HTTP/installed/original267 credit."
+    },
+    {
+      "id": "M2media1149",
+      "mode": "integrated_source",
+      "qualifies_current": true,
+      "reported_result_counts": {
+        "passed": 200
+      },
+      "matched_count": 17,
+      "qualified_count": 17,
+      "source": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-M2-integrated-1149/evidence/integrated.xml",
+          "sha256": "7b15b482aba52ac881ecee60b96b02153c49fb5fd6b3e107389206ab4e3ce06a"
+        }
+      ],
+      "note": "Current source-mode M2 media receipt; no full/gate/HTTP/ABA/child/original267 credit."
+    },
+    {
+      "id": "public-redo1140",
+      "mode": "integrated_source",
+      "qualifies_current": true,
+      "reported_result_counts": {
+        "passed": 82
+      },
+      "matched_count": 10,
+      "qualified_count": 7,
+      "source": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-public-redo-integrated-1140/evidence/joined.xml",
+          "sha256": "41bd2837f585721d3677b4105db85493fa736e07e3382e256f7ce78a14db228e"
+        }
+      ],
+      "note": "Current source-mode public/redo receipt; public alias trio remains held by settled boundary."
+    },
+    {
+      "id": "step1124",
+      "mode": "integrated_source",
+      "qualifies_current": true,
+      "reported_result_counts": {
+        "passed": 35
+      },
+      "matched_count": 14,
+      "qualified_count": 14,
+      "source": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-fixture-step-1105/evidence/step.xml",
+          "sha256": "12a474fbbbddbf3242dea72d4d6c6957811be0ecd91c9b133458afbcec1712b8"
+        }
+      ],
+      "note": "Current source-mode step receipt; no full/gate/HTTP/ABA credit."
+    },
+    {
+      "id": "artifacts1201",
+      "mode": "integrated_source",
+      "qualifies_current": true,
+      "reported_result_counts": {
+        "passed": 10
+      },
+      "matched_count": 2,
+      "qualified_count": 2,
+      "source": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D52-artifacts-integrated-1201/evidence/artifacts.xml",
+          "sha256": "30661e6ea3bf6deb9e9b05058c715c61de31dc8d1d9d2baec1b38af8292ab0a0"
+        }
+      ],
+      "note": "Current source-mode artifact/catalog receipt; no full/gate/HTTP/installed credit."
+    },
+    {
+      "id": "authoring-media1213",
+      "mode": "integrated_source",
+      "qualifies_current": true,
+      "reported_result_counts": {
+        "passed": 7
+      },
+      "matched_count": 7,
+      "qualified_count": 7,
+      "source": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D52-authoring-integrated-1213/evidence/seven.xml",
+          "sha256": "300af10eb395e1d29298cd7f7eb1ba183612fd4b717aab1b04f9a75e12319963"
+        }
+      ],
+      "note": "Current source-mode authoring-media receipt; two central real-runtime integration selectors remain excluded/unqualified."
+    },
+    {
+      "id": "remotion1206",
+      "mode": "integrated_source",
+      "qualifies_current": true,
+      "reported_result_counts": {
+        "passed": 1
+      },
+      "matched_count": 1,
+      "qualified_count": 1,
+      "source": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D52-remotion-profile-1206/evidence/exactD52node.junit.xml",
+          "sha256": "19c905bc3b3aad1bdd44d3403c5d84641f8a3acb006d46529ba03df3f077360f"
+        }
+      ],
+      "note": "Current Remotion profile receipt; exact single selector, no broader render/full credit."
+    },
+    {
+      "id": "joined-source1134",
+      "mode": "source_only",
+      "qualifies_current": false,
+      "reported_result_counts": {
+        "passed": 160
+      },
+      "matched_count": 31,
+      "qualified_count": 0,
+      "source": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R1-R2-joined-integrated-1134/evidence/joined.xml",
+          "sha256": "6e8317bd1b65f736f55f9c04344bf5c3402fa8b2399d2f7a3d8ed3185c2a45ef"
+        }
+      ],
+      "note": "Source/test receipt only; no durable captured acceptance, full/gate, HTTP, ABA, or original267 credit."
+    },
+    {
+      "id": "captured-history1124",
+      "mode": "source_only",
+      "qualifies_current": false,
+      "reported_result_counts": {
+        "passed": 46
+      },
+      "matched_count": 15,
+      "qualified_count": 0,
+      "source": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-captured-history-review-1124/evidence/qualified-targeted.xml",
+          "sha256": "9a67363a055f1880511f3ac8821eb8063c1eecf61b5730334a83c5df4997283b"
+        }
+      ],
+      "note": "Source-only captured-history review; no current integrated/full/gate/durable acceptance credit."
+    },
+    {
+      "id": "tamper-exact5",
+      "mode": "source_only",
+      "qualifies_current": false,
+      "reported_result_counts": {
+        "passed": 2,
+        "failed": 3
+      },
+      "matched_count": 5,
+      "qualified_count": 0,
+      "source": [
+        {
+          "path": "/home/user/work/wt/agt-F-D54-current-rollup-1254/evidence/agt-R1-full-tamper-sol-1105/exact5-final.xml",
+          "sha256": "f3ec65f3515a0525d9204a90206356603026385f3eea430e5dafec4db84202f1"
+        }
+      ],
+      "note": "Source-only tamper receipt; exact five includes three public alias failures and two native passes; no live Runtime/full/gate credit."
+    },
+    {
+      "id": "native-five1158",
+      "mode": "source_only_custom",
+      "qualifies_current": false,
+      "reported_result_counts": {
+        "passed": 5
+      },
+      "matched_count": 5,
+      "qualified_count": 0,
+      "source": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D52-native-helpers-1158/evidence/native.xml",
+          "sha256": "ef2601b656b4d5829303739289afb9326f99e5bfd77633b8a29eea819010e3e1"
+        }
+      ],
+      "note": "Native five explicitly held as unreviewed; source receipt cannot close behavior."
+    },
+    {
+      "id": "capability-home1207",
+      "mode": "source_only",
+      "qualifies_current": false,
+      "reported_result_counts": {
+        "failed": 3,
+        "passed": 4
+      },
+      "matched_count": 7,
+      "qualified_count": 0,
+      "source": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D52-capability-integrated-1207/evidence/seven.xml",
+          "sha256": "163a943aeaaf8964abf56f6fd15f53ef322eb7362f28ff9f5d2e1b3bbadd444d"
+        }
+      ],
+      "note": "Actual-home capability proof is held; source-only receipt cannot close the actual-home capability."
+    },
+    {
+      "id": "capability-census1213",
+      "mode": "source_only",
+      "qualifies_current": false,
+      "reported_result_counts": {
+        "passed": 7
+      },
+      "matched_count": 7,
+      "qualified_count": 0,
+      "source": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D52-census-sol-1213/evidence/seven.xml",
+          "sha256": "42bd6209132e423b744e1bb6cc23a70cf895528fac36e50c78e89ee628307a4e"
+        }
+      ],
+      "note": "Source-only census-lock repair receipt; does not close held actual-home capability."
+    },
+    {
+      "id": "M1-held1105",
+      "mode": "source_only",
+      "qualifies_current": false,
+      "reported_result_counts": {
+        "passed": 116,
+        "failed": 10
+      },
+      "matched_count": 25,
+      "qualified_count": 0,
+      "source": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-fixture-m1-1105/evidence/m1.xml",
+          "sha256": "df7927b7c4a22c79dd0ece2e89e5ea72f51835f9d0268134f14226d0623fc32e"
+        }
+      ],
+      "note": "M1 held pending faithful accepted-boundary builder/authenticated materialization; no closure credit."
+    },
+    {
+      "id": "actual-home1242",
+      "source": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-native-census-home-1242/evidence/twelve.xml",
+          "sha256": "28a19b0e4b45a0efc99c7ffe76d24bee8733e13f7a6a0d19fbb992474cf1cee3"
+        }
+      ],
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-native-census-home-1242/evidence/twelve.xml",
+      "sha256": "28a19b0e4b45a0efc99c7ffe76d24bee8733e13f7a6a0d19fbb992474cf1cee3",
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-native-census-home-1242.md",
+      "mode": "actual_home_durable_xml",
+      "qualifies_current": true,
+      "reported_result_counts": {
+        "passed": 12,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "matched_count": 12,
+      "qualified_count": 12,
+      "scope_counts": {
+        "core": 5,
+        "non-core": 7
+      },
+      "source_tuple": {
+        "agent_head": "cba425b619",
+        "agent_tree": "d19ce2e55c",
+        "runtime_head": "becfe6db88b2",
+        "runtime_tree": "7edc08e3fe"
+      },
+      "production_caller": "duck_timeline -> client.invoke_result(\"music.duck\", ...)",
+      "node_orders": [
+        117,
+        118,
+        166,
+        171,
+        172,
+        173,
+        174,
+        176,
+        177,
+        178,
+        179,
+        220
+      ],
+      "node_ids": [
+        "tests/editing_conformance/test_recipe_text_binding_native.py::test_absent_collection_is_restored_exactly",
+        "tests/editing_conformance/test_recipe_text_binding_native.py::test_multiple_births_in_absent_collection_have_exact_batch_inverse",
+        "tests/sdk/test_p4_note_rerun.py::test_p4_note_conflict_reruns_public_function_from_verified_peer_document",
+        "tests/stage1/test_capability_parity_gate_luna.py::test_stage1_capability_parity_is_explicit_and_family_proven",
+        "tests/sdk/test_timeline_sheet_native.py::test_omitted_native_clip_row_uses_normal_commit_retry_undo_redo_and_rebases",
+        "tests/sdk/test_timeline_structure.py::test_joined_music_updates_source_and_literal_duration_for_publication",
+        "tests/test_capability_ledger.py::test_shipped_ledger_reconciles_historical_capability_sets",
+        "tests/test_capability_ledger.py::test_host_consumes_the_reconciled_ledger_before_readiness_matrix",
+        "tests/test_capability_ledger.py::test_source_census_reports_unreviewed_pack_labels_without_failing_host",
+        "tests/test_capability_ledger.py::test_reviewed_v3_pack_labels_preserve_exact_canonical_action_admission",
+        "tests/test_astrid_beta_capability_matrix.py::test_beta_matrix_covers_every_discovered_capability_and_declaration",
+        "tests/test_sdk_public_surface.py::test_invoke_maps_orchestrator_result_errors_into_public_taxonomy"
+      ],
+      "note": "Exact actual-home receipt only; no full/gate/ABA/child/baseline credit and no extrapolation."
+    },
+    {
+      "id": "bootstrap-env1242",
+      "source": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D54-bootstrap-env-1242/evidence/agt-F-D54-bootstrap-env-1242.json",
+          "sha256": "d52e5fbb854e87bf4ac2e1a506d4587866457dac541e16b2b4d98f9322c94221"
+        }
+      ],
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D54-bootstrap-env-1242/evidence/agt-F-D54-bootstrap-env-1242.json",
+      "sha256": "d52e5fbb854e87bf4ac2e1a506d4587866457dac541e16b2b4d98f9322c94221",
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D54-bootstrap-env-1242.md",
+      "mode": "exact_source_reconciliation",
+      "qualifies_current": false,
+      "selected_count": 42,
+      "matched_count": 42,
+      "qualified_count": 0,
+      "category_counts": {
+        "env": 18,
+        "UNPROVEN": 24
+      },
+      "node_orders": [
+        2,
+        3,
+        4,
+        5,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        69,
+        70,
+        71,
+        127,
+        128,
+        131,
+        132,
+        133,
+        134,
+        135,
+        136,
+        137,
+        139,
+        140,
+        141,
+        142,
+        145,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151,
+        167,
+        168,
+        180,
+        217,
+        218
+      ],
+      "node_ids": [
+        "tests/core/execution/test_generic_host_actions_v3.py::test_private_child_command_preserves_entrypoint_and_original_bridge[-c]",
+        "tests/core/execution/test_generic_host_actions_v3.py::test_private_child_command_preserves_entrypoint_and_original_bridge[-m]",
+        "tests/core/execution/test_generic_host_actions_v3.py::test_private_child_command_preserves_entrypoint_and_original_bridge[script]",
+        "tests/core/execution/test_worker_startup_identity.py::test_sanitized_child_import_proves_current_host_sdk_version_and_vendored_client",
+        "tests/core/pack/test_source_setup.py::test_real_outer_command_inventory_route_retains_sibling_creator_waits_and_graph",
+        "tests/core/pack/test_source_setup.py::test_real_filtered_command_root_cf_pin_preserves_all_four_inventory_operations",
+        "tests/core/execution/test_remotion_host_session.py::test_two_public_command_workers_settle_task_leases_then_host_drains_original",
+        "tests/core/rendering/test_conformance.py::test_minimal_render_wire_parity",
+        "tests/core/rendering/test_conformance.py::test_request_sensitive_support_wire_parity",
+        "tests/core/rendering/test_conformance.py::test_passthrough_audio_wire_parity",
+        "tests/core/rendering/test_conformance.py::test_no_audio_wire_parity - ...",
+        "tests/core/rendering/test_conformance.py::test_attachment_wire_parity",
+        "tests/core/rendering/test_conformance.py::test_intentional_failure_wire_parity",
+        "tests/core/rendering/test_freeze.py::test_freeze_real_ffmpeg_transport_one_video_one_committed_sidecar",
+        "tests/core/rendering/test_service.py::test_real_ffmpeg_renders_through_generic_service[nominal]",
+        "tests/core/rendering/test_service.py::test_real_ffmpeg_renders_through_generic_service[with-audio]",
+        "tests/core/rendering/test_service.py::test_real_ffmpeg_audio_reactive_through_generic_service",
+        "tests/packs/rendering/test_builtin_registration.py::test_real_ffmpeg_render_through_registered_backend",
+        "tests/packs/rendering/test_ffmpeg_backend.py::test_manifest_command_dispatches_from_pack_root",
+        "tests/packs/rendering/test_remotion_backend.py::test_manifest_command_runs_from_owning_pack_root",
+        "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_accepts_empty_and_exact_text_fields",
+        "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons",
+        "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_non_rendered_audio_ownership",
+        "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_accepts_window_and_rejects_fps_mismatch",
+        "tests/packs/rendering/test_threejs_backend.py::test_threejs_identity_invariants_never_claim_remotion",
+        "tests/packs/rendering/test_threejs_backend.py::test_threejs_own_namespace_config_is_strict",
+        "tests/packs/test_vibecomfy_ir_bridge.py::test_t9_actual_executor_child_loads_pinned_callable_and_settles_output",
+        "tests/packs/test_vibecomfy_ir_bridge.py::test_t9_absent_explicit_activation_preserves_production_dispatch[False]",
+        "tests/packs/test_vibecomfy_ir_bridge.py::test_t9_absent_explicit_activation_preserves_production_dispatch[True]",
+        "tests/packs/test_vibecomfy_ir_bridge.py::test_t9_child_uses_explicit_pinned_fixture_outside_product_root[None]",
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]",
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]",
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]",
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]",
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]",
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]",
+        "tests/reshape/test_doctor_contract_shapes.py::test_smoke_doctor_lane_accepts_both_payload_shapes[observed-with-ok]",
+        "tests/reshape/test_doctor_contract_shapes.py::test_smoke_doctor_lane_accepts_both_payload_shapes[observed-without-ok]",
+        "tests/test_conftest_environment.py::test_bootstrap_environment_is_accepted_by_the_remotion_probe_context",
+        "tests/test_installer_service_repair_integration.py::test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_pids[False-0]",
+        "tests/test_installer_service_repair_integration.py::test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_pids[True-1]"
+      ],
+      "counted_once": true,
+      "note": "Already represented in rollup1242; no additional node credit. The exact 33 retained environment subset is 18 exact bootstrap-env nodes plus 15 separate local-bootstrap nodes outside this 42-node selection."
+    }
+  ],
+  "contract_scope": {
+    "request_fields": [
+      "api_version",
+      "project_id",
+      "timeline_id",
+      "base_revision_id",
+      "base_publication_id",
+      "commands",
+      "label",
+      "steps(id,label,intent,tags,command_ordinals,patch,reads)",
+      "merge(fields|atomic)",
+      "reads",
+      "dry_run",
+      "source",
+      "rationale",
+      "group_id",
+      "Idempotency-Key"
+    ],
+    "reply_fields": [
+      "accepted|merged canonical closure",
+      "IDs",
+      "digests",
+      "commands",
+      "id_map",
+      "records",
+      "steps",
+      "dependencies",
+      "effects",
+      "bindings",
+      "history",
+      "undo",
+      "publisher",
+      "durable receipt",
+      "dry-run would_status/null receipt",
+      "conflict reason/head",
+      "invalid code/path/hint/suggested_command"
+    ],
+    "production_caller_required": true
+  },
+  "baseline_status": {
+    "upstream_25359": "pending separate worker",
+    "pre_existing_claims": 0,
+    "REGRESSION_claims": 0,
+    "note": "UNPROVEN nodes are not called pre-existing or regressions."
+  },
+  "membership_checks": {
+    "node_count": 276,
+    "unique_ids": true,
+    "order": "1..276 exact",
+    "actual_home_ids_in_base": 12,
+    "bootstrap_env_ids_in_base": 42,
+    "bootstrap_env_category_match": {
+      "env": 18,
+      "UNPROVEN": 24
+    }
+  },
+  "nodes": [
+    {
+      "order": 1,
+      "id": "tests/core/test_editor_element_catalog.py::test_checked_in_typescript_projection_is_current",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "artifacts1201"
+      ]
+    },
+    {
+      "order": 2,
+      "id": "tests/core/execution/test_generic_host_actions_v3.py::test_private_child_command_preserves_entrypoint_and_original_bridge[-c]",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 3,
+      "id": "tests/core/execution/test_generic_host_actions_v3.py::test_private_child_command_preserves_entrypoint_and_original_bridge[-m]",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 4,
+      "id": "tests/core/execution/test_generic_host_actions_v3.py::test_private_child_command_preserves_entrypoint_and_original_bridge[script]",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 5,
+      "id": "tests/core/execution/test_worker_startup_identity.py::test_sanitized_child_import_proves_current_host_sdk_version_and_vendored_client",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 6,
+      "id": "tests/editing_conformance/test_captured_config_root_mirror.py::test_captured_config_root_rejects_tampering_without_mutation[native-order]",
+      "package": "other",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "Runtime-1214 qualifiedRuntime"
+      ]
+    },
+    {
+      "order": 7,
+      "id": "tests/editing_conformance/test_captured_nested_redo.py::test_captured_nested_redo_compiles_and_partitions_without_rewriting_source",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "public-redo1140"
+      ]
+    },
+    {
+      "order": 8,
+      "id": "tests/editing_conformance/test_captured_nested_redo.py::test_native_only_accepted_inverse_redoes_without_effect_facts[one-of-ten-notes]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "public-redo1140"
+      ]
+    },
+    {
+      "order": 9,
+      "id": "tests/editing_conformance/test_captured_nested_redo.py::test_native_only_accepted_inverse_redoes_without_effect_facts[semantic-creation]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "public-redo1140"
+      ]
+    },
+    {
+      "order": 10,
+      "id": "tests/editing_conformance/test_provider_occurrence_fork.py::test_v2_registered_fork_reply_physical_effects_step_reads_and_undo[False]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 11,
+      "id": "tests/editing_conformance/test_provider_occurrence_fork.py::test_v2_registered_fork_reply_physical_effects_step_reads_and_undo[True]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 12,
+      "id": "tests/editing_conformance/test_provider_occurrence_fork.py::test_fork_and_edit_sequential_step_read_and_guarded_fork_step_undo",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 13,
+      "id": "tests/editing_conformance/test_provider_occurrence_fork.py::test_disjoint_head_merge_and_preview_keep_other_edit",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 14,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed0-track-parent]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 15,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed0-track-occurrence:occ-1]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 16,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed0-clip-parent]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 17,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed0-clip-occurrence:occ-1]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 18,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed1-track-parent]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 19,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed1-track-occurrence:occ-1]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 20,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed1-clip-parent]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 21,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed1-clip-occurrence:occ-1]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 22,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed2-track-parent]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 23,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed2-track-occurrence:occ-1]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 24,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed2-clip-parent]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 25,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed2-clip-occurrence:occ-1]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 26,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed3-track-parent]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 27,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed3-track-occurrence:occ-1]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 28,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed3-clip-parent]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 29,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed3-clip-occurrence:occ-1]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 30,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed4-track-parent]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 31,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed4-track-occurrence:occ-1]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 32,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed4-clip-parent]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 33,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed4-clip-occurrence:occ-1]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 34,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_remove_last_clip_keeps_exact_container_shape[payload]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 35,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_remove_last_clip_keeps_exact_container_shape[config]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 36,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_remove_last_clip_keeps_exact_container_shape[both]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 37,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_remove_last_clip_keeps_exact_container_shape[null-payload]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 38,
+      "id": "tests/editing_conformance/test_recipe_m1_commands.py::test_remove_last_clip_keeps_exact_container_shape[null-config]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 39,
+      "id": "tests/editing_conformance/test_recipe_m2_auto_placement.py::test_exact_capture_replay_inverse_and_redo[image-anchor]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "public-redo1140"
+      ]
+    },
+    {
+      "order": 40,
+      "id": "tests/editing_conformance/test_recipe_m2_auto_placement.py::test_exact_capture_replay_inverse_and_redo[image-absent]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "public-redo1140"
+      ]
+    },
+    {
+      "order": 41,
+      "id": "tests/editing_conformance/test_recipe_m2_auto_placement.py::test_exact_capture_replay_inverse_and_redo[video-anchor]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "public-redo1140"
+      ]
+    },
+    {
+      "order": 42,
+      "id": "tests/editing_conformance/test_recipe_m2_auto_placement.py::test_exact_capture_replay_inverse_and_redo[video-absent]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "public-redo1140"
+      ]
+    },
+    {
+      "order": 43,
+      "id": "tests/editing_conformance/test_step_undo_v2.py::test_aba_tail_refuses_even_when_the_current_guard_matches",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "step1124"
+      ]
+    },
+    {
+      "order": 44,
+      "id": "tests/editing_conformance/test_step_undo_v2.py::test_disjoint_later_commit_survives_and_inverse_uses_actual_landing_head",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "step1124"
+      ]
+    },
+    {
+      "order": 45,
+      "id": "tests/editing_conformance/test_step_undo_v2.py::test_gap_before_newer_target_is_its_input_but_not_earlier_targets_tail",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "step1124"
+      ]
+    },
+    {
+      "order": 46,
+      "id": "tests/editing_conformance/test_step_undo_v2.py::test_step_patch_is_never_executed_as_inverse_instructions",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "step1124"
+      ]
+    },
+    {
+      "order": 47,
+      "id": "tests/editing_conformance/test_step_undo_v2.py::test_semantic_creation_reversal_preserves_unselected_root_and_redoes",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "step1124"
+      ]
+    },
+    {
+      "order": 48,
+      "id": "tests/editing_conformance/test_step_undo_v2.py::test_partial_semantic_deletion_restores_source_and_order_from_accepted_boundary",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "step1124"
+      ]
+    },
+    {
+      "order": 49,
+      "id": "tests/core/pack/test_source_setup.py::test_real_outer_command_inventory_route_retains_sibling_creator_waits_and_graph",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 50,
+      "id": "tests/core/pack/test_source_setup.py::test_real_filtered_command_root_cf_pin_preserves_all_four_inventory_operations",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 51,
+      "id": "tests/core/execution/test_remotion_host_session.py::test_two_public_command_workers_settle_task_leases_then_host_drains_original",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 52,
+      "id": "tests/core/rendering/test_conformance.py::test_minimal_render_wire_parity",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 53,
+      "id": "tests/core/rendering/test_conformance.py::test_request_sensitive_support_wire_parity",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 54,
+      "id": "tests/core/rendering/test_conformance.py::test_passthrough_audio_wire_parity",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 55,
+      "id": "tests/core/rendering/test_conformance.py::test_no_audio_wire_parity - ...",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 56,
+      "id": "tests/core/rendering/test_conformance.py::test_attachment_wire_parity",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 57,
+      "id": "tests/core/rendering/test_conformance.py::test_intentional_failure_wire_parity",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 58,
+      "id": "tests/core/rendering/test_freeze.py::test_freeze_real_ffmpeg_transport_one_video_one_committed_sidecar",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 59,
+      "id": "tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_delete_recreation_keeps_exact_stage_order[False-0]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 60,
+      "id": "tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_delete_recreation_keeps_exact_stage_order[False-1]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 61,
+      "id": "tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_delete_recreation_keeps_exact_stage_order[True-0]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 62,
+      "id": "tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_delete_recreation_keeps_exact_stage_order[True-1]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 63,
+      "id": "tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_occurrence_partition_forgery_refuses_without_writes[order]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 64,
+      "id": "tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_occurrence_partition_forgery_refuses_without_writes[native-range]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 65,
+      "id": "tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_occurrence_partition_forgery_refuses_without_writes[effect-range]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 66,
+      "id": "tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_occurrence_partition_forgery_refuses_without_writes[source]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 67,
+      "id": "tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_occurrence_partition_forgery_refuses_without_writes[step]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 68,
+      "id": "tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_occurrence_partition_forgery_refuses_without_writes[ordinal]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 69,
+      "id": "tests/core/rendering/test_service.py::test_real_ffmpeg_renders_through_generic_service[nominal]",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 70,
+      "id": "tests/core/rendering/test_service.py::test_real_ffmpeg_renders_through_generic_service[with-audio]",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 71,
+      "id": "tests/core/rendering/test_service.py::test_real_ffmpeg_audio_reactive_through_generic_service",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 72,
+      "id": "tests/editing_conformance/test_nested_config_root_history.py::test_root_config_history_rejects_tampering_without_mutation[native-order]",
+      "package": "other",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "Runtime-1214 qualifiedRuntime"
+      ]
+    },
+    {
+      "order": 73,
+      "id": "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_exact_capture_replay_inverse_and_redo[create]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "M2media1149"
+      ]
+    },
+    {
+      "order": 74,
+      "id": "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_exact_capture_replay_inverse_and_redo[unplace]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "M2media1149"
+      ]
+    },
+    {
+      "order": 75,
+      "id": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py::test_exact_capture_replay_inverse_and_redo[image-append]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "M2media1149"
+      ]
+    },
+    {
+      "order": 76,
+      "id": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py::test_exact_capture_replay_inverse_and_redo[video-append]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "M2media1149"
+      ]
+    },
+    {
+      "order": 77,
+      "id": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py::test_exact_capture_replay_inverse_and_redo[image-shift]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "M2media1149"
+      ]
+    },
+    {
+      "order": 78,
+      "id": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py::test_exact_capture_replay_inverse_and_redo[video-overlay-anchor]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "M2media1149"
+      ]
+    },
+    {
+      "order": 79,
+      "id": "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_exact_capture_replay_inverse_and_redo[add-first]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "M2media1149"
+      ]
+    },
+    {
+      "order": 80,
+      "id": "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_exact_capture_replay_inverse_and_redo[add-second]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "M2media1149"
+      ]
+    },
+    {
+      "order": 81,
+      "id": "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_exact_capture_replay_inverse_and_redo[remove-middle]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "M2media1149"
+      ]
+    },
+    {
+      "order": 82,
+      "id": "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one[image]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "M2media1149"
+      ]
+    },
+    {
+      "order": 83,
+      "id": "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one[video]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "M2media1149"
+      ]
+    },
+    {
+      "order": 84,
+      "id": "tests/editing_conformance/test_recipe_m2_video_unplace.py::test_raw_media_golden_exact_inverse_replay_and_redo[False-False]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "M2media1149"
+      ]
+    },
+    {
+      "order": 85,
+      "id": "tests/editing_conformance/test_recipe_m2_video_unplace.py::test_raw_media_golden_exact_inverse_replay_and_redo[False-True]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "M2media1149"
+      ]
+    },
+    {
+      "order": 86,
+      "id": "tests/editing_conformance/test_recipe_m2_video_unplace.py::test_raw_media_golden_exact_inverse_replay_and_redo[True-False]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "M2media1149"
+      ]
+    },
+    {
+      "order": 87,
+      "id": "tests/editing_conformance/test_recipe_m2_video_unplace.py::test_raw_media_golden_exact_inverse_replay_and_redo[True-True]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "M2media1149"
+      ]
+    },
+    {
+      "order": 88,
+      "id": "tests/editing_conformance/test_recipe_occurrence_delete.py::test_delete_reload_exact_guarded_inverse_redo_order_and_metadata[3-0]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "occurrence-delete1141"
+      ]
+    },
+    {
+      "order": 89,
+      "id": "tests/editing_conformance/test_recipe_occurrence_delete.py::test_delete_reload_exact_guarded_inverse_redo_order_and_metadata[3-1]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "occurrence-delete1141"
+      ]
+    },
+    {
+      "order": 90,
+      "id": "tests/editing_conformance/test_recipe_occurrence_delete.py::test_delete_reload_exact_guarded_inverse_redo_order_and_metadata[3-2]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "occurrence-delete1141"
+      ]
+    },
+    {
+      "order": 91,
+      "id": "tests/editing_conformance/test_recipe_occurrence_delete.py::test_delete_reload_exact_guarded_inverse_redo_order_and_metadata[1-0]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "occurrence-delete1141"
+      ]
+    },
+    {
+      "order": 92,
+      "id": "tests/editing_conformance/test_recipe_occurrence_delete.py::test_other_occurrence_child_edit_and_metadata_do_not_conflict",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "occurrence-delete1141"
+      ]
+    },
+    {
+      "order": 93,
+      "id": "tests/editing_conformance/test_recipe_occurrence_delete.py::test_exact_opaque_and_tagged_metadata_survive_last_consumer_history_inverse[absent]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "occurrence-delete1141"
+      ]
+    },
+    {
+      "order": 94,
+      "id": "tests/editing_conformance/test_recipe_occurrence_delete.py::test_exact_opaque_and_tagged_metadata_survive_last_consumer_history_inverse[None]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "occurrence-delete1141"
+      ]
+    },
+    {
+      "order": 95,
+      "id": "tests/editing_conformance/test_recipe_occurrence_delete.py::test_exact_opaque_and_tagged_metadata_survive_last_consumer_history_inverse[metadata2]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "occurrence-delete1141"
+      ]
+    },
+    {
+      "order": 96,
+      "id": "tests/editing_conformance/test_recipe_occurrence_delete.py::test_exact_opaque_and_tagged_metadata_survive_last_consumer_history_inverse[metadata3]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "occurrence-delete1141"
+      ]
+    },
+    {
+      "order": 97,
+      "id": "tests/editing_conformance/test_occurrence_fork_source_baseline.py::test_retained_app_fork_reload_undo_restores_exact_closure",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "Runtime-1214 qualifiedRuntime"
+      ]
+    },
+    {
+      "order": 98,
+      "id": "tests/editing_conformance/test_recipe_occurrence_fork.py::test_reload_undo_redo_exact_and_replay[1]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "M2media1149"
+      ]
+    },
+    {
+      "order": 99,
+      "id": "tests/editing_conformance/test_recipe_occurrence_fork.py::test_reload_undo_redo_exact_and_replay[2]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "M2media1149"
+      ]
+    },
+    {
+      "order": 100,
+      "id": "tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[set-container0]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "shot-set1156"
+      ]
+    },
+    {
+      "order": 101,
+      "id": "tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[set-container1]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "shot-set1156"
+      ]
+    },
+    {
+      "order": 102,
+      "id": "tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[set-container2]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "shot-set1156"
+      ]
+    },
+    {
+      "order": 103,
+      "id": "tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[clear-container0]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "shot-set1156"
+      ]
+    },
+    {
+      "order": 104,
+      "id": "tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[clear-container1]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "shot-set1156"
+      ]
+    },
+    {
+      "order": 105,
+      "id": "tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[clear-container2]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "shot-set1156"
+      ]
+    },
+    {
+      "order": 106,
+      "id": "tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[clear-container3]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "shot-set1156"
+      ]
+    },
+    {
+      "order": 107,
+      "id": "tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[null-container0]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "shot-set1156"
+      ]
+    },
+    {
+      "order": 108,
+      "id": "tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[null-container1]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "shot-set1156"
+      ]
+    },
+    {
+      "order": 109,
+      "id": "tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[null-container2]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "shot-set1156"
+      ]
+    },
+    {
+      "order": 110,
+      "id": "tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[empty-container0]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "shot-set1156"
+      ]
+    },
+    {
+      "order": 111,
+      "id": "tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[empty-container1]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "shot-set1156"
+      ]
+    },
+    {
+      "order": 112,
+      "id": "tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[empty-container2]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "shot-set1156"
+      ]
+    },
+    {
+      "order": 113,
+      "id": "tests/editing_conformance/test_recipe_shot_set.py::test_clear_is_removal_and_distinct_from_empty_and_null",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "shot-set1156"
+      ]
+    },
+    {
+      "order": 114,
+      "id": "tests/editing_conformance/test_recipe_shot_set.py::test_name_and_coupled_settings_are_one_atomic_command_preserving_unmentioned_fields",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "shot-set1156"
+      ]
+    },
+    {
+      "order": 115,
+      "id": "tests/editing_conformance/test_recipe_shot_set.py::test_portable_shot_set_golden",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "shot-set1156"
+      ]
+    },
+    {
+      "order": 116,
+      "id": "tests/editing_conformance/test_recipe_shot_set.py::test_shot_set_capture_and_save_import_no_renderer_or_runtime",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "shot-set1156"
+      ]
+    },
+    {
+      "order": 117,
+      "id": "tests/editing_conformance/test_recipe_text_binding_native.py::test_absent_collection_is_restored_exactly",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "actual-home1242"
+      ]
+    },
+    {
+      "order": 118,
+      "id": "tests/editing_conformance/test_recipe_text_binding_native.py::test_multiple_births_in_absent_collection_have_exact_batch_inverse",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "actual-home1242"
+      ]
+    },
+    {
+      "order": 119,
+      "id": "tests/editing_conformance/test_step_undo_v2.py::test_one_of_ten_notes_preserves_other_steps_and_redoes_exactly",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "step1124"
+      ]
+    },
+    {
+      "order": 120,
+      "id": "tests/editing_conformance/test_step_undo_v2.py::test_whole_inverse_records_each_sequential_reversal_instead_of_coalescing",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "step1124"
+      ]
+    },
+    {
+      "order": 121,
+      "id": "tests/editing_conformance/test_step_undo_v2.py::test_last_step_restores_its_own_input_not_commit_input",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "step1124"
+      ]
+    },
+    {
+      "order": 122,
+      "id": "tests/editing_conformance/test_step_undo_v2.py::test_step_contains_contiguous_command_run_and_reverses_all_its_commands",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "step1124"
+      ]
+    },
+    {
+      "order": 123,
+      "id": "tests/editing_conformance/test_step_undo_v2.py::test_later_step_dependency_refuses_subset_but_all_steps_reverse[dependency0]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "step1124"
+      ]
+    },
+    {
+      "order": 124,
+      "id": "tests/editing_conformance/test_step_undo_v2.py::test_later_step_dependency_refuses_subset_but_all_steps_reverse[dependency1]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "step1124"
+      ]
+    },
+    {
+      "order": 125,
+      "id": "tests/editing_conformance/test_step_undo_v2.py::test_later_step_dependency_refuses_subset_but_all_steps_reverse[dependency2]",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "step1124"
+      ]
+    },
+    {
+      "order": 126,
+      "id": "tests/editing_conformance/test_step_undo_v2.py::test_inverse_execution_rechecks_surviving_steps_without_a_preflight_scan",
+      "package": "provider",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "step1124"
+      ]
+    },
+    {
+      "order": 127,
+      "id": "tests/packs/rendering/test_builtin_registration.py::test_real_ffmpeg_render_through_registered_backend",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 128,
+      "id": "tests/packs/rendering/test_ffmpeg_backend.py::test_manifest_command_dispatches_from_pack_root",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 129,
+      "id": "tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest::test_text_card_renders_visible_markup",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "remotion1206"
+      ]
+    },
+    {
+      "order": 130,
+      "id": "tests/packs/rendering/test_render_export_task_adapter.py::test_render_export_adapter_writes_real_mp4_and_is_callable",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 131,
+      "id": "tests/packs/rendering/test_remotion_backend.py::test_manifest_command_runs_from_owning_pack_root",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 132,
+      "id": "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_accepts_empty_and_exact_text_fields",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 133,
+      "id": "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 134,
+      "id": "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_non_rendered_audio_ownership",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 135,
+      "id": "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_accepts_window_and_rejects_fps_mismatch",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 136,
+      "id": "tests/packs/rendering/test_threejs_backend.py::test_threejs_identity_invariants_never_claim_remotion",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 137,
+      "id": "tests/packs/rendering/test_threejs_backend.py::test_threejs_own_namespace_config_is_strict",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 138,
+      "id": "tests/packs/test_b2_integrated_closure.py::test_catalog_preserves_stage1_capability_census",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 139,
+      "id": "tests/packs/test_vibecomfy_ir_bridge.py::test_t9_actual_executor_child_loads_pinned_callable_and_settles_output",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 140,
+      "id": "tests/packs/test_vibecomfy_ir_bridge.py::test_t9_absent_explicit_activation_preserves_production_dispatch[False]",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 141,
+      "id": "tests/packs/test_vibecomfy_ir_bridge.py::test_t9_absent_explicit_activation_preserves_production_dispatch[True]",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 142,
+      "id": "tests/packs/test_vibecomfy_ir_bridge.py::test_t9_child_uses_explicit_pinned_fixture_outside_product_root[None]",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 143,
+      "id": "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_passes_inventory_identity_and_restarts_on_change",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 144,
+      "id": "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_stops_on_correlated_terminal_registration_failure",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 145,
+      "id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 146,
+      "id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 147,
+      "id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 148,
+      "id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 149,
+      "id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 150,
+      "id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 151,
+      "id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 152,
+      "id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-25-ready-True-25-None]",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 153,
+      "id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-None-ready-False-300.0-None]",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 154,
+      "id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-25-ready-True-25-None]",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 155,
+      "id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-120-None]",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 156,
+      "id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-terminal-False-1-None]",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 157,
+      "id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_pid-False-1-None]",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 158,
+      "id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_birth-False-1-None]",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 159,
+      "id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_instance-False-1-None]",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 160,
+      "id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_source-False-1-None]",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 161,
+      "id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-None]",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 162,
+      "id": "tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 163,
+      "id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-400-ready-True-400-400]",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 164,
+      "id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-150.3-30]",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 165,
+      "id": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-30]",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 166,
+      "id": "tests/sdk/test_p4_note_rerun.py::test_p4_note_conflict_reruns_public_function_from_verified_peer_document",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "actual-home1242"
+      ]
+    },
+    {
+      "order": 167,
+      "id": "tests/reshape/test_doctor_contract_shapes.py::test_smoke_doctor_lane_accepts_both_payload_shapes[observed-with-ok]",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 168,
+      "id": "tests/reshape/test_doctor_contract_shapes.py::test_smoke_doctor_lane_accepts_both_payload_shapes[observed-without-ok]",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 169,
+      "id": "tests/reshape/test_repo_hygiene.py::test_live_tree_passes_repo_hygiene",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 170,
+      "id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "deferred",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 171,
+      "id": "tests/stage1/test_capability_parity_gate_luna.py::test_stage1_capability_parity_is_explicit_and_family_proven",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "actual-home1242"
+      ]
+    },
+    {
+      "order": 172,
+      "id": "tests/sdk/test_timeline_sheet_native.py::test_omitted_native_clip_row_uses_normal_commit_retry_undo_redo_and_rebases",
+      "package": "other",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "actual-home1242"
+      ]
+    },
+    {
+      "order": 173,
+      "id": "tests/sdk/test_timeline_structure.py::test_joined_music_updates_source_and_literal_duration_for_publication",
+      "package": "other",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "actual-home1242"
+      ]
+    },
+    {
+      "order": 174,
+      "id": "tests/test_capability_ledger.py::test_shipped_ledger_reconciles_historical_capability_sets",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "actual-home1242"
+      ]
+    },
+    {
+      "order": 175,
+      "id": "tests/stage1/test_media_handoff_render_boundary.py::test_host_derived_registry_executes_canonical_ffmpeg_executor",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 176,
+      "id": "tests/test_capability_ledger.py::test_host_consumes_the_reconciled_ledger_before_readiness_matrix",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "actual-home1242"
+      ]
+    },
+    {
+      "order": 177,
+      "id": "tests/test_capability_ledger.py::test_source_census_reports_unreviewed_pack_labels_without_failing_host",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "actual-home1242"
+      ]
+    },
+    {
+      "order": 178,
+      "id": "tests/test_capability_ledger.py::test_reviewed_v3_pack_labels_preserve_exact_canonical_action_admission",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "actual-home1242"
+      ]
+    },
+    {
+      "order": 179,
+      "id": "tests/test_astrid_beta_capability_matrix.py::test_beta_matrix_covers_every_discovered_capability_and_declaration",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "actual-home1242"
+      ]
+    },
+    {
+      "order": 180,
+      "id": "tests/test_conftest_environment.py::test_bootstrap_environment_is_accepted_by_the_remotion_probe_context",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 181,
+      "id": "tests/test_env_vars_conformance.py::TestNoBareStringAccess::test_no_catalogued_bare_strings_in_core",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 182,
+      "id": "tests/sdk/test_timeline_inverse_fork_guard.py::test_fork_output_guard_allows_independent_parent_edit_and_preview_redo",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 183,
+      "id": "tests/sdk/test_timeline_inverse_fork_guard.py::test_valid_fork_history_distinguishes_output_consumers_from_retained_sibling[retained-sibling]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 184,
+      "id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-0]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "occurrence-delete1141"
+      ]
+    },
+    {
+      "order": 185,
+      "id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-1]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "occurrence-delete1141"
+      ]
+    },
+    {
+      "order": 186,
+      "id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-2]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "occurrence-delete1141"
+      ]
+    },
+    {
+      "order": 187,
+      "id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[1-0]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "occurrence-delete1141"
+      ]
+    },
+    {
+      "order": 188,
+      "id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_two_independent_group_deletes_rebase_and_restore_without_parent_membership_guard",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "occurrence-delete1141"
+      ]
+    },
+    {
+      "order": 189,
+      "id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_same_id_recreation_is_reserved_but_authenticated_undo_reuses_id",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "occurrence-delete1141"
+      ]
+    },
+    {
+      "order": 190,
+      "id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_original_app_whole_group_visible_result_after_canonical_migration_boundary",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "occurrence-delete1141"
+      ]
+    },
+    {
+      "order": 191,
+      "id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_grouped_two_deletes_are_one_history_inverse_with_exact_original_order",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "occurrence-delete1141"
+      ]
+    },
+    {
+      "order": 192,
+      "id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_last_consumer_inverse_preserves_existing_nonliteral_source_map_baseline",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "occurrence-delete1141"
+      ]
+    },
+    {
+      "order": 193,
+      "id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_independent_shared_occurrences_can_both_delete_across_last_consumer_materialization",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "occurrence-delete1141"
+      ]
+    },
+    {
+      "order": 194,
+      "id": "tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-commit-omitted-reads-label]",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "open-session1153"
+      ]
+    },
+    {
+      "order": 195,
+      "id": "tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-commit-omitted-reads-function]",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "open-session1153"
+      ]
+    },
+    {
+      "order": 196,
+      "id": "tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-commit-declared-reads-label]",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "open-session1153"
+      ]
+    },
+    {
+      "order": 197,
+      "id": "tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-commit-declared-reads-function]",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "open-session1153"
+      ]
+    },
+    {
+      "order": 198,
+      "id": "tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-preview-omitted-reads-label]",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "open-session1153"
+      ]
+    },
+    {
+      "order": 199,
+      "id": "tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-preview-omitted-reads-function]",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "open-session1153"
+      ]
+    },
+    {
+      "order": 200,
+      "id": "tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-preview-declared-reads-label]",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "open-session1153"
+      ]
+    },
+    {
+      "order": 201,
+      "id": "tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-preview-declared-reads-function]",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "open-session1153"
+      ]
+    },
+    {
+      "order": 202,
+      "id": "tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-commit-omitted-reads-label]",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "open-session1153"
+      ]
+    },
+    {
+      "order": 203,
+      "id": "tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-commit-omitted-reads-function]",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "open-session1153"
+      ]
+    },
+    {
+      "order": 204,
+      "id": "tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-commit-declared-reads-label]",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "open-session1153"
+      ]
+    },
+    {
+      "order": 205,
+      "id": "tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-commit-declared-reads-function]",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "open-session1153"
+      ]
+    },
+    {
+      "order": 206,
+      "id": "tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-preview-omitted-reads-label]",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "open-session1153"
+      ]
+    },
+    {
+      "order": 207,
+      "id": "tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-preview-omitted-reads-function]",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "open-session1153"
+      ]
+    },
+    {
+      "order": 208,
+      "id": "tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-preview-declared-reads-label]",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "open-session1153"
+      ]
+    },
+    {
+      "order": 209,
+      "id": "tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-preview-declared-reads-function]",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "open-session1153"
+      ]
+    },
+    {
+      "order": 210,
+      "id": "tests/sdk/test_timeline_open_commit_v2.py::test_function_reads_each_returned_head_and_recomputes_with_new_keys",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "open-session1153"
+      ]
+    },
+    {
+      "order": 211,
+      "id": "tests/sdk/test_timeline_open_commit_v2.py::test_three_evaluation_bound_survives_reopening",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "open-session1153"
+      ]
+    },
+    {
+      "order": 212,
+      "id": "tests/sdk/test_timeline_open_commit_v2.py::test_unknown_retry_then_conflict_continues_with_persisted_evaluation_count",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "open-session1153"
+      ]
+    },
+    {
+      "order": 213,
+      "id": "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head",
+      "package": "helpers",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 214,
+      "id": "tests/sdk/test_timeline_public_command.py::test_public_command_keeps_source_and_patch_guards[pair]",
+      "package": "other",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 215,
+      "id": "tests/sdk/test_timeline_public_command.py::test_public_command_keeps_source_and_patch_guards[foreign]",
+      "package": "other",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 216,
+      "id": "tests/sdk/test_timeline_public_command.py::test_public_command_keeps_source_and_patch_guards[digest]",
+      "package": "other",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 217,
+      "id": "tests/test_installer_service_repair_integration.py::test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_pids[False-0]",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 218,
+      "id": "tests/test_installer_service_repair_integration.py::test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_pids[True-1]",
+      "package": "bootstrap",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 219,
+      "id": "tests/test_result_manifest.py::test_output_result_registry_conformance_covers_default_registry",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "artifacts1201"
+      ]
+    },
+    {
+      "order": 220,
+      "id": "tests/test_sdk_public_surface.py::test_invoke_maps_orchestrator_result_errors_into_public_taxonomy",
+      "package": "other",
+      "scope": "non-core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "actual-home1242"
+      ]
+    },
+    {
+      "order": 221,
+      "id": "tests/test_timeline_clip_replacement.py::test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "package": "other",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "authoring-media1213"
+      ]
+    },
+    {
+      "order": 222,
+      "id": "tests/timeline/test_authoring_feedback_residual.py::test_edits_to_new_duplicate_are_not_hidden_by_added_occurrence_summary",
+      "package": "other",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 223,
+      "id": "tests/timeline/test_authoring_media.py::test_document_publish_forwards_new_stale_head_to_runtime",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "authoring-media1213"
+      ]
+    },
+    {
+      "order": 224,
+      "id": "tests/timeline/test_authoring_media.py::test_document_publish_captures_verified_media_before_document_patches",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "authoring-media1213"
+      ]
+    },
+    {
+      "order": 225,
+      "id": "tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[True]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "authoring-media1213"
+      ]
+    },
+    {
+      "order": 226,
+      "id": "tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[False]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "authoring-media1213"
+      ]
+    },
+    {
+      "order": 227,
+      "id": "tests/timeline/test_authoring_media.py::test_public_document_compound_inverse_restores_exact_original",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "authoring-media1213"
+      ]
+    },
+    {
+      "order": 228,
+      "id": "tests/timeline/test_authoring_media.py::test_catalog_import_remains_reusable_after_later_parent_cas_conflict",
+      "package": "other",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": true,
+      "qualification_receipts": [
+        "authoring-media1213"
+      ]
+    },
+    {
+      "order": 229,
+      "id": "tests/timeline/test_authoring_publication_migrations.py::test_semantic_removal_undo_restores_exact_closure",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 230,
+      "id": "tests/timeline/test_authoring_shared_alias_commit.py::test_selected_alias_forks_and_retains_exact_sibling[first]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 231,
+      "id": "tests/timeline/test_authoring_shared_alias_commit.py::test_selected_alias_forks_and_retains_exact_sibling[second]",
+      "package": "media",
+      "scope": "core",
+      "disposition": "UNPROVEN",
+      "regression_status": "UNPROVEN",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 232,
+      "id": "tests/integrations/test_d09_managed_scene_only.py::test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle[saved]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 233,
+      "id": "tests/integrations/test_d09_managed_scene_only.py::test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle[candidate]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 234,
+      "id": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_prepared_real_plate_background_picture_and_gap[False]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 235,
+      "id": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_prepared_real_plate_background_picture_and_gap[True]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 236,
+      "id": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_prepared_empty_raw_plate_stays_unknown",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 237,
+      "id": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_registered_plate_ssr_preserves_existing_draw_and_default_theme",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 238,
+      "id": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_managed_transparent_image_has_opaque_backing_without_media_alpha_proof",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 239,
+      "id": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_real_plate_fade_dip_and_translucent_gap",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 240,
+      "id": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_real_plate_wipe_mosaic_pan_and_tint_keep_the_painted_backing",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 241,
+      "id": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params0]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 242,
+      "id": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params1]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 243,
+      "id": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params2]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 244,
+      "id": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params3]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 245,
+      "id": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_public12_outer_geometry_gap_does_not_erase_original_positive[outer0]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 246,
+      "id": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_public12_outer_geometry_gap_does_not_erase_original_positive[outer1]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 247,
+      "id": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_public12_outer_geometry_gap_does_not_erase_original_positive[outer2]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 248,
+      "id": "tests/packs/rendering/test_capture_scene_labels.py::test_real_host_labels_are_retained_once_and_drawn_without_private_math",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 249,
+      "id": "tests/packs/rendering/test_capture_scene_labels.py::test_mixed_or_missing_capture_cannot_retain_facts",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 250,
+      "id": "tests/packs/rendering/test_capture_scene_labels.py::test_other_source_or_uncaptured_frame_never_falls_back",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 251,
+      "id": "tests/packs/rendering/test_capture_scene_labels.py::test_unknown_public_geometry_is_an_answer_and_unavailability_is_not_empty",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 252,
+      "id": "tests/packs/rendering/test_capture_scene_labels.py::test_real_media_bounds_use_public_canvas_and_keep_uncertain_alpha",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 253,
+      "id": "tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[frame]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 254,
+      "id": "tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[width]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 255,
+      "id": "tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[height]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 256,
+      "id": "tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[clipId]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 257,
+      "id": "tests/integrations/test_d09_managed_scene_only.py::test_public_checkout_check_uses_retained_managed_scene_result",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 258,
+      "id": "tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-text-card]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 259,
+      "id": "tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-text]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 260,
+      "id": "tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-am-snap-plate]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 261,
+      "id": "tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-image]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 262,
+      "id": "tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-frame-overlay]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 263,
+      "id": "tests/packs/rendering/test_scene_source_carry.py::test_mixed_cached_and_fresh_batch_has_facts_only_for_observed_frames[native]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 264,
+      "id": "tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-capture]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 265,
+      "id": "tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-missing]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 266,
+      "id": "tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-copy]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 267,
+      "id": "tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-query]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 268,
+      "id": "tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-frames]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 269,
+      "id": "tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-no_callback]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 270,
+      "id": "tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-extra]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 271,
+      "id": "tests/packs/rendering/test_scene_source_carry.py::test_canonical_basis_uses_whole_partial_canvas_and_rational_rate[native]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 272,
+      "id": "tests/packs/rendering/test_scene_source_carry.py::test_candidate_retains_real_compiled_candidate_and_uncertified_base_hint[native]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 273,
+      "id": "tests/packs/rendering/test_scene_source_carry.py::test_execute_handoff_uses_actual_provider_and_public_labels_in_exported_pack[native]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 274,
+      "id": "tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[native-text-card]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 275,
+      "id": "tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[native-image]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    },
+    {
+      "order": 276,
+      "id": "tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[native-frame-overlay]",
+      "package": "setup",
+      "scope": "non-core",
+      "disposition": "env",
+      "regression_status": "not-applicable",
+      "qualified": false,
+      "qualification_receipts": []
+    }
+  ],
+  "no_actions_taken": [
+    "tests",
+    "source execution",
+    "new full/gate run",
+    "network/upstream conclusion",
+    "product/source/package/install/git mutation"
+  ]
+}
