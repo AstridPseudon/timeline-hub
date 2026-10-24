@@ -203,6 +203,7 @@ class TimelineCommitStore:
         from .timeline_commit import CommitRejected
         try:
             data, records = json.loads(row["result_json"]), json.loads(edge["records_json"])
+            metadata = json.loads(edge["metadata_json"])
             previous = {"revision_id": edge["previous_revision_id"], "publication_id": edge["previous_publication_id"]}
             document = data["canonical_document"]
             valid = (edge["intent"] == "recorded" and row["command_kind"] == "timeline.commit"
@@ -218,9 +219,9 @@ class TimelineCommitStore:
                      and data["previous_publication_id"] == previous["publication_id"]
                      and data["publisher"] == edge["publisher"]
                      and all(data[k] == edge[k] for k in ("provider_version", "compiler_version"))
-                     and {k: data[k] for k in json.loads(edge["metadata_json"])
+                     and {k: data[k] for k in metadata
                           if k in data and k in _METADATA} == {
-                         k: json.loads(edge["metadata_json"])[k] for k in json.loads(edge["metadata_json"])
+                         k: metadata[k] for k in metadata
                          if k in _METADATA
                      })
             base = {"revision_id": data["base_revision_id"], "publication_id": data["base_publication_id"]}
@@ -228,7 +229,6 @@ class TimelineCommitStore:
             modern_status = "accepted" if previous == base else "merged"
             valid = valid and data["status"] in {historical_status, modern_status}
             valid = valid and data["rebased_onto"] == (None if previous == base else previous)
-            metadata = json.loads(edge["metadata_json"])
             if "merge_mode" in metadata:
                 valid = valid and data.get("merge_mode") == metadata["merge_mode"]
             if "merge" in metadata:
