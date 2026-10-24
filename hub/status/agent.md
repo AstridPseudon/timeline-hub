@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T11:18:11Z | dispatcher heartbeat 14s | live 6 (sol 2, luna 4, other 0) | busy30 23 | status age 3m -->
-# agent board, 2026-10-24T11:14:58Z
+<!-- agent | 2026-10-24T11:20:46Z | dispatcher heartbeat 14s | live 6 (sol 2, luna 4, other 0) | busy30 27 | status age 1m -->
+# agent board, 2026-10-24T11:18:56Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -169,8 +169,8 @@
 
 | R2 fixture step | Restore 14 original undo scenarios | Luna | Independent no-weakening review | review | Author 1105; review 1115 | Author 35 PASS, all 23 body ASTs unchanged. Production compiled accepted boundaries and closure facts; no product edit. | 80563c0800 |
 | R2 fixture m1 | Restore 25 exact recipe redo cases | Luna | Faithful materialization builder | review | Author 1105; review 1115 | Partial 116 PASS and 10 shared redo FAIL. Closure builder restored; authenticated materialization still absent. Review owns precise next seam; no merge. | 38db6d2b04 |
-| R2 fixture redo | Restore6 native replay cases | Luna | Authentic closure/materialization | doing | agt-R2-fixture-redo-1105 | Two fixture helpers only; no invented private authority or changed original assertions. | Basec2b |
-| F full profile | Prepare exact qualified profile row | Luna | Candidate review | review | Author 1105; review 1113 | Candidate keeps all tests, -q -n 3 and 172 outside rows. Existing 819acf profile preflight passed. No installation or duplicate full. | Preparation only |
+| R2 fixture redo | Restore 6 native replay cases | Luna | Independent no-weakening review | review | Author 1105; review 1118 | Author six PASS, strict Ruff and mypy PASS. Two helper files only, original ASTs unchanged; production compiler and provider materialization used. | Saved WIP 1105 |
+| F full profile | Install exact qualified profile row | Luna | Independent 1113 PREPARED PASS | doing | Installer 1118 | One-row candidate qualified: genuine 819acf, all tests, -q -n 3 and 172 outside rows exact. Guarded installation only; no full retry. | Candidate 4a2a3472d1 |
 | R1 full tamper | Classify5 retained guard failures | HARD Sol | Valid current production witness | doing | agt-R1-full-tamper-sol-1105 | Nativeorder and publicpair/foreign/digest refusals remain strict. Smallest source fix only after legitimate currentcause. | Basec2b |
 
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
@@ -187,7 +187,7 @@ D39: Canonical adoption is integrated-qualified on exact 0c2 with all 15 mapping
 D49 venue: Primary own-service full 9758 on venv-agent is terminal FAIL: 17,673 passed, 231 failed, 45 errors, 4 skips and 566 subtests on ba55/tree c13. Orchestrator selected this venue pending the owner; no duplicate full. Setup correction is preparing; final qualification remains unproven.
 Safety: Prior Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
 Disk: About 7.9 GB free after eight active worker checkouts. Finished rationale1045 recycled; current evidence trees stay for active reviewers. Sweep3 removed zero dirs; compact packed zero and compressed one old log. No new heavy run below 8.5 GB; prior denied targets stay stopped.
-Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred. D46 U2c closed and folded into the freeze; relay and remote providers stay deferred and fail-closed. D47 memo held.
+D52: New owner direction supersedes D37 retention for proven dormant code and its exclusive tests. Unique triage1118 maps all276 bad nodes before exact removal assignments. D31 requires current caller and repo-owner proof; no blanket deletion. V4 and D14/D23 remain cut or deferred. D46 U2c closed and folded into the freeze; relay and remote providers stay deferred and fail-closed. D47 memo held.
 Prior next ready: Rationale is qualified on unchanged homec2b by1045 PASS. Capture export1055 resumes saved1040 WIP after repeated output-limit failures; Viewing owns terminal3783 verdict. Kit received1036 and Runtime route1035 PASS; existing admission hold remains. Full9758 is99percent. No ready task waits.
 Evidence: [D39 review](../../design/agt-D39-header-review-0809.md), [ABA review](../../design/agt-F-ABA-cumulative-review-0809.md), [wheel input](../../design/agt-OPS-real-wheel-qualify-0810.md), [Farm checkpoint](../../design/farm-agent-full-checkpoint-20261024T0555Z.md).
 
@@ -208,8 +208,12 @@ Pass11:05Z: Runtime1045 withdrew the conditional child request; both lanes retai
 Pass 11:09Z: Independent census1058 PASS confirms all276 bad IDs, 64 historical closed overlaps, 119 retained traceback headers and157 summary-only results. Setup1105 PASS confirms3 symlink loops plus42 stale artifact mismatches and authentic819acf profile. Both results published; profilecandidate1105 remains preparatory. Seven other source/fixture/review workers continue. Child rows now correctly gated on existing owner admission, after kit receipt dependencies cleared.
 
 | R2 captured history | Qualify nested historical source codec | HARD Sol / Luna | Faithful captured input confirmed | doing | Sol 1112; whole path 1112 PASS | Whole-root equality loses historical codec after later inverse edits. Accepted stage boundary is required authority. Source cause qualified, behavior still FAIL. | Base c2b |
-| OPS new five-file kit | Verify actual received new revision | Luna | Independent actual result review | review | Receipt 1113 PASS; review 1116 | Actual ORCH, normal hub and committed 2b4a five hashes and modes match. New component included. Owner child hold remains; no candidate. | Source 6de |
+| OPS new five-file kit | Verify actual received new revision | Luna | Independent actual result PASS | merged | Receipt 1113; review 1116 PASS | All five ORCH, normal hub and committed hashes and modes match exact 6de. Current hub a3f49; prior 2b4a scope retained. Owner child hold remains. | Source 6de |
 
 Pass 11:12Z: Completed three result reviews finalized via supported stop, all confirmed no live process. R2 current11 passed ten and failed one captured nested historical codec path. Unique HARD Sol1112 and independent whole-path1112 dispatched immediately. Noncore171 review FAIL rejected unsupported product/environment labels and invented traceback coverage; first return1112 queued on saved author branch. Profile1105 candidate passed preparation and review1113 queued. Runtime new-kit peer1106 becomes owned received-five-file1113 row, no child admission. Three finished trees recycled this round; evidence branches and reports retained.
 
 Pass 11:15Z: Stepfixture8056 author35PASS and unchanged23bodyASTs enters independent1115. M1WIP38db author116PASS10FAIL stays unmerged; independent1115 identifies faithful materialization continuation. Wholepath1112 confirms captured nested input is faithful and full-root equality loses its historical codec after later stage edits; unique Sol1112 continues. Newfive-kit actualreceipt1113 PASS on committed2b4a enters independent1116. No new heavy run or child.
+
+| F D52 triage | Classify all 276 bad nodes by live scope | Luna | Owner D52 | doing | agt-F-D52-triage-1118 | Required categories: ours-live, dead-scope, deferred, env, pre-existing. Exact caller and exclusive-test proof precedes each removal. No official count change. | Base c2b |
+
+Pass 11:18Z: D51/D52 consumed. Freeze stays on current snapshot; no upstream chase. All276 D52 classifier1118 dispatched, with unsupported summary-only causes kept explicit. Corrected171 evidence enters independent1118. Six redo fixture controls enter independent1118. ProfilePREPARED1113 PASS -> guarded single-row installer1118, no body. Newfive-kit received1113 and independent1116 PASS; Runtimeinstalled1107/publication1110 PASS consumed, existing owner child hold unchanged. More finished worktrees recycled; no denied cleanup target retried.
