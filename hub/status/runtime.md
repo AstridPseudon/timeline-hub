@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T04:01:12Z | dispatcher heartbeat 3s | live 5 (sol 2, luna 3, other 0) | busy30 12 | status age 0m -->
+<!-- main | 2026-10-24T04:03:45Z | dispatcher heartbeat 6s | live 2 (sol 1, luna 1, other 0) | busy30 14 | status age 0m -->
 # runtime board, 2026-10-24T03:57:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -58,7 +58,7 @@
 
 | OPS-farm-agent-full | Prepare supported farm full-suite setup | Luna / Luna | Exact farm suite and tuple inputs | doing | rt-OPS-farm-agent-full-0358 | Candidate only: fresh store API, authentic template and separate full-farm row. No live operation or full run. | Integration artifact base |
 | R2r-historical-image | Classify current inverse image mismatch | Sol / Luna | Exact Agent 12701589 source | doing | rt-R2r-historical-image-sol-0353 | Original last-owner case fails on Runtime 36760. Compare actual native and effect images; no bug attribution yet. | 36760 base |
-| R-D42-history-memo | Memoize complete verified replay inputs | Sol / Luna | Complete source qualification | review | Return 0346; cumulative review 0357 | First bypass corrected. Latest regressions and socket lane require qualification. [Author](../../design/runtime-D42-validator-return-0346.md) | 35320a9e held |
+| R-D42-history-memo | Memoize complete verified replay inputs | Sol / Luna | Stateful dependency correction | doing | Review 0357 found bypass; Sol 0403; audit 0403 | 145 passed. Mutable closure attack still bypasses warm verification. Candidate held; whole validation path under review. | a6843aa9 held |
 | R-D42-proof-pin | Backport memo onto compatible proof pin | Sol / Luna | Source review in parallel | doing | Corrected pin Sol 0358; prior 0339 BLOCKED | 145 plus 135 passed; helper bypass reproduced. Ten imported later guards also fail on unchanged parent. | 37eb base; candidate held |
 | R-D42-HTTP | Cold, warm and concurrent native21 GET | Luna | Corrected reviewed proof pin | blocked:runtime | HTTP 0344 stop requested | Preparation retained. Release needs cold, warm and two concurrent HTTP timings on exact committed pin. | Await corrected pin |
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
@@ -70,7 +70,7 @@ The earlier history cost fix passed 145 cases on exact head 45c3 with Agent 4151
 Blockers: App / Proof — P3 3362 failed before Gate5. P2 12221 passed readiness; three gestures failed, five not run. App owns causes and D42 coalescing; no repeat before qualified pin.
 Blockers: Runtime — Full 29085 retains 36 failures. Targeted speed, receipt and manifest repairs passed. Headless, occupancy and contract remain assigned. No unchanged full rerun.
 Blockers: Freeze — D39 client regeneration and Agent/App tuple adoption are held for the freeze; current consumer pins stay intact.
-Blockers: Runtime — D42 correction 0346 is complete; cumulative review 0357 has network access for required socket tests. Backport and HTTP release wait for independent PASS.
+Blockers: Runtime — D42 review 0357 demonstrated a mutable closure bypass. Sol 0403 owns correction; independent whole-path audit 0403 runs in parallel. No pin release.
 Blockers: Agent — D40 consumer merged on 4745 after independent 32-control review. Integrated and installed qualifications remain Agent-owned; no Runtime producer action owed.
 
 Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held until freeze.
