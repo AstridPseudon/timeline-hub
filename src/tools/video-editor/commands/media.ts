@@ -8,8 +8,6 @@ import { getAssetImmediateSource } from '@/tools/video-editor/lib/asset-registry
 import { buildDataFromCurrentRegistry } from '@/tools/video-editor/lib/timeline-save-utils.ts';
 import { validateSerializedConfig } from '@/tools/video-editor/lib/serialize.ts';
 import type { AssetRegistry, TimelineClip, ResolvedTimelineConfig, PinnedShotGroup } from '@/tools/video-editor/types/index.ts';
-import { applyTimelineCommandEffect, createTimelineCommandRunner } from './runner.ts';
-import { buildTimelineCommandData } from './timelineData.ts';
 import type {
   TimelineCommand,
   TimelineCommandDescriptor,
@@ -752,64 +750,6 @@ export const MEDIA_COMMAND_DESCRIPTORS = [
   SWAP_MEDIA_COMMAND_DESCRIPTOR,
   PLACE_PREPARED_MEDIA_COMMAND_DESCRIPTOR,
 ] as const;
-
-const mediaCommandRunner = createTimelineCommandRunner<AddMediaCommand | SwapMediaCommand>([
-  ADD_MEDIA_COMMAND_DESCRIPTOR,
-  SWAP_MEDIA_COMMAND_DESCRIPTOR,
-]);
-
-const getFailureMessage = (
-  result: ReturnType<typeof mediaCommandRunner.apply>,
-): string => {
-  const validationMessage = result.errors[0]?.validationErrors?.[0]?.message;
-  return validationMessage ?? result.errors[0]?.message ?? 'Command failed.';
-};
-
-export const applyProvisionedMediaCommandToConfig = (
-  config: TimelineData['config'],
-  registry: AssetRegistry,
-  command: AddMediaCommand | SwapMediaCommand,
-): { config?: TimelineData['config']; result: string } => {
-  const data = buildTimelineCommandData(config, registry);
-  const result = mediaCommandRunner.apply(data, { commands: [command] });
-  if (result.status === 'rejected') {
-    return { result: getFailureMessage(result) };
-  }
-
-  return {
-    config: result.nextData.config,
-    result: result.commandResults[0]?.summary ?? 'Applied media command.',
-  };
-};
-
-export const dryRunProvisionedMediaCommand = (
-  currentData: TimelineData,
-  command: AddMediaCommand | SwapMediaCommand,
-) => {
-  return mediaCommandRunner.dryRun(currentData, { commands: [command] });
-};
-
-export const applyProvisionedMediaCommand = (
-  currentData: TimelineData,
-  command: AddMediaCommand | SwapMediaCommand,
-) => {
-  const result = mediaCommandRunner.apply(currentData, { commands: [command] });
-  if (result.status === 'rejected') {
-    return null;
-  }
-
-  return {
-    nextData: result.nextData,
-    commandResult: result.commandResults[0],
-  };
-};
-
-export const materializeProvisionedMediaCommand = (
-  currentData: TimelineData,
-  effect: TimelineCommandEffect,
-) => {
-  return applyTimelineCommandEffect(currentData, effect);
-};
 
 export const applyPreparedMediaCommand = (
   currentData: TimelineData,

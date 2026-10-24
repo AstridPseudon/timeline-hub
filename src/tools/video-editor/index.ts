@@ -100,7 +100,6 @@ export {
 } from './lib/timeline-domain.ts';
 
 export {
-  applyProvisionedMediaCommandToConfig,
   buildTimelineCommandData,
   createTimelineCommandRunner,
   MEDIA_COMMAND_DESCRIPTORS,
