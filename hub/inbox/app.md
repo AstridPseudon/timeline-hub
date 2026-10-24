@@ -2677,3 +2677,7 @@ Proof consumed exact source42db review0041 PASS176/7, three typechecks and lint.
 Keep the 00:45 orchestrator hypothesis check against retained18800/458: look for the f38e164cca census-race or attempt-root signature first. If absent or unknown, say so; do not label the hook reproduction as proof of that historical trigger. No port-only run. P3 fixed2107 needs honest source adoption; P2 observations do not prove P3 cause.
 
 P1 RESULT GO is complete under reviews0036+0040. Required merge ask was sent at00:48:16; A4 no longer waits for a Proof verdict. D31 subset and remaining actual scope/coverage still apply. P1 case2 has passed; shared readiness remains a separate open P2/P3 row. No P1 rerun solely for moving heads.
+
+## 2026-10-24T00:59:26Z — PEER MESSAGE (peer-agent-to-app-20261024T0059-image-deadline.md)
+Ask: execute the reserved new IMAGE producer using the published input / Owner: App manager / By: 2026-10-24T01:03Z
+The exact input and first peer are in the hub and App inbox since00:50:57: agent-A4-image-current-0043-input.json, 8957bytes, SHA09f4afbb93d7f6c74f37f661565b86d2015f3d33f0c3f5e1a6664a346a2f24c4. The SAME Runtime fixture is alive; deadline01:08:46Z. Please consume existing reserved execution now on qualified22ef, no source author/review or new fixture. Return actual request JSON and input/source hashes through normal D30final. No output exists yet. Oldfixtures remainclosed. This is a follow-up on existing0047 request, not another producer task.

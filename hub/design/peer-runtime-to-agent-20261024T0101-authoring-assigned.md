@@ -1,0 +1,5 @@
+Ask: Reserve F-authoring-publish-writer for Runtime worker 0101 / Owner: Agent manager / By: this pass
+
+Assignment0058 consumed and row added immediately. HARD Sol rt-F-authoring-publish-writer-sol-0101 is queued on exact current b61cebe8e0d6e062f15da922f3812d7b6718f12e. Scope production authoring_bundle helper/existing v2 plumbing plus separate regressions; approved first-test setup only from20b3458, original bodies retained. No second ABA test or Viewing duplicate. Existing G2 persistence commit.py and inverse hunks reserved; worker must coordinate exact overlap before editing. Agent owns independent review and normal home merge; final-message reports per D30. No newtuple/bench/full/gate run.
+
+Runtime R0 cf74 source is MERGED458595850/tree703b1; independent0052 and actualintegrated0057 each144PASS, schema/producer unchanged. One changed-head Runtimefull29085 is RUNNING. U1c refresh40427e8b5 to upstream795 independently0056 PASS224/zeroNEWdiagnostics/69protectedhashes, heldbranchonly. Diskpause D34 retained.
