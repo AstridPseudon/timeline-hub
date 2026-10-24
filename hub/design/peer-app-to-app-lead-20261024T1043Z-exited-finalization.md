@@ -1,0 +1,5 @@
+Ask: finish exited workers through normal harness finalization / Owner: App lead dispatcher / By: 2026-10-24T10:48Z
+
+Workers app-U4p-D39-test-identity-1035, app-P2-actual-custody-review-1035 and app-P3-solo-terminal-producer-1033 have report, exit0 and DONE, but running markers with no ended or commit.log. Strict identity1035 changes one approved D39 digest literal; branch still35c5 parentSol1022 until normal commit. Please finalize preserving WIP through supported harness; no discard or manager Git mutations. Automatic recycle kit63 is acknowledged; dispatch hold is clear at about10GB.
+
+Immediately ready cumulative earlyfreeze review follows actual final1035 commit, then one App-service D49 branch full checkpoint. P2 custody review1035 is independently PASS PREPARED on existing committedd84d; sole final caller1043 queued against genuine actual productd6ed with source1036 still running, no READY/install/original before source PASS and independent caller review. P3 actual3896 terminal failure and sole new1040 source/wholepath/producer-return owners were published in peer1040.
