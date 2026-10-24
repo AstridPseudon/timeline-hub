@@ -11,6 +11,7 @@ import {
   type ClipMeta,
   type TimelineData,
 } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { TimelineGestureReadBasis } from './timelineLocalSaveHandoff.ts';
 import type { ApplyEditOptions } from '@/tools/video-editor/hooks/useTimelineCommit.ts';
 import type {
   TimelineApplyEdit,
@@ -157,6 +158,15 @@ export function useClipEditing({
     return [...uniqueClipIds];
   }, [dataRef]);
 
+  const transitionClearBasis = useCallback((metaUpdates: Record<string, Partial<ClipMeta>>): TimelineGestureReadBasis | undefined => {
+    const current = dataRef.current;
+    const clipIds = Object.keys(metaUpdates);
+    if (!current || current.resolvedConfig !== resolvedConfig || !clipIds.length
+      || clipIds.some(id => Object.keys(metaUpdates[id]).length !== 1
+        || !Object.prototype.hasOwnProperty.call(metaUpdates[id], 'transition') || metaUpdates[id].transition !== undefined)) return undefined;
+    return structuredClone({ kind: 'transition-clear', clipId: clipIds[0], clipIds, config: current.config, registry: current.registry });
+  }, [dataRef, resolvedConfig]);
+
   const handleUpdateClips = useCallback((clipIds: string[], patch: Partial<ClipMeta>) => {
     const current = dataRef.current;
     if (!current) {
@@ -173,7 +183,8 @@ export function useClipEditing({
     ) as Record<string, Partial<ClipMeta>>;
 
     if (!patchAffectsDuration(patch)) {
-      applyRowsEdit(current.rows, metaUpdates);
+      const gestureBasis = transitionClearBasis(metaUpdates);
+      applyRowsEdit(current.rows, metaUpdates, undefined, undefined, gestureBasis ? { gestureBasis } : undefined);
       return;
     }
 
@@ -198,7 +209,7 @@ export function useClipEditing({
     }));
 
     applyRowsEdit(nextRows, metaUpdates);
-  }, [applyRowsEdit, dataRef, getValidClipIds]);
+  }, [applyRowsEdit, dataRef, getValidClipIds, transitionClearBasis]);
 
   const handleUpdateClipsDeep = useCallback((
     clipIds: string[],
@@ -229,8 +240,9 @@ export function useClipEditing({
       return;
     }
 
-    applyRowsEdit(current.rows, metaUpdates);
-  }, [applyRowsEdit, dataRef, getValidClipIds]);
+    const gestureBasis = transitionClearBasis(metaUpdates);
+    applyRowsEdit(current.rows, metaUpdates, undefined, undefined, gestureBasis ? { gestureBasis } : undefined);
+  }, [applyRowsEdit, dataRef, getValidClipIds, transitionClearBasis]);
 
   const handleSelectedClipChange = useCallback((patch: Partial<ClipMeta> & { at?: number }) => {
     const current = dataRef.current;
@@ -243,9 +255,9 @@ export function useClipEditing({
       return;
     }
 
-    const gestureBasis = resolvedConfig && current.resolvedConfig === resolvedConfig
+    const gestureBasis = transitionClearBasis({ [selectedClipId]: patch }) ?? (resolvedConfig && current.resolvedConfig === resolvedConfig
       && Object.keys(patch).length > 0 && Object.keys(patch).every((key) => ['from', 'to', 'hold', 'speed'].includes(key))
-      ? structuredClone({ kind: 'trim' as const, clipId: selectedClipId, patch, config: current.config, registry: current.registry }) : undefined;
+      ? structuredClone({ kind: 'trim' as const, clipId: selectedClipId, patch, config: current.config, registry: current.registry }) : undefined);
     const { at: _at, ...metaPatch } = patch;
     const affectsDuration = patchAffectsDuration(metaPatch);
     const nextRows = current.rows.map((row) => {
@@ -284,7 +296,7 @@ export function useClipEditing({
 
     if (gestureBasis) applyRowsEdit(nextRows, { [selectedClipId]: metaPatch }, undefined, undefined, { gestureBasis });
     else applyRowsEdit(nextRows, { [selectedClipId]: metaPatch });
-  }, [applyRowsEdit, dataRef, resolvedConfig, selectedClipId]);
+  }, [applyRowsEdit, dataRef, resolvedConfig, selectedClipId, transitionClearBasis]);
 
   const clipEditingContext: ClipEditingContext = {
     dataRef,
