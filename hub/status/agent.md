@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T09:41:06Z | dispatcher heartbeat 12s | live 3 (sol 0, luna 3, other 0) | busy30 12 | status age 1m -->
-# agent board, 2026-10-24T09:39:46Z
+<!-- agent | 2026-10-24T09:43:31Z | dispatcher heartbeat 3s | live 5 (sol 1, luna 4, other 0) | busy30 13 | status age 0m -->
+# agent board, 2026-10-24T09:43:23Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -118,7 +118,7 @@
 | OPS received kit | Verify kit receipt and jaraco facts | Luna | Independent finite result review | merged | Independent 0814 PASS | New helper b8b5 and maker e4c0 match live, normal publication and committed hub. Requester and Store unchanged. | Evidence only |
 | G4 media admission | Connect ordinary publish to verified inputs | Luna | Existing authentic admission path | merged | Source 0823 PASS; home 0832 PASS20 | Authoritative public admission, retry and foreign no-write work on integrated home; original managed duck remains separate. | 0ff3d103fb |
 | F joined source | Qualify U2, D39, D18 and ABA together | Luna | Reviewed normal home merges | merged | Joined 0816; independent 0823 PASS | 123 cases, all 15 mappings, 50 auth blobs, Ruff2145 and mypy1902 pass on exact home 0c2c. | 0c2c28da4f |
-| F ABA managed row | Identify meaningful request capture seam | Luna | Runtime diagnosis 0923 complete | doing | agt-F-ABA-capture-path-0938 | Original 20732 failed at assertion42. Cause remains unknown; read-only capture proposal due 10:00. No body retry. | Source 0c2; Runtime becfe |
+| F ABA managed row | Review meaningful request capture seam | Luna / Luna | Capture proposal 0938 | review | Author 0938; independent 0945 | No retained request record. Proposed hook capture needs sufficiency and timing review. Original remains held; due 10:00. | Source 0c2; Runtime becfe |
 | OPS wheel result review | Verify actual input and new kit receipt | Luna | Reviewed b330 helper | merged | agt-OPS-real-wheel-review-0814 PASS | All 67 original wheels and all four received kit files independently verified. Bootstrap unverified. | Lock 236d unchanged |
 
 | F count giant home | Credit one exact qualified original | Sol | Independent result 0814 PASS | merged | Author 0818; independent 0827 PASS | Official 263 closed / 4 open. All 266 other records unchanged; 123 mappings. | e13d65ba |
@@ -143,7 +143,7 @@
 
 | R1 popup gate source | Qualify coherent selected 079 provider | Luna / Luna | Complete independent verdict | merged | Author 0930; independent 0935 FAIL | Legitimate accepted passes; disjoint merge fails. Source custody verified on full 079. No HTTP or journey claim. | Selected 079 unchanged |
 
-| R1 popup pin repair | Preserve gate client bytes with source fix | Sol / Luna | Current repair and 079 review | todo | Current Sol 0928; pin author next | Prepare D41 source backport after reviewed repair and coherent 079 diagnosis. Preserve all client bytes; no gate run yet. | No candidate yet |
+| R1 popup pin repair | Preserve gate client bytes with source fix | Sol / Luna | 079 failure reviewed; source in review | doing | agt-R1-popup-079-backport-sol-0943 | Draft D41 branch from 079 now; qualify exact client and schema bytes. No selected pin changes before review. | Base 079; source 4f6 |
 
 | R1 static gates | Tighten exact static improvements | Luna / Luna | Exact source 4f6 | doing | agt-R1-static-baseline-0940 | Ruff improved by two. Normal generator only; typecheck uses the established qualified venv. No new diagnostic accepted. | Source 4f6 |
 
