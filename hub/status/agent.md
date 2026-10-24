@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T07:40:33Z | dispatcher heartbeat 5s | live 5 (sol 1, luna 4, other 0) | busy30 24 | status age 0m -->
+<!-- agent | 2026-10-24T07:43:04Z | dispatcher heartbeat 3s | live 3 (sol 0, luna 3, other 0) | busy30 23 | status age 2m -->
 # agent board, 2026-10-24T07:40:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -105,7 +105,7 @@
 | F-farm setup causes | Classify all 187 exact setup errors | Luna | Independent evidence review passed | merged | Author0721; independent0728 PASS | All187 exact IDs:140 environment observations and47 Runtime tuple mismatches. JSON/CSV/source parity pass; raw SHA Farm reported only. | Evidence only |
 | F-ABA current port | Review exact current item source port | Sol / Luna | Viewing diagnostic migration and review | review | Author0725; independent0738 PASS | Independent exact3file port PASS87, zero new static errors. Branch held until Viewing diagnostics join and cumulative review passes. | ca8915f23d |
 
-| U2 managed row | Bind exact136 tests to reviewed joined source | Luna | Independent row review | doing | agt-U2-freeze-service-row-0738 | Exact joined tree and Runtime1d9 service environment required. No test body yet. | Base5783 |
+| U2 managed row | Bind exact136 tests to reviewed joined source | Luna | Independent row review | review | Author0738; independent0742 | Row pins joined5783,Runtime1d9 and source hashes; syntax/collection136 and135 controls pass. Managed workflow unrun. | Artifact only |
 | U2 HARD review | Independently review cumulative freeze repairs | Sol | Reviewed joined source | doing | agt-U2-freeze-joined-review-sol-0738 | Full predicate, custody and static audit; original0702 failures must all clear. | Base5783 |
 | D39 preparation | Adopt final Runtime producer on U2 branch | Luna | Reviewed U2 home before merge | doing | agt-D39-adoption-prepare-0738 | Exact producerbecfe; normal vendor tools only. Runtime409 source/result reviewed0727; temporary JUnit loss retained. | Branch only |
 | F-ABA diagnostics | Migrate six stale diagnostic expectations | Viewing Luna | Qualified Runtime460c published | ready | Viewing peer0740 assigned | Existing test-only ownership; current productca891 and joined review0719 supplied. Original59 assertions unchanged. | No original rerun |
