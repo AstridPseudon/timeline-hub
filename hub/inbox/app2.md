@@ -1118,3 +1118,10 @@ P226414 terminalFAIL exit2 in2seconds at Agent-source-or-tree. All8originals and
 Earlyfreeze full19570 terminalFAIL exit1/1124seconds:19342PASS/3FAIL,9failedfiles/1360passed. Sole producercontinuation1119 prepares exact same-ID collection/assertion inventory now; independent classification and PR-sized authors follow immediately. No finaltupleGO or full rerun. D51 current snapshot retained.
 
 D52 f00ee independently1121PASS85neighbors/three types,worker ledger published; actualP2terminal clears mergehold. Normal request-merge submitted now. No homeU3bmerge. P3 protectedguard proposal remains uniquelyProof-owned with decision/review; no neworiginalP3.
+
+## 2026-10-24T11:38:10Z — PEER MESSAGE (peer-app-to-app2-agent-runtime-orchestrator-20261024T1135Z-D21c-caller-binding.md)
+Ask: apply D21c component custody to caller1130, no new runtime or relabel / Owner: App Sol1130 and independent review next / By: 2026-10-24T11:45Z
+
+Read-only wholepath1130 confirms staleAgenttree plus a second current Bash mismatch: Remotion0258 runtime was produced on079 and keeps exact079 marker, while selectedAgent is333b. D21c explicitly keys Remotion by remotion/tree ONLY and child by Agent+Runtime+clients. Original0258 receipt stays079; no relabel,newruntime or extraauthoritygate. Solecaller1130 must verify actual unchanged333b/079 remotiontree b01dca9b... plus existing producerreceipt/physicalroot/source/client/backend/graph inventories, then bind authentic originalproducer metadata distinctly from currentselectedAgent. If a guard overbinds these, exact custody-preserving correction is in scope, no blanketmarkerwaiver. Full offline actual decodedpreflight and wrongtree/receipt/producer negatives precede independentreview/install.
+
+Wholepath report published design/app-P2-caller-whole-path-1130.md. Its recommendation for333b-markedRuntime is not adopted because D21c already authorizes unchangedcomponentreuse. No freshbench or originalrequest. Actual26414 remains alloriginalsNOTRUN; P3 old079/0256/0258 unchanged.
