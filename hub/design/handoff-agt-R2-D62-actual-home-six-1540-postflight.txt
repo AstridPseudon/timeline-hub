@@ -1,0 +1,30 @@
+D62 postflight
+2026-10-24T15:42:35Z
+agent_head=57779274a0e4a1ae7defef1a6f7239b79d411d55
+agent_status=
+runtime_head=8b32cacea617c6d45241d7db90b34893a06d3026
+runtime_status=
+--- post-run hashes ---
+f2546e63ff50a325d2d095bffd3691d3fce1b50c0831ce3d211587008ce544cd  astrid/sdk/timeline/commit.py
+0702cda4d096589e34485295cb40ffe00b0f11692bbb01fbfa5228daa1da69d4  astrid/sdk/timeline/inverse.py
+901ac04ba8ced15c183432565eb8ecb4f1edd4901f71bef2d11f0d5aec33e3c2  tests/editing_conformance/test_fork_abi1_binding_set.py
+d4de3d565d9e6ec3d6cb36126998fcd3e92f1f15fe869200823ab4a7dd416b9b  tests/editing_conformance/test_fork_reservation_boundaries.py
+febd9b5261ce768375dbbb7efe3844ecf76e9283ebd6a3595c8d368b84c3cbe4  tests/editing_conformance/test_provider_occurrence_fork.py
+19b1e47a89604803d0f0f90964db48788d0bfc82955eb229949d9dee158ade2a  tests/editing_conformance/test_recipe_occurrence_fork.py
+f5ea74aaf52f741a2edf2c87ea49cb6153f7521a9d5117b461b6ef8592ed390b  tests/sdk/test_timeline_commit_provider_runtime.py
+4d084450df4d8e9dbdef934bf19ab9d909a8caecdd2646a21b758955e07a883f  tests/helpers/runtime.py
+26afb327a272c8cc4ef07ae45a8e8332187cd608109593f2d161cf1cc2b7d002  tests/stage1/test_runtime_client_cutover.py
+b0803d44dc0d795b606f769da97168f1e6e168597d86c2b33696b99a1a7ccdad  runtime.lock.json
+952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b  astrid_runtime_client/generated.py
+b42c58a36fff3e3136824492382eb05e983c247e5ca0656b35836e1a4e9ee72b  astrid_runtime_client/contract_metadata.py
+--- vendor check after ---
+ok runtime.lock.json (matches producer manifest)
+--- diff check ---
+--- evidence files ---
+adoption.log 2431 bytes
+adoption.xml 1940 bytes
+home.log 16948 bytes
+home.xml 26177 bytes
+postflight.txt 1617 bytes
+preflight.txt 4144 bytes
+postflight_exit=0

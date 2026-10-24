@@ -1,0 +1,35 @@
+D62 adoption diagnostic start 2026-10-24T15:42:07Z
+agent_head=57779274a0e4a1ae7defef1a6f7239b79d411d55
+runtime_head=8b32cacea617c6d45241d7db90b34893a06d3026
+python=/usr/bin/python3.13
+command=PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$PWD:/home/user/work/runtime ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --junitxml=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-D62-actual-home-six-1540/evidence/adoption.xml tests/stage1/test_runtime_client_cutover.py::test_empty_timeline_opens_as_composition_on_real_daemon
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___________ test_empty_timeline_opens_as_composition_on_real_daemon ____________
+
+tmp_path = PosixPath('/tmp/w-1394dea859/pytest-of-root/pytest-1/test_empty_timeline_opens_as_c0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6743fba060>
+real_runtime = <function real_runtime.<locals>.start at 0x7f67442cccc0>
+
+    def test_empty_timeline_opens_as_composition_on_real_daemon(tmp_path, monkeypatch, real_runtime):
+        daemon = real_runtime()
+        try:
+            client = _open_client(daemon)
+            project_id = client.projects.create(slug="composition", name="Composition", idempotency_key="project").data["project_id"]
+            created = client.timelines.create_empty(
+                project=project_id,
+                timeline_id="main-timeline",
+                config={"tracks": []},
+                idempotency_key="timeline",
+            )
+>           assert created.ok
+E           AssertionError: assert False
+E            +  where False = DomainResult(ok=False, data=None, error=ErrorObject(code='conflict', message='history_unavailable', details={'base': N...flicts': [], 'current': None, 'reason': 'history_unavailable', 'status': 'refused'}), receipt=None, idempotency_key='').ok
+
+tests/stage1/test_runtime_client_cutover.py:948: AssertionError
+=========================== short test summary info ============================
+FAILED tests/stage1/test_runtime_client_cutover.py::test_empty_timeline_opens_as_composition_on_real_daemon
+1 failed in 2.00s
+D62 adoption diagnostic pytest_exit=1
+D62 adoption diagnostic end 2026-10-24T15:42:10Z
+D62 adoption diagnostic retained_exit=1

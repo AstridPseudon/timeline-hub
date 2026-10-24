@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T15:44:51Z | dispatcher heartbeat 0s | live 3 (sol 0, luna 3, other 0) | busy30 14 | status age 2m -->
-# agent board, 2026-10-24T15:42:29Z
+<!-- agent | 2026-10-24T15:47:40Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 2m -->
+# agent board, 2026-10-24T15:45:31Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -65,7 +65,7 @@
 | F D60 baseline row | Bind final upstream comparison | Luna / Service | Exact upstream924 terminal | merged | Snapshot1342; review1349; service1621 | Sole meaningful full terminal FAIL:12396 PASS91 FAIL14 errors16 skips566 subtests. Exact276 comparison1452 active; no upstream PASS claim. | Upstream924437716 |
 | F current core159 | Qualify exact core checkpoint nodes | Luna | Final D61 source | review | Core1408; home equivalence | Refreshed acf/e68 PASS152, six FAIL, one D13 UNKNOWN; two FAIL are D23. All159 ASTs and137 source hashes exact47b. Final tuple proof pending. | acf87bd / e68cf |
 
-| R1 core fork remainder | Consume authenticated recorder ABI | HARD Sol / Luna | D61 qualified producer and D39 | review | Sol1417; security1424; port1433; home3769 | Runtime8b32 security412 PASS and exact treee02. Consumer normal merged3769 with allthree reviewed donor blobs; normal vendor and actual-six proof next. | Home3769a98d06 |
+| R1 core fork remainder | Consume authenticated recorder ABI | HARD Sol / Luna | D61 qualified producer and D39 | merged | Consumer1433; security1424; actual1540 | Actual5777/8b32 allfour original fork cases PASS and54 strict controls PASS, including genuinelegacy/fullrewrite. Separate inverse failure remains below. | Home57779274a0 |
 
 | F core receipt rollup | Reconcile276 with new core proof | Luna | Exact current XML and D23 | merged | Return1343 PASS |162 PASS112 open2 deferred. Current FAIL overrides earlier PASS for98/99; historical164 claim superseded explicitly. | Evidence1343 |
 | F core held inputs | Bind timing deferrals and D13 input | Luna | Existing decisions inspected | merged | agt-F-core-held-inputs-1338 | Exact D23 covers170 and213. D67 supersedes D13 UNKNOWN: ENV known gap, unchanged post-install check. Missing7-key carrier/tooltuple is documented, no owner action. | Evidence only |
@@ -81,7 +81,7 @@
 
 | F D60 comparison | Compare exact276 against upstream924 | Luna | Terminal service1621 XML | merged | Terminal1452 PASS evidence | All276 exact:75 match,66 upstream FAIL9 PASS;201 absent UNKNOWN. Nine contrasts are eight current PASS and one D23. No current regression proved. | Agent924; Runtime launch becfe |
 
-| R2 forward provider | Preserve omitted forward created claims | HARD Runtime Sol | Runtime auth fix and proof | review | Runtime1450; security1511; Agent home next | Runtime8b32 auth9433 now qualified and home. Exact two originals wait normal Agent vendor plus actual-six proof; no competing author. | Runtime8b32 |
+| R2 forward provider | Preserve omitted forward created claims | HARD Runtime Sol | Runtime auth fix and proof | doing | Runtime1450; independent Agent1546 | Actual5777/8b32 structural retry original PASS; inverse/redo original FAIL at inverse stage sequential input. Runtime ACK retained; whole-path1546 active. | Home5777 /8b32 |
 
 | F home13 custody | Preserve actual home result transcript | Luna | Existing raw worker log | merged | Receipt1440 PASS | All13 XML outcomes preserved as exact transcript bytes with ranges and hashes. Original TMP file loss disclosed; flat design handoff published. | Home68e82 |
 
@@ -105,16 +105,18 @@
 
 | U4a D62 preparation | Adopt normal generated ABI field | Luna | Runtime security then home merge | merged | Author1529; review1533 PASS; rebind1536 | Actual5777 binds qualified Runtime8b32,15 mappings exact. Independent37 PASS/39 default-lane deselections; rebind31 PASS. Six-original home proof1540 active. | Home57779274a0 |
 
+| G4 empty timeline | Classify real create_empty refusal | Luna | Exact current diagnostic | doing | agt-G4-empty-timeline-whole-path-1546 | Original creation returns history_unavailable on5777/8b32 and beforeconsumer0eda. Read-only production path classification; no second body. | Home5777 /8b32 |
+
 Integration: Agent57779274a0 includes U2 final924, normal e68 vendor adoption and independently reviewed legacy inverse plus environment key fix. Proposal inverse actual-home13 passed. D61 consumer9460a443 normal merged3769 after Runtime8b32 source/security PASS. All three reviewed donor blobs retained; normal D39 actual-home rebind1536 and source review1533 PASS merged5777. Six-original actual-home1540 active. No generated code or lock edited by manager.
-core open: 6 tracked: four D61 fork checkpoint failures and two forward-provider originals outside276. D67 makes D13 an ENV known gap, unchanged and visibly failing. Env79; two D23 originals remain deferred. Final tuple proof pending.
-regressions: 0 currently open at named qualified scope; order181 proven regression repaired and actual d27b PASS16. Nine other upstream-PASS contrasts retain current PASS but need final cut confirmation. Exact276 now163 PASS111 open2 deferred; no final zero-regression closure claim.
+core open: 2 actual5777/8b32: one retained inverse/redo original and one separate create_empty diagnostic. Originalsix has5 PASS1FAIL;54 strict controls PASS. D13ENV and two D23 deferred unchanged. Final cut proof pending.
+regressions: 0 currently open at named qualified scope; order181 proven regression repaired and actual d27b PASS16. Nine other upstream-PASS contrasts retain current PASS but need final cut confirmation. Exact276 now167 PASS107 open2 deferred; no final zero-regression closure claim.
 D60 baseline: Upstream924 full1621 terminal FAIL:12396 passed91 failed14 errors16 skips566 subtests. Corrected D63 comparison:77 counterparts (66 FAIL11 PASS),199 NEW-OURS. Missing selectors follow core rule; paired tracebacks retain exact limits. External Runtimebecfe launch later e68 is disclosed.
 Gates: P1/P2/P3 App; P4 Agent; P5 and Composition main. App U3b/D39 already merged under D56. P4 candidate317c collected3; final source binding and body follow qualified D61 source/client and sole heavy slot. No old pin, Farm or child work.
 Admission: Existing schema/source403 and automatic refusal remain stopped. D56 drops Farm venue access work. No alternate source, child, overlay, acquisition or reconstruction requested.
 Disk: About9.4GB free; cap6. Sweep3 removed0, compact packed0 and compressed4 old logs. No eligible finished clean tree; prior refused targets untouched. Target15GB is opportunistic, heavy stop floor8GB.
-Blockers: Agent — Runtime and vendor dependencies cleared; actual5777/8b32 six-original proof1540 is active and owns sole heavy slot. Keep six core-open until terminal result.
+Blockers: Runtime / Agent — Actual six proof closes five originals; remaining inverse stage-input refusal has existing Runtime owner and independent Agent whole-path1546. Separate G4 empty-timeline source1546 is owned.
 
 Blockers: Agent — D67 clears D13 blocker as ENV known gap; no owner action. D66 reverse diff1527 active; counts pending.
 Next ready: Consume actual-home six1540, finish D66 corrected missing scope1539, complete core/P4 registry1542. One heavy slot occupied by1540; P4/core follow promptly after meaningful source/result readiness.
-live 3 / cap 6; ready-undispatched 0. Luna1540 sole heavy proof,1539 reverse correction,1542 core/P4 harness return. Disk9.5GB. No live Sol.
+live 5 / cap 6; ready-undispatched 0. Luna1540 proof handoff,1539 reverse correction,1542 core/P4 harness and two1546 source investigations. No live Sol.
 Inbox consumed through Runtime1531 merged handback and15:40 ruling. Adoption/consumer already home5777 and six-proof1540 active before nudge. Last pass 2026-10-24T15:20:04Z.

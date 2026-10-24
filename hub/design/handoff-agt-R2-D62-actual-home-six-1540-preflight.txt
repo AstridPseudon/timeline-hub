@@ -1,0 +1,54 @@
+D62 preflight
+2026-10-24T15:41:40Z
+cwd=/home/user/work/wt/agt-R2-D62-actual-home-six-1540
+agent_head=57779274a0e4a1ae7defef1a6f7239b79d411d55
+agent_branch=tl/agt-R2-D62-actual-home-six-1540
+agent_status=
+runtime_head=8b32cacea617c6d45241d7db90b34893a06d3026
+runtime_status=
+python=/usr/bin/python3.13
+runtime_checkout=/home/user/work/runtime
+environment=PYTHONPATH=$PWD:/home/user/work/runtime ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1
+--- reviewed/source hashes ---
+f2546e63ff50a325d2d095bffd3691d3fce1b50c0831ce3d211587008ce544cd  astrid/sdk/timeline/commit.py
+0702cda4d096589e34485295cb40ffe00b0f11692bbb01fbfa5228daa1da69d4  astrid/sdk/timeline/inverse.py
+901ac04ba8ced15c183432565eb8ecb4f1edd4901f71bef2d11f0d5aec33e3c2  tests/editing_conformance/test_fork_abi1_binding_set.py
+d4de3d565d9e6ec3d6cb36126998fcd3e92f1f15fe869200823ab4a7dd416b9b  tests/editing_conformance/test_fork_reservation_boundaries.py
+febd9b5261ce768375dbbb7efe3844ecf76e9283ebd6a3595c8d368b84c3cbe4  tests/editing_conformance/test_provider_occurrence_fork.py
+19b1e47a89604803d0f0f90964db48788d0bfc82955eb229949d9dee158ade2a  tests/editing_conformance/test_recipe_occurrence_fork.py
+f5ea74aaf52f741a2edf2c87ea49cb6153f7521a9d5117b461b6ef8592ed390b  tests/sdk/test_timeline_commit_provider_runtime.py
+4d084450df4d8e9dbdef934bf19ab9d909a8caecdd2646a21b758955e07a883f  tests/helpers/runtime.py
+26afb327a272c8cc4ef07ae45a8e8332187cd608109593f2d161cf1cc2b7d002  tests/stage1/test_runtime_client_cutover.py
+b0803d44dc0d795b606f769da97168f1e6e168597d86c2b33696b99a1a7ccdad  runtime.lock.json
+952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b  astrid_runtime_client/generated.py
+b42c58a36fff3e3136824492382eb05e983c247e5ca0656b35836e1a4e9ee72b  astrid_runtime_client/contract_metadata.py
+--- 9460 blob equality ---
+astrid/sdk/timeline/commit.py current=f2546e63ff50a325d2d095bffd3691d3fce1b50c0831ce3d211587008ce544cd
+astrid/sdk/timeline/commit.py 9460=f2546e63ff50a325d2d095bffd3691d3fce1b50c0831ce3d211587008ce544cd
+astrid/sdk/timeline/inverse.py current=0702cda4d096589e34485295cb40ffe00b0f11692bbb01fbfa5228daa1da69d4
+astrid/sdk/timeline/inverse.py 9460=0702cda4d096589e34485295cb40ffe00b0f11692bbb01fbfa5228daa1da69d4
+tests/editing_conformance/test_fork_abi1_binding_set.py current=901ac04ba8ced15c183432565eb8ecb4f1edd4901f71bef2d11f0d5aec33e3c2
+tests/editing_conformance/test_fork_abi1_binding_set.py 9460=901ac04ba8ced15c183432565eb8ecb4f1edd4901f71bef2d11f0d5aec33e3c2
+tests/editing_conformance/test_fork_reservation_boundaries.py current=d4de3d565d9e6ec3d6cb36126998fcd3e92f1f15fe869200823ab4a7dd416b9b
+tests/editing_conformance/test_fork_reservation_boundaries.py 9460=d4de3d565d9e6ec3d6cb36126998fcd3e92f1f15fe869200823ab4a7dd416b9b
+--- 47b original blob equality ---
+tests/editing_conformance/test_provider_occurrence_fork.py current=601101d7cf0074514fa3bca4ade5ec1133380b01
+tests/editing_conformance/test_provider_occurrence_fork.py 47b=601101d7cf0074514fa3bca4ade5ec1133380b01
+tests/editing_conformance/test_recipe_occurrence_fork.py current=1ad7b6c1b1b1190152270b7f106d449ac8aa4479
+tests/editing_conformance/test_recipe_occurrence_fork.py 47b=1ad7b6c1b1b1190152270b7f106d449ac8aa4479
+tests/sdk/test_timeline_commit_provider_runtime.py current=f37a8e20db50694a24fb8dd413cb6df425fbf9cd
+tests/sdk/test_timeline_commit_provider_runtime.py 47b=f37a8e20db50694a24fb8dd413cb6df425fbf9cd
+--- lock facts ---
+mapping_count=15
+source_commit=8b32cacea617c6d45241d7db90b34893a06d3026
+producer=astrid-runtime
+sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b
+--- vendor check ---
+ok runtime.lock.json (matches producer manifest)
+--- imported module origins ---
+commit=/home/user/work/wt/agt-R2-D62-actual-home-six-1540/astrid/sdk/timeline/commit.py
+inverse=/home/user/work/wt/agt-R2-D62-actual-home-six-1540/astrid/sdk/timeline/inverse.py
+runtime_helper=/home/user/work/wt/agt-R2-D62-actual-home-six-1540/tests/helpers/runtime.py
+generated=/home/user/work/wt/agt-R2-D62-actual-home-six-1540/astrid_runtime_client/generated.py
+runtime_helper_commit=8b32cacea617c6d45241d7db90b34893a06d3026
+preflight_exit=0
