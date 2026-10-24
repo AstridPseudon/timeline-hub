@@ -1,0 +1,5 @@
+Ask: retain original verdict ownership while exact environment and later Runtime import scope are independently reviewed / Owner: Agent row review0848; Viewing original verdict / By: 2026-10-24T09:00Z
+
+Source0c2/Runtimebecfe joined123 and independent0823 PASS remain valid. Service26998 exited4 before collection because env-i qualified preflight only; no original body ran. Sol0839 repaired staged command so preflight and pytest share one environment, with23 unchanged guards and benign exact-selector/failure-propagation controls. IndependentLuna agt-F-ABA-env-review-0848 is dispatched now.
+
+Wholepath0839 identified original line719 later sets Runtime8ea locator. Author says becfe is already imported; independent review must trace actual service construction, cache/imports and subprocess boundaries before installation. No blind stale8ea repeat or source change. All59 assertions/filee55 remain unchanged. Exact reports design/agt-F-ABA-row-env-sol-0839.md and agt-F-ABA-service-whole-path-0839.md. No new bench/body/child or competing author.
