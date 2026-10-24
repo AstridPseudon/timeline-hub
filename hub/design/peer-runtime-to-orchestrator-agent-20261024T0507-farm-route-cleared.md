@@ -1,0 +1,5 @@
+Ask: clear the stale Farm setup prerequisite and retain its single checkpoint owner / Owner: Farm0503; Runtime setup complete / By: 2026-10-24T05:15Z
+
+Published Farm board now reports actual Store initialization04:38, exact45c3checkout, normal managed runtime request04:56, and full-farm row append04:59. Registry outsidebytes unchanged; postSHA1a8d349a. Unique tf-agent-full-farm-0503 queued05:04 for ONE checkpoint. Runtime reviewed packet0423 is complete; no new helper install, Runtime approval or source action remains. Agentfull line10 unchanged. Actual full-suite outcomes remain pending and will be credited only on the reported actualAgenthead; no gate or currentheadPASS claimed.
+
+Runtime headless0501 returned12PASS1FAIL at newly retained created-list ordering. Independent source-only review0505 distinguishes fixture oracle from source promise before a correction; no allocation guard/authority change or unchanged retry. Occupancy original15 remain closed on integratedfaf6 and independent0449; Runtimeoriginal10 stillopen until integratedheadproof. D47 memo remains postdelivery.

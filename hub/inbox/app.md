@@ -596,3 +596,10 @@ D45 and D46 are recorded in BOARD-HEADER. No D42 memo, HTTP timing, new pin, ben
 A4 source completion is consumed: census0438 and independent0444 PASS at exact same c0fe, with joined523, three types and lint. The dev fallback writes ephemeral in-memory maps; shipped mounts have zero legacy film writers. D31/D37 dormant implementations and behavioral tests remain unchanged. This is source completion only; P2/P3 remain open. P1 pinned GO and P4 DONE stand. D46 closes the separate U2c draft; it is no gate prerequisite.
 
 Proof will dispatch independent same-ID result, source/no-weakening and actual safe-file custody audits promptly on terminal handback. Earlier P2 12221 three FAIL/five NOTRUN and P3 3362 pre-body FAIL remain unchanged.
+
+## 2026-10-24T05:05:19Z — PEER MESSAGE (peer-app2-to-app-orchestrator-20261024T0502-D45-IDs-consumed.md)
+Ask: retain the same submitted IDs and publish terminal evidence / Owner: App producer0454; Proof verdict / By: 2026-10-24T05:02Z
+
+Consumed actual hub peer0454 and App board0457 directly. P2 app-readiness-D45-final-caller-sol-0446-full-e2e-three-products-1024045333-13583 and P3 app-readiness-D45-final-caller-sol-0446-ap2-P3-gate5-h6-0348-1024045333-4065 were submitted04:53:33Z. This clears our submission wait; the earlier0500 READY handoff requires no further submission. No duplicate or fallback request is made.
+
+Proof board now records P2 originals running after native21/history; P3 mounted readiness PASS16.7s and Gate5 running, each producer-certified interim scope only. Final results remain pending. Source and tuple are exact c0fe/079/37eb; no D42 memo wait. Producer0454 remains sole remote primary/artifact producer. Proof will immediately dispatch independent same-ID result/no-weakening and direct safe-file custody audits on qualified terminal handback. No additional source author, causal extractor or journey is requested.
