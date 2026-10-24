@@ -573,7 +573,7 @@ def _retain_sheet(tl, text):
         state = session._state()
         if state["pending"] or state["flight"] is not None:
             raise SheetError("flush original pending intent before exporting another sheet")
-        bundle = session._bundle(state)
+        bundle = session._capture_bundle(state)
         if bundle["base_parent"] != tl.bundle["base_parent"] or not equal(_sheet_content(bundle), _sheet_content(tl.bundle)):
             return  # Never certify a draft authored over a different/local basis.
         native = NativeSheet(bundle, basis=state["base"])
@@ -625,6 +625,7 @@ def _stage_sheet(tl, text, parsed, *, client=None):
         artifact["edited"] = text
         session.outbox.write(state)
     tl.bundle = candidate.bundle
+    tl.bundle.get("source_mapping", {}).pop("_runtime_document", None)
     tl._refresh()
     return changes or ["sheet edit pending acceptance"]
 

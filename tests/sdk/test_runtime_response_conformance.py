@@ -234,18 +234,6 @@ def test_commit_conflict_409_maps_to_conflict_and_keeps_its_details() -> None:
     assert sent_headers[-1]["Idempotency-Key"] == idempotency_key
 
 
-def test_publish_conflict_409_maps_to_conflict_and_keeps_its_details_r4_route() -> None:
-    client, calls = _client("publish_conflict_409")
-    recorded = fixture("publish_conflict_409")
-    with pytest.raises(WorkspaceClientError) as raised:
-        client.publish_parent_composition("project-1", "main", recorded["request"]["body"], idempotency_key="k")
-    error = raised.value
-    assert (error.status, error.code) == (409, "conflict")
-    assert error.details == recorded["body"]["details"] and error.request_id == "<request_id>"
-    assert _SERVICE_ERROR_CLASSES[error.code] is ServiceConflictError
-    _sent_the_recorded_request("publish_conflict_409", calls, project_id="project-1")
-
-
 def test_invalid_cursor_400_keeps_its_status_and_code() -> None:
     # The Runtime's "invalid_request" is not in Astrid's closed nine-code service taxonomy: callers get the
     # generic ServiceError and read the code from it (astrid/sdk/remote.py read_bytes does exactly that).

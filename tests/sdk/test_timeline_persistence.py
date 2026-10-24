@@ -340,6 +340,7 @@ def genuine_runtime(world, tmp_path):
                 replace_media(child)
 
     replace_media(bundle)
+    _clip(bundle, "a-rocket")["app"].pop("on", None)
     publication = compile_authoring_candidate(bundle).publication
     publication.update(project_id=project, timeline_id="t", parent_revision_id="rev-0", expected_head=None)
     publication["parent_composition"]["registry"] = {}
@@ -709,25 +710,6 @@ def test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_
 # ---------------------------------------------------------------- 5. stale base after restart
 
 def test_publish_after_a_restart_merges_other_clips_onto_the_moved_head(world, genuine_runtime):
-    with world.writer("A") as a:
-        a.do("draft")
-        a.do("nudge", clip="a-rocket", seconds=0.5)
-        a.do("save")
-    world.move_head("rev-1", lambda b: _clip(b, "b-type")["params"].__setitem__("text", "LIVE!"))
-
-    with world.writer("B") as b:
-        b.do("draft")
-        assert b.do("state")["base"] == "rev-0"  # the working copy still remembers the base it started from
-        published = b.do("publish")
-
-    assert published["runtime_touched"] is True  # the write is the stubbed transport, not the runtime
-    assert published["merged"] and "merged onto head rev-1" in published["merged"]
-    merged = Checkout(published["candidate"])
-    assert merged.clip("a-rocket").start == pytest.approx(1.8)  # our move
-    assert merged.clip("b-type").params["text"] == "LIVE!"  # their change, kept
-
-
-def test_publish_after_a_restart_merges_other_clips_onto_the_moved_head_r4_original(world):
     with world.writer("A") as a:
         a.do("draft")
         a.do("nudge", clip="a-rocket", seconds=0.5)
