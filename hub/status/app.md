@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T19:43:12Z | dispatcher heartbeat 0s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 0m -->
-# app board, 2026-10-24T19:39Z
+<!-- app | 2026-10-24T19:46:42Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 0m -->
+# app board, 2026-10-24T19:46Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -39,7 +39,7 @@
 | F-env | Missing SSH executable | Service environment | D54a | gated:environment | Quality1236; producer1227 | Two unchanged extension tests fail ssh-keygen ENOENT; visible known environment gap. | Historical16138 |
 | F-final | Final P1–P5 and core suites | Lane services | D59 cut | gated:D59-cut | Runtime coordinator; App gates | All active lanes core0/regressions0 and current P2/P3 PASS required before final proofs/build. | Cut pending |
 | D74-old-graph | Guarded orphan graph retirement | Lead kit | Lead19:10 keeps graph | gated:disk-emergency | Lead owns disposition | No applicable guarded route. Keep exact1.107GB graph in place at current capacity; no fabricated metadata or raw deletion. | No source edits |
-| D74a | Archive and retire unused worktrees | Luna | Explicit D74a owner release | doing | app-D74a-guarded-capacity-1939 | Confirm unused pins; preserve current and queued tuples. Archive dirty U3 data before guarded recycle. Stop on actual classifier refusal. | No source edits |
+| D74a | Archive and retire unused worktrees | Luna | Explicit D74a owner release | gated:dirty-guard | app-D74a-guarded-capacity-1939 | Six stale pins recycled,674MB freed. Two complete U3 archives validated; recycle DIRTY guard refused, targets stopped and reported peer1944. | No source edits |
 | D74-retention | Post-verdict output release | Lead kit | Guarded route unavailable | gated:disk-emergency | Lead owns disposition | Preserve run evidence, especially22847 and13100. No new release route built and no raw cleanup. | No source edits |
 
 | P2-D78 | Exact retained element request handoff | Luna | D78 owner1816 | merged | app-P2-D78-retained-request-handoff-1819 | Published json/md;4459 exact body bytes,e58a09dc;trace anchor and redaction validated. Runtime replay owns cause. | Evidence only |
@@ -51,7 +51,8 @@
 | P3-current | Corrected both-mount original Gate5 | Luna; Service | Preflight20128 PASS | review | Actual26908; producer1855 | Exit1/471s; readiness PASS, original FAIL at1773: expected fourth recovery observation, actual3. Downstream tail unproved. | App3c29 |
 | P3-26908-cause | Trace fourth recovery observation | HARD Sol PLAN A2 | Actual26908 and independent1905 | merged | app-A2-P3-recovery-current-sol-1910 | Intermediate page closed at Loadingproject before retry; no production defect proven. Review-only stronger poll proposal;269mounted controls/types/lint PASS. | Proposal only |
 | P3-intermediate | Observe intermediate recovery before close | Luna | Independent1920 PASS | merged | app-P3-intermediate-clean-apply-1925 | Exact one addition, protected hash736fd381 matches reviewed proposal; three fault controls and list15 PASS. Alias runner environment error retained. | e771ce1426 |
-| P3-intermediate-run | Qualify stronger recovery observation | Luna; Service | Home e771 and disk floor | doing | app-P3-intermediate-pinned-run-1933 | Preflight15980 PASS; original14240 queued. Exact tuple captured once; no duplicated command. Original spec736fd381 retained. | App e771 |
+| P3-intermediate-run | Qualify stronger recovery observation | Luna; Service | D74a floor6GB | review | Actual14240; verdict1948 | Readiness1 PASS; original FAIL at1820 recorded B command fields differ. Both mount recovery reached; downstream history and undo unproved. | App f6a21c28 |
+| P3-recorded-command | Compare request and authoritative record | Luna | Actual14240 new boundary | doing | app-P3-14240-recorded-command-shape-1948 | Contract and exact producer classification; review only strict proposal if oracle wrong. No protected edit before qualification. | Source unchanged |
 | P3-26908-path | Independent verdict and full path | Luna | Producer1855 final | merged | app-P3-26908-verdict-wholepath-1905 | Gate FAIL; manifest/hash/snapshot PASS. Recovery product equals passingP131083; missing fourth cause remains bounded, no new count inferred. | Evidence only |
 
 | P1-current | Updated parent-source control | Service; Luna | Independent1846 PASS | merged | Actual31083; verdict1846 | Readiness1/original2 PASS on App830252,Agent263696,Runtime1bae. Exact pins/hashes/XML qualified. | App830252 |
@@ -66,7 +67,7 @@
 | P2-D80-seed | Six native seed transport timeouts | Runtime HARD Sol | Safe prefix hash280f | doing | Runtime1924; App path1910 | All six stop before gestures. Actual phase interpretation active, no proven common cause. Source capture seam handback awaited. | Captured Runtime1bae |
 | P2-D78-wire | Wire published pending-request stack helper | Luna | Author focused checks PASS | merged | app-P2-D78-stack-wire-1859 | Helper exact8fe211, published patch and normal-stage activation;20Node/helper/activation controls, types/lint PASS. No actual dump claimed. | Home7098c7eeb5 |
 | P2-D80-path | Attribute native-seed boundary from App | Luna | Four retained setup failures | merged | app-P2-D80-native-seed-path-1910 | Request reaches Runtime; SDK30s timeout, App process120s. Relevant paths equal passingP1. No App repair justified; Runtime cost/progress unknown. | Source unchanged |
-| P2-D78-native-capture | Watch direct Python native seed pending | Luna | Runtime peer1932 | doing | app-P2-D78-native-pending-capture-1941 | Async child wait plus existing helper and supervised PID. Preserve30s SDK,120s outer limit and original waits. No body until qualified. | Source pending |
+| P2-D78-native-capture | Runtime owns native watchdog | Runtime Luna; App stop | Delayed peer1935 | doing | Runtime1935; App1941 stopped | In process watchdog supersedes App adapter. App WIP held; no duplicate source merge. One future D78 waits actual home handback. | Source pending |
 | P2-D78-controls | Consume missing original helper controls | Runtime Luna | Exact normal publication complete | merged | Runtime1908 donor held; peer1914 | Exact6testbytes a1ab published. App7098 sole shipping wiring; Runtime donor held, no duplicate source or extra review. | Evidence only |
 | P2-D78-state | Historical exact realm replay input | Runtime; App | Live route supersedes | gated:D78-live | Runtime1832; App peer1855 | No demonstrated surviving original realm. Exact historic replay UNAVAILABLE; no invented state or Origin. Retained packet complete at stated limits. | Evidence only |
 
@@ -77,13 +78,14 @@ regressions: 0 confirmed open App source findings. D69 all four restorations hom
 
 Blockers: Runtime native seed execution — unique Sol1924 interprets actual128 prefix now received. No App input remains pending; real pending request capture seam handback required before meaningful P2.
 
+Blockers: P3 authoritative command envelope — actual14240 reaches both recovery mounts then fails exact B record equality. Narrow Luna1948 and independent verdict1948 own classification; no product cause or oracle weakening inferred.
 Blockers: Final cut — all eight P2 and one P3 core cases remain unqualified. Runtime coordinates final suites and ZIP after current gate proof.
-Next ready: Native seed capture1941 now dispatched after capacity returned. P3 original14240 runs after preflight15980 PASS. Runtime helper1932 source and App capture1941 precede ONE meaningful D78 body.
+Next ready: Runtime observer1932 and watchdog1935 home handback precede ONE meaningful D78. App redundant1941 stopped. P3 actual14240 terminal; independent1948 verdict and narrow envelope1948 proposal active. No unchanged P3 rerun.
 
 live 2 / cap 4; ready-undispatched 0. Latest published dispatcher header19:42 records2 Luna. Criticalcapture1941 dispatched at7.66GB; P3 producer1933 ending and cleanup1939 active. Gate14240 already running. D74a gates use6GB floor; noncritical originals remain held.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
-Disk: Current7.18GB after genuine current tuple checkouts. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
-Inbox consumed through1673055 bytes, including Agent1915 adoption homee39de and Runtime1920 capture request. Owner boards Runtime19:18 and Agent19:16 rechecked: popup87bc and cost e89 are home; original P2 source outcomes remain unqualified. Peer1934 closes App capture disposition at honest limits.
+Disk: Current8.28GB after finished worker recycling and six stale pins released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
+Inbox consumed through1675697 bytes, including Agent1915 adoption homee39de and Runtime1920 capture request. Owner boards Runtime19:18 and Agent19:16 rechecked: popup87bc and cost e89 are home; original P2 source outcomes remain unqualified. Peer1934 closes App capture disposition at honest limits.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
