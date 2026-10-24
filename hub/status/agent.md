@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T04:45:06Z | dispatcher heartbeat 4s | live 3 (sol 0, luna 3, other 0) | busy30 18 | status age 0m -->
+<!-- agent | 2026-10-24T04:47:39Z | dispatcher heartbeat 79s | live 3 (sol 0, luna 3, other 0) | busy30 18 | status age 1m -->
 # agent board, 2026-10-24T04:40:48Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -56,11 +56,11 @@
 | F-headless-root-mirror | Preserve complete canonical mirror effects | Sol / Luna | Bounded source repair | doing | vw-F-headless-root-mirror-sol-0358 | Runtime0332 and0349 independently confirm omitted mirror removal. Viewing uniquely owns effect shortcut; original67 predicates retained. | Base8657e83653 |
 | F-retired-callers | Retained native, CLI and scene scenarios | Luna / Sol | Exact33 subset | doing | vw-F-retired-callers-census-0358 | Exact24 native-sheet,7 CLI,2 scene nodes independently verified. Viewing maps prior proofs before fixing; no retired writer restoration. | Census H30 |
 | F-count | Reconcile all267 original failures | Luna | Independent correction0358 | merged | Return0407; final review0410 PASS | Corrected JSON preserves267 exact IDs:142 closed,125 open. Six render-wire originals credited; seven H3 nodes need current D40 source. Farm checkpoint pending. | Evidence only |
-| F-D40-installed | Genuine installed external positive | Luna | Home fixture and managed child | merging | Fixture0432; independent0439 PASS | Reviewed 4a73 preserves exact three assertions and genuine owner launch custody. Own-only home queue sent. Installed original remains unrun. | 4a73a6b82e |
+| F-D40-installed | Genuine installed external positive | Luna | Genuine managed installed child | doing | Fixture integrated0446; child preparation | Fixture 4a73 reviewed PASS and merged at ba8f. Integrated helper control next, then one original positive with real installed source custody. | ba8f0bc8be |
 | U2c identity diagnostic | Keep exact identity refusal detail | Luna | Independent source review | review | agt-U2c-identity-review-0444 | Author passed two focused and four original abort controls. Authentication, cleanup and refusal predicates require independent check. Freeze held. | Donor 0439 held |
 | U2c RunPod child | Define genuine provider child custody | Luna source facts | Child process and lane authority | blocked:orchestrator | agt-U2c-runpod-capability-0439 | Existing pod, host and session identity cannot prove required attachment and two lanes. Exact child and authority question filed at 04:43; guards stay strict. | a181136220 held |
 P1: GO. Original service 18792 passed both cases; Proof reviews 0036 and 0040 passed. P4 and P5 are done. G5 already merged under H24. P2 and P3 remain with App and Proof.
-Integration: 985f012675 adds security-reviewed D40orchestrator429c to imageharness999e and D44home5c97. Historical12701589/canonical45c3/schema d106/Composition819acf retained.
+Integration: ba8f0bc8be adds independently reviewed D40 owner fixture4a73 to qualified source985f. Historical12701589, canonical45c3, schema d106 and Composition819acf remain.
 Blockers: Agent full waits for the remaining owned fixes and finite qualifications. D32 comparison rejected all pre-existing credits; no full retry.
 Blockers: Agent — complete ABA, installed external source positive, image witness, retired callers and original rendering timeout remain open. Runtime owns its historical family qualification.
 Safety: Earlier Farm, monitor, publication and bench permission refusals remain stopped. No denied action was retried here.
