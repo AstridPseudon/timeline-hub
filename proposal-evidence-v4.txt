@@ -1,70 +1,72 @@
-P3/D75b return controls — committed-candidate procedure
-=========================================================
+P3/D75b bounded control repair — existing committed candidate
+============================================================
 
-Scope
------
-The production change remains limited to the existing Gate-5 recovery helper
-and the existing mounted Gate-5 journey. The candidate keeps both automatic
-recovery mounts and asserts the physical request sequence:
+Source pair (exact Git blob bytes, without trimming or adding newlines)
+---------------------------------------------------------------------
+author parent: 5d7550ca7d005f948695ee3dc1d49273890bf59c
+validation candidate HEAD: 09ae405158bba0d0c1f4bf5502649dea9c04854f
+source before SHA-256: a6468188ff21c4fd8bd397ff242b0260ee92ab6f2f90ac94786973eaf3c1e99a
+source after SHA-256: 8661fc919714d292c567844dc4f423855923077ca6a679a1398ec2a46154315b
+mounted SHA-256: 10e58e89c0626363c3d99ae40515f09aaabdfade67f5a6d1c2426602304f901b
+patch SHA-256: 79317cfe8bbfacf6f3fd0240b30f8c3c2a96d4f84726bf947855dcda82c6b33c
 
-  observed:  A, A, A, A, B  (exactly 5)
-  forwarded: A, A, B        (exactly 3)
+Only proposal-controls-v4.mjs, proposal-evidence-v4.txt and proposed-v4.patch
+are changed. The protected journey, mounted test and all product sources are
+unchanged. Controls read the immutable before blob and current committed HEAD;
+only these three metadata files may be dirty. Lint/types inputs must match
+committed HEAD. Thus the checks apply before and after the metadata commit.
 
-The new focused Vitest proof drives the production useTimelineSave hook. That
-hook creates the real localSaveSession and durable commit outbox; the test
-reconnects by unmounting/remounting the hook and uses a boundary HTTP double
-only to observe, hold, reject, and release actual commit requests. It does not
-manually schedule A/B sends. It covers fast and delayed schedules, exact body
-and idempotency-key retention, URL/origin identity, durable owner cleanup, and
-strict negative accounting for wrong/missing/extra/reordered/double-forwarded
-attempts.
+The patch is exact output of:
+  git diff --no-ext-diff --no-color --full-index --unified=0 \
+    5d7550ca7d005f948695ee3dc1d49273890bf59c HEAD -- tests/e2e/local/three-products.spec.ts
+Zero context avoids whitespace-only context lines inside the artifact. No
+hunk text is rewritten. Controls compare the complete patch and check that
+it reverses cleanly against the candidate without applying it.
 
-Immutable source pair
-----------------------
-  author parent: 5d7550ca7d005f948695ee3dc1d49273890bf59c
-  candidate source: current committed HEAD
-  source before SHA-256: a6468188ff21c4fd8bd397ff242b0260ee92ab6f2f90ac94786973eaf3c1e99
-  source after SHA-256:  8661fc919714d292c567844dc4f423855923077ca6a679a1398ec2a46154315b5
+Structural control checks inspect assertExactLifecycle and mountedLifecycle,
+not a test title: renderHook invokes real useTimelineSave, commitTimeline uses
+the boundary, three mounts/unmounts run, durable intents clear, and exact body,
+key, URL, origin and ordering assertions require observed A,A,A,A,B (5) and
+forwarded A,A,B (3). The production hook creates createLocalSaveSession,
+sends through provider.commitTimeline, and recovers the durable owner.
+These source checks are static integrity checks, not new execution evidence.
 
-The controls read the before image only with `git show <author-parent>:<path>`
-and the after image only with `git show <current-HEAD>:<path>`. They verify the
-parent is an ancestor, the tree is clean, the exact parent/HEAD patch matches
-the retained artifact, and the committed source diff passes `git diff --check`.
-This remains valid after the candidate commit and from a clean source checkout.
-
-Validation performed in this worker
-------------------------------------
-  ./node_modules/.bin/eslint src/tools/video-editor/hooks/useTimelineSave.mountedRecovery.test.tsx --max-warnings 0
-    PASS.
-
-  ./node_modules/.bin/tsc --noEmit --pretty false --incremental false
-    PASS, zero diagnostics.
-
-  ./node_modules/.bin/vitest run --no-cache --config config/testing/vitest.config.ts \
-    --reporter dot src/tools/video-editor/hooks/useTimelineSave.mountedRecovery.test.tsx
-    PASS: 3/3 (fast, slow, strict negative controls).
-
-  /opt/node20/bin/node --check proposal-controls-v4.mjs
-    PASS.
-
-  git diff --check HEAD --
-    PASS for the working-tree changes. The parent-to-candidate check must be
-    rerun after the harness commits this worker because HEAD currently points
-    at the prior candidate while the new focused test is uncommitted.
-
-  Playwright --list and browser/service/full suites
-    NOT RUN, per task scope and the no-live/full-suite rule.
-
-Committed-candidate acceptance to run after harness commit
------------------------------------------------------------
-  /opt/node20/bin/node --import tsx --test \
-    tests/e2e/local/support/gate5-fault-order.test.mjs proposal-controls-v4.mjs
+Validation in app-P3-D75b-controls-sol-1843 on the existing committed HEAD
+------------------------------------------------------------------------
+  /opt/node20/bin/node --import tsx --test tests/e2e/local/support/gate5-fault-order.test.mjs proposal-controls-v4.mjs
+    PASS: 7/7 (3 gate-helper tests and 4 control tests).
   /opt/node20/bin/node --import tsx proposal-controls-v4.mjs --lint
+    PASS: zero diagnostics on the protected journey and mounted test.
   /opt/node20/bin/node --import tsx proposal-controls-v4.mjs --types
+    PASS: zero diagnostics using the existing repository recipe:
+    tsc --noEmit --pretty false --incremental false
+    This preserves the root tsconfig.json recipe. That solution config has
+    files: [] and references; this command does not build referenced projects
+    or establish semantic type coverage of the protected tests. No custom
+    compiler config, language service or broader typecheck is claimed.
   /opt/node20/bin/node --import tsx proposal-controls-v4.mjs --hashes
+    PASS: full source/mounted hashes, patch, whitespace and structural checks.
   git diff --check 5d7550ca7d005f948695ee3dc1d49273890bf59c HEAD --
-  node node_modules/@playwright/test/cli.js test --config \
-    playwright.three-products.config.ts tests/e2e/local/three-products.spec.ts --list
+    PASS.
+  git diff --check HEAD --
+    PASS for all three metadata artifacts.
+  git apply --reverse --check --unidiff-zero proposed-v4.patch
+    PASS; check only, no files changed.
 
-The controls intentionally require the clean committed candidate pair, so the
-node:test control command is unverified until the harness commits these edits.
+Existing behavior row — actual qualification only
+-------------------------------------------------
+P3/D75b: protected source SHA-256 above remains unchanged. This worker qualifies
+the repaired controls on donor HEAD 09ae405158bba0d0c1f4bf5502649dea9c04854f. Independent
+review app-P3-D75b-return-review-1839 reported mounted lifecycle 3/3, neighbors
+97/97 and direct lint/tsc PASS, but returned FAIL for the old metadata. Those
+are prior reviewed results, not reruns by this worker. Whole-path review
+app-P3-D75b-wholepath-final-1843 and clean-home qualification/merge remain
+PENDING unless their owners publish actual results. No future home receipt,
+live Runtime, browser, original journey, new collector, service or full-suite
+result is claimed. No protected-source issue was found in this control repair.
+
+C0 sections 1,4,5,7 remain unchanged: api_version, scope, base pair, commands,
+label, steps, merge, reads, idempotency; accepted/merged data, receipt,
+canonical/authoritative fields, dependencies/history; conflict reason/head,
+invalid code/path/hint and guarded undo. Product and generated/pin/schema
+files were not edited.

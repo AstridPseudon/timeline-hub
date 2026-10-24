@@ -1,21 +1,14 @@
 diff --git a/tests/e2e/local/three-products.spec.ts b/tests/e2e/local/three-products.spec.ts
-index 1af9a62b62..aca69c367f 100644
+index 1af9a62b62261dd60ba28a25b30259f47bb55dd3..aca69c367f7c7800a89084f40076daf00c9d2c65 100644
 --- a/tests/e2e/local/three-products.spec.ts
 +++ b/tests/e2e/local/three-products.spec.ts
-@@ -789,2 +789,3 @@ async function faultFirstCommit(page: Page) {
-   const observed: Gate5CommitIdentity[] = [];
+@@ -789,0 +790 @@ async function faultFirstCommit(page: Page) {
 +  const observedUrls: string[] = [];
-   const stagedRetries: Gate5CommitIdentity[] = [];
-@@ -798,2 +799,3 @@ async function faultFirstCommit(page: Page) {
-   let recoveryForwarded = false;
+@@ -798,0 +800 @@ async function faultFirstCommit(page: Page) {
 +  let recoveryRetryArmed = false;
-   const MAX_OBSERVED_ATTEMPTS = 16;
-@@ -838,2 +840,3 @@ async function faultFirstCommit(page: Page) {
-     stagedPage = undefined;
+@@ -838,0 +841 @@ async function faultFirstCommit(page: Page) {
 +    recoveryRetryArmed = false;
-     await forward(route, route.request(), {
-@@ -851,2 +854,13 @@ async function faultFirstCommit(page: Page) {
-     observed.push(identity);
+@@ -851,0 +855,11 @@ async function faultFirstCommit(page: Page) {
 +    observedUrls.push(request.url());
 +    if (recoveryRetryArmed && stagedRetries.length > 0 && !recoveryForwarded
 +      && sameGate5CommitIdentity(identity, stagedRetries[0])) {
@@ -27,26 +20,17 @@ index 1af9a62b62..aca69c367f 100644
 +      stagedPage = target;
 +      return;
 +    }
-     const action = classifyGate5FaultOrder({ initial, candidate: identity,
-@@ -893,3 +907,3 @@ async function faultFirstCommit(page: Page) {
-   return {
+@@ -894 +908 @@ async function faultFirstCommit(page: Page) {
 -    posts, forwarded, observed, stagedRetries, legacy, attach,
 +    posts, forwarded, observed, stagedRetries, legacy, attach, observedUrls,
-     get attempts() { return observed.length; },
-@@ -899,2 +913,3 @@ async function faultFirstCommit(page: Page) {
-     abortStagedRetry,
+@@ -899,0 +914 @@ async function faultFirstCommit(page: Page) {
 +    armRecoveryRetry() { recoveryRetryArmed = true; },
-     async loseAck() {
-@@ -1726,2 +1741,4 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
-   const originalARequest = { body: wire.posts[0].body, key: wire.posts[0].key };
+@@ -1726,0 +1742,2 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
 +  wire.armRecoveryRetry();
 +  await wire.abortStagedRetry();
-   await page.reload();
-@@ -1732,2 +1749,3 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
-   expect(wire.posts, 'reload does not send queued B or retry A').toHaveLength(1);
+@@ -1732,0 +1750 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
 +  await wire.abortStagedRetry('connectionclosed');
-   await page.close();
-@@ -1754,3 +1772,10 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
+@@ -1754,2 +1772,9 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
 -  await reopened.getByRole('button', { name: /^Recover saved edits/ })
 -    .and(reopened.locator(`[data-owner-id="${owner.ownerId}"]`)).click();
 +  wire.armRecoveryRetry();
@@ -58,9 +42,7 @@ index 1af9a62b62..aca69c367f 100644
 +      new URL(harness.doorBase).origin, new URL(harness.doorBase).origin]);
 +  expect(wire.forwarded).toHaveLength(1);
 +  await wire.releaseStagedRetry();
-   await expect.poll(() => wire.posts.length, CEILING).toBe(3);
-@@ -1761,2 +1786,10 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
-   const b = accepted(wire.posts[2]);
+@@ -1761,0 +1787,8 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
 +  expect(wire.observed).toHaveLength(5);
 +  expect(wire.observed.slice(0, 4)).toEqual([originalARequest, originalARequest, originalARequest, originalARequest]);
 +  expect(wire.observed[4]).toEqual({ body: wire.posts[2].body, key: wire.posts[2].key });
@@ -69,4 +51,3 @@ index 1af9a62b62..aca69c367f 100644
 +    .toEqual([new URL(harness.doorBase).origin, new URL(harness.doorBase).origin,
 +      new URL(harness.doorBase).origin, new URL(harness.doorBase).origin, new URL(harness.doorBase).origin]);
 +  expect(wire.forwarded).toHaveLength(3);
-   const requestB = JSON.parse(wire.posts[2].body) as CommitRequest;

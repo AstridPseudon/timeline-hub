@@ -15,13 +15,14 @@ const MOUNTED = 'src/tools/video-editor/hooks/useTimelineSave.mountedRecovery.te
 const HOOK = 'src/tools/video-editor/hooks/useTimelineSave.ts';
 const PATCH = 'proposed-v4.patch';
 const sha = (value) => createHash('sha256').update(value).digest('hex');
-const git = (args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trimEnd();
+const gitText = (args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' });
+const git = (args) => gitText(args).trimEnd();
 const candidate = git(['rev-parse', 'HEAD']);
-const before = git(['show', `${BASE}:${SOURCE}`]) + '\n';
-const after = git(['show', `${candidate}:${SOURCE}`]) + '\n';
+const before = gitText(['show', `${BASE}:${SOURCE}`]);
+const after = gitText(['show', `${candidate}:${SOURCE}`]);
 const patch = readFileSync(path.join(root, PATCH), 'utf8');
-const mounted = git(['show', `${candidate}:${MOUNTED}`]) + '\n';
-const hook = git(['show', `${candidate}:${HOOK}`]) + '\n';
+const mounted = gitText(['show', `${candidate}:${MOUNTED}`]);
+const hook = gitText(['show', `${candidate}:${HOOK}`]);
 
 function section(source, start, end) {
   const from = source.indexOf(start);
@@ -36,33 +37,63 @@ function assertCommittedParentAndCandidate() {
   assert.equal(git(['cat-file', '-t', BASE]), 'commit');
   assert.equal(git(['merge-base', '--is-ancestor', BASE, candidate]), '');
   assert.notEqual(sha(before), sha(after), 'candidate must differ from immutable parent');
-  assert.equal(sha(before), 'a6468188ff21c4fd8bd397ff242b0260ee92ab6f2f90ac94786973eaf3c1e99');
-  assert.equal(sha(after), '8661fc919714d292c567844dc4f423855923077ca6a679a1398ec2a46154315b5');
+  assert.equal(sha(before), 'a6468188ff21c4fd8bd397ff242b0260ee92ab6f2f90ac94786973eaf3c1e99a');
+  assert.equal(sha(after), '8661fc919714d292c567844dc4f423855923077ca6a679a1398ec2a46154315b');
+  assert.equal(sha(mounted), '10e58e89c0626363c3d99ae40515f09aaabdfade67f5a6d1c2426602304f901b');
+  // Control metadata can be repaired before its harness commit; the source
+  // consumed by lint/types must still match the existing committed candidate.
+  assert.equal(git(['status', '--porcelain', '--untracked-files=normal', '--', '.',
+    ':(exclude)proposal-controls-v4.mjs', ':(exclude)proposal-evidence-v4.txt', ':(exclude)proposed-v4.patch']), '',
+    'only the three control artifacts may differ from the committed candidate');
+  for (const [name, content] of [[SOURCE, after], [MOUNTED, mounted], [HOOK, hook]]) {
+    assert.equal(readFileSync(path.join(root, name), 'utf8'), content, `${name} must match committed HEAD`);
+  }
 }
 
 function assertPatchMatchesCandidate() {
-  const actual = git(['diff', '--no-ext-diff', '--no-color', '--unified=1', BASE, candidate, '--', SOURCE])
-    .replace('@@ -1753,4 +1771,11', '@@ -1754,3 +1772,10')
-    .replace('\n \n-  await reopened.getByRole', '\n-  await reopened.getByRole') + '\n';
+  const actual = gitText(['diff', '--no-ext-diff', '--no-color', '--full-index', '--unified=0', BASE, candidate, '--', SOURCE]);
   assert.equal(patch, actual, 'proposal patch must be regenerated from immutable parent to current candidate');
+  const evidence = readFileSync(path.join(root, 'proposal-evidence-v4.txt'), 'utf8');
+  for (const [label, content] of [['source before', before], ['source after', after], ['mounted', mounted], ['patch', patch]]) {
+    assert.ok(evidence.includes(`${label} SHA-256: ${sha(content)}\n`), `${label} evidence must contain the full actual hash`);
+  }
   execFileSync('git', ['diff', '--check', BASE, candidate, '--', SOURCE], { cwd: root, stdio: 'pipe' });
-  assert.equal(sha(patch), 'd9f1dfc2c249f5354bba8cf4ace2a8c8a711836552963199b58f036a43a8d634');
+  execFileSync('git', ['apply', '--reverse', '--check', '--unidiff-zero', PATCH], { cwd: root, stdio: 'pipe' });
 }
 
 function assertMountedProofIsProduction() {
-  assert.match(hook, /createLocalSaveSession/);
-  assert.match(mounted, /useTimelineSave/);
-  assert.match(mounted, /createCommitOutbox/);
-  assert.match(mounted, /localSaveState/);
-  assert.match(mounted, /recover/);
-  assert.match(mounted, /assertExactLifecycle/);
-  assert.match(mounted, /observed.*5|5.*observed/s);
-  assert.match(mounted, /forwarded.*3|3.*forwarded/s);
+  assert.match(hook, /sessionCreation = createLocalSaveSession\(/);
+  assert.match(hook, /send: \(request, key\) => provider\.commitTimeline!\(request, key\)/);
+  assert.match(hook, /await session\.recover\(owners\[0\]\)/);
+  const lifecycle = section(mounted, 'async function mountedLifecycle(', '\ndescribe(');
+  const accounting = section(mounted, 'function assertExactLifecycle(', '\nfunction makeBoundary(');
+  assert.match(lifecycle, /renderHook\(\(\) => useTimelineSave\(/);
+  assert.match(lifecycle, /commitTimeline: boundary\.post/);
+  for (const mount of ['first', 'intermediate', 'restarted']) {
+    assert.ok(lifecycle.includes(`const ${mount} = mount();`));
+    assert.ok(lifecycle.includes(`${mount}.hook.unmount();`));
+  }
+  assert.match(lifecycle, /localSaveState\?\.status\)\.toBe\('saved'\)/);
+  assert.match(lifecycle, /assertExactLifecycle\(boundary\.attempts, boundary\.forwarded,/);
+  assert.match(lifecycle, /expect\(\(await createCommitOutbox\(\)\.list\(scope\)\)\[0\]\?\.intents\)\.toEqual\(\[\]\)/);
+  assert.match(accounting, /expect\(attempts\)\.toHaveLength\(5\)/);
+  assert.match(accounting, /attempts\.slice\(0, 4\).*\.toEqual\(\[a, a, a, a\]\)/);
+  assert.match(accounting, /expect\(attempts\[4\]\)\.toMatchObject\(\{ body: b\.body, key: b\.key \}\)/);
+  assert.match(accounting, /attempt\.url === url/);
+  assert.match(accounting, /new URL\(attempt\.url\)\.origin === origin/);
+  assert.match(accounting, /expect\(forwarded\.map\(.*\.toEqual\(\[a, a, b\]\)/);
+  assert.match(accounting, /expect\(forwarded\)\.toHaveLength\(3\)/);
   assert.doesNotMatch(mounted, /makePage\s*\(|vm\.runInNewContext|send\(A\)|send\(B\)/);
   assert.match(after, /armRecoveryRetry/);
   assert.match(after, /observedUrls/);
   assert.match(after, /toHaveLength\(5\)/);
   assert.match(after, /toHaveLength\(3\)/);
+}
+
+if (['--hashes', '--lint', '--types'].some((mode) => process.argv.includes(mode))) {
+  assertCommittedParentAndCandidate();
+  assertPatchMatchesCandidate();
+  assertMountedProofIsProduction();
 }
 
 if (process.argv.includes('--hashes')) {
@@ -79,29 +110,12 @@ if (process.argv.includes('--hashes')) {
   console.log(JSON.stringify(diagnostics, null, 2));
   assert.equal(diagnostics.length, 0);
 } else if (process.argv.includes('--types')) {
-  const ts = await import('typescript');
-  const configPath = ts.default.findConfigFile(root, ts.default.sys.fileExists, 'tsconfig.json');
-  const config = ts.default.readConfigFile(configPath, ts.default.sys.readFile);
-  const parsed = ts.default.parseJsonConfigFileContent(config.config, ts.default.sys, root);
-  const files = new Map([[path.join(root, SOURCE), after], [path.join(root, MOUNTED), mounted]]);
-  const host = { ...ts.default.sys,
-    getCompilationSettings: () => parsed.options,
-    getScriptFileNames: () => [...new Set([...parsed.fileNames, ...files.keys()])],
-    getScriptVersion: () => '0',
-    getScriptSnapshot: (name) => { const text = files.get(name) ?? ts.default.sys.readFile(name); return text === undefined ? undefined : ts.default.ScriptSnapshot.fromString(text); },
-    getCurrentDirectory: () => root, getDefaultLibFileName: ts.default.getDefaultLibFilePath,
-    useCaseSensitiveFileNames: () => ts.default.sys.useCaseSensitiveFileNames,
-  };
-  const service = ts.default.createLanguageService(host);
-  const diagnostics = [...service.getSyntacticDiagnostics(path.join(root, MOUNTED)), ...service.getSemanticDiagnostics(path.join(root, MOUNTED)),
-    ...service.getSyntacticDiagnostics(path.join(root, SOURCE)), ...service.getSemanticDiagnostics(path.join(root, SOURCE))];
-  console.log(JSON.stringify(diagnostics.map((item) => ({ code: item.code, message: ts.default.flattenDiagnosticMessageText(item.messageText, '\n') })), null, 2));
-  assert.deepEqual(diagnostics, []);
-  service.dispose();
+  execFileSync(process.execPath, [path.join(root, 'node_modules/typescript/bin/tsc'),
+    '--noEmit', '--pretty', 'false', '--incremental', 'false'], { cwd: root, stdio: 'inherit' });
+  console.log('PASS: repository tsc --noEmit --pretty false --incremental false');
 } else {
   test('uses immutable parent and current committed candidate source', () => {
     assertCommittedParentAndCandidate();
-    assert.equal(git(['status', '--porcelain', '--untracked-files=no']), '', 'controls require a clean committed candidate tree');
   });
   test('patch and whitespace evidence are derived from the committed parent pair', () => {
     assertCommittedParentAndCandidate();
@@ -114,6 +128,6 @@ if (process.argv.includes('--hashes')) {
     const controls = readFileSync(path.join(root, 'proposal-controls-v4.mjs'), 'utf8');
     assert.doesNotMatch(controls, /HEAD:\$\{path\.relative/);
     assert.match(controls, /\$\{BASE\}:\$\{SOURCE\}/);
-    assert.match(controls, /git\(\['show', `\$\{candidate\}:\$\{SOURCE\}`/);
+    assert.match(controls, /gitText\(\['show', `\$\{candidate\}:\$\{SOURCE\}`/);
   });
 }
