@@ -17,6 +17,8 @@ import subprocess
 import sys
 
 
+REFUSALS = []
+
 ROOT = Path(__file__).resolve().parent
 ORCH = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch")
 SUITES = ORCH / "tests" / "suites.conf"
@@ -67,6 +69,7 @@ def assert_refusal(binding, mutated: dict, stage: str, template: str, label: str
     try:
         binding.adapt_environment_block(template, stage=stage, recipe=mutated)
     except binding.BindingError:
+        REFUSALS.append(label)
         return
     raise AssertionError(f"negative control unexpectedly accepted: {label}")
 
@@ -75,6 +78,7 @@ def assert_template_refusal(binding, base: dict, mutated: str, stage: str, label
     try:
         binding.adapt_environment_block(mutated, stage=stage, recipe=base)
     except binding.BindingError:
+        REFUSALS.append(label)
         return
     raise AssertionError(f"negative control unexpectedly accepted: {label}")
 
@@ -109,6 +113,36 @@ def assert_launch_bindings(binding, result: dict[str, object], stage: str) -> No
     )
     checked = subprocess.run(["bash", "-c", shell], text=True, capture_output=True, check=False)
     ensure(checked.returncode == 0, f"P{stage}: interpreter argv/export/failure control failed: {checked.stderr}")
+    # Execute the adapter's actual ordinary region too. The old standalone
+    # CPY/RCPY probe could not detect its misspelled $PP2/$PP3 source variables.
+    import tempfile
+    with tempfile.TemporaryDirectory(prefix=f"p{stage}-interpreter-consumption-") as directory:
+        declarations = "; ".join(
+            f"P{stage}{suffix}={shlex.quote(values[key])}" for suffix, key in (
+                ("AG", "agent_checkout"), ("RT", "runtime_checkout"),
+                ("A", "agent_head"), ("R", "runtime_head"),
+                ("APP", "app_head"), ("TREE", "app_tree"),
+            )
+        )
+        region = binding._ordinary_region(stage, values)
+        prefix = (f'{declarations}; P{stage}FAIL=; '
+                  f'p{stage}fail(){{ P{stage}FAIL="$P{stage}FAIL $1"; }}; ')
+        stop = f'if test -n "$P{stage}FAIL"; then echo "$P{stage}FAIL" >&2; exit 2; fi; '
+        probe = 'import json,os,pathlib,sys; pathlib.Path(sys.argv[1]).write_text(json.dumps({"argv":sys.argv,"executable":sys.executable,"agent":os.environ["ASTRID_AGENT_PYTHON"],"runtime":os.environ["ASTRID_RUNTIME_PYTHON"]}))'
+        actual = prefix + region + stop + 'export ASTRID_AGENT_PYTHON ASTRID_RUNTIME_PYTHON; '
+        for role, variable in (("agent", "CPY"), ("runtime", "RCPY")):
+            actual += f'"${variable}" -I -c {shlex.quote(probe)} {shlex.quote(directory + "/" + role + ".json")} || exit 3; '
+        checked = subprocess.run(["/bin/bash", "-c", actual], env={"PATH": "/usr/bin:/bin", "LC_ALL": "C"},
+                                 capture_output=True, text=True, check=False, timeout=10)
+        ensure(checked.returncode == 0, f"P{stage}: actual ordinary region refused: {checked.stderr}")
+        for role, key in (("agent", "agent_python"), ("runtime", "runtime_python")):
+            evidence = json.loads((Path(directory) / f"{role}.json").read_text())
+            ensure(evidence["executable"] == values[key], f"P{stage}: actual {role} argv used another interpreter")
+            ensure(evidence["agent"] == values["agent_python"] and evidence["runtime"] == values["runtime_python"], f"P{stage}: interpreter exports differ")
+        wrong = prefix + region.replace(f'CPY={shlex.quote(values["agent_python"])};', 'CPY=/absent-interpreter;', 1) + stop
+        checked = subprocess.run(["/bin/bash", "-c", wrong], env={"PATH": "/usr/bin:/bin", "LC_ALL": "C"},
+                                 capture_output=True, text=True, check=False, timeout=10)
+        ensure(checked.returncode == 2 and "Agent-interpreter-origin" in checked.stderr, f"P{stage}: wrong consumed interpreter was accepted")
 
 
 def main() -> int:
@@ -242,7 +276,10 @@ def main() -> int:
         assert_template_refusal(binding, base, "X" + template[1:], stage, f"protected prefix mutation: {name}")
         assert_template_refusal(binding, base, template[:-1] + "X", stage, f"protected suffix mutation: {name}")
 
-    print(json.dumps({"status": "PASS", "controls": reports, "live_execution": "NOT_RUN"}, indent=2, sort_keys=True))
+    ensure(len(REFUSALS) == 37, f"adapter mutation inventory changed: {len(REFUSALS)}")
+    print(json.dumps({"status": "PASS", "controls": reports, "refused_count": len(REFUSALS), "refused": REFUSALS,
+                      "ordinary_region_execution": "P2/P3 PASS; wrong consumed interpreter refused; four actual interpreter argv/export files verified",
+                      "live_execution": "NOT_RUN"}, indent=2, sort_keys=True))
     return 0
 
 

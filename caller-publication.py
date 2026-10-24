@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+from copy import deepcopy
 import hashlib
 import importlib.util
 import json
@@ -24,6 +25,9 @@ import shlex
 import stat
 import subprocess
 import tempfile
+import threading
+import time
+import zlib
 from typing import Any
 
 
@@ -47,25 +51,20 @@ RUNTIME_COMMIT = ""
 RUNTIME_TREE = ""
 RUNTIME_PARENTS: tuple[str, ...] = ()
 SOURCE_BINDINGS: dict[str, dict[str, str]] = {}
-# Fixed installed inputs from the independently reviewed 1238 snapshot.
-REGISTRY_SHA256 = "52f556f8dfd4fcdb29443ac84db0f33ee9252bb808c92de4ab660871ec73db93"
+# Exact 1429 installation of the independently reviewed 1419/1424 candidates.
+REGISTRY_SHA256 = "2ad71f2ce522e46a31b8e7cc85af3f2472d7ce05c68da7ace3357694d04d49f5"
 APPROVED_ROWS = {
     "full-e2e-three-products": (
-        "6a45d0567f7dea7a3c15fbcaf687f9dd62debf4527464529d8a4faf8f8e48fee",
-        "f6042b33d35229f47fe74cbd2a575b5984422d2209ed664b996fe1b590656d43",
+        "d898fb5dc7106e5fa7822ff233b3eba14c1fba3c0c3ee259b62880407730e6be",
+        "c742ca50de0fc387b5476dfe7e06a205b90ad66adf2c70d58e0b044f349b9c13",
         "0839e6b5f6454e9a3101dbb7280b201052b5166e1836749b68d28717c22e1f58",
     ),
     "ap2-P3-gate5-h6-0348": (
-        "1b7c7996f9d296aab985a0a9466de89bb71cc816d7796facc8bc79fa0b23c6e7",
-        "6366048bf89533fa450a4575288ac2de004696bab49db6d32f1869783ae493f3",
-        "47deb73f184acc27b701572b1378f2bf4ad70b75de546963647bc94cf6a8da7b",
+        "26a083051bf4e1ac34a2fdca3c413aac7472a6e756a4450b2b3ede7c03e284d8",
+        "d4fe6b9064e3e827179da2efe62630ad4cc3c58d2f2fdd88a541f4bb23fb7bf3",
+        "eddcaf273298a2fe2a4cdaba0c7a4220e57da1b36193abde2f30fb930d9ee8e1",
     ),
 }
-LEGACY_AGENT_TREE = "1094bf3662c785e4b21eddf7e3ae980da79b1af1"
-LEGACY_AGENT_TREE_P3 = "2deab1a1494fbccfce5e9235412bacb8a949c0cd"
-LEGACY_RUNTIME_TREE = "be4114705127f9ee9e86b26cd6de3f467e771c01"
-LEGACY_P3_CHILD = "venv-agent-child-app-ready-079-37eb-0256"
-LEGACY_P3_PARENT = "2e3c8f65a8628127cd283ed26116f7bcb2977b83 2357df925a660dde6624149b8e8a6e1dbf09da98"
 
 _DRY_PREFLIGHT_SPEC = importlib.util.spec_from_file_location(
     "caller_dry_preflight", ARTIFACT / "caller-dry-preflight.py"
@@ -95,18 +94,15 @@ _SERVICE_RECIPE = _local_module("current-service-inputs.py", "current_service_in
 
 P2_SUITE = "full-e2e-three-products"
 P3_SUITE = "ap2-P3-gate5-h6-0348"
-PURE_TARGET_META = Path(
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/"
-    "scratchpad/orch/workers/app-P2-P3-e68-current-pure-target-1409/meta"
-)
-PURE_TARGET_NAME = "app-P2-P3-e68-current-pure-target-1409"
-PURE_TARGET_BRANCH = "tl/app-P2-P3-e68-current-pure-target-1409"
-CUSTODY_PREFIX = (
+LEGACY_CUSTODY_PREFIX = (
     'test -n "${TIMELINE_AGENT_CHECKOUT:-}" && test -n "${TIMELINE_RUNTIME_CHECKOUT:-}" && '
     'test -n "${TIMELINE_CHILD_NAME:-}" && test -n "${TIMELINE_REMOTION_NAME:-}" || '
     '{ echo "current caller environment inputs are required; original-body-NOTRUN '
     'following-stages-NOTRUN" >&2; exit 2; }; '
 )
+CUSTODY_PREFIX = ""
+ADMISSION_BOUNDARY = ": TIMELINE_SOURCE_ENVIRONMENT_ADMITTED; "
+ADMISSION_COMPLETE = ": TIMELINE_SOURCE_ENVIRONMENT_COMPLETE; "
 NATIVE_SHA256 = "c96b2a484a3ba6ffbb7ea84e6013a8a77840782067f2469f771ecf07b74d0f13"
 ENCODED_SHA256 = {
     P2_SUITE: "76107a62e6e6cc6180cd43cbc1c9620ad32244898943e329cdf1dad51f86479c",
@@ -506,6 +502,9 @@ def installed_rows() -> tuple[dict[str, Any], dict[str, str]]:
             outer, body, tail = extract_row(line.decode())
             require(sha256(body.encode()) == APPROVED_ROWS[name][1], f"unapproved decoded body: {name}")
             require(sha256(tail.encode()) == APPROVED_ROWS[name][2], f"unapproved tail: {name}")
+            encoded = re.findall(r'base64\.b64decode\(\\?"([A-Za-z0-9+/=]+)\\?"\)', body)
+            require(len(encoded) == 1 and sha256(base64.b64decode(encoded[0], validate=True)) == ENCODED_SHA256[name],
+                    f"unapproved installed historical custody program: {name}")
             rows[name] = line.decode()
         else:
             outside.extend(line)
@@ -565,37 +564,44 @@ def binding_edits(name: str, template: str, *, tail: bool = False) -> list[tuple
     if tail and p2:
         return []
     prefix = "P2" if p2 else "P3"
-    # Literal source/ref slots, with exact multiplicities from approved rows.
+    # Exactly the reviewed installed 1429 candidates, never restored templates.
     slots = [
-        ("333b44b1a1b8be72d4d101391b7636c508419109" if p2 else "079580ca46af77e0292d49dc34386b25c8391f99",
-         AGENT_COMMIT, 3 if tail else 1),
-        ("37eb6c7bdb79dcae2523883e66b5cea5be721ffd", RUNTIME_COMMIT, 3 if tail else 1),
-        (LEGACY_AGENT_TREE if p2 else LEGACY_AGENT_TREE_P3, AGENT_TREE, 1),
-        (LEGACY_RUNTIME_TREE, RUNTIME_TREE, 1),
+        ("5492fc80414c53c77585844a25fd8a94107c71fa", AGENT_COMMIT),
+        ("e68cf231641db98a72805a586b51ab5c4fae2c16", RUNTIME_COMMIT),
+        ("9fce413c0335f2dca2bbb3ac2b20a58d2141acc6", AGENT_TREE),
+        ("a2cbedd185c7e576e20ed060d993deba17111b78", RUNTIME_TREE),
     ]
-    if tail:
+    if not tail:
         slots.extend([
-            (LEGACY_P3_CHILD, '"${TIMELINE_CHILD_NAME:?}"', 1),
-            ("/home/user/work/wt/rt-pin-34eac004", '"${TIMELINE_RUNTIME_CHECKOUT:?}"', 1),
+            ("be98aac54e275282467d85f79d3beb4665416039", APP_COMMIT),
+            ("2839c7e7841d1c0897fd8e7c12f0c848d94e3979", APP_TREE),
+            ("d24ed69dcdbd464159a1b6db27403ce6a96be2e5 94d89d36e3760af41602a545f775fb9aeeb7f0ef", " ".join(APP_PARENTS)),
         ])
-    else:
-        slots.extend([
-            ("d6ed8cbda122d810d5836ebfce3c56c10e76e9b4" if p2 else "602f8b1f58593302829fb449d0ded62a91462a22",
-             APP_COMMIT, 1 if p2 else 4),
-            ("542b772e6deed676b917f857708445b7d37a5aa8" if p2 else "a38844975865110cd2c026dc10fd7aa1ea488e71",
-             APP_TREE, 1 if p2 else 2),
-            ("cad736828b4890a4df5fff42a22bfa4851a0ecfc 01ea81395a9bb8f091262a9d8275407675188fe6" if p2 else LEGACY_P3_PARENT,
-             " ".join(APP_PARENTS), 1 if p2 else 2),
-        ])
-    edits = [edit for before, after, count in slots for edit in literal_edits(template, before, after, count)]
+    edits = []
+    # The environment region is rendered separately by the source-mode adapter.
+    region = _WORKING_BINDING._region(template, "2" if p2 else "3") if not tail else (-1, -1)
+    for before, after in slots:
+        matches = [m for m in re.finditer(re.escape(before), template)
+                   if tail or not region[0] <= m.start() < region[1]]
+        require(matches, f"missing reviewed source slot: {before}")
+        edits.extend((m.start(), m.end(), after) for m in matches)
     if tail:
+        for before, after, count in (
+            ('"${TIMELINE_RUNTIME_CHECKOUT:?}"', '"$ASTRID_RUNTIME_CHECKOUT"', 1),
+            ('CN="${TIMELINE_CHILD_NAME:?}" && CPY="$P3_CHILD_PATH/bin/python" && test "$CPY" = "$P3_CHILD_PATH/bin/python"',
+             'CPY="$P3_AGENT_PYTHON" && RCPY="$ASTRID_RUNTIME_PYTHON" && test "$CPY" = "$ASTRID_PYTHON" && test -x "$RCPY"', 1),
+            ('ASTRID_RUNTIME_PYTHON=$CPY', 'ASTRID_RUNTIME_PYTHON="$RCPY"', 3),
+        ):
+            edits.extend(literal_edits(template, before, after, count))
         return sorted(edits)
-    for key, value in ((prefix + "AG", '"${TIMELINE_AGENT_CHECKOUT:?}"'),
-                       (prefix + "RT", '"${TIMELINE_RUNTIME_CHECKOUT:?}"'),
-                       ("CN", '"${TIMELINE_CHILD_NAME:?}"'), ("RN", '"${TIMELINE_REMOTION_NAME:?}"')):
+    edits.extend(literal_edits(template, LEGACY_CUSTODY_PREFIX, "", 1))
+    edits.extend(literal_edits(template, 'CN="${TIMELINE_CHILD_NAME:?}"; RN="${TIMELINE_REMOTION_NAME:?}"; ', "", 1))
+    for key, value in ((prefix + "AG", shlex.quote(str(AGENT))), (prefix + "RT", shlex.quote(str(RUNTIME)))):
         matches = list(re.finditer(rf"(?:^|;)\s*{key}=([^;]*)", template))
         require(len(matches) == 1, f"nonunique environment binding: {key}")
         edits.append((*matches[0].span(1), value))
+    if not p2:
+        edits.extend(literal_edits(template, 'P3_CHILD_PATH "$CHILD_PATH"', 'P3_AGENT_PYTHON "$CPY"', 1))
     for algorithm, width, expected_count in (("git hash-object", 40, 67 if p2 else 84),
                                               ("sha256sum", 64, 4 if p2 else 57)):
         pattern = rf"{algorithm} -- (?P<path>[^ )|]+)[^;\n]*?=\s*(?P<digest>[0-9a-f]{{{width}}})(?![0-9a-f])"
@@ -622,16 +628,8 @@ def render_bindings(template: str, edits: list[tuple[int, int, str]]) -> str:
 
 
 def bind_runtime_launches(text: str, name: str) -> str:
-    """Route Runtime launches through the adapter's distinct interpreter."""
-
-    literal = 'ASTRID_RUNTIME_PYTHON="$CPY"'
-    expected = 1 if name == P2_SUITE else 2
-    require(text.count(literal) == expected, f"{name} Runtime launch binding inventory changed")
-    export_literal = 'ASTRID_RUNTIME_PYTHON "$CPY"'
-    require(text.count(export_literal) == 1, f"{name} Runtime export binding inventory changed")
-    return text.replace(literal, 'ASTRID_RUNTIME_PYTHON="$RCPY"').replace(
-        export_literal, 'ASTRID_RUNTIME_PYTHON "$RCPY"'
-    )
+    require('ASTRID_RUNTIME_PYTHON="$CPY"' not in text, f"{name} Runtime uses Agent interpreter")
+    return text
 
 
 def compare_bindings(template: str, candidate: str, edits: list[tuple[int, int, str]], label: str) -> None:
@@ -677,29 +675,29 @@ def authenticate_candidate(name: str, row: str, outer: str, body: str, *, enviro
         if replacement is None:
             replacement = environment["body"][start:start + environment["environment_region_bytes"]]
         marker = f'if test -n "$P{stage}FAIL"; then'
-        expected_start = expected.find("STORE_ROOT=")
+        expected_start = expected.find(f'test -f "$P{stage}O/queue/done')
         expected_end = expected.find(marker, expected_start)
         require(expected_start >= 0 and expected_end - expected_start == end - start,
                 f"{name} authenticated environment boundary moved")
         expected = expected[:expected_start] + replacement + expected[expected_end:]
-        require(joined == expected, f"{name} joined source/environment bindings changed")
+        require(joined == complete_admission(expected, name), f"{name} joined source/environment bindings changed")
         require(environment["launch_bindings"] == {"Agent": "CPY", "Runtime": "RCPY"},
                 f"{name} launch binding contract changed")
     compare_bindings(tail, candidate_tail, tail_edits, name + " tail")
     original_native, candidate_native = native_stage(original), native_stage(body)
     require(sha256(original_native.encode()) == NATIVE_SHA256 and candidate_native == original_native,
             f"{name} native/protected stage changed")
-    encoded = re.findall(r'base64\.b64decode\(\\?"([A-Za-z0-9+/=]+)\\?"\)', body)
-    require(len(encoded) == 1 and sha256(base64.b64decode(encoded[0], validate=True)) == ENCODED_SHA256[name],
-            f"{name} encoded custody stage changed")
+    # The old child-store program is replaced by the same qualified source-mode
+    # recipe used in preparation. Prefix equality authenticates its complete code.
+    require(body.startswith(CUSTODY_PREFIX) and bool(CUSTODY_PREFIX), f"{name} source-mode admission changed")
     return {"status": "PASS", "body_sha256": sha256(body.encode()), "tail_sha256": sha256(candidate_tail.encode()),
-            "native_stage_sha256": NATIVE_SHA256, "encoded_stage_sha256": ENCODED_SHA256[name],
+            "native_stage_sha256": NATIVE_SHA256, "source_mode_admission_sha256": sha256(CUSTODY_PREFIX.encode()),
             "body_binding_spans": len(body_edits), "tail_binding_spans": len(tail_edits)}
 
 
 def rebind(name: str, body: str) -> tuple[str, dict[str, str]]:
     edits = binding_edits(name, body)
-    rebound = CUSTODY_PREFIX + render_bindings(body, edits)
+    rebound = render_bindings(body, edits)
     return rebound, {"binding_spans": str(len(edits))}
 
 
@@ -755,111 +753,35 @@ def normal_service_facts(source: dict[str, Any], agent: dict[str, Any], runtime:
     return recipe, bindings, checks
 
 
-def pure_target_facts(source: dict[str, Any]) -> dict[str, Any]:
-    """Authenticate the separate read-only pure target without using it as a checkout."""
-
-    require(PURE_TARGET_META.is_file() and not PURE_TARGET_META.is_symlink(),
-            f"pure target metadata is unavailable: {PURE_TARGET_META}")
-    fields = {}
-    for line in regular_bytes(PURE_TARGET_META).decode("utf-8").splitlines():
-        if "=" in line:
-            key, value = line.split("=", 1)
-            fields[key] = value
-    require(fields.get("name") == PURE_TARGET_NAME, "pure target metadata name changed")
-    require(fields.get("base") == source["source"], "pure target metadata does not name the current App source")
-    require(fields.get("base_sha") == source["source"][:10], "pure target metadata base abbreviation changed")
-    return {
-        "name": PURE_TARGET_NAME,
-        "branch": PURE_TARGET_BRANCH,
-        "metadata": str(PURE_TARGET_META),
-        "checkout": source["checkout"],
-        "source": source["source"],
-        "tree": source["tree"],
-        "parents": source["parents"],
-        "target_use": "read-only source identity; never a product checkout or service target",
-    }
-
-
 def source_preflight() -> dict[str, Any]:
-    """Run only the source/target phases while Agent U4a adoption is pending."""
+    """The dry path uses the same complete source/environment admission."""
+    return prepare()
 
-    source = app_facts()
-    agent = facts(AGENT, label="Agent")
-    runtime = facts(RUNTIME, label="Runtime")
-    freeze_tuple(source, agent, runtime)
-    target = pure_target_facts(source)
-    registry, rows = installed_rows()
-    wire = wire_inventory()
-    tmp = Path(tempfile.mkdtemp(prefix="timeline-source-preflight-", dir=os.environ.get("TMPDIR", "/tmp")))
-    candidates: dict[str, Any] = {}
-    for name in (P2_SUITE, P3_SUITE):
-        outer, body, suffix = extract_row(rows[name])
-        rebound, _ = rebind(name, body)
-        dry = _DRY_PREFLIGHT.dry_source_preflight(
-            rebound,
-            app=source,
-            agent=agent,
-            runtime=runtime,
-            target=APP,
-            stage="2" if name == P2_SUITE else "3",
-        )
-        candidate_outer = (
-            outer[: outer.index("$(bash -c ") + len("$(bash -c ")]
-            + shlex.quote(rebound)
-            + refresh_wrapper_bindings(name, suffix)
-        )
-        preservation = authenticate_candidate(name, rows[name], candidate_outer, rebound)
-        syntax = syntax_check(candidate_outer, rebound, tmp, "source-" + name)
-        candidates[name] = {
-            "source_row_sha256": registry["rows"][name]["sha256"],
-            "decoded_template_sha256": registry["rows"][name]["decoded_sha256"],
-            "candidate_body_sha256": sha256(rebound.encode()),
-            "candidate_outer_sha256": sha256(candidate_outer.encode()),
-            "preservation": preservation,
-            "syntax": syntax,
-            "wrapper": {
-                "status": "NOT_RUN_PENDING_ADOPTION",
-                "reason": "The real wrapper/export seam is checked only after the normal Agent environment adapter can authenticate the e68 lock mapping.",
-            },
-            "dry_preflight": dry,
-        }
-    unchanged_registry(registry)
-    require(app_facts() == source, "App normal tuple changed during source preflight")
-    require(facts(AGENT, AGENT_COMMIT, AGENT_TREE, "Agent", parents=AGENT_PARENTS) == agent,
-            "Agent normal tuple changed during source preflight")
-    require(facts(RUNTIME, RUNTIME_COMMIT, RUNTIME_TREE, "Runtime", parents=RUNTIME_PARENTS) == runtime,
-            "Runtime normal tuple changed during source preflight")
-    result = {
-        "status": "SOURCE_PREPARED_AGENT_ADOPTION_PENDING",
-        "execution": "NOT_RUN",
-        "source": source,
-        "agent": agent,
-        "runtime": runtime,
-        "pure_target": target,
-        "wire_fields": wire,
-        "registry": registry,
-        "candidates": candidates,
-        "pending_dependency": {
-            "lock": str(AGENT / "runtime.lock.json"),
-            "observed_source_commit": json.loads(regular_bytes(AGENT / "runtime.lock.json")).get("source_commit"),
-            "required_source_commit": RUNTIME_COMMIT,
-            "reason": "Agent U4a must adopt Runtime e68 through the normal sync tool; the old lock is not relabeled.",
-        },
-        "preflight_scope": "source_identity_tree_target_bindings only; child/import/native/build/browser/backend/provision/schema/HTTP/original not run",
-        "prepare_commands": {
-            "refresh": "PYTHONDONTWRITEBYTECODE=1 python3 current-service-inputs.py --refresh",
-            "source": "PYTHONDONTWRITEBYTECODE=1 python3 caller-publication.py --dry-source",
-            "source_optimized": "PYTHONDONTWRITEBYTECODE=1 python3 -O caller-publication.py --dry-source",
-            "full_prepare_after_adoption": "PYTHONDONTWRITEBYTECODE=1 python3 caller-publication.py",
-            "full_prepare_after_adoption_optimized": "PYTHONDONTWRITEBYTECODE=1 python3 -O caller-publication.py",
-        },
-        "positive_baseline": "NOT_ESTABLISHED; normal environment adoption is pending",
-        "service_execution": "NOT_RUN",
-        "tmpdir": str(tmp),
-    }
-    (ARTIFACT / "caller-custody.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
-    print(json.dumps(result, indent=2, sort_keys=True))
-    return result
+
+def complete_admission(body: str, name: str) -> str:
+    """Put all real source/environment guards before output files and sockets."""
+    stage = "2" if name == P2_SUITE else "3"
+    files = ""
+    if stage == "2":
+        start = body.index('RUN_SNAPSHOT="$PWD";')
+        end = body.index('printf "%s\\n" "$P2APP"', start)
+        files = body[start:end]
+        require(sha256(files.encode()) == "d0fc5ec7aa2a30ff13d52e42c442c500d218c268fc46a9865c6f6e377bae75e8",
+                "P2 per-stage output directory/status guard changed")
+        body = body[:start] + body[end:]
+    else:
+        start = body.index(' && test "$(realpath "$PWD/node_modules")"')
+        end = body.index('; } || { echo "P3 source/private graph RED', start)
+        mount = body[start:end]
+        require(sha256(mount.encode()) == "1d7b25b86380282a7807a6e460bd51951e3172a4ec1a7888c3394ce4d20fd492",
+                "P3 private graph mount/resolution guards changed")
+        body = body[:start] + body[end:]
+        files = ('{ ' + mount[len(" && "):] + '; } || { echo "P3 source/private graph RED: original-body-NOTRUN" >&2; exit 2; }; ')
+    marker = f'if ! P{stage}_ALLOCATED_PORT='
+    require(body.count(marker) == 1, f"{name} source/socket boundary changed")
+    stop = (f'if test -n "$P{stage}FAIL"; then echo "P{stage} source/environment REFUSED:$P{stage}FAIL '
+            'original-body-NOTRUN following-stages-NOTRUN" >&2; exit 2; fi; ')
+    return body.replace(marker, stop + ADMISSION_COMPLETE + files + marker, 1)
 
 
 def join_environment(name: str, template: str, stage: str, recipe: dict[str, Any]) -> tuple[str, dict[str, Any]]:
@@ -870,23 +792,60 @@ def join_environment(name: str, template: str, stage: str, recipe: dict[str, Any
     rendered = bind_runtime_launches(render_bindings(template, edits), name)
     start, end = _WORKING_BINDING._region(template, stage)
     marker = f'if test -n "$P{stage}FAIL"; then'
-    rendered_start = rendered.find("STORE_ROOT=")
+    rendered_start = rendered.find(f'test -f "$P{stage}O/queue/done')
     rendered_end = rendered.find(marker, rendered_start)
     require(rendered_start >= 0 and rendered_end - rendered_start == end - start,
             f"{name} source binding moved the environment boundary")
     replacement = adapted["body"][start:start + adapted["environment_region_bytes"]]
-    region = template[start:end]
-    encoded_end = region.find('; if test "$STORE_STATUS"')
-    require(encoded_end > 0 and region.count("STORE_INFO=$(python3 -c") == 1,
-            f"{name} encoded custody boundary changed")
-    encoded_prefix = region[:encoded_end]
-    joined_replacement = encoded_prefix + "; " + replacement
-    adapted["joined_environment_region"] = joined_replacement
-    adapted["joined_environment_region_sha256"] = sha256(joined_replacement.encode())
-    candidate = CUSTODY_PREFIX + rendered[:rendered_start] + joined_replacement + rendered[rendered_end:]
+    adapted["joined_environment_region"] = replacement
+    adapted["joined_environment_region_sha256"] = sha256(replacement.encode())
+    candidate = complete_admission(rendered[:rendered_start] + replacement + rendered[rendered_end:], name)
     require('ASTRID_AGENT_PYTHON="$CPY"' in candidate, f"{name} Agent interpreter binding was not consumed")
     require('ASTRID_RUNTIME_PYTHON="$RCPY"' in candidate, f"{name} Runtime interpreter binding was not consumed")
     return candidate, adapted
+
+
+def launch_prefix(recipe: dict[str, Any], manifest: dict[str, Any]) -> str:
+    """Supply and validate ordinary inputs where Bash actually consumes them."""
+    module_source = regular_bytes(ARTIFACT / "current-service-inputs.py").decode()
+    frozen = _SERVICE_RECIPE.strip_authentication(recipe)
+    program = (
+        "import json,sys\n"
+        "try:\n"
+        f" ns={{'__name__':'timeline_source_inputs','__file__':'current-service-inputs.py'}}\n"
+        f" exec(compile({module_source!r}, 'current-service-inputs.py', 'exec'), ns)\n"
+        f" ns['admit_launch'](json.loads({json.dumps(frozen, sort_keys=True)!r}), "
+        f"json.loads({json.dumps(manifest, sort_keys=True)!r}), sys.argv[1], sys.argv[2])\n"
+        "except Exception as exc:\n"
+        " print('source/environment REFUSED: '+str(exc)+'; original-body-NOTRUN following-stages-NOTRUN', file=sys.stderr)\n"
+        " raise SystemExit(2)\n"
+    )
+    encoded = base64.b64encode(zlib.compress(program.encode())).decode()
+    refusal = '{ echo "source/environment inputs REFUSED; original-body-NOTRUN following-stages-NOTRUN" >&2; exit 2; }'
+    checks = []
+    expected = {
+        "TIMELINE_AGENT_CHECKOUT": recipe["source"]["agent"]["checkout"],
+        "TIMELINE_RUNTIME_CHECKOUT": recipe["source"]["runtime"]["checkout"],
+        "TIMELINE_REMOTION_NAME": Path(recipe["environment"]["file"]).stem,
+        "ASTRID_CHECKOUT": recipe["source"]["agent"]["checkout"],
+        "ASTRID_RUNTIME_CHECKOUT": recipe["source"]["runtime"]["checkout"],
+        "ASTRID_PYTHON": recipe["interpreters"]["agent"]["path"],
+        "ASTRID_RUNTIME_PYTHON": recipe["interpreters"]["runtime"]["path"],
+    }
+    for key, value in expected.items():
+        checks.append(f'{{ test -z "${{{key}+x}}" || test "${{{key}}}" = {shlex.quote(value)}; }} || {refusal}')
+    # CHILD_NAME was a legacy acquisition input, not authority for this recipe.
+    # Reject it rather than inventing a current child or accepting an old receipt.
+    for key in ("TIMELINE_CHILD_NAME", "PYTHONHOME", "NODE_PATH", "NODE_OPTIONS", "BASH_ENV", "ENV"):
+        checks.append(f'test -z "${{{key}+x}}" || {refusal}')
+    checks.append(f'{{ test -z "${{PYTHONPATH+x}}" || test "$PYTHONPATH" = "$PWD"; }} || {refusal}')
+    checks.extend([
+        "unset PYTHONPATH",
+        f'CPY={shlex.quote(recipe["interpreters"]["agent"]["path"])}',
+        f'RCPY={shlex.quote(recipe["interpreters"]["runtime"]["path"])}',
+        f'"$CPY" -I -c {shlex.quote("import base64,zlib;exec(zlib.decompress(base64.b64decode(" + repr(encoded) + "))) ")} "$PWD" "$BASH_EXECUTION_STRING" || {refusal}',
+    ])
+    return "; ".join(checks) + "; " + ADMISSION_BOUNDARY
 
 
 def syntax_check(outer: str, body: str, directory: Path, label: str) -> dict[str, Any]:
@@ -929,15 +888,14 @@ def wrapper_check(outer: str, body: str, label: str) -> dict[str, Any]:
         'test "${PLAYWRIGHT_OUTPUT_DIR+x}" = x',
         'printf "%s\\n" wrapper-argv-export-PASS',
     ])
-    result = subprocess.run(["/bin/bash", "-c", probe], text=True, capture_output=True, timeout=10, check=False,
+    result = subprocess.run(["/bin/bash"], input=probe, text=True, capture_output=True, timeout=10, check=False,
                             env={"PATH": "/usr/bin:/bin", "LC_ALL": "C"})
     require(result.returncode == 0 and result.stdout.strip() == "wrapper-argv-export-PASS",
             f"{label} wrapped argv/export probe failed: {result.stderr}")
-    # Empty environment inputs force the authenticated prefix to exit before
-    # any original stage; the real outer && chain must propagate that failure.
     require(body.startswith(CUSTODY_PREFIX), f"{label} failure prefix changed")
-    failure = subprocess.run(["/bin/bash", "-c", outer], text=True, capture_output=True, timeout=10, check=False,
-                             env={"PATH": "/usr/bin:/bin", "LC_ALL": "C"})
+    bounded = _DRY_PREFLIGHT.bounded_outer(outer, body)
+    failure = subprocess.run(["/bin/bash", "-c", bounded], text=True, capture_output=True, timeout=60, check=False,
+                             cwd=APP, env={"PATH": "/usr/bin:/bin", "LC_ALL": "C", "TIMELINE_CHILD_NAME": "obsolete-child"})
     require(failure.returncode == 2 and not failure.stdout and "original-body-NOTRUN" in failure.stderr
             and "following-stages-NOTRUN" in failure.stderr, f"{label} wrapped failure did not stop safely")
     return {"argv_count": len(argv), "eval_suffix": True, "export_probe": "PASS", "failure_returncode": 2,
@@ -956,7 +914,7 @@ def custody_requirements() -> list[dict[str, str]]:
 
 
 def negative(mode: str) -> int:
-    global SUITES, REGISTRY_SHA256, read_lock
+    global SUITES, REGISTRY_SHA256, read_lock, CUSTODY_PREFIX
     try:
         source = app_facts()
         agent = facts(AGENT, label="Agent")
@@ -986,11 +944,17 @@ def negative(mode: str) -> int:
             _, rows = installed_rows()
             for name, row in rows.items():
                 outer, template, suffix = extract_row(row)
-                body, _ = rebind(name, template)
+                recipe, _, _ = normal_service_facts(source, agent, runtime)
+                manifest = json.loads(regular_bytes(ARTIFACT / "caller-custody.json"))["launch_manifest"]
+                CUSTODY_PREFIX = launch_prefix(recipe, manifest)
+                remainder, environment = join_environment(name, template, "2" if name == P2_SUITE else "3", recipe)
+                require(sha256(remainder.encode()) == manifest["rows"][name]["remainder_sha256"], "negative baseline remainder differs")
+                body = CUSTODY_PREFIX + remainder
                 tail = refresh_wrapper_bindings(name, suffix)
                 seam = outer[:outer.index("$(bash -c ") + len("$(bash -c ")]
                 wrapped = seam + shlex.quote(body) + tail
-                authenticate_candidate(name, row, wrapped, body)
+                authenticate_candidate(name, row, wrapped, body, environment=environment)
+                _DRY_PREFLIGHT.dry_launch_preflight(wrapped, body, target=APP)
                 if mode == "native":
                     before, after = "expect(seed.headRevisionId).toBeTruthy();", "expect(seed.headRevisionId).toBeFalsy();"
                 elif mode == "protected":
@@ -1002,11 +966,11 @@ def negative(mode: str) -> int:
                 elif mode == "binding":
                     before, after = APP_TREE, "0" * 40
                 elif mode == "encoded":
-                    match = re.search(r'base64\.b64decode\(\\?"([A-Za-z0-9+/=]+)\\?"\)', body)
+                    match = re.search(r'([A-Za-z0-9+/]{100,}={0,2})', CUSTODY_PREFIX)
                     require(match is not None, "negative encoded boundary unavailable")
                     before = match.group(1)
-                    decoded = base64.b64decode(before).replace(b"!= 1", b"== 1", 1)
-                    after = base64.b64encode(decoded).decode()
+                    decoded = zlib.decompress(base64.b64decode(before)) + b"\n# mutated admission\n"
+                    after = base64.b64encode(zlib.compress(decoded)).decode()
                 else:
                     before, after = "npm run test:e2e:three-products", "npm run test:e2e:three-products --list"
                 victim = tail if mode == "tail" else body
@@ -1017,9 +981,9 @@ def negative(mode: str) -> int:
                     body = body.replace(before, after, 1)
                 wrapped = seam + shlex.quote(body) + tail
                 try:
-                    authenticate_candidate(name, row, wrapped, body)
+                    authenticate_candidate(name, row, wrapped, body, environment=environment)
                 except PreparedError as exc:
-                    require("protected" in str(exc) or "unauthenticated binding" in str(exc),
+                    require(any(token in str(exc) for token in ("protected", "unauthenticated binding", "bindings changed", "environment guard")),
                             f"negative {mode} refused for unrelated reason: {exc}")
                     print(f"NEGATIVE {mode} {name}: REFUSED: {exc}")
                 else:
@@ -1105,7 +1069,7 @@ def negative(mode: str) -> int:
     raise SystemExit(f"negative control unexpectedly accepted: {mode}")
 
 
-def prepare() -> dict[str, Any]:
+def prepare(*, emit: bool = True) -> dict[str, Any]:
     source = app_facts()
     agent = facts(AGENT, label="Agent")
     runtime = facts(RUNTIME, label="Runtime")
@@ -1115,35 +1079,40 @@ def prepare() -> dict[str, Any]:
     tmp = Path(tempfile.mkdtemp(prefix="timeline-final-tuple-", dir=os.environ.get("TMPDIR", "/tmp")))
     candidates: dict[str, Any] = {}
     prepared: dict[str, tuple[str, str, dict[str, str], dict[str, Any]]] = {}
-    # Execute both bounded source phases before deeper binding/wrapper checks.
+    global CUSTODY_PREFIX
+    remainders = {}
+    tails = {}
+    environments = {}
     for name in (P2_SUITE, P3_SUITE):
         outer, body, suffix = extract_row(rows[name])
-        rebound, environment = join_environment(
-            name,
-            body,
-            "2" if name == P2_SUITE else "3",
-            service_recipe,
+        remainders[name], environments[name] = join_environment(
+            name, body, "2" if name == P2_SUITE else "3", service_recipe,
         )
-        dry = _DRY_PREFLIGHT.dry_source_preflight(
-            rebound,
-            app=source,
-            agent=agent,
-            runtime=runtime,
-            target=APP,
-            stage="2" if name == P2_SUITE else "3",
-        )
-        candidate_outer = (
-            outer[: outer.index("$(bash -c ") + len("$(bash -c ")]
-            + shlex.quote(rebound)
-            + refresh_wrapper_bindings(name, suffix)
-        )
-        prepared[name] = candidate_outer, rebound, environment, dry
+        tails[name] = refresh_wrapper_bindings(name, suffix)
+    manifest = {
+        "registry": str(SUITES), "outside_sha256": registry["outside_sha256"],
+        "source_files": {path: value["sha256"] for path, value in SOURCE_BINDINGS.items()},
+        "rows": {name: {"installed_sha256": APPROVED_ROWS[name][0],
+                         "remainder_sha256": sha256(remainders[name].encode()),
+                         "tail_sha256": sha256(tails[name].encode())} for name in remainders},
+    }
+    CUSTODY_PREFIX = launch_prefix(service_recipe, manifest)
+    # First execute the actual outer construction and complete source-mode
+    # admission from an empty service environment. No guard is stubbed out.
+    for name in (P2_SUITE, P3_SUITE):
+        outer, _, _ = extract_row(rows[name])
+        rebound = CUSTODY_PREFIX + remainders[name]
+        candidate_outer = (outer[:outer.index("$(bash -c ") + len("$(bash -c ")]
+                           + shlex.quote(rebound) + tails[name])
+        dry = _DRY_PREFLIGHT.dry_launch_preflight(candidate_outer, rebound, target=APP, inherited={"PYTHONPATH": str(APP)})
+        prepared[name] = candidate_outer, rebound, environments[name], dry
     wire = wire_inventory()
     for name, (candidate_outer, rebound, environment, dry) in prepared.items():
         preservation = authenticate_candidate(name, rows[name], candidate_outer, rebound, environment=environment)
         syntax = syntax_check(candidate_outer, rebound, tmp, name)
         candidates[name] = {
             "source_row_sha256": registry["rows"][name]["sha256"],
+            "outer": candidate_outer,
             "rebound": rebound,
             "preservation": preservation,
             "syntax": syntax,
@@ -1194,7 +1163,8 @@ def prepare() -> dict[str, Any]:
             "live_traffic": "NOT_MEASURED; no journey executed",
             "registry_unchanged": True,
             "outside_rows_unchanged": True,
-            "native_and_encoded_stage_bytes": "authenticated unchanged against approved templates",
+            "native_stage_bytes": "authenticated unchanged against installed 1429 candidates",
+            "source_mode_substitution": "legacy child validator replaced by embedded qualified current-service-inputs.py recipe; no child identity asserted",
         },
         "wire_fields": wire,
         "counts": {
@@ -1206,7 +1176,8 @@ def prepare() -> dict[str, Any]:
             "p3_stages": 1,
         },
         "required_custody": custody,
-        "readiness": {"status": "SOURCE_PREPARED_ENVIRONMENT_AUTHENTICATED", "owner": "normal existing-service recipe 1304",
+        "launch_manifest": manifest,
+        "readiness": {"status": "SOURCE_PREPARED_ENVIRONMENT_AUTHENTICATED", "owner": "normal existing-service source-mode recipe",
                       "reason": "The actual normal working-service inputs are authenticated read-only; this artifact does not start or execute the service.",
                       "prior_refusals": "STOPPED; no alternate acquisition, new child/schema, install, preload, overlay, or historical receipt relabel"},
         "post_request_checks": ["authenticate the actual service snapshot against the frozen source/tree/parents/target/bindings", "retain the full terminal run result; it is evidence after execution"],
@@ -1221,20 +1192,182 @@ def prepare() -> dict[str, Any]:
     }
     (tmp / "caller-custody.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
     (ARTIFACT / "caller-custody.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+    if emit:
+        print(json.dumps(result, indent=2, sort_keys=True))
+    return result
+
+
+def launch_controls() -> dict[str, Any]:
+    """Refuse mutations only after the exact empty-environment launch passes."""
+    baseline = prepare(emit=False)
+    recipe = _SERVICE_CONTROL.recipe()
+    manifest = baseline["launch_manifest"]
+    candidates = baseline["candidates"]
+    refused = []
+
+    def refuse(label: str, outer: str, body: str, *, target: Path = APP, inherited: dict[str, str] | None = None) -> None:
+        try:
+            _DRY_PREFLIGHT.dry_launch_preflight(outer, body, target=target, inherited=inherited)
+        except _DRY_PREFLIGHT.DryPreflightError as exc:
+            require("(2)" in str(exc) and "original-body-NOTRUN" in str(exc), f"unrelated launch refusal {label}: {exc}")
+            refused.append(label)
+        else:
+            fail(f"launch mutation accepted: {label}")
+
+    def wrap(candidate: dict[str, Any], prefix: str) -> tuple[str, str]:
+        body = prefix + candidate["rebound"][len(CUSTODY_PREFIX):]
+        outer = candidate["outer"]
+        start = outer.index("$(bash -c ") + len("$(bash -c ")
+        end = outer.index(')" && eval', start)
+        return outer[:start] + shlex.quote(body) + outer[end:], body
+
+    for name, candidate in candidates.items():
+        _DRY_PREFLIGHT.dry_launch_preflight(candidate["outer"], candidate["rebound"], target=APP)
+        # This is the real runner's PYTHONPATH assignment, consumed and cleared
+        # at admission, before either qualified interpreter runs.
+        _DRY_PREFLIGHT.dry_launch_preflight(candidate["outer"], candidate["rebound"], target=APP, inherited={"PYTHONPATH": str(APP)})
+        for key in ("TIMELINE_AGENT_CHECKOUT", "TIMELINE_RUNTIME_CHECKOUT", "TIMELINE_REMOTION_NAME", "TIMELINE_CHILD_NAME",
+                    "PYTHONPATH", "PYTHONHOME", "NODE_OPTIONS", "ASTRID_PYTHON", "ASTRID_RUNTIME_PYTHON", "BASH_ENV"):
+            refuse(f"{name}: inherited {key}", candidate["outer"], candidate["rebound"], inherited={key: "/absent-poison"})
+
+    mutations = []
+    for role in ("app", "agent", "runtime"):
+        for field in ("head", "tree", "parents", "ref"):
+            value = deepcopy(recipe)
+            value["source"][role][field] = ["0" * 40] if field == "parents" else ("origin/main" if field == "ref" else "0" * 40)
+            mutations.append((f"wrong {role} {field}", value))
+        value = deepcopy(recipe)
+        value["source"][role].pop("head")
+        mutations.append((f"absent {role} source", value))
+        value = deepcopy(recipe)
+        value["source"][role]["checkout"] = "/absent-source-checkout"
+        mutations.append((f"absent {role} checkout", value))
+    for role in ("agent", "runtime"):
+        value = deepcopy(recipe)
+        value["interpreters"][role]["path"] = "/absent-qualified-interpreter"
+        mutations.append((f"absent {role} interpreter", value))
+        value = deepcopy(recipe)
+        value["interpreters"][role]["realpath"] = "/wrong-interpreter"
+        mutations.append((f"wrong {role} interpreter", value))
+        value = deepcopy(recipe)
+        value["interpreters"][role]["imports"]["astrid_runtime_client"] = "/wrong-import-origin"
+        mutations.append((f"wrong {role} import origin", value))
+    for role in ("app", "agent"):
+        for missing in (False, True):
+            value = deepcopy(recipe)
+            consumer = value["runtime_bindings"]["consumers"][role]
+            if missing:
+                consumer.pop("mappings")
+            else:
+                consumer["lock_sha256"] = "0" * 64
+            mutations.append((f"{'absent' if missing else 'wrong'} {role} lock", value))
+    for section, field, wrong in (
+        ("composition", "qualified_graph", "/absent-qualified-graph"),
+        ("composition", "file_map_sha256", "0" * 64),
+        ("client_contract", "schema_digest", "sha256:" + "0" * 64),
+        ("remotion", "current_agent_remotion_tree", "0" * 40),
+        ("remotion", "historical_source_commit_marker", recipe["source"]["agent"]["head"]),
+        ("environment", "ASTRID_NODE_EXECUTABLE", "/absent-node"),
+    ):
+        value = deepcopy(recipe)
+        value[section][field] = wrong
+        mutations.append((f"wrong/absent {section}.{field}", value))
+    for name, candidate in candidates.items():
+        for label, value in mutations:
+            outer, body = wrap(candidate, launch_prefix(value, manifest))
+            refuse(f"{name}: {label}", outer, body)
+        refuse(f"{name}: wrong target", candidate["outer"], candidate["rebound"], target=Path("/tmp"))
+        for field, value in (("registry", "/absent-registry"), ("outside_sha256", "0" * 64)):
+            altered = deepcopy(manifest)
+            altered[field] = value
+            outer, body = wrap(candidate, launch_prefix(recipe, altered))
+            refuse(f"{name}: wrong/absent registry {field}", outer, body)
+
+    # Exercise the post-install branch against a private registry, including
+    # both exact candidate rows, without changing the installed registry.
+    directory = Path(tempfile.mkdtemp(prefix="launch-registry-controls-"))
+    fixture = directory / "suites.conf"
+    fixture_manifest = deepcopy(manifest)
+    fixture_manifest["registry"] = str(fixture)
+    fixture_prefix = launch_prefix(recipe, fixture_manifest)
+    fixture_candidates = {name: wrap(candidate, fixture_prefix) for name, candidate in candidates.items()}
+    fixture_bytes = b"".join(
+        (f"app {line.split()[1]} {fixture_candidates[line.split()[1]][0]}\n".encode()
+         if line.split()[:2] in (["app", P2_SUITE], ["app", P3_SUITE]) else line.encode())
+        for line in SUITES.read_text().splitlines(keepends=True)
+    )
+    fixture.write_bytes(fixture_bytes)
+    for name, (outer, body) in fixture_candidates.items():
+        _DRY_PREFLIGHT.dry_launch_preflight(outer, body, target=APP)
+        own_line = f"app {name} {outer}\n".encode()
+        _, _, tail = extract_row(own_line.decode())
+        altered_tail = tail.replace("npm run test:e2e:three-products", "npm run evil:e2e:three-products", 1)
+        variants = {
+            "duplicate row": fixture_bytes + own_line,
+            "absent row": fixture_bytes.replace(own_line, b""),
+            "wrong candidate body": fixture_bytes.replace(own_line, own_line.replace(b"native-seed", b"native-evil", 1)),
+            "wrong candidate tail": fixture_bytes.replace(own_line, own_line.replace(tail.encode(), altered_tail.encode())),
+            "outsider bytes": fixture_bytes + b"# changed outsider\n",
+        }
+        for label, altered in variants.items():
+            require(altered != fixture_bytes, f"fixture mutation not applied: {label}")
+            fixture.write_bytes(altered)
+            refuse(f"{name}: registered {label}", outer, body)
+        fixture.write_bytes(fixture_bytes)
+        altered_body = body.replace("source/environment inputs REFUSED", "mutated candidate refusal", 1)
+        altered_outer = outer.replace(shlex.quote(body), shlex.quote(altered_body), 1)
+        refuse(f"{name}: executing candidate prefix changed", altered_outer, altered_body)
+        # Relatime lets the private fixture signal its first real admission
+        # read. Change it while interpreter/origin/lock probes are in progress.
+        os.utime(fixture, ns=(0, fixture.stat().st_mtime_ns))
+        changed = threading.Event()
+
+        def concurrent_write() -> None:
+            deadline = time.monotonic() + 10
+            while fixture.stat().st_atime_ns == 0 and time.monotonic() < deadline:
+                time.sleep(0.01)
+            if fixture.stat().st_atime_ns:
+                time.sleep(0.15)
+                with fixture.open("ab") as stream:
+                    stream.write(b"# concurrent registry write\n")
+                changed.set()
+
+        writer = threading.Thread(target=concurrent_write)
+        writer.start()
+        try:
+            try:
+                _DRY_PREFLIGHT.dry_launch_preflight(outer, body, target=APP)
+            except _DRY_PREFLIGHT.DryPreflightError as exc:
+                require("registry changed during admission" in str(exc), f"unrelated concurrent refusal: {exc}")
+                refused.append(f"{name}: concurrent registry write during real admission")
+            else:
+                fail("concurrent registry mutation accepted")
+        finally:
+            writer.join(timeout=11)
+        require(changed.is_set() and not writer.is_alive(), "concurrency control did not perform its mutation")
+        fixture.write_bytes(fixture_bytes)
+    unchanged_registry(baseline["registry"])
+    result = {"status": "PASS", "empty_environment_positive": list(candidates),
+              "service_environment_positive": "PYTHONPATH=$snapshot (normal launcher contract)",
+              "candidate_registry_positive": "both exact candidates in private registry",
+              "refused_count": len(refused), "refused": refused, "execution": "offline admission only"}
     print(json.dumps(result, indent=2, sort_keys=True))
     return result
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dry-source", action="store_true", help="run only source/target preflight; never prepare service bindings")
+    parser.add_argument("--dry-source", action="store_true", help="run the same complete offline source/environment admission as preparation")
+    parser.add_argument("--launch-controls", action="store_true", help="exercise real source/environment admission and mutation refusals offline")
     parser.add_argument("--negative", choices=("wrong-source", "stale", "app", "agent", "runtime", "tree", "target", "path", "body", "receipt", "registry", "duplicate", "concurrency", "native", "protected", "tail", "encoded", "binding", "app-mapping", "agent-mapping", "inventory-missing", "inventory-extra"))
     args = parser.parse_args()
     try:
         if args.negative:
             return negative(args.negative)
+        if args.launch_controls:
+            return launch_controls() and 0
         return (source_preflight() if args.dry_source else prepare()) and 0
-    except (PreparedError, _DRY_PREFLIGHT.DryPreflightError, _WORKING_BINDING.BindingError) as exc:
+    except (RuntimeError, _WORKING_BINDING.BindingError) as exc:
         print(str(exc), file=os.sys.stderr)
         return 2
 

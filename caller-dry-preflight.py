@@ -16,6 +16,47 @@ class DryPreflightError(RuntimeError):
     """The candidate source phase refused or was not safely bounded."""
 
 
+BOUNDARY = ": TIMELINE_SOURCE_ENVIRONMENT_COMPLETE; "
+LAUNCH_ARGV = ["timeout", "-k", "60", "90m", "nice", "-n", "5", "bash", "-c"]
+
+
+def bounded_outer(outer: str, body: str) -> str:
+    """Retain the real outer argv/assignment/eval and every admission guard."""
+    start = outer.index("$(bash -c ") + len("$(bash -c ")
+    end = outer.index(')" && eval', start)
+    if shlex.split(outer[start:end]) != [body] or body.count(BOUNDARY) != 1:
+        raise DryPreflightError("actual launch argv/admission boundary changed")
+    prefix = body[:body.index(BOUNDARY) + len(BOUNDARY)]
+    if any(token in prefix for token in ("mkdir -p", "_ALLOCATED_PORT=", "unlink ", "ln -s ", "npm ", "node --import")):
+        raise DryPreflightError("bounded admission includes an output or socket stage")
+    stage = "2" if 'P2_ENV="$(' in outer[:start] else "3"
+    seam = f')" && eval "$P{stage}_ENV"'
+    if outer[end:end + len(seam)] != seam:
+        raise DryPreflightError("actual launch eval boundary changed")
+    return outer[:start] + shlex.quote(prefix + "exit 0;") + seam + ' && printf "%s\\n" bounded-launch-PASS'
+
+
+def dry_launch_preflight(outer: str, body: str, *, target: Path, inherited: dict[str, str] | None = None) -> dict[str, Any]:
+    """Execute every real admission guard, with only the subsequent work cut."""
+    bounded = bounded_outer(outer, body)
+    env = {"PATH": "/usr/bin:/bin", "LC_ALL": "C"}
+    env.update(inherited or {})
+    started = time.monotonic()
+    result = subprocess.run([*LAUNCH_ARGV, bounded], cwd=target, env=env,
+                            text=True, capture_output=True, timeout=60, check=False)
+    if result.returncode or result.stdout.strip() != "bounded-launch-PASS" or "source/environment admission PASS" not in result.stderr:
+        raise DryPreflightError(f"actual launch admission refused ({result.returncode}): {result.stderr.strip()}")
+    return {
+        "status": "PASS", "returncode": result.returncode,
+        "phase": "actual_outer_source_environment_admission",
+        "service_argv": [*LAUNCH_ARGV, outer],
+        "bounded_argv": [*LAUNCH_ARGV, bounded],
+        "environment": env, "duration_seconds": round(time.monotonic() - started, 3),
+        "target": str(target), "stdout": result.stdout, "stderr": result.stderr,
+        "not_run": ["native", "build", "browser", "backend", "provision", "schema", "HTTP", "original"],
+    }
+
+
 def _guard(body: str, stage: str) -> str:
     marker = f'printf "%s\\n" "$P{stage}APP"'
     start = body.find(marker)

@@ -40,20 +40,18 @@ _RUNTIME_ARTIFACTS = {
 # an injected earlier/duplicate marker cannot move the boundary.
 _TEMPLATE_APPROVALS = {
     "2": {
-        "source_sha256": "f6042b33d35229f47fe74cbd2a575b5984422d2209ed664b996fe1b590656d43",
-        "start": 5787,
-        "end": 23160,
-        "prefix_sha256": "3b530ab9bd3dcf74354913fbb7b22f12f723a71d5c00d152bb2cbacd6effe92c",
-        "suffix_sha256": "2e7d6e669d5dd6a9825aa4b3a2e99f3989ab96038d1c199addcc9f6a7e7a462c",
-        "environment_bytes": 2181,
+        "source_sha256": "c742ca50de0fc387b5476dfe7e06a205b90ad66adf2c70d58e0b044f349b9c13",
+        "start": 5831, "end": 23833,
+        "prefix_sha256": "529110cf1c6de13e0f9191d5308d69122b593eb7c51259fa6ce46e6ad924e540",
+        "suffix_sha256": "096a73e76143252438b1fb4ac71a769105157943b3acb39d12c9dfc78191149f",
+        "environment_bytes": 2482,
     },
     "3": {
-        "source_sha256": "6366048bf89533fa450a4575288ac2de004696bab49db6d32f1869783ae493f3",
-        "start": 6420,
-        "end": 22880,
-        "prefix_sha256": "3d4e7a9478dc6ad4ad75c52121617f7d7f5829b25a95ac3a935f7388f5f1ca4c",
-        "suffix_sha256": "accaafd0928a5a18c29d3a952306112886262a41dda785b768e527f739a4260d",
-        "environment_bytes": 2181,
+        "source_sha256": "d4fe6b9064e3e827179da2efe62630ad4cc3c58d2f2fdd88a541f4bb23fb7bf3",
+        "start": 6465, "end": 24291,
+        "prefix_sha256": "19696d61596680c6498a34bdf0a8fa3c86392bed20567b6b321bf90feba04a53",
+        "suffix_sha256": "e847d99ff5beb9759afce3f45005a2b68215dbf349b1fcb6843fc585a06d39a9",
+        "environment_bytes": 2482,
     },
 }
 
@@ -188,6 +186,7 @@ def _recipe_bindings(recipe: Mapping[str, Any]) -> dict[str, str]:
         "environment_file": _absolute(environment.get("file"), "environment.file"),
         "graph": _absolute(composition.get("qualified_graph"), "composition.qualified_graph"),
         "bench": _absolute(remotion.get("bench"), "remotion.bench"),
+        "remotion_lock": _digest(remotion.get("package_lock_sha256"), "remotion.package_lock_sha256", 64),
         "remotion_tree": _digest(remotion.get("current_agent_remotion_tree"), "remotion.current_agent_remotion_tree", 40),
         "node_version": _text(remotion.get("node"), "remotion.node"),
         "npm_version": _text(remotion.get("npm"), "remotion.npm"),
@@ -221,7 +220,7 @@ def _region(template: str, stage: str) -> tuple[int, int]:
     approval = _TEMPLATE_APPROVALS[stage]
     if hashlib.sha256(template.encode()).hexdigest() != approval["source_sha256"]:
         _fail(f"{stage} template is not the approved retained source")
-    start = template.find("STORE_ROOT=")
+    start = template.find(f'test -f "$P{stage}O/queue/done')
     end_marker = f'if test -n "$P{stage}FAIL"; then'
     end = template.find(end_marker, start)
     if (
@@ -257,16 +256,18 @@ def _ordinary_region(stage: str, values: Mapping[str, str]) -> str:
             f"GRAPH={_shell(values['graph'])}",
             f"CPY={_shell(values['agent_python'])}",
             f"RCPY={_shell(values['runtime_python'])}",
+            f"RLOCK={_shell(values['remotion_lock'])}",
+            f"REMOTION_TREE={_shell(values['remotion_tree'])}",
             'ASTRID_AGENT_PYTHON="$CPY"',
             'ASTRID_RUNTIME_PYTHON="$RCPY"',
-            f"test \"$P{p}AG\" = {_shell(values['agent_checkout'])} || p{stage}fail Agent-working-venv-checkout",
-            f"test \"$P{p}RT\" = {_shell(values['runtime_checkout'])} || p{stage}fail Runtime-working-venv-checkout",
-            f"test \"$P{p}A\" = {_shell(values['agent_head'])} || p{stage}fail Agent-current-source",
-            f"test \"$P{p}R\" = {_shell(values['runtime_head'])} || p{stage}fail Runtime-current-source",
-            f"test \"$P{p}APP\" = {_shell(values['app_head'])} || p{stage}fail App-current-source",
-            f"test \"$P{p}TREE\" = {_shell(values['app_tree'])} || p{stage}fail App-current-tree",
-            f"test \"$(git -C \"$P{p}AG\" show -s --format=%T \"$P{p}A\" 2>/dev/null || true)\" = {_shell(values['agent_tree'])} || p{stage}fail Agent-current-tree",
-            f"test \"$(git -C \"$P{p}RT\" show -s --format=%T \"$P{p}R\" 2>/dev/null || true)\" = {_shell(values['runtime_tree'])} || p{stage}fail Runtime-current-tree",
+            f"test \"${p}AG\" = {_shell(values['agent_checkout'])} || p{stage}fail Agent-working-venv-checkout",
+            f"test \"${p}RT\" = {_shell(values['runtime_checkout'])} || p{stage}fail Runtime-working-venv-checkout",
+            f"test \"${p}A\" = {_shell(values['agent_head'])} || p{stage}fail Agent-current-source",
+            f"test \"${p}R\" = {_shell(values['runtime_head'])} || p{stage}fail Runtime-current-source",
+            f"test \"${p}APP\" = {_shell(values['app_head'])} || p{stage}fail App-current-source",
+            f"test \"${p}TREE\" = {_shell(values['app_tree'])} || p{stage}fail App-current-tree",
+            f"test \"$(git -C \"${p}AG\" show -s --format=%T \"${p}A\" 2>/dev/null || true)\" = {_shell(values['agent_tree'])} || p{stage}fail Agent-current-tree",
+            f"test \"$(git -C \"${p}RT\" show -s --format=%T \"${p}R\" 2>/dev/null || true)\" = {_shell(values['runtime_tree'])} || p{stage}fail Runtime-current-tree",
             f"test -x \"$CPY\" && test \"$CPY\" = {_shell(values['agent_python'])} || p{stage}fail Agent-interpreter-origin",
             f"test -x \"$RCPY\" && test \"$RCPY\" = {_shell(values['runtime_python'])} || p{stage}fail Runtime-interpreter-origin",
             f"test -x \"$NODE\" && test \"$NODE\" = {_shell(values['node'])} && test \"$($NODE --version 2>/dev/null)\" = {_shell(values['node_version'])} || p{stage}fail Remotion-node-origin",
@@ -289,10 +290,7 @@ def adapt_environment_block(template: str, *, stage: str, recipe: Mapping[str, A
     start, end = _region(template, stage)
     replacement = _ordinary_region(stage, values)
     body = template[:start] + replacement + template[end:]
-    approval = _TEMPLATE_APPROVALS[stage]
-    if (
-        len(replacement.encode()) != approval["environment_bytes"]
-    ):
+    if len(replacement.encode()) != _TEMPLATE_APPROVALS[stage]["environment_bytes"]:
         _fail(f"{stage} binding substitution changed the bounded environment size")
     return {
         "body": body,

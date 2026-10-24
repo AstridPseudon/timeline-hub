@@ -16,6 +16,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
 import subprocess
 import sys
 from typing import Any, NoReturn
@@ -42,7 +43,7 @@ RUNTIME_ARTIFACTS = (
 )
 RUNTIME_LOCKS = {"app": 14, "agent": 15}
 ENVIRONMENT_FILE = Path(
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion.env"
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-app-ready-079-37eb-0258.env"
 )
 REMOTION_ROOT = Path("/home/user/work/agent/remotion")
 IMPORT_PROBES = {
@@ -86,7 +87,7 @@ def sha256(path: Path) -> str:
 
 def read_text(path: Path) -> str:
     try:
-        require(path.is_file() and not path.is_symlink(), f"input is not a regular file: {path}")
+        require(path.is_file() and not path.is_symlink() and path.stat().st_nlink == 1, f"input is not a single regular file: {path}")
         return path.read_text(encoding="utf-8")
     except OSError as exc:
         fail(f"cannot read {path}: {exc}")
@@ -262,8 +263,28 @@ def check_remotion(recipe: dict[str, Any]) -> dict[str, Any]:
         require(read_text(bench / marker).strip() == value, f"Remotion marker changed: {marker}")
     current_tree = git(CHECKOUTS["agent"], "rev-parse", "HEAD:remotion")
     require(current_tree == expected["current_agent_remotion_tree"], "current Agent Remotion tree changed")
+    require(git(CHECKOUTS["agent"], "rev-parse", expected["historical_source_commit_marker"] + ":remotion") == current_tree,
+            "historical Remotion build origin does not have the current tree")
     require(sha256(REMOTION_ROOT / "package.json") == expected["package_sha256"], "current Remotion package changed")
     require(sha256(REMOTION_ROOT / "package-lock.json") == expected["package_lock_sha256"], "current Remotion lock changed")
+    require(sha256(bench / "package.json") == expected["package_sha256"], "bench Remotion package changed")
+    require(sha256(bench / "package-lock.json") == expected["package_lock_sha256"], "bench Remotion lock changed")
+    require(sha256(bench / "node_modules/.package-lock.json") == expected["node_modules_lock_sha256"], "bench installed lock changed")
+    # Retain the existing make-runtime artifact guard, including symlink bytes.
+    excluded = {".astrid-agent-source-commit", ".astrid-remotion-tree", ".astrid-package-lock-sha256",
+                ".astrid-package-sha256", ".astrid-component-identity", ".astrid-node-version", ".astrid-npm-version",
+                ".astrid-node-modules-lock-sha256", ".astrid-artifact-integrity", ".runtime-env", ".runtime-suite", ".provision-failure"}
+    artifact = hashlib.sha256()
+    for path in sorted(bench.rglob("*"), key=lambda path: path.relative_to(bench).as_posix()):
+        if path.name in excluded or path.is_dir() and not path.is_symlink():
+            continue
+        value = b"L:" + path.readlink().as_posix().encode() if path.is_symlink() else b"F:" + sha256(path).encode()
+        artifact.update(path.relative_to(bench).as_posix().encode() + b"\0" + value + b"\n")
+    require(artifact.hexdigest() == expected["artifact_integrity"], "bench Remotion artifact bytes changed")
+    environment = environment_snapshot()
+    require(environment["ASTRID_REMOTION_PROJECT_DIR"] == str(bench), "Remotion environment selects another bench")
+    node = subprocess.run([environment["ASTRID_NODE_EXECUTABLE"], "--version"], capture_output=True, text=True, check=False)
+    require(node.returncode == 0 and node.stdout.strip() == expected["node"], "actual Remotion Node version changed")
     return {"bench": str(bench), "source_commit_marker": expected["historical_source_commit_marker"], "current_agent_remotion_tree": current_tree}
 
 
@@ -319,13 +340,44 @@ def graph_snapshot(base: dict[str, Any]) -> dict[str, Any]:
 
 def environment_snapshot() -> dict[str, str]:
     values = {"file": str(ENVIRONMENT_FILE)}
-    for line in read_text(ENVIRONMENT_FILE).splitlines():
+    text = read_text(ENVIRONMENT_FILE)
+    for line in text.splitlines():
         if "=" in line and not line.startswith("#"):
             key, value = line.split("=", 1)
             if key in {"ASTRID_REMOTION_PROJECT_DIR", "ASTRID_NODE_EXECUTABLE", "ASTRID_TIMELINE_SCHEMA_PYTHONPATH"}:
                 values[key] = value
     required = {"file", "ASTRID_REMOTION_PROJECT_DIR", "ASTRID_NODE_EXECUTABLE", "ASTRID_TIMELINE_SCHEMA_PYTHONPATH"}
     require(set(values) == required, "existing Remotion environment inputs are incomplete")
+    # The registration authenticates only the reusable runtime artifact. Its
+    # old Agent/Runtime source labels never supply the current Python roots.
+    store = Path("/home/user/work/bench-store")
+    owner = json.loads(read_text(store / "owner.json"))
+    index_text = read_text(store / "index.json")
+    index = json.loads(index_text)
+    require(index.get("version") == 1 and not set(index) - {"version", "seq", "entries", "registrations", "retired", "retired_suites", "registration_cutover"}, "bench registry schema changed")
+    require(ENVIRONMENT_FILE.stem not in index.get("retired", []), "Remotion registration retired")
+    registration = index.get("registrations", {}).get(ENVIRONMENT_FILE.stem, {})
+    require(registration.get("env") == text, "registered Remotion environment bytes changed")
+    bench = Path(values["ASTRID_REMOTION_PROJECT_DIR"])
+    require(bench.parent == store / "entries" and bench.resolve() == bench and bench.is_dir() and not bench.is_symlink(),
+            "registered Remotion bench is not physical")
+    tree = git(CHECKOUTS["agent"], "rev-parse", "HEAD:remotion")
+    key = hashlib.sha256(json.dumps(["runtime", tree], separators=(",", ":")).encode()).hexdigest()
+    require(bench.name == "runtime-" + key and registration.get("requires") == [bench.name], "Remotion tree/registration link changed")
+    entry = index.get("entries", {}).get(bench.name, {})
+    require(set(entry) == {"component", "key", "identity", "path", "seq", "lock", "node", "owner"}, "Remotion entry schema changed")
+    identity = {"remotion_tree": tree}
+    expected_owner = {"component": "runtime", "identity": identity, "key": key, "owner": owner.get("id")}
+    require(owner.get("root") == str(store) and owner.get("tests") == str(ENVIRONMENT_FILE.parent) and owner.get("id"), "bench store owner changed")
+    require(entry.get("path") == str(bench) and all(entry.get(k) == v for k, v in expected_owner.items()), "Remotion entry identity changed")
+    require(json.loads(read_text(bench / ".bench-owner.json")) == expected_owner, "Remotion artifact owner changed")
+    for path, expected_identity in ((bench, entry.get("node")), (store / "locks" / bench.name, entry.get("lock"))):
+        require(not path.is_symlink() and path.exists(), "Remotion entry/lease missing or aliased")
+        require([path.stat().st_dev, path.stat().st_ino] == expected_identity, "Remotion entry/lease replaced")
+    node = Path(values["ASTRID_NODE_EXECUTABLE"])
+    require(node.is_file() and not node.is_symlink() and node.resolve() == node and node.stat().st_nlink == 1 and os.access(node, os.X_OK),
+            "registered Remotion Node is absent or aliased")
+    require(read_text(store / "index.json") == index_text, "Remotion registry changed during observation")
     return values
 
 
@@ -392,7 +444,19 @@ def canonical_recipe(recipe: dict[str, Any]) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
 
 
+def registry_snapshot() -> tuple[Any, ...]:
+    path = ENVIRONMENT_FILE.parent / "suites.conf"
+    require(path.is_file() and not path.is_symlink(), "service registry missing or aliased")
+    before = path.stat()
+    digest = sha256(path)
+    after = path.stat()
+    identity = lambda value: (value.st_dev, value.st_ino, value.st_size, value.st_mtime_ns, value.st_ctime_ns)
+    require(identity(before) == identity(after), "registry changed during observation")
+    return (*identity(after), digest)
+
+
 def authenticate_current(recipe: dict[str, Any]) -> dict[str, Any]:
+    registry_before = registry_snapshot()
     before = current_sources()
     for name, source in before.items():
         source_tuple(source["checkout"], name, recipe["source"][name])
@@ -401,8 +465,10 @@ def authenticate_current(recipe: dict[str, Any]) -> dict[str, Any]:
     remotion = check_remotion(recipe)
     graph = check_graph(recipe)
     bindings = check_runtime_bindings(recipe)
+    require(environment_snapshot() == recipe["environment"], "Remotion environment bytes changed")
     after = current_sources()
     require(before == after, "source tuple moved during qualification; refuse concurrent facts")
+    require(registry_snapshot() == registry_before, "registry moved during qualification; refuse concurrent facts")
     status = "pending_agent_runtime_adoption" if bindings["pending"] else "qualified_existing_inputs_not_live"
     authenticated_recipe = deepcopy(recipe)
     authenticated_recipe["status"] = status
@@ -417,7 +483,73 @@ def authenticate_current(recipe: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def admit_launch(recipe: dict[str, Any], manifest: dict[str, Any], target: str, body: str) -> None:
+    """Authenticate the existing source-mode recipe at the real Bash boundary.
+
+    The caller embeds this module and the frozen recipe in its argv. No worker
+    file or inherited Timeline input is a prerequisite of the installed row.
+    """
+    boundary = ": TIMELINE_SOURCE_ENVIRONMENT_ADMITTED; "
+    require(body.count(boundary) == 1, "candidate admission boundary is not unique")
+    prefix = body[:body.index(boundary) + len(boundary)]
+    registry = Path(manifest["registry"])
+    require(registry.is_file() and not registry.is_symlink() and registry.stat().st_nlink == 1, "registry missing or aliased")
+    def registry_identity():
+        value = registry.stat()
+        return (value.st_dev, value.st_ino, value.st_size, value.st_mtime_ns, value.st_ctime_ns)
+
+    before_stat = registry_identity()
+    before = registry.read_bytes()
+    rows = {}
+    outsiders = bytearray()
+    for line in before.splitlines(keepends=True):
+        fields = line.split(None, 2)
+        if len(fields) == 3 and fields[0] == b"app" and fields[1].decode() in manifest["rows"]:
+            name = fields[1].decode()
+            require(name not in rows, "duplicate candidate registry row")
+            rows[name] = line
+        else:
+            outsiders.extend(line)
+    require(set(rows) == set(manifest["rows"]), "candidate registry row missing")
+    require(hashlib.sha256(outsiders).hexdigest() == manifest["outside_sha256"], "registry outsider bytes changed")
+    root = Path(target)
+    require(root.is_dir() and root.resolve() == root and not root.is_symlink(), "target missing or aliased")
+    source = recipe["source"]["app"]
+    require(git(target, "rev-parse", "--show-toplevel") == target, "target is not checkout root")
+    require(git(target, "rev-parse", "HEAD^{tree}") == source["tree"], "target source tree changed")
+    head = git(target, "rev-parse", "HEAD")
+    if root == Path(source["checkout"]):
+        require(head == source["head"], "normal target source changed")
+        # Only the offline replay may still observe the reviewed installed rows.
+        installed = all(hashlib.sha256(line).hexdigest() == manifest["rows"][name]["installed_sha256"]
+                        for name, line in rows.items())
+    else:
+        require(root.parent == Path("/home/user/work/wt") and re.fullmatch(r"\.test-[A-Za-z0-9._-]+", root.name),
+                "target is not a service snapshot")
+        require(git(target, "show", "-s", "--format=%P", "HEAD") == source["head"], "target source parent changed")
+        installed = False
+    require(not git(target, "status", "--porcelain=v1", "--untracked-files=all"), "target snapshot dirty")
+    for path, digest in manifest["source_files"].items():
+        require(sha256(root / path) == digest, "target body/source bytes changed: " + path)
+    if not installed:
+        for name, line in rows.items():
+            outer = line.decode().split(None, 2)[2].rstrip("\n")
+            start = outer.index("$(bash -c ") + len("$(bash -c ")
+            end = outer.index(')" && eval', start)
+            argv = shlex.split(outer[start:end])
+            require(len(argv) == 1 and argv[0].startswith(prefix), "registry candidate admission differs")
+            require(hashlib.sha256(argv[0][len(prefix):].encode()).hexdigest() == manifest["rows"][name]["remainder_sha256"],
+                    "registry candidate body changed")
+            require(hashlib.sha256(outer[end:].encode()).hexdigest() == manifest["rows"][name]["tail_sha256"],
+                    "registry candidate tail changed")
+    authenticated = authenticate_current(recipe)
+    require(authenticated["status"] == "qualified_existing_inputs_not_live", "source-mode locks are not adopted")
+    require(registry.read_bytes() == before and registry_identity() == before_stat, "registry changed during admission")
+    print("source/environment admission PASS; original-body-NOTRUN following-stages-NOTRUN", file=sys.stderr)
+
+
 def build_recipe(base: dict[str, Any]) -> dict[str, Any]:
+    registry_before = registry_snapshot()
     before = current_sources()
     value = deepcopy(base)
     value["qualified_at"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
@@ -431,6 +563,7 @@ def build_recipe(base: dict[str, Any]) -> dict[str, Any]:
     authenticated = authenticate_current(value)
     after = current_sources()
     require(before == after, "source tuple moved while refreshing; refuse concurrent facts")
+    require(registry_snapshot() == registry_before, "registry moved while refreshing; refuse concurrent facts")
     return authenticated
 
 

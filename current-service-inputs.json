@@ -1,6 +1,6 @@
 {
   "recipe_version": 1,
-  "qualified_at": "2026-10-24T14:19:58Z",
+  "qualified_at": "2026-10-24T14:55:40Z",
   "status": "qualified_existing_inputs_not_live",
   "scope": "P2/P3/U4p current normal working-venv service inputs",
   "policy": {
@@ -25,11 +25,11 @@
     "agent": {
       "checkout": "/home/user/work/agent",
       "ref": "tl/integration",
-      "head": "5492fc80414c53c77585844a25fd8a94107c71fa",
-      "tree": "9fce413c0335f2dca2bbb3ac2b20a58d2141acc6",
+      "head": "68e82c0c2ce621f43ae73aa05fce0d1d0f47a677",
+      "tree": "aa62e96c1231de41cee32c5388592c99ae04345f",
       "parents": [
-        "5ffc1f4dfa8d691d6ade0797d0c941a1bbc649cc",
-        "512f83d8385e449c9020e5db2aa3fb02ff152848"
+        "5492fc80414c53c77585844a25fd8a94107c71fa",
+        "b9d7618f92399fdf0d33a72857ada058c028ba66"
       ],
       "clean": true,
       "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db"
@@ -341,9 +341,9 @@
     }
   },
   "environment": {
-    "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion.env",
-    "ASTRID_REMOTION_PROJECT_DIR": "/home/user/work/runtimes/agent-remotion",
-    "ASTRID_NODE_EXECUTABLE": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+    "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion-app-ready-079-37eb-0258.env",
+    "ASTRID_REMOTION_PROJECT_DIR": "/home/user/work/bench-store/entries/runtime-5ca5c561b7be7069051ac8769432cc1edf29060bed39384cd3c4ecab1736e690",
+    "ASTRID_NODE_EXECUTABLE": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node",
     "ASTRID_TIMELINE_SCHEMA_PYTHONPATH": "/home/user/work/venv-agent/lib/python3.13/site-packages"
   },
   "runtime_bindings": {
