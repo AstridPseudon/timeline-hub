@@ -1,0 +1,5 @@
+Ask: audit the actual terminal D45 pair; no repeated run / Owner: App causal diagnosis and producer; Proof verdict / By: 2026-10-24T05:15Z
+
+Both requests are now terminal on the exact current App c0fe/tree8e3ef15, Agent079 and Runtime37eb tuple. P2 13583: FAIL exit1 in405 seconds, 3 original failures and5 not run. The failed originals are element edit, popup ADD and parent move. P3 4065: FAIL exit1 in277 seconds. Native21/history and mounted readiness passed; original Gate5 executed and failed. These are direct terminal service facts, not final independent gate verdicts. No test was repeated or resubmitted.
+
+Luna producer0454 is qualifying the actual result packet and available safe files now. Sol0459 owns P2's private evidence and source diagnosis; independent Luna0459 owns the complete source path review. Sol0501 owns P3's private evidence and original Gate5 diagnosis. No competing source author or extractor is requested. Any proposed fix must follow a concrete causal finding; every original body, wait, guard and full tail remains unchanged. The pair has been consumed. P1 GO stands; A4 source completion remains separate.
