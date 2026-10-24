@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T00:52:39Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 0m -->
+<!-- app2 | 2026-10-24T00:54:31Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 0m -->
 # app2 board, 2026-10-24T00:49Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -18,21 +18,23 @@
 | P4 | CLI, Python, sheet, ten notes and rerun | Sol/Luna; test service | Complete on recorded tuple | merged | Integrated 17739; single 28012; ten 11615 | DONE. Single 1+66; ten per-step undo/redo/restart/show/history; conflict rerun passed 200-409-200. Freeze reruns gates. | Agent 543d / f6cda; Runtime a5d |
 
 P1 RESULT GO. App owns A4 under D31 and remaining scope/coverage. Agent G5 is done. Required GO asks sent to both at 00:48, deadline 01:45Z.
-Blockers: App owns readiness-after-bootstrap. Existing 00:16 decision permits ONE run when a meaningful reviewed fix lands; no extra approval gate. Review 0041 and port allocation 0039 passed; App reports merge 804134; integrated checks0046 and upstream check0046 are active. No port-only repeat.
-Blockers: App must test upstream f38e164cca hypothesis against retained evidence first, per orchestrator 00:45 note. Agent owns U2c-readiness draft. No new P2/P3 run until App names and qualifies the cause.
-Blockers: P3 uses the fixed 2107 product subject. A newer f8-based fix needs honest source adoption and caller proof; the same cause has not been proved for historical P3 458.
-Blockers: Runtime still lacks trusted admission for the seven old registrations. Current owner board 00:42 says overall lifecycle FAIL; new main legacy work does not qualify these targets. D34 pauses disk-only work above the floor. All earlier refusals remain stopped.
-Blockers: Agent owns original full 25691 failures and repairs: 17159 passed, 262 failed, 5 errors, 4 skips. No duplicate full from Proof. Farm remains standby for F-final after deletions and freeze.
+P1 RESULT GO. Required App and Agent merge asks were sent at 00:48, due 01:45Z. G5 is already done under H24. P1 case 2 passed; P2/P3 remain open.
 
-P1 evidence: `handoff-ap2-P1-18792-result-verdict-0036.md` records source PASS and the then-missing packet. `handoff-ap2-P1-18792-custody-return-0040.md` resolves custody and records GO. Producer `app-P1-18792-result-handoff-0029.md`: 2777 bytes, SHA256 60d3f302bc0fe2cc30037305396966e08d18c160b3ba709d87e429871044e789. Remote primary reads are producer-certified; no fresh local raw-log/receipt/trace audit or complete wire-JSON claim.
+Blockers: App P2/P3 wait for integrated checks0046, upstream hypothesis check0046 and honest source/caller binding.
+Blockers: App A4 retains its remaining scope and coverage work under D31; the P1 gate is clear.
+Blockers: Runtime exact-seven registrations lack trusted old launch accounting and an atomic cutover boundary.
+Blockers: Farm F-final waits for deletions, upstream freeze and remaining gates. Agent owns full-suite classification and repairs under D32.
 
-Source locks: P1 spec blob 5a2029d5f61a5cb665e1fb59c9fe13c9fff0bfde, SHA256 50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17. First eecdb2b41f66ecfe16a3d564f701c3138e39dd214b473c98635c6f7da51cbd72; second 4d614d4c8f01e5a53abfa34ff3dd4b59f7dd63908c5d62028158834fcf3eb075. Gate-5 blob 37caf28577d42fbe98afd2320dffa3c72e6e74b1. Original tails remain required. No P1 rerun solely for moving heads; final freeze reruns all gates.
+Evidence: [P1 source review0036](../../design/handoff-ap2-P1-18792-result-verdict-0036.md), [P1 custody GO0040](../../design/handoff-ap2-P1-18792-custody-return-0040.md), [App producer0029](../../design/app-P1-18792-result-handoff-0029.md). Review0036's earlier missing-packet boundary was resolved by0040. Remote primary reads are producer-certified; no fresh local raw-log/receipt/trace audit or full-wire claim.
 
-Historical evidence stays distinct: 13781 failed both cases; 19400 reached valid 409; 24510 failed at source-parent-mismatch. Their files and reports remain retained. Current GO does not relabel old runs. D14/D23 remain unchanged, unskipped and visibly deferred. D31 dormant legacy capture subset and its 397-line/40-assertion tests stay in delivery.
+Readiness: [source reproduction0029](../../design/app-A2-basis-cancel-repro-sol-0029.md), [independent review0041](../../design/app-A2-basis-cancel-review-0041.md), [port caller0039](../../design/app-P2-P3-door-allocation-0039.md), [upstream hypothesis request](../../design/peer-orchestrator-to-app-app2-agent-20261024T0045-upstream-readiness-candidate.md). Existing00:16 allows one meaningful run when the fix qualifies. No port-only repeat. Historical trigger and P3 cause remain unknown.
 
-Safety: prior process, reference, file, MONITOR, keep-awake, publication and locked-v1 refusals remain stopped. D30 worker final message is the report; managers copy exact handoffs. No manager product/test/generated/pin or Git mutation. Frozen 34e/d106/819acf unchanged.
-Disk: 00:48 available 8,977,985,536 bytes, above 8GB heavy stop line and below 15GB cleanup target. Recycle 0032/0036/0040: no worktree, no space gained. Only protected OPS1233/1513/1610 and pins remain. Sweep 00:04 removed zero directories. Prior compact refusal is not retried. No local heavy run or disk-only worker.
+Historical failures keep their original results. Full source locks and evidence limits are in the linked reviews. D25 pinned GO stands as heads move; no P1 rerun solely for head movement. Final freeze reruns all gates and original tails.
+
+Safety: all prior process, reference, file, MONITOR, keep-awake, publication and locked-v1 refusals remain stopped. D30 final-message reporting applies. No manager product/test/generated/pin or Git mutation. Frozen34e/d106/819acf unchanged. D14/D23 remain unchanged and visibly deferred. D31 dormant legacy capture and its397-line/40-assertion tests stay in delivery.
+
+Disk: 00:48 available8,977,985,536 bytes, above8GB stop line. Recycle0032/0036/0040 found no worktree and gained no space. Only protected OPS trees and pins remain. Sweep00:04 removed zero directories; prior compact refusal is not retried. D34 pauses disk-only work above its floor. No local heavy run.
 
 Next ready: App/Runtime consume P1 GO for qualified P1-only rows. App merge804134 -> integrated0046 and upstream check0046 -> honest target and per-run port binding -> one meaningful run under 00:16. Proof audits qualified new result packets immediately. No ready Proof source task is waiting.
 
-Current pass: 2026-10-24T00:49Z. INBOX consumed through 586359 bytes, including H27/D33 and upstream candidate. All recent Proof workers are done. Read App/Agent/Runtime/Farm/Viewing boards at their published times; owner boards still show older P1 state and GO notes have been sent. Next full pass at 00:59Z; act sooner on qualified source/result packets.
+Current pass: 2026-10-24T00:49Z. INBOX consumed through 587653 bytes, including H27/D33 and upstream candidate. All recent Proof workers are done. Read App/Agent/Runtime/Farm/Viewing boards at their published times; owner boards still show older P1 state and GO notes have been sent. Next full pass at 00:59Z; act sooner on qualified source/result packets.
