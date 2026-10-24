@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T05:27:03Z | dispatcher heartbeat 10s | live 5 (sol 1, luna 4, other 0) | busy30 21 | status age 0m -->
-# app board, 2026-10-24T05:25Z
+<!-- app | 2026-10-24T05:30:16Z | dispatcher heartbeat 6s | live 4 (sol 1, luna 3, other 0) | busy30 22 | status age 0m -->
+# app board, 2026-10-24T05:29Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -72,16 +72,16 @@
 | P3-D45-original-cause | Classify actual Gate5 failure | Sol; independent Luna | Independent0506 PASS | merged | app-P3-D45-original-cause-sol-0501 | Confirmed reset5-to0 against fresh clip0; zero POSTs. Proof owns setup correction; all later original stages unrun. | c0fe /079 /37eb |
 
 | A3-catalog-capture | Capture real catalog Apply turn | Luna first return | Independent 0518 FAIL | doing | app-A3-catalog-mounted-return-0524 | Real panel still refused basis before outbox. First return owns panel and staging proof; shared handoff stays with Sol 0505. | Branch only |
-| A2-element-params | Preserve parameter edit ownership basis | Sol | Independent0459 source finding | doing | app-A2-element-params-sol-0505 | Faithful callback RED required before fix. Separate files from catalog capture; no ownership waiver. | Currentc0fe base |
+| A2-element-params | Preserve parameter edit ownership basis | Sol; independent Luna | Author source complete | review | app-A2-element-params-review-0528 | Author real form callback RED to GREEN; 284 tests, three types and lint passed. Current defect, not historical trigger. | Branch only |
 | P2-D45-popup-shape | Classify popup command assertion | Luna; independent Luna | Review 0511 PASS | merged | app-P2-D45-popup-parent-cause-review-0511 | Absent V3 is confirmed planner defect. Occupied V2 valid under provider. Created-claim oracle is a separate Proof need. | Report only |
 | P2-D45-parent-cause | Classify actual parent move timeout | Sol; independent Luna | Review 0511 PASS | merged | app-P2-D45-popup-parent-cause-review-0511 | Local move 0 to 5 and zero POSTs confirmed. Internal boundary unknown; mounted reproduction 0511 active. | Report only |
 
 | A3-popup-raw-track | Preserve captured raw popup ADD track | Luna; independent review | Author source complete | review | app-A3-popup-raw-track-review-0525 | Author 23 plus 119 tests, three types and lint passed. Review challenges real caller and hung persistence acceptance. | Branch only |
 | P2-D45-cause-review | Review popup and parent causal limits | Luna | Complete | merged | app-P2-D45-popup-parent-cause-review-0511 | Product track cause confirmed; parent remains precisely unknown. Full report published. | Report only |
-| A2-parent-mounted-repro | Reproduce real move scheduling boundary | Sol; independent review | RED witness complete | review | app-P2-current-path-repro-review-0525 | Drops opaqueClip, then strict selected-field refusal. Second schedule loses basis. Two RED and one PASS; historical ordering unknown. | Artifact branch only |
+| A2-parent-mounted-repro | Reproduce real move scheduling boundary | Sol; independent Luna | Review 0525 PASS | merged | app-P2-current-path-repro-review-0525 | Independent exact-resource rerun confirms two RED and one PASS. opaqueClip loss and deferred basis loss confirmed; original ordering unknown. | Report and RED artifact only |
 | P2-popup-created-oracle | Assert exact required created claims | Proof Luna | C0 claims and popup cause0505 | blocked:app2 | Proof owner requested0511 | Keep all original command, media, closure and undo assertions; independent no-weakening required. | Request only |
 
-| P2-five-current-paths | Recheck five original never-run paths | Luna; independent review | Map complete | review | app-P2-current-path-repro-review-0525 | Five mounted callers mapped with no new confirmed defect. Upload, binding, dispatch, reload and undo stay live unknowns. | Current c0fe |
+| P2-five-current-paths | Recheck five original never-run paths | Luna; independent Luna | Review 0525 PASS | merged | app-P2-current-path-repro-review-0525 | All five real selectors and mounted paths confirmed. No prior static gap remains. Browser upload, dispatch, reload and undo stay unknown. | Report only |
 
 | A2-parent-materialization | Preserve untouched move data and basis | Sol | Faithful mounted RED witness | doing | app-A2-parent-materialization-sol-0525 | Bounded row materializer and persistence only. Shared handoff and element source remain reserved to Sol 0505. | Current c0fe |
 
