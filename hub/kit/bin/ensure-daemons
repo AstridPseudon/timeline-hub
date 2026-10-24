@@ -36,7 +36,10 @@ if [ "$A" = runtime ]; then esc=""; for f in $O/escalations/*.md $O/design/peer-
 if [ -z "$(find $O/.upstream-fetch-$A -mmin -60 2>/dev/null)" ]; then touch $O/.upstream-fetch-$A
   for r in agent runtime app composition; do [ -d /home/user/work/$r/.git ] || [ -f /home/user/work/$r/.git ] || continue
     ( timeout 90 git -C /home/user/work/$r fetch -q origin main >/dev/null 2>&1 & ) ; done
-  ( $O/bin/sweep-tmp 1 >/dev/null 2>&1; $O/bin/compact-scratch >/dev/null 2>&1 ) &   # 03:00Z LOOPS #45: hourly housekeeping without anyone remembering
+  ( $O/bin/sweep-tmp 1 >/dev/null 2>&1; $O/bin/compact-scratch >/dev/null 2>&1
+    # 09:50Z LOOPS #59: repeated fetches leave many packs (main's upstream Agent clone had 27 packs / 2.13 GiB -> 1 / 1.32 GiB). Consolidate any clone with >12 packs, keeping all objects (-A).
+    for g in /home/user/peteromallet/* /home/user/banodoco/* /home/user/work/agent /home/user/work/runtime /home/user/work/app /home/user/work/composition /home/user/timeline-hub; do
+      [ -d "$g/.git/objects/pack" ] || continue; n=$(ls $g/.git/objects/pack/*.pack 2>/dev/null | wc -l); [ "$n" -gt 12 ] && nice -n 15 timeout 1200 git -C "$g" repack -A -d -q >/dev/null 2>&1; done ) &   # 03:00Z LOOPS #45: hourly housekeeping without anyone remembering
 fi
 dead=""; fin=""
 for d in $O/workers/*/; do

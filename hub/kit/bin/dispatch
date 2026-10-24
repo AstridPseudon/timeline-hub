@@ -12,7 +12,10 @@ while [ $# -gt 0 ]; do case $1 in
  *) echo "unknown arg $1"; exit 2;; esac; done
 # Owner rule 2026-10-20 (rev 2): effort is capped at high (no xhigh). Sol only for hard tasks, flagged by a line starting "HARD:" in the brief; otherwise Luna.
 [ "$E" = xhigh ] && { echo "$(date -u +%FT%TZ) $N: effort xhigh -> high" >> $O/model-downgrades.log; E=high; }
-case $M in *sol*) grep -q '^HARD:' "$BRIEF" 2>/dev/null || { echo "$(date -u +%FT%TZ) $N: $M -> gpt-5.6-luna (no HARD: line in brief)" >> $O/model-downgrades.log; M=gpt-5.6-luna; };; esac
+# 09:55Z LOOPS #60: a "-sol-" worker name is the manager's explicit HARD intent, so it is never downgraded. A Sol model without a HARD: line or -sol- name is still downgraded, but loudly: the note goes into the owning manager's INBOX, not only a log nobody reads.
+case $M in *sol*) { grep -q '^HARD:' "$BRIEF" 2>/dev/null || [[ $N == *-sol-* ]]; } || { echo "$(date -u +%FT%TZ) $N: $M -> gpt-5.6-luna (no HARD: line in brief)" >> $O/model-downgrades.log
+    for a in runtime app agent viewing app2 farm; do case $N in rt-*) [ $a = runtime ];; app-*) [ $a = app ];; agt-*) [ $a = agent ];; vw-*) [ $a = viewing ];; ap2-*) [ $a = app2 ];; tf-*) [ $a = farm ];; *) false;; esac && [ -d $O/managers/$a ] && printf '\n## %s dispatch: %s DOWNGRADED Sol -> Luna (brief has no HARD: line). If it needs Sol, stop it and re-dispatch with a HARD: line.\n' "$(date -u +%FT%TZ)" "$N" >> $O/managers/$a/INBOX.md; done
+    M=gpt-5.6-luna; };; esac
 . $O/bin/claude-perms.sh; M=$(codex_fallback $M)   # CODEX_UNAVAILABLE -> Claude fallback
 [ -n "$REPO" ] && [ -f "$BRIEF" ] || { echo "need --repo and --brief FILE"; exit 2; }
 D=$O/workers/$N; [ -e $D ] && { echo "worker $N already exists"; exit 2; }
