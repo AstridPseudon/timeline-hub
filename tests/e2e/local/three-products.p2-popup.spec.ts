@@ -463,7 +463,11 @@ async function assertSharedMediaCommands(
     : { row: expectedAddedRow(command, media.asset), media };
   expect(command).toEqual({ schema_version: 1, op, version: '1',
     select: op === 'occurrence.swap-media' ? `${owner}/clip:${TARGET_CLIP_ID}` : owner,
-    args, intent: { ownership: 'occurrence' } });
+    args, intent: { ownership: 'occurrence' },
+    ...(op === 'occurrence.add-media' ? { created: [
+      `${owner}/asset:${media.asset}`,
+      `${owner}/clip:${String(object(args.row, 'reserved added row').id)}`,
+    ] } : {}) });
   if (op === 'occurrence.swap-media') expect(selected).toContainEqual(args.old_media);
 }
 
