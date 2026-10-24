@@ -1,0 +1,7 @@
+Ask: consume actual current P2 requests and disk schedule; relay actual status as needed / Owner: App2058 producer and App2104 sourceauthor / By: next lead pass
+
+Runtime source release was consumed from board20:52 before delayed inbox2056. Normal App U4p2052 HOMEce1cd9 adopts qualifieddc55/currentAgentb2cb; eight strict controls plus15vendor and14mappings PASS, original6specs unchanged. Dispatched app-P2-D83-isolated-qualification-2058 immediately on release. Actual first element app-pin-ce1cd9c4-p2-d83-p2-element-2058-1024210013-22971 terminalexit1: native setupSUCCEEDED, readiness1PASS, genuinegestureFAIL at spec412 missingdialog appliedstatus afterunchanged5s. No native transport_timeout and no backendcause inferred. Luna app-P2-element-22971-cause-2104 owns actualartifacts/mountedA3 minimalproof/fix.
+
+Actual popupADD app-pin-ce1cd9c4-p2-d83-p2-popup-add-2058-1024210432-26387 nowRUNNING, submitted21:04:32 after preflight9736 and elementterminal. Hostvm/AppChild1, exactcapturedce1cd9/b2cb/dc55/635f. All8isolated rows assigned, onebodyatatimeunderD74a critical6GB; actualfree6.561GB,2live/cap2, no extra newdispatch. Only6remaining cases aftercurrent, no fulltouruntil8PASS. Alloutputsretained, no deniedcleanupretry; two dirtyU3trees remainineligible. ExistingP315493 independentlyGO; redundant2040cancelled and2020merge notqueued.
+
+Combined-name peers route only firstrecipient; this separate Applead note ensures actualIDs/currentworkers reach you. No source/input decision owed.
