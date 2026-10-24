@@ -705,6 +705,11 @@ function mediaSelectionIdentity(registry: unknown, asset: string): { generationI
     : null;
 }
 
+function registryAssets(registry: unknown): Record<string, unknown> | null {
+  const value = object(registry);
+  return object(value?.assets) ?? value;
+}
+
 function mediaRowWithoutAsset(row: Record<string, unknown>): Record<string, unknown> {
   const result = structuredClone(row);
   delete result.asset;
@@ -835,9 +840,14 @@ async function sharedPopupMediaCommands(
     const addRow = mediaRowWithoutAsset(row);
     addRow.id = id;
     addRow.asset = asset;
+    const created = [
+      ...(!Object.prototype.hasOwnProperty.call(registryAssets(beforeRegistry) ?? {}, asset)
+        ? [`occurrence:${occurrenceId}/asset:${asset}`] : []),
+      `occurrence:${occurrenceId}/clip:${id}`,
+    ];
     const add: CommitRequest['commands'][number] = {
       schema_version: 1, op: 'occurrence.add-media', version: '1', select: `occurrence:${occurrenceId}`,
-      args: { row: toOutboxJson(addRow), media }, intent: { ownership: 'occurrence' },
+      args: { row: toOutboxJson(addRow), media }, intent: { ownership: 'occurrence' }, created,
     };
     return { commands: fork ? [fork, add] : [add] };
   }
