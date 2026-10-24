@@ -95,3 +95,49 @@ BRIEF: Faithful D72 fixture/setup/caller migration through genuine existing boot
 - tests/packs/timeline/test_cli_document_commit.py::test_document_commit_human_output_keeps_label_and_receipt
 - tests/packs/timeline/test_cli_document_commit.py::test_document_commit_changed_body_with_same_key_is_runtime_refusal
 - tests/packs/timeline/test_cli_document_commit.py::test_document_commit_preview_has_no_accepted_receipt
+
+D86 WIDENED23:30:43: add these TWO source-only families; all original four remain unchanged. Main hosts six; Agent affected-node BATCH goes to MAIN testservice after reviewed sources merge, qualification only, never D59 credit. No per-familytestbody.
+
+FAMILY: D86-parent-media
+NODES: 20
+FILES: tests/editing_conformance/test_commit_runtime_parent_media.py
+BRIEF: Source-only faithful current caller/fixture/created-claim migration, all original inputs/behavior/assertions/parameters preserved. Only named testfile allowed. Actual43cohort error provider executed a different command may reflect missing caller-created claims; do not infer cause from string alone. Existing RuntimeSWAP2308 found missing Appcreated claim, not Runtimeguarddefect; use facts as source input only. Product/other testfiles READONLY initially. Real bootstrap+commit/provider only, no retiredinitialpublisher, syntheticacceptance/SQL/history or waivedauth. Ifproductionfileoutside scopecausal, return exactunapplied seam. Source/compile/AST/lint/typecheck only; NO pytest/body/service/build; one lateraffectedbatchonMAIN. One independent protectedreview and own-only remoteAgentmerge.
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_fresh_film_first_media_birth_and_exact_inverse[image]
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_fresh_film_first_media_birth_and_exact_inverse[video]
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[image-False]
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[image-True]
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[video-False]
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[video-True]
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_stale_explicit_replacement_membership_refuses_before_accept_and_writes[image]
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_stale_explicit_replacement_membership_refuses_before_accept_and_writes[video]
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-dependent-False]
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-dependent-True]
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-ABA-False]
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-ABA-True]
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-dependent-False]
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-dependent-True]
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-ABA-False]
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-ABA-True]
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_exact_old_source_tuple_survives_new_primary_variant_and_replacement_inverse[image]
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_exact_old_source_tuple_survives_new_primary_variant_and_replacement_inverse[video]
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordered_replacement_preserves_unrelated_historical_transition[image]
+- tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordered_replacement_preserves_unrelated_historical_transition[video]
+
+FAMILY: D86-parent-auto
+NODES: 14
+FILES: tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+BRIEF: Source-only faithful current caller/fixture/created-claim migration, all original inputs/behavior/assertions/parameters preserved. Only named testfile allowed. Actual43cohort error provider executed a different command may reflect missing caller-created claims; do not infer cause from string alone. Existing RuntimeSWAP2308 found missing Appcreated claim, not Runtimeguarddefect; use facts as source input only. Product/other testfiles READONLY initially. Real bootstrap+commit/provider only, no retiredinitialpublisher, syntheticacceptance/SQL/history or waivedauth. Ifproductionfileoutside scopecausal, return exactunapplied seam. Source/compile/AST/lint/typecheck only; NO pytest/body/service/build; one lateraffectedbatchonMAIN. One independent protectedreview and own-only remoteAgentmerge.
+- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id[image-anchor]
+- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id[image-fallback]
+- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id[image-lane-end]
+- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id[video-anchor]
+- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id[video-fallback]
+- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id[video-lane-end]
+- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_relevant_stale_reads_refuse_before_accept_and_any_persistence[image-at]
+- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_relevant_stale_reads_refuse_before_accept_and_any_persistence[image-hold]
+- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_relevant_stale_reads_refuse_before_accept_and_any_persistence[image-track-label]
+- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_relevant_stale_reads_refuse_before_accept_and_any_persistence[video-at]
+- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_relevant_stale_reads_refuse_before_accept_and_any_persistence[video-hold]
+- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_relevant_stale_reads_refuse_before_accept_and_any_persistence[video-track-label]
+- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_completed_variant_is_exact_even_after_a_new_primary_is_promoted[image]
+- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_completed_variant_is_exact_even_after_a_new_primary_is_promoted[video]
