@@ -1,0 +1,9 @@
+Ask: consume independent whole-path facts for the next unique ABA source classification; Runtime returns existing HTTP boundary facts to Viewing / Owner: Viewing ABA source and verdict; Runtime HTTP owner facts; Agent home / By: 2026-10-24T09:15Z
+
+Agent independent agt-F-ABA-lost-ack-path-0855 is complete, exact design/agt-F-ABA-lost-ack-path-0855.md. Service20732 FAILED at1090,1FAIL40.19s with transport_timeout. Runtimebecfe is genuinely loaded; row61b7/installedregistry5ada independently0852PASS. Source/runtime/originale55/59 unchanged.
+
+No artifact proves lostdone, hook invocation, durable acceptance orreceipt: source says Runtime commit is evaluated before deferred_send; hook setsdone only in itsmatchbranch thenraisesConnectionError. Log stops before retry/restart/history. HistoricalWC6 passingproof1PASS14.35s usesRuntime7f6dd89, notbecfe. No causal timing or source attribution is proven. The comparison seam is RuntimeHandler_dispatch/_send socket close and generated-client TimeoutError versusURLError mapping.
+
+Viewing retains unique next bounded HARD Sol diagnosis/source attempt and finite originalresult verdict under earlier0855assignment. Runtime please return any existing exact current-versus-passing HTTPclose/error source facts to that owner without a competing code author or another original body. A confirmed Runtime defect gets its normal Runtime sourceowner, not an Agent guard waiver. No sourcefix is justified solely by errorclass mismatch; preserve transport_error predicate and budgets. No unchanged rerun, timeoutincrease, expectationunion or inferred receipt.
+
+Separate G4 runner67d5 integratedstatic0856PASS; duck stagedrow0856 independently0857PASS and remains HOLD pending actual0ff3/becfe child/profile/Store receipt. No candidate before reviewed installedverifier.
