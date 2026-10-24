@@ -582,6 +582,7 @@ def test_legacy_historical_reuse_keeps_newer_global_shot_head(tmp_path, occupanc
         else:
             source_document = _document(commits, project, "source", service)
         assert source_ref["timeline_id"] == ("source" if inline else "reference-source")
+        source_timeline = source_ref["timeline_id"]
         assert source_document is not None
         source_shots = copy.deepcopy(source_document["shot_revisions"])
         source_internals = copy.deepcopy(source_document["internal_timeline_revisions"])
@@ -604,18 +605,35 @@ def test_legacy_historical_reuse_keeps_newer_global_shot_head(tmp_path, occupanc
                          "args": {"changes": changes}}
         newer_steps = [{"id": "newer", "label": "Update current closure", "intent": "Update closure",
                         "tags": ["occupancy"], "command_ordinals": [0], "patch": changes, "reads": reads}]
-        newer_body = _body(service, project, "source", [newer_command], "newer",
+        newer_body = _body(service, project, source_timeline, [newer_command], "newer",
                            steps=newer_steps, reads=reads, label="newer")
         newer = service.commit_timeline(
-            project, "source", newer_body, idempotency_key="newer", publisher="occupancy-test",
-            invocation_path=route_path(project, "source"), authorize=lambda: None,
+            project, source_timeline, newer_body, idempotency_key="newer", publisher="occupancy-test",
+            invocation_path=route_path(project, source_timeline), authorize=lambda: None,
         )
         assert newer["data"]["status"] == "accepted"
+        assert newer["receipt"]["result"] == newer["data"]
+        newer_receipt = newer["receipt"]["receipt_id"]
+        assert newer_body["base_revision_id"] == source_ref["revision_id"]
+        assert newer_body["base_publication_id"] == source_ref["publication_id"]
+        assert _head(service, project, source_timeline) == {
+            "revision_id": newer["data"]["accepted_revision_id"],
+            "publication_id": newer_receipt,
+        }
+        assert newer["data"]["accepted_revision_id"] != source_ref["revision_id"]
+        assert newer_receipt != source_ref["publication_id"]
         newer_head = _conn(service).execute(
             "SELECT revision_id FROM shot_revision_heads WHERE shot_id='shot-1'"
         ).fetchone()[0]
         assert newer_head != source_shots[0]["revision_id"]
-        source_after_newer = _document(commits, project, "source", service)
+        source_after_newer = _document(commits, project, source_timeline, service)
+        assert source_after_newer is not None
+        assert source_after_newer == newer["data"]["canonical_document"]
+        assert source_after_newer["shot_revisions"][0]["revision_id"] == newer_head
+        assert source_after_newer["shot_revisions"][0]["payload"]["name"] == "NEWER GLOBAL SHOT"
+        assert source_after_newer["internal_timeline_revisions"][0]["revision_id"] != internal["revision_id"]
+        assert source_after_newer["internal_timeline_revisions"][0]["payload"]["tracks"] == newer_tracks
+        assert commits.revision_closure(project, source_timeline, source_ref["revision_id"]) == source_document
         body, key = _historical_shared_request(
             project_id=project,
             timeline_id="main",
@@ -645,7 +663,9 @@ def test_legacy_historical_reuse_keeps_newer_global_shot_head(tmp_path, occupanc
             invocation_path=route_path(project, "main"), authorize=lambda: None,
         )
         assert result["data"]["status"] == "accepted"
-        assert _document(commits, project, "source", service) == source_after_newer
+        assert result["receipt"]["result"] == result["data"]
+        assert _document(commits, project, source_timeline, service) == source_after_newer
+        assert commits.revision_closure(project, source_timeline, source_ref["revision_id"]) == source_document
         assert tuple(_conn(service).execute("SELECT COUNT(*) FROM " + table).fetchone()[0]
                      for table in ("shot_revisions", "internal_timeline_revisions")) == physical_counts
         assert _conn(service).execute("SELECT revision_id FROM shot_revision_heads WHERE shot_id='shot-1'").fetchone()[0] == newer_head
@@ -670,6 +690,30 @@ def test_legacy_historical_reuse_keeps_newer_global_shot_head(tmp_path, occupanc
         assert history["records"]["commands"][0]["created"] == [
             {"ref": "occurrence:historical-copy", "kind": "occurrence", "owner": "parent"},
         ]
+        # Preserve the original whole/per-step inverse acceptance after the real
+        # historical placement; inverse is not a source-creation shortcut.
+        inverse = {"schema_version": 1, "op": "timeline.inverse", "version": "1", "select": None,
+                   "args": {"publications": [newer_receipt]}}
+        if inline:
+            inverse["args"]["steps"] = {newer_receipt: ["newer"]}
+        inverse_result, inverse_body = _submit(
+            service, project, source_timeline, [inverse], "historical-inverse-" + str(inline),
+            label="historical inline" if inline else "historical referenced",
+        )
+        assert inverse_result["data"]["status"] == "accepted"
+        assert inverse_result["receipt"]["result"] == inverse_result["data"]
+        assert _conn(service).execute("SELECT revision_id FROM shot_revision_heads WHERE shot_id='shot-1'").fetchone()[0] == newer_head
+        assert inverse_result["data"]["canonical_document"]["shot_revisions"] == source_shots
+        assert inverse_result["data"]["canonical_document"]["internal_timeline_revisions"] == source_internals
+        assert inverse_result["data"]["canonical_document"]["shot_revisions"][0]["shot_id"] == "shot-1"
+        assert inverse_result["data"]["steps"][0]["patch"]
+        if inline:
+            assert inverse_body["commands"][0]["args"]["steps"] == {newer_receipt: ["newer"]}
+        else:
+            assert "steps" not in inverse_body["commands"][0]["args"]
+        assert commits.history_entry(project, source_timeline, inverse_result["receipt"]["receipt_id"])["records"]["undo_steps"] == (
+            {newer_receipt: ["newer"]} if inline else None
+        )
         source_row = service.get_project_timeline(project, source_ref["timeline_id"])
         service.archive_timeline(
             source_ref["timeline_id"], {"expected_version": source_row["version"]},
