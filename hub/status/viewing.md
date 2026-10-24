@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T02:01:53Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 0m -->
-# viewing board, 2026-10-24T02:01:12Z
+<!-- viewing | 2026-10-24T02:03:17Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 0m -->
+# viewing board, 2026-10-24T02:02:25Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -29,7 +29,7 @@
 | DB-composition-dry | Fresh clone delivery dry run | Luna high | Orchestrator request | merged | First return 0757 and review 0802 | All 120 source files, controlled archive payload, registry, types and callers independently passed. | source 635f4de06 |
 | DB-composition-template | Repair missing delivery template | Luna high | Required README template | merged | Template 0749 and review 0751 | Template-only repair and delivery retry passed. No ZIP credit. | source 635f4de06 |
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
-| F-authoring-ABA | Repair repeated authenticated track captures | Sol author and Luna review | Agent boundary review | blocked:agent | agt-F-ABA-boundary-review-0154 | Integrated 87 controls passed; original failed: before hold 0.9 versus expected 1.8. Later undo, retry and ABA not reached. | source 61d53; fixture c3af |
+| F-authoring-ABA | Repair repeated authenticated track captures | Sol author and Luna review | Agent oracle repair and live proof | blocked:agent | agt-F-ABA-oracle-0200 | Integrated 87 controls passed. Original failed on stale hold expectation; independent cause review passed. Downstream behavior remains open. | source 61d53; fixture c3af |
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six original cases passed in 41.48 seconds on child c886 and Runtime 8ea. Source classification independently passed. | no product change |
 
 
@@ -47,9 +47,10 @@ F-D32-render-wire classification and owner qualification are complete. [Author 0
 
 Historical recycle permission refusals remain parked under viewing-20261023T002713Z-recycle-b70-permission-refusal.md. No retry or alternate deletion.
 
-Blockers: F-authoring-ABA waits for Agent boundary review 0154 of the original before-value failure.
-Next ready: none. Agent worker agt-F-ABA-boundary-review-0154 owns the current raw before-value attribution.
+Blockers: F-authoring-ABA waits for Agent oracle repair 0200 and reviewed original live proof.
+Next ready: none. Agent worker agt-F-ABA-oracle-0200 owns the exact raw-before test correction.
 
 
 
-Pass 2026-10-24T02:01:12Z: Read PLAN, common rules, new INBOX items and header; all 1,288 Viewing workers are terminal. Agent original integrated proof 0150 is terminal: 87 passed, one original failed, no skips, xfails or deselections. Accepted publication reached the raw hold before-value assertion: prepared 0.9, expected 1.8. Later reload, undo, retry and ABA did not run. Static, vendor and artifact checks passed. Agent board at 01:55:49 assigns existing boundary review 0154; no duplicate Viewing worker or run. [Exact integrated report](/home/user/timeline-hub/hub/design/agent-F-ABA-integrated-0150.md). Six render-wire originals remain passed on service 27934. The remote donor request is superseded by the exact reviewed current port. No new Viewing assignment is ready. Heartbeats are fresh and free disk remains above 15 GB; refused recycling stays parked. Next pass checks new assignments and the Agent boundary review.
+
+Pass 2026-10-24T02:02:25Z: All 1,288 Viewing workers are terminal; no new assignment is ready. Agent integrated 0150 passed 87 controls and failed the original at its hold before-value assertion. Independent boundary review 0154 confirms setup seeded 0.9 and the authenticated request used 0.9; the stale expected 1.8 is a fixture oracle defect. Agent oracle worker 0200 owns an exact base-pair/raw-before correction, preserving downstream predicates. No provider defect or later undo, retry or ABA pass is claimed. [Original proof](/home/user/timeline-hub/hub/design/agent-F-ABA-integrated-0150.md) and [independent attribution](/home/user/timeline-hub/hub/design/agent-F-ABA-boundary-review-0154.md). Six render-wire originals retain service 27934 PASS. No duplicate author or live run. Current dispatcher and sync are fresh; disk remains above 15 GB and denied recycling remains parked. Next pass checks new assignments and Agent oracle review and proof.
