@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T09:33:42Z | dispatcher heartbeat 7s | live 2 (sol 1, luna 1, other 0) | busy30 12 | status age 0m -->
+<!-- main | 2026-10-24T09:36:34Z | dispatcher heartbeat 14s | live 3 (sol 1, luna 2, other 0) | busy30 13 | status age 1m -->
 # runtime board, 2026-10-24T09:34:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -80,7 +80,7 @@
 | R-commit-response | Verify mounted mutation caller facts | Sol / Luna | Independent final review passed | merged | Sol0812; whole path0812; final0818 PASS | Mounted nonempty element save uses one atomic doc.patch and step. [Review](../../design/runtime-commit-mounted-final-review-0818.md) | Read only |
 | OPS-wheel-layout | Match legitimate wheel metadata names | Luna | Reviewed installation complete | merged | Security 0756; live 0805; Agent 0814 PASS | All 48 private checks and zero-new mypy passed. Agent independently accepted all 67 original wheels and received kit. | b330264b9 installed |
 
-| OPS-farm-bootstrap-input | Authenticate bootstrap and xdist wheels | Luna / independent Luna | Exact current declared versions | doing | Input0932 | Five-package public hash-locked acquisition only. Schema source remains a separate lead input. No installation or child credit. | Input only |
+| OPS-farm-bootstrap-input | Authenticate bootstrap and xdist wheels | Luna / independent Luna | Independent artifact review | review | Input0932; review0936 | Five original wheels acquired in3.1MB; exact hashes and finite archive checks passed. Independent review active. No installation or child credit. | Input only |
 
 | OPS-Agent-current-child | Qualify changed Agent source child | Dispatcher / Agent Luna | Reviewed installed RECORD correction | blocked:runtime | final-0c2c-becfe; harness 0820 | Bootstrap and all installs passed. Final installed RECORD validation refused. Runtime return 0848 is active; no child READY. | Agent 0c2c / Runtime becfe |
 | OPS-Farm-current-child | Qualify Farm checkpoint child | Farm lead / Runtime Luna | Correct required imports | blocked:runtime | Actual preflight 0900 | Runtime and Agent isolated imports pass. Full row refuses shared schema; Runtime package absence is unconfirmed. Source and whole path 0906 are assigned. | Agent 9cd / Runtime 1d9 |
@@ -115,5 +115,5 @@ Agent census: official 263 closed / 4 open of 267, independently reviewed 0827 a
 Blockers: Farm and Runtime lead — Agent provenance0918 and independent0922 are complete. Exact schema242f source remains absent; lead fetch0918 owns the missing object. Five-wheel input0932 is active. Preflight stays held.
 Blockers: App — header P2/P3 GO precedes U3b home, D39 adoption and final tuple qualification.
 Blockers: Runtime — independent0903 failed cumulative security despite84 passing controls: foreign package and unowned executable accepted. Sol0923 owns inventory correction; no installation or changed child released.
-Next ready: Sol inventory0923 and exact five-wheel input0932 are dispatched. Whole-path0925 and corrected distribution facts0928 are complete. Schema implementation resumes after authenticated input and serialized maker source. No unassigned ready task.
+Next ready: Sol inventory0923 and independent five-wheel review0936 are active. Whole-path0925 and corrected distribution facts0928 are complete. Schema implementation resumes after authenticated input and serialized maker source. No unassigned ready task.
 Later: D47 memo and capsule remain held until after delivery. D34 threshold crossed at8257409024 bytes free; only three historic non-KEEP Runtime trees remain and all are dirty. Prior cleanup/process/retirement refusals stay stopped. V4,D14,D23,D31,D37 dispositions remain unchanged.
