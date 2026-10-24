@@ -13,6 +13,7 @@ from fractions import Fraction
 from typing import Any
 from urllib.parse import quote
 
+from astrid.core.timeline.clip_names import clip_media_name
 from astrid.core.timeline.duration import clip_end_frame, clip_start_frame
 
 
@@ -172,7 +173,7 @@ def build_inspector_navigation(snapshot: Mapping, cards: Sequence[Mapping]) -> d
         target = _target(scope, 'clip', identity)
         record = {'target': target, 'id': clip_id, 'clip_id': clip_id, 'track_id': track_id,
             'kind': 'clip', 'clip_kind': raw.get('kind', 'unknown'),
-            'label': raw.get('label') or raw.get('name') or clip_id,
+            'label': raw.get('label') or clip_media_name(raw) or clip_id,
             'start_frame': start, 'end_frame': end, 'frame_target': first_captured(start, end),
             'actions': {'focus_command': _frame_command(snapshot, start, clip_id=clip_id)},
             'source': {key: raw[key] for key in ('asset', 'from', 'to', 'speed') if key in raw}}

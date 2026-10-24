@@ -63,11 +63,11 @@ def test_generated_host_echo_claim_cas_settlement_and_restart(tmp_path: Path, re
         generated.handshake("astrid-generic-host-test", "0.1.0", ["projects:read", "worker:execute"])
         host = GenericPackHost(
             pack_roots=[pack],
-            client=RuntimeProtocolClient(daemon.endpoint, daemon.token),
-            executor_id="echo-host",
+            client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),
+            executor_id="astrid-pack-host",
         )
         registration = host.register()
-        assert registration["registration"].executor_id == "echo-host"
+        assert registration["registration"].executor_id == "astrid-pack-host"
         capability = next(
             item
             for item in registration["registration"].capabilities
@@ -187,8 +187,8 @@ def test_provider_fixture_is_credential_gated_then_settles_offline(
         host = GenericPackHost(
             pack_roots=[pack],
             capability_matrix=matrix,
-            client=RuntimeProtocolClient(daemon.endpoint, daemon.token),
-            executor_id="provider-fixture-host",
+            client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),
+            executor_id="astrid-pack-host",
         )
         record = host.discover()[0]
         host.preflight()

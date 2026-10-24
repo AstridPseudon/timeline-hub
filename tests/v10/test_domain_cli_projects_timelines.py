@@ -35,7 +35,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from tests.lanes import unavailable
+from tests.helpers.runtime import runtime_checkout
 
 from astrid.core.cli.domain_product import run_product_family
 from astrid.core.receipts.contract import CommandReceipt
@@ -1433,12 +1433,7 @@ def test_timeline_editing_guidance_consumes_its_json(
 @pytest.mark.integration
 def test_timelines_show_reads_runtime_motion_and_scoped_friendly_media(capsys, tmp_path) -> None:
     """Exercise actual Runtime closure -> SDK projection -> human CLI output."""
-    runtime_root = os.environ.get("ASTRID_RUNTIME_SOURCE_ROOT")
-    if not runtime_root:
-        unavailable("set ASTRID_RUNTIME_SOURCE_ROOT to the paired Runtime execution worktree")
-    runtime_path = Path(runtime_root).resolve()
-    if not (runtime_path / "runtime_protocol" / "service.py").is_file():
-        pytest.fail(f"ASTRID_RUNTIME_SOURCE_ROOT has no runtime_protocol package: {runtime_path}")
+    runtime_path = runtime_checkout()
     sys.path.insert(0, str(runtime_path))
     try:
         from runtime_protocol.service import RuntimeService

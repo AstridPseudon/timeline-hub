@@ -290,7 +290,7 @@ def build_filter_graph(
                 "setpts=PTS-STARTPTS,"
                 f"scale={width}:{height}:force_original_aspect_ratio=decrease:{_COLOUR_SCALE},"
                 f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2,"
-                f"fps={fps},format=yuv420p[{label}]"
+                f"fps={fps},format=yuv420p,{_COLOUR_FRAMES}[{label}]"
             )
             video_labels.append(f"[{label}]")
         concat_label = "vbase" if overlay_clips else "vout"
@@ -452,6 +452,9 @@ def _asset_input_argv(inputs: RenderCommandInputs) -> list[str]:
 # decodes an HD film as BT.709 whatever the matrix says (Chrome does), so every saturated colour in it shifts. The
 # scale converts to the BT.709 matrix and the encoder tags the whole description.
 _COLOUR_SCALE = "out_color_matrix=bt709:out_range=tv"
+# FFmpeg 7+ takes the colour description of the encoded stream from the frames, not from the -color_* output
+# options (only the matrix survives the scale above), so the frames carry the whole description too.
+_COLOUR_FRAMES = "setparams=colorspace=bt709:color_primaries=bt709:color_trc=bt709:range=tv"
 _COLOUR_TAGS = ("-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv")
 
 

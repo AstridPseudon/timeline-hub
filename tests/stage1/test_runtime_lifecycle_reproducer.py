@@ -136,7 +136,6 @@ def test_explicit_client_path_does_not_bootstrap(monkeypatch: pytest.MonkeyPatch
     assert calls == ["health", "handshake"]
 
 
-@pytest.mark.integration
 @pytest.mark.darwin_native
 @pytest.mark.parametrize("case", ["stale", "interrupted"])
 def test_pinned_launcher_recovers_disposable_partial_state(case: str) -> None:

@@ -122,6 +122,7 @@ def _process_snapshot() -> dict[int, _ProcessInfo]:
 
 def _parse_census(stdout: str) -> _Census:
     entries = _Census()
+    vanished: set[int] = set()
     for line in stdout.splitlines():
         fields = line.strip().split(None, 3)
         if len(fields) != 4:
@@ -133,9 +134,31 @@ def _parse_census(stdout: str) -> _Census:
         birth = process_birth_identity(pid) if sys.platform.startswith("linux") else "ps-lstart:" + fields[3]
         if birth:
             entries[pid] = _ProcessInfo(pid, ppid, pgid, birth)
-        elif sys.platform.startswith("linux") and (exited := _zombie_birth_identity(pid)):
-            entries.exited[pid] = exited
+        else:
+            vanished.add(pid)
+            if sys.platform.startswith("linux") and (exited := _zombie_birth_identity(pid)):
+                entries.exited[pid] = exited
+    if vanished:
+        # ``ps`` lists a process, then its /proc identity is read later.  A
+        # parent that exits in between is dropped from the census while its
+        # children's listed ppid still names it, which reads as an unverified
+        # child of a missing parent.  The kernel reparents a process's
+        # children before it is visible as a zombie, so a fresh ppid is
+        # authoritative: re-read it for exactly those children.
+        for pid, info in tuple(entries.items()):
+            if info.ppid in vanished:
+                fresh = _linux_ppid(pid) if sys.platform.startswith("linux") else None
+                if fresh is not None and fresh != info.ppid:
+                    entries[pid] = _ProcessInfo(pid, fresh, info.pgid, info.birth)
     return entries
+
+
+def _linux_ppid(pid: int) -> int | None:
+    try:
+        with open("/proc/%d/stat" % pid, encoding="ascii") as stream:
+            return int(stream.read().rsplit(")", 1)[1].split()[1])
+    except (OSError, IndexError, ValueError, UnicodeError):
+        return None
 
 
 CLEANUP_LATCH_NAME = "generic-host.cleanup-uncertain.json"

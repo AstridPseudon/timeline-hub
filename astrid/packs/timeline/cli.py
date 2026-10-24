@@ -71,6 +71,7 @@ from typing import Any
 from astrid.core.cli.domain_output import DomainResult, envelope_dict, print_result, render_human
 from astrid.core.cli.registration import CommandSpec, register_product_commands
 from astrid.core.cli.task_progress import task_handoff
+from astrid.core.timeline.clip_names import clip_media_name
 from astrid.packs.timeline.cli_visualize import (  # noqa: F401  (re-exported: the verb's helpers live beside it)
     _changed_cuts_line,
     _clips_changed,
@@ -352,14 +353,7 @@ def _clip_bounds(clip: Mapping[str, Any]) -> tuple[Fraction | None, Fraction | N
 
 
 def _human_clip_name(clip: Mapping[str, Any]) -> str:
-    source = clip.get("source")
-    candidates = [
-        clip.get("media_name"), clip.get("asset_name"), clip.get("name"),
-        clip.get("asset"), clip.get("asset_id"),
-        source.get("name") if isinstance(source, Mapping) else None,
-        source.get("key") if isinstance(source, Mapping) else source if isinstance(source, str) else None,
-    ]
-    return next((str(value) for value in candidates if value not in (None, "")), "(unnamed media)")
+    return clip_media_name(clip) or "(unnamed media)"
 
 
 def _human_clip_controls(clip: Mapping[str, Any]) -> list[str]:

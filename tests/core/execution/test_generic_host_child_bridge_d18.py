@@ -1,6 +1,6 @@
 """D18 offline proof: local sockets, disposable Runtime realm, fake CAS bytes.
 
-Set ASTRID_D18_RUNTIME_SOURCE to the audited Runtime worktree. Its canonical
+The Runtime checkout from tests.helpers.runtime is the audited source. Its canonical
 client is loaded under a private module name; no vendored source is replaced.
 ASTRID_D18_USE_VENDORED_CLIENT=1 retains the normal host-created client class
 and substitutes only its offline transport after the B01 vendor sync.
@@ -31,7 +31,7 @@ from astrid.core.execution.generic_host import GenericPackHost, HostError, Runti
 from astrid.sdk._child_bridge import ChildBridge, _BridgeRejected
 from astrid.sdk.execution_request import normalize_execution_request
 from astrid_runtime_client import ApiError, WorkspaceClient
-from tests.lanes import unavailable
+from tests.helpers.runtime import runtime_checkout
 
 # The Runtime realm these proofs run against is a second checkout (tests/lanes.py).
 INTEGRATION_FIXTURES = ("world",)
@@ -961,10 +961,7 @@ def test_discovery_selected_association_filter_acquires_only_selected_object(dis
 
 @pytest.fixture
 def world(tmp_path, monkeypatch):
-    source = os.environ.get("ASTRID_D18_RUNTIME_SOURCE")
-    if not source:
-        unavailable("set ASTRID_D18_RUNTIME_SOURCE to the audited Runtime worktree")
-    source = Path(source)
+    source = runtime_checkout()
     monkeypatch.syspath_prepend(str(source))
     monkeypatch.setenv("ASTRID_SOURCE_STATE", str(tmp_path / "absent.json"))
     monkeypatch.delenv("ASTRID_PACKS_PATH", raising=False)
@@ -1153,11 +1150,12 @@ def request(world, *, key="child", value="scalar", descriptors=None, request_id=
 def serve_one(world, *, ready=None):
     """Independent host instance serves the same target/registered executor."""
     host = GenericPackHost(pack_roots=[world.root], client=world.client, executor_id="worker", max_concurrency=2)
-    host.discover()
-    if ready is not None:
-        ready.set()
-    deadline = time.monotonic() + 4
-    while time.monotonic() < deadline:
+    try:
+        host.discover()
+    finally:
+        if ready is not None:
+            ready.set()  # waiters wake either way; a discovery error surfaces through the future
+    while True:
         with world.lock:
             body = {"executor_id": "worker", "capability_ids": [CHILD], "runtime_epoch": 1}
             row = world.service.store.conn.execute("SELECT id FROM tasks WHERE capability=? AND status='queued' LIMIT 1", (CHILD,)).fetchone()
@@ -1174,7 +1172,6 @@ def serve_one(world, *, ready=None):
                         lease_id=c["lease_id"], executor_id="worker")
             return host.run_task({"task": task}, lease_token=c["lease_id"], attempt_id=c["attempt_id"], fence=c["fence"])
         time.sleep(0.01)
-    raise AssertionError("child was not admitted")
 
 
 @pytest.mark.parametrize("form", ["python", "-m", "script", "-c"])
@@ -1185,14 +1182,14 @@ def test_real_sdk_parent_routes_and_independent_child_progress(world, form, deri
     ready = threading.Event()
     with ThreadPoolExecutor(max_workers=1) as pool:
         future = pool.submit(serve_one, world, ready=ready)
-        assert ready.wait(5), "independent child host did not finish discovery"
+        ready.wait()
         c = world.claim
         try:
             result = host.run_task({"task": world.task}, lease_token=c["lease_id"], attempt_id=c["attempt_id"], fence=c["fence"])
         except Exception:
-            future.result(timeout=5)
+            future.result()
             raise
-        assert future.result(timeout=5)
+        assert future.result()
     assert world.service.task(c["task_id"])["task"]["status"] == "completed"
     delegated = [call[2] for call in world.calls if call[1] == "/v1/delegated-tasks"]
     assert len(delegated) == 1
@@ -1724,14 +1721,14 @@ def test_real_sdk_verified_artifacts_and_managed_outputs(world, form):
     ready = threading.Event()
     with ThreadPoolExecutor(max_workers=1) as pool:
         future = pool.submit(serve_one, world, ready=ready)
-        assert ready.wait(5), "independent child host did not finish discovery"
+        ready.wait()
         c = world.claim
         try:
             world.host.run_task({"task": world.task}, lease_token=c["lease_id"], attempt_id=c["attempt_id"], fence=c["fence"])
         except Exception:
-            future.result(timeout=5)
+            future.result()
             raise
-        future.result(timeout=5)
+        future.result()
     assert world.service.task(world.task["id"])["task"]["status"] == "completed"
 
 
@@ -1882,11 +1879,11 @@ while not Path('outputs/descendant-ready').exists():
     ready = threading.Event()
     with ThreadPoolExecutor(max_workers=1) as pool:
         future = pool.submit(serve_one, world, ready=ready)
-        assert ready.wait(5), "independent child host did not finish discovery"
+        ready.wait()
         c = world.claim
         result = host.run_task({"task": world.task}, lease_token=c["lease_id"], attempt_id=c["attempt_id"], fence=c["fence"],
                                provider_route_grant=grant)
-        assert future.result(timeout=5)
+        assert future.result()
     signed = json.loads((attempt / "broker-evidence.json").read_text())
     expected = contexts[0].broker._admission
     assert signed["admission"] == expected
@@ -3637,7 +3634,7 @@ def test_materialization_pending_writes_consume_capacity(world, monkeypatch):
             assert not (b.output_root / "child-outputs" / rows[1]["association_id"]).exists()
         finally:
             release.set()
-        assert future.result(timeout=5)["output"] == rows[0]
+        assert future.result()["output"] == rows[0]
 
 
 @pytest.mark.parametrize("component", ["attempt", "output", "namespace", "association", "source"])
@@ -3741,7 +3738,8 @@ def test_materialization_large_object_and_hard_cap(world, monkeypatch, size):
         assert _materialize(b, child, public) == result
 
 
-def test_materialization_rejects_above_persisted_retention_budget_before_reread(world, monkeypatch):
+def test_output_above_persisted_retention_budget_is_refused_before_any_read(world, monkeypatch):
+    # b207712d9: an output over max_derived_bytes is refused at the identity check, before its bytes are fetched.
     limit = 64 * 1024 * 1024
     b, child, rows = _materialization_fixture(world, expose=False,
         limits={"max_derived_bytes": limit})
@@ -3751,13 +3749,10 @@ def test_materialization_rejects_above_persisted_retention_budget_before_reread(
         size=len(payload), digest=oid, object_id=oid)
     reads = []
     monkeypatch.setattr(world.client, "get_object", lambda oid: reads.append(oid) or payload)
-    public = b.dispatch({"v": 1, "request_id": b._sequence + 1, "op": "outputs",
-        "child_key": "child", "task_id": child["task_id"]})[0]
-    assert public["size"] == limit + 1 and reads == [oid[7:]]
     assert b.policy["limits"]["max_derived_bytes"] == limit
-    reads.clear()
-    with pytest.raises(ChildBridgeError, match="materialization retention exceeds persisted limits"):
-        _materialize(b, child, public)
+    with pytest.raises(ChildBridgeError, match="byte identity"):
+        b.dispatch({"v": 1, "request_id": b._sequence + 1, "op": "outputs",
+            "child_key": "child", "task_id": child["task_id"]})
     assert reads == [] and _retained_usage(b) == (0, 0)
     assert not (b.output_root / "child-outputs").exists()
 

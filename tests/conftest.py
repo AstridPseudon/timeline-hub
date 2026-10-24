@@ -49,7 +49,7 @@ def real_runtime(tmp_path, owned_process_groups):
 
     ``real_runtime()`` starts the daemon at ``tmp_path/realm`` with its support root at ``tmp_path/support``.
     ``real_runtime(realm, support_root=..., **daemon_options)`` starts one at a given realm (a restart reuses
-    it); ``commit=`` runs the Runtime as of that commit. The Runtime comes from ``tests.helpers.runtime``'s
+    it; the support root is made owner-only like the launcher's); ``commit=`` runs the Runtime as of that commit. The Runtime comes from ``tests.helpers.runtime``'s
     locator (``ASTRID_RUNTIME_CHECKOUT``). Every daemon is stopped at teardown.
     """
     from tests.helpers.runtime import new_runtime_daemon
@@ -58,6 +58,10 @@ def real_runtime(tmp_path, owned_process_groups):
         if realm is None:
             realm, support_root = tmp_path / "realm", support_root or tmp_path / "support"
         if support_root is not None:
+            # The installed launcher keeps the support root owner-only (0o700); the host refuses to read
+            # discovery evidence from a wider directory.
+            Path(support_root).mkdir(parents=True, exist_ok=True)
+            Path(support_root).chmod(0o700)
             daemon_options["support_root"] = support_root
         daemon = new_runtime_daemon(realm, commit=commit, **daemon_options).start()
         owned_process_groups.add_cleanup(daemon.stop)

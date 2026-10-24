@@ -59,6 +59,7 @@ def _setup(base, *, previous_schema=True):
     if previous_schema:
         with sqlite3.connect(realm / "realm.sqlite3") as connection:
             connection.execute("ALTER TABLE timelines DROP COLUMN name")
+            connection.execute("DROP TABLE user_app_state")  # added by schema v31
             connection.execute("UPDATE runtime_schema SET version=29 WHERE id=1")
     import astrid_runtime
     checkout = str(Path(astrid_runtime.__file__).resolve().parents[1])

@@ -19,6 +19,12 @@ from astrid.core.theme import builtin_theme
 from astrid.core.timeline.resolution import AssetIntegrity, classify_asset
 from astrid.packs.rendering.actions.timeline_visualize.assets import verify_now
 from astrid.packs.rendering.actions.timeline_visualize.thumbnails import sample_filmstrip
+from tests.helpers.remotion_validation import (
+    REMOTION,
+    issue_remotion_launch_validation,
+    remotion_install_problems,
+)
+from tests.packs.rendering._helpers import _execution_env
 
 
 class _Runtime:
@@ -229,71 +235,30 @@ def test_host_derived_registry_executes_canonical_ffmpeg_executor(tmp_path: Path
     assert runtime.fetches == [digest]
 
 
-# Remotion execution now requires launch-owned validation (remotion_runtime.py
-# _validated_runtime), which needs an installed Remotion runtime (node_modules with
-# @banodoco packages and a real prepare probe). A fake runtime tree cannot supply it.
-@pytest.mark.integration
-def test_host_derived_registry_reaches_canonical_remotion_executor_process(tmp_path: Path, monkeypatch) -> None:
-    """A bounded, server-shaped Remotion runtime still traverses the real executor."""
+@pytest.fixture
+def remotion_launch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """The provisioned Remotion install plus the launch-owned validation its runtime requires."""
 
-    runtime = tmp_path / "remotion-runtime"
-    packages = runtime / "node_modules" / "@banodoco"
-    for name in ("timeline-composition", "timeline-schema", "timeline-theme-2rp"):
-        (packages / name).mkdir(parents=True)
-    cli = runtime / "node_modules" / "@remotion" / "cli" / "remotion-cli.js"
-    cli.parent.mkdir(parents=True)
-    cli.write_text("// bounded test CLI\n", encoding="utf-8")
-    (runtime / "package.json").write_text("{}\n", encoding="utf-8")
-    for kind in ("effects", "animations", "transitions"):
-        (packages / "timeline-composition" / "typescript" / "src").mkdir(parents=True, exist_ok=True)
-        (packages / "timeline-composition" / "typescript" / "src" / f"{kind}.generated.ts").write_text("export {};\n", encoding="utf-8")
-        (runtime / "src").mkdir(exist_ok=True)
-        for suffix in (".ts", ".js", ".d.ts", ".js.map", ".d.ts.map"):
-            (runtime / "src" / f"{kind}.generated{suffix}").write_text("export {};\n", encoding="utf-8")
-    node = tmp_path / "node"
+    problems = remotion_install_problems()
+    if problems:
+        pytest.fail(
+            "a real render needs the provisioned Remotion install (run `make remotion-install`): " + "; ".join(problems),
+            pytrace=False,
+        )
+    with _execution_env():
+        issue_remotion_launch_validation(tmp_path, monkeypatch)
+        yield REMOTION
+
+
+@pytest.mark.integration
+def test_host_derived_registry_reaches_canonical_remotion_executor_process(tmp_path: Path, remotion_launch: Path) -> None:
+    """A host-materialized registry traverses the real executor into a real Remotion render process."""
+
+    runtime = remotion_launch
     source = tmp_path / "bounded.mp4"
     ffmpeg = shutil.which("ffmpeg")
-    assert ffmpeg, "the bounded Remotion proof needs ffmpeg to emit a valid artifact"
-    subprocess.run([ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "color=c=red:s=1280x720:r=24:d=1", "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo", "-shortest", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-video_track_timescale", "90000", str(source)], check=True)
-    # Bounded Remotion process: consume the real backend props, resolve the
-    # timeline media clip through the runtime registry, fetch the attempt-local
-    # URL, verify its digest, then transcode those fetched bytes.  This keeps
-    # the proof hermetic without weakening the production zero-shim boundary.
-    node.write_text(
-        "#!/usr/bin/env python3\n"
-        "import hashlib, json, pathlib, subprocess, sys, tempfile, urllib.parse, urllib.request\n"
-        "if sys.argv[1:] == ['--version']:\n print('v20.19.4'); raise SystemExit(0)\n"
-        "args = sys.argv[1:]\n"
-        "props_path = pathlib.Path(args[args.index('--props') + 1])\n"
-        "output_path = pathlib.Path(args[args.index('--output') + 1])\n"
-        "props = json.loads(props_path.read_text())\n"
-        "timeline = props.get('timeline')\n"
-        "registry = props.get('assets', {}).get('assets')\n"
-        "theme = props.get('theme')\n"
-        "assert isinstance(timeline, dict) and isinstance(registry, dict)\n"
-        "assert theme.get('id') == 'banodoco-default' and theme['visual']['canvas']['fps'] == 24\n"
-        "clips = [clip for clip in timeline.get('clips', []) if isinstance(clip, dict) and clip.get('clipType') == 'media']\n"
-        "assert len(clips) == 1 and clips[0].get('asset') == 'source'\n"
-        "entry = registry.get('source')\n"
-        "assert isinstance(entry, dict) and entry.get('media_id') == 'media-remotion'\n"
-        "source_url = entry.get('file')\n"
-        "parsed = urllib.parse.urlparse(source_url or '')\n"
-        "assert parsed.scheme == 'http' and parsed.hostname in {'127.0.0.1', 'localhost'}\n"
-        "payload = urllib.request.urlopen(source_url).read()\n"
-        "assert hashlib.sha256(payload).hexdigest() == entry.get('content_sha256')\n"
-        "with tempfile.TemporaryDirectory(prefix='bounded-remotion-') as directory:\n"
-        " source_path = pathlib.Path(directory) / 'source.mp4'\n"
-        " source_path.write_bytes(payload)\n"
-        f" subprocess.run([{ffmpeg!r}, '-hide_banner', '-loglevel', 'error', '-y', '-i', str(source_path), '-map', '0:v:0', '-map', '0:a?', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-video_track_timescale', '90000', str(output_path)], check=True)\n",
-        encoding="utf-8",
-    )
-    node.chmod(0o755)
-    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(runtime))
-    monkeypatch.setenv("ASTRID_NODE_EXECUTABLE", str(node))
-    monkeypatch.setenv(
-        "ASTRID_TIMELINE_SCHEMA_PYTHONPATH",
-        str(Path(__file__).parents[3] / "astrid-app" / "vendor" / "timeline-schema" / "python"),
-    )
+    assert ffmpeg, "the Remotion proof needs ffmpeg to emit a valid artifact"
+    subprocess.run([ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-f", "lavfi", "-i", "color=c=red:s=1280x720:r=24:d=1", "-f", "lavfi", "-i", "anullsrc=r=48000:cl=stereo", "-shortest", "-vf", "scale=out_color_matrix=bt709:out_range=tv,format=yuv420p", "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-video_track_timescale", "90000", str(source)], check=True)
     payload = source.read_bytes()
     digest = hashlib.sha256(payload).hexdigest()
     theme_payload = json.dumps(builtin_theme(), sort_keys=True).encode("utf-8")
@@ -344,9 +309,9 @@ def test_host_derived_registry_reaches_canonical_remotion_executor_process(tmp_p
     output = attempt / "result.mp4"
     assert output.is_file() and output.read_bytes()[4:8] == b"ftyp"
     assert sorted(runtime_client.fetches) == sorted([theme_digest, digest])
-    # A valid-but-unrelated MP4 must not satisfy this proof.  The bounded
-    # process re-encodes the handed-off red source, so its decoded first frame
-    # must match the source frame exactly.
+    # A valid-but-unrelated MP4 must not satisfy this proof.  The render
+    # re-encodes the handed-off red source, so its decoded first frame
+    # must match the source frame.
     source_frame = subprocess.run(
         [ffmpeg, "-hide_banner", "-loglevel", "error", "-i", str(source), "-frames:v", "1", "-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1"],
         check=True,
@@ -358,4 +323,10 @@ def test_host_derived_registry_reaches_canonical_remotion_executor_process(tmp_p
         capture_output=True,
     ).stdout
     assert source_frame and output_frame
-    assert source_frame == output_frame
+    assert len(source_frame) == len(output_frame)
+    # Remotion's own encode and colour conversion shift each level slightly (pure red 254,0,0 comes back as
+    # 254,24,0), so compare the mean level of each channel, not bytes. An unrelated video is far outside this.
+    for channel in range(3):
+        source_mean = sum(source_frame[channel::3]) / len(source_frame[channel::3])
+        output_mean = sum(output_frame[channel::3]) / len(output_frame[channel::3])
+        assert abs(source_mean - output_mean) <= 4, (channel, source_mean, output_mean)

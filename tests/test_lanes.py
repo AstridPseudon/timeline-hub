@@ -29,8 +29,8 @@ def _run(
     )
 
 
-DEFAULT = ("-m", "not integration and not live and not opt_in")
-HEAVY = ("-m", "integration or live or opt_in")
+DEFAULT = ("-m", "not integration and not opt_in")
+HEAVY = ("-m", "integration or opt_in")
 REQUIRE = (
     "import pytest\nfrom tests.lanes import require_module\n\npytestmark = pytest.mark.integration\n"
     "require_module('astrid_no_such_dependency')\n\ndef test_x():\n    pass\n"

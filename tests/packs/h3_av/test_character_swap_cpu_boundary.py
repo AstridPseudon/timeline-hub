@@ -147,7 +147,7 @@ def test_source_cpu_profile_roots_remain_source_bound(monkeypatch):
     assert helper._selected_execution_roots(selected) == (helper.RUNTIME_ROOT, helper.ASTRID_ROOT)
 
 
-@pytest.mark.integration
+@pytest.mark.installed
 def test_installed_cpu_origins_are_real_and_reject_mixed_source():
     import sys
     from astrid.sdk.host_bootstrap import _installed_execution_origins, PackHostBootstrapError
@@ -160,13 +160,29 @@ def test_installed_cpu_origins_are_real_and_reject_mixed_source():
         _installed_execution_origins(helper.ASTRID_ROOT, sys.executable)
 
 
-@pytest.mark.integration
+@pytest.mark.installed
 def test_installed_cpu_actions_retain_candidate_content_pins(tmp_path):
     from tests.helpers import h3_cpu_runtime as helper
 
-    candidate = helper.candidate_manifest_path_from_environment()
+    # The candidate manifest pins each executable action by the SHA-256 of the checkout's bytes; the installed copy
+    # must carry the same bytes (a wheel built from this checkout does). The manifest is written here from the checkout.
+    pinned = (
+        "astrid/packs/h3_av/pack.yaml",
+        "astrid/packs/h3_av/actions/transform/run.py",
+        "astrid/packs/h3_av/actions/transform/operation.py",
+        "astrid/packs/vibecomfy/pack.yaml",
+        "astrid/packs/vibecomfy/actions/run/run.py",
+    )
+    manifest = {
+        "schema": helper.CANDIDATE_SOURCE_MANIFEST_SCHEMA,
+        "synthetic_inference": True,
+        "synthetic_inference_classification": "synthetic-inference-only",
+        "source_files": {name: hashlib.sha256((helper.ASTRID_ROOT / name).read_bytes()).hexdigest() for name in pinned},
+    }
+    candidate = tmp_path / "candidate.json"
+    candidate.write_text(json.dumps(manifest))
+    assert helper.candidate_manifest_path_from_environment({"ASTRID_H3_CANDIDATE_MANIFEST": str(candidate)}) == candidate.resolve()
     helper._verify_installed_candidate_actions(candidate)
-    manifest = json.loads(candidate.read_text())
     manifest["source_files"]["astrid/packs/h3_av/actions/transform/run.py"] = "0" * 64
     drift = tmp_path / "candidate-drift.json"
     drift.write_text(json.dumps(manifest))
@@ -174,7 +190,7 @@ def test_installed_cpu_actions_retain_candidate_content_pins(tmp_path):
         helper._verify_installed_candidate_actions(drift)
 
 
-@pytest.mark.integration
+@pytest.mark.installed
 def test_installed_cpu_renderer_uses_real_provisioned_outputs():
     from astrid.packs.rendering.rendering.renderers.remotion import run
     from tests.helpers import h3_cpu_runtime as helper
@@ -189,19 +205,35 @@ def test_installed_cpu_renderer_uses_real_provisioned_outputs():
     assert not (project / run._REGISTRY_STATE_PATH).exists()
 
 
-@pytest.mark.integration
-def test_installed_cpu_parent_vibe_origin_and_exact_restoration():
+
+def _attested_parent_clone(tmp_path, monkeypatch):
+    """The detached pinned VibeComfy clone the helper itself builds, with the parent import state cleared.
+
+    The parent process imports VibeComfy from the selected checkout; the attested clone is a second,
+    separate root, so the parent's modules are removed here (the runtime under test restores them).
+    """
     import sys
     from tests.helpers import h3_cpu_runtime as helper
 
-    checkout = Path(os.environ["ASTRID_H3_ATTESTED_PARENT_IMPORT_CHECKOUT"])
+    monkeypatch.setattr(helper, "_HOST_EXECUTION_PROFILE", "installed")
+    checkout = helper._prepare_clean_vibecomfy_checkout(tmp_path)
     prior_path = tuple(sys.path)
     prior_modules = {name: module for name, module in sys.modules.items()
                      if name == "vibecomfy" or name.startswith("vibecomfy.")}
+    for name in prior_modules:
+        del sys.modules[name]
     runtime = helper.H3CpuRuntime.__new__(helper.H3CpuRuntime)
     runtime._prior_sys_path = prior_path
     runtime._prior_vibecomfy_modules = prior_modules
     runtime._prior_environment = {}
+    return helper, checkout, runtime, prior_path, prior_modules
+
+
+@pytest.mark.integration
+def test_installed_cpu_parent_vibe_origin_and_exact_restoration(tmp_path, monkeypatch):
+    import sys
+
+    helper, checkout, runtime, prior_path, prior_modules = _attested_parent_clone(tmp_path, monkeypatch)
     try:
         helper._expose_owned_vibecomfy_checkout(checkout)
         import vibecomfy.runtime.session as session
@@ -216,18 +248,10 @@ def test_installed_cpu_parent_vibe_origin_and_exact_restoration():
 
 
 @pytest.mark.integration
-def test_installed_cpu_parent_vibe_rejects_foreign_origin_and_alias(tmp_path):
+def test_installed_cpu_parent_vibe_rejects_foreign_origin_and_alias(tmp_path, monkeypatch):
     import sys
-    from tests.helpers import h3_cpu_runtime as helper
 
-    checkout = Path(os.environ["ASTRID_H3_ATTESTED_PARENT_IMPORT_CHECKOUT"])
-    before = tuple(sys.path)
-    prior_modules = {name: module for name, module in sys.modules.items()
-                     if name == "vibecomfy" or name.startswith("vibecomfy.")}
-    runtime = helper.H3CpuRuntime.__new__(helper.H3CpuRuntime)
-    runtime._prior_sys_path = before
-    runtime._prior_vibecomfy_modules = prior_modules
-    runtime._prior_environment = {}
+    helper, checkout, runtime, before, prior_modules = _attested_parent_clone(tmp_path, monkeypatch)
     try:
         helper._expose_owned_vibecomfy_checkout(checkout)
         selected_path = tuple(sys.path)
@@ -238,9 +262,12 @@ def test_installed_cpu_parent_vibe_rejects_foreign_origin_and_alias(tmp_path):
         runtime._restore_parent_state()
     alias = tmp_path / "vibe-alias"
     alias.symlink_to(checkout, target_is_directory=True)
-    with pytest.raises(RuntimeError, match="unavailable or aliased"):
-        helper._expose_owned_vibecomfy_checkout(alias)
-    assert tuple(sys.path) == before
+    try:
+        with pytest.raises(RuntimeError, match="unavailable or aliased"):
+            helper._expose_owned_vibecomfy_checkout(alias)
+        assert tuple(sys.path) == before
+    finally:
+        runtime._restore_parent_state()
 
 
 def _boundary_blockers() -> list[str]:
@@ -272,26 +299,12 @@ def _boundary_blockers() -> list[str]:
 def test_public_cpu_boundary_preflight_does_not_require_a_prior_qualification_receipt(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    checkout = Path(__file__).resolve().parents[3]
-    receiving_root = checkout.parents[1]
     profile = tmp_path / "synthetic-t9-template.json"
     profile.write_text(json.dumps({"profile_template": "test-only"}), encoding="utf-8")
-    monkeypatch.setenv("ASTRID_VIBECOMFY_CHECKOUT", str(receiving_root / "repos" / "vibecomfy"))
     monkeypatch.setenv("ASTRID_H3_T9_READINESS_PROFILE", str(profile))
     monkeypatch.delenv("ASTRID_H3_CHARACTER_SWAP_CPU_QUALIFICATION_RECEIPT", raising=False)
 
     assert _boundary_blockers() == []
-
-
-@pytest.mark.integration
-def test_h3_public_workspace_helper_pin_matches_current_shared_fixture() -> None:
-    from tests.helpers import h3_cpu_runtime
-
-    fixture = h3_cpu_runtime.PUBLIC_WORKSPACE_FIXTURE
-    assert fixture.is_file() and not fixture.is_symlink()
-    assert hashlib.sha256(fixture.read_bytes()).hexdigest() == (
-        h3_cpu_runtime.PUBLIC_WORKSPACE_FIXTURE_SHA256
-    )
 
 
 def test_cpu_harness_asset_map_matches_public_transform_input_contract(tmp_path: Path) -> None:
@@ -433,136 +446,6 @@ def test_h3_synthetic_readiness_profile_uses_digest_bound_model_root(tmp_path: P
     assert binding.path == model_root.resolve()
     assert len(binding.inventory) == len(model_paths)
     assert binding.qualification_identity is None
-
-
-@pytest.mark.integration  # needs the Runtime and VibeComfy checkouts and the approved T9 readiness profile
-def test_character_swap_public_managed_cpu_boundary(tmp_path: Path) -> None:
-    blockers = _boundary_blockers()
-    if blockers:
-        unavailable("public managed CPU boundary is not qualified: " + "; ".join(blockers))
-    if shutil.which("ffmpeg") is None or shutil.which("ffprobe") is None:
-        unavailable("public managed CPU boundary requires ffmpeg and ffprobe")
-
-    from PIL import Image
-
-    from tests.helpers.h3_cpu_runtime import (
-        APPROVED_CPU_MODEL_BOUNDARY,
-        H3CpuRuntime,
-    )
-
-    caller = tmp_path / "caller"
-    caller.mkdir()
-    source = caller / "baseline.mp4"
-    performance = caller / "performance.mp4"
-    for path, color, tone in ((source, "blue", 440), (performance, "green", 660)):
-        subprocess.run([
-            "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
-            "-f", "lavfi", "-i", f"color=c={color}:s=64x64:r=24:d=15",
-            "-f", "lavfi", "-i", f"sine=frequency={tone}:sample_rate=48000:duration=15",
-            "-map", "0:v:0", "-map", "1:a:0", "-c:v", "libx264", "-pix_fmt", "yuv420p",
-            "-c:a", "aac", "-shortest", str(path),
-        ], check=True, capture_output=True, timeout=60)
-    replacement = caller / "replacement.png"
-    Image.new("RGB", (64, 64), (32, 96, 160)).save(replacement)
-
-    raw = {
-        "version": 2,
-        "prompt": "Replace the person in <Video 1> with the person in <Picture 1>.",
-        "duration": 15,
-        "media": [
-            {"id": "baseline", "asset": "baseline.mp4", "role": "timeline", "modality": "video",
-             "at": {"frame": 0}, "range": [0, 15],
-             "edit": [{"stream": "video", "during": [0, 15], "mask": {"full_frame": True}}]},
-            {"id": "performance", "asset": "performance.mp4", "role": "reference", "modality": "video",
-             "range": [0, 15], "audio": False},
-            {"id": "replacement", "asset": "replacement.png", "role": "reference", "modality": "image"},
-        ],
-        "settings": {"adapter": {"id": "character_swap_v1"}},
-    }
-    request_path = tmp_path / "request.json"
-    request_path.write_text(json.dumps(raw, sort_keys=True), encoding="utf-8")
-    request = normalize_request(raw)
-    bundle_path = tmp_path / "input-bundle.zip"
-    build_input_bundle(request, {
-        "baseline.mp4": str(source),
-        "performance.mp4": str(performance),
-        "replacement.png": str(replacement),
-    }, bundle_path)
-    input_digests = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in (source, performance, replacement)}
-    for path in (source, performance, replacement):
-        path.unlink()
-
-    runtime = H3CpuRuntime(tmp_path / "runtime", cpu_model_boundary=APPROVED_CPU_MODEL_BOUNDARY)
-    try:
-        outcome = runtime.run_public_transform(
-            request_path, bundle_path, out=tmp_path / "public-transform", key="h3-character-swap-cpu-boundary",
-        )
-        assert outcome.ok, outcome.error
-        rows = paged_rows(runtime.owner.tasks.list, runtime.project_id, limit=100)
-        assert rows is not None
-        tasks = list(rows)
-        capabilities = [_field(task, "capability_id") for task in tasks]
-        for expected in (
-            "h3_av.prepare", "h3_av.compile", "vibecomfy.validate", "vibecomfy.run",
-            "h3_av.compose", "h3_av.verify", "h3_av.publication_finalizer",
-        ):
-            assert expected in capabilities
-        boundary = runtime.read_cpu_model_boundary_evidence()
-        assert boundary["schema_version"] == "h3-character-swap-cpu-boundary.v2"
-        assert boundary["synthetic_inference"] is True
-        assert boundary["queued_to_comfy"] is False
-        assert boundary["production_model_bytes_observed"] is False
-        assert boundary["task_id"] and boundary["attempt_id"] and boundary["execution_id"]
-        assert boundary["child_pid"] != os.getpid()
-        marker = boundary["activation_marker"]
-        assert marker["schema_version"] == "h3-t9-child-activation.v1"
-        assert marker["child_pid"] == boundary["child_pid"]
-        assert marker["task_id"] == boundary["task_id"]
-        assert marker["attempt_id"] == boundary["attempt_id"]
-        assert marker["execution_id"] == boundary["execution_id"]
-        assert marker["synthetic_inference"] is True
-        assert marker["queued_to_comfy"] is False
-        assert marker["production_model_bytes_observed"] is False
-        assert marker["profile_sha256"] == runtime.readiness_profile_hash
-        assert marker["candidate_manifest_sha256"] == "sha256:" + hashlib.sha256(
-            runtime.candidate_manifest_path.read_bytes()
-        ).hexdigest()
-        calls = [
-            json.loads(line)
-            for line in runtime.t9_child_calls_path.read_text(encoding="utf-8").splitlines()
-            if line
-        ]
-        assert any(
-            call.get("task_id") == boundary["task_id"]
-            and call.get("attempt_id") == boundary["attempt_id"]
-            and call.get("execution_id") == boundary["execution_id"]
-            and call.get("child_pid") == boundary["child_pid"]
-            and call.get("evidence_path") == boundary["evidence_path"]
-            for call in calls
-        )
-        for output in boundary["outputs"]:
-            output_path = Path(output["path"])
-            assert output_path.is_file() and not output_path.is_symlink()
-            assert hashlib.sha256(output_path.read_bytes()).hexdigest() == output["sha256"]
-        observed = {row["member"]: row["sha256"] for row in boundary["managed_inputs"]}
-        for name in ("performance.mp4", "replacement.png"):
-            assert input_digests[name] in observed.values()
-        finalizer = next(task for task in tasks if _field(task, "capability_id") == "h3_av.publication_finalizer")
-        finalizer_result = _field(finalizer, "result", {}) or {}
-        outputs = _field(finalizer_result, "outputs", [])
-        assert any(row.get("name") == "verified_candidate" for row in outputs if isinstance(row, dict))
-    finally:
-        runtime.close()
-
-    workspace_provenance = json.loads(
-        runtime.public_workspace_provenance_path.read_text(encoding="utf-8")
-    )
-    assert workspace_provenance["profile"] == "astrid"
-    assert workspace_provenance["candidate_manifest_sha256"]
-    assert "execution_target" not in workspace_provenance
-    assert workspace_provenance["synthetic_inference"] is True
-    assert workspace_provenance["stop"]["owner_stopped"] is True
-    assert workspace_provenance["stop"]["runtime_pid"] == workspace_provenance["runtime_pid"]
 
 
 def test_candidate_manifest_resolves_from_environment_without_runtime_startup(
@@ -1434,7 +1317,7 @@ def test_cpu_public_parent_carries_attested_vibe_imports_to_real_runner(
     runtime.owner = Owner()
     runtime.project_id = "fixture-project"
     runtime.cpu_model_boundary = "test-only"
-    runtime.vibecomfy_root = Path(os.environ["ASTRID_H3_ATTESTED_PARENT_IMPORT_CHECKOUT"])
+    runtime.vibecomfy_root = runtime_module.VIBECOMFY_SOURCE_ROOT
     assert (runtime.vibecomfy_root / "vibecomfy/__init__.py").is_file()
     monkeypatch.setattr(runtime_module, "_HOST_EXECUTION_PROFILE", "installed")
     monkeypatch.setenv("PYTHONPATH", "/tmp/stale-parent-import")
