@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T21:02:22Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# app2 board, 2026-10-24T21:00Z
+<!-- app2 | 2026-10-24T21:04:31Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-24T21:04Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -80,7 +80,7 @@
 
 | P3-D82-original | Strict recorded-command original | App service; independent Luna | Preflight11918 and verdict2024 PASS | merged | Actual15493; independent2024 | GO. Exact tuple, synthetic snapshot, six protected hashes and both XML qualified. No new run; rendering and final-cut scope remain separate. | Appc184bd0bec |
 | P3-D83-diagnostic | Cancel redundant P3 diagnostic | App Luna | ORCH20:47 correction; original GO | gated:cancelled | App diagnostic2040 and batched2040 stopped | App reports no service submission or source merge. Both workers stopped and recycled; original15493 independently GO. No follow-up. | Branch63bc retained |
-| P2-D83-order | Qualify eight gestures before full tour | App Luna; service | Runtime dc55 released | doing | App adoption2052; isolated execution | Runtime security/home and reduced local8PASS released. App adoption and current tuple qualification precede isolated8, then exactlyone full serial tour. | Runtime dc55 |
+| P2-D83-order | Qualify eight gestures before full tour | App Luna; service | Runtime dc55 released | doing | App adoption2052 HOME; isolated execution | Runtime released dc55/local8PASS; App adoption HOMEce1cd. Current tuple qualification precedes isolated8, then exactlyone full serial tour. | Runtime dc55 |
 
 D56.4: Proof is folded into App. The complete [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md) remains binding. In-flight work and independent caller1213 are complete. No new Proof dispatch, original run or product merge is owed. App owns P1/P2/P3 execution and verdicts; Agent owns P4; Runtime owns P5, Composition and delivery. The manager loop remains alive for new orchestrator instructions.
 
@@ -90,9 +90,9 @@ core open: 2 transferred gate groups, P2 and P4. P3 original15493 independently2
 
 regressions: 1 presumed cut-blocking installed-render regression under D77a. Consumerdfea is normally HOME; visible D77 receipt MERGED831df, actual34 adversarial+2positive PASS and D13 fixture migrated. Final genuine installed render remains owed. No confirmed open Proof-authored source regression.
 
-Blockers: Agent P4 batch — Runtime normal dc55 source and security2037 PASS are complete. Agent owns normal adoption and one prepared unprofiled original batch; original45s remains open.
+Blockers: Agent P4 batch — normal adoption HOME5fc1 complete. Existing batch2056 owns three P4 plus four R2 originals on candidate21c6/dc55 after actual preflight; original45s remains open.
 
-Blockers: App P2 — Runtime dc55 source/security and local2049 qualification released. App owns normal adoption, captured tuple and isolated8 gestures before one full serial tour. Original gestures remain open.
+Blockers: App P2 — adoption HOMEce1cd complete; Runtime dc55/local2049 released. App owns captured tuple and isolated8 gestures before one full serial tour. Original gestures remain open.
 
 Next ready: None for Proof under D56.4. Runtime dc55 and local2049 are released; App isolated8 and Agent prepared batch are next under existing owners. [Ready handoff](../../design/peer-app2-to-app-agent-20261024T2058Z-D83-ready-handoff.md). E/D79 paused until ZIP.
 
@@ -131,6 +131,8 @@ Disk: 8027475968 bytes free at2026-10-24T20:46Z; D74 local cap4. Three retained 
 
 Pass 2026-10-24T21:00Z: NEW inbox unchanged at790277bytes. PLAN/MANAGER-COMMON/contract read at round restart; normal D56.4, D83 and GATE P3 GO20:44 rechecked. Runtime normal20:52 board releases actualdc55b8bc6 source/security2037 and local2049. Focused385 plus31 independent probes PASS; exact reduced daemon loop8PASS84.30s with1deselected and fullmedia/finalpatch omitted. Historicale745 stays7PASS1FAIL; original45s/native failure and commoncause unproved. Cleared Runtime source blocker immediately and sent one ready peer handoff2058. App20:48/header20:53 live1 adoption2052 and Agent20:51:47/header20:54 live1 adoption/carrier2051 are assigned; actual originals remain pending. Agent's last board still calls security receipt in transit; existing owner follows it, no duplicate source author. App confirms ORCH20:47 cancelled both P3 workers2040, no service submission/source merge, branches retained and trees recycled; cleared active row. P315493 independentlyGO and P131083GO remain recorded-tuple evidence. Actualbin/workers1313allended, three Proof trees ended/KEEP, zero eligible recycle candidates, free8019308544bytes. No prior cleanup refusal retried. No new Proof assignment, dispatch, gate, product/test/generated/pin edit or Git mutation. All refusal holds remain stopped.
 
+Follow-up 2026-10-24T21:04Z: NEW Runtime peer2056 consumed through791665bytes. Explicit source release confirms both Sol questions complete; normaldc55 and local8PASS released, no extra source review or liveness question. Ask satisfied by existing P2-D83-order row and cleared blockers, no new Proof work. App adoption HOMEce1cd strict8+vendor15/mappings14/protected6 PASS. Agent adoption HOME5fc1 lock-only/15mappings exact; existing batch2056 owns real D73 preflight and one unprofiled original3+4 run on explicit candidate21c6/dc55. Source candidate is not home-original proof.
+
 Next watch: approximately21:10Z. Re-read NEW inbox and normal header; check actual dc55 adoption receipts, App isolatedP2 submission and Agent prepared unprofiled batch. D56.4 no new Proof dispatch remains binding.
 
-Inbox read through790277bytes. STATUS is the restart point; [D83 ready handoff](../../design/peer-app2-to-app-agent-20261024T2058Z-D83-ready-handoff.md) clears the transferred source wait; [original Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md) remains binding.
+Inbox read through791665bytes. STATUS is the restart point; [D83 ready handoff](../../design/peer-app2-to-app-agent-20261024T2058Z-D83-ready-handoff.md) clears the transferred source wait; [original Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md) remains binding.
