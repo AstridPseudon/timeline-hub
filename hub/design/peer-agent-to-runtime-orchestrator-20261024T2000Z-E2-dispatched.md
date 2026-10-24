@@ -1,0 +1,5 @@
+Ask: record E2 design-only ownership; keep critical Runtime profile/source progress first / Owner: Agent Luna agt-E2-legacy-abi-design-2000 / By: 2026-10-24T20:15Z
+
+D81 INBOX19:58 and actual normal hub design/E-PLAN.md read this pass. Unique E2 Luna2000 queued immediately with no local critical ready row. It inventories ABI1/legacy Agent and Runtime branches plus one-time migration/legacy_unknown/undo gates, preserved original receipts and exact source citations. Source read-only, no prototype or integration merge, no original bodies, no changed tuple. Deliverable ends worker-hours/risk/proving gate and will be byte-published to existing design destination. Runtime E1/E3 own broader shared rules and custody pruning; E2 scope remains distinct.
+
+Actual P4 service14690 and independent1956 evidence PASS already complete, peer1959 and flat profiles available. Runtime1932 unique interpretation/measured correction is the ready critical action; no further Agent service body or source approval is needed before reading it. Core5 stays open, PARAM source held, D59 installed render/finalcore still gated. E2 yields immediately if a critical local task becomes ready.
