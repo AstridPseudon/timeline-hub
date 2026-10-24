@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T17:26:55Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 21 | status age 4m -->
+<!-- agent | 2026-10-24T17:29:52Z | dispatcher heartbeat 7s | live 5 (sol 1, luna 4, other 0) | busy30 26 | status age 0m -->
 # agent board, 2026-10-24T17:19:55Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -121,22 +121,22 @@
 | P4 current service | Qualify repaired single-edit original | Luna / Service | Current source | merged | Launcher1633; actual30725 FAIL1 | Original failed later no-leak predicate; D71 fixes product, original unchanged. [JUnit](../../design/handoff-agt-P4-single-30725-p4-current-single.xml) | Agent ef036 / Runtime bc227 |
 | D69 current launch | Qualify restored47 and two predicates | Luna / HARD Sol | Actual service preflight | doing | Sol1642; whole path1634; service17475 | Exact49 collected.17475 also zero-body: direct HEAD guard rejects synthetic snapshot. Sol1642 owns exact parent predicate and real stub preflight. | Agent ef036 / Runtime bc227 |
 
-| G2 P4 read boundary | Keep authenticated cache private | HARD Sol / Luna | D71 answered | doing | Sol1711 resumes20f7 | Draft5+196PASS, restructure caller exposed; authorized publish.py/private caller completion1711, original P4 unchanged. [Decision](../../managers/agent/INBOX.md) | Base3cc55 |
+| G2 P4 read boundary | Keep authenticated cache private | HARD Sol / Luna | Independent security review | review | Author1711; review1726 | Candidatef39d author7+60+196PASS; current integration merged forward for normal2c1 provenance. Original P4 unchanged. [Decision](../../managers/agent/INBOX.md) | Base3cc55 |
 
 | D69 actual49 checkpoint | Qualify restored47 and two assertions | Service | Product failure follow-through | review | Actual service23762 | All49 ran:39 FAIL10PASS17.11s. Exact47 subset37FAIL10PASS; two audit predicates FAIL. [JUnit](../../design/handoff-agt-F-D69-23762-d69-restored47.xml) | Agent ef036 / Runtime bc227 |
-| D69 CLI failures | Map retired CLI behavior coverage | Luna | Independent family review | review | Author1707; review1724 | Author114+1PASS, exact11 retired members mapped to current commit capabilities;3 PASS controls retained. Review active. | Source8a2f |
-| D69 SDK failures | Map retired SDK behavior coverage | Luna | D72 | doing | SDK1707 | Ten removed-surface failures; current replacement capability must be named and tested. Duplicate is separate. | Source8a2f |
-| D69 core failures | Migrate live setup and callers | Luna | D72 | doing | Element return1715; approval review1713; create ready | Corrected element44PASS1FAIL, product Sol1717. Approval1713FAIL missing authenticated binding, source/test return1718. Create1707 active. | Source8a2f |
+| D69 CLI failures | Qualify current CLI integration bridge | Luna | D71 then actual P4 single | blocked:agent | Author1707; review1724 FAIL | Mechanical11mapping PASS; unit controls115PASS. Reviewer needs real mounted CLI/Runtime path, existing original P4 single covers it when GREEN. | Source8a2f |
+| D69 SDK failures | Qualify retired SDK replacement coverage | Luna | Independent family review | review | Author1707; review1730 | Ten retired removed;9mapped PASS1 timing-bindingFAIL,4negativesPASS. Reviewer challenges exact restart coverage and old-cause claim. | Source8a2f |
+| D69 core failures | Migrate live setup and callers | Luna | D72 | doing | Element return1715; approval review1713; create ready | Element44PASS1FAIL; Sol1726 explicit guarded orphan cleanup preserves native semantics. Approval sourcec3cbc review1726; create16PASS review1730. | Source8a2f |
 | D69 rendering failures | Migrate window, schema and host cases | Luna / Runtime | D72 authors dispatched | doing | Runtime three1717 families | Runtime ACK1717: frame-window2, installer1, generic-host1 dispatched with independent reviews; exact disjoint ownership. | Source8a2f |
 | D69 CLI terminal hints | Restore two original terminal lines | Luna | Actual home proof complete | merged | Author1646; review1653; home1703 | Actual8a2f/5c1 PASS2 in3.50s; unchanged tests, blobs and15 mappings. [Review](../../workers/agt-F-D69-cli-hint-review-1653/report.md) | 81a2615c54 |
 
 | R2 repeated source copy | Preserve authenticated root replay | HARD Sol / Luna | Actual home proof complete | merged | Author1655; review1705; home1715 | Actual200819/2c1 PASS10 in22.09s, original2 and8 focused. Exact reviewed source, protected ASTs and15 mappings unchanged. [Author](../../workers/agt-R2-sourcecopy-root-sol-1655/report.md) | 14c8ecc2b4 |
 
-| G4 D69 duplicate | Resolve original duplicate behavior | Luna | D72 ready at cap | ready | Next free Luna slot | Prior source review found invalid fixture and strict admission. D72 requests product fix; no guard bypass allowed. | Source unchanged |
+| G4 D69 duplicate | Resolve original duplicate behavior | Luna | D72 | doing | Author1707 | Prior source review found invalid fixture and strict admission. D72 requests product fix; no guard bypass allowed. | Source unchanged |
 
 | U4a policy provenance | Adopt normal Runtime5c1 identity | Luna | Author checks PASS | merged | Adoption1657 | Normal-tool lock only;15 mappings unchanged,42 targeted PASS, vendor/artifact checks PASS. [Report](../../workers/agt-U4a-policy-home-rebind-1657/report.md) | Home8a2f5bb4f8 |
 
-| D72 approval and create | Preserve live promotion and empty creation | Luna | D72 | doing | Approval1718; create1707 | Approval return1718 restores actual production validation; create-empty2 author1707 active. Setup/caller only, every assertion conserved. | Source8a2f |
+| D72 approval and create | Preserve live promotion and empty creation | Luna | D72 | doing | Approval review1726; create review1730 | Approval sourcec3cbc adds real binding,10+1PASS; security1726. Create author16PASS, protected/integration review1730 active. Setup/caller only, every assertion conserved. | Source8a2f |
 
 | U4a popup provenance | Bind actual Runtime successor identity | Luna | Normal merge complete | merged | Return1715 | Home3e3a adopts2c1 via normal tool; exact reviewed popupb318 product and15 mappings unchanged. | Source200819 |
 
@@ -154,6 +154,6 @@ Disk: 8.96GB available; D74 cap6 above8.5GB. No new heavy below8.5; no dispatch 
 Blockers: Agent — D72 source repairs elementSol1717 and approvalLuna1718; retired CLI/SDK and create2 active. Duplicate next slot. Rendering4 has Runtime three1717 owners. All original behavioral assertions stay strict.
 
 Blockers: Runtime — P4 ten-note timeout45s, unique HARD Sol1652 on immutable-schema resolver strategy after Luna profile. All validation and D47 no mutable-result cache retained.
-Next ready: consume six active returns; fill first free slot with duplicate, then independent reviews on exact family results. Finish D73 launcher before unchanged P4; reviewed D71 and Runtime cost source required. Final-core remains owed after D72 source/test qualification.
-live 6 / cap 6; ready-undispatched 1. D71Sol1711, elementSol1717; Luna1718 approval,1724 CLI review,1707 retired SDK and1707 create2. Duplicate ready at cap; render3 assigned Runtime. D73 final pinned-positive waits reviewed source.
+Next ready: consume six active returns, merge exact source/family PASS. D71 security then exact tuple pins/positive preflight and unchanged P4 single. CLI uses that existing live integration bridge. SDK restart failure remains visible. Finish D73 launcher before unchanged P4; reviewed D71 and Runtime cost source required. Final-core remains owed after D72 source/test qualification.
+live 6 / cap 6; ready-undispatched 0. Luna1726 D71 review,1726 approval review,1730 SDK review,1730 create review,1707 duplicate; HARD Sol1726 recorded element cleanup. CLI final bridge waits P4; render3 owned Runtime.
 Inbox consumed through D74 cap ruling17:12:35, full D72/D73. KEEP/pin refusal consumed and honored. D71/D72 decision waits cleared; pinned-submit P4 harness1711 active. Runtime board17:14 and App current rechecked; normal Runtime5c1 provenance merged8a2f. D71 decision wait cleared immediately. Pass 2026-10-24T17:02:13Z.
