@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T05:16:49Z | dispatcher heartbeat 0s | live 2 (sol 0, luna 2, other 0) | busy30 22 | status age 1m -->
-# agent board, 2026-10-24T05:15:49Z
+<!-- agent | 2026-10-24T05:19:00Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 21 | status age 1m -->
+# agent board, 2026-10-24T05:17:27Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -27,7 +27,7 @@
 | F-render-startup | Avoid unused transition-catalog scans | Luna | Source cause 0045 | merged | agt-F-transition-fixture-integrated-0126 | Actual 940b: 116 controls passed. Exact reviewed source retained both catalog authority guards. | 2b2c1a02f |
 | F-external-roots | Consume authenticated external source bytes | Sol / Luna | Original installed positive | merged | Security0330; integrated32254 | Home4745 integrated32 passed in137s. Source custody is qualified; original installed external-pack positive still needs a genuine candidate environment. | 4745f956a3 |
 | F-env-86 | Original installed-child cohort | Luna | External pack fix | blocked:agent | Services 11789 and 19627 | 69 cases passed, then 16 supported source invocations passed. One external-pack positive remains open. | c36 scope |
-| F-render-21 | Qualify original cold support timeout | Luna | Genuine current managed child ready | doing | agt-F-render-timeout-qualify-0509 | Source2802 qualified; old45s cause remains unknown. One original support-only node assigned on new child3b5c with unchanged timeout; no render or full21 duplicate. | Host/render9cd equalsba8f |
+| F-render-21 | Diagnose original support timeout | Luna | Current original failed unchanged | doing | Qualified0509 FAIL; path0522 | Current child3b5c: one support original failed45.65s in second CommandTransport probe. Independent whole-path comparison active; no render or duplicate body. | Current2007; installedba8f |
 | F-env-misc | D13, installers and bootstrap | Luna | Exact installed inputs | merged | agt-F-D13-wheel-input-0039 | Three original environment cases plus D13 passed. Exact c36 wheel matched installed payloads; wheel itself was temporary. | harness only |
 | F-CLI | CLI census, generation and motion fixture | Luna | G5 | merged | agt-F-CLI-integrated-0012 | Eight integrated cases and 32 subtests passed; reviewed generation and fixture changes only. | 43bbb / ff5dd |
 | F-observer | Nested pytest plugin isolation | Luna | G5 full | merged | agt-F-observer-harness-2355 | 25 original guard cases passed. Test bodies remain unchanged. | c8459e9f8 |
@@ -43,7 +43,7 @@
 | F-authoring-ABA | Complete original undo and ABA | Sol / Luna | New ambiguous identity boundary | blocked:viewing | Original11466 FAIL; path0507 active | Original1 failed29.28s at undo before lostACK: ambiguous item path. Full finite evidence shared. Viewing owns same source and verdict; independent whole-path review dispatched. | Home9cd; Runtime8ea |
 | F-D32-render-wire | Six original SDK wire results | Luna / service | Existing installed child | merged | Service 27934 | Six original cases passed in 41.48s; body hashes, 19 source identities, import origins and read-only profile retained. | 521c source |
 | F-helper-sequential | Repair sequential replay map | Sol / Luna | Integrated proof passed | merged | Source184dc; review0224; integrated0232 | Actual8a8d:12focused, Ruff2145 and mypy1909 passed; vendor/artifact passed. Original True and False passed on exact reviewed source. | 184dc20a70 |
-| F-D32-h3-import | Seven guards on current installed child | Luna | Independent result review | review | Qualified0508 PASS7; review0517 | Seven originals passed once on child3b5c; installedba8f and current9cd relevant bytes match. No overlay or count credit yet. | Source9cd; installedba8f |
+| F-D32-h3-import | Seven guards on current installed child | Luna | Independent result review passed | merged | Qualified0508; review0517 PASS | Seven originals passed once on child3b5c; installedba8f and current9cd relevant bytes match. Exact scope retained for next count delta. | Source9cd; installedba8f |
 | F-mypy-shrink | Lock exact static improvements | Luna | Integrated strict gate complete | merged | Independent0447; integrated0500 PASS | Actual9cd strict make mypy passed1902. Reviewed baseline removed seven old diagnostics, zero new; source and tool configuration preserved. | 251c6762b0 |
 | F-ruff-baseline | Tighten static baselines | Luna | Exact reviewed tree | merged | Review0218; D38 remainder0228 | Actual10d2 tree exactly reviewedc836: Ruff2145 and mypy1909 makegates PASS. Remainder mypy timeout disclosed, no repeat. | c8360b3732 |
 | A4 IMAGE | Complete accepted image witness | Luna | Running unchanged App producer | blocked:app | Source9cd qualified; reservation ask0505 | New forwarding source passed independent and integrated controls; image path0454 confirms prior causal seam. Request actual producer readiness before one fresh fixture. | Home9cd; Runtime8ea |
@@ -68,7 +68,7 @@ Blockers: Agent — ABA11466 undo ambiguity, D40 installed positive, complete IM
 Blockers: Viewing — consume ABA11466 whole-path0507 and own next bounded source or capture step. Three track-label mappings remain separate.
 Blockers: App — reserve an actual fresh unchanged image producer before Agent creates its next fixture. Old0441 is closed; successor forwarding source is now qualified.
 Blockers: Farm — one D43 checkpoint is queued on its existing full-farm row. No Agent duplicate full run.
-Runtime: Original headless run0501 returned12 passed and one allocation-order mismatch; Runtime0505 independently classifies source versus oracle. No duplicate Agent allocation author. Occupancy15 originals are separately closed.
+Runtime: Independent0505 classifies the headless allocation-order mismatch as a fixture oracle error. Runtime0509 owns one exact expected-list correction and the original13-case qualification; no Agent product patch.
 Count: Official142 closed and125 of267 open. Candidate0509 adds exact30 retained callers for172 closed/95 open; independent0519 owns adoption. Source-copy two originals and current H3 evidence retain exact scope pending incremental mapping.
 D32: All267 remain tagged ours. Exact upstream comparison rejected25 proposed credits; no known-gap or full-suite PASS claim.
 D46: U2c is closed, folded into the freeze U-merge. No live U2c worker; a181136220 and diagnostic WIP remain unmerged. Linux relay and RunPod custody are owner-deferred; guards remain fail-closed.
