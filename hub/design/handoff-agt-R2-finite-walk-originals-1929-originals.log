@@ -1,0 +1,511 @@
+FF..                                                                     [100%]
+=================================== FAILURES ===================================
+__ test_public_helper_restart_exact_retry_later_head_inverse_redo[False-None] __
+
+retained_pack = namespace(service=<runtime_protocol.service.RuntimeService object at 0x7feba263e990>, project='68e1742d24c44208bf5b085...artifact_root=PosixPath('/tmp/w-eecdcb137e/pytest-of-root/pytest-0/test_public_helper_restart_exa0/build-cache/realm'))
+helper_client = namespace(connect=<function helper_client.<locals>.connect at 0x7feba28d5300>, calls=[(b'{"api_version":1,"project_id"...71a363')], lost_ack=[False], before_submit=[None], outbox=<function helper_client.<locals>.<lambda> at 0x7feba26b8720>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7feba240d350>
+same_revision = False, key = None
+
+    @pytest.mark.parametrize('key', [None, 'public-element'])
+    @pytest.mark.parametrize('same_revision', [False, True])
+    def test_public_helper_restart_exact_retry_later_head_inverse_redo(
+            retained_pack, helper_client, monkeypatch, same_revision, key):
+        import json
+    
+        from runtime_protocol.errors import RuntimeErrorBase
+        from runtime_protocol.service import RuntimeService
+    
+        from astrid.sdk.timeline_elements import update_parent_element
+    
+        case, client = retained_pack, helper_client
+        original = copy.deepcopy(case.bundle()['source_mapping']['_runtime_document'])
+        before = copy.deepcopy(State(case.bundle()).entity(REF))
+        selected = case.selected
+        if not same_revision:
+            case.definition['schema']['properties']['seed']['maximum'] = 20
+            case.path.write_text(yaml.safe_dump(case.definition))
+            admission = packs.admit_project_pack('realm', case.project)
+            selected = {k: admission['elements'][0]['descriptor'][k] for k in ('id', 'kind', 'packId', 'revision')}
+        expected = case.head()['revision_id']
+        kwargs = dict(realm='realm', clip_id='effect', element=selected, expected_head=expected,
+                      duration=6, params={'seed': 8, 'opaque': {'keep': [None, False, {}]}},
+                      clear_params=['future'], idempotency_key=key)
+        client.lost_ack[0] = True
+        failed = update_parent_element(client.connect(), case.project, 'film', **kwargs)
+        assert not failed.ok
+        flight = json.loads(client.outbox().read_bytes())['flight']
+        assert flight['key'] == (key or failed.idempotency_key)
+        request = json.loads(flight['body'])
+        assert [call['op'] for call in request['commands']] == (
+            ['clip.set', 'clip.set-params'] if same_revision else
+            ['clip.set-element', 'clip.set', 'clip.set-params'])
+        if not same_revision:
+            assert request['commands'][0]['selections'] == [{
+                'key': 'element.targets', 'query_version': 1, 'owner': 'parent',
+                'members': [REF], 'order': [REF], 'boundaries': [REF], 'policy': 'guard-membership'}]
+        assert request['commands'][-1]['bindings']['scalar.target'] == REF
+        assert request['commands'][-1]['bindings']['params.element'] == REF
+        for changed in ({'duration': 7}, {'idempotency_key': 'another-key'},
+                        {'clip_id': 'missing'}, {'expected_head': 'another-head'}):
+            refused = update_parent_element(client.connect(), case.project, 'film', **{**kwargs, **changed})
+            assert not refused.ok and len(client.calls) == 1
+            assert json.loads(client.outbox().read_bytes())['flight'] == flight
+        accepted = case.submit(request, flight['key'])
+        pin = request['commands'][-1]['args']['schema_source']
+        document = accepted['data']['canonical_document']
+        row = State(commit.bundle_from_document(document)).entity(REF)
+        assert row == {**before, 'elementRef': selected, 'hold': 6,
+                       'params': {'seed': 8, 'opaque': {'keep': [None, False, {}]}}}
+        # Advance both the timeline and the declaration, then remove current selection.
+        case.submit(case.request([capture_track_set(case.bundle(), 'parent/track:picture',
+                                                   values={'label': 'Later'})]), 'later-head')
+        case.definition['schema']['properties']['seed']['maximum'] = 30
+        case.path.write_text(yaml.safe_dump(case.definition))
+        packs.admit_project_pack('realm', case.project)
+        current = case.service.get_document(case.project, pin['document_id'])
+        assert current['version'] > pin['version']
+        case.service.update_document(case.project, pin['document_id'], {
+            'expected_version': current['version'], 'content': {**current['content'], 'admissions': []}},
+            idempotency_key='remove-helper-selection')
+        shutil.rmtree(case.source_root)
+        shutil.rmtree(case.artifact_root)
+        case.service.close()
+        case.service = RuntimeService(case.root)
+        case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+        later = case.head()
+    
+        def forbidden(*a, **kw):
+            pytest.fail('helper recaptured original intent, read current admission, or called legacy writer')
+    
+        with monkeypatch.context() as retry:
+            retry.setattr('astrid.sdk.timeline_elements.execute', forbidden)
+            retry.setattr('astrid.sdk.timeline_elements._read_document', forbidden)
+            retry.setattr(commands, 'execute', forbidden)
+            result = update_parent_element(client.connect(), case.project, 'film', **kwargs)
+            assert result.ok, result.error
+            assert client.calls == [(flight['body'].encode(), flight['key'])] * 2
+            assert result.receipt.as_dict() == accepted['receipt']
+            assert result.data['new_head'] == accepted['data']['accepted_revision_id']
+            assert result.data['before'] == {'element': before['elementRef'], 'duration': 2,
+                                              'params': before['params']}
+            assert json.loads(client.outbox().read_bytes())['flight'] is None
+            assert json.loads(client.outbox().read_bytes())['pending'] == []
+            # Acknowledged invocation uses accepted Runtime history, never recapture.
+            kwargs['idempotency_key'] = flight['key']
+            again = update_parent_element(client.connect(), case.project, 'film', **kwargs)
+            assert again == result and len(client.calls) == 2
+            changed = update_parent_element(client.connect(), case.project, 'film', **{**kwargs, 'duration': 7})
+            assert not changed.ok and len(client.calls) == 2
+        assert case.head() == later
+        undone = case.submit(case.request([inverse(result.receipt.receipt_id)]), 'undo-helper')
+        restored = State(commit.bundle_from_document(undone['data']['canonical_document']))
+        assert restored.entity(REF) == before
+        assert restored.entity('parent/track:picture')['label'] == 'Later'
+        expected_pins = [case.pin] if pin == case.pin else [case.pin, pin]
+        assert undone['data']['canonical_document']['dependency_manifest']['documents'] == expected_pins
+        redone = case.submit(case.request([inverse(undone['receipt']['receipt_id'])]), 'redo-helper')
+        redone_state = State(commit.bundle_from_document(redone['data']['canonical_document']))
+        assert redone_state.entity(REF) == row
+        assert redone['data']['canonical_document']['shot_revisions'] == original['shot_revisions']
+        assert redone['data']['canonical_document']['internal_timeline_revisions'] == original['internal_timeline_revisions']
+        head = case.head()
+        with pytest.raises(RuntimeErrorBase) as error:
+>           case.submit(case.request([inverse(result.receipt.receipt_id)]), 'helper-aba')
+
+tests/core/test_timeline_element_publication_runtime.py:557: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/sdk/test_timeline_selected_schema_runtime.py:181: in submit
+    return case.service.commit_timeline(
+../../runtime/runtime_protocol/service.py:2444: in commit_timeline
+    return self._execute_timeline_commit(
+../../runtime/runtime_protocol/service.py:2499: in _execute_timeline_commit
+    outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../runtime/runtime_protocol/timeline_commit_execution.py:105: in execute
+    raise error
+../../runtime/runtime_protocol/timeline_commit_execution.py:87: in execute
+    outcome = detached(provider.commit(provider_context, port))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/commit.py:1260: in commit
+    _load(port, context, target["revision_id"])
+astrid/sdk/timeline/commit.py:433: in _load
+    document = port.revision_closure(revision)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../runtime/runtime_protocol/timeline_commit_port.py:285: in revision_closure
+    return self._read(read)
+           ^^^^^^^^^^^^^^^^
+../../runtime/runtime_protocol/timeline_commit_port.py:215: in _read
+    return copy.deepcopy(call())
+                         ^^^^^^
+../../runtime/runtime_protocol/timeline_commit_port.py:271: in read
+    entry = self._ancestor(cursor["publication_id"])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../runtime/runtime_protocol/timeline_commit_port.py:233: in _ancestor
+    entry = self.__store.history_entry(self.__project, self.__timeline, current["publication_id"])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../runtime/runtime_protocol/timeline_commit_store.py:460: in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+../../runtime/runtime_protocol/timeline_commit_store.py:254: in _verify_accepted
+    history = self._inverse_stage_history(edge["project_id"], edge["timeline_id"], records,
+../../runtime/runtime_protocol/timeline_commit_store.py:872: in _inverse_stage_history
+    return {publication: self.history_entry(project, timeline, publication, allow_archived=allow_archived)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../runtime/runtime_protocol/timeline_commit_store.py:460: in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+../../runtime/runtime_protocol/timeline_commit_store.py:254: in _verify_accepted
+    history = self._inverse_stage_history(edge["project_id"], edge["timeline_id"], records,
+../../runtime/runtime_protocol/timeline_commit_store.py:872: in _inverse_stage_history
+    return {publication: self.history_entry(project, timeline, publication, allow_archived=allow_archived)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../runtime/runtime_protocol/timeline_commit_store.py:460: in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+../../runtime/runtime_protocol/timeline_commit_store.py:261: in _verify_accepted
+    replay_request, prepared, sequential = self._historical_sequential(
+../../runtime/runtime_protocol/timeline_commit_store.py:362: in _historical_sequential
+    return request, prepared, validate_sequential_capture(
+../../runtime/runtime_protocol/timeline_commit_auth.py:2497: in validate_sequential_capture
+    _capture_records(records, prepared["records"], request)
+../../runtime/runtime_protocol/timeline_commit_auth.py:2372: in _capture_records
+    validate_commit_value(records, "Recorder")
+../../runtime/runtime_protocol/timeline_commit_validation.py:141: in validate_commit_value
+    _validator(definition).validate(value)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:449: in validate
+    for error in self.iter_errors(*args, **kwargs):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:383: in iter_errors
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:296: in properties
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:78: in items
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:296: in properties
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:78: in items
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:296: in properties
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:44: in additionalProperties
+    yield from validator.descend(instance[extra], aP, path=extra)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:340: in anyOf
+    errs = list(validator.descend(instance, subschema, schema_path=index))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:44: in additionalProperties
+    yield from validator.descend(instance[extra], aP, path=extra)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:340: in anyOf
+    errs = list(validator.descend(instance, subschema, schema_path=index))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+validator = Draft202012Validator(schema={'type': ['null', 'boolean', 'number', 'string']}, format_checker=None)
+types = ['null', 'boolean', 'number', 'string']
+instance = 'sha256:452d8edb387ae964e28831b801ca1216e40dfb1a0f18e6d2e5533dc42188a784'
+schema = {'type': ['null', 'boolean', 'number', 'string']}
+
+>   def type(validator, types, instance, schema):
+E   Failed: Timeout (>45.0s) from pytest-timeout.
+
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:282: Failed
+_ test_public_helper_restart_exact_retry_later_head_inverse_redo[False-public-element] _
+
+retained_pack = namespace(service=<runtime_protocol.service.RuntimeService object at 0x7feba240d350>, project='4ae4171cfaf64e9690b06a5...artifact_root=PosixPath('/tmp/w-eecdcb137e/pytest-of-root/pytest-0/test_public_helper_restart_exa1/build-cache/realm'))
+helper_client = namespace(connect=<function helper_client.<locals>.connect at 0x7feba0c274c0>, calls=[(b'{"api_version":1,"project_id"...lement')], lost_ack=[False], before_submit=[None], outbox=<function helper_client.<locals>.<lambda> at 0x7feb9f211260>)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7feba27343b0>
+same_revision = False, key = 'public-element'
+
+    @pytest.mark.parametrize('key', [None, 'public-element'])
+    @pytest.mark.parametrize('same_revision', [False, True])
+    def test_public_helper_restart_exact_retry_later_head_inverse_redo(
+            retained_pack, helper_client, monkeypatch, same_revision, key):
+        import json
+    
+        from runtime_protocol.errors import RuntimeErrorBase
+        from runtime_protocol.service import RuntimeService
+    
+        from astrid.sdk.timeline_elements import update_parent_element
+    
+        case, client = retained_pack, helper_client
+        original = copy.deepcopy(case.bundle()['source_mapping']['_runtime_document'])
+        before = copy.deepcopy(State(case.bundle()).entity(REF))
+        selected = case.selected
+        if not same_revision:
+            case.definition['schema']['properties']['seed']['maximum'] = 20
+            case.path.write_text(yaml.safe_dump(case.definition))
+            admission = packs.admit_project_pack('realm', case.project)
+            selected = {k: admission['elements'][0]['descriptor'][k] for k in ('id', 'kind', 'packId', 'revision')}
+        expected = case.head()['revision_id']
+        kwargs = dict(realm='realm', clip_id='effect', element=selected, expected_head=expected,
+                      duration=6, params={'seed': 8, 'opaque': {'keep': [None, False, {}]}},
+                      clear_params=['future'], idempotency_key=key)
+        client.lost_ack[0] = True
+        failed = update_parent_element(client.connect(), case.project, 'film', **kwargs)
+        assert not failed.ok
+        flight = json.loads(client.outbox().read_bytes())['flight']
+        assert flight['key'] == (key or failed.idempotency_key)
+        request = json.loads(flight['body'])
+        assert [call['op'] for call in request['commands']] == (
+            ['clip.set', 'clip.set-params'] if same_revision else
+            ['clip.set-element', 'clip.set', 'clip.set-params'])
+        if not same_revision:
+            assert request['commands'][0]['selections'] == [{
+                'key': 'element.targets', 'query_version': 1, 'owner': 'parent',
+                'members': [REF], 'order': [REF], 'boundaries': [REF], 'policy': 'guard-membership'}]
+        assert request['commands'][-1]['bindings']['scalar.target'] == REF
+        assert request['commands'][-1]['bindings']['params.element'] == REF
+        for changed in ({'duration': 7}, {'idempotency_key': 'another-key'},
+                        {'clip_id': 'missing'}, {'expected_head': 'another-head'}):
+            refused = update_parent_element(client.connect(), case.project, 'film', **{**kwargs, **changed})
+            assert not refused.ok and len(client.calls) == 1
+            assert json.loads(client.outbox().read_bytes())['flight'] == flight
+        accepted = case.submit(request, flight['key'])
+        pin = request['commands'][-1]['args']['schema_source']
+        document = accepted['data']['canonical_document']
+        row = State(commit.bundle_from_document(document)).entity(REF)
+        assert row == {**before, 'elementRef': selected, 'hold': 6,
+                       'params': {'seed': 8, 'opaque': {'keep': [None, False, {}]}}}
+        # Advance both the timeline and the declaration, then remove current selection.
+        case.submit(case.request([capture_track_set(case.bundle(), 'parent/track:picture',
+                                                   values={'label': 'Later'})]), 'later-head')
+        case.definition['schema']['properties']['seed']['maximum'] = 30
+        case.path.write_text(yaml.safe_dump(case.definition))
+        packs.admit_project_pack('realm', case.project)
+        current = case.service.get_document(case.project, pin['document_id'])
+        assert current['version'] > pin['version']
+        case.service.update_document(case.project, pin['document_id'], {
+            'expected_version': current['version'], 'content': {**current['content'], 'admissions': []}},
+            idempotency_key='remove-helper-selection')
+        shutil.rmtree(case.source_root)
+        shutil.rmtree(case.artifact_root)
+        case.service.close()
+        case.service = RuntimeService(case.root)
+        case.service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+        later = case.head()
+    
+        def forbidden(*a, **kw):
+            pytest.fail('helper recaptured original intent, read current admission, or called legacy writer')
+    
+        with monkeypatch.context() as retry:
+            retry.setattr('astrid.sdk.timeline_elements.execute', forbidden)
+            retry.setattr('astrid.sdk.timeline_elements._read_document', forbidden)
+            retry.setattr(commands, 'execute', forbidden)
+            result = update_parent_element(client.connect(), case.project, 'film', **kwargs)
+            assert result.ok, result.error
+            assert client.calls == [(flight['body'].encode(), flight['key'])] * 2
+            assert result.receipt.as_dict() == accepted['receipt']
+            assert result.data['new_head'] == accepted['data']['accepted_revision_id']
+            assert result.data['before'] == {'element': before['elementRef'], 'duration': 2,
+                                              'params': before['params']}
+            assert json.loads(client.outbox().read_bytes())['flight'] is None
+            assert json.loads(client.outbox().read_bytes())['pending'] == []
+            # Acknowledged invocation uses accepted Runtime history, never recapture.
+            kwargs['idempotency_key'] = flight['key']
+            again = update_parent_element(client.connect(), case.project, 'film', **kwargs)
+            assert again == result and len(client.calls) == 2
+            changed = update_parent_element(client.connect(), case.project, 'film', **{**kwargs, 'duration': 7})
+            assert not changed.ok and len(client.calls) == 2
+        assert case.head() == later
+        undone = case.submit(case.request([inverse(result.receipt.receipt_id)]), 'undo-helper')
+        restored = State(commit.bundle_from_document(undone['data']['canonical_document']))
+        assert restored.entity(REF) == before
+        assert restored.entity('parent/track:picture')['label'] == 'Later'
+        expected_pins = [case.pin] if pin == case.pin else [case.pin, pin]
+        assert undone['data']['canonical_document']['dependency_manifest']['documents'] == expected_pins
+        redone = case.submit(case.request([inverse(undone['receipt']['receipt_id'])]), 'redo-helper')
+        redone_state = State(commit.bundle_from_document(redone['data']['canonical_document']))
+        assert redone_state.entity(REF) == row
+        assert redone['data']['canonical_document']['shot_revisions'] == original['shot_revisions']
+        assert redone['data']['canonical_document']['internal_timeline_revisions'] == original['internal_timeline_revisions']
+        head = case.head()
+        with pytest.raises(RuntimeErrorBase) as error:
+>           case.submit(case.request([inverse(result.receipt.receipt_id)]), 'helper-aba')
+
+tests/core/test_timeline_element_publication_runtime.py:557: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/sdk/test_timeline_selected_schema_runtime.py:181: in submit
+    return case.service.commit_timeline(
+../../runtime/runtime_protocol/service.py:2444: in commit_timeline
+    return self._execute_timeline_commit(
+../../runtime/runtime_protocol/service.py:2499: in _execute_timeline_commit
+    outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../runtime/runtime_protocol/timeline_commit_execution.py:105: in execute
+    raise error
+../../runtime/runtime_protocol/timeline_commit_execution.py:87: in execute
+    outcome = detached(provider.commit(provider_context, port))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/commit.py:1260: in commit
+    _load(port, context, target["revision_id"])
+astrid/sdk/timeline/commit.py:433: in _load
+    document = port.revision_closure(revision)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../runtime/runtime_protocol/timeline_commit_port.py:285: in revision_closure
+    return self._read(read)
+           ^^^^^^^^^^^^^^^^
+../../runtime/runtime_protocol/timeline_commit_port.py:215: in _read
+    return copy.deepcopy(call())
+                         ^^^^^^
+../../runtime/runtime_protocol/timeline_commit_port.py:271: in read
+    entry = self._ancestor(cursor["publication_id"])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../runtime/runtime_protocol/timeline_commit_port.py:233: in _ancestor
+    entry = self.__store.history_entry(self.__project, self.__timeline, current["publication_id"])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../runtime/runtime_protocol/timeline_commit_store.py:460: in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+../../runtime/runtime_protocol/timeline_commit_store.py:254: in _verify_accepted
+    history = self._inverse_stage_history(edge["project_id"], edge["timeline_id"], records,
+../../runtime/runtime_protocol/timeline_commit_store.py:872: in _inverse_stage_history
+    return {publication: self.history_entry(project, timeline, publication, allow_archived=allow_archived)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../runtime/runtime_protocol/timeline_commit_store.py:460: in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+../../runtime/runtime_protocol/timeline_commit_store.py:261: in _verify_accepted
+    replay_request, prepared, sequential = self._historical_sequential(
+../../runtime/runtime_protocol/timeline_commit_store.py:331: in _historical_sequential
+    validate_commit_value(prepared, "PreparedCommit")
+../../runtime/runtime_protocol/timeline_commit_validation.py:141: in validate_commit_value
+    _validator(definition).validate(value)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:449: in validate
+    for error in self.iter_errors(*args, **kwargs):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:383: in iter_errors
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:296: in properties
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:296: in properties
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:78: in items
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:296: in properties
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:296: in properties
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:78: in items
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+validator = Draft202012Validator(schema={'additionalProperties': False, 'properties': {'path': {'$ref': '#/$defs/TokenPath'}, 'ref...'state': {'$ref': '#/$defs/AgentState'}}, 'required': ['ref', 'path', 'state'], 'type': 'object'}, format_checker=None)
+required = ['ref', 'path', 'state']
+instance = {'path': ['on'], 'ref': 'parent/clip:effect', 'state': {'state': 'absent'}}
+schema = {'additionalProperties': False, 'properties': {'path': {'$ref': '#/$defs/TokenPath'}, 'ref': {'minLength': 1, 'type': 'string'}, 'state': {'$ref': '#/$defs/AgentState'}}, 'required': ['ref', 'path', 'state'], 'type': 'object'}
+
+    def required(validator, required, instance, schema):
+        if not validator.is_type(instance, "object"):
+            return
+        for property in required:
+>           if property not in instance:
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: Timeout (>45.0s) from pytest-timeout.
+
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:308: Failed
+=========================== short test summary info ============================
+FAILED tests/core/test_timeline_element_publication_runtime.py::test_public_helper_restart_exact_retry_later_head_inverse_redo[False-None]
+FAILED tests/core/test_timeline_element_publication_runtime.py::test_public_helper_restart_exact_retry_later_head_inverse_redo[False-public-element]
+2 failed, 2 passed in 178.47s (0:02:58)
