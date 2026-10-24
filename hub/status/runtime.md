@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T15:20:03Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 2m -->
+<!-- main | 2026-10-24T15:23:17Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 1m -->
 # runtime board, 2026-10-24T15:17:55Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -85,7 +85,8 @@
 | U1d-core-review | Review core and upstream union | Luna | True two-parent merge | merged | Review 1346 PASS | Core authority and daemon union passed. No new normalized Ruff/Pyright diagnostics; existing 2 strict xfail policy exits disclosed. | f69ad5813 |
 | U1d-producer-handback | Return fixture and producer inventory | Luna | Actual e68 home | merged | rt-U1d-handoff-1401 PASS | Wire and 15 clients exact; manifest adds genuine visual fixture. [Handback](../../design/rt-U1d-handoff-1401.md) | e68cf2316 |
 | U1d-consumer-rebind | Rebind producer identity in consumers | Agent / App Luna | Normal vendor checks passed | merged | Agent custody1410; App adoption1404 | Agent5492 and Appbe98 adopt e68 provenance. Canonical15/14 bytes unchanged. D61 successor adoption remains separate. | Agent5492 / Appbe98 |
-| R-D62-integrated-proof | Prepare exact central HTTP proof | Luna | Qualified producer and normal merge | doing | Preparation1512; return1517 | First packet has source-check and output-custody defects; bounded correction active, no body released. | Evidence only |
+| R-D62-integrated-proof | Prepare exact central HTTP proof | Luna | Actual producer and consumer home | gated:adoption | Return1517; route1524 | Corrected source/lock and wait mechanics retained. Existing route lacks unique XML; additive normal row1524 dispatched. | Evidence only |
+| R-D62-http-route | Add durable central proof output | Luna | Existing normal test service | doing | rt-R-D62-http-route-1524 | One isolated suite row, current Agent source, fresh durable XML; no test body release. | Pending |
 | R-D62-joined-producer | Join mode, forward auth and wire | Luna | Exact committed sources | review | Author1503; security1511 | e02f retains411PASS/1 old-consumerFAIL; exact9460 synthetic legacy/v2PASS. Full paired union and security pending. | e02f3e3d9 |
 | R-recorder-abi-authority | Persist accepted recorder mode under D62 | HARD Sol / Luna | Joined source and independent security | review | Author1450; join1503 | 363 PASS; one retained Agent legacy-fork refusal needs qualified consumer input. Existing290 controls pass; zero new static diagnostics. | 8825219b4 held |
 | R-forward-created-authority | Authenticate omitted forward allocation claims | HARD Sol / Luna | Joined source and independent security | review | Author1450; join1503 | 323 PASS; explicit claims retained. Broader forged-native-write probe remains visibly failed under D62 producer-trust scope. | 943365586 held |
@@ -186,3 +187,5 @@ Pass 2026-10-24T15:10:59Z: PLAN, common rules, current header D62/D63 and peer b
 Pass 2026-10-24T15:16:12Z: Joined sourcee02f finished; dispatched independent Luna security1511 immediately. Preserved411PASS/1 old-consumerFAIL, exact9460 synthetic ABI1/2PASS and all source/blob/canonical checks. Preparation1512 first-return1517 corrects exact Runtime lock authority, request/wait mechanics and unique XML custody; no body rerun or live registry mutation.
 
 Pass 2026-10-24T15:17:55Z: New App1508 intake became FREEZE-App-compatibility row with actual owner1507 this pass. Current App8158 terminalFAIL19256PASS/1FAIL schema acceptance; Node stage unknown. No Runtime product cause or regression classification inferred. D62 cumulative security1511 and proof packet1517 continue independently.
+
+Pass15:23Z: Proof preparation1517 complete; exact packet rescued byte-for-byte from committed private evidence into worker record. Existing route appends selectors but cannot accept JUnit flags. Split ready harness installation1524 adds one isolated normal service row with fresh XML, no body or historical artifact overwrite. Security1511 remains active.
