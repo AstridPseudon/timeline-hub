@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T20:14:34Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 1m -->
-# agent board, 2026-10-24T20:13:27Z
+<!-- agent | 2026-10-24T20:17:17Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 1m -->
+# agent board, 2026-10-24T20:16:12Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -11,7 +11,7 @@
 | G2 / G3 | Public commit, emitter, CLI and sheet | Sol / Luna | R1, R2 | merged | G234 integrated0549 | Joined131 and live Runtime controls passed. P4 retains actual HTTP scope. | ea302e0f5 |
 | G4 | Remaining production writers | Sol / Luna | G2 | merged | G234; video; media admission0832 | Writer migration qualified; media admission20 passed on0ff3. Managed duck original remains held. | ea302e0f5; 0ff3d103fb |
 | G5 | Retire superseded writers | Luna / Sol | H24 criteria | merged | Custody review2155 | 350 cases, four SDK and c271 passed. Historical raw packet loss remains disclosed. | c36ca8c94 |
-| P4 owner | Qualify original CLI note and rerun | Luna / Service | Meaningful reviewed Runtime history-cost correction | blocked:runtime | Service14690; verdict1956 PASS evidence | CLI/sheet and rerun passed. Note01 undo timeout45.407s; cProfile overhead uncalibrated. [Verdict](../../design/agt-P4-14690-verdict-1956.md) | Pinned3b2 / e89 |
+| P4 owner | Qualify original CLI note and rerun | Sol / Luna / Service | Reviewed Runtime measured repair | blocked:runtime | Runtime repair Sol2004; Agent verdict1956 | Diagnostic14690 FAIL1/PASS2; real54 profiles and first undo49 history/48 verify retained. [Verdict](../../design/agt-P4-14690-verdict-1956.md) | Pinned3b2 / e89 |
 | F original census | Keep exact historical267 records | Sol / Luna | Independent accounting | merged | Count0818; review0827 | 263 closed,4 open;123 exact mappings. Current full9758 remains a separate failed checkpoint. | Census e13d65ba |
 | F checkpoint9758 | Retain failed full checkpoint | Service / Luna | Exact census complete | merged | 9758; census 1052 and 1058 | Historical FAIL: 17673 passed, 231 failed, 45 errors. All 276 bad IDs exact. This is retained evidence, never full PASS. | ba55 / tree c13 |
 | F checkpoint setup | Correct profile setup | Luna / Luna | Source1052; review1105 | merged | Install1118; review1124 | All45 errors classified:3 loops and42 artifact mismatches. Actual registry18de/row0bdf verified; no full retry. | Candidate4a2a3472d1 |
@@ -145,5 +145,5 @@ Blockers: Runtime — actual P4 profile input cleared. Runtime board20:05 names 
 Blockers: Final cut — final core and genuine installed render remain D59 gated. P4 evidence verdict1956 is PASS; original gate remains open pending Runtime measured correction.
 Next ready: Runtime Sol2004 candidate -> independent security then actual home -> normal adoption and meaningful originals. E2 design delivered to orchestrator; implementation stays after ZIP.
 live 0 / cap 6; ready-undispatched 0 local. E2 design and sizing delivered. Runtime Sol2004 owns critical measured source; Agent originals await reviewed home. Profile14690 verdict1956 published.
-Inbox consumed through 1071602 bytes, including D81 trimmed20:02 and App2 profile reminder1950. Existing14690/1956 satisfy recipe ask. E2 net-line sizing2008 queued; no original repeat.
+Inbox consumed through 1072989 bytes, including Runtime2004 ACK and trimmed D81. Profile input cleared; unique Sol2004 owns measured repair. E2 delivered; no unchanged originals.
 D79 later: Inventory1831 complete; no full accepted record/context survived. Existing non-gating input request retained. No fixture or test fabricated.
