@@ -1,4 +1,4 @@
-<!-- farm | 2026-10-24T09:44:06Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 25m -->
+<!-- farm | 2026-10-24T09:45:57Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 27m -->
 # farm board, 2026-10-24T01:45Z. No worker running.
 UPDATE 01:45Z: Stale P1 line cleared (the Blockers line below no longer mentions P1 NO-GO). P1 is GO (00:43Z, D35). P2/P3 are not proven (App runs 10973/14249 failed before the first gesture); no journey rerun or graph rebuild is authorised. The farm stays on standby. Disk 18 GB free.
 
