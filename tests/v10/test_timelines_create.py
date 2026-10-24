@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 from types import SimpleNamespace
 from typing import Any
+from unittest.mock import Mock
 
 import pytest
 
@@ -55,52 +56,59 @@ def runtime_create_case(tmp_path, monkeypatch):
     transport._last_handshake = {"realm_id": service.realm["id"], "actor_id": "editor"}
     calls: list[tuple[str, tuple[Any, ...], dict[str, Any]]] = []
     timelines = RemoteTimelines(transport)
-    timelines._resolve_timeline = lambda _project, timeline: DomainResult.success(
-        {"project_id": project, "timeline_id": timeline}
+    timelines._resolve_timeline = lambda project_id, timeline: DomainResult.success(
+        {"project_id": service.get_project_timeline(project_id, timeline)["project_id"],
+         "timeline_id": timeline}
     )
-    timelines.open_composition = lambda _project, timeline, **_options: DomainResult.success({
-        "native_inspection": {"project_id": project, "timeline_id": timeline},
-        "summary": {"head_revision_id": service.get_project_timeline(project, timeline)["head_revision_id"]},
+    timelines.open_composition = lambda project_id, timeline, **_options: DomainResult.success({
+        "native_inspection": {"project_id": project_id, "timeline_id": timeline},
+        "summary": {"head_revision_id": service.get_project_timeline(project_id, timeline)["head_revision_id"]},
     })
-    timelines.open_bundle = lambda _project, timeline, revision_id=None, **_options: DomainResult.success({
+    timelines.open_bundle = lambda project_id, timeline, revision_id=None, **_options: DomainResult.success({
         "bundle": commit.bundle_from_document(
-            service._timeline_commits()[0].revision_closure(project, timeline, revision_id)
+            service._timeline_commits()[0].revision_closure(project_id, timeline, revision_id)
         )
     })
 
-    def create_timeline(_project, timeline, *, name=None, idempotency_key):
-        calls.append(("create_timeline", (project, timeline), {
+    def create_timeline(project_id, timeline, *, name=None, idempotency_key):
+        calls.append(("create_timeline", (project_id, timeline), {
             "name": name, "idempotency_key": idempotency_key,
         }))
-        return service.create_timeline(project, timeline, name=name, idempotency_key=idempotency_key)
+        return service.create_timeline(project_id, timeline, name=name, idempotency_key=idempotency_key)
 
     generated.create_timeline = create_timeline
 
-    def list_timeline_commits(_project, timeline, cursor=None, limit=200):
-        calls.append(("list_timeline_commits", (project, timeline), {
+    def list_timeline_commits(project_id, timeline, cursor=None, limit=200):
+        calls.append(("list_timeline_commits", (project_id, timeline), {
             "cursor": cursor, "limit": limit,
         }))
         return service.list_timeline_commits(
-            project, timeline, cursor=cursor, limit=limit, authorize=lambda: None
+            project_id, timeline, cursor=cursor, limit=limit, authorize=lambda: None
         )
 
     generated.list_timeline_commits = list_timeline_commits
 
-    def commit_timeline(_project, timeline, body, *, idempotency_key):
-        calls.append(("commit_timeline", (project, timeline, body), {
+    def commit_timeline(project_id, timeline, body, *, idempotency_key):
+        calls.append(("commit_timeline", (project_id, timeline, body), {
             "idempotency_key": idempotency_key,
         }))
         return service.commit_timeline(
-            project, timeline, body, idempotency_key=idempotency_key, publisher="editor",
-            invocation_path=f"/v1/projects/{project}/timelines/{timeline}/commit",
+            project_id, timeline, body, idempotency_key=idempotency_key, publisher="editor",
+            invocation_path=f"/v1/projects/{project_id}/timelines/{timeline}/commit",
             authorize=lambda: None,
         )
 
     generated.commit_timeline = commit_timeline
+    retired_transport = Mock(side_effect=AssertionError("retired publication transport called"))
+    retired_service = Mock(side_effect=AssertionError("retired Runtime publication called"))
+    monkeypatch.setattr(transport, "publish_parent_composition", retired_transport)
+    monkeypatch.setattr(service, "publish_parent_composition", retired_service)
     try:
         yield SimpleNamespace(service=service, project=project, timelines=timelines, calls=calls)
     finally:
         service.close()
+        retired_transport.assert_not_called()
+        retired_service.assert_not_called()
 
 
 def _receipt(key: str) -> CommandReceipt:
@@ -286,7 +294,7 @@ class _Writer:
 
 def test_remote_create_empty_creates_shell_then_native_commit(runtime_create_case) -> None:
     result = runtime_create_case.timelines.create_empty(
-        project=runtime_create_case.project, timeline_id="01ARZ3NDEKTSV4RRFFQ69G5FAV",
+        project="render-smoke", timeline_id="01ARZ3NDEKTSV4RRFFQ69G5FAV",
         config=DEFAULT_CONFIG, idempotency_key="caller-1",
     )
     assert result.ok, result.error
@@ -308,7 +316,7 @@ def test_remote_create_empty_creates_shell_then_native_commit(runtime_create_cas
         ),
     ]
     assert runtime_create_case.calls[0] == (
-        "create_timeline", (runtime_create_case.project, "01ARZ3NDEKTSV4RRFFQ69G5FAV"),
+        "create_timeline", ("render-smoke", "01ARZ3NDEKTSV4RRFFQ69G5FAV"),
         {"name": None, "idempotency_key": "caller-1-shell"},
     )
     assert runtime_create_case.calls[-1][0] == "commit_timeline"
@@ -325,18 +333,18 @@ def test_remote_create_empty_creates_shell_then_native_commit(runtime_create_cas
     }
     history = runtime_create_case.timelines.history(runtime_create_case.project, result.data["timeline_id"], limit=100)
     assert history.ok
+    assert result.data["head_revision_id"] == history.data["head"]["revision_id"]
     assert history.data["items"][-1]["receipt"]["result"]["steps"][0]["reads"] == [
         {"kind": "scope", "ref": "timeline", "path": []},
     ]
-    assert not any(name == "publish_parent_composition" for name, _, _ in runtime_create_case.calls)
 
 
 def test_remote_create_empty_generates_ulid_when_no_id_given(runtime_create_case) -> None:
-    result = runtime_create_case.timelines.create_empty(project=runtime_create_case.project)
+    result = runtime_create_case.timelines.create_empty(project="render-smoke")
     assert result.ok, result.error
     timeline_key = result.data["timeline_id"]
     assert is_ulid(timeline_key)
-    assert runtime_create_case.calls[0][1] == (runtime_create_case.project, timeline_key)
+    assert runtime_create_case.calls[0][1] == ("render-smoke", timeline_key)
     assert runtime_create_case.calls[-1][0] == "commit_timeline"
     assert result.data["canonical_document"]["parent_revision"]["payload"]["config"]["tracks"] == []
 
@@ -351,10 +359,14 @@ def test_remote_create_empty_emits_guarded_raw_config_and_replays_exact_receipt(
         "meta": {"org.example": {"null": None, "opaque": [None, False, 0]}},
     }
     result = runtime_create_case.timelines.create_empty(
-        project=runtime_create_case.project, timeline_id="film", name="Second Cut",
+        project="render-smoke", timeline_id="film", name="Second Cut",
         config=config, idempotency_key="raw-config",
     )
     assert result.ok, result.error
+    assert runtime_create_case.calls[0] == (
+        "create_timeline", ("render-smoke", "film"),
+        {"name": "Second Cut", "idempotency_key": "raw-config-shell"},
+    )
     payload = result.data["canonical_document"]["parent_revision"]["payload"]
     assert payload["name"] == "Second Cut" and payload["slug"] == "second-cut"
     assert payload["config"] == {
@@ -368,7 +380,7 @@ def test_remote_create_empty_emits_guarded_raw_config_and_replays_exact_receipt(
     commit_calls_before_retry = [call for call in runtime_create_case.calls if call[0] == "commit_timeline"]
     assert any(command["op"] == "doc.patch" for command in commit_calls_before_retry[0][1][2]["commands"][1:])
     replayed = runtime_create_case.timelines.create_empty(
-        project=runtime_create_case.project, timeline_id="film", name="Second Cut",
+        project="render-smoke", timeline_id="film", name="Second Cut",
         config=config, idempotency_key="raw-config",
     )
     assert replayed.ok, replayed.error
@@ -379,12 +391,31 @@ def test_remote_create_empty_emits_guarded_raw_config_and_replays_exact_receipt(
 
 @pytest.mark.integration
 def test_d69_upstream_remote_create_empty_generates_ulid_when_no_id_given(runtime_create_case) -> None:
-    result = runtime_create_case.timelines.create_empty(project=runtime_create_case.project)
+    result = runtime_create_case.timelines.create_empty(project="render-smoke")
     assert result.ok, result.error
     timeline_id = result.data["timeline_id"]
     assert is_ulid(timeline_id)
     assert result.data["project_id"] == runtime_create_case.project
     assert result.data["head_revision_id"]
+    shell, replay_read, head_read, head = runtime_create_case.calls
+    assert shell == (
+        "create_timeline", ("render-smoke", timeline_id),
+        {"name": None, "idempotency_key": f"{result.idempotency_key}-shell"},
+    )
+    assert replay_read == (
+        "list_timeline_commits", (runtime_create_case.project, timeline_id),
+        {"cursor": None, "limit": 100},
+    )
+    assert head_read == (
+        "list_timeline_commits", (runtime_create_case.project, timeline_id),
+        {"cursor": None, "limit": 1},
+    )
+    name, args, kwargs = head
+    assert name == "commit_timeline"
+    assert args[:2] == (runtime_create_case.project, timeline_id)
+    assert args[2]["project_id"] == runtime_create_case.project
+    assert args[2]["timeline_id"] == timeline_id
+    assert kwargs == {"idempotency_key": f"{result.idempotency_key}-head"}
     assert result.data["canonical_document"]["parent_revision"]["payload"]["config"] == {
         "tracks": [],
         "output": {
@@ -393,6 +424,9 @@ def test_d69_upstream_remote_create_empty_generates_ulid_when_no_id_given(runtim
         },
         "clips": [],
     }
+    history = runtime_create_case.timelines.history(runtime_create_case.project, timeline_id, limit=100)
+    assert history.ok
+    assert result.data["head_revision_id"] == history.data["head"]["revision_id"]
 
 
 def test_remote_create_empty_stops_when_shell_is_rejected() -> None:
@@ -408,7 +442,7 @@ def test_remote_create_empty_stops_when_shell_is_rejected() -> None:
 @pytest.mark.integration
 def test_d66_upstream_remote_create_empty_creates_shell_then_empty_head(runtime_create_case) -> None:
     result = runtime_create_case.timelines.create_empty(
-        project=runtime_create_case.project,
+        project="render-smoke",
         timeline_id="01ARZ3NDEKTSV4RRFFQ69G5FAV",
         config=DEFAULT_CONFIG,
         idempotency_key="caller-1",
@@ -425,7 +459,7 @@ def test_d66_upstream_remote_create_empty_creates_shell_then_empty_head(runtime_
     }
     assert result.idempotency_key == "caller-1"
     assert runtime_create_case.calls[0] == (
-        "create_timeline", (runtime_create_case.project, "01ARZ3NDEKTSV4RRFFQ69G5FAV"),
+        "create_timeline", ("render-smoke", "01ARZ3NDEKTSV4RRFFQ69G5FAV"),
         {"name": None, "idempotency_key": "caller-1-shell"},
     )
     assert [call[0] for call in runtime_create_case.calls] == [
@@ -437,6 +471,11 @@ def test_d66_upstream_remote_create_empty_creates_shell_then_empty_head(runtime_
     assert runtime_create_case.calls[2][1] == runtime_create_case.calls[1][1]
     assert runtime_create_case.calls[1][2] == {"cursor": None, "limit": 100}
     assert runtime_create_case.calls[2][2] == {"cursor": None, "limit": 1}
+    assert runtime_create_case.calls[-1][1][:2] == (
+        runtime_create_case.project, "01ARZ3NDEKTSV4RRFFQ69G5FAV"
+    )
+    assert runtime_create_case.calls[-1][1][2]["project_id"] == runtime_create_case.project
+    assert runtime_create_case.calls[-1][1][2]["timeline_id"] == "01ARZ3NDEKTSV4RRFFQ69G5FAV"
     assert runtime_create_case.calls[-1][2] == {"idempotency_key": "caller-1-head"}
     assert runtime_create_case.calls[-1][1][2]["commands"][0]["args"] == {
         "name": "Main",
@@ -447,6 +486,7 @@ def test_d66_upstream_remote_create_empty_creates_shell_then_empty_head(runtime_
         },
     }
     payload = result.data["canonical_document"]["parent_revision"]["payload"]
+    assert payload["name"] == "Main"
     assert payload["config"] == {
         **DEFAULT_CONFIG,
         "output": {
@@ -462,8 +502,11 @@ def test_d66_upstream_remote_create_empty_creates_shell_then_empty_head(runtime_
     assert result.data["canonical_document"]["internal_timeline_revisions"] == []
     history = runtime_create_case.timelines.history(runtime_create_case.project, result.data["timeline_id"], limit=100)
     assert history.ok
+    assert result.data["head_revision_id"] == history.data["head"]["revision_id"]
     assert len(history.data["items"]) == 2
     assert history.data["items"][0]["intent"] == "bootstrap"
+    assert runtime_create_case.calls[3][1][2]["base_revision_id"] == history.data["items"][0]["revision_id"]
+    assert runtime_create_case.calls[3][1][2]["base_publication_id"] == history.data["items"][0]["publication_id"]
     assert len([item for item in history.data["items"] if item["intent"] == "recorded"]) == 1
     assert history.data["items"][1]["receipt"]["result"]["steps"][0]["reads"] == [
         {"kind": "scope", "ref": "timeline", "path": []},
