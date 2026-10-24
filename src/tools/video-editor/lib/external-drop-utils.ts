@@ -25,6 +25,7 @@ import {
 import { getAssetResolutionToken } from '@/tools/video-editor/lib/asset-registry.ts';
 import type { UseAssetManagementResult } from '@/tools/video-editor/hooks/useAssetManagement.ts';
 import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
+import { canonicalJsonStringify } from '@/tools/video-editor/data/typed/timelineBundle.ts';
 import type { DragCoordinator } from '@/tools/video-editor/hooks/useDragCoordinator.ts';
 import type {
   TimelineApplyEdit,
@@ -421,6 +422,13 @@ export async function handleFileDrop({
 
     const clipTime = dropPosition.time + timeOffset;
     timeOffset += defaultClipDuration;
+    const dropScope = canonicalJsonStringify({ head: dataRef.current.head,
+      composition: dataRef.current.config.app?.canonicalComposition });
+    const currentDropData = () => {
+      const current = dataRef.current;
+      return current && canonicalJsonStringify({ head: current.head,
+        composition: current.config.app?.canonicalComposition }) === dropScope ? current : null;
+    };
 
     const skeletonId = `uploading-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const skeletonMeta: ClipMeta = {
@@ -450,7 +458,7 @@ export async function handleFileDrop({
     }, { save: false });
 
     const removeSkeleton = () => {
-      const current = dataRef.current;
+      const current = currentDropData();
       if (!current) {
         return;
       }
@@ -466,7 +474,7 @@ export async function handleFileDrop({
       try {
         if (isImageFile(file)) {
           const generationData = await uploadImageGeneration(file);
-          const current = dataRef.current;
+          const current = currentDropData();
           if (!current) {
             return;
           }
@@ -484,7 +492,7 @@ export async function handleFileDrop({
 
         if (isVideoFile(file)) {
           const generationData = await uploadVideoGeneration(file);
-          const current = dataRef.current;
+          const current = currentDropData();
           if (!current) {
             return;
           }
