@@ -497,6 +497,31 @@ def execution_facts_match(required, verified):
     return True
 
 
+@contextmanager
+def realm_admission_fence(root, *, blocking=True):
+    """Retain directory custody across moves without opening any descendants.
+
+    A replacement may lend the descriptor to startup while retaining the fence
+    until startup succeeds or rollback finishes. The borrower never releases it.
+    """
+    descriptor = os.open(root, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0))
+    locked = False
+    try:
+        platform.lock_file(descriptor, blocking=blocking)
+        locked = True
+        held = os.fstat(descriptor)
+        current = os.stat(root, follow_symlinks=False)
+        if not stat.S_ISDIR(current.st_mode) or (held.st_dev, held.st_ino) != (current.st_dev, current.st_ino):
+            raise RealmAdmissionError("admission fence does not match realm root")
+        yield descriptor
+    finally:
+        try:
+            if locked:
+                platform.unlock_file(descriptor)
+        finally:
+            os.close(descriptor)
+
+
 class RealmStore:
     """The sole durable writer for one realm.
 
@@ -718,7 +743,7 @@ class RealmStore:
             if parent_fd >= 0:
                 os.close(parent_fd)
 
-    def __init__(self, root: str | Path, *, create: bool = False, acquire_owner: bool = True, admission_timeout: float = REALM_ADMISSION_TIMEOUT_SECONDS):
+    def __init__(self, root: str | Path, *, create: bool = False, acquire_owner: bool = True, admission_timeout: float = REALM_ADMISSION_TIMEOUT_SECONDS, _admission_fd=None):
         self.root = _local_realm_root(root)
         self.admission_timeout = admission_timeout
         if create:
@@ -742,7 +767,15 @@ class RealmStore:
             # persistent marker in the realm. This closes the gap between
             # discovering owner.lock and taking it: two fresh openers must not
             # both inspect/copy a database before either one becomes owner.
-            self._acquire_admission_lock()
+            if _admission_fd is None:
+                self._acquire_admission_lock()
+            # Internal replacement startup borrows its caller's fence. An
+            # ordinary opener may also have waited while its root was moved:
+            # neither may admit a different directory under the old lock.
+            held = os.fstat(self._admission_lock_file if _admission_fd is None else _admission_fd)
+            current = os.stat(self.root, follow_symlinks=False)
+            if not stat.S_ISDIR(held.st_mode) or not stat.S_ISDIR(current.st_mode) or (held.st_dev, held.st_ino) != (current.st_dev, current.st_ino):
+                raise RealmAdmissionError("admission fence does not match realm root")
             sqlite_components = [
                 self.db_path,
                 *(Path(str(self.db_path) + suffix) for suffix in ("-wal", "-shm", "-journal")),
