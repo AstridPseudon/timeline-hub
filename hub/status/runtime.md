@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T22:47:14Z | dispatcher heartbeat 10s | live 2 (sol 1, luna 1, other 0) | busy30 9 | status age 4m -->
-# runtime board, 2026-10-24T22:42:57Z
+<!-- main | 2026-10-24T22:50:17Z | dispatcher heartbeat 11s | live 2 (sol 1, luna 1, other 0) | busy30 9 | status age 0m -->
+# runtime board, 2026-10-24T22:50:16Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -181,7 +181,7 @@
 | D83-schema-churn | Preserve stopped setup experiment | Sol | Structural fix supersedes experiment | gated:superseded | Worker2141 stopped | Checkpoint retained. No released source or original credit; no further micro-gain task. | Held |
 
 | D84-structural-history | Reuse replay proof within one request | Sol / Luna | Normal apply complete | merged | Author2145; release2202 | Security243+13 pass; author1038 pass. Ten new attacks pass on candidate. [Release](../../design/runtime-D84a-release-2205.md) | beb1dafbd /732c48c6f |
-| R-P2-parent-runtime | Qualify parent response after history fix | Luna / main service | Exact assigned main venue | doing | rt-P2-main-profile-return-2238 | Parent original on fixedbceb/039f/732/635f assigned here. First preflight127 had zero bodies; main hostprofile correction active. | Runtime732 |
+| R-P2-parent-runtime | Qualify parent on assigned main venue | Luna / main service | Main dependency profile | doing | Luna2238; continuation2250 | Zero originals reached. Parent6678 build lacks Composition animations export; exact pinned package resolution assigned2250. | Runtime732 / Appbceb |
 
 | D84-lock-placement | Test head-only CAS authority limit | Sol / Luna | Exact candidate tests passed | merged | Author2147; release2202 | Ten tests pass on memo candidate. No product lock change; head-only CAS insufficient. [Proof](../../design/runtime-D84-lock-placement-2147.md) | 746d745478 /61a16a221 |
 
@@ -191,55 +191,30 @@
 | F-final-upstream-installer | Keep fresh upstream installer tests | Luna | Author checklist checks passed | merged | rt-F-final-upstream-installer-2216 | Exact 08e6 object and paths verified; 92 targets and guards preserved. [Report](../../design/runtime-final-upstream-installer-2216.md) | Private checklist only |
 
 | F-final-rehearsal | Rehearse fresh upstream delivery | Luna | Critical timing and App priority | gated:critical-capacity | rt-F-final-rehearsal-2219 BLOCKED | App shallow-parent traversal stopped staging. No ZIP. Private input fix resumes after critical sample; raw temp loss disclosed. | Source unchanged |
-| F-final-matrix | Prepare pinned per-venue dispatch | Luna | Author durable controls passed | merged | rt-F-final-matrix-return-2228 | Durable 10-venue runner; stub once/poison zero and recycled-copy check PASS. [Report](../../design/runtime-final-matrix-durable-2228.md) | Private; final inputs pending |
+| F-final-matrix | Prepare pinned venue commands | Luna | Agent2236 handoff received | ready | Durable2228; next finite join | Ten-venue runner controls passed. New Agent handoff names current five and final three selectors; join waits capacity. No install or body. | Private; final tuple pending |
 
-| P2-spare-venue | Run four assigned main diagnostics | Luna / main service | Existing main host profile | doing | rt-P2-main-profile-return-2238 | Prior preflight27231 exit127 missing App-only Node; zero bodies. First return adapts native main paths, fixed tuple and all guards intact. | No original result yet |
+| P2-spare-venue | Run four assigned main diagnostics | Luna / main service | Exact pinned package resolution | doing | rt-P2-main-dependency-2250 | Node and collection blockers resolved; build stopped before readiness or gestures. Parent, SWAP, single and bulk remain main exclusive. | No original result yet |
 
-| P4-D84a-distinct | Repair recursive fresh-history assembly | HARD Sol | Measured request66 multiplicity | doing | rt-R2-fresh-assembly-sol-2240 | 1072 accepted checks vs8 replays in12.723s; repeated _ancestor/input assembly before proof lookup. [Facts](../../design/runtime-D84a-tennote-element-measured-2231.md) | Runtime732 base |
+| P4-D84a-distinct | Remove recursive history assembly | HARD Sol | Security review after source return | doing | rt-R2-fresh-assembly-sol-2240 | Old control repeats graph nodes; candidate control passes. Source and mutation tests active. No security release or original45s credit. | Runtime732 base |
 
 | P2-popup-digest | Attribute accepted popup digest mismatch | App Luna | Actual5083 retained response | blocked:app | app-P2-popup-5083-digest-source-2233 | Accepted response reaches strict guards then canonical digest equality fails. App owns source attribution; no Runtime witness returned yet. | Appbceb / Runtime732 |
 
-Runtime producer: RELEASED 732c48c6f5a9441a65c61b24595d454a1cd3e180, tree 7ed0559c6f0a05954427cc668e303b6cd2f51586. Three product hashes exactly match the independent security review. Canonical 15 files and schema867f are unchanged. Actual release receipts and hashes are in [release](../../design/runtime-D84a-release-2205.md).
+Runtime producer: RELEASED 732c48c6f5a9441a65c61b24595d454a1cd3e180, tree 7ed0559c6f0a05954427cc668e303b6cd2f51586. Canonical 15 files and schema867f unchanged. [Release](../../design/runtime-D84a-release-2205.md).
 
-core open: P4 ten-note remains45.314s; Sol2240 owns recursive fresh-assembly bottleneck. Orchestrator29429 reports four R2 originals PASS7–11s on732; Agent actual7c48 is tree-equal to testedc2a63; four R2 scopes closed. Eight P2 remain unqualified. Final Runtime core suite owed.
-regressions: D77a genuine installed final render remains cut-blocking. Legacy ABI expectation correction is merged with 75 targeted passes and unchanged product bytes at its recorded scope.
-Current gates: P1 readiness1/original2 GO31083. P3 readiness1/original1 GO15493 with independent2024 and complete strict tail at c184/22d/44917/635f. Historical NO-GO runs stay unchanged; final matrix is still required.
+core open: P4 ten-note remains45.314s. Sol2240 owns measured recursive fresh-history input assembly; oldRED/newGREEN finite control exists, security and original qualification pending. Four R2 originals are closed on actual Agent7c48, tree-equal to testedc2a63; original45s preserved. Element7131 still fails unchanged5s; local one-patch0.315s does not reproduce actual realm.
+regressions: No newly established Runtime regression. D77 genuine installed render remains cut-blocking. Known gaps and original historical failures remain visible at their recorded scopes.
+Gates: P1 GO31083 and P3 GO15493/independent2024 retain recorded tuples. All eight P2 remain unqualified; final P1–P5 and core matrix on one tuple still required. No cut, final build or ZIP.
 
-D84a source proof: Author targeted union 1,038 passed; 13 scope tests and three ABA controls passed. Independent security review ran243 plus final13 tests and reviewed exact product bytes. Release Luna2202 qualified that evidence and ran ten same-head attacks against the candidate:10 passed. Normal lock-test merge61a16a221 and source merge732c48c6f are complete. [Release review](../../design/runtime-D84-release-review-2202.md).
-D84a behavior: Fresh mutable database, event and source predicates still run on every use. Only successful deterministic recorder replay is reused inside one evaluation. Raw verify calls stay21; full replay21 to3, historical traversals16 to2 and capture-document checks144 to32. At N2, median wall0.645 to0.242seconds and CPU0.632 to0.231seconds. No flat-N or original-budget claim. Retries, independent calls, threads and reopened daemons verify afresh. No cross-request memo or lock movement.
-Lock finding: Nine genuine same-head mutations plus an unchanged control pass. Head-pair CAS cannot replace mutable authority checks, so no lock patch was retained. Actual short overlap showed32.5ms commit wait during40.3ms history hold; no original causal attribution.
-Actual False diagnostic: One unchanged candidate197d/bc04 case failed45.008seconds. Both30/44second samples show Recorder/schema computation, with12.149CPU seconds over14.002wall seconds. No main-thread wait sampled; intervening waits and HTTP contention remain unknown. Raw stacks0600 private. No further diagnostic body needed.
+Blockers: Runtime P4 — Sol2240 fixes recursive assembly before proof lookup, measured1072checks/8replays on request66. One independent Luna security review follows source return, then Agent normal adoption and remaining original. No extra diagnosis or unchanged body.
+Blockers: App P2 — element7131 pending observation remains open. Popup5083 reaches acceptedHTTP200 and strict receipt guards, then digest equality fails; App2239 reviews exact raw numeric hashing correction. App owns asset/placement; main owns parent/SWAP/single/bulk.
+Blockers: Main profile — Luna2250 resolves existing pinned Composition package;2238 exposed shared0.0.2 missing animations export before any original. No safety refusal or product finding. [Report](../../design/runtime-main-profile-2238.md).
+Blockers: Final cut — D59 requires all lanes core0/regressions0, final pinned P1–P5/core, D69 and genuine installed render. Private final candidates remain uninstalled. Rehearsal retry waits heavy8.5GB threshold and critical priority.
+Next ready: Security review immediately when2240 returns. Agent2236 matrix handoff is ready to join into private2228 runner when capacity opens; final tuple remains pending.
 
-Blockers: Agent remaining P4 — R2 four original scopes now qualify on actual7c48 tree-equal to testedc2a63. Stale Agent blocker cleared. Actual29429 ten-note45.314FAIL; Runtime2240 owns measured fresh-assembly repair, no new original yet.
-Blockers: App P2 — Appbceb adopts732; actual7131 remains NO-GO5s per owner22:31. Sole safe-facts2227 returns existing evidence. App2225 explicitly re-accepts mainfour, Luna2232 owns them. All8P2 stay open. Sol2231 reports retainedD78 is one command/one step/11reads; localshape0.33s is not originalrealmproof.
-Blockers: Final cut — all lanes core0/regressions0, final P1–P5 plus core on one pinned tuple, D69 and genuine installed render required. No build or ZIP before cut.
-Next ready: Agent and App adopt released732 and run their existing meaningful original plans. Runtime private final-core inventory2207 is complete. D59 still holds installation, final suites and build.
+Venues: App P1/P2/P3 and final P2 tour; Agent P4; main P5/Composition. Spare main four diagnostics use fixedbceb/039f/732/635f only. D73 captures tuple once, genuine checkout receipts and preflight precede body. Newer heads do not invalidate an in-flight run.
+Delivery: Runtime merge, Agent merge, authentic App manifest command with schema digest equality, App merge. D65/D67/D72 docs installed. D77 render and D62 submit-completeness known gap remain explicit.
+Later: E1/E3, AgentE2 and D79 paused until ZIP. D42 cross-request memo held; V4 cut, D14/D23 deferred; unsafe D34 cleanup held. D56 Farm/schema access stopped. All historical safety/access/cleanup/process refusals remain stopped.
+Disk: 8145801216 available bytes at last read; cap2 conservatively by GiB. No ended clean non-KEEP Runtime worktree eligible. Guarded routine maintenance follows existing tools; no historical refused target retry.
 
-Venues: App P1/P2/P3; Agent P4; main P5/Composition. D73 captures four exact SHAs once with checkout receipts and preflight before submit. A newer head does not invalidate an in-flight run. D83 NO-GO gets automatic summary; GO gets one independent verdict.
-Delivery: Runtime merge, Agent merge, authentic App manifest command and digest equality, then App merge. Installed v2 docs and D67 bindings stay qualified. Private final candidates remain cut-gated;2207 refreshes inventory only and leaves the tuple PENDING.
-Later: E1/E3 and Agent E2 designs retained; further E/D79 paused until ZIP. All cross-request D42 memo and proof pins remain held. V4 cut, D14/D23 deferred, unsafe D34 cleanup held, D62 submit completeness known gap.
-Admission: D56 Farm/schema access stopped. Original403 and historical access, cleanup, process and retirement refusals remain stopped. D67 D13 environment gap and App dirty-U3 refusals remain unchanged.
-Disk: Last read 8600858624 available bytes, 8.01 GiB; cap4 conservatively. No ended clean non-KEEP Runtime worktree is eligible. Guarded sweep3 removed zero; compact packed zero and gzipped two old logs. Historical refused targets remain stopped; 15GB target not reached.
-
-live 2 queued or running / cap 4; ready-undispatched 0. HARD Sol2240 owns measured fresh-input assembly repair; Luna2238 resumes main diagnostics after host-path preflight failure. Matrix2228 done. Rehearsal yields to critical timing and diagnostic service priority.
-Pass 2026-10-24T22:13:47Z: Read PLAN/common, new inbox through577361bytes, header and owner boards. App asset/placement source repairs accepted HOME with browser proof still open. Runtime732 product blobs remain released and actual home clean. Consumed2207 harness completion without a redundant review under D56; private92+TS inventory remains PENDING tuple and uninstalled. Published exact author report. No new source, duplicate original or denied route.
-
-Intake 2026-10-24T22:15:49Z: Orchestrator fresh Agent08e6b90511 packaging overlap became owned row F-final-upstream-installer and dispatched Luna2216 immediately. Gating source is frozen. No upstream fetch or merge requested.
-
-Intake 2026-10-24T22:20:13Z: Orchestrator22:20 two independent final-path requests became rows and were dispatched in this pass. Rehearsal may build through existing route; it earns no final delivery or gate credit. Matrix author uses no-body stubs.
-
-Pass 2026-10-24T22:20:53Z: consumed owner22:24 spare venue priority and2216 PASS. Exact author report published. App normal adoption2212 is active after successful stale-pin recycle; Agent adoption/carrier2209 active. Source732 released. Reserve two main slots; no duplicate App body or finaltour on main. Inbox through578666bytes.
-
-Pass 2026-10-24T22:27:24Z: owner22:27 distinct ten-note critical source dispatched immediately. Agent/App adoption receipts consumed. Both2219 returns consumed: matrix first return dispatched; rehearsal input/disk block retained, no artifact claimed. Disk restored8592900096bytes after harness cleanup. Source732 unchanged. Inbox through584855bytes.
-
-Pass 2026-10-24T22:30:29Z: original sample2227 completed and durably retained, then checkpoint-stopped only to deliver owner22:31 expanded shape scope. New Sol2231 resumes samebranch without repeatingoriginal. MainCPU43.858/wall46.220 is sample fact, no lock/causal verdict inferred. App7131 NO-GO and explicit spare-venue selfclear consumed. Inbox through586973bytes.
-
-Pass 2026-10-24T22:33:42Z: delayed App2221 ACCEPT supersedes earlier spare-venue selfclear. Latest Appboard releases mainfour now; dispatchedLuna2232 on exactbceb with exclusivecaseallocation and unchangedprotectedbodies. Finaltour staysApp. Matrix2228 PASS published, remaining finaltuple/P4registration/render inputs explicit. Inbox through589672bytes.
-
-Intake 2026-10-24T22:35:20Z: App2225 explicitfirstsignal release consumed; firstmainparent recipe preparing withgenuinefixedtuple receipts. Sol2231 sourcefact contradicts sharedmulticommand premise: retainedD78onepatch11reads accepts~0.33s locally, historicalrealmunavailable. Peerfacts sent, nooriginalclosure. Inbox through591594bytes.
-
-Pass 2026-10-24T22:39:23Z: consumed2232 ordinarymissingNodepreflight127;zerooriginals. ImmediatelydispatchedLuna2238 firstreturn onretainedbranch, onlysupportedmainhostprofile pathadaptation, no source/payload/budget/guardchange. ExplicitApp2229plan and7131safe-facts2230 consumed. Sol2231continuesuniqueproductsource. Inbox through595814bytes.
-
-Pass 2026-10-24T22:41:49Z: Sol2231 bounded measurement handback consumed169controlsPASS, nosourcefix. Exactreport published; immediatelydispatchedHARDSol2240 onidentifiedfresh-inputassembly seam1072vs8, no moreoriginalprofile. RetainedD78onecommandlocal0.315s doesnotproveAppcause; two/threeextensionsstrictrefused. ActualApp7131dumpattributionunknown. No new source orsecuritycreditclaimed.
-
-Pass 2026-10-24T22:42:57Z: exactAgent2230/home7c48fourR2receipt consumed, staleblocked:agentrowmerged andBlocker cleared immediately. Allfouroriginal45s predicates preserved; tennoteonlyremainingAgentscope. App5083read/responseprogress closes internalreadwait atits scope, newdigestfindingownedApp2233row. Original7131element remainsRuntime-owned doing, no staleAppinputhold. Inbox through598723bytes.
+live 2 queued or running / cap 2; ready-undispatched 1 capacity held. HARD Sol2240 owns history authorization assembly; Luna2250 owns main setup and four diagnostics. Matrix finite join is the one ready capacity-held row; no unowned critical row.
+Pass 2026-10-24T22:50:16Z: Read PLAN/common, header through H49, inbox through605296 bytes, App/Agent actual boards and dispatcher returns. Consumed2238 setup result and dispatched2250 immediately. Published exact report and peer2250. Actual Agent7c48 four R2 closure retained; no stale Agent input blocker. No duplicate original, product edits by manager or denied route.
