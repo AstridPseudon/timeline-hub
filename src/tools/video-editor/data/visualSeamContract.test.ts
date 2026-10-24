@@ -48,8 +48,8 @@ describe('visual seam contract', () => {
 
   it('uses authored continuityTracks for gap and overlap checks when no analysis override is supplied', () => {
     const base = config([
-      media('picture-a', 0, 1, 'a'),
-      media('picture-b', 2, 1, 'b'),
+      media('picture-a', 0, 1, 'a', {label: 'Opening'}),
+      media('picture-b', 2, 1, 'b', {label: 'Closing'}),
       {id: 'plate-a', clipType: 'am-footage', track: 'plate', at: 0, hold: 2},
       {id: 'plate-b', clipType: 'am-footage', track: 'plate', at: 1, hold: 2},
     ], {visualSeamContract: {pictureTracks: ['plate'], continuityTracks: ['video']}});
@@ -58,7 +58,7 @@ describe('visual seam contract', () => {
     const report = analyzeVisualSeams(base);
 
     expect(report.structuralIssues).toHaveLength(1);
-    expect(report.structuralIssues[0]).toContain("0:02.0 · Gap on Picture between 'picture-a' and 'picture-b'");
+    expect(report.structuralIssues[0]).toContain("0:02.0 · Gap on Picture between 'Opening' and 'Closing'");
   });
 
   it('uses frame ownership rather than float seconds for a contiguous hard cut', () => {

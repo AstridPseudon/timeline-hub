@@ -41,8 +41,8 @@ print(json.dumps(r))`], {cwd: runtime, input: JSON.stringify(config), encoding: 
 function config(): ResolvedTimelineConfig {
   return {output: {resolution: '1920x1080', fps: 30, file: 'intent.mp4'},
     tracks: [{id: 'v', kind: 'visual', label: 'Picture'}], registry: {}, clips: [
-      {id: 'a', clipType: 'media', track: 'v', at: 0, hold: 1},
-      {id: 'b', clipType: 'media', track: 'v', at: 1, hold: 1, entrance: {type: 'fade', duration: 0.5}},
+      {id: 'a', clipType: 'media', asset: 'asset-a', track: 'v', at: 0, hold: 1},
+      {id: 'b', clipType: 'media', asset: 'asset-b', track: 'v', at: 1, hold: 1, entrance: {type: 'fade', duration: 0.5}},
     ]};
 }
 describe('portable Astrid intent admitted by authoritative Runtime', () => {
@@ -63,7 +63,7 @@ describe('portable Astrid intent admitted by authoritative Runtime', () => {
       {id: 'source', clipType: 'media', track: 'source', at: 0, hold: 2},
       {id: 'audio-clip', clipType: 'media', track: 'audio', at: 0, hold: 2},
     );
-    base.app = {visualSeamContract: {continuityTracks: ['v']}};
+    base.app = {visualSeamContract: {continuityTracks: ['v'], pictureTracks: ['plate']}};
 
     const owners = visualSeamOwners(base);
     const primary = owners.filter((owner) => owner.primary).map((owner) => owner.clipId).sort();
@@ -81,10 +81,30 @@ describe('portable Astrid intent admitted by authoritative Runtime', () => {
     expect(portableVisualSeamIntent(base, 30, 'synchronized').context).toEqual(runtimeBoundary.canonicalContext);
   });
 
+  it('drops opaque activation for an overlay effect but keeps its known entrance cue', () => {
+    const base = config();
+    base.tracks.push({id: 'fx', kind: 'visual', label: 'Effects'});
+    base.clips.push({id: 'overlay-effect', clipType: 'custom-process', track: 'fx', at: 1, hold: 1,
+      entrance: {type: 'fade', duration: 0.5}, elementRef: {id: 'overlay-effect', kind: 'effect', revision: 'r1'}});
+
+    const editor = analyzeVisualSeams(base);
+    const authoritative = report(base);
+    const cueIds = (rows: readonly BoundaryCue[]) => rows.map(cueIdentity).sort();
+    expect(cueIds(editor.cues)).toEqual(cueIds(authoritative.cues));
+    expect(editor.cues).not.toContainEqual(expect.objectContaining({kind: 'activation', path: expect.arrayContaining(['overlay-effect'])}));
+    expect(authoritative.cues).not.toContainEqual(expect.objectContaining({kind: 'activation', path: expect.arrayContaining(['overlay-effect'])}));
+    expect(editor.cues).toContainEqual(expect.objectContaining({kind: 'motion-start', id: 'entrance', path: expect.arrayContaining(['overlay-effect'])}));
+    expect(authoritative.cues).toContainEqual(expect.objectContaining({kind: 'motion-start', id: 'entrance', path: expect.arrayContaining(['overlay-effect'])}));
+
+    const acknowledged = withVisualSeamIntent(base, 30, 'synchronized');
+    expect(analyzeVisualSeams(acknowledged, {enforceIntent: true}).blocked).toBe(false);
+    expect(report(acknowledged).blocked).toBe(false);
+  });
+
   it('clips occurrence timeline effects at the nearest frame for fractional-second bounds', () => {
     const base = config();
     base.clips = [{
-      id: 'occ:child', clipType: 'media', track: 'v', at: 0, hold: 0.081,
+      id: 'occ:child', clipType: 'media', asset: 'child-asset', track: 'v', at: 0, hold: 0.081,
       app: {
         canonical: {parentDocumentId: 'main', occurrenceId: 'occ'},
         canonicalTiming: {occurrenceStartMs: 0, occurrenceDurationMs: 81},
@@ -115,7 +135,7 @@ describe('portable Astrid intent admitted by authoritative Runtime', () => {
       keyframes: {x: [{time: 0, value: 0, interpolation: 'linear'}, {time: 0.5, value: 10, interpolation: 'linear'}]}});
     expect(report(extra).blocked).toBe(true);
     const otherBoundary = structuredClone(acknowledged);
-    otherBoundary.clips.push({id: 'c', clipType: 'media', track: 'v', at: 2, hold: 1, entrance: {type: 'fade', duration: 0.5}});
+    otherBoundary.clips.push({id: 'c', clipType: 'media', asset: 'asset-c', track: 'v', at: 2, hold: 1, entrance: {type: 'fade', duration: 0.5}});
     expect(report(otherBoundary).boundaries).toEqual(expect.arrayContaining([
       expect.objectContaining({frame: 30, requiresIntent: false}),
       expect.objectContaining({frame: 60, requiresIntent: true}),
@@ -190,13 +210,14 @@ describe('Astra round-three occurrence lane owners', () => {
     'binds the same two-occurrence context and admits the same intent: %s', mode => {
       const base = config();
       base.tracks.push({id: 'secondary', kind: 'visual', label: 'Secondary picture'});
+      base.app = {visualSeamContract: {continuityTracks: ['v']}};
       const outgoing = {...base.clips[0]!};
       const incoming = {...base.clips[1]!, at: 0};
-      const spanning = {id: 'spanning', track: 'secondary', clipType: 'media' as const, at: 0, hold: 1,
+      const spanning = {id: 'spanning', track: 'secondary', clipType: 'media' as const, asset: 'spanning-asset', at: 0, hold: 1,
         ...(mode === 'cue-contributor' ? {exit: {type: 'fade', durationFrames: 2}} : {})};
       const outgoingClips: ResolvedTimelineConfig['clips'] = [outgoing, spanning];
       const incomingClips: ResolvedTimelineConfig['clips'] = [incoming, ...(mode === 'secondary-cut'
-        ? [{id: 'secondary-in', track: 'secondary', clipType: 'media' as const, at: 0, hold: 1}] : [])];
+        ? [{id: 'secondary-in', track: 'secondary', clipType: 'media' as const, asset: 'secondary-in-asset', at: 0, hold: 1}] : [])];
       base.clips = [outgoingClips, incomingClips].flatMap((clips, index) => clips.map(c => ({...c,
         id: `o-${index}:${c.id}`, at: index + c.at,
         app: {canonical: {parentDocumentId: 'main', occurrenceId: `o-${index}`, sourceClipId: c.id}},
@@ -287,8 +308,8 @@ describe('Astra round-two cross-consumer regressions', () => {
     const effect = {...vector.context.clip, assetEntry: {file: vector.context.source, type: 'video'}};
     base.registry = {[effect.asset]: effect.assetEntry};
     base.clips = [
-      {id: 'a', clipType: 'media', track: 'v', at: 0, hold: 1259 / 30},
-      {id: 'b', clipType: 'media', track: 'v', at: 1259 / 30, hold: 20},
+      {id: 'a', clipType: 'media', asset: 'asset-a', track: 'v', at: 0, hold: 1259 / 30},
+      {id: 'b', clipType: 'media', asset: 'asset-b', track: 'v', at: 1259 / 30, hold: 20},
       effect,
     ];
     const metadataOnly = new Proxy(base, {get(target, key, receiver) {
@@ -351,7 +372,7 @@ describe('Astra round-two cross-consumer regressions', () => {
   it('excludes a spanning cue-free secondary picture lane from the bound context', () => {
     const base = config();
     base.tracks.push({id: 'secondary', kind: 'visual', label: 'Secondary picture'});
-    base.clips.push({id: 'spanning', track: 'secondary', clipType: 'media', at: 0, hold: 4});
+    base.clips.push({id: 'spanning', track: 'secondary', clipType: 'media', asset: 'spanning-asset', at: 0, hold: 4});
     const authored = withVisualSeamIntent(base, 30, 'synchronized');
     const intent = portableVisualSeamIntent(base, 30, 'synchronized');
     expect(intent.context).toEqual(report(base).boundaries[0]?.canonicalContext);
@@ -381,14 +402,15 @@ describe('Astra round-two cross-consumer regressions', () => {
       const base = config();
       base.clips = [];
       base.tracks.push({id: 'secondary', kind: 'visual', label: 'Secondary picture'});
+      base.app = {visualSeamContract: {continuityTracks: ['v']}};
       const outgoing = {tracks: base.tracks, clips: [
-        {id: 'a', clipType: 'media', track: 'v', at: 0, hold: 1},
-        {id: 'spanning', clipType: 'media', track: 'secondary', at: 0, hold: 1,
+        {id: 'a', clipType: 'media', asset: 'asset-a', track: 'v', at: 0, hold: 1},
+        {id: 'spanning', clipType: 'media', asset: 'spanning-asset', track: 'secondary', at: 0, hold: 1,
           ...(mode === 'cue-contributor' ? {exit: {type: 'fade', durationFrames: 2}} : {})},
       ]};
       const incoming = {tracks: base.tracks, clips: [
-        {id: 'b', clipType: 'media', track: 'v', at: 0, hold: 1, entrance: {type: 'fade', duration: 0.5}},
-        ...(mode === 'lane-boundary' ? [{id: 'secondary-in', clipType: 'media', track: 'secondary', at: 0, hold: 1}] : []),
+        {id: 'b', clipType: 'media', asset: 'asset-b', track: 'v', at: 0, hold: 1, entrance: {type: 'fade', duration: 0.5}},
+        ...(mode === 'lane-boundary' ? [{id: 'secondary-in', clipType: 'media', asset: 'secondary-in-asset', track: 'secondary', at: 0, hold: 1}] : []),
       ]};
       const children = [outgoing, incoming];
       const revisions = graph.occurrences.map((o, i) => {
@@ -435,6 +457,7 @@ describe('Astra round-two cross-consumer regressions', () => {
     const base = config();
     delete base.clips[1]!.entrance;
     base.clips.forEach(c => { c.clipType = 'haus.astrid.liveScene'; });
+    base.app = {visualSeamContract: {pictureTracks: ['v']}};
     const editor = analyzeVisualSeams(base, {enforceIntent: true});
     const authoritative = report(base);
     expect(editor.blocked).toBe(false);
@@ -460,7 +483,7 @@ describe('Astra round-two cross-consumer regressions', () => {
       expect(analyzeVisualSeams(wrong, {enforceIntent: true}).blocked).toBe(true);
       expect(report(wrong).blocked).toBe(true);
     }
-    paused.clips.push({id: 'c', track: 'v', clipType: 'media', at: 4, hold: 1});
+    paused.clips.push({id: 'c', track: 'v', clipType: 'media', asset: 'asset-c', at: 4, hold: 1});
     expect(analyzeVisualSeams(paused).structuralIssues).toHaveLength(1);
     expect(report(paused).structuralIssues).toEqual([expect.objectContaining({code: 'boundary/gap', frame: 120})]);
   });
@@ -475,8 +498,8 @@ describe('Astra round-two cross-consumer regressions', () => {
     const local = {id: 'local', type: 'animated-media-transform', params: {keyframes}};
     const timelineEffect = {id: 'child', type: 'animated-media-transform', at: 1, hold: 1, params: {keyframes}};
     const childTimeline = {tracks: [{id: 'v', kind: 'visual'}], clips: [
-      {id: 'a', clipType: 'media', track: 'v', at: 0, hold: 1, ...shape, effects: [local]},
-      {id: 'b', clipType: 'media', track: 'v', at: 1, hold: 1},
+      {id: 'a', clipType: 'media', asset: 'child-a', track: 'v', at: 0, hold: 1, ...shape, effects: [local]},
+      {id: 'b', clipType: 'media', asset: 'child-b', track: 'v', at: 1, hold: 1},
     ], effects: [timelineEffect]};
     // Canonical wire shapes are intentionally broader than the editor's legacy animation types.
     child.internal_timeline_revision.timeline = childTimeline as unknown as typeof child.internal_timeline_revision.timeline;

@@ -1,7 +1,8 @@
-import type {ResolvedTimelineConfig} from '@/tools/video-editor/types/index.ts';
+import type {ResolvedTimelineClip, ResolvedTimelineConfig} from '@/tools/video-editor/types/index.ts';
 import {boundaryReport, type BoundaryDisclosure} from '../../../../vendor/astrid-browser/astrid/packs/local/rendering/elements/boundary';
 import {cueIdentity, intentContext, relevantIntentOwners, opaqueActivationCues, type IntentOwner, type SeamIntent} from '../../../../vendor/astrid-browser/astrid/packs/local/rendering/elements/seam-intent';
 import {timelineClipDurationMs} from './shotCompositionTiming.ts';
+import {coversFrame} from './visualSeamCoverage.ts';
 
 type Json = Record<string, unknown>;
 const record = (v: unknown): Json => v && typeof v === 'object' && !Array.isArray(v) ? v as Json : {};
@@ -94,6 +95,23 @@ export function visualSeamOwners(config: ResolvedTimelineConfig, metadataOnly = 
   }
   for (const cue of opaqueActivationCues(owners, frames)) {
     owners.find(o => o.path === cue.path)!.disclosure.cues.push(cue);
+  }
+  // The persisted portable intent and diagnostic analysis must see the same
+  // cues: an opaque overlay's start is not a picture-change risk.
+  for (const owner of owners) {
+    // Clip-local effects intentionally inherit their host clip's coverage, as
+    // Runtime discloses them on the host span. Occurrence-wide effects reuse
+    // that host clipId but have independent track/geometry and must classify
+    // their own owner instead.
+    const host = owner.path.includes('clip')
+      ? config.clips.find(clip => clip.id === owner.clipId)
+      : undefined;
+    const ownerCoversFrame = host
+      ? coversFrame(host, tracks.get(host.track), config)
+      : coversFrame(owner.clip as ResolvedTimelineClip, tracks.get(String(owner.clip.track ?? '')), config);
+    if (owner.disclosure.opaque.length > 0 && !ownerCoversFrame) {
+      owner.disclosure = {...owner.disclosure, cues: owner.disclosure.cues.filter(cue => cue.kind !== 'activation')};
+    }
   }
   return owners;
 }

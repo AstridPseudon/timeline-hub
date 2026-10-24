@@ -41,6 +41,8 @@ export class BridgeRouteError extends Error {
   readonly code: string | undefined;
   readonly category: BridgeErrorCategory | 'unknown';
   readonly detail: string | undefined;
+  /** The Runtime's own next step (`details.next_action`), when it names one. */
+  readonly nextAction: string | undefined;
   readonly envelope: z.infer<typeof bridgeErrorEnvelopeSchema> | null;
 
   constructor(
@@ -48,15 +50,27 @@ export class BridgeRouteError extends Error {
     status: number,
     envelope: z.infer<typeof bridgeErrorEnvelopeSchema> | null,
   ) {
-    const description = envelope?.detail ?? `${status} ${reasonPhrase(status)}`;
+    const nextAction = readNextAction(envelope);
+    const reason = envelope?.detail ?? `${status} ${reasonPhrase(status)}`;
+    const description = nextAction ? `${reason} Next: ${nextAction}` : reason;
     super(`Astrid bridge ${action} failed: ${description}`);
     this.name = 'BridgeRouteError';
     this.status = status;
     this.code = envelope?.error;
     this.detail = envelope?.detail;
+    this.nextAction = nextAction;
     this.envelope = envelope;
     this.category = classifyRouteError(status, this.code);
   }
+}
+
+/** The Runtime's `details.next_action` string, trimmed; `undefined` when absent or blank. */
+function readNextAction(envelope: z.infer<typeof bridgeErrorEnvelopeSchema> | null): string | undefined {
+  const details: unknown = envelope?.details;
+  if (typeof details !== 'object' || details === null) return undefined;
+  const next: unknown = (details as { next_action?: unknown }).next_action;
+  if (typeof next !== 'string') return undefined;
+  return next.trim() || undefined;
 }
 
 /** Network failure, timeout, or an unparseable body — never a route answer. */
@@ -138,6 +152,9 @@ export function classifyRouteError(status: number, code: string | undefined): Br
   }
   // The Runtime's 422 is a request-validation failure (`validation_error`), not an unavailable capability.
   if (code === 'validation_error') return 'invalid_body';
+  // The Runtime's CapabilityUnavailableError is HTTP 409 with code `unavailable`: a
+  // capability that is not ready, not a stale version, so it must not read as a conflict.
+  if (code === 'unavailable') return 'capability_unavailable';
   if (status === 400 || status === 413) return 'invalid_body';
   if (status === 404) return 'not_found';
   if (status === 403 || status === 409) return 'conflict';
