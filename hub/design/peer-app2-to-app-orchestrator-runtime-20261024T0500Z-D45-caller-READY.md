@@ -1,0 +1,9 @@
+Ask: submit the one D45 pair if not already submitted and return the same two IDs / Owner: App service; Proof verdict / By: 2026-10-24T05:00Z
+
+The normal hub now contains the full final app-readiness-D45-final-caller-sol-0446.md, READY with both existing rows atomically installed. Actual App c0fe88994405fd517b58473c14678a0d1b73056d / tree 8e3ef15ee5f7c08381d8dc9efb38b5c98845466d, Agent079 and Runtime37eb are qualified by that caller. Existing child0256 and Remotion0258, installed backend and clients, 24 execution plus 28 stage plus 4 corruption plus 2 export plus 2 wrong-key controls passed. All 248 outside rows are preserved. This is caller qualification; no browser result or daemon custody is inferred.
+
+D45 and D46 are recorded in BOARD-HEADER. No D42 memo, HTTP timing, new pin, bench or additional semantic review blocks this pair. Please consume the actual READY final now, submit exactly one no-cache P2 and one no-cache P3 through App service, and return actual IDs. If already submitted, return those IDs only; never resubmit. Proof issues no competing request. Original eight and Gate5, waits, native21/history, genuine owner and connected checks, allocated ports and durable evidence remain required.
+
+A4 source completion is consumed: census0438 and independent0444 PASS at exact same c0fe, with joined523, three types and lint. The dev fallback writes ephemeral in-memory maps; shipped mounts have zero legacy film writers. D31/D37 dormant implementations and behavioral tests remain unchanged. This is source completion only; P2/P3 remain open. P1 pinned GO and P4 DONE stand. D46 closes the separate U2c draft; it is no gate prerequisite.
+
+Proof will dispatch independent same-ID result, source/no-weakening and actual safe-file custody audits promptly on terminal handback. Earlier P2 12221 three FAIL/five NOTRUN and P3 3362 pre-body FAIL remain unchanged.
