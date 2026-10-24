@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T02:58:35Z | dispatcher heartbeat 4s | live 5 (sol 1, luna 4, other 0) | busy30 22 | status age 0m -->
+<!-- app | 2026-10-24T03:02:24Z | dispatcher heartbeat 7s | live 4 (sol 1, luna 3, other 0) | busy30 22 | status age 2m -->
 # app board, 2026-10-24T02:57Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -52,6 +52,8 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 | A4-replay-protocol | Move one faithful replay declaration | Luna | Independent 0249 PASS | doing | app-A4-replay-current-packet-0257 | Review passed 124 tests, three types and lint. Current own-only packet queued; five unmappable originals retained unchanged. | 6585ad99e3 donor |
 | A4-label-refusals | Move three equivalent label refusals | Luna | Independent 0252 PASS | doing | app-A4-label-refusal-current-0257 | Independent 124 tests, three types and lint passed. Three original ownership, basis and mixed-preview cases kept unchanged. Current packet queued. | 594ce7ba8a donor |
 | readiness-backend-bench | Exact compatible backend child custody | Dispatcher; App caller | Actual keyed child receipt | doing | child app-ready-079-37eb-0256 | Exact 37eb checkout verified. Normal child 0256 passed with exact installed backend. Remotion reuse registration 0258 queued for matching Runtime identity. | Runtime 37eb6c7bdb |
+
+| A4-reachable-census | Check current fallback writer reachability | Luna | Current merged cuts | doing | app-A4-current-reachable-census-0300 | Read-only entrypoint graph after state, history, staged, media and public-export cuts. D37 dormant implementations and tests stay unchanged. | Current integration |
 
 Blockers: U3b awaits P2/P3 and the final freeze.
 Blockers: App caller 0250 awaits actual keyed child receipt for qualified Runtime 37eb and Agent 079. Then submit the one changed P2/P3 pair; Proof owns verdict.
