@@ -233,11 +233,9 @@ def historical_sheet_film(tmp_path, request):
             bundle, 'occ', 'shot', name='Opening', track='picture', on=0, duration=10))
         bundle = execute(bundle, [calls[-1]]).bundle
         if internal is not None:
-            calls.extend([
-                capture_track_create(bundle, 'occurrence:occ', row)
-                for row in internal['tracks']
-            ])
-            bundle = execute(bundle, calls[-2:]).bundle
+            for row in internal['tracks']:
+                calls.append(capture_track_create(bundle, 'occurrence:occ', row))
+                bundle = execute(bundle, [calls[-1]]).bundle
             video, title = internal['clips']
             changes = [
                 {'op': 'set', 'ref': 'parent', 'path': ['registry', 'assets', 'source'],
@@ -245,7 +243,7 @@ def historical_sheet_film(tmp_path, request):
                 {'op': 'set', 'ref': 'parent', 'path': ['org.example/data'],
                  'before': ABSENT, 'value': {'null': None}},
                 {'op': 'set', 'ref': 'internal:film', 'path': ['registry', 'assets', 'source'],
-                 'before': present({}), 'value': copy.deepcopy(payload['registry']['assets']['source'])},
+                 'before': ABSENT, 'value': copy.deepcopy(payload['registry']['assets']['source'])},
                 {'op': 'set', 'ref': 'internal:film', 'path': ['clips'],
                  'before': present([]), 'value': [copy.deepcopy(video), copy.deepcopy(title)]},
             ]
