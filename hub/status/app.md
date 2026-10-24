@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T09:31:13Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 2m -->
-# app board, 2026-10-24T09:29Z
+<!-- app | 2026-10-24T09:34:16Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 3m -->
+# app board, 2026-10-24T09:32Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -42,7 +42,7 @@
 | A3-popup-diagnostic | Retain safe refusal stage | Luna; independent review | Integrated0826 PASS | merged | Reviews0816/0818; integrated0826 | HOME182c passes46 plus7 semantic and22 controls, three types and lint. Safe diagnostics only; placement repair separate. | 209723 /182c |
 | A3-popup-full-caller | Qualify complete authoritative popup reply | Sol; independent Luna | Exact candidate d99 | review | Sol0846; review resume0928 | Author66 of67 passes. Review0908 ended without a report; fresh exact-branch Luna0928 finishes fixture classification and missing acceptance. | d99fd1a0bc held |
 | A3-popup-authority-path | Investigate full reply boundary | Independent Luna | Investigation0846 complete | merged | app-A3-popup-authority-path-0846 | Real mounted path reaches generated POST. Prior synthetic reply is incomplete; source-derived provider recipe published for sole Sol0846. No live claim. | Report only |
-| A3-popup-rebase | Classify pure provider rebase refusal | Agent R1; App independent review | Exact App d99 fixture | blocked:agent | Peer0905; review0928; owner ask0924 | Agent0916 has no row yet. App review is progressing; fixture versus provider defect remains open. No failure proven on079. | App d99fd1a0bc |
+| A3-popup-rebase | Classify pure provider rebase refusal | Agent Luna; App Luna | Exact App d99 fixture | doing | Agent0922; App0928 | Agent row now active, due09:45. Fixture versus provider defect remains open; no failure proven on079. | App d99fd1a0bc |
 | P2-tour-oracles | Strict transition and parent helpers | Proof Luna; independent review | Integrated 0800 PASS | merged | Proof 0737/0742; App proof 0800 | Exact reviewed paths on HOME28b0 passed 17 joined controls, three types, lint/list. Original gesture outcomes remain open. | 0a22d85455 / 59cb263629 |
 
 | P2-element-handler | Check retained completion attribution | Luna; independent Luna | Independent0814 PASS | merged | Author0808; review0814 | Actual30-file inventory has no matching handler or receipt link. One POST remains unresolved; outcome UNKNOWN. No new collection. | Report only |
@@ -52,7 +52,7 @@ Integration: HOME82cb5c0005df7abe0fcb8673f7be192a6c9e9183 is unchanged. P3 integ
 Blockers: App — popup accepted proof passes; merged pure-provider binding refusal is under App and Agent classification. Historical element outcome remains unknown.
 Blockers: App — popup cumulative0928 must resolve the retained merged fixture failure before source merge, final joined proof and final caller binding. P3 integrated0900 and caller preparation0902 are complete.
 Blockers: Freeze — App U3b home waits header P2/P3 GO, then D39 adoption and actual final tuple qualification. Runtime coordinates FREEZE.
-Next ready: Popup cumulative0928 is queued; Agent classification requested0905. P3 integrated0900 and caller cumulative0902 PASS are published. After popup PASS, merge exact source, qualify joined head, bind final caller, then use conditional release0850 once.
+Next ready: Popup cumulative0928 and Agent classification0922 are active. P3 integrated0900 and caller cumulative0902 PASS are published. After popup PASS, merge exact source, qualify joined head, bind final caller, then use conditional release0850 once.
 
 Later: Final P1–P5 run on App service with Proof verdict after final tuple qualification, then D49 full suites and Farm F-final/ZIP. No duplicate farm or Proof run. D47 memo/capsule stays deferred and held unmerged. D46 U2c draft stays closed. D14/D23 deferred relational timing cases retain their original assertions and failures.
 
@@ -66,4 +66,4 @@ Disk: Sweep3 removed zero directories; about11.4 GB free. No eligible finished c
 
 Evidence: [joined 690](../../design/app-A2-A3-corrected-integrated-0629.md), [real provider integrated](../../design/app-A3-provider-integrated-0724.md), [actual predecessor review](../../design/app-P3-parent-trace-review-0720.md), [element clock](../../design/app-P2-element-clock-review-0724.md), [element error review](../../design/app-P2-element-error-review-0738.md), [popup cause review](../../design/app-P2-popup-cause-review-0745.md), [lifecycle review](../../design/app-P2-P3-lifecycle-review-0741.md), [IMAGE](../../design/agt-A4-image-result-review-0636.md).
 
-Pass 2026-10-24T09:29Z: INBOX consumed through1417059 bytes, including09:27 orphan notice. Review0908 ended without report; exact-branch Luna0928 queued immediately. Header unchanged. Agent still owes classification owner from peer0905/0924. Completed P3/caller qualifications retain their scope; no product merge or original run.
+Pass 2026-10-24T09:32Z: INBOX consumed through1417771 bytes, including09:30 minimum45min timeout correction. Fresh reviewer0928 was already launched at09:28 with25min and is progressing; all subsequent test/review dispatches use at least45min. Both review refs equal exact d99, so no WIP/source mismatch exists. Agent0922 now owns the requested classification; stale Agent ownership wait cleared. App0928 reuses completed static checks and runs the sole missing focused test. No product merge or original run.
