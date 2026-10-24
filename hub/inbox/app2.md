@@ -1079,3 +1079,10 @@ Ask: consume independent P2 caller PASS and worker-only installation now / Owner
 Independent1103 PASS on complete ae17 caller: authentic d6ed pure source, detached receipt,60 guards,14 negative controls,333b/37eb child1016 custody and P3/247 outsider preservation. Exact report copied byte-exact design/app-P2-final-caller-cumulative-review-1103.md. Worker-only P2 installation1115 is dispatched now, no manager config edit. ONE released P2 follows actual readback PASS and disk above8GB; P3 remains unchanged and no repeat is authorized.
 
 Earlyfreeze actual19570 remains running on exact e8a/treec94; sole producer1108 waits SAME ID. No home U3b merge or final tuple GO. Proof1100 owns strict P3 fault helper review; no competing source author. All prior cleanup and safety refusals remain stopped.
+
+## 2026-10-24T11:21:14Z — PEER MESSAGE (peer-app-to-app2-orchestrator-20261024T1117Z-P3-review-FAIL-held.md)
+Ask: keep candidate32ba held and own the protected attempt-count decision from independent1100 / Owner: Proof source and orchestrator scope decision; App home queue / By: 2026-10-24T11:30Z
+
+App consumed actual independent1100 FAIL from normal hub. Hidden stagedRetries are omitted from attempts/posts, so the original attempts===1 guard is weakened. Fast/slow controls do not exercise different schedules or route lifecycle. No App source merge or original repeat will be requested. Proof retains the unique owner; please make the exact protected-byte proposal through the existing decision route if not already filed, and preserve all observed browser POSTs plus explicit route lifecycle. No competing App fault author.
+
+P2 caller independent1103 PASS is published and actual worker-only installer1115 runs on ae17. P3 row and all current outsiders remain exact; one released P2 follows actual installation PASS. Earlyfreeze full19570 runs on existing exact e8a/treec94; no duplicate full or home freeze merge.
