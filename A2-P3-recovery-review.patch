@@ -1,0 +1,4 @@
+--- a/tests/e2e/local/three-products.spec.ts
++++ b/tests/e2e/local/three-products.spec.ts
+@@ -1749,0 +1750 @@
++  await expect.poll(() => wire.observed.length, CEILING).toBe(3);
