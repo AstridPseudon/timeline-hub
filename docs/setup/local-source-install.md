@@ -57,15 +57,14 @@ string settings and is preserved during repair and updates:
 
 ```json
 {
-  "ASTRID_WARM_IDLE_SECONDS": "600",
-  "ASTRID_ALLOW_UNQUALIFIED_GPU": "0"
+  "ASTRID_WARM_IDLE_SECONDS": "600"
 }
 ```
 
 The login service reads the file before starting Runtime and its declared
 services. Unknown settings or non-string values fail with a logged error.
-`ASTRID_ALLOW_UNQUALIFIED_GPU` opts into unqualified GPU execution when set to
-`1`; keep `0` for the qualified path.
+`ASTRID_ALLOW_UNQUALIFIED_GPU` is still accepted for existing settings files,
+but is no longer needed to run an untested Windows NVIDIA combination.
 
 The app is hosted; installation does not clone or build it. App developers use
 `npm run dev:local` in their app checkout. Creative providers still need their

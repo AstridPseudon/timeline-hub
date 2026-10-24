@@ -15,12 +15,10 @@ UI companion, and byte-identical original `source.json`.
 
 ## Windows with NVIDIA
 
-ComfyUI on Windows with NVIDIA is **not qualified yet**. GPU execution is
-unavailable until the host has a detected NVIDIA GPU and the tester explicitly
-sets `$env:ASTRID_ALLOW_UNQUALIFIED_GPU = "1"` in the environment that starts
-the pack host. Capability registration and settled results retain the
-unqualified label after opt-in. Import, inspect, edit and offline validation
-remain available without this GPU gate.
+ComfyUI on Windows with NVIDIA is untested, but runs by default. Please tell us
+how it went, including the GPU model and driver from `nvidia-smi`. For
+`vibecomfy.*`, Astrid's GPU detection is informational; the local server uses
+your own ComfyUI and its GPU.
 
 The candidate environment pins are in `environment.windows-nvidia.json` and
 `requirements.windows-nvidia.txt`. They select Python 3.12.10, PyTorch CUDA

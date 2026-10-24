@@ -6389,8 +6389,8 @@ class GenericPackHost:
                 status = "ready" if record.ready else "unavailable"
                 unavailable_reason = None if record.ready else _preflight_unavailable_reason(record)
                 gpu = record.preflight.get("gpu")
-                if isinstance(gpu, Mapping) and not gpu.get("qualified"):
-                    label = str(gpu["reason"])
+                if isinstance(gpu, Mapping) and (gpu.get("warning") or not gpu.get("qualified")):
+                    label = str(gpu.get("warning") or gpu["reason"])
                     unavailable_reason = (
                         label + " " + unavailable_reason
                         if unavailable_reason and unavailable_reason != label else label
@@ -10011,8 +10011,8 @@ class GenericPackHost:
                     f"is unavailable on this host: {renderer_selection['remotion_reason']}"
                 )
             gpu = record.preflight.get("gpu")
-            if isinstance(gpu, Mapping) and not gpu.get("qualified"):
-                failure_message += " " + str(gpu["reason"])
+            if isinstance(gpu, Mapping) and (gpu.get("warning") or not gpu.get("qualified")):
+                failure_message += " " + str(gpu.get("warning") or gpu["reason"])
             self._handoff_settlement_call(self.client.fail,
                 task_id,
                 lease_token,

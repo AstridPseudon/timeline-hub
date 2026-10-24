@@ -260,8 +260,8 @@ installer line again to restart the service.
    nvidia-smi
    ```
 
-   On macOS, open Activity Monitor and find the engine's `python` process instead. On Windows, if the GPU is not yet
-   qualified, set `ASTRID_ALLOW_UNQUALIFIED_GPU` to `"1"` in the service settings file before starting the task.
+   On macOS, open Activity Monitor and find the engine's `python` process instead. On Windows, untested NVIDIA
+   combinations run by default; the `ASTRID_ALLOW_UNQUALIFIED_GPU` setting is no longer needed.
 
 2. Run a short generation the way the kit's sender told you, for example by asking Astrid in chat.
 3. Run `nvidia-smi` again while it runs, and again right after it finishes.
@@ -276,8 +276,8 @@ installer line again to restart the service.
 
 - The memory is still held after 15 minutes of idle.
 - The engine stops while a task is still running.
-- Windows: after opting in for an unqualified GPU as described above, a task still refuses with "not qualified yet".
-  Report the GPU model and driver version from `nvidia-smi`.
+- Windows NVIDIA: the task runs, but the combination is untested. Report how it went, including the GPU model and
+  driver version from `nvidia-smi`. Wan2GP still requires a detected NVIDIA GPU and working driver.
 
 ## 5. Kill the Runtime, and it comes back
 
@@ -600,10 +600,9 @@ These are known. Report what you see, but don't stop testing for them.
 - Native Windows has never run end to end. Windows CI remains advisory until its full lane has run green on a
   real Windows runner. Linux tests exercise mocked Windows branches; they do not qualify the install line, the
   sign-in task, Chrome on Windows or GPUs.
-- GPU packs (Wan2GP, ComfyUI) say "not qualified yet" until a tester confirms them on a real NVIDIA computer. GPU
-  setup needs an engine checkout and is beyond this short installer run. To pass settings to the login service, use
-  the service environment file described in [Where things live](#where-things-live); shell profile changes do not
-  reach the service.
+- Windows NVIDIA combinations are untested and run by default; please report results with the GPU model and driver
+  from `nvidia-smi`. `ASTRID_ALLOW_UNQUALIFIED_GPU` is no longer needed (existing service settings may keep it).
+  Wan2GP still needs a detected NVIDIA GPU; VibeComfy's local server uses the user's own ComfyUI GPU.
 - The installer has not been run natively on Windows. Windows PowerShell 5.1 in particular remains unverified; if
   the line fails or its window closes, report the exact message and attach the install log.
 - Coming back after the Runtime is killed uses Task Scheduler's repeating sign-in trigger. It needs native confirmation.
