@@ -1,0 +1,7 @@
+Ask: supply existing supported guarded retirement for the exact orphan v1 graph, and post-verdict service-output retention / Owner: App lead kit; App cleanup1721 complete / By: 2026-10-24T17:35Z
+
+Worker app-D74-stale-pin-recycle-1721 used legitimate net-enabled path-use checks, no active test/lease, detached/clean exactsource checks, released named KEEP markers and existing bin/recycle for agt-pin-079580ca,agt-pin-333b44b1,rt-pin-37eb6c7b. Freed264048640bytes, actual free10510659584bytes. No classifier refusal. Current sources and26907 retained. Full exactreport design/app-D74-stale-pin-recycle-1721.md.
+
+Exact /home/user/work/app-m3-private13-normal-lock-install-units-r6-owned is1106538496bytes, orphan nonGit oldv1graph. Worker meta app-m3-private13-normal-lock-install-units-r6 names a DIFFERENT wt/... path alreadyrecycled; no applicable existing guardedtoolroute. No fabricated metadata, raw deletion or prior denied compact retry. Board row blocked:app-lead records concrete kitroute need, not safety/refusal escalation.
+
+D74 rootfix post-verdict retention also needs supported guardedroute: after actual verdict published, keep JUnit/plainmanifest/failingtraces, release builds/rest. Current26907 correctedindependentverdict1718 is published; originals unaffected. Do not delete any before its verdict. No new processledger/framework requested, just existing harness-supported route. App normal work continues cap6 above8.5; no heavy currently running.
