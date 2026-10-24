@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import io
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -53,6 +54,21 @@ def test_wc6_runner_guards_argv_helper_sink_budgets_and_retention(
         "missing",
     )
 
+    partial_sink = tmp_path / "partial.jsonl"
+    partial_sink.write_bytes(b'{"phase":"capture.start"}')
+    partial_output = io.BytesIO()
+    assert runner.retain_packet(partial_sink, 9, partial_output) == (9, "partial")
+    assert b'{"phase":"capture.start"}' in partial_output.getvalue()
+
+    oversize_sink = tmp_path / "oversize.jsonl"
+    oversize_sink.write_bytes(b"x" * (runner.MAX_PACKET_BYTES + 1))
+    oversize_output = io.BytesIO()
+    assert runner.retain_packet(oversize_sink, 0, oversize_output) == (
+        runner.MISSING_PACKET_EXIT,
+        "oversize",
+    )
+    assert b"WC6_COMPLETION_PACKET_OVERSIZE" in oversize_output.getvalue()
+
     packet = b'{"phase":"capture.end","selected":true}\n'
     sink.write_bytes(packet)
     retained = io.BytesIO()
@@ -62,3 +78,42 @@ def test_wc6_runner_guards_argv_helper_sink_budgets_and_retention(
     end = log.index(b"\nWC6_COMPLETION_PACKET_END", start)
     assert log[start : end + 1] == packet
     assert hashlib.sha256(packet).hexdigest().encode() in log
+
+
+def test_wc6_candidate_invocation_preserves_child_exit_and_packet_state(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    observed: dict[str, object] = {}
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("TMPDIR", str(tmp_path))
+    monkeypatch.setenv("ASTRID_RUNTIME_CHECKOUT", str(tmp_path))
+    monkeypatch.setattr(runner, "verify_pinned_sources", lambda *_: None)
+    monkeypatch.setattr(runner, "verify_helper", lambda helper, runner_dir: helper)
+    monkeypatch.setattr(runner, "verify_sink", lambda sink, tmpdir: sink)
+
+    def fake_run(command: list[str], **kwargs: object) -> SimpleNamespace:
+        observed["command"] = command
+        observed["cwd"] = kwargs["cwd"]
+        return SimpleNamespace(returncode=13)
+
+    monkeypatch.setattr(runner.subprocess, "run", fake_run)
+    retained: dict[str, object] = {}
+
+    def fake_retain(sink: Path, child_exit: int, output: io.BufferedWriter) -> tuple[int, str]:
+        retained["sink"] = sink
+        retained["child_exit"] = child_exit
+        output.write(b"WC6_COMPLETION_PACKET_BEGIN state=partial\n")
+        return child_exit, "partial"
+
+    monkeypatch.setattr(runner, "retain_packet", fake_retain)
+
+    assert runner.main([runner.ORIGINAL]) == 13
+    command = observed["command"]
+    assert isinstance(command, list)
+    assert command[-1] == runner.ORIGINAL
+    assert command[-4:-2] == ["-p", "wc6_completion_capture"]
+    assert observed["cwd"] == tmp_path
+    assert retained["child_exit"] == 13
+    assert retained["sink"] == tmp_path / f"wc6-completion-{runner.os.getpid()}.jsonl"
