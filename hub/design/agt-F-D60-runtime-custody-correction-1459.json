@@ -1,0 +1,111 @@
+{
+  "schema": "timeline.agent.d54a.runtime-custody-correction.v1",
+  "scope": "narrow correction to D54a terminal 1452 custody prose; no product or test change",
+  "terminal_service": {
+    "service_id": "agt-F-D60-baseline-amend-1336-full-upstream-final-9244377-1024135120-1621",
+    "request_time_utc": "2026-10-24T13:51:20Z",
+    "request": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-F-D60-baseline-amend-1336-full-upstream-final-9244377-1024135120-1621/request",
+    "request_sha256": "23415eb2b75ef107902d3c26754c7ad38a1b42d917bc37777de1f4a1a1da2961",
+    "external_lock": "external=runtime=becfe6db88b2cc034dba3fafa6c050117cdf2b06 app=d24ed69dcdbd464159a1b6db27403ce6a96be2e5 composition=635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "external_lock_sha256": "858b7a5e531b9aecba0f74cd934e737269012694b9747f9b622a6baf234009b3",
+    "runtime_origin": "/home/user/work/runtime",
+    "launch_runtime_head": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+    "launch_runtime_tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89",
+    "launch_runtime_status": "clean (asserted by retained preflight)",
+    "launch_agent_head": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "launch_agent_tree": "a81a8c7f262e4416dcdefc0720fd760e026d766b",
+    "launch_agent_parents": [
+      "39dda14913702e572197d511ad483ae0f20bf5b1",
+      "0d5d16af6f83d595144d21ea1cef2b5a468b9836"
+    ],
+    "ext_sha256": "858b7a5e531b9aecba0f74cd934e737269012694b9747f9b622a6baf234009b3",
+    "source_custody_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D60-baseline-terminal-1452/evidence/upstream-source-custody.json",
+    "source_custody_sha256": "6cd274292a4f08faba7cfea5fab300d5f4acfcfda71876ac22b885c9f81f6356",
+    "terminal_custody_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D60-baseline-terminal-1452/evidence/upstream-terminal-custody-9244377.json",
+    "terminal_custody_sha256": "e1988e547ee2c01edd31725b2cdf3f9523b91099905e489ecd0a7263c74874cc",
+    "junit_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D60-snapshot-return-1342/evidence/upstream-full-9244377.xml",
+    "junit_sha256": "2941565205663912985f766210bfead7db42264976fabee7dc899d03d4f4657f",
+    "observed_summary": {
+      "status": "fail",
+      "exit_code": 1,
+      "passed": 12396,
+      "failed": 91,
+      "errors": 14,
+      "skipped": 16,
+      "subtests": 566,
+      "duration_seconds": 3563.5
+    }
+  },
+  "preflight_boundary": {
+    "asserts_runtime_git_head": true,
+    "asserts_runtime_git_tree": true,
+    "asserts_runtime_clean_status": true,
+    "asserts_runtime_path_is_exact_origin": true,
+    "asserts_module_origins": [
+      "runtime_protocol.__file__ == /home/user/work/runtime/runtime_protocol/__init__.py",
+      "astrid.__file__ == service checkout /astrid/__init__.py",
+      "astrid_runtime_client.__file__ == service checkout /astrid_runtime_client/__init__.py",
+      "Agent schema module == service checkout /astrid/core/timeline/banodoco_schema.py",
+      "shared schema module == /home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py"
+    ],
+    "does_not_retain": [
+      "per-loaded-runtime-module hashes",
+      "an immutable Runtime snapshot or copied checkout",
+      "a lock holding /home/user/work/runtime at becfe for the pytest body",
+      "a post-import/runtime-version assertion in the pytest process"
+    ],
+    "process_boundary": "The retained command runs one Python -c preflight and then, after &&, execs a separate pytest Python invocation; its runtime checkout is the mutable external origin.",
+    "snapshot_fact": "The retained snap names the Agent service worktree /home/user/work/wt/agt-F-D60-baseline-amend-1336 and Agent tree a81a8c7f; it is not a Runtime snapshot.",
+    "corrected_interpretation": "source_and_runtime_tuple_retained is launch metadata and preflight evidence, not full-run Runtime isolation proof."
+  },
+  "runtime_checkout_transition": {
+    "current_origin": "/home/user/work/runtime",
+    "current_head": "e68cf231641db98a72805a586b51ab5c4fae2c16",
+    "current_tree": "a2cbedd185c7e576e20ed060d993deba17111b78",
+    "current_status": "clean",
+    "normal_timeline": [
+      "f69ad58139dc0026ceca814539386b0829493f96: 2026-10-24T13:44:08Z, parents becfe6db and d4f496ec, merge(runtime): complete U1d-final upstream refresh",
+      "60e7838d8b4735a41686f82fb081969e75363c0b: 2026-10-24T13:48:43Z, parent f69ad581, test(runtime): U1d-final restore visual seam FPS admission cases",
+      "service request: 2026-10-24T13:51:20Z, ext recorded Runtime becfe6db",
+      "e68cf231641db98a72805a586b51ab5c4fae2c16: 2026-10-24T13:55:42Z, parents becfe6db and 60e7838d, Merge tl/rt-U1d-tests-join-1346"
+    ],
+    "publication_correction": "Publish the terminal Runtime boundary as mutable external Runtime at /home/user/work/runtime: launch metadata was becfe/tree 7edc, while the normal checkout/merge later became e68/tree a2cb. Do not publish the whole result as isolated becfe execution."
+  },
+  "runtime_path_equivalence_becfe_to_e68": {
+    "byte_equivalent_runtime_consumer_and_wire_paths": {
+      "runtime_protocol/server.py": ["771fa8a1144238b924e9e71ffe9636c297eb6bed", "771fa8a1144238b924e9e71ffe9636c297eb6bed"],
+      "runtime_protocol/timeline_commit.py": ["044a82a3b2305b37833c5dd80c99d6a9f0f69848", "044a82a3b2305b37833c5dd80c99d6a9f0f69848"],
+      "runtime_protocol/timeline_commit_auth.py": ["979225ab8fdf7f6de1fcea4e7576b60b49b8b5f1", "979225ab8fdf7f6de1fcea4e7576b60b49b8b5f1"],
+      "runtime_protocol/timeline_commit_baseline.py": ["72f05edf5ec7e704d1229ca7fcb0802dc0369075", "72f05edf5ec7e704d1229ca7fcb0802dc0369075"],
+      "runtime_protocol/timeline_commit_execution.py": ["039f63d47ada5ce5f31d2570a0d9b317fe09d275", "039f63d47ada5ce5f31d2570a0d9b317fe09d275"],
+      "runtime_protocol/timeline_commit_inputs.py": ["6c3ed33bacfada65f37fb4b9bc4285653ce71794", "6c3ed33bacfada65f37fb4b9bc4285653ce71794"],
+      "runtime_protocol/timeline_commit_port.py": ["f53099bbb9daa8e034da8ae675ae1b368d097f5b", "f53099bbb9daa8e034da8ae675ae1b368d097f5b"],
+      "runtime_protocol/timeline_commit_producer.py": ["d2053829c147a9277bc23eed48ac2c82cd1f36de", "d2053829c147a9277bc23eed48ac2c82cd1f36de"],
+      "runtime_protocol/timeline_commit_producer_checkpoint.py": ["da5977dd9a560450a30ff03876393bf2d18b0fe3", "da5977dd9a560450a30ff03876393bf2d18b0fe3"],
+      "runtime_protocol/timeline_commit_provider.py": ["a05812e82ee2930f29e277f260f3329855378932", "a05812e82ee2930f29e277f260f3329855378932"],
+      "runtime_protocol/timeline_commit_store.py": ["970cef6525e76ca382ce24f8d1b5e1e9dd235b54", "970cef6525e76ca382ce24f8d1b5e1e9dd235b54"],
+      "runtime_protocol/timeline_commit_types.py": ["8cfbcc4147f71dbbaaae5749317bafbaac147a7f", "8cfbcc4147f71dbbaaae5749317bafbaac147a7f"],
+      "runtime_protocol/timeline_commit_validation.py": ["a50d811c4deecd99e2ff5979950c82838a1126bf", "a50d811c4deecd99e2ff5979950c82838a1126bf"],
+      "runtime_protocol/auth.py": ["f0422e9aaf7476ab2c8b02d9f38c2075614ce552", "f0422e9aaf7476ab2c8b02d9f38c2075614ce552"],
+      "contract/openapi/workspace-v1.yaml": ["83a3311713a353ef372a552b6bdf1c6221cf02e5", "83a3311713a353ef372a552b6bdf1c6221cf02e5"],
+      "contract/schemas/timeline-commit.json": ["056ae0446caecf143fb933088d368e1c5fccc67", "056ae0446caecf143fb933088d368e1c5fccc67"],
+      "runtime_protocol/schemas/timeline-commit-bundle.json": ["252f71f0acdc94db3a2b0dabec70b249877fb131", "252f71f0acdc94db3a2b0dabec70b249877fb131"]
+    },
+    "changed_runtime_paths_relevant_to_production_or_loaded_tests": {
+      "runtime_protocol/service.py": ["c3f9651c391940e3052c2feaa79dbcbf84b941b0", "f3ea8238477dac196b63bbf2736c15039a78b41e"],
+      "runtime_protocol/store.py": ["e2b439a5067cadfeeb5b7d32e8f77c74ce03a51a", "acb61ebdccabc084755f8b0072544892900cb917"],
+      "runtime_protocol/daemon.py": ["3d29579fe2308c27c39d4961ee11988bd522ae6b", "725d4386c2e2690ddd10a233a028ac2f9d48c96c"],
+      "runtime_protocol/platform.py": ["cf45c604288bac809e219aa348d3196d493a4b91", "70049865a0c11d1f874339259884dd5102350cb7"],
+      "runtime_protocol/upgrade.py": ["ccc171924f2caf04ffee40e455c8e8b2eda8f109", "d2cb5afb56ebacbc09c3b59e41c44de4626182ae"],
+      "runtime_protocol/visual_seam.py": ["66270f4d694db1928ed9372b54829198c29c4c3e", "9bb0bfb04c4cb17c539ffc3f8565f4987df0bb65c"]
+    },
+    "limit": "Canonical route/timeline-commit/wire path equivalence is exact for the listed Runtime blobs only; it does not establish all production Runtime bytes or all imports as becfe."
+  },
+  "d54a_outcome_limits": {
+    "exact_source_and_counts_retained": "Agent 924437716 / tree a81a8c7f; 12396 passed, 91 failed, 14 errors, 16 skipped, 566 subtests; JUnit hash above",
+    "exact276": "75 matched (66 upstream FAILED, 9 upstream PASSED), 201 UNKNOWN; current rollup 162 PASS, 112 OPEN, 2 DEFERRED; no current regression proven",
+    "matched66_cause": "No exact paired cause identity is retained for both runs; cannot say whether any depends on changed Runtime paths, and cannot call them pre-existing or Runtime-caused.",
+    "historical9_contrast": "The 9 upstream-PASS versus old-checkpoint-FAIL contrasts have no retained path-level dependency on becfe-to-e68 changes; 8 are historical contrasts and 1 remains the deferred current-fail checkpoint contrast.",
+    "current_agent_limit": "Current read-only Agent HEAD is 68e82c0c2ce621f43ae73aa05fce0d1d0f47a677 / tree aa62e96c1231de41cee32c5388592c99ae04345f; the terminal outcome remains evidence for Agent 924, not this current HEAD."
+  }
+}

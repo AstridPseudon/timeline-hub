@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T15:03:16Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 2m -->
+<!-- agent | 2026-10-24T15:06:01Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 2m -->
 # agent board, 2026-10-24T14:59:35Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -87,9 +87,11 @@
 
 | F final core suite | Prepare full core collection and invocation | Luna | D61 body held | merged | Collect1443 PASS | Broad8665 nodes in386 files collected; P4 three separate. Live D13/D23 and negative guards retained. No bodies run or final proof claim. | Home68e82 |
 
-| F paired cause A | Qualify first33 matched failure causes | Luna | New upstream terminal evidence | doing | Cause A1458 | Status match alone gives no pre-existing credit. Existing raw causes only; missing old traceback stays unproven. | Evidence only |
-| F paired cause B | Qualify second33 matched failure causes | Luna | New upstream terminal evidence | doing | Cause B1458 | Disjoint33 exact nodes; no rerun or duplicate classifier. Preserve current PASS and exact source limits. | Evidence only |
-| F baseline Runtime custody | Correct external Runtime source scope | Luna | Actual local e68 versus launch becfe | doing | Return1459 | Agent924 and terminal outcomes retained. Determine actual external-source and byte-equivalence limits; no new baseline or guessed isolation. | Source correction only |
+| F paired cause A | Qualify first33 matched failure causes | Luna | Existing paired causes | merged | Cause A1458 | All33 status pairs retained. Four causes differ;29 old tracebacks absent. Zero identity/env qualification; no current failure invented. | Evidence only |
+| F paired cause B | Qualify second33 matched failure causes | Luna | Existing paired causes | merged | Cause B1458 | Seven historical environment causes qualified at exact scope;26 remain unverified. Current seven PASS receipts preserved. No bodies run. | Evidence only |
+| F baseline Runtime custody | Correct external Runtime source scope | Luna | Source correction complete | merged | Return1459 PASS | Launchbecfe preflight genuine; mutable origin later e68. Timeline/auth/wire blobs exact; service/store changed. Full-run Runtime isolation unproved. | Agent924 outcomes retained |
+
+| F D63 new ours | Check201 upstream-missing names once | Luna | D63 owner rule | doing | Rename1503 | One cheap name/body rename check, no reruns. Remaining new-ours retains core proof; non-core becomes visible gap per D63. | Evidence only |
 
 Integration: Agent68e82c0c2c includes U2 final924, normal e68 vendor adoption and independently reviewed legacy inverse fix. Proposal inverse actual-home13 passed. D61 consumer9460a443 retains all three reviewed donor blobs, held for qualified Runtime producer then normal D39 and current-home qualification. No generated code or lock edited by manager.
 core open: 7 tracked: four D61 fork checkpoint failures, one genuine D13 input UNKNOWN, two forward-provider originals outside276. Proposal inverse now closed by actual-home13. Two D23 timing originals remain unchanged visibly failing and deferred. Final tuple proof remains pending.
@@ -100,7 +102,7 @@ Admission: Existing schema/source403 and automatic refusal remain stopped. D56 d
 Disk: About9.8GB free. No eligible finished clean Agent worktrees remain; earlier dirty/refused targets untouched. Compaction packed0 and compressed14 old logs. Sweep3 removed2 old directories. Cleanup target15GB remains opportunistic; sole existing heavy continues.
 Blockers: Runtime — D62 resolves private custody: accept-time record classification only, authenticated persisted ABI and normal regeneration. Runtime implementation/security remain owed; Agent consumer and D39 adopt on qualification.
 Blockers: Runtime — forward-created Sol1450 owns auth.py and the two exact ABI1 failures. Producer Sol1450 owns store/port; wire Luna1447 owns schema/generation. Source qualification and actual Agent proof remain pending.
-Blockers: Agent — paired causes1458 and external Runtime source limits1459 remain unqualified. D13 genuine seven-key input remains UNKNOWN under existing admission hold.
-Next ready: Consume cause A/B1458 and source custody1459; assign any demonstrated live core or current regression immediately. Adopt qualified D62 producer through normal tools, then final P4/full.
+Blockers: Agent — D63 one-pass201 rename classification1503 active; existing environment and current PASS evidence preserved. D13 genuine seven-key input remains UNKNOWN under existing admission hold.
+Next ready: Consume D63 rename1503; adopt qualified D62 producer through normal tools and current consumer, then run final P4/full. Forward cases have actual Runtime owner Sol1450.
 live 1 / cap 6; ready-undispatched 0. Dispatcher <!-- agent | 2026-10-24T14:57:50Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 3m --> Three Luna evidence workers queued after this snapshot; no live Sol.
 Inbox consumed through Runtime1450 D62 and forward-owner handback. All asks have rows or completed source handbacks. Last pass 2026-10-24T14:59:35Z.
