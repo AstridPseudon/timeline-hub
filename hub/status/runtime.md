@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T19:56:37Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 6 | status age 1m -->
+<!-- main | 2026-10-24T19:59:40Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 1m -->
 # runtime board, 2026-10-24T19:54:52Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -152,7 +152,7 @@
 
 | D78-observer-scope | Fix stale request phase attribution | Luna | Author seven regressions passed | merged | rt-D78-observer-scope-fix-1932 | Seven PASS; parent two RED; Ruff, Pyright, compile PASS. Exact two-file harness fix. No auth change or original rerun. | 42855b640 / b4ec6e4f4 |
 | D78-native-stack | Dump real pending native request stacks | Runtime Luna | Author12 passed; source home | merged | rt-D78-native-watchdog-1935 | Native20s daemon watchdog, cap1, private all-thread dump. Existing App bootstrap uses it. Actual live capture still owed; UI5s limitation explicit. | 44917baf5 |
-| R-P4-live-profile | Profile actual ten-note service step | HARD Sol / Agent venue | One Agent service capture | blocked:agent | Sol1932 prep; Agent1944 ready; peer1953 | Actual MemorySocket handler covered. Complete launch/helper published1938; dependency clear. Top ten, wall and per-note counts await one service body. | Captured Agent 3b2 / e89 |
+| R-P4-live-profile | Profile actual ten-note service step | HARD Sol / Agent venue | One Agent service capture | blocked:agent | Sol1932 prep; Agent1948 submission active | Actual MemorySocket handler covered. Complete launch/helper published1938; dependency clear. Top ten, wall and per-note counts await one service body. | Captured Agent 3b2 / e89 |
 
 | R2-False-history-tail | Close two remaining historical timeouts | HARD Sol / Agent Luna | Actual P4 profile | blocked:agent | Runtime profileSol1932; Agent path1932 | Candidate True pair PASS42.9s, False pair FAIL45s before PARAM resolver. Home applicability unproved; all five remain open. No cost patch before profile. | Agent 3b2 donor / e89 |
 
@@ -172,14 +172,14 @@ Venues: App P1/P2/P3, Agent P4, main P5/Composition. D73 capture four exact SHAs
 D65 delivery: Runtime merge, Agent merge, authentic App manifest command with digest equality, then App merge. Installed v2 docs and D67 exact13env7keys retained. Final candidate remains cut-gated; fresh-main apply checks required.
 
 Blockers: App live capture — Runtime44917 observer/watchdog home; source input fully cleared. App stopped duplicate1941 correctly. ONE corrected D78 live needed; peer1953 points to exact1938/1943 handbacks. Deadline19:50 elapsed, frame unknown.
-Blockers: Agent actual profile — full exact helper and launch published1938, reiterated1953. Agent1944 actual parsed route is prepared. Same-tuple1939 resume and one real profile needed before any cost change; False2 tails attached.
+Blockers: Agent actual profile — full exact helper and launch published1938, reiterated1953. Agent1948 sole actual-profile submission is active from prepared1944. One real profile needed before any cost change; False2 tails attached.
 Blockers: App popup original — reviewed87bc carrier actual23 Runtime plus4 Agent PASS. Meaningful original App qualification still owed; no new backend author.
 Blockers: Final cut — all lane core0/regressions0, all eight P2 and P3, D69 and genuine installed render required. No final proof/build before cut.
 Next ready: Agent profiled P4 resume and App corrected D78 live at their venues. E1 design follows inventory; E3 Sol review follows audit. No critical local author waits on capacity.
 Later: D79 lacks complete authentic accepted record/history/context; no synthetic fixture or new body. D80 critical work has priority. D47 memo/proof pins post-delivery; nine attacks open. V4 cut; D14/D23 deferred; D34 cleanup held. D62 submit completeness remains a known gap.
 Admission: D56 Farm/schema access stopped. Original403 and automatic access refusal remain stopped. Historical denied cleanup, process and retirement targets untouched. D67 D13 environment gap unchanged. App dirty U3 guarded recycle refusals remain stopped there.
-Disk: 8446152704 available bytes at19:54, about7.87 GiB; cap4. All new ended trees auto recycled. Five old v1 trees remain; prior refused targets excluded. Global sweep/compact routes have recorded permission limits and are not retried.
+Disk: 8446152704 available bytes at19:54, about7.87 GiB; cap4. All new ended trees auto recycled. Read-only status confirms all five remaining old non-KEEP Runtime trees are dirty; no recycle retry. Global sweep/compact routes have recorded permission limits and are not retried.
 
-live 0 / cap 4; ready-undispatched 0 critical local. Two D81 design-only Luna requests queued1956 behind critical work; update live count from next dispatcher publication. E5 waits actual profile, not a duplicate finite run.
+live 2 / cap 4; ready-undispatched 0 critical local. Dispatcher19:56:37 confirms two Luna. E1 inventory and E3 audit active; both yield to critical work. Agent1948 profile submission active. E5 waits actual profile.
 
 Pass 2026-10-24T19:54:52Z: Consumed inbox through1948 and D81. Rechecked App/Agent boards and exact44917 merge receipt; sent dependency-clear peers1953. D78 timebox elapsed without capture, no completion claim. Dispatch E1 inventory and E3 audit on spare capacity, no product changes. Prior refusals untouched.
