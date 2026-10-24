@@ -1526,17 +1526,20 @@ def test_d66_upstream_approval_is_bound_to_candidate_and_base_revision(tmp_path)
         assert compile_authoring_candidate(changed).candidate_digest != approval["candidate_digest"]
         with pytest.raises(
             AuthoringBundleError,
-            match="Runtime parent differs from the candidate scope or pin",
+            match="approval is stale or does not match candidate: candidate_digest",
         ):
-            publish_authoring_candidate(changed, writer, idempotency_key="promote-1")
+            publish_authoring_candidate(
+                changed, writer, idempotency_key="promote-1", approval=approval
+            )
         assert writer.calls == []
 
         published = publish_authoring_candidate(
-            candidate, writer, idempotency_key="promote-1"
+            candidate, writer, idempotency_key="promote-1", approval=approval
         )
-        promoted = {"approval": approval, **published}
-        assert promoted["approval"]["approval_id"] == "approval-1"
-        assert promoted["candidate_digest"] == approval["candidate_digest"]
+        assert published["approval"] == approval
+        assert published["approval"]["approval_id"] == "approval-1"
+        assert published["candidate_digest"] == approval["candidate_digest"]
+        assert "approval" not in writer.calls[0][2]
         assert len(writer.calls) == 1
     finally:
         service.close()
@@ -1684,10 +1687,10 @@ def test_d66_upstream_frozen_render_restart_then_approval_promotion_is_single_ge
             candidate, approver="editor-1", approval_id="approval-render-1"
         )
         published = publish_authoring_candidate(
-            candidate, writer, idempotency_key="promote-render-1"
+            candidate, writer, idempotency_key="promote-render-1", approval=approval
         )
-        promoted = {"approval": approval, **published}
-        assert promoted["candidate_digest"] == approval["candidate_digest"]
+        assert published["approval"] == approval
+        assert published["candidate_digest"] == approval["candidate_digest"]
         assert len(writer.calls) == 1
     finally:
         service.close()
