@@ -69,22 +69,32 @@ def test_fresh_creation_keeps_owner_custody_through_publication(tmp_path, monkey
     original_fsync = store_module.os.fsync
     interposed = threading.Event()
     outcome = []
+    contenders = []
+
+    def competing_opener():
+        try:
+            with RealmStore(root):
+                outcome.append((None, "other_owner_acquired"))
+        except Exception as exc:
+            outcome.append((type(exc), str(exc)))
 
     def interpose_competing_opener(fd):
         if root.exists() and not interposed.is_set():
             interposed.set()
-            try:
-                RealmStore(root)
-            except Exception as exc:
-                outcome.append((type(exc), str(exc)))
-            else:  # pragma: no cover - the owner lock must remain held
-                outcome.append((None, "other_owner_acquired"))
+            # Windows admission waits for the creator's directory lock, so
+            # the contender must run independently of the publishing thread.
+            contender = threading.Thread(target=competing_opener, daemon=True)
+            contenders.append(contender)
+            contender.start()
         return original_fsync(fd)
 
     monkeypatch.setattr(store_module.os, "fsync", interpose_competing_opener)
     creator = RealmStore.initialize(root, realm_id="custody-realm", display_name="Custody Realm")
     try:
         assert interposed.is_set()
+        for contender in contenders:
+            contender.join(timeout=5)
+            assert not contender.is_alive()
         assert outcome == [(OwnerBusyError, "another runtime daemon owns this realm")]
         project = creator.create_project("owner-write", "Owner Write", idempotency_key="owner-write")
         assert creator.get_project(project["id"])["name"] == "Owner Write"

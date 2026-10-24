@@ -12,6 +12,7 @@
     "conformance/fixtures/shot-composition-compatibility.json": "sha256:9d5201dd62121c278bd51037863afb59508794b96b06e1bf3f89d7b300e19fc2",
     "conformance/fixtures/task.json": "sha256:7dc2f5d3f82219b439f1c1147aa230f39e706a3c3b24a7d177efc1b975f543b9",
     "conformance/fixtures/visual-boundary-v1.json": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55",
+    "conformance/fixtures/visual-seam-cases-v1.json": "sha256:1f8363394e0b7049096365d38d00bf2dfed888eab30c3b2bce95cd44537a02e7",
     "conformance/responses/commit_conflict_409.json": "sha256:e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08",
     "conformance/responses/events_page_1_200.json": "sha256:6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d",
     "conformance/responses/events_page_2_200.json": "sha256:d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2",
@@ -81,5 +82,5 @@
     "runtime_protocol/schemas/timeline-commit-bundle.json": "sha256:b6a1550487dad7c83970d88f26ec3e8a74852cf8c57c20f3cd021847a075b39c"
   },
   "producer": "astrid-runtime",
-  "version": "sha256:65085756a96619a74de401b90d6e1b4ff0590d5090e4d4d411c50de476f345b8"
+  "version": "sha256:9af2df7561a7e7d6793ad9f82acb7770ddbecf03dbdc753496c42ff86466eb24"
 }

@@ -325,12 +325,17 @@ def _lock_windows_directory(fd: int, info, *, blocking: bool) -> tuple[int, thre
 
     LockFileEx does not accept directory handles. Windows file IDs and volume
     serials identify the retained directory independently of its path. The
-    non-reentrant in-process gate prevents Win32 mutex same-thread recursion;
+    global namespace also fences the same user in another logon session (for
+    example, a scheduled daemon and an interactive installer). Global mutexes
+    do not require SeCreateGlobalPrivilege; that restriction applies to file
+    mappings and symbolic links, not synchronization objects.
+    https://learn.microsoft.com/en-us/windows/win32/termserv/kernel-object-namespaces
+    The non-reentrant in-process gate prevents Win32 mutex same-thread recursion;
     acquisition and release must occur on the same thread.
     """
     from ctypes import wintypes
     identity = f"{current_user()}:{int(info.st_dev)}:{int(info.st_ino)}".encode()
-    name = "Local\\AstridRuntime.directory." + hashlib.sha256(identity).hexdigest()
+    name = "Global\\AstridRuntime.directory." + hashlib.sha256(identity).hexdigest()
     kernel = _kernel()
     with _directory_mutex_guard:
         gate = _directory_mutex_gates.setdefault(name, threading.Lock())
