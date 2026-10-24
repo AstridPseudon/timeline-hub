@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T13:49:55Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 1m -->
-# app board, 2026-10-24T13:48Z
+<!-- app | 2026-10-24T13:53:02Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 1m -->
+# app board, 2026-10-24T13:51Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -30,11 +30,11 @@
 | P2-element | Qualify real serialized Apply sampler | Luna; custody review | Cumulative1315 PASS | merged | Author1309; review1315 |28 diagnostics,97 mounted, three types/lint PASS. Real serialized callback and receipt case retain strict guards. | 971a29e198 |
 | P2-P3-joined | Qualify refreshed pure target | Luna | Home tree equalsfe0 | merged | Pure1340 PASS; home13:46 | 102 changed-seam PASS; exact reused704/67/79 proof and protected eight plus Gate5. Actual current producers47b/becfe. | d24ed69dcd |
 | P3-D53 | Strict retry accounting and current ledger | Luna; independent review | D53 approved | merged | Author1123; review1126; integrated1143 | 23 controls,three types/lint; observed[A,A],forwarded[A],zeroB. Original reset and tail exact. | 602f8b1f58 |
-| F-caller | Authenticate protected current caller | Luna; Sol base | Review1342 PASS | merged | Inventory1337; review1342 | Exact51 request and133 reply fields; missing, extra and poisoned type negatives PASS. Join remains. | 50314bcdd0 |
+| F-caller | Authenticate protected current caller | Luna; Sol base | Review1342 PASS | review | Inventory1337; review1342 | Module PASS51 request and133 reply fields; missing, extra and poisoned types refused. Not installed or integrated. | 50314bcdd0 |
 | F-caller-path | Challenge remaining caller architecture | Independent Luna | Repeated custody review failure | merged | app-F-caller-whole-path-1307 | Three actual guard gaps confirmed; production mounted path structurally PASS. Guidance with Sol1307. | Report only |
 | F-inputs | Qualify existing working service recipe | Luna; custody review | Actual source and custody PASS | merged | Recipe1304; review1309 | Normal venv origins/current client/artifacts/Remotion/graph PASS; no child, overlay or live daemon claim. | ed81088ed8 |
-| F-service-binding | Qualify exact environment adapter | Luna; custody review | Review1330 PASS | merged | Binding1323; review1330 | Normal and optimized controls, 36 attacks, real imports, exact refs and interpreter use PASS. Caller join remains. | d387ab1ec6 |
-| F-caller-join | Join caller and working environment | Luna | Reviewed50314 and d387 | doing | app-F-current-caller-environment-join-1344 | Mechanical exact-module join; refreshed real source facts, dry first, no install or live claim. | Branch only |
+| F-service-binding | Qualify exact environment adapter | Luna; custody review | Review1330 PASS | review | Binding1323; review1330 | Module-only PASS36 attacks, real imports and consumed interpreters. Joined current-fact refresh remains. | d387ab1ec6 |
+| F-caller-join | Join caller and working environment | Luna | Reviewed50314 and d387 | doing | Join1344; return1350 | Joinedcode872bc5 dry refuses stale971a facts.1350 implements actual current-fact refresh and positive dry preparation. | 872bc5dae3 |
 | F-node-current | Verify prior Node regressions | Luna | Refreshed home tree | merged | Node1345 PASS36; ENV2 | 33 verifier,marker guard and both release nodes pass. Two extension SSH setup failures remain explicit. | d24ed69dcd |
 | F-visual-seam | Qualify shared upstream seam fixture | Luna next | Runtime D60 existing fixture | blocked:runtime | Runtime U1d visual rows | App changed tests pass; checkout lane fixture absent in oldbecfe. Recheck actual published Runtime refresh, no acquisition. | Appfe0; Runtimebecfe |
 | F-App-full | Corrected App checkpoint terminal | App service; Luna producer | Same actual16138 | merged | Terminal producer1227 | FAIL exit1/1665s. Vitest19251PASS;Node257PASS38FAIL26SKIP. Final full GO remains open. | 5a9ff97cf0 |
@@ -48,15 +48,15 @@
 
 Integration:d24ed69dcdbd464159a1b6db27403ce6a96be2e5, treeead5ba0d4f755cf3d38c8312d9d91478eeeebe45 equals reviewedfe0. U3b and D39 are HOME atd993; later reviewed transcript, diagnostic, verifier, release and quality corrections are integrated. D59 current integrated heads every cycle; no wait for unrelated Agent repairs, D41 backports or old pinned runs.
 
-live 3 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T13:43:27Z | dispatcher heartbeat 14s | live 3 (sol 0, luna 3, other 0) | busy30 17 | status age 3m --> Newly ready join1344 and focused Node1345 are dispatched; all current workers Luna.
+live 1 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T13:49:55Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 1m --> Current-fact return1350 owns the ready caller correction; no independent source row waits.
 
 core open:9 final App gate cases unqualified,8 P2 and1 P3. D55b accepts all eight P2 as core. Historical16138 Vitest had0 failures; final core full and final P1–P5 remain required.
 
 regressions:0 open among historical App Node38 after exact refreshed-tree proof1345:36 repaired and passing,2 SSH environment failures. Final integrated full remains required; no new upstream regression is inferred.
 
-Blockers: App caller — U3-final is HOME d24ed with exact reviewedfe0 tree. Join1344 remains active; final caller dry guard, independent custody review and worker-only install precede live P2/P3.
+Blockers: App caller — U3-final HOME d24ed equals reviewedfe0 tree. Join872bc5 still pins old971a environment facts; sole Luna1350 completes authenticated current-fact refresh before final review/install/P2/P3.
 Blockers: Owner admission — historical403 and automatic access refusal remain stopped. No alternate schema, child, overlay or receipt route.
-Next ready: Consume join1344; actual dry source preflight first, independent custody review, worker-only install and current P2/P3. App full after gate requests. Recheck Runtime D60 producer and fixture each pass.
+Next ready: Consume return1350 positive dry preflight, independent custody review, worker-only install and current P2/P3. App full after gate requests. Runtime U1d target87 visual cases pass; fixture handback pending.
 
 Historical signals: P2 actual11933 exit1/469s,0PASS3FAIL5NOTRUN; native/history/readiness passed. Actual element request was pending with no observed response or terminal outcome. P3 actual3896 exit1/268s reached predecessor/reset,A acceptance,ACK loss and exact A retry; B/restart/undo tail not reached. P226414 was stale-source preflight-only,all originalsNOTRUN. Earlier source-admission20674/10144 and D45/D41 failures retain their original limits. No signal is relabeled final GO.
 
