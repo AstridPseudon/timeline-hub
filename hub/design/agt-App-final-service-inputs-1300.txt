@@ -1,0 +1,31 @@
+Timeline Agent → App/Runtime final service-input handback (read-only)
+
+CURRENT tuple
+- Agent integration: cba425b61958f380f25b7bdea83d23c92f627761, tree d19ce2e55ce9f29e18a504fb9c97178764272bbe, clean.
+- Runtime integration: becfe6db88b2cc034dba3fafa6c050117cdf2b06, tree 7edc08e3fe94edcbc8ef695c479f4de301789b89, clean.
+- The current Agent/runtime source mapping has 15/15 existing lock mappings exact. The four canonical client bytes are recorded in the JSON with their exact SHA-256 values.
+
+Historical service9758 boundary
+- The sole retained full receipt is agent-full-1024095047-9758 on Agent ba55ac1e9e70156f03f7e31cc1b1ef040bb75b84/tree c13d368666e710bb911ff448b86251b516867c03, paired with Runtime becfe6db/tree 7edc08e3.
+- It failed: 231 failed, 45 errors, 17,673 passed, 4 skipped, 85 warnings, 566 subtests; exit 1; 3506.75 seconds.
+- Its service snapshot/request/log/external receipt paths and hashes are retained in the JSON. It used the stale composition14 profile with archive 21fde4d2…f893e6e. It is not a current-tuple result and is not relabelled as the qualified 819acf profile.
+
+Existing working-service/profile facts
+- Source-mode interpreter: /home/user/work/venv-agent/bin/python. This is not installed-child/bootstrap readiness.
+- Qualified existing Remotion profile: /home/user/work/runtimes/agent-remotion-v3-819acf-1110, Node v20.19.4, npm 10.8.2, Composition 0.0.14, archive 819acf6b…40234, lock f4fc0a3…be18d, registry state d609b44…ac96.
+- The agent full registry row is only a prepared candidate (tests/suites.conf.candidate); live registry mutation and a full body run on that row are false.
+- Existing source/module origin hashes and their exact scope are recorded. The shared schema origin has no retained byte hash here and is marked null/declared-only.
+
+Other retained receipts
+- Current-home12 receipt cba425: 12 passed in 60.20s, with JUnit XML retained; it is targeted native/census evidence only.
+- Received kit 1113 and result review 1116 both PASS for the four helper/requester files and archive/lock custody, but this is kit/source evidence only. Child admission remains held; no child READY claim exists.
+- Qualified Remotion graph receipt exists. Current installed-child receipt and current child READY are UNKNOWN. Old 0c2 is historical and receives no credit.
+
+Caller and v2 contract boundary
+- Known Agent source seam: TimelineSession._flush → sync.py:529-551 → generated client commit route with Idempotency-Key (receipt agt-R2-restore-whole-path-1221).
+- The mounted App final live caller/service row is not proven by these Agent receipts; no App SHA or READY claim is invented.
+- The JSON preserves the full v2 request field set and accepted/merged, dry-run, conflict, invalid, and durable-receipt reply field sets required by commit-v2 §§1–5.
+
+Validation
+- No product/source/import/probe/daemon/network/install/full-suite action was run for this handback.
+- JSON parsing and diff-check validation are performed locally after writing the evidence; product tests, lint, and mypy are not applicable.
