@@ -551,6 +551,17 @@ const materializePreparedData = ({
   registry: AssetRegistry;
   resolvedRegistry: TimelineData['resolvedConfig']['registry'];
 }): TimelineData => {
+  // The editor preview uses seconds; raw command capture keeps the original
+  // source and validates its codecs separately. Normalize only a matching alias
+  // before rowsToConfig restores raw fields (including on rippled peers).
+  const editorClips = base.config.clips.map((clip) => {
+    if (!Object.prototype.hasOwnProperty.call(clip, 'at_ms')) return clip;
+    const { at_ms: atMs, ...editorClip } = clip as typeof clip & { at_ms: unknown };
+    if (typeof atMs !== 'number' || !Number.isFinite(atMs) || clip.at !== atMs / 1000) {
+      throw new Error(`Prepared media clip '${clip.id}' has contradictory at/at_ms timing.`);
+    }
+    return editorClip;
+  });
   const config = rowsToConfig(
     rows,
     meta,
@@ -558,7 +569,7 @@ const materializePreparedData = ({
     clipOrder,
     base.tracks,
     pinnedShotGroups,
-    base.config,
+    { ...base.config, clips: editorClips },
   );
   const nextData = buildDataFromCurrentRegistry(config, base, {
     registry,

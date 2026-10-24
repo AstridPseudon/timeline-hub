@@ -723,6 +723,45 @@ describe('prepared media command', () => {
     expect(result?.nextData.config.clips.find((clip) => clip.id === 'peer')).toMatchObject({ at: 5 });
   });
 
+  it.each([1003, 1004, null, '1003'])(
+    'normalizes only matching numeric preview timing while retaining the original source: %j', async (atMs) => {
+      const current = await buildTimelineData({
+        ...createDefaultTimelineConfig(),
+        output: { ...createDefaultTimelineConfig().output, fps: 24 },
+        tracks: [{ id: 'V1', kind: 'visual' }],
+        clips: [{
+          id: 'anchor', at: 1.003, at_ms: atMs, track: 'V1', asset: 'source',
+          from: 2, to: 6, speed: 2, hold: null,
+          transition: null, params: { opaque: [null, false, {}] },
+        }],
+      }, { assets: { source: { file: 'source.mp4', type: 'video/mp4' } } });
+      const original = structuredClone(current);
+      const result = applyPreparedMediaCommand(current, {
+        type: 'place-prepared-media',
+        payload: {
+          asset: {
+            assetKey: 'copy', mediaType: 'video', durationSeconds: 2,
+            entry: { file: 'copy.mp4', type: 'video/mp4' }, source: 'registered',
+          },
+          at: 0, afterClipId: 'anchor',
+        },
+      });
+
+      expect(current).toEqual(original);
+      if (atMs !== 1003) {
+        expect(result).toBeNull();
+        return;
+      }
+      expect(result).not.toBeNull();
+      const { at_ms: _atMs, ...source } = original.config.clips[0] as typeof original.config.clips[0] & { at_ms: unknown };
+      expect(_atMs).toBe(1003);
+      expect(result?.nextData.config.clips.find((clip) => clip.id === 'anchor')).toEqual(source);
+      expect(result?.nextData.config.clips.find((clip) => clip.asset === 'copy')).toMatchObject({
+        at: 3, from: 2, to: 6, speed: 2, hold: null, transition: null, params: source.params,
+      });
+    },
+  );
+
   it.each([0.01, 0])('clamps a %s-second source hold to the editor minimum without mutating input', async (hold) => {
     const current = await buildTimelineData(
       {
