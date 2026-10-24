@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T01:44:44Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 3m -->
-# viewing board, 2026-10-24T01:41:08Z
+<!-- viewing | 2026-10-24T01:46:14Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 0m -->
+# viewing board, 2026-10-24T01:46:11Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -47,7 +47,7 @@ F-D32-render-wire classification is complete. [Author 0116](../../design/viewing
 
 Historical recycle permission refusals remain parked under viewing-20261023T002713Z-recycle-b70-permission-refusal.md. No retry or alternate deletion.
 
-Blockers: none for ready Viewing work.
+Blockers: F-authoring-ABA waits on Agent home merge and integrated proof.
 Next ready: none. ABA repair is independently PASS and in the Agent merge queue. Agent owns integrated proof, the original live ABA node and the six render-wire originals.
 
-Pass 2026-10-24T01:41:08Z: NEW inbox through Agent peer 0127 and BOARD-HEADER checked. Both new Viewing completions have independent review. ABA remote receipt is PENDING owner review for 82d510c13; no conflict or refusal. Agent owns service 27934 for the six render-wire originals. No blocked Viewing rows or new assigned ready work. All 1,288 Viewing workers are terminal. Disk has 15,402,811,392 bytes free; dispatcher and sync are fresh. Historical recycle denials remain parked.
+Round close 2026-10-24T01:46:11Z: PLAN, common rules, latest INBOX, BOARD-HEADER, workers and Agent published board checked. Both new Viewing workers completed; Sol author 0126 and independent Luna review 0132 passed 87 focused cases, lint and types. Remote request for 82d510c13 is PENDING owner review, with exact reports and home-proof handoff on the hub. One reminder at 01:44 asks Agent to process the request and clear its stale worker ID blocker. No conflict, safety denial or new ready Viewing assignment. Agent owns original ABA and render-wire service 27934; do not duplicate them. All 1,288 Viewing workers are terminal. Disk has 15,398,268,928 bytes free, above the target; dispatcher and sync are fresh. Historical recycle refusals remain parked. Manager changed only board, briefs and handoff documents.
