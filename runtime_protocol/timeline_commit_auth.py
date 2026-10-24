@@ -1788,7 +1788,7 @@ def _authoring_parent_identity(boundary, identity_scope, manifest):
 
 
 def _project_created_child(boundary, record, following, accepted, identity_scope=None):
-    """Carry an authenticated occurrence birth into the next command input.
+    """Carry an authenticated child allocation into the next command input.
 
     Native occurrence creation records authored aggregate roots, while the
     Runtime closure stores their physical shot/internal images.  A later
@@ -1803,24 +1803,65 @@ def _project_created_child(boundary, record, following, accepted, identity_scope
     future_refs.extend(binding.get("ref") for binding in following.get("bindings", []))
     future_refs.extend(write.get("ref") for write in following.get("writes", []))
 
-    for occurrence_ref, allocation in created.items():
-        if not (isinstance(occurrence_ref, str) and occurrence_ref.startswith("occurrence:")
-                and "/" not in occurrence_ref
-                and any(ref == occurrence_ref or isinstance(ref, str) and ref.startswith(occurrence_ref + "/")
-                        for ref in future_refs)):
+    for created_ref, allocation in created.items():
+        if not (isinstance(created_ref, str) and "/" not in created_ref):
+            continue
+        fork = created_ref.startswith("shot:")
+        if not (fork or created_ref.startswith("occurrence:")):
+            continue
+        shot_id = created_ref.partition(":")[2] if fork else None
+        fork_occurrence_writes: list[dict] = []
+        owner_row: dict = {}
+        if fork:
+            if not any(isinstance(ref, str) and ref.startswith("occurrence:") for ref in future_refs):
+                continue
+            fork_occurrence_writes = [write for write in record.get("writes", [])
+                                      if (isinstance(write.get("ref"), str)
+                                          and write["ref"].startswith("occurrence:")
+                                          and write.get("path") == ["shot_id"]
+                                          and write.get("after", {}).get("state") == "present"
+                                          and write.get("after", {}).get("value") == shot_id)]
+            if not fork_occurrence_writes and any(isinstance(ref, str) and ref.startswith("occurrence:")
+                                                  for ref in created):
+                continue
+            require(len(fork_occurrence_writes) == 1,
+                    "provider created shot lacks its authenticated occurrence owner")
+            occurrence_ref = fork_occurrence_writes[0]["ref"]
+        else:
+            occurrence_ref = created_ref
+        if not any(ref == occurrence_ref or isinstance(ref, str) and ref.startswith(occurrence_ref + "/")
+                   for ref in future_refs):
             continue
         occurrence_write = next((write for write in record.get("writes", [])
                                  if write.get("ref") == occurrence_ref and not write.get("path")), None)
-        occurrence_value = ((occurrence_write or {}).get("after", {}).get("value"))
-        shot_id = occurrence_value.get("shot_id") if isinstance(occurrence_value, dict) else None
-        if (allocation.get("kind") != "occurrence" or allocation.get("owner") != "parent"
-                or not isinstance(shot_id, str)):
-            require(False, "provider created occurrence root is not an authenticated parent birth")
+        if fork:
+            owner_rows = [row for row in boundary["parent"]["payload"].get("occurrences", [])
+                          if row.get("occurrence_id") == occurrence_ref.partition(":")[2]]
+            require(len(owner_rows) == 1,
+                    "provider created shot owner is not an authenticated occurrence")
+            owner_row = owner_rows[0]
+            owner_write = fork_occurrence_writes[0]
+            require(owner_write.get("before") == {"state": "present", "value": owner_row.get("shot_id")}
+                    and owner_write.get("after") == {"state": "present", "value": shot_id},
+                    "provider created shot owner differs from its authenticated occurrence")
+            occurrence_value = {"shot_id": shot_id}
+        else:
+            occurrence_value = ((occurrence_write or {}).get("after", {}).get("value"))
+            shot_id = occurrence_value.get("shot_id") if isinstance(occurrence_value, dict) else None
+            if (allocation.get("kind") != "occurrence" or allocation.get("owner") != "parent"
+                    or not isinstance(shot_id, str)):
+                require(False, "provider created occurrence root is not an authenticated parent birth")
+                continue
+            require(occurrence_write is not None
+                    and occurrence_write.get("before") == {"state": "absent"}
+                    and occurrence_write.get("after", {}).get("state") == "present",
+                    "provider created occurrence lacks its absent-to-present root write")
+        if not isinstance(shot_id, str):
+            require(False, "provider created child has no authenticated shot identity")
             continue
-        require(occurrence_write is not None
-                and occurrence_write.get("before") == {"state": "absent"}
-                and occurrence_write.get("after", {}).get("state") == "present",
-                "provider created occurrence lacks its absent-to-present root write")
+        if fork:
+            require(allocation.get("kind") == "shot" and allocation.get("owner") is None,
+                    "provider created shot root is not an authenticated fork birth")
 
         accepted_shot_refs = [ref for ref, image in accepted.items()
                               if ref.startswith("shot-revision:") and image.get("shot_id") == shot_id]
@@ -1913,24 +1954,47 @@ def _project_created_child(boundary, record, following, accepted, identity_scope
                          if key != "internal_timeline_revision_id"} == authored_shot,
                     "provider created occurrence accepted shot is not its authored allocation")
             projected_parent = copy.deepcopy(boundary["parent"]["payload"])
-            projected_parent.setdefault("occurrences", []).append(intermediate_occurrence)
+            if fork:
+                projected_occurrences = projected_parent.get("occurrences", [])
+                projected_matches = [row for row in projected_occurrences
+                                     if row.get("occurrence_id") == occurrence_ref.partition(":")[2]]
+                require(len(projected_matches) == 1,
+                        "provider created shot owner is not an authenticated occurrence")
+                projected_matches[0].update(intermediate_occurrence)
+            else:
+                projected_parent.setdefault("occurrences", []).append(intermediate_occurrence)
             parent_pins = [binding for binding in following.get("bindings", [])
                            if binding.get("physical_ref") == "parent"
                            and binding.get("boundary", {}).get("phase") == "input"
                            and binding.get("content_digest") == digest(projected_parent)]
             require(parent_pins,
                     "provider created occurrence lacks an authenticated authoring allocation mapping")
-        require(all(accepted_occurrence[0].get(key) == value
-                    for key, value in occurrence_value.items()),
-                "provider created occurrence differs from its accepted owner")
+        if fork:
+            expected_occurrence = copy.deepcopy(owner_row)
+            expected_occurrence["shot_id"] = shot_id
+            expected_occurrence["shot_revision_id"] = accepted_shot_ref.partition(":")[2]
+            require(all(accepted_occurrence[0].get(key) == value
+                        for key, value in expected_occurrence.items()),
+                    "provider created shot differs from its accepted owner")
+        else:
+            require(all(accepted_occurrence[0].get(key) == value
+                        for key, value in occurrence_value.items()),
+                    "provider created occurrence differs from its accepted owner")
 
         result_parent = boundary["parent"]
         payload = copy.deepcopy(result_parent["payload"])
         occurrences = payload.setdefault("occurrences", [])
-        require(not any(row.get("occurrence_id") == intermediate_occurrence["occurrence_id"]
-                        for row in occurrences),
-                "provider created occurrence is already present at its input boundary")
-        occurrences.append(intermediate_occurrence)
+        if fork:
+            matches = [row for row in occurrences
+                       if row.get("occurrence_id") == occurrence_ref.partition(":")[2]]
+            require(len(matches) == 1,
+                    "provider created shot owner is not an authenticated occurrence")
+            matches[0].update(intermediate_occurrence)
+        else:
+            require(not any(row.get("occurrence_id") == intermediate_occurrence["occurrence_id"]
+                            for row in occurrences),
+                    "provider created occurrence is already present at its input boundary")
+            occurrences.append(intermediate_occurrence)
         result_parent["payload"] = payload
         result_parent["content_digest"] = digest(payload)
 
@@ -1951,7 +2015,10 @@ def _project_created_child(boundary, record, following, accepted, identity_scope
                         "provider created occurrence source digest differs from its birth")
         boundary[shot_ref] = result_shot
         boundary[internal_ref] = result_internal
-        projected_roots.update({"shot:" + shot_id, occurrence_ref})
+        projected_roots.add("shot:" + shot_id)
+        projected_roots.add(occurrence_ref)
+        if fork:
+            projected_roots.add(occurrence_ref + "/shot_id")
     return projected_roots
 
 
@@ -1978,7 +2045,9 @@ def command_output(boundary, record, following, *, accepted=None, identity_scope
     created_roots = {item.get("ref") for item in record.get("created", [])
                      if re.fullmatch(r"(?:shot|occurrence):[^/]+", item.get("ref", ""))}
     for capture in [*record["writes"], *record["derived_writes"]]:
-        if capture.get("ref") in created_roots & projected_roots and not capture.get("path"):
+        capture_site = capture.get("ref", "") + "/" + "/".join(capture.get("path", []))
+        if ((capture.get("ref") in created_roots & projected_roots and not capture.get("path"))
+                or capture_site in projected_roots):
             # The authored aggregate root was installed above through its
             # physical closure images; it has no direct Runtime image site.
             continue
