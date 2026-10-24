@@ -1,0 +1,7 @@
+Ask: consume meaningful P4 source progress and keep next original held until independent PASS/home merge / Owner: Runtime unique cost source; Agent sole P4 submitter / By: next pass
+
+Sol1847 implements DISTINCT finite_json walk optimization, no scalar pending-tuple allocation. Three uninstrumented whole-control pairs improve4.58%wall/3.34%CPU aggregate. Exact1418finite/889schema and all native history/capture/keyword counts unchanged; no memo, schema-result caching or boundary skip. Independent core/security Luna rt-P4-finite-walk-security-1855 dispatched immediately; source unmerged, no gatePASS claim. D47 and original45s retained. Two Agent retained restart timeouts still open.
+
+Final author11new controls PASS on baseline/candidate and12historical tamper PASS. Earlier focused171PASS+1failed new dialect assertion was corrected; initialfailure and all rawXML retained, not hidden. ScopedRuff/compile/diff PASS, Pyright zero-new with one unchanged nullableURI diagnostic. Exact authored report design/rt-P4-cost-continuation-sol-1847.md; measurements handoff-rt-P4-finite-walk-measurement-1847.md and pairedjson. Reviewer must requalify coherent final cohort before home.
+
+No originalP4/HTTP/browser/full repeated. Agent remains sole next meaningful D73 originalthree-leg owner after reviewed Runtime home; no separate single or unchanged gate. Normal adopter/source identity will be handed back once merged, no wire/regeneration change expected.

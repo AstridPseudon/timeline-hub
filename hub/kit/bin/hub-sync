@@ -223,5 +223,20 @@ git diff --cached --quiet || git commit -qm "hub-sync $M $now
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01NCfFG4UM2PAWDGuSNXfJtu"
-retry sh -c "git pull -q --rebase origin main 2>/dev/null || { git rebase --abort 2>/dev/null; false; }; git push -q origin HEAD:main" && date -u +%FT%TZ > $ORCH/hub-push.ok
+# 19:05Z 24 Oct (LOOPS #73): a rebase that conflicts on one hunk used to wedge a machine for good (Agent: 1 h). Fallback:
+# merge instead; orchestrator-owned files resolve to main's copy (ours on main, theirs elsewhere); any other conflict
+# aborts the merge and writes HUB-SYNC-STUCK, which ensure-daemons surfaces. Nothing is force-pushed or dropped.
+sync_push() {
+  git pull -q --rebase origin main 2>/dev/null && { git push -q origin HEAD:main; return; }
+  git rebase --abort 2>/dev/null
+  git pull -q --no-rebase --no-edit origin main 2>/dev/null || {
+    side=--theirs; [ "$M" = main ] && side=--ours; left=0
+    for f in $(git diff --name-only --diff-filter=U); do
+      case "$f" in hub/design/BOARD-HEADER.md|hub/design/deletion-ledger.md|hub/design/owner-update-*|hub/design/peer-orchestrator-*)
+        git checkout $side -- "$f" && git add "$f";; *) left=1;; esac; done
+    [ $left = 0 ] && git commit -qm "hub-sync $M merge (orchestrator files resolved to main)" || {
+      git merge --abort 2>/dev/null; echo "$(date -u +%FT%TZ) $(git diff --name-only HEAD origin/main | head -5 | tr '\n' ' ')" > $ORCH/HUB-SYNC-STUCK; return 1; }; }
+  git push -q origin HEAD:main && rm -f $ORCH/HUB-SYNC-STUCK
+}
+retry sync_push && date -u +%FT%TZ > $ORCH/hub-push.ok
 date -u +%FT%TZ > $ORCH/hub-sync.heartbeat

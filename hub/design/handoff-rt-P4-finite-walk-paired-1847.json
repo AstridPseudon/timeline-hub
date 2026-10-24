@@ -1,0 +1,65 @@
+{
+  "pairs": [
+    {
+      "old": "old-1",
+      "new": "new-1",
+      "old_timing": {
+        "wall": 7.642979,
+        "user": 7.000105,
+        "system": 0.256676,
+        "cpu": 7.256780999999999
+      },
+      "new_timing": {
+        "wall": 7.241687,
+        "user": 6.891311,
+        "system": 0.164096,
+        "cpu": 7.055407
+      },
+      "wall_gain_percent": 5.250465819675821,
+      "cpu_gain_percent": 2.774976949145902
+    },
+    {
+      "old": "old-2",
+      "new": "new-2",
+      "old_timing": {
+        "wall": 7.539601,
+        "user": 6.99684,
+        "system": 0.194013,
+        "cpu": 7.190853
+      },
+      "new_timing": {
+        "wall": 7.241459,
+        "user": 6.8208,
+        "system": 0.128335,
+        "cpu": 6.949135
+      },
+      "wall_gain_percent": 3.954347186276841,
+      "cpu_gain_percent": 3.361464905484779
+    },
+    {
+      "old": "old-confirm",
+      "new": "new-confirm",
+      "old_timing": {
+        "wall": 7.850657,
+        "user": 7.523228,
+        "system": 0.139528,
+        "cpu": 7.662756
+      },
+      "new_timing": {
+        "wall": 7.495423,
+        "user": 7.201656,
+        "system": 0.166214,
+        "cpu": 7.36787
+      },
+      "wall_gain_percent": 4.524895177562849,
+      "cpu_gain_percent": 3.8483020991403105
+    }
+  ],
+  "aggregate_gain_percent": {
+    "wall": 4.578896140390509,
+    "cpu": 3.337697797279915
+  },
+  "excluded": [
+    "old-3/new-3 pair: new-3 overlapped old-profile; retained raw but not used"
+  ]
+}
