@@ -119,3 +119,33 @@ def test_transition_adjacency_is_sorted_by_timeline_position(monkeypatch):
         ],
         30,
     )
+
+
+def test_catalog_integrity_precedes_malformed_transition_clip_sort(monkeypatch):
+    refusal = RuntimeError("transition catalog integrity failure")
+
+    def refuse_catalog():
+        raise refusal
+
+    monkeypatch.setattr(banodoco_schema, "_transition_ids", refuse_catalog)
+
+    with pytest.raises(RuntimeError, match="integrity failure"):
+        _validate_clip_transitions(
+            [_clip("a", "not-a-number", transition="cross-fade")],
+            30,
+        )
+
+
+def test_transition_on_non_string_track_still_loads_catalog(monkeypatch):
+    refusal = RuntimeError("transition catalog integrity failure")
+
+    def refuse_catalog():
+        raise refusal
+
+    monkeypatch.setattr(banodoco_schema, "_transition_ids", refuse_catalog)
+
+    with pytest.raises(RuntimeError, match="integrity failure"):
+        _validate_clip_transitions(
+            [_clip("ignored", 0, track=42, transition="cross-fade")],
+            30,
+        )

@@ -138,6 +138,13 @@ def _clip_duration_seconds(clip: dict[str, Any]) -> float | None:
 
 def _validate_clip_transitions(clips: list[dict[str, Any]], fps: float) -> None:
     known_ids: set[str] | None = None
+    if any("transition" in clip for clip in clips):
+        # Transition catalog integrity is part of validating a
+        # transition-bearing clip, including clips that are later ignored
+        # because their track is not a supported string key.
+        from astrid.core.timeline.banodoco_schema import _transition_ids
+
+        known_ids = _transition_ids()
     by_track: dict[str, list[tuple[int, dict[str, Any]]]] = {}
     for index, clip in enumerate(clips):
         track = clip.get("track")
@@ -148,13 +155,6 @@ def _validate_clip_transitions(clips: list[dict[str, Any]], fps: float) -> None:
         for position, (index, clip) in enumerate(track_clips):
             if "transition" not in clip:
                 continue
-            if known_ids is None:
-                # Transition catalog integrity is part of validating a
-                # transition-bearing clip, not a prerequisite for ordinary
-                # timelines with no transition field.
-                from astrid.core.timeline.banodoco_schema import _transition_ids
-
-                known_ids = _transition_ids()
             transition_id, duration_frames = _transition_reference(clip["transition"], f"clips[{index}].transition")
             if known_ids and transition_id not in known_ids:
                 raise ValueError(
