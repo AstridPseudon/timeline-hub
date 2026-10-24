@@ -1,7 +1,7 @@
 {
   "schema": "timeline.d32.current-node-reconciliation.delta-mapping.v1",
   "base_artifact": "evidence/agent-D32-current-node-reconciliation-H30-corrected.json",
-  "base_artifact_sha256": "0168d9b384fa6cf8a0ad8bf8bb34a7192f902d198d05c7fa5f28573dc00a49a1",
+  "base_artifact_sha256": "c70b6627e6fe4cd7f6d900e0bcb99168dd8e56a4269ad8d88e12b07eec272268",
   "actual_home": {
     "head": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
     "tree": "57f0231da0d7904ecd8778169973d6384e0ae141",
