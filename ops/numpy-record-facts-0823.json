@@ -1,0 +1,90 @@
+{
+  "task": "agt-OPS-numpy-record-facts-0823",
+  "scope": "finite read-only custody export; source facts only",
+  "candidate": {
+    "name": "venv-agent-child-final-0c2c-becfe",
+    "agent_sha": "0c2c28da4f9733a1becc134f95219ae3079fc50e",
+    "runtime_sha": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+    "failed_store_entry": {
+      "path": "/home/user/work/bench-store/entries/child-2c1745aa4fa86cd0e72834ed40b65ce4b9ea8331996f74ae951e8cfabf1bdafe",
+      "status": "ABSENT",
+      "current_installed_bytes": "not observable; not reconstructed",
+      "installed_RECORD_rows": "not observable; not reconstructed"
+    },
+    "staging_entry": "ABSENT",
+    "refusal": "dependency seed: unsafe or overlapping dependency RECORD: numpy",
+    "refusal_class": "D18 product verifier boundary; not a safety refusal"
+  },
+  "custody_receipt": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/refused/childvenv-venv-agent-child-final-0c2c-becfe",
+    "size_bytes": 3822,
+    "sha256": "288e7f1b38a74189ca4b09e7096bfb99c447a6a7766a9adf6fa630a0e3c8d473",
+    "stages": {
+      "receipt_start": "2026-10-24T08:18:38Z",
+      "verify_dependency_seed_start": "2026-10-24T08:19:04Z",
+      "verify_dependency_seed_complete": "2026-10-24T08:19:05Z",
+      "readonly_source_complete": "2026-10-24T08:19:32Z",
+      "refusal_observed": "2026-10-24T08:19:32Z"
+    },
+    "lock_sha256": "236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778"
+  },
+  "original_wheel": {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-wheelhouse-input-0733/evidence/wheelhouse/numpy-2.5.2-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+    "filename": "numpy-2.5.2-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+    "name": "numpy",
+    "version": "2.5.2",
+    "tags": [
+      "cp313-cp313-manylinux_2_27_x86_64",
+      "cp313-cp313-manylinux_2_28_x86_64"
+    ],
+    "size_bytes": 16709995,
+    "sha256": "29b86ff8a6cc556b47ec6b64b194815cc80e6bf5eedcc6cddfd65318cb0b4eee",
+    "verified_manifest": "wheel_inventory[package=numpy]",
+    "lock_hash_match": true,
+    "metadata": {
+      "dist_info": "numpy-2.5.2.dist-info",
+      "metadata_name": "numpy",
+      "metadata_version": "2.5.2",
+      "wheel_tags_match_filename": true
+    }
+  },
+  "wheel_RECORD_comparison": {
+    "record_path": "numpy-2.5.2.dist-info/RECORD",
+    "record_sha256": "2743d4738dbf5fedd71d0dde34e1148ab2a40a6c85658f20735e41ef5ab7e448",
+    "rows": 926,
+    "non_record_rows": 925,
+    "zip_member_rows": 925,
+    "hash_size_mismatches": 0,
+    "self_unhashed_record_row": [
+      "numpy-2.5.2.dist-info/RECORD",
+      "",
+      ""
+    ],
+    "duplicate_paths": 0,
+    "unsafe_path_rows": {
+      "absolute": 0,
+      "backslash": 0,
+      "empty_dot_or_dotdot_segment": 0,
+      "vspath_escape_in_wheel_namespace": 0
+    },
+    "relocation": {
+      "data_members": 0,
+      "wheel_member_path_matches_normal_site_packages_record_path": true,
+      "note": "No .data relocation is present in the retained wheel; installed path canonicalization could not be observed after candidate cleanup."
+    },
+    "ownership": {
+      "wheel_rows_unique_within_numpy": true,
+      "installed_cross_distribution_overlap": "unobservable; candidate absent"
+    },
+    "sourcecode_predicate": {
+      "py_rows": 407,
+      "pyi_rows": 275,
+      "pyc_rows": 0,
+      "helper_rule": "For an installed .pyc, source_from_cache must resolve inside site-packages to a wheel member, magic number and marshal/compile result must match; this predicate was not exercised against the absent candidate."
+    }
+  },
+  "triggering_installed_RECORD_rows": [],
+  "triggering_row_status": "UNAVAILABLE: the failed installed tree and its RECORD were cleaned/absent; the package-level refusal does not identify a row. Do not infer or reconstruct one from another environment.",
+  "verifier_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/verify_dependency_seed.py",
+  "guard_interpretation": "The retained wheel itself shows no unsafe path, relocation, duplicate, or ZIP RECORD integrity defect. This packet does not waive or alter Runtime's verifier guard."
+}
