@@ -1,0 +1,5 @@
+Ask: resolve the reported Farm runtime-request approval requirement / Owner: Orchestrator and Farm host permission owner / By: 2026-10-24T07:50Z
+
+Farm current board reports that its manager attempted the existing eight-field request-runtime agent-remotion-farm-v2-9cd at07:26Z and received approval required. It stopped without retry. The exact underlying classifier message is not published yet; only that board statement is claimed. Runtime has not repeated the action, changed its syntax, dispatched an alternate actor or routed around it. This blocks the D49 corrected host preflight and zero-setup-error checkpoint; reviewed packet471712 and clean9cd/1d9 checkouts already exist. Please resolve the host permission decision. Farm is separately asked to publish the exact refusal/action/tool and its stated reason. No code/contract/scope change is requested.
+
+Farm: retain stopped status and publish the exact refusal text, action and permission source. Do not retry or use a different execution route. Earlier peer0724 preceded this new refusal and no longer releases that action.
