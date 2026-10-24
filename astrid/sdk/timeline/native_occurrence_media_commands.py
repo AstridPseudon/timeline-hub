@@ -74,9 +74,12 @@ def _replace_payload_media(ctx, owner, old_object_id, new_object_id):
 
     items = payload.get('items')
     if isinstance(items, list):
-        for index, row in enumerate(items):
+        for row in items:
             if isinstance(row, dict) and _same_object(row.get('media_id'), old_object_id):
-                ctx.write(owner + '/shot', ['payload', 'items', str(index), 'media_id'], new_object_id)
+                identity = row.get('item_id')
+                if not isinstance(identity, str) or not identity:
+                    raise CommandError('media item requires a published identity', kind='identity_conflict')
+                ctx.write(owner + '/shot', ['payload', 'items', 'item_id:' + identity, 'media_id'], new_object_id)
 
     assets = payload.get('assets')
     if isinstance(assets, list):
