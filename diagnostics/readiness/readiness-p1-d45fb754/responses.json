@@ -1,0 +1,155 @@
+[
+  {
+    "condition": "baseline",
+    "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/d478ffd0-1781-4165-ae5c-2465d89fba57/commits?limit=50",
+    "door": false,
+    "preflight": false,
+    "started": 36789.333477471,
+    "status": 200,
+    "bytes": 1579,
+    "cors": null,
+    "items": 1,
+    "has_cursor": false,
+    "head": {
+      "publication_id": "txn-c661e7c806d14d46bc32fa7dcde02622",
+      "revision_id": "bootstrap-026f9e1fb8e149668754068c54179106"
+    },
+    "publications": [
+      "txn-c661e7c806d14d46bc32fa7dcde02622"
+    ],
+    "finished": 36789.339067808,
+    "seconds": 0.005590660999587271
+  },
+  {
+    "condition": "completed-seed-no-writer",
+    "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits?limit=50",
+    "door": false,
+    "preflight": false,
+    "started": 36791.794834058,
+    "status": 200,
+    "bytes": 96794,
+    "cors": null,
+    "items": 2,
+    "has_cursor": false,
+    "head": {
+      "publication_id": "txn-f90989d299b844dda6f20a479b18cbda",
+      "revision_id": "authoring-parent-revision-7713fd23a834df81cf64100cef4070ddf13356dd021e9281f1bc3cf2fcaa79b6"
+    },
+    "publications": [
+      "txn-f817eee8857e4a67a77aaff22651697a",
+      "txn-f90989d299b844dda6f20a479b18cbda"
+    ],
+    "finished": 36792.766606027,
+    "seconds": 0.9717724350048229
+  },
+  {
+    "condition": "pagination",
+    "page": 0,
+    "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits?limit=1",
+    "door": false,
+    "preflight": false,
+    "started": 36792.766709248,
+    "status": 200,
+    "bytes": 1977,
+    "cors": null,
+    "items": 1,
+    "has_cursor": true,
+    "head": {
+      "publication_id": "txn-f90989d299b844dda6f20a479b18cbda",
+      "revision_id": "authoring-parent-revision-7713fd23a834df81cf64100cef4070ddf13356dd021e9281f1bc3cf2fcaa79b6"
+    },
+    "publications": [
+      "txn-f817eee8857e4a67a77aaff22651697a"
+    ],
+    "finished": 36793.45433928,
+    "seconds": 0.6876306120029767
+  },
+  {
+    "condition": "pagination",
+    "page": 1,
+    "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits?limit=1",
+    "door": false,
+    "preflight": false,
+    "started": 36793.454387029,
+    "status": 200,
+    "bytes": 95376,
+    "cors": null,
+    "items": 1,
+    "has_cursor": false,
+    "head": {
+      "publication_id": "txn-f90989d299b844dda6f20a479b18cbda",
+      "revision_id": "authoring-parent-revision-7713fd23a834df81cf64100cef4070ddf13356dd021e9281f1bc3cf2fcaa79b6"
+    },
+    "publications": [
+      "txn-f90989d299b844dda6f20a479b18cbda"
+    ],
+    "finished": 36794.022991481,
+    "seconds": 0.5686047470007907
+  },
+  {
+    "condition": "completed-seed-no-writer",
+    "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits?limit=50",
+    "door": true,
+    "preflight": false,
+    "started": 36794.023100939,
+    "status": 200,
+    "bytes": 96794,
+    "cors": "https://astrid.test:38443",
+    "items": 2,
+    "has_cursor": false,
+    "head": {
+      "publication_id": "txn-f90989d299b844dda6f20a479b18cbda",
+      "revision_id": "authoring-parent-revision-7713fd23a834df81cf64100cef4070ddf13356dd021e9281f1bc3cf2fcaa79b6"
+    },
+    "publications": [
+      "txn-f817eee8857e4a67a77aaff22651697a",
+      "txn-f90989d299b844dda6f20a479b18cbda"
+    ],
+    "finished": 36795.082438366,
+    "seconds": 1.0593379640049534
+  },
+  {
+    "condition": "pagination",
+    "page": 0,
+    "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits?limit=1",
+    "door": true,
+    "preflight": false,
+    "started": 36795.082575519,
+    "status": 200,
+    "bytes": 1977,
+    "cors": "https://astrid.test:38443",
+    "items": 1,
+    "has_cursor": true,
+    "head": {
+      "publication_id": "txn-f90989d299b844dda6f20a479b18cbda",
+      "revision_id": "authoring-parent-revision-7713fd23a834df81cf64100cef4070ddf13356dd021e9281f1bc3cf2fcaa79b6"
+    },
+    "publications": [
+      "txn-f817eee8857e4a67a77aaff22651697a"
+    ],
+    "finished": 36795.766333779,
+    "seconds": 0.6837589849965298
+  },
+  {
+    "condition": "pagination",
+    "page": 1,
+    "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits?limit=1",
+    "door": true,
+    "preflight": false,
+    "started": 36795.766393409,
+    "status": 200,
+    "bytes": 95376,
+    "cors": "https://astrid.test:38443",
+    "items": 1,
+    "has_cursor": false,
+    "head": {
+      "publication_id": "txn-f90989d299b844dda6f20a479b18cbda",
+      "revision_id": "authoring-parent-revision-7713fd23a834df81cf64100cef4070ddf13356dd021e9281f1bc3cf2fcaa79b6"
+    },
+    "publications": [
+      "txn-f90989d299b844dda6f20a479b18cbda"
+    ],
+    "finished": 36796.401330005,
+    "seconds": 0.6349369379968266
+  }
+]

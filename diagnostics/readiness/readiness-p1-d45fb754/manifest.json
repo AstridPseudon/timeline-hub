@@ -1,0 +1,32 @@
+{
+  "mode": "p1",
+  "runtime_base": "2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d",
+  "runtime_source": "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238",
+  "app": "f8b15af0a66ed14e7711a4bb7f1ed5b62b4988b5",
+  "agent": "78738040d72ce74c42ddf7731221aecb06f9246d",
+  "new_observation": true,
+  "fixture_files": {
+    "tests/e2e/local/support/harness.ts": "8693bf61a6af108bf85f42ab601a155440d76278db5d0920883cc9cd2bf4c615",
+    "tests/e2e/local/support/astrid.ts": "02a42eb29b122599301b04a26360ad9676f09dcf4e3fa81d21f898aeb379710e",
+    "tests/e2e/local/support/quick-descriptor.ts": "a0e13c7876adf7d9e2c4c3f043b7199bcb9caa467021d8d6310abe1c852cc103",
+    "src/shared/lib/editorTourVersion.ts": "db5cd81a9b687a44410eed4063141b6cec8659434eb144d65aff5d58b4fe9a48",
+    "tests/e2e/local/three-products.p1-chain.spec.ts": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17"
+  },
+  "probe_files": {
+    "tests/readiness_commits_probe.py": "208a871489c4e737ee5fed693c7655e9602204d461542b118d3f5a71b72c1758",
+    "tests/readiness_probe.mts": "4463dcf076833938c368825c341b12b0a999fb3af9a7c36be76857cf8328e022",
+    "tests/readiness_probe_site/sitecustomize.py": "7a3774247a23ff92ae37eab88db99c5e0530b255c90bcfc59259f8169790b908"
+  },
+  "failure": null,
+  "node_exit": 0,
+  "captured_files": [
+    "events-20815.jsonl",
+    "events-20817.jsonl",
+    "events-20846.jsonl",
+    "manifest.json",
+    "responses.json",
+    "stacks-20815.txt",
+    "stacks-20817.txt",
+    "stacks-20846.txt"
+  ]
+}

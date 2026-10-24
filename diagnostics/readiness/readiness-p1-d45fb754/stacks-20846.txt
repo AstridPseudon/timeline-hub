@@ -1,0 +1,2116 @@
+
+time=36788.879902469 elapsed=4.8535316359993885
+{"call": 10, "thread": 139862235829952, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/objects", "http_method": "POST", "door": false, "mutex": "<unlocked _thread.RLock object owner=0 count=0 at 0x7f3439624d00>"}
+{"call": 11, "thread": 139862235829952, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/objects", "http_method": "POST", "door": false, "mutex": "<unlocked _thread.RLock object owner=0 count=0 at 0x7f3439624d00>"}
+thread=139862235829952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 1238, in do_POST
+    self._dispatch()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 1203, in _dispatch
+    self._route()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 770, in _route
+    with self.runtime.stage_object(self._binary_chunks(), expected_digest=self.headers.get("X-Expected-Digest")) as data:
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/service.py", line 4486, in stage_object
+    return self.cas.stage(chunks, self.store.staging_root,
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cas.py", line 64, in stage
+    for chunk in chunks:
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 179, in _binary_chunks
+    chunk = self.rfile.read(min(remaining, IO_CHUNK_BYTES))
+  File "/usr/lib/python3.13/socket.py", line 723, in readinto
+    return self._sock.recv_into(b)
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36789.133656954 elapsed=5.107283534001908
+{"call": 10, "thread": 139862235829952, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/objects", "http_method": "POST", "door": false, "mutex": "<unlocked _thread.RLock object owner=0 count=0 at 0x7f3439624d00>"}
+{"call": 11, "thread": 139862235829952, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/objects", "http_method": "POST", "door": false, "mutex": "<unlocked _thread.RLock object owner=0 count=0 at 0x7f3439624d00>"}
+thread=139862235829952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 1238, in do_POST
+    self._dispatch()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 1203, in _dispatch
+    self._route()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 770, in _route
+    with self.runtime.stage_object(self._binary_chunks(), expected_digest=self.headers.get("X-Expected-Digest")) as data:
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/service.py", line 4486, in stage_object
+    return self.cas.stage(chunks, self.store.staging_root,
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cas.py", line 75, in stage
+    stream.write(part)
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36789.384810729 elapsed=5.358439009003632
+{"call": 22, "thread": 139862235829952, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines", "http_method": "POST", "door": false, "mutex": "<locked _thread.RLock object owner=139862235829952 count=2 at 0x7f3439624d00>"}
+{"call": 23, "thread": 139862235829952, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines", "http_method": "POST", "door": false, "mutex": "<locked _thread.RLock object owner=139862235829952 count=2 at 0x7f3439624d00>"}
+thread=139862235829952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 1238, in do_POST
+    self._dispatch()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 1207, in _dispatch
+    self._route()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 535, in _route
+    return self._send(201, self.runtime.create_timeline(path[2], body.get("timeline_id", ""), name=body.get("name"), idempotency_key=key))
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/service.py", line 459, in wrapped
+    self._recover_cas_publication_journals()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/service.py", line 2121, in _recover_cas_publication_journals
+    staging_fd, publication_fd = self._open_publication_directory(create=False)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/service.py", line 2013, in _open_publication_directory
+    staging_fd = _open_directory_chain(self.store.staging_root)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/dirfd.py", line 671, in open_directory_chain
+    next_fd = os.open(component, _DIR_FLAGS, dir_fd=fd)
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36790.641180381 elapsed=6.614804290002212
+{"call": 56, "thread": 139862226388672, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commit", "http_method": "POST", "door": false, "mutex": "<unlocked _thread.RLock object owner=0 count=0 at 0x7f3439624d00>"}
+{"call": 57, "thread": 139862226388672, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commit", "http_method": "POST", "door": false, "mutex": "<unlocked _thread.RLock object owner=0 count=0 at 0x7f3439624d00>"}
+{"call": 58, "thread": 139862226388672, "method": "commit_timeline", "commands": 5, "mutex": "<unlocked _thread.RLock object owner=0 count=0 at 0x7f3439624d00>"}
+thread=139862226388672
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 425, in descend
+    for k, v in applicable_validators(schema):
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 347, in evolve
+    return NewValidator(**changes)
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36790.911929157 elapsed=6.885556038003415
+{"call": 56, "thread": 139862226388672, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commit", "http_method": "POST", "door": false, "mutex": "<unlocked _thread.RLock object owner=0 count=0 at 0x7f3439624d00>"}
+{"call": 57, "thread": 139862226388672, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commit", "http_method": "POST", "door": false, "mutex": "<unlocked _thread.RLock object owner=0 count=0 at 0x7f3439624d00>"}
+{"call": 58, "thread": 139862226388672, "method": "commit_timeline", "commands": 5, "mutex": "<unlocked _thread.RLock object owner=0 count=0 at 0x7f3439624d00>"}
+thread=139862226388672
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 1238, in do_POST
+    self._dispatch()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 1203, in _dispatch
+    self._route()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 523, in _route
+    return self._timeline_commit(path[2], path[4], path)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 311, in _timeline_commit
+    return self._send(200, commit(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/service.py", line 2442, in commit_timeline
+    return self._execute_timeline_commit(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/service.py", line 2497, in _execute_timeline_commit
+    outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_execution.py", line 87, in execute
+    outcome = detached(provider.commit(provider_context, port))
+  File "/tmp/w-a1885cc6b0/readiness-p1-d45fb754/agent/astrid/sdk/timeline/commit.py", line 1161, in commit
+    validate_final_candidate(
+  File "/tmp/w-a1885cc6b0/readiness-p1-d45fb754/agent/astrid/sdk/timeline/validation.py", line 601, in validate_final_candidate
+    _validate_params(
+  File "/tmp/w-a1885cc6b0/readiness-p1-d45fb754/agent/astrid/sdk/timeline/validation.py", line 459, in _validate_params
+    schema = element_schema(element)
+  File "/tmp/w-a1885cc6b0/readiness-p1-d45fb754/agent/astrid/sdk/timeline_address.py", line 290, in element_schema
+    for path in root.rglob("element.yaml"):
+  File "/usr/lib/python3.13/glob.py", line 505, in select_recursive
+    yield from select_recursive_step(stack, match_pos)
+  File "/usr/lib/python3.13/glob.py", line 529, in select_recursive_step
+    yield from select_next(entry_path, exists=True)
+  File "/usr/lib/python3.13/glob.py", line 548, in select_exists
+    self.lstat(path)
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36791.189609549 elapsed=7.163235608000832
+{"call": 56, "thread": 139862226388672, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commit", "http_method": "POST", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=1 at 0x7f3439624d00>"}
+{"call": 57, "thread": 139862226388672, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commit", "http_method": "POST", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=1 at 0x7f3439624d00>"}
+{"call": 58, "thread": 139862226388672, "method": "commit_timeline", "commands": 5, "mutex": "<locked _thread.RLock object owner=139862226388672 count=1 at 0x7f3439624d00>"}
+thread=139862226388672
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 1238, in do_POST
+    self._dispatch()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 1203, in _dispatch
+    self._route()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 523, in _route
+    return self._timeline_commit(path[2], path[4], path)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 311, in _timeline_commit
+    return self._send(200, commit(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/service.py", line 2442, in commit_timeline
+    return self._execute_timeline_commit(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/service.py", line 2497, in _execute_timeline_commit
+    outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_execution.py", line 87, in execute
+    outcome = detached(provider.commit(provider_context, port))
+  File "/tmp/w-a1885cc6b0/readiness-p1-d45fb754/agent/astrid/sdk/timeline/commit.py", line 1195, in commit
+    return port.accept(prepared)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_port.py", line 656, in accept
+    return self.__store.accept(self.__context, prepared, authorize=self.__authorize, inputs=self)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 1190, in accept
+    candidate, execution = self._validate(context, prepared, inputs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 867, in _validate
+    from .timeline_commit_auth import validate
+  File "<frozen importlib._bootstrap>", line 1369, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1340, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 1023, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1161, in get_code
+  File "<frozen importlib._bootstrap_external>", line 1091, in source_to_code
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36791.449126947 elapsed=7.422752416001458
+{"call": 56, "thread": 139862226388672, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commit", "http_method": "POST", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=1 at 0x7f3439624d00>"}
+{"call": 57, "thread": 139862226388672, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commit", "http_method": "POST", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=1 at 0x7f3439624d00>"}
+{"call": 58, "thread": 139862226388672, "method": "commit_timeline", "commands": 5, "mutex": "<locked _thread.RLock object owner=139862226388672 count=1 at 0x7f3439624d00>"}
+{"call": 70, "thread": 139862226388672, "method": "_verify_accepted", "mutex": "<locked _thread.RLock object owner=139862226388672 count=1 at 0x7f3439624d00>"}
+{"call": 71, "thread": 139862226388672, "method": "_historical_sequential", "mutex": "<locked _thread.RLock object owner=139862226388672 count=1 at 0x7f3439624d00>"}
+thread=139862226388672
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 261, in _verify_accepted
+    replay_request, prepared, sequential = self._historical_sequential(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 322, in _historical_sequential
+    validate_commit_value(prepared, "PreparedCommit")
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_validation.py", line 97, in validate_commit_value
+    _validator(definition).validate(value)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 449, in validate
+    for error in self.iter_errors(*args, **kwargs):
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 383, in iter_errors
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 78, in items
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 78, in items
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 44, in additionalProperties
+    yield from validator.descend(instance[extra], aP, path=extra)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 340, in anyOf
+    errs = list(validator.descend(instance, subschema, schema_path=index))
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 285, in type
+    if not any(validator.is_type(instance, type) for type in types):
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 285, in <genexpr>
+    if not any(validator.is_type(instance, type) for type in types):
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36791.701444581 elapsed=7.675073375998181
+{"call": 56, "thread": 139862226388672, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commit", "http_method": "POST", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=1 at 0x7f3439624d00>"}
+{"call": 57, "thread": 139862226388672, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commit", "http_method": "POST", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=1 at 0x7f3439624d00>"}
+{"call": 58, "thread": 139862226388672, "method": "commit_timeline", "commands": 5, "mutex": "<locked _thread.RLock object owner=139862226388672 count=1 at 0x7f3439624d00>"}
+{"call": 70, "thread": 139862226388672, "method": "_verify_accepted", "mutex": "<locked _thread.RLock object owner=139862226388672 count=1 at 0x7f3439624d00>"}
+{"call": 71, "thread": 139862226388672, "method": "_historical_sequential", "mutex": "<locked _thread.RLock object owner=139862226388672 count=1 at 0x7f3439624d00>"}
+thread=139862226388672
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 1238, in do_POST
+    self._dispatch()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 1203, in _dispatch
+    self._route()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 523, in _route
+    return self._timeline_commit(path[2], path[4], path)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 311, in _timeline_commit
+    return self._send(200, commit(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/service.py", line 2442, in commit_timeline
+    return self._execute_timeline_commit(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/service.py", line 2497, in _execute_timeline_commit
+    outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_execution.py", line 101, in execute
+    replay = self._lookup(context, authorize)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_execution.py", line 63, in _lookup
+    return self.commit_store.lookup(context, authorize=authorize)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 187, in lookup
+    return self._lookup(context)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 199, in _lookup
+    self._verify_accepted(row, edge, allow_archived=True)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 261, in _verify_accepted
+    replay_request, prepared, sequential = self._historical_sequential(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 50, in observed
+    emit({"event": "exit", "seconds": time.monotonic() - begin, **detail})
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 22, in emit
+    if events.tell() < 8_000_000:
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36791.957413082 elapsed=7.931037720001768
+{"call": 74, "thread": 139862226388672, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 75, "thread": 139862226388672, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 76, "thread": 139862226388672, "method": "list_timeline_commits", "limit": "50", "cursor": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 77, "thread": 139862226388672, "method": "head", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 78, "thread": 139862226388672, "method": "history_entry", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 79, "thread": 139862226388672, "method": "_verify_accepted", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 80, "thread": 139862226388672, "method": "_historical_sequential", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+thread=139862226388672
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/service.py", line 2537, in list_timeline_commits
+    through = commits.head(project_id, timeline_id)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 402, in head
+    entry = self.history_entry(project_id, timeline_id, row["publication_id"])
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 448, in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 261, in _verify_accepted
+    replay_request, prepared, sequential = self._historical_sequential(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 353, in _historical_sequential
+    return request, prepared, validate_sequential_capture(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_auth.py", line 1993, in validate_sequential_capture
+    _capture_records(records, prepared["records"], request)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_auth.py", line 1868, in _capture_records
+    validate_commit_value(records, "Recorder")
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_validation.py", line 97, in validate_commit_value
+    _validator(definition).validate(value)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 449, in validate
+    for error in self.iter_errors(*args, **kwargs):
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 383, in iter_errors
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 78, in items
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 78, in items
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 44, in additionalProperties
+    yield from validator.descend(instance[extra], aP, path=extra)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 426, in descend
+    validator = evolved.VALIDATORS.get(k)
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36792.214857928 elapsed=8.188486081002338
+{"call": 74, "thread": 139862226388672, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 75, "thread": 139862226388672, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 76, "thread": 139862226388672, "method": "list_timeline_commits", "limit": "50", "cursor": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 81, "thread": 139862226388672, "method": "history", "limit": 50, "cursor": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 82, "thread": 139862226388672, "method": "history_entry", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 83, "thread": 139862226388672, "method": "_verify_accepted", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 84, "thread": 139862226388672, "method": "_historical_sequential", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+thread=139862226388672
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 425, in descend
+    for k, v in applicable_validators(schema):
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 409, in select
+    return ready
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36792.654748249 elapsed=8.628378801004146
+{"call": 74, "thread": 139862226388672, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 75, "thread": 139862226388672, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 76, "thread": 139862226388672, "method": "list_timeline_commits", "limit": "50", "cursor": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 81, "thread": 139862226388672, "method": "history", "limit": 50, "cursor": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 86, "thread": 139862226388672, "method": "history_entry", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 87, "thread": 139862226388672, "method": "_verify_accepted", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 88, "thread": 139862226388672, "method": "_historical_sequential", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+thread=139862226388672
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 466, in _validate_reference
+    return self.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/referencing/_core.py", line 690, in lookup
+    return retrieved.value.pointer(pointer=fragment, resolver=resolver)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/referencing/_core.py", line 420, in get_or_retrieve
+    return Retrieved(registry=self, value=resource)
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36793.021807078 elapsed=8.995440646001953
+{"call": 89, "thread": 139862226388672, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 90, "thread": 139862226388672, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 91, "thread": 139862226388672, "method": "list_timeline_commits", "limit": "1", "cursor": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 92, "thread": 139862226388672, "method": "head", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 93, "thread": 139862226388672, "method": "history_entry", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 94, "thread": 139862226388672, "method": "_verify_accepted", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 95, "thread": 139862226388672, "method": "_historical_sequential", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+thread=139862226388672
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 1207, in _dispatch
+    self._route()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 552, in _route
+    return self._send(200, self.runtime.list_timeline_commits(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/service.py", line 2537, in list_timeline_commits
+    through = commits.head(project_id, timeline_id)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 402, in head
+    entry = self.history_entry(project_id, timeline_id, row["publication_id"])
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 448, in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 261, in _verify_accepted
+    replay_request, prepared, sequential = self._historical_sequential(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 353, in _historical_sequential
+    return request, prepared, validate_sequential_capture(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_auth.py", line 1993, in validate_sequential_capture
+    _capture_records(records, prepared["records"], request)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_auth.py", line 1868, in _capture_records
+    validate_commit_value(records, "Recorder")
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_validation.py", line 97, in validate_commit_value
+    _validator(definition).validate(value)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 449, in validate
+    for error in self.iter_errors(*args, **kwargs):
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 383, in iter_errors
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 78, in items
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 334, in allOf
+    yield from validator.descend(instance, subschema, schema_path=index)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 383, in if_
+    if validator.evolve(schema=if_schema).is_valid(instance):
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 344, in evolve
+    if init_name not in changes:
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36793.385472805 elapsed=9.359100248999312
+{"call": 89, "thread": 139862226388672, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 90, "thread": 139862226388672, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 91, "thread": 139862226388672, "method": "list_timeline_commits", "limit": "1", "cursor": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 96, "thread": 139862226388672, "method": "history", "limit": 1, "cursor": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 97, "thread": 139862226388672, "method": "history_entry", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 98, "thread": 139862226388672, "method": "_verify_accepted", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 99, "thread": 139862226388672, "method": "_historical_sequential", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+thread=139862226388672
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 469, in history
+    bound = self.history_entry(project_id, timeline_id, through["publication_id"])
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 448, in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 261, in _verify_accepted
+    replay_request, prepared, sequential = self._historical_sequential(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 353, in _historical_sequential
+    return request, prepared, validate_sequential_capture(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_auth.py", line 1993, in validate_sequential_capture
+    _capture_records(records, prepared["records"], request)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_auth.py", line 1868, in _capture_records
+    validate_commit_value(records, "Recorder")
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_validation.py", line 97, in validate_commit_value
+    _validator(definition).validate(value)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 449, in validate
+    for error in self.iter_errors(*args, **kwargs):
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 383, in iter_errors
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 78, in items
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 78, in items
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 44, in additionalProperties
+    yield from validator.descend(instance[extra], aP, path=extra)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 462, in _validate_reference
+    resolved = self._resolver.lookup(ref)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/referencing/_core.py", line 680, in lookup
+    uri, fragment = urldefrag(urljoin(self._base_uri, ref))
+  File "/usr/lib/python3.13/urllib/parse.py", line 601, in urljoin
+    segments = base_parts + path.split('/')
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 240, in serve_forever
+    self._handle_request_noblock()
+  File "/usr/lib/python3.13/selectors.py", line 409, in select
+    return ready
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36793.706862923 elapsed=9.680490992999694
+{"call": 101, "thread": 139862226388672, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 102, "thread": 139862226388672, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 103, "thread": 139862226388672, "method": "list_timeline_commits", "limit": "1", "cursor": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 104, "thread": 139862226388672, "method": "history", "limit": 1, "cursor": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 108, "thread": 139862226388672, "method": "history_entry", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+thread=139862226388672
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 1232, in do_GET
+    self._dispatch()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 1207, in _dispatch
+    self._route()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 552, in _route
+    return self._send(200, self.runtime.list_timeline_commits(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/service.py", line 2547, in list_timeline_commits
+    return commits.history(project_id, timeline_id, through, cursor=cursor, limit=limit)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 490, in history
+    items = [self.history_entry(project_id, timeline_id, row[0]) for row in rows[:limit]]
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 439, in history_entry
+    self._membership(project_id, timeline_id)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 165, in _membership
+    row = self.conn.execute("SELECT p.realm_id FROM timelines t JOIN projects p ON p.id=t.project_id "
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36794.001428357 elapsed=9.975056449999101
+{"call": 101, "thread": 139862226388672, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 102, "thread": 139862226388672, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 103, "thread": 139862226388672, "method": "list_timeline_commits", "limit": "1", "cursor": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 104, "thread": 139862226388672, "method": "history", "limit": 1, "cursor": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 108, "thread": 139862226388672, "method": "history_entry", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 109, "thread": 139862226388672, "method": "_verify_accepted", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 110, "thread": 139862226388672, "method": "_historical_sequential", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+thread=139862226388672
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 1232, in do_GET
+    self._dispatch()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 1207, in _dispatch
+    self._route()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 552, in _route
+    return self._send(200, self.runtime.list_timeline_commits(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/service.py", line 2547, in list_timeline_commits
+    return commits.history(project_id, timeline_id, through, cursor=cursor, limit=limit)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 490, in history
+    items = [self.history_entry(project_id, timeline_id, row[0]) for row in rows[:limit]]
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 448, in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 295, in _verify_accepted
+    "records_digest": digest(records)}
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_validation.py", line 48, in digest
+    return "sha256:" + hashlib.sha256(canonical_json(value).encode()).hexdigest()
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36794.280103172 elapsed=10.253730998003448
+{"call": 111, "thread": 139862226388672, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 112, "thread": 139862226388672, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 113, "thread": 139862226388672, "method": "list_timeline_commits", "limit": "50", "cursor": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 114, "thread": 139862226388672, "method": "head", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 115, "thread": 139862226388672, "method": "history_entry", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 116, "thread": 139862226388672, "method": "_verify_accepted", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 117, "thread": 139862226388672, "method": "_historical_sequential", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+thread=139862226388672
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/service.py", line 2537, in list_timeline_commits
+    through = commits.head(project_id, timeline_id)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 402, in head
+    entry = self.history_entry(project_id, timeline_id, row["publication_id"])
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 448, in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 261, in _verify_accepted
+    replay_request, prepared, sequential = self._historical_sequential(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 353, in _historical_sequential
+    return request, prepared, validate_sequential_capture(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_auth.py", line 1993, in validate_sequential_capture
+    _capture_records(records, prepared["records"], request)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_auth.py", line 1868, in _capture_records
+    validate_commit_value(records, "Recorder")
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_validation.py", line 97, in validate_commit_value
+    _validator(definition).validate(value)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 449, in validate
+    for error in self.iter_errors(*args, **kwargs):
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 383, in iter_errors
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 78, in items
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 78, in items
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 462, in _validate_reference
+    resolved = self._resolver.lookup(ref)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/referencing/_core.py", line 690, in lookup
+    return retrieved.value.pointer(pointer=fragment, resolver=resolver)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/referencing/_core.py", line 283, in pointer
+    resolver = self._specification.maybe_in_subresource(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/referencing/jsonschema.py", line 295, in maybe_in_subresource
+    segment not in in_child or next(_segments, None) is None
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36794.579100565 elapsed=10.55272677099856
+{"call": 111, "thread": 139862226388672, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 112, "thread": 139862226388672, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 113, "thread": 139862226388672, "method": "list_timeline_commits", "limit": "50", "cursor": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 118, "thread": 139862226388672, "method": "history", "limit": 50, "cursor": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 119, "thread": 139862226388672, "method": "history_entry", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 120, "thread": 139862226388672, "method": "_verify_accepted", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 121, "thread": 139862226388672, "method": "_historical_sequential", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+thread=139862226388672
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 449, in validate
+    for error in self.iter_errors(*args, **kwargs):
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 383, in iter_errors
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 78, in items
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 78, in items
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 355, in oneOf
+    errs = list(validator.descend(instance, subschema, schema_path=index))
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 462, in _validate_reference
+    resolved = self._resolver.lookup(ref)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/referencing/_core.py", line 690, in lookup
+    return retrieved.value.pointer(pointer=fragment, resolver=resolver)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/referencing/_core.py", line 286, in pointer
+    subresource=self._specification.create_resource(contents),
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/referencing/_core.py", line 169, in create_resource
+    return Resource(contents=contents, specification=self)
+  File "<attrs generated methods referencing._core.Resource>", line 29, in __init__
+    def __init__(self, contents, specification):
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36794.967159855 elapsed=10.940787038998678
+{"call": 111, "thread": 139862226388672, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 112, "thread": 139862226388672, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 113, "thread": 139862226388672, "method": "list_timeline_commits", "limit": "50", "cursor": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 118, "thread": 139862226388672, "method": "history", "limit": 50, "cursor": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 123, "thread": 139862226388672, "method": "history_entry", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 124, "thread": 139862226388672, "method": "_verify_accepted", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 125, "thread": 139862226388672, "method": "_historical_sequential", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+thread=139862226388672
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 490, in history
+    items = [self.history_entry(project_id, timeline_id, row[0]) for row in rows[:limit]]
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 448, in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 261, in _verify_accepted
+    replay_request, prepared, sequential = self._historical_sequential(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 353, in _historical_sequential
+    return request, prepared, validate_sequential_capture(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_auth.py", line 1993, in validate_sequential_capture
+    _capture_records(records, prepared["records"], request)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_auth.py", line 1868, in _capture_records
+    validate_commit_value(records, "Recorder")
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_validation.py", line 97, in validate_commit_value
+    _validator(definition).validate(value)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 449, in validate
+    for error in self.iter_errors(*args, **kwargs):
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 383, in iter_errors
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 78, in items
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 78, in items
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 423, in descend
+    evolved = self.evolve(schema=schema, _resolver=resolver)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 341, in evolve
+    NewValidator = validator_for(schema, default=self.__class__)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 1335, in validator_for
+    def validator_for(
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36795.241375594 elapsed=11.215002892000484
+{"call": 126, "thread": 139862226388672, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 127, "thread": 139862226388672, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 128, "thread": 139862226388672, "method": "list_timeline_commits", "limit": "1", "cursor": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 129, "thread": 139862226388672, "method": "head", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 130, "thread": 139862226388672, "method": "history_entry", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 131, "thread": 139862226388672, "method": "_verify_accepted", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 132, "thread": 139862226388672, "method": "_historical_sequential", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+thread=139862226388672
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/service.py", line 2537, in list_timeline_commits
+    through = commits.head(project_id, timeline_id)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 402, in head
+    entry = self.history_entry(project_id, timeline_id, row["publication_id"])
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 448, in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 261, in _verify_accepted
+    replay_request, prepared, sequential = self._historical_sequential(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 353, in _historical_sequential
+    return request, prepared, validate_sequential_capture(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_auth.py", line 1993, in validate_sequential_capture
+    _capture_records(records, prepared["records"], request)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_auth.py", line 1868, in _capture_records
+    validate_commit_value(records, "Recorder")
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_validation.py", line 97, in validate_commit_value
+    _validator(definition).validate(value)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 449, in validate
+    for error in self.iter_errors(*args, **kwargs):
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 383, in iter_errors
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 78, in items
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 78, in items
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 462, in _validate_reference
+    resolved = self._resolver.lookup(ref)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/referencing/_core.py", line 690, in lookup
+    return retrieved.value.pointer(pointer=fragment, resolver=resolver)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/referencing/_core.py", line 290, in pointer
+    return Resolved(contents=contents, resolver=resolver)  # type: ignore[reportUnknownArgumentType]
+  File "<attrs generated methods referencing._core.Resolved>", line 30, in __init__
+    _setattr = _cached_setattr_get(self)
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36795.689485618 elapsed=11.663112064001325
+{"call": 126, "thread": 139862226388672, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 127, "thread": 139862226388672, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 128, "thread": 139862226388672, "method": "list_timeline_commits", "limit": "1", "cursor": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 133, "thread": 139862226388672, "method": "history", "limit": 1, "cursor": false, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 134, "thread": 139862226388672, "method": "history_entry", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 135, "thread": 139862226388672, "method": "_verify_accepted", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 136, "thread": 139862226388672, "method": "_historical_sequential", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+thread=139862226388672
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/door.py", line 763, in do_GET
+    self._door()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/door.py", line 513, in _door
+    self._admit()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/door.py", line 556, in _admit
+    self._dispatch()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 1207, in _dispatch
+    self._route()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 552, in _route
+    return self._send(200, self.runtime.list_timeline_commits(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/service.py", line 2547, in list_timeline_commits
+    return commits.history(project_id, timeline_id, through, cursor=cursor, limit=limit)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 469, in history
+    bound = self.history_entry(project_id, timeline_id, through["publication_id"])
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 448, in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 261, in _verify_accepted
+    replay_request, prepared, sequential = self._historical_sequential(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 353, in _historical_sequential
+    return request, prepared, validate_sequential_capture(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_auth.py", line 1993, in validate_sequential_capture
+    _capture_records(records, prepared["records"], request)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_auth.py", line 1868, in _capture_records
+    validate_commit_value(records, "Recorder")
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_validation.py", line 97, in validate_commit_value
+    _validator(definition).validate(value)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 449, in validate
+    for error in self.iter_errors(*args, **kwargs):
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 383, in iter_errors
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 78, in items
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 423, in descend
+    evolved = self.evolve(schema=schema, _resolver=resolver)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 345, in evolve
+    changes[init_name] = getattr(self, attr_name)
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 240, in serve_forever
+    self._handle_request_noblock()
+  File "/usr/lib/python3.13/selectors.py", line 409, in select
+    return ready
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36796.024151193 elapsed=11.997780258003331
+{"call": 138, "thread": 139862226388672, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 139, "thread": 139862226388672, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 140, "thread": 139862226388672, "method": "list_timeline_commits", "limit": "1", "cursor": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 141, "thread": 139862226388672, "method": "history", "limit": 1, "cursor": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 142, "thread": 139862226388672, "method": "history_entry", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 143, "thread": 139862226388672, "method": "_verify_accepted", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 144, "thread": 139862226388672, "method": "_historical_sequential", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+thread=139862226388672
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 87, in const
+    yield ValidationError(f"{const!r} was expected")
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/exceptions.py", line 93, in __init__
+    for error in context:
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)
+
+time=36796.361645404 elapsed=12.335272524003813
+{"call": 138, "thread": 139862226388672, "method": "_dispatch", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 139, "thread": 139862226388672, "method": "_route", "path": "/v1/projects/09d86971078d4c3ca8d31fc6d76f166a/timelines/c6ffbc40-f375-4fb8-8d1f-c07adf3bb18a/commits", "http_method": "GET", "door": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 140, "thread": 139862226388672, "method": "list_timeline_commits", "limit": "1", "cursor": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 141, "thread": 139862226388672, "method": "history", "limit": 1, "cursor": true, "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 145, "thread": 139862226388672, "method": "history_entry", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 146, "thread": 139862226388672, "method": "_verify_accepted", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+{"call": 147, "thread": 139862226388672, "method": "_historical_sequential", "mutex": "<locked _thread.RLock object owner=139862226388672 count=4 at 0x7f3439624d00>"}
+thread=139862226388672
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/door.py", line 763, in do_GET
+    self._door()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/door.py", line 513, in _door
+    self._admit()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/door.py", line 556, in _admit
+    self._dispatch()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 1207, in _dispatch
+    self._route()
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/server.py", line 552, in _route
+    return self._send(200, self.runtime.list_timeline_commits(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/service.py", line 2547, in list_timeline_commits
+    return commits.history(project_id, timeline_id, through, cursor=cursor, limit=limit)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 490, in history
+    items = [self.history_entry(project_id, timeline_id, row[0]) for row in rows[:limit]]
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 448, in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 48, in observed
+    return original(self, *args, **kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/timeline_commit_store.py", line 261, in _verify_accepted
+    replay_request, prepared, sequential = self._historical_sequential(
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 50, in observed
+    emit({"event": "exit", "seconds": time.monotonic() - begin, **detail})
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 23, in emit
+    events.write(json.dumps({"time": time.monotonic(), **value}) + "\n")
+thread=139862244222656
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862252615360
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
+thread=139862263477952
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/tests/readiness_probe_site/sitecustomize.py", line 92, in sample
+    stacks.writelines(traceback.format_stack(frame, limit=36))
+thread=139862293766272
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 419, in <module>
+    raise SystemExit(main())
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 155, in main
+    return _main(args)
+  File "/home/user/work/wt/.test-rt-R-readiness-probe-sol-0138-targeted-1024013715-21238/runtime_protocol/cli.py", line 411, in _main
+    time.sleep(0.2)

@@ -1,0 +1,153 @@
+{
+  "service_id": "rt-R-readiness-probe-sol-0138-targeted-1024013715-21238",
+  "service_result": "2 passed in 65.94s",
+  "source_ast": "12 Python files PASS",
+  "runtime_base_unchanged": "2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d",
+  "limitations": [
+    "New diagnostic observations, not recovery of historical evidence.",
+    "Observed timings include bounded stack/call instrumentation.",
+    "P1 and failed-source tuples differ in App and Agent.",
+    "No browser journey, immutable-closure load or readiness lifecycle executed.",
+    "No history request hung in the bounded observation; historical cause UNKNOWN."
+  ],
+  "runs": [
+    {
+      "directory": "readiness-native21-98ed8039",
+      "mode": "native21",
+      "requests": 11,
+      "seed_commands": 21,
+      "seed_commit_seconds": 5.299688982006046,
+      "actual_imports_match_frozen_sources": true,
+      "all_entered_calls_completed": true,
+      "credential_scan": "PASS",
+      "concurrent_requests_overlap_real_seed_commit": true,
+      "completed_seed_details": [
+        {
+          "door": false,
+          "client_seconds": 5.598450454999693,
+          "handler_seconds": 5.598494800004119,
+          "verified_accepted_calls": 3,
+          "verify_seconds": 5.499642431001121,
+          "historical_sequential_seconds": 5.14632994600106,
+          "handler_event_file": "events-1901.jsonl"
+        },
+        {
+          "door": true,
+          "client_seconds": 6.277097054997284,
+          "handler_seconds": 6.26931799200247,
+          "verified_accepted_calls": 3,
+          "verify_seconds": 6.168011965004553,
+          "historical_sequential_seconds": 5.784463936994143,
+          "handler_event_file": "events-1901.jsonl"
+        }
+      ],
+      "files": {
+        "events-1041.jsonl": {
+          "bytes": 721,
+          "sha256": "5d3a9a7ec5a158bd1a231fb40b2762c134303779a4e27117c9cdcff074ace54a"
+        },
+        "events-1324.jsonl": {
+          "bytes": 2900,
+          "sha256": "9802223e94c4f178cbe854ec0d8a147ab7e78a15ffb863d0ebb9e1c03548c385"
+        },
+        "events-1901.jsonl": {
+          "bytes": 62695,
+          "sha256": "92533b048f96e327b3fcf00c6d71160533117906aa72cae2cabd79c9fe3c0875"
+        },
+        "events-3752.jsonl": {
+          "bytes": 720,
+          "sha256": "1b1e11a9fd5186017d7f7dcbcd9fb93baeaf9519db02a18953e2251941ce86df"
+        },
+        "manifest.json": {
+          "bytes": 1572,
+          "sha256": "5b1067e49dd2d21c133c41fa531eedb5952d4bd1bf378bfb1697a113414e931f"
+        },
+        "responses.json": {
+          "bytes": 6960,
+          "sha256": "ddff4fc0b5878f6f44c347e6eed37920214e4cf0b386de5be667d9dff7474c38"
+        },
+        "stacks-1041.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stacks-1324.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stacks-1901.txt": {
+          "bytes": 773541,
+          "sha256": "1fd4239ee611c7c1cbf8cafe7074ea489c085f5b1d8788efef65cc99a7573653"
+        },
+        "stacks-3752.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    },
+    {
+      "directory": "readiness-p1-d45fb754",
+      "mode": "p1",
+      "requests": 7,
+      "seed_commands": 5,
+      "seed_commit_seconds": 1.1964059909951175,
+      "actual_imports_match_frozen_sources": true,
+      "all_entered_calls_completed": true,
+      "credential_scan": "PASS",
+      "concurrent_requests_overlap_real_seed_commit": false,
+      "completed_seed_details": [
+        {
+          "door": false,
+          "client_seconds": 0.9717724350048229,
+          "handler_seconds": 0.9700321709970012,
+          "verified_accepted_calls": 3,
+          "verify_seconds": 0.952095303000533,
+          "historical_sequential_seconds": 0.9039163239940535,
+          "handler_event_file": "events-20846.jsonl"
+        },
+        {
+          "door": true,
+          "client_seconds": 1.0593379640049534,
+          "handler_seconds": 1.0549167770004715,
+          "verified_accepted_calls": 3,
+          "verify_seconds": 1.030477095999231,
+          "historical_sequential_seconds": 0.9670295280084247,
+          "handler_event_file": "events-20846.jsonl"
+        }
+      ],
+      "files": {
+        "events-20815.jsonl": {
+          "bytes": 709,
+          "sha256": "c0da64ac46ee97ec4f4f31ece57edf9dbaf31a8ea5e2a13cf99e4064d4e3f9ad"
+        },
+        "events-20817.jsonl": {
+          "bytes": 2890,
+          "sha256": "fec0c4573358cab07cf24b1f7756f5416aa12ec4e816bed055411a0b41a0af6d"
+        },
+        "events-20846.jsonl": {
+          "bytes": 53096,
+          "sha256": "3f5399a847dc7fa7c0d348252f82fef350919d25c21704a722a6194a67c43166"
+        },
+        "manifest.json": {
+          "bytes": 1524,
+          "sha256": "47021e6ed5e0a0947b2d8ef92b72808881556f9ba7ed794bb5e12f7fd5fa0ddf"
+        },
+        "responses.json": {
+          "bytes": 4937,
+          "sha256": "e74878f84343bd7286df5e9d8589072a14a7a1f032090c5b142d30b16ed1e59d"
+        },
+        "stacks-20815.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stacks-20817.txt": {
+          "bytes": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "stacks-20846.txt": {
+          "bytes": 163465,
+          "sha256": "89c9c8a9c9f0199fac3c2a855a9fc4f2fafa7c00b365d24ff9edf17607a86591"
+        }
+      }
+    }
+  ]
+}
