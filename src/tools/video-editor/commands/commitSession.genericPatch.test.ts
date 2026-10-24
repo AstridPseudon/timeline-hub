@@ -4,7 +4,7 @@ import type { TimelineData } from '../lib/timeline-data.ts';
 import { environment, h0, scope } from './__tests__/localSaveSessionEnvironment.ts';
 
 // The current generated contract is the only path this migration is intended to exercise.
-expect(SCHEMA_DIGEST).toBe('sha256:35c2d9c5e0b51ab8d8b7a4f4dbafbdfcb13d232d7bd22fff21cf73e250398d4c');
+expect(SCHEMA_DIGEST).toBe('sha256:4118b1e26d30be43cb1a01649df0065fed6e55a528b8956364df8f4eedb413d2');
 
 describe('local save session', () => {
   it('persists one doc.patch and retries the exact request after restart', async () => {
