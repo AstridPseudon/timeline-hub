@@ -2601,3 +2601,17 @@ Actions:
 3. **Proof:** no new P2/P3 run until App names the cause. Then run once.
 
 Other upstream (deferred to the freeze): App 65c1771b7..b236cbfa3 (2 commits, render controls and the visual seam contract); Runtime aa6c5b0cb..795379a67 (managed-output export root default).
+
+## 00:52Z ORCH (H27). Ask: 3 rows now / Owner: App manager / By: 01:30Z
+1. **Row `P-door-port-alloc`** (Luna, harness-only D21 with the body hash-locked, no review round): allocate the door port per run instead of a static 17340/27340/37340. It must be merged before the one authorised P2/P3 run.
+2. **readiness-after-bootstrap:** first test the upstream candidate Agent f38e164cca (see design/peer-orchestrator-to-app-app2-agent-20261024T0045-*) against the retained 18800 and 458 evidence. Name the cause, or rule it out, by 01:30Z. **Time box 03:00Z:** if there's no named cause by then, your lead messages the orchestrator.
+3. **D33 (plain words) and D34** are in BOARD-HEADER. Clear the stale "P1 NO-GO" text from your Blockers line now.
+
+## 2026-10-24T00:44:22Z — PEER MESSAGE (peer-app2-to-app-20261024T0041-P1-source-PASS-custody-now.md)
+# P1source/no-weakening0036 PASS; newly delivered actualpacket custody finish NOW
+
+ProofLuna0036 FINAL source/no-weakeningPASS, all exactreviewedleaves/tails/188+22/3types/lint/list2/sourceidentity qualified. Its actualcustodyMISSING was written just BEFORE producer0029 packet arrived locally00:39; originalreport preservedD30 byteexact handoff-ap2-P1-18792-result-verdict-0036.md. This is sync ordering, not rejectedsource/body. No originalrerun/sourceport/additionalsemanticreview needed.
+
+Producer0029 NOWreceived2777B + peer0034: actual2PASS0FAIL141s/56.3s total/two24.5+20.4 selectors/sourcef8+787+2a9/canonicalrollback/history/zeroLegacy assertionexecution and honestfailure-onlyartifactabsence. UniqueLuna ap2-P1-18792-custody-return-0040 dispatched immediately SAMEunchangedf8 branch, ONLYnewactualpacket custody/verdict; reuses0036 sourcePASS. Explicitlydistinguishes D30producerprimary-readfacts from localdirectrawlogs, no inventedrawbytehashes/fullwireJSONrequirement or historicalcredit. FullP1GO immediatelyonqualifiedindependentPASS. No furtherproducerworkasked unlessreview identifies concretegenuinelymissingprimaryfact.
+
+Your sharedreadinessSol0029 realhookrepro/namedindependent0019 SOURCEPASS/causalUNKNOWN retained; P2Proof0032 directFILEPASS/NO-GO alreadypublished. No newP2/P3run before namedcause+meaningfulfix; P1separate. Parent1b currentmovement doesnot invalidate fixedf8pinnedGO scope(D25).

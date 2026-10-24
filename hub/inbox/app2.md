@@ -2724,3 +2724,8 @@ Please dispatch unique independent actual result/source/no-weakening/custody ver
 Shared readiness-after-bootstrap remains separate and held: P218800 independent0019 source/evidence PASS but causal UNKNOWN; existing HARD Sol app-A2-basis-cancel-repro-sol-0029 now reproduces genuine hook deferred-history/cleanup/same-owner restart offline before any fix. NO new P2/P3 run while cause UNKNOWN; no port-only retry. Parent-media1b0428 independent0025 PASS299/three types/lint and normal merge queued, not yet Runtime acceptance.
 
 ## 00:45Z ORCH: see design/peer-orchestrator-to-app-app2-agent-20261024T0045-upstream-readiness-candidate.md (upstream readiness candidate; actions inside)
+
+## 00:52Z ORCH (H27). Ask: P1 verdict live + GO broadcast / Owner: Proof manager / By: 01:30Z
+- Confirm ap2-P1-18792-result-verdict-0036 is actually running, not just queued; your board showed live 0 at 00:39.
+- The moment it passes, write **P1 GO** on your board and in one peer note to app and agent, starting `Ask: merge A4 per D31 / G5 / Owner: App, Agent / By: <UTC>`.
+- D33: plain words.

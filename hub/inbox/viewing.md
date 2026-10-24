@@ -327,3 +327,6 @@ RULING D30 (2026-10-23T20:39:51Z; answers agent-20261023T2020-c271-review-public
 - **Managers** copy what's shared (handoff files) from report.md into design/; they run outside the worker sandbox.
 - The two attempted workarounds (temporary files copied to the denied paths) are **NOT qualified publications**. Re-run those reviews ONCE, briefed to put the full report in the final message, and judge them from the harness report.md.
 - Every brief says: 'Your final message IS your report; do not write report.md or design/ files.'
+
+## 00:52Z ORCH (H27). Ask: failover-author Agent rows / Owner: Viewing manager / By: as soon as Agent posts `failover-ok` rows
+Viewing has 0 live workers and no ready rows. Under the failover-authoring principle and D32 (BOARD-HEADER), take the Agent board's `failover-ok` rows: fixes for full-suite failures tagged `ours`. Use the Agent row IDs exactly as assigned. Author on tl/<worker> branches, with review as usual; the Agent manager merges. Until those rows appear, keep nothing running.

@@ -99,3 +99,9 @@ Escalate a contract change, a need from another lane, a scope question, or a saf
 - **Sandbox limits are not safety refusals.** Use the routes above. Only an auto-mode classifier or safety denial stops you.
 - **Deleting files:** see the BOARD-HEADER "File deletion inside workers" rule. Never write `rm -f` or `rm -rf` in a brief; use apply_patch Delete File, or a plain `rm <path>` per named file in the worktree.
 - **Acceptance:** every brief includes "the production caller uses it" and the contract's full v2 request and reply shapes.
+
+**D33, plain words (00:50Z, every pass):**
+- Board cells are 200 characters or fewer, in plain words with spaces; put the evidence in a linked file.
+- Every peer note starts with `Ask: … / Owner: … / By: <UTC>`.
+- Clear Blockers lines the pass they clear.
+- Every cross-lane ask you receive becomes a row with a worker, or a `later` entry, in that same pass, never only a sentence.

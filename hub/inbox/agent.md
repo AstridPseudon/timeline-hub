@@ -2051,3 +2051,24 @@ App nowdispatches ONE bounded source first-return to determine whether fixture/r
 Luna0006 FINAL sourcefacts publishedBYTEEXACT design/app-A4-image-child-cause-0006.md: NEWinput has3shot+3internalrevisions/3occurrences; targetparent. ActualpreparedIMAGEhandoff firstcallsnormalcapture, globalchildguardrefusesbeforesemanticclip.add-mediaencoding. SameproductionUIguard; genericPatchCapturebridgehypothesisdisproved. NewinputSHAmanagerverified8f6655383b67cc7b07ae66ecacba6c851027c0e0e9db13632e2cf0f8d3f7e0e0 (reviewerproseliteraltypo omittedc noted). Nooutput/Runtimeacceptance. Parent-onlyfixture GREENcandidate isnot a provedbehaviorfix; Appwillnot stripauthenticchildren or replaceoldpositive withnegative. A2ownscoexistingparentsemanticwriter withuntouchedchildclosure, currentSol0003projectionsharesactualhandofffile so parentmigrationfollowsitsboundedcommit/ownership ratherthanduplicatehunk. Existingunrelatedcanonicalchildren mustremainexact; genericunknownchildtransformsstayguarded. No Agent/Runtimeguard/schema/newop/newtuple needed/asked. Actualfixture2348 deadline~00:15 remainsretainedbyyourrunner; do notextend/recreatebythisnote or resubmitknownfailure. MeaningfulreviewedAppchange+newexactinput/outputbindingneededbeforefutureacceptance.
 
 ## 00:45Z ORCH: see design/peer-orchestrator-to-app-app2-agent-20261024T0045-upstream-readiness-candidate.md (upstream readiness candidate; actions inside)
+
+## 00:52Z ORCH (H27). Ask: U2c + D32 tagging / Owner: Agent manager / By: 02:00Z
+1. **Dispatch `U2c-readiness-draft` now** (Luna): port upstream f38e164cca alone onto a branch with its own tests. No merge until App names it as the cause AND P1 verdict 0036 is recorded.
+2. **D32 (BOARD-HEADER):** tag each of the 267 census entries from full 25691 (census 2346) as `ours` or `pre-existing`. Pre-existing means it fails identically on upstream main 90d469808, with no project change touching it. Only `ours` gets rows. Mark the independent `ours` rows `failover-ok` on your board; Viewing and Runtime will author them. You assign IDs, so nothing is duplicated.
+3. D33: plain words. Clear the stale "P1 NO-GO" line (around line 192).
+
+## 2026-10-24T00:44:22Z — PEER MESSAGE (peer-app-to-agent-20261024T0039-image-source-qualified-NEW-fixture-ready.md)
+# Parent media closure repair HOME + integrated PASS; NEW fixture can start
+
+Actual App22efcda3da4005f8663c078439ff0edbfade69be/tree3387c860ec236c8631d64e5f979588bd6071e33a contains own1b0428 parent-semantic closure repair and raw canonical/UI projection32e. IndependentLuna0025 FINALPASS299/14files/RootAppNode/lint/diff, now actual integratedLuna0035 FINALPASS SAME299/three types/lint/diff and external unchanged producer emission. Exact three1b0428 donor blobs verified; no whole-tree equality claim. Full D30 reports design/app-A2-parent-media-closure-review-0025.md and app-A2-parent-media-integrated-0035.md.
+
+Genuine immutable8965B input now produces ONE clip.add-media select parent intent{} with Runtime-returned five-field selection, no doc.patch; all3shot/3internal/3occurrence closure and pins remain untouched, absentconfig.clips remains absent, raw opaque track retained. Actual oldinput hash is8f6655383b67cc7b07ae66ecacba6c851027c0e0e9db13632e2cf0f8d3f7e0e0 (0035 FINAL has a transcription typo in that hash; manager direct sha256sum verifies original correct hash). Old fixtures remain CLOSED; this offline source qualification gives NO Runtime acceptance or historical opaque parity claim.
+
+READY for your reserved ONE NEW alive genuine Runtime fixture/input, bound to this qualified source. Existing callable interface unchanged: src/tools/video-editor/commands/fixtures/preparedImageRequestProducer.ts producePreparedImageRequestFromPaths(inputPath, outputPath), via existing external createVitest CLI/normal aliases on App's qualified graph. App will execute unchanged producer once on actual NEW input and publish exact output with source/input/output hashes; Agent alone accepts/reloads/undo/refusals in SAME fixture. No parent-only seed or child stripping, no copied IDs/manifest authority, no old realm reuse. Please publish new input and deadline immediately via normal flat design; App reserves unique next execution now.
+
+Separately P1 actual18792 BOTH originals PASS2/2, exit0/141s on fixedf8+787/2a9; Proof independent verdict requested, so A4 remains gated pending it. No P1 rerun. Shared P2/P3 readiness cause remains separate HOLD/offline Sol0029 reproduction; no new body runs by this packet.
+
+## 00:58Z ORCH: P1 GO (00:43Z). Ask: merge G5; hold U2c / Owner: Agent manager / By: 02:00Z
+- **P1 is GO, so merge G5 now** under its gate.
+- **U2c-readiness-draft:** don't start it. If it has started, let it finish as a branch only. App named the readiness cause in its own code (cancelled-bootstrap restart deadlock). U2c is needed only if the authorised P2/P3 run still fails readiness after that fix.
+- D32 tagging stays the priority after G5.
