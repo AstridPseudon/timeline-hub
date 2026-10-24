@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T03:04:58Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 21 | status age 0m -->
+<!-- app | 2026-10-24T03:07:48Z | dispatcher heartbeat 6s | live 4 (sol 2, luna 2, other 0) | busy30 23 | status age 0m -->
 # app board, 2026-10-24T03:04Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -8,7 +8,7 @@
 | A2 | Production save funnel | Sol; Luna review | C0 and U3 | merged | app-A2-final-composed-review-r7 | Original P1 chain passed on pinned f8. Latest bootstrap fix is listed below. | 9eda8e907 |
 | A3 | Popup, placement and asset saves | Sol; Luna review | A2 | merged | App and Proof workers | Source qualifications passed. P2 live gesture proof remains pending. | See linked proofs |
 | P1 | Original mixed chain | App runner; Proof review | Resolved | merged | Test 18792; Proof 0036 and 0040 | GO at 00:43. Both cases passed; exit 0, 141 seconds. Fixed App f8 / Agent 787 / Runtime 2a9. | f8b15af0a6 |
-| A4 | Executor and capture retirement | Luna; Sol author | P1 GO and D37 | doing | Recovery review 0222; basis fix 0224 | Exports and lifecycle merged. Remaining recovery guards and final reachable-path cuts continue. | 5ad7907e86 |
+| A4 | Executor and capture retirement | Luna; Sol author | P1 GO and D37 | doing | Element writer Sol 0306; dormant Sol 0306 | Recovery, replay and refusals merged. Census found one reachable element adapter writer; migration assigned. Dormant failed protocol packets retained. | 5ad7907e86 |
 | A2-staged-caller | Move staged generation onto current save | Sol; Luna review | Review 0133 PASS | merged | app-A2-staged-caller-sol-0122 | Independent 279 tests, three types and lint passed. Integrated joined proof 0150 passed 448 tests, three types and lint. | 9969949827 / e9bce18bea |
 | A4-state | Retire state transaction runner API | Luna | Review 0142 PASS | merged | app-A4-state-runner-retirement-0135 | Independent 175 tests, three types and lint passed. Integrated source follow-up will include current media-wrapper cut. | ce7a48e137 / 1f4b30a51b |
 | A4-history | Retire history runner execution | Luna | Review 0131 PASS | merged | app-A4-history-retirement-0125 | Independent 95 tests, three types and lint passed. Mounted guarded Runtime undo retained; joined proof 0150 passed 448 tests, three types and lint. | b2a546f535 / 0a0f95efc7 |
@@ -47,13 +47,18 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 
 | A2-recovery-basis | Preserve seven dependent recovery guards | Sol; Luna review | Independent 0240 and current proof PASS | merged | app-A2-recovery-basis-current-0250 | Exact reviewed current packet passed 106 tests, three types and lint; merged at dbde9cc37d. | 499a791db7 / dbde9cc37d |
 | A4-remaining-protocol | Map remaining legacy protocol cases | Luna | Read-only map complete | merged | app-A4-remaining-protocol-map-0226 | Remaining cases mapped into bounded current-save packets. Six chain and six label declarations are now assigned. | Report only |
-| A4-protocol-chain | Move faithful local chain declarations | Luna | First return completed | review | app-A4-chain-return-review-0257 | Author 138 tests, three types and lint passed. Manifest-corruption original kept unchanged where mapping is missing. | Return branch only |
-| A4-track-label | Move faithful label protocol declarations | Luna | First return completed | review | app-A4-label-return-review-0257 | Author 215 tests, three types and lint passed. Presence/remove and remote oracle originals retained. | Return branch only |
+| A4-protocol-chain | Move faithful local chain declarations | Luna | First return completed | doing | app-A4-dormant-protocol-sol-0306 | Second review failed exact pending/key and persistence assertions. Branch held; original cases remain. Sol applies D37 on concrete reachability. | Return branch only |
+| A4-track-label | Move faithful label protocol declarations | Luna | First return completed | doing | app-A4-dormant-protocol-sol-0306 | Second review found missing observed-remote, actual-conflict and closure assertions. Branch held; original cases remain. | Return branch only |
 | A4-replay-protocol | Move one faithful replay declaration | Luna | Independent 0249 PASS | merged | app-A4-replay-current-packet-0257 | Review passed 124 tests, three types and lint. Current packet passed 138 tests, three types and lint; merged 9e83160c0e. Five unmappable originals retained. | 6585ad99e3 donor |
 | A4-label-refusals | Move three equivalent label refusals | Luna | Independent 0252 PASS | merged | app-A4-label-refusal-current-0257 | Independent 124 tests, three types and lint passed. Three original ownership, basis and mixed-preview cases kept unchanged. Current packet passed 128 tests, three types and lint; merged a64587176d. | 594ce7ba8a donor |
 | readiness-backend-bench | Exact compatible backend child custody | Dispatcher; App caller | Actual keyed child receipt | doing | child app-ready-079-37eb-0256 | Exact 37eb checkout verified. Normal child 0256 passed with exact installed backend. Remotion 0258 verified reuse; actual backend imports match. | Runtime 37eb6c7bdb |
 
-| A4-reachable-census | Check current fallback writer reachability | Luna | Current merged cuts | doing | app-A4-current-reachable-census-0300 | Read-only entrypoint graph after state, history, staged, media and public-export cuts. D37 dormant implementations and tests stay unchanged. | Current integration |
+| A4-reachable-census | Check current fallback writer reachability | Luna | Current merged cuts | merged | app-A4-current-reachable-census-0300 | One reachable element adapter writer found; Sol0306 assigned. Executor and legacy protocol paths have no production value caller. | Current integration |
+
+| A2-element-writer | Move registered element adapter saves to A2 | Sol; Luna review | Census 0300 | doing | app-A2-element-writer-sol-0306 | Mounted agent-chat element adapter still calls saveTimelineAtHead. Preserve original authority, head, registry and closure on the current outbox. | Current integration |
+| A4-protocol-joined | Qualify merged protocol packets | Luna | Three reviewed merges | doing | app-A4-protocol-joined-proof-0306 | Integrated recovery, replay and label-refusal union with exact donor identities; no held packet import. | a64587176d |
+
+| P2-P3-result-handoff | Publish same-ID changed-pair evidence | Luna | Actual terminal artifacts | doing | app-P2-P3-D41-result-handoff-0307 | Producer reads actual 12221 and 3362 only, qualifies safe files and source custody. Proof owns independent gate verdict. | App804 / Agent079 / Runtime37eb |
 
 Blockers: U3b awaits P2/P3 and the final freeze.
 Blockers: App and Proof await terminal results for the single changed P2 12221 and P3 3362 pair. No repeat request; Proof owns verdict.
