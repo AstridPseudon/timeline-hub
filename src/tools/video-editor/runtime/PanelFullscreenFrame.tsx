@@ -1,6 +1,7 @@
 import { forwardRef, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Minimize2 } from 'lucide-react';
+import { useOptionalVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 
 export interface PanelFullscreenFrameProps {
   title: string;
@@ -17,14 +18,16 @@ function focusInitial(body: HTMLElement): boolean {
 }
 
 /**
- * A panel at the full size of the browser window, above the editor, chat and panes (not the
- * Fullscreen API). The host moves the panel's DOM node into the ref'd body. Modal: Esc exits and
- * Tab stays inside. Whoever opened it returns focus to its own button on exit.
+ * A panel filling the editor shell when the host supplies one, with a document-level fallback for
+ * standalone hosts (not the Fullscreen API). The host moves the panel's DOM node into the ref'd
+ * body. Shell-scoped panels leave chat reachable; standalone panels are modal. Whoever opened it
+ * returns focus to its own button on exit.
  */
 export const PanelFullscreenFrame = forwardRef<HTMLDivElement, PanelFullscreenFrameProps>(function PanelFullscreenFrame(
   { title, onExit },
   bodyRef,
 ) {
+  const shellRoot = useOptionalVideoEditorRuntime()?.shellRootRef?.current ?? null;
   const frameRef = useRef<HTMLDivElement | null>(null);
   const innerBodyRef = useRef<HTMLDivElement | null>(null);
   const onExitRef = useRef(onExit);
@@ -48,17 +51,31 @@ export const PanelFullscreenFrame = forwardRef<HTMLDivElement, PanelFullscreenFr
     return () => observer.disconnect();
   }, []);
 
-  // Esc exits unless a panel consumed it; Tab wraps inside the frame.
+  // Esc exits from the editor shell unless a panel consumed it; chat keeps its Escape.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
       const frame = frameRef.current;
       if (!frame) return;
-      if (event.key === 'Escape' && !event.defaultPrevented) {
-        event.preventDefault();
-        onExitRef.current();
-        return;
-      }
+      const target = event.target instanceof Node ? event.target : null;
+      const inEditor = !shellRoot || target === null || target === document.body
+        || target === document.documentElement || frame.contains(target) || shellRoot.contains(target);
+      if (!inEditor) return;
+      event.preventDefault();
+      onExitRef.current();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [shellRoot]);
+
+  // Tab wraps inside the frame when it owns the whole document. The shell-scoped frame leaves
+  // the chat pane reachable.
+  useEffect(() => {
+    if (shellRoot) return undefined;
+    const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Tab' || event.defaultPrevented) return;
+      const frame = frameRef.current;
+      if (!frame) return;
       const items = Array.from(frame.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => el.offsetParent !== null || el === document.activeElement);
       if (items.length === 0) return;
       const first = items[0];
@@ -77,24 +94,25 @@ export const PanelFullscreenFrame = forwardRef<HTMLDivElement, PanelFullscreenFr
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
+  }, [shellRoot]);
 
   // The page behind stays put while the frame is up.
   useLayoutEffect(() => {
+    if (shellRoot) return undefined;
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = previous; };
-  }, []);
+  }, [shellRoot]);
 
   // The app's pane handles are fixed at z-[100016] (see shared/config/panes.ts); the frame stacks above them.
   const frame = (
     <div
       ref={frameRef}
       role="dialog"
-      aria-modal="true"
+      aria-modal={shellRoot ? 'false' : 'true'}
       aria-label={title}
       data-panel-fullscreen-frame
-      className="fixed inset-0 z-[100017] flex min-h-0 flex-col bg-background text-foreground"
+      className={`${shellRoot ? 'absolute inset-y-0 left-0 right-3.5 z-50' : 'fixed inset-0 z-[100017]'} flex min-h-0 flex-col bg-background text-foreground`}
     >
       <div data-panel-fullscreen-titlebar className="flex h-9 shrink-0 select-none items-center gap-2 border-b border-border bg-muted/40 px-3">
         <span className="min-w-0 flex-1 truncate text-sm font-medium">{title}</span>
@@ -112,5 +130,5 @@ export const PanelFullscreenFrame = forwardRef<HTMLDivElement, PanelFullscreenFr
     </div>
   );
 
-  return createPortal(frame, document.body);
+  return createPortal(frame, shellRoot ?? document.body);
 });
