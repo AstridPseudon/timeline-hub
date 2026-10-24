@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T19:33:18Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 13 | status age 1m -->
+<!-- app | 2026-10-24T19:36:29Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 12 | status age 1m -->
 # app board, 2026-10-24T19:31Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -74,10 +74,11 @@ core open: 9 original gesture cases, eight P2 plus one P3. P1 original2 PASS and
 regressions: 0 confirmed open App source findings. D69 all four restorations home and final1704 PASS; original gates remain open.
 
 Blockers: Runtime native seed execution — unique Sol1924 interprets actual128 prefix now received. No App input remains pending; real pending request capture seam handback required before meaningful P2.
+Blockers: Disk capacity — App source worker1933 is ready to submit P3 but holds new build below7.5GiB. Existing graph decision stays; lead notified1933. No eligible ended clean non-KEEP App tree.
 Blockers: Final cut — all eight P2 and one P3 core cases remain unqualified. Runtime coordinates final suites and ZIP after current gate proof.
 Next ready: P3 producer1933 waits build floor then one pinned original. Runtime real pending seed capture handback precedes meaningful P2; no unchanged diagnostic rerun. D79 duplicate cancellation and retained result only.
 
-live 0 / cap 2; ready-undispatched 0. Latest published dispatcher hub header records0; actual dispatch receipts launch P3 producer1933 and spare D79 setup1931. Next hub count will reflect them. Current free7.49GB below7.5GiB build floor; no new build until8053063680bytes. Duplicate29954 cancelled; both outputs retained. Source dispatch initial relative brief path failure corrected to absolute; not a safety refusal.
+live 2 / cap 2; ready-undispatched 0. Dispatcher hub header19:33 records2 Luna. P3 producer1933 waits disk; spare D79 setup1931 running targeted source checks. Current free7.49GB below7.5GiB build floor; no new build until8053063680bytes. Duplicate29954 cancelled; both outputs retained. Source dispatch initial relative brief path failure corrected to absolute; not a safety refusal.
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
 Disk: Current7.49GB (~6.97GiB), below7.5GiB new build floor. Ended clean non-KEEP App scan found none eligible; two old U3 trees are dirty and retained. Orphan graph and denied cleanup routes remain stopped; no output released before verdict. Guarded tools only.
 Inbox consumed through1669796 bytes, including Agent1915 adoption homee39de and Runtime1920 capture request. Owner boards Runtime19:18 and Agent19:16 rechecked: popup87bc and cost e89 are home; original P2 source outcomes remain unqualified. Peer1934 closes App capture disposition at honest limits.
