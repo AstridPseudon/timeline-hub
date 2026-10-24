@@ -1,0 +1,238 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______ test_shared_source_fork_add_media_and_history_use_same_owner[True] ______
+
+self = <runtime_protocol.service.RuntimeService object at 0x7fdd705ca660>
+project_id = 'ce9df055e1ab4cdda43549ff2ed1b8c2', timeline_id = 'film'
+request = {'api_version': 1, 'project_id': 'ce9df055e1ab4cdda43549ff2ed1b8c2', 'timeline_id': 'film', 'base_revision_id': 'authoring-parent-revision-724aadfff085f859fe3fc0912bafa17c6f751aa11c398eebf8978f9d11d78f2a', ...}
+original_body = {'api_version': 1, 'project_id': 'ce9df055e1ab4cdda43549ff2ed1b8c2', 'timeline_id': 'film', 'base_revision_id': 'authoring-parent-revision-724aadfff085f859fe3fc0912bafa17c6f751aa11c398eebf8978f9d11d78f2a', ...}
+operation = 'commitTimeline', idempotency_key = 'popup-fork-add'
+publisher = 'editor'
+invocation_path = '/v1/projects/ce9df055e1ab4cdda43549ff2ed1b8c2/timelines/film/commit'
+authorize = <function created_child_public.<locals>.publish.<locals>.<lambda> at 0x7fdd700b56c0>
+
+    def _execute_timeline_commit(self, project_id, timeline_id, request, original_body, *,
+                                 operation, idempotency_key, publisher, invocation_path, authorize):
+        from .timeline_commit import CommitRejected
+        from .timeline_commit_port import CommitUnavailable, RequestCommitPort, detached, public_failure
+        if not isinstance(publisher, str) or not publisher:
+            raise AuthorizationError("authenticated publisher is required")
+        idempotency_key = require_idempotency_key(idempotency_key)
+        # A retry must authenticate against the current bearer and canonical
+        # project before it can inspect the durable idempotency row.  Archived
+        # liveness is deferred until the lookup misses, so an exact replay can
+        # still be returned without reopening the mutable producer scope.
+        check = self._timeline_authorize(project_id, timeline_id, authorize, allow_archived=True)
+    
+        def require_active():
+            check()
+            with self.store._mutex:
+                connection = self.store.conn
+                if connection is None:
+                    raise RuntimeError("runtime store is not open")
+                row = connection.execute(
+                    "SELECT 1 FROM timelines WHERE id=? AND project_id=? AND archived_at IS NULL",
+                    (timeline_id, project_id),
+                ).fetchone()
+                if row is None:
+                    raise NotFoundError("timeline not found")
+    
+        invocation = {"operation": operation, "path": invocation_path, "body": detached(original_body)}
+        request_hash = hashlib.sha256(canonical_json({
+            "operation": operation, "path": invocation_path,
+            "publisher": publisher, "request": invocation["body"],
+        }).encode()).hexdigest()
+        context = {"request": detached(request), "invocation": invocation,
+                   "request_hash": request_hash, "idempotency_key": idempotency_key,
+                   "publisher": publisher, "realm_id": self.realm["id"]}
+        commits, coordinator = self._timeline_commits()
+        with self.store._mutex:
+            self._timeline_commit_started = True
+            provider = self._timeline_commit_provider
+        def port_factory(bound_context):
+            require_active()
+            self._ensure_timeline_commit_baseline(commits, project_id, timeline_id, require_active)
+            return RequestCommitPort(self, commits, bound_context, require_active)
+        try:
+            if provider is None:
+                replay = commits.lookup(context, authorize=check)
+                if replay is not None:
+                    return replay
+                require_active()
+                raise CommitUnavailable()
+>           outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+runtime_protocol/service.py:2499: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+runtime_protocol/timeline_commit_execution.py:105: in execute
+    raise error
+runtime_protocol/timeline_commit_execution.py:87: in execute
+    outcome = detached(provider.commit(provider_context, port))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../agent/astrid/sdk/timeline/commit.py:1444: in commit
+    return port.accept(prepared)
+           ^^^^^^^^^^^^^^^^^^^^^
+runtime_protocol/timeline_commit_port.py:656: in accept
+    return self.__store.accept(self.__context, prepared, authorize=self.__authorize, inputs=self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+runtime_protocol/timeline_commit_store.py:1229: in accept
+    candidate, execution = self._validate(context, prepared, inputs)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+runtime_protocol/timeline_commit_store.py:914: in _validate
+    sequential = inputs._validate_sequential_execution(
+runtime_protocol/timeline_commit_port.py:670: in _validate_sequential_execution
+    proof = validate_sequential_capture(
+runtime_protocol/timeline_commit_auth.py:2475: in validate_sequential_capture
+    require(isinstance(capture, dict) and set(capture) == {
+runtime_protocol/timeline_commit_auth.py:2754: in validate
+    require(target_landing in _capture_document_images(step_output),
+runtime_protocol/timeline_commit_auth.py:2043: in command_output
+    require(not any(row.get("occurrence_id") == intermediate_occurrence["occurrence_id"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+runtime_protocol/timeline_commit_auth.py:1844: in _project_created_child
+    edges without borrowing their later payloads.
+runtime_protocol/timeline_commit_auth.py:21: in require
+    reject("invalid_records", message, status=422)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+reason = 'invalid_records'
+message = 'provider created shot owner differs from its authenticated occurrence'
+status = 422
+
+    def reject(reason, message=None, *, status=409):
+        from .timeline_commit import CommitRejected
+    
+>       raise CommitRejected({"http_status": status, "code": "conflict" if status == 409 else "validation_error",
+                              "message": message or reason, "details": {"status": "refused", "reason": reason,
+                              "base": None, "current": None, "conflicts": []}})
+E       runtime_protocol.timeline_commit.CommitRejected: provider created shot owner differs from its authenticated occurrence
+
+runtime_protocol/timeline_commit_store.py:29: CommitRejected
+
+The above exception was the direct cause of the following exception:
+
+actual_child_public = (<runtime_protocol.service.RuntimeService object at 0x7fdd705ca660>, 'ce9df055e1ab4cdda43549ff2ed1b8c2', {'schema_vers...2a34cfe30b410c294', 'track': 'picture', ...}, <function created_child_public.<locals>.document at 0x7fdd705c6c00>, ...)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fdd7150c3e0>
+uncaptured = True
+
+    @pytest.mark.parametrize("uncaptured", [False, True])
+    def test_shared_source_fork_add_media_and_history_use_same_owner(actual_child_public, monkeypatch, uncaptured):
+        runtime, project, _source, submitted, _held, document, publish = actual_child_public
+        commit = importlib.import_module("astrid.sdk.timeline.commit")
+        capture_shared = importlib.import_module(
+            "astrid.sdk.timeline.native_occurrence_shared").capture_occurrence_place_shared
+        capture_track = importlib.import_module("astrid.sdk.timeline.capture").capture_track_create
+    
+        def request(command):
+            head = runtime.get_project_timeline(project, "film")
+            return {**copy.deepcopy(submitted), "base_revision_id": head["head_revision_id"],
+                    "base_publication_id": head["head_publication_id"], "commands": [command],
+                    "steps": [{"id": "edit", "label": "Owner control", "intent": "Owner control",
+                               "tags": [], "command_ordinals": [0], "patch": [], "reads": []}]}
+    
+        publish(submitted, "popup-child")
+        shared = capture_shared(commit.bundle_from_document(document()), "occurrence:new", "sibling", on=10)
+        assert publish(request(shared), "popup-shared")["data"]["status"] == "accepted"
+        before = document()
+        sibling = copy.deepcopy(before["parent_revision"]["payload"]["occurrences"][1])
+        bundle = commit.bundle_from_document(before)
+        assert bundle["placements"][0]["shot_id"] != sibling["shot_id"]
+    
+        def app_publish(body, key):
+            if uncaptured and [call["op"] for call in body["commands"]] == [
+                    "occurrence.fork", "occurrence.add-media"]:
+                body = copy.deepcopy(body)
+                for call in body["commands"]:
+                    for field in list(call):
+                        if field not in {"schema_version", "op", "version", "select", "args", "intent", "created"}:
+                            call.pop(field)
+            return publish(body, key)
+    
+        fixture = runtime, project, _source, submitted, _held, document, app_publish
+>       test_actual_agent_fork_add_media_reaches_owner_projection(fixture, monkeypatch)
+
+tests/test_timeline_popup_fork_owner_projection.py:248: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_timeline_popup_fork_owner_projection.py:203: in test_actual_agent_fork_add_media_reaches_owner_projection
+    result = publish(request, "popup-fork-add")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_timeline_popup_fork_owner_projection.py:245: in app_publish
+    return publish(body, key)
+           ^^^^^^^^^^^^^^^^^^
+tests/test_timeline_commit_authentication.py:804: in publish
+    return runtime.commit_timeline(project, "film", submitted, idempotency_key=key, publisher="editor",
+runtime_protocol/service.py:2444: in commit_timeline
+    return self._execute_timeline_commit(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <runtime_protocol.service.RuntimeService object at 0x7fdd705ca660>
+project_id = 'ce9df055e1ab4cdda43549ff2ed1b8c2', timeline_id = 'film'
+request = {'api_version': 1, 'project_id': 'ce9df055e1ab4cdda43549ff2ed1b8c2', 'timeline_id': 'film', 'base_revision_id': 'authoring-parent-revision-724aadfff085f859fe3fc0912bafa17c6f751aa11c398eebf8978f9d11d78f2a', ...}
+original_body = {'api_version': 1, 'project_id': 'ce9df055e1ab4cdda43549ff2ed1b8c2', 'timeline_id': 'film', 'base_revision_id': 'authoring-parent-revision-724aadfff085f859fe3fc0912bafa17c6f751aa11c398eebf8978f9d11d78f2a', ...}
+operation = 'commitTimeline', idempotency_key = 'popup-fork-add'
+publisher = 'editor'
+invocation_path = '/v1/projects/ce9df055e1ab4cdda43549ff2ed1b8c2/timelines/film/commit'
+authorize = <function created_child_public.<locals>.publish.<locals>.<lambda> at 0x7fdd700b56c0>
+
+    def _execute_timeline_commit(self, project_id, timeline_id, request, original_body, *,
+                                 operation, idempotency_key, publisher, invocation_path, authorize):
+        from .timeline_commit import CommitRejected
+        from .timeline_commit_port import CommitUnavailable, RequestCommitPort, detached, public_failure
+        if not isinstance(publisher, str) or not publisher:
+            raise AuthorizationError("authenticated publisher is required")
+        idempotency_key = require_idempotency_key(idempotency_key)
+        # A retry must authenticate against the current bearer and canonical
+        # project before it can inspect the durable idempotency row.  Archived
+        # liveness is deferred until the lookup misses, so an exact replay can
+        # still be returned without reopening the mutable producer scope.
+        check = self._timeline_authorize(project_id, timeline_id, authorize, allow_archived=True)
+    
+        def require_active():
+            check()
+            with self.store._mutex:
+                connection = self.store.conn
+                if connection is None:
+                    raise RuntimeError("runtime store is not open")
+                row = connection.execute(
+                    "SELECT 1 FROM timelines WHERE id=? AND project_id=? AND archived_at IS NULL",
+                    (timeline_id, project_id),
+                ).fetchone()
+                if row is None:
+                    raise NotFoundError("timeline not found")
+    
+        invocation = {"operation": operation, "path": invocation_path, "body": detached(original_body)}
+        request_hash = hashlib.sha256(canonical_json({
+            "operation": operation, "path": invocation_path,
+            "publisher": publisher, "request": invocation["body"],
+        }).encode()).hexdigest()
+        context = {"request": detached(request), "invocation": invocation,
+                   "request_hash": request_hash, "idempotency_key": idempotency_key,
+                   "publisher": publisher, "realm_id": self.realm["id"]}
+        commits, coordinator = self._timeline_commits()
+        with self.store._mutex:
+            self._timeline_commit_started = True
+            provider = self._timeline_commit_provider
+        def port_factory(bound_context):
+            require_active()
+            self._ensure_timeline_commit_baseline(commits, project_id, timeline_id, require_active)
+            return RequestCommitPort(self, commits, bound_context, require_active)
+        try:
+            if provider is None:
+                replay = commits.lookup(context, authorize=check)
+                if replay is not None:
+                    return replay
+                require_active()
+                raise CommitUnavailable()
+            outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+            if "http_status" in outcome:
+                raise public_failure(outcome)
+            return outcome
+        except CommitRejected as exc:
+>           raise public_failure(exc.failure) from exc
+E           runtime_protocol.errors.RuntimeErrorBase: provider created shot owner differs from its authenticated occurrence
+
+runtime_protocol/service.py:2504: RuntimeErrorBase
+=========================== short test summary info ============================
+FAILED tests/test_timeline_popup_fork_owner_projection.py::test_shared_source_fork_add_media_and_history_use_same_owner[True]
+1 failed in 7.37s

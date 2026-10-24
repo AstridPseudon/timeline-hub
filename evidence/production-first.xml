@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="7" time="24.511" timestamp="2026-10-24T18:50:36.671566+00:00" hostname="vm"><testcase classname="tests.test_timeline_popup_fork_owner_projection" name="test_shared_source_fork_add_media_and_history_use_same_owner[False]" time="5.876"><failure message="AssertionError: assert [('_project_c..., 'validate')] == [('_project_c..., 'validate')]&#10;  &#10;  Left contains 3 more items, first extra item: ('_project_created_child', 'command_output', 'validate')&#10;  Use -v to get more diff">actual_child_public = (&lt;runtime_protocol.service.RuntimeService object at 0x7f9309586a50&gt;, '5986387b129e494683e078822c5b5f23', {'schema_vers...b705308d002faccb0', 'track': 'picture', ...}, &lt;function created_child_public.&lt;locals&gt;.document at 0x7f9309073c40&gt;, ...)
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7f9309a6c3e0&gt;
+uncaptured = False
+
+    @pytest.mark.parametrize("uncaptured", [False, True])
+    def test_shared_source_fork_add_media_and_history_use_same_owner(actual_child_public, monkeypatch, uncaptured):
+        runtime, project, _source, submitted, _held, document, publish = actual_child_public
+        commit = importlib.import_module("astrid.sdk.timeline.commit")
+        capture_shared = importlib.import_module(
+            "astrid.sdk.timeline.native_occurrence_shared").capture_occurrence_place_shared
+        capture_track = importlib.import_module("astrid.sdk.timeline.capture").capture_track_create
+    
+        def request(command):
+            head = runtime.get_project_timeline(project, "film")
+            return {**copy.deepcopy(submitted), "base_revision_id": head["head_revision_id"],
+                    "base_publication_id": head["head_publication_id"], "commands": [command],
+                    "steps": [{"id": "edit", "label": "Owner control", "intent": "Owner control",
+                               "tags": [], "command_ordinals": [0], "patch": [], "reads": []}]}
+    
+        publish(submitted, "popup-child")
+        shared = capture_shared(commit.bundle_from_document(document()), "occurrence:new", "sibling", on=10)
+        assert publish(request(shared), "popup-shared")["data"]["status"] == "accepted"
+        before = document()
+        sibling = copy.deepcopy(before["parent_revision"]["payload"]["occurrences"][1])
+        bundle = commit.bundle_from_document(before)
+        assert bundle["placements"][0]["shot_id"] != sibling["shot_id"]
+    
+        def app_publish(body, key):
+            if uncaptured and [call["op"] for call in body["commands"]] == [
+                    "occurrence.fork", "occurrence.add-media"]:
+                body = copy.deepcopy(body)
+                for call in body["commands"]:
+                    for field in list(call):
+                        if field not in {"schema_version", "op", "version", "select", "args", "intent", "created"}:
+                            call.pop(field)
+            return publish(body, key)
+    
+        fixture = runtime, project, _source, submitted, _held, document, app_publish
+&gt;       test_actual_agent_fork_add_media_reaches_owner_projection(fixture, monkeypatch)
+
+tests/test_timeline_popup_fork_owner_projection.py:248: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+actual_child_public = (&lt;runtime_protocol.service.RuntimeService object at 0x7f9309586a50&gt;, '5986387b129e494683e078822c5b5f23', {'schema_vers...b705308d002faccb0', 'track': 'picture', ...}, &lt;function created_child_public.&lt;locals&gt;.document at 0x7f9309073c40&gt;, ...)
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7f9309a6c3e0&gt;
+
+    def test_actual_agent_fork_add_media_reaches_owner_projection(actual_child_public, monkeypatch):
+        import runtime_protocol.timeline_commit_auth as auth
+        agent_commit = importlib.import_module("astrid.sdk.timeline.commit")
+        execute = importlib.import_module("astrid.sdk.timeline.commands").execute
+        capture_occurrence_fork = importlib.import_module(
+            "astrid.sdk.timeline.native_occurrence_fork").capture_occurrence_fork
+        capture_occurrence_add_media = importlib.import_module(
+            "astrid.sdk.timeline.native_occurrence_media_commands").capture_occurrence_add_media
+    
+        runtime, project, _source, submitted, _held, document, publish = actual_child_public
+        publish(submitted, "popup-child")
+        current = document()
+        bundle = agent_commit.bundle_from_document(current)
+        fork = capture_occurrence_fork(bundle, "occurrence:new", "popup-fork-shot")
+        forked = execute(bundle, [fork]).bundle
+    
+        occurrence = next(row for row in current["parent_revision"]["payload"]["occurrences"]
+                          if row["occurrence_id"] == "new")
+        shot = next(row for row in current["shot_revisions"]
+                    if row["revision_id"] == occurrence["shot_revision_id"])
+        internal = next(row for row in current["internal_timeline_revisions"]
+                        if row["revision_id"] == shot["internal_timeline_revision_id"])
+        asset = next(iter(internal["payload"]["registry"]["assets"]))
+        entry = internal["payload"]["registry"]["assets"][asset]
+        media = runtime.get_project_media_selection(
+            project, {"asset": asset, "generation_id": entry["generationId"],
+                      "variant_id": entry["variantId"]}, authorize=lambda: None)
+        row = {"id": "popup-added", "clipType": "image", "asset": media["asset"],
+               "track": "picture", "at": 0, "hold": 1}
+        verified = {"selection": media, "media_type": "image/fixture", "size": 1}
+        add = capture_occurrence_add_media(
+            forked, "occurrence:new", row, media, verified_media=[verified])
+    
+        calls = []
+        original = auth._fork_owner_before
+    
+        def counted(*args, **kwargs):
+            calls.append(tuple(frame.function for frame in inspect.stack()[1:4]))
+            return original(*args, **kwargs)
+    
+        monkeypatch.setattr(auth, "_fork_owner_before", counted)
+        head = runtime.get_project_timeline(project, "film")
+        request = copy.deepcopy(submitted)
+        request.update(
+            base_revision_id=head["head_revision_id"],
+            base_publication_id=head["head_publication_id"],
+            commands=[fork, add],
+            label="Popup fork add media",
+            steps=[{"id": "popup", "label": "Popup fork add media",
+                     "intent": "Popup fork add media", "tags": [],
+                     "command_ordinals": [0, 1], "patch": [], "reads": []}],
+        )
+    
+        result = publish(request, "popup-fork-add")
+    
+        assert [command["op"] for command in request["commands"]] == [
+            "occurrence.fork", "occurrence.add-media"]
+        assert result["data"]["status"] == "accepted"
+        assert calls
+        assert all(call and call[0] == "_project_created_child" for call in calls)
+&gt;       assert calls == [("_project_created_child", "command_output", "validate")]
+E       AssertionError: assert [('_project_c..., 'validate')] == [('_project_c..., 'validate')]
+E         
+E         Left contains 3 more items, first extra item: ('_project_created_child', 'command_output', 'validate')
+E         Use -v to get more diff
+
+tests/test_timeline_popup_fork_owner_projection.py:210: AssertionError</failure></testcase><testcase classname="tests.test_timeline_popup_fork_owner_projection" name="test_shared_source_fork_add_media_and_history_use_same_owner[True]" time="4.593"><failure message="AssertionError: assert [('_project_c..., 'validate')] == [('_project_c..., 'validate')]&#10;  &#10;  Left contains 3 more items, first extra item: ('_project_created_child', 'command_output', 'validate')&#10;  Use -v to get more diff">actual_child_public = (&lt;runtime_protocol.service.RuntimeService object at 0x7f9308ea6ad0&gt;, '7a5e893fe9934d16bc7334344d13db08', {'schema_vers...d6b9852ee720e5441', 'track': 'picture', ...}, &lt;function created_child_public.&lt;locals&gt;.document at 0x7f9308eb99e0&gt;, ...)
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7f9309a6d0f0&gt;
+uncaptured = True
+
+    @pytest.mark.parametrize("uncaptured", [False, True])
+    def test_shared_source_fork_add_media_and_history_use_same_owner(actual_child_public, monkeypatch, uncaptured):
+        runtime, project, _source, submitted, _held, document, publish = actual_child_public
+        commit = importlib.import_module("astrid.sdk.timeline.commit")
+        capture_shared = importlib.import_module(
+            "astrid.sdk.timeline.native_occurrence_shared").capture_occurrence_place_shared
+        capture_track = importlib.import_module("astrid.sdk.timeline.capture").capture_track_create
+    
+        def request(command):
+            head = runtime.get_project_timeline(project, "film")
+            return {**copy.deepcopy(submitted), "base_revision_id": head["head_revision_id"],
+                    "base_publication_id": head["head_publication_id"], "commands": [command],
+                    "steps": [{"id": "edit", "label": "Owner control", "intent": "Owner control",
+                               "tags": [], "command_ordinals": [0], "patch": [], "reads": []}]}
+    
+        publish(submitted, "popup-child")
+        shared = capture_shared(commit.bundle_from_document(document()), "occurrence:new", "sibling", on=10)
+        assert publish(request(shared), "popup-shared")["data"]["status"] == "accepted"
+        before = document()
+        sibling = copy.deepcopy(before["parent_revision"]["payload"]["occurrences"][1])
+        bundle = commit.bundle_from_document(before)
+        assert bundle["placements"][0]["shot_id"] != sibling["shot_id"]
+    
+        def app_publish(body, key):
+            if uncaptured and [call["op"] for call in body["commands"]] == [
+                    "occurrence.fork", "occurrence.add-media"]:
+                body = copy.deepcopy(body)
+                for call in body["commands"]:
+                    for field in list(call):
+                        if field not in {"schema_version", "op", "version", "select", "args", "intent", "created"}:
+                            call.pop(field)
+            return publish(body, key)
+    
+        fixture = runtime, project, _source, submitted, _held, document, app_publish
+&gt;       test_actual_agent_fork_add_media_reaches_owner_projection(fixture, monkeypatch)
+
+tests/test_timeline_popup_fork_owner_projection.py:248: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+actual_child_public = (&lt;runtime_protocol.service.RuntimeService object at 0x7f9308ea6ad0&gt;, '7a5e893fe9934d16bc7334344d13db08', {'schema_vers...d6b9852ee720e5441', 'track': 'picture', ...}, &lt;function created_child_public.&lt;locals&gt;.document at 0x7f9308eb99e0&gt;, ...)
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7f9309a6d0f0&gt;
+
+    def test_actual_agent_fork_add_media_reaches_owner_projection(actual_child_public, monkeypatch):
+        import runtime_protocol.timeline_commit_auth as auth
+        agent_commit = importlib.import_module("astrid.sdk.timeline.commit")
+        execute = importlib.import_module("astrid.sdk.timeline.commands").execute
+        capture_occurrence_fork = importlib.import_module(
+            "astrid.sdk.timeline.native_occurrence_fork").capture_occurrence_fork
+        capture_occurrence_add_media = importlib.import_module(
+            "astrid.sdk.timeline.native_occurrence_media_commands").capture_occurrence_add_media
+    
+        runtime, project, _source, submitted, _held, document, publish = actual_child_public
+        publish(submitted, "popup-child")
+        current = document()
+        bundle = agent_commit.bundle_from_document(current)
+        fork = capture_occurrence_fork(bundle, "occurrence:new", "popup-fork-shot")
+        forked = execute(bundle, [fork]).bundle
+    
+        occurrence = next(row for row in current["parent_revision"]["payload"]["occurrences"]
+                          if row["occurrence_id"] == "new")
+        shot = next(row for row in current["shot_revisions"]
+                    if row["revision_id"] == occurrence["shot_revision_id"])
+        internal = next(row for row in current["internal_timeline_revisions"]
+                        if row["revision_id"] == shot["internal_timeline_revision_id"])
+        asset = next(iter(internal["payload"]["registry"]["assets"]))
+        entry = internal["payload"]["registry"]["assets"][asset]
+        media = runtime.get_project_media_selection(
+            project, {"asset": asset, "generation_id": entry["generationId"],
+                      "variant_id": entry["variantId"]}, authorize=lambda: None)
+        row = {"id": "popup-added", "clipType": "image", "asset": media["asset"],
+               "track": "picture", "at": 0, "hold": 1}
+        verified = {"selection": media, "media_type": "image/fixture", "size": 1}
+        add = capture_occurrence_add_media(
+            forked, "occurrence:new", row, media, verified_media=[verified])
+    
+        calls = []
+        original = auth._fork_owner_before
+    
+        def counted(*args, **kwargs):
+            calls.append(tuple(frame.function for frame in inspect.stack()[1:4]))
+            return original(*args, **kwargs)
+    
+        monkeypatch.setattr(auth, "_fork_owner_before", counted)
+        head = runtime.get_project_timeline(project, "film")
+        request = copy.deepcopy(submitted)
+        request.update(
+            base_revision_id=head["head_revision_id"],
+            base_publication_id=head["head_publication_id"],
+            commands=[fork, add],
+            label="Popup fork add media",
+            steps=[{"id": "popup", "label": "Popup fork add media",
+                     "intent": "Popup fork add media", "tags": [],
+                     "command_ordinals": [0, 1], "patch": [], "reads": []}],
+        )
+    
+        result = publish(request, "popup-fork-add")
+    
+        assert [command["op"] for command in request["commands"]] == [
+            "occurrence.fork", "occurrence.add-media"]
+        assert result["data"]["status"] == "accepted"
+        assert calls
+        assert all(call and call[0] == "_project_created_child" for call in calls)
+&gt;       assert calls == [("_project_created_child", "command_output", "validate")]
+E       AssertionError: assert [('_project_c..., 'validate')] == [('_project_c..., 'validate')]
+E         
+E         Left contains 3 more items, first extra item: ('_project_created_child', 'command_output', 'validate')
+E         Use -v to get more diff
+
+tests/test_timeline_popup_fork_owner_projection.py:210: AssertionError</failure></testcase><testcase classname="tests.test_timeline_popup_fork_owner_projection" name="test_production_fork_add_owner_tampering_never_writes[owner-before]" time="2.827" /><testcase classname="tests.test_timeline_popup_fork_owner_projection" name="test_production_fork_add_owner_tampering_never_writes[owner-after]" time="2.834" /><testcase classname="tests.test_timeline_popup_fork_owner_projection" name="test_production_fork_add_owner_tampering_never_writes[source]" time="2.776" /><testcase classname="tests.test_timeline_popup_fork_owner_projection" name="test_production_fork_add_owner_tampering_never_writes[alias]" time="2.628" /><testcase classname="tests.test_timeline_popup_fork_owner_projection" name="test_production_fork_add_owner_tampering_never_writes[allocation]" time="2.806" /></testsuite></testsuites>

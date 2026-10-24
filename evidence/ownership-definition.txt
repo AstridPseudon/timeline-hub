@@ -1,0 +1,127 @@
+R-P2 / D80: one selected owner edge, two representations
+
+Decision: Runtime-only. No Agent carrier patch is required. The existing Agent
+definition and its original22847 implementation agree with the scoped Runtime
+projection. D80 retains a4d4's popup correction and makes the helper authenticate
+the complete projected row and its physical source rather than returning a
+caller-provided string. Product ownership: runtime_protocol/timeline_commit_auth.py
+(_fork_owner_before only); dedicated tests: test_timeline_popup_fork_owner_projection.py.
+Agent product and all pre-existing assertion predicates remain unchanged.
+
+Contract source: contract/commit-v2.md (unchanged, hash in source-hashes.txt).
+- Section 1, lines 60, 100-149: complete request, step partition, authoritative
+  effects/captures, batch versus step input boundaries.
+- Section 2, lines 287-353: physical images follow verified revision pins;
+  entity aliases are not physical identities; forks are not continuations;
+  another owner cannot retarget a still-reachable source. Lines 389-423 cover
+  union effects, creation and managed edges. Lines 474-479 require exact before.
+- Sections 3/4/5, lines 595/703/1563: conflict/ABA guards, unchanged envelopes,
+  accepted-boundary inverses and immutable source history.
+
+Field definition:
+1. Select one occurrence O from the authenticated sequential parent input. Its
+   physical edge is occurrence:O/shot -> (shot_id S, shot_revision_id R).
+   shot-revision:R must have shot_id S, revision_id R and a verified payload
+   digest. Its internal_timeline_revision_id pins the exact child image. An
+   image may have multiple owners; selecting O does not transfer sibling edges.
+2. The native authoring placement omits shot_revision_id/revision_id. Its local
+   shot_id A is S when only one input occurrence has shot_id S; otherwise it is
+   identity('shot-placement', project_id, timeline_id, O, S). This is a local
+   editing identity, not a replacement physical-source assertion. The native
+   occurrence:O/shot shot_id read remains S. The complete projected row must
+   equal this derivation, including every other authored/opaque field.
+3. Fork reserves destination D, creates shot:D with kind=shot and owner=None,
+   and writes occurrence:O.shot_id from A to D. It does not create O anew. The
+   source internal payload and the source shot payload copied/remapped for D
+   form the allocation baseline. Source S/R, destination D and occurrence O
+   have distinct roles; no sibling or final accepted payload can replace them.
+4. The next command's intermediate image is derived from that birth, before its
+   add-media writes. Internal revision identity includes (project, timeline, D,
+   initial_internal); shot revision identity includes (project, D, initial_shot
+   with that internal pin). Parent identity includes exact sequential images
+   and retained manifest inputs. Foreign/future aliases cannot allocate roots.
+5. Production identity_scope is passed from Runtime's authenticated source by
+   validate(), never from request annotations. A projected local ID requires a
+   nonempty two-string scope. Valid-but-foreign shared scope is also rejected.
+   The pre-existing source-only low-level command_output test has no declared
+   projection and uses its already-bound physical owner; it cannot authorize a
+   local alias. This is not an ABI downgrade or a submit compatibility policy.
+
+Cross-repo file/line map (Agent root /home/user/work/agent; Runtime this worktree):
+- Agent core/timeline/authoring_bundle.py:180 identity encoding, :264 local ID,
+  :418 physical pin verification, :473-518 projection/source mapping, :936-998
+  non-JSON _CopiedShot provenance and exact copied source baseline, :1166-1249
+  materialized revisions and source/candidate identity mapping.
+- Agent sdk/timeline/native_occurrence_fork.py:14-38 source reads and selected
+  owner write; native_occurrence_duplicate.py:61-88 copy_child root allocation,
+  original physical source custody and _CopiedShot installation.
+- Agent sdk/timeline/_command_state.py:210-270 entity/source distinction;
+  _recording.py:92-139 actual sequential reads and before/after writes;
+  _recording.py:182-204 root reservation claims.
+- Agent sdk/timeline/commit.py:302-363 canonical physical reuse for untouched
+  aliases; :730-1030 reservation scan; :770-932 restore_native_fork validates
+  exact original root/owner/reads, complete ABI binding roles and accepted versus
+  requested boundaries. These functions are AST-identical to original22847.
+- Agent sdk/timeline/_commit_patch.py:91 alias normalization; :336 sequential
+  closures; :658 materializations deliberately excludes explicit owner rebinding;
+  :1128 inverse address resolver. _root_inverse.py:12 rejoins only unchanged
+  accepted aliases; inverse.py:847 validates original captures against accepted
+  boundaries. No global State matching or inverse compatibility was relaxed.
+- Runtime timeline_commit_auth.py:1790 derives/checks A from O/S/R and scope;
+  :1836 allocation, accepted owner and initial payload projection; :1952 scoped
+  intermediate IDs; :2111 command boundary projection; :2779 validate and :2827
+  authenticated scope custody. All other auth symbols are unchanged from a4d4.
+- App original 587316e37891f1b474c2c3734e19044246b62285,
+  src/tools/travel-between-images/components/shotTimelineDataProvider.ts:755
+  sharedPopupMediaCommands, :830 fork, :850 add-media, :854 batch return.
+  This sends uncaptured native envelopes with intent and created claims. The new
+  production shared/uncaptured case uses precisely that envelope field set.
+  Original22847 popup site :431 and runPopupCase/spec :842/:851 remain an open
+  App gate; this task did not run that gesture or acquire its request body.
+
+Evidence and scope:
+- Original Runtime auth 327da207ed30880fe2ae0cd0b116722bb2c6f7a6 reproduces the
+  same owner-mismatch refusal on the real shared, uncaptured fork/add provider
+  path. evidence/replay-auth.py substitutes only that historical auth module in
+  memory; the rest of Runtime is this worktree. This is an auth regression
+  comparison, not a replay of the whole original four-repo service tuple.
+- a4d4b5a24964ec5b2a7752a6aeb1b2ef861a3669 already passes that production case;
+  four newly added exact-source-definition controls fail on a4d4 and pass here.
+- _fork_owner_before is reached four times through _project_created_child ->
+  command_output -> validate for each successful fork/add publication. Loading
+  uses load_timeline_commit_provider('astrid') and the genuine RequestCommitPort.
+- Focused12 and strict9 are the unchanged author cohorts. Additional controls
+  cover shared/captured and App-shaped uncaptured input, exact sibling retention,
+  later allocation-history scan, valid forged scope, sibling alias/owner, source
+  pins/digest, native before/after, following physical alias and allocation claims.
+  Five production refusal cases preserve DB dump, CAS, staging and total_changes.
+- ABI-history10 preserves ABI1/2 and explicitly retains the D62 submit-coverage
+  gap. Shared inverse authority:36. Agent targeted conformance:97, including
+  retained App fixture records, exact inverse/redo, source custody, ABA and ABI.
+  These Agent tests exercise detached/in-memory provider behavior; they are not
+  the actual App original or a complete cross-repo HTTP qualification.
+- Complete v2 request fields/step reads/patches are used by the production test;
+  the publisher-bound idempotency key is supplied to the ordinary service API.
+  No request/reply/history/preview schema, key policy, receipt or conflict/invalid
+  envelope code changed. Broader envelope and browser qualification is unrun.
+- source-hashes.txt records exact tested Agent head, original22847 head, file
+  hashes and symbol equality. Agent commit.py differs elsewhere due to unrelated
+  element work; the ownership/materialization/reservation functions are identical.
+- commands.txt, *.log, *.xml and *.exit retain invocations and results.
+  run-check.py and replay-auth.py preserve the tiny verification runners.
+  Runtime test environment: PYTHONDONTWRITEBYTECODE=1,
+  ASTRID_CHECKOUT=/home/user/work/agent, PYTHONPATH=.; interpreter venv-runtime.
+  Agent test retry adds PYTHONPATH=/home/user/work/agent:<this worktree>, cwd Agent;
+  the initial invocation lacked the Runtime import path and failed collection.
+- Ruff/Pyright/compile/diff pass. Ordinary scoped mypy passes. With
+  --check-untyped-defs, baseline and candidate both have 13 pre-existing errors;
+  normalized diagnostic comparison has zero new/removed errors.
+- Separate integrated 1bae0e8ccb8f912d50ad16e80d2e42f8e2ea603f empty-range changes
+  belong to _inverse_stage_inherited/_inverse_stage_ranges. Neither symbol was
+  changed here; merge this diff without replacing their reviewed <= predicates.
+
+Handoff: one cumulative independent cross-repo security review of this coherent
+source, then normal Runtime integration preserving 1bae's empty ranges. No Agent
+semantic author or carrier is needed. Actual App original22847 and integrated
+four-repo proof remain open. No full suite, browser, socket, HTTP, new package,
+acquisition, pin, generated file, shared dependency or Git mutation was performed.

@@ -1,4 +1,4 @@
-"""Production fork owner projection compatibility controls."""
+"""Physical fork ownership and its scoped authoring projection."""
 from __future__ import annotations
 
 import copy
@@ -115,6 +115,48 @@ def test_fork_owner_projection_rejects_forged_local_identity():
                        identity_scope=("project", "timeline"))
 
 
+@pytest.mark.parametrize("mutation", ["shot-pin", "revision-pin", "physical-owner", "physical-digest"])
+def test_fork_owner_definition_requires_exact_source_image(mutation):
+    boundary, record, _, _ = _production_projection_case()
+    owner = boundary["parent"]["payload"]["occurrences"][0]
+    if mutation == "shot-pin":
+        record["reads"][0]["state"]["value"]["shot_revision_id"] = "foreign"
+    elif mutation == "revision-pin":
+        record["reads"][0]["state"]["value"]["revision_id"] = "foreign"
+    elif mutation == "physical-owner":
+        boundary["shot-revision:old-r1"]["shot_id"] = "foreign"
+    else:
+        boundary["shot-revision:old-r1"]["content_digest"] = digest({})
+
+    with pytest.raises(CommitRejected):
+        _fork_owner_before(boundary, record, "occurrence:occ-new", owner,
+                           ("project", "fork-shot"))
+
+
+@pytest.mark.parametrize("mutation", [None, "scope", "sibling", "owner"])
+def test_shared_owner_definition_matches_agent(astrid_importable, mutation):
+    authoring_id = importlib.import_module("astrid.core.timeline.authoring_bundle")._authoring_shot_id
+    boundary, record, _, _ = _production_projection_case()
+    rows = boundary["parent"]["payload"]["occurrences"]
+    rows.append({**rows[0], "occurrence_id": "sibling"})
+    scope = ("project", "fork-shot")
+    expected = authoring_id(*scope, "occ-new", "old-shot", shared=True)
+    record["reads"][0]["state"]["value"]["shot_id"] = expected
+    owner = rows[0]
+    if mutation == "scope":
+        scope = ("foreign-project", "foreign-timeline")
+    elif mutation == "sibling":
+        record["reads"][0]["state"]["value"]["shot_id"] = authoring_id(
+            *scope, "sibling", "old-shot", shared=True)
+    elif mutation == "owner":
+        owner = rows[1]
+    if mutation is None:
+        assert _fork_owner_before(boundary, record, "occurrence:occ-new", owner, scope) == expected
+    else:
+        with pytest.raises(CommitRejected):
+            _fork_owner_before(boundary, record, "occurrence:occ-new", owner, scope)
+
+
 @pytest.fixture
 def actual_child_public(tmp_path, astrid_importable):
     from test_timeline_commit_authentication import created_child_public
@@ -189,4 +231,96 @@ def test_actual_agent_fork_add_media_reaches_owner_projection(actual_child_publi
     assert result["data"]["status"] == "accepted"
     assert calls
     assert all(call and call[0] == "_project_created_child" for call in calls)
+    assert calls == [("_project_created_child", "command_output", "validate")] * 4
     assert document()["parent_revision"]["payload"]["occurrences"][0]["shot_id"] == "popup-fork-shot"
+
+
+@pytest.mark.parametrize("uncaptured", [False, True])
+def test_shared_source_fork_add_media_and_history_use_same_owner(actual_child_public, monkeypatch, uncaptured):
+    runtime, project, _source, submitted, _held, document, publish = actual_child_public
+    commit = importlib.import_module("astrid.sdk.timeline.commit")
+    capture_shared = importlib.import_module(
+        "astrid.sdk.timeline.native_occurrence_shared").capture_occurrence_place_shared
+    capture_track = importlib.import_module("astrid.sdk.timeline.capture").capture_track_create
+
+    def request(command):
+        head = runtime.get_project_timeline(project, "film")
+        return {**copy.deepcopy(submitted), "base_revision_id": head["head_revision_id"],
+                "base_publication_id": head["head_publication_id"], "commands": [command],
+                "steps": [{"id": "edit", "label": "Owner control", "intent": "Owner control",
+                           "tags": [], "command_ordinals": [0], "patch": [], "reads": []}]}
+
+    publish(submitted, "popup-child")
+    shared = capture_shared(commit.bundle_from_document(document()), "occurrence:new", "sibling", on=10)
+    assert publish(request(shared), "popup-shared")["data"]["status"] == "accepted"
+    before = document()
+    sibling = copy.deepcopy(before["parent_revision"]["payload"]["occurrences"][1])
+    bundle = commit.bundle_from_document(before)
+    assert bundle["placements"][0]["shot_id"] != sibling["shot_id"]
+
+    def app_publish(body, key):
+        if uncaptured and [call["op"] for call in body["commands"]] == [
+                "occurrence.fork", "occurrence.add-media"]:
+            body = copy.deepcopy(body)
+            for call in body["commands"]:
+                for field in list(call):
+                    if field not in {"schema_version", "op", "version", "select", "args", "intent", "created"}:
+                        call.pop(field)
+        return publish(body, key)
+
+    fixture = runtime, project, _source, submitted, _held, document, app_publish
+    test_actual_agent_fork_add_media_reaches_owner_projection(fixture, monkeypatch)
+
+    after = document()
+    assert after["parent_revision"]["payload"]["occurrences"][1] == sibling
+    assert next(row for row in after["shot_revisions"]
+                if row["revision_id"] == sibling["shot_revision_id"]) in before["shot_revisions"]
+    # An ordinary later commit scans the accepted fork's native allocation proof.
+    track = capture_track(commit.bundle_from_document(after), "parent", {"id": "later", "kind": "visual"})
+    assert publish(request(track), "popup-later")["data"]["status"] == "accepted"
+
+
+@pytest.mark.parametrize("mutation", ["owner-before", "owner-after", "source", "alias", "allocation"])
+def test_production_fork_add_owner_tampering_never_writes(actual_child_public, monkeypatch, mutation):
+    from runtime_protocol.errors import RuntimeErrorBase
+    from runtime_protocol.timeline_commit_port import RequestCommitPort
+
+    runtime, _project, _source, submitted, _held, _document, publish = actual_child_public
+    publish(submitted, "popup-child")
+
+    def snapshot():
+        files = [{str(path.relative_to(root)): path.read_bytes()
+                  for path in root.rglob("*") if path.is_file()}
+                 for root in (runtime.store.cas_root, runtime.store.staging_root)]
+        return tuple(runtime.store.conn.iterdump()), files, runtime.store.conn.total_changes
+
+    before = snapshot()
+    accept = RequestCommitPort.accept
+    reached = []
+
+    def attacked(port, prepared):
+        if [record["command"]["op"] for record in prepared["records"]["commands"]] == [
+                "occurrence.fork", "occurrence.add-media"]:
+            prepared = copy.deepcopy(prepared)
+            record, following = prepared["records"]["commands"]
+            owner = next(write for write in record["writes"] if write["path"] == ["shot_id"])
+            if mutation in {"owner-before", "owner-after"}:
+                owner[mutation.removeprefix("owner-")]["value"] = "foreign"
+            elif mutation == "source":
+                read = next(read for read in record["reads"] if read["ref"].endswith("/shot")
+                            and read["path"] == ["shot_id"])
+                read["state"]["value"] = "foreign"
+            elif mutation == "alias":
+                binding = next(binding for binding in following["bindings"]
+                               if binding["physical_ref"].startswith("internal-revision:"))
+                binding["physical_ref"] = "internal-revision:foreign"
+            else:
+                record["created"][0]["owner"] = "occurrence:foreign"
+            reached.append(True)
+        return accept(port, prepared)
+
+    monkeypatch.setattr(RequestCommitPort, "accept", attacked)
+    with pytest.raises(RuntimeErrorBase):
+        test_actual_agent_fork_add_media_reaches_owner_projection(actual_child_public, monkeypatch)
+    assert reached == [True]
+    assert snapshot() == before

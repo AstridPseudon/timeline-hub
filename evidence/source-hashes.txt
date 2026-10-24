@@ -1,0 +1,73 @@
+Runtime base: a4d4b5a24964ec5b2a7752a6aeb1b2ef861a3669
+Agent tested source head (read-only): 831df37ffdfbb7cf802c95f91eac30681efdbb45
+Agent full original22847: f4d6c72ce336da66813fc39828187bccbaf80a5b
+SHA-256 file bytes and relevant source symbols; line locations refer to tested source.
+
+astrid/core/timeline/authoring_bundle.py
+  original sha256=0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d
+  tested   sha256=0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d
+  _identity: line 180, original_semantics_identical=True
+  _authoring_shot_id: line 264, original_semantics_identical=True
+  _copy_shot_for_placement: line 326, original_semantics_identical=True
+  compile_authoring_candidate: line 1000, original_semantics_identical=True
+  _copied_shot_baseline: line 948, original_semantics_identical=True
+
+astrid/sdk/timeline/native_occurrence_fork.py
+  original sha256=bb129592203eb0e8bd6353c804d335ce13dca1441813ad266451016d7c7a0d7d
+  tested   sha256=bb129592203eb0e8bd6353c804d335ce13dca1441813ad266451016d7c7a0d7d
+  occurrence_fork: line 14, original_semantics_identical=True
+
+astrid/sdk/timeline/native_occurrence_duplicate.py
+  original sha256=f2936a59859e2069169b6371669e2faf2cdc6def3a2c067a8bf08fa452986f86
+  tested   sha256=f2936a59859e2069169b6371669e2faf2cdc6def3a2c067a8bf08fa452986f86
+  copy_child: line 48, original_semantics_identical=True
+
+astrid/sdk/timeline/_command_state.py
+  original sha256=689c59d323aca2d508d152f5d5513beed094edf2f6fd9b8ef93f12f475104c39
+  tested   sha256=689c59d323aca2d508d152f5d5513beed094edf2f6fd9b8ef93f12f475104c39
+  State: line 163, original_semantics_identical=True
+
+astrid/sdk/timeline/_recording.py
+  original sha256=85aefe0328a7c9787a18c2b7e19eb8b3e4220a1c53627d1e16102b42b29c8b43
+  tested   sha256=85aefe0328a7c9787a18c2b7e19eb8b3e4220a1c53627d1e16102b42b29c8b43
+  Recording: line 71, original_semantics_identical=True
+
+astrid/sdk/timeline/_commit_patch.py
+  original sha256=05a1ebc6b251c75f4d5dc272598adc295ce5bf5a8c4596ad08497de6676264be
+  tested   sha256=05a1ebc6b251c75f4d5dc272598adc295ce5bf5a8c4596ad08497de6676264be
+  canonical_site: line 91, original_semantics_identical=True
+  CommitPatch: line 259, original_semantics_identical=True
+  inverse_address_resolver: line 1128, original_semantics_identical=True
+
+astrid/sdk/timeline/commit.py
+  original sha256=f2546e63ff50a325d2d095bffd3691d3fce1b50c0831ce3d211587008ce544cd
+  tested   sha256=6c2fc6c8dcfc228c87a285e0869b803a034b9e41c7b2e643ee500b78605b6437
+  bundle_from_document: line 154, original_semantics_identical=True
+  document_from_bundle: line 302, original_semantics_identical=True
+  _check_reservations: line 730, original_semantics_identical=True
+
+astrid/sdk/timeline/_root_inverse.py
+  original sha256=217735ed42e2d483674a54e2c6e29a8387c56791fc7f9419be1be771ea6f6f0d
+  tested   sha256=217735ed42e2d483674a54e2c6e29a8387c56791fc7f9419be1be771ea6f6f0d
+  normalize_root_inputs: line 12, original_semantics_identical=True
+
+astrid/sdk/timeline/inverse.py
+  original sha256=0702cda4d096589e34485295cb40ffe00b0f11692bbb01fbfa5228daa1da69d4
+  tested   sha256=0702cda4d096589e34485295cb40ffe00b0f11692bbb01fbfa5228daa1da69d4
+  _validate_inputs: line 847, original_semantics_identical=True
+
+runtime_protocol/timeline_commit_auth.py
+  base sha256=e89979ba343bdfd18eefe96cf8a8949ac78fa18203feba86d2c798bf95d41a71
+  work sha256=f61f280db3ccb5c25f4f68bab1d2b876ad6cd5ecc0499608a5bd1cc32be5574c
+tests/test_timeline_popup_fork_owner_projection.py
+  base sha256=575a1f090b4bb75f25dfafc41988e58de4d15ada8bf37f500e4a204569e19f3b
+  work sha256=e0e008ef8066c1320c6ab87d1fa856f357f957c8fbc55a4841e014da070f9176
+tests/test_timeline_popup_fork_authority.py
+  base sha256=16dc1297695bf9203601ff1063953b71c19728c15843c62274f3827683492468
+  work sha256=16dc1297695bf9203601ff1063953b71c19728c15843c62274f3827683492468
+contract/commit-v2.md
+  base sha256=4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7
+  work sha256=4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7
+Original dedicated-test assertions preserved: 6; new assertions are additive.
+Untouched inverse empty-range symbol: _inverse_stage_inherited; D80 diff does not modify the separate 1bae0e8ccb8f912d50ad16e80d2e42f8e2ea603f carrier.
+Untouched inverse empty-range symbol: _inverse_stage_ranges; D80 diff does not modify the separate 1bae0e8ccb8f912d50ad16e80d2e42f8e2ea603f carrier.

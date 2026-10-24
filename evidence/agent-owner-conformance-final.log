@@ -1,0 +1,6 @@
+........................................................................ [ 74%]
+.........................                                                [100%]
+------------------- left out of this run by lane (1 entries) -------------------
+[integration] run by CI job lanes-integration
+  DESELECTED tests/editing_conformance/test_occurrence_fork_source_baseline.py::test_current_runtime_retained_fork_then_emitter
+97 passed, 1 deselected in 14.90s

@@ -1788,7 +1788,7 @@ def _authoring_parent_identity(boundary, identity_scope, manifest):
 
 
 def _fork_owner_before(boundary, record, occurrence_ref, owner_row, identity_scope=None):
-    """Resolve a fork's local owner projection from its recorded source reads."""
+    """Derive the local placement ID from the selected physical source owner."""
     owner_reads = [read for read in record.get("reads", [])
                    if read.get("ref") == occurrence_ref and not read.get("path")]
     source_reads = [read for read in record.get("reads", [])
@@ -1801,6 +1801,22 @@ def _fork_owner_before(boundary, record, occurrence_ref, owner_row, identity_sco
     require(isinstance(identity_scope, tuple) and len(identity_scope) == 2
             and all(isinstance(value, str) and value for value in identity_scope),
             "provider created shot owner lacks an authenticated identity scope")
+    rows = boundary["parent"]["payload"].get("occurrences", [])
+    require([row for row in rows if "occurrence:" + row["occurrence_id"] == occurrence_ref] == [owner_row],
+            "provider created shot owner is not its selected occurrence")
+    source_shot_id = owner_row.get("shot_id")
+    source_revision_id = owner_row.get("shot_revision_id")
+    source = boundary.get("shot-revision:" + str(source_revision_id), {})
+    require(source.get("shot_id") == source_shot_id
+            and source.get("revision_id") == source_revision_id
+            and isinstance(source.get("payload"), dict)
+            and source.get("content_digest") == digest(source["payload"]),
+            "provider created shot source differs from its authenticated occurrence")
+    project_id, timeline_id = identity_scope
+    shared = sum(row.get("shot_id") == source_shot_id for row in rows) > 1
+    expected = (source_shot_id if not shared else _authoring_identity(
+        "shot-placement", project_id, timeline_id,
+        occurrence_ref.partition(":")[2], source_shot_id))
     require(len(owner_reads) == 1 and len(source_reads) == 1,
             "provider created shot owner lacks its authenticated source projection")
     owner_state = owner_reads[0].get("state", {})
@@ -1809,22 +1825,12 @@ def _fork_owner_before(boundary, record, occurrence_ref, owner_row, identity_sco
             and source_state == {"state": "present", "value": owner_row.get("shot_id")},
             "provider created shot owner has an unauthenticated source projection")
     projected = owner_state["value"]
-    managed = {"shot_id", "shot_revision_id", "revision_id"}
-    require({key: value for key, value in projected.items() if key not in managed}
-            == {key: value for key, value in owner_row.items() if key not in managed}
-            and isinstance(projected.get("shot_id"), str),
+    expected_row = {key: value for key, value in owner_row.items()
+                    if key not in {"shot_revision_id", "revision_id"}}
+    expected_row["shot_id"] = expected
+    require(projected == expected_row,
             "provider created shot owner projection differs from its occurrence")
-    if identity_scope is not None:
-        project_id, timeline_id = identity_scope
-        source_shot_id = owner_row.get("shot_id")
-        shared = sum(row.get("shot_id") == source_shot_id
-                     for row in boundary["parent"]["payload"].get("occurrences", [])) > 1
-        expected = (source_shot_id if not shared else _authoring_identity(
-            "shot-placement", project_id, timeline_id,
-            occurrence_ref.partition(":")[2], source_shot_id))
-        require(projected["shot_id"] == expected,
-                "provider created shot owner projection has an unrecognized identity")
-    return projected["shot_id"]
+    return expected
 
 
 def _project_created_child(boundary, record, following, accepted, identity_scope=None):

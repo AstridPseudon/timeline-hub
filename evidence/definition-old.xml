@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="0.196" timestamp="2026-10-24T18:49:22.805596+00:00" hostname="vm"><testcase classname="tests.test_timeline_popup_fork_owner_projection" name="test_fork_owner_definition_requires_exact_source_image[shot-pin]" time="0.002"><failure message="Failed: DID NOT RAISE CommitRejected">mutation = 'shot-pin'
+
+    @pytest.mark.parametrize("mutation", ["shot-pin", "revision-pin", "physical-owner", "physical-digest"])
+    def test_fork_owner_definition_requires_exact_source_image(mutation):
+        boundary, record, _, _ = _production_projection_case()
+        owner = boundary["parent"]["payload"]["occurrences"][0]
+        if mutation == "shot-pin":
+            record["reads"][0]["state"]["value"]["shot_revision_id"] = "foreign"
+        elif mutation == "revision-pin":
+            record["reads"][0]["state"]["value"]["revision_id"] = "foreign"
+        elif mutation == "physical-owner":
+            boundary["shot-revision:old-r1"]["shot_id"] = "foreign"
+        else:
+            boundary["shot-revision:old-r1"]["content_digest"] = digest({})
+    
+&gt;       with pytest.raises(CommitRejected):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE CommitRejected
+
+tests/test_timeline_popup_fork_owner_projection.py:131: Failed</failure></testcase><testcase classname="tests.test_timeline_popup_fork_owner_projection" name="test_fork_owner_definition_requires_exact_source_image[revision-pin]" time="0.001"><failure message="Failed: DID NOT RAISE CommitRejected">mutation = 'revision-pin'
+
+    @pytest.mark.parametrize("mutation", ["shot-pin", "revision-pin", "physical-owner", "physical-digest"])
+    def test_fork_owner_definition_requires_exact_source_image(mutation):
+        boundary, record, _, _ = _production_projection_case()
+        owner = boundary["parent"]["payload"]["occurrences"][0]
+        if mutation == "shot-pin":
+            record["reads"][0]["state"]["value"]["shot_revision_id"] = "foreign"
+        elif mutation == "revision-pin":
+            record["reads"][0]["state"]["value"]["revision_id"] = "foreign"
+        elif mutation == "physical-owner":
+            boundary["shot-revision:old-r1"]["shot_id"] = "foreign"
+        else:
+            boundary["shot-revision:old-r1"]["content_digest"] = digest({})
+    
+&gt;       with pytest.raises(CommitRejected):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE CommitRejected
+
+tests/test_timeline_popup_fork_owner_projection.py:131: Failed</failure></testcase><testcase classname="tests.test_timeline_popup_fork_owner_projection" name="test_fork_owner_definition_requires_exact_source_image[physical-owner]" time="0.001"><failure message="Failed: DID NOT RAISE CommitRejected">mutation = 'physical-owner'
+
+    @pytest.mark.parametrize("mutation", ["shot-pin", "revision-pin", "physical-owner", "physical-digest"])
+    def test_fork_owner_definition_requires_exact_source_image(mutation):
+        boundary, record, _, _ = _production_projection_case()
+        owner = boundary["parent"]["payload"]["occurrences"][0]
+        if mutation == "shot-pin":
+            record["reads"][0]["state"]["value"]["shot_revision_id"] = "foreign"
+        elif mutation == "revision-pin":
+            record["reads"][0]["state"]["value"]["revision_id"] = "foreign"
+        elif mutation == "physical-owner":
+            boundary["shot-revision:old-r1"]["shot_id"] = "foreign"
+        else:
+            boundary["shot-revision:old-r1"]["content_digest"] = digest({})
+    
+&gt;       with pytest.raises(CommitRejected):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE CommitRejected
+
+tests/test_timeline_popup_fork_owner_projection.py:131: Failed</failure></testcase><testcase classname="tests.test_timeline_popup_fork_owner_projection" name="test_fork_owner_definition_requires_exact_source_image[physical-digest]" time="0.001"><failure message="Failed: DID NOT RAISE CommitRejected">mutation = 'physical-digest'
+
+    @pytest.mark.parametrize("mutation", ["shot-pin", "revision-pin", "physical-owner", "physical-digest"])
+    def test_fork_owner_definition_requires_exact_source_image(mutation):
+        boundary, record, _, _ = _production_projection_case()
+        owner = boundary["parent"]["payload"]["occurrences"][0]
+        if mutation == "shot-pin":
+            record["reads"][0]["state"]["value"]["shot_revision_id"] = "foreign"
+        elif mutation == "revision-pin":
+            record["reads"][0]["state"]["value"]["revision_id"] = "foreign"
+        elif mutation == "physical-owner":
+            boundary["shot-revision:old-r1"]["shot_id"] = "foreign"
+        else:
+            boundary["shot-revision:old-r1"]["content_digest"] = digest({})
+    
+&gt;       with pytest.raises(CommitRejected):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE CommitRejected
+
+tests/test_timeline_popup_fork_owner_projection.py:131: Failed</failure></testcase></testsuite></testsuites>

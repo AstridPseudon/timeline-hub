@@ -1,0 +1,88 @@
+focused12: cwd=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850
+/home/user/work/venv-runtime/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/test_timeline_popup_fork_authority.py tests/test_timeline_popup_fork_owner_projection.py -k 'not definition and not shared_source and not production_fork' --basetemp=/tmp/w-e062ef876d/focused12 --junitxml=evidence/focused12.xml
+exit=0, seconds=5.31
+
+strict9: cwd=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850
+/home/user/work/venv-runtime/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/test_timeline_popup_fork_authority.py tests/test_timeline_popup_fork_owner_projection.py -k rejects --basetemp=/tmp/w-e062ef876d/strict9 --junitxml=evidence/strict9.xml
+exit=0, seconds=0.63
+
+abi-history10: cwd=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850
+/home/user/work/venv-runtime/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/test_timeline_recorder_abi_authority.py -k 'genuine_fork_recorder_authority_history_and_exact_retry or native_coverage_omissions_at_submit_keep_abi_two' --basetemp=/tmp/w-e062ef876d/abi-history10 --junitxml=evidence/abi-history10.xml
+exit=0, seconds=6.29
+
+ruff: cwd=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850
+ruff check --no-cache runtime_protocol/timeline_commit_auth.py tests/test_timeline_popup_fork_owner_projection.py
+exit=0, seconds=0.04
+
+agent-owner-conformance: cwd=/home/user/work/agent
+/home/user/work/venv-runtime/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_fork.py tests/editing_conformance/test_same_step_fork_rebase.py tests/editing_conformance/test_fork_abi1_binding_set.py tests/editing_conformance/test_occurrence_fork_source_baseline.py -m 'not integration' --basetemp=/tmp/w-e062ef876d/agent-owner --junitxml=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850/evidence/agent-owner-conformance.xml
+exit=4, seconds=0.55
+
+original327-production-red: cwd=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850
+/home/user/work/venv-runtime/bin/python /tmp/w-e062ef876d/old_auth_check.py 327da207ed30880fe2ae0cd0b116722bb2c6f7a6 -q -o addopts= -p no:cacheprovider 'tests/test_timeline_popup_fork_owner_projection.py::test_shared_source_fork_add_media_and_history_use_same_owner[True]' --basetemp=/tmp/w-e062ef876d/original327-red --junitxml=evidence/original327-production-red.xml
+exit=1, seconds=8.05
+
+pyright: cwd=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850
+pyright --pythonpath /home/user/work/venv-runtime/bin/python runtime_protocol/timeline_commit_auth.py tests/test_timeline_popup_fork_owner_projection.py
+exit=0, seconds=9.07
+
+shared-inverse-authority: cwd=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850
+/home/user/work/venv-runtime/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/test_timeline_shared_inverse_authority.py --basetemp=/tmp/w-e062ef876d/shared-inverse --junitxml=evidence/shared-inverse-authority.xml
+exit=0, seconds=0.81
+
+mypy: cwd=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850
+mypy --follow-imports=skip --ignore-missing-imports --no-incremental --cache-dir /tmp/w-e062ef876d/mypy-cache runtime_protocol/timeline_commit_auth.py tests/test_timeline_popup_fork_owner_projection.py
+exit=0, seconds=1.52
+
+definition11: cwd=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850
+/home/user/work/venv-runtime/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/test_timeline_popup_fork_owner_projection.py -k 'definition or shared_source or production_fork' --basetemp=/tmp/w-e062ef876d/definition11 --junitxml=evidence/definition11.xml
+exit=0, seconds=41.98
+
+agent-owner-conformance-final: cwd=/home/user/work/agent
+/home/user/work/venv-runtime/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_recipe_occurrence_fork.py tests/editing_conformance/test_same_step_fork_rebase.py tests/editing_conformance/test_fork_abi1_binding_set.py tests/editing_conformance/test_occurrence_fork_source_baseline.py -m 'not integration' --basetemp=/tmp/w-e062ef876d/agent-owner-final --junitxml=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850/evidence/agent-owner-conformance-final.xml
+exit=0, seconds=15.70
+
+mypy-bodies: cwd=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850
+mypy --follow-imports=skip --ignore-missing-imports --check-untyped-defs --no-incremental --cache-dir /tmp/w-e062ef876d/mypy-bodies-cache runtime_protocol/timeline_commit_auth.py tests/test_timeline_popup_fork_owner_projection.py
+exit=1, seconds=1.39
+
+shared-definition4: cwd=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850
+/home/user/work/venv-runtime/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/test_timeline_popup_fork_owner_projection.py::test_shared_owner_definition_matches_agent --basetemp=/tmp/w-e062ef876d/shared-definition4 --junitxml=evidence/shared-definition4.xml
+exit=0, seconds=0.71
+
+mypy-bodies-baseline: cwd=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850
+mypy --follow-imports=skip --ignore-missing-imports --check-untyped-defs --no-incremental --cache-dir /tmp/w-e062ef876d/mypy-baseline-cache --shadow-file runtime_protocol/timeline_commit_auth.py /tmp/w-e062ef876d/timeline_commit_auth.py --shadow-file tests/test_timeline_popup_fork_owner_projection.py /tmp/w-e062ef876d/test_timeline_popup_fork_owner_projection.py runtime_protocol/timeline_commit_auth.py tests/test_timeline_popup_fork_owner_projection.py
+exit=1, seconds=1.65
+
+a4d4-app-production: cwd=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850
+/home/user/work/venv-runtime/bin/python /tmp/w-e062ef876d/old_auth_check.py a4d4b5a24964ec5b2a7752a6aeb1b2ef861a3669 -q -o addopts= -p no:cacheprovider 'tests/test_timeline_popup_fork_owner_projection.py::test_shared_source_fork_add_media_and_history_use_same_owner[True]' --basetemp=/tmp/w-e062ef876d/a4d4-app --junitxml=evidence/a4d4-app-production.xml
+exit=0, seconds=12.47
+
+production-no-write5: cwd=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850
+/home/user/work/venv-runtime/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/test_timeline_popup_fork_owner_projection.py::test_production_fork_add_owner_tampering_never_writes --basetemp=/tmp/w-e062ef876d/no-write-final --junitxml=evidence/production-no-write5.xml
+exit=0, seconds=15.66
+
+ruff-final: cwd=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850
+ruff check --no-cache runtime_protocol/timeline_commit_auth.py tests/test_timeline_popup_fork_owner_projection.py
+exit=0, seconds=0.03
+
+compile-final: cwd=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850
+/home/user/work/venv-runtime/bin/python -m compileall -q runtime_protocol/timeline_commit_auth.py tests/test_timeline_popup_fork_owner_projection.py
+exit=0, seconds=0.21
+
+mypy-bodies-final: cwd=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850
+mypy --follow-imports=skip --ignore-missing-imports --check-untyped-defs --no-incremental --cache-dir /tmp/w-e062ef876d/mypy-final-cache runtime_protocol/timeline_commit_auth.py tests/test_timeline_popup_fork_owner_projection.py
+exit=1, seconds=1.47
+
+pyright-final: cwd=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850
+pyright --pythonpath /home/user/work/venv-runtime/bin/python runtime_protocol/timeline_commit_auth.py tests/test_timeline_popup_fork_owner_projection.py
+exit=0, seconds=5.55
+
+definition-old: before product edit, cwd Runtime worktree
+PYTHONDONTWRITEBYTECODE=1 ASTRID_CHECKOUT=/home/user/work/agent PYTHONPATH=. /home/user/work/venv-runtime/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/test_timeline_popup_fork_owner_projection.py -k definition --basetemp="$TMPDIR/definition-old" --junitxml=evidence/definition-old.xml
+exit=1 (4 expected RED definition controls on a4d4)
+
+diff-final: cwd=/home/user/work/wt/rt-P2-D80-owner-crossrepo-sol-1850
+git diff --check
+exit=0, seconds=0.08
+
