@@ -59,4 +59,28 @@ describe('mixed row drop geometry', () => {
     delete edit.dataset.timelineRowLayout;
     expect(drop(160).trackId).toBe('a'); // genuine legacy tracks-only caller
   });
+
+  it('keeps the hit owner when mutable rows lag the rendered track order', () => {
+    const { edit, layout, dataRef } = setup();
+    const current = dataRef.current;
+    if (!current) throw new Error('test data is missing');
+    current.rows = [...current.rows].reverse();
+    publishTimelineRowLayout(edit, layout, current);
+
+    const position = computeDropPosition({
+      wrapper: edit.parentElement as HTMLDivElement,
+      dataRef,
+      clientX: 200,
+      clientY: 110,
+      scale: 1,
+      scaleWidth: 100,
+      startLeft: 0,
+      rowHeight: 48,
+      sourceKind: 'visual',
+      clipDuration: 1,
+    });
+
+    expect(position.trackId).toBe('v');
+    expect(position.plan?.requestedTrackId).toBe('v');
+  });
 });

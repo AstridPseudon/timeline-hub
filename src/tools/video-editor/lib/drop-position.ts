@@ -130,7 +130,14 @@ export const computeDropPosition = ({
   const leftInGrid = clientX - editRect.left + scrollLeft - effectiveOffsetX;
   const time = Math.max(0, pixelToTime(leftInGrid));
 
-  const rowCount = current?.rows.length ?? 0;
+  // Geometry is published from the rendered track order. Keep the planner's
+  // row actions in that same order when a mutable row snapshot lags a track
+  // projection; otherwise a hit on the first rendered track can inherit the
+  // owner of a differently indexed row.
+  const plannerRows = current
+    ? current.tracks.map((track) => current.rows.find((row) => row.id === track.id) ?? { id: track.id, actions: [] })
+    : [];
+  const rowCount = current?.tracks.length ?? 0;
   const layout = getPublishedTimelineRowLayout(editArea, current);
   const requiresLayout = editArea?.dataset.timelineRowLayout === 'managed';
   const relativeY = clientY - editRect.top + scrollTop;
@@ -151,7 +158,7 @@ export const computeDropPosition = ({
     excludeClipIds,
     sourceKind: sourceKind ?? 'visual',
     tracks: current?.tracks ?? [],
-    rows: current?.rows ?? [],
+    rows: plannerRows,
     pointerRowIndex: rawRowIndex,
     pixelSnapThreshold: EDGE_SNAP_THRESHOLD_PX,
     pixelsPerSecond,
