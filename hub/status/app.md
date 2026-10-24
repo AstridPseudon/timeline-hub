@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T15:06:16Z | dispatcher heartbeat 10s | live 3 (sol 1, luna 2, other 0) | busy30 9 | status age 6m -->
-# app board, 2026-10-24T15:00Z
+<!-- app | 2026-10-24T15:09:36Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 1m -->
+# app board, 2026-10-24T15:08Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -14,7 +14,7 @@
 | A4-D52 | Delete dormant parent and track pairs | Luna; review | Current caller census | merged | Author1118; review1121 | Four deletions qualified by exact tree identity and85 neighboring tests/types. | 2e3c8f65a8 |
 | A4-session | Preserve live session behavior | Luna; review | Review1155 finding | merged | Restore1201; review1210 | Five live tests and shared module restored. Whole tree equals602f; no deletion merged. | 018bd527fc |
 | A4-transcript | Remove exclusive dormant capture pair | Luna; review | Census1205 and review1217 | merged | Author1210; integrated1232 | Exact two-file deletion.50 live neighbors and three types PASS; current worker ledger copied1233. | cca3deb361 |
-| P1-current-caller | Prepare current P1 service caller | Luna; custody review | Review 1456 findings | doing | Return 1459 from author1451 | Review FAIL: recycled source path, incomplete consumed guards and no stage retention. One Luna return fixes exact gaps; no install or original run. | Base 05efffb236 |
+| P1-current-caller | Prepare current P1 service caller | Luna; custody review | Return1459 complete | review | Author1459; cumulative1507 | Stable paths, complete consumed guards and per-stage files claim PASS. Independent second review underway; no install or original. | 8bbae64e21 |
 | P1 | Original mixed chain | App service; Proof | Historical tuple | merged | Actual18792; reviews0036/0040 | Historical GO. Final integrated tuple rerun remains required. | Appf8;Agent787;Runtime2a9 |
 | IMAGE | Genuine image acceptance and undo | Agent; independent Luna | Reviewed forwarding repair | merged | 0554; review0636 | Direct RuntimeService witness passed. No HTTP or broader final gate credit. | App1c5cc;Agent2007 |
 | P2 | Eight original gesture tour | App service; Luna verdict | Actual service launch repair | blocked:app | Actual 12541; verdict 1438 | FAIL exit 2 in 1 second at environment guard. All 8 originals NOTRUN; no product failure inferred. Sol 1437 owns launch repair. | be98aac54e |
@@ -43,7 +43,8 @@
 | P3-current-verdict | Judge same-ID preflight failure | Luna | Producer 1435 terminal | merged | Verdict 1438 NO-GO | Exact 1689: exit 2 in 1 second; 0 PASS, 0 product FAIL, Gate5 NOTRUN. All original stages unrun; source matches pure target. | Current be98 |
 | F-node-current | Verify prior Node regressions | Luna | Refreshed home tree | merged | Node1345 PASS36; ENV2 | 33 verifier,marker guard and both release nodes pass. Two extension SSH setup failures remain explicit. | d24ed69dcd |
 | F-visual-seam | Qualify shared upstream seam fixture | Luna | Final Runtime fixture identity | merged | Fixture1356 PASS; exact e68 blob | All10 cases pass on App d24. Actual Runtime e68 fixture equals qualified f69 blob; no copies or source edits. | App d24; Runtime e68 |
-| F-current-full | Full checkpoint on refreshed source | Luna; App service | Actual be98 pure source | doing | Producer 1446; actual 8158 | One no-cache full submitted 14:45:35Z; same ID only. No final GO before terminal and classification. | be98aac54e |
+| F-install-schema | Align installer schema compatibility | Luna | Actual8158 failure | doing | Author1507 | Exact existing schema assertion fails. Preserve guard/test; use normal tools and compare upstream before classifying regression. | Base be98 |
+| F-current-full | Full checkpoint on refreshed source | Luna; App service | Actual be98 pure source | doing | Producer1446; actual8158 terminal | FAIL exit1/1203s. Vitest19256 PASS/1 FAIL at installer schema guard. Producer finishes exact stage accounting; author1507 owns mismatch. | be98aac54e |
 | F-App-full | Corrected App checkpoint terminal | App service; Luna producer | Same actual16138 | merged | Terminal producer1227 | FAIL exit1/1665s. Vitest19251PASS;Node257PASS38FAIL26SKIP. Final full GO remains open. | 5a9ff97cf0 |
 | F-core-map | Map App core suites and old failures | Luna | D54/D54a | merged | Return1233 | Historical19570 groups fixed or D52 removed. Home upstream behavior UNKNOWN; no false pre-existing claim. | cca3deb361 |
 | F-offline | Repair verifier schema references | Luna; security review | Review1238 PASS33 | merged | Author1235; review1238 | 33 unchanged security cases pass. Namespace repair retains strict unknown-resource and reference guards. | 73aa558266 |
@@ -55,13 +56,13 @@
 
 Integration: be98aac54e275282467d85f79d3beb4665416039, tree 2839c7e7841d1c0897fd8e7c12f0c848d94e3979. Normal tool adoption 94d89 is merged; only runtime.lock.json differs from qualified d24ed. All 14 mapped artifacts are unchanged and match actual Runtime e68. U3-final includes exact upstream 09c844 and retains all mapped live tests. Source qualification 1409 passes 67 mounted controls on actual Agent 47b / Runtime e68.
 
-live 2 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T14:58:51Z | dispatcher heartbeat 4s | live 2 (sol 1, luna 1, other 0) | busy30 9 | status age 2m --> P1 first return1459 queued after review1456 FAIL. SoleSol1437 repairs actual launch custody; Luna owns full8158 terminal and P1 return. All independent ready work assigned.
+live 3 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T15:06:16Z | dispatcher heartbeat 10s | live 3 (sol 1, luna 2, other 0) | busy30 9 | status age 6m --> New schema author1507 and P1 cumulative1507 queued after this snapshot. Sole Sol1437 owns actual launch custody; Luna owns all independent full, schema and P1 work.
 
-core open:9 final App gate cases unqualified,8 P2 and1 P3. D55b accepts all eight P2 as core. Historical16138 Vitest had0 failures; final core full and final P1–P5 remain required.
+core open:10:9 final App gate cases unqualified plus1 installer/schema compatibility failure from actual8158. D55b accepts all eight P2 as core. Historical16138 Vitest had0 failures; final core full and final P1–P5 remain required.
 
-regressions:0 open among historical App Node38 after exact refreshed-tree proof1345:36 repaired and passing,2 SSH environment failures. Final integrated full remains required; no new upstream regression is inferred.
+regressions:0 open among historical App Node38 after exact refreshed-tree proof1345:36 repaired and passing,2 SSH environment failures. Actual8158 has1 new schema compatibility failure under1507; upstream comparison pending, no regression category inferred. Node stage accounting pending1446.
 
-Blockers: App — both current actual requests stopped at the first environment-input guard. Sol 1437 and independent whole path 1437 own launch repair; all original cases NOTRUN.
+Blockers: App — current P2/P3 stopped at first environment guard; full8158 also has1 installer schema compatibility failure owned by1507. Sol 1437 and independent whole path 1437 own launch repair; all original cases NOTRUN.
 Blockers: Owner admission — historical 403 and automatic access refusal remain stopped. No alternate schema, child, overlay or receipt route.
 Next ready: Review Sol1437 after actual scrubbed-entry dry checks pass, then worker-only two-row install and meaningful corrected P2/P3. Full8158 is independent and already queued; producer1446 owns its finite terminal packet. No duplicate gate queued.
 
