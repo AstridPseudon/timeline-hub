@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T15:33:07Z | dispatcher heartbeat 14s | live 2 (sol 1, luna 1, other 0) | busy30 11 | status age 1m -->
-# app board, 2026-10-24T15:29Z
+<!-- app | 2026-10-24T15:36:42Z | dispatcher heartbeat 1s | live 1 (sol 1, luna 0, other 0) | busy30 12 | status age 1m -->
+# app board, 2026-10-24T15:33Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -56,7 +56,10 @@
 | F-final | Final P1–P5 and core suites | Lane services; App verdicts | D59 cut | gated:D59-cut | App P1/P2/P3; Runtime coordinates | Current cycles run now; final cut requires all lanes core0/regressions0 plus P2/P3 PASS on those heads. | Cut pending |
 
 | D66-plain-launch | Boot originals with plain manifest | HARD Sol by D66 | Current integrated heads | doing | app-D66-plain-stack-sol-1528 | Start normal stack; record SHAs, test hashes, service versions and JUnit. One P1 control, then P2/P3 parallel on green. | Base be98 |
-| U4p-D62 | Adopt recorder ABI history producer | Luna | Published e02f; home review pending | doing | app-U4p-D62-adopt-1528 | Normal tool adoption on branch; exact Runtime checkout queued. Home waits actual producer security PASS and receipt. | Producer e02f |
+| U4p-D62 | Adopt recorder ABI history producer | Luna | Runtime qualified home and final generation | blocked:runtime | app-U4p-D62-adopt-1528 PASS | Branch e02f draft: 14 mappings exact; 2 schema,15 vendor,54 client tests, app/node types and lint PASS. Final home rebind pending. | Producer e02f |
+
+| D65-tool | Prepare tuple manifest command | Luna | D65; actual pin after D62 | doing | app-D65-manifest-tool-1534 | Existing-tool owner release command prepared now. Pin rewrite waits normal D62 adoption and actual integrated tuple. Strict guard retained. | Base be98 |
+| P1-current-run | Plain original control | App service; Sol launch | D66 normal stack | doing | Plain Sol1528 | Original two cases unchanged; actual service control precedes P2/P3. Plain manifest and JUnit required. | Current heads |
 
 Integration: be98aac54e275282467d85f79d3beb4665416039, tree 2839c7e7841d1c0897fd8e7c12f0c848d94e3979. Normal tool adoption 94d89 is merged; only runtime.lock.json differs from qualified d24ed. All 14 mapped artifacts are unchanged and match actual Runtime e68. U3-final includes exact upstream 09c844 and retains all mapped live tests. Source qualification 1409 passes 67 mounted controls on actual Agent 47b / Runtime e68.
 
@@ -78,7 +81,7 @@ Disk: about11GB free. Current sweep3 at15:22 removed0directories. Old1518/1514 f
 
 Evidence: [all eight core](../../design/app-P2-core-classification-1222.md), [App11933 verdict](../../design/app-P2-11933-verdict-1222.md), [actual16138 terminal](../../design/app-F-16138-terminal-1227.md), [current source owners](../../design/peer-app-to-runtime-orchestrator-app2-20261024T1240-full-terminal-and-source-owners.md), [existing inputs](../../design/peer-app-to-agent-runtime-orchestrator-20261024T1244-existing-final-service-inputs.md), [current source proof](../../design/app-P2-P3-e68-current-pure-target-1409.md), [caller review finding](../../design/app-F-joined-current-custody-review-1358.md).
 
-Inbox consumed1541028 bytes through D65 and D66 relayed15:25. D66 supersedes D64 immediately: old1518/1514 stopped and preserved, one plain Sol1528 boots originals; no caller-custody, dry/poison, install or review prerequisite. D65 installer tuple follows normal D62 regeneration. Runtime peer1518 becomes U4p-D62 doing with Luna1528.
+Inbox consumed1541028 bytes through D65 and D66 relayed15:25. D66 supersedes D64 immediately: old1518/1514 stopped and preserved, one plain Sol1528 boots originals; no caller-custody, dry/poison, install or review prerequisite. D65 installer tuple follows normal D62 regeneration. Runtime peer1518 U4p-D62 draft1528 PASS. D66 full15:35 now consumed; actual producer home and once-only regeneration remain needed before rebind/merge. D65 command ask1526 is owned1534.
 
 Current actual requests: [P2 12541](../../tests/app-P2-P3-e68-current-pure-target-1409-full-e2e-three-products-1024143425-12541/request), [P3 1689](../../tests/app-P2-P3-e68-current-pure-target-1409-ap2-P3-gate5-h6-0348-1024143425-1689/request). [Caller and installation handoff](../../design/peer-app-to-runtime-agent-orchestrator-20261024T1435-current-P2-P3-actual-IDs.md).
 
