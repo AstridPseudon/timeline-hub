@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T04:52:12Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 1m -->
-# viewing board, 2026-10-24T04:47:25Z
+<!-- viewing | 2026-10-24T04:53:39Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 0m -->
+# viewing board, 2026-10-24T04:53:02Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -29,7 +29,7 @@
 | DB-composition-dry | Fresh clone delivery dry run | Luna high | Orchestrator request | merged | First return 0757 and review 0802 | All 120 source files, controlled archive payload, registry, types and callers independently passed. | source 635f4de06 |
 | DB-composition-template | Repair missing delivery template | Luna high | Required README template | merged | Template 0749 and review 0751 | Template-only repair and delivery retry passed. No ZIP credit. | source 635f4de06 |
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
-| F-authoring-ABA | Forward authenticated inverse records | Sol author; Luna review | Completed source | review | vw-F-authoring-ABA-forward-review-0451 | Author passed 71 plus 5 tests, lint and types. Old accept and preview fail. Image inverse uses same path; original qualification waits for review and home merge. | 39e319789; 0df7b65cd |
+| F-authoring-ABA | Forward authenticated inverse records | Sol author; Luna review | Independent PASS | merging | vw-F-authoring-ABA-forward-review-0451 | Independent 71 plus 5 tests, lint, types and exact authority checks passed. Reviewed stack queued; single original qualification requested after home merge. | 39e319789; 0df7b65cd |
 | F-headless-root-mirror | Preserve complete canonical mirror effects | Sol author; Luna review | Independent PASS | merging | vw-F-headless-root-mirror-review-0443 | Independent 63 tests, Ruff, types and mounted caller passed. Remote merge queued; Runtime owns original family. | eca4de47d |
 | F-retired-callers | Qualify retained native, CLI and Scene scenarios | Luna author and review | Independent PASS | merging | vw-F-retired-callers-review-0444 | Independent 53 tests, Ruff, types and caller trace passed. Sheet delta queued for home merge; exact scope is 30 originals. | 0712aadf6 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six original cases passed in 41.48 seconds on child c886 and Runtime 8ea. Source classification independently passed. | no product change |
@@ -39,13 +39,13 @@
 
 V1 and V3 remain done on recorded integrated proofs. Composition source remains 635f4de06 with immutable archive 819acf6b. V4 stays cut under H9. D14 and D23 originals stay unchanged, unskipped and visibly failing. P1 GO is published; P2 and P3 remain with their owners.
 
-The restart killed two workers. ABA resumes from saved WIP on the same branch; headless independent review resumes on the completed source. No review verdict or original pass is inferred from the interrupted work. Agent 0407 released commands.py and _doc_patch.py forwarding to the existing single ABA author. Viewing owns the next qualified original ABA verdict through Agent's managed service. Runtime owns the original headless family.
+The restart killed two workers. Headless review resumed and passed; its home merge is queued. ABA resumed from saved WIP and completed the repair with 71 plus 5 passing tests; independent review passed and the reviewed stack is queued for home merge. Agent 0407 released commands.py and _doc_patch.py forwarding to the existing single ABA author. Viewing owns the next qualified original ABA verdict through Agent's managed service. Runtime owns the original headless family.
 
-The retained-caller authors completed. CLI and Scene needed no new diff; sheet adds explicit request fields and assertions. Independent review is active. The census review found 30 original rows; Agent's count of 33 includes separately owned track-label rows. No global count changed. The image inverse dependency question is assigned to the same ABA source author, without another live run.
+The retained-caller authors completed. CLI and Scene needed no new diff; sheet adds explicit request fields and assertions. Independent review passed 53 tests with clean lint and types; the home merge is queued. The census review found 30 original rows; Agent's count of 33 includes separately owned track-label rows. No global count changed. The image inverse dependency question is assigned to the same ABA source author, without another live run.
 
 Evidence: [restart and source handoff](../../design/peer-viewing-to-agent-20261024T0444-restart-progress.md), [headless author](../../design/viewing-F-headless-root-mirror-sol-0358.md), [sheet author](../../design/viewing-F-retired-callers-sheet-0404.md), [CLI proof](../../design/viewing-F-retired-callers-cli-0404.md), [Scene proof](../../design/viewing-F-retired-callers-scene-0404.md), [independent scope review](../../design/viewing-F-retired-callers-map-review-0404.md), [prior evidence](../../design/viewing-evidence-before-D33-20261024T0053.md).
 
 Blockers: Agent home port and managed original ABA service follow independent source PASS; Viewing owns the source and verdict.
 Later: Cut V4 and deferred relational timing remain unchanged. Prior manual hub-sync and recycle permission refusals stay stopped.
 
-Next ready: Consume independent headless and retained-caller reviews. Send qualified sources to Agent home; qualify original ABA once its meaningful repair is reviewed and integrated.
+Next ready: Consume Agent home merge receipts and integrated proofs. Agent runs the reserved original ABA on the reviewed source; Viewing owns its verdict. Runtime owns original headless qualification.
