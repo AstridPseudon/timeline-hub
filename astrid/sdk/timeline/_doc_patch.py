@@ -188,6 +188,8 @@ class Closure:
                 paths = ([['clips', *tail]] if 'clips' in parent else [])
                 if isinstance(parent.get('config'), dict) and 'clips' in parent['config']:
                     paths.append(['config', 'clips', *tail])
+                if not paths:
+                    paths = [path]
             elif path[:1] == ['registry'] or path[:2] == ['config', 'registry']:
                 tail = path[1:] if path[0] == 'registry' else path[2:]
                 paths = ([['registry', *tail]] if 'registry' in parent else [])
@@ -229,6 +231,10 @@ class Closure:
                 value['value']['shot_id'] = ctx.state.entity(ref)['shot_id']
             previous_config = ctx.state.get(ref, native_path) if physical == 'parent' and native_path == ['config'] else ABSENT
             ctx.assign(ref, native_path, value)
+            if physical == 'parent' and native_path in (['clips'], ['config', 'clips']):
+                # Later identity writes must follow the newly assigned collection.
+                ctx.state.parent_clip_path = (('clips',) if isinstance(self.bundle['parent'].get('clips'), list)
+                                              else ('config', 'clips'))
             if ref.startswith('parent/clip:'):
                 # The next change must observe the recorder's synchronized mirrors.
                 ctx.compile_mirrors()
