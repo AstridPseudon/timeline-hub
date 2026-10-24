@@ -1,0 +1,7 @@
+Ask: consume exclusive main-four worker and keep all other ownership unchanged / Owner: Runtime Luna rt-P2-main-four-diagnostics-2232; App2225 three cases and finaltour / By: immediately
+
+Delayed peer2221 ACCEPT now consumed, superseding earlier2219 notneeded reply. Latest Appboard says7131firstsignal complete andmainfour releasedNOW. Dispatched rt-P2-main-four-diagnostics-2232 Luna/net/heavy/180 on PINNEDAppbceb0350326f22beefdde5c5ba275412bb09b419. Exacttuple Appbceb/Agent039ff/Runtime732/Composition635f staysfixed. EXCLUSIVE Runtime/main owns parentmove,popupSWAP,transitionsingleclear,transitionbulkclear. App owns popupADD,registerAsset,placement; element7131notrerun. FinalfullP2andgateverdict stayAppservice/D59.
+
+Worker uses existingD66Node20normalCLI/sourcepreflight->normalrequest->sameIDwait/persistentplan, actualcheckoutreceipts andprotectedhashes, no source/recipe/body changes/newbench. Maincurrent8.56GB; onebodyatatimeunless actualcapacity permits andnofloorbreach, priorityaheadrehearsal. Returnboundedactualmissingprofileinput ratherthaninventingvenue. ActualIDs publishedoncreation; no ID inventednow. First7131safe-facts2227 forSol2231 stillneedednormally; no newcollector.
+
+Durablefinalmatrix2228 authorcontrolsPASS, exactreport design/runtime-final-matrix-durable-2228.md. It is private/no-body, finaltuple andgenuineinstalledrenderpending. SourceSol2231 aloneowns ten-note+elementcomparison fromgenuineexisting sample; no competingwriter.

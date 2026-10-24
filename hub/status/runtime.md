@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T22:31:35Z | dispatcher heartbeat 8s | live 1 (sol 1, luna 0, other 0) | busy30 8 | status age 1m -->
-# runtime board, 2026-10-24T22:30:29Z
+<!-- main | 2026-10-24T22:34:48Z | dispatcher heartbeat 2s | live 2 (sol 1, luna 1, other 0) | busy30 8 | status age 1m -->
+# runtime board, 2026-10-24T22:33:42Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -191,9 +191,9 @@
 | F-final-upstream-installer | Keep fresh upstream installer tests | Luna | Author checklist checks passed | merged | rt-F-final-upstream-installer-2216 | Exact 08e6 object and paths verified; 92 targets and guards preserved. [Report](../../design/runtime-final-upstream-installer-2216.md) | Private checklist only |
 
 | F-final-rehearsal | Rehearse fresh upstream delivery | Luna | Critical timing and App priority | gated:critical-capacity | rt-F-final-rehearsal-2219 BLOCKED | App shallow-parent traversal stopped staging. No ZIP. Private input fix resumes after critical sample; raw temp loss disclosed. | Source unchanged |
-| F-final-matrix | Prepare pinned per-venue dispatch | Luna | Durable first return | doing | rt-F-final-matrix-return-2228 | Predecessor controls pass; five committed artifacts retained on branch. Return makes handoff durable and completes command inputs. | 2219 branch only |
+| F-final-matrix | Prepare pinned per-venue dispatch | Luna | Author durable controls passed | merged | rt-F-final-matrix-return-2228 | Durable 10-venue runner; stub once/poison zero and recycled-copy check PASS. [Report](../../design/runtime-final-matrix-durable-2228.md) | Private; final inputs pending |
 
-| P2-spare-venue | Keep main diagnostic capacity available | App owner / Runtime service | App now has local capacity | gated:App-need | App sole producer2216 | App2219 explicitly clears spare-venue need; owner reserve retained if needed. Actual7131 is App-only. No main duplicate. | No main request |
+| P2-spare-venue | Run four assigned main diagnostics | Luna / main service | App2221 accepts; board2225 releases | doing | rt-P2-main-four-diagnostics-2232 | Exact Appbceb/Agent039ff/Runtime732/Composition635f. Parent, SWAP, single and bulk only; App owns other cases and finaltour. | No result yet |
 
 | P4-D84a-distinct | Repair remaining multi-command cost | HARD Sol | Owner 22:27 and 22:31 | doing | rt-P4-element-D84a-return-sol-2231 | Prior one-case sample retained: 46.220 wall, 43.858 main CPU; 15/30/44 second stacks. Resume adds element shape, no original repeat. | Runtime732 base |
 
@@ -219,7 +219,7 @@ Later: E1/E3 and Agent E2 designs retained; further E/D79 paused until ZIP. All 
 Admission: D56 Farm/schema access stopped. Original403 and historical access, cleanup, process and retirement refusals remain stopped. D67 D13 environment gap and App dirty-U3 refusals remain unchanged.
 Disk: Last read 8600858624 available bytes, 8.01 GiB; cap4 conservatively. No ended clean non-KEEP Runtime worktree is eligible. Guarded sweep3 removed zero; compact packed zero and gzipped two old logs. Historical refused targets remain stopped; 15GB target not reached.
 
-live 2 queued or running / cap 4; ready-undispatched 0. HARD Sol2231 resumes measured ten-note and element repair; Luna2228 owns durable matrix handoff. Two slots reserved for App diagnostics. Rehearsal yields to their priority.
+live 2 queued or running / cap 4; ready-undispatched 0. HARD Sol2231 owns measured repair; Luna2232 owns four assigned main diagnostics. Matrix2228 done. Rehearsal yields to critical timing and diagnostic service priority.
 Pass 2026-10-24T22:13:47Z: Read PLAN/common, new inbox through577361bytes, header and owner boards. App asset/placement source repairs accepted HOME with browser proof still open. Runtime732 product blobs remain released and actual home clean. Consumed2207 harness completion without a redundant review under D56; private92+TS inventory remains PENDING tuple and uninstalled. Published exact author report. No new source, duplicate original or denied route.
 
 Intake 2026-10-24T22:15:49Z: Orchestrator fresh Agent08e6b90511 packaging overlap became owned row F-final-upstream-installer and dispatched Luna2216 immediately. Gating source is frozen. No upstream fetch or merge requested.
@@ -231,3 +231,5 @@ Pass 2026-10-24T22:20:53Z: consumed owner22:24 spare venue priority and2216 PASS
 Pass 2026-10-24T22:27:24Z: owner22:27 distinct ten-note critical source dispatched immediately. Agent/App adoption receipts consumed. Both2219 returns consumed: matrix first return dispatched; rehearsal input/disk block retained, no artifact claimed. Disk restored8592900096bytes after harness cleanup. Source732 unchanged. Inbox through584855bytes.
 
 Pass 2026-10-24T22:30:29Z: original sample2227 completed and durably retained, then checkpoint-stopped only to deliver owner22:31 expanded shape scope. New Sol2231 resumes samebranch without repeatingoriginal. MainCPU43.858/wall46.220 is sample fact, no lock/causal verdict inferred. App7131 NO-GO and explicit spare-venue selfclear consumed. Inbox through586973bytes.
+
+Pass 2026-10-24T22:33:42Z: delayed App2221 ACCEPT supersedes earlier spare-venue selfclear. Latest Appboard releases mainfour now; dispatchedLuna2232 on exactbceb with exclusivecaseallocation and unchangedprotectedbodies. Finaltour staysApp. Matrix2228 PASS published, remaining finaltuple/P4registration/render inputs explicit. Inbox through589672bytes.
