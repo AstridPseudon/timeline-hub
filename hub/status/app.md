@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T12:01:21Z | dispatcher heartbeat 8s | live 4 (sol 0, luna 4, other 0) | busy30 26 | status age 4m -->
-# app board, 2026-10-24T11:57Z
+<!-- app | 2026-10-24T12:05:25Z | dispatcher heartbeat 8s | live 4 (sol 0, luna 4, other 0) | busy30 26 | status age 3m -->
+# app board, 2026-10-24T12:03Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -60,7 +60,7 @@
 
 | P2-final-caller | Bind only P2 to pure target | Luna; independent Luna | Independent1103 PASS | merged | Author1054; review1103 | Complete caller PASS: 60 guards,14 negative controls,actual receipt and source. P3 and247 outsiders exact. Source preparation only. | ae17a48c3a |
 | P2-only-install | Install reviewed P2 row | Luna | Review1103 PASS | merged | app-P2-only-install-1115 | Atomic write and readback PASS. P2 row11b2eebf; P3 and247 outsiders unchanged. | Config only |
-| P3-D53-caller | Authenticate only P3 source and body guards | Luna; independent Luna | Firstreview1154 FAIL | doing | Firstreturn1156 | Fix exact fabricatedreview and arbitraryproofmanifest authority. Authentic1143/602f inputs present. No install/run before cumulativePASS. | Base8dc976 |
+| P3-D53-caller | Authenticate only P3 source and body guards | Luna; independent Luna | Return1156 complete; drypreflight1203 | doing | Caller1156; dry1203 | cf1dc fixes forgedreview/proof authority. Actual decoded identitypreflight must PASS before cumulative review. No install/run. | cf1dcf1756 |
 | P3-fault-order | Apply approved exact retry accounting | Proof Luna; independent Luna | Final1126 PASS; D53 approved | merged | Clean1123; review1126; pure1143 | Normal home602f includes exact2357 three paths; strict accounting and original tails preserved. Pure integrated proof1143 active; no new run released. | 602f8b1f58 |
 
 | A4-D52 | Delete two proven dormant subsets | Luna; independent Luna | Review1121 and exact integrated tree | merged | Author1118; review1121; result1133 | Normal merge2e3c tree equals reviewed f00ee. Four deletions,85 neighbors and three types PASS. Actual-status ledger update1133 follows. | 2e3c8f65a8 |
@@ -72,12 +72,14 @@
 | F-authoring | Repair fresh-worker test fixture | Luna; independent Luna | Independent1137 PASS | gated:branch-join | Author1132; review1137 | Exact one-file fixture change;3tests/three types/lintPASS. Original order assertions retained. | 7886f11a9d |
 | F-Home | Correct exact live CTA test selector | Luna; independent Luna | Independent1137 PASS | gated:branch-join | Author1132; review1137 | Exact one-line query correction;13tests/three types/lintPASS. Dialog/focus/replay assertions retained. | e0a2937038 |
 | A4-runner | Delete retired executor and exclusive tests | Luna; independent Luna | Independent1143 PASS | gated:branch-join | Author1137; review1143 | Exactfive-path cut;83 live assertions retained. Independent82 tests,three types,lintPASS. Join1146 active. | 3403a1d0ae |
-| A4-D52-session-label | Retire census-proven dormant protocol | Luna; independent Luna | Author1145 PASS | review | Author1145; review1155 | Seven exclusivefiles and dedicatedlabelport removed; sharedfixturemodules retained.500tests/types/lint PASS; livecoverage review active. | 080db52e6b |
+| A4-D52-session-label | Retire exclusive dormant gesture only | Luna; independent Luna | Independent1155 FAIL | doing | Firstreturn1201 | Restore all five sessiontests and sharedmodule exact; only two provenexclusive gesturefiles remain candidates. No livecoverage removal. | Held080db |
 | P3-D53-source | Qualify current pure integrated target | Luna | Normal D53 merge602f | merged | Pure integrated1143 | Exact donor3,23 controls,three types,lint,body/reset/tails PASS. Exact worker ledger line published. No live GO. | 602f8b1f58 |
 | F-corrected-join | Compose reviewed checkpoint fixes | Luna; independent Luna | Four packets PASS; normalHOME602f | review | Join1146; cumulative1157 | Normal branchmerge5a9ff passed608targeted+21taskneighbors+23controls,types/lint. Cumulative review beforeONEcorrectedD49full. | 5a9ff97cf0 |
 | F-result | Verify checkpoint and ledger status | Luna | Actual merge and terminal packet | merged | Independent1133 PASS | Full packet counts and D52 whole-tree identity qualified. Actual-status worker ledger rows copied. No independent process SHA inferred. | 2e3c and e8a |
 
 | P2-reviewed-install | Install corrected reviewed P2 row | Luna | Independent1140 PASS | merged | Installer1151 | Atomicreadback PASS: row6a45d056, P3 unchanged23226c,247outsiders9acf. Actual11933 submitted. | Caller383d |
+
+| P2-dry-preflight | Generate bindings and drycheck first | Luna | ORCH11:55 instruction | doing | app-P2-dry-source-preflight-1202 | Branchonly futurecaller; derive identity after approvedreceipt/source checks and execute actualcandidateguard before review. Running11933 unchanged. | Base383d |
 
 Integration: HOME602f8b1f58593302829fb449d0ded62a91462a22 after reviewed D53 normal merge; D52 four-file deletion retained. P2 selected pure d6ed/tree542b remains immutable. Pure joined1036 PASS695+67 tests,30controls including20Gate5,11diagnostics,three types/lint and protected identities. Actual P226414 terminal preflight-only exit2,all originalsNOTRUN; decoded Agent-tree repair1130 active. Early branch e8a/treec94 is independently1058 PASS; ONE D49 full19570 failed11:28; exact failure groups all assigned1132.
 
@@ -110,3 +112,5 @@ Current P2 ID: app-P2-final-pure-integrated-1036-full-e2e-three-products-1024111
 Pass11:54: Read PLAN first,COMMON/header,new inbox and normal hub owner boards. Recycled finalized clean1045; no prior refusal retried. Complete P2 caller1140 PASS, installer1151 dispatched immediately. D53 integrated1143 PASS and exact worker-authored line copied to App ledger; supported exactcheckout602f obtained. Caller1140 finalized8dc976, independent1154 dispatched. Both full-removal reviews1143 PASS, joined1146 active. All changes remain worker-authored; no homefreeze merge or new original yet.
 
 Pass11:57: P2 correctedrow6a45 installed1151 and actual11933 submitted11:55:51Z,no-cache. P3 and247outsiders unchanged. Soleproducer1158 dispatched and waitsSAMEID; actualdoorport34575,buildphase running. D53 source1143/ledger qualified; P3 firstreview1154 FAIL, firstreturn1156 dispatched immediately. Sessionlabel080db independent1155 active. Correctedearlyjoin5a9ff cumulative1157 active; no homefreeze merge. Diskabout11GB; prior refusals remain stopped. Consumed1483487inboxbytes including ProofconditionalP31141.
+
+Pass12:03: P211933 nativefixture/history PASS and mountedreadiness PASS19s; actualeight began, firstelementFAIL17.4s andtwoelementfilefollowersNOTRUN sofar. Runstillactive; soleproducer1158 owns exactterminal/Applydiagnostics. Firstretirementreview1155FAIL for unprovenlivecoverage deletion; return1201 restoresfive sessiontests andsharedmodule. P3return1156 finalizedcf1dc; actualdryguard1203 dispatched BEFORE cumulativecallerreview perORCH11:55. SeparateP2rootfix1202 derivesbindings/drychecks; noactivecaller/configchange. No source merge during activeP2.
