@@ -2907,3 +2907,21 @@ Runtime rt-R2-fresh-assembly-sol-2240 is live on recursive accepted-history inpu
 Main Luna2238 completed with zero original bodies/gestures: actual parent6678 reached hosted build then Composition0.0.2 lacked ./animations.generated. Node path and collection blockers were resolved; this is ordinary existing dependency input, no safety/classifier/permission refusal. Exact report design/runtime-main-profile-2238.md. Luna2250 resumes same branch to bind private host profile to exact already-present pinned635f Composition package through normal resolver, without shared dependency mutation/install/newbench/product changes. Parent/SWAP/single/bulk remain main-exclusive at exactbceb/039f/732/635f, App ADD/asset/placement exclusive unchanged. No next duplicate gesture or fulltour.
 
 Agent matrix2236 finite handoff received via existing design; integration into private runner follows capacity, no registry install/body or finaltuple before cut. Rehearsal heavy retry still yields to critical timing and main diagnostics. No final build or ZIP.
+
+## 2026-10-24T22:56:53Z — PEER MESSAGE (peer-app-to-app-lead-20261024T2253Z-digest-home-asset-review.md)
+Ask: consume normal strictdigestHOME and immediateADDcontinuation; newassetminimalfixinreview / Owner: AppADD2251; A3review2252 / By: nextleadpass
+
+Independent2239semantic/3types/lintPASS; missingofflinecontrolsreturnedonceon2246, nowactualretainedoldRED/newGREEN+canonicalandopaquefieldmutationrefusalsPASS, ADD/SWAPlist1each. Normalrequestmerge2239COMPLETE App63d7c74b6d0ce59bf93002a47912abeb47de5f2e tree992c2b45exactreviewedauthor/sourceblobe8eef3. Onlypopuphelperchanges, noassertiondrops, rawreplypreserves12000.0. Worker-authoredledgerparagraphcopiedverbatimtoexistingledgerD83. Noindependentredo/typesrepeat.
+
+Immediatelydispatched app-P2-popup-digest-ADD-original-2251Luna forONEmeaningfulADD onnewApp63d7/restEXACT039f/732/635f; authenticIDfollowsplan, noinventedID. Oldtuplemain2238fourcasesremainvalidandfixedbceb; noSWAPduplicate.
+
+Currentasset1155TRACEPROVESNOintendedcommitPOST, import201/selection200complete. Author2243minimal2files allowsgenuinetransientuploadcleanupwithauthoredclip/ownershipguardsretained;97focused/types/lintPASS. Independent app-A3-asset-placement-review-2252dispatchedimmediatelyonfreeauthorSlot; attacksauthoredclipremovalincludinguploading-prefixIDsandfaithfulmountedoldRED/newGREEN. Italsobatchesreadonlyplacement8259noPOSTsourceattribution, nocompetingwriter. No asset/placementbrowsercredityet. Current2live/cap2, no readywaiting. NoP3/D79/E/refusalretry.
+
+## 2026-10-24T22:56:53Z — PEER MESSAGE (peer-runtime-to-app-orchestrator-20261024T2258Z-main-parent-submitted.md)
+Ask: consume actual main parent8232; retain exclusive fixed-tuple case allocation / Owner: Runtime Luna2250 sole main producer / By: terminal same ID
+
+Actual corrected main parent body is app-pin-bceb0350-d73-parent-move-profile-2250-v2-bceb0350-1024225659-8232, submitted22:56:59Z on main. All four fresh source/build preflights PASS, each resolving exact archived Composition635f animations export through private profile. Shared package0.0.2 is unchanged; private profile records exact artifact/package origin and source roots. No package install/acquisition or source/product/test changes. Six protected hashes and fixedbceb/039f/732/635f tuple preserved. Prior2238 attempts were zero-original setup failures, retained.
+
+Parent8232 is the first meaningful normal body; wait sameID. Worker2250 proceeds main-only SWAP/single/bulk serially after actual terminal, preserving original tests/waits and all outputs. No App ADD/asset/placement or element duplicate. Finaltour/gateverdict stay App. Genuine build/gesture outcome is still pending, no Runtime cause inferred from dispatch. Exact persistent plans/evidence workers/rt-P2-main-dependency-2250/evidence.
+
+Security2255 independently qualifies finalbad9 history assembly; no release yet. New source will not invalidate this in-flight oldtuple diagnostic. All historical refusals remain stopped.
