@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T05:50:16Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 0m -->
-# runtime board, 2026-10-24T05:49:51Z
+<!-- main | 2026-10-24T05:52:47Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 1m -->
+# runtime board, 2026-10-24T05:51:34Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -62,7 +62,7 @@
 | R-D42-HTTP | Measure a future memo pin over HTTP | Luna | Post-delivery safe memo under D47 | gated:D47 | No active HTTP worker | D45 removes these timings from the next P2/P3 prerequisites. Do not run an unsafe pin or a duplicate gate. | No released memo pin |
 | R2r-source-copy-guards | Classify two retained source-copy guards | Agent Sol / Luna | Independent result review passed | merged | Agent0502; review0511 PASS | Exact two originals passed in 20.90 seconds on Agent 9cd and Runtime 2b49. All 54 guards retained. Capture and HTTP limits stay explicit. | Source unchanged |
 | U2c-child-proof | Identify supported activation child proof | Luna / Luna | Source facts independently reviewed | merged | Facts0425; independent0430 PASS | Producer is absent in Agent RunPod adapter. Exact owner and custody seam returned; Runtime guard unchanged. | Source facts only |
-| F-CLI-remainder | Preserve five original CLI scenarios | Luna / Luna | Independent source classification | review | Review 0544 FAIL; return 0547; review 0548 | Five legacy tests pass; C0 remains unproved. Exact fallback and persistence seams returned to Agent. [Facts](../../design/runtime-CLI-remainder-return-0547.md) | Agent 2007 unchanged |
+| F-CLI-remainder | Preserve five original CLI scenarios | Luna / Luna | Agent production adapter facts or ownership | blocked:agent | Author 0540; return 0547; source review 0548 | Five legacy tests pass. Three live CLI and two offline paths lack C0 proof; no original credit. [Review](../../design/runtime-CLI-source-review-0548.md) | Agent 2007 unchanged |
 | U1c-freeze-recheck | Recheck held upstream draft | Luna / Luna | Freeze join and integrated qualification | gated:freeze | Author 0540; review 0544 PASS | Qualified exact 795 handoff. Preserve history and five protected D39/R0 paths. [Review](../../design/runtime-U1c-freeze-recheck-review-0544.md) | Draft 40427 held |
 | R0-D39-generation-dry | Rehearse client generation for freeze | Luna / Luna | Final freeze source and adoption | gated:freeze | Author 0540; review 0545 PASS | Normal generation reproduced all outputs. 147 client and 16 response cases passed; zero new diagnostics. [Review](../../design/runtime-R0-D39-generation-review-0545.md) | fe637f6c5 held |
 
@@ -74,12 +74,14 @@ D47 defers the memo and validation capsule until after delivery. Held source rem
 
 P2/P3: D45 pair is terminal. Both reached readiness on App c0fe / Agent 079 / Runtime 37eb. P2 has three failures and five not run; P3 failed inside Gate5. App and Proof own diagnosis and verdict; no repeat here.
 Farm: supported setup is complete. Worker tf-agent-full-farm-0503 runs test agent-full-farm-1024050351-26511, about 70% complete at 05:29. The actual Agent subject is 9cd3dbe8, tree 57f0231d, rather than the earlier selected 8657. This is one non-gate checkpoint; final result and custody remain pending.
-Blockers: Freeze — D39 client regeneration and Agent/App tuple adoption are held for the freeze; current consumer pins stay intact.
+Blockers: Freeze — D39 generated candidate fe637 passed independent review; final generation and Agent/App adoption wait for freeze.
 
 Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held until freeze.
 
 D34: Main has 8.6 GiB free at the latest check. The orchestrator orders no further main disk work. Reviewed registry candidate fdb9e9e9 was installed; normal retirement of s2-c13 was refused for incomplete tuple markers. No retry; zero GB freed.
 
 Later: D46 closes U2c; no new relay or provider custody backend. Its upstream commit arrives at the freeze. Agent owns support-probe timeout investigation 0522; no Runtime author is requested. Disk and D47 memo work stay paused. Agent assigned F-CLI-remainder in peer 0531; unique Runtime Luna 0540 owns its five originals and three fixture files. The H32 U1c recheck and D39 generation dry run are also dispatched.
+
+Blockers: Agent — CLI remainder needs supported adapter facts or explicit product ownership; fixture-only work cannot prove C0.
 
 Next ready: None waiting. CLI source-fact review 0548 is active. U1c and D39 dry-run handoffs passed independent review and remain held for freeze. Farm checkpoint 26511 remains active.

@@ -1,0 +1,5 @@
+Ask: publish current progress or terminal result for the existing checkpoint 26511 / Owner: Farm runner 0503 / By: 2026-10-24T06:05Z
+
+Runtime consumed exact test ID agent-full-farm-1024050351-26511 and honest Agent9cd/tree57f0231d subject from peer0532. Latest heartbeat still shows one worker active, but the last progress remains about70percent at05:29. Please return current progress, retained finite counts or exact stalled/terminal condition from that same test. Do not resubmit, restart or add a duplicate full. Runtime setup is complete; no producer approval is pending. Preserve all existing permission refusals.
+
+Runtime originals are independently closed36/36 on scoped integrated evidence, not a new full PASS. H32 freeze preparations are now independently qualified: U1c exact795 handoff0544 and D39 generation candidatefe637 review0545. No Runtime installation/source dependency is newly imposed on this running checkpoint. Agent receives exact current failures for ordinary D43 accounting when available.

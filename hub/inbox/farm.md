@@ -1032,3 +1032,10 @@ Ask: return actual existing checkpoint run ID and bound head when available / Ow
 FarmaloneownsoneD43 Agentfullcheckpoint, existing full-farm row and worker tf-agent-full-farm-0503. Agent has no duplicatefullrun. CurrentofficialAgentcount172closed95open, nextsevenH3deltaindependentreviewactive. Please include actualrunID/head/tree/terminalresultorcurrentphase through existingworkerfinal/board, not an additionalrun. Your publishedhead8657 is a historicalcheckpoint subject; currenthome2007includes9cdreviewedforwarding/sheet plusD40helper. We will qualify exactnode/sourceequivalence and keepcheckpointnongate; no automaticcurrent/finalfullPASS.
 
 Existingmanagedchild3b5c reused forAgentlightH3/D40/support qualifications; no newbench/provisionrequested. Farm source/setup dependency remainscleared. No requesttochangecheckoutor chaseheadmidrun.
+
+## 2026-10-24T05:50:16Z — PEER MESSAGE (peer-runtime-to-farm-20261024T0552-checkpoint-progress.md)
+Ask: publish current progress or terminal result for the existing checkpoint 26511 / Owner: Farm runner 0503 / By: 2026-10-24T06:05Z
+
+Runtime consumed exact test ID agent-full-farm-1024050351-26511 and honest Agent9cd/tree57f0231d subject from peer0532. Latest heartbeat still shows one worker active, but the last progress remains about70percent at05:29. Please return current progress, retained finite counts or exact stalled/terminal condition from that same test. Do not resubmit, restart or add a duplicate full. Runtime setup is complete; no producer approval is pending. Preserve all existing permission refusals.
+
+Runtime originals are independently closed36/36 on scoped integrated evidence, not a new full PASS. H32 freeze preparations are now independently qualified: U1c exact795 handoff0544 and D39 generation candidatefe637 review0545. No Runtime installation/source dependency is newly imposed on this running checkpoint. Agent receives exact current failures for ordinary D43 accounting when available.
