@@ -1024,7 +1024,7 @@ def _inverse_stage_inherited(source_step, source_commands, source_records, publi
                 and native[0] == native_end < native[1] <= len(command["writes"])
                 and isinstance(effect, list) and len(effect) == 2
                 and all(type(item) is int for item in effect)
-                and effect[0] == effect_end < effect[1] <= len(source_step["patch"]),
+                and effect[0] == effect_end <= effect[1] <= len(source_step["patch"]),
                 "inherited inverse ranges are missing, reordered, or overlapping")
         writes = [{**write, "before": write["after"], "after": write["before"]}
                   for write in reversed(command["writes"][native[0]:native[1]])]
@@ -1357,7 +1357,7 @@ def _inverse_stage_ranges(step, records, history=None):
         require(native_end - native_start == len(source_stage["native_sites"])
                 and native_start == previous_native_end and native_start < native_end <= len(record["writes"]),
                 "inverse stage native ranges are missing, reordered, or overlapping")
-        require(effect_start == previous_effect_end and effect_start < effect_end <= len(step["patch"]),
+        require(effect_start == previous_effect_end and effect_start <= effect_end <= len(step["patch"]),
                 "inverse stage effect ranges are missing, reordered, or overlapping")
         native_sites = [(write["ref"], write["path"]) for write in record["writes"][native_start:native_end]]
         effect_sites = [(effect["ref"], effect["path"]) for effect in step["patch"][effect_start:effect_end]]
