@@ -407,7 +407,7 @@ class _PublishMixin:
         else:
             if state["pending"]:
                 raise TimelineEditError("flush pending commands before restructuring")
-            base = session._bundle(state)
+            base = session._capture_bundle(state)
             local = self.document()
             # Detached checkouts may have been opened by revision alone. Bind
             # that original revision through the verified public pair reader;

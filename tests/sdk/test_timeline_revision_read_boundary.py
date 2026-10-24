@@ -11,15 +11,16 @@ from astrid.sdk.contracts import DomainResult
 from astrid.sdk.timeline import store
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.capture import capture_move
+from astrid.sdk.timeline.checkout import Checkout
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import _digest, bundle_from_document
 from astrid.sdk.timeline.sync import TimelineSession
-from astrid.sdk.timeline_sheet import NativeSheet
+from astrid.sdk.timeline_sheet import NativeSheet, apply_sheet, render_sheet
 from tests.sdk.test_timeline_restructure import restructure_runtime  # noqa: F401
 from tests.sdk.test_timeline_restructure_guarded_runtime import (
     restructure_inverse_runtime,  # noqa: F401
 )
-from tests.sdk.test_timeline_sheet_native import edit_cell
+from tests.sdk.test_timeline_sheet_native import duration_edit, edit_cell
 
 
 def test_revision_inspection_does_not_replace_authenticated_session_capture(
@@ -143,3 +144,69 @@ def test_private_capture_serves_real_sheet_and_session_acceptance(
     assert accepted["data"]["canonical_document"]["parent_revision"]["payload"]["opaque"]["private-cache-session"] is True
     assert "_runtime_document" not in opened.bundle["source_mapping"]
     assert opened._runtime_document == accepted["data"]["canonical_document"]
+
+
+def test_restructure_uses_private_capture_without_changing_detached_source(
+    restructure_inverse_runtime, tmp_path, monkeypatch,  # noqa: F811
+):
+    env = restructure_inverse_runtime
+    source = timeline.open(env.project, "t", client=env.client,
+                           outbox_path=tmp_path / "name.json")
+    source.bundle["shots"][source._shot_ids()[0]]["payload"]["name"] = "02 TWO"
+    named = source.commit("Name source chapter", idempotency_key="private-name")
+    checkout = Checkout.open(env.project, "t", client=env.client)
+    original = copy.deepcopy(checkout.bundle)
+    captured = []
+    capture = TimelineSession._capture_bundle
+
+    def observe(session, state, extra_commands=()):
+        bundle = capture(session, state, extra_commands)
+        captured.append(copy.deepcopy(bundle))
+        return bundle
+
+    monkeypatch.setattr(TimelineSession, "_capture_bundle", observe)
+    result = checkout._commit_restructure("Private restructure", client=env.client, force=False,
+                                        idempotency_key="private-restructure")
+    assert result["receipt"]["result"]["status"] == "accepted"
+    assert result["new_head"] == env.document()["parent_revision"]["revision_id"]
+    assert captured[0]["source_mapping"]["_runtime_document"] == named["data"]["canonical_document"]
+    assert captured[0]["base_parent"]["publication_id"] == named["receipt"]["receipt_id"]
+    assert checkout.bundle == original
+    assert "_runtime_document" not in json.dumps(checkout.document())
+
+
+def test_detached_sheet_retains_private_capture_through_stage_reload_and_apply(
+    restructure_inverse_runtime, tmp_path,  # noqa: F811
+):
+    from astrid.sdk.timeline.outbox import Outbox
+
+    env = restructure_inverse_runtime
+    source = timeline.open(env.project, "t", client=env.client,
+                           outbox_path=tmp_path / "card.json")
+    card = next(clip for clip in source.bundle["shots"][source._shot_ids()[0]]["internal_timeline"]["clips"]
+                if clip["id"] == "late")
+    card["app"] = {"astrid": {"cut": "c3", "layer": "card", "for": 1}}
+    accepted = source.commit("Bind sheet card", idempotency_key="private-card")
+    checkout = Checkout(copy.deepcopy(source.bundle))
+    checkout._scene_client = env.client
+    checkout.save(tmp_path / "detached.json", quiet=True)
+    text = render_sheet(checkout, cuts=["c3"])
+    outbox = Outbox(tmp_path / "detached.json.outbox.json")
+    retained = outbox.read()
+    assert retained["sheet"]["bundle"]["source_mapping"]["_runtime_document"] == accepted["data"]["canonical_document"]
+    assert retained["sheet"]["basis"] == source.head
+    assert "_runtime_document" not in checkout.bundle["source_mapping"]
+    assert "for 1s" in text
+    checkout = Checkout.load(checkout.path)
+    assert apply_sheet(checkout, duration_edit(text, 2), client=env.client)
+    assert "_runtime_document" not in checkout.bundle["source_mapping"]
+    checkout.save(quiet=True)
+    reloaded = Checkout.load(checkout.path)
+    assert "_runtime_document" not in reloaded.bundle["source_mapping"]
+    result = env.replies[-1]
+    assert result["data"]["status"] == "accepted"
+    assert result["data"]["commands"][0]["op"] == "clip.set"
+    assert outbox.read()["pending"] == [] and outbox.read()["flight"] is None
+    document = env.document()
+    assert next(clip for image in document["internal_timeline_revisions"]
+                for clip in image["payload"]["clips"] if clip["id"] == "late")["hold"] == 2
