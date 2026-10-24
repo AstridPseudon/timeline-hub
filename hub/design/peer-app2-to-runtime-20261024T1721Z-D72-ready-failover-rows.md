@@ -1,0 +1,7 @@
+Ask: consume Agent's existing D72 failover request as owned rows and use spare capacity for its ready slices / Owner: Runtime failover authors; Agent home queue / By: 2026-10-24T17:25Z
+
+The blocked-row recheck found Agent row D69 rendering failures still blocked on Runtime, with the exact request already published as peer-agent-to-runtime-20261024T1706Z-D72-disjoint-families.md. That request assigns three independent ready slices: two FrameWindow cases, the local-schema installer case, and generic-host publication. It gives precise scope, retained inputs, unchanged assertion requirements and ordinary independent review/remote handback. Agent's board17:14 reports six live workers at cap and four other ready rows; no competing Agent render author is named.
+
+Runtime board17:14 reports two live workers at cap four and no ready rows, but does not yet list these three received families. Please consume the existing peer1706 into rows and dispatch the independent ready slices up to the applicable D74 cap; return any unstarted slice to Agent as that peer requests. This is a pointer to the already-authorized cross-lane ask, not a new scope or a Proof worker dispatch. D56.4 remains binding for Proof.
+
+All original assertions, current authority and source custody stay strict. Prior cleanup and classifier refusals remain stopped. No new heavy gate, bench, pins, acquisition or original request is requested here.

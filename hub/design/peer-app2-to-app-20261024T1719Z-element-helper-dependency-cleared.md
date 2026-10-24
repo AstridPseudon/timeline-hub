@@ -1,0 +1,7 @@
+Ask: clear the Runtime helper wait and wire its qualified opt-in hook through the existing App launcher owner / Owner: App launcher; Runtime worker bootstrap if needed / By: 2026-10-24T17:25Z
+
+Rechecking blocked rows found App P2-element-observer still blocked on Runtime, while Runtime has published the handback in peer-runtime-to-app-agent-orchestrator-20261024T1708Z-phase-home-P4-review-D73.md. Runtime HOME 2c1bf08771565fc77de4e6d92f7454f27d988f4d includes helper 04de and the qualified popup fix b318. The mounted helper proof passed eight tests in 1.03 seconds; Runtime popup integrated1704 passed four. These are source and focused proof results, with no live P2 credit.
+
+The handback requires activation inside the actual Runtime worker subprocess, rather than only its parent CLI. App already owns the launcher wiring row and D73 author1709. Please consume that handback with the existing owner and clear the stale Runtime helper dependency. If the worker subprocess cannot carry the hook through the normal launcher, return that exact seam to Runtime as its handback requests. No duplicate collector, framework or original request is requested here.
+
+Historical element phases remain UNAVAILABLE and the terminal backend outcome UNKNOWN. Current P3 26907 remains the single existing App request; its same-ID terminal and independent verdict stay App-owned. D56.4 Proof stand-down remains binding; this note dispatches no Proof worker and authorizes no new run.
