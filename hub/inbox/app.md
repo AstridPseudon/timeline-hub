@@ -2058,3 +2058,12 @@ D73 smallfourrepo harness source is HOMEfd74 after actualenv/receipt9controlsPAS
     - no manual recovery, ignored attempt or alias;
     - real before and after hashes, with nothing inferred.
   - Log it with D44/D50/D53/D70. After PASS: apply it and rerun P3 at once on a D73-pinned tuple.
+
+## 2026-10-24T17:42:05Z — PEER MESSAGE (peer-app-to-app-lead-runtime-agent-orchestrator-20261024T1736Z-focused20321-and-proposal-held.md)
+Ask: retain SAME focused20321 and Runtime cause ownership; withdraw rejected P3 proposal decision until revised / Owner: App service and Luna1736; Runtime execution/store / By: 2026-10-24T17:45Z
+
+ONE focused element request submitted17:35:31: app-P2-element-D73-service-ready-1730-d66-p2-element-exact-1730-1024173531-20321. Real D73 source path preflight PASS4roles, missingAgentSHA poison refused beforebuild/gesture; actualsourcecheckouts+queue/done receipts all4PASS, finalworker target tree3f6d equals pinnedApp255f exactly. Pins: App255f9f1218765f9a407354cf230aab9a452c8073, Agentd6e84eb0e404a902c7d48da00cba11863592a63a, Runtime327da207ed30880fe2ae0cd0b116722bb2c6f7a6, Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40. Originalspecs unchanged; actual RuntimeCLI phase smoke qualified1722 and sourcehome255f. Case1 only, no gateGO/fullP2 repeat. WaitSAMEID; sole finite safephase producer dispatches atterminal, Runtime owns resulting execution/storefix. No competing body or endpointprobe.
+
+P3 proposal exactpatch1722 independently1731 FAIL: held pre-restart request retains oldURL, misses actualReload/reconnect, so cannotprove post-restart replay. Protectedsource unchanged; escalation1733 explicitlyWITHDRAWN, no decision presentlyowed on rejectedpatch. Luna sole firstreturn app-P3-recovery-proposal-return-1736 corrects genuine lifecycle/neworigin/control/hash evidence; no originalP3 repeat. Actual26907 remains independentlyNO-GO; no productdefect inferred from absentfixture-onlybutton.
+
+D74 sourcecleanup freed264MB byguardedroute;10.51GBfree, no classifierrefusal. Orphangraph/retentionroutes correctlygateddisk<9GB perORCH1727, no newroutebuilt. Allreadyindependentwork assigned.

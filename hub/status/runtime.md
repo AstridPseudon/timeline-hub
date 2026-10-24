@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T17:42:05Z | dispatcher heartbeat 4s | live 1 (sol 1, luna 0, other 0) | busy30 17 | status age 2m -->
+<!-- main | 2026-10-24T17:45:11Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 15 | status age 2m -->
 # runtime board, 2026-10-24T17:39:47Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -81,7 +81,7 @@
 | R-P4-history-cost | Reduce historical validation cost | Sol / Luna | Agent actual P4 proof | merged | Security1720; integrated1728 PASS | Actual327da passed35 in3.035s; reviewed source exact. Security175 passed; original45s P4 remains OPEN. [Proof](../../design/rt-P4-resolver-integrated-1728.md) | 327da207e /24c61fe |
 | R-P2-popup-422 | Project genuine fork-created shot roots | Luna | App current P2 proof | merged | Security1658; integrated1704 PASS | Actualb318:4 PASS0.16s, exact reviewedsource; forgedowner/sibling/source refused. App original stillpending. [Proof](../../design/rt-P2-popup-integrated-1704.md) | b318a8ec4 /88b9cf6 |
 | R-P2-popup-observation | Attribute popup physical observation refusal | Luna | Source finding complete | merged | rt-P2-popup-observation-1638 | Runtime created-child projection lacks fork-created shot roots.2Runtime+8Agent comparators PASS; source cause only. | Source unchanged |
-| R-P2-element-docpatch-hang | Observe actual server request phases | Sol / Luna | App actual worker activation | blocked:app | Phase1700; integrated1708 | Helper04de HOME2c1; mounted8 PASS1.03s. App owns CLIworker activation; actual25943 phases UNKNOWN. [Helper](../../design/rt-P2-element-phase-1700.md) | 2c1bf0877 /04de |
+| R-P2-element-docpatch-hang | Observe actual server request phases | Sol / Luna | App same-ID phase result | doing | Runtime1700; App actual20321 | App observer255f passed real CLI accepted commit. ONE pinned focused case20321 active on Runtime327da; historical25943 outcome UNKNOWN. | 2c1bf0877 /04de |
 | U1-D69-marker-scope | Preserve mixed-route live catalog predicates | Luna | Actual integrated proof passed | merged | Citations1702; integrated1708 PASS | Actual2c1:9 PASS9s; exact approvedledgerappendix published once, outsidebytes intact. [Proof](../../design/rt-U1-D69-phase-integrated-1708.md) | ea3bca10d /925a7dd |
 | U1-D69-restore-guard | Restore two skip guard originals | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 |
 | U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 /bb022 |
@@ -150,11 +150,11 @@ Venues: P1/P2/P3 App service and verdicts; P4 Agent service; P5 and Composition 
 D65 delivery: owner Runtime merge, Agent merge, authentic App update-manifest with generated digest equality, then App merge. Qualified command/docs and D67 exact13env/7key postinstall appendix stay installed; actual final outcomes PENDING. Independent coherent84Python+TS/D68 finalcandidate1621PASS stays private untilcut.
 
 Blockers: App popup proof — Runtime normal b318 merged after security1658 PASS; exact reviewed tree. Integrated focused1704 active; App owns meaningful P2. No wire change or regeneration.
-Blockers: App element activation — helper04de HOME2c1 and mounted8 PASS. App must activate it in actual worker subprocess for next meaningful P2; peer1708 sent. Historical phase UNAVAILABLE, no backend cause claimed.
+Blockers: App element phase result — activation CLOSED at App255f with real CLI accepted HTTP commit. ONE pinned focused20321 active; Runtime owns diagnosis from its safe phase result. Historical25943 terminal UNKNOWN.
 Blockers: Agent P4 proof — Runtime actual327da after independent175 PASS. Normal adoption/D73 meaningful original requestedpeer1728; original45s still OPEN. Runtime integrated1728 PASS35; current source qualified.
 Blockers: App — changed P34858 intent correction and stable current sources owned. P1 recordedGO; no duplicate P2/P3. Runtime1700 owns safe next-run phase capture; App owns normal launch wiring.
 Blockers: Final delivery — all active lanes need core0/regressions0 plus current P2/P3 and D69 completion. Agent newly reports39 restored-node failures; four classifiers own them. No cut/proofs/build/ZIP.
-Next ready: consume installer Sol/whole-path1738. Agent owns two queued D72 merges and meaningful P4; App owns focused element wiring/body. Private final candidate ready at D59 cut.
+Next ready: consume installer Sol1738 and same-ID App element20321 safe phases. Agent owns merged D72 home proof and meaningful P4. Private final candidate ready at D59 cut.
 
 Later: D47 memo and proof pins remain post-delivery; nine state attacks open. V4 cut; D14/D23 deferred unchanged. D34 broader cleanup remains held. D62 submit completeness is an explicit known gap in the Runtime behavior-change ledger.
 
