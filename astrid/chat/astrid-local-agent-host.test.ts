@@ -6,9 +6,20 @@ import { join } from 'node:path';
 import { EXTERNAL_AGENT_IDS } from './localAgents.ts';
 import { LOCAL_AGENT_ADAPTERS } from './astrid-local-agent-adapters.ts';
 import { createAstridAcpHttpServer } from './astrid-acp-bridge.ts';
-import { createLocalAgentAcpProcessHost } from './astrid-local-agent-host.ts';
+import { createLocalAgentAcpProcessHost, renderAgentProfile } from './astrid-local-agent-host.ts';
+import { resolveAstridAgentContext } from './astridAcpLauncher.ts';
 
 type Json = Record<string, unknown>;
+
+test('external agents receive the profile with the package root filled in and frontmatter removed', () => {
+  const profile = '---\nname: astrid\n---\nRead `{{ASTRID_PACKAGE_ROOT}}/packs/_core/docs/SKILL.md`, then `{{ASTRID_PACKAGE_ROOT}}/packs/<pack>/docs/SKILL.md`.\n';
+  assert.equal(
+    renderAgentProfile(profile, '/install/astrid/agent_profiles/astrid.md'),
+    'Read `/install/astrid/packs/_core/docs/SKILL.md`, then `/install/astrid/packs/<pack>/docs/SKILL.md`.\n',
+  );
+  assert.equal(renderAgentProfile('No frontmatter.', '/a/b/c.md'), 'No frontmatter.');
+  assert.throws(() => renderAgentProfile('---\nname: astrid\n', '/a/b/c.md'), /unterminated frontmatter/);
+});
 
 function executable(path: string, contents: string): void {
   writeFileSync(path, contents);
@@ -269,6 +280,7 @@ for (const agent of EXTERNAL_AGENT_IDS) {
       cwd: f.cwd,
       env: { PATH: f.bin, SHELL: f.shell, ASTRID_TEST_LOGIN_PATH: f.bin },
       profileFileForCommand: () => f.profile,
+      agentContextForCommand: async () => '<astrid_agent_context>\nPREFS_SENTINEL\n</astrid_agent_context>\n',
       callbacks: { requestPermission: () => ({ outcome: { outcome: 'cancelled' } }) },
     });
     try {
@@ -296,7 +308,10 @@ for (const agent of EXTERNAL_AGENT_IDS) {
       const firstSystemPrompt = (opening[0]!.params as Json).systemPrompt as Json | undefined;
       if (agent === 'claude-code') {
         assert.equal(firstSystemPrompt?.mode, 'append');
-        assert.match(((firstSystemPrompt?.content as Json[])[0]!.text as string), /PROFILE_SENTINEL/);
+        const appended = (firstSystemPrompt?.content as Json[])[0]!.text as string;
+        assert.match(appended, /PROFILE_SENTINEL/);
+        assert.ok(appended.indexOf('PREFS_SENTINEL') > appended.indexOf('PROFILE_SENTINEL'), 'preferences follow the profile');
+        assert.ok(appended.endsWith('</astrid_agent_context>'));
       }
       const prompts = rows.filter(row => row.receivedPrompt).map(row => row.receivedPrompt as Json[]);
       assert.equal(prompts.length, 5);
@@ -304,10 +319,10 @@ for (const agent of EXTERNAL_AGENT_IDS) {
         const text = prompt.map(part => part.text).join('\n');
         assert.match(text, /astrid_editor_context/);
         if (agent !== 'claude-code' && index === 0) {
-          assert.match(text, /<astrid_agent_context>[\s\S]*PROFILE_SENTINEL/);
+          assert.match(text, /<astrid_agent_context>[\s\S]*PROFILE_SENTINEL[\s\S]*PREFS_SENTINEL/);
           assert.match(text, /Load the relevant Astrid SKILL\.md/);
         } else {
-          assert.doesNotMatch(text, /astrid_agent_context|PROFILE_SENTINEL/);
+          assert.doesNotMatch(text, /astrid_agent_context|PROFILE_SENTINEL|PREFS_SENTINEL/);
           assert.equal(prompt.length, 1);
         }
       }
@@ -395,3 +410,62 @@ for (const agent of ['codex', 'hermes'] as const) {
     }
   });
 }
+
+for (const [label, agentContextForCommand] of [
+  ['empty output', async () => ''],
+  ['a failure', async () => { throw new Error('astrid --agent-context failed'); }],
+] as const) {
+  for (const agent of EXTERNAL_AGENT_IDS) {
+    test(`${agent} starts without a preferences block after ${label} from the context command`, async () => {
+      const directory = mkdtempSync(join(tmpdir(), 'astrid-agent-no-prefs-'));
+      const f = fixture(directory);
+      const host = await createLocalAgentAcpProcessHost(agent, {
+        cwd: f.cwd,
+        env: { PATH: f.bin, SHELL: f.shell, ASTRID_TEST_LOGIN_PATH: f.bin },
+        profileFileForCommand: () => f.profile,
+        agentContextForCommand,
+        callbacks: { requestPermission: () => ({ outcome: { outcome: 'cancelled' } }) },
+      });
+      try {
+        await host.initialize({ protocolVersion: 1, clientCapabilities: {} });
+        const created = await host.newSession<Json>({ cwd: f.cwd, mcpServers: [] });
+        await host.prompt({ sessionId: created.sessionId, prompt: [{ type: 'text', text: 'hello' }] });
+        const rows = records(f.logs).map(row => row.value as Json);
+        const opening = rows.find(row => row.method === 'session/new')!.params as Json;
+        const prompt = JSON.stringify(rows.find(row => row.receivedPrompt)!.receivedPrompt);
+        if (agent === 'claude-code') {
+          const appended = JSON.stringify(opening.systemPrompt);
+          assert.match(appended, /PROFILE_SENTINEL/);
+          assert.doesNotMatch(appended, /PREFS_SENTINEL/);
+          assert.doesNotMatch(prompt, /astrid_agent_context/);
+        } else {
+          assert.match(prompt, /astrid_agent_context.*PROFILE_SENTINEL/);
+          assert.doesNotMatch(prompt, /PREFS_SENTINEL/);
+        }
+      } finally {
+        await host.dispose();
+        rmSync(directory, { recursive: true, force: true });
+      }
+    });
+  }
+}
+
+test('resolveAstridAgentContext runs `astrid --agent-context` and never throws', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'astrid-agent-context-'));
+  try {
+    const script = (name: string, body: string) => {
+      const path = join(directory, name);
+      executable(path, `#!${process.execPath}\n${body}\n`);
+      return path;
+    };
+    const ok = script('ok', `if (process.argv[2] !== '--agent-context') process.exit(9);
+process.stdout.write('  <astrid_agent_context>' + process.env.CONTEXT_MARK + '</astrid_agent_context>\\n');`);
+    assert.equal(
+      await resolveAstridAgentContext(ok, { CONTEXT_MARK: 'USER_PREFS' }),
+      '<astrid_agent_context>USER_PREFS</astrid_agent_context>',
+    );
+    assert.equal(await resolveAstridAgentContext(script('empty', ''), {}), '');
+    assert.equal(await resolveAstridAgentContext(script('fails', `process.stdout.write('partial'); process.exit(3);`), {}), '');
+    assert.equal(await resolveAstridAgentContext(join(directory, 'does-not-exist'), {}), '');
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});

@@ -379,3 +379,36 @@ def test_all_migrated_errors_coerce_to_canonical_envelope() -> None:
         assert env["message"] == expected_cause
         assert env["reason"] == expected_cause
         assert env["degraded"] is False
+
+
+def test_recovery_suffix_appends_next_command_to_stringified_failure() -> None:
+    from astrid.core.contracts.errors import recovery_suffix
+
+    err = AstridError(
+        "ffmpeg is not installed",
+        recovery_command="install ffmpeg and retry",
+    )
+
+    # RuntimeError only receives ``cause``, so the recovery is absent from str().
+    assert str(err) == "ffmpeg is not installed"
+    assert recovery_suffix(err) == " Next: install ffmpeg and retry"
+    assert str(err) + recovery_suffix(err) == "ffmpeg is not installed Next: install ffmpeg and retry"
+
+
+def test_recovery_suffix_is_empty_without_recovery_or_for_plain_exceptions() -> None:
+    from astrid.core.contracts.errors import recovery_suffix
+
+    assert recovery_suffix(AstridError("no fix known")) == ""
+    assert recovery_suffix(AstridError("blank", recovery_command="   ")) == ""
+    assert recovery_suffix(RuntimeError("plain failure")) == ""
+
+
+def test_recovery_suffix_does_not_repeat_command_already_in_message() -> None:
+    from astrid.core.contracts.errors import recovery_suffix
+
+    err = AstridError(
+        "run astrid doctor --json first",
+        recovery_command="astrid doctor --json",
+    )
+
+    assert recovery_suffix(err) == ""

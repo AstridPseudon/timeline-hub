@@ -385,7 +385,7 @@ def test_projects_selection_and_unready_admission_are_typed_on_real_daemon(tmp_p
             before = daemon.service.store.conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0]
             blocked = client.tasks.create(project_id=project["project_id"], capability="acceptance.gpu", spec={}, idempotency_key="blocked-gpu")
             assert not blocked.ok and blocked.error.code == "unavailable"
-            assert blocked.error.details["next_action"] == "wait for capability readiness and retry"
+            assert blocked.error.details["next_action"] == "fix: gpu_not_configured; run `astrid doctor --json`, then retry"
             assert daemon.service.store.conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0] == before
     finally:
         daemon.stop()

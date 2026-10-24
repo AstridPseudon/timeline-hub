@@ -80,11 +80,20 @@ def windows_gpu_status(
     reason = "" if qualified else f"{label} on Windows with this NVIDIA GPU is not qualified yet."
     if not device.get("available"):
         reason = str(device["reason"])
+    warning = ""
+    if pack == "vibecomfy" and not device.get("available"):
+        warning = "VibeComfy uses your own ComfyUI, so Astrid does not need to detect an NVIDIA GPU."
+    elif device.get("available") and not qualified:
+        warning = (
+            f"{label} on Windows with this NVIDIA GPU is untested. It will probably work, "
+            "but please tell us how it went (GPU model and driver from `nvidia-smi`)."
+        )
     return {
-        "ok": bool(device.get("available") and (qualified or opted_in)),
+        "ok": bool(pack == "vibecomfy" or device.get("available")),
         "qualified": qualified,
         "status": "qualified" if qualified else "not qualified yet",
         "reason": reason,
+        "warning": warning,
         "opted_in": opted_in,
         "opt_in_env": f"{ALLOW_UNQUALIFIED_ENV}=1",
         "device": device,

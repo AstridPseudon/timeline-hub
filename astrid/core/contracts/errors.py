@@ -248,6 +248,22 @@ def wrap_degraded_error(
     return coerce_astrid_error(value, state_snapshot=snapshot, degraded=True)
 
 
+def recovery_suffix(exc: BaseException) -> str:
+    """Return `` Next: <recovery_command>`` when ``exc`` carries one, else ``""``.
+
+    ``AstridError`` passes only ``cause`` to ``RuntimeError``, so ``str(exc)``
+    drops the recovery command; callers that stringify a failure append this.
+    """
+
+    recovery = getattr(exc, "recovery_command", None)
+    if not isinstance(recovery, str) or not recovery.strip():
+        return ""
+    recovery = recovery.strip()
+    if recovery in str(exc):
+        return ""
+    return f" Next: {recovery}"
+
+
 def render_astrid_error(error: AstridError) -> int:
     """Render an ``AstridError`` envelope to stderr and return its exit code."""
 

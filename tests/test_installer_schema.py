@@ -87,6 +87,7 @@ def test_staging_installs_the_npm_locked_schema_before_declaring_services(tmp_pa
     assert python_installs[1] == [
         str(backend.uv), "pip", "install", "--python", str(version.python), "--no-deps",
         str(version.root / "r"), str(version.root / "r/packages/python"), str(version.root / "a"),
+        str(version.root / "v"),
     ]
     assert python_installs[2] == [
         str(backend.uv), "pip", "install", "--python", str(version.python), "--no-deps", schema_path,

@@ -21,6 +21,8 @@ dependencies = [
     "fal-client>=0.7.0",
     "xxhash>=3.4",
     "PyJWT[crypto]>=2.8",
+    # VibeComfy is installed with --no-deps by the managed installer.
+    "huggingface_hub[hf_xet]>=0.32.0",
     # pyannote.audio is intentionally excluded from core metadata.
     # It is an optional/heavy dependency; install separately if needed.
     # "pyannote.audio==3.3.2",

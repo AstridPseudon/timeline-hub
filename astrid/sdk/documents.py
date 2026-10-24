@@ -102,6 +102,11 @@ def _binding(meta: Mapping) -> str:
     return _digest({field: meta[field] for field in ("endpoint", "realm_id", "actor_id", "scope", "project_id", "document_id", "kind", "format", "checkout_id")})
 
 
+def _checkin_key(checkout_id: str, body_digest: str, base_version: int, *, legacy: bool = False) -> str:
+    prefix = "document-checkin:" if legacy else "document-checkin-"
+    return prefix + _digest([checkout_id, body_digest, base_version])
+
+
 def _sidecar(path: Path) -> Path:
     return path.with_name(path.name + ".astrid.json")
 
@@ -203,13 +208,18 @@ class _DocumentFamily(_RemoteFamily):
                 text = handle.read()
             content = text if meta["format"] == "markdown" else json.loads(text, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(f"Invalid JSON constant {value}")))
             body_digest = _digest(content)
-            key = "document-checkin:" + _digest([meta["checkout_id"], body_digest, meta["base_version"]])
+            key = _checkin_key(meta["checkout_id"], body_digest, meta["base_version"])
             # A pending retry must go straight to the mutation so durable
             # server replay can succeed even though its base is now stale.
             retry = {"body_digest": body_digest, "base_version": meta["base_version"], "idempotency_key": key}
             if meta["retry"] is not None:
                 pending = meta["retry"]
-                if not isinstance(pending, dict) or set(pending) != set(retry) or pending["idempotency_key"] != "document-checkin:" + _digest([meta["checkout_id"], pending["body_digest"], pending["base_version"]]) or pending["base_version"] != meta["base_version"]:
+                if (not isinstance(pending, dict) or set(pending) != set(retry)
+                        or pending["base_version"] != meta["base_version"]
+                        or pending["idempotency_key"] not in {
+                            _checkin_key(meta["checkout_id"], pending["body_digest"], pending["base_version"]),
+                            _checkin_key(meta["checkout_id"], pending["body_digest"], pending["base_version"], legacy=True),
+                        }):
                     raise ValueError("Malformed retry metadata.")
             if body_digest == meta["base_digest"] and meta["retry"] is None:
                 remote = self._read_pinned(meta)
