@@ -29,6 +29,13 @@ def identities(value, key, *, ref, path):
     return result
 
 
+def null_clip_mirror(payload):
+    config = payload.get('config', {})
+    return isinstance(config, dict) and (
+        'clips' in payload and payload['clips'] is None and isinstance(config.get('clips'), list)
+        or 'clips' in config and config['clips'] is None and isinstance(payload.get('clips'), list))
+
+
 def location(root, ref, path):
     node = root
     for index, token in enumerate(path):
@@ -186,8 +193,10 @@ class Closure:
                 tail = path[1:] if path[0] == 'clips' else path[2:]
                 if tail and tail[0].startswith('id:'):
                     return [('parent/clip:' + tail[0][3:], tail[1:])]
-                paths = ([['clips', *tail]] if 'clips' in parent else [])
-                if isinstance(parent.get('config'), dict) and 'clips' in parent['config']:
+                paths = ([['clips', *tail]] if 'clips' in parent and (
+                    not null_clip_mirror(parent) or isinstance(parent['clips'], list)) else [])
+                if (isinstance(parent.get('config'), dict) and 'clips' in parent['config']
+                        and (not null_clip_mirror(parent) or isinstance(parent['config']['clips'], list))):
                     paths.append(['config', 'clips', *tail])
                 if not paths:
                     paths = [path]
@@ -278,11 +287,16 @@ def validate_payload(ref, payload):
         except CommandError:
             continue
         if value != ABSENT:
+            if (ref == 'parent' and path in (['clips'], ['config', 'clips'])
+                    and value['value'] is None and null_clip_mirror(payload)):
+                continue
             identities(value['value'], identity_key(ref, path), ref=ref, path=path)
     if ref == 'parent':
         config = payload.get('config', {})
         for key in ('clips', 'registry'):
             if key in payload and isinstance(config, dict) and key in config and not equal(payload[key], config[key]):
+                if key == 'clips' and null_clip_mirror(payload):
+                    continue
                 raise CommandError('contradictory parent mirrors', kind='identity_conflict', path=[key])
 
 
@@ -291,7 +305,9 @@ def allocations(closure, physical, before, after):
     for path, kind in ((['config', 'tracks'], 'track'), (['clips'], 'clip')) if physical == 'parent' else (
             ((['tracks'], 'track'), (['clips'], 'clip')) if physical.startswith('internal') else ()):
         old, new = value_at(before, physical, path), value_at(after, physical, path)
-        if physical == 'parent' and path == ['clips'] and old == ABSENT and new == ABSENT:
+        if physical == 'parent' and path == ['clips'] and (
+                old == ABSENT and new == ABSENT
+                or null_clip_mirror(before) and before.get('clips') is None):
             old, new = value_at(before, physical, ['config', 'clips']), value_at(after, physical, ['config', 'clips'])
         previous = [] if old == ABSENT else identities(old['value'], 'id', ref=physical, path=path)
         current = [] if new == ABSENT else identities(new['value'], 'id', ref=physical, path=path)
@@ -323,7 +339,10 @@ def verify_media(ctx, ref, before, after):
             assets = registry.get('assets', {}) if isinstance(registry, dict) else {}
             if isinstance(assets, dict):
                 nodes.extend(assets.values())
-            nodes.extend(scope.get('items' if ref.startswith('shot') else 'clips', []))
+            rows = scope.get('items' if ref.startswith('shot') else 'clips', [])
+            if rows is None and ref == 'parent' and null_clip_mirror(payload):
+                continue
+            nodes.extend(rows)
         return {value for node in nodes if isinstance(node, dict)
                 for key in ('media_id', 'object_id') if isinstance(value := node.get(key), str)}
     source = ctx.state.bundle['source_mapping']['_runtime_document']
@@ -409,6 +428,8 @@ def apply_change(root, change, *, physical=None):
         for mirror in ('clips', 'registry'):
             config = root.get('config', {})
             old_config = old_root.get('config', {})
+            if mirror == 'clips' and null_clip_mirror(old_root) and path != ['config']:
+                continue
             if (path == ['config'] and op == 'set' and mirror in old_root
                     and (mirror in old_config or mirror in config)):
                 if mirror in config:

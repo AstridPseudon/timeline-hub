@@ -273,10 +273,22 @@ def _validate_clip_list(
     return by_id
 
 
+def _parent_clips(parent: Mapping[str, Any]) -> list[Any]:
+    config = parent.get("config", {})
+    rows = [(scope["clips"], path) for scope, path in (
+        (parent, "candidate.parent.clips"), (config, "candidate.parent.config.clips"))
+        if "clips" in scope]
+    lists = [value for value, _ in rows if isinstance(value, list)]
+    for value, path in rows:
+        if not isinstance(value, list) and not (value is None and lists):
+            _fail(path, "must be a list")
+    return lists[0] if lists else []
+
+
 def _baseline_clips(bundle: Mapping[str, Any]) -> dict[tuple[str, str], Mapping[str, Any]]:
     result: dict[tuple[str, str], Mapping[str, Any]] = {}
     parent = bundle.get("parent") or {}
-    for clip in parent.get("clips", []) if isinstance(parent, Mapping) else []:
+    for clip in _parent_clips(parent) if isinstance(parent, Mapping) else []:
         if isinstance(clip, Mapping) and isinstance(clip.get("id"), str):
             result[("parent", clip["id"])] = clip
     for shot_id, shot in (bundle.get("shots") or {}).items():
@@ -285,6 +297,19 @@ def _baseline_clips(bundle: Mapping[str, Any]) -> dict[tuple[str, str], Mapping[
                 if isinstance(clip, Mapping) and isinstance(clip.get("id"), str):
                     result[(str(shot_id), clip["id"])] = clip
     return result
+
+
+def _timing_parent_view(bundle: Mapping[str, Any]) -> Mapping[str, Any]:
+    from astrid.sdk.timeline._doc_patch import null_clip_mirror
+
+    parent = bundle["parent"]
+    if not null_clip_mirror(parent):
+        return bundle
+    clips = _parent_clips(parent)
+    # The timing kernel consumes one list. Adapt its detached input, never the
+    # canonical payload, source images or authenticated restoration records.
+    return {**bundle, "parent": {**parent, "clips": clips,
+            "config": {**parent["config"], "clips": clips}}}
 
 
 def _schema_for_selected(
@@ -523,18 +548,28 @@ def validate_final_candidate(
         registry = effective_parent_registry(parent)
     except ParentRegistryError as exc:
         _fail("candidate.parent.registry", str(exc))
+    if "registry" in parent and "registry" in config and not equal(parent["registry"], config["registry"]):
+        _fail("candidate.parent.config.registry", "does not match parent.registry")
     baseline_parent = (baseline or {}).get("parent", {})
     if not _same_fields(candidate, baseline, ("project_id", "timeline_id", "base_parent")):
         baseline_parent = {}
+    # An explicit null mirror is legacy storage, never a newly authored list.
+    for scope, previous, path in (
+        (parent, baseline_parent, "candidate.parent.clips"),
+        (config, baseline_parent.get("config", {}), "candidate.parent.config.clips"),
+    ):
+        if "clips" in scope and scope["clips"] is None and (
+                "clips" not in previous or previous["clips"] is not None):
+            _fail(path, "must be a list")
     clips = _validate_clip_list(
-        parent.get("clips", config.get("clips", [])), path="candidate.parent.clips",
+        _parent_clips(parent), path="candidate.parent.clips",
         tracks=tracks, registry=registry,
-        baseline={"clips": baseline_parent.get("clips", []),
+        baseline={"clips": _parent_clips(baseline_parent),
                   "tracks": baseline_parent.get("config", {}).get("tracks", []),
                   "registry": effective_parent_registry(baseline_parent)} if baseline_parent else None,
     )
     mirror = config.get("clips")
-    if isinstance(mirror, list) and isinstance(parent.get("clips"), list) and mirror and mirror != parent["clips"]:
+    if isinstance(mirror, list) and isinstance(parent.get("clips"), list) and not equal(mirror, parent["clips"]):
         _fail("candidate.parent.config.clips", "does not match parent.clips")
 
     placements = _identity_rows(candidate.get("placements", []), "candidate.placements", "occurrence_id")
@@ -607,10 +642,13 @@ def validate_final_candidate(
 
     try:
         if source_bundles:
-            validate_candidate_timing(candidate, baseline=baseline, source_bundles=source_bundles,
+            validate_candidate_timing(_timing_parent_view(candidate),
+                                      baseline=_timing_parent_view(baseline) if baseline else None,
+                                      source_bundles=[_timing_parent_view(source) for source in source_bundles],
                                       restoration_records=restoration_records)
         else:
-            validate_candidate_timing(candidate, baseline=baseline)
+            validate_candidate_timing(_timing_parent_view(candidate),
+                                      baseline=_timing_parent_view(baseline) if baseline else None)
     except (TimingCompileError, KeyError, TypeError, ValueError) as exc:
         _fail("candidate.timing", str(exc))
 
