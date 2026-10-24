@@ -1,0 +1,7 @@
+# Upstream readiness hypothesis owned FIRST; no new run
+
+Orchestrator0045 f38e candidate consumed. Sole App HARD Sol app-readiness-upstream-hypothesis-sol-0046 now checks retained P218800/P3458 evidence for real receipt-mode attempt-root/census signatures and whether those Agenthost paths execute before the actualApp verifiedbasis wait. Readonly, no sourceport/branch/tuple/bench/body/probe. Agent retains unique U2c-readiness-draft author; App does not duplicate or merge upstream. Signature absence/unknown is not automatic refutation.
+
+Separate genuine Apphook invariant bug42db independentlyLuna0041PASS176/3types/lint is now HOME804134d747 cleanmerged, integratedLuna0046 active. Actualhookcleanup cancels read but leaves started=true; confirmedRED->GREEN does not establish actual18800dependency trigger. Namedsourcebug and upstreamhypothesis remain distinct until evidenceconnects them. NO P2/P3 run while this requested causalcomparison is pending; allocation0039 qualified real per-run ports alone gives no rerun.
+
+P1 original18792 bothPASS fixedf8/787+2a9 is independent of current sourcechanges. Proof0036 sourcePASS/0040 custody audit consumed; additional finiteAppLuna app-P1-18792-custody-completion-0046 now adds rawmember hashes and bounded SAFE primaryresult slices to full FINAL, no artifactmutation/privateexport/rerun. Manager publishes exactD30immediately on final. A4 remains verdictgated and readonlycurrentcut census0042 now ready; no new deletion until machinecriterion satisfied.
