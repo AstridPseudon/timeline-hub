@@ -74,11 +74,11 @@ test('A01/A02/A03/A10/A13 production entries and repeated retained-state history
   expect(editorRuntimeRequests).toEqual([]);
   await expect(page.locator('main.astrid-public-site')).toHaveCount(0);
   await shot(page, info, 'direct-vision');
-  // Agent is the deliberate public landing audience (c9ca234b); App is an explicit `?experience=app` choice.
+  // App is the default public landing audience; explicit App and Agent links remain supported.
   // '/home?experience=agent' stays last so the retained-history trips below return to the agent audience.
   for (const [route, audience, label] of [
-    ['/', 'agent', 'root'],
-    ['/home', 'agent', 'home'],
+    ['/', 'app', 'root'],
+    ['/home', 'app', 'home'],
     ['/home?experience=app', 'app', 'app'],
     ['/home?experience=agent', 'agent', 'agent'],
   ] as const) {
@@ -161,11 +161,10 @@ test('A04/A05/A06/A07/A08 daylight palettes, resize, disclosure and live motion'
   await page.emulateMedia({ reducedMotion: 'no-preference' });
 });
 
-test('A03/A08/A11/A12 native modal focus, route teardown and transition fallback', async ({ page }, info) => {
+test('A03/A08/A11/A12 Get Started entry, route focus and transition fallback', async ({ page }, info) => {
   await page.addInitScript(() => Object.defineProperty(document, 'startViewTransition', { configurable: true, value: undefined }));
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  // Both audiences open the same setup dialog (b0f0009c). Enter Home as App, the explicit choice (c9ca234b), leave
-  // for Vision and come back through history, which restores App.
+  // Enter Home as App, leave for Vision and return through history, which restores App.
   await page.goto('/home?experience=app');
   await surface(page, 'home');
   await expect(page.locator('main.astrid-public-site')).toHaveAttribute('data-audience', 'app');
@@ -175,16 +174,10 @@ test('A03/A08/A11/A12 native modal focus, route teardown and transition fallback
   await surface(page, 'home');
   await expect(page.locator('main.astrid-public-site')).toHaveAttribute('data-audience', 'app');
   await expect(page.locator('.astrid-editor-stage')).toHaveAttribute('data-astrid-readiness', 'settled', { timeout: 30_000 });
-  const install = page.getByRole('button', { name: 'Set up Astrid', exact: true });
-  await install.click();
-  await expect(page.locator('dialog')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Close', exact: true })).toBeFocused();
-  await shot(page, info, 'install-modal');
-  await page.keyboard.press('Escape');
-  await expect(page.locator('dialog')).not.toBeVisible();
-  await expect(install).toBeFocused();
-  await install.click();
-  await expect(page.locator('dialog')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Get Started', exact: true })).toHaveAttribute('href', '/tools/video-editor');
+  await expect(page.getByRole('button', { name: 'Get the app', exact: true })).toHaveCount(0);
+  await expect(page.locator('dialog')).toHaveCount(0);
+  await shot(page, info, 'get-started-entry');
   await page.goForward();
   await surface(page, 'vision');
   await expect(page.locator('dialog')).not.toBeVisible();

@@ -4,14 +4,13 @@ import type { PublicAstridEnvironment } from './publicAstridLifecycle';
 import type { PublicAstridExperience } from './publicAstridMotion';
 
 export function readPublicAstridExperience(): PublicAstridExperience {
-  // Agent is the public landing experience. App remains an explicit choice so a
-  // reload after clicking the editor side does not silently fall back to Agent.
-  return { audience: new URLSearchParams(window.location.search).get('experience') === 'app' ? 'app' : 'agent' };
+  // App is the public landing experience; explicit Agent links survive reloads.
+  return { audience: new URLSearchParams(window.location.search).get('experience') === 'agent' ? 'agent' : 'app' };
 }
 
 export function writePublicAstridExperience(next: PublicAstridExperience, replace: boolean) {
   const url = new URL(window.location.href);
-  if (next.audience === 'app') url.searchParams.set('experience', 'app');
+  if (next.audience === 'agent') url.searchParams.set('experience', 'agent');
   else url.searchParams.delete('experience');
   url.searchParams.delete('view');
   const entry = window.history.state && typeof window.history.state === 'object' ? window.history.state : {};
