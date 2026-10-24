@@ -943,7 +943,48 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     checkout_timeline['registry']['assets']['picture-1']['local_path'] = new_path.name
     document.write_text(json.dumps(checkout))
 
-    base_bundle = fetch_bundle(project, 'film', revision_id='wc6-baseline', client=client)
+    base_bundle = fetch_bundle(
+        project, 'film', revision_id='wc6-baseline',
+        publication_id=baseline_publication, client=client,
+    )
+    assert base_bundle['base_parent'] == {
+        'revision_id': baseline['parent_revision']['revision_id'],
+        'content_digest': baseline['parent_revision']['content_digest'],
+        'publication_id': baseline_publication,
+    }
+    assert checkout['base_parent'] == base_bundle['base_parent']
+    assert base_bundle['source_mapping']['_runtime_document'] == baseline
+    placement = next(row for row in base_bundle['placements'] if row['shot_id'] == first_id)
+    raw_occurrence = next(
+        row for row in baseline['parent_revision']['payload']['occurrences']
+        if row['occurrence_id'] == placement['occurrence_id']
+    )
+    raw_shot = next(
+        row for row in baseline['shot_revisions']
+        if (row['shot_id'], row['revision_id'])
+        == (raw_occurrence['shot_id'], raw_occurrence['shot_revision_id'])
+    )
+    raw_internal = next(
+        row for row in baseline['internal_timeline_revisions']
+        if row['revision_id'] == raw_shot['internal_timeline_revision_id']
+    )
+    assert base_bundle['source_mapping']['shots'][first_id] == {
+        'shot_id': raw_shot['shot_id'],
+        'revision_id': raw_shot['revision_id'],
+        'content_digest': raw_shot['content_digest'],
+        'internal_timeline_id': raw_internal['timeline_id'],
+        'internal_timeline_revision_id': raw_internal['revision_id'],
+        'internal_timeline_content_digest': raw_internal['content_digest'],
+        'item_id_map': {},
+    }
+    assert checkout['source_mapping']['shots'][first_id] == base_bundle['source_mapping']['shots'][first_id]
+    raw_before = next(row for row in raw_internal['payload']['clips'] if row['id'] == 'clip-1')
+    assert raw_before == next(row for row in first_internal['payload']['clips'] if row['id'] == 'clip-1')
+    working_before = next(
+        row for row in base_bundle['shots'][first_id]['internal_timeline']['clips']
+        if row['id'] == 'clip-1'
+    )
+    assert working_before == raw_before
     disjoint_session = TimelineSession.open(
         project, 'film', client=client, outbox_path=tmp_path / 'disjoint.outbox.json',
         base_revision_id='wc6-baseline', base_publication_id=baseline_publication,
@@ -962,7 +1003,7 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
         ('set', ['clips', 'id:clip-1', 'at'],
          {'state': 'present', 'value': 0}, 0.125),
         ('set', ['clips', 'id:clip-1', 'hold'],
-         {'state': 'present', 'value': 1.8}, 0.75),
+         {'state': 'present', 'value': working_before['hold']}, 0.75),
     ]
     assert changes[0]['ref'] == changes[1]['ref']
     published_document = publication['data']['canonical_document']
