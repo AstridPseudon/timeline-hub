@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T03:10:35Z | dispatcher heartbeat 6s | live 3 (sol 1, luna 2, other 0) | busy30 23 | status age 1m -->
-# app board, 2026-10-24T03:09Z
+<!-- app | 2026-10-24T03:13:05Z | dispatcher heartbeat 7s | live 2 (sol 1, luna 1, other 0) | busy30 22 | status age 0m -->
+# app board, 2026-10-24T03:12Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -47,8 +47,8 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 
 | A2-recovery-basis | Preserve seven dependent recovery guards | Sol; Luna review | Independent 0240 and current proof PASS | merged | app-A2-recovery-basis-current-0250 | Exact reviewed current packet passed 106 tests, three types and lint; merged at dbde9cc37d. | 499a791db7 / dbde9cc37d |
 | A4-remaining-protocol | Map remaining legacy protocol cases | Luna | Read-only map complete | merged | app-A4-remaining-protocol-map-0226 | Remaining cases mapped into bounded current-save packets. Six chain and six label declarations are now assigned. | Report only |
-| A4-protocol-chain | Move faithful local chain declarations | Luna | First return completed | doing | app-A4-dormant-protocol-sol-0306 | Second review failed exact pending/key and persistence assertions. Branch held; original cases remain. Sol applies D37 on concrete reachability. | Return branch only |
-| A4-track-label | Move faithful label protocol declarations | Luna | First return completed | doing | app-A4-dormant-protocol-sol-0306 | Second review found missing observed-remote, actual-conflict and closure assertions. Branch held; original cases remain. | Return branch only |
+| A4-protocol-chain | Move faithful local chain declarations | Luna | First return completed | merged | app-A4-dormant-protocol-sol-0306 | D37 dormant graph verified. Original declarations and helper closure retained unchanged; failed packet held. Bounded follow-up listed in App ledger. | Return branch only |
+| A4-track-label | Move faithful label protocol declarations | Luna | First return completed | merged | app-A4-dormant-protocol-sol-0306 | D37 dormant native-label path verified. Original declarations and helpers unchanged; failed packet held. Bounded follow-up listed in App ledger. | Return branch only |
 | A4-replay-protocol | Move one faithful replay declaration | Luna | Independent 0249 PASS | merged | app-A4-replay-current-packet-0257 | Review passed 124 tests, three types and lint. Current packet passed 138 tests, three types and lint; merged 9e83160c0e. Five unmappable originals retained. | 6585ad99e3 donor |
 | A4-label-refusals | Move three equivalent label refusals | Luna | Independent 0252 PASS | merged | app-A4-label-refusal-current-0257 | Independent 124 tests, three types and lint passed. Three original ownership, basis and mixed-preview cases kept unchanged. Current packet passed 128 tests, three types and lint; merged a64587176d. | 594ce7ba8a donor |
 | readiness-backend-bench | Exact compatible backend child custody | Dispatcher; App caller | Actual keyed child receipt | doing | child app-ready-079-37eb-0256 | Exact 37eb checkout verified. Normal child 0256 passed with exact installed backend. Remotion 0258 verified reuse; actual backend imports match. | Runtime 37eb6c7bdb |
@@ -56,7 +56,7 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 | A4-reachable-census | Check current fallback writer reachability | Luna | Current merged cuts | merged | app-A4-current-reachable-census-0300 | One reachable element adapter writer found; Sol0306 assigned. Executor and legacy protocol paths have no production value caller. | Current integration |
 
 | A2-element-writer | Move registered element adapter saves to A2 | Sol; Luna review | Census 0300 | doing | app-A2-element-writer-sol-0306 | Mounted agent-chat element adapter still calls saveTimelineAtHead. Preserve original authority, head, registry and closure on the current outbox. | Current integration |
-| A4-protocol-joined | Qualify merged protocol packets | Luna | Three reviewed merges | doing | app-A4-protocol-joined-proof-0306 | Integrated recovery, replay and label-refusal union with exact donor identities; no held packet import. | a64587176d |
+| A4-protocol-joined | Qualify merged protocol packets | Luna | Three reviewed merges | merged | app-A4-protocol-joined-proof-0306 | Exact a645 passed 139 tests, three typechecks, lint and donor identities. Remaining 35 original declarations unchanged; failed packets unmerged. | a64587176d |
 
 | P2-P3-result-handoff | Publish same-ID changed-pair evidence | Luna | Actual terminal artifacts | doing | app-P2-P3-D41-result-handoff-0307 | Producer reads actual 12221 and 3362 only, qualifies safe files and source custody. Proof owns independent gate verdict. | App804 / Agent079 / Runtime37eb |
 
@@ -65,6 +65,6 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 Blockers: U3b awaits P2/P3 and the final freeze.
 Blockers: App and Proof await terminal results for the single changed P2 12221 and P3 3362 pair. No repeat request; Proof owns verdict.
 
-Next ready: Follow P2 12221 and P3 3362, publish terminal evidence, migrate the reachable element adapter writer, and resolve the bounded chain review findings.
+Next ready: Publish changed-pair evidence, classify the exact failed readiness boundary, and finish the reachable element adapter migration. D37 dormant originals stay unchanged.
 Integration: a64587176d. Current recovery packet passed 106 tests, three types and lint before its exact merge. Exports and lifecycle joined proof passed 108 plus 105 tests, three types, lint and governance. Historical joined proof 0150 remains bound to 1c5cc47bf6.
-Disk: About 11 GB free. Recycle refused two dirty old U3 trees; both retained. Finished protocol tree was already recycled. Sweep completed with zero eligible directories; prior compact refusal stands. No cleanup refusal retried.
+Disk: About 10 GB free. Recycle refused two dirty old U3 trees; both retained. Finished protocol tree was already recycled. Sweep completed with zero eligible directories; prior compact refusal stands. No cleanup refusal retried.
