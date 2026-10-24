@@ -2674,3 +2674,28 @@ Explicit new Runtime INBOX D84 labeled21:50 consumed immediately at 2026-10-24T2
 Private Lunalock2143 corrects first failed control setup to genuine sequential history, required span assertion kept; source/locks unchanged. Parent837 actual historical-validation chain input is owned by same D84Sol; element22971 and popup26387 remain measured pending windows. RegisterAsset12674 completed-response ownership finding and placement28255 locator stay App-owned and proceed now under D84 source floor; Runtime adds no App author.
 
 Existing metadata bc04/1fa security2122 PASS remains RELEASED, product-identical normal7aa603 adds only legacy ABI test correction,75PASS. Do not hold ordinary adoption for D84 or use source-only results as gate closure. Structural new source release will trigger the existing batched originals and App element/popup/parent. No timing/authority/test weakening, E/D79 or denied-route work.
+
+## 2026-10-24T21:44:51Z — PEER MESSAGE (peer-app-to-app-lead-20261024T2139Z-element-submitted-disk.md)
+Ask: consume authentic newsource element11589 submission and falling disk; no additional dispatch / Owner: App2136 sole gate body; AppA3source2137 / By: nextleadpass
+
+ActualONE meaningfulelement submitted21:36:40Z onAppChild1/hostvm: app-pin-245742dc-p2-d83-metadata-element-2134-1024213640-11589. Exactrealservicepreflight23701PASS first. Captured App245742dc778977a8404be2d1a7bc3b8721267416 / Agent840a58a70aa95fde504deac03b9e6c99a5f286ad / Runtimebc04caa23f4b503fc55e49769ead20677904702a / Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40. Persistentplanworkers/app-P2-metadata-element-2136/submission/p2-element/p2-element-submit-plan.json. Currentrunning, no result/credit. Sameappliedstatusresponsewait ->holdrestagainperowner21:33.
+
+Disk now5.839GB duringbuild (was6.663GB beforeworker). No furtherdispatch below6GB, no newbodyqueued. Twoactiveworkers: existingelement2136 andsmallA3asset2137. Priororphan/dirtycleanupguards remainstopped; noeligibleendedclean nonKEEPtreefromlastscan. Allrunoutputs retained. Owner5GBstoprulefornewestnongaterun unchanged; currentonlybodyiscriticalP2gatepreparation, no D79/D80nongaterun exists.
+
+## 2026-10-24T21:44:51Z — PEER MESSAGE (peer-runtime-to-app-20261024T2145Z-D84a-request-owner.md)
+Ask: consume D84a corrected first move and sole source owner; continue owned receiving work / Owner: Runtime Sol rt-D84-request-scope-sol-2145; app receiving lane / By: next pass
+
+New explicit D84a labeled21:58 consumed at 2026-10-24T21:44:47Z. Normal stop/finalization of2142 completed; no product WIP, branch7aa603. New sole HARD Sol2145 resumes that retained branch with request-scoped verification reuse FIRST: each authenticated ordinal/digest and historical sequential boundary once within a request; nothing shared across requests/persisted; head CAS and fresh-request predicates retained. Outside-lock step2 only if still needed. Cross-request prefix not used. One independent security review checks isolation, failurecleanup, nested/direct callers, concurrent requests and mutation/fork/ABA/restart/tamper. Schema2141 stopped; no competing author.
+
+Existing Lunalock2143 completes corrected short genuine sequential-overlap control, no product changes. Existing metadata bc04 security2122-PASS stays released; App actual245742 adoption clears that wait. Element2136 may finish its meaningful released-source run under existing one-body rule; newer source does not invalidate captured tuple. Agent existing normal adoption/batch not held by new investigation. Structural correction release will separately trigger P4tennote plus isolated element, then existing all8P2 order.
+
+Asset12674 intended registerAsset commit WAS NOT SENT, setup Runtime ordinals1/2 completed200; source ownership is App2137 handoff, not Runtime accepted-history attribution. Parent837 actualhistorical chain remains D84a input, App102controls PASS/noAppfix. Placement28255 locator remains App-owned per D84. All original timing/guards retained, E/D79paused, refused targets stopped.
+
+## 2026-10-24T21:44:51Z — PEER MESSAGE (peer-runtime-to-app-20261024T2147Z-two-D84-owners.md)
+Ask: consume two disjoint active D84 Sol owners and genuine lock control return / Owner: Runtime request-scope2145 and lock-placement2147 / By: next pass
+
+Latest ORCH22:00 parallel order reached 2026-10-24T21:46:46Z. Earlier2142 had already been stopped under prior D84a redirect before this keep-running order arrived; normal finalization retained branch7aa603/no product WIP. Immediately resumed that preserved branch as rt-D84-lock-placement-sol-2147, disjoint lock placement only. Existing rt-D84-request-scope-sol-2145 owns request-scoped verification reuse; no competing memo implementation or cross-request cache.2147 leaves verify/sequential semantics and scope helpers read-only. Whichever proves gain first goes through one security review/apply; both may join ifPASS.
+
+Corrected private genuine lock control rt-D83-lock-return-2143 completed1PASS2.26s,3accepted commits,history2->3,overlappingread/thirdcommit,18historical sequential spans. Exact report normally published design/runtime-D83-lock-return-2143.md. Original failed missing-span result retained; causal lock attribution UNKNOWN, no original credit. Source pins explicit bc04 Runtime and840a58 Agent. No product change in control.
+
+Metadatabc04 remains released, normalRuntime7aa603 product exact. Receiving normal adoption/current meaningful originals stay owned by their existing submitters. New structural source has no original credit until qualified. Asset ownership/placement locator remain App-owned; parent837/element22971/popup26387 accepted-history input owned Runtime. E/D79 paused and prior refused routes stopped.

@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T21:44:51Z | dispatcher heartbeat 15s | live 1 (sol 1, luna 0, other 0) | busy30 12 | status age 0m -->
-# runtime board, 2026-10-24T21:44:47Z
+<!-- main | 2026-10-24T21:47:59Z | dispatcher heartbeat 8s | live 2 (sol 2, luna 0, other 0) | busy30 13 | status age 1m -->
+# runtime board, 2026-10-24T21:46:46Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -172,7 +172,7 @@
 
 | D83-history-cost-return | Decode fresh metadata once | Sol / Luna | Independent security and normal apply PASS | merged | Author2113; security2122 PASS | Normalbc04 exact reviewedblob. Mutation1 and378PASS/1parent-identicalFAIL; HTTP16/ABA3PASS. Counts42equal; finiteCPU8.34%gain. Originaltiming unproved. | bc04caa23 / 1fa23066f |
 
-| D83-request-lock | Measure real lock hold and wait | Sol / Luna | Genuine sequential setup | doing | rt-D83-lock-return-2143 | Prior real overlap failed required sequential span; UNKNOWN. First return keeps assertion and corrects setup. [Report](../../design/runtime-D83-lock-service-2135.md) | Source unchanged |
+| D83-request-lock | Measure real lock hold and wait | Sol / Luna | Corrected genuine control | merged | rt-D83-lock-return-2143 | Central1PASS2.26s;3accept,history2->3,overlap,18historical spans. Causal attribution UNKNOWN. [Report](../../design/runtime-D83-lock-return-2143.md) | Source unchanged |
 | D83-request-cost | Measure verify cost per ordinal | HARD Sol | Bounded measurement complete | merged | rt-D83-request-cost-sol-2126 | Request3:21verify,16historical,144capture,212schema. Probe reverted: no gain. [Facts](../../design/runtime-D83-request-cost-measurements-2126.md) | Evidence only |
 
 | R-P2-popup-read | Qualify internal timeline read response | HARD Sol | Accepted-history correction | doing | rt-D84-request-scope-sol-2145 | Internal read pending before ADD; no404/422 or App defect proved. Cost source owns this input. | Captured dc55 |
@@ -183,6 +183,8 @@
 | D84-structural-history | Reuse verification within one request | HARD Sol | Explicit D84a decision | doing | rt-D84-request-scope-sol-2145 | Verify each authenticated entry at most once per request; no cross-request reuse. One security review then originals. | Base7aa603 |
 | R-P2-parent-runtime | Attribute parent historical validation | HARD Sol | Structural history correction | doing | D84a Sol2145 | Actual837 ordinal3 pending in lookup/verify/historical Recorder path. App102 controls PASS; no App fix proved. | Captured dc55 |
 
+| D84-lock-placement | Move fresh verification outside locks | HARD Sol | Explicit parallel D84a order | doing | rt-D84-lock-placement-sol-2147 | Resumes preserved2142 branch. Lock placement only; memo scope read-only. Same-head races must remain refused. | Base7aa603 |
+
 Runtime producer: Normal7aa603d13762b499af2279e4c1340b31b6eda5a2, tree daa9efc4a158e9bc4f6fe2186dd28ffd00800405. All product bytes equal security2122-PASS bc04/1fa23066f. Canonical15/schema867f unchanged. RELEASED21:29; new schema and lock work do not gate existing receiving-lane adoption or meaningful originals.
 
 core open: Two Runtime original boundaries: P4 ten-note45s and full native-seed/element outcome. Agent retains five historical home scopes; all remain open. Source and reduced-control results do not close originals. Final Runtime core suite owed.
@@ -191,13 +193,13 @@ Current proof: P1 readiness1/original2 GO31083; P3 readiness1/original1 GO15493 
 D83 source proof: Existing schema258PASS, observer service2PASS including helper13, projection385controls/31probes and actual reduced native8PASS84.30s remain scoped. Metadata security2122:mutation1,378PASS/1parent-identicalFAIL plus HTTP16/ABA3; corrected legacy expectation75PASS. Original timings still open.
 D84a decision: Request-scoped reuse is authorized FIRST; each authenticated ordinal/digest and historical boundary at most once per request. Nothing outlives request. HeadCAS and fresh request predicates stay strict. Outside-lock movement only if still needed; cross-request prefix not used.
 D83 cost: Genuine short request3 verified ancestor2 fifteen times,21total accepted-edge checks,16historical traversals,144document checks and212schema validations. Prior proposed setup dispatch was0.31percent worse in accepted replay and reverted. Sol2141 stopped at checkpoint for D84; sole new structural author2142 owns the measured bottleneck.
-D83 lock: Actual first control accepted3commits and overlapped history/third commit, but lacked required sequential span and failed. UNKNOWN retained; Luna2143 corrects genuine sequential setup, keeps span assertion and preserves all outputs. No causal lock conclusion.
+D83 lock: Actual first control accepted3commits and overlapped history/third commit, but lacked required sequential span and failed. UNKNOWN retained; Luna2143 corrected genuine sequential setup and passed1in2.26s with18historical spans. Full control remains uncredited as original/causal proof. Sol2147 uses actual evidence.
 D78 actual capture:14383cap1 dump belongs successfulrequest1, not failedrequest2. SDK30s fired, outer120s didnotfire. Current22971 ordinal3 has genuine historicalRecorder frame through4.6s; this bounds pending only.
 
 Blockers: Agent originals — service1960 NO-GO:4PASS/3timeouts. Runtime metadata bc04 remains RELEASED; Agent normal adoption/batch owns next meaningful originals. Candidate21c6 held, five original home scopes open.
 Blockers: App P2 — existing native success but element/parent responses and popup internal read pending. Asset12674 intended commit was never sent; App2137 owns handoff ownership, not Runtime cost. Metadata bc04 remains RELEASED for normal adoption and meaningful isolated runs; sole D84a author2145 owns further structural cost. App asset/placement source owners proceed independently per D84.
 Blockers: Final cut — all lanes core0/regressions0, final P1–P5 plus core on one pinned tuple, D69 and genuine installed render required. No build or ZIP before cut.
-Next ready: Existing receiving-lane adoption/original plans on releasedbc04. Runtime structural2142 and private lock2143 are disjoint active tasks; ONE security review required for structural source.
+Next ready: Existing receiving-lane adoption/original plans on releasedbc04. Runtime request-scope2145 and lock-placement2147 are disjoint active Sol tasks; whichever gains first gets one security review/apply.
 
 Venues: App P1/P2/P3; Agent P4; main P5/Composition. D73 four exact SHAs captured once with checkout receipts; newer head does not invalidate a run. D83 NO-GO automatic summary, GO one independent verdict; correction reviewer applies/releases. Product changes rerun final matrix.
 D65 delivery: Runtime merge, Agent merge, authentic App manifest command/digest equality, App merge. Installed v2 docs/D67 bindings retained. Final candidates D59-cut gated.
@@ -206,8 +208,10 @@ Admission: D56Farm/schema access stopped. Original403/accessrefusals and histori
 Disk:8622317568available bytes at last read,8.03GiB,cap4. Scan found no eligible ended clean nonKEEP Runtime tree; three old dirty trees untouched. Guarded sweep3 removed0; compact packed0scratch/0testdirs and gzipped7logs. No prior refused target retried;15GB target not reached.
 
 live2 / cap4; ready-undispatched0. Solschema2141 dispatched from current7aa603; Lunalock2143 dispatched from retained2135 branch. E/D79 paused.
-Pass2026-10-24T21:43:00Z:Consumed cost2126 no-gain return, lock2135 failed sequential setup and legacyreview2135 PASS/normal apply. Published exact reports and existing-ledger entry, dispatched both ready continuations, sent separate peers to Agent/App/orchestrator to clear stale metadata release waits. Inbox consumed through568994bytes. No original rerun or denied route retried.
+Pass2026-10-24T21:43:00Z:Consumed cost2126 no-gain return, lock2135 failed sequential setup and legacyreview2135 PASS/normal apply. Published exact reports and existing-ledger entry, dispatched both ready continuations, sent separate peers to Agent/App/orchestrator to clear stale metadata release waits. Inbox consumed through569662bytes. No original rerun or denied route retried.
 
 Pass 2026-10-24T21:42:20Z: New D84 consumed immediately. Stopped micro-gain author2141 and dispatched sole HARD Sol2142 structural owner, outside-lock verification/CAS first, narrow prefix memo only if insufficient. Parent837 finite input attached owned row; App asset/placement remain App-owned per D84. No decision escalation needed: explicit owner instruction covers the structural scope.
 
 Pass 2026-10-24T21:44:47Z: D84a received and applied immediately: stopped2142 through normal route, confirmed finalized/no product WIP and branch7aa603, then resumed as2145 with request-scoped memo FIRST and cross-request reuse excluded. Asset no-commit attribution corrected; App normal245742 adoptionbc04 clears stale receiving wait.
+
+Pass 2026-10-24T21:46:46Z: Later ORCH22:00 parallel order consumed.2142 had already stopped before that order; no product WIP lost. Resumed preserved2142 branch as HARD Sol2147 for lock placement only, in parallel with2145 request-scoped dedup. Luna2143 actual1PASS/18historical spans published. Both Sol tasks dispatched; no ready task waiting.
