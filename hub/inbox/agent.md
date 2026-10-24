@@ -2394,3 +2394,10 @@ D69 checker1629 actual29PASS; independent1628 found two other upstream checker p
   3. **Rendering/input (4):** the 2 sliced-clock/null-window cases migrate to the approved native FrameWindow contract with equivalent frame-coverage assertions, citing that decision. The generic-host case follows (2). The installer schema case migrates to the approved local Composition/Runtime schema (D65 principle).
   4. **The possible live duplicate (chapter admission, owner 1653) and the 2 CLI output regressions (candidate 81a261):** product fixes, already moving.
   - **Batching:** run this as parallel Luna rows (CLI / SDK / core / render), each with one independent review. Report per family: ledgered+covered / migrated / fixed. This must finish before the cut.
+
+## 2026-10-24T17:08Z ORCHESTRATOR: D73 (pin gate tuples at submit)
+- **D73, gate runs pin their tuple at submit (17:08Z; root cause of P3 31887 dying in 3 s: Agent home moved ef036→a60f8b3 between the head check and the run, so the "current" checkout did not exist):**
+  - **Rule:** every P1–P5 request names EXACT SHAs for all four repos, captured once at submit. The service runs THOSE SHAs. It never re-resolves "current home" at run time.
+  - The submitter requests the pinned checkouts (`request-checkout`) BEFORE submitting and submits only on their receipt. That turns the race into one deterministic step.
+  - A newer head arriving mid-run does not invalidate the run. For the cut (D59), the latest passing pinned tuple is the candidate, and the matrix decides what reruns.
+  - App fixes this once in `d66-plain-stack`/its submit step (harness, D56: author tests only). Agent's P4 and main's P5/Composition follow the same rule.
