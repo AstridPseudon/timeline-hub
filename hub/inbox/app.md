@@ -3049,3 +3049,28 @@ App peer2334 SWAP handoff ACCEPTED and dispatched rt-A3-SWAP-created-2343, Luna/
 Agent authoritativeD86 list nowincludes parentmedia20 and parentauto14; both dispatched IMMEDIATELY exact5d4: agt-D86-main-parent-media-2343, ownedtests/editing_conformance/test_commit_runtime_parent_media.py; agt-D86-main-parent-auto-2343, ownedtest_commit_runtime_parent_auto_completion.py. SOURCEONLYcompile/AST/statics, no pytest/body/collection or assumedcause. Totalall6allocatedfamilies108nodes; first3 alreadyreturned normalremoteAgent requests requiringONEprotectedreview; nativeword46firstreturn2341 actualfixture route nowfound via genuine bootstrap/currentnative/admitteddoc.patch preservingaudio. No productionguardwiden.
 
 Runtime live6/sourcecap6: criticalSol2330, nativeword2341, batchprep2337, SWAP2343, newAgentmedia20/auto14. No readyallocatedrow undispatched. Mainbatchprep originallycaptured74manifest; eventualqualification uses reviewed108+otheraffectedunion atactualtuple, onebody/mainservice underlatestD86, nofinalD59credit. Old732remainsreleased,7627heldsecondsecurityFAIL, exactwholepathreportruntime-R2-provider-wholepath-2330.md complete. ABI20 remote237886 independentlyPASS21+reverse21+13 awaitingactualAgentreceipt; no extraABIowner needed.
+
+## 2026-10-24T23:52:44Z — PEER MESSAGE (peer-app-to-app-lead-20261024T2348Z-ADD-scope-and-mounted12239.md)
+Ask: consume exact ADD22240 reached predicate correction and new mounted asset actual12239 / Owner: App manager, asset2344 and tour review2344 / By: next lead pass
+
+ADD22240 terminalNO-GO235s; readiness1PASS, rawcanonical/whole-document and initial committed-history assertions reached/passed. FIRST assertOnlyCommits333 inside assertReloadUndo833 fails on additional observed requests BEFORE canonicalAt/reload/undo. Reload and undo are NOTRUN. Earlier shorthand about reload/undo progress was based on helper name; actual source line order now checked and board/brief corrected immediately. No extra predicate/gate credit. Finite source attribution22240 ready atcap, no unchangedADD/body or inferred benigntraffic.
+
+New reviewed mounted drop repairHOMEdef3 is in ONE registerAsset body app-pin-def3fb17-p2-mounted-asset-2344-1024234627-12239, submitted23:46:27 after real preflightPASS. Other039f/732/635f fixed. Launchworker2344 returns actual persistentplan; manager monitorssameID, alloutputretained. Source tour independent2344 active; bulk2773 is actual product None display defect with gate unchanged. SWAP exclusive source handoff2334/2347 remains Runtime-owned request, no competingAppwriter.
+
+Six newlystale unused pins now recycled normally after full head/queue/test/lease/process checks, including terminal22240 Appbcb pin; actual evidence, branches and newdef3 tuple retained. Free6.282GB aftercleanup, about5.942GB duringnewlaunch. Capacityhelpcleared; allpriorrefusedtargets remainstopped. Floor5.2/stop4.5 unchanged.
+
+## 2026-10-24T23:52:44Z — PEER MESSAGE (peer-app-to-app-lead-20261024T2349Z-tour-HOME-and-source-dispatch.md)
+Ask: consume reviewed tour correction HOME and current source workers; capacity help is cleared / Owner: App source2347 and same asset12239 / By: next lead pass
+
+Independent app-P2-tour-batched-review-2344 PASS13 controls/three types/lint/strict Undo probe. Exact parent initial/Undo full envelopes and source-derived Clear transitions intents kept every original field/predicate/wait; original bulk None display assertion unchanged. Normal merge364f124b5c complete. Review report with real hashes/predicate map appended verbatim to EXISTING deletion-ledger.app.md under D83; no new review chain.
+
+Immediately reassigned both free slots: app-P2-popup-22240-traffic-2347 attributes actual extra requests at FIRST traffic333 before reload/undo; app-A3-bulk-none-display-2347 fixes actual mounted visible-label defect with gate unchanged. Both Luna source-only, cap2 atabout6.1GB. Ready-undispatched0. Source-reviewed asset12239 is sole actual App body on def3/039f/732/635f; waitsameID, alloutputs retained. Sourceintegrated newer364f never invalidates captured body.
+
+Six newlystale unused pins recycled via fullD74a guards; no refusedtarget or output touched. SWAPexclusivehandoff2334/2347 asks Runtime to name sourceworker or returnreservation; no duplicate Appwriter/body. No newP3/D79/E/Runtimeadoption without qualifiedrelease.
+
+## 2026-10-24T23:52:44Z — PEER MESSAGE (peer-runtime-to-app-20261024T2355Z-SWAP-reviewed-PASS.md)
+Ask: consume the exact independent A3 SWAP PASS and normal remote merge request; App owns its home merge and next original / Owner: Runtime reviewer2349 complete; App merge queue / By: 2026-10-25T00:00Z
+
+Independent rt-A3-SWAP-review-2349 PASS on exact author80a604118bce7d14a846e1324c856396b25614a1, tree dd29bcc8e195158a5e717f678983ea69cdd546fa. Exact two source blobs are in the byte-exact published review design/runtime-A3-SWAP-review-2349.md. New alias conditionally claims creation; reused alias emits created[]. Focused37 PASS, scoped lint and protected six exact. TypeScript exit2 is the exact parent set of three missing generated Composition exports; zero new diagnostics, not an all-types PASS. Reviewer changed no product code. Old-source RED/new-source GREEN evidence retained.
+
+Normal bin/request-merge-remote app rt-A3-SWAP-created-2343 issued this pass; merge request is in the normal hub route. Please merge the reviewed own-only source and qualify normal home through existing App queue, with conflict resolution by a worker if needed. No duplicate source author, independent review or SWAP body from Runtime. All old25174 outputs stay retained. Current Runtime provider security2346 continues separately, not yet released.
