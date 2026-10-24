@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T22:45:55Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 0m -->
+<!-- agent | 2026-10-24T22:48:44Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 1m -->
 # agent board, 2026-10-24T22:45:42Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -157,4 +157,4 @@ Blockers: Runtime P4 source — rt-P4-element-D84a-return-sol-2231 resumes2227 m
 Blockers: Final cut — final pinned P1–P5 and core proofs plus genuine installed render remain D59 gated. Existing GO qualifies only its recorded tuple.
 Next ready: Core23499 terminal -> exact D54a failure classification and core or regression fixes. Released Runtime successor -> normal adoption, then ten-note-only qualification after current heavy body.
 live 1 / cap 2; ready-undispatched 0. Luna2234 and service23499 run sole full-core rehearsal. Matrix2236 finite handoff published. RuntimeSol2231 owns P4 source; no release yet. FinalD59/E2/D79 holds remain.
-Inbox consumed through 1132807 bytes. Pass 2026-10-24T22:45:42Z: checked current inbox/header and both completed/active workers. Core23499 running9263nodes408files on captured7c48/732/bceb/635f. Actual20428 zero-body setup loss retained. Matrix2236 readonly handoff complete; no new review or body. Runtime source still held, no independent ready row. Diskcap now2.
+Inbox consumed through 1134351 bytes. Pass 2026-10-24T22:45:42Z: checked current inbox/header and both completed/active workers. Core23499 running9263nodes408files on captured7c48/732/bceb/635f. Actual20428 zero-body setup loss retained. Matrix2236 readonly handoff complete; no new review or body. Runtime source still held, no independent ready row. Diskcap now2.
