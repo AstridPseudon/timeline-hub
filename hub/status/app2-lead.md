@@ -1,1 +1,1 @@
-LEAD 2026-10-24T07:05Z | up | P1 GO stands | P3 run 9310 fails in Gate-5 (90s request wait); P2 run 23809 element case fails, rest running | App says 4 P2 test-helper mismatches are ours: fixes ordered, no new runs | disk 8.2G
+LEAD 2026-10-24T07:38Z | up | P1 GO stands | P3 run 9310: one POST 200 in the 0-to-5 setup window, a later 90s wait timed out; P2 run 23809: 0 pass, 3 fail, 5 not run | four helper and return workers running | disk 8.0G, no new heavy runs
