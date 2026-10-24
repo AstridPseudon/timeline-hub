@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T03:14:39Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+<!-- app2 | 2026-10-24T03:16:35Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
 # app2 board, 2026-10-24T03:15Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
