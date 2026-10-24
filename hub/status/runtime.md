@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T06:35:57Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 15 | status age 4m -->
-# runtime board, 2026-10-24T06:31:42Z
+<!-- main | 2026-10-24T06:38:29Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 1m -->
+# runtime board, 2026-10-24T06:37:10Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -55,8 +55,8 @@
 | F-helper-sequential | Classify helper replay-map refusal | Agent Sol / Luna | Integrated proof complete | merged | Agent184dc; review0224; integrated0232 | Actual Agent 8a8d passed 12 focused cases and static, vendor and artifact checks. Both original variants passed on reviewed source. | Agent184dc20a70 |
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Current installed qualification passed | merged | Agent0508; independent0517 PASS | Exact seven originals passed on managed child 3b5c, Agent ba8f and Runtime f320. Current 9cd relevant sources and test AST match. | Managed child 3b5c |
-| OPS-farm-agent-full | Correct farm full-suite environment | Sol / Luna | Independent source and kit review | review | Sol0617; review0632 | Fourteen private checks passed, including service selection and lease descriptors. Genuine Farm preflight remains required. | 471712 packet held |
-| OPS-child-dependency-route | Assess supported dependency reuse | Luna | Independent source review | review | Author0628; review0630 | No supported dependency-only reuse route found. Review checks exact source and missing install evidence. No retry requested. | Source only |
+| OPS-farm-agent-full | Correct farm full-suite environment | Sol / Luna | Genuine Farm setup and preflight | blocked:farm | Sol0617; review0632 SOURCE PASS | Fourteen checks passed. Farm has byte-exact packet and reviewed setup; host remains unverified. [Review](../../design/runtime-farm-full-v2-source-review-0632.md) | 471712 reviewed packet |
+| OPS-child-dependency-route | Assess supported dependency reuse | Luna | Actual failed install and child metadata | blocked:agent | Review0630; corrected return0634 | No supported dependency-only reuse. Metadata overclaim withdrawn; exact sanitized install evidence requested. | Source only |
 | R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Integrated proof passed | merged | Review 0405; integrated 0413 PASS | 13 standalone cases and 243 controls passed; 74 configured deselections. [Proof](../../design/runtime-historical-image-integrated-0413.md) | 2b49da8d6 / 2e96c68c |
 | R-D42-history-memo | Harden verified replay memo | Sol / Luna | Post-delivery scope under D47 | gated:D47 | Design0448; review0454 PASS | Deferred by D47. No stable validation boundary; nine state attacks remain open. Source stays unmerged. | Tests 6c6bb375; source held |
 | R-D42-proof-pin | Preserve a compatible future memo pin | Sol / Luna | Post-delivery safe memo under D47 | gated:D47 | No active pin author | D45: next P2/P3 uses existing37eb without memo. Prior unsafe backport stays held; no new checkout needed. | Earlier backport held |
@@ -70,6 +70,7 @@
 | F-G5-restructure-remainder | Qualify seven restructure originals | Luna / Luna | Independent result review passed | merged | Author 0557; review 0602 PASS | Seven exact originals passed in 54.26 seconds on Agent 2007 and Runtime 1d9dd. [Review](../../design/runtime-restructure-review-0602.md) | Agent 2007 unchanged |
 | F-normal-publish-remainder | Qualify eight publication originals | Luna / Luna | Agent renderer-free identity caller fix | blocked:agent | Author 0557; review 0601 FAIL | Seven passed; one strict no_renderer failure before submit. Exact existing raw-projection seam returned. [Review](../../design/runtime-normal-publish-review-0601.md) | Agent 2007 unchanged |
 | F-renderless-store | Open sessions without renderer imports | Sol / Luna | Agent home merge and qualification | merging | Author0619; review0626 PASS | Independent 21 passed; zero new diagnostics. Opaque callable limit retained. [Review](../../design/runtime-renderless-store-review-0626.md) | e149f8993 |
+| F-SDK-three-originals | Qualify three retained SDK originals | Luna | Agent assigned exact selectors | doing | rt-F-SDK-three-originals-0638 | Existing exact receipts first; read-only scope. No changes to the Viewing-owned ABA file. | Agent 0b425 base |
 | F-helper-originals | Qualify fourteen retained helper rows | Luna | Missing authenticated word binding | blocked:agent | Author0622; review0627 scoped PASS | Thirteen passed; one remains open. Exact missing word binding returned to Agent. [Review](../../design/runtime-helper-review-0627.md) | Agent bb50 unchanged |
 | F-R2-root-originals | Qualify nine retained root cases | Luna | Independent exact result review passed | merged | Author0622; review0625 PASS | Nine originals passed; source only. Pre/post capture limit disclosed. [Review](../../design/runtime-R2-root-review-0625.md) | Agent bb50 unchanged |
 
@@ -80,7 +81,7 @@ Runtime integration is 1d9ddba54, tree f56c396c4495. The merge adds only the rev
 D47 defers the memo and validation capsule until after delivery. Held source remains unmerged. D45 and D46 keep the next pair on existing 37eb and Agent 079 with reviewed App fixes.
 
 P2/P3: D45 pair is terminal. Both reached readiness on App c0fe / Agent 079 / Runtime 37eb. P2 has three failures and five not run; P3 failed inside Gate5. App and Proof own diagnosis and verdict; no repeat here.
-Farm: checkpoint agent-full-farm-1024050351-26511 ended on Agent9cd/tree57f0231d and Runtime45c3: 17,335 passed, 288 failed, 187 setup errors and four skips. No JUnit; seven failures are missing from the failed-line list. Independent review 0606 failed the v2 packet for missing env bindings and stale setup. Luna first return 0610 owns correction; no full is requested before reviewed supported installation.
+Farm: checkpoint agent-full-farm-1024050351-26511 ended on Agent9cd/tree57f0231d and Runtime45c3: 17,335 passed, 288 failed, 187 setup errors and four skips. No JUnit; seven failed summary nodes lack retained FAILED lines. Corrected packet471712 has independent source PASS0632. Peer0635 sends genuine setup and host preflight to Farm; one corrected checkpoint follows only after PASS. No new full result is claimed.
 Blockers: Freeze — D39 generated candidate fe637 passed independent review; final generation and Agent/App adoption wait for freeze.
 
 Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held until freeze.
@@ -91,5 +92,7 @@ Later: D46 closes U2c; no new relay or provider custody backend. Its upstream co
 
 Blockers: Agent — normal-publication original waits for Runtime source0619 review and Agent home merge.
 
-Next ready: None waiting. Farm packet review0632 and child dependency review0630 active. Renderer-free source awaits Agent home. Nine root and thirteen helper results returned; word binding remains open.
+Next ready: None waiting. SDK three-original qualification0638 is queued. Farm owns reviewed setup and genuine preflight from peer0635. Agent owns renderer-free home merge and missing child install metadata. One helper word binding remains open.
 Later: Viewing peer0624 reports its partial ABA repair and remaining native-stage address mismatch. Viewing owns source and review; no Runtime author or body is requested.
+Blockers: Farm — corrected full-suite host setup and genuine parent plus sanitized child import preflight remain unverified; reviewed packet0635 is published.
+Blockers: Agent — child dependency route needs the finite failed install log and actual existing-child custody metadata; no unchanged build retry.
