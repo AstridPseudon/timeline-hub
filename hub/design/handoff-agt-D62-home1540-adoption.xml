@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.995" timestamp="2026-10-24T15:42:08.372563+00:00" hostname="vm"><testcase classname="tests.stage1.test_runtime_client_cutover" name="test_empty_timeline_opens_as_composition_on_real_daemon" time="1.223"><failure message="AssertionError: assert False&#10; +  where False = DomainResult(ok=False, data=None, error=ErrorObject(code='conflict', message='history_unavailable', details={'base': N...flicts': [], 'current': None, 'reason': 'history_unavailable', 'status': 'refused'}), receipt=None, idempotency_key='').ok">tmp_path = PosixPath('/tmp/w-1394dea859/pytest-of-root/pytest-1/test_empty_timeline_opens_as_c0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7f6743fba060&gt;
+real_runtime = &lt;function real_runtime.&lt;locals&gt;.start at 0x7f67442cccc0&gt;
+
+    def test_empty_timeline_opens_as_composition_on_real_daemon(tmp_path, monkeypatch, real_runtime):
+        daemon = real_runtime()
+        try:
+            client = _open_client(daemon)
+            project_id = client.projects.create(slug="composition", name="Composition", idempotency_key="project").data["project_id"]
+            created = client.timelines.create_empty(
+                project=project_id,
+                timeline_id="main-timeline",
+                config={"tracks": []},
+                idempotency_key="timeline",
+            )
+&gt;           assert created.ok
+E           AssertionError: assert False
+E            +  where False = DomainResult(ok=False, data=None, error=ErrorObject(code='conflict', message='history_unavailable', details={'base': N...flicts': [], 'current': None, 'reason': 'history_unavailable', 'status': 'refused'}), receipt=None, idempotency_key='').ok
+
+tests/stage1/test_runtime_client_cutover.py:948: AssertionError</failure></testcase></testsuite></testsuites>
