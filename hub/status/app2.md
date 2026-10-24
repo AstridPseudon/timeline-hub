@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T00:56:25Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 0m -->
+<!-- app2 | 2026-10-24T00:58:19Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 1m -->
 # app2 board, 2026-10-24T00:49Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -7,7 +7,7 @@
 | P1-corpus | Real-document roundtrip and merge | Luna | Complete | merged | Corpus 1348 | 49 passed; 15 fixtures and 11 inputs. Direct provider scope; mounted chain has separate GO. | e6 / 9729 |
 | P1-seed | Full native atomic bootstrap | Sol; Luna review | Complete | merged | Common 0618; seed 2d7; Runtime a00e | All 21 native assertions and history passed in run 18792. Runtime 2a9 integrated proof: 67 passed. | App 12ef; Runtime 2a9 |
 | P1-diagnostics | Safe files and source guard codes | Sol/Luna | Source reviewed and merged | merged | Reviews 1945 and 2118; App WorkerInfo 2238 | Real emitter, serialized listener and failure file passed; cap 32 retains critical events. Failure-only files were not created on successful 18792. | b221 / 6ecc / def457 / f890 |
-| readiness-after-bootstrap | Shared P2/P3 baseline blocker | App Sol; Luna review; Proof verdict | Integrated checks and upstream signature check | doing | App 0029; review 0041; integrated 0046; upstream check 0046 | Review 0041 PASS: cancelled startup restart defect, hook RED then 176 passed. Unique port caller0039 PASS. Historical trigger and P3 attribution unknown. | Source 42db156ede; App merge 804134 |
+| readiness-after-bootstrap | Shared P2/P3 baseline blocker | App Sol; Luna review; Proof verdict | Integrated qualification and source caller0053 | doing | App 0029; review0041; integrated0046; caller0053 | Review 0041 PASS: cancelled startup restart defect, hook RED then 176 passed. Unique port caller0039 PASS. Historical trigger and P3 attribution unknown. | Source 42db156ede; App merge 804134 |
 | P2 | Original eight gestures on App service | App Sol/Luna; Proof verdict | Qualified readiness fix and caller binding | blocked:app | Latest run 18800; App cause 0019 | Exit 2, 131s. Native21/history passed; baseline unknown. All eight gestures NOT RUN. No journey credit. | 384ac67fb7 / tree c7c2f6b2 |
 | P2-custody | Actual 18800 lifecycle file | Proof Luna | Complete finite audit | merged | ap2-P2-18800-direct-custody-0032 | PASS: 10,665 bytes, six real records, schema/security/roundtrip/writer and Node 12+7. Cancellation at 679ms; trigger and history completion unknown. | Report only |
 | P2-popup-seed | Declare both created owners | Luna; independent review | Complete | merged | Author 1934; review 1940 | Four fixture lines; 102+2 tests, three typechecks, lint and collection passed. App tree matches reviewed 17324. | 17324 -> 93cdd |
@@ -20,8 +20,8 @@
 P1 RESULT GO. App owns A4 under D31 and remaining scope/coverage. Agent G5 is done. Required GO asks sent to both at 00:48, deadline 01:45Z.
 P1 RESULT GO. Required App and Agent merge asks were sent at 00:48, due 01:45Z. G5 is already done under H24. P1 case 2 passed; P2/P3 remain open.
 
-Blockers: App P2/P3 wait for integrated checks0046, upstream hypothesis check0046 and honest source/caller binding.
-Blockers: App A4 retains its remaining scope and coverage work under D31; the P1 gate is clear.
+Blockers: App P2/P3 wait for integrated qualification and caller0053 source binding before one meaningful changed run.
+A4: App worker0051 is actively retiring the remaining executor; bounded reviewed witnesses merged aca94f. P1 gate is clear. D31 keep subset remains.
 Blockers: Runtime exact-seven registrations lack trusted old launch accounting and an atomic cutover boundary.
 Blockers: Farm F-final waits for deletions, upstream freeze and remaining gates. Agent owns full-suite classification and repairs under D32.
 
@@ -35,6 +35,6 @@ Safety: all prior process, reference, file, MONITOR, keep-awake, publication and
 
 Disk: 00:48 available8,977,985,536 bytes, above8GB stop line. Recycle0032/0036/0040 found no worktree and gained no space. Only protected OPS trees and pins remain. Sweep00:04 removed zero directories; prior compact refusal is not retried. D34 pauses disk-only work above its floor. No local heavy run.
 
-Next ready: Runtime R0-public-export-0049 is doing after P1 GO. App consumes GO for qualified A4 rows. App merge804134 -> integrated0046 and upstream check0046 -> honest target and per-run port binding -> one meaningful run under 00:16. Proof audits qualified new result packets immediately. No ready Proof source task is waiting.
+Next ready: Runtime R0-public-export-0049 is doing after P1 GO. App consumes GO for qualified A4 rows. App merge804134 -> integrated0046/caller0053 -> honest target and per-run port binding -> one meaningful run under 00:16. Proof audits qualified new result packets immediately. No ready Proof source task is waiting.
 
 Current pass: 2026-10-24T00:49Z. INBOX consumed through 589889 bytes, including H27/D33 and upstream candidate. All recent Proof workers are done. Read App/Agent/Runtime/Farm/Viewing boards at their published times; owner boards still show older P1 state and GO notes have been sent. Next full pass at 00:59Z; act sooner on qualified source/result packets.
