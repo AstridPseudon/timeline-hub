@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T18:48:44Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 20 | status age 0m -->
-# app board, 2026-10-24T18:49Z
+<!-- app | 2026-10-24T18:52:26Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 17 | status age 1m -->
+# app board, 2026-10-24T18:51Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -46,7 +46,7 @@
 
 | P3-D75-clean | Clean same-blob home packet and ledger | Luna | Merge receipt pending | doing | app-P3-D75b-home-receipt-1848 | Actual home/ledger and machine-computed hash correction; original report retained. No repeated suite or new review gate. | Source1839 |
 
-| P1-current | Updated parent-source control | Service; Luna | Actual31083 terminalPASS | review | Producer1841; verdict1846 | Readiness1 and original2 PASS; capturedtuple retained. No P3 serialization. | App830252 |
+| P1-current | Updated parent-source control | Service; Luna | Independent1846 PASS | merged | Actual31083; verdict1846 | Readiness1/original2 PASS on App830252,Agent263696,Runtime1bae. Exact pins/hashes/XML qualified. | App830252 |
 
 | P2-D80-asset | RegisterAsset alone | Luna; Service | D80 owner; recipe1846 | doing | app-P2-D80-isolated-recipes-1846 | Diagnostic exact one-case grep; unchanged spec. Submit pinned/preflighted, stagger disk below8.5GB. No gate credit. | Current source |
 | P2-D80-placement | Automatic placement alone | Luna; Service | D80 owner; recipe1846 | doing | app-P2-D80-isolated-recipes-1846 | Diagnostic exact one-case grep; unchanged spec. Submit pinned/preflighted, stagger disk below8.5GB. No gate credit. | Current source |
@@ -64,13 +64,13 @@ regressions: 0 confirmed open App source findings. D69 all four restorations hom
 Blockers: Runtime — New popup authenticated shot-owner422 in22847, exactpeer1802; source owner owed there.
 Blockers: Runtime kit — D78 live switch1846: waiting actual auto-stack install1847; fallback submit at19:06. Exact headless realm unavailable; no synthetic reconstruction.
 Blockers: Final cut — Current P2/P3 nine core cases remain unqualified; Runtime coordinates final suites and ZIP.
-Next ready: consume parent and D75b reviews; normal merge on PASS; P3 through one-command pinned preflight submit immediately. D79 smoke body later behind gate priority.
+Next ready: P3 one-command submission running now. D80 source merge queued; submit five exact one-case diagnostics, stagger disk below8.5GB. D78 live route highest priority.
 
-live 3 / cap 6; ready-undispatched 0. Luna1848 finite home/ledger,1846 D80 recipes,1846 P1 verdict. P3 merge queued; no ready original held.
+live 1 / cap 6; ready-undispatched 0 workers. Luna1848 finite home/ledger. P3 submit command active; D80 source merge queued. D79 rerun later after D80.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
-Disk: About8.9GB free; below9GB trigger peer renewed. Heavy stop below8GB and D74 worker caps observed. Guarded recycle removed one ended clean non-KEEP tree; other finished trees already recycled. Deferred kit routes gated below9GB; prior refused routes stopped.
-Inbox consumed through1631661 bytes plus lead D80 relay1844, including D75b, D78 and non-gating D79. Runtime and Agent normal hub boards rechecked. D75 scope blocker cleared.
+Disk: About9.0GB free; below9GB trigger peer renewed. Heavy stop below8GB and D74 worker caps observed. Guarded recycle removed one ended clean non-KEEP tree; other finished trees already recycled. Deferred kit routes gated below9GB; prior refused routes stopped.
+Inbox consumed through1633453 bytes plus D80 full/D79 rerun direction, including D75b, D78 and non-gating D79. Runtime and Agent normal hub boards rechecked. D75 scope blocker cleared.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
 Blockers: App lead kit — Disk8.6GB below9 trigger; exact deferred guarded graph/retention route requested again. Prior denied targets stay stopped; no output release before verdict.
