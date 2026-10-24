@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T15:04:41Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 4m -->
-# runtime board, 2026-10-24T15:00:00Z
+<!-- main | 2026-10-24T15:07:38Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 2m -->
+# runtime board, 2026-10-24T15:05:32Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -85,8 +85,9 @@
 | U1d-core-review | Review core and upstream union | Luna | True two-parent merge | merged | Review 1346 PASS | Core authority and daemon union passed. No new normalized Ruff/Pyright diagnostics; existing 2 strict xfail policy exits disclosed. | f69ad5813 |
 | U1d-producer-handback | Return fixture and producer inventory | Luna | Actual e68 home | merged | rt-U1d-handoff-1401 PASS | Wire and 15 clients exact; manifest adds genuine visual fixture. [Handback](../../design/rt-U1d-handoff-1401.md) | e68cf2316 |
 | U1d-consumer-rebind | Rebind producer identity in consumers | Agent / App Luna | Normal vendor checks passed | merged | Agent custody1410; App adoption1404 | Agent5492 and Appbe98 adopt e68 provenance. Canonical15/14 bytes unchanged. D61 successor adoption remains separate. | Agent5492 / Appbe98 |
-| R-recorder-abi-authority | Persist accepted recorder mode under D62 | HARD Sol | D62 decided; wire1447 parallel | doing | rt-R-recorder-D62-producer-sol-1450 | D62 declines submit-time custody. Compute accepted-record mode once; immutable event and metadata authenticate history. | Base d068 held |
-| R-forward-created-authority | Preserve omitted forward allocation claims | HARD Sol | Agent exact two-case source handback | doing | rt-R-forward-created-authority-sol-1450 | Auth.py only; preserves explicit claims and reservation custody. Separate from store/port D62 source. | Base e68 |
+| R-D62-joined-producer | Join exact mode, forward auth and wire | Luna | Three committed source outputs | doing | rt-R-D62-joined-producer-1503 | Exact source-blob join on reviewed wire6e8; no semantic rewrite. Consumer9460 source available for legacy control; original credit stays Agent-owned. | Pending |
+| R-recorder-abi-authority | Persist accepted recorder mode under D62 | HARD Sol / Luna | Joined source and independent security | review | Author1450; join1503 | 363 PASS; one retained Agent legacy-fork refusal needs qualified consumer input. Existing290 controls pass; zero new static diagnostics. | 8825219b4 held |
+| R-forward-created-authority | Authenticate omitted forward allocation claims | HARD Sol / Luna | Joined source and independent security | review | Author1450; join1503 | 323 PASS; explicit claims retained. Broader forged-native-write probe remains visibly failed under D62 producer-trust scope. | 943365586 held |
 | R0-D61-history-wire | Generate approved optional history ABI field | Luna | Joined authenticated producer | gated:producer | Author1447; independent1454 PASS | Source6e8:148 retained positives plus16 corrected recorded-response PASS; no new static diagnostics. [Review](../../design/rt-R0-D61-wire-review-1454.md) | 6e8ae0142 |
 | R-recorder-native-custody | Review eight native omission captures | Luna | D62 source scope decided | merged | Review1445 PASS source cause | Eight actual accepts verified. D62 defers submit completeness; no new custody seam. [Review](../../design/rt-R-recorder-native-custody-review-1445.md) | Evidence only |
 | R-recorder-abi-security | Review exact coverage authority design | Luna | Design assessment complete | merged | Luna1422 design only | Validated request can select regime; exact full coverage must be proved. Final source review remains required. [Design](../../design/rt-R-recorder-abi-security-design-1422.md) | Base438 source facts |
@@ -143,7 +144,7 @@ Historical pinned proof (D56 retires further pinned runs): P1 remains historical
 Provider completion: Runtime 0915 and independent 0923 retain original cause, hook firing, durable acceptance and request correlation UNKNOWN. Nine controls passed; temporary JUnit loss remains disclosed. Original 20732/11466 remain failed and all 59 predicates unchanged. Viewing capture source 30cf passed independent 19; Agent owns home and runner wiring. No new Runtime source or original body is requested. [Source review](../../design/runtime-provider-completion-review-0923.md).
 
 KIT CHANGE: delivery-build f25dfab1 installed and qualified. Final service3309e33 independent1310 SOURCE PASS; actual lock,15 mappings and candidate guards qualified. Install waits D59 tuple.
-Blockers: Runtime — D62 producer Sol1450 and two forward created-claim refusals Sol1450 run in disjoint files; wire Luna1447 prepares in parallel. One joined security review then integrated proof.
+Blockers: Runtime — committed producer8825, forward auth9433 and reviewed wire6e8 now join in Luna1503. One cumulative security review, normal integration and central HTTP proof remain.
 Blockers: D61 consumers — old e68 rebind complete on Agent5492/Appbe98. New additive history producer needs Runtime source/security PASS before normal D39 adoption; App current cycles continue.
 Blockers: Final delivery — D59 cut requires every active lane0core/0regressions plus current P2/P3 PASS, then required final proofs and D51 live-main refresh.
 Blockers: App — current12541/1689 stop at missing external launch inputs before bodies. App Sol1437 and independent wholepath1437 own actual service-prefix repair; verdict1438 retains NOTRUN.
@@ -158,7 +159,7 @@ Pass 2026-10-24T14:34:59Z: INBOX consumed through Agent1425. Agent consumer d373
 
 live 3 / cap 4; ready-undispatched 0. Copied dispatcher14:55:43Z reports2 Sol/1 Luna. Wire reviewer1454 has since finished PASS; two disjoint source authors remain active. Normal count refresh pending.
 
-Sol exceptions: D62 producer1450 is explicitly mandated immutable custody code. Forward-created1450 is R1/R2 allocation/reservation authentication for two precise core failures. Generation and reviews use Luna.
+Sol exceptions: Both1450 source authors finished. Producer custody and forward R1/R2 allocation/reservation authentication justified Sol. Current mechanical join1503 and final independent security use Luna.
 
 Disk cleanup14:35Z: zero eligible finished clean Runtime trees. Sweep3 completed with directory broken-pipe noise; compaction completed without output. About8.5GB free; refused historical targets untouched.
 
@@ -175,3 +176,5 @@ Pass14:54Z: Wire1447 committed6e8. Luna1454 reviews exact source and corrects re
 Pass14:54Z peer intake: App current12541/1689 are preflight-only FAIL, all original bodies NOTRUN. Existing FREEZE row now names actual launch1437 and verdict1438 owners. Three newly finished trees were already absent at recycle check; no refused target retried. Disk about8.4GB.
 
 Pass 2026-10-24T15:00:00Z: Wire independent1454 PASS on exact6e8; earlier148 same-tree positives retained and corrected central16 recorded-response cases pass with durable XML. Schema/generated15 inventory published unchanged. Wire remains producer-join-gated; D62 producer and forward source still active.
+
+Pass 2026-10-24T15:05:32Z: Both source authors finished; exact finals published. Luna1503 mechanically joins reviewed wire plus exact two source blobs and task tests, then one fresh security review. No live Sol or ready unassigned source work. App full8158 remains current checkpoint; current gates remain launch-only NOTRUN.
