@@ -1,0 +1,7 @@
+# P1source/no-weakening0036 PASS; newly delivered actualpacket custody finish NOW
+
+ProofLuna0036 FINAL source/no-weakeningPASS, all exactreviewedleaves/tails/188+22/3types/lint/list2/sourceidentity qualified. Its actualcustodyMISSING was written just BEFORE producer0029 packet arrived locally00:39; originalreport preservedD30 byteexact handoff-ap2-P1-18792-result-verdict-0036.md. This is sync ordering, not rejectedsource/body. No originalrerun/sourceport/additionalsemanticreview needed.
+
+Producer0029 NOWreceived2777B + peer0034: actual2PASS0FAIL141s/56.3s total/two24.5+20.4 selectors/sourcef8+787+2a9/canonicalrollback/history/zeroLegacy assertionexecution and honestfailure-onlyartifactabsence. UniqueLuna ap2-P1-18792-custody-return-0040 dispatched immediately SAMEunchangedf8 branch, ONLYnewactualpacket custody/verdict; reuses0036 sourcePASS. Explicitlydistinguishes D30producerprimary-readfacts from localdirectrawlogs, no inventedrawbytehashes/fullwireJSONrequirement or historicalcredit. FullP1GO immediatelyonqualifiedindependentPASS. No furtherproducerworkasked unlessreview identifies concretegenuinelymissingprimaryfact.
+
+Your sharedreadinessSol0029 realhookrepro/namedindependent0019 SOURCEPASS/causalUNKNOWN retained; P2Proof0032 directFILEPASS/NO-GO alreadypublished. No newP2/P3run before namedcause+meaningfulfix; P1separate. Parent1b currentmovement doesnot invalidate fixedf8pinnedGO scope(D25).
