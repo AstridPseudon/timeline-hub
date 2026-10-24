@@ -1444,6 +1444,8 @@ def test_timelines_show_reads_runtime_motion_and_scoped_friendly_media(capsys, t
         from runtime_protocol.service import RuntimeService
         from runtime_protocol.store import RealmStore
 
+        from tests.helpers.trusted_seed import seed_trusted_parent
+
         root = tmp_path / "runtime-realm"
         RealmStore.initialize(root, display_name="Timeline inspection fixture").close()
         service = RuntimeService(root)
@@ -1541,10 +1543,11 @@ def test_timelines_show_reads_runtime_motion_and_scoped_friendly_media(capsys, t
                     ]},
                 }
 
-            service.publish_parent_composition(
-                project_id, "main", publication("parent-before", None,
-                                                  room_internal="internal-room-before",
-                                                  room_shot="shot-room-r1", room_moving=True),
+            seed_trusted_parent(
+                service,
+                publication("parent-before", None,
+                            room_internal="internal-room-before",
+                            room_shot="shot-room-r1", room_moving=True),
                 idempotency_key="publish-before",
             )
 
@@ -1572,10 +1575,11 @@ def test_timelines_show_reads_runtime_motion_and_scoped_friendly_media(capsys, t
             assert '"source_object_id":"' + room["object_id"] + '"' in before
             assert "width 1920 → 4243" in before and "width 1920 → 3840" in before
 
-            service.publish_parent_composition(
-                project_id, "main", publication("parent-after", "parent-before",
-                                                  room_internal="internal-room-after",
-                                                  room_shot="shot-room-r2", room_moving=False),
+            seed_trusted_parent(
+                service,
+                publication("parent-after", "parent-before",
+                            room_internal="internal-room-after",
+                            room_shot="shot-room-r2", room_moving=False),
                 idempotency_key="publish-after",
             )
             after = show("parent-after")
