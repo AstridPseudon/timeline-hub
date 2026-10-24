@@ -33,6 +33,7 @@ LANE_MARKERS = {
     "integration": "needs a long-lived subprocess, Node, ffmpeg, the network, or a second checkout",
     "darwin_native": "needs native macOS APIs; skipped elsewhere",
     "live": "needs real provider credentials",
+    "needs_real_pidfd": "exercises the real Linux pidfd syscalls; only the seccomp sandbox-process-control job deselects it",
 }
 
 # --- The skip registry ------------------------------------------------------
