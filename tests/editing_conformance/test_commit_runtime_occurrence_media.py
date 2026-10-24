@@ -18,106 +18,93 @@ OWNER = 'occurrence:occ-a'
 TARGET = OWNER + '/clip:clip-a'
 
 
-def _canonical_publication(project, timeline, publication, current, digest):
-    """Convert the exact fixture inputs into Runtime's accepted closure shape."""
-    parent_payload = copy.deepcopy(publication['parent_composition'])
-    parent = {'revision_id': publication['parent_revision_id'],
-              'content_digest': digest(parent_payload), 'payload': parent_payload}
-    required_shots = {(row['shot_id'], row['shot_revision_id'])
-                      for row in parent_payload['occurrences']}
-    source_shots = publication.get('shot_revisions', current['shot_revisions'])
-    shots = []
-    for source in source_shots:
-        if (source['shot_id'], source['revision_id']) not in required_shots:
-            continue
-        payload = copy.deepcopy(source['payload'])
-        payload['internal_timeline_revision_id'] = source['internal_timeline_revision_id']
-        shots.append({'shot_id': source['shot_id'], 'revision_id': source['revision_id'],
-                      'internal_timeline_revision_id': source['internal_timeline_revision_id'],
-                      'content_digest': digest(payload), 'payload': payload})
-    required_internals = {source['internal_timeline_revision_id'] for source in shots}
-    source_internals = publication.get('internal_timeline_revisions', current['internal_timeline_revisions'])
-    internals = []
-    for source in source_internals:
-        if source['revision_id'] not in required_internals:
-            continue
-        payload = copy.deepcopy(source['payload'])
-        internals.append({'timeline_id': source['timeline_id'], 'revision_id': source['revision_id'],
-                          'content_digest': digest(payload), 'payload': payload})
-    shots.sort(key=lambda image: (image['shot_id'], image['revision_id']))
-    internals.sort(key=lambda image: (image['timeline_id'], image['revision_id']))
+def _create_fixture(service, project, document, selection, *, authorize):
+    """Author the exact payloads from an empty bootstrap through commitTimeline."""
+    from astrid.sdk.timeline._doc_patch import Closure, allocations
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
 
-    media = {}
+    head = service.get_project_timeline(project, 'film')
+    parent = service.get_project_parent_composition_revision(
+        project, 'film', head['head_revision_id'])
+    empty = {'schema_version': 1, 'project_id': project, 'timeline_id': 'film',
+             'parent_revision': {key: parent[key] for key in
+                                 ('revision_id', 'content_digest', 'payload')},
+             'shot_revisions': [], 'internal_timeline_revisions': [],
+             'dependency_manifest': parent['dependency_manifest']}
+    bundle = bundle_from_document(empty)
+    verified = service.get_project_verified_media(project, selection, authorize=authorize)
+    calls = []
 
-    def collect(value):
-        if isinstance(value, dict):
-            for key, child in value.items():
-                if key in {'media_id', 'object_id'} and isinstance(child, str):
-                    media_id = child if child.startswith('sha256:') else 'sha256:' + child
-                    if len(media_id) == len('sha256:') + 64:
-                        media[media_id] = {'media_id': media_id, 'content_digest': media_id}
-                collect(child)
-        elif isinstance(value, list):
-            for child in value:
-                collect(child)
+    def append(call):
+        nonlocal bundle
+        calls.append(call)
+        bundle = execute(bundle, [call], verified_media=[verified]).bundle
 
-    for image in [parent, *shots, *internals]:
-        collect(image['payload'])
-    return {'schema_version': 1, 'project_id': project, 'timeline_id': timeline,
-            'parent_revision': parent, 'shot_revisions': shots,
-            'internal_timeline_revisions': internals,
-            'dependency_manifest': {
-                'shots': [{key: image[key] for key in (
-                    'shot_id', 'revision_id', 'internal_timeline_revision_id', 'content_digest')}
-                          for image in shots],
-                'internal_timelines': [{key: image[key] for key in (
-                    'timeline_id', 'revision_id', 'content_digest')}
-                                       for image in internals],
-                'media': [media[key] for key in sorted(media)], 'documents': [],
-            }}
+    def patch(ref, before, value, path=()):
+        closure = Closure(bundle)
+        created = ([] if path else [row['ref'] for row in allocations(
+            closure, closure.resolve(ref), before, value)])
+        append({'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+                'created': created,
+                'args': {'changes': [{'op': 'set', 'ref': ref, 'path': list(path),
+                                      'before': {'state': 'present', 'value': before},
+                                      'value': value}]}})
 
+    def submit(commands, key):
+        head = service.get_project_timeline(project, 'film')
+        request = {'api_version': 1, 'project_id': project, 'timeline_id': 'film',
+                   'base_revision_id': head['head_revision_id'],
+                   'base_publication_id': head['head_publication_id'], 'commands': commands,
+                   'label': key, 'steps': [{'id': str(index), 'label': key, 'intent': 'Fixture setup',
+                       'tags': [], 'command_ordinals': [index],
+                       'patch': call['args']['changes'] if call['op'] == 'doc.patch' else []}
+                       for index, call in enumerate(commands)],
+                   'merge': 'atomic', 'dry_run': False, 'source': {'via': 'python'}}
+        return service.commit_timeline(project, 'film', request, idempotency_key=key,
+            publisher='media-editor', invocation_path=f'/v1/projects/{project}/timelines/film/commit',
+            authorize=authorize)
 
-def _seed_fixture(service, project, publication, *, timeline, idempotency_key):
-    """Accept the fixture closure through Runtime's supported setup boundary."""
-    from runtime_protocol.timeline_commit_store import TimelineCommitStore, digest, request_identity
-    from test_timeline_commit_acceptance import accept, validate_prepared
-
-    commits = TimelineCommitStore(service.store, validate_prepared=validate_prepared)
-    head = commits.head(project, timeline)
-    current = commits.revision_closure(project, timeline, head['revision_id'])
-    command = {'schema_version': 1, 'op': 'clip.move', 'version': '1',
-               'select': 'parent/clip:clip', 'args': {'on': 2}, 'created': []}
-    request = {'api_version': 1, 'project_id': project, 'timeline_id': timeline,
-               'base_revision_id': head['revision_id'], 'base_publication_id': head['publication_id'],
-               'commands': [command], 'rationale': 'Move clip'}
-    context = {'request': request,
-               'invocation': {'operation': 'commitTimeline',
-                              'path': f'/v1/projects/{project}/timelines/{timeline}/commit',
-                              'body': copy.deepcopy(request)},
-               'idempotency_key': idempotency_key, 'realm_id': service.realm['id'],
-               'publisher': 'author'}
-    context['request_hash'] = request_identity(context)
-    document = commits.revision_closure(project, timeline, head['revision_id'])
-    parent = document['parent_revision']
-    parent['revision_id'] = publication['parent_revision_id']
-    parent['payload']['config'] = {'clips': [], 'tracks': []}
-    parent['payload']['clips'] = [
-        {'id': 'clip', 'at': 2, 'hold': 1, 'track': 'picture',
-         'clipType': 'hold', 'opaque': {'clear': None}}]
-    parent['content_digest'] = digest(parent['payload'])
-    canonical_document = _canonical_publication(project, timeline, publication, current, digest)
-    record = {'ordinal': 0, 'command': copy.deepcopy(command),
-              'writes': [{'ref': 'parent/clip:clip', 'path': ['at'],
-                          'before': {'state': 'present', 'value': 2},
-                          'after': {'state': 'present', 'value': 2}}],
-              'reads': [],
-              'selections': [], 'bindings': [], 'created': [], 'dependencies': [], 'derived_writes': []}
-    value = {'expected_head': head, 'canonical_document': canonical_document,
-             'document_digest': digest(canonical_document),
-             'records': {'schema_version': 1, 'commands': [record], 'undo_of': [], 'restored_from': None},
-             'id_map': {'clip': 'clip'}, 'semantic_events': [], 'provider_version': 'fixture-1',
-             'compiler_version': 'fixture-1'}
-    return accept(commits, context, value)
+    authored_parent = copy.deepcopy(document['parent_revision']['payload'])
+    occurrences = authored_parent.pop('occurrences')
+    authored_parent['occurrences'] = []
+    patch('parent', parent['payload'], authored_parent)
+    # Admission has no local document effect; Runtime captures its authority.
+    calls.append({'schema_version': 1, 'op': 'media.admit', 'version': '1', 'select': None,
+            'args': {'inputs': [{'pin': {'media_id': selection['object_id'],
+                                        'content_digest': selection['object_id']},
+                                 'selection': selection}]}})
+    append({'schema_version': 1, 'op': 'occurrence.create', 'version': '1', 'select': 'parent',
+            'args': {'occurrence_id': 'occ-a', 'shot_id': 'chapter-shot', 'name': 'Chapter One',
+                     'track': 'picture', 'on': 8, 'duration': 10}})
+    current = document_from_bundle(bundle)
+    patch('internal:film', current['internal_timeline_revisions'][0]['payload'],
+          copy.deepcopy(document['internal_timeline_revisions'][0]['payload']))
+    current = document_from_bundle(bundle)
+    shot = copy.deepcopy(document['shot_revisions'][0]['payload'])
+    shot['internal_timeline_revision_id'] = current['shot_revisions'][0]['internal_timeline_revision_id']
+    patch('shot:chapter-shot', current['shot_revisions'][0]['payload'], shot)
+    current = document_from_bundle(bundle)
+    before = current['parent_revision']['payload']['occurrences'][0]
+    occurrence = {**copy.deepcopy(occurrences[0]),
+                  'shot_revision_id': before['shot_revision_id']}
+    patch('parent', before, occurrence, ('occurrences', 'occurrence_id:occ-a'))
+    submit(calls, 'popup-baseline')
+    result = submit([{'schema_version': 1, 'op': 'occurrence.place-shared', 'version': '1',
+                      'select': OWNER, 'args': {'occurrence_id': 'occ-b', 'on': 10}}], 'popup-sibling')
+    actual = result['data']['canonical_document']
+    expected_parent = copy.deepcopy(document['parent_revision']['payload'])
+    actual_shot, = actual['shot_revisions']
+    actual_internal, = actual['internal_timeline_revisions']
+    for row in expected_parent['occurrences']:
+        row['shot_revision_id'] = actual_shot['revision_id']
+    expected_shot = copy.deepcopy(document['shot_revisions'][0]['payload'])
+    expected_shot['internal_timeline_revision_id'] = actual_internal['revision_id']
+    if (actual['parent_revision']['payload'] != expected_parent
+            or actual_shot['shot_id'] != 'chapter-shot' or actual_shot['payload'] != expected_shot
+            or actual_internal['timeline_id'] != 'film'
+            or actual_internal['payload'] != document['internal_timeline_revisions'][0]['payload']):
+        pytest.fail('supported fixture commits changed authored payloads or shared ownership')
 
 
 @pytest.fixture(params=['image', 'video'])
@@ -228,21 +215,9 @@ def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes
                 if row.get('asset') == 'picture':
                     row['asset'] = old['asset']
         document['shot_revisions'][0]['payload']['text_bindings'] = []
-        service.create_timeline(project, 'film', idempotency_key='popup-timeline')
-        from runtime_protocol.timeline_commit_store import TimelineCommitStore
-        from test_timeline_commit_acceptance import validate_prepared
-
-        TimelineCommitStore(service.store, validate_prepared=validate_prepared).bootstrap(
-            project, 'film', authorize=authorize)
-        _seed_fixture(service, project, {
-            'project_id': project, 'timeline_id': 'film', 'expected_head': None,
-            'parent_revision_id': 'popup-baseline', 'parent_composition': parent,
-            'shot_revisions': [{key: value for key, value in row.items() if key != 'content_digest'}
-                               for row in document['shot_revisions']],
-            'internal_timeline_revisions': [{key: value for key, value in internal.items()
-                                             if key != 'content_digest'}],
-        }, timeline='film', idempotency_key='popup-baseline')
         service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
+        service.create_timeline(project, 'film', idempotency_key='popup-timeline')
+        _create_fixture(service, project, document, old, authorize=authorize)
 
         selected, closures, candidates = [], [], []
         real_selected = RequestCommitPort.selected_media
