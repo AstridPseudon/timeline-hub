@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T06:25:55Z | dispatcher heartbeat 2s | live 3 (sol 1, luna 2, other 0) | busy30 19 | status age 1m -->
-# runtime board, 2026-10-24T06:24:47Z
+<!-- main | 2026-10-24T06:28:28Z | dispatcher heartbeat 6s | live 1 (sol 1, luna 0, other 0) | busy30 20 | status age 1m -->
+# runtime board, 2026-10-24T06:27:24Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -56,6 +56,7 @@
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Current installed qualification passed | merged | Agent0508; independent0517 PASS | Exact seven originals passed on managed child 3b5c, Agent ba8f and Runtime f320. Current 9cd relevant sources and test AST match. | Managed child 3b5c |
 | OPS-farm-agent-full | Correct farm full-suite environment | Sol / Luna | Normal environment and source custody | doing | Sol 0617; independent path 0617 | Second Luna review failed missing Node modules and service lease proof. [Review](../../design/runtime-farm-full-v2-return-review-0614.md) | 1a1ccab packet held |
+| OPS-child-dependency-route | Assess supported dependency reuse | Luna | Agent requested timeout source facts | doing | rt-OPS-child-deps-assess-0628 | Read-only maker and lock assessment. No new child request, installation or old child relabel. | Source only |
 | R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Integrated proof passed | merged | Review 0405; integrated 0413 PASS | 13 standalone cases and 243 controls passed; 74 configured deselections. [Proof](../../design/runtime-historical-image-integrated-0413.md) | 2b49da8d6 / 2e96c68c |
 | R-D42-history-memo | Harden verified replay memo | Sol / Luna | Post-delivery scope under D47 | gated:D47 | Design0448; review0454 PASS | Deferred by D47. No stable validation boundary; nine state attacks remain open. Source stays unmerged. | Tests 6c6bb375; source held |
 | R-D42-proof-pin | Preserve a compatible future memo pin | Sol / Luna | Post-delivery safe memo under D47 | gated:D47 | No active pin author | D45: next P2/P3 uses existing37eb without memo. Prior unsafe backport stays held; no new checkout needed. | Earlier backport held |
@@ -68,9 +69,9 @@
 | F-D09-remainder | Map three retained managed-scene originals | Luna / Luna | Independent mapping passed | merged | Author 0557; review 0601 PASS | Exact retained three-case PASS on Runtime 8ea; current 1d9 import probe is separate. [Review](../../design/runtime-D09-review-0601.md) | Agent 2007 unchanged |
 | F-G5-restructure-remainder | Qualify seven restructure originals | Luna / Luna | Independent result review passed | merged | Author 0557; review 0602 PASS | Seven exact originals passed in 54.26 seconds on Agent 2007 and Runtime 1d9dd. [Review](../../design/runtime-restructure-review-0602.md) | Agent 2007 unchanged |
 | F-normal-publish-remainder | Qualify eight publication originals | Luna / Luna | Agent renderer-free identity caller fix | blocked:agent | Author 0557; review 0601 FAIL | Seven passed; one strict no_renderer failure before submit. Exact existing raw-projection seam returned. [Review](../../design/runtime-normal-publish-review-0601.md) | Agent 2007 unchanged |
-| F-renderless-store | Open sessions without renderer imports | Sol / Luna | Independent review | review | Author0619; review0626 | New regressions fail on old source; changed source passed 21 controls. One existing type error; zero new diagnostics. | e149f8993 |
-| F-helper-originals | Qualify fourteen retained helper rows | Luna | Independent exact result review | review | Author0622; review0627 | Thirteen passed in 73.955 seconds. Known missing word binding remains open and unrun; no edits or guard changes. | Agent bb50 unchanged |
-| F-R2-root-originals | Qualify nine retained root cases | Luna | Independent exact result review | review | Author0622; review0625 | Nine exact originals passed in 3.63 seconds; no edits. Source and body hashes retained. | Agent bb50 unchanged |
+| F-renderless-store | Open sessions without renderer imports | Sol / Luna | Agent home merge and qualification | merging | Author0619; review0626 PASS | Independent 21 passed; zero new diagnostics. Opaque callable limit retained. [Review](../../design/runtime-renderless-store-review-0626.md) | e149f8993 |
+| F-helper-originals | Qualify fourteen retained helper rows | Luna | Missing authenticated word binding | blocked:agent | Author0622; review0627 scoped PASS | Thirteen passed; one remains open. Exact missing word binding returned to Agent. [Review](../../design/runtime-helper-review-0627.md) | Agent bb50 unchanged |
+| F-R2-root-originals | Qualify nine retained root cases | Luna | Independent exact result review passed | merged | Author0622; review0625 PASS | Nine originals passed; source only. Pre/post capture limit disclosed. [Review](../../design/runtime-R2-root-review-0625.md) | Agent bb50 unchanged |
 
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
@@ -90,4 +91,4 @@ Later: D46 closes U2c; no new relay or provider custody backend. Its upstream co
 
 Blockers: Agent — normal-publication original waits for Runtime source0619 review and Agent home merge.
 
-Next ready: None waiting. Farm Sol0617 repairs its packet. Renderer-free source0626, root result0625 and helper result0627 are in independent review. One helper binding remains open; no original repeats.
+Next ready: None waiting. Farm Sol0617 and child dependency assessment0628 active. Renderer-free source awaits Agent home. Nine root and thirteen helper originals returned; one helper binding remains open.
