@@ -1,0 +1,137 @@
+{
+  "aba_row": {
+    "bytes": 811,
+    "preserved": true,
+    "required_sha256": "962906266ee294a590958a4bcd5d4d7c1fda8dbcf9fc205f4e16ccbf3089d102",
+    "sha256": "962906266ee294a590958a4bcd5d4d7c1fda8dbcf9fc205f4e16ccbf3089d102",
+    "source": "design/agent-OPS-ABA-row-0245.txt"
+  },
+  "base_runtime_integration": "f3208b26b",
+  "classifications": {
+    "agent-remotion-0013": {
+      "active_rows": [],
+      "current": "no exact 0245 suites.conf row",
+      "disposition": "UNKNOWN; do not remove tests/agent-remotion-0013.env in this packet",
+      "evidence": [
+        "0245 suites.conf has zero active rows containing agent-remotion-0013",
+        "current full handoff selects full-current-v3-1229 with agent-remotion-v3-819acf-1110",
+        "retirement refusal/history is not used as unused proof"
+      ],
+      "final": "not selected by the current full-current-v3 recipe",
+      "gate": "no exact 0245 suites.conf row; historical evidence is not liveness proof",
+      "provision": "UNKNOWN; env-only reference remains and no remote lease/process evidence was supplied"
+    },
+    "composition14-255b6856": {
+      "active_rows": [
+        141,
+        142
+      ],
+      "current": "generic full/targeted aliases are not the current full requester",
+      "disposition": "retire only generic aliases; preserve named gate/provision rows",
+      "evidence": [
+        "current full handoff says not to reconstruct from old full or d09 rows",
+        "named composition14 node/import rows remain exact source custody"
+      ],
+      "final": "not the final full recipe; current final recipe is full-current-v3-1229",
+      "gate": "held by composition14-runtime-import-integration-1153 at line 142",
+      "provision": "held by agent-remotion-composition14-255b6856-nodes at line 141",
+      "retired_rows": [
+        21,
+        23
+      ]
+    },
+    "main95bd": {
+      "active_rows": [
+        8,
+        19,
+        123,
+        125,
+        126,
+        127,
+        128,
+        129,
+        130,
+        133
+      ],
+      "current": "not selected by current full-current-v3 requester",
+      "disposition": "HELD; no row comments",
+      "evidence": [
+        "agent-main95bd-final-current-qualification.md records the exact passing qualification",
+        "frozen proof/final-gate scope must remain runnable with exact custody"
+      ],
+      "final": "frozen Main014 qualification remains custody evidence",
+      "gate": "frozen gate1/D13/WC6 rows remain runnable",
+      "provision": "held by agent-remotion-main95bd-nodes at line 123 and env-bound rows"
+    },
+    "published14-091aa23e": {
+      "active_rows": [
+        14,
+        132,
+        134,
+        136
+      ],
+      "current": "not selected by current full-current-v3 requester",
+      "disposition": "HELD; no row comments",
+      "evidence": [
+        "agent-published14-main497-final-review.md approves the exact frozen publication proof",
+        "public/final scope remains protected despite not being the current full requester"
+      ],
+      "final": "published Main014/Main497 final review is retained evidence",
+      "gate": "frozen public/integration proof rows remain runnable",
+      "provision": "held by published14 nodes/full rows"
+    }
+  },
+  "guard_scan": {
+    "candidate_target_occurrences": {
+      "agent-remotion-0013": 0,
+      "composition14-255b6856": 4,
+      "main95bd": 10,
+      "published14-091aa23e": 4
+    },
+    "comments_are_references": true,
+    "env_target_occurrences": {
+      "agent-remotion-0013": 1,
+      "composition14-255b6856": 1,
+      "main95bd": 1,
+      "published14-091aa23e": 1
+    },
+    "retirement_eligibility": "not claimed; lead must run normal guarded retirement after review"
+  },
+  "snapshot": {
+    "active_rows": 141,
+    "candidate_active_rows": 139,
+    "captured_utc": "2026-10-24T02:45:20.793675+00:00",
+    "machine": "vm",
+    "sha256": "07260c501b3cefdd98f4ee5765d72fb26363bae354ee2f15689087bbc7c444ce"
+  },
+  "source_documents": {
+    "agent_status": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md",
+      "sha256": "c3851b674e7d2620ae88b4f6e31f091585e4d22692a20eee6f2e7418d23fdc55"
+    },
+    "board_header": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/BOARD-HEADER.md",
+      "sha256": "dede06b7afc38415454c89a72e4bd26a55e9759d913684aca3c9f799fc3ad900"
+    },
+    "composition14_preflight": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-composition14-runtime-preflight-1140.md",
+      "sha256": "16eadfe8135b241b1f13fc7c0fa61f5e3f7840331c2f4d0ca365471fdc216de9"
+    },
+    "current_full_recipe": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-F-full-env-handoff-1229.md",
+      "sha256": "718fe5ed9dd2ae9d0e5f9898c5a08f97bb955b01c07ed127404b5643ef61e21a"
+    },
+    "main95bd_frozen": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-main95bd-final-current-qualification.md",
+      "sha256": "507839dbe92f53960f0a75b05198c68de6ca1a98682dd0edc075a037f4c21d1c"
+    },
+    "published14_frozen": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-published14-main497-final-review.md",
+      "sha256": "df586fca8757aec84a61bb33bdd11ba9c31d6c1ca30080b96e173c6f64bd7648"
+    },
+    "runtime_status": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/STATUS.md",
+      "sha256": "945e24ca3bcb30f4ba1466ebcba409e606ac96b3ccd6e7ca32f12a080553c359"
+    }
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "format_version": 3,
+  "task": "OPS-suites-prune actual use 0253",
+  "decision": "private proposal only; no live apply, retirement, deletion, install, or request",
+  "base_commit": "f3208b26b",
+  "remote_snapshot": {
+    "path": "design/agent-OPS-suites-snapshot-0245.json",
+    "machine": "vm",
+    "captured_utc": "2026-10-24T02:45:20.793675+00:00",
+    "bytes": 120424,
+    "sha256": "07260c501b3cefdd98f4ee5765d72fb26363bae354ee2f15689087bbc7c444ce",
+    "protected": [
+      "agent-remotion-current",
+      "agent-remotion-v3-819acf-1110"
+    ]
+  },
+  "source": {
+    "baseline_path": "baseline-suites.conf",
+    "candidate_path": "candidate-suites.conf",
+    "baseline_bytes": 111609,
+    "baseline_sha256": "04d4959cfabb51d22687b3fb97f0a658017b16e98495d65c987b8304227e3203",
+    "candidate_bytes": 109981,
+    "candidate_sha256": "5cb281db2b31e3fac8204ad24a763132961d976242f2b047ea66560e56ce337e",
+    "active_rows": 141,
+    "candidate_active_rows": 139,
+    "unique_active_keys": 141,
+    "candidate_unique_active_keys": 139
+  },
+  "patch": {
+    "path": "agent-source.patch",
+    "bytes": 9340,
+    "sha256": "684d39a20277d2de9ad999b5b54129cdc5dc5c97387b0c3f16249ac78492c423",
+    "hunks": 2,
+    "comment_stamp": "2026-10-24T02:55Z"
+  },
+  "aba_row": {
+    "path": "agent-OPS-ABA-row-0245.txt",
+    "bytes": 811,
+    "sha256": "962906266ee294a590958a4bcd5d4d7c1fda8dbcf9fc205f4e16ccbf3089d102"
+  },
+  "env_sha256_verified": true,
+  "protected_outside_bytes": true,
+  "actual_disk_freed_gb": 0,
+  "product_tests": "not run; source-only operational packet",
+  "forbidden_actions_not_taken": [
+    "live Agent/main config or env edits",
+    "retire/request/daemon/provision/bench/kit",
+    "process or lease probe",
+    "old-refusal retry",
+    "product/schema/client/pin/kit/tuple/Git writes",
+    "deletion of live targets"
+  ],
+  "evidence_path": "evidence.json"
+}
