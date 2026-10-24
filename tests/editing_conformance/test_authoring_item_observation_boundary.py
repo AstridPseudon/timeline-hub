@@ -108,6 +108,29 @@ def test_collection_candidate_requires_source_to_authoring_item_projection():
     assert bundle['shots'][shot]['payload']['items'] != authored
 
 
+@pytest.mark.parametrize('reversed_order', [False, True])
+def test_runtime_item_identity_uses_published_binding_not_position(monkeypatch, reversed_order):
+    baseline, old, _, _ = inputs()
+    state = State(bundle_from_document(baseline))
+    shot = state.occurrence(OWNER)['shot_id']
+    source = state.bundle['source_mapping']['shots'][shot]
+    observed = state.get(OWNER + '/shot', ['payload', 'items'])['value']
+    identity = observed[0]['item_id']
+    authored = state.bundle['shots'][shot]['payload']['items'][0]['item_id']
+    assert source['item_id_map'][identity] == authored
+    assert identity != authored
+    other = copy.deepcopy(observed[0])
+    other.update(item_id='other:item', media_id='sha256:' + '3' * 64)
+    rows = [other, *observed] if reversed_order else [*observed, other]
+    monkeypatch.setitem(sys.modules, 'runtime_protocol', runtime_protocol)
+    assert location({'items': rows}, ['items', 'item_id:' + identity, 'media_id']) == {
+        'state': 'present', 'value': old['object_id']}
+    assert location({'items': rows}, ['items', 'item_id:other:item', 'media_id']) == {
+        'state': 'present', 'value': other['media_id']}
+    with pytest.raises(CommitRejected, match='provider observation has an ambiguous item path'):
+        location({'items': rows}, ['items', 'item_id:' + authored, 'media_id'])
+
+
 @pytest.mark.parametrize('rows, token', [
     ([{'item_id': 'a'}], '0'),
     ([{'item_id': 'a'}], 'item_id:missing'),
