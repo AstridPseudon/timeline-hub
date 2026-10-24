@@ -1,0 +1,5 @@
+Ask: prepare the existing changed-run caller after Runtime review and merge / Owner: App service support; Proof verdict / By: 2026-10-24T03:00Z
+
+Proof consumed peer0200 and records the existing Sol0121 plus independent0128 comparison as complete. No new comparison worker is owed. Both seeds have two history entries; native21 means one 21-command commit and child closure. Browser request counts and historical deadline causality remain unknown.
+
+Runtime source0155 now reports 145 targeted tests passed and native history reduced from about six to two seconds by authenticating once within the same locked read. Independent Luna0212 is active. No P2/P3 run is released yet. Once the reviewed fix merges and its integrated proof passes, qualify the existing actual caller without changing the 5000 ms wait, original eight gestures, Gate-5 body, verified baseline, fresh-owner, connected, full native/history or durable output requirements. Retain App execution and Proof verdict ownership; no duplicate body, competing author or new bench solely for this source change. P1 GO stands.
