@@ -1,0 +1,193 @@
+{
+  "checks": [
+    {
+      "label": "Agent exact source tree and harness custody",
+      "status": "PASS",
+      "value": {
+        "changed": [],
+        "expected_tree": "c658b5195d5c15f75f1c6e0dc63760b418b4168c",
+        "head": "cecf74b40525b9e3bfc7db4694649a15f6af3063",
+        "tree": "c658b5195d5c15f75f1c6e0dc63760b418b4168c"
+      }
+    },
+    {
+      "label": "Runtime exact pin and clean custody",
+      "status": "PASS",
+      "value": {
+        "head": "8ea0766f5e9fb23cea26c7398770a8aaac06b258",
+        "status": "clean",
+        "tree": "6047ac3033c3594b8f83db3afd8bb2c47cafa6d6"
+      }
+    },
+    {
+      "label": "validator and unchanged original body hashes",
+      "status": "PASS",
+      "value": {
+        "body_ast_sha256": "ca54f2d5059bb3b5cca1e8ee43156df6762d3a86739caa2aa18ffcb83f3ded82",
+        "target": "/home/user/work/wt/.test-agt-F-timeout-child-bind-0137-render-timeout-0137-1024014430-4004/tests/packs/rendering/test_threejs_backend.py",
+        "target_sha256": "9efe493cb2f8339177e07616b976afe6f9813ae4d415923ff25701b471e991c7",
+        "validator": "/home/user/work/wt/.test-agt-F-timeout-child-bind-0137-render-timeout-0137-1024014430-4004/astrid/core/timeline/validators/timeline.py",
+        "validator_sha256": "361f759eefeb133634d6b70af320fcb13bd1ad0fa33597860f1c6158696f9686"
+      }
+    },
+    {
+      "label": "normal child receipt and bench-store lookup",
+      "status": "PASS",
+      "value": {
+        "entry_key": "d12c6f2c4d9a7b01e2e50250b9883c880b9fd5839d48d367c8f6680f1aa478ea",
+        "identity": {
+          "agent_sha": "521c88802330901281cc37ba25818baf2575f05e",
+          "backend_sha": "8ea0766f5e9fb23cea26c7398770a8aaac06b258",
+          "client_tuple": {
+            "packages/python/astrid_runtime_client/__init__.py": "78a69901f7c68d67b152410732f1c42dd30954ca07e7b4b9a319d4ddbd9035e6",
+            "packages/python/astrid_runtime_client/contract_metadata.py": "a79b2e12de96ec8f2c4bf7b6811ccb3538baf18ca839172f7a3d7bf525029aae",
+            "packages/python/astrid_runtime_client/generated.py": "9b5686c388347108898956c3475b16960e2434d64adcefcc71a26fc269cdd904",
+            "packages/python/astrid_runtime_client/timeline_commit_types.py": "88c67d9eb650b445b8ad04c9011c1f44f1ec5e9f72a4a733050515de7ec0b616"
+          }
+        },
+        "path": "/home/user/work/bench-store/entries/child-d12c6f2c4d9a7b01e2e50250b9883c880b9fd5839d48d367c8f6680f1aa478ea",
+        "registration": {
+          "hash": "05f0916d1663908a79030cb24784614176ca4f200ab710de7d76f375e11d260f",
+          "report_sha256": "c087ef4d9ce8fa0bbeb8eceb255f120c09d8c252440eb24fdec735f0482117d7"
+        },
+        "requested_name": "venv-agent-child-render-current-0134"
+      }
+    },
+    {
+      "label": "current child installed import/source custody",
+      "status": "PASS",
+      "value": {
+        "direct_source_paths": {
+          "astrid": "/home/user/work/bench-store/entries/child-d12c6f2c4d9a7b01e2e50250b9883c880b9fd5839d48d367c8f6680f1aa478ea/.child-venv-source-venv-agent-child-render-current-0134/agent",
+          "astrid-runtime": "/home/user/work/bench-store/entries/child-d12c6f2c4d9a7b01e2e50250b9883c880b9fd5839d48d367c8f6680f1aa478ea/.child-venv-source-venv-agent-child-render-current-0134/runtime"
+        },
+        "probe": {
+          "direct_urls": {
+            "astrid": {
+              "dir_info": {},
+              "url": "file:///home/user/work/bench-store/entries/child-d12c6f2c4d9a7b01e2e50250b9883c880b9fd5839d48d367c8f6680f1aa478ea/.child-venv-source-venv-agent-child-render-current-0134/agent"
+            },
+            "astrid-runtime": {
+              "dir_info": {},
+              "url": "file:///home/user/work/bench-store/entries/child-d12c6f2c4d9a7b01e2e50250b9883c880b9fd5839d48d367c8f6680f1aa478ea/.child-venv-source-venv-agent-child-render-current-0134/runtime"
+            }
+          },
+          "executable": "/home/user/work/bench-store/entries/child-d12c6f2c4d9a7b01e2e50250b9883c880b9fd5839d48d367c8f6680f1aa478ea/bin/python",
+          "origins": {
+            "astrid": "/home/user/work/bench-store/entries/child-d12c6f2c4d9a7b01e2e50250b9883c880b9fd5839d48d367c8f6680f1aa478ea/lib/python3.13/site-packages/astrid/__init__.py",
+            "astrid_runtime": "/home/user/work/bench-store/entries/child-d12c6f2c4d9a7b01e2e50250b9883c880b9fd5839d48d367c8f6680f1aa478ea/lib/python3.13/site-packages/astrid_runtime/__init__.py",
+            "astrid_runtime_client": "/home/user/work/bench-store/entries/child-d12c6f2c4d9a7b01e2e50250b9883c880b9fd5839d48d367c8f6680f1aa478ea/lib/python3.13/site-packages/astrid_runtime_client/__init__.py",
+            "runtime_protocol": "/home/user/work/bench-store/entries/child-d12c6f2c4d9a7b01e2e50250b9883c880b9fd5839d48d367c8f6680f1aa478ea/lib/python3.13/site-packages/runtime_protocol/__init__.py",
+            "validator": "/home/user/work/bench-store/entries/child-d12c6f2c4d9a7b01e2e50250b9883c880b9fd5839d48d367c8f6680f1aa478ea/lib/python3.13/site-packages/astrid/core/timeline/validators/timeline.py"
+          },
+          "prefix": "/home/user/work/bench-store/entries/child-d12c6f2c4d9a7b01e2e50250b9883c880b9fd5839d48d367c8f6680f1aa478ea",
+          "validator_sha256": "361f759eefeb133634d6b70af320fcb13bd1ad0fa33597860f1c6158696f9686",
+          "version": [
+            3,
+            13,
+            16
+          ]
+        },
+        "site": "/home/user/work/bench-store/entries/child-d12c6f2c4d9a7b01e2e50250b9883c880b9fd5839d48d367c8f6680f1aa478ea/lib/python3.13/site-packages"
+      }
+    },
+    {
+      "label": "old c886 RED source versus current child",
+      "status": "PASS",
+      "value": {
+        "agent_sha": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+        "path": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e",
+        "status": "stale-red-source",
+        "validator_sha256": "90644ccc8565be9c733dec452229cf7538c574b2d051625fb21392572745b785"
+      }
+    },
+    {
+      "label": "parent import origins",
+      "status": "PASS",
+      "value": {
+        "astrid": "/home/user/work/wt/.test-agt-F-timeout-child-bind-0137-render-timeout-0137-1024014430-4004/astrid/__init__.py",
+        "astrid_runtime_client": "/home/user/work/wt/.test-agt-F-timeout-child-bind-0137-render-timeout-0137-1024014430-4004/astrid_runtime_client/__init__.py",
+        "banodoco_schema": "/home/user/work/wt/.test-agt-F-timeout-child-bind-0137-render-timeout-0137-1024014430-4004/astrid/core/timeline/banodoco_schema.py",
+        "python": "/usr/bin/python3.13",
+        "runtime_protocol": "/home/user/work/wt/rt-pin-8ea0766f/runtime_protocol/__init__.py",
+        "shared_schema": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py",
+        "validator": "/home/user/work/wt/.test-agt-F-timeout-child-bind-0137-render-timeout-0137-1024014430-4004/astrid/core/timeline/validators/timeline.py"
+      }
+    },
+    {
+      "label": "Node20 and npx custody",
+      "status": "PASS",
+      "value": {
+        "node": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+        "node_version": "v20.19.4",
+        "npx": "10.8.2"
+      }
+    },
+    {
+      "label": "read-only Remotion profile custody",
+      "status": "PASS",
+      "value": {
+        "composition_version": "0.0.14",
+        "entries": 23107,
+        "external_links": [],
+        "fixed_sha256": {
+          ".astrid-registry-state.json": "d609b44b37d724358a33405e9d8539008fd1ac30bc2f0d9746575c3fbadaac96",
+          "artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+          "package-lock.json": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+          "src/animations.generated.ts": "02326f12177879eb5905f9d9b6d476b2de185928ddeeeeb2321a68ebffb47ad6",
+          "src/effects.generated.ts": "127e5653e0c66993726f8334b9f4ac122d24cdfbaa9e70cdaa142189afcf2bbe",
+          "src/transitions.generated.ts": "c46d6bbd88712e775812867ec1cbe6de67473664775266c5a0b9317344ceb989"
+        },
+        "writable": []
+      }
+    },
+    {
+      "label": "forbidden environment absent before body",
+      "status": "PASS",
+      "value": {
+        "PATH": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/venv-agent/bin:/usr/bin:/bin",
+        "PYTHONPATH": "/home/user/work/wt/.test-agt-F-timeout-child-bind-0137-render-timeout-0137-1024014430-4004:/home/user/work/wt/rt-pin-8ea0766f",
+        "forbidden_absent": true,
+        "profile": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110"
+      }
+    },
+    {
+      "label": "trivial supported preflight",
+      "status": "PASS",
+      "value": {
+        "exit": 0,
+        "stdout": "{\"alternatives\": [], \"backend\": \"rendering.threejs\", \"backend_version\": \"1.0.0\", \"features\": {\"alpha_output\": true, \"audio_ownership\": \"rendered\", \"background_only\": true, \"capture_host\": \"remotion\", \"deterministic_frame_clock\": true, \"effects\": false, \"full_timeline\": true, \"media_textures\": false, \"textured_text_planes\": true, \"transitions\": false, \"webgl\": true, \"windows\": true}, \"reasons\": [], \"schema_version\": 1, \"supported\": true}"
+      }
+    }
+  ],
+  "failures": [],
+  "finite_suite": {
+    "body_ast_sha256": "ca54f2d5059bb3b5cca1e8ee43156df6762d3a86739caa2aa18ffcb83f3ded82",
+    "nodeids": [
+      "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons"
+    ],
+    "pytest": [
+      "-q",
+      "-o",
+      "addopts=",
+      "-p",
+      "no:cacheprovider",
+      "--timeout=45"
+    ],
+    "target_sha256": "9efe493cb2f8339177e07616b976afe6f9813ae4d415923ff25701b471e991c7",
+    "timeout_seconds": 45
+  },
+  "old_child": {
+    "agent_sha": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+    "status": "RED/stale",
+    "validator_sha256": "90644ccc8565be9c733dec452229cf7538c574b2d051625fb21392572745b785"
+  },
+  "original_case_executed": false,
+  "source": {
+    "agent_sha": "521c88802330901281cc37ba25818baf2575f05e",
+    "runtime_sha": "8ea0766f5e9fb23cea26c7398770a8aaac06b258",
+    "source_tree": "c658b5195d5c15f75f1c6e0dc63760b418b4168c",
+    "validator_sha256": "361f759eefeb133634d6b70af320fcb13bd1ad0fa33597860f1c6158696f9686"
+  },
+  "status": "passed"
+}

@@ -1,0 +1,3 @@
+pytest_exit=1
+child=/home/user/work/bench-store/entries/child-d12c6f2c4d9a7b01e2e50250b9883c880b9fd5839d48d367c8f6680f1aa478ea
+timeout_seconds=45

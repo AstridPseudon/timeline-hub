@@ -1,0 +1,54 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____ test_threejs_support_rejects_unsupported_timelines_with_clip_reasons _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-18/test_threejs_support_rejects_u0')
+
+    def test_threejs_support_rejects_unsupported_timelines_with_clip_reasons(
+        tmp_path: Path,
+    ) -> None:
+        def reasons_for(clip: dict, tracks: list[dict] | None = None) -> list[str]:
+            payload = {
+                "theme": "banodoco-default",
+                "theme_overrides": {"visual": {"canvas": dict(CANVAS)}},
+                "tracks": tracks or [{"id": "v1", "kind": "visual", "label": "V"}],
+                "clips": [clip],
+            }
+            timeline_path = _write_timeline(tmp_path, payload)
+            return support(THREEJS_ID, timeline_path=timeline_path).reasons
+    
+        # Unsupported clip types -> stable clip-specific reason.
+        for clip_type in ("media", "hold", "effect-layer", "mystery"):
+>           reasons = reasons_for(
+                {"id": "c", "at": 0, "track": "v1", "clipType": clip_type}
+            )
+
+tests/packs/rendering/test_threejs_backend.py:208: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/packs/rendering/test_threejs_backend.py:204: in reasons_for
+    return support(THREEJS_ID, timeline_path=timeline_path).reasons
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/rendering.py:419: in support
+    return _support_report(
+astrid/sdk/rendering.py:484: in _support_report
+    response = selected_transport.run(
+astrid/core/rendering/transport.py:328: in run
+    raise_internal_error(
+astrid/core/rendering/errors.py:235: in raise_internal_error
+    raise_structured_failure(
+astrid/core/rendering/errors.py:121: in raise_structured_failure
+    raise_renderer_error(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+error = RendererError(schema_version=1, kind='internal', backend='rendering.threejs', message='renderer command exited with st... in <module>\n    from runtime_protocol import platform\nModuleNotFoundError: No module named \'runtime_protocol\'\n'})
+
+    def raise_renderer_error(error: RendererError | Mapping[str, Any]) -> NoReturn:
+        """Raise the kind-specific exception for *error*."""
+    
+>       raise exception_from_error(error)
+E       astrid.core.rendering.errors.RendererInternalError: renderer command exited with status 1
+
+astrid/core/rendering/errors.py:110: RendererInternalError
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons
+1 failed in 4.65s
