@@ -1,0 +1,37 @@
+# Captured-run membership and preservation
+
+## Four-repo tuple
+
+- Agent: `3b2db4bdf9014de013338521dd038ebdecd25f02`
+- Runtime: `e89eb8c7dfa8cb2c451653ab200dbf77df28b173`
+- App: `e771ce1426022d1a10bab93323d40222c5ce9c3d`
+- Composition: `635f4de06fda22a85fc2e4cfc764d0153a4c9f40`
+- Agent tree at service: `c84907010418e1c0a9ca0d46900c106ba771736e`
+- Original three-file aggregate: `8e336b1ce059770f63e3026e0ee9fc0a3f29bd6e557fbba4725138065c453753`
+
+All four pinned checkout `HEAD`s matched the tuple. The service ran the exact
+three original selectors with `-m integration`, `-p no:cacheprovider`, and
+`--timeout=45`; the XML reports `tests=3`, `failures=1`, `errors=0`,
+`skipped=0`. The three source file hashes were identical before and after:
+
+- `test_p4_cli_sheet_v2_runtime.py`: `8239ad0c3ac7de05d7ab0efac7b12c34532df33f7f22f33c9c270f0aeb30f213`
+- `test_p4_ten_note_v2_runtime.py`: `c0132e0dac31be278eaa850a8cc5d96d535550e461685be263c3372b46f6d0a0`
+- `test_p4_note_rerun_v2_runtime.py`: `02ffa65700ff1c4d2e4a017fbaef6f646d100de5af61bc85e9003866eb927f36`
+
+No `parametrize`, `skip`, or `xfail` marker/call occurs in these three pinned
+test files. The XML contains the same three direct node IDs; no parameter or
+selector loss is evidenced.
+
+## Service and harness custody
+
+- Actual-host preflight selected cProfile because `py-spy` was absent at all
+  named paths before any attach; the helper SHA was
+  `ccfd3d8a6387b227de0dba253e06cd9f48afdfc079f4e6543b1adf0a4d5939bb`.
+- Registry parser and recipe syntax passed (`bash -n=0`); positive stub ran
+  once with exit 17 and the poisoned SHA stub ran zero times.
+- The guarded install changed only the two owned P4 rows; outside-row SHA was
+  `6f60f8e6493062292335ea296bf4bfd753adf8a489ea8cf177f37c93da0602ad`
+  both before and after.
+- Service preflight exit was 0 and the real body exit was 1. The only service
+  request was 14690; there was no body, HTTP, browser, full, collection,
+  original, or current-head rerun by this review.

@@ -1,1 +1,1 @@
-2026-10-24T19:26:48Z agent lead: daemons up, heartbeat fresh, live 0/cap 6 (1 queued, 0 ready), board 19:24Z (1 doing/21 review), core open 5 (P4 ten-note, 2 PARAM, 2 restart timeouts), hub-sync healthy, upstream tip 924437716 unchanged, no stuck-DONE, disk 8.8G
+2026-10-24T19:59:42Z agent lead: daemons up, heartbeat fresh, live 0/cap 6 (0 ready; manager round running), board 19:57Z (0 doing/22 review), core open 5 unchanged (P4 ten-note, PARAM, restart timeouts; installed render cut-blocking), hub-sync healthy, upstream tip 924437716 unchanged, no stuck-DONE, disk 8.8G
