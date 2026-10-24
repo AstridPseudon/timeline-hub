@@ -1,1 +1,1 @@
-2026-10-24T18:15:44Z agent lead: daemons up, heartbeat fresh, live 4/cap 4 (1 ready waits cap), board 18:02Z (11 doing/25 review), core open 22 tracked (D72/CLI/R2 cases), upstream tip 924437716 unchanged, no stuck-DONE, disk 8.4G; pin release awaiting owner
+2026-10-24T18:53:22Z agent lead: daemons up, heartbeat fresh, live 1/cap 4, 0 ready (board 18:43Z: 0 doing/23 review), core open 10, hub-sync wedge (rebase conflict on deletion-ledger) FIXED and pushed, upstream tip 924437716 unchanged, no stuck-DONE, disk 8.6G

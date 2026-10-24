@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T18:50:08Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 1m -->
-# agent board, 2026-10-24T18:48:22Z
+<!-- agent | 2026-10-24T18:52:58Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 0m -->
+# agent board, 2026-10-24T18:52:54Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -125,7 +125,8 @@
 | U4a inverse range provenance | Bind actual qualified Runtime source | Luna | Normal tools passed | merged | agt-U4a-range-rebind-1841 PASS | Actual Agent source provenance now 1bae; exact 15 canonical files and schema unchanged. All generator checks pass. | 56c6a3a78f |
 | D77 installed fixture path | Pass canonical file to strict renderer | Luna | Author setup checks passed | merged | agt-D77-fixture-path-1841 PASS | One fixture expression changed; 13 test bodies unchanged, collect 1. D13 body and genuine environment gap unchanged. | 831df37ffd |
 | R2 tail whole path | Identify new ABA history timeouts | Luna | Source cause complete | merged | agt-R2-tail-wholepath-1840 | Runtime recursive accepted-history path before PARAM resolver. Terminal Recorder, JSON and canonical schema frames differ; exact cost split unmeasured. | Evidence only |
-| R2 history measurement | Measure recursive validation multiplicity | Luna | Genuine finite inverse control | doing | agt-R2-history-cost-measure-1850 | One existing new Runtime control; counts and exclusive CPU only. No original gate repeat or product edit. | Agent831df / Runtime1bae |
+| R2 history measurement | Measure recursive validation multiplicity | Luna | Exact finite control complete | merged | agt-R2-history-cost-measure-1850 | One new Runtime control PASS6.87s;258 history reads,254 verifications, depth6. Counts are diagnostic. [Profile](../../design/handoff-agt-R2-history-cost-measure-1850-profile.json) | Evidence a70f69cd |
+| D80 popup owner | Align physical shot owner across repos | HARD Sol / Luna | Runtime source and security | blocked:runtime | Runtime D80 owner | One cross-repo source owner per D80; Agent has no competing author. Normal home source merge follows qualified handback. | Pending source |
 Integration: Agent 831df contains normal Runtime 1bae provenance, D77 canonical-file fixture, qualified renderer source a86e4, historical hydration, duplicate, reply literal, create and CLI repairs. PARAM candidate remains held separately.
 core open: 5 = P4 ten-note1, held PARAM originals2, restart timeouts2. Exact home1844 five-original PASS closes four no-op variants and selected-schema inverse. D77 installed render remains cut-blocking separately.
 regressions: D71 leak and CLI terminal predicates qualified. D77a installed rendering is a presumed regression and remains cut blocking with Runtime Sol 1758. No scope waiver inferred from unknown upstream runtime outcome.
@@ -133,10 +134,10 @@ D69/D72: exact 47 membership retained. Audit 178: 167 cleared, 9 cited, 2 restor
 Gates: P1/P2/P3 App. P4 16328 FAIL 1 PASS 2; independent verdict 1744 complete. Exact four repo tuple and unchanged 45 second budget retained. No original repeated before meaningful reviewed source.
 D60 baseline: upstream 924 terminal 12396 PASS, 91 FAIL, 14 errors, 16 skips, 566 subtests. Exact 276 split 199 NEW-OURS and 77 counterparts; external mutable Runtime scope disclosed. D67 is unchanged env gap; D23 timing deferred.
 Admission: D56 ends Farm/schema venue work. All prior access, safety and stale pin cleanup refusals remain stopped. No child, source substitute, KEEP release or installed-record relabel.
-Disk: about8.6 GiB free; cap6. Guarded sweep and compaction requested this pass; finished non-KEEP tree inventory follows. All refused KEEP and pin trees remain untouched.
+Disk: about8.9 GiB free; cap6. Recycled two finished unused baseline trees; sweep3 removed0; compact packed0 and compressed19 old logs. Refused KEEP and pin trees untouched.
 Blockers: Agent — held PARAM candidate awaits meaningful Runtime history-cost repair; original two still FAIL. Final core and genuine installed-render bodies remain gated by D59.
-Blockers: Runtime — unique cost source1827 for P4/history and four timeout originals. Agent1850 returns finite inverse call multiplicity; no competing source author or unchanged gate repeat.
-Next ready: consume finite R2 cost measurement and Runtime reviewed cost source, then qualify held PARAM originals through the existing source and security path. Final core and installed render await cut.
-live 1 / cap 6; ready-undispatched 0. Luna1850 queued for bounded history-call measurement; home1844 completed. All independent ready local source work dispatched.
-Inbox consumed through Runtime1828 and D77 fixture1825; header D79 applied. Current Runtime board18:33 names unique validation1827 source owner. Pass 2026-10-24T18:48:22Z.
+Blockers: Runtime — cost source1827 for P4/history and four timeout originals. Finite inverse profile1850 now published. D80 cross-repo popup source and independent security handback are Runtime-owned.
+Next ready: consume Runtime reviewed cost source for held PARAM originals and restart/P4 proof; receive D80 cross-repo popup source through normal queue. Final core and installed render await cut.
+live 0 / cap 6; ready-undispatched 0. Finite measurement1850 complete and handed to Runtime source1827. No local independent ready source work; five originals await meaningful reviewed cost correction.
+Inbox consumed through D80 H45 actions18:50. Runtime1827 remains sole cost source owner; D80 cross-repo Sol ownership applied. Home29 and D76 are already qualified. Pass 2026-10-24T18:52:54Z.
 D79 later: Luna1831 bounded inventory complete, no qualifying full accepted record/context survived. Runtime corpus input requested in peer1838. Non-gating, no test or fixture fabricated and no body run.

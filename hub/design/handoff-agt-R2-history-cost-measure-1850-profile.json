@@ -1,0 +1,1832 @@
+{
+  "agent_head": "831df37ffdfbb7cf802c95f91eac30681efdbb45",
+  "functions": {
+    "auth._capture_document_images": {
+      "calls": 212,
+      "exclusive_cpu_s": 0.009010304000005132,
+      "inclusive_cpu_s": 0.2620024239999976
+    },
+    "auth._capture_records": {
+      "calls": 106,
+      "exclusive_cpu_s": 0.05337821299999934,
+      "inclusive_cpu_s": 1.5231127419999964
+    },
+    "auth._inverse_stage_history": {
+      "calls": 106,
+      "exclusive_cpu_s": 0.009562846999997987,
+      "inclusive_cpu_s": 0.009562846999997987
+    },
+    "json.loads": {
+      "calls": 6299,
+      "exclusive_cpu_s": 0.17130830599999003,
+      "inclusive_cpu_s": 0.17130830599999003
+    },
+    "port.history_entry": {
+      "calls": 39,
+      "exclusive_cpu_s": 0.09288023500000042,
+      "inclusive_cpu_s": 1.4605649519999984
+    },
+    "store._inverse_stage_history": {
+      "calls": 259,
+      "exclusive_cpu_s": 0.004332373999998529,
+      "inclusive_cpu_s": 0.3799614129999991
+    },
+    "store._verify_accepted": {
+      "calls": 254,
+      "exclusive_cpu_s": 0.6507760379999896,
+      "inclusive_cpu_s": 4.126478465999997
+    },
+    "store.history_entry": {
+      "calls": 258,
+      "exclusive_cpu_s": 0.5813889850000085,
+      "inclusive_cpu_s": 4.399740902999999
+    },
+    "util.canonical_json": {
+      "calls": 5696,
+      "exclusive_cpu_s": 0.14858352599999658,
+      "inclusive_cpu_s": 0.14858352599999658
+    },
+    "validate_commit_value[CanonicalDocument]": {
+      "calls": 212,
+      "exclusive_cpu_s": 0.24265040999999243,
+      "inclusive_cpu_s": 0.24265040999999243
+    },
+    "validate_commit_value[CommitContext]": {
+      "calls": 50,
+      "exclusive_cpu_s": 0.4160967880000026,
+      "inclusive_cpu_s": 0.4160967880000026
+    },
+    "validate_commit_value[CommitRequest]": {
+      "calls": 6,
+      "exclusive_cpu_s": 0.05916526599999994,
+      "inclusive_cpu_s": 0.06042904100000013
+    },
+    "validate_commit_value[PreparedCommit]": {
+      "calls": 55,
+      "exclusive_cpu_s": 0.8625991450000006,
+      "inclusive_cpu_s": 0.8625991450000006
+    },
+    "validate_commit_value[Recorder]": {
+      "calls": 106,
+      "exclusive_cpu_s": 1.469734528999997,
+      "inclusive_cpu_s": 1.469734528999997
+    },
+    "validation.digest": {
+      "calls": 3136,
+      "exclusive_cpu_s": 0.04093714100000945,
+      "inclusive_cpu_s": 0.13848951300002255
+    }
+  },
+  "history_call_details": [
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-001"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-001"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-001"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-001"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-001"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-001"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-001"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-001"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-001"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-001"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 3,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 3,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 5,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 5,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 5,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-001"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 5,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 5,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 5,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 5,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 5,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 5,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 5,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 5,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 5,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 5,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 5,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "port.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 5,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 2,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 5,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 1,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 4,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "depth": 3,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "depth": 6,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    }
+  ],
+  "history_entry_calls_by_token": {
+    "publication-001": 11,
+    "publication-002": 67,
+    "publication-003": 170,
+    "publication-004": 49
+  },
+  "import_hashes": {
+    "json": {
+      "imported": true,
+      "path": "/usr/lib/python3.13/json/__init__.py",
+      "sha256": "43e38afede6d52ae0d602a42209b9959fc66d6020a25bcf15921446f5d1c262f"
+    },
+    "runtime_protocol.timeline_commit_auth": {
+      "imported": true,
+      "path": "/home/user/work/runtime/runtime_protocol/timeline_commit_auth.py",
+      "sha256": "a3fbb6a0289396fe84fbe455294747a627f9bae8c7579204a89db6402c66a908"
+    },
+    "runtime_protocol.timeline_commit_port": {
+      "imported": true,
+      "path": "/home/user/work/runtime/runtime_protocol/timeline_commit_port.py",
+      "sha256": "0d44b5a5e1e0374239df461cb5094ff4fe5bb70761233efd4e3a65c2b29b0859"
+    },
+    "runtime_protocol.timeline_commit_store": {
+      "imported": true,
+      "path": "/home/user/work/runtime/runtime_protocol/timeline_commit_store.py",
+      "sha256": "a2db29e4dbb5ef781d818690647e888b4eb02550c93a3e3d962df161d610d4cd"
+    },
+    "runtime_protocol.timeline_commit_validation": {
+      "imported": true,
+      "path": "/home/user/work/runtime/runtime_protocol/timeline_commit_validation.py",
+      "sha256": "c436b4d96297a2301dd0f23da8c09dc2998287f20b7c2295c61d1aa6569b8cd9"
+    },
+    "runtime_protocol.util": {
+      "imported": true,
+      "path": "/home/user/work/runtime/runtime_protocol/util.py",
+      "sha256": "07b41da1f3815120818fdc9114986666346ea7fd0dc865641551697ec94b9ae2"
+    },
+    "tests.test_timeline_inverse_sequential_authority": {
+      "imported": true,
+      "path": "/home/user/work/runtime/tests/test_timeline_inverse_sequential_authority.py",
+      "sha256": "67c4fb1b905d4d7f07c6a05053bcf93abf69865e943e62799ab53ca78f6b4592"
+    }
+  },
+  "inverse_stage_history_requests_by_token": {
+    "publication-003": 153,
+    "publication-004": 6
+  },
+  "measured_calls_by_token": [
+    {
+      "calls": 102,
+      "target": "auth._inverse_stage_history",
+      "token": "publication-003"
+    },
+    {
+      "calls": 4,
+      "target": "auth._inverse_stage_history",
+      "token": "publication-004"
+    },
+    {
+      "calls": 1,
+      "target": "port.history_entry",
+      "token": "publication-001"
+    },
+    {
+      "calls": 19,
+      "target": "port.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "calls": 17,
+      "target": "port.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "calls": 2,
+      "target": "port.history_entry",
+      "token": "publication-004"
+    },
+    {
+      "calls": 51,
+      "target": "store._inverse_stage_history",
+      "token": "publication-003"
+    },
+    {
+      "calls": 2,
+      "target": "store._inverse_stage_history",
+      "token": "publication-004"
+    },
+    {
+      "calls": 50,
+      "target": "store._verify_accepted",
+      "token": "publication-002"
+    },
+    {
+      "calls": 154,
+      "target": "store._verify_accepted",
+      "token": "publication-003"
+    },
+    {
+      "calls": 49,
+      "target": "store._verify_accepted",
+      "token": "publication-004"
+    },
+    {
+      "calls": 1,
+      "target": "store._verify_accepted",
+      "token": "publication-005"
+    },
+    {
+      "calls": 10,
+      "target": "store.history_entry",
+      "token": "publication-001"
+    },
+    {
+      "calls": 48,
+      "target": "store.history_entry",
+      "token": "publication-002"
+    },
+    {
+      "calls": 153,
+      "target": "store.history_entry",
+      "token": "publication-003"
+    },
+    {
+      "calls": 47,
+      "target": "store.history_entry",
+      "token": "publication-004"
+    }
+  ],
+  "profile_process_cpu_s": 7.070048246,
+  "publication_tokens": [
+    "publication-001",
+    "publication-002",
+    "publication-003",
+    "publication-004",
+    "publication-005"
+  ],
+  "python": "/home/user/work/venv-agent/bin/python",
+  "runtime_checkout": "/home/user/work/runtime",
+  "runtime_head": "1bae0e8ccb8f912d50ad16e80d2e42f8e2ea603f",
+  "selector": "tests/test_timeline_inverse_sequential_authority.py::test_inverse_sequential_scope_round_trip[v2-whole-restore]",
+  "source_hashes": {
+    "runtime_protocol/timeline_commit_auth.py": {
+      "path": "/home/user/work/runtime/runtime_protocol/timeline_commit_auth.py",
+      "sha256": "a3fbb6a0289396fe84fbe455294747a627f9bae8c7579204a89db6402c66a908"
+    },
+    "runtime_protocol/timeline_commit_port.py": {
+      "path": "/home/user/work/runtime/runtime_protocol/timeline_commit_port.py",
+      "sha256": "0d44b5a5e1e0374239df461cb5094ff4fe5bb70761233efd4e3a65c2b29b0859"
+    },
+    "runtime_protocol/timeline_commit_store.py": {
+      "path": "/home/user/work/runtime/runtime_protocol/timeline_commit_store.py",
+      "sha256": "a2db29e4dbb5ef781d818690647e888b4eb02550c93a3e3d962df161d610d4cd"
+    },
+    "runtime_protocol/timeline_commit_validation.py": {
+      "path": "/home/user/work/runtime/runtime_protocol/timeline_commit_validation.py",
+      "sha256": "c436b4d96297a2301dd0f23da8c09dc2998287f20b7c2295c61d1aa6569b8cd9"
+    },
+    "runtime_protocol/util.py": {
+      "path": "/home/user/work/runtime/runtime_protocol/util.py",
+      "sha256": "07b41da1f3815120818fdc9114986666346ea7fd0dc865641551697ec94b9ae2"
+    },
+    "tests/test_timeline_inverse_sequential_authority.py": {
+      "path": "/home/user/work/runtime/tests/test_timeline_inverse_sequential_authority.py",
+      "sha256": "67c4fb1b905d4d7f07c6a05053bcf93abf69865e943e62799ab53ca78f6b4592"
+    }
+  },
+  "status": "measurement-complete",
+  "target_transitions": [
+    {
+      "callee": "validate_commit_value[CanonicalDocument]",
+      "caller": "auth._capture_document_images",
+      "calls": 212
+    },
+    {
+      "callee": "validation.digest",
+      "caller": "auth._capture_document_images",
+      "calls": 212
+    },
+    {
+      "callee": "validate_commit_value[Recorder]",
+      "caller": "auth._capture_records",
+      "calls": 106
+    },
+    {
+      "callee": "json.loads",
+      "caller": "port.history_entry",
+      "calls": 39
+    },
+    {
+      "callee": "store.history_entry",
+      "caller": "port.history_entry",
+      "calls": 70
+    },
+    {
+      "callee": "store.history_entry",
+      "caller": "store._inverse_stage_history",
+      "calls": 53
+    },
+    {
+      "callee": "auth._capture_document_images",
+      "caller": "store._verify_accepted",
+      "calls": 200
+    },
+    {
+      "callee": "auth._capture_records",
+      "caller": "store._verify_accepted",
+      "calls": 100
+    },
+    {
+      "callee": "auth._inverse_stage_history",
+      "caller": "store._verify_accepted",
+      "calls": 100
+    },
+    {
+      "callee": "json.loads",
+      "caller": "store._verify_accepted",
+      "calls": 4877
+    },
+    {
+      "callee": "store._inverse_stage_history",
+      "caller": "store._verify_accepted",
+      "calls": 254
+    },
+    {
+      "callee": "util.canonical_json",
+      "caller": "store._verify_accepted",
+      "calls": 2328
+    },
+    {
+      "callee": "validate_commit_value[CommitContext]",
+      "caller": "store._verify_accepted",
+      "calls": 50
+    },
+    {
+      "callee": "validate_commit_value[PreparedCommit]",
+      "caller": "store._verify_accepted",
+      "calls": 50
+    },
+    {
+      "callee": "validation.digest",
+      "caller": "store._verify_accepted",
+      "calls": 2791
+    },
+    {
+      "callee": "json.loads",
+      "caller": "store.history_entry",
+      "calls": 1022
+    },
+    {
+      "callee": "store._verify_accepted",
+      "caller": "store.history_entry",
+      "calls": 248
+    },
+    {
+      "callee": "json.loads",
+      "caller": "validate_commit_value[CommitRequest]",
+      "calls": 1
+    },
+    {
+      "callee": "util.canonical_json",
+      "caller": "validation.digest",
+      "calls": 3136
+    }
+  ]
+}
