@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T02:11:19Z | dispatcher heartbeat 2s | live 6 (sol 2, luna 4, other 0) | busy30 28 | status age 3m -->
+<!-- agent | 2026-10-24T02:13:33Z | dispatcher heartbeat 16s | live 6 (sol 3, luna 3, other 0) | busy30 26 | status age 0m -->
 # agent board, 2026-10-24T02:08:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -34,6 +34,8 @@
 | F-stale-head | Current public helper fixture | Luna | G2 | merged | agt-F-joined-integrated-0037 | Original stale-head case passed on ca93; two other authoring gaps are assigned below. | ca93d63bd |
 | F-P4-symbol | Rename stale fixture symbol | Luna | G5 | merged | agt-F-P4-symbol-integrated-0023 | Both original metadata and CLI behavior cases passed on the integrated head. | 45cecae7b |
 | F-authoring-publish-writer | Publication helper integrated behavior | Sol / Luna | Vendor invocation disposition | blocked:orchestrator | agt-F-publish-integrated-0158 | Actual 4151: original first plus six controls 7 passed. Bare vendor script execution denied; action stopped and escalated 0206. | 544d589ca6 |
+| F-G4-root-assignment | Preserve a newly assigned parent clips root | Sol | Runtime independent cause PASS | doing | agt-R1-root-assignment-sol-0213 | Headless writer loses parent clips after config replacement; Runtime owns faithful original fixtures. No mirror workaround or guard waiver. | current 4151 |
+| F-G4-occupancy | Faithful cross-timeline historical sharing | Luna | Existing authority and carrier assessment | doing | agt-G4-occupancy-carrier-0213 | Original occupancy needs old physical pins in another timeline. Fresh duplicate does not qualify; source assessment assigned. | current 4151 |
 | F-authoring-neighbors | Migrate obsolete unit collaborators | Luna | Reviewed writer source | doing | rt-F-authoring-neighbor-fixtures-0212 | Runtime review found 15 new collaborator failures in two files; original scenarios and assertions must remain. | 4151 source |
 | F-authoring-ABA | Derive raw before from canonical source | Sol | Two stale selector attempts | doing | agt-F-ABA-oracle-sol-0208 | Public checkout omits both guessed revision fields. Sol traces authenticated canonical mapping; all 52 protected predicates remain. | 4151 product |
 | F-D32-render-wire | Six original SDK wire results | Luna / service | Existing installed child | merged | Service 27934 | Six original cases passed in 41.48s; body hashes, 19 source identities, import origins and read-only profile retained. | 521c source |
