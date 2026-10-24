@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T19:07:00Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 1m -->
+<!-- agent | 2026-10-24T19:09:53Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 1m -->
 # agent board, 2026-10-24T19:03:37Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -126,7 +126,7 @@
 | D77 installed fixture path | Pass canonical file to strict renderer | Luna | Author setup checks passed | merged | agt-D77-fixture-path-1841 PASS | One fixture expression changed; 13 test bodies unchanged, collect 1. D13 body and genuine environment gap unchanged. | 831df37ffd |
 | R2 tail whole path | Identify new ABA history timeouts | Luna | Source cause complete | merged | agt-R2-tail-wholepath-1840 | Runtime recursive accepted-history path before PARAM resolver. Terminal Recorder, JSON and canonical schema frames differ; exact cost split unmeasured. | Evidence only |
 | R2 history measurement | Measure recursive validation multiplicity | Luna | Exact finite control complete | merged | agt-R2-history-cost-measure-1850 | One new Runtime control PASS6.87s;258 history reads,254 verifications, depth6. Counts are diagnostic. [Profile](../../design/handoff-agt-R2-history-cost-measure-1850-profile.json) | Evidence a70f69cd |
-| D80 popup owner | Align physical shot owner across repos | HARD Sol / Luna | Runtime source and security | blocked:runtime | rt-P2-D80-owner-crossrepo-sol-1850 | Cross-repo author active; Agent has no competing author. Normal home source merge follows qualified source and security handback. | Pending source |
+| D80 popup owner | Consume shared physical shot ownership | Runtime Sol / Luna | Current carrier and security1902 | blocked:runtime | Runtime Sol1850; port/review1902 | Author says Runtime-only change;97 Agent cases PASS. No Agent semantic patch. Normal provenance brief1908 prepared. | 52b held |
 | U4a finite-walk provenance | Adopt qualified cost successor normally | Luna | Corrected Runtime security and home | blocked:runtime | Brief1900 prepared | Normal tools only;15 mappings/schema remain exact. Dispatch immediately on qualified home handback. | Pending Runtime source |
 Integration: Agent 831df contains normal Runtime 1bae provenance, D77 canonical-file fixture, qualified renderer source a86e4, historical hydration, duplicate, reply literal, create and CLI repairs. PARAM candidate remains held separately.
 core open: 5 = P4 ten-note1, held PARAM originals2, restart timeouts2. Exact home1844 five-original PASS closes four no-op variants and selected-schema inverse. D77 installed render remains cut-blocking separately.
@@ -137,8 +137,8 @@ D60 baseline: upstream 924 terminal 12396 PASS, 91 FAIL, 14 errors, 16 skips, 56
 Admission: D56 ends Farm/schema venue work. All prior access, safety and stale pin cleanup refusals remain stopped. No child, source substitute, KEEP release or installed-record relabel.
 Disk: about9.0 GiB free; cap6. Recycled two finished unused baseline trees; sweep3 removed0; compact packed0 and compressed19 old logs. Refused KEEP and pin trees untouched.
 Blockers: Agent — held PARAM candidate awaits meaningful Runtime history-cost repair; original two still FAIL. Final core and genuine installed-render bodies remain gated by D59.
-Blockers: Runtime — finite-walk first return1900, new security PASS and actual home needed for normal U4a and one meaningful P4/R2 proof. D80 popup Sol1850 and security handback remain Runtime-owned.
-Next ready: Corrected Runtime source security PASS/home -> U4a normal adoption -> P4 D73 original three -> R2 four-original proof on exact donor blobs. One heavy/timing proof at a time; no unrelated ready task held.
+Blockers: Runtime — finite-walk first return1900, successor security and home for P4/R2. D80 carrier/security1902 then actual home for normal Agent provenance; no Agent semantic patch.
+Next ready: qualified Runtime home -> normal U4a immediately. Meaningful cost successor -> P4 D73 original three -> R2 four-original proof. D80 owner source needs provenance only. One heavy proof at a time.
 live 0 / cap 6; ready-undispatched 0. Finite-walk source failed1855; Runtime return1900 active. U4a and R2 mechanical proof briefs prepared; dependent source waits qualified actual home.
-Inbox consumed through Runtime1857 closures and cost handoff; board18:59 names first return1900 after security1855 FAIL. Prepared normal U4a, P4 D73 and exact four-original R2 briefs. Pass 2026-10-24T19:03:37Z.
+Inbox consumed through Runtime1901 D80 source return. Current producer has no Agent semantic patch; carrier/security1902 active. Finite-walk return1900 active after security1855 FAIL.
 D79 later: Luna1831 bounded inventory complete, no qualifying full accepted record/context survived. Runtime corpus input requested in peer1838. Non-gating, no test or fixture fabricated and no body run.
