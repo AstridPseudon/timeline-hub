@@ -8,9 +8,63 @@ import test_timeline_history_replay_memo as memo_tests
 from test_timeline_commit_port import rows
 
 from runtime_protocol import timeline_commit_auth as auth
+from runtime_protocol import timeline_commit_validation as validation
 from runtime_protocol.errors import ProtocolError
 
 service = memo_tests.service
+
+# Supplied by each FunctionType's private globals, rather than closure cells.
+gate = delegate = check_gate = None
+
+
+def test_active_resolver_replacement_refuses_warm_history(service, monkeypatch):
+    from referencing import Registry
+
+    commits, _, calls, read = memo_tests.setup_read(service, monkeypatch, sequential=True)
+    expected = read()
+    assert read() == expected
+    assert len(calls) == 2
+    validator = validation._validator("CommitContext")
+    monkeypatch.setattr(validator, "_resolver", Registry().resolver())
+    assert_warm_and_cold_refuse(commits, read, service)
+
+
+@pytest.mark.parametrize("dependency", ["class", "callable"])
+def test_direct_global_dependency_refuses_warm_history(service, monkeypatch, dependency):
+    commits, _, calls, read = memo_tests.setup_read(service, monkeypatch)
+    original = auth.validate_claims
+
+    class Gate:
+        allowed = True
+
+    state = {"allowed": True}
+
+    def check():
+        if not state["allowed"]:
+            raise ValueError("changed global callable refuses this publication")
+
+    if dependency == "class":
+        def template(*args, **kwargs):
+            if not gate.allowed:
+                raise ValueError("changed global class refuses this publication")
+            return delegate(*args, **kwargs)
+
+        claims = FunctionType(template.__code__, {"gate": Gate, "delegate": original})
+    else:
+        def template(*args, **kwargs):
+            check_gate()
+            return delegate(*args, **kwargs)
+
+        claims = FunctionType(template.__code__, {"check_gate": check, "delegate": original})
+    monkeypatch.setattr(auth, "validate_claims", claims)
+    expected = read()
+    assert read() == expected
+    assert len(calls) == 1
+    if dependency == "class":
+        Gate.allowed = False
+    else:
+        state["allowed"] = False
+    assert_warm_and_cold_refuse(commits, read, service)
 
 
 def assert_warm_and_cold_refuse(commits, read, service):
