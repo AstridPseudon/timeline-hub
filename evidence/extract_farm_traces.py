@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 """Extract bounded, source-addressed traces from the retained Farm log.
 
-This is intentionally a standalone evidence tool.  It does not import the
-Agent package, run pytest, inspect the environment, or classify a failure.
-The Farm operator supplies the original log and the three published node-ID
-lists.  The original log is only read; it is never rewritten.
+This is intentionally a standalone management-evidence tool for the Farm Lead
+to run once against an existing retained log.  It does not import the Agent
+package, run pytest, inspect the environment, or classify a failure.  There is
+no product caller.  The operator supplies the original log and the three
+published node-ID lists.  The original log is only read; it is never rewritten.
+
+Supported CLI::
+
+    python3 evidence/extract_farm_traces.py --log-path LOG \
+        --closed-historical CLOSED_HISTORICAL --closed-newer CLOSED_NEWER \
+        --errored ERRORED --output-dir OUTPUT_DIR
 """
 
 from __future__ import annotations
@@ -52,6 +59,63 @@ RETAINED_CHECKPOINT_COUNTS = {
     "failed_list_missing_from_summary": 7,
     "errored_list_lines": 187,
     "closed_failures_in_this_manifest": 96,
+    "historical_closed_uncredited": 88,
+    "newer_closed_uncredited": 8,
+}
+
+FROZEN_SCOPE = {
+    "label": "frozen202/65",
+    "official_current_census": {"closed": 202, "open": 65},
+    "manifest_closed_subset": {
+        "historical": 88,
+        "newer": 8,
+        "total": 96,
+        "attribution": "uncredited",
+    },
+    "caller": {
+        "kind": "standalone_management_evidence_tool",
+        "operator": "FARM LEAD",
+        "run_count": "once against an existing retained log",
+        "product_caller": "none; no production caller is required",
+    },
+}
+
+CHECKPOINT_RECONCILIATION = {
+    "original_checkpoint_failed": 288,
+    "retained_failure_lines": 281,
+    "missing_from_retained_failure_lines": 7,
+    "equation": "281 retained failure lines + 7 missing lines = 288 checkpoint failures",
+    "setup_lines": 187,
+}
+
+OUTPUT_POLICY = {
+    "max_trace_lines": MAX_TRACE_LINES,
+    "max_trace_bytes": MAX_TRACE_BYTES,
+    "trace_bound": (
+        "The emitted source slice is at most max_trace_bytes and max_trace_lines; "
+        "an oversized first line ends at the UTF-8 byte boundary inside that line."
+    ),
+    "offsets": (
+        "start_byte and end_byte_exclusive address the exact unredacted source bytes; "
+        "end_byte_exclusive is the true truncation boundary."
+    ),
+    "trace_content": "Unmodified retained bytes except disclosed whole-line redactions.",
+    "redaction": {
+        "whole_line": True,
+        "criteria": [
+            "credential/token/secret/password/authorization assignments or bearer values",
+            "credentialed HTTP(S) URLs",
+            "Looking in indexes: lines, including uncredentialed URLs",
+            "index-url, extra-index-url, pip-index-url, pypi-url, and UV index settings",
+            "AWS access/secret keys, npm tokens, and Codex/OpenAI/Anthropic key settings",
+        ],
+        "replacement": "[REDACTED SECRET/TOKEN/INDEX-URL LINE]",
+    },
+    "classification": {
+        "cause": "unknown_not_classified",
+        "pass": "unknown_not_inferred",
+        "missing_or_ambiguous": "unknown; no pass, environment, or regression inference",
+    },
 }
 
 # Redact whole lines that look like credentials or package-index settings.
@@ -65,11 +129,15 @@ SECRET_LINE_RE = re.compile(
     r"|\bbearer\s+[A-Za-z0-9._~+/=-]{8,}"
     r"|\b(?:extra[_ -]?index[_ -]?url|index[_ -]?url|pip[_ -]?index[_ -]?url)\b"
     r"\s*(?:=|:)\s*\S+"
+    r"|\b(?:pip[_ -]?(?:extra[_ -]?)?index[_ -]?url|pypi[_ -]?url|uv[_ -]?(?:default[_ -]?)?index[_ -]?url)\b"
+    r"\s*(?:=|:|\s)\s*\S+"
+    r"|(?:^|\s)--(?:extra-)?index-url\s+(?:=\s*)?\S+"
     r"|\b(?:aws_access_key_id|aws_secret_access_key|npm[_ -]?token)\b"
     r"\s*(?:=|:)\s*\S+"
     r"|\b(?:codex|openai|anthropic)[-_]?(?:api[_ -]?key|token|secret)\b"
     r"\s*(?:=|:)\s*\S+"
-    r"|\bhttps?://[^\s/@:]+:[^\s/@]+@)"
+    r"|\bhttps?://[^\s/@:]+:[^\s/@]+@"
+    r"|^\s*looking\s+in\s+indexes\s*:)"
 )
 
 HEADER_RE = re.compile(r"^\s*_+\s+(?P<body>.+?)\s+_+\s*$")
@@ -95,17 +163,13 @@ def sha256_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
 
 
-def hash_path(path: Path) -> tuple[str | None, str | None]:
-    """Return (digest, error) without exposing file contents in errors."""
-
+def read_bytes_snapshot(path: Path) -> tuple[bytes | None, str | None, str | None]:
+    """Return the exact bytes read, their digest, and a bounded error."""
     try:
-        with path.open("rb") as handle:
-            digest = hashlib.sha256()
-            for block in iter(lambda: handle.read(1024 * 1024), b""):
-                digest.update(block)
-            return digest.hexdigest(), None
+        data = path.read_bytes()
+        return data, sha256_bytes(data), None
     except OSError as exc:
-        return None, f"{type(exc).__name__}: {exc}"
+        return None, None, f"{type(exc).__name__}: {exc}"
 
 
 def read_id_file(role: str, path: Path) -> tuple[dict, list[str]]:
@@ -116,21 +180,37 @@ def read_id_file(role: str, path: Path) -> tuple[dict, list[str]]:
         "expected_basename": expected["expected_basename"],
         "expected_sha256": expected["expected_sha256"],
         "expected_line_count": expected["expected_lines"],
-        "actual_sha256": None,
+        "before_sha256": None,
+        "used_sha256": None,
+        "after_sha256": None,
+        "immutable_before_after": False,
         "line_count": None,
     }
     errors: list[str] = []
-    try:
-        data = path.read_bytes()
-    except OSError as exc:
-        errors.append(f"{role}: cannot read published ID file: {type(exc).__name__}: {exc}")
+    data, used_hash, read_error = read_bytes_snapshot(path)
+    record["before_sha256"] = used_hash
+    record["used_sha256"] = used_hash
+    if read_error:
+        errors.append(f"{role}: cannot read published ID file: {read_error}")
         record["error"] = "missing_or_unreadable"
         return record, errors
 
-    actual_hash = sha256_bytes(data)
-    record["actual_sha256"] = actual_hash
-    if actual_hash != expected["expected_sha256"]:
+    if used_hash != expected["expected_sha256"]:
         errors.append(f"{role}: published ID file SHA-256 mismatch")
+
+    after_data, after_hash, after_error = read_bytes_snapshot(path)
+    record["after_sha256"] = after_hash
+    record["immutable_before_after"] = (
+        after_error is None and after_data == data and after_hash == used_hash
+    )
+    if after_error:
+        errors.append(f"{role}: cannot re-read published ID file after parsing: {after_error}")
+    elif not record["immutable_before_after"]:
+        errors.append(f"{role}: published ID file changed during the read")
+
+    if not record["immutable_before_after"]:
+        record["error"] = "mutated_during_read"
+
     try:
         text = data.decode("utf-8")
     except UnicodeDecodeError as exc:
@@ -215,25 +295,57 @@ def section_end(lines: Sequence[LogLine], start: int) -> int:
     return len(lines)
 
 
-def bounded_end(lines: Sequence[LogLine], start: int, natural_end: int) -> tuple[int, bool]:
+def utf8_prefix_length(text: str, byte_limit: int) -> int:
+    """Return a strict UTF-8 character boundary no larger than byte_limit."""
+
+    encoded = text.encode("utf-8")
+    if len(encoded) <= byte_limit:
+        return len(encoded)
+    while byte_limit and (encoded[byte_limit] & 0xC0) == 0x80:
+        byte_limit -= 1
+    return byte_limit
+
+
+def bounded_end(
+    lines: Sequence[LogLine], start: int, natural_end: int
+) -> tuple[int, int, bool, str]:
+    """Return (end line, end byte, truncated, boundary) for one trace."""
+
     limit = min(natural_end, start + MAX_TRACE_LINES)
+    byte_limit = lines[start].start + MAX_TRACE_BYTES
     index = start
-    while index < limit and lines[index].end - lines[start].start <= MAX_TRACE_BYTES:
+    while index < limit and lines[index].end <= byte_limit:
         index += 1
     truncated = index < natural_end
     if index == start:
-        # A pathological single line is not emitted partially: retaining only
-        # the header keeps the byte range exact and the result bounded.
-        index = min(start + 1, natural_end)
+        # Keep the source slice bounded even when the first line is oversized.
+        # The end offset is therefore allowed to fall inside that line.
+        index = start + 1
+        end_byte = lines[start].start + utf8_prefix_length(
+            lines[start].text, MAX_TRACE_BYTES
+        )
+        return index, end_byte, True, "byte_limit_inside_line"
+
+    end_byte = lines[index - 1].end
+    boundary = "line"
+    if index == limit and limit < natural_end:
         truncated = True
-    return index, truncated
+        boundary = "line_limit"
+    elif index < natural_end:
+        boundary = "byte_limit"
+    return index, end_byte, truncated, boundary
 
 
-def redact_trace(lines: Sequence[LogLine], start: int, end: int) -> tuple[str, int]:
+def redact_trace(
+    lines: Sequence[LogLine], source_data: bytes, start: int, end: int, end_byte: int
+) -> tuple[str, int]:
     chunks: list[str] = []
     redactions = 0
     for line in lines[start:end]:
-        text = line.text
+        if line.start >= end_byte:
+            break
+        raw = source_data[line.start : min(line.end, end_byte)]
+        text = raw.decode("utf-8")
         if SECRET_LINE_RE.search(line.content):
             redactions += 1
             newline = "\n" if text.endswith("\n") else ""
@@ -311,11 +423,10 @@ def extract_record(
         return base
 
     start, natural_end, kind, source_hits = candidates[0]
-    end, truncated = bounded_end(lines, start, natural_end)
+    end, end_byte, truncated, boundary = bounded_end(lines, start, natural_end)
     start_byte = lines[start].start
-    end_byte = lines[end - 1].end
     raw_trace = source_data[start_byte:end_byte]
-    redacted_trace, redaction_count = redact_trace(lines, start, end)
+    redacted_trace, redaction_count = redact_trace(lines, source_data, start, end, end_byte)
     base.update(
         {
             "status": "found",
@@ -329,6 +440,7 @@ def extract_record(
                 "end_line": lines[end - 1].number,
             },
             "trace_truncated": truncated,
+            "trace_boundary": boundary,
             "source_slice_sha256": sha256_bytes(raw_trace),
             "bounded_trace_sha256": sha256_bytes(redacted_trace.encode("utf-8")),
             "redaction_count": redaction_count,
@@ -343,8 +455,16 @@ def input_error_manifest(command: str, inputs: dict, errors: Iterable[str]) -> d
         "schema": "timeline.farm-trace-manifest.v1",
         "status": "input_error",
         "cli_command": command,
+        "supported_cli": (
+            "python3 evidence/extract_farm_traces.py --log-path LOG "
+            "--closed-historical CLOSED_HISTORICAL --closed-newer CLOSED_NEWER "
+            "--errored ERRORED --output-dir OUTPUT_DIR"
+        ),
+        "scope": FROZEN_SCOPE,
         "expected_log_sha256": EXPECTED_LOG_SHA256,
         "retained_checkpoint_counts": RETAINED_CHECKPOINT_COUNTS,
+        "checkpoint_reconciliation": CHECKPOINT_RECONCILIATION,
+        "output_policy": OUTPUT_POLICY,
         "inputs": inputs,
         "errors": list(errors),
         "note": "No trace or cause classification is produced from invalid or missing input.",
@@ -403,40 +523,33 @@ def main(argv: Sequence[str] | None = None) -> int:
         "path": str(args.log_path),
         "expected_sha256": EXPECTED_LOG_SHA256,
         "before_sha256": None,
+        "used_sha256": None,
         "after_sha256": None,
         "immutable_before_after": False,
     }
     input_records["log"] = log_record
-    before_hash, before_error = hash_path(args.log_path)
-    log_record["before_sha256"] = before_hash
-    if before_error:
-        errors.append(f"log: cannot read or hash source log: {before_error}")
-    elif before_hash != EXPECTED_LOG_SHA256:
+    source_data, source_hash, source_error = read_bytes_snapshot(args.log_path)
+    log_record["before_sha256"] = source_hash
+    log_record["used_sha256"] = source_hash
+    if source_error:
+        errors.append(f"log: cannot read source log: {source_error}")
+    elif source_hash != EXPECTED_LOG_SHA256:
         errors.append("log: source SHA-256 does not match the required Farm26511 digest")
 
-    source_data: bytes | None = None
-    source_text: str | None = None
-    if not errors:
-        try:
-            source_data = args.log_path.read_bytes()
-            source_text = source_data.decode("utf-8")
-        except UnicodeDecodeError as exc:
-            errors.append(f"log: invalid UTF-8 at byte {exc.start}; no faithful trace can be emitted")
-        except OSError as exc:
-            errors.append(f"log: cannot read source log: {type(exc).__name__}: {exc}")
+    after_data, after_hash, after_error = read_bytes_snapshot(args.log_path)
+    log_record["after_sha256"] = after_hash
+    log_record["immutable_before_after"] = (
+        source_error is None
+        and after_error is None
+        and after_data == source_data
+        and after_hash == source_hash
+    )
+    if after_error:
+        errors.append(f"log: cannot re-read source log after parsing snapshot: {after_error}")
+    elif not log_record["immutable_before_after"]:
+        errors.append("log: source changed during the read")
 
-    if source_data is not None:
-        after_hash, after_error = hash_path(args.log_path)
-        log_record["after_sha256"] = after_hash
-        if after_error:
-            errors.append(f"log: cannot re-hash source log after read: {after_error}")
-        log_record["immutable_before_after"] = (
-            before_hash == after_hash == EXPECTED_LOG_SHA256 and after_error is None
-        )
-        if not log_record["immutable_before_after"]:
-            errors.append("log: source changed or could not be verified byte-identical before/after read")
-
-    if errors or source_data is None or source_text is None:
+    if errors or source_data is None:
         manifest = input_error_manifest(command, input_records, errors)
         try:
             write_manifest(args.output_dir, manifest)
@@ -480,9 +593,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         "schema": "timeline.farm-trace-manifest.v1",
         "status": "complete",
         "cli_command": command,
+        "supported_cli": (
+            "python3 evidence/extract_farm_traces.py --log-path LOG "
+            "--closed-historical CLOSED_HISTORICAL --closed-newer CLOSED_NEWER "
+            "--errored ERRORED --output-dir OUTPUT_DIR"
+        ),
+        "scope": FROZEN_SCOPE,
         "expected_log_sha256": EXPECTED_LOG_SHA256,
         "source_log": input_records["log"],
         "retained_checkpoint_counts": RETAINED_CHECKPOINT_COUNTS,
+        "checkpoint_reconciliation": CHECKPOINT_RECONCILIATION,
+        "output_policy": OUTPUT_POLICY,
         "retained_format": (
             "pytest-xdist terminal output: underscore-delimited failure/setup headers and "
             "bounded sections ending at the next header or summary separator"
@@ -497,7 +618,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         "setup_error_records": setup_records,
         "classification_note": (
             "This tool preserves evidence only. Causes, environment/regression status, and PASS "
-            "are deliberately unknown and must be classified by the Agent worker from the raw evidence."
+            "are deliberately unknown; absence from this retained log cannot prove PASS, "
+            "environment-only failure, or regression."
         ),
     }
     try:
