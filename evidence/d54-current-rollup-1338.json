@@ -1,0 +1,118 @@
+{
+  "schema": "timeline.agent.d54.current-rollup.v2",
+  "task": "agt-F-core-counts-1338",
+  "read_only": true,
+  "base": "tl/integration@47b744dfe908dba1b9b09251d7fa2da3eb0530a6",
+  "runtime": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+  "prior_rollup": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D54-current-rollup-1254.json",
+    "sha256": "ac14855e5d8337194960d424726352c6343ca3b2f705654e9f4fc498e574a43a",
+    "old_counts": {"total": 276, "core": 159, "noncore": 117, "qualified": 118, "open": 158}
+  },
+  "source_evidence": {
+    "old276_map": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-core-home-1330/evidence/core159-old276-map.tsv",
+      "sha256": "279468169f07472f806632dcff46f2631d932acd0640eb61c1034e201edcc510"
+    },
+    "ordinary158": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-core-home-1330/evidence/core159-ordinary.xml",
+      "sha256": "5dbab3763e4339a8463186735dcb57799fb04da94bc3beced11115245f5eb31e",
+      "tests": 158,
+      "pass": 152,
+      "fail": 6,
+      "error": 0,
+      "skip": 0
+    },
+    "strict17": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-core-home-1330/evidence/r2-strict-17.xml",
+      "sha256": "bbec5fe310f6969b950ef98d54a6debeed15034b8e176800b4cb1274e40c6eec",
+      "tests": 17,
+      "pass": 17,
+      "old276_members": 0,
+      "qualification_scope": "actual-home R2 source control; outside old276"
+    },
+    "null46": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-core-home-1330/evidence/r2-null-validation-46.xml",
+      "sha256": "083d8651dd350cead32abec6519c8353078606cb7983a79f99e813a4a0a1ac35",
+      "tests": 46,
+      "pass": 46,
+      "old276_members": 0,
+      "qualification_scope": "actual-home R2 source control; outside old276"
+    },
+    "g4_actual_joined1317": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-G4-joined-home-1317/evidence/authoring-semantic-34.xml",
+      "sha256": "e35cb262b1df3dce021a79aa5d02afe611723f0501ea52092b58027cc2579898",
+      "tests": 34,
+      "pass": 34,
+      "old276_members": [230, 231],
+      "duplicate_old276_credit": [230, 231],
+      "qualification_scope": "actual-home G4 source control; exact source scopes separate"
+    }
+  },
+  "current_core_checkpoint": {
+    "ordinary_xml": {"tests": 158, "pass": 152, "fail": 6},
+    "missing_from_ordinary_xml": [162],
+    "required_blocking": {"tests": 158, "pass": 152, "fail": 5, "unknown": 1},
+    "current_core_open_author_scope": [11, 13, 98, 99, 162, 213],
+    "deferred_visible_order": 170,
+    "deferred_is_not_in_author_scope_open": true,
+    "source_control_pass_is_not_current_original_pass": true
+  },
+  "current_status_exceptions": [
+    {"old276_order": 11, "status": "FAIL", "parameter": "[True]", "id": "tests/editing_conformance/test_provider_occurrence_fork.py::test_v2_registered_fork_reply_physical_effects_step_reads_and_undo[True]", "seam": "astrid/sdk/timeline/commit.py:821-833; fork source binding changed"},
+    {"old276_order": 13, "status": "FAIL", "parameter": "", "id": "tests/editing_conformance/test_provider_occurrence_fork.py::test_disjoint_head_merge_and_preview_keep_other_edit", "seam": "astrid/sdk/timeline/commit.py:834-837; fork predecessor boundary changed"},
+    {"old276_order": 98, "status": "FAIL", "parameter": "[1]", "id": "tests/editing_conformance/test_recipe_occurrence_fork.py::test_reload_undo_redo_exact_and_replay[1]", "seam": "astrid/sdk/timeline/commit.py:821-833; fork source binding changed"},
+    {"old276_order": 99, "status": "FAIL", "parameter": "[2]", "id": "tests/editing_conformance/test_recipe_occurrence_fork.py::test_reload_undo_redo_exact_and_replay[2]", "seam": "astrid/sdk/timeline/commit.py:821-833; fork source binding changed"},
+    {"old276_order": 162, "status": "UNKNOWN", "parameter": "", "id": "tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight", "reason": "no qualified current-tuple existing profile/binding carrier; incompatible child profile not used"},
+    {"old276_order": 170, "status": "FAIL", "parameter": "[\"second\"]", "id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]", "disposition": "deferred", "seam": "astrid/sdk/timeline/_timing_evaluators.py:385-387; missing exact word binding"},
+    {"old276_order": 213, "status": "FAIL", "parameter": "", "id": "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head", "seam": "astrid/sdk/timeline/_timing_evaluators.py:385-387; missing exact word binding"}
+  ],
+  "d23_scope_decision": {
+    "approved_exact_selector": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]",
+    "approved_old276_order": 170,
+    "order_213_is_not_relabelled": true,
+    "order_213_reason": "The retained D23 handoff names order 170 as the exact settled selector; order 213 remains a separate unqualified current failure. No guessed source inheritance or new deferral credit.",
+    "evidence": [
+      "design/peer-agent-to-runtime-orchestrator-20261024T0644Z-D23-and-child-evidence.md",
+      "design/agent-G5-D23-publisher-audit-1416.md",
+      "design/agt-F-persistence-cause-review-0709.md"
+    ]
+  },
+  "qualified_open_276": {
+    "total": 276,
+    "qualified": {"total": 164, "core": 154, "noncore": 10},
+    "open": {"total": 112, "core": 5, "noncore": 107},
+    "new_old276_qualified_rows": 46,
+    "new_old276_qualified_core": 46,
+    "duplicate_receipt_rows_not_new_credit": 106,
+    "current_failures_do_not_erase_prior_durable_receipts": [98, 99]
+  },
+  "qualified_category_counts": {
+    "bootstrap": {"selected": 42, "core": 0, "noncore": 42, "qualified": 0, "open": 42},
+    "helpers": {"selected": 23, "core": 23, "noncore": 0, "qualified": 20, "open": 3},
+    "media": {"selected": 66, "core": 66, "noncore": 0, "qualified": 66, "open": 0},
+    "other": {"selected": 40, "core": 10, "noncore": 30, "qualified": 20, "open": 20},
+    "provider": {"selected": 60, "core": 60, "noncore": 0, "qualified": 58, "open": 2},
+    "setup": {"selected": 45, "core": 0, "noncore": 45, "qualified": 0, "open": 45}
+  },
+  "classification_population_unchanged": {
+    "UNPROVEN": 197,
+    "deferred": 1,
+    "env": 78,
+    "open_after_receipts": {"UNPROVEN": 33, "deferred": 1, "env": 78}
+  },
+  "historical_baselines_distinct": {
+    "pending_baseline924": true,
+    "old25359": {"full": 16468, "cancelled_partial": 14973, "body_run_by_this_task": false},
+    "old9758": {"terminal_fail": 17673, "failed": 231, "errors": 45, "skips": 4, "subtests": 566, "historical_distinct": 267},
+    "d60_upstream_body": "zero; upstream merge may change the current tuple",
+    "no_final_full_or_source_cause_claim": true
+  },
+  "contract_scope": {
+    "request_fields": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps(id,label,intent,tags,command_ordinals,patch,reads)", "merge(fields|atomic)", "reads", "dry_run", "source", "rationale", "group_id", "Idempotency-Key"],
+    "reply_fields": ["accepted|merged canonical closure", "IDs", "digests", "commands", "id_map", "records", "steps", "dependencies", "effects", "bindings", "history", "undo", "publisher", "durable receipt", "dry-run would_status/null receipt", "conflict reason/head", "invalid code/path/hint/suggested_command"],
+    "production_caller_required": true,
+    "production_path_fact": "astrid/sdk/timeline/publish.py _PublishMixin._commit_document -> TimelineSession.submit"
+  },
+  "no_actions_taken": ["no body reruns", "no source/test/registry/authority edits", "no upstream push", "no guessed source inheritance", "no final/full/source-cause claim"]
+}

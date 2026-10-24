@@ -1,0 +1,14 @@
+kind	receipt_or_scope	old276_orders_or_membership	status_or_result	parameter_or_note
+checkpoint	ordinary158	all 158 XML testcase IDs map exactly to old276; order 162 is the sole old276 core ID absent	152 PASS; 6 FAIL	XML sha256 5dbab3763e4339a8463186735dcb57799fb04da94bc3beced11115245f5eb31e
+current	order 11	11	FAIL	[True]; fork source binding changed; commit.py:821-833
+current	order 13	13	FAIL	no parameter; fork predecessor boundary changed; commit.py:834-837
+current	order 98	98	FAIL	[1]; current original failure; prior durable M2media1149 remains
+current	order 99	99	FAIL	[2]; current original failure; prior durable M2media1149 remains
+current	order 162	162	UNKNOWN	D13 managed installed preflight; no qualified current-tuple existing profile/binding carrier
+current	order 170	170	FAIL	["second"]; D23 deferred and visibly failing; _timing_evaluators.py:385-387
+current	order 213	213	FAIL	no parameter; helper/persistence timing seam; _timing_evaluators.py:385-387
+receipt	actual-home1330 ordinary	152 newly qualified old276 rows; 106 duplicate already-qualified old276 rows	152 PASS; 6 FAIL	no body rerun; exact source-mode actual-home receipt
+receipt	actual-home1330 strict17	0 old276 rows; 17 outside old276	17 PASS	source control only; XML params/membership exact; no old276 credit
+receipt	actual-home1330 null46	0 old276 rows; 46 outside old276	46 PASS	source control only; XML params/membership exact; no old276 credit
+receipt	G4actualjoined1317	230,231; 32 other PASS nodes outside old276	34 PASS	both old276 rows duplicate ordinary PASS credit; exact source scopes separate
+rollup	qualified/open276	qualified 164 (core154, noncore10); open 112 (core5, noncore107)	276 total	current author-scope core open is six: 11,13,98,99,162,213; order170 is separate deferred
