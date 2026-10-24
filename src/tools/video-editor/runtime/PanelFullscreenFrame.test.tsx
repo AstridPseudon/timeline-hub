@@ -77,3 +77,33 @@ describe('PanelFullscreenFrame', () => {
     document.body.style.overflow = '';
   });
 });
+
+describe('PanelFullscreenFrame inside the editor shell', () => {
+  it('portals into the shell root and ignores Esc typed outside it, such as in chat', async () => {
+    vi.resetModules();
+    const shell = document.createElement('div');
+    document.body.append(shell);
+    const chat = document.createElement('textarea');
+    document.body.append(chat);
+    vi.doMock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx', () => ({
+      useOptionalVideoEditorRuntime: () => ({ shellRootRef: { current: shell } }),
+    }));
+    vi.doMock('@/shared/hooks/mobile', () => ({ useIsMobile: () => false, useIsTablet: () => false }));
+    const { PanelFullscreenFrame: Frame } = await import('./PanelFullscreenFrame');
+    const onExit = vi.fn();
+    render(<Frame title="World Explorer" onExit={onExit} />);
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.parentElement).toBe(shell);
+    expect(dialog.className).toContain('absolute');
+
+    chat.focus();
+    fireEvent.keyDown(chat, { key: 'Escape' });
+    expect(onExit).not.toHaveBeenCalled();
+    fireEvent.keyDown(shell, { key: 'Escape' });
+    expect(onExit).toHaveBeenCalledTimes(1);
+    vi.doUnmock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx');
+    vi.doUnmock('@/shared/hooks/mobile');
+    shell.remove();
+    chat.remove();
+  });
+});
