@@ -2,7 +2,11 @@ import { z } from 'zod';
 import { updateClipOrder } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import type { MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
 import { getNextClipId, rowsToConfig, type TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
-import { buildAssetDropEdit, planAssetDropTarget } from '@/tools/video-editor/lib/timeline-asset-plans.ts';
+import {
+  buildAssetDropEdit,
+  planAssetDropTarget,
+  type TimelineAssetPlacementPolicy,
+} from '@/tools/video-editor/lib/timeline-asset-plans.ts';
 import { buildDuplicateClipEdit } from '@/tools/video-editor/lib/duplicate-clip.ts';
 import { getAssetImmediateSource } from '@/tools/video-editor/lib/asset-registry.ts';
 import { buildDataFromCurrentRegistry } from '@/tools/video-editor/lib/timeline-save-utils.ts';
@@ -59,6 +63,7 @@ export type PlacePreparedMediaPayload = {
   replaceClipId?: string;
   /** Keep group membership/metadata in the same editor save as the media. */
   pinnedShotGroupsOverride?: PinnedShotGroup[];
+  placementPolicy?: TimelineAssetPlacementPolicy;
 };
 
 export type PlacePreparedMediaCommand = Omit<TimelineCommand<'place-prepared-media', PlacePreparedMediaPayload>, 'payload'> & {
@@ -666,9 +671,12 @@ const buildPlacePreparedMediaEffect = (
       insertAtTop: payload.insertAtTop ?? false,
       time: Math.max(0, payload.at),
       duration,
+      placementPolicy: payload.placementPolicy,
     });
     if (!targetPlan.ok) {
-      throw new Error('Timeline data is not available for prepared media placement.');
+      throw new Error(targetPlan.error === 'preserved_track_unavailable'
+        ? 'The captured occurrence raw track is unavailable.'
+        : 'Timeline data is not available for prepared media placement.');
     }
     const insertedEdit = buildAssetDropEdit({
       current: targetPlan.preparedCurrent,

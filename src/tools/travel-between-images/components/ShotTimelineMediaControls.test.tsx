@@ -103,6 +103,7 @@ describe('ShotTimelineMediaControls', () => {
       preparedAsset,
       trackId: 'V1',
       time: 1.25,
+      placementPolicy: { kind: 'occurrence-raw-track', trackId: 'V1' },
     }));
     expect(state.commands.addClip.mock.calls[0]?.[0].preparedAsset.mediaSelection).toEqual(
       preparedAsset.mediaSelection,
