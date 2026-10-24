@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T05:45:02Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 1m -->
-# runtime board, 2026-10-24T05:43:58Z
+<!-- main | 2026-10-24T05:47:36Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 1m -->
+# runtime board, 2026-10-24T05:46:30Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -55,7 +55,6 @@
 | F-helper-sequential | Classify helper replay-map refusal | Agent Sol / Luna | Integrated proof complete | merged | Agent184dc; review0224; integrated0232 | Actual Agent 8a8d passed 12 focused cases and static, vendor and artifact checks. Both original variants passed on reviewed source. | Agent184dc20a70 |
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Current installed qualification passed | merged | Agent0508; independent0517 PASS | Exact seven originals passed on managed child 3b5c, Agent ba8f and Runtime f320. Current 9cd relevant sources and test AST match. | Managed child 3b5c |
-
 | OPS-farm-agent-full | Prepare supported farm full-suite setup | Sol / Luna | Checkpoint result | doing | Review 0423 PASS; Farm 0503 | Test agent-full-farm-1024050351-26511 reached about 70% at 05:29 on Agent 9cd, tree 57f0231d. Setup complete; result pending. | c9a58f3d2 packet |
 | R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Integrated proof passed | merged | Review 0405; integrated 0413 PASS | 13 standalone cases and 243 controls passed; 74 configured deselections. [Proof](../../design/runtime-historical-image-integrated-0413.md) | 2b49da8d6 / 2e96c68c |
 | R-D42-history-memo | Harden verified replay memo | Sol / Luna | Post-delivery scope under D47 | gated:D47 | Design0448; review0454 PASS | Deferred by D47. No stable validation boundary; nine state attacks remain open. Source stays unmerged. | Tests 6c6bb375; source held |
@@ -63,10 +62,9 @@
 | R-D42-HTTP | Measure a future memo pin over HTTP | Luna | Post-delivery safe memo under D47 | gated:D47 | No active HTTP worker | D45 removes these timings from the next P2/P3 prerequisites. Do not run an unsafe pin or a duplicate gate. | No released memo pin |
 | R2r-source-copy-guards | Classify two retained source-copy guards | Agent Sol / Luna | Independent result review passed | merged | Agent0502; review0511 PASS | Exact two originals passed in 20.90 seconds on Agent 9cd and Runtime 2b49. All 54 guards retained. Capture and HTTP limits stay explicit. | Source unchanged |
 | U2c-child-proof | Identify supported activation child proof | Luna / Luna | Source facts independently reviewed | merged | Facts0425; independent0430 PASS | Producer is absent in Agent RunPod adapter. Exact owner and custody seam returned; Runtime guard unchanged. | Source facts only |
-
-| F-CLI-remainder | Preserve five original CLI scenarios | Luna / Luna | Independent result review | review | Author 0540; review 0544 | Five exact originals passed; no fixture changes. Two existing Ruff and two mypy diagnostics; zero new. [Report](../../design/runtime-CLI-remainder-0540.md) | Agent 2007 unchanged |
-| U1c-freeze-recheck | Recheck held upstream draft | Luna / Luna | Independent fact review | review | Author 0540; review 0544 | Exact 795 ancestry retained; draft remains held. Export/history merge seams identified. [Report](../../design/runtime-U1c-freeze-recheck-0540.md) | Draft 40427 |
-| R0-D39-generation-dry | Rehearse client generation for freeze | Luna | H32 branch-only dry run | doing | rt-R0-D39-generation-dry-0540 | Normal generators and focused checks in isolated branch. Current consumer pins stay intact. | Runtime 1d9dd base |
+| F-CLI-remainder | Preserve five original CLI scenarios | Luna / Luna | First return after review failure | doing | Author 0540; review 0544 FAIL; return 0547 | Five legacy tests pass but bypass C0. No credit. First return checks existing production support. [Review](../../design/runtime-CLI-remainder-review-0544.md) | Agent 2007 unchanged |
+| U1c-freeze-recheck | Recheck held upstream draft | Luna / Luna | Freeze join and integrated qualification | gated:freeze | Author 0540; review 0544 PASS | Qualified exact 795 handoff. Preserve history and five protected D39/R0 paths. [Review](../../design/runtime-U1c-freeze-recheck-review-0544.md) | Draft 40427 held |
+| R0-D39-generation-dry | Rehearse client generation for freeze | Luna / Luna | Independent generation and response review | review | Author 0540; review 0545 | Generated candidate fe637; 147 tests passed. Remaining response cases need explicit Agent source and localhost access. | fe637f6c5 held |
 
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
@@ -84,4 +82,4 @@ D34: Main has 8.6 GiB free at the latest check. The orchestrator orders no furth
 
 Later: D46 closes U2c; no new relay or provider custody backend. Its upstream commit arrives at the freeze. Agent owns support-probe timeout investigation 0522; no Runtime author is requested. Disk and D47 memo work stay paused. Agent assigned F-CLI-remainder in peer 0531; unique Runtime Luna 0540 owns its five originals and three fixture files. The H32 U1c recheck and D39 generation dry run are also dispatched.
 
-Next ready: None waiting. CLI and U1c reports are in independent review; D39 generation dry run is active. Consume reports and retain freeze holds. Farm checkpoint 26511 remains active.
+Next ready: None waiting. CLI first return 0547 and D39 independent review 0545 are active. U1c handoff passed and remains held for freeze. Farm checkpoint 26511 remains active.

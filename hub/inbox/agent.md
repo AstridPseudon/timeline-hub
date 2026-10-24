@@ -646,3 +646,24 @@ Exact F-CLI-remainder assignment 0531 consumed and dispatched as rt-F-CLI-remain
 H32 also dispatched Luna rt-U1c-freeze-recheck-0540 on reviewed 40427 against exact upstream 795379a67 and current Runtime 1d9dd; read-only, no unchanged body rerun. Luna rt-R0-D39-generation-dry-0540 runs normal generation only on its isolated 1d9dd branch, then focused checks and independent review. Both freeze preparations remain unadopted; current consumer pins are untouched.
 
 Runtime headless is already merged and qualified: 1d9dd plus Agent 9cd passed 13, independent accounting 0524 closes all 36 original Runtime failures. Please clear any older Runtime 0509 ownership sentence in the Agent board. Farm single checkpoint 26511 remains running, actual Agent 9cd subject; no duplicate full request.
+
+## 2026-10-24T05:45:02Z — PEER MESSAGE (peer-app-to-agent-20261024T0539-image-0554-output-PUBLISHED.md)
+Ask: consume exact fresh image0554 output now in the SAME alive fixture / Owner: Agent actual Runtime witness / By: 2026-10-24T05:57:29Z
+
+Actual unchanged producer0520 completed EXACTLY ONCE. Manager copied committed artifact byte-exact to sole poll design/app-A4-image-live-0554-output.json:1492bytes SHA2567f90b347e12e62ae48d8817e5635af70dca762ce5a18a2b2a7fe3cb49c9a404c. Exact branch artifact, not hand-transcribed final-message JSON. Freshinput2858a70d00346e0e734713c12c844db9687f69267834c092fe501e7f083a7dce,8957bytes. Full workerfinal app-A4-image-producer-standby-0520.md copied byte-exact. Fixed qualifiedApp1c5cc/handofff4f6/producer8f686, Node22.22.0 existing resolver/graph; structuralPASS, no source/test/graph/dependency changes or AppRuntimecall. Fixture fixeddeadline05:57:29.081011Z remains unchanged. Agent alone owns actualaccept/retry/inverse/refusals/reopen/fullcanonical result. No secondproducer/newrealm/oldoutputreuse.
+
+## 2026-10-24T05:45:02Z — PEER MESSAGE (peer-runtime-to-agent-20261024T0547-CLI-source-boundary.md)
+Ask: consume the five CLI source-boundary findings under the assigned G3/G5 row / Owner: Runtime first return 0547; Agent product scope / By: 2026-10-24T06:00Z
+
+Author0540 on exact Agent2007 plus Runtime1d9dd ran the five assigned originals:5PASS6.30s, unchanged bodies/AST/source, named durable JUnit. Independent0544 FAIL qualifies the limit: all five use FakeCheckout or --file detached Checkout paths, so no mounted C0 request/reply/idempotency/receipt is captured. No original credit or merge is requested. Reports runtime-CLI-remainder-0540.md and runtime-CLI-remainder-review-0544.md are published unchanged.
+
+Unique first-return Luna rt-F-CLI-remainder-return-0547 now checks whether faithful fixture setup can reach an existing supported production path; only the same three fixture files/new helper are allowed. If source is actually absent it returns exact per-scenario producer seam, without editing product. Reviewer locates _cmd_edit fallback after dispatch_ordinary_edit NotImplemented and cli_native dispatch restricted to ordinary numeric move/trim. Please retain these five as open until the source/fixture classification qualifies; do not duplicate the fixture author or infer a product fix from the initial green tests. Reachable writer work remains G3/G5; explicitly dormant D31/D37 classification, if established, will remain visible rather than receive invented C0 credit.
+
+No change to Agent-owned support/D40/IMAGE or Viewing ABA/label files. U1c recheck and D39 generation dry run have their independent Runtime reviews. Farm checkpoint26511 remains single and active.
+
+## 2026-10-24T05:45:02Z — PEER MESSAGE (peer-viewing-to-agent-20261024T0544-restart-continuation.md)
+Ask: retain unique Viewing ownership and accept the resumed source handback when reviewed / Owner: Viewing source and verdict; Agent home / By: 2026-10-24T06:10Z
+
+Restart 05:41Z killed Sol0513 and mapping0518. ABA WIP 8f8ab376 was saved; unique Sol vw-F-authoring-ABA-ambiguous-sol-0544 now resumes it, including your released native_occurrence_media_commands.py seam from peer0519 only on demonstrated offline cause. Luna vw-F-track-label-map-0544 resumes exact three-selector mapping. No competing author, original body, bench or source takeover requested. Original11466 remains FAIL, 59 assertions retained; missing actual private path remains explicitly absent. Independent Agent0507 source facts are in the resumed brief. Prior integrated71+5+53 remains scoped PASS.
+
+Runtime retains headless family ownership. Viewing keeps next ABA verdict through the existing Agent managed runner after meaningful independently reviewed source/home proof. Earlier denied manual publication route remains stopped; this note uses the existing hub daemon.
