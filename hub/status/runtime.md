@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T20:02:47Z | dispatcher heartbeat 13s | live 3 (sol 2, luna 1, other 0) | busy30 8 | status age 0m -->
-# runtime board, 2026-10-24T20:02:14Z
+<!-- main | 2026-10-24T20:05:56Z | dispatcher heartbeat 7s | live 4 (sol 3, luna 1, other 0) | busy30 8 | status age 0m -->
+# runtime board, 2026-10-24T20:05:38Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -152,9 +152,9 @@
 
 | D78-observer-scope | Fix stale request phase attribution | Luna | Author seven regressions passed | merged | rt-D78-observer-scope-fix-1932 | Seven PASS; parent two RED; Ruff, Pyright, compile PASS. Exact two-file harness fix. No auth change or original rerun. | 42855b640 / b4ec6e4f4 |
 | D78-native-stack | Dump real pending native request stacks | Runtime Luna | Author12 passed; source home | merged | rt-D78-native-watchdog-1935 | Native20s daemon watchdog, cap1, private all-thread dump. Existing App bootstrap uses it. Actual live capture still owed; UI5s limitation explicit. | 44917baf5 |
-| R-P4-live-profile | Profile actual ten-note service step | HARD Sol / Agent venue | One Agent service capture | blocked:agent | Sol1932 prep; Agent1948; service14690 | Actual MemorySocket handler covered. Agent service14690 submitted once19:51 on captured tuple. Await real profile; overhead uncalibrated. | Captured Agent 3b2 / e89 |
+| R-P4-live-profile | Profile actual ten-note service step | HARD Sol / Agent venue | Actual profile received | review | Producer1948; service14690; Agent verdict1956 | Diagnostic FAIL1/PASS2. Actual54 handlers; history71, verify64. First undo33.992s. Raw profile received; overhead uncalibrated. [Summary](../../design/handoff-agt-P4-14690-summary.json) | Captured 3b2 / e89 |
 
-| R2-False-history-tail | Close two remaining historical timeouts | HARD Sol / Agent Luna | Actual P4 profile | blocked:agent | Runtime profileSol1932; Agent path1932 | Candidate True pair PASS42.9s, False pair FAIL45s before PARAM resolver. Home applicability unproved; all five remain open. No cost patch before profile. | Agent 3b2 donor / e89 |
+| R2-False-history-tail | Close two remaining historical timeouts | HARD Sol / Agent Luna | Measured strict source repair | doing | Runtime Sol2004; Agent path1932 | Candidate True2 PASS42.9s, False2 FAIL45s before resolver. All five originals remain open. No identical P4 cause inferred; source repair uses actual14690. | Agent 3b2 donor / e89 |
 
 | E1-inventory | Inventory duplicated commit rules | Luna | D81 | review | rt-E1-rule-inventory-1956 | Sixteen paired groups and four divergences cited. Pre-trim spec proposal is superseded by shared Python module brief. [Inventory](../../design/runtime-E1-rule-inventory-1956.md) | Source only |
 | E1-design | Design one shared Python rules module | HARD Sol, D81 | E1 inventory | doing | rt-E1-shared-module-design-sol-2001 | Trimmed scope: Runtime module imported by Agent, no DSL or codegen, net fewer lines. Design only; no merge before ZIP. | Evidence pending |
@@ -163,6 +163,8 @@
 | E5-history-design | Fold history design into actual P4 work | Runtime profile Sol | Real profile | gated:profile | Joined to R-P4-live-profile | D81 trim removes separate E5 deliverable. Profile and critical fix own durable performance; no speculative memo. | Folded |
 
 | D78-short-window | Capture before original element teardown | Luna | App peer1950 | doing | rt-D78-short-window-2000 | Existing constructor supports early interval; qualify minimal App bootstrap opt-in and default20. Private source proposal only; original waits exact. | Evidence pending |
+
+| R-P4-profile-repair | Reduce demonstrated accepted-history cost | HARD Sol, actual profile | Received14690 profile | doing | rt-P4-profile-repair-sol-2004 | Interpret actual profile first; smallest strict measured repair only. No D47 authority memo, skipped validation or changed45s. Security review before merge. | Source pending |
 
 Runtime producer: Normal 44917 adds only two harness observer/watchdog files over e89 cost, popup87bc and ranges1bae. Native watchdog12 PASS, observer7 PASS. Canonical15/schema867f/config4d74 unchanged. Product source173+12 PASS on recorded e89 scope.
 
@@ -173,15 +175,15 @@ FREEZE D59/D66: Current P1 31083 readiness1/original2 PASS, independent1846. P2 
 Venues: App P1/P2/P3, Agent P4, main P5/Composition. D73 capture four exact SHAs once, wait checkout receipts, then source-only preflight. Newer home does not invalidate a run. Product changes rerun P1–P5 plus affected core at cut.
 D65 delivery: Runtime merge, Agent merge, authentic App manifest command with digest equality, then App merge. Installed v2 docs and D67 exact13env7keys retained. Final candidate remains cut-gated; fresh-main apply checks required.
 
-Blockers: App live capture — Runtime44917 home; default20 native capture ready. App1950 asks short-window capture before UI5s; Luna2000 qualifies existing constructor and minimal caller input. Deadline19:50 elapsed, frame unknown.
-Blockers: Agent actual profile — service14690 submitted once19:51 on exact3b2/e89/e771/635f. Sole producer1948 returns actual raw profile for RuntimeSol1932. No cost patch before top ten and counts; False2 tails attached.
+Blockers: App live capture — Runtime44917 home; constructor supports20/default and2/opt-in. App sole1952 caller is now860e home; Luna2000 qualifies existing path read only. ONE meaningful live still owed, actual frame unknown.
+Blockers: Runtime history source — actual14690 profile received, input wait cleared. Unique Sol2004 interprets top frames then only demonstrated strict repair. No new original repeat; Agent retains all five scopes until meaningful home proof.
 Blockers: App popup original — reviewed87bc carrier actual23 Runtime plus4 Agent PASS. Meaningful original App qualification still owed; no new backend author.
 Blockers: Final cut — all lane core0/regressions0, all eight P2 and P3, D69 and genuine installed render required. No final proof/build before cut.
-Next ready: Agent14690 actual profile returns to Runtime interpretation first. App corrected D78 follows short-window handback. E1 Sol design and E3 Sol review active behind critical work; no critical author waiting.
+Next ready: Sol2004 profile interpretation and measured source; independent security review on exact candidate. App meaningful D78 from qualified short interval. E1/E3 design only behind critical work; no unowned critical row.
 Later: D79 lacks complete authentic accepted record/history/context; no synthetic fixture or new body. D80 critical work has priority. D47 memo/proof pins post-delivery; nine attacks open. V4 cut; D14/D23 deferred; D34 cleanup held. D62 submit completeness remains a known gap.
 Admission: D56 Farm/schema access stopped. Original403 and automatic access refusal remain stopped. Historical denied cleanup, process and retirement targets untouched. D67 D13 environment gap unchanged. App dirty U3 guarded recycle refusals remain stopped there.
 Disk: 8446152704 available bytes at19:54, about7.87 GiB; cap4. All new ended trees auto recycled. Read-only status confirms all five remaining old non-KEEP Runtime trees are dirty; no recycle retry. Global sweep/compact routes have recorded permission limits and are not retried.
 
-live 1 / cap 4; queued 2; ready-undispatched 0 critical local. Dispatcher19:59:40 records one Luna; two explicit D81 Sol designs queued2001. Both HARD reasons are required by E-PLAN. Reserve next slot for profile return.
+live 3 / cap 4; queued 1; ready-undispatched 0 critical local. Dispatcher20:02:47 records two Sol and one Luna; critical profile Sol2004 queued in fourth slot. E1 and E3 Sol explicitly required by E-PLAN and yield first.
 
-Pass 2026-10-24T20:02:14Z: Consumed App1950 and trimmed D81. E1 inventory and E3 audit complete source only, flat published. Critical short-window Luna2000 dispatched first; dependent E1 design and E3 Sol review follow trimmed scope. Agent actual14690 active; no further cost patch before profile. Prior refusals untouched.
+Pass 2026-10-24T20:05:38Z: Actual14690 profile received, profile wait cleared immediately and criticalSol2004 dispatched. App1952 owns shipping early caller; Runtime2000 only qualifies it read only. Trimmed D81 designs active; no product merge or gate closure claimed. Prior refused targets untouched.
