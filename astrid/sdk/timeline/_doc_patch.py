@@ -188,6 +188,8 @@ class Closure:
                 paths = ([['clips', *tail]] if 'clips' in parent else [])
                 if isinstance(parent.get('config'), dict) and 'clips' in parent['config']:
                     paths.append(['config', 'clips', *tail])
+                if not paths:
+                    paths = [path]
             elif path[:1] == ['registry'] or path[:2] == ['config', 'registry']:
                 tail = path[1:] if path[0] == 'registry' else path[2:]
                 paths = ([['registry', *tail]] if 'registry' in parent else [])
@@ -210,6 +212,18 @@ class Closure:
         return sites
 
     def install(self, ctx, physical, path, replacement):
+        if physical == 'parent' and path == ['occurrences']:
+            rows = replacement.get('value')
+            ordered = identities(rows, 'occurrence_id', ref=physical, path=path)
+            before = self.payload(physical)['occurrences']
+            if not equal(sorted(before, key=lambda row: row['occurrence_id']),
+                         sorted(rows, key=lambda row: row['occurrence_id'])):
+                raise CommandError('occurrence order writes must preserve every verified row',
+                                   kind='managed_closure_write', ref=physical, path=path)
+            # Keep each exact native owner link; submitted rows supply only order.
+            native = {row['occurrence_id']: row for row in ctx.state.bundle['placements']}
+            ctx.assign('parent', path, present([native[identity] for identity in ordered]))
+            return
         if not path:
             before = self.payload(physical)
             after = replacement['value']
@@ -229,6 +243,10 @@ class Closure:
                 value['value']['shot_id'] = ctx.state.entity(ref)['shot_id']
             previous_config = ctx.state.get(ref, native_path) if physical == 'parent' and native_path == ['config'] else ABSENT
             ctx.assign(ref, native_path, value)
+            if physical == 'parent' and native_path in (['clips'], ['config', 'clips']):
+                # Later identity writes must follow the newly assigned collection.
+                ctx.state.parent_clip_path = (('clips',) if isinstance(self.bundle['parent'].get('clips'), list)
+                                              else ('config', 'clips'))
             if ref.startswith('parent/clip:'):
                 # The next change must observe the recorder's synchronized mirrors.
                 ctx.compile_mirrors()
@@ -322,7 +340,7 @@ def validate_submitted_change(change):
     ref, path, op = change['ref'], change['path'], change['op']
     if (not path and (op != 'set' or change['before'] == ABSENT)
             or ref.startswith('shot') and path[:1] == ['internal_timeline_revision_id']
-            or ref == 'parent' and path[:1] == ['occurrences'] and (len(path) < 2
+            or ref == 'parent' and path[:1] == ['occurrences'] and (len(path) < 2 and op != 'list.move'
                 or len(path) == 2 and op == 'remove'
                 or len(path) > 2 and path[2] in ('occurrence_id', 'shot_id', 'shot_revision_id', 'revision_id'))):
         raise CommandError('closure membership and edges require semantic commands',
@@ -407,7 +425,11 @@ def apply_change(root, change, *, physical=None):
                         root[mirror] = copy.deepcopy(config[mirror])
                     else:
                         root.pop(mirror, None)
-    if not equal(managed_edges(physical, old_root), managed_edges(physical, root)):
+    old_edges, new_edges = managed_edges(physical, old_root), managed_edges(physical, root)
+    if physical == 'parent' and path == ['occurrences'] and op == 'list.move':
+        old_edges = sorted(old_edges, key=lambda row: row[0])
+        new_edges = sorted(new_edges, key=lambda row: row[0])
+    if not equal(old_edges, new_edges):
         raise CommandError('replacement changes provider-managed edges', kind='managed_closure_write', ref=ref, path=path)
     validate_payload(physical, root)
     return root, before
@@ -434,7 +456,9 @@ def patch(ctx, command):
         created = allocations(closure, physical, old_root, root)
         ctx.record['created'].extend(created)
         # Previous operands are sequential observations, not refreshed command claims.
-        if not op.startswith('list.'):
+        if physical == 'parent' and path == ['occurrences'] and op == 'list.move':
+            ctx.read('occurrence:' + change['id'])
+        elif not op.startswith('list.'):
             for native_ref, native_path in closure.native_sites(physical, path):
                 if native_path or native_ref == 'parent':
                     ctx.read(native_ref, native_path)
