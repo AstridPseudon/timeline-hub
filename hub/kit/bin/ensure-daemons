@@ -29,6 +29,10 @@ hbage=$(( $(date +%s) - $(stat -c %Y $O/dispatcher.heartbeat 2>/dev/null || echo
 mail=""; for f in $O/design/peer-*-to-$A-lead-*.md; do [ -f "$f" ] || continue; b=$(basename "$f"); grep -qxF "$b" $O/.lead-mail-seen-$A 2>/dev/null && continue
   mail="$mail $b"; echo "$b" >> $O/.lead-mail-seen-$A; done
 [ -n "$mail" ] && mgr="$mgr LEAD MAIL (read in \$ORCH/design/):$mail"
+# hourly read-only upstream fetch (01:45Z, LOOPS #39): lanes need origin/main current for U-drafts and D32 pre-existing checks. Fetch only; never push.
+if [ -z "$(find $O/.upstream-fetch-$A -mmin -60 2>/dev/null)" ]; then touch $O/.upstream-fetch-$A
+  for r in agent runtime app composition; do [ -d /home/user/work/$r/.git ] || [ -f /home/user/work/$r/.git ] || continue
+    ( timeout 90 git -C /home/user/work/$r fetch -q origin main >/dev/null 2>&1 & ) ; done; fi
 dead=""; fin=""
 for d in $O/workers/*/; do
   [ -f $d/running ] && [ -f $d/meta ] || continue
