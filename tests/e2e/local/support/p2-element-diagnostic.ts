@@ -19,12 +19,14 @@ type UiStage = 'apply' | 'request-pending' | 'response-received' | 'failure' | '
 type UiConnection = 'connected' | 'disconnected' | 'unknown';
 type UiDialog = 'present' | 'absent' | 'unknown';
 type UiStatus = 'applied' | 'pending' | 'failed' | 'unknown';
+type UiApplyButton = 'idle' | 'applying' | 'applied' | 'refused' | 'unknown';
 
 export type ElementApplyUiState = {
   stage: UiStage;
   connection: UiConnection;
   dialog: UiDialog;
   status: UiStatus;
+  applyButton: UiApplyButton;
 };
 
 export type ElementApplyDiagnosticEvent = {
@@ -69,7 +71,7 @@ type DiagnosticTestInfo = {
   attach(name: string, options: { path: string; contentType: string }): Promise<void>;
 };
 
-const UNKNOWN_UI: ElementApplyUiState = Object.freeze({ stage: 'unknown', connection: 'unknown', dialog: 'unknown', status: 'unknown' });
+const UNKNOWN_UI: ElementApplyUiState = Object.freeze({ stage: 'unknown', connection: 'unknown', dialog: 'unknown', status: 'unknown', applyButton: 'unknown' });
 
 function boundedElapsed(startedAt: number): number {
   const value = Date.now() - startedAt;
@@ -174,7 +176,9 @@ function safeUiState(value: unknown): ElementApplyUiState {
     ? source.dialog as UiDialog : 'unknown';
   const status = ['applied', 'pending', 'failed', 'unknown'].includes(source.status as string)
     ? source.status as UiStatus : 'unknown';
-  return { stage, connection, dialog, status };
+  const applyButton = ['idle', 'applying', 'applied', 'refused', 'unknown'].includes(source.applyButton as string)
+    ? source.applyButton as UiApplyButton : 'unknown';
+  return { stage, connection, dialog, status, applyButton };
 }
 
 export function elementApplyUiScript(): string {
@@ -188,6 +192,7 @@ export function elementApplyUiScript(): string {
         if (!(target instanceof Element)) return;
         const button = target.closest('button');
         if (!button || (button.textContent || '').replace(/\\s+/g, ' ').trim() !== 'Apply') return;
+        window.__timelineP2ElementApplyButton = button;
         const notify = window.__timelineP2ElementApplyBoundary;
         if (typeof notify === 'function') void notify({ kind: 'apply-click' });
       } catch { /* Boundary observation is disposable. */ }
@@ -195,17 +200,32 @@ export function elementApplyUiScript(): string {
   })();`;
 }
 
-export function readElementApplyUiState(): ElementApplyUiState {
+function applyButtonState(terminal: ElementApplyTerminal): UiApplyButton {
+  try {
+    const button = (globalThis as { __timelineP2ElementApplyButton?: unknown }).__timelineP2ElementApplyButton;
+    if (!button || typeof button !== 'object' || typeof (button as { closest?: unknown }).closest !== 'function') return 'unknown';
+    const dialog = document.querySelector('[role="dialog"]');
+    const owner = (button as { closest(selector: string): unknown }).closest('[role="dialog"]');
+    if (!dialog || owner !== dialog) return 'unknown';
+    if (terminal === 'accepted') return 'applied';
+    if (terminal === 'failed' || terminal === 'aborted') return 'refused';
+    return (button as { disabled?: unknown }).disabled === true ? 'applying' : 'idle';
+  } catch {
+    return 'unknown';
+  }
+}
+
+export function readElementApplyUiState(terminal: ElementApplyTerminal = 'unknown'): ElementApplyUiState {
   try {
     const connectionNode = document.querySelector('[data-testid="runtime-connection-status"]');
     const connectionValue = connectionNode?.getAttribute('data-state');
     const connection: UiConnection = connectionValue === 'connected' ? 'connected' : connectionValue === 'disconnected' ? 'disconnected' : 'unknown';
     const dialog = document.querySelector('[role="dialog"]');
-    const statusText = dialog?.querySelector('[role="status"]')?.textContent?.slice(0, 100).toLowerCase() ?? '';
-    const status: UiStatus = statusText.includes('applied') ? 'applied'
-      : statusText.includes('applying') || statusText.includes('pending') ? 'pending'
-        : statusText.includes('failed') || statusText.includes('error') ? 'failed' : 'unknown';
-    return { stage: 'retained', connection, dialog: dialog ? 'present' : 'absent', status };
+    const applyButton = applyButtonState(terminal);
+    const status: UiStatus = applyButton === 'applied' ? 'applied'
+      : applyButton === 'applying' ? 'pending'
+        : applyButton === 'refused' ? 'failed' : 'unknown';
+    return { stage: 'retained', connection, dialog: dialog ? 'present' : 'absent', status, applyButton };
   } catch {
     return UNKNOWN_UI;
   }
@@ -456,7 +476,7 @@ export async function retainElementApplyDiagnostic(
     collector.onChange(persist);
     collector.recordLifecycle('test-outcome');
     if (page && beforePageClose) {
-      const sampled = await withDiagnosticDeadline(() => page.evaluate(readElementApplyUiState), UNKNOWN_UI, UI_READ_TIMEOUT_MS);
+      const sampled = await withDiagnosticDeadline(() => page.evaluate(readElementApplyUiState, collector.snapshot().terminal), UNKNOWN_UI, UI_READ_TIMEOUT_MS);
       ui = safeUiState(sampled);
       uiLoss = ui === UNKNOWN_UI || !Object.entries(ui).every(([key, value]) => recordValue(sampled)[key] === value);
     }
