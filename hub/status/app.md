@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T03:46:10Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 18 | status age 6m -->
-# app board, 2026-10-24T03:40Z
+<!-- app | 2026-10-24T03:48:57Z | dispatcher heartbeat 10s | live 1 (sol 1, luna 0, other 0) | busy30 18 | status age 2m -->
+# app board, 2026-10-24T03:46Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -62,12 +62,12 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 
 | readiness-D41-cause | Classify changed-pair readiness failure | Sol; Luna review | Actual retained artifacts | doing | app-readiness-D41-cause-sol-0309 | Independent0309 PASS with corrections: P3 outbox unknown before connected/fresh-owner checks. First history 3.56 seconds; exact later await and trigger unknown. | App804 / Agent079 / Runtime37eb |
 
-| readiness-phase-diagnostics | Correlate bootstrap read phases truthfully | Sol; Luna review | First review0332 FAIL | doing | app-readiness-phase-return-sol-0339 | End events preceded validation. Bounded first return on coalescing branch preserves hook and fixes diagnostic truth. | Original7502 held |
+| readiness-phase-diagnostics | Report validated read completion truthfully | Sol; Luna review | First return0339 complete | review | app-readiness-cumulative-review-0345 | Return109 tests plus22 and12 safety, three types/lint passed. Original faulty donor remains held; cumulative review active. | ee77ea8e8a on dee99 |
 
 | P2-gesture-causes | Classify three actual gesture failures | Luna | Review 0327 complete | merged | app-P2-gesture-review-0327 | [Source classification PASS with corrected mounted save citation. Exact triggers remain unknown.](../../design/app-P2-gesture-review-0327.md) | Report only |
 
 | readiness-D42-trace | Correlate retained request and close times | Sol; Luna review | Independent review complete | merged | app-readiness-D42-trace-review-0332 | [All eight timings verified; causal link insufficient. Sent before03:50.](../../design/app-readiness-D42-trace-review-0332.md) | Report only |
-| readiness-D42-coalesce | Reuse same-head pending basis read | Luna; independent review | Author0325 complete | review | app-readiness-D42-coalesce-review-0338 | Author91 hook plus90 diagnostic/provider tests, three types and lint passed. Known donor diagnostic defect repaired separately0339. | dee99fc4cb |
+| readiness-D42-coalesce | Reuse same-head pending basis read | Luna; independent review | Independent0338 PASS | review | Cumulative0345 before merge | Independent181 tests plus22 and12 safety, three types/lint passed. Coalescing unchanged in corrected diagnostic packet. | dee99fc4cb |
 
 
 Integration: a64587176d. Current recovery packet passed 106 tests, three types and lint before its exact merge. Exports and lifecycle joined proof passed 108 plus 105 tests, three types, lint and governance. Historical joined proof 0150 remains bound to 1c5cc47bf6.
@@ -76,7 +76,7 @@ Integration: a64587176d. Current recovery packet passed 106 tests, three types a
 
 Blockers: Runtime — Complete-input memo0330 and proof-pin backport remain active. App coalescing0325 is independent; no new P2/P3 run.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
-Next ready: Review diagnostics0318 and element0314, qualify pending coalescing, and publish independent trace timing before03:50.
-Disk: Three finished worktrees recycled. Sweep3 completed with zero eligible directories. Current free10.93GB; freed bytes were not measured separately. Prior dirty U3 and compact refusals stand.
+Next ready: Merge corrected coalescing packet after cumulative review; close A4 on independent zero-writer review. Bind D42 caller when Runtime publishes qualified proof pin.
+Disk: Three finished worktrees recycled; sweep3 removed0 directories. Free11.36GB at03:41. Separate freed-byte count unavailable. Prior dirty U3 and compact refusals stand.
 
-| A4-final-census | Verify zero reachable legacy writers | Luna | Element cut merged | doing | app-A4-final-census-0340 | Bind same-tree integrated proof and census actual production paths; dormant originals stay unchanged. | f90e708b37 |
+| A4-final-census | Verify zero reachable legacy writers | Luna; independent review | Census0340 PASS | review | app-A4-final-census-review-0345 | Zero reachable fallback writers reported; retained dormant blobs and ledger entries verified. Independent challenge active. | f90e708b37 |
