@@ -192,6 +192,7 @@ def _managed_input_staging_name(port: str, digest: str, original_name: str | Non
 
 if TYPE_CHECKING:
     from astrid.core.execution.executor.schema import ExecutorDefinition
+    from astrid.core.execution.orchestrator.schema import OrchestratorDefinition
 
 
 class HostError(RuntimeError):
@@ -283,8 +284,8 @@ class _RuntimeSourceCustody:
         return next((source for source in json.loads(self._payload)["sources"]
                      if path == Path(source["root"]) or path.is_relative_to(source["root"])), None)
 
-    def descriptor(self, record: Any):
-        selected = self.select(record)
+    def descriptor(self, record: Any, *, capability_kind: str = "executor"):
+        selected = self.select(record, capability_kind=capability_kind)
         if selected is None:
             return None
         channel = tempfile.TemporaryFile()
@@ -292,7 +293,7 @@ class _RuntimeSourceCustody:
         channel.seek(0)
         return channel
 
-    def select(self, record: Any) -> bytes | None:
+    def select(self, record: Any, *, capability_kind: str = "executor") -> bytes | None:
         self.verify()
         source = self.source_for(record.source_root)
         if source is None:
@@ -304,7 +305,7 @@ class _RuntimeSourceCustody:
             raise HostError("external definition changed after discovery")
         value = json.loads(self._payload)
         matches = [definition for definition in source["definitions"]
-                   if definition["capability_kind"] == "executor"
+                   if definition["capability_kind"] == capability_kind
                    and definition["capability_id"] == record.id
                    and definition["definition_digest"] == record.capability_digest
                    and record.manifest_path == Path(source["root"]) / definition["path"]]
@@ -320,6 +321,51 @@ class _RuntimeSourceCustody:
                 "source": source, "definition": matches[0]}):
             raise HostError("external selected source custody changed")
         return selected
+
+    def orchestrator_definitions(self, roots: tuple[Path, ...]):
+        """Read selected static manifests from owner-captured bytes only."""
+        import yaml
+
+        from astrid.core.execution.orchestrator.schema import validate_orchestrator_definition
+
+        self.verify()
+        for source in json.loads(self._payload)["sources"]:
+            root = Path(source["root"])
+            if not any(root == parent or root.is_relative_to(parent) for parent in roots):
+                continue
+            contents = {name: base64.b64decode(data, validate=True)
+                        for name, data in source["contents"].items()}
+            for selected in source["definitions"]:
+                if selected["capability_kind"] != "orchestrator":
+                    continue
+                path = Path(selected["path"])
+                if path.name not in {"orchestrator.yaml", "orchestrator.yml", "orchestrator.json"}:
+                    raise HostError("external orchestrator requires a captured static manifest")
+                data = contents[path.as_posix()]
+                payload = json.loads(data) if path.suffix == ".json" else yaml.safe_load(data)
+                definition = validate_orchestrator_definition(payload)
+                folder = root / path.parent
+                metadata = dict(definition.metadata)
+                metadata.update(source="folder", orchestrator_root=str(folder), folder_id=folder.name,
+                                manifest_file=str(root / path))
+                for filename, key in (("requirements.txt", "requirements_file"),
+                                      ("pyproject.toml", "pyproject_file"), ("STAGE.md", "stage_file")):
+                    relative = (path.parent / filename).as_posix()
+                    if relative in contents:
+                        metadata[key] = str(root / relative)
+                # Match folder/pack metadata without reopening either manifest.
+                pack_path = next((parent / "pack.yaml" for parent in (path.parent, *path.parent.parents)
+                                  if (parent / "pack.yaml").as_posix() in contents), None)
+                if pack_path is not None:
+                    pack_root = root / pack_path.parent
+                    pack = yaml.safe_load(contents[pack_path.as_posix()])
+                    metadata.setdefault("source_pack", str(pack.get("id") or pack_root.name))
+                    metadata.setdefault("pack_root", str(pack_root))
+                definition = replace(definition, metadata=metadata)
+                if (definition.id != selected["capability_id"]
+                        or _capability_digest(definition.to_dict()) != selected["definition_digest"]):
+                    raise HostError("external orchestrator differs from exact Runtime selection")
+                yield folder, definition, root / path
 
 
 _runtime_external_sources: _RuntimeSourceCustody | None = None
@@ -4511,6 +4557,18 @@ def _attach_pack_metadata(definition: "ExecutorDefinition", executor_root: Path)
 
 
 @dataclass(frozen=True)
+class _OrchestratorRecord:
+    definition: OrchestratorDefinition
+    capability_digest: str
+    source_root: Path
+    manifest_path: Path
+
+    @property
+    def id(self) -> str:
+        return self.definition.id
+
+
+@dataclass(frozen=True)
 class CapabilityRecord:
     definition: ExecutorDefinition
     capability_digest: str
@@ -5412,6 +5470,7 @@ class GenericPackHost:
         self.attempt_root = Path(attempt_root).expanduser().resolve() if attempt_root else None
         self.attempt_base = Path(attempt_base).expanduser().resolve() if attempt_base else None
         self.capabilities: dict[str, CapabilityRecord] = {}
+        self._orchestrators: dict[str, _OrchestratorRecord] = {}
         self.stale_matrix_entries: tuple[str, ...] = ()
         self._registered_digests: dict[str, str] = {}
         self._registered_state: dict[str, dict[str, str]] = {}
@@ -6207,35 +6266,55 @@ class GenericPackHost:
                 load_folder_orchestrator,
             )
 
-            quarantined_dirs, _quarantined_ids = _quarantine_scope(self.pack_roots)
-            for root in self.pack_roots:
-                for orchestrator_root in discover_folder_orchestrator_roots(root):
-                    if _inside_quarantined(orchestrator_root, quarantined_dirs):
+            def definitions():
+                if _runtime_external_sources is not None:
+                    yield from _runtime_external_sources.orchestrator_definitions(self.pack_roots)
+                quarantined_dirs, _quarantined_ids = _quarantine_scope(self.pack_roots)
+                for root in self.pack_roots:
+                    if _runtime_external_sources is not None and _runtime_external_sources.source_for(root) is not None:
                         continue
-                    try:
-                        definition = load_folder_orchestrator(orchestrator_root)
-                    except (OSError, ValueError):
-                        continue
-                    if definition.id != capability_id:
-                        continue
-                    definition = _attach_pack_metadata(definition, orchestrator_root)
-                    source_roots = _admitted_source_roots(orchestrator_root, definition)
-                    source_digest = _source_digest_for_roots(source_roots)
-                    capability_digest = _capability_digest(definition.to_dict())
-                    return definition.to_dict(), {
-                        "capability_digest": capability_digest,
-                        "source_digest": source_digest,
-                        "dependency_digest": _canonical_digest({
-                            "child_executors": definition.child_executors,
-                            "child_orchestrators": definition.child_orchestrators,
-                        }),
-                        "version": definition.version,
-                        "source_root": str(orchestrator_root),
-                        "source_roots": [str(root) for root in source_roots],
-                        "python_path_roots": [
-                            str(root) for root in _admitted_python_roots(orchestrator_root, definition)
-                        ],
-                    }
+                    for orchestrator_root in discover_folder_orchestrator_roots(root):
+                        if _runtime_external_sources is not None and _runtime_external_sources.source_for(orchestrator_root) is not None:
+                            continue
+                        if _runtime_external_sources is not None:
+                            builtin = _runtime_external_sources._launch_roots[0]
+                            if not builtin or not orchestrator_root.is_relative_to(builtin):
+                                raise HostError("external orchestrator has no Runtime owner grant")
+                        if _inside_quarantined(orchestrator_root, quarantined_dirs):
+                            continue
+                        try:
+                            definition = load_folder_orchestrator(orchestrator_root)
+                        except (OSError, ValueError):
+                            continue
+                        definition = _attach_pack_metadata(definition, orchestrator_root)
+                        manifest = Path(str(definition.metadata.get("manifest_file")
+                                            or definition.metadata.get("orchestrator_file")))
+                        yield orchestrator_root, definition, manifest
+
+            for orchestrator_root, definition, manifest in definitions():
+                if definition.id != capability_id:
+                    continue
+                source_roots = _admitted_source_roots(orchestrator_root, definition)
+                source_digest = _source_digest_for_roots(source_roots)
+                capability_digest = _capability_digest(definition.to_dict())
+                orchestrator_record = _OrchestratorRecord(definition, capability_digest, orchestrator_root, manifest)
+                if _runtime_external_sources is not None:
+                    _runtime_external_sources.select(orchestrator_record, capability_kind="orchestrator")
+                self._orchestrators[capability_id] = orchestrator_record
+                return definition.to_dict(), {
+                    "capability_digest": capability_digest,
+                    "source_digest": source_digest,
+                    "dependency_digest": _canonical_digest({
+                        "child_executors": definition.child_executors,
+                        "child_orchestrators": definition.child_orchestrators,
+                    }),
+                    "version": definition.version,
+                    "source_root": str(orchestrator_root),
+                    "source_roots": [str(root) for root in source_roots],
+                    "python_path_roots": [
+                        str(root) for root in _admitted_python_roots(orchestrator_root, definition)
+                    ],
+                }
             raise HostError(f"capability not discovered: {capability_id}")
         raise HostError(f"unsupported capability kind {capability_kind!r}")
 
@@ -8647,12 +8726,13 @@ class GenericPackHost:
         inherited_fds: tuple[int, ...] = ()
         source_channel = None
         if _runtime_external_sources is not None:
-            record = self.capabilities.get(capability_id)
+            record = (self._orchestrators.get(capability_id) if capability_kind == "orchestrator"
+                      else self.capabilities.get(capability_id))
             if record is None:
                 raise HostError("external execution requires a discovered definition")
             if definition != record.definition.to_dict():
                 raise HostError("external execution definition differs from discovery")
-            source_channel = _runtime_external_sources.descriptor(record)
+            source_channel = _runtime_external_sources.descriptor(record, capability_kind=capability_kind)
             if source_channel is not None:
                 inherited_fds = (source_channel.fileno(),)
                 argv[3:3] = ["--external-source-fd", str(source_channel.fileno())]
