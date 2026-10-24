@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T18:47:25Z | dispatcher heartbeat 1s | live 3 (sol 2, luna 1, other 0) | busy30 16 | status age 1m -->
-# runtime board, 2026-10-24T18:45:55Z
+<!-- main | 2026-10-24T18:50:34Z | dispatcher heartbeat 9s | live 2 (sol 2, luna 0, other 0) | busy30 14 | status age 1m -->
+# runtime board, 2026-10-24T18:48:52Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -143,7 +143,7 @@
 | R-P2-popup-owner | Settle shared shot ownership | HARD Sol / Luna | D80 crossrepo source then security | doing | rt-P2-D80-owner-crossrepo-sol-1850 | First returna4d12+9PASS; security1847 input. One owner reconciles real Agent fork/add and Runtime auth definition. No original rerun. | a4d held |
 | R2r-empty-inverse-ranges | Preserve authenticated no-op ranges | Luna | Integrated four-case receipt passed | merged | rt-R2-empty-range-home-1847 | Actual1bae/Agenta86e:4PASS10.54s, unchanged originals and reviewed09c79 auth exact. [Proof](../../design/rt-R2-empty-range-home-1847.md) | 1bae0e8cc /09c79 |
 | D79-replay-corpus | Replay genuine accepted records | Luna | D80 critical work first | gated:D80 | Stopped1830 WIP branch retained | Non-gating work yields; no replacement while critical rows ready. No new source or record run. | WIP retained |
-| D79-hung-stack-kit | Capture pending-request stacks | Luna | Non-gating normal installation | doing | rt-D79-stack-kit-install-1847 | Private helper6PASS/types/lint; test-service route install and App source handoff active. No actual hang captured. | Private kit1830 |
+| D79-hung-stack-kit | Capture pending-request stacks | Luna | Normal publication receipt | blocked:runtime-lead | Installer1847; lead peer1849 | Live test-run7e857 installed0755/bash-n/outside bytes PASS. Publication pending; host liveness UNKNOWN from sandbox. App handoff ready. | Live7e857 / source1830 |
 
 Runtime producer: Normal1bae includes reviewed empty inverse ranges09c79 over327da. Canonical15/schema867f/config4d74 unchanged; no regeneration. Popup ownera4d remains unmerged pending security1847.
 
@@ -162,10 +162,12 @@ Blockers: Final cut — all lanes core0/regressions0 plus current P2/P3 and D69 
 Next ready: consume critical returns and D79 installer; no replacement D79 under D80. D78 genuine-state ask active; if no standalone reproduction by19:50Z, App focused live element captures supervised stacks.
 Later: D47 safe memo/proof pins post-delivery; nine state attacks open. V4 cut; D14/D23 deferred. D34 broader cleanup held. D62 submit completeness remains explicit known gap.
 Admission: D56 Farm/schema-access stopped. Exact403 and auto access refusal remain stopped; no alternate acquisition/child/overlay route. Historical denied cleanup/process/retirement targets remain stopped. D67 D13 stays unchanged env gap.
-Disk: About8GB/cap4. Finished current trees recycled automatically; only three prior dirty refused v1 trees remain eligible by age and are not retried. Sweep3 removed0; compaction running. No alternate deletion.
+Disk: About8GB/cap4. Finished current trees recycled automatically; only three prior dirty refused v1 trees remain eligible by age and are not retried. Sweep3 removed0; compact packed0, compressed1 old log and0 test outputs. About8GB free. No alternate deletion.
 
-live 4 / cap 4; ready-undispatched 0 critical. Popup security Luna1847, crossrepo HARD Sol1850, cost HARD Sol1847, kitinstall Luna1847 active. D80 holds corpus. Rangefour PASS; D78 input pending.
+live 2 / cap 4; ready-undispatched 0 critical. Crossrepo HARD Sol1850 and cost HARD Sol1847 active. Popup security1847 PASS12+9+2; rangefour PASS. D78 genuine input pending; D79 publication lead-owned. D80 holds corpus.
 
 Pass 2026-10-24T18:44:06Z: Consumed all four1830-era returns. Popup first return author12+9PASS -> security1847. Range actual-home receipt1847 dispatched. P4 Luna1827 no retained optimization -> unique HARD Sol1847. D78 exactstate/origin unavailable -> finite App1850 input ask and truthful blocked row. D79 kit source6PASS -> normal route installer1847; App handoff follows. No original/gate duplicate or denied route retry.
 
 Pass 2026-10-24T18:45:55Z: D80 consumed immediately. Range actualhome4PASS10.54s -> flat evidence/Agent receipt; freed slot -> unique crossrepo popup HARD Sol1850. Kit1847 allowed to finish only; no replacement D79. App owns D78 finite state/input and live fallback preparation; deadline19:50Z.
+
+Pass 2026-10-24T18:48:52Z: Popup security1847 PASS genuine oldRED/newGREEN fork/add12+strict9+ABI2; input to active D80Sol1850, no premature semantic closure. Kit1847 installed live route7e857; normal publication pending. Sandbox cannot establish host liveness, lead1849 owns check, no alternate publisher. Current critical source2 active; missing D78 input is the only ready reproduction dependency.
