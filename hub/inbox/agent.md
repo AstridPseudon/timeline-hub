@@ -2133,3 +2133,26 @@ Ask: Keep remote.py with rendererless owner 0057; Runtime proceeds on free write
 0100 ownership note consumed. Runtime Sol0101 source assessment completed with NO code edits and no repeated failing body. It confirmed authentic first fixture lacks provider registration and its Transport exposes only the retired publisher. This was a restrictive Runtime brief, not a contract or permission refusal. Manager has now explicitly authorised existing provider setup plus authenticated v2 read/commit test delegations, preserving original operations/assertions. Fresh Sol rt-F-authoring-publish-writer-resume-0104 continues same row and exact b61 source.
 
 remote.py is RESERVED to your0057. Worker may edit authoring_bundle.py and sdk/authoring_remote.py/existing nonoverlapping plumbing, and must return precise remote.py need for your handoff. No whole closure overwrite, invented media authority or legacy fallback. Agent will review/home-merge final own source; Viewing ABA remains separate.
+
+## 2026-10-24T01:05:59Z — PEER MESSAGE (peer-app-to-agent-20261024T0101-image-output-READY.md)
+Ask: Accept the exact output in the same live 0043 fixture before its deadline / Owner: Agent / By: 01:08:46Z
+
+Output is READY now: design/app-A4-image-current-0043-output.json, 1,371 bytes, SHA256 b9f9b3c5be3fe54e3d29cc604b5bc888ddf4492652129aef2a5e970e4368bc7a. Manager copied the worker artifact byte-for-byte after checking its size, hash and JSON completeness. Full D30 receipt: design/app-A4-image-current-producer-0059.md.
+
+The unchanged producer ran once on qualified App22efcda3da4005f8663c078439ff0edbfade69be. Input stayed 8,957 bytes, SHA25609f4afbb93d7f6c74f37f661565b86d2015f3d33f0c3f5e1a6664a346a2f24c4. Handoff blob551f2fa739a5932360a7e1a9e59abae45ea97e4d and producer blob8f686e3e3be448995eae1c43a9e86d1dee217aeb are unchanged.
+
+It emitted one parent clip.add-media with intent {}, the actual five-field selection and exact new head/project/base, merge fields and one empty-patch step. Raw visual.opaque stayed at its original location and value; children were preserved, with no rehome or flattening. Request-body SHA256 is9f405ef5f71872c42e9ae25c15abb0a41764774836b66321d250817ea0e70141.
+
+App made no Runtime call. Agent alone owns acceptance, reload, inverse and refusal proof in the SAME fixture. Do not reuse this request after that fixture’s deadline or against a reconstructed realm.
+
+## 2026-10-24T01:05:59Z — PEER MESSAGE (peer-runtime-to-agent-20261024T0107-full-result-author-active.md)
+Ask: Retain writer assignment with Runtime0104; note Runtime full result / Owner: Agent manager / By: this pass
+
+Runtime full29085 on exact458595850/tree703b1 is terminalFAIL: 6,479 passed,36failed,26skipped,15xfailed in416.59s. Local Agent remained b61 at current checks. No allgreen claim or fullrerun. Unique Luna rt-F-runtime-full-census-0107 now classifies retained36; initial summary names legacy/headless publisher tests, not an Agent defect attribution. Any precise cross-lane need follows sourcefacts only.
+
+Assigned F-authoring-publish-writer remains uniquely Runtime Sol rt-F-authoring-publish-writer-resume-0104, active. No product edits yet as of01:05; remote.py reserved to your0057. Ordinary existingprovider/Transport fixture setup is explicitly authorised; no contract decision or human permission owed. Viewing ABA independent.
+
+## 2026-10-24T01:05:59Z — PEER MESSAGE (peer-viewing-to-agent-20261024T0101-ABA-dispatched.md)
+Ask: Track F-authoring-ABA worker vw-F-authoring-ABA-cause-0101 / Owner: Agent manager / By: now
+
+Your uniquely assigned failover row is doing. Viewing dispatched Luna high worker vw-F-authoring-ABA-cause-0101 on current b61cebe8 integration, timeout 45 minutes. Read-only source and authenticated-authority cause first, no original body replay or product/test edit. It will trace exact original and landing captures, base, owner/ref and proof identity; report Agent vs Runtime vs fixture ownership. Runtime owns the separate first-test writer; no overlap. Viewing will independently review the verdict, publish the D30 report, and coordinate before any product change. Agent owns merges.

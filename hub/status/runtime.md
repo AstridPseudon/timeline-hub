@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T01:05:59Z | dispatcher heartbeat 11s | live 1 (sol 1, luna 0, other 0) | busy30 9 | status age 1m -->
-# runtime board, 2026-10-24T01:02:42Z
+<!-- main | 2026-10-24T01:08:10Z | dispatcher heartbeat 7s | live 2 (sol 1, luna 1, other 0) | busy30 10 | status age 1m -->
+# runtime board, 2026-10-24T01:06:35Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -7,7 +7,7 @@
 | U1/U1b | Upstream and schema 32 | Luna / Sol | Upstream baseline | merged | U1b review 1005; service 32328 | Integrated 456 passed; 12 skipped and 2 configured exclusions are recorded. | 27f0306b9; 4e56253c6 |
 | U1c-draft | Refresh draft to latest upstream | Luna | Freeze before integration | gated:freeze | Author 0051; review 0056 PASS | Independent 224 passed; zero new diagnostics; 69 protected paths unchanged. [Review](../../design/runtime-U1c-live-review-0056.md) | 40427e8b5 |
 | R0-public-export | Export DocPatchArgs at package root | Luna | P1 GO | merged | Author 0049; review 0052; integrated 0057 | Actual 458595850: 144 passed in 16.25 s; wire probe, generation and Ruff passed. [Proof](../../design/runtime-R0-public-export-integrated-0057.md) | 458595850 / cf74f3e6f |
-| F-runtime-full | Full suite after export fix | Test service | Integrated export proof passed | doing | runtime-full-1024005856-29085 | Full 29085 is running and has failures; terminal counts and causes pending. Prior 9458 remains historical. | 458595850 |
+| F-runtime-full | Full suite after export fix | Service / Luna census | Terminal result retained | doing | Service 29085; census 0107 | FINAL FAIL: 6,479 passed, 36 failed, 26 skipped, 15 xfailed in 416.59 s on 458595850. Census and source causes pending. | 458595850 |
 | R2r | History attribution and native authority | Luna / Sol | C0 and U1 | merged | Prior independent reviews | All source-specific results retained in [evidence](../../design/runtime-prior-proof-evidence-0051.md). | 21482a416 and later |
 | R2r-atomic-native-birth | Sequential births in atomic scope | Sol / Luna | Integrated proof | merged | Author 1546; review 1554; service 14107 | 338 passed on the recorded integrated head. No guard relaxation. | 2593942df |
 | R2r-sequential-input | Authenticate sequential input bindings | Sol / Luna | Integrated proof | merged | Author 1709; review 1728; proof 1737 | 67 passed on 2a9e with Agent bac; faithful 21-command seed and strict refusal checks. | 2a9e347ff |
@@ -44,7 +44,7 @@ Runtime integration is 458595850c354f4403dabc58a72b98bebbc2c3a3, tree 703b1aac73
 
 Blockers: App / Proof — Readiness fix 42db156 is reviewed and merged. Caller 0053 prepares the one authorised changed P2/P3 run; Proof owns the verdict.
 Blockers: Agent — Runtime author 0104 owns assigned F-authoring-publish-writer. Agent will review and home-merge; Viewing owns the separate ABA row.
-Blockers: Runtime — Full suite 29085 is running with failures; terminal census and source classification are pending.
+Blockers: Runtime — Full suite 29085 failed 36 cases. Luna0107 owns exact census and source classification before repairs; no unchanged full rerun.
 Blockers: Freeze — U1c 40427e8b5 independently passed against upstream 795379a67; integration held until freeze.
 
 D34: Disk work is paused. Main had 9,518,256,128 bytes free at 00:47, above the 8.5 GB resume threshold. Archive review 0042 has finished; no new disk round or cleanup. This pass freed 0 GB. Legacy refusals and prior permission denials remain stopped, with no retry or alternate deletion.
