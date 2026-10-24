@@ -489,6 +489,12 @@ def fetch_bundle(project: str, timeline: str, *, revision_id: str | None = None,
                 raise TimelineEditError(f"could not hydrate original checkout publication: {hydrated.error}")
             bundle = copy.deepcopy(dict(hydrated.data["bundle"]))
             bundle["base_parent"]["publication_id"] = pin["publication_id"]
+        # Some Runtime clients return the authenticated document inline and
+        # therefore do not need the second hydration above.  The requested
+        # publication is still part of the checkout's identity and must not
+        # disappear merely because that private document was included.
+        if publication_id is not None:
+            bundle.setdefault("base_parent", {})["publication_id"] = publication_id
         return bundle
 
     if client is not None:
