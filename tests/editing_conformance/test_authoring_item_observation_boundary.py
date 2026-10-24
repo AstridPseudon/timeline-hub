@@ -17,6 +17,7 @@ from astrid.sdk.timeline.commit import (
     create_runtime_commit_service,
 )
 from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_swap_media
+from tests.editing_conformance.test_authoring_undo_projection import retained_copy as retained_copy
 from tests.editing_conformance.test_doc_patch_v2 import submit
 from tests.editing_conformance.test_provider_step_undo_v2 import undo
 from tests.editing_conformance.test_recipe_occurrence_media import OWNER, TARGET, MediaRealm, inputs
@@ -126,7 +127,11 @@ def test_shared_stage_diagnostic_preserves_all_native_sites(shared_inverse_packe
 
 
 def test_historical_item_site_does_not_observe_current_published_item(shared_inverse_packet, monkeypatch):
-    from runtime_protocol.timeline_commit_auth import _inverse_stage_boundaries, _inverse_stage_ranges, images
+    from runtime_protocol.timeline_commit_auth import (
+        _inverse_stage_boundaries,
+        _inverse_stage_ranges,
+        images,
+    )
 
     _, prepared, _, source, history, _ = copy.deepcopy(shared_inverse_packet)
     monkeypatch.setitem(sys.modules, 'runtime_protocol', runtime_protocol)
@@ -144,6 +149,89 @@ def test_historical_item_site_does_not_observe_current_published_item(shared_inv
         else 'source materialization is outside its physical turnover')
     with pytest.raises(CommitRejected, match=message):
         _inverse_stage_boundaries(before, after, step, prepared['records'], after, before, history)
+
+
+def test_shared_source_restore_is_retained_reachability_not_exclusive_turnover(shared_inverse_packet):
+    from runtime_protocol.timeline_commit_auth import images
+
+    _, prepared, capture, source, history, baseline = shared_inverse_packet
+    entry, = history.values()
+    original, = entry['records']['commands']
+    record, = prepared['records']['commands']
+    stage, = [binding['boundary'] for binding in record['bindings'] if binding['key'] == 'inverse.stage']
+    assert stage == {'publication_id': entry['publication_id'], 'step_id': 'edit',
+                     'command_ordinals': [0], 'native_write_range': [0, len(original['writes'])],
+                     'effect_range': [0, 4]}
+    assert len(record['writes']) == len(original['writes'])
+    assert record['reads'] and original['reads']
+    assert prepared['canonical_document'] == baseline
+    for execution in (capture['original'], capture['landing']):
+        command, = execution['commands']
+        assert command['input'] == source and command['output'] == baseline
+        assert execution['records'] == prepared['records']
+    before, after = images(source), images(baseline)
+    source_rows = {row['occurrence_id']: row for row in source['parent_revision']['payload']['occurrences']}
+    target_rows = {row['occurrence_id']: row for row in baseline['parent_revision']['payload']['occurrences']}
+    assert source_rows['occ-b'] == target_rows['occ-b']
+    assert source_rows['occ-a']['shot_id'] != target_rows['occ-a']['shot_id']
+    assert target_rows['occ-a']['shot_revision_id'] == target_rows['occ-b']['shot_revision_id']
+    materializations = [binding for binding in original['bindings'] if binding['key'] == 'commit.materialization']
+    assert len(materializations) == 2
+    for binding in materializations:
+        fork, retained = binding['successor'], binding['physical_ref']
+        assert binding['owner'] == OWNER + '/shot'
+        assert binding['owners'] == [OWNER + '/shot', 'occurrence:occ-b/shot']
+        assert fork in before and fork not in after
+        assert retained in before and retained in after
+        assert before[retained] == after[retained]
+        assert binding['revision_id'] == before[retained]['revision_id']
+        assert binding['content_digest'] == _digest(before[retained]['payload'])
+        assert binding['content_digest'] == before[retained]['content_digest']
+        assert binding['boundary'] == {'base_revision_id': entry['receipt']['result']['base_revision_id'],
+            'base_publication_id': entry['receipt']['result']['base_publication_id'],
+            'evaluated_head': entry['previous'], 'step_id': 'edit', 'command_ordinal': 0, 'phase': 'input'}
+        sibling, = [item for item in materializations if item is not binding]
+        assert binding['edge_before'] == sibling['physical_ref']
+        assert binding['edge_after'] == sibling['successor']
+    old_state, current_state = State(bundle_from_document(baseline)), State(bundle_from_document(source))
+    mapping = old_state.shot_item_map(OWNER + '/shot')
+    current = current_state.shot_item_map(OWNER + '/shot')
+    assert set(mapping.values()) == set(current.values())
+    assert all(published == local for published, local in current.items())
+    # Exact placement-local correspondence, never a match on media bytes.
+    for published, local in mapping.items():
+        assert published != local
+        path = ['payload', 'items', 'item_id:' + published, 'media_id']
+        historical, = [write for write in original['writes'] if write['path'] == path]
+        inverse, = [write for write in record['writes'] if write['path'] == [*path[:2], 'item_id:' + local, *path[3:]]]
+        assert inverse['ref'] == historical['ref'] == OWNER + '/shot'
+        assert inverse['before'] == historical['after'] and inverse['after'] == historical['before']
+
+
+@pytest.mark.parametrize('dry_run', [False, True])
+def test_retained_source_copy_inverse_passes_the_same_runtime_validator(request, monkeypatch, dry_run):
+    realm, baseline, created = request.getfixturevalue('retained_copy')
+    captures = []
+    complete = DetachedPort.preview if dry_run else DetachedPort.accept
+    monkeypatch.setattr(DetachedPort, 'capture_sequential_execution',
+                        lambda port, packet: captures.append(copy.deepcopy(packet)), raising=False)
+
+    def finish(port, prepared):
+        source = created['data']['canonical_document']
+        history = {row['publication_id']: row for row in realm.entries
+                   if row['publication_id'] == created['receipt']['receipt_id']}
+        original, = history.values()
+        assert any(not write['path'] for command in original['records']['commands'] for write in command['writes'])
+        assert not any(binding['key'] == 'commit.materialization'
+                       for command in original['records']['commands'] for binding in command['bindings'])
+        with monkeypatch.context() as modules:
+            modules.setitem(sys.modules, 'runtime_protocol', runtime_protocol)
+            validate_sequential_capture(port.context['request'], prepared, captures[-1], source, source, history=history)
+        return complete(port, prepared)
+
+    monkeypatch.setattr(DetachedPort, 'preview' if dry_run else 'accept', finish)
+    result = submit(realm, undo(created['receipt']['receipt_id']), reads=[], dry_run=dry_run)
+    assert result['data']['canonical_document'] == baseline
 
 
 @pytest.mark.parametrize('shared_inverse_packet', [(False, False), (False, True)], indirect=True)
