@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T01:30:26Z | dispatcher heartbeat 1s | live 4 (sol 2, luna 2, other 0) | busy30 21 | status age 1m -->
-# app board, 2026-10-24T01:30Z
+<!-- app | 2026-10-24T01:33:00Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 21 | status age 2m -->
+# app board, 2026-10-24T01:31Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -10,7 +10,7 @@
 | P1 | Original mixed chain | App runner; Proof review | Resolved | merged | Test 18792; Proof 0036 and 0040 | GO at 00:43. Both cases passed; exit 0, 141 seconds. Fixed App f8 / Agent 787 / Runtime 2a9. | f8b15af0a6 |
 | A4 | Executor and capture retirement | Sol; Luna review | P1 GO: resolved | doing | Staged Sol0122; history Luna0125; proof0129 | Scalar integrated384 PASS. Preview152 and session57 independently passed and merged; joined proof0129 runs. Staged caller and history migrations continue. | 84330da5fd branch |
 | A2-staged-caller | Move staged generation onto current save | Sol | Existing prepared-media carrier | doing | app-A2-staged-caller-sol-0122 | Remove production dryRun/apply caller while preserving Runtime selection and staged placement behavior. | Branch pending |
-| A4-history | Retire history runner execution | Luna | Preview cut reviewed | doing | app-A4-history-retirement-0125 | Keep actual guarded Runtime undo and existing local history behavior; no snapshot overwrite of remote edits. | Branch pending |
+| A4-history | Retire history runner execution | Luna | Author95 PASS | review | app-A4-history-review-0131 | Runner call removed. Independent review challenges snapshot behavior, guarded Runtime undo and all old assertions. | Worker branch |
 | A4-session-tests | Move five protocol tests to current save | Luna | Review0123 PASS | merging | Proof app-A4-preview-session-integrated-0129 | Five cases independently passed57/types/lint and merged. Joined integrated proof runs on8bd7. | 039fc35ed7 / 8bd7d59e19 |
 | A4-dormant-scope | Preserve dormant raw and track assertions | Orchestrator | Scope decision | blocked:orchestrator | Escalation 0116 | Same-order track write and raw-birth positives have no production caller. Tests and implementations stay unchanged. | No change |
 | A4-reviewed-stack | Ports and mounted witnesses | Luna | Review 0105 and integrated 0115 PASS | merged | app-A4-mounted-fixture-return-0059 | Independent and integrated 111 plus 33 tests passed on exact93d487. Types/lint passed; mocked authority limit retained. | 93d48799a2 |
