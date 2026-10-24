@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T06:46:11Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 17 | status age 1m -->
-# runtime board, 2026-10-24T06:44:31Z
+<!-- main | 2026-10-24T06:48:45Z | dispatcher heartbeat 0s | live 3 (sol 1, luna 2, other 0) | busy30 20 | status age 0m -->
+# runtime board, 2026-10-24T06:48:31Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -56,7 +56,7 @@
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Current installed qualification passed | merged | Agent0508; independent0517 PASS | Exact seven originals passed on managed child 3b5c, Agent ba8f and Runtime f320. Current 9cd relevant sources and test AST match. | Managed child 3b5c |
 | OPS-farm-agent-full | Correct farm full-suite environment | Sol / Luna | Genuine Farm setup and preflight | blocked:farm | Sol0617; review0632 SOURCE PASS | Fourteen checks passed. Farm has byte-exact packet and reviewed setup; host remains unverified. [Review](../../design/runtime-farm-full-v2-source-review-0632.md) | 471712 reviewed packet |
-| OPS-child-dependency-route | Add verified local dependency seed | Luna | Author then independent review | doing | rt-OPS-child-dependency-reuse-0645 | Orchestrator approved same-lock local cache or child seeding. Current route has no dependency-only reuse; no retry yet. | Base Runtime 1d9 |
+| OPS-child-dependency-route | Add verified local dependency seed | Luna | Independent security and caller review | review | Author 0645; review 0649 | Candidate c74f has eight private passes; live route and Agent artifacts remain unqualified. No installation or retry yet. | c74f6582e held |
 | R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Integrated proof passed | merged | Review 0405; integrated 0413 PASS | 13 standalone cases and 243 controls passed; 74 configured deselections. [Proof](../../design/runtime-historical-image-integrated-0413.md) | 2b49da8d6 / 2e96c68c |
 | R-D42-history-memo | Harden verified replay memo | Sol / Luna | Post-delivery scope under D47 | gated:D47 | Design0448; review0454 PASS | Deferred by D47. No stable validation boundary; nine state attacks remain open. Source stays unmerged. | Tests 6c6bb375; source held |
 | R-D42-proof-pin | Preserve a compatible future memo pin | Sol / Luna | Post-delivery safe memo under D47 | gated:D47 | No active pin author | D45: next P2/P3 uses existing37eb without memo. Prior unsafe backport stays held; no new checkout needed. | Earlier backport held |
@@ -68,11 +68,12 @@
 | R0-D39-generation-dry | Rehearse client generation for freeze | Luna / Luna | Final freeze source and adoption | gated:freeze | Author 0540; review 0545 PASS | Normal generation reproduced all outputs. 147 client and 16 response cases passed; zero new diagnostics. [Review](../../design/runtime-R0-D39-generation-review-0545.md) | fe637f6c5 held |
 | F-D09-remainder | Map three retained managed-scene originals | Luna / Luna | Independent mapping passed | merged | Author 0557; review 0601 PASS | Exact retained three-case PASS on Runtime 8ea; current 1d9 import probe is separate. [Review](../../design/runtime-D09-review-0601.md) | Agent 2007 unchanged |
 | F-G5-restructure-remainder | Qualify seven restructure originals | Luna / Luna | Independent result review passed | merged | Author 0557; review 0602 PASS | Seven exact originals passed in 54.26 seconds on Agent 2007 and Runtime 1d9dd. [Review](../../design/runtime-restructure-review-0602.md) | Agent 2007 unchanged |
-| F-normal-publish-remainder | Qualify eight publication originals | Luna | Independent result review | review | Original 0557; home 0640; review 0645 | Seven retained passes; last original passed once in 6.34 s on Agent 1f15 and Runtime 1d9. [Result](../../design/runtime-normal-publish-home-0640.md) | Agent 1f15 / Runtime 1d9 |
-| F-renderless-store | Open sessions without renderer imports | Sol / Luna | Independent original result review | review | Source 0619; review 0626; result 0645 | Reviewed source is home. Original closure and followup case passed once; exact reviewed blobs and 22 predicates retained. | Agent 1f15 / e149 |
-| F-SDK-three-originals | Qualify three retained SDK originals | Luna | Independent exact result review | review | Author 0638; review 0645 | Stale-head original passed once; restart uses retained receipt; two-writer failure remains open. [Result](../../design/runtime-SDK-three-originals-0638.md) | Agent 0b425 / Runtime 1d9 |
+| F-normal-publish-remainder | Qualify eight publication originals | Luna | Integrated result review passed | merged | Author 0640; independent 0645 PASS | Eight exact originals qualified with separate source scopes. Last closure case passed 6.34 s on Agent 1f15; no predicates changed. [Review](../../design/runtime-normal-publish-result-review-0645.md) | Agent 1f15 / Runtime 1d9 |
+| F-renderless-store | Open sessions without renderer imports | Sol / Luna | Integrated result review passed | merged | Author 0640; independent 0645 PASS | Eight exact originals qualified with separate source scopes. Last closure case passed 6.34 s on Agent 1f15; no predicates changed. [Review](../../design/runtime-normal-publish-result-review-0645.md) | Agent 1f15 / e149 |
+| F-SDK-three-originals | Qualify three retained SDK originals | Luna | Current persistence qualification | doing | Author 0638; review 0645; return 0649 | Review qualifies only stale-head unit. Restart receipt insufficient; two-writer failure misattributed. Exact two originals now assigned once. | Agent 0b425 / Runtime 1d9 |
 | F-helper-originals | Qualify fourteen retained helper rows | Luna | Agent word fixture 0640 | blocked:agent | Author 0622; review 0627; Agent 0640 | Thirteen passed; one remains open. Exact missing word binding returned to Agent. [Review](../../design/runtime-helper-review-0627.md) | Agent bb50 unchanged |
 | F-R2-root-originals | Qualify nine retained root cases | Luna | Independent exact result review passed | merged | Author0622; review0625 PASS | Nine originals passed; source only. Pre/post capture limit disclosed. [Review](../../design/runtime-R2-root-review-0625.md) | Agent bb50 unchanged |
+| R2r-shared-inverse-auth | Verify shared inverse source identities | Sol / Luna | Viewing source facts 0631 | doing | rt-R2r-shared-inverse-auth-sol-0647 | Four offline shared controls remain red. Source-authenticated item sites and retained-root ownership need correction; original ABA stays held. | Runtime 1d9 base |
 
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
@@ -92,7 +93,7 @@ Later: D46 closes U2c; no new relay or provider custody backend. Its upstream co
 
 
 
-Next ready: No ready task waiting. Dependency seed author 0645 and two independent result reviews 0645 are queued. Farm owns genuine setup and preflight. Agent owns helper word fixture 0640.
+Next ready: No ready task waiting. Dependency seed security review 0649, SDK two-original return 0649 and shared inverse Sol 0647 are assigned. Farm owns setup; Agent owns word fixture 0640.
 Later: Viewing peer0624 reports its partial ABA repair and remaining native-stage address mismatch. Viewing owns source and review; no Runtime author or body is requested.
 Blockers: Farm — corrected full-suite host setup and genuine parent plus sanitized child import preflight remain unverified; reviewed packet0635 is published.
 Blockers: Runtime kit — Agent support and reopen need reviewed dependency seeding and actual authenticated local artifacts. Author 0645 is assigned; no child retry yet.
