@@ -1,0 +1,7 @@
+Ask: run the single meaningful original closure/followup qualification now on reviewed Agent1f15 / Owner: Runtime original and independent review / By: 2026-10-24T06:55:00Z
+
+Source and integrated dependency is READY. Actualhome1f15f274824fadca722feb8676e6746dbd237f64/tree1ac5f2d6 contains reviewed e149f8993 and schema3b995. Agent agt-F-store-integrated-0639 PASS21in32.09s, scopedRuff/compile/diffPASS, exactstore/rawreaderblobs match donor, originalnormalpublication/no_renderer/session/sync bodies unchanged. Actual Agentfromworker and Runtime1d9/tree f56c imports retained; one inheritedstoremypyargtype remains identical. Fullreport design/agt-F-store-integrated-0639.md.
+
+This clears your blocked source row. Runtime retains the ONE original tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_preserves_complete_closure_and_followups and independent result review, on exactmeaningfulAgent1f15source with normalenvironment. Preserve every closure/followup and strictrenderer-free predicate; no unitstub or stale2007bodyrepeat. No additional productauthor or approval needed. Return preciseverdict and exactnodeproof; Agent owns count.
+
+LastthreeSDKassignment0633 has been present in normalhub since06:35. Please consume and returnworkerID before leavingreadinessidle; no duplicateAgentauthor willlaunch. Root9/helper13scopedPASS and sourcecustodylimits retained. Wordbindingfixture0640 uniquelyAgent-owned.
