@@ -1,0 +1,194 @@
+{
+  "task": "D78",
+  "status": "PASS_HANDBACK_COMPLETE",
+  "scope": "read-only retained-input continuation; no causal verdict",
+  "run": {
+    "root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-860e9755-d78-watchdog-live-2001-1024200242-14383",
+    "manifest": "d66/manifest.json",
+    "phase_sink": {
+      "path": "d66/runtime-private/p2-commit-phase.jsonl",
+      "line_count": 108,
+      "sha256": "8966b306726f91a805342fff0a1ed3b43317acda53c85218176bb47eeb77b3a9",
+      "mode": "0600",
+      "unchanged": true
+    },
+    "stack_dump": {
+      "path": "d66/runtime-private/p2-commit-phase.stacks.txt",
+      "line_count": 57,
+      "bytes": 4206,
+      "sha256": "eb2e55e78734850ad08f7f36724f3e316e4535f8fec54591d6ac645796276f04",
+      "mode": "0600",
+      "captured_at": "2026-10-24T20:05:17.584Z",
+      "unchanged": true
+    },
+    "source_heads": {
+      "app": "860e9755c876ce510aabc5af0511ffe1886626f6",
+      "agent": "22d00393f7d944f1d01505637ca00b1995c3e158",
+      "runtime": "44917baf5976d6a655d582fafc63fde7b6cb242d",
+      "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+    },
+    "xml": {
+      "readiness": {
+        "path": "d66/readiness.xml",
+        "tests": 1,
+        "failures": 0,
+        "skipped": 0,
+        "errors": 0,
+        "exit": 0
+      },
+      "original": {
+        "path": "d66/p2-element.xml",
+        "tests": 1,
+        "failures": 0,
+        "skipped": 0,
+        "errors": 1,
+        "exit": 1
+      }
+    }
+  },
+  "phase_vocabulary": {
+    "schema_version": 1,
+    "ordered_names": [
+      "handler_entry",
+      "authorization",
+      "coordinator_admission",
+      "coordinator_lock",
+      "provider",
+      "accept",
+      "receipt",
+      "http_response"
+    ],
+    "categories": {
+      "handler_entry": "HTTP timeline-commit handler scope",
+      "authorization": "authenticated write authorization; repeated nested checks are counted",
+      "coordinator_admission": "commit coordinator admission envelope",
+      "coordinator_lock": "coordinator-held lock envelope",
+      "provider": "Agent/provider execution envelope",
+      "accept": "Runtime commit-port acceptance",
+      "receipt": "durable receipt/store acceptance",
+      "http_response": "Runtime response write attempt"
+    },
+    "states": {
+      "start": "phase entered",
+      "end": "phase returned normally",
+      "raised": "phase returned through an exception; exception text is intentionally not retained",
+      "observed": "summary status: at least one bounded phase event was captured",
+      "status_200": "HTTP status selected by Runtime; not proof that the caller received the response"
+    }
+  },
+  "requests": [
+    {
+      "local_ordinal": 1,
+      "overall_offsets_ms": [4556.035, 7300.056],
+      "overall_observed_span_ms": 2744.021,
+      "reported_duration_ms": 2743,
+      "capture_correlation": {
+        "watchdog_seconds": 2,
+        "dump_belongs_to_ordinal": 1,
+        "basis": [
+          "the dump mtime is 2026-10-24T20:05:17.584Z",
+          "the configured watchdog fires after 2 seconds of one active dispatch",
+          "request 1 is the only dispatch whose observed duration exceeds that bound before request 2 starts",
+          "placing the dump on request 2 would place request 1 before the retained JUnit suite start 2026-10-24T20:05:07.719Z"
+        ],
+        "clock_domain_note": "phase at_ms is monotonic-relative and the dump timestamp is wall-clock; the ordinal correlation is safe from the retained run chronology, but the monotonic-to-wall offset is not directly serialized"
+      },
+      "terminal": "normal",
+      "http_statuses": [200],
+      "raised": false,
+      "phases": [
+        {"name":"handler_entry","category":"handler_entry","count":1,"start_ms":4556.035,"end_ms":7299.026,"duration_ms":2742.991,"end_states":["end"]},
+        {"name":"authorization","category":"authorization","count":14,"start_ms":4664.534,"end_ms":6607.010,"duration_ms":1942.476,"end_states":["end"]},
+        {"name":"coordinator_admission","category":"coordinator_admission","count":1,"start_ms":4676.646,"end_ms":7298.302,"duration_ms":2621.656,"end_states":["end"]},
+        {"name":"coordinator_lock","category":"coordinator_lock","count":1,"start_ms":4676.818,"end_ms":7298.064,"duration_ms":2621.246,"end_states":["end"]},
+        {"name":"provider","category":"provider","count":1,"start_ms":4703.418,"end_ms":6595.867,"duration_ms":1892.449,"end_states":["end"]},
+        {"name":"accept","category":"accept","count":1,"start_ms":5944.357,"end_ms":6595.504,"duration_ms":651.147,"end_states":["end"]},
+        {"name":"receipt","category":"receipt","count":1,"start_ms":5961.272,"end_ms":6594.803,"duration_ms":633.531,"end_states":["end"]},
+        {"name":"http_response","category":"http_response","count":2,"start_ms":7298.636,"end_ms":7300.056,"duration_ms":1.420,"end_states":["end","end"]}
+      ]
+    },
+    {
+      "local_ordinal": 2,
+      "overall_offsets_ms": [17454.444, 51952.355],
+      "overall_observed_span_ms": 34497.911,
+      "reported_duration_ms": 34498,
+      "sdk_timeout_boundary_offset_ms": 47454.444,
+      "terminal": "locally_http_200_then_raised",
+      "http_statuses": [200],
+      "raised": true,
+      "phases": [
+        {"name":"handler_entry","category":"handler_entry","count":1,"start_ms":17454.444,"end_ms":51947.958,"duration_ms":34493.514,"end_states":["end"]},
+        {"name":"authorization","category":"authorization","count":23,"start_ms":18131.246,"end_ms":41616.462,"duration_ms":23485.216,"end_states":["end"]},
+        {"name":"coordinator_admission","category":"coordinator_admission","count":1,"start_ms":18276.070,"end_ms":51945.074,"duration_ms":33669.004,"end_states":["end"]},
+        {"name":"coordinator_lock","category":"coordinator_lock","count":1,"start_ms":18276.395,"end_ms":51944.430,"duration_ms":33668.035,"end_states":["end"]},
+        {"name":"provider","category":"provider","count":1,"start_ms":18548.533,"end_ms":41505.049,"duration_ms":22956.516,"end_states":["end"]},
+        {"name":"accept","category":"accept","count":1,"start_ms":30957.317,"end_ms":41503.302,"duration_ms":10545.985,"end_states":["end"]},
+        {"name":"receipt","category":"receipt","count":1,"start_ms":31176.965,"end_ms":41498.744,"duration_ms":10321.779,"end_states":["end"]},
+        {"name":"http_response","category":"http_response","count":2,"start_ms":51947.041,"end_ms":51952.355,"duration_ms":5.314,"end_states":["end","raised"]}
+      ],
+      "response_timing": {
+        "first_start_ms": 51947.041,
+        "first_end_ms": 51947.528,
+        "handler_end_ms": 51947.958,
+        "second_start_ms": 51948.574,
+        "raised_ms": 51952.355,
+        "selected_status": 200
+      }
+    }
+  ],
+  "timeout_classification": {
+    "sdk_30s": {
+      "classification": "observed caller-side transport_timeout",
+      "source": "generated.py:639, 664, 679-685",
+      "vocabulary": "WorkspaceClient default timeout=30.0; TimeoutError/URLError maps to code transport_timeout and message runtime request timed out",
+      "request": 2,
+      "phase_boundary_offset_ms": 47454.444,
+      "evidence": "the caller error is transport_timeout, while the Runtime phase continues to a later local HTTP 200 write attempt"
+    },
+    "app_120s": {
+      "classification": "configured outer process ceiling, not observed as the failure",
+      "source": "harness.ts:1024-1025",
+      "vocabulary": "execFileSync(..., timeout: 120_000)",
+      "evidence": "the retained error is the Python SDK transport_timeout, not a Node process timeout"
+    }
+  },
+  "semantic_distinctions": {
+    "raised": "phase observer saw an exception on the Runtime response-write path; no exception text is retained",
+    "locally_http_200": "Runtime selected status 200 in server.py:_send:321-341; this is local Runtime intent, not caller acknowledgement",
+    "caller_timeout": "SDK generated client stopped waiting and surfaced transport_timeout; this is independent of the later Runtime local response-write status"
+  },
+  "safe_stack_frames": [
+    "p2_commit_phase_capture.py:_watchdog_fire:226",
+    "auth.py:_read_bytes:69",
+    "auth.py:_read_actor:102",
+    "server.py:_authorize_timeline_commit:276",
+    "timeline_commit_store.py:_validate:942",
+    "timeline_commit_store.py:accept:1229",
+    "commit.py:commit:1444"
+  ],
+  "bounded_wait_categories": [
+    {"category":"credential_read/authorization", "observed":"one request-thread stack through auth and commit validation"},
+    {"category":"server_select_wait", "observed":"two server threads in selectors.select"},
+    {"category":"cli_main", "observed":"one main CLI thread"}
+  ],
+  "redaction": {
+    "raw_stack_exported": false,
+    "auth_exported": false,
+    "body_exported": false,
+    "idempotency_key_exported": false,
+    "url_exported": false,
+    "realm_exported": false,
+    "pid_exported": false
+  },
+  "verification": {
+    "method": "read-only hash/mode/XML/source/phase correlation",
+    "source_checks": [
+      "phase helper watchdog write and all-thread dump: p2_commit_phase_capture.py:210-227",
+      "SDK timeout vocabulary and default: generated.py:639-685",
+      "App outer process timeout: harness.ts:1024-1025",
+      "Runtime response write vocabulary: server.py:321-341"
+    ],
+    "no_suite_rerun": true,
+    "no_product_changes": true
+  }
+}

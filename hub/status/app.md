@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T20:28:23Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 7m -->
-# app board, 2026-10-24T20:20Z
+<!-- app | 2026-10-24T20:31:34Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 0m -->
+# app board, 2026-10-24T20:30Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -27,7 +27,7 @@
 | P2-phase-full | Qualify full-tour observer activation | Luna | Author1806 and smoke1819 PASS | merged | app-P2-full-phase-activation-1806 | Real normal CLI accepted commit proves provider,receipt,response;19 controls/lint/protected6 PASS. | Source1806 |
 | P2-popup-owner | Shared authenticated shot-owner definition | Runtime HARD Sol; security | Cumulative1902 PASS | merged | Source52b; carrier1902; home1908 | Actual Runtime87bc includes reviewed owner projection; no Agent patch. Actual popup qualification still owed after native-seed source issue. | Runtime87bc7f74 |
 | P2-element-runtime | Interpret native seed phases | HARD Runtime Sol | Actual128 phases | merged | Runtime1924 | Provider ordinal1 took1725ms. Ordinal2 entered store at35s, authorization at45s. Budget hid outcome; two observer defects fixed. | Evidence only |
-| P3 | Original Gate5 journey | Service; Luna | D70 | review | Actual26907; verdict1713/1718 | Exit1/470s, readiness PASS; fixture-only Recover saved edits button unavailable on reopen. | c3d79 tree6576 |
+| P3 | Original Gate5 journey | Luna; Service; independent | D82 exact source home | merged | Actual15493; producer2015; verdict2024 GO | PASS exit0/248s. Readiness1/1 and original1/1; both recovery mounts, exact5/3, mergedB, history, restart, canonical and guardedundo PASS. | Appc184bd0bec |
 | P3-history | Strict authenticated history ABI | Luna; review | Actual10033 | merged | Author1620; review1626 | 23 controls, types/lint PASS; missing/wrong ABI rejected. | 9f4ec08f56 |
 | P3-D70 | Exact semantic setup intent | Luna; review | D70 approved | merged | Author1655; review1643 | Exact a646 spec, virtual review match; original body/reset/tail retained. | aaddaf12d2 |
 | P3-recovery-source | Mounted automatic recovery census | HARD Sol PLAN A2 | Actual26907 | merged | Sol1713; verdict1718 | No product defect established; production auto-recovers. 266 mounted plus3 fault checks/types/lint PASS. | Source unchanged |
@@ -50,10 +50,10 @@
 | D79-session | Repair smoke auth and submit race | Luna | Actual25704 setup failure | merged | app-D79-session-and-submit-race-1931 | Versioned scoped credentials and same plan lock;21 D66,9 parser,3 setup controls/types/lint PASS. No browser credit. | f6a21c2852 |
 
 | P3-D75-clean | Clean same-blob home packet and ledger | Luna | Home2bd162 | merged | app-P3-D75b-home-receipt-1848 | Actual home, parents, donor equality and computed hash correction PASS. Existing ledger updated; original report retained. | Home2bd162 |
-| P3-current | Corrected both-mount original Gate5 | Luna; Service | Preflight20128 PASS | review | Actual26908; producer1855 | Exit1/471s; readiness PASS, original FAIL at1773: expected fourth recovery observation, actual3. Downstream tail unproved. | App3c29 |
+| P3-current | Historical both-mount failure | Luna; Service | Current15493 supersedes gate finding | merged | Actual26908; producer1855 | Historical FAIL471s at recovery count, retained. Additive poll then exactD82 now passes full original15493 independently. | Currentc184bd |
 | P3-26908-cause | Trace fourth recovery observation | HARD Sol PLAN A2 | Actual26908 and independent1905 | merged | app-A2-P3-recovery-current-sol-1910 | Intermediate page closed at Loadingproject before retry; no production defect proven. Review-only stronger poll proposal;269mounted controls/types/lint PASS. | Proposal only |
 | P3-intermediate | Observe intermediate recovery before close | Luna | Independent1920 PASS | merged | app-P3-intermediate-clean-apply-1925 | Exact one addition, protected hash736fd381 matches reviewed proposal; three fault controls and list15 PASS. Alias runner environment error retained. | e771ce1426 |
-| P3-intermediate-run | Qualify stronger recovery observation | Luna; Service | D74a floor6GB | review | Actual14240; verdict1948 | Independent1948 confirms readiness1 PASS/original FAIL. Both mounts strict5/3 passed; B record comparison1820 fails. No downstream history or undo credit. | App f6a21c28 |
+| P3-intermediate-run | Qualify both-mount recovery | Luna; Service | Current15493 GO | merged | Historical14240; current15493 | Historical14240 strict5/3 PASS then recorder mismatch. ExactD82 correction now passes entire original15493 including tail; report retained. | Appc184bd |
 | P3-recorded-command | Strict authoritative command expectation | Luna independent | D82 approved; qualifier2010 PASS | merged | Author1948; reviewer1954; return2005; qualifier2010 | Exact six/thirteen-key equality.21 mutation refusals,3 fault controls,types/lint PASS. Actual spec93c2bf4c and ledger home. | Homec184bd0bec |
 | P3-26908-path | Independent verdict and full path | Luna | Producer1855 final | merged | app-P3-26908-verdict-wholepath-1905 | Gate FAIL; manifest/hash/snapshot PASS. Recovery product equals passingP131083; missing fourth cause remains bounded, no new count inferred. | Evidence only |
 
@@ -79,25 +79,27 @@
 
 | P3-envelope-apply | Qualify and apply strict D82 patch | Luna independent | D82 and corrected2005 | merged | app-P3-envelope-qualify-apply-2010 | Independent qualification and exact application PASS. Normal mergec184bd; only protected assertion/helper changed, real ledger updated. | Source7dcbfda408 |
 
-| P3-D82-original | Current original with strict recorded command | Luna; Service | Preflight11918 PASS | doing | Actual15493; producer2015 | Submitted20:17Z, exact Appc184bd/Agent22d003/Runtime44917/Composition635f. One original, no D78 overlap, same-ID wait. | Spec93c2bf4c |
+| P3-D82-original | Current original with strict recorded command | Luna; Service; independent | Preflight11918 PASS | merged | Actual15493; producer2015; verdict2024 GO | PASS248s, readiness1 and original1. Exact four pins and protected93c2 verified. Full tail PASS; no rendering or final-cut full claim. | Appc184bd0bec |
 
-| P3-D83-diagnostic | Temporary soft-assertion Gate5 copy | Luna | Owner D83 | doing | app-P3-D83-diagnostic-harness-2020 | Harness-only temporary copy; six originals unchanged. Prepare one diagnostic to surface all mismatches. Current15493 remains running. | Source pending |
+| P3-D83-diagnostic | Temporary soft-assertion Gate5 copy | Luna | Actual15493 full original GO | gated:P3-green | app-P3-D83-diagnostic-harness-2020 held | Source-only25controls and both list1/lint/parse PASS. Branch held, no merge/body. Full original now proves zero remaining mismatches at captured tuple. | Source held |
 
-Integration: App e771 adds independently reviewed intermediate recovery readiness poll, exact spec736fd381. App7098 includes author-qualified D79 stack helper, fixture and normal-stage activation for future runs. App3c29 includes author-tested five D80 one-case descriptors. App2bd162 includes reviewed D75b both-mount recovery; parent status830252; D79 setup49f6; full phase38f39. App5d7550 includes one-command guarded submit037a8 over587316, with D73 snapshot admission6c7c over255f, with real Runtime CLI phase bootstrap over D73fd74, current popup provenance924140, D69c3d79, approved D70aaddaf, parent reads/audited restorations and frozen upstream3881. No new upstream refresh for gating.
+| P2-14383-correlation | Return exact retained request and dump timing | Luna | Runtime peer2019 | merged | app-P2-14383-correlation-return-2026 | Dump belongs successful ordinal1. Ordinal2 SDK30s timeout then late local200/write raised; App120s did not fire. Safe JSON/MD published; no causal closure. | Evidence only |
 
-core open: 9 original gesture cases, eight P2 plus one P3. P1 original2 PASS and independent1616 PASS at its recorded tuple.
+Integration: Appc184bd includes exact independently qualified D82spec93c2 and original15493 GO. App860e added tested two-second watchdog selection for isolated capture14383. App e771 adds independently reviewed intermediate recovery readiness poll, exact spec736fd381. App7098 includes author-qualified D79 stack helper, fixture and normal-stage activation for future runs. App3c29 includes author-tested five D80 one-case descriptors. App2bd162 includes reviewed D75b both-mount recovery; parent status830252; D79 setup49f6; full phase38f39. App5d7550 includes one-command guarded submit037a8 over587316, with D73 snapshot admission6c7c over255f, with real Runtime CLI phase bootstrap over D73fd74, current popup provenance924140, D69c3d79, approved D70aaddaf, parent reads/audited restorations and frozen upstream3881. No new upstream refresh for gating.
+
+core open: 8 original P2 gesture cases. P3 original15493 independent2024 GO; P1 original2 PASS at its recorded tuple. Final source changes follow cut rerun matrix.
 regressions: 0 confirmed open App source findings. D69 all four restorations home and final1704 PASS; original gates remain open.
 
 
-Blockers: Final cut — all eight P2 and one P3 core cases remain unqualified. Runtime coordinates final suites and ZIP after current gate proof.
+Blockers: Final cut — eight P2 cases remain unqualified. P3 current15493 is independently GO. Runtime coordinates source repair, final tuple rerun matrix, suites and ZIP.
 Blockers: Runtime native wait — actual14383 frame/phase input complete. D83 requires meaningful Runtime wait fix home before next P2 isolated gesture.
-Next ready: Current P3 actual15493 finishes. D83 author2020 prepares diagnostic harness; normal merge then ONE diagnostic. No independent NO-GO verdict under D83. D79 paused until ZIP, E4 dropped.
+Next ready: Recheck Runtime wait fix each pass; actual14383 frame/phase/correlation input complete. After meaningful home, isolated P2 cases then one full tour. P3 independently GO, no redundant diagnostic.
 
-live 2 / cap 2; ready-undispatched 0. Producer2015 and critical diagnostic author2020 active. No P2/D78 rerun before Runtime fix; no non-critical dispatch.
+live 0 / cap 4; ready-undispatched 0. All ready App critical work complete or peer-blocked on Runtime wait fix. Actual14383 input and current P3GO published. D79/E pausedZIP; no invented work or duplicate source owner.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
-Disk: Current6.932GB after D78 terminal, before next P3 build. Guarded scan found no finished clean non-KEEP App worktree remaining. Six stale pins previously released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
-Inbox consumed through1698388 bytes, including Agent1915 adoption homee39de and Runtime1920 capture request. Owner boards Runtime19:18 and Agent19:16 rechecked: popup87bc and cost e89 are home; original P2 source outcomes remain unqualified. Peer1934 closes App capture disposition at honest limits.
+Disk: Current7.530GB after D78 terminal, before next P3 build. Guarded scan found no finished clean non-KEEP App worktree remaining. Six stale pins previously released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
+Inbox consumed through1702876 bytes, including Agent1915 adoption homee39de and Runtime1920 capture request. Owner boards Runtime19:18 and Agent19:16 rechecked: popup87bc and cost e89 are home; original P2 source outcomes remain unqualified. Peer1934 closes App capture disposition at honest limits.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
 
