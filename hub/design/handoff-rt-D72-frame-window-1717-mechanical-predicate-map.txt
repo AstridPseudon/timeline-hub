@@ -1,0 +1,9 @@
+D72 mechanical map:
+- Authorized path only: tests/packs/rendering/test_live_scene_composition.py.
+- Parametrization, tmp_path/z setup, candidate capabilities, request/segment construction, layer tracks, hash, support, and source-preservation predicates retained.
+- old adapted.window is None -> new adapted.window is request.window (approved native FrameWindow contract).
+- old materialized sliced clocks (0,63,65,2,2) -> new absolute materialized clocks (2,55,75,2,20).
+- old identity/no-op window comparator -> projected _window_timeline result with exact id, clocks, metadata, one-second coverage, and per-frame [63,65) mapping.
+- old source from-only check -> full source JSON equality (stronger immutability predicate).
+- No skip/xfail/filter/deleted case/new operation/product change.
+- Strong negative coverage: native request retains a non-null window; source materialization is not pre-sliced; projected output is a distinct invocation view.

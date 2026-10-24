@@ -1,0 +1,5 @@
+path: tests/packs/rendering/test_live_scene_composition.py
+before_git_blob: 5dfc71499f86149a67f9d483e619693cc5c599c2
+after_git_blob: 3c0bfbaaa7b7a8b73ee0d90f1b2a20b58aec6efd
+before_sha256: 60d9bff9a7c8b99389c7daca0d035dbbea07ade474bca8d0d99fbc036ad8835b  -
+after_sha256: 0bbfb2d32b9a3a3dc1b1e3578f1e55ad3d49373c34d28dd1bec37e3612a9e947  tests/packs/rendering/test_live_scene_composition.py

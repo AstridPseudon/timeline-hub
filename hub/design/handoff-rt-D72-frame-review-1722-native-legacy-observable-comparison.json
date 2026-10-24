@@ -1,0 +1,113 @@
+{
+  "results": [
+    {
+      "frame_count": 30,
+      "frame_source_first_last": [
+        63.0,
+        64.93333333333334
+      ],
+      "frame_source_in_63_65": true,
+      "frame_source_min_max": [
+        63.0,
+        64.93333333333334
+      ],
+      "layer_metadata": {
+        "alpha": false,
+        "z": 0
+      },
+      "legacy_projected": {
+        "at": 0.0,
+        "from": 63.0,
+        "hold": 2.0,
+        "id": "scene_180_210",
+        "speed": 2,
+        "to": 65.0
+      },
+      "materialized_hash_matches": true,
+      "native_materialized": {
+        "at": 2,
+        "from": 55,
+        "hold": 20,
+        "speed": 2,
+        "to": 75
+      },
+      "native_window": {
+        "end_frame": 210,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null,
+        "start_frame": 180
+      },
+      "observable_projection_equal": true,
+      "observable_projection_sha256": "a3ba04a1b496a51d56e09748763a85f5deec63a4a17ff83c9eec787a453c5ca0",
+      "projected_native": {
+        "at": 0.0,
+        "from": 63.0,
+        "hold": 2.0,
+        "id": "scene_180_210",
+        "speed": 2,
+        "to": 65.0
+      },
+      "source_immutable": true,
+      "z": 0
+    },
+    {
+      "frame_count": 30,
+      "frame_source_first_last": [
+        63.0,
+        64.93333333333334
+      ],
+      "frame_source_in_63_65": true,
+      "frame_source_min_max": [
+        63.0,
+        64.93333333333334
+      ],
+      "layer_metadata": {
+        "alpha": true,
+        "z": 1
+      },
+      "legacy_projected": {
+        "at": 0.0,
+        "from": 63.0,
+        "hold": 2.0,
+        "id": "scene_180_210",
+        "speed": 2,
+        "to": 65.0
+      },
+      "materialized_hash_matches": true,
+      "native_materialized": {
+        "at": 2,
+        "from": 55,
+        "hold": 20,
+        "speed": 2,
+        "to": 75
+      },
+      "native_window": {
+        "end_frame": 210,
+        "fps_rational": [
+          30,
+          1
+        ],
+        "source_range": null,
+        "speed": null,
+        "start_frame": 180
+      },
+      "observable_projection_equal": true,
+      "observable_projection_sha256": "c23a3de97591f1d4950d8f6c74ec9341d3eeb74bb96d0ea575c983465139fb56",
+      "projected_native": {
+        "at": 0.0,
+        "from": 63.0,
+        "hold": 2.0,
+        "id": "scene_180_210",
+        "speed": 2,
+        "to": 65.0
+      },
+      "source_immutable": true,
+      "z": 1
+    }
+  ],
+  "source_root": "/tmp/rt-D72-frame-review-f91vbfph"
+}

@@ -1,0 +1,72 @@
+[
+  {
+    "worker": "rt-D72-frame-window-1717",
+    "source": "qualified-final.xml",
+    "published": "design/handoff-rt-D72-frame-window-1717-qualified-final.xml",
+    "bytes": 1396,
+    "sha256": "7c308f7d59512cae0ed0af52a4c99c4f1e64a3b3d4022288e8c4627f4bc53a5f"
+  },
+  {
+    "worker": "rt-D72-frame-window-1717",
+    "source": "mechanical-predicate-map.txt",
+    "published": "design/handoff-rt-D72-frame-window-1717-mechanical-predicate-map.txt",
+    "bytes": 951,
+    "sha256": "7c176349c25043df84c31dac77cf3c8360f3f492c0a5604bb7e4354a39c5aae1"
+  },
+  {
+    "worker": "rt-D72-frame-window-1717",
+    "source": "source-hashes-before-after.txt",
+    "published": "design/handoff-rt-D72-frame-window-1717-source-hashes-before-after.txt",
+    "bytes": 390,
+    "sha256": "4661a18b587335058c87dfada4c58081d884326aba8d6942a2ed3da48806b2ef"
+  },
+  {
+    "worker": "rt-D72-frame-review-1722",
+    "source": "review.xml",
+    "published": "design/handoff-rt-D72-frame-review-1722-review.xml",
+    "bytes": 1396,
+    "sha256": "a5b03b95ffec0f08f0a0e94a9547d6bbb302c6a08c17c1357b63399d89e89361"
+  },
+  {
+    "worker": "rt-D72-frame-review-1722",
+    "source": "native-legacy-observable-comparison.json",
+    "published": "design/handoff-rt-D72-frame-review-1722-native-legacy-observable-comparison.json",
+    "bytes": 2523,
+    "sha256": "f1f4726c78f8075e86c8e4e76d1f32186bf9b5a8484369816799083b54075b8f"
+  },
+  {
+    "worker": "rt-D72-generic-host-1717",
+    "source": "qualified.xml",
+    "published": "design/handoff-rt-D72-generic-host-1717-qualified.xml",
+    "bytes": 431,
+    "sha256": "65dda7af1cd7a4f6c330b597a4ffa4d94bff16bb9593eb453a54f32d8ce9aa77"
+  },
+  {
+    "worker": "rt-D72-generic-host-1717",
+    "source": "bounded.xml",
+    "published": "design/handoff-rt-D72-generic-host-1717-bounded.xml",
+    "bytes": 771,
+    "sha256": "f32fbf88642a537ed5d5f7f922869179e143a58186e89cf518c2abe0e9794749"
+  },
+  {
+    "worker": "rt-D72-generic-host-1717",
+    "source": "mechanical-map.txt",
+    "published": "design/handoff-rt-D72-generic-host-1717-mechanical-map.txt",
+    "bytes": 4146,
+    "sha256": "3aa5f5bd270077338b11763c3a7905a9c983605cbe99628971a837aa41604af4"
+  },
+  {
+    "worker": "rt-D72-generic-host-1717",
+    "source": "source-hashes.txt",
+    "published": "design/handoff-rt-D72-generic-host-1717-source-hashes.txt",
+    "bytes": 774,
+    "sha256": "3fd569c3308250b9a5e3bde45df8a05e1e9d520fc911190e182f9bba8dfa5252"
+  },
+  {
+    "worker": "rt-D72-generic-review-1722",
+    "source": "review.xml",
+    "published": "design/handoff-rt-D72-generic-review-1722-review.xml",
+    "bytes": 771,
+    "sha256": "8ea0b0cc400719db8fb399e06ee97c84c4f127ecd11b73cc95960bb46723d29e"
+  }
+]
