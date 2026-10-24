@@ -8,6 +8,7 @@ import {
   cancelAstridRenderTask,
   decideRenderRoute,
   enqueueAstridRuntimeRenderTimeline,
+  normalizeRuntimeVisualSeamReport,
 } from '@/tools/video-editor/lib/renderRouter';
 import { executeRenderPipeline } from '@/tools/video-editor/render/renderPipeline';
 import { AstridLocalClient } from '@/integrations/astrid/client.ts';
@@ -1325,7 +1326,7 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
     expect(result.seamReport).toMatchObject({
       blocked: true,
       warningCount: 1,
-      structuralIssues: ['picture_gap: picture gap at seam: picture: frame 30'],
+      structuralIssues: ['0:01.0 · Gap in the full-screen picture'],
       boundaries: [{
         frame: 30,
         timeSeconds: 1,
@@ -1343,6 +1344,62 @@ describe('Sprint 8 enqueueAstridRuntimeRenderTimeline', () => {
       rawDiagnostics: seamReport,
     });
     vi.unstubAllGlobals();
+  });
+
+  it('formats Runtime parent and nested findings with labels and no internal ids', () => {
+    const report = normalizeRuntimeVisualSeamReport({
+      fps: 30,
+      boundaries: [],
+      structuralIssues: [
+        {code: 'boundary/overlap', frame: 45, paths: [['parent', 'timeline-id', 'clip', 'parent-a'], ['parent', 'timeline-id', 'clip', 'parent-b']]},
+        {code: 'boundary/gap', frame: 90, paths: [['parent', 'timeline-id', 'occurrence', 'occ-2', 'clip', 'source-a'], ['parent', 'timeline-id', 'occurrence', 'occ-2', 'clip', 'source-b']]},
+      ],
+    }, {
+      tracks: [{id: 'v1', label: 'Picture'}],
+      clips: [
+        {id: 'parent-a', track: 'v1', label: 'Opening shot'},
+        {id: 'parent-b', track: 'v1', label: 'Second shot'},
+        {id: 'occ-1:source-a', track: 'v1', app: {canonical: {parentDocumentId: 'timeline-id', occurrenceId: 'occ-1'}}, label: 'Wrong occurrence'},
+        {id: 'occ-2:source-a', track: 'v1', app: {canonical: {parentDocumentId: 'timeline-id', occurrenceId: 'occ-2'}}, label: 'Nested first'},
+        {id: 'occ-2:source-b', track: 'v1', app: {canonical: {parentDocumentId: 'timeline-id', occurrenceId: 'occ-2'}}, label: 'Nested second'},
+      ],
+    });
+    expect(report?.structuralIssues).toEqual([
+      "0:01.5 · Two full-screen clips overlap on Picture: 'Opening shot' and 'Second shot'",
+      "0:03.0 · Gap on Picture between 'Nested first' and 'Nested second'",
+    ]);
+    expect(report?.structuralIssues.join(' ')).not.toMatch(/parent-a|source-a|occ-1|timeline-id/);
+  });
+
+  it('uses safe labels when Runtime paths do not resolve to authored clip names', () => {
+    const report = normalizeRuntimeVisualSeamReport({
+      fps: 30,
+      boundaries: [],
+      structuralIssues: [{code: 'boundary/overlap', frame: 1, paths: [['parent', 't', 'clip', 'secret-a'], ['parent', 't', 'clip', 'secret-b']]}],
+    }, {tracks: [{id: 'v1', label: 'Picture'}], clips: []});
+    expect(report?.structuralIssues).toEqual(["0:00.0 · Two full-screen clips overlap on Picture: 'clip' and 'clip'"]);
+    expect(report?.structuralIssues.join(' ')).not.toContain('secret-');
+  });
+
+  it('maps remaining Runtime structural codes to plain language and timecode', () => {
+    const report = normalizeRuntimeVisualSeamReport({
+      fps: 30,
+      boundaries: [],
+      structuralIssues: [
+        {code: 'boundary/negative-start', frame: -15},
+        {code: 'boundary/owner-overhang', startFrame: 30},
+        {code: 'boundary/invalid-occurrence', startFrame: 60},
+        {code: 'boundary/empty-child-picture', startFrame: 90},
+        {code: 'boundary/child-picture-gap', startFrame: 120},
+      ],
+    });
+    expect(report?.structuralIssues).toEqual([
+      '-0:00.5 · A clip starts before the timeline',
+      '0:01.0 · A nested picture extends beyond its parent',
+      '0:02.0 · A nested picture occurrence is invalid',
+      '0:03.0 · A nested picture has no full-screen image',
+      '0:04.0 · A nested picture has a gap in its full-screen image',
+    ]);
   });
 
   it('reads the advisory seam report from the admitted task spec', async () => {

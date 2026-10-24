@@ -41,6 +41,9 @@ import {
   type VisualBoundaryBehavior,
   type VisualSeamParticipant,
   type VisualSeamReport,
+  clipLabel,
+  formatVisualSeamFinding,
+  timecode,
 } from '@/tools/video-editor/data/visualSeamContract.ts';
 import type { BoundaryCue } from '../../../../vendor/astrid-browser/astrid/packs/local/rendering/elements/boundary';
 import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
@@ -984,7 +987,7 @@ export async function enqueueAstridRuntimeRenderTimeline(
       request,
       renderAdmissionKey(payload, options),
     );
-    const seamReport = readRuntimeVisualSeamReportFromAdmittedTask(result.task);
+    const seamReport = readRuntimeVisualSeamReportFromAdmittedTask(result.task, payload.timeline);
     return {
       status: 'queued',
       task_id: result.task.id,
@@ -993,7 +996,7 @@ export async function enqueueAstridRuntimeRenderTimeline(
       ...(seamReport ? { seamReport } : {}),
     };
   } catch (error) {
-    const seamReport = readRuntimeVisualSeamReport(error);
+    const seamReport = readRuntimeVisualSeamReport(error, payload.timeline);
     return {
       status: 'error',
       correlation_id: payload.correlation_id,
@@ -1037,29 +1040,77 @@ function runtimeCue(value: unknown): BoundaryCue | undefined {
   return {frame: candidate.frame, id: candidate.id, kind: candidate.kind as BoundaryCue['kind'], path: [...path]};
 }
 
-function issueText(value: unknown): string {
-  if (typeof value === 'string') return value;
+function issueText(value: unknown, fps: number, timeline?: unknown): string {
+  if (typeof value === 'string') return 'Visual boundary issue';
   const issue = jsonRecord(value);
-  if (!issue) return String(value);
+  if (!issue) return 'Visual boundary issue';
+  const timelineRecord = jsonRecord(timeline);
+  const tracks = Array.isArray(timelineRecord?.tracks) ? timelineRecord.tracks : [];
+  const clips = Array.isArray(timelineRecord?.clips) ? timelineRecord.clips : [];
+  const paths = Array.isArray(issue.paths) ? issue.paths : issue.path ? [issue.path] : [];
+  const issuePaths = paths.map(stringPath).filter((path): path is readonly string[] => path !== undefined);
+  const clipForPath = (path: readonly string[]) => {
+    const clipIndex = path.lastIndexOf('clip');
+    if (clipIndex < 0 || typeof path[clipIndex + 1] !== 'string') return undefined;
+    const pathClipId = path[clipIndex + 1];
+    const occurrenceIndex = path.lastIndexOf('occurrence');
+    const occurrenceId = occurrenceIndex >= 0 ? path[occurrenceIndex + 1] : undefined;
+    const parentIndex = path.lastIndexOf('parent');
+    const parentDocumentId = parentIndex >= 0 ? path[parentIndex + 1] : undefined;
+    const clipRecords = clips.map(jsonRecord).filter((clip): clip is Record<string, unknown> => clip !== undefined);
+    if (occurrenceId && parentDocumentId) {
+      return clipRecords.find((clip) => {
+        const canonical = jsonRecord(jsonRecord(clip.app)?.canonical);
+        return canonical?.occurrenceId === occurrenceId
+          && canonical?.parentDocumentId === parentDocumentId
+          && (canonical?.sourceClipId === pathClipId || clip.id === `${occurrenceId}:${pathClipId}`);
+      });
+    }
+    return clipRecords.find((clip) => clip.id === pathClipId);
+  };
+  const clipsForIssue = issuePaths.map(clipForPath);
+  const clipRecords = clipsForIssue.filter((clip): clip is Record<string, unknown> => clip !== undefined);
+  const labels = clipsForIssue.map((clip) => clip ? clipLabel({
+    label: clip.label,
+    text: jsonRecord(clip.text),
+  }) : 'clip');
+  const clipTrackId = typeof clipRecords[0]?.track === 'string' ? clipRecords[0].track : undefined;
+  const trackId = typeof issue.track === 'string' ? issue.track : clipTrackId;
+  const track = tracks.map(jsonRecord).find((item) => item?.id === trackId);
+  const trackLabel = typeof track?.label === 'string' ? track.label : 'Picture';
+  const code = typeof issue.code === 'string' ? issue.code : '';
+  const frame = typeof issue.frame === 'number' ? issue.frame
+    : typeof issue.startFrame === 'number' ? issue.startFrame
+    : code === 'boundary/negative-start' && typeof clipRecords[0]?.at === 'number' ? Math.round((clipRecords[0].at as number) * fps)
+      : undefined;
+  if (frame !== undefined && (code === 'boundary/overlap' || code === 'boundary/gap')) {
+    const finding = code === 'boundary/overlap' ? 'overlap' : 'gap';
+    return formatVisualSeamFinding(frame, fps, finding, trackLabel, labels.length > 0 ? labels : ['clip', 'clip']);
+  }
+  const plainCode: Record<string, string> = {
+    picture_gap: 'Gap in the full-screen picture',
+    'boundary/negative-start': 'A clip starts before the timeline',
+    'boundary/owner-overhang': 'A nested picture extends beyond its parent',
+    'boundary/invalid-occurrence': 'A nested picture occurrence is invalid',
+    'boundary/empty-child-picture': 'A nested picture has no full-screen image',
+    'boundary/child-picture-gap': 'A nested picture has a gap in its full-screen image',
+  };
+  if (plainCode[code]) return `${frame !== undefined ? `${timecode(frame / fps)} · ` : ''}${plainCode[code]}`;
   const range = typeof issue.startFrame === 'number' || typeof issue.endFrame === 'number'
-    ? `frames ${typeof issue.startFrame === 'number' ? issue.startFrame : issue.endFrame}–${typeof issue.endFrame === 'number' ? issue.endFrame : issue.startFrame}`
+    ? `${timecode((typeof issue.startFrame === 'number' ? issue.startFrame : issue.endFrame as number) / fps)}–${timecode((typeof issue.endFrame === 'number' ? issue.endFrame : issue.startFrame as number) / fps)}`
     : undefined;
-  const parts = [issue.code, issue.message, issue.track, typeof issue.frame === 'number' ? `frame ${issue.frame}` : range]
-    .filter((part): part is string => typeof part === 'string');
-  const path = stringPath(issue.path);
-  if (path) parts.push(path.join(' / '));
-  if (Array.isArray(issue.paths)) parts.push(issue.paths.map((item) => stringPath(item)?.join(' / ') ?? JSON.stringify(item)).join(', '));
-  return parts.length > 0 ? parts.join(': ') : JSON.stringify(value);
+  const line = frame !== undefined ? timecode(frame / fps) : range;
+  return [line, 'Visual boundary issue'].filter(Boolean).join(' · ');
 }
 
 /** Runtime and App use different report schemas. Normalize the Runtime wire report
  * into the UI contract while retaining the original diagnostics for path details. */
-export function normalizeRuntimeVisualSeamReport(value: unknown): VisualSeamReport | undefined {
+export function normalizeRuntimeVisualSeamReport(value: unknown, timeline?: unknown): VisualSeamReport | undefined {
   const raw = jsonRecord(value);
   if (!raw || !Array.isArray(raw.boundaries)) return undefined;
   const fps = typeof raw.fps === 'number' && Number.isFinite(raw.fps) && raw.fps > 0 ? raw.fps : 30;
   const rawIssues = Array.isArray(raw.structuralIssues) ? raw.structuralIssues : [];
-  const structuralIssues = rawIssues.map(issueText);
+  const structuralIssues = rawIssues.map((issue) => issueText(issue, fps, timeline));
   const boundaries = raw.boundaries.flatMap((rawBoundary) => {
     const boundary = jsonRecord(rawBoundary);
     if (!boundary || typeof boundary.frame !== 'number' || !Number.isFinite(boundary.frame)) return [];
@@ -1161,18 +1212,18 @@ export function normalizeRuntimeVisualSeamReport(value: unknown): VisualSeamRepo
   });
 }
 
-function readRuntimeVisualSeamReport(error: unknown): VisualSeamReport | undefined {
+function readRuntimeVisualSeamReport(error: unknown, timeline?: unknown): VisualSeamReport | undefined {
   if (!(error instanceof BridgeRouteError)) return undefined;
   const details = error.envelope?.details;
-  return normalizeRuntimeVisualSeamReport(jsonRecord(details)?.report);
+  return normalizeRuntimeVisualSeamReport(jsonRecord(details)?.report, timeline);
 }
 
-function readRuntimeVisualSeamReportFromAdmittedTask(task: unknown): VisualSeamReport | undefined {
+function readRuntimeVisualSeamReportFromAdmittedTask(task: unknown, timeline?: unknown): VisualSeamReport | undefined {
   const taskSpec = jsonRecord(jsonRecord(task)?.spec);
   const runtimeSpec = jsonRecord(taskSpec?.spec);
   const inputs = jsonRecord(runtimeSpec?.inputs);
   const timelineAuthority = jsonRecord(inputs?.timeline_authority);
-  return normalizeRuntimeVisualSeamReport(timelineAuthority?.visual_seam_report);
+  return normalizeRuntimeVisualSeamReport(timelineAuthority?.visual_seam_report, timeline);
 }
 
 /** Cancel a queued/running render through the common fenced task route. */

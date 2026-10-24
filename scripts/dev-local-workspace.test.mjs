@@ -204,6 +204,25 @@ describe('dev-local Runtime options', () => {
     assert.deepEqual(resolveRuntimeCommand({}), { command: 'astrid-runtime', args: [], cwd: undefined });
   });
 
+  it('prefers the selected Astrid checkout venv, which shares the Runtime client, over the Runtime checkout venv', () => {
+    const checkout = mkdtempSync(join(tmpdir(), 'astrid-runtime-command-test-'));
+    const astrid = mkdtempSync(join(tmpdir(), 'astrid-agent-command-test-'));
+    temporaryDirectories.push(checkout, astrid);
+    for (const root of [checkout, astrid]) {
+      mkdirSync(join(root, '.venv', 'bin'), { recursive: true });
+      writeFileSync(join(root, '.venv', 'bin', 'python'), '');
+    }
+    assert.deepEqual(resolveRuntimeCommand({ runtimeCheckout: checkout, astridCheckout: astrid }), {
+      command: join(astrid, '.venv', 'bin', 'python'), args: ['-m', 'astrid_runtime.cli'], cwd: checkout,
+    });
+    assert.deepEqual(resolveRuntimeCommand({ runtimeCheckout: checkout, astridCheckout: join(astrid, 'missing') }), {
+      command: join(checkout, '.venv', 'bin', 'python'), args: ['-m', 'astrid_runtime.cli'], cwd: checkout,
+    });
+    assert.deepEqual(resolveRuntimeCommand({ runtimeCheckout: checkout, astridCheckout: astrid, runtimePython: 'selected-python' }), {
+      command: 'selected-python', args: ['-m', 'astrid_runtime.cli'], cwd: checkout,
+    });
+  });
+
   it('requires an explicit Python override when a selected Runtime checkout lacks its venv', () => {
     const checkout = mkdtempSync(join(tmpdir(), 'astrid-runtime-no-venv-test-'));
     temporaryDirectories.push(checkout);

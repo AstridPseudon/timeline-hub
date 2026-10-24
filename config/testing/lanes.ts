@@ -8,6 +8,7 @@ import path from 'node:path';
 export const CHECKOUT_LANE = [
   // Reads Runtime's conformance vectors from a sibling Runtime worktree.
   'src/tools/video-editor/data/portableVisualSeamIntent.test.ts',
+  'src/tools/video-editor/data/visualSeamSharedCases.test.ts',
   // Runs Astrid's pack-owned scene-authoring test through @astrid (ASTRID_CHECKOUT).
   // Astrid has no JS runner, so this wrapper is the only place that test executes.
   'src/tools/video-editor/runtime/astridSceneAuthoring.test.ts',

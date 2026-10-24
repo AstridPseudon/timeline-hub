@@ -3,6 +3,7 @@ import type {
   ResolvedTimelineConfig,
   TrackDefinition,
 } from '@/tools/video-editor/types/index.ts';
+import { coversFrame } from './visualSeamCoverage.ts';
 import { timelineClipDurationMs } from './shotCompositionTiming.ts';
 import { portableVisualSeamIntent, visualSeamOwners, type DisclosedOwner } from './portableVisualSeamIntent.ts';
 import type {SeamIntent} from '../../../../vendor/astrid-browser/astrid/packs/local/rendering/elements/seam-intent';
@@ -171,41 +172,29 @@ function isPrimaryVisualClip(
   return !['effect', 'animation', 'transition'].includes(String(record(clip.elementRef)?.kind));
 }
 
-function declaredPictureTracks(config: ResolvedTimelineConfig): Set<string> {
-  const value = record(record(config.app)?.visualSeamContract)?.pictureTracks;
-  return new Set(Array.isArray(value) ? value.filter((track): track is string => typeof track === 'string') : []);
-}
-
-const MEDIA_CLIP_TYPES = new Set(['media', 'video', 'image']);
-
-/**
- * True only when the data says the clip covers the whole frame opaquely: a
- * picture clip (media with an asset, or any clip on a declared picture track)
- * with no sub-frame geometry and full opacity. Overlay roles (type, fx, sprite,
- * chrome, ...) and custom/element clips of unknown geometry never qualify.
- */
-function coversFrame(clip: ResolvedTimelineClip, track: TrackDefinition | undefined, config: ResolvedTimelineConfig): boolean {
-  if (track?.kind !== 'visual' || track.role === 'source') return false;
-  if (!declaredPictureTracks(config).has(track.id)
-    && !(MEDIA_CLIP_TYPES.has(clipType(clip)) && text(clip.asset))) return false;
-  if ((finite(clip.opacity) ?? 1) < 1 || (finite(track.opacity) ?? 1) < 1) return false;
-  const [outW, outH] = String(config.output.resolution).split('x').map(Number);
-  const full = (value: unknown, size: number | undefined) => {
-    const n = finite(value);
-    return n === undefined || !size || n >= size;
-  };
-  return full(clip.width, outW) && full(clip.height, outH);
-}
-
-function timecode(seconds: number): string {
-  const tenths = Math.round(seconds * 10);
+export function timecode(seconds: number): string {
+  const tenths = Math.round(Math.abs(seconds) * 10);
   const minutes = Math.floor(tenths / 600);
   const rest = (tenths - minutes * 600) / 10;
-  return `${minutes}:${rest.toFixed(1).padStart(4, '0')}`;
+  return `${seconds < 0 ? '-' : ''}${minutes}:${rest.toFixed(1).padStart(4, '0')}`;
 }
 
-function clipLabel(clip: ResolvedTimelineClip): string {
-  return text(clip.label) ?? text(clip.text?.content) ?? clip.id;
+export function clipLabel(clip: {label?: unknown; text?: {content?: unknown}}): string {
+  return text(clip.label) ?? text(clip.text?.content) ?? 'Unlabeled clip';
+}
+
+export function formatVisualSeamFinding(
+  frame: number,
+  fps: number,
+  finding: 'overlap' | 'gap',
+  trackLabel: string,
+  clipLabels: readonly string[],
+): string {
+  const clips = clipLabels.map((label) => `'${label}'`);
+  const detail = finding === 'overlap'
+    ? `Two full-screen clips overlap on ${trackLabel}: ${clips.join(' and ')}`
+    : `Gap on ${trackLabel} between ${clips.join(' and ')}`;
+  return `${timecode(frame / fps)} · ${detail}`;
 }
 
 function declaredTrackPolicy(config: ResolvedTimelineConfig, key: 'continuityTracks'): Set<string> | undefined {
@@ -424,7 +413,7 @@ function visualGapEdges(config: ResolvedTimelineConfig): VisualGapEdge[] {
   const tracks = continuityTracksFor(spans, {}, config);
   const spansByTrack = new Map<string, ClipSpan[]>();
   for (const span of spans) {
-    if (!span.primary || !span.track || !tracks.has(span.clip.track)) continue;
+    if (!span.primary || !span.track || !tracks.has(span.clip.track) || !coversFrame(span.clip, span.track, config)) continue;
     const current = spansByTrack.get(span.clip.track) ?? [];
     current.push(span);
     spansByTrack.set(span.clip.track, current);
@@ -504,18 +493,18 @@ export function analyzeVisualSeams(
   const requestedGuardFrames = finite(options.guardFrames);
   const guardFrames = Math.max(0, Math.floor(requestedGuardFrames ?? 2));
   const spans = buildSpans(config);
-  const allOwners = visualSeamOwners(config, true);
-  const ownerClips = new Map(config.clips.map(clip => [clip.id, clip]));
+  const owners = visualSeamOwners(config, true);
   const ownerTracks = trackMap(config);
-  // An overlay whose timing is undisclosed only "activates" at its start: that is not a picture-change risk.
-  const owners = allOwners.map(o => {
-    const c = ownerClips.get(o.clipId);
-    return o.disclosure.opaque.length > 0 && !(c && coversFrame(c, ownerTracks.get(c.track), config))
-      ? {...o, disclosure: {...o.disclosure, cues: o.disclosure.cues.filter(cue => cue.kind !== 'activation')}}
-      : o;
-  });
   const opaqueSpans = owners.filter(o => o.disclosure.opaque.length > 0)
-    .filter(o => { const c = ownerClips.get(o.clipId); return c !== undefined && coversFrame(c, ownerTracks.get(c.track), config); })
+    // Clip-local effects inherit their host clip's coverage. Occurrence-wide
+    // effects reuse a child clipId but have independent track/geometry, so
+    // classify those disclosed owners directly.
+    .filter(o => {
+      const host = o.path.includes('clip') ? config.clips.find(clip => clip.id === o.clipId) : undefined;
+      return host
+        ? coversFrame(host, ownerTracks.get(host.track), config)
+        : coversFrame(o.clip as ResolvedTimelineClip, ownerTracks.get(String(o.clip.track ?? '')), config);
+    })
     .sort((a, b) => a.startFrame - b.startFrame || a.clipId.localeCompare(b.clipId));
   const cues = buildCues(spans, owners).sort((left, right) => left.frame - right.frame);
   const opaqueElements = opaqueSpans.map(opaqueElement);
@@ -545,9 +534,7 @@ export function analyzeVisualSeams(
       const transitionDeclared = delta < 0 && transitionDuration !== null && -delta <= transitionDuration
         && transitionDuration <= Math.min(previous.endFrame - previous.startFrame, next.endFrame - next.startFrame);
       const issues = delta !== 0 && !(delta > 0 && gapDeclared) && !(delta < 0 && transitionDeclared)
-        ? [`${timecode(next.startFrame / fps)} · ${delta < 0
-            ? `Two full-screen clips overlap on ${next.track?.label ?? trackId}: '${clipLabel(previous.clip)}' and '${clipLabel(next.clip)}'`
-            : `Gap on ${next.track?.label ?? trackId} between '${clipLabel(previous.clip)}' and '${clipLabel(next.clip)}'`}`]
+        ? [formatVisualSeamFinding(next.startFrame, fps, delta < 0 ? 'overlap' : 'gap', next.track?.label ?? 'Picture', [clipLabel(previous.clip), clipLabel(next.clip)])]
         : [];
       structuralIssues.push(...issues);
       const nearby = cuesNearFrame(cues, frame, guardFrames);
