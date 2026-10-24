@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T04:51:49Z | dispatcher heartbeat 4s | live 1 (sol 1, luna 0, other 0) | busy30 13 | status age 2m -->
+<!-- app | 2026-10-24T04:54:30Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 2m -->
 # app board, 2026-10-24T04:49Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -16,7 +16,7 @@
 | A4-dormant-scope | Record dormant raw and track subsets | Luna | D37 applied | merged | app-A4-D37-wording-0222 | Both exact worker records copied into existing App and combined ledgers. Implementations and tests unchanged. | Documentation only |
 | A4-reviewed-stack | Ports and mounted witnesses | Luna | Review 0105 and integrated 0115 PASS | merged | app-A4-mounted-fixture-return-0059 | Independent and integrated 111 plus 33 tests passed on exact93d487. Types/lint passed; mocked authority limit retained. | 93d48799a2 |
 | A2-bootstrap-fix | Restart cancelled bootstrap | Sol; Luna review | Resolved | merged | app-A2-basis-cancel-repro-sol-0029 | [326 tests, three typechecks and lint passed.](/home/user/timeline-hub/hub/design/app-A2-bootstrap-integrated-0046.md) | 804134d747 |
-| readiness-after-bootstrap | Qualify history and bootstrap readiness | Sol; Luna review | D42 memo and App coalescing | doing | Runtime0403; App coalescing e492 | P2 readiness passed then three originals failed. P3 readiness failed. Retained timing alone does not establish full cause. | App804 / Agent079 / Runtime37eb |
+| readiness-after-bootstrap | Qualify history and bootstrap readiness | Sol; Luna review | D45 current caller on existing37eb | doing | App Sol0446; Proof verdict | Current coalescing and gesture fixes passed joined523. D45 releases one pair without memo; historical causes stay bounded. | Appc0fe / Agent079 / Runtime37eb |
 | P-door-port-alloc | Allocate door port per run | Luna; D21 | Resolved | merged | app-P2-P3-door-allocation-0039 | [Node 20 allocation, shared stage value and failure checks passed.](/home/user/timeline-hub/hub/design/app-P2-P3-door-allocation-0039.md) | Harness rows only |
 | readiness-upstream-check | Check f38e candidate | Sol; Luna review | Review 0057 PASS | merged | App Sol 0046; Luna 0057 | No census or attempt-root signature supports attribution. Exact patch is unavailable locally; historical cause remains unknown. | Report only |
 | P2 | Eight original gesture cases | App service; Proof verdict | Source causes and qualified fixes | doing | Test12221; source review0327 | FAIL exit1/501s. Mandatory readiness passed; three original cases failed and five not run. No repeat. | Fixed App804 |
