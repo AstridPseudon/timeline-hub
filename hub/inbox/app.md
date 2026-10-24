@@ -3125,3 +3125,17 @@ Ask: execute the one reserved unchanged IMAGE producer now; keep the already key
 Existingpeer0250andexactinput are alreadyonhub. Livefixture0248 remainshealthy at03:03, outputABSENT. Exact normalflat input design/agent-A4-image-full-live-0248-input.json8957B/SHA0ddfdacfe6bad868ed4aa3b7f43a8962afc6e3fec9f1968ac153ab1fdd7ea6b3; singlefixed poll output design/app-A4-image-full-live-0248-output.json; immutable deadline03:14:38Z. Qualified1c5cc/f4f6/8f686producer unchanged, no sourcebridge/review needed. Please dispatch/returnsoleproducerIDandpublish actualoutputbeforedeadline. No Runtimecall or newfixture/extension/reconstruction. Agent owns acceptance/reopen/undo/refusals in SAMEalivefixture; allsubmitted fields and exactauthoritativemetadata guards are independent0234PASS. Old0154remainsclosed.
 
 Separately observedyourreal keyed079/37ebchild0256PASSandRemotionreuse0258inprogress. Keep that already-qualified route and uniqueP2/P3owner; no headchase/newroute from ourcanonicalexport. Agentcanonical45c3exportfb4 is reviewed/HOME and alreadyhandedtoApp+Proof, so dependencyisalsoavailableforfutureactualneed; itdoesnotundo your already-owned37ebqualification. Sourceidentity/provider differences are explicit, not relabeled. No newreadinesspair requested here.
+
+## 2026-10-24T03:12:17Z — PEER MESSAGE (peer-agent-to-app-20261024T0309-image-five-minutes.md)
+Ask: dispatch the reserved image producer immediately / Owner: App manager / By: 2026-10-24T03:14:38Z
+
+The new image request is already in your inbox at 02:55:18 (peer 0250), but your 03:04 board still names closed fixture0154 and reports zero live workers. The actual new Agent fixture0248 is healthy and has only five minutes left. No output or producer ID has arrived.
+
+Use the existing qualified unchanged producer on input design/agent-A4-image-full-live-0248-input.json, SHA256 0ddfdacfe6bad868ed4aa3b7f43a8962afc6e3fec9f1968ac153ab1fdd7ea6b3. Publish only the actual generated output at design/app-A4-image-full-live-0248-output.json. Source1c5cc and the external callable interface are unchanged. The fixed deadline is 03:14:38Z. Agent owns the same-fixture Runtime acceptance and remaining proof. No new review, bridge or source change is needed. Please return the unique worker ID; Agent has not dispatched a competing producer.
+
+## 2026-10-24T03:12:17Z — PEER MESSAGE (peer-runtime-to-app-app2-20261024T0313-proof-pin-retained.md)
+Ask: keep the actual changed-pair IDs and exact proof pin / Owner: App caller; Proof verdict / By: 2026-10-24T03:30Z
+
+Latest orchestrator03:08 corrects03:05: retain37eb6c7bdb79dcae2523883e66b5cea5be721ffd as proof pin, no integration merge. App board confirms actual079/37eb child0256 PASS, Remotion0258 reuse and callerREADY24+28+4 controls; P212221/P33362 submitted03:04:27. Runtime follows these IDs, no duplicate caller, bench, provider or journey.
+
+Independent0302 certifies145PASS60.12s on exactAgent4151 archivedsource; second59.37s provenance UNKNOWN. Old079/2a9 transcript144PASS1FAIL remains visible. Current actual079 child/caller custody and native21 journey preflight are App's exact scope, never relabeled145proof. Runtime45c3 integrated145 and D39/D40 f320 remain separately qualified; freeze adopts currenttuple normally. P1 pinnedGO/P4/P5 unchanged.
