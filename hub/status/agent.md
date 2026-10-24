@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T14:08:08Z | dispatcher heartbeat 7s | live 3 (sol 0, luna 3, other 0) | busy30 16 | status age 1m -->
+<!-- agent | 2026-10-24T14:12:03Z | dispatcher heartbeat 15s | live 3 (sol 0, luna 3, other 0) | busy30 15 | status age 2m -->
 # agent board, 2026-10-24T14:06:44Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -72,7 +72,9 @@
 
 | F baseline snapshot guard | Accept authentic service snapshot | Luna / Luna | Service16315 zero-body FAIL | doing | Return1342; review1349 PASS | Exact direct924 or authentic one-parent snapshot passes. Wrong tree,parent,extra parents,dirty state and import overlay refuse. Source ready for one meaningful full. | Upstream924437716 |
 
-| U4a final / D39 | Bind refreshed Runtime producer | Luna | Producer final review | doing | Adopt1408 | Runtime e68cf has no wire or15-client byte delta; source identity still needs normal vendor adoption and exact producer qualification. | Candidate acf87bd base |
+| U4a final / D39 | Bind refreshed Runtime producer | Luna | Exact custody and failure classification | review | Adopt1408; review1410 | Only lock changed to reviewed Runtime e68cf;15 client hashes exact. Author82+100 pass; one inverse integration failure is under classification. | 512f83d838 |
+
+| Runtime five receipts | Publish actual home XML and map | Luna / Manager | Existing authentic1330 files | merged | Original home1330; handoff1409 | Two authentic files copied byte-exact to normal design publication, with full hashes. Runtime can qualify named membership without rerun. | Evidence only |
 
 Integration: Agent home47b744dfe9 includes reviewed final R2 null and G4 join. D60 candidateacf87bd is a true merge with exact upstream924 parent. Final committed source review1408 and independent D39 producer adoption1408 are active. Runtime normal integration is e68cf; wire/schema/client15 unchanged per producer1346, exact producer review remains separate.
 core open: 5 on actual47b:152 required PASS,4 fork FAIL,1 managed D13 UNKNOWN. Existing D23 covers both timing originals170 and213; unchanged visibly failing. Candidateacf exact159 worker1408 active, no final-tuple closure claim.
@@ -81,10 +83,10 @@ Current receipts:162 PASS,112 open,2 approved deferred of276 at47b scope. Core15
 D59 cut rows: Frozen6 source repairs merged. Four remaining fork originals are held on authenticated ABI mode authority; no unsafe compatibility candidate merges. D13 genuine seven-key binding carrier/tool tuple remains missing and UNKNOWN.
 Gates and venues: Current integrated heads; D41 retired. P1/P2/P3 App service and verdicts; P4 Agent service; P5 and Composition main. P4 row47b preflight collected3, refresh after final U2 and producer adoption; body waits single heavy slot. App U3b/D39 was merged at12:20Z.
 Admission: D56 drops Farm venue/source access. Historical403 and automatic refusal remain stopped. No alternate source,child,installed overlay or reconstruction requested.
-Disk: 9.54GB free before new workers. Recycled finished capture-export1055. G2-open-commit recycle refused DIRTY; left untouched. Sweep3 and compaction running through existing helpers. Target15GB where reachable; no new heavy below8.5GB.
+Disk: 9.54GB free before new workers. Recycled finished capture-export1055. G2-open-commit recycle refused DIRTY; left untouched. Sweep3 running; compaction packed0 and compressed2 old logs through existing helper. Target15GB where reachable; no new heavy below8.5GB.
 Blockers: Orchestrator — identify authenticated ABI mode and complete coverage fact or approve minimal boundary extension; [decision](../../escalations/agent-20261024T1400Z-ABI-mode-authority.md).
 Blockers: Agent — upstream full1621 running is the sole heavy body; exact D54 comparison and final full follow its actual terminal result. D13 input remains UNKNOWN under existing admission hold.
 Next ready: U2 committed review and D39 adoption1408, plus exact159 source qualification1408. On qualifying source PASS, normal merge immediately; refresh P4 current binding then queue when heavy slot clears. No independent ready row waits.
-live 0 / cap 6; ready-undispatched 0. Dispatcher header14:04:15Z reports0 Luna/0 Sol and predates the three dispatched1408 Luna workers, actually started14:05. Header lag disclosed; no self-count substitution.
+live 3 / cap 6; ready-undispatched 0. Dispatcher header14:08:08Z reports3 Luna/0 Sol. Adoption1408 finished; review1410 queued. All ready independent work dispatched.
 Evidence: [Rollup](../../design/agt-F-d54-current-rollup-return-1343.json), [U2 author](../../workers/agt-U2-final-amend-1336/report.md), [ABI whole path](../../workers/agt-R2-ABI-whole-path-1354/report.md).
-Inbox read through1350 peer at920793 bytes. Last pass 2026-10-24T14:06:44Z.
+Inbox read through Runtime1400 source and exact-file handbacks. Both asks have owned rows; no dependency waits unassigned. Last pass 2026-10-24T14:06:44Z.

@@ -1,0 +1,160 @@
+old276_order	status	package	scope	disposition	regression_status	parameter	node_id
+6	PASS	other	core	UNPROVEN	UNPROVEN	[native-order]	tests/editing_conformance/test_captured_config_root_mirror.py::test_captured_config_root_rejects_tampering_without_mutation[native-order]
+7	PASS	provider	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_captured_nested_redo.py::test_captured_nested_redo_compiles_and_partitions_without_rewriting_source
+8	PASS	provider	core	UNPROVEN	UNPROVEN	[one-of-ten-notes]	tests/editing_conformance/test_captured_nested_redo.py::test_native_only_accepted_inverse_redoes_without_effect_facts[one-of-ten-notes]
+9	PASS	provider	core	UNPROVEN	UNPROVEN	[semantic-creation]	tests/editing_conformance/test_captured_nested_redo.py::test_native_only_accepted_inverse_redoes_without_effect_facts[semantic-creation]
+10	PASS	provider	core	UNPROVEN	UNPROVEN	[False]	tests/editing_conformance/test_provider_occurrence_fork.py::test_v2_registered_fork_reply_physical_effects_step_reads_and_undo[False]
+11	FAIL	provider	core	UNPROVEN	UNPROVEN	[True]	tests/editing_conformance/test_provider_occurrence_fork.py::test_v2_registered_fork_reply_physical_effects_step_reads_and_undo[True]
+12	PASS	provider	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_provider_occurrence_fork.py::test_fork_and_edit_sequential_step_read_and_guarded_fork_step_undo
+13	FAIL	provider	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_provider_occurrence_fork.py::test_disjoint_head_merge_and_preview_keep_other_edit
+14	PASS	provider	core	UNPROVEN	UNPROVEN	[removed0-track-parent]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed0-track-parent]
+15	PASS	provider	core	UNPROVEN	UNPROVEN	[removed0-track-occurrence:occ-1]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed0-track-occurrence:occ-1]
+16	PASS	provider	core	UNPROVEN	UNPROVEN	[removed0-clip-parent]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed0-clip-parent]
+17	PASS	provider	core	UNPROVEN	UNPROVEN	[removed0-clip-occurrence:occ-1]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed0-clip-occurrence:occ-1]
+18	PASS	provider	core	UNPROVEN	UNPROVEN	[removed1-track-parent]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed1-track-parent]
+19	PASS	provider	core	UNPROVEN	UNPROVEN	[removed1-track-occurrence:occ-1]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed1-track-occurrence:occ-1]
+20	PASS	provider	core	UNPROVEN	UNPROVEN	[removed1-clip-parent]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed1-clip-parent]
+21	PASS	provider	core	UNPROVEN	UNPROVEN	[removed1-clip-occurrence:occ-1]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed1-clip-occurrence:occ-1]
+22	PASS	provider	core	UNPROVEN	UNPROVEN	[removed2-track-parent]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed2-track-parent]
+23	PASS	provider	core	UNPROVEN	UNPROVEN	[removed2-track-occurrence:occ-1]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed2-track-occurrence:occ-1]
+24	PASS	provider	core	UNPROVEN	UNPROVEN	[removed2-clip-parent]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed2-clip-parent]
+25	PASS	provider	core	UNPROVEN	UNPROVEN	[removed2-clip-occurrence:occ-1]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed2-clip-occurrence:occ-1]
+26	PASS	provider	core	UNPROVEN	UNPROVEN	[removed3-track-parent]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed3-track-parent]
+27	PASS	provider	core	UNPROVEN	UNPROVEN	[removed3-track-occurrence:occ-1]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed3-track-occurrence:occ-1]
+28	PASS	provider	core	UNPROVEN	UNPROVEN	[removed3-clip-parent]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed3-clip-parent]
+29	PASS	provider	core	UNPROVEN	UNPROVEN	[removed3-clip-occurrence:occ-1]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed3-clip-occurrence:occ-1]
+30	PASS	provider	core	UNPROVEN	UNPROVEN	[removed4-track-parent]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed4-track-parent]
+31	PASS	provider	core	UNPROVEN	UNPROVEN	[removed4-track-occurrence:occ-1]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed4-track-occurrence:occ-1]
+32	PASS	provider	core	UNPROVEN	UNPROVEN	[removed4-clip-parent]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed4-clip-parent]
+33	PASS	provider	core	UNPROVEN	UNPROVEN	[removed4-clip-occurrence:occ-1]	tests/editing_conformance/test_recipe_m1_commands.py::test_structural_removal_inverse_redo_preserves_full_rows_and_authored_order[removed4-clip-occurrence:occ-1]
+34	PASS	provider	core	UNPROVEN	UNPROVEN	[payload]	tests/editing_conformance/test_recipe_m1_commands.py::test_remove_last_clip_keeps_exact_container_shape[payload]
+35	PASS	provider	core	UNPROVEN	UNPROVEN	[config]	tests/editing_conformance/test_recipe_m1_commands.py::test_remove_last_clip_keeps_exact_container_shape[config]
+36	PASS	provider	core	UNPROVEN	UNPROVEN	[both]	tests/editing_conformance/test_recipe_m1_commands.py::test_remove_last_clip_keeps_exact_container_shape[both]
+37	PASS	provider	core	UNPROVEN	UNPROVEN	[null-payload]	tests/editing_conformance/test_recipe_m1_commands.py::test_remove_last_clip_keeps_exact_container_shape[null-payload]
+38	PASS	provider	core	UNPROVEN	UNPROVEN	[null-config]	tests/editing_conformance/test_recipe_m1_commands.py::test_remove_last_clip_keeps_exact_container_shape[null-config]
+39	PASS	provider	core	UNPROVEN	UNPROVEN	[image-anchor]	tests/editing_conformance/test_recipe_m2_auto_placement.py::test_exact_capture_replay_inverse_and_redo[image-anchor]
+40	PASS	provider	core	UNPROVEN	UNPROVEN	[image-absent]	tests/editing_conformance/test_recipe_m2_auto_placement.py::test_exact_capture_replay_inverse_and_redo[image-absent]
+41	PASS	provider	core	UNPROVEN	UNPROVEN	[video-anchor]	tests/editing_conformance/test_recipe_m2_auto_placement.py::test_exact_capture_replay_inverse_and_redo[video-anchor]
+42	PASS	provider	core	UNPROVEN	UNPROVEN	[video-absent]	tests/editing_conformance/test_recipe_m2_auto_placement.py::test_exact_capture_replay_inverse_and_redo[video-absent]
+43	PASS	provider	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_step_undo_v2.py::test_aba_tail_refuses_even_when_the_current_guard_matches
+44	PASS	provider	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_step_undo_v2.py::test_disjoint_later_commit_survives_and_inverse_uses_actual_landing_head
+45	PASS	provider	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_step_undo_v2.py::test_gap_before_newer_target_is_its_input_but_not_earlier_targets_tail
+46	PASS	provider	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_step_undo_v2.py::test_step_patch_is_never_executed_as_inverse_instructions
+47	PASS	provider	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_step_undo_v2.py::test_semantic_creation_reversal_preserves_unselected_root_and_redoes
+48	PASS	provider	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_step_undo_v2.py::test_partial_semantic_deletion_restores_source_and_order_from_accepted_boundary
+59	PASS	provider	core	UNPROVEN	UNPROVEN	[False-0]	tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_delete_recreation_keeps_exact_stage_order[False-0]
+60	PASS	provider	core	UNPROVEN	UNPROVEN	[False-1]	tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_delete_recreation_keeps_exact_stage_order[False-1]
+61	PASS	provider	core	UNPROVEN	UNPROVEN	[True-0]	tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_delete_recreation_keeps_exact_stage_order[True-0]
+62	PASS	provider	core	UNPROVEN	UNPROVEN	[True-1]	tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_delete_recreation_keeps_exact_stage_order[True-1]
+63	PASS	provider	core	UNPROVEN	UNPROVEN	[order]	tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_occurrence_partition_forgery_refuses_without_writes[order]
+64	PASS	provider	core	UNPROVEN	UNPROVEN	[native-range]	tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_occurrence_partition_forgery_refuses_without_writes[native-range]
+65	PASS	provider	core	UNPROVEN	UNPROVEN	[effect-range]	tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_occurrence_partition_forgery_refuses_without_writes[effect-range]
+66	PASS	provider	core	UNPROVEN	UNPROVEN	[source]	tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_occurrence_partition_forgery_refuses_without_writes[source]
+67	PASS	provider	core	UNPROVEN	UNPROVEN	[step]	tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_occurrence_partition_forgery_refuses_without_writes[step]
+68	PASS	provider	core	UNPROVEN	UNPROVEN	[ordinal]	tests/editing_conformance/test_inverse_owner_occurrence_order.py::test_nested_occurrence_partition_forgery_refuses_without_writes[ordinal]
+72	PASS	other	core	UNPROVEN	UNPROVEN	[native-order]	tests/editing_conformance/test_nested_config_root_history.py::test_root_config_history_rejects_tampering_without_mutation[native-order]
+73	PASS	media	core	UNPROVEN	UNPROVEN	[create]	tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_exact_capture_replay_inverse_and_redo[create]
+74	PASS	media	core	UNPROVEN	UNPROVEN	[unplace]	tests/editing_conformance/test_recipe_m2_placement_create_unplace.py::test_exact_capture_replay_inverse_and_redo[unplace]
+75	PASS	media	core	UNPROVEN	UNPROVEN	[image-append]	tests/editing_conformance/test_recipe_m2_shared_auto_placement.py::test_exact_capture_replay_inverse_and_redo[image-append]
+76	PASS	media	core	UNPROVEN	UNPROVEN	[video-append]	tests/editing_conformance/test_recipe_m2_shared_auto_placement.py::test_exact_capture_replay_inverse_and_redo[video-append]
+77	PASS	media	core	UNPROVEN	UNPROVEN	[image-shift]	tests/editing_conformance/test_recipe_m2_shared_auto_placement.py::test_exact_capture_replay_inverse_and_redo[image-shift]
+78	PASS	media	core	UNPROVEN	UNPROVEN	[video-overlay-anchor]	tests/editing_conformance/test_recipe_m2_shared_auto_placement.py::test_exact_capture_replay_inverse_and_redo[video-overlay-anchor]
+79	PASS	media	core	UNPROVEN	UNPROVEN	[add-first]	tests/editing_conformance/test_recipe_m2_shot_pool.py::test_exact_capture_replay_inverse_and_redo[add-first]
+80	PASS	media	core	UNPROVEN	UNPROVEN	[add-second]	tests/editing_conformance/test_recipe_m2_shot_pool.py::test_exact_capture_replay_inverse_and_redo[add-second]
+81	PASS	media	core	UNPROVEN	UNPROVEN	[remove-middle]	tests/editing_conformance/test_recipe_m2_shot_pool.py::test_exact_capture_replay_inverse_and_redo[remove-middle]
+82	PASS	media	core	UNPROVEN	UNPROVEN	[image]	tests/editing_conformance/test_recipe_m2_shot_pool.py::test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one[image]
+83	PASS	media	core	UNPROVEN	UNPROVEN	[video]	tests/editing_conformance/test_recipe_m2_shot_pool.py::test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one[video]
+84	PASS	media	core	UNPROVEN	UNPROVEN	[False-False]	tests/editing_conformance/test_recipe_m2_video_unplace.py::test_raw_media_golden_exact_inverse_replay_and_redo[False-False]
+85	PASS	media	core	UNPROVEN	UNPROVEN	[False-True]	tests/editing_conformance/test_recipe_m2_video_unplace.py::test_raw_media_golden_exact_inverse_replay_and_redo[False-True]
+86	PASS	media	core	UNPROVEN	UNPROVEN	[True-False]	tests/editing_conformance/test_recipe_m2_video_unplace.py::test_raw_media_golden_exact_inverse_replay_and_redo[True-False]
+87	PASS	media	core	UNPROVEN	UNPROVEN	[True-True]	tests/editing_conformance/test_recipe_m2_video_unplace.py::test_raw_media_golden_exact_inverse_replay_and_redo[True-True]
+88	PASS	media	core	UNPROVEN	UNPROVEN	[3-0]	tests/editing_conformance/test_recipe_occurrence_delete.py::test_delete_reload_exact_guarded_inverse_redo_order_and_metadata[3-0]
+89	PASS	media	core	UNPROVEN	UNPROVEN	[3-1]	tests/editing_conformance/test_recipe_occurrence_delete.py::test_delete_reload_exact_guarded_inverse_redo_order_and_metadata[3-1]
+90	PASS	media	core	UNPROVEN	UNPROVEN	[3-2]	tests/editing_conformance/test_recipe_occurrence_delete.py::test_delete_reload_exact_guarded_inverse_redo_order_and_metadata[3-2]
+91	PASS	media	core	UNPROVEN	UNPROVEN	[1-0]	tests/editing_conformance/test_recipe_occurrence_delete.py::test_delete_reload_exact_guarded_inverse_redo_order_and_metadata[1-0]
+92	PASS	media	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_recipe_occurrence_delete.py::test_other_occurrence_child_edit_and_metadata_do_not_conflict
+93	PASS	media	core	UNPROVEN	UNPROVEN	[absent]	tests/editing_conformance/test_recipe_occurrence_delete.py::test_exact_opaque_and_tagged_metadata_survive_last_consumer_history_inverse[absent]
+94	PASS	media	core	UNPROVEN	UNPROVEN	[None]	tests/editing_conformance/test_recipe_occurrence_delete.py::test_exact_opaque_and_tagged_metadata_survive_last_consumer_history_inverse[None]
+95	PASS	media	core	UNPROVEN	UNPROVEN	[metadata2]	tests/editing_conformance/test_recipe_occurrence_delete.py::test_exact_opaque_and_tagged_metadata_survive_last_consumer_history_inverse[metadata2]
+96	PASS	media	core	UNPROVEN	UNPROVEN	[metadata3]	tests/editing_conformance/test_recipe_occurrence_delete.py::test_exact_opaque_and_tagged_metadata_survive_last_consumer_history_inverse[metadata3]
+97	PASS	media	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_occurrence_fork_source_baseline.py::test_retained_app_fork_reload_undo_restores_exact_closure
+98	FAIL	media	core	UNPROVEN	UNPROVEN	[1]	tests/editing_conformance/test_recipe_occurrence_fork.py::test_reload_undo_redo_exact_and_replay[1]
+99	FAIL	media	core	UNPROVEN	UNPROVEN	[2]	tests/editing_conformance/test_recipe_occurrence_fork.py::test_reload_undo_redo_exact_and_replay[2]
+100	PASS	media	core	UNPROVEN	UNPROVEN	[set-container0]	tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[set-container0]
+101	PASS	media	core	UNPROVEN	UNPROVEN	[set-container1]	tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[set-container1]
+102	PASS	media	core	UNPROVEN	UNPROVEN	[set-container2]	tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[set-container2]
+103	PASS	media	core	UNPROVEN	UNPROVEN	[clear-container0]	tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[clear-container0]
+104	PASS	media	core	UNPROVEN	UNPROVEN	[clear-container1]	tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[clear-container1]
+105	PASS	media	core	UNPROVEN	UNPROVEN	[clear-container2]	tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[clear-container2]
+106	PASS	media	core	UNPROVEN	UNPROVEN	[clear-container3]	tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[clear-container3]
+107	PASS	media	core	UNPROVEN	UNPROVEN	[null-container0]	tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[null-container0]
+108	PASS	media	core	UNPROVEN	UNPROVEN	[null-container1]	tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[null-container1]
+109	PASS	media	core	UNPROVEN	UNPROVEN	[null-container2]	tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[null-container2]
+110	PASS	media	core	UNPROVEN	UNPROVEN	[empty-container0]	tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[empty-container0]
+111	PASS	media	core	UNPROVEN	UNPROVEN	[empty-container1]	tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[empty-container1]
+112	PASS	media	core	UNPROVEN	UNPROVEN	[empty-container2]	tests/editing_conformance/test_recipe_shot_set.py::test_exact_roundtrip_with_original_presence[empty-container2]
+113	PASS	media	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_recipe_shot_set.py::test_clear_is_removal_and_distinct_from_empty_and_null
+114	PASS	media	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_recipe_shot_set.py::test_name_and_coupled_settings_are_one_atomic_command_preserving_unmentioned_fields
+115	PASS	media	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_recipe_shot_set.py::test_portable_shot_set_golden
+116	PASS	media	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_recipe_shot_set.py::test_shot_set_capture_and_save_import_no_renderer_or_runtime
+117	PASS	media	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_recipe_text_binding_native.py::test_absent_collection_is_restored_exactly
+118	PASS	media	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_recipe_text_binding_native.py::test_multiple_births_in_absent_collection_have_exact_batch_inverse
+119	PASS	provider	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_step_undo_v2.py::test_one_of_ten_notes_preserves_other_steps_and_redoes_exactly
+120	PASS	provider	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_step_undo_v2.py::test_whole_inverse_records_each_sequential_reversal_instead_of_coalescing
+121	PASS	provider	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_step_undo_v2.py::test_last_step_restores_its_own_input_not_commit_input
+122	PASS	provider	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_step_undo_v2.py::test_step_contains_contiguous_command_run_and_reverses_all_its_commands
+123	PASS	provider	core	UNPROVEN	UNPROVEN	[dependency0]	tests/editing_conformance/test_step_undo_v2.py::test_later_step_dependency_refuses_subset_but_all_steps_reverse[dependency0]
+124	PASS	provider	core	UNPROVEN	UNPROVEN	[dependency1]	tests/editing_conformance/test_step_undo_v2.py::test_later_step_dependency_refuses_subset_but_all_steps_reverse[dependency1]
+125	PASS	provider	core	UNPROVEN	UNPROVEN	[dependency2]	tests/editing_conformance/test_step_undo_v2.py::test_later_step_dependency_refuses_subset_but_all_steps_reverse[dependency2]
+126	PASS	provider	core	UNPROVEN	UNPROVEN		tests/editing_conformance/test_step_undo_v2.py::test_inverse_execution_rechecks_surviving_steps_without_a_preflight_scan
+162	UNKNOWN	helpers	core	UNPROVEN	UNPROVEN		tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight
+166	PASS	helpers	core	UNPROVEN	UNPROVEN		tests/sdk/test_p4_note_rerun.py::test_p4_note_conflict_reruns_public_function_from_verified_peer_document
+170	FAIL	helpers	core	deferred	UNPROVEN	"[""second""]"	"tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[""second""]"
+172	PASS	other	core	UNPROVEN	UNPROVEN		tests/sdk/test_timeline_sheet_native.py::test_omitted_native_clip_row_uses_normal_commit_retry_undo_redo_and_rebases
+173	PASS	other	core	UNPROVEN	UNPROVEN		tests/sdk/test_timeline_structure.py::test_joined_music_updates_source_and_literal_duration_for_publication
+182	PASS	media	core	UNPROVEN	UNPROVEN		tests/sdk/test_timeline_inverse_fork_guard.py::test_fork_output_guard_allows_independent_parent_edit_and_preview_redo
+183	PASS	media	core	UNPROVEN	UNPROVEN	[retained-sibling]	tests/sdk/test_timeline_inverse_fork_guard.py::test_valid_fork_history_distinguishes_output_consumers_from_retained_sibling[retained-sibling]
+184	PASS	media	core	UNPROVEN	UNPROVEN	[3-0]	tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-0]
+185	PASS	media	core	UNPROVEN	UNPROVEN	[3-1]	tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-1]
+186	PASS	media	core	UNPROVEN	UNPROVEN	[3-2]	tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-2]
+187	PASS	media	core	UNPROVEN	UNPROVEN	[1-0]	tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[1-0]
+188	PASS	media	core	UNPROVEN	UNPROVEN		tests/sdk/test_timeline_occurrence_delete_provider.py::test_two_independent_group_deletes_rebase_and_restore_without_parent_membership_guard
+189	PASS	media	core	UNPROVEN	UNPROVEN		tests/sdk/test_timeline_occurrence_delete_provider.py::test_same_id_recreation_is_reserved_but_authenticated_undo_reuses_id
+190	PASS	media	core	UNPROVEN	UNPROVEN		tests/sdk/test_timeline_occurrence_delete_provider.py::test_original_app_whole_group_visible_result_after_canonical_migration_boundary
+191	PASS	media	core	UNPROVEN	UNPROVEN		tests/sdk/test_timeline_occurrence_delete_provider.py::test_grouped_two_deletes_are_one_history_inverse_with_exact_original_order
+192	PASS	media	core	UNPROVEN	UNPROVEN		tests/sdk/test_timeline_occurrence_delete_provider.py::test_last_consumer_inverse_preserves_existing_nonliteral_source_map_baseline
+193	PASS	media	core	UNPROVEN	UNPROVEN		tests/sdk/test_timeline_occurrence_delete_provider.py::test_independent_shared_occurrences_can_both_delete_across_last_consumer_materialization
+194	PASS	helpers	core	UNPROVEN	UNPROVEN	[doc.patch-commit-omitted-reads-label]	tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-commit-omitted-reads-label]
+195	PASS	helpers	core	UNPROVEN	UNPROVEN	[doc.patch-commit-omitted-reads-function]	tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-commit-omitted-reads-function]
+196	PASS	helpers	core	UNPROVEN	UNPROVEN	[doc.patch-commit-declared-reads-label]	tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-commit-declared-reads-label]
+197	PASS	helpers	core	UNPROVEN	UNPROVEN	[doc.patch-commit-declared-reads-function]	tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-commit-declared-reads-function]
+198	PASS	helpers	core	UNPROVEN	UNPROVEN	[doc.patch-preview-omitted-reads-label]	tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-preview-omitted-reads-label]
+199	PASS	helpers	core	UNPROVEN	UNPROVEN	[doc.patch-preview-omitted-reads-function]	tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-preview-omitted-reads-function]
+200	PASS	helpers	core	UNPROVEN	UNPROVEN	[doc.patch-preview-declared-reads-label]	tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-preview-declared-reads-label]
+201	PASS	helpers	core	UNPROVEN	UNPROVEN	[doc.patch-preview-declared-reads-function]	tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-preview-declared-reads-function]
+202	PASS	helpers	core	UNPROVEN	UNPROVEN	[native-commit-omitted-reads-label]	tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-commit-omitted-reads-label]
+203	PASS	helpers	core	UNPROVEN	UNPROVEN	[native-commit-omitted-reads-function]	tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-commit-omitted-reads-function]
+204	PASS	helpers	core	UNPROVEN	UNPROVEN	[native-commit-declared-reads-label]	tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-commit-declared-reads-label]
+205	PASS	helpers	core	UNPROVEN	UNPROVEN	[native-commit-declared-reads-function]	tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-commit-declared-reads-function]
+206	PASS	helpers	core	UNPROVEN	UNPROVEN	[native-preview-omitted-reads-label]	tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-preview-omitted-reads-label]
+207	PASS	helpers	core	UNPROVEN	UNPROVEN	[native-preview-omitted-reads-function]	tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-preview-omitted-reads-function]
+208	PASS	helpers	core	UNPROVEN	UNPROVEN	[native-preview-declared-reads-label]	tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-preview-declared-reads-label]
+209	PASS	helpers	core	UNPROVEN	UNPROVEN	[native-preview-declared-reads-function]	tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-preview-declared-reads-function]
+210	PASS	helpers	core	UNPROVEN	UNPROVEN		tests/sdk/test_timeline_open_commit_v2.py::test_function_reads_each_returned_head_and_recomputes_with_new_keys
+211	PASS	helpers	core	UNPROVEN	UNPROVEN		tests/sdk/test_timeline_open_commit_v2.py::test_three_evaluation_bound_survives_reopening
+212	PASS	helpers	core	UNPROVEN	UNPROVEN		tests/sdk/test_timeline_open_commit_v2.py::test_unknown_retry_then_conflict_continues_with_persisted_evaluation_count
+213	FAIL	helpers	core	UNPROVEN	UNPROVEN		tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head
+214	PASS	other	core	UNPROVEN	UNPROVEN	[pair]	tests/sdk/test_timeline_public_command.py::test_public_command_keeps_source_and_patch_guards[pair]
+215	PASS	other	core	UNPROVEN	UNPROVEN	[foreign]	tests/sdk/test_timeline_public_command.py::test_public_command_keeps_source_and_patch_guards[foreign]
+216	PASS	other	core	UNPROVEN	UNPROVEN	[digest]	tests/sdk/test_timeline_public_command.py::test_public_command_keeps_source_and_patch_guards[digest]
+221	PASS	other	core	UNPROVEN	UNPROVEN		tests/test_timeline_clip_replacement.py::test_remote_parent_media_replacement_publishes_exact_closure_once
+222	PASS	other	core	UNPROVEN	UNPROVEN		tests/timeline/test_authoring_feedback_residual.py::test_edits_to_new_duplicate_are_not_hidden_by_added_occurrence_summary
+223	PASS	media	core	UNPROVEN	UNPROVEN		tests/timeline/test_authoring_media.py::test_document_publish_forwards_new_stale_head_to_runtime
+224	PASS	media	core	UNPROVEN	UNPROVEN		tests/timeline/test_authoring_media.py::test_document_publish_captures_verified_media_before_document_patches
+225	PASS	media	core	UNPROVEN	UNPROVEN	[True]	tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[True]
+226	PASS	media	core	UNPROVEN	UNPROVEN	[False]	tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[False]
+227	PASS	media	core	UNPROVEN	UNPROVEN		tests/timeline/test_authoring_media.py::test_public_document_compound_inverse_restores_exact_original
+228	PASS	other	core	UNPROVEN	UNPROVEN		tests/timeline/test_authoring_media.py::test_catalog_import_remains_reusable_after_later_parent_cas_conflict
+229	PASS	media	core	UNPROVEN	UNPROVEN		tests/timeline/test_authoring_publication_migrations.py::test_semantic_removal_undo_restores_exact_closure
+230	PASS	media	core	UNPROVEN	UNPROVEN	[first]	tests/timeline/test_authoring_shared_alias_commit.py::test_selected_alias_forks_and_retains_exact_sibling[first]
+231	PASS	media	core	UNPROVEN	UNPROVEN	[second]	tests/timeline/test_authoring_shared_alias_commit.py::test_selected_alias_forks_and_retains_exact_sibling[second]
