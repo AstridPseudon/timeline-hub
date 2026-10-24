@@ -131,6 +131,19 @@ def test_three_way_legacy_head_is_not_a_conflict_and_keeps_intent(tmp_path):
     assert [k for k in merged["parent"]["config"] if k in LEGACY_FILM_KEYS] == []
 
 
+def test_three_way_legacy_head_is_not_a_conflict_and_keeps_intent_r4_original():
+    base = _legacy_bundle()
+    head = copy.deepcopy(base)
+    candidate = copy.deepcopy(base)
+    intent.migrate(candidate)  # the working copy was migrated on checkout
+    intent.set_chapters(candidate, [{"name": "01 OPEN", "from": "c1"}, {"name": "02 NEXT", "from": "c2"}])
+    merged, _lines = three_way(base, head, candidate)  # noqa: F821 -- retired upstream route remains visible
+    assert [r["name"] for r in intent.chapters(merged)] == ["01 OPEN", "02 NEXT"]
+    assert intent.slots(copy.deepcopy(merged)) == {"hero": {"kind": "footage"}}
+    assert intent.cut_notes(merged) == {"c1": {"why": "the opener"}}
+    assert [k for k in merged["parent"]["config"] if k in LEGACY_FILM_KEYS] == []
+
+
 # ---- RS-2 fixes: nothing legacy is dropped, address reads the namespace, unknown film keys merge in the namespace
 def test_migrating_a_clash_keeps_the_legacy_value_recoverably_and_survives_a_second_migration():
     bundle = _legacy_bundle()
@@ -186,4 +199,19 @@ def test_merge_keeps_a_film_namespace_key_outside_the_known_list_in_the_namespac
     local.bundle = newer
     local.save(quiet=True)
     merged2 = Checkout.load(path).bundle
+    assert ns.film_intent(merged2["parent"]["config"])["groups"] == {"g": ["c1", "c2"]}
+
+
+def test_merge_keeps_a_film_namespace_key_outside_the_known_list_in_the_namespace_r4_original():
+    base = json.loads(TINY.read_text(encoding="utf-8"))
+    head = copy.deepcopy(base)
+    candidate = copy.deepcopy(base)
+    candidate.setdefault("parent", {}).setdefault("config", {}).setdefault("app", {}).setdefault("astrid", {})["groups"] = {"g": ["c1"]}
+    merged, lines = three_way(base, head, candidate)  # noqa: F821 -- retired upstream route remains visible
+    assert lines == []
+    assert ns.film_intent(merged["parent"]["config"])["groups"] == {"g": ["c1"]}
+    assert "groups" not in merged["parent"]["config"]
+    newer = copy.deepcopy(candidate)
+    newer["parent"]["config"]["app"]["astrid"]["groups"] = {"g": ["c1", "c2"]}
+    merged2, _ = three_way(candidate, merged, newer)  # noqa: F821 -- retired upstream route remains visible
     assert ns.film_intent(merged2["parent"]["config"])["groups"] == {"g": ["c1", "c2"]}

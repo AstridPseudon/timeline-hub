@@ -151,6 +151,26 @@ def test_missing_or_mismatched_pin_fails_without_partial_or_current_fallback(dam
     assert all('future-parent-99' not in str(call) for call in reader.calls)
 
 
+@pytest.mark.parametrize('damage', ['missing_child', 'foreign_project', 'foreign_timeline', 'wrong_revision', 'corrupt_bytes'])
+def test_missing_or_mismatched_pin_fails_without_partial_or_current_fallback_r4_original(damage):
+    reader = HistoricalReader()
+    if damage == 'missing_child':
+        del reader.rows['internal-2']
+    elif damage == 'foreign_project':
+        reader.rows['shot-rev-2']['project_id'] = 'foreign'
+    elif damage == 'foreign_timeline':
+        reader.rows['internal-2']['timeline_id'] = 'foreign'
+    elif damage == 'wrong_revision':
+        reader.rows['parent-2']['revision_id'] = 'different'
+    else:
+        reader.rows['internal-2']['payload']['clips'][0]['volume'] = .2
+    result = reader.diff('project-slug', 'main', from_revision='parent-1', to_revision='parent-2')
+    assert not result.ok
+    assert result.data is None
+    assert result.error.code in ('not_found', 'integrity_error')
+    assert all('future-parent-99' not in str(call) for call in reader.calls)
+
+
 @pytest.mark.parametrize('kwargs', [{}, {'from_revision': 'parent-1'}, {'to_revision': 'parent-2'},
                                    {'from_version': 1}, {'from_revision': 'parent-1', 'to_revision': 'parent-2', 'from_version': 1}])
 def test_incomplete_or_mixed_diff_pairs_are_rejected_before_reads(kwargs):

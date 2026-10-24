@@ -94,6 +94,19 @@ def test_publish_merge_keeps_candidate_parent_config_changes_next_to_head_change
     assert merged["shots"] == head.bundle["shots"]  # the head's clip change is kept too
 
 
+def test_publish_merge_keeps_candidate_parent_config_changes_next_to_head_changes_r4_original():
+    base = _base()
+    head = _unrelated_clip_change(base)
+    candidate = copy.deepcopy(base)
+    candidate["parent"]["config"]["chapters"] = [{"name": "01 OPEN", "from": "c1"}]
+
+    merged, conflicts = three_way(base, head, candidate)  # noqa: F821 -- retired upstream route remains visible
+
+    assert conflicts == []
+    assert intent.chapters(merged) == [{"name": "01 OPEN", "from": "c1"}]  # read through intent: written under app.astrid
+    assert merged["shots"] == head["shots"]
+
+
 def test_publish_merge_flags_a_parent_config_key_changed_differently_and_force_wins(tmp_path):
     path = tmp_path / "main.json"
     Checkout(_base()).save(path, quiet=True)
@@ -112,3 +125,19 @@ def test_publish_merge_flags_a_parent_config_key_changed_differently_and_force_w
     assert Checkout.load(path).bundle["parent"]["config"]["theme_overrides"] == {
         "visual": {"canvas": {"fps": 60}}
     }
+
+
+def test_publish_merge_flags_a_parent_config_key_changed_differently_and_force_wins_r4_original():
+    base = _base()
+    head = copy.deepcopy(base)
+    head["parent"]["config"]["theme_overrides"] = {"visual": {"canvas": {"fps": 24}}}
+    candidate = copy.deepcopy(base)
+    candidate["parent"]["config"]["theme_overrides"] = {"visual": {"canvas": {"fps": 60}}}
+
+    _merged, conflicts = three_way(base, head, candidate)  # noqa: F821 -- retired upstream route remains visible
+    # the existing message format is "<key> (<unit kind>) changed ...", so the parent-config key reads "theme_overrides (parent-config)"
+    assert any("theme_overrides (parent-config)" in line for line in conflicts), conflicts
+
+    forced, forced_conflicts = three_way(base, head, candidate, force=True)  # noqa: F821 -- retired upstream route remains visible
+    assert forced_conflicts
+    assert forced["parent"]["config"]["theme_overrides"] == {"visual": {"canvas": {"fps": 60}}}
