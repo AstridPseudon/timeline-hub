@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import argparse
 import ast
+import base64
+import csv
 import hashlib
 import json
 import os
@@ -18,7 +20,7 @@ import shlex
 import subprocess
 import sys
 import time
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 from xml.etree import ElementTree as ET
 
@@ -27,6 +29,36 @@ RUNTIME_COMMIT = "f3208b26b53c4d7053e5464eaa7c5e15b1505812"
 TEST_RELATIVE = Path("tests/test_generic_host.py")
 TEST_FUNCTION = "test_structure_pack_members_survive_harvest_cleanup_and_reopen"
 PREFIXES = ("astrid", "astrid_runtime", "runtime_protocol", "astrid_runtime_client")
+EXPECTED_PROFILE = Path("/home/user/work/runtimes/agent-remotion-v3-819acf-1110")
+EXPECTED_NODE = Path("/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node")
+EXPECTED_NODE_VERSION = "v20.19.4"
+EXPECTED_ARCHIVE_SHA256 = "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234"
+EXPECTED_PROFILE_FILES = {
+    "package-lock.json": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+    ".astrid-registry.lock": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    ".astrid-registry-state.json": "d609b44b37d724358a33405e9d8539008fd1ac30bc2f0d9746575c3fbadaac96",
+}
+EXPECTED_TEST_IDENTITY = {
+    "file_sha256": "b4b99d0bd4336f26d65c7763d87d28f0ca98fc5f92b02a70ba41a43c17453709",
+    "function_source_sha256": "c5e09e12bf2a898571b9c6888604ac658f2884a5f2cb33532a24aee4d226f211",
+    "function_ast_sha256": "549a1b07affc5d59365da430a8a31887074544b50a2a3b14575d30e1a275bb6b",
+    "assertion_count": 12,
+    "assertion_ast_sha256": [
+        "589e2c1ea0e9c3c4f93b8b3b3a785884aa12cc484e3addf21bc977dd68807ec8",
+        "ad50885719d8833eba7e8105ebbc20554541fc2263b2c2cca0d2fbb8400286a5",
+        "e643f450fb4532b784d5fad2f3df8c641b043ff1dfbf35cc90f5e914e2cc4a41",
+        "a494599e2450c152cbdfb815fb21a1fbdd626f5aacf8b41abef01fa83cddc12c",
+        "72d2c7016083f09def50d83741d11050e66dcd48b04c1a119f76b49fcd162dc5",
+        "1de374522d2309e4da5b40ceaa852c7b780a1eabc2a9c417291b4485cc435c7f",
+        "6bfd1867fff52b71f7f671b1dbb0ea69663bfc2f3686e7b0707e239b291f6012",
+        "815adbb0a394022f82c45d23de7682f396e10bc7448a6cc57994986994b7b480",
+        "81bdc7f6948097c132454be5ab0758f6c4a623c150cc51340a6e1306d5dd1022",
+        "22260ca4efefb72fd34c59be3578c363aa9cb8a0d6613e6d695514623158abf4",
+        "edadff1d8207c852d74217d8b8fe5b42bc49b96115a0ea19b132971fcbb29195",
+        "e961a9537c2f82344a3e220fad4beea000d79c4e4231d8586057b9a6c2f3d3ed",
+    ],
+    "body_bytes": 4870,
+}
 SCRIPT = Path(__file__).resolve()
 
 
@@ -85,7 +117,7 @@ def source_identity(root: Path) -> dict[str, Any]:
     lines = text.splitlines()
     body = "\n".join(lines[function.lineno - 1 : function.end_lineno])
     assertions = [node for node in ast.walk(function) if isinstance(node, ast.Assert)]
-    return {
+    identity = {
         "path": str(test_path),
         "file_sha256": sha256(data),
         "function_source_sha256": sha256(body.encode("utf-8")),
@@ -96,6 +128,12 @@ def source_identity(root: Path) -> dict[str, Any]:
         ],
         "body_bytes": len(body.encode("utf-8")),
     }
+    expected = {"path": str(test_path), **EXPECTED_TEST_IDENTITY}
+    if identity != expected:
+        raise PreflightFailure(
+            "target test source does not match the independently reviewed body/function/assertion hashes"
+        )
+    return identity
 
 
 def git_identity(root: Path) -> dict[str, Any]:
@@ -106,15 +144,15 @@ def git_identity(root: Path) -> dict[str, Any]:
     except (OSError, subprocess.CalledProcessError) as exc:
         raise PreflightFailure(f"cannot read source git identity: {exc}") from exc
     changed = subprocess.check_output(
-        ["git", "status", "--porcelain", "--", str(TEST_RELATIVE)],
+        ["git", "status", "--porcelain", "--untracked-files=all"],
         cwd=root,
         text=True,
     ).strip()
     if head != SOURCE_COMMIT:
         raise PreflightFailure(f"source HEAD is {head}, expected reviewed bb50 source {SOURCE_COMMIT}")
     if changed:
-        raise PreflightFailure(f"target test source is modified: {changed}")
-    return {"head": head, "target_status": changed or "clean"}
+        raise PreflightFailure(f"source tree is modified: {changed}")
+    return {"head": head, "source_tree_status": "clean"}
 
 
 def parse_kv_receipt(path: Path) -> dict[str, str]:
@@ -124,6 +162,53 @@ def parse_kv_receipt(path: Path) -> dict[str, str]:
             key, value = line.split("=", 1)
             values[key] = value
     return values
+
+
+def verify_record(site: Path, dist: Path, stem: str) -> dict[str, Any]:
+    record = require_file(dist / "RECORD", f"{stem} RECORD")
+    record_relative = record.relative_to(site).as_posix()
+    rows: dict[str, Any] = {}
+    try:
+        with record.open(encoding="utf-8", newline="") as record_file:
+            parsed_rows = csv.reader(record_file, strict=True)
+            record_rows = list(parsed_rows)
+        for row in record_rows:
+            if len(row) != 3:
+                raise PreflightFailure(f"malformed {stem} RECORD row")
+            relative, encoded_digest, encoded_size = row
+            pure = PurePosixPath(relative)
+            if (
+                not relative
+                or pure.is_absolute()
+                or "\\" in relative
+                or str(pure) != relative
+                or relative in rows
+            ):
+                raise PreflightFailure(f"unsafe or duplicate {stem} RECORD path: {relative!r}")
+            installed = site / relative
+            resolved = installed.resolve()
+            if not installed.is_file() or installed.is_symlink() or not resolved.is_relative_to(site.resolve()):
+                raise PreflightFailure(f"missing or escaping {stem} RECORD file: {relative}")
+            content = installed.read_bytes()
+            if not encoded_digest and not encoded_size:
+                if relative != record_relative:
+                    raise PreflightFailure(f"unhashed non-RECORD {stem} row: {relative}")
+            else:
+                if not encoded_digest.startswith("sha256=") or not encoded_size.isdigit():
+                    raise PreflightFailure(f"malformed {stem} RECORD digest/size: {relative}")
+                digest = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).decode().rstrip("=")
+                if encoded_digest != f"sha256={digest}" or int(encoded_size) != len(content):
+                    raise PreflightFailure(f"{stem} RECORD bytes mismatch: {relative}")
+            rows[relative] = {
+                "sha256": sha256(content),
+                "record_digest": encoded_digest,
+                "bytes": len(content),
+            }
+    except UnicodeDecodeError as exc:
+        raise PreflightFailure(f"{stem} RECORD is not UTF-8") from exc
+    if not rows:
+        raise PreflightFailure(f"{stem} RECORD is empty")
+    return rows
 
 
 def managed_custody(root: Path, child: Path, receipt: Path) -> dict[str, Any]:
@@ -150,9 +235,13 @@ def managed_custody(root: Path, child: Path, receipt: Path) -> dict[str, Any]:
 
     origin_marker = require_file(child / ".astrid-import-origins", "installed origin marker")
     distribution_marker = require_file(child / ".astrid-distribution-metadata", "distribution marker")
-    metadata_text = distribution_marker.read_text(encoding="utf-8")
-    if "astrid_direct_url=" not in metadata_text or "astrid-runtime_direct_url=" not in metadata_text:
-        raise PreflightFailure("distribution marker lacks both managed direct URLs")
+    metadata = parse_kv_receipt(distribution_marker)
+    if metadata.get("astrid_name") != "astrid" or metadata.get("astrid_version") != "0.1.0":
+        raise PreflightFailure("distribution marker has the wrong Agent identity")
+    if metadata.get("astrid-runtime_name") != "astrid-runtime" or metadata.get("astrid-runtime_version") != "0.1.0":
+        raise PreflightFailure("distribution marker has the wrong Runtime identity")
+    if metadata.get("astrid_provenance") != "directory" or metadata.get("astrid-runtime_provenance") != "directory":
+        raise PreflightFailure("distribution marker does not require directory provenance")
 
     receipt = require_file(receipt, "managed child provision receipt")
     receipt_text = receipt.read_text(encoding="utf-8", errors="strict")
@@ -173,6 +262,15 @@ def managed_custody(root: Path, child: Path, receipt: Path) -> dict[str, Any]:
     if not site.is_dir() or site.is_symlink():
         raise PreflightFailure(f"managed child site-packages is missing or symlinked: {site}")
     distributions: dict[str, Any] = {}
+    source_roots = sorted(child.glob(".child-venv-source-*/"))
+    if len(source_roots) != 1 or any(path.is_symlink() for path in source_roots):
+        raise PreflightFailure("managed child must have exactly one non-symlink source snapshot")
+    source_root = source_roots[0]
+    expected_sources = {"astrid": source_root / "agent", "astrid_runtime": source_root / "runtime"}
+    for name, source in expected_sources.items():
+        if not source.is_dir() or source.is_symlink() or not source.resolve().is_relative_to(source_root.resolve()):
+            raise PreflightFailure(f"{name} canonical source root is missing or escapes child custody")
+    expected_direct_urls = {name: source.resolve().as_uri() for name, source in expected_sources.items()}
     for stem in ("astrid", "astrid_runtime"):
         dist_infos = sorted(site.glob(stem + "-*.dist-info"))
         if len(dist_infos) != 1:
@@ -181,15 +279,27 @@ def managed_custody(root: Path, child: Path, receipt: Path) -> dict[str, Any]:
         record = require_file(dist / "RECORD", f"{stem} RECORD")
         direct = require_file(dist / "direct_url.json", f"{stem} direct_url")
         direct_value = json.loads(direct.read_text(encoding="utf-8"))
-        if direct_value.get("dir_info", {}).get("editable"):
-            raise PreflightFailure(f"{stem} direct URL is editable")
-        url = str(direct_value.get("url", ""))
-        if not url.startswith("file:") or not url:
-            raise PreflightFailure(f"{stem} direct URL is not a managed file URL")
+        if direct_value.get("url") != expected_direct_urls[stem]:
+            raise PreflightFailure(f"{stem} direct URL is not its canonical child source root")
+        if direct_value.get("dir_info", {}).get("editable") is not False:
+            raise PreflightFailure(f"{stem} direct URL is editable or lacks non-editable provenance")
+        if "archive_info" in direct_value:
+            raise PreflightFailure(f"{stem} direct URL uses archive provenance")
+        if metadata.get(f"{stem.replace('_', '-')}_direct_url") != direct_value["url"]:
+            raise PreflightFailure(f"{stem} distribution marker does not match direct_url.json")
+        record_rows = verify_record(site, dist, stem)
         distributions[stem] = {
             "dist_info": str(dist),
-            "record": {"path": str(record), "sha256": file_digest(record)},
-            "direct_url": {"path": str(direct), "sha256": file_digest(direct), "value": direct_value},
+            "record": {
+                "path": str(record),
+                "sha256": file_digest(record),
+                "rows": record_rows,
+            },
+            "direct_url": {
+                "path": str(direct),
+                "sha256": file_digest(direct),
+                "value": direct_value,
+            },
         }
 
     return {
@@ -200,28 +310,84 @@ def managed_custody(root: Path, child: Path, receipt: Path) -> dict[str, Any]:
         "distribution_marker": {
             "path": str(distribution_marker),
             "sha256": file_digest(distribution_marker),
+            "value": metadata,
         },
         "receipt": {"path": str(receipt), "sha256": file_digest(receipt), "kv": parse_kv_receipt(receipt)},
         "site_packages": str(site),
+        "source_roots": {name: str(path.resolve()) for name, path in expected_sources.items()},
         "distributions": distributions,
-        "authority": "managed child owner + source/runtime markers + provision receipt",
+        "authority": "managed child owner + source/runtime markers + provision receipt + canonical direct URLs + complete RECORDs",
     }
 
 
 def profile_inputs(profile: Path, node: Path) -> dict[str, Any]:
+    if profile != EXPECTED_PROFILE:
+        raise PreflightFailure(f"profile root is not the approved 819acf profile: {profile}")
+    if node != EXPECTED_NODE:
+        raise PreflightFailure(f"Node executable is not the approved Node20 path: {node}")
     if not profile.is_dir() or profile.is_symlink():
         raise PreflightFailure(f"profile root is missing or symlinked: {profile}")
     if not node.is_file() or node.is_symlink():
         raise PreflightFailure(f"profile Node executable is missing or symlinked: {node}")
-    lock_paths = [profile / "package-lock.json", profile / ".astrid-registry.lock", profile / ".astrid-registry-state.json"]
     locks = []
-    for path in lock_paths:
-        require_file(path, "profile lock/input")
-        locks.append({"path": str(path), "sha256": file_digest(path), "bytes": path.stat().st_size})
+    for name, expected in EXPECTED_PROFILE_FILES.items():
+        path = require_file(profile / name, "profile lock/input")
+        actual = file_digest(path)
+        if actual != expected:
+            raise PreflightFailure(f"approved profile {name} is {actual}, expected {expected}")
+        locks.append({"path": str(path), "sha256": actual, "bytes": path.stat().st_size})
+    package = json.loads(require_file(profile / "package.json", "profile package manifest").read_text(encoding="utf-8"))
+    dependency_spec = {
+        **package.get("dependencies", {}),
+        **package.get("devDependencies", {}),
+    }
+    package_lock = json.loads((profile / "package-lock.json").read_text(encoding="utf-8"))
+    lock_packages = package_lock.get("packages", {})
+    node_modules = profile / "node_modules"
+    if not node_modules.is_dir() or node_modules.is_symlink():
+        raise PreflightFailure(f"profile node_modules is missing or symlinked: {node_modules}")
+    installed: dict[str, Any] = {}
+    for dependency in sorted(dependency_spec):
+        package_path = node_modules.joinpath(*dependency.split("/"))
+        lock_key = f"node_modules/{dependency}"
+        if lock_key not in lock_packages:
+            raise PreflightFailure(f"profile lock lacks direct dependency {dependency}")
+        if not package_path.is_dir() or package_path.is_symlink():
+            raise PreflightFailure(f"required profile dependency is missing or symlinked: {dependency}")
+        manifest = require_file(package_path / "package.json", f"{dependency} package manifest")
+        value = json.loads(manifest.read_text(encoding="utf-8"))
+        if value.get("name") != dependency:
+            raise PreflightFailure(f"profile dependency manifest name mismatch: {dependency}")
+        expected_version = lock_packages[lock_key].get("version")
+        if expected_version is not None and value.get("version") != expected_version:
+            raise PreflightFailure(f"profile dependency version mismatch: {dependency}")
+        installed[dependency] = {"path": str(package_path), "version": value.get("version")}
+    composition = dependency_spec.get("@banodoco/timeline-composition")
+    if composition != "file:artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz":
+        raise PreflightFailure("profile composition dependency is not the approved archive")
+    archive = profile / composition.removeprefix("file:")
+    require_file(archive, "Composition archive")
+    archive_sha256 = file_digest(archive)
+    if archive_sha256 != EXPECTED_ARCHIVE_SHA256:
+        raise PreflightFailure(f"Composition archive is {archive_sha256}, expected {EXPECTED_ARCHIVE_SHA256}")
+    composition_manifest = json.loads(
+        require_file(node_modules / "@banodoco" / "timeline-composition" / "package.json", "Composition package manifest").read_text(
+            encoding="utf-8"
+        )
+    )
+    if composition_manifest.get("version") != "0.0.14":
+        raise PreflightFailure("installed Composition package is not version 0.0.14")
     version = subprocess.check_output([str(node), "--version"], text=True, stderr=subprocess.STDOUT).strip()
-    if version != "v20.19.4":
-        raise PreflightFailure(f"profile Node is {version}, expected v20.19.4")
-    return {"root": str(profile), "node": str(node), "node_version": version, "locks": locks}
+    if version != EXPECTED_NODE_VERSION:
+        raise PreflightFailure(f"profile Node is {version}, expected {EXPECTED_NODE_VERSION}")
+    return {
+        "root": str(profile),
+        "node": str(node),
+        "node_version": version,
+        "locks": locks,
+        "composition_archive": {"path": str(archive), "sha256": archive_sha256},
+        "node_modules": {"path": str(node_modules), "required": installed},
+    }
 
 
 def controlled_env(child: Path, profile: dict[str, Any], scratch: Path) -> dict[str, str]:
@@ -379,6 +545,9 @@ def run_original(args: argparse.Namespace, evidence: Path) -> int:
     )
     write_json(evidence / "source-before.json", {"identity": prepared["source"], "script_sha256": script_digest})
     start = time.time()
+    stdout: bytes = b""
+    stderr: bytes = b""
+    exit_code = 125
     try:
         completed = subprocess.run(
             command,
@@ -395,6 +564,8 @@ def run_original(args: argparse.Namespace, evidence: Path) -> int:
         stderr = exc.stderr or b""
         exit_code = 124
         write_json(evidence / "timeout.json", {"timeout_seconds": args.timeout})
+    except OSError as exc:
+        write_json(evidence / "launch-error.json", {"error_type": type(exc).__name__, "error": str(exc)})
     finally:
         write_json(evidence / "timing.json", {"elapsed_seconds": time.time() - start})
     write_bytes(evidence / "stdout.txt", stdout)
@@ -404,7 +575,10 @@ def run_original(args: argparse.Namespace, evidence: Path) -> int:
         after = source_after_check(root, prepared["source"])
         source_error = None
     except PreflightFailure as exc:
-        after = source_identity(root)
+        try:
+            after = source_identity(root)
+        except PreflightFailure as after_exc:
+            after = {"error": str(after_exc)}
         source_error = str(exc)
     write_json(evidence / "source-after.json", {"identity": after, "error": source_error})
     try:
