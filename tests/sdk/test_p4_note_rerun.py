@@ -83,6 +83,7 @@ def test_p4_note_conflict_reruns_public_function_from_verified_peer_document(con
             _set_note(peer_bundle, peer_value)
             generated.bundles["peer-revision"] = peer_bundle
             generated.head = {"revision_id": "peer-revision", "publication_id": "peer-publication"}
+            generated.publications["peer-revision"] = "peer-publication"
             raise ApiError(409, "conflict", "changed", details={
                 "status": "conflict",
                 "reason": "value_conflict",

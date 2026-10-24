@@ -36,7 +36,25 @@ def detached_duration_bundle():
     return bundle
 
 
-def detached_draft(connected, tmp_path, *, params=None):
+def _attach_authenticated_source(bundle):
+    """Pair the local sheet fixture with the source image used by inverse checks."""
+    bundle['source_mapping']['_runtime_document'] = {
+        'schema_version': 1,
+        'project_id': bundle['project_id'],
+        'timeline_id': bundle['timeline_id'],
+        'parent_revision': {
+            'revision_id': bundle['base_parent']['revision_id'],
+            'content_digest': bundle['base_parent']['content_digest'],
+            'payload': copy.deepcopy(bundle['base_parent_payload']),
+        },
+        'shot_revisions': [],
+        'internal_timeline_revisions': [],
+        'dependency_manifest': {'shots': [], 'internal_timelines': [], 'media': [], 'documents': []},
+    }
+    return bundle
+
+
+def detached_draft(connected, tmp_path, *, params=None):  # noqa: F811
     client, generated, _ = connected
     original = detached_duration_bundle()
     if params:
@@ -587,9 +605,11 @@ def test_omitting_native_clip_row_deletes_exact_bound_clip_and_preserves_sibling
 
 
 def test_omitted_native_clip_row_uses_normal_commit_retry_undo_redo_and_rebases(connected):  # noqa: F811
-    session = open_session(connected)
     client, generated, path = connected
-    sheet = sheet_for(initial_bundle())
+    _attach_authenticated_source(generated.bundles['r0'])
+    session = open_session(connected)
+    authenticated_initial = _attach_authenticated_source(initial_bundle())
+    sheet = sheet_for(authenticated_initial)
     edited = remove_row(sheet.text, "parent/clip:a")
     expected = sheet.preview(edited)
     generated.lose_ack = True
@@ -610,7 +630,7 @@ def test_omitted_native_clip_row_uses_normal_commit_retry_undo_redo_and_rebases(
     assert State(generated.bundles["r1"]).entity("parent/clip:b") == State(initial_bundle()).entity("parent/clip:b")
 
     restarted.undo([result["receipt"]["receipt_id"]])
-    assert generated.bundles["r2"] == initial_bundle()
+    assert generated.bundles["r2"] == authenticated_initial
     from tests.editing_conformance.test_recipe_m1_commands import accepted_boundaries, inverse
 
     undone = inverse(expected.bundle, expected.records)
