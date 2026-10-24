@@ -1,1 +1,1 @@
-LEAD 17:23Z | up | P1 GO stands | App-owned: P3 run 26907 NO-GO at reopened Recover saved edits control, cause under review | P2 fixes in progress | P4 single run 30725 still fails, fix review active | disk 8G
+LEAD 17:55Z | up | P1 GO stands, plain current-head chain also GO | App-owned: P2 run 20321 stopped in 2s at source preflight, fix under way | P3 26907 NO-GO, recovery review | P4 ten-note step fails at 45s | disk 8G
