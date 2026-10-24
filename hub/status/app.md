@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T23:05:19Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 3m -->
-# app board, 2026-10-24T23:01Z
+<!-- app | 2026-10-24T23:08:39Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 1m -->
+# app board, 2026-10-24T23:07Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -102,7 +102,7 @@
 
 | P2-popup-5083-digest | Correct strict canonical digest oracle | Luna independent | Review2239 and controls2246 PASS | merged | Authors2233; review2239; return2246 | Raw response hash preserves12000.0. Independent canonical and opaque mutation refusals PASS;3types/lint PASS. Exact blob home and ledger logged. | App63d7c74b6d |
 
-| P2-asset-1155 | Repair transient upload ownership | Luna independent | Final guard c741 source review | review | app-A3-asset-final-diff-review-2301 | Review2252 PASS100 but added guard source. Final independent diff review2301 dispatched before merge; no browser credit. | bd3 plus c741 |
+| P2-asset-1155 | Repair transient upload ownership | Luna independent | Final guard c741 review PASS | merged | app-A3-asset-final-diff-review-2301 | Independent100/types/lint PASS; protected six exact. Normal merge7d53, reviewed blobs exact. Mounted proof owed. | Home7d53ba2813 |
 
 | P2-placement-8259 | Attribute placement response timeout | Luna | Distinct occurrence placement path | ready | Next free source slot | No intended POST in finite trace. Review2252 cannot establish same asset cause; minimum separate source attribution next. | Appbceb; Runtime732 |
 
@@ -110,15 +110,17 @@
 
 | P2-popup-7872 | Exact parent canonical expectation | Luna | Retained actual7872 | doing | app-P2-popup-7872-exact-expectation-2301 | Retained-data strict oldRED/newGREEN and full downstream oracle audit; no new body. Independent review follows correction. | Source pending |
 
-Integration: Current App63d7c74b6d0ce59bf93002a47912abeb47de5f2e merges independently reviewed popup digest correction onto bceb. Home tree992c2b45 equals reviewed author; only popup test changed. App normally adopts Runtime732c48c6f5a9441a65c61b24595d454a1cd3e180. Exact diagnostic tuple is Appbceb / Agent039ff2c2187d02b723074a8a6dfcbc6a70544c19 / Runtime732 / Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40. Existing asset5fcb and strict placement00918 repairs are included; original placement spec413d and other five protected files retained.
+| P2-asset-current | Qualify reviewed asset cleanup | Luna; service | Home7d53 /039f /732 /635f | doing | app-A3-asset-reviewed-original-2307 | Exact pins, receipts and one-command preflight before one unchanged registerAsset body. No duplicate main case. | App7d53; Runtime732 |
+
+Integration: Current App7d53ba281342d2963d92d8bcd746dc7f6b2921a4 merges reviewed asset cleanup c741 onto strict popup digest63d7. Both reviewed handoff source/test blobs exact. Popup7872 correction is source-only and not yet merged. App normally adopts Runtime732c48c6f5a9441a65c61b24595d454a1cd3e180. Exact diagnostic tuple is Appbceb / Agent039ff2c2187d02b723074a8a6dfcbc6a70544c19 / Runtime732 / Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40. Existing asset5fcb and strict placement00918 repairs are included; original placement spec413d and other five protected files retained.
 
 core open: Eight original P2 gestures remain unqualified. Element7131 still failed applied status after5s; backend eventual outcome UNKNOWN. App ADD7872 advanced through strict raw canonical digest to exact whole-document equality860, failing parent digest and revision only. Asset1155 and placement8259 sent no intended commit POST; final asset guard review active, placement distinct path ready next source slot. Main owns parent move, SWAP and both clears on fixed original tuple. Exactly one full original tour stays on App after all8 isolated PASS.
-regressions: Asset transient handoff is a confirmed App finding under independent final review2301. Placement8259 cause remains unproved; no claim that asset fix addresses it. Earlier drop-position and strict placement selectors are home with focused proof; mounted proof still owed. D69 restoration evidence retained.
+regressions: Asset transient handoff repair is independently reviewed and home7d53; one mounted qualification2307 is preparing. Placement8259 cause remains unproved; no claim that asset fix addresses it. Earlier drop-position and strict placement selectors are home with focused proof; mounted proof still owed. D69 restoration evidence retained.
 
 Blockers: Final cut — all8 isolated P2 plus full tour, final pinned P1–P5/core, D69 and genuine installed render required. Runtime coordinates matrix and ZIP. P1 31083 and P3 15493 GO retain recorded tuple scopes.
-Next ready: Merge asset c741 immediately on independent2301 PASS, then one mounted asset original after current body terminal (7872 is terminal). Placement8259 source author takes next source slot. Popup7872 author batches exact oracle correction before one review and meaningful original. Runtime2250 owns main four profile dependency; no App input owed. No P3, D79 or E work.
+Next ready: Asset c741 merged7d53 after independent2301 PASS100/types/lint; one mounted asset original2307 dispatched immediately. Placement8259 source author takes next source slot. Popup7872 author batches exact oracle correction before one review and meaningful original. Runtime2250 owns main four profile dependency; no App input owed. No P3, D79 or E work.
 
-live 2 / cap 2; ready-undispatched 1 (placement source), capacity full with critical independent guard review and popup correction.
+live 2 / cap 2; ready-undispatched 1 (placement source), capacity full with mounted asset qualification and popup correction.
 Capacity: Every ended clean non-KEEP local worktree scanned this pass; zero eligible. Latest ten stale pins released through guarded D74a route, receipt design/app-D74a-fresh-stale-pins-2214.md. Current tuple pins and all run evidence retained.
 Disk: 6.158GB after ADD7872 terminal. Owner22:14 App critical source/gate floor5.2GB; stop4.5GB, NON-element first. One body at a time on App; parallel main diagnostic venue authorized22:24. Noncritical work retains7.5GB floor.
 Safety: No new refusal. Prior dirtyU3, compact, graph, publication and source-access refusal targets stay stopped. No raw deletion or alternative denied route.
