@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T07:22:44Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 17 | status age 2m -->
-# app board, 2026-10-24T07:08Z
+<!-- app | 2026-10-24T07:25:51Z | dispatcher heartbeat 5s | live 4 (sol 0, luna 4, other 0) | busy30 19 | status age 0m -->
+# app board, 2026-10-24T07:22Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -85,21 +85,21 @@
 | P2-five-final-precheck | Precheck five original never-run paths | Luna; independent review | Review0651 complete | merged | app-P2-five-oracle-review-0651 | Four strict helper mismatches independently confirmed; source routes reach POST. Popup SWAP aligned. Proof owns exact helper correction. | Report only9b810 |
 | U3b-freeze-plan | Prepare upstream delta and merge order | Luna | Return 0657 complete | merged | Plan 0657; review 0653 | Whole held draft rejected. Own-only plan and nine conflict files published. Actual upstream draft 0707 now assigned. | Report only |
 
-| P2-element-current-failure | Locate pending real element save | Sol; Luna review | Genuine provider controls complete | review | Sol 0707; review 0717; clock 0717 | 108 tests, three types and lint pass. Three controlled stalls finish on release; no historical cause or product defect reproduced. | Test only branch |
+| P2-element-current-failure | Locate pending real element save | Sol; Luna review | Independent 0717 PASS; home merge | merged | Controls 0707; review 0717; proof 0724 | New real-provider controls passed 108 tests, three types and lint; source unchanged. Integrated three controls assigned. Historical defect unproved. | 2056c7c0 / 38b29b5e29 |
 
 | P2-four-helper-oracles | Correct strict request helper expectations | Proof Luna; independent review | App review 0651 confirmed | blocked:app2 | Proof requested at 06:57 and 07:07 | Four never-run cases plus parent fields and element reads need exact branch-specific assertions. Preserve all behavioral checks. | Pending Proof packet |
 | P3-current-setup | Match real predecessor command exactly | Proof source; App trace review | Actual 9310 accepted patch identified | blocked:app2 | Proof author requested 07:20 | Predicate and validator require clip.move but actual guarded doc.patch moved 0 to 5, with 25 request and step reads. | Source 9b810 |
 
-| U3b-refresh | Draft current upstream merge | Luna | D48 authorizes draft now | doing | app-U3b-upstream-refresh-0707 | Current 9b810 plus upstream 2a288; no held draft replay. Integration merge waits P2/P3 GO. | Draft pending |
+| U3b-refresh | Draft current upstream merge | Luna; independent Luna | Initial draft complete; targets need return | review | Draft 0707; return 0722; audit 0722 | Two-parent aa7c draft. 658 of 695 pass; navigator fixture and label healing need correction. Types, lint, conformance, Gate5 12 and AgentChat 71 pass. | aa7c1168 held |
 | P2-current-trace | Trace real element and popup waits | Luna; independent Luna | Independent first return PASS | merged | Trace 0707; review return 0714 | Element POST has no response snapshot; popup has no POST; parent POST 200. 14.35 seconds is total resource duration. | Report only |
 | P2-P3-current-packet | Correct and publish terminal packet | Luna; Proof review | First return complete | review | Producer correction 0707; Proof verdict | Eight safe files copied byte-exact with full paths and hashes. Corrected element cause and terminal counts published. | Source 663 |
 | F-App-final | Final full suite on final head | App test service | Final tuple and freeze | gated:freeze | App service; Runtime FREEZE | D49 venue accepted. Historical full 12ef passed 18,819; final current-head qualification remains pending. | Final head pending |
 
-| P3-parent-path | Prove current predecessor and parent paths | Sol; independent Luna | Actual source and trace complete | review | Sol 0714; trace review 0720 | P3 sent accepted doc.patch 0 to 5 and history 2 to 3; waiter wrongly requires clip.move. Current P2 parent also received 200. | Report only |
+| P3-parent-path | Prove current predecessor and parent paths | Sol; independent Luna | Independent actual trace 0720 PASS | merged | Sol 0714; review 0720 | P3 accepted guarded doc.patch 0 to 5; waiter requires clip.move. Current P2 parent also received 200. Proof owns exact oracle corrections. | Report only |
 
-| P2-element-clock | Locate Apply five second window | Luna | Actual retained element trace | doing | app-P2-element-phase-clock-0717 | Join Apply, owner reads, POST and page close using actual clock domains. No product change or backend inference. | Report pending |
+| P2-element-clock | Locate Apply five second window | Luna | Actual retained clock join complete | review | Timing 0717; independent review next | 420 ms before POST, 4609 ms after POST. Reads finished before Apply; no response or refresh captured. Backend outcome unknown. | Report only |
 
-Integration: 9b810408ccf8aadbca708dd0bc461afc19576427, tree 9a37265f0286128df7e6240a9df9877d959474af. Exact whole tree equals independently reviewed timing candidate 6635416195. All reviewed catalog, parameter, popup, parent, P3 setup and oracle repairs remain present.
+Integration: 38b29b5e29 adds only the reviewed real-provider control file to prior 9b810. Production source and original spec bodies remain exact selected 663. Prior product tree 9a37265f0286128df7e6240a9df9877d959474af. Exact whole tree equals independently reviewed timing candidate 6635416195. All reviewed catalog, parameter, popup, parent, P3 setup and oracle repairs remain present.
 
 Next ready: Review source or draft packets as they finish. Sol 0707 and independent trace 0707 investigate original-page waits. Proof owns strict oracle and P3 setup corrections.
 Blockers: App source — P2 element and popup pending awaits need demonstrated causes and reviewed fixes if required.
@@ -124,3 +124,7 @@ Pass 07:05Z: PLAN, COMMON, header D48/D49 and terminal reports read. Published e
 07:14Z: Assigned parent-path Sol and independent source investigation per orchestrator. Current parent POST200 is independently confirmed; old no-POST hypothesis is historical. Trace reviewer0709 factual scope confirms paths; first return0714 clarifies audit verdict versus gate NO-GO and total resource duration.
 
 07:20Z: P3 actual predecessor accepted POST is confirmed by Sol trace. One guarded doc.patch moves only parent clip at 0 to 5; history grows 2 to 3. Proof owns exact predicate/validator correction. Independent actual trace review 0720 assigned; no speculative parent source change or original rerun.
+
+07:22Z: U3b actual draft committed aa7c with upstream ancestry; target failures assigned first return and independent whole-draft audit. Provider controls independent PASS and home merge queued. Element clock localizes failure after POST, not initial owner readiness. Proof author0705 assignments consumed; current parent and element helper findings sent to those owners.
+
+07:24Z: Provider controls home merge38b29b5e29 received; actual integrated three-control proof0724 assigned. Independent P3 trace0720 PASS published. Independent element timing review0724 assigned. Proof0705 authors now explicitly asked to include current parent fields/reads and current element reads, beyond four future cases.
