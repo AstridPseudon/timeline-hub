@@ -2,22 +2,17 @@
 from __future__ import annotations
 
 import copy
-import json
 from types import SimpleNamespace
 
 import pytest
 
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline.commit import (
-    _digest,
-    _manifest,
     bundle_from_document,
-    document_from_bundle,
 )
 from astrid.sdk.timeline.native_auto_placement import unplace_shared
 from tests.editing_conformance.test_recipe_occurrence_media import inputs
 from tests.helpers.runtime import use_runtime
-from tests.sdk.test_timeline_commit_provider_document import MEDIA
 
 pytestmark = pytest.mark.integration
 OWNER = 'occurrence:occ-a'
@@ -37,7 +32,11 @@ def editing(request, tmp_path, monkeypatch):
     from runtime_protocol.timeline_commit_store import TimelineCommitStore
     from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
     from test_timeline_commit_acceptance import validate_prepared
-    from test_timeline_native_inspection import _publish
+
+    from astrid.sdk.timeline.capture import capture_track_create
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+    from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_add_media
 
     kind = request.param
 
@@ -68,39 +67,61 @@ def editing(request, tmp_path, monkeypatch):
             'version': association['lifecycle']['version']}, authorize=authorize)
         state.verified = service.get_project_verified_media(project, state.new, authorize=authorize)
         document, _, _, _ = inputs(kind)
-        document = json.loads(json.dumps(document).replace(MEDIA, state.new['object_id']))
-        document.update(project_id=project, timeline_id='main')
-        document['internal_timeline_revisions'][0]['timeline_id'] = 'main'
-        document['shot_revisions'][0]['payload']['text_bindings'] = []
-        for occurrence in document['parent_revision']['payload']['occurrences']:
-            occurrence['gain'] = 1
-        for image in [document['parent_revision'], *document['shot_revisions'],
-                      *document['internal_timeline_revisions']]:
-            image['content_digest'] = _digest(image['payload'])
-        document['dependency_manifest'] = _manifest(document['shot_revisions'],
-            document['internal_timeline_revisions'],
-            [{'media_id': state.new['object_id'], 'content_digest': state.new['object_id']}], [])
-        bundle = bundle_from_document(document)
-        source = State(bundle).config(OWNER)
-        source['registry']['assets'][state.new['asset']] = {
-            'media_id': state.new['object_id'], 'type': kind,
-            'generationId': state.new['generation_id'], 'variantId': state.new['variant_id'],
-            'opaque': {'keep': [None, False]}}
-        source['clips'].insert(1, {'id': 'placed', 'clipType': kind, 'track': 'picture',
-            'asset': state.new['asset'], 'at': 1, 'hold': 4, 'opaque': {'clear': None},
-            **({'from': 0, 'to': 4, 'speed': 1} if kind == 'video' else {})})
-        document = document_from_bundle(bundle)
+        input_parent = document['parent_revision']['payload']
+        input_occurrences = input_parent['occurrences']
+        input_internal = document['internal_timeline_revisions'][0]['payload']
+        old_result = service.import_media(
+            project, b'old-' + kind.encode(),
+            media_type='video/mp4' if kind == 'video' else 'image/png',
+            original_name='old.' + ('mp4' if kind == 'video' else 'png'),
+            actor_id='media-editor',
+            **({'duration_seconds': 6} if kind == 'video' else {}),
+            idempotency_key='old-media',
+        )['data']
+        old = service.get_project_media_selection(project, {
+            'asset': old_result['variant_id'], 'generation_id': old_result['generation_id'],
+            'variant_id': old_result['variant_id']}, authorize=authorize)
+        old_verified = service.get_project_verified_media(project, old, authorize=authorize)
         service.create_timeline(project, 'main', idempotency_key='timeline')
         TimelineCommitStore(service.store, validate_prepared=validate_prepared).bootstrap(
             project, 'main', authorize=authorize)
-        # Current Runtime's source-fixture acceptance helper, not a retired writer.
-        _publish(service, project, {
-            'parent_revision_id': 'unplace-source',
-            'parent_composition': document['parent_revision']['payload'],
-            'shot_revisions': document['shot_revisions'],
-            'internal_timeline_revisions': document['internal_timeline_revisions'],
-        }, idempotency_key='source')
-        state.baseline = service._timeline_commits()[0].revision_closure(project, 'main', 'unplace-source')
+        service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
+        head = service.get_project_timeline(project, 'main')
+        initial = service._timeline_commits()[0].revision_closure(
+            project, 'main', head['head_revision_id'])
+        bundle = bundle_from_document(initial)
+        commands = []
+
+        def append(command):
+            nonlocal bundle
+            commands.append(command)
+            bundle = execute(bundle, [command]).bundle
+
+        append(capture_track_create(bundle, 'parent', input_parent['config']['tracks'][0]))
+        for index, occurrence in enumerate(input_occurrences):
+            shot_id = occurrence['shot_id'] if index == 0 else 'chapter-shot-b'
+            append(capture_occurrence_create(
+                bundle, occurrence['occurrence_id'], shot_id, name='Chapter One',
+                track=occurrence['track'], on=occurrence['placement']['start_ms'] / 1000,
+                duration=occurrence['duration_ms'] / 1000,
+            ))
+            for track in input_internal['tracks']:
+                append(capture_track_create(bundle, 'occurrence:' + occurrence['occurrence_id'], track))
+            for row in input_internal['clips'] if index == 0 else input_internal['clips'][:1]:
+                old_row = copy.deepcopy(row)
+                old_row['asset'] = old['asset']
+                append(capture_occurrence_add_media(
+                    bundle, 'occurrence:' + occurrence['occurrence_id'], old_row, old,
+                    verified_media=[old_verified],
+                ))
+        placed = {'id': 'placed', 'clipType': kind, 'track': 'picture', 'asset': state.new['asset'],
+                  'at': 1, 'hold': 4, 'opaque': {'clear': None},
+                  **({'from': 0, 'to': 4, 'speed': 1} if kind == 'video' else {})}
+        append(capture_occurrence_add_media(
+            bundle, OWNER, placed, state.new, verified_media=[state.verified],
+        ))
+        setup = commit(state, body(state, commands), 'setup')
+        state.baseline = setup['data']['canonical_document']
         real_selected = RequestCommitPort.selected_media
 
         def selected(port, pin):
@@ -109,7 +130,6 @@ def editing(request, tmp_path, monkeypatch):
             return value
 
         monkeypatch.setattr(RequestCommitPort, 'selected_media', selected)
-        service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
         yield state
     finally:
         state.service.close()
@@ -117,9 +137,16 @@ def editing(request, tmp_path, monkeypatch):
 
 def body(editing, commands, *, dry_run=False):
     head = editing.service.get_project_timeline(editing.project, 'main')
+    label = 'Video unplace'
     return {'api_version': 1, 'project_id': editing.project, 'timeline_id': 'main',
             'base_revision_id': head['head_revision_id'], 'base_publication_id': head['head_publication_id'],
-            'commands': commands, 'dry_run': dry_run, 'source': {'via': 'python'}}
+            'commands': commands, 'label': label, 'merge': 'fields', 'reads': [],
+            'dry_run': dry_run, 'source': {'via': 'python'},
+            'rationale': 'Authenticate occurrence-owned video unplacement',
+            'group_id': 'video-unplace',
+            'steps': [{'id': 'video-unplace', 'label': label, 'intent': label,
+                       'tags': ['integration', 'video-unplace'],
+                       'command_ordinals': list(range(len(commands))), 'patch': [], 'reads': []}]}
 
 
 def commit(editing, request, key):
