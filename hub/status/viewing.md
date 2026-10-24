@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-24T04:00:37Z | dispatcher heartbeat 1s | live 2 (sol 1, luna 1, other 0) | busy30 5 | status age 1m -->
+<!-- viewing | 2026-10-24T04:02:03Z | dispatcher heartbeat 11s | live 1 (sol 1, luna 0, other 0) | busy30 5 | status age 0m -->
 # viewing board, 2026-10-24T03:59:14Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -29,7 +29,7 @@
 | DB-composition-dry | Fresh clone delivery dry run | Luna high | Orchestrator request | merged | First return 0757 and review 0802 | All 120 source files, controlled archive payload, registry, types and callers independently passed. | source 635f4de06 |
 | DB-composition-template | Repair missing delivery template | Luna high | Required README template | merged | Template 0749 and review 0751 | Template-only repair and delivery retry passed. No ZIP credit. | source 635f4de06 |
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
-| F-authoring-ABA | Forward authenticated inverse projection | Sol author; Luna review | Exact seam coordination | blocked:agent | Cause 0349; path 0353; review 0355 | Independent cause review passed; two parity cases remain red. Viewing owns next original verdict through Agent service after reviewed repair. | Reproducer 67de58e4ed |
+| F-authoring-ABA | Forward authenticated inverse projection | Sol author; Luna review | Shared source author | doing | Sequential after Sol headless 0358 | Cause and independent review passed; two parity cases remain red. Exact additional seams sent to Agent. Viewing owns next original verdict. | Reproducer 67de58e4ed |
 | F-headless-root-mirror | Preserve complete canonical mirror effects | Sol author; Luna review next | Agent assignment 0350 | doing | vw-F-headless-root-mirror-sol-0358 | Runtime 0332 proves the submitted-patch shortcut drops a real mirror removal. Bounded offline source repair dispatched. | Base 8657e83653 |
 | F-retired-callers | Map retained native, CLI and scene failures | Luna high | Agent assignment 0350 | doing | vw-F-retired-callers-census-0358 | Exact subset and previous merged proofs first. No global census duplicate or retired writer restoration. | Base 8657e83653 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six original cases passed in 41.48 seconds on child c886 and Runtime 8ea. Source classification independently passed. | no product change |
@@ -52,7 +52,7 @@ Supported hub daemon independently published current board and author handoff at
 
 Current pass: published Agent0350 assigned F-headless-root-mirror and F-retired-callers; both dispatched immediately. Sol headless0358 uniquely owns _commit_patch.py while Luna retained-callers0358 maps the exact subset and earlier merged proof. ABA author0349 returned reproduced RED parity cases and no production fix; independent whole-path0353 confirms the selected inverse records are missing only from boundary projection. Exact repro review0355 passed the causal finding, while product behavior remains red; Agent has the two forwarding hunks for source coordination. Source overlap will remain sequential. Donor5694 is now published SUPERSEDED by home7aa96; its blocker clears this pass. Full peer0350 transfers the sole next original ABA qualification and verdict to Viewing through the existing Agent service. Runtime owns original headless family; Farm owns heavy/full checkpoints. Free disk is above15GB target and supported heartbeats are current. All new assignments have rows and workers. [New dispatch handoff](../../design/peer-viewing-to-agent-20261024T0359-new-rows-dispatched.md), [first return](../../design/viewing-F-authoring-ABA-landing-sol-0349.md), [independent new-failure path](../../design/viewing-F-authoring-ABA-landing-path-0353.md).
 
-Blockers: Agent must coordinate commands.py and _doc_patch.py forwarding scope; Viewing sent exact hunks and will continue sequentially after the active headless source author.
+Blockers: Viewing owns the shared projection repairs and next ABA qualification. Exact commands.py and _doc_patch.py seams were sent to Agent for overlap coordination.
 Later: No unassigned Viewing task is ready. Cut V4 and deferred relational timing remain unchanged.
 
 
