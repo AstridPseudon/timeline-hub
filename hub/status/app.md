@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T04:54:30Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 2m -->
-# app board, 2026-10-24T04:49Z
+<!-- app | 2026-10-24T04:57:28Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 0m -->
+# app board, 2026-10-24T04:57Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -19,8 +19,8 @@
 | readiness-after-bootstrap | Qualify history and bootstrap readiness | Sol; Luna review | D45 current caller on existing37eb | doing | App Sol0446; Proof verdict | Current coalescing and gesture fixes passed joined523. D45 releases one pair without memo; historical causes stay bounded. | Appc0fe / Agent079 / Runtime37eb |
 | P-door-port-alloc | Allocate door port per run | Luna; D21 | Resolved | merged | app-P2-P3-door-allocation-0039 | [Node 20 allocation, shared stage value and failure checks passed.](/home/user/timeline-hub/hub/design/app-P2-P3-door-allocation-0039.md) | Harness rows only |
 | readiness-upstream-check | Check f38e candidate | Sol; Luna review | Review 0057 PASS | merged | App Sol 0046; Luna 0057 | No census or attempt-root signature supports attribution. Exact patch is unavailable locally; historical cause remains unknown. | Report only |
-| P2 | Eight original gesture cases | App service; Proof verdict | Source causes and qualified fixes | doing | Test12221; source review0327 | FAIL exit1/501s. Mandatory readiness passed; three original cases failed and five not run. No repeat. | Fixed App804 |
-| P3 | Original Gate-5 journey | App service; Proof verdict | D42 reviewed fix and caller | doing | Test3362; Runtime0403 and App e492 | FAIL exit2/147s at outbox readiness. Gate5 not run. No repeat. | Fixed App804 |
+| P2 | Eight original gesture cases | App service; Proof verdict | D45 source and caller READY | doing | Test13583; producer0454 | Running8 originals after native21/history GREEN. Same13583; no final counts yet. Prior12221 remains3FAIL5NOTRUN. | c0fe889944 |
+| P3 | Original Gate-5 journey | App service; Proof verdict | D45 source and caller READY | doing | Test4065; producer0454 | Mounted readiness PASS16.7s; original Gate5 nowrunning. Same4065; final result pending. Prior3362 retained. | c0fe889944 |
 | A2-parent-media-closure | Preserve untouched child closure | Sol; Luna review | Resolved | merged | app-A2-parent-media-integrated-0035 | [299 tests, types, lint and external producer passed.](/home/user/timeline-hub/hub/design/app-A2-parent-media-integrated-0035.md) | 1b0428db7d |
 | A2-image-created | Declare genuine image creations | Sol; Luna review | Review 0133 PASS | merged | app-A2-image-created-sol-0126 | Independent 261 tests and producer 28, three types and lint passed. Clip and new authored registry alias claims match provider. Joined proof 0150 passed 448 tests, three types and lint. | b3a84dea71 / 1c5cc47bf6 |
 | A4-image-live | Complete source-bound image witness | Luna | Agent full live result | doing | Producer0419 DONE; Agent0441 live | New input15fa; actual output56566d,1492bytes published. One producer PASS; Agent owns full witness. No Runtime credit yet. | Fixed1c5cc; old0330 partial |
@@ -63,14 +63,16 @@
 | App-current-joined | Qualify current combined App fixes | Luna | Reviewed source merges complete | merged | app-A2-A3-current-joined-proof-0438 | [523 tests, 24 files, three types and lint passed.](../../design/app-A2-A3-current-joined-proof-0438.md) No browser or full run. | c0fe889944 |
 | readiness-current-caller | Bind current App source in private caller | Luna | Source preparation complete | merged | app-readiness-current-caller-prep-0442 | Private source guards and60 controls PASS. No row or request changed. D45Sol0446 owns actual publication. | c0fe889944 |
 
-| readiness-D45-caller | Publish current source on existing bench | Sol | D45 and joined523 PASS | doing | app-readiness-D45-final-caller-sol-0446 | Verifies existing079/37eb custody and refreshes only two rows. One original pair follows READY. | Appc0fe; Runtime37eb |
+| readiness-D45-caller | Publish current source on existing bench | Sol | D45 and joined523 PASS | merged | app-readiness-D45-final-caller-sol-0446 | READY60 execution controls, authentic custody and exact two rows. One no-cache pair submitted04:53:33Z. | c0fe /079 /37eb |
 
+| P2-P3-D45-handoff | Publish same-ID terminal evidence | Luna | Actual13583 and4065 terminal artifacts | doing | app-P2-P3-D45-result-handoff-0454 | Finite primary facts and strictly qualified safe files; no duplicate run or causal extractor. | c0fe /079 /37eb |
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes.
 Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397-line, 40-assertion test, plus required helpers, under D31.
 Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-handoff-0029.md), [image review](/home/user/timeline-hub/hub/design/app-A2-image-created-review-0133.md), [A4 cut map](/home/user/timeline-hub/hub/design/app-A4-current-cut-census-0042.md).
 Integration: c0fe889944 contains all reviewed App fixes. Joined0438 passed523 tests, three types and lint; independent A4census0444 passed.
 Later: Runtime D42 remains security held. D45 releases the next pair on existing37eb plus current App; no unsafe memo adoption.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
-Next ready: D45 caller0446 READY, then submit one P2 and one P3 on existing37eb/079. Agent0441 full image result remains independent.
+Next ready: Wait actual D45 P213583 and P34065; producer0454 then independent Proof verdict. Agent0441 owns full image result.
 Disk: About11 GB available. Sweep0441 removed zero directories; freed0 GB. No new eligible non-KEEP tree. Earlier dirty U3 and compact refusals remain stopped.
 
+Lead: D45 actual P213583 and P34065 submitted04:53:33Z. Relay both actual IDs from peer0454 to the orchestrator; no further source wait.
