@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T06:30:30Z | dispatcher heartbeat 5s | live 2 (sol 1, luna 1, other 0) | busy30 23 | status age 1m -->
-# agent board, 2026-10-24T06:29:30Z
+<!-- agent | 2026-10-24T06:32:48Z | dispatcher heartbeat 6s | live 4 (sol 1, luna 3, other 0) | busy30 22 | status age 0m -->
+# agent board, 2026-10-24T06:32:38Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -71,29 +71,31 @@
 | F-harness integrated | Verify reviewed harness merges | Luna | Integrated proof passed | merged | agt-F-harness-integrated-0558 PASS | Actual930332 exact reviewed blobs; IMAGE unit1 and six observer synthetics, types/lint passed. No original body repeated. | Home930332e3f9 |
 | F-CLI save path | Distinguish staging from film publication | Luna | Complete source call graph | merged | agt-F-CLI-save-path-review-0600 PASS | Checkout.save stages locally; final candidate uses G3 emitter and Runtime commit. No missing film writer found; five original credits await reconciliation. | Currentbb50 |
 | F-generic reopen | Qualify harvest and reopen original | Luna | Managed candidate child | doing | 0605; harness review 0619 FAIL; fix 0626 | First return repairs exact custody and preflight gaps. No original body run; build failed pinned dependencies after 600 s. | Harness branch only |
-| F-schema originals | Preserve provider operation census | Luna | Independent review | review | Fix 0605; review 0622 | Two fixture inventories add existing media.admit closed mapping. Author passed 41 cases. Frozen 30 wire branches unchanged. | Review pending |
+| F-schema originals | Preserve provider operation census | Luna | Integrated targeted proof | merging | Author 0605; independent 0622 PASS | Two originals and 41 cases pass; Ruff, vendor, artifacts pass. Mypy 1902 unchanged; exact frozen 30 wire branches preserved. Normal merge queued. | 3b99537244 |
 | F-SDK proof review | Review nine SDK candidates | Luna | Complete corrected review | merged | agt-F-SDK-map-review-return-0619 PASS | Exactly nine candidates qualified. Earlier eleven includes two unqualified schema cases; current accounting remains 202 closed / 65 open. | Evidence only |
 | F-discovery child | Prepare faithful support qualification | Luna | Managed candidate child | doing | 0603; harness review 0619 FAIL; fix 0626 | First return fixes lock identity, body gate and durable failure evidence. No original run. Build timeout evidence retained. | Harness branch only |
 | F-renderless-store | Open commit baseline without renderer | Runtime Sol | Independent source cause 0601 | doing | failover-ok; rt-F-renderless-store-sol-0619 | Runtime owns store resolve_ids repair, independent review and remote request. Original closure case waits reviewed home source. | Base bb50 |
-| F-R2-root-originals | Qualify nine root and inverse originals | Runtime Luna | Assigned exact selectors | ready | failover-ok; assigned Runtime 0615 | Nine selectors assigned; awaiting Runtime worker ID. Viewing alone owns item identity source. No duplicate Agent author. | Base bb50 |
-| F-helper-originals | Qualify fourteen helper originals | Runtime Luna | Assigned exact selectors | ready | failover-ok; assigned Runtime 0615 | Fourteen selectors assigned; known string-cut failure needs source cause before repeat. No deferred timing repair. Await Runtime worker ID. | Base bb50 |
+| F-R2-root-originals | Qualify nine root and inverse originals | Runtime Luna | Retained receipts first | doing | failover-ok; rt-F-R2-root-originals-0622 | Nine passed in 3.63 s; independent 0625 pending. Viewing alone owns item identity source. No duplicate body. | Base bb50 |
+| F-helper-originals | Qualify fourteen helper originals | Runtime Luna | Retained receipts first | doing | failover-ok; rt-F-helper-originals-0622 | Thirteen passed in 73.955 s; review 0627 pending. Known string-cut missing word binding stays open and unrun. No deferred timing repair. | Base bb50 |
 | F-farm comparison | Compare farm outcomes with exact closure map | Luna | Independent evidence review | review | 0626; review 0630 | 88 historical and 8 newer closed IDs fail on Farm; zero confirmed non-environment causes or pass credits. Raw traces requested. | Farm 9cd / Runtime 45c3 |
 | F-farm environment | Return safe current environment facts | Luna | Independent packet review | review | 0626; review 0630 | Exact safe packet published. Agent full row has stale Runtime 3b926; no working-full claim. Runtime Sol 0617 owns correction. | Evidence only |
 | F-H32 count map | Map reviewed originals without overlap | Sol / Luna | SDK9 candidate in review | doing | Map 0626; package author 0630 | Exact 25 candidates: 3 D09, 7 restructure, 7 publication, 5 CLI and 3 labels. Package starts on SDK9; official count unchanged. | Evidence only |
-| F-count SDK9 | Package nine qualified SDK closures | Sol / Luna | Complete independent package review | review | Author 0622; reviewer 0631 | Candidate 211 closed / 56 open and 69 mappings. Independent review active; official count stays 202 / 65. | 4421f42155 evidence only |
+| F-count SDK9 | Package nine qualified SDK closures | Sol / Luna | Metadata correction with current package owner | doing | Author 0622; review 0631 FAIL metadata | Exact 9-node delta, counts and preservation pass. Complete wire inventory metadata needs correction; cumulative H32 owner 0630 retains files. | 4421f42155 evidence only |
+
+| F-SDK-three-originals | Qualify last two persistence and stale-head originals | Runtime Luna | Existing exact receipts first | ready | failover-ok; assigned Runtime 0633 | Exact three selectors are disjoint from every active owner. Qualification only; no edits to Viewing ABA file. | Source 0b425 / Runtime 1d9 |
 
 P1: GO recorded. P4 and P5 done. G5 merged under H24. App and Proof retain P2/P3 ownership.
 Integration: bb50a43c91. Discovery 0603 integrated proof passed 36 cases and 3 subtests, Ruff 2145 and mypy 1902 ratchets. Timeline source remains equal 2007.
 Count: Official 202 closed and 65 open of 267. SDK9 package 0622 is active; no provisional delta is credited. H32 and labels get separate exact-node mapping 0626.
 Farm: Checkpoint 26511 is terminal FAIL: 17,335 passed, 288 failed, 187 setup errors and 4 skips. Comparison found 88 historical-closed plus 8 newer-closed failures; all 96 causes unconfirmed without raw traces. Zero exact farm pass credit; 187 setup causes need per-node evidence. Independent 0630 is active; Farm raw trace request sent. No duplicate full.
-Blockers: Viewing — original ABA 11466 remains failed at undo. Unique item storage and inverse source 0605 is active after the minimal seam release. No competing source author or original rerun.
+Blockers: Viewing — original ABA 11466 remains failed at undo. Item source 0605 failed independent 0620 at two-shared-occurrence native membership. Unique Sol continuation 0622 owns that cause. No competing author or original rerun.
 Blockers: Runtime kit — candidate bb50 / f320 child failed pinned dependency installation after 600 s. Refused log retained. Supported dependency reuse question 0617 is pending; no unchanged retry.
-Runtime: All 36 Runtime originals closed on their qualified integrated proofs. Runtime owns renderer-free store source 0619 and assigned root/helper groups 0615.
+Runtime: All 36 Runtime originals closed on their qualified integrated proofs. Runtime owns renderer-free store source 0619 and dispatched root/helper groups 0622. No ready row waits on a worker-count limit.
 App: Complete IMAGE 0554 and independent 0636 PASS retained at direct RuntimeService scope. No new producer, realm or inferred census credit.
 Safety: Earlier Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
 Disk: About 11 GB available. Light work continues without worker-count throttle. Cancelled prune stays cancelled; no new audit of held retirement targets.
 D32: All 267 original entries remain ours. No full-suite PASS or upstream known-gap credit is claimed.
 D46: U2c closed and folded into the single freeze U-merge. Held candidates stay unmerged; relay and remote provider scope stays deferred and fail-closed.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred and visibly failing. D47 memo held post-delivery; D39 adoption waits freeze.
-Next ready: Consume schema review 0622 and SDK9 review 0631; review both harness first returns. H32 count author 0630 is active. Runtime should dispatch assigned root/helper groups. Raw Farm traces get top priority.
+Next ready: Schema home 0b425 is merged; integrated proof 0634 queued. Harness reviews 0632 and H32 count author 0630 active. Runtime gets last three SDK originals 0633. Raw Farm traces take priority.
 Evidence: [farm checkpoint](../../design/farm-agent-full-checkpoint-20261024T0555Z.md), [integrated discovery](../../design/agt-F-discovery-integrated-0603.md), [harness findings](../../design/agt-F-candidate-harness-review-0619.md).
