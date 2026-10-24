@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T21:10:30Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 7m -->
-# runtime board, 2026-10-24T21:02:57Z
+<!-- main | 2026-10-24T21:13:30Z | dispatcher heartbeat 13s | live 1 (sol 1, luna 0, other 0) | busy30 3 | status age 2m -->
+# runtime board, 2026-10-24T21:10:54Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -179,8 +179,8 @@ Current proof: P1 readiness1/original2 GO31083; P3 readiness1/original1 GO15493 
 D83 source proof: security2018 schema258PASS; observer2035 exact service2PASS and integrated2PASS including helper13; projectionsecurity2037 31+289+96PASS; exact currentdc55 genuine reduced native loop8PASS84.30s. Baselinee745 7PASS1FAIL145s remains. Reduced control excludesmedia/finaldocpatch, not original seed credit.
 D78 actual capture: App2026 correlates cap1dump to successfulrequest1. Request2 SDK30s transporttimeout; outer120s did notfire. Safeauthsnapshot cannot prove failing-request2 lockwait. Baseline local acquisition max2.09ms, compute dominated; original fullmedia34.498s cause still not fully attributed.
 
-Blockers: Agent originals — consolidated dc55 normal source/security release COMPLETE. Existing normal adoption and batch2028 own P4three plus retained R2four once, original45s unchanged. No Runtime source or approval wait.
-Blockers: App P2 — consolidated dc55 and local8PASS released. Existing App submitter owns currentfourSHA adoption/preflight and isolated gestures until8PASS, then exactlyonefullserialtour. No Runtime source or collector wait.
+Blockers: Agent originals — service 1960 is running through sole batch2056 on candidate21c6 and Runtime dc55. Five original scopes remain open; candidate source is not home proof.
+Blockers: App P2 — worker2058 owns eight isolated originals on qualified dc55, one body at a time. App home ce1cd9 adopts dc55; next full serial tour waits eight isolated PASS results.
 Blockers: Final cut — all lane core0/regressions0, final P1–P5 plus core on one pinned tuple, D69 and genuine installed render required. No build or ZIP before cut.
 Next ready: Receiving lanes start already released original work. Runtime consumes same-ID results, handles any demonstrated new source failure immediately. No speculative author or duplicate diagnostic.
 
@@ -188,7 +188,7 @@ Venues: App P1/P2/P3; Agent P4; main P5/Composition. D73 four exact SHAs capture
 D65 delivery: Runtime merge, Agent merge, authentic App manifest command/digest equality, then App merge. Installed v2 docs and D67bindings retained. Final candidate remains D59-cut gated.
 Later: E1/E3 designs and E2 Agentdesign complete before D83; further E/D79 paused untilZIP. No complete authentic D79record/history/context, no syntheticfixture. D47memo/proofpins postdelivery,nineattacks open. V4cut,D14/D23deferred,D34cleanupheld,D62submitcompletenessknown gap.
 Admission: D56 Farm/schema access stopped. Original403/accessrefusals, historical deniedcleanup/process/retirement targets untouched. D67D13envgap unchanged. AppdirtyU3guardrefusals stopped.
-Disk: 8662409216 available bytes (8.07 GiB), cap 4. No ended clean non-KEEP Runtime tree eligible; five old dirty trees remain untouched. Existing KEEP and refused targets not retried; 15 GB target not reached.
+Disk: 8660201472 available bytes (8.07 GiB), cap 4. No ended clean non-KEEP Runtime tree eligible; five old dirty trees remain untouched. Existing KEEP and refused targets not retried; 15 GB target not reached.
 
-live 0 / cap 4; ready-undispatched 0 local. All D83 source, security and reduced-control workers finished. Agent original batch 2056 is dispatched; App already adopted dc55 and has the separate 2056 release note. No E or D79 work active.
-Pass 2026-10-24T21:02:57Z: all rt- running markers checked, none live. Actual Runtime HEAD/tree still dc55/0f941; source stays frozen. Security report 2037 and local 2049 evidence already published. Agent home 5fc1 and prepared carrier 21c6 clear adoption waits. App home ce1cd9 adopts dc55; its stale seed-comparison wait is cleared by completed local 8 PASS and separate release 2056. No duplicate original or new source review. Inbox consumed through 546143 bytes. Original full-media seed, element and 45-second outcomes remain open.
+live 0 / cap 4; ready-undispatched 0 local. All D83 source, security and reduced-control workers finished. Agent service1960 is running; App worker2058 owns the eight isolated cases after consuming release2052. No E or D79 work active.
+Pass 2026-10-24T21:10:54Z: all D83 workers remain finished; Runtime source still frozen dc55. H6 dependency checks consumed actual Agent5fc1 adoption, candidate21c6 and running service1960, plus Appce1cd9 adoption and isolated worker2058. Earlier App seed wait is cleared. No local ready work, no duplicate original and no new review. E/D79 remain paused. Inbox consumed through 551822 bytes. Disk above main floor with no eligible clean finished Runtime tree; stopped cleanup targets untouched. Original full-media seed, element, history scopes and45s gate outcomes remain open.
