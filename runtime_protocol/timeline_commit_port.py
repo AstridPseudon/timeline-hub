@@ -212,7 +212,8 @@ class RequestCommitPort:
             raise AuthorizationError("timeline commit port is closed")
         with self.__service.store._mutex:
             self.__authorize()
-            return copy.deepcopy(call())
+            with self.__store.history_read_scope():
+                return copy.deepcopy(call())
 
     def head(self):
         def read():
@@ -235,7 +236,7 @@ class RequestCommitPort:
                     raise refused("history_unavailable", "publication/revision pins disagree")
                 if current["publication_id"] == publication_id:
                     from .timeline_commit_inputs import reachable_document_input_pins
-                    pins = reachable_document_input_pins(self.__service.store.conn, self.__project, self.__timeline,
+                    pins = reachable_document_input_pins(self.__store.conn, self.__project, self.__timeline,
                                                          publication_ids=[publication_id])
                     self.__history_pins.extend(pin for pin in pins if pin not in self.__history_pins)
                     return entry
