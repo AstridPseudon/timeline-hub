@@ -6,9 +6,19 @@ import { join } from 'node:path';
 import { EXTERNAL_AGENT_IDS } from './localAgents.ts';
 import { LOCAL_AGENT_ADAPTERS } from './astrid-local-agent-adapters.ts';
 import { createAstridAcpHttpServer } from './astrid-acp-bridge.ts';
-import { createLocalAgentAcpProcessHost } from './astrid-local-agent-host.ts';
+import { createLocalAgentAcpProcessHost, renderAgentProfile } from './astrid-local-agent-host.ts';
 
 type Json = Record<string, unknown>;
+
+test('external agents receive the profile with the package root filled in and frontmatter removed', () => {
+  const profile = '---\nname: astrid\n---\nRead `{{ASTRID_PACKAGE_ROOT}}/packs/_core/docs/SKILL.md`, then `{{ASTRID_PACKAGE_ROOT}}/packs/<pack>/docs/SKILL.md`.\n';
+  assert.equal(
+    renderAgentProfile(profile, '/install/astrid/agent_profiles/astrid.md'),
+    'Read `/install/astrid/packs/_core/docs/SKILL.md`, then `/install/astrid/packs/<pack>/docs/SKILL.md`.\n',
+  );
+  assert.equal(renderAgentProfile('No frontmatter.', '/a/b/c.md'), 'No frontmatter.');
+  assert.throws(() => renderAgentProfile('---\nname: astrid\n', '/a/b/c.md'), /unterminated frontmatter/);
+});
 
 function executable(path: string, contents: string): void {
   writeFileSync(path, contents);

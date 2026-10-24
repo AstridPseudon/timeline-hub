@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { AcpProcessHost, AcpProcessHostError, type AcpProcessHostOptions } from './acpProcessHost.ts';
 import { ASTRID_ACP_COMMAND, ASTRID_ACP_CONTEXT_SYSTEM_PROMPT, resolveAstridAcpSystemPromptFile, type AstridAcpLauncherOptions } from './astridAcpLauncher.ts';
 import { sessionAgentId, type LocalAgentId } from './localAgents.ts';
@@ -7,6 +8,15 @@ import { discoverLocalAgents, localAgentLaunch } from './astrid-local-agents.ts'
 type ExternalAgent = Exclude<LocalAgentId, 'astrid'>;
 function record(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
+
+/** Render the packaged profile as the terminal launcher does: package root filled in, OMP frontmatter dropped. */
+export function renderAgentProfile(text: string, profilePath: string): string {
+  const rendered = text.replaceAll('{{ASTRID_PACKAGE_ROOT}}', dirname(dirname(profilePath)));
+  if (!rendered.startsWith('---\n')) return rendered;
+  const end = rendered.indexOf('\n---\n', 4);
+  if (end < 0) throw new AcpProcessHostError(`Astrid agent profile has an unterminated frontmatter block: ${profilePath}`, { code: 'acp_unavailable' });
+  return rendered.slice(end + 5);
 }
 
 /** Namespace only the wire ID. The adapter retains its own opaque session ID and transcript. */
@@ -95,7 +105,7 @@ export async function createLocalAgentAcpProcessHost(agent: ExternalAgent, optio
   if (choice.state === 'sign-in') throw new AcpProcessHostError(`${choice.name} sign-in is required. ${choice.line}`, { code: 'acp_unavailable' });
   const launch = await localAgentLaunch(agent, env);
   const profilePath = (options.profileFileForCommand ?? resolveAstridAcpSystemPromptFile)(options.command ?? ASTRID_ACP_COMMAND, env);
-  const profile = readFileSync(profilePath, 'utf8');
+  const profile = renderAgentProfile(readFileSync(profilePath, 'utf8'), profilePath);
   return new LocalAgentAcpHost(agent, [
     profile,
     'You are the selected local agent in the Astrid App. Use Astrid skills and its installed CLI tools for creative work. Load the relevant Astrid SKILL.md when needed, as installed by `python3 -m astrid.skills.cli sync`. Do not run skill sync or change global agent settings during a chat.',
