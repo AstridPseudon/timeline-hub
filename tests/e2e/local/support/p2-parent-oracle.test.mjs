@@ -7,9 +7,24 @@ import { expect } from '@playwright/test';
 import ts from 'typescript';
 
 const source = readFileSync(new URL('../three-products.p2-tour.spec.ts', import.meta.url), 'utf8');
-const helper = source.match(/^function assertParentMoveRequestV2\([^]*?^}/m)?.[0];
-assert.ok(helper, 'exercise the actual mounted parent-move assertion helper');
-const check = compileFunction(`${ts.transpileModule(helper, {}).outputText}\nreturn assertParentMoveRequestV2;`, ['expect'])(expect);
+const parentHelper = source.match(/^function assertParentMoveRequestV2\([^]*?^}/m)?.[0];
+const objectHelper = source.match(/^function object\([^]*?^}/m)?.[0];
+const normalizedCommandsHelper = source.match(/^function assertNormalizedCommands\([^]*?^}/m)?.[0];
+const replyHelper = source.match(/^function assertReplyShape\([^]*?^}/m)?.[0];
+const historyHelper = source.match(/^function assertAuthoritativeHistoryPublication\([^]*?^}/m)?.[0];
+const headHelper = source.match(/^function assertAuthoritativeHead\([^]*?^}/m)?.[0];
+const inverseHelper = source.match(/^function assertInverseTargetsPublication\([^]*?^}/m)?.[0];
+const undoHelper = source.match(/^function assertUndoHistoryPublication\([^]*?^}/m)?.[0];
+assert.ok(parentHelper, 'exercise the actual mounted parent-move assertion helper');
+assert.ok(replyHelper, 'exercise the actual mounted reply assertion helper');
+assert.ok(historyHelper && headHelper && inverseHelper && undoHelper, 'exercise actual publication binding helpers');
+const check = compileFunction(`${ts.transpileModule(parentHelper, {}).outputText}\nreturn assertParentMoveRequestV2;`, ['expect'])(expect);
+const checkReply = compileFunction([
+  objectHelper, normalizedCommandsHelper, replyHelper,
+].map((helper) => ts.transpileModule(helper, {}).outputText).join('\n') + '\nreturn assertReplyShape;', ['expect'])(expect);
+const checkBindings = compileFunction([
+  historyHelper, headHelper, inverseHelper, undoHelper,
+].map((helper) => ts.transpileModule(helper, {}).outputText).join('\n') + '\nreturn { assertAuthoritativeHistoryPublication, assertAuthoritativeHead, assertInverseTargetsPublication, assertUndoHistoryPublication };', ['expect'])(expect);
 
 const original = {
   parent_revision: {
@@ -123,4 +138,92 @@ test('actual helper refuses malformed, missing, and extra parent move variants',
     mutate(candidate);
     assert.throws(() => check(candidate, { revision_id: 'revision', publication_id: 'publication' }, original, 'f2-app-clip', 5));
   }
+});
+
+function replyFixture() {
+  const key = '0f3c4b3a-2e1d-4c5b-8a79-0123456789ab';
+  const receiptId = 'txn-0123456789abcdef0123456789abcdef';
+  const command = {
+    schema_version: 1, op: 'doc.patch', version: '1', select: null,
+    created: [], args: { changes: [] }, intent: {}, resolved: [], expect: {},
+    authorship: {}, reads: [], selections: [], bindings: {},
+  };
+  const body = {
+    api_version: 1, project_id: 'project', timeline_id: 'timeline',
+    base_revision_id: 'revision', base_publication_id: 'publication',
+    commands: [command], label: 'Edit timeline', steps: [{
+      id: 'step', label: 'Edit timeline', intent: 'Edit timeline', tags: [],
+      command_ordinals: [0], patch: [{ op: 'set' }], dependencies: [{ kind: 'scope' }],
+    }], merge: 'fields', dry_run: false, source: { via: 'app' },
+  };
+  const data = {
+    status: 'accepted', base_revision_id: 'revision', base_publication_id: 'publication',
+    previous_revision_id: 'revision', previous_publication_id: 'publication',
+    accepted_revision_id: 'revision-next', rebased_onto: null, canonical_document: {},
+    document_digest: 'sha256:document', commands: [command], id_map: {},
+    provider_version: 'provider', compiler_version: 'compiler', merge_mode: 'fields',
+    steps: body.steps, publisher: 'publisher', source: body.source, label: body.label,
+  };
+  const receipt = {
+    receipt_id: receiptId, command_kind: 'timeline.commit', idempotency_key: key,
+    request_hash: 'hash', project_id: 'project', project_seq: [1, 1], event_ids: ['event'],
+    result: data, created_at: '2026-10-24T00:00:00Z',
+  };
+  const envelope = { data, receipt };
+  return {
+    post: {
+      key, body, json: envelope,
+      response: { status: () => 200 },
+    },
+    result: envelope,
+  };
+}
+
+test('actual reply helper accepts a distinct UUID request key and txn receipt identity', () => {
+  const { post, result } = replyFixture();
+  checkReply(post, { revision_id: 'revision', publication_id: 'publication' });
+  assert.equal(result.receipt.receipt_id, 'txn-0123456789abcdef0123456789abcdef');
+  assert.notEqual(result.receipt.receipt_id, post.key);
+});
+
+test('actual reply helper refuses wrong receipt identity, request key, and head', () => {
+  const variants = [
+    (candidate) => { candidate.result.receipt.receipt_id = candidate.post.key; },
+    (candidate) => { candidate.result.receipt.idempotency_key = 'other-request-key'; },
+    (candidate) => { candidate.result.data.previous_publication_id = 'wrong-publication'; },
+  ];
+  for (const mutate of variants) {
+    const candidate = replyFixture();
+    mutate(candidate);
+    assert.throws(() => checkReply(candidate.post, { revision_id: 'revision', publication_id: 'publication' }));
+  }
+});
+
+test('actual publication helpers accept exact history, head, inverse, and undo bindings', () => {
+  const { result } = replyFixture();
+  const publicationId = result.receipt.receipt_id;
+  const entry = { publication_id: publicationId, records: { undo_of: [publicationId] } };
+  const inverse = { body: { commands: [{
+    schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
+    args: { publications: [publicationId] },
+  }] } };
+  checkBindings.assertAuthoritativeHistoryPublication(entry, result);
+  checkBindings.assertAuthoritativeHead({ revision_id: 'revision-next', publication_id: publicationId }, result);
+  checkBindings.assertInverseTargetsPublication(inverse, publicationId);
+  checkBindings.assertUndoHistoryPublication(entry, publicationId);
+});
+
+test('actual publication helpers refuse wrong history, head, inverse, and undo bindings', () => {
+  const { result } = replyFixture();
+  const publicationId = result.receipt.receipt_id;
+  const wrong = [
+    () => checkBindings.assertAuthoritativeHistoryPublication({ publication_id: 'wrong-publication' }, result),
+    () => checkBindings.assertAuthoritativeHead({ revision_id: 'revision-next', publication_id: 'wrong-publication' }, result),
+    () => checkBindings.assertInverseTargetsPublication({ body: { commands: [{
+      schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
+      args: { publications: ['wrong-publication'] },
+    }] } }, publicationId),
+    () => checkBindings.assertUndoHistoryPublication({ records: { undo_of: ['wrong-publication'] } }, publicationId),
+  ];
+  for (const checkWrong of wrong) assert.throws(checkWrong);
 });
