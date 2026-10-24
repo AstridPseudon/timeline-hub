@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T06:23:21Z | dispatcher heartbeat 1s | live 3 (sol 2, luna 1, other 0) | busy30 16 | status age 1m -->
-# runtime board, 2026-10-24T06:21:56Z
+<!-- main | 2026-10-24T06:25:55Z | dispatcher heartbeat 2s | live 3 (sol 1, luna 2, other 0) | busy30 19 | status age 1m -->
+# runtime board, 2026-10-24T06:24:47Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -68,9 +68,9 @@
 | F-D09-remainder | Map three retained managed-scene originals | Luna / Luna | Independent mapping passed | merged | Author 0557; review 0601 PASS | Exact retained three-case PASS on Runtime 8ea; current 1d9 import probe is separate. [Review](../../design/runtime-D09-review-0601.md) | Agent 2007 unchanged |
 | F-G5-restructure-remainder | Qualify seven restructure originals | Luna / Luna | Independent result review passed | merged | Author 0557; review 0602 PASS | Seven exact originals passed in 54.26 seconds on Agent 2007 and Runtime 1d9dd. [Review](../../design/runtime-restructure-review-0602.md) | Agent 2007 unchanged |
 | F-normal-publish-remainder | Qualify eight publication originals | Luna / Luna | Agent renderer-free identity caller fix | blocked:agent | Author 0557; review 0601 FAIL | Seven passed; one strict no_renderer failure before submit. Exact existing raw-projection seam returned. [Review](../../design/runtime-normal-publish-review-0601.md) | Agent 2007 unchanged |
-| F-renderless-store | Open sessions without renderer imports | Sol / Luna | Agent assigned existing reader seam | doing | rt-F-renderless-store-sol-0619 | Source repair queued; independent review and Agent home merge precede the original qualification. | Agent bb50 base |
-| F-helper-originals | Qualify fourteen retained helper rows | Luna | Agent assigned exact selectors | doing | rt-F-helper-originals-0622 | Existing receipts first. Known missing word binding is source only; no unchanged failure rerun. | Agent bb50 base |
-| F-R2-root-originals | Qualify nine retained root cases | Luna | Agent assigned exact selectors | doing | rt-F-R2-root-originals-0622 | Receipt mapping first; one meaningful qualification if needed. Original predicates remain. | Agent bb50 base |
+| F-renderless-store | Open sessions without renderer imports | Sol / Luna | Independent review | review | Author0619; review0626 | New regressions fail on old source; changed source passed 21 controls. One existing type error; zero new diagnostics. | e149f8993 |
+| F-helper-originals | Qualify fourteen retained helper rows | Luna | Independent exact result review | review | Author0622; review0627 | Thirteen passed in 73.955 seconds. Known missing word binding remains open and unrun; no edits or guard changes. | Agent bb50 unchanged |
+| F-R2-root-originals | Qualify nine retained root cases | Luna | Independent exact result review | review | Author0622; review0625 | Nine exact originals passed in 3.63 seconds; no edits. Source and body hashes retained. | Agent bb50 unchanged |
 
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
@@ -90,4 +90,4 @@ Later: D46 closes U2c; no new relay or provider custody backend. Its upstream co
 
 Blockers: Agent — normal-publication original waits for Runtime source0619 review and Agent home merge.
 
-Next ready: None waiting. Farm Sol0617 and renderer-free source0619 are active. New root and helper qualification0622 are queued. Independent farm path0617 returned; sanitize-child origins need actual qualification.
+Next ready: None waiting. Farm Sol0617 repairs its packet. Renderer-free source0626, root result0625 and helper result0627 are in independent review. One helper binding remains open; no original repeats.
