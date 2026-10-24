@@ -1,1 +1,1 @@
-LEAD 19:28Z | up | P1 GO stands | App-owned: P3 run 26908 NO-GO, fourth recovery observation 3 not 4, cause review active | P2 NO-GO, verdict review | P4 ten-note still 45s, small gain only | disk 8G
+LEAD 19:59Z | up | P1 GO stands | App-owned: P3 NO-GO but further: both recovery mounts pass, record equality fails, later steps unproved | P2 NO-GO stands | P4 profile run found no fix yet | disk 8G
