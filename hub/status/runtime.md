@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T17:54:36Z | dispatcher heartbeat 2s | live 1 (sol 1, luna 0, other 0) | busy30 12 | status age 1m -->
-# runtime board, 2026-10-24T17:53:20Z
+<!-- main | 2026-10-24T17:57:48Z | dispatcher heartbeat 12s | live 2 (sol 1, luna 1, other 0) | busy30 11 | status age 1m -->
+# runtime board, 2026-10-24T17:56:29Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -113,6 +113,7 @@
 | D72-frame-window | Preserve native frame window assertions | Luna | Agent integrated qualification | doing | Review1722 PASS; homef4d6 | Remote merge receipt f4d6; reviewed7 PASS. Agent owns actual home proof. Native/legacy semantic coverage and typecheck limits retained. | 4f01572d4 / Agentf4d6 |
 | D72-installer-schema | Verify pinned local staging schema | HARD Sol / Luna | Agent normal merge and home proof | merging | Local1746 PASS; remote1738 requested | D77 accepts migration. Author51PASS, independent50+new1PASS; strict graph/digest guards. Separate installed renderer D77 remains open. | 2a1637a14 / b4f79 |
 | D77-render-path | Settle upstream installed-render comparison | Luna / orchestrator | D77 evidence-scope answer | blocked:orchestrator | Read-only1749 UNKNOWN | Source mismatch concrete; upstream controls2+41PASS, genuine staged artifact unproved. [Decision](../../escalations/runtime-20261024T1753Z-D77-upstream-proof-limit.md) | No product change |
+| D72-home29 | Finish exact integrated family receipt | Luna | Authentic29 selectors and source identity | doing | rt-D72-home-qualified-1756 | Resume f4d6 without accidental60s outer cap; worker90min and per-test45s. Exact review membership input requested1756. No P4 duplicate. | Agentf4d6 / Runtime327da |
 | D72-generic-host | Migrate requester publication fixture | Luna | Agent integrated qualification | doing | Review1722 PASS; homef4d6 | Remote merge receipt f4d6; reviewed3 PASS. Agent owns actual home proof. CAS/producer/idempotency assertions unchanged. | 712093ec9 / Agentf4d6 |
 | F-final-D73 | Capture proof tuple once at submit | Luna | Final tuple and D59 cut | gated:D59-cut | Source1728; receipt1735 PASS | Private87Python+TS candidate and D73 stubs passed. Current security175/integrated35 cited; tuple pending, no install or body. | Private candidate |
 | F-final-D72 | Document retired CLI migration | Luna | Installed renderer and byte checks passed | merged | rt-F-final-D72-docs-1704 PASS | Actual docs installed171108 with backups; help, renderer, exactD65/D67/D62 preservation PASS. [Proof](../../design/rt-F-final-D72-docs-1704.md) | Installed docs |
@@ -155,7 +156,7 @@ Blockers: App element phases — activation CLOSED at App255f. Actual20321 zero-
 Blockers: Runtime P4 cost — original16328 after327da FAIL45.336s; CLI/sheet and conflict-rerun PASS. HARD Sol1752 resumes fresh complete validation cost; Agent1744 owns independent whole path/verdict. No unchanged retry.
 Blockers: App — changed P34858 intent correction and stable current sources owned. P1 recordedGO; no duplicate P2/P3. Runtime1700 owns safe next-run phase capture; App owns normal launch wiring.
 Blockers: Final delivery — all active lanes need core0/regressions0 plus current P2/P3 and D69 completion. Agent newly reports39 restored-node failures; four classifiers own them. No cut/proofs/build/ZIP.
-Next ready: consume costSol1752, D77 evidence-scope answer1753 and Agent installer receipt. App1739 owns focused preflight; Agent1744 owns original16328 verdict/whole path. Final candidate gated cut.
+Next ready: exact29 selector handoff1756, costSol1752 and D77 answer1753. App owns actual service preflight; Agent1744 owns16328 verdict/whole path. Final candidate gated cut.
 
 Later: D47 memo and proof pins remain post-delivery; nine state attacks open. V4 cut; D14/D23 deferred unchanged. D34 broader cleanup remains held. D62 submit completeness is an explicit known gap in the Runtime behavior-change ledger.
 
@@ -163,7 +164,7 @@ Admission: D56 stops Farm and schema-access work. Exact403 and automatic access 
 
 Disk: about8.2GB. Sweep3 removed0; compact packed0 and compressed3 old logs. Three abandoned v1 trees refused as dirty and remain untouched; no alternate deletion. Finished current trees automatically recycle.
 
-live 1 / cap 4; ready-undispatched 0. HARD Sol1752 cost continuation after original16328 timeout. D77 upstream1749 UNKNOWN scope question1753 filed; installer localPASS queued Agent merge. No denied targets retried.
+live 2 / cap 4; ready-undispatched 0. HARD Sol1752 cost continuation and Luna1756 home29 receipt. D77 UNKNOWN scope question1753 filed; installer localPASS queued Agent merge. No denied targets retried.
 
 Pass 2026-10-24T16:57:06Z: New Agent actual49 failures consumed with its four disjoint source classifiers. Popup author88b9 complete -> independent security1658 dispatched. D69 review1647 FAIL only citations -> return1658 dispatched. P4Sol1652 active; element phase still UNKNOWN pending App-host input. Source remains5c1 and no originals duplicated.
 
@@ -197,3 +198,5 @@ Pass 2026-10-24T17:52:27Z: New Agent16328 meaningful three-leg gate consumed: PA
 Blockers: orchestrator — D77 upstream1749 UNKNOWN; exact supported source/control mismatch is proved, genuine staged input absent. [Evidence-scope decision1753](../../escalations/runtime-20261024T1753Z-D77-upstream-proof-limit.md). No pre-existing credit or alternate acquisition.
 
 Pass 2026-10-24T17:53:20Z: D77 sole Luna1749 source comparison UNKNOWN; authentic upstream2+41controls PASS but no genuine staged artifact. Exact original report/trace published; finite proof-scope decision1753 filed, no invented upstream failure. HARD costSol1752 remains active.
+
+Pass 2026-10-24T17:56:29Z: Agent ready home29 failover1747 dispatchedLuna1756 on f4d6 with90min worker/no60s outercap/pertest45s unchanged. Flat command omitted actual29 list; exact original list/approval/SDK receipts requested1756 while workercollects. No guessed membership or duplicate P4/body.

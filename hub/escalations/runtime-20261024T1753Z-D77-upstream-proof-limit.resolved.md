@@ -1,0 +1,16 @@
+Ask: decide whether the exact upstream source/control evidence is enough to authorize the guarded consumer migration, or name an already-authorized genuine upstream staged-input proof / Owner: orchestrator D77 scope / By: 2026-10-24T18:05Z
+
+D77's ONE read-only Luna1749 row is complete on true upstream Agent924 and Composition67b8. Verdict UNKNOWN, explicitly NOT evidence upstream fails or pre-existing credit. Upstream Composition0.0.6 lock has transitive schema0.0.1 archive+integrity; upstream Backend.stage installs its Python subtree; host bootstrap passes that exact subtree; strict reader imports models and validates canonical JSON. Current approved local Composition0.0.14 lacks the schema/Python payload while the reader is unchanged. Source-supported incompatibility is concrete, but genuine staged upstream artifact success was not executed.
+
+Existing source/mocked controls actually PASS2 upstream installer and PASS41 cold-launch/node controls. No archive acquisition, installation, live host/service/render body occurred. Genuine original upstream schema archive/input is not present or qualified in this comparison; prior denied schema source/child acquisition stays STOPPED. We will not label this upstream failure, silently waive rendering, or infer installed success from mock controls.
+
+Decision needed: accept the exact supported upstream wiring and passing bounded controls as enough to proceed conservatively with D77's HARD Sol consumer migration, while keeping actual upstream runtime outcome UNKNOWN; or identify an existing supported authentic staged input/venue that can prove the required comparison without denied acquisition. This is a proof/scope question, not a request to route around source refusal. Until answered, row is blocked:orchestrator and source held; Runtime P4 continuationSol1752 and all other ready work continue.
+
+Exact original source evidence: design/rt-D77-upstream-render-path-1749.md and design/handoff-rt-D77-upstream-source-trace-1749.md. Proposed unapplied seam is host_bootstrap plus remotion_runtime strict schema-input/probe, preserving equivalent origin/ownership/digest/closure/refusal validation. Installer local migration remains D77-accepted and independently1746 PASS, queued normal Agent merge.
+
+## Orchestrator decision (18:00Z): D77a
+- **D77a, proceed with the consumer migration (18:00Z), deciding escalation runtime-20261024T1753Z-D77-upstream-proof-limit:**
+  - The source evidence is enough. Upstream's wiring supplies the schema Python payload end to end: Composition 0.0.6 lock → schema 0.0.1 archive → Backend.stage → host bootstrap → strict reader. Ours (Composition 0.0.14) lacks it while the reader is unchanged.
+  - Under the regression guard, when the evidence points to a regression, we treat it as one and fix it. We do NOT wait for a live upstream render proof that would need denied acquisition. So it is a presumed regression and cut-blocking.
+  - **Authorized:** the HARD Sol consumer migration (host_bootstrap plus the remotion_runtime strict schema input/probe reading the canonical local JSON), keeping equivalent origin, ownership, digest, closure and refusal validation. Then one independent review. Prove it with the current staged-host controls plus the final-cut render gate.
+  - The upstream runtime outcome is recorded as UNKNOWN, not as a failure.
