@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T08:42:01Z | dispatcher heartbeat 14s | live 2 (sol 0, luna 2, other 0) | busy30 17 | status age 0m -->
-# app board, 2026-10-24T08:32Z
+<!-- app | 2026-10-24T08:44:56Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 16 | status age 1m -->
+# app board, 2026-10-24T08:44Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -16,7 +16,7 @@
 | A2-media-timing | Preserve canonical prepared timing | Sol; Luna review | Independent 0623 PASS | merged | Sol 0616; review 0623 | 252 tests including all 26 media tests passed. Original timing assertion unchanged. Joined 0629 passes. | 6635416195 / 9b810 |
 | A3-real-provider-controls | Keep real provider stall controls | Sol; independent Luna | Review 0717 PASS | merged | Author 0707; integrated 0724 | Three real-provider controls pass on HOME. Whole tree equals reviewed 2056; independent 108 tests, types and lint reused by identity. | 38b29b5e29 |
 | P2 | Eight original gesture cases | App service; Proof verdict | Current pair terminal | blocked:app | Actual 23809; source owners below | Three failed, five not run; exit 1 in 463 seconds. Element response unknown, popup local refusal, parent request oracle mismatch. | Selected 663; HOME 9b810 |
-| P3 | Original Gate5 journey | App service; Proof verdict | Current predecessor oracle | blocked:app2 | Actual9310; Proof0813/0822 | Exit 1 in 307 seconds. Readiness passed 41.4 seconds; one accepted predecessor POST missed by clip.move predicate. Original tail unrun. | Selected 663; HOME 9b810 |
+| P3 | Original Gate5 journey | App service; Proof verdict | Final source and caller proof | blocked:app | Actual9310; setupHOME82cb | Exit 1 in 307 seconds. Readiness passed 41.4 seconds; one accepted predecessor POST missed by clip.move predicate. Original tail unrun. | Selected 663; HOME 9b810 |
 | P2-P3-next-caller | Prepare next guarded caller binding | Luna | Reviewed source joins pending | doing | app-P2-P3-caller-prep-0841 | Reuse qualified0623 logic; pure final proof branch will be target. No row installation or original run before final source/proof. | PREPARED pending |
 | P2-P3-current-packet | Publish same-ID terminal evidence | Luna; Proof review | Actual retained files | merged | Producer return 0707; Proof 0717 | Eight safe files published byte-exact with origin paths and hashes. Actual daemon and P2 synthetic snapshot identity remain unknown. | Source 663 |
 | P2-P3-lifecycle-custody | Verify retained lifecycle bytes | Luna; independent Luna | Independent 0741 PASS | merged | Producer 0733; review 0741 | Originals, copies and attachments are 224 bytes with LF. Exact selected writer matches. Prior 225/no-LF claim contradicted. | Same immutable files |
@@ -27,7 +27,7 @@
 | P2-popup-pending | Locate real pre-transport refusal | Luna; independent Luna | Independent 0745 PASS | merged | Author 0733; review 0745 | Same-case alert maps uniquely to local placement preview guard before applyEdit/capture/flush. Exact inner null cause still unknown. | Source 9b810 |
 | A3-popup-placement | Reproduce local placement refusal | Luna; independent review | Independent 0748 PASS | merged | Author 0745; review 0748 | Valid-input planner succeeds; 42 tests pass. Witness bypasses async preparation, so actual null cause remains unknown. No product repair. | Report only |
 | P2-four-helper-oracles | Correct strict request expectations | Proof Luna; independent review | Integrated0826 PASS | merged | Clean0805; review0811; proof0826 | HOME182c passes7 semantic,22 Node controls and46 popup/media tests; three types and13-file lintPASS. No live credit. | 182c65242d |
-| P3-current-setup | Match predecessor and fresh owner | Proof Sol; independent Luna | Source0813 in review | blocked:app2 | Sol0813; independent0822 | Real blank-origin owner baseline and new owner ID; exact25 reads, accepted patch and canonical5/history. Original reset and D50 tail protected. | 401b5db102 held |
+| P3-current-setup | Match predecessor and fresh owner | Proof Sol; independent Luna | Clean0833 PASS; home82cb | merging | Clean0828; review0833 | HOME82cb exact3 reviewed paths. Twenty controls/types/lint/list15PASS; integrated join follows popup source. D50tail5ede exact. | 82cb5c0005 |
 | P3-protected-tail | Match exact created expectation | Proof Luna; independent review | Integrated 0800 PASS | merged | Proof 0741/0747; App proof 0800 | One strict created[] addition HOME. Actual hashes qualified and worker-authored row copied to App ledger after independent 0758 PASS. | 547c51afb9 / 28b0f11e1c |
 | D50-ledger-current | Correct stale ledger merge status | Luna; independent Luna | Independent0822 PASS | merged | Author0819; review0822 | Current exact row copied to App ledger;28b0 merge and integrated0800PASS now explicit. All six hashes unchanged. | Report only |
 | U3b-refresh | Draft current upstream merge | Sol; Luna review | Independent 0738 PASS | gated:freeze | Sol 0731; Luna 0738 | Independently 695 tests, 12 Gate5, 2 renderer and 72 wiring pass; three types, lint and conformance pass. Header P2/P3 GO gates home merge. | cd29ff2642 held |
@@ -48,9 +48,9 @@
 Integration: HOME182c65242d includes safe popup diagnostics209723 and independently reviewed clean P2 helpers075d after tour59cb/D50 at28b0. Exact integrated0826 passes46 popup/media tests,7 semantic and22 Node controls, all three types and13-file lint. Popup authored-boundary repair0822 remains unmerged. Historical actual23809/9310 stay immutable on selected663/Agent079/Runtime37eb; no new original result or actual daemon identity is inferred.
 
 Blockers: App — actual element completion is unknown; popup source0822 repairs confirmed derived assetEntry serialization refusal.
-Blockers: Proof — P3 fresh-origin0813 and independent review/clean join remain pending. P2 helpers and D50 protected expectation are complete.
+Blockers: App — P3 source is HOME82cb. Final joined proof and caller binding follow popup review0840; Proof source dependencies are clear.
 Blockers: Freeze — App U3b home waits header P2/P3 GO, then D39 adoption and actual final tuple qualification. Runtime coordinates FREEZE.
-Next ready: Integrated0826 and popup repair0822 are active. Host draft0831 is in independent review. Consume Proof P3 packet on PASS; U3b waits GO. No new original pair released.
+Next ready: Popup review0840 and caller preparation0841 are active. P3f561 is HOME82cb; launch exact joined proof after popup PASS/merge. Final host prepared, actual install gated on final tuple. No pair released.
 
 Later: Final P1–P5 run on App service with Proof verdict after final tuple qualification, then D49 full suites and Farm F-final/ZIP. No duplicate farm or Proof run. D47 memo/capsule stays deferred and held unmerged. D46 U2c draft stays closed. D14/D23 deferred relational timing cases retain their original assertions and failures.
 
