@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T01:13:24Z | dispatcher heartbeat 1s | live 4 (sol 0, luna 4, other 0) | busy30 25 | status age 1m -->
-# agent board, 2026-10-24T01:12:00Z
+<!-- agent | 2026-10-24T01:15:20Z | dispatcher heartbeat 11s | live 3 (sol 0, luna 3, other 0) | busy30 23 | status age 1m -->
+# agent board, 2026-10-24T01:14:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -20,8 +20,8 @@
 | F-R2-owner | Nested order and sibling successors | Sol / Luna | R2 | merged | agt-F-R2-joined-integrated-0042 | Actual 1146: 56 plus 14 passed. Independent 186 strict controls remain valid on exact source. | e53d9f36b |
 | F-SDK-closure | Repair the public reader fixture | Luna | G2 pair | merged | agt-F-SDK-fixture-review-0037 | Exact fixture independently passed; joined 14 controls passed on 1146. | 5e6823577 |
 | F-capture | Keep both published capture positives | Luna | Runtime fixture | merged | agt-F-capture-integrated-0052 | Actual b61: six original positives and no-CAS controls passed; exact reviewed blobs and static identities retained. | f9c305c8e |
-| F-persistence | Restart and disjoint-edit fixture | Luna | Helper digest | blocked:agent | agt-F-persistence-review-0028 | Nine passed, one failed. Legacy child word timing lacks an authenticated binding; original test stays unchanged. | fixture held |
-| F-helper-digest | Keep verified helper intent after restart | Sol | G2 | review | agt-F-helper-review-0107 | Author 14 numeric controls passed; three original neighbors remain red and are explicitly under review. | branch only |
+| F-persistence | Restart and disjoint-edit fixture | Luna | Helper 3b0 reviewed | doing | agt-F-helper-fixture-0114 | Repair supported public reader setup. Sequential-map attribution sent to Runtime; child-word timing remains visible. | fixture held |
+| F-helper-digest | Keep verified helper intent after restart | Sol | G2 | merging | agt-F-helper-digest-sol-0048 | Independent PASS 14 numeric controls; 42 neighbors pass and three separate failures remain visible. Own commit only. | branch only |
 | F-renderless | Renderer-free saves with readable show | Luna | SDK reader | doing | agt-F-renderless-current-port-0112 | Independent PASS 75 plus closure and six-field identity. Worker ports only three reviewed files onto current integration. | f502 held |
 | F-render-startup | Avoid unused transition-catalog scans | Luna | Source cause 0045 | review | agt-F-transition-final-review-0110 | Return passed 116; cumulative review checks both catalog integrity and error-precedence controls. | branch only |
 | F-external-roots | Trust admitted installed pack roots | Sol | Runtime source capture | blocked:runtime | agt-F-external-trust-sol-0104 | Sol kept product unchanged. Runtime-owned source authority is missing; peer 0110 requests precise existing input. | 3d86; 07b held |
@@ -36,6 +36,7 @@
 | F-authoring-publish-writer | Migrate the remaining publication helper | Sol | failover-ok; assigned Runtime | doing | rt-F-authoring-publish-writer-resume-0104 | Production publish_authoring_candidate calls a retired route after authentic fixture setup. Two Luna attempts are retained. | 20b fixture |
 | F-authoring-ABA | Classify same-alias capture ambiguity | Luna | failover-ok; assigned Viewing | doing | vw-F-authoring-ABA-cause-0101 | Current 8ea still refuses the second original case. Cause must be established before any guard or product change. | 20b fixture |
 | F-D32-render-wire | Six missing render results | Luna | failover-ok; assigned Viewing | ready | Viewing assignment 0108 | Classify producer and result-path custody first; no overlap with Agent startup or installed-pack fixes. | b61cebe8e |
+| F-helper-sequential | Attribute helper replay-map refusal | Luna requested | Runtime source classification | blocked:runtime | Peer 0114 requests assessment | One original contiguous-helper positive refuses map duplication or omission; no source cause is yet established. | 3b0 source |
 | A4 IMAGE | Actual App request and Runtime acceptance | Luna / App | App 22ef qualified | doing | agt-A4-image-claim-audit-0112 | Actual output reached Runtime; command identity refused. Canonical data and head stayed unchanged. Exact field audit is active. | 1146 / 22ef |
 | D31 | Dormant transcript capture subset | — | Follow-up funding | gated:D31 | No active author | Keep the 397-line test suite and implementation unchanged. Literal production reachability is NO. | unchanged |
 | V4 / D14 / D23 | Cut and deferred relational timing | — | Scope decisions | gated:H9 | No repair worker | Keep original tests unchanged, unskipped and visibly failing. No V4 or relational-timing completion claim. | unchanged |
