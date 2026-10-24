@@ -1,1 +1,1 @@
-app-lead 11:41Z: daemons up (uptime 1540m, no restart), 4 workers running, disk 10.3G free, wt 32 dirs; no blockers; P2/P3 not yet GO (P2 original 26414 all NOTRUN; stale-Agent-tree repair 1130 active)
+app-lead 12:12Z: daemons up (ensure-daemons uptime 1571m, machine up 26h, no restart), 4 workers running, disk 10.5G free, wt 34 dirs, scratch /tmp/w-* <=2MB, no blockers, no LEAD FETCH; P2 original actual11933 running since 11:55:51Z (same ID, no repeat), P3 caller first-return 1156 active; P2/P3 not yet GO
