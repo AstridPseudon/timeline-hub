@@ -34,6 +34,23 @@ Unknowns are deliberately finite: five lifecycle marker assertions, two review-o
 
 The newer eight are not backdated. No open-node PASS credit is assigned because the packet has no quiet-log/JUnit exact PASS list. No tests, probes, original bodies, full suite, install, product edit, schema/client/pin change, or v2 caller change was made. The JSON/CSV rows retain the actual Farm section line/byte offsets and the published extract scope for independent review.
 
+## CSV custody correction (F-farm96-csv-custody)
+
+The returned CSV at `856de6e3f2` omitted all 288 Farm tuple cells. Restore `agent_commit`, `agent_tree`, and `runtime_commit` for each of the 96 rows from the unchanged JSON `source_tuple`, cross-checked against each JSON `failed_farm_tuple` and original CSV at `cf0218cf5ef137b8e24fc2678a2de8a5de25ce1a`: Agent `9cd3dbe865a941c052bda04ae0d61306d18f8f26`, tree `57f0231da0d7904ecd8778169973d6384e0ae141`, Runtime `45c3a7f476e1c5f74fafc15956a58b9871eee21f`. These are the Farm failure identities; the separate qualified prior-proof scope columns retain their exact values, including authenticated Runtime `f3208b26b53c4d7053e5464eaa7c5e15b1505812` where applicable.
+
+The same serialization also omitted 96 `source_citation` cells. This additional explicit correction restores the original CSV strings, each independently reconstructed from JSON `source_citations` as `repo path:line (note)` joined by `; `. Both authoritative sources agree for all 96 rows. The complete before/after cell diff is exactly 288 tuple cells plus these 96 citation cells; all other CSV cells, column order, row order, proof references, and every JSON byte remain unchanged.
+
+Standalone stdlib validation checks every one of the 31 mapped CSV fields against JSON for all 96 rows, including tuple, citations, offsets, hashes, prior-proof scopes and optional values. Required cells have zero blanks. Optional blanks retain their JSON meaning: 15 unknown changed-source values are null, 81 rows have no finite missing fact because their classification is not unknown, and all 96 qualified rows have no prior-missing reason. Exactly one current docs challenge remains; neither its repair nor a future home tuple is qualified here.
+
+The published manifest still reports 288 failure sections but only 281 short-summary FAILED lines: the seven-line discrepancy remains unknown and receives no inferred node identities or PASS credit. The 187 ERROR sections are separate evidence and are not reclassified by this CSV repair. The raw Farm hash and byte count remain manifest-reported only; the raw log was not locally rehashed.
+
+Final data artifact SHA256 values after the CSV correction:
+
+| Artifact | SHA256 |
+|---|---|
+| `farm96-causes.json` (unchanged) | `9b9bc96bc6309c8b98d5afa8c3582a88d38d2895f97438f407e1c5044668b896` |
+| `farm96-causes.csv` | `d0dd5e799b1d18a6f051642e55077f650af068da6c5a4675b4e5e7c717913da4` |
+
 ## v2 contract limits
 
 This evidence-only packet does not prove implementation or production-caller adoption of v2. The required request remains the full shape: `api_version`, `project_id`, `timeline_id`, `base_revision_id`, `base_publication_id`, nonempty `commands`, `label`, `steps` (`id`, `label`, `intent`, `tags`, `command_ordinals`, `patch`, `reads`), `merge` (`fields|atomic`), declared reads, `dry_run`, `source`, `rationale`, `group_id`, and a stable idempotency key. Replies remain the full `accepted`/`merged` canonical document/head/revision/digests/records/effects/steps/dependencies/bindings/history/undo/attribution` forms, dry-run `would_status` with null receipt, and structured conflict/invalid forms with reason or code/path/hint/current head/suggested command. No v2 caller test or production-caller proof was run or claimed.
