@@ -161,25 +161,3 @@ Rule: a milestone exits only when every row tagged with it is DELETED (except or
 | surface | disposition | real replacement tests / raw proof |
 | `getClipSourceDuration` / `getClipTimelineDuration` and `getClipDurationInFrames` in App config utilities | **KEEP — CLOSED by the 2026-10-21 11:53 UTC ruling: legitimate domain/frame-policy adapter**. It admits malformed trim/hold-kind/speed and applies App minimum-frame policy; public 0.0.13 only has canonical whole-timeline duration and cannot replace this contract. | `src/tools/video-editor/lib/config-utils.test.ts` and `src/tools/video-editor/compositions/playerEvaluation.test.ts` (64-control authority run); source comparison and smallest prerequisite are `handoff-vw-m3-d08-retained-domain-duration-REPORT.md`. |
 | `playerEvaluation` / `VisualClip` host transition, custom-owner identity, missing-transition diagnostic, and host-timing paths | **KEEP — CLOSED by the 2026-10-21 11:53 UTC ruling: legitimate host adapters**, not duplicate evaluator math. Public plans are used where semantics match; host-owned/unsupported declarations stay on the host path. | `src/tools/video-editor/compositions/VisualClip.test.tsx`, `VisualClip.evaluation.test.tsx`, `playerEvaluation.test.ts`, and `TimelineRenderer.sequence.test.tsx`; exact call-map disposition is `handoff-vw-m3-d08-qualified-current-cut-REPORT.md`. |
-
-# P2 independent review — PASS
-
-Reviewed `fe62860405` against D82/D83. The one-file correction independently derives parent content digest/revision from raw pre-gesture data via pinned Runtime canonicalization. Whole-document equality, receipt identity, reload/undo, guarded closure, and protected fields remain strict.
-
-Exact source hashes:
-
-- Before: `f7dedc84f2a5ddfe855b8ce0fda2edc6b3d4bb71e3bbef030266596855f237b6`
-- After: `f2d63c703ba506b52dfd8bb0ebaee56ed3f1f58600650c36f09ceaa76a154d10`
-- Commit: `fe62860405`
-- Blob: `6e019176210be1ae7cc72b29f1eed0c062f496d2`
-
-Tests:
-
-- Actual node:test path: 2 passed.
-- Literal requested path: failed because the file is under `support/`.
-- TypeScript node/app/root: passed.
-- ESLint popup spec: passed.
-- `git diff --check`: passed.
-- Protected support oracle unchanged.
-
-No source changes made during review. No blockers. `DONE` and commit message were written. Next step: normal manager merge and existing-ledger PASS entry.

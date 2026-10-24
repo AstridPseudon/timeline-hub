@@ -1,0 +1,74 @@
+{
+  "task": "rt-P2-main-dependency-2250",
+  "profile": {
+    "script": "/home/user/work/wt/rt-P2-main-dependency-2250/scripts/testing/d66-plain-stack-profile.mjs",
+    "vite_config": "/home/user/work/wt/rt-P2-main-dependency-2250/scripts/testing/d66-vite-profile.config.ts",
+    "execution_root": "/home/user/work/wt/rt-P2-main-dependency-2250",
+    "node": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+    "node_modules": "/home/user/work/app/node_modules",
+    "composition_archive": "/home/user/work/wt/app-pin-bceb0350/vendor/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz",
+    "composition_archive_bytes": 73451,
+    "composition_archive_sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+    "composition_package": "@banodoco/timeline-composition@0.0.14",
+    "composition_package_file_count": 80,
+    "composition_package_bytes": 292690,
+    "composition_package_sha256": "6bbab9766c13dd450c08f3975e8f690bb718e2ba73f6d929ebd13ee4acb767cf",
+    "animations_generated_sha256": "578b89e8afbe37994949b02a64295f044fd439d3d1c4ec805e3a24b33b0f9043",
+    "resolved_export": "@banodoco/timeline-composition/animations.generated -> staged pinned package dist/animations.generated.js"
+  },
+  "pins": {
+    "app": "bceb0350326f22beefdde5c5ba275412bb09b419",
+    "agent": "039ff2c2187d02b723074a8a6dfcbc6a70544c19",
+    "runtime": "732c48c6f5a9441a65c61b24595d454a1cd3e180",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "source_preflight_ids": [
+    "app-pin-bceb0350-d73-parent-move-profile-2250-v2-bceb0350-preflight-1024225447-10421",
+    "app-pin-bceb0350-d73-popup-swap-profile-2250-v2-bceb0350-preflight-1024225517-2482",
+    "app-pin-bceb0350-d73-transition-none-single-profile-2250-v2-bceb0350-preflight-1024225547-7135",
+    "app-pin-bceb0350-d73-transition-none-bulk-profile-2250-v2-bceb0350-preflight-1024225626-16007"
+  ],
+  "normal_runs": {
+    "p2-parent-move": {
+      "id": "app-pin-bceb0350-d73-parent-move-profile-2250-v2-bceb0350-1024225659-8232",
+      "status": "fail",
+      "exit_code": 1,
+      "setup_and_readiness": "pass",
+      "original_body": "reached",
+      "failure": "existing parent-move body assertion expected legacy exact body; runtime request contained modern fields"
+    },
+    "p2-popup-swap": {
+      "id": "app-pin-bceb0350-d73-popup-swap-profile-2250-v2-bceb0350-1024230205-25174",
+      "status": "fail",
+      "exit_code": 1,
+      "setup_and_readiness": "pass",
+      "original_body": "reached",
+      "failure": "existing Runtime validation_error/invalid_records: provider executed a different command"
+    },
+    "p2-transition-none-single": {
+      "id": "app-pin-bceb0350-d73-transition-none-single-profile-2250-v2-bceb0350-1024230607-10376",
+      "status": "fail",
+      "exit_code": 1,
+      "setup_and_readiness": "pass",
+      "original_body": "reached",
+      "failure": "existing document-patch body assertion expected steps[0].label Edit timeline"
+    },
+    "p2-transition-none-bulk": {
+      "id": "app-pin-bceb0350-d73-transition-none-bulk-profile-2250-v2-bceb0350-1024230927-2773",
+      "status": "fail",
+      "exit_code": 1,
+      "setup_and_readiness": "pass",
+      "original_body": "reached",
+      "failure": "existing UI assertion saw transition selector __none__ instead of None"
+    }
+  },
+  "predecessor_setup_ids_retained": [27231, 12965, 7951, 6678],
+  "protected_test_sha256": {
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "tests/e2e/local/three-products.p1-chain.spec.ts": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17",
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "413d314d5788021bd54ae29e03813bfac91e279d5e038d6108cbb3ae18fa4133",
+    "tests/e2e/local/three-products.p2-popup.spec.ts": "4292d0b5928e1390c48d0e33876621a2e9b6c7e0616607a72f1b3fa3873d1de9",
+    "tests/e2e/local/three-products.p2-tour.spec.ts": "07fe3d84831e2e5977405811ceaa7a592614871e15ec108d812eb024ebed2f3c",
+    "tests/e2e/local/three-products.spec.ts": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b"
+  }
+}
