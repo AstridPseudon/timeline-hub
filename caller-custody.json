@@ -2,8 +2,8 @@
   "status": "PREPARED",
   "run_authorization": "NOT_GRANTED",
   "artifact": {
-    "branch": "tl/app-P2-D41-actual-custody-prep-1020",
-    "purpose": "prepare the existing qualified caller for one genuine D41 Agent333 P2 backport",
+    "branch": "tl/app-P2-final-caller-bind-1043",
+    "purpose": "prepare the P2-only caller for the authenticated pure-product join",
     "original_run": false,
     "caller_artifacts_only": ["caller-publication.py", "caller-custody.json"]
   },
@@ -25,12 +25,12 @@
       "installed_sha256": "1fe55269347c878c986263b93afedccd6a198952d61858794ce84f0304f01fd1"
     },
     "ap2-P3-gate5-h6-0348": {
-      "installed_sha256": "4ae8ae786cefd6be2aedb901a539fe81eb77a299ae4c246a8cd31c429440798d"
+      "installed_sha256": "23226c274dbdbb8750f009cb89d7920db40eb49513af906df7b4f76d9a7a3bf0"
     },
     "outside_rows": 247,
     "outside_bytes": 465609,
     "outside_sha256": "9acf76fafd09c0e4ecd89be6288402f8557dcb17c3a70f492ce9ae56d241e2e8",
-    "draft_sha256": "f883921b07137bb1331756f2f7ec418234def01efc352458da761d7cc038f776"
+    "draft_sha256": "PENDING_SOURCE_CHECKOUT_REVALIDATION"
   },
   "wire_fields": {
     "request": [
@@ -68,17 +68,26 @@
     "backend_execution": "not run"
   },
   "source_rederivation": {
-    "final_manifest": "optional until the final App pure-product join is independently qualified",
+    "final_manifest": "fixed terminal source identity in caller-publication.py; publication waits for the separate checkout",
     "dispatcher_authorization": {
       "worker": "required existing ORCH/workers/<worker>/meta identity",
-      "branch": "must be tl/<worker> and match the dispatched clean checkout",
+      "branch": "must be tl/<worker> in the dispatched proof-worker metadata",
       "base": "must match dispatcher meta base/base_sha",
-      "source_receipt": "required hashed immutable receipt carrying worker, branch, base, source, tree, parent, checkout",
-      "review": "manifest PASS is insufficient without matching dispatcher metadata and source receipt"
+      "source_receipt": "required hashed terminal worker report plus the exact normal checkout receipt",
+      "review": "terminal source PASS is insufficient for installation; caller review remains separate"
     },
-    "final_source": "PENDING",
-    "final_tree": "PENDING",
-    "final_parent": "PENDING",
+    "final_source": "d6ed8cbda122d810d5836ebfce3c56c10e76e9b4",
+    "final_tree": "542b772e6deed676b917f857708445b7d37a5aa8",
+    "final_parent": "cad736828b4890a4df5fff42a22bfa4851a0ecfc 01ea81395a9bb8f091262a9d8275407675188fe6",
+    "final_worker": "app-P2-final-pure-integrated-1036",
+    "final_branch": "tl/app-P2-final-pure-integrated-1036",
+    "final_checkout": "/home/user/work/wt/app-pin-d6ed8cbd",
+    "final_checkout_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-d6ed8cbda122d810d5836ebfce3c56c10e76e9b4",
+    "final_checkout_receipt_sha256": "f6837597c860406d39a5bab26580f398acbfd2337abea2ef204226db8360a182",
+    "final_base": "d6ed8cbda122d810d5836ebfce3c56c10e76e9b4",
+    "final_source_report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P2-final-pure-integrated-1036/report.md",
+    "final_source_report_sha256": "f3190adbe41e18e99705eceb6271325295fa5f9fff7c904aa51ef2c79c8079e1",
+    "terminal_source_status": "PASS; dispatched proof-worker worktree recycled, authenticated normal detached checkout retained; no installation claim made",
     "independent_review": "PENDING",
     "required_reviewed_paths": [
       "src/tools/video-editor/commands/media.ts",
@@ -98,10 +107,32 @@
       "tests/e2e/local/support/p2-semantic-oracle.test.mjs"
     ],
     "protected_hashes": {
-      "d50_tail_sha256": "PENDING_FINAL_SOURCE_REDERIVATION",
+      "d50_tail_sha256": "facd1609882327d233196bbe50180de92387c8282b9cd344d7b342711fb4cbc5",
       "known_reviewed_reference": "5ede6f374857a66a327da3cea0e85de0457a04267003f3f66e3d40ee4f380912",
-      "p3_gate5_sha256": "PENDING_FINAL_SOURCE_REDERIVATION",
-      "p2_body_hashes": "PENDING_FINAL_SOURCE_REDERIVATION"
+      "p3_gate5_sha256": "e6cf20b09e412df16f82265b0b855c426123e93b44861bd0b7770dcf82d751d4",
+      "p2_body_hashes": {
+        "tests/e2e/local/three-products.p2-tour.spec.ts": "2e8fc72bcf29870299a13aab50258a0528f727909125099b53a8aa13bc530a8d",
+        "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "5f82ec9064abf15e1beada27e3c7905556cbcf66a63bc0a843f685729cb9ae71",
+        "tests/e2e/local/three-products.p2-popup.spec.ts": "05370adc76b2e8506e812a2c7ce9bde4441868c7c6d97aac7bf0eb8845b64a84",
+        "tests/e2e/local/three-products.spec.ts": "26c1ae764013f8907ff7f3664dbcee016c88bc17a797f66800d012e618165d5b"
+      }
+    },
+    "reviewed_hashes": {
+      "src/tools/video-editor/commands/media.ts": "44fa022ab28d000753dcfb02686306a96889f7ea609cf871097aad84678c6c34",
+      "src/tools/video-editor/commands/media.test.ts": "f8e0389542867a2cafbd9d8c4dafa1a623d895a7fd25e800619a162350466b98",
+      "tests/e2e/local/three-products.spec.ts": "26c1ae764013f8907ff7f3664dbcee016c88bc17a797f66800d012e618165d5b",
+      "tests/e2e/local/support/gate5-reset-precondition.ts": "94568a9baec294cd6848ad37d01163c057c0c4fb0cea202eafe3838b493c71ab",
+      "tests/e2e/local/support/gate5-reset-precondition.test.mjs": "430d75012714c7c183f467bba533f1b2122fa834c9711395de935d8ebef02fee",
+      "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "5f82ec9064abf15e1beada27e3c7905556cbcf66a63bc0a843f685729cb9ae71",
+      "tests/e2e/local/three-products.p2-tour.spec.ts": "2e8fc72bcf29870299a13aab50258a0528f727909125099b53a8aa13bc530a8d",
+      "tests/e2e/local/three-products.p2-popup.spec.ts": "05370adc76b2e8506e812a2c7ce9bde4441868c7c6d97aac7bf0eb8845b64a84",
+      "tests/e2e/local/three-products.p1-chain.spec.ts": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17",
+      "tests/e2e/local/support/p2-document-oracle.ts": "1d622a43f77b05e8196783efa625fca0498e22f409426c1853097e320ecf83ca",
+      "tests/e2e/local/support/p2-document-oracle.test.mjs": "b3a6a3b993e7f2bd94ba724d0d6001235d21e7df5378e8a489f37c70105924ce",
+      "tests/e2e/local/support/p2-original-owner-ready.ts": "3a1b2785b2c7eabf7fa67ee635c51aa5238e68798048a22f2340c6cc75753f1c",
+      "tests/e2e/local/support/p2-original-owner-ready.test.mjs": "bdfe5bd805363503da8b16a52f190935efef31c39e9e1a6c2cb53fcbc31a3911",
+      "tests/e2e/local/support/p2-semantic-oracle.ts": "460bd9110ffd31621c70eaba424ee4faf5cd4498e913fe9afa5aacee972105e4",
+      "tests/e2e/local/support/p2-semantic-oracle.test.mjs": "287aeb8671d1a626b55bba84d0a9a5219b4105a009ef4ec844e69cf3d2eb04f5"
     },
     "no_obsolete_hash_reuse": true
   },
@@ -214,12 +245,8 @@
     "wrong_artifact_result": "preflight-only exit 2; originals NOTRUN; immutable and never relabeled"
   },
   "missing_final_inputs": [
-    "actual final reviewed joined source SHA/tree/parent",
-    "source fingerprints and spec/body hashes rederived from that tree",
-    "independent review PASS for the joined source",
-    "final App pure-product joined source/tree/parent and rederived source/body checksums",
-    "separate read-only pure final-integrated proof-worker target",
-    "normal-service single-parent same-tree snapshot authorization",
+    "independent review PASS for the caller candidate",
+    "separate worker-only installation",
     "integrated P2 proof and actual daemon identity"
   ]
 }
