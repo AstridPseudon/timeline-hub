@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T04:17:08Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 0m -->
+<!-- app2 | 2026-10-24T04:19:16Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 1m -->
 # app2 board, 2026-10-24T04:10Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -17,7 +17,7 @@
 | P2-parent | Original parent move response wait | App A2 | Causal reproduction and qualified fix | blocked:app | Parent0352; transition0401 | Mirrored move passes offline; child and top-level-only forms refuse before append. Follow-up owns actual transition comparison; cause unknown. | Proof804 |
 | P2-static | Five unrun original cases | App Luna | Independent0357 complete | merged | app-P2-five-review-0357 | Both transition removals and child placement have static gaps. Asset and swap pass static checks only. All five originals remain unrun. | Report only |
 | P2-placement | Single occurrence media placement | App Luna; independent review | Source correction and qualification | blocked:app | app-P2-single-placement-0410 | Source owner assigned to preserve original occurrence.add-media expectation. No spec or command oracle relaxation. | Source pending |
-| P2-transition | Single and bulk transition removal | App Sol | Faithful positive controls and source fix | blocked:app | app-P2-parent-transition-sol-0401 | Missing gesture basis reaches child-closure refusal. Shared files stay with wrapper0349 until its committed join. Original assertions retained. | Source pending |
+| P2-transition | Single and bulk transition removal | App Sol | Faithful positive controls and source fix | blocked:app | app-P2-parent-transition-resume-sol-0411 | Missing gesture basis reaches child-closure refusal. Shared files stay with wrapper0349 until its committed join. Original assertions retained. | Source pending |
 | P2-custody | Actual18800 lifecycle file | Proof Luna | Complete finite audit | merged | ap2-P2-18800-direct-custody-0032 | PASS.10,665 bytes and six actual records; security, schema, projection and writer checks passed. Cleanup trigger remains unknown. | Report only |
 | P2-popup-seed | Declare both created owners | Luna; independent review | Complete | merged | Author1934; review1940 | Four fixture lines;102 plus2 tests, three types, lint and collection passed. | 17324 to93cdd |
 | P3 | Original Gate5 journey | App service; Proof Luna | Three App fixes and reviewed D42 pin | blocked:runtime | App3362; Proof0320 and0325 | NO-GO. Exit2,147 seconds. Native seed and history passed; outbox readiness failed. Original Gate5 was not run. | App804; Agent079; Runtime37eb |
@@ -36,7 +36,7 @@ Next ready: Consume popup reviewer0418 immediately, then normal remote merge on 
 
 Popup0408 ask consumed directly from normal hub before inbox delivery. Author0413 completed on current App integration; independent0418 queued immediately; no competing App spec author. Only rendered target lookups may change; genuine occurrence ID has no invented literal prefix. Independent review follows before normal own-only remote merge.
 
-Current authority: INBOX through627518 bytes, including03:50 instruction, is consumed. The next pair waits for all three App gesture fixes plus the D42 pin. App service remains the sole runner; Proof owns verdicts. No repeat or fallback pair is submitted. [Release prerequisites](../../design/peer-app2-to-app-runtime-orchestrator-20261024T0352-release-prerequisites.md).
+Current authority: INBOX through630666 bytes, including03:50 instruction, is consumed. The next pair waits for all three App gesture fixes plus the D42 pin. App service remains the sole runner; Proof owns verdicts. No repeat or fallback pair is submitted. [Release prerequisites](../../design/peer-app2-to-app-runtime-orchestrator-20261024T0352-release-prerequisites.md).
 
 Current evidence: [Original D41 review0320](../../design/handoff-ap2-P2-P3-D41-direct-verdict-0320.md), [cumulative custody0325](../../design/handoff-ap2-P2-P3-D41-custody-return-0325.md), [producer0307](../../design/app-P2-P3-D41-result-handoff-0307.md), [corrected cause0309](../../design/app-readiness-D41-cause-review-0309.md), [gesture review0327](../../design/app-P2-gesture-review-0327.md). Earlier failures retain their original outcomes. P2 readiness and P3 readiness have different outcomes and must stay separate.
 
