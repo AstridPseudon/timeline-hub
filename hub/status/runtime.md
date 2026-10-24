@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T15:13:51Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 7 | status age 2m -->
-# runtime board, 2026-10-24T15:10:59Z
+<!-- main | 2026-10-24T15:16:56Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 0m -->
+# runtime board, 2026-10-24T15:16:12Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -85,8 +85,8 @@
 | U1d-core-review | Review core and upstream union | Luna | True two-parent merge | merged | Review 1346 PASS | Core authority and daemon union passed. No new normalized Ruff/Pyright diagnostics; existing 2 strict xfail policy exits disclosed. | f69ad5813 |
 | U1d-producer-handback | Return fixture and producer inventory | Luna | Actual e68 home | merged | rt-U1d-handoff-1401 PASS | Wire and 15 clients exact; manifest adds genuine visual fixture. [Handback](../../design/rt-U1d-handoff-1401.md) | e68cf2316 |
 | U1d-consumer-rebind | Rebind producer identity in consumers | Agent / App Luna | Normal vendor checks passed | merged | Agent custody1410; App adoption1404 | Agent5492 and Appbe98 adopt e68 provenance. Canonical15/14 bytes unchanged. D61 successor adoption remains separate. | Agent5492 / Appbe98 |
-| R-D62-integrated-proof | Prepare exact central HTTP proof | Luna | Qualified producer and normal merge | doing | rt-R-D62-proof-prepare-1512 | Preparation only; no body or source change. Exact integration proof follows security PASS and normal merge. | Pending |
-| R-D62-joined-producer | Join exact mode, forward auth and wire | Luna | Three committed source outputs | doing | rt-R-D62-joined-producer-1503 | Exact source-blob join on reviewed wire6e8; no semantic rewrite. Consumer9460 source available for legacy control; original credit stays Agent-owned. | Pending |
+| R-D62-integrated-proof | Prepare exact central HTTP proof | Luna | Qualified producer and normal merge | doing | Preparation1512; return1517 | First packet has source-check and output-custody defects; bounded correction active, no body released. | Evidence only |
+| R-D62-joined-producer | Join mode, forward auth and wire | Luna | Exact committed sources | review | Author1503; security1511 | e02f retains411PASS/1 old-consumerFAIL; exact9460 synthetic legacy/v2PASS. Full paired union and security pending. | e02f3e3d9 |
 | R-recorder-abi-authority | Persist accepted recorder mode under D62 | HARD Sol / Luna | Joined source and independent security | review | Author1450; join1503 | 363 PASS; one retained Agent legacy-fork refusal needs qualified consumer input. Existing290 controls pass; zero new static diagnostics. | 8825219b4 held |
 | R-forward-created-authority | Authenticate omitted forward allocation claims | HARD Sol / Luna | Joined source and independent security | review | Author1450; join1503 | 323 PASS; explicit claims retained. Broader forged-native-write probe remains visibly failed under D62 producer-trust scope. | 943365586 held |
 | R0-D61-history-wire | Generate approved optional history ABI field | Luna | Joined authenticated producer | gated:producer | Author1447; independent1454 PASS | Source6e8:148 retained positives plus16 corrected recorded-response PASS; no new static diagnostics. [Review](../../design/rt-R0-D61-wire-review-1454.md) | 6e8ae0142 |
@@ -145,7 +145,7 @@ Historical pinned proof (D56 retires further pinned runs): P1 remains historical
 Provider completion: Runtime 0915 and independent 0923 retain original cause, hook firing, durable acceptance and request correlation UNKNOWN. Nine controls passed; temporary JUnit loss remains disclosed. Original 20732/11466 remain failed and all 59 predicates unchanged. Viewing capture source 30cf passed independent 19; Agent owns home and runner wiring. No new Runtime source or original body is requested. [Source review](../../design/runtime-provider-completion-review-0923.md).
 
 KIT CHANGE: delivery-build f25dfab1 installed and qualified. Final service3309e33 independent1310 SOURCE PASS; actual lock,15 mappings and candidate guards qualified. Install waits D59 tuple.
-Blockers: Runtime — committed producer8825, forward auth9433 and reviewed wire6e8 now join in Luna1503. One cumulative security review, normal integration and central HTTP proof remain.
+Blockers: Runtime — exact joined producere02f committed; independent security1511 and full paired union pending. Normal merge, consumer adoption and current central HTTP proof follow PASS.
 Blockers: D61 consumers — old e68 rebind complete on Agent5492/Appbe98. New additive history producer needs Runtime source/security PASS before normal D39 adoption; App current cycles continue.
 Blockers: Final delivery — D59 cut requires every active lane0core/0regressions plus current P2/P3 PASS, then required final proofs and D51 live-main refresh.
 Blockers: App — current12541/1689 stop at missing external launch inputs before bodies. App Sol1437 and independent wholepath1437 own actual service-prefix repair; verdict1438 retains NOTRUN.
@@ -181,3 +181,5 @@ Pass 2026-10-24T15:00:00Z: Wire independent1454 PASS on exact6e8; earlier148 sam
 Pass 2026-10-24T15:05:32Z: Both source authors finished; exact finals published. Luna1503 mechanically joins reviewed wire plus exact two source blobs and task tests, then one fresh security review. No live Sol or ready unassigned source work. App full8158 remains current checkpoint; current gates remain launch-only NOTRUN.
 
 Pass 2026-10-24T15:10:59Z: PLAN, common rules, current header D62/D63 and peer boards consumed. Join1503 is active in static checks; independent security brief1511 ready for its committed head. Independent proof preparation1512 dispatched. No new ready source row waiting. Current App8158 remains unique; current P2/P3 are preflight FAIL with all originals NOTRUN. No new clean finished Runtime tree exists; historical refused cleanup targets stay stopped.
+
+Pass 2026-10-24T15:16:12Z: Joined sourcee02f finished; dispatched independent Luna security1511 immediately. Preserved411PASS/1 old-consumerFAIL, exact9460 synthetic ABI1/2PASS and all source/blob/canonical checks. Preparation1512 first-return1517 corrects exact Runtime lock authority, request/wait mechanics and unique XML custody; no body rerun or live registry mutation.
