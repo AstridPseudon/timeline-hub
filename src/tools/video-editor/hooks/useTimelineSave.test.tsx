@@ -15,7 +15,7 @@ import { VideoEditorRuntimeProvider } from '../contexts/VideoEditorRuntimeContex
 import { createTimelineStore, TimelineStoreProvider } from './timelineStore';
 import { ShotTimelineMediaControls } from '@/tools/travel-between-images/components/ShotTimelineMediaControls.tsx';
 import { createInteractionState, type InteractionStateRef } from '../lib/interaction-state';
-import { buildTimelineData, configToRows, type TimelineData } from '../lib/timeline-data';
+import { buildTimelineData, buildTimelineDataWithResolver, configToRows, type TimelineData } from '../lib/timeline-data';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import { getConfigSignature, getStableConfigSignature } from '../lib/config-utils';
 import { createDefaultTimelineConfig } from '../lib/defaults';
@@ -206,6 +206,11 @@ describe('useTimelineSave — recovered draft durability', () => {
       const scope = { realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-1' };
       const head = { projectId: scope.projectId, timelineId: scope.timelineId, headRevisionId: 'r0', headPublicationId: 'p0' };
       const config = createDefaultTimelineConfig();
+      if (mode === 'image') {
+        // Same untouched canonical track shape as the historical IMAGE input.
+        config.tracks = [{ id: 'V1', kind: 'visual', role: 'output', ...{ opaque: [null, false] } },
+          { id: 'A1', kind: 'audio', ...{ label: null, app: null } }];
+      }
       const oldMedia = { asset: 'old-video', generation_id: 'generation-old', variant_id: 'variant-old',
         object_id: `sha256:${'c'.repeat(64)}`, catalog_digest: `sha256:${'d'.repeat(64)}` };
       const registry: AssetRegistry = { assets: mode === 'video' ? { 'old-video': { media_id: oldMedia.object_id, type: 'video',
@@ -223,10 +228,14 @@ describe('useTimelineSave — recovered draft durability', () => {
       }
       const initialReply = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' }, { timelineId: scope.timelineId });
       const document = initialReply.data.canonical_document;
-      document.parent_revision.payload = { config: JSON.parse(JSON.stringify(config)), clips: JSON.parse(JSON.stringify(config.clips)), registry, occurrences: [] };
+      document.parent_revision.payload = { config: JSON.parse(JSON.stringify(config)), clips: JSON.parse(JSON.stringify(config.clips)), registry, occurrences: [],
+        metadata: { opaque: [null, false], absent: null } };
       document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
+      const originalDocument = JSON.stringify(document);
       const initial = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
-      const data = await buildTimelineData(config, registry, undefined, 1, undefined, head);
+      const data = mode === 'image'
+        ? await buildTimelineDataWithResolver(config, registry, { resolveAssetUrl: file => file }, 1, scope.timelineId, undefined, head)
+        : await buildTimelineData(config, registry, undefined, 1, undefined, head);
       const media = { asset: 'variant-new', generation_id: 'generation-new', variant_id: 'variant-new',
         object_id: `sha256:${'a'.repeat(64)}`, catalog_digest: `sha256:${'b'.repeat(64)}` };
       const entry = { file: `runtime-import.${mode === 'video' ? 'mp4' : 'png'}`, type: `${mode}/${mode === 'video' ? 'mp4' : 'png'}`, media_id: media.object_id };
@@ -246,6 +255,17 @@ describe('useTimelineSave — recovered draft durability', () => {
         posts.push({ body: new TextDecoder().decode(body), key: headers['Idempotency-Key'] });
         const [durable] = await createCommitOutbox().list(scope);
         expect(durable.pending?.request).toMatchObject(posts.at(-1)!);
+        if (posts.length === 1) expect(durable.intents[0].payload).toHaveProperty('before', document);
+        for (const intent of durable.intents) {
+          expect(intent.payload).toMatchObject({ before: { parent_revision: { payload: {
+            config: { tracks: config.tracks }, metadata: document.parent_revision.payload.metadata,
+          } } }, after: { parent_revision: { payload: {
+            config: { tracks: config.tracks }, metadata: document.parent_revision.payload.metadata,
+          } } } });
+          expect(intent.payload).toHaveProperty('before.parent_revision.payload.config.tracks', config.tracks);
+          expect(intent.payload).toHaveProperty('after.parent_revision.payload.config.tracks', config.tracks);
+        }
+        expect(JSON.stringify(document)).toBe(originalDocument);
         if (outcome === 'invalid') return { status: 422, headers: {}, body: json({ code: 'invalid', message: 'Media selection changed',
           details: { status: 'invalid', code: 'selection_changed', path: ['commands', '0', 'args', 'old_media'], hint: 'Reload media', suggested_command: 'timeline show' } }) };
         if (outcome === 'conflict' || (outcome === 'dependent conflict' && posts.length === 2)) return { status: 409, headers: {}, body: json({ code: 'conflict',
@@ -257,6 +277,8 @@ describe('useTimelineSave — recovered draft durability', () => {
           const canonical = landed.data.canonical_document;
           const local = harness!.hook.result.current.dataRef.current!;
           const canonicalConfig = JSON.parse(JSON.stringify(local.config)) as typeof config;
+          // Fixture replies preserve canonical fields the display does not model.
+          canonicalConfig.tracks = structuredClone(config.tracks);
           const born = canonicalConfig.clips.find(clip => clip.asset !== oldMedia.asset)!;
           born.at = 2.25;
           canonical.parent_revision.payload = { config: canonicalConfig, clips: canonicalConfig.clips,
@@ -286,6 +308,13 @@ describe('useTimelineSave — recovered draft durability', () => {
           } });
         await vi.waitFor(() => expect(harness!.hook.result.current.localSaveState?.ownerId).toBeTruthy());
         await settleInitialRecoveryCheck();
+        if (mode === 'image') {
+          expect(data.config.tracks[0]).not.toHaveProperty('opaque');
+          expect(data.resolvedConfig.tracks[0]).not.toHaveProperty('opaque');
+          expect(config.tracks[0]).toHaveProperty('opaque', [null, false]);
+          expect(config.tracks[0]).not.toHaveProperty('label');
+          expect(config.tracks[1]).toMatchObject({ label: null, app: null });
+        }
         await act(async () => {
           fireEvent.click(screen.getByRole('button', { name: mode === 'video' ? 'Add video after selected clip' : 'Add media' }));
           fireEvent.change(screen.getByLabelText('Choose media for shot timeline'), {
@@ -333,6 +362,7 @@ describe('useTimelineSave — recovered draft durability', () => {
         });
         const [stored] = await createCommitOutbox().list(scope);
         const request = JSON.parse(posts[0].body) as CommitRequest;
+        expect(JSON.stringify(document)).toBe(originalDocument);
         if (mode === 'video') {
           expect(request).toMatchObject({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
             base_revision_id: 'r0', base_publication_id: 'p0', label: 'Add video after clip', merge: 'fields', dry_run: false, source: { via: 'app' },
@@ -369,6 +399,7 @@ describe('useTimelineSave — recovered draft durability', () => {
                 state: { state: 'present', value: mode === 'video' ? 2 : 1.2667 } },
             ]) });
           expect(suffix.steps![0].patch).toEqual(suffix.commands[0].args.changes);
+          expect(JSON.stringify(suffix.commands[0].args.changes)).not.toContain('tracks');
           expect(stored.intents).toHaveLength(1);
           expect(stored.intents[0].basis).toEqual({ after: stored.accepted!.intentId });
           expect(stored.pending?.outcome).toMatchObject({ kind: 'rejected', error: { details: { reason: 'dependency_changed' } } });
@@ -405,6 +436,23 @@ describe('useTimelineSave — recovered draft durability', () => {
         expect(settled.intents).toEqual([]);
         expect(settled.accepted?.value).toMatchObject({ response: landed, receipt: landed!.receipt,
           canonicalDocument: landed!.data.canonical_document });
+        expect(landed!.data.canonical_document.parent_revision.payload.config).toMatchObject({ tracks: config.tracks });
+        if (mode === 'image' && outcome === 'accepted') {
+          const editing = renderHook(() => useClipEditing({ dataRef: harness!.hook.result.current.dataRef,
+            resolvedConfig: harness!.hook.result.current.dataRef.current!.resolvedConfig,
+            selectedClipId: bornId, selectedTrack: null, currentTime: 0,
+            selectClip: vi.fn(), setSelectedTrackId: vi.fn(), applyEdit: harness!.hook.result.current.applyEdit }));
+          await act(async () => { editing.result.current.handleSelectedClipChange({ hold: 1 }); });
+          editing.unmount();
+          const [trimmed] = await createCommitOutbox().list(scope);
+          expect(trimmed.intents).toHaveLength(1);
+          expect(trimmed.intents[0].payload).toHaveProperty('before', landed!.data.canonical_document);
+          expect(trimmed.intents[0].payload).toHaveProperty('after.parent_revision.payload.config.tracks', config.tracks);
+          expect(trimmed.intents[0].payload).toMatchObject({ documentIntent: { changes: [
+            { op: 'set', path: ['clips', `id:${bornId}`, 'at'], value: 2.2667 },
+            { op: 'set', path: ['clips', `id:${bornId}`, 'hold'], value: 1 },
+          ] } });
+        }
       } finally {
         harness?.hook.unmount();
         if (descriptor) Object.defineProperty(navigator, 'locks', descriptor);

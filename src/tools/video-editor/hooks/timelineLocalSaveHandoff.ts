@@ -5,7 +5,7 @@ import { canonicalJsonStringify, type TimelineBundleEnvelope } from '../data/typ
 import { authoringBundleFromDocument, type AuthoringBundle } from '../commands/authoringBundle.ts';
 import { TimelineVersionConflictError, type DataProvider, type TimelineCommandBasis, type TimelineHeadRevision, type TimelineSaveReceipt } from '../data/DataProvider.ts';
 import type { AssetRegistry, TimelineConfig } from '../types/index.ts';
-import { canonicalizeTimelinePair } from '../lib/timeline-domain.ts';
+import { canonicalizeTimelinePair, projectTimelineTracksForDisplay } from '../lib/timeline-domain.ts';
 import { withDefaultTimelineOutput } from '../lib/defaults.ts';
 import { markTimelineSaveRejection, type TimelineSaveRejectionCode } from '../lib/timeline-diagnostics.ts';
 import type { PlacePreparedMediaCommand } from '../commands/media.ts';
@@ -77,7 +77,8 @@ function checkSource(initial: TimelineCommandBasis, source: TimelineSaveSource) 
   // Accept the original raw view or main's actual load/build view. No arbitrary
   // display snapshot can establish an authored entity binding.
   if ((!same(authoredJson(source.config), authoredJson(loaded))
-    && !same(authoredJson(source.config), authoredJson(projected.config)))
+    && !same(authoredJson(source.config), authoredJson(projected.config))
+    && !same(authoredJson(source.config), authoredJson(projectTimelineTracksForDisplay(projected.config))))
     || !same(authoredJson(source.registry), authoredJson(projected.registry))) {
     refuse('upstream source differs from the verified authored parent', 'source-parent-mismatch');
   }

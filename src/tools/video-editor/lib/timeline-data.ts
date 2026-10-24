@@ -35,6 +35,7 @@ import type {
 import {
   canonicalizeTimelinePair,
   cloneTimelineExtras,
+  projectTimelineTracksForDisplay,
   serializeTimelineConfigSnapshot,
 } from '@/tools/video-editor/lib/timeline-domain.ts';
 import { buildAssetReferenceMap } from '@/tools/video-editor/lib/asset-registry.ts';
@@ -528,10 +529,11 @@ export const buildTimelineData = async (
   transcriptReferences?: TranscriptReferences,
 ): Promise<TimelineData> => {
   const canonical = canonicalizeTimelinePair(config, registry);
-  const resolvedConfig = await resolveTimelineConfig(canonical.config, canonical.registry, urlResolver);
+  const displayConfig = projectTimelineTracksForDisplay(canonical.config);
+  const resolvedConfig = await resolveTimelineConfig(displayConfig, canonical.registry, urlResolver);
 
   return assembleTimelineData({
-    config: canonical.config,
+    config: displayConfig,
     configVersion,
     head,
     registry: canonical.registry,
@@ -568,6 +570,7 @@ export const buildTimelineDataWithResolver = async (
   transcriptReferences?: TranscriptReferences,
 ): Promise<TimelineData> => {
   const canonical = canonicalizeTimelinePair(config, registry);
+  const displayConfig = projectTimelineTracksForDisplay(canonical.config);
 
   const urlResolver: UrlResolver = (file, entry, assetId) => {
     const resolutionToken = file || entry?.media_id || assetId || '';
@@ -577,7 +580,7 @@ export const buildTimelineDataWithResolver = async (
     return resolver.resolveAssetUrl(resolutionToken);
   };
 
-  const resolvedConfig = await resolveTimelineConfig(canonical.config, canonical.registry, urlResolver);
+  const resolvedConfig = await resolveTimelineConfig(displayConfig, canonical.registry, urlResolver);
 
   // Surface missing-asset references through the resolver lifecycle so
   // the host can render a tombstone / retry path.
@@ -603,7 +606,7 @@ export const buildTimelineDataWithResolver = async (
   }
 
   return assembleTimelineData({
-    config: canonical.config,
+    config: displayConfig,
     configVersion,
     head,
     registry: canonical.registry,
