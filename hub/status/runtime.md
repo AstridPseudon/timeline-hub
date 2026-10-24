@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T13:30:55Z | dispatcher heartbeat 1s | live 3 (sol 0, luna 3, other 0) | busy30 7 | status age 0m -->
-# runtime board, 2026-10-24T13:24:19Z
+<!-- main | 2026-10-24T13:33:51Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 2m -->
+# runtime board, 2026-10-24T13:31:54Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -132,17 +132,18 @@ Historical pinned proof (D56 retires further pinned runs): P1 remains historical
 Provider completion: Runtime 0915 and independent 0923 retain original cause, hook firing, durable acceptance and request correlation UNKNOWN. Nine controls passed; temporary JUnit loss remains disclosed. Original 20732/11466 remain failed and all 59 predicates unchanged. Viewing capture source 30cf passed independent 19; Agent owns home and runner wiring. No new Runtime source or original body is requested. [Source review](../../design/runtime-provider-completion-review-0923.md).
 
 KIT CHANGE: delivery-build f25dfab1 installed and qualified. Final service3309e33 independent1310 SOURCE PASS; actual lock,15 mappings and candidate guards qualified. Install waits D59 tuple.
+Blockers: D60 — Runtime U1d joins final upstreamd4f496 first; exact contract delta determines consumer regeneration.
 Blockers: Final delivery — D59 cut requires every active lane0core/0regressions plus current P2/P3 PASS, then required final proofs and D51 live-main refresh.
 Blockers: App — existing Agent service-input handback1305 is complete. Actual App-host current caller/bench qualification remains App-owned; installed-child identity stays UNKNOWN, no new provision inferred.
 Blockers: Agent — two nullmirror positives remain red before home. Independent1258 and exact named1304 qualify both retainedredo nodes on held e5fa only; current-home proof remains owed.
-Next ready: U1d-final dispatched; perform manager merge-forward when worktree exists. Contract delta first, then review/merge; D39 regeneration if wire changes. Main P5 and Composition await D59 cut; reviewed service3309e33 can be installed with the exact cut tuple. Agent owns remaining source/home proof.
+Next ready: Join exact visual source/test blobs as workers finish; independent custody/protected review then merge U1d. Contract or OpenAPI delta triggers D39 regeneration before consumer handback.
 
 Later: D47 memo and proof-pin work stay post-delivery; nine state attacks open. D34 broader cleanup held above8.5GB or until delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 cut; D14/D23 deferred unchanged. D52 removals require caller proof; live tests stay strict.
 
 Disk: About8.5GB free, above main8GB heavy floor. Five old v1 trees refused recycle as dirty; no forced removal. Sweep3 removed0. Compaction packed0 and compressed0 logs; no refused target retried.
 
-Pass 2026-10-24T13:24:19Z: Independent service1310 SOURCE PASS consumed and published. Source candidate and durable launchers qualified; no live installation or real-body credit. Agent nullmirror/home and App current gates remain cut blockers. Existing finished Runtime worktrees are already recycled; no refused v1 target retried.
+Pass 2026-10-24T13:31:54Z: D60 received and acted on immediately. Exactd4f496 merge-forward has5conflicts. Main Luna owns daemon/manifest/join; two parallel Luna own visual source/policy and protected test union. Early delta source inventory active. Sweep3freed0; no deniedtarget retried.
 
-live 0 / cap 4; ready-undispatched 0. Dispatcher header: <!-- main | 2026-10-24T13:22:06Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 2m -->
+live 3 / cap 4; ready-undispatched 0. Dispatcher header: <!-- main | 2026-10-24T13:30:55Z | dispatcher heartbeat 1s | live 3 (sol 0, luna 3, other 0) | busy30 7 | status age 0m -->
 
-Sol exception: No live Sol worker. Completed1305 had a HARD cross-repo custody reason after failed Luna attempts; independent1310 is Luna.
+Sol exception: All three live Runtime workers are Luna. Semantic core conflict would justify HARD Sol only if a precise nonmechanical conflict is established.
