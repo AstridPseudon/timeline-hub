@@ -452,7 +452,12 @@ class CommitPatch:
             stages = self.inverse_stages[ordinal] = []
             # Equal historical bytes must not replace the authenticated input revision.
             before = self.closures[ordinal]
-            for _, bundle in ctx.inverse_stages:
+            for index, (_, bundle) in enumerate(ctx.inverse_stages):
+                # The last native stage precedes retained-input reconciliation.
+                # Project its completed boundary, including the authenticated
+                # manifest used by acceptance to reuse a historical parent pin.
+                if index == len(ctx.inverse_stages) - 1:
+                    bundle = ctx.state.bundle
                 after = inverse_closure(bundle, ctx.inverse_sources)
                 stages.append((before, after))
                 before = after
@@ -469,7 +474,7 @@ class CommitPatch:
                 binding['boundary'] = {**self.boundaries[ordinal], **binding['boundary']}
         if ordinal == step['command_ordinals'][-1]:
             self.outputs[step['id']] = copy.deepcopy(ctx.state.bundle)
-        if self.v2 and len(self.calls) > 1:
+        if self.v2 and (len(self.calls) > 1 or ordinal in self.inverse_stages):
             self.execution_boundaries.append({
                 'boundary': copy.deepcopy(self.boundaries[ordinal]),
                 'input': copy.deepcopy(self.closures[ordinal].document),
@@ -590,11 +595,15 @@ class CommitPatch:
                         record['bindings'].append(binding)
             # Synthesized legacy steps need the same continuation authority as
             # explicit v2 steps when their native edits materialize child roots.
+            # Input materializations describe the step's actual endpoints.
+            # Transient inverse roots belong to their authenticated inverse.stage
+            # effect ranges, not to the outer command's input closure.
             segments = [(first, second) for index in step['command_ordinals']
                         for first, second in self.inverse_stages.get(index, [])]
-            for first, second in segments or [(before, after)]:
-                self.materializations(record, first, second, self.boundaries[ordinal], step,
-                    [write for index in step['command_ordinals'] for write in plan.records[index]['writes']])
+            if not self.v2 or not segments:
+                for first, second in segments or [(before, after)]:
+                    self.materializations(record, first, second, self.boundaries[ordinal], step,
+                        [write for index in step['command_ordinals'] for write in plan.records[index]['writes']])
         if self.merge_mode == 'atomic':
             # Effects and materializations can touch roots beyond the authored writes.
             # Build the complete batch union only after their bindings are recorded.
@@ -802,7 +811,7 @@ def rebase_patch(plan, entries, head_bundle, *, load_boundary):
         try:
             for old_images, old_rows, new_images, new_rows, records, step in _managed_boundaries(entry, boundary, output):
                 _materialization_sites(entry, old_images, old_rows, new_images, new_rows, records, step,
-                                       transitions, missing, sites[site_start:])
+                                       transitions, missing, sites[site_start:], include_inverse_stages=True)
         except (KeyError, TypeError, IndexError) as exc:
             raise CommandError('incomplete materialization history', kind='history_unavailable') from exc
 
@@ -911,7 +920,7 @@ def rebase_patch(plan, entries, head_bundle, *, load_boundary):
 
 
 def _materialization_sites(entry, old_images, old_rows, new_images, new_rows, records, step,
-                           transitions, missing, sites):
+                           transitions, missing, sites, *, include_inverse_stages=False):
     before_rows = {row['occurrence_id']: row for row in old_rows}
     after_rows = {row['occurrence_id']: row for row in new_rows}
     for identity in before_rows.keys() & after_rows.keys():
@@ -932,6 +941,40 @@ def _materialization_sites(entry, old_images, old_rows, new_images, new_rows, re
                 # Pin turnover proves reachability, not continuation. Require the
                 # accepted source binding and both exact managed-edge boundaries.
                 proven = False
+                stage = step.get('_inverse_stage') if step is not None else None
+                if not any(binding.get('key') == 'commit.effect' for record in records for binding in record['bindings']):
+                    stage = None  # Legacy native stages retain their original input proofs.
+                if stage is not None:
+                    # validate_nested_history authenticates this native/effect
+                    # partition against its source publication before this scan.
+                    # Transient stage images are effect-bound, never outer-input
+                    # materializations. Require both exact physical endpoints.
+                    start, end = stage['boundary']['effect_range']
+                    for ref, images, rows, side in ((old, old_images, old_rows, 'before'),
+                                                    (new, new_images, new_rows, 'after')):
+                        expected_owners = ['occurrence:' + row['occurrence_id'] + '/shot' for row in rows
+                            if ref == 'shot-revision:' + row['shot_revision_id'] or ref == 'internal-revision:'
+                            + images['shot-revision:' + row['shot_revision_id']]['internal_timeline_revision_id']]
+                        pins = [binding for record in records for binding in record['bindings']
+                                if binding.get('key') == 'commit.effect' and binding.get('physical_ref') == ref
+                                and binding.get('path') == [] and start <= binding.get('effect_ordinal', -1) < end
+                                and binding.get('boundary', {}).get('side') == side]
+                        if not pins or any(
+                                binding.get('ref') != ref or binding.get('revision_id') != images[ref]['revision_id']
+                                or binding.get('content_digest') != images[ref]['content_digest']
+                                or binding.get('policy') != 'fixed' or binding.get('dependencies') != []
+                                or binding.get('owners') != expected_owners
+                                or binding.get('step_id') != step['id']
+                                or binding.get('boundary') != {**{
+                                    key: entry['receipt']['result'][key]
+                                    for key in ('base_revision_id', 'base_publication_id')},
+                                    'evaluated_head': entry['previous'], 'step_id': step['id'],
+                                    'command_ordinal': step['command_ordinals'][-1],
+                                    'phase': 'effect', 'side': side}
+                                for binding in pins):
+                            raise CommandError('inverse stage image differs from authenticated effects',
+                                               kind='history_unavailable', ref=ref)
+                    proven = True
                 for record in records:
                     for binding in record['bindings']:
                         if (binding.get('key') != 'commit.materialization'
@@ -961,7 +1004,10 @@ def _materialization_sites(entry, old_images, old_rows, new_images, new_rows, re
                 if not proven:
                     missing.add(old)
                     continue
-                transitions.append((old, new, owner))
+                # Stage proofs are lineage for address scans, not additional
+                # commit.materialization claims at the outer input boundary.
+                if stage is None or include_inverse_stages:
+                    transitions.append((old, new, owner))
                 for site in sites:
                     if site['ref'] == old and site.get('owner') == owner:
                         site['ref'] = new
@@ -981,7 +1027,7 @@ def inverse_address_resolver(entries, head_bundle, *, load_boundary, load_histor
         before, after = (Closure(bundle) for bundle in load_boundary(entry))
         for old_images, old_rows, new_images, new_rows, records, step in _managed_boundaries(entry, before, after):
             _materialization_sites(entry, old_images, old_rows, new_images, new_rows, records, step,
-                                   transitions, missing, [])
+                                   transitions, missing, [], include_inverse_stages=True)
             boundary = SimpleNamespace(images={'parent': before.images['parent'], **old_images},
                 document={'parent_revision': {'payload': {'occurrences': old_rows}}})
             output = SimpleNamespace(images={'parent': after.images['parent'], **new_images},
