@@ -22,14 +22,14 @@ AGENT = Path(__file__).resolve().parents[1]
 RUNTIME = Path("/home/user/work/wt/rt-pin-8ea0766f")
 WORKER = Path(
     "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a"
-    "/scratchpad/orch/workers/agt-A4-image-created-current-0154"
+    "/scratchpad/orch/workers/agt-A4-image-live-0441"
 )
 EVIDENCE = WORKER / "evidence"
 TMP_ROOT = Path(os.environ.get("TMPDIR", "/tmp"))
-REALM_ROOT = TMP_ROOT / f"a4-image-created-current-0154-realm-{os.getpid()}"
+REALM_ROOT = TMP_ROOT / f"a4-image-live-0441-realm-{os.getpid()}"
 OUTPUT = Path(
     "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a"
-    "/scratchpad/orch/design/app-A4-image-created-current-0154-output.json"
+    "/scratchpad/orch/design/app-A4-image-live-0441-output.json"
 )
 APP_SOURCE = "f4f6b4f95c430956b1a5c05750ac3e4573286785"
 PRODUCER_SOURCE = "8f686e3e"
