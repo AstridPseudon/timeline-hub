@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T10:13:39Z | dispatcher heartbeat 15s | live 7 (sol 2, luna 5, other 0) | busy30 13 | status age 0m -->
+<!-- app | 2026-10-24T10:18:20Z | dispatcher heartbeat 7s | live 7 (sol 1, luna 6, other 0) | busy30 13 | status age 3m -->
 # app board, 2026-10-24T10:05Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -47,6 +47,7 @@
 | A3-popup-full-caller | Qualify complete authoritative popup reply | Sol; independent Luna | Agent333b checkout and review0955 | doing | Pin qualification1011 | Run unchanged67 mounted/provider/media tests against coherent333b and37eb. Old66/67 failure retained; no live credit. | 5bafd247e8 held |
 | A3-popup-authority-path | Investigate full reply boundary | Independent Luna | Investigation0846 complete | merged | app-A3-popup-authority-path-0846 | Real mounted path reaches generated POST. Prior synthetic reply is incomplete; source-derived provider recipe published for sole Sol0846. No live claim. | Report only |
 | A3-popup-rebase | Repair confirmed provider fork continuation | Agent Sol; Luna review | Independent0955 PASS | merged | Agent0943; review0955 | Exact333b has18 new and detached accepted/merged PASS. Protected3418 blobs unchanged;16 existing inverse failures retained. App qualification1011 active. | 333b44b1a1 |
+| P2-new-child | Qualify new D41 child custody | Normal maker; Luna caller | Exact333b and37eb checkouts | doing | venv-agent-child-app-popup-333b-37eb-1016 | Supported maker queued without suite registration; old0256 stays P3-only. Reuse verified Remotion0258 separately. | Agent333b; Runtime37eb |
 | P2-tour-oracles | Strict transition and parent helpers | Proof Luna; independent review | Integrated 0800 PASS | merged | Proof 0737/0742; App proof 0800 | Exact reviewed paths on HOME28b0 passed 17 joined controls, three types, lint/list. Original gesture outcomes remain open. | 0a22d85455 / 59cb263629 |
 
 | P2-element-handler | Check retained completion attribution | Luna; independent Luna | Independent0814 PASS | merged | Author0808; review0814 | Actual30-file inventory has no matching handler or receipt link. One POST remains unresolved; outcome UNKNOWN. No new collection. | Report only |
@@ -79,3 +80,5 @@ Dispatch correction10:06Z: three1005 requests initially refused ordinary missing
 Pass10:09Z: independent diagnostic1005 FAIL published byte-exact. Sole Luna first-return1009 closes real event-order, correlation and attachment gaps with actual controls; source recovery limited to three existing worker-authored files while harness finalization remains pending.
 
 Pass10:13Z: INBOX consumed1436752 bytes. Lead finalized0955 workers:7c9 caller,c4a diagnostic,a721 true early merge. NewSol1005 received sanctioned conflict-free82cb merge-forward and normal Runtime sync/browser vendor now succeed. Agent333b/0955 source PASS clears Agent blocker, normal exact checkout ready; App mounted qualification1011 active. P3 first-return1011 repairs real circular admission, preserving actual249 outsiders. D41 source0950 cumulative1013 is queued after normal finalization request. No original request.
+
+10:16Z: supported new keyed child requested on actual333b/37eb with no suite registration, preserving current caller outsider counts. Existing Remotion0258 remains independently verified and reused by unchanged remotion tree. No bench copies, old receipt relabel, new P3 or source pin file edit.
