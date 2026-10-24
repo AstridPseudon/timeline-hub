@@ -7,6 +7,12 @@ only a fixed phase vocabulary, relative monotonic times and bounded counts;
 request bodies, headers, credentials, URLs, identifiers and exception text
 never cross the observation boundary.
 
+When a private phase sink is supplied, the same opt-in also arms one daemon
+timer per active dispatch.  A still-pending dispatch gets at most the bounded
+watchdog capture allowance, written as a raw all-Python-thread faulthandler
+dump beside the phase sink.  The timer belongs to that dispatch and is
+cancelled at dispatch return, including raised and aborted returns.
+
 The normal App launcher does not import test helpers.  A launcher that wants
 this diagnostic must start the Runtime worker with this checkout on
 ``PYTHONPATH`` and explicitly call ``P2CommitPhaseCapture(..., enabled=True)``
@@ -16,6 +22,7 @@ enabled.
 """
 from __future__ import annotations
 
+import faulthandler
 import json
 import os
 import sys
@@ -36,6 +43,9 @@ PHASES = (
     "http_response",
 )
 
+DEFAULT_WATCHDOG_SECONDS = 20.0
+DEFAULT_MAX_WATCHDOG_CAPTURES = 1
+
 
 class P2CommitPhaseCapture:
     """Bounded observer for mounted Runtime commit calls.
@@ -54,19 +64,35 @@ class P2CommitPhaseCapture:
         max_requests: int = 8,
         max_events: int = 128,
         max_bytes: int = 64 * 1024,
+        watchdog_seconds: float = DEFAULT_WATCHDOG_SECONDS,
+        max_watchdog_captures: int = DEFAULT_MAX_WATCHDOG_CAPTURES,
+        timer_factory: Any = None,
+        clock_ns: Any = None,
+        dump_traceback: Any = None,
     ) -> None:
-        if max_requests < 1 or max_events < 1 or max_bytes < 256:
+        if (max_requests < 1 or max_events < 1 or max_bytes < 256
+                or watchdog_seconds <= 0 or max_watchdog_captures < 1):
             raise ValueError("capture bounds must be positive")
         self.enabled = enabled
         self.max_requests = max_requests
         self.max_events = max_events
         self.max_bytes = max_bytes
+        self.watchdog_seconds = watchdog_seconds
+        self.max_watchdog_captures = max_watchdog_captures
+        self._timer_factory = timer_factory or threading.Timer
+        self._clock_ns = clock_ns or time.monotonic_ns
+        self._dump_traceback = dump_traceback or faulthandler.dump_traceback
         self.sink = Path(sink).absolute() if sink is not None else None
+        self.watchdog_sink = (self.sink.with_name(f"{self.sink.stem}.stacks.txt")
+                              if self.sink is not None else None)
         self.events: list[dict[str, Any]] = []
         self.failures = 0
         self.truncated = False
+        self.watchdog_captures = 0
         self.active = False
         self._stream: Any = None
+        self._watchdog_stream: Any = None
+        self._watchdog_lock = threading.Lock()
         self._start_ns = 0
         self._previous_trace: Any = None
         self._previous_thread_trace: Any = None
@@ -93,11 +119,14 @@ class P2CommitPhaseCapture:
             temporary = Path(os.environ.get("TMPDIR", "/tmp")).resolve()
             if not self.sink.parent.resolve().is_relative_to(temporary) or self.sink.is_symlink():
                 raise ValueError("P2 phase sink must be a new file under TMPDIR")
+            if (self.watchdog_sink is not None
+                    and (self.watchdog_sink.exists() or self.watchdog_sink.is_symlink())):
+                raise ValueError("P2 watchdog sink must be a new file")
             self._stream = os.fdopen(
                 os.open(self.sink, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600),
                 "w",
             )
-        self._start_ns = time.monotonic_ns()
+        self._start_ns = self._clock_ns()
         self._previous_trace = sys.gettrace()
         self._previous_thread_trace = threading.gettrace()
         self.active = True
@@ -108,7 +137,10 @@ class P2CommitPhaseCapture:
     def stop(self) -> None:
         if not self.active:
             return
-        self.active = False
+        with self._lock:
+            self.active = False
+            for request in list(self._requests.values()):
+                self._cancel_watchdog(request)
         if sys.gettrace() == self._trace:
             sys.settrace(self._previous_trace)
         if threading.gettrace() == self._trace:
@@ -122,9 +154,79 @@ class P2CommitPhaseCapture:
             except Exception:  # noqa: BLE001 - observer failure cannot affect the operation
                 self.failures += 1
             self._stream = None
+        with self._watchdog_lock:
+            if self._watchdog_stream is not None:
+                try:
+                    self._watchdog_stream.flush()
+                    self._watchdog_stream.close()
+                except Exception:  # noqa: BLE001 - observer failure cannot affect the operation
+                    self.failures += 1
+                self._watchdog_stream = None
 
     def _at_ms(self) -> float:
-        return round((time.monotonic_ns() - self._start_ns) / 1_000_000, 3)
+        return round((self._clock_ns() - self._start_ns) / 1_000_000, 3)
+
+    def _cancel_watchdog(self, request: dict[str, Any]) -> None:
+        timer = request.get("watchdog_timer")
+        if timer is not None:
+            request["watchdog_timer"] = None
+            try:
+                timer.cancel()
+            except Exception:  # noqa: BLE001 - observer failure cannot affect the operation
+                self.failures += 1
+
+    def _arm_watchdog(self, ordinal: int) -> None:
+        if self.sink is None or self.watchdog_sink is None:
+            return
+        request: dict[str, Any] | None = None
+        try:
+            with self._lock:
+                request = self._requests.get(ordinal)
+                if request is None or not self.active:
+                    return
+                token = object()
+                timer = self._timer_factory(
+                    self.watchdog_seconds,
+                    lambda: self._watchdog_fire(ordinal, token),
+                )
+                timer.daemon = True
+                request["watchdog_token"] = token
+                request["watchdog_timer"] = timer
+                timer.start()
+        except Exception:  # noqa: BLE001 - observer failure cannot affect the operation
+            if request is not None:
+                request["watchdog_timer"] = None
+            self.failures += 1
+
+    def _watchdog_fire(self, ordinal: int, token: object) -> None:
+        request = self._requests.get(ordinal)
+        with self._lock:
+            if (not self.active or request is None
+                    or request.get("watchdog_token") is not token
+                    or request.get("dispatch_finished")
+                    or request.get("watchdog_fired")
+                    or self.watchdog_captures >= self.max_watchdog_captures):
+                return
+            request["watchdog_fired"] = True
+            request["watchdog_timer"] = None
+            self.watchdog_captures += 1
+        try:
+            with self._watchdog_lock:
+                if not self.active:
+                    return
+                if self._watchdog_stream is None:
+                    assert self.watchdog_sink is not None
+                    fd = os.open(
+                        self.watchdog_sink,
+                        os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                        0o600,
+                    )
+                    os.fchmod(fd, 0o600)
+                    self._watchdog_stream = os.fdopen(fd, "w", buffering=1)
+                self._dump_traceback(file=self._watchdog_stream, all_threads=True)
+                self._watchdog_stream.flush()
+        except Exception:  # noqa: BLE001 - observer failure cannot affect the operation
+            self.failures += 1
 
     def _write(self, event: dict[str, Any]) -> None:
         if len(self.events) >= self.max_events:
@@ -158,12 +260,17 @@ class P2CommitPhaseCapture:
                 "last_phase": None,
                 "handler": id(handler) if handler is not None else None,
                 "thread": threading.get_ident(),
+                "dispatch_finished": False,
+                "watchdog_timer": None,
+                "watchdog_token": None,
+                "watchdog_fired": False,
             }
             if handler is not None:
                 self._handler_requests[id(handler)] = ordinal
             self._thread_requests[threading.get_ident()] = ordinal
         if emit_handler:
             self._begin(ordinal, "handler_entry")
+            self._arm_watchdog(ordinal)
         return ordinal
 
     def _request_for_frame(self, frame: Any) -> int | None:
@@ -308,6 +415,9 @@ class P2CommitPhaseCapture:
         if phase == "request_scope":
             if event == "return":
                 request = self._requests[ordinal]
+                with self._lock:
+                    request["dispatch_finished"] = True
+                self._cancel_watchdog(request)
                 if self._handler_requests.get(request["handler"]) == ordinal:
                     del self._handler_requests[request["handler"]]
                 if self._thread_requests.get(request["thread"]) == ordinal:
