@@ -11,6 +11,8 @@ from __future__ import annotations
 import ast
 import re
 import shlex
+import sys
+import textwrap
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -26,6 +28,7 @@ REPO = Path(__file__).resolve().parent.parent
 WORKFLOWS = REPO / ".github" / "workflows"
 TESTS = REPO / "tests"
 LANE_NAMES = set(lanes.LANE_MARKERS)
+_this = sys.modules[__name__]
 AUTOMATIC_TRIGGERS = {"push", "pull_request", "schedule"}
 
 
@@ -35,6 +38,8 @@ AUTOMATIC_TRIGGERS = {"push", "pull_request", "schedule"}
 class PytestCommand:
     marker_expression: str
     paths: list[str]  # relative to the repo; empty = the whole suite
+    keyword_expression: str | None = None  # the -k expression, if any
+    blocking: dict[str, bool] = field(default_factory=dict)  # OS key -> a failure of this step fails CI
 
 
 @dataclass
@@ -78,7 +83,7 @@ def _pytest_commands(run: str) -> list[PytestCommand]:
             continue
         tokens = shlex.split(line)
         rest = tokens[tokens.index("pytest") + 1:]
-        expression, paths, i = None, [], 0
+        expression, keyword, paths, i = None, None, [], 0
         while i < len(rest):
             token = rest[i]
             if token == "-m":
@@ -86,13 +91,68 @@ def _pytest_commands(run: str) -> list[PytestCommand]:
                 i += 1
             elif token.startswith("-m="):
                 expression = token[3:]
+            elif token == "-k":
+                keyword = rest[i + 1]
+                i += 1
+            elif token.startswith("-k") and not token.startswith("--"):
+                keyword = token[2:].removeprefix("=")
             elif token == "-n":
                 i += 1
             elif token.startswith("tests"):
                 paths.append(token.split("::")[0])
             i += 1
-        commands.append(PytestCommand(_default_marker_expression() if expression is None else expression, paths))
+        commands.append(PytestCommand(_default_marker_expression() if expression is None else expression, paths, keyword))
     return commands
+
+
+def _matrix_combos(matrix: dict) -> list[dict]:
+    """The legs of a matrix: the cross product of its axes, minus ``exclude``, plus ``include``.
+
+    An ``include`` entry is added to every leg whose axis values it does not contradict; when it matches none it is a
+    leg of its own (the GitHub rule, without the overwrite-by-earlier-include subtleties).
+    """
+    axes = {key: values for key, values in matrix.items() if key not in ("include", "exclude")}
+    combos: list[dict] = [{}] if axes else []
+    for key, values in axes.items():
+        combos = [{**combo, key: value} for combo in combos for value in values]
+    exclude = matrix.get("exclude") or []
+    combos = [c for c in combos if not any(all(c.get(k) == v for k, v in ex.items()) for ex in exclude)]
+    for entry in matrix.get("include") or []:
+        matching = [c for c in combos if all(c[k] == v for k, v in entry.items() if k in axes)]
+        if matching:
+            for combo in matching:
+                combo.update(entry)
+        else:
+            combos.append(dict(entry))
+    return combos
+
+
+def _job_from_spec(workflow: str, name: str, spec: dict, triggers: set[str]) -> Job:
+    where = f"{workflow}:{name}"
+    runs_on = spec["runs-on"]
+    if runs_on == "${{ matrix.os }}":
+        combos = _matrix_combos(spec["strategy"]["matrix"])
+        assert combos and all("os" in c for c in combos), f"{where}: the matrix has no os on some leg"
+        runners = [combo["os"] for combo in combos]
+    else:
+        assert "${{" not in runs_on, f"{where}: unsupported runs-on {runs_on!r}"
+        runners = [runs_on]
+    job = Job(workflow, name, {}, triggers=triggers)
+    job_blocking = {runner: not _continue_on_error(spec.get("continue-on-error"), runner, where) for runner in runners}
+    for runner in runners:  # a failing blocking leg fails CI, so an OS is blocking if any of its legs is
+        key = _os_key(runner)
+        job.oses[key] = job.oses.get(key, False) or job_blocking[runner]
+    for step in spec["steps"]:
+        if "run" not in step:
+            continue
+        commands = _pytest_commands(step["run"])
+        for runner in runners:
+            blocking = job_blocking[runner] and not _continue_on_error(step.get("continue-on-error"), runner, f"{where} step")
+            for command in commands:
+                key = _os_key(runner)
+                command.blocking[key] = command.blocking.get(key, False) or blocking
+        job.commands.extend(commands)
+    return job
 
 
 def _jobs() -> dict[str, Job]:
@@ -104,21 +164,7 @@ def _jobs() -> dict[str, Job]:
         for name, spec in data["jobs"].items():
             where = f"{workflow.name}:{name}"
             assert name not in jobs, f"{where}: job name used twice"
-            runs_on = spec["runs-on"]
-            if runs_on == "${{ matrix.os }}":
-                runners = spec["strategy"]["matrix"]["os"]
-            else:
-                assert "${{" not in runs_on, f"{where}: unsupported runs-on {runs_on!r}"
-                runners = [runs_on]
-            oses = {}
-            for runner in runners:
-                blocking = not _continue_on_error(spec.get("continue-on-error"), runner, where)
-                oses[_os_key(runner)] = blocking
-            job = Job(workflow.name, name, oses, triggers=triggers)
-            for step in spec["steps"]:
-                if "run" in step:
-                    job.commands.extend(_pytest_commands(step["run"]))
-            jobs[name] = job
+            jobs[name] = _job_from_spec(workflow.name, name, spec, triggers)
     return jobs
 
 
@@ -130,6 +176,7 @@ class Use:
     test: str
     marks: frozenset[str]  # lane markers on the test (module + class + function)
     hosts: frozenset[str]  # hosts every declared skip on the test lets it run on
+    classes: frozenset[str] = frozenset()  # enclosing class names
 
 
 def _mark_names(node: ast.AST) -> set[str]:
@@ -164,10 +211,10 @@ def _uses() -> dict[str, list[Use]]:
             if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == "pytestmark" for t in node.targets):
                 module_marks |= _mark_names(node.value)
 
-        def visit(body, inherited: set[str]):
+        def visit(body, inherited: set[str], classes: frozenset[str] = frozenset()):
             for node in body:
                 if isinstance(node, ast.ClassDef):
-                    visit(node.body, inherited | {n for d in node.decorator_list for n in _mark_names(d)})
+                    visit(node.body, inherited | {n for d in node.decorator_list for n in _mark_names(d)}, classes | {node.name})
                 elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith("test"):
                     marks = inherited | {n for d in node.decorator_list for n in _mark_names(d)}
                     text = ast.get_source_segment(source, node) or ""
@@ -179,10 +226,23 @@ def _uses() -> dict[str, list[Use]]:
                     for name in entries:
                         hosts &= SKIP_REGISTRY[name].runs_on()
                     for name in entries:
-                        uses[name].append(Use(path.name, node.name, frozenset(marks & LANE_NAMES), hosts))
+                        uses[name].append(Use(path.name, node.name, frozenset(marks & LANE_NAMES), hosts, classes))
 
         visit(tree.body, module_marks)
     return uses
+
+
+_PLAIN_EXCLUSION = re.compile(r"^\s*not\s+([A-Za-z0-9_.\-]+)\s*$", re.IGNORECASE)
+
+
+def _k_keeps(expression: str, use: Use) -> bool:
+    """True only for ``-k \"not <term>\"`` where <term> matches nothing pytest's -k would look at on this test."""
+    match = _PLAIN_EXCLUSION.match(expression)
+    if not match:
+        return False
+    term = match.group(1).lower()
+    names = [use.test, Path(use.file).stem, *use.classes, *use.marks]
+    return not any(term in name.lower() for name in names)
 
 
 def _selects(command: PytestCommand, use: Use) -> bool:
@@ -191,19 +251,41 @@ def _selects(command: PytestCommand, use: Use) -> bool:
         for p in command.paths
     ):
         return False
+    if command.keyword_expression is not None and not _k_keeps(command.keyword_expression, use):
+        return False
     if not command.marker_expression.strip():
         return True
     return Expression.compile(command.marker_expression).evaluate(lambda name: name in use.marks)
 
 
+def _running_blocking(entry: DeclaredSkip, job: Job, uses: list[Use]) -> dict[str, bool]:
+    """Runner OS -> whether a failing step fails CI, for the OSes where ``job`` selects a test that uses ``entry``."""
+    running: dict[str, bool] = {}
+    for os_key in job.oses:
+        if os_key not in entry.runs_on():
+            continue
+        for use in uses:
+            if os_key not in use.hosts:
+                continue
+            for command in job.commands:
+                if _selects(command, use):
+                    running[os_key] = running.get(os_key, False) or command.blocking[os_key]
+    return running
+
+
 def _running(entry: DeclaredSkip, job: Job, uses: list[Use]) -> set[str]:
     """The runner OSes of ``job`` where it selects a test that uses ``entry`` on a host the test runs on."""
-    return {
-        os_key
-        for os_key in job.oses
-        for use in uses
-        if os_key in use.hosts and os_key in entry.runs_on() and any(_selects(c, use) for c in job.commands)
-    }
+    return set(_running_blocking(entry, job, uses))
+
+
+def _bad_k_filters(jobs: dict[str, Job]) -> list[str]:
+    return [
+        f"{job.workflow}:{name}: pytest -k {command.keyword_expression!r} is not a plain `not <term>`; "
+        "it cannot be checked statically, so the job is credited with no declared test"
+        for name, job in jobs.items()
+        for command in job.commands
+        if command.keyword_expression is not None and not _PLAIN_EXCLUSION.match(command.keyword_expression)
+    ]
 
 
 # --- the checks ------------------------------------------------------------------------
@@ -277,3 +359,98 @@ def test_blocking_says_whether_any_job_that_runs_the_test_can_fail_ci() -> None:
 
 def test_continue_on_error_expressions_are_supported_forms() -> None:
     assert _jobs()  # _continue_on_error fails the test for any form it cannot evaluate
+
+
+def test_k_filters_are_plain_exclusions() -> None:
+    assert not _bad_k_filters(_jobs())
+
+
+# --- the parser itself: one focused test per simplification it used to make ---------------
+
+def _spec(text: str) -> dict:
+    return yaml.safe_load(textwrap.dedent(text))
+
+
+def _use(test: str = "test_a", file: str = "test_x.py", classes=(), marks=()) -> Use:
+    return Use(file, test, frozenset(marks), frozenset(HOSTS), frozenset(classes))
+
+
+_ENTRY = DeclaredSkip("demo", "os_name == 'nt'", "demo", ("j",))
+
+
+def test_matrix_include_and_exclude_decide_the_runner_oses() -> None:
+    job = _job_from_spec("w.yml", "j", _spec("""
+        runs-on: ${{ matrix.os }}
+        strategy:
+          matrix:
+            os: [ubuntu-latest, windows-latest]
+            exclude:
+              - os: windows-latest
+            include:
+              - os: macos-latest
+              - os: ubuntu-latest
+                extra: true
+        steps:
+          - run: python -m pytest -q
+        """), {"push"})
+    assert sorted(job.oses) == ["linux", "macos"]
+    only_include = _job_from_spec("w.yml", "j", _spec("""
+        runs-on: ${{ matrix.os }}
+        strategy:
+          matrix:
+            include:
+              - os: windows-latest
+        steps:
+          - run: python -m pytest -q
+        """), {"push"})
+    assert sorted(only_include.oses) == ["windows"]
+
+
+def test_step_level_continue_on_error_makes_the_step_non_blocking() -> None:
+    job = _job_from_spec("w.yml", "j", _spec("""
+        runs-on: ${{ matrix.os }}
+        strategy:
+          matrix:
+            os: [ubuntu-latest, windows-latest]
+        steps:
+          - run: python -m pytest -q tests/test_x.py
+            continue-on-error: ${{ matrix.os == 'windows-latest' }}
+        """), {"push"})
+    assert job.oses == {"linux": True, "windows": True}  # the job itself would fail CI on both
+    assert _running_blocking(_ENTRY, job, [_use()]) == {"linux": True}  # windows: step is non-blocking, but the entry is posix-only
+    entry = DeclaredSkip("demo2", "os_name != 'nt'", "demo", ("j",))
+    assert _running_blocking(entry, job, [_use()]) == {"windows": False}
+
+
+def test_k_expression_is_parsed_and_only_a_plain_untouching_exclusion_credits_a_test() -> None:
+    def job_with(k: str) -> Job:
+        return _job_from_spec("w.yml", "j", _spec(f"""
+            runs-on: ubuntu-latest
+            steps:
+              - run: python -m pytest -q -k "{k}" tests/test_x.py
+            """), {"push"})
+
+    keeps = job_with("not slow")
+    assert keeps.commands[0].keyword_expression == "not slow"
+    assert _running(_ENTRY, keeps, [_use("test_a")]) == {"linux"}
+    assert not _bad_k_filters({"j": keeps})
+    # the exclusion touches the test (name, class, file or mark): not credited
+    assert not _running(_ENTRY, keeps, [_use("test_slow_path")])
+    assert not _running(_ENTRY, keeps, [_use(classes=["TestSlow"])])
+    assert not _running(_ENTRY, keeps, [_use(file="test_slow.py")])
+    assert not _running(_ENTRY, keeps, [_use(marks=["slow"])])
+    # anything but a plain `not <term>` is never credited, and is flagged
+    for other in ("slow or fast", "not slow and not fast", "slow"):
+        bad = job_with(other)
+        assert not _running(_ENTRY, bad, [_use("test_a")])
+        assert _bad_k_filters({"j": bad})
+
+
+def test_an_entry_with_neither_a_job_nor_no_ci_is_rejected(monkeypatch) -> None:
+    bare = DeclaredSkip("bare", "os_name == 'nt'", "demo", ())
+    monkeypatch.setattr(_this, "SKIP_REGISTRY", {"bare": bare})
+    monkeypatch.setattr(_this, "_uses", lambda: {"bare": [_use()]})
+    with pytest.raises(AssertionError, match="bare: no CI job runs it"):
+        test_every_declared_job_exists_and_runs_a_test_of_the_entry()
+    monkeypatch.setattr(_this, "SKIP_REGISTRY", {"bare": DeclaredSkip("bare", "os_name == 'nt'", "demo", (), no_ci="not supported")})
+    test_every_declared_job_exists_and_runs_a_test_of_the_entry()
