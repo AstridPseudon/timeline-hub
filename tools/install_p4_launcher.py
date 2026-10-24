@@ -1,4 +1,4 @@
-"""CAS-install the owned D73/final-core rows without touching other suites."""
+"""CAS-install owned D73 rows without touching other suites."""
 
 from __future__ import annotations
 
@@ -14,17 +14,22 @@ from pathlib import Path
 
 candidate, registry, evidence = map(Path, sys.argv[1:4])
 expected = sys.argv[4]
-target_keys = {
-    (b"agent", b"p4-current-becfe-http-3legs"),
-    (b"agent", b"p4-current-single"),
-    (b"agent", b"final-core"),
-}
+requested_name = sys.argv[5].encode() if len(sys.argv) == 6 else None
+target_keys = (
+    {
+        (b"agent", b"p4-current-becfe-http-3legs"),
+        (b"agent", b"p4-current-single"),
+        (b"agent", b"final-core"),
+    }
+    if requested_name is None
+    else {(b"agent", requested_name)}
+)
 rows = {
     tuple(line.split()[:2]): line
     for line in candidate.read_bytes().splitlines(keepends=True)
     if line.startswith(b"agent ")
 }
-assert set(rows) == target_keys
+assert target_keys <= set(rows)
 assert registry.is_file() and not registry.is_symlink()
 assert stat.S_IMODE(registry.stat().st_mode) == 0o600
 evidence.mkdir(parents=True, exist_ok=True)
@@ -43,6 +48,9 @@ with registry.open("rb") as locked:
             line = rows[key]
             found.add(key)
         after_lines.append(line)
+    for key in sorted(target_keys - found):
+        after_lines.append(rows[key])
+        found.add(key)
     assert found == target_keys
 
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime(
@@ -85,4 +93,4 @@ with registry.open("rb") as locked:
     print("before", expected)
     print("after", hashlib.sha256(after).hexdigest())
     print("outside", hashlib.sha256(outside(lines)).hexdigest(), "byte-identical")
-    print("mode 0600; only the three owned D73/final-core rows changed")
+    print("mode 0600; only the requested owned D73 rows changed")
