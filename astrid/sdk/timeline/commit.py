@@ -718,7 +718,7 @@ def _check_reservations(port, plan, current, rejected, base):
     def boundary(revision):
         return _load(port, context, revision)
 
-    def restore_native_fork(state, record, write, accepted_base):
+    def restore_native_fork(state, record, write, accepted_base, requested_base, recorder_abi):
         """Retain the native fork proof while replaying an accepted birth."""
         command = record.get('command')
         if (not isinstance(command, Mapping)
@@ -810,51 +810,80 @@ def _check_reservations(port, plan, current, rejected, base):
                      'fork collection order changed')
 
         bindings = record.get('bindings', [])
+        _require(isinstance(bindings, list)
+                 and all(isinstance(item, Mapping) for item in bindings),
+                 'fork binding proof is malformed')
         source_bindings = [item for item in bindings if item.get('key') == 'fork.source']
         owner_bindings = [item for item in bindings if item.get('key') == 'fork.owner']
+        source_shots = {row['revision_id']: row for row in document['shot_revisions']}
         source_owners = ['occurrence:' + row['occurrence_id'] + '/shot'
                          for row in parent['payload']['occurrences']
-                         if row['shot_id'] == source_shot_id]
+                         if source_shots[row['shot_revision_id']]['internal_timeline_revision_id']
+                         == source_internal['revision_id']]
         _require(len(source_bindings) == len(owner_bindings) == 1,
                  'fork source bindings are unavailable')
-        source_binding, owner_binding = source_bindings[0], owner_bindings[0]
-        _require(source_binding.get('ref') == owner + '/source'
-                 and source_binding.get('physical_ref') ==
-                 'internal-revision:' + source_internal['revision_id']
-                 and source_binding.get('revision_id') == source_internal['revision_id']
-                 and source_binding.get('content_digest') == source_internal['content_digest']
-                 and source_binding.get('owners') == source_owners
-                 and source_binding.get('path') == []
-                 and owner_binding.get('ref') == owner
-                 and owner_binding.get('physical_ref') == 'parent'
-                 and owner_binding.get('revision_id') == parent['revision_id']
-                 and owner_binding.get('content_digest') == parent['content_digest']
-                 and owner_binding.get('path') == ['occurrences', 'occurrence_id:' + identity],
-                 'fork source binding changed')
+        source_binding = source_bindings[0]
+        native_bindings = [
+            {'key': key, 'ref': ref, 'policy': 'fixed', 'dependencies': []}
+            for key, ref in (('collection.owner:collection.clips', owner),
+                             ('collection.owner:collection.tracks', owner),
+                             ('fork.source', owner + '/source'), ('fork.owner', owner))]
         _require(isinstance(accepted_base, Mapping)
                  and set(accepted_base) == {'revision_id', 'publication_id'}
                  and accepted_base['revision_id'] == parent['revision_id'],
                  'fork predecessor boundary changed')
-        for binding in (source_binding, owner_binding):
-            binding_boundary = binding.get('boundary')
-            _require(isinstance(binding_boundary, Mapping)
-                     and binding_boundary.get('base_revision_id') == parent['revision_id']
-                     and binding_boundary.get('base_publication_id') ==
-                     accepted_base['publication_id']
-                     and binding_boundary.get('evaluated_head') == {
-                         'revision_id': parent['revision_id'],
-                         'publication_id': accepted_base['publication_id']}
-                     and binding_boundary.get('command_ordinal') == record.get('ordinal')
-                     and isinstance(binding_boundary.get('step_id'), str)
-                     and bool(binding_boundary['step_id']),
-                     'fork binding boundary changed')
+        # ABI-1 native captures predate physical enrichment. Only the complete
+        # native record shape may use that proof; mixed physical facts fail closed.
+        native = bindings == native_bindings
+        _require(not native or recorder_abi != 2,
+                 'ABI2 fork bindings cannot use legacy allocation proof')
+        if not native:
+            # Every native role must retain its physical input proof. Checking
+            # only the two fork roles admits partially stripped v2 records.
+            for expected_binding in native_bindings:
+                matches = [item for item in bindings if item.get('key') == expected_binding['key']]
+                _require(len(matches) == 1, 'fork binding role is unavailable')
+                binding = matches[0]
+                expected = {**expected_binding,
+                    'physical_ref': ('internal-revision:' + source_internal['revision_id']
+                                     if binding is source_binding else 'parent'),
+                    'revision_id': (source_internal if binding is source_binding else parent)['revision_id'],
+                    'content_digest': (source_internal if binding is source_binding else parent)['content_digest'],
+                    'path': [] if binding is source_binding else ['occurrences', 'occurrence_id:' + identity],
+                    'boundary': binding.get('boundary')}
+                if binding is source_binding:
+                    expected['owners'] = source_owners
+                _require(binding == expected, 'fork native binding schema changed')
+            for binding in bindings:
+                binding_boundary = binding.get('boundary')
+                _require(isinstance(binding_boundary, Mapping)
+                         and isinstance(binding.get('physical_ref'), str)
+                         and bool(binding['physical_ref'])
+                         and binding.get('policy') == 'fixed'
+                         and binding.get('dependencies') == []
+                         and binding_boundary.get('base_revision_id') == requested_base['revision_id']
+                         and binding_boundary.get('base_publication_id') ==
+                         requested_base['publication_id']
+                         and binding_boundary.get('evaluated_head') == {
+                             'revision_id': parent['revision_id'],
+                             'publication_id': accepted_base['publication_id']}
+                         and binding_boundary.get('command_ordinal') == record.get('ordinal')
+                         and isinstance(binding_boundary.get('step_id'), str)
+                         and bool(binding_boundary['step_id']),
+                         'fork binding boundary changed')
+                if binding.get('key') in {item['key'] for item in native_bindings}:
+                    _require(set(binding_boundary) == {'base_revision_id', 'base_publication_id',
+                             'evaluated_head', 'command_ordinal', 'step_id', 'phase'}
+                             and binding_boundary['phase'] == 'input',
+                             'fork input phase changed')
         state.bundle['shots'][destination] = _CopiedShot(
             state.bundle['shots'][destination], {
                 'source_occurrence_id': identity, 'source_shot_id': source_shot_id,
                 'source_revision_id': source_revision_id,
                 'occurrence_id': identity, 'shot_id': destination})
 
-    def scan(records, bundle, *, ordinary=False, output=None, accepted_base):
+    def scan(records, bundle, *, ordinary=False, output=None, accepted_base, requested_base,
+             recorder_abi=None):
         state = State(bundle)
         reserved.update(_reservation_refs(state))
         for record in records:
@@ -900,7 +929,8 @@ def _check_reservations(port, plan, current, rejected, base):
                         write['ref'], kind=root[0], owner=created['owner'],
                         value=write['after']['value'], restoring=True)
                     if root[0] == 'shot':
-                        restore_native_fork(state, record, write, accepted_base)
+                        restore_native_fork(state, record, write, accepted_base, requested_base,
+                                            recorder_abi)
                 else:
                     state.set(write['ref'], write['path'], write['after'])
                 if write['ref'] == 'timeline':
@@ -923,16 +953,24 @@ def _check_reservations(port, plan, current, rejected, base):
                 # recorded edge supplies its authenticated original boundary.
                 continue
             recorded = True
+            # Only Runtime's authenticated history entry supplies capture custody.
+            # Pre-change entries have no field; explicit malformed values fail closed.
+            recorder_abi = entry.get('recorder_abi', 1)
+            _require(type(recorder_abi) is int and recorder_abi in (1, 2),
+                     'invalid authenticated recorder ABI')
             records = _records([entry], rejected, base, current)
             _require(entry.get('previous') is not None, 'missing original identity boundary')
             scan(records, boundary(entry['previous']['revision_id']),
-                 output=boundary(entry['revision_id']), accepted_base=entry['previous'])
+                 output=boundary(entry['revision_id']), accepted_base=entry['previous'],
+                 recorder_abi=recorder_abi,
+                 requested_base={key: entry['receipt']['result']['base_' + key]
+                                 for key in ('revision_id', 'publication_id')})
             reserved.update(_reservation_refs(State(boundary(entry['revision_id']))))
     except (AuthoringBundleError, CommandError, KeyError, TypeError, ValueError) as exc:
         raise rejected(_failure('history_unavailable', 'semantic identity history is unavailable',
                                 base, current)) from exc
     scan(plan.records, boundary(current['revision_id']), ordinary=True, output=plan.bundle,
-         accepted_base=base)
+         accepted_base=current, requested_base=base)
 
 
 class RuntimeCommitService:
