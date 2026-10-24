@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T08:56:57Z | dispatcher heartbeat 0s | live 2 (sol 1, luna 1, other 0) | busy30 12 | status age 3m -->
-# app board, 2026-10-24T08:53Z
+<!-- app | 2026-10-24T09:00:11Z | dispatcher heartbeat 12s | live 2 (sol 1, luna 1, other 0) | busy30 12 | status age 0m -->
+# app board, 2026-10-24T08:59Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -27,7 +27,7 @@
 | P2-popup-pending | Locate real pre-transport refusal | Luna; independent Luna | Independent 0745 PASS | merged | Author 0733; review 0745 | Same-case alert maps uniquely to local placement preview guard before applyEdit/capture/flush. Exact inner null cause still unknown. | Source 9b810 |
 | A3-popup-placement | Reproduce local placement refusal | Luna; independent review | Independent 0748 PASS | merged | Author 0745; review 0748 | Valid-input planner succeeds; 42 tests pass. Witness bypasses async preparation, so actual null cause remains unknown. No product repair. | Report only |
 | P2-four-helper-oracles | Correct strict request expectations | Proof Luna; independent review | Integrated0826 PASS | merged | Clean0805; review0811; proof0826 | HOME182c passes7 semantic,22 Node controls and46 popup/media tests; three types and13-file lintPASS. No live credit. | 182c65242d |
-| P3-current-setup | Match predecessor and fresh owner | Proof Sol; independent Luna | Clean0833 PASS; home82cb | merged | Clean0828; review0833 | HOME82cb has exact three reviewed paths. Twenty controls/types/lint/list15 PASS; joined proof follows popup. D50 tail remains exact. | 82cb5c0005 |
+| P3-current-setup | Qualify merged predecessor and owner | Proof Sol; independent Luna | Clean0833 PASS; home82cb | review | Clean0828; review0833; integrated0900 | HOME82cb has exact three reviewed paths. Independent integrated source checks now active, separate from popup. D50 tail remains exact. | 82cb5c0005 |
 | P3-protected-tail | Match exact created expectation | Proof Luna; independent review | Integrated 0800 PASS | merged | Proof 0741/0747; App proof 0800 | One strict created[] addition HOME. Actual hashes qualified and worker-authored row copied to App ledger after independent 0758 PASS. | 547c51afb9 / 28b0f11e1c |
 | D50-ledger-current | Correct stale ledger merge status | Luna; independent Luna | Independent0822 PASS | merged | Author0819; review0822 | Current exact row copied to App ledger;28b0 merge and integrated0800PASS now explicit. All six hashes unchanged. | Report only |
 | U3b-refresh | Draft current upstream merge | Sol; Luna review | Independent 0738 PASS | gated:freeze | Sol 0731; Luna 0738 | Independently 695 tests, 12 Gate5, 2 renderer and 72 wiring pass; three types, lint and conformance pass. Header P2/P3 GO gates home merge. | cd29ff2642 held |
@@ -61,8 +61,8 @@ Delivery: D31 retains transcriptAssociateCapture.ts, its unchanged 397-line/40-a
 
 Safety: Prior historical cleanup, graph, publication and compact refusals remain stopped; no alternate route or retry. Managers write only boards, briefs and qualified shared reports. Workers own every product, test, generated and pin change. No direct Git mutation or upstream push.
 
-Disk: About 11 GB free. Current finished App worktrees are harness recycled. Only two unrecycled historical U3 trees remain; their prior refusals stay stopped. No refused compact or cleanup route is retried. Stopped oversized target-check worker0636 at06:43; its 5.5 GB temporary copies were harness-cleaned. New workers inspect dependencies in place, with bounded scratch. Refused historical U3/compact cleanup remains untouched.
+Disk: Latest sweep3 removed zero directories; 11113 MiB free. Current finished App worktrees are harness recycled. Only two unrecycled historical U3 trees remain; their prior refusals stay stopped. No refused compact or cleanup route is retried. Stopped oversized target-check worker0636 at06:43; its 5.5 GB temporary copies were harness-cleaned. New workers inspect dependencies in place, with bounded scratch. Refused historical U3/compact cleanup remains untouched.
 
 Evidence: [joined 690](../../design/app-A2-A3-corrected-integrated-0629.md), [real provider integrated](../../design/app-A3-provider-integrated-0724.md), [actual predecessor review](../../design/app-P3-parent-trace-review-0720.md), [element clock](../../design/app-P2-element-clock-review-0724.md), [element error review](../../design/app-P2-element-error-review-0738.md), [popup cause review](../../design/app-P2-popup-cause-review-0745.md), [lifecycle review](../../design/app-P2-P3-lifecycle-review-0741.md), [IMAGE](../../design/agt-A4-image-result-review-0636.md).
 
-Pass 2026-10-24T08:53Z: Review0850 FAIL immediately returned0853; stale mounted bindings must be corrected and exercised. Independent popup path0846 published byte-exact; Sol0846 is producing a source-derived pure provider reply with valid enclosing duration. No product or installed rows changed by manager; no original pair released.
+Pass 2026-10-24T08:59Z: Current workers checked. P3 integrated0900 dispatched immediately on pure82cb rather than waiting for disjoint popup. Popup0846 and caller first return0853 remain active. Independent whole-path0846 report is published; prior reply fixture remains unqualified. No original run or installed row change.
