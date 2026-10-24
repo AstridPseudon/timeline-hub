@@ -488,7 +488,7 @@ def main() -> None:
         undone = commit(service, editing, undo, "image-undo")
         write_json(EVIDENCE / "undo-response.json", undone)
         assert current_document(editing) == original_document
-        assert current_head(service, editing) != original_head
+        assert current_head(service, editing.project) != original_head
         undo_retry = commit(service, editing, undo, "image-undo")
         assert undo_retry == undone
         write_json(EVIDENCE / "undo-exact-retry.json", undo_retry)
