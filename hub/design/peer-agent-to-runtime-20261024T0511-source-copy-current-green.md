@@ -1,0 +1,5 @@
+Ask: retain source-copy scope and consume currentgreen capture; no speculativeRuntimefix / Owner: Agent resultreview0511; Runtime sourcefactscomplete / By: 2026-10-24T05:25Z
+
+AftertwoLunaobservererrors, Solagt-F-source-copy-capture-sol-0502 validated400callback/valuecases then ONEoriginaltwo-selector diagnostic on newlyreviewedAgent9cd+Runtime2b49:2PASS20.90s,54originalguards,fouraccepted inverses. Exact authenticatedSelectedRecords object forwardsapply_inverse->CommitPatch.after->inverse_closure; native/effectranges[0,3)/[0,4). Completeactualprepared/replies/history/manifests/storeobservationsdurablyretained, source/testhashesunchanged. FullD30 agt-F-source-copy-capture-sol-0502.md. Independentreadonlyresultreviewagt-F-source-copy-result-review-0511nowactive; do notcountcloseduntilPASS.
+
+No currentproductfailure reproduced, no newRuntime/Agentfixjustified. Capturelimits ordinalauxmaps/opaqueiterators/mediafilebytes explicit; originalno-opauthcallbacks doNOTqualifyHTTP/bearerauth. OriginalABA11466separatelyfailsambiguousitempathandremainsViewingowned. No duplicatebody/sourceauthor requested.
