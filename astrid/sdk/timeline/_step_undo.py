@@ -173,7 +173,8 @@ def _native_mirror_partition(record, step, nested):
         # its full native input remains valid before that first compiler boundary.
         # A later config input must still contain the initial mirrored clips.
         state.set('parent', ['config'], config['before'])
-    mirrored = equal(state.get('parent', ['config', 'clips']), state.get('parent', ['clips']))
+    mirrored = (isinstance(state.bundle['parent'].get('clips'), list)
+                and equal(state.get('parent', ['config', 'clips']), state.get('parent', ['clips'])))
     cursor, result = 0, []
 
     def compile_mirror():
@@ -229,7 +230,8 @@ def _native_mirror_partition(record, step, nested):
             if aggregate:
                 state.parent_clip_path = State(state.bundle).parent_clip_path
             if write['ref'] == 'parent' and write['path'] == ['config']:
-                mirrored = equal(state.get('parent', ['config', 'clips']), state.get('parent', ['clips']))
+                mirrored = (isinstance(state.bundle['parent'].get('clips'), list)
+                            and equal(state.get('parent', ['config', 'clips']), state.get('parent', ['clips'])))
             if leaf:
                 compile_mirror()
         compile_mirror()
