@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T21:19:10Z | dispatcher heartbeat 1s | live 2 (sol 0, luna 2, other 0) | busy30 5 | status age 0m -->
-# app board, 2026-10-24T21:19Z
+<!-- app | 2026-10-24T21:22:41Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 2m -->
+# app board, 2026-10-24T21:21Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -93,10 +93,10 @@
 | P2-element-22971 | Return Runtime provider pending boundary | Luna | Author2104 actual artifact attribution | blocked:runtime | Runtime peer2110; App return2110 | No App fix justified; 100 controls PASS. Observed provider/history pending through window, exact safe correlation returning. | Source unchanged |
 | P2-element-22971-handoff | Publish safe phase and stack facts | Luna | Existing author2104 evidence | merged | app-P2-element-22971-safe-return-2110 | Ordinal3 provider pending; real7469B0600 stack belongs element. Safe frame and123 phases published; no App fix. | Evidence only |
 | P2-D83-popup-add | Popup ADD isolated original | Luna; Service | Preflight 9736 PASS | review | App2058; actual26387 | Readiness PASS, case FAIL before popup gesture: shared occurrence group missing at helper331. Not historical owner422. | App ce1cd9 |
-| P2-popup-26387 | Attribute missing shared group before ADD | Luna | Actual26387 | doing | app-P2-popup-26387-cause-2115 | Dispatched immediately after handoff2110 completed and disk6.61GB. Actual DOM/source attribution, no duplicate body. | Source ce1cd9 |
+| P2-popup-26387 | Attribute missing shared group before ADD | Luna | Actual26387 | blocked:runtime | App2115; Runtime peer2121 | Internal timeline read pending through teardown; no App defect.55 controls/types/lint and protected6 PASS. Source report published. | Source unchanged |
 | P2-D83-parent-move | Parent move isolated original | Luna; Service | Preflight20867 PASS | review | App2058; actual837 | Readiness1 PASS, original1 ERROR at response wait90000ms. Source attribution queued for next slot; no gate credit. | Appce1cd9; Agent5fc1 |
-| P2-parent-837 | Attribute missing parent response | Luna | Actual837 | ready | Brief2119 prepared | Next cap2 slot; authentic trace before fix or Runtime attribution. No duplicate body or NO-GO verdict. | Source ce1cd9 |
-| P2-D83-asset | RegisterAsset isolated original | Luna; Service | Qualified dc55 source; prior body ends | doing | app-P2-D83-isolated-qualification-2058 | Assigned sequentially under D74a critical 6 GB floor. Actual IDs pending; no current PASS or gate credit claimed. | Fresh captured tuple |
+| P2-parent-837 | Attribute missing parent response | Luna | Actual837; disk at least6.5GB | gated:disk6.5GB | Brief2119 prepared | Slot free but disk6.498GB below ordinary dispatch floor. Dispatch immediately when capacity returns; no duplicate body. | Source ce1cd9 |
+| P2-D83-asset | RegisterAsset isolated original | Luna; Service | Preflight PASS | doing | App2058; actual12674 | Submitted21:18:27Z. Genuine result pending; one body under critical6GB floor. | Appce1cd9; Agent5fc1 |
 | P2-D83-placement | Automatic placement isolated original | Luna; Service | Qualified dc55 source; prior body ends | doing | app-P2-D83-isolated-qualification-2058 | Assigned sequentially under D74a critical 6 GB floor. Actual IDs pending; no current PASS or gate credit claimed. | Fresh captured tuple |
 | P2-D83-swap | Popup SWAP isolated original | Luna; Service | Qualified dc55 source; prior body ends | doing | app-P2-D83-isolated-qualification-2058 | Assigned sequentially under D74a critical 6 GB floor. Actual IDs pending; no current PASS or gate credit claimed. | Fresh captured tuple |
 | P2-D83-clear | Transition single clear isolated original | Luna; Service | Qualified dc55 source; prior body ends | doing | app-P2-D83-isolated-qualification-2058 | Assigned sequentially under D74a critical 6 GB floor. Actual IDs pending; no current PASS or gate credit claimed. | Fresh captured tuple |
@@ -112,10 +112,10 @@ Blockers: Final cut — eight P2 cases remain unqualified. P3 current15493 is in
 Blockers: App qualification — Runtime dc55 source/security and local eight controls are released. App2058 owns all eight isolated cases, one body at a time; stop repeated native failures and return actual results.
 Next ready: Producer2058 runs remaining five cases sequentially. Parent source837 dispatches at next cap2 slot and disk threshold. Full P2 only after eight isolated PASS. P3 independently GO.
 
-live 2 / cap 2; ready-undispatched 1. Producer2058 advances five cases; popup source author2115 owns actual26387. Parent source837 ready at next slot. One body only.
+live 1 / cap 2; ready-undispatched 0. Producer2058 owns remaining five cases. Parent source837 is gated by ordinary6.5GB floor at6.498GB. Popup2115 complete, Runtime peer2121 published. One body only.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
-Disk: Current 6.629 GB; cap 2. One critical P2 build/body runs under D74a 6 GB exception. No concurrent body or noncritical dispatch. Guarded scan found no finished clean non-KEEP App worktree remaining. Six stale pins previously released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
+Disk: Current 6.498 GB; cap 2. One critical P2 build/body runs under D74a 6 GB exception. No concurrent body or noncritical dispatch. Guarded scan found no finished clean non-KEEP App worktree remaining. Six stale pins previously released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
 Inbox consumed through 1714884 bytes; ORCH 20:47 cancels both redundant P3 workers. Owner boards Runtime 20:30 and Agent 20:27 rechecked. Runtime e745 schema setup is home, but both D83 Sol rows and observer acceptance remain active; no consolidated native wait release. P3 current 15493 independently GO.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
@@ -129,3 +129,5 @@ Disk this pass:6.61GB after handoff worker automatic recycle, cap2. Scan all loc
 Evidence current: [Element safe report](../../design/app-P2-element-22971-safe-return-2110.md), [safe phases](../../design/app-P2-element-22971-safe-return-2110.json), [Runtime and lead handoff](../../design/peer-app-to-runtime-app-lead-orchestrator-20261024T2116Z-element-frame-and-popup.md).
 
 21:19Z current: parent837 terminalNO-GO, readiness1PASS/original1ERROR response wait90000. Brief parent-837-cause-2119 prepared and ready at nextcap2slot. Producer2058 advancing registerAsset; no repeated native setupfailure or duplicate body. Popup2115 active, source tree unchanged so far. Disk6.63GB after run build released.
+
+21:21Z: popup2115 terminalPASS source attribution only, no App change. Exact report and peer2121 published: internal timeline read pending, no404/422;55controls/types/lintPASS. Parent author is gated onlyby6.5GB source dispatchfloor; slotfree at6.498GB. All owner boards rechecked; no Runtime successor for element/popup yet. Current registerAsset12674 active.
