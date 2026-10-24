@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T22:00:27Z | dispatcher heartbeat 2s | live 1 (sol 1, luna 0, other 0) | busy30 11 | status age 0m -->
-# runtime board, 2026-10-24T21:57:42Z
+<!-- main | 2026-10-24T22:03:24Z | dispatcher heartbeat 15s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 0m -->
+# runtime board, 2026-10-24T22:02:56Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -180,7 +180,7 @@
 
 | D83-schema-churn | Preserve stopped setup experiment | HARD Sol | D84 supersedes micro-gains | gated:D84 | rt-D83-schema-churn-sol-2141 stopping | Checkpoint WIP retained. No new source or gate credit; do not import into structural author. | Held |
 
-| D84-structural-history | Reuse verification within one request | HARD Sol | Explicit D84a decision | doing | rt-D84-request-scope-sol-2145 | Verify each authenticated entry at most once per request; no cross-request reuse. One security review then originals. | Base7aa603 |
+| D84-structural-history | Reuse replay proof within one request | Sol / Luna | Reviewed source exact apply | review | Author2145; releaseLuna2202 | Independentsecurity243+13PASS;author1038PASS. N2fullreplay21->3,wall0.645->0.242s. [Proof](../../design/runtime-D84-measurements-2145.md) | beb1dafbd |
 | R-P2-parent-runtime | Attribute parent historical validation | HARD Sol | Structural history correction | doing | D84a Sol2145 | Actual837 ordinal3 pending in lookup/verify/historical Recorder path. App102 controls PASS; no App fix proved. | Captured dc55 |
 
 | D84-lock-placement | Test head-only CAS authority limit | HARD Sol | One shared security review | review | rt-D84-lock-placement-sol-2147 | No product patch. Nine same-head attacks plus control10PASS;union527PASS. [Report](../../design/runtime-D84-lock-placement-2147.md) | Test-only candidate |
@@ -225,3 +225,5 @@ Current receiving proof: App new-source11589 on245742/840a/bc04 repeats unchange
 Lock-source handback: No product lock movement retained; head-pair CAS cannot invalidate mutable authenticated facts. New10adversarial tests and527targetedPASS wait the SAME upcoming request-scope securityreview, not a separate review chain. Diagnostic2151 completed and published safe facts; no original repeat needed.
 
 App source update2153 consumed: failed asset source stays held; first-return2150 active. Placement strict two-selector proposal independent2152 owns apply/log onPASS. Runtime adds no App author; App disk6.011GB/sourcecap2 and prior refusals retained.
+
+Current D84a source: Author2145 complete atbeb1dafbd. Existing INDEPENDENT security reviewer243PASS/final13PASS covers exactthreeproducthashes. Luna2202 dispatched immediately for provenance/hashqualification, new10lockcounterexamples oncandidate and normalapply/release; no secondsemanticsecurityaudit or repeatedunion. Author1038PASS,13scope/3ABA and63percentN2CPUgain qualified atsourceonly. Originalbudgets stillopen.

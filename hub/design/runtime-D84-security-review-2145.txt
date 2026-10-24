@@ -1,0 +1,15 @@
+Independent reviewer /root/security_review: PASS, no blocking security counterexample.
+Reviewed unchanged product SHA-256:
+store 4de021df7b662e70ff8b8722f84fb0635994fc97bfc9ad0a23a50bf67dd607f1
+execution b1f48fee664e98328213a515ced4e9b7e7cb10db207a36c8c2e86c818709e194
+service ecda93232570fcd7f43335f3cec9af63781aa745d4e4aa72cb639eebffc6884e
+
+Boundaries examined: request lifetime, nested/concurrent scopes, independent coordinator/service/store evaluations, same-head mutation, ordinal/digest invalidation, source/physical owner/input authority, failure cleanup including BaseException, recursion/cycles, unchanged acceptance locking/CAS/idempotency/receipt and durable-winner behavior.
+Only successful deterministic replay is memoized; all mutable DB authority remains freshly read and checked. Remaining SQL inside retained sequential replay (realm and event rows) is included in the key.
+
+Independent command:
+PYTHONDONTWRITEBYTECODE=1 ASTRID_CHECKOUT=/home/user/work/agent /home/user/work/venv-runtime/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 tests/test_timeline_request_verification.py tests/test_timeline_commit_authentication.py tests/test_timeline_recorder_abi_authority.py tests/test_timeline_history_authenticated_read.py tests/test_timeline_commit_execution.py
+Result: 243 passed in 74.61s, exit 0. Initial unset-checkout run produced fixture setup errors; corrected command passed.
+
+Same reviewer inspected two added tests (coherent source rewrite with fixed accepted bytes and nested public history API), confirmed PASS on test SHA-256 a110185389377bdd474dea5cbea5ce3739aa9e61e349815614639fce1adb4131, and independently ran the final 13 request tests: 13 passed in 3.03s, exit 0. git diff --check passed. Subsequent test-file edits only applied Ruff import sorting; product unchanged.
+Reviewer performed no source edits, merge or release. Integration release remains the orchestrator/reviewer queue's action.
