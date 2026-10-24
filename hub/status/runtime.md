@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T17:14:24Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 0m -->
-# runtime board, 2026-10-24T17:14:02Z
+<!-- main | 2026-10-24T17:17:24Z | dispatcher heartbeat 1s | live 4 (sol 0, luna 4, other 0) | busy30 17 | status age 0m -->
+# runtime board, 2026-10-24T17:17:15Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -110,7 +110,10 @@
 | F-final-builder | Put verifier clones in TMPDIR | Luna / Luna | Exact installed proof complete | merged | Review1229; installed1233 PASS | f25d atomically installed0755, old script backed up. Installed smoke and integrity checks passed; no real build. | f25dfab1 installed |
 | F-final-D68-assess | Check fresh upstream packaging | Luna | Source assessment complete | merged | rt-F-final-D68-assess-1543 | Stale builder hash found. Proposed refresh moves frozen integration; correction assigned1546. [Facts](../../workers/rt-F-final-D68-assess-1543/evidence/source-assessment.md) | Evidence only |
 | F-final-D68 | Preserve fresh upstream in staging | Luna | Source and private caller qualified | gated:D59-cut | Author1546; review1554; wire1601 | Exact fda independent PASS; caller1601 synthetic service path PASS, extras and overlap receipts retained. No live install or build. | fda54be4 held |
-| F-final-D73 | Capture proof tuple once at submit | Luna | Private source preparation | doing | rt-F-final-D73-prep-1707 | Main P5/Composition and core runner candidate. All four exact SHAs and checkout receipts before request; no live body or install. | Private candidate |
+| D72-frame-window | Preserve native frame window assertions | Luna | Approved D72 contract | doing | rt-D72-frame-window-1717 | Two restored cases; exact pin, hold, alpha, absolute window and frame coverage. Independent protected review follows. | Author active |
+| D72-installer-schema | Preserve local schema integrity check | Luna | Approved D72 canonical source | doing | rt-D72-installer-schema-1717 | One restored case; actual Backend.stage only if proved stale. No external package restoration or fake integrity. | Author active |
+| D72-generic-host | Migrate requester publication fixture | Luna | Approved D72 current caller | doing | rt-D72-generic-host-1717 | One restored case; every behavior assertion retained, no retired GenericPackHost alias or writer. | Author active |
+| F-final-D73 | Capture proof tuple once at submit | Luna | Final tuple and D59 cut | gated:D59-cut | rt-F-final-D73-prep-1707 PASS | Private submit-once four-SHA route/stubs passed. Old84 plusTS retained; popup added, P4newtests qualificationpending. No live install or body. | Private candidate |
 | F-final-D72 | Document retired CLI migration | Luna | Installed renderer and byte checks passed | merged | rt-F-final-D72-docs-1704 PASS | Actual docs installed171108 with backups; help, renderer, exactD65/D67/D62 preservation PASS. [Proof](../../design/rt-F-final-D72-docs-1704.md) | Installed docs |
 | F-final-D67 | Document genuine post-install D13 check | Luna | Exact source and installed render PASS | merged | Inputs1528; install1533 PASS | Installed README13env/7keys and original selector; D62 known gap in both docs. Actual renderer and exact-byte/mode checks PASS. | Installed docs |
 | F-final-D65 | Include authentic manifest release order | Luna | Actual installed renderer passed | merged | rt-F-final-D65-complete-1546 | Installed f992 README and8cda notes; actual command and vendor rebind precondition. D67 appendix exact. [Proof](../../design/rt-F-final-D65-complete-1546.md) | Installed docs |
@@ -151,7 +154,7 @@ Blockers: App element activation — helper04de HOME2c1 and mounted8 PASS. App m
 Blockers: Runtime P4 — security1706 passed174 but FAILed two strictRuffB009s and asked schema-mutation control. Luna1713 firstreturn active; original45s remains OPEN, no memo/budget waiver.
 Blockers: App — changed P34858 intent correction and stable current sources owned. P1 recordedGO; no duplicate P2/P3. Runtime1700 owns safe next-run phase capture; App owns normal launch wiring.
 Blockers: Final delivery — all active lanes need core0/regressions0 plus current P2/P3 and D69 completion. Agent newly reports39 restored-node failures; four classifiers own them. No cut/proofs/build/ZIP.
-Next ready: consume P4return1713 for independentfinalreview, D73prep1707 and Appphasewiring1700. Exact element diagnostic venue is owned by App; no duplicate main body.
+Next ready: consume P4return1713 and each D72family1717 for independentreview. Appphasewiring1700 owns exactelementvenue; no duplicate mainbody. D73candidate prepared, cutheld.
 
 Later: D47 memo and proof pins remain post-delivery; nine state attacks open. V4 cut; D14/D23 deferred unchanged. D34 broader cleanup remains held. D62 submit completeness is an explicit known gap in the Runtime behavior-change ledger.
 
@@ -159,7 +162,7 @@ Admission: D56 stops Farm and schema-access work. Exact403 and automatic access 
 
 Disk: about8.3GB, above main8GB heavy floor. Sweep3 freed0; compact packed0/compressed0. Finished worktrees automatically recycle; no old refused target retried.
 
-live 2 / cap 4; ready-undispatched 0. Luna1713 P4 first return and1707 D73 private prep. D74 caps consumed:6 above8.5GB,4 at7.5–8.5,2 below7.5; no dispatch below6.5. No guarded release refusals retried.
+live 4 / cap 4; ready-undispatched 0. Luna1713 P4 return plus three1717 D72 Agent families. D74 caps apply; disk about8.3GB. No guarded release refusals retried.
 
 Pass 2026-10-24T16:57:06Z: New Agent actual49 failures consumed with its four disjoint source classifiers. Popup author88b9 complete -> independent security1658 dispatched. D69 review1647 FAIL only citations -> return1658 dispatched. P4Sol1652 active; element phase still UNKNOWN pending App-host input. Source remains5c1 and no originals duplicated.
 
@@ -168,3 +171,5 @@ Pass 2026-10-24T17:00:20Z: App1649 completes historical element phase input as U
 Pass 2026-10-24T17:08:53Z: Popup actualb3184PASS; D69finalcitations1702PASS -> normalea3. Phasehelper04de author8PASS -> normal2c1, exactAppworker-activation ask1708. P4authorb2e complete -> security1706. D72docs1704, D73privateprep1707, exactD69/phaseproof1708 active undercap4. No originalduplicate or cut/build.
 
 Pass 2026-10-24T17:14:02Z: D69actual2c1 focused9PASS9s andexactledgerpublication1708 closes RuntimeD69. D72docsinstalled171108/renderer/sourcehelpPASS. P4security174PASSbutstrictlintFAIL -> Lunafirstreturn1713, schema-mutabilitycontrol explicit. D73prep1707 readysoon. Appfocused diagnosticvenue1700 consumed, onebody not yet requested. D74classifierrefusal stays stopped, no stale-pin release retry.
+
+Pass 2026-10-24T17:17:15Z: Agentpeer1706 threeindependentreadyD72families consumed -> FrameWindow1717, installer-schema1717, generic-host1717 allLuna dispatchsamepass. ActualcurrentAgent200819 andRuntime2c1 used, no stale rollback. P4return1713 remainsuniquesourceowner. D73privateprep1707PASS heldcut; fourlive undercap4.
