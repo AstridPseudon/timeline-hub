@@ -128,3 +128,26 @@ def test_remotion_lock_pins_the_immutable_composition_public_entry():
             assert target.startswith("./dist/")
             assert "package/" + target.removeprefix("./") in files
 
+
+# D66 restore of upstream-924 selector 10444.  This exact positive remains
+# visible because no approved deletion ledger entry covers the upstream pin.
+def test_d66_upstream_remotion_lock_pins_the_transitive_schema_package():
+    package = json.loads((ROOT / "remotion/package.json").read_text(encoding="utf-8"))
+    lock = json.loads((ROOT / "remotion/package-lock.json").read_text(encoding="utf-8"))
+    composition = lock["packages"]["node_modules/@banodoco/timeline-composition"]
+    schema = lock["packages"]["node_modules/@banodoco/timeline-schema"]
+
+    assert package["dependencies"]["@banodoco/timeline-composition"] == (
+        "https://github.com/banodoco/timeline-composition/archive/refs/tags/v0.0.6.tar.gz"
+    )
+    assert composition["dependencies"]["@banodoco/timeline-schema"] == (
+        "https://github.com/banodoco/timeline-schema/archive/refs/tags/v0.0.1.tar.gz"
+    )
+    assert schema["version"] == "0.0.1"
+    assert schema["resolved"] == (
+        "https://github.com/banodoco/timeline-schema/archive/refs/tags/v0.0.1.tar.gz"
+    )
+    assert schema["integrity"] == (
+        "sha512-m7oUjUV+q1dPb78N6+5B3iayTXkV/WBrQLxNDrlt32j4GXY2sQOIOwpGBw4kNjjngVpSwSaAGneQKUWCgUS8lQ=="
+    )
+
