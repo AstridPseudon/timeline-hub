@@ -40,15 +40,10 @@ import {
   seedTimelineStoreBeforeRender,
 } from '@/tools/video-editor/hooks/timelineStore.ts';
 import {
-  createTimelineCommandRunner,
-  MEDIA_COMMAND_DESCRIPTORS,
   provisionRegisteredTimelineMedia,
 } from '@/tools/video-editor/commands/index.ts';
 import type {
   TimelineChromeContextValue,
-  TimelineEditorCommandInput,
-  TimelineEditorCommandResult,
-  TimelineEditorCommand,
   TimelineEditorContextValue,
   TimelineEditorCommands,
   TimelinePlaybackContextValue,
@@ -101,8 +96,6 @@ export function useTimelineRenderRequest(
     renderRuntime: { projectId },
   }), [assetRegistry, projectId, renderMetadata, resolvedConfig, timelineId]);
 }
-
-const editorCommandRunner = createTimelineCommandRunner<TimelineEditorCommand>(MEDIA_COMMAND_DESCRIPTORS);
 
 function useTimelineEditorContextValue({
   data,
@@ -993,55 +986,11 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
       };
     };
 
-    const validate = (input: TimelineEditorCommandInput | unknown, options?: Parameters<typeof editorCommandRunner.validate>[2]) => {
-      return editorCommandRunner.validate(getCurrentData(), input, options);
-    };
-
-    const dryRun = (input: TimelineEditorCommandInput | unknown, options?: Parameters<typeof editorCommandRunner.dryRun>[2]) => {
-      return editorCommandRunner.dryRun(getCurrentData(), input, options);
-    };
-
-    const apply = (input: TimelineEditorCommandInput | unknown, options?: Parameters<TimelineEditorCommands['apply']>[1]): TimelineEditorCommandResult => {
-      const current = getCurrentData();
-      const timelinePermission = runtime.timelineEditability?.checkTimeline?.();
-      const result = editorCommandRunner.apply(current, input, options);
-      if (timelinePermission && !timelinePermission.allowed) {
-        return {
-          ...result,
-          status: 'rejected',
-          nextData: current,
-          errors: [...result.errors, {
-            code: 'validation_failed',
-            message: 'Timeline edits are temporarily unavailable while canonical shot state is updating.',
-            path: '$',
-          }],
-        };
-      }
-      if (result.status !== 'rejected' && result.nextData.stableSignature !== current.stableSignature) {
-        save.commitData(result.nextData, {
-          save: options?.save,
-          selectedClipId: options?.selectedClipId,
-          selectedTrackId: options?.selectedTrackId,
-          semantic: options?.semantic,
-          transactionId: result.transaction.transactionId,
-          commandHistory: {
-            transaction: result.transaction,
-            history: result.history,
-          },
-        });
-      }
-
-      return result;
-    };
-
     return {
       buildAddMediaCommand,
       buildSwapCommand,
-      validate,
-      dryRun,
-      apply,
     };
-  }, [data, dataRef, runtime.timelineEditability, save]);
+  }, [data, dataRef]);
 
   const editor = useTimelineEditorContextValue({
     data,
