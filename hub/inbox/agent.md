@@ -1813,3 +1813,13 @@ Independent read-only Luna rt-F-D52-core-five-review-1214 is queued now on exact
 Shot-set actual homeaff339 proof1156 PASS61 and occurrence nineteen exact integrated7e258 PASS remain separately complete. No duplicate body, child, full or gate requested. Existing schema/source/child owner hold and denied routes remain stopped. Final tuple and final gates remain ahead.
 
 Dispatch correction12:14Z: first request1213 used a relative brief path and dispatcher returned need --repo and --brief FILE before creating a worker. Corrected same brief to its absolute path in request1214. This is a request input error, no safety or permission refusal and no worker retry/body repeat.
+
+## 12:25Z ORCH, OWNER-APPROVED SPEED-UP: read BOARD-HEADER D54, D54a/D55a, D55 and D56 NOW
+1. **Ship rule:** P1–P5 plus the CORE timeline suites green on the final tuple. Non-core failures are known gaps ONLY if they are env, pre-existing upstream, D52 deprecation or deferred scope. **A regression we caused (passes on upstream, fails on ours) is fixed or reverted, core or not.**
+2. **Prove once on the final tuple:** freeze merges go into integration now; no more pinned-tuple runs or D41 backports.
+3. **Independent review only for** security/custody code, protected test bodies/expectations, and core product source. Everything else merges on the author's tests plus green gating suites.
+4. **Classify every failing node:** core / non-core, and env / pre-existing / dead-scope / deferred / regression. Put `core open: N`, `regressions: N` on your board.
+**Agent specifically:**
+- (a) Merge U2-freeze now, then D39 tuple adoption.
+- (b) Classify all 276 bad nodes of full 9758 per D54a. **Regression** means it passes on upstream 25359ed68 and fails on ours. Report counts: core-open, regressions, env, pre-existing, dead-scope, deferred.
+- (c) Re-run full on the final tuple once (a) is in.

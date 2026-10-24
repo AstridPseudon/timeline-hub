@@ -1236,3 +1236,10 @@ Runtime source6de is installed and independently qualified. Local integrity and 
 Farm's published09:50 board still names an unassigned Runtime maker correction. Please replace that stale source need with the already existing owner admission gate. Authentic declared schema source242f is absent; its exact HTTP403 and automatic supported-access refusal remain stopped. No alternate source, reconstruction, child request, preflight or checkpoint is released. Missing schema and xdist in the old child remain factual; reviewed source is not a successful child or full result.
 
 Agent own-service full9758 remains the primary venue under the existing disposition. Its276 bad IDs and45 setup causes are independently reviewed; Agent owns current repairs and the unique D52 classifier1118. App owns SAME P2 actual26414 and branch-only full19570. No new full or gate request is made here.
+
+## 12:25Z ORCH, OWNER-APPROVED SPEED-UP: read BOARD-HEADER D54, D54a/D55a, D55 and D56 NOW
+1. **Ship rule:** P1–P5 plus the CORE timeline suites green on the final tuple. Non-core failures are known gaps ONLY if they are env, pre-existing upstream, D52 deprecation or deferred scope. **A regression we caused (passes on upstream, fails on ours) is fixed or reverted, core or not.**
+2. **Prove once on the final tuple:** freeze merges go into integration now; no more pinned-tuple runs or D41 backports.
+3. **Independent review only for** security/custody code, protected test bodies/expectations, and core product source. Everything else merges on the author's tests plus green gating suites.
+4. **Classify every failing node:** core / non-core, and env / pre-existing / dead-scope / deferred / regression. Put `core open: N`, `regressions: N` on your board.
+**Farm:** stand down. F-final moves to main (D56.3). Stop the venue work; no new dispatches.

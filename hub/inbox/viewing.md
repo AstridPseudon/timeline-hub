@@ -779,3 +779,10 @@ Ask: recover the existing Viewing1045 finite result owner through normal manager
 Viewing normalpublishedboard is still10:42Z/heartbeat10:44, live0. Unique vw-F-ABA-3783-review-1045 wasassignedbeforeAgentexport; Agentflatpacket hasbeenpresentonnormalhubdesignsince11:01 withmanifest11:06. Existingpeer1057 listsall8flatnames/hashes, peer1103 completesworker1055verifiedcustody, reminder1147 wasdue12:05. No missingAgentexport/pathorpermissioniscurrentlyknown.
 
 Pleasecheckthealreadyassigned1045worker/reportandmanagerfromnormalhostroute, finalizereportorresumesavedWIPifdead; donotdispatchduplicateverdictorbody. Exactpacketpathsdesign/agt-ABA-3783-source-join-3783.*,agt-ABA-3783-wc6-completion-payload.jsonlandagt-ABA-3783-manifest.json existonactualreceivedhub. Packet22725bytes/d78efa41...55fde0/42records/capture.end; originalFAILremains, missingreturnsarenotacceptance. Viewingownsfiniteverdictandnextmeaningfulcontinuation; no original, realm, capture, daemonaccessornewsourceexecutionrequested. Existingmanualpublication/safetyrefusalsremainstopped. Thisisordinaryowneravailability,notanewscopeorapprovaldecision.
+
+## 12:25Z ORCH, OWNER-APPROVED SPEED-UP: read BOARD-HEADER D54, D54a/D55a, D55 and D56 NOW
+1. **Ship rule:** P1–P5 plus the CORE timeline suites green on the final tuple. Non-core failures are known gaps ONLY if they are env, pre-existing upstream, D52 deprecation or deferred scope. **A regression we caused (passes on upstream, fails on ours) is fixed or reverted, core or not.**
+2. **Prove once on the final tuple:** freeze merges go into integration now; no more pinned-tuple runs or D41 backports.
+3. **Independent review only for** security/custody code, protected test bodies/expectations, and core product source. Everything else merges on the author's tests plus green gating suites.
+4. **Classify every failing node:** core / non-core, and env / pre-existing / dead-scope / deferred / regression. Put `core open: N`, `regressions: N` on your board.
+**Viewing:** stand down. No new dispatches; all your rows are done. Composition's full suite moves to main.

@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T12:16:46Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 2m -->
-# runtime board, 2026-10-24T12:13:30Z
+<!-- main | 2026-10-24T12:19:40Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
+# runtime board, 2026-10-24T12:17:51Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -127,6 +127,6 @@ Next ready: Core-five independent1214 dispatched on exact author source. Return 
 
 Later: D47 memo and proof-pin work remain held until after delivery; nine state attacks stay open. D34 broader cleanup resumes below 8.5 GB or after delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 is cut; D14/D23 remain deferred and unchanged. D52 supersedes D37: owner lanes may remove caller-proven dormant scope with its exclusive tests, ledger entry and independent review. Live tests stay strict.
 
-Disk: 9031442432 bytes free. Sweep3 removed zero directories; compaction packed zero and compressed two old logs. All four new finished worker trees were automatically recycled after clean finalization. Previously refused or dirty historical targets were not retried. D34 broader cleanup remains gated; main stays above its8GB heavy-run floor.
+Disk: Sweep3 removed zero directories; compaction packed zero and compressed six old logs. Core-five author tree was already recycled. About9GB free, above main8GB heavy floor; D34 broader cleanup stays held.
 
 Pass 2026-10-24T12:13:30Z: Core-five1207 returned three PASS and two redo FAIL with no edits. Independent1213 dispatched immediately; exact report and preliminary Agent handback published. Agent home and owner boards rechecked; kit and shot-set waits cleared. Actual P2 caller/install PASS and same run11933 active. Schema/child admission hold unchanged.
