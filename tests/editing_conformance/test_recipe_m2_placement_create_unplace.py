@@ -17,22 +17,17 @@ from astrid.sdk.timeline.native_placement_commands import (
 )
 from astrid.sdk.timeline.rebase import replay
 from tests.editing_conformance.fixture_loader import load_fixture
-from tests.editing_conformance.m2_authenticated_redo import AuthenticatedRedo
 from tests.editing_conformance.test_recipe_m1_commands import inverse as _inverse
 from tests.editing_conformance.test_recipe_m1_commands import later
-from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm, inputs
+from tests.editing_conformance.test_recipe_m2_auto_placement import GenuineTimeline
+from tests.editing_conformance.test_recipe_occurrence_media import inputs
 from tests.sdk.test_timeline_commit_provider import (
     inverse as inverse_call,
 )
-from tests.sdk.test_timeline_commit_provider import (
-    runtime_abi,  # noqa: F401 -- autouse detached ABI fixture
-)
 from tests.sdk.test_timeline_commit_provider_document import MEDIA
 
-_AUTHENTICATED_REDO = AuthenticatedRedo(_execute, _inverse)
-execute = _AUTHENTICATED_REDO.execute
-inverse = _AUTHENTICATED_REDO.inverse
-accepted_boundaries = _AUTHENTICATED_REDO.accepted_boundaries
+execute = _execute
+inverse = _inverse
 
 OWNER = 'occurrence:occ-a'
 CHILD = OWNER + '/clip:placed'
@@ -41,16 +36,34 @@ ON, HOLD = 9.0, 4
 FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_placement_create_unplace.json'
 
 
-def create_case():
-    document, _, new, verified = inputs('image')
+@pytest.fixture
+def genuine_runtime(tmp_path, monkeypatch):
+    context = GenuineTimeline.create(tmp_path, monkeypatch, 'image')
+    try:
+        yield context
+    finally:
+        context.close()
+
+
+def create_case(context=None):
+    if context is None:
+        document, _, new, verified = inputs('image')
+    else:
+        document, new, verified = context.document, context.new, context.verified
     bundle = bundle_from_document(document)
     command = capture_placement_create(bundle, OWNER, 'placed', new, ON, HOLD,
                                        ownership='occurrence', verified_media=verified)
     return document, bundle, command, verified
 
 
-def unplace_case():
-    _, bundle, command, verified = create_case()
+def unplace_case(context=None):
+    _, bundle, command, verified = create_case(context)
+    if context is not None:
+        created = context.call([command], 'placement-create')
+        document = created['data']['canonical_document']
+        bundle = bundle_from_document(document)
+        removal = capture_placement_unplace(bundle, OWNER, 'placed', ownership='occurrence')
+        return document, bundle, removal
     created = execute(bundle, [command], verified_media=verified)
     document = document_from_bundle(created.bundle)
     bundle = bundle_from_document(document)
@@ -58,10 +71,10 @@ def unplace_case():
     return document, bundle, removal
 
 
-def case(operation):
+def case(operation, context=None):
     if operation == 'create':
-        return create_case()
-    document, bundle, command = unplace_case()
+        return create_case(context)
+    document, bundle, command = unplace_case(context)
     return document, bundle, command, []
 
 
@@ -79,8 +92,9 @@ def test_portable_goldens(operation):
 
 
 @pytest.mark.parametrize('operation', ['create', 'unplace'])
-def test_exact_capture_replay_inverse_and_redo(operation):
-    _, bundle, command, verified = case(operation)
+@pytest.mark.integration
+def test_exact_capture_replay_inverse_and_redo(operation, genuine_runtime):
+    _, bundle, command, verified = case(operation, genuine_runtime)
     before = copy.deepcopy(bundle)
     validate_command(command)
     assert json.loads(json.dumps(command, allow_nan=False)) == command
@@ -91,7 +105,8 @@ def test_exact_capture_replay_inverse_and_redo(operation):
     undone = inverse(plan.bundle, plan.records)
     assert undone.bundle == before
     # Re-inserting a removed row needs accepted order, as in the removal recipe.
-    redone = inverse(undone.bundle, accepted_boundaries(undone.records, plan.bundle, undone.bundle))
+    redone = inverse(undone.bundle, genuine_runtime.accepted_boundaries(
+        undone.records, plan.bundle, undone.bundle))
     assert redone.bundle == plan.bundle
 
 
@@ -122,27 +137,29 @@ def test_unplace_clears_the_child_and_keeps_its_registry_binding():
     assert plan.bundle['parent'] == bundle['parent']
 
 
-def test_provider_accepts_create_with_exact_undo_and_redo():
-    document, _, command, verified = create_case()
-    realm = MediaRealm(document, verified)
-    created = realm.call([command])
-    undo = realm.call([inverse_call([created['receipt']['receipt_id']])])
+@pytest.mark.integration
+def test_provider_accepts_create_with_exact_undo_and_redo(genuine_runtime):
+    document, _, command, verified = create_case(genuine_runtime)
+    realm = genuine_runtime
+    created = realm.call([command], 'placement-create')
+    undo = realm.call([inverse_call([created['receipt']['receipt_id']])], 'placement-create-undo')
     assert undo['data']['canonical_document'] == document
-    redo = realm.call([inverse_call([undo['receipt']['receipt_id']])])
+    redo = realm.call([inverse_call([undo['receipt']['receipt_id']])], 'placement-create-redo')
     assert redo['data']['canonical_document'] == created['data']['canonical_document']
 
 
-def test_provider_accepts_unplace_with_exact_undo_and_redo():
-    document, _, command, verified = create_case()
-    realm = MediaRealm(document, verified)
-    created = realm.call([command])
+@pytest.mark.integration
+def test_provider_accepts_unplace_with_exact_undo_and_redo(genuine_runtime):
+    document, _, command, verified = create_case(genuine_runtime)
+    realm = genuine_runtime
+    created = realm.call([command], 'placement-create')
     after = created['data']['canonical_document']
     removal = capture_placement_unplace(bundle_from_document(after), OWNER, 'placed', ownership='occurrence')
-    removed = realm.call([removal])
+    removed = realm.call([removal], 'placement-unplace')
     assert removed['data']['canonical_document'] != after
-    undo = realm.call([inverse_call([removed['receipt']['receipt_id']])])
+    undo = realm.call([inverse_call([removed['receipt']['receipt_id']])], 'placement-unplace-undo')
     assert undo['data']['canonical_document'] == after
-    redo = realm.call([inverse_call([undo['receipt']['receipt_id']])])
+    redo = realm.call([inverse_call([undo['receipt']['receipt_id']])], 'placement-unplace-redo')
     assert redo['data']['canonical_document'] == removed['data']['canonical_document']
 
 

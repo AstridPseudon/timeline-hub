@@ -14,20 +14,15 @@ from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundl
 from astrid.sdk.timeline.native_auto_placement import auto_place_shared, unplace_shared
 from astrid.sdk.timeline.native_shot_pool_commands import POOL, capture_shot_pool
 from astrid.sdk.timeline.rebase import replay
-from tests.editing_conformance.m2_authenticated_redo import AuthenticatedRedo
 from tests.editing_conformance.test_recipe_m1_commands import inverse as _inverse
-from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm, inputs
+from tests.editing_conformance.test_recipe_m2_auto_placement import GenuineTimeline
+from tests.editing_conformance.test_recipe_occurrence_media import inputs
 from tests.sdk.test_timeline_commit_provider import (
     inverse as inverse_call,
 )
-from tests.sdk.test_timeline_commit_provider import (
-    runtime_abi,  # noqa: F401 -- autouse detached ABI fixture
-)
 
-_AUTHENTICATED_REDO = AuthenticatedRedo(_execute, _inverse)
-execute = _AUTHENTICATED_REDO.execute
-inverse = _AUTHENTICATED_REDO.inverse
-accepted_boundaries = _AUTHENTICATED_REDO.accepted_boundaries
+execute = _execute
+inverse = _inverse
 
 OWNER = 'occurrence:occ-a'
 CHILD = OWNER + '/clip:placed'
@@ -39,8 +34,24 @@ CASES = {'image-append': ('image', None, None), 'video-append': ('video', None, 
          'image-shift': ('image', CLIP_B_START, None), 'video-overlay-anchor': ('video', None, 'clip-c')}
 
 
-def build(kind, *, frame=None, anchor=None, wide=True, **kwargs):
-    document, _, new, verified = inputs(kind)
+@pytest.fixture
+def genuine_runtime(request, tmp_path, monkeypatch):
+    parameter = getattr(request.node, 'callspec', None)
+    values = parameter.params if parameter is not None else {}
+    name = values.get('name')
+    kind = values.get('kind') or CASES[name][0]
+    context = GenuineTimeline.create(tmp_path, monkeypatch, kind)
+    try:
+        yield context
+    finally:
+        context.close()
+
+
+def build(kind, *, frame=None, anchor=None, wide=True, context=None, **kwargs):
+    if context is None:
+        document, _, new, verified = inputs(kind)
+    else:
+        document, new, verified = context.document, context.new, context.verified
     bundle = bundle_from_document(document)
     state = State(bundle)
     if wide:
@@ -69,8 +80,10 @@ def test_portable_goldens(name):
 
 
 @pytest.mark.parametrize('name', CASES)
-def test_exact_capture_replay_inverse_and_redo(name):
-    _, bundle, result, verified = case(name)
+@pytest.mark.integration
+def test_exact_capture_replay_inverse_and_redo(name, genuine_runtime):
+    kind, frame, anchor = CASES[name]
+    _, bundle, result, verified = build(kind, frame=frame, anchor=anchor, context=genuine_runtime)
     before = copy.deepcopy(bundle)
     [command] = result['commands']
     validate_command(command)
@@ -81,7 +94,8 @@ def test_exact_capture_replay_inverse_and_redo(name):
     assert replay(plan, bundle, verified_media=verified).records == plan.records
     undone = inverse(plan.bundle, plan.records)
     assert undone.bundle == before
-    redone = inverse(undone.bundle, accepted_boundaries(undone.records, plan.bundle, undone.bundle))
+    redone = inverse(undone.bundle, genuine_runtime.accepted_boundaries(
+        undone.records, plan.bundle, undone.bundle))
     assert redone.bundle == plan.bundle
 
 
@@ -293,14 +307,14 @@ def test_unplace_removes_the_image_expression_keeps_the_binding_and_is_guarded()
 
 
 @pytest.mark.parametrize('kind', ['image', 'video'])
-def test_provider_accepts_shared_placement_with_exact_undo_and_redo(kind):
-    _, bundle, result, verified = build(kind)
-    document = document_from_bundle(bundle)
-    realm = MediaRealm(document, verified)
-    created = realm.call(result['commands'])
-    undo = realm.call([inverse_call([created['receipt']['receipt_id']])])
+@pytest.mark.integration
+def test_provider_accepts_shared_placement_with_exact_undo_and_redo(kind, genuine_runtime):
+    _, bundle, result, verified = build(kind, context=genuine_runtime)
+    realm = genuine_runtime
+    created = realm.call(result['commands'], 'shared-placement')
+    undo = realm.call([inverse_call([created['receipt']['receipt_id']])], 'shared-placement-undo')
     assert undo['data']['canonical_document'] != created['data']['canonical_document']
-    redo = realm.call([inverse_call([undo['receipt']['receipt_id']])])
+    redo = realm.call([inverse_call([undo['receipt']['receipt_id']])], 'shared-placement-redo')
     assert redo['data']['canonical_document'] == created['data']['canonical_document']
     assert document_from_bundle(bundle_from_document(created['data']['canonical_document'])) == (
         created['data']['canonical_document'])
