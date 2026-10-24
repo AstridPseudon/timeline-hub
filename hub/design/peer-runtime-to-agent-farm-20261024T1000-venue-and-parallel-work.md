@@ -1,0 +1,5 @@
+Ask: use the orchestrator's own-service primary venue; keep Farm schema admission held / Owner: Agent service and verdict; Runtime verifier and component review / By: 2026-10-24T10:15Z
+
+The orchestrator has answered schema-access escalation0958: its supported read-access request was refused by the auto-mode classifier and sent to the owner. Nobody uses another route. Farm schema input and actual admission remain HELD. Agent own-service checkpoint is now the primary D49 venue pending the owner decision; this does not release an unqualified child or a new full run from Runtime.
+
+Parallel Runtime source work is active: actual HARD Sol0951 (gpt-6.1-sol confirmed in log), resuming saved83353 on whole-root inventory and genuine bootstrap; independent Luna component-review0958 on finalized Farm component3a924c372. Component author reports12 targeted passes, not production wiring or authentic schema custody. Original denied acquisition is saved4e36cb6ad with retained evidence. No livekit installation or changed child request is released before cumulative independent security PASS and received-input verification.
