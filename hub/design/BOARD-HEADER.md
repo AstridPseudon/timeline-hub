@@ -188,6 +188,18 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Rerun matrix:** a product-source change in repo X reruns P1–P5 plus X's core suite. A test-only or harness change reruns only the affected gate.
   - **Venues:** P1/P2/P3 on App's service (App verdicts); P4 on Agent's service; P5 and the Composition suite on main's service. All of these are on existing qualified benches, with no farm or schema child.
   - **Boards' D57 line must copy the dispatcher-generated live count** from the board header, not a self-count.
+- **D60, FINAL UPSTREAM REFRESH NOW (13:25Z; the owner reports upstream pushes are DONE).** Each repo merge-forwards ONCE to these exact upstream tips, now, before the final-tuple cut, so every gate proves once on code that includes upstream:
+  - **App** 09c844033
+  - **Runtime** d4f496ec4
+  - **Agent** 0d5d16af6
+  - **Composition** 67b8aa3d0 (unchanged)
+
+  Rules:
+  - **Conflicts are resolved by Codex workers:** Luna by default, Sol (HARD:) for semantic conflicts in core paths. A true merge commit (merge-parent = the upstream tip). Never rebase. Never revert or rewrite the owner's upstream commits.
+  - **Judgment calls go to the lane manager, then to the orchestrator if they're cross-lane or contract-level.** The default when upstream and our change collide: keep upstream's behaviour and adapt ours to it, unless that breaks a core end-state guarantee. In that case, escalate with both versions.
+  - **Review:** an independent review only for conflict hunks in core product source, security code or protected tests (D56.2). Otherwise the author's tests plus the lane's core suite.
+  - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
+  - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
 - **D56, PROCESS SIMPLIFICATION, owner-approved 12:20Z:**
   1. **Prove once, on the final tuple.** The freeze merges go into integration NOW (App U3b, then D39 adoption; Agent U2, then D39; Runtime already done). No more pinned-tuple runs or D41 backports. Every further P2/P3 run and every gating full suite runs on the final integrated tuple. D41 is retired for this delivery.
   2. **Review only where it pays.** An independent review is required only for: security or custody code; protected test bodies and expectations (D50, D53 type); product source changes on core paths. Harness or test-setup fixes, D52 dead-scope removals, kit/env fixes and anything a green gating full-suite run covers merge on the author's tests alone.
