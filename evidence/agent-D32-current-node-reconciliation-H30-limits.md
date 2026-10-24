@@ -1,8 +1,9 @@
 # H30/D43/H3 cumulative census limits
 
 - Artifact: `agent-D32-current-node-reconciliation-H30-corrected.json`
-- Artifact SHA-256: `705c6df3a22200510c335143826c9a57df5de8ea05abe1697e4ca21058586771`
+- Artifact SHA-256: `05be229672afd60c65ddd1e1e04b914d5d64b67c444de4d1109a9b6e2ba7e5c1`
 - Current qualified census: **267 total; 201 closed; 66 open**.
+- Current metadata-only correction: active families sum to **66**, with **0** active Rendering missing result file nodes (all six are proven passed); active lane owners sum to **66** (Agent 60, Runtime 2, Viewing 4). All 267 node records, proofs, historical counts, and 59 CSV/mapping rows are unchanged.
 - Historical baseline preserved: **172 closed / 95 open**; the 0550 package snapshot remains historical **179 closed / 88 open** metadata context only.
 - Cumulative delta in this update: **+22 exact current Occurrence-media inverse originals** (16 corruption and 6 retained-scope cases), all phase `call`, Agent-owned at base, now independently reviewed PASS.
 - Inverse proof: qualifier `agt-F-inverse22-qualified-0537`; **22 passed in 3.55s**; independent result review `agt-F-inverse22-result-review-0550` PASS. Exact JUnit/log and before/after source custody/hash proof are recorded in `inverse22_current_0537` and the 59-row mapping.
