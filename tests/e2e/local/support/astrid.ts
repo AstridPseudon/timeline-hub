@@ -211,10 +211,10 @@ export class AstridCli {
     return this.python(['-m', 'astrid', ...args], options);
   }
 
-  async commitCaptured(projectId: string, timelineId: string, base: HeadPin, operation:
+  async commitCapturedResult(projectId: string, timelineId: string, base: HeadPin, operation:
     { kind: 'track'; id: string } | { kind: 'move'; clipId: string; on: number }
     | { kind: 'label'; trackId: string; label: string }
-    | { kind: 'clear-transition'; clipId: string }, key: string): Promise<CommitAcceptedMutation> {
+    | { kind: 'clear-transition'; clipId: string }, key: string): Promise<AstridEnvelope<CommitAcceptedMutation['data']> & { receipt?: CommitAcceptedMutation['receipt'] }> {
     const program = [
       'import json, sys',
       'from astrid.sdk.client import AstridClient',
@@ -243,10 +243,17 @@ export class AstridCli {
       '    elif operation["kind"] == "clear-transition": command = capture_clip_set(bundle, "parent/clip:" + operation["clipId"], clear=["transition"])',
       '    else: command = capture_move(bundle, "parent/clip:" + operation["clipId"], operation["on"])',
       '    body = {"api_version": 1, "project_id": project, "timeline_id": timeline, "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"], "commands": [command], "source": {"via": "python"}}',
-      '    result = client.timelines.commit(project, timeline, body, idempotency_key=key); assert result.ok, result.as_dict(); print(json.dumps(result.as_dict()))',
+      '    result = client.timelines.commit(project, timeline, body, idempotency_key=key); print(json.dumps(result.as_dict()))',
     ].join('\n');
     const run = await this.python(['-c', program, JSON.stringify([projectId, timelineId, base, operation, key])]);
-    const result = JSON.parse(run.stdout.trim().split('\n').pop()!);
+    return JSON.parse(run.stdout.trim().split('\n').pop()!);
+  }
+
+  async commitCaptured(projectId: string, timelineId: string, base: HeadPin, operation:
+    { kind: 'track'; id: string } | { kind: 'move'; clipId: string; on: number }
+    | { kind: 'label'; trackId: string; label: string }
+    | { kind: 'clear-transition'; clipId: string }, key: string): Promise<CommitAcceptedMutation> {
+    const result = await this.commitCapturedResult(projectId, timelineId, base, operation, key);
     if (!result.ok || !result.receipt) throw new Error(`Agent command was not accepted: ${JSON.stringify(result)}`);
     return { data: result.data, receipt: result.receipt } as CommitAcceptedMutation;
   }
