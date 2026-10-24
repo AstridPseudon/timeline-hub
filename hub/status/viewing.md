@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T07:49:54Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 0m -->
-# viewing board, 2026-10-24T07:49:18Z
+<!-- viewing | 2026-10-24T07:51:30Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 0m -->
+# viewing board, 2026-10-24T07:51:27Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -37,8 +37,8 @@
 | F-track-label mapping | Map three retained label scenarios | Luna author and review | Exact source comparison | merged | Mapping 0544; independent 0547 | Exact three mappings passed independent review. Existing CLI receipt retained; Agent owns census credit. No new execution claimed. | Base 9cd3dbe865 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six original cases passed in 41.48 seconds on child c886 and Runtime 8ea. Source classification independently passed. | no product change |
 
-| F-ABA diagnostics | Review six diagnostic expectation migrations | Luna high | Author passed targeted checks | review | vw-F-ABA-diagnostics-review-0748 | Author 0744 passed all 95 cases, Ruff and mypy on Runtime 460c. Independent no-weakening review queued; original 59 assertions unchanged. | 81dfe8b1e8 |
-| FREEZE Composition | Qualify upstream and full service checkpoint | Luna high | D48 and D49 | review | Review 0750; service full 23379 | Live upstream 67b8 unchanged. Types and registry passed. One uncached full checkpoint queued on Viewing service; no final gate credit. | Source 635f4de06 |
+| F-ABA diagnostics | Import reviewed six expectation migrations | Luna author and review | Agent current-only join | merging | Author 0744; independent 0748 PASS | Both passed all 95 cases on Runtime 460c, Ruff and mypy. All original 59 assertions retained; exact blob sent for Agent home import. | 81dfe8b1e8 |
+| FREEZE Composition | Confirm upstream and full service checkpoint | Luna high | Independent readiness verdict | review | Readiness 0746; review 0750; full 23379 | Upstream 67b8 unchanged. Viewing full checkpoint passed all 86 tests in 6 seconds, zero skipped. No final suite credit. | Source 635f4de06 |
 
 | OPS-hub-publication | Confirm supported board publication | Existing hub daemon | Published current board and peer | merged | Existing hub daemon | Board body and author handoff match local bytes; hub HEAD equals origin/main. Failed manual action remains stopped. | Hub ea55792fc |
 
@@ -55,9 +55,9 @@ Three label mappings independently passed: Unicode, empty string and clear. Exac
 
 Evidence: [whole-path owner verdict](../../design/viewing-F-authoring-ABA-whole-path-review-0638.md), [shared source diagnosis](../../design/viewing-F-authoring-ABA-stage-return-sol-0631.md), [Runtime handoff](../../design/peer-viewing-to-runtime-20261024T0641-ABA-source-auth-repair.md), [independent storage FAIL](../../design/viewing-F-authoring-ABA-item-storage-review-0620.md), [item source and limits](../../design/viewing-F-authoring-ABA-item-storage-sol-0605.md), [shared occurrence control](../../design/viewing-F-authoring-ABA-item-storage-materialized-0605.log), [original ABA verdict](../../design/viewing-F-authoring-ABA-original-review-0513.md), [integrated controls](../../design/agt-F-viewing-joined-integrated-0500.md), [ABA source finding](../../design/viewing-F-authoring-ABA-ambiguous-sol-0544.md), [independent cause review](../../design/viewing-F-authoring-ABA-cause-review-0550.md), [label mapping](../../design/viewing-F-track-label-map-0544.md), [independent mapping review](../../design/viewing-F-track-label-review-0547.md), [earlier evidence](../../design/viewing-evidence-before-D33-20261024T0053.md).
 
-Blockers: None for Viewing source work. Agent owns the current product port and home merge; independent diagnostic review follows author 0744.
+Blockers: Agent — import reviewed diagnostic blob into current-only product join and qualify home before the one original ABA run.
 Later: Image inverse peer0455 failed before forwarding source 0df7. Agent owns any next image witness; no new Viewing body or source author. V4 cut and deferred timing stay unchanged; earlier permission refusals remain stopped.
 
-Next ready: Review diagnostic 0744 on completion. Consume Composition 0746 and queue one service checkpoint if supported. Qualify joined home source before one original rerun.
+Next ready: Consume Composition independent 0750 verdict and Agent current join receipt. Dispatch original result review when the managed run returns.
 
 07:44Z Runtime dependency cleared on published 460c / repair 35764. Independent Agent0719 on exact d33fe + 35764 passed four shared positives and two source-copy comparisons; full95 was89PASS6old-expectationFAIL. Viewing owns only six diagnostic migrations; Agent ports the three product blobs to current home. Supported exact Runtime checkout is available at /home/user/work/wt/rt-pin-460c2d39. No original ABA replay, original PASS or complete product merge is claimed. Independent0638 source-cause verdict remains valid; pre-repair review0643 was finalized143 without report and receives no review credit. Composition full venue is Viewing service under D49; checkpoint pending readiness worker0746.
