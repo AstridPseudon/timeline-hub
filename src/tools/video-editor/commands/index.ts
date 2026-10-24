@@ -6,12 +6,8 @@ export {
 } from './runner.ts';
 export {
   ADD_MEDIA_COMMAND_DESCRIPTOR,
-  applyProvisionedMediaCommand,
-  applyProvisionedMediaCommandToConfig,
   buildAddMediaCommandEffect,
   buildSwapMediaCommandEffect,
-  dryRunProvisionedMediaCommand,
-  materializeProvisionedMediaCommand,
   MEDIA_COMMAND_DESCRIPTORS,
   PLACE_PREPARED_MEDIA_COMMAND_DESCRIPTOR,
   applyPreparedMediaCommand,
