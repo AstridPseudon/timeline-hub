@@ -167,6 +167,7 @@ def test_generic_host_runs_external_python_orchestrator_from_admitted_pack(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     from astrid.core.execution.generic_host import GenericPackHost
+    from tests.helpers.external_orchestrator_owner import admit_external_orchestrator_source
 
     pack_root = tmp_path / "external_pack"
     orchestrator_root = pack_root / "orchestrators" / "demo"
@@ -192,6 +193,7 @@ def test_generic_host_runs_external_python_orchestrator_from_admitted_pack(
         encoding="utf-8",
     )
     monkeypatch.setenv("PYTHONPATH", str(tmp_path / "ambient-that-must-not-be-used"))
+    admit_external_orchestrator_source(tmp_path=tmp_path, monkeypatch=monkeypatch, pack_root=pack_root)
     host = GenericPackHost(pack_roots=[pack_root])
     definition, admission = host.admit("orchestrator", "external_pack.demo")
     result = host.invoke_capability(
