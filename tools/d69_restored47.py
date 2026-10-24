@@ -85,8 +85,14 @@ def _require_ancestor(root: Path, commit: str, head: str) -> None:
         raise AssertionError(f"required donor is not an ancestor of {head}: {commit}")
 
 
-def check(root: Path, *, require_donors: bool, inspect_refs: bool = False) -> dict[str, object]:
-    manifest = json.loads((root / MANIFEST).read_text(encoding="utf-8"))
+def check(
+    root: Path,
+    *,
+    manifest_path: Path,
+    require_donors: bool,
+    inspect_refs: bool = False,
+) -> dict[str, object]:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     rows = manifest["rows"]
     if manifest["counts"] != {
         "rows": 47,
@@ -169,12 +175,20 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--service-preflight", action="store_true")
     parser.add_argument("--inspect", action="store_true")
+    parser.add_argument("--root", type=Path)
+    parser.add_argument("--manifest", type=Path)
     args = parser.parse_args()
     if args.service_preflight == args.inspect:
         parser.error("choose exactly one of --service-preflight or --inspect")
-    root = Path(__file__).resolve().parents[1]
+    root = (args.root or Path(__file__).resolve().parents[1]).resolve()
+    manifest = (args.manifest or root / MANIFEST).resolve()
     try:
-        result = check(root, require_donors=args.service_preflight, inspect_refs=args.inspect)
+        result = check(
+            root,
+            manifest_path=manifest,
+            require_donors=args.service_preflight,
+            inspect_refs=args.inspect,
+        )
     except (AssertionError, OSError, subprocess.CalledProcessError) as exc:
         print(f"D69_PREFLIGHT_FAIL: {exc}", file=sys.stderr)
         return 2
