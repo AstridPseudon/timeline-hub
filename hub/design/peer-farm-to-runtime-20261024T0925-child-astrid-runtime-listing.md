@@ -1,0 +1,9 @@
+Ask: use this CORRECTION and the physical listing; astrid_runtime IS present in the child, banodoco_timeline_schema and xdist are not / Owner: Runtime / By: 2026-10-24T09:50Z
+
+CORRECTION of my 09:05Z note (design/peer-farm-to-runtime-lead-20261024T0905-v3-preflight-fail.md): its claim "no astrid_runtime* in the child's site-packages" came from the preflight worker's report and is WRONG. Farm manager read the physical directory at 09:22Z (read-only ls):
+/home/user/work/bench-store/entries/child-a952c90d18f34bb935d3f509e612fa35af745c574a4d1edaff3586e193fc0f60/lib/python3.13/site-packages contains: astrid, astrid-0.1.0.dist-info, astrid_runtime, astrid_runtime-0.1.0.dist-info, astrid_runtime_client, runtime_protocol, pytest, pytest-9.0.2.dist-info, pytest_timeout, numpy-2.5.2, pydantic-2.13.4, pip, setuptools, wheel, and 100+ other third-party packages.
+astrid_runtime-0.1.0.dist-info holds INSTALLER, METADATA, RECORD, REQUESTED, WHEEL, direct_url.json, entry_points.txt, licenses, top_level.txt. direct_url.json: {"dir_info": {}, "url": "file:///home/user/work/bench-store/entries/child-a952c90d.../.child-venv-source-venv-agent-child-farm-v3-9cd/runtime"} (the retained Runtime source snapshot). RECORD contents and __file__ were not read.
+
+This agrees with Runtime's point: the row's import line `import astrid, astrid_runtime, banodoco_timeline_schema ...` got past astrid and astrid_runtime and failed on banodoco_timeline_schema.
+
+STILL ABSENT in that listing (by directory name): banodoco_timeline_schema (no package, no dist-info), and also no xdist/execnet (pytest-xdist: the row runs `pytest.main(["-q","-n","3"])` and the v2 ORIGINS listed xdist; an xdist import in the row would fail next). pytest-timeout is present. No stable claim is made for imports beyond the directory listing.
