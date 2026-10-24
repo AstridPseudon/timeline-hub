@@ -1,0 +1,2407 @@
+{
+ "log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-full-farm-1024050351-26511/log.txt",
+ "log_sha256": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
+ "log_bytes": 2089428,
+ "log_lines": 34419,
+ "summary_FAILED_lines": 281,
+ "summary_ERROR_lines": 187,
+ "failure_sections": 288,
+ "error_sections": 187,
+ "failure_section_range_lines": [
+  5676,
+  33893
+ ],
+ "error_section_range_lines": [
+  260,
+  5675
+ ],
+ "short_summary_first_line": 33942,
+ "closed_historical_88": {
+  "listed": 88,
+  "found": 88,
+  "unknown": 0,
+  "unknown_nodes": [],
+  "listed_but_not_in_short_summary_FAILED": [],
+  "extracts": [
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_cancellation_after_child_result_blocks_success",
+    "line_start": 17510,
+    "line_end": 17725,
+    "byte_start": 1050429,
+    "byte_end": 1062331,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_canonical_punctuation_paths_use_opaque_module_names[actions/a-folder/script.v1.py]",
+    "line_start": 15223,
+    "line_end": 15433,
+    "byte_start": 917673,
+    "byte_end": 929497,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_canonical_punctuation_paths_use_opaque_module_names[actions/hello-world.py]",
+    "line_start": 14796,
+    "line_end": 15006,
+    "byte_start": 893088,
+    "byte_end": 904898,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_canonical_running_state_wins_over_legacy_cancelled_field[False]",
+    "line_start": 14360,
+    "line_end": 14577,
+    "byte_start": 868971,
+    "byte_end": 881030,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_canonical_running_state_wins_over_legacy_cancelled_field[True]",
+    "line_start": 14578,
+    "line_end": 14795,
+    "byte_start": 881030,
+    "byte_end": 893088,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_condition_skip_and_public_runner_bypass_are_import_free",
+    "line_start": 11511,
+    "line_end": 11720,
+    "byte_start": 712984,
+    "byte_end": 724806,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_cannot_close_unproved_real_attempt[observation]",
+    "line_start": 18843,
+    "line_end": 18884,
+    "byte_start": 1126633,
+    "byte_end": 1128618,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[False-False]",
+    "line_start": 18643,
+    "line_end": 18692,
+    "byte_start": 1116945,
+    "byte_end": 1119368,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[False-True]",
+    "line_start": 18693,
+    "line_end": 18742,
+    "byte_start": 1119368,
+    "byte_end": 1121790,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[True-False]",
+    "line_start": 18743,
+    "line_end": 18792,
+    "byte_start": 1121790,
+    "byte_end": 1124212,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_cpu_shutdown_waits_for_real_original_attempt_release[True-True]",
+    "line_start": 18793,
+    "line_end": 18842,
+    "byte_start": 1124212,
+    "byte_end": 1126633,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_input_schema_before_import_and_only_effective_kwargs",
+    "line_start": 9456,
+    "line_end": 9682,
+    "byte_start": 591248,
+    "byte_end": 604746,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_legacy_child_command_and_ancestor_import_fence",
+    "line_start": 16604,
+    "line_end": 16817,
+    "byte_start": 996861,
+    "byte_end": 1009157,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_legacy_orchestrator_child_command_route",
+    "line_start": 17726,
+    "line_end": 17936,
+    "byte_start": 1062331,
+    "byte_end": 1074697,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_malformed_entrypoint_rejected_without_import[/tmp/escape.py-run]",
+    "line_start": 10129,
+    "line_end": 10361,
+    "byte_start": 631070,
+    "byte_end": 644849,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_malformed_entrypoint_rejected_without_import[actions/../escape.py-run]",
+    "line_start": 10362,
+    "line_end": 10594,
+    "byte_start": 644849,
+    "byte_end": 658640,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_malformed_entrypoint_rejected_without_import[actions/hello.py-bad-name]",
+    "line_start": 10595,
+    "line_end": 10827,
+    "byte_start": 658640,
+    "byte_end": 672433,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[False-False]",
+    "line_start": 17937,
+    "line_end": 18241,
+    "byte_start": 1074697,
+    "byte_end": 1093259,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[False-True]",
+    "line_start": 18242,
+    "line_end": 18546,
+    "byte_start": 1093259,
+    "byte_end": 1111819,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[True-False]",
+    "line_start": 18547,
+    "line_end": 18594,
+    "byte_start": 1111819,
+    "byte_end": 1114383,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_managed_review_cancel_retires_only_observed_owner_and_preserves_drift[True-True]",
+    "line_start": 18595,
+    "line_end": 18642,
+    "byte_start": 1114383,
+    "byte_end": 1116945,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_non_json_result_fails[__import__('pathlib').Path('/fake')]",
+    "line_start": 9019,
+    "line_end": 9245,
+    "byte_start": 566013,
+    "byte_end": 579392,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_non_json_result_fails[float('inf')]",
+    "line_start": 8111,
+    "line_end": 8337,
+    "byte_start": 512705,
+    "byte_end": 526038,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_non_json_result_fails[float('nan')]",
+    "line_start": 7884,
+    "line_end": 8110,
+    "byte_start": 499372,
+    "byte_end": 512705,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_non_json_result_fails[object()]",
+    "line_start": 8338,
+    "line_end": 8564,
+    "byte_start": 526038,
+    "byte_end": 539363,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_output_schema_validates_return_without_file_ports",
+    "line_start": 9246,
+    "line_end": 9455,
+    "byte_start": 579392,
+    "byte_end": 591248,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_private_child_command_preserves_entrypoint_and_original_bridge[-c]",
+    "line_start": 6269,
+    "line_end": 6314,
+    "byte_start": 408420,
+    "byte_end": 411127,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_private_child_command_preserves_entrypoint_and_original_bridge[-m]",
+    "line_start": 6315,
+    "line_end": 6360,
+    "byte_start": 411127,
+    "byte_end": 413834,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_private_child_command_preserves_entrypoint_and_original_bridge[script]",
+    "line_start": 6361,
+    "line_end": 6406,
+    "byte_start": 413834,
+    "byte_end": 416545,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_private_imports_add_no_repository_or_pack_pythonpath",
+    "line_start": 16218,
+    "line_end": 16426,
+    "byte_start": 974235,
+    "byte_end": 986010,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_python_action_receives_original_host_bridge_before_import",
+    "line_start": 6038,
+    "line_end": 6268,
+    "byte_start": 396026,
+    "byte_end": 408420,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_python_declared_files_require_real_attempt_output[False]",
+    "line_start": 15646,
+    "line_end": 15892,
+    "byte_start": 941297,
+    "byte_end": 955716,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_python_declared_files_require_real_attempt_output[True]",
+    "line_start": 15893,
+    "line_end": 16111,
+    "byte_start": 955716,
+    "byte_end": 967956,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_python_return_settles_with_trusted_evidence_and_no_files",
+    "line_start": 15434,
+    "line_end": 15645,
+    "byte_start": 929497,
+    "byte_end": 941297,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_runtime_cancellation_contains_owned_action_without_terminal_ack[canonical-cancel_requested-False]",
+    "line_start": 12407,
+    "line_end": 12659,
+    "byte_start": 762146,
+    "byte_end": 775764,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_runtime_cancellation_contains_owned_action_without_terminal_ack[canonical-cancel_requested-True]",
+    "line_start": 13999,
+    "line_end": 14251,
+    "byte_start": 848806,
+    "byte_end": 862422,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_runtime_cancellation_contains_owned_action_without_terminal_ack[canonical-cancelled-False]",
+    "line_start": 12660,
+    "line_end": 12912,
+    "byte_start": 775764,
+    "byte_end": 789368,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_runtime_cancellation_contains_owned_action_without_terminal_ack[legacy-cancel_requested-False]",
+    "line_start": 13419,
+    "line_end": 13671,
+    "byte_start": 816582,
+    "byte_end": 830194,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_runtime_cancellation_contains_owned_action_without_terminal_ack[legacy-cancelled-False]",
+    "line_start": 13746,
+    "line_end": 13998,
+    "byte_start": 835208,
+    "byte_end": 848806,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_runtime_cancellation_contains_owned_action_without_terminal_ack[typed-cancel_requested-False]",
+    "line_start": 11787,
+    "line_end": 12039,
+    "byte_start": 728602,
+    "byte_end": 742212,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_runtime_cancellation_contains_owned_action_without_terminal_ack[typed-cancelled-False]",
+    "line_start": 12154,
+    "line_end": 12406,
+    "byte_start": 748550,
+    "byte_end": 762146,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_runtime_cancellation_contains_owned_action_without_terminal_ack[wrapped-cancel_requested-False]",
+    "line_start": 12913,
+    "line_end": 13165,
+    "byte_start": 789368,
+    "byte_end": 802982,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_runtime_cancellation_contains_owned_action_without_terminal_ack[wrapped-cancelled-False]",
+    "line_start": 13166,
+    "line_end": 13418,
+    "byte_start": 802982,
+    "byte_end": 816582,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_schema_required_value_preserves_json_semantics[None]",
+    "line_start": 16818,
+    "line_end": 17029,
+    "byte_start": 1009157,
+    "byte_end": 1021056,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_schema_required_value_preserves_json_semantics[]",
+    "line_start": 17164,
+    "line_end": 17375,
+    "byte_start": 1029795,
+    "byte_end": 1041692,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_static_discover_admit_dry_run_and_owned_child",
+    "line_start": 5822,
+    "line_end": 6037,
+    "byte_start": 383692,
+    "byte_end": 396026,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_strict_json_results_are_nested_data[0]",
+    "line_start": 6829,
+    "line_end": 7039,
+    "byte_start": 440194,
+    "byte_end": 452015,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_strict_json_results_are_nested_data[False]",
+    "line_start": 6618,
+    "line_end": 6828,
+    "byte_start": 428369,
+    "byte_end": 440194,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_strict_json_results_are_nested_data[None]",
+    "line_start": 6407,
+    "line_end": 6617,
+    "byte_start": 416545,
+    "byte_end": 428369,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_strict_json_results_are_nested_data[]",
+    "line_start": 7040,
+    "line_end": 7250,
+    "byte_start": 452015,
+    "byte_end": 463837,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_strict_json_results_are_nested_data[value4]",
+    "line_start": 7251,
+    "line_end": 7461,
+    "byte_start": 463837,
+    "byte_end": 475659,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_strict_json_results_are_nested_data[value5]",
+    "line_start": 7462,
+    "line_end": 7672,
+    "byte_start": 475659,
+    "byte_end": 487489,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_generic_host_actions_v3.py::test_strict_json_results_are_nested_data[value6]",
+    "line_start": 7673,
+    "line_end": 7883,
+    "byte_start": 487489,
+    "byte_end": 499372,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_remotion_host_session.py::test_two_public_command_workers_settle_task_leases_then_host_drains_original",
+    "line_start": 19512,
+    "line_end": 19840,
+    "byte_start": 1164469,
+    "byte_end": 1184930,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/execution/test_worker_startup_identity.py::test_sanitized_child_import_proves_current_host_sdk_version_and_vendored_client",
+    "line_start": 5677,
+    "line_end": 5788,
+    "byte_start": 375128,
+    "byte_end": 381536,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/pack/test_source_setup.py::test_real_filtered_command_root_cf_pin_preserves_all_four_inventory_operations",
+    "line_start": 19878,
+    "line_end": 19927,
+    "byte_start": 1187672,
+    "byte_end": 1191065,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/pack/test_source_setup.py::test_real_outer_command_inventory_route_retains_sibling_creator_waits_and_graph",
+    "line_start": 19841,
+    "line_end": 19877,
+    "byte_start": 1184930,
+    "byte_end": 1187672,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/rendering/test_conformance.py::test_attachment_wire_parity",
+    "line_start": 21948,
+    "line_end": 21989,
+    "byte_start": 1311100,
+    "byte_end": 1313430,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/rendering/test_conformance.py::test_intentional_failure_wire_parity",
+    "line_start": 21990,
+    "line_end": 22031,
+    "byte_start": 1313430,
+    "byte_end": 1315775,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/rendering/test_conformance.py::test_minimal_render_wire_parity",
+    "line_start": 21779,
+    "line_end": 21820,
+    "byte_start": 1301577,
+    "byte_end": 1303941,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/rendering/test_conformance.py::test_no_audio_wire_parity",
+    "line_start": 21906,
+    "line_end": 21947,
+    "byte_start": 1308780,
+    "byte_end": 1311100,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/rendering/test_conformance.py::test_passthrough_audio_wire_parity",
+    "line_start": 21864,
+    "line_end": 21905,
+    "byte_start": 1306433,
+    "byte_end": 1308780,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/rendering/test_conformance.py::test_request_sensitive_support_wire_parity",
+    "line_start": 21821,
+    "line_end": 21863,
+    "byte_start": 1303941,
+    "byte_end": 1306433,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/rendering/test_freeze.py::test_freeze_real_ffmpeg_transport_one_video_one_committed_sidecar",
+    "line_start": 23169,
+    "line_end": 23316,
+    "byte_start": 1378340,
+    "byte_end": 1385666,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/rendering/test_service.py::test_real_ffmpeg_audio_reactive_through_generic_service",
+    "line_start": 24491,
+    "line_end": 24637,
+    "byte_start": 1448438,
+    "byte_end": 1455713,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/rendering/test_service.py::test_real_ffmpeg_renders_through_generic_service[nominal]",
+    "line_start": 24175,
+    "line_end": 24332,
+    "byte_start": 1433198,
+    "byte_end": 1440818,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/core/rendering/test_service.py::test_real_ffmpeg_renders_through_generic_service[with-audio]",
+    "line_start": 24333,
+    "line_end": 24490,
+    "byte_start": 1440818,
+    "byte_end": 1448438,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/rendering/test_builtin_registration.py::test_real_ffmpeg_render_through_registered_backend",
+    "line_start": 25308,
+    "line_end": 25387,
+    "byte_start": 1498658,
+    "byte_end": 1501843,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/rendering/test_ffmpeg_backend.py::test_manifest_command_dispatches_from_pack_root",
+    "line_start": 25388,
+    "line_end": 25430,
+    "byte_start": 1501843,
+    "byte_end": 1503933,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/rendering/test_remotion_backend.py::test_manifest_command_runs_from_owning_pack_root",
+    "line_start": 22032,
+    "line_end": 22075,
+    "byte_start": 1315775,
+    "byte_end": 1317904,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/rendering/test_render_export_task_adapter.py::test_render_export_adapter_writes_real_mp4_and_is_callable",
+    "line_start": 23452,
+    "line_end": 23661,
+    "byte_start": 1393308,
+    "byte_end": 1404178,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/rendering/test_threejs_backend.py::test_threejs_identity_invariants_never_claim_remotion",
+    "line_start": 24102,
+    "line_end": 24136,
+    "byte_start": 1429517,
+    "byte_end": 1431369,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/rendering/test_threejs_backend.py::test_threejs_own_namespace_config_is_strict",
+    "line_start": 24137,
+    "line_end": 24174,
+    "byte_start": 1431369,
+    "byte_end": 1433198,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_accepts_empty_and_exact_text_fields",
+    "line_start": 23950,
+    "line_end": 23982,
+    "byte_start": 1421617,
+    "byte_end": 1423337,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_accepts_window_and_rejects_fps_mismatch",
+    "line_start": 24068,
+    "line_end": 24101,
+    "byte_start": 1427660,
+    "byte_end": 1429517,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_non_rendered_audio_ownership",
+    "line_start": 24033,
+    "line_end": 24067,
+    "byte_start": 1425881,
+    "byte_end": 1427660,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/test_vibecomfy_ir_bridge.py::test_t9_absent_explicit_activation_preserves_production_dispatch[False]",
+    "line_start": 26076,
+    "line_end": 26099,
+    "byte_start": 1537501,
+    "byte_end": 1538992,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/test_vibecomfy_ir_bridge.py::test_t9_absent_explicit_activation_preserves_production_dispatch[True]",
+    "line_start": 26100,
+    "line_end": 26123,
+    "byte_start": 1538992,
+    "byte_end": 1540482,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/test_vibecomfy_ir_bridge.py::test_t9_actual_executor_child_loads_pinned_callable_and_settles_output",
+    "line_start": 26056,
+    "line_end": 26075,
+    "byte_start": 1536205,
+    "byte_end": 1537501,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/test_vibecomfy_ir_bridge.py::test_t9_child_uses_explicit_pinned_fixture_outside_product_root[None]",
+    "line_start": 26124,
+    "line_end": 26160,
+    "byte_start": 1540482,
+    "byte_end": 1543051,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight",
+    "line_start": 29183,
+    "line_end": 29195,
+    "byte_start": 1734193,
+    "byte_end": 1736365,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/reshape/test_doctor_contract_shapes.py::test_smoke_doctor_lane_accepts_both_payload_shapes[observed-with-ok]",
+    "line_start": 29253,
+    "line_end": 29273,
+    "byte_start": 1740282,
+    "byte_end": 1741479,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/reshape/test_doctor_contract_shapes.py::test_smoke_doctor_lane_accepts_both_payload_shapes[observed-without-ok]",
+    "line_start": 29274,
+    "line_end": 29294,
+    "byte_start": 1741479,
+    "byte_end": 1742679,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/stage1/test_media_handoff_render_boundary.py::test_host_derived_registry_executes_canonical_ffmpeg_executor",
+    "line_start": 31123,
+    "line_end": 31208,
+    "byte_start": 1848537,
+    "byte_end": 1853076,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/test_conftest_environment.py::test_bootstrap_environment_is_accepted_by_the_remotion_probe_context",
+    "line_start": 31384,
+    "line_end": 31481,
+    "byte_start": 1863194,
+    "byte_end": 1868805,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/test_installer_service_repair_integration.py::test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_pids[False-0]",
+    "line_start": 33148,
+    "line_end": 33241,
+    "byte_start": 1981277,
+    "byte_end": 1986572,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/test_installer_service_repair_integration.py::test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_pids[True-1]",
+    "line_start": 33242,
+    "line_end": 33335,
+    "byte_start": 1986572,
+    "byte_end": 1991865,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale",
+    "line_start": 33400,
+    "line_end": 33482,
+    "byte_start": 1995625,
+    "byte_end": 1999798,
+    "match": "unique name",
+    "truncated": false
+   }
+  ]
+ },
+ "closed_newer_8": {
+  "listed": 8,
+  "found": 8,
+  "unknown": 0,
+  "unknown_nodes": [],
+  "listed_but_not_in_short_summary_FAILED": [],
+  "extracts": [
+   {
+    "node": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
+    "line_start": 25068,
+    "line_end": 25153,
+    "byte_start": 1483589,
+    "byte_end": 1489165,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]",
+    "line_start": 24982,
+    "line_end": 25067,
+    "byte_start": 1478015,
+    "byte_end": 1483589,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]",
+    "line_start": 24810,
+    "line_end": 24895,
+    "byte_start": 1466861,
+    "byte_end": 1472439,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]",
+    "line_start": 24724,
+    "line_end": 24809,
+    "byte_start": 1461281,
+    "byte_end": 1466861,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]",
+    "line_start": 25154,
+    "line_end": 25239,
+    "byte_start": 1489165,
+    "byte_end": 1494749,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]",
+    "line_start": 24896,
+    "line_end": 24981,
+    "byte_start": 1472439,
+    "byte_end": 1478015,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]",
+    "line_start": 24638,
+    "line_end": 24723,
+    "byte_start": 1455713,
+    "byte_end": 1461281,
+    "match": "unique name",
+    "truncated": false
+   },
+   {
+    "node": "tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack",
+    "line_start": 31209,
+    "line_end": 31260,
+    "byte_start": 1853076,
+    "byte_end": 1855836,
+    "match": "unique name",
+    "truncated": false
+   }
+  ]
+ },
+ "errored_187": {
+  "listed": 187,
+  "found": 187,
+  "unknown": 0,
+  "unknown_nodes": [],
+  "listed_but_not_in_short_summary_ERROR": [],
+  "extracts": [
+   {
+    "node": "tests/core/execution/test_runtime_orchestrator_custody_d40.py::test_capture_survives_last_check_to_import_mutation",
+    "line_start": 404,
+    "line_end": 416,
+    "byte_start": 29447,
+    "byte_end": 30233,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_orchestrator_custody_d40.py::test_existing_orchestrator_invocation_uses_owner_capture",
+    "line_start": 261,
+    "line_end": 273,
+    "byte_start": 20604,
+    "byte_end": 21395,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_orchestrator_custody_d40.py::test_owner_grant_for_wrong_definition_is_refused_before_execution",
+    "line_start": 430,
+    "line_end": 442,
+    "byte_start": 31028,
+    "byte_end": 31835,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_orchestrator_custody_d40.py::test_selected_module_cannot_fall_back_to_installed_source[json]",
+    "line_start": 443,
+    "line_end": 455,
+    "byte_start": 31835,
+    "byte_end": 32638,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_orchestrator_custody_d40.py::test_ungranted_orchestrator_never_reaches_dynamic_discovery",
+    "line_start": 417,
+    "line_end": 429,
+    "byte_start": 30233,
+    "byte_end": 31028,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_orchestrator_custody_d40.py::test_wrong_retained_authority_refused_before_discovery[channel_id]",
+    "line_start": 300,
+    "line_end": 312,
+    "byte_start": 23021,
+    "byte_end": 23830,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_orchestrator_custody_d40.py::test_wrong_retained_authority_refused_before_discovery[custody_scope]",
+    "line_start": 274,
+    "line_end": 286,
+    "byte_start": 21395,
+    "byte_end": 22210,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_orchestrator_custody_d40.py::test_wrong_retained_authority_refused_before_discovery[operation_id]",
+    "line_start": 313,
+    "line_end": 325,
+    "byte_start": 23830,
+    "byte_end": 24643,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_orchestrator_custody_d40.py::test_wrong_retained_authority_refused_before_discovery[owner_epoch]",
+    "line_start": 287,
+    "line_end": 299,
+    "byte_start": 22210,
+    "byte_end": 23021,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_orchestrator_custody_d40.py::test_wrong_retained_authority_refused_before_discovery[profile]",
+    "line_start": 326,
+    "line_end": 338,
+    "byte_start": 24643,
+    "byte_end": 25446,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_orchestrator_custody_d40.py::test_wrong_source_authority_refused_before_execution[definition]",
+    "line_start": 352,
+    "line_end": 364,
+    "byte_start": 26247,
+    "byte_end": 27052,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_orchestrator_custody_d40.py::test_wrong_source_authority_refused_before_execution[inventory]",
+    "line_start": 378,
+    "line_end": 390,
+    "byte_start": 27845,
+    "byte_end": 28648,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_orchestrator_custody_d40.py::test_wrong_source_authority_refused_before_execution[path]",
+    "line_start": 365,
+    "line_end": 377,
+    "byte_start": 27052,
+    "byte_end": 27845,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_orchestrator_custody_d40.py::test_wrong_source_authority_refused_before_execution[revision]",
+    "line_start": 339,
+    "line_end": 351,
+    "byte_start": 25446,
+    "byte_end": 26247,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_orchestrator_custody_d40.py::test_wrong_source_authority_refused_before_execution[revoked]",
+    "line_start": 391,
+    "line_end": 403,
+    "byte_start": 28648,
+    "byte_end": 29447,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_capture_after_bind_mutation_is_rejected_before_execution",
+    "line_start": 625,
+    "line_end": 637,
+    "byte_start": 43113,
+    "byte_end": 43906,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_captured_command_refuses_installed_namespace_collision",
+    "line_start": 846,
+    "line_end": 858,
+    "byte_start": 56547,
+    "byte_end": 57336,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_command_loader_executes_captured_descendants_after_last_check",
+    "line_start": 638,
+    "line_end": 650,
+    "byte_start": 43906,
+    "byte_end": 44709,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_malformed_capture_never_reaches_discovery[42]",
+    "line_start": 794,
+    "line_end": 806,
+    "byte_start": 53436,
+    "byte_end": 54215,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_malformed_capture_never_reaches_discovery[[]]",
+    "line_start": 768,
+    "line_end": 780,
+    "byte_start": 51873,
+    "byte_end": 52652,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_malformed_capture_never_reaches_discovery[null]",
+    "line_start": 755,
+    "line_end": 767,
+    "byte_start": 51092,
+    "byte_end": 51873,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_malformed_capture_never_reaches_discovery[{broken]",
+    "line_start": 781,
+    "line_end": 793,
+    "byte_start": 52652,
+    "byte_end": 53436,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_malformed_capture_never_reaches_discovery[{}]",
+    "line_start": 742,
+    "line_end": 754,
+    "byte_start": 50313,
+    "byte_end": 51092,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_mutation_before_discovery_or_selection_fails_closed[ancestor]",
+    "line_start": 547,
+    "line_end": 559,
+    "byte_start": 38265,
+    "byte_end": 39068,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_mutation_before_discovery_or_selection_fails_closed[bytes]",
+    "line_start": 534,
+    "line_end": 546,
+    "byte_start": 37468,
+    "byte_end": 38265,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_mutation_before_discovery_or_selection_fails_closed[definition]",
+    "line_start": 495,
+    "line_end": 507,
+    "byte_start": 35063,
+    "byte_end": 35870,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_mutation_before_discovery_or_selection_fails_closed[profile]",
+    "line_start": 482,
+    "line_end": 494,
+    "byte_start": 34262,
+    "byte_end": 35063,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_mutation_before_discovery_or_selection_fails_closed[revision]",
+    "line_start": 508,
+    "line_end": 520,
+    "byte_start": 35870,
+    "byte_end": 36673,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_mutation_before_discovery_or_selection_fails_closed[root]",
+    "line_start": 521,
+    "line_end": 533,
+    "byte_start": 36673,
+    "byte_end": 37468,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_mutation_before_discovery_or_selection_fails_closed[scope]",
+    "line_start": 469,
+    "line_end": 481,
+    "byte_start": 33465,
+    "byte_end": 34262,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_mutation_before_discovery_or_selection_fails_closed[symlink]",
+    "line_start": 560,
+    "line_end": 572,
+    "byte_start": 39068,
+    "byte_end": 39869,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_owner_grants_cannot_authorize_package_collisions[astrid.py]",
+    "line_start": 586,
+    "line_end": 598,
+    "byte_start": 40666,
+    "byte_end": 41465,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_owner_grants_cannot_authorize_package_collisions[astrid_runtime_client.py]",
+    "line_start": 612,
+    "line_end": 624,
+    "byte_start": 42284,
+    "byte_end": 43113,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_owner_grants_cannot_authorize_package_collisions[runtime_protocol.py]",
+    "line_start": 599,
+    "line_end": 611,
+    "byte_start": 41465,
+    "byte_end": 42284,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_package_main_uses_captured_loader",
+    "line_start": 833,
+    "line_end": 845,
+    "byte_start": 55780,
+    "byte_end": 56547,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_production_command_executes_only_capture_after_last_check[False-command]",
+    "line_start": 690,
+    "line_end": 702,
+    "byte_start": 47104,
+    "byte_end": 47929,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_production_command_executes_only_capture_after_last_check[True-command]",
+    "line_start": 703,
+    "line_end": 715,
+    "byte_start": 47929,
+    "byte_end": 48752,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_production_python_action_uses_private_descriptor[False]",
+    "line_start": 664,
+    "line_end": 676,
+    "byte_start": 45524,
+    "byte_end": 46315,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_production_python_action_uses_private_descriptor[True]",
+    "line_start": 677,
+    "line_end": 689,
+    "byte_start": 46315,
+    "byte_end": 47104,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_python_action_loader_executes_captured_descendants_after_last_check",
+    "line_start": 651,
+    "line_end": 663,
+    "byte_start": 44709,
+    "byte_end": 45524,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_real_producer_calls_consumer_before_cli_and_requires_retained_preparation",
+    "line_start": 456,
+    "line_end": 468,
+    "byte_start": 32638,
+    "byte_end": 33465,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_revoked_owner_custody_never_becomes_a_source_grant",
+    "line_start": 716,
+    "line_end": 728,
+    "byte_start": 48752,
+    "byte_end": 49536,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_selection_rejects_caller_handles_and_duplicate_consumption",
+    "line_start": 573,
+    "line_end": 585,
+    "byte_start": 39869,
+    "byte_end": 40666,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_source_mutation_before_consumer_is_rejected",
+    "line_start": 729,
+    "line_end": 741,
+    "byte_start": 49536,
+    "byte_end": 50313,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_standalone_runtime_launcher_keeps_its_own_private_handle_class",
+    "line_start": 859,
+    "line_end": 871,
+    "byte_start": 57336,
+    "byte_end": 58141,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_task_claims_cannot_write_runtime_owner_grants",
+    "line_start": 820,
+    "line_end": 832,
+    "byte_start": 55001,
+    "byte_end": 55780,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/core/execution/test_runtime_source_custody_d40.py::test_wrong_source_root_cannot_fall_back_to_live_execution",
+    "line_start": 807,
+    "line_end": 819,
+    "byte_start": 54215,
+    "byte_end": 55001,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/integrations/test_d09_managed_scene_only.py::test_public_checkout_check_uses_retained_managed_scene_result",
+    "line_start": 1066,
+    "line_end": 1162,
+    "byte_start": 67513,
+    "byte_end": 72185,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/integrations/test_d09_managed_scene_only.py::test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle[candidate]",
+    "line_start": 969,
+    "line_end": 1065,
+    "byte_start": 62825,
+    "byte_end": 67513,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/integrations/test_d09_managed_scene_only.py::test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle[saved]",
+    "line_start": 872,
+    "line_end": 968,
+    "byte_start": 58141,
+    "byte_end": 62825,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_managed_transparent_image_has_opaque_backing_without_media_alpha_proof",
+    "line_start": 3591,
+    "line_end": 3617,
+    "byte_start": 235840,
+    "byte_end": 237636,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_prepared_empty_raw_plate_stays_unknown",
+    "line_start": 3537,
+    "line_end": 3563,
+    "byte_start": 232273,
+    "byte_end": 234052,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_prepared_real_plate_background_picture_and_gap[False]",
+    "line_start": 3483,
+    "line_end": 3509,
+    "byte_start": 228715,
+    "byte_end": 230494,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_prepared_real_plate_background_picture_and_gap[True]",
+    "line_start": 3510,
+    "line_end": 3536,
+    "byte_start": 230494,
+    "byte_end": 232273,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_public12_outer_geometry_gap_does_not_erase_original_positive[outer0]",
+    "line_start": 3780,
+    "line_end": 3806,
+    "byte_start": 248321,
+    "byte_end": 250115,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_public12_outer_geometry_gap_does_not_erase_original_positive[outer1]",
+    "line_start": 3807,
+    "line_end": 3833,
+    "byte_start": 250115,
+    "byte_end": 251909,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_public12_outer_geometry_gap_does_not_erase_original_positive[outer2]",
+    "line_start": 3834,
+    "line_end": 3860,
+    "byte_start": 251909,
+    "byte_end": 253703,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_real_plate_fade_dip_and_translucent_gap",
+    "line_start": 3618,
+    "line_end": 3644,
+    "byte_start": 237636,
+    "byte_end": 239415,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_real_plate_wipe_mosaic_pan_and_tint_keep_the_painted_backing",
+    "line_start": 3645,
+    "line_end": 3671,
+    "byte_start": 239415,
+    "byte_end": 241201,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_registered_plate_ssr_preserves_existing_draw_and_default_theme",
+    "line_start": 3564,
+    "line_end": 3590,
+    "byte_start": 234052,
+    "byte_end": 235840,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params0]",
+    "line_start": 3672,
+    "line_end": 3698,
+    "byte_start": 241201,
+    "byte_end": 242981,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params1]",
+    "line_start": 3699,
+    "line_end": 3725,
+    "byte_start": 242981,
+    "byte_end": 244761,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params2]",
+    "line_start": 3726,
+    "line_end": 3752,
+    "byte_start": 244761,
+    "byte_end": 246541,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_am_snap_plate_scene_capability.py::test_unproven_backing_cannot_claim_opaque_coverage[params3]",
+    "line_start": 3753,
+    "line_end": 3779,
+    "byte_start": 246541,
+    "byte_end": 248321,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[clipId]",
+    "line_start": 4077,
+    "line_end": 4103,
+    "byte_start": 267969,
+    "byte_end": 269748,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[frame]",
+    "line_start": 3996,
+    "line_end": 4022,
+    "byte_start": 262632,
+    "byte_end": 264411,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[height]",
+    "line_start": 4050,
+    "line_end": 4076,
+    "byte_start": 266190,
+    "byte_end": 267969,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_capture_scene_labels.py::test_mismatched_public_response_is_not_relabelled[width]",
+    "line_start": 4023,
+    "line_end": 4049,
+    "byte_start": 264411,
+    "byte_end": 266190,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_capture_scene_labels.py::test_mixed_or_missing_capture_cannot_retain_facts",
+    "line_start": 3888,
+    "line_end": 3914,
+    "byte_start": 255494,
+    "byte_end": 257273,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_capture_scene_labels.py::test_other_source_or_uncaptured_frame_never_falls_back",
+    "line_start": 3915,
+    "line_end": 3941,
+    "byte_start": 257273,
+    "byte_end": 259052,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_capture_scene_labels.py::test_real_host_labels_are_retained_once_and_drawn_without_private_math",
+    "line_start": 3861,
+    "line_end": 3887,
+    "byte_start": 253703,
+    "byte_end": 255494,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_capture_scene_labels.py::test_real_media_bounds_use_public_canvas_and_keep_uncertain_alpha",
+    "line_start": 3969,
+    "line_end": 3995,
+    "byte_start": 260846,
+    "byte_end": 262632,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_capture_scene_labels.py::test_unknown_public_geometry_is_an_answer_and_unavailability_is_not_empty",
+    "line_start": 3942,
+    "line_end": 3968,
+    "byte_start": 259052,
+    "byte_end": 260846,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[full-error0]",
+    "line_start": 4386,
+    "line_end": 4432,
+    "byte_start": 288810,
+    "byte_end": 291963,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[full-error1]",
+    "line_start": 4433,
+    "line_end": 4479,
+    "byte_start": 291963,
+    "byte_end": 295116,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[full-error2]",
+    "line_start": 4480,
+    "line_end": 4526,
+    "byte_start": 295116,
+    "byte_end": 298269,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[layer-error0]",
+    "line_start": 4668,
+    "line_end": 4714,
+    "byte_start": 307740,
+    "byte_end": 310895,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[layer-error1]",
+    "line_start": 4715,
+    "line_end": 4761,
+    "byte_start": 310895,
+    "byte_end": 314050,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[layer-error2]",
+    "line_start": 4762,
+    "line_end": 4808,
+    "byte_start": 314050,
+    "byte_end": 317205,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[window-error0]",
+    "line_start": 4527,
+    "line_end": 4573,
+    "byte_start": 298269,
+    "byte_end": 301426,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[window-error1]",
+    "line_start": 4574,
+    "line_end": 4620,
+    "byte_start": 301426,
+    "byte_end": 304583,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_consumer_failure_cancel_and_timeout_release_attempt[window-error2]",
+    "line_start": 4621,
+    "line_end": 4667,
+    "byte_start": 304583,
+    "byte_end": 307740,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_native_decode_error_releases_attempt_before_consumer[full]",
+    "line_start": 5091,
+    "line_end": 5137,
+    "byte_start": 335931,
+    "byte_end": 339072,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_native_decode_error_releases_attempt_before_consumer[layer]",
+    "line_start": 5185,
+    "line_end": 5231,
+    "byte_start": 342217,
+    "byte_end": 345360,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_native_decode_error_releases_attempt_before_consumer[window]",
+    "line_start": 5138,
+    "line_end": 5184,
+    "byte_start": 339072,
+    "byte_end": 342217,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_pcm_error_never_launches_consumer[full]",
+    "line_start": 4809,
+    "line_end": 4855,
+    "byte_start": 317205,
+    "byte_end": 320315,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_pcm_error_never_launches_consumer[layer]",
+    "line_start": 4903,
+    "line_end": 4949,
+    "byte_start": 323427,
+    "byte_end": 326538,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_pcm_error_never_launches_consumer[window]",
+    "line_start": 4856,
+    "line_end": 4902,
+    "byte_start": 320315,
+    "byte_end": 323427,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_serialized_root_clock_and_single_scalar_gain[full-compiled-normal_profile0]",
+    "line_start": 4104,
+    "line_end": 4150,
+    "byte_start": 269748,
+    "byte_end": 272923,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_serialized_root_clock_and_single_scalar_gain[full-compiled-normal_profile1]",
+    "line_start": 4151,
+    "line_end": 4197,
+    "byte_start": 272923,
+    "byte_end": 276098,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_serialized_root_clock_and_single_scalar_gain[layer-compiled-normal_profile0]",
+    "line_start": 4292,
+    "line_end": 4338,
+    "byte_start": 282456,
+    "byte_end": 285633,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_serialized_root_clock_and_single_scalar_gain[layer-compiled-normal_profile1]",
+    "line_start": 4339,
+    "line_end": 4385,
+    "byte_start": 285633,
+    "byte_end": 288810,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_serialized_root_clock_and_single_scalar_gain[window-compiled-normal_profile0]",
+    "line_start": 4198,
+    "line_end": 4244,
+    "byte_start": 276098,
+    "byte_end": 279277,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_serialized_root_clock_and_single_scalar_gain[window-compiled-normal_profile1]",
+    "line_start": 4245,
+    "line_end": 4291,
+    "byte_start": 279277,
+    "byte_end": 282456,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_source_digest_error_never_prepares_or_launches[full]",
+    "line_start": 4950,
+    "line_end": 4996,
+    "byte_start": 326538,
+    "byte_end": 329667,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_source_digest_error_never_prepares_or_launches[layer]",
+    "line_start": 5044,
+    "line_end": 5090,
+    "byte_start": 332800,
+    "byte_end": 335931,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_normal_source_digest_error_never_prepares_or_launches[window]",
+    "line_start": 4997,
+    "line_end": 5043,
+    "byte_start": 329667,
+    "byte_end": 332800,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_read_only_root_context_holds_normal_pcm_until_query_exits[full-False]",
+    "line_start": 5373,
+    "line_end": 5419,
+    "byte_start": 354759,
+    "byte_end": 357908,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_read_only_root_context_holds_normal_pcm_until_query_exits[full-True]",
+    "line_start": 5420,
+    "line_end": 5466,
+    "byte_start": 357908,
+    "byte_end": 361055,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_read_only_root_context_holds_normal_pcm_until_query_exits[layer-False]",
+    "line_start": 5561,
+    "line_end": 5607,
+    "byte_start": 367359,
+    "byte_end": 370510,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_read_only_root_context_holds_normal_pcm_until_query_exits[layer-True]",
+    "line_start": 5608,
+    "line_end": 5654,
+    "byte_start": 370510,
+    "byte_end": 373659,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_read_only_root_context_holds_normal_pcm_until_query_exits[window-False]",
+    "line_start": 5467,
+    "line_end": 5513,
+    "byte_start": 361055,
+    "byte_end": 364208,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_read_only_root_context_holds_normal_pcm_until_query_exits[window-True]",
+    "line_start": 5514,
+    "line_end": 5560,
+    "byte_start": 364208,
+    "byte_end": 367359,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_shared_threejs_executor_keeps_its_existing_source_path[full]",
+    "line_start": 5232,
+    "line_end": 5278,
+    "byte_start": 345360,
+    "byte_end": 348491,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_shared_threejs_executor_keeps_its_existing_source_path[layer]",
+    "line_start": 5326,
+    "line_end": 5372,
+    "byte_start": 351626,
+    "byte_end": 354759,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_normal_audio_run.py::test_shared_threejs_executor_keeps_its_existing_source_path[window]",
+    "line_start": 5279,
+    "line_end": 5325,
+    "byte_start": 348491,
+    "byte_end": 351626,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_cut_fractional_fps_and_empty_scene_are_answers",
+    "line_start": 1277,
+    "line_end": 1295,
+    "byte_start": 81036,
+    "byte_end": 82505,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_invalid_launch_validation_is_unavailable",
+    "line_start": 1486,
+    "line_end": 1504,
+    "byte_start": 97301,
+    "byte_end": 98770,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_invalid_resolved_inputs_are_unavailable[frame]",
+    "line_start": 1695,
+    "line_end": 1713,
+    "byte_start": 113515,
+    "byte_end": 114984,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_invalid_resolved_inputs_are_unavailable[unresolved]",
+    "line_start": 1676,
+    "line_end": 1694,
+    "byte_start": 112046,
+    "byte_end": 113515,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_invalid_resolved_inputs_are_unavailable[unsorted]",
+    "line_start": 1657,
+    "line_end": 1675,
+    "byte_start": 110577,
+    "byte_end": 112046,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_invalid_response_cardinality_or_frame_is_unavailable[response0]",
+    "line_start": 1562,
+    "line_end": 1580,
+    "byte_start": 103182,
+    "byte_end": 104661,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_invalid_response_cardinality_or_frame_is_unavailable[response1]",
+    "line_start": 1581,
+    "line_end": 1599,
+    "byte_start": 104661,
+    "byte_end": 106140,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_invalid_response_cardinality_or_frame_is_unavailable[response2]",
+    "line_start": 1600,
+    "line_end": 1618,
+    "byte_start": 106140,
+    "byte_end": 107619,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_invalid_response_cardinality_or_frame_is_unavailable[response3]",
+    "line_start": 1619,
+    "line_end": 1637,
+    "byte_start": 107619,
+    "byte_end": 109098,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_invalid_response_cardinality_or_frame_is_unavailable[response4]",
+    "line_start": 1638,
+    "line_end": 1656,
+    "byte_start": 109098,
+    "byte_end": 110577,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_missing_or_escaped_admitted_helper_is_unavailable[False]",
+    "line_start": 1524,
+    "line_end": 1542,
+    "byte_start": 100239,
+    "byte_end": 101711,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_missing_or_escaped_admitted_helper_is_unavailable[True]",
+    "line_start": 1543,
+    "line_end": 1561,
+    "byte_start": 101711,
+    "byte_end": 103182,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_public_package_failure_is_unavailable[broken]",
+    "line_start": 1467,
+    "line_end": 1485,
+    "byte_start": 95832,
+    "byte_end": 97301,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_public_package_failure_is_unavailable[missing]",
+    "line_start": 1448,
+    "line_end": 1466,
+    "byte_start": 94363,
+    "byte_end": 95832,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_reserved_clip_ids_use_only_authored_role_overrides[None-__proto__]",
+    "line_start": 1315,
+    "line_end": 1333,
+    "byte_start": 83978,
+    "byte_end": 85460,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_reserved_clip_ids_use_only_authored_role_overrides[None-constructor]",
+    "line_start": 1334,
+    "line_end": 1352,
+    "byte_start": 85460,
+    "byte_end": 86944,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_reserved_clip_ids_use_only_authored_role_overrides[None-toString]",
+    "line_start": 1353,
+    "line_end": 1371,
+    "byte_start": 86944,
+    "byte_end": 88425,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_reserved_clip_ids_use_only_authored_role_overrides[background-__proto__]",
+    "line_start": 1372,
+    "line_end": 1390,
+    "byte_start": 88425,
+    "byte_end": 89913,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_reserved_clip_ids_use_only_authored_role_overrides[background-constructor]",
+    "line_start": 1391,
+    "line_end": 1409,
+    "byte_start": 89913,
+    "byte_end": 91403,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_reserved_clip_ids_use_only_authored_role_overrides[background-toString]",
+    "line_start": 1410,
+    "line_end": 1428,
+    "byte_start": 91403,
+    "byte_end": 92890,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_resolved_painter_order_and_compiled_payload_are_preserved",
+    "line_start": 1296,
+    "line_end": 1314,
+    "byte_start": 82505,
+    "byte_end": 83978,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_transition_frames_equal_canonical_public_query[center-dip]",
+    "line_start": 1201,
+    "line_end": 1219,
+    "byte_start": 75136,
+    "byte_end": 76610,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_transition_frames_equal_canonical_public_query[center-dissolve]",
+    "line_start": 1220,
+    "line_end": 1238,
+    "byte_start": 76610,
+    "byte_end": 78089,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_transition_frames_equal_canonical_public_query[end-dip]",
+    "line_start": 1239,
+    "line_end": 1257,
+    "byte_start": 78089,
+    "byte_end": 79560,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_transition_frames_equal_canonical_public_query[end-dissolve]",
+    "line_start": 1258,
+    "line_end": 1276,
+    "byte_start": 79560,
+    "byte_end": 81036,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_transition_frames_equal_canonical_public_query[start-dip]",
+    "line_start": 1163,
+    "line_end": 1181,
+    "byte_start": 72185,
+    "byte_end": 73658,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_transition_frames_equal_canonical_public_query[start-dissolve]",
+    "line_start": 1182,
+    "line_end": 1200,
+    "byte_start": 73658,
+    "byte_end": 75136,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_unknown_custom_modifier_and_unresolved_media_stay_unknown",
+    "line_start": 1429,
+    "line_end": 1447,
+    "byte_start": 92890,
+    "byte_end": 94363,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_answers.py::test_unsupported_loader_override_is_unavailable",
+    "line_start": 1505,
+    "line_end": 1523,
+    "byte_start": 98770,
+    "byte_end": 100239,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_host.py::test_declared_background_has_known_empty_content",
+    "line_start": 1987,
+    "line_end": 2007,
+    "byte_start": 133115,
+    "byte_end": 134503,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_host.py::test_large_native_batch_is_not_truncated",
+    "line_start": 1819,
+    "line_end": 1839,
+    "byte_start": 121981,
+    "byte_end": 123369,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_host.py::test_missing_host_input_is_unavailable_not_an_empty_scene[assets]",
+    "line_start": 1924,
+    "line_end": 1944,
+    "byte_start": 128937,
+    "byte_end": 130332,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_host.py::test_missing_host_input_is_unavailable_not_an_empty_scene[theme]",
+    "line_start": 1903,
+    "line_end": 1923,
+    "byte_start": 127543,
+    "byte_end": 128937,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_host.py::test_missing_host_input_is_unavailable_not_an_empty_scene[tracks]",
+    "line_start": 1945,
+    "line_end": 1965,
+    "byte_start": 130332,
+    "byte_end": 131727,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_host.py::test_native_host_default_custom_alias_capability_and_immutable_props",
+    "line_start": 1714,
+    "line_end": 1734,
+    "byte_start": 114984,
+    "byte_end": 116382,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_host.py::test_native_host_passes_public12_compiled_transitions_unchanged",
+    "line_start": 1882,
+    "line_end": 1902,
+    "byte_start": 126150,
+    "byte_end": 127543,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_host.py::test_native_host_preserves_root_painter_order_and_current_roles",
+    "line_start": 1861,
+    "line_end": 1881,
+    "byte_start": 124757,
+    "byte_end": 126150,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_host.py::test_native_host_rational_frame_clock_is_half_open",
+    "line_start": 1840,
+    "line_end": 1860,
+    "byte_start": 123369,
+    "byte_end": 124757,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_host.py::test_native_host_resolves_custom_transition_defaults_and_boundaries[center]",
+    "line_start": 1777,
+    "line_end": 1797,
+    "byte_start": 119174,
+    "byte_end": 120579,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_host.py::test_native_host_resolves_custom_transition_defaults_and_boundaries[end]",
+    "line_start": 1798,
+    "line_end": 1818,
+    "byte_start": 120579,
+    "byte_end": 121981,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_host.py::test_native_host_resolves_custom_transition_defaults_and_boundaries[start]",
+    "line_start": 1756,
+    "line_end": 1776,
+    "byte_start": 117770,
+    "byte_end": 119174,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_host.py::test_native_host_uses_exact_assets_and_runtime_theme",
+    "line_start": 1735,
+    "line_end": 1755,
+    "byte_start": 116382,
+    "byte_end": 117770,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_host.py::test_source_metadata_does_not_supply_missing_host_inputs",
+    "line_start": 1966,
+    "line_end": 1986,
+    "byte_start": 131727,
+    "byte_end": 133115,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_host.py::test_unknown_animation_diagnostics_and_root_tail_are_preserved",
+    "line_start": 2008,
+    "line_end": 2028,
+    "byte_start": 134503,
+    "byte_end": 135895,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-am-snap-plate]",
+    "line_start": 2157,
+    "line_end": 2213,
+    "byte_start": 143854,
+    "byte_end": 147456,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-frame-overlay]",
+    "line_start": 2271,
+    "line_end": 2327,
+    "byte_start": 151042,
+    "byte_end": 154644,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-image]",
+    "line_start": 2214,
+    "line_end": 2270,
+    "byte_start": 147456,
+    "byte_end": 151042,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-text-card]",
+    "line_start": 2029,
+    "line_end": 2099,
+    "byte_start": 135895,
+    "byte_end": 140270,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_source_carry.py::test_actual_source_join_queries_historical_scene_and_overlay[native-text]",
+    "line_start": 2100,
+    "line_end": 2156,
+    "byte_start": 140270,
+    "byte_end": 143854,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_source_carry.py::test_candidate_retains_real_compiled_candidate_and_uncertified_base_hint[native]",
+    "line_start": 2841,
+    "line_end": 2897,
+    "byte_start": 187078,
+    "byte_end": 190676,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_source_carry.py::test_canonical_basis_uses_whole_partial_canvas_and_rational_rate[native]",
+    "line_start": 2784,
+    "line_end": 2840,
+    "byte_start": 183496,
+    "byte_end": 187078,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_source_carry.py::test_execute_handoff_uses_actual_provider_and_public_labels_in_exported_pack[native]",
+    "line_start": 2898,
+    "line_end": 2954,
+    "byte_start": 190676,
+    "byte_end": 194282,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-capture]",
+    "line_start": 2385,
+    "line_end": 2441,
+    "byte_start": 158234,
+    "byte_end": 161844,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-copy]",
+    "line_start": 2499,
+    "line_end": 2555,
+    "byte_start": 165454,
+    "byte_end": 169058,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-extra]",
+    "line_start": 2727,
+    "line_end": 2783,
+    "byte_start": 179890,
+    "byte_end": 183496,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-frames]",
+    "line_start": 2613,
+    "line_end": 2669,
+    "byte_start": 172664,
+    "byte_end": 176272,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-missing]",
+    "line_start": 2442,
+    "line_end": 2498,
+    "byte_start": 161844,
+    "byte_end": 165454,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-no_callback]",
+    "line_start": 2670,
+    "line_end": 2726,
+    "byte_start": 176272,
+    "byte_end": 179890,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_source_carry.py::test_failed_capture_or_copy_exposes_no_scene_and_removes_partial_files[native-query]",
+    "line_start": 2556,
+    "line_end": 2612,
+    "byte_start": 169058,
+    "byte_end": 172664,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_source_carry.py::test_mixed_cached_and_fresh_batch_has_facts_only_for_observed_frames[native]",
+    "line_start": 2328,
+    "line_end": 2384,
+    "byte_start": 154644,
+    "byte_end": 158234,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[native-frame-overlay]",
+    "line_start": 3069,
+    "line_end": 3125,
+    "byte_start": 201426,
+    "byte_end": 205010,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[native-image]",
+    "line_start": 3012,
+    "line_end": 3068,
+    "byte_start": 197858,
+    "byte_end": 201426,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_scene_source_carry.py::test_sdk_source_reaches_real_final_staging_callback[native-text-card]",
+    "line_start": 2955,
+    "line_end": 3011,
+    "byte_start": 194282,
+    "byte_end": 197858,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_sprite_scene_capability.py::test_compiled_sprite_bounds_keep_logical_units_and_source",
+    "line_start": 3126,
+    "line_end": 3146,
+    "byte_start": 205010,
+    "byte_end": 206398,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_sprite_scene_capability.py::test_compiled_sprite_editor_units_snap_once",
+    "line_start": 3147,
+    "line_end": 3167,
+    "byte_start": 206398,
+    "byte_end": 207786,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_sprite_scene_capability.py::test_known_sprite_bounds_do_not_invent_media_alpha[extra0]",
+    "line_start": 3210,
+    "line_end": 3230,
+    "byte_start": 210574,
+    "byte_end": 211962,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_sprite_scene_capability.py::test_known_sprite_bounds_do_not_invent_media_alpha[extra1]",
+    "line_start": 3231,
+    "line_end": 3251,
+    "byte_start": 211962,
+    "byte_end": 213350,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_sprite_scene_capability.py::test_public_sprite_offcanvas_run_in_mixedscale_and_integrity_addresses",
+    "line_start": 3189,
+    "line_end": 3209,
+    "byte_start": 209174,
+    "byte_end": 210574,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_sprite_scene_capability.py::test_sprite_missing_dimensions_and_decorations_stay_unknown[params0-None]",
+    "line_start": 3252,
+    "line_end": 3272,
+    "byte_start": 213350,
+    "byte_end": 214753,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_sprite_scene_capability.py::test_sprite_missing_dimensions_and_decorations_stay_unknown[params1-entry1]",
+    "line_start": 3273,
+    "line_end": 3293,
+    "byte_start": 214753,
+    "byte_end": 216158,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_sprite_scene_capability.py::test_sprite_missing_dimensions_and_decorations_stay_unknown[params2-entry2]",
+    "line_start": 3294,
+    "line_end": 3314,
+    "byte_start": 216158,
+    "byte_end": 217563,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_sprite_scene_capability.py::test_sprite_missing_dimensions_and_decorations_stay_unknown[params3-entry3]",
+    "line_start": 3315,
+    "line_end": 3335,
+    "byte_start": 217563,
+    "byte_end": 218968,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_sprite_scene_capability.py::test_sprite_missing_dimensions_and_decorations_stay_unknown[params4-entry4]",
+    "line_start": 3336,
+    "line_end": 3356,
+    "byte_start": 218968,
+    "byte_end": 220373,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_sprite_scene_capability.py::test_sprite_public12_declarations_and_installed_bytes",
+    "line_start": 3462,
+    "line_end": 3482,
+    "byte_start": 227327,
+    "byte_end": 228715,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_sprite_scene_capability.py::test_sprite_registered_ssr_preserves_drawing",
+    "line_start": 3168,
+    "line_end": 3188,
+    "byte_start": 207786,
+    "byte_end": 209174,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_sprite_scene_capability.py::test_sprite_renderer_selected_source_wins_over_static_fallback",
+    "line_start": 3378,
+    "line_end": 3398,
+    "byte_start": 221765,
+    "byte_end": 223157,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_sprite_scene_capability.py::test_sprite_stepped_strip_and_hidden_frames_use_the_draw_clock",
+    "line_start": 3357,
+    "line_end": 3377,
+    "byte_start": 220373,
+    "byte_end": 221765,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_sprite_scene_capability.py::test_sprite_unsupported_outer_geometry_stays_unknown[outer0]",
+    "line_start": 3399,
+    "line_end": 3419,
+    "byte_start": 223157,
+    "byte_end": 224547,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_sprite_scene_capability.py::test_sprite_unsupported_outer_geometry_stays_unknown[outer1]",
+    "line_start": 3420,
+    "line_end": 3440,
+    "byte_start": 224547,
+    "byte_end": 225937,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/packs/rendering/test_sprite_scene_capability.py::test_sprite_unsupported_outer_geometry_stays_unknown[outer2]",
+    "line_start": 3441,
+    "line_end": 3461,
+    "byte_start": 225937,
+    "byte_end": 227327,
+    "match": "unique name"
+   },
+   {
+    "node": "tests/sdk/test_scene_real_public_summary_rle.py::test_real_public_scene_answers_reach_rle_summary",
+    "line_start": 5655,
+    "line_end": 5675,
+    "byte_start": 373659,
+    "byte_end": 375047,
+    "match": "unique name"
+   }
+  ]
+ },
+ "redactions": []
+}

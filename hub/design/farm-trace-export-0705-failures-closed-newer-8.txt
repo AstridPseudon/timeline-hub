@@ -1,0 +1,678 @@
+##### NODE tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]
+##### log.txt lines 25068-25153 bytes [1483589,1489165) match=unique name section_lines=86
+_ test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift] _
+[gw2] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/popen-gw2/test_cpu_host_readiness_identi5')
+fault = 'checkout_drift'
+
+    @pytest.mark.parametrize("fault", ["success", "missing_revision", "missing_content",
+                                      "revision_drift", "content_drift", "checkout_drift",
+                                      "profile_hash_drift"])
+    def test_cpu_host_readiness_identity_reaches_real_installed_guard(tmp_path, fault):
+        import sys
+        from tests.helpers import h3_cpu_runtime as helper
+    
+        checkout = tmp_path / "controlled-vibe"
+        package = checkout / "vibecomfy"
+        package.mkdir(parents=True)
+        (package / "__init__.py").write_text('"""Controlled dependency, no backend."""\n')
+        (package / "workflow_bundle.py").write_text("FIXTURE_ONLY = True\n")
+        revision = helper.PINNED_VIBECOMFY_REVISION
+        digest = "sha256:" + hashlib.sha256((package / "workflow_bundle.py").read_bytes()).hexdigest()
+        profile = {
+            "vibecomfy_candidate": {"kind": "local_snapshot", "checkout": str(checkout),
+                                   "revision": revision, "source_content_digest": digest},
+            "vibecomfy_session": {"source_revision": revision, "source_content_digest": digest},
+        }
+        readiness = tmp_path / "readiness.json"
+        readiness.write_text(json.dumps(profile))
+        values = helper._vibecomfy_host_readiness_environment(
+            checkout, readiness, "sha256:" + hashlib.sha256(readiness.read_bytes()).hexdigest(),
+            revision, digest,
+        )
+        assert values["ASTRID_VIBECOMFY_ATTESTED_REVISION"] == profile["vibecomfy_session"]["source_revision"]
+        assert values["ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST"] == profile["vibecomfy_session"]["source_content_digest"]
+        if fault == "missing_revision": values.pop("ASTRID_VIBECOMFY_ATTESTED_REVISION")
+        if fault == "missing_content": values.pop("ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST")
+        if fault == "revision_drift": values["ASTRID_VIBECOMFY_ATTESTED_REVISION"] = "0" * 40
+        if fault == "content_drift": values["ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST"] = "sha256:" + "0" * 64
+        if fault == "checkout_drift": values["ASTRID_VIBECOMFY_CHECKOUT"] = str(tmp_path)
+        if fault == "profile_hash_drift": values["ASTRID_HOST_READINESS_PROFILE_HASH"] = "sha256:" + "0" * 64
+        identity_keys = tuple(helper._vibecomfy_host_readiness_environment(
+            checkout, readiness, "unused", revision, digest,
+        ))
+        prior = {key: os.environ.get(key) for key in identity_keys}
+        script = r'''
+    import json,os,sys
+    from pathlib import Path
+    import astrid
+    from astrid.core.execution.generic_host import _install_host_vibecomfy_import_root, _host_product_import_origins, HostError
+    from astrid.sdk.host_bootstrap import _host_render_environment
+    keys=json.loads(sys.argv[1]);checkout=Path(sys.argv[2]);before=_host_product_import_origins();oldpath=sys.path[:]
+    import astrid_runtime_client
+    # The installed product tree is what holds astrid and its client: site-packages in a wheel install, the checkout
+    # when the venv lives inside it, and their common ancestor when astrid is an editable install (CI).
+    product=Path(os.path.commonpath([Path(astrid.__file__).resolve().parent,Path(astrid_runtime_client.__file__).resolve().parent]))
+    environment=_host_render_environment(product)
+    assert {key:environment.get(key) for key in keys} == {key:os.environ.get(key) for key in keys}
+    os.environ.clear();os.environ.update(environment)
+    try:
+        assert _install_host_vibecomfy_import_root()==checkout
+        import vibecomfy.workflow_bundle as bundle
+        assert Path(bundle.__file__).is_relative_to(checkout)
+        assert _host_product_import_origins()==before
+        print(json.dumps({'accepted':True,'product_origins_unchanged':True}))
+    except HostError:
+        assert sys.path==oldpath
+        print(json.dumps({'accepted':False,'path_unchanged':True}))
+    '''
+        remove = (*identity_keys, "ASTRID_VIBECOMFY_CANDIDATE_KIND",
+                  "ASTRID_VIBECOMFY_CANDIDATE_REVISION", "ASTRID_VIBECOMFY_CANDIDATE_CONTENT_DIGEST")
+        with helper._temporary_environment(values, remove=remove):
+            environment = dict(os.environ)
+            environment.update(ASTRID_HOST_EXECUTION_PROFILE="installed", ASTRID_PACK_HOST_PYTHON=sys.executable)
+            environment.pop("PYTHONPATH", None)
+            result = subprocess.run([sys.executable, "-I", "-c", script, json.dumps(identity_keys), str(checkout)],
+                                    env=environment, text=True, capture_output=True, timeout=20)
+        assert {key: os.environ.get(key) for key in identity_keys} == prior
+>       assert result.returncode == 0, result.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "<string>", line 4, in <module>
+E             import astrid
+E         ModuleNotFoundError: No module named 'astrid'
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/user/work/venv-agent/bin/python', '-I', '-c', "\nimport json,os,sys\nfrom pathlib import... last):\n  File "<string>", line 4, in <module>\n    import astrid\nModuleNotFoundError: No module named \'astrid\'\n').returncode
+
+tests/packs/h3_av/test_character_swap_cpu_boundary.py:96: AssertionError
+
+##### NODE tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]
+##### log.txt lines 24982-25067 bytes [1478015,1483589) match=unique name section_lines=86
+_ test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift] _
+[gw2] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/popen-gw2/test_cpu_host_readiness_identi4')
+fault = 'content_drift'
+
+    @pytest.mark.parametrize("fault", ["success", "missing_revision", "missing_content",
+                                      "revision_drift", "content_drift", "checkout_drift",
+                                      "profile_hash_drift"])
+    def test_cpu_host_readiness_identity_reaches_real_installed_guard(tmp_path, fault):
+        import sys
+        from tests.helpers import h3_cpu_runtime as helper
+    
+        checkout = tmp_path / "controlled-vibe"
+        package = checkout / "vibecomfy"
+        package.mkdir(parents=True)
+        (package / "__init__.py").write_text('"""Controlled dependency, no backend."""\n')
+        (package / "workflow_bundle.py").write_text("FIXTURE_ONLY = True\n")
+        revision = helper.PINNED_VIBECOMFY_REVISION
+        digest = "sha256:" + hashlib.sha256((package / "workflow_bundle.py").read_bytes()).hexdigest()
+        profile = {
+            "vibecomfy_candidate": {"kind": "local_snapshot", "checkout": str(checkout),
+                                   "revision": revision, "source_content_digest": digest},
+            "vibecomfy_session": {"source_revision": revision, "source_content_digest": digest},
+        }
+        readiness = tmp_path / "readiness.json"
+        readiness.write_text(json.dumps(profile))
+        values = helper._vibecomfy_host_readiness_environment(
+            checkout, readiness, "sha256:" + hashlib.sha256(readiness.read_bytes()).hexdigest(),
+            revision, digest,
+        )
+        assert values["ASTRID_VIBECOMFY_ATTESTED_REVISION"] == profile["vibecomfy_session"]["source_revision"]
+        assert values["ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST"] == profile["vibecomfy_session"]["source_content_digest"]
+        if fault == "missing_revision": values.pop("ASTRID_VIBECOMFY_ATTESTED_REVISION")
+        if fault == "missing_content": values.pop("ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST")
+        if fault == "revision_drift": values["ASTRID_VIBECOMFY_ATTESTED_REVISION"] = "0" * 40
+        if fault == "content_drift": values["ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST"] = "sha256:" + "0" * 64
+        if fault == "checkout_drift": values["ASTRID_VIBECOMFY_CHECKOUT"] = str(tmp_path)
+        if fault == "profile_hash_drift": values["ASTRID_HOST_READINESS_PROFILE_HASH"] = "sha256:" + "0" * 64
+        identity_keys = tuple(helper._vibecomfy_host_readiness_environment(
+            checkout, readiness, "unused", revision, digest,
+        ))
+        prior = {key: os.environ.get(key) for key in identity_keys}
+        script = r'''
+    import json,os,sys
+    from pathlib import Path
+    import astrid
+    from astrid.core.execution.generic_host import _install_host_vibecomfy_import_root, _host_product_import_origins, HostError
+    from astrid.sdk.host_bootstrap import _host_render_environment
+    keys=json.loads(sys.argv[1]);checkout=Path(sys.argv[2]);before=_host_product_import_origins();oldpath=sys.path[:]
+    import astrid_runtime_client
+    # The installed product tree is what holds astrid and its client: site-packages in a wheel install, the checkout
+    # when the venv lives inside it, and their common ancestor when astrid is an editable install (CI).
+    product=Path(os.path.commonpath([Path(astrid.__file__).resolve().parent,Path(astrid_runtime_client.__file__).resolve().parent]))
+    environment=_host_render_environment(product)
+    assert {key:environment.get(key) for key in keys} == {key:os.environ.get(key) for key in keys}
+    os.environ.clear();os.environ.update(environment)
+    try:
+        assert _install_host_vibecomfy_import_root()==checkout
+        import vibecomfy.workflow_bundle as bundle
+        assert Path(bundle.__file__).is_relative_to(checkout)
+        assert _host_product_import_origins()==before
+        print(json.dumps({'accepted':True,'product_origins_unchanged':True}))
+    except HostError:
+        assert sys.path==oldpath
+        print(json.dumps({'accepted':False,'path_unchanged':True}))
+    '''
+        remove = (*identity_keys, "ASTRID_VIBECOMFY_CANDIDATE_KIND",
+                  "ASTRID_VIBECOMFY_CANDIDATE_REVISION", "ASTRID_VIBECOMFY_CANDIDATE_CONTENT_DIGEST")
+        with helper._temporary_environment(values, remove=remove):
+            environment = dict(os.environ)
+            environment.update(ASTRID_HOST_EXECUTION_PROFILE="installed", ASTRID_PACK_HOST_PYTHON=sys.executable)
+            environment.pop("PYTHONPATH", None)
+            result = subprocess.run([sys.executable, "-I", "-c", script, json.dumps(identity_keys), str(checkout)],
+                                    env=environment, text=True, capture_output=True, timeout=20)
+        assert {key: os.environ.get(key) for key in identity_keys} == prior
+>       assert result.returncode == 0, result.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "<string>", line 4, in <module>
+E             import astrid
+E         ModuleNotFoundError: No module named 'astrid'
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/user/work/venv-agent/bin/python', '-I', '-c', "\nimport json,os,sys\nfrom pathlib import... last):\n  File "<string>", line 4, in <module>\n    import astrid\nModuleNotFoundError: No module named \'astrid\'\n').returncode
+
+tests/packs/h3_av/test_character_swap_cpu_boundary.py:96: AssertionError
+
+##### NODE tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]
+##### log.txt lines 24810-24895 bytes [1466861,1472439) match=unique name section_lines=86
+_ test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content] _
+[gw2] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/popen-gw2/test_cpu_host_readiness_identi2')
+fault = 'missing_content'
+
+    @pytest.mark.parametrize("fault", ["success", "missing_revision", "missing_content",
+                                      "revision_drift", "content_drift", "checkout_drift",
+                                      "profile_hash_drift"])
+    def test_cpu_host_readiness_identity_reaches_real_installed_guard(tmp_path, fault):
+        import sys
+        from tests.helpers import h3_cpu_runtime as helper
+    
+        checkout = tmp_path / "controlled-vibe"
+        package = checkout / "vibecomfy"
+        package.mkdir(parents=True)
+        (package / "__init__.py").write_text('"""Controlled dependency, no backend."""\n')
+        (package / "workflow_bundle.py").write_text("FIXTURE_ONLY = True\n")
+        revision = helper.PINNED_VIBECOMFY_REVISION
+        digest = "sha256:" + hashlib.sha256((package / "workflow_bundle.py").read_bytes()).hexdigest()
+        profile = {
+            "vibecomfy_candidate": {"kind": "local_snapshot", "checkout": str(checkout),
+                                   "revision": revision, "source_content_digest": digest},
+            "vibecomfy_session": {"source_revision": revision, "source_content_digest": digest},
+        }
+        readiness = tmp_path / "readiness.json"
+        readiness.write_text(json.dumps(profile))
+        values = helper._vibecomfy_host_readiness_environment(
+            checkout, readiness, "sha256:" + hashlib.sha256(readiness.read_bytes()).hexdigest(),
+            revision, digest,
+        )
+        assert values["ASTRID_VIBECOMFY_ATTESTED_REVISION"] == profile["vibecomfy_session"]["source_revision"]
+        assert values["ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST"] == profile["vibecomfy_session"]["source_content_digest"]
+        if fault == "missing_revision": values.pop("ASTRID_VIBECOMFY_ATTESTED_REVISION")
+        if fault == "missing_content": values.pop("ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST")
+        if fault == "revision_drift": values["ASTRID_VIBECOMFY_ATTESTED_REVISION"] = "0" * 40
+        if fault == "content_drift": values["ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST"] = "sha256:" + "0" * 64
+        if fault == "checkout_drift": values["ASTRID_VIBECOMFY_CHECKOUT"] = str(tmp_path)
+        if fault == "profile_hash_drift": values["ASTRID_HOST_READINESS_PROFILE_HASH"] = "sha256:" + "0" * 64
+        identity_keys = tuple(helper._vibecomfy_host_readiness_environment(
+            checkout, readiness, "unused", revision, digest,
+        ))
+        prior = {key: os.environ.get(key) for key in identity_keys}
+        script = r'''
+    import json,os,sys
+    from pathlib import Path
+    import astrid
+    from astrid.core.execution.generic_host import _install_host_vibecomfy_import_root, _host_product_import_origins, HostError
+    from astrid.sdk.host_bootstrap import _host_render_environment
+    keys=json.loads(sys.argv[1]);checkout=Path(sys.argv[2]);before=_host_product_import_origins();oldpath=sys.path[:]
+    import astrid_runtime_client
+    # The installed product tree is what holds astrid and its client: site-packages in a wheel install, the checkout
+    # when the venv lives inside it, and their common ancestor when astrid is an editable install (CI).
+    product=Path(os.path.commonpath([Path(astrid.__file__).resolve().parent,Path(astrid_runtime_client.__file__).resolve().parent]))
+    environment=_host_render_environment(product)
+    assert {key:environment.get(key) for key in keys} == {key:os.environ.get(key) for key in keys}
+    os.environ.clear();os.environ.update(environment)
+    try:
+        assert _install_host_vibecomfy_import_root()==checkout
+        import vibecomfy.workflow_bundle as bundle
+        assert Path(bundle.__file__).is_relative_to(checkout)
+        assert _host_product_import_origins()==before
+        print(json.dumps({'accepted':True,'product_origins_unchanged':True}))
+    except HostError:
+        assert sys.path==oldpath
+        print(json.dumps({'accepted':False,'path_unchanged':True}))
+    '''
+        remove = (*identity_keys, "ASTRID_VIBECOMFY_CANDIDATE_KIND",
+                  "ASTRID_VIBECOMFY_CANDIDATE_REVISION", "ASTRID_VIBECOMFY_CANDIDATE_CONTENT_DIGEST")
+        with helper._temporary_environment(values, remove=remove):
+            environment = dict(os.environ)
+            environment.update(ASTRID_HOST_EXECUTION_PROFILE="installed", ASTRID_PACK_HOST_PYTHON=sys.executable)
+            environment.pop("PYTHONPATH", None)
+            result = subprocess.run([sys.executable, "-I", "-c", script, json.dumps(identity_keys), str(checkout)],
+                                    env=environment, text=True, capture_output=True, timeout=20)
+        assert {key: os.environ.get(key) for key in identity_keys} == prior
+>       assert result.returncode == 0, result.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "<string>", line 4, in <module>
+E             import astrid
+E         ModuleNotFoundError: No module named 'astrid'
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/user/work/venv-agent/bin/python', '-I', '-c', "\nimport json,os,sys\nfrom pathlib import... last):\n  File "<string>", line 4, in <module>\n    import astrid\nModuleNotFoundError: No module named \'astrid\'\n').returncode
+
+tests/packs/h3_av/test_character_swap_cpu_boundary.py:96: AssertionError
+
+##### NODE tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]
+##### log.txt lines 24724-24809 bytes [1461281,1466861) match=unique name section_lines=86
+_ test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision] _
+[gw2] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/popen-gw2/test_cpu_host_readiness_identi1')
+fault = 'missing_revision'
+
+    @pytest.mark.parametrize("fault", ["success", "missing_revision", "missing_content",
+                                      "revision_drift", "content_drift", "checkout_drift",
+                                      "profile_hash_drift"])
+    def test_cpu_host_readiness_identity_reaches_real_installed_guard(tmp_path, fault):
+        import sys
+        from tests.helpers import h3_cpu_runtime as helper
+    
+        checkout = tmp_path / "controlled-vibe"
+        package = checkout / "vibecomfy"
+        package.mkdir(parents=True)
+        (package / "__init__.py").write_text('"""Controlled dependency, no backend."""\n')
+        (package / "workflow_bundle.py").write_text("FIXTURE_ONLY = True\n")
+        revision = helper.PINNED_VIBECOMFY_REVISION
+        digest = "sha256:" + hashlib.sha256((package / "workflow_bundle.py").read_bytes()).hexdigest()
+        profile = {
+            "vibecomfy_candidate": {"kind": "local_snapshot", "checkout": str(checkout),
+                                   "revision": revision, "source_content_digest": digest},
+            "vibecomfy_session": {"source_revision": revision, "source_content_digest": digest},
+        }
+        readiness = tmp_path / "readiness.json"
+        readiness.write_text(json.dumps(profile))
+        values = helper._vibecomfy_host_readiness_environment(
+            checkout, readiness, "sha256:" + hashlib.sha256(readiness.read_bytes()).hexdigest(),
+            revision, digest,
+        )
+        assert values["ASTRID_VIBECOMFY_ATTESTED_REVISION"] == profile["vibecomfy_session"]["source_revision"]
+        assert values["ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST"] == profile["vibecomfy_session"]["source_content_digest"]
+        if fault == "missing_revision": values.pop("ASTRID_VIBECOMFY_ATTESTED_REVISION")
+        if fault == "missing_content": values.pop("ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST")
+        if fault == "revision_drift": values["ASTRID_VIBECOMFY_ATTESTED_REVISION"] = "0" * 40
+        if fault == "content_drift": values["ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST"] = "sha256:" + "0" * 64
+        if fault == "checkout_drift": values["ASTRID_VIBECOMFY_CHECKOUT"] = str(tmp_path)
+        if fault == "profile_hash_drift": values["ASTRID_HOST_READINESS_PROFILE_HASH"] = "sha256:" + "0" * 64
+        identity_keys = tuple(helper._vibecomfy_host_readiness_environment(
+            checkout, readiness, "unused", revision, digest,
+        ))
+        prior = {key: os.environ.get(key) for key in identity_keys}
+        script = r'''
+    import json,os,sys
+    from pathlib import Path
+    import astrid
+    from astrid.core.execution.generic_host import _install_host_vibecomfy_import_root, _host_product_import_origins, HostError
+    from astrid.sdk.host_bootstrap import _host_render_environment
+    keys=json.loads(sys.argv[1]);checkout=Path(sys.argv[2]);before=_host_product_import_origins();oldpath=sys.path[:]
+    import astrid_runtime_client
+    # The installed product tree is what holds astrid and its client: site-packages in a wheel install, the checkout
+    # when the venv lives inside it, and their common ancestor when astrid is an editable install (CI).
+    product=Path(os.path.commonpath([Path(astrid.__file__).resolve().parent,Path(astrid_runtime_client.__file__).resolve().parent]))
+    environment=_host_render_environment(product)
+    assert {key:environment.get(key) for key in keys} == {key:os.environ.get(key) for key in keys}
+    os.environ.clear();os.environ.update(environment)
+    try:
+        assert _install_host_vibecomfy_import_root()==checkout
+        import vibecomfy.workflow_bundle as bundle
+        assert Path(bundle.__file__).is_relative_to(checkout)
+        assert _host_product_import_origins()==before
+        print(json.dumps({'accepted':True,'product_origins_unchanged':True}))
+    except HostError:
+        assert sys.path==oldpath
+        print(json.dumps({'accepted':False,'path_unchanged':True}))
+    '''
+        remove = (*identity_keys, "ASTRID_VIBECOMFY_CANDIDATE_KIND",
+                  "ASTRID_VIBECOMFY_CANDIDATE_REVISION", "ASTRID_VIBECOMFY_CANDIDATE_CONTENT_DIGEST")
+        with helper._temporary_environment(values, remove=remove):
+            environment = dict(os.environ)
+            environment.update(ASTRID_HOST_EXECUTION_PROFILE="installed", ASTRID_PACK_HOST_PYTHON=sys.executable)
+            environment.pop("PYTHONPATH", None)
+            result = subprocess.run([sys.executable, "-I", "-c", script, json.dumps(identity_keys), str(checkout)],
+                                    env=environment, text=True, capture_output=True, timeout=20)
+        assert {key: os.environ.get(key) for key in identity_keys} == prior
+>       assert result.returncode == 0, result.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "<string>", line 4, in <module>
+E             import astrid
+E         ModuleNotFoundError: No module named 'astrid'
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/user/work/venv-agent/bin/python', '-I', '-c', "\nimport json,os,sys\nfrom pathlib import... last):\n  File "<string>", line 4, in <module>\n    import astrid\nModuleNotFoundError: No module named \'astrid\'\n').returncode
+
+tests/packs/h3_av/test_character_swap_cpu_boundary.py:96: AssertionError
+
+##### NODE tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]
+##### log.txt lines 25154-25239 bytes [1489165,1494749) match=unique name section_lines=86
+_ test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift] _
+[gw2] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/popen-gw2/test_cpu_host_readiness_identi6')
+fault = 'profile_hash_drift'
+
+    @pytest.mark.parametrize("fault", ["success", "missing_revision", "missing_content",
+                                      "revision_drift", "content_drift", "checkout_drift",
+                                      "profile_hash_drift"])
+    def test_cpu_host_readiness_identity_reaches_real_installed_guard(tmp_path, fault):
+        import sys
+        from tests.helpers import h3_cpu_runtime as helper
+    
+        checkout = tmp_path / "controlled-vibe"
+        package = checkout / "vibecomfy"
+        package.mkdir(parents=True)
+        (package / "__init__.py").write_text('"""Controlled dependency, no backend."""\n')
+        (package / "workflow_bundle.py").write_text("FIXTURE_ONLY = True\n")
+        revision = helper.PINNED_VIBECOMFY_REVISION
+        digest = "sha256:" + hashlib.sha256((package / "workflow_bundle.py").read_bytes()).hexdigest()
+        profile = {
+            "vibecomfy_candidate": {"kind": "local_snapshot", "checkout": str(checkout),
+                                   "revision": revision, "source_content_digest": digest},
+            "vibecomfy_session": {"source_revision": revision, "source_content_digest": digest},
+        }
+        readiness = tmp_path / "readiness.json"
+        readiness.write_text(json.dumps(profile))
+        values = helper._vibecomfy_host_readiness_environment(
+            checkout, readiness, "sha256:" + hashlib.sha256(readiness.read_bytes()).hexdigest(),
+            revision, digest,
+        )
+        assert values["ASTRID_VIBECOMFY_ATTESTED_REVISION"] == profile["vibecomfy_session"]["source_revision"]
+        assert values["ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST"] == profile["vibecomfy_session"]["source_content_digest"]
+        if fault == "missing_revision": values.pop("ASTRID_VIBECOMFY_ATTESTED_REVISION")
+        if fault == "missing_content": values.pop("ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST")
+        if fault == "revision_drift": values["ASTRID_VIBECOMFY_ATTESTED_REVISION"] = "0" * 40
+        if fault == "content_drift": values["ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST"] = "sha256:" + "0" * 64
+        if fault == "checkout_drift": values["ASTRID_VIBECOMFY_CHECKOUT"] = str(tmp_path)
+        if fault == "profile_hash_drift": values["ASTRID_HOST_READINESS_PROFILE_HASH"] = "sha256:" + "0" * 64
+        identity_keys = tuple(helper._vibecomfy_host_readiness_environment(
+            checkout, readiness, "unused", revision, digest,
+        ))
+        prior = {key: os.environ.get(key) for key in identity_keys}
+        script = r'''
+    import json,os,sys
+    from pathlib import Path
+    import astrid
+    from astrid.core.execution.generic_host import _install_host_vibecomfy_import_root, _host_product_import_origins, HostError
+    from astrid.sdk.host_bootstrap import _host_render_environment
+    keys=json.loads(sys.argv[1]);checkout=Path(sys.argv[2]);before=_host_product_import_origins();oldpath=sys.path[:]
+    import astrid_runtime_client
+    # The installed product tree is what holds astrid and its client: site-packages in a wheel install, the checkout
+    # when the venv lives inside it, and their common ancestor when astrid is an editable install (CI).
+    product=Path(os.path.commonpath([Path(astrid.__file__).resolve().parent,Path(astrid_runtime_client.__file__).resolve().parent]))
+    environment=_host_render_environment(product)
+    assert {key:environment.get(key) for key in keys} == {key:os.environ.get(key) for key in keys}
+    os.environ.clear();os.environ.update(environment)
+    try:
+        assert _install_host_vibecomfy_import_root()==checkout
+        import vibecomfy.workflow_bundle as bundle
+        assert Path(bundle.__file__).is_relative_to(checkout)
+        assert _host_product_import_origins()==before
+        print(json.dumps({'accepted':True,'product_origins_unchanged':True}))
+    except HostError:
+        assert sys.path==oldpath
+        print(json.dumps({'accepted':False,'path_unchanged':True}))
+    '''
+        remove = (*identity_keys, "ASTRID_VIBECOMFY_CANDIDATE_KIND",
+                  "ASTRID_VIBECOMFY_CANDIDATE_REVISION", "ASTRID_VIBECOMFY_CANDIDATE_CONTENT_DIGEST")
+        with helper._temporary_environment(values, remove=remove):
+            environment = dict(os.environ)
+            environment.update(ASTRID_HOST_EXECUTION_PROFILE="installed", ASTRID_PACK_HOST_PYTHON=sys.executable)
+            environment.pop("PYTHONPATH", None)
+            result = subprocess.run([sys.executable, "-I", "-c", script, json.dumps(identity_keys), str(checkout)],
+                                    env=environment, text=True, capture_output=True, timeout=20)
+        assert {key: os.environ.get(key) for key in identity_keys} == prior
+>       assert result.returncode == 0, result.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "<string>", line 4, in <module>
+E             import astrid
+E         ModuleNotFoundError: No module named 'astrid'
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/user/work/venv-agent/bin/python', '-I', '-c', "\nimport json,os,sys\nfrom pathlib import... last):\n  File "<string>", line 4, in <module>\n    import astrid\nModuleNotFoundError: No module named \'astrid\'\n').returncode
+
+tests/packs/h3_av/test_character_swap_cpu_boundary.py:96: AssertionError
+
+##### NODE tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]
+##### log.txt lines 24896-24981 bytes [1472439,1478015) match=unique name section_lines=86
+_ test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift] _
+[gw2] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/popen-gw2/test_cpu_host_readiness_identi3')
+fault = 'revision_drift'
+
+    @pytest.mark.parametrize("fault", ["success", "missing_revision", "missing_content",
+                                      "revision_drift", "content_drift", "checkout_drift",
+                                      "profile_hash_drift"])
+    def test_cpu_host_readiness_identity_reaches_real_installed_guard(tmp_path, fault):
+        import sys
+        from tests.helpers import h3_cpu_runtime as helper
+    
+        checkout = tmp_path / "controlled-vibe"
+        package = checkout / "vibecomfy"
+        package.mkdir(parents=True)
+        (package / "__init__.py").write_text('"""Controlled dependency, no backend."""\n')
+        (package / "workflow_bundle.py").write_text("FIXTURE_ONLY = True\n")
+        revision = helper.PINNED_VIBECOMFY_REVISION
+        digest = "sha256:" + hashlib.sha256((package / "workflow_bundle.py").read_bytes()).hexdigest()
+        profile = {
+            "vibecomfy_candidate": {"kind": "local_snapshot", "checkout": str(checkout),
+                                   "revision": revision, "source_content_digest": digest},
+            "vibecomfy_session": {"source_revision": revision, "source_content_digest": digest},
+        }
+        readiness = tmp_path / "readiness.json"
+        readiness.write_text(json.dumps(profile))
+        values = helper._vibecomfy_host_readiness_environment(
+            checkout, readiness, "sha256:" + hashlib.sha256(readiness.read_bytes()).hexdigest(),
+            revision, digest,
+        )
+        assert values["ASTRID_VIBECOMFY_ATTESTED_REVISION"] == profile["vibecomfy_session"]["source_revision"]
+        assert values["ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST"] == profile["vibecomfy_session"]["source_content_digest"]
+        if fault == "missing_revision": values.pop("ASTRID_VIBECOMFY_ATTESTED_REVISION")
+        if fault == "missing_content": values.pop("ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST")
+        if fault == "revision_drift": values["ASTRID_VIBECOMFY_ATTESTED_REVISION"] = "0" * 40
+        if fault == "content_drift": values["ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST"] = "sha256:" + "0" * 64
+        if fault == "checkout_drift": values["ASTRID_VIBECOMFY_CHECKOUT"] = str(tmp_path)
+        if fault == "profile_hash_drift": values["ASTRID_HOST_READINESS_PROFILE_HASH"] = "sha256:" + "0" * 64
+        identity_keys = tuple(helper._vibecomfy_host_readiness_environment(
+            checkout, readiness, "unused", revision, digest,
+        ))
+        prior = {key: os.environ.get(key) for key in identity_keys}
+        script = r'''
+    import json,os,sys
+    from pathlib import Path
+    import astrid
+    from astrid.core.execution.generic_host import _install_host_vibecomfy_import_root, _host_product_import_origins, HostError
+    from astrid.sdk.host_bootstrap import _host_render_environment
+    keys=json.loads(sys.argv[1]);checkout=Path(sys.argv[2]);before=_host_product_import_origins();oldpath=sys.path[:]
+    import astrid_runtime_client
+    # The installed product tree is what holds astrid and its client: site-packages in a wheel install, the checkout
+    # when the venv lives inside it, and their common ancestor when astrid is an editable install (CI).
+    product=Path(os.path.commonpath([Path(astrid.__file__).resolve().parent,Path(astrid_runtime_client.__file__).resolve().parent]))
+    environment=_host_render_environment(product)
+    assert {key:environment.get(key) for key in keys} == {key:os.environ.get(key) for key in keys}
+    os.environ.clear();os.environ.update(environment)
+    try:
+        assert _install_host_vibecomfy_import_root()==checkout
+        import vibecomfy.workflow_bundle as bundle
+        assert Path(bundle.__file__).is_relative_to(checkout)
+        assert _host_product_import_origins()==before
+        print(json.dumps({'accepted':True,'product_origins_unchanged':True}))
+    except HostError:
+        assert sys.path==oldpath
+        print(json.dumps({'accepted':False,'path_unchanged':True}))
+    '''
+        remove = (*identity_keys, "ASTRID_VIBECOMFY_CANDIDATE_KIND",
+                  "ASTRID_VIBECOMFY_CANDIDATE_REVISION", "ASTRID_VIBECOMFY_CANDIDATE_CONTENT_DIGEST")
+        with helper._temporary_environment(values, remove=remove):
+            environment = dict(os.environ)
+            environment.update(ASTRID_HOST_EXECUTION_PROFILE="installed", ASTRID_PACK_HOST_PYTHON=sys.executable)
+            environment.pop("PYTHONPATH", None)
+            result = subprocess.run([sys.executable, "-I", "-c", script, json.dumps(identity_keys), str(checkout)],
+                                    env=environment, text=True, capture_output=True, timeout=20)
+        assert {key: os.environ.get(key) for key in identity_keys} == prior
+>       assert result.returncode == 0, result.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "<string>", line 4, in <module>
+E             import astrid
+E         ModuleNotFoundError: No module named 'astrid'
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/user/work/venv-agent/bin/python', '-I', '-c', "\nimport json,os,sys\nfrom pathlib import... last):\n  File "<string>", line 4, in <module>\n    import astrid\nModuleNotFoundError: No module named \'astrid\'\n').returncode
+
+tests/packs/h3_av/test_character_swap_cpu_boundary.py:96: AssertionError
+
+##### NODE tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]
+##### log.txt lines 24638-24723 bytes [1455713,1461281) match=unique name section_lines=86
+____ test_cpu_host_readiness_identity_reaches_real_installed_guard[success] ____
+[gw2] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/popen-gw2/test_cpu_host_readiness_identi0')
+fault = 'success'
+
+    @pytest.mark.parametrize("fault", ["success", "missing_revision", "missing_content",
+                                      "revision_drift", "content_drift", "checkout_drift",
+                                      "profile_hash_drift"])
+    def test_cpu_host_readiness_identity_reaches_real_installed_guard(tmp_path, fault):
+        import sys
+        from tests.helpers import h3_cpu_runtime as helper
+    
+        checkout = tmp_path / "controlled-vibe"
+        package = checkout / "vibecomfy"
+        package.mkdir(parents=True)
+        (package / "__init__.py").write_text('"""Controlled dependency, no backend."""\n')
+        (package / "workflow_bundle.py").write_text("FIXTURE_ONLY = True\n")
+        revision = helper.PINNED_VIBECOMFY_REVISION
+        digest = "sha256:" + hashlib.sha256((package / "workflow_bundle.py").read_bytes()).hexdigest()
+        profile = {
+            "vibecomfy_candidate": {"kind": "local_snapshot", "checkout": str(checkout),
+                                   "revision": revision, "source_content_digest": digest},
+            "vibecomfy_session": {"source_revision": revision, "source_content_digest": digest},
+        }
+        readiness = tmp_path / "readiness.json"
+        readiness.write_text(json.dumps(profile))
+        values = helper._vibecomfy_host_readiness_environment(
+            checkout, readiness, "sha256:" + hashlib.sha256(readiness.read_bytes()).hexdigest(),
+            revision, digest,
+        )
+        assert values["ASTRID_VIBECOMFY_ATTESTED_REVISION"] == profile["vibecomfy_session"]["source_revision"]
+        assert values["ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST"] == profile["vibecomfy_session"]["source_content_digest"]
+        if fault == "missing_revision": values.pop("ASTRID_VIBECOMFY_ATTESTED_REVISION")
+        if fault == "missing_content": values.pop("ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST")
+        if fault == "revision_drift": values["ASTRID_VIBECOMFY_ATTESTED_REVISION"] = "0" * 40
+        if fault == "content_drift": values["ASTRID_VIBECOMFY_ATTESTED_CONTENT_DIGEST"] = "sha256:" + "0" * 64
+        if fault == "checkout_drift": values["ASTRID_VIBECOMFY_CHECKOUT"] = str(tmp_path)
+        if fault == "profile_hash_drift": values["ASTRID_HOST_READINESS_PROFILE_HASH"] = "sha256:" + "0" * 64
+        identity_keys = tuple(helper._vibecomfy_host_readiness_environment(
+            checkout, readiness, "unused", revision, digest,
+        ))
+        prior = {key: os.environ.get(key) for key in identity_keys}
+        script = r'''
+    import json,os,sys
+    from pathlib import Path
+    import astrid
+    from astrid.core.execution.generic_host import _install_host_vibecomfy_import_root, _host_product_import_origins, HostError
+    from astrid.sdk.host_bootstrap import _host_render_environment
+    keys=json.loads(sys.argv[1]);checkout=Path(sys.argv[2]);before=_host_product_import_origins();oldpath=sys.path[:]
+    import astrid_runtime_client
+    # The installed product tree is what holds astrid and its client: site-packages in a wheel install, the checkout
+    # when the venv lives inside it, and their common ancestor when astrid is an editable install (CI).
+    product=Path(os.path.commonpath([Path(astrid.__file__).resolve().parent,Path(astrid_runtime_client.__file__).resolve().parent]))
+    environment=_host_render_environment(product)
+    assert {key:environment.get(key) for key in keys} == {key:os.environ.get(key) for key in keys}
+    os.environ.clear();os.environ.update(environment)
+    try:
+        assert _install_host_vibecomfy_import_root()==checkout
+        import vibecomfy.workflow_bundle as bundle
+        assert Path(bundle.__file__).is_relative_to(checkout)
+        assert _host_product_import_origins()==before
+        print(json.dumps({'accepted':True,'product_origins_unchanged':True}))
+    except HostError:
+        assert sys.path==oldpath
+        print(json.dumps({'accepted':False,'path_unchanged':True}))
+    '''
+        remove = (*identity_keys, "ASTRID_VIBECOMFY_CANDIDATE_KIND",
+                  "ASTRID_VIBECOMFY_CANDIDATE_REVISION", "ASTRID_VIBECOMFY_CANDIDATE_CONTENT_DIGEST")
+        with helper._temporary_environment(values, remove=remove):
+            environment = dict(os.environ)
+            environment.update(ASTRID_HOST_EXECUTION_PROFILE="installed", ASTRID_PACK_HOST_PYTHON=sys.executable)
+            environment.pop("PYTHONPATH", None)
+            result = subprocess.run([sys.executable, "-I", "-c", script, json.dumps(identity_keys), str(checkout)],
+                                    env=environment, text=True, capture_output=True, timeout=20)
+        assert {key: os.environ.get(key) for key in identity_keys} == prior
+>       assert result.returncode == 0, result.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "<string>", line 4, in <module>
+E             import astrid
+E         ModuleNotFoundError: No module named 'astrid'
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/user/work/venv-agent/bin/python', '-I', '-c', "\nimport json,os,sys\nfrom pathlib import... last):\n  File "<string>", line 4, in <module>\n    import astrid\nModuleNotFoundError: No module named \'astrid\'\n').returncode
+
+tests/packs/h3_av/test_character_swap_cpu_boundary.py:96: AssertionError
+
+##### NODE tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack
+##### log.txt lines 31209-31260 bytes [1853076,1855836) match=unique name section_lines=52
+____ test_generic_host_runs_external_python_orchestrator_from_admitted_pack ____
+[gw2] linux -- Python 3.13.16 /home/user/work/venv-agent/bin/python
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-0/popen-gw2/test_generic_host_runs_externa0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fd40846a040>
+
+    def test_generic_host_runs_external_python_orchestrator_from_admitted_pack(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from astrid.core.execution.generic_host import GenericPackHost
+        from tests.helpers.external_orchestrator_owner import admit_external_orchestrator_source
+    
+        pack_root = tmp_path / "external_pack"
+        orchestrator_root = pack_root / "orchestrators" / "demo"
+        module_root = pack_root / "external_pkg"
+        orchestrator_root.mkdir(parents=True)
+        module_root.mkdir()
+        (pack_root / "pack.yaml").write_text(
+            "schema_version: 2\nid: external_pack\nname: External Pack\nversion: '1.0'\n"
+            "status: active\ndocumentation:\n  kind: none\n  reason: test fixture\n"
+            "content:\n  orchestrators: orchestrators\n",
+            encoding="utf-8",
+        )
+        (orchestrator_root / "orchestrator.yaml").write_text(
+            "schema_version: 1\nid: external_pack.demo\nname: Demo\nkind: external\nversion: '1.0'\n"
+            "runtime:\n  kind: python\n  module: external_pkg.run\n  function: run\n",
+            encoding="utf-8",
+        )
+        (module_root / "__init__.py").write_text("", encoding="utf-8")
+        (module_root / "run.py").write_text(
+            "import os\n"
+            "def run(request, orchestrator):\n"
+            "    return {'returncode': 0, 'outputs': {'imported_from': os.path.dirname(__file__)}}\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setenv("PYTHONPATH", str(tmp_path / "ambient-that-must-not-be-used"))
+>       admit_external_orchestrator_source(tmp_path=tmp_path, monkeypatch=monkeypatch, pack_root=pack_root)
+
+tests/stage1/test_zero_shim_execution_pack_deletion.py:196: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def admit_external_orchestrator_source(
+        *, tmp_path: Path, monkeypatch: Any, pack_root: Path
+    ) -> SimpleNamespace:
+        """Install one genuine owner-captured source handle before host discovery."""
+        from tests.helpers.runtime import use_runtime
+    
+        use_runtime(RUNTIME_F320)
+>       from runtime_protocol import external_pack_sources as producer
+E       ImportError: cannot import name 'external_pack_sources' from 'runtime_protocol' (/home/user/work/wt/rt-pin-45c3a7f4/runtime_protocol/__init__.py)
+
+tests/helpers/external_orchestrator_owner.py:53: ImportError
+
