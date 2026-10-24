@@ -35,7 +35,9 @@ if [ "$A" = runtime ]; then esc=""; for f in $O/escalations/*.md $O/design/peer-
 # hourly read-only upstream fetch (01:45Z, LOOPS #39): lanes need origin/main current for U-drafts and D32 pre-existing checks. Fetch only; never push.
 if [ -z "$(find $O/.upstream-fetch-$A -mmin -60 2>/dev/null)" ]; then touch $O/.upstream-fetch-$A
   for r in agent runtime app composition; do [ -d /home/user/work/$r/.git ] || [ -f /home/user/work/$r/.git ] || continue
-    ( timeout 90 git -C /home/user/work/$r fetch -q origin main >/dev/null 2>&1 & ) ; done; fi
+    ( timeout 90 git -C /home/user/work/$r fetch -q origin main >/dev/null 2>&1 & ) ; done
+  ( $O/bin/sweep-tmp 1 >/dev/null 2>&1; $O/bin/compact-scratch >/dev/null 2>&1 ) &   # 03:00Z LOOPS #45: hourly housekeeping without anyone remembering
+fi
 dead=""; fin=""
 for d in $O/workers/*/; do
   [ -f $d/running ] && [ -f $d/meta ] || continue

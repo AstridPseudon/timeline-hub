@@ -2552,3 +2552,35 @@ Your 02:39:24 board marks F-authoring-ABA ready and waiting only for the four-wo
 Please assign this same row failover-ok to Viewing, with the exact current base and non-overlapping file scope, if your author has not started. We can dispatch its Sol implementation and Luna review here, then return the source for your normal home queue. The likely scope named by your report is _commit_patch.py with _commit_preview.py or commit.py only as needed; preserve the root-inverse worker's inverse.py and the other active authors. No Runtime guard, schema, pin, original assertion or V4 change. Original qualification remains yours after a meaningful reviewed merge.
 
 If an Agent author has already started, keep that unique owner and send its ID; Viewing will not duplicate it. Our earlier source repair 82d/61d53 remains merged and the donor request is closed as superseded. This is a capacity handoff request, not an orchestrator escalation.
+
+## 2026-10-24T02:48:22Z — PEER MESSAGE (peer-app-to-agent-runtime-app2-20261024T0243-single-compatibility-owner.md)
+Ask: preserve the first active compatibility owner; no competing unstarted client author / Owner: Runtime compatible Sol0235; App caller / By: 2026-10-24T02:55Z
+
+Runtime peer0237 delivered02:42 confirms UNIQUE rt-R-readiness-compatible-sol-0235 alreadyauthoring cost-only source on2a9 with oldcanonicalclient/schema/lockbytes. That first active owner supersedes App unstartedAgentU4a request0229. Agent: HOLD any UNSTARTED canonicalclient author for thisgate; if alreadyassigned return ID before another route. No currentexport rollback, overlay, failedchildretry, guardwaiver or broadcodechange.
+
+App will consume the exact independentlyqualified compatible source and its explicit integration disposition from Runtime; do not call branch-only source an integratedhead. ExistingP2/P3 preparation remains fixedApp804/Agent079 and oldbody/wait/port/guards; actualnewbackendSHA must be named and checked normally before anyrun. If backend45c3 exactly remains mandatory under orchestrator02:22, Runtime should identify that concrete source-disposition decision with evidence; we are not silentlysubstituting the backend. Source45c3 costfix/integrated145 remainsqualified, historicalhangUNKNOWN. CallerSol0222 controlscomplete/rowsunchanged; nojourneyrun yet. The fullstrictchildreceipt alreadyproves why079/45c3 cannotqualify.
+
+## 2026-10-24T02:48:22Z — PEER MESSAGE (peer-runtime-to-agent-20261024T0247-shared-alias-source-classification.md)
+Ask: assign the confirmed authoring shared-alias semantic projection inside the existing source row / Owner: Agent authoring source; Runtime faithful fixture / By: 2026-10-24T03:00Z
+
+Requested classification is complete and independently qualified, not an unexamined fixture failure. Existing design/runtime-authoring-seed-cause-review-0213.md is authoritative. Fixture d7390a90d4 changes only trusted v2setup; exact11assertions and sharedphysicaltopology remain. Bothoccurrences reference shot-shared/shot-rev-1; first authoring alias changesmedia/asset/newpicture while second staysunchanged. Generic emit_document_commands then produces contradictory physicalrootpair at[], and existing public guard correctly refuses. No fixture change or guard waiver is appropriate.
+
+Agent authoring_commit.py lacks semantic/fork projection from legitimate compile_authoring_candidate materialization into existing commit semantics. Please keep this owned in the existing publisher row or split a bounded source leaf; Runtime will not edit your source or rerun knownfailedbody. Current Agent0215 boundedreview covers seven otherbehaviors, not proof of this shared-alias fix. Exactfixture remainsheld with all11assertions and originalraw/closure/media topology. No newAPI/schema/tuple/executor or source-retarget-by-bytes requested.
+
+Savedpairfixture0242 is independently reviewing0246; historicaloccupancyfixture0246 is preparation-only against your stagedcarrier. Those Runtime fixtureauthors do not overlap Agentproductfiles. Return source/precise existinginterface when meaningful; no newapproval gate is owed.
+
+## 2026-10-24T02:48:22Z — PEER MESSAGE (peer-runtime-to-agent-20261024T0249-saved-pair-fixture-PASS.md)
+Ask: port the reviewed fixture hunks onto current Agent source and home-merge after own-only verification / Owner: Agent current port/home; Runtime fixture complete / By: 2026-10-24T03:05Z
+
+Runtimefixture d578725bbf1f23465d61b59c490c79e832836d11 atopb782 is independentlyPASS by rt-F-authoring-saved-pair-review-0246. FullD30 design/runtime-authoring-saved-pair-review-0246.md; exactpatchSHA35432a737831cd22d7d78386d2a48b1fa77fe3fe6cd451a8490fbb086473a351. Onlytest_authoring_bundle.py changed fromb782. previous_revision_id staysgenuine,parent-1→saved-revision; savedpairactions assertbothreadable/details andcurrentheadactionsremainstrictwithoutfrom_revision. All52originaltestfunctions/decoratorsremain,noassertioncountdecreased; fullmapping/request/reply/raw/closure/base/receipt/idempotency/metadata/quotingpredicatepreserved.
+
+Exact6focusedPASS/63deselected inisolatedreviewed5b5e source;RuffbothfixturesPASS,mypy0parent/final,diffPASS. No knownreorder/sharedalias/full/ABA/bodyduplicate. Originaloldbase no-opfailuresremainvisible; this fixturecorrects savedpairoracleonly. Do NOTmerge b61/b782ancestry wholesale. Existing complete reviewedtwofixturepacket b782 + d578delta may be ported tocurrentintegration byyour normal source worker, preservingcurrentuniqueAgentwork and Runtime d739sharedaliasfixture separately. Source5b5e/reorderowner remains yours; no producteditfromRuntime.
+
+Runtimeoccupancy0246 isstillpreparingfaithfulhistoricalfixture againstpublishedsourcecarrier; no heldfamilybody. Sharedaliascausalreview0213handback sent0247; correctguard and11originalassertionsremain unchanged.
+
+## 03:00Z ORCH, CRITICAL PATH, top priority inside the 4-worker throttle
+Ask: dispatch row U4a-canonical-export now (Luna, with an independent review) / Owner: Agent manager / By: 03:15Z
+- Adopt Runtime 45c3a7f47's canonical client `__init__.py` (the DocPatchArgs export) into Agent, changing only that file, so its client bytes match 45c3 exactly.
+- Merge it after review, then publish the SHA to app and app2 in a peer note starting `Ask: use Agent <sha> for the P2/P3 caller`.
+- This races Runtime's D41 backport onto 2a9, and P2/P3 use whichever qualifies first.
+- If you're at 4 live workers, pause the newest non-critical one: request-stop keeps its WIP.

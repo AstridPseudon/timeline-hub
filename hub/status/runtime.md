@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T02:48:22Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 19 | status age 1m -->
-# runtime board, 2026-10-24T02:46:30Z
+<!-- main | 2026-10-24T02:50:40Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 19 | status age 0m -->
+# runtime board, 2026-10-24T02:49:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -38,7 +38,7 @@
 | OPS-main-v1-registration | Finite abandoned registration proposal | Luna / independent Luna | Source only | merged | Return 1850; review 1855 | Proposal passed; no live configuration, removal or target retry. | evidence only |
 | V4-deferred | H9 cut and deferred timing | Orchestrator | Deferred scope | gated:H9-cut | No new worker | Original failures stay unchanged and visible. No V4 repair or proof run. | deferred |
 | F-authoring-publish-writer | Preserve publication behavior | Sol / Luna | Agent unique source author | blocked:agent | Agent behavior0215; Runtime review0223 | Runtime no-op21ed independently passed6+7; handed to Agent, no merge here. Duplicate placement0225 stopped; source retained. | 21ed0b37d6 held |
-| F-authoring-neighbors | Preserve saved-pair action predicate | Luna / Luna | Independent fixture review | review | Author0242; rt-F-authoring-saved-pair-review-0246 | Six focused cases passed against5b5e; saved and current pairs asserted. Agent owns product source and home merge. | Source0242 held |
+| F-authoring-neighbors | Preserve saved-pair action predicate | Luna / Luna | Agent current-only port and home | blocked:agent | Author0242; independent0246 PASS | Six focused cases passed with strict saved/current pair predicates;52originalfunctions retained. [Review](../../design/runtime-authoring-saved-pair-review-0246.md) | d578725bbf held |
 | F-authoring-seed-fixture | Preserve shared-alias compiler case | Luna / Sol | Agent semantic fork projection | blocked:agent | Fixture0207; source review0213 PASS | All 11 assertions preserved. Correct contradictory-alias guard exposes missing authoring semantic projection, not bad setup. | d7390a90d4 held |
 | OPS-manifest-restore | Restore accidental generated manifest write | Luna | Exact main file identity | merged | Restore 0110; independent 0113 PASS | Exact tracked hash 7c541b restored; main cleanliness and byte equality independently verified. | HEAD 458595850 |
 | R0-public-export-manifest | Refresh generated artifact hash | Luna | Integrated verification passed | merged | Author 0111; review 0115; integrated 0128 | Actual db11: 74 passed, manifest and generation checks passed; 77 of 78 entries unchanged. [Proof](../../design/runtime-R0-manifest-integrated-0128.md) | db11ea829 / 8a742b1c2 |
@@ -50,18 +50,18 @@
 | F-full-census-review | Verify all failures and exact recovery | Luna independent | Reports 0107 and 0110 | merged | rt-F-census-recovery-review-0113 PASS | Exact 36 nodes and all counts independently verified; main recovery clean and exact. [Review](../../design/runtime-full-census-recovery-review-0113.md) | Evidence only |
 | R2r-external-pack-source | Bind external pack authority | Sol / Luna | Runtime producer proof complete | merged | Security0240; integrated10713 | Actual f320:317passed2configuredexclusions. Agent consumer remains unqualified. [Proof](../../design/runtime-D39-D40-integrated-0246.md) | f3208b26b / eb2775376 |
 | R-readiness-commits-hang | Reduce authenticated history cost | Sol / Luna | Integrated proof passed | merged | Source 0212; final 0205; proof 0210 | Actual 45c3 with Agent4151: 145 passed, zero skips. Historical cause unknown. [Proof](../../design/runtime-readiness-integrated-0210.md). | 45c3a7f47 |
-| R-readiness-compatible | Cost-only proof pin on old client | Sol / Luna | Independent source and145proof | review | Author0241; rt-R-readiness-backport-review-0245 | Exact2a9 client/OpenAPI retained.079run144passed1oldtranscriptfailure;145proof uses qualified4151 source as0210. | 37eb6c7bd |
-| F-helper-sequential | Classify helper replay-map refusal | Luna / Sol | Agent actual map review | blocked:agent | Agent observer0202; reviewer0210 | Actual map retained: extra batch read key. Agent owns bounded cause review and repair; Runtime guard stays strict. | No Runtime change |
+| R-readiness-compatible | Cost-only proof pin on old client | Sol / Luna | App actual caller qualification | blocked:app | Author0241; independent0245 PASS | Proof pin37eb:145passed with4151. Exact079clientbytes match; old079transcriptfailure retained. [Review](../../design/runtime-readiness-backport-review-0245.md) | 37eb6c7bd proof pin |
+| F-helper-sequential | Classify helper replay-map refusal | Agent Sol / Luna | Integrated proof complete | merged | Agent184dc; review0224; integrated0232 | Actual8a8d:12focused and static/vendor/artifact passed; originalTrue/Falsepassed on exact reviewedsource. Runtime guard unchanged. | Agent184dc20a70 |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Agent existing child qualified | merged | Source 0125; review 0132; Agent 0137 | Exact seven passed in 3.60 s on existing child c886; wrong-tree control refused and body/source identities retained. | Source 521c888; installed c36 |
 
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
 Runtime integration is f3208b26b, tree c4bcf9297e11. D39/D40 merged; integrated19379 passed162 and10713 passed317 with2configuredexclusions. Prior history proof remains exact45c scope. History cost source merged with exact reviewed tree; integrated145 proof0210 passed with Agent4151. Reviewed speed and receipt test repairs merged. Integrated speed passed 14; integrated receipt proof passed both cases with explicit Agent path. Manifest proof 0128 passed 74 and generation checks on db11. Wire shapes and schema unchanged; no final full-suite pass claimed.
 
-Blockers: Runtime / Agent / App — App079/45c3 child failed client bytes. Orchestrator authorizes Runtime2a9 cost-only pin0241 racing Agent export adoption; first qualified tuple gets one changed pair.
+Blockers: App / Proof — Cost-only37eb pin is independentlyqualified145 and matches079clientbytes. App owns actual caller/childqualification; firstqualifiedroute getsONEchangedpair. Old079transcriptfailure retained.
 Blockers: Runtime — Full 29085 retains 36 failures. Targeted speed, receipt and manifest repairs passed. Headless, occupancy and contract remain assigned. No unchanged full rerun.
 Blockers: Freeze — D39 client regeneration and Agent/App tuple adoption are held for the freeze; current consumer pins stay intact.
-Blockers: Agent — Source0215 publisher review passed with reorder execution held. Runtime0242 owns saved-pair fixture. Agent owns root inverse, historical sharing and helper integrated proof.
+Blockers: Agent — Source0215 publisher review passed with reorder execution held. Runtime0242 owns saved-pair fixture. Agent owns root inverse, historical sharing and current-only fixture port. Helper integrated proof passed.
 Blockers: Runtime / Agent — D40 producer passed and merged f320; integrated317passed2configuredexclusions. Agent must consume captured bytes or revalidate after bind; missing consumer still refuses before discovery.
 
 Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held until freeze.
@@ -70,4 +70,4 @@ D34: Orchestrator02:33 confirms main is steady near8.4GiB after D36 and orders n
 
 Later: OPS legacy admission and v1 archive retirement resume below 8.5 GB or after delivery. OPS-suites-prune finite Agent assessment is complete; required references remain and0013 eligibility is unknown. No retirement or further audit requested. Dormant D31 transcript implementation and tests remain in delivery. Installed kit hashes and custody remain in the prior board and design evidence; no installation this pass.
 
-Next ready: Consume backport review0245 or Agent export adoption, saved-pair review0246 and occupancy preparation0246; D39/D40 own proof is complete. Agent owns publication, root assignment, historical sharing and helper map repairs.
+Next ready: Consume App qualifiedcallerhandback for37eb or Agentexport route, Agent currentfixtureport and occupancy preparation0246. D39/D40 producerproof complete. Agent owns publication, root assignment, historical sharing and helper map repairs.
