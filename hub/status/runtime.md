@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T09:13:48Z | dispatcher heartbeat 13s | live 3 (sol 1, luna 2, other 0) | busy30 8 | status age 0m -->
+<!-- main | 2026-10-24T09:16:41Z | dispatcher heartbeat 4s | live 2 (sol 1, luna 1, other 0) | busy30 8 | status age 1m -->
 # runtime board, 2026-10-24T09:14:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -81,7 +81,7 @@
 | OPS-wheel-layout | Match legitimate wheel metadata names | Luna | Reviewed installation complete | merged | Security 0756; live 0805; Agent 0814 PASS | All 48 private checks and zero-new mypy passed. Agent independently accepted all 67 original wheels and received kit. | b330264b9 installed |
 
 | OPS-Agent-current-child | Qualify changed Agent source child | Dispatcher / Agent Luna | Reviewed installed RECORD correction | blocked:runtime | final-0c2c-becfe; harness 0820 | Bootstrap and all installs passed. Final installed RECORD validation refused. Runtime return 0848 is active; no child READY. | Agent 0c2c / Runtime becfe |
-| OPS-Farm-current-child | Qualify Farm checkpoint child | Farm lead / Runtime Luna | Correct required imports | blocked:runtime | Actual preflight 0900 | Runtime and Agent isolated imports pass. Full row refuses absent schema and astrid_runtime. Source and whole path 0906 are assigned. | Agent 9cd / Runtime 1d9 |
+| OPS-Farm-current-child | Qualify Farm checkpoint child | Farm lead / Runtime Luna | Correct required imports | blocked:runtime | Actual preflight 0900 | Runtime and Agent isolated imports pass. Full row refuses shared schema; Runtime package absence is unconfirmed. Source and whole path 0906 are assigned. | Agent 9cd / Runtime 1d9 |
 
 | OPS-child-verifier-numpy-RECORD | Verify installed dependency record paths | HARD Sol / Luna | Final cumulative security review | review | Sol 0853; independent 0903 | Sol ffb926 passed 84 cases, canonical wrappers and strict path controls. Zero new type diagnostics. Final source review active; uninstalled. | ffb926589 held |
 
@@ -110,7 +110,7 @@ Proof: P1 remains historical GO at its original pinned tuple. P4 and P5 retain t
 
 Agent census: official 263 closed / 4 open of 267, independently reviewed 0827 and received peer0830. Giant rationale closes exactly one original; all 266 other records and prior 122 mappings are unchanged. Four open originals are discovery support, generic harvest/reopen and two unchanged D23 word-anchor cases. No full-suite or Farm pass credit follows. Persistence integrated 0733 and independent 0736 passed both originals on exact home 3f7 and Runtime becfe. Shared inverse source is separately qualified on 460c by 177 Runtime cases plus six shared/source-copy controls; Agent owns its current join and original ABA verdict.
 
-Blockers: Farm — actual9cd/1d9 child is created. Farm row is installed, but full preflight refuses missing shared schema and astrid_runtime. Shared schema needs an authenticated input. Agent0910 is requested and Luna0913 is active on committed Solffb926. Runtime-package absence remains unconfirmed.
+Blockers: Farm — actual9cd/1d9 child is created. Farm row is installed, but full preflight refuses missing shared schema. Shared schema needs an authenticated input. Agent0910 is requested and Luna0913 is active on committed Solffb926. Runtime-package absence remains unconfirmed.
 Blockers: App — header P2/P3 GO precedes U3b home, D39 adoption and final tuple qualification.
 Blockers: Runtime — final-0c2c-becfe remains refused. First return7d30 passed62 cases. Solffb926 passed84 cases and zero-new static checks. Final independent0903 must pass before atomic installation and changed child.
 Next ready: Solffb926 final review0903, distribution author0913 and provider completion Sol0915 are dispatched. Agent owns schema provenance0910. Farm preflight stays held. No unassigned ready Runtime task.
