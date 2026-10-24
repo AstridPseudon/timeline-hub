@@ -10,7 +10,8 @@ import { DirectHarness, DOOR_PORT, startDirectHarness } from './harness.ts';
 import type { TimelineConfig } from '../../../../src/tools/video-editor/types/index.ts';
 import type { TimelineDraftRecord } from '../../../../src/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import type { OutboxRecord } from '../../../../src/tools/video-editor/commands/commitOutbox.ts';
-import { clearMountedBootstrapFailure, MountedBootstrapError, recordMountedBootstrapFailure, type MountedBootstrapStage } from '../mounted-readiness-safety.ts';
+import { clearMountedBootstrapFailure, MountedBootstrapError, recordMountedBootstrapFailure, retainMountedBootstrapDiagnostics, type MountedBootstrapDiagnosticTestInfo, type MountedBootstrapStage } from '../mounted-readiness-safety.ts';
+import { MOUNTED_DIAGNOSTIC_MAX_RECORDS, mountedDiagnosticInitScript } from '../p1-diagnostic-safety.ts';
 
 export const UI = {
   status: '[data-testid="runtime-connection-status"]',
@@ -24,6 +25,14 @@ export const UI = {
 
 /** The workspace route a visitor opens on the hosted origin. `/` itself is the public landing page in the WEB build (src/app/routes.tsx:77). */
 export const APP_ENTRY_ROUTE = '/tools/video-editor';
+
+const mountedBootstrapDiagnosticTargets = new WeakMap<BrowserContext, MountedBootstrapDiagnosticTestInfo>();
+
+/** Opt the real bootstrap page into the reviewed producer and retain its snapshot before teardown. */
+export async function installMountedBootstrapDiagnostics(context: BrowserContext, testInfo: MountedBootstrapDiagnosticTestInfo): Promise<void> {
+  mountedBootstrapDiagnosticTargets.set(context, testInfo);
+  await context.addInitScript({ content: mountedDiagnosticInitScript({ buffer: 'mounted-bootstrap', maxRecords: MOUNTED_DIAGNOSTIC_MAX_RECORDS }) });
+}
 
 /** QUICK shares the F1 browser/runtime boundary, so teardown verifies the Playwright server group is gone. */
 export async function closeQuickBrowser(browser: Browser | undefined, browserServer: Awaited<ReturnType<typeof chromium.launchServer>>): Promise<void> {
@@ -104,6 +113,7 @@ export async function openApp(page: Page, harness: DirectHarness) {
 export async function bootstrapMountedBaseline(context: BrowserContext, harness: DirectHarness): Promise<OutboxRecord[]> {
   clearMountedBootstrapFailure();
   let page: Page | undefined;
+  let outcome: 'completed' | 'failed' = 'failed';
   const run = async <T>(stage: MountedBootstrapStage, operation: () => Promise<T>): Promise<T> => {
     try {
       return await operation();
@@ -126,12 +136,17 @@ export async function bootstrapMountedBaseline(context: BrowserContext, harness:
         owners = await commandOutboxes(page!, harness.seed.timelineId);
         return owners.some((owner) => owner.scope.projectId === harness.seed.projectId && !owner.pending && owner.intents.length === 0);
       }, { message: 'the bootstrap editor must persist its scoped command owner before closing' }).toBe(true);
+      outcome = 'completed';
       return owners;
     });
   } catch (error) {
     recordMountedBootstrapFailure(error);
     throw error;
   } finally {
+    const testInfo = mountedBootstrapDiagnosticTargets.get(context);
+    if (testInfo) {
+      try { await retainMountedBootstrapDiagnostics(testInfo, page, outcome); } catch { /* Diagnostic retention is disposable. */ }
+    }
     await page?.close();
   }
 }

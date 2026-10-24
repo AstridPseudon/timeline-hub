@@ -1,11 +1,14 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { BrowserContext, Page } from '@playwright/test';
+import { mkdtempSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { createFakeIndexedDB } from '../../../vendor/fake-indexeddb/index.js';
 import { createCommitOutbox } from '../../../src/tools/video-editor/commands/commitOutbox.ts';
 import { bootstrapMountedBaseline } from './support/app.ts';
 import type { DirectHarness } from './support/harness.ts';
-import { clearMountedBootstrapFailure, hasFreshSettledOwner, isFreshlyConnected, MountedBootstrapError, readExistingReadonly, readMountedBootstrapFailure, recordMountedBootstrapFailure } from './mounted-readiness-safety.ts';
+import { clearMountedBootstrapFailure, hasFreshSettledOwner, isFreshlyConnected, MountedBootstrapError, readExistingReadonly, readMountedBootstrapFailure, recordMountedBootstrapFailure, retainMountedBootstrapDiagnostics } from './mounted-readiness-safety.ts';
 
 test('missing database is unavailable, not a verified empty baseline', async () => {
   let reads = 0;
@@ -53,6 +56,45 @@ test('mounted bootstrap failures expose only a finite safe projection', () => {
   assert.deepEqual(readMountedBootstrapFailure(), { stage: 'selection', code: 'mounted-bootstrap', class: 'mounted-bootstrap' });
   clearMountedBootstrapFailure();
   assert.equal(readMountedBootstrapFailure(), undefined);
+});
+
+test('mounted bootstrap retention uses the real serialized producer snapshot and preserves unknowns', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'mounted-bootstrap-lifecycle-'));
+  const artifactPath = join(directory, 'mounted-bootstrap-lifecycle.json');
+  const testInfo = {
+    outputPath(name: string) { assert.equal(name, 'mounted-bootstrap-lifecycle.json'); return artifactPath; },
+    async attach(name: string) { assert.equal(name, 'mounted-bootstrap-lifecycle.json'); },
+  };
+  const page = {
+    async evaluate<T>(fn: () => T): Promise<T> {
+      void fn;
+      return {
+        status: 'observed', buffer: 'mounted-bootstrap', accepted: 1, rejected: 0, overflow: 0, listenerErrors: 0,
+        records: [{ version: 1, phase: 'basis-read', basisStatus: 'loading', projectId: 'project', timelineId: 'timeline',
+          identityPresent: 'UNKNOWN', sessionPresent: false, errorCode: 'UNKNOWN', errorClass: 'UNKNOWN' }],
+      } as T;
+    },
+  };
+  await retainMountedBootstrapDiagnostics(testInfo, page, 'failed');
+  const artifact = JSON.parse(readFileSync(artifactPath, 'utf8')) as { status: string; lifecycle: { beforePageClose: boolean }; diagnostics: { records: Array<Record<string, unknown>> } };
+  assert.equal(artifact.status, 'captured');
+  assert.equal(artifact.lifecycle.beforePageClose, true);
+  assert.equal(artifact.diagnostics.records[0].phase, 'basis-read');
+  assert.equal(artifact.diagnostics.records[0].identityPresent, 'UNKNOWN');
+});
+
+test('mounted bootstrap retention keeps an early UNKNOWN artifact when the page closes or the writer fails', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'mounted-bootstrap-unknown-'));
+  const artifactPath = join(directory, 'mounted-bootstrap-lifecycle.json');
+  const closedPage = { async evaluate(): Promise<never> { throw new Error('page closed'); } };
+  await retainMountedBootstrapDiagnostics({ outputPath: () => artifactPath, attach: async () => {} }, closedPage, 'failed');
+  const artifact = JSON.parse(readFileSync(artifactPath, 'utf8')) as { status: string; diagnostics: unknown };
+  assert.equal(artifact.status, 'UNKNOWN');
+  assert.equal(artifact.diagnostics, 'UNKNOWN');
+  await assert.doesNotReject(() => retainMountedBootstrapDiagnostics({
+    outputPath: () => { throw new Error('output unavailable'); },
+    attach: async () => {},
+  }, closedPage, 'failed'));
 });
 
 // The vendored fake uses event listeners and a database Map. Adapt only its
