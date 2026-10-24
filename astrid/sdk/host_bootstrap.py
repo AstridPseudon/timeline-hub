@@ -841,6 +841,12 @@ def _prepare_render_validation(source_path: Path, env: dict[str, str],
     return launch_id
 
 
+# Launch state the owner holds about a parked host that the host never writes into its ready marker:
+# the process identity is compared field by field, and the launch argv pin and native launch identity
+# are verified against the live process by _parked_host_identity_matches.
+_LAUNCH_ONLY_STATE = frozenset({"pid", "process_birth_id", "launch_argv_sha256", "launch_native_identity"})
+
+
 @dataclass
 class _ParkedPackHostHandle:
     process: Any
@@ -997,7 +1003,12 @@ class _ParkedPackHostPreparer:
         )
         handle = self._assert_owned(handle)
         if handle.grant_sent or handle.process.poll() is not None or not _parked_host_identity_matches(handle.state):
-            raise PackHostBootstrapError("parked host grant is consumed or its incarnation changed")
+            exit_code = handle.process.poll()
+            detail = ""
+            if exit_code is not None:
+                log_path = Path(handle.state["support_root"]) / f"generic-host-{handle.operation_id}.log"
+                detail = f" (host exited {exit_code}: {_host_failure_cause(log_path) or 'see ' + str(log_path)})"
+            raise PackHostBootstrapError("parked host grant is consumed or its incarnation changed" + detail)
         if (set(grant) != {"activation_id", "credential_file", "executor_incarnation", "evidence_digest"}
                 or grant["credential_file"] != handle.state["credential_file"]):
             raise PackHostBootstrapError("parked host grant is foreign")
@@ -1062,7 +1073,7 @@ class _ParkedPackHostPreparer:
                         or ready.get("process_birth_id") != handle.state["process_birth_id"]
                         or ready.get("executor_id") != reference.executor_id
                         or any(ready.get(key) != value for key, value in handle.state.items()
-                               if key not in {"pid", "process_birth_id"})):
+                               if key not in _LAUNCH_ONLY_STATE)):
                     raise PackHostBootstrapError("parked host readiness is foreign")
                 return
             if handle.process.poll() is not None or (ready and ready.get("status") == "failed"):

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib
+import importlib.metadata
 import json
 import os
 import shutil
@@ -45,6 +46,7 @@ def resident_host(tmp_path, real_runtime):
     imports.mkdir()
     # The canonical, non-symlink interpreter consumes these measured packages.
     # Avoid changing/installing anything in the shared venv or Runtime checkout.
+    owners = importlib.metadata.packages_distributions()
     for name in ("PIL", "yaml", "dotenv", "jsonschema", "attrs", "attr", "referencing", "rpds",
                  "jsonschema_specifications", "typing_extensions"):
         package = importlib.import_module(name)
@@ -53,6 +55,13 @@ def resident_host(tmp_path, real_runtime):
                             ignore=shutil.ignore_patterns("__pycache__"))
         else:
             shutil.copy2(package.__file__, imports / Path(package.__file__).name)
+        # Linux wheels keep the shared libraries their extension modules load (Pillow's libjpeg, ...) in a
+        # sibling "<dist>.libs" directory; a package copied without it cannot be imported by the host.
+        for owner in owners.get(name, ()):
+            distribution = importlib.metadata.distribution(owner)
+            for libs in {Path(item.parts[0]) for item in distribution.files or () if item.parts[0].endswith(".libs")}:
+                if not (imports / libs).exists():
+                    shutil.copytree(Path(distribution.locate_file(libs)), imports / libs)
     pack = tmp_path / "cpu-pack"
     pack.mkdir()
     (pack / "executor.yaml").write_text(json.dumps({
@@ -202,6 +211,7 @@ def test_real_parked_process_inspection_preserves_identity_guards(resident_host,
 
 @pytest.mark.parametrize("lost_reply", [False, True])
 def test_bootstrap_register_observe_commit_and_same_incarnation_recovery(resident_host, monkeypatch, lost_reply):
+    """Resident acceptance is committed over the private channel while the credential is still disabled."""
     witness = resident_host
     parked = witness.launcher.park(witness.reference, target=witness.reference.effective_target)
     events = []
@@ -209,43 +219,46 @@ def test_bootstrap_register_observe_commit_and_same_incarnation_recovery(residen
     observe_ready = witness.inspector.observe_ready
     record = witness.service.record_remote_activation
 
-    def private_ack(handle, grant):
+    def credential_is_disabled(grant):
         token = Path(grant["credential_file"]).read_text().strip()
         with pytest.raises(ApiError) as denied:
             RuntimeProtocolClient(witness.daemon.endpoint, token)._authenticate_worker(witness.reference.executor_id)
         assert denied.value.status == 401
+
+    def private_ack(handle, grant, *, accept=None):
+        assert accept is not None  # a machine placement requires Runtime's acceptance receipt
+        credential_is_disabled(grant)
         assert witness.service._latest_remote_activation(witness.task_id) is None
-        result = acknowledge(handle, grant)
-        assert witness.service._latest_remote_activation(witness.task_id) is None
-        events.append("private_ack_disabled")
+        events.append("ack_started")
+
+        def checked_accept(received, process):
+            credential_is_disabled(grant)
+            assert witness.service._latest_remote_activation(witness.task_id) is None
+            accept(received, process)
+            assert witness.service._latest_remote_activation(witness.task_id) is not None
+            events.append("accepted")
+
+        result = acknowledge(handle, grant, accept=checked_accept)
+        events.append("acknowledged")
         return result
 
     def ready(handle):
         observation = observe_ready(handle)
-        if witness.service._latest_remote_activation(witness.task_id) is None:
-            client = RuntimeProtocolClient(witness.daemon.endpoint, witness.daemon.worker_credential_path.read_text().strip())
-            client._authenticate_worker(witness.reference.executor_id)
-            denied = client.claim_next(executor_id=witness.reference.executor_id,
-                                       capability_ids=[witness.reference.capability_identity.capability_id],
-                                       idempotency_key="precommit-claim", target=witness.reference.effective_target)
-            assert denied.waiting_reason == "remote_activation_missing"
-            assert getattr(denied, "attempt_id", None) is None
-            assert witness.service.task(witness.task_id)["task"]["status"] == "queued"
-            events.append("enabled_registered_observed_claim_denied")
+        assert events[-1] == "acknowledged"
+        # Only after the private ACK does Runtime enable the credential the host registers with.
+        RuntimeProtocolClient(witness.daemon.endpoint, witness.daemon.worker_credential_path.read_text().strip()
+                              )._authenticate_worker(witness.reference.executor_id)
+        events.append("ready")
         return observation
 
     def commit(task_id, qualification, **kwargs):
         first = "commit" not in events
         if first:
-            assert events == ["private_ack_disabled", "enabled_registered_observed_claim_denied"]
+            assert events == ["ack_started"]
         result = record(task_id, qualification, **kwargs)
         events.append("commit" if first else "replayed_commit")
         if lost_reply and first:
-            deadline = time.monotonic() + 5
-            while witness.service.task(task_id)["task"]["status"] == "queued" and time.monotonic() < deadline:
-                time.sleep(0.02)
-            assert witness.service.task(task_id)["task"]["status"] != "queued"
-            raise EOFError("committed response lost after host claim")
+            raise EOFError("committed response lost")  # Runtime replays the identical request
         return result
 
     monkeypatch.setattr(witness.preparer, "acknowledge", private_ack)
@@ -253,6 +266,8 @@ def test_bootstrap_register_observe_commit_and_same_incarnation_recovery(residen
     monkeypatch.setattr(witness.service, "record_remote_activation", commit)
     qualification = witness.launcher.activate(witness.task, witness.reference, parked)
     assert witness.launcher.activation_state == "active"
+    assert events == ["ack_started", "commit", *(
+        ["replayed_commit"] if lost_reply else []), "accepted", "acknowledged", "ready"]
     assert witness.service._latest_remote_activation(witness.task_id) == qualification
     assert host_bootstrap._parked_host_identity_matches(parked.handle.state)
     deadline = time.monotonic() + 10
@@ -267,24 +282,22 @@ def test_bootstrap_register_observe_commit_and_same_incarnation_recovery(residen
     outputs = witness.service.managed_outputs(witness.task_id)
     assert len(outputs) == 1
     assert witness.service.object(outputs[0]["object_id"])[1] == b"accepted"
-    if lost_reply:
-        assert events[-1] == "replayed_commit"
     assert witness.service.store.conn.execute(
         "SELECT COUNT(*) FROM events WHERE task_id=? AND kind='task.remote_activation_qualified'",
         (witness.task_id,),
     ).fetchone()[0] == 1
 
 
-@pytest.mark.parametrize("failure", ["ack", "ready", "cleanup"])
+@pytest.mark.parametrize("failure", ["ack", "cleanup"])
 def test_precommit_failure_revokes_before_stopping_exact_host(resident_host, monkeypatch, failure):
+    """A private ACK that fails before Runtime accepts leaves nothing committed: revoke, then stop the host."""
     witness = resident_host
     parked = witness.launcher.park(witness.reference, target=witness.reference.effective_target)
     abort = witness.preparer.abort
     stopped = []
     def fail(*args, **kwargs):
         raise OSError("deliberate precommit failure")
-    monkeypatch.setattr(witness.preparer if failure == "ack" else witness.inspector,
-                        "acknowledge" if failure == "ack" else "observe_ready", fail)
+    monkeypatch.setattr(witness.preparer, "acknowledge", fail)
     def stop(handle):
         assert witness.service._latest_remote_activation(witness.task_id) is None
         assert witness.daemon.credentials.actor_metadata(witness.reference.executor_id) is None
@@ -381,6 +394,9 @@ def test_abort_preserves_primary_failure_without_signaling_after_failed_identity
 
 @pytest.mark.parametrize("changed", ["ready_marker", "registration", "provider"])
 def test_independent_readiness_rejects_changed_evidence(resident_host, monkeypatch, changed):
+    """Evidence that changes after acceptance never reports active; Runtime keeps the exact generation."""
+    from runtime_protocol.errors import ConflictError
+
     witness = resident_host
     parked = witness.launcher.park(witness.reference, target=witness.reference.effective_target)
     await_ready = witness.preparer.await_ready
@@ -397,26 +413,37 @@ def test_independent_readiness_rejects_changed_evidence(resident_host, monkeypat
                 "account_ref": "different-account", "pod_id": "different-pod",
             })
     monkeypatch.setattr(witness.preparer, "await_ready", changed_after_start)
-    with pytest.raises(host_bootstrap.PackHostBootstrapError):
+    with pytest.raises((host_bootstrap.PackHostBootstrapError, ConflictError)):
         witness.launcher.activate(witness.task, witness.reference, parked)
-    assert witness.service._latest_remote_activation(witness.task_id) is None
-    assert witness.daemon.credentials.actor_metadata(witness.reference.executor_id) is None
-    assert parked.handle.process.poll() is not None
+    # Acceptance was already committed over the private channel: from there no exception authorizes
+    # revoking the credential or stopping the host, and the launcher stays unresolved, never active.
+    assert witness.launcher.activation_state == "unknown"
+    assert witness.launcher.activation_host == parked
+    assert witness.service._latest_remote_activation(witness.task_id) is not None
+    assert witness.daemon.credentials.actor_metadata(witness.reference.executor_id) is not None
+    assert not parked.handle.aborted and parked.handle.cleanup_error is None
 
 
 def test_uncertain_commit_preserves_exact_host_and_credential(resident_host, monkeypatch):
+    """Acceptance whose reply is lost twice may have committed: keep the generation, never revoke or stop."""
+    from runtime_protocol.errors import ConflictError
+
     witness = resident_host
     parked = witness.launcher.park(witness.reference, target=witness.reference.effective_target)
-    def unknown(*args, **kwargs):
+    record = witness.service.record_remote_activation
+    def commits_but_reply_is_lost(*args, **kwargs):
+        record(*args, **kwargs)
         raise OSError("commit transport unresolved")
-    monkeypatch.setattr(witness.service, "record_remote_activation", unknown)
+    monkeypatch.setattr(witness.service, "record_remote_activation", commits_but_reply_is_lost)
     monkeypatch.setattr(witness.preparer, "abort", lambda handle: pytest.fail("uncertain commit must not stop host"))
-    with pytest.raises(OSError):
+    # Runtime cannot prove the commit failed: its exact cleanup refuses, leaving everything in place.
+    with pytest.raises(ConflictError, match="reconcile before cleanup"):
         witness.launcher.activate(witness.task, witness.reference, parked)
     assert witness.launcher.activation_state == "unknown"
     assert witness.launcher.activation_host == parked
+    assert witness.service._latest_remote_activation(witness.task_id) is not None
     assert witness.daemon.credentials.actor_metadata(witness.reference.executor_id) is not None
-    assert host_bootstrap._parked_host_identity_matches(parked.handle.state)
+    assert not parked.handle.aborted and parked.handle.cleanup_error is None
 
 
 def test_real_disabled_bearer_fails_handshake_and_enabled_bearer_becomes_ready(real_runtime):
