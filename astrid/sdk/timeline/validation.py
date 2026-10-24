@@ -527,7 +527,7 @@ def validate_final_candidate(
     if not _same_fields(candidate, baseline, ("project_id", "timeline_id", "base_parent")):
         baseline_parent = {}
     clips = _validate_clip_list(
-        parent.get("clips", config.get("clips")), path="candidate.parent.clips",
+        parent.get("clips", config.get("clips", [])), path="candidate.parent.clips",
         tracks=tracks, registry=registry,
         baseline={"clips": baseline_parent.get("clips", []),
                   "tracks": baseline_parent.get("config", {}).get("tracks", []),

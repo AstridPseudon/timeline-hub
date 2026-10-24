@@ -561,7 +561,7 @@ def validate_candidate_timing(
                 raise TimingCompileError("invalid authored word anchor fields")
             if refs:
                 raise TimingCompileError("word anchors require parent ownership")
-    for clip in projection["parent"]["clips"]:
+    for clip in projection["parent"].get("clips", []):
         declarations = intent._app(clip)
         refs = declarations.get("word_anchors", {})
         if not isinstance(refs, dict) or set(refs) - {"on", "until"}:
