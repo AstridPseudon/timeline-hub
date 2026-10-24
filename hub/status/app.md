@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T16:37:00Z | dispatcher heartbeat 10s | live 4 (sol 0, luna 4, other 0) | busy30 18 | status age 1m -->
-# app board, 2026-10-24T16:36Z
+<!-- app | 2026-10-24T16:40:50Z | dispatcher heartbeat 12s | live 3 (sol 0, luna 3, other 0) | busy30 20 | status age 0m -->
+# app board, 2026-10-24T16:40Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -55,30 +55,32 @@
 | P2-parent-reads | Preserve exact declared history reads | Luna | Current parent failure 550 | review | Author 1625; review 1636 | Exact declared reads, omitted stays absent. Three controls files, types and lint PASS; review checks semantic recipe. | 6b7b6e7a40 |
 | P2-popup-runtime | Fix physical observation refusal | Runtime owner | Current ADD 422 | blocked:runtime | Peer app 1625 sent | Genuine ADD returns invalid_records: intermediate command lacks authenticated physical observation. No guard waiver. | Agent9502/Runtime8b32 |
 | P3-history-review | Review strict authenticated ABI oracle | Luna | Author 1620 PASS | merged | app-P3-history-review-1626 | Independent PASS; wrong and missing ABI rejected; all other exact history guards preserved. | 471dc827b6 |
-| D69-placement | Restore two upstream placement cases | Luna | Reverse audit 1608 | review | Author 1625; review 1635 | Two upstream bodies exact; bounded outbox retry repair. Author 30 tests, three types and lint PASS. | fe773e45aa |
-| D69-fullscreen | Restore upstream fullscreen assertions | Luna | Reverse audit 1608 | review | Author 1626; review 1636 | Upstream body exact; shell-aware fix has old RED and new 15 PASS, three types and lint PASS. | 6859c4035a |
-| D69-voice | Restore gated upstream voice matrix | Luna | Reverse audit 1608 | review | Author 1626; review 1633 | Restored upstream body; fixed flag regression. Author 58 tests, types and lint PASS. | 222a55759e |
+| D69-placement | Restore two upstream placement cases | Luna | Review 1635 FAIL | doing | app-U3-D69-placement-return-1640 | First return restricts retry to proven stale-head; definitive refusals must not replay. Original bodies exact. | Base fe773e45aa |
+| D69-fullscreen | Restore upstream fullscreen assertions | Luna | Independent 1636 PASS | merging | Author 1626; review 1636 | Exact upstream body; all four shell/Escape predicates. Old RED/new 15 PASS, types/lint PASS. | 6859c4035a |
+| D69-voice | Restore gated upstream voice matrix | Luna | Independent 1633 PASS | merging | Author 1626; review 1633 | Exact upstream body, old RED/new 58 PASS; types, lint and no-raw-skips PASS. | 222a55759e |
 
-| P3-changed-run | Original Gate5 after history fix | App service; Luna verdict | Reviewed history fix home | doing | Actual 4858 | One no-cache plain launch submitted 16:31:47Z. Same-ID manifest and XML awaited. | App 9f4ec08f56 |
-| U4p-current | Bind current Runtime provenance | Luna | Runtime bc227 home | doing | app-U4p-current-provenance-1635 | Normal tools only; preserve canonical bytes and schema 867f. Align release manifest and run strict guards. | Current homes |
+| P3-changed-run | Original Gate5 after history fix | App service; Luna verdict | Reviewed history fix home | review | Actual 4858; verdict 1637 | Exit 1 in 278s; readiness PASS. Primary setup intent mismatch; separate Agent tuple movement. | Snapshot e76ac/tree c139 |
+| U4p-current | Bind current Runtime provenance | Luna | Runtime bc227 home | merged | app-U4p-current-provenance-1635 | Normal tools; 14 mappings exact; strict 2 skew, 4 updater, 2 schema controls PASS. | 7f3d605de5 |
 
-Integration: App 9f4ec08f569f48fb859b5375e570c57b9bca2862 includes independently reviewed strict P3 history fix over 1540. Frozen upstream 3881, D62 normal client, D65 strict schema and D66 plain launcher retained. All six original spec hashes unchanged. Current P1 26312 is independently GREEN at its recorded App1540/Agent9502/Runtime8b32 tuple; never relabelled after source movement.
+| P3-step-intent | Qualify exact setup intent mismatch | Luna | Actual 4858 primary failure | doing | app-P3-step-intent-classify-1638 | Compare genuine mounted intent with protected generic expectation. Return minimal proposal if expectation is outdated. | Base 7f3d |
 
-live 5 / cap 6; ready-undispatched 0. Parent reads, fullscreen, voice and placement reviews active; Runtime provenance author active. Changed P3 runs separately on App service.
+Integration: App 7f3d605de5 includes normal current Runtime provenance adoption plus independently reviewed strict P3 history fix 9f4ec08 over 1540. Frozen upstream 3881, D62 normal client, D65 strict schema and D66 plain launcher retained. All six original spec hashes unchanged. Current P1 26312 is independently GREEN at its recorded App1540/Agent9502/Runtime8b32 tuple; never relabelled after source movement.
 
-core open: 9 active gesture cases (8 P2 plus 1 P3). Current P1 original 2 PASS and independent 1616 PASS. All eight P2 are CORE; current P2 25943 is 0 PASS, 3 FAIL, 5 NOTRUN. Current P3 10033 NO-GO; meaningful changed 4858 active.
+live 4 / cap 6; ready-undispatched 0. Parent reads review, placement first return, P3 same-ID verdict and intent owner active. Voice/fullscreen independent PASS queued for merge. No original currently running; no duplicate submitted.
+
+core open: 9 active gesture cases (8 P2 plus 1 P3). Current P1 original 2 PASS and independent 1616 PASS at recorded tuple. All eight P2 are CORE; current P2 25943 is 0 PASS, 3 FAIL, 5 NOTRUN. Current P3 10033 NO-GO; meaningful changed 4858 failed at a new setup intent boundary and Agent tuple drift, independent verdict active.
 regressions: 3 confirmed caused findings awaiting home: voice flag, placement retry and fullscreen shell behavior. Each has author GREEN and unchanged upstream bodies; independent reviews active. Prior stale D62 admission and installer regressions are closed at their exact proofs.
 
-Blockers: App — Parent reads review 1636, fullscreen review 1636, voice review 1633 and placement review 1635 active. P3 fix home; changed original 4858 awaited.
+Blockers: App — Parent reads review 1636 and placement first return 1640 active. Voice/fullscreen PASS in normal merge queue. P3 history fix home; changed original 4858 verdict and intent owner active.
 Blockers: Runtime — Popup ADD 422 missing authenticated physical observation (peer1625) and element request pending at teardown (peer1629). No backend cause inferred. Owner request renewed in peer1635.
-Blockers: Final cut — Current P2/P3 must pass; D69 restoration and normal current producer adoption remain active. Runtime owns final proofs/build/ZIP.
+Blockers: Final cut — Current P2/P3 must pass; D69 restoration and normal current producer adoption is home. Runtime owns final proofs/build/ZIP.
 
 Historical signals: P1 26312 exit0/237s readiness1/original2 PASS; P2 25943 exit1/463s readiness PASS, originals 0 PASS/3 FAIL/5 NOTRUN; P3 10033 exit1/286s readiness PASS, fails history oracle before original reset. Exact terminal IDs and independent verdicts retained. Earlier 11933, 3896, 26414 and 12541/1689 remain their recorded historical scopes.
 
 D66: Caller custody drafts remain stopped and preserved. Plain manifest records actual repo HEADs, original test hashes, service versions and JUnit XML; no worker-only installation, synthetic identity or new authentication prerequisite.
 
 Delivery: D52 removed only proven dormant code and exclusive tests; live session, transcript host/reconcile/import/doc.patch paths retained. D65 complete owner command supplied to Runtime. No upstream push or M5.
-Safety: Prior denied cleanup, compact, graph, publication and source-access routes remain stopped. Normal recycle removed one eligible finished tree; two dirty historical trees were refused and left untouched. Managers write boards/briefs and copy qualified worker reports; workers own product/tests/generated/pins/Git.
+Safety: Prior denied cleanup, compact, graph, publication and source-access routes remain stopped. Normal recycle removed one eligible finished tree; two dirty historical trees were refused and left untouched. P3 afterAll rejected actual Agent source/provenance movement; no future original during expected imports movement. Managers write boards/briefs and copy qualified worker reports; workers own product/tests/generated/pins/Git.
 Disk: About 9.9 GB free, cap 6; heavy stop 8 GB. Automatic recycle active; no eligible ended clean non-KEEP tree left at pass check.
 
 Evidence: [P3 independent strict history review](../../design/app-P3-history-review-1626.md), [P2 same-ID verdict](../../design/app-P2-25943-verdict-1625.md), [current P1 independent verdict](../../design/app-P1-26312-current-verdict-1616.md), [current composed source qualification](../../design/app-F-current-join-proof-1553.md), [all eight core](../../design/app-P2-core-classification-1222.md).
