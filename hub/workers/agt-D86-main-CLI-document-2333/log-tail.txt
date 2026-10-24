@@ -1,3 +1,29 @@
+ def _document_file(tmp_path, realm):
+     candidate = bundle_from_document(copy.deepcopy(realm.documents[realm.head["revision_id"]]))
+     candidate["base_parent"]["publication_id"] = realm.head["publication_id"]
+
+ succeeded in 21914ms:
+/home/user/work/wt/agt-D86-main-CLI-document-2333/tests/packs/timeline/test_cli_document_commit.py
+/home/user/work/wt/agt-D86-main-CLI-document-2333/tests/packs/timeline/test_cli_document_commit.py
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-document-2333/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-document-2333/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-document-2333/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-document-2333/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-document-2333/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..d5ae66e609b3f5c402e1478fa68bfb13f721855c
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-document-2333/commit-msg
+@@ -0,0 +1,5 @@
++test(timeline): migrate F-D86 D86-CLI-document fixture
++
++Route the CLI document commit tests through the existing Runtime bootstrap
++and authenticated commitTimeline/provider path while preserving all test
++bodies, assertions, decorators, and parameters.
+diff --git a/tests/packs/timeline/test_cli_document_commit.py b/tests/packs/timeline/test_cli_document_commit.py
 index c86712efe1d97ff374104368eaddcfe73269766d..a95d0df20b469b42fa8ce5c1431bd15e382d84c1
 --- a/tests/packs/timeline/test_cli_document_commit.py
 +++ b/tests/packs/timeline/test_cli_document_commit.py
@@ -155,246 +181,220 @@ index c86712efe1d97ff374104368eaddcfe73269766d..a95d0df20b469b42fa8ce5c1431bd15e
      candidate["base_parent"]["publication_id"] = realm.head["publication_id"]
 
 exec
-/bin/bash -lc '/home/user/work/venv-agent/bin/ruff check tests/packs/timeline/test_cli_document_commit.py' in /home/user/work/wt/agt-D86-main-CLI-document-2333
- succeeded in 0ms:
-All checks passed!
+/bin/bash -lc "printf '%s\\n' '--- changed fixture lines ---'; nl -ba tests/packs/timeline/test_cli_document_commit.py | sed -n '1,155p'; printf '%s\\n' '--- final checks ---'; git diff --check; git status --short; printf '%s\\n' '--- commit message ---'; sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-document-2333/commit-msg; printf '%s\\n' '--- evidence size ---'; du -sh /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-document-2333/evidence; test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-document-2333/DONE && echo DONE=present" in /home/user/work/wt/agt-D86-main-CLI-document-2333
+ succeeded in 149ms:
+--- changed fixture lines ---
+     1	from __future__ import annotations
+     2	
+     3	import copy
+     4	import json
+     5	import sys
+     6	from types import SimpleNamespace
+     7	
+     8	import pytest
+     9	
+    10	from astrid.packs.timeline import cli as timeline_cli
+    11	from astrid.sdk import timeline
+    12	from astrid.sdk.contracts import DomainResult, ErrorObject
+    13	from astrid.sdk.remote import RemoteTimelines
+    14	from astrid.sdk.timeline.commit import bundle_from_document, create_runtime_commit_service
+    15	from tests.helpers.runtime import use_runtime
+    16	from tests.sdk.test_timeline_commit_provider import runtime_abi  # noqa: F401
+    17	
+    18	
+    19	@pytest.fixture
+    20	def public_session(tmp_path, runtime_abi):  # noqa: F811
+    21	    """Use the real Runtime bootstrap and authenticated commit provider path."""
+    22	    use_runtime()
+    23	    for name in ("runtime_protocol", "runtime_protocol.contract_metadata",
+    24	                 "runtime_protocol.timeline_commit"):
+    25	        sys.modules.pop(name, None)
+    26	
+    27	    from runtime_protocol.errors import RuntimeErrorBase
+    28	    from runtime_protocol.service import RuntimeService
+    29	    from runtime_protocol.store import RealmStore
+    30	
+    31	    root = tmp_path / "realm"
+    32	    RealmStore.initialize(root, realm_id="realm-1").close()
+    33	    service = RuntimeService(root)
+    34	    service.register_timeline_commit_provider(create_runtime_commit_service())
+    35	    project = service.create_project(
+    36	        {"slug": "project-1", "name": "Project 1"}, idempotency_key="project-1",
+    37	    )["id"]
+    38	    service.create_timeline(project, "film", idempotency_key="film")
+    39	    sent = []
+    40	
+    41	    class RuntimeRealm:
+    42	        def __init__(self):
+    43	            self.project, self.timeline = project, "film"
+    44	
+    45	        @property
+    46	        def head(self):
+    47	            return service.list_timeline_commits(
+    48	                self.project, self.timeline, authorize=lambda: None,
+    49	            )["head"]
+    50	
+    51	        @property
+    52	        def entries(self):
+    53	            return service.list_timeline_commits(
+    54	                self.project, self.timeline, authorize=lambda: None,
+    55	            )["items"]
+    56	
+    57	        @property
+    58	        def documents(self):
+    59	            commits, _ = service._timeline_commits()
+    60	            return {
+    61	                entry["revision_id"]: commits.revision_closure(
+    62	                    self.project, self.timeline, entry["revision_id"],
+    63	                )
+    64	                for entry in self.entries
+    65	            }
+    66	
+    67	    realm = RuntimeRealm()
+    68	
+    69	    class Reader(RemoteTimelines):
+    70	        def _resolve_timeline(self, *_args):
+    71	            return DomainResult.success({
+    72	                "project_id": project, "timeline_id": "film",
+    73	            })
+    74	
+    75	        def open_composition(self, *_args, revision_id=None, **_kwargs):
+    76	            head = realm.head["revision_id"]
+    77	            return DomainResult.success({
+    78	                "native_inspection": {
+    79	                    "project_id": project, "timeline_id": "film",
+    80	                },
+    81	                "summary": {
+    82	                    "head_revision_id": head,
+    83	                    "revision_id": revision_id or head,
+    84	                },
+    85	            })
+    86	
+    87	        def _typed(self, operation, requested_project, *args, **kwargs):
+    88	            timeline_id = args[0] if args else "film"
+    89	            try:
+    90	                if operation == "list_timeline_commits":
+    91	                    result = service.list_timeline_commits(
+    92	                        requested_project, timeline_id,
+    93	                        cursor=kwargs.get("cursor"), limit=kwargs.get("limit", 50),
+    94	                        authorize=lambda: None,
+    95	                    )
+    96	                    return DomainResult.success(result)
+    97	                if operation == "commit_timeline":
+    98	                    body = copy.deepcopy(args[1])
+    99	                    sent.append(body)
+   100	                    result = service.commit_timeline(
+   101	                        requested_project, timeline_id, body,
+   102	                        idempotency_key=kwargs["idempotency_key"],
+   103	                        publisher="actor-1",
+   104	                        invocation_path=f"/v1/projects/{requested_project}/timelines/{timeline_id}/commit",
+   105	                        authorize=lambda: None,
+   106	                    )
+   107	                    from astrid.core.receipts.contract import CommandReceipt
+   108	
+   109	                    receipt = CommandReceipt.from_dict(result["receipt"]) if result["receipt"] else None
+   110	                    return DomainResult.success(result["data"], receipt=receipt)
+   111	                if operation == "get_project_parent_composition_revision":
+   112	                    result = service.get_project_parent_composition_revision(
+   113	                        requested_project, args[0], args[-1],
+   114	                    )
+   115	                    return DomainResult.success(result)
+   116	                if operation == "get_project_shot_revision":
+   117	                    result = service.get_project_shot_revision(
+   118	                        requested_project, args[0], args[-1],
+   119	                    )
+   120	                    return DomainResult.success(result)
+   121	                if operation == "get_project_timeline_revision":
+   122	                    result = service.get_project_timeline_revision(
+   123	                        requested_project, args[0], args[-1],
+   124	                    )
+   125	                    return DomainResult.success(result)
+   126	                raise AssertionError(f"unexpected Runtime operation {operation!r}")
+   127	            except RuntimeErrorBase as exc:
+   128	                return DomainResult.failure(ErrorObject(
+   129	                    exc.code, exc.message, exc.details or {},
+   130	                ))
+   131	
+   132	    reader = Reader(object())
+   133	    client = SimpleNamespace(
+   134	        timelines=reader,
+   135	        _remote=SimpleNamespace(_transport=SimpleNamespace(
+   136	            _last_handshake={"realm_id": "realm-1", "actor_id": "actor-1"},
+   137	        )),
+   138	    )
+   139	    path = tmp_path / "outbox.json"
+   140	    opened = timeline.open(project, "film", client=client, outbox_path=path)
+   141	    assert "_runtime_document" not in opened.bundle["source_mapping"]
+   142	    try:
+   143	        yield opened, realm, sent, client, path
+   144	    finally:
+   145	        service.close()
+   146	
+   147	
+   148	def _document_file(tmp_path, realm):
+   149	    candidate = bundle_from_document(copy.deepcopy(realm.documents[realm.head["revision_id"]]))
+   150	    candidate["base_parent"]["publication_id"] = realm.head["publication_id"]
+   151	    path = tmp_path / "timeline.json"
+   152	    path.write_text(json.dumps(candidate), encoding="utf-8")
+   153	    return path
+   154	
+   155	
+--- final checks ---
+ M tests/packs/timeline/test_cli_document_commit.py
+--- commit message ---
+test(timeline): migrate F-D86 D86-CLI-document fixture
 
-exec
-/bin/bash -lc '/home/user/work/venv-agent/bin/mypy tests/packs/timeline/test_cli_document_commit.py' in /home/user/work/wt/agt-D86-main-CLI-document-2333
- succeeded in 1523ms:
-Success: no issues found in 1 source file
+Route the CLI document commit tests through the existing Runtime bootstrap
+and authenticated commitTimeline/provider path while preserving all test
+bodies, assertions, decorators, and parameters.
+--- evidence size ---
+1.1M	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-document-2333/evidence
+DONE=present
 
 codex
-The fixture migration is in place and static checks are clean so far: `py_compile`, Ruff, and mypy all pass. I’m now checking exact AST conservation against `5d4ae93…` (assertions, decorators, parameters, and assigned selectors), then I’ll record hashes/diff evidence and finish without running pytest or any body/service suite as required.
-exec
-/bin/bash -lc 'set -o pipefail
-owned=tests/packs/timeline/test_cli_document_commit.py
-evidence_dir=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-document-2333/evidence
-PYTHONPYCACHEPREFIX="$evidence_dir/pycache" /home/user/work/venv-agent/bin/python -m py_compile "$owned"
-git diff --check
-/home/user/work/venv-agent/bin/python - "$owned" <<'"'PY'
-import ast
-import subprocess
-import sys
+## Report
 
-path = sys.argv[1]
-base = subprocess.check_output([
-    \"git\", \"show\", \"5d4ae93c833cc1adee109b28405276210165c0db:\" + path,
-], text=True)
-current = open(path, encoding=\"utf-8\").read()
-old_tree, new_tree = ast.parse(base), ast.parse(current)
+Updated only [test_cli_document_commit.py](/home/user/work/wt/agt-D86-main-CLI-document-2333/tests/packs/timeline/test_cli_document_commit.py).
 
-def tests(tree):
-    return {node.name: node for node in tree.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith(\"test_\")}
+- Replaced synthetic `DetachedRealm` setup with genuine Runtime bootstrap, `RuntimeService`, and authenticated `commit_timeline`/provider path.
+- Preserved all 12 test bodies, assertions, decorators, and parameters.
+- Exact assigned manifest: 8 selectors, unchanged from base `5d4ae93c…`.
+- Diffstat: 135 insertions, 2 deletions.
+- SHA256: `96807dd7acbe081479b15b42014f0b45d2c48ae66eee10b8405ee836b8971ebe`
+- Blob: `a95d0df20b469b42fa8ce5c1431bd15e382d84c1`
 
-def inventory(node):
-    return {
-        \"args\": ast.dump(node.args, include_attributes=False),
-        \"decorators\": [ast.dump(item, include_attributes=False) for item in node.decorator_list],
-        \"body\": ast.dump(ast.Module(body=node.body, type_ignores=[]), include_attributes=False),
-        \"asserts\": [ast.dump(item, include_attributes=False) for item in ast.walk(node) if isinstance(item, ast.Assert)],
-    }
-old, new = tests(old_tree), tests(new_tree)
-assert list(old) == list(new), (list(old), list(new))
-for name in old:
-    old_i, new_i = inventory(old[name]), inventory(new[name])
-    assert old_i == new_i, name
-selectors = [
-    \"test_document_commit_uses_the_authenticated_commit_door\",
-    \"test_document_commit_retry_uses_runtime_idempotency_without_history_scan\",
-    \"test_document_commit_retry_does_not_scan_a_long_history_page\",
-    \"test_document_commit_clean_raw_empty_app_is_a_noop\",
-    \"test_document_commit_preserves_unknown_parent_app_data\",
-    \"test_document_commit_human_output_keeps_label_and_receipt\",
-    \"test_document_commit_changed_body_with_same_key_is_runtime_refusal\",
-    \"test_document_commit_preview_has_no_accepted_receipt\",
-]
-assert list(old) == selectors, list(old)
-print(f\"AST conservation: PASS ({len(selectors)} selectors; bodies/asserts/decorators/parameters unchanged)\")
-print(\"Selectors:\")
-for name in selectors:
-    print(f\"- {name}\")
-PY
-printf '\\n--- status ---\\n'
-git status --short
-printf '\\n--- hashes ---\\n'
-sha256sum \""'$owned"
-git hash-object "$owned"
-printf '"'\\n--- diffstat ---\\n'
-git diff --stat
-printf '\\n--- own diff patch ---\\n'
-git diff -- \""'$owned" > "$evidence_dir/own-only.patch"
-wc -c "$evidence_dir/own-only.patch"
-' in /home/user/work/wt/agt-D86-main-CLI-document-2333
- succeeded in 407ms:
-Traceback (most recent call last):
-  File "<stdin>", line 37, in <module>
-AssertionError: ['test_document_commit_uses_the_authenticated_commit_door', 'test_document_commit_retry_uses_runtime_idempotency_without_history_scan', 'test_document_commit_retry_does_not_scan_a_long_history_page', 'test_document_commit_empty_key_refuses_before_outbox_flight', 'test_document_commit_clean_raw_empty_app_is_a_noop', 'test_document_commit_preserves_unknown_parent_app_data', 'test_document_commit_human_output_keeps_label_and_receipt', 'test_document_commit_changed_body_with_same_key_is_runtime_refusal', 'test_document_commit_preview_has_no_accepted_receipt', 'test_document_commit_requires_a_nonempty_message_and_key', 'test_document_commit_refuses_a_stale_base_pair', 'test_document_commit_parser_uses_current_project_for_file_edits']
+Checks passed:
 
---- status ---
- M tests/packs/timeline/test_cli_document_commit.py
+- `py_compile`
+- Ruff
+- mypy
+- `git diff --check`
+- AST conservation
 
---- hashes ---
-96807dd7acbe081479b15b42014f0b45d2c48ae66eee10b8405ee836b8971ebe  tests/packs/timeline/test_cli_document_commit.py
-a95d0df20b469b42fa8ce5c1431bd15e382d84c1
+Per D85/D86 rules, pytest and runtime qualification were not run. The manager should run the single later batched qualification for the 8 assigned selectors.
 
---- diffstat ---
- tests/packs/timeline/test_cli_document_commit.py | 137 ++++++++++++++++++++++-
- 1 file changed, 135 insertions(+), 2 deletions(-)
+Commit message written; `DONE` marker created.
+tokens used
+223,455
+## Report
 
---- own diff patch ---
-6499 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-document-2333/evidence/own-only.patch
+Updated only [test_cli_document_commit.py](/home/user/work/wt/agt-D86-main-CLI-document-2333/tests/packs/timeline/test_cli_document_commit.py).
 
-exec
-/bin/bash -lc "evidence_dir=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-document-2333/evidence
-/home/user/work/venv-agent/bin/python - tests/packs/timeline/test_cli_document_commit.py <<'PY'
-import ast
-import subprocess
-import sys
+- Replaced synthetic `DetachedRealm` setup with genuine Runtime bootstrap, `RuntimeService`, and authenticated `commit_timeline`/provider path.
+- Preserved all 12 test bodies, assertions, decorators, and parameters.
+- Exact assigned manifest: 8 selectors, unchanged from base `5d4ae93c…`.
+- Diffstat: 135 insertions, 2 deletions.
+- SHA256: `96807dd7acbe081479b15b42014f0b45d2c48ae66eee10b8405ee836b8971ebe`
+- Blob: `a95d0df20b469b42fa8ce5c1431bd15e382d84c1`
 
-path = sys.argv[1]
-base = subprocess.check_output([
-    \"git\", \"show\", \"5d4ae93c833cc1adee109b28405276210165c0db:\" + path,
-], text=True)
-current = open(path, encoding=\"utf-8\").read()
-old_tree, new_tree = ast.parse(base), ast.parse(current)
+Checks passed:
 
-def tests(tree):
-    return {node.name: node for node in tree.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith(\"test_\")}
+- `py_compile`
+- Ruff
+- mypy
+- `git diff --check`
+- AST conservation
 
-def inventory(node):
-    return {
-        \"args\": ast.dump(node.args, include_attributes=False),
-        \"decorators\": [ast.dump(item, include_attributes=False) for item in node.decorator_list],
-        \"body\": ast.dump(ast.Module(body=node.body, type_ignores=[]), include_attributes=False),
-        \"asserts\": [ast.dump(item, include_attributes=False) for item in ast.walk(node) if isinstance(item, ast.Assert)],
-    }
-old, new = tests(old_tree), tests(new_tree)
-assert list(old) == list(new), (list(old), list(new))
-for name in old:
-    old_i, new_i = inventory(old[name]), inventory(new[name])
-    assert old_i == new_i, name
-selectors = [
-    \"test_document_commit_uses_the_authenticated_commit_door\",
-    \"test_document_commit_retry_uses_runtime_idempotency_without_history_scan\",
-    \"test_document_commit_retry_does_not_scan_a_long_history_page\",
-    \"test_document_commit_clean_raw_empty_app_is_a_noop\",
-    \"test_document_commit_preserves_unknown_parent_app_data\",
-    \"test_document_commit_human_output_keeps_label_and_receipt\",
-    \"test_document_commit_changed_body_with_same_key_is_runtime_refusal\",
-    \"test_document_commit_preview_has_no_accepted_receipt\",
-]
-assert all(name in old for name in selectors)
-print(f\"AST conservation: PASS ({len(old)} test bodies; assertions/decorators/parameters unchanged)\")
-print(f\"Assigned selectors: PASS ({len(selectors)} exact retained core nodes)\")
-for name in selectors:
-    print(f\"- {name}\")
-PY
-" in /home/user/work/wt/agt-D86-main-CLI-document-2333
- succeeded in 239ms:
-AST conservation: PASS (12 test bodies; assertions/decorators/parameters unchanged)
-Assigned selectors: PASS (8 exact retained core nodes)
-- test_document_commit_uses_the_authenticated_commit_door
-- test_document_commit_retry_uses_runtime_idempotency_without_history_scan
-- test_document_commit_retry_does_not_scan_a_long_history_page
-- test_document_commit_clean_raw_empty_app_is_a_noop
-- test_document_commit_preserves_unknown_parent_app_data
-- test_document_commit_human_output_keeps_label_and_receipt
-- test_document_commit_changed_body_with_same_key_is_runtime_refusal
-- test_document_commit_preview_has_no_accepted_receipt
+Per D85/D86 rules, pytest and runtime qualification were not run. The manager should run the single later batched qualification for the 8 assigned selectors.
 
-exec
-/bin/bash -lc "rg -n -l 'Use the real Runtime bootstrap and authenticated commit provider path|RuntimeRealm' /home/user/work/wt /home/user/work 2>/dev/null | head -n 40" in /home/user/work/wt/agt-D86-main-CLI-document-2333
-exec
-/bin/bash -lc 'set -o pipefail
-evidence_dir=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-document-2333/evidence
-owned=tests/packs/timeline/test_cli_document_commit.py
-: > "$evidence_dir/static.log"
-run() {
-  label=$1
-  shift
-  echo "## $label" | tee -a "$evidence_dir/static.log"
-  "$@" 2>&1 | tee -a "$evidence_dir/static.log"
-  status=${PIPESTATUS[0]}
-  echo "exit=$status" | tee -a "$evidence_dir/static.log"
-  return "$status"
-}
-run "py_compile" env PYTHONPYCACHEPREFIX="$evidence_dir/pycache" /home/user/work/venv-agent/bin/python -m py_compile "$owned"
-run "ruff" /home/user/work/venv-agent/bin/ruff check "$owned"
-run "mypy" /home/user/work/venv-agent/bin/mypy "$owned"
-run "git diff --check" git diff --check
-printf '"'\\n--- final status ---\\n'
-git status --short
-printf '\\n--- final diffstat ---\\n'
-git diff --stat
-printf '\\n--- final hashes ---\\n'
-sha256sum \""'$owned" | tee "$evidence_dir/hashes.txt"
-git hash-object "$owned" | tee -a "$evidence_dir/hashes.txt"
-git diff --stat | tee "$evidence_dir/diffstat.txt"
-git diff -- "$owned" > "$evidence_dir/own-only.patch"
-wc -c "$evidence_dir/own-only.patch"
-' in /home/user/work/wt/agt-D86-main-CLI-document-2333
- succeeded in 347ms:
-## py_compile
-exit=0
-## ruff
-All checks passed!
-exit=0
-## mypy
-Success: no issues found in 1 source file
-exit=0
-## git diff --check
-exit=0
-
---- final status ---
- M tests/packs/timeline/test_cli_document_commit.py
-
---- final diffstat ---
- tests/packs/timeline/test_cli_document_commit.py | 137 ++++++++++++++++++++++-
- 1 file changed, 135 insertions(+), 2 deletions(-)
-
---- final hashes ---
-96807dd7acbe081479b15b42014f0b45d2c48ae66eee10b8405ee836b8971ebe  tests/packs/timeline/test_cli_document_commit.py
-a95d0df20b469b42fa8ce5c1431bd15e382d84c1
- tests/packs/timeline/test_cli_document_commit.py | 137 ++++++++++++++++++++++-
- 1 file changed, 135 insertions(+), 2 deletions(-)
-6499 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-document-2333/evidence/own-only.patch
-
-exec
-/bin/bash -lc "evidence_dir=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-document-2333/evidence
-/home/user/work/venv-agent/bin/python - tests/packs/timeline/test_cli_document_commit.py <<'PY' | tee \""'$evidence_dir/ast-conservation.txt"
-import ast
-import subprocess
-import sys
-path = sys.argv[1]
-base = subprocess.check_output(["git", "show", "5d4ae93c833cc1adee109b28405276210165c0db:" + path], text=True)
-current = open(path, encoding="utf-8").read()
-old_tree, new_tree = ast.parse(base), ast.parse(current)
-def tests(tree):
-    return {node.name: node for node in tree.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name.startswith("test_")}
-def inventory(node):
-    return {"args": ast.dump(node.args, include_attributes=False), "decorators": [ast.dump(item, include_attributes=False) for item in node.decorator_list], "body": ast.dump(ast.Module(body=node.body, type_ignores=[]), include_attributes=False), "asserts": [ast.dump(item, include_attributes=False) for item in ast.walk(node) if isinstance(item, ast.Assert)]}
-old, new = tests(old_tree), tests(new_tree)
-assert list(old) == list(new)
-for name in old:
-    assert inventory(old[name]) == inventory(new[name]), name
-selectors = ["test_document_commit_uses_the_authenticated_commit_door", "test_document_commit_retry_uses_runtime_idempotency_without_history_scan", "test_document_commit_retry_does_not_scan_a_long_history_page", "test_document_commit_clean_raw_empty_app_is_a_noop", "test_document_commit_preserves_unknown_parent_app_data", "test_document_commit_human_output_keeps_label_and_receipt", "test_document_commit_changed_body_with_same_key_is_runtime_refusal", "test_document_commit_preview_has_no_accepted_receipt"]
-assert all(name in old for name in selectors)
-print(f"AST conservation: PASS ({len(old)} test bodies; assertions/decorators/parameters unchanged)")
-print(f"Assigned selectors: PASS ({len(selectors)} exact retained core nodes)")
-for name in selectors:
-    print(f"- {name}")
-PY
-' in /home/user/work/wt/agt-D86-main-CLI-document-2333
- succeeded in 106ms:
-AST conservation: PASS (12 test bodies; assertions/decorators/parameters unchanged)
-Assigned selectors: PASS (8 exact retained core nodes)
-- test_document_commit_uses_the_authenticated_commit_door
-- test_document_commit_retry_uses_runtime_idempotency_without_history_scan
-- test_document_commit_retry_does_not_scan_a_long_history_page
-- test_document_commit_clean_raw_empty_app_is_a_noop
-- test_document_commit_preserves_unknown_parent_app_data
-- test_document_commit_human_output_keeps_label_and_receipt
-- test_document_commit_changed_body_with_same_key_is_runtime_refusal
-- test_document_commit_preview_has_no_accepted_receipt
-
+Commit message written; `DONE` marker created.

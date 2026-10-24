@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T23:36:11Z | dispatcher heartbeat 7s | live 1 (sol 1, luna 0, other 0) | busy30 8 | status age 2m -->
-# runtime board, 2026-10-24T23:31:16Z
+<!-- main | 2026-10-24T23:39:36Z | dispatcher heartbeat 13s | live 2 (sol 1, luna 1, other 0) | busy30 9 | status age 1m -->
+# runtime board, 2026-10-24T23:37:24Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -211,60 +211,26 @@
 | D86-M1-outbox | Migrate ten outbox setup cases | Luna | Agent reserved one test file | doing | agt-D86-main-M1-2333 | Source-only; all ten original predicates and parameters retained. No body; Agent protected review then normal remote merge. | Agent5d4ae93 |
 | D86-shared-inverse | Migrate ten shared inverse cases | Luna | Agent reserved one test file | doing | agt-D86-main-shared-inverse-2333 | Source-only; no synthetic accepted history or retired publisher. One later affected-node batch. | Agent5d4ae93 |
 | D86-native-word | Migrate46 native word setup cases | Luna | Agent reserved two test files | doing | agt-D86-main-native-word-2333 | Source-only; word references and inverse/ABA assertions retained. No per-family pytest/body. | Agent5d4ae93 |
-| D86-CLI-document | Migrate eight document CLI cases | Luna | Agent reserved one test file | doing | agt-D86-main-CLI-document-2333 | Source-only; genuine current commit caller and every CLI assertion retained. One later main batch. | Agent5d4ae93 |
+| D86-CLI-document | Migrate eight document CLI cases | Luna / Agent review | Agent protected review then merge | review | agt-D86-main-CLI-document-2333 | Source-only compile/Ruff/mypy/AST PASS;12 bodies exact. Remote request carries8 selectors; no body or core credit. | Remote author branch |
+
+| D86-main-batch-prep | Prepare existing main affected-node route | Luna | D86 main qualification assignment | doing | rt-D86-main-batch-prep-2337 | Source and parsed stub only; exact74-node manifest, existing service and D73 receipt/input guards. No body or live install. | Future tuple pending |
 
 Runtime producer: RELEASED 732c48c6f5a9441a65c61b24595d454a1cd3e180, tree 7ed0559c6f0a05954427cc668e303b6cd2f51586. Canonical 15 files and schema867f unchanged. [Release](../../design/runtime-D84a-release-2205.md).
 
-core open: P4 ten-note remains45.314s. Bad9 failed independent callback freshness attack and remains unmerged. Author2304 returned7627; independent Luna2319 now qualifies final freshness and normal apply. Original remains45.314s; no new timing claim. Four R2 originals are closed on actual Agent7c48, tree-equal to testedc2a63; original45s preserved. Element7131 still fails unchanged5s; local one-patch0.315s does not reproduce actual realm.
+core open: P4 ten-note remains45.314s. Bad9 and7627 failed independent callback freshness attacks and remain held. Sol2330 repairs the full provider boundary; independent wholepath2330 has reproduced the late pin-read gap. Original remains45.314s; no new timing claim. Four R2 originals are closed on actual Agent7c48, tree-equal to testedc2a63; original45s preserved. Element7131 still fails unchanged5s; local one-patch0.315s does not reproduce actual realm.
 regressions: No newly established Runtime regression. D77 genuine installed render remains cut-blocking. Known gaps and original historical failures remain visible at their recorded scopes.
 Gates: P1 GO31083 and P3 GO15493/independent2024 retain recorded tuples. All eight P2 remain unqualified; final P1–P5 and core matrix on one tuple still required. No cut, final build or ZIP.
 
 Blockers: Runtime P4 — independent2319 FAIL: provider pin-read callback after store finalcheck mutates ancestor metadata and port returns. Sol2330 repairs full provider boundary; independent Luna2330 wholepath runs in parallel. Released732 unchanged.
-Blockers: App P2 — element7131 pending observation remains open. Popup5083 strict digest correction is App63d7 HOME with independent controls; new ADD7872 remains App owned. App owns asset/placement; main owns parent/SWAP/single/bulk.
+Blockers: App P2 — element7131 remains failed5s. App mounted drops8419/8259 sent no intendedPOST; uniqueAppSol2319 owns repair. ADD5217 reached new helper import error, App2327 owns setup. App tour2323 batches parent/single/bulk; SWAP claim App-owned.
 Main profile: CLEARED by2250 private exact635f package resolution and four actual preflights PASS. Parent8232 terminal at exact request envelope; shared dependencies unchanged. Historical setup failures retained. [Prior report](../../design/runtime-main-profile-2238.md).
 Blockers: Final cut — D59 requires all lanes core0/regressions0, final pinned P1–P5/core, D69 and genuine installed render. Private final candidates remain uninstalled. Rehearsal retry waits heavy8.5GB threshold and critical priority.
-Next ready: Sol2330 source plus independent wholepath2330 active after secondFAIL. ABI20 reviewedPASS and remoteAgent merge requested. Agent D86 list awaited for four main source authors. Rehearsal waits8.5GB and critical priority; final tuple pending.
+Next ready: Sol2330 source returns to final independentsecurity. Four D86 source authors and main-batch prep2337 active; Agent reviews/normal merges precede one affected-node batch. ABI20 remote receipt pending. Rehearsal below8.5GB; final tuple pending.
 
 Venues: App P1/P2/P3 and final P2 tour; Agent P4; main P5/Composition. Spare main four diagnostics use fixedbceb/039f/732/635f only. D73 captures tuple once, genuine checkout receipts and preflight precede body. Newer heads do not invalidate an in-flight run.
 Delivery: Runtime merge, Agent merge, authentic App manifest command with schema digest equality, App merge. D65/D67/D72 docs installed. D77 render and D62 submit-completeness known gap remain explicit.
 Later: E1/E3, AgentE2 and D79 paused until ZIP. D42 cross-request memo held; V4 cut, D14/D23 deferred; unsafe D34 cleanup held. D56 Farm/schema access stopped. All historical safety/access/cleanup/process refusals remain stopped.
-Disk: 7366033408 available bytes at23:18; cap2. No new noncritical dispatch. Finished2250/2308/2304 were automatically recycled; existing evidence and branches retained. Cleanup checks continue through guarded routes.
+Disk: 7521595392 available bytes at23:31; sourcecap6 underD85, service tiers retained. Sweep3 removed0; compact packed0 and gzipped10old logs. No ended clean nonKEEP Runtime tree eligible; no refused-target retry.
 
-live 6 / cap 6 source; ready-undispatched 0. Runtime Sol2330 and wholepath2330 plus FOUR Agent D86 source families2333. No per-family bodies. ABI20 remote merge pending. Heavy cap2 with one body below7.5GB; rehearsal noncritical held below8.5GB.
-Pass 2026-10-24T22:50:16Z: Read PLAN/common, header through H49, inbox through605296 bytes, App/Agent actual boards and dispatcher returns. Consumed2238 setup result and dispatched2250 immediately. Published exact report and peer2250. Actual Agent7c48 four R2 closure retained; no stale Agent input blocker. No duplicate original, product edits by manager or denied route.
-
-Intake 2026-10-24T22:51:20Z: consumed inbox through605296 bytes. App2240 delayed main-READY note is already fulfilled by2232/2238/2250; no stale App need gate. Agent2242 handoff dispatched immediately to2252; no registry/body. No new source release.
-
-Pass 2026-10-24T22:55:27Z: author2240 finalbad9 consumed and security2255 dispatched immediately. Preliminary source-only review is retained honestly; final source and test attacks now independently qualified in2255. Guarded sweep3 removed0, compact packed0/gzipped0. No eligible non-KEEP Runtime tree.
-
-Intake 2026-10-24T22:58:12Z: actual parent8232 dispatched and relayed to App. Main profile blocker cleared this pass. Remaining main cases stay2250 exclusive. No new original on a moving tuple.
-
-Intake 2026-10-24T23:03Z: parent8232 reached original after readinessPASS. App protected-envelope attribution became owned blocked:app row and peer2303 in this pass. No separate NO-GO review or Runtime cause inference. Remaining main diagnostics2250 continue.
-
-Pass 2026-10-24T23:05:06Z: independent2255 FAIL consumed and Sol2304 dispatched immediately onbad9 branch. Exact report published and oldsource732 retained; no merge request. MainSWAP25174 follows parent8232. Rehearsal2257 source-only PASS consumed, real8.5GB work remains gated.
-
-H6 2026-10-24T23:05Z: App board confirms raw canonical digest source63d7 merged with independent controls; stale blocked:app digest row cleared immediately. App asset/placement2252 review and newADD7872 are distinct current owners. Main oldtuple remains valid.
-
-Intake 2026-10-24T23:08Z: actualSWAP25174 strict invalid_records refusal became row and Luna2308 dispatch immediately. Single10376 is live; bulk remains2250 exclusive. No speculative sharedcause or duplicatebody.
-
-Artifact custody 2026-10-24T23:10Z: rehearsal2257 temporary worktree was recycled. Exact two committed worker-authored Python files exported read-only from tl/rt-F-rehearsal-input-2257 to durable worker evidence; no new code authored or source modified. Original report retained byte-exact.
-
-H6 2026-10-24T23:10Z: App2303 received; ADD7872 raw digest passed and now strict full canonical860 differs in parent revision fields. New canonical row names existingApp2301 worker, no stale digest blocker or speculativeRuntimefix. App assetfinalguard2301 and placement source allocation remain App owned. Inbox through606757 bytes.
-
-Intake 2026-10-24T23:13Z: single10376 specificintent versus genericexpectation became App-owned row and peer2313 attached to parenttour oracle. Bulk2773 is sole remainingmainbody. No assertion or source changed by manager.
-
-Pass 2026-10-24T23:20:30Z: read PLAN/common/header and new inbox through609412 bytes. Actual workers show ABI20 already dispatched2316; no duplicate. Consumed terminal2250 and2308, published exact reports and four-result JSON. Consumed2304 final7627 and immediately queued Luna2319 independent security with normal apply on PASS. H6 App/Agent boards read; peer asks become owned rows. No manager product edits or new original.
-
-Intake 2026-10-24T23:22Z: ABI20 author2316 completed21PASS, old20ERROR and exact body/parameter/no-write conservation. Independent Luna2322 dispatched immediately on same branch; own-only remote Agent merge follows PASS. Sweep3 removed0; compact packed0 and gzipped10 old logs; finished test compaction still running. No cleanup refusal or original rerun.
-
-D85 intake 2026-10-24T23:24:23Z: source-only critical cap6 above6.5GB applied. ABI20 ownership is ALREADY active: author rt-Agent-ABI20-provider-2316 completed21PASS; independent rt-Agent-ABI20-review-2322 now reproduced21PASS and finishes conservation/order review. Board row F-provider-ABI20 and two ordinary peer notes name exact workers. Repeated owner assignment request is a publication lag, not missing dispatch. No duplicate author or new original. Inbox through612297 bytes.
-
-D86 intake 2026-10-24T23:25:58Z: accepted up to4 Agent family authors, prefix agt-, through normal request route and remote Agent merges. Named family list absent in ORCH and normal hub; blocked:agent row added, peer requests actual reserved input. Actual local Agent advanced normally to5d4ae93. Runtime security235PASS now complete; attack/neighbor review continues. Inbox through614905 bytes.
-
-Intake 2026-10-24T23:27:07Z: ABI20 independent2322 PASS21 plus reverse21 and13 order/neighbor controls, Ruff/mypy/compile/diff and exact AST conservation. Requested own-only remote Agent merge237886 via normal queue immediately. No extra review/body; actual Agent receipt still owed. Runtime security2319 now235+192+14PASS; independent witness/novel attacks continue. D86 list still absent.
-
-Pass 2026-10-24T23:31:16Z: independent2319 FINALFAIL consumed immediately; exact report preserved. Secondsecurityfailure escalated to HARD Sol2330 on SAME7627 branch and independent readonly client-to-provider/store wholepath2330 in parallel, per second-failed-fix rule. No merge/adoption/original, old732 remains released. App2320/2323 consumed: asset8419 intendedPOSTabsent, unique AppSol2319 repairs mounted drops; ADD5217 current body and parent envelope2323 active. No Runtimecause inferred for noPOST. D86 list still absent; no duplicate source ownership. Inbox through617951 bytes.
-
-D86 widened intake 2026-10-24T23:31Z: main accepts up to6 Agent family authors and owns affected-node qualification batch through main test service, not finalD59. Current two critical Runtime owners retain priority; four immediate source slots available under D85 cap6. Named family list remains absent, blocked:agent. No body submitted or source invented. Inbox through618248 bytes.
-
-D86 ready intake 2026-10-24T23:33Z: authoritative four-family list arrived normalhub; copied byte-exact and immediately dispatched all4 agt-prefix Luna authors on exact5d4ae93. Total74 affected nodes, five disjoint files, excludes ABI20/occurrence48/WC6. NOpytest/body per D85; compile/AST/statics only. Agent owns protected reviews/normal remote merges; latest D86 moves ONE later batched node qualification to main service. Two Runtime critical owners retained; source live6/cap6, readyundispatched0.
+live 5 / cap 6 source; ready-undispatched 0. Runtime Sol2330, THREE Agent D86 source families2333 and main-batch prep2337. CLI8 source returned; Agent protected review requested. Wholepath2330 complete; exact late-callback finding retained. No per-family bodies. ABI20 remote merge pending. Heavy cap2 with one body below7.5GB; rehearsal noncritical held below8.5GB.
+Current pass 2026-10-24T23:38:04Z: CLI8 author source/statics/AST complete, exact12 bodies retained. Requested normal remote Agent branch with ONE protected review before merge; main later8-node batch stays pending. Runtime source and other3 family authors continue; wholepath evidence complete. Inbox through620746 bytes; all original budgets and refused routes unchanged.

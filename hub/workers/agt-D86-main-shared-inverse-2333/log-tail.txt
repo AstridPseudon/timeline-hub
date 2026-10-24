@@ -1,251 +1,222 @@
-        if index == 1:
-            _, authored_shot, authored_internal = occurrence_image(target, "occurrence-1")
-            authored_shot["payload"].update(
-                unknown={"literal": [None, False, 0, {}, []]},
-                items=[{
-                    "item_id": "shared-source-item", "media_id": fixture.media_ids[0],
-                    "metadata": {"literal": "shared-source-item", "keep": [None, False]},
-                }],
-            )
-            authored_internal["payload"].update(
-                source_window={"start": 4, "end": 9},
-                unknown={"literal": [None, False, 0, {}, []]},
-            )
-            authored_internal["payload"]["clips"][0]["extension"] = {
-                "literal": "shared-source-item", "clear": None,
-            }
-            for ordinal, occurrence in enumerate(parent["occurrences"][1:]):
-                occurrence["placement"]["start_ms"] = 8000 + ordinal * 2000
-            parent["unknown"] = {"literal": [None, False, 0, {}, []]}
-        repeated = copy.deepcopy(parent["occurrences"][index - 1])
-        repeated.update(occurrence_id="repeated-third",
-                        placement={"start_ms": 13000 if index == 1 else 6000, "track": "picture"})
-        parent["occurrences"].append(repeated)
-
-        target["parent_revision"]["payload"] = parent
-        target["parent_revision"]["content_digest"] = _digest(parent)
-        for image in target["shot_revisions"]:
-            image["content_digest"] = _digest(image["payload"])
-        for image in target["internal_timeline_revisions"]:
-            image["content_digest"] = _digest(image["payload"])
-        target["dependency_manifest"] = _manifest(
-            target["shot_revisions"], target["internal_timeline_revisions"],
-            target["dependency_manifest"]["media"], target["dependency_manifest"]["documents"],
-        )
-        setup_commands.extend(emit_document_commands(
-            bundle_from_document(staged), bundle_from_document(target)))
-
-        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
-        edit.commit(edit.body(setup_commands), "shared-inverse-baseline")
-
-        def unavailable(*args, **kwargs):
-            raise AssertionError("save evaluated a scene")
-
-        import runtime_protocol.service as service_module
-        import runtime_protocol.visual_seam as visual_seam
-        monkeypatch.setattr(service_module, "evaluate_closure", unavailable)
-        monkeypatch.setattr(visual_seam, "evaluate_closure", unavailable)
-        yield edit, index
-    finally:
-        edit.service.close()
-
-
-def test_shared_slot_move_inverse_redo_and_rematerialization(shared_editing):
-    from test_timeline_commit_integration import inverse
-
-    edit, index = shared_editing
-    original = edit.document()
-    baseline_history = copy.deepcopy(edit.history())
-    baseline_closures = [edit.document(entry["revision_id"]) for entry in baseline_history]
-    transcript = edit.service.get_document(edit.project, edit.film.fixture.transcript_document_id)
-    binding = edit.service.get_project_shot_text_binding(edit.project, edit.film.fixture.text_binding_id)
-    owner = f"occurrence:occurrence-{index}/clip:clip-{index}"
-    move = edit.agent.move(edit.agent.bundle(original), owner, 3.5)
-    first = edit.commit(edit.body([move]), "shared-first-move")
-    edit.assert_readback(first)
-    undone = edit.commit(edit.body([inverse(first["receipt"]["receipt_id"])]), "shared-undo")
-    assert undone["data"]["canonical_document"] == original
-    redone = edit.commit(edit.body([inverse(undone["receipt"]["receipt_id"])]), "shared-redo")
-    assert redone["data"]["canonical_document"] == first["data"]["canonical_document"]
-    undone_again = edit.commit(edit.body([inverse(redone["receipt"]["receipt_id"])]), "shared-undo-again")
-    assert undone_again["data"]["canonical_document"] == original
-    move = edit.agent.move(edit.agent.bundle(edit.document()), owner, 3.6)
-    rematerialized = edit.commit(edit.body([move]), "shared-rematerialize")
-    assert {s["shot_id"] for s in rematerialized["data"]["canonical_document"]["shot_revisions"]} == {
- .../test_commit_runtime_shared_inverse.py          | 68 ++++++++++++++--------
- 1 file changed, 45 insertions(+), 23 deletions(-)
-
-codex
-The edit is now limited to the owned fixture setup: the ten test selectors and their test bodies remain untouched. The old `publish_parent_composition` call and its unused synthetic child payload are gone; setup now registers the provider and submits the migrated baseline through `commit_timeline`. I’m moving to the required AST/static checks and will treat any type/lint issue as a source problem to resolve within this file only.
-exec
-/bin/bash -lc 'E=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/evidence; mkdir -p "$E/pycache"; PYTHONPYCACHEPREFIX="$E/pycache" /home/user/work/venv-agent/bin/python -m py_compile tests/editing_conformance/test_commit_runtime_shared_inverse.py; echo "py_compile_exit=$?"' in /home/user/work/wt/agt-D86-main-shared-inverse-2333
- succeeded in 193ms:
-py_compile_exit=0
-
-exec
-/bin/bash -lc '/home/user/work/venv-agent/bin/ruff check tests/editing_conformance/test_commit_runtime_shared_inverse.py' in /home/user/work/wt/agt-D86-main-shared-inverse-2333
- exited 1 in 40ms:
-tests/editing_conformance/test_commit_runtime_shared_inverse.py:19:5: I001 [*] Import block is un-sorted or un-formatted
-   |
-17 |       runtime = use_runtime()
-18 |       monkeypatch.syspath_prepend(str(runtime / "tests"))
-19 | /     from runtime_protocol.service import RuntimeService
-20 | |     from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
-21 | |     from test_timeline_commit_integration import Editing
-22 | |     from timeline_commit_film_fixture import build_film_fixture
-23 | |
-24 | |     from astrid.sdk.timeline.capture import capture_move
-25 | |     from astrid.sdk.timeline.commands import execute
-26 | |     from astrid.sdk.timeline.commit import _digest, _manifest, bundle_from_document, document_from_bundle
-27 | |     from astrid.sdk.timeline.emitter import emit_document_commands
-28 | |     from astrid.sdk.timeline.native_occurrence_fork import capture_occurrence_fork
-   | |__________________________________________________________________________________^ I001
-29 |
-30 |       fixture = build_film_fixture(tmp_path)
-   |
-   = help: Organize imports
-
-Found 1 error.
-[*] 1 fixable with the `--fix` option.
-
-exec
-/bin/bash -lc '/home/user/work/venv-agent/bin/ruff check --fix tests/editing_conformance/test_commit_runtime_shared_inverse.py && /home/user/work/venv-agent/bin/ruff check tests/editing_conformance/test_commit_runtime_shared_inverse.py' in /home/user/work/wt/agt-D86-main-shared-inverse-2333
- succeeded in 38ms:
-Found 1 error (1 fixed, 0 remaining).
-All checks passed!
-
-exec
-/bin/bash -lc "sed -n '14,34p' tests/editing_conformance/test_commit_runtime_shared_inverse.py && /home/user/work/venv-agent/bin/mypy tests/editing_conformance/test_commit_runtime_shared_inverse.py" in /home/user/work/wt/agt-D86-main-shared-inverse-2333
- succeeded in 2752ms:
-
-@pytest.fixture(params=[3, 1], ids=["original-third", "authored-first"])
-def shared_editing(request, tmp_path, monkeypatch):
-    runtime = use_runtime()
-    monkeypatch.syspath_prepend(str(runtime / "tests"))
-    from runtime_protocol.service import RuntimeService
-    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
-    from test_timeline_commit_integration import Editing
-    from timeline_commit_film_fixture import build_film_fixture
-
-    from astrid.sdk.timeline.capture import capture_move
-    from astrid.sdk.timeline.commands import execute
-    from astrid.sdk.timeline.commit import (
-        _digest,
-        _manifest,
-        bundle_from_document,
-        document_from_bundle,
-    )
-    from astrid.sdk.timeline.emitter import emit_document_commands
-    from astrid.sdk.timeline.native_occurrence_fork import capture_occurrence_fork
-
-Success: no issues found in 1 source file
-
-exec
-/bin/bash -lc "python3 - <<'PY'
-import ast, subprocess
-from pathlib import Path
-path='tests/editing_conformance/test_commit_runtime_shared_inverse.py'
-current=ast.parse(Path(path).read_text())
-base=ast.parse(subprocess.check_output(['git','show','5d4ae93c833cc1adee109b28405276210165c0db:'+path], text=True))
-
-def tests(tree):
-    return {n.name:n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name.startswith('test_')}
-
-def clean(node):
-    return ast.dump(node, annotate_fields=True, include_attributes=False)
-
-ct, bt = tests(current), tests(base)
-print('test_names_equal=', list(ct)==list(bt))
-print('test_names=', list(ct))
-print('test_body_ast_equal=', all(clean(ct[n].body)==clean(bt[n].body) for n in ct))
-print('test_args_ast_equal=', all(clean(ct[n].args)==clean(bt[n].args) for n in ct))
-print('test_decorators_equal=', all(clean(ct[n].decorator_list)==clean(bt[n].decorator_list) for n in ct))
-print('fixture_body_changed=', clean(current.body[1].body) "'!= clean(base.body[1].body))
-for n in ct:
-    print(n, '"'args=', clean(ct[n].args), 'decorators=', clean(ct[n].decorator_list), 'assert_count=', sum(isinstance(x, ast.Assert) for x in ast.walk(ct[n])))
-PY
-sha256sum tests/editing_conformance/test_commit_runtime_shared_inverse.py
-git hash-object tests/editing_conformance/test_commit_runtime_shared_inverse.py
-git diff --numstat -- tests/editing_conformance/test_commit_runtime_shared_inverse.py
-git diff --check" in /home/user/work/wt/agt-D86-main-shared-inverse-2333
- succeeded in 320ms:
-test_names_equal= True
-test_names= ['test_shared_slot_move_inverse_redo_and_rematerialization', 'test_shared_inverse_preserves_newer_disjoint_parent_edit', 'test_shared_inverse_preserves_newer_disjoint_sibling_edit', 'test_shared_inverse_refuses_touching_aba_atomically', 'test_shared_redo_refuses_intervening_aba_after_exact_undo']
-Traceback (most recent call last):
-  File "<stdin>", line 16, in <module>
-  File "<stdin>", line 16, in <genexpr>
-  File "<stdin>", line 11, in clean
-  File "/usr/lib/python3.13/ast.py", line 191, in dump
-    raise TypeError('expected AST, got %r' % node.__class__.__name__)
-TypeError: expected AST, got 'list'
-cdf978681b6feba734eef2dd3928012d937e823f1212b5156529177a96237e9c  tests/editing_conformance/test_commit_runtime_shared_inverse.py
-2d3d84a1c3a7439949a274eba06310e083e0e9ad
-50	23	tests/editing_conformance/test_commit_runtime_shared_inverse.py
-
-exec
-/bin/bash -lc "python3 - <<'PY'
-import ast, subprocess
-from pathlib import Path
-path='tests/editing_conformance/test_commit_runtime_shared_inverse.py'
-current=ast.parse(Path(path).read_text())
-base=ast.parse(subprocess.check_output(['git','show','5d4ae93c833cc1adee109b28405276210165c0db:'+path], text=True))
-
-def tests(tree):
-    return {n.name:n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name.startswith('test_')}
-
-def clean(node):
-    return ast.dump(node, annotate_fields=True, include_attributes=False) if isinstance(node, ast.AST) else repr(node)
-
-ct, bt = tests(current), tests(base)
-print('test_names_equal=', list(ct)==list(bt))
-print('test_names=', list(ct))
-print('test_body_ast_equal=', all(clean(ct[n].body)==clean(bt[n].body) for n in ct))
-print('test_args_ast_equal=', all(clean(ct[n].args)==clean(bt[n].args) for n in ct))
-print('test_decorators_equal=', all(clean(ct[n].decorator_list)==clean(bt[n].decorator_list) for n in ct))
-print('fixture_body_changed=', clean(current.body[1].body) "'!= clean(base.body[1].body))
-for n in ct:
-    print(n, '"'args=', clean(ct[n].args), 'decorators=', clean(ct[n].decorator_list), 'assert_count=', sum(isinstance(x, ast.Assert) for x in ast.walk(ct[n])))
-PY
-sha256sum tests/editing_conformance/test_commit_runtime_shared_inverse.py
-git hash-object tests/editing_conformance/test_commit_runtime_shared_inverse.py
-git diff --numstat -- tests/editing_conformance/test_commit_runtime_shared_inverse.py
-git diff --check" in /home/user/work/wt/agt-D86-main-shared-inverse-2333
- succeeded in 45ms:
-test_names_equal= True
-test_names= ['test_shared_slot_move_inverse_redo_and_rematerialization', 'test_shared_inverse_preserves_newer_disjoint_parent_edit', 'test_shared_inverse_preserves_newer_disjoint_sibling_edit', 'test_shared_inverse_refuses_touching_aba_atomically', 'test_shared_redo_refuses_intervening_aba_after_exact_undo']
-test_body_ast_equal= False
-test_args_ast_equal= True
-test_decorators_equal= True
-Traceback (most recent call last):
-  File "<stdin>", line 19, in <module>
-AttributeError: 'ImportFrom' object has no attribute 'body'
-cdf978681b6feba734eef2dd3928012d937e823f1212b5156529177a96237e9c  tests/editing_conformance/test_commit_runtime_shared_inverse.py
-2d3d84a1c3a7439949a274eba06310e083e0e9ad
-50	23	tests/editing_conformance/test_commit_runtime_shared_inverse.py
-
-exec
-/bin/bash -lc "git diff -- tests/editing_conformance/test_commit_runtime_shared_inverse.py | sed -n '1,260p' && python3 - <<'PY'
-import ast, subprocess
-from pathlib import Path
-p='tests/editing_conformance/test_commit_runtime_shared_inverse.py'
-c=ast.parse(Path(p).read_text()); b=ast.parse(subprocess.check_output(['git','show','5d4ae93c833cc1adee109b28405276210165c0db:'+p], text=True))
-cf={n.name:n for n in c.body if isinstance(n, ast.FunctionDef) and n.name.startswith('test_')}; bf={n.name:n for n in b.body if isinstance(n, ast.FunctionDef) and n.name.startswith('test_')}
-for n in cf:
-    if ast.dump(cf[n], include_attributes=False) "'!= ast.dump(bf[n], include_attributes=False):
-        print('"'different',n)
-        for i,(x,y) in enumerate(zip(cf[n].body,bf[n].body)):
-            if ast.dump(x, include_attributes=False)"'!=ast.dump(y, include_attributes=False):
-                print('"' stmt',i, type(x).__name__)
-                print(ast.dump(x, include_attributes=False)[:600])
-                print(ast.dump(y, include_attributes=False)[:600])
-                break
-PY" in /home/user/work/wt/agt-D86-main-shared-inverse-2333
- succeeded in 916ms:
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..8b737decfd136a15cea383c96a320a1978afc036
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/commit-msg
+@@ -0,0 +1,3 @@
++test(agent): migrate F-D86 D86-shared-inverse fixture
++
++Route shared-inverse setup through the existing Runtime commitTimeline/provider path with native authored revision allocation.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/evidence/ast-conservation.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/evidence/ast-conservation.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..bc276bd5ec11343d615c8a482aed26160dee2094
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/evidence/ast-conservation.txt
+@@ -0,0 +1,24 @@
++AST conservation against exact base 5d4ae93c833cc1adee109b28405276210165c0db
++
++test_names_equal= True
++test_body_ast_equal= True
++test_decorators_ast_equal= True
++test_parameters_ast_equal= True
++assert_counts= [13, 3, 3, 4, 6] [13, 3, 3, 4, 6]
++raises_counts= [0, 0, 0, 1, 1]
++raises_counts_current= [0, 0, 0, 1, 1]
++assertions_equal= True
++raises_equal= True
++selector_manifest_expected= True
++
++Exact assigned selectors for later one-batch qualification:
++test_shared_slot_move_inverse_redo_and_rematerialization[original-third]
++test_shared_slot_move_inverse_redo_and_rematerialization[authored-first]
++test_shared_inverse_preserves_newer_disjoint_parent_edit[original-third]
++test_shared_inverse_preserves_newer_disjoint_parent_edit[authored-first]
++test_shared_inverse_preserves_newer_disjoint_sibling_edit[original-third]
++test_shared_inverse_preserves_newer_disjoint_sibling_edit[authored-first]
++test_shared_inverse_refuses_touching_aba_atomically[original-third]
++test_shared_inverse_refuses_touching_aba_atomically[authored-first]
++test_shared_redo_refuses_intervening_aba_after_exact_undo[original-third]
++test_shared_redo_refuses_intervening_aba_after_exact_undo[authored-first]
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/evidence/own-only.patch b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/evidence/own-only.patch
+new file mode 100644
+index 0000000000000000000000000000000000000000..3e76923690fa4398c67ebfea49ed5557114877a0
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/evidence/own-only.patch
+@@ -0,0 +1,112 @@
++diff --git a/tests/editing_conformance/test_commit_runtime_shared_inverse.py b/tests/editing_conformance/test_commit_runtime_shared_inverse.py
++index e9f575d547..2ea112f84a 100644
++--- a/tests/editing_conformance/test_commit_runtime_shared_inverse.py
+++++ b/tests/editing_conformance/test_commit_runtime_shared_inverse.py
++@@ -21,8 +21,16 @@ def shared_editing(request, tmp_path, monkeypatch):
++     from test_timeline_commit_integration import Editing
++     from timeline_commit_film_fixture import build_film_fixture
++ 
+++    from astrid.sdk.timeline._shot_commands import capture_shot_set
++     from astrid.sdk.timeline.capture import capture_move
++-    from astrid.sdk.timeline.commit import bundle_from_document
+++    from astrid.sdk.timeline.commands import execute
+++    from astrid.sdk.timeline.commit import (
+++        _digest,
+++        _manifest,
+++        bundle_from_document,
+++        document_from_bundle,
+++    )
+++    from astrid.sdk.timeline.emitter import emit_document_commands
++ 
++     fixture = build_film_fixture(tmp_path)
++     service = RuntimeService(fixture.duplicate_root)
++@@ -30,36 +38,59 @@ def shared_editing(request, tmp_path, monkeypatch):
++                    SimpleNamespace(move=capture_move, bundle=bundle_from_document))
++     try:
++         original = edit.document()
++-        parent = copy.deepcopy(original["parent_revision"]["payload"])
++         index = request.param
++-        children = {}
+++        original_bundle = bundle_from_document(original)
+++        setup_commands = []
+++        staged = original
++         if index == 1:
++-            _, shot, internal = copy.deepcopy(occurrence_image(original, "occurrence-1"))
++-            shot.update(revision_id="authored-shot", internal_timeline_revision_id="authored-internal")
++-            shot["payload"].update(unknown={"literal": [None, False, 0, {}, []]}, items=[{
++-                "item_id": "shared-source-item", "media_id": fixture.media_ids[0],
++-                "metadata": {"literal": "shared-source-item", "keep": [None, False]},
++-            }])
++-            internal["revision_id"] = "authored-internal"
++-            internal["payload"].update(source_window={"start": 4, "end": 9},
++-                                       unknown={"literal": [None, False, 0, {}, []]})
++-            internal["payload"]["clips"][0]["extension"] = {"literal": "shared-source-item", "clear": None}
++-            for image in (shot, internal):
++-                image.pop("content_digest")
++-            parent["occurrences"][0]["shot_revision_id"] = shot["revision_id"]
+++            _, source_shot, _ = occurrence_image(original, "occurrence-1")
+++            shot_set = capture_shot_set(
+++                original_bundle, "occurrence:occurrence-1/shot",
+++                values={"name": source_shot["payload"]["name"]},
+++            )
+++            setup_commands.append(shot_set)
+++            staged = document_from_bundle(execute(original_bundle, [shot_set]).bundle)
+++        target = copy.deepcopy(staged)
+++        parent = copy.deepcopy(staged["parent_revision"]["payload"])
+++        if index == 1:
+++            _, authored_shot, authored_internal = occurrence_image(target, "occurrence-1")
+++            authored_shot["payload"].update(
+++                unknown={"literal": [None, False, 0, {}, []]},
+++                items=[{
+++                    "item_id": "shared-source-item", "media_id": fixture.media_ids[0],
+++                    "metadata": {"literal": "shared-source-item", "keep": [None, False]},
+++                }],
+++            )
+++            authored_internal["payload"].update(
+++                source_window={"start": 4, "end": 9},
+++                unknown={"literal": [None, False, 0, {}, []]},
+++            )
+++            authored_internal["payload"]["clips"][0]["extension"] = {
+++                "literal": "shared-source-item", "clear": None,
+++            }
++             for ordinal, occurrence in enumerate(parent["occurrences"][1:]):
++                 occurrence["placement"]["start_ms"] = 8000 + ordinal * 2000
++             parent["unknown"] = {"literal": [None, False, 0, {}, []]}
++-            children = {"shot_revisions": [shot], "internal_timeline_revisions": [internal]}
++         repeated = copy.deepcopy(parent["occurrences"][index - 1])
++         repeated.update(occurrence_id="repeated-third",
++                         placement={"start_ms": 13000 if index == 1 else 6000, "track": "picture"})
++         parent["occurrences"].append(repeated)
++-        service.publish_parent_composition(edit.project, edit.timeline, {
++-            "project_id": edit.project, "timeline_id": edit.timeline,
++-            "expected_head": fixture.parent_revision_id,
++-            "parent_revision_id": "shared-inverse-baseline", "parent_composition": parent, **children,
++-        }, idempotency_key="shared-inverse-baseline")
++
+++        target["parent_revision"]["payload"] = parent
+++        target["parent_revision"]["content_digest"] = _digest(parent)
+++        for image in target["shot_revisions"]:
+++            image["content_digest"] = _digest(image["payload"])
+++        for image in target["internal_timeline_revisions"]:
+++            image["content_digest"] = _digest(image["payload"])
+++        target["dependency_manifest"] = _manifest(
+++            target["shot_revisions"], target["internal_timeline_revisions"],
+++            target["dependency_manifest"]["media"], target["dependency_manifest"]["documents"],
+++        )
+++        setup_commands.extend(emit_document_commands(
+++            bundle_from_document(staged), bundle_from_document(target)))
++
+++        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+++        edit.commit(edit.body(setup_commands), "shared-inverse-baseline")
++ 
++         def unavailable(*args, **kwargs):
++             raise AssertionError("save evaluated a scene")
++@@ -68,7 +99,6 @@ def shared_editing(request, tmp_path, monkeypatch):
++         import runtime_protocol.service as service_module
++         import runtime_protocol.visual_seam as visual_seam
++         monkeypatch.setattr(service_module, "evaluate_closure", unavailable)
++         monkeypatch.setattr(visual_seam, "evaluate_closure", unavailable)
++-        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
++         yield edit, index
++     finally:
++         edit.service.close()
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/evidence/source-origins.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/evidence/source-origins.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..9b97dd10dbc36bdf095d3c27b67babb4b54bcc83
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/evidence/source-origins.txt
+@@ -0,0 +1,22 @@
++F-D86 D86-shared-inverse source origins and later one-batch selector manifest
++
++Owned source: tests/editing_conformance/test_commit_runtime_shared_inverse.py
++Fixture/setup origin: existing Runtime tests/timeline_commit_film_fixture.py build_film_fixture and tests/test_timeline_commit_integration.py Editing.body/commit.
++Provider origin: existing Runtime runtime_protocol.timeline_commit_provider.load_timeline_commit_provider("astrid"), invoked through Editing.commit.
++Native authored-first allocator: existing Agent astrid.sdk.timeline._shot_commands.capture_shot_set on occurrence:occurrence-1/shot; this preserves the original shared shot identity while allocating a native authored revision.
++Target transition origin: existing Agent astrid.sdk.timeline.emitter.emit_document_commands from staged canonical document to target canonical document.
++Baseline origin: existing captured pre-cut verified publication restored by build_film_fixture; no retired publisher or synthetic history is used by this fixture.
++
++The assigned family has exactly ten retained selectors:
++1. test_shared_slot_move_inverse_redo_and_rematerialization[original-third]
++2. test_shared_slot_move_inverse_redo_and_rematerialization[authored-first]
++3. test_shared_inverse_preserves_newer_disjoint_parent_edit[original-third]
++4. test_shared_inverse_preserves_newer_disjoint_parent_edit[authored-first]
++5. test_shared_inverse_preserves_newer_disjoint_sibling_edit[original-third]
++6. test_shared_inverse_preserves_newer_disjoint_sibling_edit[authored-first]
++7. test_shared_inverse_refuses_touching_aba_atomically[original-third]
++8. test_shared_inverse_refuses_touching_aba_atomically[authored-first]
++9. test_shared_redo_refuses_intervening_aba_after_exact_undo[original-third]
++10. test_shared_redo_refuses_intervening_aba_after_exact_undo[authored-first]
++
++No product seam was identified from source inspection. Runtime behavior remains unverified because the acceptance is source-only; do not interpret this report as a body/core-closure review.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/evidence/static-results.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/evidence/static-results.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..e4f66a9cfbf51cc5e911bf4e073d131883d15154
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/evidence/static-results.txt
+@@ -0,0 +1,21 @@
++Source-only validation for F-D86 D86-shared-inverse
++
++Target: tests/editing_conformance/test_commit_runtime_shared_inverse.py
++Base: 5d4ae93c833cc1adee109b28405276210165c0db
++
++Commands and exits:
++- PYTHONPYCACHEPREFIX=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/evidence/pycache /home/user/work/venv-agent/bin/python -m py_compile tests/editing_conformance/test_commit_runtime_shared_inverse.py: exit 0
++- /home/user/work/venv-agent/bin/ruff check tests/editing_conformance/test_commit_runtime_shared_inverse.py: exit 0, All checks passed!
++- /home/user/work/venv-agent/bin/mypy tests/editing_conformance/test_commit_runtime_shared_inverse.py: exit 0, Success: no issues found in 1 source file
++- git diff --check: exit 0
++
++No pytest, per-family test body/service/browser/build, full suite, benchmark, or profile was run; this task is source-only and the central manager owns later qualification.
++
++Source scan:
++- Retired publish_parent_composition, install_verified_baseline, seed_trusted_parent, authored-shot, and authored-internal setup calls are absent.
++- Existing provider route is present: register_timeline_commit_provider followed by edit.commit(edit.body(...), ...).
++- Existing native setup is present: capture_shot_set plus emit_document_commands.
++
++Changed-file SHA256: 0d998609891e8f5c65bfd6c1eef972a31235cf03fafe404243f30ea06eccca8c
++Changed-file git blob: 2ea112f84a0d930f919a26296c795820dee69cfe
++Diffstat: 1 file changed, 53 insertions(+), 23 deletions(-)
 diff --git a/tests/editing_conformance/test_commit_runtime_shared_inverse.py b/tests/editing_conformance/test_commit_runtime_shared_inverse.py
-index e9f575d547..2d3d84a1c3 100644
+index e9f575d54711af7a6cc614f157611739defa154d..47e275dfaa93da2bc2e2ab783275b7225d4e0b9e
 --- a/tests/editing_conformance/test_commit_runtime_shared_inverse.py
 +++ b/tests/editing_conformance/test_commit_runtime_shared_inverse.py
-@@ -22,7 +22,15 @@ def shared_editing(request, tmp_path, monkeypatch):
+@@ -22,7 +22,15 @@
      from timeline_commit_film_fixture import build_film_fixture
  
      from astrid.sdk.timeline.capture import capture_move
@@ -258,11 +229,11 @@ index e9f575d547..2d3d84a1c3 100644
 +        document_from_bundle,
 +    )
 +    from astrid.sdk.timeline.emitter import emit_document_commands
-+    from astrid.sdk.timeline.native_occurrence_fork import capture_occurrence_fork
++    from astrid.sdk.timeline._shot_commands import capture_shot_set
  
      fixture = build_film_fixture(tmp_path)
      service = RuntimeService(fixture.duplicate_root)
-@@ -30,36 +38,56 @@ def shared_editing(request, tmp_path, monkeypatch):
+@@ -30,37 +38,60 @@
                     SimpleNamespace(move=capture_move, bundle=bundle_from_document))
      try:
          original = edit.document()
@@ -272,6 +243,16 @@ index e9f575d547..2d3d84a1c3 100644
 +        original_bundle = bundle_from_document(original)
 +        setup_commands = []
 +        staged = original
++        if index == 1:
++            _, source_shot, _ = occurrence_image(original, "occurrence-1")
++            shot_set = capture_shot_set(
++                original_bundle, "occurrence:occurrence-1/shot",
++                values={"name": source_shot["payload"]["name"]},
++            )
++            setup_commands.append(shot_set)
++            staged = document_from_bundle(execute(original_bundle, [shot_set]).bundle)
++        target = copy.deepcopy(staged)
++        parent = copy.deepcopy(staged["parent_revision"]["payload"])
          if index == 1:
 -            _, shot, internal = copy.deepcopy(occurrence_image(original, "occurrence-1"))
 -            shot.update(revision_id="authored-shot", internal_timeline_revision_id="authored-internal")
@@ -286,13 +267,6 @@ index e9f575d547..2d3d84a1c3 100644
 -            for image in (shot, internal):
 -                image.pop("content_digest")
 -            parent["occurrences"][0]["shot_revision_id"] = shot["revision_id"]
-+            fork = capture_occurrence_fork(
-+                original_bundle, "occurrence:occurrence-1", "authored-shot")
-+            setup_commands.append(fork)
-+            staged = document_from_bundle(execute(original_bundle, [fork]).bundle)
-+        target = copy.deepcopy(staged)
-+        parent = copy.deepcopy(staged["parent_revision"]["payload"])
-+        if index == 1:
 +            _, authored_shot, authored_internal = occurrence_image(target, "occurrence-1")
 +            authored_shot["payload"].update(
 +                unknown={"literal": [None, False, 0, {}, []]},
@@ -321,7 +295,7 @@ index e9f575d547..2d3d84a1c3 100644
 -            "expected_head": fixture.parent_revision_id,
 -            "parent_revision_id": "shared-inverse-baseline", "parent_composition": parent, **children,
 -        }, idempotency_key="shared-inverse-baseline")
-+
+ 
 +        target["parent_revision"]["payload"] = parent
 +        target["parent_revision"]["content_digest"] = _digest(parent)
 +        for image in target["shot_revisions"]:
@@ -337,10 +311,11 @@ index e9f575d547..2d3d84a1c3 100644
 +
 +        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
 +        edit.commit(edit.body(setup_commands), "shared-inverse-baseline")
- 
++
          def unavailable(*args, **kwargs):
              raise AssertionError("save evaluated a scene")
-@@ -68,7 +96,6 @@ def shared_editing(request, tmp_path, monkeypatch):
+ 
+@@ -68,7 +99,6 @@
          import runtime_protocol.visual_seam as visual_seam
          monkeypatch.setattr(service_module, "evaluate_closure", unavailable)
          monkeypatch.setattr(visual_seam, "evaluate_closure", unavailable)
@@ -349,52 +324,77 @@ index e9f575d547..2d3d84a1c3 100644
      finally:
          edit.service.close()
 
+codex
+Static checks and the AST audit pass. The audit confirms all ten retained selectors, test bodies, decorators, parameters, assertion counts, and refusal-path counts match the exact base. I’ve also recorded the source origins, selector manifest, hashes, diffstat, and own-only patch in durable evidence.
 exec
-/bin/bash -lc "python3 - <<'PY'
-import ast, subprocess
-from pathlib import Path
-p='tests/editing_conformance/test_commit_runtime_shared_inverse.py'
-c=ast.parse(Path(p).read_text()); b=ast.parse(subprocess.check_output(['git','show','5d4ae93c833cc1adee109b28405276210165c0db:'+p], text=True))
+/bin/bash -lc "set -o pipefail
+/home/user/work/venv-agent/bin/ruff check tests/editing_conformance/test_commit_runtime_shared_inverse.py
+git diff --check
+printf '%s\\n' 'changed_paths:'
+git diff --name-only
+printf '%s\\n' 'status:'
+git status --short
+printf '%s\\n' 'evidence_files:'
+find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/evidence -maxdepth 1 -type f -printf '%f %s bytes\\n' | sort
+printf '%s\\n' 'commit_msg:'
+sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/commit-msg" in /home/user/work/wt/agt-D86-main-shared-inverse-2333
+ succeeded in 17ms:
+All checks passed!
+changed_paths:
+tests/editing_conformance/test_commit_runtime_shared_inverse.py
+status:
+ M tests/editing_conformance/test_commit_runtime_shared_inverse.py
+evidence_files:
+ast-conservation.txt 1170 bytes
+own-only.patch 6304 bytes
+source-origins.txt 2015 bytes
+static-results.txt 1542 bytes
+commit_msg:
+test(agent): migrate F-D86 D86-shared-inverse fixture
 
-def dump(v):
-    if isinstance(v, list): return '['+','.join(dump(x) for x in v)+']'
-    if isinstance(v, ast.AST): return ast.dump(v, annotate_fields=True, include_attributes=False)
-    return repr(v)
-cf={n.name:n for n in c.body if isinstance(n, ast.FunctionDef) and n.name.startswith('test_')}; bf={n.name:n for n in b.body if isinstance(n, ast.FunctionDef) and n.name.startswith('test_')}
-print('test_names_equal=', list(cf)==list(bf))
-print('test_selector_manifest=')
-for n in cf:
-    print('  '+n+'[original-third]')
-    print('  '+n+'[authored-first]')
-print('test_body_ast_equal=', all(dump(cf[n].body)==dump(bf[n].body) for n in cf))
-print('test_args_ast_equal=', all(dump(cf[n].args)==dump(bf[n].args) for n in cf))
-print('test_decorators_ast_equal=', all(dump(cf[n].decorator_list)==dump(bf[n].decorator_list) for n in cf))
-print('assert_counts_equal=', all(sum(isinstance(x, ast.Assert) for x in ast.walk(cf[n]))==sum(isinstance(x, ast.Assert) for x in ast.walk(bf[n])) for n in cf))
-print('with_raises_counts_equal=', all(sum(isinstance(x, ast.With) for x in ast.walk(cf[n]))==sum(isinstance(x, ast.With) for x in ast.walk(bf[n])) for n in cf))
-PY
-sha256sum tests/editing_conformance/test_commit_runtime_shared_inverse.py
-git hash-object tests/editing_conformance/test_commit_runtime_shared_inverse.py
-git diff --numstat -- tests/editing_conformance/test_commit_runtime_shared_inverse.py
-git diff --check" in /home/user/work/wt/agt-D86-main-shared-inverse-2333
- succeeded in 649ms:
-test_names_equal= True
-test_selector_manifest=
-  test_shared_slot_move_inverse_redo_and_rematerialization[original-third]
-  test_shared_slot_move_inverse_redo_and_rematerialization[authored-first]
-  test_shared_inverse_preserves_newer_disjoint_parent_edit[original-third]
-  test_shared_inverse_preserves_newer_disjoint_parent_edit[authored-first]
-  test_shared_inverse_preserves_newer_disjoint_sibling_edit[original-third]
-  test_shared_inverse_preserves_newer_disjoint_sibling_edit[authored-first]
-  test_shared_inverse_refuses_touching_aba_atomically[original-third]
-  test_shared_inverse_refuses_touching_aba_atomically[authored-first]
-  test_shared_redo_refuses_intervening_aba_after_exact_undo[original-third]
-  test_shared_redo_refuses_intervening_aba_after_exact_undo[authored-first]
-test_body_ast_equal= True
-test_args_ast_equal= True
-test_decorators_ast_equal= True
-assert_counts_equal= True
-with_raises_counts_equal= True
-cdf978681b6feba734eef2dd3928012d937e823f1212b5156529177a96237e9c  tests/editing_conformance/test_commit_runtime_shared_inverse.py
-2d3d84a1c3a7439949a274eba06310e083e0e9ad
-50	23	tests/editing_conformance/test_commit_runtime_shared_inverse.py
+Route shared-inverse setup through the existing Runtime commitTimeline/provider path with native authored revision allocation.
 
+exec
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/DONE && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/DONE && test ! -e /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-shared-inverse-2333/BLOCKED && echo DONE_READY' in /home/user/work/wt/agt-D86-main-shared-inverse-2333
+ succeeded in 0ms:
+DONE_READY
+
+codex
+## Report
+
+Implemented F-D86 D86-shared-inverse in [test_commit_runtime_shared_inverse.py](/home/user/work/wt/agt-D86-main-shared-inverse-2333/tests/editing_conformance/test_commit_runtime_shared_inverse.py).
+
+- Migrated setup from retired `publish_parent_composition` to native command emission and real Runtime `commitTimeline` provider.
+- Used `shot.set` to preserve the original shared `shot_id` while allocating the authored revision.
+- Preserved all ten selectors, test bodies, parameters, decorators, assertions, and refusal paths.
+- No product seam identified; behavioral execution remains unverified per source-only acceptance.
+
+Validation:
+
+- `py_compile`: exit 0
+- `ruff check`: exit 0
+- `mypy`: exit 0
+- `git diff --check`: exit 0
+- No pytest or full suite run.
+
+Evidence is under the assigned worker evidence directory. Commit message written and `DONE` created.
+tokens used
+320,918
+## Report
+
+Implemented F-D86 D86-shared-inverse in [test_commit_runtime_shared_inverse.py](/home/user/work/wt/agt-D86-main-shared-inverse-2333/tests/editing_conformance/test_commit_runtime_shared_inverse.py).
+
+- Migrated setup from retired `publish_parent_composition` to native command emission and real Runtime `commitTimeline` provider.
+- Used `shot.set` to preserve the original shared `shot_id` while allocating the authored revision.
+- Preserved all ten selectors, test bodies, parameters, decorators, assertions, and refusal paths.
+- No product seam identified; behavioral execution remains unverified per source-only acceptance.
+
+Validation:
+
+- `py_compile`: exit 0
+- `ruff check`: exit 0
+- `mypy`: exit 0
+- `git diff --check`: exit 0
+- No pytest or full suite run.
+
+Evidence is under the assigned worker evidence directory. Commit message written and `DONE` created.
