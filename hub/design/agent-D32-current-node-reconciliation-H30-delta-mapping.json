@@ -1,8 +1,8 @@
 {
   "schema": "timeline.d32.current-node-reconciliation.delta-mapping.v1",
   "base_artifact": "evidence/agent-D32-current-node-reconciliation-H30-corrected.json",
-  "base_artifact_sha256": "22ee4d6df217eef1cef60f7e9c646b6f5fe13a45d31163afb2ffe46126facae0",
-  "base_artifact_sha256_meaning": "SHA-256 of the current corrected census file named by base_artifact; package linkage, not a historical source or proof hash.",
+  "base_artifact_sha256": "286047a522d61e57f8c46bb655d63d96bd82fd21e6f597fa72a2e017b2552eb2",
+  "base_artifact_sha256_meaning": "SHA-256 of final corrected census bytes, computed after last census write; no embedded self hash.",
   "actual_home": {
     "head": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
     "tree": "57f0231da0d7904ecd8778169973d6384e0ae141",
@@ -2313,6 +2313,44 @@
       "proof_ref": "normal_closure_home0640_review0645",
       "credit": "confirmed_closed",
       "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "current_node_id": "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "current_function": "test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "function_renamed": "no",
+      "current_function_line": "542",
+      "original_body_ast_sha256": "6b1885acf3b9fea921dc44c5ae89b5571d33e52957cacfd2d0270476d3494963",
+      "current_body_ast_sha256": "6b1885acf3b9fea921dc44c5ae89b5571d33e52957cacfd2d0270476d3494963",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "2cec94f78293ba6258d04f32c2a17fc87df33b4b8b95e091aa357e211603871b",
+      "current_source_file_sha256": "277c0fbd2ec8acc3703c7d437dddd451487ca8a9364eabc9e45e7168a43f4e0e",
+      "scenario_mapping": "Restored current restart closure; historical38af challenge and0649 FAIL retained separately. Exactly two original source-mode/FakeTimelines process-persistence outcomes on Agent HOME3f7/tree163a and Runtime becfe/tree7edc. Restart restores challenged closure once; two-writer is separate original once. No HTTP, installed-source/child, canonical-client adoption, authenticated actor, provisioning, full suite, complete v2 wire/reply/history/receipt qualification. D23 moved-head and wordsecond, mocked stale-head, support and generic child receive no additional credit.",
+      "proof_ref": "persistence_integrated0733_review0736",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param",
+      "current_node_id": "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param",
+      "current_function": "test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param",
+      "function_renamed": "no",
+      "current_function_line": "681",
+      "original_body_ast_sha256": "52b549548687044bd192d3ecdc62436d3a9e536bf2f1562d21589751fbd1c05f",
+      "current_body_ast_sha256": "52b549548687044bd192d3ecdc62436d3a9e536bf2f1562d21589751fbd1c05f",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "2cec94f78293ba6258d04f32c2a17fc87df33b4b8b95e091aa357e211603871b",
+      "current_source_file_sha256": "277c0fbd2ec8acc3703c7d437dddd451487ca8a9364eabc9e45e7168a43f4e0e",
+      "scenario_mapping": "Separate original two-writer closure, credited once. Exactly two original source-mode/FakeTimelines process-persistence outcomes on Agent HOME3f7/tree163a and Runtime becfe/tree7edc. Restart restores challenged closure once; two-writer is separate original once. No HTTP, installed-source/child, canonical-client adoption, authenticated actor, provisioning, full suite, complete v2 wire/reply/history/receipt qualification. D23 moved-head and wordsecond, mocked stale-head, support and generic child receive no additional credit.",
+      "proof_ref": "persistence_integrated0733_review0736",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     }
   ],
   "non_credit_dispositions": [
@@ -3144,5 +3182,155 @@
       "full25691 FAIL; frozen Farm26511 source/head mismatch and96 possible closed-node failures unresolved",
       "No farm retrospective credit, full-suite green, HTTP/installed/full-v2 acceptance, product/static/behavior test run or product edit"
     ]
+  },
+  "persistence_challenge_mapping0750": {
+    "status": "CANDIDATE; independent cumulative package review PASS pending",
+    "task": "agt-F-count-persistence-challenge-sol-0750",
+    "base_commit": "a3dff9d69685fd66f296b015e7517408c2b932f5",
+    "base_census_sha256": "22ee4d6df217eef1cef60f7e9c646b6f5fe13a45d31163afb2ffe46126facae0",
+    "base_independent_review": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-count-current-review-0715/report.md",
+      "sha256": "cf093e3fd6e51a0f0104cbe7b18375d17056078121fb23d578697174a7d86963"
+    },
+    "historical_base_counts": {
+      "total": 267,
+      "closed": 261,
+      "open": 6,
+      "mappings": 120,
+      "current_mapping_rows": 119,
+      "historical_challenged_mapping_rows": 1
+    },
+    "current_qualification_tuple": {
+      "agent_head": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+      "agent_tree": "163a7f2334e2a7e49058fefbf03077d6ff090660",
+      "runtime_head": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+      "runtime_tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89"
+    },
+    "delta": {
+      "newly_closed": [
+        "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+        "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param"
+      ],
+      "reopened": [
+        "tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale"
+      ],
+      "net_closed": 1
+    },
+    "counts": {
+      "total": 267,
+      "closed": 262,
+      "open": 5
+    },
+    "active_owner_counts": {
+      "Agent": 5
+    },
+    "active_family_counts": {
+      "Agent SDK / timeline unconfirmed": 2,
+      "CLI FakeCheckout fixture": 0,
+      "D09 installed-profile setup": 0,
+      "Execution/rendering/pack remainder": 1,
+      "Isolated Agent child import fence": 0,
+      "Occurrence-media inverse fixture": 0,
+      "Other task-specific unconfirmed": 0,
+      "Rendering missing result file": 0,
+      "Retired CLI/native route or stale caller": 0,
+      "Runtime child import / OPS": 1,
+      "CLI/manifest/current-surface": 1
+    },
+    "remaining_exact_original_node_ids": [
+      "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]",
+      "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head",
+      "tests/test_generic_host.py::test_structure_pack_members_survive_harvest_cleanup_and_reopen",
+      "tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale"
+    ],
+    "mapping_inventory": {
+      "total_rows": 122,
+      "current_confirmed_closed_rows": 121,
+      "current_unique_original_ids": 121,
+      "historical_challenged_rows": 1,
+      "all_unique_original_ids": 121,
+      "unchanged_prior_rows": 120,
+      "appended_current_rows": 2,
+      "note": "Historical restart row retained byte-for-field; new restart current row supersedes applicability without double credit. Two writer is new unique original mapping. Giant was a baseline closure with no mapping row; historical cli_surface_0012 proof preserved."
+    },
+    "proof_inventory": {
+      "total": 50,
+      "unchanged_prior_records": 48,
+      "new_scoped_pass_records": 1,
+      "new_current_challenge_records": 1,
+      "distinct_proof_refs_on_current_closed_nodes": 47
+    },
+    "current_proof_applicability": {
+      "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history": {
+        "current_credit": true,
+        "proof_ref": "persistence_integrated0733_review0736",
+        "historical38af_challenged": true,
+        "historical0649_failure_preserved": true
+      },
+      "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param": {
+        "current_credit": true,
+        "proof_ref": "persistence_integrated0733_review0736",
+        "historical0649_failure_preserved": true
+      },
+      "tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale": {
+        "current_credit": false,
+        "proof_ref": "giant_current_challenge0750",
+        "historical_proof_refs": [
+          "cli_surface_0012"
+        ],
+        "future8c5ae_current_credit": false
+      }
+    },
+    "retained_sources": {
+      "integrated0733": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-SDK-persistence-integrated-0733.md",
+        "sha256": "f8cd4ad23cbf0f5af52f08d05f2b11025118ca9e697101d8ac944608b822fe98"
+      },
+      "independent0736": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-SDK-persistence-result-review-0736.md",
+        "sha256": "c949c9039431187ea2422ab7dee7024958809d360048c30f6c3c94f0ce3efdfa"
+      },
+      "peer0739": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-runtime-to-agent-orchestrator-20261024T0739-SDK-two-qualified.md",
+        "sha256": "a583dc56551ea2195f450da271273dbbb227710e66a08c0d8dcae63af29fe2f3"
+      },
+      "base_review0715": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-count-current-review-0715/report.md",
+        "sha256": "cf093e3fd6e51a0f0104cbe7b18375d17056078121fb23d578697174a7d86963"
+      },
+      "farm_review0733": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-farm96-review-0733.md",
+        "sha256": "ce9ef24291bb6e938a35ab3a40eb54d768978cb47330614f8e8e40f70f73a5f4"
+      },
+      "farm_return0742": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-farm96-return-0742.md",
+        "sha256": "ee47ae1d2c442091fe6e1e8d7cbbd929a4a28ae1ce13ec62df4aa2efe2d875a5"
+      },
+      "giant_author0742": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-giant-rationale-0742/report.md",
+        "sha256": "6bc1543f44738a66e80fba55c0c94819fa3eb72baa9dcd3416e5b81a53a84af0"
+      },
+      "giant_review0747": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-giant-review-0747/report.md",
+        "sha256": "ccdae6b5fc3c4d38f9680f260e7ed3408b4da4321bc5092630e282595e3215ee"
+      }
+    },
+    "preservation": {
+      "unchanged_other_node_records": 264,
+      "all_original_ids_phases_tags_preserved": true,
+      "phases": {
+        "call": 262,
+        "setup": 5
+      },
+      "unchanged_prior_proof_records": 48,
+      "unchanged_prior_coverage_entries": 48,
+      "unchanged_prior_mapping_rows": 120,
+      "complete_CONTRACTINVENTORY": "unchanged; production caller uses it remains acceptance requirement"
+    },
+    "scope": "Exactly two original source-mode/FakeTimelines process-persistence outcomes on Agent HOME3f7/tree163a and Runtime becfe/tree7edc. Restart restores challenged closure once; two-writer is separate original once. No HTTP, installed-source/child, canonical-client adoption, authenticated actor, provisioning, full suite, complete v2 wire/reply/history/receipt qualification. D23 moved-head and wordsecond, mocked stale-head, support and generic child receive no additional credit.",
+    "historical_metadata_policy": "current_challenge0705/current_challenge_mapping, earlier counts/proofs/coverage and their pending-at-author-time wording are preserved historical snapshots; independent0715 PASS establishes the base. This section alone supplies0750 current applicability. Prior mapped evidence retains its original qualified source/import scope.",
+    "farm_limits": "Frozen Farm26511 Runtime45c tuple: 96 failures classified80 environment/1 regression/15 unknown, not current retrospective passes. Only direct current giant-file/docs original is reopened here; other95 unchanged. full25691 FAIL retained; no current full267 PASS.",
+    "raw_result_limit": "Independent0736 checked XML SHA, exactly the two named original selectors passing, all ten body/assertion pairs, fixture and relevant production blobs, module origins and clean trees. Peer0739 names both exact originals. Primary/independent reports are read and hashed locally; raw XML and qualification.md/review.md are not present locally. No claim of local raw XML parsing or rehashing; digest is reported and independently verified0736."
   }
 }

@@ -20,15 +20,21 @@
     "current_integrated_tree": "57f0231da0d7904ecd8778169973d6384e0ae141",
     "requested_base_head": "8657e83653f48c935f52f209516456bcb5a36282",
     "current_integration_is_three_commits_past_requested_base": true,
-    "current_source_identity_policy": "Source merge alone grants zero original behavior credit; every node retains its exact original pytest ID/body/assertion mapping. The 0500, 0508, and inverse22 deltas credit only exact mapped nodes. The 0551 D40 delta credits one exact independently reviewed installed-child original with current relevant production bytes equal to qualified source 2007; it does not claim whole-current-HEAD installed qualification."
+    "current_source_identity_policy": "Source merge alone grants zero original behavior credit; every node retains its exact original pytest ID/body/assertion mapping. The 0500, 0508, and inverse22 deltas credit only exact mapped nodes. The 0551 D40 delta credits one exact independently reviewed installed-child original with current relevant production bytes equal to qualified source 2007; it does not claim whole-current-HEAD installed qualification.",
+    "current_persistence_qualification0750": {
+      "agent_head": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+      "agent_tree": "163a7f2334e2a7e49058fefbf03077d6ff090660",
+      "runtime_head": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+      "runtime_tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89"
+    }
   },
   "reconciliation": {
     "exact_unique_entries": 267,
     "exact_unique_ids": 267,
     "exact_unique_phase_rows": 267,
     "counts": {
-      "proven_passed": 261,
-      "active_owner": 6,
+      "proven_passed": 262,
+      "active_owner": 5,
       "deferred_cut_visible": 0,
       "genuinely_unowned": 0
     },
@@ -38,17 +44,17 @@
     "unassigned_minimum_source_gaps": 0,
     "owner_status_does_not_credit_passes": true,
     "all_tags_ours": true,
-    "confirmed_closed_ids": 261,
-    "open_ids": 6,
-    "held_or_unknown_ids": 6,
-    "newly_confirmed_closed_since_0118": 125,
+    "confirmed_closed_ids": 262,
+    "open_ids": 5,
+    "held_or_unknown_ids": 5,
+    "newly_confirmed_closed_since_0118": 126,
     "current_head_full267_pass": false,
-    "full_checkpoint": "UNRESOLVED: Farm26511 source/head mismatch and 96 possible closed-node failures; no retrospective Farm credit or broad full PASS.",
+    "full_checkpoint": "Frozen Farm26511 Runtime45c tuple: 96 failures classified80 environment/1 regression/15 unknown, not current retrospective passes. Only direct current giant-file/docs original is reopened here; other95 unchanged. full25691 FAIL retained; no current full267 PASS.",
     "effective_owner_counts_active": {
-      "Agent": 6
+      "Agent": 5
     },
     "active_family_counts": {
-      "Agent SDK / timeline unconfirmed": 4,
+      "Agent SDK / timeline unconfirmed": 2,
       "CLI FakeCheckout fixture": 0,
       "D09 installed-profile setup": 0,
       "Execution/rendering/pack remainder": 1,
@@ -57,7 +63,8 @@
       "Other task-specific unconfirmed": 0,
       "Rendering missing result file": 0,
       "Retired CLI/native route or stale caller": 0,
-      "Runtime child import / OPS": 1
+      "Runtime child import / OPS": 1,
+      "CLI/manifest/current-surface": 1
     },
     "counts_are_exact_node_membership_not_author_named_totals": true
   },
@@ -1416,6 +1423,628 @@
       "old_proof_disposition": "Older38af retained PASS is explicitly historical/challenged for restart. Identical original body/function is insufficient: executed journal.py/begin_nudge changed and old raw JUnit/log is unavailable, per independent0645. All historical proofs/mapping inventory retained.",
       "independent0654_status": "Peer0654 reports independent two-result review in progress; no completed0654 verdict is fabricated. Independent0645 already withdrew restart current-source credit;0649 is actual current failure.",
       "credit_limit": "Current exact restart and two-writer originals both fail at initial draft: Checkout.draft -> store.fetch_bundle -> c.timelines.history, store.py466; _FakeTimelines implements only open_composition/open_bundle. No scenario actions or assertions are reached. Runtime is assigned faithful fixture migration; no qualified fix yet. Original Agent owner/phase retained. atomic_scope_changed belongs to the separate test_publish_after_a_restart_merges_other_clips_onto_the_moved_head, not two-writer."
+    },
+    "persistence_integrated0733_review0736": {
+      "verdict": "PASS; independently reviewed0736",
+      "result": "2 passed in 4.17s",
+      "exact_original_node_ids": [
+        "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+        "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param"
+      ],
+      "phase": "call",
+      "agent_source": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+      "agent_tree": "163a7f2334e2a7e49058fefbf03077d6ff090660",
+      "runtime_source": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+      "runtime_tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89",
+      "fixture_commit": "848bfb6b18279f50ac82d5e8759456b4fb7dcfe2",
+      "fixture_file": "tests/sdk/test_timeline_persistence.py",
+      "fixture_git_blob": "4eab80b30d8ffb2f52a211d86774cfdc256b9a20",
+      "fixture_sha256": "277c0fbd2ec8acc3703c7d437dddd451487ca8a9364eabc9e45e7168a43f4e0e",
+      "source_identity": {
+        "tests/sdk/test_timeline_persistence.py::test_genuine_persistence_fixture_binds_exact_pair_and_refuses_bad_scope_without_writes": {
+          "original": {
+            "source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "2cec94f78293ba6258d04f32c2a17fc87df33b4b8b95e091aa357e211603871b",
+            "function_line": 436,
+            "function_ast_sha256": "49dc744be01491dc39b8368123154c540464a99918af20f4be92d20b970b9e1c",
+            "body_ast_sha256": "ccc430a2b9553fc5af76363a8e740ca7b85546f0ae5af06398886f41457b61b6",
+            "assertion_ast_sha256": [
+              "ff6c25d2e7790e3db85c5b6a47710b75fe0e8a15ef18796f7344d805faacbe1e",
+              "0822e663a37ef7abdd26e3203e7536545a923de0042f03b1cf7a7197e9b9fa6b",
+              "ce9ff1660f8311d2d733f1c798486c89819e4f5bd0470fd69ef77dc049357864",
+              "1499d72ea97ed429841a7cfc134f71ad0047a7a7f2754f02ba14f372e2727545",
+              "1dbff6d3f44a43f953b7ff12cb3721f6f784e9294afe48d68e37924922c82fe8",
+              "a2b4aecd2c1618e75aee25aa5bfdb1e0101d343891406badfd4cf67ac0682e28",
+              "5cba6e3035c4724c7ed42367d2047cd85eba7a257a86ce1775d1f30f25ea406f",
+              "118034bc2b4102ab2db754ad42f078c9a67503a815d5e63cf6454275955902ea",
+              "ec52e972ed727eec7248d41eb17dbdba927146e03d5116afdb103dfa51770ee6"
+            ],
+            "assertion_count": 9
+          },
+          "qualified_source": {
+            "source_ref": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "277c0fbd2ec8acc3703c7d437dddd451487ca8a9364eabc9e45e7168a43f4e0e",
+            "function_line": 476,
+            "function_ast_sha256": "49dc744be01491dc39b8368123154c540464a99918af20f4be92d20b970b9e1c",
+            "body_ast_sha256": "ccc430a2b9553fc5af76363a8e740ca7b85546f0ae5af06398886f41457b61b6",
+            "assertion_ast_sha256": [
+              "ff6c25d2e7790e3db85c5b6a47710b75fe0e8a15ef18796f7344d805faacbe1e",
+              "0822e663a37ef7abdd26e3203e7536545a923de0042f03b1cf7a7197e9b9fa6b",
+              "ce9ff1660f8311d2d733f1c798486c89819e4f5bd0470fd69ef77dc049357864",
+              "1499d72ea97ed429841a7cfc134f71ad0047a7a7f2754f02ba14f372e2727545",
+              "1dbff6d3f44a43f953b7ff12cb3721f6f784e9294afe48d68e37924922c82fe8",
+              "a2b4aecd2c1618e75aee25aa5bfdb1e0101d343891406badfd4cf67ac0682e28",
+              "5cba6e3035c4724c7ed42367d2047cd85eba7a257a86ce1775d1f30f25ea406f",
+              "118034bc2b4102ab2db754ad42f078c9a67503a815d5e63cf6454275955902ea",
+              "ec52e972ed727eec7248d41eb17dbdba927146e03d5116afdb103dfa51770ee6"
+            ],
+            "assertion_count": 9
+          },
+          "body_and_assertions_unchanged": true,
+          "qualified_original_credit": false
+        },
+        "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history": {
+          "original": {
+            "source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "2cec94f78293ba6258d04f32c2a17fc87df33b4b8b95e091aa357e211603871b",
+            "function_line": 501,
+            "function_ast_sha256": "01be09548668b984a04a27f0d8fedccfaa6141da005d1a70fb7440bbcd61e43d",
+            "body_ast_sha256": "6b1885acf3b9fea921dc44c5ae89b5571d33e52957cacfd2d0270476d3494963",
+            "assertion_ast_sha256": [
+              "66c0345a24dc41fd75810b6dd5e3e3f8c2ac57145a750bd41e0f082f438a1782",
+              "48535bdf8e5441c8f92bb56dbeebdb142742eddc5f756b71ec000de6293eaf8f",
+              "17d37ef625b3e082b68c4cf45a2b05c818bf924586ab437bdcaf6453714094d1",
+              "8b40ab411572932ea9e73663101f3f9ae84908a689554ed71df400bd0519ad1d",
+              "da2393d02a0644aeee20576d9d55087977d8623891dd943edb8ce08869051115",
+              "5e7849b38fe130400665986cc7a2e97999c09f799217d77a436105e38546323d",
+              "cde6a36dbc9a321c37b6c9548ac02c5d3161fc784e051c2f0fe36bdfb741f731",
+              "8b40ab411572932ea9e73663101f3f9ae84908a689554ed71df400bd0519ad1d",
+              "6340b86273bc088c2b5dcd43125aaab5d77122ddadf5c53226c90269cf3abb98",
+              "17d37ef625b3e082b68c4cf45a2b05c818bf924586ab437bdcaf6453714094d1"
+            ],
+            "assertion_count": 10
+          },
+          "qualified_source": {
+            "source_ref": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "277c0fbd2ec8acc3703c7d437dddd451487ca8a9364eabc9e45e7168a43f4e0e",
+            "function_line": 542,
+            "function_ast_sha256": "01be09548668b984a04a27f0d8fedccfaa6141da005d1a70fb7440bbcd61e43d",
+            "body_ast_sha256": "6b1885acf3b9fea921dc44c5ae89b5571d33e52957cacfd2d0270476d3494963",
+            "assertion_ast_sha256": [
+              "66c0345a24dc41fd75810b6dd5e3e3f8c2ac57145a750bd41e0f082f438a1782",
+              "48535bdf8e5441c8f92bb56dbeebdb142742eddc5f756b71ec000de6293eaf8f",
+              "17d37ef625b3e082b68c4cf45a2b05c818bf924586ab437bdcaf6453714094d1",
+              "8b40ab411572932ea9e73663101f3f9ae84908a689554ed71df400bd0519ad1d",
+              "da2393d02a0644aeee20576d9d55087977d8623891dd943edb8ce08869051115",
+              "5e7849b38fe130400665986cc7a2e97999c09f799217d77a436105e38546323d",
+              "cde6a36dbc9a321c37b6c9548ac02c5d3161fc784e051c2f0fe36bdfb741f731",
+              "8b40ab411572932ea9e73663101f3f9ae84908a689554ed71df400bd0519ad1d",
+              "6340b86273bc088c2b5dcd43125aaab5d77122ddadf5c53226c90269cf3abb98",
+              "17d37ef625b3e082b68c4cf45a2b05c818bf924586ab437bdcaf6453714094d1"
+            ],
+            "assertion_count": 10
+          },
+          "body_and_assertions_unchanged": true,
+          "qualified_original_credit": true
+        },
+        "tests/sdk/test_timeline_persistence.py::test_a_writer_that_dies_holding_the_lock_does_not_block_the_next_writer": {
+          "original": {
+            "source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "2cec94f78293ba6258d04f32c2a17fc87df33b4b8b95e091aa357e211603871b",
+            "function_line": 533,
+            "function_ast_sha256": "31a9e7e736e0a6129a683124b0a4d5442b24fe78a8f58b853e9218332589c0ee",
+            "body_ast_sha256": "5995854e8a84fb13f85b41eaf8088e36ff9fbe0e2f3768bd255a023e2cded6d2",
+            "assertion_ast_sha256": [
+              "51e3f78f07507b4ca7650a428bb0088460b0cceb0e0b0c6319128d529e8be95f",
+              "6e607451d6468f82d8af773510cd9dac52432a10ac00a16a5a0a381e179e36af",
+              "0c194365d6b91f0b3c68165534266c4ac25bb4ebdbb8657cd37e15ccf69758e1",
+              "4b981e0972fb7b7c5f31423d4087dc90895e66b96e5bbae9b97ea4048c1d0876",
+              "fbca50485e525a99bdabe1b07744c9465640a9ff95d11f9ef691b8ef626736c9",
+              "6340b86273bc088c2b5dcd43125aaab5d77122ddadf5c53226c90269cf3abb98"
+            ],
+            "assertion_count": 6
+          },
+          "qualified_source": {
+            "source_ref": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "277c0fbd2ec8acc3703c7d437dddd451487ca8a9364eabc9e45e7168a43f4e0e",
+            "function_line": 574,
+            "function_ast_sha256": "31a9e7e736e0a6129a683124b0a4d5442b24fe78a8f58b853e9218332589c0ee",
+            "body_ast_sha256": "5995854e8a84fb13f85b41eaf8088e36ff9fbe0e2f3768bd255a023e2cded6d2",
+            "assertion_ast_sha256": [
+              "51e3f78f07507b4ca7650a428bb0088460b0cceb0e0b0c6319128d529e8be95f",
+              "6e607451d6468f82d8af773510cd9dac52432a10ac00a16a5a0a381e179e36af",
+              "0c194365d6b91f0b3c68165534266c4ac25bb4ebdbb8657cd37e15ccf69758e1",
+              "4b981e0972fb7b7c5f31423d4087dc90895e66b96e5bbae9b97ea4048c1d0876",
+              "fbca50485e525a99bdabe1b07744c9465640a9ff95d11f9ef691b8ef626736c9",
+              "6340b86273bc088c2b5dcd43125aaab5d77122ddadf5c53226c90269cf3abb98"
+            ],
+            "assertion_count": 6
+          },
+          "body_and_assertions_unchanged": true,
+          "qualified_original_credit": false
+        },
+        "tests/sdk/test_timeline_persistence.py::test_a_failed_working_copy_write_leaves_no_undo_step_for_the_edit_it_did_not_save": {
+          "original": {
+            "source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "2cec94f78293ba6258d04f32c2a17fc87df33b4b8b95e091aa357e211603871b",
+            "function_line": 565,
+            "function_ast_sha256": "5815af7ef980219020eb9c084326023c0b8b5d8ab8aa0930deefad6fd3703587",
+            "body_ast_sha256": "50a581a9ab4129dc954e90cdeef726180c26fe3ab9d63e04b1314b84babb6d6c",
+            "assertion_ast_sha256": [
+              "cbda7cb8c6ec4c5c7ae12c388de0c5a24cc8f0b84b2a966ce586095368bffd72",
+              "2b368541304587f240d818c2a7013ad4ff224a50ace31f7b8377b31d1176dc31",
+              "9553bce6c3481d1b535c2a5a154b80ea030fbfae5498863f7cb620f8d0a4267b"
+            ],
+            "assertion_count": 3
+          },
+          "qualified_source": {
+            "source_ref": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "277c0fbd2ec8acc3703c7d437dddd451487ca8a9364eabc9e45e7168a43f4e0e",
+            "function_line": 606,
+            "function_ast_sha256": "5815af7ef980219020eb9c084326023c0b8b5d8ab8aa0930deefad6fd3703587",
+            "body_ast_sha256": "50a581a9ab4129dc954e90cdeef726180c26fe3ab9d63e04b1314b84babb6d6c",
+            "assertion_ast_sha256": [
+              "cbda7cb8c6ec4c5c7ae12c388de0c5a24cc8f0b84b2a966ce586095368bffd72",
+              "2b368541304587f240d818c2a7013ad4ff224a50ace31f7b8377b31d1176dc31",
+              "9553bce6c3481d1b535c2a5a154b80ea030fbfae5498863f7cb620f8d0a4267b"
+            ],
+            "assertion_count": 3
+          },
+          "body_and_assertions_unchanged": true,
+          "qualified_original_credit": false
+        },
+        "tests/sdk/test_timeline_persistence.py::test_a_live_holder_that_never_exits_is_waited_for_then_refused_by_name": {
+          "original": {
+            "source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "2cec94f78293ba6258d04f32c2a17fc87df33b4b8b95e091aa357e211603871b",
+            "function_line": 595,
+            "function_ast_sha256": "051141051a022ba18c70b2a1006dc312039279b56dfa2fbce45c6a4c41a8ba98",
+            "body_ast_sha256": "4cfc75dc9c30ae7bee03e55788ce7a2354ff7084cf58a9ac824d51579913029c",
+            "assertion_ast_sha256": [
+              "9553bce6c3481d1b535c2a5a154b80ea030fbfae5498863f7cb620f8d0a4267b",
+              "bbd846983b9e6f2e7ab307a1fdeaa83c01b1fb1bea040478234b0b4d6fc2ec24",
+              "b0214bd7d43155eb785fea6c4aec5457ca2bf4d6e7ea65b1440bb8d11ed571dd",
+              "02635b696de19e34940bfe2cf4b606aa423147ee24067d0e5998c937362c3101",
+              "61b67e1bb182ac33fa26de7c49d7171ee3f998fede92d72010250b81e70e030b"
+            ],
+            "assertion_count": 5
+          },
+          "qualified_source": {
+            "source_ref": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "277c0fbd2ec8acc3703c7d437dddd451487ca8a9364eabc9e45e7168a43f4e0e",
+            "function_line": 636,
+            "function_ast_sha256": "051141051a022ba18c70b2a1006dc312039279b56dfa2fbce45c6a4c41a8ba98",
+            "body_ast_sha256": "4cfc75dc9c30ae7bee03e55788ce7a2354ff7084cf58a9ac824d51579913029c",
+            "assertion_ast_sha256": [
+              "9553bce6c3481d1b535c2a5a154b80ea030fbfae5498863f7cb620f8d0a4267b",
+              "bbd846983b9e6f2e7ab307a1fdeaa83c01b1fb1bea040478234b0b4d6fc2ec24",
+              "b0214bd7d43155eb785fea6c4aec5457ca2bf4d6e7ea65b1440bb8d11ed571dd",
+              "02635b696de19e34940bfe2cf4b606aa423147ee24067d0e5998c937362c3101",
+              "61b67e1bb182ac33fa26de7c49d7171ee3f998fede92d72010250b81e70e030b"
+            ],
+            "assertion_count": 5
+          },
+          "body_and_assertions_unchanged": true,
+          "qualified_original_credit": false
+        },
+        "tests/sdk/test_timeline_persistence.py::test_a_truncated_temp_file_is_never_read_as_the_working_copy": {
+          "original": {
+            "source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "2cec94f78293ba6258d04f32c2a17fc87df33b4b8b95e091aa357e211603871b",
+            "function_line": 619,
+            "function_ast_sha256": "02fbe6926c1a30c6d76cd36f8bf05936c64caf0b8f823808194ff8e86d96b3e5",
+            "body_ast_sha256": "3b25db40170a1ff9b86598100d80df7f74a1e2a2592a141692e867535e949d07",
+            "assertion_ast_sha256": [
+              "722dab656d61c5da51438c17ef4b9ddb60363161b8532a867bfb23f3fca94a24",
+              "880896242af2180ebe92f44908f424066721a7f53fe3c679a09995a62f9862f8",
+              "2a1aac52608fa6b90afb381bc67415a8395271e49a17e48756313066a8f80ad8"
+            ],
+            "assertion_count": 3
+          },
+          "qualified_source": {
+            "source_ref": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "277c0fbd2ec8acc3703c7d437dddd451487ca8a9364eabc9e45e7168a43f4e0e",
+            "function_line": 660,
+            "function_ast_sha256": "02fbe6926c1a30c6d76cd36f8bf05936c64caf0b8f823808194ff8e86d96b3e5",
+            "body_ast_sha256": "3b25db40170a1ff9b86598100d80df7f74a1e2a2592a141692e867535e949d07",
+            "assertion_ast_sha256": [
+              "722dab656d61c5da51438c17ef4b9ddb60363161b8532a867bfb23f3fca94a24",
+              "880896242af2180ebe92f44908f424066721a7f53fe3c679a09995a62f9862f8",
+              "2a1aac52608fa6b90afb381bc67415a8395271e49a17e48756313066a8f80ad8"
+            ],
+            "assertion_count": 3
+          },
+          "body_and_assertions_unchanged": true,
+          "qualified_original_credit": false
+        },
+        "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param": {
+          "original": {
+            "source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "2cec94f78293ba6258d04f32c2a17fc87df33b4b8b95e091aa357e211603871b",
+            "function_line": 640,
+            "function_ast_sha256": "0fb5606bfe7d5124db66bf316b8347ed118fd3310f193c9095691bad64b733d5",
+            "body_ast_sha256": "52b549548687044bd192d3ecdc62436d3a9e536bf2f1562d21589751fbd1c05f",
+            "assertion_ast_sha256": [
+              "e5cc1619b7806771604b8a70871a0b929ffed267f057c9cf10caca0d2b7e7727",
+              "17d37ef625b3e082b68c4cf45a2b05c818bf924586ab437bdcaf6453714094d1",
+              "8b40ab411572932ea9e73663101f3f9ae84908a689554ed71df400bd0519ad1d",
+              "6e7ffebe3d4b26ee4a61480f402e6e14f341c5a38aa9f75be730e9c08518a8ea"
+            ],
+            "assertion_count": 4
+          },
+          "qualified_source": {
+            "source_ref": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "277c0fbd2ec8acc3703c7d437dddd451487ca8a9364eabc9e45e7168a43f4e0e",
+            "function_line": 681,
+            "function_ast_sha256": "0fb5606bfe7d5124db66bf316b8347ed118fd3310f193c9095691bad64b733d5",
+            "body_ast_sha256": "52b549548687044bd192d3ecdc62436d3a9e536bf2f1562d21589751fbd1c05f",
+            "assertion_ast_sha256": [
+              "e5cc1619b7806771604b8a70871a0b929ffed267f057c9cf10caca0d2b7e7727",
+              "17d37ef625b3e082b68c4cf45a2b05c818bf924586ab437bdcaf6453714094d1",
+              "8b40ab411572932ea9e73663101f3f9ae84908a689554ed71df400bd0519ad1d",
+              "6e7ffebe3d4b26ee4a61480f402e6e14f341c5a38aa9f75be730e9c08518a8ea"
+            ],
+            "assertion_count": 4
+          },
+          "body_and_assertions_unchanged": true,
+          "qualified_original_credit": true
+        },
+        "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head": {
+          "original": {
+            "source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "2cec94f78293ba6258d04f32c2a17fc87df33b4b8b95e091aa357e211603871b",
+            "function_line": 670,
+            "function_ast_sha256": "e7dedc1039da997242f30489a01ca612cbf6cb9392147a03c75c34c06ab26293",
+            "body_ast_sha256": "e1eb217ab5fcccbfe64ac9c4b66db125c5b3028766808c7fd57e904c542f5ece",
+            "assertion_ast_sha256": [
+              "5d0b5c3453a85bd387f6f9bb461552f70787432124600009a666caad4cef6ff2",
+              "05454dfa3de809dce0b8a26e940d37d393c9d917da2d7b3d3f090cd847a0938e",
+              "74ffb60e0825544f87c9b34c8e13866783648cbbcd229b59aaa108e5d0ea8458",
+              "b2c65855859bf322c60d9a8ee29d657f48d5facbee40f3f860bb556bb5e71d96",
+              "26e2b04529e0f7a06674a6ffedaff1278e02e8edd42091a4c94bc743c08e2646"
+            ],
+            "assertion_count": 5
+          },
+          "qualified_source": {
+            "source_ref": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "277c0fbd2ec8acc3703c7d437dddd451487ca8a9364eabc9e45e7168a43f4e0e",
+            "function_line": 711,
+            "function_ast_sha256": "e7dedc1039da997242f30489a01ca612cbf6cb9392147a03c75c34c06ab26293",
+            "body_ast_sha256": "e1eb217ab5fcccbfe64ac9c4b66db125c5b3028766808c7fd57e904c542f5ece",
+            "assertion_ast_sha256": [
+              "5d0b5c3453a85bd387f6f9bb461552f70787432124600009a666caad4cef6ff2",
+              "05454dfa3de809dce0b8a26e940d37d393c9d917da2d7b3d3f090cd847a0938e",
+              "74ffb60e0825544f87c9b34c8e13866783648cbbcd229b59aaa108e5d0ea8458",
+              "b2c65855859bf322c60d9a8ee29d657f48d5facbee40f3f860bb556bb5e71d96",
+              "26e2b04529e0f7a06674a6ffedaff1278e02e8edd42091a4c94bc743c08e2646"
+            ],
+            "assertion_count": 5
+          },
+          "body_and_assertions_unchanged": true,
+          "qualified_original_credit": false
+        },
+        "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_refuses_a_clip_both_sides_changed": {
+          "original": {
+            "source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "2cec94f78293ba6258d04f32c2a17fc87df33b4b8b95e091aa357e211603871b",
+            "function_line": 690,
+            "function_ast_sha256": "48f96e7c39284e0750c89584acaf6ceb9ac50c1247e66550bba27fc841cf9744",
+            "body_ast_sha256": "9cb7a13485b8b257eb1e45173366a1a5def4b55425905e5d52b293c6fbba00b3",
+            "assertion_ast_sha256": [
+              "8c5ce79f6e709f0ea0b9213595381a92d1287fd3a0f5c2aea96baec1b246f628",
+              "8b956d0bb02b9b4ede88736c16b523051c0a5b40d222f500531ddf8b85c2d3d1"
+            ],
+            "assertion_count": 2
+          },
+          "qualified_source": {
+            "source_ref": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "277c0fbd2ec8acc3703c7d437dddd451487ca8a9364eabc9e45e7168a43f4e0e",
+            "function_line": 731,
+            "function_ast_sha256": "48f96e7c39284e0750c89584acaf6ceb9ac50c1247e66550bba27fc841cf9744",
+            "body_ast_sha256": "9cb7a13485b8b257eb1e45173366a1a5def4b55425905e5d52b293c6fbba00b3",
+            "assertion_ast_sha256": [
+              "8c5ce79f6e709f0ea0b9213595381a92d1287fd3a0f5c2aea96baec1b246f628",
+              "8b956d0bb02b9b4ede88736c16b523051c0a5b40d222f500531ddf8b85c2d3d1"
+            ],
+            "assertion_count": 2
+          },
+          "body_and_assertions_unchanged": true,
+          "qualified_original_credit": false
+        },
+        "tests/sdk/test_timeline_persistence.py::test_a_discard_in_one_process_leaves_the_next_process_with_no_working_copy": {
+          "original": {
+            "source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "2cec94f78293ba6258d04f32c2a17fc87df33b4b8b95e091aa357e211603871b",
+            "function_line": 707,
+            "function_ast_sha256": "577d42839cb7954a0f3c55b46682e8f049375611cf3a1a2ff332edc395907332",
+            "body_ast_sha256": "f3eec60445da68e7981e410ba89b3f610430c5edc248cf24d0d4e54dc05c7f85",
+            "assertion_ast_sha256": [
+              "70038ccc51bdd513728e22166ce8964dc939ec08f932c7be1a6ce335a9f2f2cc",
+              "e399c8b2f940111aa0b9c7b8678c5d1a0bd85cd1ba2d003648a9c803d6adf1b5",
+              "3ccfaf09f78fa6bed26249762c1a80b9d02c69e2f502d8ab6e9815f8eb300fd4",
+              "96bf02b8e321562b2e7f23dc59a9b2fafe8c3df8c215a4c6bd6307752adb0cfb",
+              "91b1c8db505a20c44523d79ab9568a08800dbac1fc012ae818e26ca0969a2665"
+            ],
+            "assertion_count": 5
+          },
+          "qualified_source": {
+            "source_ref": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+            "test_file": "tests/sdk/test_timeline_persistence.py",
+            "source_file_sha256": "277c0fbd2ec8acc3703c7d437dddd451487ca8a9364eabc9e45e7168a43f4e0e",
+            "function_line": 748,
+            "function_ast_sha256": "577d42839cb7954a0f3c55b46682e8f049375611cf3a1a2ff332edc395907332",
+            "body_ast_sha256": "f3eec60445da68e7981e410ba89b3f610430c5edc248cf24d0d4e54dc05c7f85",
+            "assertion_ast_sha256": [
+              "70038ccc51bdd513728e22166ce8964dc939ec08f932c7be1a6ce335a9f2f2cc",
+              "e399c8b2f940111aa0b9c7b8678c5d1a0bd85cd1ba2d003648a9c803d6adf1b5",
+              "3ccfaf09f78fa6bed26249762c1a80b9d02c69e2f502d8ab6e9815f8eb300fd4",
+              "96bf02b8e321562b2e7f23dc59a9b2fafe8c3df8c215a4c6bd6307752adb0cfb",
+              "91b1c8db505a20c44523d79ab9568a08800dbac1fc012ae818e26ca0969a2665"
+            ],
+            "assertion_count": 5
+          },
+          "body_and_assertions_unchanged": true,
+          "qualified_original_credit": false
+        }
+      },
+      "production_source_comparison": {
+        "astrid/sdk/timeline_checkout.py": {
+          "qualified_sha256": "df26607e2b9973333f01c6a384bc7b493bb43c6ceb49ea23f2d5260172ab1de8",
+          "qualified_git_blob": "2370df9e488fdc67b3b678e306430a5e4a0d4de1",
+          "reviewed_sources": {
+            "1f15f274824fadca722feb8676e6746dbd237f64": {
+              "sha256": "df26607e2b9973333f01c6a384bc7b493bb43c6ceb49ea23f2d5260172ab1de8",
+              "git_blob": "2370df9e488fdc67b3b678e306430a5e4a0d4de1",
+              "equal": true
+            },
+            "d5665e898ac6e3347c8b8ddfc06b3c678dea04fa": {
+              "sha256": "df26607e2b9973333f01c6a384bc7b493bb43c6ceb49ea23f2d5260172ab1de8",
+              "git_blob": "2370df9e488fdc67b3b678e306430a5e4a0d4de1",
+              "equal": true
+            }
+          }
+        },
+        "astrid/sdk/timeline/store.py": {
+          "qualified_sha256": "e1bb20da211dd9573b38d63a0b1acab7ab0d2f6c3d085bc97e3184ba012ee029",
+          "qualified_git_blob": "ae950e8db903970da5f84765e1ebad88ad5ab106",
+          "reviewed_sources": {
+            "1f15f274824fadca722feb8676e6746dbd237f64": {
+              "sha256": "e1bb20da211dd9573b38d63a0b1acab7ab0d2f6c3d085bc97e3184ba012ee029",
+              "git_blob": "ae950e8db903970da5f84765e1ebad88ad5ab106",
+              "equal": true
+            },
+            "d5665e898ac6e3347c8b8ddfc06b3c678dea04fa": {
+              "sha256": "e1bb20da211dd9573b38d63a0b1acab7ab0d2f6c3d085bc97e3184ba012ee029",
+              "git_blob": "ae950e8db903970da5f84765e1ebad88ad5ab106",
+              "equal": true
+            }
+          }
+        },
+        "astrid/sdk/timeline/journal.py": {
+          "qualified_sha256": "52daf04ff30b869eefb126232fa9fdcd1a26b023655d9ada731af01a99f84614",
+          "qualified_git_blob": "48836bb9ce981743f452a6698eaf7ca6a79feb87",
+          "reviewed_sources": {
+            "1f15f274824fadca722feb8676e6746dbd237f64": {
+              "sha256": "52daf04ff30b869eefb126232fa9fdcd1a26b023655d9ada731af01a99f84614",
+              "git_blob": "48836bb9ce981743f452a6698eaf7ca6a79feb87",
+              "equal": true
+            },
+            "d5665e898ac6e3347c8b8ddfc06b3c678dea04fa": {
+              "sha256": "52daf04ff30b869eefb126232fa9fdcd1a26b023655d9ada731af01a99f84614",
+              "git_blob": "48836bb9ce981743f452a6698eaf7ca6a79feb87",
+              "equal": true
+            }
+          }
+        },
+        "astrid/sdk/timeline/commit.py": {
+          "qualified_sha256": "73a7afefb5c0bdc23ca7d2cce5c85d46ad6494b5af692181c3e428c5ea7b5499",
+          "qualified_git_blob": "f47801b0fb14e807973c8414baff23f66055054b",
+          "reviewed_sources": {
+            "1f15f274824fadca722feb8676e6746dbd237f64": {
+              "sha256": "73a7afefb5c0bdc23ca7d2cce5c85d46ad6494b5af692181c3e428c5ea7b5499",
+              "git_blob": "f47801b0fb14e807973c8414baff23f66055054b",
+              "equal": true
+            },
+            "d5665e898ac6e3347c8b8ddfc06b3c678dea04fa": {
+              "sha256": "73a7afefb5c0bdc23ca7d2cce5c85d46ad6494b5af692181c3e428c5ea7b5499",
+              "git_blob": "f47801b0fb14e807973c8414baff23f66055054b",
+              "equal": true
+            }
+          }
+        },
+        "astrid/sdk/timeline/sync.py": {
+          "qualified_sha256": "44ace78aa0b38b1c501291ebe27c2e37b6d3afb7018be8c2d33379b4f1f955e8",
+          "qualified_git_blob": "1d3692b6c922cd227c8c3a630bd84df4861e4ca1",
+          "reviewed_sources": {
+            "1f15f274824fadca722feb8676e6746dbd237f64": {
+              "sha256": "44ace78aa0b38b1c501291ebe27c2e37b6d3afb7018be8c2d33379b4f1f955e8",
+              "git_blob": "1d3692b6c922cd227c8c3a630bd84df4861e4ca1",
+              "equal": true
+            },
+            "d5665e898ac6e3347c8b8ddfc06b3c678dea04fa": {
+              "sha256": "44ace78aa0b38b1c501291ebe27c2e37b6d3afb7018be8c2d33379b4f1f955e8",
+              "git_blob": "1d3692b6c922cd227c8c3a630bd84df4861e4ca1",
+              "equal": true
+            }
+          }
+        }
+      },
+      "retained_sources": {
+        "integrated0733": {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-SDK-persistence-integrated-0733.md",
+          "sha256": "f8cd4ad23cbf0f5af52f08d05f2b11025118ca9e697101d8ac944608b822fe98"
+        },
+        "independent0736": {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-SDK-persistence-result-review-0736.md",
+          "sha256": "c949c9039431187ea2422ab7dee7024958809d360048c30f6c3c94f0ce3efdfa"
+        },
+        "peer0739": {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-runtime-to-agent-orchestrator-20261024T0739-SDK-two-qualified.md",
+          "sha256": "a583dc56551ea2195f450da271273dbbb227710e66a08c0d8dcae63af29fe2f3"
+        }
+      },
+      "reported_junit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-SDK-persistence-integrated-0733/evidence/sdk-integrated.xml",
+      "reported_junit_sha256": "d2699be64fa40d984b6bbe65b3b7029f09f0c86ebcaf1a84320a5271faf23c84",
+      "result_membership_basis": "Independent0736 checked XML SHA, exactly the two named original selectors passing, all ten body/assertion pairs, fixture and relevant production blobs, module origins and clean trees. Peer0739 names both exact originals. Primary/independent reports are read and hashed locally; raw XML and qualification.md/review.md are not present locally. No claim of local raw XML parsing or rehashing; digest is reported and independently verified0736.",
+      "raw_junit_present_locally": false,
+      "module_origins": "Per author0733/independent0736: this Agent source worktree and /home/user/work/runtime; no new import/probe here.",
+      "production_caller_scope": "Retained original process harness executes worker_main -> Checkout.draft/nudge/set/note/save/undo with file-backed _FakeTimelines.history/open_bundle. Relevant Checkout/store/journal/commit/sync source blobs compared read-only. This fixture path is no production commitTimeline wire acceptance. The production-caller requirement remains in CONTRACTINVENTORY; no new field-by-field wire capture.",
+      "credit_limit": "Exactly two original source-mode/FakeTimelines process-persistence outcomes on Agent HOME3f7/tree163a and Runtime becfe/tree7edc. Restart restores challenged closure once; two-writer is separate original once. No HTTP, installed-source/child, canonical-client adoption, authenticated actor, provisioning, full suite, complete v2 wire/reply/history/receipt qualification. D23 moved-head and wordsecond, mocked stale-head, support and generic child receive no additional credit.",
+      "historical_challenge_refs": [
+        "persistence_current_challenge0649",
+        "sdk9_persistence_retained"
+      ],
+      "no_rerun_in_count_package": true
+    },
+    "giant_current_challenge0750": {
+      "verdict": "CURRENT CHALLENGE; historical closed credit withdrawn",
+      "result": "Author0742 old source: 1 failed in 0.54s; independent Farm96review0733 confirms current mismatch. Future repair independent0747: 1 passed in 0.59s, not current HOME.",
+      "exact_original_node_ids": [
+        "tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale"
+      ],
+      "phase": "call",
+      "agent_source": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+      "current_source": {
+        "source_ref": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+        "path": "astrid/core/execution/generic_host.py",
+        "git_blob": "16ac3a864811b3c7353acee85c6c9453239617d1",
+        "sha256": "b5ad2c6494064ecb5e1c1c1c251b411a39f8b59de3358ddc783a1b1ec6765fd6",
+        "physical_lines": 14313
+      },
+      "current_rationale": {
+        "source_ref": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+        "path": "docs/giant-file-rationale.md",
+        "git_blob": "2ed0efb4104e9fa98338195dac2b729f74a729df",
+        "sha256": "109e6c6486adb6f74db83b2c81d8ba58142738bceaae876783f8550ecb9f88e7",
+        "physical_lines": 72
+      },
+      "current_claim_lines": 13998,
+      "current_actual_minus_claim": 315,
+      "unchanged_original_test": {
+        "c36ca8c94b695b0e25b7d42c89f194661f187423": {
+          "source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+          "test_file": "tests/test_structure_contracts.py",
+          "source_file_sha256": "47fa16bf4b721e1f7cb0fb7e6e14bbf5978efb5a382fed593564bc651d4d32da",
+          "function_line": 955,
+          "function_ast_sha256": "33edad2875755847eab484d79468ac9a9b2d8276e045647d113bdd27831c9358",
+          "body_ast_sha256": "1a11408dfaacf2351fdd57bceea1181c725795b6c0794ac86e5b37e515708efc",
+          "assertion_ast_sha256": [
+            "35500fb09a8e116321e70d922bef0b54a597b4e2db3298152556609db0f8856b",
+            "288fd03de1545e5bb3717dd9461a732388e3a1e028d4174f8b605fb1f19eeca3",
+            "1da40ecd267cd92f72390f2dd7ed9e99adf14a2e1b6a9f790d38be58b006b8f3",
+            "0c7a9c0d0aeeb3c8468ba3df43691e16fddd5a847e8e535cb65cf9a1e9fc62c5",
+            "311812653214421cc7a94dc559799a44416a6f754221019e0a8183cdb1c14919"
+          ],
+          "assertion_count": 5
+        },
+        "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630": {
+          "source_ref": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+          "test_file": "tests/test_structure_contracts.py",
+          "source_file_sha256": "47fa16bf4b721e1f7cb0fb7e6e14bbf5978efb5a382fed593564bc651d4d32da",
+          "function_line": 955,
+          "function_ast_sha256": "33edad2875755847eab484d79468ac9a9b2d8276e045647d113bdd27831c9358",
+          "body_ast_sha256": "1a11408dfaacf2351fdd57bceea1181c725795b6c0794ac86e5b37e515708efc",
+          "assertion_ast_sha256": [
+            "35500fb09a8e116321e70d922bef0b54a597b4e2db3298152556609db0f8856b",
+            "288fd03de1545e5bb3717dd9461a732388e3a1e028d4174f8b605fb1f19eeca3",
+            "1da40ecd267cd92f72390f2dd7ed9e99adf14a2e1b6a9f790d38be58b006b8f3",
+            "0c7a9c0d0aeeb3c8468ba3df43691e16fddd5a847e8e535cb65cf9a1e9fc62c5",
+            "311812653214421cc7a94dc559799a44416a6f754221019e0a8183cdb1c14919"
+          ],
+          "assertion_count": 5
+        },
+        "8c5ae21fcd39d7ff7d72fb0b19a6ae4147af0609": {
+          "source_ref": "8c5ae21fcd39d7ff7d72fb0b19a6ae4147af0609",
+          "test_file": "tests/test_structure_contracts.py",
+          "source_file_sha256": "47fa16bf4b721e1f7cb0fb7e6e14bbf5978efb5a382fed593564bc651d4d32da",
+          "function_line": 955,
+          "function_ast_sha256": "33edad2875755847eab484d79468ac9a9b2d8276e045647d113bdd27831c9358",
+          "body_ast_sha256": "1a11408dfaacf2351fdd57bceea1181c725795b6c0794ac86e5b37e515708efc",
+          "assertion_ast_sha256": [
+            "35500fb09a8e116321e70d922bef0b54a597b4e2db3298152556609db0f8856b",
+            "288fd03de1545e5bb3717dd9461a732388e3a1e028d4174f8b605fb1f19eeca3",
+            "1da40ecd267cd92f72390f2dd7ed9e99adf14a2e1b6a9f790d38be58b006b8f3",
+            "0c7a9c0d0aeeb3c8468ba3df43691e16fddd5a847e8e535cb65cf9a1e9fc62c5",
+            "311812653214421cc7a94dc559799a44416a6f754221019e0a8183cdb1c14919"
+          ],
+          "assertion_count": 5
+        }
+      },
+      "original_test_body_and_assertions_unchanged": true,
+      "strict_predicate": "abs(actual_lines - entry_lines) <= 50; current drift315 exceeds tolerance50. Original body/assertions untouched.",
+      "author_old_red_log": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-giant-rationale-0742/log.txt",
+        "sha256": "cea8a7b2b49665e119d0949d1346bc12a56eb2d9c203b1c7c22ea6181195fd5c"
+      },
+      "author_old_red_log_lines": [
+        1270,
+        1277
+      ],
+      "author_old_red_command": "PYTHONPATH=/home/user/work/runtime:/home/user/work/wt/agt-F-giant-rationale-0742 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale",
+      "future_repair": {
+        "commit": "8c5ae21fcd39d7ff7d72fb0b19a6ae4147af0609",
+        "parent": "5783ae65c279518ba55f47ece98e138de0ff86f6",
+        "source": {
+          "source_ref": "8c5ae21fcd39d7ff7d72fb0b19a6ae4147af0609",
+          "path": "astrid/core/execution/generic_host.py",
+          "git_blob": "36b8e5ee579f96ee7c62d70887509b5b534e6345",
+          "sha256": "9a0d3f8e987c043e4dfdb7912e63b228fc6dfeec41d573d92ff31bf4ec8cd11b",
+          "physical_lines": 14330
+        },
+        "rationale": {
+          "source_ref": "8c5ae21fcd39d7ff7d72fb0b19a6ae4147af0609",
+          "path": "docs/giant-file-rationale.md",
+          "git_blob": "88b399d3b03cbac6a22d5814e77ae664aaa3cfe5",
+          "sha256": "6d31c9c62f518259541e7fbfc2991877116af0a4e41cac1aa8b3cad0fa2963e9",
+          "physical_lines": 72
+        },
+        "claim_lines": 14330,
+        "independent_result": "0747 PASS: 1 passed in 0.59s",
+        "home_at_qualification": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+        "future_is_home": false,
+        "current_closure_credit": false
+      },
+      "retained_sources": {
+        "farm_review0733": {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-farm96-review-0733.md",
+          "sha256": "ce9ef24291bb6e938a35ab3a40eb54d768978cb47330614f8e8e40f70f73a5f4"
+        },
+        "farm_return0742": {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-farm96-return-0742.md",
+          "sha256": "ee47ae1d2c442091fe6e1e8d7cbbd929a4a28ae1ce13ec62df4aa2efe2d875a5"
+        },
+        "giant_author0742": {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-giant-rationale-0742/report.md",
+          "sha256": "6bc1543f44738a66e80fba55c0c94819fa3eb72baa9dcd3416e5b81a53a84af0"
+        },
+        "giant_review0747": {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-giant-review-0747/report.md",
+          "sha256": "ccdae6b5fc3c4d38f9680f260e7ed3408b4da4321bc5092630e282595e3215ee"
+        }
+      },
+      "historical_proof_refs": [
+        "cli_surface_0012"
+      ],
+      "credit_limit": "Reopen only this exact current docs original from direct current-source mismatch and old RED. Keep prior cli_surface_0012 proof historical/challenged for this node; no blanket reopening of frozen Farm Runtime45c failures. Future8c5ae repair on U2 source14330 does not qualify HOME3f7 source14313; await merged HOME plus independent qualification. No source/test execution in this package."
     }
   },
   "unowned_gaps": {},
@@ -8904,18 +9533,19 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "Historical restart PASS challenged by independent0645; current0649 exact original fails at draft because fixture history is absent.",
+      "reason": "Exact original independently qualified by integrated0733 and result-review0736 on HOME3f7/Runtimebecfe; source-mode/FakeTimelines only.",
       "owner_ref": "sdk_g234",
       "proof_refs": [
         "sdk9_persistence_retained",
         "sdk9_source_map_0554",
         "sdk9_independent_0603",
         "sdk9_corrected_0619",
-        "persistence_current_challenge0649"
+        "persistence_current_challenge0649",
+        "persistence_integrated0733_review0736"
       ],
-      "proof_status": "historical_pass_challenged_current_fail",
+      "proof_status": "exact_current_source_mode_pass0733_review0736",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_persistence.py",
@@ -8925,43 +9555,56 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "reopened_current_failure0649",
-        "qualification_source": "0b4255fd8a1c20b089093cb2508394e896f54a96",
+        "classification": "confirmed_closed_current_persistence0733_review0736",
+        "current_head": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+        "current_tree": "163a7f2334e2a7e49058fefbf03077d6ff090660",
+        "runtime_source": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
         "post_0118_evidence_refs": [
-          "persistence_current_challenge0649"
+          "persistence_integrated0733_review0736"
         ],
-        "qualifying_original_behavior_credit": false,
-        "result": "2 failed in 1.92s (restart and two-writer)",
-        "scope": "Current exact restart and two-writer originals both fail at initial draft: Checkout.draft -> store.fetch_bundle -> c.timelines.history, store.py466; _FakeTimelines implements only open_composition/open_bundle. No scenario actions or assertions are reached. Runtime is assigned faithful fixture migration; no qualified fix yet. Original Agent owner/phase retained. atomic_scope_changed belongs to the separate test_publish_after_a_restart_merges_other_clips_onto_the_moved_head, not two-writer.",
-        "historical_pre_current_challenge_reconciliation": {
-          "classification": "confirmed_closed_post_0118_sdk9",
-          "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
-          "post_0118_disposition": "Original restart/crash/truncated-temp/discard storage predicates and same-clip restart refusal retained; no merge-positive credit.",
+        "qualifying_original_behavior_credit": true,
+        "result": "2 passed in 4.17s; exact two original members",
+        "scope": "Exactly two original source-mode/FakeTimelines process-persistence outcomes on Agent HOME3f7/tree163a and Runtime becfe/tree7edc. Restart restores challenged closure once; two-writer is separate original once. No HTTP, installed-source/child, canonical-client adoption, authenticated actor, provisioning, full suite, complete v2 wire/reply/history/receipt qualification. D23 moved-head and wordsecond, mocked stale-head, support and generic child receive no additional credit.",
+        "historical_pre_persistence0750_reconciliation": {
+          "classification": "reopened_current_failure0649",
+          "qualification_source": "0b4255fd8a1c20b089093cb2508394e896f54a96",
           "post_0118_evidence_refs": [
+            "persistence_current_challenge0649"
+          ],
+          "qualifying_original_behavior_credit": false,
+          "result": "2 failed in 1.92s (restart and two-writer)",
+          "scope": "Current exact restart and two-writer originals both fail at initial draft: Checkout.draft -> store.fetch_bundle -> c.timelines.history, store.py466; _FakeTimelines implements only open_composition/open_bundle. No scenario actions or assertions are reached. Runtime is assigned faithful fixture migration; no qualified fix yet. Original Agent owner/phase retained. atomic_scope_changed belongs to the separate test_publish_after_a_restart_merges_other_clips_onto_the_moved_head, not two-writer.",
+          "historical_pre_current_challenge_reconciliation": {
+            "classification": "confirmed_closed_post_0118_sdk9",
+            "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+            "post_0118_disposition": "Original restart/crash/truncated-temp/discard storage predicates and same-clip restart refusal retained; no merge-positive credit.",
+            "post_0118_evidence_refs": [
+              "sdk9_persistence_retained",
+              "sdk9_source_map_0554",
+              "sdk9_independent_0603",
+              "sdk9_corrected_0619"
+            ],
+            "qualifying_original_behavior_credit": true,
+            "source_equivalence": "Relevant production functions match retained proof per 0554/0603; bb50 timeline files equal 2007. No original body/source audit or execution repeated for this package.",
+            "historical_pre_sdk9_reconciliation": {
+              "classification": "open_held_or_unknown",
+              "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+              "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+              "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+              "post_0118_evidence_refs": [],
+              "qualifying_original_behavior_credit": false
+            }
+          },
+          "historical_proof_refs_challenged_for_this_node": [
             "sdk9_persistence_retained",
             "sdk9_source_map_0554",
             "sdk9_independent_0603",
             "sdk9_corrected_0619"
           ],
-          "qualifying_original_behavior_credit": true,
-          "source_equivalence": "Relevant production functions match retained proof per 0554/0603; bb50 timeline files equal 2007. No original body/source audit or execution repeated for this package.",
-          "historical_pre_sdk9_reconciliation": {
-            "classification": "open_held_or_unknown",
-            "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-            "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-            "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-            "post_0118_evidence_refs": [],
-            "qualifying_original_behavior_credit": false
-          }
+          "fixture_migration_assignee": "Runtime",
+          "qualified_fix": false
         },
-        "historical_proof_refs_challenged_for_this_node": [
-          "sdk9_persistence_retained",
-          "sdk9_source_map_0554",
-          "sdk9_independent_0603",
-          "sdk9_corrected_0619"
-        ],
-        "fixture_migration_assignee": "Runtime",
-        "qualified_fix": false
+        "historical_failure_preserved": "persistence_current_challenge0649 remains unchanged; older38af receipt remains challenged. New tuple independently qualifies current closure."
       }
     },
     {
@@ -8969,12 +9612,14 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact original independently qualified by integrated0733 and result-review0736 on HOME3f7/Runtimebecfe; source-mode/FakeTimelines only.",
       "owner_ref": "sdk_g234",
-      "proof_refs": [],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_refs": [
+        "persistence_integrated0733_review0736"
+      ],
+      "proof_status": "exact_current_source_mode_pass0733_review0736",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_persistence.py",
@@ -8984,12 +9629,25 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_persistence0733_review0736",
+        "current_head": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+        "current_tree": "163a7f2334e2a7e49058fefbf03077d6ff090660",
+        "runtime_source": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+        "post_0118_evidence_refs": [
+          "persistence_integrated0733_review0736"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "result": "2 passed in 4.17s; exact two original members",
+        "scope": "Exactly two original source-mode/FakeTimelines process-persistence outcomes on Agent HOME3f7/tree163a and Runtime becfe/tree7edc. Restart restores challenged closure once; two-writer is separate original once. No HTTP, installed-source/child, canonical-client adoption, authenticated actor, provisioning, full suite, complete v2 wire/reply/history/receipt qualification. D23 moved-head and wordsecond, mocked stale-head, support and generic child receive no additional credit.",
+        "historical_pre_persistence0750_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        },
+        "historical_failure_preserved": "persistence_current_challenge0649 remains unchanged; older38af receipt remains challenged. New tuple independently qualifies current closure."
       }
     },
     {
@@ -10393,9 +11051,10 @@
       "phase": "call",
       "family": "CLI/manifest/current-surface",
       "tag": "ours",
-      "status": "proven_passed",
+      "status": "active_owner",
       "proof_refs": [
-        "cli_surface_0012"
+        "cli_surface_0012",
+        "giant_current_challenge0750"
       ],
       "baseline_status": "proven_passed",
       "original_body_assertion_mapping": {
@@ -10404,17 +11063,33 @@
         "phase": "call",
         "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
       },
-      "effective_owner": null,
+      "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "confirmed_closed_at_0118_baseline",
-        "current_head_requalification": "not_claimed",
-        "proof_refs": [
+        "classification": "reopened_current_docs_failure0750",
+        "current_head": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+        "current_tree": "163a7f2334e2a7e49058fefbf03077d6ff090660",
+        "qualifying_original_behavior_credit": false,
+        "post_0118_evidence_refs": [
+          "giant_current_challenge0750"
+        ],
+        "historical_pre_persistence0750_reconciliation": {
+          "classification": "confirmed_closed_at_0118_baseline",
+          "current_head_requalification": "not_claimed",
+          "proof_refs": [
+            "cli_surface_0012"
+          ],
+          "note": "Retained exact proof from the reviewed reconciliation; no post-0118 rerun was used to inflate or revoke the baseline count.",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b"
+        },
+        "historical_proof_refs_challenged_for_this_node": [
           "cli_surface_0012"
         ],
-        "note": "Retained exact proof from the reviewed reconciliation; no post-0118 rerun was used to inflate or revoke the baseline count.",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b"
-      }
+        "future_repair_current_credit": false,
+        "scope": "Reopen only this exact current docs original from direct current-source mismatch and old RED. Keep prior cli_surface_0012 proof historical/challenged for this node; no blanket reopening of frozen Farm Runtime45c failures. Future8c5ae repair on U2 source14330 does not qualify HOME3f7 source14313; await merged HOME plus independent qualification. No source/test execution in this package."
+      },
+      "reason": "Current HOME3f7 generic_host14313 versus rationale13998; independent0733 current mismatch and author0742 oldRED. Future8c5ae/U2 source14330 PASS is not HOME.",
+      "proof_status": "historical_pass_challenged_current_docs_failure"
     },
     {
       "exact_node_id": "tests/timeline/test_authoring_media.py::test_document_publish_forwards_new_stale_head_to_runtime",
@@ -10974,9 +11649,9 @@
     "review_artifact": "workers/agt-F-census-review-0358/evidence/h30-reconciliation-review.json",
     "corrected_counts": {
       "total": 267,
-      "closed": 261,
-      "open": 6,
-      "held_or_unknown": 6
+      "closed": 262,
+      "open": 5,
+      "held_or_unknown": 5
     },
     "newly_credited_ids": [
       "tests/core/rendering/test_conformance.py::test_attachment_wire_parity",
@@ -11193,7 +11868,7 @@
       "inverse22_result_review_0550"
     ],
     "cumulative_0550_metadata_fix_disposition": "The 0550 package correction was metadata-only: it reconciled the seven H3 current-qualified nodes, preserved the historical 172/95 baseline and exact 37-row mapping, and produced artifact SHA c70b6627e6fe4cd7f6d900e0bcb99168dd8e56a4269ad8d88e12b07eec272268. It remains historical 179/88 package context here; it is not new behavior credit or a node-status change.",
-    "current_cumulative_disposition": "Candidate current-challenge package:261closed/6open/267;120 mappings including119 current closure mappings and1 historical/challenged restart mapping. Against candidate0652: -restart,+stalehead,+closure; net+1. Exactly prior24 roots/helpers/schema remain unchanged. Historical next24 260/7/118 and official236/31/94 retained as provenance. Independent review of this candidate is pending; no full-suite green or retrospective Farm credit.",
+    "current_cumulative_disposition": "Candidate0750:262closed/5open/267, exact +restart +two-writer -giant from independent0715 PASS base261/6. 122 mapping rows=121 current unique closures+1 preserved historical/challenged restart. Prior0705 section is a historical reviewed snapshot; latest persistence_challenge0750 applicability supersedes it. Independent cumulative package review pending; no full/HTTP/installed/adoption credit.",
     "newly_confirmed_closed_at_0551_d40": [
       "tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack"
     ],
@@ -11302,6 +11977,16 @@
         "normal_closure_home0640_review0645",
         "persistence_current_challenge0649"
       ]
+    },
+    "persistence_challenge_delta0750": {
+      "newly_closed": [
+        "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+        "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param"
+      ],
+      "reopened": [
+        "tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale"
+      ],
+      "net_closed": 1
     }
   },
   "owner_registry_note": "H30 current ownership is Viewing for the retained-caller delta and six render-wire rows, Runtime for the seven H3 source-drift rows, and Agent for Agent-home rows. Historical worker labels are not active authors. The three track-label rows remain separate. The seven H3 import-source rows and the exact 22 occurrence-media inverse rows are current-qualified; source-copy selectors were checked and are absent from the 267-node census.",
@@ -11836,6 +12521,20 @@
       "reply_fields_exercised": [],
       "retained_behavior_projection": "Both originals fail at initial draft before scenario actions; no new positive behavior proof.",
       "limit": "Current exact restart and two-writer originals both fail at initial draft: Checkout.draft -> store.fetch_bundle -> c.timelines.history, store.py466; _FakeTimelines implements only open_composition/open_bundle. No scenario actions or assertions are reached. Runtime is assigned faithful fixture migration; no qualified fix yet. Original Agent owner/phase retained. atomic_scope_changed belongs to the separate test_publish_after_a_restart_merges_other_clips_onto_the_moved_head, not two-writer. Finite observed assertions only; complete CONTRACTINVENTORY remains specification. Unlisted request/reply fields, optional annotations, HTTP/auth/installed custody, complete history/undo/attribution and all reply variants remain unproven. No new execution in this package."
+    },
+    "persistence_integrated0733_review0736": {
+      "basis": "0733 integrated actual2PASS4.17s; independent0736 checks exact named XML membership/source/origins. Read-only blob/AST comparisons in count package.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "retained_behavior_projection": "Restart persists nudge/text/note and undo order through a fresh process; two separate writers retain different-clip edits and refuse the same parameter. Exact10 original bodies/assertions match. Fake history/open_bundle provide exact head pins; no observed production commitTimeline wire envelope.",
+      "limit": "Exactly two original source-mode/FakeTimelines process-persistence outcomes on Agent HOME3f7/tree163a and Runtime becfe/tree7edc. Restart restores challenged closure once; two-writer is separate original once. No HTTP, installed-source/child, canonical-client adoption, authenticated actor, provisioning, full suite, complete v2 wire/reply/history/receipt qualification. D23 moved-head and wordsecond, mocked stale-head, support and generic child receive no additional credit. Empty field arrays mean no field-by-field production wire observation established, not absent fields. CONTRACTINVENTORY and all prior observed-field scopes remain unchanged."
+    },
+    "giant_current_challenge0750": {
+      "basis": "Direct current source/rationale mismatch; original strict test and independent0733/author0742 oldRED retained.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "retained_behavior_projection": "Current docs predicate fails315-line drift against tolerance50. Future14330 docs fix PASS excluded from current closure.",
+      "limit": "Reopen only this exact current docs original from direct current-source mismatch and old RED. Keep prior cli_surface_0012 proof historical/challenged for this node; no blanket reopening of frozen Farm Runtime45c failures. Future8c5ae repair on U2 source14330 does not qualify HOME3f7 source14313; await merged HOME plus independent qualification. No source/test execution in this package."
     }
   },
   "metadata0636": {
@@ -12038,5 +12737,155 @@
       "full25691 FAIL; frozen Farm26511 source/head mismatch and96 possible closed-node failures unresolved",
       "No farm retrospective credit, full-suite green, HTTP/installed/full-v2 acceptance, product/static/behavior test run or product edit"
     ]
+  },
+  "persistence_challenge0750": {
+    "status": "CANDIDATE; independent cumulative package review PASS pending",
+    "task": "agt-F-count-persistence-challenge-sol-0750",
+    "base_commit": "a3dff9d69685fd66f296b015e7517408c2b932f5",
+    "base_census_sha256": "22ee4d6df217eef1cef60f7e9c646b6f5fe13a45d31163afb2ffe46126facae0",
+    "base_independent_review": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-count-current-review-0715/report.md",
+      "sha256": "cf093e3fd6e51a0f0104cbe7b18375d17056078121fb23d578697174a7d86963"
+    },
+    "historical_base_counts": {
+      "total": 267,
+      "closed": 261,
+      "open": 6,
+      "mappings": 120,
+      "current_mapping_rows": 119,
+      "historical_challenged_mapping_rows": 1
+    },
+    "current_qualification_tuple": {
+      "agent_head": "3f7e63b0cfb0c7165b0b61d6f149d038c16dd630",
+      "agent_tree": "163a7f2334e2a7e49058fefbf03077d6ff090660",
+      "runtime_head": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+      "runtime_tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89"
+    },
+    "delta": {
+      "newly_closed": [
+        "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+        "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param"
+      ],
+      "reopened": [
+        "tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale"
+      ],
+      "net_closed": 1
+    },
+    "counts": {
+      "total": 267,
+      "closed": 262,
+      "open": 5
+    },
+    "active_owner_counts": {
+      "Agent": 5
+    },
+    "active_family_counts": {
+      "Agent SDK / timeline unconfirmed": 2,
+      "CLI FakeCheckout fixture": 0,
+      "D09 installed-profile setup": 0,
+      "Execution/rendering/pack remainder": 1,
+      "Isolated Agent child import fence": 0,
+      "Occurrence-media inverse fixture": 0,
+      "Other task-specific unconfirmed": 0,
+      "Rendering missing result file": 0,
+      "Retired CLI/native route or stale caller": 0,
+      "Runtime child import / OPS": 1,
+      "CLI/manifest/current-surface": 1
+    },
+    "remaining_exact_original_node_ids": [
+      "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]",
+      "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head",
+      "tests/test_generic_host.py::test_structure_pack_members_survive_harvest_cleanup_and_reopen",
+      "tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale"
+    ],
+    "mapping_inventory": {
+      "total_rows": 122,
+      "current_confirmed_closed_rows": 121,
+      "current_unique_original_ids": 121,
+      "historical_challenged_rows": 1,
+      "all_unique_original_ids": 121,
+      "unchanged_prior_rows": 120,
+      "appended_current_rows": 2,
+      "note": "Historical restart row retained byte-for-field; new restart current row supersedes applicability without double credit. Two writer is new unique original mapping. Giant was a baseline closure with no mapping row; historical cli_surface_0012 proof preserved."
+    },
+    "proof_inventory": {
+      "total": 50,
+      "unchanged_prior_records": 48,
+      "new_scoped_pass_records": 1,
+      "new_current_challenge_records": 1,
+      "distinct_proof_refs_on_current_closed_nodes": 47
+    },
+    "current_proof_applicability": {
+      "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history": {
+        "current_credit": true,
+        "proof_ref": "persistence_integrated0733_review0736",
+        "historical38af_challenged": true,
+        "historical0649_failure_preserved": true
+      },
+      "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param": {
+        "current_credit": true,
+        "proof_ref": "persistence_integrated0733_review0736",
+        "historical0649_failure_preserved": true
+      },
+      "tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale": {
+        "current_credit": false,
+        "proof_ref": "giant_current_challenge0750",
+        "historical_proof_refs": [
+          "cli_surface_0012"
+        ],
+        "future8c5ae_current_credit": false
+      }
+    },
+    "retained_sources": {
+      "integrated0733": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-SDK-persistence-integrated-0733.md",
+        "sha256": "f8cd4ad23cbf0f5af52f08d05f2b11025118ca9e697101d8ac944608b822fe98"
+      },
+      "independent0736": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-SDK-persistence-result-review-0736.md",
+        "sha256": "c949c9039431187ea2422ab7dee7024958809d360048c30f6c3c94f0ce3efdfa"
+      },
+      "peer0739": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-runtime-to-agent-orchestrator-20261024T0739-SDK-two-qualified.md",
+        "sha256": "a583dc56551ea2195f450da271273dbbb227710e66a08c0d8dcae63af29fe2f3"
+      },
+      "base_review0715": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-count-current-review-0715/report.md",
+        "sha256": "cf093e3fd6e51a0f0104cbe7b18375d17056078121fb23d578697174a7d86963"
+      },
+      "farm_review0733": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-farm96-review-0733.md",
+        "sha256": "ce9ef24291bb6e938a35ab3a40eb54d768978cb47330614f8e8e40f70f73a5f4"
+      },
+      "farm_return0742": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-farm96-return-0742.md",
+        "sha256": "ee47ae1d2c442091fe6e1e8d7cbbd929a4a28ae1ce13ec62df4aa2efe2d875a5"
+      },
+      "giant_author0742": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-giant-rationale-0742/report.md",
+        "sha256": "6bc1543f44738a66e80fba55c0c94819fa3eb72baa9dcd3416e5b81a53a84af0"
+      },
+      "giant_review0747": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-giant-review-0747/report.md",
+        "sha256": "ccdae6b5fc3c4d38f9680f260e7ed3408b4da4321bc5092630e282595e3215ee"
+      }
+    },
+    "preservation": {
+      "unchanged_other_node_records": 264,
+      "all_original_ids_phases_tags_preserved": true,
+      "phases": {
+        "call": 262,
+        "setup": 5
+      },
+      "unchanged_prior_proof_records": 48,
+      "unchanged_prior_coverage_entries": 48,
+      "unchanged_prior_mapping_rows": 120,
+      "complete_CONTRACTINVENTORY": "unchanged; production caller uses it remains acceptance requirement"
+    },
+    "scope": "Exactly two original source-mode/FakeTimelines process-persistence outcomes on Agent HOME3f7/tree163a and Runtime becfe/tree7edc. Restart restores challenged closure once; two-writer is separate original once. No HTTP, installed-source/child, canonical-client adoption, authenticated actor, provisioning, full suite, complete v2 wire/reply/history/receipt qualification. D23 moved-head and wordsecond, mocked stale-head, support and generic child receive no additional credit.",
+    "historical_metadata_policy": "current_challenge0705/current_challenge_mapping, earlier counts/proofs/coverage and their pending-at-author-time wording are preserved historical snapshots; independent0715 PASS establishes the base. This section alone supplies0750 current applicability. Prior mapped evidence retains its original qualified source/import scope.",
+    "farm_limits": "Frozen Farm26511 Runtime45c tuple: 96 failures classified80 environment/1 regression/15 unknown, not current retrospective passes. Only direct current giant-file/docs original is reopened here; other95 unchanged. full25691 FAIL retained; no current full267 PASS.",
+    "raw_result_limit": "Independent0736 checked XML SHA, exactly the two named original selectors passing, all ten body/assertion pairs, fixture and relevant production blobs, module origins and clean trees. Peer0739 names both exact originals. Primary/independent reports are read and hashed locally; raw XML and qualification.md/review.md are not present locally. No claim of local raw XML parsing or rehashing; digest is reported and independently verified0736."
   }
 }

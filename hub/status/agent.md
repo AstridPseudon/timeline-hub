@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T08:02:55Z | dispatcher heartbeat 6s | live 4 (sol 2, luna 2, other 0) | busy30 34 | status age 2m -->
-# agent board, 2026-10-24T07:57:00Z
+<!-- agent | 2026-10-24T08:05:24Z | dispatcher heartbeat 4s | live 2 (sol 1, luna 1, other 0) | busy30 34 | status age 2m -->
+# agent board, 2026-10-24T08:04:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -132,18 +132,22 @@
 
 | D39 actual independent review | Review full candidate after reviewer authored changes | Luna | Complete2c55 source proposal | doing | agt-D39-final-readonly-review-0757 | Extra strictpath/body assertions require a reviewer who authorednone of thecandidate. No home beforePASS. | 2c55d0ed89 |
 
-| F-count new package review | Validate complete262/5 candidate package | Luna | Complete original and challenge evidence | review | agt-F-count-persistence-review-0759 | Full267membership, allpriorproofs and exact3-node delta; no credituntilPASS. | Five files |
-| F-farm final custody review | Verify all31field CSV/JSON mappings | Luna | Sol384-cell correction complete | review | agt-F-farm96-custody-review-0759 | All96IDs, genuinepriorproofs, source tuples/citations and limited80/1/15classification. | Three files |
+| F-count new package review | Validate complete262/5 current package | Luna | Complete independent review passed | merged | Sol0750; independent0759 PASS | All267 and264unaffectedrecords preserved;122mappings. Two exact closures and one current docs challenge. | Census286047a5 |
+| F-farm final custody review | Verify all31field CSV/JSON mappings | Luna | Complete independent review passed | merged | Sol0752; independent0759 PASS | All96IDs and2976cells match;80environment,1regression,15unknown. Genuinepriorproof scopes retained; no passcredit. | JSON9b9bc96b |
 
 | U2 duck seed | Restore faithful canonical seed before workflow | Sol | Actual135pass1fail managed result | doing | agt-U2-duck-seed-sol-0801 | Seedpublish refuses contradictory parent mirrors; originalscenario assertions untouched. Cause before anyfixturechange. | Sourceccf87 |
 | U2 duck whole path | Classify seed consistency and public free edits | Luna | Independent second-failure investigation | doing | agt-U2-duck-whole-path-0801 | Compare passingnormalpublication and strictmirrorrefusal. No duplicateauthor or body. | Read only |
 | D39 wire idempotency | Assert actual transmitted stable key | Sol | Independent0757FAIL missingwitness | doing | agt-D39-idempotency-sol-0801 | Actualtransportheaders discarded bytesthelper; canonicalsource/path/body/errorchecks pass. Narrowtestonly fix. | Base2c55 |
 | D39 whole path | Compare actual client and passing wire witness | Luna | Independent second-failure investigation | doing | agt-D39-whole-path-0801 | Source to actualrequestheader/errorassertions; no generation or productchange. | Read only |
 
+| U2 interim home | Merge independently reviewed upstream source | Sol / queue | HARD0755 SOURCE PASS and freshlive tip | merging | agt-U2-boundary-final-sol-0745 | Allrestoredpredicates andexactunionqualified; D18loader/duckworkflow executionremain separateopenrows. | ccf87bd949 |
+| U2 D18 loader | Preserve package context in generated-client fixture | Luna | Independent exact source diagnosis | doing | agt-U2-D18-loader-0803 | Fixtureloads generated.py top-level but it hasrelativeimports. Preserve142tests624assertions andall6boundedwaits. | Baseccf87 |
+| F-ABA current test join | Import exact independently reviewed diagnostic blob | Luna | Viewing0748 PASS95 | doing | agt-F-ABA-diagnostic-join-0803 | Currentproductca891 independentlyPASS87; exact81dfe testonlyimport, nooldancestry/originalbody. | Baseca891 |
+
 P1: GO recorded. P4 and P5 done. G5 merged under H24. App and Proof retain P2/P3 ownership.
 Integration: 3f7e63b0cf adds reviewed persistence fixture848b above the exact d566 harness union. Runtime two-original home0733 and result0736 PASS; exact count mapping0750 active, no credit inferred from merge. Harness integrated0706 remains scoped staticPASS.
-Count: Published census is261 closed / 6 open of267; one current giant-rationale result is challenged by independent0733 pending exact reconciliation.  independent cumulative0715PASS. CensusSHA22ee4d6df217eef1cef60f7e9c646b6f5fe13a45d31163afb2ffe46126facae0. 120 mappings:119 current closures plus one challenged historical restart. Complete five-file package is published.
-Farm: Checkpoint26511 remains17,335PASS/288FAIL/187setup/4skip, Agent9cd/Runtime45c3. All96 requested failure sections and187setup records arrived. Setup independent0728 PASS:140 environment plus47 tuple mismatches. Failure96 review0733 failed prior-proof fields; corrected complete packet856de is in independent0747 review. No exact passed-node credit.
+Count: Official262 closed / 5 open of267, complete independent0759PASS. Delta+restart,+two-writer,-currentgiant. CensusSHA286047a522d61e57f8c46bb655d63d96bd82fd21e6f597fa72a2e017b2552eb2. All267 originalrecords retained;122mappingrows=121current+1historicalchallengedrestart. Full5-filepackagepublished. Docs futurefix gets no currentcredit.
+Farm: Checkpoint26511 remains17,335PASS/288FAIL/187setup/4skip, Agent9cd/Runtime45c3. All96 requested failure sections and187setup records arrived. Setup independent0728 PASS:140 environment plus47 tuple mismatches. Final96packet independently0759PASS:80environment,1currentdocsregression,15unknown; all96 priorqualifiedscopes retained and2976CSVcells verified. No exact passed-node credit.
 Blockers: Runtime kit — original67 wheels acquired but verifier rejects dotted metadata layout. Independent0740 confirms exact single dotted-name verifier defect; Runtime source correction requested. No newchild retry.
 Runtime: All36 original Runtime failures closed. Fixture848b home3f7 exact2 originals passed4.17s with independent0736 PASS; scoped count reconciliation0750 dispatched. Shared inverse460c passed177plus6 and Agent joined0719 passed four positives; current-only Agent portca891 independently0738 PASS87; Viewing diagnostic migration and cumulative join are next.
 App: Complete IMAGE 0554 and independent 0636 PASS retained at direct RuntimeService scope. No new producer or realm; no inferred census credit.
@@ -151,7 +155,7 @@ Safety: Earlier Farm, monitor, publication, bench and cleanup refusals remain st
 Disk: About 11 GB free. All finished unprotected Agent worktrees are already recycled; current pass found no eligible remaining candidate. Light work continues. Cancelled registry prune and held targets stay held.
 D32: All 267 original entries remain ours. Approved exact-node history is distinct from current challenged results. No full-suite PASS or upstream credit.
 D46: U2c closed and folded into the single freeze U-merge. Held candidates remain unmerged; relay and remote-provider scope remains deferred and fail-closed.
-D48: Two coverage pieces passed independent0721 review. Joined5783 retains histories/static gates; Sol0738 rejects3 effective fixture gaps. Sol0745 repair and independent wholepath0745 active. Service23062 ran zero bodies; row firstfix0747 active.
+D48: Finalccf87 independentlyHARDSol0755SOURCEPASS; normal home mergequeued. Sourceonly interim qualification:8guardcases+23controls pass; D18loader0803 and duckseed0801 remainopen with originaltests unchanged. Freshlive0755 verified25359.
 D39: Runtimebecfe producer and independent0727 source/result PASS consumed. Canonical adoption91bf prepared; independent0747 and exact conflict fixture0747 active. Home merge held for reviewed U2.
 D49 venue: Agent final full on Farm after corrected host setup and a zero-setup-error checkpoint. Fallback is Agent service after dependency-route qualification. Checkpoint 26511 has 187 setup errors; neither venue is yet qualified for final.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred. Independent0709 applies D23 to the separate internal a-rocket moved-head restart original; keep it visibly failing. D47 memo stays held.

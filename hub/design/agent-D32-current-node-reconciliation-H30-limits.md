@@ -1,8 +1,8 @@
 # H30/D43/H3 cumulative census limits
 
 - Artifact: `agent-D32-current-node-reconciliation-H30-corrected.json`
-- Artifact SHA-256: `22ee4d6df217eef1cef60f7e9c646b6f5fe13a45d31163afb2ffe46126facae0`
-- Current challenge candidate census: **267 total; 261 closed; 6 open; 120 mappings (119 current closures + 1 historical challenged)**. Prior next24 snapshot: **260/7/118**. Base **236/31/94**, commit `02bd3f1f238501ae42061d7802dd69fd34dd1821`, has independent0644 CORE plus scoped metadata/cumulative PASS. The current challenge candidate awaits independent review; no full-suite PASS is asserted.
+- Artifact SHA-256: `286047a522d61e57f8c46bb655d63d96bd82fd21e6f597fa72a2e017b2552eb2`
+- Current0750 candidate census: **267 total; 262 closed; 5 open; 122 mapping rows (121 unique current closures + 1 historical challenged restart)**. Reviewed0715 base: **261/6/120**. Prior next24 snapshot: **260/7/118**. Base **236/31/94**, commit `02bd3f1f238501ae42061d7802dd69fd34dd1821`, has independent0644 CORE plus scoped metadata/cumulative PASS. The current challenge candidate awaits independent review; no full-suite PASS is asserted.
 - Prior metadata correction: active families summed to **66**, with **0** active Rendering missing result file nodes (all six are proven passed); active lane owners summed to **66** (Agent 60, Runtime 2, Viewing 4). That metadata-only correction preserved all 267 nodes and 59 mapping rows; the one-node D40 delta below is subsequent.
 - Historical baseline preserved: **172 closed / 95 open**; the 0550 package snapshot remains historical **179 closed / 88 open** metadata context only.
 - Prior cumulative inverse delta: **+22 exact current Occurrence-media inverse originals** (16 corruption and 6 retained-scope cases), all phase `call`, Agent-owned at base, now independently reviewed PASS.
@@ -103,7 +103,7 @@ Historical next24 remaining 7 exact original phase-call IDs (superseded below):
 - `tests/timeline/test_authoring_media.py::test_document_publish_forwards_new_stale_head_to_runtime`
 
 
-## Current challenge candidate (0705)
+## Historical current challenge snapshot (0705; independently reviewed0715 PASS; superseded by0750)
 
 - **261 closed / 6 open / 267 total**. Exact delta from candidate0652 is **-restart +stalehead +complete-closure**, net+1. All267 unique original IDs/phases are retained (**262call/5setup**, all ours); all264 unrelated node records, all45 prior proof and observed-field records, full metadata0636 CONTRACTINVENTORY, and the exact prior24 roots/helpers/schema remain unchanged. This candidate requires independent package PASS; underlying two late selector verdicts are independently PASS0645.
 - **120 CSV/JSON mappings =119 current closure mappings +1 historical/challenged restart mapping**.117 prior rows are unchanged; restart's original mapping is preserved in `current_challenge_mapping.historical_restart_mapping`, and its inventory row is explicitly marked `historical_challenged`. Two new rows are appended. Mapping inventory does not sum to261 closed nodes. **48 proof records =45 unchanged +2 finite PASS records +1 current failure record**;48 coverage entries separate specification from observed predicates;45 distinct defined proof records are referenced by the current261 closed nodes (a reference count, not45 current executions). `current_proof_applicability` supersedes only the challenged restart's historical coverage and the late closure's historical no_renderer failure.
@@ -129,3 +129,200 @@ Remaining **6** exact original IDs, all phase `call`:
 - `tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param`
 
 - `tests/test_generic_host.py::test_structure_pack_members_survive_harvest_cleanup_and_reopen`
+
+
+## Current persistence qualification and docs challenge (0750)
+
+- **CANDIDATE: independent cumulative package PASS pending.** Base `a3dff9d69685fd66f296b015e7517408c2b932f5` is independent0715 PASS **261/6/120**. Exact delta **+restart +two-writer -giant = net+1** gives **262 closed /5 open /267**. All267 original IDs/phases/tags (262call/5setup, all ours), all264 unrelated node records, all48 prior proof and coverage records, every prior mapping and the complete CONTRACTINVENTORY are preserved. Prior0705 and older snapshots above are historical; this section supplies current applicability.
+- **122 CSV/JSON mapping rows =121 unique current closures +1 historical/challenged restart row**;121 unique original IDs overall. All120 old rows remain unchanged; two current rows are appended. Restart historical38af PASS stays challenged,0649 actual2FAIL stays historical failure; new0733/0736 proof restores current restart closure once. The separate two-writer closes once. Giant had no baseline mapping row; its old `cli_surface_0012` proof remains historical/challenged for this node. Fifty proof records =48 retained +1 scoped two-node PASS +1 current docs challenge; coverage projections remain separate from specification.
+- Persistence: **actual2PASS4.17s**, Agent `3f7e63b0cfb0c7165b0b61d6f149d038c16dd630`/tree`163a7f2334e2a7e49058fefbf03077d6ff090660`, Runtime `becfe6db88b2cc034dba3fafa6c050117cdf2b06`/tree`7edc08e3fe94edcbc8ef695c479f4de301789b89`. Fixture file exactly matches `848bfb6b18`; all10 original body/assertion pairs verified by read-only AST/blob comparisons. JUnit SHA **`d2699be64fa40d984b6bbe65b3b7029f09f0c86ebcaf1a84320a5271faf23c84`**, exact two named original memberships and module origins independently checked0736 and named in peer0739. Raw XML/qualification/review evidence is remote and absent locally; the digest/membership is independently verified report evidence, not a local rehash or raw parse. Both primary reports and peer are read and hashed.
+- **Giant original REOPENED:** `tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale`. HOME3f7 actual **14,313** lines, SHA`b5ad2c6494064ecb5e1c1c1c251b411a39f8b59de3358ddc783a1b1ec6765fd6`, versus current rationale **13,998**, drift315 > original tolerance50. Farm96review0733 independently confirms the current comparison; author0742 oldRED is **1failed0.54s**. Original strict test body/assertions are unchanged. Docs-only future `8c5ae21fcd39d7ff7d72fb0b19a6ae4147af0609` on U2 parent5783ae has14330 lines, SHA`9a0d3f8e987c043e4dfdb7912e63b228fc6dfeec41d573d92ff31bf4ec8cd11b`, and independent0747 **1PASS0.59s**. It is **not HOME** and receives zero current closure credit; no future merged claim.
+- Current owners: **Agent5**. Current families: **SDK/timeline2 + Runtime child/import1 + execution/rendering/pack1 + CLI/manifest/current-surface1 =5**. Exact remaining originals:
+
+  - `tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons`
+  - `tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut["second"]`
+  - `tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head`
+  - `tests/test_generic_host.py::test_structure_pack_members_survive_harvest_cleanup_and_reopen`
+  - `tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale`
+
+- D23 moved-head and wordsecond remain unchanged/open/deferred; support and generic child remain unqualified. Frozen Farm Runtime45c failures **80environment/1regression/15unknown** supply no retrospective current passes and no automatic reopen of the other95 originals. Only the direct current giant source/docs challenge reopens here. All scoped root/helper/installed/H3 evidence retains original qualified tuples and limits.
+- Exactly two original source-mode/FakeTimelines process-persistence outcomes on Agent HOME3f7/tree163a and Runtime becfe/tree7edc. Restart restores challenged closure once; two-writer is separate original once. No HTTP, installed-source/child, canonical-client adoption, authenticated actor, provisioning, full suite, complete v2 wire/reply/history/receipt qualification. D23 moved-head and wordsecond, mocked stale-head, support and generic child receive no additional credit. Full request/reply inventory and mounted production-caller acceptance remain required. Static relevant blob comparisons and file-backed fixture predicates do not establish every request/reply/history/undo/publisher/receipt field. No source execution, body/test/probe/HTTP/full/browser/gate run, product edit, new ledger or outside worktree edit.
+- Validation: standalone stdlib full JSON/CSV membership, exact base delta and264 preservation, owner/family/all267 sums, all prior proof/coverage/mapping/contract preservation, ten original body/assertion pairs, relevant production blobs, exact current/future docs comparison, final census external SHA and five-file package SHA (sorted relative filename +NUL+bytes+NUL). Final report carries package SHA; no recursive embedded package digest. Structured detail: `corrected.json#/persistence_challenge0750` and `delta-mapping.json#/persistence_challenge_mapping0750`.
+
+
+## Standalone read-only stdlib validator (0750)
+
+Save this block under TMPDIR and run `python3 "$TMPDIR/validate_count.py"` from the candidate worktree. It imports no product code and runs no test/probe. Raw XML checking is conditional on local availability; independently verified0736 membership/digest is explicit when absent.
+
+```python
+import ast
+import collections
+import csv
+import hashlib
+import io
+import json
+from pathlib import Path
+import re
+import subprocess
+
+root = Path.cwd()
+e = root / 'evidence'
+prefix = 'agent-D32-current-node-reconciliation-H30-'
+base = 'a3dff9d69685fd66f296b015e7517408c2b932f5'
+orch = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+def git(*args, repo=root):
+    return subprocess.check_output(['git', '-C', str(repo), *args])
+
+def old_file(name):
+    return git('show', base + ':evidence/' + prefix + name)
+
+def blob(ref, path):
+    return git('show', ref + ':' + path)
+
+def function_identity(info):
+    data = blob(info['source_ref'], info['test_file'])
+    tree = ast.parse(data)
+    node = next(n for n in tree.body if isinstance(n, ast.FunctionDef)
+                and n.name == info['test_file_function'])
+    dump = lambda n: sha(ast.dump(n, include_attributes=False).encode())
+    assert sha(data) == info['source_file_sha256']
+    assert node.lineno == info['function_line']
+    assert dump(node) == info['function_ast_sha256']
+    assert dump(ast.Module(body=node.body, type_ignores=[])) == info['body_ast_sha256']
+    assertions = [dump(n) for n in ast.walk(node) if isinstance(n, ast.Assert)]
+    assert assertions == info['assertion_ast_sha256']
+    assert len(assertions) == info['assertion_count']
+
+def validate_identity(info, name):
+    function_identity(dict(info, test_file_function=name))
+
+d = json.loads((e / (prefix + 'corrected.json')).read_text())
+m = json.loads((e / (prefix + 'delta-mapping.json')).read_text())
+b = json.loads(old_file('corrected.json'))
+bm = json.loads(old_file('delta-mapping.json'))
+a = d['persistence_challenge0750']
+assert a == m['persistence_challenge_mapping0750']
+original = json.loads((orch / 'design/agent-D32-failure-map-0057.json').read_text())
+key = lambda n: (n['exact_node_id'], n['phase'], n['tag'])
+assert len(d['nodes']) == len({key(n) for n in d['nodes']}) == 267
+assert len({n['exact_node_id'] for n in d['nodes']}) == 267
+assert {key(n) for n in d['nodes']} == {key(n) for n in b['nodes']}
+assert {key(n) for n in d['nodes']} == {key(n) for n in original['entries']}
+assert all(n['tag'] == 'ours' for n in d['nodes'])
+assert collections.Counter(n['phase'] for n in d['nodes']) == {'call':262, 'setup':5}
+oldnodes = {n['exact_node_id']:n for n in b['nodes']}
+nodes = {n['exact_node_id']:n for n in d['nodes']}
+changed = {k for k in nodes if nodes[k] != oldnodes[k]}
+assert changed == set(a['delta']['newly_closed'] + a['delta']['reopened'])
+assert len(changed) == 3 and len(nodes) - len(changed) == 264
+closed = {k for k,n in nodes.items() if n['status'] == 'proven_passed'}
+oldclosed = {k for k,n in oldnodes.items() if n['status'] == 'proven_passed'}
+assert closed-oldclosed == set(a['delta']['newly_closed'])
+assert oldclosed-closed == set(a['delta']['reopened'])
+assert len(closed)-len(oldclosed) == a['delta']['net_closed'] == 1
+opened = [n for n in d['nodes'] if n['exact_node_id'] not in closed]
+assert a['counts'] == {'total':267, 'closed':len(closed), 'open':len(opened)}
+assert (len(closed), len(opened)) == (262,5)
+assert a['remaining_exact_original_node_ids'] == [n['exact_node_id'] for n in opened]
+owners = dict(collections.Counter(n['effective_owner'] for n in opened))
+families = dict(collections.Counter(n['family'] for n in opened))
+assert owners == a['active_owner_counts'] == {'Agent':5}
+assert {k:v for k,v in a['active_family_counts'].items() if v} == families
+assert sum(owners.values()) == sum(families.values()) == 5
+r = d['reconciliation']
+assert r['counts'] == dict(b['reconciliation']['counts'], proven_passed=262, active_owner=5)
+assert r['confirmed_closed_ids'] + r['open_ids'] == 267
+assert r['effective_owner_counts_active'] == owners
+assert r['active_family_counts'] == a['active_family_counts']
+assert not r['current_head_full267_pass']
+for section in ['proofs', 'PROOF_FIELD_COVERAGE']:
+    assert all(d[section][k] == v for k,v in b[section].items())
+    assert len(d[section]) == len(b[section])+2 == 50
+assert d['CONTRACTINVENTORY'] == b['CONTRACTINVENTORY']
+assert m['CONTRACTINVENTORY'] == bm['CONTRACTINVENTORY']
+assert d['current_challenge0705'] == b['current_challenge0705']
+assert m['current_challenge_mapping'] == bm['current_challenge_mapping']
+assert all(m[k] == v for k,v in bm.items()
+           if k not in {'rows','base_artifact_sha256','base_artifact_sha256_meaning'})
+assert m['rows'][:120] == bm['rows'] and len(m['rows']) == 122
+with (e / (prefix + 'delta.csv')).open(newline='') as f:
+    assert list(csv.DictReader(f)) == m['rows']
+assert (e / (prefix + 'delta.csv')).read_bytes().startswith(old_file('delta.csv'))
+current = [x for x in m['rows'] if x['credit'] == 'confirmed_closed']
+history = [x for x in m['rows'] if x['credit'] == 'historical_challenged']
+assert len(current) == len({x['exact_original_node_id'] for x in current}) == 121
+assert len(history) == 1
+assert all(x['exact_original_node_id'] in closed for x in current)
+for row in m['rows']:
+    assert row['exact_original_node_id'] in nodes
+    assert row['phase'] == nodes[row['exact_original_node_id']]['phase']
+    assert all(p in d['proofs'] for p in row['proof_ref'].split(';'))
+for node in d['nodes']:
+    assert all(p in d['proofs'] for p in node.get('proof_refs', []))
+p = d['proofs']['persistence_integrated0733_review0736']
+assert p['exact_original_node_ids'] == a['delta']['newly_closed']
+assert p['result'] == '2 passed in 4.17s'
+assert len(p['source_identity']) == 10
+for nid, pair in p['source_identity'].items():
+    for which in ['original','qualified_source']:
+        validate_identity(pair[which], nid.split('::')[1])
+    assert pair['original']['body_ast_sha256'] == pair['qualified_source']['body_ast_sha256']
+    assert pair['original']['assertion_ast_sha256'] == pair['qualified_source']['assertion_ast_sha256']
+assert blob(p['agent_source'],p['fixture_file']) == blob(p['fixture_commit'],p['fixture_file'])
+assert sha(blob(p['agent_source'],p['fixture_file'])) == p['fixture_sha256']
+for path, comparison in p['production_source_comparison'].items():
+    data = blob(p['agent_source'],path)
+    assert sha(data) == comparison['qualified_sha256']
+    for ref, origin in comparison['reviewed_sources'].items():
+        assert data == blob(ref,path) and sha(data) == origin['sha256'] and origin['equal']
+assert git('rev-parse',p['agent_source']+'^{tree}').decode().strip() == p['agent_tree']
+assert git('rev-parse',p['runtime_source']+'^{tree}',repo='/home/user/work/runtime').decode().strip() == p['runtime_tree']
+assert '2 passed in 4.17s' in Path(a['retained_sources']['integrated0733']['path']).read_text()
+assert p['reported_junit_sha256'] in Path(a['retained_sources']['independent0736']['path']).read_text()
+peer = Path(a['retained_sources']['peer0739']['path']).read_text()
+assert all(nid.split('::')[1] in peer for nid in p['exact_original_node_ids'])
+raw = Path(p['reported_junit'])
+assert raw.exists() == p['raw_junit_present_locally']
+if raw.exists():
+    import xml.etree.ElementTree as ET
+    assert sha(raw.read_bytes()) == p['reported_junit_sha256']
+    cases = list(ET.fromstring(raw.read_bytes()).iter('testcase'))
+    assert sorted(c.get('name') for c in cases) == sorted(x.split('::')[1] for x in p['exact_original_node_ids'])
+    assert all(not list(c) for c in cases)
+g = d['proofs']['giant_current_challenge0750']
+for rec in [g['current_source'],g['current_rationale'],g['future_repair']['source'],g['future_repair']['rationale']]:
+    data = blob(rec['source_ref'],rec['path'])
+    assert sha(data) == rec['sha256'] and len(data.splitlines()) == rec['physical_lines']
+assert (g['current_source']['physical_lines'],g['current_claim_lines']) == (14313,13998)
+assert '13,998' in blob(g['agent_source'],'docs/giant-file-rationale.md').decode()
+assert g['current_actual_minus_claim'] == 315
+for info in g['unchanged_original_test'].values():
+    validate_identity(info,g['exact_original_node_ids'][0].split('::')[1])
+assert len({x['body_ast_sha256'] for x in g['unchanged_original_test'].values()}) == 1
+assert not g['future_repair']['current_closure_credit'] and not g['future_repair']['future_is_home']
+assert g['future_repair']['source']['physical_lines'] == g['future_repair']['claim_lines'] == 14330
+red = Path(g['author_old_red_log']['path']).read_text()
+assert '1 failed in 0.54s' in red and 'claims 13998 lines but on-disk count is 14313' in red
+for source in list(a['retained_sources'].values())+[g['author_old_red_log']]:
+    assert sha(Path(source['path']).read_bytes()) == source['sha256']
+assert a['proof_inventory']['distinct_proof_refs_on_current_closed_nodes'] == len({p for n in d['nodes'] if n['exact_node_id'] in closed for p in n['proof_refs']})
+cp = e / (prefix+'corrected.json')
+digest = sha(cp.read_bytes())
+assert (e/(prefix+'corrected.sha256')).read_text() == digest+'  '+cp.name+'\n'
+assert m['base_artifact_sha256'] == digest
+allowed = {str(p.relative_to(root)) for p in e.iterdir() if p.name.startswith(prefix)}
+changedpaths = set(git('diff','--name-only',base).decode().splitlines())
+assert len(allowed) == 5 and changedpaths == allowed
+assert not git('ls-files','--others','--exclude-standard').strip()
+package = hashlib.sha256()
+for name in sorted(allowed):
+    package.update(name.encode()+b'\0'+(root/name).read_bytes()+b'\0')
+print('PASS: all267 original IDs/phases/tags;262 closed/5 open;264 unchanged;owners/families;122 mappings=121 current+1 historical;50 proofs/coverage;all prior contracts/proofs/mappings;10 AST/assertion pairs;source blobs;current/future docs;five-file-only scope')
+print('CENSUS_SHA256='+digest)
+print('PACKAGE_SHA256='+package.hexdigest())
+print('RAW_XML_LOCAL='+str(raw.exists())+';0736 independently verified named membership/digest retained; no local raw validation claimed when absent')
+```
