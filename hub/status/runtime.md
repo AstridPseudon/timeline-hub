@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T11:52:45Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 1m -->
-# runtime board, 2026-10-24T11:50:08Z
+<!-- main | 2026-10-24T11:55:43Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 0m -->
+# runtime board, 2026-10-24T11:55:13Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -115,16 +115,16 @@ Inputs: Genuine archive 443977 has actual Agent receipt 1004 and independent 101
 
 Farm checkpoint 26511 remains terminal on Agent 9cd and Runtime 45c3: 17,335 passed, 288 failed, 187 setup errors and four skips. Setup accounting retains 140 environment observations and 47 tuple mismatches. Prior-closure review retains 80 environment, one docs regression and 15 unknown results. Seven failure identities and original JUnit remain unknown. The old 9cd/1d9 child passes isolated imports and contains astrid_runtime; schema and xdist are absent. No corrected checkpoint is requested. Peer 1128 asks Farm to replace its stale Runtime maker blocker with the existing owner admission gate.
 
-Proof: P1 remains historical GO. P4 and P5 retain named scopes; all final gates still need the final tuple. App P2 26414 terminated at stale Agent tree guard; all original gestures NOTRUN. App Sol1130 and independent whole-path1130 own caller-only correction before a meaningful changed run. Proof owns verdict. Historical P2 23809, P3 9310 and current P3 3896 remain NO-GO. Proof's clean D53 source 2357 has independent final review 1126 PASS. Its normal merge can follow P226414 terminal; Proof owns home and integrated qualification. No new P3 is released.
+Proof: P1 remains historical GO. P4 and P5 retain named scopes; all final gates still need the final tuple. App P2 26414 terminated at stale Agent tree guard; all original gestures NOTRUN. App Sol1130 and independent whole-path1130 own caller-only correction before a meaningful changed run. Proof owns verdict. Historical P2 23809, P3 9310 and current P3 3896 remain NO-GO. Proof D53 source2357 is normally merged on App602f with D52 deletions retained. App pure1143 and Proof integrated1148 own qualification; P3 caller1140 prepares binding. No new P3 is released.
 
 Provider completion: Runtime 0915 and independent 0923 retain original cause, hook firing, durable acceptance and request correlation UNKNOWN. Nine controls passed; temporary JUnit loss remains disclosed. Original 20732/11466 remain failed and all 59 predicates unchanged. Viewing capture source 30cf passed independent 19; Agent owns home and runner wiring. No new Runtime source or original body is requested. [Source review](../../design/runtime-provider-completion-review-0923.md).
 
 Blockers: Owner admission — exact schema HTTP 403 and automatic access refusal remain stopped under the existing hold. No schema or child request is released. [Evidence](../../design/runtime-schema-acquisition-status-0955.md).
-Blockers: App and Proof — P2 caller stale-tree correction and D53 home qualification precede next released journeys. Header P2/P3 GO precedes App upstream and D39 home adoption.
+Blockers: App and Proof — P2 caller correction, D53 integrated qualification and exact P3 caller precede released journeys. Header P2/P3 GO precedes App upstream and D39 home adoption.
 Next ready: Agent home merges sole reviewed3b8dc and qualifies it. Occurrence19 proof returned. No ready Runtime author or review is waiting; App owns caller and full follow-ups.
 
 Later: D47 memo and proof-pin work remain held until after delivery; nine state attacks stay open. D34 broader cleanup resumes below 8.5 GB or after delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 is cut; D14/D23 remain deferred and unchanged. D52 supersedes D37: owner lanes may remove caller-proven dormant scope with its exclusive tests, ledger entry and independent review. Live tests stay strict.
 
 Disk: 9031442432 bytes free. Sweep3 removed zero directories; compaction packed zero and compressed two old logs. All four new finished worker trees were automatically recycled after clean finalization. Previously refused or dirty historical targets were not retried. D34 broader cleanup remains gated; main stays above its8GB heavy-run floor.
 
-Pass 2026-10-24T11:46:56Z: Shot-set independent1143 PASS17+61, exact original bodies/params/fixture bytes and production materialization retained. Flat authored XML, origins and hashes published1150 for remote receipt. Sole own3b8dc queued through request-merge-remote immediately; Agent home and integrated proof remain. Occurrence19 independently qualified on exact integration source returned1145. Checked current peer boards and header; no gate, full or child repeated.
+Pass 2026-10-24T11:55:13Z: Rechecked current owner boards and header. App D53 is home602f with D52 deletion retained; pure1143, Proof1148 and caller1140 are active, no new original run. Agent has ACKed Runtime groups. Both Runtime reviews are PASS; sole shot-set3b8dc waits Agent home and proof, occurrence19 exact source evidence is returned. Current source and previous full failures remain distinct. Existing owner schema/child hold remains.
