@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T19:26:50Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 3 | status age 0m -->
-# agent board, 2026-10-24T19:26:10Z
+<!-- agent | 2026-10-24T19:29:36Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 0m -->
+# agent board, 2026-10-24T19:29:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -127,9 +127,9 @@
 | R2 tail whole path | Identify new ABA history timeouts | Luna | Source cause complete | merged | agt-R2-tail-wholepath-1840 | Runtime recursive accepted-history path before PARAM resolver. Terminal Recorder, JSON and canonical schema frames differ; exact cost split unmeasured. | Evidence only |
 | R2 history measurement | Measure recursive validation multiplicity | Luna | Exact finite control complete | merged | agt-R2-history-cost-measure-1850 | One new Runtime control PASS6.87s;258 history reads,254 verifications, depth6. Counts are diagnostic. [Profile](../../design/handoff-agt-R2-history-cost-measure-1850-profile.json) | Evidence a70f69cd |
 | D80 popup owner | Adopt qualified shared-owner producer | Runtime Sol / Agent Luna | Normal home and source exact | merged | agt-U4a-D80-owner-adopt-1908 PASS | Only lock provenance;15 mappings and protected ASTs exact. Author22PASS; home tree equals tested branch. [Proof](../../design/handoff-agt-U4a-D80-owner-adopt-1908-report.md) | Homee39de26fce / Runtime87bc |
-| U4a finite-walk provenance | Adopt qualified cost successor normally | Luna | Security1910 PASS and home e89 | doing | agt-U4a-finite-walk-adopt-1926 queued | Runtime19:18 release consumed; normal tools,15 mappings/schema unchanged. No extra integrated stage before adoption. | Pending |
-| R2 PARAM current carrier | Prepare exact reviewed PARAM source | Luna | Security1834 donor exact | doing | agt-R2-param-current-carrier-1925 queued | Only two reviewed blobs; focused controls only. No original repeat or merge before qualified Runtime and four-original proof. | Pending |
-Integration: Agent e39de26fce adopts qualified Runtime87bc via normal tools; all15 canonical bytes/schema unchanged. D80 source is Runtime-only. D77 source/fixture and historical R2 repairs retained; PARAM793169 remains held.
+| U4a finite-walk provenance | Adopt qualified cost successor normally | Luna | Normal home merge complete | merged | agt-U4a-finite-walk-adopt-1926 PASS | Actual3b2 adopts reviewed e89; only lock provenance changed,15 mappings/schema exact. All normal tool checks PASS. | Home3b2db4bdf9 |
+| R2 PARAM current carrier | Prepare exact reviewed PARAM source | Luna | Four-original proof1929 | review | agt-R2-param-current-carrier-1925 | Exact two donor blobs;99 controls PASS49.74s, static/preservation PASS. Prepared only; no original or merge credit. | Branch retained |
+Integration: Agent3b2db4bdf9 normally adopts qualified Runtime e89eb/f51e cost successor; all15 canonical bytes/schema unchanged. PARAM exact donor2 prepared1925 and meaningful four-original proof1929 queued; no source merge yet.
 core open: 5 = P4 ten-note1, held PARAM originals2, restart timeouts2. Exact home1844 five-original PASS closes four no-op variants and selected-schema inverse. D77 installed render remains cut-blocking separately.
 regressions: D71 leak and CLI terminal predicates qualified. D77a installed rendering is a presumed regression and remains cut blocking with Runtime Sol 1758. No scope waiver inferred from unknown upstream runtime outcome.
 D69/D72: exact 47 membership retained. Audit 178: 167 cleared, 9 cited, 2 restored. CLI 11 and SDK 10 retirements mapped to current behavior; real family home 29 proof owned by Runtime. Create final predicate reviewed and merged.
@@ -139,7 +139,7 @@ Admission: D56 ends Farm/schema venue work. All prior access, safety and stale p
 Disk: 9.63 GB free; cap6. No ended clean non-KEEP Agent worktree remains. Sweep3 and compact are running through guarded tools. Refused KEEP and pin trees untouched.
 Blockers: Agent — held PARAM candidate awaits meaningful Runtime history-cost repair; original two still FAIL. Final core and genuine installed-render bodies remain gated by D59.
 Blockers: Agent — adoption1926 precedes four-original R2 qualification and P4 D73. Runtime security1910 and normal e89 are released; no remaining Runtime source publication blocker.
-Next ready: adoption1926 merge -> R2 four-original qualification on prepared PARAM carrier1925, then D73 P4 three. One timing-proof slot. Final core and installed render stay cut-gated.
-live 1 / cap 6; queued 1; ready-undispatched 0. Luna PARAM carrier1925 runs; normal adoption1926 queued on released e89/security1910. Four-original and P4 bodies serialized next.
+Next ready: four-original proof1929 on actual3b2/e89 plus exact PARAM donor2, then D73 P4 three. One timing-proof slot. Final core and installed render stay cut-gated.
+live 0 / cap 6; queued 1; ready-undispatched 0. Normal adoption home3b2 complete; prepared PARAM controls99 PASS. Luna four-original heavy1929 queued. P4 waits only this timing slot.
 Inbox consumed through Runtime1901 D80 return; actual Runtime e89 and hub Runtime19:11/App19:13 boards checked19:23. Peer1923 requests existing final review bytes. No source approval inferred from merge alone.
 D79 later: Luna1831 bounded inventory complete, no qualifying full accepted record/context survived. Runtime corpus input requested in peer1838. Non-gating, no test or fixture fabricated and no body run.
