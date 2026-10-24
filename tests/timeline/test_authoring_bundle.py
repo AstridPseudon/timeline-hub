@@ -625,6 +625,47 @@ def test_publish_uses_one_compilation_and_returns_complete_mapping():
     assert all("from_revision" not in action for action in result["next_actions"][2:])
 
 
+def test_publication_data_projects_accepted_parent_revision_without_rewriting_reply():
+    parent, shots, timelines = _closure(shared=True)
+    candidate = open_authoring_bundle(
+        parent, shot_revisions=shots, internal_timeline_revisions=timelines
+    )
+    candidate["source_mapping"]["_runtime_document"] = _runtime_document(parent, shots, timelines)
+
+    class CompleteReplyWriter(_Writer):
+        def commit_timeline(self, project_id, timeline_id, body, *, idempotency_key):
+            envelope = super().commit_timeline(
+                project_id, timeline_id, body, idempotency_key=idempotency_key
+            )
+            envelope["data"].update(
+                base_revision_id=body["base_revision_id"],
+                base_publication_id=body["base_publication_id"],
+                commands=copy.deepcopy(body["commands"]),
+                steps=copy.deepcopy(body["steps"]),
+                merge_mode=body["merge"],
+                label=body["label"],
+                source=copy.deepcopy(body["source"]),
+                rationale=body["rationale"],
+                publisher="test-user",
+            )
+            envelope["receipt"]["result"] = copy.deepcopy(envelope["data"])
+            return envelope
+
+    writer = CompleteReplyWriter(candidate["source_mapping"]["_runtime_document"])
+
+    result = publish_authoring_candidate(candidate, writer, idempotency_key="accepted-parent-alias")
+
+    publication = result["publication"]
+    assert publication["accepted_revision_id"] == "saved-revision"
+    assert publication["parent_revision_id"] == publication["accepted_revision_id"]
+    assert publication["data"]["accepted_revision_id"] == "saved-revision"
+    assert publication["data"]["parent_revision_id"] == "saved-revision"
+    assert publication["canonical_document"] == writer.document
+    assert publication["data"]["canonical_document"] == writer.document
+    assert publication["receipt"]["result"]["accepted_revision_id"] == "saved-revision"
+    assert publication["data"]["steps"] == writer.calls[0][2]["steps"]
+
+
 def test_group_move_compiles_and_uses_existing_publication_boundary():
     parent, shots, timelines = _closure(shared=True)
     candidate = open_authoring_bundle(
@@ -1193,9 +1234,38 @@ def test_candidate_compiler_integrates_with_runtime_atomic_publication(tmp_path)
     from runtime_protocol import service as runtime_service
     from runtime_protocol import store as runtime_store
 
+    from astrid.sdk.timeline.commit import create_runtime_commit_service
+    from tests.helpers.trusted_seed import seed_trusted_parent
+
     root = tmp_path / "realm"
     runtime_store.RealmStore.initialize(root).close()
     service = runtime_service.RuntimeService(root)
+    service.register_timeline_commit_provider(create_runtime_commit_service())
+
+    class Transport:
+        def list_timeline_commits(self, project_id, timeline_id, **kwargs):
+            return service.list_timeline_commits(project_id, timeline_id, authorize=lambda: None, **kwargs)
+
+        def get_project_parent_composition_revision(self, project_id, timeline_id, revision):
+            return service.get_project_parent_composition_revision(project_id, timeline_id, revision)
+
+        def get_project_shot_revision(self, project_id, shot_id, revision):
+            return service.get_project_shot_revision(project_id, shot_id, revision)
+
+        def get_project_timeline_revision(self, project_id, timeline_id, revision):
+            return service.get_project_timeline_revision(project_id, timeline_id, revision)
+
+        def get_project_media_selection(self, project_id, selection):
+            return service.get_project_media_selection(project_id, selection, authorize=lambda: None)
+
+        def commit_timeline(self, project_id, timeline_id, payload, **kwargs):
+            return service.commit_timeline(
+                project_id, timeline_id, payload, publisher="test-user",
+                invocation_path=f"/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+                authorize=lambda: None, **kwargs
+            )
+
+    transport = Transport()
     try:
         project = service.create_project(
             {"slug": "authoring", "name": "Authoring"}, idempotency_key="project"
@@ -1231,7 +1301,7 @@ def test_candidate_compiler_integrates_with_runtime_atomic_publication(tmp_path)
             "internal_timeline_revisions": timelines,
             "shot_revisions": shots,
         }
-        service.publish_parent_composition(project_id, "main", seed, idempotency_key="seed-parent")
+        seed_trusted_parent(service, seed, idempotency_key="seed-parent")
         exact_parent = service.get_project_parent_composition_revision(
             project_id, "main", "parent-1"
         )
@@ -1251,7 +1321,7 @@ def test_candidate_compiler_integrates_with_runtime_atomic_publication(tmp_path)
         }
 
         committed = publish_authoring_candidate(
-            candidate, service, idempotency_key="complete-candidate"
+            candidate, transport, idempotency_key="complete-candidate"
         )
         new_head = committed["publication"]["data"]["new_head"]
         assert committed["summary"]["new_head"] == new_head
@@ -1269,9 +1339,8 @@ def test_candidate_compiler_integrates_with_runtime_atomic_publication(tmp_path)
         assert reread["payload"]["opaque_parent"] == {"keep": ["all", "fields"]}
         newer_payload = copy.deepcopy(reread["payload"])
         newer_payload["opaque_parent"]["writer"] = "later"
-        service.publish_parent_composition(
-            project_id,
-            "main",
+        seed_trusted_parent(
+            service,
             {
                 "project_id": project_id,
                 "timeline_id": "main",
@@ -1282,7 +1351,7 @@ def test_candidate_compiler_integrates_with_runtime_atomic_publication(tmp_path)
             idempotency_key="later-writer",
         )
         replay = publish_authoring_candidate(
-            candidate, service, idempotency_key="complete-candidate"
+            candidate, transport, idempotency_key="complete-candidate"
         )
         assert replay == committed
         assert service._timeline_resource("main")["head_revision_id"] == "newer-head"
