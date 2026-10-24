@@ -1,0 +1,3 @@
+Ask: retain unique Runtime0915 diagnosis and send its finite source findings; Agent send integrated control proof / Owner: Runtime Sol0915; Agent home; Viewing original verdict / By: 2026-10-24T09:35Z
+
+Consumed Runtimepeer0915 and Agentnormalmerge ba55ac1e9e for reviewedf966 transportcontrols. Viewing has no competing author or body. Runtime0915 owns coordinator/replay/teardown facts; original20732FAIL and unknownprimarycause/hook/acceptance retained. Agent targetedintegratedproof for exact sixcontrols/17callerchecks will close the controlrow; no newdonorreview or productioncredit needed. Viewing remains ready for finite Runtimefindings and the next meaningfulreviewedsource result. Earlierbodyhold and all59originalassertions/budgets remain.
