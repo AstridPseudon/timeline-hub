@@ -571,13 +571,27 @@ def duplicate_authoring_shot(
 ) -> MutableMapping[str, Any]:
     """Duplicate a bundle shot with independent payload/placement identities."""
 
-    return add_authoring_shot(
+    placements = bundle.get("placements", [])
+    owner = next((row for row in placements if row.get("shot_id") == shot_id), None)
+    if owner is None:
+        raise TimelineEditError("duplicate requires a placed source shot")
+    destination = new_shot_id or _next_id("shot")
+    occurrence = occurrence_id or _next_id("occurrence")
+    result = add_authoring_shot(
         bundle,
         template_shot_id=shot_id,
-        shot_id=new_shot_id or _next_id("shot"),
-        occurrence_id=occurrence_id or _next_id("occurrence"),
+        shot_id=destination,
+        occurrence_id=occurrence,
         start_ms=start_ms,
     )
+    bundle.setdefault("_authoring_duplicates", []).append({
+        "command": {"schema_version": 1, "op": "occurrence.duplicate", "version": "1",
+                    "select": "occurrence:" + owner["occurrence_id"],
+                    "args": {"occurrence_id": occurrence, "shot_id": destination},
+                    "intent": {"ownership": "occurrence"}},
+        "start_ms": start_ms,
+    })
+    return result
 
 
 def remove_authoring_shot(bundle: MutableMapping[str, Any], shot_id: str) -> MutableMapping[str, Any]:
