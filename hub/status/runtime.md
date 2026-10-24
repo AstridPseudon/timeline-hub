@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T15:52:42Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 1m -->
-# runtime board, 2026-10-24T15:51:27Z
+<!-- main | 2026-10-24T15:55:31Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 1m -->
+# runtime board, 2026-10-24T15:54:21Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -99,11 +99,11 @@
 | F-final | Main delivery build and ZIP | Luna | D59 cut and final proofs | doing | Builder1233; docs1229; service1244 | Builder and v2 prose installed. Durable service helper repair active; live-main refresh and final build wait qualified cut and proofs. | No delivery artifact |
 | F-final-builder | Put verifier clones in TMPDIR | Luna / Luna | Exact installed proof complete | merged | Review1229; installed1233 PASS | f25d atomically installed0755, old script backed up. Installed smoke and integrity checks passed; no real build. | f25dfab1 installed |
 | F-final-D68-assess | Check fresh upstream packaging | Luna | Source assessment complete | merged | rt-F-final-D68-assess-1543 | Stale builder hash found. Proposed refresh moves frozen integration; correction assigned1546. [Facts](../../workers/rt-F-final-D68-assess-1543/evidence/source-assessment.md) | Evidence only |
-| F-final-D68 | Preserve fresh upstream in staging | Luna | Frozen gating refs stay fixed | doing | rt-F-final-D68-isolated-1546 | Private candidate and synthetic preservation controls; no live install, upstream refresh or final build. | Pending |
+| F-final-D68 | Preserve fresh upstream in staging | Luna | Delivery integrity review | review | Author1546; review1554 | Candidate fda preserves owner additions in synthetic controls; exact integrity and final caller review active. No install or real build. | fda54be4 held |
 | F-final-D67 | Document genuine post-install D13 check | Luna | Exact source and installed render PASS | merged | Inputs1528; install1533 PASS | Installed README13env/7keys and original selector; D62 known gap in both docs. Actual renderer and exact-byte/mode checks PASS. | Installed docs |
 | F-final-D65 | Include authentic manifest release order | Luna | Actual installed renderer passed | merged | rt-F-final-D65-complete-1546 | Installed f992 README and8cda notes; actual command and vendor rebind precondition. D67 appendix exact. [Proof](../../design/rt-F-final-D65-complete-1546.md) | Installed docs |
 | F-final-docs | Refresh v1 delivery prose | Luna | Installed hashes and rendering passed | merged | Author1226; install1229 PASS | Two exact v2 documents installed atomically; predecessors backed up. Final tuple, gates and ZIP remain pending. | ef414 / 403384 installed |
-| F-final-core-refresh | Include current core source controls | Luna | Actual Runtime8b32 source | doing | rt-F-final-core-refresh-1550 | Final cut preparation only. Preserve81 old files and TS; add recorder ABI and forward-created authority controls. No bodies or install. | Pending |
+| F-final-core-refresh | Include current core source controls | Luna | Actual final tuple at cut | gated:D59-cut | rt-F-final-core-refresh-1550 | Candidate preserves81 files plus TS and adds2 current files. Compile, stub controls, collection122, static and no-install checks PASS. | c55c runner held |
 | F-final-service | Qualify callable final service candidate | Sol / Luna | D59 tuple and new backup path | gated:D59-cut | Author1305; independent1310 PASS | Source custody passed; actual vendor and15 mappings checked. [Review](../../design/runtime-final-service-custody-delta-1310.md). No install or live proof. | 3309e33 candidate |
 | F-final-inputs | Return qualified Runtime producer | Runtime1219 / App1222 | Actual consumer and Agent receipts | merged | Producer0727; handback1231 | Runtime becfe/tree7edc and all15 canonical mappings qualified. App home d993 receipt consumed; no child authority inferred. | Producer becfe |
 | F-D54-runtime-census | Classify core and regressions | Luna | Retained accounting complete | merged | Census1219 | Confirmed core open0; regressions0. One cross-lane provider incident remains unknown. [Accounting](../../design/runtime-D54-census-1219.md) | Runtime becfe |
@@ -161,3 +161,5 @@ Pass 2026-10-24T15:47:45Z: latest INBOX through App1539 and D68 consumed. Actual
 Pass 2026-10-24T15:49:16Z: final-core source list3309 lacks new recorder ABI and forward-created files; private successor1550 assigned under cap. Retain all81 old files and TS, no separate D62 proof or body before cut. Sweep3 freed0; compact in progress.
 
 Pass 2026-10-24T15:51:27Z: D65 docs1546 actual install/renderer/diff/appendix checksPASS consumed; exactreport published and App/orchestrator notified. Agent normal5777 adoption now clears vendor dependency; single home-six1540 alreadyactive, no repeat requested. Core1550 and D68 isolated1546 remain active.
+
+Pass 2026-10-24T15:54:21Z: core1550 source ready83 Python files+TS,122 new-file nodes collected, no bodies or install. D68 candidatefda author synthetic preservation controlsPASS; independent delivery-integrity review1554 dispatched immediately. Actual wrappers and artifact installation remain held.
