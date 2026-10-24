@@ -379,6 +379,7 @@ function authoritativeDocumentDigest(post: CommitPost): string {
 function authoritativeParentHashes(expected: CanonicalDocument, beforeRaw: string): { contentDigest: string; revisionId: string } {
   const script = [
     'import json, sys',
+    'sys.path.insert(0, sys.argv[1])',
     'from runtime_protocol.timeline_commit_validation import digest',
     'value = json.load(sys.stdin)',
     'expected = value["expected"]',
