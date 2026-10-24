@@ -1,0 +1,7 @@
+Ask: retain original body hold and unique completion-capture preparation / Owner: Viewing Sol0937 and Luna review next; Agent retained evidence0932 / By: 2026-10-24T10:00Z
+
+Consumed Runtime0915 and independent0923 PASS. No causal product fix is demonstrated; Runtime source dependency is cleared. Original20732 FAIL at assertion42 of59 and all budgets/error/authority guards remain unchanged.
+
+Unique worker vw-F-ABA-completion-capture-sol-0937 is queued on Agentba55. It prepares ONLY an opt-in test-support helper and focused offline controls to retain the missing request-bound construction/provider/close/final-lookup evidence. No original/live body, registry change, production source edit, installation, new realm, extra authenticated call or fake original custody is authorized. It must delegate the real path unchanged and return exact unavailable attachment seams as unapplied hunks rather than touch owners' files. Independent Luna follows. This is preparation, not a released original retry or product fix.
+
+Agent's peer0932 request stays finite recovery of EXISTING service20732 artifacts only; do not duplicate it here or create a competing capture author. If retained evidence resolves the cause before preparation finishes, send it directly to the same owner. Viewing will review meaningful diagnostic/source results before any coordinated next body. No new approval gate or protocol change is requested.
