@@ -109,18 +109,31 @@ def test_export_preserves_completed_historical_provenance_after_restart(tmp_path
         second.close()
 
 
-def test_export_fails_closed_without_runtime_export_root(tmp_path: Path) -> None:
+def test_export_defaults_to_downloads_folder_without_overwriting(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    home = tmp_path / "home"
+    home.mkdir()
+    monkeypatch.setenv("HOME", str(home))
     root = tmp_path / "realm"
     export_root = tmp_path / "exports"
     export_root.mkdir()
-    service, association, _task, _payload, _epoch = _settled_service(root, export_root)
+    service, association, _task, payload, _epoch = _settled_service(root, export_root)
     service.close()
     service = RuntimeService(root)
     try:
-        with pytest.raises(ConflictError, match="export root is not configured"):
-            service.export_managed_output(
-                association["association_id"], {"destination_filename": association["filename"]}, idempotency_key="export-without-root",
-            )
+        assert not (home / "Downloads").exists()
+        first = service.export_managed_output(
+            association["association_id"], {"destination_filename": association["filename"]}, idempotency_key="default-1",
+        )["data"]
+        default = home / "Downloads" / "Astrid exports"
+        assert first["destination"] == {"root": str(default.resolve()), "filename": association["filename"]}
+        assert (default / association["filename"]).read_bytes() == payload
+        second = service.export_managed_output(
+            association["association_id"], {"destination_filename": association["filename"]}, idempotency_key="default-2",
+        )["data"]
+        assert second["destination"]["filename"] != association["filename"]
+        assert (default / second["destination"]["filename"]).read_bytes() == payload
+        assert (default / association["filename"]).read_bytes() == payload
+        assert len(list(default.iterdir())) == 2
     finally:
         service.close()
 

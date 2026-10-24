@@ -6505,9 +6505,25 @@ class RuntimeService:
             raise ConflictError("managed output filename is not a direct safe file name") from exc
         return association, attempt, data, export_filename
 
+    def _ensure_export_root(self):
+        """Use the configured export root, else default to ~/Downloads/Astrid exports (created on demand)."""
+        if self.export_root is not None:
+            return self.export_root
+        default = Path.home() / "Downloads" / "Astrid exports"
+        try:
+            default.mkdir(parents=True, exist_ok=True)
+            resolved = default.resolve()
+        except OSError as exc:
+            raise ConflictError("managed-output default export folder is unavailable") from exc
+        if resolved == self.store.root or resolved.is_relative_to(self.store.root) or self.store.root.is_relative_to(resolved):
+            raise ConflictError("managed-output export root must be outside the active realm root")
+        if default.is_symlink() or not resolved.is_dir():
+            raise ConflictError("managed-output default export folder must be an ordinary directory")
+        self.export_root = resolved
+        return resolved
+
     def _materialize_export(self, filename, data):
-        if self.export_root is None:
-            raise ConflictError("managed-output export root is not configured")
+        self._ensure_export_root()
         if len(str(filename).encode("utf-8")) > self._export_leaf_max_bytes():
             raise ConflictError("managed-output export destination filename is too long")
         identity, root_fd, _ = _pin_directory(self.export_root)
@@ -6577,8 +6593,7 @@ class RuntimeService:
     def export_managed_output(self, association_id, body, *, idempotency_key=None):
         """Materialize exact CAS bytes for one completed retained output."""
         idempotency_key = require_idempotency_key(idempotency_key)
-        if self.export_root is None:
-            raise ConflictError("managed-output export root is not configured")
+        self._ensure_export_root()
         body = _wire_object(body, required=("destination_filename",), allowed=("destination_filename", "expected"))
         destination_filename = _wire_string(body, "destination_filename")
         expected = body.get("expected") or {}
