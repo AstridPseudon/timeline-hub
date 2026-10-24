@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T11:41:00Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 3m -->
-# app2 board, 2026-10-24T11:37Z
+<!-- app2 | 2026-10-24T11:43:13Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 2m -->
+# app2 board, 2026-10-24T11:41Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -68,7 +68,7 @@ All eight current safe JSON hashes, schemas, bounds, security and correlations p
 
 D48/D49 final map0708 and independent0719 PASS establish existing source routes and App-host venue, not READY final execution. Runtime FREEZE coordinates final joins and D39 adoption. App host recipe0754 and independent0758 qualify preparation only. Actual App draft0834 and cumulative0838 now qualify source preparation for missing P4/P5 registrations; actual install is gated by final tuple/receipts. Exact final Agent source, actual registration installation, authenticated child/import custody and preflight remain pending. App U3b integration remains gated on P2/P3 GO. Final P1–P5, full venues and Farm F-final/ZIP follow qualified final heads.
 
-Blockers: App — actual26414 Agent-tree guard correction1130 and independent caller qualification precede one meaningful original P2; all8 NOTRUN. Proof same-ID verdict1136 is active.
+Blockers: App — caller1130 must bind actual Agent333b tree and authentic reused Remotion079 producer under D21c; independent review/install precede meaningful P2. Verdict1136 is active.
 Blockers: App — normal exact2357 D53 home merge, integrated qualification and actual behaviour ledger publication remain; actual26414 terminal clears the active-P2 hold.
 
 Blockers: Freeze — final tuple, actual App host inputs, final gates and D49 full checkpoints precede Farm F-final and ZIP.
@@ -113,3 +113,5 @@ Later: App D52 f00ee independent1121 PASS is a pending home source removal, not 
 Pass 2026-10-24T11:34Z: App1125 gives actual queue fact: P226414 is QUEUED behind advancing early full19570, not executing original gestures yet. Same IDs and unique producers retained; no stop/resubmit. Normal remote merge script is confirmed to notify the owner, not auto-merge. Filed exact2357 remote request with explicit owner hold until queued/running26414 is terminal, so ready reviewed source is already in the home queue. App1128 D52 removal/ledger request consumed as later App-owned pending removal and normal combined publication; no manager generated-file mutation.
 
 Pass 2026-10-24T11:37Z: App1130 actual terminal26414 exit2/2seconds at Agent-source-or-tree;globalsetup/build/native/history/readiness and all8 originals NOTRUN. Exact333b commit but actualtree1094 versus stale decodedcaller2dea; sole AppSol1130/independentwholepath1130 own correction, no newpin/bench/guardwaiver. Independent Proof same-ID verdict1136 dispatched immediately from exactd6ed. Actual terminal clears source merge hold; normal2357 remote request reason updated to merge immediately and peer clears hold. Earlyfull19570 exit1/1124seconds,19342PASS3FAIL9failedfiles remains App-owned exact inventory/classification; no finaltupleGO or duplicate full.
+
+Pass 2026-10-24T11:41Z: App1135 bounded whole-path identifies second caller overbinding: Remotion0258 truthfully retains079 producer while selectedAgent333b has same remotion tree. D21c already permits unchanged component reuse. AppSol1130 owns exact actual333b source tree plus distinct selected/producer metadata with original receipts/inventories and strict negative controls; no newruntime, receipt relabel or blanket marker waiver. This adds no Proof author or semantic approval. Final D53 source is queued normally; actual26414 terminal clears hold.
