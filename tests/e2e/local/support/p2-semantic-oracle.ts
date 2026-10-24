@@ -7,6 +7,7 @@ export type SemanticAddMediaOracle = {
   op: 'clip.add-media' | 'occurrence.add-media';
   owner: string;
   select: string;
+  label: string;
 };
 
 export type SemanticCommitPost = {
@@ -19,6 +20,10 @@ function object(value: unknown, label: string): JsonObject {
   expect(typeof value, label).toBe('object');
   expect(Array.isArray(value), label).toBe(false);
   return value as JsonObject;
+}
+
+function exactKeys(value: unknown, expected: readonly string[], label: string): void {
+  expect(Object.keys(object(value, label)).sort(), label).toEqual([...expected].sort());
 }
 
 function assetIds(container: unknown): Set<string> {
@@ -62,38 +67,37 @@ export function assertSemanticAddMediaRequest(
 ): void {
   expect(post.key).toMatch(/\S/);
   const body = post.body;
+  exactKeys(body, [
+    'api_version', 'project_id', 'timeline_id', 'base_revision_id', 'base_publication_id',
+    'commands', 'label', 'steps', 'merge', 'dry_run', 'source',
+  ], 'semantic commit request');
   expect(body.api_version).toBe(1);
   expect(body.base_revision_id).toBe(before.revision_id);
   expect(body.base_publication_id).toBe(before.publication_id);
-  expect(body.project_id).toEqual(expect.any(String));
-  expect(body.timeline_id).toEqual(expect.any(String));
-  expect(body.label).toEqual(expect.any(String));
+  expect(body.project_id).toBe(authored.project_id);
+  expect(body.timeline_id).toBe(authored.timeline_id);
+  expect(body.label).toBe(expected.label);
   expect(body.dry_run).toBe(false);
   expect(body.source).toEqual({ via: 'app' });
-  for (const key of ['rationale', 'group_id'] as const) {
-    if (Object.hasOwn(body, key)) expect(body[key]).toEqual(expect.any(String));
-  }
   expect(body.merge).toBe('fields');
-  expect(Object.hasOwn(body, 'reads')).toBe(false);
   expect(body.commands).toHaveLength(1);
   expect(body.steps).toHaveLength(1);
 
   const command = body.commands[0]!;
-  expect(Object.keys(command).filter((key) => ![
-    'schema_version', 'op', 'version', 'select', 'args', 'intent', 'resolved', 'expect', 'authorship',
-    'reads', 'selections', 'bindings', 'created', 'rationale', 'group_id',
-  ].includes(key))).toEqual([]);
+  exactKeys(command, ['schema_version', 'op', 'version', 'select', 'args', 'intent', 'created'], 'semantic command');
   expect(command.schema_version).toBe(1);
   expect(command.op).toBe(expected.op);
   expect(command.version).toBe('1');
   expect(command.select).toBe(expected.select);
   expect(command.intent).toEqual(expected.op === 'clip.add-media' ? {} : { ownership: 'occurrence' });
   const args = object(command.args, `${expected.op} args`);
-  expect(Object.keys(args).sort()).toEqual(['media', 'row']);
+  exactKeys(args, ['media', 'row'], `${expected.op} args`);
   const row = object(args.row, `${expected.op} row`);
+  exactKeys(row, ['asset', 'at', 'clipType', 'hold', 'id', 'track'], `${expected.op} row`);
   expect(row.id).toEqual(expect.any(String));
   expect(row.asset).toEqual(expect.any(String));
-  expect(args.media).toEqual(expect.any(Object));
+  const media = object(args.media, `${expected.op} media`);
+  exactKeys(media, ['asset', 'catalog_digest', 'generation_id', 'object_id', 'variant_id'], `${expected.op} media`);
 
   const created = authoredAssetIds(authored, expected.owner).has(row.asset as string)
     ? [`${expected.owner}/clip:${row.id}`]
@@ -101,7 +105,7 @@ export function assertSemanticAddMediaRequest(
   expect(command.created).toEqual(created);
 
   const step = body.steps[0]!;
-  expect(Object.keys(step).sort()).toEqual(['command_ordinals', 'id', 'intent', 'label', 'patch', 'tags']);
+  exactKeys(step, ['command_ordinals', 'id', 'intent', 'label', 'patch', 'tags'], 'semantic commit step');
   expect(step.id).toEqual(expect.any(String));
   expect(step.label).toBe(body.label);
   expect(step.intent).toBe(body.label);

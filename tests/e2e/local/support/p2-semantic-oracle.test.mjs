@@ -31,9 +31,9 @@ function post(overrides = {}) {
     timeline_id: 'timeline',
     base_revision_id: 'r0',
     base_publication_id: 'p0',
-    commands: [{ schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent', args: { row, media }, intent: {}, created: ['parent/asset:asset-new', 'parent/clip:clip-new'] }],
-    label: 'Place media',
-    steps: [{ id: 'place-media', label: 'Place media', intent: 'Place media', tags: [], command_ordinals: [0], patch: [] }],
+    commands: [{ schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent', args: { row: structuredClone(row), media: structuredClone(media) }, intent: {}, created: ['parent/asset:asset-new', 'parent/clip:clip-new'] }],
+    label: 'Edit timeline',
+    steps: [{ id: 'place-media', label: 'Edit timeline', intent: 'Edit timeline', tags: [], command_ordinals: [0], patch: [] }],
     merge: 'fields',
     dry_run: false,
     source: { via: 'app' },
@@ -44,22 +44,22 @@ function post(overrides = {}) {
 
 function accepts(value) {
   assert.doesNotThrow(() => assertSemanticAddMediaRequest(value, base, before, {
-    op: 'clip.add-media', owner: 'parent', select: 'parent',
+    op: 'clip.add-media', owner: 'parent', select: 'parent', label: 'Edit timeline',
   }));
 }
 
 test('semantic media oracle accepts the exact source shape and refuses the old shape', () => {
   accepts(post());
   assert.throws(() => assertSemanticAddMediaRequest(post({ merge: 'atomic' }), base, before, {
-    op: 'clip.add-media', owner: 'parent', select: 'parent',
+    op: 'clip.add-media', owner: 'parent', select: 'parent', label: 'Edit timeline',
   }));
   assert.throws(() => assertSemanticAddMediaRequest(post({ steps: [{ id: 'place-media', label: 'Place media', intent: 'Place media', tags: [], command_ordinals: [0], patch: [{}] }] }), base, before, {
-    op: 'clip.add-media', owner: 'parent', select: 'parent',
+    op: 'clip.add-media', owner: 'parent', select: 'parent', label: 'Edit timeline',
   }));
 });
 
 test('semantic media oracle refuses command, created, read, and submitted-patch drift', () => {
-  const expected = { op: 'clip.add-media', owner: 'parent', select: 'parent' };
+  const expected = { op: 'clip.add-media', owner: 'parent', select: 'parent', label: 'Edit timeline' };
   for (const mutate of [
     (value) => { value.body.commands = []; },
     (value) => { value.body.commands.push(structuredClone(value.body.commands[0])); },
@@ -68,6 +68,13 @@ test('semantic media oracle refuses command, created, read, and submitted-patch 
     (value) => { value.body.commands[0].created = ['parent/asset:asset-new', 'parent/clip:clip-new', 'parent/clip:extra']; },
     (value) => { delete value.body.commands[0].created; },
     (value) => { value.body.reads = []; },
+    (value) => { value.body.unexpected = 'metadata'; },
+    (value) => { value.body.commands[0].reads = []; },
+    (value) => { value.body.commands[0].resolved = { extra: true }; },
+    (value) => { value.body.commands[0].rationale = 123; },
+    (value) => { value.body.commands[0].args.row.extra = true; },
+    (value) => { value.body.commands[0].args.media.extra = true; },
+    (value) => { value.body.label = 'Place media'; },
     (value) => { value.body.steps[0].reads = []; },
     (value) => { delete value.body.steps[0].patch; },
     (value) => { value.body.steps[0].patch = [{}]; },
@@ -84,10 +91,10 @@ test('semantic media oracle derives asset birth from the pregesture registry', (
   const value = post();
   value.body.commands[0].created = ['parent/clip:clip-new'];
   assert.doesNotThrow(() => assertSemanticAddMediaRequest(value, base, authored, {
-    op: 'clip.add-media', owner: 'parent', select: 'parent',
+    op: 'clip.add-media', owner: 'parent', select: 'parent', label: 'Edit timeline',
   }));
   value.body.commands[0].created = ['parent/asset:asset-new', 'parent/clip:clip-new'];
   assert.throws(() => assertSemanticAddMediaRequest(value, base, authored, {
-    op: 'clip.add-media', owner: 'parent', select: 'parent',
+    op: 'clip.add-media', owner: 'parent', select: 'parent', label: 'Edit timeline',
   }));
 });

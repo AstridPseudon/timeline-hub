@@ -476,7 +476,7 @@ test('P2 mounted registerAsset save: real file drop, exact media/registry fields
   const post = await commitFromGesture(page, wire, () => dropFileOnTimeline(page, file, seed3.appClipId, seed3.transitionClipId, 0, THREE_PRODUCTS_REFERENCE_AT, 5));
   const imported = object((await (await importResponse).json()).data, 'registered media import');
   const selected = await selectionResponse.then((response) => response.json()) as JsonObject;
-  assertSemanticAddMediaRequest(post, before.head, original, { op: 'clip.add-media', owner: 'parent', select: 'parent' });
+  assertSemanticAddMediaRequest(post, before.head, original, { op: 'clip.add-media', owner: 'parent', select: 'parent', label: 'Edit timeline' });
   const command = post.body.commands[0]!;
   expect(command.op).toBe('clip.add-media');
   expect(command.select).toBe('parent');
@@ -533,7 +533,7 @@ test('P2 mounted automatic child placement: embedded shot file gesture, occurren
   const imported = object((await (await importResponse).json()).data, 'child media import');
   const selected = await selectionResponse.then((response) => response.json()) as JsonObject;
   assertSemanticAddMediaRequest(post, before.head, original, {
-    op: 'occurrence.add-media', owner: `occurrence:${seed3.occurrenceId}`, select: `occurrence:${seed3.occurrenceId}`,
+    op: 'occurrence.add-media', owner: `occurrence:${seed3.occurrenceId}`, select: `occurrence:${seed3.occurrenceId}`, label: 'Edit timeline',
   });
   const command = post.body.commands[0]!;
   expect(command.op).toBe('occurrence.add-media');
