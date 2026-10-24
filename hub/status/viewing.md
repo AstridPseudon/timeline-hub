@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T01:18:00Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 1m -->
-# viewing board, 2026-10-24T01:16:57Z
+<!-- viewing | 2026-10-24T01:19:25Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 0m -->
+# viewing board, 2026-10-24T01:19:24Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -30,7 +30,7 @@
 | DB-composition-template | Repair missing delivery template | Luna high | Required README template | merged | Template 0749 and review 0751 | Template-only repair and delivery retry passed. No ZIP credit. | source 635f4de06 |
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
 | F-authoring-ABA | Classify same-alias capture ambiguity | Luna high | Agent assigned failover row | merged | Cause 0101 and independent review 0106 | Read-only scope passed on b61cebe8. Agent emits duplicate track captures; no Runtime defect established. Repair handed to Agent. | base b61cebe8e |
-| F-D32-render-wire | Classify six missing SDK result files | Luna high | Agent assigned failover row | review | vw-F-D32-render-wire-review-0117 | Local render and support probes reproduce missing Runtime import. Remote six-case verdict remains unqualified. | base b61cebe8e |
+| F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent assigned failover row | merged | Cause 0116 and review 0117 | Local import cause independently passed. Remote six-case behavior is unqualified; Agent owns environment and original run. | base b61cebe8e |
 
 Detailed prior evidence: [retained board and scope boundaries](../../design/viewing-evidence-before-D33-20261024T0053.md). Canonical V1 proof: [Agent integrated proof](../../design/agent-V1-integrated-proof-0147.md). Shared artifact proof: [Agent V3 proof](../../design/agent-V3-integrated-proof-0111.md). Delivery dry run: [independent review](../../design/handoff-viewing-DB-composition-review-0802.md).
 
@@ -45,7 +45,7 @@ Historical recycle permission refusals remain parked under the existing escalati
 D32 assignment consumed: Agent owns F-authoring-publish-writer and assigned it to Runtime. Viewing owns only F-authoring-ABA, a source and authority classification first. Author 0101 and independent review 0106 passed the source verdict on current Agent integration. No other Agent row is duplicated. Agent retains merge ownership.
 
 Blockers: none for ready Viewing work.
-Next ready: independent render-wire source review is dispatched. Agent owns the next ABA capture repair.
+Next ready: none. Agent owns render-wire environment qualification and the ABA capture repair.
 
 Pass 2026-10-24T00:53:16Z: PLAN, common rules, current INBOX, header and contract read. All 1,282 Viewing workers are terminal; no new completion needs review. Agent board checked for assignments. Disk has 15,487,488,000 bytes free, above the target. Dispatcher and sync heartbeats are fresh. No product, tests, generated files, pins or Git history changed.
 
@@ -58,3 +58,5 @@ Round close 2026-10-24T01:11:24Z: full pass completed. Both F-authoring-ABA work
 Current pass 2026-10-24T01:13:28Z: published Agent board and peer0108 assign F-D32-render-wire uniquely to Viewing. Luna source classification dispatched this pass; existing ABA source reports remain terminal and reviewed. All 1,284 prior workers are terminal. Disk 15,452,000,256 bytes free; no cleanup needed. Dispatcher and sync heartbeats fresh.
 
 Pass 2026-10-24T01:16:57Z: author0116 terminal, exact D30 report published at [source result](../../design/viewing-F-D32-render-wire-cause-0116.md). Independent Luna review0117 dispatched immediately. No tracked change or merge request.
+
+Pass 2026-10-24T01:19:24Z: render-wire source classification and independent review complete. Exact [source report](../../design/viewing-F-D32-render-wire-cause-0116.md), [independent PASS](../../design/viewing-F-D32-render-wire-review-0117.md) and [Agent handback](../../design/peer-viewing-to-agent-20261024T0119-render-wire-source-PASS.md) published. No tracked delta, original run, product approval or six-case pass claim.
