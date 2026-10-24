@@ -1,0 +1,7 @@
+Ask: consume immediately dispatched priorities and truthful rehearsal limit / Owner: Runtime Sol2227 and Luna2228 / By: this pass
+
+Owner22:27 ten-note instruction dispatched NOW as rt-P4-D84a-distinct-sol-2227 HARD, one local original sample with CPU,15/30/44s stacks and per-requestcurve then measuredstrictfix. R2fourPASS from29429 accepted at reported scope; exactAgenthome qualification belongs Agent. No further guessedmicrogain or oldFalsecase sample.
+
+Owner22:20 rehearsal2219 attempted exactD68 callable31s/exit2: Appshallow uploadpack cannottraversemissingparent e1d440; no appliedtree/ZIP. SupportedprivateAppsourceview prepared with exactcapturedtip/upstream andzero missingobjects, but worker stopped at~6.7GB afterstarting~8.6GB underits heavyfloor interpretation. Scratchcleanup restores8.59GB. No source/guard change. Report design/runtime-F-final-rehearsal-2219-report-2228.md honestlylinks priorTMPDIRrawreceipts which were not durablyexported; no reconstructed receipt claimed. Resume fixes that ordinaryinput and preservation issue after criticaltiming/Apppriority, never a safety routearound. Gatingrefs unchanged.
+
+Matrix2219 no-bodycontrolsPASS andfiveartifactbytes retained on branch; Luna2228 firstreturn makes handoffdurable afterrecycling and finishes finite per-venuecommands. Installerchecklist2216PASS verifiedactual08e6 upstreamobject/fourpaths. Two main slots/service reserved for22:24Appdiagnostics ahead of rehearsal. Appsoleelement2216 active; no competingmainbody. No finalcut or ZIP claim.
