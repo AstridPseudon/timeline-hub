@@ -354,16 +354,24 @@ def test_remote_create_empty_emits_guarded_raw_config_and_replays_exact_receipt(
     assert len(session.calls) == calls_before_retry
 
 
-def test_d69_upstream_remote_create_empty_generates_ulid_when_no_id_given() -> None:
+def test_d69_upstream_remote_create_empty_generates_ulid_when_no_id_given(monkeypatch) -> None:
     writer = _Writer()
+    session = _native_session(monkeypatch, writer)
     result = RemoteTimelines(writer).create_empty(project="render-smoke")
     assert result.ok, result.error
     timeline_id = result.data["timeline_id"]
     assert is_ulid(timeline_id)
     assert writer.calls[0][1] == ("render-smoke", timeline_id)
     assert writer.calls[1][1][1] == timeline_id
-    assert writer.calls[1][2]["idempotency_key"] == f"{result.idempotency_key}-head"
-    assert writer.calls[1][1][2]["parent_composition"]["config"] == {"tracks": []}
+    assert session.calls[0][1] == f"{result.idempotency_key}-head"
+    assert result.data["canonical_document"]["parent_revision"]["payload"]["config"] == {
+        "tracks": [],
+        "output": {
+            "resolution": "1280x720", "fps": 30, "file": "output.mp4",
+            "background": None, "background_scale": None,
+        },
+        "clips": [],
+    }
 
 
 def test_remote_create_empty_stops_when_shell_is_rejected() -> None:
@@ -376,8 +384,9 @@ def test_remote_create_empty_stops_when_shell_is_rejected() -> None:
 
 # D66 restore of upstream-924 selector 12306.  The old positive is retained
 # beside the native commit case; no old-route retirement is inferred here.
-def test_d66_upstream_remote_create_empty_creates_shell_then_empty_head() -> None:
+def test_d66_upstream_remote_create_empty_creates_shell_then_empty_head(monkeypatch) -> None:
     writer = _Writer()
+    session = _native_session(monkeypatch, writer)
     result = RemoteTimelines(writer).create_empty(
         project="render-smoke",
         timeline_id="01ARZ3NDEKTSV4RRFFQ69G5FAV",
@@ -385,30 +394,48 @@ def test_d66_upstream_remote_create_empty_creates_shell_then_empty_head() -> Non
         idempotency_key="caller-1",
     )
     assert result.ok, result.error
-    assert result.data == {
+    assert {
+        key: result.data[key]
+        for key in ("project_id", "timeline_id", "head_revision_id", "created")
+    } == {
         "project_id": "P-1",
         "timeline_id": "01ARZ3NDEKTSV4RRFFQ69G5FAV",
         "head_revision_id": "H-1",
         "created": True,
     }
     assert result.idempotency_key == "caller-1"
-    shell, head = writer.calls
-    assert shell == (
+    assert writer.calls[0] == (
         "create_timeline",
         ("render-smoke", "01ARZ3NDEKTSV4RRFFQ69G5FAV"),
         {"idempotency_key": "caller-1-shell"},
     )
-    name, args, kwargs = head
-    assert name == "publish_parent_composition"
-    assert args[0] == "P-1"  # the runtime's project id, not the slug
-    publication = args[2]
-    assert publication["expected_head"] is None
-    assert publication["parent_composition"] == {
-        "config": DEFAULT_CONFIG,
-        "registry": {},
-        "clips": [],
-        "occurrences": [],
+    inspection, publication = writer.calls[1:]
+    assert inspection[0] == "list_timeline_commits"
+    assert inspection[1] == ("P-1", "01ARZ3NDEKTSV4RRFFQ69G5FAV")
+    assert publication[0] == "commit_timeline"
+    assert publication[2] == {"idempotency_key": "caller-1-head"}
+    command, key = session.calls[0]
+    assert key == "caller-1-head"
+    assert command[0]["op"] == "timeline.init"
+    assert command[0]["args"]["name"] == "Main"
+    payload = result.data["canonical_document"]["parent_revision"]["payload"]
+    assert payload["config"]["tracks"] == DEFAULT_CONFIG["tracks"]
+    assert payload["config"]["theme_overrides"] == DEFAULT_CONFIG["theme_overrides"]
+    assert payload["registry"]["assets"] == {}
+    assert payload["clips"] == []
+    assert payload["occurrences"] == []
+    assert payload["config"]["output"] == {
+        "resolution": "1920x1080", "fps": 30, "file": "output.mp4",
+        "background": None, "background_scale": None,
     }
-    assert publication["shot_revisions"] == []
-    assert publication["internal_timeline_revisions"] == []
-    assert kwargs == {"idempotency_key": "caller-1-head"}
+    assert payload["config"]["clips"] == []
+    assert result.data["canonical_document"]["shot_revisions"] == []
+    assert result.data["canonical_document"]["internal_timeline_revisions"] == []
+    assert session.writer.history[0]["receipt"]["result"]["base_revision_id"] == "bootstrap"
+    assert session.writer.history[0]["receipt"]["result"]["base_publication_id"] == "bootstrap-publication"
+    assert session.writer.history[0]["receipt"]["result"]["steps"][0]["reads"] == [
+        {"kind": "scope", "ref": "timeline", "path": []},
+    ]
+    assert [name for name, _, _ in writer.calls] == [
+        "create_timeline", "list_timeline_commits", "commit_timeline",
+    ]
