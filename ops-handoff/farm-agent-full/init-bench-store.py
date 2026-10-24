@@ -37,6 +37,13 @@ def _load_store(module_path: Path):
     return module.Store
 
 
+def _validate_store(store) -> None:
+    """Run the store's supported ownership and inode checks before reading it."""
+
+    with store.mutex():
+        store._load()
+
+
 def open_or_initialize(*, orch_root: Path, store_root: Path, bench_store: Path) -> tuple[str, str]:
     """Open a valid store or initialize only a truly absent store.
 
@@ -63,12 +70,12 @@ def open_or_initialize(*, orch_root: Path, store_root: Path, bench_store: Path) 
             mode = "initialized"
             store = Store.initialize(store_root, tests_dir)
 
-        # Exercise the existing index/projection validator, then reopen
-        # through the same supported constructor to prove owner identity
-        # survives init.
-        store._load()
+        # Exercise the existing ownership/inode and index validators, then
+        # reopen through the same supported constructor to prove owner
+        # identity survives init.
+        _validate_store(store)
         reopened = Store(store_root, tests_dir)
-        reopened._load()
+        _validate_store(reopened)
     except RuntimeError as exc:
         # The reviewed helper uses its own Refused subclass of RuntimeError.
         raise Refused(str(exc)) from exc

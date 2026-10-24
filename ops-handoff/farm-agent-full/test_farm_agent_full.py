@@ -8,6 +8,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 PACKET = Path(__file__).parent
 ORCH = Path(os.environ.get(
     "FARM_ORCH_ROOT",
@@ -134,6 +136,25 @@ def test_unknown_partial_symlink_foreign_wrong_tests_and_root_identity_refuse(tm
     owner["root"] = str(tmp_path / "not-the-root")
     (identity / "owner.json").write_text(json.dumps(owner), encoding="utf-8")
     _assert_refused_without_write(orch, identity, bench_store)
+
+
+@pytest.mark.parametrize("target", ("entries", "locks", "staging", "mutex", "owner.json", "index.json"))
+def test_replaced_store_nodes_refuse_without_write(tmp_path: Path, target: str) -> None:
+    orch, _tests, bench_store = _fixture(tmp_path)
+    root = tmp_path / "replaced"
+    assert _run(orch, root, bench_store).returncode == 0
+
+    original = root / target
+    saved = root / (target + ".saved")
+    os.rename(original, saved)
+    if target in {"entries", "locks", "staging"}:
+        original.mkdir(mode=0o700)
+    elif target == "mutex":
+        original.touch(mode=0o600)
+    else:
+        original.write_bytes(saved.read_bytes())
+
+    _assert_refused_without_write(orch, root, bench_store)
 
 
 def test_approved_template_attachments_are_byte_exact() -> None:
