@@ -10,6 +10,9 @@ import base64
 import hashlib
 import json
 import re
+import threading
+from contextlib import contextmanager
+from functools import wraps
 
 from .errors import ConflictError, ProtocolError, ValidationError
 from .idempotency import command_result
@@ -149,6 +152,16 @@ def timeline_scope_is_empty(conn, timeline_id, *, project_id=None):
     return True
 
 
+def _evaluation(method):
+    @wraps(method)
+    def evaluate(self, *args, **kwargs):
+        if getattr(self._verification, "current", None) is not None:
+            return method(self, *args, **kwargs)
+        with self.verification_scope():
+            return method(self, *args, **kwargs)
+    return evaluate
+
+
 class TimelineCommitStore:
     def __init__(self, store, *, validate_prepared, validate_event=None):
         self.store = store
@@ -156,6 +169,20 @@ class TimelineCommitStore:
         # Agent-owned leaves. It must raise on invalid data, never normalize it.
         self.validate_prepared = validate_prepared
         self.validate_event = validate_event
+        self._verification = threading.local()
+
+    @contextmanager
+    def verification_scope(self):
+        """Start an independent evaluation, including when another is nested."""
+        previous = getattr(self._verification, "current", None)
+        current = {"verified": set(), "active": set()}
+        self._verification.current = current
+        try:
+            yield
+        finally:
+            current["verified"].clear()
+            current["active"].clear()
+            self._verification.current = previous
 
     @property
     def conn(self):
@@ -169,6 +196,7 @@ class TimelineCommitStore:
             reject("history_unavailable")
         return row["realm_id"]
 
+    @_evaluation
     def lookup(self, context, *, authorize):
         with self.store._mutex:
             authorize()
@@ -199,7 +227,19 @@ class TimelineCommitStore:
         self._verify_accepted(row, edge, allow_archived=True)
         return self._envelope(row, edge["project_id"])
 
+    @_evaluation
     def _verify_accepted(self, row, edge, *, allow_archived=False):
+        active = self._verification.current["active"]
+        identity = (edge["project_id"], edge["timeline_id"], edge["publication_id"])
+        if identity in active:
+            raise ProtocolError("accepted commit history contains a cycle")
+        active.add(identity)
+        try:
+            return self._verify_accepted_record(row, edge, allow_archived=allow_archived)
+        finally:
+            active.remove(identity)
+
+    def _verify_accepted_record(self, row, edge, *, allow_archived=False):
         from .timeline_commit import CommitRejected
         try:
             data, records = json.loads(row["result_json"]), json.loads(edge["records_json"])
@@ -241,32 +281,6 @@ class TimelineCommitStore:
                 valid = valid and data.get("label") == records["label"]
             if "merge_mode" in records:
                 valid = valid and data.get("merge_mode") == records["merge_mode"]
-            if "steps" in records:
-                from .timeline_commit_auth import validate
-                replay_request = {**metadata, "commands": data["commands"],
-                                  "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"]}
-                source = self.revision_closure(edge["project_id"], edge["timeline_id"], previous["revision_id"],
-                                               allow_archived=allow_archived)
-                continuations = self._binding_continuations(
-                    edge["project_id"], edge["timeline_id"], base["publication_id"], previous,
-                    allow_archived=allow_archived,
-                )
-                history = self._inverse_stage_history(edge["project_id"], edge["timeline_id"], records,
-                                                      allow_archived=allow_archived)
-                prepared = {"records": records, "expected_head": previous, "canonical_document": document}
-                original = self.revision_closure(edge["project_id"], edge["timeline_id"], base["revision_id"],
-                                                 allow_archived=allow_archived)
-                sequential = None
-                if _PRIVATE_EXECUTION in metadata:
-                    replay_request, prepared, sequential = self._historical_sequential(
-                        metadata[_PRIVATE_EXECUTION], row, edge, data, prepared, original, source,
-                        continuations, history,
-                    )
-                else:
-                    from .timeline_commit_auth import sequential_proof_required
-                    if sequential_proof_required(prepared, source, continuations):
-                        raise ValueError("historical sequential proof is missing")
-                validate(replay_request, prepared, source, original, continuations, history, sequential=sequential)
             ids = json.loads(row["event_ids_json"])
             seq = row["resulting_stream_seq"]
             # Replay verifies the accepted prefix, independent of later writes.
@@ -315,8 +329,53 @@ class TimelineCommitStore:
                     raise ValueError()
                 self._check_inherited_allocations(project, timeline, records, allocations, edge["project_seq"],
                                                    allow_archived=allow_archived)
+            if "steps" in records:
+                self._accepted_replay(row, edge, data, metadata, records, previous, events,
+                                      allow_archived=allow_archived)
         except (KeyError, TypeError, ValueError, IndexError, ValidationError, CommitRejected) as exc:
             raise ProtocolError("accepted commit record is corrupt") from exc
+
+    def _accepted_replay(self, row, edge, data, metadata, records, previous, events, *, allow_archived):
+        base = {"revision_id": data["base_revision_id"], "publication_id": data["base_publication_id"]}
+        replay_request = {**metadata, "commands": data["commands"],
+                          "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"]}
+        source = self.revision_closure(edge["project_id"], edge["timeline_id"], previous["revision_id"],
+                                       allow_archived=allow_archived)
+        continuations = self._binding_continuations(
+            edge["project_id"], edge["timeline_id"], base["publication_id"], previous,
+            allow_archived=allow_archived,
+        )
+        history = self._inverse_stage_history(edge["project_id"], edge["timeline_id"], records,
+                                              allow_archived=allow_archived)
+        prepared = {"records": records, "expected_head": previous, "canonical_document": data["canonical_document"]}
+        original = self.revision_closure(edge["project_id"], edge["timeline_id"], base["revision_id"],
+                                         allow_archived=allow_archived)
+        realm = self.conn.execute("SELECT realm_id FROM projects WHERE id=?", (edge["project_id"],)).fetchone()
+        # Entry bytes alone do not cover mutable source rows or event prefixes.
+        # Resolve those afresh before reusing the pure recorder/capture checks.
+        key = (edge["project_seq"], digest({"ledger": dict(row), "edge": dict(edge),
+               "source": source, "base": original, "continuations": {key: sorted(value) for key, value in continuations.items()}, "history": history,
+               "events": [dict(event) for event in events], "realm": list(realm) if realm else None}))
+        verified = self._verification.current["verified"]
+        if key not in verified:
+            self._verify_accepted_replay(row, edge, data, metadata, replay_request, prepared,
+                                         original, source, continuations, history)
+            verified.add(key)
+
+    def _verify_accepted_replay(self, row, edge, data, metadata, replay_request, prepared,
+                                original, source, continuations, history):
+        from .timeline_commit_auth import validate
+        sequential = None
+        if _PRIVATE_EXECUTION in metadata:
+            replay_request, prepared, sequential = self._historical_sequential(
+                metadata[_PRIVATE_EXECUTION], row, edge, data, prepared, original, source,
+                continuations, history,
+            )
+        else:
+            from .timeline_commit_auth import sequential_proof_required
+            if sequential_proof_required(prepared, source, continuations):
+                raise ValueError("historical sequential proof is missing")
+        validate(replay_request, prepared, source, original, continuations, history, sequential=sequential)
 
     def _historical_sequential(self, execution, row, edge, data, accepted, base, source, continuations, history):
         from .timeline_commit_auth import validate_sequential_capture
@@ -401,6 +460,7 @@ class TimelineCommitStore:
                    "event_ids": json.loads(row["event_ids_json"]), "result": data, "created_at": row["created_at"]}
         return detached({"data": data, "receipt": receipt})
 
+    @_evaluation
     def head(self, project_id, timeline_id):
         return self._head_entry(project_id, timeline_id)[0]
 
@@ -439,6 +499,7 @@ class TimelineCommitStore:
                 reject("history_unavailable", "timeline catalog facts are corrupt")
             return dict(row), entry
 
+    @_evaluation
     def history_entry(self, project_id, timeline_id, publication_id, *, allow_archived=False):
         with self.store._mutex:
             if allow_archived:
@@ -474,6 +535,7 @@ class TimelineCommitStore:
                 entry["steps"] = records["steps"]
             return entry
 
+    @_evaluation
     def _read_history(self, project_id, timeline_id, *, cursor, limit):
         # Keep the authenticated head entry local to this one locked read. Its
         # receipt, events, source and execution proof have all been verified;
@@ -493,6 +555,7 @@ class TimelineCommitStore:
                 bound = self.history_entry(project_id, timeline_id, through["publication_id"])
             return self._history_page(project_id, timeline_id, through, bound, cursor=cursor, limit=limit)
 
+    @_evaluation
     def history(self, project_id, timeline_id, through, after_publication_id=None, cursor=None, limit=100):
         if type(limit) is not int or not 1 <= limit <= 200:
             raise ValidationError("history limit must be 1–200")
@@ -543,6 +606,7 @@ class TimelineCommitStore:
                 "seq": items[-1]["receipt"]["project_seq"][0]}).encode()).decode()
         return {"items": items, "next_cursor": next_cursor, "head": detached(through)}
 
+    @_evaluation
     def revision_closure(self, project_id, timeline_id, revision_id, *, allow_archived=False):
         with self.store._mutex:
             if allow_archived:
@@ -584,6 +648,7 @@ class TimelineCommitStore:
             self._verify_inputs(document)
             return document
 
+    @_evaluation
     def source_revision_closure(self, project_id, timeline_id, revision_id, publication_id,
                                 content_digest):
         """Return one authenticated historical source closure.
@@ -621,6 +686,7 @@ class TimelineCommitStore:
             if row["kind"] == PROJECT_PACK_KIND:
                 validate_pack_snapshot_objects(self.conn, document["project_id"], json.loads(row["content_json"]))
 
+    @_evaluation
     def integrity_errors(self):
         errors = []
         previous = {}
@@ -1170,6 +1236,7 @@ class TimelineCommitStore:
                             "WHERE COALESCE(json_extract(i.value, '$.item_id'), json_extract(i.value, '$.id'))=? LIMIT 1", (ref,)).fetchone()):
                     reject("identity_collision")
 
+    @_evaluation
     def preview(self, context, prepared, *, authorize, inputs=None):
         context, prepared = detached(context), detached(prepared)
         with self.store._mutex:
@@ -1211,6 +1278,7 @@ class TimelineCommitStore:
         if any(c["op"] == "timeline.restore" for c in request["commands"]) and expected != base:
             reject("stale_head")
 
+    @_evaluation
     def accept(self, context, prepared, *, authorize, inputs=None):
         context, prepared = detached(context), detached(prepared)
         with self.store._mutex:

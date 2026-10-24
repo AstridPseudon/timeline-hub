@@ -67,6 +67,10 @@ class CommitExecutionCoordinator:
             raise CommitOutcomeUnknown() from exc
 
     def execute(self, context, provider, port_factory, *, authorize):
+        with self.commit_store.verification_scope():
+            return self._execute(context, provider, port_factory, authorize=authorize)
+
+    def _execute(self, context, provider, port_factory, *, authorize):
         context = detached(context)
         if request_identity(context) != context["request_hash"]:
             reject("invocation_mismatch", status=422)
