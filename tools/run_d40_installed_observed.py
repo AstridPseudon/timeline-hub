@@ -1,5 +1,6 @@
 """D40 custody runner. Stage A is synthetic; run-original requires reviewed bytes.
 
+preflight-identity runs Stage B metadata checks and stops before child launch.
 The profile callback observes the real method's return without replacing it.
 Observation errors fail custody separately, after pytest, and never replace a
 product return or exception. A profile return of None is deliberately ambiguous
@@ -150,14 +151,15 @@ def source_identity(root, evidence):
     retain(evidence / "original-test.py", data)
     retain(evidence / "original-helper.py", helper)
     node = next(n for n in ast.parse(data).body if isinstance(n, ast.FunctionDef) and n.name == FUNCTION)
-    body = "\n".join(data.decode().splitlines()[node.lineno - 1:node.end_lineno]) + "\n"
+    # 0520 hashes the source slice without a final LF and includes AST locations.
+    body = "\n".join(data.decode().splitlines()[node.lineno - 1:node.end_lineno])
     assertions = [n for n in ast.walk(node) if isinstance(n, ast.Assert)]
     identity = {
         "file_sha256": sha(data), "helper_sha256": sha(helper),
         "function_source_sha256": sha(body.encode()),
-        "function_ast_sha256": sha(ast.dump(node, include_attributes=False).encode()),
+        "function_ast_sha256": sha(ast.dump(node, include_attributes=True).encode()),
         "assertion_count": len(assertions),
-        "assertion_ast_sha256": [sha(ast.dump(n, include_attributes=False).encode()) for n in assertions],
+        "assertion_ast_sha256": [sha(ast.dump(n, include_attributes=True).encode()) for n in assertions],
     }
     return identity
 
@@ -292,7 +294,7 @@ def pytest_child(root, evidence, expected_sha):
     return status if status else (2 if observer.errors else 0)
 
 
-def run_original(root, evidence, reviewed_sha):
+def run_original(root, evidence, reviewed_sha, *, prelaunch_only=False):
     digest = retain_self(evidence)
     if digest != reviewed_sha:
         raise RuntimeError("reviewed harness SHA does not match: no original execution")
@@ -310,6 +312,12 @@ def run_original(root, evidence, reviewed_sha):
     retain_json(evidence / "command.json", {"argv": command, "env": env, "cwd": str(root)})
     retain(evidence / "command.sh", ("env -i " + shlex.join([k + "=" + v for k, v in env.items()]
                                                           + command) + "\n").encode())
+    if prelaunch_only:
+        retain_json(evidence / "identity-preflight.json", {
+            "status": "PASS", "observer_sha256": digest, "root": str(root),
+            "custody_files_checked": len(before), "launch_intercepted_before_Popen": True,
+        })
+        return 0
     with (evidence / "stdout.txt").open("xb") as stdout, (evidence / "stderr.txt").open("xb") as stderr:
         process = subprocess.Popen(command, cwd=root, env=env, stdout=stdout, stderr=stderr)
         try:
@@ -468,7 +476,7 @@ def preflight(root, evidence):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=("preflight", "run-original", "_pytest"))
+    parser.add_argument("mode", choices=("preflight", "preflight-identity", "run-original", "_pytest"))
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--evidence", type=Path, required=True)
     parser.add_argument("--reviewed-source-sha256")
@@ -481,7 +489,8 @@ def main():
         parser.error("Stage B requires independent review and --reviewed-source-sha256")
     if args.mode == "_pytest":
         return pytest_child(root, evidence, args.reviewed_source_sha256)
-    return run_original(root, evidence, args.reviewed_source_sha256)
+    return run_original(root, evidence, args.reviewed_source_sha256,
+                        prelaunch_only=args.mode == "preflight-identity")
 
 
 if __name__ == "__main__":
