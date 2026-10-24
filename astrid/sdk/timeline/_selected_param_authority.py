@@ -6,6 +6,23 @@ from functools import lru_cache
 from ._command_state import CommandError, State
 
 
+def _bound(record, expected):
+    bindings = [b for b in record['bindings'] if b['key'] == expected['key']]
+    if len(bindings) != 1:
+        return False
+    binding = bindings[0]
+    if binding == expected:
+        return True
+    # V2 enriches these generated bindings at the actual command boundary.
+    # The provider/Runtime authenticates those image fields; they supplement
+    # the semantic association rather than replacing its fixed ref/policy.
+    image = {'physical_ref', 'revision_id', 'content_digest', 'boundary', 'path'}
+    if binding.get('physical_ref') != 'parent':
+        image.add('owners')
+    return (set(binding) == set(expected) | image
+            and all(binding[key] == value for key, value in expected.items()))
+
+
 def _association(record, select):
     from .commit import _document_pin
 
@@ -14,18 +31,16 @@ def _association(record, select):
         return None
     schemas = [d for d in record['dependencies'] if d['key'] == 'params.schema']
     snapshots = [d for d in record['dependencies'] if d['key'] == 'params.snapshot']
-    bindings = [b for b in record['bindings'] if b['key'] == 'params.element']
-    if len(schemas) != 1 or len(snapshots) != 1 or bindings != [{
+    if len(schemas) != 1 or len(snapshots) != 1 or not _bound(record, {
             'key': 'params.element', 'ref': select, 'policy': 'fixed',
-            'dependencies': ['params.schema', 'params.snapshot']}]:
+            'dependencies': ['params.schema', 'params.snapshot']}):
         return None
     owner = select.rsplit('/', 1)[0]
     required = [{'key': 'scalar.target', 'ref': select, 'policy': 'fixed',
                  'dependencies': ['scalar.images']}]
     if owner != 'parent':
         required.append({'key': 'scalar.owner', 'ref': owner, 'policy': 'fixed', 'dependencies': []})
-    if any([b for b in record['bindings'] if b['key'] == expected['key']] != [expected]
-           for expected in required):
+    if any(not _bound(record, expected) for expected in required):
         return None
     schema, snapshot = schemas[0], snapshots[0]
     pin = snapshot['pin']
@@ -68,10 +83,12 @@ def resolve_selected_param_source(port, *, context, through, select, staged=()):
     def relevant(record, index):
         for write in record['writes']:
             ref, path = write['ref'], write['path']
-            if ref == select and (not path or path[0] in ('params', 'elementRef', 'element_ref')):
+            if ref == select and (not path or path[0] in (
+                    'params', 'elementRef', 'element_ref', 'id', 'clipType', 'clip_type',
+                    'asset', 'asset_id', 'media_id', 'object_id', 'file', 'src', 'source')):
                 return True
             if ref == 'timeline' or ref == owner and (not path or path[0] in (
-                    'clips', 'shot_id', 'shot_revision_id', 'internal_timeline_revision_id')):
+                    'clips', 'occurrence_id', 'shot_id', 'shot_revision_id', 'internal_timeline_revision_id')):
                 return True
             if owner == 'parent' and ref == 'parent' and path[:2] == ['config', 'clips']:
                 return True
