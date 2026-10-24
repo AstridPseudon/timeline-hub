@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T18:30:40Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 19 | status age 0m -->
-# app board, 2026-10-24T18:31Z
+<!-- app | 2026-10-24T18:34:01Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 16 | status age 0m -->
+# app board, 2026-10-24T18:34Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -42,7 +42,7 @@
 | D74-retention | Post-verdict output release | Lead kit | Trigger below9GB | gated:disk<9G | Lead peer1759 | Disk9.6GB; deferred guarded route. All22847 outputs preserved for D78 handoff. | No source edits |
 
 | P2-D78 | Exact retained element request handoff | Luna | D78 owner1816 | merged | app-P2-D78-retained-request-handoff-1819 | Published json/md;4459 exact body bytes,e58a09dc;trace anchor and redaction validated. Runtime replay owns cause. | Evidence only |
-| D79 | One live-edit robustness smoke | Luna | Spare slot only; non-gating | gated:P3-priority | app-D79-live-edit-smoke-1821 | One case authored,18 controls/types/lint PASS; body held behind P3 priority. No original edits. | Source1821 |
+| D79 | One live-edit robustness smoke | Luna; Service | Non-gating; preflight23524 PASS | doing | Actual28293; producer1834 | One case submitted through one-command guarded route; no ready P2/P3 delayed. Wait sameID, no gate promotion. | App830252 |
 
 | P3-D75-clean | Clean same-blob home packet and ledger | Luna | Failed source controls1826 | gated:review-PASS | app-P3-D75b-clean-home-packet-1827 | Source held; no original changed at home. Reuse after genuine corrected PASS only. | Current source |
 
@@ -56,9 +56,9 @@ Blockers: Runtime execution — D78 exact retained element request published1823
 Blockers: Final cut — Current P2/P3 nine core cases remain unqualified; Runtime coordinates final suites and ZIP.
 Next ready: consume parent and D75b reviews; normal merge on PASS; P3 through one-command pinned preflight submit immediately. D79 smoke body later behind gate priority.
 
-live 2 / cap 6; ready-undispatched 0. Luna1831 D75b controls return, Luna1827 held packet winding down. Parent home830252. D79 body behind P3 priority.
+live 2 / cap 6; ready-undispatched 0. Luna1831 D75b controls return and Luna1834 sole D79 result producer. Parent home830252. D79 actual28293 non-gating.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
-Disk: About9.4GB free. Guarded recycle removed one ended clean non-KEEP tree; other finished trees already recycled. Deferred kit routes gated below9GB; prior refused routes stopped.
-Inbox consumed through1623307 bytes, including D75b, D78 and non-gating D79. Runtime and Agent normal hub boards rechecked. D75 scope blocker cleared.
+Disk: About9.1GB free. Guarded recycle removed one ended clean non-KEEP tree; other finished trees already recycled. Deferred kit routes gated below9GB; prior refused routes stopped.
+Inbox consumed through1626115 bytes, including D75b, D78 and non-gating D79. Runtime and Agent normal hub boards rechecked. D75 scope blocker cleared.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
