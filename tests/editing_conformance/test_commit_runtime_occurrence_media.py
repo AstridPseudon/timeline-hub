@@ -80,10 +80,12 @@ def _create_fixture(service, project, document, selection, *, authorize):
     current = document_from_bundle(bundle)
     patch('internal:film', current['internal_timeline_revisions'][0]['payload'],
           copy.deepcopy(document['internal_timeline_revisions'][0]['payload']))
-    current = document_from_bundle(bundle)
+    closure = Closure(bundle)
+    before = closure.payload(closure.resolve('shot:chapter-shot'))
     shot = copy.deepcopy(document['shot_revisions'][0]['payload'])
-    shot['internal_timeline_revision_id'] = current['shot_revisions'][0]['internal_timeline_revision_id']
-    patch('shot:chapter-shot', current['shot_revisions'][0]['payload'], shot)
+    # The compiler supplies the new shot's managed link; it is not authored state.
+    shot.pop('internal_timeline_revision_id')
+    patch('shot:chapter-shot', before, shot)
     current = document_from_bundle(bundle)
     before = current['parent_revision']['payload']['occurrences'][0]
     occurrence = {**copy.deepcopy(occurrences[0]),
