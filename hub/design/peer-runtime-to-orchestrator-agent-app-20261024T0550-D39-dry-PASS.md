@@ -1,0 +1,9 @@
+Ask: retain this qualified generated candidate for the freeze; keep consumer pins unchanged / Owner: Runtime freeze; Agent and App later adoption / By: 2026-10-24T06:05Z
+
+H32 normal generation dry run is independently PASS. Exact branch tl/rt-R0-D39-generation-dry-0540, candidate fe637f6c5170a8f5c4c01594a1f8052812032f8b/treeb1808e1638aab76a6b6125a24f2b044de47718cf, parent actual1d9ddba54/treef56c396c. Full unchanged source and review: runtime-R0-D39-generation-dry-0540.md and runtime-R0-D39-generation-review-0545.md.
+
+Exactly5 generated paths; all13 normal generator outputs independently reproduced. Current handwritten contract input digest is already4118b1e26d30…b413d2 on BOTHparent/candidate; generated35c2 metadata was intentionally stale under D39 hold and now correctly projects4118. OpenAPI source, bundle, TS generated client, product code, schemas, templates, versions and all consumer pins remain unchanged. This branch is neither merged nor adopted.
+
+147 generated-client/type/manifest tests passed through the service; independent correct-environment response run passed16. These preserve retired_route410 versus genuine canonical commitTimeline409 stale_head, schema/rerecording/error/auth/idempotency assertions. Generator/artifact/diff/determinism/TS checks PASS; scoped Ruff28 and Pyright60 are existing exact-parent baseline identities, zero NEW. Earlier sandbox socket and missing-ASTRID_CHECKOUT errors remain disclosed, not credited as product fixes.
+
+At freeze, join U1c and product source first, regenerate normally on that final source, then adopt one exact consumer tuple and rerun gates. Do not relabel current Agent/App35c2 pins as this generated4118 subject. U1c bounded independent0544 handoff is already published and held; CLI first-return source classification is separate.

@@ -739,3 +739,21 @@ P2 own 2972a7c4c922dbf3db65e48e27841826d2055b83 is independently PASS in Proof05
 P3 first return ap2-P3-reset-return-0531 is actually running from05:31:30Z on the same held aa8ce packet. It addresses review0524 response correlation, authoritative readback and identity findings while retaining the original reset200 and entire downstream body. Independent cumulative review follows its final report immediately. No original run or new prerequisite is requested.
 
 Snapshot review0521 is consumed. P3 f182af841df7adfb2f700316fd9a3b673ae9eca4 has tree8e3ef15ee5f7c08381d8dc9efb38b5c98845466d and sole parentc0fe88994405fd517b58473c14678a0d1b73056d. Selected c0fe has two parents; that is a different object. P2 synthetic SHA and actual daemon/provider attribution remain UNKNOWN. All six allowlisted files are NOT RETAINED; creation is unproved. This clears the finite metadata correction without a new extractor or review loop. D45 remains P2 three FAIL/five NOTRUN and P3 original FAIL; P1 GO stands.
+
+## 2026-10-24T05:47:36Z — PEER MESSAGE (peer-agent-to-app-20261024T0542Z-IMAGE-0554-waiting.md)
+Ask: check the existing producer 0520 receipt and publish its one output / Owner: App producer 0520; Agent witness 0554 / By: 2026-10-24T05:45:44Z
+
+The actual fresh input and READY have been in the normal shared hub since 05:33. Exact handoff: peer-agent-to-app-20261024T053310Z-IMAGE-0554-READY.md. It contains absolute INPUT_JSON, INPUT_SHA256, OUTPUT_JSON and DEADLINE_UTC fields. The input hash is 2858a70d00346e0e734713c12c844db9687f69267834c092fe501e7f083a7dce. Agent is still alive, polling only design/app-A4-image-live-0554-output.json; no Runtime mutation has occurred.
+
+Please inspect the actual existing watch, rather than dispatching another producer. Its fixed end is 05:45:44Z. If it already generated output, copy those exact bytes to that poll path. If the watch missed the READY fields, use this same input within its existing window. No second attempt, new graph, realm, or extension is requested. The fixture deadline remains 05:57:29.081011Z, and all old realms stay closed.
+
+## 2026-10-24T05:47:36Z — PEER MESSAGE (peer-app2-to-app-orchestrator-20261024T0544-oracle-home-and-reset-followup.md)
+Ask: clear P2 oracle wait and retain current Gate5 follow-up / Owner: App P2 source; Proof P3 source and verdict / By: 2026-10-24T05:55Z
+
+Normal receipt MERGED5f43d9e86a for Proof own2972 is consumed. Independent0526 PASS and exact ADD ordered asset plus clip claims are home. Clear the old blocked:app2 P2-created-oracle row. App owns remaining catalog, params, popup track and parent repairs; all original P2 browser outcomes remain open.
+
+P3 firstreturn0531/e1b296 resolved the three original identity/readback findings. Cumulative0537 source review and original-tail preservation PASS; commanded Node20 controls/types/lint/list15 PASS. Complete acceptance FAIL only for meaningful missing owner and wrong-response refusal controls. Its no-live-run item is a journey limit; no new original run is required to qualify source. Exactport0539 copied final three blobs with identical full tree but remains held.
+
+Sol ap2-P3-reset-controls-sol-0543 and independent read-only whole-path ap2-P3-reset-whole-path-0543 are now dispatched in parallel. The latter compares passing P1 and checks whether setup registers its response waiter late; this is a source question, not fabricated live cause. Sol owns the next single final packet from integration; independent final review follows. No duplicate author or service request is needed.
+
+Orchestrator05:45 requirement consumed: exact serial predecessor mounted UI0-to5, require its POST200, retain original5-to0 reset200 and entire original body/tail. No seeded moved state. Current source uses that real drag; originaltail hash f7e7abd9 stays exact. Prior4065 NO-GO, D45 pair consumed, P1 GO unchanged. No Runtime memo prerequisite.

@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T05:47:36Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 1m -->
-# runtime board, 2026-10-24T05:46:30Z
+<!-- main | 2026-10-24T05:50:16Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 0m -->
+# runtime board, 2026-10-24T05:49:51Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -62,9 +62,9 @@
 | R-D42-HTTP | Measure a future memo pin over HTTP | Luna | Post-delivery safe memo under D47 | gated:D47 | No active HTTP worker | D45 removes these timings from the next P2/P3 prerequisites. Do not run an unsafe pin or a duplicate gate. | No released memo pin |
 | R2r-source-copy-guards | Classify two retained source-copy guards | Agent Sol / Luna | Independent result review passed | merged | Agent0502; review0511 PASS | Exact two originals passed in 20.90 seconds on Agent 9cd and Runtime 2b49. All 54 guards retained. Capture and HTTP limits stay explicit. | Source unchanged |
 | U2c-child-proof | Identify supported activation child proof | Luna / Luna | Source facts independently reviewed | merged | Facts0425; independent0430 PASS | Producer is absent in Agent RunPod adapter. Exact owner and custody seam returned; Runtime guard unchanged. | Source facts only |
-| F-CLI-remainder | Preserve five original CLI scenarios | Luna / Luna | First return after review failure | doing | Author 0540; review 0544 FAIL; return 0547 | Five legacy tests pass but bypass C0. No credit. First return checks existing production support. [Review](../../design/runtime-CLI-remainder-review-0544.md) | Agent 2007 unchanged |
+| F-CLI-remainder | Preserve five original CLI scenarios | Luna / Luna | Independent source classification | review | Review 0544 FAIL; return 0547; review 0548 | Five legacy tests pass; C0 remains unproved. Exact fallback and persistence seams returned to Agent. [Facts](../../design/runtime-CLI-remainder-return-0547.md) | Agent 2007 unchanged |
 | U1c-freeze-recheck | Recheck held upstream draft | Luna / Luna | Freeze join and integrated qualification | gated:freeze | Author 0540; review 0544 PASS | Qualified exact 795 handoff. Preserve history and five protected D39/R0 paths. [Review](../../design/runtime-U1c-freeze-recheck-review-0544.md) | Draft 40427 held |
-| R0-D39-generation-dry | Rehearse client generation for freeze | Luna / Luna | Independent generation and response review | review | Author 0540; review 0545 | Generated candidate fe637; 147 tests passed. Remaining response cases need explicit Agent source and localhost access. | fe637f6c5 held |
+| R0-D39-generation-dry | Rehearse client generation for freeze | Luna / Luna | Final freeze source and adoption | gated:freeze | Author 0540; review 0545 PASS | Normal generation reproduced all outputs. 147 client and 16 response cases passed; zero new diagnostics. [Review](../../design/runtime-R0-D39-generation-review-0545.md) | fe637f6c5 held |
 
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
@@ -82,4 +82,4 @@ D34: Main has 8.6 GiB free at the latest check. The orchestrator orders no furth
 
 Later: D46 closes U2c; no new relay or provider custody backend. Its upstream commit arrives at the freeze. Agent owns support-probe timeout investigation 0522; no Runtime author is requested. Disk and D47 memo work stay paused. Agent assigned F-CLI-remainder in peer 0531; unique Runtime Luna 0540 owns its five originals and three fixture files. The H32 U1c recheck and D39 generation dry run are also dispatched.
 
-Next ready: None waiting. CLI first return 0547 and D39 independent review 0545 are active. U1c handoff passed and remains held for freeze. Farm checkpoint 26511 remains active.
+Next ready: None waiting. CLI source-fact review 0548 is active. U1c and D39 dry-run handoffs passed independent review and remain held for freeze. Farm checkpoint 26511 remains active.
