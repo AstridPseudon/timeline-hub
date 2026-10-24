@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T11:49:35Z | dispatcher heartbeat 5s | live 3 (sol 0, luna 3, other 0) | busy30 23 | status age 2m -->
-# app board, 2026-10-24T11:47Z
+<!-- app | 2026-10-24T11:53:10Z | dispatcher heartbeat 7s | live 3 (sol 0, luna 3, other 0) | busy30 23 | status age 1m -->
+# app board, 2026-10-24T11:54Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -56,33 +56,35 @@
 | P3-safe-custody | Qualify six actual safe files | Proof Luna | Actual3896 retained bytes | merged | Proof1104 | Safe contents,schemas,writer and attachment equality PASS. Private mode and remote custody remain FAIL or UNKNOWN; no new run owed. | Report only |
 | P3-terminal-current | Publish qualified same-ID packet | Luna; Proof verdict | Independent1046 PASS | merged | Actual3896; safe packet1056 | Six safe JSONs published byte-exact with origins/hashes. Setup/reset,A acceptance,ACK loss/retry reached; B drop/restart/undo not reached. | Actual3896 |
 | P2-current-join | Qualify pure joined product target | Luna | Reviewed popup and diagnostic home | merged | Pure integrated1036 PASS | 695 plus67 tests,30 controls including20 Gate5,11 diagnostics,three types and lint PASS; all protected blobs exact. Pure execution target only. | d6ed8cbda1 |
-| U4p-D39-test-identity | Refresh strict current producer identity | Luna | Sol1022 caller repair | doing | Identity1035 | Change only one stale digest literal to exact approved D39 producer; all original semantic assertions remain. Cumulative independent review follows. | Earlyfreeze only |
+| U4p-D39-test-identity | Refresh strict current producer identity | Luna; independent review | Cumulative1058 PASS | merged | Identity1035; review1058 | Exact current producer identity integrated in earlye8a. Full19570 failed separately; four fixes join1146. | Early e8a |
 
 | P2-final-caller | Bind only P2 to pure target | Luna; independent Luna | Independent1103 PASS | merged | Author1054; review1103 | Complete caller PASS: 60 guards,14 negative controls,actual receipt and source. P3 and247 outsiders exact. Source preparation only. | ae17a48c3a |
 | P2-only-install | Install reviewed P2 row | Luna | Review1103 PASS | merged | app-P2-only-install-1115 | Atomic write and readback PASS. P2 row11b2eebf; P3 and247 outsiders unchanged. | Config only |
-| P3-D53-caller | Prepare only P3 source and body guards | Luna | Concrete D53 source2357 | doing | app-P3-D53-caller-prepare-1140 | Mechanical source/body preparation on branch; final home source and pure proof are inputs. Old079/0256 tuple and current P2 stay exact. | Artifact branch |
+| P3-D53-caller | Prepare only P3 source and body guards | Luna; independent Luna | Pure1143 PASS; actualcheckout602f | review | Author1140; review1154 | Mechanical caller8dc976 PREPARED. Review challenges actual guard inputs and future receipt circularity; no install/run. | 8dc9767f6e |
 | P3-fault-order | Apply approved exact retry accounting | Proof Luna; independent Luna | Final1126 PASS; D53 approved | merged | Clean1123; review1126; pure1143 | Normal home602f includes exact2357 three paths; strict accounting and original tails preserved. Pure integrated proof1143 active; no new run released. | 602f8b1f58 |
 
 | A4-D52 | Delete two proven dormant subsets | Luna; independent Luna | Review1121 and exact integrated tree | merged | Author1118; review1121; result1133 | Normal merge2e3c tree equals reviewed f00ee. Four deletions,85 neighbors and three types PASS. Actual-status ledger update1133 follows. | 2e3c8f65a8 |
 | P2-D52-live-check | Classify five unreached gestures | Luna | Owner11:15 request | merged | app-P2-D52-live-gesture-check-1118 | All five source-live; no dead or deferred cut. All eight originals retained. No browser credit. | Exact d6ed |
 | F-App-early | Run D49 branch full checkpoint | App service; Luna producer | Exact e8a branch | blocked:app | Actual19570; producer1119 | Exit1/1124s. 19342 pass,3 fail;9 failed files include7 collection errors. Four bounded owners1132; no repeat full. | e8a593e1d3 |
 
-| P2-Agent-tree | Correct actual caller component bindings | Sol; independent Luna | Author1130 PASS; path1130 complete | review | Sol1130; cumulative1140 | Correct Agent tree and authentic Remotion producer binding. Actual shell positive and stale negatives PASS; no config install or repeat. | 383d7c091c |
-| F-collections | Remove retired Supabase task closure | Luna; independent Luna | Author1137 PASS21neighbors | review | Author1137; independent1143 | Exact48 retired closure/exclusive-test deletions; upstream matches. Live Runtime task routes preserved;21neighbors/three typesPASS. | 664a8a08dd |
+| P2-Agent-tree | Correct actual caller component bindings | Sol; independent Luna | Complete1140 PASS | merged | Sol1130; review1140 | Actual decoded Bash positive,7 shell negatives and22 publication refusals PASS; install1151 active. No live credit. | 383d7c091c |
+| F-collections | Remove retired Supabase task closure | Luna; independent Luna | Independent1143 PASS | gated:branch-join | Author1137; review1143 | Exact48 deletions; live Runtime task caller and21 neighbors,three types PASS. Join1146 active. | 664a8a08dd |
 | F-authoring | Repair fresh-worker test fixture | Luna; independent Luna | Independent1137 PASS | gated:branch-join | Author1132; review1137 | Exact one-file fixture change;3tests/three types/lintPASS. Original order assertions retained. | 7886f11a9d |
 | F-Home | Correct exact live CTA test selector | Luna; independent Luna | Independent1137 PASS | gated:branch-join | Author1132; review1137 | Exact one-line query correction;13tests/three types/lintPASS. Dialog/focus/replay assertions retained. | e0a2937038 |
-| A4-runner | Delete retired executor and exclusive tests | Luna; independent Luna | Author1137 PASS89tests | review | Author1137; independent1143 | Exact five paths;83 live assertions retained.89tests/three types/lintPASS. No executor export restoration. | 3403a1d0ae |
+| A4-runner | Delete retired executor and exclusive tests | Luna; independent Luna | Independent1143 PASS | gated:branch-join | Author1137; review1143 | Exactfive-path cut;83 live assertions retained. Independent82 tests,three types,lintPASS. Join1146 active. | 3403a1d0ae |
 | A4-D52-session-label | Retire census-proven dormant protocol | Luna; review next | Existing D37 ledger; now D52 | doing | app-A4-D52-session-label-retire-1145 | Verify current no-caller proof,remove only exclusive dormant code/tests; preserve live outbox and D31 transcript. Branch only. | Home602f base |
-| P3-D53-source | Qualify current pure integrated target | Luna | Normal D53 merge602f | doing | app-P3-D53-pure-integrated-1143 | Exact D53 donor/guards/tails and D52 tree plus23controls/types/lint; future pure target only if PASS. | 602f8b1f58 |
+| P3-D53-source | Qualify current pure integrated target | Luna | Normal D53 merge602f | merged | Pure integrated1143 | Exact donor3,23 controls,three types,lint,body/reset/tails PASS. Exact worker ledger line published. No live GO. | 602f8b1f58 |
 | F-corrected-join | Compose reviewed checkpoint fixes | Luna; review next | Four packets and HOME602f | doing | app-U3b-F-reviewed-join-1146 | Normal merge-forward602f conflict-free; exact donor repairs and D52 closures then targeted/type/lint qualification. Branch only. | Early branch |
 | F-result | Verify checkpoint and ledger status | Luna | Actual merge and terminal packet | merged | Independent1133 PASS | Full packet counts and D52 whole-tree identity qualified. Actual-status worker ledger rows copied. No independent process SHA inferred. | 2e3c and e8a |
 
+| P2-reviewed-install | Install corrected reviewed P2 row | Luna | Independent1140 PASS | doing | app-P2-reviewed-tree-install-1151 | Worker-only atomic install and actual readback; P3 and current247 outsiders preserved. No new request yet. | Caller383d |
+
 Integration: HOME602f8b1f58593302829fb449d0ded62a91462a22 after reviewed D53 normal merge; D52 four-file deletion retained. P2 selected pure d6ed/tree542b remains immutable. Pure joined1036 PASS695+67 tests,30controls including20Gate5,11diagnostics,three types/lint and protected identities. Actual P226414 terminal preflight-only exit2,all originalsNOTRUN; decoded Agent-tree repair1130 active. Early branch e8a/treec94 is independently1058 PASS; ONE D49 full19570 failed11:28; exact failure groups all assigned1132.
 
-Blockers: App — repair reviewed caller stale Agent tree1130, independent review and worker-only install before meaningful P2. Actual26414 originals all NOTRUN.
-Blockers: App — D53 source is home602f after independent1126 PASS. Pure proof1143 and P3 caller1140 prepare final binding; no new P3 released.
-Blockers: Freeze — home U3b/D39 wait P2/P3 GO. Earlyfull19570 FAIL is qualified1133; four fixes join1146 with independent removal reviews1143. No repeat full yet.
-Next ready: On cumulative1140 PASS, worker-only P2 install then corrected meaningful request. P3 caller1140 prepares without run authority. Consume four full-source returns and independent result1133. No ready task waits. Consume clean D53 source1123 only after independent final PASS; original P3 remains NO-GO. Await same-ID19570 full.
+Blockers: App — corrected P2 caller383d independently1140 PASS; installer1151 active. Actual26414 remains terminal preflight-only,all8NOTRUN.
+Blockers: App — D53 pure602f independently1143 PASS and exact worker ledger line published. Caller1140 is review1154; final source/target binding and worker-only install precede new P3.
+Blockers: Freeze — home U3b/D39 wait P2/P3 GO. Full19570 FAIL remains visible; four independently passed fixes join1146. No repeat full before cumulative review.
+Next ready: On installer1151 PASS, submit the existing released ONE meaningful P2 and assign same-ID producer. Consume caller1154,retirement1145 and join1146; dispatch independent reviews immediately. No P3/full duplicate.
 
 Later: Final P1–P5 run on App service with Proof verdict after final tuple qualification, then D49 full suites and Farm F-final/ZIP. No duplicate farm or Proof run. D47 memo/capsule stays deferred and held unmerged. D46 U2c draft stays closed. D14/D23 deferred relational timing cases retain their original assertions and failures.
 
@@ -104,3 +106,5 @@ Inbox: Consumed1479599 bytes through Proof1134 delayed remote-request hold. Actu
 Sweep3 completed11:23: removed zero directories; about11GB free. Prior compact/cleanup refusals remain stopped.
 
 Current P2 ID: app-P2-final-pure-integrated-1036-full-e2e-three-products-1024111909-26414. Sole producer app-P2-terminal-producer-1119; no duplicate P3. D51 freezes current upstream snapshot until delivery refresh.
+
+Pass11:54: Read PLAN first,COMMON/header,new inbox and normal hub owner boards. Recycled finalized clean1045; no prior refusal retried. Complete P2 caller1140 PASS, installer1151 dispatched immediately. D53 integrated1143 PASS and exact worker-authored line copied to App ledger; supported exactcheckout602f obtained. Caller1140 finalized8dc976, independent1154 dispatched. Both full-removal reviews1143 PASS, joined1146 active. All changes remain worker-authored; no homefreeze merge or new original yet.
