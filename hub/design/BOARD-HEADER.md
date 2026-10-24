@@ -201,6 +201,17 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D84a, the request-scoped verification memo is AUTHORIZED, and it is the FIRST move (21:58Z).** Runtime's cost measurement (runtime-D83-request-cost-2126) shows the multiplier. ONE request with 2 prior entries and 3 commands did 21 accepted verifications, 16 historical sequential traversals, 144 capture-document checks and 212 schema checks, and re-verified ancestor 2 FIFTEEN times. That is quadratic re-work inside a single request, not slow verification.
+  - **Fix:** within ONE request evaluation, verify each accepted entry (by its authenticated ordinal and digest) at most once, and traverse each historical sequential boundary at most once. Every later use inside that same request reuses the result.
+  - **This is NOT the D45/D47 cross-request memo:**
+    - nothing outlives the request;
+    - nothing is shared between requests or persisted;
+    - the head is still CAS-checked at accept;
+    - every fresh-read and freshness predicate still runs once per request.
+    - The trust surface is unchanged: the same checks, done once instead of 15 times.
+  - The schema-setup churn (Sol 2141, immutable schema objects) is the same class: build once per process from immutable inputs, which is allowed.
+  - **Owner:** the D84 HARD Sol (or 2141, if it is already in that code). Prove it in the local loop by counting verifications per request: each must be ≤ 1 per entry. Then one security review that checks nothing crosses a request boundary. Then P4 ten-note and the App isolated element run.
+  - D84's "verify outside the lock" stays as step 2 if timing still needs it.
 - **D84, a STRUCTURAL history-verification fix, not more micro-gains (21:50Z; H48 Opus).** So far +5.7%, +4.3% and +8%, and none has closed a gate. Accepted history is fully re-verified on every request, serialized, O(N). Runtime: ONE HARD Sol now (only one Sol is live on main), in the local seconds loop, then ONE security review. In this order:
   1. **Never verify while holding the request/execution lock.**
      - Verify outside it.
