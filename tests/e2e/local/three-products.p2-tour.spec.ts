@@ -341,12 +341,13 @@ function assertRequestV2(post: CommitPost, before: HeadPin, modern = true): void
   expect(post.body.source).toEqual({ via: 'app' });
 }
 
-function assertDocumentPatchRequest(body: CommitRequest, changes: unknown[]): void {
+function assertDocumentPatchRequest(body: CommitRequest, changes: unknown[], created?: string[]): void {
   expect(body.commands).toEqual([{
     schema_version: 1,
     op: 'doc.patch',
     version: '1',
     select: null,
+    ...(created === undefined ? {} : { created }),
     args: { changes },
   }]);
   expect(body.steps).toHaveLength(1);
@@ -357,6 +358,66 @@ function assertDocumentPatchRequest(body: CommitRequest, changes: unknown[]): vo
     command_ordinals: [0],
     patch: changes,
   });
+}
+
+function assertTransitionRequestV2(
+  post: CommitPost,
+  before: HeadPin,
+  original: CanonicalDocument,
+  ids: string[],
+  changes: unknown[],
+): void {
+  expect(post.key).toBeTruthy();
+  expect(post.body).toMatchObject({
+    api_version: 1,
+    project_id: expect.any(String),
+    timeline_id: expect.any(String),
+    base_revision_id: before.revision_id,
+    base_publication_id: before.publication_id,
+    commands: expect.any(Array),
+    label: expect.any(String),
+    steps: expect.any(Array),
+    merge: 'fields',
+    dry_run: false,
+    source: { via: 'app' },
+  });
+
+  const payload = original.parent_revision.payload as unknown as JsonObject;
+  const config = payload.config as JsonObject;
+  const clips = config.clips as Array<JsonObject>;
+  const reads = ids.flatMap((id) => {
+    const clip = clips.find((candidate) => candidate.id === id);
+    expect(clip, `transition source clip ${id}`).toBeTruthy();
+    return ['id', 'transition'].map((key) => ({
+      kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${id}`, key],
+      state: Object.hasOwn(clip!, key) ? { state: 'present', value: clip![key] } : { state: 'absent' },
+    }));
+  });
+  reads.push({
+    kind: 'field', ref: 'parent', path: ['config', 'pinnedShotGroups'],
+    state: Object.hasOwn(config, 'pinnedShotGroups')
+      ? { state: 'present', value: config.pinnedShotGroups } : { state: 'absent' },
+  });
+
+  expect(post.body.commands).toEqual([{
+    schema_version: 1,
+    op: 'doc.patch',
+    version: '1',
+    select: null,
+    created: [],
+    args: { changes },
+  }]);
+  expect(post.body.merge).toBe('fields');
+  expect(post.body.reads).toEqual(reads);
+  expect(post.body.steps).toEqual([{
+    id: expect.any(String),
+    label: 'Edit timeline',
+    intent: `Clear transitions: ${ids.join(', ')}`,
+    tags: [],
+    command_ordinals: [0],
+    patch: changes,
+    reads,
+  }]);
 }
 
 function assertHistoryMetadata(entry: HistoryEntry, post: CommitPost, result: CommitAcceptedMutation): void {
@@ -510,10 +571,11 @@ async function proveGestureAndUndo(
   assertCommands: (body: CommitRequest) => void,
   assertAfter: (after: CanonicalDocument) => void,
   assertUndo: (undone: CanonicalDocument) => void,
+  assertRequest: (post: CommitPost, before: HeadPin) => void = (post, head) => assertRequestV2(post, head),
 ): Promise<void> {
   assertCanonicalClosure(original, harness, seed);
   const post = await commitFromGesture(page, wire, gesture);
-  assertRequestV2(post, before.head);
+  assertRequest(post, before.head);
   assertCommands(post.body);
   const result = assertReplyShape(post, before.head);
   const after = result.data.canonical_document;
@@ -597,17 +659,19 @@ test('P2 mounted transition None single: raw clear preserves opaque data/order a
   const wire = wireFor(page);
   const before = await history(harness, seed3);
   const original = await canonicalDocumentAt(harness, seed3, before.head.revision_id);
+  const changes = [{
+    op: 'remove',
+    ref: 'parent',
+    path: ['clips', `id:${seed3.transitionClipId}`, 'transition'],
+    before: { state: 'present', value: clipById(original, seed3.transitionClipId).transition },
+  }];
   await proveGestureAndUndo(page, harness, seed3, wire, before, original,
     () => clearTransition(page, seed3.transitionClipId),
     [seed3.transitionClipId], ['transition'],
-    (body) => assertDocumentPatchRequest(body, [{
-      op: 'remove',
-      ref: 'parent',
-      path: ['clips', `id:${seed3.transitionClipId}`, 'transition'],
-      before: { state: 'present', value: clipById(original, seed3.transitionClipId).transition },
-    }]),
+    (body) => assertDocumentPatchRequest(body, changes, []),
     (after) => assertRawTransitionCleared(original, after, [seed3.transitionClipId]),
-    (undone) => expect(clipById(undone, seed3.transitionClipId).transition).toEqual(clipById(original, seed3.transitionClipId).transition));
+    (undone) => expect(clipById(undone, seed3.transitionClipId).transition).toEqual(clipById(original, seed3.transitionClipId).transition),
+    (post, head) => assertTransitionRequestV2(post, head, original, [seed3.transitionClipId], changes));
 });
 
 test('P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo', async ({ page, harness, seed3 }) => {
@@ -616,16 +680,18 @@ test('P2 mounted transition None bulk: atomic raw clears preserve unknown fields
   const before = await history(harness, seed3);
   const original = await canonicalDocumentAt(harness, seed3, before.head.revision_id);
   const ids = [seed3.appClipId, seed3.transitionClipId];
+  const changes = ids.map((id) => ({
+    op: 'remove',
+    ref: 'parent',
+    path: ['clips', `id:${id}`, 'transition'],
+    before: { state: 'present', value: clipById(original, id).transition },
+  }));
   await proveGestureAndUndo(page, harness, seed3, wire, before, original,
     () => clearTransitionBulk(page, seed3), ids, ['transition'],
-    (body) => assertDocumentPatchRequest(body, ids.map((id) => ({
-      op: 'remove',
-      ref: 'parent',
-      path: ['clips', `id:${id}`, 'transition'],
-      before: { state: 'present', value: clipById(original, id).transition },
-    }))),
+    (body) => assertDocumentPatchRequest(body, changes, []),
     (after) => assertRawTransitionCleared(original, after, ids),
     (undone) => {
       for (const id of ids) expect(clipById(undone, id).transition).toEqual(clipById(original, id).transition);
-    });
+    },
+    (post, head) => assertTransitionRequestV2(post, head, original, ids, changes));
 });
