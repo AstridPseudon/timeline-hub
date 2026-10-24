@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T11:09:51Z | dispatcher heartbeat 7s | live 8 (sol 1, luna 7, other 0) | busy30 18 | status age 0m -->
-# agent board, 2026-10-24T11:09:18Z
+<!-- agent | 2026-10-24T11:12:44Z | dispatcher heartbeat 9s | live 9 (sol 2, luna 7, other 0) | busy30 21 | status age 0m -->
+# agent board, 2026-10-24T11:12:20Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -163,14 +163,14 @@
 
 | F checkpoint census | Reconcile all 276 bad results | Luna | Independent result PASS | merged | Author 1052; independent 1058 PASS | All 276 IDs match. 64 historical closed are bad here; 119 tracebacks retained and 157 summary only. Historical count unchanged. [Review](../../design/agt-F-full9758-census-review-1058.md). | Evidence only |
 | F checkpoint setup | Classify all 45 setup errors | Luna | Independent source PASS | merged | Author 1052; review 1105 PASS | Exact 3 symlink loops and 42 artifact mismatches confirmed. Existing 819acf profile qualified; candidate 1105 prepares one row. No full retry. | Evidence only |
-| R2 checkpoint sources | Attribute60 core failures | Sol / Luna | Independent review and current11 | review | Source1052; review1105 | 15 historicalcodec and45 fixture cases. Four currentcodec nodes passed67; eleven need meaningful currentqualification. No newproductfix proven. | Currentc2b |
+| R2 checkpoint sources | Attribute 60 core failures | Sol / Luna | Independent current qualification | review | Source 1052; review 1105 | Current 11: ten order and forgery cases PASS, captured nested redo FAIL identity conflict. Four fork nodes previously PASS. Captured source owner 1112 follows. | Current c2b |
 
-| F checkpoint other causes | Classify171 other failures | Luna | Independent source review | review | Author1054; review1105 | Author labels70 fixture,61 environment,29 product,5 version,6 unknown. Productlabels and false ba55-absence claim are challenged. | Evidence pending |
+| F checkpoint other causes | Classify 171 other failures | Luna | First review FAIL | doing | Author 1054; review 1105; return 1112 | Only 55 retained tracebacks, 116 summary only. Product labels lack caller proof; 18 environment labels rejected. First return corrects evidence only. | No product credit |
 
 | R2 fixture step | Restore14 original undo scenarios | Luna | Authentic acceptedboundary setup | doing | agt-R2-fixture-step-1105 | Fixture/helpers only; all original bodies and guards retained. Meaningful changed-fixture proof then independent review. | Basec2b |
 | R2 fixture m1 | Restore25 exact recipe redo cases | Luna | Production closure builder | doing | agt-R2-fixture-m1-1105 | One fixture file; preserve complete rows/order/container shapes and original bodies. No guard waiver or product edits. | Basec2b |
 | R2 fixture redo | Restore6 native replay cases | Luna | Authentic closure/materialization | doing | agt-R2-fixture-redo-1105 | Two fixture helpers only; no invented private authority or changed original assertions. | Basec2b |
-| F full profile | Prepare exact qualified profile row | Luna | Setup review1105 | doing | agt-F-full-profile-candidate-1105 | One-row candidate using existing819acf profile; preserve all tests and outside rows. No installation or duplicate full. | Preparation only |
+| F full profile | Prepare exact qualified profile row | Luna | Candidate review | review | Author 1105; review 1113 | Candidate keeps all tests, -q -n 3 and 172 outside rows. Existing 819acf profile preflight passed. No installation or duplicate full. | Preparation only |
 | R1 full tamper | Classify5 retained guard failures | HARD Sol | Valid current production witness | doing | agt-R1-full-tamper-sol-1105 | Nativeorder and publicpair/foreign/digest refusals remain strict. Smallest source fix only after legitimate currentcause. | Basec2b |
 
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
@@ -206,3 +206,8 @@ Next ready: Eight scoped workers1105 dispatched for three result reviews, three 
 Pass11:05Z: Runtime1045 withdrew the conditional child request; both lanes retain existing owner admission hold. Kit receipts are complete. Core and noncore source assessments have independent reviews, not automatic closures or productdefect credit.
 
 Pass 11:09Z: Independent census1058 PASS confirms all276 bad IDs, 64 historical closed overlaps, 119 retained traceback headers and157 summary-only results. Setup1105 PASS confirms3 symlink loops plus42 stale artifact mismatches and authentic819acf profile. Both results published; profilecandidate1105 remains preparatory. Seven other source/fixture/review workers continue. Child rows now correctly gated on existing owner admission, after kit receipt dependencies cleared.
+
+| R2 captured history | Qualify nested historical source codec | HARD Sol / Luna | Current one-node FAIL | doing | Sol 1112; whole path 1112 | Existing captured nested redo still refuses source identity. Unique source author and independent read-only path review; fixture-redo1105 remains disjoint. | Base c2b |
+| OPS new five-file kit | Verify actual received new revision | Luna | Runtime installer 1105 PASS | doing | agt-OPS-five-kit-receipt-1113 | Exact new five hashes, modes and normal committed publication only. Existing child admission hold remains; no new candidate or package action. | Source 6de |
+
+Pass 11:12Z: Completed three result reviews finalized via supported stop, all confirmed no live process. R2 current11 passed ten and failed one captured nested historical codec path. Unique HARD Sol1112 and independent whole-path1112 dispatched immediately. Noncore171 review FAIL rejected unsupported product/environment labels and invented traceback coverage; first return1112 queued on saved author branch. Profile1105 candidate passed preparation and review1113 queued. Runtime new-kit peer1106 becomes owned received-five-file1113 row, no child admission. Three finished trees recycled this round; evidence branches and reports retained.
