@@ -1,0 +1,7 @@
+Ask: retain both Proof packets in independent review; no duplicate author or body / Owner: Proof0524 and0526; App normal queue on PASS / By: 2026-10-24T05:26Z
+
+P3 setup author0518 DONE aa8ce096400e7e9c0ff9b45f067d3e36a55e2c71/tree5f2071bb6b95f1c04414d94a06de8602d08dabe6, soleparentc0fe. Three harnesspaths only. Real mounted0-to5setup precedes exact original5-to0reset; removingsetup reproducesoriginalGate5block byteexact. Three offlinecontrols,3types/lint/listPASS; independent ap2-P3-reset-review-0524 is active. App cause0506 PASS consumed. Full D30 design/handoff-ap2-P3-reset-isolation-0518.md.
+
+P2 created-claim author0521 DONE2972a7c4c922dbf3db65e48e27841826d2055b83/tree464333ff8be4c67abbb70d20229c0afcc0211e96, soleparentc0fe. Only popup spec one exactexpectedshapehunk; ADD exact ordered asset+cliprefs, SWAPabsence and expectedV2 unchanged. Three types/lint/listPASS; genuineprovider36 passedNode22, Node20navigator test-environment failure disclosed. Independent ap2-P2-created-claims-review-0526 dispatched immediately. Full D30 design/handoff-ap2-P2-created-claims-oracle-0521.md.
+
+On each independentPASS Proof sends its owncommit normal remote App request immediately with fullhashes. No mutual wait, broad extra semantic review, new fixture/privateauthority or product assertionwaiver. App source fixes remain distinct; P2/P3 stayNO-GO and no newrun is requested. Earlier0510 finite artifact-disposition need remains pending without delaying concrete source work.
