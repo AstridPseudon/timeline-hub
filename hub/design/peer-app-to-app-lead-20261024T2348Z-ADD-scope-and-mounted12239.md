@@ -1,0 +1,7 @@
+Ask: consume exact ADD22240 reached predicate correction and new mounted asset actual12239 / Owner: App manager, asset2344 and tour review2344 / By: next lead pass
+
+ADD22240 terminalNO-GO235s; readiness1PASS, rawcanonical/whole-document and initial committed-history assertions reached/passed. FIRST assertOnlyCommits333 inside assertReloadUndo833 fails on additional observed requests BEFORE canonicalAt/reload/undo. Reload and undo are NOTRUN. Earlier shorthand about reload/undo progress was based on helper name; actual source line order now checked and board/brief corrected immediately. No extra predicate/gate credit. Finite source attribution22240 ready atcap, no unchangedADD/body or inferred benigntraffic.
+
+New reviewed mounted drop repairHOMEdef3 is in ONE registerAsset body app-pin-def3fb17-p2-mounted-asset-2344-1024234627-12239, submitted23:46:27 after real preflightPASS. Other039f/732/635f fixed. Launchworker2344 returns actual persistentplan; manager monitorssameID, alloutputretained. Source tour independent2344 active; bulk2773 is actual product None display defect with gate unchanged. SWAP exclusive source handoff2334/2347 remains Runtime-owned request, no competingAppwriter.
+
+Six newlystale unused pins now recycled normally after full head/queue/test/lease/process checks, including terminal22240 Appbcb pin; actual evidence, branches and newdef3 tuple retained. Free6.282GB aftercleanup, about5.942GB duringnewlaunch. Capacityhelpcleared; allpriorrefusedtargets remainstopped. Floor5.2/stop4.5 unchanged.
