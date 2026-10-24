@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T23:12:16Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 2m -->
-# app board, 2026-10-24T23:10Z
+<!-- app | 2026-10-24T23:15:28Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 1m -->
+# app board, 2026-10-24T23:14Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -104,13 +104,15 @@
 
 | P2-asset-1155 | Repair transient upload ownership | Luna independent | Final guard c741 review PASS | merged | app-A3-asset-final-diff-review-2301 | Independent100/types/lint PASS; protected six exact. Normal merge7d53, reviewed blobs exact. Mounted proof owed. | Home7d53ba2813 |
 
-| P2-placement-8259 | Attribute placement response timeout | Luna | Distinct occurrence placement path | ready | Next free source slot | No intended POST in finite trace. Review2252 cannot establish same asset cause; minimum separate source attribution next. | Appbceb; Runtime732 |
+| P2-placement-8259 | Attribute placement response timeout | Luna | Distinct occurrence placement path | doing | app-A3-placement-8259-cause-2313 | Source author now owns exact missing POST. Preserve physical occurrence guards; faithful mounted oldRED/newGREEN required before repair. | Base home7d53 |
 
 | P2-popup-ADD-current | Qualify strict digest on mounted ADD | Luna; service | Raw digest fix home63d7 | gated:source-fix | App2255; actual7872 | NO-GO222s. Readiness PASS; raw digest452 passed. Exact canonical equality860 failed only parent digest/revision; tail NOTRUN. | App63d7; Runtime732 |
 
-| P2-popup-7872 | Exact parent canonical expectation | Luna independent | Retained actual7872; author PASS | review | app-P2-popup-parent-oracle-review-2309 | Author fe628 derives parent wrappers from raw-before data; four mutation refusals, 2 Node controls, 3 types and lint PASS. No new body. | Candidatefe62860405 |
+| P2-popup-7872 | Exact parent canonical expectation | Luna independent | Independent2309 PASS | merging | app-P2-popup-parent-oracle-review-2309 | Exact raw-before parent wrappers; whole document/reload/undo strict. 2 Node, 3 types/lint PASS. Exact report copied to existing ledger. | Sourcefe62860405 |
 
 | P2-asset-current | Qualify reviewed asset cleanup | Luna; service | Home7d53 /039f /732 /635f | doing | app-A3-asset-reviewed-original-2307 | Preflight29082 PASS; body8419 submitted23:09:11. Exact7d53/039f/732/635f, unchanged original. Wait same ID. | App7d53; Runtime732 |
+
+| P2-parent-8232 | Strict full request envelope | Luna | Main original8232 terminal | ready | Next source slot | Peer Runtime2303: readiness PASS, original fails strict minimal-envelope342; production adds label/steps. Keep every full v2 field exact. | Appbceb; Runtime732 |
 
 Integration: Current App7d53ba281342d2963d92d8bcd746dc7f6b2921a4 merges reviewed asset cleanup c741 onto strict popup digest63d7. Both reviewed handoff source/test blobs exact. Popup7872 correction is source-only and not yet merged. App normally adopts Runtime732c48c6f5a9441a65c61b24595d454a1cd3e180. Exact diagnostic tuple is Appbceb / Agent039ff2c2187d02b723074a8a6dfcbc6a70544c19 / Runtime732 / Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40. Existing asset5fcb and strict placement00918 repairs are included; original placement spec413d and other five protected files retained.
 
@@ -118,11 +120,11 @@ core open: Eight original P2 gestures remain unqualified. Element7131 still fail
 regressions: Asset transient handoff repair is independently reviewed and home7d53; one mounted qualification2307 is preparing. Placement8259 cause remains unproved; no claim that asset fix addresses it. Earlier drop-position and strict placement selectors are home with focused proof; mounted proof still owed. D69 restoration evidence retained.
 
 Blockers: Final cut — all8 isolated P2 plus full tour, final pinned P1–P5/core, D69 and genuine installed render required. Runtime coordinates matrix and ZIP. P1 31083 and P3 15493 GO retain recorded tuple scopes.
-Next ready: Asset c741 merged7d53 after independent2301 PASS100/types/lint; one mounted asset original2307 dispatched immediately. Placement8259 source author takes next source slot. Popup7872 author PASS now independent2309; apply and one meaningful ADD after asset8419 terminal. Runtime2250 owns main four profile dependency; no App input owed. No P3, D79 or E work.
+Next ready: Asset c741 merged7d53 after independent2301 PASS100/types/lint; one mounted asset original2307 dispatched immediately. Placement8259 source author2313 dispatched at review slot release. Parent8232 exact envelope correction takes next source slot. Popup7872 independent2309 PASS and normal merge queued; one meaningful ADD after asset8419 terminal. Runtime2250 owns main four profile dependency; no App input owed. No P3, D79 or E work.
 
-live 2 / cap 2; ready-undispatched 1 (placement source), capacity full with mounted asset qualification and popup correction.
+live 2 / cap 2; ready-undispatched 1 (parent8232 source), capacity full with asset8419 and placement2313.
 Capacity: Every ended clean non-KEEP local worktree scanned this pass; zero eligible. Latest ten stale pins released through guarded D74a route, receipt design/app-D74a-fresh-stale-pins-2214.md. Current tuple pins and all run evidence retained.
 Disk: 6.041GB during asset8419 build. Owner22:14 App critical source/gate floor5.2GB; stop4.5GB, NON-element first. One body at a time on App; parallel main diagnostic venue authorized22:24. Noncritical work retains7.5GB floor.
 Safety: No new refusal. Prior dirtyU3, compact, graph, publication and source-access refusal targets stay stopped. No raw deletion or alternative denied route.
-Inbox consumed through1788240 bytes. PLAN/common/C0/header and Runtime board checked. Runtime2250 latest setup ownership consumed. D73 genuine exact checkout receipts and one-command source preflight before every body; newer heads never invalidate captured tuples.
+Inbox consumed through1790187 bytes. PLAN/common/C0/header and Runtime board checked. Runtime2250 latest setup ownership consumed. D73 genuine exact checkout receipts and one-command source preflight before every body; newer heads never invalidate captured tuples.
 Evidence: [ADD7872 service summary](../../tests/app-pin-63d7c74b-p2-digest-add-2255-1024225558-7872/summary), [asset guard review2252](../../workers/app-A3-asset-placement-review-2252/report.md), [element7131](../../design/app-P2-D84a-element-2216.md), [main setup return](../../design/runtime-main-profile-2238.md).
