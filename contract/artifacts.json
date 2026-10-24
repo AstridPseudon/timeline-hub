@@ -12,22 +12,23 @@
     "conformance/fixtures/shot-composition-compatibility.json": "sha256:9d5201dd62121c278bd51037863afb59508794b96b06e1bf3f89d7b300e19fc2",
     "conformance/fixtures/task.json": "sha256:7dc2f5d3f82219b439f1c1147aa230f39e706a3c3b24a7d177efc1b975f543b9",
     "conformance/fixtures/visual-boundary-v1.json": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55",
+    "conformance/responses/commit_conflict_409.json": "sha256:e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08",
     "conformance/responses/events_page_1_200.json": "sha256:6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d",
     "conformance/responses/events_page_2_200.json": "sha256:d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2",
     "conformance/responses/invalid_cursor_400.json": "sha256:16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff",
     "conformance/responses/managed_outputs_200.json": "sha256:6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d",
     "conformance/responses/not_found_404.json": "sha256:4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6",
-    "conformance/responses/publish_conflict_409.json": "sha256:19d664d035691202da03b22b858456c49983e253c7485a6347baa1cf350eea57",
+    "conformance/responses/retired_route_410.json": "sha256:e3b43083786aae88fe3aabaaf8de631803c6a11610607eb7c3527f999aa80292",
     "conformance/responses/task_admission_201.json": "sha256:108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c",
     "conformance/responses/task_read_200.json": "sha256:cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829",
     "conformance/responses/validation_error_422.json": "sha256:2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a",
     "conformance/second-client-core-v1.yaml": "sha256:3a0a5aff4e66435212ba567850a0a27c5555601a33ecbd3ed7e21737948662e3",
     "contract/component-manifest.json": "sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5",
     "contract/manifest.json": "sha256:414243ac7ab66ea197571e0ef85dbe8b4049e7a10a662a90870d9b9459aad369",
-    "contract/openapi/workspace-v1.yaml": "sha256:fe68ceb4419a6482775addde8893d6b12818191f6817fc706bba1630dde217f4",
+    "contract/openapi/workspace-v1.yaml": "sha256:302523509996d42fb1d978912f4e6ea022d8ba596896c6cc307161d2cdc5c075",
     "contract/schemas/app-state.json": "sha256:bba8272c9dbf3039d329af8d05d5e23c94d4f59884b332c7f12ab1bb07ace043",
     "contract/schemas/backup.json": "sha256:71ec2f4bc9ad63ac05e8149cf0d1a4f96fa8d5aa4b85bf12a61938fbafb2151e",
-    "contract/schemas/common.json": "sha256:65e0196e36a0565f3a2f69e489e4c1fa6114df039eb25666c60591f266e06f19",
+    "contract/schemas/common.json": "sha256:2f608ca95c5be758c47dd70e4ed52d2835e070362c3cfd2f4328b25964dfec61",
     "contract/schemas/doctor.json": "sha256:d0caac9e7bf6a81d68abb52e757b321f7a45d4f2afff43bd4880089ea8dcc243",
     "contract/schemas/document.json": "sha256:6d8fe08563eb96504c874c1d3535527371a8a67f54b06bcd324c32f99cb286e3",
     "contract/schemas/edit-command.json": "sha256:d106dfe8212500709b4072d7bc0486f83c27d5d8de33d215cb52b9ea7d46357d",
@@ -80,5 +81,5 @@
     "runtime_protocol/schemas/timeline-commit-bundle.json": "sha256:b6a1550487dad7c83970d88f26ec3e8a74852cf8c57c20f3cd021847a075b39c"
   },
   "producer": "astrid-runtime",
-  "version": "sha256:100eb485f69dea58e9fe06ba4919617a597f1822016fa0cbab63297f2dcb4f61"
+  "version": "sha256:6eb9b8352e8a47aefd76274e496952f8aa320a9795d629961f9381110f15d3f8"
 }

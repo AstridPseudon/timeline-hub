@@ -145,19 +145,22 @@ paths:
       responses: { '200': { description: Project documents, content: { application/json: { schema: { $ref: '#/components/schemas/DocumentPage' } } } } }
     post:
       operationId: createDocument
+      description: Timeline document payloads (timeline_id, timeline-prefixed document_id, or timeline.composition kind) are retired; use commitTimeline.
       parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CreateDocument' } } } }
-      responses: { '201': { description: Versioned document with committed receipt, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
+      responses: { '201': { description: Versioned document with committed receipt, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '409': { $ref: '#/components/responses/Conflict' }, '410': { $ref: '#/components/responses/RetiredRoute' } }
   /v1/projects/{project_id}/documents/{document_id}:
     get:
       operationId: getDocument
+      description: Timeline-prefixed document IDs are retired; use inspectTimeline.
       parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/DocumentId' } ]
-      responses: { '200': { description: Versioned document, content: { application/json: { schema: { $ref: './schemas/document.json' } } } } }
+      responses: { '200': { description: Versioned document, content: { application/json: { schema: { $ref: './schemas/document.json' } } } }, '410': { $ref: '#/components/responses/RetiredRoute' } }
     patch:
       operationId: updateDocument
+      description: Timeline-prefixed document IDs and payloads carrying timeline_id are retired; use commitTimeline.
       parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/DocumentId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/UpdateDocument' } } } }
-      responses: { '200': { description: Updated document with committed receipt, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
+      responses: { '200': { description: Updated document with committed receipt, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '409': { $ref: '#/components/responses/Conflict' }, '410': { $ref: '#/components/responses/RetiredRoute' } }
   /v1/projects/{project_id}/objects:
     get:
       operationId: listProjectObjects
@@ -358,25 +361,17 @@ paths:
       responses: { '200': { description: Canonical parent-composition history page, content: { application/json: { schema: { $ref: '#/components/schemas/ParentCompositionRevisionPage' } } } }, '404': { $ref: '#/components/responses/NotFound' } }
     post:
       operationId: publishParentComposition
-      description: >-
-        Atomically publish one complete one-level parent composition and its immutable child/internal revisions.
-        Compatibility publication requires projects:write and an explicit Idempotency-Key. It is eligible only for
-        an untracked timeline whose expected_head matches its current head, or a genuinely empty headless timeline
-        with expected_head null (including a fresh timeline identity). Tracked timelines must use commitTimeline.
-        A 409 details.reason of timeline_commit_required means the current head is tracked by command history;
-        stale_head means expected_head differs from the untracked current head; headless_content_not_empty means
-        the headless timeline contains authored content or scoped rows, including legacy project documents.
-        These refusals occur before publication writes. Identical successful retries retain the original receipt.
+      description: Retired for every timeline, including headless timelines. Use commitTimeline. Authentication and scope checks precede retirement; retirement precedes JSON decoding, idempotency lookup, and writes. Raw request bytes may already have been prefetched.
       parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/TimelineId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ParentCompositionPublication' } } } }
-      responses: { '200': { description: Durable parent publication receipt, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
+      responses: { '410': { $ref: '#/components/responses/RetiredRoute' } }
   /v1/projects/{project_id}/timelines/{timeline_id}/replace-parent-media:
     post:
       operationId: replaceParentCompositionMedia
-      description: Replace one clip in an exact immutable parent-composition closure and atomically publish its successor.
+      description: Retired for every timeline, including headless timelines. Use commitTimeline. Authentication and scope checks precede retirement; retirement precedes JSON decoding, idempotency lookup, and writes. Raw request bytes may already have been prefetched.
       parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/TimelineId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ParentCompositionMediaReplacement' } } } }
-      responses: { '200': { description: Durable parent replacement receipt, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
+      responses: { '410': { $ref: '#/components/responses/RetiredRoute' } }
   /v1/projects/{project_id}/timelines/{timeline_id}/composition-revisions/{revision}:
     get:
       operationId: getProjectParentCompositionRevision
@@ -395,9 +390,10 @@ paths:
   /v1/projects/{project_id}/timeline-documents:
     post:
       operationId: createTimelineDocument
+      description: Retired for every timeline, including headless timelines. Use commitTimeline. Authentication and scope checks precede retirement; retirement precedes JSON decoding, idempotency lookup, and writes. Raw request bytes may already have been prefetched.
       parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CreateTimelineDocument' } } } }
-      responses: { '201': { description: Timeline and composition document committed atomically, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
+      responses: { '410': { $ref: '#/components/responses/RetiredRoute' } }
   /v1/projects/{project_id}/shots/{shot_id}/revisions/{revision}:
     get:
       operationId: getProjectShotRevision
@@ -422,10 +418,10 @@ paths:
   /v1/timelines/{timeline_id}/replace-clip:
     post:
       operationId: replaceTimelineClip
-      description: Atomically replace one explicit composition clip with a managed object owned by the timeline project while preserving authored timing and unrelated document state.
+      description: Retired for every timeline, including headless timelines. Use commitTimeline. Authentication and scope checks precede retirement; retirement precedes JSON decoding, idempotency lookup, and writes. Raw request bytes may already have been prefetched.
       parameters: [ { $ref: '#/components/parameters/TimelineId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/timeline-clip-replacement.json' } } } }
-      responses: { '200': { description: Updated canonical timeline with committed receipt, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
+      responses: { '410': { $ref: '#/components/responses/RetiredRoute' } }
   /v1/timelines/{timeline_id}/diff:
     get:
       operationId: diffTimeline
@@ -443,9 +439,10 @@ paths:
   /v1/timelines/{timeline_id}/recover:
     post:
       operationId: recoverTimeline
+      description: Catalog visibility recovery remains supported. Restoring a historical version is retired; use commitTimeline with timeline.restore.
       parameters: [ { $ref: '#/components/parameters/TimelineId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RecoverTimeline' } } } }
-      responses: { '200': { description: Recovered timeline with committed receipt, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
+      responses: { '200': { description: Recovered timeline with committed receipt, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '409': { $ref: '#/components/responses/Conflict' }, '410': { $ref: '#/components/responses/RetiredRoute' } }
   /v1/shots/{shot_id}:
     get:
       operationId: getShot
@@ -454,9 +451,10 @@ paths:
   /v1/projects/{project_id}/shots:
     post:
       operationId: createProjectShot
+      description: Direct catalog mutations of shots in current or historical film placements are retired; use commitTimeline. Unplaced project shots remain supported.
       parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ProjectShotCreate' } } } }
-      responses: { '201': { description: Project shot mutation, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } } }
+      responses: { '201': { description: Project shot mutation, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '410': { $ref: '#/components/responses/RetiredRoute' } }
     get:
       operationId: listProjectShots
       parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/Cursor' }, { $ref: '#/components/parameters/Limit' }, { name: include_archived, in: query, required: false, schema: { type: boolean, default: false } } ]
@@ -468,33 +466,38 @@ paths:
       responses: { '200': { description: Project shot, content: { application/json: { schema: { $ref: '#/components/schemas/ProjectShot' } } } } }
     patch:
       operationId: updateProjectShot
+      description: Direct catalog mutations of shots in current or historical film placements are retired; use commitTimeline. Unplaced project shots remain supported.
       parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/ShotId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ProjectShotUpdate' } } } }
-      responses: { '200': { description: Updated project shot mutation, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } } }
+      responses: { '200': { description: Updated project shot mutation, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '410': { $ref: '#/components/responses/RetiredRoute' } }
   /v1/projects/{project_id}/shots/{shot_id}/archive:
     post:
       operationId: archiveProjectShot
+      description: Direct catalog mutations of shots in current or historical film placements are retired; use commitTimeline. Unplaced project shots remain supported.
       parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/ShotId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ExpectedVersion' } } } }
-      responses: { '200': { description: Archived project shot mutation, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } } }
+      responses: { '200': { description: Archived project shot mutation, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '410': { $ref: '#/components/responses/RetiredRoute' } }
   /v1/projects/{project_id}/shots/{shot_id}/recover:
     post:
       operationId: recoverProjectShot
+      description: Direct catalog mutations of shots in current or historical film placements are retired; use commitTimeline. Unplaced project shots remain supported.
       parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/ShotId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ExpectedVersion' } } } }
-      responses: { '200': { description: Recovered project shot mutation, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } } }
+      responses: { '200': { description: Recovered project shot mutation, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '410': { $ref: '#/components/responses/RetiredRoute' } }
   /v1/projects/{project_id}/shots/{shot_id}/items:
     post:
       operationId: addShotItem
+      description: Direct catalog mutations of shots in current or historical film placements are retired; use commitTimeline. Unplaced project shots remain supported.
       parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/ShotId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ShotItemCreate' } } } }
-      responses: { '200': { description: Updated shot mutation, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } } }
+      responses: { '200': { description: Updated shot mutation, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '410': { $ref: '#/components/responses/RetiredRoute' } }
   /v1/projects/{project_id}/shots/{shot_id}/items/{item_id}:
     delete:
       operationId: removeShotItem
+      description: Direct catalog mutations of shots in current or historical film placements are retired; use commitTimeline. Unplaced project shots remain supported.
       parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/ShotId' }, { name: item_id, in: path, required: true, schema: { type: string } }, { $ref: '#/components/parameters/IdempotencyKey' } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ExpectedVersion' } } } }
-      responses: { '200': { description: Updated shot mutation, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } } }
+      responses: { '200': { description: Updated shot mutation, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '410': { $ref: '#/components/responses/RetiredRoute' } }
   /v1/projects/{project_id}/shots/{shot_id}/promote-candidate:
     post:
       operationId: promoteProjectShotCandidate
@@ -504,9 +507,10 @@ paths:
   /v1/projects/{project_id}/shots/{shot_id}/reorder:
     post:
       operationId: reorderShotItems
+      description: Direct catalog mutations of shots in current or historical film placements are retired; use commitTimeline. Unplaced project shots remain supported.
       parameters: [ { $ref: '#/components/parameters/ProjectId' }, { $ref: '#/components/parameters/ShotId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
       requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ShotReorder' } } } }
-      responses: { '200': { description: Updated shot mutation, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } } }
+      responses: { '200': { description: Updated shot mutation, content: { application/json: { schema: { $ref: '#/components/schemas/CommittedMutation' } } } }, '410': { $ref: '#/components/responses/RetiredRoute' } }
   /v1/projects/{project_id}/shot-text-bindings:
     get:
       operationId: listProjectShotTextBindings
@@ -846,10 +850,10 @@ paths:
   /v1/attempts/{attempt_id}/publish-timeline-render:
     post:
       operationId: publishTimelineRender
-      description: Fenced, replay-safe publication of one canonical timeline revision and the render task bound to it.
+      description: Retired for every timeline, including headless timelines. Use commitTimeline. Authentication and scope checks precede retirement; retirement precedes JSON decoding, idempotency lookup, and writes. Raw request bytes may already have been prefetched.
       parameters: [ { $ref: '#/components/parameters/AttemptId' }, { $ref: '#/components/parameters/IdempotencyKey' } ]
       requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: false, required: [lease_id, fence, runtime_epoch, timeline_id, expected_version, config, registry, render], properties: { lease_id: { type: string }, fence: { type: integer }, runtime_epoch: { type: integer, minimum: 1 }, timeline_id: { type: string }, expected_version: { type: integer, minimum: 1 }, config: { type: object }, registry: { type: object }, render: { type: object }, slug: { type: string }, name: { type: string } } } } } }
-      responses: { '200': { description: Durable timeline/render publication link, content: { application/json: { schema: { type: object } } } }, '409': { $ref: '#/components/responses/Conflict' } }
+      responses: { '410': { $ref: '#/components/responses/RetiredRoute' } }
   /v1/attempts/{attempt_id}/fail:
     post:
       operationId: failAttempt
@@ -1614,6 +1618,9 @@ components:
       content: { application/json: { schema: { $ref: './schemas/common.json#/$defs/Error' } } }
     Conflict:
       description: Conflict or idempotency mismatch
+      content: { application/json: { schema: { $ref: './schemas/common.json#/$defs/Error' } } }
+    RetiredRoute:
+      description: Retired route or retired timeline/placed-shot use of a supported route; use canonical timeline commands.
       content: { application/json: { schema: { $ref: './schemas/common.json#/$defs/Error' } } }
     RangeNotSatisfiable:
       description: Invalid byte range
