@@ -8,6 +8,7 @@ import ts from 'typescript';
 
 const source = readFileSync(new URL('../three-products.p2-tour.spec.ts', import.meta.url), 'utf8');
 const parentHelper = source.match(/^function assertParentMoveRequestV2\([^]*?^}/m)?.[0];
+const requestHelper = source.match(/^function assertRequestV2\([^]*?^}/m)?.[0];
 const objectHelper = source.match(/^function object\([^]*?^}/m)?.[0];
 const normalizedCommandsHelper = source.match(/^function assertNormalizedCommands\([^]*?^}/m)?.[0];
 const replyHelper = source.match(/^function assertReplyShape\([^]*?^}/m)?.[0];
@@ -17,10 +18,12 @@ const headHelper = source.match(/^function assertAuthoritativeHead\([^]*?^}/m)?.
 const inverseHelper = source.match(/^function assertInverseTargetsPublication\([^]*?^}/m)?.[0];
 const undoHelper = source.match(/^function assertUndoHistoryPublication\([^]*?^}/m)?.[0];
 assert.ok(parentHelper, 'exercise the actual mounted parent-move assertion helper');
+assert.ok(requestHelper, 'exercise the actual mounted v2 request assertion helper');
 assert.ok(replyHelper, 'exercise the actual mounted reply assertion helper');
 assert.ok(historyHelper && headHelper && inverseHelper && undoHelper, 'exercise actual publication binding helpers');
 assert.ok(historyMetadataHelper, 'exercise the actual mounted history metadata assertion helper');
 const check = compileFunction(`${ts.transpileModule(parentHelper, {}).outputText}\nreturn assertParentMoveRequestV2;`, ['expect'])(expect);
+const checkRequest = compileFunction(`${ts.transpileModule(requestHelper, {}).outputText}\nreturn assertRequestV2;`, ['expect'])(expect);
 const checkReply = compileFunction([
   objectHelper, normalizedCommandsHelper, replyHelper,
 ].map((helper) => ts.transpileModule(helper, {}).outputText).join('\n') + '\nreturn assertReplyShape;', ['expect'])(expect);
@@ -32,6 +35,8 @@ const checkHistoryMetadata = compileFunction([
 ].map((helper) => ts.transpileModule(helper, {}).outputText).join('\n') + '\nreturn assertHistoryMetadata;', ['expect'])(expect);
 
 const original = {
+  project_id: 'project',
+  timeline_id: 'timeline',
   parent_revision: {
     payload: {
       config: {
@@ -98,7 +103,7 @@ function fixture() {
         base_revision_id: 'revision', base_publication_id: 'publication',
         commands: [{ schema_version: 1, op: 'doc.patch', version: '1', select: null, created: [], args: { changes } }],
         label: 'Edit timeline',
-        steps: [{ id: 'step', label: 'Edit timeline', intent: 'Move f2-app-clip on V1', tags: [], command_ordinals: [0], patch: changes, reads: expectedReads }],
+        steps: [{ id: '0f3c4b3a-2e1d-4c5b-8a79-8123456789ab', label: 'Edit timeline', intent: 'Move f2-app-clip on V1', tags: [], command_ordinals: [0], patch: changes, reads: expectedReads }],
         merge: 'fields', reads: expectedReads, dry_run: false, source: { via: 'app' },
       },
     },
@@ -142,6 +147,64 @@ test('actual helper refuses malformed, missing, and extra parent move variants',
     const candidate = structuredClone(post);
     mutate(candidate);
     assert.throws(() => check(candidate, { revision_id: 'revision', publication_id: 'publication' }, original, 'f2-app-clip', 5));
+  }
+});
+
+function inverseFixture() {
+  const command = {
+    schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
+    args: { publications: ['publication'] },
+  };
+  const body = {
+    api_version: 1, project_id: 'project', timeline_id: 'timeline',
+    base_revision_id: 'revision', base_publication_id: 'publication',
+    commands: [command], label: 'Undo timeline',
+    steps: [{ id: '0f3c4b3a-2e1d-4c5b-8a79-8123456789ab', label: 'Undo timeline', intent: 'Undo timeline',
+      tags: [], command_ordinals: [0], patch: [] }],
+    merge: 'fields', reads: [], dry_run: false, source: { via: 'app' },
+  };
+  return {
+    post: { key: 'request-key', body },
+    before: { revision_id: 'revision', publication_id: 'publication' },
+    expected: { projectId: 'project', timelineId: 'timeline', publicationId: 'publication' },
+  };
+}
+
+test('actual shared request helper accepts the full v2 Undo envelope', () => {
+  const { post, before, expected } = inverseFixture();
+  checkRequest(post, before, false, expected);
+});
+
+test('the retired minimal Undo envelope is red against the genuine full request', () => {
+  const { post, before, expected } = inverseFixture();
+  assert.throws(() => assert.deepEqual(post.body, {
+    api_version: 1, project_id: expected.projectId, timeline_id: expected.timelineId,
+    base_revision_id: before.revision_id, base_publication_id: before.publication_id,
+    commands: post.body.commands, source: { via: 'app' },
+  }));
+  checkRequest(post, before, false, expected);
+});
+
+test('actual shared request helper refuses Undo envelope mutations', () => {
+  const { post, before, expected } = inverseFixture();
+  const variants = [
+    (candidate) => { candidate.body.label = 'Edit timeline'; },
+    (candidate) => { candidate.body.steps[0].id = 'wrong-step'; },
+    (candidate) => { candidate.body.steps[0].tags = ['wrong-tag']; },
+    (candidate) => { candidate.body.steps[0].patch = [{ op: 'set' }]; },
+    (candidate) => { candidate.body.reads = [{ kind: 'scope', ref: 'timeline', path: [] }]; },
+    (candidate) => { delete candidate.body.reads; },
+    (candidate) => { delete candidate.body.steps; },
+    (candidate) => { candidate.body.extra = true; },
+    (candidate) => { candidate.body.commands[0].args.publications[0] = 'other-publication'; },
+    (candidate) => { candidate.body.commands[0].op = 'doc.patch'; },
+    (candidate) => { candidate.body.base_revision_id = 'other-revision'; },
+    (candidate) => { candidate.body.base_publication_id = 'other-publication'; },
+  ];
+  for (const mutate of variants) {
+    const candidate = structuredClone(post);
+    mutate(candidate);
+    assert.throws(() => checkRequest(candidate, before, false, expected));
   }
 });
 
