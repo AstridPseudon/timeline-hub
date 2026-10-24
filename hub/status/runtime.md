@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T19:31:38Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 7m -->
-# runtime board, 2026-10-24T19:18:49Z
+<!-- main | 2026-10-24T19:34:45Z | dispatcher heartbeat 14s | live 2 (sol 1, luna 1, other 0) | busy30 11 | status age 2m -->
+# runtime board, 2026-10-24T19:32:34Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -81,7 +81,7 @@
 | R-P4-history-cost | Preserve finite walk snapshots | Luna / Sol | Actual integrated receipt passed | merged | Review1910; home1919 PASS | Exact e89eb: 173 focused plus12 historical PASS; source exact f51e. Three pairs gain5.69% wall. Original45s gate stays open. | e89eb8c7d / f51e29658 |
 | R-P2-popup-422 | Project genuine fork-created shot roots | Luna | App current P2 proof | merged | Security1658; integrated1704 PASS | Actualb318:4 PASS0.16s, exact reviewedsource; forgedowner/sibling/source refused. App original stillpending. [Proof](../../design/rt-P2-popup-integrated-1704.md) | b318a8ec4 /88b9cf6 |
 | R-P2-popup-observation | Attribute popup physical observation refusal | Luna | Source finding complete | merged | rt-P2-popup-observation-1638 | Runtime created-child projection lacks fork-created shot roots.2Runtime+8Agent comparators PASS; source cause only. | Source unchanged |
-| R-P2-element-docpatch-hang | Interpret actual live request phases | HARD Sol / App lead | Actual128 safe phases received | doing | rt-D78-phase128-resume-sol-1924 | Actual13100 seed timeout;128 genuine events received. Budget saturated, ordinal1 repeats; no dump/attach. Source interpretation resumes1915. Deadline19:50Z. | Source unchanged |
+| R-P2-element-docpatch-hang | Capture actual blocked request frame | HARD Sol / App lead | Correct observer and native stack watch | doing | PhaseSol1924 complete; fixLuna1932 | Actual13100 reached accept, prefix clipped. Two observer defects proved; real blocked frame absent. Fix and native watch ownership moving. Deadline19:50Z. | Captured1bae / currente89 |
 | U1-D69-marker-scope | Preserve mixed-route live catalog predicates | Luna | Actual integrated proof passed | merged | Citations1702; integrated1708 PASS | Actual2c1:9 PASS9s; exact approvedledgerappendix published once, outsidebytes intact. [Proof](../../design/rt-U1-D69-phase-integrated-1708.md) | ea3bca10d /925a7dd |
 | U1-D69-restore-guard | Restore two skip guard originals | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 |
 | U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 /bb022 |
@@ -146,9 +146,13 @@
 | D79-hung-stack-kit | Capture pending request stacks | Luna / App | Actual capture | blocked:app | App stackwire1859 HOME7098; live1856 | Runtime7e857 routes output; App shipping helper20 controls PASS. Actual13100 captured before helper home; supervised dump still unproved. | Runtime7e857 / App7098 |
 | R-P4-inverse-profile | Measure distinct inverse traversal | Agent Luna | Authentic finite receipt complete | merged | agt-R2-history-cost-measure-1850 | Genuine new v2 restore passed in 6.87s; 258 history, 254 verify and 6299 JSON calls. Authentic profile and XML; raw log and script loss disclosed. | Evidence a70f69 |
 
-| D80-seed-timeouts | Attribute six native seed timeouts | HARD Sol / App Luna | Actual phase interpretation | doing | Runtime1924; App seed path1910 | Allfive D80 and live13100 stop before gestures. Actual128 phase prefix saturates; common cause and daemon identity unproved. | Captured Runtime1bae |
+| D80-seed-timeouts | Attribute six native seed timeouts | HARD Sol / App Luna | Actual phase interpretation | doing | Runtime1932; App seed path1910 | Allfive D80 and live13100 stop before gestures. Actual accept entry proved; prefix saturates. Common cause and real daemon identity unproved. | Captured Runtime1bae |
 | D80-selector-accounting | Preserve popup case inventory | Luna | Authentic XML and AST map | merged | rt-P2-D80-selector-accounting-1915 | 23 unique Runtime cases: eight preserved plus 15 new. Earlier 27 included four authority-file neighbors. No behavior dropped. | Source unchanged |
 | D78-App-donor | Retain overlapping helper candidate | Luna | Sole App shipping owner1859 | gated:App-shipping | rt-D78-app-stack-activation-1908 | Donor six controls PASS; never merge beside App1859 HOME7098. No actual live capture inferred. | Held donor |
+
+| D78-observer-scope | Fix stale request phase attribution | Luna | Actual phase defects proved | doing | rt-D78-observer-scope-fix-1932 | Expire finished dispatch mappings and preserve generator resume tracking; two files only. Harness author tests; no auth change or original rerun. | Runtime e89 base |
+| D78-native-stack | Watch native seed pending requests | App Luna / lead | App shipping helper7098 | blocked:app | Peer1932 asks sole App owner | Python seed execFileSync bypasses browser watcher. Minimum normal helper coverage requested; all original waits/payloads unchanged. | App source owner owed |
+| R-P4-live-profile | Profile actual ten-note service step | HARD Sol / Agent venue | ORCH19:31 and current cost source | doing | rt-P4-live-profile-sol-1932 | One coordinated actual-daemon profile: top10 cumulative frames, wall versus45s, reads and commits pernote. No further cost guess or duplicate body. | Runtime e89 base |
 
 Runtime producer: Normal e89eb contains security-PASS finite walk f51e over reviewed popup87bc and empty ranges1bae. Canonical15/schema867f/config4d74 unchanged. Actual finite home1919 PASS173+12, no new diagnostics.
 
@@ -159,15 +163,15 @@ FREEZE D59/D66: Current P1 31083 readiness1/original2 PASS with independent1846.
 Venues: App P1/P2/P3, Agent P4, main P5/Composition. D73 captures four exact SHAs once, waits checkout receipts, then source-only preflight. Newer home does not invalidate a run. Product change reruns P1–P5 plus affected core at cut.
 D65 delivery: Runtime merge, Agent merge, authentic App manifest command with generated digest equality, then App merge. Installed v2 docs and D67 exact13env7keys retained. Private final candidate remains cut-gated; fresh-main apply checks required.
 
-Blockers: App live capture — actual13100 FAIL213s in native seed before gesture; no dump/attach ran. Existing128 safe phases received1914, hash280f verified by resumed Sol1924. Prefix budget saturated; actual Python frame remains UNKNOWN. No new body. Deadline19:50Z.
-Blockers: Agent original cost proof — Runtime e89eb/f51e is independently security-PASS. Normal adoption ready now; meaningful P4 and four retained R2 originals remain Agent-owned. Integrated receipt1919 complete PASS173+12.
+Blockers: App live capture — actual13100 has no dump. Sol1924 proves stale observer attribution and lost generator lock completion; Luna1932 fixes Runtime observer. App1932 native Python pending stack coverage requested. Actual frame UNKNOWN; deadline19:50Z.
+Blockers: Agent original cost proof — Runtime e89eb/f51e security1910 and home1919 PASS173+12 published. Normal adoption ready. ORCH19:31 requires ONE actual ten-note daemon profile; RuntimeSol1932 prepares it with Agent venue, no further cost change before profile.
 Blockers: App popup original — reviewed87bc carrier actual23 Runtime plus4 Agent PASS, selector accounting complete. Original meaningful App qualification still owed; no new backend author.
 Blockers: Final cut — all lanes core0/regressions0, P2/P3 and D69 complete; genuine installed render required. No final proof/build before cut.
-Next ready: Consume unique Sol1924 actual128 phase interpretation. Four seed timeouts share one investigation; no claim of shared cause without frame.
+Next ready: Consume observerLuna1932 and live-profileSol1932; App native stack watch owner requested. Four seed timeouts share one investigation; no claim of shared cause without frame.
 Later: D79 missing complete authentic accepted record/history/context; no synthetic fixture or new body. D80 non-gating hold remains. D47 memo/proof pins post-delivery, nine attacks open. V4 cut; D14/D23 deferred; D34 broader cleanup held. D62 submit completeness remains known gap.
 Admission: D56 Farm/schema-access stopped. Exact403 and auto access refusal remain stopped. Historical denied cleanup/process/retirement targets untouched. D67 D13 unchanged environment gap.
 Disk: About7.9GiB; cap4. Four newly finished current trees already recycled automatically. Prior refused dirty v1 and KEEP targets untouched. No alternate deletion.
 
-live 1 / cap 4; ready-undispatched 0 critical. Actual128 phase input clears missing-source wait; unique D78 Sol1924 resumes saved1915 branch. Agent cost adoption ready on normal source handback. D78 actual App capture input still missing.
+live 2 / cap 4; ready-undispatched 0 critical. ObserverLuna1932 and P4 actual-profileSol1932 active. App native watch asked as critical row; D79 Runtime hold remains. Agent cost adoption ready on normal source handback. D78 actual App capture input still missing.
 
-Pass 2026-10-24T19:18:49Z: Finite security1910 PASS merged via normal queue to e89eb. Popup actual-home23+4 and accounting PASS consumed. D78 source audit found no deliberate shared daemon but actual sharing remains unknown without capture. App1859 is sole shipping helper; donor1908 held. Four native-seed timeout asks have one owned row. No gate duplicate or safety reroute.
+Pass 2026-10-24T19:32:34Z: Actual128 phase interpretation complete, not two invocations for ordinal1: start/end pairs. Ordinal2 reaches accept then capture128 exhausted. Two concrete observer defects now authorLuna1932. ORCH19:31 real-profile instruction dispatchedSol1932, coordinating one Agent body. No product auth or further cost patch; no safety refusal or duplicate original.
