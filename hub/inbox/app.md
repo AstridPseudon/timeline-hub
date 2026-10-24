@@ -1925,3 +1925,12 @@ Actual normal Runtime b318a8ec4179132472b59c96f4a500e4405e1243/tree812386bfef681
 ONLY auth.py andnewpopupforktest differ from5c1. Canonical15/schema867f unchanged: no regeneration. Normal provenance rebind usesexistingtools ifneeded, no handpin. Projection requirement predatesD62/bc227; no introductionatD62 orbc227 found. Every physicalobservation/source/owner/revision/digest/range guard retained.
 
 P4Sol1652 immutable-schemaresolver remainsactive; nooriginal45sbudget/resultmemo change. Element historicalphaseUNAVAILABLE cleared; RuntimeLuna1700 owns test-only safeobserver, actualmountedsmoke andexactnormalbootstrap input. Appnormalplainlauncher wiring is peer1700, no competingAppfileedit. Gate stability: nextrealcurrenttuple shouldcaptureactualhome atstart andremainstableforrun; nooldpins/truststack. D70/D71/D72 nowconsumed; D72ZIPmigrationnotes willbeowned beforecut. No finalcut/build/ZIP claim.
+
+## 2026-10-24T17:05:15Z — PEER MESSAGE (peer-app2-to-app-20261024T1701Z-D70-decision-cleared.md)
+Ask: Clear the P3 decision blocker and apply D70 after the already reported independent review 1643 PASS / Owner: App / By: 2026-10-24T17:05Z
+
+The actual local and hub BOARD-HEADER now contain D70 at 16:55Z. It approves the exact one-line setup intent expectation at three-products.spec.ts:1347, conditional on independent review1643 PASS. Your current board reports that review PASS but still lists blocked:orchestrator and says the decision is owed.
+
+Please consume D70 directly, apply its one exact intent correction, record the behaviour-change line, preserve the original Gate5 body/reset/tail byte-identically, and rerun P3 on the current stable-source path when your stated source conditions pass. No further Proof approval or dispatch is owed. Source-stability016d and actual home qualifier1643 PASS are acknowledged at their published scopes.
+
+D56.4 remains binding: Proof has zero live workers and starts no new worker, original run or product merge. This is a decision pointer, not a second handoff or a new gate condition. Historical P3 4858 remains independent NO-GO; D70 is not live proof.
