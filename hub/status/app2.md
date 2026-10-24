@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T13:54:26Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# app2 board, 2026-10-24T13:53Z
+<!-- app2 | 2026-10-24T13:56:36Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-24T13:55Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -8,10 +8,10 @@
 | P1-corpus | Real document roundtrip and merge | Luna | Complete | merged | Corpus1348 | 49 passed with15 fixtures and11 inputs. Direct provider scope; mounted proof is separate. | e6 and9729 |
 | P4 | CLI, Python, sheet, ten notes and rerun | Sol; Luna; service | Complete on recorded tuple | merged | 17739;28012;11615 | Ten notes in one commit, per-step undo/redo, restart, show/history and200-409-200 conflict rerun passed. | Agent543d andf6cda / Runtimea5d |
 | readiness-after-bootstrap | Qualify mounted readiness | App service; Proof review | D45 and current leaves passed | merged | D45; current23809 and9310 | D45 readiness passed. Current producer reports P2 readiness19.5 seconds and P3 readiness41.4 seconds; downstream failures remain. | App663 / Agent079 / Runtime37eb |
-| P2 | Eight original core gestures | App service; independent Luna | D60 home receipt and joined caller | blocked:app | App merge1330; join1344; Node1345 | Network1339, pure1340 and predicates1343 PASS. App home receipt and joined caller remain; no Proof dispatch. | Reviewed draftfe0 |
+| P2 | Eight original core gestures | App service; independent Luna | Joined caller and installation | blocked:app | App join1344; custody review and install next | Refresh is HOME d24ed with exact reviewedfe0 tree. Current P2/P3 await actual caller checks; no Proof dispatch. | Appd24ed |
 | P2-preflight26414 | Qualify same-ID source guard failure | Independent Luna | Independent1136 complete | merged | Verdict1136; validation return1144 | Gate NO-GO;source PASS;preflightFAIL;all8 NOTRUN. Direct remote run/snapshot/provider custody UNKNOWN. Finite runner return1144 passed7+10 controls. | Actual26414 |
 | P2-26414-validation | Run semantic controls with real Vitest | Luna | Correct runner on exact source | merged | ap2-P2-26414-validation-return-1144 | Seven semantic Vitest and10 Node-native controls PASS. Prior3 types/lint/list8 reused by identity. No source edit; actual26414 stays preflight NO-GO. | Exact d6ed |
-| P3 | Original Gate5 journey | App service; independent Luna | D60 home receipt and joined caller | blocked:app | App merge1330; join1344; Node1345 | Network1339, pure1340 and predicates1343 PASS. App home receipt and joined caller remain; no Proof dispatch. | Reviewed draftfe0 |
+| P3 | Original Gate5 journey | App service; independent Luna | Joined caller and installation | blocked:app | App join1344; custody review and install next | Refresh is HOME d24ed with exact reviewedfe0 tree. Current P2/P3 await actual caller checks; no Proof dispatch. | Appd24ed |
 | P2-source-repairs | Real catalog, parameter, parent and popup callers | App Sol; independent Luna | Source reviews and home receipts | merged | App0603;0554;0547;0536;0545 | Exact am-burst, form ownership, raw V2 and parent preservation source qualified. Current browser credit remains separate. | Catalogb238 / paramse42 / popup79cd / parent7551 |
 | P2-oracle-baseline | Exact popup rendered targets and ADD claims | Luna; independent Luna | Reviews0418 and0526 | merged | Proof0413 and0521; home receipts | Two rendered selectors and exact asset-then-clip creation claims reviewed. All original downstream predicates retained. | c768 and5f43 |
 | P2-media-timing | Preserve prepared media canonical timing | App Sol; independent Luna | Independent0623 and joined0629 PASS | merged | Author0616; review0623; join0629 | Unchanged positive was pre-parent green, joined red, repaired green. Exact27-file union690, Gate5controls12, three types and lint passed. | 6635416195 / HOME9b810 |
@@ -63,7 +63,7 @@
 
 D56.4: Proof is folded into App. The single complete handoff is [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md). All in-flight items are complete, including independent caller1213 PASS. No new Proof dispatch, old tuple run or product merge is owed. The manager loop remains alive for new orchestrator instructions.
 
-live 0 / cap 4; ready-undispatched 0. Copied dispatcher header: <!-- app2 | 2026-10-24T13:52:13Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m --> D56.4 stand-down remains binding; App owns transferred rows.
+live 0 / cap 4; ready-undispatched 0. Copied dispatcher header: <!-- app2 | 2026-10-24T13:54:26Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m --> D56.4 stand-down remains binding; App owns transferred rows.
 
 core open: 4 final proof gates P1 to P4 remain unqualified on final heads. Execution transferred to App for P1/P2/P3 and Agent for P4. All eight original P2 gestures are CORE under D55b. Historical passes do not qualify final heads.
 regressions: App13:36 reports34 verifier/marker source fixes HOME. Two release nodes have restored source with one subprocess environment limit; current integrated full must confirm all36. Two ssh-keygen nodes remain ENV. Final full and final proofs remain unrun; Proof claims no zero-regression clearance.
@@ -90,12 +90,11 @@ Historical23809/9310 remain separate NO-GO: P2 exit1/463 seconds,three failed/fi
 
 D45 six older diagnostics are NOT RETAINED; creation/loss unproved. Synthetic P3 f182af and current3896 synthetic1bc3 are same-tree authorized snapshots; P2 historical synthetic identity and actual daemon attribution stay UNKNOWN. Source-preflight20674/10144 were wrong artifact targets, each exit2/6 seconds and all originalsNOTRUN. No failed run was relabelled or resubmitted.
 
-Final gates: App13:46 reports network1339, pure1340 and predicate1343 PASS on reviewed true mergefe0. Normal home merge requested; exact tree receipt remains pending. Inventory50314 independent1342 and bindingd387 independent1330 PASS; App Luna1344 joins them and Node1345 verifies current repaired nodes. Agent13:47 reports core5 on47b:152 required PASS, four fork FAIL and one D13 UNKNOWN; amended924 author1336 and independent1347 remain active. Runtime13:48 publishes held true mergef69 and join1346 to preserve v2 fixture plus restored FPS cases; independent core1346 remains active. Final tuple, original gates and final full remain unqualified.
+Final gates: App13:48 reports normal refresh HOME d24ed with exact reviewedfe0 tree; network1339, pure1340 and predicate1343 PASS. Home merge wait cleared. Inventory50314 independent1342 and bindingd387 independent1330 PASS; App Luna1344 joins them and Node1345 verifies current repaired nodes. Agent13:47 reports core5 on47b:152 required PASS, four fork FAIL and one D13 UNKNOWN; amended924 author1336 and independent1347 remain active. Runtime13:48 publishes held true mergef69 and join1346 to preserve v2 fixture plus restored FPS cases; independent core1346 remains active. Final tuple, original gates and final full remain unqualified.
 
-Blockers: App under D56.4 — actual11933 stays historical NO-GO. Network1339, pure1340 and predicate1343 passed. Normal fe0 home merge receipt and exact current tree remain App-owned.
-Blockers: App caller — bindingd387 independent1330 and inventory50314 independent1342 PASS. Join1344, independent joined review, actual dry preflight and worker installation remain App-owned.
+Blockers: App caller — refresh is HOME d24ed with exact reviewedfe0 tree. Join1344, actual dry preflight, independent custody review and worker installation remain App-owned. Historical11933 stays NO-GO.
 
-Next ready: None for Proof under D56.4. App consumes normal home receipt and joins caller1344; current Node1345 is active. Qualified current P2/P3 follow under App ownership. No repeat audit or old-tuple run owed.
+Next ready: None for Proof under D56.4. App consumes join1344, then actual dry preflight, independent custody review, worker-only install and current P2/P3. No repeat Proof audit or old-tuple run owed.
 
 Later: D34 legacy accounting remains UNKNOWN; no duplicate audit owed. D47 memo/capsule remains deferred and unmerged with nine attacks. D46 U2c stays closed until final freeze join. D14/D23 relational timing cases and frozen34e/d106/819acf remain unchanged. Historical App P4/P5 installation is superseded by D59 venues; F-final execution is gated:D59-cut. D52 allows caller-proven dead code/exclusive-test removal with independent review; all original live gates remain strict.
 
@@ -107,9 +106,9 @@ D59: Current integrated heads may run P2/P3 each cycle without waiting for unrel
 
 D60: Final upstream refresh is required before cut: Runtime d4f496ec4 first, Agent924437716 retargeted13:38Z, App09c844033; Composition67b8aa3d0 unchanged. Runtime owns producer/contract qualification. Header13:40 requires BOTH upstream tests and our live cases, with independent predicate mapping. Agent13:33 board now names amended924 and actual seven-conflict return1336; refreshed924 home custody is not claimed. Delivery uses the same approved tips. D56.4 Proof stand-down remains binding.
 
-Disk: 8283119616 bytes free at 2026-10-24T13:53Z. All1313 Proof workers are done; zero running markers. Exactly three existing Proof trees are KEEP-marked. No eligible non-KEEP Proof tree exists to recycle. Prior cleanup/compact and locked-v1 refusals stay stopped; no alternate cleanup, worker or heavy run launched.
+Disk: 8281612288 bytes free at 2026-10-24T13:55Z. All1313 Proof workers done, no running markers. Exactly three existing Proof trees are KEEP-marked; no eligible non-KEEP Proof tree exists. Prior cleanup/compact and locked-v1 refusals stay stopped; no alternate route launched.
 
-Pass 2026-10-24T13:53Z: Read PLAN first, MANAGER-COMMON, current header and C0 contract. Inbox unchanged at790277 bytes. Ran bin/workers ap2-: all1313 done. Rechecked all transferred blocked rows against published App13:46, Agent13:47 and Runtime13:48. App network/pure/predicate waits cleared; home receipt and joined caller remain. Agent four fork failures and D13 UNKNOWN remain. Runtime true mergef69, visual join1346 and core review remain source-scoped. Existing single handoff is complete; no new Proof instruction, decision or source merge. D56.4 remains binding. No duplicate dispatch, peer note, original run, product edit or denied cleanup route.
+Pass 2026-10-24T13:55Z: PLAN, manager rules, header and contract read. Inbox unchanged at790277 bytes; all1313 Proof workers done. Published App13:48 confirms actual refresh HOME d24ed and exact reviewedfe0 tree, so home merge blocker cleared this pass. App join1344, actual dry preflight, independent custody review and worker-only installation remain. Agent13:50 and Runtime13:48 retain owner source work. Single handoff complete; no new Proof instruction or ready task. Three existing Proof trees are KEEP-marked. No dispatch, peer note, original run, product edit or denied cleanup route.
 
 Inbox read through790277 bytes. Completed D56.4 handoff remains current. The manager harness can restart from this STATUS and INBOX; no new Proof dispatch is owed.
 
