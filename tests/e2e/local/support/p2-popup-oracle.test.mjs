@@ -9,16 +9,19 @@ import { expect } from '@playwright/test';
 import ts from 'typescript';
 
 const source = readFileSync(new URL('../three-products.p2-popup.spec.ts', import.meta.url), 'utf8');
+const trafficHelper = source.match(/^function isReadOnlyInspection\([^]*?^}/m)?.[0];
 const publicationHelper = source.match(/^function authoritativePublicationId\([^]*?^}/m)?.[0];
 const historyHelper = source.match(/^function assertAuthoritativeHistoryPublication\([^]*?^}/m)?.[0];
 const headHelper = source.match(/^function assertAuthoritativeHead\([^]*?^}/m)?.[0];
 const inverseHelper = source.match(/^function assertInverseTargetsPublication\([^]*?^}/m)?.[0];
 const undoHelper = source.match(/^function assertUndoHistoryPublication\([^]*?^}/m)?.[0];
+assert.ok(trafficHelper, 'exercise the actual popup traffic classifier');
 assert.ok(publicationHelper, 'exercise the actual popup reply helper');
 assert.ok(historyHelper && headHelper && inverseHelper && undoHelper, 'exercise actual popup publication helpers');
 const compile = (body, returnName, names, values) => compileFunction(
   `${ts.transpileModule(body, {}).outputText}\nreturn ${returnName};`, names,
 )(...values);
+const readOnlyInspection = compile(trafficHelper, 'isReadOnlyInspection', ['Request'], [undefined]);
 const publicationId = compile(publicationHelper, 'authoritativePublicationId', ['expect'], [expect]);
 const checkBindings = compile(
   [historyHelper, headHelper, inverseHelper, undoHelper]
@@ -46,6 +49,21 @@ function replyFixture() {
     head: { revision_id: data.accepted_revision_id, publication_id: receiptId },
   };
 }
+
+function request(method, path) {
+  return { method: () => method, url: () => `https://app.test/api/runtime${path}` };
+}
+
+test('actual popup traffic classifier accepts only the exact read-only inspect POST', () => {
+  assert.equal(readOnlyInspection(request('POST', '/v1/projects/project/timelines/timeline/inspect')), true);
+  for (const [method, path] of [
+    ['POST', '/v1/projects/project/timelines/timeline/composition-revisions'],
+    ['POST', '/v1/projects/project/timelines/timeline/unknown-write'],
+    ['POST', '/v1/projects/project/timelines/timeline/commit'],
+    ['GET', '/v1/projects/project/timelines/timeline/inspect'],
+    ['POST', '/v1/projects/project/timelines/timeline/inspect?limit=1'],
+  ]) assert.equal(readOnlyInspection(request(method, path)), false, `${method} ${path}`);
+});
 
 test('actual popup helpers accept distinct UUID request and txn receipt identities', () => {
   const { post, result, entry, head } = replyFixture();

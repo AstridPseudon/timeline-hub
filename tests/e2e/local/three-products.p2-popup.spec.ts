@@ -72,6 +72,7 @@ interface PopupWire {
   mutations: Request[];
   selections: Response[];
   imports: Response[];
+  inspections: Response[];
 }
 
 const test = appTest.extend<object, { popup: PopupSeed }>({
@@ -313,7 +314,7 @@ async function preparePopupSeed(harness: DirectHarness): Promise<PopupSeed> {
 }
 
 function wireFor(page: Page): PopupWire {
-  const wire: PopupWire = { posts: [], mutations: [], selections: [], imports: [] };
+  const wire: PopupWire = { posts: [], mutations: [], selections: [], imports: [], inspections: [] };
   page.on('request', (request) => {
     if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method())
       && /\/v1\/projects\//.test(new URL(request.url()).pathname)) wire.mutations.push(request);
@@ -322,14 +323,27 @@ function wireFor(page: Page): PopupWire {
     const path = new URL(response.url()).pathname;
     if (path.endsWith('/media-selection')) wire.selections.push(response);
     if (path.endsWith('/media-imports')) wire.imports.push(response);
+    if (response.request().method() === 'POST' && isReadOnlyInspection(response.request())) wire.inspections.push(response);
   });
   return wire;
 }
 
+function isReadOnlyInspection(request: Request): boolean {
+  const url = new URL(request.url());
+  return request.method() === 'POST'
+    && /^\/(?:api\/runtime\/)?v1\/projects\/[^/]+\/timelines\/[^/]+\/inspect$/.test(url.pathname)
+    && url.search === '' && url.hash === '';
+}
+
 function assertOnlyCommits(wire: PopupWire, expected: CommitPost[]): void {
-  // Media acquisition precedes the film edit; every other mutation must be the
-  // exact observed commit. This catches unknown routes as well as old saves.
-  const film = wire.mutations.filter((request) => !/\/projects\/[^/]+\/media-imports$/.test(new URL(request.url()).pathname));
+  // Runtime's inspectTimeline is a POST-shaped read used by the mounted
+  // canonical-head reader/poller. Keep it classified by its exact route;
+  // every other observed mutation remains part of the film assertion.
+  expect(wire.inspections.every((response) => response.status() === 200)).toBe(true);
+  const film = wire.mutations.filter((request) => {
+    const path = new URL(request.url()).pathname;
+    return !/\/projects\/[^/]+\/media-imports$/.test(path) && !isReadOnlyInspection(request);
+  });
   expect(film).toEqual(expected.map((post) => post.request));
   expect(film.every((request) => request.method() === 'POST' && COMMITS.test(new URL(request.url()).pathname))).toBe(true);
 }
