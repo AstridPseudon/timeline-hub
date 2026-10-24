@@ -11,8 +11,9 @@ The checkpoint was run once against Agent commit
 `57f0231da0d7904ecd8778169973d6384e0ae141`), with Runtime `45c3a7f4` as the
 backend. It returned 288 failures, 17,335 passes, 187 setup errors and 4
 skips; no JUnit was produced. The failure and error node lists are retained in
-the shared hub design area. This packet does not relabel that result or call
-all failures environmental.
+the shared hub design area (281 failed lines, 187 setup error lines); seven
+summary failures cannot be accounted for from those lines. This packet does
+not relabel that result or call all failures environmental.
 
 The old Runtime lock remains authoritative for the four canonical client
 hashes and declares source `45c3a7f476e1c5f74fafc15956a58b9871eee21f`. That
@@ -60,45 +61,54 @@ env -u RUNTIME_AGENT_CHECKOUT -u RUNTIME_RUNTIME_CHECKOUT \
   /home/user/work/toolchain/node-v20.19.4-linux-x64/bin
 ```
 
-The returned receipt must be the source of the final managed profile path,
-`FARM_RECEIPT_MANAGED_PROFILE`/`ASTRID_REMOTION_PROJECT_DIR`, Node
-v20.19.4/npm 10.8.2 carrier, and actual Runtime/Agent/module origins. Do not
-handforge a managed identity from these arguments. The packet row is an
-incomplete rendering template until that receipt exists: it refuses a missing
-profile or missing `node_modules/react` peer and has no ambient-profile
-fallback.
+The returned normal receipt must supply the actual managed profile path,
+Node v20.19.4/npm 10.8.2 carrier, requested Agent/Runtime SHAs and build origin.
+Verify clean checkout SHA/tree and actual import origins separately. A path in
+the request is not proof of installation. Runtime's declared `45c3` lock and
+four client hashes remain unchanged; using reviewed `1d9dd` is source selection,
+not an overlay or generated tuple adoption.
 
-## Safe installer sequence
+`registration-row.txt` is a rendering template. Replace `@MANAGED_PROFILE@`
+and `@RUNTIME_CHECKOUT@` only with physical paths authenticated by those normal
+receipts. The installed row contains literal paths and `PYTHONPATH="$PWD:<Runtime>"`
+for the service's Agent snapshot. It never depends on an ambient receipt
+variable. It includes `ASTRID_TEST_NODE_MODULES=<managed-profile>/node_modules`
+and all existing required environment bindings. Pre-pytest checks execute
+actual Node/npm version commands, peer resolution/imports and Python imports,
+and verify origins, D40 source bytes, declared lock and canonical client hashes.
 
-1. Verify the packet manifest, the installed `bench_store.py` hash, the
-   authentic `remotion-env-nodes` row/env attachments from the predecessor
-   packet, the existing `agent full` row, exactly one existing `agent
-   full-farm` row, and all current registry bytes.
-2. Save a UTC private backup. Refuse a missing, partial, or symlinked
-   `/home/user/work/bench-store`; this pass expects the already existing Store
-   and must not initialize, reinitialize, adopt, or replace it. Refuse registry
-   drift rather than replacing a stale whole config.
-3. Open the existing Store through `Store(root, ORCH/tests)` and validate it
-   through public reads (`registered`, `registration_entries`, and
-   `names_for_suite`). Do not call `Store.initialize`.
-4. Let the normal maker create or authenticate the managed Runtime entry. A
-   receipt with Runtime `45c3` or missing `external_pack_sources` is a source
-   mismatch and stops the operation. Bind its authentic managed profile path
-   as `FARM_RECEIPT_MANAGED_PROFILE`; do not invent or infer that path.
-5. From the fresh post-maker baseline, under `store.mutex()`, replace the one
-   existing `agent full-farm` row with the exact LF-terminated contents of
-   `registration-row.txt` using the existing atomic API. Preserve the original
-   `agent full` row and every byte outside that one row. Do not append a
-   duplicate or replace the whole config. The new full-farm row is unmanaged;
-   the maker’s Runtime row remains managed. Roll back only this replacement if
-   post-update public validation fails and the file still equals the exact
-   post-update snapshot.
-6. Return pre/post hashes, the exact replaced bytes, outside-byte comparison,
-   Store owner/index validation, normal receipts, and actual source/module
-   origins. Only Farm may then request the one later checkpoint. The production
-   caller must select this row through `test-run`; no separate synthetic full
-   environment establishes host validity.
+## Existing Store installation and private evidence
 
-Any refusal, drift, wrong source, partial initialization, or permission denial
-stops the sequence. Use only the installed Store recovery route for an
-interrupted transaction; never restore owner/index over a live Store.
+[FARM-CODEX-BRIEF.md](FARM-CODEX-BRIEF.md) contains the one reviewed normal
+installer command and exact missing inputs. It opens the existing Store,
+requires its normal managed registration, renders the template, and replaces
+exactly one existing `agent full-farm` row under `store.mutex()` using the
+installed atomic API. It uses a fresh post-maker baseline and UTC backup,
+preserves the original `agent full` and every outside byte, refuses drift,
+and rolls back only its unchanged post-image. It does not initialize,
+reinitialize, adopt, append a duplicate, replace owner/index, or install a helper.
+An interrupted Store transaction uses the existing recovery route.
+
+The later installer needs this directory's six files: this README, the brief,
+registration template, source-selection JSON, targeted test and manifest.
+It also needs the predecessor's authentic `remotion-env-nodes` row/env
+attachments and current normal checkout/runtime receipts. No current Farm
+registry, source checkout receipt or managed profile receipt has been supplied
+here; publication remains held. Do not substitute a selected historical pin
+or `/home/user/work/runtime` for those inputs.
+
+Private acceptance executes the brief's actual installer command body, then
+production `test-run`'s exact line-15 awk extraction and its actual
+`suite_lease` context manager (`names_for_suite`/`acquire`, lines 66, 70–73).
+Only pytest's body is substituted with a bounded diagnostic; the rendered
+recipe's environment/version/peer/import/hash checks still run. The diagnostic
+and its subprocess inherit acquired lease descriptors; lock exclusion and
+release are checked. Fixtures export exact Agent/Runtime Git objects and borrow
+historical renderer peers read-only for imports. They do not authenticate the
+current 0.0.14 managed graph, prove a Farm receipt, run a full suite or qualify
+Farm. Negative cases cover pre-body refusal, Store/registry drift and guarded
+rollback. No live service, Store or dispatcher is invoked.
+
+A parameterized source packet PASS does not mean Farm READY. Independent
+source review and a later genuine Farm preflight remain separate, before
+Farm requests the one corrected checkpoint through the production caller.
