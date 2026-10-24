@@ -22,7 +22,7 @@
   },
   "existing_suite_rows": {
     "full-e2e-three-products": {
-      "installed_sha256": "11b2eebf5a610670623c4a7f958dfa799841da088bc9ccb13aa146dab60575da"
+      "installed_sha256": "6a45d0567f7dea7a3c15fbcaf687f9dd62debf4527464529d8a4faf8f8e48fee"
     },
     "ap2-P3-gate5-h6-0348": {
       "installed_sha256": "23226c274dbdbb8750f009cb89d7920db40eb49513af906df7b4f76d9a7a3bf0"
@@ -65,7 +65,20 @@
     "wrong_artifact": "caller-artifact target and dirty target refuse before original body",
     "bash_n": "each decoded and wrapped row",
     "real_execution": "not run",
-    "backend_execution": "not run"
+    "backend_execution": "not run",
+    "dry_identity_preflight": "first candidate qualification; actual decoded/wrapped P2 guard; read-only; no setup/build/native/gestures/sockets",
+    "dry_identity_preflight_result": "PASS",
+    "dry_identity_preflight_duration_seconds": 9.158,
+    "dry_identity_preflight_candidate_sha256": "6a45d0567f7dea7a3c15fbcaf687f9dd62debf4527464529d8a4faf8f8e48fee",
+    "dry_identity_preflight_target": "d6ed8cbda122d810d5836ebfce3c56c10e76e9b4 @ 542b772e6deed676b917f857708445b7d37a5aa8",
+    "dry_identity_preflight_source_facts": {
+      "app": "d6ed8cbda122d810d5836ebfce3c56c10e76e9b4 / 542b772e6deed676b917f857708445b7d37a5aa8 / cad736828b4890a4df5fff42a22bfa4851a0ecfc 01ea81395a9bb8f091262a9d8275407675188fe6",
+      "agent": "333b44b1a1b8be72d4d101391b7636c508419109 / 1094bf3662c785e4b21eddf7e3ae980da79b1af1 / 079580ca46af77e0292d49dc34386b25c8391f99",
+      "runtime": "37eb6c7bdb79dcae2523883e66b5cea5be721ffd / be4114705127f9ee9e86b26cd6de3f467e771c01 / 2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d",
+      "remotion": "agent-remotion-app-ready-079-37eb-0258 / b01dca9b3b24f54093c20b7c5657316f997725db / producer 079580ca46af77e0292d49dc34386b25c8391f99",
+      "component_tree_digest": "ac0bf2a252d3f3a7640ed2a0b555b8a91ff81671a3b70074ed27676357edbbc9",
+      "child": "venv-agent-child-app-popup-333b-37eb-1016 / 188546b73edd84d90d8d5c321b63b3278eaec80d0050e1b63cea4be298302321"
+    }
   },
   "source_rederivation": {
     "final_manifest": "fixed terminal source identity in caller-publication.py; publication waits for the separate checkout",
@@ -225,6 +238,7 @@
     "child": "venv-agent-child-app-ready-079-37eb-0256",
     "remotion": "agent-remotion-app-ready-079-37eb-0258",
     "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db",
+    "remotion_producer": "079580ca46af77e0292d49dc34386b25c8391f99",
     "client_file_count": 4,
     "runtime_backend_file_count": 78,
     "runtime_backend_digest": "d70ce25e13e02c1b805e682e7e098fba78cc6732f90c482a84bf074ab98ef2bb",

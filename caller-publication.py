@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -23,36 +24,47 @@ import subprocess
 
 ORCH = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch")
 APP = Path(__file__).resolve().parent
+_DRY_PREFLIGHT_SPEC = importlib.util.spec_from_file_location("caller_dry_preflight", APP / "caller-dry-preflight.py")
+if _DRY_PREFLIGHT_SPEC is None or _DRY_PREFLIGHT_SPEC.loader is None:
+    raise RuntimeError("PREPARED: dry preflight helper is unavailable")
+_DRY_PREFLIGHT = importlib.util.module_from_spec(_DRY_PREFLIGHT_SPEC)
+_DRY_PREFLIGHT_SPEC.loader.exec_module(_DRY_PREFLIGHT)
 SUITES_FILE = ORCH / "tests/suites.conf"
 SUITES = ("full-e2e-three-products", "ap2-P3-gate5-h6-0348")
-CURRENT_P2_ROW_SHA256 = "11b2eebf5a610670623c4a7f958dfa799841da088bc9ccb13aa146dab60575da"
+CURRENT_P2_ROW_SHA256 = "6a45d0567f7dea7a3c15fbcaf687f9dd62debf4527464529d8a4faf8f8e48fee"
 
 QUALIFIED_APP = "66354161950d1e747965c095ea97b881d2592708"
 QUALIFIED_TREE = "9a37265f0286128df7e6240a9df9877d959474af"
 QUALIFIED_PARENT = "b2380539c5545661954d2794976631312ee1d939"
 SOURCE_BASE = "f90e708b379145ac456924742cc51c187ed6e0c6"
-AGENT = "079580ca46af77e0292d49dc34386b25c8391f99"
+HISTORIC_AGENT = "079580ca46af77e0292d49dc34386b25c8391f99"
+HISTORIC_AGENT_TREE = "2deab1a1494fbccfce5e9235412bacb8a949c0cd"
+HISTORIC_AGENT_CHECKOUT = Path("/home/user/work/wt/agt-pin-079580ca")
+HISTORIC_CHILD = "venv-agent-child-app-ready-079-37eb-0256"
+HISTORIC_CHILD_KEY = "5464e85332660e8d6d133653d0600709f2aac5a6c9a0ff0e0bc1fb18312d7f2f"
 ACTUAL_AGENT = "333b44b1a1b8be72d4d101391b7636c508419109"
 ACTUAL_AGENT_TREE = "1094bf3662c785e4b21eddf7e3ae980da79b1af1"
 ACTUAL_AGENT_DELTA_SHA256 = "ad0dfa1a0fac08dae219af90ea527b9d9f6cfdadc4254086d2bc70f227b13a80"
 ACTUAL_AGENT_CHECKOUT = Path("/home/user/work/wt/agt-pin-333b44b1")
 ACTUAL_AGENT_RECEIPT = ORCH / "queue/done" / f"checkout-agent-{ACTUAL_AGENT}"
+ACTUAL_AGENT_RECEIPT_SHA256 = "fad9e905e1ebf658215887dd84ad01e7ed2014366d0fbaecf56b3a6fa5388d96"
 ACTUAL_AGENT_REVIEW = ORCH / "design/agt-R1-popup-079-backport-review-0955.md"
 RUNTIME = "37eb6c7bdb79dcae2523883e66b5cea5be721ffd"
 RUNTIME_TREE = "be4114705127f9ee9e86b26cd6de3f467e771c01"
-AGENT_CHECKOUT = Path("/home/user/work/wt/agt-pin-079580ca")
+RUNTIME_PARENT = "2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d"
 RUNTIME_CHECKOUT = Path("/home/user/work/wt/rt-pin-37eb6c7b")
-CHILD = "venv-agent-child-app-ready-079-37eb-0256"
 ACTUAL_CHILD = "venv-agent-child-app-popup-333b-37eb-1016"
 REMOTION = "agent-remotion-app-ready-079-37eb-0258"
-CHILD_KEY = "5464e85332660e8d6d133653d0600709f2aac5a6c9a0ff0e0bc1fb18312d7f2f"
-CHILD_ROOT = Path("/home/user/work/bench-store/entries") / f"child-{CHILD_KEY}"
 ACTUAL_CHILD_KEY = "188546b73edd84d90d8d5c321b63b3278eaec80d0050e1b63cea4be298302321"
 ACTUAL_CHILD_ROOT = Path("/home/user/work/bench-store/entries") / f"child-{ACTUAL_CHILD_KEY}"
 REMOTION_ROOT = Path("/home/user/work/bench-store/entries/runtime-5ca5c561b7be7069051ac8769432cc1edf29060bed39384cd3c4ecab1736e690")
-PROVISION_RECEIPT = ORCH / "tests/provision" / f"{CHILD}.txt"
-CHILD_RECEIPT = ORCH / "queue/done" / f"childvenv-{CHILD}"
 REMOTION_RECEIPT = ORCH / "queue/done" / f"runtime-{REMOTION}"
+REMOTION_RECEIPT_SHA256 = "75d0b7b9960a66ad7ac23cfc69c183b5bcd9ea832df9ba7c194b64a71a70eb9a"
+ACTUAL_CHILD_MAKER_RECEIPT_SHA256 = "b009028c010c7dfd1abfac5b04368bff4d0b8ed3aff62bfcd93d7da967c9a6f9"
+ACTUAL_CHILD_PROVISION_RECEIPT_SHA256 = "57e5eacfb1b12f12b64858dccf5cbba40a087f9e062cded024234bb1a621efeb"
+ACTUAL_CHILD_IMPORT_RECEIPT_SHA256 = "1135edfc5da73e3c47306279546cb6f34658ef8ba2429b08529b897af051dd56"
+REMOTION_COMPONENT_FILE_COUNT = 80
+REMOTION_COMPONENT_TREE_DIGEST = "ac0bf2a252d3f3a7640ed2a0b555b8a91ff81671a3b70074ed27676357edbbc9"
 D41_AGENT_MANIFEST_ENV = "TIMELINE_D41_AGENT_MANIFEST"
 FINAL_SOURCE_WORKER = "app-P2-final-pure-integrated-1036"
 FINAL_SOURCE_BRANCH = f"tl/{FINAL_SOURCE_WORKER}"
@@ -205,7 +217,7 @@ def assert_actual_manifest(manifest: dict[str, object] | None) -> dict[str, obje
     expected = {
         "source": ACTUAL_AGENT,
         "tree": ACTUAL_AGENT_TREE,
-        "parent": AGENT,
+        "parent": HISTORIC_AGENT,
         "checkout": str(ACTUAL_AGENT_CHECKOUT),
         "source_receipt": str(ACTUAL_AGENT_RECEIPT),
         "source_receipt_sha256": digest(ACTUAL_AGENT_RECEIPT.read_bytes()),
@@ -355,8 +367,6 @@ def d41_agent_input() -> dict[str, object]:
         manifest = value
     actual = assert_actual_manifest(manifest)
     source = ACTUAL_AGENT
-    tree = ACTUAL_AGENT_TREE
-    parent = AGENT
     root = physical_path(ACTUAL_AGENT_CHECKOUT)
     if root == APP or not root.is_dir() or root.is_symlink():
         raise RuntimeError("PREPARED: D41 Agent checkout is unavailable or is a caller target")
@@ -368,9 +378,11 @@ def d41_agent_input() -> dict[str, object]:
         raise RuntimeError("PREPARED: D41 Agent checkout must be the supported detached checkout")
     if git(root, "rev-parse", "HEAD").decode().strip() != source:
         raise RuntimeError("PREPARED: D41 Agent checkout HEAD does not match qualified source")
-    if git(root, "show", "-s", "--format=%T", source).decode().strip() != tree:
+    tree = git(root, "show", "-s", "--format=%T", source).decode().strip()
+    parent = git(root, "show", "-s", "--format=%P", source).decode().strip()
+    if tree != ACTUAL_AGENT_TREE:
         raise RuntimeError("PREPARED: D41 Agent tree does not match qualified source")
-    if git(root, "show", "-s", "--format=%P", source).decode().strip() != parent:
+    if parent != HISTORIC_AGENT:
         raise RuntimeError("PREPARED: D41 Agent parent does not match exact 079 base")
     changed = git(root, "diff", "--name-only", parent, source).decode().splitlines()
     if changed != ["astrid/sdk/timeline/_commit_patch.py", "tests/editing_conformance/test_same_step_fork_rebase.py"]:
@@ -407,8 +419,11 @@ def d41_agent_input() -> dict[str, object]:
     runtime_checkout = physical_path(runtime_candidate)
     if runtime_checkout != RUNTIME_CHECKOUT or not runtime_checkout.is_dir():
         raise RuntimeError("PREPARED: D41 Runtime checkout is not the retained exact checkout")
+    runtime_tree = git(runtime_checkout, "show", "-s", "--format=%T", RUNTIME).decode().strip()
+    runtime_parent = git(runtime_checkout, "show", "-s", "--format=%P", RUNTIME).decode().strip()
     if (git(runtime_checkout, "rev-parse", "HEAD").decode().strip() != RUNTIME
-            or git(runtime_checkout, "show", "-s", "--format=%T", RUNTIME).decode().strip() != RUNTIME_TREE
+            or runtime_tree != RUNTIME_TREE
+            or not runtime_parent
             or git(runtime_checkout, "status", "--porcelain=v1", "--untracked-files=all").strip()):
         raise RuntimeError("PREPARED: D41 Runtime checkout is not Runtime37eb")
     runtime_paths = git(runtime_checkout, "ls-tree", "-r", "--name-only", RUNTIME, "packages/python/astrid_runtime_client/").decode().splitlines()
@@ -436,7 +451,7 @@ def d41_agent_input() -> dict[str, object]:
         raise RuntimeError("PREPARED: D41 backend identity is not Runtime37eb")
     child = ACTUAL_CHILD
     child_key = ACTUAL_CHILD_KEY
-    if child == CHILD or child_key == CHILD_KEY:
+    if child == HISTORIC_CHILD or child_key == HISTORIC_CHILD_KEY:
         raise RuntimeError("PREPARED: D41 child relabels the retained 0256 child")
     child_candidate = ACTUAL_CHILD_ROOT
     if child_candidate.is_symlink():
@@ -477,7 +492,8 @@ def d41_agent_input() -> dict[str, object]:
         raise RuntimeError("PREPARED: D41 Remotion checkout is not the retained exact checkout")
     return {
         "source": source, "tree": tree, "parent": parent, "checkout": str(root),
-        "source_receipt": source_receipt, "runtime": RUNTIME, "runtime_tree": RUNTIME_TREE,
+        "source_receipt": source_receipt, "runtime": RUNTIME, "runtime_tree": runtime_tree,
+        "runtime_parent": runtime_parent,
         "runtime_checkout": str(runtime_checkout), "client_hashes": client_hashes,
         "backend_hashes": backend_hashes, "backend_digest": backend_digest,
         "child": child, "child_key": child_key, "child_root": str(child_root),
@@ -577,10 +593,14 @@ def final_source_input() -> dict[str, object] | None:
         raise RuntimeError("PREPARED: final source full base identity changed")
     if git(root, "rev-parse", "HEAD").decode().strip() != manifest["source"]:
         raise RuntimeError("final source HEAD does not match explicit input")
-    if git(root, "show", "-s", "--format=%T", manifest["source"]).decode().strip() != manifest["tree"]:
+    observed_tree = git(root, "show", "-s", "--format=%T", manifest["source"]).decode().strip()
+    observed_parent = git(root, "show", "-s", "--format=%P", manifest["source"]).decode().strip()
+    if observed_tree != manifest["tree"]:
         raise RuntimeError("final source tree does not match explicit input")
-    if git(root, "show", "-s", "--format=%P", manifest["source"]).decode().strip() != manifest["parent"]:
+    if observed_parent != manifest["parent"]:
         raise RuntimeError("final source parent does not match explicit input")
+    manifest["tree"] = observed_tree
+    manifest["parent"] = observed_parent
     if str(manifest["parent"]).split() != FINAL_SOURCE_PARENTS.split():
         raise RuntimeError("PREPARED: terminal pure-product parents changed")
     checkout_receipt_candidate = Path(str(manifest["checkout_receipt"]))
@@ -691,29 +711,21 @@ def source_custody(final: dict[str, object]) -> dict[str, object]:
             "source_report_sha256": str(final["source_report_sha256"])}
 
 def custody_facts() -> dict[str, object]:
-    assert git(AGENT_CHECKOUT, "rev-parse", "HEAD").decode().strip() == AGENT
-    assert git(AGENT_CHECKOUT, "show", "-s", "--format=%T", "HEAD").decode().strip() == "2deab1a1494fbccfce5e9235412bacb8a949c0cd"
-    assert not git(AGENT_CHECKOUT, "status", "--porcelain=v1", "--untracked-files=all").strip()
     assert git(RUNTIME_CHECKOUT, "rev-parse", "HEAD").decode().strip() == RUNTIME
     assert git(RUNTIME_CHECKOUT, "show", "-s", "--format=%T", "HEAD").decode().strip() == RUNTIME_TREE
     assert not git(RUNTIME_CHECKOUT, "status", "--porcelain=v1", "--untracked-files=all").strip()
-    for receipt in (PROVISION_RECEIPT, CHILD_RECEIPT, REMOTION_RECEIPT):
-        assert receipt.is_file()
-    provision = PROVISION_RECEIPT.read_text()
     remotion = REMOTION_RECEIPT.read_text()
-    assert f"agent_sha={AGENT}" in provision and f"runtime_sha={RUNTIME}" in provision
+    assert f"requested_agent_sha={HISTORIC_AGENT}" in remotion and f"requested_runtime_sha={RUNTIME}" in remotion
     assert f"requested_name={REMOTION}" in remotion and f"requested_runtime_sha={RUNTIME}" in remotion
     assert "reuse=verified" in remotion
 
     paths = git(RUNTIME_CHECKOUT, "ls-tree", "-r", "--name-only", RUNTIME, "packages/python/astrid_runtime_client/").decode().splitlines()
     assert len(paths) == 4
     client_hashes = {}
-    child_site = CHILD_ROOT / "lib/python3.13/site-packages"
+    child_site = ACTUAL_CHILD_ROOT / "lib/python3.13/site-packages"
     for path in paths:
         runtime_bytes = git(RUNTIME_CHECKOUT, "show", f"{RUNTIME}:{path}")
-        agent_path = path.removeprefix("packages/python/")
-        assert runtime_bytes == git(AGENT_CHECKOUT, "show", f"{AGENT}:{agent_path}")
-        installed = child_site / agent_path
+        installed = child_site / path.removeprefix("packages/python/")
         assert installed.is_file() and installed.read_bytes() == runtime_bytes
         client_hashes[path] = digest(runtime_bytes)
 
@@ -733,7 +745,74 @@ def custody_facts() -> dict[str, object]:
     graph_hashes = {str(path.relative_to(graph_root)): digest(path.read_bytes()) for path in graph_files}
     assert len(graph_hashes) == 80
     assert digest(json.dumps(graph_hashes, sort_keys=True, separators=(",", ":")).encode()) == "ac0bf2a252d3f3a7640ed2a0b555b8a91ff81671a3b70074ed27676357edbbc9"
-    return {"agent": AGENT, "agent_tree": "2deab1a1494fbccfce5e9235412bacb8a949c0cd", "runtime": RUNTIME, "runtime_tree": RUNTIME_TREE, "child": CHILD, "child_key": CHILD_KEY, "remotion": REMOTION, "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db", "provision_receipt_sha256": digest(PROVISION_RECEIPT.read_bytes()), "child_receipt_sha256": digest(CHILD_RECEIPT.read_bytes()), "remotion_receipt_sha256": digest(REMOTION_RECEIPT.read_bytes()), "client_file_count": len(client_hashes), "client_hashes": client_hashes, "runtime_backend_file_count": len(backend_hashes), "runtime_backend_digest": digest(json.dumps(backend_hashes, sort_keys=True, separators=(",", ":")).encode()), "graph_file_count": len(graph_hashes), "graph_digest": digest(json.dumps(graph_hashes, sort_keys=True, separators=(",", ":")).encode()), "daemon_identity": "UNINFERRED_BY_SOURCE_PREPARATION"}
+    return {"agent": ACTUAL_AGENT, "agent_tree": ACTUAL_AGENT_TREE, "runtime": RUNTIME, "runtime_tree": RUNTIME_TREE, "child": ACTUAL_CHILD, "child_key": ACTUAL_CHILD_KEY, "remotion": REMOTION, "remotion_producer": HISTORIC_AGENT, "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db", "remotion_receipt_sha256": digest(REMOTION_RECEIPT.read_bytes()), "client_file_count": len(client_hashes), "client_hashes": client_hashes, "runtime_backend_file_count": len(backend_hashes), "runtime_backend_digest": digest(json.dumps(backend_hashes, sort_keys=True, separators=(",", ":")).encode()), "graph_file_count": len(graph_hashes), "graph_digest": digest(json.dumps(graph_hashes, sort_keys=True, separators=(",", ":")).encode()), "daemon_identity": "UNINFERRED_BY_SOURCE_PREPARATION"}
+
+
+def dry_identity_preflight(row: bytes) -> dict[str, object]:
+    """Run the candidate's read-only identity guard before any later preparation."""
+    app_root = physical_path(FINAL_SOURCE_CHECKOUT)
+    app_tree = git(app_root, "show", "-s", "--format=%T", FINAL_SOURCE).decode().strip()
+    app_parent = git(app_root, "show", "-s", "--format=%P", FINAL_SOURCE).decode().strip()
+    agent_tree = git(ACTUAL_AGENT_CHECKOUT, "show", "-s", "--format=%T", ACTUAL_AGENT).decode().strip()
+    agent_parent = git(ACTUAL_AGENT_CHECKOUT, "show", "-s", "--format=%P", ACTUAL_AGENT).decode().strip()
+    runtime_tree = git(RUNTIME_CHECKOUT, "show", "-s", "--format=%T", RUNTIME).decode().strip()
+    runtime_parent = git(RUNTIME_CHECKOUT, "show", "-s", "--format=%P", RUNTIME).decode().strip()
+    if (app_tree, app_parent) != (FINAL_SOURCE_TREE, FINAL_SOURCE_PARENTS):
+        raise RuntimeError("PREPARED: dry preflight App identity is not the approved source")
+    if (agent_tree, agent_parent) != (ACTUAL_AGENT_TREE, HISTORIC_AGENT):
+        raise RuntimeError("PREPARED: dry preflight Agent identity is not the approved source")
+    if (runtime_tree, runtime_parent) != (RUNTIME_TREE, RUNTIME_PARENT):
+        raise RuntimeError("PREPARED: dry preflight Runtime identity is not the approved source")
+    expected = {
+        "stage": 2,
+        "orch": ORCH,
+        "app": {
+            "source": FINAL_SOURCE,
+            "tree": app_tree,
+            "parent": app_parent,
+            "checkout_receipt": str(FINAL_SOURCE_CHECKOUT_RECEIPT),
+            "checkout_receipt_sha256": FINAL_SOURCE_CHECKOUT_RECEIPT_SHA256,
+            "source_report": str(FINAL_SOURCE_REPORT),
+            "source_report_sha256": FINAL_SOURCE_REPORT_SHA256,
+        },
+        "agent": {
+            "source": ACTUAL_AGENT,
+            "tree": agent_tree,
+            "parent": agent_parent,
+            "delta_sha256": ACTUAL_AGENT_DELTA_SHA256,
+            "checkout": str(ACTUAL_AGENT_CHECKOUT),
+            "receipt": str(ACTUAL_AGENT_RECEIPT),
+            "receipt_sha256": ACTUAL_AGENT_RECEIPT_SHA256,
+        },
+        "runtime": {
+            "source": RUNTIME,
+            "tree": runtime_tree,
+            "parent": runtime_parent,
+            "checkout": str(RUNTIME_CHECKOUT),
+        },
+        "child": {
+            "name": ACTUAL_CHILD,
+            "key": ACTUAL_CHILD_KEY,
+            "root": str(ACTUAL_CHILD_ROOT),
+            "maker_receipt": str(ORCH / "queue/done" / f"childvenv-{ACTUAL_CHILD}"),
+            "maker_receipt_sha256": ACTUAL_CHILD_MAKER_RECEIPT_SHA256,
+            "provision_receipt": str(ORCH / "tests/provision" / f"{ACTUAL_CHILD}.txt"),
+            "provision_receipt_sha256": ACTUAL_CHILD_PROVISION_RECEIPT_SHA256,
+            "import_receipt": str(ACTUAL_CHILD_ROOT / ".astrid-import-origins"),
+            "import_receipt_sha256": ACTUAL_CHILD_IMPORT_RECEIPT_SHA256,
+        },
+        "remotion": {
+            "name": REMOTION,
+            "producer": HISTORIC_AGENT,
+            "tree": "b01dca9b3b24f54093c20b7c5657316f997725db",
+            "root": str(REMOTION_ROOT),
+            "receipt": str(REMOTION_RECEIPT),
+            "receipt_sha256": REMOTION_RECEIPT_SHA256,
+            "component_file_count": REMOTION_COMPONENT_FILE_COUNT,
+            "component_tree_digest": REMOTION_COMPONENT_TREE_DIGEST,
+        },
+    }
+    return _DRY_PREFLIGHT.dry_preflight(row, target=app_root, expected=expected)
 
 
 def selected_rows() -> tuple[bytes, dict[str, tuple[int, bytes]]]:
@@ -854,9 +933,12 @@ def bind_retained_remotion(inner: str) -> str:
         'str(runtime_path) + " from agent " + agent_sha',
         '"requested_agent_sha=" + agent_sha',
     ):
+        after = before.removesuffix("agent_sha") + repr(HISTORIC_AGENT)
+        if guard.count(before) == 0 and guard.count(after) == 1:
+            continue
         if guard.count(before) != 1:
             raise RuntimeError("PREPARED: retained Remotion origin binding is ambiguous")
-        guard = guard.replace(before, before.removesuffix("agent_sha") + repr(AGENT), 1)
+        guard = guard.replace(before, after, 1)
     encoded = base64.b64encode(guard.encode()).decode()
     return inner[:match.start(1)] + encoded + inner[match.end(1):]
 
@@ -904,10 +986,11 @@ def mechanical_controls(
 
 
 def prepare(out: Path) -> dict[str, object]:
+    raw, rows = selected_rows()
+    dry_preflight = dry_identity_preflight(rows[SUITES[0]][1])
     final = final_source_input()
     agent = d41_agent_input()
     custody = custody_facts()
-    raw, rows = selected_rows()
     if digest(rows[SUITES[0]][1]) != CURRENT_P2_ROW_SHA256:
         raise RuntimeError("PREPARED: installed P2 row differs from the immutable 26414 caller")
     if SUITES_FILE.read_bytes() != raw:
@@ -920,10 +1003,10 @@ def prepare(out: Path) -> dict[str, object]:
         "checkout": str(APP),
     }
     outside = b"".join(line for i, line in enumerate(raw.splitlines(keepends=True), 1) if i not in {rows[name][0] for name in SUITES})
-    binding_replacements = {
-        str(custody["agent_tree"]): str(agent["tree"]),
+    replacements = {
+        "source_facts": dry_preflight["custody"],
+        "p2_bindings": {"app": app_input["source"], "agent": agent["source"], "runtime": RUNTIME},
     }
-    replacements = dict(binding_replacements)
     drafts = {}
     stage_records = {}
     for n, name in enumerate(SUITES, 2):
@@ -943,26 +1026,33 @@ def prepare(out: Path) -> dict[str, object]:
             assert text.count(current_parent) == 1
         assert str(app_input["parent"]) in text
         outer, inner, tail = extract_inner(line)
-        row_replacements = dict(binding_replacements)
         updated = inner
-        for before, after in row_replacements.items():
-            count = updated.count(before)
-            if count == 0:
-                raise RuntimeError(f"mounted source token is missing: {before}")
-            updated = updated.replace(before, after)
-            if before != after and updated.count(before):
-                raise RuntimeError(f"mounted source token was not fully rebound: {before}")
+        identity_bindings = {
+            f"P{n}A=[^;]+": f"P{n}A={agent['source']}",
+            f"P{n}R=[^;]+": f"P{n}R={RUNTIME}",
+            f"P{n}APP=[^;]+": f"P{n}APP={app_input['source']}",
+            f"P{n}TREE=[^;]+": f"P{n}TREE={app_input['tree']}",
+            f"P{n}PARENT='[^']*'": f"P{n}PARENT='{app_input['parent']}'",
+            f"P{n}AG=" + r"\$\{" + f"P{n}_AGENT_CHECKOUT:-[^}}]+" + r"\}": f"P{n}AG=${{P{n}_AGENT_CHECKOUT:-{agent['checkout']}}}",
+            f"P{n}RT=" + r"\$\{" + f"P{n}_RUNTIME_CHECKOUT:-[^}}]+" + r"\}": f"P{n}RT=${{P{n}_RUNTIME_CHECKOUT:-{RUNTIME_CHECKOUT}}}",
+            r"CN=[^;]+": f"CN={agent['child']}",
+        }
+        for pattern, after in identity_bindings.items():
+            updated, count = re.subn(pattern, after, updated, count=1)
+            if count != 1:
+                raise RuntimeError(f"mounted source binding is missing or ambiguous: {pattern}")
         updated = bind_retained_remotion(updated)
         if (
             f"P{n}APP={app_input['source']}" not in updated
             or f"P{n}TREE={app_input['tree']}" not in updated
-            or QUALIFIED_PARENT in updated
-            or AGENT in updated
-            or CHILD in updated
+            or f"P{n}A={HISTORIC_AGENT}" in updated
+            or f"P{n}AG=${{P{n}_AGENT_CHECKOUT:-{HISTORIC_AGENT_CHECKOUT}}}" in updated
+            or f"P{n}TREE={HISTORIC_AGENT_TREE}" in updated
+            or f"CN={HISTORIC_CHILD}" in updated
         ):
             raise RuntimeError("decoded P2 caller retained stale Agent source identity")
         assert f"P{n}A={agent['source']}" in updated and f"P{n}R={RUNTIME}" in updated
-        assert str(agent["checkout"]) in updated and str(AGENT_CHECKOUT) not in updated
+        assert str(agent["checkout"]) in updated and str(HISTORIC_AGENT_CHECKOUT) not in updated
         assert updated.count(str(agent["tree"])) == 1
         assert f"P{n}APP={app_input['source']}" in updated
         assert f"P{n}TREE={app_input['tree']}" in updated
@@ -1003,6 +1093,7 @@ def prepare(out: Path) -> dict[str, object]:
         "outside_row_count": len(raw.splitlines(keepends=True)) - len(SUITES), "outside_bytes": len(outside), "outside_sha256": digest(outside),
         "wire_fields": WIRE_FIELDS,
         "stage_records": stage_records,
+        "dry_identity_preflight": dry_preflight,
         "door_port": {"allocation": ["P2_ALLOCATED_PORT", "P3_ALLOCATED_PORT"], "propagates_before_every_stage": True, "changed": False},
         "tool_versions": {"node": "not-read", "npm": "not-read", "playwright": "not-read"},
         "final_inputs": {"catalog_source": "PENDING", "p2_source": FINAL_SOURCE, "p3_source": "PENDING (retained installed row)", "source_manifest": str(FINAL_SOURCE_REPORT), "source_report": str(FINAL_SOURCE_REPORT), "source_report_sha256": FINAL_SOURCE_REPORT_SHA256, "source_checkout": str(FINAL_SOURCE_CHECKOUT), "source_checkout_receipt": str(FINAL_SOURCE_CHECKOUT_RECEIPT), "source_checkout_receipt_sha256": FINAL_SOURCE_CHECKOUT_RECEIPT_SHA256, "d41_agent_source": ACTUAL_AGENT, "d41_agent_checkout": str(ACTUAL_AGENT_CHECKOUT), "d41_agent_receipt": str(ACTUAL_AGENT_RECEIPT), "d41_agent_child": ACTUAL_CHILD, "d41_agent_child_key": ACTUAL_CHILD_KEY, "d41_agent_manifest": os.environ.get(D41_AGENT_MANIFEST_ENV, "ACTUAL_FIXED_EVIDENCE")},
