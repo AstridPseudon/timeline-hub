@@ -24,7 +24,34 @@ pytestmark = pytest.mark.integration
 
 @pytest.fixture(params=['image', 'video'])
 def editing(request, tmp_path, monkeypatch):
-    yield from parent.media_realm(tmp_path, monkeypatch, request.param, historical=False)
+    realm = parent.media_realm(tmp_path, monkeypatch, request.param, historical=False, pristine=True)
+    try:
+        editing = next(realm)
+        from astrid.sdk.timeline.emitter import emit_document_commands
+
+        before = bundle_from_document(parent.current(editing))
+        after = copy.deepcopy(before)
+        after['parent']['config']['tracks'].append({
+            'id': 'visual', 'kind': 'visual', 'role': 'output', 'opaque': [None, False],
+        })
+        commands_to_apply = emit_document_commands(before, after)
+        request_body = parent.body(editing, commands_to_apply)
+        request_body.update(
+            label='parent auto fixture', merge='atomic', reads=[],
+            rationale='Parent auto fixture bootstrap', group_id='parent-auto-fixture',
+            steps=[{
+                'id': 'parent-auto-fixture', 'label': 'parent auto fixture',
+                'intent': 'Prepare parent auto fixture', 'tags': ['integration'],
+                'command_ordinals': list(range(len(commands_to_apply))),
+                'patch': [change for command in commands_to_apply
+                          for change in command['args']['changes']],
+                'reads': [],
+            }],
+        )
+        parent.commit(editing, request_body, 'parent-auto-fixture')
+        yield editing
+    finally:
+        realm.close()
 
 
 def completion(editing, policy):
