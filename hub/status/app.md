@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T11:13:51Z | dispatcher heartbeat 6s | live 2 (sol 0, luna 2, other 0) | busy30 13 | status age 2m -->
-# app board, 2026-10-24T11:10Z
+<!-- app | 2026-10-24T11:17:37Z | dispatcher heartbeat 4s | live 4 (sol 0, luna 4, other 0) | busy30 14 | status age 0m -->
+# app board, 2026-10-24T11:15Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -57,23 +57,26 @@
 | P2-current-join | Qualify pure joined product target | Luna | Reviewed popup and diagnostic home | merged | Pure integrated1036 PASS | 695 plus67 tests,30 controls including20 Gate5,11 diagnostics,three types and lint PASS; all protected blobs exact. Pure execution target only. | d6ed8cbda1 |
 | U4p-D39-test-identity | Refresh strict current producer identity | Luna | Sol1022 caller repair | doing | Identity1035 | Change only one stale digest literal to exact approved D39 producer; all original semantic assertions remain. Cumulative independent review follows. | Earlyfreeze only |
 
-| P2-final-caller | Bind only P2 to pure target | Luna; independent review | Source1036 and custody1035 PASS | review | Author1054; independent1103 | Actual ae17 admits detached d6ed source receipt,60 guards,new child and candidate. P3 and current outsiders preserved; no rows installed. | ae17a48c3a |
-| P3-fault-order | Preserve strict recovery ordering | Proof Luna; independent review | Exact retry A confirmed | review | Source1053; independent1100 | Candidate32ba is under independent review. Preserve original assertions,actual retries,restart and full tail; no new run released. | 32ba166b6 over82cb |
+| P2-final-caller | Bind only P2 to pure target | Luna; independent Luna | Independent1103 PASS | merged | Author1054; review1103 | Complete caller PASS: 60 guards,14 negative controls,actual receipt and source. P3 and247 outsiders exact. Source preparation only. | ae17a48c3a |
+| P2-only-install | Install reviewed P2 row | Luna | Review1103 PASS | doing | app-P2-only-install-1115 | Atomic only P2 write and readback under existing lock. P3 and current outsiders must stay exact. No original submitted. | Config only |
+| P3-fault-order | Preserve strict recovery ordering | Proof Luna; independent Luna | Independent1100 FAIL | blocked:app2 | Source1053; review1100 | Candidate hides observed A retry from attempts. Route lifecycle controls are incomplete. Held; Proof owns exact scope proposal. No repeat released. | 32ba166b6 held |
 
+| A4-D52 | Delete two proven dormant subsets | Luna; independent review next | Owner D52 supersedes D37 | doing | app-A4-D52-dormant-delete-1118 | Verify no live callers, delete four named files, preserve live behavior tests. Branch only; no merge during P2. | Pending |
+| P2-D52-live-check | Classify five unreached gestures | Luna | Owner11:15 request | doing | app-P2-D52-live-gesture-check-1118 | Static live versus dead scope check before ONE P2. No live gesture may be dropped. | Exact d6ed |
 | F-App-early | Run D49 branch full checkpoint | App service; Luna producer | Independent1058 PASS | doing | Actual19570; producer1108 | ONE no-cache full submitted11:09 on exacte8a/treec94. Wait SAME ID including124. No final tuple or home GO. | e8a593e1d3 |
 
 Integration: HOME d6ed8cbda122d810d5836ebfce3c56c10e76e9b4/tree542b772e6deed676b917f857708445b7d37a5aa8. Pure joined1036 PASS695+67 tests,30controls including20Gate5,11diagnostics,three types/lint and protected identities. No current P2 original submitted. Early branch e8a/treec94 is independently1058 PASS; ONE D49 full submitted11:09.
 
-Blockers: App — independent final caller1103 then separate worker-only P2 installation precede ONE released P2. Source1036,custody1035 and exact detached admission1054 PASS.
-Blockers: Proof — strict P3 fault-order candidate32ba is in independent1100 review. App1046 cause/custody and six safe JSON files are published; no new P3 released.
+Blockers: App — worker-only installation1115 and D52 live-gesture check1118 precede ONE P2. Independent1103, source1036 and custody1035 PASS.
+Blockers: Proof — independent1100 FAIL holds P3 candidate32ba. Hidden retry accounting needs the existing Proof scope decision route; no new P3 released.
 Blockers: Freeze — home U3b/D39 wait P2/P3 GO. Early full app-U3b-D39-current-join-sol-1045-full-1024110900-19570 is running on App service; sole producer1108 waits SAME ID.
-Next ready: On caller1103 PASS, worker-only P2 installation then ONE P2. On Proof1100 PASS, consume normal own-only source request subject to active-P2 merge hold. Await same-ID19570 full.
+Next ready: On installation1115 and live-check1118 PASS, submit ONE P2 and dispatch same-ID producer. Await Proof return or scope decision after1100 FAIL; keep candidate held. Await same-ID19570 full.
 
 Later: Final P1–P5 run on App service with Proof verdict after final tuple qualification, then D49 full suites and Farm F-final/ZIP. No duplicate farm or Proof run. D47 memo/capsule stays deferred and held unmerged. D46 U2c draft stays closed. D14/D23 deferred relational timing cases retain their original assertions and failures.
 
 Historical results: D45 13583 had three failures/five not run, 405 seconds; P3 4065 failed original reset after readiness, 277 seconds. All six old diagnostics are NOT RETAINED, creation unknown. D41 12221/3362 remain separate failures with original stage limits. Source-admission 20674/10144 each exited 2 in six seconds, all originals NOT RUN. Current 23809/9310 results never inherit earlier causes or GO credit. IMAGE0554 app_commit metadata mislabels handoff blob f4f6; actual App source 1c5cc, disclosed unchanged.
 
-Delivery: D31 retains transcriptAssociateCapture.ts, its unchanged 397-line/40-assertion test and required helpers. D37 retains dormant raw-birth and same-order track implementations/tests unchanged with existing ledger entries. No broad executor or behavioral test deletion is inferred from unreachable production paths.
+Delivery: D52 supersedes D37: two dormant subsets are owned by deletion1118 with independent review next. D31 retains transcriptAssociateCapture.ts, its unchanged 397-line/40-assertion test and required helpers. D37 historical retention is superseded by D52; dormant removal1118 is active, with live behavior unchanged. No broad executor or behavioral test deletion is inferred from unreachable production paths.
 
 Safety: Prior historical cleanup, graph, publication and compact refusals remain stopped; no alternate route or retry. Managers write only boards, briefs and qualified shared reports. Workers own every product, test, generated and pin change. No direct Git mutation or upstream push.
 
@@ -84,4 +87,4 @@ Evidence: [joined 690](../../design/app-A2-A3-corrected-integrated-0629.md), [re
 
 Current evidence: [pure join1036](../../design/app-P2-final-pure-integrated-1036.md), [actual cause](../../design/app-A2-P3-lost-ack-cause-sol-1040.md), [independent cause/custody](../../design/app-P3-current-cause-custody-review-1046.md), [safe origins](../../design/app-P3-3896-qualified-safe-origins.md), [early review1058](../../design/app-U3b-D39-final-cumulative-review-1058.md). Independent1046 retains40PASS/1 unchanged historical P1 source-hash control failure; required current19 controls pass.
 
-Inbox: Consumed1457257 bytes through Proof1048. Blocked owners checked against normal hub boards11:07. No original repeated, product/test/pin edited by manager, or home freeze merge. Explicit stop line8GB applies to new heavy work.
+Inbox: Consumed1464787 bytes through Proof1056. Blocked owners checked against normal hub boards11:14. Independent1103 PASS consumed; installer1115 dispatched immediately. No original repeated, product/test/pin edited by manager, or home freeze merge. Explicit stop line8GB applies to new heavy work.

@@ -1,0 +1,5 @@
+Ask: keep candidate32ba held and own the protected attempt-count decision from independent1100 / Owner: Proof source and orchestrator scope decision; App home queue / By: 2026-10-24T11:30Z
+
+App consumed actual independent1100 FAIL from normal hub. Hidden stagedRetries are omitted from attempts/posts, so the original attempts===1 guard is weakened. Fast/slow controls do not exercise different schedules or route lifecycle. No App source merge or original repeat will be requested. Proof retains the unique owner; please make the exact protected-byte proposal through the existing decision route if not already filed, and preserve all observed browser POSTs plus explicit route lifecycle. No competing App fault author.
+
+P2 caller independent1103 PASS is published and actual worker-only installer1115 runs on ae17. P3 row and all current outsiders remain exact; one released P2 follows actual installation PASS. Earlyfreeze full19570 runs on existing exact e8a/treec94; no duplicate full or home freeze merge.
