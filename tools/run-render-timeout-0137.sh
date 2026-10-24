@@ -21,7 +21,8 @@ CHILD_NAME=venv-agent-child-render-current-0134
 RECEIPT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/childvenv-venv-agent-child-render-current-0134
 PROVISION_REPORT=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/provision/venv-agent-child-render-current-0134.txt
 BENCH_INDEX=/home/user/work/bench-store/index.json
-EVIDENCE=$(mktemp -d "${TMPDIR:-/tmp}/render-timeout-0137.XXXXXX")
+EVIDENCE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-timeout-harness-return-0148/evidence
+mkdir -p "$EVIDENCE"
 
 : "${EXPECTED_SOURCE_TREE:?set EXPECTED_SOURCE_TREE to the finalized source snapshot tree}"
 EXPECTED_RUNTIME_TREE=6047ac3033c3594b8f83db3afd8bb2c47cafa6d6
@@ -385,11 +386,72 @@ if [ -z "$CHILD" ]; then
 fi
 
 set +e
-timeout 45 "$PARENT_PYTHON" -P -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 \
+env -u PYTHONPATH \
+    PATH="$CHILD/bin:$NODE_BIN:/usr/bin:/bin" \
+    ASTRID_HOST_EXECUTION_PROFILE=installed \
+    timeout 45 "$CHILD/bin/python" -P -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 \
     tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons \
     >"$EVIDENCE/pytest.log" 2>&1
 STATUS=$?
 set -e
-printf 'pytest_exit=%s\nchild=%s\ntimeout_seconds=45\n' "$STATUS" "$CHILD" > "$EVIDENCE/result.txt"
+
+set +e
+"$PARENT_PYTHON" -P - "$EVIDENCE/preflight.json" "$EVIDENCE/postflight.json" <<'PY'
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+preflight_path, postflight_path = map(Path, sys.argv[1:])
+root = Path(os.environ["F_RENDER_ROOT"]).resolve()
+runtime = Path(os.environ["F_RENDER_RUNTIME"]).resolve()
+expected_tree = os.environ["F_EXPECTED_SOURCE_TREE"]
+allowed = {"tools/run-render-timeout-0137.sh"}
+
+def status(path: Path) -> list[str]:
+    return [line for line in subprocess.check_output(
+        ["git", "status", "--porcelain", "--untracked-files=all"],
+        cwd=path,
+        text=True,
+    ).splitlines() if line]
+
+def paths(lines: list[str]) -> list[str]:
+    return [line[3:] if len(line) >= 3 else line for line in lines]
+
+root_status = status(root)
+runtime_status = status(runtime)
+source_tree = subprocess.check_output(
+    ["git", "rev-parse", "HEAD^{tree}"], cwd=root, text=True
+).strip()
+failures = []
+if source_tree != expected_tree:
+    failures.append({"check": "source tree after body", "value": {"actual": source_tree, "expected": expected_tree}})
+if set(paths(root_status)) - allowed:
+    failures.append({"check": "source custody after body", "value": paths(root_status)})
+if runtime_status:
+    failures.append({"check": "Runtime custody after body", "value": runtime_status})
+
+before = json.loads(preflight_path.read_text())
+report = {
+    "status": "passed" if not failures else "failed",
+    "failures": failures,
+    "before_status": before.get("status"),
+    "source_tree": source_tree,
+    "changed": paths(root_status),
+    "runtime_changed": runtime_status,
+    "original_case_executed": True,
+}
+postflight_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+print(f"F_RENDER_0137_POSTFLIGHT={report['status'].upper()} failures={len(failures)}", flush=True)
+raise SystemExit(bool(failures))
+PY
+POSTFLIGHT=$?
+set -e
+
+printf 'pytest_exit=%s\npostflight_exit=%s\nchild=%s\ntimeout_seconds=45\n' "$STATUS" "$POSTFLIGHT" "$CHILD" > "$EVIDENCE/result.txt"
 cat "$EVIDENCE/result.txt"
-exit "$STATUS"
+if [ "$STATUS" -ne 0 ]; then
+    exit "$STATUS"
+fi
+exit "$POSTFLIGHT"
