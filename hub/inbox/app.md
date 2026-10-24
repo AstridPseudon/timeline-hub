@@ -2966,3 +2966,22 @@ Ask: consume actual asset8419 on reviewed home7d53 and ongoing strict popup revi
 App normal7d53ba281342d2963d92d8bcd746dc7f6b2921a4 now merges final c741 after independent2301 PASS100/types/lint/protected6; source22a8e474/test098543 exact. Actual isolated original registerAsset body app-pin-7d53ba28-p2-asset-reviewed-2307-1024230911-8419 submitted23:09:11 on App service, preflight29082 PASS. Rest immutable039f/732/635f; wait sameID, all output retained, no extra body. Currentfree6.041GB during build, critical5.2GB floor/4.5GB stop retained.
 
 Popup7872 author fe628 completed retained-data oldJSRED/newGREEN and four strict mutation refusals; parent digest/revision independently reproduced from raw-before canonical payload. Source-only popup spec correction under independent app-P2-popup-parent-oracle-review-2309 now; full whole-document/reload/undo strict assertions retained. No self-review merge or new popup body before actual home and asset terminal. Placement8259 distinct occurrence path remains next source slot at full2cap. Main parent8232 and resolvedComposition2250 peer consumed; exclusive four ownership unchanged. No P3/D79/E, full tour only after8 isolated PASS, no prior refusal retry.
+
+## 2026-10-24T23:20:09Z — PEER MESSAGE (peer-runtime-to-app-orchestrator-20261024T2319Z-main-four-findings.md)
+Ask: assign SWAP missing allocation claim and bulk display attribution; attach parent/single findings to your existing protected tour owner / Owner: App A3 SWAP and P2 tour; Runtime main2250 complete / By: 2026-10-24T23:25Z
+
+All FOUR assigned main diagnostics completed exactly once on fixedbceb/039f/732/635f, each readinessPASS and original reached. Exact author report design/runtime-P2-main-four-report-2250.md and machine-readable design/runtime-P2-main-four-results-2250.json copied byte-exact. Parent8232 strict envelope342 sees label/steps (existing peer2303); single10376 step label/intent377 differs (peer2313). Existing App protected tour owner should batch these with one independent diff review, every assertion retained under D83.
+
+SWAP25174: read-only Runtime2308 source attribution complete, design/runtime-P2-swap-source-2308.md and runtime-P2-swap-comparison-2308.md exact. App shotTimelineDataProvider.ts866–868 omits commands[1].created, while Agent actual provider allocates new occurrence asset. C0 requires declared created claim; same App ADD already has conditional pattern834–846. Six Agent and two Runtime focused controls PASS; guard correct/unchanged. Assign one App caller correction, conditional claim only for new alias, independent core-path review. No Runtime equality exception or original rerun yet.
+
+Bulk2773 original reached; UI select displays __none__ while strict expected None. No cause/oracle conclusion from text alone. Assign exact retained-data source attribution, batch protected tour correction if justified. Exact full IDs in JSON; no second body, independent NO-GO review or new collector. All four outputs retained. Runtime venue task complete; final full tour remains App after8 isolatedPASS. Element7131 eventual outcome remains UNKNOWN; Runtime final freshness successor7627 is in independent security2319, not released.
+
+## 2026-10-24T23:28Z ORCHESTRATOR: D85: source-only critical authors may run up to 6 at once above 6.5 GB (heavy bodies keep the D74 tiers)
+- **D85, Agent's 424 core rehearsal failures are FAMILY work: open the source-only parallelism (23:28Z).** The rehearsal classification is PRE 16 / KNOWN-GAP 37 / ENV 73 / NEW-OURS core 424 / REGRESSION 0, mostly migration and setup families (retired-route fixtures, verification_scope fixture contract, occurrence bootstrap).
+  - **The cap rule for SOURCE-ONLY critical authors** (no service build, ~0.2 GB each): on every lane, up to **6** may run at once while free disk is above 6.5 GB. The D74 disk tiers keep governing SERVICE/heavy bodies (one heavy body at a time below 7.5 GB). The rule applies now.
+  - **Agent:**
+    - Group the 424 into families by first exception, location and fixture; expect roughly 5–15.
+    - Put one Luna per family, all in parallel.
+    - Each is a faithful D72 setup migration (genuine bootstrap, never synthetic acceptance history, every assertion kept) or a product fix.
+    - Then ONE batched rerun of only the affected nodes through the service.
+    - Report each family's count and owner.

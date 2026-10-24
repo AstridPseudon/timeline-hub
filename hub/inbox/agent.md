@@ -3087,3 +3087,20 @@ Dispatched agt-F-rehearsal-contrasts-2311 for exact18upstreamPASS contrasts FIRS
 Third agt-F-rehearsal-rollup-2311 is exempt SOURCE-ONLY ANALYSIS under explicit23:08ruling, reusing2305tables + D63matcher + authentic924XML +276census/ledgers. All550records exact;16failboth,18upstreamPASS,516no-single-match. Final six requestedcounts pending. Provisional425core/88env/36deferred/1P4 is NOT final reclassifiedcounts. Failureworker used worktree evidence then auto-recycle; exact committed571e9bytes recovered via read-onlygitshow, disclosed, never reconstructedresults. Both tables/reports normallypublished flatdesign/handoff-agt-F-rehearsal-*.
 
 Peer2310 reserves tests/sdk/test_selected_param_neutral_stage.py and tests/sdk/test_timeline_selected_schema_runtime.py for RuntimeABI20 failover; needsactualworkername/boardrow. Runtime2255assemblysecurity stillnotreleased; adoption/remainingtennote proof follows actualrelease without additional approval. Free8.00GBdecimal(~7.45GiB),two source plusoneexemptanalysis,one affectedbodyatatime. D59/render/E2/D79 and priorrefusalstops preserved.
+
+## 2026-10-24T23:20:09Z — PEER MESSAGE (peer-runtime-to-agent-orchestrator-20261024T2319Z-ABI20-and-source.md)
+Ask: clear stale ABI20 assignment wait and consume exact running owner plus Runtime security successor / Owner: Runtime Luna rt-Agent-ABI20-provider-2316 and security rt-R2-assembly-security-return-2319 / By: 2026-10-24T23:25Z
+
+ABI20 actual worker rt-Agent-ABI20-provider-2316 started23:16:45Z on Agent7c48/Runtime732. Existing brief reserves ONLY tests/sdk/test_selected_param_neutral_stage.py and tests/sdk/test_timeline_selected_schema_runtime.py for fixture setup, all20 original corruption/no-write assertions intact. Strict installed-digest neighbor already PASS alone in current worker log; no final20 outcome inferred. No competing Agent author; one independent protected review precedes own-only remote merge. No Agent input or owner decision owed.
+
+Runtime Sol2304 now returned final7627c8318bd1d7e63e0b3f26ec907c6339eced04. Exact author report design/runtime-R2-assembly-return-2304.md:235 required+192 neighbors+3 finite previews PASS, original callback RED onbad9, graph counts near-linear. Independent Luna rt-R2-assembly-security-return-2319 dispatched immediately on exactfinal branch for source/security attacks and normal apply on PASS. Released source remains732 until PASS and actual home receipt; no Agent original/adoption yet. Prior bad9 security FAIL remains visible. No duplicate fourR2 or P4.
+
+## 2026-10-24T23:28Z ORCHESTRATOR: D85: source-only critical authors may run up to 6 at once above 6.5 GB (heavy bodies keep the D74 tiers)
+- **D85, Agent's 424 core rehearsal failures are FAMILY work: open the source-only parallelism (23:28Z).** The rehearsal classification is PRE 16 / KNOWN-GAP 37 / ENV 73 / NEW-OURS core 424 / REGRESSION 0, mostly migration and setup families (retired-route fixtures, verification_scope fixture contract, occurrence bootstrap).
+  - **The cap rule for SOURCE-ONLY critical authors** (no service build, ~0.2 GB each): on every lane, up to **6** may run at once while free disk is above 6.5 GB. The D74 disk tiers keep governing SERVICE/heavy bodies (one heavy body at a time below 7.5 GB). The rule applies now.
+  - **Agent:**
+    - Group the 424 into families by first exception, location and fixture; expect roughly 5–15.
+    - Put one Luna per family, all in parallel.
+    - Each is a faithful D72 setup migration (genuine bootstrap, never synthetic acceptance history, every assertion kept) or a product fix.
+    - Then ONE batched rerun of only the affected nodes through the service.
+    - Report each family's count and owner.

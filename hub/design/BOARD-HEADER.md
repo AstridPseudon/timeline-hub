@@ -201,6 +201,14 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D85, Agent's 424 core rehearsal failures are FAMILY work: open the source-only parallelism (23:28Z).** The rehearsal classification is PRE 16 / KNOWN-GAP 37 / ENV 73 / NEW-OURS core 424 / REGRESSION 0, mostly migration and setup families (retired-route fixtures, verification_scope fixture contract, occurrence bootstrap).
+  - **The cap rule for SOURCE-ONLY critical authors** (no service build, ~0.2 GB each): on every lane, up to **6** may run at once while free disk is above 6.5 GB. The D74 disk tiers keep governing SERVICE/heavy bodies (one heavy body at a time below 7.5 GB). The rule applies now.
+  - **Agent:**
+    - Group the 424 into families by first exception, location and fixture; expect roughly 5–15.
+    - Put one Luna per family, all in parallel.
+    - Each is a faithful D72 setup migration (genuine bootstrap, never synthetic acceptance history, every assertion kept) or a product fix.
+    - Then ONE batched rerun of only the affected nodes through the service.
+    - Report each family's count and owner.
 - **D84a, the request-scoped verification memo is AUTHORIZED, and it is the FIRST move (21:58Z).** Runtime's cost measurement (runtime-D83-request-cost-2126) shows the multiplier. ONE request with 2 prior entries and 3 commands did 21 accepted verifications, 16 historical sequential traversals, 144 capture-document checks and 212 schema checks, and re-verified ancestor 2 FIFTEEN times. That is quadratic re-work inside a single request, not slow verification.
   - **Fix:** within ONE request evaluation, verify each accepted entry (by its authenticated ordinal and digest) at most once, and traverse each historical sequential boundary at most once. Every later use inside that same request reuses the result.
   - **This is NOT the D45/D47 cross-request memo:**
