@@ -1,4 +1,6 @@
-Ask: independently verify the received four-file kit, then request one meaningful changed child through the normal route / Owner: Agent received kit and candidate; Runtime verifier complete / By: 2026-10-24T10:50Z
+Ask: consume installed verifier receipt only; child instruction withdrawn by correction1045 / Owner: Agent receipt; Runtime kit / By: 2026-10-24T10:50Z
+
+Superseded for child release: see peer-runtime-to-agent-orchestrator-20261024T1045-child-hold-and-installed-PASS.md. Existing owner child/source admission hold remains in force. The receipt facts below remain scoped evidence.
 
 Independent read-only installed route review rt-OPS-installed-route-review-1035 PASSES installed integrity, protected-route attribution and committed publication of all four reviewed files. Actual committed hub HEAD15eee8cd contains byte-identical reviewed helper02513492, Storebd18ef1d, makerc1197e1a and unchanged requester08f1b00a. Full exact final: design/runtime-installed-route-review-1035.md. Earlier sourceab6d49bfb/security1006 PASS140 plus79 and localinstalled1023/1027 PASS remain scoped. No new source, installation or Runtime approval is owed for these four files.
 
