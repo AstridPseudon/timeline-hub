@@ -27,8 +27,8 @@
     "exact_unique_ids": 267,
     "exact_unique_phase_rows": 267,
     "counts": {
-      "proven_passed": 202,
-      "active_owner": 65,
+      "proven_passed": 211,
+      "active_owner": 56,
       "deferred_cut_visible": 0,
       "genuinely_unowned": 0
     },
@@ -38,19 +38,19 @@
     "unassigned_minimum_source_gaps": 0,
     "owner_status_does_not_credit_passes": true,
     "all_tags_ours": true,
-    "confirmed_closed_ids": 202,
-    "open_ids": 65,
-    "held_or_unknown_ids": 65,
-    "newly_confirmed_closed_since_0118": 66,
+    "confirmed_closed_ids": 211,
+    "open_ids": 56,
+    "held_or_unknown_ids": 56,
+    "newly_confirmed_closed_since_0118": 75,
     "current_head_full267_pass": false,
     "full_checkpoint": "pending; no authorized Farm result tree was available; do not assume forthcoming PASS",
     "effective_owner_counts_active": {
-      "Agent": 59,
-      "Runtime": 2,
+      "Agent": 51,
+      "Runtime": 1,
       "Viewing": 4
     },
     "active_family_counts": {
-      "Agent SDK / timeline unconfirmed": 52,
+      "Agent SDK / timeline unconfirmed": 43,
       "CLI FakeCheckout fixture": 3,
       "D09 installed-profile setup": 3,
       "Execution/rendering/pack remainder": 1,
@@ -703,6 +703,123 @@
       ],
       "phase": "call",
       "credit_limit": "Only this exact external-pack original call node earns one closure. No second generic_host original, whole86/full/gate, current-whole-HEAD installed, future, or v2 production caller/wire-contract acceptance credit. No rerun performed for this package."
+    },
+    "sdk9_source_map_0554": {
+      "report": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-SDK-proof-map-0554/report.md",
+        "sha256": "524027ebd53edaac9ccc890d2867bc7a98cf0bda67b2b4b90f676092e085782c"
+      },
+      "log": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-SDK-proof-map-0554/log.txt",
+        "sha256": "5b61034cabb8cc3cdf9026eb52685e598e526d95cac2f1f7e14084f11eaf4c74"
+      },
+      "result": "Retained author source findings; historical 11 header superseded by 0619; two schema selectors excluded.",
+      "behavior_rerun_for_this_package": false
+    },
+    "sdk9_independent_0603": {
+      "report": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-SDK-map-review-0603/report.md",
+        "sha256": "c5e8c024cd0d062010896a9f964d1d3665bb329cc3c41b85374fead4ffff141c"
+      },
+      "log": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-SDK-map-review-0603/log.txt",
+        "sha256": "2bb7d0d7a443397052bf18b56bd8610e3057a6a1afafab083f3cd053e7b052a1"
+      },
+      "result": "Retained independent source/function/AST/receipt findings; historical 11 header superseded by 0619.",
+      "behavior_rerun_for_this_package": false
+    },
+    "sdk9_corrected_0619": {
+      "report": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-SDK-map-review-return-0619/report.md",
+        "sha256": "704d2293f9c2afa5d6c4cef2bcfa4e5a415e3941356f8d5303862aca9263de5e"
+      },
+      "log": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-SDK-map-review-return-0619/log.txt",
+        "sha256": "ff28727fc96d1ea82f86c832c1003fff6c7820381919773179b74ca2e0946c3e"
+      },
+      "result": "Controlling corrected independent review: exactly 9 qualified, 24 unqualified, 2 schema selectors excluded/pending separate 0605 fix.",
+      "behavior_rerun_for_this_package": false
+    },
+    "sdk9_capture_retained": {
+      "reports": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-capture-integrated-0052/report.md",
+          "sha256": "2f504937cbcf2654d9a0472114e8f3a19b36db1f7457e6264a9a0e5c58566298"
+        },
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-capture-review-0037/report.md",
+          "sha256": "3691763008dbff21c9971daab249d1c1a36885fae83f52dc639529eaee0fc29d"
+        }
+      ],
+      "log": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-capture-integrated-0052/log.txt",
+        "sha256": "ee835a080cb85aed342305c4d975c38a11fe86591fbca7df056b94434451c74c"
+      },
+      "retained_outcome": "6 passed in 97.64s; exact 2 positives plus 4 inline/no-CAS controls; collect-only names retained in 0052 log lines 3065-3066.",
+      "receipt_source": "0052 log lines 2362-2377, 3065-3066; 0037 report; independent 0603 and corrected 0619.",
+      "authorization_scope": "SDK capture admission of exact certified saved/candidate source and dependency closure; real Runtime publication, validation, claim, CAS retrieval and GenericPackHost materialization. No SDK pre-Runtime snapshot write. Only two original positives credited.",
+      "source_review_refs": [
+        "sdk9_source_map_0554",
+        "sdk9_independent_0603",
+        "sdk9_corrected_0619"
+      ],
+      "behavior_rerun_for_this_package": false
+    },
+    "sdk9_helper_retained": {
+      "reports": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-helper-map-review-0224/report.md",
+          "sha256": "3ff0cd4863880aaba25b6411a4868d6f44e7e2805084391166d71ebb594cb841"
+        }
+      ],
+      "log": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-helper-map-review-0224/log.txt",
+        "sha256": "d56d57074d0033f7b1e2d96dfb123eb5aca881fe508dc41d5858ba8d7efa7c03"
+      },
+      "retained_outcome": "[False]: 1 passed in 10.94s, accepted; [True]: 1 passed in 21.79s, merged. Independent outcome passed with null longrepr.",
+      "receipt_source": "0224 log lines 9870-9873, 10267-10270, 10295-10311; independent 0603 and corrected 0619.",
+      "authorization_scope": "Exact sequential nudge helper request/captures checked by both unchanged pinned Runtime validators; replay map 14 -> 5, all other carrier fields retained. Real accepted/merged outcome; source/function/module-origin invariants unchanged. No broader helper/root/undo credit.",
+      "reported_packet": {
+        "historical_path": "/tmp/w-73d8801d68/tmp/agt-F-helper-map-review-0224/evidence/original-true-qualified-final.json",
+        "sha256": "b2044948e3fc6fa765c8ddf66b110a5d11353559c0a5c1a7a233b432add8ac61",
+        "bytes": 2286241
+      },
+      "reported_outcome": {
+        "historical_path": "/tmp/w-73d8801d68/tmp/agt-F-helper-map-review-0224/evidence/original-true-qualified-final.outcome.json",
+        "sha256": "5c503a0625d42d10d1d2c9db1c4c48809bbb468f793ca04bc6d3cc65801b43b8"
+      },
+      "reported_packet_limit": "Historical temporary packet is no longer present at its recorded path; hashes and exact outcome are retained in the hashed 0224 log/report and independently admitted by 0603/0619. No packet rehash or rerun is claimed.",
+      "source_review_refs": [
+        "sdk9_source_map_0554",
+        "sdk9_independent_0603",
+        "sdk9_corrected_0619"
+      ],
+      "behavior_rerun_for_this_package": false
+    },
+    "sdk9_persistence_retained": {
+      "reports": [
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-persistence-fixture-0008/report.md",
+          "sha256": "bb96c403a7e5f2f186c4a1dfb045633c2b02028a14813747e9afbae3a28f7003"
+        },
+        {
+          "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-persistence-helper-sol-0037/report.md",
+          "sha256": "02727a0fe7514dceead87cfae91f29a949bf0bedda09ba4d70b6eb1b4a832336"
+        }
+      ],
+      "log": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-persistence-fixture-0008/log.txt",
+        "sha256": "25ce09aec51482ddf6b39f674ad01ff5450f3aef1e4ed87280f7020209287106"
+      },
+      "retained_outcome": "Persistence shard 9 passed / 1 failed; five named original passes admitted by corrected 0619. Sole failure is merge-positive and receives zero credit.",
+      "receipt_source": "0008 retained module result (log lines 17520-17697); 0037 retained original/restored-source 9-pass/1-fail result; independent 0603 and corrected 0619.",
+      "authorization_scope": "Four storage lifecycle originals use the faithful file-backed fixture (history DTO, exact revision/publication pins, open_bundle validation); same-clip restart refusal uses genuine Runtime with exact base/history and no-write checks. No disjoint merge success or installed/full qualification.",
+      "source_review_refs": [
+        "sdk9_source_map_0554",
+        "sdk9_independent_0603",
+        "sdk9_corrected_0619"
+      ],
+      "behavior_rerun_for_this_package": false
     }
   },
   "unowned_gaps": {},
@@ -5628,14 +5745,18 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact original admitted by corrected independent SDK review 0619; retained finite outcome and relevant production-function equality from 0554/0603.",
       "owner_ref": "sdk_capture_0052",
       "proof_refs": [
-        "capture_0052"
+        "capture_0052",
+        "sdk9_capture_retained",
+        "sdk9_source_map_0554",
+        "sdk9_independent_0603",
+        "sdk9_corrected_0619"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_capture_closure_source.py",
@@ -5645,12 +5766,25 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_post_0118_sdk9",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "Exact saved/candidate capture source, identity, digest, dependencies, registry and host round-trip predicates retained; False maps to saved-ref, True maps to candidate-ref.",
+        "post_0118_evidence_refs": [
+          "sdk9_capture_retained",
+          "sdk9_source_map_0554",
+          "sdk9_independent_0603",
+          "sdk9_corrected_0619"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Relevant production functions match retained proof per 0554/0603; bb50 timeline files equal 2007. No original body/source audit or execution repeated for this package.",
+        "historical_pre_sdk9_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -5658,14 +5792,18 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact original admitted by corrected independent SDK review 0619; retained finite outcome and relevant production-function equality from 0554/0603.",
       "owner_ref": "sdk_capture_0052",
       "proof_refs": [
-        "capture_0052"
+        "capture_0052",
+        "sdk9_capture_retained",
+        "sdk9_source_map_0554",
+        "sdk9_independent_0603",
+        "sdk9_corrected_0619"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_capture_closure_source.py",
@@ -5675,12 +5813,25 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_post_0118_sdk9",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "Exact saved/candidate capture source, identity, digest, dependencies, registry and host round-trip predicates retained; False maps to saved-ref, True maps to candidate-ref.",
+        "post_0118_evidence_refs": [
+          "sdk9_capture_retained",
+          "sdk9_source_map_0554",
+          "sdk9_independent_0603",
+          "sdk9_corrected_0619"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Relevant production functions match retained proof per 0554/0603; bb50 timeline files equal 2007. No original body/source audit or execution repeated for this package.",
+        "historical_pre_sdk9_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -6503,14 +6654,18 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact original admitted by corrected independent SDK review 0619; retained finite outcome and relevant production-function equality from 0554/0603.",
       "owner_ref": "sdk_helper_0107",
       "proof_refs": [
-        "helper_0107"
+        "helper_0107",
+        "sdk9_helper_retained",
+        "sdk9_source_map_0554",
+        "sdk9_independent_0603",
+        "sdk9_corrected_0619"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
@@ -6520,12 +6675,25 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_post_0118_sdk9",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "Original contiguous helper steps and sequential reads retained; False accepted, True merged with corrected replay carrier.",
+        "post_0118_evidence_refs": [
+          "sdk9_helper_retained",
+          "sdk9_source_map_0554",
+          "sdk9_independent_0603",
+          "sdk9_corrected_0619"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Relevant production functions match retained proof per 0554/0603; bb50 timeline files equal 2007. No original body/source audit or execution repeated for this package.",
+        "historical_pre_sdk9_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -6533,12 +6701,17 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact original admitted by corrected independent SDK review 0619; retained finite outcome and relevant production-function equality from 0554/0603.",
       "owner_ref": "runtime_helper_seq_0114",
-      "proof_refs": [],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_refs": [
+        "sdk9_helper_retained",
+        "sdk9_source_map_0554",
+        "sdk9_independent_0603",
+        "sdk9_corrected_0619"
+      ],
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
@@ -6548,12 +6721,25 @@
       },
       "effective_owner": "Runtime",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_post_0118_sdk9",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "Original contiguous helper steps and sequential reads retained; False accepted, True merged with corrected replay carrier.",
+        "post_0118_evidence_refs": [
+          "sdk9_helper_retained",
+          "sdk9_source_map_0554",
+          "sdk9_independent_0603",
+          "sdk9_corrected_0619"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Relevant production functions match retained proof per 0554/0603; bb50 timeline files equal 2007. No original body/source audit or execution repeated for this package.",
+        "historical_pre_sdk9_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7177,12 +7363,17 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact original admitted by corrected independent SDK review 0619; retained finite outcome and relevant production-function equality from 0554/0603.",
       "owner_ref": "sdk_g234",
-      "proof_refs": [],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_refs": [
+        "sdk9_persistence_retained",
+        "sdk9_source_map_0554",
+        "sdk9_independent_0603",
+        "sdk9_corrected_0619"
+      ],
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_persistence.py",
@@ -7192,12 +7383,25 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_post_0118_sdk9",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "Original restart/crash/truncated-temp/discard storage predicates and same-clip restart refusal retained; no merge-positive credit.",
+        "post_0118_evidence_refs": [
+          "sdk9_persistence_retained",
+          "sdk9_source_map_0554",
+          "sdk9_independent_0603",
+          "sdk9_corrected_0619"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Relevant production functions match retained proof per 0554/0603; bb50 timeline files equal 2007. No original body/source audit or execution repeated for this package.",
+        "historical_pre_sdk9_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7205,12 +7409,17 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact original admitted by corrected independent SDK review 0619; retained finite outcome and relevant production-function equality from 0554/0603.",
       "owner_ref": "sdk_g234",
-      "proof_refs": [],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_refs": [
+        "sdk9_persistence_retained",
+        "sdk9_source_map_0554",
+        "sdk9_independent_0603",
+        "sdk9_corrected_0619"
+      ],
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_persistence.py",
@@ -7220,12 +7429,25 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_post_0118_sdk9",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "Original restart/crash/truncated-temp/discard storage predicates and same-clip restart refusal retained; no merge-positive credit.",
+        "post_0118_evidence_refs": [
+          "sdk9_persistence_retained",
+          "sdk9_source_map_0554",
+          "sdk9_independent_0603",
+          "sdk9_corrected_0619"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Relevant production functions match retained proof per 0554/0603; bb50 timeline files equal 2007. No original body/source audit or execution repeated for this package.",
+        "historical_pre_sdk9_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7233,12 +7455,17 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact original admitted by corrected independent SDK review 0619; retained finite outcome and relevant production-function equality from 0554/0603.",
       "owner_ref": "sdk_g234",
-      "proof_refs": [],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_refs": [
+        "sdk9_persistence_retained",
+        "sdk9_source_map_0554",
+        "sdk9_independent_0603",
+        "sdk9_corrected_0619"
+      ],
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_persistence.py",
@@ -7248,12 +7475,25 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_post_0118_sdk9",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "Original restart/crash/truncated-temp/discard storage predicates and same-clip restart refusal retained; no merge-positive credit.",
+        "post_0118_evidence_refs": [
+          "sdk9_persistence_retained",
+          "sdk9_source_map_0554",
+          "sdk9_independent_0603",
+          "sdk9_corrected_0619"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Relevant production functions match retained proof per 0554/0603; bb50 timeline files equal 2007. No original body/source audit or execution repeated for this package.",
+        "historical_pre_sdk9_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7289,12 +7529,17 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact original admitted by corrected independent SDK review 0619; retained finite outcome and relevant production-function equality from 0554/0603.",
       "owner_ref": "sdk_g234",
-      "proof_refs": [],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_refs": [
+        "sdk9_persistence_retained",
+        "sdk9_source_map_0554",
+        "sdk9_independent_0603",
+        "sdk9_corrected_0619"
+      ],
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_persistence.py",
@@ -7304,12 +7549,25 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_post_0118_sdk9",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "Original restart/crash/truncated-temp/discard storage predicates and same-clip restart refusal retained; no merge-positive credit.",
+        "post_0118_evidence_refs": [
+          "sdk9_persistence_retained",
+          "sdk9_source_map_0554",
+          "sdk9_independent_0603",
+          "sdk9_corrected_0619"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Relevant production functions match retained proof per 0554/0603; bb50 timeline files equal 2007. No original body/source audit or execution repeated for this package.",
+        "historical_pre_sdk9_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7317,12 +7575,17 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact original admitted by corrected independent SDK review 0619; retained finite outcome and relevant production-function equality from 0554/0603.",
       "owner_ref": "sdk_g234",
-      "proof_refs": [],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_refs": [
+        "sdk9_persistence_retained",
+        "sdk9_source_map_0554",
+        "sdk9_independent_0603",
+        "sdk9_corrected_0619"
+      ],
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_persistence.py",
@@ -7332,12 +7595,25 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_post_0118_sdk9",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "Original restart/crash/truncated-temp/discard storage predicates and same-clip restart refusal retained; no merge-positive credit.",
+        "post_0118_evidence_refs": [
+          "sdk9_persistence_retained",
+          "sdk9_source_map_0554",
+          "sdk9_independent_0603",
+          "sdk9_corrected_0619"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Relevant production functions match retained proof per 0554/0603; bb50 timeline files equal 2007. No original body/source audit or execution repeated for this package.",
+        "historical_pre_sdk9_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -9172,6 +9448,23 @@
       "original_node_credit": 22,
       "source_mode_not_installed_claim": true,
       "aggregate_47_186_56_credit": 0
+    },
+    "sdk9": {
+      "exact_node_count": 9,
+      "original_node_credit": 9,
+      "source_review_refs": [
+        "sdk9_source_map_0554",
+        "sdk9_independent_0603",
+        "sdk9_corrected_0619"
+      ],
+      "proof_refs": [
+        "sdk9_capture_retained",
+        "sdk9_helper_retained",
+        "sdk9_persistence_retained"
+      ],
+      "excluded_schema_count": 2,
+      "unqualified_sdk_count": 24,
+      "current_full267_pass": false
     }
   },
   "known_scopes_and_limits": [
@@ -9181,21 +9474,22 @@
     "Aggregate neighbor totals, source-only, mock, candidate, installed-positive absence, stale failures, and wrapper-only fixes receive zero original behavior credit.",
     "The seven exact H3 selectors are current-qualified and closed by h3_current_0508; historical h3_import_0137 remains historical and is not relabeled. The renderer support timeout 0509 is pending and not credited.",
     "The exact 22 occurrence-media inverse selectors are current-qualified by inverse22_current_0537 and independently PASS-reviewed by inverse22_result_review_0550: 16 corruption and six retained-scope call rows. Their helper authority uses actual realm history/boundaries and real inverse resolvers; no predicate was weakened.",
-    "The exact D40 external-pack call row is the only new status change in this update. The prior 22 inverse originals remain qualified unchanged; aggregate, source-copy, and unenumerated body/neighbor results grant no additional credit.",
+    "Historical 0558 package scope: The exact D40 external-pack call row is the only new status change in this update. The prior 22 inverse originals remain qualified unchanged; aggregate, source-copy, and unenumerated body/neighbor results grant no additional credit.",
     "The 0550 metadata correction remains explicitly cumulative historical context only: it corrected H3 metadata and external hashes, preserved all 267 nodes and the exact 37-row mapping, and did not itself add inverse22 credit. Its 179/88 count is not the final current count.",
     "No current full267 PASS or authorized Farm checkpoint result was found; checkpoint remains pending.",
-    "D40 exact external-pack custody is closed by 0551/0552 for one original only. Three track-label rows, ABA-11466, IMAGE inverse (zero original credit), renderer timeout 0509, and Farm checkpoint remain open. The two source-copy selectors absent from the 267-node census receive zero credit; CLI/SDK mapping work is deferred here.",
+    "Historical 0558 package scope: D40 exact external-pack custody is closed by 0551/0552 for one original only. Three track-label rows, ABA-11466, IMAGE inverse (zero original credit), renderer timeout 0509, and Farm checkpoint remain open. The two source-copy selectors absent from the 267-node census receive zero credit; CLI/SDK mapping work is deferred here.",
     "This bounded fixture count does not claim the v2 production caller/wire-contract acceptance, including the complete request/reply shape; no product, test, schema, client, pin, or M5 change was made.",
-    "Only this exact external-pack original call node earns one closure. No second generic_host original, whole86/full/gate, current-whole-HEAD installed, future, or v2 production caller/wire-contract acceptance credit. No rerun performed for this package."
+    "Only this exact external-pack original call node earns one closure. No second generic_host original, whole86/full/gate, current-whole-HEAD installed, future, or v2 production caller/wire-contract acceptance credit. No rerun performed for this package.",
+    "Exactly nine active SDK original call nodes close in this delta: capture 2, contiguous helpers 2, persistence 5. Other 258 node records, prior proof records and 60 mapping rows remain unchanged. The 24 unqualified SDK selectors and two schema inventory cases stay open; schema fix is owned separately by 0605. No aggregate, future CLI/labels/D09/restructure/schema/root/helper-neighbor/Farm/source-copy credit; no full267, current installed-head or blanket v2 acceptance claim."
   ],
   "correction": {
     "basis": "Independent H30 census review after FAIL0358",
     "review_artifact": "workers/agt-F-census-review-0358/evidence/h30-reconciliation-review.json",
     "corrected_counts": {
       "total": 267,
-      "closed": 202,
-      "open": 65,
-      "held_or_unknown": 65
+      "closed": 211,
+      "open": 56,
+      "held_or_unknown": 56
     },
     "newly_credited_ids": [
       "tests/core/rendering/test_conformance.py::test_attachment_wire_parity",
@@ -9263,7 +9557,16 @@
       "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-dependent]",
       "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-disjoint]",
       "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-missing]",
-      "tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack"
+      "tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack",
+      "tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[False]",
+      "tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[True]",
+      "tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[False]",
+      "tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[True]",
+      "tests/sdk/test_timeline_persistence.py::test_a_discard_in_one_process_leaves_the_next_process_with_no_working_copy",
+      "tests/sdk/test_timeline_persistence.py::test_a_truncated_temp_file_is_never_read_as_the_working_copy",
+      "tests/sdk/test_timeline_persistence.py::test_a_writer_that_dies_holding_the_lock_does_not_block_the_next_writer",
+      "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_refuses_a_clip_both_sides_changed",
+      "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history"
     ],
     "newly_credited_proof_refs": [
       "render_wire_27934",
@@ -9272,7 +9575,13 @@
       "inverse22_current_0537",
       "inverse22_result_review_0550",
       "d40_observed_0551",
-      "d40_result_review_0552"
+      "d40_result_review_0552",
+      "sdk9_capture_retained",
+      "sdk9_helper_retained",
+      "sdk9_persistence_retained",
+      "sdk9_source_map_0554",
+      "sdk9_independent_0603",
+      "sdk9_corrected_0619"
     ],
     "historical_open_ids": [
       "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
@@ -9367,13 +9676,32 @@
       "inverse22_result_review_0550"
     ],
     "cumulative_0550_metadata_fix_disposition": "The 0550 package correction was metadata-only: it reconciled the seven H3 current-qualified nodes, preserved the historical 172/95 baseline and exact 37-row mapping, and produced artifact SHA c70b6627e6fe4cd7f6d900e0bcb99168dd8e56a4269ad8d88e12b07eec272268. It remains historical 179/88 package context here; it is not new behavior credit or a node-status change.",
-    "current_cumulative_disposition": "Cumulative current qualification is 202 closed / 65 open: the prior 201/66 exact package plus this one D40 external-pack original. Historical 172/95 and 179/88 snapshots remain unchanged.",
+    "current_cumulative_disposition": "Current exact membership is 211 closed / 56 open: historical 202/65 D40 package plus exactly 9 SDK originals admitted by corrected independent 0619. Historical 201/66, 202/65, 172/95 and 179/88 snapshots remain provenance only.",
     "newly_confirmed_closed_at_0551_d40": [
       "tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack"
     ],
     "newly_confirmed_closed_at_0551_d40_proof_refs": [
       "d40_observed_0551",
       "d40_result_review_0552"
+    ],
+    "newly_confirmed_closed_at_sdk9": [
+      "tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[False]",
+      "tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[True]",
+      "tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[False]",
+      "tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[True]",
+      "tests/sdk/test_timeline_persistence.py::test_a_discard_in_one_process_leaves_the_next_process_with_no_working_copy",
+      "tests/sdk/test_timeline_persistence.py::test_a_truncated_temp_file_is_never_read_as_the_working_copy",
+      "tests/sdk/test_timeline_persistence.py::test_a_writer_that_dies_holding_the_lock_does_not_block_the_next_writer",
+      "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_refuses_a_clip_both_sides_changed",
+      "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history"
+    ],
+    "newly_confirmed_closed_at_sdk9_proof_refs": [
+      "sdk9_capture_retained",
+      "sdk9_helper_retained",
+      "sdk9_persistence_retained",
+      "sdk9_source_map_0554",
+      "sdk9_independent_0603",
+      "sdk9_corrected_0619"
     ]
   },
   "owner_registry_note": "H30 current ownership is Viewing for the retained-caller delta and six render-wire rows, Runtime for the seven H3 source-drift rows, and Agent for Agent-home rows. Historical worker labels are not active authors. The three track-label rows remain separate. The seven H3 import-source rows and the exact 22 occurrence-media inverse rows are current-qualified; source-copy selectors were checked and are absent from the 267-node census."
