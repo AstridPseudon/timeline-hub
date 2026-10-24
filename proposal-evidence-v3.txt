@@ -1,0 +1,172 @@
+P3 D75 door proposal v3 — HOLD / DO NOT APPLY
+==========================================
+
+Result and remaining scope question
+-----------------------------------
+No production defect or gate PASS is claimed. There is no approved protected
+source byte delta (0 bytes applied). proposed-v3.patch is a review candidate,
+not an application recommendation: its fast intermediate-reload control fails
+the journey's original posts=1 guard. The retained test asserts that failure;
+17/17 control tests passing therefore DOES NOT mean the candidate is ready.
+
+The precise remaining question for ORCH is whether the pre-restart mounted
+reload/persistence block may be consolidated into the post-restart fresh mount,
+retaining its exact owner/request/intent predicates and wait ceilings there.
+That removes one recovery-capable mount and can retain D75 observed=3 before
+release, forwarded=1, observed=4 after B. It changes the lifecycle coverage of
+an original reload and needs an explicit scope judgment. No such consolidation
+has been made. Keeping both mounts allows an extra production A retry; silently
+ignoring it, holding an invented owner lock, suppressing it, or relaxing the
+observed counts is outside the brief. Raising counts is not proposed.
+
+Source finding: neither previous URL interpretation is sufficient
+----------------------------------------------------------------
+App base: 767836d0fa50ca9fceac4cc6941136f6c2970b9e.
+Protected spec: tests/e2e/local/three-products.spec.ts, unchanged on disk.
+
+Read the native Runtime door/daemon source both at the integration checkout and
+at the actual-run Runtime pin 5c1a03f1338294c6817c2c898f1007d5cbfe6aa5
+using git show. door.py:392-405 binds the door to runtime and daemon_runtime;
+door.py:551-556 dispatches admitted workspace routes inside that Runtime;
+daemon.py:269-292 creates both listeners against the same service and publishes
+endpoint, instance, door_endpoint and door_origin together. Shutdown closes the
+old door before restart. A workspace commit has no separate upstream HTTP hop.
+
+The browser origin is the fixed door (harness.ts doorBase), not runtimeUrl.
+The latter is the daemon's dynamic direct endpoint. A held Playwright route
+has not reached the door until releaseStagedRetry calls the existing unchanged
+route.fetch({ maxRetries: 0 }). It can reach the restarted listener at the same
+browser URL. Thus 1731's old-URL objection was wrong for this path. V2's browser
+origin==dynamic daemon endpoint assertion was also wrong.
+
+The candidate uses existing observations only: discovery() ties the new direct
+endpoint, instance, realm and door endpoint together; existing expectSameRealm
+reads health/realm from inside the page THROUGH THE DOOR and compares Astrid's
+discovery-following identity; captured commit URLs must stay at that door;
+release forwards the captured route unchanged; existing exact A replay envelope
+and direct current-Runtime history assertions remain. A second expectSameRealm
+checks identity after A/B. No new harness helper, product authority, proxy URL
+rewrite, manual recovery, request replay, fake Runtime reply or collector is
+proposed. These are source-level proof predicates pending a real authorized run.
+
+Why the remaining lifecycle is unsafe
+-------------------------------------
+useTimelineSave.ts:362-366 automatically recovers a sole durable local-save
+owner. localSaveSession.ts:322-325 claims that owner and pumps its persisted
+request. commitOutbox.ts:240-251 lists persisted owners without filtering them
+by an editor fixture's recovery button. This applies to the ORIGINAL
+page.reload() as well as the later reopened page.
+
+D53 has already observed [A,A] / forwarded[A] before B is authored. If reload
+recovery runs before the subsequent storage reads/close, the original fault
+helper classifies its exact A as recovery and forwards it to the OLD Runtime.
+The candidate therefore fails posts=1 before restart. If that reload is armed
+and held instead, closing it and mounting again after restart produces FOUR
+observed attempts before release; this fails D75's exact THREE. Both schedules
+are retained. The passing P1 is a useful automatic-recovery comparator, but its
+single recovery mount and lack of a dependent B do not prove this P3 lifecycle.
+No inference is made that this fast schedule occurred in actual26907.
+
+Retained predicate/wait map
+---------------------------
+- Candidate source delta: +37/-2 lines, net +1,839 UTF-8 bytes; patch 3,467 bytes.
+  The only removed statements are the obsolete owner-scoped fixture-button
+  click. All other original statements, waits, CEILING values, poll callbacks,
+  timeouts and downstream assertions are byte-retained. Minimal context uses
+  genuinely empty context lines, not lines containing a lone space.
+- D53 prepareAfterAckLossMountedDocuments and reset precondition are unchanged.
+  Observed [A,A], exact identity/body/key, forwarded[A], zero B remain strict.
+- Original page.reload(), expectConnected(page), afterReload exact request and
+  intents, posts=1, page.close(), real restart, new page, attach-before-openApp,
+  expectConnected(reopened), openSeededTimeline, same-realm/new-instance reads,
+  persisted request/intents and posts=1 remain in their original order.
+- The replacement button boundary arms automatic recovery before openApp,
+  requires exactly 3 observed identical As and 1 forwarded A, checks the exact
+  stable door URL, then releases that captured request. Duplicate while held
+  is refused; the arm is cleared only at release.
+- Original posts=3 wait, exact A body/key/reply/history, B base pair, commands,
+  label/merge/steps/reads, publisher, merged status, C predecessor and position
+  remain. Added guards require exactly 4 observed requests, exact A then B,
+  forwarded=3 and unchanged door/Runtime identity.
+- Canonical config/clips/transition, owner drain, authenticated history,
+  bindings/dependencies, immutable closure, preview, Agent readback, guarded
+  inverse/undo/history, opaque fields, legacy-zero and TokenSniff tail remain
+  unchanged. No request/reply shape is changed; full C0 v2 remains authoritative.
+- These are retained source predicates, not claims of live downstream success.
+
+Reproduction (from this worktree, Node v20.20.0)
+------------------------------------------------
+git apply --whitespace=error --check proposed-v3.patch
+  PASS, exit 0; never applied to original source.
+git apply --numstat proposed-v3.patch
+  PASS, 37 additions / 2 deletions in the protected spec (virtual only).
+git diff --check
+  PASS. Each new artifact was also checked with:
+  git diff --no-index --check /dev/null <artifact>
+  No whitespace diagnostics (no-index can exit 1 because content differs).
+/opt/node20/bin/node --check proposal-controls-v3.mjs
+  PASS.
+/opt/node20/bin/node --import tsx --test tests/e2e/local/support/gate5-fault-order.test.mjs
+  PASS, 3/3 existing Gate5 controls.
+/opt/node20/bin/node --import tsx --test proposal-controls-v3.mjs
+  PASS, 17/17 controls: fast/slow post-restart route callbacks; wrong body,
+  wrong key, B before A; duplicates while held and after release; dynamic-origin
+  substitution; fast/slow execution of the actual virtual restart block;
+  stale discovery endpoint/instance, wrong realm/door, old door health identity;
+  fast intermediate-reload counterexample and armed-reload extra-count
+  counterexample; static retained-wait/deletion check.
+  The control script extracts and transpiles the ACTUAL virtual helper and
+  restart block. Route/page doubles exercise scheduling in memory; their opaque
+  controlMarker response is not an accepted/merged Runtime envelope. The two
+  counterexample tests PASS by requiring the candidate to FAIL its strict guard.
+  No sockets, real browser, Runtime service, manual live retry, or original
+  journey run is used. UI connection and product callbacks are modeled, not
+  qualified. The source chain above establishes why the fast event is allowed.
+/opt/node20/bin/node --import tsx proposal-controls-v3.mjs --lint
+  PASS: virtual protected spec through repository ESLint, cache=false,
+  0 errors/warnings; no shared dependency writes.
+/opt/node20/bin/node --import tsx proposal-controls-v3.mjs --types
+  PASS: repo-tsconfig language service, baseline 23 / virtual 23 diagnostics,
+  zero added diagnostics (multiset comparison; no missing-module overlay).
+/opt/node20/bin/node --import tsx proposal-controls-v3.mjs --hashes
+  PASS: deterministic full/protected before/virtual-after hashes below.
+
+Hashes (SHA-256; exact selectors are retained in proposal-controls-v3.mjs)
+-------------------------------------------------------------------------
+Full spec before:
+a6468188ff21c4fd8bd397ff242b0260ee92ab6f2f90ac94786973eaf3c1e99a
+Full virtual after:
+a7fdfa1e6df526d0a77da09233c4bb0a16b860d08c1133df941d3bd65a89caa8
+faultFirstCommit before:
+0ac6ab0f91cfc9fee0136ec90f408584e2a7755f245b7aea2f85f06c8c316c31
+faultFirstCommit virtual after:
+41dac7302795c1b876d9fe42284857909d8dc205f84cdbe04794be43ae906166
+Restart slice (originalARequest to const b) before:
+938179e2f3198818e4736cc4b221991d67afb4fcba3259da9b12854622534afc
+Restart slice virtual after:
+aa9b7ca51c9cc71d92662a702a871ac30555085ce968c085514e4910ff2aa540
+Complete P3 case before:
+d47d55265b3905a1882ffb370df033cf92b35c3492d4bec366d8da0272b9fb20
+Complete P3 case virtual after:
+7fdaff4caf9700e7cab3ce1f48695937acd2822418111cc6c9068eb76a7840c4
+P3 reset prefix before == virtual after:
+cd5c1726efb978ee93d3aeb1e94edbe2c505d85630e9c34a3c68f36e27ec0113
+Mounted D53 helper before == virtual after:
+b1feb8823e918b5c657da5c0ec04703c65c7eb78ca5cf0c134018acd3ea31ea9
+P3 downstream (includes added guards) before:
+916ab7e397972e54762dbffde5d11d180dd99cd1e31d0855d313e1d228c4d9c4
+P3 downstream virtual after:
+9173482e4f2371254694421a8687afbe5a8646502fbb64e9a39baa653786c447
+Canonical/history/undo tail before == virtual after:
+4cf6ee9ef5bafd049d144c135b9eebfe285091a30d58c7330549ce357354dc95
+proposed-v3.patch:
+2e2439ece1130b6439aedb8759caa5f5f1e42bffc5d5f314477f56722d6b36e2
+
+Scope/disposition
+-----------------
+Only these three v3 review artifacts were added. Original protected spec,
+helpers, product, launcher, generated clients and pins remain unchanged.
+No original/browser/service/full/private collector run was requested or run.
+The independent wholepath1750 report agrees with the stable-door finding; it
+does not examine the intermediate reload counterexample. Independent lifecycle
+PASS and an ORCH scope resolution remain prerequisites for application.

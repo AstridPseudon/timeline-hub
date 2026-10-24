@@ -1,0 +1,75 @@
+--- a/tests/e2e/local/three-products.spec.ts
++++ b/tests/e2e/local/three-products.spec.ts
+@@ -791,2 +791,3 @@
+   const legacy: string[] = [];
++  const observedUrls: string[] = [];
+   let held: Route | undefined;
+@@ -798,2 +799,3 @@
+   let recoveryForwarded = false;
++  let recoveryRetryArmed = false;
+   const MAX_OBSERVED_ATTEMPTS = 16;
+@@ -838,2 +840,3 @@
+     stagedPage = undefined;
++    recoveryRetryArmed = false;
+     await forward(route, route.request(), {
+@@ -851,2 +854,13 @@
+     observed.push(identity);
++    observedUrls.push(request.url());
++    if (recoveryRetryArmed && stagedRetries.length > 0 && !recoveryForwarded
++      && sameGate5CommitIdentity(identity, stagedRetries[0])) {
++      if (stagedRoute) {
++        await route.abort('failed');
++        throw new Error('Gate5 fault control already has a staged automatic retry');
++      }
++      stagedRoute = route;
++      stagedPage = target;
++      return;
++    }
+     const action = classifyGate5FaultOrder({ initial, candidate: identity,
+@@ -894,2 +908,3 @@
+     posts, forwarded, observed, stagedRetries, legacy, attach,
++    observedUrls,
+     get attempts() { return observed.length; },
+@@ -899,2 +914,3 @@
+     abortStagedRetry,
++    armRecoveryRetry() { recoveryRetryArmed = true; },
+     async loseAck() {
+@@ -1734,2 +1750,3 @@
+
++  const endpointBeforeRestart = harness.runtimeUrl;
+   const restarted = await harness.restartRuntime();
+@@ -1738,2 +1755,7 @@
+   expect(harness.realmId).toBe(realmBefore.realmId);
++  expect(harness.runtimeUrl).not.toBe(endpointBeforeRestart);
++  expect(harness.runtimePort).not.toBe(restarted.oldPort);
++  expect(harness.discovery()).toMatchObject({ endpoint: harness.runtimeUrl,
++    runtime_instance_id: harness.runtimeInstanceId, active_realm: realmBefore.realmId,
++    door_endpoint: new URL(harness.doorBase).origin, door_origin: harness.origin });
+   const reopened = await context.newPage();
+@@ -1741,2 +1763,5 @@
+   await wire.attach(reopened);
++  // The production sole-owner mount retries automatically. Arm the real route
++  // observer before remount so the exact retry is held at the stable door.
++  wire.armRecoveryRetry();
+   await openApp(reopened, harness);
+@@ -1753,5 +1778,10 @@
+
+-  await reopened.getByRole('button', { name: /^Recover saved edits/ })
+-    .and(reopened.locator(`[data-owner-id="${owner.ownerId}"]`)).click();
++  await expect.poll(() => wire.observed.length, CEILING).toBe(3);
++  expect(wire.observed.slice(0, 3).every((identity) => sameGate5CommitIdentity(identity, wire.observed[0]))).toBe(true);
++  expect(wire.observedUrls[2]).toBe(wire.observedUrls[0]);
++  expect(new URL(wire.observedUrls[2]).origin).toBe(new URL(harness.doorBase).origin);
++  expect(wire.forwarded).toHaveLength(1);
++  await wire.releaseStagedRetry();
+   await expect.poll(() => wire.posts.length, CEILING).toBe(3);
++  expect(wire.forwarded).toHaveLength(3);
+   expect(wire.posts[1].body).toBe(originalARequest.body);
+@@ -1776,2 +1806,7 @@
+   expect(position(b.data.canonical_document, seed3.appClipId)).toBe(7);
++  expect(wire.observed).toHaveLength(4);
++  expect(sameGate5CommitIdentity(wire.observed[2], wire.observed[0])).toBe(true);
++  expect(sameGate5CommitIdentity(wire.observed[3], wire.observed[0])).toBe(false);
++  expect(wire.observedUrls[3]).toBe(wire.observedUrls[2]);
++  expect(await expectSameRealm(reopened, harness, astrid)).toEqual(realmAfter);
+   expect(b.data.canonical_document.parent_revision.payload.config).toMatchObject({
