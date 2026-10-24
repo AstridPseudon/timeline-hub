@@ -91,6 +91,7 @@ def authoring_commit_request(candidate: Mapping[str, Any], writer: Any, *,
     if compilation is None:
         compilation = compile_authoring_candidate(candidate)
     base = _read_base(writer, candidate)
+    publication_id = base['base_parent']['publication_id']
     work = copy.deepcopy(dict(candidate))
     # These two missing transport pins may be hydrated only from Runtime. All
     # supplied baseline/provenance fields remain checked by the normal emitter.
@@ -118,9 +119,14 @@ def authoring_commit_request(candidate: Mapping[str, Any], writer: Any, *,
         mapping = bundle['source_mapping']
         mapping['shots'] = {key: row for key, row in mapping['shots'].items() if key in reachable}
         mapping['placements'] = {key: row for key, row in mapping['placements'].items() if key in retained}
+    base, work, forks = _fork_shared_aliases(base, work)
+    commands.extend(forks)
+    semantic_count = len(commands)
+    placements = work['placements']
     # List guards use published physical edges, not local independent-shot IDs.
-    physical = [row for row in base['source_mapping']['_runtime_document'][
-        'parent_revision']['payload']['occurrences'] if row['occurrence_id'] in retained]
+    from ._doc_patch import Closure
+
+    physical = Closure(base).document['parent_revision']['payload']['occurrences']
     physical_by_id = {row['occurrence_id']: row for row in physical}
     target = [{**row, **{key: physical_by_id[row['occurrence_id']][key]
                         for key in ('shot_id', 'shot_revision_id')}} for row in placements]
@@ -158,9 +164,14 @@ def authoring_commit_request(candidate: Mapping[str, Any], writer: Any, *,
         if value not in inputs:
             inputs.append(value)
     steps = [{'id': 'authoring', 'label': 'Publish authoring candidate', 'intent': '', 'tags': [],
-        'command_ordinals': list(range(len(commands))),
+        'command_ordinals': list(range(semantic_count, len(commands))),
         'patch': [copy.deepcopy(change) for call in commands if call['op'] == 'doc.patch'
                   for change in call['args']['changes']]}]
+    if semantic_count:
+        steps.insert(0, {'id': 'structure', 'label': 'Materialize authoring structure',
+            'intent': '', 'tags': [], 'command_ordinals': list(range(semantic_count)), 'patch': []})
+        if not steps[-1]['command_ordinals']:
+            steps.pop()
     if inputs:
         # Runtime captures all inputs before execution. Record consumption at
         # the final boundary, where these pins are in the resulting closure.
@@ -170,6 +181,68 @@ def authoring_commit_request(candidate: Mapping[str, Any], writer: Any, *,
                          'select': None, 'args': {'inputs': inputs}})
     return {'api_version': 1, 'project_id': candidate['project_id'], 'timeline_id': candidate['timeline_id'],
         'base_revision_id': base['base_parent']['revision_id'],
-        'base_publication_id': base['base_parent']['publication_id'], 'commands': commands,
+        'base_publication_id': publication_id, 'commands': commands,
         'label': 'Publish authoring candidate', 'steps': steps, 'merge': 'atomic', 'source': {'via': 'python'},
         'rationale': 'Publish authoring candidate ' + compilation.candidate_digest}
+
+
+def _fork_shared_aliases(base: dict[str, Any], work: dict[str, Any]) -> tuple[
+        dict[str, Any], dict[str, Any], list[dict[str, Any]]]:
+    from astrid.core.timeline.authoring_bundle import (
+        _copy_shot_for_placement,
+        _identity,
+        _remap_known_item_references,
+    )
+
+    from ._command_state import equal
+    from .commands import execute
+    from .emitter import emit_document_commands
+    from .native_occurrence_fork import capture_occurrence_fork
+
+    # Check every supplied baseline and source before replacing any projection
+    # with recorder output. Authored payloads alone are allowed to differ.
+    provenance = copy.deepcopy(work)
+    provenance['parent'] = copy.deepcopy(base['parent'])
+    provenance['placements'] = copy.deepcopy(base['placements'])
+    for local, shot in provenance['shots'].items():
+        for field in ('payload', 'internal_timeline'):
+            shot[field] = copy.deepcopy(base['shots'][local][field])
+    emit_document_commands(base, provenance)
+    document = base['source_mapping']['_runtime_document']
+    physical = {row['occurrence_id']: row for row in document['parent_revision']['payload']['occurrences']}
+    commands = []
+    for placement in work['placements']:
+        local = placement['shot_id']
+        shot, original = work['shots'][local], base['shots'][local]
+        source = physical[placement['occurrence_id']]
+        shared = sum(row['shot_revision_id'] == source['shot_revision_id']
+                     for row in physical.values()) > 1
+        if not shared or all(equal(shot[field], original[field])
+                             for field in ('payload', 'internal_timeline')):
+            continue
+        # The virtual authoring alias already occupies a local slot. Reserve a
+        # separate deterministic native destination bound to this exact source.
+        destination = _identity('authoring-fork', work['project_id'], work['timeline_id'], source)
+        for bundle in (base, work):
+            bundle['base_parent'].pop('publication_id', None)
+        call = capture_occurrence_fork(base, 'occurrence:' + placement['occurrence_id'], destination)
+        plan = execute(base, [call])
+        raw = next(row['payload'] for row in document['shot_revisions']
+                   if row['revision_id'] == source['shot_revision_id'])
+        _, remap = _copy_shot_for_placement(raw, project_id=work['project_id'],
+            timeline_id=work['timeline_id'], occurrence_id=placement['occurrence_id'],
+            authoring_shot_id=destination, source_shot_id=source['shot_id'])
+        old_map = base['source_mapping']['shots'][local]['item_id_map']
+        authored = copy.deepcopy(plan.bundle['shots'][destination])
+        authored['payload'] = _remap_known_item_references(
+            shot['payload'], {old_map.get(key, key): value for key, value in remap.items()})
+        authored['internal_timeline'] = copy.deepcopy(shot['internal_timeline'])
+        work['shots'][destination] = authored
+        placement['shot_id'] = destination
+        base = plan.bundle
+        commands.extend(plan.commands)
+        for bundle in (base, work):
+            if not any(row['shot_id'] == local for row in bundle['placements']):
+                bundle['shots'].pop(local)
+                bundle['source_mapping']['shots'].pop(local)
+    return base, work, commands
