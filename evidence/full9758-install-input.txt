@@ -1,0 +1,42 @@
+F9758 normal guarded atomic installation input
+
+Live registry (read-only snapshot): /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+Candidate row: tests/suites.conf.candidate
+Target row selector: agent       full
+Target row occurrence: exactly 1 (line 21)
+
+Pre-registry: 173 rows, 121761 bytes, sha256=31cfddf295b376036c62e08d935373a78fdc37f153f1445f4a69f08437c56133
+Original target row: 910 bytes, sha256=24d58a0534c836c2cb692bdeead498856f3fd8b597cd64bf5fb7249e1eeb9d70
+Candidate row: 3969 bytes, sha256=0bdf88d2a61f89a6fb51ec7bf2fe1cca21268462e23b7e8cb5d430f4e248dd81
+Expected post-registry: 173 rows, 124820 bytes, sha256=18deaf1e759fdb97b578ace0138139ae69940c21ae4b4bc9483c6c49e2c9e07c
+Outside-row bytes: 120851 bytes, 172 rows, sha256=f14b6ef0eb7720dc9605f321a8b3d95a6b189e6be5a79d98bedb4be846a8efc7
+
+Normal installation is owner-controlled and guarded: re-read the live registry,
+require the pre-registry hash above, require exactly one target row and the
+outside-row digest above, construct a same-directory temporary file, replace
+atomically, then verify the expected post-registry hash and outside-row digest.
+Refuse on any precondition or postcondition mismatch. This worker did not run
+that installation and did not mutate the live registry.
+
+Qualified existing profile input (not copied or changed):
+  path=/home/user/work/runtimes/agent-remotion-v3-819acf-1110
+  profile_mode=0755
+  profile_manifest_entries=23108
+  profile_manifest_sha256=ed4616c674ffea71e6849f615f385ffa312914c7ca39cf0172e0da1e6df9750e
+  profile_state_sha256=d609b44b37d724358a33405e9d8539008fd1ac30bc2f0d9746575c3fbadaac96
+  package_lock_sha256=f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d
+  composition_archive_sha256=819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234
+  composition_version=0.0.14
+  node=v20.19.4
+  node_modules_mode=0755
+  node_modules_symlink=false
+
+Source/runtime inputs retained by the row:
+  agent_head=c2b1f7e5a31e3ab24309532bddfc892ae64ba374
+  agent_tree=1a5cd15370cac2e769801e09f1869fc427978f12
+  runtime_head=becfe6db88b2cc034dba3fafa6c050117cdf2b06
+  runtime_tree=7edc08e3fe94edcbc8ef695c479f4de301789b89
+  runtime_projection=/home/user/work/agent-runtime-projection-0856/site-packages
+  schema_pythonpath=/home/user/work/venv-agent/lib/python3.13/site-packages
+  python=/home/user/work/venv-agent/bin/python
+  pytest_arguments=-q -n 3
