@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T11:24:51Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 3m -->
-# app2 board, 2026-10-24T11:21Z
+<!-- app2 | 2026-10-24T11:27:07Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 0m -->
+# app2 board, 2026-10-24T11:26Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -27,7 +27,7 @@
 | P3-current-safe-files | Audit six safe-file contents | Independent Luna | Direct content audit complete | merged | ap2-P3-six-file-custody-1104 | Six content/schema/projector/writer checks PASS. Private-mode custody FAIL is retained separately; no journey or remote-original custody credit. | Exact82cb |
 | P3-retry-guard-scope | Approve exact retry identity assertion | Orchestrator; Proof | D53 approved in header11:20 | merged | D53; independent1115 PASS | Exact observed[A,A], forwarded[A], zero distinctB and deterministic held retry approved. Original Gate5 body/reset/tail stay exact. | Decision D53 |
 | P3-lost-ack-current | Preserve strict fault and retry order | Luna; independent Luna | Cumulative1115 PASS | merged | Return1107; independent1115 | Architecture and exact guard proposal PASS23 controls/types/lint/list15. No live credit; clean D53 source application follows. | bd08; source held |
-| P3-D53-clean | Apply approved guard on clean home base | Luna; independent review follows | D53 and cumulative1115 PASS | doing | ap2-P3-D53-clean-apply-1123 | Exact reviewed three-path delta over d6ed; one D53 guard, executed full hashes and worker ledger row. No failed donor ancestry or original run. | Base d6ed |
+| P3-D53-clean | Apply approved guard on clean home base | Luna; independent Luna | Author1123 complete; final review active | review | Author1123; independent1126 | Exact2357 over d6ed;23 controls/types/lint/list15 PASS. Actual full hashes and D53 ledger row reported. Final independent no-weakening pending. | 2357df925a |
 | P2-new-child | Qualify actual D41 child custody | App maker; independent Luna | Actual1035 custody review PASS | merged | Child1016; prep1020; review1035 | Actual maker/provision key188546b7 and P2-only source/import custody PASS. Final caller1054 is separate. Old0256 stays P3-only. | Agent333; Runtime37eb |
 | P2-five-oracle | Classify five previously unrun paths | App independent Luna | Independent0651 complete | merged | App0651 | Four exact helper defects confirmed; SWAP aligned. Source and controlled transport only; no live gesture credit. | Exact9b810 / 079 / 37eb |
 | P2-transition-oracle | Strict single and bulk clear expectations | Luna; independent Luna | Source merged; combined proof follows | merged | Donor ac538; composition0737 | Independent0730 and0742 PASS. Normal App receipt28b0 includes exact reviewed transition delta; no browser credit. | ac538 / HOME28b0 |
@@ -71,7 +71,7 @@ Blockers: App — worker installation1115 and actual readback precede ONE releas
 Blockers: Proof — D53 clean application1123, independent final review, normal home merge and integrated proof precede a new P3 caller or release.
 
 Blockers: Freeze — final tuple, actual App host inputs, final gates and D49 full checkpoints precede Farm F-final and ZIP.
-Next ready: Review clean D53 worker1123 immediately on completion. App installation1115 proceeds independently; track same full19570 and one actual P2.
+Next ready: On independent1126 PASS, normal remote D53 merge and App integrated proof/ledger. App P2 installation proceeds independently; track same full19570.
 
 Evidence: [P3 integrated0900](../../design/app-P3-current-integrated-0900.md), [caller PREPARED0902](../../design/app-P2-P3-caller-cumulative-review-0902.md), [Current terminal verdict0709](../../design/handoff-ap2-P2-P3-verified-result-verdict-0709.md), [source0649](../../design/handoff-ap2-P2-P3-current-source-verdict-0649.md), [tour review0742](../../design/handoff-ap2-P2-tour-compose-review-0742.md), [D50 review0747](../../design/handoff-ap2-P3-D50-created-review-0747.md), [actual P3 review0720](../../design/app-P3-parent-trace-review-0720.md), [lifecycle correction0741](../../design/app-P2-P3-lifecycle-review-0741.md), [final map review0719](../../design/handoff-ap2-P1-P5-final-map-review-0719.md).
 
@@ -100,3 +100,5 @@ Pass1121: Read PLAN first, common rules, header D51/D52, new inbox and actual Ap
 D51/D52: Keep current freeze snapshot; final delivery owns one live-main refresh. D52 supersedes dormant retention in D37: repo lanes may remove dead code and its exclusive tests with caller proof, ledger and independent review. No Proof live gate or original behavioral requirement is removed. Existing refusals stay stopped.
 
 Pass11:21Z: D53 read directly in header: exact retry accounting APPROVED. Independent1115 FINAL passes unprotected architecture and concrete proposal; loseAck already waits for the single held retry, no additional setup call needed.23 controls,three types,lint,list15,identity/lifecycle attacks and reverse-removal PASS; no live credit. Report copied byte-exact. Dispatched sole Luna1123 on exact current home d6ed for clean three-path composition, approved guard, actual full hashes and worker-authored D53 ledger line. No failed donor ancestry, original Gate5 body/reset/tail change or original run. Cleared orchestrator blocker this pass. Kit automatically recycled completed review tree. Sweep3 exit0 removed zero directories.
+
+Pass 2026-10-24T11:26Z: Completed Luna1123 exact2357 is one owncommit over HOME d6ed, three paths, no donor ancestry. Author23 controls/three types/lint/list15 and reverse-removal PASS. Actual fullspec26c1 to95d9; original Gate5 body, reset, canonical5ede tail and downstream tail unchanged. Worker-authored D53 ledger row remains pending home/integrated status, not manager prose. Independent final1126 dispatched immediately on exact2357. Final report copied byte-exact. App new1117 peer repeats historical1100 FAIL; existing D53 and cumulative1115 already supersede that stale wait. Prior candidate32ba remains unmerged. No new P3 run.
