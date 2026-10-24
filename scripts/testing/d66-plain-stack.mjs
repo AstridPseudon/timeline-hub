@@ -11,9 +11,13 @@ const orch = '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a
 const nodeDir = '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin';
 const node = path.join(nodeDir, 'node');
 const readiness = 'tests/e2e/local/three-products.mounted-readiness.spec.ts';
-const suites = {
+export const suites = {
   p1: { files: ['tests/e2e/local/three-products.p1-chain.spec.ts'], count: 2 },
-  p2: { files: ['tests/e2e/local/three-products.p2-popup.spec.ts', 'tests/e2e/local/three-products.p2-tour.spec.ts', 'tests/e2e/local/three-products.p2-elements-assets.spec.ts'], count: 8 },
+  p2: {
+    files: ['tests/e2e/local/three-products.p2-popup.spec.ts', 'tests/e2e/local/three-products.p2-tour.spec.ts', 'tests/e2e/local/three-products.p2-elements-assets.spec.ts'],
+    count: 8,
+    retainRuntimeLogs: true,
+  },
   'p2-element': {
     files: ['tests/e2e/local/three-products.p2-elements-assets.spec.ts'], count: 1,
     grep: 'P2 mounted element edit: real catalog apply, exact params patch, reload and guarded Undo$',
@@ -201,6 +205,17 @@ function repoTrees(sources) {
 
 function shellQuote(value) {
   return `'${String(value).replaceAll("'", "'\\''")}'`;
+}
+
+export function playwrightLaunchEnv({ suite, suiteName, output, junit, stage, baseEnv = process.env }) {
+  const env = {
+    ...baseEnv,
+    PLAYWRIGHT_OUTPUT_DIR: path.join(output, stage),
+    PLAYWRIGHT_JUNIT_OUTPUT_FILE: junit[stage === 'readiness' ? 'readiness' : 'original'],
+  };
+  delete env.D66_RUNTIME_LOG_DIR;
+  if (suite.retainRuntimeLogs && stage === suiteName) env.D66_RUNTIME_LOG_DIR = path.join(output, 'runtime-private');
+  return env;
 }
 
 function receiptPath(role, head) {
@@ -558,8 +573,7 @@ export async function main(sourceOptions = {}) {
     if (grep) args.push('--grep', grep);
     args.push('--reporter', list ? 'list' : 'list,./config/testing/playwrightSkipGuard.ts,junit');
     if (list) args.push('--list');
-    const env = { ...process.env, PLAYWRIGHT_OUTPUT_DIR: path.join(output, stage), PLAYWRIGHT_JUNIT_OUTPUT_FILE: manifest.junit[stage === 'readiness' ? 'readiness' : 'original'] };
-    if (suite.retainRuntimeLogs && stage === name) env.D66_RUNTIME_LOG_DIR = path.join(output, 'runtime-private');
+    const env = playwrightLaunchEnv({ suite, suiteName: name, output, junit: manifest.junit, stage });
     return { args, env };
   }
 
