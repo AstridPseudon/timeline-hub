@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T15:41:09Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 5m -->
-# runtime board, 2026-10-24T15:35:56Z
+<!-- main | 2026-10-24T15:44:01Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 2m -->
+# runtime board, 2026-10-24T15:42:02Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -98,6 +98,7 @@
 | FREEZE | Reach final tuple cut | Runtime manager | D59 cut with D66 and D67 | doing | Runtime producer done; Agent/App owners | Runtime0core/0regression; Agent6 outcomes; App9 gates plus1 installer regression. Cut requires current P2/P3 PASS. | Runtime8b32 |
 | F-final | Main delivery build and ZIP | Luna | D59 cut and final proofs | doing | Builder1233; docs1229; service1244 | Builder and v2 prose installed. Durable service helper repair active; live-main refresh and final build wait qualified cut and proofs. | No delivery artifact |
 | F-final-builder | Put verifier clones in TMPDIR | Luna / Luna | Exact installed proof complete | merged | Review1229; installed1233 PASS | f25d atomically installed0755, old script backed up. Installed smoke and integrity checks passed; no real build. | f25dfab1 installed |
+| F-final-D68 | Preserve later upstream during packaging | Luna | D68 frozen gating scope | doing | rt-F-final-D68-assess-1543 | Read-only actual builder/final-caller assessment: fresh upstream must preserve owner additions and apply our delta; no new gating merge. | Pending |
 | F-final-D67 | Document genuine post-install D13 check | Luna | Exact source and installed render PASS | merged | Inputs1528; install1533 PASS | Installed README13env/7keys and original selector; D62 known gap in both docs. Actual renderer and exact-byte/mode checks PASS. | Installed docs |
 | F-final-D65 | Include authentic manifest release order | Luna | App complete refresh invocation | blocked:app | Docs1526; App D65 owner | Candidates/render PASS. Existing sync tool lacks complete manifest update+digest check; exact App seam returned, no docs installed. | Evidence only |
 | F-final-docs | Refresh v1 delivery prose | Luna | Installed hashes and rendering passed | merged | Author1226; install1229 PASS | Two exact v2 documents installed atomically; predecessors backed up. Final tuple, gates and ZIP remain pending. | ef414 / 403384 installed |
@@ -128,7 +129,7 @@ FREEZE D59/D66: Runtime source and regenerated producer READY. Agent adopts15 ca
 
 D66: no separate D62 integrated-proof stage. Author tests plus independent security and Agent actual-home six suffice; final cut covers remaining Runtime proof. The isolated1524 route is installed but unused. Provider-completion historical incident is not held open; the originating cut rerun decides closure or a new core cause.
 
-Venues: P1/P2/P3 on App service with unchanged originals and App verdicts; P4 on Agent; P5 and Composition on main. Product change in X reruns P1–P5 plus X core. Test/harness change reruns affected gate. Main P5 and Composition preparations remain qualified; execution waits cut. D60 exact upstream tips are retained; no further live-main chase unless owner asks.
+Venues: P1/P2/P3 on App service with unchanged originals and App verdicts; P4 on Agent; P5 and Composition on main. Product change in X reruns P1–P5 plus X core. Test/harness change reruns affected gate. Main P5 and Composition preparations remain qualified; execution waits cut. D68 adds App3881 once now; later upstream moves stay out of gating and receive final patch-apply checks only. F-final overlaps trigger scoped final suites.
 
 D65 delivery: owner merges Runtime, then Agent, runs the included authentic App manifest refresh with generated digest equality, then merges App. Runtime docs candidate1526 waits App's complete command; existing sync tool alone is insufficient. D67 exact13env/7key appendix1533 is installed and renderer-qualified. All final outcomes remain PENDING.
 
@@ -137,7 +138,7 @@ Blockers: App — D66 plain launch/P1 control precedes current P2/P3 parallel. H
 Blockers: App manifest — fix confirmed installer regression once against new8b32/schema867f and actual Agent after normal adoption; strict guard retained.
 Blockers: Final docs — App complete manifest-refresh invocation remains owed under existing D65 row; D67 appendix1533 is installed and qualified; no Runtime doc input remains for it.
 Blockers: Final delivery — cut needs every active lane0core/0regressions and current P2/P3PASS, then required final proofs/build/ZIP.
-Next ready: consume normal Agent/App adoption and six-original proof; add authentic D65 command when App publishes it.
+Next ready: finish D68 builder source assessment; consume normal Agent/App adoption and six-original proof; add authentic D65 command when App publishes it.
 
 Later: D47 memo and proof pins remain post-delivery; nine state attacks open. V4 cut; D14/D23 deferred unchanged. D34 broader cleanup remains held. D62 submit completeness is an explicit known gap in the Runtime behavior-change ledger.
 
@@ -145,8 +146,10 @@ Admission: D56 stops Farm and schema-access work. Exact403 and automatic access 
 
 Disk: about8.5GB, above main8GB heavy floor. Newly finished clean/absent Runtime trees recycled through normal tool; no old refused target retried. No forced removal or new cleanup worker.
 
-live 1 / cap 4; ready-undispatched 0. Copied dispatcher: <!-- main | 2026-10-24T15:32:36Z | dispatcher heartbeat 15s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 1m --> D67 installation1533 completed after this snapshot; consumer/tooling work belongs to Agent/App. No local ready task waits.
+live 0 / cap 4; ready-undispatched 0. Copied dispatcher15:38:19Z reports0 Sol/0 Luna. D68 source assessment1543 queued after snapshot; all local ready work assigned.
 
 Pass 2026-10-24T15:34:02Z: PLAN/common/header D62–D67 and peer boards consumed. SecurityPASS412 -> normal merge8b32 completed and exact producer handed to Agent/App immediately. Separate D62 proof removed perD66. D67 docs installer1533 active; D65 missing command assigned App. No final proof or delivery claim.
 
 Pass 2026-10-24T15:35:56Z: D67 installer1533 completed actual atomic README/gate install with backups, exact13env/7keys and original selector, renderer/diff/mode/hash PASS. Final statuses remain PENDING. App complete D65 command and Agent/App normal adoption remain peer-owned. Newly finished worktrees are absent at recycle check; no old refused target retried.
+
+Pass 2026-10-24T15:42:02Z: D68 read and became F-final-D68 row with Luna1543 immediately. App3881 merge is App-owned and parallel to boot. Builder fresh-main preservation assessed through actual final caller, no new gate run or upstream fetch. D62 merged8b32 handback remains ready; Agent1529/App1528 normal adoption owners consumed.
