@@ -174,6 +174,61 @@ def _assert_uuidish(value: Any, label: str) -> None:
     assert re.fullmatch(r"[0-9a-fA-F-]{16,}", value), label
 
 
+def _assert_submitted_items(
+    submitted: dict[str, Any], authoritative: dict[str, Any], label: str
+) -> None:
+    """Keep every submitted field/value while checking the recorded envelope."""
+    assert set(submitted) <= set(authoritative), label
+    for field, value in submitted.items():
+        assert authoritative[field] == value, f"{label}.{field} changed"
+
+
+def _assert_authoritative_command(
+    submitted: dict[str, Any],
+    authoritative: dict[str, Any],
+    expected: dict[str, Any],
+) -> None:
+    _assert_submitted_items(submitted, authoritative, "authoritative command")
+    media = submitted["args"]["media"]
+    row = submitted["args"]["row"]
+    asset_ref = f"parent/asset:{media['asset']}"
+    clip_ref = f"parent/clip:{row['id']}"
+    added_fields = {"authorship", "bindings", "expect", "reads", "resolved", "selections"}
+    assert set(authoritative) == set(submitted) | added_fields
+    assert authoritative["created"] == submitted["created"]
+    assert authoritative["authorship"] == {
+        asset_ref + "::": "direct",
+        clip_ref + "::": "direct",
+    }
+    assert authoritative["bindings"] == {"media.track": f"parent/track:{row['track']}"}
+    assert authoritative["expect"] == {
+        asset_ref + "::": {"state": "absent"},
+        clip_ref + "::": {"state": "absent"},
+    }
+    assert authoritative["resolved"] == []
+    assert isinstance(authoritative["reads"], list) and authoritative["reads"]
+    assert isinstance(authoritative["selections"], list) and authoritative["selections"]
+    assert authoritative == expected
+
+
+def _assert_authoritative_step(
+    submitted: dict[str, Any],
+    authoritative: dict[str, Any],
+    expected: dict[str, Any],
+) -> None:
+    submitted_metadata = {key: value for key, value in submitted.items() if key != "patch"}
+    authoritative_metadata = {
+        key: value for key, value in authoritative.items() if key != "patch"
+    }
+    _assert_submitted_items(submitted_metadata, authoritative_metadata, "authoritative step")
+    assert set(authoritative) == set(submitted) | {"dependencies"}
+    assert submitted["patch"] == []
+    assert authoritative["patch"] != submitted["patch"]
+    assert authoritative["patch"] == expected["patch"]
+    assert authoritative["dependencies"] == expected["dependencies"]
+    assert authoritative == expected
+
+
 def _source_facts(editing: Any, document: dict[str, Any], head: dict[str, str]) -> dict[str, Any]:
     association = next(item for item in editing.associations if item["variant_key"] == "new")
     pin = copy.deepcopy(editing.pins["new"])
@@ -388,7 +443,11 @@ def main() -> None:
         write_json(EVIDENCE / "accepted-response.json", accepted)
         assert accepted["data"]["status"] in {"accepted", "merged", "rebased"}
         assert accepted["receipt"]
-        assert accepted["data"]["commands"][0] == command
+        prepared = editing.candidates[-1]
+        provider_command = prepared["records"]["commands"][0]["command"]
+        provider_step = prepared["records"]["steps"][0]
+        _assert_authoritative_command(command, accepted["data"]["commands"][0], provider_command)
+        _assert_authoritative_step(request["steps"][0], accepted["data"]["steps"][0], provider_step)
         accepted_document = current_document(editing)
         accepted_head = current_head(service, editing.project)
         accepted_payload = accepted_document["parent_revision"]["payload"]
