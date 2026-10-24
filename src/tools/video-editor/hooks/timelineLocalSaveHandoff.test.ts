@@ -759,7 +759,8 @@ it.each(['valid', 'missing owner', 'wrong owner', 'stale selection', 'child sele
     return useClipEditing({ dataRef: commit.dataRef, resolvedConfig: commit.data?.resolvedConfig ?? null, selectedClipId: 'authored',
       selectedTrack: null, currentTime: 0, selectClip: vi.fn(), setSelectedTrackId: commit.setSelectedTrackId, applyEdit: (mutation, options) => {
         if (options?.gestureBasis?.kind === 'element') {
-          captured = saveElementParameterEdit(commit.dataRef.current!, mutation, options.gestureBasis, routes, 'timeline-commit').then(() => {});
+          adapter.updateContext(options.gestureBasis.context);
+          captured = saveElementParameterEdit(commit.dataRef.current!, mutation, options.gestureBasis, routes, 'timeline-commit', adapter.captureForTurn()).then(() => {});
           void captured.catch(() => {});
         } else commit.applyEdit(mutation, options);
       } });

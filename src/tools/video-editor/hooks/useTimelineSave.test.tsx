@@ -11,7 +11,7 @@ import { useTimelineHistory } from './useTimelineHistory';
 import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
 import { json, runtimeFixture } from '@/test/fakeWorkspaceRuntime.ts';
 import type { HistoryEntry, HistoryPage, CommitRequest } from '@/integrations/runtime/timeline-commit-types.ts';
-import { useTimelineSave } from './useTimelineSave';
+import { bindElementParameterOwner, useTimelineSave } from './useTimelineSave';
 import type { UsePollSyncQueries } from './usePollSync';
 import { useClipEditing } from './useClipEditing';
 import { VideoEditorRuntimeProvider } from '../contexts/VideoEditorRuntimeContext';
@@ -2150,6 +2150,10 @@ it.each(['valid', 'wrong source', 'stale head'] as const)('forwards parameter ge
   try {
     const current = harness.hook.result.current.dataRef.current!;
     const routes = harness.hook.result.current.elementTimelineRoutes;
+    const adapter = new AstridElementOperationAdapter(context, routes, 'project-commit', {
+      timelineId: 'timeline-1', assertAuthority: () => {}, getHead: () => current.head,
+    });
+    bindElementParameterOwner(routes, context, adapter);
     const original = { config: current.config, registry: current.registry, config_version: current.configVersion, head: current.head };
     if (control === 'wrong source') vi.spyOn(routes, 'get').mockResolvedValue({ ...original, config: { ...current.config, clips: [] } });
     if (control === 'stale head') vi.spyOn(routes, 'get').mockResolvedValue({ ...original, head: { ...current.head!, headPublicationId: 'another' } });

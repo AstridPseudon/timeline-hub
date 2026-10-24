@@ -274,9 +274,10 @@ export function useClipEditing({
         toast.error('Element parameter ownership changed or is unavailable; reload the timeline before editing.');
         return;
       }
-      elementBasis = structuredClone({ kind: 'element', clipId: selectedClipId, config: current.config, registry: current.registry,
-        context: elementOwner.elementContext!, operation: { name: 'timeline.update_element', project: elementOwner.projectSlug,
-          timeline: elementOwner.timelineId, expected_version: current.configVersion, clip_id: selectedClipId, params: patch.params } });
+      elementBasis = { ...structuredClone({ kind: 'element' as const, clipId: selectedClipId, config: current.config, registry: current.registry,
+        operation: { name: 'timeline.update_element' as const, project: elementOwner.projectSlug,
+          timeline: elementOwner.timelineId, expected_version: current.configVersion, clip_id: selectedClipId, params: patch.params } }),
+        context: elementOwner.elementContext! };
     }
 
     if (elementBasis) {

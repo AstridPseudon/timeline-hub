@@ -1,5 +1,6 @@
 import { withTimelineBasisDiagnostics } from '../lib/timeline-basis-diagnostics.ts';
-import { applyTimelineOperation, type ElementTimelineRoutes, type ElementTimelineDocument } from '../runtime/element-adapter.ts';
+import { type AstridElementOperationAdapter, type ElementTimelineRoutes, type ElementTimelineDocument } from '../runtime/element-adapter.ts';
+import type { AstridAgentElementContext } from '../runtime/element-contract.ts';
 import { persistedTranscriptItems } from '../data/typed/projectTranscript.ts';
 import type { RegistrationSaveOwner } from './timeline-state-types.ts';
 import {
@@ -47,9 +48,18 @@ interface PendingOriginalSaveRead {
   settled: boolean;
 }
 
+const elementParameterOwners = new WeakMap<ElementTimelineRoutes, { context: AstridAgentElementContext; adapter: AstridElementOperationAdapter }>();
+
+/** Share the mounted adapter's authority with its exact Inspector source. */
+export function bindElementParameterOwner(routes: ElementTimelineRoutes, context: AstridAgentElementContext, adapter: AstridElementOperationAdapter) {
+  const binding = { context, adapter };
+  elementParameterOwners.set(routes, binding);
+  return () => { if (elementParameterOwners.get(routes) === binding) elementParameterOwners.delete(routes); };
+}
+
 /** Keep parameter gestures on the scoped element route, before generic serialization. */
 export async function saveElementParameterEdit(current: TimelineData, mutation: TimelineEditMutation,
-  basis: TimelineGestureReadBasis, routes: ElementTimelineRoutes, timelineId: string) {
+  basis: TimelineGestureReadBasis, routes: ElementTimelineRoutes, timelineId: string, adapter: AstridElementOperationAdapter) {
   if (basis.kind !== 'element') throw new TimelineVersionConflictError('Element parameter basis is unavailable; draft retained');
   const op = basis.operation;
   if (!op || op.name !== 'timeline.update_element' || !op.params || op.element || op.duration !== undefined
@@ -69,9 +79,7 @@ export async function saveElementParameterEdit(current: TimelineData, mutation: 
     || original.config_version !== current.configVersion) {
     throw new TimelineVersionConflictError('Element parameter owner changed; draft retained');
   }
-  return routes.save(timelineId, { config: applyTimelineOperation(basis.context, basis.config, op),
-    registry: original.registry, expectedVersion: original.config_version, expectedHead: original.head,
-    bundle: original.bundle, original, operation: op, context: basis.context });
+  return adapter.execute(op);
 }
 
 export function useTimelineSave(
@@ -768,11 +776,15 @@ export function useTimelineSave(
         if (localDocumentSave) {
           const handoff = await localOwner.ready;
           if (!handoff || localOwner.closed) throw new TimelineVersionConflictError('Element local save owner was replaced');
+          const next = await buildTimelineData(config, registry, resolveAssetUrl, input.expectedVersion,
+            input.bundle?.itemsBySchemaRef, input.expectedHead, input.bundle?.transcriptReferences);
           checkCurrent();
           await handoff.capture({ config, registry, head: input.expectedHead, bundle: input.bundle }, {
             kind: 'element', config: original!.config as TimelineConfig, registry: original!.registry as AssetRegistry,
             clipId: 'clip_id' in input.operation ? input.operation.clip_id ?? '' : '', operation: input.operation, context: input.context,
           });
+          checkCurrent();
+          commitElementData(next, { save: false, skipHistory: true });
           await handoff.flush();
         } else {
           const next = await buildTimelineData(config, registry, resolveAssetUrl, input.expectedVersion,
@@ -793,7 +805,11 @@ export function useTimelineSave(
     if (options?.gestureBasis?.kind !== 'element') { commitApplyEdit(mutation, options); return; }
     const current = elementDataRef.current;
     if (!current) { toast.error('Element parameter source is unavailable; draft retained'); return; }
-    void saveElementParameterEdit(current, mutation, options.gestureBasis, elementTimelineRoutes, timelineId)
+    const owner = elementParameterOwners.get(elementTimelineRoutes);
+    if (!owner || owner.context !== options.gestureBasis.context) {
+      toast.error('Element parameter editor owner changed or is unavailable; draft retained'); return;
+    }
+    void saveElementParameterEdit(current, mutation, options.gestureBasis, elementTimelineRoutes, timelineId, owner.adapter.captureForTurn())
       .catch(error => toast.error(error instanceof Error ? error.message : String(error)));
   }, [commitApplyEdit, elementDataRef, elementTimelineRoutes, timelineId, toast]);
 
