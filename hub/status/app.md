@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T19:36:29Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 12 | status age 1m -->
-# app board, 2026-10-24T19:31Z
+<!-- app | 2026-10-24T19:39:40Z | dispatcher heartbeat 0s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 0m -->
+# app board, 2026-10-24T19:39Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -39,18 +39,19 @@
 | F-env | Missing SSH executable | Service environment | D54a | gated:environment | Quality1236; producer1227 | Two unchanged extension tests fail ssh-keygen ENOENT; visible known environment gap. | Historical16138 |
 | F-final | Final P1–P5 and core suites | Lane services | D59 cut | gated:D59-cut | Runtime coordinator; App gates | All active lanes core0/regressions0 and current P2/P3 PASS required before final proofs/build. | Cut pending |
 | D74-old-graph | Guarded orphan graph retirement | Lead kit | Lead19:10 keeps graph | gated:disk-emergency | Lead owns disposition | No applicable guarded route. Keep exact1.107GB graph in place at current capacity; no fabricated metadata or raw deletion. | No source edits |
+| D74a | Archive and retire unused worktrees | Luna | Explicit D74a owner release | doing | app-D74a-guarded-capacity-1939 | Confirm unused pins; preserve current and queued tuples. Archive dirty U3 data before guarded recycle. Stop on actual classifier refusal. | No source edits |
 | D74-retention | Post-verdict output release | Lead kit | Guarded route unavailable | gated:disk-emergency | Lead owns disposition | Preserve run evidence, especially22847 and13100. No new release route built and no raw cleanup. | No source edits |
 
 | P2-D78 | Exact retained element request handoff | Luna | D78 owner1816 | merged | app-P2-D78-retained-request-handoff-1819 | Published json/md;4459 exact body bytes,e58a09dc;trace anchor and redaction validated. Runtime replay owns cause. | Evidence only |
 | D79 | One live edit robustness smoke | Luna; Service | Normal D66 auth | review | app-D79-normal-auth-resume-1922 | Actual25704 readiness PASS; smoke setup invalid bearer before all three assertions. Duplicate29954 cancelled before tests; both outputs kept. | App7098 |
 
-| D79-session | Repair smoke auth and submit race | Luna | Actual25704 setup failure | doing | app-D79-session-and-submit-race-1931 | Source setup versus passing P1; meaningful race controls if needed. No browser rerun; non gating spare slot. | Source pending |
+| D79-session | Repair smoke auth and submit race | Luna | Actual25704 setup failure | merged | app-D79-session-and-submit-race-1931 | Versioned scoped credentials and same plan lock;21 D66,9 parser,3 setup controls/types/lint PASS. No browser credit. | f6a21c2852 |
 
 | P3-D75-clean | Clean same-blob home packet and ledger | Luna | Home2bd162 | merged | app-P3-D75b-home-receipt-1848 | Actual home, parents, donor equality and computed hash correction PASS. Existing ledger updated; original report retained. | Home2bd162 |
 | P3-current | Corrected both-mount original Gate5 | Luna; Service | Preflight20128 PASS | review | Actual26908; producer1855 | Exit1/471s; readiness PASS, original FAIL at1773: expected fourth recovery observation, actual3. Downstream tail unproved. | App3c29 |
 | P3-26908-cause | Trace fourth recovery observation | HARD Sol PLAN A2 | Actual26908 and independent1905 | merged | app-A2-P3-recovery-current-sol-1910 | Intermediate page closed at Loadingproject before retry; no production defect proven. Review-only stronger poll proposal;269mounted controls/types/lint PASS. | Proposal only |
 | P3-intermediate | Observe intermediate recovery before close | Luna | Independent1920 PASS | merged | app-P3-intermediate-clean-apply-1925 | Exact one addition, protected hash736fd381 matches reviewed proposal; three fault controls and list15 PASS. Alias runner environment error retained. | e771ce1426 |
-| P3-intermediate-run | Qualify stronger recovery observation | Luna; Service | Home e771 and disk floor | doing | app-P3-intermediate-pinned-run-1933 | One pinned preflight then original. Actual IDs pending; no build below7.5GiB. Both recovery mounts and exact counts retained. | App e771 |
+| P3-intermediate-run | Qualify stronger recovery observation | Luna; Service | Home e771 and disk floor | doing | app-P3-intermediate-pinned-run-1933 | Same plan command started under D74a6GB gate floor on home f6a; IDs pending. Both mounts and exact counts retained. | App e771 |
 | P3-26908-path | Independent verdict and full path | Luna | Producer1855 final | merged | app-P3-26908-verdict-wholepath-1905 | Gate FAIL; manifest/hash/snapshot PASS. Recovery product equals passingP131083; missing fourth cause remains bounded, no new count inferred. | Evidence only |
 
 | P1-current | Updated parent-source control | Service; Luna | Independent1846 PASS | merged | Actual31083; verdict1846 | Readiness1/original2 PASS on App830252,Agent263696,Runtime1bae. Exact pins/hashes/XML qualified. | App830252 |
@@ -74,13 +75,14 @@ core open: 9 original gesture cases, eight P2 plus one P3. P1 original2 PASS and
 regressions: 0 confirmed open App source findings. D69 all four restorations home and final1704 PASS; original gates remain open.
 
 Blockers: Runtime native seed execution — unique Sol1924 interprets actual128 prefix now received. No App input remains pending; real pending request capture seam handback required before meaningful P2.
-Blockers: Disk capacity — App source worker1933 is ready to submit P3 but holds new build below7.5GiB. Existing graph decision stays; lead notified1933. No eligible ended clean non-KEEP App tree.
-Blockers: Final cut — all eight P2 and one P3 core cases remain unqualified. Runtime coordinates final suites and ZIP after current gate proof.
-Next ready: P3 producer1933 waits build floor then one pinned original. Runtime real pending seed capture handback precedes meaningful P2; no unchanged diagnostic rerun. D79 duplicate cancellation and retained result only.
 
-live 2 / cap 2; ready-undispatched 0. Dispatcher hub header19:33 records2 Luna. P3 producer1933 waits disk; spare D79 setup1931 running targeted source checks. Current free7.49GB below7.5GiB build floor; no new build until8053063680bytes. Duplicate29954 cancelled; both outputs retained. Source dispatch initial relative brief path failure corrected to absolute; not a safety refusal.
+Blockers: Final cut — all eight P2 and one P3 core cases remain unqualified. Runtime coordinates final suites and ZIP after current gate proof.
+Next ready: P3 single command is active under D74a6GB floor; worker1933 resumes same plan and produces verdict. Runtime1924 meaningful pending seed capture handback precedes P2. D74a cleanup1939 active; no D79 rerun.
+
+live 2 / cap 4; ready-undispatched 0. Latest published dispatcher header19:36 live2 Luna; current author1931 ended, P3 producer1933 and cleanup1939 assigned. D74a gates/D78 use6.0GB floor, noncritical new originals retain7.5GB floor. One P3 submit command running; no duplicate call.
+
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
-Disk: Current7.49GB (~6.97GiB), below7.5GiB new build floor. Ended clean non-KEEP App scan found none eligible; two old U3 trees are dirty and retained. Orphan graph and denied cleanup routes remain stopped; no output released before verdict. Guarded tools only.
-Inbox consumed through1669796 bytes, including Agent1915 adoption homee39de and Runtime1920 capture request. Owner boards Runtime19:18 and Agent19:16 rechecked: popup87bc and cost e89 are home; original P2 source outcomes remain unqualified. Peer1934 closes App capture disposition at honest limits.
+Disk: Current7.66GB before new gate preparation. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
+Inbox consumed through1670746 bytes, including Agent1915 adoption homee39de and Runtime1920 capture request. Owner boards Runtime19:18 and Agent19:16 rechecked: popup87bc and cost e89 are home; original P2 source outcomes remain unqualified. Peer1934 closes App capture disposition at honest limits.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
