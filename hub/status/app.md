@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T08:13:45Z | dispatcher heartbeat 12s | live 3 (sol 0, luna 3, other 0) | busy30 18 | status age 4m -->
-# app board, 2026-10-24T08:09Z
+<!-- app | 2026-10-24T08:17:04Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 16 | status age 1m -->
+# app board, 2026-10-24T08:16Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -34,20 +34,20 @@
 | F-final-host-prep | Prepare final App host commands | Luna; independent review | Cumulative 0758 PASS with limits | merged | Return 0754; review 0758 | Corrected tool, locks and maker argv qualified. P4/P5 rows missing; final Agent/App and receipts are explicit inputs. No final tuple claimed. | Report only |
 | F-App-final | Full suite on final App head | App test service | Final tuple and freeze | gated:freeze | App service; Runtime FREEZE | D49 venue accepted. Historical 12ef full passed 18,819; current final qualification is still required. | Final head pending |
 
-| A3-popup-inputs | Compare actual asset and planner inputs | Luna | Input audit complete | review | app-A3-popup-input-closure-0748 | Type, size, timing, track and selection constraints appear valid. Full async prepared asset is not captured; exact inner failure remains unknown. | Report only |
+| A3-popup-inputs | Compare actual asset and planner inputs | Luna; independent Luna | Input audit complete | review | Author0748; review0814 | Valid type, size, timing, track and selection; full async prepared asset absent. Exact inner failure remains unknown. | Report only |
 
-| A3-popup-diagnostic | Retain safe refusal stage | Luna; independent review | First return from 0802 FAIL | doing | Author 0754; return 0806 | Real popup dropped diagnostic; new outer catch changed guard exception behavior. Both must be fixed before cumulative review. | 2837d62 held |
-| A3-popup-full-caller | Prove complete async popup save path | Luna | Missing preparation boundary witness | doing | app-A3-popup-full-caller-witness-0754 | Dedicated mounted test through import, preparation, preview and real dispatch. Product source owned only by diagnostic worker. | Branch only |
+| A3-popup-diagnostic | Retain safe refusal stage | Luna; independent review | First return complete | review | Author0754; return0806; review0816 | Return retains safe alert attributes and original guard behavior; author46/types/lintPASS. Cumulative review pending. | Return held |
+| A3-popup-full-caller | Prove complete async popup save path | Luna; independent Luna | Witness RED needs classification | review | Author0754; review0814 | Serialized asset validation refuses before applyEdit. Expected-failure marker is held; no passing original or defect attribution. | aebf027 held |
 | P2-tour-oracles | Strict transition and parent helpers | Proof Luna; independent review | Integrated 0800 PASS | merged | Proof 0737/0742; App proof 0800 | Exact reviewed paths on HOME28b0 passed 17 joined controls, three types, lint/list. Original gesture outcomes remain open. | 0a22d85455 / 59cb263629 |
 
-| P2-element-handler | Check retained completion attribution | Luna | Runtime source assessment complete | doing | app-P2-element-handler-retained-0808 | Only existing actual request logs and retained references. No endpoint, receipt lookup, process probe or new collection. Preserve UNKNOWN if absent. | Report preparation |
+| P2-element-handler | Check retained completion attribution | Luna; independent Luna | Independent0814 PASS | merged | Author0808; review0814 | Actual30-file inventory has no matching handler or receipt link. One POST remains unresolved; outcome UNKNOWN. No new collection. | Report only |
 
 Integration: HOME 28b0f11e1c contains reviewed tour helpers at 59cb and D50 one-line created[] at 28b0. Product source remains exact 9b810/663; test/spec changes are qualified separately and integrated proof0800 passed 17 controls, three types, lint and list checks. Original 23809/9310 remain immutable on selected663, Agent079 and Runtime37eb.
 
-Blockers: App — actual element completion is unknown; faithful popup local-placement reproduction 0745 is active.
+Blockers: App — actual element completion is unknown; popup full-caller0814 reviews the new pre-applyEdit RED witness.
 Blockers: Proof — strict helper/setup packets and independent no-weakening reviews must pass before another original pair. Proof owns its protected-tail decision request.
 Blockers: Freeze — App U3b home waits header P2/P3 GO, then D39 adoption and actual final tuple qualification. Runtime coordinates FREEZE.
-Next ready: Review popup full-caller and diagnostic return on completion. Element retained-handler audit is dispatched. U3b waits header P2/P3 GO; remaining Proof packets stay held. No new original pair released.
+Next ready: Independent full-caller, input and handler0814 plus cumulative diagnostic0816 are queued. Consume Proof clean packets on PASS. U3b waits header P2/P3 GO; no new pair released.
 
 Later: Final P1–P5 run on App service with Proof verdict after final tuple qualification, then D49 full suites and Farm F-final/ZIP. No duplicate farm or Proof run. D47 memo/capsule stays deferred and held unmerged. D46 U2c draft stays closed. D14/D23 deferred relational timing cases retain their original assertions and failures.
 
@@ -72,3 +72,5 @@ Pass 08:00Z: New INBOX/header and owner boards consumed, D50 approval applied. T
 Pass 08:03Z: Integrated0800 PASS closes source proof for tour and D50 on exact28b0; full report published. D50 worker-authored eight-column ledger row independently0758PASS copied to existing App-owned ledger; no generated combined file edited. Corrected host recipe independent0758PASS with missing final inputs explicit. Popup diagnostic0754 author completed44/types/lint; independent0802 challenges actual retained channel. Full async witness0754 active. Runtime final assessment uses ordinary0755/0756 return; active App caller citation correction sent0802.
 
 Pass 08:08Z: Runtime0757 final assessment consumed and bounded source blocker cleared. No justified runtime fix or measured latency. Element0808 inspects only already-retained handler attribution; no new endpoint or producer. Diagnostic0802 FAIL immediately assigned sole first-return0806 for actual popup retention and original guard behavior. Full caller0754 remains active with a new RED case under investigation; no expected-failure case will be merged as a passing original.
+
+Pass08:16: PLAN, COMMON, current header and peer boards rechecked. Tour/D50 and ledger are complete; Proof stale wait corrected by peer0816. Three finite independent0814 reviews dispatched; first diagnostic return completed46/types/lint and cumulative0816 dispatched. Fullcaller expected-failure remains held. No source repair inferred from an unqualified fixture.
