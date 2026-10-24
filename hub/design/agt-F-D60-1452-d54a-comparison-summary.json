@@ -1,0 +1,120 @@
+{
+  "assertions": {
+    "current_rollup_counts_preserved": true,
+    "every_exact276_selector_once": true,
+    "missing_is_not_pass": true,
+    "no_newer_extra2forward_failures_included": true,
+    "source_scopes_preserved": true
+  },
+  "classifications": {
+    "DEFERRED_CURRENT_FAIL_CHECKPOINT_CONTRAST": 1,
+    "HISTORICAL_CHECKPOINT_CONTRAST": 8,
+    "MATCHED_FAILURE_CAUSE_UNVERIFIED": 66,
+    "UNKNOWN": 201
+  },
+  "current_authoritative_rollup": {
+    "DEFERRED": 2,
+    "OPEN": 112,
+    "PASS": 162,
+    "core_DEFERRED": 2,
+    "core_OPEN": 5,
+    "core_PASS": 152,
+    "noncore_OPEN": 107,
+    "noncore_PASS": 10
+  },
+  "current_open_core": [
+    {
+      "assignment": "current-open-core-unknown-upstream",
+      "current_core_status": "FAIL",
+      "evidence_refs": [
+        "actual-home1330-core159-ordinary.xml"
+      ],
+      "node_id": "tests/editing_conformance/test_provider_occurrence_fork.py::test_v2_registered_fork_reply_physical_effects_step_reads_and_undo[True]",
+      "old276_order": 11,
+      "package": "provider",
+      "parameter": "[True]",
+      "reason": "missing_upstream_selector",
+      "upstream_status": "UNKNOWN"
+    },
+    {
+      "assignment": "current-open-core-unknown-upstream",
+      "current_core_status": "FAIL",
+      "evidence_refs": [
+        "actual-home1330-core159-ordinary.xml"
+      ],
+      "node_id": "tests/editing_conformance/test_provider_occurrence_fork.py::test_disjoint_head_merge_and_preview_keep_other_edit",
+      "old276_order": 13,
+      "package": "provider",
+      "parameter": "",
+      "reason": "missing_upstream_selector",
+      "upstream_status": "UNKNOWN"
+    },
+    {
+      "assignment": "current-open-core-unknown-upstream",
+      "current_core_status": "FAIL",
+      "evidence_refs": [
+        "d54-d57-final-classification-rollup-1242",
+        "actual-home1330-core159-ordinary.xml"
+      ],
+      "node_id": "tests/editing_conformance/test_recipe_occurrence_fork.py::test_reload_undo_redo_exact_and_replay[1]",
+      "old276_order": 98,
+      "package": "media",
+      "parameter": "[1]",
+      "reason": "missing_upstream_selector",
+      "upstream_status": "UNKNOWN"
+    },
+    {
+      "assignment": "current-open-core-unknown-upstream",
+      "current_core_status": "FAIL",
+      "evidence_refs": [
+        "d54-d57-final-classification-rollup-1242",
+        "actual-home1330-core159-ordinary.xml"
+      ],
+      "node_id": "tests/editing_conformance/test_recipe_occurrence_fork.py::test_reload_undo_redo_exact_and_replay[2]",
+      "old276_order": 99,
+      "package": "media",
+      "parameter": "[2]",
+      "reason": "missing_upstream_selector",
+      "upstream_status": "UNKNOWN"
+    },
+    {
+      "assignment": "current-open-core-unknown-upstream",
+      "current_core_status": "UNKNOWN",
+      "evidence_refs": [
+        "d54-current-rollup-1338.current_status_exceptions"
+      ],
+      "node_id": "tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight",
+      "old276_order": 162,
+      "package": "helpers",
+      "parameter": "",
+      "reason": "missing_upstream_selector",
+      "upstream_status": "UNKNOWN"
+    }
+  ],
+  "current_regressions_proven": [],
+  "deferred_checkpoint_contrast": [
+    "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head"
+  ],
+  "exact276_comparison": {
+    "lossless_selector_set": true,
+    "matched": 75,
+    "matched_upstream_ERROR": 0,
+    "matched_upstream_FAILED": 66,
+    "matched_upstream_PASSED": 9,
+    "unknown_missing_or_duplicate": 201
+  },
+  "scope": {
+    "core": 159,
+    "noncore": 117,
+    "total": 276
+  },
+  "upstream_terminal": {
+    "duration_seconds": 3563.5,
+    "errors": 14,
+    "failed": 91,
+    "passed": 12396,
+    "skipped": 16,
+    "subtests": 566,
+    "warnings": 13
+  }
+}

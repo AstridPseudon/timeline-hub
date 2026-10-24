@@ -1,0 +1,70 @@
+{
+  "bench_lease_result": "complete",
+  "completeness_checks": {
+    "no_duplicate_service_requested": true,
+    "source_and_runtime_tuple_retained": true,
+    "terminal_status_exit_and_bench_complete": true,
+    "xml_counts_match_service_summary": true,
+    "xml_end_tag_present": true,
+    "xml_parse_complete": true
+  },
+  "environment_facts": {
+    "authoritative_fact_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D60-baseline-terminal-1452/evidence/upstream-source-custody.json",
+    "clean_source_and_runtime_guards": "retained and asserted in service preflight",
+    "module_origin_guards": "retained and asserted in service preflight",
+    "node": "v20.19.4",
+    "profile": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110",
+    "python": "/home/user/work/venv-agent/bin/python",
+    "runtime_checkout": "/home/user/work/runtime"
+  },
+  "exit_code": 1,
+  "junit_bytes": 6732462,
+  "junit_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D60-snapshot-return-1342/evidence/upstream-full-9244377.xml",
+  "junit_sha256": "2941565205663912985f766210bfead7db42264976fabee7dc899d03d4f4657f",
+  "request": [
+    "target=agt-F-D60-baseline-amend-1336",
+    "repo=agent",
+    "suite=full-upstream-final-9244377",
+    "files=''",
+    "nocache=1",
+    "requested=2026-10-24T13:51:20Z"
+  ],
+  "schema": "timeline.agent.d54a.upstream-terminal-custody.v1",
+  "service_id": "agt-F-D60-baseline-amend-1336-full-upstream-final-9244377-1024135120-1621",
+  "service_summary_counts": {
+    "duration_seconds": 3563.5,
+    "errors": 14,
+    "failed": 91,
+    "passed": 12396,
+    "skipped": 16,
+    "subtests": 566,
+    "warnings": 13
+  },
+  "source_boundary": {
+    "agent_head": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "agent_tree": "a81a8c7f262e4416dcdefc0720fd760e026d766b",
+    "external_app": "d24ed69dcdbd464159a1b6db27403ce6a96be2e5",
+    "external_composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "runtime_head": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+    "runtime_tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89"
+  },
+  "status": "fail",
+  "summary_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-F-D60-baseline-amend-1336-full-upstream-final-9244377-1024135120-1621/summary",
+  "terminal": true,
+  "xml_counts": {
+    "closing_testsuites_present": true,
+    "root_errors": 14,
+    "root_failures": 91,
+    "root_skipped": 16,
+    "root_tests": 13083,
+    "root_time_seconds": 3563.015,
+    "subtests_from_root_minus_testcases": 566,
+    "testcase_elements": 12517,
+    "testcase_status_counts": {
+      "ERROR": 14,
+      "FAILED": 91,
+      "PASSED": 12396,
+      "SKIPPED": 16
+    }
+  }
+}
