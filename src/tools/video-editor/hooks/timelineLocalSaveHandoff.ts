@@ -43,7 +43,33 @@ export interface TimelineLocalSaveHandoff {
 
 /** Scoped editors supply their own verified physical-image join and durable owner. */
 export type TimelinePersistenceHandoff = Pick<TimelineLocalSaveHandoff, 'capture' | 'flush'>;
-export const TimelinePersistenceHandoffContext = createContext<TimelinePersistenceHandoff | undefined>(undefined);
+export interface TimelinePersistenceBinding {
+  readonly provider: DataProvider;
+  readonly timelineId: string;
+}
+const persistenceBindings = new WeakMap<TimelinePersistenceBinding, TimelinePersistenceHandoff>();
+export const TimelinePersistenceHandoffContext = createContext<TimelinePersistenceBinding | undefined>(undefined);
+
+/** Assembly issues a capability for one provider and one mounted editor scope. */
+export function bindTimelinePersistenceHandoff(
+  provider: DataProvider, timelineId: string, handoff: TimelinePersistenceHandoff,
+): TimelinePersistenceBinding {
+  const binding = Object.freeze({ provider, timelineId });
+  persistenceBindings.set(binding, handoff);
+  return binding;
+}
+
+const invalidPersistenceBinding: TimelinePersistenceHandoff = {
+  async capture() { throw new TimelineVersionConflictError('Scoped timeline save binding is unavailable; draft retained'); },
+  async flush() { throw new TimelineVersionConflictError('Scoped timeline save binding is unavailable; draft retained'); },
+};
+export function resolveTimelinePersistenceHandoff(
+  binding: TimelinePersistenceBinding | undefined, provider: DataProvider, timelineId: string,
+): TimelinePersistenceHandoff | undefined {
+  if (binding === undefined) return undefined;
+  return binding.provider === provider && binding.timelineId === timelineId
+    ? persistenceBindings.get(binding) ?? invalidPersistenceBinding : invalidPersistenceBinding;
+}
 
 const same = (a: unknown, b: unknown) => a === undefined || b === undefined
   ? a === b : canonicalJsonStringify(a) === canonicalJsonStringify(b);

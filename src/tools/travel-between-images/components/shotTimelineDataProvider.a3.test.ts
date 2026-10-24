@@ -142,10 +142,12 @@ describe('shot popup A3 save ingress', () => {
     const dependent = { ...first, clips: first.clips.map(clip => clip.id === 'popup-added-a3'
       ? { ...clip, label: 'Captured dependent' } : clip) };
     try {
-      const captured = provider.localDocumentSave!.capture({ config: first, registry: (await provider.loadAssetRegistry()) });
+      const captured = provider.localDocumentSave!.capture({ head: { projectId: scope.projectId, timelineId: scope.timelineId,
+        headRevisionId: h.initial.head.revisionId, headPublicationId: h.initial.head.publicationId }, config: first, registry: (await provider.loadAssetRegistry()) });
       first.clips.at(-1)!.id = 'mutated-after-capture';
       await captured;
-      await provider.localDocumentSave!.capture({ config: dependent, registry: (await provider.loadAssetRegistry()) });
+      await provider.localDocumentSave!.capture({ head: { projectId: scope.projectId, timelineId: scope.timelineId,
+        headRevisionId: h.initial.head.revisionId, headPublicationId: h.initial.head.publicationId }, config: dependent, registry: (await provider.loadAssetRegistry()) });
       const [record] = await h.records();
       expect(record.intents).toHaveLength(2);
       expect(record.intents[0].basis).toEqual({ head: h.initial.head });
@@ -164,6 +166,47 @@ describe('shot popup A3 save ingress', () => {
       expect(h.send.mock.calls[1][0].commands[0].args.changes).toEqual([{ op: 'set', ref: internalRef,
         path: ['clips', 'id:popup-added-a3', 'label'], before: { state: 'absent' }, value: 'Captured dependent' }]);
       expect(legacy).not.toHaveBeenCalled();
+    } finally { await provider.dispose(); }
+  });
+
+  it.each(['missing', 'project', 'timeline', 'revision', 'publication'] as const)(
+    'refuses a %s source head before popup outbox admission', async (kind) => {
+      const h = harness();
+      const provider = h.mount();
+      const head = { projectId: scope.projectId, timelineId: scope.timelineId,
+        headRevisionId: h.initial.head.revisionId, headPublicationId: h.initial.head.publicationId };
+      if (kind === 'project') head.projectId = 'another-project';
+      if (kind === 'timeline') head.timelineId = 'another-timeline';
+      if (kind === 'revision') head.headRevisionId = 'another-revision';
+      if (kind === 'publication') head.headPublicationId = 'another-publication';
+      try {
+        await expect(provider.localDocumentSave!.capture({ config: h.add(),
+          registry: await provider.loadAssetRegistry(), head: kind === 'missing' ? undefined : head }))
+          .rejects.toThrow('Popup canonical head changed during capture');
+        expect((await h.records()).flatMap(record => record.intents)).toEqual([]);
+        expect(h.send).not.toHaveBeenCalled();
+        expect(h.oldPublish).not.toHaveBeenCalled();
+      } finally { await provider.dispose(); }
+    },
+  );
+
+  it.each(['scope', 'projection'] as const)('refuses an unbound %s despite a matching parent head', async (kind) => {
+    const h = harness();
+    if (kind === 'scope') {
+      (h.before.parent_revision.payload.occurrences as Array<Record<string, unknown>>)[0].occurrence_id = 'another-occurrence';
+    } else {
+      h.before.internal_timeline_revisions[0].content_digest = 'sha256:another-physical-image';
+      h.before.dependency_manifest.internal_timelines[0].content_digest = 'sha256:another-physical-image';
+    }
+    const provider = h.mount();
+    try {
+      await expect(provider.localDocumentSave!.capture({ config: h.add(), registry: await provider.loadAssetRegistry(),
+        head: { projectId: scope.projectId, timelineId: scope.timelineId,
+          headRevisionId: h.initial.head.revisionId, headPublicationId: h.initial.head.publicationId } }))
+        .rejects.toThrow(kind === 'scope' ? 'unique physical occurrence binding' : 'verified physical closure pin');
+      expect((await h.records()).flatMap(record => record.intents)).toEqual([]);
+      expect(h.send).not.toHaveBeenCalled();
+      expect(h.oldPublish).not.toHaveBeenCalled();
     } finally { await provider.dispose(); }
   });
 

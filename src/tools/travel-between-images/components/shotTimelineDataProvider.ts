@@ -33,7 +33,7 @@ import {
   updateCanonicalShotTimeline,
 } from '@/tools/video-editor/data/shotCompositionEditor.ts';
 import { createLocalSaveSession, type LocalSave, type LocalSaveSession, type LocalSaveState } from '@/tools/video-editor/commands/localSaveSession.ts';
-import type { TimelinePersistenceHandoff } from '@/tools/video-editor/hooks/timelineLocalSaveHandoff.ts';
+import { bindTimelinePersistenceHandoff, type TimelinePersistenceBinding, type TimelinePersistenceHandoff } from '@/tools/video-editor/hooks/timelineLocalSaveHandoff.ts';
 import type { CanonicalDocument, CommitRequest } from '@/integrations/runtime/timeline-commit-types.ts';
 import { toOutboxJson, type OutboxJson } from '@/tools/video-editor/commands/commitOutbox.ts';
 import type {
@@ -285,6 +285,7 @@ type ShotTimelineDataProvider = DataProvider & {
   getProjectMediaSelection?: (query: MediaSelectionQuery) => Promise<MediaSelection>;
   getProjectVerifiedMedia?: (selection: MediaSelection) => Promise<VerifiedMedia>;
   localDocumentSave?: TimelinePersistenceHandoff;
+  bindLocalDocumentSave(timelineId: string): TimelinePersistenceBinding | undefined;
   timelineQueryIdentity: string;
   setPublishCallback: (callback?: (
     composition: PreparedShotComposition,
@@ -999,6 +1000,21 @@ export function createShotTimelineDataProvider(
     void localSaveSessionPromise.catch(() => {});
   }
 
+  // Only the verified assembly read and our own accepted successors supply
+  // source pins; a display projection or a later provider poll cannot do so.
+  const readSourceHead = () => {
+    const sourceComposition = composition;
+    const sourceHead = localSaveHead;
+    return localSaveSessionPromise!.then(() => {
+      const verified = sourceHead ?? localSaveHead;
+      if (!verified || verified.revisionId !== sourceComposition.headRevisionId) {
+        throw new TimelineVersionConflictError('Popup original source head is unavailable; draft retained');
+      }
+      return { projectId: sourceComposition.projectId, timelineId: sourceComposition.parentDocumentId,
+        headRevisionId: verified.revisionId, headPublicationId: verified.publicationId };
+    });
+  };
+
   let captureChain: Promise<void> = Promise.resolve();
   let capturedExpectedHeadRevisionId = composition.headRevisionId;
   const localDocumentSave: TimelinePersistenceHandoff | undefined = localSaveEnabled ? {
@@ -1012,10 +1028,10 @@ export function createShotTimelineDataProvider(
         const session = await localSaveSessionPromise!;
         assertEditorHeadIsCurrent();
         if (canonicalBase.headRevisionId !== rawComposition.headRevisionId
-          || (head && (head.projectId !== rawComposition.projectId
-            || head.timelineId !== rawComposition.parentDocumentId
-            || head.headRevisionId !== rawComposition.headRevisionId
-            || head.headPublicationId !== localSaveHead?.publicationId))) {
+          || !head || head.projectId !== rawComposition.projectId
+          || head.timelineId !== rawComposition.parentDocumentId
+          || head.headRevisionId !== rawComposition.headRevisionId
+          || head.headPublicationId !== localSaveHead?.publicationId) {
           throw new TimelineVersionConflictError('Popup canonical head changed during capture; draft retained');
         }
         const draftRegistry = nextRegistry ?? registry;
@@ -1110,6 +1126,15 @@ export function createShotTimelineDataProvider(
 
   const provider: ShotTimelineDataProvider = {
     localDocumentSave,
+    bindLocalDocumentSave: (timelineId) => localDocumentSave
+      ? bindTimelinePersistenceHandoff(provider, timelineId, {
+          capture(source) {
+            const snapshot = structuredClone(source);
+            const head = readSourceHead();
+            return head.then(verified => localDocumentSave.capture({ ...snapshot, head: snapshot.head ?? verified }));
+          },
+          flush: () => localDocumentSave.flush(),
+        }) : undefined,
     get timelineQueryIdentity() {
       return timelineQueryIdentity;
     },
@@ -1256,7 +1281,7 @@ export function createShotTimelineDataProvider(
       const draftRegistry = nextRegistry ?? registry;
       assertEditorHeadIsCurrent();
       if (localDocumentSave) {
-        await localDocumentSave.capture({ config: nextConfig, registry: draftRegistry });
+        await localDocumentSave.capture({ config: nextConfig, registry: draftRegistry, head: await readSourceHead() });
         return (await localDocumentSave.flush()).configVersion;
       }
       if (!shotCompositionAdapter?.publish) {

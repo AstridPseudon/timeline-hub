@@ -36,7 +36,7 @@ import type { AssetRegistry, TimelineConfig } from '@/tools/video-editor/types/i
 import type { CommitDataOptions, ScheduleSaveFn } from '@/tools/video-editor/hooks/useTimelineCommit.ts';
 import { generateUUID } from '@/shared/lib/taskCreation/ids.ts';
 import { emitTimelineSaveDiagnostic, isTimelineDiagnosticsEnabled } from '@/tools/video-editor/lib/timeline-diagnostics.ts';
-import { TimelinePersistenceHandoffContext, type TimelineGestureReadBasis, type TimelinePersistenceHandoff } from './timelineLocalSaveHandoff.ts';
+import { TimelinePersistenceHandoffContext, resolveTimelinePersistenceHandoff, type TimelineGestureReadBasis, type TimelinePersistenceHandoff } from './timelineLocalSaveHandoff.ts';
 
 export type SaveStatus = 'saved' | 'saving' | 'dirty' | 'retrying' | 'error';
 
@@ -257,7 +257,8 @@ export function useTimelinePersistence({
   diagnosticOwner,
 }: UseTimelinePersistenceOptions): UseTimelinePersistenceResult {
   const scopedLocalDocumentSave = useContext(TimelinePersistenceHandoffContext);
-  const localDocumentSave = suppliedLocalDocumentSave ?? scopedLocalDocumentSave;
+  const localDocumentSave = resolveTimelinePersistenceHandoff(scopedLocalDocumentSave, provider, timelineId)
+    ?? suppliedLocalDocumentSave;
   const fallbackHeadRevisionRef = useRef(dataRef.current?.head);
   const headRevisionRef = suppliedHeadRevisionRef ?? fallbackHeadRevisionRef;
   const persistenceEnabled = isDataProviderPersistenceEnabled(provider);

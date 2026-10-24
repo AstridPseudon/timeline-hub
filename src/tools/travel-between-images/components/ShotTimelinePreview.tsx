@@ -588,6 +588,8 @@ export function ShotTimelinePreview({
   dataProvider?.setPublishCallback(handleCanonicalCompositionPublished);
   const canEdit = shotCompositionAdapter?.publish !== undefined;
   const shotTimelineId = shotTimelineSessionId(currentComposition.parentDocumentId, occurrenceId, editorSessionToken);
+  const persistenceBinding = useMemo(() => dataProvider?.bindLocalDocumentSave(shotTimelineId),
+    [dataProvider, shotTimelineId]);
   if (freshHeadStatus === 'loading') {
     return <section data-shot-timeline-preview="true" data-shot-timeline-status="loading" aria-label="Shot timeline">Loading current shot timeline…</section>;
   }
@@ -638,7 +640,7 @@ export function ShotTimelinePreview({
         </div>
       </div>
 
-      <TimelinePersistenceHandoffContext.Provider value={dataProvider?.localDocumentSave}>
+      <TimelinePersistenceHandoffContext.Provider value={persistenceBinding}>
         <VideoEditorProvider
           dataProvider={dataProvider!}
           projectId={currentComposition.projectId}
