@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T10:26:07Z | dispatcher heartbeat 5s | live 7 (sol 0, luna 7, other 0) | busy30 16 | status age 2m -->
-# agent board, 2026-10-24T10:17:43Z
+<!-- agent | 2026-10-24T10:28:31Z | dispatcher heartbeat 11s | live 8 (sol 0, luna 8, other 0) | busy30 18 | status age 1m -->
+# agent board, 2026-10-24T10:27:15Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -118,7 +118,7 @@
 | OPS received kit | Verify kit receipt and jaraco facts | Luna | Independent finite result review | merged | Independent 0814 PASS | New helper b8b5 and maker e4c0 match live, normal publication and committed hub. Requester and Store unchanged. | Evidence only |
 | G4 media admission | Connect ordinary publish to verified inputs | Luna | Existing authentic admission path | merged | Source 0823 PASS; home 0832 PASS20 | Authoritative public admission, retry and foreign no-write work on integrated home; original managed duck remains separate. | 0ff3d103fb |
 | F joined source | Qualify U2, D39, D18 and ABA together | Luna | Reviewed normal home merges | merged | Joined 0816; independent 0823 PASS | 123 cases, all 15 mappings, 50 auth blobs, Ruff2145 and mypy1902 pass on exact home 0c2c. | 0c2c28da4f |
-| F ABA managed row | Attach reviewed completion capture and retain packet | Luna / Luna | Independent runner review | review | Author1004; review1014 | Integrated19 plus new offline1 pass. Exact two-file runner546d saved; source/module/profile/original guards and durable retention under review. Original held. | 546d86816a |
+| F ABA managed row | Attach reviewed completion capture and retain packet | Luna / Luna | First-return candidate review | review | Author1004; FAIL1014; return1019 | Return now has actual candidate and install manifest;21 offline pass. Normal finalization saves new tests before independent review. Original held. | Support546d; return pending |
 | OPS wheel result review | Verify actual input and new kit receipt | Luna | Reviewed b330 helper | merged | agt-OPS-real-wheel-review-0814 PASS | All 67 original wheels and all four received kit files independently verified. Bootstrap unverified. | Lock 236d unchanged |
 
 | F count giant home | Credit one exact qualified original | Sol | Independent result 0814 PASS | merged | Author 0818; independent 0827 PASS | Official 263 closed / 4 open. All 266 other records unchanged; 123 mappings. | e13d65ba |
@@ -151,11 +151,13 @@
 
 | F local checkpoint | Qualify D49 fallback on existing service | Service | H36 owner instruction | doing | agent-full-1024095047-9758 | One full queued on working venv-agent registration; running. Exact ba55 snapshot, current Runtime and existing renderer profile. | Home ba55 |
 
-| R2 historical source | Restore authenticated prior item mapping during undo | Sol / Luna | Actual integrated qualification | doing | Sol0959; review1011; home1017 | Independent67 plus244 pass, strict static gates pass. Normal merge d83 completed; integrated67 now assigned. | Home d83e8de3a1 |
+| R2 historical source | Restore authenticated prior item mapping during undo | Sol / Luna | Rationale guard correction | doing | Integrated1017 PASS67; structure1023 FAIL | Actual d83 behavior and static gates pass. Inverse grew1166 to1208, requiring one missing rationale entry; docs-only1026 assigned. | Home d83e8de3a1 |
 
 | OPS five-wheel receipt | Verify genuine received bootstrap and test inputs | Luna / Luna | Actual received input independently passed | merged | Author1004; independent1011 PASS | Archive443977 and all10 members, five wheelhashes, roles, lock and committed artifact match. No ORCH sidecar; no install or child claim. | Input only |
 
 | OPS shared schema source | Preserve declared schema authority | Runtime / owner | Orchestrator10:16 disposition | blocked:runtime | Runtime acquisition0955 stopped | Exact declared source HTTP403; automatic access request refused. No alternate route. Installed provenance0918/0922 stays scoped. | Source242f unknown |
+
+| R2 structure rationale | Register newly over-threshold inverse file | Luna / Luna | Source d83, structure1023 FAIL | doing | agt-R2-rationale-1026 | Add only exact1208-line rationale entry; all38 prior entries and original test unchanged. Independent review and integrated proof follow. Due10:40Z. | Base d83 |
 
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
 Integration: d83e8de3a1 normally merges reviewed R2 historical-source fix1c917 above3c3 opt-in capturehelper and qualified R1homef91. Actual R2 integrated67 worker1017 is assigned; source/security independent1011 passed67 plus244. No original-node credit.
