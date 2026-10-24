@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T04:10:52Z | dispatcher heartbeat 1s | live 3 (sol 1, luna 2, other 0) | busy30 18 | status age 0m -->
-# app board, 2026-10-24T04:10Z
+<!-- app | 2026-10-24T04:13:43Z | dispatcher heartbeat 6s | live 3 (sol 1, luna 2, other 0) | busy30 15 | status age 2m -->
+# app board, 2026-10-24T04:11Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -40,12 +40,12 @@
 | A4-track-label | Move faithful label protocol declarations | Luna | First return completed | merged | app-A4-dormant-protocol-sol-0306 | D37 dormant native-label path verified. Original declarations and helpers unchanged; failed packet held. Bounded follow-up listed in App ledger. | Return branch only |
 | A4-replay-protocol | Move one faithful replay declaration | Luna | Independent 0249 PASS | merged | app-A4-replay-current-packet-0257 | Review passed 124 tests, three types and lint. Current packet passed 138 tests, three types and lint; merged 9e83160c0e. Five unmappable originals retained. | 6585ad99e3 donor |
 | A4-label-refusals | Move three equivalent label refusals | Luna | Independent 0252 PASS | merged | app-A4-label-refusal-current-0257 | Independent 124 tests, three types and lint passed. Three original ownership, basis and mixed-preview cases kept unchanged. Current packet passed 128 tests, three types and lint; merged a64587176d. | 594ce7ba8a donor |
-| readiness-backend-bench | Exact compatible backend child custody | Dispatcher; App caller | Actual keyed child receipt | doing | child app-ready-079-37eb-0256 | Exact 37eb checkout verified. Normal child 0256 passed with exact installed backend. Remotion 0258 verified reuse; actual backend imports match. | Runtime 37eb6c7bdb |
+| readiness-backend-bench | Exact compatible backend child custody | Dispatcher; App caller | Actual keyed child receipt | merged | child app-ready-079-37eb-0256 | Exact 37eb checkout verified. Normal child 0256 passed with exact installed backend. Remotion 0258 verified reuse; actual backend imports match. | Runtime 37eb6c7bdb |
 | A4-reachable-census | Check current fallback writer reachability | Luna | Current merged cuts | merged | app-A4-current-reachable-census-0300 | One reachable element adapter writer found; Sol0306 assigned. Executor and legacy protocol paths have no production value caller. | Current integration |
 | A2-element-writer | Move registered element saves to A2 | Sol; Luna review | Independent 0335 PASS | merged | app-A2-element-handoff-sol-0314 | Merged f90 has exact reviewed source tree; independent221 tests, three types and lint passed. Final census0340 assigned. | f90e708b37 |
 | A4-protocol-joined | Qualify merged protocol packets | Luna | Three reviewed merges | merged | app-A4-protocol-joined-proof-0306 | Exact a645 passed 139 tests, three typechecks, lint and donor identities. Remaining 35 original declarations unchanged; failed packets unmerged. | a64587176d |
 | P2-P3-result-handoff | Publish same-ID changed-pair evidence | Luna | Actual terminal artifacts | merged | app-P2-P3-D41-result-handoff-0307 | Terminal P2 three failed, five not run; P3 Gate5 not run. Full producer and three qualified P3 safe files published for Proof. | App804 / Agent079 / Runtime37eb |
-| readiness-D41-cause | Classify changed-pair readiness failure | Sol; Luna review | Actual retained artifacts | doing | app-readiness-D41-cause-sol-0309 | Independent0309 PASS with corrections: P3 outbox unknown before connected/fresh-owner checks. First history 3.56 seconds; exact later await and trigger unknown. | App804 / Agent079 / Runtime37eb |
+| readiness-D41-cause | Classify changed-pair readiness failure | Sol; Luna review | Independent review complete | merged | app-readiness-D41-cause-sol-0309 | Independent0309 PASS with corrections: P3 outbox unknown before connected/fresh-owner checks. First history 3.56 seconds; exact later await and trigger unknown. | App804 / Agent079 / Runtime37eb |
 | readiness-phase-diagnostics | Report validated read completion truthfully | Sol; Luna review | Cumulative0345 and0355 PASS | merged | app-readiness-element-join-sol-0351 | Validated phase correction and generation diagnostics integrated with element routes; primary errors and wait/body guards retained. | e492d963ba |
 | P2-gesture-causes | Classify three actual gesture failures | Luna | Review 0327 complete | merged | app-P2-gesture-review-0327 | [Source classification PASS with corrected mounted save citation. Exact triggers remain unknown.](../../design/app-P2-gesture-review-0327.md) | Report only |
 | readiness-D42-trace | Correlate retained request and close times | Sol; Luna review | Independent review complete | merged | app-readiness-D42-trace-review-0332 | [All eight timings verified; causal link insufficient. Sent before03:50.](../../design/app-readiness-D42-trace-review-0332.md) | Report only |
@@ -64,8 +64,8 @@ Safety: Historical cleanup, graph and publication denials stand. Managers write 
 Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397-line, 40-assertion test, plus required helpers, under D31.
 Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-handoff-0029.md), [image review](/home/user/timeline-hub/hub/design/app-A2-image-created-review-0133.md), [A4 cut map](/home/user/timeline-hub/hub/design/app-A4-current-cut-census-0042.md).
 Integration: e492d963ba; joined 332 and independent 108 tests, three types and lint passed. Element migration is integrated; original old804 element failure is not directly reproduced.
-Blockers: Runtime — D42 corrected source review0357, proof pin0358, independent proof and HTTP release remain required before caller custody.
+Blockers: Runtime — Review0357 found another warm-cache closure bypass. Correction0403 and whole-path audit0403 are active; pin and HTTP release remain held.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
 Next ready: Wrapper review0408; parent and transition author0411; child placement0410; Proof popup lookup request0408. Qualify D42 caller once Runtime pin and HTTP release arrive. No repeat now.
-Disk: 11.06 GiB available before this pass cleanup. No finished non-KEEP clean worktree remains. Prior dirty U3 and compact refusals stand; sweep3 running. Freed bytes pending.
+Disk: 11.06 GiB available before this pass cleanup. No finished non-KEEP clean worktree remains. Prior dirty U3 and compact refusals stand; sweep3 removed zero directories. Freed zero GB.
 Blockers: Agent — Image helper0348 must qualify before a future producer reservation. Actual0330 output and partial acceptance remain immutable.
