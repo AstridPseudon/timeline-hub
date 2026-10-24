@@ -3250,6 +3250,8 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
     for command in _document_edit_commands(candidate).values():
         print("next: " + command)
     print("Use a fresh idempotency key for new intent; reuse the same candidate and key for a retry.")
+    if target is not None:
+        print(f"next: timelines check {target}")
     return sweep_status or verify_status
 
 
