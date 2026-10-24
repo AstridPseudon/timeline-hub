@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T05:36:29Z | dispatcher heartbeat 15s | live 5 (sol 1, luna 4, other 0) | busy30 21 | status age 0m -->
-# app board, 2026-10-24T05:29Z
+<!-- app | 2026-10-24T05:39:40Z | dispatcher heartbeat 10s | live 4 (sol 1, luna 3, other 0) | busy30 18 | status age 1m -->
+# app board, 2026-10-24T05:37Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -23,7 +23,7 @@
 | P3 | Original Gate-5 journey | App service; Proof verdict | Reset setup author and review | blocked:app2 | ap2-P3-reset-isolation-0518 | D45 4065 failed initial reset after readiness passed. Proof owns real UI precondition; original reset and every tail stay exact. | c0fe889944 |
 | A2-parent-media-closure | Preserve untouched child closure | Sol; Luna review | Resolved | merged | app-A2-parent-media-integrated-0035 | [299 tests, types, lint and external producer passed.](/home/user/timeline-hub/hub/design/app-A2-parent-media-integrated-0035.md) | 1b0428db7d |
 | A2-image-created | Declare genuine image creations | Sol; Luna review | Review 0133 PASS | merged | app-A2-image-created-sol-0126 | Independent 261 tests and producer 28, three types and lint passed. Clip and new authored registry alias claims match provider. Joined proof 0150 passed 448 tests, three types and lint. | b3a84dea71 / 1c5cc47bf6 |
-| A4-image-live | Complete source-bound image witness | Luna producer; Agent witness | Qualified forwarding source | doing | app-A4-image-producer-standby-0520 | RUNNING and PREPARED 05:20:44 to 05:45:44. Agent asked for one fresh input; no attempt yet. Closed 0441 stays incomplete. | Fixed source 1c5cc |
+| A4-image-live | Complete source-bound image witness | Luna producer; Agent witness | Qualified forwarding source | doing | app-A4-image-producer-standby-0520 | Output 1492 bytes and 7f90 hash published byte-exact for fresh 0554. One attempt; Agent owns actual acceptance, undo and reopen. | Fixed source 1c5cc |
 | A2-video-caller | Normalized video duplication | Sol; Luna review | Resolved | merged | app-A2-video-integrated-2350 | 217 integrated tests and three typechecks passed. Agent provider is merged; no old raw-positive parity claim. | a714a4cc11 |
 | U3b-draft | Final upstream composition | Sol; Luna review | P2/P3 and final freeze | gated:freeze | app-U3b-current-join-2053 | Reviewed branch stays isolated. Refresh live upstream refs at freeze; do not merge during pinned proof. | Branch only |
 | F-App-full | Full suite before retirement | Test service; Luna review | Resolved for historical head | merged | app-F-D19-current-full-1230 | 18,819 tests passed on exact 12ef. A final qualification follows actual retirement and freeze. | 12ef320545 |
@@ -79,7 +79,7 @@
 | A3-popup-raw-track | Preserve captured raw popup ADD track | Luna first return | Independent 0525 FAIL | doing | app-A3-popup-track-mounted-return-0532 | Missing disabled-track refusal and mounted occupied-V2 positive. Actual production carrier verified; first return assigned. | Branch only |
 | P2-D45-cause-review | Review popup and parent causal limits | Luna | Complete | merged | app-P2-D45-popup-parent-cause-review-0511 | Product track cause confirmed; parent remains precisely unknown. Full report published. | Report only |
 | A2-parent-mounted-repro | Reproduce real move scheduling boundary | Sol; independent Luna | Review 0525 PASS | merged | app-P2-current-path-repro-review-0525 | Independent exact-resource rerun confirms two RED and one PASS. opaqueClip loss and deferred basis loss confirmed; original ordering unknown. | Report and RED artifact only |
-| P2-popup-created-oracle | Assert exact required created claims | Proof Luna | Author and independent review | blocked:app2 | ap2-P2-created-claims-oracle-0521 | Proof owns exact C0 claim expectation; all core command, media, closure, selectors and undo assertions retained. | Branch only |
+| P2-popup-created-oracle | Assert exact required created claims | Proof Luna; independent review | Review 0526 PASS; home merge | merged | ap2-P2-created-claims-oracle-0521 | Exact ordered asset and clip refs; all other bytes retained. Home merge receipt 5f43 confirmed. Live P2 remains open. | 2972a7c4c / 5f43d9e86a |
 
 | P2-five-current-paths | Recheck five original never-run paths | Luna; independent Luna | Review 0525 PASS | merged | app-P2-current-path-repro-review-0525 | All five real selectors and mounted paths confirmed. No prior static gap remains. Browser upload, dispatch, reload and undo stay unknown. | Report only |
 
@@ -95,5 +95,5 @@ Next ready: Catalog return 0524, parent source 0525 and params 0505 active. Popu
 Disk: About 11 GB available. Recycled finished caller 0446 through bin/recycle. Sweep 3 removed zero directories; freed 0 GB. Historical dirty U3 and compact refusals remain stopped.
 
 Lead: D45 pair is terminal: P213583 failed3 with5 not run; P34065 failed original Gate5 after readiness passed. Full packet and causal owners are in peer0504.
-Blockers: Agent — image producer 0520 is prepared until 05:45:44; next genuine input is awaited.
+Blockers: Agent — fresh image 0554 output is published; actual Runtime acceptance, undo and reopen verdict awaited.
 Blockers: Proof — Gate5 requires a real 5-second precondition. Proof owns setup correction and independent no-weakening; App review 0506 passed.
