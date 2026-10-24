@@ -1,0 +1,86 @@
+OPS schema distribution existing-input evidence
+Task: agt-OPS-schema-input-0918
+Scope: read-only inspection of /home/user/work/venv-agent and selected Agent source files.
+No install, download, network, cache search, child request, process probe, or venv mutation.
+
+Observed package
+  distribution: banodoco-timeline-schema
+  version: 0.0.2
+  installed package path:
+    /home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema
+  dist-info path:
+    /home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema-0.0.2.dist-info
+  installer: pip (INSTALLER physical sha256 ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508)
+
+direct_url provenance (safe parsed fields only)
+  repository: github.com/banodoco/ArtAgents.git
+  vcs: git
+  requested_revision: 242f9c4306bf3b501222cb041a9eb246ef47bc85
+  commit_id: 242f9c4306bf3b501222cb041a9eb246ef47bc85
+  subdirectory: packages/timeline-schema/python
+  direct_url.json physical sha256: b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e
+  direct_url RECORD digest: sha256=t6Ck-QIY1UvB-xGGCdQKOB9XYmUPjlhj7DkJjsJpFl4
+  URL safety: no credential, query, or fragment was observed; raw URL is not reproduced here.
+
+Metadata and RECORD
+  METADATA physical sha256: 49fd34e5afe868b39ef9c7131f8093ca98017f0129faab5aa86bd5a80e2eba0e
+  METADATA RECORD digest: sha256=Sf005a_oaLOe-ccTH4CTypgBfwEp-qtaqGvVqA4uug4
+  RECORD physical sha256: 50be781bec3546ca9995ce2f0aaa1284fa68198735866c0f00a601bb3ce9c3a1
+  RECORD self-entry: blank by wheel/install convention; its physical hash is not an original artifact hash.
+  RECORD verification: every nonblank RECORD sha256 digest matched the current installed file; pycache entries were blank/unhashed.
+  RECORD does not authenticate an original wheel/archive hash.
+
+Physical hashes for the retained installed files
+  ...dist-info/INSTALLER: ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508
+  ...dist-info/METADATA: 49fd34e5afe868b39ef9c7131f8093ca98017f0129faab5aa86bd5a80e2eba0e
+  ...dist-info/RECORD: 50be781bec3546ca9995ce2f0aaa1284fa68198735866c0f00a601bb3ce9c3a1
+  ...dist-info/REQUESTED: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  ...dist-info/WHEEL: 98e75747d0b7c0c568bfb71263c3d8f970b3a374a6996087bc642be5cb09a1aa
+  ...dist-info/direct_url.json: b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e
+  ...dist-info/top_level.txt: 543a8d01279949f8ec5ec908c47cfcdb6978921a13207e748a97376022d86ee0
+  banodoco_timeline_schema/__init__.py: 0760fca0b4ea29ca384932eb2291044acc6b9b62e12153b7480d2e354cef845c
+  banodoco_timeline_schema/generated.py: da74eae27fafc8e8410b96c99cec0652f54343fa7b975ec315295d644ea6ae63
+  banodoco_timeline_schema/materialize.py: 41651567e2e29b565a2854210c146ecb450c49c815504ede375775eb020bde38
+  banodoco_timeline_schema/theme.py: b713f1e61c8c63b1ce957d7a6c4b1f1c5c1700d4fd6336f99f97ba7e964f4dcb
+  banodoco_timeline_schema/timeline.schema.json: 5592a6bb4376b9b9b84d66897b17f058eed5f0176d3c9ead262e19283fc86f25
+  banodoco_timeline_schema/validate.py: ef953e644cbaee6919397571a00966c45cddf9e55f4d83636e9a037afb187059
+
+Passing interpreter and import finder
+  interpreter: /home/user/work/venv-agent/bin/python
+  Python: 3.13.16
+  sys.prefix: /home/user/work/venv-agent
+  importlib.util.find_spec('banodoco_timeline_schema').origin:
+    /home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py
+  imported module __file__: same as finder origin
+  production caller __file__:
+    /home/user/work/wt/agt-OPS-schema-input-0918/astrid/core/timeline/banodoco_schema.py
+  production_shared_type_identity: True
+  production_materializer_identity: True
+  production caller source physical sha256: 572845f1102cefd2c8c9cae1f889393e3ba1b7b2b8d681f3f1f0bd96c63321ce
+  caller imports/re-exports the external package at banodoco_schema.py:41-60 and 83-89.
+
+Declared installer/local inputs (declarations, not original-artifact custody)
+  pyproject.toml:59 dev optional dependency names the Git source at the same
+  pin, with repo path github.com/banodoco/astrid-agent.git and subdirectory
+  packages/timeline-schema/python.
+  pyproject.toml physical sha256: 79c9a2e614f37ab57bad967b4cb9f9f1adfa4eedda3116b64b1d044b4dc1eb30
+  banodoco_schema.py:67-68 documents editable local input:
+    /path/to/banodoco-workspace/packages/timeline-schema/python
+  host_bootstrap.py:485-496 supports a server-owned local Python root at
+    Remotion node_modules/@banodoco/timeline-schema/python through
+    ASTRID_TIMELINE_SCHEMA_PYTHONPATH.
+  requirements/proof.lock contains no banodoco-timeline-schema entry.
+  proof.lock physical sha256: 236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778
+
+Custody boundary
+  retained installed package directory: proven at the path above.
+  original wheel/artifact hash: UNKNOWN; no retained original wheel/archive
+    was referenced by the inspected direct_url/metadata or the retained
+    source-facts reports.
+  original wheel/artifact durable path: UNKNOWN.
+  The installed RECORD and its current physical hash are integrity facts about
+  this installed tree only, never authority for an original wheel SHA.
+
+Related retained reports read: runtime-farm-v3-import-facts-0906.md,
+runtime-farm-v3-whole-path-0906.md, and peer-runtime-to-agent-20261024T0910-
+schema-distribution-input.md. No product files or dependencies were changed.
