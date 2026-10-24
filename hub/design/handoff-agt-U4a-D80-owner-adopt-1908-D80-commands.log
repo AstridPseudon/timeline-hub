@@ -1,0 +1,25 @@
+U4a/D80 exact command log
+
+1. `/home/user/work/venv-agent/bin/python scripts/refresh_runtime_client.py --producer /home/user/work/runtime`
+   exit=0; `refreshed Runtime artifacts from 87bc7f74e093`
+
+2. `/home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/runtime`
+   exit=0; `ok runtime.lock.json (matches producer manifest)`
+
+3. `/home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check`
+   exit=0; `artifacts.json is current`
+
+4. `git diff --check`
+   exit=0; no output
+
+5. `PYTHONPATH="$PWD:/home/user/work/runtime" ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q tests/stage1/test_vendored_workspace_client_parity_luna.py tests/sdk/test_workspace_client_timeline_commit.py`
+   exit=0; `22 passed in 0.49s`
+
+6. Final status audit:
+   - Agent status: ` M runtime.lock.json`
+   - Runtime status: clean
+   - changed paths: `runtime.lock.json` only
+   - 15 mapping comparison: `PASS`
+   - import-origin probe: `PASS`
+   - empty-range AST/predicate probe: `PASS`
+
