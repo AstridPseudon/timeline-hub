@@ -1,0 +1,143 @@
+import { describe, expect, it, vi } from 'vitest';
+import { createFakeIndexedDB } from 'fake-indexeddb';
+import { ApiError } from '@/integrations/runtime/generated.ts';
+import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
+import type { CanonicalDocument, CommitRequest } from '@/integrations/runtime/generated.ts';
+import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
+import { createCommitOutbox, toOutboxJson, type OutboxRecord } from './commitOutbox.ts';
+import { createLocalSaveSession } from './localSaveSession.ts';
+
+const scope = { realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-commit' };
+const h0 = { revisionId: 'r0', publicationId: 'p0' };
+const h1 = { revisionId: 'r1', publicationId: 'p1' };
+
+function documentPair() {
+  const document = acceptedCommit({ revision_id: h0.revisionId, publication_id: h0.publicationId },
+    { revision_id: h0.revisionId, publication_id: h0.publicationId }).data.canonical_document;
+  const payload = document.parent_revision.payload as Record<string, unknown>;
+  payload.config = { tracks: [{ id: 'V1', label: 'Initial' }] };
+  payload.tracks = [{ id: 'V1', label: 'Initial' }];
+  payload.clips = [];
+  payload.registry = { assets: {} };
+  payload.occurrences = [];
+  document.parent_revision.content_digest = fixtureDigest(payload);
+  const afterA = structuredClone(document);
+  (afterA.parent_revision.payload as Record<string, unknown>).tracks = [{ id: 'V1', label: 'A' }];
+  (afterA.parent_revision.payload as Record<string, unknown>).config = { tracks: [{ id: 'V1', label: 'A' }] };
+  const afterB = structuredClone(afterA);
+  (afterB.parent_revision.payload as Record<string, unknown>).tracks = [{ id: 'V1', label: 'B' }];
+  (afterB.parent_revision.payload as Record<string, unknown>).config = { tracks: [{ id: 'V1', label: 'B' }] };
+  return { document, afterA, afterB };
+}
+
+function acceptedResult(document: CanonicalDocument, head = h1): TimelineCommitResult {
+  const response = acceptedCommit({ revision_id: head.revisionId, publication_id: head.publicationId },
+    { revision_id: h0.revisionId, publication_id: h0.publicationId });
+  response.data.canonical_document = structuredClone(document);
+  response.data.canonical_document.parent_revision.revision_id = head.revisionId;
+  response.data.canonical_document.parent_revision.content_digest = fixtureDigest(
+    response.data.canonical_document.parent_revision.payload,
+  );
+  response.data.document_digest = fixtureDigest(response.data.canonical_document);
+  return { response, accepted: head, canonicalDocument: response.data.canonical_document,
+    graph: {}, receipt: response.receipt };
+}
+
+async function editOwner(factory: IDBFactory, change: (record: OutboxRecord) => void) {
+  await new Promise<void>((resolve, reject) => {
+    const request = factory.open('astrid.command-outbox', 1);
+    request.addEventListener('error', () => reject(request.error));
+    request.addEventListener('success', () => {
+      const db = request.result;
+      const tx = db.transaction('owners', 'readwrite');
+      const store = tx.objectStore('owners');
+      const read = store.getAll();
+      read.addEventListener('success', () => {
+        for (const record of read.result as OutboxRecord[]) {
+          change(record);
+          store.put(record, JSON.stringify([scope.realmId, scope.actorId, scope.projectId, scope.timelineId, record.ownerId]));
+        }
+      });
+      tx.addEventListener('complete', () => { db.close(); resolve(); });
+      tx.addEventListener('abort', () => { db.close(); reject(tx.error); });
+    });
+  });
+}
+
+function environment() {
+  const pair = documentPair();
+  const initial: TimelineCommandBasis = { head: h0, canonicalDocument: pair.document };
+  const factory = createFakeIndexedDB();
+  const outboxes = createCommitOutbox({ indexedDB: factory, exclusiveLock: async (_key, work) => work() });
+  const send = vi.fn<(request: CommitRequest, key: string) => Promise<TimelineCommitResult>>();
+  const prepareDisplay = vi.fn(async (basis: TimelineCommandBasis, draft?: ReturnType<typeof toOutboxJson>) => ({
+    document: draft ?? toOutboxJson(basis.canonicalDocument), adopt: vi.fn(),
+  }));
+  const mount = () => createLocalSaveSession({ scope, initial, document: toOutboxJson(pair.document), outboxes, send,
+    loadLatest: async () => initial, prepareDisplay, changed: () => {} });
+  return { pair, initial, factory, outboxes, send, prepareDisplay, mount };
+}
+
+describe('local save recovery basis refusals', () => {
+  it.each(['missing dependent display basis', 'missing revision', 'empty revision', 'missing publication',
+    'empty publication', 'missing document', 'mismatched revision'] as const)(
+    'retains work without projecting or sending when recovery has a %s', async (fault) => {
+      const env = environment();
+      const session = await env.mount();
+      const before = structuredClone(env.pair.document);
+      const afterA = structuredClone(env.pair.afterA);
+      const afterB = structuredClone(env.pair.afterB);
+      const roots = [{ ref: 'parent' as const, revisionId: h0.revisionId,
+        contentDigest: before.parent_revision.content_digest }];
+      await session.appendDocument({ before, after: afterA, roots, label: 'A',
+        step: { id: 'a-step', label: 'A', intent: 'A', tags: [] } });
+      await session.appendDocument({ before: afterA, after: afterB, roots, label: 'B',
+        step: { id: 'b-step', label: 'B', intent: 'B', tags: [] } });
+      // A's cached ACK must arrive before B's retryable refusal.
+      env.send.mockResolvedValueOnce(acceptedResult(afterA)).mockRejectedValueOnce(
+        new ApiError(409, 'conflict', 'busy', '', { status: 'refused', reason: 'head_busy' }),
+      );
+      await expect(session.flush()).rejects.toThrow('unacknowledged');
+      const [saved] = await env.outboxes.list(scope);
+      expect(saved.accepted).toBeDefined();
+      expect(saved.pending).toBeDefined();
+      expect(saved.intents).toHaveLength(1);
+      const original = { intents: structuredClone(saved.intents), pending: structuredClone(saved.pending),
+        accepted: structuredClone(saved.accepted) };
+      const projectionCount = env.prepareDisplay.mock.calls.length;
+      const sendCount = env.send.mock.calls.length;
+      expect(sendCount).toBe(2);
+      const originalPayload = saved.intents[0].payload as Record<string, unknown>;
+      const originalBasis = originalPayload.displayBasis as { head: { revisionId?: string; publicationId?: string }; canonicalDocument?: unknown };
+      expect(originalBasis).toMatchObject({ head: h0, canonicalDocument: before });
+      await session.dispose();
+      await editOwner(env.factory, (record) => {
+        const payload = record.intents[0].payload as Record<string, unknown>;
+        if (fault === 'missing dependent display basis') delete payload.displayBasis;
+        else {
+          const basis = payload.displayBasis as { head: { revisionId?: string; publicationId?: string }; canonicalDocument?: unknown };
+          if (fault === 'missing publication') delete basis.head.publicationId;
+          else if (fault === 'empty publication') basis.head.publicationId = '';
+          else if (fault === 'missing revision') delete basis.head.revisionId;
+          else if (fault === 'empty revision') basis.head.revisionId = '';
+          else if (fault === 'missing document') delete basis.canonicalDocument;
+          else basis.head.revisionId = 'another-revision';
+        }
+      });
+      const [corrupted] = await env.outboxes.list(scope);
+      const reopened = await env.mount();
+      await expect(reopened.recover(corrupted.ownerId)).rejects.toThrow('verified original display basis');
+      expect(reopened.getState()).toMatchObject({ status: 'recovery' });
+      expect(env.prepareDisplay).toHaveBeenCalledTimes(projectionCount);
+      expect(env.send).toHaveBeenCalledTimes(sendCount);
+      expect(() => reopened.append({ before: afterB, after: afterB, label: 'C', commands: [{
+        schema_version: 1, op: 'doc.patch', version: '1', select: null, args: { changes: [] },
+      }] })).toThrow('Local save session is closed or awaiting recovery');
+      await expect(reopened.flush()).rejects.toThrow('Local save session is closed or awaiting recovery');
+      const [retained] = await env.outboxes.list(scope);
+      expect(retained.intents).toEqual(original.intents);
+      expect(retained.pending).toEqual(original.pending);
+      expect(retained.accepted).toEqual(original.accepted);
+      await reopened.dispose();
+    });
+});
