@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { AstridElementOperationAdapter, createElementTimelineRoutes } from '../runtime/element-adapter.ts';
+import { ASTRID_EFFECT_CATALOG } from '../runtime/astrid-element-catalog.ts';
 import { buildAstridAgentElementContext } from '../runtime/element-contract.ts';
 import React from 'react';
 import { act, fireEvent, renderHook, screen } from '@testing-library/react';
@@ -2134,4 +2135,41 @@ describe('useTimelineSave mounted save diagnostics', () => {
       else Reflect.deleteProperty(navigator, 'locks');
     }
   });
+});
+
+
+it.each(['valid', 'wrong source', 'stale head'] as const)('forwards parameter gestures through its own element route: %s', async control => {
+  const data = makeTimelineData('params');
+  data.head = { projectId: 'project-commit', timelineId: 'timeline-1', headRevisionId: 'r0', headPublicationId: 'p0' };
+  const context = buildAstridAgentElementContext({ astridEffects: ASTRID_EFFECT_CATALOG });
+  const entry = context.catalog.find(item => item.id === 'text-card' && item.packId === 'rendering')!;
+  const elementRef = { id: entry.id, kind: entry.kind, packId: entry.packId, revision: entry.revision };
+  data.config.clips[0] = { ...data.config.clips[0], elementRef, params: { value: 2 } };
+  data.resolvedConfig.clips[0] = { ...data.resolvedConfig.clips[0], elementRef, params: { value: 2 } };
+  const harness = setup(async () => 1, undefined, { data, loadBasis: vi.fn() });
+  try {
+    const current = harness.hook.result.current.dataRef.current!;
+    const routes = harness.hook.result.current.elementTimelineRoutes;
+    const original = { config: current.config, registry: current.registry, config_version: current.configVersion, head: current.head };
+    if (control === 'wrong source') vi.spyOn(routes, 'get').mockResolvedValue({ ...original, config: { ...current.config, clips: [] } });
+    if (control === 'stale head') vi.spyOn(routes, 'get').mockResolvedValue({ ...original, head: { ...current.head!, headPublicationId: 'another' } });
+    const saved = vi.spyOn(routes, 'save').mockResolvedValue(original);
+    const params = { value: 3 };
+    act(() => harness.hook.result.current.applyEdit({ type: 'config', resolvedConfig: { ...current.resolvedConfig,
+      clips: current.resolvedConfig.clips.map(clip => ({ ...clip, params })) } }, { gestureBasis: {
+      kind: 'element', clipId: 'clip-params', config: current.config, registry: current.registry, context,
+      operation: { name: 'timeline.update_element', project: 'project-commit', timeline: 'timeline-1', expected_version: current.configVersion, clip_id: 'clip-params', params },
+    } }));
+    if (control === 'valid') {
+      await vi.waitFor(() => expect(saved).toHaveBeenCalledTimes(1));
+      expect(saved.mock.calls[0]).toEqual(['timeline-1', expect.objectContaining({ original,
+        expectedHead: current.head, expectedVersion: current.configVersion,
+        config: { ...current.config, clips: [{ ...current.config.clips[0], params }] },
+      })]);
+    } else {
+      await vi.waitFor(() => expect(harness.toast.error).toHaveBeenCalledWith('Element parameter owner changed; draft retained'));
+      expect(saved).not.toHaveBeenCalled();
+    }
+    expect(harness.saveTimeline).not.toHaveBeenCalled();
+  } finally { harness.hook.unmount(); }
 });

@@ -1,3 +1,13 @@
+import { toast } from '@/shared/components/ui/runtime/sonner.tsx';
+import { createElement } from 'react';
+import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
+import { AstridElementParams } from '../components/PropertiesPanel/AstridElementParams.tsx';
+import { useClipEditing } from './useClipEditing.ts';
+import type { AgentChatEditorContext } from '@/shared/contexts/AgentChatContext.tsx';
+import { AstridElementOperationAdapter, type ElementTimelineRoutes } from '../runtime/element-adapter.ts';
+import { saveElementParameterEdit } from './useTimelineSave.ts';
+import { useTimelineCommit } from './useTimelineCommit.ts';
+import { TimelineEventBus } from './useTimelineEventBus.ts';
 import { applyTimelineOperation } from '../runtime/element-adapter.ts';
 import { buildAstridAgentElementContext } from '../runtime/element-contract.ts';
 import { ASTRID_EFFECT_CATALOG } from '../runtime/astrid-element-catalog.ts';
@@ -15,6 +25,15 @@ import { TimelineVersionConflictError } from '../data/DataProvider.ts';
 import type { AssetRegistry, TimelineConfig } from '../types/index.ts';
 import { createTimelineLocalSaveHandoff, type TimelineSaveSource } from './timelineLocalSaveHandoff.ts';
 
+vi.mock('@/shared/components/ui/runtime/sonner.tsx', () => ({ toast: { error: vi.fn() } }));
+
+const propertyOwner = vi.hoisted(() => ({ context: null as AgentChatEditorContext | null, descriptors: [] as unknown[] }));
+vi.mock('@/shared/contexts/AgentChatContext.tsx', () => ({ useOptionalAgentChatBridge: () => ({ editorContext: propertyOwner.context }) }));
+vi.mock('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx', async importOriginal => ({
+  ...await importOriginal<typeof import('@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx')>(),
+  useVideoEditorRuntime: () => ({ astridElementHost: { descriptors: propertyOwner.descriptors } }),
+}));
+
 const contractFixture = vi.hoisted(() => ({ digest: 'sha256:unsupported-test-fixture' }));
 const CURRENT_V2_DIGEST = 'sha256:35c2d9c5e0b51ab8d8b7a4f4dbafbdfcb13d232d7bd22fff21cf73e250398d4c';
 
@@ -23,18 +42,19 @@ vi.mock('@/integrations/runtime/generated-contract-metadata.ts', async (importOr
   get SCHEMA_DIGEST() { return contractFixture.digest; },
 }));
 
-afterEach(() => { contractFixture.digest = 'sha256:unsupported-test-fixture'; vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+afterEach(() => { propertyOwner.context = null; vi.mocked(toast.error).mockClear(); contractFixture.digest = 'sha256:unsupported-test-fixture'; vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
-async function environment(children = false, raw = false, rawIds = ['authored'], rawApp?: Record<string, unknown>, asset?: { key: string; registry: AssetRegistry; mirror?: boolean | Record<string, unknown>; rawRegistry?: Record<string, unknown> }, topLevel = false, transitions: boolean | 'null' = false, pinned = false) {
+async function environment(children = false, raw: boolean | 'property' = false, rawIds = ['authored'], rawApp?: Record<string, unknown>, asset?: { key: string; registry: AssetRegistry; mirror?: boolean | Record<string, unknown>; rawRegistry?: Record<string, unknown> }, topLevel = false, transitions: boolean | 'null' = false, pinned = false) {
   const head = { projectId: 'project-commit', timelineId: 'timeline-commit', headRevisionId: 'r0', headPublicationId: 'p0' };
   let source: TimelineSaveSource = { config: createDefaultTimelineConfig(), registry: asset?.registry ?? { assets: {} }, head };
   const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' }, { children }).data.canonical_document;
   const { output: _derived, ...config } = source.config;
   document.parent_revision.payload = { ...document.parent_revision.payload, config, clips: [], registry: source.registry };
   if (raw) {
-    const authored = { ...config, output: { resolution: null, file: null, opaque: { keep: null } }, pinnedShotGroups: pinned ? [{ shotId: 'shot-1', trackId: 'V1', clipIds: ['authored'] }] : null,
-      ...Object.fromEntries([['__proto__', { keep: null }], ['constructor', null]]),
-      opaque: { keep: [null, false] }, clips: rawIds.map((id, index) => ({ id, track: 'V1', at: index * 2, hold: 2, clipType: null,
+    const authored = { ...config, output: raw === 'property' ? _derived : { resolution: null, file: null, opaque: { keep: null } },
+      ...(raw === 'property' ? {} : { pinnedShotGroups: pinned ? [{ shotId: 'shot-1', trackId: 'V1', clipIds: ['authored'] }] : null }),
+      ...(raw === 'property' ? {} : Object.fromEntries([['__proto__', { keep: null }], ['constructor', null]])),
+      opaque: { keep: [null, false] }, clips: rawIds.map((id, index) => ({ id, track: 'V1', at: index * 2, hold: 2, clipType: raw === 'property' ? 'hold' : null,
         opaque: { keep: null }, ...(transitions && index < 2 ? { transition: transitions === 'null' ? null : { type: 'crossfade', duration: 0.5, opaque: null } } : {}), ...(rawApp ? { app: rawApp } : {}), ...(asset ? { asset: asset.key } : {}) })) };
     document.parent_revision.payload.config = authored;
     if (asset?.mirror) document.parent_revision.payload.config.registry = structuredClone(asset.mirror === true ? source.registry : asset.mirror);
@@ -688,5 +708,138 @@ it.each([false, true])('binds top-level parent element clips and refuses an inco
     expect(document.parent_revision.payload.clips[1]).toEqual(env.initial.canonicalDocument.parent_revision.payload.clips[1]);
     expect(document.shot_revisions).toEqual(env.initial.canonicalDocument.shot_revisions);
   }
+  await env.session.dispose();
+});
+
+
+it.each(['valid', 'missing owner', 'wrong owner', 'stale selection', 'child selection', 'missing head', 'stale head'] as const)(
+  'saves or refuses the real element parameter callback on an occurrence-bearing local chain: %s', async control => {
+  contractFixture.digest = CURRENT_V2_DIGEST;
+  const env = await environment(true, 'property', ['authored', 'sibling']);
+  const context = buildAstridAgentElementContext({ astridEffects: ASTRID_EFFECT_CATALOG });
+  const entry = context.catalog.find(item => item.id === 'text-card' && item.packId === 'rendering')!;
+  const element = { id: entry.id, kind: entry.kind, revision: entry.revision, packId: entry.packId };
+  const apply = { name: 'timeline.apply_element' as const, project: 'project-commit', timeline: 'timeline-commit', expected_version: 1,
+    clip_id: 'authored', placement: 'clip' as const, element, params: { selectedSegmentIndex: 2, future: 'keep' } };
+  let original = { ...env.source, config: applyTimelineOperation(context, env.source.config, apply), config_version: 1 };
+  await env.handoff.capture(original, { kind: 'element', config: env.source.config, registry: env.source.registry, clipId: 'authored', operation: apply, context });
+  const routes: ElementTimelineRoutes = { get: async () => original, save: vi.fn(async (_id, input) => {
+    await env.handoff.capture({ ...original, config: input.config as TimelineConfig, registry: input.registry as AssetRegistry }, {
+      kind: 'element', config: original.config, registry: original.registry, clipId: 'authored', operation: input.operation!, context: input.context!,
+    });
+    original = { ...original, config: input.config as TimelineConfig };
+    return original;
+  }) };
+  const adapter = new AstridElementOperationAdapter(context, routes, 'project-commit', {
+    timelineId: 'timeline-commit', assertAuthority: () => {}, getHead: () => original.head,
+  });
+  propertyOwner.context = { tool: 'video-editor', projectId: 'project-commit', projectSlug: 'project-commit', timelineId: 'timeline-commit', timelineName: null,
+    timelineSummary: { configVersion: 1, trackCount: 1, clipCount: 2, assetCount: 0, duration: 4 },
+    elementContext: { ...context, selectedClips: [{ id: 'authored', trackId: 'V1', at: 0, duration: 2, elementRef: element,
+      params: original.config.clips[0].params, scope: 'parent-timeline' }] }, elementOperationAdapter: adapter };
+  propertyOwner.descriptors = [{ ...element, componentPath: 'packs/text-card', schema: { properties: { selectedSegmentIndex: { type: 'number', title: 'Selected Segment Index' } } } }];
+  const data = await buildTimelineData(original.config, original.registry);
+  data.head = original.head;
+  data.configVersion = 1;
+  if (control === 'missing owner') propertyOwner.context = null;
+  if (control === 'wrong owner') propertyOwner.context!.projectId = 'another-project';
+  if (control === 'stale selection') propertyOwner.context!.elementContext!.selectedClips = [{ ...propertyOwner.context!.elementContext!.selectedClips[0], elementRef: { ...element, revision: 'stale' } }];
+  if (control === 'child selection') propertyOwner.context!.elementContext!.selectedClips = [{ ...propertyOwner.context!.elementContext!.selectedClips[0], scope: 'child-shot' }];
+  if (control === 'missing head') data.head = undefined;
+  if (control === 'stale head') data.head = { ...original.head!, headPublicationId: 'another-publication' };
+  const beforeGesture = structuredClone(env.session.getDocument());
+  const eventBus = new TimelineEventBus();
+  let captured: Promise<void> | undefined;
+  eventBus.on('scheduleSave', (next, options) => {
+    captured = env.handoff.capture({ config: next.config, registry: next.registry, head: next.head }, options?.gestureBasis);
+    void captured.catch(() => {});
+  });
+  const hook = renderHook(() => {
+    const commit = useTimelineCommit({ initialData: data, eventBus, lastSavedSignatureRef: { current: data.signature } });
+    return useClipEditing({ dataRef: commit.dataRef, resolvedConfig: commit.data?.resolvedConfig ?? null, selectedClipId: 'authored',
+      selectedTrack: null, currentTime: 0, selectClip: vi.fn(), setSelectedTrackId: commit.setSelectedTrackId, applyEdit: (mutation, options) => {
+        if (options?.gestureBasis?.kind === 'element') {
+          captured = saveElementParameterEdit(commit.dataRef.current!, mutation, options.gestureBasis, routes, 'timeline-commit').then(() => {});
+          void captured.catch(() => {});
+        } else commit.applyEdit(mutation, options);
+      } });
+  });
+  const form = render(createElement(AstridElementParams, { clip: data.resolvedConfig.clips[0], registry: data.resolvedConfig.registry,
+    onChange: patch => hook.result.current.handleSelectedClipChange(patch, propertyOwner.context) }));
+  act(() => fireEvent.change(screen.getByLabelText('Selected Segment Index'), { target: { value: '1' } }));
+  if (control === 'stale head') {
+    expect(captured).toBeDefined();
+    await expect(captured).rejects.toThrow('Element parameter owner changed');
+    expect(env.session.getDocument()).toEqual(beforeGesture);
+    expect((await env.outboxes.list(env.scope))[0].intents).toHaveLength(1);
+    form.unmount(); hook.unmount();
+    await env.session.dispose();
+    return;
+  }
+  if (control !== 'valid') {
+    await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(1));
+    expect(routes.save).not.toHaveBeenCalled();
+    expect(captured).toBeUndefined();
+    expect(env.session.getDocument()).toEqual(beforeGesture);
+    expect((await env.outboxes.list(env.scope))[0].intents).toHaveLength(1);
+    expect(env.send).not.toHaveBeenCalled();
+    form.unmount(); hook.unmount();
+    await env.session.dispose();
+    return;
+  }
+  expect(captured).toBeDefined();
+  await captured;
+  expect(routes.save).toHaveBeenCalledTimes(1);
+  const final = env.session.getDocument() as unknown as typeof env.initial.canonicalDocument;
+  expect(final.parent_revision.payload.config.clips[0].params).toEqual({ selectedSegmentIndex: 1, future: 'keep' });
+  expect(final.parent_revision.payload.config.clips[1]).toEqual(env.initial.canonicalDocument.parent_revision.payload.config.clips[1]);
+  expect(final.shot_revisions).toEqual(env.initial.canonicalDocument.shot_revisions);
+  expect(final.internal_timeline_revisions).toEqual(env.initial.canonicalDocument.internal_timeline_revisions);
+  expect(final.parent_revision.payload.occurrences).toEqual(env.initial.canonicalDocument.parent_revision.payload.occurrences);
+  const [stored] = await env.outboxes.list(env.scope);
+  expect(stored.intents[1].basis).toEqual({ after: stored.intents[0].id });
+  expect(stored.intents[1].payload.documentIntent).toMatchObject({ merge: 'atomic', reads: expect.arrayContaining([
+    expect.objectContaining({ kind: 'field', path: ['config', 'clips', 'id:authored', 'params'], state: { state: 'present', value: { selectedSegmentIndex: 2, future: 'keep' } } }),
+  ]) });
+  const intent = stored.intents[1].payload.documentIntent as { reads: unknown[]; step: { id: string; reads: unknown[] }; changes: unknown[] };
+  expect(intent.changes).toEqual([{ op: 'set', ref: 'parent', path: ['clips', 'id:authored', 'params', 'selectedSegmentIndex'],
+    before: { state: 'present', value: 2 }, value: 1 }]);
+  expect(intent.step.reads).toEqual(intent.reads);
+  env.prepareDisplay.mockImplementation(async basis => ({ document: toOutboxJson(basis.canonicalDocument), adopt() {} }));
+  const sent: Parameters<Transport>[] = [];
+  const client = new WorkspaceClient('http://runtime.test', 'token', async (...args) => {
+    sent.push(args);
+    throw new Error('Lost acknowledgement');
+  });
+  env.send.mockImplementationOnce(async () => {
+    const response = acceptedCommit({ revision_id: 'r1', publication_id: 'p1' }, { revision_id: 'r0', publication_id: 'p0' });
+    response.data.canonical_document = structuredClone(stored.intents[0].payload.after) as unknown as typeof env.initial.canonicalDocument;
+    response.data.canonical_document.parent_revision.revision_id = 'r1';
+    return { response, accepted: { revisionId: 'r1', publicationId: 'p1' }, canonicalDocument: response.data.canonical_document,
+      receipt: response.receipt, graph: {} };
+  }).mockImplementation((request, key) => client.commitTimeline(env.scope.projectId, env.scope.timelineId, request, key));
+  await expect(env.session.flush()).rejects.toThrow('unacknowledged');
+  const [uncertain] = await env.outboxes.list(env.scope);
+  const exact = uncertain.pending!.request;
+  const request = JSON.parse(exact.body);
+  expect(sent[0].slice(0, 2)).toEqual(['POST', exact.path]);
+  expect(sent[0][2]['Idempotency-Key']).toBe(exact.key);
+  expect(new TextDecoder().decode(sent[0][3])).toBe(exact.body);
+  expect(request).toMatchObject({ api_version: 1, project_id: env.scope.projectId, timeline_id: env.scope.timelineId,
+    base_revision_id: 'r1', base_publication_id: 'p1', label: 'Edit timeline', merge: 'atomic', reads: intent.reads,
+    source: { via: 'app' }, dry_run: false,
+    commands: [{ schema_version: 1, op: 'doc.patch', version: '1', select: null, created: [], args: { changes: intent.changes } }],
+    steps: [{ id: intent.step.id, label: 'Edit timeline', intent: 'timeline.update_element', tags: [], command_ordinals: [0], patch: intent.changes, reads: intent.reads }] });
+  const latest = { head: { revisionId: 'r1', publicationId: 'p1' }, canonicalDocument: structuredClone(stored.intents[0].payload.after) as unknown as typeof env.initial.canonicalDocument };
+  latest.canonicalDocument.parent_revision.revision_id = 'r1';
+  const recovered = await createLocalSaveSession({ scope: env.scope, initial: latest, document: toOutboxJson(latest.canonicalDocument),
+    outboxes: env.outboxes, send: env.send, loadLatest: async () => latest, changed() {}, prepareDisplay: env.prepareDisplay });
+  await recovered.recover(uncertain.ownerId);
+  expect(recovered.getState().status).toBe('retry');
+  expect(sent[1]).toEqual(sent[0]);
+  expect((await env.outboxes.list(env.scope))[0].intents[0].payload).toEqual(stored.intents[1].payload);
+  expect(env.handoff.canUndo()).toBe(false);
+  await recovered.dispose();
+  form.unmount(); hook.unmount(); propertyOwner.context = null;
   await env.session.dispose();
 });

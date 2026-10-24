@@ -1,6 +1,7 @@
 import { getEffectiveClipVolume } from '@/tools/video-editor/lib/clip-volume.ts';
 import { TimelineItemSelectionSummary } from './TimelineItemSelectionSummary.tsx';
 import { EMPTY_TIMELINE_DATA_ITEMS } from '@/shared/state/selectionStore.ts';
+import { useOptionalAgentChatBridge } from '@/shared/contexts/AgentChatContext.tsx';
 import { memo, useEffect, useMemo, useRef, type ComponentType, type ReactNode } from 'react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { BulkClipPanel } from '@/tools/video-editor/components/PropertiesPanel/BulkClipPanel.tsx';
@@ -193,6 +194,7 @@ export interface PropertiesPanelProps {
 
 function PropertiesPanelComponent({ visible = true }: PropertiesPanelProps) {
   useRenderDiagnostic('PropertiesPanel');
+  const elementOwner = useOptionalAgentChatBridge()?.editorContext;
   const {
     data,
     resolvedConfig,
@@ -557,7 +559,7 @@ function PropertiesPanelComponent({ visible = true }: PropertiesPanelProps) {
             track={selectedTrack}
             deviceClass={deviceClass}
             hasPredecessor={selectedClipHasPredecessor}
-            onChange={handleSelectedClipChange}
+            onChange={patch => handleSelectedClipChange(patch, elementOwner)}
             onResetPosition={handleResetClipPosition}
             onClose={clearSelection}
             onDelete={selectedClip ? () => {
