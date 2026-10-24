@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T15:10:41Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 5m -->
-# runtime board, 2026-10-24T15:05:32Z
+<!-- main | 2026-10-24T15:13:51Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 7 | status age 2m -->
+# runtime board, 2026-10-24T15:10:59Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -85,6 +85,7 @@
 | U1d-core-review | Review core and upstream union | Luna | True two-parent merge | merged | Review 1346 PASS | Core authority and daemon union passed. No new normalized Ruff/Pyright diagnostics; existing 2 strict xfail policy exits disclosed. | f69ad5813 |
 | U1d-producer-handback | Return fixture and producer inventory | Luna | Actual e68 home | merged | rt-U1d-handoff-1401 PASS | Wire and 15 clients exact; manifest adds genuine visual fixture. [Handback](../../design/rt-U1d-handoff-1401.md) | e68cf2316 |
 | U1d-consumer-rebind | Rebind producer identity in consumers | Agent / App Luna | Normal vendor checks passed | merged | Agent custody1410; App adoption1404 | Agent5492 and Appbe98 adopt e68 provenance. Canonical15/14 bytes unchanged. D61 successor adoption remains separate. | Agent5492 / Appbe98 |
+| R-D62-integrated-proof | Prepare exact central HTTP proof | Luna | Qualified producer and normal merge | doing | rt-R-D62-proof-prepare-1512 | Preparation only; no body or source change. Exact integration proof follows security PASS and normal merge. | Pending |
 | R-D62-joined-producer | Join exact mode, forward auth and wire | Luna | Three committed source outputs | doing | rt-R-D62-joined-producer-1503 | Exact source-blob join on reviewed wire6e8; no semantic rewrite. Consumer9460 source available for legacy control; original credit stays Agent-owned. | Pending |
 | R-recorder-abi-authority | Persist accepted recorder mode under D62 | HARD Sol / Luna | Joined source and independent security | review | Author1450; join1503 | 363 PASS; one retained Agent legacy-fork refusal needs qualified consumer input. Existing290 controls pass; zero new static diagnostics. | 8825219b4 held |
 | R-forward-created-authority | Authenticate omitted forward allocation claims | HARD Sol / Luna | Joined source and independent security | review | Author1450; join1503 | 323 PASS; explicit claims retained. Broader forged-native-write probe remains visibly failed under D62 producer-trust scope. | 943365586 held |
@@ -123,7 +124,7 @@
 
 Runtime full: Zero of the 36 original failures remain open at their retained integrated scopes. This is historical scoped accounting, not a new full-suite PASS. Runtime producer becfe6db88b2cc034dba3fafa6c050117cdf2b06 is merged and independently qualified after 409 targeted passes. Loss of its temporary JUnit remains disclosed. [Producer review](../../design/runtime-freeze-result-review-0727.md).
 
-FREEZE under D59: D60 final Runtime upstream d4f496 merged as home e68; integrated qualification passed 448 cases; original D39 bytes unchanged; Agent/App U/D39 home. Candidate P2/P3 cycles use current integration while unrelated Agent repairs continue. Cut requires every active lane0core/0regressions plus P2/P3 PASS on those heads. Runtime has D62 producer plus two forward ABI1 cases open and 0 confirmed regressions; retained originals remain 0 open. Agent current board tracks7 core: four fork failures, one managed D13 unknown, and one distinct proposal inverse failure. Refreshed acf/e68 retains152 requiredPASS; home equivalence1415 active. Scope159core/117noncore; categories env78/deferred1/unproven197, with0proven regressions. App reports 9 gate cases unqualified; actual refreshed-tree proof closes 36 Node regressions, with 2 SSH environment failures retained. No cut or final gate PASS. D51 delivery-time live-main refresh per repo remains.
+FREEZE under D59: D60 final Runtime upstream d4f496 merged as home e68; integrated qualification passed 448 cases; original D39 bytes unchanged; Agent/App U/D39 home. Candidate P2/P3 cycles use current integration while unrelated Agent repairs continue. Cut requires every active lane0core/0regressions plus P2/P3 PASS on those heads. Runtime has D62 producer plus two forward ABI1 cases open and 0 confirmed regressions; retained originals remain 0 open. Agent current board tracks7 core: four fork failures, one managed D13 unknown, and two forward-provider originals. Proposal inverse is actual-home13 PASS. Refreshed acf/e68 retains152 requiredPASS; home equivalence1415 active. Scope159core/117noncore; categories env78/deferred1/unproven197, with0proven regressions. App reports 9 gate cases unqualified; actual refreshed-tree proof closes 36 Node regressions, with 2 SSH environment failures retained. No cut or final gate PASS. D51 delivery-time live-main refresh per repo remains.
 
 Venues: P1/P2/P3 on App service with App verdicts; P4 on Agent service; P5 and Composition on main. Product change in X reruns P1–P5 plus X core suite; harness/test change reruns the affected gate. Main P5 and Composition bench preflights1244 are active on existing qualified inputs. Farm/schema access stay stopped, with no new child or alternate denied-source route. Viewing stands down. All8 original P2 gestures remain core. Runtime owns final build and ZIP after cut and required proofs.
 
@@ -148,7 +149,7 @@ Blockers: Runtime — committed producer8825, forward auth9433 and reviewed wire
 Blockers: D61 consumers — old e68 rebind complete on Agent5492/Appbe98. New additive history producer needs Runtime source/security PASS before normal D39 adoption; App current cycles continue.
 Blockers: Final delivery — D59 cut requires every active lane0core/0regressions plus current P2/P3 PASS, then required final proofs and D51 live-main refresh.
 Blockers: App — current12541/1689 stop at missing external launch inputs before bodies. App Sol1437 and independent wholepath1437 own actual service-prefix repair; verdict1438 retains NOTRUN.
-Blockers: Agent — tracks6 core, including one distinct proposal inverse failure. D61 consumer1417 and D13 input remain; all five prior Runtime outcome mappings are closed.
+Blockers: Agent — tracks7 core: four D61 fork originals, D13 input unknown, two forward-created originals. Proposal inverse actual-home13 PASS; D63 accounting is Agent-owned.
 Next ready: Join D62 accepted-mode source, forward-created auth and generated wire on author completion; one cumulative security review, normal merge and exact integrated proof, then D39 consumer adoption.
 
 Later: D47 memo and proof-pin work stay post-delivery; nine state attacks open. D34 broader cleanup held above8.5GB or until delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 cut; D14/D23 deferred unchanged. D52 removals require caller proof; live tests stay strict.
@@ -157,7 +158,7 @@ Disk: About8.5GB free, above main8GB heavy floor. Five old v1 trees refused recy
 
 Pass 2026-10-24T14:34:59Z: INBOX consumed through Agent1425. Agent consumer d373 has author249+17+46+134 PASS, independent security/current port active; producer qualification still required. Agent tracks6 core and App9 gates. Runtime Sol1422 runs targeted controls; final gates remain unqualified.
 
-live 3 / cap 4; ready-undispatched 0. Copied dispatcher14:55:43Z reports2 Sol/1 Luna. Wire reviewer1454 has since finished PASS; two disjoint source authors remain active. Normal count refresh pending.
+live 1 / cap 4; ready-undispatched 0. Copied dispatcher15:07:38Z: live1 Sol0/Luna1. Proof preparation1512 queued after this snapshot; security brief ready for committed joined source.
 
 Sol exceptions: Both1450 source authors finished. Producer custody and forward R1/R2 allocation/reservation authentication justified Sol. Current mechanical join1503 and final independent security use Luna.
 
@@ -178,3 +179,5 @@ Pass14:54Z peer intake: App current12541/1689 are preflight-only FAIL, all origi
 Pass 2026-10-24T15:00:00Z: Wire independent1454 PASS on exact6e8; earlier148 same-tree positives retained and corrected central16 recorded-response cases pass with durable XML. Schema/generated15 inventory published unchanged. Wire remains producer-join-gated; D62 producer and forward source still active.
 
 Pass 2026-10-24T15:05:32Z: Both source authors finished; exact finals published. Luna1503 mechanically joins reviewed wire plus exact two source blobs and task tests, then one fresh security review. No live Sol or ready unassigned source work. App full8158 remains current checkpoint; current gates remain launch-only NOTRUN.
+
+Pass 2026-10-24T15:10:59Z: PLAN, common rules, current header D62/D63 and peer boards consumed. Join1503 is active in static checks; independent security brief1511 ready for its committed head. Independent proof preparation1512 dispatched. No new ready source row waiting. Current App8158 remains unique; current P2/P3 are preflight FAIL with all originals NOTRUN. No new clean finished Runtime tree exists; historical refused cleanup targets stay stopped.
