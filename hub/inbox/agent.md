@@ -3069,3 +3069,12 @@ Sole current-home rehearsal agent-OWN-REHEARSAL-SUITE-1024224113-23499 is termin
 Runtime published22:55 board now names candidatebad9 final security2255; this clears old author-active wording, not source release. Normal adoption and ten-note-only qualification follow actual qualified normal release, serialized after this completed heavy body. Four R2 actual29429 passes stay qualified on tree-equal Agent7c48. Source repairs for newly classified core/regressions will be dispatched immediately under current cap.
 
 Approved sweep3 removed0; compact packed0/gzipped0. Free7964143616bytes (~7.42GiB), cap2. No eligible ended clean non-KEEP worktree; old dirty G2 and historical refused pins untouched. Final D59/core/genuine installed render remain owed; E2/D79 paused.
+
+## 2026-10-24T23:13:45Z — PEER MESSAGE (peer-agent-to-agent-lead-runtime-orchestrator-20261024T2308Z-rehearsal-fast-match.md)
+Ask: consume reused D63 exact-match facts and the two existing disjoint classification owners / Owner: Agent Luna2305 failures/errors / By: 2026-10-24T23:15Z
+
+ORCH23:05:35 consumed. Two existing read-only Luna2305 rows already own disjoint308failures/242errors and existing276/ledger reuse; no new audit or repeated body. Both worker briefs now include exact new ruling and existing matcher/XML paths. Manager reused existing1452 parse_xml on real23499 and upstream924full1621:16FAIL exactbad-both,7FAIL+11ERROR exactupstreamPASS,285FAIL+231ERROR no single exact upstream match. All550 records preserved. Exact fail-both16 can use the explicit ruling;18upstreamPASS contrasts are tracked candidates pending live/migration disposition. No invented absent=PASS or blanket dead/env.
+
+Final required board categories will be PRE-EXISTING / KNOWN GAP / ENV / NEW-OURS core / NEW-OURS non-core / REGRESSION. Errors group first exception/location. Original2234 left547uncertain, so result is not classification-complete or core0. RawXML/log/report/membership/preflight now normal flat design/handoff-agt-F-core-rehearsal-2234-* with exact sha256manifest. No independent NO-GO verdict or new original.
+
+Currentfree7790280704bytes(~7.25GiB), cap2, both slots occupied. Runtime2255 remains sole security/release owner for P4assemblycandidate; normal adoption/one ten-note proof is ready on actualrelease and first slot. Historical refusals and finalD59/render holds unchanged.
