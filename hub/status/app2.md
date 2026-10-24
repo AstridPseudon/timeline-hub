@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T08:00:07Z | dispatcher heartbeat 9s | live 2 (sol 1, luna 1, other 0) | busy30 18 | status age 2m -->
-# app2 board, 2026-10-24T07:58Z
+<!-- app2 | 2026-10-24T08:02:20Z | dispatcher heartbeat 8s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 2m -->
+# app2 board, 2026-10-24T08:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -24,7 +24,7 @@
 | P2-popup-current | Locate actual popup local preview refusal | App Luna; independent Luna | Retained cause review0745 PASS | doing | app-A3-popup-placement-repro-0745 | Media import/selection pass; alert identifies local placement preview refusal before capture. Exact inner null cause still unknown; faithful reproduction active. | Exact current source |
 | P2-five-oracle | Classify five previously unrun paths | App independent Luna | Independent0651 complete | merged | App0651 | Four exact helper defects confirmed; SWAP aligned. Source and controlled transport only; no live gesture credit. | Exact9b810 / 079 / 37eb |
 | P2-transition-oracle | Strict single and bulk clear expectations | Luna; independent Luna | Cumulative0730 PASS | ready | Donor ac538; composition0737 | Exact source metadata and wrong-read controls independently passed; original parent/inverse/tails retained. Own-only composition starts now. | ac5383543d |
-| P2-semantic-oracle | Strict asset and placement expectations | Sol; independent Luna | Second Luna fix failed genuine producer | doing | ap2-P2-semantic-producer-sol-0739 | Actual serializer includes opacity1; helper fixed-row keyset rejects genuine request. Sol repair and independent whole path assigned immediately. | 7d3ef22794 held |
+| P2-semantic-oracle | Strict asset and placement expectations | Sol; independent Luna | Sol genuine producer correction complete | review | Sol0739; independent0800 running | Genuine parent and occurrence producers pass; 7 helper and46 producer controls, three types, lint and list3 pass. Cumulative review running. | 8f9584d4e8 held |
 | P2-semantic-whole-path | Trace real semantic producer and row fields | Independent Luna | Second failed helper fix | doing | ap2-P2-semantic-whole-path-0739 | Read-only client to Runtime comparison for both semantic gestures and passing P1. No competing author or original run. | Exact7d3 / source663 |
 | P2-parent-oracle | Strict parent move request expectations | Luna; independent Luna | Cumulative0735 PASS | ready | Donor1aad; composition0737 | Exact source helper and new refusal controls pass. Earlier three types and list3 retained. Failed inherited transition source will not enter integration. | 1aad15c9ca |
 | P2-tour-compose | Compose strict tour on clean current integration | Luna; independent Luna | Independent0742 PASS; own-only request queued | merging | ap2-P2-tour-clean-compose-0737 | Exact donor regions and outside target bytes pass; controls5, three types, lint and list3 pass. Failed donor ancestry excluded; normal App queue. | 0a22d854 |
@@ -61,7 +61,7 @@ Blockers: App and Runtime — actual element completion is unknown; popup placem
 Blockers: Proof — semantic and P3 fresh-owner Sol corrections, independent reviews and clean source composition must qualify before another pair.
 Blockers: App queue — reviewed tour0a22 and D50 source547c await normal merge receipts; App owns D50 behaviour-change ledger publication.
 Blockers: Freeze — final tuple, actual App-host inputs, final gates and D49 full checkpoints precede Farm F-final and ZIP.
-Next ready: Review Sol0739 and Sol0745 immediately when they finish. Merge requests for tour and D50 are already queued. Compose catalog with semantic only after actual producer review passes. No heavy or original run is released.
+Next ready: Independent semantic0800 is running. Review Sol0745 immediately when it finishes. Merge requests for tour and D50 are already queued. Compose catalog with semantic only after actual producer review passes. No heavy or original run is released.
 
 Evidence: [Current terminal verdict0709](../../design/handoff-ap2-P2-P3-verified-result-verdict-0709.md), [source0649](../../design/handoff-ap2-P2-P3-current-source-verdict-0649.md), [tour review0742](../../design/handoff-ap2-P2-tour-compose-review-0742.md), [D50 review0747](../../design/handoff-ap2-P3-D50-created-review-0747.md), [actual P3 review0720](../../design/app-P3-parent-trace-review-0720.md), [lifecycle correction0741](../../design/app-P2-P3-lifecycle-review-0741.md), [final map review0719](../../design/handoff-ap2-P1-P5-final-map-review-0719.md).
 
@@ -71,4 +71,4 @@ Safety: Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked
 
 Disk: Latest8222437376 bytes free. No new heavy runs below8GB. Lead07:42 requires minimal necessary light dispatches and pauses new ones below7GB except D50 and its review. No finished non-KEEP worktree is left in inventory; harness recycles on finish. Existing three finished KEEP trees remain protected. Supported sweep3 at07:24 removed zero directories. No compact or previously refused cleanup retry.
 
-Pass: 07:58. INBOX consumed through726999 bytes. Header D50 and current App/Runtime boards checked. Sol0739 and Sol0745 are running with fresh log progress. Independent whole-path0745 report is now copied byte-exact to a flat handoff. Tour remote receipt is PENDING owner review; D50 request awaits its normal receipt and App-owned behaviour ledger. No finished non-KEEP worktrees exist; three KEEP trees remain protected. No heavy or original run released. Next full pass about08:08; process completions sooner.
+Pass: 08:00. INBOX consumed through726999 bytes. Sol0739 completed8f958; full final copied byte-exact. Independent cumulative Luna0800 was dispatched immediately and is actually running. Sol0745 is making progress. Tour remote receipt remains PENDING owner review; D50 normal receipt and App-owned ledger remain pending. Disk8368533504 bytes free; no finished non-KEEP worktree remains. No heavy or original run released. Next full pass about08:10; process completions sooner.
