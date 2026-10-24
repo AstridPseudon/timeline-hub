@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T09:00:11Z | dispatcher heartbeat 12s | live 2 (sol 1, luna 1, other 0) | busy30 12 | status age 0m -->
-# app board, 2026-10-24T08:59Z
+<!-- app | 2026-10-24T09:03:32Z | dispatcher heartbeat 1s | live 3 (sol 1, luna 2, other 0) | busy30 11 | status age 0m -->
+# app board, 2026-10-24T09:03Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -17,7 +17,7 @@
 | A3-real-provider-controls | Keep real provider stall controls | Sol; independent Luna | Review 0717 PASS | merged | Author 0707; integrated 0724 | Three real-provider controls pass on HOME. Whole tree equals reviewed 2056; independent 108 tests, types and lint reused by identity. | 38b29b5e29 |
 | P2 | Eight original gesture cases | App service; Proof verdict | Current pair terminal | blocked:app | Actual 23809; source owners below | Three failed, five not run; exit 1 in 463 seconds. Element response unknown, popup local refusal, parent request oracle mismatch. | Selected 663; HOME 9b810 |
 | P3 | Original Gate5 journey | App service; Proof verdict | Final source and caller proof | blocked:app | Actual9310; setupHOME82cb | Exit 1 in 307 seconds. Readiness passed 41.4 seconds; one accepted predecessor POST missed by clip.move predicate. Original tail unrun. | Selected 663; HOME 9b810 |
-| P2-P3-next-caller | Correct prepared caller binding | Luna; independent Luna | Review0850 FAIL | doing | First return0853 | Review found stale mounted source tokens and unauthenticated final target input. Focused first return queued. No rows installed or run. | b5fc held |
+| P2-P3-next-caller | Review corrected caller binding | Luna; independent Luna | Return0853 authored PASS | review | Return0853; cumulative0902 | Mounted rebind and target controls authored PASS. Independent cumulative review is active. Final source and proof target remain inputs; no rows installed. | 1d92503b4c |
 | P2-P3-current-packet | Publish same-ID terminal evidence | Luna; Proof review | Actual retained files | merged | Producer return 0707; Proof 0717 | Eight safe files published byte-exact with origin paths and hashes. Actual daemon and P2 synthetic snapshot identity remain unknown. | Source 663 |
 | P2-P3-lifecycle-custody | Verify retained lifecycle bytes | Luna; independent Luna | Independent 0741 PASS | merged | Producer 0733; review 0741 | Originals, copies and attachments are 224 bytes with LF. Exact selected writer matches. Prior 225/no-LF claim contradicted. | Same immutable files |
 | P3-parent-path | Prove actual predecessor dispatch | Sol; independent Luna | Independent 0720 PASS | merged | Sol 0714; review 0720 | One POST 200 accepted; guarded doc.patch moves 0 to 5 with 25 request/step reads. Canonical 5 and history 2 to 3. | Report only |
@@ -51,7 +51,7 @@ Integration: HOME82cb5c0005df7abe0fcb8673f7be192a6c9e9183 includes clean P3 f561
 Blockers: App — actual element completion is unknown; popup source0822 repairs confirmed derived assetEntry serialization refusal.
 Blockers: App — P3 source is HOME82cb. Final joined proof and caller binding follow popup review0840; Proof source dependencies are clear.
 Blockers: Freeze — App U3b home waits header P2/P3 GO, then D39 adoption and actual final tuple qualification. Runtime coordinates FREEZE.
-Next ready: Popup Sol0846 and independent path0846 are running. Caller0850 FAIL is in first return0853. After popup cumulative PASS, merge then dispatch exact joined proof and final caller binding. No pair released.
+Next ready: Popup Sol0846 and independent path0846 are running. Caller first return0853 is in cumulative0902 review. After popup cumulative PASS, merge then dispatch exact joined proof and final caller binding. Conditional Proof0850 release applies only after all actual qualifications pass.
 
 Later: Final P1–P5 run on App service with Proof verdict after final tuple qualification, then D49 full suites and Farm F-final/ZIP. No duplicate farm or Proof run. D47 memo/capsule stays deferred and held unmerged. D46 U2c draft stays closed. D14/D23 deferred relational timing cases retain their original assertions and failures.
 
@@ -65,4 +65,4 @@ Disk: Latest sweep3 removed zero directories; 11113 MiB free. Current finished A
 
 Evidence: [joined 690](../../design/app-A2-A3-corrected-integrated-0629.md), [real provider integrated](../../design/app-A3-provider-integrated-0724.md), [actual predecessor review](../../design/app-P3-parent-trace-review-0720.md), [element clock](../../design/app-P2-element-clock-review-0724.md), [element error review](../../design/app-P2-element-error-review-0738.md), [popup cause review](../../design/app-P2-popup-cause-review-0745.md), [lifecycle review](../../design/app-P2-P3-lifecycle-review-0741.md), [IMAGE](../../design/agt-A4-image-result-review-0636.md).
 
-Pass 2026-10-24T08:59Z: Current workers checked. P3 integrated0900 dispatched immediately on pure82cb rather than waiting for disjoint popup. Popup0846 and caller first return0853 remain active. Independent whole-path0846 report is published; prior reply fixture remains unqualified. No original run or installed row change.
+Pass 2026-10-24T09:03Z: New Proof0846 and conditional0850 consumed. P3 integrated0900 owns the ready head checks; caller first return0853 is in cumulative0902 review. Actual popup0840 FAIL remains held with sole Sol0846 active. Conditional run prerequisite is not met; no row install or original submission.
