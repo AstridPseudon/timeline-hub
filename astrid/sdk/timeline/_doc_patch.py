@@ -436,6 +436,24 @@ def apply_change(root, change, *, physical=None):
     return root, before
 
 
+def item_scoped_removal(closure, changes, physical, path):
+    # Mixed structural replacements retain their aggregate order-restoration proof.
+    path = normalized_path(physical, path)
+    for change in changes:
+        if change['op'].startswith('list.') and any(
+                '/' in identity or '::' in identity for identity in change['order_before']):
+            return False  # Literal patch identities need not be native entity refs.
+        other = normalized_path(physical, change['path'])
+        if change['op'] == 'list.remove' or path[:len(other)] != other:
+            continue
+        try:
+            if closure.resolve(change['ref']) == physical:
+                return False
+        except CommandError:
+            return False
+    return True
+
+
 def patch(ctx, command):
     closure = Closure(ctx.state.bundle)
     ctx.patch_closure = closure
@@ -464,7 +482,21 @@ def patch(ctx, command):
                 if native_path or native_ref == 'parent':
                     ctx.read(native_ref, native_path)
         start = len(ctx.record['writes'])
-        closure.install(ctx, physical, path, value_at(root, physical, path))
+        if (op == 'list.remove' and identity_key(physical, path) == 'id'
+                and item_scoped_removal(closure, command['args']['changes'], physical, path)):
+            # Guard the complete removed row and collection shape separately;
+            # surviving rows are not operands of a member removal.
+            for native_ref, native_path in closure.native_sites(physical, [*path, 'id:' + change['id']]):
+                owner, entity = native_ref.rsplit('/', 1)
+                key = 'collection.' + entity.split(':', 1)[0] + 's'
+                if not any(selected['key'] == key and selected['owner'] == owner
+                           for selected in ctx.record['selections']):
+                    ctx.select(key, owner)
+                ctx.read(native_ref, native_path)
+                ctx.clear(native_ref, native_path)
+            ctx.compile_mirrors()
+        else:
+            closure.install(ctx, physical, path, value_at(root, physical, path))
         binding = closure.binding(ref, physical, command_ordinal=ctx.record['ordinal'], change_ordinal=ordinal,
                                   phase='input')
         # Bindings remain provider facts in the existing recorder; never command claims.
