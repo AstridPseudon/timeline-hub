@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T16:07:17Z | dispatcher heartbeat 7s | live 3 (sol 1, luna 2, other 0) | busy30 8 | status age 0m -->
-# runtime board, 2026-10-24T16:07:05Z
+<!-- main | 2026-10-24T16:10:25Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 1m -->
+# runtime board, 2026-10-24T16:09:13Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -95,9 +95,9 @@
 | R0-D61-history-wire | Generate optional history ABI field | Luna | Joined source security PASS | merged | Wire1454; security1511 | Actual8b32 canonical15 exact6e8; schema867f. Agent5777 and App95cf now normally adopted; no regeneration remains. | 8b32cacea / 6e8 |
 | R-recorder-native-custody | Review eight native omission captures | Luna | D62 source scope decided | merged | Review1445 PASS source cause | Eight actual accepts verified. D62 defers submit completeness; no new custody seam. [Review](../../design/rt-R-recorder-native-custody-review-1445.md) | Evidence only |
 | R-recorder-abi-security | Review exact coverage authority design | Luna | Design assessment complete | merged | Luna1422 design only | Validated request can select regime; exact full coverage must be proved. Final source review remains required. [Design](../../design/rt-R-recorder-abi-security-design-1422.md) | Base438 source facts |
-| FREEZE-App-compatibility | Qualify accepted installer schema | App Luna | D66 waits D62 regeneration | gated:D62 | App1507; D65 successor | Confirmed caused regression19256PASS/1FAIL. Pin actual tuple ONCE after D62; strict guard unchanged, NodeNOTRUN. | App be98 / Runtime e68 |
+| FREEZE-App-compatibility | Qualify accepted installer schema | App Luna | Actual integrated1553 passed | merged | App6d74; proof1553 | Strict skew2, updater4 and schema2 PASS on actual6d74. Fourteen mappings exact8b32/schema867f. Installer regression closed. | App6d74 / Runtime8b32 |
 | FREEZE-current-P2-P3 | Qualify current original App journeys | App Sol | D66 plain launch and P1 control | blocked:app | App plain-launch owner | Historical12541/1689 FAIL before bodies. D66 starts normal stack, unchanged originals and plain run manifest; P1 then P2/P3 parallel. | App be98, new tuple pending |
-| FREEZE | Reach final tuple cut | Runtime manager | D59 cut with D66 and D67 | doing | Runtime Sol1557; Agent/App owners | Runtime1core/0regression; Agent2core; App9 gates plus1 installer regression. Cut requires current P2/P3 PASS. | Runtime8b32 |
+| FREEZE | Reach final tuple cut | Runtime manager | D59 cut with D66 and D67 | doing | Runtime Sol1557; Agent/App owners | Runtime1core/0regression; Agent2core; App9 gate cases/0regression. Cut requires current P2/P3 PASS. | Runtime8b32 |
 | F-final | Main delivery build and ZIP | Luna | D59 cut and final proofs | doing | Builder1233; docs1229; service1244 | Builder and v2 prose installed. Durable service helper repair active; live-main refresh and final build wait qualified cut and proofs. | No delivery artifact |
 | F-final-builder | Put verifier clones in TMPDIR | Luna / Luna | Exact installed proof complete | merged | Review1229; installed1233 PASS | f25d atomically installed0755, old script backed up. Installed smoke and integrity checks passed; no real build. | f25dfab1 installed |
 | F-final-D68-assess | Check fresh upstream packaging | Luna | Source assessment complete | merged | rt-F-final-D68-assess-1543 | Stale builder hash found. Proposed refresh moves frozen integration; correction assigned1546. [Facts](../../workers/rt-F-final-D68-assess-1543/evidence/source-assessment.md) | Evidence only |
@@ -129,7 +129,7 @@ Runtime producer: 8b32cacea617c6d45241d7db90b34893a06d3026, tree a095ecbe8b01b0f
 core open: 1 Runtime inverse timeline-root compatibility defect, independently attributed by Agent1546. Sol1557 owns correction. Actual Agent5777/Runtime8b32 closes five of six originals;54 strict controls pass. Final Runtime core suite remains required.
 regressions: 0 confirmed Runtime originals. Historical36closed/0open/0unaccounted remains scoped accounting, not a new full-suite PASS.
 
-FREEZE D59/D66: Runtime producer8b32 is home; one inverse source cause now owned. Agent5777 actual-six5PASS1FAIL;54strictPASS. App normal14 mapping rebind1539 and once-only manifest pin remain owned. App9 gate cases and1 installer regression remain open. No cut, finalGO or artifact.
+FREEZE D59/D66: Runtime producer8b32 is home; one inverse source cause now owned. Agent5777 actual-six5PASS1FAIL;54strictPASS. App6d74 normal14 adoption and strict manifest pin are qualified1553; App9 gate cases remain open, installer regression closed. No cut, finalGO or artifact.
 
 D66: no separate D62 integrated-proof stage. Author tests plus independent security and Agent actual-home six suffice; final cut covers remaining Runtime proof. The isolated1524 route is installed but unused. Provider-completion historical incident is not held open; the originating cut rerun decides closure or a new core cause.
 
@@ -139,7 +139,7 @@ D65 delivery: owner merges Runtime, then Agent, runs authentic App update-manife
 
 Blockers: Runtime / Agent — actual six1540 is5PASS1FAIL. Sol1557 owns inverse stage-input cause; Agent1546 independently traces whole path. Separate empty-create original is Agent G4-owned.
 Blockers: App — P1 actual13564 FAIL before split POST. Sol1600 plus independent wholepath1600 own cause; P2/P3 parallel only after changed P1 green. No duplicate original.
-Blockers: App manifest — App6d74 includes strict installer fix; integrated1553 verifies closure. Runtime source-only auth successor will need truthful normal provenance rebind after merge, no new schema generation.
+
 
 Blockers: Final delivery — cut needs every active lane0core/0regressions and current P2/P3PASS, then required final proofs/build/ZIP.
 Next ready: finish Sol1557 and dispatch prepared security1606 immediately; finish D68 finalcaller1601 and D69 audit1603. D65 docs and normal D62 adoptions complete; no local ready row unassigned.
@@ -175,3 +175,5 @@ Pass 2026-10-24T16:01:15Z: D68 exactfda independent1554PASS; real final caller w
 Pass 2026-10-24T16:03:29Z: new D69 instruction consumed beforecut; one Luna1603 dispatched immediately for Runtime reverse diff and weakening audit. App/Agent own theirrows. No duplicatebody or productauthor; Sol1557 and D68caller1601 remainactive undercap4.
 
 Pass 2026-10-24T16:07:05Z: author1557 stillactive, existing333strictPASS and oneoriginalGREEN observed only; security1606 brief prepared, dispatch waits exactcompletedcommit. App P1 actual13564 terminalNO-GO before splitPOST; AppSol1600 owns meaningfulfix. Peers warned authonly source movement will need normalprovenance rebind after actualmerge, no wiregeneration.
+
+Pass 2026-10-24T16:09:13Z: actual App6d74 sourcequalification1553PASS closes confirmedinstaller regression: skew2/updater4/schema2,14 mappings exact8b32. Cleared manifest Blockers line now; App9 coregate cases remain. Source-only futureRuntime identity rebind after actualauthmerge remains normal vendor work, no new schema generation.
