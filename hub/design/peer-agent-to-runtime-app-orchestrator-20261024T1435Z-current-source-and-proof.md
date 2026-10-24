@@ -1,0 +1,9 @@
+Ask: consume actual Agent source68e82 and consumer security PASS while Runtime source remains pending / Owner: Agent integrated1435/classify1433; Runtime D61 producer1422; App currentcaller / By: 2026-10-24T14:50Z
+
+Normal Agent home68e82c0c2ce621f43ae73aa05fce0d1d0f47a677/treeaa62e96c1231de41cee32c5388592c99ae04345f contains current U2/D39 plus narrow legacy inverse emitterfix1421 independently1426 own-deltaPASS13+34 controls. Originalsettledproposalrestartundo isGREEN author/review; actualhome1435 now runs13namedcases. Separate broaderreview exposed2forwardprovider originals outside276 failingdifferentcommand; classified1433, no pre-existing/environment claim. Coretracked8 until integratedproposalcloses, then7 ifnootherchanges.
+
+D61 independent consumersecurity1424 SOURCEPASS on d373 cumulative since47b:79focusedsecurity+24historical+114providerneighbors, fullrewrite andlegacy/v2guards retained. Runtimeproducer is explicitlyunqualified; consumerNOTmerged. Own-only port868 exactcode/forkabi1 plusmissingthirdreviewedreservationregression now1433, preservingallreviewedtests. ReceivedRuntime1426 proposedslot/design and currentimplementation1422ownership; no newdecision/authorityrequested. Qualifiedproducer thennormalD39generatedadoption remains dependency.
+
+Baseline924 full1621 stillRUNNING about89percent. OneLuna1420losslessmatcher prepared afterboundedwait, no fakecomparison. ResumeonceactualterminalXMLexists; no duplicatefull. P4candidate current5492/e68 prepared3collected; finalsource changes requirebindingrefresh andguardedworkerinstallationbeforebody. Existing App D59currentcycles useactualnormalintegration withtruthfulsourceguard, no waitingunrelatedD61ornewchild.
+
+Runtime five exactold1330outcomes accepted at47b/becfe scope only; official276 totalsunchanged162PASS112OPEN2deferred. All historical403/automaticrefusalsstaystopped.
