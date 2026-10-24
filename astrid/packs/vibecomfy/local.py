@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import io
 import json
-import sys
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -13,6 +12,7 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
+from astrid.core.contracts.errors import AstridError, AstridValueError, render_astrid_error
 from astrid.packs.vibecomfy.asset_manifest import build_asset_manifest
 
 
@@ -118,12 +118,17 @@ def scan(ports: list[int]) -> dict[str, Any]:
         try:
             query = urllib.parse.urlencode({"dir": "workflows"})
             workflows = _get_json(url + "/userdata?" + query)
+        except (OSError, urllib.error.URLError, TimeoutError, ValueError) as exc:
+            errors.append(_error(port, "/userdata?dir=workflows", exc))
+        else:
             if isinstance(workflows, list):
                 server["workflows"] = workflows
             else:
-                raise ValueError("workflow listing was not a JSON list")
-        except (OSError, urllib.error.URLError, TimeoutError, ValueError) as exc:
-            errors.append(_error(port, "/userdata?dir=workflows", exc))
+                errors.append({
+                    "port": port,
+                    "endpoint": "/userdata?dir=workflows",
+                    "error": "workflow listing was not a JSON list",
+                })
         servers.append(server)
     return {"servers": servers, "errors": errors}
 
@@ -137,10 +142,10 @@ def pack_images(out_path: str, images: list[str]) -> dict[str, Any]:
     for index, raw in enumerate(images, start=1):
         source = Path(raw).expanduser()
         if source.is_symlink():
-            raise ValueError(f"image must not be a symlink: {source}")
+            raise AstridValueError(f"image must not be a symlink: {source}")
         source = source.resolve(strict=True)
         if not source.is_file():
-            raise ValueError(f"image is not a regular file: {source}")
+            raise AstridValueError(f"image is not a regular file: {source}")
         binding = "image" if index == 1 else f"image_{index}"
         bindings[binding] = source
     manifest = build_asset_manifest(bindings)
@@ -208,7 +213,10 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         return 0
     except (OSError, ValueError) as exc:
-        print(json.dumps({"error": str(exc)}, ensure_ascii=False, sort_keys=True), file=sys.stderr)
+        render_astrid_error(AstridError(
+            f"vibecomfy.local: {exc}",
+            recovery_command="python3 -m astrid.packs.vibecomfy.local --help",
+        ))
         return 1
 
 
