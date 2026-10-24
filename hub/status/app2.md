@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T04:19:16Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 1m -->
-# app2 board, 2026-10-24T04:10Z
+<!-- app2 | 2026-10-24T04:21:20Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
+# app2 board, 2026-10-24T04:21Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -13,7 +13,7 @@
 | readiness-client-link | Compare P1 and native seed history | App Sol; Luna review | Complete retained comparison | merged | App0121; review0128 | Both histories contain two entries. Native seed has21 commands and child closure. Failed browser request counts remain unknown. | Report only |
 | P2 | Eight original gestures | App service; Proof Luna | Three App fixes and reviewed D42 pin | blocked:app | App12221; Proof0320 and0325 | NO-GO. Exit1,501 seconds. Readiness passed; three original cases failed and five were not run. | App804; Agent079; Runtime37eb |
 | P2-element | Original element head capture failure | App Sol; Luna review | Integrated proof and original failure coverage | blocked:app | Element0314; review0335; census0340 | Source merged after221 tests, types and lint. Exact original trigger remains unknown; source migration alone gives no P2 credit. | f90e708b37 |
-| P2-popup | Correct rendered popup target lookup | Proof Luna; independent review | Author checks passed | review | Author0413; reviewer0418 | Two lookups changed.27 projection tests, three types, lint and list2 passed. Independent no-weakening review queued immediately. | adf39c533 |
+| P2-popup | Correct rendered popup target lookup | Proof Luna; independent review | Independent0418 PASS | merging | Author0413; review0418; remote App queue | Exactly two selectors. All other bytes and assertions retained;27 projection tests, three types, lint and list2 passed. No live gate credit. | adf39c533 |
 | P2-parent | Original parent move response wait | App A2 | Causal reproduction and qualified fix | blocked:app | Parent0352; transition0401 | Mirrored move passes offline; child and top-level-only forms refuse before append. Follow-up owns actual transition comparison; cause unknown. | Proof804 |
 | P2-static | Five unrun original cases | App Luna | Independent0357 complete | merged | app-P2-five-review-0357 | Both transition removals and child placement have static gaps. Asset and swap pass static checks only. All five originals remain unrun. | Report only |
 | P2-placement | Single occurrence media placement | App Luna; independent review | Source correction and qualification | blocked:app | app-P2-single-placement-0410 | Source owner assigned to preserve original occurrence.add-media expectation. No spec or command oracle relaxation. | Source pending |
@@ -32,9 +32,9 @@ P1 RESULT GO. BOARD-HEADER records GO at00:43Z; D35 is satisfied. Original18792 
 Blockers: Runtime owes stateful memo correction0403, independent whole-path review, compatible pin proof and cold, warm and concurrent HTTP checks.
 Blockers: App owes three qualified gesture fixes and their exact reviewed caller composition before the next pair.
 Blockers: Farm F-final waits for remaining deletions, upstream freeze and P2/P3 proof. Agent owns D32 repairs and classification.
-Next ready: Consume popup reviewer0418 immediately, then normal remote merge on independent no-weakening PASS. Consume Runtime0403 and App0359/0401 handoffs immediately; release one pair only after all prerequisites and authentic caller custody pass.
+Next ready: App home merge receipt for reviewed popup adf39c533; consume source reviews and Runtime0403 at completion. Consume Runtime0403 and App0359/0401 handoffs immediately; release one pair only after all prerequisites and authentic caller custody pass.
 
-Popup0408 ask consumed directly from normal hub before inbox delivery. Author0413 completed on current App integration; independent0418 queued immediately; no competing App spec author. Only rendered target lookups may change; genuine occurrence ID has no invented literal prefix. Independent review follows before normal own-only remote merge.
+Popup0408 ask consumed directly from normal hub before inbox delivery. Author0413 completed on current App integration; independent0418 queued immediately; no competing App spec author. Only rendered target lookups may change; genuine occurrence ID has no invented literal prefix. Independent0418 PASS completed; normal own-only remote merge request sent at04:21Z.
 
 Current authority: INBOX through630666 bytes, including03:50 instruction, is consumed. The next pair waits for all three App gesture fixes plus the D42 pin. App service remains the sole runner; Proof owns verdicts. No repeat or fallback pair is submitted. [Release prerequisites](../../design/peer-app2-to-app-runtime-orchestrator-20261024T0352-release-prerequisites.md).
 
@@ -52,11 +52,11 @@ Later: Agent U2c699236a285 stays unmerged. Activation15 collected with6FAIL and9
 
 Safety: All prior process, reference, file, MONITOR, keep-awake, publication and locked-v1 refusals remain stopped. Prior compact refusal is not retried. D30 applies: worker final message is the report; managers copy qualified handoffs. No manager product, test, generated, pin or Git mutation. Frozen34e/d106/819acf, D14/D23 and dormant D31 implementation with397-line/40-assertion tests remain unchanged.
 
-Disk:04:09 available8804573184 bytes, above8GB heavy stop and8.5GB D34 threshold. All21 remaining worktrees have KEEP; no eligible supported recycle. Supported sweep3 completed: zero eligible directories,8375 to8374 MiB available. No local heavy run or disk-only worker.
+Disk:04:20 available8793006080 bytes, above8GB heavy stop and8.5GB D34 threshold. All21 remaining worktrees have KEEP; no eligible supported recycle. Supported sweep3 completed: zero eligible directories,8375 to8374 MiB available. No local heavy run or disk-only worker.
 New source handoffs: [Runtime correction and review](../../design/peer-runtime-to-app-app2-orchestrator-20261024T0358-D42-correction-review.md), [App five-case finding](../../design/peer-app-to-app2-orchestrator-20261024T0357-static-five-early.md). Runtime local socket restriction was a documented sandbox limit, not a classifier denial; the independent reviewer has network capability. Latest regressions remain unqualified until that review.
 
 Second D42 security finding: [Runtime0403](../../design/peer-runtime-to-app-app2-orchestrator-20261024T0403-D42-stateful-return.md) records an actual mutable-closure-state attack on a684, reproduced independently by the pin author. Author and whole-validation auditor0403 run in parallel; unknown implementation state must take full verification. No performance or journey run is released.
 
 D42 security finding: [Independent0339](../../design/runtime-D42-security-review-0339.md) reproduced a warm-memo bypass after changing validate_claims while auth.validate stayed unchanged. Candidate35320 is held. Required304 tests passed but do not override the attack. Runtime owns correction0346; no safety refusal or contract decision is involved.
 
-Pass: All1237 Proof workers checked and done. Runtime, App, Agent and Farm boards rechecked at04:09Z. Popup target0352, parent0352 and static0352 are dispatched by App; no duplicate Proof author. No pending Proof review or merge blocks source work. Next full pass04:20Z; act earlier on a real handback.
+Pass: All1239 Proof workers checked and done. Runtime, App, Agent and Farm boards rechecked at04:20Z. Popup target0352, parent0352 and static0352 are dispatched by App; no duplicate Proof author. No pending Proof review or merge blocks source work. Next full pass04:30Z; act earlier on a real handback.
