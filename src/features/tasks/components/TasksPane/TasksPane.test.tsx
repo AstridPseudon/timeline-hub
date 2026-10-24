@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TasksPane } from './TasksPane';
@@ -173,7 +173,7 @@ vi.mock('./RuntimeTaskList', () => ({
 }));
 
 vi.mock('./RuntimeActivityDock', () => ({
-  RuntimeActivityDock: (props: any) => <div data-testid="runtime-activity-dock" data-runtime-activity-dock="true" onMouseLeave={props.onTemporaryHistoryLeave} onBlur={props.onTemporaryHistoryLeave}>
+  RuntimeActivityDock: (props: any) => <div data-testid="runtime-activity-dock" data-runtime-activity-dock="true">
     <button type="button" aria-label={props.isPinned ? 'Stop keeping tasks open' : 'Keep tasks open'} title={props.isPinned ? 'Stop keeping tasks open' : 'Keep tasks open'} aria-pressed={props.isPinned} onClick={props.onTogglePinned}>Toggle activity history</button>
     <button type="button" aria-label={props.isHistoryOpen ? 'Stop peeking at tasks' : 'Peek at tasks'} title={props.isHistoryOpen ? 'Stop peeking at tasks' : 'Peek at tasks'} aria-expanded={props.isHistoryOpen} onClick={props.onToggleHistory}>Toggle task history</button>
     <button type="button" onClick={props.onOpenHistory}>Open activity history</button>
@@ -480,14 +480,22 @@ describe('TasksPane', () => {
     const chat = screen.getByTestId('agent-chat-panel');
     fireEvent.mouseLeave(dock, { relatedTarget: taskArea });
     expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
-    fireEvent.mouseLeave(taskArea, { relatedTarget: chat });
-    expect(screen.queryByTestId('runtime-task-history-empty')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Peek at tasks' })).toHaveFocus();
+    vi.useFakeTimers();
+    try {
+      fireEvent.mouseLeave(taskArea, { relatedTarget: chat });
+      expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
+      act(() => { vi.advanceTimersByTime(150); });
+      expect(screen.queryByTestId('runtime-task-history-empty')).toBeNull();
+      expect(screen.getByRole('button', { name: 'Peek at tasks' })).toHaveFocus();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Peek at tasks' }));
-    expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
-    fireEvent.mouseLeave(dock, { relatedTarget: document.body });
-    expect(screen.queryByTestId('runtime-task-history-empty')).toBeNull();
+      fireEvent.click(screen.getByRole('button', { name: 'Peek at tasks' }));
+      expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
+      fireEvent.mouseLeave(dock, { relatedTarget: document.body });
+      act(() => { vi.advanceTimersByTime(150); });
+      expect(screen.queryByTestId('runtime-task-history-empty')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
 
     fireEvent.click(screen.getByRole('button', { name: 'Peek at tasks' }));
     expect(screen.getByTestId('runtime-task-history-empty')).toBeInTheDocument();
@@ -633,6 +641,77 @@ describe('TasksPane', () => {
     expect(paneControlProps.actions.composerButton.ariaLabel).toBe('Open message composer');
     // Chat voice is switched off: the cell shows only Message.
     expect(paneControlProps.actions.composerButton.secondary).toBeUndefined();
+  });
+
+  describe('temporary history peek', () => {
+    function openPeek() {
+      useLocationMock.mockReturnValue({
+        pathname: '/tools/video-editor',
+        search: '?project=runtime-project&timeline=timeline-1',
+      });
+      useTasksPaneControllerMock.mockReturnValue({
+        ...legacyControllerState,
+        isRuntimeMode: true,
+        runtimeActivityTasks: [],
+        runtimeTaskData: { tasks: [], total: 0, totalPages: 0 },
+        runtimeTaskActions: {
+          cancelTask: vi.fn(), retryTask: vi.fn(), isTaskActionPending: vi.fn().mockReturnValue(false),
+          exportManagedOutput: vi.fn(), isExportTaskPending: vi.fn().mockReturnValue(false),
+        },
+      });
+      renderTasksPane();
+      fireEvent.click(screen.getByRole('button', { name: 'Peek at tasks' }));
+      const dock = screen.getByTestId('runtime-activity-dock');
+      const container = dock.closest('[data-runtime-peek-container]') as HTMLElement;
+      expect(container).toContainElement(screen.getByTestId('runtime-task-history-empty'));
+      return { dock, container, wrapper: container.parentElement as HTMLElement };
+    }
+    const peekOpen = () => screen.queryByTestId('runtime-task-history-empty') !== null;
+
+    it('survives crossing a strip outside the surfaces when the pointer re-enters within the grace', () => {
+      const { dock, wrapper } = openPeek();
+      vi.useFakeTimers();
+      try {
+        fireEvent.mouseLeave(dock, { relatedTarget: wrapper });
+        act(() => { vi.advanceTimersByTime(100); });
+        expect(peekOpen()).toBe(true);
+        fireEvent.mouseOut(wrapper, { relatedTarget: dock });
+        act(() => { vi.advanceTimersByTime(1000); });
+        expect(peekOpen()).toBe(true);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('closes after the grace when the pointer really leaves', () => {
+      const { dock } = openPeek();
+      vi.useFakeTimers();
+      try {
+        fireEvent.mouseLeave(dock, { relatedTarget: document.body });
+        act(() => { vi.advanceTimersByTime(149); });
+        expect(peekOpen()).toBe(true);
+        act(() => { vi.advanceTimersByTime(1); });
+        expect(peekOpen()).toBe(false);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('does not close when focus leaves to nowhere, and stays open when pinned', () => {
+      const { dock } = openPeek();
+      vi.useFakeTimers();
+      try {
+        fireEvent.blur(dock, { relatedTarget: null });
+        act(() => { vi.advanceTimersByTime(1000); });
+        expect(peekOpen()).toBe(true);
+        fireEvent.click(screen.getByRole('button', { name: 'Keep tasks open' }));
+        fireEvent.mouseLeave(dock, { relatedTarget: document.body });
+        act(() => { vi.advanceTimersByTime(1000); });
+        expect(peekOpen()).toBe(true);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 
   it('restores the chat-filled layout preference and persists it when toggled', async () => {

@@ -161,6 +161,8 @@ export async function openSeededTimeline(page: Page, harness: DirectHarness) {
   await expect(page.getByRole('combobox', { name: 'Select project' })).toContainText(harness.seed.projectName);
   await expect(page.getByRole('combobox', { name: 'Select timeline' })).toBeVisible();
   await expect(firstTrackName(page)).toBeVisible();
+  // The editor mounts beneath the connection card and is inert until the card has left: an edit before that is dropped.
+  await expect(page.locator(UI.panel)).toHaveCount(0);
 }
 
 /** Opens the production embedded canonical ShotEditorView from the parent editor's shot-group label. */

@@ -6,7 +6,6 @@ import { EditorPane } from '@/features/editor/components/EditorPaneTab';
 import { ToolsPane } from '@/shared/components/ToolsPane/ToolsPane';
 import { AstridLoading } from '@/shared/components/AstridLoading';
 import { SettingsModal } from '@/shared/components/SettingsModal/SettingsModal';
-import { OnboardingModal } from '@/shared/components/modals/OnboardingModal';
 import { dispatchAppEvent } from '@/shared/lib/typedEvents';
 
 import { useIsMobile, useIsTablet } from '@/shared/hooks/mobile';
@@ -20,7 +19,6 @@ import { useSplitViewScroll } from './hooks/useSplitViewScroll';
 import { useGlobalPaneShortcuts } from './hooks/useGlobalPaneShortcuts';
 import { useSettingsModal } from './hooks/useSettingsModal';
 import { useReplayEditorTour } from './hooks/useReplayEditorTour';
-import { useOnboardingFlow } from './hooks/useOnboardingFlow';
 import { useResetCurrentShotOnRouteChange } from './hooks/useResetCurrentShotOnRouteChange';
 import { LayoutMainContent } from './components/LayoutMainContent';
 import { usePanesStore } from '@/shared/state/panesStore';
@@ -64,7 +62,6 @@ const LayoutShell: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const { isSettingsModalOpen, setIsSettingsModalOpen, settingsInitialTab } = useSettingsModal();
   const replayEditorTour = useReplayEditorTour();
-  const { showOnboardingModal, onboardingMode, handleOnboardingClose } = useOnboardingFlow();
   useResetCurrentShotOnRouteChange();
   useGlobalPaneShortcuts();
 
@@ -150,12 +147,6 @@ const LayoutShell: React.FC = () => {
           initialTab={settingsInitialTab}
         />
 
-        {/* Onboarding Modal */}
-        <OnboardingModal
-          isOpen={showOnboardingModal}
-          mode={onboardingMode}
-          onClose={handleOnboardingClose}
-        />
     </div>
   );
 };

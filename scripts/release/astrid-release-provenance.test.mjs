@@ -14,6 +14,7 @@ import {
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { describe, it } from 'node:test';
+import { declaredSkip } from '../quality/declared-skip.mjs';
 
 import {
   RELEASE_LEDGER_PATH,
@@ -132,7 +133,7 @@ function withRepo(options, callback) {
   }
 }
 
-describe('Astrid release candidate provenance', () => {
+describe('Astrid release candidate provenance', { skip: declaredSkip('macos-release-process-containment') }, () => {
   it('rejects hidden index flags that can conceal modified worktree bytes', () => {
     withCandidateRepo(({ repoRoot }) => {
       assert.doesNotThrow(() => assertCleanReleaseCheckout(repoRoot, 'fixture'));
@@ -170,6 +171,24 @@ describe('Astrid release candidate provenance', () => {
         RELEASE_MANIFEST_PATH,
         `${releaseEvidenceDirectory(RELEASE)}receipt.txt`,
       ].sort());
+    });
+  });
+
+  it('does not reuse cached object bytes across separate provenance inspections', () => {
+    withCandidateRepo(({ repoRoot, candidateCommit }) => {
+      const headCommit = freezeEvidence(repoRoot, candidateCommit);
+      const inspect = () => inspectCandidateController({
+        repoRoot, candidateCommit, headCommit, release: RELEASE,
+      });
+      assert.doesNotThrow(inspect);
+
+      // Keep the exact same commit IDs but make a previously read manifest
+      // object unavailable. A process-global memo would incorrectly accept
+      // the second inspection using its old JSON bytes.
+      const object = git(repoRoot, ['rev-parse', `${headCommit}:${RELEASE_MANIFEST_PATH}`]);
+      const objectPath = resolve(repoRoot, '.git/objects', object.slice(0, 2), object.slice(2));
+      rmSync(objectPath);
+      assert.throws(inspect, /git show .*extension-ship-quality\.json failed/);
     });
   });
 

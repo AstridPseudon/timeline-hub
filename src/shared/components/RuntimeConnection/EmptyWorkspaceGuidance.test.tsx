@@ -2,18 +2,20 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ ensureSession: vi.fn(), clipboard: vi.fn(), connectedBefore: true }));
+const mocks = vi.hoisted(() => ({ ensureSession: vi.fn(), clipboard: vi.fn(), connectedBefore: true, desktop: true, beginTour: vi.fn() }));
 vi.mock('@/integrations/runtime/client.ts', () => ({ AstridRuntimeClient: class { ensureSession = mocks.ensureSession; } }));
 vi.mock('@/integrations/runtime/connection.ts', () => ({ runtimeApiBase: () => 'http://127.0.0.1:17340/api/runtime' }));
 vi.mock('@/integrations/runtime/RuntimeConnectionProvider.tsx', () => ({ useRuntimeConnection: () => ({ connectedBefore: mocks.connectedBefore }) }));
 vi.mock('@/shared/lib/browser/clipboard.ts', () => ({ writeClipboardTextSafe: mocks.clipboard }));
+vi.mock('@/tools/video-editor/tour/runner/useIsDesktopEditor.ts', () => ({ useIsDesktopEditor: () => mocks.desktop }));
+vi.mock('@/shared/state/editorTourStore', () => ({ startEditorTour: mocks.beginTour }));
 
 import { EmptyWorkspaceGuidance } from './EmptyWorkspaceGuidance.tsx';
 import { installCommand, RUNTIME_CONNECTION_COPY } from './copy.ts';
 
-function showGuidance(onRefresh = vi.fn()) {
+function showGuidance(onRefresh = vi.fn(), confirmedEmpty = true) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  render(<QueryClientProvider client={client}><EmptyWorkspaceGuidance onRefresh={onRefresh} /></QueryClientProvider>);
+  render(<QueryClientProvider client={client}><EmptyWorkspaceGuidance onRefresh={onRefresh} confirmedEmpty={confirmedEmpty} /></QueryClientProvider>);
   return onRefresh;
 }
 function openDetails() {
@@ -25,6 +27,8 @@ function openDetails() {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.connectedBefore = true;
+  mocks.desktop = true;
+  mocks.beginTour.mockReset();
   mocks.ensureSession.mockResolvedValue({
     realm: { realm_id: 'realm-existing', display_name: 'My workspace' },
     health: { runtime_instance_id: 'instance-existing' },
@@ -34,6 +38,29 @@ beforeEach(() => {
 });
 
 describe('connected empty workspace guidance', () => {
+  it('offers the editor tour only for a confirmed empty workspace on desktop, without creating a project', () => {
+    showGuidance();
+    fireEvent.click(screen.getByRole('button', { name: 'Take the editor tour' }));
+    expect(mocks.beginTour).toHaveBeenCalledOnce();
+    expect(mocks.ensureSession).not.toHaveBeenCalled();
+  });
+
+  it('shows the tour to a first-time connection without showing returning-user recovery copy', () => {
+    mocks.connectedBefore = false;
+    showGuidance();
+    expect(screen.getByRole('button', { name: 'Take the editor tour' })).toBeInTheDocument();
+    expect(screen.queryByText('Expected to see your work? It may be in another Astrid folder on this computer.')).toBeNull();
+  });
+
+  it('hides the editor tour while project discovery is unconfirmed or on mobile', () => {
+    showGuidance(vi.fn(), false);
+    expect(screen.queryByRole('button', { name: 'Take the editor tour' })).toBeNull();
+
+    mocks.desktop = false;
+    showGuidance();
+    expect(screen.queryByRole('button', { name: 'Take the editor tour' })).toBeNull();
+  });
+
   it('uses plain visible words and keeps workspace identity in the agent copy only', async () => {
     const onRefresh = showGuidance();
     expect(screen.getByText('Expected to see your work? It may be in another Astrid folder on this computer.')).toBeInTheDocument();

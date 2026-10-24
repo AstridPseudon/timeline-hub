@@ -94,9 +94,11 @@ export function useRuntimeEditorDiscovery({
   const projectsQuery = useQuery({
     queryKey: ["runtime-editor", session, "projects"],
     enabled,
-    queryFn: async () => {
-      await assertNativeEditorConnection();
-      const rows = await client.listProjects();
+    queryFn: async ({ signal }) => {
+      await assertNativeEditorConnection(signal);
+      signal.throwIfAborted();
+      const rows = await client.withSignal(signal).listProjects();
+      signal.throwIfAborted();
       if (
         rows.some((p) => !p.project_id || !p.slug || typeof p.name !== "string")
       )
@@ -114,10 +116,12 @@ export function useRuntimeEditorDiscovery({
   const timelinesQuery = useQuery({
     queryKey: ["runtime-editor", session, canonicalProjectId, "timelines"],
     enabled: enabled && !!project,
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
+      const attemptClient = client.withSignal(signal);
       const rows = z
         .array(timelineSchema)
-        .parse(await client.listTimelines(canonicalProjectId!));
+        .parse(await attemptClient.listTimelines(canonicalProjectId!));
+      signal.throwIfAborted();
       if (rows.some((t) => t.project_id && t.project_id !== canonicalProjectId))
         throw new Error(
           "Runtime returned a timeline belonging to a different project.",
@@ -132,7 +136,7 @@ export function useRuntimeEditorDiscovery({
           return { ...timeline, name: fallbackName };
         }
         try {
-          const detail = await client.getProjectParentCompositionRevision(
+          const detail = await attemptClient.getProjectParentCompositionRevision(
             canonicalProjectId!,
             timeline.timeline_id,
             timeline.head_revision_id,
@@ -156,6 +160,7 @@ export function useRuntimeEditorDiscovery({
             slug: timeline.slug || detailSlug || undefined,
           };
         } catch {
+          signal.throwIfAborted();
           return { ...timeline, name: fallbackName };
         }
       }));
@@ -173,7 +178,7 @@ export function useRuntimeEditorDiscovery({
     queries: (timelinesQuery.data ?? []).map((timeline) => ({
       queryKey: ["runtime-editor", canonicalProjectId, "timeline-edit", timeline.timeline_id],
       enabled: enabled && !!project,
-      queryFn: () => client.latestTimelineEditAt(canonicalProjectId!, timeline.timeline_id),
+      queryFn: ({ signal }: { signal: AbortSignal }) => client.withSignal(signal).latestTimelineEditAt(canonicalProjectId!, timeline.timeline_id),
       staleTime: 60_000,
     })),
   });
@@ -197,7 +202,9 @@ export function useRuntimeEditorDiscovery({
     if (canonicalProjectId) void refreshTimelines();
   }, [enabled, open, canonicalProjectId, refreshProjects, refreshTimelines]);
   const reconnect = async () => {
-    await client.reconnect();
+    // A refetch alone joins an unresolved initial load. Cancel it first so Retry
+    // owns fresh requests and React Query discards every obsolete result.
+    await queryClient.cancelQueries({ queryKey: ["runtime-editor", session] });
     await refreshProjects();
     if (canonicalProjectId) await refreshTimelines();
   };

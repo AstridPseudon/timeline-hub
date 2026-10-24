@@ -1663,7 +1663,9 @@ const TimelineRendererBody: FC<{ config: ResolvedTimelineConfig }> = memo(({ con
 
   const visualContent = useMemo(() => {
     const resolution = renderConfig.output.resolution;
-    let accumulated: ReactNode = null;
+    // Keep ordinary tracks as keyed siblings. Nesting another unkeyed Fragment for
+    // every new row reparents (and remounts) all existing images, worlds and decoders.
+    let accumulated: ReactNode[] = [];
 
     for (const track of visualTracks) {
       const trackClips = clipsByTrack.regular[track.id] ?? [];
@@ -1683,22 +1685,20 @@ const TimelineRendererBody: FC<{ config: ResolvedTimelineConfig }> = memo(({ con
             />
           )
         : null;
-      let lowerTrackContent: ReactNode = accumulated;
+      let lowerTrackContent = accumulated;
       const effectLayers = sortClipsByAt(clipsByTrack.effectLayers[track.id] ?? []);
 
-      if (lowerTrackContent && effectLayers.length > 0) {
+      if (lowerTrackContent.length > 0 && effectLayers.length > 0) {
         for (const effectLayer of effectLayers) {
-          lowerTrackContent = (
-            <EffectLayerSequence key={effectLayer.id} clip={effectLayer} fps={fps}>
+          lowerTrackContent = [
+            <EffectLayerSequence key={`effect:${effectLayer.id}`} clip={effectLayer} fps={fps}>
               {lowerTrackContent}
-            </EffectLayerSequence>
-          );
+            </EffectLayerSequence>,
+          ];
         }
       }
 
-      accumulated = lowerTrackContent && trackContent
-        ? <>{lowerTrackContent}{trackContent}</>
-        : (trackContent ?? lowerTrackContent);
+      accumulated = trackContent ? [...lowerTrackContent, trackContent] : lowerTrackContent;
     }
 
     return accumulated;

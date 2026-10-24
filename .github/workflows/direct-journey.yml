@@ -79,7 +79,9 @@ jobs:
           PLAYWRIGHT_OUTPUT_DIR: ${{ runner.temp }}/direct-results
           NODE_OPTIONS: --max-old-space-size=4096
           ASTRID_APP_DIRECT_DOOR_PORT: "17341"
-        run: npx playwright test -c playwright.direct.config.ts --reporter=json,list
+          # A missing dependency in this job is a failure, never a skip (config/testing/skipRegistry.mjs).
+          ASTRID_REQUIRE_LANES: direct-journey
+        run: npx playwright test -c playwright.direct.config.ts --reporter=json,list,./config/testing/playwrightSkipGuard.ts
 
       - name: Check the outcome counts
         if: ${{ !cancelled() }}
@@ -174,6 +176,9 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/python -m pip install -e .
+          # Astrid imports runtime_protocol but does not declare it: the installer puts the Runtime beside it with --no-deps
+          # (astrid/installer/backend.py, scripts/ci_install_runtime.py). Here the Runtime under test is the sibling checkout.
+          .venv/bin/python -m pip install --no-deps -e ../astrid-runtime
           .venv/bin/python -m astrid.core.dev.cross_client --help > /dev/null
 
       # Chrome, not Chromium: the render case plays an H.264 film (the bundled Chromium cannot decode it) and a missing Chrome
@@ -189,12 +194,13 @@ jobs:
         working-directory: astrid-app
         env:
           ASTRID_CHECKOUT: ${{ github.workspace }}/astrid-agent
+          ASTRID_REQUIRE_LANES: direct-journey
           ASTRID_PYTHON: ${{ github.workspace }}/astrid-agent/.venv/bin/python
           # Written by the JSON reporter itself (the globalSetup prints to stdout, so a shell redirect would corrupt the file).
           PLAYWRIGHT_JSON_OUTPUT_NAME: ${{ runner.temp }}/three-products.json
           PLAYWRIGHT_OUTPUT_DIR: ${{ runner.temp }}/three-products-results
           NODE_OPTIONS: --max-old-space-size=4096
-        run: npm run test:e2e:three-products -- --reporter=json,list
+        run: npm run test:e2e:three-products -- --reporter=json,list,./config/testing/playwrightSkipGuard.ts
 
       # Pass rule (R-9, same as the direct journey): no quarantined cases exist for this spec, so every case must pass. Durations are
       # written to three-products-summary.json and recorded, never judged (R-10).

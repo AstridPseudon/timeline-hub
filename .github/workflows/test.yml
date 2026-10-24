@@ -16,6 +16,19 @@ jobs:
           cache: npm
       - run: npm ci --legacy-peer-deps
       - run: npm test
+      - run: npm run test:sdk-boundary
+
+  # The release tooling is macOS-only by design (lockf broker, BSD ps eww, darwin-pinned attestation), so the vitest job
+  # declares these cases as skipped (config/testing/skipRegistry.mjs: macos-release-process-containment, macos-lockf-broker)
+  # and this job runs exactly those files where the condition holds. Plain node: these files import only the repo.
+  release-tooling-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: node --test --test-concurrency=1 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=./scripts/quality/node-skip-guard-reporter.mjs --test-reporter-destination=stdout scripts/release/bounded-command.test.mjs scripts/release/astrid-release-provenance.test.mjs scripts/release/verify-extension-ship.test.mjs
 
   # Cross-repo copies: every vendored artifact must match its selected producer commit.
   boundary:

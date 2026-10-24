@@ -116,6 +116,20 @@ describe('PublicAstridInstallDialog', () => {
     expect(trigger).toHaveFocus();
   });
 
+  it('returns focus to the trigger in Safari, which does not focus a clicked button', () => {
+    // Safari leaves focus on the nearest focusable ancestor (here the page's `main`) instead of the button.
+    render(<main tabIndex={-1} data-testid="page"><Harness /></main>);
+    const page = screen.getByTestId('page');
+    const trigger = screen.getByRole('button', { name: 'Open install' });
+    page.focus();
+    fireEvent.click(trigger);
+    expect(trigger).not.toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus();
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(document.querySelector('dialog')).not.toHaveAttribute('open');
+    expect(trigger).toHaveFocus();
+  });
+
   it.each([
     ['macOS', MAC_CHROME, 'MacIntel', 'your dock'],
     ['Windows', WIN_CHROME, 'Win32', 'your taskbar'],

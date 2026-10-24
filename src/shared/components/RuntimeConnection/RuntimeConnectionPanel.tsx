@@ -9,12 +9,14 @@ import { ASTRID_HELP_URL } from '@/integrations/astrid/help.ts';
 import { isMobileDevice } from '@/pages/Home/installScenario.ts';
 import { useSendLinkToComputer } from '@/pages/Home/useSendLinkToComputer.ts';
 import { CopyInstallCommand } from './CopyInstallCommand.tsx';
-import { EmptyEditorShell } from './EmptyEditorShell.tsx';
-import { RUNTIME_CONNECTION_COPY as COPY, withBrowser } from './copy.ts';
+import { CardDisclosure, EditorCard, EditorCardFoot } from './EditorCard.tsx';
+import { EditorCardLayer } from './EditorCardLayer.tsx';
+import { RUNTIME_CONNECTION_COPY as COPY, withBrowser, type WindowMode } from './copy.ts';
 
 export interface RuntimeConnectionPanelProps {
   /** The gate's value: the screen to show (on the way out, the last one shown). */
   readonly connection: RuntimeConnectionValue;
+  readonly windowMode?: WindowMode;
   /** Set once Astrid has connected after this panel asked for something: it shows so, then leaves (see the gate). */
   readonly exit?: RuntimeConnectionPanelExit | null;
 }
@@ -30,9 +32,6 @@ export const CONNECTED_MIN_MS = 900;
 export const SETTLED_QUIET_MS = 150;
 /** The panel's way out: the card lifts away and the empty editor cross-fades into the real one. */
 export const LEAVE_MS = 500;
-
-/** The same face the landing page, the install dialog and the header show: the pixel mink's app icon. */
-const AVATAR_SRC = '/astrid-app-icon-192.png';
 
 /** The editor beneath has painted its frame: nothing in the page holds the boot (`bootLayer.ts`'s ready signal). */
 function appSettled(): boolean {
@@ -92,34 +91,9 @@ const ConnectedContext = createContext(false);
  */
 function GateLayer({ dataState, exit, children }: { dataState: string; exit: RuntimeConnectionPanelExit | null; children: ReactNode }) {
   const leaving = useLeaving(exit, CONNECTED_MIN_MS);
-  return (
-    <section
-      aria-label={COPY.panelLabel}
-      data-testid="runtime-not-connected"
-      data-state={dataState}
-      data-leaving={leaving ? '' : undefined}
-      // Over the app's own panes (the chat pane sits at z 100016) while the app mounts beneath it.
-      className={cn('fixed inset-0 z-[100100] overflow-y-auto text-foreground', leaving && 'pointer-events-none')}
-    >
-      {/* Fades in over the boot screen's paper; fades out over the real editor. */}
-      <div className={cn('fixed inset-0 transition-opacity duration-500 ease-out animate-in fade-in-0 motion-reduce:animate-none motion-reduce:transition-none', leaving && 'opacity-0')}>
-        <EmptyEditorShell />
-        <div aria-hidden="true" className="absolute inset-0 bg-foreground/[0.07] backdrop-blur-[2px]" />
-      </div>
-      <div className="relative flex min-h-full items-center justify-center p-4">
-        <div
-          key={dataState}
-          className={cn(
-            // Opacity only on the way in: the "Up here" arrow is fixed to the viewport, so nothing above it may transform.
-            'w-full max-w-[576px] transition-[opacity,transform] duration-300 ease-out animate-in fade-in-0 motion-reduce:transition-none motion-reduce:animate-none',
-            leaving && '-translate-y-1 opacity-0',
-          )}
-        >
-          <ConnectedContext.Provider value={Boolean(exit)}>{children}</ConnectedContext.Provider>
-        </div>
-      </div>
-    </section>
-  );
+  return <EditorCardLayer aria-label={COPY.panelLabel} data-testid="runtime-not-connected" data-state={dataState} data-leaving={leaving ? '' : undefined} leaving={leaving} cardKey={dataState}>
+    <ConnectedContext.Provider value={Boolean(exit)}>{children}</ConnectedContext.Provider>
+  </EditorCardLayer>;
 }
 
 /**
@@ -136,7 +110,7 @@ function StatusLine({ text, help }: { text: string; help: boolean }) {
     if (!connected && wordsRef.current) waitingWidth.current = wordsRef.current.getBoundingClientRect().width;
   });
   return (
-    <div className="flex min-h-12 items-center justify-center gap-2 border-t border-border/70 bg-muted/40 px-[22px] py-3 text-[13px] text-muted-foreground">
+    <EditorCardFoot>
       <span aria-hidden="true" className="relative flex h-4 w-4 shrink-0 items-center justify-center">
         <span className={cn('absolute h-2 w-2 rounded-full bg-primary transition-opacity duration-200', connected ? 'opacity-0' : 'animate-pulse')} />
         <span className={cn('absolute flex h-4 w-4 items-center justify-center rounded-full bg-primary text-primary-foreground transition-[opacity,transform] duration-300 ease-out', connected ? 'scale-100 opacity-100' : 'scale-50 opacity-0')}>
@@ -154,7 +128,7 @@ function StatusLine({ text, help }: { text: string; help: boolean }) {
           </>
         )}
       </span>
-    </div>
+    </EditorCardFoot>
   );
 }
 
@@ -179,24 +153,13 @@ interface CardProps {
  */
 function Card({ title, sentence, action, children, status, pointer, showHelp = false }: CardProps) {
   const connected = useContext(ConnectedContext);
-  return (
-    <div className="relative overflow-hidden rounded-[18px] border border-border bg-card text-center shadow-[0_24px_60px_-24px_rgb(37_36_31/0.45),0_2px_8px_rgb(37_36_31/0.08)]">
-      <div className="space-y-4 p-[22px] pt-[26px]">
-        <header className="grid justify-items-center gap-3">
-          {/* The icon file carries its own rounded tile and shadow, as the install dialog shows it at this size. */}
-          <img src={AVATAR_SRC} alt="" className="-mb-1.5 h-[76px] w-[76px]" />
-          <div className="space-y-1">
-            <h1 className="text-balance font-serif font-theme-heading text-[25px] font-normal leading-tight text-foreground">{title}</h1>
-            <p className="text-balance text-sm leading-6 text-muted-foreground">{sentence}</p>
-          </div>
-        </header>
-        {children}
-        {action}
-      </div>
-      {(status || connected) && <StatusLine text={status ?? COPY.waiting} help={showHelp} />}
-      {pointer && !connected && <ToolbarPointer label={pointer} corner="top-left" tone="page" />}
-    </div>
-  );
+  return <>
+    <EditorCard title={title} sentence={sentence} foot={(status || connected) ? <StatusLine text={status ?? COPY.waiting} help={showHelp} /> : undefined}>
+      {children}
+      {action}
+    </EditorCard>
+    {pointer && !connected && <ToolbarPointer label={pointer} corner="top-left" tone="page" />}
+  </>;
 }
 
 /**
@@ -272,7 +235,7 @@ function PermissionCard({ connection }: { connection: RuntimeConnectionValue }) 
     <Card
       title={withBrowser(permission.title)}
       sentence={withBrowser(permission.sentence)}
-      action={<Button type="button" className="h-11 w-full rounded-xl" onClick={() => connection.connect()}>{permission.connect}</Button>}
+      action={<div className="space-y-2"><Button type="button" className="h-11 w-full rounded-xl" onClick={() => connection.connect()}>{permission.connect}</Button><CardDisclosure label={permission.allowTitle}>{permission.allowDetails}</CardDisclosure></div>}
     />
   );
 }
@@ -300,20 +263,21 @@ function BlockedCard() {
  * Nothing answers and this browser has never connected. That is also what a set-up computer looks like from a new
  * browser or a private window, so the screen uses the same idempotent install line.
  */
-function SetUpCard() {
+function SetUpCard({ windowMode }: { windowMode?: WindowMode }) {
   const { setUp } = COPY;
-  return <Card title={setUp.title} sentence={setUp.sentence} action={<CopyInstallCommand mode="install" />} status={COPY.waiting} />;
+  // Nothing has asked the browser yet, so this card never says it will: the permission card does, once Connect is next.
+  return <Card title={setUp.title} sentence={setUp.sentence} action={<CopyInstallCommand mode="install" windowMode={windowMode} />} status={COPY.waiting} />;
 }
 
 /** Nothing answers on a return visit, or the gateway answered but Astrid is not ready: a person does the same for each. */
-function NotRunningCard() {
+function NotRunningCard({ windowMode }: { windowMode?: WindowMode }) {
   const { notRunning } = COPY;
-  return <Card title={notRunning.title} sentence={notRunning.sentence} action={<CopyInstallCommand mode="install" />} status={COPY.waiting} showHelp />;
+  return <Card title={notRunning.title} sentence={notRunning.sentence} action={<CopyInstallCommand mode="install" windowMode={windowMode} />} status={COPY.waiting} showHelp />;
 }
 
-function UpdateNeededCard() {
+function UpdateNeededCard({ windowMode }: { windowMode?: WindowMode }) {
   const { updateNeeded } = COPY;
-  return <Card title={updateNeeded.title} sentence={updateNeeded.sentence} action={<CopyInstallCommand mode="update" />} status={COPY.waiting} showHelp />;
+  return <Card title={updateNeeded.title} sentence={updateNeeded.sentence} action={<CopyInstallCommand mode="update" windowMode={windowMode} />} status={COPY.waiting} showHelp />;
 }
 
 /** Chrome's prompt is next. Setup stays in front of it unless a prior connection or the installer's handoff asked to go in. */
@@ -322,17 +286,17 @@ function awaitingConnect({ awaitingConnect: awaiting, state, isChecking }: Runti
 }
 
 /** The screen for a connection: its name (the journey and Layout tests read it) and its card. */
-function screenFor(connection: RuntimeConnectionValue, phone: boolean): { name: string; card: ReactNode } | null {
+function screenFor(connection: RuntimeConnectionValue, phone: boolean, windowMode?: WindowMode): { name: string; card: ReactNode } | null {
   const { state } = connection;
   if (phone) return { name: 'phone', card: <PhoneCard /> };
   if (awaitingConnect(connection)) {
     return { name: connection.isChecking ? 'pending' : 'permission', card: <PermissionCard connection={connection} /> };
   }
   switch (state.status) {
-    case 'set_up': return { name: 'set_up', card: <SetUpCard /> };
-    case 'not_running': return { name: 'not_running', card: <NotRunningCard /> };
+    case 'set_up': return { name: 'set_up', card: <SetUpCard windowMode={windowMode} /> };
+    case 'not_running': return { name: 'not_running', card: <NotRunningCard windowMode={windowMode} /> };
     case 'blocked': return { name: 'blocked', card: <BlockedCard /> };
-    case 'update_needed': return { name: 'update_needed', card: <UpdateNeededCard /> };
+    case 'update_needed': return { name: 'update_needed', card: <UpdateNeededCard windowMode={windowMode} /> };
     default: return null;
   }
 }
@@ -341,13 +305,13 @@ function screenFor(connection: RuntimeConnectionValue, phone: boolean): { name: 
  * The connection panel for the hosted build, one screen per thing a person can do, over the empty editor.
  * Renders nothing once connected unless it is on its way out (`exit`). Every word comes from `copy.ts`.
  */
-export function RuntimeConnectionPanel({ connection, exit = null }: RuntimeConnectionPanelProps) {
+export function RuntimeConnectionPanel({ connection, exit = null, windowMode }: RuntimeConnectionPanelProps) {
   // The landing page's install dialog asks the same question, so the two always agree on who is on a phone.
   const phone = useMemo(isMobileDevice, []);
   const { state } = connection;
   if (state.status === 'connected') return null;
   if (state.status === 'connecting' && !awaitingConnect(connection)) return <ConnectingPanel phone={phone} exit={exit} />;
-  const screen = screenFor(connection, phone);
+  const screen = screenFor(connection, phone, windowMode);
   if (!screen) return null;
   return <GateLayer dataState={screen.name} exit={exit}>{screen.card}</GateLayer>;
 }

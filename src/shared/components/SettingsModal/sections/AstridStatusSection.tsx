@@ -4,7 +4,7 @@ import { AstridRuntimeClient } from '@/integrations/runtime/client.ts';
 import { useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import type { Health, Realm, ServiceStatus } from '@/integrations/runtime/generated.ts';
 import { Button } from '@/shared/components/ui/button';
-import { SetupStatusLine } from '@/shared/components/OnboardingModal/components/SetupStatusLine.tsx';
+import { SetupStatusLine } from '@/shared/components/RuntimeConnection/SetupStatusLine.tsx';
 import { RUNTIME_CONNECTION_COPY, withCommandShell } from '@/shared/components/RuntimeConnection/copy.ts';
 import { connectionStatus } from './ConnectionSection.tsx';
 import { ASTRID_HELP_URL } from '@/integrations/astrid/help.ts';

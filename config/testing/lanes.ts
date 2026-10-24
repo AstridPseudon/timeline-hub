@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+
 // Test lanes (testing plan UP.3, R-5). Tests listed here need files outside this
 // repository: another repo's checkout. The default run excludes them;
 // `npm run test:checkout` runs exactly them, so the two lanes together are the
@@ -11,3 +14,14 @@ export const CHECKOUT_LANE = [
   // Checks the extension catalog against the selected Astrid checkout.
   'src/tools/video-editor/dev/localExtensions.catalog.test.ts',
 ];
+
+/**
+ * A renamed or deleted file would otherwise drop out of both lanes without a sound (the default run excludes the list,
+ * the checkout lane includes only it). Every vitest config load checks that each listed file exists.
+ */
+export function assertCheckoutLaneFilesExist(repoRoot: string): void {
+  const missing = CHECKOUT_LANE.filter((file) => !existsSync(path.join(repoRoot, file)));
+  if (missing.length > 0) {
+    throw new Error(`CHECKOUT_LANE (config/testing/lanes.ts) lists files that do not exist: ${missing.join(', ')}`);
+  }
+}

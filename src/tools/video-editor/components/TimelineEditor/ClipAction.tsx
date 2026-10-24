@@ -648,7 +648,7 @@ function ClipActionComponent({
               ? (emptyShotLabel ?? 'New Shot')
               : isEffectLayer
                 ? (clipMeta.continuous?.type || 'Effect Layer')
-                : (shotName || clipMeta.text?.content || clipMeta.label || clipMeta.asset || action.id)}
+                : (shotName || clipMeta.text?.content || clipMeta.displayName || clipMeta.label || clipMeta.asset || action.id)}
           </div>
           {effectBadges.length > 0 && (
             <div className="mt-1 flex gap-1 overflow-hidden">

@@ -55,6 +55,15 @@ const ALL_SCREENS: ReadonlyArray<[string, () => RuntimeConnectionValue]> = [
 ];
 
 describe('RuntimeConnectionPanel', () => {
+  it('a fresh browser after the welcome tour: the set-up card promises no browser prompt, because nothing will ask yet', () => {
+    // Permission `prompt` and never connected: the welcome's connection step lands here, with no Connect to press.
+    panel(connectionFor({ status: 'set_up' }, { awaitingConnect: true }));
+    expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'set_up');
+    expect(screen.getByRole('heading', { name: 'Set up Astrid on this computer' })).toBeInTheDocument();
+    expect(shownText()).not.toMatch(/will ask|Choose Allow/);
+    expect(screen.queryByRole('button', { name: 'Connect' })).not.toBeInTheDocument();
+  });
+
   it.each(ALL_SCREENS)('%s: speaks of Astrid and never names a Runtime, workspace, port or command', (_name, connection) => {
     panel(connection());
     expect(shownText()).toContain('Astrid');
@@ -153,12 +162,18 @@ describe('RuntimeConnectionPanel', () => {
 
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'permission');
     expect(screen.getByRole('heading', { name: 'Connect to Astrid on this computer' })).toBeInTheDocument();
-    expect(screen.getByText('Chrome will ask about devices on your network. Choose Allow so this page can reach Astrid.')).toBeInTheDocument();
+    expect(screen.getByText('Chrome will ask to reach your computer. Choose Allow.')).toBeInTheDocument();
+    const connectButton = screen.getByRole('button', { name: 'Connect' });
+    const disclosureButton = screen.getByRole('button', { name: 'What does this allow?' });
+    expect(connectButton.compareDocumentPosition(disclosureButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByText(COPY.permission.allowDetails)).not.toBeInTheDocument();
+    fireEvent.click(disclosureButton);
+    expect(screen.getByText("This page can talk to Astrid running on your computer, and nothing else. Astrid only lets it work with your Astrid projects, media and jobs. It can't open your other files or apps. Chat messages go to your own agent on this computer. Your work never passes through our servers.")).toBeInTheDocument();
     // Nothing is waiting yet: Connect is what starts it.
     expect(screen.queryByText(COPY.waiting)).not.toBeInTheDocument();
     // The install path lives on the set-up state, which a first-timer reaches right after Allow.
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
-    expect(screen.getAllByRole('button')).toHaveLength(1);
+    expect(screen.getAllByRole('button')).toHaveLength(2);
     expect(screen.queryByRole('button', { name: /agent/i })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
@@ -170,7 +185,7 @@ describe('RuntimeConnectionPanel', () => {
 
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'pending');
     expect(screen.getByRole('heading', { name: 'Choose Allow in Chrome' })).toBeInTheDocument();
-    expect(screen.getByText('Chrome is asking at the top left of this window.')).toBeInTheDocument();
+    expect(screen.getByText('The prompt is at the top left of this window.')).toBeInTheDocument();
     expect(screen.getByText(COPY.waiting)).toBeInTheDocument();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
     expect(screen.queryByText('Connecting…')).not.toBeInTheDocument();
@@ -180,8 +195,9 @@ describe('RuntimeConnectionPanel', () => {
     expect(arrow).toHaveAttribute('data-corner', 'top-left');
     expect(arrow).toHaveAttribute('data-tone', 'page');
     expect(arrow).toHaveAttribute('aria-hidden', 'true');
-    // It hangs off the card (its parent is the card it leaves) and says "Up here" like the dialog's.
-    expect(arrow.parentElement).toBe(screen.getByTestId('runtime-not-connected').querySelector(CARD));
+    // It is the card's sibling because it is fixed to the viewport, and says "Up here" like the dialog's.
+    expect(arrow.parentElement?.querySelector(CARD)).toBe(screen.getByTestId('runtime-not-connected').querySelector(CARD));
+    expect(arrow.parentElement).not.toBe(screen.getByTestId('runtime-not-connected').querySelector(CARD));
     expect(arrow.querySelector('text')?.textContent).toBe('UP HERE');
     expect(arrow.querySelector('path.astrid-toolbar-pointer-line')).not.toBeNull();
     expect(shownText()).not.toContain('just below the address bar');
@@ -191,11 +207,11 @@ describe('RuntimeConnectionPanel', () => {
     inEdge();
     panel(connectionFor({ status: 'connecting' }, { awaitingConnect: true, isChecking: true }));
     expect(screen.getByRole('heading', { name: 'Choose Allow in Edge' })).toBeInTheDocument();
-    expect(screen.getByText('Edge is asking at the top left of this window.')).toBeInTheDocument();
+    expect(screen.getByText('The prompt is at the top left of this window.')).toBeInTheDocument();
     cleanup();
 
     panel(connectionFor({ status: 'connecting' }, { awaitingConnect: true }));
-    expect(screen.getByText('Edge will ask about devices on your network. Choose Allow so this page can reach Astrid.')).toBeInTheDocument();
+    expect(screen.getByText('Edge will ask to reach your computer. Choose Allow.')).toBeInTheDocument();
     cleanup();
 
     panel(connectionFor({ status: 'blocked' }));
@@ -235,7 +251,7 @@ describe('RuntimeConnectionPanel', () => {
     panel(connectionFor({ status: 'set_up' }));
 
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'set_up');
-    expect(screen.getByRole('heading', { name: 'Connect Astrid on this computer' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Set up Astrid on this computer' })).toBeInTheDocument();
     const sentence = screen.getByText('Your coding agent can set Astrid up, or reconnect the one you have.');
     expect(sentence).toHaveClass('text-sm', 'text-muted-foreground');
     expect(screen.getAllByRole('button')).toHaveLength(2);
@@ -275,7 +291,7 @@ describe('RuntimeConnectionPanel', () => {
     expect(screen.getByRole('button', { name: COPY.agent.commandCopy })).toBeInTheDocument();
     expect(screen.getByRole('code')).toHaveTextContent(installCommand('install'));
     expect(shownText()).not.toMatch(/reload/i);
-    expect(screen.queryByText('Connect Astrid on this computer')).not.toBeInTheDocument();
+    expect(screen.queryByText('Set up Astrid on this computer')).not.toBeInTheDocument();
   });
 
   describe('on a phone', () => {
@@ -410,7 +426,7 @@ describe('RuntimeConnectionPanel', () => {
 
       expect(within(card.lastElementChild as HTMLElement).getByRole('status')).toHaveTextContent(COPY.connected.sentence);
       expect(screen.queryByText(COPY.waiting)).not.toBeInTheDocument();
-      expect(screen.getByRole('heading', { name: 'Connect Astrid on this computer' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Set up Astrid on this computer' })).toBeInTheDocument();
 
       act(() => { vi.advanceTimersByTime(CONNECTED_MIN_MS + LEAVE_MS); });
       expect(section).not.toHaveAttribute('data-leaving');

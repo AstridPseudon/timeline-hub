@@ -18,10 +18,10 @@ import {
 const play = vi.fn(() => Promise.resolve());
 const cardReady = () => getEditorTourState().ready.card;
 
-function renderAt(tourAct: EditorTourAct, beat: EditorTourBeat, options: { reducedMotion?: boolean; onSkip?: () => void } = {}) {
-  const { reducedMotion = false } = options;
+function renderAt(tourAct: EditorTourAct, beat: EditorTourBeat, options: { reducedMotion?: boolean; coarsePointer?: boolean; onSkip?: () => void } = {}) {
+  const { reducedMotion = false, coarsePointer = false } = options;
   const onSkip = 'onSkip' in options ? options.onSkip : vi.fn();
-  vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({ matches: reducedMotion, media: query } as MediaQueryList));
+  vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({ matches: query === '(pointer: coarse)' ? coarsePointer : reducedMotion, media: query } as MediaQueryList));
   startEditorTour();
   setEditorTourBeat(tourAct, beat);
   const onPrimary = vi.fn();
@@ -33,6 +33,8 @@ const advance = (ms: number) => act(() => { vi.advanceTimersByTime(ms); });
 
 beforeEach(() => {
   vi.useFakeTimers();
+  vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
+  vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Macintosh) Chrome/131.0.0.0 Safari/537.36');
   vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(play);
   vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined);
 });
@@ -276,6 +278,20 @@ describe('TourCard', () => {
     renderAt(1, 'land', { onSkip: undefined });
     expect(screen.queryByRole('button', { name: /Skip tour/ })).toBeNull();
     expect(screen.getByText('Esc')).toBeInTheDocument();
+  });
+
+  it('hides keyboard hints on phones', () => {
+    vi.spyOn(navigator, 'platform', 'get').mockReturnValue('iPhone');
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)');
+    renderAt(1, 'compose');
+    expect(screen.queryByText('Esc')).not.toBeInTheDocument();
+    expect(screen.queryByText('↵')).not.toBeInTheDocument();
+  });
+
+  it('hides keyboard hints on coarse pointer devices', () => {
+    renderAt(1, 'compose', { coarsePointer: true });
+    expect(screen.queryByText('Esc')).not.toBeInTheDocument();
+    expect(screen.queryByText('↵')).not.toBeInTheDocument();
   });
 
   it('a card still showing the previous beat never reports ready for the new one', () => {

@@ -66,7 +66,9 @@ function Editor({ name, timelineId, compact }: { name: string; timelineId: strin
   })], [name, timelineId]);
   return <BrowserVideoEditor dataProvider={dataProvider} timelineId={timelineId} assetResolver={assetResolver}
     effectCatalog={effectCatalog} hostServices={services} extensions={extensions}>
-    <Probe name={name} /><TimelineEditorShellCore timelineId={timelineId} forceCondensed={compact} showHeader={false} />
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      <Probe name={name} /><div style={{ flex: 1, minHeight: 0 }}><TimelineEditorShellCore timelineId={timelineId} forceCondensed={compact} showHeader={false} /></div>
+    </div>
   </BrowserVideoEditor>;
 }
 function Host() {

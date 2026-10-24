@@ -317,6 +317,10 @@ async function launchFixture(overrides = {}) {
   const hostedConfig = join(fixture, 'hosted-origin.json');
   writeFileSync(hostedConfig, overrides.hostedOriginConfigRaw ?? JSON.stringify({ origin: overrides.configuredOrigin ?? null }));
   const env = {
+    HOME: fixture,
+    USERPROFILE: fixture,
+    LOCALAPPDATA: join(fixture, 'AppData', 'Local'),
+    XDG_DATA_HOME: join(fixture, '.local', 'share'),
     ASTRID_WORKSPACE_DISCOVERY: discovery,
     ASTRID_APP_LOOPBACK_ORIGIN: '',
     ASTRID_APP_HOSTED_ORIGIN_CONFIG: overrides.hostedOriginConfigPath ?? hostedConfig,
@@ -650,7 +654,7 @@ const HEALTHY_OUTPUT = (origin) => ['Starting Astrid…', '', `  Open ${origin}`
 test('a healthy start prints exactly the Open block, once Astrid is reachable, and nothing else', async () => {
   const started = await startLauncher({ configuredOrigin: 'https://hosted.test' });
   try {
-    assert.equal(started.stdout, HEALTHY_OUTPUT('https://hosted.test'));
+    assert.equal(started.stdout, HEALTHY_OUTPUT(`http://127.0.0.1:${started.env.PORT}/tools/video-editor`));
     assert.equal(started.stderr, '');
     // npm is asked to be silent, and Vite to log warnings only.
     const spawned = readFileSync(started.spawnLog, 'utf8').split('\n').filter(Boolean);
@@ -678,8 +682,8 @@ test('--verbose prints the technical lines after the Open block, and ASTRID_VERB
         until: (stdout) => stdout.includes(OPEN_BLOCK_END) && stdout.includes('browser door') && stdout.includes('fake-npm run dev --') && stdout.includes('Runtime discovery proxy listening'),
       });
       const { stdout } = started;
-      assert(stdout.startsWith(HEALTHY_OUTPUT('https://hosted.test')), stdout);
-      const rest = stdout.slice(HEALTHY_OUTPUT('https://hosted.test').length);
+      assert(stdout.startsWith(HEALTHY_OUTPUT(`http://127.0.0.1:${started.env.PORT}/tools/video-editor`)), stdout);
+      const rest = stdout.slice(HEALTHY_OUTPUT(`http://127.0.0.1:${started.env.PORT}/tools/video-editor`).length);
       assert.match(rest, /workspace\.v1 runtime healthy at http:\/\/127\.0\.0\.1:\d+; Astrid App will use port \d+/);
       assert(rest.includes('Runtime discovery proxy listening on 127.0.0.1:'), rest);
       assert(rest.includes(`browser door ${doorEndpoint} for https://hosted.test`), rest);
@@ -739,7 +743,7 @@ test('a second launcher for the same Astrid says so, prints the same Open block,
     writeFileSync(first.spawnLog, '');
     const second = await launcherEnds({ fixture: first.fixture, env: { PORT: first.env.PORT } });
     assert.equal(second.code, 0, second.stderr);
-    assert.equal(second.stdout, ['Astrid is already running in another window.', '', '  Open https://hosted.test', '', OPEN_BLOCK_END, ''].join('\n'));
+    assert.equal(second.stdout, ['Astrid is already running in another window.', '', `  Open http://127.0.0.1:${first.env.PORT}/tools/video-editor`, '', OPEN_BLOCK_END, ''].join('\n'));
     assert.equal(second.stderr, '');
     assert.equal(second.spawned, '', 'no discovery proxy, ACP bridge or Vite for the second launcher');
   } finally { await first.stop(); }
@@ -835,8 +839,8 @@ test('a stopped Runtime points to the command that starts it', async () => {
   }
 });
 
-function assertOpenAfterStart(stdout, origin) {
-  assert.equal(stdout, HEALTHY_OUTPUT(origin));
+function assertOpenAfterStart(started) {
+  assert.equal(started.stdout, HEALTHY_OUTPUT(`http://127.0.0.1:${started.env.PORT}/tools/video-editor`));
 }
 
 test('the launcher leaves agent chat registration and lifecycle to the Runtime', async () => {
@@ -857,9 +861,9 @@ test('the launcher leaves agent chat registration and lifecycle to the Runtime',
   }
 });
 
-test('the shipped config makes the production origin the default: Open shows it once the door and the app answer', async () => {
+test('the default keeps the hosted door available while opening the source editor', async () => {
   const started = await startLauncher({ shippedConfig: true, doorOrigin: 'https://astrid.haus' });
-  try { assertOpenAfterStart(started.stdout, 'https://astrid.haus'); } finally { await started.stop(); }
+  try { assertOpenAfterStart(started); } finally { await started.stop(); }
 });
 
 test('ASTRID_APP_LOOPBACK_ORIGIN=off requires no door and prints no Open line, even with a configured origin', async () => {
@@ -892,12 +896,12 @@ test("a null configured origin keeps today's behaviour: no door unless one is gi
 test('an explicit origin wins over the configured one, from ASTRID_APP_LOOPBACK_ORIGIN or --hosted-origin', async () => {
   const fromEnvironment = await startLauncher({ configuredOrigin: 'https://astrid.haus', doorOrigin: 'https://hosted.test', env: { ASTRID_APP_LOOPBACK_ORIGIN: 'https://hosted.test' } });
   try {
-    assertOpenAfterStart(fromEnvironment.stdout, 'https://hosted.test');
+    assertOpenAfterStart(fromEnvironment);
     assert(!fromEnvironment.stdout.includes('astrid.haus'), fromEnvironment.stdout);
   } finally { await fromEnvironment.stop(); }
   const fromArgument = await startLauncher({ configuredOrigin: 'https://astrid.haus', doorOrigin: 'https://hosted.test', args: ['--hosted-origin', 'https://hosted.test'] });
   try {
-    assertOpenAfterStart(fromArgument.stdout, 'https://hosted.test');
+    assertOpenAfterStart(fromArgument);
     assert(!fromArgument.stdout.includes('astrid.haus'), fromArgument.stdout);
   } finally { await fromArgument.stop(); }
 });

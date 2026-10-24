@@ -572,7 +572,9 @@ test.describe('Extension Harness — Route accessibility', () => {
       { waitUntil: 'domcontentloaded' },
     );
     expect(response?.ok()).toBe(true);
-    await expect(page.locator('[data-video-editor-harness-ready="true"]')).toBeVisible();
+    // Like goToScenario: the lazy harness route loads its modules for this fresh page, which can outlast an
+    // assertion's own wait, so wait for readiness and let only a hang fail.
+    await page.locator('[data-video-editor-harness-ready="true"]').waitFor({ state: 'visible' });
     await expect(page.locator('vite-error-overlay')).toHaveCount(0);
   });
 
@@ -583,6 +585,7 @@ test.describe('Extension Harness — Route accessibility', () => {
 
   test('invalid scenario param falls back to populated', async ({ page }) => {
     await page.goto(`${HARNESS_BASE}?scenario=nonexistent&localTest=1&localProject=extension-harness&localTimeline=extension-harness`, { waitUntil: 'domcontentloaded' });
+    await page.locator('[data-video-editor-harness-ready="true"]').waitFor({ state: 'visible' });
     await expect(page.locator('h1')).toContainText('Populated');
     await expect(page.locator('[data-video-editor-extension-package-id="ext.inspector-tools"]')).toBeVisible();
   });

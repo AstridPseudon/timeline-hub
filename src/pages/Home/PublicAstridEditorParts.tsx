@@ -3,8 +3,7 @@ import { RemotionPreview } from '@/tools/video-editor/components/PreviewPanel/Re
 import { TimelineEditorCoreBody } from '@/tools/video-editor/components/TimelineEditor/TimelineEditorCoreBody.tsx';
 import { PUBLIC_TIMELINE_OBSERVATIONS } from '@/tools/video-editor/runtime/editorHostObservations.ts';
 import { useRequiredEffectCatalog } from '@/tools/video-editor/runtime/catalogContexts.tsx';
-import { useTimelineEditorData, useTimelinePlaybackContext } from '@/tools/video-editor/hooks/timelineStore.ts';
-import { userSelectTimelineClip } from '@/shared/state/selectionStore.ts';
+import { useTimelineEditorData, useTimelineOpsSelector, useTimelinePlaybackContext } from '@/tools/video-editor/hooks/timelineStore.ts';
 import { usePublicAstridExample } from './publicAstridExample.tsx';
 
 function usePublicAstridTimelineObservations() {
@@ -90,12 +89,16 @@ export const PublicAstridTimeline = memo(function PublicAstridTimeline({active, 
 /** Start with the first real asset selected so the App view opens on useful inspector data. */
 export function PublicAstridInitialSelection() {
   const {resolvedConfig, selectedClipId} = useTimelineEditorData();
+  // The owner-bound op, not the owner-less store call: the editor swaps in its own selection
+  // slice when it takes ownership, which silently dropped a selection made without the owner
+  // and left the inspector (and the Effects callout's connector target) empty until a click.
+  const selectClip = useTimelineOpsSelector(ops => ops.selectClip);
   useEffect(() => {
     const firstClip = resolvedConfig?.clips[0];
     if (!firstClip || selectedClipId) return;
-    const frame = window.requestAnimationFrame(() => userSelectTimelineClip(firstClip.id, { additive: false }));
+    const frame = window.requestAnimationFrame(() => selectClip(firstClip.id));
     return () => window.cancelAnimationFrame(frame);
-  }, [resolvedConfig, selectedClipId]);
+  }, [resolvedConfig, selectedClipId, selectClip]);
   return null;
 }
 

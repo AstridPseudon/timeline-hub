@@ -1,8 +1,9 @@
 import type { ProjectObjectMetadata, ProjectObjectStorage } from '@/sdk/video/assets/projectObjects.ts';
+import { EDITOR_TOUR_ASSET_MANIFEST, editorTourAssetUrl } from '../tourMedia.ts';
 
-/** Lantern Valley, moon overlook: world 22-32 s (the moon up, lanterns lifting off at 24). */
-export const TOUR_SCENE_SOURCE_FROM = 50;
-export const TOUR_SCENE_SOURCE_TO = 60;
+/** The completed guide: continuous bird flight and early descent into town. */
+export const TOUR_SCENE_SOURCE_FROM = 2.5;
+export const TOUR_SCENE_SOURCE_TO = 16.5;
 
 async function sha256(bytes: Uint8Array): Promise<string> {
   const hash = await globalThis.crypto.subtle.digest('SHA-256', bytes as unknown as BufferSource);
@@ -15,7 +16,7 @@ function createMemoryObjectStorage(): ProjectObjectStorage {
   return {
     async ingest(bytes, mediaType, filename): Promise<ProjectObjectMetadata> {
       const digest = await sha256(bytes);
-      const objectId = `tour-object-${digest.slice('sha256:'.length)}`;
+      const objectId = `tour-object-${globalThis.crypto.randomUUID()}`;
       objects.set(objectId, new Uint8Array(bytes));
       return { object_id: objectId, digest, media_type: mediaType, size: bytes.byteLength, filename };
     },
@@ -29,17 +30,20 @@ function createMemoryObjectStorage(): ProjectObjectStorage {
 
 let liveScenePromise: Promise<Record<string, unknown>> | null = null;
 
-/**
- * The `app.liveScene` envelope of the vendored Lantern Valley (inline html, no project storage).
- * The ~640 KB world loads lazily and is built once per page load.
- */
+/** Load and verify the portable world, then create this session's object identities. */
 export function loadTourLiveScene(): Promise<Record<string, unknown>> {
   liveScenePromise ??= (async () => {
-    const [{ SAMPLE_WORLD }, { parsePreparedScenePackage, ingestPreparedPackage }] = await Promise.all([
-      import('@astrid/packs/rendering/ui/threejs-live-editor/explorer/worlds/sample'),
+    const asset = EDITOR_TOUR_ASSET_MANIFEST.assets.world;
+    const [response, { parsePreparedScenePackage, ingestPreparedPackage }] = await Promise.all([
+      fetch(editorTourAssetUrl(asset.filename), { credentials: 'omit' }),
       import('@astrid/packs/rendering/ui/threejs-live-editor/authoring'),
     ]);
-    const parsed = await parsePreparedScenePackage(new TextEncoder().encode(SAMPLE_WORLD.packageJson));
+    if (!response.ok) throw new Error(`Could not load the tour world (${response.status}).`);
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    if (bytes.byteLength !== asset.size || await sha256(bytes) !== `sha256:${asset.sha256}`) {
+      throw new Error('The tour world failed its integrity check.');
+    }
+    const parsed = await parsePreparedScenePackage(bytes);
     return (await ingestPreparedPackage(createMemoryObjectStorage(), parsed)).liveScene;
   })().catch((error) => {
     liveScenePromise = null;

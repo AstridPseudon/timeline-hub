@@ -4,6 +4,8 @@ import { AstridRuntimeClient } from '@/integrations/runtime/client.ts';
 import { useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { runtimeApiBase } from '@/integrations/runtime/connection.ts';
 import { Button } from '@/shared/components/ui/button.tsx';
+import { useIsDesktopEditor } from '@/tools/video-editor/tour/runner/useIsDesktopEditor.ts';
+import { startEditorTour } from '@/shared/state/editorTourStore';
 import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard.ts';
 import { installCommand, RUNTIME_CONNECTION_COPY } from './copy.ts';
 
@@ -28,11 +30,12 @@ function emptyWorkspaceDiagnostic(identity: WorkspaceIdentity, pageOrigin: strin
 }
 
 /** An empty, healthy workspace can be the wrong one; help people check before creating new work. */
-export function EmptyWorkspaceGuidance({ onRefresh }: { onRefresh: () => void }) {
+export function EmptyWorkspaceGuidance({ onRefresh, confirmedEmpty = false }: { onRefresh: () => void; confirmedEmpty?: boolean }) {
   const [showDetails, setShowDetails] = useState(false);
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
   const [didCopy, setDidCopy] = useState(false);
   const { connectedBefore } = useRuntimeConnection();
+  const desktop = useIsDesktopEditor();
   const copiedTimer = useRef<number | null>(null);
   const identity = useQuery({
     queryKey: ['runtime', 'empty-workspace-identity'],
@@ -73,27 +76,33 @@ export function EmptyWorkspaceGuidance({ onRefresh }: { onRefresh: () => void })
     onRefresh();
   };
 
-  // The card around this already says "No projects yet", so the guidance starts at the question it answers.
-  if (!connectedBefore) return null;
+  const showTour = confirmedEmpty && desktop;
+  // The app only mounts this component after a successful empty project listing.
+  // Keep work-recovery guidance for returning users, while allowing a new user to
+  // try the in-memory tour before creating any project.
+  if (!connectedBefore && !showTour) return null;
   return <div className="space-y-3 text-sm text-muted-foreground">
-    <p>Expected to see your work? It may be in another Astrid folder on this computer.</p>
-    <details onToggle={event => setShowDetails(event.currentTarget.open)}>
-      <summary className="cursor-pointer text-foreground">Find my work</summary>
-      <div className="mt-3 space-y-3">
-        {identity.isPending && <p role="status">Reading details…</p>}
-        {identity.error && <p role="status">Astrid's details aren't available right now.</p>}
-        <div className="flex flex-wrap gap-2">
-          {identity.data && <Button variant="outline" onClick={() => void handleCopy()}>
-            {copyState === 'copied' ? copy.copied : 'Copy steps for your agent'}
-          </Button>}
-          <Button variant="outline" onClick={handleCheckAgain}>Check again</Button>
+    {showTour && <Button variant="outline" onClick={startEditorTour}>Take the editor tour</Button>}
+    {connectedBefore && <>
+      <p>Expected to see your work? It may be in another Astrid folder on this computer.</p>
+      <details onToggle={event => setShowDetails(event.currentTarget.open)}>
+        <summary className="cursor-pointer text-foreground">Find my work</summary>
+        <div className="mt-3 space-y-3">
+          {identity.isPending && <p role="status">Reading details…</p>}
+          {identity.error && <p role="status">Astrid's details aren't available right now.</p>}
+          <div className="flex flex-wrap gap-2">
+            {identity.data && <Button variant="outline" onClick={() => void handleCopy()}>
+              {copyState === 'copied' ? copy.copied : 'Copy steps for your agent'}
+            </Button>}
+            <Button variant="outline" onClick={handleCheckAgain}>Check again</Button>
+          </div>
+          {identity.data && didCopy && <p role="status">{copy.pasteNext}</p>}
+          {identity.data && copyState === 'failed' && <div className="space-y-2">
+            <p role="status">{copy.copyFailed}</p>
+            <textarea aria-label={copy.copyFailed} readOnly value={diagnostic} rows={6} onFocus={event => event.currentTarget.select()} className="w-full rounded-md border border-border bg-background p-2 text-xs text-foreground" />
+          </div>}
         </div>
-        {identity.data && didCopy && <p role="status">{copy.pasteNext}</p>}
-        {identity.data && copyState === 'failed' && <div className="space-y-2">
-          <p role="status">{copy.copyFailed}</p>
-          <textarea aria-label={copy.copyFailed} readOnly value={diagnostic} rows={6} onFocus={event => event.currentTarget.select()} className="w-full rounded-md border border-border bg-background p-2 text-xs text-foreground" />
-        </div>}
-      </div>
-    </details>
+      </details>
+    </>}
   </div>;
 }

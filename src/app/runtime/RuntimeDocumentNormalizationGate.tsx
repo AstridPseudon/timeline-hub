@@ -4,6 +4,8 @@ import { AstridRuntimeClient } from '@/integrations/runtime/client';
 import { useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider';
 import { AstridLoading } from '@/shared/components/AstridLoading';
 import { RuntimeConnectorRecoveryBanner } from '@/shared/components/RuntimeConnection/RuntimeConnectorRecoveryBanner';
+import { useRuntimeRequestWait } from '@/integrations/runtime/useRuntimeRequestWait.ts';
+import { WorkspaceDiscoveryPending } from '@/shared/components/RuntimeConnection/WorkspaceDiscoveryPending.tsx';
 import { hasRuntimeDocumentSelectors, normalizeRuntimeDocumentUrl } from './runtimeDocument';
 
 /** Resolve the opening selection once the authenticated Runtime connection is ready. */
@@ -18,6 +20,7 @@ export function RuntimeDocumentNormalizationGate({ children }: { children: React
   const [initialReady, setInitialReady] = useState(() => !hasRuntimeDocumentSelectors(search, pathname));
   const [failure, setFailure] = useState<Error | null>(null);
   const [retry, setRetry] = useState(0);
+  const stillWaiting = useRuntimeRequestWait(isConnected && !failure, `${retry}:${currentHref}`);
   const readyForCurrentRoute = initialReady && (
     didInitialResolution.current || !hasRuntimeDocumentSelectors(search, pathname)
   );
@@ -33,9 +36,10 @@ export function RuntimeDocumentNormalizationGate({ children }: { children: React
       return;
     }
     let cancelled = false;
+    const controller = new AbortController();
     setFailure(null);
     void normalizeRuntimeDocumentUrl(
-      new AstridRuntimeClient(),
+      new AstridRuntimeClient({ signal: controller.signal }),
       { pathname: initialPathname, search: initialSearch, hash: initialHash },
       (next) => {
         // Mark completion before the replacement rerenders this gate. Waiting
@@ -54,7 +58,7 @@ export function RuntimeDocumentNormalizationGate({ children }: { children: React
     }).catch((error: unknown) => {
       if (!cancelled) setFailure(error instanceof Error ? error : new Error(String(error)));
     });
-    return () => { cancelled = true; };
+    return () => { cancelled = true; controller.abort(); };
   }, [hash, isConnected, navigate, pathname, retry, search]);
 
   if (readyForCurrentRoute) return <>{children}</>;
@@ -70,7 +74,11 @@ export function RuntimeDocumentNormalizationGate({ children }: { children: React
       />
     );
   }
-  // Holds the boot screen (and the connection panel on its way out) until the document is known, as the editor does
-  // while its workspace answers (`bootLayer.ts`).
-  return <><AstridLoading /><span data-boot-hold="" hidden /></>;
+  if (!isConnected || !stillWaiting) return <><AstridLoading /><span data-boot-hold="" hidden /></>;
+  return <WorkspaceDiscoveryPending
+    waitedAlready
+    key={currentHref}
+    onRetry={() => setRetry(value => value + 1)}
+    onOpenEditor={() => navigate('/tools/video-editor', { replace: true })}
+  />;
 }

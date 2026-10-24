@@ -1,4 +1,5 @@
 import { EmptyWorkspaceGuidance } from '@/shared/components/RuntimeConnection/EmptyWorkspaceGuidance.tsx';
+import { WorkspaceDiscoveryPending } from '@/shared/components/RuntimeConnection/WorkspaceDiscoveryPending.tsx';
 import { useNativeEditorRecovery } from '../hooks/useNativeEditorRecovery.ts';
 import { assertNativeEditorConnection } from "@/integrations/astrid/nativeEditorConnection.ts";
 import type { ExtensionPendingWorkState } from "@/sdk/context.ts";
@@ -343,8 +344,8 @@ export default function VideoEditorPage() {
   });
 
   const tourSelection = useEditorTourSelection();
-  // The trigger sees the USER's selection, which the tour's own selection never replaces.
-  useEditorTourHost(!!userProviderSelection);
+  // Register explicit replays; first-run welcome already finished before this editor opens.
+  useEditorTourHost();
   const providerSelection = tourSelection ?? userProviderSelection;
 
   // dataKind V1 golden path (groken round 4): DEV-only fixture provider so the
@@ -829,8 +830,8 @@ export default function VideoEditorPage() {
       {connectionFailed && (
         <RuntimeConnectorRecoveryBanner
           error={recoveryError ?? new Error(nativeRecoveryError ?? "Workspace unavailable")}
-          onRetry={handleRuntimeRetry}
-          retrying={runtimeRetrying || nativeRecovery.retrying}
+          onRetry={providerSelection ? handleRuntimeRetry : runtimeDiscovery.reconnect}
+          retrying={!!providerSelection && (runtimeRetrying || nativeRecovery.retrying)}
           projectId={projectId}
           timelineId={timelineId}
           connectionUrl={runtimeOrigin() || (typeof location === "undefined" ? null : location.origin)}
@@ -868,7 +869,7 @@ export default function VideoEditorPage() {
       ) : (
         <>
           {selectorsHeader}
-          {workspaceSettling ? <span data-boot-hold="" hidden /> : (
+          {workspaceSettling ? <WorkspaceDiscoveryPending onRetry={() => void runtimeDiscovery.reconnect()} /> : (
             <>
               <div className="px-4 py-2">{timelinePreviewControls}</div>
               <div className="flex flex-1 items-center justify-center px-6">
@@ -887,7 +888,10 @@ export default function VideoEditorPage() {
                       : "Create a blank timeline for this project to open it in the editor."}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {!projectId && projects?.length === 0 && <EmptyWorkspaceGuidance onRefresh={() => void runtimeDiscovery.projectsQuery.refetch()} />}
+                    {!projectId && projects?.length === 0 && <EmptyWorkspaceGuidance
+                      onRefresh={() => void runtimeDiscovery.projectsQuery.refetch()}
+                      confirmedEmpty={runtimeDiscovery.projectsQuery.isSuccess && !discoveryError}
+                    />}
                     {selectedProject && !timelineId && !discoveryError && <Button
                       onClick={() => void handleCreateFirstTimeline()}
                       disabled={creatingFirstTimeline}
@@ -895,7 +899,7 @@ export default function VideoEditorPage() {
                     {firstTimelineError && <p className="mt-3 text-xs text-destructive" role="alert">
                       Timeline setup failed ({firstTimelineError}). Retry here or check the connected Astrid Runtime.
                     </p>}
-                    {discoveryError && <Button onClick={() => void handleRuntimeRetry()}>Retry workspace discovery</Button>}
+                    {discoveryError && <Button onClick={() => void runtimeDiscovery.reconnect()}>Retry workspace discovery</Button>}
                   </CardContent>
                 </Card>
               </div>

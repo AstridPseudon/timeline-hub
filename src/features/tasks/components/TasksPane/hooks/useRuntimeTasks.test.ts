@@ -8,6 +8,7 @@ import type {
   Task as RuntimeTask,
 } from '@/integrations/runtime/generated.ts';
 import {
+  exportDestination,
   exportSelectedRuntimeTaskOutput,
   listAllRuntimeTasks,
   runtimeTaskIsCancellable,
@@ -180,7 +181,7 @@ describe('Runtime TasksPane adapter', () => {
     await expect(transitionRuntimeTask(client, 'other-project', {
       taskId: 'task-queued',
       action: 'cancel',
-    })).rejects.toThrow('not other-project');
+    })).rejects.toThrow('belongs to a different project');
     expect(client.cancelTask).not.toHaveBeenCalled();
   });
 });
@@ -318,5 +319,15 @@ describe('useRuntimeTasks safety refresh', () => {
     expect(queryClient.getQueryData(runtimeTaskQueryKey('project-B'))).toEqual([foreign]);
     hook.unmount();
     queryClient.clear();
+  });
+});
+
+describe('exportDestination', () => {
+  it('names the folder and file, keeping the full location for a tooltip', () => {
+    const receipt = { filename: 'cut.mp4', destination: { root: '/Users/me/Downloads/Astrid exports/', filename: 'cut.mp4' } } as never;
+    expect(exportDestination(receipt)).toEqual({
+      label: 'Astrid exports/cut.mp4',
+      title: '/Users/me/Downloads/Astrid exports/cut.mp4',
+    });
   });
 });

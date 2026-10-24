@@ -147,7 +147,7 @@ describe('TimelineRenderControls', () => {
     expect(document.querySelector<HTMLDetailsElement>('[data-video-editor-render-warning="true"] details')?.open).toBe(true);
     expect(screen.getByRole('region', {name: 'Visual seam admission report'})).toBeTruthy();
     expect(screen.getByText('Visual boundary report')).toBeTruthy();
-    expect(screen.getByText('Frame 30 · 1.00s')).toBeTruthy();
+    expect(screen.getByText('0:01.0 · Possible visual change at this cut')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', {name: 'Render'}));
     expect(startRender).toHaveBeenCalledOnce();
   });
@@ -387,8 +387,8 @@ describe('TimelineRenderControls', () => {
     render(<TimelineRenderControls previewActionButtonClass="" />);
 
     expect(screen.getByRole('region', {name: 'Visual seam admission report'})).toBeTruthy();
-    expect(screen.getByText('Frame 30 · 1.00s')).toBeTruthy();
-    expect(screen.getByText('motion-start')).toBeTruthy();
+    expect(screen.getByText('0:01.0 · Possible visual change at this cut')).toBeTruthy();
+    expect(screen.getByText(/Frame 30 · motion-start/)).toBeTruthy();
     expect(screen.queryByRole('button', {name: 'Declare flagged boundaries as hard cuts'})).toBeNull();
     fireEvent.click(screen.getByRole('button', {name: 'Acknowledge listed cues as synchronized'}));
     expect(acknowledgeCues).toHaveBeenCalledOnce();

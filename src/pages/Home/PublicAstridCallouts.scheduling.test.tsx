@@ -19,13 +19,13 @@ import { usePublicAstridPlayerHeight } from './usePublicAstridPlayerHeight';
 let frames: Map<number, FrameRequestCallback>;
 let sequence: number;
 let events: string[];
-let resizeCallbacks: ResizeObserverCallback[];
+let resizeObservers: Array<{ callback: ResizeObserverCallback; targets: Set<Element> }>;
 let mutationCallbacks: MutationCallback[];
 let phone: boolean;
 const originalResizeObserver = window.ResizeObserver;
 const originalMutationObserver = window.MutationObserver;
 
-function Stage({ active = true, beforeReveal = false, audience = 'app', reducedMotion = false, chatContent = true, chatAvailable = true }: { active?: boolean; beforeReveal?: boolean; audience?: 'app' | 'agent'; reducedMotion?: boolean; chatContent?: boolean; chatAvailable?: boolean }) {
+function Stage({ active = true, beforeReveal = false, audience = 'app', reducedMotion = false, chatContent = true, chatAvailable = true, inspectorHidden = false }: { active?: boolean; beforeReveal?: boolean; audience?: 'app' | 'agent'; reducedMotion?: boolean; chatContent?: boolean; chatAvailable?: boolean; inspectorHidden?: boolean }) {
   const stage = useRef<HTMLDivElement>(null);
   usePublicAstridPlayerHeight(stage, active && beforeReveal);
   return <div ref={stage} data-testid="stage">
@@ -39,7 +39,7 @@ function Stage({ active = true, beforeReveal = false, audience = 'app', reducedM
         <div className="astrid-example-result" />
         </>}
       </div>}
-      <div className="astrid-inspector-surface">
+      <div className="astrid-inspector-surface" data-test-inspector hidden={inspectorHidden}>
         <div role="tablist" className="grid-cols-4" data-test-hidden-tablist>
           <button role="tab" />
           <button role="tab" aria-controls="hidden-inspector" />
@@ -67,10 +67,12 @@ function settle() {
 }
 
 beforeEach(() => {
-  frames = new Map(); sequence = 0; events = []; resizeCallbacks = []; mutationCallbacks = []; phone = false;
+  frames = new Map(); sequence = 0; events = []; resizeObservers = []; mutationCallbacks = []; phone = false;
   class TestResizeObserver {
-    constructor(callback: ResizeObserverCallback) { resizeCallbacks.push(callback); }
-    observe() {} disconnect() {}
+    readonly targets = new Set<Element>();
+    constructor(readonly callback: ResizeObserverCallback) { resizeObservers.push(this); }
+    observe(target: Element) { this.targets.add(target); }
+    disconnect() { this.targets.clear(); }
   }
   class TestMutationObserver {
     constructor(callback: MutationCallback) { mutationCallbacks.push(callback); }
@@ -89,6 +91,7 @@ beforeEach(() => {
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
     events.push('read');
     if (this.dataset.testid === 'stage' || this.classList.contains('astrid-callouts')) return new DOMRect(0, 0, 500, 500);
+    if (this.closest('[data-test-inspector][hidden]')) return new DOMRect(0, 0, 0, 0);
     if (this.closest('[data-test-hidden-tablist]')) return new DOMRect(0, 0, 0, 0);
     return new DOMRect(100, 100, 100, 80);
   });
@@ -191,7 +194,7 @@ describe('bounded stage passes', () => {
       const endpoint = view.container.querySelector('.astrid-callout-dot-end[data-callout="community"]')!;
       expect(Number(endpoint.getAttribute('cx'))).toBe(170);
       targetWidth = 55;
-      act(() => resizeCallbacks.at(-1)!([], {} as ResizeObserver));
+      act(() => resizeObservers.at(-1)!.callback([], resizeObservers.at(-1)! as unknown as ResizeObserver));
       settle();
       expect(Number(endpoint.getAttribute('cx'))).toBe(185);
       expect(path.getAttribute('data-connector-target')).toBe('community');
@@ -472,14 +475,14 @@ describe('bounded stage passes', () => {
   it.each([
     ['app', ['timeline', 'effects', 'models']],
     ['agent', ['community', 'tools', 'workflows']],
-  ] as const)('presents %s cards in narrative order with non-overlapping card/connector turns', (audience, order) => {
+  ] as const)('presents %s cards in narrative order with overlapping entrance turns', (audience, order) => {
     const view = render(<Stage audience={audience} />);
     const cards = [...view.container.querySelectorAll<HTMLElement>('article.astrid-callout')];
     expect(cards.map(card => card.dataset.callout)).toEqual(order);
     const milliseconds = (element: HTMLElement | SVGElement, name: string) => parseFloat(element.style.getPropertyValue(`--astrid-${name}`));
-    // Keep the narrative legible without returning to the previous five-second entrance.
-    expect(milliseconds(cards[0], 'callout-start')).toBe(450);
-    expect(milliseconds(cards[2], 'endpoint-start') + milliseconds(cards[2], 'endpoint-duration')).toBe(3670);
+    // Cards enter as a short sequence while connector drawing follows each card's settle.
+    expect(milliseconds(cards[0], 'callout-start')).toBe(120);
+    expect(milliseconds(cards[2], 'endpoint-start') + milliseconds(cards[2], 'endpoint-duration')).toBe(1900);
     for (const [index, card] of cards.entries()) {
       const group = view.container.querySelector<SVGElement>(`g:has(path[data-callout="${card.dataset.callout}"])`)!;
       expect(group.getAttribute('style')).toBe(card.getAttribute('style'));
@@ -491,10 +494,30 @@ describe('bounded stage passes', () => {
       expect(lineStart).toBeGreaterThanOrEqual(start + 250);
       expect(endStart).toBeGreaterThanOrEqual(lineStart + milliseconds(card, 'connector-duration'));
       if (cards[index + 1]) {
-        expect(milliseconds(cards[index + 1], 'callout-start')).toBeGreaterThan(endStart + milliseconds(card, 'endpoint-duration'));
-        expect(milliseconds(cards[index + 1], 'callout-start') - start).toBe(1080);
+        expect(milliseconds(cards[index + 1], 'callout-start') - start).toBe(360);
+        expect(milliseconds(cards[index + 1], 'callout-start')).toBeLessThan(endStart + milliseconds(card, 'endpoint-duration'));
       }
     }
+  });
+
+  it('rechecks the App Effects connector when its Inspector target becomes visible', () => {
+    const view = render(<Stage inspectorHidden />);
+    settle();
+    const path = view.container.querySelector<SVGPathElement>('path[data-callout="effects"]')!;
+    const effectsTab = view.container.querySelector<HTMLElement>('.astrid-inspector-surface [role="tablist"].grid-cols-4 > [role="tab"]')!;
+    expect(path.getAttribute('data-connector-target')).toBeNull();
+    expect(resizeObservers.some(observer => observer.targets.has(effectsTab))).toBe(true);
+
+    view.rerender(<Stage />);
+    act(() => resizeObservers
+      .filter(observer => observer.targets.has(effectsTab))
+      .forEach(observer => observer.callback([{ target: effectsTab, contentRect: new DOMRect(100, 100, 100, 80) } as ResizeObserverEntry], observer as unknown as ResizeObserver)));
+    expect(frames.size).toBeGreaterThan(0);
+    paint();
+
+    expect(path.getAttribute('data-connector-target')).toBe('effects');
+    settle();
+    expect(frames.size).toBe(0);
   });
 
   it('reads all callout/stage boxes before writes and stops after stable scroll/resize bursts', () => {
@@ -536,7 +559,7 @@ describe('bounded stage passes', () => {
     expect(stage.querySelector<HTMLElement>('.astrid-editor-tilt')!.style.transform).toContain('rotateX(-1.600deg)');
     fireEvent.resize(window);
     const stale = [...frames.values()];
-    const staleResize = resizeCallbacks[0];
+    const staleResize = resizeObservers[0]!.callback;
     const staleMutation = mutationCallbacks[0];
     view.rerender(<Stage active={false} />);
     events = [];
@@ -562,7 +585,7 @@ describe('bounded stage passes', () => {
     expect(view.getByTestId('stage').style.getPropertyValue('--astrid-player-height')).toBe('');
     fireEvent.resize(window);
     const stale = [...frames.values()];
-    const observer = resizeCallbacks[0];
+    const observer = resizeObservers[0]!.callback;
     view.unmount();
     events = [];
     act(() => { stale.forEach((callback) => callback(performance.now())); observer([], {} as ResizeObserver); });

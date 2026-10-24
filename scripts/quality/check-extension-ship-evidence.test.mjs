@@ -666,7 +666,7 @@ describe('extension ship evidence gate', () => {
       headCommit: controllerCommit,
       provenanceChangedPaths: allEvidencePaths,
     });
-    assert.match(result.errors.join('\n'), /commit does not match the frozen Astrid candidate/);
+    assert.match(result.errors.join('\n'), /commit does not match the frozen Astrid App candidate/);
   });
 
   it('rejects the impossible same-commit controller and propagated provenance failures', () => {

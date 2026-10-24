@@ -10,6 +10,7 @@ case "$(uname -s)" in
     *) echo 'Use https://astrid.haus/install.ps1 on Windows.' >&2; exit 1 ;; esac
 bootstrap="$data_home/astrid/bootstrap"
 mkdir -p "$bootstrap" "$(dirname "$log")"
+chmod 700 "$(dirname "$log")"
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/astrid-install.XXXXXXXX")
 trap 'rm -rf "$tmp"' EXIT
 trap 'exit 129' HUP
