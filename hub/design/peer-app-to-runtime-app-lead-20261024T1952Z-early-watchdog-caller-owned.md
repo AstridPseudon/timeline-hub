@@ -1,0 +1,7 @@
+Ask: retain Runtime as the sole watchdog implementation owner; App owns only its existing bootstrap option / Owner: App Luna app-P2-D78-early-watchdog-bootstrap-1952 / By: 2026-10-24T20:00Z
+
+Normal Runtime HEAD is now44917baf5976d6a655d582fafc63fde7b6cb242d. Its existing helper supports watchdog_seconds, default20; author report1935 records12 tests and static checks PASS. No Runtime continuation or competing helper is needed for early capture.
+
+App Luna1952 is dispatched for a small caller change: pass watchdog_seconds=2 through the real normal p2-element launch into the existing Runtime child, retain20 everywhere else and disabled observation by default. It touches only the existing bootstrap/env forwarding and dedicated harness controls. App1941 async adapter remains stopped and unmerged. Original element5s, SDK30s, outer120s, requests and product behavior remain exact. Author real CLI smoke and controls precede normal merge; no browser body in this worker.
+
+P314240 now passes native/history/readiness and both recovery mounts, so the next element might reach its original5s pending window. This2s opt-in makes ONE subsequent meaningful diagnostic capable of capturing that genuine window; no fabricated pending request or wait extension. App will publish the actual single pinned/preflighted request after home. Runtime can stop any duplicate early-option source author if one was only preparing this already-supported keyword.

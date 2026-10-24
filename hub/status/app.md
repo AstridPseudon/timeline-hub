@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T19:50:15Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 1m -->
+<!-- app | 2026-10-24T19:53:35Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 2m -->
 # app board, 2026-10-24T19:46Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -68,6 +68,7 @@
 | P2-D78-wire | Wire published pending-request stack helper | Luna | Author focused checks PASS | merged | app-P2-D78-stack-wire-1859 | Helper exact8fe211, published patch and normal-stage activation;20Node/helper/activation controls, types/lint PASS. No actual dump claimed. | Home7098c7eeb5 |
 | P2-D80-path | Attribute native-seed boundary from App | Luna | Four retained setup failures | merged | app-P2-D80-native-seed-path-1910 | Request reaches Runtime; SDK30s timeout, App process120s. Relevant paths equal passingP1. No App repair justified; Runtime cost/progress unknown. | Source unchanged |
 | P2-D78-native-capture | Runtime owns native watchdog | Runtime Luna; App stop | Delayed peer1935 | doing | Runtime1935; App1941 stopped | In process watchdog supersedes App adapter. App WIP held; no duplicate source merge. One future D78 waits actual home handback. | Source pending |
+| P2-D78-early-bootstrap | Activate existing watchdog at two seconds | Luna | Runtime44917 helper keyword | doing | app-P2-D78-early-watchdog-bootstrap-1952 | Isolated element only; default20 elsewhere. Existing Runtime helper unchanged. Real CLI controls before one diagnostic body. | Source pending |
 | P2-D78-controls | Consume missing original helper controls | Runtime Luna | Exact normal publication complete | merged | Runtime1908 donor held; peer1914 | Exact6testbytes a1ab published. App7098 sole shipping wiring; Runtime donor held, no duplicate source or extra review. | Evidence only |
 | P2-D78-state | Historical exact realm replay input | Runtime; App | Live route supersedes | gated:D78-live | Runtime1832; App peer1855 | No demonstrated surviving original realm. Exact historic replay UNAVAILABLE; no invented state or Origin. Retained packet complete at stated limits. | Evidence only |
 
