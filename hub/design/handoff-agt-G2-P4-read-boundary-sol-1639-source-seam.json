@@ -1,0 +1,31 @@
+{
+  "status": "BLOCKED: no product correction applied",
+  "cause": "P4 original at line 76 calls TimelineSession._bundle, then line 113 classifies its result as revision-only. Current _bundle explicitly opens the exact revision/publication pair and returns its authenticated cache.",
+  "explicit_source_decision": "d05fcc0766c248e7b352d2e7d4b10af6331d43d4, sync.py:199-205; clean-pair positive/refusal controls in test_timeline_sync.py:174-194.",
+  "timeline": "P4 custody predicate was ported in ca1f2228c2343d95402b18d3f6d11eae68cc2867 at 2026-10-23 06:04Z; unconditional capture hydration followed in d05fcc0766c at 09:08Z.",
+  "ordinary_reader": "store.fetch_bundle(... revision_id=..., no publication_id) -> _remote_timeline.open_bundle no publication -> open_authoring_bundle, no _runtime_document.",
+  "canonical_reader": "_remote_timeline.py:174-211 validates exact history/receipt pair, compares immutable closure, retains _runtime_document and publication_id.",
+  "accepted_result": "sync._ack validates canonical closure/digest/scope/receipt result/hash/base-head; commit.bundle_from_document retains the document cache; unchanged.",
+  "public_session": "commit_session.Timeline._adopt moves the canonical cache into private state; _execution_bundle restores it only for execution; unchanged.",
+  "sheet": "NativeSheet.export retains session._bundle in outbox; load/preview/apply use retained original; unchanged.",
+  "unapplied_options_for_orchestrator": [
+    "Classify P4 original as authenticated capture and retain its current cache (requires explicitly revising protected P4 expectations, forbidden here).",
+    "Introduce an explicit ordinary-inspection projection separate from authenticated capture and migrate callers/positive custody controls together (broader boundary decision; no implicit cache stripping here)."
+  ],
+  "no_safe_local_fix": "Changing commit.bundle_from_document or execution cache custody would change accepted canonical behavior without changing original, which was deepcopied before export. Changing sheet code cannot change that earlier deepcopy. Returning revision-only data globally from _bundle conflicts with its explicit current capture contract and passing source-custody controls.",
+  "controls": {
+    "name": "pytest",
+    "errors": "0",
+    "failures": "2",
+    "skipped": "0",
+    "tests": "55",
+    "time": "81.599",
+    "timestamp": "2026-10-24T16:42:15.011191+00:00",
+    "hostname": "vm"
+  },
+  "unrelated_failures": [
+    "test_repeated_source_copy_real_port_idempotency_and_guarded_inverse[False]",
+    "test_repeated_source_copy_real_port_idempotency_and_guarded_inverse[True]"
+  ],
+  "failure_boundary": "test_commit_runtime_source_copy.py:335 redo-copy; CommitConflict original authored guard changed. No product changes or baseline rerun; no broader cause claimed."
+}

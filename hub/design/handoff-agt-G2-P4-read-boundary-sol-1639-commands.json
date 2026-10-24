@@ -1,0 +1,112 @@
+{
+  "cwd": "/home/user/work/wt/agt-G2-P4-read-boundary-sol-1639",
+  "environment": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONPATH": "/home/user/work/wt/agt-G2-P4-read-boundary-sol-1639:/home/user/work/runtime",
+    "ASTRID_RUNTIME_CHECKOUT": "/home/user/work/runtime",
+    "ASTRID_RUNTIME_SOURCE_ROOT": "/home/user/work/runtime",
+    "ASTRID_REMOTION_PROJECT_DIR": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110",
+    "ASTRID_NODE_EXECUTABLE": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+    "ASTRID_TEST_NODE_MODULES": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/node_modules"
+  },
+  "targeted_argv": [
+    "/home/user/work/venv-agent/bin/python",
+    "-P",
+    "-m",
+    "pytest",
+    "-q",
+    "-o",
+    "addopts=",
+    "-p",
+    "no:cacheprovider",
+    "--timeout=45",
+    "--basetemp=/tmp/w-35183eca99/controls",
+    "--junitxml=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-G2-P4-read-boundary-sol-1639/evidence/controls.xml",
+    "tests/sdk/test_timeline_revision_read_boundary.py",
+    "tests/sdk/test_timeline_session_pair.py",
+    "tests/sdk/test_remote_timeline_owner_scope.py",
+    "tests/editing_conformance/test_recipe_timeline_source_copy.py",
+    "tests/editing_conformance/test_commit_runtime_source_copy.py",
+    "tests/sdk/test_timeline_sync.py::test_clean_bundle_hydration_authenticates_exact_pair_without_pending_commands",
+    "tests/sdk/test_timeline_sync.py::test_clean_bundle_hydration_refuses_wrong_publication_for_revision",
+    "tests/sdk/test_timeline_restructure_guarded_runtime.py::test_fixture_restructure_public_call_hydrates_exact_current_closure",
+    "tests/sdk/test_timeline_restructure_guarded_runtime.py::test_fixture_reader_authorizes_exact_pair_and_refuses_wrong_scope_without_writes"
+  ],
+  "targeted_exit": 1,
+  "new_boundary_argv": [
+    "/home/user/work/venv-agent/bin/python",
+    "-P",
+    "-m",
+    "pytest",
+    "-q",
+    "-o",
+    "addopts=",
+    "-p",
+    "no:cacheprovider",
+    "--timeout=45",
+    "--basetemp=/tmp/w-35183eca99/boundary-tests",
+    "--junitxml=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-G2-P4-read-boundary-sol-1639/evidence/boundary.xml",
+    "tests/sdk/test_timeline_revision_read_boundary.py"
+  ],
+  "new_boundary_exit": 0,
+  "vendor_argv": [
+    "/home/user/work/venv-agent/bin/python",
+    "scripts/vendor_lock.py",
+    "check",
+    "runtime.lock.json",
+    "--producer",
+    "/home/user/work/runtime"
+  ],
+  "artifact_argv": [
+    "/home/user/work/venv-agent/bin/python",
+    "scripts/artifact_manifest.py",
+    "--check"
+  ],
+  "diff_argv": [
+    "git",
+    "diff",
+    "--check"
+  ],
+  "ruff_argv_template": [
+    "/home/user/work/venv-agent/bin/python",
+    "-m",
+    "ruff",
+    "check",
+    "--no-cache",
+    "--output-format=json",
+    "--stdin-filename",
+    "<scope path>",
+    "-"
+  ],
+  "ruff_scope": [
+    "astrid/sdk/timeline/commit_session.py",
+    "astrid/sdk/timeline/commit.py",
+    "astrid/sdk/timeline_sheet.py",
+    "tests/sdk/test_timeline_revision_read_boundary.py"
+  ],
+  "ruff_method": "Compare current stdin JSON diagnostics against git show HEAD:<scope path>; require new regression file clean.",
+  "mypy_argv": [
+    "/home/user/work/venv-agent/bin/python",
+    "-m",
+    "mypy",
+    "--cache-dir",
+    "/tmp/w-35183eca99/quality/mypy-current",
+    "--hide-error-context",
+    "--no-color-output",
+    "--no-pretty",
+    "--show-error-codes",
+    "astrid/sdk/timeline/commit_session.py",
+    "astrid/sdk/timeline/commit.py",
+    "astrid/sdk/timeline_sheet.py",
+    "tests/sdk/test_timeline_revision_read_boundary.py"
+  ],
+  "mypy_baseline": {
+    "cache_dir": "/tmp/w-35183eca99/quality/mypy-base",
+    "shadow_files": {
+      "astrid/sdk/timeline/commit_session.py": "/tmp/w-35183eca99/quality/base-0.py",
+      "astrid/sdk/timeline/commit.py": "/tmp/w-35183eca99/quality/base-1.py",
+      "astrid/sdk/timeline_sheet.py": "/tmp/w-35183eca99/quality/base-2.py"
+    },
+    "result": "Identical exact error lines: 1 current / 1 baseline, zero new."
+  }
+}

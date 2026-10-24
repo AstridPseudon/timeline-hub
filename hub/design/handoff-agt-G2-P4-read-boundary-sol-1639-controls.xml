@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="55" time="81.599" timestamp="2026-10-24T16:42:15.011191+00:00" hostname="vm"><testcase classname="tests.sdk.test_timeline_revision_read_boundary" name="test_revision_inspection_does_not_replace_authenticated_session_capture" time="5.827" /><testcase classname="tests.sdk.test_timeline_revision_read_boundary" name="test_clean_session_capture_refuses_a_mismatched_pair_without_writes" time="5.345" /><testcase classname="tests.sdk.test_timeline_session_pair" name="test_genuine_anchor_with_public_pair_reader" time="5.235" /><testcase classname="tests.sdk.test_timeline_session_pair" name="test_session_capture_reload_and_function_keep_verified_pair" time="5.616" /><testcase classname="tests.sdk.test_timeline_session_pair" name="test_session_pair_authentication_refuses_without_writes[wrong-revision]" time="5.411" /><testcase classname="tests.sdk.test_timeline_session_pair" name="test_session_pair_authentication_refuses_without_writes[wrong-publication]" time="5.640" /><testcase classname="tests.sdk.test_timeline_session_pair" name="test_session_pair_authentication_refuses_without_writes[missing-entry]" time="5.633" /><testcase classname="tests.sdk.test_remote_timeline_owner_scope" name="test_open_bundle_uses_authenticated_internal_owner_pin" time="0.004" /><testcase classname="tests.sdk.test_remote_timeline_owner_scope" name="test_open_bundle_refuses_mismatched_parent_response[project_id]" time="0.004" /><testcase classname="tests.sdk.test_remote_timeline_owner_scope" name="test_open_bundle_refuses_mismatched_parent_response[timeline_id]" time="0.003" /><testcase classname="tests.sdk.test_remote_timeline_owner_scope" name="test_open_bundle_refuses_mismatched_parent_response[revision_id]" time="0.004" /><testcase classname="tests.sdk.test_remote_timeline_owner_scope" name="test_open_bundle_refuses_mismatched_internal_response" time="0.003" /><testcase classname="tests.sdk.test_remote_timeline_owner_scope" name="test_open_bundle_refuses_mismatched_shot_response" time="0.003" /><testcase classname="tests.editing_conformance.test_recipe_timeline_source_copy" name="test_source_copy_keeps_raw_parent_closure_order_sharing_and_opaque_data[False]" time="0.019" /><testcase classname="tests.editing_conformance.test_recipe_timeline_source_copy" name="test_source_copy_keeps_raw_parent_closure_order_sharing_and_opaque_data[True]" time="0.020" /><testcase classname="tests.editing_conformance.test_recipe_timeline_source_copy" name="test_unverified_source_bytes_are_never_an_input_authority" time="0.022" /><testcase classname="tests.editing_conformance.test_recipe_timeline_source_copy" name="test_source_copy_rejects_forged_claims_and_incomplete_maps_atomically[created]" time="0.017" /><testcase classname="tests.editing_conformance.test_recipe_timeline_source_copy" name="test_source_copy_rejects_forged_claims_and_incomplete_maps_atomically[edge]" time="0.011" /><testcase classname="tests.editing_conformance.test_recipe_timeline_source_copy" name="test_source_copy_rejects_forged_claims_and_incomplete_maps_atomically[scope]" time="0.015" /><testcase classname="tests.editing_conformance.test_recipe_timeline_source_copy" name="test_source_copy_rejects_forged_claims_and_incomplete_maps_atomically[shot]" time="0.016" /><testcase classname="tests.editing_conformance.test_recipe_timeline_source_copy" name="test_source_copy_rejects_forged_claims_and_incomplete_maps_atomically[occurrence]" time="0.015" /><testcase classname="tests.editing_conformance.test_recipe_timeline_source_copy" name="test_source_copy_rejects_forged_claims_and_incomplete_maps_atomically[order]" time="0.016" /><testcase classname="tests.editing_conformance.test_recipe_timeline_source_copy" name="test_source_copy_preserves_retained_media_and_documents_and_records_inputs" time="0.019" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_real_port_receipts_preview_undo_redo" time="5.505" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_refuses_bad_authority_or_claims_without_writes[foreign]" time="0.250" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_refuses_bad_authority_or_claims_without_writes[outside]" time="0.234" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_refuses_bad_authority_or_claims_without_writes[pair]" time="0.241" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_refuses_bad_authority_or_claims_without_writes[digest]" time="0.235" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_refuses_bad_authority_or_claims_without_writes[same]" time="0.250" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_refuses_bad_authority_or_claims_without_writes[occupied]" time="0.241" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_refuses_bad_authority_or_claims_without_writes[sharing]" time="0.240" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_refuses_bad_authority_or_claims_without_writes[order]" time="0.306" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_refuses_bad_authority_or_claims_without_writes[media]" time="0.227" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_refuses_bad_authority_or_claims_without_writes[created]" time="0.276" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_refuses_bad_authority_or_claims_without_writes[archived]" time="0.248" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_production_duplicate_caller_uses_authenticated_semantic_and_archives_failures" time="0.354" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_rejects_project_wide_occupied_shot_without_writes" time="0.369" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_repeated_source_copy_real_port_idempotency_and_guarded_inverse[False]" time="5.077"><failure message="astrid.sdk.timeline.sync.CommitConflict: original authored guard changed">self = &lt;astrid.sdk.timeline.sync.TimelineSession object at 0x7fdd2b6d7930&gt;
+
+    def _flush(self, *, idempotency_key=None, dry_run=False, via="python", prepare=None):
+        with self.outbox.locked():
+            state = self._state()
+            if prepare is not None:
+                prepare(state)
+            flight = state["flight"]
+            if _flight_kind(flight) == "assembly-admission":
+                raise TimelineEditError("retry the original assembly admission before flushing commands")
+            if flight is None:
+                if not state["pending"]:
+                    raise TimelineEditError("no pending timeline commands")
+                body = {"api_version": 1, "project_id": self.project_id, "timeline_id": self.timeline_id,
+                        "base_revision_id": state["base"]["revision_id"],
+                        "base_publication_id": state["base"]["publication_id"],
+                        "commands": copy.deepcopy(state["pending"]), "source": {"via": via}, "dry_run": dry_run}
+                if 'rationale' in state:
+                    body['rationale'] = state['rationale']
+                body.update(copy.deepcopy(state.get("commit_options", {})))
+                key = idempotency_key if idempotency_key is not None else f"timeline-edit-{uuid.uuid4().hex}"
+                if key == state.get("preview_key"):
+                    raise TimelineEditError("use a fresh key after a preview")
+                flight = {"path": self.path, "body": request_bytes(body).decode(), "key": key,
+                          "count": len(state["pending"]), "fence": uuid.uuid4().hex}
+                state["flight"] = flight
+                self.outbox.write(state)
+            body = self._flight_body(state, flight, idempotency_key, dry_run)
+            if "fence" not in flight:  # Preserve requests persisted before fencing was added.
+                flight["fence"] = uuid.uuid4().hex
+                self.outbox.write(state)
+            flight = copy.deepcopy(flight)
+        try:
+&gt;           result = _response(self.client.timelines.commit(
+                self.project_id, self.timeline_id, body, idempotency_key=flight["key"],
+            ))
+
+astrid/sdk/timeline/sync.py:549: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+result = DomainResult(ok=False, data=None, error=ErrorObject(code='conflict', message='original authored guard changed', detail...publication_id': 'txn-381a5e28e30541aca748e0a17fb8241f'}, 'conflicts': []}), receipt=None, idempotency_key='redo-copy')
+
+    def _response(result):
+        if not result.ok:
+            error = result.error
+&gt;           raise WorkspaceClientError(0, error.code, error.message, dict(error.details))
+E           astrid.sdk.workspace_client.WorkspaceClientError: original authored guard changed
+
+astrid/sdk/timeline/sync.py:54: WorkspaceClientError
+
+The above exception was the direct cause of the following exception:
+
+saved_source = &lt;function saved_source.&lt;locals&gt;.install at 0x7fdd2acdd1c0&gt;
+with_content = False
+
+    @pytest.mark.parametrize('with_content', [False, True])
+    def test_repeated_source_copy_real_port_idempotency_and_guarded_inverse(saved_source, with_content):
+        from astrid.sdk.timeline import open as open_timeline
+        from astrid.sdk.timeline_duplicate import duplicate_timeline
+        from tests.sdk.test_timeline_restructure import flat_film
+    
+        source = flat_film()
+        source['parent']['clips'] = []
+        source['parent']['registry'] = {}
+        source['shots']['film']['internal_timeline']['clips'] = []
+        source['shots']['film']['internal_timeline']['registry'] = {'assets': {}}
+        if with_content:
+            source['shots']['film']['payload']['items'] = [
+                {'item_id': 'source-item', 'media_id': 'picture', 'metadata': {'opaque': [None, False]}}]
+            source['shots']['film']['internal_timeline']['clips'] = [
+                {'id': 'picture-clip', 'clipType': 'image', 'track': 'plate',
+                 'asset': 'picture', 'at': 0, 'hold': 2, 'opaque': [None, False]}]
+            source['shots']['film']['internal_timeline']['registry']['assets']['picture'] = {
+                'type': 'image', 'media_id': 'picture'}
+        again = copy.deepcopy(source['placements'][0])
+        again.update(occurrence_id='again', placement={'start_ms': 12000})
+        source['placements'].append(again)
+        client, project, document, bodies = saved_source(source)
+        original = document('t')
+        result = duplicate_timeline(project, 't', slug='copy', client=client)
+        copied = document('copy')
+        body = copy.deepcopy(bodies[0])
+        history = client.timelines.history(project, 'copy', limit=200).data['items']
+        entry = next(row for row in history if row['revision_id'] == result['new_head'])
+        key = entry['receipt']['idempotency_key']
+        reply = client._remote._transport._generated.commit_timeline(project, 'copy', body, idempotency_key=key)
+        assert reply['receipt'] == entry['receipt'] and document('copy') == copied
+        timeline = open_timeline(project, 'copy', client=client)
+        undone = timeline.undo(publications=[entry['publication_id']], idempotency_key='undo-copy')
+        assert document('copy')['parent_revision']['payload']['occurrences'] == []
+        assert document('copy')['shot_revisions'] == document('copy')['internal_timeline_revisions'] == []
+&gt;       timeline.undo(publications=[undone['receipt']['receipt_id']], idempotency_key='redo-copy')
+
+tests/editing_conformance/test_commit_runtime_source_copy.py:335: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/sdk/timeline/commit_session.py:85: in undo
+    return self.session.undo(publications, steps=None if steps == 1 else steps, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/sync.py:455: in undo
+    return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via, prepare=prepare)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;astrid.sdk.timeline.sync.TimelineSession object at 0x7fdd2b6d7930&gt;
+
+    def _flush(self, *, idempotency_key=None, dry_run=False, via="python", prepare=None):
+        with self.outbox.locked():
+            state = self._state()
+            if prepare is not None:
+                prepare(state)
+            flight = state["flight"]
+            if _flight_kind(flight) == "assembly-admission":
+                raise TimelineEditError("retry the original assembly admission before flushing commands")
+            if flight is None:
+                if not state["pending"]:
+                    raise TimelineEditError("no pending timeline commands")
+                body = {"api_version": 1, "project_id": self.project_id, "timeline_id": self.timeline_id,
+                        "base_revision_id": state["base"]["revision_id"],
+                        "base_publication_id": state["base"]["publication_id"],
+                        "commands": copy.deepcopy(state["pending"]), "source": {"via": via}, "dry_run": dry_run}
+                if 'rationale' in state:
+                    body['rationale'] = state['rationale']
+                body.update(copy.deepcopy(state.get("commit_options", {})))
+                key = idempotency_key if idempotency_key is not None else f"timeline-edit-{uuid.uuid4().hex}"
+                if key == state.get("preview_key"):
+                    raise TimelineEditError("use a fresh key after a preview")
+                flight = {"path": self.path, "body": request_bytes(body).decode(), "key": key,
+                          "count": len(state["pending"]), "fence": uuid.uuid4().hex}
+                state["flight"] = flight
+                self.outbox.write(state)
+            body = self._flight_body(state, flight, idempotency_key, dry_run)
+            if "fence" not in flight:  # Preserve requests persisted before fencing was added.
+                flight["fence"] = uuid.uuid4().hex
+                self.outbox.write(state)
+            flight = copy.deepcopy(flight)
+        try:
+            result = _response(self.client.timelines.commit(
+                self.project_id, self.timeline_id, body, idempotency_key=flight["key"],
+            ))
+        except Exception as exc:
+            details = getattr(exc, "details", {})
+            if isinstance(details, dict) and details.get("status") in {"conflict", "refused", "invalid"}:
+                failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
+                with self.outbox.locked():
+                    state = self._state()
+                    if state["flight"] == flight:
+                        self._flight_body(state, flight, idempotency_key, dry_run)
+                        state["conflict"] = failure
+                        self.outbox.write(state)
+&gt;               raise CommitConflict(failure) from exc
+E               astrid.sdk.timeline.sync.CommitConflict: original authored guard changed
+
+astrid/sdk/timeline/sync.py:562: CommitConflict</failure></testcase><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_repeated_source_copy_real_port_idempotency_and_guarded_inverse[True]" time="5.478"><failure message="astrid.sdk.timeline.sync.CommitConflict: original authored guard changed">self = &lt;astrid.sdk.timeline.sync.TimelineSession object at 0x7fdd2a5ecae0&gt;
+
+    def _flush(self, *, idempotency_key=None, dry_run=False, via="python", prepare=None):
+        with self.outbox.locked():
+            state = self._state()
+            if prepare is not None:
+                prepare(state)
+            flight = state["flight"]
+            if _flight_kind(flight) == "assembly-admission":
+                raise TimelineEditError("retry the original assembly admission before flushing commands")
+            if flight is None:
+                if not state["pending"]:
+                    raise TimelineEditError("no pending timeline commands")
+                body = {"api_version": 1, "project_id": self.project_id, "timeline_id": self.timeline_id,
+                        "base_revision_id": state["base"]["revision_id"],
+                        "base_publication_id": state["base"]["publication_id"],
+                        "commands": copy.deepcopy(state["pending"]), "source": {"via": via}, "dry_run": dry_run}
+                if 'rationale' in state:
+                    body['rationale'] = state['rationale']
+                body.update(copy.deepcopy(state.get("commit_options", {})))
+                key = idempotency_key if idempotency_key is not None else f"timeline-edit-{uuid.uuid4().hex}"
+                if key == state.get("preview_key"):
+                    raise TimelineEditError("use a fresh key after a preview")
+                flight = {"path": self.path, "body": request_bytes(body).decode(), "key": key,
+                          "count": len(state["pending"]), "fence": uuid.uuid4().hex}
+                state["flight"] = flight
+                self.outbox.write(state)
+            body = self._flight_body(state, flight, idempotency_key, dry_run)
+            if "fence" not in flight:  # Preserve requests persisted before fencing was added.
+                flight["fence"] = uuid.uuid4().hex
+                self.outbox.write(state)
+            flight = copy.deepcopy(flight)
+        try:
+&gt;           result = _response(self.client.timelines.commit(
+                self.project_id, self.timeline_id, body, idempotency_key=flight["key"],
+            ))
+
+astrid/sdk/timeline/sync.py:549: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+result = DomainResult(ok=False, data=None, error=ErrorObject(code='conflict', message='original authored guard changed', detail...publication_id': 'txn-fb90c3847a2448639ff77001615f85f4'}, 'conflicts': []}), receipt=None, idempotency_key='redo-copy')
+
+    def _response(result):
+        if not result.ok:
+            error = result.error
+&gt;           raise WorkspaceClientError(0, error.code, error.message, dict(error.details))
+E           astrid.sdk.workspace_client.WorkspaceClientError: original authored guard changed
+
+astrid/sdk/timeline/sync.py:54: WorkspaceClientError
+
+The above exception was the direct cause of the following exception:
+
+saved_source = &lt;function saved_source.&lt;locals&gt;.install at 0x7fdd2acdd6c0&gt;
+with_content = True
+
+    @pytest.mark.parametrize('with_content', [False, True])
+    def test_repeated_source_copy_real_port_idempotency_and_guarded_inverse(saved_source, with_content):
+        from astrid.sdk.timeline import open as open_timeline
+        from astrid.sdk.timeline_duplicate import duplicate_timeline
+        from tests.sdk.test_timeline_restructure import flat_film
+    
+        source = flat_film()
+        source['parent']['clips'] = []
+        source['parent']['registry'] = {}
+        source['shots']['film']['internal_timeline']['clips'] = []
+        source['shots']['film']['internal_timeline']['registry'] = {'assets': {}}
+        if with_content:
+            source['shots']['film']['payload']['items'] = [
+                {'item_id': 'source-item', 'media_id': 'picture', 'metadata': {'opaque': [None, False]}}]
+            source['shots']['film']['internal_timeline']['clips'] = [
+                {'id': 'picture-clip', 'clipType': 'image', 'track': 'plate',
+                 'asset': 'picture', 'at': 0, 'hold': 2, 'opaque': [None, False]}]
+            source['shots']['film']['internal_timeline']['registry']['assets']['picture'] = {
+                'type': 'image', 'media_id': 'picture'}
+        again = copy.deepcopy(source['placements'][0])
+        again.update(occurrence_id='again', placement={'start_ms': 12000})
+        source['placements'].append(again)
+        client, project, document, bodies = saved_source(source)
+        original = document('t')
+        result = duplicate_timeline(project, 't', slug='copy', client=client)
+        copied = document('copy')
+        body = copy.deepcopy(bodies[0])
+        history = client.timelines.history(project, 'copy', limit=200).data['items']
+        entry = next(row for row in history if row['revision_id'] == result['new_head'])
+        key = entry['receipt']['idempotency_key']
+        reply = client._remote._transport._generated.commit_timeline(project, 'copy', body, idempotency_key=key)
+        assert reply['receipt'] == entry['receipt'] and document('copy') == copied
+        timeline = open_timeline(project, 'copy', client=client)
+        undone = timeline.undo(publications=[entry['publication_id']], idempotency_key='undo-copy')
+        assert document('copy')['parent_revision']['payload']['occurrences'] == []
+        assert document('copy')['shot_revisions'] == document('copy')['internal_timeline_revisions'] == []
+&gt;       timeline.undo(publications=[undone['receipt']['receipt_id']], idempotency_key='redo-copy')
+
+tests/editing_conformance/test_commit_runtime_source_copy.py:335: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/sdk/timeline/commit_session.py:85: in undo
+    return self.session.undo(publications, steps=None if steps == 1 else steps, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/sync.py:455: in undo
+    return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via, prepare=prepare)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;astrid.sdk.timeline.sync.TimelineSession object at 0x7fdd2a5ecae0&gt;
+
+    def _flush(self, *, idempotency_key=None, dry_run=False, via="python", prepare=None):
+        with self.outbox.locked():
+            state = self._state()
+            if prepare is not None:
+                prepare(state)
+            flight = state["flight"]
+            if _flight_kind(flight) == "assembly-admission":
+                raise TimelineEditError("retry the original assembly admission before flushing commands")
+            if flight is None:
+                if not state["pending"]:
+                    raise TimelineEditError("no pending timeline commands")
+                body = {"api_version": 1, "project_id": self.project_id, "timeline_id": self.timeline_id,
+                        "base_revision_id": state["base"]["revision_id"],
+                        "base_publication_id": state["base"]["publication_id"],
+                        "commands": copy.deepcopy(state["pending"]), "source": {"via": via}, "dry_run": dry_run}
+                if 'rationale' in state:
+                    body['rationale'] = state['rationale']
+                body.update(copy.deepcopy(state.get("commit_options", {})))
+                key = idempotency_key if idempotency_key is not None else f"timeline-edit-{uuid.uuid4().hex}"
+                if key == state.get("preview_key"):
+                    raise TimelineEditError("use a fresh key after a preview")
+                flight = {"path": self.path, "body": request_bytes(body).decode(), "key": key,
+                          "count": len(state["pending"]), "fence": uuid.uuid4().hex}
+                state["flight"] = flight
+                self.outbox.write(state)
+            body = self._flight_body(state, flight, idempotency_key, dry_run)
+            if "fence" not in flight:  # Preserve requests persisted before fencing was added.
+                flight["fence"] = uuid.uuid4().hex
+                self.outbox.write(state)
+            flight = copy.deepcopy(flight)
+        try:
+            result = _response(self.client.timelines.commit(
+                self.project_id, self.timeline_id, body, idempotency_key=flight["key"],
+            ))
+        except Exception as exc:
+            details = getattr(exc, "details", {})
+            if isinstance(details, dict) and details.get("status") in {"conflict", "refused", "invalid"}:
+                failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
+                with self.outbox.locked():
+                    state = self._state()
+                    if state["flight"] == flight:
+                        self._flight_body(state, flight, idempotency_key, dry_run)
+                        state["conflict"] = failure
+                        self.outbox.write(state)
+&gt;               raise CommitConflict(failure) from exc
+E               astrid.sdk.timeline.sync.CommitConflict: original authored guard changed
+
+astrid/sdk/timeline/sync.py:562: CommitConflict</failure></testcase><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_unknown_outcome_retains_destination_and_exact_retry[False]" time="0.209" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_unknown_outcome_retains_destination_and_exact_retry[True]" time="0.202" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_real_port_preserves_raw_parent_config_presence[mirrors0]" time="0.253" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_real_port_preserves_raw_parent_config_presence[mirrors1]" time="0.215" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_real_port_preserves_raw_parent_config_presence[mirrors2]" time="0.233" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_real_port_preserves_raw_parent_config_presence[mirrors3]" time="0.218" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_retained_inputs_whole_undo_redo" time="5.634" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_captured_authority_still_guards_acceptance[archived-after-capture]" time="0.287" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_captured_authority_still_guards_acceptance[forged-physical-media]" time="0.222" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_inverse_refuses_later_leaf_writes_atomically[False]" time="0.477" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_inverse_refuses_later_leaf_writes_atomically[True]" time="0.627" /><testcase classname="tests.editing_conformance.test_commit_runtime_source_copy" name="test_source_copy_known_refusal_archives_actual_destination" time="0.165" /><testcase classname="tests.sdk.test_timeline_sync" name="test_clean_bundle_hydration_authenticates_exact_pair_without_pending_commands" time="0.005" /><testcase classname="tests.sdk.test_timeline_sync" name="test_clean_bundle_hydration_refuses_wrong_publication_for_revision" time="0.006" /><testcase classname="tests.sdk.test_timeline_restructure_guarded_runtime" name="test_fixture_restructure_public_call_hydrates_exact_current_closure" time="6.597" /><testcase classname="tests.sdk.test_timeline_restructure_guarded_runtime" name="test_fixture_reader_authorizes_exact_pair_and_refuses_wrong_scope_without_writes" time="5.772" /></testsuite></testsuites>
