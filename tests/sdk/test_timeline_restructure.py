@@ -400,19 +400,30 @@ def restructure_runtime(tmp_path, monkeypatch):
         replies.append(copy.deepcopy(result))
         return result
 
-    generated = SimpleNamespace(commit_timeline=send, list_timeline_commits=lambda p, t, cursor=None, limit=200:
-        service.list_timeline_commits(p, t, cursor=cursor, limit=limit, authorize=lambda: None))
+    def list_timelines(p, cursor=None, limit=50):
+        page = service.list_timelines(p, cursor=cursor, limit=limit)
+        return page['items'], page.get('next_cursor')
+
+    generated = SimpleNamespace(
+        commit_timeline=send,
+        list_timelines=list_timelines,
+        inspect_timeline=lambda p, t, options=None: service.inspect_timeline(p, t, options),
+        list_timeline_commits=lambda p, t, cursor=None, limit=200:
+            service.list_timeline_commits(p, t, cursor=cursor, limit=limit, authorize=lambda: None),
+        get_project_parent_composition_revision=lambda p, t, revision:
+            service.get_project_parent_composition_revision(p, t, revision),
+        get_project_shot_revision=lambda p, shot, revision:
+            service.get_project_shot_revision(p, shot, revision),
+        get_project_timeline_revision=lambda p, timeline, revision:
+            service.get_project_timeline_revision(p, timeline, revision),
+    )
     transport = WorkspaceClient.__new__(WorkspaceClient)
     transport._generated = generated
     transport._last_handshake = {'realm_id': service.realm['id'], 'actor_id': 'editor'}
     client = SimpleNamespace(_remote=SimpleNamespace(_transport=transport), timelines=RemoteTimelines(transport))
-    client.timelines.open_composition = lambda p, t: DomainResult.success({
-        'native_inspection': {'project_id': project, 'timeline_id': t},
-        'summary': {'head_revision_id': service.get_project_timeline(project, t)['head_revision_id']}})
-    client.timelines._resolve_timeline = lambda p, t: DomainResult.success({'project_id': project, 'timeline_id': t})
-    client.timelines.open_bundle = lambda p, t, revision_id=None, **kw: DomainResult.success({'bundle':
-        bundle_from_document(service._timeline_commits()[0].revision_closure(project, t,
-            revision_id or service.get_project_timeline(project, t)['head_revision_id']))})
+    client.timelines._resolve_timeline = RemoteTimelines._resolve_timeline.__get__(client.timelines)
+    client.timelines.open_composition = RemoteTimelines.open_composition.__get__(client.timelines)
+    client.timelines.open_bundle = RemoteTimelines.open_bundle.__get__(client.timelines)
     client.projects = SimpleNamespace(show=lambda p: DomainResult.success({'project_id': project}))
     client.media = SimpleNamespace(import_bytes=lambda **kw: DomainResult.success(service.ingest(
         project, kw['data'], original_name=kw['filename'], media_type=kw['media_type'],
