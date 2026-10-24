@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T01:36:17Z | dispatcher heartbeat 1s | live 6 (sol 3, luna 3, other 0) | busy30 38 | status age 3m -->
+<!-- main | 2026-10-24T01:38:33Z | dispatcher heartbeat 13s | live 3 (sol 2, luna 1, other 0) | busy30 39 | status age 1m -->
 # runtime board, 2026-10-24T01:33:03Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -39,16 +39,16 @@
 | F-authoring-publish-writer | Migrate Agent publication helper | HARD Sol | Released capture glue | doing | rt-F-authoring-capture-glue-sol-0130 | Prior source 4 passed. Agent released commit and remote hunks; original roundtrip awaits joined capture. | 0114 source held |
 | OPS-manifest-restore | Restore accidental generated manifest write | Luna | Exact main file identity | merged | Restore 0110; independent 0113 PASS | Exact tracked hash 7c541b restored; main cleanliness and byte equality independently verified. | HEAD 458595850 |
 | R0-public-export-manifest | Refresh generated artifact hash | Luna | Integrated verification passed | merged | Author 0111; review 0115; integrated 0128 | Actual db11: 74 passed, manifest and generation checks passed; 77 of 78 entries unchanged. [Proof](../../design/runtime-R0-manifest-integrated-0128.md) | db11ea829 / 8a742b1c2 |
-| R5-full-headless | Preserve ten headless scenarios | Luna | Second independent review | review | rt-R5-headless-review-0135 | Return 12 passed. Review genuine bootstrap, same-ID adoption, raw payload and CAS scenario preservation. | Return 0125 |
-| R5-full-occupancy | Preserve fifteen occupancy scenarios | Luna | Independent review | review | rt-R5-occupancy-review-0132 | Author 16 passed; review checks each original occupancy, historical reuse, tamper and no-write predicate. | Author 0113 |
-| R5-full-speed | Preserve six speed refusals | Luna | Second independent review | review | rt-R5-speed-review-net-0138 | First review hit socket sandbox limit. Network-enabled review now checks 14 tests and original diagnostic baseline. | Return 0125 |
-| R5-full-receipt-key | Preserve receipt and key guards | Luna | Second independent review | review | rt-R5-receipt-key-review-0138 | Original receipt equalities restored. Receipt test passed; network-enabled review covers both cases and original baseline. | Return 0128 |
+| R5-full-headless | Preserve ten headless scenarios | HARD Sol | Two Luna source failures | doing | rt-R5-headless-sol-0143 | Review 0135 found raw inputs still unsubmitted and scoped predicates vacuous. Sol owns faithful scenario mapping. | 2c3a539 held |
+| R5-full-occupancy | Preserve fifteen occupancy scenarios | Luna | First review findings | doing | rt-R5-occupancy-return-0140 | Review 0132 found historical identity remapping and vacuous tamper targets. Restore exact original predicates. | Author 0113 held |
+| R5-full-speed | Preserve six speed refusals | Luna | Own-only merge packet | doing | rt-R5-speed-current-port-0143 | Independent 0138 PASS: 14 tests, all six inputs, unchanged SQL/CAS and zero new type diagnostics. | d12e5143f reviewed |
+| R5-full-receipt-key | Preserve receipt and key guards | Luna | Own-only merge packet | doing | rt-R5-receipt-current-port-0145 | Independent 0138 PASS: both cases and original receipt/replay equalities, zero new type diagnostics. | ad056d139 reviewed |
 | R5-full-conformance | Declare retired-route errors | Luna source / review | Contract and tuple decision | blocked:orchestrator | Review 0119; corrected proposal published | Five-route proposal incomplete. Truthful corrected scope and coordinated tuple await [decision](../../escalations/runtime-20261024T0119-retired-route-contract.md). | No contract edits |
 | F-full-census-review | Verify all failures and exact recovery | Luna independent | Reports 0107 and 0110 | merged | rt-F-census-recovery-review-0113 PASS | Exact 36 nodes and all counts independently verified; main recovery clean and exact. [Review](../../design/runtime-full-census-recovery-review-0113.md) | Evidence only |
-| R2r-external-pack-source | Bind external pack capture authority | HARD Sol / Luna | Existing authenticated origin | doing | rt-R2r-external-capture-sol-0134 | Review confirmed byte observation but missing origin and definition binding. Private producer must prove authority before changes. | No product edits |
+| R2r-external-pack-source | Bind external pack capture authority | HARD Sol / Luna | New authority scope decision | blocked:orchestrator | Source 0116; review 0125; Sol 0134 | No existing authenticated origin or definition admission. Concrete private authority question escalated; no product changes. | Read only |
 | R-readiness-commits-hang | Diagnose pinned history GET hang | HARD Sol | Orchestrator 01:22 | doing | rt-R-readiness-probe-sol-0138 | First probe rejected absolute path; zero tests ran. Relative diagnostic now assigned for three server conditions. Cause unknown. | Pinned 2a9e347ff |
-| F-helper-sequential | Classify helper replay-map refusal | Luna | Actual retained capture | review | rt-R2r-helper-sequential-review-0134 | Assessment lacked current failing capture. Independent review challenges attribution based on older R1 history. | Read only |
-| F-D32-h3-import | Seven isolated child import nodes | Luna | Existing installed environment | review | rt-F-D32-h3-review-0132 | Seven unique nodes confirmed. Installed child absent on main; source review and existing environment handback requested. | Read only |
+| F-helper-sequential | Classify helper replay-map refusal | Luna | Actual retained failing map | blocked:agent | Source 0125; independent 0134 | Attribution rejected; actual owner unknown. Agent asked for current private capture, not historical lookalike. | Read only |
+| F-D32-h3-import | Seven isolated child import nodes | Luna | Existing installed interpreter | blocked:agent | Source 0125; independent 0132 | Test selects source-only interpreter for installed contract. Agent asked for existing qualified child/profile and exact seven acceptance. | No source defect proven |
 
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
@@ -57,7 +57,8 @@ Runtime integration is db11ea829, tree a92a576a8837. Reviewed artifact manifest 
 Blockers: Runtime / App — P2 and P3 original bodies did not run in 10973 and 14249. Server history completion is unknown; Sol0138 owns pinned diagnosis. App client source0113 found no justified fix.
 Blockers: Runtime — Full 29085 has 36 failures; exact census is independently verified. Four repair families and the contract correction are assigned; no unchanged full rerun.
 Blockers: Orchestrator — Approve the corrected truthful retired-route declarations and coordinated tuple in escalations/runtime-20261024T0119-retired-route-contract.md.
-Blockers: Agent — Independent cumulative review and home merge follow the assigned publication writer. Agent released capture glue; Viewing owns native media and recording hunks.
+Blockers: Agent — Publication review/home merge follows Sol0130. Helper assessment needs actual failing private map; seven imports need existing installed interpreter/profile. Peers 0132 and 0140 sent.
+Blockers: Orchestrator — Approve and identify the owner-authenticated private external source admission in escalations/runtime-20261024T0143-external-source-authority.md.
 Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held until freeze.
 
 D34: Disk work remains paused. Main had 9,071,763,456 bytes free at 01:23, above the 8.5 GB resume threshold. This pass freed 0 GB. No cleanup round, legacy retry, bench retirement or alternate deletion. Prior safety and permission refusals remain stopped.

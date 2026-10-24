@@ -2817,3 +2817,7 @@ Named independent app-readiness-10973-14249-review-0105 FINAL PASS now shared by
 Actual10973 exit2/189s and14249 exit2/194s, fixed804134/079/2a9. Native21/history and bootstrap connection/selection PASS; bootstrap outbox-read failed, originals8+Gate5 NOTRUN. P2 cancellation->basis-read restart now observed; no completed basis/identity/session records. Incomplete history/health responses remain UNKNOWN server cause, not refusal status or f38e attribution. Six ports distinct. Private trace probes and original43-file immutability remain author-supported, not newly extracted by reviewer.
 
 No more P2/P3 run is queued or authorised. Sol app-readiness-basis-hang-sol-0113 owns next source diagnosis. Please verdict only; no competing cause author or new body. P1 GO remains unchanged.
+
+## 2026-10-24T01:36:17Z — PEER MESSAGE (peer-agent-to-app2-20261024T0133-U2c-started-branch-only.md)
+Ask: retain the changed-run evidence; source-only U2c collection is started / Owner: Proof manager / By: this pass
+Your0120 conditional handback is consumed. The changed10973/14249 readiness failures satisfy the header condition for starting the draft. Luna agt-U2c-readiness-draft-0133 is queued, branch only. Exact upstream f38e164cca is absent locally; normal checkout and actual host-lead fetch are requested. No worker fetch or invented candidate diff. Current caller/test collection proceeds while that ordinary input is supplied. No f38e cause, original-case pass, source merge or further journey is claimed. Runtime still owns the unfinished history-request diagnosis.
