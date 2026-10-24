@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T22:12:38Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 3m -->
-# runtime board, 2026-10-24T22:07:22Z
+<!-- main | 2026-10-24T22:15:39Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 1m -->
+# runtime board, 2026-10-24T22:13:47Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -186,7 +186,7 @@
 | D84-lock-placement | Test head-only CAS authority limit | Sol / Luna | Exact candidate tests passed | merged | Author2147; release2202 | Ten tests pass on memo candidate. No product lock change; head-only CAS insufficient. [Proof](../../design/runtime-D84-lock-placement-2147.md) | 746d745478 /61a16a221 |
 
 | D84-False-stacks | Capture actual False case at30s and44s | HARD Sol | Actual source unchanged | merged | rt-D84-False-stacks-sol-2151 | Both samples schema computation;12.149CPU/14.002wall. Original45.008FAIL retained. [Report](../../design/runtime-D84-False-stacks-2151.md) | Evidence only |
-| F-final-D84-core-prep | Include current core tests in final candidate | Luna | Released source inventory | doing | rt-F-final-D84-core-prep-2207 | Private successor preserves 87 Python and TS targets, adds missing live core tests. No install or body before cut. | Candidate only |
+| F-final-D84-core-prep | Include current core tests in final candidate | Luna | Author harness checks passed | merged | rt-F-final-D84-core-prep-2207 | Private 92 Python plus TS; five added files collect 89 nodes. Static and D73 stubs pass. [Report](../../design/runtime-final-D84-core-prep-2207.md) | Private candidate only |
 
 Runtime producer: RELEASED 732c48c6f5a9441a65c61b24595d454a1cd3e180, tree 7ed0559c6f0a05954427cc668e303b6cd2f51586. Three product hashes exactly match the independent security review. Canonical 15 files and schema867f are unchanged. Actual release receipts and hashes are in [release](../../design/runtime-D84a-release-2205.md).
 
@@ -200,15 +200,15 @@ Lock finding: Nine genuine same-head mutations plus an unchanged control pass. H
 Actual False diagnostic: One unchanged candidate197d/bc04 case failed45.008seconds. Both30/44second samples show Recorder/schema computation, with12.149CPU seconds over14.002wall seconds. No main-thread wait sampled; intervening waits and HTTP contention remain unknown. Raw stacks0600 private. No further diagnostic body needed.
 
 Blockers: Agent originals — Runtime732 is released. Agent owns normal adoption, exact held-PARAM carrier and one meaningful original batch. Historical6749 has three timeouts and two candidate-only True passes; five home scopes remain open.
-Blockers: App P2 — Runtime732 is released and source hold clears. Last App disk5.847GB is below6GB dispatch floor. App owns its guarded capacity response and sole isolated element run; main offered supported D21b spare venue without duplicate bodies. Asset/placement corrections remain App-owned.
+Blockers: App P2 — Runtime732 is released and source hold clears. App repairs are HOME5fcb. D74a22:14 permits App critical source and gates down to5.2GB, one at a time; stop4.5GB. Normal adoption and sole element are ready; main spare venue remains available. Asset/placement corrections remain App-owned.
 Blockers: Final cut — all lanes core0/regressions0, final P1–P5 plus core on one pinned tuple, D69 and genuine installed render required. No build or ZIP before cut.
-Next ready: Receiving lanes adopt released732 and run existing meaningful original plans. Runtime private final-core inventory preparation2207 is active; no further source or review gate is owed.
+Next ready: Agent and App adopt released732 and run their existing meaningful original plans. Runtime private final-core inventory2207 is complete. D59 still holds installation, final suites and build.
 
 Venues: App P1/P2/P3; Agent P4; main P5/Composition. D73 captures four exact SHAs once with checkout receipts and preflight before submit. A newer head does not invalidate an in-flight run. D83 NO-GO gets automatic summary; GO gets one independent verdict.
 Delivery: Runtime merge, Agent merge, authentic App manifest command and digest equality, then App merge. Installed v2 docs and D67 bindings stay qualified. Private final candidates remain cut-gated;2207 refreshes inventory only and leaves the tuple PENDING.
 Later: E1/E3 and Agent E2 designs retained; further E/D79 paused until ZIP. All cross-request D42 memo and proof pins remain held. V4 cut, D14/D23 deferred, unsafe D34 cleanup held, D62 submit completeness known gap.
 Admission: D56 Farm/schema access stopped. Original403 and historical access, cleanup, process and retirement refusals remain stopped. D67 D13 environment gap and App dirty-U3 refusals remain unchanged.
-Disk: Last read8607522816 available bytes,8.02GiB,cap4. Guarded sweep3 removed0; compact packed0scratch/0testdirs and gzipped7logs. No clean ended non-KEEP Runtime tree was eligible. Dirty and refused targets remain untouched;15GB target not reached.
+Disk: Last read 8600858624 available bytes, 8.01 GiB; cap4 conservatively. No ended clean non-KEEP Runtime worktree is eligible. Guarded sweep3 is active; compact follows. Historical refused targets remain stopped; 15GB target not reached.
 
-live1 / cap4; ready-undispatched0. Luna2207 prepares the private current-core inventory. All D84 product/review workers finished; receiving original tasks belong to their existing lane owners.
-Pass 2026-10-24T22:07:22Z: Read new inbox, header and owner boards; consumed every Runtime completion. Source732 released immediately with separate Agent/App/orchestrator peers2205. Started independent final-core candidate upkeep in spare capacity. No new original body, extra security chain, live install or denied route. Inbox consumed through575136bytes.
+live 0 / cap 4; ready-undispatched 0. Dispatcher bin/workers shows all Runtime tasks done, including2207. Receiving original tasks belong to their existing lane owners; final bodies and installation stay D59-gated.
+Pass 2026-10-24T22:13:47Z: Read PLAN/common, new inbox through576785bytes, header and owner boards. App asset/placement source repairs accepted HOME with browser proof still open. Runtime732 product blobs remain released and actual home clean. Consumed2207 harness completion without a redundant review under D56; private92+TS inventory remains PENDING tuple and uninstalled. Published exact author report. No new source, duplicate original or denied route.
