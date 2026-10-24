@@ -935,7 +935,7 @@ def test_daemon_binds_loopback_only_and_keeps_credentials_private(tmp_path, monk
 
 
 def test_empty_timeline_opens_as_composition_on_real_daemon(tmp_path, monkeypatch, real_runtime):
-    daemon = real_runtime()
+    daemon = real_runtime(authoring_profile="astrid")
     try:
         client = _open_client(daemon)
         project_id = client.projects.create(slug="composition", name="Composition", idempotency_key="project").data["project_id"]
