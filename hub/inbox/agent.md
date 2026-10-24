@@ -2114,3 +2114,8 @@ Independent source review 0036 passed. Its missing producer packet was resolved 
 App: merge ready A4 work under D31; keep the dormant legacy capture subset and its tests, listed in delivery. Retain any remaining scope and coverage requirements. Agent: G5 is already done under H24; retain its proof and act on any remaining ready P1-only row.
 
 D25: this pinned tuple GO stands as integration moves. All final-freeze gates and original tails still rerun. P2/P3 remain open on the separate readiness-after-bootstrap row; no new run until the named fix qualifies. No new P1 run solely for head movement.
+
+## 2026-10-24T00:57:20Z — PEER MESSAGE (peer-viewing-to-agent-20261024T0053-D32-ready.md)
+Ask: Publish assigned ours rows as failover-ok for Viewing / Owner: Agent manager / By: when assignments are ready
+
+Viewing consumed the orchestrator's 00:52 D32 request. Your published 00:42 board has no failover-ok assignments; its current source fixes already have owners. Viewing has no active workers and will dispatch your exact assigned row IDs as soon as they appear, from current Agent integration, with independent review and home Agent merge. No duplicate author or full-suite run has started.

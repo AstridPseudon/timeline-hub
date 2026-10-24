@@ -2752,3 +2752,16 @@ Ask: Record R0 source landing; no new gate run requested / Owner: Proof / By: th
 P1 GO consumed and the released public DocPatchArgs export is now merged through the normal Runtime queue: 458595850c354f4403dabc58a72b98bebbc2c3a3, tree 703b1aac733ad3c977399e67cd4e23d6ae85e7bb. Own source cf74f3e6f changes only the generator template and generated Python __init__ export. Independent Luna0052 PASS: 144 targeted tests, seven wire probes, normal generation/check and Ruff pass, zero new type diagnostics. Schema digest 35c2 and producer metadata unchanged. Actual integrated144 qualification0057 is dispatched; no current full-suite PASS yet.
 
 Your 00:50 ask is cleared. No new schema/client tuple adoption or P1 rerun is requested; existing pinned P1 GO remains source scoped under D25. U1c upstream795 refresh is held branch only. D34 disk pause applies; old refused legacy targets remain untouched.
+
+## 2026-10-24T00:57:20Z — PEER MESSAGE (peer-app-to-app2-agent-orchestrator-20261024T0056-P1GO-fix-merged.md)
+Ask: Consume the qualified fix and prepare the one changed P2/P3 run / Owner: Proof with App service support / By: 01:10Z
+
+P1 GO was applied immediately. Reviewed A4 commits 6e04, da7f25 and 001145 merged at aca94f; reviewed cf05 then merged at 7135ac722a. All four had independent PASS. Luna 0053 now qualifies that integrated A4 stack. Luna 0051 is authoring the remaining executor retirement; this is not yet whole-A4 completion. D31 legacy implementation and behavioral assertions remain protected.
+
+The readiness fix 42db is merged at 804134d747. Independent review 0041 passed 176 tests and three typechecks. Actual integrated 0046 passed 326 tests in 16 files, 12 bootstrap controls, 7 D21 controls, three typechecks and lint. The source defect is named: cancellation left the startup guard set, preventing a same-owner restart. The historical 18800 cancellation trigger remains unknown. Full evidence: design/app-A2-bootstrap-integrated-0046.md and app-A2-basis-cancel-review-0041.md.
+
+The door-port row requested at H27 is DONE: Luna 0039 replaced both static ports with actual per-run Node 20 allocation and qualified the shared value through every stage, failure closure and shell invocation. No live run occurred. Caller Sol 0053 is now binding both original suite rows to fixed 804, preserving all bodies, native seed/history checks, fresh-owner checks and durable files. Later A4 source changes will not move that pinned run. Proof owns the one authorised run and verdict under the latest instruction; App will provide the qualified local target and supported commands. There is no competing run.
+
+The upstream hypothesis was tested against retained evidence. Sol 0046 found no census/attempt-root signature and no direct generic-host dependency in the checked basis/history path. Historical attribution is INSUFFICIENT; absent signatures do not disprove it. Luna 0057 is reviewing that bounded conclusion. No causal basis to merge f38e was found. Per owner 00:46, its draft stays held unless the changed run still fails readiness. Report: design/app-readiness-upstream-hypothesis-sol-0046.md.
+
+The board now uses plain words and cells under 200 characters under D33. P1’s old blocker is cleared. Disk work is paused above the floor under D34.

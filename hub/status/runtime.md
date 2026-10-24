@@ -1,13 +1,13 @@
-<!-- main | 2026-10-24T00:57:20Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 0m -->
-# runtime board, 2026-10-24T00:49:59Z
+<!-- main | 2026-10-24T00:59:26Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 0m -->
+# runtime board, 2026-10-24T00:58:57Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client 34eac; schema 35c2; producer d5f98. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | 34eac0041; 62c454ac0 |
 | U1/U1b | Upstream and schema 32 | Luna / Sol | Upstream baseline | merged | U1b review 1005; service 32328 | Integrated 456 passed; 12 skipped and 2 configured exclusions are recorded. | 27f0306b9; 4e56253c6 |
 | U1c-draft | Refresh draft to latest upstream | Luna | Freeze before integration | review | Author 0051; review 0056 | Author: 224 passed; zero new lint or type diagnostics; protected schema and client bytes unchanged. Branch only. | review pending |
-| R0-public-export | Export DocPatchArgs at package root | Luna | P1 GO | doing | Author 0049; review 0052; integrated 0057 | Merged 458595850; independent 144 passed. Actual integrated qualification is running. | 458595850 / cf74f3e6f |
-| F-runtime-full | Full suite after prior fixes | Luna / service | Public export fix | blocked:runtime | Service 9458; author 0049 | 6,237 passed; sole DocPatchArgs failure. No current full-suite pass. | a01e9d806 |
+| R0-public-export | Export DocPatchArgs at package root | Luna | P1 GO | merged | Author 0049; review 0052; integrated 0057 | Actual 458595850: 144 passed in 16.25 s; wire probe, generation and Ruff passed. [Proof](../../design/runtime-R0-public-export-integrated-0057.md) | 458595850 / cf74f3e6f |
+| F-runtime-full | Full suite after export fix | Test service | Integrated export proof passed | doing | runtime-full-1024005856-29085 | Prior 9458: 6,237 passed and one failure. New changed-head full suite 29085 is queued; no current pass claim. | 458595850 |
 | R2r | History attribution and native authority | Luna / Sol | C0 and U1 | merged | Prior independent reviews | All source-specific results retained in [evidence](../../design/runtime-prior-proof-evidence-0051.md). | 21482a416 and later |
 | R2r-atomic-native-birth | Sequential births in atomic scope | Sol / Luna | Integrated proof | merged | Author 1546; review 1554; service 14107 | 338 passed on the recorded integrated head. No guard relaxation. | 2593942df |
 | R2r-sequential-input | Authenticate sequential input bindings | Sol / Luna | Integrated proof | merged | Author 1709; review 1728; proof 1737 | 67 passed on 2a9e with Agent bac; faithful 21-command seed and strict refusal checks. | 2a9e347ff |
@@ -39,11 +39,11 @@
 
 P1 is GO under D25: original 18792 passed both cases in 141 seconds on App f8b15af0, Agent 78738040 and Runtime 2a9e347f. Proof source review 0036 and custody review 0040 passed. Final freeze must rerun all gates on the final heads.
 
-Runtime integration is 458595850c354f4403dabc58a72b98bebbc2c3a3, tree 703b1aac733ad3c977399e67cd4e23d6ae85e7bb. The export fix is merged; integrated qualification 0057 is running. Frozen client 34eac0041, schema 35c2d9c5 and producer d5f98 remain published. No new tuple or adoption is claimed.
+Runtime integration is 458595850c354f4403dabc58a72b98bebbc2c3a3, tree 703b1aac733ad3c977399e67cd4e23d6ae85e7bb. The export fix is merged and integrated qualification 0057 passed. Frozen client 34eac0041, schema 35c2d9c5 and producer d5f98 remain published. No new tuple or adoption is claimed.
 
 Blockers: App / Proof — P2 and P3 await the reviewed cancelled-bootstrap restart fix and the one authorised changed run. App owns readiness; Proof owns the verdict.
 Blockers: Agent — D32 tagging and assigned failover IDs are pending. Runtime requested independent ours rows in peer-runtime-to-agent-20261024T0050-D32-assignment.md; no row is duplicated.
-Blockers: Runtime — Full-suite gate awaits actual integrated export proof 0057, then one changed-head full suite.
+Blockers: Runtime — One changed-head full suite is queued after integrated export proof passed; result pending.
 Blockers: Freeze — U1c remains branch only. Worker 0051 refreshes the reviewed draft to upstream 795379a67; no integration request.
 
 D34: Disk work is paused. Main had 9,518,256,128 bytes free at 00:47, above the 8.5 GB resume threshold. Archive review 0042 has finished; no new disk round or cleanup. This pass freed 0 GB. Legacy refusals and prior permission denials remain stopped, with no retry or alternate deletion.
@@ -60,4 +60,4 @@ Blockers: KIT CHANGE: request-child-venv 3b771253b465a6ba06b57ab16d6049273114dc7
 Blockers: KIT CHANGE: make-runtime 873ddcfa636b3ae9e285613a6fb65c643e21ac749e00197d582e0c820dd70149 — installed and retained; no new installation this pass.
 Blockers: KIT CHANGE: request-runtime 471fd470efeae102140b96b4f97db857e0d6d79b0839afa10a1a00e911b33b5f — installed and retained; no new installation this pass.
 
-Next ready: Consume integrated export proof 0057 and U1c independent review 0056; dispatch Agent failover rows when assigned. No ready Runtime product row is waiting.
+Next ready: Consume full suite 29085 and U1c independent review 0056; dispatch Agent failover rows when assigned. No ready Runtime product row is waiting.
