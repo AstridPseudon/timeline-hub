@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T01:32:49Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 4m -->
-# app2 board, 2026-10-24T01:29Z
+<!-- app2 | 2026-10-24T01:34:52Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 1m -->
+# app2 board, 2026-10-24T01:33Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | P1 | Original mounted mixed chain | App Sol/Luna; Proof Luna | Complete on pinned tuple | merged | App run 18792; Proof reviews 0036 and 0040 | P1 RESULT GO. Exit 0, 141s; 2 passed in 56.3s. Source review and result custody passed. Freeze reruns all gates. | App f8b15af0a6; Agent 78738040; Runtime 2a9e347f |
@@ -7,7 +7,7 @@
 | P1-corpus | Real-document roundtrip and merge | Luna | Complete | merged | Corpus 1348 | 49 passed; 15 fixtures and 11 inputs. Direct provider scope; mounted chain has separate GO. | e6 / 9729 |
 | P1-seed | Full native atomic bootstrap | Sol; Luna review | Complete | merged | Common 0618; seed 2d7; Runtime a00e | All 21 native assertions and history passed in run 18792. Runtime 2a9 integrated proof: 67 passed. | App 12ef; Runtime 2a9 |
 | P1-diagnostics | Safe files and source guard codes | Sol/Luna | Source reviewed and merged | merged | Reviews 1945 and 2118; App WorkerInfo 2238 | Real emitter, serialized listener and failure file passed; cap 32 retains critical events. Failure-only files were not created on successful 18792. | b221 / 6ecc / def457 / f890 |
-| readiness-after-bootstrap | Verified basis read does not finish | App Sol; Luna review; Proof verdict | Runtime handler diagnosis | blocked:runtime | App 0113; Runtime need0117; Proof0126 PASS | P2 read restarted after cancellation. Both failed outbox wait; no completed history response captured. Server cause unknown. No repeat. | Fixed App 804134 |
+| readiness-after-bootstrap | Verified basis read does not finish | App Sol; Luna review; Proof verdict | Runtime handler diagnosis | blocked:runtime | Runtime Sol0125; App Sol0121; Proof0126 PASS | P2 read restarted after cancellation. Both failed outbox wait; no completed history response captured. Server cause unknown. No repeat. | Fixed App 804134 |
 | P2 | Original eight gestures on App service | App service; Proof verdict | Named meaningful readiness fix | blocked:runtime | Run 10973; Proof audit0126 PASS | Exit 2, 189s. Native/history and bootstrap connection/selection passed; outbox wait failed. All eight originals NOT RUN. | App 804134d747 / tree 8437e476 |
 | P2-custody | Actual 18800 lifecycle file | Proof Luna | Complete finite audit | merged | ap2-P2-18800-direct-custody-0032 | PASS: 10,665 bytes, six real records, schema/security/roundtrip/writer and Node 12+7. Cancellation at 679ms; trigger and history completion unknown. | Report only |
 | P2-popup-seed | Declare both created owners | Luna; independent review | Complete | merged | Author 1934; review 1940 | Four fixture lines; 102+2 tests, three typechecks, lint and collection passed. App tree matches reviewed 17324. | 17324 -> 93cdd |
@@ -20,7 +20,7 @@
 
 P1 RESULT GO. BOARD-HEADER records it at the 00:43 status line; D35 is satisfied. App and Agent received the required merge asks at 00:48, due 01:45Z. G5 is done. P1 case 2 passed; P2/P3 remain open.
 
-Blockers: Runtime owes the history-handler diagnosis requested by App 0117. No new P2/P3 run.
+Blockers: Runtime Sol0125 owes the pinned history-handler diagnosis; App Sol0121 compares client and seed. No new P2/P3 run.
 Blockers: Farm F-final waits for deletions, upstream freeze and remaining gates. Agent owns full-suite classification and repairs under D32.
 
 A4: Scalar cut a7d41 is merged. App Sol0112 and Luna0116 own remaining preview and protocol migrations. Orchestrator owes the bounded dormant assertion scope; all protected tests stay.
@@ -39,6 +39,6 @@ Disk: 01:22 available 8,939,413,504 bytes, above the 8 GB stop line. Supported r
 
 Latest pair: [App actual cause report0105](../../design/app-readiness-10973-14249-cause-sol-0105.md) records distinct live ports, seven false DB probes per run, no captured history completion, P2 restart and all originals NOT RUN. Named independent review0105 PASS and all four safe files arrived at01:20. Proof Luna0126 completed PASS: direct file and production projection audit, writer roundtrip and Node12+7. [Final](../../design/handoff-ap2-P2-P3-changed-safe-custody-0126.md). No direct local raw/trace audit is claimed. Bootstrap connection/selection passed; the later mandatory connected-selection and fresh-owner stages did not run. Existing five-second baseline and later fresh-owner/connected guards remain unchanged.
 
-Next ready: Runtime owns App source need0117. Apply the exact bounded handback when published; dispatch any ready Proof source correction immediately. No duplicate causal author or journey. Agent U2c stays held per its board. Later: final freeze gates after the remaining source work and upstream freeze.
+Next ready: Runtime Sol0125 owns server reproduction; App Sol0121 owns client and seed comparison. Apply the exact bounded handback when published; dispatch any ready Proof source correction immediately. No duplicate causal author or journey. Agent U2c stays held per its board. Later: final freeze gates after the remaining source work and upstream freeze.
 
-Current full pass: 2026-10-24T01:29Z. INBOX through598078 bytes plus direct0115 and shared reports consumed. Audit0126 terminal exit0, exact2187-byte final published; App and orchestrator verdict notes written. All1235 local Proof workers terminal. App, Agent, Runtime and Farm boards rechecked; Runtime still has the stale caller wait, with peer0124 requesting correction. Supported recycle found zero eligible worktrees; free8,928,591,872 bytes. Prior compact refusal is not retried. No ready Proof work waiting. Next full pass01:39Z; act sooner on new evidence.
+Current full pass: 2026-10-24T01:29Z, owner update01:33Z. INBOX through599885 bytes and shared source review0117 consumed. Audit0126 terminal exit0, exact2187-byte final published; App and orchestrator verdict notes written. All1235 local Proof workers terminal. App, Agent, Runtime and Farm boards rechecked; Runtime now owns source row R-readiness-commits-hang with active Sol0125; App client0121 runs separately. Supported recycle found zero eligible worktrees; free8,928,591,872 bytes. Prior compact refusal is not retried. No ready Proof work waiting. Next full pass01:39Z; act sooner on new evidence.
