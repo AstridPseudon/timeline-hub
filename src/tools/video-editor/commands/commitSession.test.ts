@@ -746,6 +746,69 @@ function rename(session: Awaited<ReturnType<typeof createTimelineCommandSession>
 }
 
 describe('track labels in the existing durable command session', () => {
+  it.each([undefined, 'Original', ''])('keeps original presence %j for value, empty and clear edits', async (original) => {
+    for (const args of [
+      { values: { label: 'Renamed' }, clear: [] },
+      { values: { label: '' }, clear: [] },
+      { values: {}, clear: ['label'] },
+    ] as TrackLabelArgs[]) {
+      const raw = document();
+      if (original !== undefined) rawTrack(raw).label = original;
+      raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
+      const env = await environment(raw);
+      const session = await env.mount();
+      const captured = captureTrackLabelEdit(session.trackLabelPort, env.current(), 'V1');
+      submitTrackLabelEdit(captured, args);
+      await session.flush();
+      const command = env.commits()[0].body!.commands[0];
+      expect(command).toMatchObject({ op: 'track.set', version: '1', select: 'parent/track:V1', args,
+        expect: { 'parent/track:V1::label': original === undefined ? { state: 'absent' } : { state: 'present', value: original } },
+        bindings: { 'scalar.target': 'parent/track:V1' } });
+      expect(Object.keys(command.expect!)).toEqual(['parent/track:V1::label']);
+      expect(command.reads).toEqual([{ ref: 'parent/track:V1', path: ['id'], state: { state: 'present', value: 'V1' } }]);
+      const accepted = env.projected.at(-1)!.canonicalDocument;
+      if ('label' in args.values) expect(rawTrack(accepted).label).toBe(args.values.label);
+      else expect(rawTrack(accepted)).not.toHaveProperty('label');
+      expect(accepted.parent_revision.payload.opaque).toEqual({ absent: null });
+      expect(accepted.parent_revision.payload.clips).toEqual(raw.parent_revision.payload.clips);
+      expect(env.previews.mock.calls[0][0]).toEqual({ version: 1, operations: [{ op: 'track.update', target: 'V1',
+        payload: { label: 'label' in args.values ? args.values.label : 'V1' } }] });
+      await session.undo();
+      await session.flush();
+      expect(env.commits()[1].body!.commands[0]).toMatchObject({ op: 'timeline.inverse', args: { publications: ['p1'] } });
+      const restored = rawTrack(env.projected.at(-1)!.canonicalDocument);
+      if (original === undefined) expect(restored).not.toHaveProperty('label');
+      else expect(restored.label).toBe(original);
+      await session.dispose();
+    }
+  });
+  it.each(['move', 'label'] as const)('allows disjoint remote editing while %s guards stay original', async (operation) => {
+    const env = await environment();
+    const session = await env.mount();
+    const capturedMove = captureClipMove(session.port, env.current(), 'x');
+    const capturedLabel = captureTrackLabelEdit(session.trackLabelPort, env.current(), 'V1');
+    const remote = await env.external((raw) => {
+      if (operation === 'move') rawTrack(raw).label = 'Remote label';
+      else {
+        (raw.parent_revision.payload.clips as Array<{ at: number }>)[0].at = 8;
+        (raw.parent_revision.payload.config as { clips: Array<{ at: number }> }).clips[0].at = 8;
+      }
+    });
+    session.observe(remote);
+    await vi.waitFor(() => expect(env.current().head?.headRevisionId).toBe(remote.head.revisionId));
+    if (operation === 'move') submitClipMove(capturedMove, 5);
+    else submitTrackLabelEdit(capturedLabel, { values: { label: 'Local label' }, clear: [] });
+    await session.flush();
+    const accepted = env.projected.at(-1)!.canonicalDocument;
+    expect(env.current().config.clips[0].at).toBe(operation === 'move' ? 5 : 8);
+    expect(rawTrack(accepted).label).toBe(operation === 'move' ? 'Remote label' : 'Local label');
+    const command = env.commits()[0].body!.commands[0];
+    expect(command.expect?.[operation === 'move' ? 'parent/clip:x::at' : 'parent/track:V1::label'])
+      .toEqual(operation === 'move' ? { state: 'present', value: 1 } : { state: 'absent' });
+    if (operation === 'move') expect(command.reads?.some((read) => read.path.includes('label'))).toBe(false);
+    else expect(command.reads?.some((read) => read.ref.includes('/clip:'))).toBe(false);
+    await session.dispose();
+  });
   it('drains a label-only edit on close into the same outbox without starting a request', async () => {
     const env = await environment();
     const session = await env.mount();

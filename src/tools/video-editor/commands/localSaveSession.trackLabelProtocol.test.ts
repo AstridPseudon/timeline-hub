@@ -164,75 +164,39 @@ function withClipAt(source: TimelineSaveSource, at: number): TimelineSaveSource 
 }
 
 describe('track labels in the existing durable command session', () => {
-  it.each([undefined, 'Original', ''])('keeps original presence %j for value, empty and clear edits', async (original) => {
-    for (const args of [
-      { values: { label: 'Renamed' }, clear: [] },
-      { values: { label: '' }, clear: [] },
-      { values: {}, clear: ['label'] },
-    ] as const) {
-      const env = await environment(original ?? undefined);
-      const source = withTrackLabel(env.sourceForInitial(), original);
-      const session = await env.mount();
-      const next = withTrackLabel(source, 'label' in args.values ? args.values.label : undefined);
-      const after = env.document(next, env.initial.canonicalDocument);
-      env.queue(after);
-      const noChange = ('label' in args.values && args.values.label === original)
-        || (!('label' in args.values) && original === undefined);
-      if (!('label' in args.values)) {
-        // TimelineLocalSaveHandoff treats omitted editor fields as partial views;
-        // its generic capture has no explicit track-label clear token. Keep the
-        // production document-patch join here while retaining the clear case.
-        await session.session.appendDocument({ before: env.initial.canonicalDocument, after,
-          roots: [{ ref: 'parent', revisionId: h0.revisionId, contentDigest: env.initial.canonicalDocument.parent_revision.content_digest }],
-          label: 'Edit timeline', step: { id: 'track-label-step', label: 'Edit timeline', intent: 'Clear track label', tags: [] } });
-      } else {
-        await session.handoff.capture(next);
-      }
-      await session.handoff.flush();
-      if (noChange) {
-        expect(env.send).not.toHaveBeenCalled();
-        expect(session.session.getDocument()).toEqual(env.initial.canonicalDocument);
-        await session.session.dispose();
-        continue;
-      }
-      const request = env.send.mock.calls[0][0];
-      const command = request.commands[0];
-      expect(command).toMatchObject({ op: 'doc.patch', version: '1', select: null, created: [],
-        args: { changes: ['label' in args.values ? { op: 'set', ref: 'parent', path: ['tracks', 'id:V1', 'label'],
-          before: original === undefined ? { state: 'absent' } : { state: 'present', value: original }, value: args.values.label }
-          : { op: 'remove', ref: 'parent', path: ['tracks', 'id:V1', 'label'],
-            before: original === undefined ? { state: 'absent' } : { state: 'present', value: original } }] } });
-      const changes = command.args.changes as unknown as Array<Record<string, OutboxJson>>;
-      expect(changes).toHaveLength(1);
-      expect(changes[0].path).toEqual(['tracks', 'id:V1', 'label']);
-      expect(Object.keys(changes[0])).toContain('before');
-      const accepted = session.session.getDocument() as unknown as CanonicalDocument;
-      const acceptedPayload = parent(accepted);
-      const rawPayload = parent(env.initial.canonicalDocument);
-      if ('label' in args.values) expect((acceptedPayload.config as ParentPayload).tracks).toEqual(expect.arrayContaining([
-        expect.objectContaining({ id: 'V1', label: args.values.label }),
-      ]));
-      else expect((acceptedPayload.config as ParentPayload).tracks).toEqual(expect.not.arrayContaining([
-        expect.objectContaining({ id: 'V1', label: expect.anything() }),
-      ]));
-      expect(acceptedPayload.opaque).toEqual(rawPayload.opaque);
-      expect(acceptedPayload.clips).toEqual(rawPayload.clips);
-      expect(acceptedPayload.tracks).toEqual((acceptedPayload.config as ParentPayload).tracks);
-      expect(accepted.shot_revisions).toEqual(env.initial.canonicalDocument.shot_revisions);
-      expect(accepted.internal_timeline_revisions).toEqual(env.initial.canonicalDocument.internal_timeline_revisions);
-      expect(accepted.dependency_manifest).toEqual(env.initial.canonicalDocument.dependency_manifest);
-      expect(env.send.mock.calls.every(([sent]) => sent.commands.every(({ op }) => op === 'doc.patch'))).toBe(true);
-      const beforeUndo = accepted;
-      env.queue(env.initial.canonicalDocument);
-      await session.handoff.undo();
-      const restored = session.session.getDocument() as unknown as CanonicalDocument;
-      expect(restored.parent_revision.payload).toEqual(env.initial.canonicalDocument.parent_revision.payload);
-      expect(session.session.getDocument()).toEqual(restored);
-      expect(env.send.mock.calls[1][0].commands).toEqual([{ schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
-        args: { publications: ['p1'] } }]);
-      expect(beforeUndo.parent_revision.payload).not.toBe(restored.parent_revision.payload);
-      await session.session.dispose();
-    }
+  it('forwards mounted empty input as a value-empty label edit', async () => {
+    const original = 'Original';
+    const env = await environment(original);
+    const source = withTrackLabel(env.sourceForInitial(), original);
+    const session = await env.mount();
+    const next = withTrackLabel(source, '');
+    const after = env.document(next, env.initial.canonicalDocument);
+    env.queue(after);
+    await session.handoff.capture(next);
+    await session.handoff.flush();
+    const request = env.send.mock.calls[0][0];
+    const command = request.commands[0];
+    expect(command).toMatchObject({ op: 'doc.patch', version: '1', select: null, created: [],
+      args: { changes: [{ op: 'set', ref: 'parent', path: ['tracks', 'id:V1', 'label'],
+        before: { state: 'present', value: original }, value: '' }] } });
+    const changes = command.args.changes as unknown as Array<Record<string, OutboxJson>>;
+    expect(changes).toHaveLength(1);
+    expect(changes[0].path).toEqual(['tracks', 'id:V1', 'label']);
+    expect(Object.keys(changes[0])).toContain('before');
+    const accepted = session.session.getDocument() as unknown as CanonicalDocument;
+    const acceptedPayload = parent(accepted);
+    const rawPayload = parent(env.initial.canonicalDocument);
+    expect((acceptedPayload.config as ParentPayload).tracks).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'V1', label: '' }),
+    ]));
+    expect(acceptedPayload.opaque).toEqual(rawPayload.opaque);
+    expect(acceptedPayload.clips).toEqual(rawPayload.clips);
+    expect(acceptedPayload.tracks).toEqual((acceptedPayload.config as ParentPayload).tracks);
+    expect(accepted.shot_revisions).toEqual(env.initial.canonicalDocument.shot_revisions);
+    expect(accepted.internal_timeline_revisions).toEqual(env.initial.canonicalDocument.internal_timeline_revisions);
+    expect(accepted.dependency_manifest).toEqual(env.initial.canonicalDocument.dependency_manifest);
+    expect(env.send.mock.calls.every(([sent]) => sent.commands.every(({ op }) => op === 'doc.patch'))).toBe(true);
+    await session.session.dispose();
   });
 
   it('keeps queued move → label guards and the exact native pending identity through reload', async () => {
@@ -327,39 +291,4 @@ describe('track labels in the existing durable command session', () => {
     await session.session.dispose();
   });
 
-  it.each(['move', 'label'] as const)('allows disjoint remote editing while %s guards stay original', async (operation) => {
-    const env = await environment();
-    const session = await env.mount();
-    const local = operation === 'move' ? withClipAt(session.source, 5) : withTrackLabel(session.source, 'Local label');
-    const remote = env.remote((raw) => {
-      if (operation === 'move') {
-        (parent(raw).config as ParentPayload).tracks = [{ id: 'V1', kind: 'visual', label: 'Remote label' }];
-        parent(raw).tracks = structuredClone((parent(raw).config as ParentPayload).tracks);
-      } else {
-        ((parent(raw).config as ParentPayload).clips as Array<Record<string, OutboxJson>>)[0].at = 8;
-        ((parent(raw).clips as Array<Record<string, OutboxJson>>)[0]).at = 8;
-      }
-    });
-    const mergedSource = structuredClone(local);
-    if (operation === 'move') track(mergedSource).label = 'Remote label';
-    else ((mergedSource.config.clips as unknown as Array<Record<string, OutboxJson>>)[0]).at = 8;
-    const merged = env.document(mergedSource, remote.document);
-    env.queue(merged);
-    await session.handoff.capture(local);
-    await session.handoff.flush();
-    const accepted = session.session.getDocument() as unknown as CanonicalDocument;
-    expect((parent(accepted).config as ParentPayload).clips).toEqual(expect.arrayContaining([
-      expect.objectContaining({ at: operation === 'move' ? 5 : 8 }),
-    ]));
-    expect((parent(accepted).config as ParentPayload).tracks).toEqual(expect.arrayContaining([
-      expect.objectContaining({ label: operation === 'move' ? 'Remote label' : 'Local label' }),
-    ]));
-    const request = env.send.mock.calls[0][0];
-    const change = request.commands[0].args.changes[0];
-    expect(request.commands[0].op).toBe('doc.patch');
-    expect(change.before).toEqual(operation === 'move' ? { state: 'present', value: 1 } : { state: 'absent' });
-    expect(change.path).toEqual(operation === 'move' ? ['clips', 'id:x', 'at'] : ['tracks', 'id:V1', 'label']);
-    expect(request.commands.some(({ op }) => op === 'track.set')).toBe(false);
-    await session.session.dispose();
-  });
 });
