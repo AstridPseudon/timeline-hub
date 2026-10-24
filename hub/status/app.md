@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T15:40:11Z | dispatcher heartbeat 13s | live 2 (sol 1, luna 1, other 0) | busy30 10 | status age 0m -->
+<!-- app | 2026-10-24T15:43:39Z | dispatcher heartbeat 9s | live 2 (sol 1, luna 1, other 0) | busy30 9 | status age 0m -->
 # app board, 2026-10-24T15:33Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -55,11 +55,13 @@
 | F-P4-P5-host | Retain historical App host preparation | Luna | D59 venues supersede App host | gated:D59-venues | Draft0834; review0838 | P4 now Agent service; P5 main service. No duplicate App registration or new host task. | Source draft only |
 | F-final | Final P1–P5 and core suites | Lane services; App verdicts | D59 cut | gated:D59-cut | App P1/P2/P3; Runtime coordinates | Current cycles run now; final cut requires all lanes core0/regressions0 plus P2/P3 PASS on those heads. | Cut pending |
 
-| D66-plain-launch | Boot originals with plain manifest | HARD Sol by D66 | Agent D62 normal client adoption | doing | app-D66-plain-stack-sol-1528 | Actual stack boots after 6GB heap; native seed refused 867f vs Agent4118. Existing Agent1529/1533 owns normal adoption; urgent peer sent. | Runtime8b32 |
-| U4p-D62 | Adopt recorder ABI history producer | Luna | Runtime8b32 merged; security412 PASS | doing | Draft1528 PASS; home1539 | Actual Runtime home published. Normal home rebind1539 dispatched immediately; reuse exact tested generated blobs. | Runtime8b32 |
+| D66-plain-launch | Boot originals with plain manifest | HARD Sol by D66 | Normal current heads now adopted | doing | app-D66-plain-stack-sol-1528 | Agent adoption landed5777; App95cf merged forward into active launch worker via sanctioned route. Boot schema input need cleared. | App95cf; Runtime8b32 |
+| U4p-D62 | Adopt recorder ABI history producer | Luna | Actual producer8b32; author PASS | merged | Home1539 PASS | Normal sync/vendor/schema2/artifacts PASS. Fourteen mappings exact; tested TS blobs retained. Actual App home95cf. | 95cfbf216f |
 
 | D65-tool | Prepare tuple manifest command | Luna | Author tests PASS; D56 | merged | app-D65-manifest-tool-1534 | Four tests, help/plan, syntax and diff PASS. update-manifest command sent to Runtime. Actual pin waits D62 adoption. | daa6a68062 |
 | P1-current-run | Plain original control | App service; Sol launch | D66 normal stack | doing | Plain Sol1528 | Original two cases unchanged; actual service control precedes P2/P3. Plain manifest and JUnit required. | Current heads |
+
+| U3-D68 | Final upstream connection refresh | Luna | Authorized exact3881 upstream | doing | app-U3-D68-upstream-final-1543 | True merge-forward once; keep upstream and all own live tests. Parallel D66 boot; no service hold. | Upstream3881 |
 
 Integration: be98aac54e275282467d85f79d3beb4665416039, tree 2839c7e7841d1c0897fd8e7c12f0c848d94e3979. Normal tool adoption 94d89 is merged; only runtime.lock.json differs from qualified d24ed. All 14 mapped artifacts are unchanged and match actual Runtime e68. U3-final includes exact upstream 09c844 and retains all mapped live tests. Source qualification 1409 passes 67 mounted controls on actual Agent 47b / Runtime e68.
 
@@ -87,6 +89,6 @@ Current actual requests: [P2 12541](../../tests/app-P2-P3-e68-current-pure-targe
 
 Current full request: [App full 8158](../../tests/app-P2-P3-e68-current-pure-target-1409-full-1024144535-8158/request). Base be98/tree2839; exact pure1409 target. This is the one current refreshed checkpoint; historical16138 stays separate.
 
-Blockers: Agent — D66 actual native launch proves client mismatch867f vs4118. Existing Agent adoption1529/review1533 and consumer must home; Runtime source/security need cleared. App plain Sol1528 continues.
+Blockers: App — D66 normal boot now has current Agent5777 and App95cf D62 clients. Sol1528 owns control P1; P2/P3 parallel immediately on green.
 Blockers: App — actual8b32 normal adoption1539 runs now; D65 pin follows App adoption and actual refreshed Agent tuple. Runtime producer need cleared.
 Next ready: Consume D66 boot commands or exact P1 ID; submit/wait P1 once, then P2/P3 parallel on green. Merge normal D62 adoption after producer handback.
