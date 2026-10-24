@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, statSync } from 'node:fs';
 import { test } from 'node:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Request, Response } from '@playwright/test';
-import { ElementApplyDiagnosticCollector, installElementApplyDiagnostic, readElementApplyUiState, retainElementApplyDiagnostic, serializeElementApplyDiagnostic, type ElementApplyDiagnosticArtifact } from './p2-element-diagnostic.ts';
+import { ElementApplyDiagnosticCollector, closeElementApplyDiagnosticContext, elementApplyDiagnosticPageFixture, installElementApplyDiagnostic, readElementApplyUiState, retainElementApplyDiagnostic, serializeElementApplyDiagnostic, type ElementApplyDiagnosticArtifact } from './p2-element-diagnostic.ts';
 
 function applyBody(intent = 'timeline.apply_element'): Record<string, unknown> {
   const changes = [{ op: 'list.insert', ref: 'parent', path: ['config', 'clips'], before: { state: 'absent' }, id: 'element-1', value: { id: 'element-1' }, order_before: [], after_id: null }];
@@ -133,7 +133,7 @@ test('page close retains pending versus unknown without inventing a response', (
   pending.recordApplyClick();
   pending.recordRequest(post);
   pending.recordPageClose();
-  assert.equal(pending.snapshot().terminal, 'aborted');
+  assert.equal(pending.snapshot().terminal, 'pending');
   assert.equal(pending.snapshot().events.at(-1)?.stage, 'page-close');
   assert.equal(pending.snapshot().events.at(-1)?.responseStatus, 'UNKNOWN');
 
@@ -199,7 +199,8 @@ test('the collector caps retained events at its bound', () => {
   for (let index = 0; index < 40; index += 1) collector.recordApplyClick();
   const events = collector.snapshot().events;
   assert.equal(events.length, 24);
-  assert.equal(events.at(-1)?.sequence, 24);
+  assert.equal(events.at(-1)?.sequence, 40);
+  assert.equal(collector.eventsLost, true);
 });
 
 test('an attachment failure is reported instead of success', async () => {
@@ -225,4 +226,284 @@ test('serialization falls back to the safe loss marker when supplied data exceed
   const serialized = serializeElementApplyDiagnostic(artifact);
   assert.match(serialized, /"diagnostic":"UNKNOWN"/);
   assert.ok(Buffer.byteLength(serialized) < 24 * 1024);
+});
+
+
+test('the actual fixture retains late response/finish through context teardown and attaches identical final bytes', async () => {
+  const directory = mkdtempSync(join(process.env.TMPDIR ?? tmpdir(), 'p2-element-fixture-'));
+  const output = join(directory, 'p2-element-apply-diagnostic.json');
+  const mock = installerPage();
+  const target = request();
+  let beforeClose: ElementApplyDiagnosticArtifact | undefined;
+  let attachment: string | undefined;
+  const page = Object.assign(mock.page as object, {
+    evaluate: async () => ({ stage: 'retained', connection: 'connected', dialog: 'present', status: 'unknown' }),
+    async close() {
+      beforeClose = JSON.parse(readFileSync(output, 'utf8'));
+      mock.emit('response', response(target, 200));
+      mock.emit('requestfinished', target);
+      mock.emit('close');
+    },
+  });
+  const context = {
+    async newPage() { setImmediate(() => mock.apply()); return page; },
+    async close() {},
+  };
+  await elementApplyDiagnosticPageFixture({ context: context as never }, async () => {
+    mock.emit('request', target);
+  }, { outputPath: () => output, status: 'failed', async attach(_name, options) { attachment = readFileSync(options.path, 'utf8'); } });
+  assert.equal(beforeClose?.diagnostic === 'UNKNOWN' ? undefined : beforeClose?.diagnostic.terminal, 'pending');
+  assert.equal(attachment, undefined, 'attachment must wait for context teardown');
+  await closeElementApplyDiagnosticContext(context as never);
+  const bytes = readFileSync(output, 'utf8');
+  assert.equal(attachment, bytes);
+  const artifact = JSON.parse(bytes) as ElementApplyDiagnosticArtifact;
+  assert.equal(artifact.lifecycle.beforePageClose, true);
+  assert.equal(artifact.lifecycle.pageClosed, true);
+  assert.notEqual(artifact.diagnostic, 'UNKNOWN');
+  if (artifact.diagnostic === 'UNKNOWN') return;
+  assert.equal(artifact.diagnostic.terminal, 'accepted');
+  assert.deepEqual(artifact.diagnostic.events.map((event) => event.stage), [
+    'apply-click', 'request-start', 'test-outcome', 'retained', 'teardown-start', 'response', 'request-finished', 'page-close',
+  ]);
+});
+
+
+test('initial retention must not freeze out a later real response', async () => {
+  const directory = mkdtempSync(join(process.env.TMPDIR ?? tmpdir(), 'p2-element-late-'));
+  const output = join(directory, 'p2-element-apply-diagnostic.json');
+  const collector = new ElementApplyDiagnosticCollector();
+  const target = request();
+  collector.recordApplyClick();
+  collector.recordRequest(target);
+  await retainElementApplyDiagnostic({ outputPath: () => output, async attach() {} }, undefined, collector, 'failed', 'initial');
+  collector.recordResponse(response(target, 200));
+  // Drain the real writer, without a browser or timing change.
+  await retainElementApplyDiagnostic({ outputPath: () => output, async attach() {} }, undefined, collector, 'failed', 'final');
+  const artifact = JSON.parse(readFileSync(output, 'utf8')) as ElementApplyDiagnosticArtifact;
+  assert.equal(artifact.diagnostic === 'UNKNOWN' ? undefined : artifact.diagnostic.terminal, 'accepted');
+});
+
+
+for (const terminal of ['aborted', 'failed', 'pending'] as const) {
+  test(`the actual fixture preserves the UI assertion failure and ${terminal} after page close`, async () => {
+    const directory = mkdtempSync(join(process.env.TMPDIR ?? tmpdir(), 'p2-element-late-close-'));
+    const output = join(directory, 'p2-element-apply-diagnostic.json');
+    const mock = installerPage();
+    const target = request(terminal === 'aborted' ? 'net::ERR_ABORTED private-url' : terminal === 'failed' ? 'net::ERR_FAILED private-url' : undefined);
+    let attachment: string | undefined;
+    const order: string[] = [];
+    const assertion = new Error('primary UI assertion');
+    const page = Object.assign(mock.page as object, {
+      evaluate: async () => ({ stage: 'retained', connection: 'connected', dialog: 'present', status: 'unknown' }),
+      async close() {
+        order.push('page-close');
+        const initial = JSON.parse(readFileSync(output, 'utf8')) as ElementApplyDiagnosticArtifact;
+        assert.equal(initial.diagnostic === 'UNKNOWN' ? undefined : initial.diagnostic.terminal, 'pending');
+        assert.equal(initial.lifecycle.pageClosed, false);
+        mock.emit('close');
+      },
+    });
+    const context = {
+      async newPage() { setImmediate(() => mock.apply()); return page; },
+      async close() {
+        order.push('context-close');
+        // This arrives after page.close() resolved: the old writer lost it.
+        if (terminal !== 'pending') mock.emit('requestfailed', target);
+      },
+    };
+    await assert.rejects(elementApplyDiagnosticPageFixture({ context: context as never }, async () => {
+      mock.emit('request', target);
+      throw assertion;
+    }, { outputPath: () => output, status: 'failed', async attach(_name, options) {
+      order.push('attach');
+      attachment = readFileSync(options.path, 'utf8');
+    } }), (error) => error === assertion);
+    // The page-close event itself cannot claim the request was aborted.
+    const afterPageClose = JSON.parse(readFileSync(output, 'utf8')) as ElementApplyDiagnosticArtifact;
+    assert.equal(attachment, undefined);
+    await closeElementApplyDiagnosticContext(context as never);
+    const bytes = readFileSync(output, 'utf8');
+    assert.equal(attachment, bytes);
+    const artifact = JSON.parse(bytes) as ElementApplyDiagnosticArtifact;
+    assert.equal(artifact.lifecycle.testOutcome, 'failed');
+    assert.equal(artifact.lifecycle.beforePageClose, true);
+    assert.equal(artifact.lifecycle.pageClosed, true);
+    assert.notEqual(artifact.diagnostic, 'UNKNOWN');
+    if (artifact.diagnostic === 'UNKNOWN') return;
+    assert.equal(artifact.diagnostic.terminal, terminal);
+    const closed = artifact.diagnostic.events.find((event) => event.stage === 'page-close');
+    assert.equal(closed?.terminal, 'pending');
+    assert.equal(closed?.failure, 'none');
+    assert.equal(closed?.ui.stage, 'closed');
+    const retained = artifact.diagnostic.events.find((event) => event.stage === 'retained');
+    assert.deepEqual(retained?.ui, { stage: 'retained', connection: 'connected', dialog: 'present', status: 'unknown' });
+    assert.ok(afterPageClose);
+    assert.deepEqual(order, ['page-close', 'context-close', 'attach']);
+    assert.doesNotMatch(bytes, /private|primary UI assertion/);
+    assert.equal(statSync(output).mode & 0o777, 0o600);
+  });
+}
+
+test('a finished request without response metadata stays UNKNOWN, never accepted', async () => {
+  const collector = new ElementApplyDiagnosticCollector();
+  const mock = installerPage();
+  const install = installElementApplyDiagnostic(mock.page as never, collector);
+  const target = request();
+  mock.emit('request', target);
+  mock.emit('requestfinished', target);
+  mock.apply();
+  await install;
+  assert.deepEqual(stages(collector), ['apply-click', 'request-start', 'request-finished']);
+  assert.equal(collector.snapshot().terminal, 'unknown');
+  assert.equal(collector.snapshot().events.at(-1)?.responseStatus, 'UNKNOWN');
+});
+
+test('a fast response and finish before the boundary callback keep their real order', async () => {
+  const collector = new ElementApplyDiagnosticCollector();
+  const mock = installerPage();
+  const install = installElementApplyDiagnostic(mock.page as never, collector);
+  const target = request();
+  mock.emit('request', target);
+  mock.emit('response', response(target, 200));
+  mock.emit('requestfinished', target);
+  mock.apply();
+  await install;
+  assert.deepEqual(stages(collector), ['apply-click', 'request-start', 'response', 'request-finished']);
+  assert.equal(collector.snapshot().terminal, 'accepted');
+});
+
+test('an abort after response headers remains an observed abort, not an acceptance', () => {
+  const collector = new ElementApplyDiagnosticCollector();
+  const target = request('net::ERR_ABORTED');
+  collector.recordApplyClick();
+  collector.recordRequest(target);
+  collector.recordResponse(response(target, 200));
+  collector.recordRequestFailed(target);
+  assert.equal(collector.snapshot().terminal, 'aborted');
+  assert.deepEqual(stages(collector), ['apply-click', 'request-start', 'response', 'request-failed']);
+});
+
+test('unrelated and malformed traffic cannot supply a terminal outcome or leak a body', () => {
+  for (const mutate of [
+    (body: Record<string, unknown>) => ({ ...body, api_version: 2 }),
+    (body: Record<string, unknown>) => ({ ...body, steps: [] }),
+    (body: Record<string, unknown>) => ({ ...body, source: { via: 'agent' } }),
+    () => { throw new Error('private body parse failure'); },
+  ]) {
+    const collector = new ElementApplyDiagnosticCollector();
+    const target = request();
+    const malformed = request();
+    malformed.postDataJSON = () => mutate(applyBody());
+    collector.recordApplyClick();
+    collector.recordRequest(target);
+    collector.recordRequest(malformed);
+    collector.recordResponse(response(malformed, 200));
+    collector.recordRequestFailed(malformed);
+    collector.recordRequestFinished(malformed);
+    assert.equal(collector.snapshot().terminal, 'pending');
+    assert.deepEqual(stages(collector), ['apply-click', 'request-start']);
+  }
+});
+
+test('event overflow keeps the real terminal event and reports event loss in the file', () => {
+  const collector = new ElementApplyDiagnosticCollector();
+  for (let index = 0; index < 40; index += 1) collector.recordApplyClick();
+  const target = request('net::ERR_ABORTED');
+  collector.recordRequest(target);
+  collector.recordPageClose();
+  collector.recordRequestFailed(target);
+  const artifact = JSON.parse(serializeElementApplyDiagnostic({ diagnostic: collector.snapshot(), lifecycle: {}, losses: { events: collector.eventsLost } })) as ElementApplyDiagnosticArtifact;
+  assert.equal(artifact.losses.events, true);
+  if (artifact.diagnostic === 'UNKNOWN') assert.fail('safe bounded snapshot was lost');
+  assert.equal(artifact.diagnostic.events.length, 24);
+  assert.equal(artifact.diagnostic.events.at(-1)?.stage, 'request-failed');
+  assert.equal(artifact.diagnostic.terminal, 'aborted');
+});
+
+test('missing request events and bounded pending-request overflow are explicit losses', () => {
+  const collector = new ElementApplyDiagnosticCollector();
+  collector.recordApplyClick();
+  collector.recordResponse(response(request(), 200));
+  assert.equal(collector.snapshot().terminal, 'unknown');
+  assert.equal(collector.eventsLost, true);
+  const pending = new ElementApplyDiagnosticCollector();
+  for (let index = 0; index < 9; index += 1) pending.recordRequest(request());
+  pending.recordApplyClick();
+  assert.equal(pending.eventsLost, true);
+});
+
+test('the writer projects every nested key and never invokes untrusted toJSON', () => {
+  const collector = new ElementApplyDiagnosticCollector();
+  collector.recordApplyClick();
+  const marker = { authorization: 'Bearer private', url: 'https://private.invalid', body: 'private body', toJSON() { assert.fail('untrusted toJSON'); } };
+  const snapshot = collector.snapshot();
+  const artifact = {
+    ...marker, lifecycle: { ...marker, testOutcome: 'failed', beforePageClose: true, pageClosed: false },
+    diagnostic: { ...snapshot, ...marker, events: snapshot.events.map((event) => ({ ...event, ...marker, ui: { ...event.ui, ...marker } })) },
+    losses: { ...marker, write: false, events: false, ui: false },
+  };
+  const text = serializeElementApplyDiagnostic(artifact);
+  assert.doesNotMatch(text, /private|Bearer|authorization|url|body|toJSON/);
+  const safe = JSON.parse(text) as ElementApplyDiagnosticArtifact;
+  assert.equal(safe.status, 'observed');
+  assert.deepEqual(Object.keys(safe).sort(), ['diagnostic', 'kind', 'lifecycle', 'losses', 'status', 'version']);
+  assert.deepEqual(Object.keys(safe.lifecycle).sort(), ['beforePageClose', 'pageClosed', 'testOutcome']);
+  assert.deepEqual(Object.keys(safe.losses).sort(), ['events', 'ui', 'write']);
+  if (safe.diagnostic === 'UNKNOWN') assert.fail('valid diagnostic lost');
+  assert.deepEqual(Object.keys(safe.diagnostic).sort(), ['events', 'kind', 'pageClosed', 'terminal', 'version']);
+  assert.deepEqual(Object.keys(safe.diagnostic.events[0]!).sort(), ['correlation', 'elapsedMs', 'failure', 'idempotencyKey', 'request', 'response', 'responseStatus', 'sequence', 'stage', 'terminal', 'ui', 'version']);
+  assert.deepEqual(Object.keys(safe.diagnostic.events[0]!.ui).sort(), ['connection', 'dialog', 'stage', 'status']);
+});
+
+test('malformed enums, correlations, bounds and nested UI are fail-closed', () => {
+  const collector = new ElementApplyDiagnosticCollector();
+  collector.recordApplyClick();
+  const snapshot = collector.snapshot();
+  const event = snapshot.events[0]!;
+  for (const bad of [
+    { stage: 'Bearer private' }, { terminal: 'private' }, { request: 'private' }, { response: 'private' }, { failure: 'private' },
+    { idempotencyKey: 'private-key' }, { correlation: 'apply-private-id' }, { correlation: 'apply-1000000' },
+    { sequence: -1 }, { sequence: 1.5 }, { sequence: 1_000_001 }, { elapsedMs: Infinity }, { elapsedMs: -1 }, { elapsedMs: 600_001 },
+    { responseStatus: 600 }, { responseStatus: 'private' },
+  ]) {
+    const text = serializeElementApplyDiagnostic({ diagnostic: { ...snapshot, events: [{ ...event, ...bad }] } });
+    assert.doesNotMatch(text, /private|Infinity/);
+    const safe = JSON.parse(text) as ElementApplyDiagnosticArtifact;
+    assert.equal(safe.losses.events, true);
+    if (safe.diagnostic === 'UNKNOWN') assert.fail('bounded diagnostic lost');
+    assert.deepEqual(safe.diagnostic.events, []);
+  }
+  const badUi = JSON.parse(serializeElementApplyDiagnostic({
+    lifecycle: { testOutcome: 'private', beforePageClose: 'private', pageClosed: 'private' },
+    diagnostic: { ...snapshot, terminal: 'private', pageClosed: 'private', events: [{ ...event, ui: { stage: 'private', status: 'private', connection: 'private', dialog: 'private' } }] },
+  })) as ElementApplyDiagnosticArtifact;
+  assert.equal(badUi.lifecycle.testOutcome, 'unknown');
+  assert.equal(badUi.losses.ui, true);
+  assert.equal(badUi.losses.events, true);
+  assert.doesNotMatch(JSON.stringify(badUi), /private/);
+});
+
+test('unavailable UI and a failed output path remain disposable with no fake attachment', async () => {
+  const collector = new ElementApplyDiagnosticCollector();
+  collector.recordApplyClick();
+  const directory = mkdtempSync(join(process.env.TMPDIR ?? tmpdir(), 'p2-element-errors-'));
+  const output = join(directory, 'diagnostic.json');
+  let attaches = 0;
+  assert.equal(await retainElementApplyDiagnostic({ outputPath: () => output, async attach() { attaches += 1; } },
+    { evaluate: async () => { throw new Error('private UI failure'); } }, collector, 'private'), true);
+  const safe = JSON.parse(readFileSync(output, 'utf8')) as ElementApplyDiagnosticArtifact;
+  assert.equal(safe.losses.ui, true);
+  assert.equal(safe.lifecycle.testOutcome, 'unknown');
+  const missing = join(directory, 'missing', 'diagnostic.json');
+  const unwritable = new ElementApplyDiagnosticCollector();
+  unwritable.recordApplyClick();
+  assert.equal(await retainElementApplyDiagnostic({ outputPath: () => missing, async attach() { attaches += 1; } }, undefined, unwritable, 'failed'), false);
+  assert.equal(existsSync(missing), false);
+  assert.equal(attaches, 1);
+});
+
+test('no Apply produces no diagnostic file or attachment', async () => {
+  const collector = new ElementApplyDiagnosticCollector();
+  assert.equal(await retainElementApplyDiagnostic({ outputPath() { assert.fail('unexpected output'); }, async attach() { assert.fail('unexpected attachment'); } }, undefined, collector, 'passed'), false);
 });
