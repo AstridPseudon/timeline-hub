@@ -306,8 +306,12 @@ def test_every_entry_has_tests_and_a_condition_that_lets_some_host_run_them() ->
 def test_every_declared_job_exists_and_runs_a_test_of_the_entry() -> None:
     jobs, uses, problems = _jobs(), _uses(), []
     for entry in SKIP_REGISTRY.values():
+        if entry.no_ci:
+            if entry.ci:
+                problems.append(f"{entry.name}: has both no_ci and ci jobs {entry.ci}")
+            continue  # test_no_undeclared_job_runs_a_test_of_the_entry fails if a job does run it
         if not entry.ci:
-            problems.append(f"{entry.name}: no CI job runs it where the condition is false")
+            problems.append(f"{entry.name}: no CI job runs it where the condition is false; list a job or give no_ci a reason")
         for name in entry.ci:
             if name not in jobs:
                 problems.append(f"{entry.name}: no such CI job {name!r}")
