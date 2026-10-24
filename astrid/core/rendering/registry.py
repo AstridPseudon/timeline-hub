@@ -22,7 +22,6 @@ from astrid.core.pack import (
     pack_rendering_manifest_paths,
     validate_content_id_in_pack,
 )
-from astrid.core.pack import loader as pack_loader
 from astrid.core.pack.alias_resolver import (
     AliasResolutionError,
     AliasResolver,
@@ -467,20 +466,10 @@ def load_default_registries(
     """Discover static rendering manifests and build the three registries."""
 
     root = REPO_ROOT if project_root is None else Path(project_root).resolve()
-    scans: dict[Path, tuple[PackDefinition, ...]] = {}
-
-    def scan_once(pack_root: str | Path | None = None) -> tuple[PackDefinition, ...]:
-        key = (pack_loader.packs_root() if pack_root is None else Path(pack_root)).resolve()
-        if key not in scans:
-            scans[key] = discover_packs() if pack_root is None else discover_packs(pack_root)
-        return scans[key]
-
-    # The source and project-local layers may share a root. Keep their
-    # provenance separate while admitting that tree only once per load.
     discovered = discover_pack_metadata(
         project_root=root,
         extra_pack_roots=extra_pack_roots,
-        discover_packs_fn=scan_once,
+        discover_packs_fn=discover_packs,
     )
     pack_trust = {
         item.priority_index: _derive_pack_trust(item)
