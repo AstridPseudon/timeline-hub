@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import re
+import shlex
 import subprocess
 import time
 from typing import Any
@@ -16,6 +18,10 @@ class DryPreflightError(RuntimeError):
 def _guard(body: str, stage: str) -> str:
     marker = f'printf "%s\\n" "$P{stage}APP"'
     start = body.find(marker)
+    if start < 0 and stage == "3":
+        # P3's retained source phase starts with the checked-out HEAD rather
+        # than a printf of P3APP; P3APP is supplied by the frozen prefix.
+        start = body.find("APP_HEAD=$(git rev-parse HEAD")
     if start < 0:
         raise DryPreflightError("decoded candidate has no App identity guard")
     end_marker = f'test -f "$P{stage}O/queue/done'
@@ -40,6 +46,7 @@ def dry_source_preflight(
     agent: dict[str, Any],
     runtime: dict[str, Any],
     target: Path,
+    stage: str,
 ) -> dict[str, Any]:
     """Run the decoded candidate's actual source/target/binding guard.
 
@@ -47,10 +54,12 @@ def dry_source_preflight(
     and original-body custody.  Missing later custody therefore remains a
     PREPARED blocker and cannot turn this read-only source PASS into READY.
     """
-    stage = "2"
+    if stage not in {"2", "3"}:
+        raise DryPreflightError(f"unsupported source stage: {stage}")
     guard = _guard(body, stage)
-    target = target.resolve()
-    if not target.is_dir() or target.is_symlink():
+    body_match = re.search(rf"(?:^|;)\s*P{stage}BODY=([^;]+)", body)
+    source_body = body_match.group(1).strip("'\"") if body_match else ""
+    if not target.is_absolute() or target.is_symlink() or target.resolve() != target or not target.is_dir():
         raise DryPreflightError(f"source target is unavailable: {target}")
     prefix = "\n".join(
         (
@@ -63,8 +72,9 @@ def dry_source_preflight(
             f'P{stage}PARENT={" ".join(app["parents"])!r}',
             f'P{stage}AG={agent["checkout"]}',
             f'P{stage}RT={runtime["checkout"]}',
-            'P2FAIL=""',
-            'p2fail(){ P2FAIL="$P2FAIL $1"; };',
+            f'P{stage}BODY={shlex.quote(source_body)}' if source_body else ':',
+            f'P{stage}FAIL=""',
+            f'p{stage.lower()}fail(){{ P{stage}FAIL="$P{stage}FAIL $1"; }};',
             guard,
         )
     )
@@ -87,7 +97,7 @@ def dry_source_preflight(
         "duration_seconds": elapsed,
         "returncode": result.returncode,
         "phase": "source_identity_tree_target_bindings",
-        "command": "actual decoded P2 source guard via caller-dry-preflight.py",
+        "command": f"actual decoded P{stage} source guard via caller-dry-preflight.py",
         "target": {"checkout": str(target), "source": app["source"], "tree": app["tree"], "parents": app["parents"]},
         "refusals": [],
         "not_run": ["child", "import", "native", "build", "browser", "backend", "provision", "schema", "HTTP", "original"],

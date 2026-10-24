@@ -34,12 +34,18 @@ APP = Path("/home/user/work/app")
 AGENT = Path("/home/user/work/agent")
 RUNTIME = Path("/home/user/work/runtime")
 NORMAL_REF = "tl/integration"
-RUNTIME_COMMIT = "becfe6db88b2cc034dba3fafa6c050117cdf2b06"
-RUNTIME_TREE = "7edc08e3fe94edcbc8ef695c479f4de301789b89"
-RUNTIME_PARENTS = (
-    "46eb068c5adf663270512aca8a4bdd62c1488e6d",
-    "c021f13afb655225570e3f0323f00a55132e8643",
-)
+# These are populated once, from the clean normal refs selected by `prepare`.
+# Keeping them unset until then prevents a stale handoff tuple from becoming
+# the source of a newly generated candidate.
+APP_COMMIT = ""
+APP_TREE = ""
+APP_PARENTS: tuple[str, ...] = ()
+AGENT_COMMIT = ""
+AGENT_TREE = ""
+AGENT_PARENTS: tuple[str, ...] = ()
+RUNTIME_COMMIT = ""
+RUNTIME_TREE = ""
+RUNTIME_PARENTS: tuple[str, ...] = ()
 # Fixed installed inputs from the independently reviewed 1238 snapshot.
 REGISTRY_SHA256 = "52f556f8dfd4fcdb29443ac84db0f33ee9252bb808c92de4ab660871ec73db93"
 APPROVED_ROWS = {
@@ -49,7 +55,7 @@ APPROVED_ROWS = {
         "0839e6b5f6454e9a3101dbb7280b201052b5166e1836749b68d28717c22e1f58",
     ),
     "ap2-P3-gate5-h6-0348": (
-        "1b7c7996d9f296aab985a0a9466de89bb71cc816d7796facc8bc79fa0b23c6e7",
+        "1b7c7996f9d296aab985a0a9466de89bb71cc816d7796facc8bc79fa0b23c6e7",
         "6366048bf89533fa450a4575288ac2de004696bab49db6d32f1869783ae493f3",
         "47deb73f184acc27b701572b1378f2bf4ad70b75de546963647bc94cf6a8da7b",
     ),
@@ -90,7 +96,7 @@ REQUEST_FIELDS = [
     "atomic", "Idempotency-Key", "dry_run", "source", "rationale", "group_id",
 ]
 REPLY_FIELDS = [
-    "data", "receipt", "canonical_document", "document_digest", "id_map", "commands",
+    "data", "receipt", "canonical_document", "document_digest", "id_map", "history", "undo", "commands",
     "authoritative_commands", "authoritative_steps", "dependencies", "merge_mode", "base",
     "base_revision_id", "base_publication_id", "previous", "previous_revision_id",
     "previous_publication_id", "accepted_ids", "accepted_revision_id", "publisher", "provider",
@@ -180,6 +186,16 @@ def facts(root: Path, commit: str | None = None, tree: str | None = None, label:
         "checkout": str(root), "source": actual, "tree": actual_tree,
         "parents": list(actual_parents), "ref": NORMAL_REF, "directory_identity": list(before),
     }
+
+
+def freeze_tuple(source: dict[str, Any], agent: dict[str, Any], runtime: dict[str, Any]) -> None:
+    """Freeze the exact normal-ref tuple used by every later guard check."""
+    global APP_COMMIT, APP_TREE, APP_PARENTS
+    global AGENT_COMMIT, AGENT_TREE, AGENT_PARENTS
+    global RUNTIME_COMMIT, RUNTIME_TREE, RUNTIME_PARENTS
+    APP_COMMIT, APP_TREE, APP_PARENTS = source["source"], source["tree"], tuple(source["parents"])
+    AGENT_COMMIT, AGENT_TREE, AGENT_PARENTS = agent["source"], agent["tree"], tuple(agent["parents"])
+    RUNTIME_COMMIT, RUNTIME_TREE, RUNTIME_PARENTS = runtime["source"], runtime["tree"], tuple(runtime["parents"])
 
 
 def app_facts() -> dict[str, Any]:
@@ -438,6 +454,26 @@ def syntax_check(outer: str, body: str, directory: Path, label: str) -> dict[str
     return {"decoded": str(decoded), "wrapped": str(wrapped), "decoded_sha256": file_sha(decoded), "wrapped_sha256": file_sha(wrapped)}
 
 
+def wrapper_check(outer: str, body: str, label: str) -> dict[str, Any]:
+    """Prove the retained row still has the one-argument bash-c wrapper seam."""
+    marker = "$(bash -c "
+    start = outer.index(marker) + len(marker)
+    end = outer.index(")\" && eval", start)
+    argv = shlex.split(outer[start:end])
+    require(len(argv) == 1 and argv[0] == body, f"{label} wrapper changed bash-c argv")
+    suffix = outer[end:]
+    require(")\" && eval" in suffix, f"{label} wrapper lost eval suffix")
+    require(("export" in body) and ("P2" in body or "P3" in body), f"{label} wrapper lost exports")
+    require("original-body-NOTRUN" in body and "following-stages-NOTRUN" in body,
+            f"{label} wrapper lost failure proof")
+    probe = subprocess.run(
+        ["/bin/bash", "-c", 'printf "%s\\n" "$#:$1"; export TIMELINE_WRAPPER_PROBE=ok; test "$TIMELINE_WRAPPER_PROBE" = ok', "wrapper", "payload"],
+        text=True, capture_output=True, check=False,
+    )
+    require(probe.returncode == 0 and probe.stdout.strip() == "1:payload", f"{label} bash-c argv/export probe failed")
+    return {"argv_count": len(argv), "eval_suffix": True, "export_probe": "PASS", "failure_proof": True}
+
+
 def custody_requirements() -> list[dict[str, str]]:
     required = [
         ("tuple_coordinator_admission", "normal coordinator admission for the exact App/Agent/Runtime tuple"),
@@ -455,26 +491,28 @@ def custody_requirements() -> list[dict[str, str]]:
 
 
 def negative(mode: str) -> int:
+    global SUITES, REGISTRY_SHA256
     try:
+        source = app_facts()
+        agent = facts(AGENT, label="Agent")
+        runtime = facts(RUNTIME, label="Runtime")
+        freeze_tuple(source, agent, runtime)
         if mode in {"wrong-source", "stale", "app"}:
-            facts(APP, "0" * 40, APP_TREE, "negative App", parents=APP_PARENTS)
+            facts(APP, "0" * 40, APP_TREE, "App", parents=APP_PARENTS)
         elif mode == "agent":
-            facts(AGENT, "0" * 40, AGENT_TREE, "negative Agent", parents=AGENT_PARENTS)
+            facts(AGENT, "0" * 40, AGENT_TREE, "Agent", parents=AGENT_PARENTS)
         elif mode == "runtime":
-            facts(RUNTIME, "0" * 40, RUNTIME_TREE, "negative Runtime")
+            facts(RUNTIME, "0" * 40, RUNTIME_TREE, "Runtime", parents=RUNTIME_PARENTS)
         elif mode == "tree":
-            facts(APP, APP_COMMIT, "0" * 40, "negative App", parents=APP_PARENTS)
+            facts(APP, APP_COMMIT, "0" * 40, "App", parents=APP_PARENTS)
         elif mode == "target":
             facts(Path("/tmp"), AGENT_COMMIT, AGENT_TREE, "negative target")
         elif mode == "body":
-            source = app_facts()
-            agent = facts(AGENT, AGENT_COMMIT, AGENT_TREE, "Agent", parents=AGENT_PARENTS)
-            runtime = facts(RUNTIME, RUNTIME_COMMIT, RUNTIME_TREE, "Runtime")
             _, body, _ = extract_row(next(line for line in SUITES.read_text().splitlines(True) if line.startswith(f"app {P2_SUITE} ")))
             rebound, _ = rebind(P2_SUITE, body)
             rebound = rebound.replace(AGENT_TREE, "0" * 40, 1)
             try:
-                _DRY_PREFLIGHT.dry_source_preflight(rebound, app=source, agent=agent, runtime=runtime, target=APP)
+                _DRY_PREFLIGHT.dry_source_preflight(rebound, app=source, agent=agent, runtime=runtime, target=APP, stage="2")
             except _DRY_PREFLIGHT.DryPreflightError as exc:
                 raise PreparedError(str(exc)) from exc
         elif mode == "receipt":
@@ -482,6 +520,35 @@ def negative(mode: str) -> int:
         elif mode == "registry":
             snapshot, _ = installed_rows()
             require(snapshot["outside_sha256"] == "0" * 64, "registry outsider bytes changed")
+        elif mode == "path":
+            _, body, _ = extract_row(next(line for line in SUITES.read_text().splitlines(True) if line.startswith(f"app {P2_SUITE} ")))
+            rebound, _ = rebind(P2_SUITE, body)
+            with tempfile.TemporaryDirectory(prefix="caller-negative-path-") as directory:
+                alias = Path(directory) / "app-alias"
+                alias.symlink_to(APP, target_is_directory=True)
+                try:
+                    _DRY_PREFLIGHT.dry_source_preflight(rebound, app=source, agent=agent, runtime=runtime, target=alias, stage="2")
+                except _DRY_PREFLIGHT.DryPreflightError as exc:
+                    raise PreparedError(str(exc)) from exc
+        elif mode in {"duplicate", "concurrency"}:
+            original_path, original_digest = SUITES, REGISTRY_SHA256
+            with tempfile.TemporaryDirectory(prefix="caller-negative-registry-") as directory:
+                candidate = Path(directory) / "suites.conf"
+                original = original_path.read_bytes()
+                p3_line = next(line for line in original.splitlines(keepends=True) if line.startswith(b"app " + P3_SUITE.encode() + b" "))
+                candidate.write_bytes(original + p3_line if mode == "duplicate" else original)
+                SUITES = candidate
+                REGISTRY_SHA256 = sha256(candidate.read_bytes())
+                snapshot, _ = installed_rows()
+                if mode == "duplicate":
+                    raise SystemExit("duplicate control unexpectedly accepted")
+                candidate.write_bytes(candidate.read_bytes() + b"\n")
+                try:
+                    unchanged_registry(snapshot)
+                except PreparedError as exc:
+                    raise PreparedError(str(exc)) from exc
+                raise SystemExit("concurrency control unexpectedly accepted")
+            SUITES, REGISTRY_SHA256 = original_path, original_digest
         else:
             fail(f"unknown negative control: {mode}")
     except PreparedError as exc:
@@ -492,8 +559,9 @@ def negative(mode: str) -> int:
 
 def prepare() -> dict[str, Any]:
     source = app_facts()
-    agent = facts(AGENT, AGENT_COMMIT, AGENT_TREE, "Agent", parents=AGENT_PARENTS)
-    runtime = facts(RUNTIME, RUNTIME_COMMIT, RUNTIME_TREE, "Runtime")
+    agent = facts(AGENT, label="Agent")
+    runtime = facts(RUNTIME, label="Runtime")
+    freeze_tuple(source, agent, runtime)
     bindings = check_runtime_lock()
     registry, rows = installed_rows()
     tmp = Path(tempfile.mkdtemp(prefix="timeline-final-tuple-", dir=os.environ.get("TMPDIR", "/tmp")))
@@ -501,24 +569,28 @@ def prepare() -> dict[str, Any]:
     for name in (P2_SUITE, P3_SUITE):
         outer, body, suffix = extract_row(rows[name])
         rebound, old = rebind(name, body)
-        dry = None
-        if name == P2_SUITE:
-            dry = _DRY_PREFLIGHT.dry_source_preflight(
-                rebound,
-                app=source,
-                agent=agent,
-                runtime=runtime,
-                target=APP,
-            )
+        dry = _DRY_PREFLIGHT.dry_source_preflight(
+            rebound,
+            app=source,
+            agent=agent,
+            runtime=runtime,
+            target=APP,
+            stage="2" if name == P2_SUITE else "3",
+        )
         candidate_outer = (
             outer[: outer.index("$(bash -c ") + len("$(bash -c ")]
             + shlex.quote(rebound)
             + refresh_wrapper_bindings(suffix, old)
         )
         syntax = syntax_check(candidate_outer, rebound, tmp, name)
-        candidates[name] = {"source_row_sha256": registry["rows"][name]["sha256"], "rebound": old, "syntax": syntax}
-        if dry is not None:
-            candidates[name]["dry_preflight"] = dry
+        candidates[name] = {
+            "source_row_sha256": registry["rows"][name]["sha256"],
+            "rebound": old,
+            "syntax": syntax,
+            "wrapper": wrapper_check(candidate_outer, rebound, name),
+            "dry_preflight": dry,
+        }
+    unchanged_registry(registry)
     custody = custody_requirements()
     result = {
         "status": "PREPARED",
@@ -554,7 +626,7 @@ def prepare() -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--negative", choices=("wrong-source", "stale", "app", "agent", "runtime", "tree", "target", "body", "receipt", "registry"))
+    parser.add_argument("--negative", choices=("wrong-source", "stale", "app", "agent", "runtime", "tree", "target", "path", "body", "receipt", "registry", "duplicate", "concurrency"))
     args = parser.parse_args()
     try:
         return negative(args.negative) if args.negative else (prepare() and 0)
