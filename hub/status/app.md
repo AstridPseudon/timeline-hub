@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T08:50:52Z | dispatcher heartbeat 13s | live 2 (sol 1, luna 1, other 0) | busy30 13 | status age 1m -->
-# app board, 2026-10-24T08:49Z
+<!-- app | 2026-10-24T08:53:48Z | dispatcher heartbeat 7s | live 2 (sol 1, luna 1, other 0) | busy30 14 | status age 0m -->
+# app board, 2026-10-24T08:53Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -17,7 +17,7 @@
 | A3-real-provider-controls | Keep real provider stall controls | Sol; independent Luna | Review 0717 PASS | merged | Author 0707; integrated 0724 | Three real-provider controls pass on HOME. Whole tree equals reviewed 2056; independent 108 tests, types and lint reused by identity. | 38b29b5e29 |
 | P2 | Eight original gesture cases | App service; Proof verdict | Current pair terminal | blocked:app | Actual 23809; source owners below | Three failed, five not run; exit 1 in 463 seconds. Element response unknown, popup local refusal, parent request oracle mismatch. | Selected 663; HOME 9b810 |
 | P3 | Original Gate5 journey | App service; Proof verdict | Final source and caller proof | blocked:app | Actual9310; setupHOME82cb | Exit 1 in 307 seconds. Readiness passed 41.4 seconds; one accepted predecessor POST missed by clip.move predicate. Original tail unrun. | Selected 663; HOME 9b810 |
-| P2-P3-next-caller | Review prepared caller binding | Luna; independent Luna | Final product join pending | review | Prep0841; review0850 | Prepared artifacts b5fc retain old custody and explicit final inputs. Independent executable source and retention controls active. No rows installed. | b5fc832b78 |
+| P2-P3-next-caller | Correct prepared caller binding | Luna; independent Luna | Review0850 FAIL | doing | First return0853 | Review found stale mounted source tokens and unauthenticated final target input. Focused first return queued. No rows installed or run. | b5fc held |
 | P2-P3-current-packet | Publish same-ID terminal evidence | Luna; Proof review | Actual retained files | merged | Producer return 0707; Proof 0717 | Eight safe files published byte-exact with origin paths and hashes. Actual daemon and P2 synthetic snapshot identity remain unknown. | Source 663 |
 | P2-P3-lifecycle-custody | Verify retained lifecycle bytes | Luna; independent Luna | Independent 0741 PASS | merged | Producer 0733; review 0741 | Originals, copies and attachments are 224 bytes with LF. Exact selected writer matches. Prior 225/no-LF claim contradicted. | Same immutable files |
 | P3-parent-path | Prove actual predecessor dispatch | Sol; independent Luna | Independent 0720 PASS | merged | Sol 0714; review 0720 | One POST 200 accepted; guarded doc.patch moves 0 to 5 with 25 request/step reads. Canonical 5 and history 2 to 3. | Report only |
@@ -41,6 +41,7 @@
 
 | A3-popup-diagnostic | Retain safe refusal stage | Luna; independent review | Integrated0826 PASS | merged | Reviews0816/0818; integrated0826 | HOME182c passes46 plus7 semantic and22 controls, three types and lint. Safe diagnostics only; placement repair separate. | 209723 /182c |
 | A3-popup-full-caller | Qualify complete authoritative popup reply | Sol; independent Luna | Second review0840 FAIL | doing | HARD Sol0846; wholepath0846 | Real mounted POST reached; mock still echoes commands and lacks complete effects/dependencies. Product repair held for cumulative proof. | 63e held |
+| A3-popup-authority-path | Investigate full reply boundary | Independent Luna | Investigation0846 complete | merged | app-A3-popup-authority-path-0846 | Real mounted path reaches generated POST. Prior synthetic reply is incomplete; source-derived provider recipe published for sole Sol0846. No live claim. | Report only |
 | P2-tour-oracles | Strict transition and parent helpers | Proof Luna; independent review | Integrated 0800 PASS | merged | Proof 0737/0742; App proof 0800 | Exact reviewed paths on HOME28b0 passed 17 joined controls, three types, lint/list. Original gesture outcomes remain open. | 0a22d85455 / 59cb263629 |
 
 | P2-element-handler | Check retained completion attribution | Luna; independent Luna | Independent0814 PASS | merged | Author0808; review0814 | Actual30-file inventory has no matching handler or receipt link. One POST remains unresolved; outcome UNKNOWN. No new collection. | Report only |
@@ -50,7 +51,7 @@ Integration: HOME82cb5c0005df7abe0fcb8673f7be192a6c9e9183 includes clean P3 f561
 Blockers: App — actual element completion is unknown; popup source0822 repairs confirmed derived assetEntry serialization refusal.
 Blockers: App — P3 source is HOME82cb. Final joined proof and caller binding follow popup review0840; Proof source dependencies are clear.
 Blockers: Freeze — App U3b home waits header P2/P3 GO, then D39 adoption and actual final tuple qualification. Runtime coordinates FREEZE.
-Next ready: Popup Sol0846 and independent path0846 are running. Caller0841 is PREPARED and independent0850 is queued. After popup cumulative PASS, merge then dispatch exact joined proof and final caller binding. No pair released.
+Next ready: Popup Sol0846 and independent path0846 are running. Caller0850 FAIL is in first return0853. After popup cumulative PASS, merge then dispatch exact joined proof and final caller binding. No pair released.
 
 Later: Final P1–P5 run on App service with Proof verdict after final tuple qualification, then D49 full suites and Farm F-final/ZIP. No duplicate farm or Proof run. D47 memo/capsule stays deferred and held unmerged. D46 U2c draft stays closed. D14/D23 deferred relational timing cases retain their original assertions and failures.
 
@@ -64,4 +65,4 @@ Disk: About 11 GB free. Current finished App worktrees are harness recycled. Onl
 
 Evidence: [joined 690](../../design/app-A2-A3-corrected-integrated-0629.md), [real provider integrated](../../design/app-A3-provider-integrated-0724.md), [actual predecessor review](../../design/app-P3-parent-trace-review-0720.md), [element clock](../../design/app-P2-element-clock-review-0724.md), [element error review](../../design/app-P2-element-error-review-0738.md), [popup cause review](../../design/app-P2-popup-cause-review-0745.md), [lifecycle review](../../design/app-P2-P3-lifecycle-review-0741.md), [IMAGE](../../design/agt-A4-image-result-review-0636.md).
 
-Pass 2026-10-24T08:49Z: PLAN, COMMON, header, newest INBOX, worker states and App2/Runtime boards checked. P3 source receipt82cb clears its merge wait. Completed caller0841 is in independent0850 review immediately; no source changes or installations by manager. Popup0840 FAIL has Sol and independent whole-path owners0846. Final registration0838 remains source PREPARED; actual final inputs and installation stay gated.
+Pass 2026-10-24T08:53Z: Review0850 FAIL immediately returned0853; stale mounted bindings must be corrected and exercised. Independent popup path0846 published byte-exact; Sol0846 is producing a source-derived pure provider reply with valid enclosing duration. No product or installed rows changed by manager; no original pair released.
