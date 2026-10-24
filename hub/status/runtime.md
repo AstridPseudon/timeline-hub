@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T14:25:24Z | dispatcher heartbeat 10s | live 1 (sol 1, luna 0, other 0) | busy30 6 | status age 1m -->
-# runtime board, 2026-10-24T14:24:26Z
+<!-- main | 2026-10-24T14:28:27Z | dispatcher heartbeat 12s | live 1 (sol 1, luna 0, other 0) | busy30 6 | status age 2m -->
+# runtime board, 2026-10-24T14:26:27Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -84,9 +84,9 @@
 | U1d-tests-join | Join v2 fixture and FPS cases | Luna | Normal home receipt | merged | Join 1346; protected 1351 | Only 18 added lines above true f69. Current Runtime home tree equals reviewed 60e candidate. | 60e / e68 |
 | U1d-core-review | Review core and upstream union | Luna | True two-parent merge | merged | Review 1346 PASS | Core authority and daemon union passed. No new normalized Ruff/Pyright diagnostics; existing 2 strict xfail policy exits disclosed. | f69ad5813 |
 | U1d-producer-handback | Return fixture and producer inventory | Luna | Actual e68 home | merged | rt-U1d-handoff-1401 PASS | Wire and 15 clients exact; manifest adds genuine visual fixture. [Handback](../../design/rt-U1d-handoff-1401.md) | e68cf2316 |
-| U1d-consumer-rebind | Rebind producer identity in consumers | Agent / App Luna | Normal vendor tools | blocked:agent-app | Peer producer rebind 1404 | Client bytes unchanged; source commit and producer manifest need current owner receipts. | Runtime e68 |
+| U1d-consumer-rebind | Rebind producer identity in consumers | Agent / App Luna | Normal vendor checks passed | merged | Agent custody1410; App adoption1404 | Agent5492 and Appbe98 adopt e68 provenance. Canonical15/14 bytes unchanged. D61 successor adoption remains separate. | Agent5492 / Appbe98 |
 | R-recorder-abi-authority | Authenticate recorder mode in accepted history | HARD Sol | D61 approved | doing | Sol1410; first return Sol1422 | First author returned RED controls only. Resume adds validated complete coverage and event-bound history fact; schema impact reported. | 4386016 held |
-| R-recorder-abi-security | Review exact coverage authority design | Luna | New real downgrade controls | doing | rt-R-recorder-abi-security-design-1422 | Independent design and attack assessment runs beside source continuation; final committed source review still required. | Base 4386016 |
+| R-recorder-abi-security | Review exact coverage authority design | Luna | Design assessment complete | merged | Luna1422 design only | Validated request can select regime; exact full coverage must be proved. Final source review remains required. [Design](../../design/rt-R-recorder-abi-security-design-1422.md) | Base438 source facts |
 | FREEZE | Reach final tuple cut | Runtime manager | D59 cut and D61 producer | doing | Runtime1410; Agent/App owners | Runtime1 required D61 task; Agent5 core; App9 gates. Confirmed regressions0. Cut requires current heads0/0 plus P2/P3 PASS. | Runtime e68 |
 | F-final | Main delivery build and ZIP | Luna | D59 cut and final proofs | doing | Builder1233; docs1229; service1244 | Builder and v2 prose installed. Durable service helper repair active; live-main refresh and final build wait qualified cut and proofs. | No delivery artifact |
 | F-final-builder | Put verifier clones in TMPDIR | Luna / Luna | Exact installed proof complete | merged | Review1229; installed1233 PASS | f25d atomically installed0755, old script backed up. Installed smoke and integrity checks passed; no real build. | f25dfab1 installed |
@@ -140,7 +140,7 @@ Provider completion: Runtime 0915 and independent 0923 retain original cause, ho
 
 KIT CHANGE: delivery-build f25dfab1 installed and qualified. Final service3309e33 independent1310 SOURCE PASS; actual lock,15 mappings and candidate guards qualified. Install waits D59 tuple.
 Blockers: Runtime — D61 first return Sol1422 owns validated ABI authority, additive HistoryEntry field and normal generation; Luna1422 reviews new security design. Exact impact reported14:13Z; independent security and integrated proof required.
-Blockers: Agent and App — e68 producer rebind requested; D61 will produce additive history schema and regenerated successor; both consumers need normal D39 adoption. Coordinate current source identity without holding App current-head P2/P3 cycles.
+Blockers: D61 consumers — old e68 rebind complete on Agent5492/Appbe98. New additive history producer needs Runtime source/security PASS before normal D39 adoption; App current cycles continue.
 Blockers: Final delivery — D59 cut requires every active lane0core/0regressions plus current P2/P3 PASS, then required final proofs and D51 live-main refresh.
 Blockers: App — existing Agent service-input handback1305 is complete. Actual App-host current caller/bench qualification remains App-owned; installed-child identity stays UNKNOWN, no new provision inferred.
 Blockers: Agent — core open 5 remains owner scope; D61 ABI consumer and D13 input remain. All five prior Runtime outcome mappings are now closed by named XML evidence.
