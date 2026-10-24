@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T22:51:30Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 3m -->
-# app board, 2026-10-24T22:47Z
+<!-- app | 2026-10-24T22:54:59Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 3m -->
+# app board, 2026-10-24T22:51Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -100,21 +100,23 @@
 | P2-D84a-app-sweep | App three isolated diagnostics | Luna; service | Exact bceb / 039f / 732 / 635f | review | app-P2-D84a-app-sweep-2225 | All readiness PASS; ADD5083 digest452FAIL afterHTTP200. Asset1155 and placement8259 responsewait90s ERROR. No isolated PASS. | Appbceb; Runtime732 |
 | P2-D84a-7131-facts | Retained element phase and dump facts | Luna read only | Actual7131 terminal | merged | app-P2-D84a-7131-safe-facts-2227 | Exact safe JSON/MD published. Element ordinal3 provider seen; no accept/receipt/HTTP response. Private5868B dump; attribution bounded. | Evidence only |
 
-| P2-popup-5083-digest | Correct strict canonical digest oracle | Luna independent | Author2233 oldRED/newGREEN PASS | review | app-P2-popup-digest-controls-return-2246 | Semantic review and3types/lint PASS; exact patch applied. Offline independent mutation control omitted; same-branch return owns missing check. Merge held. | Appbceb; Runtime732 |
+| P2-popup-5083-digest | Correct strict canonical digest oracle | Luna independent | Review2239 and controls2246 PASS | merged | Authors2233; review2239; return2246 | Raw response hash preserves12000.0. Independent canonical and opaque mutation refusals PASS;3types/lint PASS. Exact blob home and ledger logged. | App63d7c74b6d |
 
-| P2-asset-1155 | Attribute current asset response timeout | Luna source only | Actual1155 and home5fcb | doing | app-A3-asset-1155-cause-2243 | No browser commit POST. Author traces transient uploading skeleton removal to ownership refusal; faithful oldRED/newGREEN and strict authored-removal guards in progress. | Appbceb; Runtime732 |
+| P2-asset-1155 | Repair transient upload ownership handoff | Luna independent | Author2243 source97 tests PASS | review | app-A3-asset-placement-review-2252 | No intended POST. Two-file minimal skeleton cleanup repair; author types/lint PASS. Review attacks authored removal and ownership guards. | Candidate2243 |
 
-| P2-placement-8259 | Attribute current placement response timeout | Luna next slot | Actual8259 and strict selector home | ready | Next free App source slot | Earlier locator is cleared; now responsewait90s ERROR. Determine actual commit POST before product change. No new body. | Appbceb; Runtime732 |
+| P2-placement-8259 | Attribute current placement response timeout | Luna read only | Actual8259 and strict selector home | doing | app-A3-asset-placement-review-2252 | No intended commit POST in finite trace count. Same review batches read-only source attribution; no competing writer or duplicate body. | Appbceb; Runtime732 |
 
-Integration: App bceb0350326f22beefdde5c5ba275412bb09b419 normally adopts Runtime732c48c6f5a9441a65c61b24595d454a1cd3e180. Exact diagnostic tuple is Appbceb / Agent039ff2c2187d02b723074a8a6dfcbc6a70544c19 / Runtime732 / Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40. Existing asset5fcb and strict placement00918 repairs are included; original placement spec413d and other five protected files retained.
+| P2-popup-ADD-current | Qualify strict raw digest on mounted ADD | Luna; service | Reviewed correction normal home | doing | app-P2-popup-digest-ADD-original-2251 | One meaningful original ADD; exact newApp63d7 with039f/732/635f, D73 preflight before body. Old main diagnostic tuple remains fixed. | App63d7; Runtime732 |
+
+Integration: Current App63d7c74b6d0ce59bf93002a47912abeb47de5f2e merges independently reviewed popup digest correction onto bceb. Home tree992c2b45 equals reviewed author; only popup test changed. App normally adopts Runtime732c48c6f5a9441a65c61b24595d454a1cd3e180. Exact diagnostic tuple is Appbceb / Agent039ff2c2187d02b723074a8a6dfcbc6a70544c19 / Runtime732 / Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40. Existing asset5fcb and strict placement00918 repairs are included; original placement spec413d and other five protected files retained.
 
 core open: Eight original P2 gestures remain unqualified. D84a element7131 passed native setup and readiness, but original applied-status412 still failed at5s. Eventual result UNKNOWN. Latest owner22:24 explicitly releases remaining diagnostics after this first signal. App2225 owns ADD, registerAsset and placement serially. Runtime/main owns parent move, SWAP, single clear and bulk clear in parallel waves. No duplicate bodies. Exactly one full original tour stays on App service after all8 isolated PASS.
 regressions: Zero remaining confirmed App source findings. Asset independent96required and162neighbors plus placement22controls/types/lint passed and are home. Their browser proofs remain owed. D69 restoration evidence retained.
 
 Blockers: Final cut — all8isolatedP2 plus fulltour and pinned final P1–P5/core, D69 and genuine installed render required. Runtime coordinates final matrix and ZIP. Recorded P1 31083 and P3 15493 GO retain their exact tuple scopes.
-Next ready: Runtime2232 runs its four assigned main cases; lead22:46 confirms the old gated line is superseded. App2225 three-case sweep terminal; no PASS. Source attribution and strict digest review active. Retained7131 safe facts2227 published to Runtime in peer2230. Asset1155 source author2243 and popup digest reviewer2239 active. No P3, D79 or E work.
+Next ready: Runtime2232 runs its four assigned main cases; lead22:46 confirms the old gated line is superseded. App2225 three-case sweep terminal; no PASS. Source attribution and strict digest review active. Retained7131 safe facts2227 published to Runtime in peer2230. Asset/placement review2252 active; strict digest source is home and meaningful ADD runner2251 active. No P3, D79 or E work.
 
-live 2 / cap 2; ready-undispatched 1 on App; placement8259 source attribution takes the next source slot. Runtime rt-P2-main-profile-return-2238 owns the four main cases and ordinary main Node profile correction; no further App input owed.
+live 2 / cap 2; ready-undispatched 0 on App. Runtime rt-P2-main-profile-return-2238 owns the four main cases and ordinary main Node profile correction; no further App input owed.
 Capacity: No ended clean non-KEEP App worktree eligible in this pass. Latest ten stale pins released through guarded D74a route; receipt design/app-D74a-fresh-stale-pins-2214.md. Current tuple pins and all run evidence retained.
 Disk: 6.38GB during ADD5083; build release follows terminal. Owner22:14 App critical source/gate floor5.2GB; stop4.5GB, NON-element first. One body at a time on App; parallel main diagnostic venue explicitly authorized22:24. Noncritical work retains7.5GB floor.
 Safety: No new refusal. Prior dirtyU3, compact, graph, publication and source-access refusal targets stay stopped. No raw deletion or alternative denied route.
