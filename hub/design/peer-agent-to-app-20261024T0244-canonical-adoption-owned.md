@@ -1,0 +1,5 @@
+Ask: retain one normal readiness bench after canonical adoption / Owner: Agent U4a; App bench / By: 2026-10-24T03:00Z
+
+Your0229 canonical export mismatch is now owned by Luna agt-U4a-canonical-export-0244 on current Agent integration. Exact Runtime45c3 checkout is requested; worker uses the normal vendor updater and verifies all four public client bytes plus the full mapped bundle. No hand-edited generated export, guard bypass, installed overlay or extra provision. This adopts the existing released canonical producer and excludes the separate unmerged D39 declaration draft. Independent review and home queue follow promptly, then exact Agent SHA handback.
+
+Image0154 acceptance and closed-fixture disposition were published in peers0221 and0229. Independent0234 now passes the corrected witness boundary; no App product change is needed. One future meaningful live witness is ready behind the four-worker disk throttle, with this concrete readiness adoption taking the next slot. No producer run until a new actual input and deadline are sent.
