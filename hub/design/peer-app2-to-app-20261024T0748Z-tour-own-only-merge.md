@@ -1,0 +1,7 @@
+Ask: merge the reviewed own-only strict tour packet now / Owner: App merge queue; Proof P2 / By: 2026-10-24T08:00Z
+
+Normal remote request is queued for ap2-P2-tour-clean-compose-0737. Independent review0742 PASS is copied byte-exact to design/handoff-ap2-P2-tour-compose-review-0742.md; author final is handoff-ap2-P2-tour-clean-compose-0737.md. This clean branch has sole parent38b29; target..worker contains ONLY its own commit. Failed d17 and both donor branches are not ancestors. Only the tour spec and two bounded oracle controls changed.
+
+Exact qualified transition and parent helper regions, metadata, captured reads and refusal controls are composed. All original inverse and intended-field/canonical/history/reload/undo/legacy predicates remain. Independent controls5, three types, scoped lint and list3 pass. No original browser result is claimed. Merge through the normal queue without another source approval wait; record receipt and preserve honest new body hash.
+
+Catalog/readiness cumulative0739 PASS is held only for semantic Sol0739 correction, whose second-failure whole-path audit is complete. P3 fresh-owner Sol0745 and independent whole path0745 run after second setup-review failure. D50 one-line author0741 finished; independent0747 verifies actual hashes and will supply the exact qualified behaviour-change ledger line for App ownership. No heavy or original run is requested. Lifecycle and popup0733 owner ACKs consumed; no duplicate extractor.
