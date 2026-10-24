@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T15:58:50Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# app2 board, 2026-10-24T15:50Z
+<!-- app2 | 2026-10-24T16:01:23Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# app2 board, 2026-10-24T15:59Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -64,7 +64,7 @@
 
 D56.4: Proof is folded into App. The single complete handoff is [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md). All in-flight items are complete, including independent caller1213 PASS. No new Proof dispatch, old tuple run or product merge is owed. The manager loop remains alive for new orchestrator instructions.
 
-live 0 / cap 4; ready-undispatched 0. All1313 Proof workers done. Latest copied dispatcher15:48:57Z reports0live. D56.4 stand-down remains binding; App owns transferred rows.
+live 0 / cap 4; ready-undispatched 0. All1313 Proof workers done, zero running markers. D56.4 stand-down remains binding; App owns transferred rows.
 
 core open: 4 final proof gates P1 to P4 remain unqualified on final heads. Execution transferred to App for P1/P2/P3 and Agent for P4. All eight original P2 gestures are CORE under D55b. Historical passes do not qualify final heads.
 regressions: App8158 retains one confirmed installer/schema regression, visibly pending D62 regeneration under D66; exact tuple manifest pins follow once, with strict guard. Agent actual d27b PASS16 closes its named env regression. D67 removes D13 installed-tuple UNKNOWN from core blockers; six Agent fork/forward cases remain. No final zero-regression clearance.
@@ -123,9 +123,9 @@ D67: Agent D13 installed-native preflight is NEW-OURS and lacks genuine deployme
 
 D68: Header15:45 assigns one true forward merge of App upstream3881e9440 in parallel with D66 boot. P2/P3 use whichever App head is integrated when boot passes; final cut requires that merge. Later upstream is frozen for gating; F-final uses fresh main under D51 with source-overlap checks. Runtime, Agent and Composition upstream tips are unchanged. App owns source and merge; no Proof dispatch.
 
-Disk: 8223961088 bytes free at2026-10-24T15:48:41Z. All1313 Proof workers done. Three remaining Proof worktrees have KEEP markers; no eligible non-KEEP Proof tree. Prior cleanup, compact and locked-v1 refusals remain stopped; no alternate route launched.
+Disk: 8217022464 bytes free at2026-10-24T15:59Z. All1313 Proof workers done, zero running markers. Three remaining Proof worktrees have KEEP markers; no eligible non-KEEP Proof tree. Prior cleanup, compact and locked-v1 refusals remain stopped; no alternate route launched.
 
-Pass 2026-10-24T15:50Z: PLAN read first, then common rules, inbox, contract and header throughD68. Inbox unchanged790277 bytes; bin/workers reports all1313 done. Actual hub boards at/home/user/timeline-hub/hub/status clear both normal D62 consumer dependencies: App95cf and Agent5777 are HOME. Updated the transferred source wait immediately; remaining App P1/P2/P3 and installer proof remain blocked:app. Agent1540 returned5 of6 originals plus54strict PASS, allfour fork originals green; existing owner and1546 investigations cover inverse/create_empty core-open2. App pin1545 runs now. D68 upstream merge1543 is assigned parallel with boot. No duplicate peer, Proof dispatch, product edit, Git mutation or refused cleanup route. Monitoring continues for the ten-minute interval; STATUS remains the harness restart point.
+Pass 2026-10-24T15:59Z: Completed a ten-minute monitoring interval. PLAN read first; common rules, contract and header throughD68 consulted. Inbox unchanged790277 bytes; all1313 Proof workers remain done. Rechecked every transferred blocked row against actual hub App15:50, Agent15:50 and Runtime15:52 boards. App95cf and Agent5777 D62 consumers are HOME. Actual P1 control13564 is submitted through the normal stack; no terminal green or new P2/P3 result is published. D68 merge1543 is queued after289 targeted tests/types/lint PASS; generic browser error retained. Manifest pin1545 passes strict skew2/schema2; firstreturn1548 owns stale updater fixture. Agent1540 reports5 of6 originals and54strict PASS, allfour fork originals green; existing Runtime owner and Agent1546 cover inverse/create_empty core-open2. Historical16138 checkpoint blocker cleared; actual8158 release proof remains separate. D56.4 remains binding. No new Proof worker, duplicate run, peer, product edit, Git mutation or refused cleanup route. STATUS is the harness restart point.
 
 Inbox read through790277 bytes. Completed D56.4 handoff remains current. The manager harness can restart from this STATUS and INBOX; no new Proof dispatch is owed.
 
