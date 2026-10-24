@@ -718,7 +718,7 @@ def _check_reservations(port, plan, current, rejected, base):
     def boundary(revision):
         return _load(port, context, revision)
 
-    def restore_native_fork(state, record, write):
+    def restore_native_fork(state, record, write, accepted_base):
         """Retain the native fork proof while replaying an accepted birth."""
         command = record.get('command')
         if (not isinstance(command, Mapping)
@@ -831,15 +831,19 @@ def _check_reservations(port, plan, current, rejected, base):
                  and owner_binding.get('content_digest') == parent['content_digest']
                  and owner_binding.get('path') == ['occurrences', 'occurrence_id:' + identity],
                  'fork source binding changed')
+        _require(isinstance(accepted_base, Mapping)
+                 and set(accepted_base) == {'revision_id', 'publication_id'}
+                 and accepted_base['revision_id'] == parent['revision_id'],
+                 'fork predecessor boundary changed')
         for binding in (source_binding, owner_binding):
             binding_boundary = binding.get('boundary')
             _require(isinstance(binding_boundary, Mapping)
                      and binding_boundary.get('base_revision_id') == parent['revision_id']
                      and binding_boundary.get('base_publication_id') ==
-                     base['publication_id']
+                     accepted_base['publication_id']
                      and binding_boundary.get('evaluated_head') == {
                          'revision_id': parent['revision_id'],
-                         'publication_id': base['publication_id']}
+                         'publication_id': accepted_base['publication_id']}
                      and binding_boundary.get('command_ordinal') == record.get('ordinal')
                      and isinstance(binding_boundary.get('step_id'), str)
                      and bool(binding_boundary['step_id']),
@@ -850,7 +854,7 @@ def _check_reservations(port, plan, current, rejected, base):
                 'source_revision_id': source_revision_id,
                 'occurrence_id': identity, 'shot_id': destination})
 
-    def scan(records, bundle, *, ordinary=False, output=None):
+    def scan(records, bundle, *, ordinary=False, output=None, accepted_base):
         state = State(bundle)
         reserved.update(_reservation_refs(state))
         for record in records:
@@ -896,7 +900,7 @@ def _check_reservations(port, plan, current, rejected, base):
                         write['ref'], kind=root[0], owner=created['owner'],
                         value=write['after']['value'], restoring=True)
                     if root[0] == 'shot':
-                        restore_native_fork(state, record, write)
+                        restore_native_fork(state, record, write, accepted_base)
                 else:
                     state.set(write['ref'], write['path'], write['after'])
                 if write['ref'] == 'timeline':
@@ -921,12 +925,14 @@ def _check_reservations(port, plan, current, rejected, base):
             recorded = True
             records = _records([entry], rejected, base, current)
             _require(entry.get('previous') is not None, 'missing original identity boundary')
-            scan(records, boundary(entry['previous']['revision_id']), output=boundary(entry['revision_id']))
+            scan(records, boundary(entry['previous']['revision_id']),
+                 output=boundary(entry['revision_id']), accepted_base=entry['previous'])
             reserved.update(_reservation_refs(State(boundary(entry['revision_id']))))
     except (AuthoringBundleError, CommandError, KeyError, TypeError, ValueError) as exc:
         raise rejected(_failure('history_unavailable', 'semantic identity history is unavailable',
                                 base, current)) from exc
-    scan(plan.records, boundary(current['revision_id']), ordinary=True, output=plan.bundle)
+    scan(plan.records, boundary(current['revision_id']), ordinary=True, output=plan.bundle,
+         accepted_base=base)
 
 
 class RuntimeCommitService:
