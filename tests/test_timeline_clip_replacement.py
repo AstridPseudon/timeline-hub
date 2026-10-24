@@ -166,7 +166,12 @@ def test_selected_media_commit_door_preserves_original_identity() -> None:
 
 
 def test_remote_parent_media_replacement_publishes_exact_closure_once() -> None:
-    from tests.timeline.test_authoring_bundle import NEW, _closure, _digest
+    # Predicate mapping: publish_parent_composition is retired; the same
+    # closure mutation now lands through one full-v2 commit_timeline request
+    # and durable receipt, with exact selected payload and head preserved.
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+    from tests.timeline.test_authoring_bundle import NEW, _closure, _digest, _runtime_document
 
     parent, shots, internals = _closure(shared=False)
     internal = internals[0]
@@ -177,10 +182,13 @@ def test_remote_parent_media_replacement_publishes_exact_closure_once() -> None:
     internal["content_digest"] = _digest(internal["payload"])
     shot = shots[0]
     parent["content_digest"] = _digest(parent["payload"])
+    source_document = _runtime_document(parent, [shot], [internal])
+    base_bundle = bundle_from_document(source_document)
+    base_bundle["source_mapping"]["_runtime_document"] = copy.deepcopy(source_document)
 
     class Transport:
         def __init__(self):
-            self.published = []
+            self.committed = []
 
         def list_timelines(self, project, *, cursor=None, limit=50):
             return ([{"project_id": project, "timeline_id": "main", "slug": "main"}], None)
@@ -190,7 +198,9 @@ def test_remote_parent_media_replacement_publishes_exact_closure_once() -> None:
 
         def get_project_parent_composition_revision(self, project_id, timeline_id, revision):
             assert (project_id, timeline_id, revision) == ("project-1", "main", "parent-1")
-            return parent
+            return {**copy.deepcopy(parent), "dependency_manifest": copy.deepcopy(
+                source_document["dependency_manifest"]
+            )}
 
         def get_project_shot_revision(self, project_id, shot_id, revision):
             assert (project_id, shot_id, revision) == ("project-1", "shot-shared", "shot-rev-1")
@@ -200,9 +210,39 @@ def test_remote_parent_media_replacement_publishes_exact_closure_once() -> None:
             assert (project_id, timeline_id, revision) == ("project-1", "main", "internal-1")
             return internal
 
-        def publish_parent_composition(self, project_id, timeline_id, publication, *, idempotency_key):
-            self.published.append((project_id, timeline_id, publication, idempotency_key))
-            return {"data": {"new_head": publication["parent_revision_id"]}, "receipt": None}
+        def list_timeline_commits(self, project_id, timeline_id, *, cursor=None, limit=100):
+            assert (project_id, timeline_id, cursor, limit) == ("project-1", "main", None, 100)
+            return {"data": {"items": [{
+                "publication_id": "publication-1", "revision_id": "parent-1",
+                "receipt": {"receipt_id": "publication-1", "result": {
+                    "canonical_document": copy.deepcopy(source_document),
+                }},
+            }], "next_cursor": None}}
+
+        def publish_parent_composition(self, *args, **kwargs):
+            raise AssertionError("retired parent writer must not be called")
+
+        def commit_timeline(self, project_id, timeline_id, body, *, idempotency_key):
+            assert (project_id, timeline_id) == ("project-1", "main")
+            self.committed.append((copy.deepcopy(body), idempotency_key))
+            landed = execute(
+                base_bundle, body["commands"], commit_request=body
+            ).bundle
+            canonical = document_from_bundle(landed)
+            data = {
+                "status": "accepted", "accepted_revision_id": "parent-2",
+                "previous_revision_id": "parent-1",
+                "previous_publication_id": "publication-1",
+                "base_revision_id": "parent-1", "base_publication_id": "publication-1",
+                "rebased_onto": None, "canonical_document": canonical,
+            }
+            receipt = {
+                "receipt_id": "publication-2", "command_kind": "timeline.commit",
+                "idempotency_key": idempotency_key, "request_hash": "a" * 64,
+                "project_id": "project-1", "project_seq": [1, 1],
+                "event_ids": ["event-1"], "result": data, "created_at": "now",
+            }
+            return {"data": data, "receipt": receipt}
 
     transport = Transport()
     result = RemoteTimelines(transport).replace_parent_media(
@@ -211,14 +251,30 @@ def test_remote_parent_media_replacement_publishes_exact_closure_once() -> None:
     )
 
     assert result.ok, result.error
-    assert len(transport.published) == 1
-    _project, _timeline, publication, key = transport.published[0]
+    assert len(transport.committed) == 1
+    request, key = transport.committed[0]
     assert key == "parent-replace-1"
-    child = publication["internal_timeline_revisions"][0]["payload"]
+    assert request["api_version"] == 1
+    assert request["project_id"] == "project-1"
+    assert request["timeline_id"] == "main"
+    assert request["base_revision_id"] == "parent-1"
+    assert request["base_publication_id"] == "publication-1"
+    assert request["commands"]
+    assert request["label"] == "Publish authoring candidate"
+    assert request["steps"]
+    assert request["merge"] == "atomic"
+    assert request["source"] == {"via": "python"}
+    assert "dry_run" not in request
+    assert "reads" not in request
+    assert result.receipt is not None
+    assert result.receipt.receipt_id == "publication-2"
+    child = result.data["publication"]["publication"]["canonical_document"][
+        "internal_timeline_revisions"
+    ][0]["payload"]
     selected = next(clip for clip in child["clips"] if clip["id"] == "picture-1")
     assert selected["asset"] == "new-picture"
     assert selected["at"] == 0 and selected["hold"] == 1
-    assert publication["expected_head"] == "parent-1"
+    assert result.data["expected_head"] == "parent-1"
 
 
 def test_parent_media_cli_forwards_exact_locator_and_head(capsys) -> None:

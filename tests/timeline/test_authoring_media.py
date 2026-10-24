@@ -19,7 +19,7 @@ from astrid.sdk.authoring_bundle import (
     plan_authoring_media,
     publish_authoring_candidate,
 )
-from tests.timeline.test_authoring_bundle import AUDIO, OLD, _closure
+from tests.timeline.test_authoring_bundle import AUDIO, OLD, _closure, _runtime_document
 
 
 def bundle():
@@ -27,6 +27,18 @@ def bundle():
     return open_authoring_bundle(
         parent, shot_revisions=shots, internal_timeline_revisions=internals
     )
+
+
+def bundle_with_runtime_source(*, shared=False):
+    """Build the authenticated closure image used by the current session reader."""
+    parent, shots, internals = _closure(shared=shared)
+    result = open_authoring_bundle(
+        parent, shot_revisions=shots, internal_timeline_revisions=internals
+    )
+    result["source_mapping"]["_runtime_document"] = _runtime_document(
+        parent, shots, internals
+    )
+    return result
 
 
 def picture(tmp_path, name="new.png", colour="red"):
@@ -227,11 +239,15 @@ def test_import_failure_cannot_reach_publication(tmp_path):
 
 
 def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypatch):
+    # Predicate mapping: retired open_bundle/direct commit calls become the
+    # opened session's exact closure read and one commit_many v2 request; the
+    # stale-head refusal, one import, unchanged source file, and no receipt
+    # artifact remain unchanged.
     import sys
     from contextlib import nullcontext
     from types import SimpleNamespace
 
-    from astrid.sdk.workspace_client import WorkspaceClientError
+    from astrid.sdk.timeline.sync import CommitConflict
 
     script = Path(__file__).parents[2] / "astrid/packs/rendering/docs/scripts/timeline_document.py"
     spec = importlib.util.spec_from_file_location("timeline_document_test", script)
@@ -266,49 +282,55 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
             return {"selection": selection, "media_type": "image/png", "size": 78,
                     "width": 16, "height": 12}
 
-    class PublicTimelines:
-        def __init__(self):
-            self._client = None
-            self.open_composition_calls = []
-            self.open_bundle_calls = []
-            self.commit_calls = []
+    stale_workspace = StaleWorkspace()
+    session_base = bundle_with_runtime_source()
+    session_base["base_parent"]["publication_id"] = "publication-1"
+    session_base["placements"][0].update(source_offset=0, speed=1)
+    session_base["base_placements"]["occ-1"].update(source_offset=0, speed=1)
+    session_shot = next(iter(session_base["shots"].values()))
+    session_shot["base_internal_timeline"]["registry"]["assets"]["old-picture"].update(
+        generationId="generation-old", variantId="variant-old"
+    )
+    session_shot["internal_timeline"]["registry"]["assets"]["old-picture"].update(
+        generationId="generation-old", variantId="variant-old"
+    )
 
-        def open_composition(self, project, timeline):
-            self.open_composition_calls.append((project, timeline))
-            return SimpleNamespace(ok=True, data={
-                "native_inspection": {"project_id": project, "timeline_id": timeline},
-                "summary": {"head_revision_id": "advanced-head"},
+    class Session:
+        def __init__(self):
+            self.calls = []
+
+        def _state(self):
+            return {"base": {"revision_id": "parent-1", "publication_id": "publication-1"}}
+
+        def _bundle(self, state):
+            assert state["base"] == {"revision_id": "parent-1", "publication_id": "publication-1"}
+            return copy.deepcopy(session_base)
+
+        def commit_many(self, commands, **kwargs):
+            steps = [{
+                "id": "step-1", "label": kwargs["label"], "intent": "", "tags": [],
+                "command_ordinals": [0], "patch": [],
+            }]
+            request = {
+                "api_version": 1, "project_id": "project-1", "timeline_id": "main",
+                "base_revision_id": kwargs["base"]["revision_id"],
+                "base_publication_id": kwargs["base"]["publication_id"],
+                "commands": copy.deepcopy(commands), "label": kwargs["label"],
+                "steps": steps, "merge": kwargs["merge"], "dry_run": False,
+                "source": {"via": kwargs["via"]},
+            }
+            self.calls.append((request, kwargs))
+            raise CommitConflict({
+                "code": "conflict", "message": "parent composition head is stale",
+                "details": {"status": "conflict"},
             })
 
-        def open_bundle(self, project, timeline, *, revision_id, publication_id=None):
-            self.open_bundle_calls.append((project, timeline, revision_id, publication_id))
-            original = bundle()
-            original["base_parent"]["publication_id"] = "publication-1"
-            original["placements"][0].update(source_offset=0, speed=1)
-            original["base_placements"]["occ-1"].update(source_offset=0, speed=1)
-            original_shot = next(iter(original["shots"].values()))
-            original_shot["base_internal_timeline"]["registry"]["assets"]["old-picture"].update(
-                generationId="generation-old", variantId="variant-old"
-            )
-            original_shot["internal_timeline"]["registry"]["assets"]["old-picture"].update(
-                generationId="generation-old", variantId="variant-old"
-            )
-            return SimpleNamespace(ok=True, data={"bundle": original})
-
-        def commit(self, project, timeline, body, *, idempotency_key):
-            self.commit_calls.append((project, timeline, body, idempotency_key))
-            raise WorkspaceClientError(
-                409, "conflict", "parent composition head is stale", {"status": "conflict"}
-            )
-
-    stale_workspace = StaleWorkspace()
-    public_timelines = PublicTimelines()
-    public_timelines._client = stale_workspace
+    session = Session()
     client = SimpleNamespace(
         _remote=SimpleNamespace(
             _transport=SimpleNamespace(_last_handshake={"realm_id": "test", "actor_id": "author"})
         ),
-        timelines=public_timelines,
+        timelines=SimpleNamespace(),
     )
     monkeypatch.setattr(
         helper.AstridClient, "open_from_launcher", lambda **kwargs: nullcontext(client)
@@ -316,12 +338,13 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
     monkeypatch.setattr(
         helper, "workspace", lambda: stale_workspace
     )
+    monkeypatch.setattr(helper.TimelineSession, "open", lambda *args, **kwargs: session)
     monkeypatch.setattr(
         sys,
         "argv",
         [str(script), "publish", "--file", str(document), "--idempotency-key", "stale-edit"],
     )
-    with pytest.raises(ValueError, match="parent composition head is stale"):
+    with pytest.raises(CommitConflict, match="parent composition head is stale"):
         helper.main()
     assert document.read_text() == json.dumps(work)
     assert document.with_suffix(".check.json").exists()
@@ -329,13 +352,10 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
     assert document.with_suffix(".prepared.json").exists()
     assert not document.with_suffix(".publication.json").exists()
     assert len(stale_workspace.calls) == 1
-    assert public_timelines.open_composition_calls == [("project-1", "main")]
-    assert public_timelines.open_bundle_calls == [
-        ("project-1", "main", "parent-1", "publication-1"),
-    ] * 4
-    assert len(public_timelines.commit_calls) == 1
-    project_id, timeline_id, request, key = public_timelines.commit_calls[0]
-    assert (project_id, timeline_id, key) == ("project-1", "main", "stale-edit")
+    assert len(session.calls) == 1
+    request, options = session.calls[0]
+    assert (request["project_id"], request["timeline_id"]) == ("project-1", "main")
+    assert options["idempotency_key"] == "stale-edit"
     assert request["api_version"] == 1
     assert request["project_id"] == "project-1"
     assert request["timeline_id"] == "main"
@@ -348,6 +368,7 @@ def test_document_publish_forwards_new_stale_head_to_runtime(tmp_path, monkeypat
     assert request["source"] == {"via": "script"}
     assert len(request["steps"]) == 1
     assert request["steps"][0]["command_ordinals"] == [0]
+    assert options["verified_media"]
 
 
 def test_document_publish_captures_verified_media_before_document_patches():
@@ -356,7 +377,12 @@ def test_document_publish_captures_verified_media_before_document_patches():
     helper = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(helper)
 
-    base = bundle()
+    parent, shots, internals = _closure(shared=False)
+    base = open_authoring_bundle(
+        parent, shot_revisions=shots, internal_timeline_revisions=internals
+    )
+    base["source_mapping"]["_runtime_document"] = _runtime_document(parent, shots, internals)
+    base["base_parent"]["publication_id"] = "original-publication"
     base["placements"][0].update(source_offset=0, speed=1)
     base["base_placements"]["occ-1"].update(source_offset=0, speed=1)
     shot = next(iter(base["shots"].values()))
@@ -454,6 +480,10 @@ def _public_document_compound(recorded):
     assert base["source_mapping"]["_runtime_document"] == document
     assert base["base_parent"]["publication_id"] == pin["publication_id"]
     target = "occurrence:occ-a/clip:clip-a"
+    detached["source_mapping"]["_runtime_document"] = copy.deepcopy(
+        base["source_mapping"]["_runtime_document"]
+    )
+    assert detached["source_mapping"]["_runtime_document"] == document
     swap = capture_occurrence_swap_media(detached, target, old, new, verified_media=verified)
     candidate = execute(detached, [swap], verified_media=verified).bundle
     child = next(iter(candidate["shots"].values()))
@@ -1530,6 +1560,12 @@ def test_supplied_plan_is_rechecked_before_catalog_read_or_import(tmp_path):
 
 
 def test_catalog_import_remains_reusable_after_later_parent_cas_conflict(tmp_path):
+    # Predicate mapping: the retired whole-composition writer is replaced by
+    # one authoring commit_timeline request; the CAS refusal and catalog's
+    # idempotent replay/no-second-import guarantees remain exact.
+    from astrid.sdk.workspace_client import WorkspaceClientError
+    from tests.timeline.test_authoring_bundle import _Writer
+
     path = picture(tmp_path)
     work = bundle()
     edit(work, path.name)
@@ -1538,14 +1574,44 @@ def test_catalog_import_remains_reusable_after_later_parent_cas_conflict(tmp_pat
     imported = import_authoring_media(plan, catalog)
     assert len(catalog.calls) == 1
 
-    class StaleWriter:
-        def publish_parent_composition(self, *args, **kwargs):
-            raise RuntimeError("parent CAS conflict")
+    parent, shots, internals = _closure(shared=False)
 
-    with pytest.raises(RuntimeError, match="parent CAS conflict"):
+    class StaleWriter(_Writer):
+        def __init__(self):
+            super().__init__(_runtime_document(parent, shots, internals))
+            self.requests = []
+
+        def commit_timeline(self, project_id, timeline_id, body, *, idempotency_key):
+            self.requests.append((project_id, timeline_id, copy.deepcopy(body), idempotency_key))
+            raise WorkspaceClientError(
+                409, "conflict", "parent CAS conflict", {"status": "conflict"}
+            )
+
+        def get_project_media_selection(self, project_id, selection):
+            return {"data": {
+                "asset": selection["asset"],
+                "generation_id": selection["generation_id"],
+                "variant_id": selection["variant_id"],
+                "object_id": catalog.calls[0][2]["expected_digest"],
+                "catalog_digest": "sha256:" + "c" * 64,
+            }}
+
+    writer = StaleWriter()
+    with pytest.raises(WorkspaceClientError, match="parent CAS conflict"):
         publish_authoring_candidate(
-            imported["candidate"], StaleWriter(), idempotency_key="parent-conflict"
+            imported["candidate"], writer, idempotency_key="parent-conflict"
         )
+    assert len(writer.requests) == 1
+    project_id, timeline_id, request, key = writer.requests[0]
+    assert (project_id, timeline_id, key) == ("project-1", "main", "parent-conflict")
+    assert request["api_version"] == 1
+    assert request["base_revision_id"] == "parent-1"
+    assert request["base_publication_id"] == "publication-1"
+    assert request["commands"]
+    assert request["label"]
+    assert request["steps"]
+    assert request["merge"] == "atomic"
+    assert "publish_parent_composition" not in dir(writer)
     replay = import_authoring_media(plan, catalog)
     assert replay["imports"][0]["reused"] is True
     assert len(catalog.calls) == 1
