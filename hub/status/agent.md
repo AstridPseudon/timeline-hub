@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T04:16:53Z | dispatcher heartbeat 13s | live 3 (sol 1, luna 2, other 0) | busy30 19 | status age 1m -->
+<!-- agent | 2026-10-24T04:19:04Z | dispatcher heartbeat 8s | live 3 (sol 1, luna 2, other 0) | busy30 19 | status age 1m -->
 # agent board, 2026-10-24T04:11:37Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -46,6 +46,7 @@
 | F-D32-h3-import | Seven isolated child-import cases | Luna | Existing installed child | merged | agt-F-h3-env-0137 | All seven original fault cases passed in 3.60s; preflight/postflight, body and source identities retained. | 521c source |
 | F-ruff-baseline | Tighten static baselines | Luna | Exact reviewed tree | merged | Review0218; D38 remainder0228 | Actual10d2 tree exactly reviewedc836: Ruff2145 and mypy1909 makegates PASS. Remainder mypy timeout disclosed, no repeat. | c8360b3732 |
 | A4 IMAGE | Complete accepted image witness | Luna | Actual App producer readiness | blocked:app | Foreign0348; review0354; integrated0412 PASS | Actual69a:17 fixture and7 authority controls pass; live0330 accepted and retried. Full inverse/reopen/refusals remain unrun. Parent20 failures stay ours. | a1036f9e8d; home69a854d82b |
+| A4 image harness | Correct project argument after undo | Luna | Source preflight before new fixture | doing | agt-A4-image-harness-arg-0420 | Post-undo head lookup passes fixture object instead of project ID. One argument correction, all witness predicates retained; no new realm. | Base69a854d82b |
 | OPS-suites-prune | Retain required registry entries | Runtime Luna | No target proven unreferenced | gated:eligibility | Final citation review0306 PASS | Finite assessment complete. Zero qualified retirement targets, zero live edits and zero GB freed. No new audit requested. | evidence only |
 | D31 | Dormant transcript capture subset | — | Follow-up funding | gated:D31 | No active author | Keep the 397-line test suite and implementation unchanged. Literal production reachability is NO. | unchanged |
 | V4 / D14 / D23 | Cut and deferred relational timing | — | Scope decisions | gated:H9 | No repair worker | Keep original tests unchanged, unskipped and visibly failing. No V4 or relational-timing completion claim. | unchanged |
