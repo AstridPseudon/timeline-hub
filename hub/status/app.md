@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T15:36:42Z | dispatcher heartbeat 1s | live 1 (sol 1, luna 0, other 0) | busy30 12 | status age 1m -->
+<!-- app | 2026-10-24T15:40:11Z | dispatcher heartbeat 13s | live 2 (sol 1, luna 1, other 0) | busy30 10 | status age 0m -->
 # app board, 2026-10-24T15:33Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -55,10 +55,10 @@
 | F-P4-P5-host | Retain historical App host preparation | Luna | D59 venues supersede App host | gated:D59-venues | Draft0834; review0838 | P4 now Agent service; P5 main service. No duplicate App registration or new host task. | Source draft only |
 | F-final | Final P1–P5 and core suites | Lane services; App verdicts | D59 cut | gated:D59-cut | App P1/P2/P3; Runtime coordinates | Current cycles run now; final cut requires all lanes core0/regressions0 plus P2/P3 PASS on those heads. | Cut pending |
 
-| D66-plain-launch | Boot originals with plain manifest | HARD Sol by D66 | Current integrated heads | doing | app-D66-plain-stack-sol-1528 | Start normal stack; record SHAs, test hashes, service versions and JUnit. One P1 control, then P2/P3 parallel on green. | Base be98 |
-| U4p-D62 | Adopt recorder ABI history producer | Luna | Runtime qualified home and final generation | blocked:runtime | app-U4p-D62-adopt-1528 PASS | Branch e02f draft: 14 mappings exact; 2 schema,15 vendor,54 client tests, app/node types and lint PASS. Final home rebind pending. | Producer e02f |
+| D66-plain-launch | Boot originals with plain manifest | HARD Sol by D66 | Agent D62 normal client adoption | doing | app-D66-plain-stack-sol-1528 | Actual stack boots after 6GB heap; native seed refused 867f vs Agent4118. Existing Agent1529/1533 owns normal adoption; urgent peer sent. | Runtime8b32 |
+| U4p-D62 | Adopt recorder ABI history producer | Luna | Runtime8b32 merged; security412 PASS | doing | Draft1528 PASS; home1539 | Actual Runtime home published. Normal home rebind1539 dispatched immediately; reuse exact tested generated blobs. | Runtime8b32 |
 
-| D65-tool | Prepare tuple manifest command | Luna | D65; actual pin after D62 | doing | app-D65-manifest-tool-1534 | Existing-tool owner release command prepared now. Pin rewrite waits normal D62 adoption and actual integrated tuple. Strict guard retained. | Base be98 |
+| D65-tool | Prepare tuple manifest command | Luna | Author tests PASS; D56 | merged | app-D65-manifest-tool-1534 | Four tests, help/plan, syntax and diff PASS. update-manifest command sent to Runtime. Actual pin waits D62 adoption. | daa6a68062 |
 | P1-current-run | Plain original control | App service; Sol launch | D66 normal stack | doing | Plain Sol1528 | Original two cases unchanged; actual service control precedes P2/P3. Plain manifest and JUnit required. | Current heads |
 
 Integration: be98aac54e275282467d85f79d3beb4665416039, tree 2839c7e7841d1c0897fd8e7c12f0c848d94e3979. Normal tool adoption 94d89 is merged; only runtime.lock.json differs from qualified d24ed. All 14 mapped artifacts are unchanged and match actual Runtime e68. U3-final includes exact upstream 09c844 and retains all mapped live tests. Source qualification 1409 passes 67 mounted controls on actual Agent 47b / Runtime e68.
@@ -87,6 +87,6 @@ Current actual requests: [P2 12541](../../tests/app-P2-P3-e68-current-pure-targe
 
 Current full request: [App full 8158](../../tests/app-P2-P3-e68-current-pure-target-1409-full-1024144535-8158/request). Base be98/tree2839; exact pure1409 target. This is the one current refreshed checkpoint; historical16138 stays separate.
 
-Blockers: App — D66 plain boot1528 owns P1 control through actual service. P1 green releases P2/P3 immediately in parallel, without P1 verdict wait.
-Blockers: Runtime — D62 normal producer security and home receipt pending; App adoption1528 prepares now. D65 installer pin follows regeneration.
+Blockers: Agent — D66 actual native launch proves client mismatch867f vs4118. Existing Agent adoption1529/review1533 and consumer must home; Runtime source/security need cleared. App plain Sol1528 continues.
+Blockers: App — actual8b32 normal adoption1539 runs now; D65 pin follows App adoption and actual refreshed Agent tuple. Runtime producer need cleared.
 Next ready: Consume D66 boot commands or exact P1 ID; submit/wait P1 once, then P2/P3 parallel on green. Merge normal D62 adoption after producer handback.
