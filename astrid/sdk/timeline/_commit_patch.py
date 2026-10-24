@@ -191,8 +191,13 @@ def effect_diff(before, after):
             value = payload.pop(mirror)
             config = payload.setdefault('config', {})
             if mirror in config and not equal(present(config[mirror]), present(value)):
-                raise CommandError('contradictory parent mirrors', kind='capture_mismatch',
-                                   ref='parent', path=['config', mirror])
+                other = config[mirror]
+                if mirror != 'clips' or not (
+                        other is None and isinstance(value, list)
+                        or value is None and isinstance(other, list)):
+                    raise CommandError('contradictory parent mirrors', kind='capture_mismatch',
+                                       ref='parent', path=['config', mirror])
+                value = other if isinstance(other, list) else value
             config[mirror] = value
         return payload
 
