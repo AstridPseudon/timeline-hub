@@ -214,7 +214,9 @@ def test_legacy_visual_publisher_cannot_seed_retained_speed_shapes(tmp_path, sco
             service.publish_parent_composition(project, "main", publication, idempotency_key="public-speed-refusal")
         assert error.value.status == 410
         assert error.value.code == "retired_route"
-        assert error.value.details["reason"] == "timeline_commit_required"
+        details = error.value.details
+        assert isinstance(details, dict)
+        assert details["reason"] == "timeline_commit_required"
         assert tuple(service.store.conn.iterdump()) == before
         assert _cas_bytes(service) == cas
     finally:
