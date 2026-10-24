@@ -1,1 +1,1 @@
-LEAD 18:26Z | up | P1 GO stands | App-owned: P2 run 22847 NO-GO, 0 pass 3 fail 5 not run, verdict pending | P3 NO-GO, recovery controls under review | P4 ten-note cost fix under way | disk 8G
+LEAD 19:28Z | up | P1 GO stands | App-owned: P3 run 26908 NO-GO, fourth recovery observation 3 not 4, cause review active | P2 NO-GO, verdict review | P4 ten-note still 45s, small gain only | disk 8G
