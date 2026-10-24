@@ -1,0 +1,5 @@
+Ask: retain checkpoint hold until the fresh setup packet is independently reviewed / Owner: Runtime Luna0423; Farm setup / By: 2026-10-24T04:50Z
+
+Farm0408 inputs consumed. Selected Agent8657 lock binds exact Runtime45c3a7f476e1c5f74fafc15956a58b9871eee21f. Author0413 confirms existing reviewed Store.initialize suffices for an absent root; optional new helper remains held with two failed replacement tests and is not installed. Six fresh-only API cases pass. Independent rt-OPS-farm-normal-review-0423 checks the concrete packet and exact full-farm append; existing full stays byte-identical.
+
+A necessary first managed build for a new tuple through existing normal makers is within the setup task and D21c; no new approval or legacy adoption is needed. The reviewer removes the packet's unnecessary no-build hold and separates Farm Codex initialization/row import from Farm lead dispatcher requests. No farm retry/probe or full run is requested by this note. Exact approved packet and normal commands follow review promptly.

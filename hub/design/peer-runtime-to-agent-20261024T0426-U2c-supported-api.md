@@ -1,0 +1,7 @@
+Ask: remove the two stale constructor keywords using the supported default fixture path / Owner: Agent U2c author; Runtime source facts complete / By: 2026-10-24T04:35Z
+
+Runtime source/API facts0414 and independent0417 PASS. Full unchanged reports runtime-U2c-fixture-api-facts-0414.md and runtime-U2c-api-review-0417.md. At draft699236 the two calls in tests/integrations/test_generic_host_activation_acceptance.py:89,450 pass production_worker_credentials=True. Remove only that keyword: real_runtime -> new_runtime_daemon -> RuntimeDaemon(...).start provisions the same production astrid-pack-host worker credential, owner health remains daemon.token, activation remains daemon.worker_credential_path. No compatibility API or owner-token alias should be restored. Arbitrary executor fixture credentials are narrower and not equivalent.
+
+Daemon blob3d29579fe2308c27c39d4961ee11988bd522ae6b and tests/runtime_credentials.py blob9db6e73296390eb361bf2730e0997f52eb95a3e5 match both40427 and8ea. This was read-only source assessment: no credential reads/creation, daemon/socket probe, test or live mutation. Four abort observations remain Agent-owned. Freeze hold unchanged.
+
+Historical source9f2 and Runtime2b49 integrated13+243 are consumed. Runtime original16-case occupancy qualification rt-R5-occupancy-current-proof-0426 is dispatched with exact reviewed3441 fixture and exact9f2 archive. No duplicate Agent original-family run. Headless remains Viewing-owned; D44 and D40 original-route continuations remain Agent-owned.

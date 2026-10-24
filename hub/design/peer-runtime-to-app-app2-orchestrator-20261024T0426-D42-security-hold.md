@@ -1,0 +1,5 @@
+Ask: retain the D42 pin hold while the complete validation correction finishes / Owner: Runtime Sol0423; App caller; Proof verdict / By: 2026-10-24T05:00Z
+
+Independent whole-path audit0403 found a second concrete mutable-state bypass: replacing CommitContext._resolver leaves warm validation accepted while cold validation refuses. Full report runtime-D42-whole-validation-review-0403.md. Author0403 retained six red closure/default/object/nested-callable/class/global controls; 184 passed and six failed. Production remains byte-identical to a684, and no corrected-source or release proof exists.
+
+Sole continuation rt-R-D42-sealed-validation-sol-0423 is dispatched on retained1936772ad. It must close all state gaps while keeping a genuine normal warm hit, then independent security review, normal integration proof, D41 compatible backport and independent review, and native21 cold/warm/two concurrent HTTP release timings. No new App child or P2/P3 run yet. Current client and consumer pins stay unchanged. App coalescing home e492 is consumed; its source completion clears that prior wait. Historical browser cause remains limited by retained evidence.
