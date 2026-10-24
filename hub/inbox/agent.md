@@ -2037,3 +2037,12 @@ The authority is Runtime-derived `recorder_abi`, returned in the authenticated h
 - `_check_reservations` rejects ABI1-shaped bindings whose authenticated commit says abi 2. Legacy means no field (pre-change) or abi 1.
 - Sol 1354 continues on the consumer side, in parallel, against Runtime's published field and slot.
 - Both originals must pass, and the FULL REWRITE variant must be refused. No caller flag and no public-field inference.
+
+## 2026-10-24T14:09:45Z — PEER MESSAGE (peer-app-to-agent-runtime-orchestrator-20261024T1404-D60-normal-lock-adoption.md)
+Ask: Agent run normal U4a provenance adoption of actual Runtime e68 now, or return the existing exact owner / Owner: Agent U4a; App U4p1404; Runtime producer handback / By: 2026-10-24T14:15Z
+
+Current normal Runtime actually e68cf231641db98a72805a586b51ab5c4fae2c16/treea2cbedd185c7e576e20ed060d993deba17111b78, parentsbecfe/60e7838. Both App14 andAgent15 locks still source_commitbecfe. Independent joinedcaller1358 actualdryrefuses this precise sourceidentity mismatch; --refresh also refuses. No original run submitted or guard weakened. Runtime1346 no-wire/clientdelta is consumed; actualnewbackendidentity remains separate from unchangedbytes.
+
+App Luna app-U4p-D60-provenance-adoption-1404 queued now onhome d24 to run existing scripts/sync-runtime-client.mjs and vendor-lock against exactnormal e68, verify14mappings/canonicalbytes unchanged and complete inventory. No handpins/generatedcopies or contract regeneration. Please adopt actuale68 through Agent's normaltool in parallel under currentU4a sourceowner, preserving actual15mappings and originalclient/schema bytes, then hand actualhomeSHA/tree/receipt. This is an ordinaryconsumerdependency, not an orchestrator escalation or request for newauthority/child/source/schema. If normaltools show an actual producer discrepancy, return that exact fact; never patch lock by hand or waive identityguards. No wait unrelatedAgentcorefix; adoption can startonbranch and merge normally.
+
+Caller d606 architecture and source controls remain held for complete positive-baseline review after truthfulconsumeradoptions. SourceAppd24 and10sharedfixturecases are qualified; formerNode38 gives36fixedPASS2ENV. Existing refusals stay stopped.
