@@ -1,0 +1,91 @@
+--- a/tests/e2e/local/three-products.spec.ts
++++ b/tests/e2e/local/three-products.spec.ts
+@@ -796,6 +796,7 @@
+   const stagedReady = new Promise<void>((resolve) => { stagedResolve = resolve; });
+   let initial: Gate5CommitIdentity | undefined;
+   let recoveryForwarded = false;
++  let recoveryRetryArmed = false;
+   const MAX_OBSERVED_ATTEMPTS = 16;
+   const observe = (target: Page) => {
+     target.on('request', (request) => {
+@@ -849,6 +850,17 @@
+       throw new Error(`Gate5 fault control observed more than ${MAX_OBSERVED_ATTEMPTS} commit POST attempts`);
+     }
+     observed.push(identity);
++    if (recoveryRetryArmed && stagedRetries.length > 0 && !recoveryForwarded
++      && sameGate5CommitIdentity(identity, stagedRetries[0])) {
++      recoveryRetryArmed = false;
++      if (stagedRoute) {
++        await route.abort('failed');
++        throw new Error('Gate5 fault control already has a staged automatic retry');
++      }
++      stagedRoute = route;
++      stagedPage = target;
++      return;
++    }
+     const action = classifyGate5FaultOrder({ initial, candidate: identity,
+       automaticRetryStaged: stagedRetries.length > 0, recoveryForwarded });
+     if (action === 'reject-unexpected-duplicate' || action === 'reject-early-dependent') {
+@@ -897,6 +909,7 @@
+     waitForStagedRetry,
+     releaseStagedRetry,
+     abortStagedRetry,
++    armRecoveryRetry() { recoveryRetryArmed = true; },
+     async loseAck() {
+       if (!held) throw new Error('No durably accepted response to lose');
+       await held.abort('connectionreset');
+@@ -1732,27 +1745,34 @@
+   expect(wire.posts, 'reload does not send queued B or retry A').toHaveLength(1);
+   await page.close();
+ 
+-  const restarted = await harness.restartRuntime();
+-  expect(restarted.oldInstanceId).toBe(realmBefore.runtimeInstanceId);
+-  expect(harness.runtimeInstanceId).not.toBe(restarted.oldInstanceId);
+-  expect(harness.realmId).toBe(realmBefore.realmId);
+   const reopened = await context.newPage();
+   sniff.attach(reopened);
+   await wire.attach(reopened);
++  // Production recovery is automatic for the sole mounted owner. Arm the real
++  // commit observer before remount, then hold that exact retry for the restart.
++  wire.armRecoveryRetry();
+   await openApp(reopened, harness);
+   await expectConnected(reopened);
+   await openSeededTimeline(reopened, harness);
+-  const realmAfter = await expectSameRealm(reopened, harness, astrid);
+-  expect(realmAfter.realmId).toBe(realmBefore.realmId);
+-  expect(realmAfter.runtimeInstanceId).toBe(harness.runtimeInstanceId);
+-  expect(realmAfter.runtimeInstanceId).not.toBe(realmBefore.runtimeInstanceId);
+   const persisted = (await commandOutboxes(reopened, seed3.timelineId)).find((candidate) => candidate.ownerId === owner.ownerId)!;
+   expect(persisted.pending?.request).toEqual(owner.pending!.request);
+   expect(persisted.intents).toEqual(owner.intents);
+   expect(wire.posts).toHaveLength(1);
++  await expect.poll(() => wire.observed.length, CEILING).toBe(3);
++  expect(wire.observed.slice(0, 3).every((identity) => sameGate5CommitIdentity(identity, wire.observed[0]))).toBe(true);
++  expect(wire.forwarded).toHaveLength(1);
+ 
+-  await reopened.getByRole('button', { name: /^Recover saved edits/ })
+-    .and(reopened.locator(`[data-owner-id="${owner.ownerId}"]`)).click();
++  const restarted = await harness.restartRuntime();
++  expect(restarted.oldInstanceId).toBe(realmBefore.runtimeInstanceId);
++  expect(harness.runtimeInstanceId).not.toBe(restarted.oldInstanceId);
++  expect(harness.realmId).toBe(realmBefore.realmId);
++  await expectConnected(reopened);
++  const realmAfter = await expectSameRealm(reopened, harness, astrid);
++  expect(realmAfter.realmId).toBe(realmBefore.realmId);
++  expect(realmAfter.runtimeInstanceId).toBe(harness.runtimeInstanceId);
++  expect(realmAfter.runtimeInstanceId).not.toBe(realmBefore.runtimeInstanceId);
++
++  await wire.releaseStagedRetry();
+   await expect.poll(() => wire.posts.length, CEILING).toBe(3);
+   expect(wire.posts[1].body).toBe(originalARequest.body);
+   expect(wire.posts[1].key).toBe(originalARequest.key);
+@@ -1774,6 +1794,9 @@
+   expect(b.data.status).toBe('merged');
+   expect(b.data.previous_publication_id).toBe(pinOf(c).publication_id);
+   expect(position(b.data.canonical_document, seed3.appClipId)).toBe(7);
++  expect(wire.observed).toHaveLength(4);
++  expect(sameGate5CommitIdentity(wire.observed[2], wire.observed[0])).toBe(true);
++  expect(sameGate5CommitIdentity(wire.observed[3], wire.observed[0])).toBe(false);
+   expect(b.data.canonical_document.parent_revision.payload.config).toMatchObject({
+     tracks: expect.arrayContaining([expect.objectContaining({ id: 'f2-gate5-independent-C', kind: 'audio', label: 'f2-gate5-independent-C' })]),
+   });
