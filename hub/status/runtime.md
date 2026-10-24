@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T19:19:07Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 0m -->
+<!-- main | 2026-10-24T19:22:13Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 0m -->
 # runtime board, 2026-10-24T19:18:49Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -78,10 +78,10 @@
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
 | F-D52-core-five | Map five named actual home outcomes | Luna | Authentic XML and map verified | merged | Receipt 1418 PASS | All five named cases PASS on actual47b/becfe. Current four fork failures are distinct. [Receipt](../../design/rt-F-D52-core-five-receipt-1418.md) | Agent 47b |
 | U1-D69-test-audit | Preserve upstream test predicates | Luna | Seven restorations before cut | merged | rt-U1-D69-test-audit-1603 | Missing16:9 mapped,7 restore. Changed129:75 clear,54 cited. Two skip markers cited;12 dynamic scopes explicit. [Audit](../../design/rt-U1-D69-test-audit-1603.md) | Source facts only |
-| R-P4-history-cost | Preserve finite walk snapshots | Luna / Sol | Actual integrated receipt | doing | Review1910 PASS; home1919 | Normal e89eb contains reviewed f51e; 173+12 source PASS. Three pairs gain 5.69% wall. Original 45s gate remains open. | e89eb8c7d / f51e29658 |
+| R-P4-history-cost | Preserve finite walk snapshots | Luna / Sol | Actual integrated receipt passed | merged | Review1910; home1919 PASS | Exact e89eb: 173 focused plus12 historical PASS; source exact f51e. Three pairs gain5.69% wall. Original45s gate stays open. | e89eb8c7d / f51e29658 |
 | R-P2-popup-422 | Project genuine fork-created shot roots | Luna | App current P2 proof | merged | Security1658; integrated1704 PASS | Actualb318:4 PASS0.16s, exact reviewedsource; forgedowner/sibling/source refused. App original stillpending. [Proof](../../design/rt-P2-popup-integrated-1704.md) | b318a8ec4 /88b9cf6 |
 | R-P2-popup-observation | Attribute popup physical observation refusal | Luna | Source finding complete | merged | rt-P2-popup-observation-1638 | Runtime created-child projection lacks fork-created shot roots.2Runtime+8Agent comparators PASS; source cause only. | Source unchanged |
-| R-P2-element-docpatch-hang | Capture live element blocked frame | HARD Sol / App lead | Actual 13100 capture | blocked:app | rt-D78-live-stack-cause-sol-1915 | Source audit complete; actual stacks and cross-run daemon identity absent. Historical replay lacks realm. No duplicate body. Deadline 19:50Z. | Source unchanged |
+| R-P2-element-docpatch-hang | Capture live element blocked frame | HARD Sol / App lead | Existing 128 phase summary | blocked:app | rt-D78-live-stack-cause-sol-1915 | Actual13100 fails native seed before gesture;128 phases retained, no dump/attach ran. App safe summary1922 requested; frame unknown. Deadline19:50Z. | Source unchanged |
 | U1-D69-marker-scope | Preserve mixed-route live catalog predicates | Luna | Actual integrated proof passed | merged | Citations1702; integrated1708 PASS | Actual2c1:9 PASS9s; exact approvedledgerappendix published once, outsidebytes intact. [Proof](../../design/rt-U1-D69-phase-integrated-1708.md) | ea3bca10d /925a7dd |
 | U1-D69-restore-guard | Restore two skip guard originals | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 |
 | U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 /bb022 |
@@ -150,7 +150,7 @@
 | D80-selector-accounting | Preserve popup case inventory | Luna | Authentic XML and AST map | merged | rt-P2-D80-selector-accounting-1915 | 23 unique Runtime cases: eight preserved plus 15 new. Earlier 27 included four authority-file neighbors. No behavior dropped. | Source unchanged |
 | D78-App-donor | Retain overlapping helper candidate | Luna | Sole App shipping owner1859 | gated:App-shipping | rt-D78-app-stack-activation-1908 | Donor six controls PASS; never merge beside App1859 HOME7098. No actual live capture inferred. | Held donor |
 
-Runtime producer: Normal e89eb contains security-PASS finite walk f51e over reviewed popup87bc and empty ranges1bae. Canonical15/schema867f/config4d74 unchanged. Actual finite home receipt1919 active.
+Runtime producer: Normal e89eb contains security-PASS finite walk f51e over reviewed popup87bc and empty ranges1bae. Canonical15/schema867f/config4d74 unchanged. Actual finite home1919 PASS173+12, no new diagnostics.
 
 core open: 2 Runtime boundaries: original P4 ten-note45s timeout and element pending-to-teardown with terminal cause UNKNOWN. Popup source qualified; App original22847 stays failed until meaningful proof. Final Runtime core suite owed.
 regressions: 1 presumed installed-render regression under D77a awaiting genuine final render. Reviewed dfea is normal Agent831df; actual34 adversarial plus2 positive PASS. No waiver inferred.
@@ -159,15 +159,15 @@ FREEZE D59/D66: Current P1 31083 readiness1/original2 PASS with independent1846.
 Venues: App P1/P2/P3, Agent P4, main P5/Composition. D73 captures four exact SHAs once, waits checkout receipts, then source-only preflight. Newer home does not invalidate a run. Product change reruns P1–P5 plus affected core at cut.
 D65 delivery: Runtime merge, Agent merge, authentic App manifest command with generated digest equality, then App merge. Installed v2 docs and D67 exact13env7keys retained. Private final candidate remains cut-gated; fresh-main apply checks required.
 
-Blockers: App live capture — actual13100 terminal per App board; sole1856/lead must return dump or precise disposition and safe cross-run process/realm/port identities. Runtime1915 source audit complete, no real frame yet. Deadline19:50Z.
-Blockers: Agent original cost proof — Runtime e89eb/f51e is independently security-PASS. Normal adoption ready now; meaningful P4 and four retained R2 originals remain Agent-owned. Integrated receipt1919 active in parallel.
+Blockers: App live capture — actual13100 FAIL213s in native seed before gesture; no dump/attach ran. Existing128 Runtime phases retained privately; App safe ordered summary requested1922. Actual Python frame remains UNKNOWN. Deadline19:50Z.
+Blockers: Agent original cost proof — Runtime e89eb/f51e is independently security-PASS. Normal adoption ready now; meaningful P4 and four retained R2 originals remain Agent-owned. Integrated receipt1919 complete PASS173+12.
 Blockers: App popup original — reviewed87bc carrier actual23 Runtime plus4 Agent PASS, selector accounting complete. Original meaningful App qualification still owed; no new backend author.
 Blockers: Final cut — all lanes core0/regressions0, P2/P3 and D69 complete; genuine installed render required. No final proof/build before cut.
-Next ready: Consume finite actual-home1919; interpret actual13100 capture promptly when App publishes it. Four seed timeouts share one investigation; no claim of shared cause without frame.
+Next ready: Interpret actual13100 safe ordered128 phase summary promptly when App publishes it. Four seed timeouts share one investigation; no claim of shared cause without frame.
 Later: D79 missing complete authentic accepted record/history/context; no synthetic fixture or new body. D80 non-gating hold remains. D47 memo/proof pins post-delivery, nine attacks open. V4 cut; D14/D23 deferred; D34 broader cleanup held. D62 submit completeness remains known gap.
 Admission: D56 Farm/schema-access stopped. Exact403 and auto access refusal remain stopped. Historical denied cleanup/process/retirement targets untouched. D67 D13 unchanged environment gap.
 Disk: About7.9GiB; cap4. Four newly finished current trees already recycled automatically. Prior refused dirty v1 and KEEP targets untouched. No alternate deletion.
 
-live 1 / cap 4; ready-undispatched 0 critical. Runtime finite-home1919 active; two1915 returns consumed. Agent cost adoption ready on normal source handback. D78 actual App capture input still missing.
+live 0 / cap 4; ready-undispatched 0 critical. Runtime finite-home1919 PASS consumed; two1915 returns consumed. Agent cost adoption ready on normal source handback. D78 actual App capture input still missing.
 
 Pass 2026-10-24T19:18:49Z: Finite security1910 PASS merged via normal queue to e89eb. Popup actual-home23+4 and accounting PASS consumed. D78 source audit found no deliberate shared daemon but actual sharing remains unknown without capture. App1859 is sole shipping helper; donor1908 held. Four native-seed timeout asks have one owned row. No gate duplicate or safety reroute.

@@ -1,0 +1,17 @@
+scalars ok 
+shared ok 
+deep ok 
+cycle ValidationError commit value must not contain cycles
+nan ValidationError commit value must contain only finite JSON
+infinity ValidationError commit value must contain only finite JSON
+custom-container ValidationError commit value must contain only finite JSON
+custom-key ValidationError commit JSON object keys must be strings
+reverse-error-order ValidationError commit value must contain only finite JSON
+baseline-list-sibling-snapshot ok
+candidate-list-sibling-snapshot ok
+baseline-dict-sibling-snapshot ok
+candidate-dict-sibling-snapshot ok
+baseline fresh-nested-mutation ok
+candidate fresh-nested-mutation ok
+baseline_sha 1bae0e8ccb8f912d50ad16e80d2e42f8e2ea603f
+candidate_sha f51e296589c85570fda4739ec7a137415309d21f
