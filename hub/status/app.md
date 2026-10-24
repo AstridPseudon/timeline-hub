@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T22:31:05Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 0m -->
-# app board, 2026-10-24T22:26Z
+<!-- app | 2026-10-24T22:34:23Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 5 | status age 1m -->
+# app board, 2026-10-24T22:32Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -97,8 +97,10 @@
 | P2-D84a-element | Original element on structural release | Luna; service | Exact bceb / 039f / 732 / 635f | review | App2216; actual7131 | NO-GO172s. Native and readiness PASS; original applied status412 FAIL5s. Response wait remains open; eventual outcome UNKNOWN. | Appbceb; Runtime732 |
 
 | P2-D84a-main-venue | Main four isolated diagnostics | Runtime Luna | Element7131 first signal complete | ready | Runtime venue requested2221; released2225 | Main owns parent move, SWAP, single clear and bulk clear. Same exact four pins; unchanged originals; no full tour. | Appbceb; Runtime732 |
-| P2-D84a-app-sweep | App three isolated diagnostics | Luna; service | Element7131 first signal complete | doing | app-P2-D84a-app-sweep-2225 | Owns ADD, asset and placement serially. Exact same four pins and source preflight before each; ADD5083 running after24725 preflight PASS; asset and placement next. | Appbceb; Runtime732 |
+| P2-D84a-app-sweep | App three isolated diagnostics | Luna; service | Element7131 first signal complete | doing | app-P2-D84a-app-sweep-2225 | Owns ADD, asset and placement serially. Same four pins. ADD5083 reached HTTP200 then strict digest452FAIL; asset and placement next. | Appbceb; Runtime732 |
 | P2-D84a-7131-facts | Retained element phase and dump facts | Luna read only | Actual7131 terminal | merged | app-P2-D84a-7131-safe-facts-2227 | Exact safe JSON/MD published. Element ordinal3 provider seen; no accept/receipt/HTTP response. Private5868B dump; attribution bounded. | Evidence only |
+
+| P2-popup-5083-digest | Attribute strict canonical digest mismatch | Luna source only | Actual5083 accepted reply | doing | app-P2-popup-5083-digest-source-2233 | ADD progressed beyond read and commit; spec452 digest equality fails. Exact source and retained-response control owed; no expectation changed. | Appbceb; Runtime732 |
 
 Integration: App bceb0350326f22beefdde5c5ba275412bb09b419 normally adopts Runtime732c48c6f5a9441a65c61b24595d454a1cd3e180. Exact diagnostic tuple is Appbceb / Agent039ff2c2187d02b723074a8a6dfcbc6a70544c19 / Runtime732 / Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40. Existing asset5fcb and strict placement00918 repairs are included; original placement spec413d and other five protected files retained.
 
@@ -108,9 +110,9 @@ regressions: Zero remaining confirmed App source findings. Asset independent96re
 Blockers: Final cut — all8isolatedP2 plus fulltour and pinned final P1–P5/core, D69 and genuine installed render required. Runtime coordinates final matrix and ZIP. Recorded P1 31083 and P3 15493 GO retain their exact tuple scopes.
 Next ready: Runtime main venue dispatch four assigned cases now, released in peer2225. App2225 runs its three cases. Retained7131 safe facts2227 published to Runtime in peer2230. No P3, D79 or E work.
 
-live 1 / cap 2; ready-undispatched 0 on App. Main four cases assigned to Runtime through normal peer route; awaiting actual worker receipt, not a Runtime source blocker.
+live 2 / cap 2; ready-undispatched 0 on App. Main four cases assigned to Runtime through normal peer route; awaiting actual worker receipt, not a Runtime source blocker.
 Capacity: No ended clean non-KEEP App worktree eligible in this pass. Latest ten stale pins released through guarded D74a route; receipt design/app-D74a-fresh-stale-pins-2214.md. Current tuple pins and all run evidence retained.
-Disk: 6.94GB after7131 build release. Owner22:14 App critical source/gate floor5.2GB; stop4.5GB, NON-element first. One body at a time on App; parallel main diagnostic venue explicitly authorized22:24. Noncritical work retains7.5GB floor.
+Disk: 6.38GB during ADD5083; build release follows terminal. Owner22:14 App critical source/gate floor5.2GB; stop4.5GB, NON-element first. One body at a time on App; parallel main diagnostic venue explicitly authorized22:24. Noncritical work retains7.5GB floor.
 Safety: No new refusal. Prior dirtyU3, compact, graph, publication and source-access refusal targets stay stopped. No raw deletion or alternative denied route.
-Inbox consumed through1766484bytes. PLAN/common/C0/header plus Runtime board checked. Owner22:24 parallel order applied; source released732 and normal adoption are complete. D73 exact pins, genuine checkout receipts and one-command source preflight before every body. Newer heads never invalidate a captured tuple.
+Inbox consumed through1770879bytes. PLAN/common/C0/header plus Runtime board checked. Owner22:24 parallel order applied; source released732 and normal adoption are complete. D73 exact pins, genuine checkout receipts and one-command source preflight before every body. Newer heads never invalidate a captured tuple.
 Evidence: [D84a element actual7131](../../design/app-P2-D84a-element-2216.md), [main venue release](../../design/peer-app-to-runtime-20261024T2225Z-D84a-element-signal-release.md), [normal adoption](../../design/app-U4p-D84a-adoption-2212.md), [asset independent PASS](../../design/app-A3-asset-drop-rereview-2154.md), [placement independent PASS](../../design/app-P2-placement-selector-review-2152.md).

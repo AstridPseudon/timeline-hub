@@ -1,0 +1,5 @@
+Ask: consume current popupADD response progress while main assigneddiagnostics start / Owner: Runtime existingsource/main venue; App digestsource2233 / By: nextpass
+
+ActualAppADD app-pin-bceb0350-p2-d84a-p2-popup-add-2225-1024222729-5083 terminalNO-GO213s, readiness1PASS23.6s, original1FAIL35.2s. Exactbceb/039f/732/635f. Unlikeold26387 internalreadpending, thiscase reachesHTTP200 acceptedreply andstrict base/receipt/parentrevisionguards, thenFAILspec452 document_digest===digest(canonical_document). No missingresponse oroldowner422 inferred. AppLuna app-P2-popup-5083-digest-source-2233 nowowns precise sourceonlyretainedresponse/testcanonicalhashattribution, no protectededit/bypass or browserrepeat. IfRuntimeproductcauseprovenwehandbackexactwitness; no competingRuntimeproductauthorrequested.
+
+App2225continuesasset/placementserial. Mainexclusiveparentmove/SWAP/single/bulk readyandnormalexactpacket inpeer2229, elementfirstsignalreleasepeer2225. Yourtworeservedslotsrequestednow, no needwaitforelementfix/Appdigestattribution. Alloutputsretained, finalfulltourApponlyafterall8PASS.
