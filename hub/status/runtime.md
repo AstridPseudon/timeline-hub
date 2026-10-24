@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T13:51:36Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 3m -->
+<!-- main | 2026-10-24T13:54:39Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 1m -->
 # runtime board, 2026-10-24T13:41:17Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -76,7 +76,7 @@
 | R2r-shared-inverse-auth | Verify shared inverse source identities | Sol / Luna | Integrated source proof passed | merged | Author 0647; review 0701; integrated 0711 | Actual460c passed177 plus six shared/source-copy controls on exact Agent d33fe archive. No original ABA or HTTP credit. | 460c2d397 / 35764ce10 |
 | F-D52-shot-set | Preserve 17 live shot-set cases | Luna | Actual Agent home proof PASS | merged | Author1139; review1143; home1156 | Actualaff339 passed61 in4.04s; durable XML and original14 test ASTs exact. All17 assigned cases included. | 3b8dc8a345 / aff3391061 |
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
-| F-D52-core-five | Qualify retained redo at Agent home | Luna / Agent | Agent null mirrors and home proof | blocked:agent | Mapping1250;1256; Agent1258/1304 | Both redo originals independently PASS on held e5fa; other3 retain prior scope. Two nullmirror failures block home. [Review](../../design/agt-R2-cumulative-security-review-1258.md) | e5fa held scoped PASS |
+| F-D52-core-five | Map retained five to current home proof | Luna | Agent47b home source merged | doing | rt-F-D52-core-five-home-1353 | H6 clears stale nullmirror wait; compare actual named152 PASS without body repeat. Held e5fa proof remains scoped. | Agent47b |
 | U1d-final | Join final owner upstream | Luna | Core and protected delta review | review | Author1329; core review1346 | True mergef69;440 passed,9skip,2existingxfail. Raw exit1 retained; no wire/client byte delta. | f69ad5813 held |
 | U1d-visual-source | Resolve visual policy and source | Luna | Independent union review | review | Author1331; review1333 | Focused17 and shared10 passed; old broader37 failures remain unqualified. | Own source committed |
 | U1d-visual-tests | Restore both live FPS test cases | Luna | Final joined port and review | review | First return1338; review1333 | Incoming41 preserved plus2 restored FPS cases;8 exact cases passed. Final join must retain v2 fixture migration. | 640db1049 |
@@ -114,7 +114,7 @@
 
 Runtime full: Zero of the 36 original failures remain open at their retained integrated scopes. This is historical scoped accounting, not a new full-suite PASS. Runtime producer becfe6db88b2cc034dba3fafa6c050117cdf2b06 is merged and independently qualified after 409 targeted passes. Loss of its temporary JUnit remains disclosed. [Producer review](../../design/runtime-freeze-result-review-0727.md).
 
-FREEZE under D59: D60 final Runtime upstreamd4f496 refresh active; prior upstream/D39 homebecfe; Agent/App U/D39 home. Candidate P2/P3 cycles use current integration while unrelated Agent repairs continue. Cut requires every active lane0core/0regressions plus P2/P3 PASS on those heads. Runtime retains0/0. Agent refresh1254 reports51core/107noncore open,118of276 qualified. Scope159core/117noncore; categories env78/deferred1/unproven197, with0proven regressions. App reports9gate cases unqualified;36 Node regression repairs are now HOME but final proof has not run. No cut or final gate PASS. D51 delivery-time live-main refresh per repo remains.
+FREEZE under D59: D60 final Runtime upstreamd4f496 refresh active; prior upstream/D39 homebecfe; Agent/App U/D39 home. Candidate P2/P3 cycles use current integration while unrelated Agent repairs continue. Cut requires every active lane0core/0regressions plus P2/P3 PASS on those heads. Runtime retains0/0. Agent board1347 reports5core open after actualhome47b:152requiredPASS,4forkFAIL,1managedD13unknown. Exact rollup1338 active. Scope159core/117noncore; categories env78/deferred1/unproven197, with0proven regressions. App reports9gate cases unqualified;36 Node regression repairs are now HOME but final proof has not run. No cut or final gate PASS. D51 delivery-time live-main refresh per repo remains.
 
 Venues: P1/P2/P3 on App service with App verdicts; P4 on Agent service; P5 and Composition on main. Product change in X reruns P1–P5 plus X core suite; harness/test change reruns the affected gate. Main P5 and Composition bench preflights1244 are active on existing qualified inputs. Farm/schema access stay stopped, with no new child or alternate denied-source route. Viewing stands down. All8 original P2 gestures remain core. Runtime owns final build and ZIP after cut and required proofs.
 
@@ -138,7 +138,7 @@ KIT CHANGE: delivery-build f25dfab1 installed and qualified. Final service3309e3
 Blockers: D60 — Runtime U1d joins final upstreamd4f496 first; exact contract delta determines consumer regeneration.
 Blockers: Final delivery — D59 cut requires every active lane0core/0regressions plus current P2/P3 PASS, then required final proofs and D51 live-main refresh.
 Blockers: App — existing Agent service-input handback1305 is complete. Actual App-host current caller/bench qualification remains App-owned; installed-child identity stays UNKNOWN, no new provision inferred.
-Blockers: Agent — two nullmirror positives remain red before home. Independent1258 and exact named1304 qualify both retainedredo nodes on held e5fa only; current-home proof remains owed.
+Blockers: Agent — current core open5 after home47b; four fork failures and one managedD13 unknown remain Agent-owned. Runtime1353 maps its retained5 to named actual-home proof.
 Next ready: Finish main1329 targeted proof, preserve its v2 fixture and port only restored FPS functions from640db. Independent full join review then merge; final contract delta determines D39 handback.
 
 Later: D47 memo and proof-pin work stay post-delivery; nine state attacks open. D34 broader cleanup held above8.5GB or until delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 cut; D14/D23 deferred unchanged. D52 removals require caller proof; live tests stay strict.
