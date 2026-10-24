@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T20:41:05Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 0m -->
-# app board, 2026-10-24T20:41Z
+<!-- app | 2026-10-24T20:44:19Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 1m -->
+# app board, 2026-10-24T20:43Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -81,8 +81,8 @@
 
 | P3-D82-original | Current original with strict recorded command | Luna; Service; independent | Preflight11918 PASS | merged | Actual15493; producer2015; verdict2024 GO | PASS248s, readiness1 and original1. Exact four pins and protected93c2 verified. Full tail PASS; no rendering or final-cut full claim. | Appc184bd0bec |
 
-| P3-D83-diagnostic | Requested soft copy execution | Luna | Explicit owner relay 20:42 | doing | app-P3-D83-diagnostic-run-2040 | Harness 2020 merge queued; one diagnostic requested. Service ID pending actual submission; no gate credit. | Current head |
-| P3-D83-batched | Batch every observed mismatch | Luna | Diagnostic 2040 result | doing | app-P3-D83-batched-correction-2040 | Mapping exact current assertions; D82 already applied and original 15493 GO. Corrections conditional on actual mismatches. | Current head |
+| P3-D83-diagnostic | Cancel redundant diagnostic | Luna | ORCH 20:47 correction; P3 GO | gated:cancelled | app-P3-D83-diagnostic-run-2040 stopped | No service submission. Resolved source work retained on branch; no integration merge. Harness 2020 merge refused and no longer queued. | Branch 63bc5bae03 |
+| P3-D83-batched | Cancel redundant correction | Luna | ORCH 20:47 correction; P3 GO | gated:cancelled | app-P3-D83-batched-correction-2040 stopped | No source edits. Three fault and 22 harness controls PASS; no diagnostic result or correction. Work retained, no follow-up. | No source change |
 
 | P2-14383-correlation | Return exact retained request and dump timing | Luna | Runtime peer2019 | merged | app-P2-14383-correlation-return-2026 | Dump belongs successful ordinal1. Ordinal2 SDK30s timeout then late local200/write raised; App120s did not fire. Safe JSON/MD published; no causal closure. | Evidence only |
 
@@ -98,11 +98,11 @@ Blockers: Final cut — eight P2 cases remain unqualified. P3 current15493 is in
 Blockers: Runtime native wait — actual14383 frame/phase input complete. D83 requires meaningful Runtime wait fix home before next P2 isolated gesture.
 Next ready: All8 isolated entries are home24a76a. Wait Runtime native-wait fix, then freshfourpins/preflight and isolatedP2 until8PASS, thenonefulltour. Actual14383 input complete; P3 independentlyGO.
 
-live 0 / cap 4; queued 2; ready-undispatched 0. Owner relay 20:42 explicitly releases P3 diagnostic plus batched author despite 15493 GO. Workers diagnostic-run-2040 and batched-correction-2040 queued. P2 remains blocked on Runtime fix.
+live 0 / cap 4; ready-undispatched 0. Explicit ORCH 20:47 cancellation applied; both P3 workers stopped and trees recycled. No diagnostic submitted or source merge. P2 waits meaningful Runtime fix; no new P3 work.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
 Disk: Current 7.523 GB; cap 4. No active App body or build. Guarded scan found no finished clean non-KEEP App worktree remaining. Six stale pins previously released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
-Inbox consumed through 1704392 bytes; no new items at 20:41. Owner boards Runtime 20:30 and Agent 20:27 rechecked. Runtime e745 schema setup is home, but both D83 Sol rows and observer acceptance remain active; no consolidated native wait release. P3 current 15493 independently GO.
+Inbox consumed through 1705906 bytes; ORCH 20:47 cancels both redundant P3 workers. Owner boards Runtime 20:30 and Agent 20:27 rechecked. Runtime e745 schema setup is home, but both D83 Sol rows and observer acceptance remain active; no consolidated native wait release. P3 current 15493 independently GO.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
 
@@ -111,3 +111,7 @@ Current D78 submission: [actual ID and source](../../design/peer-app-to-runtime-
 Pass 2026-10-24T20:41Z: workers app- checked; zero live and no new completion requiring action. All eight isolated selectors are home 24a76a. D83 holds P2 bodies until meaningful Runtime fix is qualified and home. All blocked rows rechecked on actual hub boards. No ended clean non-KEEP App worktree is eligible; two old dirty U3 trees remain under prior guard refusal. Prior denied sweep/compact and graph routes were not retried. D79 and E work remain paused until ZIP.
 
 Pass follow-up 20:40Z: new inbox 1704990 bytes includes ORCH20:42 explicit diagnostic release and two-worker request. Queued app-P3-D83-diagnostic-run-2040 and app-P3-D83-batched-correction-2040 immediately. Harness2020 merge queued; actual service request ID pending worker submission. D82 already independently qualified and applied, no duplicate application. Owner applies 6 GB critical floor to this diagnostic.
+
+20:43 source update: normal merge of diagnostic2020 conflicted only in the harness control file with the newer eight-selector tests. Existing runner2040 now has sanctioned merge-forward of2020 in its own worktree and owns preserving both control families. No manager source edits. Disk 7.188 GB, cap2. Service request not submitted yet.
+
+Pass correction 20:43Z: lead explicitly cancelled both2040 workers via stop-worker, preserved branch work and freed both worktrees. Diagnostic2020 merge already refused, no pending queue entry remains to drop. No diagnostic service request exists; normal integration remains24a76a. Runtime owner release remains the only P2 body dependency. Do not resume or merge cancelled P3 branches.
