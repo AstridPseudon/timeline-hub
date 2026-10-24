@@ -8,9 +8,6 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
-import os
-import subprocess
-import sys
 
 import pytest
 
@@ -23,7 +20,6 @@ from astrid.sdk.workspace_client import WorkspaceClientError
 from tests.editing_conformance import test_native_batch_ingress
 from tests.editing_conformance.test_native_batch_ingress import command, label
 from tests.editing_conformance.test_native_sheet_current import property_cell
-from tests.helpers.runtime import runtime_checkout
 
 pytestmark = pytest.mark.integration
 runtime = test_native_batch_ingress.runtime
@@ -32,9 +28,10 @@ TITLE = 'parent/clip:title'
 
 
 def _preflight_detached_fixture(root, project_id):
-    """Prove the historical seed is a readable current Runtime closure."""
+    """Prove the current commit bootstrap is a readable Runtime closure."""
     from runtime_protocol.service import RuntimeService
-    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+
+    from astrid.sdk.timeline import commit
 
     failures = []
 
@@ -45,7 +42,7 @@ def _preflight_detached_fixture(root, project_id):
     service = RuntimeService(root)
     try:
         try:
-            service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
+            service.register_timeline_commit_provider(commit.create_runtime_commit_service())
         except Exception as exc:  # noqa: BLE001  (report all setup failures together)
             failures.append(f'current provider registration: {type(exc).__name__}: {exc}')
 
@@ -55,17 +52,8 @@ def _preflight_detached_fixture(root, project_id):
             timeline = None
             failures.append(f'current timeline read: {type(exc).__name__}: {exc}')
         try:
-            parent = service.get_project_parent_composition_revision(project_id, 'film', 'sheet-baseline')
-        except Exception as exc:  # noqa: BLE001  (report all setup failures together)
-            parent = None
-            failures.append(f'current parent read: {type(exc).__name__}: {exc}')
-        try:
-            closure = service._timeline_commits()[0].revision_closure(project_id, 'film', 'sheet-baseline')
-        except Exception as exc:  # noqa: BLE001  (report all setup failures together)
-            closure = None
-            failures.append(f'current closure read: {type(exc).__name__}: {exc}')
-        try:
-            head = service._timeline_commits()[0].head(project_id, 'film')
+            history = service.list_timeline_commits(project_id, 'film', authorize=lambda: None)
+            head = history['head']
         except Exception as exc:  # noqa: BLE001  (report all setup failures together)
             head = None
             failures.append(f'current head read: {type(exc).__name__}: {exc}')
@@ -73,10 +61,20 @@ def _preflight_detached_fixture(root, project_id):
         check('project/timeline identity', isinstance(timeline, dict)
               and timeline.get('project_id') == project_id and timeline.get('timeline_id') == 'film')
         check('head revision/publication pair', isinstance(head, dict)
-              and head.get('revision_id') == 'sheet-baseline'
+              and isinstance(head.get('revision_id'), str) and head['revision_id']
               and isinstance(head.get('publication_id'), str) and head['publication_id'])
+
+        parent = closure = None
+        if isinstance(head, dict):
+            try:
+                parent = service.get_project_parent_composition_revision(
+                    project_id, 'film', head['revision_id'])
+                closure = service._timeline_commits()[0].revision_closure(
+                    project_id, 'film', head['revision_id'])
+            except Exception as exc:  # noqa: BLE001  (report all setup failures together)
+                failures.append(f'current closure read: {type(exc).__name__}: {exc}')
         check('public head mirrors pair', isinstance(timeline, dict)
-              and timeline.get('head_revision_id') == 'sheet-baseline'
+              and timeline.get('head_revision_id') == (head or {}).get('revision_id')
               and timeline.get('head_publication_id') == (head or {}).get('publication_id'))
 
         if parent is not None and closure is not None:
@@ -94,16 +92,17 @@ def _preflight_detached_fixture(root, project_id):
                   and payload.get('clips') == [] and isinstance(occurrences, list)
                   and len(occurrences) == 1)
             occurrence = occurrences[0] if isinstance(occurrences, list) and len(occurrences) == 1 else {}
+            shot = closure['shot_revisions'][0] if closure['shot_revisions'] else {}
+            internal_image = closure['internal_timeline_revisions'][0] if closure['internal_timeline_revisions'] else {}
             check('occurrence ownership/track shape', occurrence.get('occurrence_id') == 'occ'
-                  and occurrence.get('shot_id') == 'shot'
-                  and occurrence.get('shot_revision_id') == 'shot-rev'
+                  and occurrence.get('shot_id') == shot.get('shot_id') == 'shot'
+                  and occurrence.get('shot_revision_id') == shot.get('revision_id')
                   and occurrence.get('track') == 'picture'
                   and occurrence.get('placement', {}).get('track') == 'picture')
             check('occurrence timing shape', occurrence.get('placement', {}).get('start_ms') == 0
                   and occurrence.get('duration_ms') == 10000
                   and occurrence.get('source_offset') == 0 and occurrence.get('speed') == 1)
 
-            internal_image = closure['internal_timeline_revisions'][0] if closure['internal_timeline_revisions'] else {}
             internal_payload = internal_image.get('payload', {})
             clips = internal_payload.get('clips', [])
             check('internal container/track order', [track.get('id') for track in internal_payload.get('tracks', [])]
@@ -133,29 +132,30 @@ def _preflight_detached_fixture(root, project_id):
                   and len(media_pins) == 1 and media_pins[0].get('media_id') == media_id
                   and media_pins[0].get('content_digest') == media_id)
             if isinstance(media_id, str):
-                bare = media_id.removeprefix('sha256:')
-                owned = service.store.conn.execute(
-                    'SELECT 1 FROM objects o JOIN project_objects po ON po.digest=o.digest '
-                    'WHERE o.digest=? AND po.project_id=?', (bare, project_id),
-                ).fetchone()
-                check('source object ownership', owned is not None)
                 try:
-                    check('source bytes/digest', 'sha256:' + hashlib.sha256(service.cas.read(bare)).hexdigest() == media_id)
+                    owned = service.object_location(project_id, media_id)
+                    check('source object ownership', owned.get('object_id') == media_id
+                          and owned.get('verified') is True)
+                except Exception as exc:  # noqa: BLE001  (report all setup failures together)
+                    failures.append(f'source ownership: {type(exc).__name__}: {exc}')
+                try:
+                    _metadata, source_bytes = service.object(media_id)
+                    check('source bytes/digest', 'sha256:' + hashlib.sha256(source_bytes).hexdigest() == media_id)
                 except Exception as exc:  # noqa: BLE001  (report all setup failures together)
                     failures.append(f'source read: {type(exc).__name__}: {exc}')
 
-            shot = closure['shot_revisions'][0] if closure['shot_revisions'] else {}
             check('shot ownership/internal pin', shot.get('shot_id') == 'shot'
-                  and shot.get('internal_timeline_revision_id') == 'internal-rev')
-            shot_row = service.store.conn.execute(
-                'SELECT project_id FROM shot_revisions WHERE id=? AND shot_id=?', ('shot-rev', 'shot'),
-            ).fetchone()
-            internal_row = service.store.conn.execute(
-                'SELECT project_id, timeline_id FROM internal_timeline_revisions WHERE id=?', ('internal-rev',),
-            ).fetchone()
-            check('child revision ownership', shot_row is not None and shot_row['project_id'] == project_id)
-            check('internal revision ownership', internal_row is not None
-                  and internal_row['project_id'] == project_id and internal_row['timeline_id'] == 'film')
+                  and shot.get('internal_timeline_revision_id') == internal_image.get('revision_id'))
+            try:
+                shot_row = service.get_project_shot_revision(project_id, 'shot', shot['revision_id'])
+                internal_row = service.get_project_timeline_revision(
+                    project_id, 'film', internal_image['revision_id'])
+                check('child revision ownership', shot_row['project_id'] == project_id
+                      and shot_row['shot_id'] == 'shot')
+                check('internal revision ownership', internal_row['project_id'] == project_id
+                      and internal_row['timeline_id'] == 'film')
+            except Exception as exc:  # noqa: BLE001  (report all setup failures together)
+                failures.append(f'child revision read: {type(exc).__name__}: {exc}')
     finally:
         service.close()
 
@@ -165,9 +165,20 @@ def _preflight_detached_fixture(root, project_id):
 
 @pytest.fixture
 def historical_sheet_film(tmp_path, request):
-    # Use PLAN's frozen Runtime main, through its real APIs in another process.
-    # Current Runtime then performs its normal migration and history adoption.
-    old_runtime = runtime_checkout('8c1830d1ca64a3934c37611a28ffe8db7df879ea')
+    # Build the original authored rows through the current Runtime commit door.
+    # The accepted history and closure are therefore provider-owned, not a
+    # replayed legacy publication or a manually installed store record.
+    from runtime_protocol.service import RuntimeService
+    from runtime_protocol.store import RealmStore
+    from runtime_protocol.timeline_commit_port import route_path
+
+    from astrid.sdk.timeline import commit
+    from astrid.sdk.timeline._command_state import ABSENT, present
+    from astrid.sdk.timeline.capture import capture_track_create
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.native_initialize import capture_initialize
+    from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+
     clips = [
         {'id': 'video', 'clipType': 'media', 'track': 'picture', 'at': 0,
          'asset': 'source', 'from': 1, 'to': 5.0, 'hold': 4, 'speed': 2,
@@ -198,50 +209,66 @@ def historical_sheet_film(tmp_path, request):
         payload['_internal'] = {'tracks': [{'id': 'plate', 'kind': 'visual'}, {'id': 'type', 'kind': 'visual'}],
                                 'output': copy.deepcopy(payload['config']['output']), 'clips': clips}
     root = tmp_path / 'historical-realm'
-    script = """
-import json
-import sys
-from pathlib import Path
-from runtime_protocol.service import RuntimeService
-from runtime_protocol.store import RealmStore
-root = Path(sys.argv[1])
-RealmStore.initialize(root).close()
-service = RuntimeService(root)
-try:
-    project = service.create_project({'slug': 'ordinary-sheet', 'name': 'Ordinary sheet'})['id']
-    service.create_timeline(project, 'film', idempotency_key='create-film')
-    media = service.ingest(project, b'ordinary sheet source', media_type='video/mp4',
-                           original_name='source.mp4', idempotency_key='source')['data']['object_id']
-    payload = json.load(sys.stdin)
-    internal = payload.pop('_internal', None)
-    payload['registry']['assets']['source'] = {'media_id': media, 'type': 'video', 'duration': 12}
-    shots, internals = [], []
-    if internal is not None:
-        internal['registry'] = payload['registry']
-        shots = [{'shot_id': 'shot', 'revision_id': 'shot-rev',
-                  'internal_timeline_revision_id': 'internal-rev', 'payload': {'name': 'Opening', 'items': []}}]
-        internals = [{'timeline_id': 'film', 'revision_id': 'internal-rev', 'payload': internal}]
-    service.publish_parent_composition(project, 'film', {
-        'project_id': project, 'timeline_id': 'film', 'expected_head': None,
-        'parent_revision_id': 'sheet-baseline', 'parent_composition': payload,
-        'shot_revisions': shots, 'internal_timeline_revisions': internals,
-    }, idempotency_key='seed-sheet')
-    print(json.dumps({'project_id': project, 'realm_id': service.store.realm['id']}))
-finally:
-    service.close()
-"""
-    result = subprocess.run([sys.executable, '-c', script, str(root)], input=json.dumps(payload),
-        cwd=tmp_path, env={**os.environ, 'PYTHONPATH': str(old_runtime)},
-        capture_output=True, text=True)
-    assert result.returncode == 0, result.stdout + result.stderr
-    facts = json.loads(result.stdout)
-    from runtime_protocol.upgrade import migrate_canonical_to_current
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
+    try:
+        service.register_timeline_commit_provider(commit.create_runtime_commit_service())
+        project = service.create_project({'slug': 'ordinary-sheet', 'name': 'Ordinary sheet'})['id']
+        service.create_timeline(project, 'film', idempotency_key='create-film')
+        media = service.ingest(project, b'ordinary sheet source', media_type='video/mp4',
+                               original_name='source.mp4', idempotency_key='source')['data']['object_id']
 
-    migration = migrate_canonical_to_current(root, expected_realm_id=facts['realm_id'],
-        confirmation='MIGRATE CANONICAL ' + facts['realm_id'])
-    assert migration['ok']
-    _preflight_detached_fixture(root, facts['project_id'])
-    return root, facts['project_id']
+        payload['registry']['assets']['source'] = {'media_id': media, 'type': 'video', 'duration': 12}
+        internal = payload.pop('_internal', None)
+        history = service.list_timeline_commits(project, 'film', authorize=lambda: None)
+        base = history['head']
+        document = service._timeline_commits()[0].revision_closure(project, 'film', base['revision_id'])
+        bundle = commit.bundle_from_document(document)
+        calls = [capture_initialize(bundle, name='Opening', slug='film',
+                                    output=copy.deepcopy(payload['config']['output']))]
+        bundle = execute(bundle, calls).bundle
+        calls.append(capture_track_create(bundle, 'parent', copy.deepcopy(payload['config']['tracks'][0])))
+        bundle = execute(bundle, [calls[-1]]).bundle
+        calls.append(capture_occurrence_create(
+            bundle, 'occ', 'shot', name='Opening', track='picture', on=0, duration=10))
+        bundle = execute(bundle, [calls[-1]]).bundle
+        if internal is not None:
+            for row in internal['tracks']:
+                calls.append(capture_track_create(bundle, 'occurrence:occ', row))
+                bundle = execute(bundle, [calls[-1]]).bundle
+            video, title = internal['clips']
+            changes = [
+                {'op': 'set', 'ref': 'parent', 'path': ['registry', 'assets', 'source'],
+                 'before': ABSENT, 'value': copy.deepcopy(payload['registry']['assets']['source'])},
+                {'op': 'set', 'ref': 'parent', 'path': ['org.example/data'],
+                 'before': ABSENT, 'value': {'null': None}},
+                {'op': 'set', 'ref': 'internal:film', 'path': ['registry', 'assets', 'source'],
+                 'before': ABSENT, 'value': copy.deepcopy(payload['registry']['assets']['source'])},
+                {'op': 'set', 'ref': 'internal:film', 'path': ['clips'],
+                 'before': present([]), 'value': [copy.deepcopy(video), copy.deepcopy(title)]},
+            ]
+            calls.append({'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+                          'args': {'changes': changes},
+                          'created': ['occurrence:occ/clip:video', 'occurrence:occ/clip:title']})
+
+        steps = [{'id': f'bootstrap-{index + 1}', 'label': 'Bootstrap ordinary sheet',
+                  'intent': '', 'tags': [], 'command_ordinals': [index],
+                  'patch': copy.deepcopy(call['args']['changes']) if call['op'] == 'doc.patch' else []}
+                 for index, call in enumerate(calls)]
+        request_body = {
+            'api_version': 1, 'project_id': project, 'timeline_id': 'film',
+            'base_revision_id': base['revision_id'], 'base_publication_id': base['publication_id'],
+            'commands': calls, 'label': 'Bootstrap ordinary sheet', 'steps': steps,
+            'merge': 'atomic', 'dry_run': False, 'source': {'via': 'test-bootstrap'},
+        }
+        accepted = service.commit_timeline(
+            project, 'film', request_body, idempotency_key='seed-sheet', publisher='author',
+            invocation_path=route_path(project, 'film'), authorize=lambda: None)
+        assert accepted['data']['status'] == 'accepted'
+        _preflight_detached_fixture(root, project)
+        return root, project
+    finally:
+        service.close()
 
 
 def draft(runtime, tmp_path):
