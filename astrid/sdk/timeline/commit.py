@@ -724,9 +724,9 @@ def _check_reservations(port, plan, current, rejected, base):
         for record in records:
             items = record['created']
             if record['command']['op'] == 'occurrence.place-shared':
-                from .native_occurrence_shared import reopen_shared_source
+                from .native_occurrence_shared import restore_shared_record
 
-                reopen_shared_source(state.bundle, record['command']['select'])
+                restore_shared_record(state.bundle, record, output)
             if (not isinstance(items, list) or any(not valid(item) for item in items)
                     or not isinstance(record['command'], Mapping)
                     or record['command'].get('created') != [item['ref'] for item in items]):
@@ -1099,8 +1099,8 @@ class RuntimeCommitService:
                                          inverse_sources=inverse_sources)
             resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
                                               context=context, through=base)
-            from .native_timeline_duplicate import resolve_source
-            resolve_inputs = resolve_source(port, resolve_inputs)
+            from .native_occurrence_shared import resolve_source
+            resolve_inputs = resolve_source(port, resolve_inputs, inverse_records)
             original = execute(bundle, execution_calls, inverse_records=inverse_records,
                                intervening_records=inverse_intervening, closures=closures,
                                verified_media=verified_media, realm_id=context['realm_id'],
@@ -1130,7 +1130,7 @@ class RuntimeCommitService:
                                              inverse_sources=inverse_sources)
                     resolve_inputs = _schema_resolver(port, schema_inputs, inverse_records,
                                                       context=context, through=current)
-                    resolve_inputs = resolve_source(port, resolve_inputs)
+                    resolve_inputs = resolve_source(port, resolve_inputs, inverse_records)
                     if undo_of or any(call['op'] == 'doc.patch' for call in calls) or any(
                             key in request for key in ('merge', 'reads', 'steps')):
                         _records(entries, CommitRejected, base, current)
