@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, render, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -20,6 +20,7 @@ import { buildTimelineData } from '../lib/timeline-data';
 import { MEDIA_COMMAND_DESCRIPTORS, PLACE_PREPARED_MEDIA_COMMAND_DESCRIPTOR } from '../commands/media';
 import { useTimelineChromeContext, useTimelineEditorData, useTimelineEditorOps } from '../hooks/timelineStore';
 import { VideoEditorProvider } from './VideoEditorProvider';
+import { ElementsLibraryPanel } from '../components/ElementsLibraryPanel';
 import { ADD_GENERATION_QUERY_PARAM, readPendingAdds, writePendingAdds } from '@/domains/media-lightbox/hooks/addToVideoEditorConstants';
 
 vi.mock('../hooks/useEffects.ts', () => ({ useEffects: () => ({ data: [] }) }));
@@ -233,7 +234,7 @@ async function mountElement(outcome: 'accepted' | 'merged' | 'conflict' | 'inval
       { id: 'sibling', track: 'V1', at: 3, hold: 2 }], opaque: { absent: null } } as unknown as TimelineConfig;
   const base = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' },
     { projectId, timelineId, children: true }).data.canonical_document;
-  const registry = { assets: {}, opaque: { keep: null } };
+  const registry = { assets: {} };
   base.parent_revision.payload = { ...base.parent_revision.payload, config, clips: config.clips, registry };
   base.parent_revision.content_digest = fixtureDigest(base.parent_revision.payload);
   let basis: TimelineCommandBasis = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: base };
@@ -245,7 +246,7 @@ async function mountElement(outcome: 'accepted' | 'merged' | 'conflict' | 'inval
   let ops!: ReturnType<typeof useTimelineEditorOps>;
   function Consumer() {
     editor = useTimelineEditorData(); chrome = useTimelineChromeContext(); chat = useAgentChatBridge(); ops = useTimelineEditorOps();
-    return null;
+    return <ElementsLibraryPanel open onOpenChange={vi.fn()} onOpenCreationPrompt={vi.fn()} />;
   }
   const commit = vi.fn<NonNullable<DataProvider['commitTimeline']>>(async (request, key) => {
     if (outcome === 'conflict' || outcome === 'invalid') throw new ApiError(outcome === 'conflict' ? 409 : 422,
@@ -278,25 +279,48 @@ async function mountElement(outcome: 'accepted' | 'merged' | 'conflict' | 'inval
     basis = { head: { revisionId: 'r1', publicationId: 'p1' }, canonicalDocument: document };
     return { response, accepted: basis.head, canonicalDocument: document, graph: {}, receipt: response.receipt };
   });
-  const provider: DataProvider = { loadTimeline: vi.fn(async () => ({ config, configVersion: 1, head: initialData.head })),
-    loadAssetRegistry: vi.fn(async () => registry), resolveAssetUrl: async file => file, saveTimeline: vi.fn(), saveTimelineAtHead: vi.fn(),
+  const provider: DataProvider = { loadTimeline: vi.fn(async () => ({ config: initialData.config, configVersion: 1, head: initialData.head })),
+    loadAssetRegistry: vi.fn(async () => initialData.registry), resolveAssetUrl: async file => file, saveTimeline: vi.fn(), saveTimelineAtHead: vi.fn(),
     loadTimelineCommandBasis: vi.fn(async () => structuredClone(basis)), getRecoverableIdentity: async () => ({ realmId: 'realm', actorId: 'actor' }), commitTimeline: commit };
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   const view = render(<MemoryRouter><QueryClientProvider client={client}><AgentChatProvider>
-    <VideoEditorProvider dataProvider={provider} projectId={projectId} projectSlug="element-project" timelineId={timelineId} userId={null} initialTimelineData={initialData}>
+    <VideoEditorProvider dataProvider={provider} projectId={projectId} projectSlug="element-project" timelineId={timelineId} userId={null}>
       <Consumer />
     </VideoEditorProvider>
   </AgentChatProvider></QueryClientProvider></MemoryRouter>);
   await waitFor(() => expect(chat.editorContext?.elementOperationAdapter).toBeDefined());
+  await waitFor(() => expect(chat.editorContext?.timelineSummary).toMatchObject({ configVersion: 1 }));
   const entry = chat.editorContext!.elementContext!.catalog.find(item => item.id === 'text-card' && item.packId === 'rendering')!;
   expect(entry.admitted).toBe(true);
   return { view, provider, commit, base, getBasis: () => basis, getEditor: () => editor, getChrome: () => chrome,
-    getOps: () => ops, capture: () => chat.editorContext!.elementOperationAdapter!.captureForTurn(),
+    getOps: () => ops, getTimelineSummary: () => chat.editorContext?.timelineSummary,
+    capture: () => chat.editorContext!.elementOperationAdapter!.captureForTurn(),
     operation: { name: 'timeline.apply_element', project: 'element-project', timeline: timelineId, expected_version: 1, clip_id: 'parent', placement: 'clip',
       element: { id: entry.id, kind: entry.kind, packId: entry.packId, revision: entry.revision }, params: { color: 'red' } } };
 }
 
 describe('registered parent element outbox handoff', () => {
+  it('captures and applies the catalog element through the mounted panel and v2 outbox', async () => {
+    const mounted = await mountElement();
+    try {
+      await act(async () => { mounted.getOps().selectClip('parent'); });
+      await waitFor(() => expect(mounted.getTimelineSummary()).toMatchObject({ configVersion: 1 }));
+      await waitFor(() => expect(screen.getAllByRole('button', { name: 'Apply' }).length).toBeGreaterThan(0));
+      const applyButton = screen.getAllByRole('button', { name: 'Apply' }).find(button => button.parentElement?.textContent?.includes(mounted.operation.element.revision));
+      expect(applyButton).toBeDefined();
+      await act(async () => { fireEvent.click(applyButton!); });
+      await waitFor(() => expect(mounted.commit).toHaveBeenCalledOnce());
+      const [request, key] = mounted.commit.mock.calls[0];
+      expect(request).toMatchObject({ api_version: 1, project_id: projectId, timeline_id: timelineId,
+        base_revision_id: 'r0', base_publication_id: 'p0', label: 'Edit timeline', merge: 'atomic', dry_run: false,
+        source: { via: 'app' }, commands: [{ op: 'doc.patch', args: { changes: expect.any(Array) } }],
+        reads: expect.arrayContaining([{ kind: 'collection', ref: 'parent', path: ['config', 'clips'], members: expect.any(Array), order: expect.any(Array) }]),
+        steps: [{ id: expect.any(String), label: 'Edit timeline', intent: 'timeline.apply_element', tags: [], command_ordinals: [0], patch: expect.any(Array), reads: expect.any(Array) }] });
+      expect(request.commands[0].args.changes).toEqual(request.steps![0].patch);
+      expect(key).toEqual(expect.any(String));
+    } finally { mounted.view.unmount(); }
+  });
+
   it.each(['accepted', 'merged', 'conflict', 'invalid'] as const)('saves a child-bearing parent with a retained original basis: %s', async outcome => {
     const mounted = await mountElement(outcome);
     try {
