@@ -49,6 +49,12 @@ for pair in agent runtime app composition; do
     test -z "$(git -C "$path" status --porcelain --untracked-files=all)" || { echo "D73 launcher: $pair checkout is dirty" >&2; exit 1; }
 done
 test "$(git -C "${pin[agent_path]}" rev-list --parents -n 1 HEAD)" = "${pin[agent_parents]}" || { echo 'D73 launcher: Agent parent guard mismatch' >&2; exit 1; }
+for pair in agent runtime app composition; do
+    parent_key=${pair}_parents
+    if [ -n "${pin[$parent_key]+present}" ]; then
+        test "$(git -C "${pin[${pair}_path]}" rev-list --parents -n 1 HEAD)" = "${pin[$parent_key]}" || { echo "D73 launcher: $pair parent guard mismatch" >&2; exit 1; }
+    fi
+done
 test "$(sha256sum "${pin[agent_path]}/tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py" "${pin[agent_path]}/tests/editing_conformance/test_p4_ten_note_v2_runtime.py" "${pin[agent_path]}/tests/editing_conformance/test_p4_note_rerun_v2_runtime.py" | sha256sum | awk '{print $1}')" = "${pin[original_p4_test_hash]}" || { echo 'D73 launcher: original P4 test hash mismatch' >&2; exit 1; }
 
 evidence=${P4_D73_EVIDENCE:?D73 launcher: P4_D73_EVIDENCE is required}
@@ -94,10 +100,13 @@ from pathlib import Path
 agent, runtime, runtime_sha, schema_root, profile, composition_version = map(Path, sys.argv[1:])
 lock = json.loads((agent / 'runtime.lock.json').read_text())
 assert lock['source_commit'] == runtime_sha.name
+assert lock['producer'] == 'astrid-runtime'
+assert len(lock['files']) == 15
 for rel, entry in lock['files'].items():
     assert hashlib.sha256((agent / rel).read_bytes()).hexdigest() == entry['sha256'].removeprefix('sha256:')
 import astrid
 import astrid_runtime_client
+from astrid_runtime_client.contract_metadata import CONTRACT_VERSION, SCHEMA_DIGEST
 import astrid.core.timeline.banodoco_schema as schema
 import banodoco_timeline_schema as shared_schema
 import runtime_protocol
@@ -106,6 +115,8 @@ assert Path(astrid_runtime_client.__file__).resolve() == agent / 'astrid_runtime
 assert Path(schema.__file__).resolve() == agent / 'astrid/core/timeline/banodoco_schema.py'
 assert Path(runtime_protocol.__file__).resolve() == runtime / 'runtime_protocol/__init__.py'
 assert Path(shared_schema.__file__).resolve() == schema_root / 'banodoco_timeline_schema/__init__.py'
+assert CONTRACT_VERSION == '0.2.14'
+assert SCHEMA_DIGEST == 'sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b'
 package = json.loads((profile / 'node_modules/@banodoco/timeline-composition/package.json').read_text())
 assert package['version'] == composition_version.name
 PY
