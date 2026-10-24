@@ -1,0 +1,99 @@
+{
+  "status": "PREPARED",
+  "run_authorization": "NOT_GRANTED",
+  "execution": "NOT_RUN",
+  "purpose": "Final integrated App caller preparation; production caller uses the generated candidate only after authentic custody admission.",
+  "source_tuple": {
+    "app": {
+      "source": "d99396bca7c3853435cfa5a5991f5b1073187be4",
+      "tree": "3311baa327c8963d007cfc3a1b2f04617085f3b3",
+      "parents": [
+        "602f8b1f58593302829fb449d0ded62a91462a22",
+        "5a9ff97cf036efdd409c559dbd0334ff7a5639b8"
+      ],
+      "ref": "HEAD"
+    },
+    "agent": {
+      "source": "b0e18d03caaa4a479431786f4377f8222c268dd2",
+      "tree": "720acec9d7c6243924221420e986b63d049973a1",
+      "ref": "tl/integration"
+    },
+    "runtime": {
+      "source": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+      "tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89",
+      "ref": "tl/integration"
+    }
+  },
+  "bindings": {
+    "runtime_producer": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+    "app_consumer_files": 14,
+    "agent_consumer_files": 14,
+    "schema_sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+    "normal_refs_authenticated": true
+  },
+  "registry": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "snapshot": "read-only at preparation time",
+    "line_count": 249,
+    "byte_count": 569825,
+    "sha256": "52f556f8dfd4fcdb29443ac84db0f33ee9252bb808c92de4ab660871ec73db93",
+    "p2_suite": "full-e2e-three-products",
+    "p2_row_sha256": "6a45d0567f7dea7a3c15fbcaf687f9dd62debf4527464529d8a4faf8f8e48fee",
+    "p2_row_bytes": 43846,
+    "p3_suite": "ap2-P3-gate5-h6-0348",
+    "p3_row_sha256": "1b7c7996d9f296aab985a0a9466de89bb71cc816d7796facc8bc79fa0b23c6e7",
+    "p3_row_bytes": 60370,
+    "outside_row_count": 247,
+    "outside_bytes": 465609,
+    "outside_sha256": "9acf76fafd09c0e4ecd89be6288402f8557dcb17c3a70f492ce9ae56d241e2e8",
+    "outsider_registry_bytes": "preserved and guarded by caller-publication.py",
+    "mutation": "none"
+  },
+  "preparation": {
+    "command": "TMPDIR=<private temporary directory> python3 caller-publication.py",
+    "candidate_paths": "<TMPDIR>/timeline-final-tuple-<pid>/{full-e2e-three-products,ap2-P3-gate5-h6-0348}.{decoded,wrapped}.sh",
+    "source_guard_counts": {
+      "full-e2e-three-products": 71,
+      "ap2-P3-gate5-h6-0348": 141
+    },
+    "bash_n": "decoded and wrapped candidates",
+    "candidate_lifetime": "private temporary output only; no registry installation"
+  },
+  "wire_fields": {
+    "request": [
+      "api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "schema_version", "op", "version", "select", "args", "created", "label", "steps", "id", "intent", "tags", "command_ordinals", "patch", "reads", "dependencies", "merge", "fields", "atomic", "Idempotency-Key", "dry_run", "source", "rationale", "group_id"
+    ],
+    "reply": [
+      "data", "receipt", "canonical_document", "document_digest", "id_map", "commands", "authoritative_commands", "authoritative_steps", "dependencies", "merge_mode", "base", "base_revision_id", "base_publication_id", "previous", "previous_revision_id", "previous_publication_id", "accepted_ids", "accepted_revision_id", "publisher", "provider", "durable_receipt", "accepted", "merged", "rebased", "conflict", "invalid", "code", "path", "hint", "suggested_command", "head", "current", "result", "request_hash", "event_ids", "dry_run", "would_status", "reason", "http_status"
+    ],
+    "envelope": "full {data,receipt}; no receipt relabeling"
+  },
+  "preservation": {
+    "p2_cases": 8,
+    "p3": "strict request/reply, reads, receipts, history, undo, restart, stage-output, wait, and failure guards retained",
+    "legacy_route_traffic": 0,
+    "registry_mutation": false
+  },
+  "required_missing_custody": [
+    "normal tuple-coordinator admission for the exact three source identities",
+    "normal exact App, Agent, and Runtime checkout receipts",
+    "genuine current child/client identity and import receipt",
+    "genuine current Runtime backend receipt",
+    "genuine current Remotion environment and graph receipts",
+    "normal service snapshot created after admission",
+    "terminal result for integrated full run 16138"
+  ],
+  "blocked": {
+    "owner": "tuple coordinator / Agent and Runtime owners",
+    "status": "STOPPED",
+    "reason": "Automatic access refusal remains in force; required custody is not present.",
+    "prohibited_bypass": "alternate fetch, schema request, child or preload request, receipt patch, historical child reuse, or pin reuse"
+  },
+  "full_run": {
+    "id": "app-U3b-F-reviewed-join-1146-full-1024120556-16138",
+    "source": "5a9ff97cf036efdd409c559dbd0334ff7a5639b8",
+    "tree": "3311baa327c8963d007cfc3a1b2f04617085f3b3",
+    "status": "RUNNING_OR_UNVERIFIED",
+    "terminal_claim": false
+  }
+}
