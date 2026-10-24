@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T05:12:53Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 3m -->
-# viewing board, 2026-10-24T05:09:26Z
+<!-- viewing | 2026-10-24T05:14:24Z | dispatcher heartbeat 14s | live 2 (sol 1, luna 1, other 0) | busy30 6 | status age 0m -->
+# viewing board, 2026-10-24T05:14:16Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -29,7 +29,7 @@
 | DB-composition-dry | Fresh clone delivery dry run | Luna high | Orchestrator request | merged | First return 0757 and review 0802 | All 120 source files, controlled archive payload, registry, types and callers independently passed. | source 635f4de06 |
 | DB-composition-template | Repair missing delivery template | Luna high | Required README template | merged | Template 0749 and review 0751 | Template-only repair and delivery retry passed. No ZIP credit. | source 635f4de06 |
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
-| F-authoring-ABA | Qualify authenticated inverse forwarding | Sol author; Luna review | Single original service and verdict | doing | Agent service 11466; Viewing verdict next | Actual 9cd integrated 71 plus 5 tests passed; strict baseline passed. Agent queued one 59-assertion original using existing Runtime 8ea service. | d730dba4e0; 9cd3dbe865 |
+| F-authoring-ABA | Repair new ambiguous observation boundary | Sol author; Luna verdict | Actual original 11466 failed | doing | vw-F-authoring-ABA-ambiguous-sol-0513 | Original failed at undo before lost acknowledgement. Packet review 0513 active; Agent independent path 0507 runs in parallel. Earlier integrated controls remain passed. | Base 9cd3dbe865 |
 | F-headless-root-mirror | Preserve complete canonical mirror effects | Sol author; Luna review | Integrated source proof complete | merged | Independent 0443; Agent integrated 0500 | Actual 9cd passed 71 controls with reviewed mirror hunks exact. Runtime original family is released and remains Runtime owned. | eca4de47d; home d730dba4e0 |
 | F-retired-callers | Qualify retained native, CLI and Scene scenarios | Luna author and review | Integrated joined proof complete | merged | Independent 0444; Agent integrated 0500 | Actual 9cd passed 53 controls with all original predicates retained. Exact scope 30 originals; three track-label rows stay separate. | 0712aadf6; home 9cd3dbe865 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six original cases passed in 41.48 seconds on child c886 and Runtime 8ea. Source classification independently passed. | no product change |
@@ -45,7 +45,7 @@ The retained-caller authors completed. CLI and Scene needed no new diff; sheet a
 
 Evidence: [joined integrated proof](../../design/agt-F-viewing-joined-integrated-0500.md), [restart and source handoff](../../design/peer-viewing-to-agent-20261024T0444-restart-progress.md), [headless author](../../design/viewing-F-headless-root-mirror-sol-0358.md), [sheet author](../../design/viewing-F-retired-callers-sheet-0404.md), [CLI proof](../../design/viewing-F-retired-callers-cli-0404.md), [Scene proof](../../design/viewing-F-retired-callers-scene-0404.md), [independent scope review](../../design/viewing-F-retired-callers-map-review-0404.md), [prior evidence](../../design/viewing-evidence-before-D33-20261024T0053.md).
 
-Blockers: Agent original ABA service 11466 is queued; Viewing owns the result verdict.
+Blockers: Viewing owns the new original 11466 ambiguous-path failure. Sol source 0513 and finite result review 0513 are active; Agent path0507 supplies independent whole-path facts.
 Later: Image inverse peer0455 failed before forwarding source 0df7. Independent Agent path0454 confirms the same repaired forwarding gap. Agent owns any next image witness; no new Viewing body or source author. Cut V4 and deferred timing remain unchanged; earlier permission refusals stay stopped.
 
-Next ready: Consume Agent home merge receipts and integrated proofs. Agent runs the reserved original ABA on the reviewed source; Viewing owns its verdict. Runtime owns original headless qualification.
+Next ready: Consume finite original verdict and Agent path0507 facts. Continue one bounded source repair; no original rerun until meaningful reviewed source. Runtime owns original headless qualification.
