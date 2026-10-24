@@ -1,0 +1,42 @@
+{
+  "current": {
+    "file_ast": "7fc622d2ed19995b3e2337aacd6b82106a8e76f1985d2b4a7a93a1f39d163530",
+    "functions": {
+      "test_clear_is_removal_and_distinct_from_empty_and_null": [
+        "10ad399e7fb506ebd43351e5766fe74674cd193183eb45944449548a48257705"
+      ],
+      "test_exact_roundtrip_with_original_presence": [
+        "ef852f6d64ff4018e73e1e5b4661348e4a5ba72cab31424f5ff3d6903a9aeb83"
+      ],
+      "test_name_and_coupled_settings_are_one_atomic_command_preserving_unmentioned_fields": [
+        "fddc25593e5309dff4abb1d3ed666b291f710c9ed07a81f3aecaf06f27bd653f"
+      ],
+      "test_portable_shot_set_golden": [
+        "d21083b8e71bf8e8a8590e433d3a2ab5f65eb014e18d069dd19d83f8c4c6ff1f"
+      ],
+      "test_shot_set_capture_and_save_import_no_renderer_or_runtime": [
+        "ce4b929e4bbf24c8e1a3372ac6f2f7474711a7a274e26acfcdd4707bdf984ab8"
+      ]
+    }
+  },
+  "parent": {
+    "file_ast": "4288463c05d64ffa3709144b68d9444ffec60a21ae0e31c8be90c62fd6dd9088",
+    "functions": {
+      "test_clear_is_removal_and_distinct_from_empty_and_null": [
+        "10ad399e7fb506ebd43351e5766fe74674cd193183eb45944449548a48257705"
+      ],
+      "test_exact_roundtrip_with_original_presence": [
+        "ef852f6d64ff4018e73e1e5b4661348e4a5ba72cab31424f5ff3d6903a9aeb83"
+      ],
+      "test_name_and_coupled_settings_are_one_atomic_command_preserving_unmentioned_fields": [
+        "fddc25593e5309dff4abb1d3ed666b291f710c9ed07a81f3aecaf06f27bd653f"
+      ],
+      "test_portable_shot_set_golden": [
+        "d21083b8e71bf8e8a8590e433d3a2ab5f65eb014e18d069dd19d83f8c4c6ff1f"
+      ],
+      "test_shot_set_capture_and_save_import_no_renderer_or_runtime": [
+        "ce4b929e4bbf24c8e1a3372ac6f2f7474711a7a274e26acfcdd4707bdf984ab8"
+      ]
+    }
+  }
+}

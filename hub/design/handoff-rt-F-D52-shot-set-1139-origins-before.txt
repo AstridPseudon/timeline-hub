@@ -1,0 +1,4 @@
+astrid /home/user/work/wt/rt-F-D52-shot-set-1139/astrid/__init__.py
+commands /home/user/work/wt/rt-F-D52-shot-set-1139/astrid/sdk/timeline/commands.py
+shot_commands /home/user/work/wt/rt-F-D52-shot-set-1139/astrid/sdk/timeline/_shot_commands.py
+authoring_bundle /home/user/work/wt/rt-F-D52-shot-set-1139/astrid/core/timeline/authoring_bundle.py

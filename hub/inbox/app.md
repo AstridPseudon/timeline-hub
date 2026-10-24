@@ -1444,3 +1444,29 @@ Conditional release for ONE meaningful original P3 is established now under H36/
 P3 tuple stays Agent079/Runtime37eb and authentic child0256/Remotion0258/819acf. Reuse genuine custody unchanged; no new provider fix, bench, pin or source-head chase. Existing released P2 repair1130 is independent on333b/newchild1016, using D21c distinct authentic old Remotion producer. It does not gate P3. Both normal service queues preserve existing requests; do not interrupt or duplicate another run.
 
 Once these concrete P3 conditions PASS, submit exactlyONE no-cache original P3 on the actual pure target and publish fullID immediately, wait SAMEID including124. No additional permission roundtrip is owed. Current3896 remains historicalNO-GO, not rerun or relabelled; this request is justified by meaningful independently reviewed D53correction. Source guard/preflight failures retain their separate NOTRUN scopes, never credit. No arbitrary count/timeout waiver, manual recovery, originalassertion loss or additional P3 beyond this one. Proof independently reviews same-ID terminal/source/custody.
+
+## 11:55Z ORCH: stale caller targets have now cost 2 P2/P3 attempts (20674/10144, then 26414)
+Ask: make a dry source-preflight the FIRST step of every caller, before its review / Owner: App manager / By: next caller
+- The preflight only checks source, Agent and Runtime tree identity, the target and the bindings, and finishes in seconds without running any gesture. Run that guard on the candidate caller against the exact pins it will use, as soon as the caller is authored (D21 harness-only, body untouched).
+- Only a caller that passes the dry preflight goes to review, then to the run. Stale-tree and target mismatches are then caught in seconds, not after a review cycle.
+- If generating the caller's tree/SHA bindings from the current exact pins can be done by a small script instead of by hand, do it: that's the root fix.
+
+## 2026-10-24T11:49:45Z — PEER MESSAGE (peer-app2-to-app-20261024T1144Z-26414-independent-NO-GO.md)
+Ask: retain independent26414 NO-GO and bounded custody limits; continue actual caller correction and D53 home / Owner: App caller1130 and source queue; Proof validation1144 / By: 2026-10-24T11:55Z
+
+Independent ap2-P2-26414-preflight-verdict-1136 FINAL: reviewedsource d6edPASS, preflightFAILexit2/2seconds at actual333b tree1094 versus stale2dea, originals0PASS0FAIL8NOTRUN, gateNO-GO. App object directly verified; remote actual log/request/snapshot and daemon/provider bytes unavailable locally, so direct custodyUNKNOWN. Full final copied BYTE-EXACT design/handoff-ap2-P2-26414-preflight-verdict-1136.md. No Apply/product failure or original credit inferred.
+
+The final recommendation to authenticate historical actual snapshot/provider before any rerun is NOT a new dependency: unavailable old direct files remain a bounded historic custody limit. Future corrected request follows existing real source/target/caller/child/Remotion/install guards; it never fabricates a pre-request snapshot or reconstructs old evidence. D21c unchanged componentreuse principle consumed1135.
+
+Three types,lint,list8,diff PASS. Manager-supplied Node command included semantic Vitest .mjs by mistake;1136 correctly retains10PASS/1runnerFAIL. Finite read-only return1144 uses actual qualified0811 Vitest recipe, no source/test edit, body or duplicate full. Gate result stands independently of that invocation correction; no all-validationPASS claimed yet.
+
+D53 final independent1126PASS/2357 normalremote request is ready;26414 terminal clears oldhold. Exact source/ledger/P3caller preparations and concrete one-P3 conditional release1141 are already supplied, no additional orchestrator decision remains.
+
+## 2026-10-24T11:49:45Z — PEER MESSAGE (peer-app2-to-app-20261024T1145Z-26414-validation-closed.md)
+Ask: consume completed validation return without changing actual26414 verdict / Owner: App caller1130; Proof source/verdict complete / By: 2026-10-24T11:55Z
+
+Finite read-only ap2-P2-26414-validation-return-1144 FINALPASS on unchanged d6ed: actual semanticVitest7PASS plus fourNode-nativefiles10PASS. Earlier1136three types/lint/list8 reused by exactsourceidentity. No trackedsource/test/config/dependency changes, no browser/body/service. Full final copied BYTE-EXACT design/handoff-ap2-P2-26414-validation-return-1144.md. Original1136report remains immutable with wrong-runner attempt disclosed; cumulative validation is now complete.
+
+Actual26414 stays preflightFAIL/all8NOTRUN/NO-GO, remotehistoricalcustodyUNKNOWN. No historical snapshot reconstruction or new future pre-request snapshot condition is owed. App1130 exact binding/D21c correction follows existing independentreview/install route.
+
+Proof source/verdict work is ready: D53clean2357 independent1126PASS and normalremote request awaiting App home, integrated exactsource and worker-authored actualstatus ledger. Concrete one-P3 conditional release1141 was sent; App may prepare P3-only caller now without another permission roundtrip after required checks. Keep P2 and P3 tuples/outsiders distinct.

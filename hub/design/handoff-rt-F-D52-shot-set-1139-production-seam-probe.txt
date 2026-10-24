@@ -1,0 +1,8 @@
+production provider execute(commit_request): PASS
+compiler publication parent revision: authoring-parent-revision-3854c02041b1353c7fbf832990c27e4551f4eb41df0055383174a681963d5c7c
+compiler publication shot revisions: 2
+accepted canonical parent revision: authoring-parent-revision-26f332f5d60d95de11d40f994fd905d7b807250028773d402e489699524bce12
+accepted canonical shot revisions: 2
+accepted canonical prompt: New
+accepted document verified: PASS
+runtime source mapping present: True

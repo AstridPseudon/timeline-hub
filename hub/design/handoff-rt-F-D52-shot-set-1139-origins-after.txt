@@ -1,0 +1,8 @@
+Agent astrid: /home/user/work/wt/rt-F-D52-shot-set-1139/astrid/__init__.py
+Agent compiler: /home/user/work/wt/rt-F-D52-shot-set-1139/astrid/core/timeline/authoring_bundle.py
+Agent commit: /home/user/work/wt/rt-F-D52-shot-set-1139/astrid/sdk/timeline/commit.py
+Agent commands: /home/user/work/wt/rt-F-D52-shot-set-1139/astrid/sdk/timeline/commands.py
+Agent shot commands: /home/user/work/wt/rt-F-D52-shot-set-1139/astrid/sdk/timeline/_shot_commands.py
+Runtime protocol: /home/user/work/runtime/runtime_protocol/__init__.py
+Runtime execution: /home/user/work/runtime/runtime_protocol/timeline_commit_execution.py
+Runtime service: /home/user/work/runtime/runtime_protocol/service.py
