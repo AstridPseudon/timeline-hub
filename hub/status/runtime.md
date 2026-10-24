@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T23:23:17Z | dispatcher heartbeat 1s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 0m -->
-# runtime board, 2026-10-24T23:20:30Z
+<!-- main | 2026-10-24T23:26:24Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 0m -->
+# runtime board, 2026-10-24T23:25:58Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -206,6 +206,8 @@
 | F-provider-ABI20 | Migrate selected-PARAM real provider setup | Luna | Independent protected review | review | Author2316; review2322 | All20 plus strict digest neighbor PASS21. Old setup20ERROR; original body/parameters/no-write guards exact. [Author](../../design/runtime-Agent-ABI20-author-2316.md) | Review pending |
 | P2-transition-bulk | Qualify exact clear display value | App source requested | Actual2773 original reached | blocked:app | Main2250; App requested | Original expects None; actual select displays __none__. Exact retained-data attribution required; no oracle change inferred. | Exact bceb/039f/732/635f |
 
+| D86-Agent-families | Host four disjoint Agent family authors | Luna | Agent named family list and files | blocked:agent | Runtime dispatch owner | D86 accepted; four slots available after critical Runtime needs. agt-D86-main-families.md absent in current hub. No duplicate reservation. | Agent local5d4ae93 |
+
 Runtime producer: RELEASED 732c48c6f5a9441a65c61b24595d454a1cd3e180, tree 7ed0559c6f0a05954427cc668e303b6cd2f51586. Canonical 15 files and schema867f unchanged. [Release](../../design/runtime-D84a-release-2205.md).
 
 core open: P4 ten-note remains45.314s. Bad9 failed independent callback freshness attack and remains unmerged. Author2304 returned7627; independent Luna2319 now qualifies final freshness and normal apply. Original remains45.314s; no new timing claim. Four R2 originals are closed on actual Agent7c48, tree-equal to testedc2a63; original45s preserved. Element7131 still fails unchanged5s; local one-patch0.315s does not reproduce actual realm.
@@ -223,7 +225,7 @@ Delivery: Runtime merge, Agent merge, authentic App manifest command with schema
 Later: E1/E3, AgentE2 and D79 paused until ZIP. D42 cross-request memo held; V4 cut, D14/D23 deferred; unsafe D34 cleanup held. D56 Farm/schema access stopped. All historical safety/access/cleanup/process refusals remain stopped.
 Disk: 7366033408 available bytes at23:18; cap2. No new noncritical dispatch. Finished2250/2308/2304 were automatically recycled; existing evidence and branches retained. Cleanup checks continue through guarded routes.
 
-live 2 / cap 2; ready-undispatched 0. Runtime security2319 running and Agent ABI20 review2322 queued; no duplicate owner. Rehearsal held below8.5GB.
+live 2 / cap 6 source; ready-undispatched 0. D85 applied above6.5GB: Runtime security2319 and Agent ABI20 review2322 running. Heavy cap2 with one body below7.5GB; rehearsal noncritical held below8.5GB.
 Pass 2026-10-24T22:50:16Z: Read PLAN/common, header through H49, inbox through605296 bytes, App/Agent actual boards and dispatcher returns. Consumed2238 setup result and dispatched2250 immediately. Published exact report and peer2250. Actual Agent7c48 four R2 closure retained; no stale Agent input blocker. No duplicate original, product edits by manager or denied route.
 
 Intake 2026-10-24T22:51:20Z: consumed inbox through605296 bytes. App2240 delayed main-READY note is already fulfilled by2232/2238/2250; no stale App need gate. Agent2242 handoff dispatched immediately to2252; no registry/body. No new source release.
@@ -249,3 +251,7 @@ Intake 2026-10-24T23:13Z: single10376 specificintent versus genericexpectation b
 Pass 2026-10-24T23:20:30Z: read PLAN/common/header and new inbox through609412 bytes. Actual workers show ABI20 already dispatched2316; no duplicate. Consumed terminal2250 and2308, published exact reports and four-result JSON. Consumed2304 final7627 and immediately queued Luna2319 independent security with normal apply on PASS. H6 App/Agent boards read; peer asks become owned rows. No manager product edits or new original.
 
 Intake 2026-10-24T23:22Z: ABI20 author2316 completed21PASS, old20ERROR and exact body/parameter/no-write conservation. Independent Luna2322 dispatched immediately on same branch; own-only remote Agent merge follows PASS. Sweep3 removed0; compact packed0 and gzipped10 old logs; finished test compaction still running. No cleanup refusal or original rerun.
+
+D85 intake 2026-10-24T23:24:23Z: source-only critical cap6 above6.5GB applied. ABI20 ownership is ALREADY active: author rt-Agent-ABI20-provider-2316 completed21PASS; independent rt-Agent-ABI20-review-2322 now reproduced21PASS and finishes conservation/order review. Board row F-provider-ABI20 and two ordinary peer notes name exact workers. Repeated owner assignment request is a publication lag, not missing dispatch. No duplicate author or new original. Inbox through612297 bytes.
+
+D86 intake 2026-10-24T23:25:58Z: accepted up to4 Agent family authors, prefix agt-, through normal request route and remote Agent merges. Named family list absent in ORCH and normal hub; blocked:agent row added, peer requests actual reserved input. Actual local Agent advanced normally to5d4ae93. Runtime security235PASS now complete; attack/neighbor review continues. Inbox through614905 bytes.
