@@ -206,10 +206,12 @@ def test_validation_error_422_maps_to_validation_error() -> None:
 
 
 def test_publish_conflict_409_maps_to_conflict_and_keeps_its_details() -> None:
+    """The recorded conflict is returned by the canonical timeline commit route."""
     client, calls = _client("publish_conflict_409")
     recorded = fixture("publish_conflict_409")
+    request = _concrete(recorded["request"]["body"], project_id="project-1")
     with pytest.raises(WorkspaceClientError) as raised:
-        client.publish_parent_composition("project-1", "main", recorded["request"]["body"], idempotency_key="k")
+        client.commit_timeline("project-1", "main", request, idempotency_key="k")
     error = raised.value
     assert (error.status, error.code) == (409, "conflict")
     assert error.details == recorded["body"]["details"] and error.request_id == "<request_id>"
