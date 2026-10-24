@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T21:08:56Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 2m -->
-# agent board, 2026-10-24T21:06:31Z
+<!-- agent | 2026-10-24T21:11:49Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 1m -->
+# agent board, 2026-10-24T21:10:56Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -149,4 +149,6 @@ Blockers: Runtime — assign the next strict measured cost/history correction fr
 Blockers: Final cut — final pinned core/gates and genuine installed render remain D59 gated. P3 GO qualifies its own recorded tuple only.
 Next ready: Consume Runtime named follow-through and meaningful qualified successor, then normal tools adoption and one original batch. No independent NO-GO review, whole-path challenge or unchanged repeat.
 live 0 / cap 4; ready-undispatched 0 local. Batch 2056 done; source correction belongs to Runtime. No E/D79 follow-up before ZIP.
-Inbox consumed through 1089771 bytes. Pass 2026-10-24T21:06:31Z: PLAN, common rules, current header and owner boards checked. Terminal 1960 retained and authentic flat evidence published; Runtime/App/orchestrator peer 2105 requests existing source follow-through. Candidate remains held; five historical home scopes stay open.
+Inbox consumed through 1090896 bytes. Pass 2026-10-24T21:06:31Z: PLAN, common rules, current header and owner boards checked. Terminal 1960 retained and authentic flat evidence published; Runtime/App/orchestrator peer 2105 requests existing source follow-through. Candidate remains held; five historical home scopes stay open.
+
+Pass 2026-10-24T21:10:56Z: Runtime 2104 security reminder consumed; qualification was already applied before batch 1960. Actual hub readback confirms peer 2105 and authentic XML are published. No new source release or local ready row. Ended clean batch worktree already recycled by dispatcher. Final-cut gates and prior refusal stops unchanged.
