@@ -1,8 +1,36 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createFakeIndexedDB } from 'fake-indexeddb';
 import { fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import type { CanonicalDocument, CommitRequest } from '@/integrations/runtime/generated.ts';
-import type { OutboxRequest } from './commitOutbox.ts';
+import { createCommitOutbox, toOutboxJson, type OutboxExclusiveLock, type OutboxRequest } from './commitOutbox.ts';
+import { createLocalSaveSession } from './localSaveSession.ts';
 import { environment, h0, scope } from './__tests__/localSaveSessionEnvironment.ts';
+
+function statefulExclusiveLock() {
+  type LockRequest = { name: string; held: boolean; released: Promise<void> };
+  const active = new Map<string, LockRequest>();
+  const history: LockRequest[] = [];
+  const exclusiveLock: OutboxExclusiveLock = async (name, work) => {
+    if (active.has(name)) throw new Error('claimed');
+    let release!: () => void;
+    const request: LockRequest = { name, held: true, released: new Promise<void>((resolve) => { release = resolve; }) };
+    active.set(name, request);
+    history.push(request);
+    try {
+      return await work();
+    } finally {
+      request.held = false;
+      active.delete(name);
+      release();
+    }
+  };
+  const requestsFor = (ownerId: string) => history.filter((request) => request.name.endsWith(`${JSON.stringify(ownerId)}]`));
+  return {
+    exclusiveLock,
+    heldFor(ownerId: string) { return requestsFor(ownerId).at(-1)?.held === true; },
+    async releasedFor(ownerId: string) { await requestsFor(ownerId).at(-1)?.released; },
+  };
+}
 
 function ownerRecoveryEnvironment() {
   const env = environment();
@@ -25,24 +53,11 @@ function ownerRecoveryEnvironment() {
     return env.accepted(document, { revisionId: `r${requests.length - 1}`, publicationId: `p${requests.length - 1}` });
   });
 
-  // The qualified helper uses real IndexedDB persistence but deliberately leaves
-  // locking injectable. Extend only this fixture so a live owner remains claimed.
-  const owners = new Set<string>();
-  const create = env.outboxes.create;
-  const recover = env.outboxes.recover;
-  env.outboxes.create = (outboxScope, work) => create(outboxScope, async (box, ownerId) => {
-    owners.add(ownerId);
-    try { return await work(box, ownerId); }
-    finally { owners.delete(ownerId); }
-  });
-  env.outboxes.recover = async (outboxScope, ownerId, work) => {
-    if (owners.has(ownerId)) throw new Error('claimed');
-    return recover(outboxScope, ownerId, async (box) => {
-      owners.add(ownerId);
-      try { return await work(box); }
-      finally { owners.delete(ownerId); }
-    });
-  };
+  const lock = statefulExclusiveLock();
+  const outboxes = createCommitOutbox({ indexedDB: createFakeIndexedDB(), exclusiveLock: lock.exclusiveLock });
+  const mount = (basis = env.initial) => createLocalSaveSession({ scope, initial: basis,
+    document: toOutboxJson(basis.canonicalDocument), outboxes, send: env.send,
+    loadLatest: async () => basis, prepareDisplay: env.prepareDisplay, changed: () => {} });
 
   const move = async (session: Awaited<ReturnType<typeof env.mount>>, on: number) => {
     const before = session.getDocument() as unknown as CanonicalDocument;
@@ -58,7 +73,7 @@ function ownerRecoveryEnvironment() {
     return after;
   };
 
-  return { ...env, authored, requests, move };
+  return { ...env, authored, requests, move, outboxes, mount, lock };
 }
 
 describe('local save owner recovery', () => {
@@ -71,6 +86,7 @@ describe('local save owner recovery', () => {
     await expect(first.flush()).rejects.toThrow('unacknowledged');
     await vi.waitFor(() => expect(first.getState().status).toBe('retry'));
     const owner = first.getState().ownerId!;
+    expect(env.lock.heldFor(owner)).toBe(true);
     const [stored] = await env.outboxes.list(scope);
     const originalA = { ...env.requests[0], body: structuredClone(env.requests[0].body) };
 
@@ -140,9 +156,12 @@ describe('local save owner recovery', () => {
     const second = await env.mount();
 
     expect(second.getState()).toMatchObject({ status: 'recovery', recoverableOwners: [owner] });
+    expect(env.lock.heldFor(owner)).toBe(true);
     await expect(second.recover(owner)).rejects.toThrow('claimed');
     expect(env.requests).toHaveLength(1);
     await first.dispose();
+    await env.lock.releasedFor(owner);
+    expect(env.lock.heldFor(owner)).toBe(false);
     await second.recover(owner);
     expect(env.requests[1]).toEqual(originalA);
     expect(env.requests).toHaveLength(2);
