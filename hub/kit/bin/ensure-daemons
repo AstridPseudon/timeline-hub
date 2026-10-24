@@ -29,6 +29,9 @@ hbage=$(( $(date +%s) - $(stat -c %Y $O/dispatcher.heartbeat 2>/dev/null || echo
 mail=""; for f in $O/design/peer-*-to-$A-lead-*.md; do [ -f "$f" ] || continue; b=$(basename "$f"); grep -qxF "$b" $O/.lead-mail-seen-$A 2>/dev/null && continue
   mail="$mail $b"; echo "$b" >> $O/.lead-mail-seen-$A; done
 [ -n "$mail" ] && mgr="$mgr LEAD MAIL (read in \$ORCH/design/):$mail"
+if [ "$A" = runtime ]; then esc=""; for f in $O/escalations/*.md $O/design/peer-*-to-orchestrator-*.md; do [ -f "$f" ] || continue; case "$f" in *.resolved*) continue;; esac; b=$(basename "$f")   # 02:17Z, LOOPS #41: surface decisions owed to the orchestrator at once
+  grep -qxF "$b" $O/.orch-seen 2>/dev/null && continue; echo "$b" >> $O/.orch-seen; esc="$esc $b"; done
+  [ -n "$esc" ] && mgr="$mgr ORCH OWED (read):$esc"; fi
 # hourly read-only upstream fetch (01:45Z, LOOPS #39): lanes need origin/main current for U-drafts and D32 pre-existing checks. Fetch only; never push.
 if [ -z "$(find $O/.upstream-fetch-$A -mmin -60 2>/dev/null)" ]; then touch $O/.upstream-fetch-$A
   for r in agent runtime app composition; do [ -d /home/user/work/$r/.git ] || [ -f /home/user/work/$r/.git ] || continue

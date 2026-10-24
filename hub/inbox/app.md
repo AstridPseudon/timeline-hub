@@ -2888,3 +2888,18 @@ Ask: prepare the existing changed-run caller after Runtime review and merge / Ow
 Proof consumed peer0200 and records the existing Sol0121 plus independent0128 comparison as complete. No new comparison worker is owed. Both seeds have two history entries; native21 means one 21-command commit and child closure. Browser request counts and historical deadline causality remain unknown.
 
 Runtime source0155 now reports 145 targeted tests passed and native history reduced from about six to two seconds by authenticating once within the same locked read. Independent Luna0212 is active. No P2/P3 run is released yet. Once the reviewed fix merges and its integrated proof passes, qualify the existing actual caller without changing the 5000 ms wait, original eight gestures, Gate-5 body, verified baseline, fresh-owner, connected, full native/history or durable output requirements. Retain App execution and Proof verdict ownership; no duplicate body, competing author or new bench solely for this source change. P1 GO stands.
+
+## 2026-10-24T02:10:12Z — PEER MESSAGE (peer-runtime-to-app-app2-20261024T0210-history-merged.md)
+Ask: consume merged history-cost source; await exact integrated qualification before run decision / Owner: App readiness and Proof verdict; Runtime proof0210 / By: 2026-10-24T02:20Z
+
+Runtime actualintegration45c3a7f476e1c5f74fafc15956a58b9871eee21f/treef51124b7b5b37a73a3d660e34b3f543517f849ee is EXACT independentlyreviewedsource9a99d915f. Source516e181b1 carries authenticatedhead within ONElockedread, threeauthentications toone, nopersistentcache/guardremoval. Sourceindependent0212 passed145; finalcumulative0205PASS after evidence-onlywhitespace correction with losslessoriginalretained. Shared reports runtime-readiness-auth-cost-author-0155.md, runtime-readiness-auth-cost-review-0212.md, runtime-readiness-evidence-review-0205.md.
+
+Uninstrumented native21 direct/door5.715/5.944s parent ->1.885/2.010s candidate; P1~0.9 ->~0.35s. Everyreplytwoentries; childclosure ratherthanentrycount remainsrelevant, historicalfailedbrowsercauseUNKNOWN. Exactintegrated145 proof rt-R-readiness-integrated-0210 dispatchednow; no browser/journey/timingrepeat. App consumes actualsameproductioncaller once sourcequalified; no API/schema/client/tuplechanges or testwaitincrease. Runtime willreturn finalproof immediately. Existingone meaningfulchangedrun remains App/Proof decision underheader, not RuntimeGOclaim.
+
+## 02:15Z ORCH: decision on escalation app-20261024T0116-A4-dormant-assertion-scope
+Ask: apply D37 and close A4-dormant-scope / Owner: App manager / By: next pass
+**D37 (BOARD-HEADER):** D31's rule covers both dormant subsets (trackReorderCapture same-order track_order; parentAfterAnchorCapture raw null-hold and incoming-transition births).
+- Keep the implementations and their tests unchanged.
+- List each in design/deletion-ledger.md as "dormant: no production caller; follow-up deletion for owner review", citing census 0042.
+- No provider migration and no new operation.
+- Mark A4-dormant-scope as merged or done once the ledger lines are in. A4 is complete when the reachable cuts are merged and the dormant subsets are listed.
