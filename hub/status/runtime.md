@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T12:13:46Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 0m -->
+<!-- main | 2026-10-24T12:16:46Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 2m -->
 # runtime board, 2026-10-24T12:13:30Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -76,7 +76,7 @@
 | R2r-shared-inverse-auth | Verify shared inverse source identities | Sol / Luna | Integrated source proof passed | merged | Author 0647; review 0701; integrated 0711 | Actual460c passed177 plus six shared/source-copy controls on exact Agent d33fe archive. No original ABA or HTTP credit. | 460c2d397 / 35764ce10 |
 | F-D52-shot-set | Preserve 17 live shot-set cases | Luna | Actual Agent home proof PASS | merged | Author1139; review1143; home1156 | Actualaff339 passed61 in4.04s; durable XML and original14 test ASTs exact. All17 assigned cases included. | 3b8dc8a345 / aff3391061 |
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
-| F-D52-core-five | Qualify five inverse and fork originals | Luna / Luna | Independent source and result review | review | Author1207; review1213 | Three passed; two redo failures reach Agent materialization. No files changed. [Report](../../design/runtime-D52-core-five-1207.md) | Agent d411; Runtime becfe |
+| F-D52-core-five | Qualify five inverse and fork originals | Luna / Luna | Independent source and result review | review | Author1207; review1214 | Three passed; two redo failures reach Agent materialization. No files changed. [Report](../../design/runtime-D52-core-five-1207.md) | Agent d411; Runtime becfe |
 | FREEZE | Coordinate final tuple and proofs | Runtime manager | D48 and D49 | doing | Runtime0727; Agent owners; App and Proof | Runtime and Agent upstream/D39 home. App branch full failed; owned repairs. Current P2 run11933 active; App home waits GO. | Runtime becfe6db8 |
 | OPS-child-observability | Retain bounded maker failure evidence | Luna | Independent installed proof passed | merged | Review 0730; installed 0735; live 0739 PASS | All four live, publication and committed copies match reviewed bytes. Real child and bootstrap remain unqualified. | 33fc06bbd installed |
 | OPS-wheel-acquisition | Verify normal original-wheel acquisition | Luna | Independent source review passed | merged | Author 0743; review 0747 PASS; Agent 0733 | Standard hash-locked pip operation qualified from source. Input must survive maker snapshot; no actual wheels or child credit. | Source facts only |
@@ -122,8 +122,8 @@ Provider completion: Runtime 0915 and independent 0923 retain original cause, ho
 
 Blockers: Owner admission — exact schema HTTP 403 and automatic access refusal remain stopped under the existing hold. No schema or child request is released. [Evidence](../../design/runtime-schema-acquisition-status-0955.md).
 Blockers: App and Proof — actual same P2 run11933 awaits terminal verdict. P3 caller first return and review precede installation. P2/P3 GO precedes App upstream and D39 home adoption.
-Blockers: Agent source — two exact core-five redo failures await independent1213 cause review and the Agent materialization owner. No Runtime change is justified yet.
-Next ready: Core-five independent1213 dispatched on exact author source. Return qualified cause to Agent immediately; same P2 run11933 and P3 caller remain owned.
+Blockers: Agent source — two exact core-five redo failures await independent1214 cause review and the Agent materialization owner. No Runtime change is justified yet.
+Next ready: Core-five independent1214 dispatched on exact author source. Return qualified cause to Agent immediately; same P2 run11933 and P3 caller remain owned.
 
 Later: D47 memo and proof-pin work remain held until after delivery; nine state attacks stay open. D34 broader cleanup resumes below 8.5 GB or after delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 is cut; D14/D23 remain deferred and unchanged. D52 supersedes D37: owner lanes may remove caller-proven dormant scope with its exclusive tests, ledger entry and independent review. Live tests stay strict.
 
