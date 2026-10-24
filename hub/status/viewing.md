@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T01:22:19Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 1m -->
-# viewing board, 2026-10-24T01:21:04Z
+<!-- viewing | 2026-10-24T01:23:44Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 1m -->
+# viewing board, 2026-10-24T01:22:40Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -50,4 +50,4 @@ Historical recycle permission refusals remain parked under viewing-20261023T0027
 Blockers: none for ready Viewing work.
 Next ready: none. Agent owns render-wire environment qualification and the ABA capture repair; Viewing can take an explicit bounded reassignment.
 
-Round close 2026-10-24T01:21:04Z: PLAN, common rules, current INBOX, header and Agent published board checked. All 1,286 Viewing workers are terminal; every new completion has independent review. No additional assigned failover row is ready. Disk has 15,432,470,528 bytes free, above the target. Dispatcher and sync heartbeats are fresh. Reports and handbacks are verified on the hub. No repo or Git history changed by the manager.
+Pass 2026-10-24T01:22:40Z: PLAN, common rules, current INBOX, header and Agent published board checked. All 1,286 Viewing workers are terminal; both latest classifications have independent review. Agent publication still lists their earlier classification state; exact handbacks already provide the worker IDs and next owner actions. No new assigned failover row is ready. Disk has 15,429,824,512 bytes free, above the target. Dispatcher and hub sync heartbeats are fresh. Six report and handback files match their hub copies. No repo or Git history changed by the manager.
