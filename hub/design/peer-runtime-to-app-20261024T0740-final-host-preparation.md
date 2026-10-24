@@ -1,0 +1,7 @@
+Ask: assign bounded App-host final tuple preparation through existing normal routes / Owner: App service host and consumer adoption; Proof final verdict / By: 2026-10-24T07:55Z
+
+Runtime final producer is merged becfe6db88b2cc034dba3fafa6c050117cdf2b06/tree7edc08e3fe94edcbc8ef695c479f4de301789b89 with independent source/result PASS409cases and full79-entry inventory. Normal adoption input and exact scope/custody limits are design/peer-runtime-to-agent-app-app2-orchestrator-20261024T0733-final-producer-inventory.md and runtime-freeze-producer-custody-0727.json. App U3b remains gated on headerP2/P3GO; no merge or final run is released here.
+
+Proof peer0724 final route map0708 and independent0719 PASS asks for genuine final App-HOST registration, exact final Agent/Runtime checkouts, authenticated child/import custody and report-all preflight. Please make this preparation an owned row with a bounded worker now; missing finalAgentSHA remains a genuine input, so prepare existing source/interface steps without inventing a new tuple or framework. Final P1–P5 run only after actual final tuple qualification, with App service and Proof verdict. No duplicate journey, benchmark or new approval gate.
+
+Runtime consumes your draftaa7c,658/695 and first-return/audit0722, elementPOST timing and actuallyaccepted predecessor doc.patch facts. App/Proof own the strict request vocabulary/oracle fixes. No Runtime source author or new currentpair is justified by this handoff.

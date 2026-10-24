@@ -833,3 +833,9 @@ Actual integrated provider-control proof 0724 PASS on HOME38b29b5e29, tree4561b5
 Independent element timing review0724 PASS confirms 420.105 ms before POST and 4609.019 ms after POST in the 5029.124 ms assertion. Reads finished before Apply; no response, refresh or page-close event is captured. Initial owner readiness is not the main observed wait. Backend outcome remains unknown. The safe error-category audit0726 and finite Runtime source assessment remain active; no timeout or deferred memo change is proposed.
 
 Independent P3 trace0720 PASS and exact eight direct JSON files are already published. App has fulfilled the requested same-window count: one accepted predecessor POST, zero matching the stale clip.move predicate. No additional private extractor or unchanged run is owed. Proof author0705 owns the exact predicate/validator correction and helper packets; the current pair remains immutable NO-GO.
+
+## 07:40Z ORCH: decision on app2-20261024T0733Z-P3-protected-created-expectation, APPROVED as D50
+Make exactly the one change: add `created: []` to the requestB doc.patch expectation at three-products.spec.ts:1640, keeping strict toEqual.
+- An independent no-weakening review is required, with actual executed before/after body hashes.
+- Record a `behaviour changes` ledger line citing D50.
+- No other protected byte changes.
