@@ -52,6 +52,44 @@ PROVISION_RECEIPT = ORCH / "tests/provision" / f"{CHILD}.txt"
 CHILD_RECEIPT = ORCH / "queue/done" / f"childvenv-{CHILD}"
 REMOTION_RECEIPT = ORCH / "queue/done" / f"runtime-{REMOTION}"
 D41_AGENT_MANIFEST_ENV = "TIMELINE_D41_AGENT_MANIFEST"
+FINAL_SOURCE_WORKER = "app-P2-final-pure-integrated-1036"
+FINAL_SOURCE_BRANCH = f"tl/{FINAL_SOURCE_WORKER}"
+FINAL_SOURCE_CHECKOUT = Path("/home/user/work/wt/app-P2-final-pure-integrated-1036")
+FINAL_SOURCE_META = ORCH / "workers" / FINAL_SOURCE_WORKER / "meta"
+FINAL_SOURCE_REPORT = ORCH / "workers" / FINAL_SOURCE_WORKER / "report.md"
+FINAL_SOURCE = "d6ed8cbda122d810d5836ebfce3c56c10e76e9b4"
+FINAL_SOURCE_TREE = "542b772e6deed676b917f857708445b7d37a5aa8"
+FINAL_SOURCE_PARENTS = "cad736828b4890a4df5fff42a22bfa4851a0ecfc 01ea81395a9bb8f091262a9d8275407675188fe6"
+FINAL_SOURCE_BASE = "d6ed8cbda122d810d5836ebfce3c56c10e76e9b4"
+FINAL_SOURCE_REPORT_SHA256 = "f3190adbe41e18e99705eceb6271325295fa5f9fff7c904aa51ef2c79c8079e1"
+FINAL_SOURCE_REVIEWED_HASHES = {
+    "src/tools/video-editor/commands/media.ts": "44fa022ab28d000753dcfb02686306a96889f7ea609cf871097aad84678c6c34",
+    "src/tools/video-editor/commands/media.test.ts": "f8e0389542867a2cafbd9d8c4dafa1a623d895a7fd25e800619a162350466b98",
+    "tests/e2e/local/three-products.spec.ts": "26c1ae764013f8907ff7f3664dbcee016c88bc17a797f66800d012e618165d5b",
+    "tests/e2e/local/support/gate5-reset-precondition.ts": "94568a9baec294cd6848ad37d01163c057c0c4fb0cea202eafe3838b493c71ab",
+    "tests/e2e/local/support/gate5-reset-precondition.test.mjs": "430d75012714c7c183f467bba533f1b2122fa834c9711395de935d8ebef02fee",
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "5f82ec9064abf15e1beada27e3c7905556cbcf66a63bc0a843f685729cb9ae71",
+    "tests/e2e/local/three-products.p2-tour.spec.ts": "2e8fc72bcf29870299a13aab50258a0528f727909125099b53a8aa13bc530a8d",
+    "tests/e2e/local/three-products.p2-popup.spec.ts": "05370adc76b2e8506e812a2c7ce9bde4441868c7c6d97aac7bf0eb8845b64a84",
+    "tests/e2e/local/three-products.p1-chain.spec.ts": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17",
+    "tests/e2e/local/support/p2-document-oracle.ts": "1d622a43f77b05e8196783efa625fca0498e22f409426c1853097e320ecf83ca",
+    "tests/e2e/local/support/p2-document-oracle.test.mjs": "b3a6a3b993e7f2bd94ba724d0d6001235d21e7df5378e8a489f37c70105924ce",
+    "tests/e2e/local/support/p2-original-owner-ready.ts": "3a1b2785b2c7eabf7fa67ee635c51aa5238e68798048a22f2340c6cc75753f1c",
+    "tests/e2e/local/support/p2-original-owner-ready.test.mjs": "bdfe5bd805363503da8b16a52f190935efef31c39e9e1a6c2cb53fcbc31a3911",
+    "tests/e2e/local/support/p2-semantic-oracle.ts": "460bd9110ffd31621c70eaba424ee4faf5cd4498e913fe9afa5aacee972105e4",
+    "tests/e2e/local/support/p2-semantic-oracle.test.mjs": "287aeb8671d1a626b55bba84d0a9a5219b4105a009ef4ec844e69cf3d2eb04f5",
+}
+FINAL_SOURCE_PROTECTED_HASHES = {
+    "d50_tail_sha256": "facd1609882327d233196bbe50180de92387c8282b9cd344d7b342711fb4cbc5",
+    "known_reviewed_reference": "5ede6f374857a66a327da3cea0e85de0457a04267003f3f66e3d40ee4f380912",
+    "p3_gate5_sha256": "e6cf20b09e412df16f82265b0b855c426123e93b44861bd0b7770dcf82d751d4",
+    "p2_body_hashes": {
+        "tests/e2e/local/three-products.p2-tour.spec.ts": FINAL_SOURCE_REVIEWED_HASHES["tests/e2e/local/three-products.p2-tour.spec.ts"],
+        "tests/e2e/local/three-products.p2-elements-assets.spec.ts": FINAL_SOURCE_REVIEWED_HASHES["tests/e2e/local/three-products.p2-elements-assets.spec.ts"],
+        "tests/e2e/local/three-products.p2-popup.spec.ts": FINAL_SOURCE_REVIEWED_HASHES["tests/e2e/local/three-products.p2-popup.spec.ts"],
+        "tests/e2e/local/three-products.spec.ts": FINAL_SOURCE_REVIEWED_HASHES["tests/e2e/local/three-products.spec.ts"],
+    },
+}
 BENCH_STORE = Path("/home/user/work/bench-store")
 SHA1_RE = re.compile(r"^[0-9a-f]{40}$")
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -446,9 +484,29 @@ def d41_agent_input() -> dict[str, object]:
 
 def final_source_input() -> dict[str, object] | None:
     manifest_name = os.environ.get("TIMELINE_FINAL_SOURCE_MANIFEST")
-    if not manifest_name:
-        return None
-    manifest = json.loads(Path(manifest_name).read_text())
+    fixed = not manifest_name
+    if fixed:
+        manifest = {
+            "checkout": str(FINAL_SOURCE_CHECKOUT),
+            "source": FINAL_SOURCE,
+            "tree": FINAL_SOURCE_TREE,
+            "parent": FINAL_SOURCE_PARENTS,
+            "review": "PASS",
+            "worker": FINAL_SOURCE_WORKER,
+            "branch": FINAL_SOURCE_BRANCH,
+            "base": FINAL_SOURCE_BASE[:10],
+            "base_sha": FINAL_SOURCE_BASE[:10],
+            "base_full": FINAL_SOURCE_BASE,
+            "source_receipt": str(FINAL_SOURCE_REPORT),
+            "source_receipt_sha256": FINAL_SOURCE_REPORT_SHA256,
+            "required_paths": list(REQUIRED_FINAL_SOURCE_PATHS),
+            "reviewed_hashes": FINAL_SOURCE_REVIEWED_HASHES,
+            "protected_hashes": FINAL_SOURCE_PROTECTED_HASHES,
+        }
+    else:
+        manifest = json.loads(Path(manifest_name).read_text())
+    if not isinstance(manifest, dict):
+        raise RuntimeError("PREPARED: final source manifest is not an object")
     required = (
         "checkout", "source", "tree", "parent", "review", "worker", "branch",
         "base", "base_sha", "source_receipt", "source_receipt_sha256",
@@ -457,6 +515,11 @@ def final_source_input() -> dict[str, object] | None:
         raise RuntimeError("PREPARED: final source manifest is incomplete")
     if manifest["review"] != "PASS":
         raise RuntimeError("PREPARED: independent final-source review is not PASS")
+    if fixed and any(manifest.get(key) != value for key, value in {
+        "source": FINAL_SOURCE, "tree": FINAL_SOURCE_TREE, "parent": FINAL_SOURCE_PARENTS,
+        "worker": FINAL_SOURCE_WORKER, "branch": FINAL_SOURCE_BRANCH,
+    }.items()):
+        raise RuntimeError("PREPARED: final source fixed identity differs from terminal pure-product result")
     worker = str(manifest["worker"])
     if not worker or "/" in worker or worker in {".", ".."}:
         raise RuntimeError("PREPARED: final source worker identity is invalid")
@@ -472,6 +535,11 @@ def final_source_input() -> dict[str, object] | None:
         or manifest["branch"] != f"tl/{worker}"
     ):
         raise RuntimeError("PREPARED: final source does not match dispatcher branch/base identity")
+    if fixed:
+        if meta.get("base") != FINAL_SOURCE_BASE[:10] or meta.get("base_sha") != FINAL_SOURCE_BASE[:10]:
+            raise RuntimeError("PREPARED: final source dispatcher base prefix changed")
+        if meta.get("worktree") != str(FINAL_SOURCE_CHECKOUT):
+            raise RuntimeError("PREPARED: final source dispatcher worktree changed")
     checkout_path = Path(str(manifest["checkout"]))
     if checkout_path.is_symlink():
         raise RuntimeError("PREPARED: final source checkout must not be a symlink")
@@ -489,13 +557,19 @@ def final_source_input() -> dict[str, object] | None:
     base_commit = git(root, "rev-parse", f"{manifest['base']}^{{commit}}").decode().strip()
     if not base_commit.startswith(str(manifest["base_sha"])):
         raise RuntimeError("final source base does not match dispatcher base identity")
+    if fixed and base_commit != FINAL_SOURCE_BASE:
+        raise RuntimeError("PREPARED: final source full base identity changed")
     if git(root, "rev-parse", "HEAD").decode().strip() != manifest["source"]:
         raise RuntimeError("final source HEAD does not match explicit input")
     if git(root, "show", "-s", "--format=%T", manifest["source"]).decode().strip() != manifest["tree"]:
         raise RuntimeError("final source tree does not match explicit input")
     if git(root, "show", "-s", "--format=%P", manifest["source"]).decode().strip() != manifest["parent"]:
         raise RuntimeError("final source parent does not match explicit input")
-    if len(str(manifest["parent"]).split()) != 1:
+    parents = str(manifest["parent"]).split()
+    if fixed:
+        if parents != FINAL_SOURCE_PARENTS.split():
+            raise RuntimeError("PREPARED: terminal pure-product parents changed")
+    elif len(parents) != 1:
         raise RuntimeError("final proof-worker target must be an authorized single-parent snapshot")
     receipt_candidate = Path(str(manifest["source_receipt"]))
     if receipt_candidate.is_symlink():
@@ -505,16 +579,42 @@ def final_source_input() -> dict[str, object] | None:
         receipt_path.relative_to(ORCH)
     except ValueError as exc:
         raise RuntimeError("PREPARED: source receipt is outside the dispatcher area") from exc
-    if receipt_path == Path(manifest_name).resolve() or not receipt_path.is_file():
+    if (manifest_name and receipt_path == Path(manifest_name).resolve()) or not receipt_path.is_file():
         raise RuntimeError("PREPARED: immutable source receipt is unavailable")
     if digest(receipt_path.read_bytes()) != manifest["source_receipt_sha256"]:
         raise RuntimeError("PREPARED: source receipt hash does not match explicit input")
-    receipt = source_receipt(receipt_path)
-    for key in ("worker", "branch", "base", "base_sha", "source", "tree", "parent", "checkout"):
-        if str(receipt_value(receipt, key)) != str(manifest[key]):
-            raise RuntimeError(f"PREPARED: source receipt identity mismatch: {key}")
-    if receipt_value(receipt, "review") not in (None, "PASS"):
-        raise RuntimeError("PREPARED: source receipt review is not PASS")
+    if fixed:
+        report = receipt_path.read_text()
+        required_report = (
+            "## PASS — bounded pure-product qualification",
+            f"- HEAD: `{FINAL_SOURCE}`",
+            f"- Tree: `{FINAL_SOURCE_TREE}`",
+            f"- Parents: `{FINAL_SOURCE_PARENTS.replace(' ', '`, `')}`",
+            f"- Agent: `{ACTUAL_AGENT}`, clean",
+            f"- Runtime: `{RUNTIME}`, clean",
+            "27 files, **695/695 passed**",
+            "Popup mounted accepted/merged/provider/media: **67/67 passed**",
+            "Gate5/oracle controls: **30/30 passed**",
+            "Retained diagnostics: **11/11 passed**",
+            "Scoped ESLint on six changed TypeScript files: passed",
+            "Private Python compile: passed",
+            "`git diff --check`: passed",
+            "All 7 donor blobs match exactly.",
+            "All 4 original spec bodies match.",
+            "All 6 D31/D37 blobs unchanged.",
+        )
+        if any(marker not in report for marker in required_report):
+            raise RuntimeError("PREPARED: terminal pure-product report is incomplete")
+        manifest["source_report"] = str(receipt_path)
+        manifest["source_report_sha256"] = manifest["source_receipt_sha256"]
+        manifest["source_receipt"] = {"path": str(receipt_path), "sha256": manifest["source_receipt_sha256"]}
+    else:
+        receipt = source_receipt(receipt_path)
+        for key in ("worker", "branch", "base", "base_sha", "source", "tree", "parent", "checkout"):
+            if str(receipt_value(receipt, key)) != str(manifest[key]):
+                raise RuntimeError(f"PREPARED: source receipt identity mismatch: {key}")
+        if receipt_value(receipt, "review") not in (None, "PASS"):
+            raise RuntimeError("PREPARED: source receipt review is not PASS")
     manifest["dispatcher_meta"] = {key: meta[key] for key in ("name", "repo", "base", "base_sha", "worktree")}
     manifest["source_receipt"] = {"path": str(receipt_path), "sha256": manifest["source_receipt_sha256"]}
     return manifest
@@ -551,19 +651,28 @@ def source_custody(final: dict[str, object]) -> dict[str, object]:
     if not isinstance(protected, dict):
         raise RuntimeError("PREPARED: protected D50/P3 hashes are required final inputs")
     spec = source_bytes(root, source, "tests/e2e/local/three-products.spec.ts")
+    d50 = b"".join(spec.splitlines(keepends=True)[1572:1706])
+    if protected.get("d50_tail_sha256") != digest(d50):
+        raise RuntimeError("D50 protected tail does not match final source")
     tail = spec[spec.index(b"  const resetResponse = page.waitForResponse", spec.index(b"test('M2 real gate 5")):spec.index(b"\n", spec.index(b"test('M2 ordinary extension batch")) + 1]
-    if protected.get("d50_tail_sha256") != digest(tail):
-        raise RuntimeError("D50/P3 protected tail does not match final source")
+    if protected.get("known_reviewed_reference") != digest(tail):
+        raise RuntimeError("D50/P3 reviewed tail does not match final source")
     p3 = guarded(spec.decode(), "test('M2 real gate 5", "test('M2 ordinary extension batch").rstrip() + b"\n"
     if protected.get("p3_gate5_sha256") != digest(p3):
         raise RuntimeError("P3 Gate5 body does not match final source")
+    p2_bodies = protected.get("p2_body_hashes")
+    if p2_bodies != {
+        path: observed_hashes[path]
+        for path in FINAL_SOURCE_PROTECTED_HASHES["p2_body_hashes"]
+    }:
+        raise RuntimeError("P2 protected body set does not match final source")
     anchors = {}
     anchors[source] = {"tree": tree, "parents": parent}
     return {"source": source, "tree": tree, "parent": parent, "checkout": str(root),
             "anchors": anchors, "fingerprints": fingerprints, "fingerprint_count": len(fingerprints),
             "fingerprint_digest": digest(canonical.encode()), "required_paths": list(required_paths), "p3_whole": {"blob": git_blob(spec), "sha256": digest(spec)},
             "gate5_sha256": digest(p3), "reset_and_tail_sha256": digest(tail), "reviewed_hashes": reviewed_hashes,
-            "protected_hashes": protected}
+            "protected_hashes": protected, "d50_sha256": digest(d50)}
 
 def custody_facts() -> dict[str, object]:
     assert git(AGENT_CHECKOUT, "rev-parse", "HEAD").decode().strip() == AGENT
@@ -698,6 +807,23 @@ def row_fingerprints(inner: str, n: int) -> list[tuple[str, str, str]]:
     return [(path, kind, expected) for (path, kind), expected in found.items()]
 
 
+def refresh_fingerprints(inner: str, n: int, final: dict[str, object]) -> tuple[str, list[tuple[str, str, str]]]:
+    """Re-derive every decoded P2 source/body guard from the authenticated tree."""
+    root = physical_path(Path(str(final["checkout"])))
+    updated = inner
+    refreshed = []
+    for path, kind, old in row_fingerprints(inner, n):
+        data = (root / path).read_bytes()
+        expected = git_blob(data) if kind == "blob" else digest(data)
+        if updated.count(old) < 1:
+            raise RuntimeError(f"P{n}: source guard is not replaceable: {path}")
+        updated = updated.replace(old, expected)
+        refreshed.append((path, kind, expected))
+    if row_fingerprints(updated, n) != refreshed:
+        raise RuntimeError(f"P{n}: source/body guards were not fully rederived")
+    return updated, refreshed
+
+
 def mechanical_controls(
     inner: str,
     n: int,
@@ -781,6 +907,11 @@ def prepare(out: Path) -> dict[str, object]:
         assert QUALIFIED_PARENT in text
         outer, inner, tail = extract_inner(line)
         row_replacements = dict(binding_replacements)
+        row_replacements.update({
+            QUALIFIED_APP: str(app_input["source"]),
+            QUALIFIED_TREE: str(app_input["tree"]),
+            QUALIFIED_PARENT: str(app_input["parent"]),
+        })
         updated = inner
         for before, after in row_replacements.items():
             count = updated.count(before)
@@ -790,14 +921,17 @@ def prepare(out: Path) -> dict[str, object]:
             if before != after and updated.count(before):
                 raise RuntimeError(f"mounted source token was not fully rebound: {before}")
         if (
-            f"P{n}APP={QUALIFIED_APP}" not in updated
-            or f"P{n}TREE={QUALIFIED_TREE}" not in updated
-            or QUALIFIED_PARENT not in updated
+            f"P{n}APP={app_input['source']}" not in updated
+            or f"P{n}TREE={app_input['tree']}" not in updated
+            or QUALIFIED_PARENT in updated
             or AGENT in updated
             or CHILD in updated
         ):
             raise RuntimeError("decoded P2 caller retained stale Agent source identity")
         assert f"P{n}A={agent['source']}" in updated and f"P{n}R={RUNTIME}" in updated
+        assert f"P{n}APP={app_input['source']}" in updated
+        assert f"P{n}TREE={app_input['tree']}" in updated
+        assert f"P{n}PARENT='{app_input['parent']}'" in updated
         assert agent["child"] in updated and REMOTION in updated
         native_start = inner.index("import { expect }")
         native_end = inner.index("finally { await harness.stop(); }")
@@ -811,10 +945,8 @@ def prepare(out: Path) -> dict[str, object]:
         updated_native_end = updated.index("finally { await harness.stop(); }")
         assert updated[updated_native_start:updated_native_end] == before_native
         assert f"P{n}_ALLOCATED_PORT" in updated and "original-body-NOTRUN" in updated
-        current_fingerprints = {
-            path: {kind: expected}
-            for path, kind, expected in row_fingerprints(updated, n)
-        }
+        updated, refreshed = refresh_fingerprints(updated, n, app_input)
+        current_fingerprints = {path: {kind: expected} for path, kind, expected in refreshed}
         controls = mechanical_controls(updated, n, current_fingerprints, app_input, agent)
         new_outer = outer[:outer.index("$(bash -c ") + len("$(bash -c ")] + shlex.quote(updated) + tail
         for label, data in ((f"p{n}-inner.sh", inner), (f"p{n}-new-inner.sh", updated), (f"p{n}-outer.sh", outer), (f"p{n}-new-outer.sh", new_outer)):
@@ -830,7 +962,7 @@ def prepare(out: Path) -> dict[str, object]:
         "replacements": replacements,
         "run_authorization": "NOT_GRANTED",
         "qualified_caller": {"commit": "1f82e4b6d86918177f1ec9ddf5747f037f94084f", "app_source": QUALIFIED_APP, "app_tree": QUALIFIED_TREE, "app_parent": QUALIFIED_PARENT},
-        "source_base": SOURCE_BASE, "final_source": source_custody(final) if final is not None else {"status": "PENDING", "reason": "final App pure-product join is not available"}, "d41_agent": agent, "custody": custody,
+        "source_base": SOURCE_BASE, "final_source": app_input if final is not None else {"status": "PENDING", "reason": "final App pure-product join is not available"}, "d41_agent": agent, "custody": custody,
         "live_row_sha256": {name: digest(rows[name][1]) for name in SUITES},
         "draft_row_sha256": {name: digest((drafts[name] + "\n").encode()) for name in SUITES},
         "outside_row_count": len(raw.splitlines(keepends=True)) - len(SUITES), "outside_bytes": len(outside), "outside_sha256": digest(outside),
@@ -838,8 +970,8 @@ def prepare(out: Path) -> dict[str, object]:
         "stage_records": stage_records,
         "door_port": {"allocation": ["P2_ALLOCATED_PORT", "P3_ALLOCATED_PORT"], "propagates_before_every_stage": True, "changed": False},
         "tool_versions": {"node": "not-read", "npm": "not-read", "playwright": "not-read"},
-        "final_inputs": {"catalog_source": "PENDING", "p2_source": "PENDING", "p3_source": "PENDING", "source_manifest": "PENDING", "d41_agent_source": ACTUAL_AGENT, "d41_agent_checkout": str(ACTUAL_AGENT_CHECKOUT), "d41_agent_receipt": str(ACTUAL_AGENT_RECEIPT), "d41_agent_child": ACTUAL_CHILD, "d41_agent_child_key": ACTUAL_CHILD_KEY, "d41_agent_manifest": os.environ.get(D41_AGENT_MANIFEST_ENV, "ACTUAL_FIXED_EVIDENCE")},
-        "missing_inputs": ["final reviewed joined App source SHA/tree/parent", "final App source/body checksum rederivation", "separate clean pure final-integrated proof-worker target", "integrated P2 proof and daemon identity"],
+        "final_inputs": {"catalog_source": "PENDING", "p2_source": FINAL_SOURCE, "p3_source": "PENDING (retained installed row)", "source_manifest": FINAL_SOURCE_REPORT, "d41_agent_source": ACTUAL_AGENT, "d41_agent_checkout": str(ACTUAL_AGENT_CHECKOUT), "d41_agent_receipt": str(ACTUAL_AGENT_RECEIPT), "d41_agent_child": ACTUAL_CHILD, "d41_agent_child_key": ACTUAL_CHILD_KEY, "d41_agent_manifest": os.environ.get(D41_AGENT_MANIFEST_ENV, "ACTUAL_FIXED_EVIDENCE")},
+        "missing_inputs": ["independent final caller review", "separate worker-only installation", "integrated P2 proof and daemon identity"],
         "negative_context": {"source_target_0644": "retained as source-only context", "wrong_artifacts": ["20674", "10144"], "wrong_artifacts_status": "preflight-only, originals NOTRUN; never reuse or relabel"},
         "retention_reuse": {"allowed": True, "condition": "decoded caller logic byte-identical after audited bindings/fingerprints/body hashes/log identity", "otherwise": "bounded real execution controls required", "qualified_stages": 60},
         "selected_source_snapshot": {"required": "normal service must recreate the separate read-only final proof-worker branch and authorize one single-parent same-tree snapshot", "daemon_identity": "uninferred", "candidate_mechanics_only": True},
