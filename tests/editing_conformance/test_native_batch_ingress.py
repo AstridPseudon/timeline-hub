@@ -139,13 +139,43 @@ def batch():
 
 
 def cli(runtime, capsys, path, *args, base=None):
-    """Submit the file's batch through the current Runtime-backed commit API.
+    """Submit the captured file through the supported ``timelines commit`` CLI.
 
-    ``edit commands-file`` was retired by G5.  Keep the original file input
-    and CLI provenance while routing the batch through the public session
-    caller, which uses Runtime's canonical ``commitTimeline`` door.
+    The retained fixture is a native command capture.  G5's supported CLI
+    accepts a detached checkout, so prepare that checkout beside the capture
+    and invoke the real parser/handler; malformed captures remain untouched
+    and reach the same CLI refusal path.
     """
+    from astrid.packs.timeline.cli import build_parser
+    from astrid.sdk.timeline.checkout import Checkout
+
     pins = base or runtime.base
+    cli_path = path.with_name(path.name + '.detached.json')
+    capture = path.read_bytes()
+    cache = getattr(runtime, '_cli_capture_cache', {})
+    cached = cache.get(str(path))
+    try:
+        if cached is not None and cached[0] == capture:
+            cli_path = cached[1]
+        else:
+            raw = json.loads(capture)
+            if not isinstance(raw, list):
+                cli_path = path
+            else:
+                original = (cached[2] if cached is not None else
+                            runtime.client().timelines.open_bundle(
+                                runtime.project, 'film', revision_id=pins['base_revision_id']
+                            ).data['bundle'])
+                cache[str(path)] = (capture, cli_path, copy.deepcopy(original))
+                plan = execute(original, raw)
+                candidate = Checkout(plan.bundle).document()
+                candidate['base_parent'] = {**candidate['base_parent'], **pins}
+                cli_path.write_text(json.dumps(candidate))
+                cache[str(path)] = (capture, cli_path, copy.deepcopy(original))
+    except (TimelineEditError, OSError, TypeError, ValueError, KeyError):
+        cli_path = path
+    runtime._cli_capture_cache = cache
+
     idempotency_key = None
     for index, value in enumerate(args):
         if value == '--idempotency-key' and index + 1 < len(args):
@@ -153,33 +183,13 @@ def cli(runtime, capsys, path, *args, base=None):
             break
     if idempotency_key is None:
         idempotency_key = f'batch-cli-{len(runtime.calls)}'
-    dry_run = '--dry-run' in args
-    try:
-        commands = json.loads(path.read_bytes())
-        accepted = runtime.session(base=pins).commit_many(
-            commands, idempotency_key=idempotency_key, dry_run=dry_run, via='cli'
-        )
-        payload = {'ok': True, **accepted}
-        print(json.dumps(payload))
-        return 0, payload
-    except (TimelineEditError, WorkspaceClientError, CommitConflict, URLError,
-            OSError, TypeError, ValueError, KeyError) as error:
-        # The CLI boundary reports current API refusals as JSON.
-        failure = getattr(error, 'failure', None)
-        if isinstance(failure, dict):
-            payload = {'ok': False, 'error': {
-                'code': failure.get('code', 'timeline_commit_error'),
-                'message': failure.get('message', str(error)),
-                'details': failure.get('details', {}),
-            }}
-        else:
-            payload = {'ok': False, 'error': {
-                'code': getattr(error, 'code', 'timeline_commit_error'),
-                'message': str(getattr(error, 'message', error)),
-                'details': dict(getattr(error, 'details', {}) or {}),
-            }}
-        print(json.dumps(payload))
-        return 1, payload
+    argv = ['commit', 'film', '--project', runtime.project, '--file', str(cli_path),
+            '--message', 'Timeline edit', '--json', *args]
+    if '--idempotency-key' not in args:
+        argv.extend(['--idempotency-key', idempotency_key])
+    parsed = build_parser(runtime.client()).parse_args(argv)
+    code = parsed.handler(parsed)
+    return code, json.loads(capsys.readouterr().out)
 
 
 @pytest.mark.parametrize('captured', [False, True])
