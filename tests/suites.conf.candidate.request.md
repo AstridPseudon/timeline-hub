@@ -1,7 +1,7 @@
 # D69 restored-47 plus two-audit service request
 
 The existing `d69-restored47-nodes` row is ready for the manager's first actual
-49-body request after this launcher repair. The source manifest remains the
+49-body request after the real-service diagnostic below passed. The source manifest remains the
 identity manifest: 47 rows, 34 functions, 20 parameterized rows, and 27
 non-parameterized rows. Its XML/class selectors are not transport selectors.
 
@@ -33,9 +33,48 @@ R=$(/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpa
 The registered command supplies deliberate argv0 `d69-restored47-nodes` to
 the inner `bash -c`, so the service's appended selector arguments all reach
 pytest through `"$@"`. It retains the existing source AST, import/schema,
-Runtime, lock, profile, and node guards. No service body or pytest body was
-requested by this worker.
+Runtime, lock, profile, and node guards. No pytest body was requested by this worker. The harmless diagnostic is
+requested on integration:agent through the real test service.
 
 Expected durable JUnit output:
 
-`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D69-proof-install-return-1622/evidence/d69-restored47.xml`
+`/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D69-snapshot-launch-sol-1642/evidence/d69-restored47.xml`
+
+
+The Agent HEAD guard is the exact existing P4 predicate: the normal HEAD with
+its exact parents, or a synthetic HEAD whose sole parent is that normal HEAD.
+Both cases require the exact Agent tree. The shell uses pipefail so a failed
+47-row AST/metadata source gate cannot be hidden by tee. The normal Runtime,
+lock/all15, import/schema, profile819acf and Node20 guards remain in place.
+The final pytest call has a 45-second test timeout.
+
+The installed d69-preflight row has byte-identical guards and argument transport;
+only the suite key and final pytest executable differ. Its harmless stub checks
+all 48 transport arguments plus the original pytest options, records service
+HEAD/tree/parents and exits 37. This expected diagnostic exit is not a behavior
+verdict. The body row is ready only after the real-service result demonstrates
+exactly one stub invocation and exit 37 propagation.
+
+Diagnostic result: agent-d69-preflight-1024164256-28403 (integration:agent).
+Durable diagnostic command and artifacts:
+
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D69-snapshot-launch-sol-1642/evidence/diagnostic-request.txt
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D69-snapshot-launch-sol-1642/evidence/d69-stub-result.json
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D69-snapshot-launch-sol-1642/evidence/d69-source-preflight.json
+
+The selector string is byte-identical to worker1634's successful exact49
+collection (transport SHA256 6f6e080c887a7976ee6bf132f7bdb90a49aaa7d25262b67ac40ee278d36a18ef).
+No second collection is needed. The manager alone requests one body run.
+
+
+READY: the real service completed the diagnostic in 2 seconds. It reports fail
+exit=37 as deliberately requested by the stub; diagnostic acceptance is PASS.
+The stub ran exactly once in the service-created snapshot
+/home/user/work/wt/.test-agent-d69-preflight-1024164256-28403, HEAD
+e6fb511912e7f6b0bca209c794f616e1262d52ea, sole parent ef0363985e645481952448619f2cbb25e9d51a66,
+and tree 1be86f3bb070ec0712afa334c7d7fa4c1d4e0a6d. The 47-row/34-function
+source gate passed there. Full guards completed before the stub; it verified
+all 48 selector arguments. Wrong-source poison exited 1 before the stub.
+The actual result is retained in evidence/service-{request,snap,log.txt,summary,exit,status}
+and diagnostic-source-preflight.json under the durable worker directory above.
+No behavior verdict or JUnit XML exists. The manager may now request ONE body.
