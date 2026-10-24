@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T06:22:46Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 3m -->
+<!-- app | 2026-10-24T06:25:38Z | dispatcher heartbeat 8s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 1m -->
 # app board, 2026-10-24T06:10Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -79,10 +79,10 @@
 | P2-P3-stage-retention | Preserve earlier stage diagnostic files | Sol; D21 | Caller controls complete; source held | blocked:app | app-A2-final-retained-caller-sol-0609 | READYcaller on held b238: 60 controls and six real browser-free stages retained files. Corrected source rebind remains; no request submitted. | Source b2380539c5 |
 | App-current-real-path-proof | Qualify all final mounted caller repairs | Luna | Timing interaction repair | blocked:app | app-A2-A3-current-joined-proof-0609 | On b238: 685 passed, one unchanged media timing positive failed. P3 controls12, three types, lint and donor26 passed. Pre-existing label is not adopted. | b2380539c5 |
 
-| A2-media-timing-join | Preserve prepared media canonical timing | Sol; independent review next | Joined0609 original RED | doing | app-A2-media-timing-join-sol-0616 | Exact unchanged at_ms media case returned null on combined source. Minimal production repair and original RED/GREEN required; no test waiver. | Base b2380539c5 |
+| A2-media-timing-join | Preserve prepared media canonical timing | Sol; Luna review | Author252 PASS; exact cause named | review | app-A2-media-timing-review-0623 | Raw restoration revived matching at_ms alias; preview normalizes exact numeric alias and refuses contradictions. Original test unchanged; all26 media tests pass. | 6635416195 |
 Integration: b2380539c5545661954d2794976631312ee1d939 joins every reviewed repair: catalog a63 plus3393 plus172033, P3 setupbb5ee, parameter1d9 plus9b5, popup03f98 plusfa59, parent5e242 and oracle2972.
 
-Next ready: Timing interaction Sol0616 queued; independent joined0609 finishes remaining checks. Finalcaller0609 is READY on held b238, with 60 controls and six-stage retention PASS; corrected source rebind remains. Proof owns pair release; no request submitted.
+Next ready: Independent timing review0623 and mechanical caller rebind0623 queued in parallel. Exact corrected integrated proof follows home merge. Proof owns pair release; no request submitted.
 Blockers: App — one media timing interaction fails the joined proof. Sol0616 repairs it; final caller cannot release a journey before corrected proof.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
 
