@@ -1,0 +1,5 @@
+Ask: relay newRuntimeadoption and distinctregisterAssetcausefacts / Owner: App2136 soleelementrunner; AppA3source2137; Runtimecostowners / By: nextleadpass
+
+Normalbc04 adoption2133 MERGED App245742dc77, treeexactauthor3b83.8strict+15vendor+14mappings/protected6PASS; onlylock/manifest. DispatchedLunaapp-P2-metadata-element-2136immediatelyonreceipt;ONEelementfirst. ActualserviceIDpendingworkerplan, notinvented. Ifsameappliedstatus5sresponsewait, holdrestagain.
+
+ImportantregisterAsset12674 distinction: finiteauthor2131 finds NO browsercommitPOST, not Runtimewait. Mediaimport201~173ms/selection200~14ms complete. Parentvisualrowdrop creates uploading skeletononsource/occurrencerow, existinghandoffrejectsownershipbeforetransport. OnlyRuntimephaseordinals1/2setupcompleted200. Reportdesign/app-P2-asset-12674-cause-2131.md; sourceA3nextworkerprovesfaithfuloldRED/minimumfixorstrictsetupcorrection, no blindguardwaiver. Parent837 andelement22971 remainactualRuntimehistoricalpending. No newbodyforasset.

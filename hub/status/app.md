@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T21:33:23Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 7 | status age 1m -->
-# app board, 2026-10-24T21:34Z
+<!-- app | 2026-10-24T21:36:52Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 0m -->
+# app board, 2026-10-24T21:37Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -7,8 +7,8 @@
 | U3-final | Final upstream refresh | Luna | D60 and D68 | merged | Author1330; audit1343; composed1553 | 289 source checks, types and lint PASS; predicates mapped. | d24ed69dcd |
 | U4p | Generated client and schema | Luna; reviewed | Runtime D62 | merged | Adoption1539; composed1553 | Normal tools, 14 mappings exact; schema867f. | 95cfbf216f |
 | U4p-D83 | Adopt qualified history and observer source | Luna | Runtime dc55 security PASS | merged | app-U4p-D83-qualified-adoption-2052 | Eight strict controls, 15 vendor tests, 14 exact mappings PASS; home tree equals author. Protected six unchanged. | Home ce1cd9c439 |
-| U4p-metadata | Adopt qualified metadata decoding fix | Luna | Runtimebc04 released; security2122 PASS | doing | app-U4p-D83-metadata-adoption-2133 | Normal tools only; source-only floor6GB. Capture identities and preserve canonical mappings/schema/protected6. | Runtimebc04 |
-| P2-metadata-element | Qualify applied status on metadata fix | Luna; Service | U4p2133 normal home | blocked:app | Brief2134 prepared | One element first after adoption; same failure holds remaining bodies for next Runtime release. Critical6GB floor. | New tuple pending |
+| U4p-metadata | Adopt qualified metadata decoding fix | Luna | Runtimebc04 released; security2122 PASS | merged | app-U4p-D83-metadata-adoption-2133 | Normal tools PASS;8strict,15vendor,14mappings/protected6 exact. Only lock and install manifest; home tree equals author. | App245742dc77 |
+| P2-metadata-element | Qualify applied status on metadata fix | Luna; Service | U4p2133 normal home | doing | app-P2-metadata-element-2136 | Dispatched immediately after merge. One element first; same pending5s failure holds rest. Actual ID pending authentic submission. | App245742; Runtimebc04 |
 | U4p-current | Current popup provenance | Luna | Runtime2c1 | merged | Author1711; return1714 | Normal tools, eight strict controls and 14 mappings PASS. | 92414037c7 |
 | A2 | Production dependent save funnel | HARD Sol; Luna | C0 and U3 | merged | Source authors and reviews | Mounted save/outbox and authoritative replies integrated; original gates below. | Current home |
 | A3 | Popup placement element asset saves | Luna; core Sol | A2 | merged | Source authors and reviews | Mounted routes integrated; all eight original gestures remain core and unqualified. | Current home |
@@ -98,7 +98,8 @@
 | P2-popup-26387 | Attribute missing shared group before ADD | Luna | Actual26387 | blocked:runtime | App2115; Runtime peer2121 | Internal timeline read pending through teardown; no App defect.55 controls/types/lint and protected6 PASS. Source report published. | Source unchanged |
 | P2-D83-parent-move | Parent move isolated original | Luna; Service | Preflight20867 PASS | review | App2058; actual837 | Readiness1 PASS, original1 ERROR at response wait90000ms. Source attribution queued for next slot; no gate credit. | Appce1cd9; Agent5fc1 |
 | P2-parent-837 | Attribute parent response wait | Luna | Actual837 | blocked:runtime | App2125; Runtime Sol2113 | Request3 reached historical validation; no App fix.102 controls/types/lint/protected6 PASS. Report and peer2131 published. | Source unchanged |
-| P2-asset-12674 | Attribute exact missing asset response | Luna | Actual12674 completed Runtime phases | doing | app-P2-asset-12674-cause-2131 | One finite source attribution: actual browser waiter versus completed Runtime responses. No common cause inferred or duplicate body. | Source ce1cd9 |
+| P2-asset-12674 | Attribute exact missing asset response | Luna | Actual12674 completed Runtime phases | merged | app-P2-asset-12674-cause-2131 | No browser commit sent. Media import/select completed; drop crossed ownership before transport. Exact report published. | Source unchanged |
+| A3-asset-owner | Prove asset drop target and handoff | Luna | Finite12674 attribution2131 | doing | app-A3-asset-drop-owner-2137 | Faithful mounted oldRED then minimum fix or strict setup proposal. No source change without proven cause; no body. | Source245742 |
 | P2-D83-asset | RegisterAsset isolated original | Luna; Service | Preflight PASS | review | App2058; actual12674 | Readiness1 PASS, original1 ERROR at commitFromGesture responsewait90000. Author2125 compares actual source boundary. | Appce1cd9; Agent5fc1 |
 | P2-D83-placement | Automatic placement isolated original | Luna; Service | Preflight29256 PASS | review | App2058; actual28255 | Readiness1PASS, original1FAIL visible locator in dropFileIn358 before intended save. No gate credit. Retained for next source qualification. | Appce1cd9; Agent5fc1 |
 | P2-D83-swap | Popup SWAP isolated original | Luna; Service | Meaningful reviewed history fix | blocked:runtime | App2058 held; Runtime Sol2113 | Owner21:31 holds remaining body; no gesture run. Resume all eight only after new source home. | Source unchanged |
@@ -112,14 +113,14 @@ regressions: 0 confirmed open App source findings. D69 all four restorations hom
 
 
 Blockers: Final cut — eight P2 cases remain unqualified. P3 current15493 is independently GO. Runtime coordinates source repair, final tuple rerun matrix, suites and ZIP.
-Blockers: Runtime history source — owner21:31 holds remaining isolated bodies after placement28255. Runtime Sol2113 owns accepted-history correction; App2131 completes asset correlation; parent2125 confirms Runtime boundary. Requalify all eight on new source.
-Next ready: Adoption2133 normal merge then ONE element on qualifiedbc04. If same applied-status response wait, hold rest again. Asset2131 returns retained browser-waiter correlation. P3 independently GO.
+Blockers: P2 source qualification — bc04 released and adopted App245742. ONE element2136 first; same wait holds rest again. Parent is Runtime history; registerAsset no commit sent, App2137 owns target/handoff proof.
+Next ready: Element2136 actual newsource result; same applied-status wait holds rest. Assetsource2137 proves mounted target/handoff before any fix. P3 independently GO.
 
-live 2 / cap 2; ready-undispatched 0. Asset source2131 plus normal adoption2133. Runtimebc04 RELEASE supersedes hold; element2134 is next after normal home, one body only.
+live 2 / cap 2; ready-undispatched 0. Elementrunner2136 plus A3 asset source2137. Adoption2133 home245742. Runtimebc04 release consumed; one element body only.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
-Disk: Current 6.674 GB; cap 2. One critical P2 build/body runs under D74a 6 GB exception. No concurrent body or noncritical dispatch. Guarded scan found no finished clean non-KEEP App worktree remaining. Six stale pins previously released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
-Inbox consumed through 1722544 bytes; ORCH 20:47 cancels both redundant P3 workers. Owner boards Runtime 20:30 and Agent 20:27 rechecked. Runtime e745 schema setup is home, but both D83 Sol rows and observer acceptance remain active; no consolidated native wait release. P3 current 15493 independently GO.
+Disk: Current 6.495 GB; cap 2. One critical P2 build/body runs under D74a 6 GB exception. No concurrent body or noncritical dispatch. Guarded scan found no finished clean non-KEEP App worktree remaining. Six stale pins previously released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
+Inbox consumed through 1723914 bytes; ORCH 20:47 cancels both redundant P3 workers. Owner boards Runtime 20:30 and Agent 20:27 rechecked. Runtime e745 schema setup is home, but both D83 Sol rows and observer acceptance remain active; no consolidated native wait release. P3 current 15493 independently GO.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
 
@@ -144,3 +145,7 @@ Pass21:24Z: NEW inbox consumed through1717736bytes, Runtime2113 owner ask fulfil
 21:32Z: producer2058 normalSTOPcomplete, WIP/plans retained andtreeautomaticallyrecycled. SWAPpreflight12165PASS, normalplan null; no extra body submitted. Parent2125 terminalsourcePASS/nochange: realRuntimeordinal3 historicalvalidationpending;102controls/types/lintPASS. Report+Runtimepeer2131published. AssetphasecompletedHTTPresponses needfinitecorrelation; Luna2131 dispatched immediately, reportonlyunlessprovedsourcecause. Zeroactivebody. Owner holds all8reruns for meaningfulRuntimehistoryfix.
 
 21:34Z owner21:33 Runtimebc04 RELEASE consumed immediately, superseding21:31hold. Normalhomebc04 verified, LunaU4p2133 dispatched sourceonly normalvendor/manifest; security2122 alreadyPASS perowner. Runnerbrief2134 prepared, waitsactualApphome thenONEelementfirst; ifsameapplied5s pending, holdrest again. Asset2131 remainsindependentfiniteattribution/no body. No newapproval/custody layer.
+
+21:35Z: U4p2133 authorPASS exactnormalbc04 adoption, onlyruntime.lock/installmanifest.8strict+15vendor+14mappings/protected6PASS, knownRuntimeTSstaleoutput remainsunchanged. Normalmergequeued immediately; noindependentreview needed metadataD56. Elementrunner2134 readyonhomereceipt. NewRuntimepeer2128 twodisjointSol sourceowners consumed; owner21:33release supersedesolderhold.
+
+21:37Z: normaladoption2133 MERGED245742dc77, exactauthortree3b83bafa. Elementrunner2136 dispatchedimmediately; actualIDpendingplan. Asset2131 finitePASS provesno browsercommitPOST, successfulmediaimport/select but ownershipreject; notdemonstratedRuntime90s stall. A3assetowner2137 dispatched firstfreeslot forfaithfuloldRED/minimumfixorstrictsetupreviewproposal. Exactreport+separateRuntime/lead2137peerspublished; noextraassetbody.

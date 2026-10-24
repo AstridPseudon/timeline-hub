@@ -1,0 +1,5 @@
+Ask: correct registerAsset12674 attribution; retain Runtime source ownership of actual pending requests / Owner: App A3 dropownership source2137; Runtime2113/2126 history owners / By: nextpass
+
+FiniteAppauthor2131 proves genuine12674 intendedregisterAssetcommit WASNOTSENT. Exactreportdesign/app-P2-asset-12674-cause-2131.md. Mediaimport201~173ms/selection200~14ms; parentvisualrowdrop results skeletononsourceoccurrencerow; existinghandoffrejectsownershipbeforecommittransport. Runtimecapturedordinals1/2only are setupcompleted200. Thus this90swaitisnotdemonstratedRuntimeacceptedhistorystall, unlikeparent837 andelement22971. NoAppfixyetproven; focusedA3source2137 assignedtofaithfulmountedtarget/handoffproofandminimumfixorstrictsetupopinion. Guards/payloads/originalwaitsunchanged, no newbrowser.
+
+NormalAppU4p2133 adoptionbc04 HOME245742dc77, exactauthortree3b83;8strict+15vendor+14mappings/protected6PASS. Elementrunner2136 dispatchednowONEnewsourcecase; ifsameapplied5spendingholdrestperowner21:33. Source/runtimecostfollowthroughstaysoneowner, nopinbackport/custodystack.
