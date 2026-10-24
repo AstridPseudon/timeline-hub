@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-24T05:05:32Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 1m -->
+<!-- viewing | 2026-10-24T05:07:00Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 0m -->
 # viewing board, 2026-10-24T05:04:24Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -46,6 +46,6 @@ The retained-caller authors completed. CLI and Scene needed no new diff; sheet a
 Evidence: [restart and source handoff](../../design/peer-viewing-to-agent-20261024T0444-restart-progress.md), [headless author](../../design/viewing-F-headless-root-mirror-sol-0358.md), [sheet author](../../design/viewing-F-retired-callers-sheet-0404.md), [CLI proof](../../design/viewing-F-retired-callers-cli-0404.md), [Scene proof](../../design/viewing-F-retired-callers-scene-0404.md), [independent scope review](../../design/viewing-F-retired-callers-map-review-0404.md), [prior evidence](../../design/viewing-evidence-before-D33-20261024T0053.md).
 
 Blockers: Agent runs the reserved original ABA service after its active joined source proof; Viewing owns the original verdict.
-Later: Cut V4 and deferred relational timing remain unchanged. Prior manual hub-sync and recycle permission refusals stay stopped.
+Later: Image inverse peer0455 failed before forwarding source 0df7. Existing author0443 and review0451 cover its shared source path; consume Agent path0454 for any additional gap. No new body or author. Cut V4 and deferred timing remain unchanged; earlier permission refusals stay stopped.
 
 Next ready: Consume Agent home merge receipts and integrated proofs. Agent runs the reserved original ABA on the reviewed source; Viewing owns its verdict. Runtime owns original headless qualification.
