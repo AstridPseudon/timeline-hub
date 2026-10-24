@@ -592,7 +592,8 @@ class CommitPatch:
             after = inverse_closure(self.outputs[step['id']], self.inverse_sources.get(ordinal, []),
                                     inverse_records=self.inverse_records.get(ordinal, ()))
             record = plan.records[ordinal]
-            if self.v2:
+            if self.v2 or any(self.inverse_stages.get(index)
+                              for index in step['command_ordinals']):
                 for index, effect in enumerate(step['patch']):
                     segment = next(((first, second) for source_ordinal in step['command_ordinals']
                         for stage, (first, second) in zip(
