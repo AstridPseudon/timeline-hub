@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T16:37:41Z | dispatcher heartbeat 12s | live 1 (sol 1, luna 0, other 0) | busy30 16 | status age 2m -->
-# runtime board, 2026-10-24T16:29:54Z
+<!-- main | 2026-10-24T16:40:42Z | dispatcher heartbeat 11s | live 4 (sol 1, luna 3, other 0) | busy30 17 | status age 0m -->
+# runtime board, 2026-10-24T16:40:05Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -79,7 +79,9 @@
 | F-D52-core-five | Map five named actual home outcomes | Luna | Authentic XML and map verified | merged | Receipt 1418 PASS | All five named cases PASS on actual47b/becfe. Current four fork failures are distinct. [Receipt](../../design/rt-F-D52-core-five-receipt-1418.md) | Agent 47b |
 | U1-D69-test-audit | Preserve upstream test predicates | Luna | Seven restorations before cut | merged | rt-U1-D69-test-audit-1603 | Missing16:9 mapped,7 restore. Changed129:75 clear,54 cited. Two skip markers cited;12 dynamic scopes explicit. [Audit](../../design/rt-U1-D69-test-audit-1603.md) | Source facts only |
 | R-P4-history-cost | Reduce historical schema validation cost | HARD Sol after Luna | Guard-preserving measured design | doing | Luna1625; Sol1635 | Luna profile found no safe speedup. Sol continues caller cost, every validation and45s retained. D47 result/history memo held. | New3controls only |
-| U1-D69-marker-scope | Resolve two mixed-route marker citations | Luna | Finite live catalog mapping | doing | rt-U1-D69-marker-scope-1632 | Independent1628 found two marker citation components wrong. Check live catalog assertions and exact replacements before disposition. | Source facts pending |
+| R-P2-popup-observation | Classify popup physical observation refusal | Luna | Actual source evidence | doing | rt-P2-popup-observation-1638 | Actual P225943 ADD gets422 invalid_records: missing authenticated physical observation. Attribute source without relaxing guards. | Source facts pending |
+| R-P2-element-boundary | Classify pending element request phase | Runtime / App | Existing safe server phase facts | blocked:app | App source1620 and wholepath1621 | POST pending through teardown; no response or receipt outcome retained. Peer1639 asks existing safe phases, else UNAVAILABLE. | Actual9502 /8b32 |
+| U1-D69-marker-scope | Preserve mixed-route live catalog predicates | Luna | Independent protected review | doing | Facts1632; author1638 | Two blanket xfails hide live catalog checks. Correct only approved retired scope; preserve unconditional live catalog predicates. | Source facts qualified |
 | U1-D69-restore-guard | Restore two skip guard originals | Luna | Joined policy review | review | Restore1613; policy1616; join1621 | Two exact upstream bodies restored. Policy fix passes24; joined seven-test scope and independent protected review next. | ee407797d |
 | U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Joined protected review | review | rt-U1-D69-checker-1629 | Policy1616 passes24 and Pyright0. Preserve no_ci, false-condition refusal and stricter current xfail/node/hash guards. | Policy source ready |
 | U1-D69-restore-registry | Restore five registry originals | Luna | Joined policy review | review | Restore1613; join1621 | Five exact bodies restored; prior11PASS1FAIL exposed no_ci. Join1621 imports exact blob onto corrected policy. | Source ready |
@@ -143,10 +145,10 @@ D65 delivery: owner merges Runtime, then Agent, runs authentic App update-manife
 
 Blockers: Runtime P4 — actual ten-note timeout during historical canonical schema validation; bounded profile/source1625 active, no validation or budget waiver.
 Blockers: Agent — one unchanged inverse original on actual Runtimebc227 is due after merged security PASS. Peer1621 supplies exact source/tree and asks only the one meaningful current-home proof.
-Blockers: App — current P2 25943 and P3 10033 running. P1control26312 PASS2; independent1616 verdict pending. App owns exact terminal facts; no duplicate original.
-Blockers: Runtime D69 — joined28PASS1FAIL. Checker1629 restores upstream no_ci source predicate; independent wholepath1628 checks source and audit citations. All7 restored bodies exact.
+Blockers: App — current P2 25943 and P3 10033 NO-GO. P1control26312 PASS2 plus independent1616 PASS. App owns element/oracle facts; Runtime popup1638 source active.
+Blockers: Runtime D69 — exactthree-checker1633 PASS29; independent1639 active. Mixed-route xfails need livecatalog correction1638 then independent review. All7 original restorations exact.
 Blockers: Final delivery — cut needs active lanes0core/0regressions, current P2/P3PASS and D69 completion, then final proofs/build/ZIP.
-Next ready: consume checker1629 then dispatch exact joined policy/protected review; consume P4 profile1625 and wholepath1628 findings. Agent inverse and App parallel gate originals already owned.
+Next ready: consume policyreview1639 for normalmerge, popup1638 source attribution, mixedmarker1638 correction and SolP4cost1635. Element phase facts remain App-owned; no repeat static cost audit.
 
 Later: D47 memo and proof pins remain post-delivery; nine state attacks open. V4 cut; D14/D23 deferred unchanged. D34 broader cleanup remains held. D62 submit completeness is an explicit known gap in the Runtime behavior-change ledger.
 
@@ -154,7 +156,7 @@ Admission: D56 stops Farm and schema-access work. Exact403 and automatic access 
 
 Disk: about8.6GB, above main8GB heavy floor. Sweep3 freed0; compact packed0/compressed0. Finished worktrees automatically recycle; no old refused target retried.
 
-live 2 / cap 4; ready-undispatched 0. Copied dispatcher header16:31:41Z reports0Sol/2Luna before1633/1635 successors. Sol1635 justified by Luna failed safe optimization and core auth design; three rows owned.
+live 1 / cap 4; ready-undispatched 0. Copied dispatcher header16:37:41Z reports1Sol/0Luna before popup1638, marker1638 and review1639 queue. Four admitted rows; Sol justified by failed Luna/auth design.
 
 Pass 2026-10-24T15:34:02Z: PLAN/common/header D62–D67 and peer boards consumed. SecurityPASS412 -> normal merge8b32 completed and exact producer handed to Agent/App immediately. Separate D62 proof removed perD66. D67 docs installer1533 active; D65 missing command assigned App. No final proof or delivery claim.
 
@@ -203,3 +205,5 @@ Pass 2026-10-24T16:29:54Z: join1621 terminal28PASS1FAIL reveals existing checker
 Pass 2026-10-24T16:32Z: independent wholepath1628 FAIL finds three checker bodies missing no_ci; first1629 owns one then remaining two restore upstream unchanged. Two mixed-route marker citation issues get unique readonly1632 finite scope; no skipped live catalog credit. Other54 decision citations verified. P4 profile1625 active.
 
 Pass 2026-10-24T16:35Z: checker1629 actual29PASS; exact remaining two checker restorations1633 active before independent cumulative review. LunaP4profile1625 no justified productfix; HARD Sol1635 continues bounded caller optimization after failedLuna, all checks/timeouts retained and D47 memo held. Unique marker scope1632 active.
+
+Pass 2026-10-24T16:40:05Z: P2popup422 became unique Luna1638 source row; elementpending became separate blockedApp retainedphase row with peer1639 exactsafeinput request, no speculative backend cause. Threechecker1633 exactupstream and29PASS -> independent1639 dispatched immediately. Mixedmarkers1638 author active underD52, everylivecatalog assertion retained. P4Sol1635 active.
