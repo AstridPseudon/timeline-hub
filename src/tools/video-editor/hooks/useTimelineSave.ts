@@ -79,6 +79,7 @@ export function useTimelineSave(
   const [localSaveState, setLocalSaveState] = useState<LocalSaveState | null>(null);
   const localOwner = useMemo(() => ({ provider, timelineId, closed: false, started: false, generation: 0,
     headKey: '', recovered: false,
+    retirement: undefined as Promise<void> | undefined,
     ready: undefined as Promise<TimelineLocalSaveHandoff> | undefined,
     handoff: undefined as TimelineLocalSaveHandoff | undefined,
     session: undefined as LocalSaveSession | undefined }), [provider, timelineId]);
@@ -149,7 +150,8 @@ export function useTimelineSave(
   const { dataRef: localDataRef, editSeqRef: localEditSeqRef, commitData: adoptCanonicalData } = commit;
   const originalHeadKey = canonicalJsonStringify(commit.data?.head ?? null);
   useEffect(() => {
-    let previousDisposal: Promise<void> | undefined;
+    let previousDisposal = localOwner.retirement;
+    let sessionCreation: Promise<LocalSaveSession> | undefined;
     if (localOwner.started) {
       if (localOwner.headKey === originalHeadKey || localOwner.session?.getState().status !== 'saved'
         || localEditSeqRef.current !== savedSeqRef.current) return;
@@ -208,17 +210,17 @@ export function useTimelineSave(
       const isCurrent = () => !localOwner.closed && generation === localOwner.generation;
       localOwner.ready = (async () => {
         const verified = await originalRead;
-        if (cancelled || localOwner.closed || localEditSeqRef.current !== editSeq) {
+        if (cancelled || !isCurrent() || localEditSeqRef.current !== editSeq) {
           throw markTimelineSaveRejection(new TimelineVersionConflictError('Local edits preceded the original verified read; draft retained'), 'owner-original-read-invalidated');
         }
         const identity = await provider.getRecoverableIdentity!();
         emitTimelineSaveDiagnostic('identity-read', () => ({ owner: localOwner, timelineId,
           identityPresent: identity != null, closed: localOwner.closed, current: isCurrent(), generation }));
-        if (cancelled || localOwner.closed) throw markTimelineSaveRejection(new Error('Local save session replaced during identity read'), 'owner-identity-invalidated', 'Error');
+        if (cancelled || !isCurrent()) throw markTimelineSaveRejection(new Error('Local save session replaced during identity read'), 'owner-identity-invalidated', 'Error');
         await previousDisposal;
         if (!isCurrent()) throw markTimelineSaveRejection(new Error('Local save session replaced during owner retirement'), 'owner-retirement-invalidated', 'Error');
         let adoptedSource = structuredClone(verified.source);
-        const session = await createLocalSaveSession({
+        sessionCreation = createLocalSaveSession({
           scope: { ...identity, projectId: verified.initial.canonicalDocument.project_id, timelineId },
           initial: verified.initial, document: toOutboxJson(verified.initial.canonicalDocument),
           send: (request, key) => provider.commitTimeline!(request, key),
@@ -256,6 +258,7 @@ export function useTimelineSave(
             } };
           },
         });
+        const session = await sessionCreation;
         if (!isCurrent()) { await session.dispose(); throw markTimelineSaveRejection(new Error('Local save session replaced during outbox claim'), 'owner-claim-invalidated', 'Error'); }
         localOwner.session = session;
         emitTimelineSaveDiagnostic('session-created', () => ({ owner: localOwner, timelineId,
@@ -299,6 +302,14 @@ export function useTimelineSave(
       });
     }
     return () => { cancelled = true;
+      if (!localOwner.session) {
+        // A cancelled bootstrap has no live session to retain. Let the same
+        // owner restart, and retire any claim already in flight before reuse.
+        localOwner.generation++;
+        localOwner.started = false;
+        localOwner.ready = undefined;
+        localOwner.retirement = sessionCreation?.then(session => session.dispose(), () => {}) ?? previousDisposal;
+      }
       emitTimelineSaveDiagnostic('lifecycle-cancel', () => ({ owner: localOwner, timelineId,
         closed: localOwner.closed, generation: localOwner.generation, sessionPresent: Boolean(localOwner.session) }));
     };
