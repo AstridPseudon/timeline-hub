@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T13:45:39Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 4m -->
+<!-- main | 2026-10-24T13:48:34Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 0m -->
 # runtime board, 2026-10-24T13:41:17Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -77,10 +77,12 @@
 | F-D52-shot-set | Preserve 17 live shot-set cases | Luna | Actual Agent home proof PASS | merged | Author1139; review1143; home1156 | Actualaff339 passed61 in4.04s; durable XML and original14 test ASTs exact. All17 assigned cases included. | 3b8dc8a345 / aff3391061 |
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
 | F-D52-core-five | Qualify retained redo at Agent home | Luna / Agent | Agent null mirrors and home proof | blocked:agent | Mapping1250;1256; Agent1258/1304 | Both redo originals independently PASS on held e5fa; other3 retain prior scope. Two nullmirror failures block home. [Review](../../design/agt-R2-cumulative-security-review-1258.md) | e5fa held scoped PASS |
-| U1d-final | Join final owner upstream | Luna | D60 exactd4f496 | doing | rt-U1d-final-1329 | Incoming18 files; contract delta checked first. Targeted proof and review pending. | Basebecfe; upstreamd4f496 |
+| U1d-final | Join final owner upstream | Luna | Core and protected delta review | review | Author1329; core review1346 | True mergef69;440 passed,9skip,2existingxfail. Raw exit1 retained; no wire/client byte delta. | f69ad5813 held |
 | U1d-visual-source | Resolve visual policy and source | Luna | Independent union review | review | Author1331; review1333 | Focused17 and shared10 passed; old broader37 failures remain unqualified. | Own source committed |
 | U1d-visual-tests | Restore both live FPS test cases | Luna | Final joined port and review | review | First return1338; review1333 | Incoming41 preserved plus2 restored FPS cases;8 exact cases passed. Final join must retain v2 fixture migration. | 640db1049 |
 | U1d-visual-review | Check both source and protected tests | Luna | Exact source and test union | review | rt-U1d-visual-review-1333 | SOURCE PASS; TEST FAIL for two omitted live FPS cases. First return active. | Read only |
+| U1d-tests-join | Preserve v2 fixture and live FPS cases | Luna | Exact true mergef69 | doing | rt-U1d-tests-join-1346 | Add only2 restored functions to current v2 fixture;95 visual cases expected. | Basef69 |
+| U1d-core-review | Verify daemon and upstream core union | Luna | Committed true mergef69 | review | rt-U1d-core-review-1346 | Authenticate producer and raw skip-policy limits; protected tests reviewed separately. | Read only |
 | FREEZE | Reach final tuple cut | Runtime manager | D59 cut | doing | Lane owners; main benches1244 | Runtime0core/0regressions; Agent51core at refresh1254; App9gate cases,36regression repairs home awaiting proof. Cut requires all lanes0/0 plus current P2/P3 PASS. | Runtime becfe6db8 |
 | F-final | Main delivery build and ZIP | Luna | D59 cut and final proofs | doing | Builder1233; docs1229; service1244 | Builder and v2 prose installed. Durable service helper repair active; live-main refresh and final build wait qualified cut and proofs. | No delivery artifact |
 | F-final-builder | Put verifier clones in TMPDIR | Luna / Luna | Exact installed proof complete | merged | Review1229; installed1233 PASS | f25d atomically installed0755, old script backed up. Installed smoke and integrity checks passed; no real build. | f25dfab1 installed |
