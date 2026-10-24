@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T02:56:17Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# viewing board, 2026-10-24T02:54:05Z
+<!-- viewing | 2026-10-24T02:57:47Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# viewing board, 2026-10-24T02:56:49Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -32,6 +32,7 @@
 | F-authoring-ABA | Complete authenticated undo capture and projection | Sol author and Luna review | Agent assignment or projection repair | blocked:agent | Agent author pending; Viewing capacity note 0244 | Cause 0227 complete: exact baseline restored offline, but private capture and parent projection fail. Original service 141 remains failed. | source 61d53; oracle c70c4665b2 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six original cases passed in 41.48 seconds on child c886 and Runtime 8ea. Source classification independently passed. | no product change |
 
+| OPS-hub-publication | Restore supported board publication | Manager | Permission boundary | blocked:orchestrator | No worker | Hub sync hit read-only Git config; attempt stopped. Publication unconfirmed. | No product change |
 
 Detailed prior evidence: [retained board and scope boundaries](../../design/viewing-evidence-before-D33-20261024T0053.md). V1: [Agent integrated proof](../../design/agent-V1-integrated-proof-0147.md). V3: [Agent shared archive proof](../../design/agent-V3-integrated-proof-0111.md). Delivery dry run: [independent review](../../design/handoff-viewing-DB-composition-review-0802.md).
 
@@ -47,7 +48,8 @@ F-D32-render-wire classification and owner qualification are complete. [Author 0
 
 Historical recycle permission refusals remain parked under viewing-20261023T002713Z-recycle-b70-permission-refusal.md. No retry or alternate deletion.
 
-Blockers: F-authoring-ABA awaits Agent author assignment or a reviewed projection repair; Viewing offered its available capacity in peer 0244.
+Blockers: F-authoring-ABA awaits Agent author assignment or a reviewed projection repair; capacity offers 0244 and 0255 are pending.
+Blockers: Orchestrator must resolve supported hub publication after the read-only Git configuration failure; see the linked escalation.
 Next ready: none assigned. Dispatch F-authoring-ABA here if Agent transfers the ready projection repair; otherwise retain its unique home author.
 
 
@@ -62,3 +64,5 @@ Pass and round handoff 2026-10-24T02:54:05Z: Read PLAN v2.1, MANAGER-COMMON, the
 V1, V3 and six original render-wire results remain complete on their recorded proofs. V4 stays cut, and the original ABA behavior remains unqualified. Dispatcher and hub heartbeats are fresh at this pass. Free disk is 15,319,420,928 bytes, above the 15 GB target; no cleanup is needed. Historical recycle refusals remain parked. Only this board changed; no product, test, generated, package or pin files were edited.
 
 Current oracle evidence: [author 0208](/home/user/timeline-hub/hub/design/agt-F-ABA-oracle-sol-0208.md), [independent PASS 0224](/home/user/timeline-hub/hub/design/agt-F-ABA-oracle-review-0224.md), and [harness candidate 0224](/home/user/timeline-hub/hub/design/agt-OPS-ABA-suite-0224.md). The [Agent board](/home/user/timeline-hub/hub/status/agent.md) records original service 141 failed at undo. [Cause 0227](/home/user/timeline-hub/hub/design/agt-F-ABA-inverse-cause-sol-0227.md) is complete; a projection implementation is ready and waiting for an author slot. The original behavior remains unqualified.
+
+Permission handoff 2026-10-24T02:56:49Z: The supported hub sync attempt hit `error: could not lock config file .git/config: Read-only file system` and was interrupted with exit 130. No retry or alternative write route. Local board and capacity peer 0255 remain reviewable; remote publication is unconfirmed. [Permission escalation](../../escalations/viewing-20261024T025649Z-hub-sync-read-only.md). No product or test changes. Stop this publication action pending owner resolution.
