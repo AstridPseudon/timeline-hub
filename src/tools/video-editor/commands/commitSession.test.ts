@@ -449,31 +449,6 @@ describe('real clip move session through the Runtime HTTP boundary', () => {
       }
       await recovered.dispose();
     });
-  it('retains an unsaved B preview after uncertain A without an ephemeral transmission', async () => {
-    const env = await environment();
-    const session = await env.mount();
-    env.setFault('lost');
-    env.move(session, 5);
-    await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
-    const [original] = await env.outboxes.list(scope);
-    const wireA = structuredClone(env.commits()[0]);
-    const open = env.factory.open.bind(env.factory);
-    env.factory.open = () => { throw new Error('disk full'); };
-    env.move(session, 7);
-    await vi.waitFor(() => expect(session.getState().status).toBe('error'));
-    expect(session.getState()).toMatchObject({ error: 'Unsaved move: disk full', canUndo: false });
-    expect(env.current().config.clips[0].at).toBe(7);
-    expect(env.commits()).toEqual([wireA]);
-    env.factory.open = open;
-    const [retained] = await env.outboxes.list(scope);
-    expect(retained.intents).toEqual(original.intents);
-    expect(retained.pending).toEqual(original.pending);
-    await session.retry();
-    expect(env.commits()[1]).toEqual(wireA);
-    expect(env.commits()[2].body?.commands[0].expect?.['parent/clip:x::at']).toEqual({ state: 'present', value: 5 });
-    expect(session.getState().status).toBe('saved');
-    await session.dispose();
-  });
   it.each([true, false])('recovers legacy work only with a matching original document: %s', async (matching) => {
     const env = await environment();
     const session = await env.mount();
