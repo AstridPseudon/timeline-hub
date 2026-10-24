@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T04:36:09Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 0m -->
-# app board, 2026-10-24T04:36Z
+<!-- app | 2026-10-24T04:38:43Z | dispatcher heartbeat 4s | live 3 (sol 0, luna 3, other 0) | busy30 15 | status age 1m -->
+# app board, 2026-10-24T04:37Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -52,18 +52,18 @@
 | readiness-D42-coalesce | Reuse same-head pending basis read | Sol; Luna review | Independent0355 PASS | merged | app-readiness-element-join-sol-0351 | Exact reviewed tree integrated; joined332 tests and independent108, three types/lint passed. No live run claimed. | e492d963ba |
 | readiness-whole-path | Independently investigate client to server | Sol; Luna review | Review0336 PASS | merged | app-readiness-whole-path-review-0336 | [Source path and causal limits independently verified; missing clock and await joins remain.](../../design/app-readiness-whole-path-review-0336.md) | Report only |
 | A4-final-census | Verify zero reachable legacy writers | Luna; independent review | Review0345 FAIL | doing | Popup source0349 assigned | Original zero-writer claim withdrawn. Actual scoped popup fallback identified; independent element proof remains valid. | Report only |
-| A2-popup-wrapper | Bind scoped popup saves to verified source | Sol; Luna review | Cumulative0427 PASS | merging | app-A2-popup-binding-return-sol-0417 | Independent351 plus38 tests, three types and lint pass. Forged contexts and missing source heads refuse. Both author commits reviewed; home merge queued. | 6efdb +0267ed4f03 |
+| A2-popup-wrapper | Bind scoped popup saves to verified source | Sol; Luna review | Cumulative0427 PASS; home merge | merging | app-A2-popup-binding-return-sol-0417 | Independent351 plus38 tests, three types and lint pass. Corrected context integrated with parent packet; joined qualification next. | bad9a84fea |
 | readiness-D42-caller | Prepare qualified D42 caller | Sol | Qualified Runtime memo proof pin | blocked:runtime | app-readiness-D42-caller-sol-0348 | Draft24+28+4 and4 extra controls passed; exact old receipts checked. Shared rows unchanged; final pin and keyed child required. | Draft only |
 | P2-parent-outbox | Preserve parent move dispatch boundary | Sol; Luna review | Current packet integrated | merged | app-P2-parent-current-packet-0430 | Source-qualified closure and causal inputs passed292 tests. Actual old12221 trigger remains unknown; no browser credit. | 19c4839d81 |
 | P2-popup-target | Correct rendered popup target lookup | Luna; Proof review | Proof 0418 PASS and home merge | merged | ap2-P2-popup-rendered-target-0413 | Exactly two selector lines integrated; own reviewed blob retained. Source tests and no-weakening pass; original live P2 awaits combined fixes. | adf39c533 / c768058cd0 |
 | P2-five-static | Check five original not-run gestures | Luna; independent review | Review 0357 PASS | merged | app-P2-five-review-0357 | Static review finds transition clears and single-occurrence placement gaps. Authors 0411 and 0410 assigned. Asset and swap still need live proof. | Report only |
 | P2-parent-transition | Preserve parent and transition edits | Luna port; independent review | Current port and home tree equality PASS | merged | app-P2-parent-current-packet-0430 | Integrated tree equals qualified packet:292 tests, three types and lint pass. Only independently reviewed parent diff landed. | 6bd1eb0d04 /19c4839d81 |
 
-| P2-single-child-placement | Declare occurrence ADD creation claims | Luna; independent review | First return0424 complete | review | app-A3-created-claims-review-0431 | Author342 tests, three types and lint passed. New and registered assets covered. Actual submitted claims and Agent capture reviewed together. | Source0424 |
+| P2-single-child-placement | Declare occurrence ADD creation claims | Luna; independent review | Cumulative0431 PASS | merging | app-A3-created-claims-return-0424 | Independent342 tests, three types/lint and pinned Runtime guard control pass. Both new and registered assets use exact claims. Home queue submitted. | 561a +19ac2b0ddc |
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes.
 Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397-line, 40-assertion test, plus required helpers, under D31.
 Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-handoff-0029.md), [image review](/home/user/timeline-hub/hub/design/app-A2-image-created-review-0133.md), [A4 cut map](/home/user/timeline-hub/hub/design/app-A4-current-cut-census-0042.md).
-Integration: 19c4839d81; tree ccea4662 equals current parent packet qualified292 tests, three types and lint. Reviewed selector and coalescing retained. Wrapper merge queued next.
+Integration: bad9a84fea adds cumulatively reviewed source-bound popup context to reviewed parent and selector packets. Final child carrier queued; joined qualification follows.
 Blockers: Runtime — D42 mutable state and resolver bypasses require Sol0423 correction, independent security proof, compatible pin and HTTP release. No caller adoption yet.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
 Next ready: Wrapper binding return0417; parent author0411; child review0416 and claim audit0420; Proof selector0413; image producer0419. Qualify D42 caller once Runtime pin and HTTP release arrive. No repeat now.
