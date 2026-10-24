@@ -24,3 +24,16 @@ for d in $O/workers/*/; do [ -f $d/running ] || [ -f $d/KEEP ] && continue; f=""
   [ -n "$f" ] && [ $(stat -c %Y $f) -lt $old ] || continue
   for l in $d/log.txt $d/*.log; do [ -f "$l" ] && [ $(stat -c %s "$l") -gt 1048576 ] && gzip -f "$l" && g=$((g+1)); done; done
 echo "gzipped $g old worker logs; free now $(df -BM --output=avail /home/user | tail -1 | tr -d ' ')"
+
+# finished test-run output (18:05Z, 24 Oct; D74 root fix, lossless): in tests/<run>/ whose status is not "running", with no
+# live runner pid, whose exit marker is over 1 h old and that no manager STATUS.md, suites.conf or tests/*.env names, every
+# subdirectory over MIN_MB is packed into <dir>.tgz and every file over 5 MB is gzipped in place. Unpack with tar xzf/gunzip.
+tp=0
+for t in $O/tests/*/; do r=$(basename $t); [ -f $t/exit ] || continue; [ "$(cat $t/status 2>/dev/null)" = running ] && continue
+  [ -f $t/running ] && kill -0 "$(cat $t/running 2>/dev/null)" 2>/dev/null && continue
+  [ $(stat -c %Y $t/exit) -lt $cut ] || continue; grep -qw -- "$r" <<< "$REF" && continue
+  for s in $(find $t -mindepth 1 -maxdepth 2 -type d 2>/dev/null); do [ -d "$s" ] || continue
+    [ $(du -sm "$s" | cut -f1) -gt $MIN ] || continue
+    tar czf "$s.tgz" -C "$(dirname "$s")" "$(basename "$s")" && rm -rf "$s" && tp=$((tp+1)); done
+  find $t -type f -size +5M ! -name '*.gz' ! -name '*.tgz' -print0 2>/dev/null | xargs -0 -r gzip -q 2>/dev/null; done
+echo "packed $tp finished test-run dirs; free now $(df -BM --output=avail /home/user | tail -1 | tr -d ' ')"
