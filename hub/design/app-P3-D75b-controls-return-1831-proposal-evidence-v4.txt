@@ -1,0 +1,70 @@
+P3/D75b return controls — committed-candidate procedure
+=========================================================
+
+Scope
+-----
+The production change remains limited to the existing Gate-5 recovery helper
+and the existing mounted Gate-5 journey. The candidate keeps both automatic
+recovery mounts and asserts the physical request sequence:
+
+  observed:  A, A, A, A, B  (exactly 5)
+  forwarded: A, A, B        (exactly 3)
+
+The new focused Vitest proof drives the production useTimelineSave hook. That
+hook creates the real localSaveSession and durable commit outbox; the test
+reconnects by unmounting/remounting the hook and uses a boundary HTTP double
+only to observe, hold, reject, and release actual commit requests. It does not
+manually schedule A/B sends. It covers fast and delayed schedules, exact body
+and idempotency-key retention, URL/origin identity, durable owner cleanup, and
+strict negative accounting for wrong/missing/extra/reordered/double-forwarded
+attempts.
+
+Immutable source pair
+----------------------
+  author parent: 5d7550ca7d005f948695ee3dc1d49273890bf59c
+  candidate source: current committed HEAD
+  source before SHA-256: a6468188ff21c4fd8bd397ff242b0260ee92ab6f2f90ac94786973eaf3c1e99
+  source after SHA-256:  8661fc919714d292c567844dc4f423855923077ca6a679a1398ec2a46154315b5
+
+The controls read the before image only with `git show <author-parent>:<path>`
+and the after image only with `git show <current-HEAD>:<path>`. They verify the
+parent is an ancestor, the tree is clean, the exact parent/HEAD patch matches
+the retained artifact, and the committed source diff passes `git diff --check`.
+This remains valid after the candidate commit and from a clean source checkout.
+
+Validation performed in this worker
+------------------------------------
+  ./node_modules/.bin/eslint src/tools/video-editor/hooks/useTimelineSave.mountedRecovery.test.tsx --max-warnings 0
+    PASS.
+
+  ./node_modules/.bin/tsc --noEmit --pretty false --incremental false
+    PASS, zero diagnostics.
+
+  ./node_modules/.bin/vitest run --no-cache --config config/testing/vitest.config.ts \
+    --reporter dot src/tools/video-editor/hooks/useTimelineSave.mountedRecovery.test.tsx
+    PASS: 3/3 (fast, slow, strict negative controls).
+
+  /opt/node20/bin/node --check proposal-controls-v4.mjs
+    PASS.
+
+  git diff --check HEAD --
+    PASS for the working-tree changes. The parent-to-candidate check must be
+    rerun after the harness commits this worker because HEAD currently points
+    at the prior candidate while the new focused test is uncommitted.
+
+  Playwright --list and browser/service/full suites
+    NOT RUN, per task scope and the no-live/full-suite rule.
+
+Committed-candidate acceptance to run after harness commit
+-----------------------------------------------------------
+  /opt/node20/bin/node --import tsx --test \
+    tests/e2e/local/support/gate5-fault-order.test.mjs proposal-controls-v4.mjs
+  /opt/node20/bin/node --import tsx proposal-controls-v4.mjs --lint
+  /opt/node20/bin/node --import tsx proposal-controls-v4.mjs --types
+  /opt/node20/bin/node --import tsx proposal-controls-v4.mjs --hashes
+  git diff --check 5d7550ca7d005f948695ee3dc1d49273890bf59c HEAD --
+  node node_modules/@playwright/test/cli.js test --config \
+    playwright.three-products.config.ts tests/e2e/local/three-products.spec.ts --list
+
+The controls intentionally require the clean committed candidate pair, so the
+node:test control command is unverified until the harness commits these edits.

@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T18:37:31Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 16 | status age 0m -->
-# app board, 2026-10-24T18:38Z
+<!-- app | 2026-10-24T18:41:22Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 16 | status age 1m -->
+# app board, 2026-10-24T18:41Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -31,20 +31,22 @@
 | P3-history | Strict authenticated history ABI | Luna; review | Actual10033 | merged | Author1620; review1626 | 23 controls, types/lint PASS; missing/wrong ABI rejected. | 9f4ec08f56 |
 | P3-D70 | Exact semantic setup intent | Luna; review | D70 approved | merged | Author1655; review1643 | Exact a646 spec, virtual review match; original body/reset/tail retained. | aaddaf12d2 |
 | P3-recovery-source | Mounted automatic recovery census | HARD Sol PLAN A2 | Actual26907 | merged | Sol1713; verdict1718 | No product defect established; production auto-recovers. 266 mounted plus3 fault checks/types/lint PASS. | Source unchanged |
-| P3-D75 | Retain both recovery mounts and exact counts | Luna | Review1826 FAIL | doing | app-P3-D75b-controls-return-1831 | First return fixes committed baseline/whitespace and adds real mounted recovery controls;5/3 not yet proven. | Resume1819 |
+| P3-D75 | Retain both recovery mounts and exact counts | Luna | Return1831 mounted3+100 PASS | review | app-P3-D75b-return-review-1839 | Immutable baseline controls repaired; reviewer runs postcommit Node controls and challenges actual5/3 lifecycle. | Source1831 |
 | P3-D75-path | Challenge full restart route | Luna | Second proposal failure | merged | app-P3-D75-door-wholepath-1750 | Browser door stable; original P1 holds across restart. Verify door realm plus direct new-daemon history. | Read only |
 | P-D73-submit | One-command guarded submission | Luna | D73 addendum | merged | app-D73-one-command-submit-1757 | 18 mocked controls/types/lint PASS; one preflight then one original, same4pins, 124 resume without duplicate. | 5d7550ca7d |
 | F-install-schema | Strict tuple/schema alignment | Luna | D62 and D65 | merged | Pin1545; fixture1548; proof1553 | Two skew,four updater,two schema controls PASS. Installer regression closed. | 6d74fdd88a |
 | F-current-full | Historical refreshed checkpoint | Service; Luna | Actual8158 | merged | Producer1446 | 19256 Vitest PASS, one installer FAIL now fixed. Node NOTRUN. Final full still owed. | be98aac54e |
 | F-env | Missing SSH executable | Service environment | D54a | gated:environment | Quality1236; producer1227 | Two unchanged extension tests fail ssh-keygen ENOENT; visible known environment gap. | Historical16138 |
 | F-final | Final P1–P5 and core suites | Lane services | D59 cut | gated:D59-cut | Runtime coordinator; App gates | All active lanes core0/regressions0 and current P2/P3 PASS required before final proofs/build. | Cut pending |
-| D74-old-graph | Guarded orphan graph retirement | Lead kit | Trigger below9GB | gated:disk<9G | Lead peer1759 | Disk9.6GB; deferred exact1.107GB route. No fabricated metadata or raw deletion. | No source edits |
-| D74-retention | Post-verdict output release | Lead kit | Trigger below9GB | gated:disk<9G | Lead peer1759 | Disk9.6GB; deferred guarded route. All22847 outputs preserved for D78 handoff. | No source edits |
+| D74-old-graph | Guarded orphan graph retirement | Lead kit | Disk8.6GB trigger crossed | blocked:app-lead | Lead peer1759 | Disk8.6GB; requested exact1.107GB guarded route. No fabricated metadata or raw deletion. | No source edits |
+| D74-retention | Post-verdict output release | Lead kit | Disk8.6GB trigger crossed | blocked:app-lead | Lead peer1759 | Disk8.6GB; guarded retention route requested. All22847 outputs preserved for D78 handoff. | No source edits |
 
 | P2-D78 | Exact retained element request handoff | Luna | D78 owner1816 | merged | app-P2-D78-retained-request-handoff-1819 | Published json/md;4459 exact body bytes,e58a09dc;trace anchor and redaction validated. Runtime replay owns cause. | Evidence only |
 | D79 | One live-edit robustness smoke | Luna; Service | Actual28293 terminalFAIL | doing | Producer1834; setup1838 | ReadinessPASS; smoke stops at identity invalid bearer. Remote/drag/undo NOTREACHED. First setup return; non-gating. | App830252 |
 
-| P3-D75-clean | Clean same-blob home packet and ledger | Luna | Failed source controls1826 | gated:review-PASS | app-P3-D75b-clean-home-packet-1827 | Source held; no original changed at home. Reuse after genuine corrected PASS only. | Current source |
+| P3-D75-clean | Clean same-blob home packet and ledger | Luna | Protected review1839 | doing | app-P3-D75b-clean-return-1839 | Copy exact spec and mountedtest; retain controls outside repo. Parent integrated source identity also checked. | Current source |
+
+| P1-current | Updated parent-source control | Service; Luna | Preflight11421 PASS | doing | Actual31083; producer1841 | Required D59 current-source rerun; independent verdict follows. P3 submission does not wait for P1. | App830252 |
 
 Integration: App5d7550 includes one-command guarded submit037a8 over587316, with D73 snapshot admission6c7c over255f, with real Runtime CLI phase bootstrap over D73fd74, current popup provenance924140, D69c3d79, approved D70aaddaf, parent reads/audited restorations and frozen upstream3881. No new upstream refresh for gating.
 
@@ -56,9 +58,11 @@ Blockers: Runtime execution — D78 exact retained element request published1823
 Blockers: Final cut — Current P2/P3 nine core cases remain unqualified; Runtime coordinates final suites and ZIP.
 Next ready: consume parent and D75b reviews; normal merge on PASS; P3 through one-command pinned preflight submit immediately. D79 smoke body later behind gate priority.
 
-live 3 / cap 6; ready-undispatched 0. Luna1831 D75b controls, Luna1834 D79 finite producer, Luna1838 D79 setup return. No original P2/P3 active.
+live 4 / cap 6; ready-undispatched 0. Luna1839 D75b review/clean, Luna1838 D79 setup, Luna1841 P1 same-ID producer. P1 actual31083 active; P3 does not wait for it.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
-Disk: About9.0GB free. Guarded recycle removed one ended clean non-KEEP tree; other finished trees already recycled. Deferred kit routes gated below9GB; prior refused routes stopped.
+Disk: About8.6GB free; below9GB trigger peer renewed. Heavy stop below8GB and D74 worker caps observed. Guarded recycle removed one ended clean non-KEEP tree; other finished trees already recycled. Deferred kit routes gated below9GB; prior refused routes stopped.
 Inbox consumed through1628507 bytes, including D75b, D78 and non-gating D79. Runtime and Agent normal hub boards rechecked. D75 scope blocker cleared.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
+
+Blockers: App lead kit — Disk8.6GB below9 trigger; exact deferred guarded graph/retention route requested again. Prior denied targets stay stopped; no output release before verdict.
