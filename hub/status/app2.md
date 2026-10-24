@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T12:19:50Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 1m -->
-# app2 board, 2026-10-24T12:18Z
+<!-- app2 | 2026-10-24T12:21:58Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 1m -->
+# app2 board, 2026-10-24T12:20Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -61,6 +61,8 @@
 | P2-11933-popup-track | Classify strict V2 versus plate mapping | Independent Luna; author after proof | App1208 ask; exact source | doing | Proof1215 | Complete source path and intended track semantics before any strict repair. Sole App1207 owns retained expected and actual facts. | Exactd6ed;333b |
 | P2-11933-parent-receipt | Classify strict receipt and head IDs | Independent Luna; author after proof | App1208 ask; exact source | doing | Proof1215 | Trace request key,receipt,parent publication and history IDs against passingP1. No identity assertion dropped or replaced speculatively. | Exactd6ed;37eb |
 
+D56.4: Proof is folded into App. ONE complete handoff is published in design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md. NO new Proof dispatches after that note. Existing1215 runs to completion; App finishes caller1206. P2/P3 run only on final integrated tuple with App-owned independent verdicts. Earlier old-tuple conditional1141/1200 is superseded. The loop stays alive pending orchestrator instruction.
+
 P1 RESULT GO remains scoped to original18792: both mounted cases passed, exit0 in141 seconds, on App f8b15af0 / Agent78738040 / Runtime2a9e347f. Independent0036 source and0040 custody passed. P1 case2 includes refusal, message, canonical rollback and zero legacy traffic. Corpus49 passed with15 real fixtures and11 inputs. Final heads must rerun P1.
 
 P4 DONE remains scoped to original CLI/Python/sheet, ten notes in one commit with per-step undo/redo, restart, show/history and200-409-200 conflict rerun. Final heads must rerun P4. IMAGE0554 has independent direct RuntimeService witness; no duplicate Proof run.
@@ -75,7 +77,7 @@ P3 latest original3896 remains NO-GO: exit1/268 seconds. Accepted predecessor0-t
 
 D53 source2357 is normally HOME602f8b1f58593302829fb449d0ded62a91462a22/treea38844975865110cd2c026dc10fd7aa1ea488e71, parents2e3c/2357. Independent1126 and actual integrated1148 PASS:23 controls,three locked typechecks,lint,list15,diff and exact three donor paths. Only other delta is independently reviewed D52 four deletions. No failed32ba/bd08 ancestry. Original Gate5 body/reset/canonical5ede tail and downstream tail stay exact. Actual App pure1143 independently PASS provides the genuine execution target; Proof's recycled review tree is not an App-local target.
 
-D53 actual App worker-authored line is already in existing deletion-ledger.app.md behaviour changes with before/after fullspec and guard hashes, author2357/review1126, MERGED602f and integratedPASS. Ledger requirement is MET. Proof1148's sole inaccurate description of original counters is corrected by finite1154; original counted every observed POST. Its fuller eight-column row is optional formatting, not an additional gate. Existing conditional ONE P3 authority1141 is automatic after actual source/target/caller binding, independent mechanical review and worker-only install/readback PASS on old079/37eb/0256/0258. No further permission roundtrip.
+D53 actual App worker-authored line is already in existing deletion-ledger.app.md behaviour changes with before/after fullspec and guard hashes, author2357/review1126, MERGED602f and integratedPASS. Ledger requirement is MET. Proof1148's sole inaccurate description of original counters is corrected by finite1154; original counted every observed POST. Its fuller eight-column row is optional formatting, not an additional gate. D56.4 supersedes old-tuple conditional1141. Finish existing caller review for reusable source preparation; actual P3 now runs only on final integrated tuple under App ownership.
 
 D50 requiredcreated[] remains exact and independently reviewed. Actual protected tail is5ede6f374857a66a327da3cea0e85de0457a04267003f3f66e3d40ee4f380912. Existing App-owned ledger correctly records home28b0/integrated0800; no generated combined ledger edit.
 
@@ -85,10 +87,10 @@ D45 six older diagnostics are NOT RETAINED; creation/loss unproved. Synthetic P3
 
 Final gates: D48/D49 source map and App-host preparation are independently qualified. Final P4/P5 registration drafts0834/0838 are PREPARED only, not installed. Runtime FREEZE coordinates final tuple, D39 adoption and final host/origin/child/import receipts. App U3b/D39 home remains gated on P2/P3 GO. Early branch full19570 FAIL is independently1133 classified; all four bounded repairs independently passed and correctedjoin5a9ff independent1157 PASS. ONE changedD49full16138 requested12:05:56Z; soleproducer1207,no final GO. D51 holds current snapshot until one live-main refresh at delivery.
 
-Blockers: Proof1215 and App1207 — actual11933 independently NO-GO. Whole-path source classification owns popup and parent rows; sole App return owns safe Apply qualification and exact private facts.
-Blockers: App — P3 returncf1dc and actual dryguard1203 PASS. Cumulative review1206 and worker-only install/readback precede one conditional P3; source and ledger requirement met.
+Blockers: App under D56.4 — adopt actual11933 NO-GO,popup and parent rows. Existing Proof1215 finishes independent source classification; App1207 owns safe Apply facts.
+Blockers: App under D56.4 — finish in-flight P3caller1206,then bind actual final tuple. Source602f and D53ledger PASS; old-tuple conditional P3 release superseded.
 Blockers: Freeze — final tuple, actual App-host registrations and receipts, final P1–P5 and D49 full checkpoints precede Farm F-final and ZIP.
-Next ready: Consume independent source1215 and App safe return1207, dispatch strict oracle author only if proved. P3 cumulative1206/install releases one conditional original. Track same-ID full16138.
+Next ready: NO new Proof dispatches. Consume running1215 and append exact report to the single D56handoff. App owns source repairs,caller1206,actual16138 and final-tuple independent verdicts.
 
 Later: D34 legacy accounting remains UNKNOWN; no duplicate audit owed. D47 memo/capsule remains deferred and unmerged with nine attacks. D46 U2c stays closed until final freeze join. D14/D23 relational timing cases and frozen34e/d106/819acf remain unchanged. Final registration installation and F-final execution are gated:freeze. D52 allows caller-proven dead code/exclusive-test removal with independent review; all original live gates remain strict.
 
@@ -96,6 +98,6 @@ Safety: Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked
 
 Disk: Latest8347049984 bytes free. Completed1148/1154 trees already recycled normally, branches/reports retained. Remaining three historical Proof trees are KEEP and untouched. Supported11:54 sweep3 exited0 and removed zero directories; prior refused compact/cleanup not retried. No new heavy below8GB; minimum light launches below8GB, no new dispatch below7GB except approved D50/review.
 
-Pass 2026-10-24T12:18Z: Independent1213 FINAL NO-GO/sourcePASS copied byte-exact; its truncated producerhash is explicitly corrected in peer1216 without modifying report. Exact actualelement assertion remains UNKNOWN locally. New App1208 asks are two concrete Proof rows owned by independent1215 whole-path worker, dispatched before ask arrived. Sole Appreturn1207 owns exact retained facts and safe1260B Apply qualification; no duplicate extractor. CorrectedearlyD49join5a9ff independently1157 PASS, actual16138 requested12:05:56Z,soleproducer1207. P3actualdryguard1203 PASS precedes cumulative1206; existing source/ledger/conditional1141 stays. Completed1213 tree already recycled; local disk8191209472bytes, no heavy launch. No source/oracle edit or original rerun yet.
+Pass 2026-10-24T12:20Z: Received authoritative lead relay D54–D56. Proof folds into App underD56.4, final-integrated-tuple P2/P3 only, independent App reviewer per verdict. Sent ONE full plain-words peerhandoff listing all open P2/P3,11933,caller and finalhost/registration/gate rows. No new dispatches after handoff. Existing1215 source investigation is running; its final will be copied into same note. D53integrated1148 and correctedledger1154 already complete. Appcaller1206 remains App-owned. Explicitly superseded old-tuple conditional1141/1200,without weakening original gates. Keep loop alive; no goal marked complete.
 
 Evidence: [D53 actual integrated1148](../../design/handoff-ap2-P3-D53-integrated-1148.md), [finite wording1154](../../design/handoff-ap2-P3-D53-ledger-wording-1154.md), [App current source1143](../../design/app-P3-D53-pure-integrated-1143.md), [conditional release1200](../../design/peer-app2-to-app-runtime-20261024T1200Z-D53-ledger-met-conditional-P3.md), [P2 actual26414 verdict1136](../../design/handoff-ap2-P2-26414-preflight-verdict-1136.md), [P3 actual3896 verdict1053](../../design/handoff-ap2-P3-solo-result-verdict-1053.md), [previous pair0709](../../design/handoff-ap2-P2-P3-verified-result-verdict-0709.md), [current source0649](../../design/handoff-ap2-P2-P3-current-source-verdict-0649.md).
