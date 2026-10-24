@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T01:03:44Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 1m -->
+<!-- main | 2026-10-24T01:05:59Z | dispatcher heartbeat 11s | live 1 (sol 1, luna 0, other 0) | busy30 9 | status age 1m -->
 # runtime board, 2026-10-24T01:02:42Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -36,14 +36,14 @@
 | OPS-App-template | Authentic approved profile | Proof Luna | Exact pair export | merged | Proof 1835; App 1842 | Proof pair imported unchanged. Runtime duplicate with wrong newline hash remains excluded. | evidence only |
 | OPS-main-v1-registration | Finite abandoned registration proposal | Luna / independent Luna | Source only | merged | Return 1850; review 1855 | Proposal passed; no live configuration, removal or target retry. | evidence only |
 | V4-deferred | H9 cut and deferred timing | Orchestrator | Deferred scope | gated:H9-cut | No new worker | Original failures stay unchanged and visible. No V4 repair or proof run. | deferred |
-| F-authoring-publish-writer | Migrate Agent publication helper | HARD Sol | Agent D32 assignment | doing | rt-F-authoring-publish-writer-sol-0101 | Agent uniquely assigned this ours row after two Luna failures. Source author dispatched; Agent owns home review and merge. | Agent b61cebe8 |
+| F-authoring-publish-writer | Migrate Agent publication helper | HARD Sol | Agent D32 assignment | doing | rt-F-authoring-publish-writer-resume-0104 | Sol0101 confirmed fixture needs provider and v2 Transport. Manager clarified that scope; Sol0104 continues. Agent owns remote.py and home merge. | Agent b61cebe8 |
 
 P1 is GO under D25: original 18792 passed both cases in 141 seconds on App f8b15af0, Agent 78738040 and Runtime 2a9e347f. Proof source review 0036 and custody review 0040 passed. Final freeze must rerun all gates on the final heads.
 
 Runtime integration is 458595850c354f4403dabc58a72b98bebbc2c3a3, tree 703b1aac733ad3c977399e67cd4e23d6ae85e7bb. The export fix is merged and integrated qualification 0057 passed. Frozen client 34eac0041, schema 35c2d9c5 and producer d5f98 remain published. No new tuple or adoption is claimed.
 
 Blockers: App / Proof — Readiness fix 42db156 is reviewed and merged. Caller 0053 prepares the one authorised changed P2/P3 run; Proof owns the verdict.
-Blockers: Agent — Runtime author 0101 owns assigned F-authoring-publish-writer. Agent will review and home-merge; Viewing owns the separate ABA row.
+Blockers: Agent — Runtime author 0104 owns assigned F-authoring-publish-writer. Agent will review and home-merge; Viewing owns the separate ABA row.
 Blockers: Runtime — Full suite 29085 is running with failures; terminal census and source classification are pending.
 Blockers: Freeze — U1c 40427e8b5 independently passed against upstream 795379a67; integration held until freeze.
 
@@ -61,4 +61,4 @@ Blockers: KIT CHANGE: request-child-venv 3b771253b465a6ba06b57ab16d6049273114dc7
 Blockers: KIT CHANGE: make-runtime 873ddcfa636b3ae9e285613a6fb65c643e21ac749e00197d582e0c820dd70149 — installed and retained; no new installation this pass.
 Blockers: KIT CHANGE: request-runtime 471fd470efeae102140b96b4f97db857e0d6d79b0839afa10a1a00e911b33b5f — installed and retained; no new installation this pass.
 
-Next ready: Consume full suite 29085 and Sol author 0101. U1c is reviewed and held for freeze; Agent owns review and home merge for the assigned writer row. No ready Runtime product row is waiting.
+Next ready: Consume full suite 29085 and Sol author 0104. U1c is reviewed and held for freeze; Agent owns review and home merge for the assigned writer row. No ready Runtime product row is waiting.

@@ -2126,3 +2126,10 @@ Ask: Reserve F-authoring-publish-writer for Runtime worker 0101 / Owner: Agent m
 Assignment0058 consumed and row added immediately. HARD Sol rt-F-authoring-publish-writer-sol-0101 is queued on exact current b61cebe8e0d6e062f15da922f3812d7b6718f12e. Scope production authoring_bundle helper/existing v2 plumbing plus separate regressions; approved first-test setup only from20b3458, original bodies retained. No second ABA test or Viewing duplicate. Existing G2 persistence commit.py and inverse hunks reserved; worker must coordinate exact overlap before editing. Agent owns independent review and normal home merge; final-message reports per D30. No newtuple/bench/full/gate run.
 
 Runtime R0 cf74 source is MERGED458595850/tree703b1; independent0052 and actualintegrated0057 each144PASS, schema/producer unchanged. One changed-head Runtimefull29085 is RUNNING. U1c refresh40427e8b5 to upstream795 independently0056 PASS224/zeroNEWdiagnostics/69protectedhashes, heldbranchonly. Diskpause D34 retained.
+
+## 2026-10-24T01:03:44Z — PEER MESSAGE (peer-runtime-to-agent-20261024T0104-authoring-scope-remote-reserved.md)
+Ask: Keep remote.py with rendererless owner 0057; Runtime proceeds on free writer files / Owner: Agent manager / By: this pass
+
+0100 ownership note consumed. Runtime Sol0101 source assessment completed with NO code edits and no repeated failing body. It confirmed authentic first fixture lacks provider registration and its Transport exposes only the retired publisher. This was a restrictive Runtime brief, not a contract or permission refusal. Manager has now explicitly authorised existing provider setup plus authenticated v2 read/commit test delegations, preserving original operations/assertions. Fresh Sol rt-F-authoring-publish-writer-resume-0104 continues same row and exact b61 source.
+
+remote.py is RESERVED to your0057. Worker may edit authoring_bundle.py and sdk/authoring_remote.py/existing nonoverlapping plumbing, and must return precise remote.py need for your handoff. No whole closure overwrite, invented media authority or legacy fallback. Agent will review/home-merge final own source; Viewing ABA remains separate.

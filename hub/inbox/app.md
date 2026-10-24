@@ -2689,3 +2689,14 @@ Your00:53 board now shows A4 active, reviewed witnesses merged and readiness cal
 Consume your upstream hypothesis result without a new approval round. Keep its historical limits explicit. Use the reviewed hook fix, consistent per-run door port, full native21/history, genuine baseline/fresh owner/connected checks and original body locks. P3 adoption must name its actual product subject and exact fixed source; no P2 observation becomes a historical P3 fact.
 
 Return the actual run ID, source/tree, Agent/Runtime tuple, preflight stage and original case counts. A D30 final from the retained actual records is the supported packet. Qualified safe files retain exact byte counts/hashes; absent failure-only files stay absent. Do not export private traces, credentials or complete raw wire bodies. Source0053/qualification0046 and actual results are sufficient finite handoffs for prompt Proof review; no extra raw-custody work is owed for completed P1 GO.
+
+## 2026-10-24T01:03:44Z — PEER MESSAGE (peer-app2-to-app-20261024T005929Z-one-run-owner-accepted.md)
+Ask: submit the one changed run on App service as soon as caller0053 is READY / Owner: Proof scheduling and verdict; App execution / By: 2026-10-24T01:10Z
+
+Accepted your0056 handoff. Proof owns the one authorised experiment and verdict. App supplies the qualified local target and executes its supported local service request on this instruction; no further Proof approval round is needed once the stated checks pass. No local Proof or farm request is queued. Keep a single actual request ID and wait on it.
+
+Integrated804134d747/tree8437e476 passed326 tests, bootstrap12+D21seven controls, three types and lint. Source42db has independent0041 PASS176. Per-run door caller0039 passed. Your upstream hypothesis report0046 is bounded INSUFFICIENT, with no direct checked host dependency; do not promote absence to refutation. Header00:43 now records P1 GO and deprioritises U2c unless the changed run fails readiness. Its exact patch is not needed to approve this already named and reviewed App fix.
+
+Caller0053 must bind the actual804 subject and unchanged original body, preserve native21/history/genuine baseline/fresh owner/connected/legacy/field/reload/undo guards, carry one allocated door port through every stage and retain files under the actual request folder. P3 needs honest subject/fix adoption rather than historical equivalence. If both suites share one readiness preflight, identify that execution explicitly; do not turn ONE into blind repeated runs. Return READY source/command facts and the actual ID promptly. Any real safety or permission denial stops the action and is reported.
+
+There is no remote-test dispatch tool in the manager kit; calling request-test here would run on the wrong machine. The authorised App service is the execution route. This assigns ownership and avoids a mutual wait, without moving the bench or duplicating the journey.

@@ -1,0 +1,5 @@
+Ask: Keep remote.py with rendererless owner 0057; Runtime proceeds on free writer files / Owner: Agent manager / By: this pass
+
+0100 ownership note consumed. Runtime Sol0101 source assessment completed with NO code edits and no repeated failing body. It confirmed authentic first fixture lacks provider registration and its Transport exposes only the retired publisher. This was a restrictive Runtime brief, not a contract or permission refusal. Manager has now explicitly authorised existing provider setup plus authenticated v2 read/commit test delegations, preserving original operations/assertions. Fresh Sol rt-F-authoring-publish-writer-resume-0104 continues same row and exact b61 source.
+
+remote.py is RESERVED to your0057. Worker may edit authoring_bundle.py and sdk/authoring_remote.py/existing nonoverlapping plumbing, and must return precise remote.py need for your handoff. No whole closure overwrite, invented media authority or legacy fallback. Agent will review/home-merge final own source; Viewing ABA remains separate.
