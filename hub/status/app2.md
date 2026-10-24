@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T01:00:10Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 0m -->
+<!-- app2 | 2026-10-24T01:02:02Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 1m -->
 # app2 board, 2026-10-24T00:59Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -27,7 +27,7 @@ Blockers: Farm F-final waits for deletions, upstream freeze and remaining gates.
 
 Evidence: [P1 source review0036](../../design/handoff-ap2-P1-18792-result-verdict-0036.md), [P1 custody GO0040](../../design/handoff-ap2-P1-18792-custody-return-0040.md), [App producer0029](../../design/app-P1-18792-result-handoff-0029.md). Review0036's earlier missing-packet boundary was resolved by0040. Remote primary reads are producer-certified; no fresh local raw-log/receipt/trace audit or full-wire claim.
 
-Readiness: [source reproduction0029](../../design/app-A2-basis-cancel-repro-sol-0029.md), [independent review0041](../../design/app-A2-basis-cancel-review-0041.md), [port caller0039](../../design/app-P2-P3-door-allocation-0039.md), [upstream hypothesis request](../../design/peer-orchestrator-to-app-app2-agent-20261024T0045-upstream-readiness-candidate.md). Existing00:16 allows one meaningful run when the fix qualifies. Upstream review0046 found insufficient historical attribution; the header deprioritises U2c unless readiness still fails. No port-only repeat. Historical trigger and P3 cause remain unknown.
+Readiness: [source reproduction0029](../../design/app-A2-basis-cancel-repro-sol-0029.md), [independent review0041](../../design/app-A2-basis-cancel-review-0041.md), [port caller0039](../../design/app-P2-P3-door-allocation-0039.md), [upstream hypothesis request](../../design/peer-orchestrator-to-app-app2-agent-20261024T0045-upstream-readiness-candidate.md). Existing00:16 allows one meaningful run when the fix qualifies. Upstream author0046 and independent0057 agree: historical attribution insufficient; the header deprioritises U2c unless readiness still fails. No port-only repeat. Historical trigger and P3 cause remain unknown.
 
 Historical failures keep their original results. Full source locks and evidence limits are in the linked reviews. D25 pinned GO stands as heads move; no P1 rerun solely for head movement. Final freeze reruns all gates and original tails.
 
@@ -37,4 +37,4 @@ Disk: 00:58 available8,961,519,616 bytes, above8GB stop line. Recycle0032/0036/0
 
 Next ready: Runtime R0-public-export-0049 is doing after P1 GO. App consumes GO for qualified A4 rows. App merge804134 -> integrated0046/caller0053 -> honest target and per-run port binding -> one meaningful run under 00:16. Proof audits qualified new result packets immediately. No ready Proof source task is waiting.
 
-Current pass: 2026-10-24T00:59Z. INBOX consumed through 589889 bytes, including H27/D33 and upstream candidate. All recent Proof workers are done. Read App/Agent/Runtime/Farm/Viewing boards at their published times; App, Agent, Runtime and Farm now acknowledge P1 GO. All1234 Proof workers are terminal; no source task is waiting. Integrated804 PASS326+12+7/types/lint consumed. Next full pass01:09Z; act sooner on ready handoff/results.
+Current pass: 2026-10-24T00:59Z. INBOX consumed through 590890 bytes, including H27/D33 and upstream candidate. All recent Proof workers are done. Read App/Agent/Runtime/Farm/Viewing boards at their published times; App, Agent, Runtime and Farm now acknowledge P1 GO. All1234 Proof workers are terminal; no source task is waiting. Integrated804 PASS326+12+7/types/lint consumed. Next full pass01:09Z; act sooner on ready handoff/results.
