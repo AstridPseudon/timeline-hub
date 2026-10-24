@@ -1,12 +1,20 @@
 --- a/bin/bench_store.py
 +++ b/bin/bench_store.py
-@@ -356 +356,2 @@
+@@ -1 +1,6 @@
+-"""Dedicated owned bench lifecycle; stdlib only. No legacy adoption."""
++"""Dedicated owned bench lifecycle; stdlib only. No legacy adoption.
++
++The mutex serializes cooperating processes of the owning UID. It cannot make
++POSIX name removal safe against that UID replacing a directory between the
++last identity check and rmdir, including inside a private quarantine.
++"""
+@@ -356 +361,2 @@
 -    def _delete_owned(self, path, entry):
 +    @contextlib.contextmanager
 +    def _deletion_authority(self, path, entry):
-@@ -357,0 +359 @@
+@@ -357,0 +364 @@
 +            yield None
-@@ -367 +369,6 @@
+@@ -367 +374,6 @@
 -        root_fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
 +        parent_fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
 +        try:
@@ -14,7 +22,7 @@
 +        except BaseException:
 +            os.close(parent_fd)
 +            raise
-@@ -384,0 +392,38 @@
+@@ -384,0 +397,38 @@
 +            yield root_fd, parent_fd, os.fstat(root_fd), os.fstat(parent_fd)
 +        finally:
 +            os.close(root_fd)
@@ -53,16 +61,16 @@
 +            root_fd, parent_fd, _, _ = authority
 +            marker = path / '.bench-owner.json'
 +            root_info = os.fstat(root_fd)
-@@ -424,2 +469,3 @@
+@@ -424,2 +474,3 @@
 -            path.rmdir()
 -            sync_dir(path.parent)
 +            # dir_fd pins the parent, but comparison and rmdir are not atomic.
 +            os.rmdir(path.name, dir_fd=parent_fd)
 +            os.fsync(parent_fd)
-@@ -427,2 +472,0 @@
+@@ -427,2 +477,0 @@
 -        finally:
 -            os.close(root_fd)
-@@ -468,13 +512,20 @@
+@@ -468,13 +517,20 @@
 -        self._verify_pending_reports(journal)
 -        self._apply_projection(journal['projections'], forward)
 -        atomic(self.root / 'index.json', canonical(journal['after'] if forward else journal['before']))
@@ -98,12 +106,66 @@
 +            self._finish_journal()
 --- a/bin/request-runtime
 +++ b/bin/request-runtime
-@@ -13,0 +14,10 @@
+@@ -7 +7,3 @@
+-O=${RUNTIME_ORCH_ROOT:-/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch}
++# The installed caller's location selects its queue; inherited environment does
++# not confer authority to redirect a recovery request.
++O=$(CDPATH= cd -- "$(/usr/bin/dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P) || exit 2
+@@ -13,0 +16,59 @@
 +# Recovery has no target/adoption argument: only the store journal can confer
 +# deletion authority. An absent or legacy store is never initialized here.
 +if [ "${1:-}" = --recover-store ]; then
 +  [ "$#" -eq 1 ] || { echo 'REFUSED: --recover-store takes no arguments' >&2; exit 2; }
-+  if ! (set -C; printf 'BENCHRECOVER\n' > "$O/queue/pending/bench-store-recovery"); then
++  if ! /usr/bin/python3 -I - "$O" <<'PY'
++import os
++import stat
++import sys
++
++fds = []
++try:
++    # Open each component without following links, retaining the actual queue
++    # descriptor for creation. A later pathname substitution cannot redirect it.
++    fd = os.open('/', os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
++    fds.append(fd)
++    parts = sys.argv[1].strip('/').split('/') + ['queue', 'pending']
++    for ordinal, part in enumerate(parts):
++        fd = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
++        fds.append(fd)
++        info = os.fstat(fd)
++        if ordinal >= len(parts) - 3:
++            if info.st_uid != os.getuid() or info.st_mode & 0o022:
++                raise ValueError('unsafe queue directory owner/mode')
++        elif info.st_mode & 0o022 and not info.st_mode & stat.S_ISVTX:
++            raise ValueError('unsafe queue ancestor mode')
++    def verify_chain():
++        for ordinal, part in enumerate(parts):
++            current = os.stat(part, dir_fd=fds[ordinal], follow_symlinks=False)
++            opened = os.fstat(fds[ordinal + 1])
++            if (current.st_dev, current.st_ino) != (opened.st_dev, opened.st_ino):
++                raise ValueError('queue directory replaced')
++    verify_chain()
++    # Verify the descriptor's mode again immediately before the write. The
++    # owner UID remains the trust boundary; its processes can change permissions.
++    info = os.fstat(fd)
++    if info.st_uid != os.getuid() or info.st_mode & 0o022:
++        raise ValueError('unsafe queue directory owner/mode')
++    leaf = os.open('bench-store-recovery', os.O_WRONLY | os.O_CREAT | os.O_EXCL
++                   | os.O_NOFOLLOW, 0o600, dir_fd=fd)
++    fds.append(leaf)
++    with os.fdopen(leaf, 'wb', closefd=False) as stream:
++        stream.write(b'BENCHRECOVER\n')
++        stream.flush()
++        os.fsync(leaf)
++    os.fsync(fd)
++    verify_chain()
++except (OSError, ValueError) as exc:
++    print('REFUSED: ' + str(exc), file=sys.stderr)
++    sys.exit(2)
++finally:
++    for fd in reversed(fds):
++        os.close(fd)
++PY
++  then
 +    echo 'REFUSED: store recovery is already queued or queue is unsafe' >&2; exit 2
 +  fi
 +  echo "store recovery queued; result in $O/queue/done/bench-store-recovery"

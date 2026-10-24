@@ -1,4 +1,9 @@
-"""Dedicated owned bench lifecycle; stdlib only. No legacy adoption."""
+"""Dedicated owned bench lifecycle; stdlib only. No legacy adoption.
+
+The mutex serializes cooperating processes of the owning UID. It cannot make
+POSIX name removal safe against that UID replacing a directory between the
+last identity check and rmdir, including inside a private quarantine.
+"""
 import argparse
 import contextlib
 import fcntl

@@ -217,16 +217,22 @@ Store._checkpoint = checkpoint
                 self.assertFalse(target.exists())
                 f.protected()
 
+    @unittest.expectedFailure
     def test_final_rmdir_substitution_counterexample(self):
-        # This is an acceptance FAILURE, recorded explicitly rather than claiming
-        # descriptor-relative rmdir provides an atomic inode comparison.
+        # OPS-bench-store requires replacement preservation and no metadata
+        # writes on refusal. POSIX name removal still lacks atomic inode CAS.
+        outcomes = []
+        expected = []
         for empty in (False, True):
             with self.subTest(env_i=empty):
                 f = Fixture()
+                assert f.store is not None
                 f.pending_eviction(empty=empty)
                 target = Path(f.old['path'])
                 displaced = f.home / 'displaced-empty-victim'
                 observation = f.home / 'replacement-inode'
+                before_metadata = ((f.root / 'index.json').read_bytes(), tree(f.tests),
+                                   f.store.journal.read_bytes())
                 f.inject(f'''
 original_rmdir = os.rmdir
 def substitute(path, *args, **kwargs):
@@ -239,40 +245,57 @@ def substitute(path, *args, **kwargs):
 os.rmdir = substitute
 ''')
                 result = f.dispatch(empty=empty)
-                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                 self.assertTrue(observation.exists())
                 self.assertTrue(displaced.exists())
-                self.assertFalse(target.exists(), 'counterexample no longer reproduces; qualify the fix')
-                self.assertFalse(f.store.journal.exists())
+                outcomes.append((result.returncode,
+                                 target.stat().st_ino if target.exists() else None,
+                                 (f.root / 'index.json').read_bytes(), tree(f.tests),
+                                 f.store.journal.read_bytes() if f.store.journal.exists() else None))
+                expected.append((2, int(observation.read_text()), *before_metadata))
                 f.protected()
+        self.assertEqual(outcomes, expected)
 
+    @unittest.expectedFailure
     def test_late_replacement_refusal_has_already_written_counterexample(self):
+        # OPS-bench-store requires no projection/index/journal writes before an
+        # authority refusal, including a replacement after the last validation.
+        outcomes = []
+        expected = []
         for empty in (False, True):
             with self.subTest(env_i=empty):
                 f = Fixture()
+                assert f.store is not None
                 f.pending_eviction(empty=empty)
                 target = Path(f.old['path'])
                 displaced = f.home / 'late-displaced-victim'
                 before_payload = tree(target)
                 before_index = (f.root / 'index.json').read_bytes()
                 before_suites = (f.tests / 'suites.conf').read_bytes()
+                before_tests = tree(f.tests)
+                before_journal = f.store.journal.read_bytes()
+                observation = f.home / 'replacement-state.json'
                 f.inject(f'''
 original_projection = Store._apply_projection
 def substitute(self, projections, forward):
     target = Path({str(target)!r})
     target.rename({str(displaced)!r})
     target.mkdir()
+    Path({str(observation)!r}).write_text(json.dumps(tree(target)))
     return original_projection(self, projections, forward)
 Store._apply_projection = substitute
 ''')
                 result = f.dispatch(empty=empty)
                 self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
                 self.assertIn('REFUSED: deletion root replaced', result.stdout)
-                self.assertNotEqual((f.root / 'index.json').read_bytes(), before_index)
-                self.assertNotEqual((f.tests / 'suites.conf').read_bytes(), before_suites)
                 self.assertTrue(f.store.journal.exists())
                 self.assertEqual(tree(displaced), before_payload)
+                self.assertEqual(json.loads(json.dumps(tree(target))), json.loads(observation.read_text()))
+                outcomes.append(((f.root / 'index.json').read_bytes(),
+                                 (f.tests / 'suites.conf').read_bytes(), tree(f.tests),
+                                 f.store.journal.read_bytes()))
+                expected.append((before_index, before_suites, before_tests, before_journal))
                 f.protected()
+        self.assertEqual(outcomes, expected)
 
     def test_parent_rename_at_rmdir_does_not_delete_replacement(self):
         for empty in (False, True):
@@ -299,7 +322,7 @@ os.rmdir = substitute
                 self.assertEqual(tree(displaced / Path(f.current['path']).name), f.current_before)
                 self.assertEqual(f.legacy(), f.legacy_before)
 
-    def test_queue_directory_substitution_counterexample(self):
+    def test_queue_directory_substitution_refuses_without_writes(self):
         for empty in (False, True):
             with self.subTest(env_i=empty):
                 f = Fixture()
@@ -308,11 +331,65 @@ os.rmdir = substitute
                 foreign = f.home / 'foreign-pending'
                 foreign.mkdir()
                 pending.symlink_to(foreign, target_is_directory=True)
-                before = tree(f.root), tree(f.tests), f.legacy()
+                before = tree(f.root), tree(f.tests), f.legacy(), tree(foreign)
+                result = f.request('--recover-store', empty=empty)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn('REFUSED:', result.stderr)
+                self.assertEqual((tree(f.root), tree(f.tests), f.legacy(), tree(foreign)), before)
+
+    def test_queue_owner_mode_is_bound_to_write(self):
+        for empty in (False, True):
+            for component in ('.', 'queue', 'queue/pending'):
+                with self.subTest(env_i=empty, component=component):
+                    f = Fixture()
+                    (f.orch / component).chmod(0o777)
+                    before = tree(f.home)
+                    result = f.request('--recover-store', empty=empty)
+                    self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                    self.assertIn('REFUSED:', result.stderr)
+                    self.assertEqual(tree(f.home), before)
+
+    def test_queue_open_descriptor_prevents_late_redirection(self):
+        for empty in (False, True):
+            with self.subTest(env_i=empty):
+                f = Fixture()
+                pending = f.queue.parent
+                displaced = f.home / 'displaced-pending'
+                foreign = f.home / 'foreign-pending'
+                foreign.mkdir()
+                before = tree(foreign), tree(f.root), tree(f.tests), f.legacy()
+                requester = f.orch / 'bin/request-runtime'
+                requester.write_text(requester.read_text().replace('fds = []', f'''
+original_open = os.open
+def substitute(path, flags, *args, **kwargs):
+    if path == 'bench-store-recovery':
+        os.rename({str(pending)!r}, {str(displaced)!r})
+        os.symlink({str(foreign)!r}, {str(pending)!r})
+    return original_open(path, flags, *args, **kwargs)
+os.open = substitute
+fds = []'''))
+                result = f.request('--recover-store', empty=empty)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn('REFUSED: queue directory replaced', result.stderr)
+                self.assertEqual((tree(foreign), tree(f.root), tree(f.tests), f.legacy()), before)
+                self.assertEqual((displaced / f.queue.name).read_bytes(), b'BENCHRECOVER\n')
+
+    def test_queue_location_ignores_inherited_redirect(self):
+        for empty in (False, True):
+            with self.subTest(env_i=empty):
+                f = Fixture()
+                other = Fixture()
+                before = tree(other.home)
+                original_env = f.env
+
+                def redirected_env(empty=False):
+                    return dict(original_env(empty), RUNTIME_ORCH_ROOT=str(other.orch))
+
+                f.env = redirected_env
                 result = f.request('--recover-store', empty=empty)
                 self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-                self.assertEqual((foreign / f.queue.name).read_bytes(), b'BENCHRECOVER\n')
-                self.assertEqual((tree(f.root), tree(f.tests), f.legacy()), before)
+                self.assertEqual(f.queue.read_bytes(), b'BENCHRECOVER\n')
+                self.assertEqual(tree(other.home), before)
 
     def test_request_dispatch_recovery_normal_and_env_i(self):
         for empty in (False, True):
