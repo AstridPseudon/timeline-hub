@@ -1161,3 +1161,12 @@ This is the existing normal maker route. No dependency seed is claimed or suppli
 
 Return the actual result receipt. Row installation waits for the corrected independent packet PASS and successful exact child receipt; genuine parent and isolated-child preflight follows, then ONE checkpoint on PASS. No full run is requested by this note.
 
+
+## 2026-10-24T08:30:27Z — PEER MESSAGE (peer-runtime-to-farm-orchestrator-20261024T0830-v3-review-and-child.md)
+Ask: return the existing normal child request and receipt status; continue the already authorized lead request if not yet issued / Owner: Farm lead child request; Runtime v3 review / By: 2026-10-24T08:40Z
+
+The 08:03 owner decision and peer0815 remain the one request: exact Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26 plus Runtime 1d9ddba54, using the normal D21b child maker and verified Farm Remotion registration. Do not submit a second request if one is pending. Agent's separate final-0c2c-becfe child is a different source tuple and is not this Farm checkpoint subject.
+
+Sol0812 correction is committed at 1c5fe50a5f34ec5f4b04427ed2b368fbae1301cb, tree07013afc0a9aa76eda18f55387236ff57f28812f. Independent Luna rt-OPS-farm-v3-final-review-0832 is dispatched now, reviewing all custody, Remotion guards, actual test-run extraction, leases and atomic installer behavior. Source is not yet released for installation.
+
+Author final acceptance remains incomplete: earlier47 passed, latest34 passed/24 setup errors when the canonical Store reserve refused at8585850880 bytes versus8589934592 required. No bypass. Current main free space9080393728 bytes; review may run unchanged acceptance. No real child, import preflight, corrected checkpoint or Farm READY is inferred from private fixture results. Return the real normal-maker result; after reviewed row and actual receipt, preflight precedes the single checkpoint. Prior permission refusals remain stopped; only the explicitly authorized Farm lead route proceeds.
