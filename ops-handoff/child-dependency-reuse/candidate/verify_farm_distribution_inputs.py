@@ -16,6 +16,10 @@ maker's integration point is::
 The five approved wheels are the independently reviewed original packet.  No
 caller-supplied additional wheel authority exists until an independent review
 register is wired in; caller labels and hashes cannot grant admission.
+Source custody uses the normal maker's real OS UID/GID and physical descriptor
+reads. Safe copies and sealed modes are admitted explicitly; copied snapshots
+without selected Git object authority fail closed. The receipt describes the
+checked bytes and paths, and must be revalidated at every later maker use.
 """
 
 from __future__ import annotations
@@ -32,6 +36,7 @@ import subprocess
 import tomllib
 import zipfile
 from collections.abc import Mapping, Sequence
+from contextlib import ExitStack
 from dataclasses import dataclass
 from email import message_from_bytes
 from pathlib import Path, PurePosixPath
@@ -394,16 +399,207 @@ def validate_wheel_inputs(
     return result
 
 
-def _git(root: Path, *args: str) -> str:
+def _git(root: int, *args: str) -> str:
+    # The maker process, Git executable and OS are trusted. Caller Git env,
+    # global config, replacement objects and the working index are not authority.
+    env = {
+        key: value for key, value in os.environ.items() if not key.startswith("GIT_")
+    }
+    env.update(
+        GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull, GIT_OPTIONAL_LOCKS="0"
+    )
     try:
         completed = subprocess.run(
-            ["git", *args], cwd=root, text=True, capture_output=True, check=False
+            ["git", "--no-replace-objects", "-c", "core.fsmonitor=false", *args],
+            cwd=f"/proc/self/fd/{root}",
+            pass_fds=(root,),
+            env=env,
+            capture_output=True,
+            check=False,
         )
-    except OSError as exc:
+    except (OSError, UnicodeError) as exc:
         _fail(f"schema source Git probe failed: {exc}")
     if completed.returncode != 0:
-        _fail(f"schema source Git probe refused: git {' '.join(args)}")
-    return completed.stdout
+        _fail(
+            "schema source Git probe refused; missing interface: authenticated "
+            "selected Agent Git object source for copied snapshots"
+        )
+    if (
+        args == ("cat-file", "commit", SCHEMA_COMMIT)
+        and _git_object_digest("commit", completed.stdout) != SCHEMA_COMMIT
+    ):
+        _fail("schema source selected commit content cannot be authenticated")
+    try:
+        return completed.stdout.decode("utf-8")
+    except UnicodeError as exc:
+        _fail(f"schema source Git output is not supported UTF-8: {exc}")
+
+
+def _node(info: os.stat_result) -> tuple[int, ...]:
+    return (
+        info.st_dev,
+        info.st_ino,
+        info.st_mode,
+        info.st_uid,
+        info.st_gid,
+        info.st_nlink,
+        info.st_size,
+        info.st_mtime_ns,
+        info.st_ctime_ns,
+    )
+
+
+class _SourceCustody(ExitStack):
+    """Pin physical paths from /; authenticate before open and after use.
+
+    Ownership comes from the maker's real UID/GID, never caller metadata.
+    Root-owned, nonwritable system ancestors are allowed. The root-owned sticky
+    system /tmp namespace is allowed only ABOVE the source root; its pinned
+    child must belong to the maker. Same-UID writers are outside isolation:
+    this is a checked read, not a lock or authority to install later by path.
+    """
+
+    def __init__(self, root: Path):
+        super().__init__()
+        self.root = root
+        self.nodes: dict[Path, tuple[int, os.stat_result]] = {}
+        self.uid, self.gid = os.getuid(), os.getgid()
+        self.contents: dict[Path, bytes] = {}
+
+    def directory(self, path: Path) -> int:
+        if path in self.nodes:
+            return self.nodes[path][0]
+        parent = None if path == Path("/") else self.directory(path.parent)
+        return self.open(path, directory=True, parent=parent)
+
+    def open(self, path: Path, *, directory: bool, parent: int | None) -> int:
+        name = "/" if parent is None else path.name
+        info = os.stat(name, dir_fd=parent, follow_symlinks=False)
+        if path in self.nodes:
+            fd, original = self.nodes[path]
+            if _node(info) != _node(original) or _node(os.fstat(fd)) != _node(original):
+                _fail(f"schema source path changed before reuse: {path}")
+            return fd
+        mode = stat.S_IMODE(info.st_mode)
+        ancestor = path != self.root and path in self.root.parents
+        if stat.S_ISLNK(info.st_mode):
+            _fail(f"schema source path contains a symlink: {path}")
+        expected = stat.S_ISDIR if directory else stat.S_ISREG
+        if not expected(info.st_mode) or (not directory and info.st_nlink != 1):
+            _fail(f"schema source path is not an owned physical entry: {path}")
+        owners = {0, self.uid} if ancestor else {self.uid}
+        groups = {0, self.gid} if ancestor else {self.gid}
+        if info.st_uid not in owners or info.st_gid not in groups:
+            _fail(f"schema source unexpected owner/group: {path}")
+        sticky_namespace = path == Path("/tmp") and ancestor and info.st_uid == 0 and mode == 0o1777
+        if not sticky_namespace and (mode & 0o7022):
+            _fail(f"schema source unsafe writable/special mode: {path}")
+        if (
+            directory
+            and not ancestor
+            and mode not in {0o500, 0o550, 0o555, 0o700, 0o750, 0o755}
+        ):
+            _fail(f"schema source directory mode is not a supported copy mode: {path}")
+        if not directory and mode not in {
+            0o400,
+            0o440,
+            0o444,
+            0o600,
+            0o640,
+            0o644,
+            0o500,
+            0o550,
+            0o555,
+            0o700,
+            0o750,
+            0o755,
+        }:
+            _fail(f"schema source file mode is not a supported copy mode: {path}")
+        flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
+        if directory:
+            flags |= os.O_DIRECTORY
+        fd = os.open(name, flags, dir_fd=parent)
+        self.callback(os.close, fd)
+        if _node(os.fstat(fd)) != _node(info):
+            _fail(f"schema source path changed while opening: {path}")
+        self.nodes[path] = fd, info
+        return fd
+
+    def read(self, path: Path, git_mode: str | None = None) -> bytes:
+        fd = self.open(path, directory=False, parent=self.directory(path.parent))
+        info = self.nodes[path][1]
+        mode = stat.S_IMODE(info.st_mode)
+        # Normal copies may retain owner write or be sealed by the maker.
+        allowed = {0o400, 0o440, 0o444, 0o600, 0o640, 0o644}
+        if git_mode == "100755":
+            allowed = {0o500, 0o550, 0o555, 0o700, 0o750, 0o755}
+        if mode not in allowed:
+            _fail(f"schema source mode does not match Git for: {path}")
+        if path in self.contents:
+            return self.contents[path]
+        with os.fdopen(os.dup(fd), "rb") as stream:
+            data = stream.read()
+        if _node(os.fstat(fd)) != _node(info):
+            _fail(f"schema source file changed while reading: {path}")
+        self.contents[path] = data
+        return data
+
+    def preflight(self) -> None:
+        """Authenticate selected physical entries before status/content reads."""
+
+        self.open(
+            self.root / "pyproject.toml",
+            directory=False,
+            parent=self.directory(self.root),
+        )
+        pending = [self.root / SCHEMA_SUBDIRECTORY]
+        while pending:
+            directory = pending.pop()
+            fd = self.directory(directory)
+            for name in os.listdir(fd):
+                target = directory / name
+                info = os.stat(name, dir_fd=fd, follow_symlinks=False)
+                is_directory = stat.S_ISDIR(info.st_mode)
+                self.open(target, directory=is_directory, parent=fd)
+                if is_directory:
+                    pending.append(target)
+
+    def finish(self) -> list[dict[str, Any]]:
+        result = []
+        for path, (fd, info) in sorted(self.nodes.items()):
+            parent = None if path == Path("/") else self.nodes[path.parent][0]
+            current = os.stat(
+                "/" if parent is None else path.name,
+                dir_fd=parent,
+                follow_symlinks=False,
+            )
+            count = 5 if path != self.root and path in self.root.parents else 9
+            if (
+                _node(current)[:count] != _node(info)[:count]
+                or _node(os.fstat(fd))[:count] != _node(info)[:count]
+            ):
+                _fail(f"schema source path changed during validation: {path}")
+            result.append(
+                {
+                    "path": str(path),
+                    "uid": info.st_uid,
+                    "gid": info.st_gid,
+                    "mode": oct(stat.S_IMODE(info.st_mode)),
+                    "device": info.st_dev,
+                    "inode": info.st_ino,
+                    **(
+                        {
+                            "nlink": info.st_nlink,
+                            "size": info.st_size,
+                            "mtime_ns": info.st_mtime_ns,
+                            "ctime_ns": info.st_ctime_ns,
+                        }
+                        if count == 9
+                        else {}
+                    ),
+                }
+            )
+        return result
 
 
 def _contains_value(value: object, expected: str) -> bool:
@@ -416,155 +612,212 @@ def _contains_value(value: object, expected: str) -> bool:
     return False
 
 
-def _tracked_schema_files(root: Path) -> dict[str, str]:
-    """Return the selected package's tracked paths and Git modes."""
+def _tracked_schema_files(root: int, tree: str) -> dict[str, tuple[str, str]]:
+    """Authenticate tree objects down to the full package, never the index."""
 
-    raw = _git(root, "ls-files", "-s", "--", SCHEMA_SUBDIRECTORY)
-    tracked: dict[str, str] = {}
-    for line in raw.splitlines():
-        metadata, separator, relative = line.partition("\t")
-        fields = metadata.split()
-        if separator != "\t" or len(fields) != 3 or fields[2] != "0":
-            _fail("schema source Git index has an invalid selected package entry")
-        mode, _object_id, _stage = fields
-        if mode not in {"100644", "100755"}:
-            _fail(f"schema source selected package has an unsafe Git mode: {relative}")
-        if not relative.startswith(f"{SCHEMA_SUBDIRECTORY}/"):
-            _fail(f"schema source Git index escaped the selected package: {relative}")
-        if relative in tracked:
-            _fail(f"schema source Git index repeats a selected package path: {relative}")
-        tracked[relative] = mode
-    if not tracked:
+    tracked: dict[str, tuple[str, str]] = {}
+
+    def walk(oid: str, prefix: str) -> None:
+        raw = _git(root, "ls-tree", "-z", oid)
+        entries = []
+        serialized = bytearray()
+        for entry in raw.split("\0"):
+            if not entry:
+                continue
+            metadata, separator, name = entry.partition("\t")
+            fields = metadata.split()
+            if not separator or len(fields) != 3 or "/" in name:
+                _fail("schema source Git tree has an invalid entry")
+            mode, kind, child = fields
+            _safe_member(name, "schema source Git tree")
+            if not re.fullmatch(r"[0-9a-f]{40}", child):
+                _fail("schema source Git tree has an invalid object identity")
+            serialized.extend(
+                mode.lstrip("0").encode()
+                + b" "
+                + name.encode()
+                + b"\0"
+                + bytes.fromhex(child)
+            )
+            entries.append((mode, kind, child, name))
+        if _git_object_digest("tree", bytes(serialized)) != oid:
+            _fail("schema source tree content does not match committed identity")
+        for mode, kind, child, name in entries:
+            relative = f"{prefix}/{name}" if prefix else name
+            selected = relative == "pyproject.toml" or relative.startswith(
+                f"{SCHEMA_SUBDIRECTORY}/"
+            )
+            ancestor = (
+                SCHEMA_SUBDIRECTORY == relative
+                or SCHEMA_SUBDIRECTORY.startswith(f"{relative}/")
+            )
+            if ancestor or (selected and kind == "tree"):
+                if mode != "040000" or kind != "tree":
+                    _fail("schema source selected path is not a committed directory")
+                walk(child, relative)
+            elif selected:
+                if mode not in {"100644", "100755"} or kind != "blob":
+                    _fail(
+                        f"schema source selected package has an unsafe Git mode: {relative}"
+                    )
+                tracked[relative] = mode, child
+
+    walk(tree, "")
+    if "pyproject.toml" not in tracked or not any(
+        path.startswith(f"{SCHEMA_SUBDIRECTORY}/") for path in tracked
+    ):
         _fail("schema source subdirectory is not tracked")
     return tracked
 
 
-def _read_authenticated_schema_files(
-    subpath: Path, tracked: Mapping[str, str]
-) -> list[dict[str, Any]]:
-    """Read every physical selected-package file, including ignored entries."""
+def _git_object_digest(kind: str, data: bytes) -> str:
+    return hashlib.sha1(f"{kind} {len(data)}\0".encode() + data).hexdigest()
 
+
+def _read_authenticated_schema_files(
+    custody: _SourceCustody, tracked: Mapping[str, tuple[str, str]]
+) -> list[dict[str, Any]]:
     expected_dirs: set[str] = {SCHEMA_SUBDIRECTORY}
     for relative in tracked:
         parts = relative.split("/")
-        expected_dirs.update("/".join(parts[:index]) for index in range(2, len(parts)))
-
-    actual: dict[str, dict[str, Any]] = {}
-    pending = [subpath]
-    source_root = subpath.parents[2]
+        expected_dirs.update("/".join(parts[:index]) for index in range(1, len(parts)))
+    pending = [custody.root / SCHEMA_SUBDIRECTORY]
+    physical: set[str] = {"pyproject.toml"}
     while pending:
         directory = pending.pop()
-        try:
-            entries = list(os.scandir(directory))
-        except OSError as exc:
-            _fail(f"schema source package subtree cannot be read: {exc}")
-        for entry in entries:
-            target = Path(entry.path)
-            relative = target.relative_to(source_root).as_posix()
-            try:
-                info = entry.stat(follow_symlinks=False)
-            except OSError as exc:
-                _fail(f"schema source package entry cannot be read: {relative}: {exc}")
+        fd = custody.directory(directory)
+        for name in os.listdir(fd):
+            target = directory / name
+            relative = target.relative_to(custody.root).as_posix()
+            info = os.stat(name, dir_fd=fd, follow_symlinks=False)
             if stat.S_ISLNK(info.st_mode):
                 _fail(f"schema source package subtree contains a symlink: {relative}")
             if stat.S_ISDIR(info.st_mode):
                 if relative not in expected_dirs:
                     _fail(
-                        "schema source package subtree contains an unowned directory: "
-                        f"{relative}"
+                        f"schema source package subtree contains an unowned directory: {relative}"
                     )
+                custody.directory(target)
                 pending.append(target)
-                continue
-            if not stat.S_ISREG(info.st_mode):
-                _fail(f"schema source package subtree contains an unsafe entry: {relative}")
-            if relative not in tracked:
-                _fail(f"schema source package subtree contains an unowned file: {relative}")
-            mode = stat.S_IMODE(info.st_mode)
-            expected_mode = 0o755 if tracked[relative] == "100755" else 0o644
-            if mode != expected_mode:
-                _fail(f"schema source mode does not match Git for: {relative}")
-            data = _read_regular(target, f"schema source {relative}")
-            actual[relative] = {
+            elif relative not in tracked:
+                _fail(
+                    f"schema source package subtree contains an unowned file: {relative}"
+                )
+            else:
+                physical.add(relative)
+    if physical != set(tracked):
+        _fail("schema package source tree is incomplete")
+    files = []
+    for relative, (mode, blob) in sorted(tracked.items()):
+        data = custody.read(custody.root / relative, mode)
+        if _git_object_digest("blob", data) != blob:
+            _fail(f"schema source bytes differ from committed blob: {relative}")
+        files.append(
+            {
                 "path": relative,
-                "mode": tracked[relative],
+                "mode": mode,
+                "blob": blob,
                 "sha256": hashlib.sha256(data).hexdigest(),
                 "size": len(data),
             }
-
-    if set(actual) != set(tracked):
-        missing = sorted(set(tracked) - set(actual))
-        _fail(f"schema source package subtree is incomplete: {missing[0]}")
-    return [actual[path] for path in sorted(actual)]
+        )
+    return files
 
 
 def validate_schema_source(schema_source: Path) -> dict[str, Any]:
-    """Validate a clean Agent checkout containing the selected schema source."""
+    """Check selected Git source under the normal maker's OS ownership.
 
-    root = _physical_directory(Path(schema_source), "schema source")
-    top = _git(root, "rev-parse", "--show-toplevel").strip()
-    if Path(top).resolve() != root:
-        _fail("schema source Git root does not match the supplied physical tree")
-    if _git(root, "rev-parse", "HEAD").strip() != SCHEMA_COMMIT:
-        _fail("schema source commit is not the selected Agent commit")
-    selected_commit = _git(root, "rev-parse", f"{SCHEMA_COMMIT}^{{commit}}").strip()
-    if selected_commit != SCHEMA_COMMIT:
-        _fail("schema source selected commit cannot be authenticated")
-    if _git(root, "status", "--porcelain=v1", "--untracked-files=all"):
-        _fail("schema source tree is not clean")
-    if any(line.startswith("120000 ") for line in _git(root, "ls-files", "-s").splitlines()):
-        _fail("schema source tree contains a symlink")
-    head_tree = _git(root, "rev-parse", "HEAD^{tree}").strip()
-    selected_tree = _git(root, "rev-parse", f"{SCHEMA_COMMIT}^{{tree}}").strip()
-    if not selected_tree or head_tree != selected_tree:
-        _fail("schema source tree is not bound to the selected Agent commit")
+    A bare copied snapshot has no Git authority; it fails closed until the
+    maker supplies a separately authenticated selected object-source interface.
+    No observed seal or caller-provided UID can substitute for that interface.
+    """
 
-    agent_pyproject = root / "pyproject.toml"
+    root = Path(schema_source)
+    if root.anchor != "/" or ".." in root.parts:
+        _fail("schema source must have an absolute physical path")
     try:
-        agent_metadata = tomllib.loads(_read_regular(agent_pyproject, "Agent pyproject").decode())
-    except (UnicodeDecodeError, tomllib.TOMLDecodeError) as exc:
-        _fail(f"Agent pyproject is invalid: {exc}")
-    if not _contains_value(agent_metadata, SCHEMA_DECLARATION):
-        _fail("Agent pyproject does not contain the exact selected schema declaration")
-
-    subpath = root / SCHEMA_SUBDIRECTORY
-    if subpath.is_symlink() or not subpath.is_dir() or subpath.resolve() != subpath:
-        _fail("selected schema subdirectory is absent or symlinked")
-    package_pyproject = subpath / "pyproject.toml"
-    try:
-        package_metadata = tomllib.loads(
-            _read_regular(package_pyproject, "schema package pyproject").decode()
-        )
-    except (UnicodeDecodeError, tomllib.TOMLDecodeError) as exc:
-        _fail(f"schema package pyproject is invalid: {exc}")
-    project = package_metadata.get("project")
-    if (
-        not isinstance(project, Mapping)
-        or project.get("name") != SCHEMA_PACKAGE
-        or project.get("version") != SCHEMA_VERSION
-    ):
-        _fail("schema package metadata name/version is not exact")
-    package_dir = subpath / "banodoco_timeline_schema"
-    init = package_dir / "__init__.py"
-    if (
-        package_dir.is_symlink()
-        or not package_dir.is_dir()
-        or init.is_symlink()
-        or not init.is_file()
-    ):
-        _fail("schema package source tree is incomplete")
-
-    tracked = _tracked_schema_files(root)
-    files = _read_authenticated_schema_files(subpath, tracked)
-    return {
-        "package": SCHEMA_PACKAGE,
-        "version": SCHEMA_VERSION,
-        "source_url": "git+https://github.com/banodoco/astrid-agent.git",
-        "commit": SCHEMA_COMMIT,
-        "subdirectory": SCHEMA_SUBDIRECTORY,
-        "tree": selected_tree,
-        "content_sha256": _json_digest(files),
-        "files": files,
-    }
+        with _SourceCustody(root) as custody:
+            fd = custody.directory(root)
+            top = _git(fd, "rev-parse", "--show-toplevel").strip()
+            if Path(top) != root:
+                _fail(
+                    "schema source Git root does not match the supplied physical tree"
+                )
+            if _git(fd, "rev-parse", "HEAD").strip() != SCHEMA_COMMIT:
+                _fail("schema source commit is not the selected Agent commit")
+            if (
+                _git(fd, "rev-parse", f"{SCHEMA_COMMIT}^{{commit}}").strip()
+                != SCHEMA_COMMIT
+            ):
+                _fail("schema source selected commit cannot be authenticated")
+            custody.preflight()
+            if _git(fd, "status", "--porcelain=v1", "--untracked-files=all"):
+                _fail("schema source tree is not clean")
+            if any(
+                line.startswith("120000 ")
+                for line in _git(fd, "ls-files", "-s").splitlines()
+            ):
+                _fail("schema source tree contains a symlink")
+            tree = _git(fd, "rev-parse", f"{SCHEMA_COMMIT}^{{tree}}").strip()
+            if not tree or _git(fd, "rev-parse", "HEAD^{tree}").strip() != tree:
+                _fail("schema source tree is not bound to the selected Agent commit")
+            # Git resolves the pinned object; independently hash its bytes so
+            # neither an index flag nor an altered loose object grants custody.
+            commit_data = _git(fd, "cat-file", "commit", SCHEMA_COMMIT).encode()
+            if commit_data.split(b"\n", 1)[0] != f"tree {tree}".encode():
+                _fail("schema source tree is not bound to the selected Agent commit")
+            tracked = _tracked_schema_files(fd, tree)
+            required = {
+                "pyproject.toml",
+                f"{SCHEMA_SUBDIRECTORY}/pyproject.toml",
+                f"{SCHEMA_SUBDIRECTORY}/banodoco_timeline_schema/__init__.py",
+            }
+            if not required.issubset(tracked):
+                _fail("schema package source tree is incomplete")
+            files = _read_authenticated_schema_files(custody, tracked)
+            agent_metadata = tomllib.loads(
+                custody.read(
+                    root / "pyproject.toml", tracked["pyproject.toml"][0]
+                ).decode()
+            )
+            if not _contains_value(agent_metadata, SCHEMA_DECLARATION):
+                _fail(
+                    "Agent pyproject does not contain the exact selected schema declaration"
+                )
+            package_metadata = tomllib.loads(
+                custody.read(
+                    root / SCHEMA_SUBDIRECTORY / "pyproject.toml",
+                    tracked[f"{SCHEMA_SUBDIRECTORY}/pyproject.toml"][0],
+                ).decode()
+            )
+            project = package_metadata.get("project")
+            if (
+                not isinstance(project, Mapping)
+                or project.get("name") != SCHEMA_PACKAGE
+                or project.get("version") != SCHEMA_VERSION
+            ):
+                _fail("schema package metadata name/version is not exact")
+            nodes = custody.finish()
+            return {
+                "package": SCHEMA_PACKAGE,
+                "version": SCHEMA_VERSION,
+                "source_url": "git+https://github.com/banodoco/astrid-agent.git",
+                "commit": SCHEMA_COMMIT,
+                "tree": tree,
+                "subdirectory": SCHEMA_SUBDIRECTORY,
+                "content_sha256": _json_digest(files),
+                "files": files,
+                "custody": {
+                    "authority": "maker-real-uid-gid",
+                    "uid": custody.uid,
+                    "gid": custody.gid,
+                    "root": str(root),
+                    "nodes": nodes,
+                    "reuse": "revalidate; receipt is not an installation lease",
+                },
+            }
+    except (OSError, UnicodeError, tomllib.TOMLDecodeError) as exc:
+        _fail(f"schema source physical custody refused: {exc}")
 
 
 def validate_farm_distribution_inputs(
@@ -576,7 +829,9 @@ def validate_farm_distribution_inputs(
     """Return the maker/Store input receipt after all source/input checks."""
 
     schema = validate_schema_source(schema_source)
-    distributions = validate_wheel_inputs(wheelhouse, additional_wheels=additional_wheels)
+    distributions = validate_wheel_inputs(
+        wheelhouse, additional_wheels=additional_wheels
+    )
     receipt: dict[str, Any] = {"schema_source": schema, "wheel_inputs": distributions}
     receipt["component_identity"] = _json_digest(receipt)
     return receipt
