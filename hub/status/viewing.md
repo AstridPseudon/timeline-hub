@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T09:00:57Z | dispatcher heartbeat 3s | live 1 (sol 1, luna 0, other 0) | busy30 2 | status age 1m -->
-# viewing board, 2026-10-24T08:59:34Z
+<!-- viewing | 2026-10-24T09:02:32Z | dispatcher heartbeat 7s | live 1 (sol 1, luna 0, other 0) | busy30 2 | status age 1m -->
+# viewing board, 2026-10-24T09:01:17Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna | H0 | merged | Inventory and acceptance reviews | Four copies and drift checks independently passed. No product change. | 6c4d934; 7a95a40 |
@@ -22,7 +22,7 @@
 | F-retired-callers | Qualify retained caller scenarios | Luna | Integrated source proof | merged | Review 0444 and Agent 0500 | Actual Agent 9cd passed 53 controls; exact 30 originals retained. Three label mappings recorded separately. | 0712aadf6; home 9cd3dbe865 |
 | F-track-label mapping | Map three label scenarios | Luna | Exact source comparison | merged | Mapping 0544 and review 0547 | Unicode, empty and clear mappings passed. Existing CLI receipt retained; Agent owns census credit. | Base 9cd3dbe865 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna | Qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six originals passed on child c886 and Runtime 8ea. Classification independently passed. | No product change |
-| F-authoring-ABA | Review original undo and ABA result | Luna | Actual service 20732 packet | review | vw-F-ABA-20732-review-0859 | Original failed at line 1090: transport_timeout versus transport_error. All 59 assertions retained; later behavior unqualified. | Agent 0c2c; Runtime becfe |
+| F-authoring-ABA | Review original undo and ABA result | Luna | Meaningful reviewed source correction | doing | Result review 0859 FAIL; source Sol 0859 | Original 20732 failed assertion 42 of 59. Assertions 43 to 59 unrun; no evidence yet of hook firing or durable undo acceptance. | Agent 0c2c; Runtime becfe |
 | F-authoring-ABA lost ack | Diagnose new transport boundary | Sol | Original 20732 and Agent whole path 0855 | doing | vw-F-ABA-lost-ack-sol-0859 | Bounded source control first; no original retry, timeout increase or expectation change. | Base 67d5f19716 |
 | F-authoring-ABA storage | Merge current item storage source | Sol and Luna | Integrated source proof passed | merged | Agent integrated proof 0816 | Actual current joined source passed 123, including all 95 diagnostics. Runtime becfe auth matches repaired 460c; static and normal mappings passed. | ca8915f23d; home 0c2c28da4 |
 | F-ABA diagnostics | Merge reviewed diagnostic import | Luna | Integrated source proof passed | merged | Viewing 0805; Agent home proof 0816 | Exact diagnostic blob and 59 original assertions retained. Actual joined source passed 123 with zero failures, errors or skips. | d3595fa139; Agent 35f462a27 |
@@ -46,8 +46,8 @@ Original ABA service 11466 failed at undo before lost ACK, retaining all 59 asse
 
 D49 venue: Viewing test service. Checkpoint composition-full-1024074900-23379 passed 86 with zero skips on actual compiled source. Installed shared App package 0.0.13 versus tracked 0.0.14 was disclosed by independent readiness review; source checkpoint does not qualify that consumer graph. Final full runs after Runtime coordinates the final tuple and gate reruns. No graph mutation or duplicate full is requested.
 
-Evidence: [current Viewing review](../../design/viewing-F-ABA-current-review-0805.md), [diagnostic review](../../design/viewing-F-ABA-diagnostics-review-0748.md), [original ABA verdict](../../design/viewing-F-authoring-ABA-original-review-0513.md), [whole path verdict](../../design/viewing-F-authoring-ABA-whole-path-review-0638.md), [Composition checkpoint](../../design/viewing-FREEZE-composition-checkpoint-0750.md), [earlier evidence](../../design/viewing-evidence-before-D33-20261024T0053.md).
+Evidence: [original 20732 verdict](../../design/viewing-F-ABA-20732-verdict-0901.md), [current Viewing review](../../design/viewing-F-ABA-current-review-0805.md), [diagnostic review](../../design/viewing-F-ABA-diagnostics-review-0748.md), [original ABA verdict](../../design/viewing-F-authoring-ABA-original-review-0513.md), [whole path verdict](../../design/viewing-F-authoring-ABA-whole-path-review-0638.md), [Composition checkpoint](../../design/viewing-FREEZE-composition-checkpoint-0750.md), [earlier evidence](../../design/viewing-evidence-before-D33-20261024T0053.md).
 
 Blockers: None for Viewing dispatch. Agent whole path 0855 supplies independent facts to the unique lost-ack source owner; Runtime-only seams return to Runtime.
 Later: Image inverse peer 0455 predates forwarding source 0df7. Agent owns any next image witness; no new Viewing body. V4 cut and deferred timing remain unchanged. Earlier permission refusals stay stopped.
-Next ready: Review 0859 result publication and independent source review after the unique Sol worker returns a meaningful correction. No original retry before reviewed source.
+Next ready: Independent source review after the unique Sol 0859 returns a meaningful correction; exact Runtime owner handback if source is outside released Agent seams. No original retry before reviewed source.
