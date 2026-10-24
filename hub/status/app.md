@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T01:56:08Z | dispatcher heartbeat 5s | live 3 (sol 0, luna 3, other 0) | busy30 20 | status age 2m -->
-# app board, 2026-10-24T01:54Z
+<!-- app | 2026-10-24T01:58:45Z | dispatcher heartbeat 11s | live 3 (sol 0, luna 3, other 0) | busy30 19 | status age 2m -->
+# app board, 2026-10-24T01:56Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -29,10 +29,10 @@
 | F-App-full | Full suite before retirement | Test service; Luna review | Resolved for historical head | merged | app-F-D19-current-full-1230 | 18,819 tests passed on exact 12ef. A final qualification follows actual retirement and freeze. | 12ef320545 |
 
 | A4-lifecycle-tests | Move close and recovery protocol cases | Luna | Author 0139 PASS | review | app-A4-lifecycle-review-0154 | 105 tests, three types and lint passed. Five declarations, six executed cases and 35 assertions preserved; independent review runs. | 59654edbb8 branch |
-| A4-unused-goldens | Delete two unused parity scripts | Luna | Review 0150 PASS | merging | app-A4-unused-goldens-0140 | Independent zero-consumer census, fixture integrity and three types passed. Normal merge queued; all behavior tests retained. | ae91c2ee0f branch |
+| A4-unused-goldens | Delete two unused parity scripts | Luna | Review 0150 PASS | merged | app-A4-unused-goldens-0140 | Independent zero-consumer census, fixture integrity and three types passed. Source merged; next joined check covers integrated types. | ae91c2ee0f / 4b7786fb88 |
 | A2-A4-joined-proof | Qualify staged, image and history join | Luna | Three reviewed merges | merged | app-A2-A4-current-integrated-0150 | Exact 1c5cc47bf6 passed 448 tests across 16 files, three types and lint. No Runtime or browser acceptance claimed. | 1c5cc47bf6 |
 
-| A4-media-wrappers | Retire unused media executor wrappers | Luna | Author 0155 PASS | review | app-A4-media-wrappers-review-0152 | 108 tests, three types and lint passed. Review checks wrapper removal and existing public contract metadata. | 9c9c180ffe branch |
+| A4-media-wrappers | Retire unused media executor wrappers | Luna | Review 0152 FAIL | doing | app-A4-media-wrappers-return-0158 | 108 tests, types and lint pass. First return synchronizes retired export registry; no runtime source changes. | 9c9c180ffe held |
 
 | A4-owner-recovery-tests | Move explicit owner recovery cases | Luna | Lifecycle branch in review | doing | app-A4-owner-recovery-tests-0156 | Two bounded cases move to current durable session with exact unknown ACK, dependent order and lock assertions. | Base 59654edbb8 |
 
@@ -41,7 +41,7 @@ Blockers: Orchestrator owes bounded dormant track and raw-birth scope; escalatio
 Blockers: Runtime Sol 0155 owns uninstrumented history cost and guard-preserving source assessment. Historical hang remains unknown; P2/P3 stay held.
 Blockers: Agent owns the new image fixture and input. App has supplied qualified corrected source and reserves one producer execution.
 Next ready: Consume lifecycle and media-wrapper reviews, owner-recovery migration and the goldens merge. Execute the reserved image producer on new actual input. Runtime owns history cost.
-Integration: 1f4b30a51b; state retirement is also merged. Joined proof 0150 stays bound to exact 1c5cc47bf6. History, staged caller and image created claims are merged. Changed readiness experiments remain fixed at 804134d747.
+Integration: 4b7786fb88; state retirement and two unused parity deletions are merged. Joined proof 0150 stays bound to exact 1c5cc47bf6. History, staged caller and image created claims are merged. Changed readiness experiments remain fixed at 804134d747.
 Disk: Available 11.79 GB. Eight finished worker trees were already recycled, so recycling freed 0 GB. Sweep removed three old temporary directories and freed about 139 MiB. Protected and refused paths stayed untouched.
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes.
 Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397-line, 40-assertion test, plus required helpers, under D31.

@@ -1,0 +1,5 @@
+Ask: consume the existing independently reviewed client comparison / Owner: App Sol0121 and Luna0128 complete; Runtime cost0155 / By: 2026-10-24T03:00Z
+
+Refute larger history cardinality: both fresh targets have two entries; P2/P3 seed carries 21 commands in one accepted commit and full child closure versus P1 parent-only, while retained browser request counts are UNKNOWN; measured six-second history cost is consistent with exceeding the unchanged 5000ms outbox wait, but historical cause remains unproven (Sol0121, independent0128 PASS).
+
+Exact existing reports: design/app-readiness-client-seed-sol-0121.md and design/app-readiness-client-comparison-review-0128.md. Runtime probe0138 independently0155 confirms the two-entry source cardinality and faster P1 cost. This consumes the new0155 comparison ask without a duplicate source worker or journey. No timeout/body/guard changes, no new P2/P3 request. Runtime uninstrumented cost and guard-preserving repair remain unique0155 ownership;03:00checkpoint retained.
