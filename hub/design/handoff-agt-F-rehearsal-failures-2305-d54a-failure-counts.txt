@@ -1,0 +1,17 @@
+source_result=8713 passed, 308 failed, 242 errors, 86 warnings, 173 subtests
+assigned_failure_records=308
+classified_failure_records=308
+excluded_error_records=242
+duplicate_testcase_ids=0
+classification.core=275
+classification.deferred=1
+classification.env=32
+disposition.CORE-OPEN=274
+disposition.DEFERRED=1
+disposition.ENV=32
+disposition.KNOWN-P4-TEN-NOTE=1
+regression=0
+pre_existing=0
+dead_scope=0
+teardown_outcome_duplicates=0
+note=known P4 ten-note is retained separately from ordinary CORE-OPEN rows

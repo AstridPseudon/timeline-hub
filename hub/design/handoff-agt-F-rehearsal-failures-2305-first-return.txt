@@ -1,0 +1,36 @@
+D54a first return — authentic service23499 failure slice
+
+Scope: failure records only; 308 exact XML testcase IDs. The 242 XML error
+records and the known P4 ten-note are not used to invent a shared diagnosis.
+
+First repair families and exact IDs:
+
+- Runtime inverse-stage custody / authenticated effect image:
+  - tests.editing_conformance.test_commit_runtime_numeric_params::test_native_film_param_edit_preserves_exact_image_and_inverse[2-2.0-occurrence:occurrence-1/clip:clip-1]
+  - tests.editing_conformance.test_commit_runtime_occurrence_fork::test_registered_fork_normal_wire_accept_edit_and_guarded_undo
+  - tests.sdk.test_timeline_clip_scalar_provider::test_original_app_fields_provider_reload_exact_inverse_redo_and_disjoint_rebase
+  Evidence: OWN-REHEARSAL-SUITE.xml failure traces; Runtime service.py:2504
+  messages “inverse stage … differs/does not cover”. Proposed owner: Runtime.
+
+- Agent native word/timing binding:
+  - tests.editing_conformance.test_native_word_anchor::test_word_ending_at_occurrence_end_preserves_revision_only_restore_and_inverse[retained0]
+  - tests.editing_conformance.test_native_word_anchor::test_follow_rebases_original_choice_after_source_move_and_reorder[True]
+  - tests.editing_conformance.test_timing_retained_inputs::test_accepted_rebase_has_exact_document_but_no_reconstructible_word_choice
+  Evidence: OWN-REHEARSAL-SUITE.xml failure traces; Runtime timing rejection
+  is the observed boundary, not a proven baseline cause. Proposed owner: Agent.
+
+- Agent native batch ingress / capture custody:
+  - tests.editing_conformance.test_native_batch_ingress::test_batch_original_claims_one_publication_reload_inverse[cli-False]
+  - tests.editing_conformance.test_native_batch_ingress::test_batch_capture_never_refreshes_after_concurrent_ack
+  - tests.editing_conformance.test_native_batch_ingress::test_file_parser_requires_both_original_pins_and_describes_registry
+  Evidence: OWN-REHEARSAL-SUITE.xml exact SystemExit/assertion traces. Proposed
+  owner: Agent.
+
+- Runtime parent command provenance:
+  - tests.editing_conformance.test_commit_runtime_parent_media::test_fresh_film_first_media_birth_and_exact_inverse[image]
+  - tests.editing_conformance.test_commit_runtime_parent_auto_completion::test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id[image-anchor]
+  Evidence: OWN-REHEARSAL-SUITE.xml exact “provider executed a different
+  command” traces. Proposed owner: Runtime.
+
+Disposition at first return: these are CORE-OPEN families. No source change,
+rerun, diagnosis run, regression claim, or dead-scope claim is made here.
