@@ -67,7 +67,8 @@ describe('prepared image request producer fixture', () => {
     });
     const command = (exported.request.commands as Array<Record<string, unknown>>)[0]!;
     expect(exported.request.commands).toHaveLength(1);
-    expect(command).toMatchObject({ op: 'clip.add-media', select: 'parent', intent: {}, args: { media: SYNTHETIC_SELECTION } });
+    expect(command).toMatchObject({ schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent', intent: {},
+      created: ['parent/asset:synthetic-image', 'parent/clip:clip-0'], args: { media: SYNTHETIC_SELECTION } });
     expect((command.args as Record<string, unknown>).row).toMatchObject({
       id: 'clip-0', track: 'V1', at: 2, clipType: 'hold', hold: 5, asset: 'synthetic-image',
     });
@@ -90,7 +91,7 @@ describe('prepared image request producer fixture', () => {
     await expect(access(malformedOutput)).rejects.toThrow();
   });
 
-  it.each(['valid', 'generic', 'child row', 'occurrence lane', 'placement lane', 'head', 'foreign timeline', 'gesture basis',
+  it.each(['valid', 'existing asset', 'asset alias', 'existing asset alias', 'forged asset', 'forged clip', 'existing clip', 'generic', 'child row', 'occurrence lane', 'placement lane', 'head', 'foreign timeline', 'gesture basis',
     'local child mutation', 'registry', 'missing selection', 'extra selection', 'wrong recipe', 'wrong command', 'track mutation',
     'additional row', 'bundle', 'unknown gesture', 'source mismatch', 'child selection', 'mirrors'] as const)('preserves a mixed raw parent closure and bounds the prepared recipe: %s', async (kind) => {
     const fixture = input();
@@ -100,6 +101,11 @@ describe('prepared image request producer fixture', () => {
     canonical.internal_timeline_revisions = structuredClone(closure.internal_timeline_revisions);
     canonical.dependency_manifest = structuredClone(closure.dependency_manifest);
     const parent = canonical.parent_revision.payload;
+    const existingAsset = kind === 'existing asset' || kind === 'existing asset alias';
+    if (existingAsset) {
+      (parent.registry.assets as Record<string, unknown>)[fixture.preparedAsset.assetKey] = structuredClone(fixture.preparedAsset.entry);
+    }
+    Object.assign((parent.config.tracks as Array<Record<string, unknown>>)[0], { opaque: [null, false] });
     parent.occurrences = structuredClone(closure.parent_revision.payload.occurrences);
     for (const occurrence of parent.occurrences as Array<Record<string, unknown>>) {
       occurrence.track = kind === 'placement lane' ? 'other' : 'picture';
@@ -117,6 +123,9 @@ describe('prepared image request producer fixture', () => {
     const data = await buildTimelineData({ ...loaded, ...withDefaultTimelineOutput(loaded) },
       parent.registry as unknown as AssetRegistry);
     const source = { config: data.config, registry: data.registry, head };
+    if (kind === 'asset alias' || kind === 'existing asset alias') Object.assign(fixture.preparedAsset, {
+      mediaSelection: { ...fixture.preparedAsset.mediaSelection, asset: 'selected-image' },
+    });
     const command = buildPlacePreparedMediaCommand({ prepared: fixture.preparedAsset, trackId: 'V1', time: 2,
       forceNewTrack: false, insertAtTop: false });
     const preview = previewPreparedMediaCommand(data, command)!;
@@ -124,6 +133,7 @@ describe('prepared image request producer fixture', () => {
     const next = { ...source, config: structuredClone(preview.nextData.config), registry: structuredClone(preview.nextData.registry) };
     const gesture: TimelineGestureReadBasis = structuredClone({ kind: 'prepared-media', config: source.config,
       registry: source.registry, clipId: row.id, command });
+    const originalGesture = JSON.stringify(gesture);
     if (kind === 'source mismatch') source.config.clips[0].at = 99;
     if (kind === 'mirrors') parent.tracks = [];
     const initial = { head: fixture.head, canonicalDocument: canonical };
@@ -155,11 +165,18 @@ describe('prepared image request producer fixture', () => {
     if (kind === 'child selection') gesture.clipId = 'occ-0::clip';
     if (kind === 'track mutation') next.config.tracks[0].label = 'changed';
     if (kind === 'additional row') next.config.clips.push({ ...row, id: 'extra' });
+    if (kind === 'forged asset') next.config.clips.at(-1)!.asset = 'unselected-asset';
+    if (kind === 'forged clip') gesture.clipId = 'unselected-clip';
+    if (kind === 'existing clip') next.config.clips.at(-1)!.id = source.config.clips[0].id;
+    const captureInput = JSON.stringify(next);
+    const captureGesture = JSON.stringify(gesture);
+    const captureDocument = structuredClone(session.getDocument());
     try {
       const capture = handoff.capture(kind === 'bundle' ? { ...next, bundle: { schema_version: 1, itemsBySchemaRef: {} } } : next,
         kind === 'generic' ? undefined : gesture);
-      if (kind !== 'valid') {
-        const message = kind === 'generic' || kind === 'unknown gesture' || kind === 'occurrence lane' || kind === 'placement lane' ? 'child ownership/fork mapping'
+      if (kind !== 'valid' && !existingAsset && kind !== 'asset alias') {
+        const message = kind === 'existing clip' ? 'authored parent entity binding is ambiguous'
+          : kind === 'generic' || kind === 'unknown gesture' || kind === 'occurrence lane' || kind === 'placement lane' ? 'child ownership/fork mapping'
           : kind === 'source mismatch' ? 'upstream source differs'
             : kind === 'mirrors' ? 'contradictory parent tracks mirror'
           : kind === 'head' || kind === 'foreign timeline' ? 'original verified authoring head'
@@ -174,6 +191,7 @@ describe('prepared image request producer fixture', () => {
         expect(stored.intents).toEqual([]);
         expect(stored.pending).toBeUndefined();
         expect(send).not.toHaveBeenCalled();
+        expect(session.getDocument()).toEqual(captureDocument);
       } else {
         await capture;
         const [stored] = await outboxes.list(scope);
@@ -187,9 +205,14 @@ describe('prepared image request producer fixture', () => {
         expect(captured.parent_revision.payload.config).not.toHaveProperty('clips');
         expect(stored.intents[0].payload).toHaveProperty('after', captured);
         expect(stored.intents[0].payload).toHaveProperty('commands', [{ schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent',
-          args: { row, media: SYNTHETIC_SELECTION }, intent: {} }]);
+          args: { row, media: fixture.preparedAsset.mediaSelection }, intent: {}, created: [
+            ...(existingAsset ? [] : ['parent/asset:synthetic-image']), `parent/clip:${row.id}`,
+          ] }]);
+        expect(JSON.stringify(gesture)).toBe(originalGesture);
       }
       expect(JSON.stringify(canonical)).toBe(original);
+      expect(JSON.stringify(next)).toBe(captureInput);
+      expect(JSON.stringify(gesture)).toBe(captureGesture);
     } finally { await session.dispose(); }
   });
 
