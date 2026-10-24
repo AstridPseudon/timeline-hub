@@ -27,9 +27,9 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 ORCH = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch")
-SOURCE = Path("/home/user/work/wt/agt-pin-0c2c28da")
+SOURCE = Path("/home/user/work/wt/agt-pin-0ff3d103")
 RUNTIME = Path("/home/user/work/wt/rt-pin-becfe6db")
-CHILD_NAME = "venv-agent-child-final-0c2c-becfe"
+CHILD_NAME = "venv-agent-child-final-0ff3-becfe"
 RECEIPT = ORCH / "tests/provision" / (CHILD_NAME + ".txt")
 MAKER = ORCH / "bin/make-child-venv"
 MAKER_SHA256 = "c887a1bef4831f2ca5a43372ee28430000b2f20b9d290bffb237f27ffc404ff2"
@@ -37,7 +37,7 @@ SCRATCH = Path(os.environ.get("TMPDIR", "/tmp"))
 EVIDENCE = Path(os.environ.get("DISCOVERY_EVIDENCE", str(SCRATCH / "discovery-evidence")))
 TARGET = "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons"
 TARGET_FILE = SOURCE / TARGET.split("::")[0]
-EXPECTED_AGENT = "0c2c28da4f9733a1becc134f95219ae3079fc50e"
+EXPECTED_AGENT = "0ff3d103fb892977b0853829f42b748a5d567851"
 EXPECTED_RUNTIME = "becfe6db88b2cc034dba3fafa6c050117cdf2b06"
 EXPECTED_PROFILE = "agent-remotion-v3-819acf-1110"
 PROFILE = Path("/home/user/work/runtimes") / EXPECTED_PROFILE
