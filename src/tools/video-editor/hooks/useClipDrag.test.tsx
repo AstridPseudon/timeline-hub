@@ -1,4 +1,10 @@
-import { __resetSelectionStoreForTests, userSelectTimelineItems } from '@/shared/state/selectionStore';
+import {
+  __getSelectionStateForTests,
+  __resetSelectionStoreForTests,
+  editorSetSelectedTrackId,
+  userSelectTimelineClip,
+  userSelectTimelineItems,
+} from '@/shared/state/selectionStore';
 import { commitDraggingSession } from './useClipDrag.helpers.ts';
 // @vitest-environment jsdom
 import { act, fireEvent, renderHook } from '@testing-library/react';
@@ -25,11 +31,16 @@ const selectionMocks = vi.hoisted(() => ({
   userSelectTimelineClips: vi.fn(),
 }));
 
-vi.mock('@/shared/state/selectionStore', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@/shared/state/selectionStore')>(),
-  userSelectTimelineClip: selectionMocks.userSelectTimelineClip,
-  userSelectTimelineClips: selectionMocks.userSelectTimelineClips,
-}));
+vi.mock('@/shared/state/selectionStore', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/state/selectionStore')>();
+  selectionMocks.userSelectTimelineClip.mockImplementation((...args) => actual.userSelectTimelineClip(...args));
+  selectionMocks.userSelectTimelineClips.mockImplementation((...args) => actual.userSelectTimelineClips(...args));
+  return {
+    ...actual,
+    userSelectTimelineClip: selectionMocks.userSelectTimelineClip,
+    userSelectTimelineClips: selectionMocks.userSelectTimelineClips,
+  };
+});
 
 const makeTrack = (id: string): TrackDefinition => ({
   id,
@@ -304,6 +315,7 @@ type ClipDragScenario =
     TimelineEditorOpsContextValue,
     | 'setGestureOwner'
     | 'setInputModalityFromPointerType'
+    | 'setSelectedTrackId'
     | 'moveClipToRow'
     | 'createTrackAndMoveClip'
     | 'selectClip'
@@ -333,6 +345,7 @@ function renderClipDrag(scenario: ClipDragScenario & { applyResolvedClipMove?: T
       ...initial.ops,
       setGestureOwner: scenario.setGestureOwner,
       setInputModalityFromPointerType: scenario.setInputModalityFromPointerType,
+      setSelectedTrackId: scenario.setSelectedTrackId ?? vi.fn(),
       moveClipToRow: scenario.moveClipToRow,
       ...(scenario.applyResolvedClipMove ? { applyResolvedClipMove: scenario.applyResolvedClipMove } : {}),
       createTrackAndMoveClip: scenario.createTrackAndMoveClip,
@@ -525,6 +538,7 @@ describe('useClipDrag', () => {
   it('preserves additive touch selection on move-mode taps that do not start a drag', () => {
 
     const selectClip = vi.fn();
+    const setSelectedTrackId = vi.fn((trackId: string | null) => editorSetSelectedTrackId(trackId));
     const { clip, wrapper, cleanup } = setupDom();
     const timelineWrapperRef = { current: wrapper };
     const dataRef = { current: makeData() };
@@ -539,6 +553,7 @@ describe('useClipDrag', () => {
         gestureOwner: 'none',
         setGestureOwner: vi.fn(),
         setInputModalityFromPointerType: vi.fn(() => 'touch'),
+        setSelectedTrackId,
         moveClipToRow: vi.fn(),
         createTrackAndMoveClip: vi.fn(),
         selectClip,
@@ -573,6 +588,159 @@ describe('useClipDrag', () => {
         additive: false,
         preserveIfSelected: true,
       }, undefined);
+      expect(setSelectedTrackId).toHaveBeenCalledWith('V1');
+    } finally {
+      cleanup();
+    }
+  });
+
+  it('keeps the mounted pointer selection track aligned with a clip on a later row', () => {
+    const { clip, wrapper, cleanup } = setupDom('clip-2', 'V2');
+    const setSelectedTrackId = vi.fn((trackId: string | null) => editorSetSelectedTrackId(trackId));
+    editorSetSelectedTrackId('V1');
+
+    try {
+      renderClipDrag({
+        timelineWrapperRef: { current: wrapper },
+        dataRef: { current: makeMultiClipData() },
+        deviceClass: 'desktop',
+        interactionMode: 'select',
+        gestureOwner: 'none',
+        setGestureOwner: vi.fn(),
+        setInputModalityFromPointerType: vi.fn(() => 'mouse'),
+        setSelectedTrackId,
+        moveClipToRow: vi.fn(),
+        createTrackAndMoveClip: vi.fn(),
+        selectClip: vi.fn(),
+        selectClips: vi.fn(),
+        selectedClipIdsRef: { current: new Set<string>() },
+        additiveSelectionRef: { current: false },
+        applyEdit: vi.fn(),
+        coordinator: makeCoordinator(),
+        scale: 1,
+        scaleWidth: 100,
+      });
+
+      fireEvent.pointerDown(clip, { button: 0, pointerId: 23, clientX: 24, clientY: 60 });
+      fireEvent.pointerUp(window, { pointerId: 23, clientX: 24, clientY: 60 });
+
+      expect(__getSelectionStateForTests().timeline.selectedClipIds).toEqual(new Set(['clip-2']));
+      expect(__getSelectionStateForTests().timeline.selectedTrackId).toBe('V2');
+      expect(setSelectedTrackId).toHaveBeenCalledWith('V2');
+    } finally {
+      cleanup();
+    }
+  });
+
+  it('keeps shift selection additive while making the newly selected clip track explicit', () => {
+    const { clip, wrapper, cleanup } = setupDom('clip-2', 'V2');
+    const setSelectedTrackId = vi.fn((trackId: string | null) => editorSetSelectedTrackId(trackId));
+    userSelectTimelineClip('clip-1', { additive: false });
+    editorSetSelectedTrackId('V1');
+
+    try {
+      renderClipDrag({
+        timelineWrapperRef: { current: wrapper },
+        dataRef: { current: makeMultiClipData() },
+        deviceClass: 'desktop',
+        interactionMode: 'select',
+        gestureOwner: 'none',
+        setGestureOwner: vi.fn(),
+        setInputModalityFromPointerType: vi.fn(() => 'mouse'),
+        setSelectedTrackId,
+        moveClipToRow: vi.fn(),
+        createTrackAndMoveClip: vi.fn(),
+        selectClip: vi.fn(),
+        selectClips: vi.fn(),
+        selectedClipIdsRef: { current: new Set(['clip-1']) },
+        additiveSelectionRef: { current: true },
+        applyEdit: vi.fn(),
+        coordinator: makeCoordinator(),
+        scale: 1,
+        scaleWidth: 100,
+      });
+
+      fireEvent.pointerDown(clip, { button: 0, pointerId: 24, clientX: 24, clientY: 60 });
+      fireEvent.pointerUp(window, { pointerId: 24, shiftKey: true, clientX: 24, clientY: 60 });
+
+      expect(__getSelectionStateForTests().timeline.selectedClipIds).toEqual(new Set(['clip-1', 'clip-2']));
+      expect(__getSelectionStateForTests().timeline.selectedTrackId).toBe('V2');
+      expect(setSelectedTrackId).toHaveBeenCalledWith('V2');
+    } finally {
+      cleanup();
+    }
+  });
+
+  it('does not invent a track when toggle selection clears the clicked clip', () => {
+    const { clip, wrapper, cleanup } = setupDom('clip-2', 'V2');
+    const setSelectedTrackId = vi.fn((trackId: string | null) => editorSetSelectedTrackId(trackId));
+    userSelectTimelineClip('clip-2', { additive: false });
+    editorSetSelectedTrackId('V2');
+
+    try {
+      renderClipDrag({
+        timelineWrapperRef: { current: wrapper },
+        dataRef: { current: makeMultiClipData() },
+        deviceClass: 'desktop',
+        interactionMode: 'select',
+        gestureOwner: 'none',
+        setGestureOwner: vi.fn(),
+        setInputModalityFromPointerType: vi.fn(() => 'mouse'),
+        setSelectedTrackId,
+        moveClipToRow: vi.fn(),
+        createTrackAndMoveClip: vi.fn(),
+        selectClip: vi.fn(),
+        selectClips: vi.fn(),
+        selectedClipIdsRef: { current: new Set(['clip-2']) },
+        additiveSelectionRef: { current: true },
+        applyEdit: vi.fn(),
+        coordinator: makeCoordinator(),
+        scale: 1,
+        scaleWidth: 100,
+      });
+
+      fireEvent.pointerDown(clip, { button: 0, metaKey: true, pointerId: 25, clientX: 24, clientY: 60 });
+      fireEvent.pointerUp(window, { pointerId: 25, metaKey: true, clientX: 24, clientY: 60 });
+
+      expect(__getSelectionStateForTests().timeline.selectedClipIds).toEqual(new Set());
+      expect(__getSelectionStateForTests().timeline.selectedTrackId).toBe('V2');
+      expect(setSelectedTrackId).not.toHaveBeenCalled();
+    } finally {
+      cleanup();
+    }
+  });
+
+  it('refuses an unknown clip row without changing selection ownership', () => {
+    const { clip, wrapper, cleanup } = setupDom('missing', 'V9');
+    const setSelectedTrackId = vi.fn();
+
+    try {
+      renderClipDrag({
+        timelineWrapperRef: { current: wrapper },
+        dataRef: { current: makeData() },
+        deviceClass: 'desktop',
+        interactionMode: 'select',
+        gestureOwner: 'none',
+        setGestureOwner: vi.fn(),
+        setInputModalityFromPointerType: vi.fn(() => 'mouse'),
+        setSelectedTrackId,
+        moveClipToRow: vi.fn(),
+        createTrackAndMoveClip: vi.fn(),
+        selectClip: vi.fn(),
+        selectClips: vi.fn(),
+        selectedClipIdsRef: { current: new Set<string>() },
+        additiveSelectionRef: { current: false },
+        applyEdit: vi.fn(),
+        coordinator: makeCoordinator(),
+        scale: 1,
+        scaleWidth: 100,
+      });
+
+      fireEvent.pointerDown(clip, { button: 0, pointerId: 26, clientX: 24, clientY: 60 });
+      fireEvent.pointerUp(window, { pointerId: 26, clientX: 24, clientY: 60 });
+
+      expect(__getSelectionStateForTests().timeline.selectedClipIds).toEqual(new Set());
+      expect(setSelectedTrackId).not.toHaveBeenCalled();
     } finally {
       cleanup();
     }
