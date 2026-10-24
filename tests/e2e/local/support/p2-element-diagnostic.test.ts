@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, statSync } from 'node:fs';
 import { test } from 'node:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { runInNewContext } from 'node:vm';
 import type { Request, Response } from '@playwright/test';
 import { ElementApplyDiagnosticCollector, closeElementApplyDiagnosticContext, elementApplyDiagnosticPageFixture, installElementApplyDiagnostic, readElementApplyUiState, retainElementApplyDiagnostic, serializeElementApplyDiagnostic, type ElementApplyDiagnosticArtifact } from './p2-element-diagnostic.ts';
 
@@ -167,18 +168,31 @@ test('the retained writer emits bounded JSON for a failed page close', async () 
 
 test('the retained writer keeps real allowlisted page state and redacts malicious fields', async () => {
   const priorDocument = (globalThis as { document?: unknown }).document;
+  const priorButton = (globalThis as { __timelineP2ElementApplyButton?: unknown }).__timelineP2ElementApplyButton;
+  const dialog = {};
+  const button = { disabled: false, closest: () => dialog };
   (globalThis as { document?: unknown }).document = {
     querySelector(selector: string) {
       if (selector === '[data-testid="runtime-connection-status"]') return { getAttribute: () => 'connected' };
-      if (selector === '[role="dialog"]') return { querySelector: () => ({ textContent: 'Applied private DOM text' }) };
+      if (selector === '[role="dialog"]') return dialog;
       return null;
     },
   };
+  (globalThis as { __timelineP2ElementApplyButton?: unknown }).__timelineP2ElementApplyButton = button;
   try {
-    assert.deepEqual(readElementApplyUiState(), { stage: 'retained', connection: 'connected', dialog: 'present', status: 'applied' });
+    assert.deepEqual(readElementApplyUiState('accepted'), { stage: 'retained', connection: 'connected', dialog: 'present', status: 'applied', applyButton: 'applied' });
+    button.disabled = true;
+    assert.deepEqual(readElementApplyUiState('pending'), { stage: 'retained', connection: 'connected', dialog: 'present', status: 'pending', applyButton: 'applying' });
+    button.disabled = false;
+    assert.deepEqual(readElementApplyUiState(), { stage: 'retained', connection: 'connected', dialog: 'present', status: 'unknown', applyButton: 'idle' });
+    assert.deepEqual(readElementApplyUiState('failed'), { stage: 'retained', connection: 'connected', dialog: 'present', status: 'failed', applyButton: 'refused' });
+    button.closest = () => null;
+    assert.deepEqual(readElementApplyUiState('accepted'), { stage: 'retained', connection: 'connected', dialog: 'present', status: 'unknown', applyButton: 'unknown' });
   } finally {
     if (priorDocument === undefined) delete (globalThis as { document?: unknown }).document;
     else (globalThis as { document?: unknown }).document = priorDocument;
+    if (priorButton === undefined) delete (globalThis as { __timelineP2ElementApplyButton?: unknown }).__timelineP2ElementApplyButton;
+    else (globalThis as { __timelineP2ElementApplyButton?: unknown }).__timelineP2ElementApplyButton = priorButton;
   }
   const directory = mkdtempSync(join(process.env.TMPDIR ?? tmpdir(), 'p2-element-diagnostic-ui-'));
   const output = join(directory, 'p2-element-apply-diagnostic.json');
@@ -187,11 +201,41 @@ test('the retained writer keeps real allowlisted page state and redacts maliciou
   const retained = await retainElementApplyDiagnostic({
     outputPath() { return output; },
     async attach() {},
-  }, { evaluate: async () => ({ stage: 'retained', connection: 'connected', dialog: 'present', status: 'applied', authorization: 'Bearer secret', domText: 'private DOM text' }) }, collector, 'passed');
+  }, { evaluate: async () => ({ stage: 'retained', connection: 'connected', dialog: 'present', status: 'applied', applyButton: 'applied', authorization: 'Bearer secret', domText: 'private DOM text' }) }, collector, 'passed');
   assert.equal(retained, true);
   const serialized = readFileSync(output, 'utf8');
   assert.doesNotMatch(serialized, /Bearer secret|private DOM text|authorization|domText/);
   assert.match(serialized, /"connection":"connected"/);
+});
+
+test('the actual evaluated UI sampler is self-contained and only returns bounded state', () => {
+  const dialog = { textContent: 'Applied private DOM text', dataset: { secret: 'private data' } };
+  const button: { disabled: boolean; textContent: string; closest: () => typeof dialog | null } = { disabled: false, textContent: 'Apply private text', closest: () => dialog };
+  const document = {
+    querySelector(selector: string) {
+      if (selector === '[data-testid="runtime-connection-status"]') return { getAttribute: () => 'connected' };
+      if (selector === '[role="dialog"]') return dialog;
+      throw new Error('unexpected selector');
+    },
+  };
+  const context = { document, __timelineP2ElementApplyButton: button };
+  const readInBrowser = runInNewContext(`(${readElementApplyUiState.toString()})`, context) as (terminal?: string) => unknown;
+  const readState = (terminal?: string) => JSON.parse(JSON.stringify(readInBrowser(terminal))) as Record<string, string>;
+
+  assert.deepEqual(readState(), { stage: 'retained', connection: 'connected', dialog: 'present', status: 'unknown', applyButton: 'idle' });
+  button.disabled = true;
+  assert.deepEqual(readState('pending'), { stage: 'retained', connection: 'connected', dialog: 'present', status: 'pending', applyButton: 'applying' });
+  button.disabled = false;
+  assert.deepEqual(readState('accepted'), { stage: 'retained', connection: 'connected', dialog: 'present', status: 'applied', applyButton: 'applied' });
+  assert.deepEqual(readState('failed'), { stage: 'retained', connection: 'connected', dialog: 'present', status: 'failed', applyButton: 'refused' });
+  assert.deepEqual(readState('unexpected'), { stage: 'retained', connection: 'connected', dialog: 'present', status: 'unknown', applyButton: 'idle' });
+  button.closest = () => null;
+  assert.deepEqual(readState('accepted'), { stage: 'retained', connection: 'connected', dialog: 'present', status: 'unknown', applyButton: 'unknown' });
+  assert.doesNotMatch(JSON.stringify(readState('accepted')), /private|text|data|secret/);
+
+  const malformedContext = { document: { querySelector: () => { throw new Error('malformed document'); } } };
+  const readMalformed = runInNewContext(`(${readElementApplyUiState.toString()})`, malformedContext) as () => unknown;
+  assert.deepEqual(JSON.parse(JSON.stringify(readMalformed())), { stage: 'unknown', connection: 'unknown', dialog: 'unknown', status: 'unknown', applyButton: 'unknown' });
 });
 
 test('the collector caps retained events at its bound', () => {
@@ -337,7 +381,7 @@ for (const terminal of ['aborted', 'failed', 'pending'] as const) {
     assert.equal(closed?.failure, 'none');
     assert.equal(closed?.ui.stage, 'closed');
     const retained = artifact.diagnostic.events.find((event) => event.stage === 'retained');
-    assert.deepEqual(retained?.ui, { stage: 'retained', connection: 'connected', dialog: 'present', status: 'unknown' });
+    assert.deepEqual(retained?.ui, { stage: 'retained', connection: 'connected', dialog: 'present', status: 'unknown', applyButton: 'unknown' });
     assert.ok(afterPageClose);
     assert.deepEqual(order, ['page-close', 'context-close', 'attach']);
     assert.doesNotMatch(bytes, /private|primary UI assertion/);
@@ -453,7 +497,7 @@ test('the writer projects every nested key and never invokes untrusted toJSON', 
   if (safe.diagnostic === 'UNKNOWN') assert.fail('valid diagnostic lost');
   assert.deepEqual(Object.keys(safe.diagnostic).sort(), ['events', 'kind', 'pageClosed', 'terminal', 'version']);
   assert.deepEqual(Object.keys(safe.diagnostic.events[0]!).sort(), ['correlation', 'elapsedMs', 'failure', 'idempotencyKey', 'request', 'response', 'responseStatus', 'sequence', 'stage', 'terminal', 'ui', 'version']);
-  assert.deepEqual(Object.keys(safe.diagnostic.events[0]!.ui).sort(), ['connection', 'dialog', 'stage', 'status']);
+  assert.deepEqual(Object.keys(safe.diagnostic.events[0]!.ui).sort(), ['applyButton', 'connection', 'dialog', 'stage', 'status']);
 });
 
 test('malformed enums, correlations, bounds and nested UI are fail-closed', () => {
@@ -482,6 +526,25 @@ test('malformed enums, correlations, bounds and nested UI are fail-closed', () =
   assert.equal(badUi.losses.ui, true);
   assert.equal(badUi.losses.events, true);
   assert.doesNotMatch(JSON.stringify(badUi), /private/);
+});
+
+test('the Apply button enum is preserved and malformed UI state is fail-closed', () => {
+  const collector = new ElementApplyDiagnosticCollector();
+  collector.recordApplyClick();
+  const snapshot = collector.snapshot();
+  const event = snapshot.events[0]!;
+  const applying = JSON.parse(serializeElementApplyDiagnostic({
+    diagnostic: { ...snapshot, events: [{ ...event, ui: { stage: 'retained', connection: 'connected', dialog: 'present', status: 'pending', applyButton: 'applying' } }] },
+  })) as ElementApplyDiagnosticArtifact;
+  if (applying.diagnostic === 'UNKNOWN') assert.fail('bounded Apply button state was lost');
+  assert.equal(applying.diagnostic.events[0]?.ui.applyButton, 'applying');
+
+  const malformed = JSON.parse(serializeElementApplyDiagnostic({
+    diagnostic: { ...snapshot, events: [{ ...event, ui: { stage: 'retained', connection: 'connected', dialog: 'present', status: 'pending', applyButton: 'private' } }] },
+  })) as ElementApplyDiagnosticArtifact;
+  assert.equal(malformed.losses.ui, true);
+  if (malformed.diagnostic === 'UNKNOWN') assert.fail('bounded malformed UI state was lost');
+  assert.equal(malformed.diagnostic.events[0]?.ui.applyButton, 'unknown');
 });
 
 test('unavailable UI and a failed output path remain disposable with no fake attachment', async () => {

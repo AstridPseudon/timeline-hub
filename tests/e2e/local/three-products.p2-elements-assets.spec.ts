@@ -461,9 +461,9 @@ test('P2 mounted element edit: real catalog apply, exact params patch, reload an
   const undo = await commitFromGesture(page, wire, async () => {
     await page.getByRole('button', { name: 'Undo', exact: true }).click();
   });
-  assertRequestV2(undo, { revision_id: paramsResult.data.accepted_revision_id, publication_id: paramsCommit.key });
-  expect(undo.body.commands[0]).toEqual({ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [paramsCommit.key] } });
-  const undoneParams = assertAcceptedReply(undo, { revision_id: paramsResult.data.accepted_revision_id, publication_id: paramsCommit.key });
+  assertRequestV2(undo, { revision_id: paramsResult.data.accepted_revision_id, publication_id: paramsResult.receipt.receipt_id });
+  expect(undo.body.commands[0]).toEqual({ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [paramsResult.receipt.receipt_id] } });
+  const undoneParams = assertAcceptedReply(undo, { revision_id: paramsResult.data.accepted_revision_id, publication_id: paramsResult.receipt.receipt_id });
   expect(undoneParams.data.canonical_document.parent_revision.payload).toEqual(paramsBase.parent_revision.payload);
   assertNoLegacy(wire);
   assertUndoHistoryEntry(await history(harness, seed3), undo, paramsCommit);
@@ -477,7 +477,7 @@ test('P2 mounted element edit: real catalog apply, exact params patch, reload an
   const undoApply = await commitFromGesture(page, wire, async () => {
     await page.getByRole('button', { name: 'Undo', exact: true }).click();
   });
-  const undoneApply = assertAcceptedReply(undoApply, { revision_id: undoneParams.data.accepted_revision_id, publication_id: undo.key });
+  const undoneApply = assertAcceptedReply(undoApply, { revision_id: undoneParams.data.accepted_revision_id, publication_id: undoneParams.receipt.receipt_id });
   expect(undoneApply.data.canonical_document.parent_revision.payload).toEqual(original.parent_revision.payload);
   assertNoLegacy(wire);
   assertUndoHistoryEntry(await history(harness, seed3), undoApply, apply);
