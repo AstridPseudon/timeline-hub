@@ -117,7 +117,7 @@ before(async () => {
       }))], created: [], dependencies: [], derived_writes: [] };
   authoritativeHistory = { publication_id: 'publication-after', revision_id: 'revision-after',
     previous: { revision_id: base.revisionId, publication_id: base.publicationId }, receipt: response.receipt, intent: 'recorded',
-    provider_version: data.provider_version, compiler_version: data.compiler_version, publisher: ownerScope.actorId,
+    provider_version: data.provider_version, compiler_version: data.compiler_version, recorder_abi: 2, publisher: ownerScope.actorId,
     source: request.source, label: request.label, merge: request.merge, merge_mode: data.merge_mode, reads, steps: data.steps,
     records: { schema_version: 1, commands: [record], undo_of: [], restored_from: null, undo_steps: null,
       label: request.label, merge_mode: data.merge_mode, steps: data.steps } };
@@ -553,6 +553,9 @@ test('Gate5 checks full canonical closure, digest, history records, effects, dep
     mutate(next);
     assert.throws(() => assertGate5ResetPrecondition(inputWithReply(responseFor(next))), /canonical closure|document digest|id map|publisher/);
   }
+  const wrongAbi = structuredClone(authoritativeHistory);
+  wrongAbi.recorder_abi = 1;
+  assert.throws(() => assertGate5ResetPrecondition({ ...valid, authoritativeHistory: wrongAbi }), /authoritative history/);
   for (const mutate of [
     entry => { entry.foreign = true; }, entry => { entry.records.foreign = true; },
     entry => { entry.records.commands[0].foreign = true; },

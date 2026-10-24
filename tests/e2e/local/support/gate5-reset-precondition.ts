@@ -379,11 +379,15 @@ export function assertGate5ResetPrecondition(input: Gate5ResetPreconditionInput)
   const record = { ordinal: 0, command: expectedCommand,
     writes: [{ ref: nativeRef, path: ['at'], before, after: { state: 'present', value: input.expectedPosition } }],
     reads: recordReads, selections: [], bindings, created: [], dependencies: [], derived_writes: derivedWrites };
+  // C0 history attribution is part of the authoritative record, and D62 freezes
+  // recorder_abi at acceptance. The mounted record has physical_ref bindings,
+  // so Runtime 8b32 classifies this current recorder as ABI 2; response data
+  // intentionally remains free of this history-only field.
   exact(input.authoritativeHistory, {
     publication_id: receipt.receipt_id, revision_id: acceptedRevisionId,
     previous: { revision_id: input.expectedBase.revisionId, publication_id: input.expectedBase.publicationId },
     receipt, intent: 'recorded', provider_version: data.provider_version, compiler_version: data.compiler_version,
-    publisher: ownerScope.actorId, source: { via: 'app' }, label: 'Edit timeline', ...annotations, merge: 'fields', merge_mode: 'fields',
+    recorder_abi: 2, publisher: ownerScope.actorId, source: { via: 'app' }, label: 'Edit timeline', ...annotations, merge: 'fields', merge_mode: 'fields',
     reads: expectedReads, steps: [expectedStep], records: { schema_version: 1, commands: [record], undo_of: [],
       restored_from: null, undo_steps: null, label: 'Edit timeline', merge_mode: 'fields', steps: [expectedStep] },
   }, 'authoritative history');
