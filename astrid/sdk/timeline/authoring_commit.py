@@ -5,7 +5,11 @@ import copy
 from collections.abc import Mapping
 from typing import Any
 
-from astrid.core.timeline.authoring_bundle import AuthoringBundleError, compile_authoring_candidate
+from astrid.core.timeline.authoring_bundle import (
+    AuthoringBundleError,
+    CandidateCompilation,
+    compile_authoring_candidate,
+)
 
 
 def response_data(value: Any) -> dict[str, Any]:
@@ -77,12 +81,15 @@ def _read_base(writer: Any, candidate: Mapping[str, Any]) -> dict[str, Any]:
     return base
 
 
-def authoring_commit_request(candidate: Mapping[str, Any], writer: Any) -> dict[str, Any]:
+def authoring_commit_request(
+    candidate: Mapping[str, Any], writer: Any, *, compilation: CandidateCompilation | None = None,
+) -> dict[str, Any]:
     from ._command_state import equal
     from .emitter import _diff, emit_document_commands
     from .native_media_admission import registry_selections
 
-    compilation = compile_authoring_candidate(candidate)
+    if compilation is None:
+        compilation = compile_authoring_candidate(candidate)
     base = _read_base(writer, candidate)
     work = copy.deepcopy(dict(candidate))
     # These two missing transport pins may be hydrated only from Runtime. All
@@ -102,7 +109,13 @@ def authoring_commit_request(candidate: Mapping[str, Any], writer: Any) -> dict[
         commands.append({'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
                          'args': {'changes': placement_changes}})
     if not commands:
-        raise AuthoringBundleError('authoring candidate has no changes to commit')
+        # Republishing an unchanged checkout still needs Runtime's replay/CAS
+        # boundary. A guarded equal-value set preserves the authored config
+        # without replacing the closure or manufacturing an edit.
+        config = copy.deepcopy(base['parent']['config'])
+        commands.append({'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+            'args': {'changes': [{'op': 'set', 'ref': 'parent', 'path': ['config'],
+                'before': {'state': 'present', 'value': config}, 'value': copy.deepcopy(config)}]}})
     source = base['source_mapping']['_runtime_document']
     inputs = [{'pin': copy.deepcopy(pin)} for pin in compilation.publication['dependency_manifest']['media']
               if pin not in source['dependency_manifest']['media']]

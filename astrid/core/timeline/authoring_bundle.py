@@ -1852,7 +1852,7 @@ def publish_authoring_candidate(
 
     summary = authoring_change_summary(candidate, media_imports=media_imports)
     publication = compilation.publication
-    request = authoring_commit_request(candidate, writer)
+    request = authoring_commit_request(candidate, writer, compilation=compilation)
     envelope = writer.commit_timeline(
         publication["project_id"],
         publication["timeline_id"],
@@ -1867,13 +1867,19 @@ def publish_authoring_candidate(
                   dependency_manifest=document['dependency_manifest'])
     if isinstance(envelope, Mapping) and 'receipt' in envelope:
         result['receipt'] = _copy(envelope['receipt'])
+    # Retain the complete v2 envelope as well as the established direct aliases.
+    result = {**_copy(dict(envelope)), **result, 'data': _copy(result)}
+    feedback = _copy(result['data'])
+    if summary['authored_change_count'] == 0:
+        # Equal authored bytes have no saved diff to inspect.
+        feedback.pop('old_head', None)
     return {
         "candidate_digest": compilation.candidate_digest,
         "identity_mapping": _copy(dict(compilation.identity_mapping)),
         "changed_identities": _copy(list(compilation.changed_identities)),
         "publication": result,
         **publication_feedback(
-            summary, result,
+            summary, feedback,
             project_id=publication["project_id"], timeline_id=publication["timeline_id"],
         ),
     }
