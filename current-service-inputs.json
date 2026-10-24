@@ -1,6 +1,6 @@
 {
   "recipe_version": 1,
-  "qualified_at": "2026-10-24T14:55:40Z",
+  "qualified_at": "2026-10-24T15:19:14Z",
   "status": "qualified_existing_inputs_not_live",
   "scope": "P2/P3/U4p current normal working-venv service inputs",
   "policy": {
@@ -25,11 +25,11 @@
     "agent": {
       "checkout": "/home/user/work/agent",
       "ref": "tl/integration",
-      "head": "68e82c0c2ce621f43ae73aa05fce0d1d0f47a677",
-      "tree": "aa62e96c1231de41cee32c5388592c99ae04345f",
+      "head": "d27b6601e56b19334c9534338ce1f3ac80e85fc7",
+      "tree": "2449edb7729b2de0fa57093b788fa0f13058ae4a",
       "parents": [
-        "5492fc80414c53c77585844a25fd8a94107c71fa",
-        "b9d7618f92399fdf0d33a72857ada058c028ba66"
+        "68e82c0c2ce621f43ae73aa05fce0d1d0f47a677",
+        "2a8fbc6c2bc05ba965bdfc0f3e421d123e2048a0"
       ],
       "clean": true,
       "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db"
