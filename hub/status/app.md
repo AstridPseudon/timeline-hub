@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T01:53:41Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 19 | status age 4m -->
-# app board, 2026-10-24T01:46Z
+<!-- app | 2026-10-24T01:56:08Z | dispatcher heartbeat 5s | live 3 (sol 0, luna 3, other 0) | busy30 20 | status age 2m -->
+# app board, 2026-10-24T01:54Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -16,7 +16,7 @@
 | A4-dormant-scope | Preserve dormant raw and track assertions | Orchestrator | Scope decision | blocked:orchestrator | Escalation 0116 | Same-order track write and raw-birth positives have no production caller. Tests and implementations stay unchanged. | No change |
 | A4-reviewed-stack | Ports and mounted witnesses | Luna | Review 0105 and integrated 0115 PASS | merged | app-A4-mounted-fixture-return-0059 | Independent and integrated 111 plus 33 tests passed on exact93d487. Types/lint passed; mocked authority limit retained. | 93d48799a2 |
 | A2-bootstrap-fix | Restart cancelled bootstrap | Sol; Luna review | Resolved | merged | app-A2-basis-cancel-repro-sol-0029 | [326 tests, three typechecks and lint passed.](/home/user/timeline-hub/hub/design/app-A2-bootstrap-integrated-0046.md) | 804134d747 |
-| readiness-after-bootstrap | Verified basis read does not finish | Sol; Luna review | Runtime server diagnosis | blocked:runtime | rt-R-readiness-probe-sol-0138 | Probe 17839 rejected an absolute path; zero tests ran. Runtime now owns relative three-condition probe. App comparison is published. | Fixed 804134d747 |
+| readiness-after-bootstrap | Verified basis read does not finish | Sol; Luna review | Runtime uninstrumented cost | blocked:runtime | rt-R-readiness-auth-cost-sol-0155 | All 18 probe requests completed. Native history took about six seconds with wrappers. Historical hang cause remains unknown; no P2/P3 rerun. | Fixed 804134d747 |
 | P-door-port-alloc | Allocate door port per run | Luna; D21 | Resolved | merged | app-P2-P3-door-allocation-0039 | [Node 20 allocation, shared stage value and failure checks passed.](/home/user/timeline-hub/hub/design/app-P2-P3-door-allocation-0039.md) | Harness rows only |
 | readiness-upstream-check | Check f38e candidate | Sol; Luna review | Review 0057 PASS | merged | App Sol 0046; Luna 0057 | No census or attempt-root signature supports attribution. Exact patch is unavailable locally; historical cause remains unknown. | Report only |
 | P2 | Eight original gesture cases | App service; Proof verdict | Shared readiness cause | blocked:runtime | Test 10973; Proof review 0126 PASS | Exit 2 after 189 seconds. Native and history passed; outbox basis read failed. All eight original gestures NOT RUN. No rerun. | Fixed 804134d747 |
@@ -28,17 +28,19 @@
 | U3b-draft | Final upstream composition | Sol; Luna review | P2/P3 and final freeze | gated:freeze | app-U3b-current-join-2053 | Reviewed branch stays isolated. Refresh live upstream refs at freeze; do not merge during pinned proof. | Branch only |
 | F-App-full | Full suite before retirement | Test service; Luna review | Resolved for historical head | merged | app-F-D19-current-full-1230 | 18,819 tests passed on exact 12ef. A final qualification follows actual retirement and freeze. | 12ef320545 |
 
-| A4-lifecycle-tests | Move close and recovery protocol cases | Luna | Current local save | doing | app-A4-lifecycle-tests-0139 | Five-file targeted suite passed 105 tests; author completes types and assertion mapping. | Branch pending |
-| A4-unused-goldens | Delete two unused parity scripts | Luna | Author 0140 complete | review | app-A4-goldens-review-0150 | Author removed only two unreferenced scripts. Independent reference and quality checks dispatched. | Reviewed branch pending |
+| A4-lifecycle-tests | Move close and recovery protocol cases | Luna | Author 0139 PASS | review | app-A4-lifecycle-review-0154 | 105 tests, three types and lint passed. Five declarations, six executed cases and 35 assertions preserved; independent review runs. | 59654edbb8 branch |
+| A4-unused-goldens | Delete two unused parity scripts | Luna | Review 0150 PASS | merging | app-A4-unused-goldens-0140 | Independent zero-consumer census, fixture integrity and three types passed. Normal merge queued; all behavior tests retained. | ae91c2ee0f branch |
 | A2-A4-joined-proof | Qualify staged, image and history join | Luna | Three reviewed merges | merged | app-A2-A4-current-integrated-0150 | Exact 1c5cc47bf6 passed 448 tests across 16 files, three types and lint. No Runtime or browser acceptance claimed. | 1c5cc47bf6 |
 
-| A4-media-wrappers | Retire unused media executor wrappers | Luna | State and staged source merged | doing | app-A4-media-runner-wrappers-0155 | Remove only uncalled wrappers and exports. Current preview, descriptors and all behavior tests stay intact. | Base 1f4b30a51b |
+| A4-media-wrappers | Retire unused media executor wrappers | Luna | Author 0155 PASS | review | app-A4-media-wrappers-review-0152 | 108 tests, three types and lint passed. Review checks wrapper removal and existing public contract metadata. | 9c9c180ffe branch |
+
+| A4-owner-recovery-tests | Move explicit owner recovery cases | Luna | Lifecycle branch in review | doing | app-A4-owner-recovery-tests-0156 | Two bounded cases move to current durable session with exact unknown ACK, dependent order and lock assertions. | Base 59654edbb8 |
 
 Blockers: U3b awaits P2/P3 and the final freeze.
 Blockers: Orchestrator owes bounded dormant track and raw-birth scope; escalation app-20261024T0116-A4-dormant-assertion-scope.md.
-Blockers: Runtime Sol 0138 owns the server history reproduction. P2/P3 remain held; no journey rerun is authorised.
+Blockers: Runtime Sol 0155 owns uninstrumented history cost and guard-preserving source assessment. Historical hang remains unknown; P2/P3 stay held.
 Blockers: Agent owns the new image fixture and input. App has supplied qualified corrected source and reserves one producer execution.
-Next ready: Consume state, lifecycle, goldens and joined proof results. Execute the reserved image producer promptly on new actual input. Runtime owns the shared server probe.
+Next ready: Consume lifecycle and media-wrapper reviews, owner-recovery migration and the goldens merge. Execute the reserved image producer on new actual input. Runtime owns history cost.
 Integration: 1f4b30a51b; state retirement is also merged. Joined proof 0150 stays bound to exact 1c5cc47bf6. History, staged caller and image created claims are merged. Changed readiness experiments remain fixed at 804134d747.
 Disk: Available 11.79 GB. Eight finished worker trees were already recycled, so recycling freed 0 GB. Sweep removed three old temporary directories and freed about 139 MiB. Protected and refused paths stayed untouched.
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes.
