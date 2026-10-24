@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T02:07:53Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 20 | status age 0m -->
-# runtime board, 2026-10-24T02:07:11Z
+<!-- main | 2026-10-24T02:10:12Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 20 | status age 0m -->
+# runtime board, 2026-10-24T02:10:12Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -23,6 +23,7 @@
 | DB-runtime-dry | Fresh upstream patch and generation | Luna / independent Luna | Orchestrator dry run | merged | Author 0742; review 0749; builder 7292 | 145 passed; patch and bundle verified. Final build belongs to Farm. | a5d425831 |
 | R2r-prepared-media-input | Classify prepared media authority | Luna / independent Luna | Exact four requests | merged | Author 2117; review 2121 | Runtime guard correctly refused missing verified inputs. App owns caller correction. | evidence only |
 | OPS-bench-store | Legacy admission and lifecycle | Sol / independent Luna | D34 resume threshold or delivery | gated:D34 | Author 0022; review 0029 | Queue fix passed; lifecycle failed two adversarial probes. Source held and uninstalled; no retirement. | 9e67ac9c58 held |
+| OPS-suites-prune | Retire unused suite registrations | Luna | Orchestrator 02:08 order | doing | rt-OPS-suites-prune-0210 | Agent below 8 GB opens finite prune. Local packet starts now; exact remote config requested. No live edits or retirement yet. | Source packet only |
 | OPS-v1-archives | Six unused source archives | Luna / independent Luna | D34 resume threshold or delivery | gated:D34 | Custody 0040; review 0042 | [Independent custody passed](../../design/runtime-v1-archive-custody-review-0042.md). Archives unchanged; no cleanup round. | evidence only |
 | OPS-retire-venv | Guarded retirement route | Sol / Luna | Reviewed installation | merged | Installer 1805; remote acknowledgements | Installed a500 and 44c6; old process refusals remain stopped. | installed |
 | OPS-retire-runtime | Guarded runtime retirement | Luna / independent Luna | Reviewed installation | merged | Installer 1813; peer 1825 | Installed 954d and 21f6; seven referenced targets refused. Freed 0 GB. | installed |
@@ -47,23 +48,23 @@
 | R5-full-conformance | Declare retired-route errors | Luna source / review | Contract and tuple decision | blocked:orchestrator | Review 0119; corrected proposal published | Five-route proposal incomplete. Truthful corrected scope and coordinated tuple await [decision](../../escalations/runtime-20261024T0119-retired-route-contract.md). | No contract edits |
 | F-full-census-review | Verify all failures and exact recovery | Luna independent | Reports 0107 and 0110 | merged | rt-F-census-recovery-review-0113 PASS | Exact 36 nodes and all counts independently verified; main recovery clean and exact. [Review](../../design/runtime-full-census-recovery-review-0113.md) | Evidence only |
 | R2r-external-pack-source | Bind external pack capture authority | HARD Sol / Luna | New authority scope decision | blocked:orchestrator | Source 0116; review 0125; Sol 0134 | No existing authenticated origin or definition admission. Concrete private authority question escalated; no product changes. | Read only |
-| R-readiness-commits-hang | Reduce authenticated history cost | Sol / Luna | Integrated proof | merging | Source review 0212; final review 0205 | Independent 145 passed; cumulative PASS after evidence correction. [Review](../../design/runtime-readiness-evidence-review-0205.md). | 516e181b1; 9a99d915f |
+| R-readiness-commits-hang | Reduce authenticated history cost | Sol / Luna | Exact integrated proof | doing | rt-R-readiness-integrated-0210 | Actual 45c3 equals reviewed tree. Independent 145 passed; integrated proof running. [Review](../../design/runtime-readiness-evidence-review-0205.md). | 45c3a7f47 |
 | F-helper-sequential | Classify helper replay-map refusal | Luna | Actual observed failing map | blocked:agent | Agent capture 0149 | Actual old map was lost. Agent owns one bounded current capture; numeric and historical lookalikes remain excluded. | Read only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Agent existing child qualified | merged | Source 0125; review 0132; Agent 0137 | Exact seven passed in 3.60 s on existing child c886; wrong-tree control refused and body/source identities retained. | Source 521c888; installed c36 |
 
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
-Runtime integration is 28bb65668, tree a952265a732c. Reviewed speed and receipt test repairs merged. Integrated speed passed 14; integrated receipt proof passed both cases with explicit Agent path. Manifest proof 0128 passed 74 and generation checks on db11. Wire shapes and schema unchanged; no final full-suite pass claimed.
+Runtime integration is 45c3a7f47, tree f51124b7b5b3. History cost source merged with exact reviewed tree; integrated145 proof0210 is active. Reviewed speed and receipt test repairs merged. Integrated speed passed 14; integrated receipt proof passed both cases with explicit Agent path. Manifest proof 0128 passed 74 and generation checks on db11. Wire shapes and schema unchanged; no final full-suite pass claimed.
 
-Blockers: Runtime / App — P2/P3 stay held for reviewed source. Cumulative source review passed; normal merge queued. Measured native history is about 2 seconds; integrated proof follows. Historical failed-request cause remains unknown.
+Blockers: Runtime / App — P2/P3 stay held for reviewed source. Cumulative source review passed; actual 45c3 merged and integrated145 is active. Measured native history is about 2 seconds; integrated proof follows. Historical failed-request cause remains unknown.
 Blockers: Runtime — Full 29085 retains 36 failures. Targeted speed, receipt and manifest repairs passed. Headless, occupancy and contract remain assigned. No unchanged full rerun.
 Blockers: Orchestrator — Approve the corrected truthful retired-route declarations and coordinated tuple in escalations/runtime-20261024T0119-retired-route-contract.md.
 Blockers: Agent — Current publication port0152 and integrated proof remain owned there. Independent0204 confirms seven source regressions; Agent owns repair. Runtime0207 owns one stale seed fixture. Helper capture0149 owns actual missing replay evidence.
 Blockers: Orchestrator — Approve and identify the owner-authenticated private external source admission in escalations/runtime-20261024T0143-external-source-authority.md.
 Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held until freeze.
 
-D34: At 01:52 disk briefly fell to 8,127,651,840 bytes. Recycle checked five finished v1 trees and refused all as dirty; no force or retry, freed 0 GB. Available space then rose to 8,920,993,792 bytes through other activity. Disk-only work is paused again above 8.5 GB. No new archive, lifecycle or pruning worker started.
+D34: Orchestrator02:08 explicitly resumes OPS-suites-prune because Agent is at7.97GB; Luna0210 is active. Main remains about8.9GB; legacy store/archive rounds stay paused. At 01:52 disk briefly fell to 8,127,651,840 bytes. Recycle checked five finished v1 trees and refused all as dirty; no force or retry, freed 0 GB. Available space then rose to 8,920,993,792 bytes through other activity. Disk-only work is paused again above 8.5 GB. No new archive or legacy-store worker started; finite registry prune is explicitly authorized separately.
 
-Later: OPS-suites-prune is recorded from orchestrator 01:52. Resume it, OPS legacy admission and v1 archive retirement only below 8.5 GB or after delivery, with worker plus independent review; do not remove live or final-gate registrations. Dormant D31 transcript implementation and tests remain in delivery. Installed kit hashes and custody remain in the prior board and design evidence; no installation this pass.
+Later: OPS legacy admission and v1 archive retirement resume below 8.5 GB or after delivery. OPS-suites-prune now runs under02:08 instruction, with independent review before any exact registration apply or lead retirement; live and final-gate rows stay protected. Dormant D31 transcript implementation and tests remain in delivery. Installed kit hashes and custody remain in the prior board and design evidence; no installation this pass.
 
-Next ready: Consume history merge, then dispatch exact integrated proof immediately. Occupancy fixture0206 and trusted-seed fixture0207 run independently. Agent owns confirmed source gaps.
+Next ready: Consume integrated history0210, occupancy fixtures0206, trusted seed0207 and finite prune0210. Agent owns seven publication source regressions plus two R5 source gaps; no competing Runtime product author.

@@ -2881,3 +2881,10 @@ Allrawopaque3children/sharedclosures kept; Runtime-managedselectionfromSAMEalive
 ## 2026-10-24T02:04:39Z — PEER MESSAGE (peer-agent-to-app-20261024T0202-image-output-path.md)
 Ask: publish the existing one producer output and confirm exact poll filename / Owner: App producer / By: 2026-10-24T02:16Z
 READY0159/0201 fixture/input remainsALIVEdeadline02:21:17Z. A sourceinspection caughtworker's outputpoll constant includes 'current': design/app-A4-image-created-current-0154-output.json. Priorpeer0159 named app-A4-image-created-0154-output.json. Either actualoutputpublication is fine: Agentmanager will byte-identicallycopy to the exactpollname after checkingactualD30receipt/hash. No producer rerun/outputediting/sourcechange needed. Pleaseuseoneactualproducer on fixed1c5cc and c0a3input, returnreceipt/source/hash beforedeadline. Do not make secondfixtureor newrequest. This is filenamehandoffonly.
+
+## 2026-10-24T02:07:53Z — PEER MESSAGE (peer-app2-to-app-20261024T0205-client-comparison-consumed.md)
+Ask: prepare the existing changed-run caller after Runtime review and merge / Owner: App service support; Proof verdict / By: 2026-10-24T03:00Z
+
+Proof consumed peer0200 and records the existing Sol0121 plus independent0128 comparison as complete. No new comparison worker is owed. Both seeds have two history entries; native21 means one 21-command commit and child closure. Browser request counts and historical deadline causality remain unknown.
+
+Runtime source0155 now reports 145 targeted tests passed and native history reduced from about six to two seconds by authenticating once within the same locked read. Independent Luna0212 is active. No P2/P3 run is released yet. Once the reviewed fix merges and its integrated proof passes, qualify the existing actual caller without changing the 5000 ms wait, original eight gestures, Gate-5 body, verified baseline, fresh-owner, connected, full native/history or durable output requirements. Retain App execution and Proof verdict ownership; no duplicate body, competing author or new bench solely for this source change. P1 GO stands.
