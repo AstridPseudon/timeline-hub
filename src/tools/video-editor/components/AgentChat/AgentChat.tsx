@@ -31,6 +31,7 @@ import {
   useLocalAgents,
 } from '@/tools/video-editor/hooks/useAgentSession.ts';
 import { useAgentVoice } from '@/tools/video-editor/hooks/useAgentVoice.ts';
+import { CHAT_VOICE_ENABLED } from '@/tools/video-editor/hooks/chatVoice.ts';
 import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnostics.ts';
 import { loadGenerationForLightbox } from '@/tools/video-editor/lib/generation-utils.ts';
 import type {
@@ -541,6 +542,7 @@ function AvailableAgentChatPanel({
       ? 'Recording...'
       : (isProcessing || sendMessage.isPending || hasQueuedMessages)
         ? 'Type to queue next message...'
+        : !CHAT_VOICE_ENABLED ? 'Type a message...'
         : coarsePointer ? 'Type, or tap the mic to talk...' : 'Type or press Cmd+Shift+R to talk...';
   const optimisticTurnAlreadyMaterialized = optimisticMessage !== null
     && Boolean(activeSessionData?.turns.some((turn) => turn.role === 'user' && turn.request_id === optimisticMessage.id));
@@ -685,6 +687,7 @@ function AvailableAgentChatPanel({
 
   // Cmd+Shift+R global shortcut — kept verbatim per plan_v5 Step 4.7.
   useEffect(() => {
+    if (!CHAT_VOICE_ENABLED) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === 'r') {
         event.preventDefault();
@@ -1169,9 +1172,9 @@ function AvailableAgentChatPanel({
             ) : (
               <>
                 <p>✨ I can do almost anything</p>
-                {coarsePointer
+                {CHAT_VOICE_ENABLED && (coarsePointer
                   ? <p className="mt-1 text-xs">Tap the mic to talk</p>
-                  : <p className="mt-1 text-xs">Press <kbd className="rounded border border-border px-1 py-0.5 text-[10px]">Cmd+Shift+R</kbd> to talk</p>}
+                  : <p className="mt-1 text-xs">Press <kbd className="rounded border border-border px-1 py-0.5 text-[10px]">Cmd+Shift+R</kbd> to talk</p>)}
                 <p data-testid="agent-chat-runs-with" className="mt-4 flex items-center gap-1.5 rounded-md border border-border/70 px-2 py-1 text-[11px]">
                   <AgentIcon agent={startingAgent ?? chatAgent} className="h-3 w-3 shrink-0" />
                   {agentNames[chatAgent]} · {chatModelName ?? 'default model'}
@@ -1414,7 +1417,7 @@ function AvailableAgentChatPanel({
             />
 
             <div className="absolute inset-y-4 right-2 z-10 flex w-8 flex-col gap-2">
-              <div className="relative flex min-h-0 flex-1 items-center justify-center">
+              {CHAT_VOICE_ENABLED && <div className="relative flex min-h-0 flex-1 items-center justify-center">
                 <Button
                   type="button"
                   size="icon"
@@ -1440,7 +1443,7 @@ function AvailableAgentChatPanel({
                     <X className="h-3 w-3" />
                   </Button>
                 )}
-              </div>
+              </div>}
 
               <div className="flex min-h-0 flex-1 items-center justify-center">
                 <Button

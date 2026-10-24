@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ComponentProps } from 'react';
 import type { AgentTurn } from '@/tools/video-editor/types/agent-session';
 import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
+import { CHAT_VOICE_ENABLED } from '@/tools/video-editor/hooks/chatVoice.ts';
 import { AgentChatPanel as AgentChatPanelWithoutProvider } from './AgentChat';
 import { RuntimeConnectionProvider, useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
 import { BridgeContractError } from '@/tools/video-editor/data/bridgeContract.ts';
@@ -471,7 +472,7 @@ describe('AgentChat', () => {
       expect(input).toHaveAttribute('placeholder', 'Starting Codex…');
       expect(input).toHaveValue('');
       expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
-      expect(screen.getByRole('button', { name: 'Voice input (Cmd+Shift+R)' })).toBeDisabled();
+      expect(screen.queryByRole('button', { name: 'Voice input (Cmd+Shift+R)' })).toBeNull();
       fireEvent.keyDown(input, { key: 'Enter' });
       fireEvent.keyDown(window, { key: 'r', metaKey: true, shiftKey: true });
       expect(state.sendMessage.mutateAsync).not.toHaveBeenCalled();
@@ -894,7 +895,28 @@ describe('AgentChat', () => {
     expect(state.createSession.mutate).not.toHaveBeenCalled();
   });
 
-  it('Cmd+Shift+R remains available for project chat without a timeline', async () => {
+  it('offers no voice input: no mic control and Cmd+Shift+R is not captured', async () => {
+    const state = createState();
+    state.timelineId = null;
+    state.sessionsData = [];
+    mockFromState(state);
+
+    renderAgentChat();
+
+    expect(screen.queryByTitle(/voice input/i)).not.toBeInTheDocument();
+    expect(screen.queryByTitle(/recording/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/transcribing/i)).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/queue next message|type a message/i)).toBeInTheDocument();
+
+    const notCancelled = fireEvent.keyDown(window, {
+      key: 'r',
+      metaKey: true,
+      shiftKey: true,
+    });
+    expect(notCancelled).toBe(true);
+  });
+
+  it('matches the configured voice gate for project chat without a timeline', async () => {
     const state = createState();
     state.timelineId = null;
     state.sessionsData = [];
@@ -910,13 +932,23 @@ describe('AgentChat', () => {
 
     renderAgentChat();
 
-    fireEvent.keyDown(window, {
-      key: 'r',
-      metaKey: true,
-      shiftKey: true,
-    });
-
-    expect(state.voice.startRecording).toHaveBeenCalledTimes(1);
+    if (CHAT_VOICE_ENABLED) {
+      expect(screen.getByTitle('Voice input (Cmd+Shift+R)')).toBeInTheDocument();
+      fireEvent.keyDown(window, {
+        key: 'r',
+        metaKey: true,
+        shiftKey: true,
+      });
+      expect(state.voice.startRecording).toHaveBeenCalledTimes(1);
+    } else {
+      expect(screen.queryByTitle('Voice input (Cmd+Shift+R)')).toBeNull();
+      expect(fireEvent.keyDown(window, {
+        key: 'r',
+        metaKey: true,
+        shiftKey: true,
+      })).toBe(true);
+      expect(state.voice.startRecording).not.toHaveBeenCalled();
+    }
   });
 
   it('routes attachment removal through the composer intent', async () => {
@@ -1097,7 +1129,7 @@ describe('AgentChat', () => {
     expect(screen.queryByText(/Delivery not confirmed/)).toBeNull();
     expect(screen.queryByRole('button', { name: 'Send now' })).toBeNull();
     expect(screen.queryByTitle('Stop agent')).toBeNull();
-    expect(screen.getByTitle('Voice input (Cmd+Shift+R)')).toBeDisabled();
+    expect(screen.queryByTitle('Voice input (Cmd+Shift+R)')).toBeNull();
     expect(screen.queryByRole('combobox', { name: 'Agent model' })).toBeNull();
     expect(getQueuedTexts()).toEqual(['Already running', 'Waiting behind it']);
     expect(state.projectChats['project-1'].draft.queued_messages.map(row => row.id)).toEqual(['active-request', 'queued-next']);
@@ -1256,7 +1288,7 @@ describe('project-only Astrid chat', () => {
     const context = { tool: 'video-editor', projectId: 'project-1', projectSlug: 'first', timelineId: null, timelineName: null };
     mocks.useAgentChatBridge.mockReturnValue({ timelineId: null, editorContext: context });
     render(<AgentChatPanel isExpanded />);
-    const composer = screen.getByPlaceholderText('Type or press Cmd+Shift+R to talk...');
+    const composer = screen.getByPlaceholderText('Type a message...');
     expect(composer).not.toBeDisabled();
     fireEvent.change(composer, { target: { value: 'Remember model B for this project' } });
     fireEvent.keyDown(composer, { key: 'Enter', code: 'Enter' });
