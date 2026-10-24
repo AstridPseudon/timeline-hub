@@ -391,11 +391,15 @@ esac
     assert dispatch.returncode == 0, dispatch.stdout + dispatch.stderr
     records = log.read_text().splitlines()
     assert any(line.startswith("VERIFIER ") for line in records)
-    pinned = [line for line in records if line.startswith("VERIFIER ") and "--install" in line]
+    pinned = [line for line in records if line.startswith("VERIFIER ") and "--install" in line.split()]
     assert len(pinned) == 1
     assert "--committed-lock" in pinned[0]
     assert ".dependency-wheelhouse" in pinned[0]
     assert str(wheelhouse) not in pinned[0]
+    installed = [line for line in records if line.startswith("VERIFIER ") and "--installed" in line.split()]
+    assert len(installed) == 1
+    assert records.index(pinned[0]) < records.index(installed[0])
+    assert records.index(installed[0]) < next(index for index, line in enumerate(records) if line.startswith("PIP ") and "--no-build-isolation" in line)
 
 
 def load_helper(name: str, path: Path):
@@ -533,9 +537,175 @@ def test_installed_console_script_negatives_remain_strict(tmp_path: Path) -> Non
         helper.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
 
 
+@pytest.mark.parametrize("long_path", [False, True])
+def test_installed_scripts_match_canonical_pip_and_survive_relocation(tmp_path: Path, long_path: bool) -> None:
+    PipScriptMaker = importlib.import_module("pip._internal.operations.install.wheel").PipScriptMaker
+
+    helper, root, data = installed_dependency_fixture(tmp_path)
+    stage = tmp_path / ("stage-" + "x" * (140 if long_path else 1))
+    (stage / "bin").mkdir(parents=True)
+    maker = PipScriptMaker(None, str(stage / "bin"))
+    maker.executable = str(stage / "bin/python")
+    maker.variants = {""}
+    maker.make("seed-tool = seedpkg:main")
+    content = (stage / "bin/seed-tool").read_bytes()
+    assert content.startswith(b"#!/bin/sh\n" if long_path else f"#!{stage}/bin/python\n".encode())
+    site = root / "lib/python3.13/site-packages"
+    files = {str(path.relative_to(site)): path.read_bytes() for path in site.rglob("*") if path.is_file() and path.name != "RECORD"}
+    files["../../../bin/seed-tool"] = content
+    stage_site = stage / "lib/python3.13/site-packages"
+    write_record(stage_site, "seedpkg-1.0.0.dist-info", files)
+    # Exercise the actual maker relocation body, including RECORD rehashing.
+    (stage / ".provision-report").write_text("")
+    (stage / ".astrid-distribution-metadata").write_text("")
+    (stage / "bin/seed-tool").write_bytes(content.replace(str(stage).encode(), str(root).encode()))
+    relocation = MAKER.read_text().split("<<'RELOCATE'\n", 1)[1].split("\nRELOCATE", 1)[0]
+    result = subprocess.run([sys.executable, "-I", "-", str(stage), str(root)], input=relocation, text=True, capture_output=True, check=False)
+    assert result.returncode == 0, result.stderr
+    for path in stage_site.rglob("*"):
+        if path.is_file():
+            (site / path.relative_to(stage_site)).write_bytes(path.read_bytes())
+    (root / "bin/seed-tool").write_bytes((stage / "bin/seed-tool").read_bytes())
+    helper.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
+
+
+@pytest.mark.parametrize("mutation", ["outside", "record-link", "target-link", "duplicate", "malformed"])
+def test_maker_relocation_preflights_record_authority(tmp_path: Path, monkeypatch, mutation: str) -> None:
+    import runpy
+
+    stage = tmp_path / "stage"
+    metadata = stage / "lib/python3.13/site-packages/seedpkg-1.0.0.dist-info"
+    metadata.mkdir(parents=True)
+    direct = metadata / "direct_url.json"
+    original = json.dumps({"url": (stage / "source").as_uri()})
+    direct.write_text(original)
+    outside = tmp_path / "outside"
+    outside.write_bytes(b"outside bytes never read")
+    record = metadata / "RECORD"
+    rows = "seedpkg-1.0.0.dist-info/RECORD,,\n"
+    if mutation == "outside":
+        rows += "../../../../outside,sha256=forged,23\n"
+    elif mutation == "target-link":
+        (metadata / "linked").symlink_to(outside)
+        rows += "seedpkg-1.0.0.dist-info/linked,sha256=forged,23\n"
+    elif mutation == "duplicate":
+        rows += rows
+    elif mutation == "malformed":
+        rows += "only,two\n"
+    record.write_text(rows)
+    if mutation == "record-link":
+        record.rename(tmp_path / "outside-record")
+        record.symlink_to(tmp_path / "outside-record")
+    relocation = MAKER.read_text().split("<<'RELOCATE'\n", 1)[1].split("\nRELOCATE", 1)[0]
+    relocation_file = tmp_path / "maker-relocation.py"
+    relocation_file.write_text(relocation)
+    monkeypatch.setattr(sys, "argv", ["relocation", str(stage), str(tmp_path / "final")])
+    read_bytes = Path.read_bytes
+
+    def guarded_read(path):
+        assert path.resolve() != outside, "outside RECORD target read"
+        return read_bytes(path)
+
+    monkeypatch.setattr(Path, "read_bytes", guarded_read)
+    with pytest.raises(SystemExit):
+        runpy.run_path(str(relocation_file), run_name="__main__")
+    assert direct.read_text() == original
+
+
+@pytest.mark.parametrize("case", ["record-link", "owner-link", "site-parent-link"])
+def test_metadata_record_is_never_read_before_physical_validation(tmp_path: Path, case: str) -> None:
+    helper, root, data = installed_dependency_fixture(tmp_path)
+    site = root / "lib/python3.13/site-packages"
+    metadata_path = site / "seedpkg-1.0.0.dist-info"
+    outside = tmp_path / "outside"
+    if case == "record-link":
+        (metadata_path / "RECORD").rename(outside)
+        (metadata_path / "RECORD").symlink_to(outside)
+    elif case == "owner-link":
+        metadata_path.rename(outside)
+        metadata_path.symlink_to(outside, target_is_directory=True)
+    else:
+        (root / "lib/python3.13").rename(outside)
+        (root / "lib/python3.13").symlink_to(outside, target_is_directory=True)
+    reads = []
+
+    class Distribution:
+        _path = metadata_path
+
+        @property
+        def metadata(self):
+            reads.append("METADATA")
+            raise AssertionError("metadata read before containment")
+
+        @property
+        def files(self):
+            reads.append("RECORD")
+            raise AssertionError("RECORD read before containment")
+
+    helper.md.distributions = lambda path: [Distribution()]
+    with pytest.raises(SystemExit):
+        helper.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
+    assert reads == []
+
+
+@pytest.mark.parametrize("mutation", ["hash", "size", "symlink", "outside", "self-missing", "bookkeeping", "overlap"])
+def test_console_record_integrity_and_bookkeeping_controls(tmp_path: Path, mutation: str) -> None:
+    helper, root, data = installed_dependency_fixture(tmp_path)
+    site = root / "lib/python3.13/site-packages"
+    record = site / "seedpkg-1.0.0.dist-info/RECORD"
+    lines = record.read_text().splitlines()
+    script_row = next(row for row in lines if row.startswith("../../../bin/seed-tool,"))
+    if mutation == "hash":
+        lines[lines.index(script_row)] = script_row.replace("sha256=", "sha256=wrong")
+    elif mutation == "size":
+        lines[lines.index(script_row)] = script_row.rsplit(",", 1)[0] + ",1"
+    elif mutation == "self-missing":
+        lines = [row for row in lines if not row.startswith("seedpkg-1.0.0.dist-info/RECORD,")]
+    elif mutation == "symlink":
+        script = root / "bin/seed-tool"
+        script.rename(root / "bin/original")
+        script.symlink_to(root / "bin/original")
+    elif mutation == "outside":
+        lines.append("../../../../outside,,")
+    elif mutation == "overlap":
+        # Two original distributions cannot own the same generated script.
+        import io
+
+        output = io.BytesIO()
+        with zipfile.ZipFile(output, "w") as archive, zipfile.ZipFile(io.BytesIO(data)) as original:
+            for entry in original.infolist():
+                content = original.read(entry).replace(b"Name: seedpkg", b"Name: otherpkg")
+                archive.writestr(entry.filename.replace("seedpkg/", "otherpkg/").replace("seedpkg-1.0.0.dist-info", "otherpkg-1.0.0.dist-info"), content)
+        other_metadata = site / "otherpkg-1.0.0.dist-info"
+        other_metadata.mkdir()
+        with zipfile.ZipFile(output) as archive:
+            files = {entry.filename: archive.read(entry) for entry in archive.infolist()}
+        files["../../../bin/seed-tool"] = (root / "bin/seed-tool").read_bytes()
+        write_record(site, other_metadata.name, files)
+        first = next(iter(helper.md.distributions(path=[])))
+        second = type(first)()
+        second._path = other_metadata
+        second.metadata = {"Name": "otherpkg"}
+        second.files = [Path("otherpkg-1.0.0.dist-info/RECORD")]
+        helper.md.distributions = lambda path: [first, second]
+        with pytest.raises(SystemExit, match="overlapping"):
+            helper.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data, "otherpkg-1.0.0-py3-none-any.whl": output.getvalue()})
+        return
+    else:
+        import base64
+
+        content = b"arbitrary installer bytes"
+        (record.parent / "INSTALLER").write_bytes(content)
+        digest = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).decode().rstrip("=")
+        lines.append(f"seedpkg-1.0.0.dist-info/INSTALLER,sha256={digest},{len(content)}")
+    record.write_text("\n".join(lines) + "\n")
+    with pytest.raises(SystemExit):
+        helper.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
+
+
 @pytest.mark.parametrize(
     "target",
-    ["seedpkg:main:bad", "seedpkg", "seedpkg:", "seedpkg:main extra", "seedpkg:main [broken"],
+    ["seedpkg:main:bad", "seedpkg", "seedpkg:", "seedpkg:main extra", "seedpkg:main [broken", "seedpkg:main [first, second-dash]"],
 )
 def test_installed_console_script_target_matches_distlib_grammar(
     tmp_path: Path, target: str
@@ -731,9 +901,7 @@ def test_real_maker_preserves_existing_target_arguments(tmp_path: Path) -> None:
     assert "reused child venv path=" in result.stdout and "remotion=remotion-graph" in result.stdout
 
 
-@pytest.mark.parametrize("provenance", ["valid", "valid-pyc", "missing", "forged-record", "wrong-wheel", "wrong-lock", "unowned-file", "forged-pyc"])
-def test_real_maker_seeded_store_reuse(tmp_path: Path, provenance: str) -> None:
-    env, args, wheelhouse = retained_fixture(tmp_path, managed=True, provenance=provenance)
+def private_maker(tmp_path: Path, args: list[str]) -> Path:
     # The production maker pins the approved real lock; the private fixture pins
     # its own tiny lock without changing production trust or installing anything.
     private = tmp_path / "maker-kit"
@@ -746,6 +914,13 @@ def test_real_maker_seeded_store_reuse(tmp_path: Path, provenance: str) -> None:
     maker.write_text(source)
     maker.chmod(0o755)
     (private / VERIFY.name).write_bytes(VERIFY.read_bytes())
+    return maker
+
+
+@pytest.mark.parametrize("provenance", ["valid", "valid-pyc", "missing", "forged-record", "wrong-wheel", "wrong-lock", "unowned-file", "forged-pyc"])
+def test_real_maker_seeded_store_reuse(tmp_path: Path, provenance: str) -> None:
+    env, args, wheelhouse = retained_fixture(tmp_path, managed=True, provenance=provenance)
+    maker = private_maker(tmp_path, args)
     result = subprocess.run([str(maker), *args, "--dependency-wheelhouse", str(wheelhouse)], env=env, text=True, capture_output=True, check=False)
     retain_caller_evidence("seeded-store-" + provenance, result)
     if provenance in ("valid", "valid-pyc"):
@@ -774,10 +949,34 @@ def test_real_maker_keeps_unseeded_store_compatibility(tmp_path: Path) -> None:
 
 def test_real_maker_rechecks_seeded_store_reuse_without_new_wheelhouse(tmp_path: Path) -> None:
     env, args, _ = retained_fixture(tmp_path, managed=True, provenance="forged-record")
-    result = subprocess.run([str(MAKER), *args], env=env, text=True, capture_output=True, check=False)
+    maker = private_maker(tmp_path, args)
+    result = subprocess.run([str(maker), *args], env=env, text=True, capture_output=True, check=False)
     retain_caller_evidence("seeded-store-without-new-input", result)
     assert result.returncode != 0
     assert "status=passed" not in result.stdout
+    assert "installed dependency differs from original wheel" in result.stderr
+
+
+@pytest.mark.parametrize("case", ["valid", "helper-tampered", "helper-symlink", "unapproved-lock"])
+def test_seeded_reuse_without_argument_authenticates_helper_and_lock(tmp_path: Path, case: str) -> None:
+    env, args, _ = retained_fixture(tmp_path, managed=True)
+    maker = private_maker(tmp_path, args)
+    helper = maker.parent / VERIFY.name
+    if case == "helper-tampered":
+        helper.write_text("raise SystemExit('UNTRUSTED HELPER EXECUTED')\n")
+    elif case == "helper-symlink":
+        helper.rename(maker.parent / "original-helper")
+        helper.symlink_to(maker.parent / "original-helper")
+    elif case == "unapproved-lock":
+        maker.write_text(re.sub(r"^EXPECTED_PROOF_LOCK_SHA256=.*$", "EXPECTED_PROOF_LOCK_SHA256=" + "0" * 64, maker.read_text(), flags=re.MULTILINE))
+    result = subprocess.run([str(maker), *args], env=env, text=True, capture_output=True, check=False)
+    if case == "valid":
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "reused child venv path=" in result.stdout
+    else:
+        assert result.returncode == 2
+        assert "untrusted dependency seed verifier" in result.stderr if case.startswith("helper-") else "requires approved proof.lock" in result.stderr
+        assert "UNTRUSTED HELPER EXECUTED" not in result.stderr
 
 
 def test_real_maker_failure_evidence_survives_store_rollback(tmp_path: Path) -> None:

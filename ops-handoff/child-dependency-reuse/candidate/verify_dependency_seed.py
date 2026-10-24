@@ -31,7 +31,7 @@ from packaging.utils import (
 
 ENTRY_POINT_TARGET = re.compile(
     r"\A(?P<module>\w+(?:\.\w+)*):(?P<function>\w+(?:\.\w+)*)"
-    r"(?:\s*\[\s*[\w-]+(?:=\w+)?(?:,\s*[\w-]+(?:=\w+)?)*\s*\])?\Z"
+    r"(?:\s*\[\s*[\w-]+(?:=\w+)?(?:,\s*\w+(?:=\w+)?)*\s*\])?\Z"
 )
 
 
@@ -229,23 +229,47 @@ def validated_record_path(root: Path, site: Path, dist: object, record: str, nam
     return path
 
 
+def child_file(root: Path, path: Path) -> None:
+    if not path.is_relative_to(root) or not path.resolve().is_relative_to(root):
+        fail("installed dependency file escapes child")
+    cursor = root
+    for part in path.relative_to(root).parts:
+        cursor /= part
+        info = cursor.lstat()
+        if stat.S_ISLNK(info.st_mode) or info.st_uid != os.getuid():
+            fail("symlinked or foreign installed dependency path")
+    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+        fail("installed dependency path is not a regular file")
+
+
 def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
     """Compare installed bytes to authenticated original wheels, not RECORD claims."""
+    if not root.is_absolute() or root != root.resolve() or root.stat().st_uid != os.getuid():
+        fail("installed child root is not physical or owned")
     sites = list((root / "lib").glob("python*/site-packages"))
     if len(sites) != 1 or root.is_symlink() or sites[0].is_symlink():
         fail("installed child layout is missing or ambiguous")
-    root = root.resolve()
-    site = sites[0].resolve()
-    if not site.is_relative_to(root):
+    site = sites[0]
+    if site != site.resolve() or not site.is_relative_to(root):
         fail("installed site-packages escapes child")
+    distributions = list(md.distributions(path=[str(site)]))
+    # Distribution.files reads RECORD internally. Validate its physical owner
+    # before asking importlib.metadata to read either metadata or the file list.
+    for dist in distributions:
+        dist_path = getattr(dist, "_path", None)
+        if not isinstance(dist_path, Path) or not dist_path.is_relative_to(site):
+            fail("dependency RECORD owner escapes child")
+        record_path = validated_record_path(root, site, dist, str(dist_path.relative_to(site) / "RECORD"), "installed")
+        child_file(root, record_path)
+        child_file(root, dist_path / "METADATA")
     owned: set[str] = set()
     for filename, data in artifacts.items():
         name, version, _, _ = parse_wheel_filename(filename)
-        distributions = [dist for dist in md.distributions(path=[str(site)])
-                         if canonicalize_name(dist.metadata.get("Name", "")) == name]
-        if len(distributions) != 1 or distributions[0].version != str(version):
+        matches = [dist for dist in distributions
+                   if canonicalize_name(dist.metadata.get("Name", "")) == name]
+        if len(matches) != 1 or matches[0].version != str(version):
             fail(f"missing or ambiguous installed dependency: {name}")
-        dist = distributions[0]
+        dist = matches[0]
         records = [str(item) for item in dist.files or [] if str(item).endswith(".dist-info/RECORD")]
         if len(records) != 1:
             fail(f"missing installed dependency RECORD: {name}")
@@ -258,7 +282,7 @@ def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
                 if any(part.endswith(".data") for part in Path(entry.filename).parts):
                     fail(f"unsupported relocated wheel layout: {filename}")
                 wheel_files[entry.filename] = archive.read(entry)
-        generated_scripts: dict[str, bytes] = {}
+        generated_scripts: dict[str, set[bytes]] = {}
         entrypoint_files = [
             rel for rel in wheel_files if rel.endswith(".dist-info/entry_points.txt")
         ]
@@ -269,6 +293,8 @@ def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
             parser.optionxform = str  # type: ignore[method-assign, assignment]
             try:
                 parser.read_string(wheel_files[entrypoint_files[0]].decode("utf-8"))
+                if parser.defaults():
+                    fail(f"unsupported default console entry-point metadata: {name}")
                 entrypoints = (
                     list(parser.items("console_scripts", raw=True))
                     if parser.has_section("console_scripts")
@@ -282,6 +308,8 @@ def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
                     or "/" in script_name
                     or "\\" in script_name
                     or "\x00" in script_name
+                    or any(character.isspace() for character in script_name)
+                    or script_name.startswith("[")
                     or script_name in {".", ".."}
                 ):
                     fail(f"unsafe console entry-point name: {name}:{script_name!r}")
@@ -294,17 +322,25 @@ def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
                 rel = str(Path(os.path.relpath(script_path, site)))
                 if rel in generated_scripts:
                     fail(f"duplicate console entry-point script: {name}:{script_name}")
-                generated_scripts[rel] = (
-                    f"#!{root / 'bin/python'}\n"
+                body = (
                     "import sys\n"
                     f"from {module} import {function.split('.', 1)[0]}\n"
                     "if __name__ == '__main__':\n"
                     "    sys.argv[0] = sys.argv[0].removesuffix('.exe')\n"
                     f"    sys.exit({function}())\n"
                 ).encode()
+                executable = str(root / "bin/python")
+                if " " in executable:
+                    executable = '"' + executable + '"'
+                # Pip's long-path shell trampoline survives maker relocation.
+                generated_scripts[rel] = {
+                    f"#!{executable}\n".encode() + body,
+                    (f"#!/bin/sh\n'''exec' {executable} \"$0\" \"$@\"\n' '''\n").encode() + body,
+                }
         rows: set[str] = set()
         physical_rows: set[str] = set()
         record_path = validated_record_path(root, site, dist, record, name)
+        child_file(root, record_path)
         for row in csv.reader(io.StringIO(captured_bytes(record_path).decode()), strict=True):
             if len(row) != 3:
                 fail(f"malformed dependency RECORD: {name}")
@@ -337,6 +373,7 @@ def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
                 fail(f"unsafe or overlapping dependency RECORD: {name}")
             rows.add(rel)
             physical_rows.add(physical)
+            child_file(root, resolved)
             content = captured_bytes(path)
             original = wheel_files.get(rel)
             if original is not None:
@@ -356,20 +393,26 @@ def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
                 if not encoded and not size:
                     continue
             elif rel in generated_scripts:
-                if content != generated_scripts[rel]:
+                if content not in generated_scripts[rel]:
                     fail(f"generated dependency script differs from wheel entry point: {rel}")
             elif Path(rel).parent != Path(record).parent or Path(rel).name not in {"INSTALLER", "REQUESTED"}:
                 fail(f"unowned installed dependency file: {rel}")
+            elif content != (b"pip\n" if Path(rel).name == "INSTALLER" else b""):
+                fail(f"unexpected installer bookkeeping: {rel}")
             digest = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).decode().rstrip("=")
             if encoded != "sha256=" + digest or size != str(len(content)):
                 fail(f"dependency RECORD integrity mismatch: {rel}")
         if not set(wheel_files).issubset(rows):
             fail(f"incomplete installed dependency: {name}")
+        if record not in rows:
+            fail(f"missing installed dependency RECORD self-row: {name}")
         if not set(generated_scripts).issubset(rows):
             fail(f"missing installed console script: {name}")
         for prefix in {Path(rel).parts[0] for rel in wheel_files}:
             location = site / prefix
             for path in ([location] if location.is_file() else location.rglob("*")):
+                if path.is_symlink():
+                    fail(f"symlinked dependency package path: {path.name}")
                 if path.is_file() and str(path.relative_to(site)) not in rows:
                     fail(f"unowned dependency package file: {path.name}")
         owned.update(physical_rows)

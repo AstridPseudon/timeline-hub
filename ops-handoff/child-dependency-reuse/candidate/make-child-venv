@@ -21,7 +21,7 @@ PIP_NETWORK_TIMEOUT_SECONDS=${CHILD_VENV_PIP_NETWORK_TIMEOUT_SECONDS:-30}
 PIP_RETRIES=${CHILD_VENV_PIP_RETRIES:-2}
 REQUIREMENTS_PATH=${CHILD_VENV_REQUIREMENTS_PATH:-requirements/proof.lock}
 EXPECTED_PROOF_LOCK_SHA256=236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778
-VERIFIER_SHA256=61f7a832a7b01e9168b0200302fadebb630b8686dd9844dbaef6f6f989d255a4
+VERIFIER_SHA256=d45cddba5f4ccea455ee4461b73b82cfcc7f7427f9d7fccd44421f30c6279d6a
 DEPENDENCY_SEED=
 SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
 
@@ -192,9 +192,9 @@ done)
 STORE_HELPER=$O/bin/bench_store.py
 [ -f "$STORE_HELPER" ] && [ ! -L "$STORE_HELPER" ] || { echo 'REFUSED: bench store helper unavailable' >&2; exit 2; }
 export STORE_CONTEXT="$(declare -p O A R W PYTHON TIMEOUT_BIN PIP_TIMEOUT_SECONDS LOCAL_TIMEOUT_SECONDS FREEZE_TIMEOUT_SECONDS BUILD_TIMEOUT_SECONDS KILL_AFTER_SECONDS PIP_NETWORK_TIMEOUT_SECONDS PIP_RETRIES REQUIREMENTS_PATH N S BS RT RUNTIME_SHA CLIENT_IDENTITY LOCK_SHA DEPENDENCY_SEED SCRIPT_DIR; declare -f failure run_stage progress source_state)"
-python3 -I - "$0" "$STORE_HELPER" "$W/bench-store" "$O/tests" "$N" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$A" "$R" "$W" "$PYTHON" "$BS" "$RT" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$DEPENDENCY_SEED" <<'STORE_PY'
+python3 -I - "$0" "$STORE_HELPER" "$W/bench-store" "$O/tests" "$N" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$A" "$R" "$W" "$PYTHON" "$BS" "$RT" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$DEPENDENCY_SEED" "$VERIFIER_SHA256" "$EXPECTED_PROOF_LOCK_SHA256" <<'STORE_PY'
 import hashlib, importlib.util, os, pathlib, re, shlex, stat, subprocess, sys
-script, helper, root, tests, name, agent, backend, client, checkout, runtime_checkout, work, python, base_suite, remotion, requirements, lock, dependency_seed = sys.argv[1:]
+script, helper, root, tests, name, agent, backend, client, checkout, runtime_checkout, work, python, base_suite, remotion, requirements, lock, dependency_seed, verifier_sha, approved_lock = sys.argv[1:]
 sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location('bench_store', helper)
 module = importlib.util.module_from_spec(spec)
@@ -311,9 +311,15 @@ def verify(path):
     if dependency_seed or retained_seed.exists() or retained_seed.is_symlink():
         if not retained_seed.is_dir() or retained_seed.is_symlink():
             raise RuntimeError('seeded child reuse requires Store custody and retained original wheels')
+        seed_helper = pathlib.Path(script).parent / 'verify_dependency_seed.py'
+        if (seed_helper != seed_helper.resolve() or not seed_helper.is_file()
+                or hashlib.sha256(seed_helper.read_bytes()).hexdigest() != verifier_sha):
+            raise RuntimeError('untrusted dependency seed verifier')
+        if lock != approved_lock:
+            raise RuntimeError('dependency seed requires approved proof.lock SHA-256')
         # Authenticate retained ORIGINAL wheels before executing this child,
         # including a seeded entry reused without a new wheelhouse argument.
-        subprocess.run([python, '-I', str(pathlib.Path(script).parent / 'verify_dependency_seed.py'),
+        subprocess.run([python, '-I', str(seed_helper),
                         str(retained_seed), '-', '--committed-lock', checkout,
                         agent, requirements, lock, '--installed', str(retained)], check=True,
                        timeout=int(os.environ.get('CHILD_VENV_LOCAL_TIMEOUT_SECONDS', '600')))
@@ -384,6 +390,9 @@ if [ -n "$DEPENDENCY_SEED" ]; then
   run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$P" -I "$SCRIPT_DIR/verify_dependency_seed.py" "$SEED_SNAPSHOT" - --committed-lock "$A" "$S" "$REQUIREMENTS_PATH" "$LOCK_SHA" --install "${PIP_ARGS[@]}"
 else
   run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps -r "$REQ"
+fi
+if [ -n "$DEPENDENCY_SEED" ]; then
+  run_stage verify-installed-dependencies "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" "$SEED_SNAPSHOT" - --committed-lock "$A" "$S" "$REQUIREMENTS_PATH" "$LOCK_SHA" --installed "$T"
 fi
 
 AGENT_SRC=$SRC/agent
@@ -535,14 +544,52 @@ run_stage freeze-identity "$LOCAL_TIMEOUT_SECONDS" bash -c \
 # no complete destination exists until all validation above has passed.
 run_stage shebang-relocation "$LOCAL_TIMEOUT_SECONDS" bash -c \
   'set -e
+   test -z "$(find "$3/bin" -type l -print -quit)"
    while IFS= read -r file; do sed -i "s#$1#$2#g" "$file"; done < <(grep -rl -- "$1" "$3/bin" 2>/dev/null || true)' \
   _ "$T" "$D" "$T"
 run_stage origin-relocation "$LOCAL_TIMEOUT_SECONDS" sed -i "s#$T#$D#g" "$T/.astrid-import-origins"
 source_state "$A" "$S" && source_state "$R" "$RUNTIME_SHA" || failure 2 source-changed-during-build
 run_stage path-metadata-relocation "$LOCAL_TIMEOUT_SECONDS" python3 - "$T" "$D" <<'RELOCATE'
-import base64, csv, hashlib, io, json, pathlib, sys
+import base64, csv, hashlib, io, json, os, pathlib, stat, sys
 stage, final = map(pathlib.Path, sys.argv[1:])
-for path in stage.glob('lib/python*/site-packages/*.dist-info/direct_url.json'):
+def physical_file(path):
+    if not path.resolve().is_relative_to(stage):
+        raise SystemExit('relocation file escapes child')
+    cursor = stage
+    for part in path.relative_to(stage).parts:
+        cursor /= part
+        info = cursor.lstat()
+        if stat.S_ISLNK(info.st_mode) or info.st_uid != os.getuid():
+            raise SystemExit('unsafe relocation path')
+    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+        raise SystemExit('unsafe relocation file')
+records = []
+# Validate every authority-bearing path before reading row targets or writing.
+for record in stage.glob('lib/python*/site-packages/*.dist-info/RECORD'):
+    physical_file(record)
+    site = record.parent.parent
+    rows = list(csv.reader(io.StringIO(record.read_text()), strict=True))
+    seen = set()
+    for row in rows:
+        if len(row) != 3:
+            raise SystemExit('malformed relocation RECORD')
+        rel = row[0]
+        pure = pathlib.PurePosixPath(rel)
+        if not rel or pure.is_absolute() or str(pure) != rel or '\\' in rel or '\x00' in rel:
+            raise SystemExit('unsafe relocation RECORD path')
+        target = site / rel
+        physical_file(target)
+        resolved = target.resolve()
+        if '..' in pure.parts and rel != os.path.relpath(resolved, site):
+            raise SystemExit('unsupported relocation RECORD path')
+        if resolved in seen:
+            raise SystemExit('duplicate relocation RECORD path')
+        seen.add(resolved)
+    records.append((record, site, rows))
+direct_urls = list(stage.glob('lib/python*/site-packages/*.dist-info/direct_url.json'))
+for path in direct_urls:
+    physical_file(path)
+for path in direct_urls:
     direct = json.loads(path.read_text())
     url = direct.get('url', '')
     if url.startswith(stage.as_uri() + '/'):
@@ -550,11 +597,10 @@ for path in stage.glob('lib/python*/site-packages/*.dist-info/direct_url.json'):
         path.write_text(json.dumps(direct))
 # Relocated console launchers and direct_url are distribution-owned files:
 # recompute their RECORD rows rather than accepting stale installation hashes.
-for record in stage.glob('lib/python*/site-packages/*.dist-info/RECORD'):
-    site = record.parent.parent
-    rows = list(csv.reader(io.StringIO(record.read_text())))
+for record, site, rows in records:
     for row in rows:
-        if row[1]:
+        target = (site / row[0]).resolve()
+        if row[1] and (target.parent == stage / 'bin' or target == record.parent / 'direct_url.json'):
             data = (site / row[0]).read_bytes()
             row[1] = 'sha256=' + base64.urlsafe_b64encode(hashlib.sha256(data).digest()).decode().rstrip('=')
             row[2] = str(len(data))
