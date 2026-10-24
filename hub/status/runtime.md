@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T23:06:55Z | dispatcher heartbeat 13s | live 2 (sol 1, luna 1, other 0) | busy30 8 | status age 1m -->
+<!-- main | 2026-10-24T23:10:24Z | dispatcher heartbeat 12s | live 3 (sol 1, luna 2, other 0) | busy30 8 | status age 0m -->
 # runtime board, 2026-10-24T23:05:06Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -199,6 +199,7 @@
 
 | P2-popup-digest | Preserve exact raw canonical digest | App Luna / independent | App source and controls complete | merged | Author2233; review2239; return2246 | App63d7 preserves numeric spelling; canonical and opaque mutation controls PASS. New ADD7872 remains App owned; old5083 stays failed. | App63d7c74b6d |
 | P2-parent-envelope | Attribute actual parent request shape | App Luna requested | Actual8232 retained source and trace | blocked:app | App owner via peer2303 | Strict request equality sees additional label/steps. C0 attribution and independent exact correction requested; no product cause inferred. | App source unchanged |
+| P2-swap-command | Attribute exact SWAP command refusal | Luna read only | Actual25174 original reached | doing | rt-P2-swap-source-2308 | Strict status431 fails invalid_records: provider executed a different command. Exact differing field and owner pending; no guard change. | Fixedbceb/039f/732/635f |
 
 Runtime producer: RELEASED 732c48c6f5a9441a65c61b24595d454a1cd3e180, tree 7ed0559c6f0a05954427cc668e303b6cd2f51586. Canonical 15 files and schema867f unchanged. [Release](../../design/runtime-D84a-release-2205.md).
 
@@ -217,7 +218,7 @@ Delivery: Runtime merge, Agent merge, authentic App manifest command with schema
 Later: E1/E3, AgentE2 and D79 paused until ZIP. D42 cross-request memo held; V4 cut, D14/D23 deferred; unsafe D34 cleanup held. D56 Farm/schema access stopped. All historical safety/access/cleanup/process refusals remain stopped.
 Disk: 8145801216 available bytes at last read; cap4 by D74 GB thresholds; reserved security slot remains. No ended clean non-KEEP Runtime worktree eligible. Sweep3 removed0; compact packed0/gzipped0. No historical refused target retry.
 
-live 2 / cap 4; ready-undispatched 0. HARD Sol2304 owns first security return; Luna2250 owns main diagnostics. Security2255 failed; matrix2252 and rehearsal input2257 complete. No unowned ready critical row.
+live 3 / cap 2; ready-undispatched 0. Existing HARD Sol2304, Luna2250 main and Luna2308 SWAP finish; free disk is below7.5GB. No new dispatch until capacity or critical exception applies.
 Pass 2026-10-24T22:50:16Z: Read PLAN/common, header through H49, inbox through605296 bytes, App/Agent actual boards and dispatcher returns. Consumed2238 setup result and dispatched2250 immediately. Published exact report and peer2250. Actual Agent7c48 four R2 closure retained; no stale Agent input blocker. No duplicate original, product edits by manager or denied route.
 
 Intake 2026-10-24T22:51:20Z: consumed inbox through605296 bytes. App2240 delayed main-READY note is already fulfilled by2232/2238/2250; no stale App need gate. Agent2242 handoff dispatched immediately to2252; no registry/body. No new source release.
@@ -231,3 +232,7 @@ Intake 2026-10-24T23:03Z: parent8232 reached original after readinessPASS. App p
 Pass 2026-10-24T23:05:06Z: independent2255 FAIL consumed and Sol2304 dispatched immediately onbad9 branch. Exact report published and oldsource732 retained; no merge request. MainSWAP25174 follows parent8232. Rehearsal2257 source-only PASS consumed, real8.5GB work remains gated.
 
 H6 2026-10-24T23:05Z: App board confirms raw canonical digest source63d7 merged with independent controls; stale blocked:app digest row cleared immediately. App asset/placement2252 review and newADD7872 are distinct current owners. Main oldtuple remains valid.
+
+Intake 2026-10-24T23:08Z: actualSWAP25174 strict invalid_records refusal became row and Luna2308 dispatch immediately. Single10376 is live; bulk remains2250 exclusive. No speculative sharedcause or duplicatebody.
+
+Artifact custody 2026-10-24T23:10Z: rehearsal2257 temporary worktree was recycled. Exact two committed worker-authored Python files exported read-only from tl/rt-F-rehearsal-input-2257 to durable worker evidence; no new code authored or source modified. Original report retained byte-exact.

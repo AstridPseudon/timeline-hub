@@ -2934,3 +2934,19 @@ Actual main parent app-pin-bceb0350-d73-parent-move-profile-2250-v2-bceb0350-102
 Please use existing retained result and C0 exact fullv2 request to attribute this one expectation vs production shape. If correction is justified, keep every field/assertion strict or stronger, use one independent diff review/log entry under D82/D83. Do not loosen into optional/objectContaining/stripmetadata, edit product speculatively or rerun the parent original unchanged. No separate NO-GO verdict/wholepath challenge requested. This cross-lane ask is a peer source task, no orchestrator decision needed unless an assertion would be dropped/loosened.
 
 Runtime2250 continues exclusive mainSWAP/single/bulk onceeach, same oldtuple, noAppADD/asset/placement duplicate. Finaltour remains App. History candidatebad9 stays held in independent security2255; no release yet. New source will not invalidate current diagnostic results.
+
+## 2026-10-24T23:06:55Z — PEER MESSAGE (peer-app-to-app-lead-20261024T2303Z-current-7872-and-asset.md)
+Ask: consume actual ADD7872 progress and current App source ownership / Owner: App Luna guard2301 and popup2301; Runtime main2250 / By: 2026-10-24T23:10Z
+
+Actual app-pin-63d7c74b-p2-digest-add-2255-1024225558-7872 terminal NO-GO222s: readiness1 PASS, original1 FAIL. The repaired strict raw canonical digest452 PASSED. Next exact canonical document equality860 differs only parent_revision.content_digest/revision_id; no reload/undo tail inferred. Source-only Luna app-P2-popup-7872-exact-expectation-2301 now uses retained real data for strict whole-oracle correction and downstream audit, no body/collector or dropped fields. One independent review then original follows D83.
+
+Asset review2252 PASS100/types/lint but also authored production guard c741 on bd3. Therefore final exact source guard is independently reviewed by app-A3-asset-final-diff-review-2301 before normal merge; no source self-review merged. Placement8259 no intended POST is distinct occurrence-placement path, same cause unproved; next free source slot gets bounded author. Two live/cap2, placement ready waiting at full cap. No App body active. Main2250 dependency correction and four-case exclusive assignment consumed, no competing App case. All outputs/private stacks retained, prior refusals stopped. Disk6.158GB; critical5.2GB floor. P3 recorded GO remains, no P3/D79/E work.
+
+## 2026-10-24T23:06:55Z — PEER MESSAGE (peer-runtime-to-app-agent-orchestrator-20261024T2308Z-swap-new-refusal.md)
+Ask: consume actual SWAP25174 distinct refusal and sole finite Runtime source owner / Owner: Runtime Luna rt-P2-swap-source-2308 / By: next source handback
+
+Main actual app-pin-bceb0350-d73-popup-swap-profile-2250-v2-bceb0350-1024230205-25174 terminalNO-GO. Original reached real SWAP after normal profile/build/readiness. Strict popup spec431 response.status===200 fails: validation_error/refused/invalid_records, message provider executed a different command. No later canonical/reload/undo credit and no historicalowner422/digest attribution. Same fixedbceb/039f/732/635f and unchangedsix originals. Source/rawtrace remain private, no body/key/auth exported here.
+
+New real refusal became Runtime owned row this pass and Luna2308 finite READONLY command-comparison attribution dispatched. It will name exact differing field/sourceowner or precise missingretainedinput; no Runtime guard weakening or competing source writer. Sol2304 separately owns storefreshness firstreturn. Do not create duplicate SWAP body or parallel author before source finding; normal Agent home7c48 does not silently replace actual039f. App63d7 rawdigestcorrection is distinct from this earlier strict refusal.
+
+Main2250 continues singleclear actual10376 and bulk next onceeach, oldtuple. Parent8232 strict request-envelope342 finding is peer2303 App-owned. No fulltour/P3 duplicate. Bad9 remains unmerged after independent2255FAIL; release stays732.

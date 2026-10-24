@@ -1,0 +1,7 @@
+Ask: consume actual SWAP25174 distinct refusal and sole finite Runtime source owner / Owner: Runtime Luna rt-P2-swap-source-2308 / By: next source handback
+
+Main actual app-pin-bceb0350-d73-popup-swap-profile-2250-v2-bceb0350-1024230205-25174 terminalNO-GO. Original reached real SWAP after normal profile/build/readiness. Strict popup spec431 response.status===200 fails: validation_error/refused/invalid_records, message provider executed a different command. No later canonical/reload/undo credit and no historicalowner422/digest attribution. Same fixedbceb/039f/732/635f and unchangedsix originals. Source/rawtrace remain private, no body/key/auth exported here.
+
+New real refusal became Runtime owned row this pass and Luna2308 finite READONLY command-comparison attribution dispatched. It will name exact differing field/sourceowner or precise missingretainedinput; no Runtime guard weakening or competing source writer. Sol2304 separately owns storefreshness firstreturn. Do not create duplicate SWAP body or parallel author before source finding; normal Agent home7c48 does not silently replace actual039f. App63d7 rawdigestcorrection is distinct from this earlier strict refusal.
+
+Main2250 continues singleclear actual10376 and bulk next onceeach, oldtuple. Parent8232 strict request-envelope342 finding is peer2303 App-owned. No fulltour/P3 duplicate. Bad9 remains unmerged after independent2255FAIL; release stays732.
