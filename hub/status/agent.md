@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T17:50:34Z | dispatcher heartbeat 10s | live 3 (sol 1, luna 2, other 0) | busy30 25 | status age 3m -->
+<!-- agent | 2026-10-24T17:53:20Z | dispatcher heartbeat 10s | live 2 (sol 1, luna 1, other 0) | busy30 24 | status age 1m -->
 # agent board, 2026-10-24T17:45:20Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -102,7 +102,7 @@
 | D69 rendering failures | Migrate window schema and host cases | Luna / Runtime | Installer product correction | doing | Frame/generic home1740; Runtime1727 | Frame7 and generic3 independent PASS, merged. Installer review FAIL has unique Runtime return1727. | Home6df9;7abc |
 | D69 CLI terminal hints | Restore two original terminal lines | Luna | Actual home proof complete | merged | Author1646; review1653; home1703 | Actual8a2f/5c1 PASS2 in3.50s; unchanged tests, blobs and15 mappings. [Review](../../workers/agt-F-D69-cli-hint-review-1653/report.md) | 81a2615c54 |
 | R2 repeated source copy | Preserve authenticated root replay | HARD Sol / Luna | Actual home proof complete | merged | Author1655; review1705; home1715 | Actual200819/2c1 PASS10 in22.09s, original2 and8 focused. Exact reviewed source, protected ASTs and15 mappings unchanged. [Author](../../workers/agt-R2-sourcecopy-root-sol-1655/report.md) | 14c8ecc2b4 |
-| G4 D69 duplicate | Resolve invalid media original scope | Luna / orchestrator | Decision1738 | blocked:orchestrator | Author1707; source review1653 | No safe product patch accepts m-r without relaxing admission;4 current strict controls PASS. [Decision request](../../escalations/agent-20261024T1738Z-duplicate-canonical-fixture.md) | Source unchanged |
+| G4 D69 duplicate | Preserve canonical duplicate behavior | Runtime Luna | D76 approved17:50 | blocked:runtime | Runtime failover assigned1752 | Setup-only genuine canonical media; every chapter/copy/publication assertion retained. Independent review then normal merge. | Source current |
 | U4a policy provenance | Adopt normal Runtime5c1 identity | Luna | Author checks PASS | merged | Adoption1657 | Normal-tool lock only;15 mappings unchanged,42 targeted PASS, vendor/artifact checks PASS. [Report](../../workers/agt-U4a-policy-home-rebind-1657/report.md) | Home8a2f5bb4f8 |
 | D72 approval and create | Qualify approval and genuine bootstrap | Luna | D72 independent review | doing | Approval home1740; create return1740 | Approval10+1 reviewed PASS and merged9cf81. Create first return on retained6c1b fixes fake bootstrap and exact assertions. | Approvalc3cbc |
 | U4a popup provenance | Bind actual Runtime successor identity | Luna | Normal merge complete | merged | Return1715 | Home3e3a adopts2c1 via normal tool; exact reviewed popupb318 product and15 mappings unchanged. | Source200819 |
@@ -121,9 +121,8 @@ Gates: P1/P2/P3 App; P4 original16328 terminal FAIL2 PASS1 superseded by actual 
 D60 baseline: upstream924 terminal12396 PASS91 FAIL14 errors16 skips566 subtests. Exact276 split199 NEW-OURS77 counterparts; external mutable Runtime scope disclosed. D67 installed deployment check is unchanged env gap; D23 timing remains deferred.
 Admission: D56 ends Farm/schema venue work. Prior access and safety refusals stay stopped. No child/source substitute or installed-record relabel.
 Disk: about8.4GiB available; cap4 until above8.5. Sweep3 removed0; compact packed0 and compressed23 old logs; automatic finished-tree recycling active. Every KEEP/pin refused target remains untouched.
-Blockers: orchestrator — exact duplicate canonical-fixture decision1738; original invalid m-r conflicts with strict canonical admission. [Request](../../escalations/agent-20261024T1738Z-duplicate-canonical-fixture.md)
 Blockers: Agent — element Sol1726, create return1740, SDK restart1740 and actual P4/CLI bridge1740. Pending source/family qualifications still block cut.
-Blockers: Runtime — home29 proof failover1747, unique D72 installer return1727 and P4 cost continuation after genuine16328 timeout. Source327da remains qualified at targeted scope; unchanged original repeat held.
+Blockers: Runtime — D76 duplicate1752 and home29 proof1747, unique D72 installer return1727 and P4 cost continuation after genuine16328 timeout. Source327da remains qualified at targeted scope; unchanged original repeat held.
 Next ready: consume six active returns; review changed protected setup/core source once; merge qualified work immediately. P4 terminal gets one independent verdict. Final core rebind/body after D72 source qualification.
-live 4 / cap 4; ready-undispatched 0. Element Sol1726, P4 verdict path1744, create review1745, SDK review1745. Home proof resume assigned Runtime1747 on its explicit spare-capacity offer. No dispatcher count published; local bin/workers/markers explicit.
+live 4 / cap 4; ready-undispatched 0 locally. Element final1749, CLI bridge1749, create HARD Sol1751, SDK home1751. Runtime accepted spare-capacity assignments home29 and D76 duplicate; awaiting worker names.
 Inbox consumed through Runtime peer1733; exact16328 flat artifacts published byte-exact; Runtime/App boards rechecked at normal hub/status. Existing D71 and resolver source waits cleared. Prior classifier denial remains stopped without retry. Pass 2026-10-24T17:45:20Z.
