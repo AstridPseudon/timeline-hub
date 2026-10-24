@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T10:17:09Z | dispatcher heartbeat 14s | live 4 (sol 0, luna 4, other 0) | busy30 18 | status age 0m -->
-# agent board, 2026-10-24T10:16:41Z
+<!-- agent | 2026-10-24T10:19:54Z | dispatcher heartbeat 11s | live 5 (sol 0, luna 5, other 0) | busy30 19 | status age 2m -->
+# agent board, 2026-10-24T10:17:43Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -151,14 +151,14 @@
 
 | F local checkpoint | Qualify D49 fallback on existing service | Service | H36 owner instruction | doing | agent-full-1024095047-9758 | One full queued on working venv-agent registration; running. Exact ba55 snapshot, current Runtime and existing renderer profile. | Home ba55 |
 
-| R2 historical source | Restore authenticated prior item mapping during undo | Sol / Luna | Independent source and security PASS | merging | Sol0959; independent1011 PASS | Exact1c917:67 focused plus244 neighbors pass. Strict Ruff2143/mypy1902 pass; source/owner/history/redo guards retained. Normal merge queued. | 1c9171b855 |
+| R2 historical source | Restore authenticated prior item mapping during undo | Sol / Luna | Actual integrated qualification | doing | Sol0959; review1011; home1017 | Independent67 plus244 pass, strict static gates pass. Normal merge d83 completed; integrated67 now assigned. | Home d83e8de3a1 |
 
 | OPS five-wheel receipt | Verify genuine received bootstrap and test inputs | Luna / Luna | Actual received input independently passed | merged | Author1004; independent1011 PASS | Archive443977 and all10 members, five wheelhashes, roles, lock and committed artifact match. No ORCH sidecar; no install or child claim. | Input only |
 
 | OPS shared schema source | Preserve declared schema authority | Runtime / orchestrator | Owner source-access disposition | blocked:orchestrator | Runtime acquisition0955 stopped | Exact declared source HTTP403; automatic access request refused. No alternate route. Installed provenance0918/0922 stays scoped. | Source242f unknown |
 
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
-Integration: 3c3ee9e8c4 adds only reviewed two-file opt-in capture helper30cf to qualified R1 homef91. Actual R1 integrated0959 passed all18 new,167 total with four exact old failures; strict static gates pass. Capture integrated19 is assigned1004.
+Integration: d83e8de3a1 normally merges reviewed R2 historical-source fix1c917 above3c3 opt-in capturehelper and qualified R1homef91. Actual R2 integrated67 worker1017 is assigned; source/security independent1011 passed67 plus244. No original-node credit.
 Count: Official263 closed /4 open of267 restored after independent current-repair0904 and causal0914 PASS. Exactly123 mappings remain; census e13d65ba unchanged. Farm giant was an already repaired original, so no duplicate closure or new census artifact.
 Open originals: discovery support; generic harvest/reopen; D23 helper word-second; D23 moved-head restart. All original records and historical challenges retained.
 Farm: Checkpoint 26511 remains 17,335 passed, 288 failed, 187 setup errors and 4 skips on Agent 9cd / Runtime 45c3. Independently reviewed 96-node packet: 80 environment, 1 docs regression and 15 unknown. Setup packet: 140 environment and 47 tuple mismatches. No new Farm pass credit.
@@ -172,5 +172,5 @@ D49 venue: Existing Agent own-service full9758 on working venv-agent is running.
 Safety: Prior Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
 Disk: About9GB free after sweep-tmp3 recovered4GB, eleven finished clean trees recycled, and compact-scratch compressed5 old logs. Full9758 space fluctuates; no new heavy run below8GB. Prior denied targets remain stopped.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred. D46 U2c closed and folded into the freeze; relay and remote providers stay deferred and fail-closed. D47 memo held.
-Next ready: R2 independent1011 PASS, normal home merge queued; integrated qualification follows receipt. ABA attachment independent1014 active. Five-wheel receipt independentlyPASS and returned. Full9758 about63percent; no new full, original ABA or child released.
+Next ready: R2 merged d83; integrated1017 is assigned. ABA attachment source review1014 active. Five-wheel actual receipt independentlyPASS returned. App owns exact333b gate custody; full9758 continues on originalba55. No new heavy run or original released.
 Evidence: [D39 review](../../design/agt-D39-header-review-0809.md), [ABA review](../../design/agt-F-ABA-cumulative-review-0809.md), [wheel input](../../design/agt-OPS-real-wheel-qualify-0810.md), [Farm checkpoint](../../design/farm-agent-full-checkpoint-20261024T0555Z.md).
