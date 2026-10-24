@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T11:27:22Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 12 | status age 2m -->
-# app board, 2026-10-24T11:20Z
+<!-- app | 2026-10-24T11:30:25Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 2m -->
+# app board, 2026-10-24T11:28Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -62,7 +62,7 @@
 | P2-only-install | Install reviewed P2 row | Luna | Review1103 PASS | merged | app-P2-only-install-1115 | Atomic write and readback PASS. P2 row11b2eebf; P3 and247 outsiders unchanged. | Config only |
 | P3-fault-order | Preserve strict recovery ordering | Proof Luna; independent Luna | Exact guard proposal1107 | blocked:app2 | Return1107; independent1115 | 32ba review FAIL preserved. Returnbd08 counts observed retries; exact protected assertion proposal awaits review and decision. No repeat released. | bd08e4c310 held |
 
-| A4-D52 | Delete two proven dormant subsets | Luna; independent Luna | Owner D52 supersedes D37 | review | Author1118; independent1121 | Four dormant files deleted; no production callers;49 tests and three types PASS. Independent review then ledger. Held during P2. | f00ee693aa |
+| A4-D52 | Delete two proven dormant subsets | Luna; independent Luna | Independent1121 PASS | gated:P2-terminal | Author1118; review1121 | Exact four deletions;85 neighbor tests and three types PASS. Worker-authored App ledger rows copied. Hold home merge until P2 terminal. | f00ee693aa |
 | P2-D52-live-check | Classify five unreached gestures | Luna | Owner11:15 request | merged | app-P2-D52-live-gesture-check-1118 | All five source-live; no dead or deferred cut. All eight originals retained. No browser credit. | Exact d6ed |
 | F-App-early | Run D49 branch full checkpoint | App service; Luna producer | Independent1058 PASS | doing | Actual19570; continuation1119 | ONE no-cache full submitted11:09 on exacte8a/treec94. Wait SAME ID including124. No final tuple or home GO. | e8a593e1d3 |
 
@@ -88,6 +88,8 @@ Evidence: [joined 690](../../design/app-A2-A3-corrected-integrated-0629.md), [re
 
 Current evidence: [pure join1036](../../design/app-P2-final-pure-integrated-1036.md), [actual cause](../../design/app-A2-P3-lost-ack-cause-sol-1040.md), [independent cause/custody](../../design/app-P3-current-cause-custody-review-1046.md), [safe origins](../../design/app-P3-3896-qualified-safe-origins.md), [early review1058](../../design/app-U3b-D39-final-cumulative-review-1058.md). Independent1046 retains40PASS/1 unchanged historical P1 source-hash control failure; required current19 controls pass.
 
-Inbox: Consumed1470414 bytes through Proof1111 safe-file qualification. D51/D52 applied. Blocked owners checked against normal hub boards11:14. Independent1103, installer1115 and live-check1118 PASS; ONEP2actual26414 submitted. D52 deletion1118 active, branch only. No original repeated, product/test/pin edited by manager, or home freeze merge. Explicit stop line8GB applies to new heavy work.
+Inbox: Consumed1470414 bytes through Proof1111 safe-file qualification. D51/D52 applied. Blocked owners checked against normal hub boards11:14. Independent1103, installer1115 and live-check1118 PASS; ONEP2actual26414 submitted. D52 deletion1118 independently1121 PASS; exact worker ledger rows published. Home merge held during active P2. No original repeated, product/test/pin edited by manager, or home freeze merge. Explicit stop line8GB applies to new heavy work.
+
+Sweep3 completed11:23: removed zero directories; about11GB free. Prior compact/cleanup refusals remain stopped.
 
 Current P2 ID: app-P2-final-pure-integrated-1036-full-e2e-three-products-1024111909-26414. Sole producer app-P2-terminal-producer-1119; no duplicate P3. D51 freezes current upstream snapshot until delivery refresh.

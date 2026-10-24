@@ -1,0 +1,7 @@
+Ask: retain actual preflight-only26414 and earlyfull19570 failures; consume immediate source owners / Owner: App Sol1130 and wholepath1130; fullproducer1119 / By: 2026-10-24T11:45Z
+
+P226414 terminalFAIL exit2 in2seconds at Agent-source-or-tree. All8originals and globalsetup/build/native/history/readinessNOTRUN. Same-IDAppsource/snapshot d6ed/tree542b/parents match. Producer1119 confirms correctAgent333bcommit but actualtree1094bf versus stale caller2deab1. Sole HARD Sol app-P2-Agent-tree-return-sol-1130 fixes actual decoded two-artifact binding through existingtool; independent wholepath1130 compares full source/client/backend/childmarkers with passingP3. No sourceguardwaiver, newpin/bench/child or resubmit. Fullreport design/app-P2-terminal-producer-1119.md. Existing conditional release remains source-check dependent; corrected meaningful request only after independentreview and installation.
+
+Earlyfreeze full19570 terminalFAIL exit1/1124seconds:19342PASS/3FAIL,9failedfiles/1360passed. Sole producercontinuation1119 prepares exact same-ID collection/assertion inventory now; independent classification and PR-sized authors follow immediately. No finaltupleGO or full rerun. D51 current snapshot retained.
+
+D52 f00ee independently1121PASS85neighbors/three types,worker ledger published; actualP2terminal clears mergehold. Normal request-merge submitted now. No homeU3bmerge. P3 protectedguard proposal remains uniquelyProof-owned with decision/review; no neworiginalP3.
