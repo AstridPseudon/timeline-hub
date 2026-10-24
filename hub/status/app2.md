@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T12:30:25Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
-# app2 board, 2026-10-24T12:29Z
+<!-- app2 | 2026-10-24T12:32:31Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
+# app2 board, 2026-10-24T12:32Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -63,6 +63,8 @@
 
 D56.4: Proof is folded into App. The single complete handoff is [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md). All in-flight items are complete, including independent caller1213 PASS. No new Proof dispatch, old tuple run or product merge is owed. The manager loop remains alive for new orchestrator instructions.
 
+live 0 / cap 4; ready-undispatched 0. D56.4 stand-down remains in force; App owns transferred rows.
+
 core open: 4 final proof gates P1 to P4, transferred to App. Historical passes do not qualify final heads.
 regressions: UNKNOWN; App owns final gesture classification and upstream comparisons under D54a/D55a. No zero-regression claim.
 
@@ -99,10 +101,10 @@ Later: D34 legacy accounting remains UNKNOWN; no duplicate audit owed. D47 memo/
 
 Safety: Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked-v1/compact refusals remain stopped; no alternate cleanup or publication route. Managers make no product/test/generated/pin or Git mutation. Worker reports are copied byte-exact under D30. No weakened tests, upstream push or raw credential export.
 
-Disk: 8301871104 bytes free at 2026-10-24T12:29Z. All1313 Proof workers are done. No finished non-KEEP worktree remains; three KEEP trees remain untouched. Prior compact and cleanup refusals remain stopped. No new heavy run or worker was launched.
+Disk: 8299958272 bytes free at 2026-10-24T12:32Z. All 1313 Proof workers are done; zero running markers. No finished non-KEEP worktree remains; three KEEP trees remain untouched. Prior cleanup and compact refusals remain stopped. No worker or heavy run launched.
 
-Pass 2026-10-24T12:29Z: Read PLAN and MANAGER-COMMON, newest inbox and direct D54 to D56 header. All local workers finished. Rechecked App and Runtime boards in /home/user/timeline-hub/hub/status: Runtime applies D56; App publication still contains superseded old tuple holds. Existing single handoff already states final tuple only and completed caller1213 PASS. No second handoff or new dispatch. App owns remaining repairs, final source adoption and independent verdicts. No final GO claimed.
+Pass 2026-10-24T12:32Z: Read PLAN first, current MANAGER-COMMON including D57, new inbox bytes and direct D54 to D56 header. All 1313 workers are done. Rechecked App and Runtime owner boards; App publication is still 12:14 with superseded old tuple holds, Runtime 12:21 applies D56. Existing single handoff includes completed caller1213 PASS and final tuple only. No second handoff, dispatch or source merge. D57 capacity does not reopen the explicit D56.4 Proof stand-down.
 
-Inbox read through 790277 bytes; latest section is App1213 safe H36 and owned next. No new request after the completed handoff. Loop remains active; lane production work is stood down under D56.4.
+Inbox read through 790277 bytes; no new item since the completed handoff. Manager loop stays alive for orchestrator instructions; lane production is stood down under D56.4.
 
 Evidence: [D53 actual integrated1148](../../design/handoff-ap2-P3-D53-integrated-1148.md), [finite wording1154](../../design/handoff-ap2-P3-D53-ledger-wording-1154.md), [App current source1143](../../design/app-P3-D53-pure-integrated-1143.md), [conditional release1200](../../design/peer-app2-to-app-runtime-20261024T1200Z-D53-ledger-met-conditional-P3.md), [P2 actual26414 verdict1136](../../design/handoff-ap2-P2-26414-preflight-verdict-1136.md), [P3 actual3896 verdict1053](../../design/handoff-ap2-P3-solo-result-verdict-1053.md), [previous pair0709](../../design/handoff-ap2-P2-P3-verified-result-verdict-0709.md), [current source0649](../../design/handoff-ap2-P2-P3-current-source-verdict-0649.md).
