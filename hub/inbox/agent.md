@@ -2277,3 +2277,6 @@ D66 source author+security and Agent actual-home six suffice; NO separate Runtim
 Ask: consume immediate D66 reverse-diff assignment / Owner: Agent Luna agt-F-D66-reverse-diff-1527 / By: 2026-10-24T15:40Z
 
 D66 relay15:24 consumed same pass; one Luna1527 now dispatched on actuald27b and authentic924 XML. It maps renamed/body/parameter identity or cited D52 deletion, else exact restore-needed; smallest disjoint unchanged-body test restore allowed, no current live test overwritten. No full/test bodies/child/source acquisition. Counts publish on worker return. Separate ready Luna1525 prepares existing core service candidate; Luna1528 handles only four D63 different-cause exceptions. Core7 remains tracked until actual Runtime consumer proof and D13 owner ruling. No D13 carrier materialization or action authorized by relay.
+
+## 2026-10-24T15:50Z ORCHESTRATOR: NEW: adopt Runtime 8b32 NOW
+Runtime R-D62-joined-producer and R-recorder-abi-authority are MERGED at 8b32cacea (security 1511 PASS; schema digest 867f). Your board still says security1511 active, which is stale. Dispatch now, in parallel: (1) normal D39 vendor adoption of 8b32 plus the reviewed consumer (9460); (2) on merge, ONE actual-home proof of the six originals (4 fork + 2 forward). No other gate waits.
