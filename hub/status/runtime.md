@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T22:34:48Z | dispatcher heartbeat 2s | live 2 (sol 1, luna 1, other 0) | busy30 8 | status age 1m -->
-# runtime board, 2026-10-24T22:33:42Z
+<!-- main | 2026-10-24T22:37:56Z | dispatcher heartbeat 10s | live 1 (sol 1, luna 0, other 0) | busy30 8 | status age 2m -->
+# runtime board, 2026-10-24T22:35:20Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -209,7 +209,7 @@ Lock finding: Nine genuine same-head mutations plus an unchanged control pass. H
 Actual False diagnostic: One unchanged candidate197d/bc04 case failed45.008seconds. Both30/44second samples show Recorder/schema computation, with12.149CPU seconds over14.002wall seconds. No main-thread wait sampled; intervening waits and HTTP contention remain unknown. Raw stacks0600 private. No further diagnostic body needed.
 
 Blockers: Agent home proof — Agent039ff adopted732. Owner29429 reports four R2PASS and ten-note45.314FAIL. Agent owns exact batch/candidate merge and home applicability; Sol2227 owns the remaining measured cost source.
-Blockers: App P2 — Appbceb adopts732; actual7131 remains NO-GO5s per owner22:31. Sole safe-facts2227 returns existing evidence. No main spare venue needed now; all8P2 stay open. Sol2231 compares element shape without a browser repeat.
+Blockers: App P2 — Appbceb adopts732; actual7131 remains NO-GO5s per owner22:31. Sole safe-facts2227 returns existing evidence. App2225 explicitly re-accepts mainfour, Luna2232 owns them. All8P2 stay open. Sol2231 reports retainedD78 is one command/one step/11reads; localshape0.33s is not originalrealmproof.
 Blockers: Final cut — all lanes core0/regressions0, final P1–P5 plus core on one pinned tuple, D69 and genuine installed render required. No build or ZIP before cut.
 Next ready: Agent and App adopt released732 and run their existing meaningful original plans. Runtime private final-core inventory2207 is complete. D59 still holds installation, final suites and build.
 
@@ -233,3 +233,5 @@ Pass 2026-10-24T22:27:24Z: owner22:27 distinct ten-note critical source dispatch
 Pass 2026-10-24T22:30:29Z: original sample2227 completed and durably retained, then checkpoint-stopped only to deliver owner22:31 expanded shape scope. New Sol2231 resumes samebranch without repeatingoriginal. MainCPU43.858/wall46.220 is sample fact, no lock/causal verdict inferred. App7131 NO-GO and explicit spare-venue selfclear consumed. Inbox through586973bytes.
 
 Pass 2026-10-24T22:33:42Z: delayed App2221 ACCEPT supersedes earlier spare-venue selfclear. Latest Appboard releases mainfour now; dispatchedLuna2232 on exactbceb with exclusivecaseallocation and unchangedprotectedbodies. Finaltour staysApp. Matrix2228 PASS published, remaining finaltuple/P4registration/render inputs explicit. Inbox through589672bytes.
+
+Intake 2026-10-24T22:35:20Z: App2225 explicitfirstsignal release consumed; firstmainparent recipe preparing withgenuinefixedtuple receipts. Sol2231 sourcefact contradicts sharedmulticommand premise: retainedD78onepatch11reads accepts~0.33s locally, historicalrealmunavailable. Peerfacts sent, nooriginalclosure. Inbox through591594bytes.

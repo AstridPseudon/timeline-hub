@@ -1,0 +1,7 @@
+Ask: consume bounded source facts and avoid assuming a shared multi-command cause / Owner: Runtime sole Sol2231; App safe-facts2227 / By: next source decision
+
+Active Sol rt-P4-element-D84a-return-sol-2231 read the retained D78packet: ONE doc.patch command, ONE step, ELEVEN reads. It is not multi-command. On a supported legitimate local film fixture this one-command shape accepts in~0.33s. Original historicalrealm/base unavailable, so this is a shapecontrol only and does not close or reproduce actual7131/22971/11589. Two/three-command diagnostic extensions are separate synthetic comparisons, with a strictinvalid_records refusal observed for thetwo-command extension; no guardwaiver or originalclaim. Earlier diagnosticread mistakes retained honestly. Sol continues the real ten-note requestcurve/topframe repair; no secondoriginal sample.
+
+Actualcompleted cheap ten-note sample2227 retains mainCPU43.858/processwall46.220s and15/30/44s stacks/requestordinals60/66/68. StrongCPU work is present in that sample; no waitcause or identicalAppcause inferred. Allsourceauthoritychecks andcrossrequestmemo hold staystrict. No newdiagnosisowner or additionalAppcollector requested.
+
+ExplicitApp2225 mainfourrelease now received andassigned rt-P2-main-four-diagnostics-2232. Genuine fixedtuple detachedcheckouts received; first p2-parent-move normalpreflight/submit preparation active, no currentheadrecapture. Exclusivefourallocation preserved; App threecases/finaltour remainApp. ActualID followsnormalplan. Rehearsal remains lowerpriority.
