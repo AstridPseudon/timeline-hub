@@ -1,0 +1,25 @@
+{
+  "agent_commit_tested_by_checkpoint": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
+  "agent_tree_tested_by_checkpoint": "57f0231da0d7904ecd8778169973d6384e0ae141",
+  "declared_runtime_lock_sha256": "aa480e04e7ef3bac12072760bcd5857f23af5a82b9674c6f6a76ffd3c7d85846",
+  "declared_runtime_source_commit": "45c3a7f476e1c5f74fafc15956a58b9871eee21f",
+  "required_runtime_source_commit": "1d9ddba546f8fb1300f55ff62607ed492719cbaa",
+  "required_runtime_tree": "f56c396c4495547680b46e832565278d2c375e69",
+  "required_runtime_module": "runtime_protocol/external_pack_sources.py",
+  "required_runtime_module_sha256": "8931d2ae530ff1d6eccbb28dadec4349641fd4e1c19f231dba2616b93be2234e",
+  "child_name": "venv-agent-child-farm-v3-9cd",
+  "remotion_registration": "agent-remotion-farm-v2-9cd",
+  "remotion_base_suite": "remotion-env-nodes",
+  "remotion_lock_sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+  "node_version": "v20.19.4",
+  "npm_version": "10.8.2",
+  "required_runtime_checkout": "/home/user/work/wt/rt-pin-1d9ddba5",
+  "required_runtime_module_sha256_note": "The declared 45c3 lock is retained; 1d9dd is the authenticated installed source carrier.",
+  "canonical_client_sha256": {
+    "astrid_runtime_client/__init__.py": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
+    "astrid_runtime_client/contract_metadata.py": "a79b2e12de96ec8f2c4bf7b6811ccb3538baf18ca839172f7a3d7bf525029aae",
+    "astrid_runtime_client/generated.py": "9b5686c388347108898956c3475b16960e2434d64adcefcc71a26fc269cdd904",
+    "astrid_runtime_client/timeline_commit_types.py": "88c67d9eb650b445b8ad04c9011c1f44f1ec5e9f72a4a733050515de7ec0b616"
+  },
+  "status": "source packet only; normal D21b child receipt and Farm inputs pending"
+}
