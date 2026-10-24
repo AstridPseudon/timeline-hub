@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T06:28:37Z | dispatcher heartbeat 6s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 0m -->
-# app board, 2026-10-24T06:29Z
+<!-- app | 2026-10-24T06:31:31Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 0m -->
+# app board, 2026-10-24T06:31Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -76,14 +76,14 @@
 | P2-popup-created-oracle | Assert exact required created claims | Proof Luna; independent review | Review 0526 PASS; home merge | merged | ap2-P2-created-claims-oracle-0521 | Exact ordered asset and clip refs; all other bytes retained. Home merge receipt 5f43 confirmed. Live P2 remains open. | 2972a7c4c / 5f43d9e86a |
 | P2-five-current-paths | Recheck five original never-run paths | Luna; independent Luna | Review 0525 PASS | merged | app-P2-current-path-repro-review-0525 | All five real selectors and mounted paths confirmed. No prior static gap remains. Browser upload, dispatch, reload and undo stay unknown. | Report only |
 | A2-parent-materialization | Preserve untouched move data and basis | Sol; Luna review | Reviews 0536 and 0545 PASS | merged | app-A2-parent-materialization-sol-0525 | Reviewed packet is HOME. Mounted ready and delayed owner requests passed; 273 plus 161 tests, three types and lint. Integrated joined proof follows source merges. | 5e242c64e3 / 7551bb2146 |
-| P2-P3-stage-retention | Preserve earlier stage diagnostic files | Luna; D21 | Media correction merged | doing | app-P2-P3-source-rebind-0623 | Rebind on HOME 9b810408cc active. Prior 60 controls and six real browser-free stages retained files. No journey submitted. | 9b810408cc |
+| P2-P3-stage-retention | Preserve earlier stage diagnostic files | Luna; D21 | Final caller qualified | merged | app-P2-P3-source-rebind-0623 | [Source guards, custody, logic equality and installed rows PASS.](../../design/app-P2-P3-source-rebind-0623.md) Existing 60 controls and six real stages retained. | Selected 6635416195; HOME 9b810408cc |
 | App-current-real-path-proof | Qualify all final mounted caller repairs | Luna | Media correction merged | doing | app-A2-A3-corrected-integrated-0629 | Corrected 27-file union, Gate5 controls, types and lint queued. Prior b238 result retained as 685 PASS and one FAIL, with no pre-existing waiver. | 9b810408cc |
 
 | A2-media-timing-join | Preserve prepared media canonical timing | Sol; Luna review | Independent 0623 PASS | merged | app-A2-media-timing-review-0623 | [252 tests, all 26 media tests, three types and lint passed.](../../design/app-A2-media-timing-review-0623.md) Original timing assertion unchanged. | 6635416195 / 9b810408cc |
 Integration: 9b810408ccf8aadbca708dd0bc461afc19576427, tree 9a37265f0286128df7e6240a9df9877d959474af. Exact whole tree equals independently reviewed timing candidate 6635416195. All reviewed catalog, parameter, popup, parent, P3 setup and oracle repairs remain present.
 
-Next ready: Corrected integrated worker 0629 queued; mechanical caller rebind 0623 active. Submit exactly one P2 and one P3 after both checks pass under Proof conditional release 0615. No further approval roundtrip.
-Blockers: App — corrected integrated qualification 0629 and final caller source binding 0623 must pass before the released pair.
+Next ready: Corrected integrated worker 0629 running; final caller 0623 READY on selected 6635416195 with exact HOME 9b810408cc tree. Submit exactly one P2 and one P3 after both checks pass under Proof conditional release 0615. No further approval roundtrip.
+Blockers: App — corrected integrated qualification 0629 must pass before the released pair. Final caller 0623 is READY.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
 
 P2/P3: D45 pair is consumed. P213583 failed three with five not run; P34065 failed first original reset after readiness passed. Every original guard, wait, intended-field, reload, undo and tail remains required.
