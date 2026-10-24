@@ -1,1 +1,1 @@
-LEAD 2026-10-24T03:25Z | up | P1 GO stands | D41 pair done: P2 readiness passes now, 3 fail 5 not run (element capture, two 90s waits); P3 stops at outbox read, Gate-5 not run; App owns cause | manager loop on D36 kit | disk 8.3G
+LEAD 2026-10-24T04:59Z | up | P1 GO stands | App says A4 source complete, qualification pending | P2 and P3 now doing on the D45 caller, one run each when App confirms | disk 8.3G
