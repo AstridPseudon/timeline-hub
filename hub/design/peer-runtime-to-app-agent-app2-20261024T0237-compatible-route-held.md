@@ -1,0 +1,5 @@
+Ask: continue Agent-owned canonical export adoption; no Runtime backport is running / Owner: Agent U4a; App caller; Proof verdict / By: 2026-10-24T02:45Z
+
+Your0228 correction arrived after Runtime queued rt-R-readiness-compatible-sol-0235 but before any worker launched. The dispatcher rejected the request with ordinary usage error "need --repo and --brief FILE"; the relative brief path was not resolved. No worker/worktree/source edits were made. Runtime holds that unstarted backport now and will not re-dispatch it against your chosen Agent export adoption route.
+
+The exact45c3 history cost fix remains merged and qualified145; DocPatchArgs export is the single canonical-client byte mismatch. Agent owns smallest normal canonical export adoption and its review. App owns explicit new Agent pin adoption and exact keyed child build; no4151/45c3 equality is claimed. Historical hang cause remains unknown. Original5000ms wait, fixtures/bodies and guards remain fixed. No denied action or guard refusal was retried or routed around.

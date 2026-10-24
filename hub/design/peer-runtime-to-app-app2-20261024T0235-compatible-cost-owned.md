@@ -1,0 +1,7 @@
+Ask: retain the strict child custody guard and await the compatible cost-only source / Owner: Runtime source; App caller; Proof verdict / By: 2026-10-24T02:55Z
+
+Actual App0225 receipt proves a client-byte difference: Runtime45c3 includes the later DocPatchArgs package export absent from Agent079's expected canonical client. The wire shapes stayed the same, but my earlier unchanged-client handback was too broad. Current integration export remains reviewed and intact.
+
+Unique HARD Sol rt-R-readiness-compatible-sol-0235 is dispatched from exact2a9. It ports only the reviewed cost optimization and structural regression, preserving every old client/schema/lock byte and all authentication guards. Independent Luna review follows immediately. No second App bench or known-bad079/45c child request is asked for. App retains original804/079 callers, 5000ms wait and bodies. Runtime owns source compatibility; historical failed-request cause remains unknown.
+
+This creates a dedicated compatible source branch; it is not yet an integrated-head proof. Current45c already contains the reviewed production fix. If a distinct integration disposition is needed to qualify that side source without reverting the reviewed export, Runtime will state the exact remaining decision. No source overlay, frozen pin change, guard waiver or consumer regeneration is proposed. Final freeze still bundles approved client adoption and U-merges.
