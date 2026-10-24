@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T02:11:46Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# viewing board, 2026-10-24T02:11:24Z
+<!-- viewing | 2026-10-24T02:13:09Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# viewing board, 2026-10-24T02:12:51Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -29,7 +29,7 @@
 | DB-composition-dry | Fresh clone delivery dry run | Luna high | Orchestrator request | merged | First return 0757 and review 0802 | All 120 source files, controlled archive payload, registry, types and callers independently passed. | source 635f4de06 |
 | DB-composition-template | Repair missing delivery template | Luna high | Required README template | merged | Template 0749 and review 0751 | Template-only repair and delivery retry passed. No ZIP credit. | source 635f4de06 |
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
-| F-authoring-ABA | Repair repeated authenticated track captures | Sol author and Luna review | Agent oracle return and live proof | blocked:agent | agt-F-ABA-oracle-return-0204 | Integrated 87 controls passed. Original failed on stale hold expectation; independent cause review passed. Downstream behavior remains open. | source 61d53; fixture c3af |
+| F-authoring-ABA | Repair repeated authenticated track captures | Sol author and Luna review | Agent canonical selector and live proof | blocked:agent | agt-F-ABA-oracle-sol-0208 | Integrated 87 controls passed. Two fixture selectors failed before behavior; Agent Sol traces canonical mapping. Original downstream behavior remains open. | source 61d53; fixture c3af |
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six original cases passed in 41.48 seconds on child c886 and Runtime 8ea. Source classification independently passed. | no product change |
 
 
@@ -47,13 +47,13 @@ F-D32-render-wire classification and owner qualification are complete. [Author 0
 
 Historical recycle permission refusals remain parked under viewing-20261023T002713Z-recycle-b70-permission-refusal.md. No retry or alternate deletion.
 
-Blockers: F-authoring-ABA waits for Agent oracle return 0204 and reviewed original live proof.
-Next ready: none. Agent worker agt-F-ABA-oracle-return-0204 owns the corrected raw-before selector.
+Blockers: F-authoring-ABA waits for Agent Sol canonical selector 0208 and reviewed original live proof.
+Next ready: none. Agent worker agt-F-ABA-oracle-sol-0208 owns the canonical raw-before selector.
 
 
 
 
 
-Current ABA evidence: Agent integrated proof 0150 on bc38 passed 87 controls and failed the original at the hold before-value assertion. Independent boundary review 0154 confirms trusted setup seeded 0.9, the authenticated base and request used 0.9, and stale expectation 1.8 caused the failure. Runtime accepted publication before that assertion; later reload, undo, retry and ABA did not run. Agent oracle author 0200 then selected a missing checkout key and stopped with KeyError. Agent first-return worker agt-F-ABA-oracle-return-0204 owns the nested revision selector and all 52 retained predicates. No new live pass or provider defect is claimed. [Original integrated report](/home/user/timeline-hub/hub/design/agent-F-ABA-integrated-0150.md), [independent attribution](/home/user/timeline-hub/hub/design/agent-F-ABA-boundary-review-0154.md), [oracle first result](/home/user/timeline-hub/hub/design/agent-F-ABA-oracle-0200.md).
+Current ABA evidence: Agent integrated proof 0150 on bc38 passed 87 controls and failed the original at the hold before-value assertion. Independent boundary review 0154 found that trusted setup, authenticated base and request used 0.9 while the stale expectation used 1.8. Later reload, undo, retry and ABA did not run. Oracle 0200 then stopped on a missing checkout key; first return 0204 also stopped before behavior because the public checkout lacks the proposed nested revision field. Agent board 02:08:00 assigns Sol agt-F-ABA-oracle-sol-0208 to trace the authenticated canonical mapping and retain all 52 predicates. No new live pass or provider defect is claimed. [Original integrated report](/home/user/timeline-hub/hub/design/agent-F-ABA-integrated-0150.md), [independent attribution](/home/user/timeline-hub/hub/design/agent-F-ABA-boundary-review-0154.md), [first oracle](/home/user/timeline-hub/hub/design/agent-F-ABA-oracle-0200.md), [first return](/home/user/timeline-hub/hub/design/agent-F-ABA-oracle-return-0204.md).
 
-Current pass 2026-10-24T02:11:24Z: INBOX and header have no new Viewing assignment. All 1,288 Viewing workers are terminal. Agent board 02:03:50 still assigns ABA oracle first return 0204 on current 415181d983; its reviewed fixture and original live proof remain pending. The donor merge receipt is SUPERSEDED by reviewed current port 61d53/home13d42. No duplicate worker or live run is needed. Six original render-wire cases remain passed on service 27934. Free disk is 15,364,354,048 bytes, above the cleanup target; historical recycling refusals remain parked. Dispatcher and hub sync are fresh. Only this manager board changed. Next pass checks new inbox items, the header and Agent's oracle review and live proof.
+Current pass 2026-10-24T02:12:51Z: Rechecked the new Agent board and published first-return report. Agent already escalated its two failed selector attempts to Sol 0208; no Viewing assignment, duplicate author or live run is needed. All 1,288 Viewing workers are terminal. Source request is closed as superseded by reviewed 61d53/home13d42. Six original render-wire cases remain passed on service 27934. Free disk is above 15 GB; historical recycling refusals remain parked. Dispatcher and sync are fresh. Only this manager board changed.
