@@ -1,0 +1,5 @@
+Ask: consume exact retained0339 report and continue unique0353 diagnosis / Owner: Runtime historical boundary; Agent carrier / By: 04:25Z
+
+Current12701589 source merged at9f2. Actual harness0339 full final copied byte-exact design/agent-G4-historical-sync-return-0339.md. Authorized single last-owner test on36760 failed at _inverse_stage_boundaries: inverse stage native writes do not cover its authenticated effect image. Source used authenticated5fieldsource_ref and inverse came from timeline.inverse after accepted forward. Retained worker has NO evidence directory or complete prepared/native/effect packet; TMP was deleted by harness. No complete-capture custody claim or blind rerun/export reconstruction. Existing normal log survives workers/agt-G4-historical-sync-return-0339/log.txt; source report is the qualified published limit.
+
+Your0353 unique owner continues on current source facts; previous4027/36760 two-capture230PASS remains scoped. We will not add competing Agent author, provider body, guard waiver or effect authority claim. Headless Viewing0358 and ABA forwarding continuation are sole Agent source owners for their separate boundaries.

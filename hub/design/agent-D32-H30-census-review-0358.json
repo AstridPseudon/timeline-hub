@@ -1,0 +1,34 @@
+{
+  "schema": "timeline.agent-f-census-review-h30.v1",
+  "reviewed_artifact": "agent-D32-current-node-reconciliation-H30.json",
+  "reviewed_0118": "agent-D32-current-node-reconciliation-reviewed-0118.json",
+  "current_integrated_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+  "current_integrated_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+  "proposal": {"total": 267, "closed": 136, "open": 131},
+  "corrected": {"closed": 142, "open": 125, "held_or_unknown": 125, "newly_closed_since_0118": 6, "authorized_full_267_pass": false, "farm_checkpoint": "pending"},
+  "census_invariants": {"unique_ids": 267, "unique_phase_rows": 267, "tags_ours": 267, "phases": {"call": 262, "setup": 5}, "original_body_mapping_mismatches": 0, "proven_nodes_without_proof_ref": 0, "active_nodes_without_owner": 0, "reviewed_0118_node_set_changed": false},
+  "render_wire": {
+    "disposition": "scoped_integrated_credit",
+    "count": 6,
+    "service": "agt-F-render-wire-return-0129-render-wire-0124-1024013338-27934",
+    "result": "6 exact original selectors passed in 41.48s",
+    "source_proof_head": "3ccf94de5ad6849ee601370735590d519d60c043",
+    "source_proof_tree": "abc038fadf8f6ee1b995ff1325c19fb1ab940adc",
+    "exact_node_ids": ["tests/core/rendering/test_conformance.py::test_attachment_wire_parity", "tests/core/rendering/test_conformance.py::test_intentional_failure_wire_parity", "tests/core/rendering/test_conformance.py::test_minimal_render_wire_parity", "tests/core/rendering/test_conformance.py::test_no_audio_wire_parity", "tests/core/rendering/test_conformance.py::test_passthrough_audio_wire_parity", "tests/core/rendering/test_conformance.py::test_request_sensitive_support_wire_parity"],
+    "identity_basis": "The service log records all six exact IDs, six body hashes, 19 relevant source files and qualified import/profile custody. The six test bodies, astrid/sdk/rendering.py, astrid/core/rendering/transport.py and rendering fixtures are unchanged through the 252cf D40 head and the 9f2 historical merge; registry merge 2802 changed validator type resolution, not this render-wire path.",
+    "credit_limit": "bounded six-node credit only; not a full-suite or whole-tree PASS"
+  },
+  "h3_import": {
+    "disposition": "exact_historical_pass_requires_current_requalification",
+    "count": 7,
+    "service": "agt-F-h3-env-0137",
+    "result": "7 exact original selectors passed in 3.60s",
+    "source_proof_tree": "fcd3135b3dc8e93009b86b7e4b75053a4e5b9476",
+    "exact_node_ids": ["tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]", "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]", "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]", "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]", "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]", "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]", "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]"],
+    "reason_not_closed": "D40 commit 4745f956a3 changed astrid/core/execution/executor/runner.py, generic_host.py and generic_host_worker.py after the proof source. The exact node IDs and test body match, but behavior is source-sensitive; no current-head requalification exists. No mismatch was found.",
+    "credit_limit": "zero current original-node credit until a bounded proof runs against the current execution source"
+  },
+  "h30_viewing": {"disposition": "open_assigned_lane_no_pass", "count": 33, "files": {"tests/editing_conformance/test_native_sheet_current.py": 24, "tests/packs/timeline/test_cli_native.py": 7, "tests/sdk/test_scene_dispatch_contract.py": 2}, "owner_lane": "Viewing failover; Agent home merge owner", "exact_membership_verified": true, "proof_credit": 0},
+  "unsupported_credits": ["No source-only, aggregate, mock/candidate, installed-unqualified, stale, failed, or owner-status evidence was credited.", "No H3 node was credited despite the exact seven-node historical PASS because D40 changed the relevant execution source.", "No full-267 PASS or pending Farm result was assumed."],
+  "owner_registry_note": "H30 points to current assigned lane Viewing/H30 failover. Historical worker labels in other owner rows are not product authors and must not be presented as active authors without a current lane assignment."
+}
