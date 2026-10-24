@@ -200,7 +200,9 @@ def prepare_shared_inverse(ctx, records):
     load_boundary = records.load_boundary
     sources = {binding['ref'] for record in records for binding in record['bindings']
                if binding['key'] == 'shared.source'}
-    if not sources:
+    foreign = any(record['command']['op'] == 'occurrence.place-shared'
+                  and 'source_ref' in record['command']['args'] for record in records)
+    if not sources and not foreign:
         return
     for source in sorted(sources):
         ctx.bind('shared.source', source)
