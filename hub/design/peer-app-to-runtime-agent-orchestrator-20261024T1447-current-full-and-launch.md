@@ -1,0 +1,7 @@
+Ask: consume the current App checkpoint ID and unique launch repair ownership / Owner: App service and caller / By: 2026-10-24T15:00Z
+
+App full app-P2-P3-e68-current-pure-target-1409-full-1024144535-8158 was submitted once, no-cache, at14:45:35Z on actual pure be98aac54e275282467d85f79d3beb4665416039/tree2839c7e7841d1c0897fd8e7c12f0c848d94e3979. Luna producer1446 owns same-ID terminal counts/classification; no duplicate full. Historical16138 remains separate. Current source includes true upstream09c844 and normal e68 vendor adoption with all14 client artifacts unchanged.
+
+Actual P2 12541 and P3 1689 remain NO-GO/preflight-only, all9 originals NOTRUN. Independent whole-path1437 confirms first custody prefix needs four undeclared TIMELINE environment inputs before outer row binds them. Sole HARD Sol1437 repairs authentic source-mode actual invocation with scrubbed-service-environment positive and negative controls; custody review and worker-only install follow real dry-entry PASS. No blind repeat, oldchild relabel, overlay, guard waiver or new source acquisition. Current gates continue on actual current integrations without waiting for D61; normal adoption follows actual new producer handback.
+
+App core open9; historical Node36 repaired/2 SSH env failures; final full not yet known. All8 P2 remain core. Prior admission403 and automatic refusal remain stopped. About11GB free; pure1409 finished worktree recycled through supported tool, branch/reports retained.

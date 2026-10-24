@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T14:43:28Z | dispatcher heartbeat 9s | live 1 (sol 1, luna 0, other 0) | busy30 9 | status age 2m -->
-# app board, 2026-10-24T14:41Z
+<!-- app | 2026-10-24T14:47:11Z | dispatcher heartbeat 2s | live 2 (sol 1, luna 1, other 0) | busy30 10 | status age 0m -->
+# app board, 2026-10-24T14:47Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -42,6 +42,7 @@
 | P3-current-verdict | Judge same-ID preflight failure | Luna | Producer 1435 terminal | merged | Verdict 1438 NO-GO | Exact 1689: exit 2 in 1 second; 0 PASS, 0 product FAIL, Gate5 NOTRUN. All original stages unrun; source matches pure target. | Current be98 |
 | F-node-current | Verify prior Node regressions | Luna | Refreshed home tree | merged | Node1345 PASS36; ENV2 | 33 verifier,marker guard and both release nodes pass. Two extension SSH setup failures remain explicit. | d24ed69dcd |
 | F-visual-seam | Qualify shared upstream seam fixture | Luna | Final Runtime fixture identity | merged | Fixture1356 PASS; exact e68 blob | All10 cases pass on App d24. Actual Runtime e68 fixture equals qualified f69 blob; no copies or source edits. | App d24; Runtime e68 |
+| F-current-full | Full checkpoint on refreshed source | Luna; App service | Actual be98 pure source | doing | Producer 1446; actual 8158 | One no-cache full submitted 14:45:35Z; same ID only. No final GO before terminal and classification. | be98aac54e |
 | F-App-full | Corrected App checkpoint terminal | App service; Luna producer | Same actual16138 | merged | Terminal producer1227 | FAIL exit1/1665s. Vitest19251PASS;Node257PASS38FAIL26SKIP. Final full GO remains open. | 5a9ff97cf0 |
 | F-core-map | Map App core suites and old failures | Luna | D54/D54a | merged | Return1233 | Historical19570 groups fixed or D52 removed. Home upstream behavior UNKNOWN; no false pre-existing claim. | cca3deb361 |
 | F-offline | Repair verifier schema references | Luna; security review | Review1238 PASS33 | merged | Author1235; review1238 | 33 unchanged security cases pass. Namespace repair retains strict unknown-resource and reference guards. | 73aa558266 |
@@ -53,7 +54,7 @@
 
 Integration: be98aac54e275282467d85f79d3beb4665416039, tree 2839c7e7841d1c0897fd8e7c12f0c848d94e3979. Normal tool adoption 94d89 is merged; only runtime.lock.json differs from qualified d24ed. All 14 mapped artifacts are unchanged and match actual Runtime e68. U3-final includes exact upstream 09c844 and retains all mapped live tests. Source qualification 1409 passes 67 mounted controls on actual Agent 47b / Runtime e68.
 
-live 4 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T14:39:55Z | dispatcher heartbeat 5s | live 4 (sol 1, luna 3, other 0) | busy30 10 | status age 1m --> The two verdicts and independent whole path have now finished. Sol 1437 remains sole launch author after a failed Luna service invocation. Review starts immediately after actual positive real-entry dry checks; no repeat is queued.
+live 1 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T14:43:28Z | dispatcher heartbeat 9s | live 1 (sol 1, luna 0, other 0) | busy30 9 | status age 2m --> Producer1446 is queued after this snapshot; Sol1437 remains the launch author. All independent ready work is assigned. The sole Sol exception is a failed Luna real-service launch requiring cross-artifact custody repair.
 
 core open:9 final App gate cases unqualified,8 P2 and1 P3. D55b accepts all eight P2 as core. Historical16138 Vitest had0 failures; final core full and final P1–P5 remain required.
 
@@ -61,7 +62,7 @@ regressions:0 open among historical App Node38 after exact refreshed-tree proof1
 
 Blockers: App — both current actual requests stopped at the first environment-input guard. Sol 1437 and independent whole path 1437 own launch repair; all original cases NOTRUN.
 Blockers: Owner admission — historical 403 and automatic access refusal remain stopped. No alternate schema, child, overlay or receipt route.
-Next ready: Both exact current verdicts are NO-GO with all originals NOTRUN; Sol 1437 repairs actual source-mode launch with the completed independent whole-path findings. Actual scrubbed-service dry entry must pass before next custody review and installation. No repeat queued.
+Next ready: Review Sol1437 after actual scrubbed-entry dry checks pass, then worker-only two-row install and meaningful corrected P2/P3. Full8158 is independent and already queued; producer1446 owns its finite terminal packet. No duplicate gate queued.
 
 Historical signals: P2 actual11933 exit1/469s,0PASS3FAIL5NOTRUN; native/history/readiness passed. Actual element request was pending with no observed response or terminal outcome. P3 actual3896 exit1/268s reached predecessor/reset,A acceptance,ACK loss and exact A retry; B/restart/undo tail not reached. P226414 was stale-source preflight-only,all originalsNOTRUN. Earlier source-admission20674/10144 and D45/D41 failures retain their original limits. No signal is relabeled final GO.
 
@@ -69,10 +70,12 @@ Delivery: D52 proven dormant parent,track,transcript and executor scope is remov
 
 Safety: Prior denied cleanup,compact,graph,publication and source-access routes remain stopped. Managers write only boards,briefs and qualified shared reports. Workers own all product,test,generated,pin and Git changes. No upstream push.
 
-Disk: about 12 GB free. Finished clean non-KEEP App scan found zero further candidates. Approved sweep-tmp 3 completed and removed zero directories. Prior refused compact and dirty historical cleanup paths stay stopped. Heavy stop line 8 GB.
+Disk: about 11 GB free. Finished pure1409 worktree recycled; branch and reports retained, normal test service recreates it as needed. Earlier approved sweep removed zero directories. Prior refused compact and dirty historical cleanup paths stay stopped. Heavy stop line 8 GB.
 
 Evidence: [all eight core](../../design/app-P2-core-classification-1222.md), [App11933 verdict](../../design/app-P2-11933-verdict-1222.md), [actual16138 terminal](../../design/app-F-16138-terminal-1227.md), [current source owners](../../design/peer-app-to-runtime-orchestrator-app2-20261024T1240-full-terminal-and-source-owners.md), [existing inputs](../../design/peer-app-to-agent-runtime-orchestrator-20261024T1244-existing-final-service-inputs.md), [current source proof](../../design/app-P2-P3-e68-current-pure-target-1409.md), [caller review finding](../../design/app-F-joined-current-custody-review-1358.md).
 
 Inbox consumed 1534197 bytes through Agent 1419 adoption home receipt. Producer rebind and fixture requests are complete in U4p-D60 and F-visual-seam. Runtime backend/source identity still refreshes independently of unchanged client bytes. Proof open rows were adopted; its only in-flight whole path1215 is complete and reused. No duplicate audit or original requested. Later: final integrated App full and P1–P5, then Runtime final build/ZIP. D61 producer/consumer boundary is Runtime and Agent owned; adopt any actual new producer through normal tools on handback, without holding current cycles for it. D60 owner pushes complete: true U3-final merge and normal e68 App adoption are home. P2/P3 use the refreshed head. D47 memo and D46 remote custody remain deferred. Later: correct the source-only diagnostic pending label before using that mode as an acceptance signal. Full isolated preparation passed; real service entry failed and remains owned by Sol 1437.
 
 Current actual requests: [P2 12541](../../tests/app-P2-P3-e68-current-pure-target-1409-full-e2e-three-products-1024143425-12541/request), [P3 1689](../../tests/app-P2-P3-e68-current-pure-target-1409-ap2-P3-gate5-h6-0348-1024143425-1689/request). [Caller and installation handoff](../../design/peer-app-to-runtime-agent-orchestrator-20261024T1435-current-P2-P3-actual-IDs.md).
+
+Current full request: [App full 8158](../../tests/app-P2-P3-e68-current-pure-target-1409-full-1024144535-8158/request). Base be98/tree2839; exact pure1409 target. This is the one current refreshed checkpoint; historical16138 stays separate.
