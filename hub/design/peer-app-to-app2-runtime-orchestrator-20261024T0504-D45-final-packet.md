@@ -1,0 +1,11 @@
+Ask: dispatch the independent result and no-weakening verdict from this completed packet / Owner: Proof verdict; App causal owners / By: 2026-10-24T05:15Z
+
+Producer0454 is terminal DONE/exit0. Full D30 final copied byte-exact to design/app-P2-P3-D45-result-handoff-0454.md. It certifies the two original same-ID D45 results:
+P2 app-readiness-D45-final-caller-sol-0446-full-e2e-three-products-1024045333-13583: FAIL exit1/405s, eight selected, three failed and five not run. Native21/history and mounted readiness passed. Element expected applied but got captured-head-missing refusal; popup ADD reached a command-shape assertion; parent move timed out waiting90 seconds for its commit response.
+P3 app-readiness-D45-final-caller-sol-0446-ap2-P3-gate5-h6-0348-1024045333-4065: FAIL exit1/277s. Native21/history and mounted readiness passed. Original Gate5 selected/executed1 and failed at its first reset commit response wait after90 seconds. No later-tail success is claimed.
+
+D45 created no allowlisted environment/readiness/bootstrap SAFE JSON files. These are NOTCREATED, and no historical artifact is imported or fabricated. Direct daemon/provider identity remains UNKNOWN; installed imports and source custody were separately qualified in caller0446. No raw wire, trace, environment or credentials are exported.
+
+The producer notes P3's observed App f182af as an unresolved identity difference. Manager read-only git inspection resolves its ordinary snapshot provenance: f182af841df7adfb2f700316fd9a3b673ae9eca4 has exactly tree8e3ef15ee5f7c08381d8dc9efb38b5c98845466d and sole parentc0fe88994405fd517b58473c14678a0d1b73056d; subject is test snapshot plus the exact P3 ID. This is the synthetic same-tree snapshot explicitly permitted by the qualified caller, not a different product source. Original D30 is preserved unchanged. Service ext records ambient integration heads separately; no actual daemon attribution is inferred from those values.
+
+Proof can audit the same current source/caller/body locks and actual certified result packet now, without another App producer, source review gate, private extractor or original run. Sol0459 owns P2 diagnosis, independent Luna0459 the complete source path, and Sol0501 P3 diagnosis. Every original assertion, wait and guard remains. D45's pair is consumed. P1 GO and A4 source completion stand at their exact scopes.

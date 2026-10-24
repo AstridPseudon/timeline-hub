@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T05:02:41Z | dispatcher heartbeat 3s | live 3 (sol 2, luna 1, other 0) | busy30 13 | status age 0m -->
-# app board, 2026-10-24T05:03Z
+<!-- app | 2026-10-24T05:05:25Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 2m -->
+# app board, 2026-10-24T05:04Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -23,7 +23,7 @@
 | P3 | Original Gate-5 journey | App service; Proof verdict | D45 source and caller READY | doing | Test4065; producer0454 | FAIL exit1/277s. Readiness passed in16.7s; original Gate5 ran and failed. Sol0501 owns diagnosis; prior3362 retained. | c0fe889944 |
 | A2-parent-media-closure | Preserve untouched child closure | Sol; Luna review | Resolved | merged | app-A2-parent-media-integrated-0035 | [299 tests, types, lint and external producer passed.](/home/user/timeline-hub/hub/design/app-A2-parent-media-integrated-0035.md) | 1b0428db7d |
 | A2-image-created | Declare genuine image creations | Sol; Luna review | Review 0133 PASS | merged | app-A2-image-created-sol-0126 | Independent 261 tests and producer 28, three types and lint passed. Clip and new authored registry alias claims match provider. Joined proof 0150 passed 448 tests, three types and lint. | b3a84dea71 / 1c5cc47bf6 |
-| A4-image-live | Complete source-bound image witness | Luna | Agent full live result | doing | Producer0419 DONE; Agent0441 live | New input15fa; output56566d,1492 bytes published. One producer passed; Agent owns full witness. No Runtime credit yet. | Fixed1c5cc; old0330 partial |
+| A4-image-live | Complete source-bound image witness | Luna; Viewing Sol | Reviewed inverse repair and new witness | blocked:viewing | Viewing ABA0443; Agent path0454 | Closed0441 accepted and retried; foreign and changed-body refusals passed. Undo preview refused invalid records. No inverse or reopen PASS. | Input15fa; output56566d |
 | A2-video-caller | Normalized video duplication | Sol; Luna review | Resolved | merged | app-A2-video-integrated-2350 | 217 integrated tests and three typechecks passed. Agent provider is merged; no old raw-positive parity claim. | a714a4cc11 |
 | U3b-draft | Final upstream composition | Sol; Luna review | P2/P3 and final freeze | gated:freeze | app-U3b-current-join-2053 | Reviewed branch stays isolated. Refresh live upstream refs at freeze; do not merge during pinned proof. | Branch only |
 | F-App-full | Full suite before retirement | Test service; Luna review | Resolved for historical head | merged | app-F-D19-current-full-1230 | 18,819 tests passed on exact 12ef. A final qualification follows actual retirement and freeze. | 12ef320545 |
@@ -65,7 +65,7 @@
 
 | readiness-D45-caller | Publish current source on existing bench | Sol | D45 and joined523 PASS | merged | app-readiness-D45-final-caller-sol-0446 | READY: 60 execution controls, authentic custody and exact two rows. One pair submitted04:53:33Z. | c0fe /079 /37eb |
 
-| P2-P3-D45-handoff | Publish same-ID terminal evidence | Luna | Actual13583 and4065 terminal artifacts | doing | app-P2-P3-D45-result-handoff-0454 | Finite primary facts and strictly qualified safe files; no duplicate run or causal extractor. | c0fe /079 /37eb |
+| P2-P3-D45-handoff | Publish same-ID terminal evidence | Luna | Actual terminal artifacts | merged | app-P2-P3-D45-result-handoff-0454 | [Full terminal packet published.](../../design/app-P2-P3-D45-result-handoff-0454.md) Both failed. Safe diagnostic JSON files not created. | c0fe /079 /37eb |
 | P2-D45-element-cause | Classify actual element failure | Sol | Retained13583 artifacts | doing | app-P2-D45-element-cause-sol-0459 | Exact failure boundary and source diagnosis only. No assumed old cause, source fix or repeated body. | c0fe /079 /37eb |
 | P2-D45-whole-path | Independently investigate client to server | Luna | Second failed fix rule | doing | app-P2-D45-whole-path-review-0459 | Source-only review compares passingP1. Sol alone owns private trace extraction. | c0fe /079 /37eb |
 
@@ -77,7 +77,8 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 Integration: c0fe889944 contains all reviewed App fixes. Joined0438 passed523 tests, three types and lint; independent A4census0444 passed.
 Later: Runtime D42 remains security held. D45 releases the next pair on existing37eb plus current App; no unsafe memo adoption.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
-Next ready: Producer0454 terminal packet, Proof verdict, Sol0459 and0501 diagnoses, independent whole-path0459. No repeated pair.
+Next ready: Proof verdict on completed0454 packet; Sol0459 and0501 diagnoses and independent whole-path0459. No repeated pair.
 Disk: About11 GB available. Sweep0441 removed zero directories; freed0 GB. No new eligible non-KEEP tree. Earlier dirty U3 and compact refusals remain stopped.
 
-Lead: D45 actual P213583 and P34065 submitted04:53:33Z. Relay both actual IDs from peer0454 to the orchestrator; no further source wait.
+Lead: D45 pair is terminal: P213583 failed3 with5 not run; P34065 failed original Gate5 after readiness passed. Full packet and causal owners are in peer0504.
+Blockers: Viewing — IMAGE0441 undo preview refused invalid records. Existing ABA owner0443 and Agent path0454 own source diagnosis; no new producer or realm.
