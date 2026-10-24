@@ -18,6 +18,97 @@ OWNER = 'occurrence:occ-a'
 TARGET = OWNER + '/clip:clip-a'
 
 
+def _create_fixture(service, project, document, selection, *, authorize):
+    """Author the exact payloads from an empty bootstrap through commitTimeline."""
+    from astrid.sdk.timeline._doc_patch import Closure, allocations
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
+
+    head = service.get_project_timeline(project, 'film')
+    parent = service.get_project_parent_composition_revision(
+        project, 'film', head['head_revision_id'])
+    empty = {'schema_version': 1, 'project_id': project, 'timeline_id': 'film',
+             'parent_revision': {key: parent[key] for key in
+                                 ('revision_id', 'content_digest', 'payload')},
+             'shot_revisions': [], 'internal_timeline_revisions': [],
+             'dependency_manifest': parent['dependency_manifest']}
+    bundle = bundle_from_document(empty)
+    verified = service.get_project_verified_media(project, selection, authorize=authorize)
+    calls = []
+
+    def append(call):
+        nonlocal bundle
+        calls.append(call)
+        bundle = execute(bundle, [call], verified_media=[verified]).bundle
+
+    def patch(ref, before, value, path=()):
+        closure = Closure(bundle)
+        created = ([] if path else [row['ref'] for row in allocations(
+            closure, closure.resolve(ref), before, value)])
+        append({'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+                'created': created,
+                'args': {'changes': [{'op': 'set', 'ref': ref, 'path': list(path),
+                                      'before': {'state': 'present', 'value': before},
+                                      'value': value}]}})
+
+    def submit(commands, key):
+        head = service.get_project_timeline(project, 'film')
+        request = {'api_version': 1, 'project_id': project, 'timeline_id': 'film',
+                   'base_revision_id': head['head_revision_id'],
+                   'base_publication_id': head['head_publication_id'], 'commands': commands,
+                   'label': key, 'steps': [{'id': str(index), 'label': key, 'intent': 'Fixture setup',
+                       'tags': [], 'command_ordinals': [index],
+                       'patch': call['args']['changes'] if call['op'] == 'doc.patch' else []}
+                       for index, call in enumerate(commands)],
+                   'merge': 'atomic', 'dry_run': False, 'source': {'via': 'python'}}
+        return service.commit_timeline(project, 'film', request, idempotency_key=key,
+            publisher='media-editor', invocation_path=f'/v1/projects/{project}/timelines/film/commit',
+            authorize=authorize)
+
+    authored_parent = copy.deepcopy(document['parent_revision']['payload'])
+    occurrences = authored_parent.pop('occurrences')
+    authored_parent['occurrences'] = []
+    patch('parent', parent['payload'], authored_parent)
+    # Admission has no local document effect; Runtime captures its authority.
+    calls.append({'schema_version': 1, 'op': 'media.admit', 'version': '1', 'select': None,
+            'args': {'inputs': [{'pin': {'media_id': selection['object_id'],
+                                        'content_digest': selection['object_id']},
+                                 'selection': selection}]}})
+    append({'schema_version': 1, 'op': 'occurrence.create', 'version': '1', 'select': 'parent',
+            'args': {'occurrence_id': 'occ-a', 'shot_id': 'chapter-shot', 'name': 'Chapter One',
+                     'track': 'picture', 'on': 8, 'duration': 10}})
+    current = document_from_bundle(bundle)
+    patch('internal:film', current['internal_timeline_revisions'][0]['payload'],
+          copy.deepcopy(document['internal_timeline_revisions'][0]['payload']))
+    closure = Closure(bundle)
+    before = closure.payload(closure.resolve('shot:chapter-shot'))
+    shot = copy.deepcopy(document['shot_revisions'][0]['payload'])
+    # The compiler supplies the new shot's managed link; it is not authored state.
+    shot.pop('internal_timeline_revision_id')
+    patch('shot:chapter-shot', before, shot)
+    current = document_from_bundle(bundle)
+    before = current['parent_revision']['payload']['occurrences'][0]
+    occurrence = {**copy.deepcopy(occurrences[0]),
+                  'shot_revision_id': before['shot_revision_id']}
+    patch('parent', before, occurrence, ('occurrences', 'occurrence_id:occ-a'))
+    submit(calls, 'popup-baseline')
+    result = submit([{'schema_version': 1, 'op': 'occurrence.place-shared', 'version': '1',
+                      'select': OWNER, 'args': {'occurrence_id': 'occ-b', 'on': 10}}], 'popup-sibling')
+    actual = result['data']['canonical_document']
+    expected_parent = copy.deepcopy(document['parent_revision']['payload'])
+    actual_shot, = actual['shot_revisions']
+    actual_internal, = actual['internal_timeline_revisions']
+    for row in expected_parent['occurrences']:
+        row['shot_revision_id'] = actual_shot['revision_id']
+    expected_shot = copy.deepcopy(document['shot_revisions'][0]['payload'])
+    expected_shot['internal_timeline_revision_id'] = actual_internal['revision_id']
+    if (actual['parent_revision']['payload'] != expected_parent
+            or actual_shot['shot_id'] != 'chapter-shot' or actual_shot['payload'] != expected_shot
+            or actual_internal['timeline_id'] != 'film'
+            or actual_internal['payload'] != document['internal_timeline_revisions'][0]['payload']):
+        pytest.fail('supported fixture commits changed authored payloads or shared ownership')
+
+
 @pytest.fixture(params=['image', 'video'])
 def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes):
     runtime = use_runtime()
@@ -126,15 +217,9 @@ def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes
                 if row.get('asset') == 'picture':
                     row['asset'] = old['asset']
         document['shot_revisions'][0]['payload']['text_bindings'] = []
-        service.publish_parent_composition(project, 'film', {
-            'project_id': project, 'timeline_id': 'film', 'expected_head': None,
-            'parent_revision_id': 'popup-baseline', 'parent_composition': parent,
-            'shot_revisions': [{key: value for key, value in row.items() if key != 'content_digest'}
-                               for row in document['shot_revisions']],
-            'internal_timeline_revisions': [{key: value for key, value in internal.items()
-                                             if key != 'content_digest'}],
-        }, idempotency_key='popup-baseline')
         service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
+        service.create_timeline(project, 'film', idempotency_key='popup-timeline')
+        _create_fixture(service, project, document, old, authorize=authorize)
 
         selected, closures, candidates = [], [], []
         real_selected = RequestCommitPort.selected_media
@@ -160,13 +245,21 @@ def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes
 
         def accept(port, prepared):
             candidates.append(copy.deepcopy(prepared))
+            print('DEBUG PREPARED COMMAND', prepared['records']['commands'][0]['command'])
             if state.before_accept:
                 state.before_accept()
             return real_accept(port, prepared)
 
+        real_preview = RequestCommitPort.preview
+
+        def preview(port, prepared):
+            print('DEBUG PREVIEW COMMAND', prepared['records']['commands'][0]['command'])
+            return real_preview(port, prepared)
+
         monkeypatch.setattr(RequestCommitPort, 'selected_media', selected_media)
         monkeypatch.setattr(RequestCommitPort, 'revision_closure', revision_closure)
         monkeypatch.setattr(RequestCommitPort, 'accept', accept)
+        monkeypatch.setattr(RequestCommitPort, 'preview', preview)
         yield state
     finally:
         if 'state' in locals():
