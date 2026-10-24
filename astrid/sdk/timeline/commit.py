@@ -681,7 +681,7 @@ def _reservation_refs(state):
 def _check_reservations(port, plan, current, rejected, base):
     from astrid.sdk.timeline.commands import CommandError
 
-    from ._command_state import State, root_identity
+    from ._command_state import State, equal, one, root_identity
 
     def valid(item):
         if (not isinstance(item, Mapping) or set(item) != {'ref', 'kind', 'owner'}
@@ -718,7 +718,143 @@ def _check_reservations(port, plan, current, rejected, base):
     def boundary(revision):
         return _load(port, context, revision)
 
-    def scan(records, bundle, *, ordinary=False, output=None):
+    def restore_native_fork(state, record, write, accepted_base):
+        """Retain the native fork proof while replaying an accepted birth."""
+        command = record.get('command')
+        if (not isinstance(command, Mapping)
+                or command.get('op') != 'occurrence.fork'):
+            return
+        root = root_identity(write.get('ref'))
+        args = command.get('args')
+        owner = command.get('select')
+        owner_root = root_identity(owner)
+        if (root != ('shot', args.get('shot_id') if isinstance(args, Mapping) else None)
+                or owner_root is None or owner_root[0] != 'occurrence'
+                or not isinstance(args, Mapping) or set(args) != {'shot_id'}):
+            raise CommandError('fork allocation proof is unavailable', kind='history_unavailable')
+        destination = root[1]
+        identity = owner_root[1]
+        document = state.bundle['source_mapping'].get('_runtime_document')
+        _verify_document(document)
+        parent = document['parent_revision']
+        _require((document['project_id'], document['timeline_id']) ==
+                 (state.bundle['project_id'], state.bundle['timeline_id']),
+                 'fork source scope changed')
+        _require(state.bundle['base_parent'] == {
+            key: parent[key] for key in ('revision_id', 'content_digest')
+        }, 'fork source boundary changed')
+        occurrence = one(parent['payload']['occurrences'], 'occurrence_id', identity)
+        source_shot_id = occurrence['shot_id']
+        source_revision_id = occurrence['shot_revision_id']
+        source_shot = one(document['shot_revisions'], 'revision_id', source_revision_id)
+        _require(source_shot['shot_id'] == source_shot_id,
+                 'fork source shot binding changed')
+        source_internal = one(document['internal_timeline_revisions'], 'revision_id',
+                              source_shot['internal_timeline_revision_id'])
+        from astrid.core.timeline.authoring_bundle import _CopiedShot, _copy_shot_for_placement
+
+        copied_payload, _ = _copy_shot_for_placement(
+            source_shot['payload'], project_id=document['project_id'],
+            timeline_id=document['timeline_id'], occurrence_id=identity,
+            authoring_shot_id=destination, source_shot_id=source_shot_id)
+        expected = {'payload': copied_payload,
+                    'internal_timeline': copy.deepcopy(source_internal['payload'])}
+        _require(write['before'] == {'state': 'absent'}
+                 and write['after']['state'] == 'present'
+                 and equal(write['after']['value'], expected),
+                 'fork native copy value changed')
+        owner_row = state.occurrence(owner)
+        _require(command.get('version') == '1'
+                 and command.get('schema_version') == 1
+                 and command.get('intent') == {'ownership': 'occurrence'}
+                 and command.get('resolved') == [owner],
+                 'fork command boundary changed')
+        _require(command.get('created') == [write['ref']]
+                 and record.get('created') == [{'ref': write['ref'], 'kind': 'shot', 'owner': None}],
+                 'fork allocation record changed')
+
+        owner_writes = [item for item in record.get('writes', [])
+                        if item.get('ref') == owner and item.get('path') == ['shot_id']]
+        _require(len(owner_writes) == 1
+                 and owner_writes[0]['before'] == {
+                     'state': 'present', 'value': owner_row['shot_id']}
+                 and owner_writes[0]['after'] == {'state': 'present', 'value': destination},
+                 'fork owner edge changed')
+
+        required_reads = {
+            (owner, ()): {'state': 'present', 'value': owner_row},
+            (owner + '/shot', ('shot_id',)): {
+                'state': 'present', 'value': source_shot_id},
+            (owner + '/source', ()): {
+                'state': 'present', 'value': source_internal['payload']},
+            (owner + '/shot', ('payload',)): {
+                'state': 'present', 'value': source_shot['payload']},
+            (write['ref'], ()): {'state': 'absent'},
+        }
+        reads = record.get('reads', [])
+        for (ref, path), expected_read in required_reads.items():
+            matches = [item for item in reads
+                       if item.get('ref') == ref and tuple(item.get('path', ())) == path]
+            _require(len(matches) == 1 and equal(matches[0].get('state'), expected_read),
+                     'fork source observation changed')
+
+        from ._recording import selection
+
+        selections = record.get('selections', [])
+        _require({item.get('key') for item in selections} ==
+                 {'collection.clips', 'collection.tracks'}
+                 and all(item.get('owner') == owner for item in selections),
+                 'fork collection order proof is unavailable')
+        for selected in selections:
+            _require(equal(selection(state, selected['key'], owner, selected['members']), selected),
+                     'fork collection order changed')
+
+        bindings = record.get('bindings', [])
+        source_bindings = [item for item in bindings if item.get('key') == 'fork.source']
+        owner_bindings = [item for item in bindings if item.get('key') == 'fork.owner']
+        source_owners = ['occurrence:' + row['occurrence_id'] + '/shot'
+                         for row in parent['payload']['occurrences']
+                         if row['shot_id'] == source_shot_id]
+        _require(len(source_bindings) == len(owner_bindings) == 1,
+                 'fork source bindings are unavailable')
+        source_binding, owner_binding = source_bindings[0], owner_bindings[0]
+        _require(source_binding.get('ref') == owner + '/source'
+                 and source_binding.get('physical_ref') ==
+                 'internal-revision:' + source_internal['revision_id']
+                 and source_binding.get('revision_id') == source_internal['revision_id']
+                 and source_binding.get('content_digest') == source_internal['content_digest']
+                 and source_binding.get('owners') == source_owners
+                 and source_binding.get('path') == []
+                 and owner_binding.get('ref') == owner
+                 and owner_binding.get('physical_ref') == 'parent'
+                 and owner_binding.get('revision_id') == parent['revision_id']
+                 and owner_binding.get('content_digest') == parent['content_digest']
+                 and owner_binding.get('path') == ['occurrences', 'occurrence_id:' + identity],
+                 'fork source binding changed')
+        _require(isinstance(accepted_base, Mapping)
+                 and set(accepted_base) == {'revision_id', 'publication_id'}
+                 and accepted_base['revision_id'] == parent['revision_id'],
+                 'fork predecessor boundary changed')
+        for binding in (source_binding, owner_binding):
+            binding_boundary = binding.get('boundary')
+            _require(isinstance(binding_boundary, Mapping)
+                     and binding_boundary.get('base_revision_id') == parent['revision_id']
+                     and binding_boundary.get('base_publication_id') ==
+                     accepted_base['publication_id']
+                     and binding_boundary.get('evaluated_head') == {
+                         'revision_id': parent['revision_id'],
+                         'publication_id': accepted_base['publication_id']}
+                     and binding_boundary.get('command_ordinal') == record.get('ordinal')
+                     and isinstance(binding_boundary.get('step_id'), str)
+                     and bool(binding_boundary['step_id']),
+                     'fork binding boundary changed')
+        state.bundle['shots'][destination] = _CopiedShot(
+            state.bundle['shots'][destination], {
+                'source_occurrence_id': identity, 'source_shot_id': source_shot_id,
+                'source_revision_id': source_revision_id,
+                'occurrence_id': identity, 'shot_id': destination})
+
+    def scan(records, bundle, *, ordinary=False, output=None, accepted_base):
         state = State(bundle)
         reserved.update(_reservation_refs(state))
         for record in records:
@@ -763,6 +899,8 @@ def _check_reservations(port, plan, current, rejected, base):
                     Recording(state.bundle, record['command'], record['ordinal']).create_entity(
                         write['ref'], kind=root[0], owner=created['owner'],
                         value=write['after']['value'], restoring=True)
+                    if root[0] == 'shot':
+                        restore_native_fork(state, record, write, accepted_base)
                 else:
                     state.set(write['ref'], write['path'], write['after'])
                 if write['ref'] == 'timeline':
@@ -787,12 +925,14 @@ def _check_reservations(port, plan, current, rejected, base):
             recorded = True
             records = _records([entry], rejected, base, current)
             _require(entry.get('previous') is not None, 'missing original identity boundary')
-            scan(records, boundary(entry['previous']['revision_id']), output=boundary(entry['revision_id']))
+            scan(records, boundary(entry['previous']['revision_id']),
+                 output=boundary(entry['revision_id']), accepted_base=entry['previous'])
             reserved.update(_reservation_refs(State(boundary(entry['revision_id']))))
     except (AuthoringBundleError, CommandError, KeyError, TypeError, ValueError) as exc:
         raise rejected(_failure('history_unavailable', 'semantic identity history is unavailable',
                                 base, current)) from exc
-    scan(plan.records, boundary(current['revision_id']), ordinary=True, output=plan.bundle)
+    scan(plan.records, boundary(current['revision_id']), ordinary=True, output=plan.bundle,
+         accepted_base=base)
 
 
 class RuntimeCommitService:
