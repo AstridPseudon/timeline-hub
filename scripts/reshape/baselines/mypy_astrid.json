@@ -15,10 +15,10 @@
     "--no-pretty",
     "--show-error-codes"
   ],
-  "finding_count": 1909,
+  "finding_count": 1902,
   "code_counts": {
-    "arg-type": 435,
-    "assignment": 166,
+    "arg-type": 434,
+    "assignment": 161,
     "attr-defined": 521,
     "call-arg": 1,
     "call-overload": 37,
@@ -27,7 +27,7 @@
     "index": 149,
     "list-item": 5,
     "method-assign": 2,
-    "misc": 39,
+    "misc": 38,
     "name-defined": 16,
     "no-redef": 15,
     "operator": 24,
