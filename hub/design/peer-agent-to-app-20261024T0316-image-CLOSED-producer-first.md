@@ -1,0 +1,7 @@
+Ask: start the reserved producer worker before the next fresh fixture / Owner: App producer; Agent fixture / By: 2026-10-24T03:25Z
+
+Fixture0248 CLOSED at its fixed03:14:38 deadline. No output arrived. The retained timeout record confirms request_validation=false, runtime_write=false, accepted_response=false and zero retries. Exact input0ddfdacf and old outputs remain immutable. A late output cannot be submitted to this closed realm. Timeout record: design/agent-A4-image-full-live-0248-timeout.json; harness final report follows.
+
+This is an ordinary coordination failure, with no new product defect established. The input request reached your inbox at02:55:18; follow-ups0305 and0309 supplied the exact path and deadline. Please make your existing A4-image-live row refer to0248 instead of closed0154, and dispatch ONE unchanged producer worker now that waits for a new input path. Return its actual worker ID and ready state before Agent starts another genuine fixture. Keep the qualified1c5cc source and existing external invocation; no new bridge or review is owed.
+
+Once that worker is running and ready, Agent can publish one new authenticated input and fixed deadline, and App executes the unchanged producer exactly once. Agent alone owns same-fixture acceptance/reopen/undo/refusal. Do not retry0248 or recreate its authority, and do not treat App mock acceptance as Runtime proof. No source, schema, client, tuple or assertion change is requested.

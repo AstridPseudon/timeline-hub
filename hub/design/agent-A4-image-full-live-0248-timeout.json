@@ -1,0 +1,15 @@
+{
+  "status": "blocked",
+  "reason": "App output did not arrive within 25 minutes",
+  "error": "TimeoutError: App output did not arrive within 25 minutes: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A4-image-full-live-0248-output.json",
+  "output_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-A4-image-full-live-0248-output.json",
+  "input_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-A4-image-full-live-0248/evidence/producer-input.json",
+  "input_sha256": "0ddfdacfe6bad868ed4aa3b7f43a8962afc6e3fec9f1968ac153ab1fdd7ea6b3",
+  "accepted_response": false,
+  "request_validation": false,
+  "runtime_write": false,
+  "same_fixture_retries": 0,
+  "new_fixture": false,
+  "source_facts": "runtime-source-facts.json",
+  "ready": "READY"
+}

@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T03:14:09Z | dispatcher heartbeat 3s | live 4 (sol 2, luna 2, other 0) | busy30 16 | status age 1m -->
+<!-- agent | 2026-10-24T03:16:23Z | dispatcher heartbeat 0s | live 3 (sol 2, luna 1, other 0) | busy30 15 | status age 0m -->
 # agent board, 2026-10-24T03:10:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -45,7 +45,7 @@
 | F-helper-sequential | Repair sequential replay map | Sol / Luna | Integrated proof passed | merged | Source184dc; review0224; integrated0232 | Actual8a8d:12focused, Ruff2145 and mypy1909 passed; vendor/artifact passed. Original True and False passed on exact reviewed source. | 184dc20a70 |
 | F-D32-h3-import | Seven isolated child-import cases | Luna | Existing installed child | merged | agt-F-h3-env-0137 | All seven original fault cases passed in 3.60s; preflight/postflight, body and source identities retained. | 521c source |
 | F-ruff-baseline | Tighten static baselines | Luna | Exact reviewed tree | merged | Review0218; D38 remainder0228 | Actual10d2 tree exactly reviewedc836: Ruff2145 and mypy1909 makegates PASS. Remainder mypy timeout disclosed, no repeat. | c8360b3732 |
-| A4 IMAGE | Complete accepted image witness | Luna | App one new producer output | doing | agt-A4-image-full-live-0248 | New genuine fixture ready, fixed deadline03:14:38Z; input0ddfdacf. Old0154 remains closed and immutable. | support743a615d |
+| A4 IMAGE | Complete accepted image witness | Luna | App producer worker ready | blocked:app | Fixture0248 expired; App peer0316 | No output by03:14:38; zero request validation or Runtime writes. Next fixture waits for an actual running producer. | support743a615d |
 | OPS-suites-prune | Retain required registry entries | Runtime Luna | Final finite assessment | doing | Runtime actual-use0253 | Prior empty proposal preserved. Runtime corrects active-row versus actual-use classification; no live edit or retirement ready. | snapshot only |
 | D31 | Dormant transcript capture subset | — | Follow-up funding | gated:D31 | No active author | Keep the 397-line test suite and implementation unchanged. Literal production reachability is NO. | unchanged |
 | V4 / D14 / D23 | Cut and deferred relational timing | — | Scope decisions | gated:H9 | No repair worker | Keep original tests unchanged, unskipped and visibly failing. No V4 or relational-timing completion claim. | unchanged |
@@ -56,7 +56,7 @@ Blockers: Agent full waits for the remaining owned fixes and finite qualificatio
 Blockers: Agent full waits for exact root inverse, publication joins, complete authoring undo, installed external sources and the original rendering timeout.
 Safety: Earlier Farm, monitor, publication and bench permission refusals remain stopped. No denied action was retried here.
 Disk: Lead reports8.6GB free. Recycled five clean finished worktrees; supported sweep and compact completed. Required and previously refused targets remain untouched.
-Next ready: Current publisher qualification, final root inverse review, D40 consumer review, image output. ABA and rendering source work assigned to peer capacity.
+Next ready: D40 security review, historical redo review, registry reuse review and peer ABA/shared-alias source handoffs. Next image fixture waits for a running App producer.
 Evidence: Earlier detailed results remain in [the archived board](archive-v2/STATUS-20261024T0055Z.md) and the existing design handoffs. Worker final messages are copied unchanged into design.
 D32: Exact upstream comparison completed. Independent review rejected all 25 proposed pre-existing credits. All 267 remain ours; no known-gap or whole-suite PASS claim.
 Later: D37 dormant A4 capture subsets remain unchanged in delivery; no new provider migration. Source reviews and full-gate failure counts remain separate.
