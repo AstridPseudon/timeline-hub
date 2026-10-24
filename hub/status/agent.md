@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T14:44:40Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 0m -->
+<!-- agent | 2026-10-24T14:47:17Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 0m -->
 # agent board, 2026-10-24T14:40:48Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -85,7 +85,7 @@
 
 | F home13 custody | Preserve actual home result transcript | Luna | Existing raw worker log | merged | Receipt1440 PASS | All13 XML outcomes preserved as exact transcript bytes with ranges and hashes. Original TMP file loss disclosed; flat design handoff published. | Home68e82 |
 
-| F final core suite | Prepare full core collection and invocation | Luna | Current source, D61 body held | doing | Collect1443 | Collect only; includes live negatives and visible D13/D23 cases. No body or registry change. | Home68e82 |
+| F final core suite | Prepare full core collection and invocation | Luna | D61 body held | merged | Collect1443 PASS | Broad8665 nodes in386 files collected; P4 three separate. Live D13/D23 and negative guards retained. No bodies run or final proof claim. | Home68e82 |
 
 Integration: Agent68e82c0c2c includes U2 final924, normal e68 vendor adoption and independently reviewed legacy inverse fix. Proposal inverse actual-home13 passed. D61 consumer9460a443 retains all three reviewed donor blobs, held for qualified Runtime producer then normal D39 and current-home qualification. No generated code or lock edited by manager.
 core open: 7 tracked: four D61 fork checkpoint failures, one genuine D13 input UNKNOWN, two forward-provider originals outside276. Proposal inverse now closed by actual-home13. Two D23 timing originals remain unchanged visibly failing and deferred. Final tuple proof remains pending.

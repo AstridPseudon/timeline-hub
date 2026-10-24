@@ -1,0 +1,118 @@
+{
+  "task": "F/D54",
+  "base_agent_commit": "68e82c0c2ce621f43ae73aa05fce0d1d0f47a677",
+  "runtime_origin": "/home/user/work/runtime",
+  "runtime_commit_observed": "e68cf231641db98a72805a586b51ab5c4fae2c16",
+  "runtime_tree_observed": "a2cbedd185c7e576e20ed060d993deba17111b78",
+  "python_origin": "/home/user/work/venv-agent/bin/python",
+  "collection_only": {
+    "final_core_nodes": 8665,
+    "final_core_files": 386,
+    "final_core_roots": [
+      "tests/editing_conformance",
+      "tests/sdk",
+      "tests/timeline",
+      "tests/core/timeline",
+      "tests/core/test_timeline_element_publication.py",
+      "tests/core/test_timeline_element_publication_runtime.py",
+      "tests/core/rendering/test_timeline_visualize_cli_grammar.py",
+      "tests/packs/timeline",
+      "tests/packs/video_editing/test_runtime_publication_chain.py",
+      "tests/test_timeline_clip_replacement.py"
+    ],
+    "final_core_exclusions": [
+      "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py",
+      "tests/editing_conformance/test_p4_ten_note_v2_runtime.py",
+      "tests/editing_conformance/test_p4_note_rerun_v2_runtime.py"
+    ],
+    "p4_http_original_nodes": 3,
+    "p4_http_original_selectors": [
+      "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py::test_cli_sheet_v2_runtime_preserves_document_and_reads_back",
+      "tests/editing_conformance/test_p4_ten_note_v2_runtime.py::test_http_ten_note_commit_per_step_inverse_and_redo",
+      "tests/editing_conformance/test_p4_note_rerun_v2_runtime.py::test_http_note_conflict_reruns_public_function_from_verified_peer_document"
+    ],
+    "d13_nodes": 1,
+    "d13_selector": "tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight",
+    "d23_selectors_present": [
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]",
+      "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head"
+    ],
+    "old_full9758_checkpoint": {
+      "historical_nodes": 159,
+      "relationship": "not used as the final-core selector; retained as historical full9758-failure coverage"
+    }
+  },
+  "collection_command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=\"$PWD:/home/user/work/runtime\" ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_RUNTIME_SOURCE_ROOT=/home/user/work/runtime ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages /home/user/work/venv-agent/bin/python -P -m pytest --collect-only -q -o addopts= -p no:cacheprovider --junitxml=EVIDENCE/final-core-collect.xml --ignore=tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py --ignore=tests/editing_conformance/test_p4_ten_note_v2_runtime.py --ignore=tests/editing_conformance/test_p4_note_rerun_v2_runtime.py tests/editing_conformance tests/sdk tests/timeline tests/core/timeline tests/core/test_timeline_element_publication.py tests/core/test_timeline_element_publication_runtime.py tests/core/rendering/test_timeline_visualize_cli_grammar.py tests/packs/timeline tests/packs/video_editing/test_runtime_publication_chain.py tests/test_timeline_clip_replacement.py",
+  "proposed_service_command": "env -i HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 PYTHONPATH=\"$PWD:/home/user/work/runtime\" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin:/bin ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime ASTRID_RUNTIME_SOURCE_ROOT=/home/user/work/runtime ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages /home/user/work/venv-agent/bin/python -P -m pytest -q -n 3 -o addopts= -p no:cacheprovider --timeout=45 --junitxml=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-final-core-collect-1443/evidence/final-core.xml --ignore=tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py --ignore=tests/editing_conformance/test_p4_ten_note_v2_runtime.py --ignore=tests/editing_conformance/test_p4_note_rerun_v2_runtime.py tests/editing_conformance tests/sdk tests/timeline tests/core/timeline tests/core/test_timeline_element_publication.py tests/core/test_timeline_element_publication_runtime.py tests/core/rendering/test_timeline_visualize_cli_grammar.py tests/packs/timeline tests/packs/video_editing/test_runtime_publication_chain.py tests/test_timeline_clip_replacement.py",
+  "p4_service_command_suffix": "-m integration tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py::test_cli_sheet_v2_runtime_preserves_document_and_reads_back tests/editing_conformance/test_p4_ten_note_v2_runtime.py::test_http_ten_note_commit_per_step_inverse_and_redo tests/editing_conformance/test_p4_note_rerun_v2_runtime.py::test_http_note_conflict_reruns_public_function_from_verified_peer_document",
+  "production_caller_seams": [
+    "astrid/sdk/timeline/commit_session.py:23 Timeline; :73 Timeline.undo; :163 Timeline.commit",
+    "astrid/sdk/timeline/sync.py:137 TimelineSession; :306 commit; :395 move; :405 trim; :415 undo",
+    "astrid/sdk/timeline/commit.py:1073 RuntimeCommitService.commit; :1385 create_runtime_commit_service",
+    "astrid/sdk/timeline/commands.py EditCommand execution/validation",
+    "astrid/sdk/timeline/rebase.py and inverse.py replay/inverse guards",
+    "astrid/sdk/remote.py:915 visualize and timeline show/inspect callers",
+    "astrid/sdk/timeline_sheet.py:860-881 native sheet commit through TimelineSession"
+  ],
+  "test_inventory": {
+    "commit_door_editcommand": [
+      "tests/sdk/test_timeline_commit_provider.py",
+      "tests/sdk/test_timeline_commit_provider_document.py",
+      "tests/sdk/test_timeline_commit_provider_runtime.py",
+      "tests/sdk/test_timeline_open_commit.py",
+      "tests/sdk/test_timeline_open_commit_v2.py",
+      "tests/editing_conformance/test_commit_v2_validation.py",
+      "tests/editing_conformance/test_doc_patch_v2.py",
+      "tests/editing_conformance/test_document_patch_emitter_v2.py"
+    ],
+    "session_rebase_inverse_undo_history": [
+      "tests/sdk/test_timeline_session_pair.py",
+      "tests/sdk/test_timeline_sync.py",
+      "tests/sdk/test_timeline_persistence.py",
+      "tests/sdk/test_timeline_checkout_history.py",
+      "tests/sdk/test_timeline_undo_transport.py",
+      "tests/sdk/test_timeline_inverse_binding.py",
+      "tests/editing_conformance/test_step_undo_v2.py",
+      "tests/editing_conformance/test_inverse_aba_partition.py",
+      "tests/editing_conformance/test_authenticated_inverse_restoration.py"
+    ],
+    "occurrence_placement_split_trim_move": [
+      "tests/editing_conformance/test_recipe_occurrence_create.py",
+      "tests/editing_conformance/test_recipe_occurrence_delete.py",
+      "tests/editing_conformance/test_recipe_occurrence_fork.py",
+      "tests/editing_conformance/test_recipe_m2_placement.py",
+      "tests/editing_conformance/test_recipe_m2_clip_split.py",
+      "tests/editing_conformance/test_recipe_m2_clip_trim.py",
+      "tests/editing_conformance/test_recipe_m1_commands.py",
+      "tests/sdk/test_timeline_clip_trim_provider.py",
+      "tests/sdk/test_timeline_split_last.py",
+      "tests/sdk/test_timeline_owned_move_publish.py"
+    ],
+    "show_sheet_visualize": [
+      "tests/sdk/test_timeline_show_views.py",
+      "tests/sdk/test_timeline_sheet.py",
+      "tests/sdk/test_timeline_sheet_native.py",
+      "tests/sdk/test_timeline_visualize_public_surface.py",
+      "tests/core/timeline/test_timeline_visualize_hashes.py",
+      "tests/core/timeline/test_timeline_visualize_ids.py",
+      "tests/core/timeline/test_timeline_visualize_navigation.py",
+      "tests/core/timeline/test_timeline_visualize_schemas.py",
+      "tests/core/timeline/test_timeline_visualize_select.py",
+      "tests/core/timeline/test_timeline_visualize_validate.py"
+    ],
+    "editing_runner_and_cli": [
+      "tests/editing_conformance/runner.py",
+      "tests/editing_conformance/test_runner_selftest.py",
+      "tests/packs/timeline/test_cli_commit_move.py",
+      "tests/packs/timeline/test_cli_commit_trim.py",
+      "tests/packs/timeline/test_cli_history.py",
+      "tests/packs/timeline/test_cli_native_sheet.py",
+      "tests/packs/timeline/test_show_clip_working_copy.py",
+      "tests/packs/timeline/test_visualize_drafts.py"
+    ]
+  },
+  "pending": [
+    "D61 Runtime-derived recorder_abi and any required client regeneration/source refresh must land before acceptance collection/run.",
+    "This worker performed collection only; no test body, HTTP request, authenticated request, browser, gate, full suite, install, registry edit, or source/test edit was performed."
+  ]
+}
