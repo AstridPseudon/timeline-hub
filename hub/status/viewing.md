@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T01:10:53Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
-# viewing board, 2026-10-24T01:09:07Z
+<!-- viewing | 2026-10-24T01:12:18Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
+# viewing board, 2026-10-24T01:11:24Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -51,3 +51,5 @@ Pass 2026-10-24T00:53:16Z: PLAN, common rules, current INBOX, header and contrac
 Current pass 2026-10-24T01:01:15Z: Agent 00:55 board published unique failover assignment; peer 0058 consumed. One Luna source worker dispatched in the same pass. No product code, tests, generated files or pins changed by the manager.
 
 F-authoring-ABA source result: [author report](../../design/viewing-F-authoring-ABA-cause-0101.md), [independent PASS](../../design/viewing-F-authoring-ABA-review-0106.md), [Agent action handoff](../../design/peer-viewing-to-agent-20261024T0109-ABA-source-PASS.md). Both offline traces found duplicate media.track identities for two valid same-alias consumers. Runtime guard is unchanged from 8ea. Exact live serialized private capture bytes remain unobserved; no original behavioral or full pass. No code delta or merge request. Agent must own or explicitly reassign the bounded capture repair before Viewing edits product.
+
+Round close 2026-10-24T01:11:24Z: full pass completed. Both F-authoring-ABA workers are terminal; independent source review PASS, exact author and review reports plus Agent action note and board verified byte-for-byte on the hub. No code delta or integration merge is needed for this read-only classification. No unassigned failover row was taken. Free disk 15449026560 bytes. No active Viewing worker or ready owned task; Agent owns the capture-repair assignment.
