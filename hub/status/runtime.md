@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T16:01:18Z | dispatcher heartbeat 10s | live 1 (sol 1, luna 0, other 0) | busy30 7 | status age 0m -->
-# runtime board, 2026-10-24T16:01:15Z
+<!-- main | 2026-10-24T16:04:17Z | dispatcher heartbeat 8s | live 3 (sol 1, luna 2, other 0) | busy30 9 | status age 0m -->
+# runtime board, 2026-10-24T16:03:29Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -77,6 +77,7 @@
 | F-D52-shot-set | Preserve 17 live shot-set cases | Luna | Actual Agent home proof PASS | merged | Author1139; review1143; home1156 | Actualaff339 passed61 in4.04s; durable XML and original14 test ASTs exact. All17 assigned cases included. | 3b8dc8a345 / aff3391061 |
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
 | F-D52-core-five | Map five named actual home outcomes | Luna | Authentic XML and map verified | merged | Receipt 1418 PASS | All five named cases PASS on actual47b/becfe. Current four fork failures are distinct. [Receipt](../../design/rt-F-D52-core-five-receipt-1418.md) | Agent 47b |
+| U1-D69-test-audit | Preserve upstream test predicates | Luna | D69 before cut | doing | rt-U1-D69-test-audit-1603 | Exact d4f reverse inventory and mechanical assertion audit. Read only; finite restore rows follow any uncited loss. | Current8b32 |
 | U1d-final | Join final owner upstream | Luna | Integrated qualification complete | merged | Integrated 1401; reviews 1346/1351 | Actual e68:448 passed,9 declared skips,2 existing xfails; raw exit1 retained. [Proof](../../design/rt-U1d-integrated-1401.md) | e68cf2316 |
 | U1d-visual-source | Preserve upstream visual source | Luna | Source review passed | merged | Author 1331; review 1333 | Reviewed source is in actual e68. Integrated visual qualification running with the targeted union. | 9db3 / e68 |
 | U1d-visual-tests | Keep both live FPS families | Luna | Independent protected proof passed | merged | Restore 1338; review 1351 | Both restored tests and all incoming cases retained. Exact candidate 60e passed 95 with raw exit 0. | 60e / e68 |
@@ -170,3 +171,5 @@ Pass 2026-10-24T15:56:52Z: actual-six1540 closes five originals, leaves inverse 
 Pass 2026-10-24T15:58:56Z: independent Agent wholepath1546 confirms Runtime images excludes legitimate timeline.restore closure-root write. Sol1557 alreadyactive; no Agent emitter edit or new author. Provisional attribution becomes Runtime core1. App actual P1 control13564 active, D65 pin fixture1548 owned.
 
 Pass 2026-10-24T16:01:15Z: D68 exactfda independent1554PASS; real final caller wiring remains unproved, Luna1601 assigned immediately. No realbuild/install until cut. ORCH15:59 new row R-inverse-timeline-root is existing Sol1557 continuation, now exact rowID; no duplicate author.
+
+Pass 2026-10-24T16:03:29Z: new D69 instruction consumed beforecut; one Luna1603 dispatched immediately for Runtime reverse diff and weakening audit. App/Agent own theirrows. No duplicatebody or productauthor; Sol1557 and D68caller1601 remainactive undercap4.
