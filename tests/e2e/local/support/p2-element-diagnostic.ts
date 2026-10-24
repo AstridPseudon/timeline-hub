@@ -5,6 +5,7 @@ import { withDiagnosticDeadline } from '../p1-diagnostic-safety.ts';
 export const P2_ELEMENT_DIAGNOSTIC_FILE = 'p2-element-apply-diagnostic.json';
 const MAX_EVENTS = 24;
 const MAX_BYTES = 24 * 1024;
+const MAX_PENDING_REQUESTS = 8;
 const RETENTION_TIMEOUT_MS = 500;
 const UI_READ_TIMEOUT_MS = 150;
 
@@ -89,10 +90,51 @@ function requestFailureKind(request: Request): FailureKind {
 
 function isCommitRequest(request: Request): boolean {
   try {
-    return request.method() === 'POST' && /^\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/.test(new URL(request.url()).pathname);
+    return request.method() === 'POST' && /^\/(?:api\/runtime\/)?v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/.test(new URL(request.url()).pathname);
   } catch {
     return false;
   }
+}
+
+function requestBody(request: Request): Record<string, unknown> | undefined {
+  try {
+    const value = request.postDataJSON();
+    return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** The catalog Apply request's authenticated provenance and patch shape, not a UI alias, selects the target. */
+function isElementApplyRequest(request: Request): boolean {
+  const body = requestBody(request);
+  if (!isCommitRequest(request) || keyPresence(request) !== 'present' || !body || body.api_version !== 1 || body.label !== 'Edit timeline'
+    || body.merge !== 'atomic' || body.dry_run !== false || typeof body.project_id !== 'string'
+    || typeof body.timeline_id !== 'string' || typeof body.base_revision_id !== 'string'
+    || typeof body.base_publication_id !== 'string') return false;
+  const source = body.source;
+  if (!source || typeof source !== 'object' || Array.isArray(source) || (source as Record<string, unknown>).via !== 'app') return false;
+  const commands = body.commands;
+  const steps = body.steps;
+  if (!Array.isArray(commands) || commands.length !== 1 || !Array.isArray(steps) || steps.length !== 1) return false;
+  const command = commands[0];
+  const step = steps[0];
+  if (!command || typeof command !== 'object' || Array.isArray(command) || !step || typeof step !== 'object' || Array.isArray(step)) return false;
+  const commandRecord = command as Record<string, unknown>;
+  const stepRecord = step as Record<string, unknown>;
+  const args = commandRecord.args;
+  const changes = args && typeof args === 'object' && !Array.isArray(args) ? (args as Record<string, unknown>).changes : undefined;
+  const firstChange = Array.isArray(changes) && changes.length === 1 ? changes[0] : undefined;
+  const change = firstChange && typeof firstChange === 'object' && !Array.isArray(firstChange) ? firstChange as Record<string, unknown> : undefined;
+  const path = change?.path;
+  return commandRecord.schema_version === 1 && commandRecord.op === 'doc.patch' && commandRecord.version === '1'
+    && commandRecord.select === null && Array.isArray(commandRecord.created)
+    && stepRecord.intent === 'timeline.apply_element' && Array.isArray(stepRecord.command_ordinals)
+    && stepRecord.command_ordinals.length === 1 && stepRecord.command_ordinals[0] === 0
+    && Array.isArray(changes) && Array.isArray(stepRecord.patch) && Array.isArray(stepRecord.reads)
+    && stepRecord.patch.length === changes.length
+    && change?.op === 'list.insert' && change.ref === 'parent' && Array.isArray(path)
+    && path.length > 0 && path.every((part) => typeof part === 'string') && path.at(-1) === 'clips';
 }
 
 function keyPresence(request: Request): 'present' | 'absent' | 'unknown' {
@@ -171,6 +213,7 @@ export function readElementApplyUiState(): ElementApplyUiState {
 export class ElementApplyDiagnosticCollector {
   private readonly startedAt = Date.now();
   private readonly events: ElementApplyDiagnosticEvent[] = [];
+  private readonly pendingRequests: Array<{ request: Request; response?: Response; failure?: FailureKind }> = [];
   private active?: { correlation: Correlation; request?: Request; terminal: ElementApplyTerminal };
   private applyOrdinal = 0;
   private closed = false;
@@ -180,17 +223,25 @@ export class ElementApplyDiagnosticCollector {
     const correlation = `apply-${this.applyOrdinal}` as Correlation;
     this.active = { correlation, terminal: 'unknown' };
     this.record({ stage: 'apply-click', correlation, request: 'not-observed', idempotencyKey: 'unknown', responseStatus: 'UNKNOWN', response: 'none', failure: 'none', terminal: 'unknown' });
+    const candidate = this.pendingRequests.pop();
+    if (candidate) this.bindRequest(candidate);
   }
 
   recordRequest(request: Request): void {
-    if (!this.active || this.active.request || !isCommitRequest(request)) return;
-    this.active.request = request;
-    this.active.terminal = 'pending';
-    this.record({ stage: 'request-start', correlation: this.active.correlation, request: 'scoped-commit', idempotencyKey: keyPresence(request), responseStatus: 'UNKNOWN', response: 'none', failure: 'none', terminal: 'pending' });
+    if (!isElementApplyRequest(request)) return;
+    const candidate = this.pendingRequests.find((entry) => entry.request === request) ?? this.rememberRequest(request);
+    if (this.active && !this.active.request && candidate) this.bindRequest(candidate);
   }
 
   recordResponse(response: Response): void {
-    if (!this.active?.request || response.request() !== this.active.request || this.active.terminal !== 'pending') return;
+    const request = response.request();
+    if (!isElementApplyRequest(request)) return;
+    if (!this.active?.request || request !== this.active.request) {
+      const candidate = this.pendingRequests.find((entry) => entry.request === request);
+      if (candidate) candidate.response = response;
+      return;
+    }
+    if (this.active.terminal !== 'pending') return;
     const status = statusCode(response.status());
     const outcome = responseOutcome(status);
     this.active.terminal = outcome.terminal;
@@ -198,7 +249,13 @@ export class ElementApplyDiagnosticCollector {
   }
 
   recordRequestFailed(request: Request): void {
-    if (!this.active?.request || request !== this.active.request || this.active.terminal !== 'pending') return;
+    if (!isElementApplyRequest(request)) return;
+    if (!this.active?.request || request !== this.active.request) {
+      const candidate = this.pendingRequests.find((entry) => entry.request === request);
+      if (candidate) candidate.failure = requestFailureKind(request);
+      return;
+    }
+    if (this.active.terminal !== 'pending') return;
     const failure = requestFailureKind(request);
     const terminal: ElementApplyTerminal = failure === 'aborted' ? 'aborted' : failure === 'failed' ? 'failed' : 'unknown';
     this.active.terminal = terminal;
@@ -228,6 +285,24 @@ export class ElementApplyDiagnosticCollector {
   private record(input: Omit<ElementApplyDiagnosticEvent, 'version' | 'sequence' | 'elapsedMs' | 'ui'>): void {
     if (this.events.length >= MAX_EVENTS) return;
     this.events.push({ version: 1, sequence: this.events.length + 1, elapsedMs: boundedElapsed(this.startedAt), ...input, ui: stateFor(input.stage, input.terminal) });
+  }
+
+  private rememberRequest(request: Request): { request: Request; response?: Response; failure?: FailureKind } {
+    if (this.pendingRequests.length >= MAX_PENDING_REQUESTS) this.pendingRequests.shift();
+    const candidate = { request };
+    this.pendingRequests.push(candidate);
+    return candidate;
+  }
+
+  private bindRequest(candidate: { request: Request; response?: Response; failure?: FailureKind }): void {
+    if (!this.active || this.active.request) return;
+    const pendingIndex = this.pendingRequests.indexOf(candidate);
+    if (pendingIndex >= 0) this.pendingRequests.splice(pendingIndex, 1);
+    this.active.request = candidate.request;
+    this.active.terminal = 'pending';
+    this.record({ stage: 'request-start', correlation: this.active.correlation, request: 'scoped-commit', idempotencyKey: keyPresence(candidate.request), responseStatus: 'UNKNOWN', response: 'none', failure: 'none', terminal: 'pending' });
+    if (candidate.failure) this.recordRequestFailed(candidate.request);
+    else if (candidate.response) this.recordResponse(candidate.response);
   }
 }
 
@@ -271,18 +346,18 @@ export async function retainElementApplyDiagnostic(
       lifecycle: { ...initial.lifecycle, pageClosed: collector.snapshot().pageClosed },
       losses: { write: false, events: false, ui: ui === UNKNOWN_UI },
     };
-    await withDiagnosticDeadline(async () => { await writeFile(output, serializeElementApplyDiagnostic(final), { encoding: 'utf8', mode: 0o600 }); await testInfo.attach(P2_ELEMENT_DIAGNOSTIC_FILE, { path: output, contentType: 'application/json' }); return true; }, false, Math.max(0, deadline - Date.now()));
-    return true;
+    return await withDiagnosticDeadline(async () => { await writeFile(output, serializeElementApplyDiagnostic(final), { encoding: 'utf8', mode: 0o600 }); await testInfo.attach(P2_ELEMENT_DIAGNOSTIC_FILE, { path: output, contentType: 'application/json' }); return true; }, false, Math.max(0, deadline - Date.now()));
   } catch {
-    return wrote;
+    return false;
   }
 }
 
 export async function installElementApplyDiagnostic(page: Page, collector: ElementApplyDiagnosticCollector): Promise<void> {
-  await page.exposeFunction('__timelineP2ElementApplyBoundary', () => collector.recordApplyClick()).catch(() => {});
-  await page.addInitScript({ content: elementApplyUiScript() }).catch(() => {});
   page.on('request', (request) => collector.recordRequest(request));
   page.on('response', (response) => collector.recordResponse(response));
   page.on('requestfailed', (request) => collector.recordRequestFailed(request));
   page.on('close', () => collector.recordPageClose());
+  const expose = page.exposeFunction('__timelineP2ElementApplyBoundary', () => collector.recordApplyClick()).catch(() => {});
+  const init = page.addInitScript({ content: elementApplyUiScript() }).catch(() => {});
+  await Promise.all([expose, init]);
 }
