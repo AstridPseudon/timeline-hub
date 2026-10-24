@@ -9,15 +9,29 @@ A=${CHILD_VENV_AGENT_CHECKOUT:-/home/user/work/agent}
 R=${CHILD_VENV_RUNTIME_CHECKOUT:-/home/user/work/runtime}
 N=${1:-}; S=${2:-}; BS=${3:-}; REMOTION=${4:-}
 RUNTIME_SHA=
+DEPENDENCY_SEED=${CHILD_VENV_DEPENDENCY_WHEELHOUSE:-}
 refuse() { echo "REFUSED: $*" >&2; exit 2; }
 case "$O:$W" in /*:/*) ;; *) refuse 'roots must be absolute';; esac
 [[ "$N" =~ ^venv-agent-child-[a-z0-9-]+$ ]] || refuse 'invalid child name'
 [[ "$S" =~ ^[0-9a-f]{40}$ ]] || refuse 'exact 40-character Agent commit required'
-if [ "$#" -eq 8 ] && [ "$5" = --source-carrier ]; then
-  A=$6; R=$7; RUNTIME_SHA=$8
-elif [ "$#" -gt 4 ]; then
-  refuse 'call shape is NAME AGENT_SHA [BASE_SUITE REMOTION_GRAPH] [--source-carrier AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA]'
-fi
+shift 2
+BS=
+REMOTION=
+if [ "$#" -gt 0 ] && [[ "$1" != --* ]]; then BS=$1; shift; fi
+if [ "$#" -gt 0 ] && [[ "$1" != --* ]]; then REMOTION=$1; shift; fi
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --source-carrier)
+      [ "$#" -ge 4 ] || refuse 'source carrier requires Agent checkout, Runtime checkout and Runtime SHA'
+      A=$2; R=$3; RUNTIME_SHA=$4; shift 4
+      ;;
+    --dependency-wheelhouse)
+      [ "$#" -ge 2 ] || refuse 'dependency wheelhouse path is missing'
+      DEPENDENCY_SEED=$2; shift 2
+      ;;
+    *) refuse 'unknown child venv option';;
+  esac
+done
 case "$A:$R" in /*:/*) ;; *) refuse 'source checkouts must be absolute';; esac
 [[ "$A" =~ ^/[A-Za-z0-9._/-]+$ && "$R" =~ ^/[A-Za-z0-9._/-]+$ ]] || refuse 'source checkout path contains unsafe characters'
 [ "$A" = "$(readlink -e -- "$A" 2>/dev/null)" ] || refuse 'Agent checkout path is missing or symlinked'
@@ -39,6 +53,11 @@ CLIENT_IDENTITY=$(git -C "$R" ls-tree -r --name-only "$RUNTIME_SHA" packages/pyt
   [ -n "$path" ] || continue; printf '%s=' "$path"; git -C "$R" show "$RUNTIME_SHA:$path" | sha256sum | cut -d' ' -f1
 done) || refuse 'client source unavailable'
 [ -n "$CLIENT_IDENTITY" ] || refuse 'generated Runtime client identity is incomplete'
+if [ -n "$DEPENDENCY_SEED" ]; then
+  [[ "$DEPENDENCY_SEED" =~ ^/[A-Za-z0-9._/-]+$ ]] || refuse 'dependency wheelhouse path contains unsafe characters'
+  [ -d "$DEPENDENCY_SEED" ] || refuse 'dependency wheelhouse is missing'
+  [ "$DEPENDENCY_SEED" = "$(readlink -e -- "$DEPENDENCY_SEED" 2>/dev/null)" ] || refuse 'dependency wheelhouse must be a physical directory'
+fi
 qualified=()
 # A retained destination with the requested name must authenticate itself.
 # Another matching bench cannot conceal a corrupt or partial same-name path.
@@ -220,10 +239,12 @@ fi
 for arg in "$N" "$S" "$BS" "$REMOTION"; do
   [ -z "$arg" ] || [[ "$arg" =~ ^[a-zA-Z0-9_-]+$ ]] || refuse 'dispatcher arguments must be simple names'
 done
-if [ "$#" -eq 8 ]; then
-  [[ "$A" =~ ^/[A-Za-z0-9._/-]+$ && "$R" =~ ^/[A-Za-z0-9._/-]+$ && "$RUNTIME_SHA" =~ ^[0-9a-f]{40}$ ]] || refuse 'dispatcher carrier contains unsafe fields'
-  printf 'CHILDVENV %s %s%s%s --source-carrier %s %s %s\n' "$N" "$S" "${BS:+ $BS}" "${REMOTION:+ $REMOTION}" "$A" "$R" "$RUNTIME_SHA" > "$O/queue/pending/childvenv-$N"
-else
-  printf 'CHILDVENV %s %s%s%s\n' "$N" "$S" "${BS:+ $BS}" "${REMOTION:+ $REMOTION}" > "$O/queue/pending/childvenv-$N"
-fi
+[[ "$A" =~ ^/[A-Za-z0-9._/-]+$ && "$R" =~ ^/[A-Za-z0-9._/-]+$ && "$RUNTIME_SHA" =~ ^[0-9a-f]{40}$ ]] || refuse 'dispatcher carrier contains unsafe fields'
+{
+  printf 'CHILDVENV %s %s' "$N" "$S"
+  [ -z "$BS" ] || printf ' %s' "$BS"
+  [ -z "$REMOTION" ] || printf ' %s' "$REMOTION"
+  [ -z "$DEPENDENCY_SEED" ] || printf ' --dependency-wheelhouse %s' "$DEPENDENCY_SEED"
+  printf ' --source-carrier %s %s %s\n' "$A" "$R" "$RUNTIME_SHA"
+} > "$O/queue/pending/childvenv-$N"
 echo "child venv $N queued; result in $O/queue/done/childvenv-$N"

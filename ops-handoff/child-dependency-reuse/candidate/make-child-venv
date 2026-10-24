@@ -20,7 +20,8 @@ PIP_NETWORK_TIMEOUT_SECONDS=${CHILD_VENV_PIP_NETWORK_TIMEOUT_SECONDS:-30}
 PIP_RETRIES=${CHILD_VENV_PIP_RETRIES:-2}
 REQUIREMENTS_PATH=${CHILD_VENV_REQUIREMENTS_PATH:-requirements/proof.lock}
 EXPECTED_PROOF_LOCK_SHA256=236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778
-DEPENDENCY_SEED=${CHILD_VENV_DEPENDENCY_WHEELHOUSE:-}
+VERIFIER_SHA256=3aba7a5a289b242f3152f39dd4939028eef94325c4c82fb0d96b41809df3c48e
+DEPENDENCY_SEED=
 SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
 
 case "$O:$W" in
@@ -41,12 +42,27 @@ case "$N" in
 esac
 [[ "$N" =~ ^venv-agent-child-[a-z0-9-]+$ ]] || { echo 'REFUSED: invalid child name'; exit 2; }
 [[ "$S" =~ ^[0-9a-f]{40}$ ]] || { echo 'REFUSED: exact Agent commit required'; exit 2; }
-if [ "$#" -eq 8 ] && [ "$5" = --source-carrier ]; then
-  A=$6; R=$7; RUNTIME_SHA=$8
-elif [ "$#" -gt 4 ]; then
-  echo 'REFUSED: call shape is NAME AGENT_SHA [BASE_SUITE REMOTION_GRAPH] [--source-carrier AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA]' >&2
-  exit 2
-fi
+shift 2
+BS=
+RT=
+if [ "$#" -gt 0 ] && [[ "$1" != --* ]]; then BS=$1; shift; fi
+if [ "$#" -gt 0 ] && [[ "$1" != --* ]]; then RT=$1; shift; fi
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --source-carrier)
+      [ "$#" -ge 4 ] || { echo 'REFUSED: source carrier requires Agent checkout, Runtime checkout and Runtime SHA' >&2; exit 2; }
+      A=$2; R=$3; RUNTIME_SHA=$4; shift 4
+      ;;
+    --dependency-wheelhouse)
+      [ "$#" -ge 2 ] || { echo 'REFUSED: dependency wheelhouse path is missing' >&2; exit 2; }
+      DEPENDENCY_SEED=$2; shift 2
+      ;;
+    *)
+      echo 'REFUSED: unknown child venv option' >&2
+      exit 2
+      ;;
+  esac
+done
 case "$A:$R" in /*:/*) ;; *) echo 'REFUSED: source checkouts must be absolute' >&2; exit 2;; esac
 [[ "$A" =~ ^/[A-Za-z0-9._/-]+$ && "$R" =~ ^/[A-Za-z0-9._/-]+$ ]] || { echo 'REFUSED: source checkout path contains unsafe characters' >&2; exit 2; }
 [ "$A" = "$(readlink -e -- "$A" 2>/dev/null)" ] || { echo 'REFUSED: Agent checkout path is missing or symlinked' >&2; exit 2; }
@@ -117,6 +133,9 @@ done
   [ "$DEPENDENCY_SEED" = "$(readlink -e -- "$DEPENDENCY_SEED" 2>/dev/null)" ] || missing+=("physical dependency wheelhouse:$DEPENDENCY_SEED")
   [ -d "$DEPENDENCY_SEED" ] || missing+=("directory:$DEPENDENCY_SEED")
   [ -f "$SCRIPT_DIR/verify_dependency_seed.py" ] || missing+=("dependency seed verifier:$SCRIPT_DIR/verify_dependency_seed.py")
+  [ ! -L "$SCRIPT_DIR/verify_dependency_seed.py" ] || missing+=("symlinked dependency seed verifier")
+  [ "$SCRIPT_DIR/verify_dependency_seed.py" = "$(readlink -e -- "$SCRIPT_DIR/verify_dependency_seed.py" 2>/dev/null)" ] || missing+=("non-physical dependency seed verifier")
+  [ "$(sha256sum "$SCRIPT_DIR/verify_dependency_seed.py" 2>/dev/null | cut -d' ' -f1)" = "$VERIFIER_SHA256" ] || missing+=("untrusted dependency seed verifier")
 }
 [ -w "$O/tests" ] || missing+=("writable:$O/tests")
 check() { "$@" >/dev/null 2>&1 || missing+=("$*"); }
@@ -166,7 +185,7 @@ done)
 
 STORE_HELPER=$O/bin/bench_store.py
 [ -f "$STORE_HELPER" ] && [ ! -L "$STORE_HELPER" ] || { echo 'REFUSED: bench store helper unavailable' >&2; exit 2; }
-export STORE_CONTEXT="$(declare -p O A R W PYTHON TIMEOUT_BIN PIP_TIMEOUT_SECONDS LOCAL_TIMEOUT_SECONDS FREEZE_TIMEOUT_SECONDS BUILD_TIMEOUT_SECONDS KILL_AFTER_SECONDS PIP_NETWORK_TIMEOUT_SECONDS PIP_RETRIES REQUIREMENTS_PATH N S BS RT RUNTIME_SHA CLIENT_IDENTITY LOCK_SHA; declare -f failure run_stage progress source_state)"
+export STORE_CONTEXT="$(declare -p O A R W PYTHON TIMEOUT_BIN PIP_TIMEOUT_SECONDS LOCAL_TIMEOUT_SECONDS FREEZE_TIMEOUT_SECONDS BUILD_TIMEOUT_SECONDS KILL_AFTER_SECONDS PIP_NETWORK_TIMEOUT_SECONDS PIP_RETRIES REQUIREMENTS_PATH N S BS RT RUNTIME_SHA CLIENT_IDENTITY LOCK_SHA DEPENDENCY_SEED SCRIPT_DIR; declare -f failure run_stage progress source_state)"
 python3 -I - "$0" "$STORE_HELPER" "$W/bench-store" "$O/tests" "$N" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$A" "$R" "$W" "$PYTHON" "$BS" "$RT" "$REQUIREMENTS_PATH" "$LOCK_SHA" <<'STORE_PY'
 import hashlib, importlib.util, os, pathlib, shlex, subprocess, sys
 script, helper, root, tests, name, agent, backend, client, checkout, runtime_checkout, work, python, base_suite, remotion, requirements, lock = sys.argv[1:]
@@ -286,10 +305,15 @@ run_stage filter-requirements "$LOCAL_TIMEOUT_SECONDS" bash -c \
   _ "$A" "$S" "$REQUIREMENTS_PATH" "$REQ"
 SEED_ARGS=()
 if [ -n "$DEPENDENCY_SEED" ]; then
-  run_stage verify-dependency-seed "$LOCAL_TIMEOUT_SECONDS" "$P" -I "$SCRIPT_DIR/verify_dependency_seed.py" "$DEPENDENCY_SEED" "$REQ"
-  SEED_ARGS=(--no-index --find-links "$DEPENDENCY_SEED" --require-hashes)
+  SEED_SNAPSHOT=$T/.dependency-wheelhouse
+  run_stage verify-dependency-seed "$LOCAL_TIMEOUT_SECONDS" "$P" -I "$SCRIPT_DIR/verify_dependency_seed.py" "$DEPENDENCY_SEED" "$REQ" "$SEED_SNAPSHOT"
+  SEED_ARGS=(--no-index --find-links "$SEED_SNAPSHOT" --require-hashes)
 fi
-run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" "${SEED_ARGS[@]}" -q --no-deps -r "$REQ"
+if [ -n "$DEPENDENCY_SEED" ]; then
+  run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" "${SEED_ARGS[@]}" -q --no-deps -r "$SEED_SNAPSHOT/requirements.txt"
+else
+  run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps -r "$REQ"
+fi
 
 AGENT_SRC=$SRC/agent
 RUNTIME_SRC=$SRC/runtime
