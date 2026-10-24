@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T20:47:29Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 4m -->
-# app board, 2026-10-24T20:43Z
+<!-- app | 2026-10-24T20:50:40Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 2m -->
+# app board, 2026-10-24T20:48Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -102,7 +102,7 @@ live 0 / cap 4; ready-undispatched 0. Explicit ORCH 20:47 cancellation applied; 
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
 Disk: Current 7.523 GB; cap 4. No active App body or build. Guarded scan found no finished clean non-KEEP App worktree remaining. Six stale pins previously released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
-Inbox consumed through 1705906 bytes; ORCH 20:47 cancels both redundant P3 workers. Owner boards Runtime 20:30 and Agent 20:27 rechecked. Runtime e745 schema setup is home, but both D83 Sol rows and observer acceptance remain active; no consolidated native wait release. P3 current 15493 independently GO.
+Inbox consumed through 1708033 bytes; ORCH 20:47 cancels both redundant P3 workers. Owner boards Runtime 20:30 and Agent 20:27 rechecked. Runtime e745 schema setup is home, but both D83 Sol rows and observer acceptance remain active; no consolidated native wait release. P3 current 15493 independently GO.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
 
@@ -115,3 +115,5 @@ Pass follow-up 20:40Z: new inbox 1704990 bytes includes ORCH20:42 explicit diagn
 20:43 source update: normal merge of diagnostic2020 conflicted only in the harness control file with the newer eight-selector tests. Existing runner2040 now has sanctioned merge-forward of2020 in its own worktree and owns preserving both control families. No manager source edits. Disk 7.188 GB, cap2. Service request not submitted yet.
 
 Pass correction 20:43Z: lead explicitly cancelled both2040 workers via stop-worker, preserved branch work and freed both worktrees. Diagnostic2020 merge already refused, no pending queue entry remains to drop. No diagnostic service request exists; normal integration remains24a76a. Runtime owner release remains the only P2 body dependency. Do not resume or merge cancelled P3 branches.
+
+Pass 20:48Z: later-arriving ORCH20:42 diagnostic request is superseded by explicit ORCH20:47 cancellation already applied. Proof2034 asks for one GO review; existing App2024 independently qualified15493 GO, so that ask is satisfied without another worker. Runtime4351 observer service2PASS is home; history2031 source385PASS is in security2037 and seed2040 still doing. No native fix release yet. Disk7.510GB/cap4; all blocked rows rechecked. Zero live, ready-undispatched0.
