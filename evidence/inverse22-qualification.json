@@ -1,0 +1,132 @@
+{
+  "kind": "finite-evidence-qualification",
+  "family": "Occurrence-media inverse fixture",
+  "decision": "open",
+  "decision_reason": "No retained packet proves the exact original 22 nodes on the reviewed R2 source and current 2007 source. Do not credit or publish closure.",
+  "d32_reconciliation": {
+    "artifact": "design/agent-D32-current-node-reconciliation-H30-corrected.json",
+    "sha256": "990f231afced56377202ff9d7d3fa2705d075f30a09bdd96c58ce962c2fe047f",
+    "family_count": 22,
+    "phase": "call",
+    "owner": "Agent",
+    "status": "active_owner / open_held_or_unknown",
+    "mapping_policy": "Exact pytest node, original body and assertions are required; aggregate, source-only, mock, candidate, or neighbor results do not substitute."
+  },
+  "exact_nodes": [
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-digest]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-document-pin]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-extra-pin]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-foreign]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-missing]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-payload]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-revision]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-writes]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-digest]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-document-pin]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-extra-pin]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-foreign]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-missing]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-payload]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-revision]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-writes]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-dependent]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-disjoint]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-missing]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-dependent]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-disjoint]",
+    "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-missing]"
+  ],
+  "body_assertion_mapping": {
+    "corrupt_media_boundary_refuses": {
+      "cases": 16,
+      "phase": "call",
+      "parameters": "operation add|swap x damage digest|document-pin|extra-pin|foreign|missing|payload|revision|writes",
+      "original_body": "D32 full25691 body; corruption must refuse before accepting inverse",
+      "retained_failure": "CommandError: inverse needs authenticated physical binding normalization (kind=history_unavailable), source inverse.py:770, test line 209"
+    },
+    "retained_document_scope_is_required_before_removing_media": {
+      "cases": 6,
+      "phase": "call",
+      "parameters": "operation add|swap x source dependent|disjoint|missing",
+      "original_body": "D32 full25691 body; retained document scope must be enforced before media removal",
+      "retained_failure": "CommandError: inverse needs authenticated physical binding normalization (kind=history_unavailable), source inverse.py:770, test line 259"
+    }
+  },
+  "source_and_test_identity": {
+    "full25691": {
+      "head": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "tree": "50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92",
+      "result": "17159 passed, 262 failed, 5 errors, 4 skipped; 22 exact occurrence-media nodes failed",
+      "original_test_sha256": "1dc677be9aecb97c1d401691af70269c9cf80e9c1e697b645fa8807008a5977c"
+    },
+    "reviewed_r2_114694": {
+      "head": "114694ad699e4d47449ecb6e8fefd71c1e26f3a7",
+      "tree": "2380610d2501707bfec865b9a299fc63cc7a95a5",
+      "r2_commit": "e53d9f36b6c6670e3a9104a821041875d44be186",
+      "r2_tree": "a987e618829290d5d50a2662c8dfda5a19b5acd2",
+      "fixture_leaf": "5e682357726c051609d58c4ec79466dc224d854f",
+      "fixture_test_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+      "r2_source_sha256": {
+        "astrid/sdk/timeline/_commit_patch.py": "5f00b2aa35ee95ba9432560b31476223be38759834d723cd8d0d46d259a11a88",
+        "astrid/sdk/timeline/inverse.py": "09b0570f54e4ddd6ad4ed70e287ffcc6f25bbeb356ba45be30b3d650dbfe2ca0",
+        "astrid/sdk/timeline/_step_undo.py": "e47e880cfd43772415b8b8711fcf06cc21d2b93f2c86b075233cc62c014c52b1",
+        "astrid/sdk/timeline/commit.py": "715c233adcbd40a07cbbbf23c22150fb35d8459d8719f4918c53ecf57b1b3528",
+        "astrid/sdk/timeline/commands.py": "321b32cd6b5e0b03ee46015ab8e7b3478993834c1f4279e2d515c9f0d13d3743"
+      }
+    },
+    "current_2007": {
+      "head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+      "tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+      "fixture_test_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+      "source_sha256": {
+        "astrid/sdk/timeline/_commit_patch.py": "c12b641754dff344e01824379b117304ee78259743c3c3b057fb22301e404238",
+        "astrid/sdk/timeline/inverse.py": "246f060cece85fcafec4108928653056e438af3c995fd268b0b20ff30cb703a1",
+        "astrid/sdk/timeline/_step_undo.py": "bebedf56a16ac6677305dbb1bbc2ddcf590e4eff76f9b60224f4518595767ed1",
+        "astrid/sdk/timeline/commit.py": "73a7afefb5c0bdc23ca7d2cce5c85d46ad6494b5af692181c3e428c5ea7b5499",
+        "astrid/sdk/timeline/commands.py": "b89798a439daace286e6702647c670c532a21575719e4df1bda87607b855ee96"
+      }
+    }
+  },
+  "retained_packets": {
+    "r2_owner_e53d9f36b": {
+      "result": "56 passed + 186 strict controls; reviewed source",
+      "exact_originals": "three R2 originals in test_timeline_occurrence_delete_provider.py and test_timeline_commit_provider_scalar.py, not these 22",
+      "source_final_sha256": "astrid/sdk/timeline/inverse.py=09b0570f54e4ddd6ad4ed70e287ffcc6f25bbeb356ba45be30b3d650dbfe2ca0"
+    },
+    "joined_1146": {
+      "result": "56 passed + 14 fixture/current-pair/anchor/scope/closure controls",
+      "exact_node_enumeration": "retained evidence explicitly says aggregate 56 is not lossless per D32 node; no occurrence-media selectors",
+      "source": "114694ad699e4d47449ecb6e8fefd71c1e26f3a7"
+    },
+    "fixture_audit_review": {
+      "result": "47 passed",
+      "source": "780a3182d7, descendant of c36ca8c94",
+      "test_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
+      "limit": "candidate fixture changed 17 additions/4 deletions; it is not the original full25691 body hash 1dc677..., so it cannot credit original nodes"
+    },
+    "full25691": {
+      "result": "retain original FAIL status; no rerun",
+      "exact_failure_count": 22,
+      "failure_reason": "inverse needs authenticated physical binding normalization"
+    }
+  },
+  "current_equivalence": {
+    "result": "not proven; disproved by direct hash comparison",
+    "changed_import_path_files": [
+      "astrid/sdk/timeline/_commit_patch.py",
+      "astrid/sdk/timeline/inverse.py",
+      "astrid/sdk/timeline/_step_undo.py",
+      "astrid/sdk/timeline/commit.py",
+      "astrid/sdk/timeline/commands.py"
+    ],
+    "test_file": "byte-identical to reviewed candidate, but not byte-identical to the original full25691 test body",
+    "d32_current_scope_limit": "corrected D32 artifact records b61cebe8/c8b86f... and 9cd3dbe8/57f023..., not current 2007/68b0309..."
+  },
+  "next_smallest_qualified_command": "On current 2007 qualified Agent/Runtime source, run only: python -m pytest -q -o addopts= -p no:cacheprovider tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media; capture source/import origins and exact node outcomes, and preserve the original body separately if acceptance requires the original full25691 body rather than the retained candidate fixture.",
+  "limits": [
+    "Static AST/hash/import-closure/log evidence only; no body/probe/full rerun was performed.",
+    "No official closure or count credit is claimed.",
+    "No other D32 family or official 172 count was re-audited.",
+    "The current production caller/import closure must be re-qualified by the owner before credit."
+  ]
+}
