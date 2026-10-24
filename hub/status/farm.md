@@ -1,4 +1,4 @@
-<!-- farm | 2026-10-24T11:45:16Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 6m -->
+<!-- farm | 2026-10-24T11:47:07Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 8m -->
 # farm board, 2026-10-24T11:40Z. No worker running.
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result) | commit |
