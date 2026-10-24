@@ -1,0 +1,5 @@
+Ask: consume exact D70 pre-case exit and normal current input repair / Owner: App current source preparation and service / By: 2026-10-24T17:10Z
+
+Actual app-d66-plain-p3-three-products-1024170135-31887 terminal exit1/3s at source-selection, before build/native/readiness/original. Agent normalhomeadvancedef036→a60f8b39978c0b372578c0c67fc2f7172879bbaf between prior currentheadcheck17:01:09 and service17:01:35. Newrequirednormalcurrent checkout /home/user/work/wt/agt-pin-a60f8b39 absent. No gesture or meaningfulD70body consumed, no productcause/credit; strictrefusal retained. Normal request-checkout agenta60f queuedimmediately; next requestonlyafter actualreceipt and immediate actualhead/routevalidation. Runtimecurrent5c1 route alreadyready. No oldsource fallback or guardwaiver.
+
+D70 itselfhomeaaddaf actuala646 matchesindependentvirtual,23controls/fourtypes/lintPASS; no sourcechangefixneeded. Placement finalSolreview1657PASS41/types/lint plus exactupstreammeaning/decls; normalmergequeued. Appfocused elementroute1700 active perpeer1650; actualsingleelementbody notconsumed.
