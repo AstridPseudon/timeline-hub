@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T10:46:38Z | dispatcher heartbeat 7s | live 1 (sol 1, luna 0, other 0) | busy30 15 | status age 2m -->
-# runtime board, 2026-10-24T10:44:42Z
+<!-- main | 2026-10-24T10:49:27Z | dispatcher heartbeat 11s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 1m -->
+# runtime board, 2026-10-24T10:48:34Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -91,6 +91,8 @@
 
 | OPS-schema-source-access | Obtain authentic schema source | Luna / orchestrator | Session access decision | blocked:orchestrator | Acquisition 0955 stopped | Exact declared GitHub source returned HTTP 403. No original source acquired and no alternate route attempted. | Input absent |
 | OPS-installed-route | Resolve installed route provenance | Luna | Independent receipt passed | merged | rt-OPS-installed-route-review-1035 | Four-file installed and committed publication PASS at 15eee8cd. Daemon drift attributed to separate orchestrator maintenance. [Review](../../design/runtime-installed-route-review-1035.md) | Evidence only |
+
+| OPS-maker-baseline | Refresh exact installed maker snapshot | Luna | Reviewed c119 maker receipt | doing | rt-OPS-maker-baseline-refresh-1050 | Existing strict test compares old saved e4 bytes with newly installed c119. Worker verifies and refreshes only the snapshot; test body unchanged. | Pending |
 
 Runtime full: zero of 36 original failures open at retained integrated scopes; no new full-suite PASS. Producer becfe6db88b2cc034dba3fafa6c050117cdf2b06 is merged and independently qualified after 409 targeted passes. Temporary producer JUnit loss remains disclosed. [Proof](../../design/runtime-freeze-result-review-0727.md).
 
