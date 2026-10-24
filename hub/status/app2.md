@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T15:12:56Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# app2 board, 2026-10-24T15:12Z
+<!-- app2 | 2026-10-24T15:15:07Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-24T15:14Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -63,7 +63,7 @@
 
 D56.4: Proof is folded into App. The single complete handoff is [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md). All in-flight items are complete, including independent caller1213 PASS. No new Proof dispatch, old tuple run or product merge is owed. The manager loop remains alive for new orchestrator instructions.
 
-live 0 / cap 4; ready-undispatched 0. Copied dispatcher header: <!-- app2 | 2026-10-24T15:08:38Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 4m --> D56.4 stand-down remains binding; App owns transferred rows.
+live 0 / cap 4; ready-undispatched 0. Copied dispatcher header: <!-- app2 | 2026-10-24T15:12:56Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m --> D56.4 stand-down remains binding; App owns transferred rows.
 
 core open: 4 final proof gates P1 to P4 remain unqualified on final heads. Execution transferred to App for P1/P2/P3 and Agent for P4. All eight original P2 gestures are CORE under D55b. Historical passes do not qualify final heads.
 regressions: App15:00 reports0 open among historical Node38:36 repaired and passing;2 SSH environment failures. Current full8158 remains with App producer1446 for terminal classification. No final zero-regression clearance is claimed.
@@ -112,9 +112,9 @@ D62: Header14:55 resolves Runtime native-custody escalation1443. No new submit-t
 
 D63: Header15:03 assigns the one cheap201-selector rename check and paired66-failure classification to Agent. Agent row1503 owns it. Eight upstream PASS contrasts require current cut proof; D23 stays deferred. Runtime source mismatch1459 remains scoped. No Proof dispatch or change to D56.4 follows.
 
-Disk: 8246611968 bytes free at 2026-10-24T15:12Z. All 1313 Proof workers done, no running markers. Three existing Proof trees are KEEP-marked; no eligible non-KEEP Proof tree. Prior cleanup, compact and locked-v1 refusals remain stopped; no alternate route launched.
+Disk: 8245788672 bytes free at 2026-10-24T15:14Z. All 1313 Proof workers done, no running markers. Three existing Proof trees are KEEP-marked; no eligible non-KEEP Proof tree. Prior cleanup, compact and locked-v1 refusals remain stopped; no alternate route launched.
 
-Pass 2026-10-24T15:12Z: Completed the monitoring interval after restart from STATUS and INBOX. Read PLAN first, MANAGER-COMMON, C0 and header through new D63. Inbox unchanged790277 bytes; D56.4 remains binding. bin/workers confirms all1313 Proof workers done. Rechecked every blocked row against App15:00, Agent14:59 with D63 row1503, and Runtime15:05 boards. P2/P3 remain preflight NO-GO with originals NOTRUN; sole App launch1437 and full8158 producer1446 remain active. Runtime source8825/auth9433/wire6e8 join1503 precedes security review and integrated proof. D63 classification has Agent owner1503; no Proof task follows. No new dispatch, duplicate run, peer note, product edit, Git mutation or refused cleanup route. STATUS is the manager harness restart point.
+Pass 2026-10-24T15:14Z: Restarted from STATUS and INBOX; read PLAN first, MANAGER-COMMON, C0 and header through D63. Inbox unchanged at790277 bytes; D56.4 remains binding. bin/workers confirms all1313 Proof workers done. Rechecked every blocked row against actual hub boards: App15:00 launch1437 and full8158 producer1446 remain owned; P2/P3 are preflight NO-GO with originals NOTRUN. Agent15:08 tracks7core and D63 correction1508, including two upstream counterparts and candidate181. Runtime15:05 joins committed8825/auth9433/wire6e8 in1503 before security and integrated proof. No transferred blocker cleared; no new Proof dispatch or decision follows. No duplicate run, peer note, product edit, Git mutation or refused cleanup route. Monitoring continues under D56.4.
 
 Inbox read through790277 bytes. Completed D56.4 handoff remains current. The manager harness can restart from this STATUS and INBOX; no new Proof dispatch is owed.
 
