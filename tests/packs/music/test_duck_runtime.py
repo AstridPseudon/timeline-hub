@@ -109,7 +109,7 @@ def test_managed_duck_outputs_and_tagged_rerun_leave_the_input_revision_unchange
         "bed": {"media_id": bed_id, "type": "audio/wav"},
         "voice": {"media_id": voice_id, "type": "audio/wav"},
     }}
-    parent["clips"] = [
+    parent["clips"] = parent["config"]["clips"] = [
         {"id": "voice-1", "clipType": "media", "track": "vo", "asset": "voice", "at": 0, "from": 0, "to": 8},
         {"id": "music-1", "clipType": "media", "track": "music", "asset": "bed", "at": 0, "from": 0, "to": 8},
     ]
