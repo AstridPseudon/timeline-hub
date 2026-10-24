@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T17:02:24Z | dispatcher heartbeat 12s | live 2 (sol 1, luna 1, other 0) | busy30 19 | status age 0m -->
+<!-- agent | 2026-10-24T17:05:19Z | dispatcher heartbeat 5s | live 3 (sol 1, luna 2, other 0) | busy30 20 | status age 0m -->
 # agent board, 2026-10-24T17:02:13Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -112,7 +112,7 @@
 | F D69 weakening audit | Audit178 changed upstream tests | Luna | Two upstream assertions owed | doing | Audit1603; small restore ready | One pass:167 cleared9 cited D09/D10,2 owed restore in CLI edit-flags. Source unchanged; exact hunks retained. | Current9502 /924 |
 
 | P4 CLI default | Preserve ordinary parser namespace | Luna | Actual current P4 proof | merged | Author1613; review1617 PASS36 | One-line default reviewed; retired flag rejected, P4 originals unchanged. [Review](../../workers/agt-P4-native-default-review-1617/report.md) | 4de7cdbc53 |
-| P4 ten-note cause | Reduce demonstrated validation cost | HARD Runtime Sol / Agent | Qualified source correction | blocked:runtime | rt-P4-history-resolver-sol-1652 | Runtime board1652 resumes retained profile; all validation and45s retained. No unchanged repeat. [Owner](../../design/rt-P4-history-cost-1625.md) | Runtime5c1 |
+| P4 ten-note cause | Reduce demonstrated validation cost | HARD Runtime Sol / Agent | Qualified source correction | blocked:runtime | rt-P4-schema-resolver-sol-1652 | Runtime board1652 resumes retained profile; all validation and45s retained. No unchanged repeat. [Owner](../../design/rt-P4-history-cost-1625.md) | Runtime5c1 |
 | D69 owed assertions | Restore two terminal-line predicates | Luna | Behavior proof | merged | Author1617; review1622 PASS | Both predicates and all47 successor records independently exact. Behavior pending. [Review](../../workers/agt-F-D69-two-assertions-review-1622/report.md) | 9a781a38f7 |
 
 | U4a root-auth successor | Bind qualified Runtime provenance | Luna | Normal merge complete | merged | agt-U4a-root-auth-rebind-1630 PASS | Lock-only tool update; 15 mappings unchanged, vendor/artifact checks PASS. [Report](../../workers/agt-U4a-root-auth-rebind-1630/report.md) | ef0363985e |
@@ -124,30 +124,32 @@
 | G2 P4 read boundary | Keep authenticated cache private | HARD Sol / Luna | D71 answered | doing | Sol1701 resumes1639 | Original P4 unchanged; one security review then service rerun. [Decision](../../managers/agent/INBOX.md) | Base3cc55 |
 
 | D69 actual49 checkpoint | Qualify restored47 and two assertions | Service | Product failure follow-through | review | Actual service23762 | All49 ran:39 FAIL10PASS17.11s. Exact47 subset37FAIL10PASS; two audit predicates FAIL. [JUnit](../../design/handoff-agt-F-D69-23762-d69-restored47.xml) | Agent ef036 / Runtime bc227 |
-| D69 CLI failures | Resolve11 retired-route conflicts | Luna / Orchestrator | D69 versus G5 disposition | blocked:orchestrator | CLI1646 complete | Eleven conflicts,three XML PASS; no environment claim. [Report](../../design/agt-F-D69-failures-cli-1646.md) | Evidence only |
-| D69 SDK failures | Resolve11 fixture contract conflicts | Luna / Orchestrator | D69 versus G5 disposition | blocked:orchestrator | SDK1646; duplicate1653 | Ten route conflicts and one invalid duplicate fixture; five XML PASS. No defect inferred. [Report](../../design/agt-F-D69-failures-sdk-1646.md) | Evidence only |
-| D69 core failures | Resolve11 old-writer fixture contracts | Luna / Orchestrator | D69 versus G5/R5 disposition | blocked:orchestrator | Core1646 complete | Eleven exact original failures require removed element/promotion/create writer seams. [Report](../../design/agt-F-D69-failures-core-1646.md) | Evidence only |
-| D69 rendering failures | Resolve4 native-window and input contracts | Luna / Orchestrator | Exact prior contract disposition | blocked:orchestrator | Rendering1646 complete | Four decision conflicts,two PASS; zero env. [Report](../../design/agt-F-D69-failures-render-1646.md) | Evidence only |
+| D69 CLI failures | Map retired CLI behavior coverage | Luna | D72 ready at cap | ready | Next free Luna slot | Eleven retired-interface failures; ledger mappings plus targeted replacement tests for uncovered capabilities. No old aliases. | Source8a2f |
+| D69 SDK failures | Map retired SDK behavior coverage | Luna | D72 ready at cap | ready | Next free Luna slot | Ten removed-surface failures; current replacement capability must be named and tested. Duplicate is separate. | Source8a2f |
+| D69 core failures | Migrate live setup and callers | Luna | D72 | doing | Element1705; approval/create ready | Seven element, two approval and two create-empty cases; every assertion retained, independent reviews follow. | Source8a2f |
+| D69 rendering failures | Migrate window, schema and host cases | Luna / Runtime | D72 failover assigned | blocked:runtime | Runtime peer1706 | Three disjoint ready families assigned Runtime spare capacity; no competing Agent author. | Source8a2f |
 | D69 CLI terminal hints | Restore two original terminal lines | Luna | Actual home proof | doing | Author1646; review1653; home1703 | Independent PASS2; normal mergea60f. Actual integrated two-case proof active. [Review](../../workers/agt-F-D69-cli-hint-review-1653/report.md) | 81a2615c54 |
 
-| R2 repeated source copy | Repair authenticated root-baseline guard | HARD Sol / Luna | Source cause qualified | doing | Whole-path1650; Sol1655 | Live Agent R2 defect: repeated physical shot revisions versus authored root guard. Two originals remain FAIL. [Cause](../../design/agt-R2-sourcecopy-whole-path-1650-source-cause.json) | Source pending |
+| R2 repeated source copy | Preserve authenticated root replay | HARD Sol / Luna | Independent security | review | Author1655; review1705 | Author2 originals,42 neighbors,35 authority/tool,8 focused PASS. Originals unchanged. [Author](../../workers/agt-R2-sourcecopy-root-sol-1655/report.md) | 14c8ecc2b4 |
 
-| G4 D69 duplicate | Resolve invalid mock versus admission contract | Luna / Orchestrator | D69 exact fixture disposition | blocked:orchestrator | Independent1653 complete | No product defect found; original invalid media bypasses old mocked check. Four live/negative controls PASS. [Report](../../design/agt-G4-D69-duplicate-validation-1653.md) | Source unchanged |
+| G4 D69 duplicate | Resolve original duplicate behavior | Luna | D72 ready at cap | ready | Next free Luna slot | Prior source review found invalid fixture and strict admission. D72 requests product fix; no guard bypass allowed. | Source unchanged |
 
 | U4a policy provenance | Adopt normal Runtime5c1 identity | Luna | Author checks PASS | merged | Adoption1657 | Normal-tool lock only;15 mappings unchanged,42 targeted PASS, vendor/artifact checks PASS. [Report](../../workers/agt-U4a-policy-home-rebind-1657/report.md) | Home8a2f5bb4f8 |
 
+| D72 approval and create | Preserve live promotion and empty creation | Luna | Ready at cap | ready | Next two free slots | Approval2 and create-empty2 setup/caller-only migrations; all assertions conserved. | Source8a2f |
+
 Integration: Agent8a2f5bb4f8 includes true upstream924 merge, D62 client/consumer, unchanged47 restorations, reviewed CLI terminal hints81a261 and tool-only Runtime5c1 provenance578420. Canonical15 unchanged. Runtime5c1 product equals qualifiedbc227; only reviewed skip-policy files changed.
-core open: 6 tracked pending actual-home CLI2 qualification: two P4, two source-copy redo, two terminal predicates. Separate37 D69 restored failures remain cut-blocking contract conflicts under escalation1654; no known-gap label. D71 no-leak regression now has active Sol1701. Root inverse actual-home PASS1.
-regressions: D71 confirms one P4 no-leak regression; active Sol1701. Two CLI output-order failures independently PASS2 and merged, actual-home1703 running. All37 D69 restored failures remain unqualified conflicts; duplicate stricter admission is not called a repair. Prior181 PASS16.
+core open: 6 tracked pending actual-home CLI2 qualification: two P4, two source-copy redo, two terminal predicates. Separate37 D69 restored failures now have D72 migration/retirement owners; no unqualified known-gap label. D71 no-leak regression now has active Sol1701. Root inverse actual-home PASS1.
+regressions: D71 confirms one P4 no-leak regression; active Sol1701. Two CLI output-order failures independently PASS2 and merged, actual-home1703 running. All37 D69 restored failures require D72 qualification; duplicate stricter admission is not called a repair. Prior181 PASS16.
 D60 baseline: Upstream924 full1621 terminal FAIL: 12396 passed, 91 failed, 14 errors, 16 skips, 566 subtests. Exact276:199 NEW-OURS and77 counterparts. Mutable external Runtime scope remains disclosed.
 D66 reverse:137 ledgered,178 present-changed,47 restored,0 renamed. Actual47:10PASS37FAIL; every failure source-classified as a concrete contract/fixture conflict under escalation1654. Audit178:167 cleared,9 cited,2 restored; terminal fix81a261 independentPASS2 merge queued.
 Gates: P1/P2/P3 App; P4 Agent; P5 and Composition Runtime. Original P4 service29577 FAIL2/PASS1. Next P4 run needs current source rebind and meaningful ten-note correction. Final-core body still owed.
 Admission: D56 ends Farm/schema venue work. Prior access and safety refusals stay stopped. D67 D13 remains unchanged visible environment known gap with no owner action. D23 timing remains deferred.
-Disk: About9GB free; cap6. All fresh completed worktrees already recycled. Sweep3 and compact-scratch active; prior refused targets stay stopped. No new heavy run yet.
+Disk: 8.88GiB free; cap4. All fresh completed trees recycled. Sweep3 removed0; compact packed0/gzipped0. Prior refused targets stay stopped; no heavy currently running.
 
-Blockers: Orchestrator — D69 exact37 restored expectations conflict with current retired writer/native-window/schema contracts. Consolidated escalation agent-20261024T1654Z-D69-restores-vs-retired-contracts.md; all bodies unchanged.
+Blockers: Agent — D72 resolves original37 disposition. Parallel faithful migrations and retired coverage mappings proceed; every remaining behavior failure stays visible and blocks cut.
 
 Blockers: Runtime — P4 ten-note timeout45s, unique HARD Sol1652 on immutable-schema resolver strategy after Luna profile. All validation and D47 no mutable-result cache retained.
 Next ready: consume sourcecopy1655 and private-cache1701, dispatch one independent security review per completed core change; actual CLI home1703. Apply D69 disposition1654 immediately. Final-core and unchanged P4 proofs follow meaningful reviewed source.
-live 3 / cap 6; ready-undispatched 0. HARD Sol1655 inverse and HARD Sol1701 D71 private cache, Luna1703 CLI home. Runtime shared P4 cost has unique Sol1652; no duplicate profile or body.
-Inbox consumed through D71 relay2026-10-24T16:57:03Z. Runtime board16:52 and App16:55 rechecked; normal Runtime5c1 provenance merged8a2f. D71 decision wait cleared immediately. Pass 2026-10-24T17:02:13Z.
+live 4 / cap 4; ready-undispatched 5. Sol1701 D71; Luna1703 home,1705 R2 security and1705 element. D72 approval2,create2,retired CLI,retired SDK,duplicate are ready at cap. Three render families assigned Runtime.
+Inbox consumed through D72 relay2026-10-24T17:01:22Z and full D71. Both decision waits cleared. Runtime board16:52 and App16:55 rechecked; normal Runtime5c1 provenance merged8a2f. D71 decision wait cleared immediately. Pass 2026-10-24T17:02:13Z.
