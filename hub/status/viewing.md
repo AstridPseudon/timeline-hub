@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T05:50:12Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 0m -->
-# viewing board, 2026-10-24T05:42:47Z
+<!-- viewing | 2026-10-24T05:51:41Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 0m -->
+# viewing board, 2026-10-24T05:50:46Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
