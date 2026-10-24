@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T15:36:05Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# app2 board, 2026-10-24T15:31Z
+<!-- app2 | 2026-10-24T15:38:12Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-24T15:37Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -64,7 +64,7 @@
 
 D56.4: Proof is folded into App. The single complete handoff is [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md). All in-flight items are complete, including independent caller1213 PASS. No new Proof dispatch, old tuple run or product merge is owed. The manager loop remains alive for new orchestrator instructions.
 
-live 0 / cap 4; ready-undispatched 0. Copied dispatcher header: <!-- app2 | 2026-10-24T15:29:52Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 4m --> D56.4 stand-down remains binding; App owns transferred rows.
+live 0 / cap 4; ready-undispatched 0. Copied dispatcher header: <!-- app2 | 2026-10-24T15:36:05Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m --> D56.4 stand-down remains binding; App owns transferred rows.
 
 core open: 4 final proof gates P1 to P4 remain unqualified on final heads. Execution transferred to App for P1/P2/P3 and Agent for P4. All eight original P2 gestures are CORE under D55b. Historical passes do not qualify final heads.
 regressions: App8158 retains one confirmed installer/schema regression, visibly pending D62 regeneration under D66; exact tuple manifest pins follow once, with strict guard. Agent actual d27b PASS16 closes its named env regression. D67 removes D13 installed-tuple UNKNOWN from core blockers; six Agent fork/forward cases remain. No final zero-regression clearance.
@@ -91,7 +91,7 @@ Historical23809/9310 remain separate NO-GO: P2 exit1/463 seconds,three failed/fi
 
 D45 six older diagnostics are NOT RETAINED; creation/loss unproved. Synthetic P3 f182af and current3896 synthetic1bc3 are same-tree authorized snapshots; P2 historical synthetic identity and actual daemon attribution stay UNKNOWN. Source-preflight20674/10144 were wrong artifact targets, each exit2/6 seconds and all originalsNOTRUN. No failed run was relabelled or resubmitted.
 
-Final gates: App15:19 retains independent verdict1438 for actualP212541/P31689: each exit2/1s at environment guard; all originals NOTRUN, no backend outcome inferred. D64 author52966 passed actual empty-service controls; Luna1518 owns exact real-service installation/dry with clean abort and missing-input poison. No separate harness custody review gates execution. Submit P2/P3 in parallel only after actual D64 dryPASS. P1 Sol1514 and wholepath1514 run independently. Full8158 terminalFAIL:19256 VitestPASS/1 installer schemaFAIL, NodeNOTRUN; release decision escalated1514. Runtime15:17 joinedproducere02f awaits security1511/full paired union, then normal merge/adoption/proof. Agent15:16 tracks7core with env fixHOMEd27b and integrated1518 pending. Final cut and P1–P5 remain unqualified.
+Final gates: App15:21 retains historical12541/1689 NO-GO: each exit2/1s, all originals NOTRUN. Header D66 now supersedes caller-custody work and D64 dry: App must plain-boot current heads with original files and identity manifest, pass P1 control, then run P2/P3 in parallel without verdict-review wait. Latest App publication still predates D66; no new live result inferred. D65 pins once after D62 generation/adoption; installer8158 remains visibly pending with19256PASS/1FAIL and NodeNOTRUN. Runtime15:31 records actual HOME8b32 exactly equal independently reviewed e02f, security1511 and paired412PASS. Agent15:29 owns six fork/forward originals and final P4/core; D67 D13 is unchanged env known gap. Final cut and P1-P5 remain unqualified.
 
 Blockers: App launch — D66 plain current-head service boot and green P1 control precede parallel P2/P3. Plain manifest records all repo heads, original file hashes, service versions and JUnit XML. Caller-custody and worker-only installation are no longer prerequisites.
 
@@ -121,9 +121,9 @@ D66: Header H42 replaces D64 launch and all caller-custody prerequisites. App st
 
 D67: Agent D13 installed-native preflight is NEW-OURS and lacks genuine deployment bindings/tool paths in lane environments. It stays unchanged and visibly failing as an environment known gap, with README post-install instructions. It is not core-blocking; Agent target is six fork/forward cases. No fabricated input or Proof run.
 
-Disk: 8233414656 bytes free at 2026-10-24T15:31Z. All1313 Proof workers done, no running markers. Three existing Proof trees are KEEP-marked; no eligible non-KEEP Proof tree. Prior cleanup, compact and locked-v1 refusals remain stopped; no alternate route launched.
+Disk: 8230023168 bytes free at 2026-10-24T15:37Z. All1313 Proof workers done, no running markers. Three existing Proof trees are KEEP-marked; no eligible non-KEEP Proof tree. Prior cleanup, compact and locked-v1 refusals remain stopped; no alternate route launched.
 
-Pass 2026-10-24T15:31Z: PLAN read first, common rules and contract consulted, header read through new D65. Inbox unchanged790277 bytes. bin/workers confirms all1313 done. Rechecked every blocked row against actual App15:21, Agent15:24 and Runtime15:24 hub boards. D64 real-service dry/poison remains App1518-owned before originals. D65 clears the installer decision wait; F-App-current now waits for the approved App manifest repair and strict proof. Agent d27b actual16 PASS and completed D63 rollup retained. Runtime e02f security1511 and durable proof route1524 remain owned. No new Proof assignment; D56.4 stands. No duplicate run, peer note, product edit, Git mutation or refused cleanup route. Continuing the monitoring interval; STATUS is the harness restart point.
+Pass 2026-10-24T15:37Z: Completed a ten-minute monitoring interval after restart. PLAN read first; common rules, contract and header consulted through D65-D67. Inbox unchanged790277 bytes. bin/workers confirms all1313 done. Rechecked blocked rows against App15:21, Agent15:29 and Runtime15:31 actual hub boards. D66 replaces launch custody with App plain current-head boot, green P1 control, then parallel P2/P3. D65/D66 resolves installer decision and defers one exact manifest pin until D62 generation; F-App-current is gated accordingly. Runtime actual8b32 is normally merged and equals security-reviewed e02f, paired412PASS; separate proof stage superseded. Agent D67 target six confirmed on owner board; reverse-diff1527 active. No new Proof assignment; D56.4 stands. No duplicate run, peer note, product edit, Git mutation or refused cleanup route. STATUS is the harness restart point.
 
 Inbox read through790277 bytes. Completed D56.4 handoff remains current. The manager harness can restart from this STATUS and INBOX; no new Proof dispatch is owed.
 
