@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T23:42:47Z | dispatcher heartbeat 8s | live 2 (sol 1, luna 1, other 0) | busy30 9 | status age 2m -->
-# runtime board, 2026-10-24T23:37:24Z
+<!-- main | 2026-10-24T23:46:07Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 0m -->
+# runtime board, 2026-10-24T23:46:06Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -195,18 +195,18 @@
 
 | P2-spare-venue | Complete four main diagnostics | Luna / main service | All four originals reached | merged | rt-P2-main-dependency-2250 | All readiness PASS; four NO-GO. Parent envelope, SWAP allocation, single intent and bulk display. [Report](../../design/runtime-P2-main-four-report-2250.md) | Fixed bceb/039f/732/635f |
 
-| P4-D84a-distinct | Repair full provider-return freshness | HARD Sol / Luna | Second independent review FAIL | doing | Sol2330; read-only wholepath2330 | Candidate7627 leaks after provider pin callback; held. Independent caller-to-store investigation runs with source repair. [FAIL](../../design/runtime-R2-assembly-security-return-2319.md) | Released732;7627 held |
+| P4-D84a-distinct | Authenticate full provider-return boundary | Sol / Luna final security | Independent final source review | review | Author2330; security2346 | Candidate6a9 author260+192+123,2witnesses and3finite PASS. Old7627 latepinreadFAIL retained. [Author](../../design/runtime-R2-provider-freshness-2330.md) | 6a9a98f96 held |
 
 | P2-popup-digest | Preserve exact raw canonical digest | App Luna / independent | App source and controls complete | merged | Author2233; review2239; return2246 | App63d7 preserves numeric spelling; canonical and opaque mutation controls PASS. New ADD7872 remains App owned; old5083 stays failed. | App63d7c74b6d |
 | P2-parent-envelope | Attribute actual parent request shape | App Luna requested | Actual8232 retained source and trace | blocked:app | App owner via peer2303 | Strict request equality sees additional label/steps. C0 attribution and independent exact correction requested; no product cause inferred. | App source unchanged |
-| P2-swap-command | Declare SWAP asset allocation | App source requested | Runtime source attribution complete | blocked:app | Runtime2308; App requested | Missing commands[1].created claim. Six Agent and two Runtime controls PASS; guard unchanged. [Finding](../../design/runtime-P2-swap-comparison-2308.md) | Source unchanged |
+| P2-swap-command | Declare SWAP asset allocation | Luna / Runtime failover | App exclusive source handoff | doing | rt-A3-SWAP-created-2343 | Exact32036 base; conditional new-alias claim plus faithful controls. One independent core review before remoteApp merge; no body. | Source candidate pending |
 | P2-popup-canonical | Qualify complete canonical expectation | App Luna | ADD7872 raw digest passed | blocked:app | app-P2-popup-7872-exact-expectation-2301 | Strict full equality860 differs in parent revision identity/digest. App owns retained-data attribution and exact correction; no Runtime source request. | App63d7 / Runtime732 |
 | P2-transition-intent | Qualify exact clear step intent | App source requested | Single10376 original reached | blocked:app | Existing tour oracle owner via peer2313 | Strict step377 expects generic intent; actual clear action emits specific intent. Batch with parent envelope in one protected file; bulk2773 pending. | Fixedbceb/039f/732/635f |
 
 | F-provider-ABI20 | Migrate selected-PARAM real provider setup | Luna | Normal remote Agent merge receipt | merging | Author2316; independent2322 PASS | Exact21, reverse21 and13 neighbor/order controls PASS; original AST/matrix exact. [Review](../../design/runtime-Agent-ABI20-review-2322.md) | 2378867874 |
 | P2-transition-bulk | Qualify exact clear display value | App source requested | Actual2773 original reached | blocked:app | Main2250; App requested | Original expects None; actual select displays __none__. Exact retained-data attribution required; no oracle change inferred. | Exact bceb/039f/732/635f |
 
-| D86-Agent-families | Host disjoint Agent family authors | Luna | Named list received and dispatched | doing | Four agt-D86-main workers2333 | All74 assigned nodes: M1 10,shared inverse10,native word46,CLI8. Source/AST/statics only; one later main affected-node batch. | Agent5d4ae93 base |
+| D86-Agent-families | Host six Agent family authors | Luna | All six named families dispatched | doing | Six main families; nativeword return2341 | 108 affected nodes. Three source returns for Agent review, word firstreturn plus media20/auto14 active. Source-only; later main batch. | Agent5d4ae93 base |
 
 | D86-M1-outbox | Migrate ten outbox setup cases | Luna / Agent review | Protected fixture-history mapping | review | agt-D86-main-M1-2333 | Source/statics PASS; bootstrap/recorded history assertions changed and need strict independent mapping. No body/core credit. | baaa9fd3f |
 | D86-shared-inverse | Migrate ten shared inverse cases | Luna / Agent review | Agent protected review then merge | review | agt-D86-main-shared-inverse-2333 | Source/statics/AST PASS; genuine native provider and shared shot identity retained. Remote request; no behavioral credit. | d49ebd104 |
@@ -215,22 +215,25 @@
 
 | D86-main-batch-prep | Prepare existing main affected-node route | Luna | D86 main qualification assignment | doing | rt-D86-main-batch-prep-2337 | Source and parsed stub only; exact74-node manifest, existing service and D73 receipt/input guards. No body or live install. | Future tuple pending |
 
+| D86-parent-media | Migrate20 parent media cases | Luna | New exclusive Agent file allocation | doing | agt-D86-main-parent-media-2343 | Source-only real caller/created-claim attribution; every original behavior retained. No per-family body. | Agent5d4ae93 |
+| D86-parent-auto | Migrate14 parent completion cases | Luna | New exclusive Agent file allocation | doing | agt-D86-main-parent-auto-2343 | Source-only; no assumed common cause from invalid_records. Independent Agent review before normal merge. | Agent5d4ae93 |
+
 Runtime producer: RELEASED 732c48c6f5a9441a65c61b24595d454a1cd3e180, tree 7ed0559c6f0a05954427cc668e303b6cd2f51586. Canonical 15 files and schema867f unchanged. [Release](../../design/runtime-D84a-release-2205.md).
 
 core open: P4 ten-note remains45.314s. Bad9 and7627 failed independent callback freshness attacks and remain held. Sol2330 repairs the full provider boundary; independent wholepath2330 has reproduced the late pin-read gap. Original remains45.314s; no new timing claim. Four R2 originals are closed on actual Agent7c48, tree-equal to testedc2a63; original45s preserved. Element7131 still fails unchanged5s; local one-patch0.315s does not reproduce actual realm.
 regressions: No newly established Runtime regression. D77 genuine installed render remains cut-blocking. Known gaps and original historical failures remain visible at their recorded scopes.
 Gates: P1 GO31083 and P3 GO15493/independent2024 retain recorded tuples. All eight P2 remain unqualified; final P1–P5 and core matrix on one tuple still required. No cut, final build or ZIP.
 
-Blockers: Runtime P4 — independent2319 FAIL: provider pin-read callback after store finalcheck mutates ancestor metadata and port returns. Sol2330 repairs full provider boundary; independent Luna2330 wholepath runs in parallel. Released732 unchanged.
+Blockers: Runtime P4 — final6a9 source encloses fullprovider boundary; author260+192+123 and both actualwitnessesPASS. Independent Luna2346 finalsecurity and normalapply onPASS active. Oldbad9/7627FAIL held; released732 unchanged.
 Blockers: App P2 — element7131 remains failed5s. App mounted drops8419/8259 sent no intendedPOST; uniqueAppSol2319 owns repair. ADD5217 reached new helper import error, App2327 owns setup. App tour2323 batches parent/single/bulk; SWAP claim App-owned.
 Main profile: CLEARED by2250 private exact635f package resolution and four actual preflights PASS. Parent8232 terminal at exact request envelope; shared dependencies unchanged. Historical setup failures retained. [Prior report](../../design/runtime-main-profile-2238.md).
 Blockers: Final cut — D59 requires all lanes core0/regressions0, final pinned P1–P5/core, D69 and genuine installed render. Private final candidates remain uninstalled. Rehearsal retry waits heavy8.5GB threshold and critical priority.
-Next ready: Sol2330 source returns to final independentsecurity. Four D86 source authors and main-batch prep2337 active; Agent reviews/normal merges precede one affected-node batch. ABI20 remote receipt pending. Rehearsal below8.5GB; final tuple pending.
+Next ready: Independent security2346 qualifies6a9 and normalapply onPASS. Four D86 source authors and main-batch prep2337 active; Agent reviews/normal merges precede one affected-node batch. ABI20 remote receipt pending. Rehearsal below8.5GB; final tuple pending.
 
 Venues: App P1/P2/P3 and final P2 tour; Agent P4; main P5/Composition. Spare main four diagnostics use fixedbceb/039f/732/635f only. D73 captures tuple once, genuine checkout receipts and preflight precede body. Newer heads do not invalidate an in-flight run.
 Delivery: Runtime merge, Agent merge, authentic App manifest command with schema digest equality, App merge. D65/D67/D72 docs installed. D77 render and D62 submit-completeness known gap remain explicit.
 Later: E1/E3, AgentE2 and D79 paused until ZIP. D42 cross-request memo held; V4 cut, D14/D23 deferred; unsafe D34 cleanup held. D56 Farm/schema access stopped. All historical safety/access/cleanup/process refusals remain stopped.
 Disk: 7521595392 available bytes at23:31; sourcecap6 underD85, service tiers retained. Sweep3 removed0; compact packed0 and gzipped10old logs. No ended clean nonKEEP Runtime tree eligible; no refused-target retry.
 
-live 3 / cap 6 source; ready-undispatched 0. Runtime Sol2330, native-word firstreturn2341 and main-batch prep2337; M1 and inverse/CLI source returned for remote review. Wholepath2330 complete; exact late-callback finding retained. No per-family bodies. ABI20 remote merge pending. Heavy cap2 with one body below7.5GB; rehearsal noncritical held below8.5GB.
-Current pass 2026-10-24T23:40:48Z: All3 completed D86 families source-only returned through remoteAgent requests with ONEprotectedreview required. M1 history fixture assertions explicitly flagged for independent no-weakening map. Nativeword firstreturn2341 active on expanded uniquefixture scope; product readonly. RuntimeSol2330 requiredsuite active; mainbatchprep2337 active. Current source3/cap6, authoritative4 families all owned; no duplicate body. Inbox through622838 bytes.
+live 6 / cap 6 source; ready-undispatched 0. Runtime finalsecurity2346, nativeword2341, main-batch prep2337, App SWAP2343 and Agent parentmedia20/auto14 authors2343. Three Agent returns need owner review. Wholepath2330 complete; exact late-callback finding retained. No per-family bodies. ABI20 remote merge pending. Heavy cap2 with one body below7.5GB; rehearsal noncritical held below8.5GB.
+Current pass 2026-10-24T23:46:06Z: RuntimeSol2330 complete6a9 exact3files.260required+192neighbors+123port/coordinator+2actualwitnesses+3finitepreviewsPASS, original42attacks kept. Independent finalLuna2346 dispatched IMMEDIATELY; onPASSnormalqueueapply andhomeidentity inworker, no extra stage/body. Oldsource732 remains. All6 source slots owned; mainqualification preparation no body. Inbox through627314 bytes.

@@ -1,0 +1,400 @@
+                 and isinstance(row.get("payload"), Mapping), "invalid revision image")
+        _require(row.get("content_digest") == _digest(row["payload"]),
+                 "immutable payload digest mismatch")
+        _require("project_id" not in row, "project scope belongs on the canonical document")
+    _require(set(parent) == PARENT_IMAGE_FIELDS, "invalid parent image")
+    payload = parent["payload"]
+    config = payload.get("config", {})
+    _require(isinstance(config, Mapping), "invalid parent config")
+    if payload.get("clips") and config.get("clips"):
+        _require(payload["clips"] == config["clips"], "parent clips and config.clips disagree")
+    for row in shots:
+        _require(set(row) == SHOT_IMAGE_FIELDS and _id(row["shot_id"]),
+                 "invalid shot image")
+    for row in internals:
+        _require(set(row) == INTERNAL_IMAGE_FIELDS
+                 and _id(row["timeline_id"]), "invalid internal image")
+    shot_index = {(row["shot_id"], row["revision_id"]): row for row in shots}
+    internal_index = {row["revision_id"]: row for row in internals}
+    _require(len(shot_index) == len(shots) and len(internal_index) == len(internals)
+             and len({row["revision_id"] for row in shots}) == len(shots),
+             "duplicate closure identity")
+    occurrences = parent["payload"].get("occurrences")
+    _require(isinstance(occurrences, list), "parent occurrences are required")
+    used_shots = set()
+    for row in occurrences:
+        _require(isinstance(row, Mapping), "invalid occurrence")
+        key = (row.get("shot_id"), row.get("shot_revision_id"))
+        _require(key in shot_index, "missing exact occurrence shot revision")
+        used_shots.add(key)
+    _require(used_shots == set(shot_index), "shot closure is incomplete or contains orphans")
+astrid/sdk/timeline/native_parent_media_commands.py:166:    calls.extend(call('track.create', {'row': row}) for row in timeline['tracks']
+astrid/sdk/timeline/capture.py:235:def track_create(ctx, command):
+astrid/sdk/timeline/capture.py:258:def capture_track_create(bundle, owner, row):
+astrid/sdk/timeline/capture.py:260:    return _capture(bundle, {'schema_version': 1, 'op': 'track.create', 'version': '1',
+astrid/sdk/timeline/_collections.py:10:         'track.create': 'track'}
+astrid/sdk/timeline/_recording.py:172:            self.select('track.create' if kind == 'track' else 'collection.' + kind + 's', owner)
+astrid/sdk/timeline/_recording.py:259:                        and selected['key'] == 'track.create'
+astrid/sdk/timeline/native_initialize.py:28:    Append full V1 then A1 track.create captures over each preceding local result.
+astrid/sdk/timeline/commands.py:39:    from .capture import MOVE_INTENT, move, track_create
+astrid/sdk/timeline/commands.py:102:            'track.create': Operation(TRACK_CREATE_PARAMETERS, track_create, {}),
+astrid/sdk/timeline/commands.py:153:    if command['op'] == 'track.create':
+astrid/sdk/timeline/commands.py:157:            raise CommandError("track.create requires parent or occurrence owner")
+astrid/sdk/timeline/commands.py:159:            raise CommandError("track.create has no intention overrides")
+astrid/sdk/timeline/inverse.py:779:                selections.append(selection(state, 'track.create', owner))
+astrid/sdk/timeline/inverse.py:1112:            if (selected['key'] == 'track.create'
+astrid/sdk/timeline/native_checkout.py:37:    if command.get('op') == 'track.create' and command['select'] == 'parent':
+astrid/sdk/timeline/native_checkout.py:62:                and selection[0].get('key') == 'track.create'
+astrid/sdk/timeline/capture.py:235:def track_create(ctx, command):
+astrid/sdk/timeline/capture.py:258:def capture_track_create(bundle, owner, row):
+astrid/sdk/timeline/capture.py:260:    return _capture(bundle, {'schema_version': 1, 'op': 'track.create', 'version': '1',
+31:def body(editing, calls, *, dry_run=False):
+
+exec
+/bin/bash -lc "sed -n '300,420p' astrid/sdk/timeline/emitter.py; sed -n '220,285p' astrid/sdk/timeline/capture.py; sed -n '130,210p' astrid/sdk/timeline/commands.py" in /home/user/work/wt/agt-D86-main-parent-auto-2343
+ succeeded in 0ms:
+            commands.append(command)
+            pending = []
+        return commands
+    except (CommandError, ValueError, KeyError) as exc:
+        raise DocumentPatchError(f"cannot emit a source-bound doc.patch: {exc}") from exc
+
+
+__all__ = ["DocumentPatchError", "emit_document_commands"]
+    _provenance(ctx, owner)
+    ctx.bind('move.target', ref, dependencies=['move.images', 'move.quantization', *source_dependencies])
+    ctx.write(ref, ['at_ms'] if 'at_ms' in clip and 'at' not in clip else ['at'],
+              local * 1000 if 'at_ms' in clip and 'at' not in clip else local)
+    if 'at' in clip and 'at_ms' in clip:
+        ctx.write(ref, ['at_ms'], local * 1000)
+    ctx.object(ref, ['app'])
+    ctx.object(ref, ['app', 'astrid'])
+    for prefix in (['app'], ['app', 'astrid']):
+        for key in ('on', 'until', 'until_film_end'):
+            ctx.clear(ref, prefix + [key])
+    ctx.write(ref, ['app', 'astrid', 'fixed_start'], True)
+    ctx.write(ref, ['app', 'astrid', 'for'], duration)
+
+
+def track_create(ctx, command):
+    owner, row = command['select'], command['args']['row']
+    ctx.create(owner, 'track', row)
+
+
+def _capture(bundle, command):
+    from .commands import execute
+    return execute(bundle, [command]).commands[0]
+
+
+def move_intent(select):
+    intent = dict(MOVE_INTENT)
+    if isinstance(select, str) and select.startswith('occurrence:'):
+        intent['ownership'] = 'occurrence'
+    return intent
+
+
+def capture_move(bundle, select, on):
+    """Capture on the original authored bundle; `on` is absolute global seconds."""
+    return _capture(bundle, {'schema_version': 1, 'op': 'clip.move', 'version': '1',
+                             'select': select, 'args': {'on': on}, 'intent': move_intent(select)})
+
+
+def capture_track_create(bundle, owner, row):
+    """Small structural proof: caller allocates the row ID once, before sending."""
+    return _capture(bundle, {'schema_version': 1, 'op': 'track.create', 'version': '1',
+                             'select': owner, 'args': {'row': copy.deepcopy(row)}, 'intent': {}})
+
+
+def capture_clip_delete(bundle, select):
+    """Capture a bounded parent removal through the authoritative executor."""
+    return _capture(bundle, {'schema_version': 1, 'op': 'clip.delete', 'version': '1',
+                             'select': select, 'args': {}, 'intent': {}})
+
+
+def validate_command(command):
+    try:
+        json.dumps(command, allow_nan=False)
+    except (ValueError, TypeError) as exc:
+        raise CommandError("command must be finite JSON") from exc
+    errors = sorted(_VALIDATOR.iter_errors(command), key=lambda e: str(e.path))
+    if errors:
+        raise CommandError(errors[0].message)
+    if command['version'] != '1':
+        raise CommandError("unsupported operation version", kind='unsupported_version')
+    if command['op'] not in (*operations(), 'timeline.inverse', 'timeline.restore'):
+        raise CommandError(f"unsupported operation {command['op']!r}", kind='unsupported_operation')
+    operation = operations().get(command['op'])
+    if operation is not None:
+        errors = list(_VALIDATOR.evolve(schema=operation.parameters).iter_errors(command['args']))
+        if errors:
+            raise CommandError(errors[0].message)
+    if command['op'] == 'doc.patch':
+        from ._doc_patch import validate_submitted_change
+        for change in command['args']['changes']:
+            validate_submitted_change(change)
+    if command['op'] == 'track.create':
+        if command['select'] != 'parent' and not (
+                isinstance(command['select'], str) and command['select'].startswith('occurrence:')
+                and '/' not in command['select']):
+            raise CommandError("track.create requires parent or occurrence owner")
+        if command.get('intent', {}) != {}:
+            raise CommandError("track.create has no intention overrides")
+
+    if command['op'] == 'producer.guard':
+        pin = command['args']['pin']
+        if any(type(pin[key]) is not int for key in ('fence', 'runtime_epoch')):
+            raise CommandError('producer fence and epoch must be positive integers')
+
+
+def _normalize(command):
+    command = copy.deepcopy(command)
+    validate_command(command)
+    operation = operations().get(command['op'])
+    resolved = command.get('resolved', [command['select']] if operation and operation.singleton else [])
+    for field in ('expect', 'authorship'):
+        if field not in command:
+            continue
+        normalized = {}
+        for key, value in command[field].items():
+            ref, path = address(key, resolved)
+            canonical = ref + '::' + spelling(path)
+            if canonical in normalized and not equal(normalized[canonical], value):
+                raise CommandError("inconsistent equivalent property guards", ref=ref, path=path)
+            normalized[canonical] = value
+        command[field] = normalized
+    return command
+
+
+def _verify_claims(ctx, command):
+    for ref in command.get('created', []):
+        if ctx.state.entity(ref, optional=True) is not None:
+            raise CommandError('created identity is occupied', kind='identity_collision', ref=ref)
+    for key, expected in command.get('expect', {}).items():
+        ref, path = address(key, command.get('resolved', []))
+        guard(ctx.state, ref, path, expected)
+    for read in command.get('reads', []):
+        guard(ctx.state, read['ref'], read['path'], read['state'])
+    for selected in command.get('selections', []):
+        actual = selection(ctx.state, selected['key'], selected['owner'], selected['members'])
+        if not selection_matches(selected, actual):
+            raise CommandError("original selection membership/order changed", kind='selection_changed', ref=selected['owner'])
+
+
+def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_map=None,
+            closures=None, verified_media=(), schema_inputs=(), realm_id=None, resolve_inputs=None,
+            verified_producer=None, commit_request=None, evaluated_head=None, replay_bindings=None):
+    """Execute atomically. History inputs must already be authenticated by provider.
+
+    Empty intervening_records means proven empty ancestry, never unavailable
+    history. Incoming recorder fields are checked claims; generated records are
+    the authority. No persistence, mutable reads or renderer lives here.
+    """
+    from .inverse import apply_inverse
+
+codex
+The authoritative D86 row confirms the 14 selectors are exactly the three-mode six-case retry/undo path, six stale-read controls, and two promoted-variant cases. The rehearsal evidence identifies the relevant Runtime refusal as command/record identity validation, not permission to relax guards. I’m therefore changing only the fixture setup: keep the genuine managed-output/bootstrap path, request a pristine empty timeline, and add the visual parent track through the current source-bound `doc.patch` emitter with a complete commit envelope so its `created` claim is generated and authenticated by the real Agent provider. The test bodies and selectors remain untouched.
+apply patch
+patch: completed
+/home/user/work/wt/agt-D86-main-parent-auto-2343/tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+diff --git a/tests/editing_conformance/test_commit_runtime_parent_auto_completion.py b/tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+index d4306b2181debd447a0f734fa52381fc9bce7002..1622f3686f8fd77fac1b4f3d486d40ab93223101
+--- a/tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
++++ b/tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+@@ -24,7 +24,34 @@
+ 
+ @pytest.fixture(params=['image', 'video'])
+ def editing(request, tmp_path, monkeypatch):
+-    yield from parent.media_realm(tmp_path, monkeypatch, request.param, historical=False)
++    realm = parent.media_realm(tmp_path, monkeypatch, request.param, historical=False, pristine=True)
++    try:
++        editing = next(realm)
++        from astrid.sdk.timeline.emitter import emit_document_commands
++
++        before = bundle_from_document(parent.current(editing))
++        after = copy.deepcopy(before)
++        after['parent']['config']['tracks'].append({
++            'id': 'visual', 'kind': 'visual', 'role': 'output', 'opaque': [None, False],
++        })
++        commands_to_apply = emit_document_commands(before, after)
++        request_body = parent.body(editing, commands_to_apply)
++        request_body.update(
++            label='parent auto fixture', merge='atomic', reads=[],
++            rationale='Parent auto fixture bootstrap', group_id='parent-auto-fixture',
++            steps=[{
++                'id': 'parent-auto-fixture', 'label': 'parent auto fixture',
++                'intent': 'Prepare parent auto fixture', 'tags': ['integration'],
++                'command_ordinals': list(range(len(commands_to_apply))),
++                'patch': [change for command in commands_to_apply
++                          for change in command['args']['changes']],
++                'reads': [],
++            }],
++        )
++        parent.commit(editing, request_body, 'parent-auto-fixture')
++        yield editing
++    finally:
++        realm.close()
+ 
+ 
+ def completion(editing, policy):
+
+exec
+/bin/bash -lc "git diff -- tests/editing_conformance/test_commit_runtime_parent_auto_completion.py; printf '\\n--- diff check ---\\n'; git diff --check; printf '\\n--- status ---\\n'; git status --short; printf '\\n--- target selectors ---\\n'; rg '"'^def test_|''^@pytest.mark.parametrize'"' tests/editing_conformance/test_commit_runtime_parent_auto_completion.py" in /home/user/work/wt/agt-D86-main-parent-auto-2343
+ succeeded in 419ms:
+diff --git a/tests/editing_conformance/test_commit_runtime_parent_auto_completion.py b/tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+index d4306b2181..1622f3686f 100644
+--- a/tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
++++ b/tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+@@ -24,7 +24,34 @@ pytestmark = pytest.mark.integration
+ 
+ @pytest.fixture(params=['image', 'video'])
+ def editing(request, tmp_path, monkeypatch):
+-    yield from parent.media_realm(tmp_path, monkeypatch, request.param, historical=False)
++    realm = parent.media_realm(tmp_path, monkeypatch, request.param, historical=False, pristine=True)
++    try:
++        editing = next(realm)
++        from astrid.sdk.timeline.emitter import emit_document_commands
++
++        before = bundle_from_document(parent.current(editing))
++        after = copy.deepcopy(before)
++        after['parent']['config']['tracks'].append({
++            'id': 'visual', 'kind': 'visual', 'role': 'output', 'opaque': [None, False],
++        })
++        commands_to_apply = emit_document_commands(before, after)
++        request_body = parent.body(editing, commands_to_apply)
++        request_body.update(
++            label='parent auto fixture', merge='atomic', reads=[],
++            rationale='Parent auto fixture bootstrap', group_id='parent-auto-fixture',
++            steps=[{
++                'id': 'parent-auto-fixture', 'label': 'parent auto fixture',
++                'intent': 'Prepare parent auto fixture', 'tags': ['integration'],
++                'command_ordinals': list(range(len(commands_to_apply))),
++                'patch': [change for command in commands_to_apply
++                          for change in command['args']['changes']],
++                'reads': [],
++            }],
++        )
++        parent.commit(editing, request_body, 'parent-auto-fixture')
++        yield editing
++    finally:
++        realm.close()
+ 
+ 
+ def completion(editing, policy):
+
+--- diff check ---
+
+--- status ---
+ M tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+
+--- target selectors ---
+@pytest.mark.parametrize('mode', ['anchor', 'fallback', 'lane-end'])
+def test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id(editing, monkeypatch, mode):
+@pytest.mark.parametrize('change', ['at', 'hold', 'track-label'])
+def test_relevant_stale_reads_refuse_before_accept_and_any_persistence(editing, monkeypatch, change):
+def test_completed_variant_is_exact_even_after_a_new_primary_is_promoted(editing, monkeypatch):
+
+exec
+/bin/bash -lc "rg -n 'line-length|\\[tool.ruff|mypy' pyproject.toml setup.cfg tox.ini 2>/dev/null | head -100; realpath /home/user/work/venv-agent/bin/python /home/user/work/venv-agent/bin/ruff /home/user/work/venv-agent/bin/mypy" in /home/user/work/wt/agt-D86-main-parent-auto-2343
+ succeeded in 26ms:
+pyproject.toml:53:    "mypy==1.17.0",
+pyproject.toml:196:[tool.ruff]
+pyproject.toml:198:line-length = 100
+pyproject.toml:207:[tool.ruff.lint]
+pyproject.toml:234:[tool.mypy]
+pyproject.toml:236:# The Darwin custody modules raise on every other platform, so mypy would skip their bodies as
+pyproject.toml:237:# unreachable and the exact-count gate (scripts/reshape/baselines/mypy_astrid.json) would differ
+/usr/bin/python3.13
+/home/user/work/venv-agent/bin/ruff
+/home/user/work/venv-agent/bin/mypy
+
+codex
+The diff is confined to the assigned file and preserves all 14 selectors and their test bodies. I’m now running the mandated source checks only (compile, Ruff, mypy, diff check), plus static AST/selector conservation against the exact base; I will not run pytest or any service/full suite under D85.
+exec
+/bin/bash -lc "mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-auto-2343/evidence/pycache
+PYCACHEPREFIX=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-parent-auto-2343/evidence/pycache /home/user/work/venv-agent/bin/python -m py_compile tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+printf 'py_compile exit=%s\\n' \""'$?"
+/home/user/work/venv-agent/bin/ruff check tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+printf '"'ruff exit=%s\\n' \""'$?"
+/home/user/work/venv-agent/bin/mypy tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+printf '"'mypy exit=%s\\n' \""'$?"
+git diff --check
+printf '"'diff-check exit=%s\\n' \""'$?"' in /home/user/work/wt/agt-D86-main-parent-auto-2343
+ succeeded in 1999ms:
+py_compile exit=0
+All checks passed!
+ruff exit=0
+Success: no issues found in 1 source file
+mypy exit=0
+diff-check exit=0
+
+exec
+/bin/bash -lc "/home/user/work/venv-agent/bin/python - <<'PY'
+import ast
+import subprocess
+from pathlib import Path
+
+path = Path('tests/editing_conformance/test_commit_runtime_parent_auto_completion.py')
+base = subprocess.check_output([
+    'git', 'show', '5d4ae93c833cc1adee109b28405276210165c0db:' + str(path),
+], text=True)
+current = path.read_text()
+base_tree = ast.parse(base)
+current_tree = ast.parse(current)
+
+def test_nodes(tree):
+    return [node for node in tree.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name.startswith('test_')]
+
+def normalized(node):
+    return ast.dump(node, annotate_fields=True, include_attributes=False)
+
+base_tests = test_nodes(base_tree)
+current_tests = test_nodes(current_tree)
+assert [node.name for node in base_tests] == [node.name for node in current_tests]
+assert len(base_tests) == len(current_tests) == 3
+for before, after in zip(base_tests, current_tests):
+    assert normalized(before) == normalized(after), before.name
+
+# The selectors are fixed by the source's three parametrizations.
+selectors = [
+    (mode, kind) for mode in ('anchor', 'fallback', 'lane-end')
+    for kind in ('image', 'video')
+] + [
+    (kind, change) for kind in ('image', 'video')
+    for change in ('at', 'hold', 'track-label')
+] + [('image',), ('video',)]
+assert len(selectors) == 14
+print('AST test-body conservation: PASS (3 test definitions, 14 expanded selectors)')
+print('selector manifest:')
+for selector in selectors:
+    print('  ' + str(selector))
+PY" in /home/user/work/wt/agt-D86-main-parent-auto-2343
+ succeeded in 22ms:
+AST test-body conservation: PASS (3 test definitions, 14 expanded selectors)
+selector manifest:
+  ('anchor', 'image')
+  ('anchor', 'video')
+  ('fallback', 'image')
+  ('fallback', 'video')
+  ('lane-end', 'image')
+  ('lane-end', 'video')
+  ('image', 'at')
+  ('image', 'hold')
+  ('image', 'track-label')
+  ('video', 'at')
+  ('video', 'hold')
+  ('video', 'track-label')
+  ('image',)
+  ('video',)
+
+exec
+/bin/bash -lc 'sha256sum tests/editing_conformance/test_commit_runtime_parent_auto_completion.py; git diff --numstat; git diff --stat; git diff --name-only; git rev-parse HEAD; git status --short' in /home/user/work/wt/agt-D86-main-parent-auto-2343
+ succeeded in 438ms:
+27910865f3c68dd29a36c03018bed833657a40ad747f51ac97e513adcb3219bc  tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+28	1	tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+ .../test_commit_runtime_parent_auto_completion.py  | 29 +++++++++++++++++++++-
+ 1 file changed, 28 insertions(+), 1 deletion(-)
+tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+5d4ae93c833cc1adee109b28405276210165c0db
+ M tests/editing_conformance/test_commit_runtime_parent_auto_completion.py
+

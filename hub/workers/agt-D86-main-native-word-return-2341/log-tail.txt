@@ -1,77 +1,3 @@
-+    ), parent_track, card, occurrence, media_admission, *changes], "initial-commit")
- 
-     service.close()
-     return {'project': project, 'pin': pin, 'source': source}
-
-exec
-/bin/bash -lc 'git diff -- tests/editing_conformance/native_word_anchor_fixture.py && git diff --check && PYTHONPYCACHEPREFIX=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341/tmpdir/pycache /home/user/work/venv-agent/bin/python -m py_compile tests/editing_conformance/native_word_anchor_fixture.py tests/editing_conformance/test_native_word_anchor.py tests/editing_conformance/test_word_binding_recipe.py' in /home/user/work/wt/agt-D86-main-native-word-return-2341
- exited 1 in 143ms:
-diff --git a/tests/editing_conformance/native_word_anchor_fixture.py b/tests/editing_conformance/native_word_anchor_fixture.py
-index af7407a5a2..81749a8940 100644
---- a/tests/editing_conformance/native_word_anchor_fixture.py
-+++ b/tests/editing_conformance/native_word_anchor_fixture.py
-@@ -16,8 +16,10 @@ from astrid.core.timeline import moments
- from astrid.core.timeline.authoring_bundle import _digest
- from astrid.sdk.media_transcript import build_transcript, transcript_document_id
- from astrid.sdk.timeline import commit as agent
-+from astrid.sdk.timeline._clip_commands import capture_clip_add
- from astrid.sdk.timeline.capture import capture_track_create
- from astrid.sdk.timeline.compiler import WordBinding
-+from astrid.sdk.timeline.commit import bundle_from_document
- from astrid.sdk.timeline.units import source_to_timeline_time
- from tests.helpers.runtime import runtime_checkout, use_runtime
- 
-@@ -65,10 +67,16 @@ def first_selection(bundle):
- 
- 
- def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scope=None):
--    # Historical data is authored with the pre-cut public API; measured edits
--    # use the current Runtime and normal provider after reopening this realm.
-+    # Source documents are ordinary Runtime data.  The timeline fixture is
-+    # bootstrapped through the live commit provider below, not the retired
-+    # parent-composition publisher.
-     from runtime_protocol.service import RuntimeService
-     from runtime_protocol.store import RealmStore
-+    from runtime_protocol.timeline_commit_port import route_path
-+    from astrid.sdk.timeline.commands import execute
-+    from astrid.sdk.timeline.emitter import emit_document_commands
-+    from astrid.sdk.timeline.native_initialize import capture_initialize
-+    from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
- 
-     root = Path(root)
-     RealmStore.initialize(root).close()
-@@ -86,37 +94,96 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
-     opaque = {"opaque_transcript": {"pin": pin, "raw": [None, False, 0, 0.0, {}, [], ""]}}
-     service.create_project_shot(project, {"shot_id": "shot", "name": "Voice"},
-                                 idempotency_key="shot")
-+
-+    service.register_timeline_commit_provider(agent.create_runtime_commit_service())
-+    service.create_timeline(project, "film", idempotency_key="timeline")
-+
-+    def head():
-+        value = service.get_project_timeline(project, "film")
-+        return {"revision_id": value["head_revision_id"],
-+                "publication_id": value["head_publication_id"]}
-+
-+    def submit(commands, key):
-+        current = head()
-+        result = service.commit_timeline(
-+            project, "film", {
-+                "api_version": 1, "project_id": project, "timeline_id": "film",
-+                "base_revision_id": current["revision_id"],
-+                "base_publication_id": current["publication_id"],
-+                "commands": commands,
-+            }, idempotency_key=key, publisher="timing-editor",
-+            invocation_path=route_path(project, "film"), authorize=lambda: None,
-+        )
-+        return result["data"]["canonical_document"]
-+
-+    bootstrap = service.get_project_parent_composition_revision(
-+        project, "film", head()["revision_id"])
-+    empty = {
-+        "schema_version": 1, "project_id": project, "timeline_id": "film",
-+        "parent_revision": {key: bootstrap[key] for key in
-+                             ("revision_id", "content_digest", "payload")},
 +        "shot_revisions": [], "internal_timeline_revisions": [],
 +        "dependency_manifest": bootstrap["dependency_manifest"],
 +    }
@@ -153,7 +79,7 @@ index af7407a5a2..81749a8940 100644
 +        "schema_version": 1, "op": "media.admit", "version": "1", "select": None,
 +        "args": {"inputs": [{"pin": {"media_id": media, "content_digest": media}}]},
 +    }
-+    document = submit([capture_initialize(
++    submit([capture_initialize(
 +        bundle, name="Voice", slug="film", output={
 +            "resolution": "1280x720", "fps": FPS, "file": "output.mp4",
 +            "background": None, "background_scale": None,
@@ -162,26 +88,103 @@ index af7407a5a2..81749a8940 100644
  
      service.close()
      return {'project': project, 'pin': pin, 'source': source}
-[Errno 20] Not a directory: '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341/tmpdir/pycache'
-apply patch
-patch: completed
-/home/user/work/wt/agt-D86-main-native-word-return-2341/tests/editing_conformance/native_word_anchor_fixture.py
+
+exec
+/bin/bash -lc 'set -o pipefail
+PYTHONPYCACHEPREFIX=/tmp/w-b5606f1592/agt-D86-pycache /home/user/work/venv-agent/bin/python -m py_compile tests/editing_conformance/native_word_anchor_fixture.py tests/editing_conformance/test_native_word_anchor.py tests/editing_conformance/test_word_binding_recipe.py; echo py_compile_exit:$?
+/home/user/work/venv-agent/bin/ruff check tests/editing_conformance/native_word_anchor_fixture.py tests/editing_conformance/test_native_word_anchor.py tests/editing_conformance/test_word_binding_recipe.py; echo ruff_exit:$?
+/home/user/work/venv-agent/bin/mypy tests/editing_conformance/native_word_anchor_fixture.py tests/editing_conformance/test_native_word_anchor.py tests/editing_conformance/test_word_binding_recipe.py; echo mypy_exit:$?
+git diff --check; echo diff_check_exit:$?
+echo '"'--- source-only diff ---'; git diff --name-only; git diff --stat; echo '--- status ---'; git status --short
+
+echo '--- selector count/group ---'; awk '/"'^FAMILY: D86-native-word/{on=1;next} /''^FAMILY:/{on=0} on && /''^- tests'"\\/editing_conformance/{count++; print} END{print \"selector_count=\" count}' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md" in /home/user/work/wt/agt-D86-main-native-word-return-2341
+ succeeded in 669ms:
+py_compile_exit:0
+All checks passed!
+ruff_exit:0
+Success: no issues found in 3 source files
+mypy_exit:0
+diff_check_exit:0
+--- source-only diff ---
+tests/editing_conformance/native_word_anchor_fixture.py
+ .../native_word_anchor_fixture.py                  | 124 ++++++++++++++++-----
+ 1 file changed, 95 insertions(+), 29 deletions(-)
+--- status ---
+ M tests/editing_conformance/native_word_anchor_fixture.py
+--- selector count/group ---
+- tests/editing_conformance/test_native_word_anchor.py::test_word_ending_at_occurrence_end_preserves_revision_only_restore_and_inverse[retained0]
+- tests/editing_conformance/test_native_word_anchor.py::test_occurrence_window_is_rechecked_for_source_move_stale_replay_and_inverse
+- tests/editing_conformance/test_native_word_anchor.py::test_undo_recovers_before_binding_even_when_text_writes_are_equal[True-False]
+- tests/editing_conformance/test_native_word_anchor.py::test_undo_recovers_before_binding_even_when_text_writes_are_equal[True-True]
+- tests/editing_conformance/test_native_word_anchor.py::test_follow_rebases_original_choice_after_source_move_and_reorder[True]
+- tests/editing_conformance/test_native_word_anchor.py::test_phrase_records_all_consecutive_main_word_ids
+- tests/editing_conformance/test_native_word_anchor.py::test_same_word_in_reused_cas_clips_retains_raw_source_through_undo[True]
+- tests/editing_conformance/test_native_word_anchor.py::test_last_write_clear_undo_restore_and_restore_inverse
+- tests/editing_conformance/test_native_word_anchor.py::test_equal_text_references_produce_distinct_canonical_revisions
+- tests/editing_conformance/test_native_word_anchor.py::test_equal_text_restore_recovers_the_selected_publications_binding
+- tests/editing_conformance/test_native_word_anchor.py::test_raw_canonical_bundle_compiles_in_fresh_process_without_history
+- tests/editing_conformance/test_native_word_anchor.py::test_reference_is_authoritative_and_kernel_never_searches_echo["stop" #99 +300f]
+- tests/editing_conformance/test_native_word_anchor.py::test_reference_is_authoritative_and_kernel_never_searches_echo[obsolete display label]
+- tests/editing_conformance/test_native_word_anchor.py::test_reference_is_authoritative_and_kernel_never_searches_echo[None]
+- tests/editing_conformance/test_native_word_anchor.py::test_on_until_clear_preserves_other_reference_and_opaque_fields
+- tests/editing_conformance/test_native_word_anchor.py::test_half_open_window_and_exact_rational_fps_are_validated_at_acceptance
+- tests/editing_conformance/test_native_word_anchor.py::test_stale_anchor_refuses_when_intervening_window_excludes_selected_word
+- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[missing-occurrence-source occurrence/clip is missing]
+- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[missing-clip-source occurrence/clip is missing]
+- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[missing-word-stable word is missing]
+- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[missing-pin-exact transcript pin is missing]
+- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[wrong-pin-exact transcript pin is missing]
+- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[malformed-id-invalid authored word reference]
+- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[empty-ids-invalid authored word reference]
+- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[duplicate-ids-invalid authored word reference]
+- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[null-reference-invalid authored word reference]
+- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[unknown-field-invalid authored word anchor fields]
+- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[outside-window-outside the half-open source window]
+- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[nonfinite-offset-expected finite JSON]
+- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[offset-precision-exceeds main Moment precision]
+- tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[unsupported-owner-word anchors require parent ownership]
+- tests/editing_conformance/test_native_word_anchor.py::test_typed_second_offset_preserves_main_precision_at_rational_frame_boundary
+- tests/editing_conformance/test_native_word_anchor.py::test_stale_choice_and_guarded_inverse_refuse_competing_target_writes
+- tests/editing_conformance/test_native_word_anchor.py::test_first_use_retains_v1_before_producer_removes_words_and_exact_retry_after_restart
+- tests/editing_conformance/test_native_word_anchor.py::test_native_move_refuses_anchor_basis_until_explicit_clear
+- tests/editing_conformance/test_native_word_anchor.py::test_source_removal_and_changed_media_refuse_atomically
+- tests/editing_conformance/test_native_word_anchor.py::test_first_anchor_inverse_recovers_literal_timing_and_exact_absence
+- tests/editing_conformance/test_word_binding_recipe.py::test_undo_recovers_before_binding_even_when_text_writes_are_equal[True-False]
+- tests/editing_conformance/test_word_binding_recipe.py::test_undo_recovers_before_binding_even_when_text_writes_are_equal[True-True]
+- tests/editing_conformance/test_word_binding_recipe.py::test_follow_rebases_original_choice_after_source_move_and_reorder[True]
+- tests/editing_conformance/test_word_binding_recipe.py::test_same_word_in_reused_cas_clips_retains_raw_source_through_undo[True]
+- tests/editing_conformance/test_word_binding_recipe.py::test_last_write_clear_undo_restore_and_restore_inverse
+- tests/editing_conformance/test_word_binding_recipe.py::test_raw_canonical_bundle_compiles_in_fresh_process_without_history
+- tests/editing_conformance/test_word_binding_recipe.py::test_on_until_clear_preserves_other_reference_and_opaque_fields
+- tests/editing_conformance/test_word_binding_recipe.py::test_half_open_window_and_exact_rational_fps_are_validated_at_acceptance
+- tests/editing_conformance/test_word_binding_recipe.py::test_stale_anchor_refuses_when_intervening_window_excludes_selected_word
+selector_count=46
+
+exec
+/bin/bash -lc "echo '--- commit message ---'; sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341/commit-msg; echo '--- final diff excerpt ---'; git diff -- tests/editing_conformance/native_word_anchor_fixture.py | sed -n '1,260p'; echo '--- exact base ---'; git rev-parse HEAD; git diff --quiet 5d4ae93c833cc1adee109b28405276210165c0db -- tests/editing_conformance/test_native_word_anchor.py tests/editing_conformance/test_word_binding_recipe.py; echo unchanged_assigned_tests_exit:"'$?' in /home/user/work/wt/agt-D86-main-native-word-return-2341
+ succeeded in 0ms:
+--- commit message ---
+test(timeline): migrate F-D86 native word fixture
+
+Replace the retired publication seed with the existing Runtime commit bootstrap
+and an admitted-media doc.patch that preserves the native word fixture's
+literal audio source, placement, opaque fields, and transcript inputs.
+--- final diff excerpt ---
 diff --git a/tests/editing_conformance/native_word_anchor_fixture.py b/tests/editing_conformance/native_word_anchor_fixture.py
-index af7407a5a2d42bb63b5cc11ba4a4924d3186c607..4b67bf29bd36d470f49fbf4e135d4bbf644157c8
+index af7407a5a2..0af60ab0d9 100644
 --- a/tests/editing_conformance/native_word_anchor_fixture.py
 +++ b/tests/editing_conformance/native_word_anchor_fixture.py
-@@ -16,8 +16,10 @@
+@@ -16,7 +16,9 @@ from astrid.core.timeline import moments
  from astrid.core.timeline.authoring_bundle import _digest
  from astrid.sdk.media_transcript import build_transcript, transcript_document_id
  from astrid.sdk.timeline import commit as agent
 +from astrid.sdk.timeline._clip_commands import capture_clip_add
  from astrid.sdk.timeline.capture import capture_track_create
- from astrid.sdk.timeline.compiler import WordBinding
 +from astrid.sdk.timeline.commit import bundle_from_document
+ from astrid.sdk.timeline.compiler import WordBinding
  from astrid.sdk.timeline.units import source_to_timeline_time
  from tests.helpers.runtime import runtime_checkout, use_runtime
- 
-@@ -65,10 +67,16 @@
+@@ -65,10 +67,17 @@ def first_selection(bundle):
  
  
  def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scope=None):
@@ -193,6 +196,7 @@ index af7407a5a2d42bb63b5cc11ba4a4924d3186c607..4b67bf29bd36d470f49fbf4e135d4bbf
      from runtime_protocol.service import RuntimeService
      from runtime_protocol.store import RealmStore
 +    from runtime_protocol.timeline_commit_port import route_path
++
 +    from astrid.sdk.timeline.commands import execute
 +    from astrid.sdk.timeline.emitter import emit_document_commands
 +    from astrid.sdk.timeline.native_initialize import capture_initialize
@@ -200,10 +204,12 @@ index af7407a5a2d42bb63b5cc11ba4a4924d3186c607..4b67bf29bd36d470f49fbf4e135d4bbf
  
      root = Path(root)
      RealmStore.initialize(root).close()
-@@ -86,37 +94,96 @@
+@@ -84,39 +93,96 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
+         "kind": "media.transcript", "content": content}, idempotency_key="transcript-v1")["data"]
+     pin = {"document_id": document_id, "version": 1, "content_digest": _digest(content)}
      opaque = {"opaque_transcript": {"pin": pin, "raw": [None, False, 0, 0.0, {}, [], ""]}}
-     service.create_project_shot(project, {"shot_id": "shot", "name": "Voice"},
-                                 idempotency_key="shot")
+-    service.create_project_shot(project, {"shot_id": "shot", "name": "Voice"},
+-                                idempotency_key="shot")
 +
 +    service.register_timeline_commit_provider(agent.create_runtime_commit_service())
 +    service.create_timeline(project, "film", idempotency_key="timeline")
@@ -322,79 +328,73 @@ index af7407a5a2d42bb63b5cc11ba4a4924d3186c607..4b67bf29bd36d470f49fbf4e135d4bbf
  
      service.close()
      return {'project': project, 'pin': pin, 'source': source}
+--- exact base ---
+5d4ae93c833cc1adee109b28405276210165c0db
+unchanged_assigned_tests_exit:0
 
 exec
-/bin/bash -lc 'mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341/tmpdir/pycache && PYTHONPYCACHEPREFIX=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341/tmpdir/pycache /home/user/work/venv-agent/bin/python -m py_compile tests/editing_conformance/native_word_anchor_fixture.py tests/editing_conformance/test_native_word_anchor.py tests/editing_conformance/test_word_binding_recipe.py; echo py_compile_exit:$?; /home/user/work/venv-agent/bin/ruff check tests/editing_conformance/native_word_anchor_fixture.py tests/editing_conformance/test_native_word_anchor.py tests/editing_conformance/test_word_binding_recipe.py; echo ruff_exit:$?; /home/user/work/venv-agent/bin/mypy tests/editing_conformance/native_word_anchor_fixture.py tests/editing_conformance/test_native_word_anchor.py tests/editing_conformance/test_word_binding_recipe.py; echo mypy_exit:$?; git diff --check' in /home/user/work/wt/agt-D86-main-native-word-return-2341
- succeeded in 1558ms:
-mkdir: cannot create directory ‘/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341/tmpdir’: Not a directory
-py_compile_exit:1
-tests/editing_conformance/native_word_anchor_fixture.py:2:1: I001 [*] Import block is un-sorted or un-formatted
-   |
- 1 |   """Real Runtime fixture using first-use transcript capture by the native provider."""
- 2 | / from __future__ import annotations
- 3 | |
- 4 | | import copy
- 5 | | import json
- 6 | | import os
- 7 | | import subprocess
- 8 | | import sys
- 9 | | from fractions import Fraction
-10 | | from pathlib import Path
-11 | | from types import SimpleNamespace
-12 | |
-13 | | import pytest
-14 | |
-15 | | from astrid.core.timeline import moments
-16 | | from astrid.core.timeline.authoring_bundle import _digest
-17 | | from astrid.sdk.media_transcript import build_transcript, transcript_document_id
-18 | | from astrid.sdk.timeline import commit as agent
-19 | | from astrid.sdk.timeline._clip_commands import capture_clip_add
-20 | | from astrid.sdk.timeline.capture import capture_track_create
-21 | | from astrid.sdk.timeline.compiler import WordBinding
-22 | | from astrid.sdk.timeline.commit import bundle_from_document
-23 | | from astrid.sdk.timeline.units import source_to_timeline_time
-24 | | from tests.helpers.runtime import runtime_checkout, use_runtime
-   | |_______________________________________________________________^ I001
-25 |
-26 |   TARGET = ('parent', '', 'card')
-   |
-   = help: Organize imports
-
-tests/editing_conformance/native_word_anchor_fixture.py:73:5: I001 [*] Import block is un-sorted or un-formatted
-   |
-71 |       # bootstrapped through the live commit provider below, not the retired
-72 |       # parent-composition publisher.
-73 | /     from runtime_protocol.service import RuntimeService
-74 | |     from runtime_protocol.store import RealmStore
-75 | |     from runtime_protocol.timeline_commit_port import route_path
-76 | |     from astrid.sdk.timeline.commands import execute
-77 | |     from astrid.sdk.timeline.emitter import emit_document_commands
-78 | |     from astrid.sdk.timeline.native_initialize import capture_initialize
-79 | |     from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
-   | |______________________________________________________________________________________^ I001
-80 |
-81 |       root = Path(root)
-   |
-   = help: Organize imports
-
-Found 2 errors.
-[*] 2 fixable with the `--fix` option.
-ruff_exit:1
-Success: no issues found in 3 source files
-mypy_exit:0
-
-exec
-/bin/bash -lc 'ls -ld /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341/tmpdir 2>&1 || true; find /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341 -maxdepth 2 -ls 2>/dev/null | head -30; ls -ld /tmp/w-* 2>/dev/null | head' in /home/user/work/wt/agt-D86-main-native-word-return-2341
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341/DONE && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341/DONE && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341/DONE && echo DONE_created' in /home/user/work/wt/agt-D86-main-native-word-return-2341
  succeeded in 0ms:
-drwxr-xr-x 2 root root 4096 Oct 24 23:40 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341
--rw-r--r-- 1 root root   18 Oct 24 23:40 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341/tmpdir
-  2401666      4 drwxr-xr-x   2 root     root         4096 Oct 24 23:40 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341
-  2401672    996 -rw-r--r--   1 root     root      1018819 Oct 24 23:42 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341/log.txt
-  2401667      8 -rw-r--r--   1 root     root         6326 Oct 24 23:40 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341/brief.md
-  2401671      4 -rw-r--r--   1 root     root           50 Oct 24 23:40 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341/wrapper.log
-  2401670      4 -rw-r--r--   1 root     root           18 Oct 24 23:40 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341/tmpdir
-  2401669      0 -rw-r--r--   1 root     root            0 Oct 24 23:40 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341/running
-  2401668      4 -rw-r--r--   1 root     root          244 Oct 24 23:40 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-native-word-return-2341/meta
-drwxr-xr-x 15 root root 4096 Oct 24 23:42 /tmp/w-614a8e6616
-drwxr-xr-x  7 root root 4096 Oct 24 23:42 /tmp/w-b5606f1592
+DONE_created
 
+codex
+# F-D86 D86-native-word report
+
+Implemented the genuine migration in [native_word_anchor_fixture.py](/home/user/work/wt/agt-D86-main-native-word-return-2341/tests/editing_conformance/native_word_anchor_fixture.py:69).
+
+- Replaced retired `publish_parent_composition` seeding with Runtime `create_timeline` + native `timeline.init`, track/clip/occurrence commands.
+- Added admitted-media `doc.patch` bootstrap preserving the original audio track, source window, word data, pins, opaque fields, and literal 2000ms placement.
+- Production visual-child guard remains unchanged.
+- Assigned test files were untouched.
+
+Source evidence: existing live bootstrap in `test_commit_runtime_first_clip.py:24-99`, public commit bootstrap in `astrid/sdk/remote.py:482-595`, generic patch media admission in `_doc_patch.py:331-356`, and preserved visual guard in `native_occurrence_media_commands.py:191-196`.
+
+Verification:
+
+- `py_compile`: passed
+- Ruff: passed
+- mypy: passed
+- `git diff --check`: passed
+- AST conservation: passed; assigned tests unchanged byte-for-byte
+- No pytest, collection, service, build, or full suite run.
+
+Diffstat: 1 file, `+95/-29`.
+
+Hashes:
+
+- Fixture: SHA-256 `ac5caefbedfad319f795ba5bdb151baed338209ec39a4b9a46dfdfde069508dc`; base blob `af7407a5a2d42bb63b5cc11ba4a4924d3186c607`
+- Native test: unchanged; SHA-256 `ab07f5b9cda3a42d0c9273917b46d9486c39b453b979d2ad5d39df5528d4179f`
+- Recipe test: unchanged; SHA-256 `4722227e6e347778bb491f4f660e0a8d049ee074026b23e43de939a65d47142a`
+
+Exact 46-selector manifest remains the D86 family manifest: 37 native-anchor selectors and 9 word-binding selectors, unchanged from base. Main manager should run the single later batched affected-node qualification. Commit message written; `DONE` created.
+tokens used
+263,684
+# F-D86 D86-native-word report
+
+Implemented the genuine migration in [native_word_anchor_fixture.py](/home/user/work/wt/agt-D86-main-native-word-return-2341/tests/editing_conformance/native_word_anchor_fixture.py:69).
+
+- Replaced retired `publish_parent_composition` seeding with Runtime `create_timeline` + native `timeline.init`, track/clip/occurrence commands.
+- Added admitted-media `doc.patch` bootstrap preserving the original audio track, source window, word data, pins, opaque fields, and literal 2000ms placement.
+- Production visual-child guard remains unchanged.
+- Assigned test files were untouched.
+
+Source evidence: existing live bootstrap in `test_commit_runtime_first_clip.py:24-99`, public commit bootstrap in `astrid/sdk/remote.py:482-595`, generic patch media admission in `_doc_patch.py:331-356`, and preserved visual guard in `native_occurrence_media_commands.py:191-196`.
+
+Verification:
+
+- `py_compile`: passed
+- Ruff: passed
+- mypy: passed
+- `git diff --check`: passed
+- AST conservation: passed; assigned tests unchanged byte-for-byte
+- No pytest, collection, service, build, or full suite run.
+
+Diffstat: 1 file, `+95/-29`.
+
+Hashes:
+
+- Fixture: SHA-256 `ac5caefbedfad319f795ba5bdb151baed338209ec39a4b9a46dfdfde069508dc`; base blob `af7407a5a2d42bb63b5cc11ba4a4924d3186c607`
+- Native test: unchanged; SHA-256 `ab07f5b9cda3a42d0c9273917b46d9486c39b453b979d2ad5d39df5528d4179f`
+- Recipe test: unchanged; SHA-256 `4722227e6e347778bb491f4f660e0a8d049ee074026b23e43de939a65d47142a`
+
+Exact 46-selector manifest remains the D86 family manifest: 37 native-anchor selectors and 9 word-binding selectors, unchanged from base. Main manager should run the single later batched affected-node qualification. Commit message written; `DONE` created.
