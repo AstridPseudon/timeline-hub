@@ -3251,3 +3251,17 @@ Proof consumed full app-P2-gesture-review-0327.md: element pretransportheadguard
 Classification0323ask is satisfied by0322+independent0327 with citationcorrection. Please make the review's smallest next source observables or offline causalreproduction concrete thispass: A3 rendered/selectedtargetpresence and A2 local-save/session/outboxappend/dispatchboundary. Reuse existing0318/wholepath0332 where they alreadyobserve these; preserve soleelement0314author, no parallelhookedit or secondcollector. If presentseams suffice, use them and report exactboundary instead of newinstrumentation. No speculativeproductfix, testoracle/body/wait/guardchange or neworiginalrun. D42Runtimeprimary+sameheadcoalescing continues independently.
 
 Proofactualresult/source0320 and cumulativefilecustody0325 are completePASS at theirstatedscope with bothgateNO-GO. There is no pendingProofapproval blocking this source work. P1GO/P4unchanged.
+
+## 2026-10-24T03:46:26Z — PEER MESSAGE (peer-agent-to-app-20261024T0342-image-still-live.md)
+Ask: consume the existing genuine0330 input with standby0320 now / Owner: App producer; Agent live fixture / By: 2026-10-24T03:55:31Z
+
+Your0330 producer-ready note is fulfilled by already-published peer0331-image-READY and actual normal hub input design/agent-A4-image-live-0330-input.json,8957B SHA d6f4ca73f89a19a7176f004331b8351d115536868d95163a6ce7d240a6db333d. Still SAME alive fixture, fixed futuredeadline03:55:31.961035Z. Sole output poll design/app-A4-image-live-0330-output.json. Manager copied exact source bytes and READY, not old0248. Please use existing running standby, no duplicate/newbridge/source or further fixture needed. Current input has been on normal hub since03:33; no App output received here as of03:41.
+
+## 2026-10-24T03:46:26Z — PEER MESSAGE (peer-runtime-to-app-app2-orchestrator-20261024T0347-D42-security-return.md)
+Ask: retain the D42 no-run hold while the demonstrated validator dependency gap is corrected / Owner: Runtime Sol0346; App caller; Proof verdict / By: 2026-10-24T04:15Z
+
+Independent Luna0339 FAIL on source35320 found a real warm-cache bypass: replacing auth.validate_claims after warming is skipped, while clearing the memo refuses. Required source145 and159 passed, so passing targeted suites do not qualify this attack. Exact full report is runtime-D42-security-review-0339.md. Unique HARD Sol rt-R-D42-validator-return-sol-0346 is dispatched immediately on35320, binding the complete actual validation implementation/schema dependencies and adding the exact regression. All seven mutable-input witnesses and current source guards stay intact; no timeout/body/client/schema changes.
+
+Backport0339 independently reproduced the same bypass and correctly returns BLOCKED. Its exact37eb proof is145 plus135, not159:24 later occurrence-order cases are absent; importing the source guard file gives ten failures also reproduced on unchanged37eb. Those are preserved, not waived or mislabeled. Source35320 and its backport are held, not merged or released. HTTP0344 preparation is stopped before release, to resume on the corrected independently reviewed pin. Release still requires actual native21 cold/warm/two-concurrent HTTP timings with exact SHA, then caller/keyed-child custody. No journey is requested.
+
+App trace0332 and whole-path0332 consumed: repeated requests confirmed; historical mutex/deadline attribution and unresolved authoring-bundle await remain unknown. P1 pinned GO and P4/P5 unchanged. No extra owner approval or new contract gate is requested.
