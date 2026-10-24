@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T14:46:17Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 2m -->
-# runtime board, 2026-10-24T14:43:45Z
+<!-- main | 2026-10-24T14:49:23Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 2m -->
+# runtime board, 2026-10-24T14:46:55Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -86,6 +86,7 @@
 | U1d-producer-handback | Return fixture and producer inventory | Luna | Actual e68 home | merged | rt-U1d-handoff-1401 PASS | Wire and 15 clients exact; manifest adds genuine visual fixture. [Handback](../../design/rt-U1d-handoff-1401.md) | e68cf2316 |
 | U1d-consumer-rebind | Rebind producer identity in consumers | Agent / App Luna | Normal vendor checks passed | merged | Agent custody1410; App adoption1404 | Agent5492 and Appbe98 adopt e68 provenance. Canonical15/14 bytes unchanged. D61 successor adoption remains separate. | Agent5492 / Appbe98 |
 | R-recorder-abi-authority | Authenticate recorder mode in accepted history | HARD Sol | Cross-repo native custody decision | blocked:orchestrator | Sol1422 handback; Luna1445 | Eight exact omission captures accepted. Final cohort23 PASS12 FAIL; no mode producer or generation. [Decision](../../escalations/runtime-20261024T1443Z-D61-private-native-custody.md) | d06813468 held |
+| R0-D61-history-wire | Generate approved optional history ABI field | Luna | D61 additive field approved | doing | rt-R0-D61-history-wire-1447 | Independent wire preparation; no authority claim. Held from merge and consumer adoption until complete producer qualifies. | Pending |
 | R-recorder-native-custody | Review new complete-native evidence | Luna | Exact Sol1422 packets | doing | rt-R-recorder-native-custody-review-1445 | Whole path compares eight actual omissions with full v2 and genuine legacy; no repeated originals. | Read only |
 | R-recorder-abi-security | Review exact coverage authority design | Luna | Design assessment complete | merged | Luna1422 design only | Validated request can select regime; exact full coverage must be proved. Final source review remains required. [Design](../../design/rt-R-recorder-abi-security-design-1422.md) | Base438 source facts |
 | FREEZE | Reach final tuple cut | Runtime manager | D59 cut and D61 producer | doing | Runtime1410; Agent/App owners | Runtime1 required D61 task; Agent6 tracked core; App9 gates. Confirmed regressions0. Cut requires current heads0/0 plus P2/P3 PASS. | Runtime e68 |
@@ -153,12 +154,14 @@ Disk: About8.5GB free, above main8GB heavy floor. Five old v1 trees refused recy
 
 Pass 2026-10-24T14:34:59Z: INBOX consumed through Agent1425. Agent consumer d373 has author249+17+46+134 PASS, independent security/current port active; producer qualification still required. Agent tracks6 core and App9 gates. Runtime Sol1422 runs targeted controls; final gates remain unqualified.
 
-live 1 / cap 4; ready-undispatched 0. Last dispatcher header14:37:12Z reports1 Sol; independent Luna1445 queued this pass. Count refresh follows normal dispatch.
+live 1 / cap 4; ready-undispatched 0. Last dispatcher header14:43:09Z reports1 Sol; source1422 is now finished and Luna1445 is confirmed running. Wire Luna1447 queued; normal count refresh pending.
 
-Sol exception: Source Sol1422 is D61-mandated authenticated recorder mode and complete coverage custody. New exact native omission evidence requires cross-repo custody decision; independent whole-path review1443 is Luna.
+Sol exception: Source Sol1422 completed held d068; no live Sol. New exact native omission evidence requires cross-repo custody decision. Independent whole path1445 and approved wire preparation1447 are Luna.
 
 Disk cleanup14:35Z: zero eligible finished clean Runtime trees. Sweep3 completed with directory broken-pipe noise; compaction completed without output. About8.5GB free; refused historical targets untouched.
 
 Pass 2026-10-24T14:43:45Z: New exact coverage packets read; native-custody contract escalation written in this pass and independent Luna1445 queued. No unsafe source merge, generation or gate claim. App current cycles remain independent of D61.
 
 Dispatch14:45Z: first native-review request1443 returned ordinary need --repo and --brief FILE because the dispatcher resolves relative brief paths elsewhere. Reissued1445 with absolute brief path on committed d068. No safety/permission denial. App current P2 12541 and P3 1689 were requested14:34Z; App sole terminal1435 and independent verdict owners retained.
+
+Pass 2026-10-24T14:46:55Z: Split already-approved optional history schema/generation into independent Luna1447, starting from e68 while native-custody decision/review proceed. Both branches remain held until complete authenticated producer qualifies. No ready independent local row left waiting.
