@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T20:55:23Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 3m -->
-# runtime board, 2026-10-24T20:52:05Z
+<!-- main | 2026-10-24T20:58:23Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 1m -->
+# runtime board, 2026-10-24T20:56:31Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -154,7 +154,7 @@
 | D78-native-stack | Dump real pending native request stacks | Runtime Luna | Author12 passed; source home | merged | rt-D78-native-watchdog-1935 | Native20s daemon watchdog, cap1, private all-thread dump. Existing App bootstrap uses it. Actual live capture still owed; UI5s limitation explicit. | 44917baf5 |
 | R-P4-live-profile | Profile actual ten-note service step | HARD Sol / Agent venue | Independent evidence review passed | merged | Producer1948; service14690; verdict1956 PASS | Diagnostic FAIL1/PASS2.54 handlers; history71, verify64. First undo33.992s. Evidence independently qualified; overhead uncalibrated. [Summary](../../design/handoff-agt-P4-14690-summary.json) | Captured3b2/e89 only |
 
-| D83-history-cost | Avoid measured capture copy cost | HARD Sol / Luna | Batched original proof | merging | Author2031; security2037 PASS | Normaldc55 equals reviewed source;385 controls plus31 independent probes PASS. Parent-equivalent shared/mutation/concurrency checks retained. | dc55b8bc6 /57df943ec |
+| D83-history-cost | Avoid measured capture copy cost | HARD Sol / Luna | Exact normal source proof passed | merged | Author2031; security2037 PASS | Normaldc55 exact reviewed blobs,385 controls plus31 probes PASS; current native8PASS. No original45s credit. [Review](../../design/runtime-D83-history-security-2037.md) | dc55b8bc6 /57df943ec |
 | R2-False-history-tail | Qualify five original history scopes | HARD Sol / Luna | Agent normal adoption and batch | blocked:agent | Source2031; security2037 PASS | Normaldc55 schema and projection gains qualified; five original scopes remain open until Agent2028 meaningful batch. | dc55b8bc6 |
 
 | E1-inventory | Inventory duplicated commit rules | Luna | Sol design complete | merged | rt-E1-rule-inventory-1956 | Sixteen paired groups and four divergences cited. Earlier DSL suggestion is superseded by final shared Python design. [Inventory](../../design/runtime-E1-rule-inventory-1956.md) | Source only |
@@ -165,33 +165,30 @@
 
 | D78-short-window | Capture before original element teardown | Luna | Existing caller qualified | merged | rt-D78-short-window-2000 | Runtime12 PASS and App22 controls PASS. Actual860e early2s/default20 path qualified; cap1 seed-consumption limitation explicit. [Proof](../../design/runtime-D78-short-window-2000.md) | App860e; Runtime44917 |
 
-| R-P4-profile-repair | Reuse immutable validator setup | Sol / Luna | Actual original proof | merging | Author2004; security2018 PASS | Normal e745 source exact reviewed fbba.258 PASS; finite CPU14.85% gain. Original45s remains unproved. | e74527f5f / fbba9e8e9 |
+| R-P4-profile-repair | Reuse immutable validator setup | Sol / Luna | Exact normal source proof passed | merged | Author2004; security2018 PASS | Normaldc55 retains exact reviewedfbba;258 source controls and integrated native8PASS. FiniteCPU14.85%gain; original45s unproved. | e74527f5f /fbba9e8e9 |
 
 | R-P4-evidence-hygiene | Keep proof outputs outside source | Luna | Byte equality verified | merged | rt-P4-evidence-cleanup-2018 | Exact24 files preserved outside source and removed. Both reviewed product/test blobs exact; normal e745 only two-file product delta. | a213ed89f / e74527f5f |
 | D78-actual-frame | Reduce observer attribution overhead | Sol / Luna | Integrated service proof passed | merged | Sol2019; Luna2035 | Normal4351: exact service2PASS7.72s includes helper13 and mounted off/parent/fixed. Source blobs exact; no original recovery claim. | 4351b9f91 / fa2c16296 |
 
-Runtime producer: Normaldc55b8bc6 joins independent-security-PASS projection57df on observer4351 and schemae745. Canonical15/schema867f remain exact; actual original proof pending. Canonical15/schema867f unchanged. Previous normal44917 observer/watchdog captured actual14383. No original45s closure.
+Runtime producer: Normal dc55b8bc6e638acd9e5031ff6b51b50cd2e2b63c, tree0f941b27dc3396adbf41683e8ae30d77fc8b8768. Reviewed schema setup e745, observer4351, projection57df. Canonical15/schema867f unchanged. Source frozen since20:42 for receiving-lane proof.
 
-core open: 2 Runtime boundaries: P4 accepted-history45s and native seed/element pending boundary. Agent retains all five historical original scopes. D83 treats common cause as a working hypothesis pending local evidence. Final Runtime core suite owed.
-regressions: D77a genuine installed final render remains cut-blocking; actual Agent34 adversarial plus2 positive PASS is source proof only.
-FREEZE D59/D66/D83: P1 current31083 readiness1/original2 PASS. P2 original22847 zero pass,three fail,five not run. Current P315493 originalPASS248s and independent2024 GO; both recovery mounts and full strict tail qualified at c184/22d/44917/635f. All8 P2 isolated gestures must pass before one full tour. P1–P5 plus core on one final pinned tuple; no cut/build/ZIP.
-Venues: App P1/P2/P3, Agent P4, main P5/Composition. D73 captures four exact SHAs once with checkout receipts. Newer home does not invalidate a run. D83 NO-GO gets brief automatic summary; GO keeps one independent verdict. No duplicate diagnostic service body.
-D65 delivery: Runtime merge, Agent merge, authentic App manifest command/digest equality, then App merge. Installed v2 docs and D67 bindings retained. Final candidate remains cut-gated.
+core open: 2 Runtime boundaries remain at original scope: P4 ten-note45s and full native-seed/element outcome. Agent retains five historical original scopes, all unclosed. Source qualification does not close originals. Final Runtime core suite owed.
+regressions: D77a genuine installed final render remains cut-blocking. Agent actual34adversarial+2positive PASS is source proof only.
 
-Blockers: App original seed/element — exactdc55 local8PASS and all source/security receipts released. App normal adoption and isolated P2 gestures own actual fullmedia/element qualification. No Runtime source input owed.
-Blockers: Agent originals — Runtime dc55 normal merge/security2037 PASS complete. Agent2028 owns normal adoption and one batch of P4three plus retained R2four. All five original scopes stay open until actual proof.
-Blockers: App popup original — reviewed87bc actual23 Runtime plus4 Agent PASS. Meaningful App isolated gesture qualification remains owed after D83 fix.
-Blockers: Final cut — lane core0/regressions0, eight P2, final tuple reruns, D69 and genuine installed render required. Current P3 GO qualifies only recorded tuple. No build before cut.
-Next ready: Agent adopts qualified dc55 and runs prepared original batch once. App captures current tuple and starts isolated P2 gestures. Runtime consumes same-ID results, no duplicate authors or runs. No E/D79 follow-up until ZIP.
-Later: D79 has no complete authentic accepted record/history/context; paused D83. E1/E3 designs delivered before pause, no further work until ZIP. E2 Agent design complete. D47 memo/proof pins post-delivery,nine attacks open. V4 cut; D14/D23 deferred; D34 cleanup held. D62 submit completeness remains known gap.
-Admission: D56 Farm/schema access stopped. Original403/access refusals and historical denied cleanup/process/retirement targets untouched. D67 D13 gap unchanged. App dirtyU3 guard refusals stay stopped.
-Disk: 8693473280 available bytes at20:33, about8.10GiB; cap4. Ended trees auto recycle. Three prior dirty old Runtime trees remain ineligible; no retry. Recorded global sweep/compact permission limits untouched.
+Current proof: P1 readiness1/original2 GO31083; P3 readiness1/original1 GO15493 with independent2024 and full strict tail at c184/22d/44917/635f. All8P2 remain open. Historical P2143/P314240 NO-GO retained; no relabel.
+D83 source proof: security2018 schema258PASS; observer2035 exact service2PASS and integrated2PASS including helper13; projectionsecurity2037 31+289+96PASS; exact currentdc55 genuine reduced native loop8PASS84.30s. Baselinee745 7PASS1FAIL145s remains. Reduced control excludesmedia/finaldocpatch, not original seed credit.
+D78 actual capture: App2026 correlates cap1dump to successfulrequest1. Request2 SDK30s transporttimeout; outer120s did notfire. Safeauthsnapshot cannot prove failing-request2 lockwait. Baseline local acquisition max2.09ms, compute dominated; original fullmedia34.498s cause still not fully attributed.
 
-live 0 / cap 4; ready-undispatched 0 critical local. Source/security/observer/local control work complete. Cross-lane original submitters own next ready work; no E/D79 follow-up. Observer service complete; no E/D79 worker live.
-Pass 2026-10-24T20:30:32Z: D83 source and local reproduction dispatched. Independent schema security2018 PASS258 consumed; exact cleanup2018 merged normal e745. Actual14383 capture wait cleared. Observer2019 exact service acceptance and integrated receipt2035 PASS consumed; normal4351. P315493 independent2024 GO consumed. Seed execution ordinary registration blocker assigned2040; history2031 source complete/security2037 active. No gate or cut closure. Prior refusals untouched.
+Blockers: Agent originals — consolidated dc55 normal source/security release COMPLETE. Existing normal adoption and batch2028 own P4three plus retained R2four once, original45s unchanged. No Runtime source or approval wait.
+Blockers: App P2 — consolidated dc55 and local8PASS released. Existing App submitter owns currentfourSHA adoption/preflight and isolated gestures until8PASS, then exactlyonefullserialtour. No Runtime source or collector wait.
+Blockers: Final cut — all lane core0/regressions0, final P1–P5 plus core on one pinned tuple, D69 and genuine installed render required. No build or ZIP before cut.
+Next ready: Receiving lanes start already released original work. Runtime consumes same-ID results, handles any demonstrated new source failure immediately. No speculative author or duplicate diagnostic.
 
-D83(1b) explicit: HARD Sol rt-D83-history-path-sol-2031 COMPLETED at20:36, source report published, security2037 active. Two original Sol questions were dispatched together; do not infer missing second Sol from current live count. App2026 correlates dump to successful request1; SDK30s timed out request2, outer120s did not fire.
+Venues: App P1/P2/P3; Agent P4; main P5/Composition. D73 four exact SHAs capturedonce with checkoutreceipts. Newerhead doesnotinvalidate a run. D83 NO-GO automaticbriefsummary, GO oneindependentverdict; correction reviewer applies/releasesproof. Productchanges rerun final matrix.
+D65 delivery: Runtime merge, Agent merge, authentic App manifest command/digest equality, then App merge. Installed v2 docs and D67bindings retained. Final candidate remains D59-cut gated.
+Later: E1/E3 designs and E2 Agentdesign complete before D83; further E/D79 paused untilZIP. No complete authentic D79record/history/context, no syntheticfixture. D47memo/proofpins postdelivery,nineattacks open. V4cut,D14/D23deferred,D34cleanupheld,D62submitcompletenessknown gap.
+Admission: D56 Farm/schema access stopped. Original403/accessrefusals, historical deniedcleanup/process/retirement targets untouched. D67D13envgap unchanged. AppdirtyU3guardrefusals stopped.
+Disk: 8667082752 availablebytes (8.07GiB), cap4. No ended clean nonKEEP Runtime tree eligible; three old dirty trees untouched. Newworkers autorecycled. Prior sweep/compactpermissionlimits and denied targets not retried;15GB target not reached.
 
-Current20:44: security2037 PASS and normal dc55 consumed. Native control oldobserver N4 ON timed out45s, seven other variants passed. Stack is observer request lookup/jsonschema path, not measured lock blocking. Seed2040 checks corrected source; original14383 common-cause limits remain.
-
-Pass 2026-10-24T20:52:05Z: exactcombineddc55 local8PASS consumed and published with actualXML. Source/security release complete; Agent batch and App isolated gestures ready. All8original P2 and fiveAgenthistory scopes still open. No original or finalcut credit from reducedcontrol. No eligible clean ended Runtime tree; prior refusedcleanup untouched.
+live 0 / cap 4; ready-undispatched 0 local. Both D83Sol questions completed, one securityreview PASS, source merged and localcandidate8PASS. Cross-lane original submitters own nextready work. No E/D79active.
+Pass 2026-10-24T20:56:31Z: board overwritten with current state. Normal hub contains source release2048 and local8PASS2052. Peer routing only notifies firstrecipient; separate App2056 and Proof2056 notes correct earlier multi-lane filenames. P3GO consumed. All original scope and priorrefusal limits retained. Inbox consumed through544660bytes.
