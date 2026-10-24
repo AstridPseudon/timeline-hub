@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T23:26:24Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 0m -->
-# runtime board, 2026-10-24T23:25:58Z
+<!-- main | 2026-10-24T23:29:29Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 2m -->
+# runtime board, 2026-10-24T23:27:07Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -203,7 +203,7 @@
 | P2-popup-canonical | Qualify complete canonical expectation | App Luna | ADD7872 raw digest passed | blocked:app | app-P2-popup-7872-exact-expectation-2301 | Strict full equality860 differs in parent revision identity/digest. App owns retained-data attribution and exact correction; no Runtime source request. | App63d7 / Runtime732 |
 | P2-transition-intent | Qualify exact clear step intent | App source requested | Single10376 original reached | blocked:app | Existing tour oracle owner via peer2313 | Strict step377 expects generic intent; actual clear action emits specific intent. Batch with parent envelope in one protected file; bulk2773 pending. | Fixedbceb/039f/732/635f |
 
-| F-provider-ABI20 | Migrate selected-PARAM real provider setup | Luna | Independent protected review | review | Author2316; review2322 | All20 plus strict digest neighbor PASS21. Old setup20ERROR; original body/parameters/no-write guards exact. [Author](../../design/runtime-Agent-ABI20-author-2316.md) | Review pending |
+| F-provider-ABI20 | Migrate selected-PARAM real provider setup | Luna | Normal remote Agent merge receipt | merging | Author2316; independent2322 PASS | Exact21, reverse21 and13 neighbor/order controls PASS; original AST/matrix exact. [Review](../../design/runtime-Agent-ABI20-review-2322.md) | 2378867874 |
 | P2-transition-bulk | Qualify exact clear display value | App source requested | Actual2773 original reached | blocked:app | Main2250; App requested | Original expects None; actual select displays __none__. Exact retained-data attribution required; no oracle change inferred. | Exact bceb/039f/732/635f |
 
 | D86-Agent-families | Host four disjoint Agent family authors | Luna | Agent named family list and files | blocked:agent | Runtime dispatch owner | D86 accepted; four slots available after critical Runtime needs. agt-D86-main-families.md absent in current hub. No duplicate reservation. | Agent local5d4ae93 |
@@ -225,7 +225,7 @@ Delivery: Runtime merge, Agent merge, authentic App manifest command with schema
 Later: E1/E3, AgentE2 and D79 paused until ZIP. D42 cross-request memo held; V4 cut, D14/D23 deferred; unsafe D34 cleanup held. D56 Farm/schema access stopped. All historical safety/access/cleanup/process refusals remain stopped.
 Disk: 7366033408 available bytes at23:18; cap2. No new noncritical dispatch. Finished2250/2308/2304 were automatically recycled; existing evidence and branches retained. Cleanup checks continue through guarded routes.
 
-live 2 / cap 6 source; ready-undispatched 0. D85 applied above6.5GB: Runtime security2319 and Agent ABI20 review2322 running. Heavy cap2 with one body below7.5GB; rehearsal noncritical held below8.5GB.
+live 1 / cap 6 source; ready-undispatched 0. D85 applied above6.5GB: Runtime security2319 running; ABI20 reviewed PASS and remote merge requested. Heavy cap2 with one body below7.5GB; rehearsal noncritical held below8.5GB.
 Pass 2026-10-24T22:50:16Z: Read PLAN/common, header through H49, inbox through605296 bytes, App/Agent actual boards and dispatcher returns. Consumed2238 setup result and dispatched2250 immediately. Published exact report and peer2250. Actual Agent7c48 four R2 closure retained; no stale Agent input blocker. No duplicate original, product edits by manager or denied route.
 
 Intake 2026-10-24T22:51:20Z: consumed inbox through605296 bytes. App2240 delayed main-READY note is already fulfilled by2232/2238/2250; no stale App need gate. Agent2242 handoff dispatched immediately to2252; no registry/body. No new source release.
@@ -255,3 +255,5 @@ Intake 2026-10-24T23:22Z: ABI20 author2316 completed21PASS, old20ERROR and exact
 D85 intake 2026-10-24T23:24:23Z: source-only critical cap6 above6.5GB applied. ABI20 ownership is ALREADY active: author rt-Agent-ABI20-provider-2316 completed21PASS; independent rt-Agent-ABI20-review-2322 now reproduced21PASS and finishes conservation/order review. Board row F-provider-ABI20 and two ordinary peer notes name exact workers. Repeated owner assignment request is a publication lag, not missing dispatch. No duplicate author or new original. Inbox through612297 bytes.
 
 D86 intake 2026-10-24T23:25:58Z: accepted up to4 Agent family authors, prefix agt-, through normal request route and remote Agent merges. Named family list absent in ORCH and normal hub; blocked:agent row added, peer requests actual reserved input. Actual local Agent advanced normally to5d4ae93. Runtime security235PASS now complete; attack/neighbor review continues. Inbox through614905 bytes.
+
+Intake 2026-10-24T23:27:07Z: ABI20 independent2322 PASS21 plus reverse21 and13 order/neighbor controls, Ruff/mypy/compile/diff and exact AST conservation. Requested own-only remote Agent merge237886 via normal queue immediately. No extra review/body; actual Agent receipt still owed. Runtime security2319 now235+192+14PASS; independent witness/novel attacks continue. D86 list still absent.
