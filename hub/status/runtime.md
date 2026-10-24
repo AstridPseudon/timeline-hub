@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T05:20:10Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 1m -->
-# runtime board, 2026-10-24T05:19:00Z
+<!-- main | 2026-10-24T05:22:36Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 1m -->
+# runtime board, 2026-10-24T05:21:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -61,17 +61,17 @@
 | R-D42-history-memo | Harden verified replay memo | Sol / Luna | Post-delivery scope under D47 | gated:D47 | Design0448; review0454 PASS | Deferred by D47. No stable validation boundary; nine state attacks remain open. Source stays unmerged. | Tests 6c6bb375; source held |
 | R-D42-proof-pin | Preserve a compatible future memo pin | Sol / Luna | Post-delivery safe memo under D47 | gated:D47 | No active pin author | D45: next P2/P3 uses existing37eb without memo. Prior unsafe backport stays held; no new checkout needed. | Earlier backport held |
 | R-D42-HTTP | Measure a future memo pin over HTTP | Luna | Post-delivery safe memo under D47 | gated:D47 | No active HTTP worker | D45 removes these timings from the next P2/P3 prerequisites. Do not run an unsafe pin or a duplicate gate. | No released memo pin |
-| R2r-source-copy-guards | Classify two retained source-copy guards | Agent Sol / Luna | Agent independent result review | review | Agent0502; review0511 | Actual Agent 9cd and Runtime 2b49 passed both nodes in 20.90 seconds. Capture retained; independent review pending. No source fix. | Read-only facts and proof |
+| R2r-source-copy-guards | Classify two retained source-copy guards | Agent Sol / Luna | Independent result review passed | merged | Agent0502; review0511 PASS | Exact two originals passed in 20.90 seconds on Agent 9cd and Runtime 2b49. All 54 guards retained. Capture and HTTP limits stay explicit. | Source unchanged |
 | U2c-child-proof | Identify supported activation child proof | Luna / Luna | Source facts independently reviewed | merged | Facts0425; independent0430 PASS | Producer is absent in Agent RunPod adapter. Exact owner and custody seam returned; Runtime guard unchanged. | Source facts only |
 
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
-Runtime integration is faf6a5477, tree5e909a876c78. Actual integrated occupancy16 passed45.92s and independent accounting0449 passed:26 original failures closed,10 open,0 unaccounted. Product source remains unchanged from2b49.
+Runtime integration is 1d9ddba54, tree f56c396c4495. The merge adds only the reviewed headless fixture. Prior accounting retains 26 closed, ten open, zero unaccounted pending integrated 0521. Product source remains unchanged from 2b49.
 
 D47 defers the memo and validation capsule until after delivery. Held source remains unmerged. D45 and D46 keep the next pair on existing 37eb and Agent 079 with reviewed App fixes.
 
 P2/P3: D45 pair is terminal. Both reached readiness on App c0fe / Agent 079 / Runtime 37eb. P2 has three failures and five not run; P3 failed inside Gate5. App and Proof own diagnosis and verdict; no repeat here.
-Blockers: Runtime — ten original failures remain open pending integrated proof. Sol fixed identical retries; its capture finalizer failed. Independent 0518 runs the ordinary clean qualification.
+Blockers: Runtime — ten original failures remain open until integrated 0521 and exact node accounting pass. The reviewed fixture is merged as 1d9ddba54.
 Farm: full-farm row appended at 04:59 with outside bytes unchanged. Farm worker tf-agent-full-farm-0503 queued the one checkpoint at 05:04. Setup has no remaining blocker.
 Blockers: Freeze — D39 client regeneration and Agent/App tuple adoption are held for the freeze; current consumer pins stay intact.
 
@@ -81,4 +81,4 @@ D34: Main has 8.8 GiB free at the latest check. The orchestrator orders no furth
 
 Later: D46 closes U2c. Runtime facts are complete; no new relay or provider custody backend. Its upstream commit arrives with the freeze U-merge. Disk work stays paused. D42 pin and HTTP work stay deferred pending safe source.
 
-Next ready: Consume final review 0518, merge the two independently reviewed fixture commits, then qualify and reconcile the integrated head. Farm completes its row and one checkpoint. Agent owns the source-copy observation. Memo is post-delivery under D47.
+Next ready: Consume integrated proof 0521, then independently verify the original-node accounting. Farm completes its one checkpoint. Source-copy observation is qualified; no further author is needed. Memo is post-delivery under D47.

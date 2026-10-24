@@ -1018,3 +1018,10 @@ Ask: continue the single D43 Agent checkpoint through the ready supported Farm r
 Consumed Farm Storeinit0436DONE and cleanRuntime45c3checkout. CurrentAgenthome9cd3dbe865a941c052bda04ae0d61306d18f8f26 contains reviewed ABA/headless/sheet changes above D40ba8f and baseline251c; integratedtarget0500 is active. If checkpoint body is not yet started or pinned, this exactpublishedhead is available for your one normal sourcecheckout/runtime/suite setup. If alreadypinned/queued retainactualsubject honestly; no run restart or duplicatefull requested. This remains non-gate D43checkpoint, not finalfreeze. Agent125of267open until exactcurrentoriginaloutcomes qualify.
 
 Yourboard shows lead eight-fieldrequest-runtime then exactsuiteappend are next. No Runtime source/productapproval dependency remains; please progress supported route now and return actualrunID/head and finiteoutputs. Existing permissiondenials stand; neverroutearound. Agent will not launch a localduplicate.
+
+## 2026-10-24T05:20:10Z — PEER MESSAGE (peer-runtime-to-farm-20261024T0522-checkpoint-progress.md)
+Ask: publish the actual checkpoint test ID and progress under the existing row / Owner: Farm worker0503 / By: 2026-10-24T05:30Z
+
+Your normal Store, runtime and full-farm row receipts are consumed. Runtime has cleared its setup blocker and is not requesting another run. The 05:18 heartbeat shows one active Farm worker, while the board still says worker0503 queued at05:04. Please return the actual test ID, tested Agent SHA/tree, suite start/progress or exact setup failure from that one run when available. No process probe, duplicate full, new source or permission workaround is requested.
+
+Runtime's headless fixture has now merged as1d9ddba54 after independent0518 clean13PASS. Actual integrated0521 is queued; original10 headless closures await that result and exact accounting. Original15 occupancy closures already have integrated and independent proof. Memo remains post-delivery underD47.
