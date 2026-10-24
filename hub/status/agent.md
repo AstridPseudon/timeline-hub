@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T02:06:04Z | dispatcher heartbeat 8s | live 4 (sol 1, luna 3, other 0) | busy30 26 | status age 0m -->
-# agent board, 2026-10-24T02:03:50Z
+<!-- agent | 2026-10-24T02:09:13Z | dispatcher heartbeat 14s | live 4 (sol 1, luna 3, other 0) | busy30 27 | status age 1m -->
+# agent board, 2026-10-24T02:08:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -35,7 +35,7 @@
 | F-P4-symbol | Rename stale fixture symbol | Luna | G5 | merged | agt-F-P4-symbol-integrated-0023 | Both original metadata and CLI behavior cases passed on the integrated head. | 45cecae7b |
 | F-authoring-publish-writer | Publication helper integrated behavior | Sol / Luna | Vendor invocation disposition | blocked:orchestrator | agt-F-publish-integrated-0158 | Actual 4151: original first plus six controls 7 passed. Bare vendor script execution denied; action stopped and escalated 0206. | 544d589ca6 |
 | F-authoring-neighbors | Migrate obsolete unit collaborators | Luna | Reviewed writer source | doing | rt-F-authoring-neighbor-fixtures-0212 | Runtime review found 15 new collaborator failures in two files; original scenarios and assertions must remain. | 4151 source |
-| F-authoring-ABA | Fix authenticated raw-before selector | Luna | Valid nested checkout identity | doing | agt-F-ABA-oracle-return-0204 | Oracle author used a missing key; actual internal revision is nested. First return preserves all 52 predicates before new live check. | current 4151 |
+| F-authoring-ABA | Derive raw before from canonical source | Sol | Two stale selector attempts | doing | agt-F-ABA-oracle-sol-0208 | Public checkout omits both guessed revision fields. Sol traces authenticated canonical mapping; all 52 protected predicates remain. | 4151 product |
 | F-D32-render-wire | Six original SDK wire results | Luna / service | Existing installed child | merged | Service 27934 | Six original cases passed in 41.48s; body hashes, 19 source identities, import origins and read-only profile retained. | 521c source |
 | F-helper-sequential | Capture actual helper replay-map refusal | Sol | Two diagnostic failures | doing | agt-F-helper-observer-sol-0202 | Luna observer first lost float data, then timed out tracing. Sol fixes only telemetry before one meaningful capture; no product cause claimed. | no product change |
 | F-D32-h3-import | Seven isolated child-import cases | Luna | Existing installed child | merged | agt-F-h3-env-0137 | All seven original fault cases passed in 3.60s; preflight/postflight, body and source identities retained. | 521c source |
@@ -43,7 +43,7 @@
 | A4 IMAGE | Actual App request on new live fixture | Luna / App | App producer output | doing | agt-A4-image-created-current-0154 | New input c0a3b657 published; App producer requested. Exact fixture deadline 02:21:17Z. Old requests stay closed. | bc38 / b3a84 |
 | D31 | Dormant transcript capture subset | — | Follow-up funding | gated:D31 | No active author | Keep the 397-line test suite and implementation unchanged. Literal production reachability is NO. | unchanged |
 | V4 / D14 / D23 | Cut and deferred relational timing | — | Scope decisions | gated:H9 | No repair worker | Keep original tests unchanged, unskipped and visibly failing. No V4 or relational-timing completion claim. | unchanged |
-| U2c | Upstream readiness draft review | Luna | Exact f38e port authored | review | agt-U2c-review-0202 | Exact four-file port passed 161 plus 31 controls and static checks. Activation remains unqualified; draft stays unmerged without causal authority. | branch only |
+| U2c | Upstream readiness draft only | Luna | Confirmed cause before merge | gated:readiness-cause | agt-U2c-review-0202 | Source scope PASS54; activation 6 failed and 9 errors because upstream Runtime fixture API is absent. No merge or readiness proof. | 699236a285 |
 P1: GO. Original service 18792 passed both cases; Proof reviews 0036 and 0040 passed. P4 and P5 are done. G5 already merged under H24. P2 and P3 remain with App and Proof.
 Integration: 415181d983d6d1d56a912da16ad4c5690e663187, tree f49cae445194350ed6def2aed65abbf4d870f639. Frozen 34e client, d106 schema and 819acf artifact unchanged.
 Blockers: Agent full waits for the remaining owned fixes and finite qualifications. D32 baseline comparison is active; no full retry.
