@@ -6,7 +6,7 @@ import { createFakeIndexedDB } from 'fake-indexeddb';
 import ts from 'typescript';
 import { createCommitOutbox } from '../../../../src/tools/video-editor/commands/commitOutbox.ts';
 import { dragTimelineClip } from './app.ts';
-import { assertGate5ResetPrecondition } from './gate5-reset-precondition.ts';
+import { assertGate5ResetPrecondition, expectedGate5MoveReads } from './gate5-reset-precondition.ts';
 
 // Offline control only: these request/response/outbox objects are mocked and do not prove a browser or Runtime journey.
 const base = { revisionId: 'revision-before', publicationId: 'publication-before' };
@@ -14,18 +14,19 @@ const scope = { projectId: 'project-f2', timelineId: 'timeline-f2' };
 const clipId = 'f2-app-clip';
 const trackId = 'V1';
 const changes = [{ op: 'set', ref: 'parent', path: ['clips', `id:${clipId}`, 'at'], before: { state: 'present', value: 0 }, value: 5 }];
-const reads = [
-  ...[['id', clipId], ['track', trackId], ['at', 0], ['clipType', 'media'], ['hold', undefined], ['from', 0], ['to', 3], ['speed', 1], ['asset', 'f2-app']]
-    .map(([key, value]) => ({ kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${clipId}`, key], state: value === undefined ? { state: 'absent' } : { state: 'present', value } })),
-  { kind: 'field', ref: 'parent', path: ['config', 'output', 'fps'], state: { state: 'present', value: 30 } },
-  { kind: 'field', ref: 'parent', path: ['config', 'registry', 'assets', 'f2-app'], state: { state: 'present', value: { file: 'f2-app.png', type: 'image/png' } } },
-  { kind: 'field', ref: 'parent', path: ['config', 'tracks', `id:${trackId}`, 'kind'], state: { state: 'present', value: 'visual' } },
-  { kind: 'field', ref: 'parent', path: ['config', 'pinnedShotGroups'], state: { state: 'absent' } },
-  { kind: 'collection', ref: 'parent', path: ['config', 'clips'], members: ['f2-app-clip', 'f2-transition-clip'], order: ['f2-app-clip', 'f2-transition-clip'] },
-  ...[['track', trackId], ['id', 'f2-transition-clip'], ['at', 15], ['track', trackId], ['clipType', 'media'], ['hold', undefined], ['from', 0], ['to', 3], ['speed', 1], ['asset', 'f2-video']]
-    .map(([key, value]) => ({ kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:f2-transition-clip', key], state: value === undefined ? { state: 'absent' } : { state: 'present', value } })),
-  { kind: 'field', ref: 'parent', path: ['config', 'registry', 'assets', 'f2-video'], state: { state: 'present', value: { file: 'f2-video.mp4', type: 'video/mp4' } } },
-];
+// This is the immutable parent payload captured before the gesture. The top-level
+// clip/registry mirrors match the mounted producer's authored shape, rather than
+// deriving expected reads from the submitted request.
+const preGestureParent = {
+  config: { output: { fps: 30 }, tracks: [{ id: trackId, kind: 'visual' }] },
+  clips: [
+    { id: clipId, track: trackId, at: 0, clipType: 'media', from: 0, to: 3, speed: 1, asset: 'f2-app' },
+    { id: 'f2-transition-clip', track: trackId, at: 15, clipType: 'media', from: 0, to: 3, speed: 1, asset: 'f2-video' },
+  ],
+  registry: { assets: { 'f2-app': { file: 'f2-app.png', type: 'image/png' }, 'f2-video': { file: 'f2-video.mp4', type: 'video/mp4' } } },
+};
+const preGestureDocument = { parent_revision: { payload: preGestureParent } };
+const reads = expectedGate5MoveReads({ preGestureDocument, clipId, expectedTrackId: trackId });
 const command = { schema_version: 1, op: 'doc.patch', version: '1', select: null, created: [], args: { changes } };
 const request = {
   api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
@@ -42,15 +43,19 @@ const data = {
   provider_version: 'provider-v2', compiler_version: 'compiler-v2', publisher: 'publisher-v2', merge_mode: 'fields', label: request.label, source: request.source,
   steps: [{ ...request.steps[0], patch: [{ ...changes[0], path: ['config', ...changes[0].path] }], dependencies: [] }],
   canonical_document: { schema_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
-    parent_revision: { revision_id: 'revision-after', content_digest: 'sha256:parent', payload: { config: { clips: [{ id: clipId, at: 5 }], tracks: [{ id: trackId, kind: 'visual' }], output: { fps: 30 } }, clips: [{ id: clipId, at: 5 }] } },
+    parent_revision: { revision_id: 'revision-after', content_digest: 'sha256:parent', payload: { ...preGestureParent,
+      clips: [{ ...preGestureParent.clips[0], at: 5 }, preGestureParent.clips[1]] } },
     shot_revisions: [], internal_timeline_revisions: [], dependency_manifest: { shots: [], internal_timelines: [], media: [], documents: [] } },
 };
 const response = { data, receipt: { receipt_id: 'publication-after', command_kind: 'timeline.commit', idempotency_key: 'setup-key', request_hash: 'hash', project_id: scope.projectId, project_seq: [1, 1], event_ids: ['event-1'], result: data } };
-const settled = [{ pending: null, intents: [] }];
+const acceptedValue = { response, accepted: { revisionId: 'revision-after', publicationId: 'publication-after' },
+  canonicalDocument: data.canonical_document, receipt: response.receipt, graph: {} };
+const settled = [{ scope: { realmId: 'realm', actorId: 'actor', ...scope }, ownerId: 'owner-setup', generation: 1,
+  pending: undefined, intents: [], accepted: { intentId: 'setup-intent', head: { revisionId: 'revision-after', publicationId: 'publication-after' }, value: acceptedValue } }];
 const authoritativeHead = { revision_id: 'revision-after', publication_id: 'publication-after' };
 const authoritativeRevision = { project_id: scope.projectId, timeline_id: scope.timelineId, revision_id: 'revision-after', payload: { config: { clips: [{ id: clipId, at: 5 }] }, clips: [{ id: clipId, at: 5 }] } };
 const valid = {
-  request, requestIdentity: request, responseRequest: request, requestIdempotencyKey: 'setup-key',
+  request, requestIdentity: request, responseRequest: request, requestIdempotencyKey: 'setup-key', expectedOwnerId: 'owner-setup', preGestureDocument,
   responseStatus: 200, responseBody: response, expectedBase: base, expectedScope: scope,
   clipId, expectedTrackId: trackId, expectedPreviousPosition: 0, expectedPosition: 5, settledOutboxes: settled, authoritativeHead, authoritativeRevision,
 };
@@ -65,8 +70,7 @@ test('the isolated 0-start cannot satisfy a 5→0 reset precondition without a s
   const oldStartData = { ...data, canonical_document: { ...data.canonical_document,
     parent_revision: { ...data.canonical_document.parent_revision,
       payload: { ...data.canonical_document.parent_revision.payload,
-        config: { ...data.canonical_document.parent_revision.payload.config, clips: [{ id: clipId, at: 0 }] },
-        clips: [{ id: clipId, at: 0 }] } } } };
+        clips: [{ ...preGestureParent.clips[0], at: 0 }, preGestureParent.clips[1]] } } } };
   assert.throws(() => assertGate5ResetPrecondition({
     ...valid, responseStatus: 200, responseBody: { data: oldStartData, receipt: { receipt_id: 'publication-old', result: oldStartData } },
     request: { ...request, commands: [{ ...command, args: { changes: [{ ...changes[0], value: 0 }] } }] },
@@ -110,9 +114,12 @@ test('Gate5 rejects an authoritative readback with the wrong scope or position',
 test('Gate5 refuses queued and pending records from the real outbox until acknowledgement settles them', async () => {
   const outbox = createCommitOutbox({ indexedDB: createFakeIndexedDB(), exclusiveLock: async (_name, work) => work() });
   await outbox.create({ ...scope, realmId: 'realm', actorId: 'actor' }, async (box) => {
-    const check = async () => ({ ...valid, settledOutboxes: [await box.read()] });
+    const check = async () => {
+      const record = await box.read();
+      return { ...valid, expectedOwnerId: record.ownerId, settledOutboxes: [record] };
+    };
     const initial = await check();
-    assert.doesNotThrow(() => assertGate5ResetPrecondition(initial));
+    assert.throws(() => assertGate5ResetPrecondition(initial), /accepted owner result/);
     const intentId = await box.append({ commands: request.commands }, { head: base });
     const queued = await check();
     assert.equal(queued.settledOutboxes[0].pending, undefined);
@@ -124,10 +131,10 @@ test('Gate5 refuses queued and pending records from the real outbox until acknow
     assert.equal(pending.settledOutboxes[0].pending.intentId, intentId);
     assert.throws(() => assertGate5ResetPrecondition(pending), /owner is still pending/);
     await box.dispatch(() => { throw new Error('An exact pending retry must reuse its request'); },
-      async () => ({ kind: 'accepted', head: { revisionId: 'revision-after', publicationId: 'publication-after' }, value: response }));
+      async () => ({ kind: 'accepted', head: { revisionId: 'revision-after', publicationId: 'publication-after' }, value: acceptedValue }));
     const acknowledged = await check();
     assert.doesNotThrow(() => assertGate5ResetPrecondition(acknowledged));
-    assert.throws(() => assertGate5ResetPrecondition({ ...acknowledged, settledOutboxes: [...acknowledged.settledOutboxes, ...pending.settledOutboxes] }), /owner is still pending/);
+    assert.throws(() => assertGate5ResetPrecondition({ ...acknowledged, settledOutboxes: [...acknowledged.settledOutboxes, ...pending.settledOutboxes] }), /owner is missing or ambiguous/);
   });
   assert.throws(() => assertGate5ResetPrecondition({ ...valid, settledOutboxes: [] }), /owner is missing/);
 });
@@ -195,11 +202,26 @@ test('Gate5 refuses an authentic-looking setup with wrong before/value, readset,
   assert.throws(() => assertGate5ResetPrecondition({ ...valid, request: {
     ...request, commands: [{ ...command, args: { changes: [{ ...changes[0], value: 4 }] } }],
   } }), /requested position/);
-  assert.throws(() => assertGate5ResetPrecondition({ ...valid, request: { ...request,
-    reads: [{ ...reads[0], path: ['config', 'clips', 'id:other-clip', 'at'] }] } }), /step claims/);
+  const wrongRead = { ...reads[0], path: ['clips', 'id:other-clip', 'at'] };
+  const wrongReads = [wrongRead, ...reads.slice(1)];
+  assert.throws(() => assertGate5ResetPrecondition({ ...valid, request: { ...request, reads: wrongReads,
+    steps: [{ ...request.steps[0], reads: wrongReads }] } }), /move read dependencies/);
+  const wrongStateReads = [{ ...reads[0], state: { state: 'present', value: 1 } }, ...reads.slice(1)];
+  assert.throws(() => assertGate5ResetPrecondition({ ...valid, request: { ...request, reads: wrongStateReads,
+    steps: [{ ...request.steps[0], reads: wrongStateReads }] } }), /move read dependencies/);
   assert.throws(() => assertGate5ResetPrecondition({ ...valid, request: {
     ...request, steps: [{ ...request.steps[0], intent: 'Save local editor changes' }],
   } }), /step claims/);
+});
+
+test('Gate5 binds the settled owner to scope, identity, accepted head, receipt, and key', () => {
+  assert.throws(() => assertGate5ResetPrecondition({ ...valid, settledOutboxes: [{ ...settled[0], scope: { ...settled[0].scope, projectId: 'other-project' } }] }), /owner scope/);
+  assert.throws(() => assertGate5ResetPrecondition({ ...valid, settledOutboxes: [{ ...settled[0], ownerId: 'other-owner' }] }), /owner identity/);
+  assert.throws(() => assertGate5ResetPrecondition({ ...valid, settledOutboxes: [{ ...settled[0], accepted: { ...settled[0].accepted, head: { revisionId: 'stale', publicationId: 'publication-after' } } }] }), /owner head/);
+  assert.throws(() => assertGate5ResetPrecondition({ ...valid, settledOutboxes: [{ ...settled[0], accepted: { ...settled[0].accepted,
+    value: { ...settled[0].accepted.value, receipt: { ...settled[0].accepted.value.receipt, idempotency_key: 'wrong-key' } } } }] }), /owner receipt/);
+  assert.throws(() => assertGate5ResetPrecondition({ ...valid, settledOutboxes: [{ ...settled[0], accepted: { ...settled[0].accepted,
+    value: { ...settled[0].accepted.value, receipt: { ...settled[0].accepted.value.receipt, receipt_id: 'wrong-receipt' } } } }] }), /owner receipt/);
 });
 
 test('the actual Gate5 setup listens before the real drag helper drops, and ignores another POST reply', async () => {

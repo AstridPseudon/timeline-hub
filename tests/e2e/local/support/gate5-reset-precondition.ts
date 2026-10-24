@@ -9,6 +9,8 @@ export interface Gate5ResetPreconditionInput {
   responseBody: unknown;
   expectedBase: { revisionId: string; publicationId: string };
   expectedScope: { projectId: string; timelineId: string };
+  expectedOwnerId: string;
+  preGestureDocument: unknown;
   clipId: string;
   expectedTrackId: string;
   expectedPreviousPosition: number;
@@ -23,6 +25,10 @@ function object(value: unknown, label: string): JsonObject {
   return value as JsonObject;
 }
 
+function isRecord(value: unknown): value is JsonObject {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
 function string(value: unknown, label: string): string {
   if (typeof value !== 'string' || !value) throw new Error(`Gate5 precondition ${label} is missing`);
   return value;
@@ -35,6 +41,78 @@ function number(value: unknown, label: string): number {
 
 function sameJson(left: unknown, right: unknown): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
+}
+
+/**
+ * Reconstruct the move planner's ordered reads from the immutable pre-gesture
+ * parent. The submitted request is deliberately not an input to this oracle.
+ */
+export function expectedGate5MoveReads(input: {
+  preGestureDocument: unknown;
+  clipId: string;
+  expectedTrackId: string;
+}): unknown[] {
+  const document = object(input.preGestureDocument, 'pre-gesture document');
+  const parentRevision = object(document.parent_revision, 'pre-gesture parent revision');
+  const payload = object(parentRevision.payload, 'pre-gesture parent payload');
+  const config = object(payload.config, 'pre-gesture config');
+  const topLevelClips = !Object.prototype.hasOwnProperty.call(config, 'clips') && Array.isArray(payload.clips);
+  const clipPath = topLevelClips ? ['clips'] : ['config', 'clips'];
+  const clips = topLevelClips ? payload.clips : config.clips;
+  if (!Array.isArray(clips)) throw new Error('Gate5 precondition pre-gesture clips are missing');
+  const selected = clips.filter((candidate): candidate is JsonObject => isRecord(candidate) && candidate.id === input.clipId);
+  if (selected.length !== 1) throw new Error('Gate5 precondition pre-gesture clip is ambiguous');
+  const selectedClip = selected[0];
+  const reads: unknown[] = [];
+  const read = (value: JsonObject, key: string, path: string[]) => reads.push({
+    kind: 'field', ref: 'parent', path: [...path, key],
+    state: Object.prototype.hasOwnProperty.call(value, key)
+      ? { state: 'present', value: structuredClone(value[key]) } : { state: 'absent' },
+  });
+  const readPath = (value: JsonObject, keys: string[], path: string[]) => {
+    const [key, ...rest] = keys;
+    if (rest.length && isRecord(value[key])) return readPath(value[key], rest, [...path, key]);
+    read(value, key, path);
+  };
+  const timingReads = (item: JsonObject) => {
+    for (const key of ['id', 'track', 'at', 'clipType', 'hold', 'from', 'to', 'speed', 'asset']) {
+      read(item, key, [...clipPath, `id:${String(item.id)}`]);
+    }
+  };
+  const registry = object(payload.registry, 'pre-gesture registry');
+  const assetRead = (item: JsonObject) => {
+    if (typeof item.asset !== 'string') return;
+    readPath(registry, ['assets', item.asset], ['config', 'registry']);
+  };
+
+  timingReads(selectedClip);
+  readPath(config, ['output', 'fps'], ['config']);
+  if (!isRecord(config.output) || config.output.fps == null) {
+    read(config, 'theme', ['config']);
+    readPath(config, ['theme_overrides', 'visual', 'canvas', 'fps'], ['config']);
+  }
+  assetRead(selectedClip);
+  const tracks = config.tracks;
+  if (!Array.isArray(tracks)) throw new Error('Gate5 precondition pre-gesture tracks are missing');
+  const track = tracks.filter((candidate): candidate is JsonObject => isRecord(candidate) && candidate.id === input.expectedTrackId);
+  if (track.length !== 1) throw new Error('Gate5 precondition pre-gesture track is ambiguous');
+  if (selectedClip.track !== input.expectedTrackId) throw new Error('Gate5 precondition pre-gesture track mismatch');
+  read(track[0], 'kind', ['config', 'tracks', `id:${input.expectedTrackId}`]);
+  read(config, 'pinnedShotGroups', ['config']);
+  const order = clips.map((candidate) => isRecord(candidate) ? candidate.id : undefined);
+  if (order.some((id) => typeof id !== 'string')) throw new Error('Gate5 precondition pre-gesture clip identity is missing');
+  reads.push({ kind: 'collection', ref: 'parent', path: clipPath, members: [...order].sort(), order });
+  for (const candidate of clips) {
+    if (!isRecord(candidate)) throw new Error('Gate5 precondition pre-gesture clip is malformed');
+    const item = candidate;
+    if (item.id === input.clipId) continue;
+    read(item, 'track', [...clipPath, `id:${String(item.id)}`]);
+    if (item.track === input.expectedTrackId) {
+      timingReads(item);
+      assetRead(item);
+    }
+  }
+  return reads;
 }
 
 /**
@@ -55,7 +133,10 @@ export function assertGate5ResetPrecondition(input: Gate5ResetPreconditionInput)
   if (request.merge !== 'fields') throw new Error('Gate5 precondition merge mismatch');
   if (request.dry_run !== false) throw new Error('Gate5 precondition dry-run mismatch');
   if (!sameJson(request.source, { via: 'app' })) throw new Error('Gate5 precondition source mismatch');
-  if (!Array.isArray(request.reads) || request.reads.length < 1) throw new Error('Gate5 precondition reads are missing');
+  const expectedReads = expectedGate5MoveReads({
+    preGestureDocument: input.preGestureDocument, clipId: input.clipId, expectedTrackId: input.expectedTrackId,
+  });
+  if (!sameJson(request.reads, expectedReads)) throw new Error('Gate5 precondition move read dependencies mismatch');
   const commands = request.commands;
   if (!Array.isArray(commands) || commands.length !== 1) throw new Error('Gate5 precondition command is missing');
   const command = object(commands[0], 'command');
@@ -158,11 +239,31 @@ export function assertGate5ResetPrecondition(input: Gate5ResetPreconditionInput)
     throw new Error('Gate5 precondition authoritative position mismatch');
   }
 
-  for (const candidate of input.settledOutboxes) {
-    const outbox = object(candidate, 'outbox');
-    if (outbox.pending) throw new Error('Gate5 precondition owner is still pending');
-    const intents = outbox.intents;
-    if (!Array.isArray(intents) || intents.length !== 0) throw new Error('Gate5 precondition owner is not settled');
-  }
   if (input.settledOutboxes.length !== 1) throw new Error('Gate5 precondition owner is missing or ambiguous');
+  const outbox = object(input.settledOutboxes[0], 'outbox');
+  const scope = object(outbox.scope, 'outbox scope');
+  if (scope.projectId !== input.expectedScope.projectId || scope.timelineId !== input.expectedScope.timelineId) {
+    throw new Error('Gate5 precondition owner scope mismatch');
+  }
+  if (outbox.ownerId !== input.expectedOwnerId) throw new Error('Gate5 precondition owner identity mismatch');
+  if (outbox.pending) throw new Error('Gate5 precondition owner is still pending');
+  const intents = outbox.intents;
+  if (!Array.isArray(intents) || intents.length !== 0) throw new Error('Gate5 precondition owner is not settled');
+  const accepted = object(outbox.accepted, 'accepted owner result');
+  const acceptedHead = object(accepted.head, 'accepted owner head');
+  if (acceptedHead.revisionId !== acceptedRevisionId || acceptedHead.publicationId !== receipt.receipt_id) {
+    throw new Error('Gate5 precondition owner head mismatch');
+  }
+  const acceptedValue = object(accepted.value, 'accepted owner value');
+  const acceptedIdentity = object(acceptedValue.accepted, 'accepted owner identity');
+  if (acceptedIdentity.revisionId !== acceptedRevisionId || acceptedIdentity.publicationId !== receipt.receipt_id) {
+    throw new Error('Gate5 precondition owner accepted identity mismatch');
+  }
+  const acceptedReceipt = object(acceptedValue.receipt, 'accepted owner receipt');
+  if (!sameJson(acceptedValue.response, input.responseBody)
+    || !sameJson(acceptedValue.canonicalDocument, document)
+    || !sameJson(acceptedReceipt, receipt)
+    || acceptedReceipt.idempotency_key !== input.requestIdempotencyKey) {
+    throw new Error('Gate5 precondition owner receipt or canonical result mismatch');
+  }
 }
