@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T09:15:33Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 6m -->
-# app board, 2026-10-24T09:09Z
+<!-- app | 2026-10-24T09:18:33Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 2m -->
+# app board, 2026-10-24T09:15Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -50,7 +50,7 @@
 Integration: HOME82cb5c0005df7abe0fcb8673f7be192a6c9e9183 includes clean P3 f561 after HOME182c. Receipt and source are verified; prior integrated0826 covers182c only. Popup candidate63e remains held after independent0840 FAIL on authoritative reply modeling. Sole Sol0846 and independent whole-path0846 are running. Final joined proof follows reviewed popup merge; no current original run is released.
 
 Blockers: App — popup accepted proof passes; merged pure-provider binding refusal is under App and Agent classification. Historical element outcome remains unknown.
-Blockers: App — P3 source is HOME82cb. Final joined proof and caller binding follow popup review0840; Proof source dependencies are clear.
+Blockers: App — popup cumulative0908 must resolve the retained merged fixture failure before source merge, final joined proof and final caller binding. P3 integrated0900 and caller preparation0902 are complete.
 Blockers: Freeze — App U3b home waits header P2/P3 GO, then D39 adoption and actual final tuple qualification. Runtime coordinates FREEZE.
 Next ready: Popup cumulative0908 is active; Agent classification requested0905. P3 integrated0900 and caller cumulative0902 PASS are published. After popup PASS, merge exact source, qualify joined head, bind final caller, then use conditional release0850 once.
 
@@ -66,4 +66,4 @@ Disk: Latest sweep3 removed zero directories; 11113 MiB free. Current finished A
 
 Evidence: [joined 690](../../design/app-A2-A3-corrected-integrated-0629.md), [real provider integrated](../../design/app-A3-provider-integrated-0724.md), [actual predecessor review](../../design/app-P3-parent-trace-review-0720.md), [element clock](../../design/app-P2-element-clock-review-0724.md), [element error review](../../design/app-P2-element-error-review-0738.md), [popup cause review](../../design/app-P2-popup-cause-review-0745.md), [lifecycle review](../../design/app-P2-P3-lifecycle-review-0741.md), [IMAGE](../../design/agt-A4-image-result-review-0636.md).
 
-Pass 2026-10-24T09:09Z: P3 integrated0900 PASS and caller cumulative0902 PASS published byte-exact. Popup0846 ended66PASS/1ordinaryFAIL; cumulative0908 dispatched immediately. Agent peer0905 owns source classification, with exact handoff follow-up0908. No merge, install or original run while popup acceptance remains failed.
+Pass 2026-10-24T09:15Z: INBOX consumed through1416766 bytes, including conditional0850 and corrected-condition0855/0859 ACKs. Header unchanged; Agent board checked and source pickup0905 remains pending. Popup cumulative0908 is progressing in source inspection and bounded offline reproduction. Current P3/caller qualifications are published. No original run, row installation or speculative provider author.
