@@ -13,10 +13,9 @@ maker's integration point is::
     # maker/Store identity before create and on every reuse verification.
 
 ``schema_source`` is the Agent source tree, not an installed distribution.
-The five approved wheels are the independently reviewed original packet.  An
-additional wheel is admitted only when its caller-supplied expectation agrees
-with its filename, metadata, bytes, RECORD, and safe archive contents.  The
-caller cannot turn an arbitrary label or digest into source authority.
+The five approved wheels are the independently reviewed original packet.  No
+caller-supplied additional wheel authority exists until an independent review
+register is wired in; caller labels and hashes cannot grant admission.
 """
 
 from __future__ import annotations
@@ -48,12 +47,10 @@ SCHEMA_DECLARATION: Final = (
     f"{SCHEMA_COMMIT}#subdirectory={SCHEMA_SUBDIRECTORY}"
 )
 
-_SHA256 = re.compile(r"\A[0-9a-f]{64}\Z")
 _WHEEL_NAME = re.compile(
     r"\A(?P<name>.+)-(?P<version>[^-]+)-(?P<python>[^-]+)-"
     r"(?P<abi>[^-]+)-(?P<platform>[^.]+)\.whl\Z"
 )
-_SAFE_COMPONENT = re.compile(r"\A[A-Za-z0-9][A-Za-z0-9_.+-]*\Z")
 
 
 class ValidationError(ValueError):
@@ -65,9 +62,9 @@ class WheelInput:
     """An independently reviewed wheel the maker wants retained.
 
     The expected identity is checked against the archive.  The fixed five
-    packet entries below are the only built-in approvals.  Callers may add a
-    source or test wheel with their own reviewed expectation, but cannot omit
-    or relabel one of the fixed entries.
+    packet entries below are the only approved inputs.  ``additional_wheels``
+    remains in the interface for the later independently authenticated join,
+    but is refused while that authority is absent.
     """
 
     path: Path
@@ -327,32 +324,23 @@ def _validate_wheel(path: Path, expected: WheelInput) -> dict[str, Any]:
 def validate_wheel_inputs(
     wheelhouse: Path, *, additional_wheels: Sequence[WheelInput] = ()
 ) -> dict[str, Any]:
-    """Authenticate the fixed packet and optional reviewed wheel inputs.
+    """Authenticate the fixed packet and refuse unauthenticated additions.
 
     This function does not require schema custody, making it useful for the
     maker's finite input stage.  ``validate_farm_distribution_inputs`` is the
     production gate and additionally requires the exact Agent source tree.
+    A future independently authenticated register may extend this finite
+    packet; caller-provided metadata is not that register.
     """
 
     root = _physical_directory(Path(wheelhouse), "wheelhouse")
     extras = list(additional_wheels)
-    extra_by_filename: dict[str, WheelInput] = {}
-    for item in extras:
-        if item.role not in {"additional-source", "additional-test"}:
-            _fail(f"additional wheel role is unsupported: {item.role!r}")
-        if not _SAFE_COMPONENT.fullmatch(item.filename) or not item.filename.endswith(".whl"):
-            _fail(f"additional wheel filename is unsafe: {item.filename!r}")
-        if item.filename in _APPROVED_BY_FILENAME or item.filename in extra_by_filename:
-            _fail(f"duplicate wheel identity: {item.filename}")
-        if not _SHA256.fullmatch(item.sha256) or item.size <= 0:
-            _fail(f"additional wheel expectation is not an exact hash/size: {item.filename}")
-        if not item.source or not _SAFE_COMPONENT.fullmatch(item.source):
-            _fail(f"additional wheel source is not a stable label: {item.filename}")
-        if Path(item.path).name != item.filename or Path(item.path).parent != root:
-            _fail(f"additional wheel path must be a direct wheelhouse child: {item.filename}")
-        extra_by_filename[item.filename] = item
-
-    expected = {**_APPROVED_BY_FILENAME, **extra_by_filename}
+    if extras:
+        _fail(
+            "additional wheel authority is unavailable; only the reviewed "
+            "original packet is admitted"
+        )
+    expected = _APPROVED_BY_FILENAME
     actual: dict[str, Path] = {}
     for entry in os.scandir(root):
         path = Path(entry.path)
@@ -428,6 +416,87 @@ def _contains_value(value: object, expected: str) -> bool:
     return False
 
 
+def _tracked_schema_files(root: Path) -> dict[str, str]:
+    """Return the selected package's tracked paths and Git modes."""
+
+    raw = _git(root, "ls-files", "-s", "--", SCHEMA_SUBDIRECTORY)
+    tracked: dict[str, str] = {}
+    for line in raw.splitlines():
+        metadata, separator, relative = line.partition("\t")
+        fields = metadata.split()
+        if separator != "\t" or len(fields) != 3 or fields[2] != "0":
+            _fail("schema source Git index has an invalid selected package entry")
+        mode, _object_id, _stage = fields
+        if mode not in {"100644", "100755"}:
+            _fail(f"schema source selected package has an unsafe Git mode: {relative}")
+        if not relative.startswith(f"{SCHEMA_SUBDIRECTORY}/"):
+            _fail(f"schema source Git index escaped the selected package: {relative}")
+        if relative in tracked:
+            _fail(f"schema source Git index repeats a selected package path: {relative}")
+        tracked[relative] = mode
+    if not tracked:
+        _fail("schema source subdirectory is not tracked")
+    return tracked
+
+
+def _read_authenticated_schema_files(
+    subpath: Path, tracked: Mapping[str, str]
+) -> list[dict[str, Any]]:
+    """Read every physical selected-package file, including ignored entries."""
+
+    expected_dirs: set[str] = {SCHEMA_SUBDIRECTORY}
+    for relative in tracked:
+        parts = relative.split("/")
+        expected_dirs.update("/".join(parts[:index]) for index in range(2, len(parts)))
+
+    actual: dict[str, dict[str, Any]] = {}
+    pending = [subpath]
+    source_root = subpath.parents[2]
+    while pending:
+        directory = pending.pop()
+        try:
+            entries = list(os.scandir(directory))
+        except OSError as exc:
+            _fail(f"schema source package subtree cannot be read: {exc}")
+        for entry in entries:
+            target = Path(entry.path)
+            relative = target.relative_to(source_root).as_posix()
+            try:
+                info = entry.stat(follow_symlinks=False)
+            except OSError as exc:
+                _fail(f"schema source package entry cannot be read: {relative}: {exc}")
+            if stat.S_ISLNK(info.st_mode):
+                _fail(f"schema source package subtree contains a symlink: {relative}")
+            if stat.S_ISDIR(info.st_mode):
+                if relative not in expected_dirs:
+                    _fail(
+                        "schema source package subtree contains an unowned directory: "
+                        f"{relative}"
+                    )
+                pending.append(target)
+                continue
+            if not stat.S_ISREG(info.st_mode):
+                _fail(f"schema source package subtree contains an unsafe entry: {relative}")
+            if relative not in tracked:
+                _fail(f"schema source package subtree contains an unowned file: {relative}")
+            mode = stat.S_IMODE(info.st_mode)
+            expected_mode = 0o755 if tracked[relative] == "100755" else 0o644
+            if mode != expected_mode:
+                _fail(f"schema source mode does not match Git for: {relative}")
+            data = _read_regular(target, f"schema source {relative}")
+            actual[relative] = {
+                "path": relative,
+                "mode": tracked[relative],
+                "sha256": hashlib.sha256(data).hexdigest(),
+                "size": len(data),
+            }
+
+    if set(actual) != set(tracked):
+        missing = sorted(set(tracked) - set(actual))
+        _fail(f"schema source package subtree is incomplete: {missing[0]}")
+    return [actual[path] for path in sorted(actual)]
+
+
 def validate_schema_source(schema_source: Path) -> dict[str, Any]:
     """Validate a clean Agent checkout containing the selected schema source."""
 
@@ -437,10 +506,17 @@ def validate_schema_source(schema_source: Path) -> dict[str, Any]:
         _fail("schema source Git root does not match the supplied physical tree")
     if _git(root, "rev-parse", "HEAD").strip() != SCHEMA_COMMIT:
         _fail("schema source commit is not the selected Agent commit")
+    selected_commit = _git(root, "rev-parse", f"{SCHEMA_COMMIT}^{{commit}}").strip()
+    if selected_commit != SCHEMA_COMMIT:
+        _fail("schema source selected commit cannot be authenticated")
     if _git(root, "status", "--porcelain=v1", "--untracked-files=all"):
         _fail("schema source tree is not clean")
     if any(line.startswith("120000 ") for line in _git(root, "ls-files", "-s").splitlines()):
         _fail("schema source tree contains a symlink")
+    head_tree = _git(root, "rev-parse", "HEAD^{tree}").strip()
+    selected_tree = _git(root, "rev-parse", f"{SCHEMA_COMMIT}^{{tree}}").strip()
+    if not selected_tree or head_tree != selected_tree:
+        _fail("schema source tree is not bound to the selected Agent commit")
 
     agent_pyproject = root / "pyproject.toml"
     try:
@@ -477,27 +553,15 @@ def validate_schema_source(schema_source: Path) -> dict[str, Any]:
     ):
         _fail("schema package source tree is incomplete")
 
-    tracked = _git(root, "ls-files", "-z", "--", SCHEMA_SUBDIRECTORY).split("\0")
-    tracked = [item for item in tracked if item]
-    if not tracked:
-        _fail("schema source subdirectory is not tracked")
-    files: list[dict[str, Any]] = []
-    for relative in tracked:
-        target = root / relative
-        if target.is_symlink() or not target.is_file():
-            _fail(f"schema source contains a non-regular tracked file: {relative}")
-        data = _read_regular(target, f"schema source {relative}")
-        files.append(
-            {"path": relative, "sha256": hashlib.sha256(data).hexdigest(), "size": len(data)}
-        )
-    files.sort(key=lambda item: item["path"])
+    tracked = _tracked_schema_files(root)
+    files = _read_authenticated_schema_files(subpath, tracked)
     return {
         "package": SCHEMA_PACKAGE,
         "version": SCHEMA_VERSION,
         "source_url": "git+https://github.com/banodoco/astrid-agent.git",
         "commit": SCHEMA_COMMIT,
         "subdirectory": SCHEMA_SUBDIRECTORY,
-        "tree": _git(root, "rev-parse", "HEAD^{tree}").strip(),
+        "tree": selected_tree,
         "content_sha256": _json_digest(files),
         "files": files,
     }

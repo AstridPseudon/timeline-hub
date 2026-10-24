@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import sys
 import tarfile
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -42,6 +44,36 @@ def reviewed_wheelhouse(tmp_path: Path) -> Path:
                 target = wheelhouse / Path(member.name).name
                 target.write_bytes(archive.extractfile(member).read())  # type: ignore[union-attr]
     return wheelhouse
+
+
+def forged_additional_wheel(path: Path) -> component.WheelInput:
+    files = {
+        "evilpkg/__init__.py": b"FORGED = True\n",
+        "evilpkg-1.0.dist-info/METADATA": (
+            b"Metadata-Version: 2.1\nName: evilpkg\nVersion: 1.0\n"
+        ),
+        "evilpkg-1.0.dist-info/WHEEL": b"Wheel-Version: 1.0\nTag: py3-none-any\n",
+    }
+    record_rows = []
+    for name, data in files.items():
+        digest = base64.urlsafe_b64encode(hashlib.sha256(data).digest()).decode().rstrip("=")
+        record_rows.append(f"{name},sha256={digest},{len(data)}")
+    record_rows.append("evilpkg-1.0.dist-info/RECORD,,")
+    files["evilpkg-1.0.dist-info/RECORD"] = ("\n".join(record_rows) + "\n").encode()
+    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, data in files.items():
+            archive.writestr(name, data)
+    data = path.read_bytes()
+    return component.WheelInput(
+        path=path,
+        filename=path.name,
+        name="evilpkg",
+        version="1.0",
+        sha256=hashlib.sha256(data).hexdigest(),
+        size=len(data),
+        role="additional-test",
+        source="caller-forged",
+    )
 
 
 def test_reviewed_packet_validates_as_exact_role_partition(tmp_path: Path) -> None:
@@ -146,13 +178,17 @@ def fake_schema_git(root: Path, *, commit: str = SCHEMA_COMMIT, status: str = ""
             return f"{root}\n"
         if args == ("rev-parse", "HEAD"):
             return f"{commit}\n"
+        if args == ("rev-parse", f"{SCHEMA_COMMIT}^{{commit}}"):
+            return f"{SCHEMA_COMMIT}\n"
         if args == ("status", "--porcelain=v1", "--untracked-files=all"):
             return status
         if args == ("ls-files", "-s"):
-            return "\n".join(f"100644 blob fixture\t{path}" for path in tracked)
-        if args == ("ls-files", "-z", "--", SCHEMA_SUBDIRECTORY):
-            return "\0".join(tracked) + "\0"
+            return "\n".join(f"100644 blob 0\t{path}" for path in tracked)
+        if args == ("ls-files", "-s", "--", SCHEMA_SUBDIRECTORY):
+            return "\n".join(f"100644 blob 0\t{path}" for path in tracked)
         if args == ("rev-parse", "HEAD^{tree}"):
+            return "tree-id\n"
+        if args == ("rev-parse", f"{SCHEMA_COMMIT}^{{tree}}"):
             return "tree-id\n"
         raise AssertionError(args)
 
@@ -162,6 +198,8 @@ def fake_schema_git(root: Path, *, commit: str = SCHEMA_COMMIT, status: str = ""
 def test_private_schema_fixture_produces_source_identity_not_custody(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """The monkeypatched Git probe exercises receipt shape, not source custody."""
+
     root = private_schema_fixture(tmp_path)
     monkeypatch.setattr(component, "_git", fake_schema_git(root))
 
@@ -171,6 +209,63 @@ def test_private_schema_fixture_produces_source_identity_not_custody(
     assert identity["subdirectory"] == SCHEMA_SUBDIRECTORY
     assert identity["package"] == "banodoco-timeline-schema"
     assert identity["files"]
+
+
+def test_caller_forged_additional_wheel_has_no_independent_authority(tmp_path: Path) -> None:
+    wheelhouse = reviewed_wheelhouse(tmp_path)
+    forged = forged_additional_wheel(wheelhouse / "evilpkg-1.0-py3-none-any.whl")
+    with pytest.raises(ValidationError, match="additional wheel authority"):
+        validate_wheel_inputs(wheelhouse, additional_wheels=(forged,))
+
+
+def test_ignored_schema_escape_link_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = private_schema_fixture(tmp_path)
+    outside = tmp_path / "outside.py"
+    outside.write_text("ESCAPE = True\n")
+    (root / SCHEMA_SUBDIRECTORY / "banodoco_timeline_schema" / "ignored.py").symlink_to(
+        outside
+    )
+    monkeypatch.setattr(component, "_git", fake_schema_git(root))
+    with pytest.raises(ValidationError, match="symlink"):
+        validate_schema_source(root)
+
+
+def test_ignored_schema_extra_file_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = private_schema_fixture(tmp_path)
+    (root / SCHEMA_SUBDIRECTORY / "ignored.py").write_text("EXTRA = True\n")
+    monkeypatch.setattr(component, "_git", fake_schema_git(root))
+    with pytest.raises(ValidationError, match="unowned file"):
+        validate_schema_source(root)
+
+
+def test_ignored_schema_extra_directory_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = private_schema_fixture(tmp_path)
+    (root / SCHEMA_SUBDIRECTORY / "ignored-dir").mkdir()
+    monkeypatch.setattr(component, "_git", fake_schema_git(root))
+    with pytest.raises(ValidationError, match="unowned directory"):
+        validate_schema_source(root)
+
+
+def test_schema_tree_must_match_the_selected_commit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = private_schema_fixture(tmp_path)
+
+    def forged_tree_git(_root: Path, *args: str) -> str:
+        result = fake_schema_git(root)(_root, *args)
+        if args == ("rev-parse", "HEAD^{tree}"):
+            return "wrong-tree\n"
+        return result
+
+    monkeypatch.setattr(component, "_git", forged_tree_git)
+    with pytest.raises(ValidationError, match="tree is not bound"):
+        validate_schema_source(root)
 
 
 @pytest.mark.parametrize(
