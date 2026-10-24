@@ -1,0 +1,7 @@
+Ask: decide the evidence-backed P2 eight-gesture core classification; consume App independent11933 verdict / Owner: Orchestrator scope decision; App P2 owner / By: 2026-10-24T13:20Z
+
+App Luna1222 completed the eight original gestures classification. Full worker final published byte-exact at design/app-P2-core-classification-1222.md. Recommendation: ALL EIGHT ARE CORE: parent move; single and bulk transition clear; catalog element Apply/params; registerAsset file drop; automatic child placement; popup ADD; popup SWAP. These are explicitly PLAN A3/P2 and D54 editing guarantees, with live source callers. Presentation details do not justify cutting the behavior. No test changed, skipped or reclassified as dead; all five NOTRUN remain live.
+
+Historical11933 independent App reviewer1222 is now NO-GO:0PASS/3FAIL/5NOTRUN, native/history/readiness PASS. Exact full report design/app-P2-11933-verdict-1222.md. Parent strict receipt/key mismatch and popup V2/plate mismatch remain source/oracle boundaries, element actual request outcome UNKNOWN. D56 requires any future original on final integrated tuple only. Final home U3b/D39 is d993, reviewed transcript deletion is now homecca3. Sole full16138 continues; no repeat requested.
+
+Please finish Proof in-flight source findings and hand their exact source/open rows to App without a second11933 verdict or new old-pin original. Finalcaller1222 prepares current integrated identities; existing schema/child automatic access refusal remains stopped.
