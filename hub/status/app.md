@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T06:06:58Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 0m -->
+<!-- app | 2026-10-24T06:09:59Z | dispatcher heartbeat 7s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 0m -->
 # app board, 2026-10-24T06:03Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -71,7 +71,7 @@
 
 | P3-D45-original-cause | Classify actual Gate5 failure | Sol; independent Luna | Independent0506 PASS | merged | app-P3-D45-original-cause-sol-0501 | Confirmed reset5-to0 against fresh clip0; zero POSTs. Proof owns setup correction; all later original stages unrun. | c0fe /079 /37eb |
 
-| A3-catalog-capture | Capture exact motion catalog Apply | Sol; Luna review | Exact author complete | review | app-A3-catalog-final-cumulative-review-0603 | Exact am-burst positive and original missing-capture RED retained; opaque registry restored. Author 31 tests, three types and lint passed. | a63 plus 3393 plus 172033 stack |
+| A3-catalog-capture | Capture exact motion catalog Apply | Sol; Luna review | Cumulative0603 PASS | merged | app-A3-catalog-exact-motion-sol-0557 | Exact am-burst real RuntimeDataProvider POST, 31 tests, three types and lint passed independently. Raw closure preserved and old missing-head RED retained. | a63 plus 3393 plus 172033 / b2380539c5 |
 | A2-element-params | Preserve parameter edit ownership basis | Sol; Luna review | Cumulative 0554 PASS | merged | app-A2-element-owner-return-sol-0536 | Independent 284 plus 9 mounted tests, three types and lint passed. Real form reaches production commitTimeline boundary; HTTP is mocked. | 1d9 plus 9b5 / e42ee6227f |
 | P2-D45-popup-shape | Classify popup command assertion | Luna; independent Luna | Review 0511 PASS | merged | app-P2-D45-popup-parent-cause-review-0511 | Absent V3 is confirmed planner defect. Occupied V2 valid under provider. Created-claim oracle is a separate Proof need. | Report only |
 | P2-D45-parent-cause | Classify actual parent move timeout | Sol; independent Luna | Review 0511 PASS | merged | app-P2-D45-popup-parent-cause-review-0511 | Local move 0 to 5 and zero POSTs confirmed. Internal boundary unknown; mounted reproduction 0511 active. | Report only |
@@ -85,15 +85,15 @@
 
 | A2-parent-materialization | Preserve untouched move data and basis | Sol; Luna review | Reviews 0536 and 0545 PASS | merged | app-A2-parent-materialization-sol-0525 | Reviewed packet is HOME. Mounted ready and delayed owner requests passed; 273 plus 161 tests, three types and lint. Integrated joined proof follows source merges. | 5e242c64e3 / 7551bb2146 |
 
-| P2-P3-stage-retention | Preserve earlier stage diagnostic files | Luna; D21 | Final source binding pending | blocked:app | app-P2-P3-retained-caller-prep-0600 | PREPARED: 60 controls and stage roots pass; 248 outside rows intact. Final catalog and newly merged P3 source need binding. No live rows changed. | Artifact only |
+| P2-P3-stage-retention | Preserve earlier stage diagnostic files | Sol; D21 | PREP0600 complete; all source HOME | doing | app-A2-final-retained-caller-sol-0609 | Final caller binds b238 catalog and P3 setup with retained stage roots and authentic existing tuple. No service request authorized. | Source b2380539c5 |
 
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes.
 Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397-line, 40-assertion test, plus required helpers, under D31.
 Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-handoff-0029.md), [image review](/home/user/timeline-hub/hub/design/app-A2-image-created-review-0133.md), [A4 cut map](/home/user/timeline-hub/hub/design/app-A4-current-cut-census-0042.md).
-Integration: ae7acc1c2e joins reviewed P3 setup bb5ee above parameter e42, popup79cd, parent7551 and oracle5f43. Combined proof follows catalog source. Prior 523 stays scoped to c0fe.
+Integration: b2380539c5 joins final reviewed exact catalog stack above P3 setupae7, parameterse42, popup79cd, parent7551 and oracle5f43. Joined0609 and finalcaller0609 dispatched in parallel.
 Later: D47 defers Runtime memo and capsule until after delivery. Held unsafe source stays unmerged. The D45 pair is consumed; no new pair is released.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
-Next ready: Catalog final cumulative0603 queued; caller retention0600 running. Parameter is HOMEe42, popupHOME79cd and parentHOME7551. Proof owns P3 final source; no new pair.
+Next ready: Joined proof0609 and final retained caller0609 queued on exact b238. Every source prerequisite is HOME. Proof owns the next pair release and verdict; no new pair submitted.
 Disk: About 11 GB available. Recycled finished catalog return0524 through bin/recycle; sweep3 completed; capped output did not retain its removal count. Historical dirty U3 and compact refusals remain stopped; no retry.
 
 Lead: D45 pair is terminal: P213583 failed3 with5 not run; P34065 failed original Gate5 after readiness passed. Full packet and causal owners are in peer0504.
@@ -101,3 +101,5 @@ IMAGE0554 closed: independent0636 PASS. Actual App commit1c5cc, handoff blobf4f6
 P3 setup is HOMEae7acc1c2e after independent0553 PASS. Exact original reset/tail retained. App owns final caller binding; no remaining Proof source wait.
 
 Pass: 05:53Z. Latest INBOX and peer boards consumed; parent merge receipt verified. Catalog and popup reviews continue; parameter review dispatched immediately on completed return.
+
+| App-current-real-path-proof | Qualify all final mounted caller repairs | Luna | All reviewed sources HOME | doing | app-A2-A3-current-joined-proof-0609 | Exact b238 union of 27 focused files plus P3 controls, three types and lint. Actual transport proof and donor identities required. | b2380539c5 |
