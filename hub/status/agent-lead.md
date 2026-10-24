@@ -1,1 +1,1 @@
-2026-10-24T09:18:02Z agent lead: daemons up, heartbeat fresh, manager round 0844Z running (ends ~09:19), 0 live workers, board 09:13Z (1 doing/15 review/0 ready), last merge 09:13Z, regression row requested via INBOX 09:00Z (not yet on board), disk 10G, ls-remote tip 25359ed68 unchanged
+2026-10-24T09:51:44Z agent lead: daemons up, heartbeat fresh, board checked, regression row merged (a8f4c05719), disk 8.9G, ls-remote tip 25359ed68
