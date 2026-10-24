@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { reportErrorBoundaryCatch } from '@/shared/lib/errorHandling/recoverableError';
+import { isChunkLoadError } from '@/shared/runtime/ChunkLoadErrorBoundary';
 import { ErrorDebugDetails } from '@/shared/components/error/ErrorDebugDetails';
 
 interface AppErrorBoundaryState {
@@ -60,6 +61,8 @@ export class AppErrorBoundary extends React.Component<
     if (this.state.hasError) {
       const { error } = this.state;
       const isDev = import.meta.env.DEV;
+      // A stale hashed chunk after a redeploy: a reload fetches the new build, retrying cannot.
+      const isStale = isChunkLoadError(error);
 
       return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -74,10 +77,12 @@ export class AppErrorBoundary extends React.Component<
             {/* Error message */}
             <div className="space-y-2">
               <h1 className="text-2xl font-semibold text-foreground">
-                Something went wrong
+                {isStale ? 'Astrid was updated' : 'Something went wrong'}
               </h1>
               <p className="text-muted-foreground">
-                We're sorry, but something unexpected happened. Please try refreshing the page.
+                {isStale
+                  ? 'A newer version of Astrid is available. Reload to continue.'
+                  : "We're sorry, but something unexpected happened. Please try refreshing the page."}
               </p>
             </div>
 
@@ -85,12 +90,14 @@ export class AppErrorBoundary extends React.Component<
 
             {/* Action buttons */}
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button onClick={this.handleRetry} variant="outline">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Try Again
-              </Button>
+              {!isStale && (
+                <Button onClick={this.handleRetry} variant="outline">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Try Again
+                </Button>
+              )}
               <Button onClick={this.handleReload}>
-                Reload Page
+                Reload
               </Button>
             </div>
 

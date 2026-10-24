@@ -1,6 +1,17 @@
 import React from 'react';
 import { reportErrorBoundaryCatch } from '@/shared/lib/errorHandling/recoverableError';
 
+/** True for the failures a stale hashed chunk produces after a redeploy. */
+export function isChunkLoadError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? '');
+  return (
+    message.includes('Failed to fetch dynamically imported module') ||
+    message.includes('Loading chunk') ||
+    message.includes('ChunkLoadError') ||
+    message.includes('MIME type')
+  );
+}
+
 interface ChunkLoadErrorBoundaryState {
   hasError: boolean;
 }
@@ -32,13 +43,7 @@ export class ChunkLoadErrorBoundary extends React.Component<
 
   static getDerivedStateFromError(error: Error): ChunkLoadErrorBoundaryState {
     // Check if it's a chunk load error
-    const isChunkError =
-      error.message.includes('Failed to fetch dynamically imported module') ||
-      error.message.includes('Loading chunk') ||
-      error.message.includes('ChunkLoadError') ||
-      error.message.includes('MIME type');
-
-    if (isChunkError) {
+    if (isChunkLoadError(error)) {
       return { hasError: true };
     }
 
