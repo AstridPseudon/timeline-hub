@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T05:39:40Z | dispatcher heartbeat 10s | live 4 (sol 1, luna 3, other 0) | busy30 18 | status age 1m -->
-# app board, 2026-10-24T05:37Z
+<!-- app | 2026-10-24T05:43:05Z | dispatcher heartbeat 2s | live 4 (sol 1, luna 3, other 0) | busy30 18 | status age 0m -->
+# app board, 2026-10-24T05:39Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -71,7 +71,7 @@
 
 | P3-D45-original-cause | Classify actual Gate5 failure | Sol; independent Luna | Independent0506 PASS | merged | app-P3-D45-original-cause-sol-0501 | Confirmed reset5-to0 against fresh clip0; zero POSTs. Proof owns setup correction; all later original stages unrun. | c0fe /079 /37eb |
 
-| A3-catalog-capture | Capture real catalog Apply turn | Luna first return | Independent 0518 FAIL | doing | app-A3-catalog-mounted-return-0524 | Real panel still refused basis before outbox. First return owns panel and staging proof; shared handoff stays with Sol 0505. | Branch only |
+| A3-catalog-capture | Capture real catalog Apply turn | Luna first return | Independent 0518 FAIL | doing | app-A3-catalog-resume-0543 | Stopped worker WIP saved at 3393. Corrected targeted 30 passed; resume finishes types and lint before independent review. | Branch only |
 | A2-element-params | Preserve parameter edit ownership basis | Sol first return | Independent 0528 FAIL | doing | app-A2-element-owner-return-sol-0536 | Actual form chain and copied-context owner authority unproved despite 284 tests. First return requires mounted positive and strict attacks. | Branch only |
 | P2-D45-popup-shape | Classify popup command assertion | Luna; independent Luna | Review 0511 PASS | merged | app-P2-D45-popup-parent-cause-review-0511 | Absent V3 is confirmed planner defect. Occupied V2 valid under provider. Created-claim oracle is a separate Proof need. | Report only |
 | P2-D45-parent-cause | Classify actual parent move timeout | Sol; independent Luna | Review 0511 PASS | merged | app-P2-D45-popup-parent-cause-review-0511 | Local move 0 to 5 and zero POSTs confirmed. Internal boundary unknown; mounted reproduction 0511 active. | Report only |
@@ -85,13 +85,15 @@
 
 | A2-parent-materialization | Preserve untouched move data and basis | Sol; independent Luna | Author source complete | review | app-A2-parent-materialization-review-0536 | Faithful witness now three PASS; adjacent 273 tests, three types and lint passed. Guarded source reuse under review. | Branch only |
 
+| P2-P3-stage-retention | Preserve earlier stage diagnostic files | Luna; D21 | Proof finite retention ask | doing | app-P2-P3-stage-retention-0542 | Prove real output cleanup behavior offline; prepare bounded caller adjustment. No live row or original run change. | Candidate only |
+
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes.
 Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397-line, 40-assertion test, plus required helpers, under D31.
 Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-handoff-0029.md), [image review](/home/user/timeline-hub/hub/design/app-A2-image-created-review-0133.md), [A4 cut map](/home/user/timeline-hub/hub/design/app-A4-current-cut-census-0042.md).
-Integration: c0fe889944 contains all reviewed App fixes. Joined0438 passed523 tests, three types and lint; independent A4census0444 passed.
+Integration: 5f43d9e86a adds only reviewed popup claim oracle to c0fe. Its tree equals reviewed 2972. Joined 523 and A4 census proofs retain their c0fe source scope.
 Later: D47 defers Runtime memo and capsule until after delivery. Held unsafe source stays unmerged. The D45 pair is consumed; no new pair is released.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
-Next ready: Catalog return 0524, parent source 0525 and params 0505 active. Popup and current-path reviews 0525 queued. Proof owns reset and created-claim oracles; no new pair.
+Next ready: Catalog return 0524, popup return 0532 and parameter owner return 0536 active. Parent review 0536 active. Proof reset 0518 under review next; no new pair.
 Disk: About 11 GB available. Recycled finished caller 0446 through bin/recycle. Sweep 3 removed zero directories; freed 0 GB. Historical dirty U3 and compact refusals remain stopped.
 
 Lead: D45 pair is terminal: P213583 failed3 with5 not run; P34065 failed original Gate5 after readiness passed. Full packet and causal owners are in peer0504.
