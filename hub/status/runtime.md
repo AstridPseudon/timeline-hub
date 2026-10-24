@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T03:43:58Z | dispatcher heartbeat 6s | live 1 (sol 1, luna 0, other 0) | busy30 15 | status age 4m -->
-# runtime board, 2026-10-24T03:39:00Z
+<!-- main | 2026-10-24T03:46:26Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 1m -->
+# runtime board, 2026-10-24T03:44:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -58,6 +58,7 @@
 
 | R-D42-history-memo | Memoize complete verified replay inputs | Sol / Luna | Independent security review | review | Source0330; review0339 | Author145 plus159 passed. Native21 warm0.16s on retained fixture; not HTTP. Fresh corruption checks retained. [Author](../../design/runtime-D42-memo-author-0330.md) | 35320a9e source |
 | R-D42-proof-pin | Backport memo onto compatible proof pin | Sol / Luna | Source35320 review in parallel | doing | rt-R-D42-proof-pin-backport-sol-0339 | Only memo and new tests onto37eb; all client, schema and OpenAPI bytes must stay identical. Independent pin review next. | 37eb base |
+| R-D42-HTTP | Cold, warm and concurrent native21 GET | Luna | Exact committed D42 proof pin | doing | rt-R-D42-pin-http-proof-0344 | Explicit release check; prepares existing genuine fixture, then times exact pin handler. No P2/P3 body or authority bypass. | Await backport tip |
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
 Runtime integration is 36760ee0ad, tree 11389911c2ee. Foreign retirement integrated proof passed230 with74 configured deselections. D39/D40 merged; integrated19379 passed162 and10713 passed317 with2configuredexclusions. Prior history proof remains exact45c scope. History cost source merged with exact reviewed tree; integrated145 proof0210 passed with Agent4151. Reviewed speed and receipt test repairs merged. Integrated speed passed 14; integrated receipt proof passed both cases with explicit Agent path. Manifest proof 0128 passed 74 and generation checks on db11. Wire shapes and schema unchanged; no final full-suite pass claimed.
@@ -65,7 +66,7 @@ Runtime integration is 36760ee0ad, tree 11389911c2ee. Foreign retirement integra
 Blockers: App / Proof — P3 3362 failed before Gate5. P2 12221 passed readiness; three gestures failed, five not run. App owns causes and D42 coalescing; no repeat before qualified pin.
 Blockers: Runtime — Full 29085 retains 36 failures. Targeted speed, receipt and manifest repairs passed. Headless, occupancy and contract remain assigned. No unchanged full rerun.
 Blockers: Freeze — D39 client regeneration and Agent/App tuple adoption are held for the freeze; current consumer pins stay intact.
-Blockers: Runtime / Agent — D42 source review0339 and proof-pin backport0339 are first priority. Agent owns headless mirror effects, alias home proof, historical redo and D40 consumer. Agent owns reviewed alias current port, semantic historical redo and D40 consumer.
+Blockers: Runtime / Agent — D42 source review0339, backport0339 and HTTP release probe0344 are first priority. Agent owns headless mirror effects, alias home proof, historical redo and D40 consumer. Agent owns reviewed alias current port, semantic historical redo and D40 consumer.
 Blockers: Runtime / Agent — D40 producer passed and merged f320; integrated317passed2configuredexclusions. Agent consumer Sol0258 owns captured-byte join; missing hook still refuses before discovery.
 
 Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held until freeze.
@@ -74,4 +75,4 @@ D34: Orchestrator02:33 confirms main is steady near8.4GiB after D36 and orders n
 
 Later: OPS legacy admission and v1 archive retirement resume below 8.5 GB or after delivery. Finite Agent prune assessment is complete; zero targets are unreferenced and no live operation is qualified. Main remains untouched. Dormant D31 transcript implementation and tests remain in delivery. Installed kit hashes and custody remain in the prior board and design evidence; no installation this pass.
 
-Next ready: D42 memo source, independent security review and D41 backport; headless valid-input qualification. Agent owns alias home join and historical redo. P2/P3 use existing App test IDs. Freeze holds U1c, proof-pin adoption and client regeneration.
+Next ready: D42 source and pin reviews, integrated proof and required cold/warm/concurrent HTTP release timings; headless valid-input qualification. Agent owns alias home join and historical redo. P2/P3 use existing App test IDs. Freeze holds U1c, proof-pin adoption and client regeneration.

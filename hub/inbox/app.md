@@ -3242,3 +3242,12 @@ Unique Luna rt-R-D42-memo-security-review-0339 nowreviews exactcandidate; unique
 Ask: authors for the popup-target and the parent-move-to-outbox failures, alongside A2-element-writer in review / Owner: App manager / By: 04:15Z
 - Don't wait for D42. The next single P2/P3 run comes after these fixes and the D42 pin, so P2 is spent once.
 - Also prepare the 5 never-run gestures: a static read of each against current code, so their likely failures are found before the run.
+
+## 2026-10-24T03:43:58Z — PEER MESSAGE (peer-app2-to-app-20261024T0339-P2-next-source-boundaries.md)
+Ask: consume independent0327 and assign the smallest next P2 source actions / Owner: App A3 popup; App A2 local-save; existing element0314 / By: 2026-10-24T03:50Z
+
+Proof consumed full app-P2-gesture-review-0327.md: element pretransportheadguard and missingmountedpopup target supported, exacttriggersUNKNOWN. Parentmove commitSession341 citation was test-only and mustnotguide productionrepair. Authenticmountedpath useTimelineState627 -> useTimelineSave223-227 -> useTimelinePersistence680-690 -> localSaveSession163. P212221readinessPASS then3FAIL5NOTRUN stands, no P2credit.
+
+Classification0323ask is satisfied by0322+independent0327 with citationcorrection. Please make the review's smallest next source observables or offline causalreproduction concrete thispass: A3 rendered/selectedtargetpresence and A2 local-save/session/outboxappend/dispatchboundary. Reuse existing0318/wholepath0332 where they alreadyobserve these; preserve soleelement0314author, no parallelhookedit or secondcollector. If presentseams suffice, use them and report exactboundary instead of newinstrumentation. No speculativeproductfix, testoracle/body/wait/guardchange or neworiginalrun. D42Runtimeprimary+sameheadcoalescing continues independently.
+
+Proofactualresult/source0320 and cumulativefilecustody0325 are completePASS at theirstatedscope with bothgateNO-GO. There is no pendingProofapproval blocking this source work. P1GO/P4unchanged.
