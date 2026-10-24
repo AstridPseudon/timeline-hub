@@ -4,7 +4,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { appCheckoutTarget, buildSubmitPlan, captureSubmitPins, exactCheckoutPath, playwrightLaunchEnv, preflightSources, receiptCheckout, registerSubmitRecipes, selectPinnedSources, serviceRecipe, suites, submit, validatePinnedSource, validatePinnedSources, validateSelectedSource, waitForSubmitReceipts } from './d66-plain-stack.mjs';
+import { appCheckoutTarget, buildSubmitPlan, captureSubmitPins, createP3DiagnosticSpec, exactCheckoutPath, p3DiagnosticSpecText, playwrightLaunchEnv, preflightSources, receiptCheckout, registerSubmitRecipes, selectPinnedSources, serviceRecipe, suites, submit, validatePinnedSource, validatePinnedSources, validateSelectedSource, waitForSubmitReceipts } from './d66-plain-stack.mjs';
 
 const state = (overrides = {}) => ({
   root: '/snapshot/agent', head: 'a'.repeat(40), tree: 'b'.repeat(40), branch: null, dirty: false, ...overrides,
@@ -23,6 +23,47 @@ test('D66 full P2 launch retains bounded Runtime phase logs while other suites s
   assert.equal(launch('p1').D66_RUNTIME_LOG_DIR, undefined);
   assert.equal(launch('p3').D66_RUNTIME_LOG_DIR, undefined);
   assert.notEqual(launch('p2').D66_RUNTIME_LOG_DIR, launch('p2-element').D66_RUNTIME_LOG_DIR);
+});
+
+test('D83 diagnostic copies the exact Gate 5 source and softens only its Playwright expect binding', () => {
+  const base = mkdtempSync(path.join(process.env.TMPDIR ?? os.tmpdir(), 'd83-diagnostic-'));
+  const sourcePath = path.join(base, 'three-products.spec.ts');
+  const copyPath = path.join(base, 'three-products.p3-diagnostic.spec.ts');
+  const source = [
+    "import { expect, type Locator, type Page, type Request, type Route } from '@playwright/test';",
+    "import { preserved } from './support.ts';",
+    "test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local gesture, exact retry, restart and undo preserve intent', async () => { await expect(preserved).toBe(true); });",
+    '',
+  ].join('\n');
+  writeFileSync(sourcePath, source);
+
+  const result = createP3DiagnosticSpec({ sourcePath, copyPath });
+  assert.equal(readFileSync(sourcePath, 'utf8'), source, 'the captured source remains byte-exact');
+  assert.equal(readFileSync(copyPath, 'utf8'), p3DiagnosticSpecText(source));
+  assert.match(readFileSync(copyPath, 'utf8'), /d66Expect\.configure\(\{ soft: true \}\)/);
+  assert.equal(result.sourcePath, sourcePath);
+  assert.match(result.sourceSha256, /^[a-f0-9]{64}$/);
+  assert.throws(() => createP3DiagnosticSpec({ sourcePath: path.join(base, 'wrong.spec.ts'), copyPath }), /exact Gate 5 spec/);
+  assert.throws(() => createP3DiagnosticSpec({ sourcePath, copyPath: sourcePath }), /must not overwrite/);
+});
+
+test('D83 diagnostic derives the actual current Gate 5 source, not a hand-maintained duplicate', () => {
+  const base = mkdtempSync(path.join(process.env.TMPDIR ?? os.tmpdir(), 'd83-actual-source-'));
+  const sourcePath = path.resolve('tests/e2e/local/three-products.spec.ts');
+  const copyPath = path.join(base, 'three-products.p3-diagnostic.spec.ts');
+  const before = readFileSync(sourcePath);
+  const result = createP3DiagnosticSpec({ sourcePath, copyPath });
+  assert.deepEqual(readFileSync(sourcePath), before);
+  assert.equal(result.sourceSha256.length, 64);
+  assert.equal(readFileSync(copyPath, 'utf8'), p3DiagnosticSpecText(before.toString('utf8')));
+});
+
+test('D83 diagnostic is an opt-in Gate 5 copy while normal P3 keeps its original file', () => {
+  assert.deepEqual(suites.p3.files, ['tests/e2e/local/three-products.spec.ts']);
+  assert.deepEqual(suites['p3-diagnostic'].files, suites.p3.files);
+  assert.equal(suites['p3-diagnostic'].grep, suites.p3.grep);
+  assert.equal(suites['p3-diagnostic'].count, suites.p3.count);
+  assert.equal(suites['p3-diagnostic'].diagnostic, true);
 });
 
 test('D80 focused P2 descriptors select one exact original test each', () => {
