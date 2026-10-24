@@ -2,10 +2,11 @@ import { RuntimeConnectionProvider, RuntimeConnectionGate } from '@/integrations
 import { RuntimeConnectionPanel } from '@/shared/components/RuntimeConnection/RuntimeConnectionPanel.tsx';
 import { StarterProjectHandoff } from './StarterProjectHandoff.tsx';
 import { completeWelcome } from './welcomeProgress.ts';
+import type { WindowMode } from '@/shared/components/RuntimeConnection/copy.ts';
 
-export default function WelcomeConnection() {
+export default function WelcomeConnection({ windowMode }: { windowMode: WindowMode }) {
   return <RuntimeConnectionProvider><RuntimeConnectionGate
-    panel={(connection, exit) => <RuntimeConnectionPanel connection={connection} exit={exit} firstRun />}>
+    panel={(connection, exit) => <RuntimeConnectionPanel connection={connection} exit={exit} firstRun windowMode={windowMode} />}>
     <StarterProjectHandoff onContinueWithoutProject={() => window.location.assign(completeWelcome())} onReady={selection => window.location.assign(completeWelcome(selection))} />
   </RuntimeConnectionGate></RuntimeConnectionProvider>;
 }

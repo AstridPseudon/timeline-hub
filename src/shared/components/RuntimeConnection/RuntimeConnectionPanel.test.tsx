@@ -59,9 +59,9 @@ describe('RuntimeConnectionPanel', () => {
     const connect = vi.fn();
     render(<RuntimeConnectionPanel firstRun connection={connectionFor({ status: 'connecting' }, { awaitingConnect: true, connect })} />);
     expect(screen.getAllByRole('heading')).toHaveLength(1);
-    expect(screen.getByRole('heading', { name: 'Connect your machine' })).toBeInTheDocument();
-    expect(screen.getByText(/own GPU or connected providers/)).toBeInTheDocument();
-    expect(screen.getAllByRole('button')).toHaveLength(1);
+    expect(screen.getByRole('heading', { name: 'Connect to Astrid on this computer' })).toBeInTheDocument();
+    expect(screen.getByText('Chrome will ask to reach your computer. Choose Allow.')).toBeInTheDocument();
+    expect(screen.getAllByRole('button')).toHaveLength(2);
     fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
     expect(connect).toHaveBeenCalledOnce();
   });
@@ -164,12 +164,14 @@ describe('RuntimeConnectionPanel', () => {
 
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'permission');
     expect(screen.getByRole('heading', { name: 'Connect to Astrid on this computer' })).toBeInTheDocument();
-    expect(screen.getByText('Chrome will ask about devices on your network. Choose Allow so this page can reach Astrid.')).toBeInTheDocument();
+    expect(screen.getByText('Chrome will ask to reach your computer. Choose Allow.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'What does this allow?' }));
+    expect(screen.getByText("This page can talk to Astrid running on your computer, and nothing else. Astrid only lets it work with your Astrid projects, media and jobs. It can't open your other files or apps. Chat messages go to your own agent on this computer. Your work never passes through our servers.")).toBeInTheDocument();
     // Nothing is waiting yet: Connect is what starts it.
     expect(screen.queryByText(COPY.waiting)).not.toBeInTheDocument();
     // The install path lives on the set-up state, which a first-timer reaches right after Allow.
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
-    expect(screen.getAllByRole('button')).toHaveLength(1);
+    expect(screen.getAllByRole('button')).toHaveLength(2);
     expect(screen.queryByRole('button', { name: /agent/i })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
@@ -181,7 +183,7 @@ describe('RuntimeConnectionPanel', () => {
 
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'pending');
     expect(screen.getByRole('heading', { name: 'Choose Allow in Chrome' })).toBeInTheDocument();
-    expect(screen.getByText('Chrome is asking at the top left of this window. This is how we access the data and tools to run this locally.')).toBeInTheDocument();
+    expect(screen.getByText('The prompt is at the top left of this window.')).toBeInTheDocument();
     expect(screen.getByText(COPY.waiting)).toBeInTheDocument();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
     expect(screen.queryByText('Connecting…')).not.toBeInTheDocument();
@@ -202,11 +204,11 @@ describe('RuntimeConnectionPanel', () => {
     inEdge();
     panel(connectionFor({ status: 'connecting' }, { awaitingConnect: true, isChecking: true }));
     expect(screen.getByRole('heading', { name: 'Choose Allow in Edge' })).toBeInTheDocument();
-    expect(screen.getByText('Edge is asking at the top left of this window. This is how we access the data and tools to run this locally.')).toBeInTheDocument();
+    expect(screen.getByText('The prompt is at the top left of this window.')).toBeInTheDocument();
     cleanup();
 
     panel(connectionFor({ status: 'connecting' }, { awaitingConnect: true }));
-    expect(screen.getByText('Edge will ask about devices on your network. Choose Allow so this page can reach Astrid.')).toBeInTheDocument();
+    expect(screen.getByText('Edge will ask to reach your computer. Choose Allow.')).toBeInTheDocument();
     cleanup();
 
     panel(connectionFor({ status: 'blocked' }));

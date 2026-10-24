@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { agentInstructions, installCommand } from './copy.ts';
+import { agentInstructions, installCommand, localSetupInstructions, LOCAL_SETUP } from './copy.ts';
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -27,5 +27,26 @@ describe('update handoff', () => {
     expect(text).toContain("If you run Astrid from source checkouts: update those checkouts to their main branches and restart Astrid. Don't run the installer over them.");
     expect(text).toContain('running runtime_protocol from a git checkout');
     expect(agentInstructions('install', 'https://astrid.haus')).not.toContain('source checkouts');
+  });
+});
+
+describe('onboarding instructions', () => {
+  it('ends web instructions with the chosen window mode', () => {
+    expect(agentInstructions('install', 'https://astrid.haus', 'app-window')).toMatch(/When Astrid is running, open it in the installed Astrid app if it exists, otherwise https:\/\/astrid\.haus in my browser\.$/);
+    expect(agentInstructions('install', 'https://astrid.haus', 'browser-tab')).toMatch(/When Astrid is running, open it at https:\/\/astrid\.haus in my browser\.$/);
+  });
+
+  it('returns the fully local instructions', () => {
+    const text = localSetupInstructions();
+    expect(text).toContain('Please set up Astrid to run fully on this computer, including the editor, so I can change Astrid itself.');
+    expect(text).toContain('https://github.com/banodoco/astrid-app');
+    expect(text).toContain('npm run dev:local');
+    expect(text).toContain('http://127.0.0.1:5180/tools/video-editor?connect=1');
+    expect(text).toContain(LOCAL_SETUP.startCommand);
+  });
+
+  it('local setup start command is defined', () => {
+    expect(LOCAL_SETUP.startCommand).not.toMatch(/job X2/i);
+    expect(LOCAL_SETUP.startCommand.trim()).not.toBe('');
   });
 });

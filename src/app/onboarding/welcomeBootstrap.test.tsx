@@ -24,7 +24,7 @@ describe('welcome root error handling', () => {
     // lazy() caches its rejection per module instance, so each case loads a fresh module graph.
     vi.resetModules();
     const { renderWelcome } = await import('./welcomeBootstrap');
-    await act(async () => { renderWelcome(root); });
+    await act(async () => { renderWelcome(root, 'connection'); });
     await vi.waitFor(() => expect(root.querySelector('button')).not.toBeNull());
   }
 

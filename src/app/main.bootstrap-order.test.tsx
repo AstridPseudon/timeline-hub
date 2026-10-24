@@ -46,7 +46,7 @@ describe('main entry bootstrap order', () => {
     bootstrapMocks.renderApp.mockReset();
     document.body.replaceChildren();
     // The web root is the public landing entry; the app bootstrap only runs on an app route.
-    window.history.replaceState({}, '', '/tools/video-editor?localTest=1');
+    window.history.replaceState({}, '', '/tools/video-editor?localProject=demo');
   });
 
   afterEach(() => {

@@ -1,38 +1,52 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 beforeEach(() => { localStorage.clear(); vi.resetModules(); });
-describe('welcome ownership', () => {
-  it('owns a fresh bare editor, never existing project links or other routes', async () => {
-    const { shouldShowWelcome } = await import('./welcomeProgress');
-    expect(shouldShowWelcome(new URL('https://astrid.haus/tools/video-editor'))).toBe(true);
-    for (const path of ['/', '/settings', '/tools/video-editor?project=real', '/tools/video-editor?timeline=real', '/tools/video-editor?localTest=1']) {
-      expect(shouldShowWelcome(new URL(`https://astrid.haus${path}`))).toBe(false);
-    }
+
+describe('welcome entry', () => {
+  it.each([
+    ['/tools/video-editor', null, 'tour'],
+    ['/tools/video-editor?foo=1', 'choose', 'choose'],
+    ['/tools/video-editor?connect=1', 'tour', 'connection'],
+    ['/tools/video-editor?connect=1', 'complete', 'connection'],
+    ['/tools/video-editor?connect=1', null, 'connection'],
+    ['/tools/video-editor?project=p', 'tour', 'editor'],
+    ['/tools/video-editor?timeline=t', 'tour', 'editor'],
+    ['/tools/video-editor?localProject=p', 'tour', 'editor'],
+    ['/tools/video-editor?localTimeline=t', 'tour', 'editor'],
+    ['/tools/video-editor?project=p&connect=1', 'tour', 'editor'],
+    ['/tools/video-editor?connect=0', 'local', 'local'],
+    ['/tools/video-editor', 'complete', 'editor'],
+    ['/tools/other', 'tour', 'editor'],
+  ] as const)('routes %s at %s to %s', async (path, phase, expected) => {
+    const { entryFor } = await import('./welcomeProgress');
+    expect(entryFor(new URL(`https://astrid.haus${path}`), phase)).toBe(expected);
   });
-  it('migrates returning browser signals without a Runtime request', async () => {
-    const { shouldShowWelcome } = await import('./welcomeProgress');
-    for (const [key, value] of [['astrid.runtime.connectedBefore', '1'], ['astrid-setup-complete', 'true'], ['astrid-editor-tour-v1', '1'], ['astrid:lastOpenedLocalProjectSlug', 'real']]) {
-      localStorage.clear(); localStorage.setItem(key, value);
-      expect(shouldShowWelcome(new URL('https://astrid.haus/tools/video-editor'))).toBe(false);
-    }
+
+  it.each(['astrid.runtime.connectedBefore', 'astrid-setup-complete', 'astrid-editor-tour-v1', 'astrid:lastOpenedLocalProjectSlug'])('normalizes legacy marker %s once', async key => {
+    localStorage.setItem(key, 'present');
+    const { readWelcomePhase } = await import('./welcomeProgress');
+    expect(readWelcomePhase()).toBe('complete');
+    expect(localStorage.getItem('astrid:welcome-v1')).toBe('complete');
   });
-  it('resumes connection across reload despite connected-before, then exits only to real selection', async () => {
+
+  it('advances the phase record and only writes that record on completion', async () => {
     const progress = await import('./welcomeProgress');
-    progress.writeWelcomePhase('connection');
-    localStorage.setItem('astrid.runtime.connectedBefore', '1');
-    vi.resetModules();
-    const resumed = await import('./welcomeProgress');
-    const url = new URL('https://astrid.haus/tools/video-editor');
-    expect(resumed.shouldShowWelcome(url)).toBe(true);
-    expect(resumed.welcomeEntryPhase(url)).toBe('connection');
-    expect(resumed.completeWelcome({projectId: 'saved-id', timelineId: 'saved-timeline'})).toBe('/tools/video-editor?project=saved-id&timeline=saved-timeline');
-    expect(resumed.shouldShowWelcome(url)).toBe(false);
-  });
-  it('installer handoff goes directly to connection and skip does not claim completion', async () => {
-    const progress = await import('./welcomeProgress');
-    progress.writeWelcomePhase('tour');
-    expect(progress.welcomeEntryPhase(new URL('https://astrid.haus/tools/video-editor?connect=1'))).toBe('connection');
-    progress.writeWelcomePhase('connection');
+    for (const phase of ['tour', 'choose', 'connection', 'local'] as const) {
+      progress.writeWelcomePhase(phase);
+      expect(progress.readWelcomePhase()).toBe(phase);
+    }
+    expect(progress.completeWelcome({ projectId: 'p', timelineId: 't' })).toBe('/tools/video-editor?project=p&timeline=t');
+    expect(localStorage.getItem('astrid:welcome-v1')).toBe('complete');
+    expect(localStorage.getItem('astrid-setup-complete')).toBeNull();
     expect(localStorage.getItem('astrid-editor-tour-v1')).toBeNull();
+  });
+
+  it('continues in memory when browser storage is blocked', async () => {
+    const progress = await import('./welcomeProgress');
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('blocked'); });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked'); });
+    progress.writeWelcomePhase('local');
+    expect(progress.readWelcomePhase()).toBe('local');
+    expect(progress.entryFor(new URL('https://astrid.haus/tools/video-editor'), progress.readWelcomePhase())).toBe('local');
   });
 });

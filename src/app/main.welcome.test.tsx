@@ -5,6 +5,7 @@ const boot = vi.hoisted(() => ({
   migrate: vi.fn(),
   identity: vi.fn(),
   release: vi.fn(),
+  welcomeEntry: null as string | null,
 }));
 vi.mock('@/migrations/astridRenameBrowserMigration.ts', () => ({ migrateAstridBrowserStorage: boot.migrate }));
 vi.mock('@/app/bootLayer.ts', () => ({ releaseBootLayerWhenReady: boot.release }));
@@ -14,6 +15,7 @@ describe('main welcome routing', () => {
     vi.resetModules();
     localStorage.clear();
     boot.steps = [];
+    boot.welcomeEntry = null;
     boot.migrate.mockReset().mockImplementation(async () => { boot.steps.push('migrate'); return { success: true }; });
     boot.identity.mockReset().mockImplementation(async () => { boot.steps.push('identity'); });
     boot.release.mockReset();
@@ -33,7 +35,7 @@ describe('main welcome routing', () => {
     });
     vi.doMock('@/app/onboarding/welcomeBootstrap.tsx', () => {
       boot.steps.push('import welcome');
-      return { renderWelcome: () => { boot.steps.push('render welcome'); } };
+      return { renderWelcome: (_root: HTMLElement, entry: string) => { boot.welcomeEntry = entry; boot.steps.push('render welcome'); } };
     });
     vi.doMock('@/app/publicBootstrap.tsx', () => {
       boot.steps.push('import public');
@@ -57,12 +59,13 @@ describe('main welcome routing', () => {
     expect(boot.release).toHaveBeenCalledWith(document.getElementById('root'));
   });
 
-  it.each(['tour', 'connection'])('resumes an unfinished %s visit through welcome', async phase => {
+  it.each(['tour', 'choose', 'connection', 'local'])('resumes an unfinished %s visit through welcome', async phase => {
     localStorage.setItem('astrid:welcome-v1', phase);
     // A successfully connected but unfinished first-project handoff is still resumable.
     localStorage.setItem('astrid.runtime.connectedBefore', '1');
     await enter();
     expect(boot.steps).toEqual(['migrate', 'import welcome', 'render welcome']);
+    expect(boot.welcomeEntry).toBe(phase);
   });
 
   it.each([
@@ -83,8 +86,8 @@ describe('main welcome routing', () => {
   it.each([
     '/tools/video-editor?project=my-film&timeline=main#frame-20',
     '/tools/video-editor?project=my-film',
-    '/tools/video-editor?localTest=1',
-    '/tools/video-editor?runtimeOrigin=http%3A%2F%2Flocalhost%3A17340',
+    '/tools/video-editor?localProject=demo',
+    '/tools/video-editor?localTimeline=demo',
   ])('keeps explicit entry %s on the normal app path without changing its address', async path => {
     window.history.replaceState({}, '', path);
     const before = window.location.href;
@@ -92,6 +95,19 @@ describe('main welcome routing', () => {
     expect(window.location.href).toBe(before);
     expect(boot.steps).toContain('render app');
     expect(boot.steps).not.toContain('import welcome');
+  });
+
+  it('ignores unrelated query keys and resumes the bare welcome by phase', async () => {
+    localStorage.setItem('astrid:welcome-v1', 'choose');
+    window.history.replaceState({}, '', '/tools/video-editor?unrelated=1');
+    await enter();
+    expect(boot.welcomeEntry).toBe('choose');
+  });
+
+  it('ignores unrelated query keys on a fresh visit too', async () => {
+    window.history.replaceState({}, '', '/tools/video-editor?runtimeOrigin=http%3A%2F%2Flocalhost%3A17340');
+    await enter();
+    expect(boot.welcomeEntry).toBe('tour');
   });
 
   it.each(['/', '/home', '/vision'])('keeps %s on the public entry without welcome, migration or Runtime startup', async path => {

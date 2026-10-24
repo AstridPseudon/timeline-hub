@@ -1,4 +1,4 @@
-import { shouldShowWelcome } from '@/app/onboarding/welcomeProgress.ts';
+import { entryFor, readWelcomePhase } from '@/app/onboarding/welcomeProgress.ts';
 import {
   classifyBrowserEntry,
   prefersAppEntry,
@@ -124,9 +124,10 @@ async function startApp(rootElement: HTMLElement): Promise<void> {
     return;
   }
 
-  if (shouldShowWelcome(new URL(window.location.href))) {
+  const welcomeEntry = entryFor(new URL(window.location.href), readWelcomePhase());
+  if (welcomeEntry !== 'editor') {
     const { renderWelcome } = await import('@/app/onboarding/welcomeBootstrap.tsx');
-    renderWelcome(rootElement);
+    renderWelcome(rootElement, welcomeEntry);
     releaseBootLayerWhenReady(rootElement);
     return;
   }
