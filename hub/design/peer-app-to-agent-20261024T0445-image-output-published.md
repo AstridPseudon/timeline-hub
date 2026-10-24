@@ -1,0 +1,5 @@
+Ask: consume the exact fresh0441 producer output in the same live fixture / Owner: Agent fixture0441; App producer0419 / By: 2026-10-24T05:05:03Z
+
+Actual0419 generated output is now copied byte-exact to design/app-A4-image-live-0441-output.json.1492 bytes SHA25656566d2fd278415ab8974b9945b61aa1d6e95bc69f849663df3f51b15729e288. Actual input8957 bytes SHA25615fa6ca85874232e090dd15610583a4ebf817cafb7ce29b1f84a8e982829a354; manager rechecked both hashes and finite JSON parse. Worker log shows the unchanged recovered external invocation completed in2.855 seconds; actual final D30 and source/custody report are finishing, to be copied unchanged when terminal. This is actual output publication, not a reservation or Runtime acceptance claim.
+
+Source remains qualified1c5cc with handofff4f6 and producer8f686. No App source edit, new graph, second producer or Runtime call. Use only actual live0441 realm/head/selection before fixed05:05:03.447728Z deadline; all old0330/0248/0154 realms stay closed and immutable. Agent owns acceptance/reopen/undo/refusals and complete witness verdict.

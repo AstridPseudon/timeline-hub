@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T04:44:11Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 1m -->
-# app board, 2026-10-24T04:42Z
+<!-- app | 2026-10-24T04:46:45Z | dispatcher heartbeat 1s | live 3 (sol 1, luna 2, other 0) | busy30 15 | status age 0m -->
+# app board, 2026-10-24T04:46Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -51,24 +51,26 @@
 | readiness-D42-trace | Correlate retained request and close times | Sol; Luna review | Independent review complete | merged | app-readiness-D42-trace-review-0332 | [All eight timings verified; causal link insufficient. Sent before03:50.](../../design/app-readiness-D42-trace-review-0332.md) | Report only |
 | readiness-D42-coalesce | Reuse same-head pending basis read | Sol; Luna review | Independent0355 PASS | merged | app-readiness-element-join-sol-0351 | Exact reviewed tree integrated; joined332 tests and independent108, three types/lint passed. No live run claimed. | e492d963ba |
 | readiness-whole-path | Independently investigate client to server | Sol; Luna review | Review0336 PASS | merged | app-readiness-whole-path-review-0336 | [Source path and causal limits independently verified; missing clock and await joins remain.](../../design/app-readiness-whole-path-review-0336.md) | Report only |
-| A4-final-census | Verify zero reachable legacy writers | Luna; independent review | Corrected popup is integrated | doing | app-A4-current-final-census-0438 | Previous zero-writer claim withdrawn. New census traces actual mounted, alternate and disconnected paths; dormant ledgers verified. | c0fe889944 |
+| A4-final-census | Verify zero reachable legacy writers | Luna; independent Luna | Census0438 complete; review required | review | app-A4-final-census-review-0444 | Author finds zero shipped legacy writers; independent review challenges dev fallback destination and dormant custody. Joined523 PASS. | c0fe889944 |
 | A2-popup-wrapper | Bind scoped popup saves to verified source | Sol; Luna review | Cumulative0427 PASS; joined proof | merged | app-A2-A3-current-joined-proof-0438 | Independent351 plus38 tests, three types/lint passed. Integrated corrected context joins parent and child carriers; combined proof active. | bad9a84fea /c0fe889944 |
-| readiness-D42-caller | Prepare qualified D42 caller | Sol | Qualified Runtime memo proof pin | blocked:runtime | app-readiness-D42-caller-sol-0348 | Draft24+28+4 and4 extra controls passed; exact old receipts checked. Shared rows unchanged; final pin and keyed child required. | Draft only |
+| readiness-D42-caller | Prepare qualified D42 caller | Sol | D45 supersedes for next pair | gated:D42 | app-readiness-D42-caller-sol-0348 | Draft24+28+4 and4 extra controls passed; exact old receipts checked. Shared rows unchanged; final pin and keyed child required. | Draft only |
 | P2-parent-outbox | Preserve parent move dispatch boundary | Sol; Luna review | Current packet integrated | merged | app-P2-parent-current-packet-0430 | Source-qualified closure and causal inputs passed292 tests. Actual old12221 trigger remains unknown; no browser credit. | 19c4839d81 |
 | P2-popup-target | Correct rendered popup target lookup | Luna; Proof review | Proof 0418 PASS and home merge | merged | ap2-P2-popup-rendered-target-0413 | Exactly two selector lines integrated; own reviewed blob retained. Source tests and no-weakening pass; original live P2 awaits combined fixes. | adf39c533 / c768058cd0 |
 | P2-five-static | Check five original not-run gestures | Luna; independent review | Review 0357 PASS | merged | app-P2-five-review-0357 | Static review finds transition clears and single-occurrence placement gaps. Authors 0411 and 0410 assigned. Asset and swap still need live proof. | Report only |
 | P2-parent-transition | Preserve parent and transition edits | Luna port; independent review | Current port and home tree equality PASS | merged | app-P2-parent-current-packet-0430 | Integrated tree equals qualified packet:292 tests, three types and lint pass. Only independently reviewed parent diff landed. | 6bd1eb0d04 /19c4839d81 |
 
 | P2-single-child-placement | Use exact occurrence ADD carrier and claims | Luna; independent review | Cumulative0431 PASS; joined proof | merged | app-A2-A3-current-joined-proof-0438 | Independent342 tests, three types/lint and pinned Runtime guard pass. Current join includes shared and single-occurrence ADD. | 19ac2b0ddc /c0fe889944 |
-| App-current-joined | Qualify current combined App fixes | Luna | Reviewed source merges complete | doing | app-A2-A3-current-joined-proof-0438 | Exact current head; deduplicated popup and parent acceptance files, three types and lint. No full or browser run. | c0fe889944 |
+| App-current-joined | Qualify current combined App fixes | Luna | Reviewed source merges complete | merged | app-A2-A3-current-joined-proof-0438 | [523 tests, 24 files, three types and lint passed.](../../design/app-A2-A3-current-joined-proof-0438.md) No browser or full run. | c0fe889944 |
 | readiness-current-caller | Bind current App source in private caller | Luna | Current merged App | doing | app-readiness-current-caller-prep-0442 | Refresh source and body guards only. No installed row or request; Runtime release remains required. | c0fe889944 |
+
+| readiness-D45-caller | Publish current source on existing bench | Sol | D45 and joined523 PASS | doing | app-readiness-D45-final-caller-sol-0446 | Verifies existing079/37eb custody and refreshes only two rows. One original pair follows READY. | Appc0fe; Runtime37eb |
 
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes.
 Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397-line, 40-assertion test, plus required helpers, under D31.
 Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-handoff-0029.md), [image review](/home/user/timeline-hub/hub/design/app-A2-image-created-review-0133.md), [A4 cut map](/home/user/timeline-hub/hub/design/app-A4-current-cut-census-0042.md).
-Integration: c0fe889944 contains all reviewed parent, bound popup, child ADD and selector changes plus coalescing. Current joined proof0438 passed523 tests; types/lint pending. Reachable census0438 and caller preparation0442 are active.
-Blockers: Runtime — D42 mutable state and resolver bypasses require Sol0423 correction, independent security proof, compatible pin and HTTP release. No caller adoption yet.
+Integration: c0fe889944 contains all reviewed parent, bound popup, child ADD and selector changes plus coalescing. Joined0438 passed523 tests, three types and lint. Independent census review0444 and caller preparation0442 are active.
+Later: Runtime D42 remains security held. D45 releases the next pair on existing37eb plus current App; no unsafe memo adoption.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
-Next ready: Current joined proof0438 and final census0438, then independent census review. Image0419 is prepared and running; new Agent input awaited. Runtime pin remains held.
+Next ready: Census review0444 and caller preparation0442. Image0419 emitted new0441 output56566d; exact output published. D45 caller0446 is first priority.
 Disk: About 11 GB available after dispatches. No finished non-KEEP clean worktree remains. Prior dirty U3 and compact refusals stand; sweep3 removed zero directories. Freed zero GB.
 
