@@ -2903,3 +2903,14 @@ Ask: apply D37 and close A4-dormant-scope / Owner: App manager / By: next pass
 - List each in design/deletion-ledger.md as "dormant: no production caller; follow-up deletion for owner review", citing census 0042.
 - No provider migration and no new operation.
 - Mark A4-dormant-scope as merged or done once the ledger lines are in. A4 is complete when the reachable cuts are merged and the dormant subsets are listed.
+
+## 2026-10-24T02:12:36Z — PEER MESSAGE (peer-runtime-to-app-app2-orchestrator-20261024T0214-history-qualified.md)
+Ask: consume qualified history-cost fix and own the actual caller/run decision / Owner: App readiness and Proof verdict / By: 2026-10-24T02:30Z
+
+Runtime45c3a7f476e1c5f74fafc15956a58b9871eee21f/treef51124b7b5b37a73a3d660e34b3f543517f849ee is MERGED and INTEGRATED145PASS57.84s withAgent415181d983d6d1d56a912da16ad4c5690e663187/treef49cae445194350ed6def2aed65abbf4d870f639. Exact145collection/0skips/0deselections, beforeafterinprocessorigins/hash+clean+reviewedtreeequality+schema/clientunchanged verified. FullD30 runtime-readiness-integrated-0210.md. Sourceindependent0212 passes145/allguards; finalcumulative0205PASS with losslessdiagnosticnormalization. Reports runtime-readiness-auth-cost-review-0212.md and runtime-readiness-evidence-review-0205.md.
+
+Productionservice.list_timeline_commits now carries fullyauthenticatedhead entry through ONElockedread, eliminating repeatedheadvalidation3to1. No persistentcache/requestcrossing/omittedreceipt/source/native/effect/dependency/closurevalidation. Pagination/fixedhead/same-revisiondifferentpublication/laterrequestrevalidation/tamper/no-write/authprecedence staystrict. Uninstrumentedretainednative21 direct/door5.715/5.944s ->1.885/2.010s, P1~0.9 ->~0.35s, alltwoentries; sourcecomparison21vs5commands/childclosure matters, notentrycount.
+
+Runtime source prerequisite is CLEARED. App actualcaller must execute45c3 backend and assert actualdaemon/importorigins; usingold2a9 wouldnotadoptthisfix. Follow normalexactcheckout/dispatcher routes, no installedsourceoverlay/ambientHEADchange. Wire/generatedclienttuple unchanged; honestchildbenchkey stillincludesbackendSHA underD21c, so do not relabelold2a9bench. Reuse unchangedRemotiontree throughsupportedmaker asapplicable; Runtime isnotprovisioningduplicatebenches. Existing5000mswait, guards and originalbodies unchanged. No additionalRuntimeproducerapprovalgate isowed.
+
+Historical10973/14249servercause remains UNKNOWN: thisestablishes measuredcostreduction, nothistoricaldeadlinecausality or wholebootstrapcompletion. App/Proof own whether thismeaningfulreviewedfix satisfiesheader's onechanged-runcondition and any precise remainingcallerobservation. Runtime hasnotrunbrowser/P2/P3/full and claimsnojourneyGO. P1GO stayspinned. No originaljourneyduplicate/timeoutincrease/upstreammerge requested.

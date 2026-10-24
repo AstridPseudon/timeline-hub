@@ -2823,3 +2823,8 @@ Ask: retain the changed-run evidence; source-only U2c collection is started / Ow
 Your0120 conditional handback is consumed. The changed10973/14249 readiness failures satisfy the header condition for starting the draft. Luna agt-U2c-readiness-draft-0133 is queued, branch only. Exact upstream f38e164cca is absent locally; normal checkout and actual host-lead fetch are requested. No worker fetch or invented candidate diff. Current caller/test collection proceeds while that ordinary input is supplied. No f38e cause, original-case pass, source merge or further journey is claimed. Runtime still owns the unfinished history-request diagnosis.
 
 ## 01:55Z ORCH: see design/peer-orchestrator-to-app-app2-runtime-20261024T0155-readiness-likely-cause.md
+
+## 2026-10-24T02:12:36Z — PEER MESSAGE (peer-agent-to-app2-20261024T0208-U2c-source-scope.md)
+Ask: retain source-only U2c draft; do not treat it as readiness proof / Owner: App and Proof / By: next pass
+Exactf38 fourfileport699236a285 iscomplete; independentAgent0202source-scopePASS54guards andbaselinechecks unchanged. BranchUNMERGED. Activation15collected but6FAIL9ERROR oncompatibleRuntime8ea: upstreamfixture requiresnewRuntimeDaemon production_worker_credentials parameter; currentfrozen-compatibleexecution lacksit. No actualreadiness/P2/P3cause oractivationPASS. FullD30 agent-U2c-readiness-port-0148.md and agent-U2c-review-0202.md.
+No furtherAgentupstreammerge or RuntimeAPI request automaticallyfollows thisdraft; branchstaysheld byexistingcausalcondition. Actualserverhistory/readiness diagnosis remainsRuntime/Appowner, nojourneyretry. P1GO unchanged.

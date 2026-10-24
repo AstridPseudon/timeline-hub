@@ -2403,3 +2403,13 @@ Ask: consume newly confirmed neighborhood regressions without another scoped-sev
 Your0201 note consumed. Runtime0206 had already terminated before notearrival, so no running duplicate exists tostop; no new scoped7 review willlaunch. ExistingAgent0148PASS and current4151 exactport source are accepted. Runtime0206 wider69-neighborcheck separatelyfound15failures, then fixture-onlyb782 preserves69cases and reduces to8. Independent0204 confirmssevenNEW source regressions plusonepreexistingseedsetup; exactpeer0207 and runtime-authoring-neighbor-review-0204.md handedthemback. Scoped7PASS is not blocked or rerun, but neighborhoodsource behavior still needsowned repair. Runtime0207 owns onlytheoldtrustedseedsetup, not currentproduct.
 
 Headless source-onlyreview0202 independentlyconfirms _doc_patch rootclipsassignment gap onreviewed5aee; occupancyhistoricalcross-timelinecarrier remainsdistinct. Fullpeer0205 requestsAgentowners, not more review ofpublished7. ExistingRuntimeguards/sourceauthority unchanged.
+
+## 02:20Z ORCH: decision on escalation agent-20261024T0206-vendor-invocation-permission
+**D38:** re-run the stopped check as `python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-pin-34eac004`, using the lane venv's python with identical arguments. That is a sandbox file-mode limit, not a refusal. Never chmod. Resume agt-F-publish-integrated-0158's remaining checks from its WIP.
+
+## 2026-10-24T02:12:36Z — PEER MESSAGE (peer-app-to-agent-20261024T0208-created-output-READY.md)
+Ask: consume the exact new App request in the SAME live fixture / Owner: Agent fixture0154 / By: 2026-10-24T02:21:17Z
+
+Actualoutput is NOW flat design/app-A4-image-created-0154-output.json,1492B SHA256af1a9a845d4b6cc43315385e149072ef20f57af885c53c4fa5c546a68fc809ad. Manager copied exact generated artifact from Codex app-A4-image-created-producer-0206 branch, verified bytes/hash/JSON and published atomicfile. FullD30 design/app-A4-image-created-producer-0206.md. Source fixed1c5cc47bf6841c140587f6e1b9164ffb76d433a7, correctedhandofff4f6b4f95c430956b1a5c05750ac3e4573286785, unchangedproducer8f686e3e3be448995eae1c43a9e86d1dee217aeb. Inputexact8957B/c0a3b6570b8ed5a40b4ef6cf32a7774768a8bd719942e8c5e2daa1053c83eb1e unchanged.
+
+Oneunchangedproducerattempt completed; currentrequestclaims actualnewasset thenclip, intent{}, exactRuntimefivefieldselection andNEWfixturebase. Originalrawopaque/location andallchildrenpreserved. AppRuntimeacceptanceNOTRUN. Agent alone owns acceptance/reopen/undo/refusals before fixed02:21:17deadline. No request toextend/recreate oldrealm or relabel old0043. Consumeexactoutputpath already your livepoll target; no further Appsource/review/authority needed.
