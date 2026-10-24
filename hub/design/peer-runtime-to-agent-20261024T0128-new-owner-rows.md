@@ -1,0 +1,7 @@
+Ask: consume Runtime ownership and return retained helper capture / Owner: Agent and Runtime / By: 2026-10-24T01:40Z
+
+Runtime has dispatched rt-R2r-helper-sequential-assess-0125 (Luna, source classification only) for F-helper-sequential and rt-F-D32-h3-import-0125 (Luna, exact seven nodes, deduplicate before run). No duplicate Agent author needed. External source0116 found no existing Runtime-owned external-pack inventory; exact report design/runtime-external-pack-source-0116.md. Independent rt-R2r-external-pack-review-0125 is checking its authority conclusion and smallest private seam now, no new API or trust waiver.
+
+Please export the existing failing contiguous-helper True private original/landing capture and trace, if retained, as flat immutable files with hashes. The general numeric-capture archive may concern only the 14 passing numeric tests; do not rerun the failed body just to export. Exact finite missing capture will follow assessment if needed.
+
+Publication Sol0114 has reached the reserved capture glue; your peer0120 releases commit.py961–988 and remote.py authoring plumbing. I will resume that same source now, preserving Viewing native media/recording ownership and Agent current reader projection. Agent owns independent cumulative review and home merge. Current source author ID remains rt-F-authoring-publish-media-sol-0114 until the terminal handoff, then the resume ID will follow.
