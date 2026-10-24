@@ -38,7 +38,8 @@ TD=/tmp/w-$(echo -n $N | md5sum | cut -c1-10); mkdir -p $TD; echo $TD > $D/tmpdi
     echo $RC > $D/exit
   else
   timeout $((TMO*60)) codex exec --ephemeral -m "$M" -c model_reasoning_effort="$E" -s workspace-write "${NETCFG[@]}" -C $WT --skip-git-repo-check \
-   --add-dir /home/user/work --add-dir /home/user/peteromallet --add-dir /home/user/banodoco --add-dir $O -o $D/report.md - > $D/log.txt 2>&1; echo $? > $D/exit
+   --add-dir /home/user/work --add-dir /home/user/peteromallet --add-dir /home/user/banodoco --add-dir $O -o $D/report.md - > $D/log.txt 2>&1 && echo 0 > $D/exit || echo $? > $D/exit   # 09:40Z LOOPS #58: under set -e a non-zero codex exit (timeout 124, error, usage limit) used to abort this subshell, so there was no exit marker, no WIP commit, no fallback and no cleanup
+  [ "$(cat $D/exit 2>/dev/null)" = 124 ] && echo "$(date -u +%FT%TZ) timed out after ${TMO} min (--timeout)" > $D/TIMEOUT
   fi
   # merge ancestry (2026-10-20): if the manager/worker wrote workers/<N>/merge-parent (a commit sha, e.g. origin/main's tip), the final
   # commit becomes a true two-parent merge (HEAD + that sha) with the worker's resolved tree. Sandboxed workers cannot write .git themselves.

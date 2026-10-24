@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T09:28:01Z | dispatcher heartbeat 11s | live 2 (sol 1, luna 1, other 0) | busy30 11 | status age 0m -->
+<!-- main | 2026-10-24T09:30:52Z | dispatcher heartbeat 2s | live 1 (sol 1, luna 0, other 0) | busy30 11 | status age 1m -->
 # runtime board, 2026-10-24T09:27:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -83,7 +83,7 @@
 | OPS-Agent-current-child | Qualify changed Agent source child | Dispatcher / Agent Luna | Reviewed installed RECORD correction | blocked:runtime | final-0c2c-becfe; harness 0820 | Bootstrap and all installs passed. Final installed RECORD validation refused. Runtime return 0848 is active; no child READY. | Agent 0c2c / Runtime becfe |
 | OPS-Farm-current-child | Qualify Farm checkpoint child | Farm lead / Runtime Luna | Correct required imports | blocked:runtime | Actual preflight 0900 | Runtime and Agent isolated imports pass. Full row refuses shared schema; Runtime package absence is unconfirmed. Source and whole path 0906 are assigned. | Agent 9cd / Runtime 1d9 |
 
-| OPS-child-verifier-numpy-RECORD | Authenticate complete installed inventory | HARD Sol / Luna | Final independent security PASS | doing | Sol0923; whole path0925; review0903 FAIL | All84 controls passed, but foreign package and extra executable were accepted. Source remains uninstalled. [Review](../../design/runtime-verifier-security-review-0903.md). | ffb926 held |
+| OPS-child-verifier-numpy-RECORD | Authenticate complete installed inventory | HARD Sol / Luna | Final independent security PASS | doing | Sol0923; whole path0925; review0903 FAIL | All84 controls pass; foreign files were accepted. Whole path0925 identifies missing bootstrap custody. Sol0923 owns correction; uninstalled. [Review](../../design/runtime-verifier-security-review-0903.md). | ffb926 held |
 
 | R2r-provider-completion | Classify post-provider replay failure | HARD Sol / Luna | Independent source review passed | merged | Author0915; review0923 PASS | Bounded source assessment passed; original cause UNKNOWN. Nine author controls passed; temporary JUnit lost. [Review](../../design/runtime-provider-completion-review-0923.md). | Runtime becfe unchanged |
 

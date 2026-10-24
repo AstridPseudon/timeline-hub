@@ -106,3 +106,4 @@ Escalate a contract change, a need from another lane, a scope question, or a saf
 - Clear Blockers lines the pass they clear.
 - Every cross-lane ask you receive becomes a row with a worker, or a `later` entry, in that same pass, never only a sentence.
 - **Second failed fix on a gate (03:25Z):** when one fix for a gate failure doesn't clear it, dispatch an independent read-only whole-path investigation (client to server, comparing a passing gate) at once, in parallel with the owner's next attempt.
+- **Worker timeouts (09:40Z):** never pass --timeout under 45 for any task that runs tests, tsc, vitest or reviews; the default is 180. A worker that hits its timeout now gets an exit 124 marker plus a TIMEOUT file, and its WIP is committed to tl/<worker>. Resume it from that branch with a longer --timeout; never re-dispatch it fresh.

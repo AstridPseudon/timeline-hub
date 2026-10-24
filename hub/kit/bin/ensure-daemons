@@ -50,7 +50,7 @@ for d in $O/workers/*/; do
   if [ -f $d/DONE ] || [ -f $d/BLOCKED ]; then   # worker finished (wrote DONE/BLOCKED) but its wrapper died before writing exit/ended (00:57Z app): finalize, not a death
     $O/bin/stop-worker $w "finished; wrapper ended before its exit marker (ensure-daemons)" >/dev/null 2>&1; fin="$fin $w"; continue; fi
   up=$(awk '{printf "%d", $1/60}' /proc/uptime); why="process ended without DONE/exit marker (uptime ${up}m)"; [ "$up" -lt 30 ] && why="died in container restart (uptime ${up}m)"
-  { date -u +%FT%TZ; echo "reason: $why"; ls -la --time-style=+%H:%M:%S $d; ps -eo pid,ppid,etime,args | grep -F -e "$w" -e "$wt" | grep -v grep; tail -5 $d/log.txt 2>/dev/null; } > $d/orphan-evidence.txt 2>&1   # 05:48Z LOOPS #52: keep evidence for diagnosis
+  { date -u +%FT%TZ; echo "reason: $why"; ls -la --time-style=+%H:%M:%S $d; ps -eo pid,ppid,etime,args | grep -F -e "$w" -e "$wt" | grep -v grep; tail -5 $d/log.txt 2>/dev/null; echo "--- memory"; free -m; echo "--- kernel oom"; (dmesg -T 2>/dev/null || journalctl -k --no-pager 2>/dev/null) | grep -iE "oom|killed process" | tail -5; echo "--- dispatcher"; ps -o pid,pgid,sid,etime,args -p $(cat $O/dispatcher.pid 2>/dev/null) 2>/dev/null; } > $d/orphan-evidence.txt 2>&1   # 05:48Z LOOPS #52: keep evidence for diagnosis
   $O/bin/stop-worker $w "$why (ensure-daemons)" >/dev/null 2>&1   # finalizes the orphan: commits WIP to tl/<worker>
   dead="$dead $w"
 done
