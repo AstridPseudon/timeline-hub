@@ -1,0 +1,1 @@
+{"version":1,"kind":"mounted-bootstrap-lifecycle","status":"UNKNOWN","lifecycle":{"outcome":"completed","pageMounted":true,"beforePageClose":true},"diagnostics":"UNKNOWN","losses":{"read":true,"write":false,"records":true}}

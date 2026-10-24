@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T10:53:27Z | dispatcher heartbeat 6s | live 3 (sol 1, luna 2, other 0) | busy30 25 | status age 5m -->
-# app board, 2026-10-24T10:47Z
+<!-- app | 2026-10-24T10:56:42Z | dispatcher heartbeat 4s | live 3 (sol 1, luna 2, other 0) | busy30 25 | status age 2m -->
+# app board, 2026-10-24T10:54Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -57,15 +57,15 @@
 | P2-current-join | Qualify pure joined product target | Luna | Reviewed popup and diagnostic home | merged | Pure integrated1036 PASS | 695 plus67 tests,30 controls including20 Gate5,11 diagnostics,three types and lint PASS; all protected blobs exact. Pure execution target only. | d6ed8cbda1 |
 | U4p-D39-test-identity | Refresh strict current producer identity | Luna | Sol1022 caller repair | doing | Identity1035 | Change only one stale digest literal to exact approved D39 producer; all original semantic assertions remain. Cumulative independent review follows. | Earlyfreeze only |
 
-| P2-final-caller | Bind only P2 to actual pure target | Luna; independent review | Source1036 and custody1035 PASS | doing | Final caller1043 | Actual d6ed pure source plus333b/37eb/new child1016. Preserve P3 and all current outsiders; no installation before review. | Artifacts only |
+| P2-final-caller | Bind only P2 to actual pure target | Luna; independent review | Source1036 and custody1035 PASS | doing | Source return1054 | Author1043 refuses recycled proof path. Actual exact detached checkout ready; sole return1054 preserves source/target guards and current P3. | Two artifacts only |
 | P3-fault-order | Preserve strict lost-ACK ordering | Proof harness | Sol1040 confirms exact retry A | blocked:app2 | Peer1046; Proof owner requested | Gate5 fulfills recovery while P1 holds it across restart. Preserve original assertions; Proof owns deterministic fault timing. No new original released. | No source edit yet |
 
 Integration: HOME d6ed8cbda1 includes independently reviewed own-only popup84b08 and retained diagnostic01ea. Exact current pure-product qualification1036 is running. Earlier P3 pure82cb qualified20 controls/types/lint/list and original3896 now terminal. Source qualification gives no live gate credit.
 
-Blockers: App — pure-product1036 and custody1035 PASS; sole final P2-only caller1043 binds exact source/target and preserves P3. Independent review and separate installation precede ONE P2.
+Blockers: App — sole P2 caller return1054 fixes recycled-target admission using actual exact detached receipt. Pure source1036 and custody1035 PASS; independent review and installation follow.
 Blockers: Proof — exact retry A confirmed by Sol1040. Peer1046 asks strict Gate5 fault-order repair; App independent1046 qualifies same-ID cause/custody before safe publication. No repeat.
 Blockers: Freeze — home U3b waits P2/P3 GO. Current early branch1045 received conflict-free d6ed merge-forward; cumulative review then D49 branch full checkpoint follow.
-Next ready: Final P2 caller1043 is active after pure source1036 PASS. Earlyfreeze source1035 passed; normal harness finalization precedes cumulative branch join/review and checkpoint.
+Next ready: Caller return1054 and earlyfreeze currentjoin1045 are active; independent cumulative reviews dispatch on completion. ActualP3 cause/custody1046 review active; Proof fault-order owner requested.
 
 Later: Final P1–P5 run on App service with Proof verdict after final tuple qualification, then D49 full suites and Farm F-final/ZIP. No duplicate farm or Proof run. D47 memo/capsule stays deferred and held unmerged. D46 U2c draft stays closed. D14/D23 deferred relational timing cases retain their original assertions and failures.
 
@@ -102,3 +102,5 @@ Pass10:40Z: INBOX consumed1447990 bytes through disk hold10:36. Recycled11 eligi
 Pass10:44Z: joined1036 PASS695+67+30+11/types/lint/protected identities; actual custody1035 PASS PREPARED. Final P2-only caller1043 active. Independent P3 source1040 rejects unsupported early-B inference; sole Sol1040 owns retained identity classification and Proof1044 receives strict harness-order ask. Producer return1040 corrects predecessor/reset to assertedPASS while retaining failure and remainderNOTRUN. Lead1043 owns exited harness finalization. INBOX consumed1449881 bytes; explicit10:41 hold lift acknowledged.
 
 Pass10:47Z: normal strict identity1035 finalizeda432,15tests/types/lintPASS; early currentjoinSol1045 dispatched and sanctioned d6ed merge-forward completed conflict-free. Final P2 caller1043 active. Sol1040 actual trace confirms retry A exactkey/body/reply before Bpointerdown;72tests/types/lintPASS, no product defect. Proof peer1046 owns strict fault-boundary correction; independent App1046 reviews actual cause/custody. Exact finished reports published byte-for-byte.
+
+Pass10:54Z: caller1043 source binding/60guards passed but correctly refused recycledproof1036 path. Supported exact Appd6ed detachedKEEP receipt created. Sole Luna return1054 recovers only two worker-authored1043 artifacts while normal finalization is pending, authenticates existing proofmeta/ref plus actual checkout and preserves wrong-artifact refusals. No row install or original. Cleanup recycled4 more finished clean worktrees; Sweep3 removed0. Free disk about11GB; refused routes untouched.
