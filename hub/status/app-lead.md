@@ -1,1 +1,1 @@
-app-lead 12:41Z: daemons up (uptime 1601m, no restart), 5 running markers, disk 10.5G free, wt 34 dirs; board carries 'live 6 / cap 6; ready-undispatched 0'; no blockers, no LEAD FETCH; D54-D57 speed-up relayed to manager
+app-lead 13:12Z: daemons up (ensure-daemons uptime 1631m, machine up 27h, no restart), 4 workers running, disk 11.0G free, wt 31 dirs, scratch /tmp/w-* <=2MB; board 'live 5 / cap 6; ready-undispatched 0'; no blockers, no LEAD FETCH, no new refusals; P2 (all 8 CORE per D55b) and P3 not yet GO, caller custody repairs active
