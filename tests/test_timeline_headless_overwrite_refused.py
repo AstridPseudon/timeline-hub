@@ -332,9 +332,9 @@ def test_cas_correct_republish_after_reading_the_head_is_accepted(service):
     assert entry["receipt"] == again["receipt"]
     assert entry["records"]["commands"][0]["command"] == again["data"]["commands"][0]
     assert entry["records"]["commands"][0]["created"] == [
+        {"kind": "track", "owner": "parent", "ref": "parent/track:picture"},
         {"kind": "asset", "owner": "parent", "ref": "parent/asset:a"},
         {"kind": "clip", "owner": "parent", "ref": "parent/clip:edited"},
-        {"kind": "track", "owner": "parent", "ref": "parent/track:picture"},
     ]
     event = runtime.store.conn.execute(
         "SELECT kind, payload_json FROM timeline_events WHERE id=?",
