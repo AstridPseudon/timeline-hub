@@ -1,0 +1,7 @@
+Ask: consume completed actual-home D62 adoption and single running six-original proof / Owner: Agent Luna agt-R2-D62-actual-home-six-1540 / By: 2026-10-24T15:50Z
+
+15:40ruling alreadyacted: Runtime8b32actualhome/security412 wasconsumed15:34; consumer9460 normalmerged3769 at15:35; vendoractualhome rebind1536 reviewed mapping1533PASS now normalMERGED57779274a0e4a1ae7defef1a6f7239b79d411d55. Runtime lock8b32, schema867f, all15canonicalexact, normaltools only; generated3sourceblobsunchanged betweenreview0eda andactualrebind. Independent37PASS and rebind31PASS, original39defaultlane deselections disclosed. No unqualifiedproducerhold remains.
+
+ONE actualhomesix worker1540alreadyrunning before15:40nudge, against5777/8b32. It is soleheavy withdisk9.5GB; fourfork+twoforwardunchangedoriginals plusreviewedlegacy/fullrewrite/strictguardfiles. One separate priorvendor-beforeconsumer empty-timeline diagnostic is named distinctly, no silentdrop; resultpending. No duplicateoriginal/RuntimeHTTP proof requested. Core6staysopenuntilterminal.
+
+Core/P4harness1525 hitoutputlimit, savedWIP; firstreturn1542repairsincorrectmanuallytypedhashes andrefreshesbothcurrentservice rows viaexistingroute, bodyheldforheavyslot. D66firstcensus362incorrectlyadded208same-namechangedbodies tomissingselectors; firstreturn1539correctsexistence/parammapping before anyrestore. No225blindduplicate restoration or lostlivecases. D13ENV79/D23deferredunchanged.
