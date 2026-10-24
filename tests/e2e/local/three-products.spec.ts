@@ -1638,7 +1638,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   expect(wire.posts[2].key).not.toBe(wire.posts[0].key);
   expect(requestB).toMatchObject({ base_revision_id: pinOf(a).revision_id, base_publication_id: pinOf(a).publication_id });
   expect(requestB.commands).toEqual([{ schema_version: 1, op: 'doc.patch', version: '1', select: null,
-    args: { changes: mountedB.changes } }]);
+    args: { changes: mountedB.changes }, created: [] }]);
   expect(requestB.label).toBe(mountedB.label);
   expect(requestB.merge).toBe(mountedB.merge ?? 'atomic');
   expect(requestB.steps).toEqual([{ ...mountedB.step, command_ordinals: [0], patch: mountedB.changes }]);
