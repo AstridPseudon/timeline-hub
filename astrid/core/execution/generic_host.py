@@ -4282,6 +4282,54 @@ def _verify_admitted_source(admission: Mapping[str, Any]) -> None:
         raise HostError("admitted capability source digest changed")
 
 
+def _verify_managed_pack_source(pack_root: Path, inventory_identity: str) -> None:
+    """Require an installed external pack to come from the held source inventory."""
+    from astrid.core.pack.source_setup import SourceSetupError, active_source_inventory
+
+    if not inventory_identity:
+        raise HostError(
+            "installed external capability requires the Runtime-held source inventory identity"
+        )
+    try:
+        inventory = active_source_inventory()
+    except (OSError, SourceSetupError, ValueError) as exc:
+        raise HostError(f"installed external source inventory is unavailable: {exc}") from exc
+    if inventory.identity != inventory_identity:
+        raise HostError("installed external source inventory changed")
+    source = next((item for item in inventory.sources if item.pack_root == pack_root), None)
+    if source is None:
+        raise HostError("installed external pack root is not in the trusted source inventory")
+    if any(path.is_symlink() for path in pack_root.rglob("*")):
+        raise HostError("installed external pack source contains a symlink")
+
+    installed_root = Path(__file__).resolve().parents[3]
+    for child in pack_root.iterdir():
+        if child.is_dir() and (installed_root / child.name / "__init__.py").is_file():
+            raise HostError(
+                f"installed external pack package collides with installed package {child.name!r}"
+            )
+
+
+def _admission_fields(admission: Mapping[str, Any]) -> dict[str, Any]:
+    """Select the host-owned admission fields without changing the wire shape."""
+    fields = {
+        key: admission.get(key)
+        for key in (
+            "capability_digest",
+            "source_digest",
+            "dependency_digest",
+            "version",
+            "source_root",
+            "source_roots",
+        )
+    }
+    # Runtime-owned network admissions predate the optional import-root field;
+    # an omitted field is completed from the host's trusted admission below.
+    if "python_path_roots" in admission:
+        fields["python_path_roots"] = admission["python_path_roots"]
+    return fields
+
+
 def _vcs_revision(root: Path) -> str:
     """Return the checked-out revision for source-epoch invalidation."""
     checkout = next((candidate for candidate in (root, *root.parents) if (candidate / ".git").exists()), None)
@@ -5874,6 +5922,34 @@ class GenericPackHost:
             label = "claim-next" if name == "claim_next" else name
             raise HostError(f"runtime client lacks canonical {label} operation")
         return operation
+
+    def _trusted_installed_invocation(
+        self,
+        *,
+        capability_kind: str,
+        capability_id: str,
+        definition: Mapping[str, Any],
+        admission: Mapping[str, Any] | None,
+    ) -> tuple[Mapping[str, Any], Mapping[str, Any]]:
+        """Rebuild installed admission from host-held capability/source state."""
+        trusted_definition, trusted_admission = self.admit(capability_kind, capability_id)
+        metadata = trusted_definition.get("metadata", {})
+        if not isinstance(metadata, Mapping) or str(trusted_definition.get("kind")) != "external":
+            return trusted_definition, trusted_admission
+        raw_pack_root = metadata.get("pack_root")
+        if not isinstance(raw_pack_root, str) or not raw_pack_root:
+            raise HostError("installed external capability has no admitted pack root")
+        _verify_managed_pack_source(
+            Path(raw_pack_root).expanduser().resolve(), self.source_inventory_identity
+        )
+        if _capability_digest(definition) != trusted_admission["capability_digest"]:
+            raise HostError("caller capability definition does not match trusted admission")
+        if admission is not None:
+            caller_fields = _admission_fields(admission)
+            trusted_fields = _admission_fields(trusted_admission)
+            if any(caller_fields.get(key) != trusted_fields.get(key) for key in caller_fields):
+                raise HostError("caller admission does not match trusted Runtime admission")
+        return trusted_definition, trusted_admission
 
     def _default_matrix_path(self) -> Path | None:
         checkout = Path(__file__).resolve().parents[3]
@@ -8388,6 +8464,16 @@ class GenericPackHost:
         """
         if capability_kind not in {"executor", "orchestrator"}:
             raise HostError(f"unsupported capability kind {capability_kind!r}")
+        installed_profile = os.environ.get("ASTRID_HOST_EXECUTION_PROFILE") == "installed"
+        if installed_profile and definition is None and admission is not None:
+            raise HostError("installed capability admission requires a host-owned definition")
+        if installed_profile and definition is not None:
+            definition, admission = self._trusted_installed_invocation(
+                capability_kind=capability_kind,
+                capability_id=capability_id,
+                definition=definition,
+                admission=admission,
+            )
         attempt_path = Path(attempt).expanduser().resolve()
         attempt_path.mkdir(parents=True, exist_ok=True)
         if definition is not None:
@@ -8470,7 +8556,10 @@ class GenericPackHost:
             if network_hook_roots or import_roots:
                 env["PYTHONPATH"] = os.pathsep.join(dict.fromkeys((*network_hook_roots, *import_roots)))
         broker_endpoint = str((child_env or {}).get("ASTRID_BROKER_PROXY") or "")
-        argv = [sys.executable, "-m", "astrid.core.execution.generic_host_worker", str(request_path)]
+        argv = [sys.executable]
+        if installed_profile:
+            argv.append("-I")
+        argv.extend(("-m", "astrid.core.execution.generic_host_worker", str(request_path)))
         inherited_fds = ()
         try:
             if capability_kind == "executor" and capability_id == "rendering.timeline_visualize":
