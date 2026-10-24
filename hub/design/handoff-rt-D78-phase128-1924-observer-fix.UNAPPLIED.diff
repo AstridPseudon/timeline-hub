@@ -1,0 +1,42 @@
+--- a/tests/helpers/p2_commit_phase_capture.py
++++ b/tests/helpers/p2_commit_phase_capture.py
+@@ -259,12 +259,23 @@
+ 
+     def _trace_inner(self, frame: Any, event: str, arg: Any) -> Any:
+         if event == "call":
++            previous = self._frames.get(id(frame))
++            if previous is not None and previous.get("phase") == "coordinator_admission":
++                return self._trace
+             phase = self._phase(frame)
+             if phase == "handler_entry":
+                 ordinal = self._new_request(handler=frame.f_locals.get("self"), emit_handler=True)
+                 if ordinal is None:
+                     return None
+                 self._frames[id(frame)] = {"phase": phase, "ordinal": ordinal, "error": False}
++                parent = frame.f_back
++                while parent is not None:
++                    if (parent.f_globals.get("__name__") == "runtime_protocol.server"
++                            and parent.f_code.co_qualname == "RuntimeHandler._dispatch"):
++                        self._frames[id(parent)] = {"phase": "request_scope", "ordinal": ordinal}
++                        parent.f_trace = self._trace
++                        break
++                    parent = parent.f_back
+                 return self._trace
+             ordinal = self._request_for_frame(frame)
+             if phase is None and frame.f_code.co_qualname == "CommitExecutionCoordinator.execute":
+@@ -294,6 +305,15 @@
+             return self._trace
+         phase = state["phase"]
+         ordinal = state["ordinal"]
++        if phase == "request_scope":
++            if event == "return":
++                request = self._requests[ordinal]
++                if self._handler_requests.get(request["handler"]) == ordinal:
++                    del self._handler_requests[request["handler"]]
++                if self._thread_requests.get(request["thread"]) == ordinal:
++                    del self._thread_requests[request["thread"]]
++                del self._frames[id(frame)]
++            return self._trace
+         if event == "exception":
+             state["error"] = True
+             return self._trace

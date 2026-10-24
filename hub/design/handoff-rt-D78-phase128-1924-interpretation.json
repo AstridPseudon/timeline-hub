@@ -1,0 +1,448 @@
+{
+  "input": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-D78-live-13100-safe-phases.jsonl",
+  "bytes": 13355,
+  "sha256": "280f186c4694ab7b950d1653400722d3ca4278a101a69a0e2aa38ece085a8836",
+  "source_mode": "0o644",
+  "retained_mode": "0o600",
+  "records": 128,
+  "phase_counts": {
+    "handler_entry": 3,
+    "authorization": 67,
+    "coordinator_admission": 3,
+    "coordinator_lock": 2,
+    "provider": 3,
+    "accept": 3,
+    "receipt": 3,
+    "http_response": 44
+  },
+  "state_counts": {
+    "start": 69,
+    "end": 59
+  },
+  "last_record": {
+    "at_ms": 45430.793,
+    "count": 20,
+    "phase": "authorization",
+    "request": 2,
+    "schema_version": 1,
+    "state": "start"
+  },
+  "ordinals": {
+    "1": {
+      "records": 83,
+      "phases": {
+        "handler_entry": {
+          "starts": 1,
+          "ends": 1,
+          "start_ms": [
+            5291.084
+          ],
+          "end_ms": [
+            7814.908
+          ],
+          "paired_elapsed_ms": [
+            2523.824
+          ]
+        },
+        "authorization": {
+          "starts": 14,
+          "ends": 14,
+          "start_ms": [
+            5446.241,
+            5460.069,
+            5467.36,
+            5468.753,
+            5715.424,
+            5720.219,
+            5722.737,
+            6172.451,
+            6176.429,
+            6651.434,
+            7185.586,
+            7189.331,
+            7207.053,
+            7219.413
+          ],
+          "end_ms": [
+            5447.338,
+            5461.156,
+            5468.523,
+            5469.564,
+            5716.56,
+            5721.227,
+            5723.697,
+            6173.596,
+            6177.411,
+            6652.683,
+            7186.819,
+            7190.535,
+            7208.212,
+            7220.646
+          ],
+          "paired_elapsed_ms": [
+            1.097,
+            1.087,
+            1.163,
+            0.811,
+            1.136,
+            1.008,
+            0.96,
+            1.145,
+            0.982,
+            1.249,
+            1.233,
+            1.204,
+            1.159,
+            1.233
+          ]
+        },
+        "coordinator_admission": {
+          "starts": 2,
+          "ends": 0,
+          "start_ms": [
+            5459.828,
+            7814.072
+          ],
+          "end_ms": [],
+          "paired_elapsed_ms": []
+        },
+        "coordinator_lock": {
+          "starts": 1,
+          "ends": 0,
+          "start_ms": [
+            5459.965
+          ],
+          "end_ms": [],
+          "paired_elapsed_ms": []
+        },
+        "provider": {
+          "starts": 1,
+          "ends": 1,
+          "start_ms": [
+            5486.173
+          ],
+          "end_ms": [
+            7211.129
+          ],
+          "paired_elapsed_ms": [
+            1724.956
+          ]
+        },
+        "accept": {
+          "starts": 1,
+          "ends": 1,
+          "start_ms": [
+            6611.748
+          ],
+          "end_ms": [
+            7210.947
+          ],
+          "paired_elapsed_ms": [
+            599.199
+          ]
+        },
+        "receipt": {
+          "starts": 1,
+          "ends": 1,
+          "start_ms": [
+            6629.58
+          ],
+          "end_ms": [
+            7210.513
+          ],
+          "paired_elapsed_ms": [
+            580.933
+          ]
+        },
+        "http_response": {
+          "starts": 22,
+          "ends": 22,
+          "start_ms": [
+            7814.552,
+            7815.104,
+            13302.017,
+            13302.624,
+            13345.218,
+            13345.87,
+            14217.287,
+            14217.943,
+            15268.497,
+            15269.077,
+            15276.927,
+            15277.967,
+            15494.825,
+            15495.493,
+            15515.699,
+            15516.468,
+            15534.438,
+            15535.115,
+            15741.337,
+            15742.135,
+            15756.092,
+            15757.887
+          ],
+          "end_ms": [
+            7814.743,
+            7815.913,
+            13302.381,
+            13303.146,
+            13345.603,
+            13346.475,
+            14217.66,
+            14218.526,
+            15268.843,
+            15270.627,
+            15277.65,
+            15278.787,
+            15495.176,
+            15496.093,
+            15516.11,
+            15517.302,
+            15534.819,
+            15536.862,
+            15741.738,
+            15744.642,
+            15756.525,
+            15761.742
+          ],
+          "paired_elapsed_ms": [
+            0.191,
+            0.809,
+            0.364,
+            0.522,
+            0.385,
+            0.605,
+            0.373,
+            0.583,
+            0.346,
+            1.55,
+            0.723,
+            0.82,
+            0.351,
+            0.6,
+            0.411,
+            0.834,
+            0.381,
+            1.747,
+            0.401,
+            2.507,
+            0.433,
+            3.855
+          ]
+        }
+      }
+    },
+    "2": {
+      "records": 45,
+      "phases": {
+        "handler_entry": {
+          "starts": 1,
+          "ends": 0,
+          "start_ms": [
+            22171.56
+          ],
+          "end_ms": [],
+          "paired_elapsed_ms": []
+        },
+        "authorization": {
+          "starts": 20,
+          "ends": 19,
+          "start_ms": [
+            22891.064,
+            23058.026,
+            23147.223,
+            23151.65,
+            24367.475,
+            24371.794,
+            24375.658,
+            24378.94,
+            24382.212,
+            24385.721,
+            24962.5,
+            25572.673,
+            29963.064,
+            31124.622,
+            31127.081,
+            32931.779,
+            32937.495,
+            32941.339,
+            35550.876,
+            45430.793
+          ],
+          "end_ms": [
+            22893.626,
+            23059.681,
+            23150.98,
+            23152.9,
+            24369.193,
+            24373.034,
+            24376.856,
+            24380.117,
+            24383.526,
+            24386.951,
+            24964.074,
+            25574.232,
+            29964.969,
+            31126.308,
+            31128.388,
+            32933.374,
+            32938.988,
+            32942.74,
+            35552.645
+          ],
+          "paired_elapsed_ms": [
+            2.562,
+            1.655,
+            3.757,
+            1.25,
+            1.718,
+            1.24,
+            1.198,
+            1.177,
+            1.314,
+            1.23,
+            1.574,
+            1.559,
+            1.905,
+            1.686,
+            1.307,
+            1.595,
+            1.493,
+            1.401,
+            1.769
+          ]
+        },
+        "coordinator_admission": {
+          "starts": 1,
+          "ends": 0,
+          "start_ms": [
+            23057.036
+          ],
+          "end_ms": [],
+          "paired_elapsed_ms": []
+        },
+        "coordinator_lock": {
+          "starts": 1,
+          "ends": 0,
+          "start_ms": [
+            23057.569
+          ],
+          "end_ms": [],
+          "paired_elapsed_ms": []
+        },
+        "provider": {
+          "starts": 1,
+          "ends": 0,
+          "start_ms": [
+            23374.08
+          ],
+          "end_ms": [],
+          "paired_elapsed_ms": []
+        },
+        "accept": {
+          "starts": 1,
+          "ends": 0,
+          "start_ms": [
+            35044.141
+          ],
+          "end_ms": [],
+          "paired_elapsed_ms": []
+        },
+        "receipt": {
+          "starts": 1,
+          "ends": 0,
+          "start_ms": [
+            35259.487
+          ],
+          "end_ms": [],
+          "paired_elapsed_ms": []
+        },
+        "http_response": {
+          "starts": 0,
+          "ends": 0,
+          "start_ms": [],
+          "end_ms": [],
+          "paired_elapsed_ms": []
+        }
+      }
+    }
+  },
+  "source_hashes": {
+    "/home/user/work/wt/rt-D78-phase128-resume-sol-1924/tests/helpers/p2_commit_phase_capture.py": {
+      "captured_ref": "1bae0e8ccb8f912d50ad16e80d2e42f8e2ea603f",
+      "captured_sha256": "e68425c1f128609e77d2b5cf914af55e02d7fbdf732faf46cf73d2937887ec7b",
+      "current_sha256": "e68425c1f128609e77d2b5cf914af55e02d7fbdf732faf46cf73d2937887ec7b",
+      "identical": true
+    },
+    "/home/user/work/wt/rt-D78-phase128-resume-sol-1924/tests/test_p2_commit_phase_capture.py": {
+      "captured_ref": "1bae0e8ccb8f912d50ad16e80d2e42f8e2ea603f",
+      "captured_sha256": "a5115e8953a6a4311fef1705441820fd4f342d6a262b3e89ea23a6d4eac59af4",
+      "current_sha256": "a5115e8953a6a4311fef1705441820fd4f342d6a262b3e89ea23a6d4eac59af4",
+      "identical": true
+    },
+    "/home/user/work/wt/rt-D78-phase128-resume-sol-1924/runtime_protocol/server.py": {
+      "captured_ref": "1bae0e8ccb8f912d50ad16e80d2e42f8e2ea603f",
+      "captured_sha256": "aa82d81b772edd8edbf76895e8198383a6a34412ab437630024b39aa43b55c52",
+      "current_sha256": "aa82d81b772edd8edbf76895e8198383a6a34412ab437630024b39aa43b55c52",
+      "identical": true
+    },
+    "/home/user/work/wt/rt-D78-phase128-resume-sol-1924/runtime_protocol/timeline_commit_execution.py": {
+      "captured_ref": "1bae0e8ccb8f912d50ad16e80d2e42f8e2ea603f",
+      "captured_sha256": "2b0c256757f1bf0b3ab3124840250d2d8ef5dbec31a259c4b1e924e295619dd6",
+      "current_sha256": "2b0c256757f1bf0b3ab3124840250d2d8ef5dbec31a259c4b1e924e295619dd6",
+      "identical": true
+    },
+    "/home/user/work/wt/rt-D78-phase128-resume-sol-1924/runtime_protocol/timeline_commit_port.py": {
+      "captured_ref": "1bae0e8ccb8f912d50ad16e80d2e42f8e2ea603f",
+      "captured_sha256": "0d44b5a5e1e0374239df461cb5094ff4fe5bb70761233efd4e3a65c2b29b0859",
+      "current_sha256": "0d44b5a5e1e0374239df461cb5094ff4fe5bb70761233efd4e3a65c2b29b0859",
+      "identical": true
+    },
+    "/home/user/work/wt/rt-D78-phase128-resume-sol-1924/runtime_protocol/timeline_commit_store.py": {
+      "captured_ref": "1bae0e8ccb8f912d50ad16e80d2e42f8e2ea603f",
+      "captured_sha256": "a2db29e4dbb5ef781d818690647e888b4eb02550c93a3e3d962df161d610d4cd",
+      "current_sha256": "a2db29e4dbb5ef781d818690647e888b4eb02550c93a3e3d962df161d610d4cd",
+      "identical": true
+    },
+    "/home/user/work/wt/rt-D78-phase128-resume-sol-1924/runtime_protocol/daemon.py": {
+      "captured_ref": "1bae0e8ccb8f912d50ad16e80d2e42f8e2ea603f",
+      "captured_sha256": "3dd152c1c3b2744287cedc5fc6b51e39676b3870bae3577cbc555b8d21d8e9fb",
+      "current_sha256": "3dd152c1c3b2744287cedc5fc6b51e39676b3870bae3577cbc555b8d21d8e9fb",
+      "identical": true
+    },
+    "/home/user/work/app/scripts/testing/sitecustomize.py": {
+      "captured_ref": "3c29d553a7af0b0e0876760052855818ea834658",
+      "captured_sha256": "503e91e93fdfdf28bcce43c24f2c5928228c5780c23a2070a1349f3851139dd1",
+      "current_sha256": "503e91e93fdfdf28bcce43c24f2c5928228c5780c23a2070a1349f3851139dd1",
+      "identical": true
+    },
+    "/home/user/work/app/tests/e2e/local/support/harness.ts": {
+      "captured_ref": "3c29d553a7af0b0e0876760052855818ea834658",
+      "captured_sha256": "83a072e26668e97c18d986ebc5f04cbc13d31c7855ff474573f9b96a40dfb710",
+      "current_sha256": "a9207021d3f71b68c23c9fc7488f663846da4cd656a4a5e2c15c96f2506bd82e",
+      "identical": false
+    },
+    "/home/user/work/app/tests/e2e/local/support/app.ts": {
+      "captured_ref": "3c29d553a7af0b0e0876760052855818ea834658",
+      "captured_sha256": "eb00e60327a1321a18c56b41b13c8ced6526716b1e08af48779b13c8912c9edd",
+      "current_sha256": "e10998e0eabb69926ab8fc276307d504f2ddcf5d4b76436968b935752cd10e21",
+      "identical": false
+    },
+    "/home/user/work/app/scripts/testing/d66-plain-stack.mjs": {
+      "captured_ref": "3c29d553a7af0b0e0876760052855818ea834658",
+      "captured_sha256": "6aa3b5e1185cfcb5cb01a937df6d1b570b57b95eddaa61befef961b714512259",
+      "current_sha256": "edce6bda4101a99e83cef9414a1ca31fd4ebbbbe4e201a550d78bed9a23306df",
+      "identical": false
+    },
+    "/home/user/work/app/tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts": {
+      "captured_ref": "3c29d553a7af0b0e0876760052855818ea834658",
+      "captured_sha256": "ea6832082fdf98fe70897e3814ec5bb99b36119ac761f9ff56299a935740266b",
+      "current_sha256": "ea6832082fdf98fe70897e3814ec5bb99b36119ac761f9ff56299a935740266b",
+      "identical": true
+    }
+  },
+  "heads": {
+    "/home/user/work/wt/rt-D78-phase128-resume-sol-1924": "87bc7f74e09330885cfaff551ca629f51beea7b6",
+    "/home/user/work/app": "7098c7eeb567311d8d3b008759350261cbaec8bd"
+  }
+}
