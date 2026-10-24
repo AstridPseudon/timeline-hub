@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T20:31:34Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 0m -->
-# app board, 2026-10-24T20:30Z
+<!-- app | 2026-10-24T20:34:47Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 2m -->
+# app board, 2026-10-24T20:32Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -85,6 +85,8 @@
 
 | P2-14383-correlation | Return exact retained request and dump timing | Luna | Runtime peer2019 | merged | app-P2-14383-correlation-return-2026 | Dump belongs successful ordinal1. Ordinal2 SDK30s timeout then late local200/write raised; App120s did not fire. Safe JSON/MD published; no causal closure. | Evidence only |
 
+| P2-D83-selectors | Complete all eight isolated gesture entries | Luna | D83 order | doing | app-P2-D83-eight-isolated-selectors-2032 | Six entries exist; add missing popupADD and parentmove selectors. Unchanged original specs, list-only qualification; no browser until Runtime fix. | Source pending |
+
 Integration: Appc184bd includes exact independently qualified D82spec93c2 and original15493 GO. App860e added tested two-second watchdog selection for isolated capture14383. App e771 adds independently reviewed intermediate recovery readiness poll, exact spec736fd381. App7098 includes author-qualified D79 stack helper, fixture and normal-stage activation for future runs. App3c29 includes author-tested five D80 one-case descriptors. App2bd162 includes reviewed D75b both-mount recovery; parent status830252; D79 setup49f6; full phase38f39. App5d7550 includes one-command guarded submit037a8 over587316, with D73 snapshot admission6c7c over255f, with real Runtime CLI phase bootstrap over D73fd74, current popup provenance924140, D69c3d79, approved D70aaddaf, parent reads/audited restorations and frozen upstream3881. No new upstream refresh for gating.
 
 core open: 8 original P2 gesture cases. P3 original15493 independent2024 GO; P1 original2 PASS at its recorded tuple. Final source changes follow cut rerun matrix.
@@ -93,13 +95,13 @@ regressions: 0 confirmed open App source findings. D69 all four restorations hom
 
 Blockers: Final cut — eight P2 cases remain unqualified. P3 current15493 is independently GO. Runtime coordinates source repair, final tuple rerun matrix, suites and ZIP.
 Blockers: Runtime native wait — actual14383 frame/phase input complete. D83 requires meaningful Runtime wait fix home before next P2 isolated gesture.
-Next ready: Recheck Runtime wait fix each pass; actual14383 frame/phase/correlation input complete. After meaningful home, isolated P2 cases then one full tour. P3 independently GO, no redundant diagnostic.
+Next ready: Finish two missing isolated selectors2032 while Runtime repairs wait. Actual14383 input complete. After meaningful Runtime home, run isolated8 then one full tour. P3 independently GO.
 
-live 0 / cap 4; ready-undispatched 0. All ready App critical work complete or peer-blocked on Runtime wait fix. Actual14383 input and current P3GO published. D79/E pausedZIP; no invented work or duplicate source owner.
+live 1 / cap 2; ready-undispatched 0. Critical harness2032 completes required D83 eight-case selections, no browser. Runtime owns wait fix. Actual14383 input and P3GO published; D79/E pausedZIP.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
-Disk: Current7.530GB after D78 terminal, before next P3 build. Guarded scan found no finished clean non-KEEP App worktree remaining. Six stale pins previously released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
-Inbox consumed through1702876 bytes, including Agent1915 adoption homee39de and Runtime1920 capture request. Owner boards Runtime19:18 and Agent19:16 rechecked: popup87bc and cost e89 are home; original P2 source outcomes remain unqualified. Peer1934 closes App capture disposition at honest limits.
+Disk: Current7.363GB after D78 terminal, before next P3 build. Guarded scan found no finished clean non-KEEP App worktree remaining. Six stale pins previously released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
+Inbox consumed through1704392 bytes, including Agent1915 adoption homee39de and Runtime1920 capture request. Owner boards Runtime19:18 and Agent19:16 rechecked: popup87bc and cost e89 are home; original P2 source outcomes remain unqualified. Peer1934 closes App capture disposition at honest limits.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
 
