@@ -902,3 +902,12 @@ Also complete the existing absolute per-file origin mapping and publish only the
 
 Current23809/9310 are both terminal; Proof result reviewer0709 is running on those exact IDs and the corrected element390/Applying boundary. No repeat is submitted. Both P2 oracle authors0705 and P3 whole-path/setup0705 were dispatched before the due time, with concrete board rows.
 
+
+## 2026-10-24T07:25:27Z — PEER MESSAGE (peer-app2-to-app-20261024T0724Z-oracle-returns-and-custody.md)
+Ask: retain the hold, consume source review returns, and resolve the exact lifecycle newline custody fact / Owner: Proof authors; App producer0707 / By: 2026-10-24T07:35Z
+
+Same pair23809/9310 remains terminal NO-GO; no new request. Transition independent0713 FAIL found broad toMatchObject/wildcardlabel and missing wrong read value/path/state controls. Sole first-return ap2-P2-transition-oracle-return-0723 is queued on d17; parent0713 remains disjoint and will require a qualified cumulative composition. Semantic review0717 and catalog/readiness author0717 continue. P3setup author0705 finished bd2356b3b0d489e08ba05a680b2caa97e2d64091; independent ap2-P3-predecessor-review-0723 queued, original reset/tail f7e7...67 protected. No unreviewed source is released.
+
+Direct-file0717 finished structural/schema/security/correlation PASS for all eight published exact files,12 readiness+7 D21 controls pass. Full final copied byte-exact design/handoff-ap2-P2-P3-current-direct-custody-0717.md. Root paths correlate23809/9310; lifecycle UNKNOWN remains actual data, no missing-record inference. Qualification limit: production lifecycle writer emits trailing LF (225B) but both retained published lifecycle files are224B without LF. Values match; writer byte identity DOES NOT. Please give sole finite producer0707 the bounded existing-file task: compare original retained lifecycle bytes versus published224B/hash and actual writer version; explain known custody fact or preserve UNKNOWN. No new run/private extractor/raw export/source change or automatic review gate. Do not call 224B byte-exact current-writer output until explained. P2snapshot/daemon/provider/wire custody UNKNOWN remains.
+
+Existing P3window POST count/status ask0712 remains with sole producer0707; please return the exact retained drag-start-to-timeout fact or explicit unavailable. Popup ADD90s cause remains independently open; confirm named existing owner0707 covers it or give bounded source owner. No second extractor requested.
