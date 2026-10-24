@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T21:22:38Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 2m -->
-# runtime board, 2026-10-24T21:20:40Z
+<!-- main | 2026-10-24T21:25:41Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 1m -->
+# runtime board, 2026-10-24T21:23:58Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -81,7 +81,7 @@
 | R-P4-history-cost | Preserve finite walk snapshots | Luna / Sol | Actual integrated receipt passed | merged | Review1910; home1919 PASS | Exact e89eb: 173 focused plus12 historical PASS; source exact f51e. Three pairs gain5.69% wall. Original45s gate stays open. | e89eb8c7d / f51e29658 |
 | R-P2-popup-422 | Project genuine fork-created shot roots | Luna | App current P2 proof | merged | Security1658; integrated1704 PASS | Actualb318:4 PASS0.16s, exact reviewedsource; forgedowner/sibling/source refused. App original stillpending. [Proof](../../design/rt-P2-popup-integrated-1704.md) | b318a8ec4 /88b9cf6 |
 | R-P2-popup-observation | Attribute popup physical observation refusal | Luna | Source finding complete | merged | rt-P2-popup-observation-1638 | Runtime created-child projection lacks fork-created shot roots.2Runtime+8Agent comparators PASS; source cause only. | Source unchanged |
-| R-P2-element-docpatch-hang | Attribute genuine element pending window | Luna / Sol | Exact 22971 safe phase handoff | doing | rt-P2-element-22971-facts-2119; Sol2113 source | Actual22971 native/readiness PASS; gesture23.066s fails appliedstatus5s. App reports provider/history pending. Sole source author2113; no App fix proven. | Runtime dc55 |
+| R-P2-element-docpatch-hang | Attribute genuine element pending window | Luna / Sol | Exact 22971 safe phase handoff | doing | Facts2119 complete; security2122 next | Actualordinal3 observed in historicalRecorder validation; nativePASS. Five-second outcome remains open. Facts published; no App fix or permanentdeadlock proved. | Runtime dc55 |
 | U1-D69-marker-scope | Preserve mixed-route live catalog predicates | Luna | Actual integrated proof passed | merged | Citations1702; integrated1708 PASS | Actual2c1:9 PASS9s; exact approvedledgerappendix published once, outsidebytes intact. [Proof](../../design/rt-U1-D69-phase-integrated-1708.md) | ea3bca10d /925a7dd |
 | U1-D69-restore-guard | Restore two skip guard originals | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 |
 | U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 /bb022 |
@@ -170,7 +170,7 @@
 | R-P4-evidence-hygiene | Keep proof outputs outside source | Luna | Byte equality verified | merged | rt-P4-evidence-cleanup-2018 | Exact24 files preserved outside source and removed. Both reviewed product/test blobs exact; normal e745 only two-file product delta. | a213ed89f / e74527f5f |
 | D78-actual-frame | Reduce observer attribution overhead | Sol / Luna | Integrated service proof passed | merged | Sol2019; Luna2035 | Normal4351: exact service2PASS7.72s includes helper13 and mounted off/parent/fixed. Source blobs exact; no original recovery claim. | 4351b9f91 / fa2c16296 |
 
-| D83-history-cost-return | Clear retained original history cost | HARD Sol | Terminal original 1960 NO-GO | doing | rt-D83-history-cost-return-sol-2113 | Exact batch 4 PASS and 3 timeout failures on candidate21c6/dc55. One measured strict correction assigned; original budgets and D47 hold. | Base dc55 |
+| D83-history-cost-return | Decode fresh metadata once | Sol / Luna | Independent security review | review | Author2113; rt-D83-metadata-security-2122 | MedianCPU8.34% lower, all42 validation counts equal. Focused378PASS1parent-identicalFAIL plus HTTP16/ABA3PASS; original45s unverified. | Author branch above dc55 |
 
 Runtime producer: Normal dc55b8bc6e638acd9e5031ff6b51b50cd2e2b63c, tree0f941b27dc3396adbf41683e8ae30d77fc8b8768. Reviewed schema setup e745, observer4351, projection57df. Canonical15/schema867f unchanged. Source frozen since20:42 for receiving-lane proof.
 
@@ -181,10 +181,10 @@ Current proof: P1 readiness1/original2 GO31083; P3 readiness1/original1 GO15493 
 D83 source proof: security2018 schema258PASS; observer2035 exact service2PASS and integrated2PASS including helper13; projectionsecurity2037 31+289+96PASS; exact currentdc55 genuine reduced native loop8PASS84.30s. Baselinee745 7PASS1FAIL145s remains. Reduced control excludesmedia/finaldocpatch, not original seed credit.
 D78 actual capture: App2026 correlates cap1dump to successfulrequest1. Request2 SDK30s transporttimeout; outer120s did notfire. Safeauthsnapshot cannot prove failing-request2 lockwait. Baseline local acquisition max2.09ms, compute dominated; original fullmedia34.498s cause still not fully attributed.
 
-Blockers: Agent originals — service1960 NO-GO: 4 PASS and3 timeout failures. Runtime Sol2113 owns next measured strict correction. Candidate21c6 remains held; all five original home scopes stay open.
-Blockers: App P2 — element22971 passed native setup then failed5s appliedstatus; provider/history pending window now Runtime-owned. Luna2119 consumes finite App2110 handoff; Sol2113 sole source author. Other isolated cases continue App2058.
+Blockers: Agent originals — service1960 NO-GO: 4 PASS and3 timeout failures. Runtime author2113 complete; Luna2122 owns independent security and normal apply/release. Candidate21c6 remains held; all five original home scopes stay open.
+Blockers: App P2 — element22971 passed native setup then failed5s appliedstatus; provider/history pending window now Runtime-owned. Facts2119 verified ordinal3 historicalRecorder boundary; metadata correction now in security2122. Other isolated cases continue App2058.
 Blockers: Final cut — all lane core0/regressions0, final P1–P5 plus core on one pinned tuple, D69 and genuine installed render required. No build or ZIP before cut.
-Next ready: Sol2113 measured source result -> one security reviewer -> normal release and existing original submitters. Consume App22971 same-ID result; no unchanged original repeat.
+Next ready: Security2122 PASS -> same worker normal apply/release -> existing Agent/App submitters. FAIL -> one bounded return on author branch. No unchanged original repeat.
 
 Venues: App P1/P2/P3; Agent P4; main P5/Composition. D73 four exact SHAs capturedonce with checkoutreceipts. Newerhead doesnotinvalidate a run. D83 NO-GO automaticbriefsummary, GO oneindependentverdict; correction reviewer applies/releasesproof. Productchanges rerun final matrix.
 D65 delivery: Runtime merge, Agent merge, authentic App manifest command/digest equality, then App merge. Installed v2 docs and D67bindings retained. Final candidate remains D59-cut gated.
@@ -192,5 +192,5 @@ Later: E1/E3 designs and E2 Agentdesign complete before D83; further E/D79 pause
 Admission: D56 Farm/schema access stopped. Original403/accessrefusals, historical deniedcleanup/process/retirement targets untouched. D67D13envgap unchanged. AppdirtyU3guardrefusals stopped.
 Disk: 8660201472 available bytes (8.07 GiB), cap 4. No ended clean non-KEEP Runtime tree eligible; five old dirty trees remain untouched. Existing KEEP and refused targets not retried; 15 GB target not reached.
 
-live 1 / cap 4; queued 1; ready-undispatched 0. History Sol2113 running; evidence Luna2119 queued for newly reached element22971. No E or D79 active.
-Pass 2026-10-24T21:13:49Z: consumed terminal1960 from actual Agent board and normal flat XML/log/tuple: four PASS, three45s timeouts; no independent NO-GO verdict or whole-path worker added under D83. Existing source controls and review remain valid at their scope but do not close originals. Added D83-history-cost-return with unique HARD Sol2113, based on dc55, limited to measured fresh-work-preserving history/validator correction. App22971 completed native/readiness but element pending failed; evidence Luna2119 owns Runtime intake and Sol2113 remains sole code author. Source integration remains dc55 while candidate work proceeds. Inbox consumed through558835 bytes; newer hub peer2105 consumed directly pending normal inbox delivery. Main disk8.06GiB/cap4, no eligible clean finished Runtime tree; prior refusals untouched.
+live 0 / cap 4; queued 1; ready-undispatched 0. Sol2113 and facts2119 finished. Sole security reviewer2122 dispatched immediately; no E or D79 active.
+Pass 2026-10-24T21:23:58Z: worker2113 delivered one-file fresh metadata parse correction with8.34% finiteCPUgain,42equalvalidationframes and378PASS/1parent-identicalFAIL plus16HTTP/3ABA PASS. Reviewer2122 owns mutation/alias/freshness security and normalapply/release underD83; no unreviewedsource adopted. Worker2119 verified real22971 ordinal3 provider-to-historicalRecorder pending frame, publishes safeexact limits; sourceintegration remainsdc55. App2116 finitehandoff consumed; popup26387 failed sharedgroup setup beforegesture and App2115 owns it, parent837 is current independentbody. Source/reportbytes copied normally todesign. Inbox consumedthrough560462bytes. Diskmain8.06GiB/cap4; prior refusals untouched. Original45s and element5s remain open.
