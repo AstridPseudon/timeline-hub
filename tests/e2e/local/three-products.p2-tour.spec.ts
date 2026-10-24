@@ -296,12 +296,35 @@ function assertReplyShape(post: CommitPost, before: HeadPin, modern = true): Com
   }
   expect(data.source).toEqual(post.body.source);
   const receipt = object(envelope.receipt, 'accepted receipt');
-  expect(receipt.receipt_id).toBe(post.key);
+  expect(receipt.receipt_id).toEqual(expect.stringMatching(/^txn-\S+$/));
+  expect(receipt.receipt_id).not.toBe(post.key);
   expect(receipt.idempotency_key).toBe(post.key);
   expect(receipt.result).toEqual(envelope.data);
   if (data.status === 'accepted') expect(data.rebased_onto).toBeNull();
   else expect(data.rebased_onto).toMatchObject({ revision_id: expect.any(String), publication_id: expect.any(String) });
   return envelope as unknown as CommitAcceptedMutation;
+}
+
+function assertAuthoritativeHistoryPublication(entry: HistoryEntry, result: CommitAcceptedMutation): void {
+  expect(entry.publication_id).toBe(result.receipt.receipt_id);
+}
+
+function assertAuthoritativeHead(head: HeadPin, result: CommitAcceptedMutation): void {
+  expect(head).toEqual({
+    revision_id: result.data.accepted_revision_id,
+    publication_id: result.receipt.receipt_id,
+  });
+}
+
+function assertInverseTargetsPublication(inverse: CommitPost, publicationId: string): void {
+  expect(inverse.body.commands).toEqual([{
+    schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
+    args: { publications: [publicationId] },
+  }]);
+}
+
+function assertUndoHistoryPublication(entry: HistoryEntry, publicationId: string): void {
+  expect(entry.records?.undo_of).toEqual([publicationId]);
 }
 
 function assertRequestV2(post: CommitPost, before: HeadPin, modern = true): void {
@@ -487,7 +510,7 @@ function assertTransitionRequestV2(
 function assertHistoryMetadata(entry: HistoryEntry, post: CommitPost, result: CommitAcceptedMutation): void {
   expect(entry.intent).toBe('recorded');
   expect(entry.records).not.toBeNull();
-  expect(entry.publication_id).toBe(post.key);
+  assertAuthoritativeHistoryPublication(entry, result);
   expect(entry.revision_id).toBe(result.data.accepted_revision_id);
   expect(entry.receipt).toEqual(result.receipt);
   expect(entry.publisher).toBe(result.data.publisher);
@@ -648,13 +671,12 @@ async function proveGestureAndUndo(
   assertOnlyParentClipFieldsChanged(original, after, expectedClipIds, expectedFields);
   assertAfter(after);
   const committed = await history(harness, seed);
-  const entry = committed.items.find((candidate) => candidate.publication_id === post.key);
+  const entry = committed.items.find((candidate) => candidate.publication_id === result.receipt.receipt_id);
   expect(entry, 'history joins by receipt/publication id').toBeTruthy();
   assertHistoryProof(entry!, post, result, original, after, expectedClipIds, expectedFields);
   assertNoNewLegacyEntries(before, committed);
   expect(committed.items.filter((candidate) => !before.items.some((known) => known.publication_id === candidate.publication_id))).toHaveLength(1);
-  expect(committed.head.revision_id).toBe(result.data.accepted_revision_id);
-  expect(committed.head.publication_id).toBe(post.key);
+  assertAuthoritativeHead(committed.head, result);
   await assertReloaded(page, harness, result.data.accepted_revision_id);
   expect(await history(harness, seed), 'reload preserves the complete authoritative history').toEqual(committed);
   expect(wire.legacy, 'the mounted gesture has no old-route write').toEqual([]);
@@ -663,10 +685,7 @@ async function proveGestureAndUndo(
     await page.getByRole('button', { name: 'Undo', exact: true }).click();
   });
   assertRequestV2(inverse, pinOf(result), false);
-  expect(inverse.body.commands).toEqual([{
-    schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
-    args: { publications: [post.key] },
-  }]);
+  assertInverseTargetsPublication(inverse, result.receipt.receipt_id);
   const inverseResult = assertReplyShape(inverse, pinOf(result), false);
   const undone = inverseResult.data.canonical_document;
   const actualUndone = await canonicalDocumentAt(harness, seed, inverseResult.data.accepted_revision_id);
@@ -674,11 +693,11 @@ async function proveGestureAndUndo(
   assertCanonicalRestored(original, undone);
   assertUndo(undone);
   const finalHistory = await history(harness, seed);
-  const inverseEntry = finalHistory.items.find((candidate) => candidate.publication_id === inverse.key);
+  const inverseEntry = finalHistory.items.find((candidate) => candidate.publication_id === inverseResult.receipt.receipt_id);
   expect(inverseEntry, 'Undo history joins by receipt/publication id').toBeTruthy();
   assertHistoryMetadata(inverseEntry!, inverse, inverseResult);
-  expect(inverseEntry?.records?.undo_of).toEqual([post.key]);
-  expect(finalHistory.items.filter((candidate) => candidate.publication_id !== inverse.key),
+  assertUndoHistoryPublication(inverseEntry!, result.receipt.receipt_id);
+  expect(finalHistory.items.filter((candidate) => candidate.publication_id !== inverseResult.receipt.receipt_id),
     'Undo preserves every prior authoritative history entry').toEqual(committed.items);
   assertNoNewLegacyEntries(before, finalHistory);
   expect(finalHistory.items.filter((candidate) => !before.items.some((known) => known.publication_id === candidate.publication_id))).toHaveLength(2);
