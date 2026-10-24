@@ -115,6 +115,7 @@ def begin_nudge(clip, seconds, frames):
     from astrid.sdk import timeline_intent as intent
 
     from ._doc_patch import Closure, value_at
+    from .checkout import Checkout
 
     tl = clip._tl
     if (not tl.bundle.get("base_parent", {}).get("publication_id")
@@ -133,15 +134,18 @@ def begin_nudge(clip, seconds, frames):
     if calls is None:
         return None
     calls.extend(copy.deepcopy(tl._helper_calls))
+    boundary = original
     if calls:
         from .commands import execute
 
         # Use the existing provider projection of preceding commands. Compiling
         # the detached preview alone gives a different successor ownership.
         boundary = execute(original, [command for call in calls for command in call["commands"]]).bundle
-        if authored_digest(boundary) != authored_digest(before):
-            return None
-        before = boundary
+    # Checkout migrates legacy intent on a private copy. Authenticate that
+    # view, but capture reads and patch preconditions from the exact source.
+    if authored_digest(Checkout(copy.deepcopy(boundary)).document()) != authored_digest(before):
+        return None
+    before = boundary
     closure = Closure(before)
     refs = [ref for ref, owners in closure.owners.items()
             if ref.startswith("internal-revision:")
@@ -253,7 +257,7 @@ def helper_batch(tl, base, candidate):
     replay = Checkout(copy.deepcopy(base))
     commands, steps = [], []
     for call in calls:
-        if call.get("before") != authored_digest(replay.document()):
+        if call.get("before") != authored_digest(base if not steps else replay.document()):
             return None  # an uncaptured edit occurred between helper operations
         if call.get("op") != "nudge":
             raise TimelineEditError("unknown helper capture")
