@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T16:31:41Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 13 | status age 1m -->
+<!-- main | 2026-10-24T16:34:39Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 2m -->
 # runtime board, 2026-10-24T16:29:54Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -79,6 +79,7 @@
 | F-D52-core-five | Map five named actual home outcomes | Luna | Authentic XML and map verified | merged | Receipt 1418 PASS | All five named cases PASS on actual47b/becfe. Current four fork failures are distinct. [Receipt](../../design/rt-F-D52-core-five-receipt-1418.md) | Agent 47b |
 | U1-D69-test-audit | Preserve upstream test predicates | Luna | Seven restorations before cut | merged | rt-U1-D69-test-audit-1603 | Missing16:9 mapped,7 restore. Changed129:75 clear,54 cited. Two skip markers cited;12 dynamic scopes explicit. [Audit](../../design/rt-U1-D69-test-audit-1603.md) | Source facts only |
 | R-P4-history-cost | Reduce historical schema validation cost | Luna | Finite profile then strict review | doing | rt-P4-history-cost-1625 | Actual P4 ten-note timeout in schema ref validation. Profile finite captures; preserve every check and45s budget. No history memo. | Pending |
+| U1-D69-marker-scope | Resolve two mixed-route marker citations | Luna | Finite live catalog mapping | doing | rt-U1-D69-marker-scope-1632 | Independent1628 found two marker citation components wrong. Check live catalog assertions and exact replacements before disposition. | Source facts pending |
 | U1-D69-restore-guard | Restore two skip guard originals | Luna | Joined policy review | review | Restore1613; policy1616; join1621 | Two exact upstream bodies restored. Policy fix passes24; joined seven-test scope and independent protected review next. | ee407797d |
 | U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Joined protected review | review | rt-U1-D69-checker-1629 | Policy1616 passes24 and Pyright0. Preserve no_ci, false-condition refusal and stricter current xfail/node/hash guards. | Policy source ready |
 | U1-D69-restore-registry | Restore five registry originals | Luna | Joined policy review | review | Restore1613; join1621 | Five exact bodies restored; prior11PASS1FAIL exposed no_ci. Join1621 imports exact blob onto corrected policy. | Source ready |
@@ -198,3 +199,5 @@ Pass 2026-10-24T16:25Z: peerAgent1619 became owned R-P4-history-cost/Luna1625 im
 Pass 2026-10-24T16:28Z: final joined candidate independent1621 PASS consumed, kept private/gated cut. D69 joined actual29 has28PASS1FAIL: existing registry checker ignores upstream no_ci. Independent readonly wholepath1628 assigned immediately after first policy fix failed to clear joined scope; author correction follows exact source return. P4 finite profile1625 active.
 
 Pass 2026-10-24T16:29:54Z: join1621 terminal28PASS1FAIL reveals existing checker dropped upstream no_ci predicate. Corrector1629 dispatched on committedjoined4e1 while independent wholepath1628 runs; protected7 original bodies stay exact. Runtime policy regression1 explicitly open until normalmergeproof. Finalcandidate1621 independentPASS held at cut.
+
+Pass 2026-10-24T16:32Z: independent wholepath1628 FAIL finds three checker bodies missing no_ci; first1629 owns one then remaining two restore upstream unchanged. Two mixed-route marker citation issues get unique readonly1632 finite scope; no skipped live catalog credit. Other54 decision citations verified. P4 profile1625 active.
