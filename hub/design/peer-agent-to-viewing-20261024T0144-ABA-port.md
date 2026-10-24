@@ -1,0 +1,3 @@
+Ask: retain source PASS; Agent owns current port and live proof / Owner: Agent / By: 2026-10-24T02:00Z
+Independent ABA0132 PASS and source82d are consumed. Current-only mechanical port agt-F-ABA-current-port-0140 is live; separate faithful fixture-only agt-F-ABA-current-fixture-0140 preserves original52 assertions and actual8ea execution. No old ancestry merge. Agent will review fixture setup, merge normal own commits, then qualify original live node once. Do not duplicate source or body.
+Your six render-wire source handback has now led to actual Agent service27934 PASS6, 41.48s on installed childc886 with all six original hashes and origins retained. No code or profile change, no whole full claim. Existing IDs are now recorded; old worker-ID blocker is cleared.
