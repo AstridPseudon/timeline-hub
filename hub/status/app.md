@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T16:51:09Z | dispatcher heartbeat 4s | live 2 (sol 1, luna 1, other 0) | busy30 27 | status age 0m -->
-# app board, 2026-10-24T16:52Z
+<!-- app | 2026-10-24T16:54:48Z | dispatcher heartbeat 9s | live 2 (sol 1, luna 1, other 0) | busy30 25 | status age 1m -->
+# app board, 2026-10-24T16:55Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -48,12 +48,12 @@
 
 | P3-history | Repair exact history precondition | Luna | Actual 10033 failure | merged | Author 1620; review 1626 | Strict authenticated ABI 2; 23 controls, three types and lint PASS. Six original specs unchanged. | 9f4ec08f56 |
 | P3-current-verdict | Judge 10033 and challenge path | Luna | Same-ID terminal facts | merged | app-P3-10033-verdict-path-1620 | NO-GO. Exact history oracle omits authenticated recorder_abi 2; reset/retry/restart/undo unreached. | Read only |
-| P2-element-current | Classify current element failure | Luna | Completed first case 25943 | blocked:runtime | app-P2-element-current-cause-1620 | UI applied check fails at 412 after 5 seconds; valid request pending at teardown. 187 mounted and 31 diagnostic controls PASS. No App fix proven. | Base 1540 |
+| P2-element-current | Resolve pending element request | HARD Runtime Sol | Actual 25943 pending | blocked:runtime | rt-P2-element-sol-1643 | Existing phases UNAVAILABLE; unique Runtime execution/store owner may run one meaningful reproduction per ORCH16:45. | Actual 25943 |
 | P2-element-path | Challenge mounted element path | Luna | Repeated gate failure | merged | app-P2-element-whole-path-1621 | Request starts; retained diagnostic remains pending through teardown. No terminal response or backend cause proven. | Read only |
 
 | P2-current-verdict | Judge exact tour 25943 | Luna | Same-ID terminal | merged | app-P2-25943-verdict-1625 | Separate three failed cases from five NOTRUN. Plain manifest/XML and original hashes. | Read only |
 | P2-parent-reads | Preserve exact declared history reads | Luna | Independent 1636 PASS | merged | Author 1625; review 1636 | Exact reads or exact absence. 13 Node and 7 semantic controls, four types/lint PASS. Integrated 1643 active. | a2a6e4abbd |
-| P2-popup-runtime | Fix physical observation refusal | Runtime owner | Current ADD 422 | blocked:runtime | Peer app 1625 sent | Genuine ADD returns invalid_records: intermediate command lacks authenticated physical observation. No guard waiver. | Agent9502/Runtime8b32 |
+| P2-popup-runtime | Fix physical observation refusal | Runtime Luna | Current ADD 422 | blocked:runtime | rt-P2-popup-auth-1643 | Wholepath1638 finds fork-created shot root missing from child projection; faithful old RED/new GREEN and security review required. | Runtime auth draft |
 | P3-history-review | Review strict authenticated ABI oracle | Luna | Author 1620 PASS | merged | app-P3-history-review-1626 | Independent PASS; wrong and missing ABI rejected; all other exact history guards preserved. | 471dc827b6 |
 | D69-placement | Restore two upstream placement cases | HARD Sol | Second review 1644 FAIL | doing | app-U3-D69-placement-sol-1650 | Real dependency_changed/status conflict still retries. Sol repair plus independent whole path; no unsafe source home. | Base 61f0fb613a |
 | D69-fullscreen | Restore upstream fullscreen assertions | Luna | Independent 1636 PASS | merged | Author 1626; review 1636 | Exact upstream body and four shell/Escape predicates. Old RED/new 15 PASS; integrated 1643 active. | cb9ba67c65 |
@@ -65,22 +65,22 @@
 | P3-step-intent | Correct outdated setup intent oracle | Luna | D66 protected-file decision | blocked:orchestrator | Author 1638; proposal review 1643 | Exact semantic move intent proposed; 70 mounted controls PASS. Original body/reset/tail unchanged. Escalation 1643 written. | Read only |
 
 | P3-4858-verdict | Judge changed original Gate5 | Luna | Same-ID terminal facts | merged | app-P3-4858-verdict-path-1637 | Independent NO-GO. Stale intent primary; Agent source/provenance drift secondary. History precondition passed. | Read only |
-| D66-stable-source | Keep current imports stable per run | Luna | Actual 4858 source drift | doing | app-D66-current-source-complete-1649 | First return preserves plain command; normal current ef036/bc227 detached checkouts are ready. | Draft only |
+| D66-stable-source | Keep current imports stable per run | Luna | Author plus actual positive PASS | merging | Author 1649; positive 1652 | Same plain command; real current ef036/5c1a routes. Empty-input collects 2/8/1; five controls/lint PASS. | 016d5e4054 |
 | F-home-current | Qualify merged repairs and ledger | Luna | Home a2a6 | merged | app-current-home-qualify-1643 | PASS 58 voice, 15 fullscreen, 10 P2, 7 semantic, 23 Gate5; four types/lint. Reviewed blobs exact; worker rows copied. | a2a6e4abbd |
 
 | P2-server-phase | Answer exact retained handler input | Luna | Runtime peer 1639 | merged | app-P2-25943-server-phase-return-1647 | UNAVAILABLE: no server stdout, matching handler trace or receipt. Safe client phases only. Peer1649 returns finite input. | Read only |
-| D69-placement-path | Challenge definitive refusal replay | Luna | Second failed retry fix | doing | app-U3-D69-placement-whole-path-1650 | Independent full path compares actual Runtime dependency conflict with passing P1 refusal handling. | Base 61f0 |
+| D69-placement-path | Challenge definitive refusal replay | Luna | Whole path complete | merged | app-U3-D69-placement-whole-path-1650 | Generic 409 is definitive; CAS contention is handled internally. No qualified Runtime semantic retry marker exists. | Read only |
 
 Integration: App a2a6e4abbd includes parent reads, voice, fullscreen, normal current Runtime provenance7f3d and strict P3 history9f4 over1540. Frozen upstream 3881, D62 normal client, D65 strict schema and D66 plain launcher retained. All six original spec hashes unchanged. Current P1 26312 is independently GREEN at its recorded App1540/Agent9502/Runtime8b32 tuple; never relabelled after source movement.
 
-live 3 / cap 6; ready-undispatched 0. Placement Sol repair and independent whole path plus snapshot harness return active. Home qualifier PASS; no original running. No original currently running.
+live 1 / cap 6; ready-undispatched 0. Placement Sol repair active. Whole path and harness actual positives completed; harness merge queued. No ready independent source row waiting; P3 decision pending. No original currently running.
 
 core open: 9 active gesture cases (8 P2 plus 1 P3). Current P1 original 2 PASS and independent 1616 PASS at recorded tuple. All eight P2 are CORE; current P2 25943 is 0 PASS, 3 FAIL, 5 NOTRUN. Current P3 10033 NO-GO; meaningful changed 4858 failed at a new setup intent boundary and Agent tuple drift, independent verdict active.
 regressions: 1 confirmed open placement retry defect; Sol after two independent refusal-replay failures. Voice/fullscreen fixes home and integrated1643 PASS. All restored bodies and original protected cases retained.
 
-Blockers: App — Placement Sol1650 and independent whole path1650, current-source harness1649 active; home qualifier1643 PASS.
+Blockers: App — Placement Sol1650 active; source wholepath complete. Harness actualpositive1652 PASS and merge queued; home qualifier1643 PASS.
 Blockers: Orchestrator — one exact P3 setup intent expectation needs decision under D66 unchanged-file rule; escalations/app-20261024T1643Z-P3-exact-move-intent.md. Proposal review1643 PASS; exact virtual full hashes and unchanged body/reset/tail published.
-Blockers: Runtime — Popup source owner rt-P2-popup-observation-1638 active. Element server phases UNAVAILABLE; peer1649 hands next handler observation to Runtime. No backend cause inferred.
+Blockers: Runtime — Popup Luna rt-P2-popup-auth-1643 owns fork-root projection; element HARD Sol rt-P2-element-sol-1643 owns exact next observation/reproduction. Existing App phases UNAVAILABLE; peer1649 sent.
 Blockers: Final cut — Current P2/P3 and D69 placement restoration remain open. Normal producer adoption home; Runtime owns final proofs/build/ZIP.
 
 Historical signals: P1 26312 exit0/237s readiness1/original2 PASS; P2 25943 exit1/463s readiness PASS, originals 0 PASS/3 FAIL/5 NOTRUN; P3 10033 exit1/286s readiness PASS, fails history oracle before original reset. Exact terminal IDs and independent verdicts retained. Earlier 11933, 3896, 26414 and 12541/1689 remain their recorded historical scopes.
@@ -93,5 +93,5 @@ Disk: About 9.9 GB free, cap 6; heavy stop 8 GB. Automatic recycle active; no el
 
 Evidence: [P3 independent strict history review](../../design/app-P3-history-review-1626.md), [P2 same-ID verdict](../../design/app-P2-25943-verdict-1625.md), [current P1 independent verdict](../../design/app-P1-26312-current-verdict-1616.md), [current composed source qualification](../../design/app-F-current-join-proof-1553.md), [all eight core](../../design/app-P2-core-classification-1222.md).
 
-Inbox consumed through 1563543 bytes. Runtime and Agent boards rechecked from /home/user/timeline-hub/hub/status: Runtime bc227 inverse auth fix is home with unchanged wire/schema; App normal provenance 1635 ready and dispatched. No source/adoption decision owed. Agent inverse original now PASS1 at its current proof; Agent/Runtime own remaining P4 repairs. Runtime D69 policy nowhome5c1a; normal current checkout queued, no wire change inferred.
+Inbox consumed through 1565650 bytes. Runtime and Agent boards rechecked from /home/user/timeline-hub/hub/status: Runtime bc227 inverse auth fix is home with unchanged wire/schema; App normal provenance 1635 ready and dispatched. No source/adoption decision owed. Agent inverse original now PASS1 at its current proof; Agent/Runtime own remaining P4 repairs. Runtime D69 policy nowhome5c1a; normal current checkout queued, no wire change inferred.
 Next ready: consume author/review returns, merge qualified disjoint fixes immediately; review parent reads on completion; same-ID P3 verdict on terminal.
