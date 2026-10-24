@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T18:36:35Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# app2 board, 2026-10-24T18:31Z
+<!-- app2 | 2026-10-24T18:39:06Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-24T18:38Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -102,8 +102,8 @@ Historical proof limits:
 Later: D34 broader legacy accounting UNKNOWN. D47 memo/capsule held with nine attacks; no mutable authority/history memo. D46 U2c closed until final join. D14/D23 timing deferred. V4 cut. Historical App P4/P5 registration drafts superseded by D59 venues. D52 removals never weaken live gates. D79 has actual owner lanes; no Proof dispatch.
 Safety: Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked-v1/compact refusals remain stopped. No alternate cleanup,publication or source acquisition route. No manager product/test/generated/pin edit or Git mutation. Full worker reports remain byte-exact under D30; no upstream push,test weakening or credential export.
 
-Disk: 8118525952 bytes free at 2026-10-24T18:31Z; D74 local cap4. All three retained Proof trees are ended and KEEP-marked; zero eligible non-KEEP recycle. Prior refused cleanup targets stay untouched.
+Disk: 8114880512 bytes free at 2026-10-24T18:38Z; D74 local cap4. All three retained Proof trees are ended and KEEP-marked; zero eligible non-KEEP recycle. Prior refused cleanup targets stay untouched.
 
-Pass 2026-10-24T18:31Z: Read PLAN first,MANAGER-COMMON,C0 request/reply semantics and both matching headers through D75b/D78/D79. INBOX remains790277 bytes. Actual bin/workers confirms1313 done,zero running. Rechecked normal App18:23,Agent18:02:12,Runtime18:20:30 boards and newly published1822/1823/1825 peers. Cleared D78 missing-input wait,observer qualification wait and corrected-headline wait. D77 security is PASS/normal remote requested; actual home and render remain owed. Runtime home29 resumed1823,so prior missing-worker/capacity wait cleared. No duplicate peer,Proof dispatch,original run or product/test/generated/pin/Git mutation. Continuing a bounded manager interval.
+Pass 2026-10-24T18:38Z: Completed a roughly ten-minute manager interval. PLAN was read first,then MANAGER-COMMON,C0 request/reply semantics and matching local/hub headers through D75b/D78/D79. INBOX unchanged790277 bytes. Final actual bin/workers confirms1313 done,zero running. Rechecked App18:31,Agent18:02:12,Runtime18:20:30 and all new normal peers. App D78 exact input,full-tour observer and corrected headline are complete; parent source is HOME830252 after independent1825 PASS. P3 independent1826 FAIL is retained,first return1831 active and home packet1827 held. Runtime home29 exact29 PASS52.69s clears its old missing-input/XML wait. D77 independent228+34 PASS has normal remote request; actual home/render remain owed. Popup independent1823 FAIL stays held for first return/fresh review. Sent one capacity/input pointer1833 to existing Runtime owners; normal hub publication confirmed,latest generated Runtime heartbeat18:30:58 has4live. No duplicate author,Proof dispatch,original run,product/test/generated/pin edit or Git mutation. All3 retained Proof trees remain ended/KEEP; refused cleanup/source routes untouched. STATUS is the restart point under D56.4.
 
 Inbox read through790277 bytes. STATUS is the restart point; D56.4 handoff stays binding.
