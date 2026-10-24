@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { QUERY_PRESETS } from '@/shared/lib/query/queryDefaults';
 import { AstridRuntimeClient } from '@/integrations/runtime/client.ts';
@@ -150,11 +150,11 @@ export async function transitionRuntimeTask(
   const current = await client.getTask(input.taskId);
   if (current.project_id !== projectId) {
     throw new Error(
-      `Workspace Runtime task ${input.taskId} belongs to project ${String(current.project_id)}, not ${projectId}`,
+      'this task belongs to a different project',
     );
   }
   if (!Number.isInteger(current.version) || current.version < 1) {
-    throw new Error(`Workspace Runtime task ${input.taskId} has no positive version`);
+    throw new Error('this task has no version to act on');
   }
 
   const key = idempotencyKey(
@@ -233,16 +233,16 @@ export async function exportSelectedRuntimeTaskOutput(
   const current = await client.getTask(taskId);
   if (current.project_id !== projectId) {
     throw new Error(
-      `Workspace Runtime task ${taskId} belongs to project ${String(current.project_id)}, not ${projectId}`,
+      'this task belongs to a different project',
     );
   }
   if (!runtimeTaskIsSelectedTimelineRender(current, timelineId)) {
-    throw new Error(`Workspace Runtime task ${taskId} is not the selected timeline render`);
+    throw new Error('only renders of the open timeline can be exported');
   }
 
   const output = (await listAllRuntimeManagedOutputs(client, taskId)).find(isPlayableManagedOutput);
   if (!output) {
-    throw new Error(`Workspace Runtime task ${taskId} has no available video managed output`);
+    throw new Error('this render has no video file to export');
   }
   return client.exportManagedOutput(
     output.association_id,
@@ -260,6 +260,21 @@ function mergeRuntimeTaskResults(
   return current.map((task) => byId.get(task.task_id) ?? task);
 }
 
+export type RuntimeTaskActionKind = RuntimeTaskAction | 'export';
+
+/** Where an export landed: `<folder>/<file>` to show, the full location for a tooltip. */
+export function exportDestination(receipt: ManagedOutputExportReceipt): { label: string; title: string } {
+  const root = receipt.destination.root;
+  const folder = root.split(/[\\/]+/).filter(Boolean).pop();
+  const file = receipt.destination.filename || receipt.filename;
+  return { label: folder ? `${folder}/${file}` : file, title: `${root.replace(/[\\/]+$/, '')}/${file}` };
+}
+
+export interface RuntimeTaskActionFailure {
+  action: RuntimeTaskActionKind;
+  message: string;
+}
+
 export function useRuntimeTasks(projectId: string | null) {
   const client = useMemo(() => new AstridRuntimeClient(), []);
   const queryClient = useQueryClient();
@@ -275,6 +290,21 @@ export function useRuntimeTasks(projectId: string | null) {
     enabled: Boolean(projectId),
     ...QUERY_PRESETS.realtimeBacked,
   });
+  const [failures, setFailures] = useState<Record<string, RuntimeTaskActionFailure>>({});
+  const [exportedTo, setExportedTo] = useState<Record<string, { label: string; title: string }>>({});
+  const recordFailure = (taskIds: readonly string[], action: RuntimeTaskActionKind, error: Error) =>
+    setFailures((current) => ({
+      ...current,
+      ...Object.fromEntries(taskIds.map((id) => [id, { action, message: error.message }])),
+    }));
+  const clearFailure = (taskIds: readonly string[]) =>
+    setFailures((current) => {
+      if (!taskIds.some((id) => id in current)) return current;
+      const next = { ...current };
+      for (const id of taskIds) delete next[id];
+      return next;
+    });
+  const dismissActionError = useCallback((taskId: string) => clearFailure([taskId]), []);
   const transitionMutation = useMutation<
     MutationResult<RuntimeTask>,
     Error,
@@ -282,15 +312,17 @@ export function useRuntimeTasks(projectId: string | null) {
   >({
     mutationFn: (input) => {
       if (!input.projectId) {
-        throw new Error('A Runtime project is required for task mutation');
+        throw new Error('no project is open');
       }
       return transitionRuntimeTask(client, input.projectId, input);
     },
     onSuccess: (updated, input) => {
+      clearFailure([input.taskId]);
       queryClient.setQueryData<RuntimeTask[]>(runtimeTaskQueryKey(input.projectId), (current) =>
         mergeRuntimeTaskResults(current, [updated]),
       );
     },
+    onError: (error, input) => recordFailure([input.taskId], input.action, error),
   });
 
   const cancelAllMutation = useMutation<
@@ -306,10 +338,12 @@ export function useRuntimeTasks(projectId: string | null) {
       })));
     },
     onSuccess: (updated, input) => {
+      clearFailure(input.pending.map((task) => task.task_id));
       queryClient.setQueryData<RuntimeTask[]>(runtimeTaskQueryKey(input.projectId), (current) =>
         mergeRuntimeTaskResults(current, updated),
       );
     },
+    onError: (error, input) => recordFailure(input.pending.map((task) => task.task_id), 'cancel', error),
   });
 
   const exportMutation = useMutation<
@@ -319,10 +353,15 @@ export function useRuntimeTasks(projectId: string | null) {
   >({
     mutationFn: ({ projectId: capturedProjectId, taskId, timelineId }) => {
       if (!capturedProjectId) {
-        throw new Error('A Runtime project is required for managed-output export');
+        throw new Error('no project is open');
       }
       return exportSelectedRuntimeTaskOutput(client, capturedProjectId, taskId, timelineId);
     },
+    onSuccess: (result, input) => {
+      clearFailure([input.taskId]);
+      setExportedTo((current) => ({ ...current, [input.taskId]: exportDestination(result) }));
+    },
+    onError: (error, input) => recordFailure([input.taskId], 'export', error),
   });
 
   const isTaskActionPending = (taskId: string, action: RuntimeTaskAction): boolean => (
@@ -349,7 +388,10 @@ export function useRuntimeTasks(projectId: string | null) {
     }),
     isCancelAllPending: cancelAllMutation.isPending,
     isTaskActionPending,
-    actionError: transitionMutation.error ?? cancelAllMutation.error ?? exportMutation.error,
+    actionFailures: failures,
+    dismissActionError,
+    exportedTo,
+    actionError: Object.keys(failures).length > 0 ? new Error('Task action failed') : null,
     isActionPending: transitionMutation.isPending || cancelAllMutation.isPending || exportMutation.isPending,
     canCancel: runtimeTaskIsCancellable,
     canRetry: runtimeTaskIsRetryable,

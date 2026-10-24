@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Event, ManagedOutput, Task as RuntimeTask } from '@/integrations/runtime/generated.ts';
 import type { AgentTaskLink } from '@/tools/video-editor/runtime/agentTaskLinks';
@@ -61,7 +61,7 @@ function dockElement(
 ) {
   return <RuntimeActivityDock
     projectId="project-1" timelineId={null} tasks={tasks} links={links} isLoading={false} error={null} actionError={null}
-    isPinned={options.isPinned ?? false} isHistoryOpen={options.isHistoryOpen ?? false} onTogglePinned={vi.fn()} onToggleHistory={vi.fn()} onTemporaryHistoryLeave={vi.fn()} onOpenHistory={onOpenHistory} onCancelTask={cancelTask} onRetryTask={vi.fn()}
+    isPinned={options.isPinned ?? false} isHistoryOpen={options.isHistoryOpen ?? false} onTogglePinned={vi.fn()} onToggleHistory={vi.fn()} onOpenHistory={onOpenHistory} onCancelTask={cancelTask} onRetryTask={vi.fn()}
     isTaskActionPending={() => false} onExportManagedOutput={vi.fn()} isExportTaskPending={() => false}
     requestedTaskInspection={requestedTaskInspection} onTaskInspectionRequestHandled={vi.fn()}
   />;
@@ -124,7 +124,7 @@ describe('RuntimeActivityDock', () => {
     render(<RuntimeActivityDock
       projectId="project-1" timelineId={null} tasks={[task('done-task', 'generation.generate_image', { state: 'succeeded' })]}
       links={[]} isLoading={false} isPinned={false} isHistoryOpen={false} error={null} actionError={null}
-      onTogglePinned={vi.fn()} onToggleHistory={toggleHistory} onTemporaryHistoryLeave={vi.fn()} onOpenHistory={vi.fn()} onCancelTask={cancelTask}
+      onTogglePinned={vi.fn()} onToggleHistory={toggleHistory} onOpenHistory={vi.fn()} onCancelTask={cancelTask}
       onRetryTask={vi.fn()} isTaskActionPending={() => false} onExportManagedOutput={vi.fn()} isExportTaskPending={() => false}
     />);
     fireEvent.click(screen.getByRole('button', { name: 'Peek at tasks' }));
@@ -134,7 +134,7 @@ describe('RuntimeActivityDock', () => {
   it('keeps the task history toggle available while task history is loading', () => {
     render(<RuntimeActivityDock
       projectId="project-1" timelineId={null} tasks={[]} links={[]} isLoading isPinned={false} isHistoryOpen={false} error={null} actionError={null}
-      onTogglePinned={vi.fn()} onToggleHistory={vi.fn()} onTemporaryHistoryLeave={vi.fn()} onOpenHistory={vi.fn()} onCancelTask={cancelTask} onRetryTask={vi.fn()}
+      onTogglePinned={vi.fn()} onToggleHistory={vi.fn()} onOpenHistory={vi.fn()} onCancelTask={cancelTask} onRetryTask={vi.fn()}
       isTaskActionPending={() => false} onExportManagedOutput={vi.fn()} isExportTaskPending={() => false}
     />);
     expect(screen.getByRole('button', { name: 'Peek at tasks' })).toBeEnabled();
@@ -320,5 +320,51 @@ describe('RuntimeActivityDock', () => {
     unmount();
     renderDock([current], [{ ...liveLink, liveObserved: false }]);
     expect(screen.getByTestId('activity-task-row')).not.toHaveClass('motion-safe:animate-[pulse_700ms_ease-out_1]');
+  });
+
+  it('keeps the dock gap inside its own frame so the temporary peek has no dead strip', () => {
+    const view = renderDock([]);
+    const dock = view.container.querySelector<HTMLElement>('[data-runtime-activity-dock="true"]')!;
+    expect(dock.className).not.toMatch(/\bm[xy]?-\d/);
+    expect(dock.parentElement).toHaveAttribute('data-runtime-activity-dock-frame', 'true');
+    expect(dock.parentElement!.className).toContain('py-1');
+  });
+
+  describe('hover inspector grace', () => {
+    async function openHoverInspector() {
+      renderDock([task('task-1', 'media.clip_extract')]);
+      const row = document.querySelector<HTMLElement>('[data-activity-task-id="task-1"]')!;
+      fireEvent.mouseEnter(row);
+      const inspector = await screen.findByLabelText('Clip extraction activity details');
+      return { row, inspector };
+    }
+
+    it('keeps the inspector while the pointer crosses a gap from the row into it', async () => {
+      const { row, inspector } = await openHoverInspector();
+      vi.useFakeTimers();
+      try {
+        fireEvent.mouseLeave(row, { relatedTarget: document.body });
+        act(() => { vi.advanceTimersByTime(100); });
+        fireEvent.mouseEnter(inspector);
+        act(() => { vi.advanceTimersByTime(1000); });
+        expect(screen.getByLabelText('Clip extraction activity details')).toBeInTheDocument();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('hides the inspector after the grace when the pointer goes elsewhere', async () => {
+      const { row } = await openHoverInspector();
+      vi.useFakeTimers();
+      try {
+        fireEvent.mouseLeave(row, { relatedTarget: document.body });
+        act(() => { vi.advanceTimersByTime(100); });
+        expect(screen.getByLabelText('Clip extraction activity details')).toBeInTheDocument();
+        act(() => { vi.advanceTimersByTime(100); });
+        expect(screen.queryByLabelText('Clip extraction activity details')).not.toBeInTheDocument();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 });
