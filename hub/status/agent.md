@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T13:20:10Z | dispatcher heartbeat 8s | live 4 (sol 0, luna 4, other 0) | busy30 25 | status age 8m -->
-# agent board, 2026-10-24T13:12:21Z
+<!-- agent | 2026-10-24T13:23:25Z | dispatcher heartbeat 6s | live 3 (sol 0, luna 3, other 0) | busy30 25 | status age 1m -->
+# agent board, 2026-10-24T13:22:13Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -20,7 +20,7 @@
 | F D52 occurrence-delete | Preserve 19 live delete scenarios | Runtime Luna | Independent integrated result | merged | Author1139; review1141 PASS19 | All19 passed6.43s directly on integration7e258, unchanged bodies and source. No code diff or merge needed; no current full claim. | Integration7e258 |
 | F open commit fixture | Preserve 19 public session scenarios | Luna / Luna | Actual integrated proof | merged | Review1139; integrated1153 PASS42 | Actual8c223 passed42 in5.99s; durableXML retained, all23 bodies and reviewed blobs unchanged. Static evidence reused exactly. | Home8c223d77fe |
 | F M2 media fixtures | Preserve 17 placement and pool scenarios | Luna / Luna | Actual integrated proof | merged | Review1148; home1149 PASS200 | Actual44cc passed200 in68.17s, durable XML; all six reviewed blobs, original ASTs and production hashes exact. | Home44cc5f6b34 |
-| R2 M1 fixture | Preserve25 removal and redo scenarios | HARD Sol / Luna | Validator and emitter continuation | doing | Sol1308; wholepath1310 | First Luna fix clears mirror capture. Two originals now fail downstream validation/emitter; full path remains strict. | d98f base |
+| R2 M1 fixture | Preserve25 removal and redo scenarios | Sol / Luna | Independent final core security | review | Sol1308; review1317 | Author all126M1,336cohort,17strict,46new pass. Null shapes5 pass; all46 originalASTs exact. HARD after Luna failed. | 04a4841 held |
 | R1 member removal | Preserve disjoint surviving row edits | Luna | Final null continuation and review | review | Independent1258 scoped PASS | Joined custody review passes336,203,10,9,17,3. Two null originals remain open, so joined source held. | e5fa held |
 | R2 redo remainder | Qualify ancestor and fork redo paths | Luna | Actual final home proof | review | Independent1258 PASS; packet1304 | Both exact retained fork redo originals pass in durable336 XML. Candidate held with null continuation; no home credit yet. | e5fa held |
 | R2 exact restore | Preserve opaque IDs and exact closure | Luna | Final null continuation and review | review | Independent1258 scoped PASS | Actual independent inverse9, strict17 and opaque3 pass. Exact ten pass; raw null originals remain open. | e5fa held |
@@ -55,22 +55,22 @@
 | F D54 bootstrap | Classify42 exact package nodes | Luna | Source categories complete | merged | Bootstrap env1242 | Exact42 include18 env and24 unproven. Fifteen local bootstrap cases are outside this slice. No baseline claims. | Evidence only |
 | F D54 setup | Classify 45 exact package nodes | Luna | Source classification complete | merged | agt-F-D54-setup-1236 | All45 non-core environment setup; exact membership retained. | Evidence only |
 | F D54 other | Classify 40 exact package nodes | Luna | Source scope classified | merged | Other1236 | Ten core and30 non-core;40 baseline categories unproven. | Evidence only |
-| G4 fork continuation | Preserve authenticated engine fork sources | Luna | Actual home qualification | merging | Review1304 PASS; home1310 | Full fork stack reviewed. Normal home9b055; actual-home proof active. | 9b055a93ff |
-| G4 duplicate wiring | Use registered duplicate command | Sol / Luna | Independent source security | review | Sol1254; review1308 | Author78 passes include both original failures;71 controls pass. Two baseline mypy errors unchanged. HARD after two Luna failures. | 23f60c4280 held |
+| G4 fork continuation | Preserve authenticated engine fork sources | Luna | Combined actual home proof | merged | Review1304; home1310; join1317 | Actual9b055 controls33,41,8,2,79 pass. Prior report tree label wrong; actual tree ed0043. Combined3db proof active. | 9b055a93ff |
+| G4 duplicate wiring | Use registered duplicate command | Sol / Luna | Combined actual home proof | merging | Review1308 PASS; home1317 | Reviewed23f normalmerged3db4; actual joined source proof active, originals and strictcopyguards retained. | 3db4af43ca |
 
-| F upstream baseline | Compare exact upstream25359 | Service / Luna | One heavy service slot | doing | Service14973 | Exact25359 full queued13:11Z with venv-agent and durable named XML. Same unfiltered suite; no baseline source edits. | 25359ed687 |
+| F upstream baseline | Compare exact upstream25359 | Service / Luna | One heavy service slot | doing | Actual service16468 | Meaningful unfiltered full running since13:16Z,20percent. Prior14973 was2second preflight-only with zero tests, not full PASS. | 25359ed687 |
 | App final service input | Return existing source and service receipts | Luna | Exact existing receipt handback | merged | Readonly1300; peer1305 | Current source/client15 and historical service receipts published. Installed child remains UNKNOWN; no source relabel. | Evidence only |
 
-Integration: Actual Agent home9b055a93ff includes reviewed G4 fork replay and priorcba425/D39. Runtimebecfe15 mappings retained. App U3b/D39 already merged12:20Z; no obsolete P2/P3 merge hold.
+Integration: Agent home3db4af43ca contains reviewedG4fork and duplicate, U2d01d/D39adoption3c8f. Runtimebecfe15 mappings retained. App U3b/D39 merged12:20Z. R2final04a candidate independentreview1317 active.
 core open: 51. Exact current refresh1254 qualifies118 of276 and leaves158 open:51core and107non-core. Scope159core/117non-core.
 regressions: 0 proven; categories env78, deferred1, pre-existing0, dead-scope0, unproven197. Unknown comparisons are not known gaps. ONE exact upstream25359 full is being prepared under12:46 authorization.
 Current receipts: Qualified118 of276 including actual-home12. Original full9758 remains terminal FAIL:17673 passed,231 failed,45 errors,4 skips,566 subtests. Historical267 remains263closed/4open, separate.
-D59 cut rows: R2M1, R1member removal, R2redo, R2exact restore, G4fork, G4duplicate, plus D54 core/regressions. G4fork9b055 is reviewed and proving actualhome. R2e5fa independent custody scopedPASS; null continuation source remains held.
+D59 cut rows: Frozen6 repairs plus D54core/regressions only. G4fork/duplicate reviewed and merged3db; combined actualhome1317 active. R2joinedbasee5fa independentscopedPASS; final04a allM1author126 green underreview1317.
 Gates and venues: Final integrated heads only; D41 retired. P1/P2/P3 App service and App verdicts; P4 final rerun Agent service; P5 and Composition main. Runtime owns F-final and ZIP. One final Agent full follows meaningful core-source readiness, after the single upstream comparison heavy slot.
 Admission: D56 drops Farm venue/source access. Historical403 and automatic refusal remain stopped. No alternate source, child, installed overlay or reconstruction requested.
 Later: Viewing stood down; originalABA3783 remains FAIL with missing completion outcomes and retained packet1055. No new original/observer. DeferredD23/D14 and D47 remain held.
-Disk: 9.72GB free at13:11Z. One upstream full requested above8.5GB floor; final integrated full waits this heavy slot. Safe sweep removedzero, compact gzipped2; no refused target retried.
-Blockers: Agent null continuationSol1308 and duplicate review1308 hold core source; wholepath1310 independent. Source G4 actual-home proof1310 active. D54 comparisons await single upstream service14973.
-Next ready: All six classifier slices complete. Upstream service14973 queued; P4 readiness1311 and source review/repair/proof active. Final null-source review dispatches at commit.
-live 3 / cap 6; ready-undispatched 0. Dispatcher header13:09:08Z measured1Sol/2Luna; next publication captures six requested workers and recent completions. Sol1308 HARD: validator/emitter continuation after Luna failed.
+Disk: About9.6GB free at13:18Z. One meaningful upstream full16468 running, above8.5GB admission floor; no other heavy. Launcher fixed and currentagentfull alias restored with exact env/guards and durable XML.
+Blockers: Agent finalnull source independentreview1317 and joinedG4 actualproof1317 hold corresponding core closure. D54comparison awaits upstreamfull16468. Final full waits meaningful source and heavy slot; ownerAgent.
+Next ready: Core159 readiness1319 active; actualqualification follows R2merge. P4 venue preparation1311 PASS3collected, finalsource row refresh/install follows meaningful currentcoretuple. All classifier slices complete.
+live 4 / cap 6; ready-undispatched 0. Dispatcher header13:20:10Z:4Luna/0Sol. Product authors finished; current independent source review, joined proof and core readiness remain.
 Evidence: [Rollup](../../design/agt-F-D54-rollup-1242.md), [Actual home12](../../design/agt-F-native-census-home-1242.md), [Joined core](../../design/agt-R2-cumulative-join-1238.md), [Redo handoff](../../design/peer-agent-to-runtime-20261024T1258Z-redo-inputs.md).
