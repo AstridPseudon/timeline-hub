@@ -929,3 +929,48 @@ test('P1 detailed failure caller projects hostile heads and an unsafe source ass
     for (const line of lines) assert.equal(line.includes(secret), false);
   }
 });
+
+test('basis phases and committed dependency flags roundtrip strictly through cap32 retention', () => {
+  const listeners = new Map<string, (event: unknown) => void>();
+  const window = { addEventListener: (name: string, listener: (event: unknown) => void) => listeners.set(name, listener) } as Record<string, unknown>;
+  runInNewContext(mountedDiagnosticInitScript({ buffer: 'mounted-bootstrap', maxRecords: MOUNTED_DIAGNOSTIC_MAX_RECORDS }), { window, Object, Set, Number, JSON });
+  const listener = listeners.get(MOUNTED_DIAGNOSTIC_EVENT)!;
+  const flags = ['dependencyBaselinePresent', 'providerChanged', 'timelineChanged', 'headChanged', 'dataRefChanged',
+    'editSeqRefChanged', 'adoptionChanged', 'ownerChanged', 'resolverChanged', 'localSaveChanged'];
+  for (let sequence = 0; sequence < 40; sequence++) {
+    const detail = { version: 1, phase: sequence % 2 ? 'basis-operation' : 'basis-dependencies-committed', sequence,
+      ownerAlias: 1, generation: 2, basisReadOrdinal: 3, operationOrdinal: 4,
+      operation: 'internal', operationState: 'start', ...Object.fromEntries(flags.map(key => [key, true])),
+      token: 'private', config: { private: true }, error: new Error('private') };
+    listener({ detail });
+    const projected = projectMountedDiagnosticDetail(detail);
+    assert.ok(projected.accepted);
+    if (projected.accepted) assert.deepEqual(projectMountedDiagnosticDetail(projected.record), projected);
+  }
+  const snapshot = (window.__timelineSaveDiagnosticsSnapshot as () => Record<string, any>)();
+  assert.equal(snapshot.accepted, 40);
+  assert.equal(snapshot.records.length, 32);
+  assert.equal(snapshot.overflow, 8);
+  assert.equal(snapshot.rejected, 0);
+  assert.equal(snapshot.listenerErrors, 0);
+  for (const record of snapshot.records) {
+    assert.equal(record.operation, 'internal');
+    assert.equal(record.operationState, 'start');
+    assert.equal(record.basisReadOrdinal, 3);
+    for (const flag of flags) assert.equal(record[flag], true);
+    const projected = projectMountedDiagnosticDetail(record);
+    assert.ok(projected.accepted);
+    if (projected.accepted) assert.equal(JSON.stringify(projected.record), JSON.stringify(record));
+  }
+  assert.ok(!JSON.stringify(snapshot).includes('private'));
+  const foreign = { version: 1, phase: 'basis-operation', operation: 'https://private', operationState: 'private',
+    basisReadOrdinal: Infinity, operationOrdinal: -1, ...Object.fromEntries(flags.map(key => [key, 'true'])) };
+  const projected = projectMountedDiagnosticDetail(foreign);
+  assert.ok(projected.accepted);
+  if (projected.accepted) for (const key of [...flags, 'operation', 'operationState', 'operationOrdinal', 'basisReadOrdinal']) {
+    assert.equal(projected.record[key], 'UNKNOWN');
+  }
+  const getter = Object.defineProperty({ version: 1, phase: 'basis-operation' }, 'operation', { get() { throw new Error('private'); } });
+  assert.doesNotThrow(() => listener({ detail: getter }));
+  assert.doesNotThrow(() => projectMountedDiagnosticDetail(getter));
+});

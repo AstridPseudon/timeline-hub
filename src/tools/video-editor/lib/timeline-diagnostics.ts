@@ -13,7 +13,7 @@ export function isTimelineDiagnosticsEnabled(): boolean {
 }
 
 const SAVE_DIAGNOSTIC_PHASES = ['schedule', 'capture-called', 'capture-resolved', 'capture-rejected',
-  'owner-init', 'owner-closed', 'owner-retired', 'lifecycle-cancel',
+  'basis-operation', 'basis-dependencies-committed', 'owner-init', 'owner-closed', 'owner-retired', 'lifecycle-cancel',
   'basis-read', 'basis-ready', 'basis-unavailable', 'basis-error',
   'identity-read', 'session-created', 'session-recovered', 'session-changed',
   'adoption-start', 'adoption-complete', 'adopted-read', 'handoff-ready', 'owner-error'] as const;
@@ -52,6 +52,20 @@ export function markTimelineSaveRejection<T extends Error>(error: T, code: Timel
 }
 
 interface SaveDiagnosticObservation {
+  dependencyBaselinePresent?: unknown;
+  providerChanged?: unknown;
+  timelineChanged?: unknown;
+  headChanged?: unknown;
+  dataRefChanged?: unknown;
+  editSeqRefChanged?: unknown;
+  adoptionChanged?: unknown;
+  ownerChanged?: unknown;
+  resolverChanged?: unknown;
+  localSaveChanged?: unknown;
+  basisReadOrdinal?: unknown;
+  operation?: unknown;
+  operationOrdinal?: unknown;
+  operationState?: unknown;
   error?: unknown;
   owner?: object;
   timelineId?: unknown;
@@ -90,6 +104,9 @@ function identifier(value: unknown) {
 }
 function finite(value: unknown) {
   return typeof value === 'number' && Number.isFinite(value) ? value : UNKNOWN;
+}
+function counter(value: unknown) {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 1_000_000_000 ? value : UNKNOWN;
 }
 function bool(value: unknown) { return typeof value === 'boolean' ? value : UNKNOWN; }
 function choice(value: unknown, allowed: readonly string[]) {
@@ -152,6 +169,19 @@ export function emitTimelineSaveDiagnostic(boundary: SaveDiagnosticPhase | (() =
     const detail = Object.freeze({ version: 1, sequence: ++saveDiagnosticSequence, time: saveDiagnosticTime, phase,
       projectId: identifier(own(mountedHead, 'projectId') ?? own(own(observed.source, 'head'), 'projectId')),
       timelineId: identifier(observed.timelineId), clipId: identifier(clipId), ownerAlias,
+      dependencyBaselinePresent: bool(observed.dependencyBaselinePresent),
+      providerChanged: bool(observed.providerChanged),
+      timelineChanged: bool(observed.timelineChanged),
+      headChanged: bool(observed.headChanged),
+      dataRefChanged: bool(observed.dataRefChanged),
+      editSeqRefChanged: bool(observed.editSeqRefChanged),
+      adoptionChanged: bool(observed.adoptionChanged),
+      ownerChanged: bool(observed.ownerChanged),
+      resolverChanged: bool(observed.resolverChanged),
+      localSaveChanged: bool(observed.localSaveChanged),
+      basisReadOrdinal: counter(observed.basisReadOrdinal), operationOrdinal: counter(observed.operationOrdinal),
+      operation: choice(observed.operation, ['loader', 'history', 'parent', 'shot', 'internal']),
+      operationState: choice(observed.operationState, ['start', 'end', 'refused']),
       generation: finite(observed.generation), sessionPresent: bool(observed.sessionPresent), closed: bool(observed.closed), current: bool(observed.current),
       identityPresent: bool(observed.identityPresent), scopeMatched: bool(observed.scopeMatched),
       mountedHead: head(mountedHead), originalHead: head(originalHead),
