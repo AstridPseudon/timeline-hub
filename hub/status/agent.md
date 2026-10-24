@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T10:22:52Z | dispatcher heartbeat 7s | live 6 (sol 0, luna 6, other 0) | busy30 15 | status age 5m -->
+<!-- agent | 2026-10-24T10:26:07Z | dispatcher heartbeat 5s | live 7 (sol 0, luna 7, other 0) | busy30 16 | status age 2m -->
 # agent board, 2026-10-24T10:17:43Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -155,20 +155,20 @@
 
 | OPS five-wheel receipt | Verify genuine received bootstrap and test inputs | Luna / Luna | Actual received input independently passed | merged | Author1004; independent1011 PASS | Archive443977 and all10 members, five wheelhashes, roles, lock and committed artifact match. No ORCH sidecar; no install or child claim. | Input only |
 
-| OPS shared schema source | Preserve declared schema authority | Runtime / orchestrator | Owner source-access disposition | blocked:orchestrator | Runtime acquisition0955 stopped | Exact declared source HTTP403; automatic access request refused. No alternate route. Installed provenance0918/0922 stays scoped. | Source242f unknown |
+| OPS shared schema source | Preserve declared schema authority | Runtime / owner | Orchestrator10:16 disposition | blocked:runtime | Runtime acquisition0955 stopped | Exact declared source HTTP403; automatic access request refused. No alternate route. Installed provenance0918/0922 stays scoped. | Source242f unknown |
 
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
 Integration: d83e8de3a1 normally merges reviewed R2 historical-source fix1c917 above3c3 opt-in capturehelper and qualified R1homef91. Actual R2 integrated67 worker1017 is assigned; source/security independent1011 passed67 plus244. No original-node credit.
 Count: Official263 closed /4 open of267 restored after independent current-repair0904 and causal0914 PASS. Exactly123 mappings remain; census e13d65ba unchanged. Farm giant was an already repaired original, so no duplicate closure or new census artifact.
 Open originals: discovery support; generic harvest/reopen; D23 helper word-second; D23 moved-head restart. All original records and historical challenges retained.
 Farm: Checkpoint 26511 remains 17,335 passed, 288 failed, 187 setup errors and 4 skips on Agent 9cd / Runtime 45c3. Independently reviewed 96-node packet: 80 environment, 1 docs regression and 15 unknown. Setup packet: 140 environment and 47 tuple mismatches. No new Farm pass credit.
-Blockers: Orchestrator — Runtime exact schema acquisition returned HTTP403, then read-access request was refused by automatic review. Lead fetch and all alternate routes stay stopped. Agent impact: [refusal](../../escalations/agent-20261024T1008Z-schema-source-refusal.md).
+Blockers: Runtime and owner — exact schema acquisition returned HTTP403 and the access request was refused by automatic review. Orchestrator10:16 keeps child admission held; no Agent action is owed. All alternate routes stay stopped. Impact: [refusal](../../escalations/agent-20261024T1008Z-schema-source-refusal.md).
 Blockers: Runtime private verifier — whole-root foreign-file attack remains accepted after106 controls. Runtime HARD Sol0951 and cumulative security review own it; no installation or child request before clean review and received-kit proof.
 Runtime: Producer becfe is independently qualified and all 15 Agent mappings now match. Shared authority is qualified on 460c and its exact-auth descendant becfe. Runtime has all 36 original failures closed at recorded scopes.
 App: Complete IMAGE 0554 and independent 0636 PASS retained at direct RuntimeService scope. No additional producer or realm; no inferred original-node credit.
 D48: Upstream 25359 merged via reviewed source ccf87 and normal d01. Restored predicates retained. D18 loader merged after independent PASS; duck scenario remains open under unique G4 source owner 0814.
 D39: Canonical adoption is integrated-qualified on exact 0c2 with all 15 mappings. Actual wire-key negative controls remain strict. Final three-lane tuple and gate proofs remain unqualified.
-D49 venue: Existing Agent own-service full9758 on working venv-agent is running. Runtime board records owner selection of this primary venue after schema access refusal. Farm remains held; zero-setup and final-gate qualification are unproven.
+D49 venue: Existing Agent own-service full9758 on working venv-agent is running. The orchestrator selected this primary venue pending the owner after schema access refusal. Farm remains held; zero-setup and final-gate qualification are unproven.
 Safety: Prior Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
 Disk: About9GB free after sweep-tmp3 recovered4GB, eleven finished clean trees recycled, and compact-scratch compressed5 old logs. Full9758 space fluctuates; no new heavy run below8GB. Prior denied targets remain stopped.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred. D46 U2c closed and folded into the freeze; relay and remote providers stay deferred and fail-closed. D47 memo held.
