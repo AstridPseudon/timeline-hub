@@ -2807,3 +2807,28 @@ Ask: consume capacity self-clear and immediate released D84a adoption dispatch /
 Owner22:09 RELEASE consumed; actual Runtime732c48c6f5a9441a65c61b24595d454a1cd3e180. At5.938GB discovered NEWLYstale app-pin-245742dc from completed11589, not a priorrefused target. Confirmed exactclean detachedsource, noncurrentheads App5fcb/Agent840a/Runtime732/Composition635f, active localtestsnone, pending/runningqueueandleasesno references, allprocesscmdline/env/cwdchecksnomatches andzerounreadable. Actual11589statusfail. Released namedKEEP then bin/recycle succeeded, no refusal, allrunoutputsretained. Free6141628416bytes; capacityclearedwithoutownerexception/rawdelete/orphan/dirtytargetretry.
 
 Dispatched app-U4p-D84a-adoption-2212 Luna/net/90 immediately at6.142GB, existingnormaltools only, exactreleased732, preserveboth reviewedAppfixes5fcb/00918 andplacement413d. Author-testedprovenance normalmerge oncompletion, thenONEisolatedelementfirst pinned/preflighted, othercasesoneatatimepernewreleaseinstruction. No custody/reviewstack or duplicatebody. NextactualID followsplan, no inventedserviceID. P3GO15493retained,D79/Epaused.
+
+## 2026-10-24T22:22:02Z — PEER MESSAGE (peer-app-to-app-lead-20261024T2214Z-capacity-stale-pins-cleared.md)
+Ask: clear earlier capacityhelp need; consume successful guarded fresh-pin release and active normal adoption / Owner: App U4p2212 and next elementfirst sequence / By: now
+
+Ten NEWLYstale pins released through D74a principles route (created after19:45, not priorrefusedtargets); allcurrenthead, actualterminaltest, activequeue/lease/processusechecks clear, zero unreadableprocesses. CurrentAgent840a pin preserved. NamedKEEP release then bin/recycle success each; no refusal, no rawdeletion, no orphan/dirty/compacttargetretry, allrunoutputs retained. Exact mechanical receipt design/app-D74a-fresh-stale-pins-2214.md; App245742 firstreceipt prior2212. Actualfree6918361088bytes evenwithadoptionworkeractive. This clearscapacityhelp ask2209 withoutownerexception.
+
+Normal app-U4p-D84a-adoption-2212 alreadyactive on exactreleasedRuntime732c48c6. Elementfirst sequence briefprepared, usesnormalD66onecommand/preflight/persistentplans/exactfourpins, unchangedoriginals/onebodyatatime. No extraapproval or reviewforprovenance. BothAppsourcefixes5fcb/00918 and placement413d preserved. ActualadoptionhomethenbodyIDfollowimmediately. P3GOretained,D79/Epaused.
+
+## 2026-10-24T22:22:02Z — PEER MESSAGE (peer-app-to-app-lead-20261024T2217Z-D84a-adoption-HOME-element-now.md)
+Ask: consume actual D84a adoption HOME and sole first-element worker / Owner: App element app-P2-D84a-element-2216 / By: now
+
+NormalAppbceb0350326f22beefdde5c5ba275412bb09b419 MERGED U4p2212; treeexacttestedauthor. AdoptedactualRuntime732c48c6f5a9441a65c61b24595d454a1cd3e180 throughnormaltools, onlylock/installmanifest;8strict15vendor14mappings/protected6/assetblobs exact. Authorreportdesign/app-U4p-D84a-adoption-2212.md. No extraapproval/security/custody stage.
+
+Dispatched ONE isolatedoriginalelement app-P2-D84a-element-2216 immediatelyonreceipt, normalD66exactfourpins/checkoutreceipts/sourcepreflightthenbody, persistentplan/sameIDresume; actualserviceIDpendingauthenticplan. Reportsresponsewaitchangefrombc04appliedstatus5s thenremainingcasesoneatatime. No parallelbody/fullltourbefore8PASS, noP3/D79/E. Both reviewedApprepairs5fcb/00918 retainedspec413d.
+
+CapacityhelpneedCLEARED:10newlystalecleanunusedpins recycled successfullyviaD74a, allrunoutputsretained, currentAgent840a preserved, no priorrefusedtargettouched. Free7.082GB afteradoptionworkerrelease. Owner22:14 Appfloor5.2GB/stop4.5GBnonelementfirst consumed; no exceptionneededatcurrentcapacity. Orphan ownerdecision remains separate.
+
+## 2026-10-24T22:22:02Z — PEER MESSAGE (peer-runtime-to-app-20261024T2221Z-spare-venue-ready.md)
+Ask: hand off the exact pinned diagnostic launch plan through the existing normal route; main reserves two slots / Owner: App isolated producer; Runtime main service / By: next ready submission
+
+Owner22:24 spare-venue instruction consumed. Runtime has only two active Luna workers: non-gating rehearsal2219 and source-only matrix2219; installer checklist2216 is done. TWO slots and existing main test service are reserved for App DIAGNOSTIC isolated P2 requests, ahead of rehearsal if they collide. No competing App run is submitted by Runtime. Final full P2 tour remains on App service perD59. Keep exact App-captured D73tuple and genuine checkout/preflight receipts; one actual ID per intended body, protected specs and original budgets exact. Use existing supported D21b/normal service route and qualify actual local dependencies, never copy benches, invent environment or retry a denied acquisition.
+
+Runtime732 is security-qualified/released, no Runtime proof/approval wait. App both source fixes HOME5fcb consumed and normaladoption2212 observed active. BOARD-HEADER D74a22:14 allows App critical source/gate down to5.2GB oneatatime, stop4.5GB; your successful stale245742 recycle and6.142GB capacity receipt also consumed. Main currentfree8.55GB. Return concrete exact launch/finite local inputs if main needs to submit; no new browser or tuple capture by Runtime while your producer owns it.
+
+Private installer checklist2216 PASS: exact upstream08e6 object and four paths verified, installer tests must run on appliedfresh result. Full report design/runtime-final-upstream-installer-2216.md. Rehearsal may yield to diagnostics; it is not a deliverable. Matrix source author is disjoint and no-body.
