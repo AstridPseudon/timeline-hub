@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T16:56:04Z | dispatcher heartbeat 1s | live 1 (sol 1, luna 0, other 0) | busy30 16 | status age 2m -->
-# runtime board, 2026-10-24T16:51:34Z
+<!-- main | 2026-10-24T16:59:10Z | dispatcher heartbeat 7s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 2m -->
+# runtime board, 2026-10-24T16:57:06Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -79,10 +79,10 @@
 | F-D52-core-five | Map five named actual home outcomes | Luna | Authentic XML and map verified | merged | Receipt 1418 PASS | All five named cases PASS on actual47b/becfe. Current four fork failures are distinct. [Receipt](../../design/rt-F-D52-core-five-receipt-1418.md) | Agent 47b |
 | U1-D69-test-audit | Preserve upstream test predicates | Luna | Seven restorations before cut | merged | rt-U1-D69-test-audit-1603 | Missing16:9 mapped,7 restore. Changed129:75 clear,54 cited. Two skip markers cited;12 dynamic scopes explicit. [Audit](../../design/rt-U1-D69-test-audit-1603.md) | Source facts only |
 | R-P4-history-cost | Reduce historical validation cost | HARD Sol after Luna | Exact immutable schema semantics | doing | rt-P4-schema-resolver-sol-1652 | Resume6bba profile; only shared schema resolver file, auth read-only. Every value fully validated afresh; no history/result memo or45s change. | 6bba WIP preserved |
-| R-P2-popup-422 | Project genuine fork-created shot roots | Luna | Independent security review | doing | rt-P2-popup-auth-1643 | Faithful fork then ADD source correction; first attribute introduction before D62. Preserve every physical observation and pin. | Author active |
+| R-P2-popup-422 | Project genuine fork-created shot roots | Luna | Independent security review | review | Author1643; security1658 | Candidate88b9:7 focused,228 auth,18 Agent PASS. Review challenges every physical/source/range guard. [Report](../../design/rt-P2-popup-auth-1643.md) | 88b9cf6b8 held |
 | R-P2-popup-observation | Attribute popup physical observation refusal | Luna | Source finding complete | merged | rt-P2-popup-observation-1638 | Runtime created-child projection lacks fork-created shot roots.2Runtime+8Agent comparators PASS; source cause only. | Source unchanged |
 | R-P2-element-docpatch-hang | Count and reproduce element request wait | HARD Sol requested by ORCH | App in-place request/baseline venue | blocked:app | rt-P2-element-sol-1643 | Actual25943 logs absent onmain; door audit response-only. Arrival/lock/provider/receipt UNKNOWN. Peer1650 asks real App-host repro input. | No product fix |
-| U1-D69-marker-scope | Preserve mixed-route live catalog predicates | Luna | Independent protected review | review | Author1638; review1647 | Both blanket xfails removed; live catalog strict, retired-onlysegments removed. Author6PASS; exact predicate/ledger review active. | Candidate1638 |
+| U1-D69-marker-scope | Preserve mixed-route live catalog predicates | Luna | Correct exact citations | doing | Author1638; review1647; return1658 | Review FAIL:76 catalog/refusal plus second-client1 PASS; exact retired and revision mappings owed. [Review](../../design/rt-U1-D69-markers-review-1647.md) | 925a7dd held |
 | U1-D69-restore-guard | Restore two skip guard originals | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 |
 | U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 /bb022 |
 | U1-D69-restore-registry | Restore five registry originals | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 |
@@ -144,13 +144,13 @@ Venues: P1/P2/P3 App service and verdicts; P4 Agent service; P5 and Composition 
 
 D65 delivery: owner Runtime merge, Agent merge, authentic App update-manifest with generated digest equality, then App merge. Qualified command/docs and D67 exact13env/7key postinstall appendix stay installed; actual final outcomes PENDING. Independent coherent84Python+TS/D68 finalcandidate1621PASS stays private untilcut.
 
-Blockers: Runtime popup — source1638 proves missing fork-created shot projection; unique Luna1643 owns auth.py, strict oldRED/newGREEN then independent security review.
+Blockers: Runtime popup — author88b9 complete; independent Luna security1658 active before merge. Every authenticated physical/source/owner/range guard retained.
 Blockers: App element venue — RuntimeSol1643 log inventory found exact25943 artifacts absent; arrival/lock/provider/receipt UNKNOWN. Peer1650 asks App-host retainedfacts/in-place baseline for authorized realrepro.
-Blockers: Runtime P4 — original ten-note45s timeout; finite profile1625/1635 no justified product fix. WIP6bba preserved; shared request owner1643 continues caller facts, all validation/budget retained.
-Blockers: Runtime D69 — policy integrated29 PASS clears its source regression. Mixed-marker correction1638 passes6; independentprotectedreview1647 active. Exact ledgerproposal publication afterPASS.
-Blockers: App — changed P34858 and source/oracle corrections remain owned. P1 currentGO; no duplicate P2/P3 request. Existing element phase/log need sent peer1644.
-Blockers: Final delivery — active lanes0core/0regressions, current P2/P3PASS and D69 completion required before cut/proofs/build/ZIP.
-Next ready: consume integrated1644, popupauthor1643 and mixedmarkers1638 for immediate review; Sol1643 actual phase/repro facts. No ready local row waiting.
+Blockers: Runtime P4 — original ten-note45s timeout; HARD Sol1652 resumes6bba for immutable-schema resolver work in validation.py only. Every value fully validated; D47 history/result memo held.
+Blockers: Runtime D69 — policy integrated29 PASS. Mixed-marker review1647 FAIL on exact replacement citations; first return1658 owns evidence correction. Live76 plus second-client1 PASS retained.
+Blockers: App — changed P34858 intent correction and stable current sources owned. P1 recordedGO; no duplicate P2/P3. Existing element real reproduction input remains peer1650, Runtime source ownership retained.
+Blockers: Final delivery — all active lanes need core0/regressions0 plus current P2/P3 and D69 completion. Agent newly reports39 restored-node failures; four classifiers own them. No cut/proofs/build/ZIP.
+Next ready: consume popup security1658, D69 citation return1658 and P4 Sol1652. Element reproduction depends on App-host retained input. No ready local row waiting.
 
 Later: D47 memo and proof pins remain post-delivery; nine state attacks open. V4 cut; D14/D23 deferred unchanged. D34 broader cleanup remains held. D62 submit completeness is an explicit known gap in the Runtime behavior-change ledger.
 
@@ -158,62 +158,6 @@ Admission: D56 stops Farm and schema-access work. Exact403 and automatic access 
 
 Disk: about8.6GB, above main8GB heavy floor. Sweep3 freed0; compact packed0/compressed0. Finished worktrees automatically recycle; no old refused target retried.
 
-live 1 / cap 4; ready-undispatched 0. Copied dispatcher header16:43:46Z reports0Sol/1Luna before three1643/1644 requests. Four admitted rows. Sol1643 explicitly requested by ORCH for real recurring element diagnosis.
+live 3 / cap 4; ready-undispatched 0. HARD Sol1652 schema resolver; Luna1658 popup security and D69 citation return. Two initial relative-brief dispatch errors corrected with absolute paths.
 
-Pass 2026-10-24T15:34:02Z: PLAN/common/header D62–D67 and peer boards consumed. SecurityPASS412 -> normal merge8b32 completed and exact producer handed to Agent/App immediately. Separate D62 proof removed perD66. D67 docs installer1533 active; D65 missing command assigned App. No final proof or delivery claim.
-
-Pass 2026-10-24T15:35:56Z: D67 installer1533 completed actual atomic README/gate install with backups, exact13env/7keys and original selector, renderer/diff/mode/hash PASS. Final statuses remain PENDING. App complete D65 command and Agent/App normal adoption remain peer-owned. Newly finished worktrees are absent at recycle check; no old refused target retried.
-
-Pass 2026-10-24T15:42:02Z: D68 read and became F-final-D68 row with Luna1543 immediately. App3881 merge is App-owned and parallel to boot. Builder fresh-main preservation assessed through actual final caller, no new gate run or upstream fetch. D62 merged8b32 handback remains ready; Agent1529/App1528 normal adoption owners consumed.
-
-Pass 2026-10-24T15:47:45Z: latest INBOX through App1539 and D68 consumed. Actual final producer8b32 confirmed to peers. D65 blocker cleared and docs1546 assigned. D68 assessment1543 returned; staging correction1546 assigned to avoid moving frozen refs. Agent1536/1533 actual adoption is App plainboot dependency; peer sent. No separate D62 proof or final gate/build.
-
-Pass 2026-10-24T15:49:16Z: final-core source list3309 lacks new recorder ABI and forward-created files; private successor1550 assigned under cap. Retain all81 old files and TS, no separate D62 proof or body before cut. Sweep3 freed0; compact in progress.
-
-Pass 2026-10-24T15:51:27Z: D65 docs1546 actual install/renderer/diff/appendix checksPASS consumed; exactreport published and App/orchestrator notified. Agent normal5777 adoption now clears vendor dependency; single home-six1540 alreadyactive, no repeat requested. Core1550 and D68 isolated1546 remain active.
-
-Pass 2026-10-24T15:54:21Z: core1550 source ready83 Python files+TS,122 new-file nodes collected, no bodies or install. D68 candidatefda author synthetic preservation controlsPASS; independent delivery-integrity review1554 dispatched immediately. Actual wrappers and artifact installation remain held.
-
-Pass 2026-10-24T15:56:52Z: actual-six1540 closes five originals, leaves inverse sequential-input refusal; HARD Sol1557 dispatched on8b32 immediately. Agent wholepath1546 independent in parallel. Separate empty-timeline failure stays Agent G4-owned. Runtime provisional core1, no cut or waiver. App D66 plain P1 actual13564 active.
-
-Pass 2026-10-24T15:58:56Z: independent Agent wholepath1546 confirms Runtime images excludes legitimate timeline.restore closure-root write. Sol1557 alreadyactive; no Agent emitter edit or new author. Provisional attribution becomes Runtime core1. App actual P1 control13564 active, D65 pin fixture1548 owned.
-
-Pass 2026-10-24T16:01:15Z: D68 exactfda independent1554PASS; real final caller wiring remains unproved, Luna1601 assigned immediately. No realbuild/install until cut. ORCH15:59 new row R-inverse-timeline-root is existing Sol1557 continuation, now exact rowID; no duplicate author.
-
-Pass 2026-10-24T16:03:29Z: new D69 instruction consumed beforecut; one Luna1603 dispatched immediately for Runtime reverse diff and weakening audit. App/Agent own theirrows. No duplicatebody or productauthor; Sol1557 and D68caller1601 remainactive undercap4.
-
-Pass 2026-10-24T16:07:05Z: author1557 stillactive, existing333strictPASS and oneoriginalGREEN observed only; security1606 brief prepared, dispatch waits exactcompletedcommit. App P1 actual13564 terminalNO-GO before splitPOST; AppSol1600 owns meaningfulfix. Peers warned authonly source movement will need normalprovenance rebind after actualmerge, no wiregeneration.
-
-Pass 2026-10-24T16:09:13Z: actual App6d74 sourcequalification1553PASS closes confirmedinstaller regression: skew2/updater4/schema2,14 mappings exact8b32. Cleared manifest Blockers line now; App9 coregate cases remain. Source-only futureRuntime identity rebind after actualauthmerge remains normal vendor work, no new schema generation.
-
-Pass 2026-10-24T16:11:07Z: Sol1557 completed760269; author28focused+333strict+oneoriginalPASS, staticPASS. Security1606 dispatched immediately on exactcommit before normalmerge. D68caller1601 authorPASS now source-ready, finaltuple/install/build stillheld. D69 audit1603 active.
-
-Pass 2026-10-24T16:11:51Z: finalcore newinverse guard file is a real source addition. Luna1612 assigned coherent private84file+TS/D68candidate join immediately, no actualsource or registry writes. Security1606 and audit1603 continue undercap4.
-
-Pass 2026-10-24T16:13:35Z: D69audit1603 completed missing16=>9mapped/7restore, changed129=>75clear/54cited. Disjoint Luna1613 guard2 and registry5 restorations dispatched immediately undercap4. Exactupstream protectedbodies retained; redsourcecause returns finiteowner, no assertionweakening. Security1606 and finalcandidate1612 alsoactive.
-
-Pass 2026-10-24T16:17:04Z: guard restoration1613 exactupstream bodies gives15PASS2FAIL. Missing upstream skip-policy behavior confirmed: no_ci absent, falsehostcondition not enforced. Luna1616 policyowner dispatched immediately on restoredbranch, tests/lanes.py only; stricter ours preserved. Cumulative protected/source review follows meaningfulcorrection.
-
-Pass 2026-10-24T16:17:28Z: inverse security1606 FINALPASS exact760269:28focused333strict171ABI plusstaticPASS. request-merge1557 queued immediately. Registryrestore1613 reports11PASS1FAIL, same no_ci source defect already uniquelyowned1616. Allseven testbodies restoredexactly; joined protectedreview follows sourcefix, no redtest merge.
-
-Pass 2026-10-24T16:22:20Z: normal inverse merge bc227 confirmed exact reviewed tree; Agent/App/orchestrator peer1621 issued immediately. Policy1616 and final candidate1612 completed; disjoint joined restoration and independent delivery review1621 dispatched. App source gate repaired1540, actual changed P126312 pending. No cut or realbuild.
-
-Pass 2026-10-24T16:25Z: peerAgent1619 became owned R-P4-history-cost/Luna1625 immediately; finite profile before smallest shared-schema optimization, D47 history memo held. App current P1control26312 PASS2; App already released parallel P2/P3. D69 join and independent finalcandidate1621 active.
-
-Pass 2026-10-24T16:28Z: final joined candidate independent1621 PASS consumed, kept private/gated cut. D69 joined actual29 has28PASS1FAIL: existing registry checker ignores upstream no_ci. Independent readonly wholepath1628 assigned immediately after first policy fix failed to clear joined scope; author correction follows exact source return. P4 finite profile1625 active.
-
-Pass 2026-10-24T16:29:54Z: join1621 terminal28PASS1FAIL reveals existing checker dropped upstream no_ci predicate. Corrector1629 dispatched on committedjoined4e1 while independent wholepath1628 runs; protected7 original bodies stay exact. Runtime policy regression1 explicitly open until normalmergeproof. Finalcandidate1621 independentPASS held at cut.
-
-Pass 2026-10-24T16:32Z: independent wholepath1628 FAIL finds three checker bodies missing no_ci; first1629 owns one then remaining two restore upstream unchanged. Two mixed-route marker citation issues get unique readonly1632 finite scope; no skipped live catalog credit. Other54 decision citations verified. P4 profile1625 active.
-
-Pass 2026-10-24T16:35Z: checker1629 actual29PASS; exact remaining two checker restorations1633 active before independent cumulative review. LunaP4profile1625 no justified productfix; HARD Sol1635 continues bounded caller optimization after failedLuna, all checks/timeouts retained and D47 memo held. Unique marker scope1632 active.
-
-Pass 2026-10-24T16:40:05Z: P2popup422 became unique Luna1638 source row; elementpending became separate blockedApp retainedphase row with peer1639 exactsafeinput request, no speculative backend cause. Threechecker1633 exactupstream and29PASS -> independent1639 dispatched immediately. Mixedmarkers1638 author active underD52, everylivecatalog assertion retained. P4Sol1635 active.
-
-Pass 2026-10-24T16:45:45Z: Agent inverse actual1PASS consumed and blocker cleared. Policy independent29+14+7 PASS -> normalmerge5c1 -> exact integrated1644 dispatched immediately. ORCH16:45 popup and element criticalrows now authorLuna1643/realreproHARDSol1643 in parallel. Sourceprofile1635 WIP6bba preserved/stopped to release authownership; no productchange claimed.
-
-Pass 2026-10-24T16:47:31Z: exact integrated policy1644 PASS29/12.67s noerrors/skips closes skip-policy regression, normalhome5c1 exactreviewedsource. Mixedmarker1638 author6PASS -> independentprotectedreview1647 dispatched. New Agent singleP4 downstreamcache failure has uniqueAgentSol1639; no Runtimebody/correction guessed. PopupLuna and elementSol1643 continue.
-
-Pass 2026-10-24T16:51:34Z: elementSol1643 finishes required first log inventory: actualApp25943 artifacts absent, response-onlyaudit cannotcountpendingarrivals. Explicit phaseUNKNOWN; no productfix or blindbody. Peer1650 asks concreteApphost in-place packet/normalvenue or onefocusedcapture, Runtimekeepssourcefixownership. Popupauthor and markerreview continue.
-
-Pass 2026-10-24T16:52Z: P4 remains independent of missingApp elementlogs. HARD Sol1652 resumes retained6bba profile for one bounded immutable-schema resolver strategy, validation.py only; popupLuna alone ownsauth. D47 validated-results/historymemo remainsheld. Elementrealrepro in-place venue requestedApppeer1650.
+Pass 2026-10-24T16:57:06Z: New Agent actual49 failures consumed with its four disjoint source classifiers. Popup author88b9 complete -> independent security1658 dispatched. D69 review1647 FAIL only citations -> return1658 dispatched. P4Sol1652 active; element phase still UNKNOWN pending App-host input. Source remains5c1 and no originals duplicated.
