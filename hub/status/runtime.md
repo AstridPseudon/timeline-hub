@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T21:28:50Z | dispatcher heartbeat 2s | live 2 (sol 2, luna 0, other 0) | busy30 5 | status age 1m -->
-# runtime board, 2026-10-24T21:27:17Z
+<!-- main | 2026-10-24T21:32:02Z | dispatcher heartbeat 14s | live 3 (sol 2, luna 1, other 0) | busy30 6 | status age 2m -->
+# runtime board, 2026-10-24T21:29:23Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -170,12 +170,12 @@
 | R-P4-evidence-hygiene | Keep proof outputs outside source | Luna | Byte equality verified | merged | rt-P4-evidence-cleanup-2018 | Exact24 files preserved outside source and removed. Both reviewed product/test blobs exact; normal e745 only two-file product delta. | a213ed89f / e74527f5f |
 | D78-actual-frame | Reduce observer attribution overhead | Sol / Luna | Integrated service proof passed | merged | Sol2019; Luna2035 | Normal4351: exact service2PASS7.72s includes helper13 and mounted off/parent/fixed. Source blobs exact; no original recovery claim. | 4351b9f91 / fa2c16296 |
 
-| D83-history-cost-return | Decode fresh metadata once | Sol / Luna | Independent security review | review | Author2113; rt-D83-metadata-security-2122 | MedianCPU8.34% lower, all42 validation counts equal. Focused378PASS1parent-identicalFAIL plus HTTP16/ABA3PASS; original45s unverified. | Author branch above dc55 |
+| D83-history-cost-return | Decode fresh metadata once | Sol / Luna | Independent security and normal apply PASS | merged | Author2113; security2122 PASS | Normalbc04 exact reviewedblob. Mutation1 and378PASS/1parent-identicalFAIL; HTTP16/ABA3PASS. Counts42equal; finiteCPU8.34%gain. Originaltiming unproved. | bc04caa23 / 1fa23066f |
 
 | D83-request-lock | Measure real lock hold and wait | HARD Sol | ORCH 21:28 element and popup inputs | doing | rt-D83-request-lock-sol-2126 | Read-only seconds-long genuine daemon control; per-request wait/hold versus verify compute. No new original or speculative source fix. | Metadata author branch |
 | D83-request-cost | Measure verify cost per ordinal | HARD Sol | ORCH 21:28 accepted-history priority | doing | rt-D83-request-cost-sol-2126 | Sole next product author: finite N and ordinal counts, strict measured correction or source-backed limit. Prior metadata review remains independent. | Metadata author branch |
 
-Runtime producer: Normal dc55b8bc6e638acd9e5031ff6b51b50cd2e2b63c, tree0f941b27dc3396adbf41683e8ae30d77fc8b8768. Reviewed schema setup e745, observer4351, projection57df. Canonical15/schema867f unchanged. Source frozen since20:42 for receiving-lane proof.
+Runtime producer: Normal bc04caa23f4b503fc55e49769ead20677904702a, treefa696b342468ae191735409822fa3c7c66f8a590. Freshmetadata1fa security2122 PASS above schemae745/observer4351/projection57df. Canonical15/schema867f unchanged. Released21:29 to both receiving lanes; new2126 questions do not gate adoption or originals.
 
 core open: 2 Runtime boundaries remain at original scope: P4 ten-note45s and full native-seed/element outcome. Agent retains five historical original scopes, all unclosed. Source qualification does not close originals. Final Runtime core suite owed.
 regressions: D77a genuine installed final render remains cut-blocking. Agent actual34adversarial+2positive PASS is source proof only.
@@ -184,10 +184,10 @@ Current proof: P1 readiness1/original2 GO31083; P3 readiness1/original1 GO15493 
 D83 source proof: security2018 schema258PASS; observer2035 exact service2PASS and integrated2PASS including helper13; projectionsecurity2037 31+289+96PASS; exact currentdc55 genuine reduced native loop8PASS84.30s. Baselinee745 7PASS1FAIL145s remains. Reduced control excludesmedia/finaldocpatch, not original seed credit.
 D78 actual capture: App2026 correlates cap1dump to successfulrequest1. Request2 SDK30s transporttimeout; outer120s did notfire. Safeauthsnapshot cannot prove failing-request2 lockwait. Baseline local acquisition max2.09ms, compute dominated; original fullmedia34.498s cause still not fully attributed.
 
-Blockers: Agent originals — service1960 NO-GO: 4 PASS and3 timeout failures. Runtime author2113 complete; Luna2122 owns independent security and normal apply/release. Candidate21c6 remains held; all five original home scopes stay open.
-Blockers: App P2 — element, asset and parent pending responses now hold further isolated runs per ORCH21:31. Metadata security2122 publishes immediately on PASS; App owns next eight isolated runs. Two Sol2126 own new verify/lock questions.
+Blockers: Agent originals — service1960 NO-GO: 4 PASS and3 timeout failures. Runtime bc04 security2122 PASS is RELEASED; existing normal adoption/batch own originals. Two Sol2126 remain parallel, not prerequisites. Candidate21c6 remains held; all five original home scopes stay open.
+Blockers: App P2 — element, asset and parent pending responses now hold further isolated runs per ORCH21:31. Normalbc04 security2122 PASS released immediately; App owns next eight isolated runs. Two Sol2126 own new verify/lock questions.
 Blockers: Final cut — all lane core0/regressions0, final P1–P5 plus core on one pinned tuple, D69 and genuine installed render required. No build or ZIP before cut.
-Next ready: Security2122 PASS -> same worker normal apply and immediate release to existing submitters; do not hold for new2126 questions. Two Sol2126 progress disjoint source-cost and lock questions. FAIL returns once.
+Next ready: Existing receiving-lane normal adoption -> pinned originalwork on releasedbc04 now. Two Sol2126 continue disjoint sourcecost/lock questions, no newbodywait.
 
 Venues: App P1/P2/P3; Agent P4; main P5/Composition. D73 four exact SHAs capturedonce with checkoutreceipts. Newerhead doesnotinvalidate a run. D83 NO-GO automaticbriefsummary, GO oneindependentverdict; correction reviewer applies/releasesproof. Productchanges rerun final matrix.
 D65 delivery: Runtime merge, Agent merge, authentic App manifest command/digest equality, then App merge. Installed v2 docs and D67bindings retained. Final candidate remains D59-cut gated.
@@ -195,5 +195,5 @@ Later: E1/E3 designs and E2 Agentdesign complete before D83; further E/D79 pause
 Admission: D56 Farm/schema access stopped. Original403/accessrefusals, historical deniedcleanup/process/retirement targets untouched. D67D13envgap unchanged. AppdirtyU3guardrefusals stopped.
 Disk: 8660201472 available bytes (8.07 GiB), cap 4. No ended clean non-KEEP Runtime tree eligible; five old dirty trees remain untouched. Existing KEEP and refused targets not retried; 15 GB target not reached.
 
-live 3 / cap 4; ready-undispatched 0. Luna2122 security and two requested HARD Sol2126 active. No E/D79 work.
-Pass 2026-10-24T21:27:17Z: ORCH21:28 explicit renewed two-Sol questions dispatched in same pass: lockSol2126 READONLY per-request hold/wait and costSol2126 sole nextproduct author over Nentries/ordinals, both on metadataauthor dependency; no duplicateoriginal/profilefamily. ORCH21:31 holds furtherAppisolatedruns afterelement/asset/parentpending; publishmetadataimmediately ifsecurityPASS, no newholdfor2126. Security2122 active since21:23 with normalapply/release in sameworker. Sourceintegrationstilldc55. All original45s/UI5s and D47 freshvalidation/memo restrictions retained. Inbox consumedthrough561682bytes. Disk8585105408bytes(8.00GiB),cap4; no eligible endedcleanRuntime tree; priorrefusalsuntouched.
+live 2 / cap 4; ready-undispatched 0. Security2122 completed and normalbc04 RELEASED immediately to separate Agent/App/orchestrator notes. Two requested Sol2126 remainactive; E/D79paused.
+Pass 2026-10-24T21:29:23Z: independent2122 PASS and normalmergeconsumedimmediately, exactreportcopiedbyteforbyte todesign/runtime-D83-metadata-security-2122.md. Normalheadbc04/treefa696/sourceblob96d7 qualifiedbyreviewer. ReceivinglanesneednoextraRuntimeapproval/review/audit or2126result beforetheirpreparedoriginals. Sourcequalificationdoesnotcloseoriginaltiming. New2126questionsstillactiveonreviewedmetadata1fa, nooverlappingproductauthor. Inboxconsumedthrough561682bytes. Main disk8.00GiB/cap4; no endedcleaneligibleRuntime tree, priorrefusalsuntouched.
