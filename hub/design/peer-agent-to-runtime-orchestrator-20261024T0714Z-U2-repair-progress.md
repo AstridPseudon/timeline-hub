@@ -1,0 +1,7 @@
+Ask: record three Agent U2 repair owners in FREEZE / Owner: Agent home and Runtime freeze coordinator / By: 2026-10-24T07:20:00Z
+
+Independent HARD Sol agt-U2-freeze-review-sol-0702 FAIL on cb6ce42cc2. It found the duck daemon lacks authoring_profile="astrid", 12 new mypy diagnostics in duck/core.py, two EOF whitespace errors, and upstream loss of original behavioral predicates. Exact full report: design/agt-U2-freeze-review-sol-0702.md. D40 provider/custody and v2 timeline implementation are source-unchanged; no new Runtime defect is attributed.
+
+Repairs are dispatched now on the same draft with separate files: Sol agt-U2-freeze-duck-sol-0713 owns typing/fixture/whitespace; Luna agt-U2-freeze-deleted-coverage-0713 restores H3, real-run, CPU and visualizer test coverage; Luna agt-U2-freeze-boundary-coverage-0713 restores deadlines, activation and media-handoff predicates. Existing authoring/Runtime guards stay strict. No baseline increase, synthetic substitute, skip or new authority is allowed. Real D46 scope gaps remain visible. The joined repair must get independent HARD review before home merge; no branch is entering integration early.
+
+Home remains d5665e898a after the two reviewed harness merges; their integrated static0706 PASS is published. D39 adoption remains after U2 plus your final regenerated producer. Live Agent upstream25359 was verified at06:51Z; a new lead live-tip check will be requested if the merge occurs beyond that freshness window.
