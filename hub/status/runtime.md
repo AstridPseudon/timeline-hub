@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T06:59:11Z | dispatcher heartbeat 9s | live 3 (sol 1, luna 2, other 0) | busy30 16 | status age 2m -->
-# runtime board, 2026-10-24T06:54:44Z
+<!-- main | 2026-10-24T07:01:44Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 17 | status age 0m -->
+# runtime board, 2026-10-24T07:01:28Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -56,7 +56,7 @@
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Current installed qualification passed | merged | Agent0508; independent0517 PASS | Exact seven originals passed on managed child 3b5c, Agent ba8f and Runtime f320. Current 9cd relevant sources and test AST match. | Managed child 3b5c |
 | OPS-farm-agent-full | Correct farm full-suite environment | Sol / Luna | Genuine Farm setup and preflight | blocked:farm | Sol0617; review0632 SOURCE PASS | Fourteen checks passed. Farm has byte-exact packet and reviewed setup; host remains unverified. [Review](../../design/runtime-farm-full-v2-source-review-0632.md) | 471712 reviewed packet |
-| OPS-child-dependency-route | Add verified local dependency seed | Luna | First security fix | doing | Author 0645; review 0649 FAIL; fix 0654 | Normal caller loses seed variable. Exact pin, wheel metadata and immutable snapshot gaps remain; no install or retry. | c74f held |
+| OPS-child-dependency-route | Add verified local dependency seed | Luna | Cumulative security review | review | Author 0645; fix 0654; review 0701 | First fix reports 19 private passes. Normal caller and immutable artifact custody await independent review; no install or retry. | ec31c22f6 held |
 | R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Integrated proof passed | merged | Review 0405; integrated 0413 PASS | 13 standalone cases and 243 controls passed; 74 configured deselections. [Proof](../../design/runtime-historical-image-integrated-0413.md) | 2b49da8d6 / 2e96c68c |
 | R-D42-history-memo | Harden verified replay memo | Sol / Luna | Post-delivery scope under D47 | gated:D47 | Design0448; review0454 PASS | Deferred by D47. No stable validation boundary; nine state attacks remain open. Source stays unmerged. | Tests 6c6bb375; source held |
 | R-D42-proof-pin | Preserve a compatible future memo pin | Sol / Luna | Post-delivery safe memo under D47 | gated:D47 | No active pin author | D45: next P2/P3 uses existing37eb without memo. Prior unsafe backport stays held; no new checkout needed. | Earlier backport held |
@@ -73,7 +73,7 @@
 | F-SDK-three-originals | Qualify three retained SDK originals | Luna | Agent fixture ownership handback | review | Two originals 0649; result review 0654 | Stale-head unit passed. Both persistence cases fail initial draft because fake history is missing; exact result review pending. | Agent 0b425 / Runtime 1d9 |
 | F-helper-originals | Qualify fourteen retained helper rows | Luna | Settled D23 child-word scope | gated:D23 | Author 0622; review 0627; Agent 0640 | Thirteen passed. Remaining child-word case is D23 deferred, unchanged and open; no fixture binding or timing backend invented. | Agent bb50 unchanged |
 | F-R2-root-originals | Qualify nine retained root cases | Luna | Independent exact result review passed | merged | Author0622; review0625 PASS | Nine originals passed; source only. Pre/post capture limit disclosed. [Review](../../design/runtime-R2-root-review-0625.md) | Agent bb50 unchanged |
-| R2r-shared-inverse-auth | Verify shared inverse source identities | Sol / Luna | Viewing source facts 0631 | doing | rt-R2r-shared-inverse-auth-sol-0647 | Four offline shared controls remain red. Source-authenticated item sites and retained-root ownership need correction; original ABA stays held. | Runtime 1d9 base |
+| R2r-shared-inverse-auth | Verify shared inverse source identities | Sol / Luna | Independent security review | review | Author 0647; review 0701 | New controls 177 pass; four shared positives pass. Frozen diagnostics still have six failures requiring independent classification. | 35764ce10 held |
 | FREEZE | Coordinate final merge and proof sequence | Runtime manager | D48 and D49 | doing | Runtime join 0652; peer lane owners | Runtime join resumes targeted proof; D39 next. Agent and App drafts requested; Composition check requested. Final tuple, gates, full suites and ZIP wait. | Exact proof pins unchanged |
 
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
