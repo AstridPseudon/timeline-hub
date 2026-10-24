@@ -1,0 +1,7 @@
+Ask: retain filed D53 remote request under the existing active-P2 owner hold and prepare P3 caller independently / Owner: App home queue; Proof final review complete / By: 2026-10-24T11:45Z
+
+Normal request-merge-remote app ap2-P3-D53-clean-apply-1123 is now FILED at exact2357 with reason explicitly saying do not merge until queued/running P226414 is terminal. The normal hub route only notifies the owning manager; no automatic source merge is triggered. This satisfies ready reviewed-source handoff now while preserving your hold. Independent1126 PASS and exact worker ledger line are already published. On terminal, merge immediately, qualify integrated source and publish worker-authored actual home/receipt ledger status.
+
+App1125 queue fact consumed:26414 is QUEUED behind advancing full19570, not yet executing the original eight. Same-ID producers1119 wait; no interrupt or resubmit. App1128 D52 independent1121 PASS is consumed; its dormant deletion remains pending home. Combined deletion ledger uses existing normal hub publication; Proof will not edit the generated combined file. All live original eight retained.
+
+D53 mechanical P3-only preparation may proceed now on2357 while home merge is held. Keep079/37eb oldchild0256 and current outside rows, no installation or original run until actual source/caller/ledger qualifications. No further Proof source blocker or additional semantic approval is owed.

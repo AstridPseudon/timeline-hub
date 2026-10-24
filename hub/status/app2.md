@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T11:31:51Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 0m -->
-# app2 board, 2026-10-24T11:31Z
+<!-- app2 | 2026-10-24T11:34:08Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 0m -->
+# app2 board, 2026-10-24T11:34Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -8,7 +8,7 @@
 | P1-corpus | Real document roundtrip and merge | Luna | Complete | merged | Corpus1348 | 49 passed with15 fixtures and11 inputs. Direct provider scope; mounted proof is separate. | e6 and9729 |
 | P4 | CLI, Python, sheet, ten notes and rerun | Sol; Luna; service | Complete on recorded tuple | merged | 17739;28012;11615 | Ten notes in one commit, per-step undo/redo, restart, show/history and200-409-200 conflict rerun passed. | Agent543d andf6cda / Runtimea5d |
 | readiness-after-bootstrap | Qualify mounted readiness | App service; Proof review | D45 and current leaves passed | merged | D45; current23809 and9310 | D45 readiness passed. Current producer reports P2 readiness19.5 seconds and P3 readiness41.4 seconds; downstream failures remain. | App663 / Agent079 / Runtime37eb |
-| P2 | Eight original gestures | App service; Proof verdict | Caller1103 and installation1115 PASS | doing | Actual26414; App producer1119 | One no-cache original submitted11:19:09 on exactd6ed/333b/37eb. All eight retained. Wait sameID; independent verdict follows terminal packet. | HOME d6ed;333b;37eb |
+| P2 | Eight original gestures | App service; Proof verdict | Caller1103 and installation1115 PASS | doing | Actual26414; App producer1119 | One no-cache original queued behind full19570 on exactd6ed/333b/37eb. All eight retained. Wait sameID26414; verdict follows terminal packet. | HOME d6ed;333b;37eb |
 | P3 | Original Gate5 journey | App service; independent Luna | Strict fault-order source1053 | doing | Actual3896; verdict1053 NO-GO | Independent NO-GO. Exit1/268 seconds at attempts1 versus2. Predecessor/reset and exact A retry reached; B and restart/undo tail not run. | HOME82cb; old079 and37eb |
 | P2-source-repairs | Real catalog, parameter, parent and popup callers | App Sol; independent Luna | Source reviews and home receipts | merged | App0603;0554;0547;0536;0545 | Exact am-burst, form ownership, raw V2 and parent preservation source qualified. Current browser credit remains separate. | Catalogb238 / paramse42 / popup79cd / parent7551 |
 | P2-oracle-baseline | Exact popup rendered targets and ADD claims | Luna; independent Luna | Reviews0418 and0526 | merged | Proof0413 and0521; home receipts | Two rendered selectors and exact asset-then-clip creation claims reviewed. All original downstream predicates retained. | c768 and5f43 |
@@ -67,11 +67,11 @@ All eight current safe JSON hashes, schemas, bounds, security and correlations p
 
 D48/D49 final map0708 and independent0719 PASS establish existing source routes and App-host venue, not READY final execution. Runtime FREEZE coordinates final joins and D39 adoption. App host recipe0754 and independent0758 qualify preparation only. Actual App draft0834 and cumulative0838 now qualify source preparation for missing P4/P5 registrations; actual install is gated by final tuple/receipts. Exact final Agent source, actual registration installation, authenticated child/import custody and preflight remain pending. App U3b integration remains gated on P2/P3 GO. Final P1–P5, full venues and Farm F-final/ZIP follow qualified final heads.
 
-Blockers: App service — same P2 actual26414 and sole terminal packet1119 precede independent Proof verdict. Source1036, custody1035, caller1103 and install1115 passed.
-Blockers: App — active P2 actual26414 gates D53 source merge. Exact2357 independent1126 PASS; normal home merge, integrated proof and ledger publication follow terminal.
+Blockers: App service — P2 actual26414 is queued behind advancing full19570. Same-ID producer1119 waits; independent verdict follows terminal packet.
+Blockers: App — queued or running P2 actual26414 gates D53 home merge. Normal remote request2357 is filed with explicit owner hold; integrated proof and ledger follow terminal.
 
 Blockers: Freeze — final tuple, actual App host inputs, final gates and D49 full checkpoints precede Farm F-final and ZIP.
-Next ready: On actual26414 terminal, request normal remote merge of exact2357 immediately; review same-ID P2 packet when published. App may prepare P3 caller meanwhile.
+Next ready: On actual26414 terminal, App consumes filed2357 merge request; Proof reviews terminal packet. App may prepare P3 caller now. Combined ledger uses existing publication route.
 
 Evidence: [P3 integrated0900](../../design/app-P3-current-integrated-0900.md), [caller PREPARED0902](../../design/app-P2-P3-caller-cumulative-review-0902.md), [Current terminal verdict0709](../../design/handoff-ap2-P2-P3-verified-result-verdict-0709.md), [source0649](../../design/handoff-ap2-P2-P3-current-source-verdict-0649.md), [tour review0742](../../design/handoff-ap2-P2-tour-compose-review-0742.md), [D50 review0747](../../design/handoff-ap2-P3-D50-created-review-0747.md), [actual P3 review0720](../../design/app-P3-parent-trace-review-0720.md), [lifecycle correction0741](../../design/app-P2-P3-lifecycle-review-0741.md), [final map review0719](../../design/handoff-ap2-P1-P5-final-map-review-0719.md).
 
@@ -106,3 +106,7 @@ Pass 2026-10-24T11:26Z: Completed Luna1123 exact2357 is one owncommit over HOME 
 Pass 2026-10-24T11:28Z: Actual sole P2 request app-P2-final-pure-integrated-1036-full-e2e-three-products-1024111909-26414 consumed from App1119. Pure d6ed/tree542,Agent333b/Runtime37eb,newchild1016/key188546,Remotion0258/819acf. Actual P2 row11b2eebf, unchanged P3 row23226c and247outsiders9acf qualified by App installation1115. D52 source1118 confirms all five previously unreached cases are live; all eight originals retained. SameID producer1119 owns terminal and retained Apply facts. No duplicate body or speculative result. Final D53 review1126 remains active; source merge waits active P2 terminal.
 
 Pass 2026-10-24T11:31Z: Independent final1126 PASS consumed on actual2357, one owncommit over d6ed with no32ba/bd08 ancestors. Exact delta equals cumulatively qualified helper source plus only approved D53 guard.23 controls,three types,lint,list15,diff and actual hash-region checks passed; worker-authored ledger line qualified. Report copied byte-exact. Source is gated only by App explicit no-merge-during-active-P2 rule, actual26414 still running per latest board. Normal merge request follows terminal immediately. No duplicate suite or product change.
+
+Later: App D52 f00ee independent1121 PASS is a pending home source removal, not a live test cut. Existing normal hub publication owns combined deletion ledger; Proof performs no generated-file edit. App original five later gestures are live and all eight remain required.
+
+Pass 2026-10-24T11:34Z: App1125 gives actual queue fact: P226414 is QUEUED behind advancing early full19570, not executing original gestures yet. Same IDs and unique producers retained; no stop/resubmit. Normal remote merge script is confirmed to notify the owner, not auto-merge. Filed exact2357 remote request with explicit owner hold until queued/running26414 is terminal, so ready reviewed source is already in the home queue. App1128 D52 removal/ledger request consumed as later App-owned pending removal and normal combined publication; no manager generated-file mutation.
