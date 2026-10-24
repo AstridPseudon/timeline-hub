@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T00:50:45Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 0m -->
+<!-- app2 | 2026-10-24T00:52:39Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 0m -->
 # app2 board, 2026-10-24T00:49Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -7,7 +7,7 @@
 | P1-corpus | Real-document roundtrip and merge | Luna | Complete | merged | Corpus 1348 | 49 passed; 15 fixtures and 11 inputs. Direct provider scope; mounted chain has separate GO. | e6 / 9729 |
 | P1-seed | Full native atomic bootstrap | Sol; Luna review | Complete | merged | Common 0618; seed 2d7; Runtime a00e | All 21 native assertions and history passed in run 18792. Runtime 2a9 integrated proof: 67 passed. | App 12ef; Runtime 2a9 |
 | P1-diagnostics | Safe files and source guard codes | Sol/Luna | Source reviewed and merged | merged | Reviews 1945 and 2118; App WorkerInfo 2238 | Real emitter, serialized listener and failure file passed; cap 32 retains critical events. Failure-only files were not created on successful 18792. | b221 / 6ecc / def457 / f890 |
-| readiness-after-bootstrap | Shared P2/P3 baseline blocker | App Sol; Luna review; Proof verdict | Own merge, current source binding and upstream check | merging | App basis-cancel 0029; review 0041; port worker 0039 | Review 0041 PASS: cancelled startup restart defect, hook RED then 176 passed. Unique port caller0039 PASS. Historical trigger and P3 attribution unknown. | Candidate 42db156ede, based on f8 |
+| readiness-after-bootstrap | Shared P2/P3 baseline blocker | App Sol; Luna review; Proof verdict | Integrated checks and upstream signature check | doing | App 0029; review 0041; integrated 0046; upstream check 0046 | Review 0041 PASS: cancelled startup restart defect, hook RED then 176 passed. Unique port caller0039 PASS. Historical trigger and P3 attribution unknown. | Source 42db156ede; App merge 804134 |
 | P2 | Original eight gestures on App service | App Sol/Luna; Proof verdict | Qualified readiness fix and caller binding | blocked:app | Latest run 18800; App cause 0019 | Exit 2, 131s. Native21/history passed; baseline unknown. All eight gestures NOT RUN. No journey credit. | 384ac67fb7 / tree c7c2f6b2 |
 | P2-custody | Actual 18800 lifecycle file | Proof Luna | Complete finite audit | merged | ap2-P2-18800-direct-custody-0032 | PASS: 10,665 bytes, six real records, schema/security/roundtrip/writer and Node 12+7. Cancellation at 679ms; trigger and history completion unknown. | Report only |
 | P2-popup-seed | Declare both created owners | Luna; independent review | Complete | merged | Author 1934; review 1940 | Four fixture lines; 102+2 tests, three typechecks, lint and collection passed. App tree matches reviewed 17324. | 17324 -> 93cdd |
@@ -18,7 +18,7 @@
 | P4 | CLI, Python, sheet, ten notes and rerun | Sol/Luna; test service | Complete on recorded tuple | merged | Integrated 17739; single 28012; ten 11615 | DONE. Single 1+66; ten per-step undo/redo/restart/show/history; conflict rerun passed 200-409-200. Freeze reruns gates. | Agent 543d / f6cda; Runtime a5d |
 
 P1 RESULT GO. App owns A4 under D31 and remaining scope/coverage. Agent G5 is done. Required GO asks sent to both at 00:48, deadline 01:45Z.
-Blockers: App owns readiness-after-bootstrap. Existing 00:16 decision permits ONE run when a meaningful reviewed fix lands; no extra approval gate. Review 0041 and port allocation 0039 passed; source merge and current qualification are next. No port-only repeat.
+Blockers: App owns readiness-after-bootstrap. Existing 00:16 decision permits ONE run when a meaningful reviewed fix lands; no extra approval gate. Review 0041 and port allocation 0039 passed; App reports merge 804134; integrated checks0046 and upstream check0046 are active. No port-only repeat.
 Blockers: App must test upstream f38e164cca hypothesis against retained evidence first, per orchestrator 00:45 note. Agent owns U2c-readiness draft. No new P2/P3 run until App names and qualifies the cause.
 Blockers: P3 uses the fixed 2107 product subject. A newer f8-based fix needs honest source adoption and caller proof; the same cause has not been proved for historical P3 458.
 Blockers: Runtime still lacks trusted admission for the seven old registrations. Current owner board 00:42 says overall lifecycle FAIL; new main legacy work does not qualify these targets. D34 pauses disk-only work above the floor. All earlier refusals remain stopped.
@@ -33,6 +33,6 @@ Historical evidence stays distinct: 13781 failed both cases; 19400 reached valid
 Safety: prior process, reference, file, MONITOR, keep-awake, publication and locked-v1 refusals remain stopped. D30 worker final message is the report; managers copy exact handoffs. No manager product/test/generated/pin or Git mutation. Frozen 34e/d106/819acf unchanged.
 Disk: 00:48 available 8,977,985,536 bytes, above 8GB heavy stop line and below 15GB cleanup target. Recycle 0032/0036/0040: no worktree, no space gained. Only protected OPS1233/1513/1610 and pins remain. Sweep 00:04 removed zero directories. Prior compact refusal is not retried. No local heavy run or disk-only worker.
 
-Next ready: App/Runtime consume P1 GO for qualified P1-only rows. App review0041 PASS -> normal own merge -> honest target and per-run port binding -> one meaningful run under 00:16. Proof audits qualified new result packets immediately. No ready Proof source task is waiting.
+Next ready: App/Runtime consume P1 GO for qualified P1-only rows. App merge804134 -> integrated0046 and upstream check0046 -> honest target and per-run port binding -> one meaningful run under 00:16. Proof audits qualified new result packets immediately. No ready Proof source task is waiting.
 
 Current pass: 2026-10-24T00:49Z. INBOX consumed through 586359 bytes, including H27/D33 and upstream candidate. All recent Proof workers are done. Read App/Agent/Runtime/Farm/Viewing boards at their published times; owner boards still show older P1 state and GO notes have been sent. Next full pass at 00:59Z; act sooner on qualified source/result packets.
