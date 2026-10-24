@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T07:06:00Z | dispatcher heartbeat 4s | live 3 (sol 2, luna 1, other 0) | busy30 22 | status age 1m -->
-# agent board, 2026-10-24T07:04:36Z
+<!-- agent | 2026-10-24T07:08:28Z | dispatcher heartbeat 14s | live 3 (sol 2, luna 1, other 0) | busy30 22 | status age 0m -->
+# agent board, 2026-10-24T07:08:26Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -91,14 +91,14 @@
 | U2-freeze D48 | Merge current upstream into branch | Luna / Sol | Independent HARD review | review | Draft 0651; Sol review 0702 | Draft cb6ce merged upstream 25359. Targeted 135 pass, one fail; mypy rises by 12. Deletions and custody preservation require review. | cb6ce42cc2 |
 | D39 adoption | Adopt final canonical regenerated client | Luna | Reviewed U2 home and Runtime producer | blocked:runtime | Producer requested in FREEZE peer 0651 | After D48 U2 merge, adopt once through vendor tools and independent review. No current pin or schema change yet. | Pending final tuple |
 | F-SDK persistence fixture | Preserve two restart and multiwriter scenarios | Runtime Luna | Agent assignment 0704 | doing | Runtime author requested | Two originals fail at missing fake history before actions. Only faithful collaborator migration allowed; journal and publish remain Agent owned. | Pending own-only return |
-| F-persistence merge source | Preserve authenticated helper reads after restart | Sol | G2 and R1 | doing | agt-F-persistence-merge-sol-0658 | Source cause and repair for the separate moved-head merge original; no fixture edits or duplicate Runtime two-case run. | Base 1f15 |
-| F-harness integrated static | Verify both reviewed runner merges | Luna | Home d566 | doing | agt-F-harness-static-integrated-0706 | Exact four blobs and staged rows plus syntax, Ruff and mypy. No child, preflight or original execution. | d5665e898a |
-| F-farm trace extractor | Extract retained traces for 96 closed failures | Luna | Independent source review | review | Author 0655; review 0704 | Read-only helper is complete; raw Farm log remains remote. No cause classification or pass credit yet. | a787d0fc63 |
+| F-persistence merge source | Preserve authenticated helper reads after restart | Sol / Luna | Exact binding cause and scope | review | Source 0658; independent 0709 | No source delta: fields, 137 reads and exact pair survive restart. Probe fails child-word binding; scope review distinguishes D23 from faithful fixture input. | Source 1f15 unchanged |
+| F-harness integrated static | Verify both reviewed runner merges | Luna | Integrated source proof passed | merged | agt-F-harness-static-integrated-0706 PASS | Home d566 exact four reviewed blobs and staged rows; compile, Ruff, mypy and shell syntax pass. No candidate, preflight or original ran. | d5665e898a |
+| F-farm trace extractor | Extract retained traces for 96 closed failures | Luna | First fix after source review | doing | Author 0655; review 0704 FAIL; fix 0707 | Review found byte-snapshot, bounds, manifest and redaction gaps. First fix is active; raw log remains remote and all causes unconfirmed. | a787 held |
 | F-count current challenge | Reopen failed restart and map two qualified originals | Sol / Luna | Exact source-scoped proofs | doing | agt-F-count-current-challenge-sol-0705 | Expected 261 / 6 only if exact proof deltas qualify. Historical restart receipt retained as challenged; publication awaits independent review. | Candidate only |
 | OPS-child dependency input | Supply genuine local wheel custody | Runtime Luna | Reviewed maker and authentic artifacts | blocked:runtime | Runtime first fix 0654; Agent packet 0642 | Installed RECORDs retain source integrity. No known proof.lock-authenticated dependency wheel archive; no retry or installed overlay. | No child created |
 
 P1: GO recorded. P4 and P5 done. G5 merged under H24. App and Proof retain P2/P3 ownership.
-Integration: d5665e898a adds independently reviewed discovery and generic proof runners above 1f15. Integrated static worker 0706 is active. Store 0639 passed 21; original normal publication 0640 passed with independent 0645.
+Integration: d5665e898a includes both independently reviewed proof runners. Integrated static0706 PASS confirms exact four blobs, row hashes, compile, Ruff, mypy and shell syntax. Runtime originals remain blocked on a genuine child.
 Count: Last approved package is 236 closed / 31 open of 267, 94 mappings. Current Runtime 0649 challenges one prior closed restart. Candidate 260 / 7 is held; Sol 0705 corrects it and maps two later proofs. No new official credit yet.
 Farm: Checkpoint 26511 terminal FAIL: 17,335 passed, 288 failed, 187 setup errors, four skips. Exact 88 historical plus eight newer closed IDs still need raw traces. All 96 causes remain unconfirmed; no pass credit or duplicate full.
 Blockers: Runtime — shared inverse authentication source repair 0647 gates ABA. Agent item source remains unmerged; original 11466 remains failed before lost acknowledgement.
@@ -114,5 +114,5 @@ D48: Agent U2 draft cb6ce includes upstream 25359, live tip verified by lead at 
 D39: Adoption waits reviewed U2 home plus Runtime final canonical regenerated producer. No current tuple change.
 D49 venue: Agent final full on Farm after corrected host setup and a zero-setup-error checkpoint. Fallback is Agent service after dependency-route qualification. Checkpoint 26511 has 187 setup errors; neither venue is yet qualified for final.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred and visibly failing. D47 memo remains held post-delivery.
-Next ready: No independent ready row is waiting. U2 Sol review, count correction/review, harness integrated static and Farm extractor review are dispatched. Runtime SDK fixture assignment is published; normal child qualification waits genuine inputs.
+Next ready: No independent ready row waiting. U2 Sol review, count correction, Farm extractor first fix and persistence cause review are dispatched. Runtime SDK fixture assignment is published; child qualification needs genuine inputs.
 Evidence: [upstream draft](../../design/agt-U2-freeze-draft-0651.md), [discovery review](../../design/agt-F-discovery-harness-final-review-0654.md), [generic review](../../design/agt-F-generic-harness-final-review-0654.md), [Farm checkpoint](../../design/farm-agent-full-checkpoint-20261024T0555Z.md).
