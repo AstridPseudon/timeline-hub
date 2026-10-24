@@ -2531,7 +2531,7 @@ class RuntimeService:
         check = self._timeline_authorize(project_id, timeline_id, authorize, mutation=False)
         commits, _ = self._timeline_commits()
         try:
-            with self.store._mutex:
+            with commits.verification_scope(), self.store._mutex:
                 check()
                 self._ensure_timeline_commit_baseline(commits, project_id, timeline_id, check)
                 return commits._read_history(project_id, timeline_id, cursor=cursor, limit=limit)
