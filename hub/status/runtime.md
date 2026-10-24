@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T20:09:16Z | dispatcher heartbeat 11s | live 2 (sol 2, luna 0, other 0) | busy30 7 | status age 1m -->
-# runtime board, 2026-10-24T20:05:38Z
+<!-- main | 2026-10-24T20:12:31Z | dispatcher heartbeat 11s | live 3 (sol 3, luna 0, other 0) | busy30 8 | status age 1m -->
+# runtime board, 2026-10-24T20:11:38Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -158,8 +158,8 @@
 
 | E1-inventory | Inventory duplicated commit rules | Luna | D81 | review | rt-E1-rule-inventory-1956 | Sixteen paired groups and four divergences cited. Pre-trim spec proposal is superseded by shared Python module brief. [Inventory](../../design/runtime-E1-rule-inventory-1956.md) | Source only |
 | E1-design | Design one shared Python rules module | HARD Sol, D81 | E1 inventory | doing | rt-E1-shared-module-design-sol-2001 | Trimmed scope: Runtime module imported by Agent, no DSL or codegen, net fewer lines. Design only; no merge before ZIP. | Evidence pending |
-| E3-audit | Audit custody against actual threats | Luna | D81 | review | rt-E3-custody-audit-1956 | Product and harness threats separated. Concrete line reduction still needs Sol review. [Audit](../../design/runtime-E3-custody-audit-1956.md) | Source only |
-| E3-review | Review proposed custody simplification | HARD Sol, D81 | E3 audit | doing | rt-E3-custody-review-sol-2001 | Explicit Sol custody design review; require source-backed net line reduction without removing guard behavior. No implementation. | Evidence pending |
+| E3-audit | Audit custody against actual threats | Luna | D81 first return | review | Audit1956; corrected2009 | Sol2001 FAIL found three source and scope errors; Luna2009 corrects all three with estimated1–5 line reduction. [Revised](../../design/runtime-E3-audit-revised-2009.md) | Source only |
+| E3-review | Review proposed custody simplification | HARD Sol, D81 | Corrected Luna2009 audit | doing | rt-E3-review-return-sol-2011 | Original2001 FAIL retained. Bounded return verifies three corrected points, actual caller and strict guard equivalence; no code changes. | Design only |
 | E5-history-design | Fold history design into actual P4 work | Runtime profile Sol | Real profile | gated:profile | Joined to R-P4-live-profile | D81 trim removes separate E5 deliverable. Profile and critical fix own durable performance; no speculative memo. | Folded |
 
 | D78-short-window | Capture before original element teardown | Luna | Existing caller qualified | merged | rt-D78-short-window-2000 | Runtime12 PASS and App22 controls PASS. Actual860e early2s/default20 path qualified; cap1 seed-consumption limitation explicit. [Proof](../../design/runtime-D78-short-window-2000.md) | App860e; Runtime44917 |
@@ -180,10 +180,10 @@ Blockers: Runtime history source — actual14690 profile received, input wait cl
 Blockers: App popup original — reviewed87bc carrier actual23 Runtime plus4 Agent PASS. Meaningful original App qualification still owed; no new backend author.
 Blockers: Final cut — all lane core0/regressions0, all eight P2 and P3, D69 and genuine installed render required. No final proof/build before cut.
 Next ready: Sol2004 profile interpretation and measured source; independent security review on exact candidate. App meaningful D78 from qualified short interval. E1/E3 design only behind critical work; no unowned critical row.
-Later: D79 lacks complete authentic accepted record/history/context; no synthetic fixture or new body. D80 critical work has priority. D47 memo/proof pins post-delivery; nine attacks open. V4 cut; D14/D23 deferred; D34 cleanup held. D62 submit completeness remains a known gap.
+Later: D79 lacks complete authentic accepted record/history/context; no synthetic fixture or new body. D80 critical work has priority. Agent owns E2 design in agt-E2-legacy-abi-design-2000; no competing Runtime ABI design. D47 memo/proof pins post-delivery; nine attacks open. V4 cut; D14/D23 deferred; D34 cleanup held. D62 submit completeness remains a known gap.
 Admission: D56 Farm/schema access stopped. Original403 and automatic access refusal remain stopped. Historical denied cleanup, process and retirement targets untouched. D67 D13 environment gap unchanged. App dirty U3 guarded recycle refusals remain stopped there.
-Disk: 8446152704 available bytes at19:54, about7.87 GiB; cap4. All new ended trees auto recycled. Read-only status confirms all five remaining old non-KEEP Runtime trees are dirty; no recycle retry. Global sweep/compact routes have recorded permission limits and are not retried.
+Disk: 8710946816 available bytes at20:10, about8.11 GiB; cap4. All new ended trees auto recycled. Read-only status confirms all five remaining old non-KEEP Runtime trees are dirty; no recycle retry. Global sweep/compact routes have recorded permission limits and are not retried.
 
-live 4 / cap 4; ready-undispatched 0 critical local. Dispatcher20:05:56 records three Sol and one Luna; short-window Luna has since ended. Three Sol reasons: critical measured cost, explicit D81 E1 design and E3 security review.
+live 2 / cap 4; queued 1; ready-undispatched 0 critical local. Dispatcher20:09:16 confirms two Sol; bounded E3 Sol return queued2011. Reasons: measured core cost and D81 explicit E1/E3 design. Critical next slot remains free.
 
-Pass 2026-10-24T20:05:38Z: Actual14690 profile received, profile wait cleared immediately and criticalSol2004 dispatched. App1952 owns shipping early caller; Runtime2000 only qualifies it read only. Trimmed D81 designs active; no product merge or gate closure claimed. Prior refused targets untouched.
+Pass 2026-10-24T20:11:38Z: Rechecked inbox through Agent2000, actual14690 independent evidence PASS and App earlycaller home. P4Sol2004 active on measured source; no new original. E3Sol2001 failed, one Luna return2009 corrected allthree points, required Solreturn2011 dispatched. E1 design active. No remaining clean finished Runtime tree to recycle; prior refusals untouched.
