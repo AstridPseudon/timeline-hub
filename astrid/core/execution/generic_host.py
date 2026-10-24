@@ -6205,7 +6205,9 @@ class GenericPackHost:
                     else self.credential_source.get(name)
                 )
             ]
-            checks["credentials"] = {"ok": not missing_env, "missing": missing_env}
+            # Credentials are diagnostic here; the selected cloud provider
+            # resolves its key only when a call actually needs it.
+            checks["credentials"] = {"ok": True, "missing": missing_env}
             required_packages = record.matrix.get("required_packages") or record.definition.metadata.get("required_packages", adapter.required_packages)
             missing_packages = [package for package in (required_packages or ()) if importlib.util.find_spec(str(package)) is None]
             checks["packages"] = {"ok": not missing_packages, "missing": missing_packages}

@@ -53,7 +53,7 @@ FAMILY_PROOFS: dict[str, dict[str, str]] = {
     },
     "local_generation": {
         "kind": "family_representative",
-        "selector": "tests/integrations/test_generic_host_runtime_control2.py::test_provider_fixture_is_credential_gated_then_settles_offline",
+        "selector": "tests/integrations/test_generic_host_runtime_control2.py::test_provider_fixture_without_credentials_settles_offline",
         "rationale": "the shared host admission and settlement route is proven while local-generation readiness remains dependency-gated",
     },
 }

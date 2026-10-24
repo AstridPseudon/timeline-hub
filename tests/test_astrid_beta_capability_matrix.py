@@ -45,8 +45,7 @@ def test_beta_reference_family_preflight_is_truthful_on_this_machine():
 
     provider = host.capabilities["generation.generate_image_openai"]
     assert provider.adapter.family == "provider"
-    if not provider.ready:
-        assert provider.preflight["credentials"]["missing"]
+    assert provider.ready
 
     render = host.capabilities["rendering.render"]
     assert render.adapter.family == "render"
@@ -126,15 +125,33 @@ def test_provider_ledger_rows_are_networked_and_credential_dispositions_match():
         assert record.matrix["adapter_family"] == "provider"
 
 
-def test_manifest_secrets_reconcile_to_provider_readiness(monkeypatch):
-    for key in ("GIPHY_API_KEY", "FAL_KEY"):
+def test_manifest_secrets_report_missing_without_gating_readiness(monkeypatch, tmp_path):
+    monkeypatch.setenv("ASTRID_ENV_FILE", str(tmp_path / "missing.env"))
+    for key in ("GIPHY_API_KEY", "FAL_KEY", "HF_TOKEN", "HUGGING_FACE_HUB_TOKEN"):
         monkeypatch.delenv(key, raising=False)
     host = GenericPackHost(pack_roots=[Path("astrid/packs")])
     host.discover()
     host.preflight()
     assert host.capabilities["media.gif_search"].preflight["credentials"]["missing"] == ["GIPHY_API_KEY"]
-    assert host.capabilities["media.gif_search"].ready is False
-    for capability_id in ("media.speech_repair_lavasr", "fal.h3_video"):
+    assert host.capabilities["media.gif_search"].ready is True
+    for capability_id in (
+        "media.speech_repair_lavasr", "fal.h3_video",
+        "generation.generate_image", "generation.generate_video",
+    ):
         record = host.capabilities[capability_id]
         assert record.preflight["credentials"]["missing"] == ["FAL_KEY"]
-        assert record.ready is False
+        assert record.ready is True
+    loras = host.capabilities["training.search_loras"]
+    assert loras.preflight["credentials"] == {
+        "ok": True, "missing": ["HF_TOKEN", "HUGGING_FACE_HUB_TOKEN"],
+    }
+    assert loras.ready is True
+
+
+def test_video_understanding_matrix_matches_manifest_credentials():
+    host = GenericPackHost(pack_roots=[Path("astrid/packs")])
+    host.discover()
+    for capability_id in ("understanding.video_understand", "understanding.scene_describe"):
+        record = host.capabilities[capability_id]
+        assert record.matrix["required_env"] == ["GEMINI_API_KEY"]
+        assert record.definition.isolation.secrets_required == ("GEMINI_API_KEY",)

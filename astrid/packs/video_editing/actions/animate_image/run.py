@@ -27,7 +27,7 @@ from astrid.core.cli_choices import (
 )
 from astrid.core.util.http import FAL_QUEUE_URL, default_client
 from astrid.packs.video_editing.shared.result_receipts import write_action_receipt
-from astrid.core.util.secrets import candidate_env_files, read_env_value
+from astrid.core.util.credentials_scope import CredentialsScope
 
 FAL_EDIT_MODEL_ID = "openai/gpt-image-2/edit"
 FAL_ANIMATE_MODEL_ID = "fal-ai/wan/v2.2-14b/animate/move"
@@ -70,17 +70,8 @@ BASE_PROMPT = (
 
 
 def _load_env_var(name: str, env_file: Path | None) -> str:
-    if value := os.environ.get(name, "").strip():
-        return value
-    tried: list[str] = [f"{name} environment variable"]
-    for candidate in candidate_env_files(env_file):
-        tried.append(str(candidate))
-        if value := read_env_value(candidate, name):
-            return value
-    raise AstridError(
-        f"{name} not found. Tried: {', '.join(tried)}",
-        recovery_command=f"export {name}=<value>",
-    )
+    scope = name.lower().removesuffix("_api_key").removesuffix("_key")
+    return CredentialsScope.get_local(scope, env_file=env_file)
 
 
 def write_json(path: Path, payload: Any) -> None:

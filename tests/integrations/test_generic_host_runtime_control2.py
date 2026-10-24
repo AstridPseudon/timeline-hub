@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from astrid.core.execution.generic_host import GenericPackHost, RuntimeProtocolClient
-from astrid_runtime_client import ApiError, WorkspaceClient
+from astrid_runtime_client import WorkspaceClient
 
 pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
 
@@ -101,7 +101,7 @@ def test_generated_host_echo_claim_cas_settlement_and_restart(tmp_path: Path, re
         daemon.stop()
 
 
-def test_provider_fixture_is_credential_gated_then_settles_offline(
+def test_provider_fixture_without_credentials_settles_offline(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, real_runtime
 ) -> None:
     """Provider admission is honest without making a real network request."""
@@ -192,7 +192,7 @@ def test_provider_fixture_is_credential_gated_then_settles_offline(
         )
         record = host.discover()[0]
         host.preflight()
-        assert host.capabilities[record.id].ready is False
+        assert host.capabilities[record.id].ready is True
         assert host.capabilities[record.id].preflight["network"] == {"ok": True}
         assert host.capabilities[record.id].preflight["credentials"]["missing"] == [
             "ASTRID_TEST_PROVIDER_KEY"
@@ -202,26 +202,8 @@ def test_provider_fixture_is_credential_gated_then_settles_offline(
         capability_page, capability_cursor = generated.list_capabilities()
         assert capability_cursor is None
         capability = next(item for item in capability_page if item.capability_id == record.id)
-        assert capability.status == "unavailable"
-        assert capability.unavailable_reason == "credentials:missing=ASTRID_TEST_PROVIDER_KEY"
-        with pytest.raises(ApiError, match="capability is not ready for admission"):
-            generated.admit_task(
-                capability_id=record.id,
-                capability_digest=record.capability_digest,
-                input_object_ids=[],
-                idempotency_key="provider-fixture-task",
-            )
-
-        # Readiness changes only after the explicit credential is supplied;
-        # the fixture command itself remains entirely offline.
-        monkeypatch.setenv("ASTRID_TEST_PROVIDER_KEY", "fixture-secret")
-        host.preflight()
-        assert host.capabilities[record.id].ready is True
-        host.register(deliberate=True)
-        capability_page, capability_cursor = generated.list_capabilities()
-        assert capability_cursor is None
-        capability = next(item for item in capability_page if item.capability_id == record.id)
         assert capability.status == "ready"
+        assert not capability.unavailable_reason
         project = generated.create_project(
             "Provider fixture", slug="provider-fixture", idempotency_key="provider-fixture-project"
         )
