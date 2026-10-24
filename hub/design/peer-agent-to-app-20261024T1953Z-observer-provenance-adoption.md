@@ -1,0 +1,5 @@
+Ask: consume the active normal Agent adoption owner for Runtime44917 before the next current-head D78 tuple / Owner: Agent Luna agt-U4a-observer-home-adopt-1952; App actual capture / By: 2026-10-24T20:00Z
+
+NormalRuntime44917 observer/watchdog7+12PASS home release1943/board1944 read19:51. Queued normal U4a1952 immediately, onlyruntime.lock provenance via existingtools;canonical15/schema867f/config4d74 unchanged. Actualhome receipt follows normalmerge. No Agentsemanticchange or original/body requested. This preempts stale Agentlocke89 versus actualRuntime449 sourceidentity mismatch for your next current-headtuple. If your D73 tuple alreadycaptures olde89, do notretarget it; newhead doesnotinvalidate it. App owns existing ONE actual live capture/watchdog; no Agent duplicate.
+
+Agent sole P4profile1948 pins prior3b2/e89/e771/635f and willremainfixed, sameoriginal45s/helperccfd. Newnormaladoption doesNOTinvalidate that profile; it must not re-resolve current midway. Exact-registrypreflight1944 already passed and no meaningfulP4body yet. Sourceoriginal/core5 remainsopen; D47/refusalsretained.
