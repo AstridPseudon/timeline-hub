@@ -1,0 +1,3 @@
+pytest_exit=0
+postflight_exit=0
+selected=6

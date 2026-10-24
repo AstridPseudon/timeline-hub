@@ -1,0 +1,77 @@
+{
+  "cases": [
+    {
+      "duration": "5.696",
+      "longrepr": "",
+      "nodeid": "tests/core/rendering/test_conformance.py::test_attachment_wire_parity",
+      "observed": {
+        "cwd": [],
+        "result_producer": [],
+        "stderr": []
+      },
+      "outcome": "passed",
+      "phase": "call"
+    },
+    {
+      "duration": "4.628",
+      "longrepr": "",
+      "nodeid": "tests/core/rendering/test_conformance.py::test_intentional_failure_wire_parity",
+      "observed": {
+        "cwd": [],
+        "result_producer": [],
+        "stderr": []
+      },
+      "outcome": "passed",
+      "phase": "call"
+    },
+    {
+      "duration": "6.772",
+      "longrepr": "",
+      "nodeid": "tests/core/rendering/test_conformance.py::test_minimal_render_wire_parity",
+      "observed": {
+        "cwd": [],
+        "result_producer": [],
+        "stderr": []
+      },
+      "outcome": "passed",
+      "phase": "call"
+    },
+    {
+      "duration": "6.233",
+      "longrepr": "",
+      "nodeid": "tests/core/rendering/test_conformance.py::test_no_audio_wire_parity",
+      "observed": {
+        "cwd": [],
+        "result_producer": [],
+        "stderr": []
+      },
+      "outcome": "passed",
+      "phase": "call"
+    },
+    {
+      "duration": "7.370",
+      "longrepr": "",
+      "nodeid": "tests/core/rendering/test_conformance.py::test_passthrough_audio_wire_parity",
+      "observed": {
+        "cwd": [],
+        "result_producer": [],
+        "stderr": []
+      },
+      "outcome": "passed",
+      "phase": "call"
+    },
+    {
+      "duration": "10.021",
+      "longrepr": "",
+      "nodeid": "tests/core/rendering/test_conformance.py::test_request_sensitive_support_wire_parity",
+      "observed": {
+        "cwd": [],
+        "result_producer": [],
+        "stderr": []
+      },
+      "outcome": "passed",
+      "phase": "call"
+    }
+  ],
+  "selected": 6
+}

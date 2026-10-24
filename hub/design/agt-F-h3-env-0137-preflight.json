@@ -1,0 +1,200 @@
+{
+  "checks": [
+    {
+      "label": "trivial boot prerequisites",
+      "status": "PASS",
+      "value": {
+        "Node20 executable": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+        "Runtime checkout": "/home/user/work/wt/rt-pin-8ea0766f",
+        "Runtime package": "/home/user/work/wt/rt-pin-8ea0766f/runtime_protocol/__init__.py",
+        "bench index": "/home/user/work/bench-store/index.json",
+        "installed Agent source": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e/.child-venv-source-venv-agent-child-f-post-g5-c36-abd47-store/agent",
+        "installed child": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e",
+        "installed interpreter": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e/bin/python",
+        "profile archive": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz",
+        "profile lock": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/package-lock.json",
+        "render profile": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110",
+        "schema site-packages": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py",
+        "source root": "/home/user/work/wt/agt-F-h3-env-0137"
+      }
+    },
+    {
+      "label": "Agent source tree identity and custody",
+      "status": "PASS",
+      "value": {
+        "changed": [
+          "tools/run-h3-import-0137.sh"
+        ],
+        "head": "521c88802330901281cc37ba25818baf2575f05e",
+        "tree": "fcd3135b3dc8e93009b86b7e4b75053a4e5b9476"
+      }
+    },
+    {
+      "label": "Runtime pin and clean checkout",
+      "status": "PASS",
+      "value": {
+        "head": "8ea0766f5e9fb23cea26c7398770a8aaac06b258",
+        "tree": "6047ac3033c3594b8f83db3afd8bb2c47cafa6d6"
+      }
+    },
+    {
+      "label": "installed child bench identity",
+      "status": "PASS",
+      "value": {
+        "identity": {
+          "agent_sha": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+          "backend_sha": "abd47e68de6d7a36bec8ac4f0f6e0bc01d98d14e",
+          "client_tuple": {
+            "packages/python/astrid_runtime_client/__init__.py": "78a69901f7c68d67b152410732f1c42dd30954ca07e7b4b9a319d4ddbd9035e6",
+            "packages/python/astrid_runtime_client/contract_metadata.py": "a79b2e12de96ec8f2c4bf7b6811ccb3538baf18ca839172f7a3d7bf525029aae",
+            "packages/python/astrid_runtime_client/generated.py": "9b5686c388347108898956c3475b16960e2434d64adcefcc71a26fc269cdd904",
+            "packages/python/astrid_runtime_client/timeline_commit_types.py": "88c67d9eb650b445b8ad04c9011c1f44f1ec5e9f72a4a733050515de7ec0b616"
+          }
+        },
+        "key": "c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e",
+        "path": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e"
+      }
+    },
+    {
+      "label": "source equality with installed Agent c36",
+      "status": "PASS",
+      "value": {
+        "files": 4,
+        "paths": {
+          "astrid/core/execution/generic_host.py": {
+            "current": "fc020cc2f6256642203fc4d36a9bb661265fa9a9589d386a46963528d11791d3",
+            "installed_c36": "fc020cc2f6256642203fc4d36a9bb661265fa9a9589d386a46963528d11791d3"
+          },
+          "astrid/sdk/host_bootstrap.py": {
+            "current": "50e73b1a9b95528dc06192e0102caad55ec7192b5369ff8a6698cb14c70a0b07",
+            "installed_c36": "50e73b1a9b95528dc06192e0102caad55ec7192b5369ff8a6698cb14c70a0b07"
+          },
+          "tests/helpers/h3_cpu_runtime.py": {
+            "current": "8b5acd4db61b1cabea66389ee9c4858df6cc1ae55ddb7f5e74b6ccac00e22bd6",
+            "installed_c36": "8b5acd4db61b1cabea66389ee9c4858df6cc1ae55ddb7f5e74b6ccac00e22bd6"
+          },
+          "tests/packs/h3_av/test_character_swap_cpu_boundary.py": {
+            "current": "242ce54e59367aae0af8ac51b70d286f9fae7b8b29a5ab3b78920eeba91dd815",
+            "installed_c36": "242ce54e59367aae0af8ac51b70d286f9fae7b8b29a5ab3b78920eeba91dd815"
+          }
+        }
+      }
+    },
+    {
+      "label": "seven original body hashes and guard branches",
+      "status": "PASS",
+      "value": {
+        "body_sha256": "ae56aaf49eb0d3c7488405a2c930fc097a7789fecf06ec3ca349b3a38c04197c",
+        "count": 7,
+        "faults": [
+          "success",
+          "missing_revision",
+          "missing_content",
+          "revision_drift",
+          "content_drift",
+          "checkout_drift",
+          "profile_hash_drift"
+        ]
+      }
+    },
+    {
+      "label": "parent current-source import origins",
+      "status": "PASS",
+      "value": {
+        "astrid": "/home/user/work/wt/agt-F-h3-env-0137/astrid/__init__.py",
+        "astrid_runtime_client": "/home/user/work/wt/agt-F-h3-env-0137/astrid_runtime_client/__init__.py",
+        "banodoco_schema": "/home/user/work/wt/agt-F-h3-env-0137/astrid/core/timeline/banodoco_schema.py",
+        "executable": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e/bin/python",
+        "runtime_protocol": "/home/user/work/wt/rt-pin-8ea0766f/runtime_protocol/__init__.py",
+        "shared_schema": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py"
+      }
+    },
+    {
+      "label": "installed child isolated import origins",
+      "status": "PASS",
+      "value": {
+        "executable": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e/bin/python",
+        "origins": {
+          "astrid": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e/lib/python3.13/site-packages/astrid/__init__.py",
+          "astrid_runtime": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e/lib/python3.13/site-packages/astrid_runtime/__init__.py",
+          "astrid_runtime_client": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e/lib/python3.13/site-packages/astrid_runtime_client/__init__.py",
+          "runtime_protocol": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e/lib/python3.13/site-packages/runtime_protocol/__init__.py"
+        },
+        "prefix": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e",
+        "site": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e/lib/python3.13/site-packages",
+        "version": [
+          3,
+          13,
+          16
+        ]
+      }
+    },
+    {
+      "label": "Node20 and read-only render profile",
+      "status": "PASS",
+      "value": {
+        "node": {
+          "path": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+          "version": "v20.19.4"
+        },
+        "profile": {
+          "archive_sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+          "composition_version": "0.0.14",
+          "external_links": [],
+          "lock_sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+          "writable": []
+        }
+      }
+    },
+    {
+      "label": "qualified environment",
+      "status": "PASS",
+      "value": {
+        "PYTHONPATH": "/home/user/work/wt/agt-F-h3-env-0137:/home/user/work/wt/rt-pin-8ea0766f",
+        "forbidden_absent": true,
+        "profile": "installed"
+      }
+    },
+    {
+      "label": "exact seven original selectors collect",
+      "status": "PASS",
+      "value": {
+        "count": 7,
+        "nodeids": [
+          "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
+          "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]",
+          "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]",
+          "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]",
+          "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]",
+          "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]",
+          "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]"
+        ]
+      }
+    }
+  ],
+  "failures": [],
+  "scope": {
+    "guard_faults": [
+      "success",
+      "missing_revision",
+      "missing_content",
+      "revision_drift",
+      "content_drift",
+      "checkout_drift",
+      "profile_hash_drift"
+    ],
+    "installed_agent_revision": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+    "installed_child": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e",
+    "runtime_revision": "8ea0766f5e9fb23cea26c7398770a8aaac06b258",
+    "selected": [
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]",
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]",
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]",
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]",
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]",
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
+      "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]"
+    ]
+  },
+  "status": "passed"
+}

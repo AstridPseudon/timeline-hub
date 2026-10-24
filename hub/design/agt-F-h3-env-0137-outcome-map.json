@@ -1,0 +1,47 @@
+{
+  "cases": [
+    {
+      "detail": "",
+      "duration": "0.950",
+      "nodeid": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]",
+      "outcome": "passed"
+    },
+    {
+      "detail": "",
+      "duration": "0.378",
+      "nodeid": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]",
+      "outcome": "passed"
+    },
+    {
+      "detail": "",
+      "duration": "0.385",
+      "nodeid": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]",
+      "outcome": "passed"
+    },
+    {
+      "detail": "",
+      "duration": "0.446",
+      "nodeid": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]",
+      "outcome": "passed"
+    },
+    {
+      "detail": "",
+      "duration": "0.410",
+      "nodeid": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]",
+      "outcome": "passed"
+    },
+    {
+      "detail": "",
+      "duration": "0.387",
+      "nodeid": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
+      "outcome": "passed"
+    },
+    {
+      "detail": "",
+      "duration": "0.413",
+      "nodeid": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]",
+      "outcome": "passed"
+    }
+  ],
+  "selected": 7
+}

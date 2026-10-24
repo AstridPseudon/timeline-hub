@@ -1,0 +1,5 @@
+pytest_exit=0
+postflight_exit=0
+selected=7
+script_sha256=b0855c09041884bce9feac3642edc9e114453212921cd3b1dd619b7e5c6b805e
+target_source_tree=fcd3135b3dc8e93009b86b7e4b75053a4e5b9476

@@ -1,0 +1,292 @@
+{
+  "checks": [
+    {
+      "label": "installed executable and Python pin",
+      "status": "PASS",
+      "value": {
+        "executable": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e/bin/python",
+        "version": "Python 3.13.16"
+      }
+    },
+    {
+      "label": "Agent source identity",
+      "status": "PASS",
+      "value": {
+        "allowed_harness_changes": [],
+        "expected_tree": "abc038fadf8f6ee1b995ff1325c19fb1ab940adc",
+        "head": "3ccf94de5ad6849ee601370735590d519d60c043",
+        "parent": "9b32be7382258b6f070d4ec41f235fac09a2d6de",
+        "tree": "abc038fadf8f6ee1b995ff1325c19fb1ab940adc"
+      }
+    },
+    {
+      "label": "Runtime pin and clean checkout",
+      "status": "PASS",
+      "value": {
+        "head": "8ea0766f5e9fb23cea26c7398770a8aaac06b258",
+        "status": "clean",
+        "tree": "6047ac3033c3594b8f83db3afd8bb2c47cafa6d6"
+      }
+    },
+    {
+      "label": "installed child bench identity",
+      "status": "PASS",
+      "value": {
+        "identity": {
+          "agent_sha": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+          "backend_sha": "abd47e68de6d7a36bec8ac4f0f6e0bc01d98d14e",
+          "client_tuple": {
+            "packages/python/astrid_runtime_client/__init__.py": "78a69901f7c68d67b152410732f1c42dd30954ca07e7b4b9a319d4ddbd9035e6",
+            "packages/python/astrid_runtime_client/contract_metadata.py": "a79b2e12de96ec8f2c4bf7b6811ccb3538baf18ca839172f7a3d7bf525029aae",
+            "packages/python/astrid_runtime_client/generated.py": "9b5686c388347108898956c3475b16960e2434d64adcefcc71a26fc269cdd904",
+            "packages/python/astrid_runtime_client/timeline_commit_types.py": "88c67d9eb650b445b8ad04c9011c1f44f1ec5e9f72a4a733050515de7ec0b616"
+          }
+        },
+        "key": "c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e",
+        "path": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e"
+      }
+    },
+    {
+      "label": "source equality with installed Agent c36",
+      "status": "PASS",
+      "value": {
+        "files": 19,
+        "paths": {
+          "astrid/core/foundation/atomic_io.py": {
+            "current": "c4bdb016691fb44c6b04c85293256bb0c83d75702c7a96a54d8b1031e2d05c41",
+            "equal": true,
+            "installed_c36": "c4bdb016691fb44c6b04c85293256bb0c83d75702c7a96a54d8b1031e2d05c41"
+          },
+          "astrid/core/rendering/__init__.py": {
+            "current": "60ae7e82ceba146d8aad237641ebbc43dce39797aec64fa5595a14ca919c2906",
+            "equal": true,
+            "installed_c36": "60ae7e82ceba146d8aad237641ebbc43dce39797aec64fa5595a14ca919c2906"
+          },
+          "astrid/core/rendering/transport.py": {
+            "current": "58a7aaa59ff744876be1eccd9ef94b16304d3270c02163d0829894f86f6ff4af",
+            "equal": true,
+            "installed_c36": "58a7aaa59ff744876be1eccd9ef94b16304d3270c02163d0829894f86f6ff4af"
+          },
+          "astrid/core/subprocess_env.py": {
+            "current": "ae1aefbdec52e7db70b2ddfe7b2f75698bfc5aece1b5506030bc30569a3ee42b",
+            "equal": true,
+            "installed_c36": "ae1aefbdec52e7db70b2ddfe7b2f75698bfc5aece1b5506030bc30569a3ee42b"
+          },
+          "astrid/sdk/rendering.py": {
+            "current": "b5062e7afc9c58144ea679932778fb8aa2cc5777f9ae00d8b0acd1b0727b6c3b",
+            "equal": true,
+            "installed_c36": "b5062e7afc9c58144ea679932778fb8aa2cc5777f9ae00d8b0acd1b0727b6c3b"
+          },
+          "tests/core/rendering/test_conformance.py": {
+            "current": "0432b08e11c18db61e68fac747dad9e7a44f59cf42297a8aa15f071ba59d3a46",
+            "equal": true,
+            "installed_c36": "0432b08e11c18db61e68fac747dad9e7a44f59cf42297a8aa15f071ba59d3a46"
+          },
+          "tests/fixtures/renderer_packs/sdk/_shared.py": {
+            "current": "d1619cec5966a221265fcad1ef8f017cbd403b3479daae390ac477fd1a94001a",
+            "equal": true,
+            "installed_c36": "d1619cec5966a221265fcad1ef8f017cbd403b3479daae390ac477fd1a94001a"
+          },
+          "tests/fixtures/renderer_packs/sdk/pack.yaml": {
+            "current": "712f40e9b481466dadfd1e3d013e0794749a1c46b25da36dccfac06f5e4b98bf",
+            "equal": true,
+            "installed_c36": "712f40e9b481466dadfd1e3d013e0794749a1c46b25da36dccfac06f5e4b98bf"
+          },
+          "tests/fixtures/renderer_packs/sdk/render.py": {
+            "current": "b700b87e4fa7354903c78c1e1e9f33b7dcb35c196cc92083cb33668adb5da0ed",
+            "equal": true,
+            "installed_c36": "b700b87e4fa7354903c78c1e1e9f33b7dcb35c196cc92083cb33668adb5da0ed"
+          },
+          "tests/fixtures/renderer_packs/sdk/renderer.yaml": {
+            "current": "5729fcf9114a9a0a7020da4251669a6bab577b3cf3632152692489b9656c4551",
+            "equal": true,
+            "installed_c36": "5729fcf9114a9a0a7020da4251669a6bab577b3cf3632152692489b9656c4551"
+          },
+          "tests/fixtures/renderer_packs/sdk/requests/attachment-render.json": {
+            "current": "a5ea55e380ed2464711277d5d59ebfe348860ae3d24ec892d589bf82c91d43dc",
+            "equal": true,
+            "installed_c36": "a5ea55e380ed2464711277d5d59ebfe348860ae3d24ec892d589bf82c91d43dc"
+          },
+          "tests/fixtures/renderer_packs/sdk/requests/failure-render.json": {
+            "current": "7e4c0bff491c02617cb177352f563faaf06b08383cfb1032754e4d7a41226556",
+            "equal": true,
+            "installed_c36": "7e4c0bff491c02617cb177352f563faaf06b08383cfb1032754e4d7a41226556"
+          },
+          "tests/fixtures/renderer_packs/sdk/requests/minimal-render.json": {
+            "current": "60319459e28eba72f8840ea7da1374f61dd25aa19aa3c8f7133b7984d1e7a529",
+            "equal": true,
+            "installed_c36": "60319459e28eba72f8840ea7da1374f61dd25aa19aa3c8f7133b7984d1e7a529"
+          },
+          "tests/fixtures/renderer_packs/sdk/requests/no-audio-render.json": {
+            "current": "7a14ea994902543adad0d6b403706a711f102c021680830ee71aba7c4cc10d2f",
+            "equal": true,
+            "installed_c36": "7a14ea994902543adad0d6b403706a711f102c021680830ee71aba7c4cc10d2f"
+          },
+          "tests/fixtures/renderer_packs/sdk/requests/passthrough-render.json": {
+            "current": "40a036daa19880a38a21d906cf2fd6590ae967821757078769d2edfc91661670",
+            "equal": true,
+            "installed_c36": "40a036daa19880a38a21d906cf2fd6590ae967821757078769d2edfc91661670"
+          },
+          "tests/fixtures/renderer_packs/sdk/requests/support-supported.json": {
+            "current": "cfd8fcb89ba22cd00ce1aef93eeb2b613d5566e5ec81683ceb94a0165bd23090",
+            "equal": true,
+            "installed_c36": "cfd8fcb89ba22cd00ce1aef93eeb2b613d5566e5ec81683ceb94a0165bd23090"
+          },
+          "tests/fixtures/renderer_packs/sdk/requests/support-window.json": {
+            "current": "d9280bd06ab7725e9f2b761009bf96cdc2fc9dab29b8bd994c833f1e57e8ed8d",
+            "equal": true,
+            "installed_c36": "d9280bd06ab7725e9f2b761009bf96cdc2fc9dab29b8bd994c833f1e57e8ed8d"
+          },
+          "tests/fixtures/renderer_packs/sdk/requests/timeline.json": {
+            "current": "b343b1b11403bcc5d43fe75a0b9830d04702afb994a64b77ccd76e36f84aecc9",
+            "equal": true,
+            "installed_c36": "b343b1b11403bcc5d43fe75a0b9830d04702afb994a64b77ccd76e36f84aecc9"
+          },
+          "tests/fixtures/renderer_packs/sdk/sdk_render.py": {
+            "current": "e8dd07599e43df2177b1ffe5e5093e08c2616e935dcf8f3c4d8d311bb7136489",
+            "equal": true,
+            "installed_c36": "e8dd07599e43df2177b1ffe5e5093e08c2616e935dcf8f3c4d8d311bb7136489"
+          }
+        }
+      }
+    },
+    {
+      "label": "six original body hashes",
+      "status": "PASS",
+      "value": {
+        "test_attachment_wire_parity": {
+          "current": "9167b658f64137361068fa332b3d60fb0415cd0666fb72cadb38974d5410f689",
+          "installed_c36": "9167b658f64137361068fa332b3d60fb0415cd0666fb72cadb38974d5410f689"
+        },
+        "test_intentional_failure_wire_parity": {
+          "current": "d1f3bc531d6995feaa1cb193fc994c99f40fd29ad65fa24060fd5729d67c3fe3",
+          "installed_c36": "d1f3bc531d6995feaa1cb193fc994c99f40fd29ad65fa24060fd5729d67c3fe3"
+        },
+        "test_minimal_render_wire_parity": {
+          "current": "cb659a0fe30943ef07c5bdee368330a86304422092a2f0b65b98d6e7064d430d",
+          "installed_c36": "cb659a0fe30943ef07c5bdee368330a86304422092a2f0b65b98d6e7064d430d"
+        },
+        "test_no_audio_wire_parity": {
+          "current": "cbb299e0754ac4de36722c7a6cd730afdd2a59195117028315bbc7f8854ab43f",
+          "installed_c36": "cbb299e0754ac4de36722c7a6cd730afdd2a59195117028315bbc7f8854ab43f"
+        },
+        "test_passthrough_audio_wire_parity": {
+          "current": "f145a787709fc4b5d52ad81c29db9e1d6f49c91a8476912baa3c353be704dad7",
+          "installed_c36": "f145a787709fc4b5d52ad81c29db9e1d6f49c91a8476912baa3c353be704dad7"
+        },
+        "test_request_sensitive_support_wire_parity": {
+          "current": "54e9b5f46d83fd2440068b28d7dbc5cac0bc72b04943baab4992e1047c1a9d18",
+          "installed_c36": "54e9b5f46d83fd2440068b28d7dbc5cac0bc72b04943baab4992e1047c1a9d18"
+        }
+      }
+    },
+    {
+      "label": "parent Agent and Runtime import origins",
+      "status": "PASS",
+      "value": {
+        "astrid": "/home/user/work/wt/.test-agt-F-render-wire-return-0129-render-wire-0124-1024013338-27934/astrid/__init__.py",
+        "astrid_runtime_client": "/home/user/work/wt/.test-agt-F-render-wire-return-0129-render-wire-0124-1024013338-27934/astrid_runtime_client/__init__.py",
+        "banodoco_schema": "/home/user/work/wt/.test-agt-F-render-wire-return-0129-render-wire-0124-1024013338-27934/astrid/core/timeline/banodoco_schema.py",
+        "executable": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e/bin/python",
+        "runtime_protocol": "/home/user/work/wt/rt-pin-8ea0766f/runtime_protocol/__init__.py",
+        "shared_schema": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py"
+      }
+    },
+    {
+      "label": "installed child import origins",
+      "status": "PASS",
+      "value": {
+        "executable": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e/bin/python",
+        "origins": {
+          "astrid": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e/lib/python3.13/site-packages/astrid/__init__.py",
+          "astrid_runtime": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e/lib/python3.13/site-packages/astrid_runtime/__init__.py",
+          "astrid_runtime_client": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e/lib/python3.13/site-packages/astrid_runtime_client/__init__.py",
+          "runtime_protocol": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e/lib/python3.13/site-packages/runtime_protocol/__init__.py"
+        },
+        "prefix": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e",
+        "site": "/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e/lib/python3.13/site-packages",
+        "version": [
+          3,
+          13,
+          16
+        ]
+      }
+    },
+    {
+      "label": "Node20 and render profile",
+      "status": "PASS",
+      "value": {
+        "path": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+        "version": "v20.19.4"
+      }
+    },
+    {
+      "label": "installed profile read-only custody",
+      "status": "PASS",
+      "value": {
+        "archive_sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+        "composition_version": "0.0.14",
+        "inventory": {
+          "entries": 23107,
+          "external_links": [],
+          "registry": {
+            ".astrid-registry-state.json": "d609b44b37d724358a33405e9d8539008fd1ac30bc2f0d9746575c3fbadaac96",
+            "src/animations.generated.ts": "02326f12177879eb5905f9d9b6d476b2de185928ddeeeeb2321a68ebffb47ad6",
+            "src/effects.generated.ts": "127e5653e0c66993726f8334b9f4ac122d24cdfbaa9e70cdaa142189afcf2bbe",
+            "src/transitions.generated.ts": "c46d6bbd88712e775812867ec1cbe6de67473664775266c5a0b9317344ceb989"
+          },
+          "sha256": "ed376790f275c95bbf16f09b53cb92a929116b78d0550f31615517181d74607f",
+          "writable": []
+        },
+        "package_lock_sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d"
+      }
+    },
+    {
+      "label": "qualified environment",
+      "status": "PASS",
+      "value": {
+        "ASTRID_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-8ea0766f",
+        "ASTRID_RUNTIME_SOURCE_ROOT": "/home/user/work/wt/rt-pin-8ea0766f",
+        "PYTHONPATH": "/home/user/work/wt/.test-agt-F-render-wire-return-0129-render-wire-0124-1024013338-27934:/home/user/work/wt/rt-pin-8ea0766f",
+        "forbidden_absent": true
+      }
+    },
+    {
+      "label": "exact six original selectors collect",
+      "status": "PASS",
+      "value": {
+        "count": 6,
+        "nodeids": [
+          "tests/core/rendering/test_conformance.py::test_attachment_wire_parity",
+          "tests/core/rendering/test_conformance.py::test_intentional_failure_wire_parity",
+          "tests/core/rendering/test_conformance.py::test_minimal_render_wire_parity",
+          "tests/core/rendering/test_conformance.py::test_no_audio_wire_parity",
+          "tests/core/rendering/test_conformance.py::test_passthrough_audio_wire_parity",
+          "tests/core/rendering/test_conformance.py::test_request_sensitive_support_wire_parity"
+        ]
+      }
+    }
+  ],
+  "failures": [],
+  "scope": {
+    "excluded": [
+      "tests/core/rendering/test_conformance.py::test_fixture_pack_static_surface"
+    ],
+    "installed_component_scope": [
+      "sdk renderer",
+      "atomic_io",
+      "subprocess_env",
+      "core rendering transport",
+      "SDK fixture tree"
+    ],
+    "selected": [
+      "tests/core/rendering/test_conformance.py::test_attachment_wire_parity",
+      "tests/core/rendering/test_conformance.py::test_intentional_failure_wire_parity",
+      "tests/core/rendering/test_conformance.py::test_minimal_render_wire_parity",
+      "tests/core/rendering/test_conformance.py::test_no_audio_wire_parity",
+      "tests/core/rendering/test_conformance.py::test_passthrough_audio_wire_parity",
+      "tests/core/rendering/test_conformance.py::test_request_sensitive_support_wire_parity"
+    ]
+  },
+  "status": "passed"
+}
