@@ -52,7 +52,7 @@ const runtime = vi.hoisted(() => ({
   internalTimelineRevisions: [] as Array<Record<string, unknown>>,
   publishes: [] as string[],
   commits: [] as Array<{ body: unknown; key: string }>,
-  /** Runs once, before the next publish is checked: simulates a sibling publish. */
+  /** Runs once after a basis read, before local authoring: simulates a sibling publish. */
   beforePublish: null as null | (() => void),
 }));
 
@@ -159,15 +159,17 @@ vi.mock('@/integrations/runtime/dataProvider', () => ({
     }
     async loadTimelineCommandBasis() {
       const document = canonicalDocument();
-      return { head: { revisionId: runtime.head, publicationId: `pub-${runtime.head}` }, canonicalDocument: document, graph: {} };
+      const basis = { head: { revisionId: runtime.head, publicationId: `pub-${runtime.head}` }, canonicalDocument: document, graph: {} };
+      // Sibling publication after this immutable read, before local authoring.
+      const hook = runtime.beforePublish;
+      runtime.beforePublish = null;
+      hook?.();
+      return basis;
     }
     async getRecoverableIdentity() {
       return { realmId: 'realm', actorId: 'actor' };
     }
     async commitTimeline(request: any, key: string) {
-      const hook = runtime.beforePublish;
-      runtime.beforePublish = null;
-      hook?.();
       runtime.commits.push({ body: structuredClone(request), key });
       if (request.base_revision_id !== runtime.head) {
         throw new ApiError(409, 'conflict', 'intervening_write', '', { status: 'conflict' });
@@ -467,7 +469,7 @@ describe('placementService: CAS round-trips over workspace.v1', () => {
     expect(read.byShot.get(SHOT)?.[0]?.timelineFrame).toBeNull();
   });
 
-  it('retains the original durable intent when a concurrent publish is refused', async () => {
+  it('a concurrent publish between load and save engages the stale-head retry, not a lost update', async () => {
     const router = createFakeRuntimeRouter();
     installRuntime(router);
     const generationId = firstSeededGenerationId(router);
@@ -480,13 +482,12 @@ describe('placementService: CAS round-trips over workspace.v1', () => {
       runtime.head = 'rev-sibling';
     };
 
-    await expect(placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId }))
-      .rejects.toMatchObject({ code: 'timeline_version_conflict' });
-    expect(runtime.publishes).toHaveLength(0);
-    const outboxes = createCommitOutbox({ indexedDB: globalThis.indexedDB });
-    const [saved] = await outboxes.list({ realmId: 'realm', actorId: 'actor', projectId: PROJECT, timelineId: TIMELINE });
-    expect(saved?.pending?.outcome?.kind).toBe('rejected');
-    expect(saved?.intents[0]?.payload).toMatchObject({ documentIntent: { roots: [{ ref: 'parent' }] } });
+    const placed = await placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId });
+    expect(placed.entryId).toContain(SHOT);
+    expect(runtime.publishes).toHaveLength(1);
+    const read = await fetchProjectPlacements(PROJECT);
+    expect(read.config.clips.map((clip) => clip.id)).toContain('sibling');
+    expect(read.byShot.get(SHOT)?.map((r) => r.generationId)).toEqual([generationId]);
   });
 
   it('gallery rows walk the R12 pages for the merge view', async () => {

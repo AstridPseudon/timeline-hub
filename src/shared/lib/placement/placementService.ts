@@ -16,7 +16,7 @@ import { AstridLocalClient } from '@/integrations/astrid/client';
 import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider';
 import type { CanonicalDocument, EditCommand } from '@/integrations/runtime/timeline-commit-types';
 import type { TimelineCommandBasis, TimelineSaveReceipt } from '@/tools/video-editor/data/DataProvider';
-import { toOutboxJson } from '@/tools/video-editor/commands/commitOutbox';
+import { createCommitOutbox, toOutboxJson, type OutboxScope } from '@/tools/video-editor/commands/commitOutbox';
 import { createLocalSaveSession, type LocalSaveSession } from '@/tools/video-editor/commands/localSaveSession';
 import { canonicalJsonStringify } from '@/tools/video-editor/data/typed/timelineBundle';
 import { authoringBundleFromDocument } from '@/tools/video-editor/commands/authoringBundle';
@@ -38,6 +38,10 @@ import {
 const GALLERY_PAGE_LIMIT = 100;
 /** Journey-scale bound: enough pages that panels see every generation without unbounded paging. */
 const GALLERY_MAX_ROWS = 500;
+/** Re-read once if the verified document changes before a durable intent exists. */
+const PLACEMENT_RETRY_ATTEMPTS = 2;
+
+class PlacementDocumentChangedError extends TimelineVersionConflictError {}
 
 export class PlacementProjectMissingError extends Error {
   constructor(projectSlug: string) {
@@ -197,27 +201,20 @@ function createPlacementLocalSaveHandoff(options: {
       }
     },
     async flush() {
-      try {
-        const basis = await options.session.flush();
-        const adopted = options.adopted(basis);
-        const head = adopted.receipt.head;
-        if (head.projectId !== initial.canonicalDocument.project_id
-          || head.timelineId !== initial.canonicalDocument.timeline_id
-          || head.headRevisionId !== basis.head.revisionId
-          || head.headPublicationId !== basis.head.publicationId
-          || !sameJson(adopted.source.head, head)) {
-          refusePlacement('canonical assembly did not adopt the accepted head');
-        }
-        initial = structuredClone(basis);
-        source = structuredClone(adopted.source);
-        document = structuredClone(basis.canonicalDocument);
-        return adopted.receipt;
-      } catch (error) {
-        if (['blocked', 'conflict', 'error', 'recovery'].includes(options.session.getState().status)) {
-          refusePlacement(error instanceof Error ? error.message : String(error));
-        }
-        throw error;
+      const basis = await options.session.flush();
+      const adopted = options.adopted(basis);
+      const head = adopted.receipt.head;
+      if (head.projectId !== initial.canonicalDocument.project_id
+        || head.timelineId !== initial.canonicalDocument.timeline_id
+        || head.headRevisionId !== basis.head.revisionId
+        || head.headPublicationId !== basis.head.publicationId
+        || !sameJson(adopted.source.head, head)) {
+        refusePlacement('canonical assembly did not adopt the accepted head');
       }
+      initial = structuredClone(basis);
+      source = structuredClone(adopted.source);
+      document = structuredClone(basis.canonicalDocument);
+      return adopted.receipt;
     },
   };
 }
@@ -257,13 +254,27 @@ function createDocumentStore(target: ActiveTimelineTarget): DocumentStore {
       // placement operation below owns only the explicit parent physical root; child and
       // occurrence images are validated dependencies and remain untouched.
       await authoringBundleFromDocument(basis.canonicalDocument);
+      // Detect only local read staleness, before creating an owner or authoring
+      // guards. A Runtime rejection after dispatch is definitive for that intent.
+      const current = await provider.loadTimelineCommandBasis(ref);
+      if (current.head.revisionId !== basis.head.revisionId
+        || current.head.publicationId !== basis.head.publicationId) {
+        throw new PlacementDocumentChangedError('Timeline document changed before placement authoring');
+      }
       let saveBasis = basis;
       let source = sourceFromBasis(saveBasis);
       const identity = await provider.getRecoverableIdentity();
+      const outboxes = createCommitOutbox();
+      const scope: OutboxScope = {
+        ...identity,
+        projectId: basis.canonicalDocument.project_id,
+        timelineId: basis.canonicalDocument.timeline_id,
+      };
       const session = await createLocalSaveSession({
-        scope: { ...identity, projectId: basis.canonicalDocument.project_id, timelineId: basis.canonicalDocument.timeline_id },
+        scope,
         initial: basis,
         document: toOutboxJson(basis.canonicalDocument),
+        outboxes,
         send: (request, key) => provider.commitTimeline(request, key),
         loadLatest: () => provider.loadTimelineCommandBasis(ref),
         prepareDisplay: async (nextBasis, draft) => ({
@@ -313,12 +324,8 @@ function createDocumentStore(target: ActiveTimelineTarget): DocumentStore {
       };
     },
     async save(document) {
-      try {
-        await document.handoff.capture({ ...document.source, config: document.config, registry: document.registry });
-        return (await document.handoff.flush()).configVersion;
-      } finally {
-        await document.session.dispose();
-      }
+      await document.handoff.capture({ ...document.source, config: document.config, registry: document.registry });
+      return (await document.handoff.flush()).configVersion;
     },
   };
 }
@@ -338,17 +345,33 @@ export async function mutateTimelineDocument<T>(
   const store = createDocumentStore(target);
   const ref = target.timelineRef;
 
-  const document = await store.load();
-  if (!target.allowVersionRebase) {
-    const stale = target.headRevisionId !== undefined && document.headRevisionId !== target.headRevisionId;
-    if (stale) {
-      throw new TimelineVersionConflictError(
-        `Timeline ${ref} is at version ${document.expectedVersion}; expected active editor version ${target.configVersion}`,
-      );
+  for (let attempt = 0; attempt < PLACEMENT_RETRY_ATTEMPTS; attempt += 1) {
+    let document: PlacementSaveDocument;
+    try {
+      document = await store.load();
+    } catch (error) {
+      if (target.allowVersionRebase && error instanceof PlacementDocumentChangedError
+        && attempt + 1 < PLACEMENT_RETRY_ATTEMPTS) continue;
+      throw error;
+    }
+    try {
+      if (!target.allowVersionRebase) {
+        const stale = target.headRevisionId !== undefined && document.headRevisionId !== target.headRevisionId;
+        if (stale) {
+          throw new TimelineVersionConflictError(
+            `Timeline ${ref} is at version ${document.expectedVersion}; expected active editor version ${target.configVersion}`,
+          );
+        }
+      }
+      const result = mutate(document);
+      return { result, configVersion: await store.save(document) };
+    } finally {
+      await document.session.dispose();
     }
   }
-  const result = mutate(document);
-  return { result, configVersion: await store.save(document) };
+  throw new TimelineVersionConflictError(
+    `Timeline placement save conflicted ${PLACEMENT_RETRY_ATTEMPTS} consecutive times`,
+  );
 }
 
 async function resolveLegacyPlacementTarget(projectSlug: string): Promise<ActiveTimelineTarget> {
