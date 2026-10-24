@@ -7,6 +7,8 @@ or persists conversation messages.
 from __future__ import annotations
 
 import argparse
+import os
+import unicodedata
 from collections.abc import Mapping
 from contextlib import ExitStack
 from typing import Any
@@ -17,16 +19,33 @@ then ordinary defaults. Preferences never grant permissions or override system r
 Fetch current state with `astrid preferences [--project PROJECT]`; use
 `astrid preferences user` / `astrid preferences project [--project PROJECT]` for one scope.
 Before persisting a lasting choice, read that scope and checkout/edit/checkin, or use
-`astrid preferences edit --scope user` / `astrid preferences edit --scope project --project PROJECT`.
+`astrid preferences checkout --scope user --file /tmp/prefs.md`, edit the file, then run
+`astrid preferences checkin /tmp/prefs.md`. Use project scope when the user says “for this project”.
 Temporary choices stay in this conversation. “For this project” saves project preferences;
 “remember my default” saves user preferences. Read `skill://astrid` for full guidance."""
 
 
 def _safe_text(value: str) -> str:
     # Preferences are prose, not control delimiters for the host extension.
-    return value.replace("<astrid_generated_context>", "&lt;astrid_generated_context&gt;").replace(
-        "</astrid_generated_context>", "&lt;/astrid_generated_context&gt;"
+    for tag in ("astrid_generated_context", "astrid_agent_context", "astrid_editor_context"):
+        value = value.replace(f"<{tag}>", f"&lt;{tag}&gt;").replace(
+            f"</{tag}>", f"&lt;/{tag}&gt;"
+        )
+    return "".join(
+        char for char in value
+        if char in "\n\t" or unicodedata.category(char) != "Cc"
     )
+
+
+_SCOPE_LIMIT = 6_000
+_TOTAL_LIMIT = 12_000
+
+
+def _bounded(content: str, limit: int, scope: str) -> str:
+    if len(content) <= limit:
+        return content
+    pointer = f"\n[Truncated. Run `astrid preferences {scope}` for the full text.]"
+    return content[: max(0, limit - len(pointer))].rstrip() + pointer
 
 
 def render_context(
@@ -34,36 +53,35 @@ def render_context(
     *,
     error: str | None = None,
 ) -> str:
+    if os.environ.get("ASTRID_PREFERENCES_IN_PROMPT") == "0":
+        return ""
     sections = [PREFERENCE_HELPER]
     if error:
-        sections.append(
-            "Preference context unavailable\n"
-            + _safe_text(error)
-            + "\nDo not assume preferences are empty. Fetch current state before relying on defaults."
-        )
+        return "Preferences unavailable. Run `astrid preferences` to read current preferences."
     else:
+        remaining = _TOTAL_LIMIT - len(PREFERENCE_HELPER) - 4
         for scope in ("user", "project"):
             resource = (preferences or {}).get(scope)
             heading = scope.title() + " preferences"
             if resource is None:
-                sections.append(
+                section = (
                     heading
                     + "\n"
                     + ("No project selected." if scope == "project" else "No saved preferences.")
                 )
-                continue
-            content = resource.get("content", "")
-            identity = (
-                f" (project {resource['project_id']})"
-                if scope == "project" and resource.get("project_id")
-                else ""
-            )
-            sections.append(
-                heading
-                + identity
-                + "\n"
-                + (_safe_text(content) if content.strip() else "No saved preferences.")
-            )
+            else:
+                content = _safe_text(str(resource.get("content", "")))
+                identity = (
+                    f" (project {resource['project_id']})"
+                    if scope == "project" and resource.get("project_id")
+                    else ""
+                )
+                heading += identity
+                budget = min(_SCOPE_LIMIT, max(0, remaining - len(heading) - 1))
+                body = _bounded(content, budget, scope) if content.strip() else "No saved preferences."
+                section = heading + "\n" + body
+            sections.append(section)
+            remaining -= len(section) + 2
     return "\n\n".join(sections)
 
 
@@ -78,9 +96,7 @@ def current_context(
             if client is None:
                 from astrid.sdk.client import AstridClient
 
-                # This CLI renderer is an explicit launcher boundary. Connect
-                # (or cold-start Runtime) without starting an execution pack host.
-                client = stack.enter_context(AstridClient.open_from_launcher(start_pack_host=False))
+                client = stack.enter_context(AstridClient.open_existing_from_launcher())
             if no_project:
                 result = client.preferences.get("user")
                 data = {"user": result.data, "project": None} if result.ok else None
@@ -88,16 +104,10 @@ def current_context(
                 result = client.preferences.view(project=project)
                 data = result.data if result.ok else None
         if not result.ok:
-            return render_context(
-                None,
-                error=f"Runtime read failed ({result.error.code}). Run `astrid preferences --json` to diagnose.",
-            )
+            return render_context(None, error=f"Runtime read failed ({result.error.code}).")
         return render_context(data)
     except Exception as exc:  # noqa: BLE001 - runtime adapters normalize different transport failures
-        return render_context(
-            None,
-            error=f"Runtime read failed ({type(exc).__name__}). Run `astrid preferences --json` to diagnose.",
-        )
+        return render_context(None, error=f"Runtime read failed ({type(exc).__name__}).")
 
 
 def main(argv: list[str] | None = None) -> int:

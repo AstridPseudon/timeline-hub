@@ -9,17 +9,18 @@ preferences, and ordinary defaults. A project preference applies only to that
 project. A temporary choice such as "use the cloud model for this attempt"
 stays in the current conversation. "Use this for this project" is a project
 preference; "remember my default" is a user preference. Do not turn a pattern
-you inferred into a lasting preference.
+you inferred into a lasting preference. Preferences are included in model
+prompts, so never store passwords, API keys, or other secrets in them.
 
 ## Read and change preferences
 
 The main Astrid skill is the agent-facing entrypoint. In a host that supports
 Astrid skill references, read `skill://astrid`; otherwise read the installed
-`astrid/packs/_core/docs/SKILL.md` distributed with Astrid. For every new task,
-fetch current preference content before applying it. Fetch again when the
-project changes, before editing, and after a context refresh that might have
-made earlier content stale. A failed fetch is an error to report, not an empty
-document.
+`astrid/packs/_core/docs/SKILL.md` distributed with Astrid. New Astrid agent
+sessions include a bounded snapshot of user and selected-project preferences
+automatically. Fetch current preference content again when the project changes,
+before editing, and after a context refresh that might have made earlier
+content stale. A failed fetch is an error to report, not an empty document.
 
 ```bash
 # Both scopes, with the active project when one is selected
@@ -70,15 +71,15 @@ model, backend, dependency, or capability is available.
 
 ## Use preferences in another CLI
 
-An external coding CLI does not acquire Astrid's preference content merely by
-launching in an Astrid project. Its agent should first read `skill://astrid`
-through the host's skill resolver (or the installed core skill file), then run
-`astrid preferences` and fetch the current project document before acting.
-Use `astrid preferences user` when only user-level guidance is needed. Before
-changing a durable preference, fetch the relevant document, choose the scope
-from the user's words, and use the documented checkout/check-in commands.
-Astrid's system prompt helper applies to Astrid's own supported agent session;
-it does not claim to rewrite an arbitrary external CLI's prompt.
+The Astrid app also adds the same bounded snapshot to newly launched Claude
+Code, Codex, and Hermes sessions. An external CLI launched directly in a
+terminal does not receive that automatic prompt context. Its agent should read
+`skill://astrid` through the host's skill resolver (or the installed core skill
+file), then run `astrid preferences` and fetch the current project document
+before acting. Use `astrid preferences user` when only user-level guidance is
+needed. Before changing a durable preference, fetch the relevant document,
+choose the scope from the user's words, and use the documented checkout/check-in
+commands.
 
 ## Use project documents
 

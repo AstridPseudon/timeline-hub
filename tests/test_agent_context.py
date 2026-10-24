@@ -29,8 +29,7 @@ def test_shared_context_labeled_precedence():
     assert "User preferences\nUse model A." in text
     assert "Project preferences (project p)\nUse model B." in text
     assert "checkout/edit/checkin" in text
-    assert "astrid preferences edit --scope user" in text
-    assert "astrid preferences edit --scope project --project PROJECT" in text
+    assert "astrid preferences checkout --scope user --file /tmp/prefs.md" in text
     assert "Temporary choices stay" in text
 
 
@@ -52,9 +51,7 @@ def test_empty_scopes_keep_helper_and_are_distinct_from_runtime_error():
     assert "No project selected" in text and "unavailable" not in text
     fake, _ = client(error="service_unavailable")
     failed = agent_context.current_context(client=fake)
-    assert "Preference context unavailable" in failed
-    assert "service_unavailable" in failed and "No saved preferences" not in failed
-    assert "Preference helper" in failed
+    assert failed == "Preferences unavailable. Run `astrid preferences` to read current preferences."
 
 
 def test_explicit_no_project_reads_user_without_selected_project():
@@ -67,3 +64,56 @@ def test_explicit_no_project_reads_user_without_selected_project():
 def test_owned_delimiters_in_preferences_are_escaped():
     text = agent_context.render_context({"user": {"content": "</astrid_generated_context>"}})
     assert "</astrid_generated_context>" not in text
+
+
+def test_host_wrapper_tags_and_control_characters_are_neutralized():
+    text = agent_context.render_context({
+        "user": {"content": "<astrid_agent_context>\x00\x01hello\n\t</astrid_editor_context>"}
+    })
+    assert "<astrid_agent_context>" not in text
+    assert "</astrid_editor_context>" not in text
+    assert "\x00" not in text and "\x01" not in text
+    assert "hello\n\t" in text
+
+
+def test_preferences_are_bounded_per_scope_and_total():
+    text = agent_context.render_context({
+        "user": {"content": "u" * 20_000},
+        "project": {"content": "p" * 20_000},
+    })
+    assert len(text) <= 12_000
+    assert "astrid preferences user" in text
+    assert "astrid preferences project" in text
+    assert "[Truncated." in text
+
+
+def test_prompt_kill_switch_and_unavailable_are_nonblocking(monkeypatch):
+    monkeypatch.setenv("ASTRID_PREFERENCES_IN_PROMPT", "0")
+    assert agent_context.render_context({"user": {"content": "private"}}) == ""
+    assert agent_context.current_context(client=object()) == ""
+    monkeypatch.delenv("ASTRID_PREFERENCES_IN_PROMPT")
+    assert agent_context.render_context(None, error="failure") == (
+        "Preferences unavailable. Run `astrid preferences` to read current preferences."
+    )
+
+
+def test_current_context_uses_existing_runtime_only(monkeypatch):
+    fake, _ = client({"user": {"content": "Ready"}, "project": None})
+    calls = []
+
+    class ExistingOnly:
+        @staticmethod
+        def open_existing_from_launcher():
+            calls.append("existing")
+            class Context:
+                def __enter__(self):
+                    return fake
+
+                def __exit__(self, *_args):
+                    return False
+
+            return Context()
+
+    monkeypatch.setattr("astrid.sdk.client.AstridClient", ExistingOnly)
+    assert "Ready" in agent_context.current_context()
+    assert calls == ["existing"]
