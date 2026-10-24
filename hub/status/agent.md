@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T00:20:18Z | dispatcher heartbeat 5s | live 9 (sol 1, luna 8, other 0) | busy30 35 | status age 1m -->
-# agent board, 2026-10-24T00:18:53Z
+<!-- agent | 2026-10-24T00:23:30Z | dispatcher heartbeat 13s | live 4 (sol 1, luna 3, other 0) | busy30 34 | status age 1m -->
+# agent board, 2026-10-24T00:22:17Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | U2-ops-health | stale dispatcher/false orphan diagnosis | Luna readonly; host lead | dispatcher heartbeat09:06 | merged | agt-U2-ops-health-0912 FINAL | Readonly diagnosis+lead0943 confirms hung pip09:07-09:42; one PID terminated; FIFO resumed, no hostrestart. False sandbox orphan diagnosis confirmed; no productchange | ops-only |
@@ -169,17 +169,17 @@
 | F-postG5-persistence-fixture | seven persistence fake API obligations | Luna | readonly0005 source | doing | agt-F-persistence-fixture-0008 QUEUED | Currenthistory/exactpair/restart mockcontract only, all7originalpredicatesKEEP | currentbase |
 | F-postG5-schema-carrier | frozen registered semantic carrier census | Luna readonly | readonly0005 openfinding | merged | agt-F-schema-carrier-audit-0010 FINAL | Actualopaquequalifiedwire+closedproviderargs supportsALL5; no consumerblock/newtuple. Testsrecognize3only; test-onlyoracle0015 dispatched | evidence-only |
 | F-postG5-capture-oracle | exact inline vs capture-reference source | Luna readonly | terminaltwofailures | merged | agt-F-capture-oracle-audit-0010 FINAL | SDKinline PREadmissionmock wronglyusedforRuntimepublishedref/CASpositive; actualtwo-boundaryfixture0015 mustretainALLoriginaldigests/pins/hostclaims | evidence-only |
-| F-postG5-P4-symbol | stale renamed behavior symbol reference | Luna | readonly0005 source | review | agt-F-P4-symbol-review-0017 QUEUED | AuthoroneJSONliteral/2PASS/2148/1911/tools; independent0017 no-weakening/currentcallercheck | currentbase |
+| F-postG5-P4-symbol | stale renamed behavior symbol reference | Luna | readonly0005 source | merging | agt-F-P4-symbol-review-0017 FINALPASS; mergeQUEUED; actualproof0023 | AuthoroneJSONliteral/2PASS/2148/1911/tools; Independent0017 2PASS1.9s/exactoneJSONliteral/prodcaller/vendorPASS | currentbase |
 
 | F-postG5-render-managed | exact21 render installed-runner qualification | Luna harness/proof | source0003/existingc886 | doing | agt-F-render-managed-0013 QUEUED | Same c36/abd47 managedbench/819acf, actual21bodyhash/reportall/childstderr+origins; no newbench/backendedit/bodyrepeat | c36scopeONLY |
 | F-postG5-env-misc-inputs | D13/installer2/bootstrap exactinputs | Luna readonly | misc0007 retainedsource | merged | agt-F-env-misc-inputs-0013 FINAL | Exact4sourceinputs: c886 installedruntime/cleanchildavailable; oldD13carrier ef851 notc36 mustnotrelabel. Ownqualified0020 reportall/actualnewderivedbindingsonlyiflegitimate | evidence-only |
 
 | F-postG5-document-publish | stale-head document helper fixture seam | Luna | misc0007 confirmedsource | review | agt-F-document-publish-review-0020 QUEUED | Authorchanged1PASS/whole74PASS2FAIL; independent0020 exactno-weakening+2neighborcause first, no unsupportedpreexistingclaim | currentbase |
 
-| F-postG5-schema-oracle | provider-only closed args/current cohort tests | Luna | schemaaudit0010 carrierPASS | doing | agt-F-schema-oracle-0015 QUEUED | Add2actualprovider-onlymetadata whilekeeping30wire/closedargsstrictness; no schema/pinchange | currentbase |
+| F-postG5-schema-oracle | provider-only closed args/current cohort tests | Luna | schemaaudit0010 carrierPASS | review | agt-F-schema-review-0023 QUEUED | Own8f88 only2oracletests; author6+3+13+malformedclosedargsPASS, broadunion45stimeoutafter8/noFAIL/NOTwholePASS; independent0023 boundedonly | currentbase |
 | F-postG5-capture-closure-fixture | original2 actualpublished capture proof boundary | Luna | captureaudit0010 | doing | agt-F-capture-closure-fixture-0015 QUEUED | SDKinline+realRuntimepublication/claim/materialization; ALLoriginalCAS/pin/source/hostassertionsKEEP | currentbase |
 | F-postG5-env-source16 | exact16 supportedsource-profile invocations | Luna harness | env17cause0010 | doing | agt-F-env-source16-0015 QUEUED | Samec36/abd47c886; sourcefixtures/profile+Nodecleaninvocation, D21bodylocks; no guardchange/newbench | c36scopeONLY |
-| F-postG5-external-installed | admitted externalpack installedloader roots | Luna author | env17cause0010 confirmedproduction | doing | agt-F-external-installed-roots-0015 QUEUED | Preservevalidatedfencedroots throughcurrentinstalledloader; no ambientPYTHONPATH/guardwaiver; strictforeign/digest/securitycontrols | currentbase |
+| F-postG5-external-installed | admitted externalpack installedloader roots | Luna author | env17cause0010 confirmedproduction | review | agt-F-external-roots-review-0025 QUEUED | Own07b3 productiongeneric_host14lines+172test; author5+7unitPASS/originalpositiveunqualifiedmissingRuntimeimport. Independentsecurity0025 checksinstalledguard/admittedauthorityFIRST, propercandidatebenchonlylater | currentbase |
 
 | F-postG5-env-misc-qualified | D13/installer2/clean-bootstrap qualification | Luna harness/proof | actualc886 + sourceinputs0013 | doing | agt-F-env-misc-qualified-0020 QUEUED | Exact4input/bodyhash/preflight; no oldef851carrierrelabel/newbench/guardwaiver; missingauthorityreturnsfact | c36scopeONLY |
 Resolved: G5 merged c36 after H24 case1+P4 criterion; actual350+SDK4+c2711 PASS, independent2155 custody audit PASS with130 raw packet loss disclosed. P4/P5/R5 retained scoped DONE. D14/D23/H9 tests unchanged, unskipped, visibly failing.
