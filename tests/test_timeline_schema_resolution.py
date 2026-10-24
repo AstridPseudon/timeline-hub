@@ -58,7 +58,9 @@ def _validators(resources, root):
         for uri, schema in resources.items()
     )
     original = Draft202012Validator({"$ref": root}, registry=registry)
-    cached = original.evolve(
+    cached = validation._reuse_schema_validators(Draft202012Validator)(
+        original.schema, registry=registry
+    ).evolve(
         _resolver=validation._reuse_schema_resolution(
             validation._validator_resolver(original)
         )
@@ -69,6 +71,87 @@ def _validators(resources, root):
 def _errors(validator, value):
     return [(list(e.path), list(e.schema_path), e.message)
             for e in validator.iter_errors(value)]
+
+
+def test_compiled_validators_traverse_every_keyword_and_create_fresh_errors():
+    from jsonschema.validators import extend
+
+    calls = Counter()
+    keywords = {}
+    for name, check in Draft202012Validator.VALIDATORS.items():
+        def counted(validator, constraint, instance, schema, name=name, check=check):
+            calls[name] += 1
+            yield from check(validator, constraint, instance, schema) or ()
+        keywords[name] = counted
+    base = extend(Draft202012Validator, validators=keywords)
+    schema = {"type": "object", "properties": {
+        "items": {"type": "array", "items": {"type": "integer", "minimum": 2}}
+    }, "additionalProperties": False}
+    original = base(schema)
+    cached = validation._reuse_schema_validators(base)(schema)
+    value: dict[str, list[object]] = {"items": [2, 3, 4]}
+    for _ in range(2):
+        for item in (2, True, 0, "bad", 5):
+            value["items"][0] = item
+            calls.clear()
+            expected = _errors(original, value)
+            expected_calls = calls.copy()
+            calls.clear()
+            assert _errors(cached, value) == expected
+            assert calls == expected_calls
+    value["items"][0] = False
+    first = list(cached.iter_errors(value))
+    first[0].path.append("tampered")
+    assert _errors(cached, value) == _errors(original, value)
+
+
+def test_compiled_validator_identity_includes_parent_registry_and_checker():
+    from jsonschema import FormatChecker
+
+    root = "https://example.invalid/shared"
+    compiled = validation._reuse_schema_validators(Draft202012Validator)
+    schema = {"$ref": root}
+    validators = [compiled(schema, registry=Registry().with_resource(
+        root, Resource.from_contents({"type": kind}, default_specification=DRAFT202012)
+    )) for kind in ("string", "integer")]
+    for _ in range(3):
+        assert not _errors(validators[0], "ok")
+        assert _errors(validators[0], 2)
+        assert not _errors(validators[1], 2)
+        assert _errors(validators[1], "ok")
+    checked = compiled({"properties": {"x": {"format": "email"}}},
+                       format_checker=FormatChecker())
+    unchecked = checked.evolve(format_checker=None)
+    for _ in range(2):
+        assert _errors(checked, {"x": "bad"})
+        assert not _errors(unchecked, {"x": "bad"})
+
+
+def test_compiled_setup_concurrent_eviction_keeps_constraints_and_releases_values():
+    import gc
+    import weakref
+    from concurrent.futures import ThreadPoolExecutor
+
+    class Value(dict):
+        pass
+
+    compiled = validation._reuse_schema_validators(Draft202012Validator)
+    validator = compiled({"properties": {
+        str(i): {"const": i} for i in range(300)
+    }})
+
+    def check(i):
+        value = Value({str(i % 300): i % 300})
+        validator.validate(value)
+        reference = weakref.ref(value)
+        value[str(i % 300)] = -1
+        assert _errors(validator, value)
+        return reference
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        references = list(pool.map(check, range(900)))
+    gc.collect()
+    assert all(reference() is None for reference in references)
 
 
 def test_installed_schema_copy_survives_nested_resource_replacement():

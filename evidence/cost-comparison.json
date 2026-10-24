@@ -1,0 +1,259 @@
+{
+  "parent_commit": "44917baf5976d6a655d582fafc63fde7b6cb242d",
+  "parent_source_sha256": "c4b2143f151db766738eebd330983a8037a9a9fc8627b93303f26a59bbc53115",
+  "candidate_source_sha256": "aaf7fe7b057e5792f85493fff631e2ed0538d1a0acfec9580837fc5489c9a5bd",
+  "fixture_sha256": "51e353be23b2ebf80e454f2b5cd165a904ab0478c41a6065ed310535d55976cd",
+  "schema_bundle_sha256": "e4da5c0edc728869a7e78b5820b36f0a0756e1891af64a4f8c0fc37d705196e1",
+  "samples_seconds_per_three_verifications": {
+    "parent": [
+      {
+        "cpu": 0.379263373,
+        "wall": 0.3869099760049721
+      },
+      {
+        "cpu": 0.44865594200000025,
+        "wall": 0.4531499029981205
+      },
+      {
+        "cpu": 0.40050460300000035,
+        "wall": 0.40966513799503446
+      },
+      {
+        "cpu": 0.37255017899999965,
+        "wall": 0.3733246120100375
+      },
+      {
+        "cpu": 0.4034608230000005,
+        "wall": 0.4132619050069479
+      },
+      {
+        "cpu": 0.3768178209999995,
+        "wall": 0.3775271370104747
+      },
+      {
+        "cpu": 0.3964355509999997,
+        "wall": 0.41491926200978924
+      },
+      {
+        "cpu": 0.3913757129999995,
+        "wall": 0.3948848250001902
+      },
+      {
+        "cpu": 0.3736969970000006,
+        "wall": 0.3755274019931676
+      },
+      {
+        "cpu": 0.38286845699999983,
+        "wall": 0.39168650899955537
+      }
+    ],
+    "candidate": [
+      {
+        "cpu": 0.32283041200000007,
+        "wall": 0.3321213339950191
+      },
+      {
+        "cpu": 0.33600203500000014,
+        "wall": 0.37594262600759976
+      },
+      {
+        "cpu": 0.3225673529999997,
+        "wall": 0.33140476400149055
+      },
+      {
+        "cpu": 0.33594309199999994,
+        "wall": 0.3452060999989044
+      },
+      {
+        "cpu": 0.3103705080000001,
+        "wall": 0.31044652000127826
+      },
+      {
+        "cpu": 0.36304906499999934,
+        "wall": 0.3688024090079125
+      },
+      {
+        "cpu": 0.32328842499999944,
+        "wall": 0.3265743130032206
+      },
+      {
+        "cpu": 0.33693897299999964,
+        "wall": 0.34119459899375215
+      },
+      {
+        "cpu": 0.3508603260000003,
+        "wall": 0.3532750099984696
+      },
+      {
+        "cpu": 0.31028505000000006,
+        "wall": 0.3140176699962467
+      }
+    ]
+  },
+  "medians": {
+    "parent": {
+      "cpu": 0.38712208499999967,
+      "wall": 0.3932856669998728
+    },
+    "candidate": {
+      "cpu": 0.3296157584999997,
+      "wall": 0.3366579664943856
+    }
+  },
+  "cpu_reduction_fraction": 0.14854829710890827,
+  "identical_checks_per_verification": {
+    "_keywords.py:36:additionalProperties": [
+      2582,
+      3154
+    ],
+    "_keywords.py:59:items": [
+      492,
+      1556
+    ],
+    "_keywords.py:351:oneOf": [
+      76,
+      106
+    ],
+    "timeline_commit_auth.py:316:validate_claims": [
+      4,
+      4
+    ],
+    "timeline_commit_auth.py:2469:validate_sequential_capture": [
+      1,
+      1
+    ],
+    "timeline_commit_auth.py:2243:_capture_document_images": [
+      54,
+      54
+    ],
+    "timeline_commit_validation.py:18:finite_json": [
+      56,
+      56
+    ],
+    "_keywords.py:215:pattern": [
+      760,
+      760
+    ],
+    "_keywords.py:337:anyOf": [
+      374,
+      1568
+    ],
+    "_keywords.py:332:allOf": [
+      4,
+      4
+    ],
+    "_keywords.py:270:<genexpr>": [
+      950,
+      950
+    ],
+    "_keywords.py:274:ref": [
+      56,
+      8190
+    ],
+    "_keywords.py:285:<genexpr>": [
+      25562,
+      25562
+    ],
+    "_keywords.py:127:exclusiveMinimum": [
+      54,
+      54
+    ],
+    "_keywords.py:149:minimum": [
+      40,
+      40
+    ],
+    "_keywords.py:269:enum": [
+      396,
+      396
+    ],
+    "_keywords.py:286:<genexpr>": [
+      3158,
+      3158
+    ],
+    "_types.py:197:<lambda>": [
+      154,
+      154
+    ],
+    "_keywords.py:85:const": [
+      556,
+      556
+    ],
+    "_keywords.py:194:minItems": [
+      12,
+      12
+    ],
+    "_keywords.py:200:maxItems": [
+      4,
+      4
+    ],
+    "_keywords.py:206:uniqueItems": [
+      106,
+      106
+    ],
+    "_keywords.py:231:minLength": [
+      1472,
+      1472
+    ],
+    "_types.py:26:is_array": [
+      3234,
+      3234
+    ],
+    "_types.py:30:is_bool": [
+      1560,
+      1560
+    ],
+    "_types.py:52:is_object": [
+      12312,
+      12312
+    ],
+    "_types.py:56:is_string": [
+      7834,
+      7834
+    ],
+    "_keywords.py:282:type": [
+      11448,
+      11448
+    ],
+    "_keywords.py:290:properties": [
+      56,
+      2544
+    ],
+    "timeline_commit_validation.py:162:validate_commit_value": [
+      56,
+      56
+    ],
+    "_keywords.py:382:if_": [
+      120,
+      120
+    ],
+    "_keywords.py:28:propertyNames": [
+      10,
+      10
+    ],
+    "_keywords.py:304:required": [
+      980,
+      980
+    ],
+    "_types.py:45:is_number": [
+      1708,
+      1708
+    ],
+    "_types.py:94:is_type": [
+      28380,
+      28380
+    ],
+    "_types.py:34:is_integer": [
+      154,
+      154
+    ],
+    "_types.py:41:is_null": [
+      1578,
+      1578
+    ]
+  },
+  "validator_constructions": {
+    "parent": 21240,
+    "candidate": 1942
+  },
+  "limits": "Existing two-command capture control; no original/service latency or 45s proof."
+}

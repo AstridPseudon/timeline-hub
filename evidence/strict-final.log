@@ -1,0 +1,927 @@
+........................................................................ [ 31%]
+........................................................................ [ 62%]
+..............................EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE.. [ 94%]
+.............                                                            [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_created_child_public_acceptance_and_strict_refusals[None] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118b51a90>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_acceptance_and_strict_refusals[foreign] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118a11da0>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_acceptance_and_strict_refusals[future] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118a13a80>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_acceptance_and_strict_refusals[wrong-owner] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118a12820>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_acceptance_and_strict_refusals[missing-input] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118a12f20>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_acceptance_and_strict_refusals[ambiguous] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f911a1883d0>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_acceptance_and_strict_refusals[pin-revision] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f91175c4fa0>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_acceptance_and_strict_refusals[parent-revision] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f91175c7460>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_acceptance_and_strict_refusals[birth-parent] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f91175c7cb0>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_acceptance_and_strict_refusals[digest] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f91175c6900>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_acceptance_and_strict_refusals[before] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f91175c4d70>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_acceptance_and_strict_refusals[effect-range] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f911a129da0>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_acceptance_and_strict_refusals[missing-effects] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118a129e0>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_acceptance_and_strict_refusals[order] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118a120b0>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_acceptance_and_strict_refusals[foreign-source] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f91175c6900>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_acceptance_and_strict_refusals[ambiguous-birth] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f91175c62e0>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_acceptance_and_strict_refusals[unpromoted] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118a129e0>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_sequential_birth_aliases_accept_fields_and_atomic[fields-False] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118a12b30>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_sequential_birth_aliases_accept_fields_and_atomic[fields-True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118a13690>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_sequential_birth_aliases_accept_fields_and_atomic[atomic-False] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118a13d90>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_sequential_birth_aliases_accept_fields_and_atomic[atomic-True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118a126d0>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_atomic_keeps_birth_tamper_refusals[foreign-source-False] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118a10980>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_atomic_keeps_birth_tamper_refusals[foreign-source-True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118a123c0>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_atomic_keeps_birth_tamper_refusals[ambiguous-birth-False] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118a13d90>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_atomic_keeps_birth_tamper_refusals[ambiguous-birth-True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f91192f9b70>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_atomic_keeps_birth_tamper_refusals[foreign-False] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118bc37e0>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_atomic_keeps_birth_tamper_refusals[foreign-True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118bc3700>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_atomic_keeps_birth_tamper_refusals[future-False] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118bc1b70>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_atomic_keeps_birth_tamper_refusals[future-True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118bc2c80>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_atomic_keeps_birth_tamper_refusals[wrong-owner-False] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118bc2890>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_atomic_keeps_birth_tamper_refusals[wrong-owner-True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118bc15c0>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_atomic_keeps_birth_tamper_refusals[outside-read-False] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f91188e20b0>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_atomic_keeps_birth_tamper_refusals[outside-read-True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118bc07c0>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_atomic_keeps_birth_tamper_refusals[missing-scope-False] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9118bc0130>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_atomic_keeps_birth_tamper_refusals[missing-scope-True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f91188e0c90>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_promotion_keeps_prior_parent_media_and_mirror_writes[True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f91188e1b70>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_refuses_uncaptured_foreign_source_dependency[True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f91188e25f0>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_captured_transcript_advances_sequential_manifest[None-True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f91188e3620>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_captured_transcript_advances_sequential_manifest[before-True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f91188e33f0>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+_ ERROR at setup of test_created_child_public_captured_transcript_advances_sequential_manifest[late-source-True] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f91188e26d0>
+
+    @pytest.fixture
+    def astrid_importable(monkeypatch):
+        """Import ``astrid`` from the checkout; its third-party dependencies come from the interpreter."""
+>       monkeypatch.syspath_prepend(str(astrid_checkout()))
+                                        ^^^^^^^^^^^^^^^^^
+
+tests/astrid_checkout.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def astrid_checkout() -> Path:
+        root = Path(os.environ.get("ASTRID_CHECKOUT") or RUNTIME_ROOT.parent / "astrid").resolve()
+        if not (root / "astrid" / "core" / "execution" / "generic_host.py").is_file():
+>           raise AssertionError(
+                f"Astrid checkout is unavailable: {root} (set ASTRID_CHECKOUT to the Astrid repository root)"
+            )
+E           AssertionError: Astrid checkout is unavailable: /home/user/work/wt/astrid (set ASTRID_CHECKOUT to the Astrid repository root)
+
+tests/astrid_checkout.py:22: AssertionError
+=========================== short test summary info ============================
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_acceptance_and_strict_refusals[None]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_acceptance_and_strict_refusals[foreign]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_acceptance_and_strict_refusals[future]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_acceptance_and_strict_refusals[wrong-owner]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_acceptance_and_strict_refusals[missing-input]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_acceptance_and_strict_refusals[ambiguous]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_acceptance_and_strict_refusals[pin-revision]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_acceptance_and_strict_refusals[parent-revision]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_acceptance_and_strict_refusals[birth-parent]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_acceptance_and_strict_refusals[digest]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_acceptance_and_strict_refusals[before]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_acceptance_and_strict_refusals[effect-range]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_acceptance_and_strict_refusals[missing-effects]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_acceptance_and_strict_refusals[order]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_acceptance_and_strict_refusals[foreign-source]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_acceptance_and_strict_refusals[ambiguous-birth]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_acceptance_and_strict_refusals[unpromoted]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_sequential_birth_aliases_accept_fields_and_atomic[fields-False]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_sequential_birth_aliases_accept_fields_and_atomic[fields-True]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_sequential_birth_aliases_accept_fields_and_atomic[atomic-False]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_sequential_birth_aliases_accept_fields_and_atomic[atomic-True]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_atomic_keeps_birth_tamper_refusals[foreign-source-False]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_atomic_keeps_birth_tamper_refusals[foreign-source-True]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_atomic_keeps_birth_tamper_refusals[ambiguous-birth-False]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_atomic_keeps_birth_tamper_refusals[ambiguous-birth-True]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_atomic_keeps_birth_tamper_refusals[foreign-False]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_atomic_keeps_birth_tamper_refusals[foreign-True]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_atomic_keeps_birth_tamper_refusals[future-False]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_atomic_keeps_birth_tamper_refusals[future-True]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_atomic_keeps_birth_tamper_refusals[wrong-owner-False]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_atomic_keeps_birth_tamper_refusals[wrong-owner-True]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_atomic_keeps_birth_tamper_refusals[outside-read-False]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_atomic_keeps_birth_tamper_refusals[outside-read-True]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_atomic_keeps_birth_tamper_refusals[missing-scope-False]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_atomic_keeps_birth_tamper_refusals[missing-scope-True]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_promotion_keeps_prior_parent_media_and_mirror_writes[True]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_refuses_uncaptured_foreign_source_dependency[True]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_captured_transcript_advances_sequential_manifest[None-True]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_captured_transcript_advances_sequential_manifest[before-True]
+ERROR tests/test_timeline_commit_authentication.py::test_created_child_public_captured_transcript_advances_sequential_manifest[late-source-True]
+189 passed, 40 errors in 59.31s

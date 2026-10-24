@@ -1,0 +1,17 @@
+{
+  "medians": {
+    "parent": {
+      "cpu": 0.38712208499999967,
+      "wall": 0.3932856669998728
+    },
+    "candidate": {
+      "cpu": 0.3296157584999997,
+      "wall": 0.3366579664943856
+    }
+  },
+  "cpu_reduction_fraction": 0.14854829710890827,
+  "validator_constructions": {
+    "parent": 21240,
+    "candidate": 1942
+  }
+}
