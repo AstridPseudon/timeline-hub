@@ -26,8 +26,8 @@ from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree as ET
 
-SOURCE_COMMIT = "bb50a43c915ec00c05c5ee34569a040bab8e817c"
-RUNTIME_COMMIT = "f3208b26b53c4d7053e5464eaa7c5e15b1505812"
+SOURCE_COMMIT = "0c2c28da4f9733a1becc134f95219ae3079fc50e"
+RUNTIME_COMMIT = "becfe6db88b2cc034dba3fafa6c050117cdf2b06"
 TEST_RELATIVE = Path("tests/test_generic_host.py")
 TEST_FUNCTION = "test_structure_pack_members_survive_harvest_cleanup_and_reopen"
 PREFIXES = ("astrid", "astrid_runtime", "runtime_protocol", "astrid_runtime_client")
@@ -63,10 +63,10 @@ EXPECTED_TEST_IDENTITY = {
 }
 SCRIPT = Path(__file__).resolve()
 ORCH = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch")
-SOURCE_ROOT = Path("/home/user/work/wt/agt-pin-bb50a43c")
-RUNTIME_ROOT = Path("/home/user/work/wt/rt-pin-f3208b26")
+SOURCE_ROOT = Path("/home/user/work/wt/agt-pin-0c2c28da")
+RUNTIME_ROOT = Path("/home/user/work/wt/rt-pin-becfe6db")
 STORE_ROOT = Path("/home/user/work/bench-store")
-CHILD_NAME = "venv-agent-child-generic-bb50-f320-0638"
+CHILD_NAME = "venv-agent-child-final-0c2c-becfe"
 SAFE_ENV_KEYS = (
     "PYTHONPATH", "PYTHONNOUSERSITE", "ASTRID_RUNTIME_CHECKOUT",
     "ASTRID_HOST_EXECUTION_PROFILE", "ASTRID_REMOTION_PROJECT_DIR", "ASTRID_NODE_EXECUTABLE",
@@ -199,7 +199,7 @@ def managed_custody() -> dict[str, Any]:
     expected: dict[str, Any] = {"agent_sha": SOURCE_COMMIT, "backend_sha": RUNTIME_COMMIT,
                 "client_tuple": client_identity()}
     if len(children) != 1 or children[0]["identity"] != expected:
-        raise PreflightFailure("normal registration does not bind the exact bb50/f320/client tuple")
+        raise PreflightFailure("normal registration does not bind the exact 0c2c/becfe/client tuple")
     entry = children[0]
     child = real_child(Path(entry["path"]))
     report = require_file(ORCH / "tests/provision" / (CHILD_NAME + ".txt"), "normal provision report")
@@ -614,7 +614,7 @@ def main() -> int:
 
     def sources() -> dict[str, Any]:
         if args.source_root != SOURCE_ROOT or SOURCE_ROOT.resolve() != SOURCE_ROOT or RUNTIME_ROOT.resolve() != RUNTIME_ROOT:
-            raise PreflightFailure("explicit source carrier must be the approved physical bb50 path")
+            raise PreflightFailure("explicit source carrier must be the approved physical 0c2c path")
         return {"agent": git_identity(SOURCE_ROOT), "runtime": git_identity(RUNTIME_ROOT, RUNTIME_COMMIT)}
 
     def provision() -> dict[str, Any]:
