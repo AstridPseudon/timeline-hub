@@ -409,10 +409,16 @@ def draft_path(project_id: str, timeline_id: str, name: str = "main") -> Path:
 
 def resolve_ids(project: str, timeline: str, *, client: Any = None) -> tuple[str, str, str]:
     """(project_id, timeline_id, head) for a project slug/id and a timeline slug/id."""
+    from inspect import Parameter, signature
+
     from astrid.sdk import AstridClient
 
     def read(c: Any) -> tuple[str, str, str]:
-        shown = c.timelines.open_composition(project, timeline)
+        reader = c.timelines.open_composition
+        # Custom readers may retain the two-argument interface.
+        raw = any(parameter.name == "_raw_projection" or parameter.kind == Parameter.VAR_KEYWORD
+                  for parameter in signature(reader).parameters.values())
+        shown = reader(project, timeline, **({"_raw_projection": True} if raw else {}))
         if not shown.ok or not isinstance(shown.data, Mapping):
             raise TimelineEditError(f"could not open timeline {timeline!r} in project {project!r}: {shown.error}")
         native = shown.data.get("native_inspection") or {}
