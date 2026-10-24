@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T06:30:56Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 18 | status age 1m -->
-# runtime board, 2026-10-24T06:29:35Z
+<!-- main | 2026-10-24T06:33:27Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 17 | status age 1m -->
+# runtime board, 2026-10-24T06:31:42Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -55,7 +55,7 @@
 | F-helper-sequential | Classify helper replay-map refusal | Agent Sol / Luna | Integrated proof complete | merged | Agent184dc; review0224; integrated0232 | Actual Agent 8a8d passed 12 focused cases and static, vendor and artifact checks. Both original variants passed on reviewed source. | Agent184dc20a70 |
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Current installed qualification passed | merged | Agent0508; independent0517 PASS | Exact seven originals passed on managed child 3b5c, Agent ba8f and Runtime f320. Current 9cd relevant sources and test AST match. | Managed child 3b5c |
-| OPS-farm-agent-full | Correct farm full-suite environment | Sol / Luna | Normal environment and source custody | doing | Sol 0617; independent path 0617 | Second Luna review failed missing Node modules and service lease proof. [Review](../../design/runtime-farm-full-v2-return-review-0614.md) | 1a1ccab packet held |
+| OPS-farm-agent-full | Correct farm full-suite environment | Sol / Luna | Independent source and kit review | review | Sol0617; review0632 | Fourteen private checks passed, including service selection and lease descriptors. Genuine Farm preflight remains required. | 471712 packet held |
 | OPS-child-dependency-route | Assess supported dependency reuse | Luna | Independent source review | review | Author0628; review0630 | No supported dependency-only reuse route found. Review checks exact source and missing install evidence. No retry requested. | Source only |
 | R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Integrated proof passed | merged | Review 0405; integrated 0413 PASS | 13 standalone cases and 243 controls passed; 74 configured deselections. [Proof](../../design/runtime-historical-image-integrated-0413.md) | 2b49da8d6 / 2e96c68c |
 | R-D42-history-memo | Harden verified replay memo | Sol / Luna | Post-delivery scope under D47 | gated:D47 | Design0448; review0454 PASS | Deferred by D47. No stable validation boundary; nine state attacks remain open. Source stays unmerged. | Tests 6c6bb375; source held |
@@ -85,11 +85,11 @@ Blockers: Freeze — D39 generated candidate fe637 passed independent review; fi
 
 Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held until freeze.
 
-D34: Main has 8.2 GiB free at the latest check. The orchestrator orders no further main disk work. Reviewed registry candidate fdb9e9e9 was installed; normal retirement of s2-c13 was refused for incomplete tuple markers. No retry; zero GB freed.
+D34: Main has 8.5 GiB free at the latest check. The orchestrator orders no further main disk work. Reviewed registry candidate fdb9e9e9 was installed; normal retirement of s2-c13 was refused for incomplete tuple markers. No retry; zero GB freed.
 
 Later: D46 closes U2c; no new relay or provider custody backend. Its upstream commit arrives at the freeze. Agent owns support-probe timeout investigation 0522; no Runtime author is requested. Disk and D47 memo work stay paused. CLI five retained units and the final v2 production save path passed independent Sol0601 review. Agent owns exact original count mapping; no source change is justified. The H32 U1c recheck and D39 generation dry run are also dispatched.
 
 Blockers: Agent — normal-publication original waits for Runtime source0619 review and Agent home merge.
 
-Next ready: None waiting. Farm Sol0617 is finishing. Child dependency source review0630 is queued. Renderer-free source awaits Agent home; helper word binding remains Agent-owned. No original repeats.
+Next ready: None waiting. Farm packet review0632 and child dependency review0630 active. Renderer-free source awaits Agent home. Nine root and thirteen helper results returned; word binding remains open.
 Later: Viewing peer0624 reports its partial ABA repair and remaining native-stage address mismatch. Viewing owns source and review; no Runtime author or body is requested.
