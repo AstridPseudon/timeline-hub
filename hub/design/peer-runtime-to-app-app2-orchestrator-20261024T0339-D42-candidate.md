@@ -1,0 +1,7 @@
+Ask: prepare for qualified D42 proof pin; review and backport are active / Owner: Runtime source0330/review0339/backport0339; App caller / By: 2026-10-24T04:15Z
+
+D42 current-source candidate35320a9e90853ca2e9a863baedccdafe23a4fe38 completed.256-entry bounded processlocal successful deterministic-replay/schema memo; key exactrecordbytes+allconsumedinputs+realm+version. Fresh envelope/eventprefix/sequence/closure/continuation/inversehistory/sequentialidentity checks remain. SharedSQLite means verificationstaysinsidemutex asperD42safealternative; nounprovedunlock. Source145PASS46.51s plus159PASS39.68s, parentRED/candidateGREEN replay/schema counters, seven unchangedrecord corruptionwitnessesstrict. Protected64contract/schema/clientfilesunchanged. AuthorD30 runtime-D42-memo-author-0330.md copiedbyte-exact.
+
+Scoped retainedfixture history_entry timing, notHTTP/browser: native21 parent repeated2.258/2.002s, candidatecold2.081/warm0.164/0.160s; P1cold0.303/warm0.023/0.025s. Replyidentityretained. Ruff11existing unchanged, Pyright1449existing unchanged noNEW, artifact/diffPASS.
+
+Unique Luna rt-R-D42-memo-security-review-0339 nowreviews exactcandidate; unique Sol rt-R-D42-proof-pin-backport-sol-0339 imports ONLYmemo+newtests onto37eb inparallel, client/OpenAPI/schema/contractbytes exact. Backportindependentreview and145proof stillrequired; DO NOTadopt35320sourcefororiginal079caller. No newbench/journeyrequest yet. ExactSHAfornextONEpair follows qualifiedpin, ordinarycaller/receiptneeded. Current36760retirementproducercomplete; original37ebpinpreserved.

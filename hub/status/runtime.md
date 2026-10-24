@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T03:38:52Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 15 | status age 0m -->
-# runtime board, 2026-10-24T03:38:00Z
+<!-- main | 2026-10-24T03:41:29Z | dispatcher heartbeat 8s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 2m -->
+# runtime board, 2026-10-24T03:39:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -56,7 +56,8 @@
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Agent existing child qualified | merged | Source 0125; review 0132; Agent 0137 | Exact seven passed in 3.60 s on existing child c886; wrong-tree control refused and body/source identities retained. | Source 521c888; installed c36 |
 
-| R-D42-history-memo | Memoize complete verified replay inputs | Sol / Luna | D42 approved | doing | Source0330; witness review0330 PASS | Seven corruption witnesses and15 neighbors passed review. Complete-input memo source underway; no performance qualification yet. | Test42080; source pending |
+| R-D42-history-memo | Memoize complete verified replay inputs | Sol / Luna | Independent security review | review | Source0330; review0339 | Author145 plus159 passed. Native21 warm0.16s on retained fixture; not HTTP. Fresh corruption checks retained. [Author](../../design/runtime-D42-memo-author-0330.md) | 35320a9e source |
+| R-D42-proof-pin | Backport memo onto compatible proof pin | Sol / Luna | Source35320 review in parallel | doing | rt-R-D42-proof-pin-backport-sol-0339 | Only memo and new tests onto37eb; all client, schema and OpenAPI bytes must stay identical. Independent pin review next. | 37eb base |
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
 Runtime integration is 36760ee0ad, tree 11389911c2ee. Foreign retirement integrated proof passed230 with74 configured deselections. D39/D40 merged; integrated19379 passed162 and10713 passed317 with2configuredexclusions. Prior history proof remains exact45c scope. History cost source merged with exact reviewed tree; integrated145 proof0210 passed with Agent4151. Reviewed speed and receipt test repairs merged. Integrated speed passed 14; integrated receipt proof passed both cases with explicit Agent path. Manifest proof 0128 passed 74 and generation checks on db11. Wire shapes and schema unchanged; no final full-suite pass claimed.
@@ -64,7 +65,7 @@ Runtime integration is 36760ee0ad, tree 11389911c2ee. Foreign retirement integra
 Blockers: App / Proof — P3 3362 failed before Gate5. P2 12221 passed readiness; three gestures failed, five not run. App owns causes and D42 coalescing; no repeat before qualified pin.
 Blockers: Runtime — Full 29085 retains 36 failures. Targeted speed, receipt and manifest repairs passed. Headless, occupancy and contract remain assigned. No unchanged full rerun.
 Blockers: Freeze — D39 client regeneration and Agent/App tuple adoption are held for the freeze; current consumer pins stay intact.
-Blockers: Runtime / Agent — D42 complete-input memo0330 is first priority. Agent owns headless mirror effects, alias home proof, historical redo and D40 consumer. Agent owns reviewed alias current port, semantic historical redo and D40 consumer.
+Blockers: Runtime / Agent — D42 source review0339 and proof-pin backport0339 are first priority. Agent owns headless mirror effects, alias home proof, historical redo and D40 consumer. Agent owns reviewed alias current port, semantic historical redo and D40 consumer.
 Blockers: Runtime / Agent — D40 producer passed and merged f320; integrated317passed2configuredexclusions. Agent consumer Sol0258 owns captured-byte join; missing hook still refuses before discovery.
 
 Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held until freeze.
