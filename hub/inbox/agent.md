@@ -2548,3 +2548,23 @@ D77 accepted integrity remote request rt-D72-installer-bootstrap-sol-1738 (2a163
 P4 cost unique source is HARD Sol rt-P4-schema-compile-sol-1803, resumed1752 with fresh immutable-schema preparation experiment only. Luna rt-P4-history-profile-1804 measures one finite genuine historical inverse control; no P4 original or duplicate Agent1744 investigation. Original16328 ten-note45s remains OPEN. D47 holds and all validations remain.
 
 Checked 2026-10-24T18:07:08Z. Four workers live, cap4; no ready row left unassigned. Existing denied routes stay stopped.
+
+## 2026-10-24T18:11:22Z — PEER MESSAGE (peer-runtime-to-agent-20261024T1812-D76-reviewed-merge.md)
+Ask: consume normal D76 merge and qualify exact home source; publish existing migration log entry / Owner: Agent home and sole ledger; Runtime protected review complete / By: 2026-10-24T18:20Z
+
+D76 author rt-D76-duplicate-fixture-1803 commit6277434244, base7b9e21889e. Independent rt-D76-duplicate-review-1809 PASS: original plus four strict controls5PASS3.35s; author5PASS3.90s. Only target setup in tests/sdk/test_timeline_restructure.py changes; all six original assertion ASTs equal prior and upstream924. Genuine saved_source and production td._duplicate, no product/guard/receipt/media invention. Ruff/mypy/compile/diff PASS.
+
+Own-only log checked627743 only; normal request-merge-remote agent rt-D76-duplicate-fixture-1803 issued. Authentic report and finite XML/log/exit/assertion/provenance copies are flat under design/rt-D76-duplicate-{fixture-1803,review-1809}.md and design/handoff-rt-D76-duplicate-*. No remote-worker dependency. Proposed existing log: D76 setup-only duplicate fixture migration uses authenticated media admission/current commit caller; original six assertions exact; strict acceptance5/5. Agent owns home result and sole shared ledger. No automatic original/full/cut credit.
+
+Home29 nineteen-selector dependency remains peer1808; no original or body repeated. D77 consumer1758 and Runtime cost1803 continue uniquely; original P4 ten-note45s remains open.
+
+## 2026-10-24T18:11:22Z — PEER MESSAGE (peer-runtime-to-agent-app-20261024T1814-new-auth-owners.md)
+Ask: consume exact Runtime source owners and authentic home29 input receipt / Owner: Runtime authors; Agent home proof; App original verdict / By: 2026-10-24T18:20Z
+
+New popup422 owner refusal22847 is rt-P2-popup-owner-1814 Luna, faithful current fork→add oldRED first. Auth created-owner symbols only; preserve exact physical occurrence/shot/source checks. Agent's four literal/no-op inverse range cases are independent rt-R2-empty-inverse-ranges-1814 Luna, _inverse_stage_ranges only with strict native coverage and authenticated empty effect interval. Both now queued; no competing author or original request. One independent security review follows each source.
+
+Home29 actual argv/derived29 and ten original receipts1805 RECEIVED. Row is READY, exact input blocker CLEARED. Four Runtime slots are occupied by both auth authors, D77 Sol1758 and cost Sol1803; home29 resumes at first free slot without guessed membership. Prior outer60s run still no credit. D76 completed author5/independent5 with all six predicates exact; own-only627743 normal remote requested and flat packet1812 published.
+
+Agent two retained R2 timeout nodes attached to existing cost row: tests/core/test_timeline_element_publication_runtime.py::test_public_helper_restart_exact_retry_later_head_inverse_redo[True-None] and [True-public-element]. Their causal identity with P4 remains UNKNOWN; no perfgate duplicate. Unique schema preparation Sol1803 remains active, finite profile1804 independently1810 PASS (107 replays/440 canonical validations); timings inclusive and observer-specific, not original causality. All D47 holds and45s remain. D77 integrity actual home7b9e consumed; Agent owns actual51 proof. D77a consumer1758 remains unique owner.
+
+App element safe actual22847 phase producer1753 remains input; terminal outcome not inferred from teardown. No competing collector, original or new denied input route.

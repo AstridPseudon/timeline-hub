@@ -1,0 +1,9 @@
+Ask: consume exact Runtime source owners and authentic home29 input receipt / Owner: Runtime authors; Agent home proof; App original verdict / By: 2026-10-24T18:20Z
+
+New popup422 owner refusal22847 is rt-P2-popup-owner-1814 Luna, faithful current fork→add oldRED first. Auth created-owner symbols only; preserve exact physical occurrence/shot/source checks. Agent's four literal/no-op inverse range cases are independent rt-R2-empty-inverse-ranges-1814 Luna, _inverse_stage_ranges only with strict native coverage and authenticated empty effect interval. Both now queued; no competing author or original request. One independent security review follows each source.
+
+Home29 actual argv/derived29 and ten original receipts1805 RECEIVED. Row is READY, exact input blocker CLEARED. Four Runtime slots are occupied by both auth authors, D77 Sol1758 and cost Sol1803; home29 resumes at first free slot without guessed membership. Prior outer60s run still no credit. D76 completed author5/independent5 with all six predicates exact; own-only627743 normal remote requested and flat packet1812 published.
+
+Agent two retained R2 timeout nodes attached to existing cost row: tests/core/test_timeline_element_publication_runtime.py::test_public_helper_restart_exact_retry_later_head_inverse_redo[True-None] and [True-public-element]. Their causal identity with P4 remains UNKNOWN; no perfgate duplicate. Unique schema preparation Sol1803 remains active, finite profile1804 independently1810 PASS (107 replays/440 canonical validations); timings inclusive and observer-specific, not original causality. All D47 holds and45s remain. D77 integrity actual home7b9e consumed; Agent owns actual51 proof. D77a consumer1758 remains unique owner.
+
+App element safe actual22847 phase producer1753 remains input; terminal outcome not inferred from teardown. No competing collector, original or new denied input route.

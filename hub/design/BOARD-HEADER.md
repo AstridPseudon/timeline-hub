@@ -201,6 +201,28 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D79, three cheap robustness rows, in parallel and NON-gating (18:30Z, owner asked for robustness without bureaucracy or slowdown).** Luna only, one row each, author tests only (no review gate), never on the critical path, and never preempting a critical-path slot. Promote one to a gate only if it is green and I decide so.
+  1. **App: live-edit smoke (1 Playwright case on the D66 plain stack, pinned + preflighted).** Open the editor, have the Agent CLI commit an edit to the same timeline, and assert:
+     - (a) the open timeline shows the Agent's edit, after the turn completes, within 10 s;
+     - (b) a drag held during the remote arrival is not clobbered (usePollSync's in-flight hold), and the remote edit lands afterwards;
+     - (c) undo after the remote arrival does not resurrect pre-remote state (the remoteCommit history drop).
+
+     A failure is a real product finding: report it, and it goes through D54a like anything else.
+  2. **Runtime: conformance replay corpus.** Take the REAL accepted commit records already retained from today's passing P1/P4/Agent home runs (no new runs), and add one test per side that replays them:
+     - Agent: the recorder/reservation checks accept every record;
+     - Runtime: auth/validate accepts every record and re-derives the same recorder_abi;
+     - plus ONE mutated copy of each that both sides must refuse.
+
+     It targets the bug class behind most of today's defects (Agent and Runtime strictness drifting apart). Fixture and test only, with no product change.
+  3. **Kit: automatic stack dump on a hung test request.** The test service and the D66 harness, when a request has had no response for 20 s, run `py-spy dump` (if installed) or `gdb -batch -ex py-bt` on the Runtime daemon and provider PIDs into the run's evidence dir. It's harness only and no product code changes, so every future hang arrives with its blocked frame.
+- **D78, element-apply hang: reproduce OUTSIDE the browser, with stack dumps (18:20Z).** It has recurred since H36, through 2 P2 runs today, and the in-run phase instrumentation came back UNAVAILABLE. Stop diagnosing it only through 7-minute browser runs.
+  - **Runtime, HARD Sol, dispatched with `--net`:**
+    1. Start the stack at P2 22847's pinned tuple (App 587316e / Agent f4d6c72 / Runtime 327da20 / Composition 635f4de).
+    2. Replay the EXACT retained element `doc.patch` request (method, headers, body, idempotency key, from App's retained network evidence) with curl or a minimal client.
+    3. If it hangs past 10 s, dump every Python thread stack of the Runtime daemon and the Agent provider process (`faulthandler` via `faulthandler.register(SIGUSR1)` if the processes allow it, else `py-spy` if installed, else `gdb -batch -ex "py-bt"`), and record which lock, wait or call each request thread is blocked on.
+    4. If it does NOT hang with replay, the difference is in what the browser sends or how it waits: diff the two requests byte for byte.
+  - Report the blocked frame with file and line. The fix follows from that, with a security review only if auth code changes.
+  - **Popup 422** ("provider created shot owner differs from its authenticated occurrence") stays with the Runtime popup owner. First check whether b318's fork-created shot-root projection compares the owner against the wrong occurrence. **The parent "Committed ..." label** is App's.
 - **D75b, P3 recovery counts (18:15Z, scope question 1805):** **retain BOTH automatic-recovery mounts, with strictly revised COMPLETE exact counts.** Do NOT consolidate.
   - **Why:** consolidating the intermediate reload into the post-restart mount drops an observation point, and that is a weakening. Counting every attempt the product really makes, including the intermediate reload's extra attempt A, observes more of production.
   - **Rules:**

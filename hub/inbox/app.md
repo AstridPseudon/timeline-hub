@@ -2123,3 +2123,31 @@ Ask: revisit deferred guarded orphan-graph and post-verdict output retention rou
 Actual17:58 df shows8.7GB free, crossed9GB trigger. ORCH1727 deferred the exact1.107GB abandoned app-m3-private13-normal-lock-install-units-r6-owned graph and guarded post-verdict retention until this threshold; please now tell orchestrator and resolve existing supported tool route if warranted. No fabricated metadata, rawdelete or refused compact/graph/cleanup route retry. Exact old graph evidence remains design/app-D74-stale-pin-recycle-1721.md and peer1724. Current22847 P2 is RUNNING: never delete its output before independent verdict. Finished clean non-KEEP App trees are auto-recycled; last manager check had no eligible tree.
 
 D74 cap6 above8.5GB,4 at7.5–8.5,2 below7.5,stop newdispatch below6.5 applied. Three live workers currently: phaseproducer1753, P3Sol1750 aftertwoLunafailures, one-command harnessLuna1757. P2 native/history/readinessPASS; firstelement and popup failures observed, remaining tour active; no terminalcount/phasecause yet. Do not interrupt or rerun sameID. Root source work continues independently within caps.
+
+## 2026-10-24T18:15Z ORCHESTRATOR: D75b (P3-D75 scope 1805): keep both mounts, complete exact counts
+- **D75b, P3 recovery counts (18:15Z, scope question 1805):** **retain BOTH automatic-recovery mounts, with strictly revised COMPLETE exact counts.** Do NOT consolidate.
+  - **Why:** consolidating the intermediate reload into the post-restart mount drops an observation point, and that is a weakening. Counting every attempt the product really makes, including the intermediate reload's extra attempt A, observes more of production.
+  - **Rules:**
+    - every attempt is asserted with exact identity (request, key, body, origin);
+    - exact equalities only: no "at least" or range counts;
+    - the sequence order is asserted;
+    - every original wait and timeout is unchanged.
+  - Independent 1806 must confirm the revised totals come from the real retained controls, not inferred. Then apply it and rerun P3 on a pinned, preflighted tuple.
+
+## 2026-10-24T18:20Z ORCHESTRATOR: D78. Runtime will need the EXACT retained element doc.patch request bytes from P2 22847 (method, headers, body, key). Publish them to the hub as a design/ handoff file now, if not already there.
+
+## 2026-10-24T18:30Z ORCHESTRATOR: D79 row 1 for App (live-edit smoke, Luna, NON-gating; dispatch when a slot is free, never ahead of P2/P3 work)
+- **D79, three cheap robustness rows, in parallel and NON-gating (18:30Z, owner asked for robustness without bureaucracy or slowdown).** Luna only, one row each, author tests only (no review gate), never on the critical path, and never preempting a critical-path slot. Promote one to a gate only if it is green and I decide so.
+  1. **App: live-edit smoke (1 Playwright case on the D66 plain stack, pinned + preflighted).** Open the editor, have the Agent CLI commit an edit to the same timeline, and assert:
+     - (a) the open timeline shows the Agent's edit, after the turn completes, within 10 s;
+     - (b) a drag held during the remote arrival is not clobbered (usePollSync's in-flight hold), and the remote edit lands afterwards;
+     - (c) undo after the remote arrival does not resurrect pre-remote state (the remoteCommit history drop).
+
+     A failure is a real product finding: report it, and it goes through D54a like anything else.
+  2. **Runtime: conformance replay corpus.** Take the REAL accepted commit records already retained from today's passing P1/P4/Agent home runs (no new runs), and add one test per side that replays them:
+     - Agent: the recorder/reservation checks accept every record;
+     - Runtime: auth/validate accepts every record and re-derives the same recorder_abi;
+     - plus ONE mutated copy of each that both sides must refuse.
+
+     It targets the bug class behind most of today's defects (Agent and Runtime strictness drifting apart). Fixture and test only, with no product change.
+  3. **Kit: automatic stack dump on a hung test request.** The test service and the D66 harness, when a request has had no response for 20 s, run `py-spy dump` (if installed) or `gdb -batch -ex py-bt` on the Runtime daemon and provider PIDs into the run's evidence dir. It's harness only and no product code changes, so every future hang arrives with its blocked frame.
