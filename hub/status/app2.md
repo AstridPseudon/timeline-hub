@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T21:00:11Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# app2 board, 2026-10-24T20:58Z
+<!-- app2 | 2026-10-24T21:02:22Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# app2 board, 2026-10-24T21:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -80,11 +80,11 @@
 
 | P3-D82-original | Strict recorded-command original | App service; independent Luna | Preflight11918 and verdict2024 PASS | merged | Actual15493; independent2024 | GO. Exact tuple, synthetic snapshot, six protected hashes and both XML qualified. No new run; rendering and final-cut scope remain separate. | Appc184bd0bec |
 | P3-D83-diagnostic | Cancel redundant P3 diagnostic | App Luna | ORCH20:47 correction; original GO | gated:cancelled | App diagnostic2040 and batched2040 stopped | App reports no service submission or source merge. Both workers stopped and recycled; original15493 independently GO. No follow-up. | Branch63bc retained |
-| P2-D83-order | Qualify eight gestures before full tour | App; Runtime source | D83 measured Runtime repair | later | App execution; Runtime two HARD Sol | Native seed and P4 treated as one suspected cost or lock-wait defect under D83. Single gestures first; one full serial tour remains required. | No new proof |
+| P2-D83-order | Qualify eight gestures before full tour | App Luna; service | Runtime dc55 released | doing | App adoption2052; isolated execution | Runtime security/home and reduced local8PASS released. App adoption and current tuple qualification precede isolated8, then exactlyone full serial tour. | Runtime dc55 |
 
 D56.4: Proof is folded into App. The complete [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md) remains binding. In-flight work and independent caller1213 are complete. No new Proof dispatch, original run or product merge is owed. App owns P1/P2/P3 execution and verdicts; Agent owns P4; Runtime owns P5, Composition and delivery. The manager loop remains alive for new orchestrator instructions.
 
-live 0 / cap 4; ready-undispatched 0 for Proof under D56.4. Normal Proof header20:47 confirms0live; actualbin/workers1313rows/0running. Owner headers App20:44 live0, Runtime20:52 live0, Agent20:45 live0. No new Proof assignment.
+live 0 / cap 4; ready-undispatched 0 for Proof under D56.4. Normal Proof header20:58 confirms0live; actualbin/workers1313rows/0running. Owner headers App20:53 live1, Runtime20:52 live0, Agent20:54 live1. No new Proof assignment.
 
 core open: 2 transferred gate groups, P2 and P4. P3 original15493 independently2024 GO on its captured tuple; P1 current31083 independently1846 GO. All8 P2 cases remain required; P4 original45s remains open. Final D59 matrix still applies.
 
@@ -129,14 +129,8 @@ Safety: Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked
 
 Disk: 8027475968 bytes free at2026-10-24T20:46Z; D74 local cap4. Three retained Proof trees are ended/KEEP; zero non-KEEP recycle candidates. No prior compact, graph, reference or locked-v1 refusal retried; no alternate cleanup.
 
-Pass 2026-10-24T20:49Z: Restart read PLAN, MANAGER-COMMON, contract, NEW inbox and normal header before action. Inbox unchanged at790277bytes. D56.4 handoff remains binding; D83 and GATE P3 GO20:44 directly verified. Actualbin/workers1313rows/allended; no new Proof completion. All three remaining Proof worktrees are ended/KEEP and zero eligible recycle candidates; free disk8024444928bytes at20:47:53. No prior cleanup refusal retried. Current normal owner boards: Runtime20:42:24/header20:43 names seedSol2040 and historysecurity2037, with generated live1; security completion/home is not yet reported and no duplicate author is justified. App20:41/header20:41 owns two explicit diagnostic workers2040 despite originalP3GO; all8 isolatedP2 entries HOME24a76a, body held for meaningful Runtime fix. Agent20:41:40/header20:42 has live0, normal adoptionb2cb of4351 and completed batch prep2034; originals held for consolidated D83 release. P3 original15493 independently2024GO and P1 original31083 independently1846GO remain tuple-scoped; P2/P4 open, finalD59matrix unchanged. No new Proof assignment, dispatch, gate, product/test/generated/pin edit or Git mutation. All safety/refusal holds remain stopped.
+Pass 2026-10-24T21:00Z: NEW inbox unchanged at790277bytes. PLAN/MANAGER-COMMON/contract read at round restart; normal D56.4, D83 and GATE P3 GO20:44 rechecked. Runtime normal20:52 board releases actualdc55b8bc6 source/security2037 and local2049. Focused385 plus31 independent probes PASS; exact reduced daemon loop8PASS84.30s with1deselected and fullmedia/finalpatch omitted. Historicale745 stays7PASS1FAIL; original45s/native failure and commoncause unproved. Cleared Runtime source blocker immediately and sent one ready peer handoff2058. App20:48/header20:53 live1 adoption2052 and Agent20:51:47/header20:54 live1 adoption/carrier2051 are assigned; actual originals remain pending. Agent's last board still calls security receipt in transit; existing owner follows it, no duplicate source author. App confirms ORCH20:47 cancelled both P3 workers2040, no service submission/source merge, branches retained and trees recycled; cleared active row. P315493 independentlyGO and P131083GO remain recorded-tuple evidence. Actualbin/workers1313allended, three Proof trees ended/KEEP, zero eligible recycle candidates, free8019308544bytes. No prior cleanup refusal retried. No new Proof assignment, dispatch, gate, product/test/generated/pin edit or Git mutation. All refusal holds remain stopped.
 
-Follow-up 2026-10-24T20:51Z: Normal App20:44 header live0 now publishes ORCH20:47 cancellation of both redundant P3 workers2040. No service submission, source edit or integration merge; branch63bc retained, both trees recycled. Clear active Proof handoff row immediately. No new Proof dispatch.
+Next watch: approximately21:10Z. Re-read NEW inbox and normal header; check actual dc55 adoption receipts, App isolatedP2 submission and Agent prepared unprofiled batch. D56.4 no new Proof dispatch remains binding.
 
-Follow-up 2026-10-24T20:53Z: Normal Runtime20:46 header live1 publishes security2037 PASS and actual normaldc55b8bc6 equals reviewed57df. Focused385 plus31 independent probes PASS; original45s remains unproved. Clear history security/home blocker now; Agent owns adoption and prepared batch. SeedSol2040 still active, current off/on comparison pending. Native control oldobserver N4 ON timed out45s while seven variants passed; do not infer common cause or original gate success.
-
-Follow-up 2026-10-24T20:58Z: Runtime normal20:52 board releases actualdc55 source/security/local2049. Exact reduced loop8PASS84.30s with1deselected and fullmedia/finalpatch omitted; original gate and45s remain open. Cleared Runtime source blocker, retained App/Agent actual-proof waits, and sent one peer handoff peer-app2-to-app-agent-20261024T2058Z-D83-ready-handoff.md. No new Proof dispatch or run.
-
-Next watch: approximately21:00Z. Re-read NEW inbox and normal header; check Runtime security2037/home, seed-service2040, Agent batch adoption and new orchestrator instructions. Cancelled App diagnostic has no follow-up. No ready Proof work.
-
-Inbox read through790277bytes. STATUS is the restart point; D56.4 handoff stays binding.
+Inbox read through790277bytes. STATUS is the restart point; [D83 ready handoff](../../design/peer-app2-to-app-agent-20261024T2058Z-D83-ready-handoff.md) clears the transferred source wait; [original Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md) remains binding.
