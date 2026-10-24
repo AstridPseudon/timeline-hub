@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T17:11:18Z | dispatcher heartbeat 11s | live 4 (sol 0, luna 4, other 0) | busy30 17 | status age 0m -->
-# runtime board, 2026-10-24T17:08:53Z
+<!-- main | 2026-10-24T17:14:24Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 0m -->
+# runtime board, 2026-10-24T17:14:02Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -78,11 +78,11 @@
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
 | F-D52-core-five | Map five named actual home outcomes | Luna | Authentic XML and map verified | merged | Receipt 1418 PASS | All five named cases PASS on actual47b/becfe. Current four fork failures are distinct. [Receipt](../../design/rt-F-D52-core-five-receipt-1418.md) | Agent 47b |
 | U1-D69-test-audit | Preserve upstream test predicates | Luna | Seven restorations before cut | merged | rt-U1-D69-test-audit-1603 | Missing16:9 mapped,7 restore. Changed129:75 clear,54 cited. Two skip markers cited;12 dynamic scopes explicit. [Audit](../../design/rt-U1-D69-test-audit-1603.md) | Source facts only |
-| R-P4-history-cost | Reduce historical validation cost | Sol / Luna | Independent security review | review | Author1652; security1706 | Candidateb2e:174+30+41 PASS, same56 fresh validations; finiteCPU267 to159ms. Original45s failure OPEN. [Report](../../design/rt-P4-schema-resolver-sol-1652.md) | b2e154b held |
+| R-P4-history-cost | Reduce historical validation cost | Sol / Luna | Correct lint and schema mutation control | doing | Security1706; return1713 | Review174 PASS but FAIL new RuffB009 and immutable-schema control. Luna1713 corrects only two files; original45s remains OPEN. | b2e154b held |
 | R-P2-popup-422 | Project genuine fork-created shot roots | Luna | App current P2 proof | merged | Security1658; integrated1704 PASS | Actualb318:4 PASS0.16s, exact reviewedsource; forgedowner/sibling/source refused. App original stillpending. [Proof](../../design/rt-P2-popup-integrated-1704.md) | b318a8ec4 /88b9cf6 |
 | R-P2-popup-observation | Attribute popup physical observation refusal | Luna | Source finding complete | merged | rt-P2-popup-observation-1638 | Runtime created-child projection lacks fork-created shot roots.2Runtime+8Agent comparators PASS; source cause only. | Source unchanged |
 | R-P2-element-docpatch-hang | Observe actual server request phases | Sol / Luna | App actual worker activation | blocked:app | Phase1700; integrated1708 | Helper04de HOME2c1; mounted8 PASS1.03s. App owns CLIworker activation; actual25943 phases UNKNOWN. [Helper](../../design/rt-P2-element-phase-1700.md) | 2c1bf0877 /04de |
-| U1-D69-marker-scope | Preserve mixed-route live catalog predicates | Luna | Integrated proof and ledger publication | doing | Citations1702 PASS; integrated1708 | Normalmergeea3 after76+1 live and22 replacements PASS. Exact citations independentlyPASS; actual focusedproof/publication active. | ea3bca10d /925a7dd |
+| U1-D69-marker-scope | Preserve mixed-route live catalog predicates | Luna | Actual integrated proof passed | merged | Citations1702; integrated1708 PASS | Actual2c1:9 PASS9s; exact approvedledgerappendix published once, outsidebytes intact. [Proof](../../design/rt-U1-D69-phase-integrated-1708.md) | ea3bca10d /925a7dd |
 | U1-D69-restore-guard | Restore two skip guard originals | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 |
 | U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 /bb022 |
 | U1-D69-restore-registry | Restore five registry originals | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 |
@@ -111,7 +111,7 @@
 | F-final-D68-assess | Check fresh upstream packaging | Luna | Source assessment complete | merged | rt-F-final-D68-assess-1543 | Stale builder hash found. Proposed refresh moves frozen integration; correction assigned1546. [Facts](../../workers/rt-F-final-D68-assess-1543/evidence/source-assessment.md) | Evidence only |
 | F-final-D68 | Preserve fresh upstream in staging | Luna | Source and private caller qualified | gated:D59-cut | Author1546; review1554; wire1601 | Exact fda independent PASS; caller1601 synthetic service path PASS, extras and overlap receipts retained. No live install or build. | fda54be4 held |
 | F-final-D73 | Capture proof tuple once at submit | Luna | Private source preparation | doing | rt-F-final-D73-prep-1707 | Main P5/Composition and core runner candidate. All four exact SHAs and checkout receipts before request; no live body or install. | Private candidate |
-| F-final-D72 | Document retired CLI migration | Luna | D72 and authentic source help | doing | rt-F-final-D72-docs-1704 | Actual ZIP README and owner notes; preserve D65 command, D67 exact appendix and D62 known gap. No build. | Author active |
+| F-final-D72 | Document retired CLI migration | Luna | Installed renderer and byte checks passed | merged | rt-F-final-D72-docs-1704 PASS | Actual docs installed171108 with backups; help, renderer, exactD65/D67/D62 preservation PASS. [Proof](../../design/rt-F-final-D72-docs-1704.md) | Installed docs |
 | F-final-D67 | Document genuine post-install D13 check | Luna | Exact source and installed render PASS | merged | Inputs1528; install1533 PASS | Installed README13env/7keys and original selector; D62 known gap in both docs. Actual renderer and exact-byte/mode checks PASS. | Installed docs |
 | F-final-D65 | Include authentic manifest release order | Luna | Actual installed renderer passed | merged | rt-F-final-D65-complete-1546 | Installed f992 README and8cda notes; actual command and vendor rebind precondition. D67 appendix exact. [Proof](../../design/rt-F-final-D65-complete-1546.md) | Installed docs |
 | F-final-docs | Refresh v1 delivery prose | Luna | Installed hashes and rendering passed | merged | Author1226; install1229 PASS | Two exact v2 documents installed atomically; predecessors backed up. Final tuple, gates and ZIP remain pending. | ef414 / 403384 installed |
@@ -138,7 +138,7 @@
 Runtime producer: 2c1bf0877 adds reviewedD69 tests and opt-in test observer over b318 popup. Productauth equals security88b9; popup actualb3184PASS0.16s. Canonical15/schema867f unchanged; no regeneration. P4 b2e remains held for independent1706. [Popup proof](../../design/rt-P2-popup-integrated-1704.md).
 
 core open: 2 Runtime boundaries remain: P4 ten-note45s timeout and element pending-to-teardown with terminal cause UNKNOWN. Popup source fix is qualified at b318; actual App P2 remains pending. Inverse original CLOSED at ef036/bc227. Final Runtime core cut suite remains required.
-regressions: 0 confirmed open Runtime source regressions at qualified scope. D69 skip policy CLOSED at actual5c1 with29 PASS. Both mixed-route blanket xfails removed in reviewed normal ea3; actual integrated proof/publication1708 active. Popup defect predatesD62/bc227 and source fix is home. Historical36 accounting unchanged.
+regressions: 0 confirmed open Runtime source regressions at qualified scope. D69 skip policy CLOSED at actual5c1 with29 PASS. Mixed markers CLOSED at actual2c1 with9 PASS; exact ledgerpublished after independent1702. Popup fix home, App original pending. Historical36 accounting unchanged.
 
 FREEZE D59/D66: current P1 actual26312 original2PASS plus independent1616PASS. P2 25943 original0PASS3FAIL5NOTRUN; changed P3 4858 App-owned. Agent root inverse original closes at actualef036/bc227; P4 parser original confirmation and ten-note cost remain. No cut/finalGO/artifact.
 
@@ -148,11 +148,10 @@ D65 delivery: owner Runtime merge, Agent merge, authentic App update-manifest wi
 
 Blockers: App popup proof — Runtime normal b318 merged after security1658 PASS; exact reviewed tree. Integrated focused1704 active; App owns meaningful P2. No wire change or regeneration.
 Blockers: App element activation — helper04de HOME2c1 and mounted8 PASS. App must activate it in actual worker subprocess for next meaningful P2; peer1708 sent. Historical phase UNAVAILABLE, no backend cause claimed.
-Blockers: Runtime P4 — b2e source candidate measured40.2percent finiteCPU improvement; independentsecurity1706 active. Original45s timeout remains OPEN, no result/historymemo or budget change.
-Blockers: Runtime D69 — marker source merged ea3 after finalcitation1702 PASS. Integrated1708 qualifies affected tests and publishes exact reviewedledgerappendix. Prior29 policyPASS retained.
+Blockers: Runtime P4 — security1706 passed174 but FAILed two strictRuffB009s and asked schema-mutation control. Luna1713 firstreturn active; original45s remains OPEN, no memo/budget waiver.
 Blockers: App — changed P34858 intent correction and stable current sources owned. P1 recordedGO; no duplicate P2/P3. Runtime1700 owns safe next-run phase capture; App owns normal launch wiring.
 Blockers: Final delivery — all active lanes need core0/regressions0 plus current P2/P3 and D69 completion. Agent newly reports39 restored-node failures; four classifiers own them. No cut/proofs/build/ZIP.
-Next ready: consume P4security1706 for immediate normalmerge; D69 integrated1708 and D72docs1704. D73prep1707 active; App worker-phase activation follows peer1708.
+Next ready: consume P4return1713 for independentfinalreview, D73prep1707 and Appphasewiring1700. Exact element diagnostic venue is owned by App; no duplicate main body.
 
 Later: D47 memo and proof pins remain post-delivery; nine state attacks open. V4 cut; D14/D23 deferred unchanged. D34 broader cleanup remains held. D62 submit completeness is an explicit known gap in the Runtime behavior-change ledger.
 
@@ -160,10 +159,12 @@ Admission: D56 stops Farm and schema-access work. Exact403 and automatic access 
 
 Disk: about8.3GB, above main8GB heavy floor. Sweep3 freed0; compact packed0/compressed0. Finished worktrees automatically recycle; no old refused target retried.
 
-live 4 / cap 4; ready-undispatched 0. Luna1706 P4 security,1704 D72 docs,1707 D73 final prep,1708 D69/phase integrated. All independent ready rows dispatched.
+live 2 / cap 4; ready-undispatched 0. Luna1713 P4 first return and1707 D73 private prep. D74 caps consumed:6 above8.5GB,4 at7.5–8.5,2 below7.5; no dispatch below6.5. No guarded release refusals retried.
 
 Pass 2026-10-24T16:57:06Z: New Agent actual49 failures consumed with its four disjoint source classifiers. Popup author88b9 complete -> independent security1658 dispatched. D69 review1647 FAIL only citations -> return1658 dispatched. P4Sol1652 active; element phase still UNKNOWN pending App-host input. Source remains5c1 and no originals duplicated.
 
 Pass 2026-10-24T17:00:20Z: App1649 completes historical element phase input as UNAVAILABLE. Cleared blockedApp immediately; unique Luna1700 implements bounded opt-in test-only observation and actual mounted smoke. No original or product guard edit. Four ready rows dispatched undercap4.
 
 Pass 2026-10-24T17:08:53Z: Popup actualb3184PASS; D69finalcitations1702PASS -> normalea3. Phasehelper04de author8PASS -> normal2c1, exactAppworker-activation ask1708. P4authorb2e complete -> security1706. D72docs1704, D73privateprep1707, exactD69/phaseproof1708 active undercap4. No originalduplicate or cut/build.
+
+Pass 2026-10-24T17:14:02Z: D69actual2c1 focused9PASS9s andexactledgerpublication1708 closes RuntimeD69. D72docsinstalled171108/renderer/sourcehelpPASS. P4security174PASSbutstrictlintFAIL -> Lunafirstreturn1713, schema-mutabilitycontrol explicit. D73prep1707 readysoon. Appfocused diagnosticvenue1700 consumed, onebody not yet requested. D74classifierrefusal stays stopped, no stale-pin release retry.

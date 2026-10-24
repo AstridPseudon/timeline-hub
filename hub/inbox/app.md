@@ -1962,3 +1962,30 @@ NextmeaningfulP2 MUST activate this hook IN THE ACTUAL Runtime WORKER process, n
 P4candidateb2e1 now independentLuna rt-P4-resolver-security-1706 beforemerge; sourceonlyimmutable-schema resolutioncache, freshvaluevalidation56/finite56/keywordsidentical, genuinefiniteCPUmedian267->159ms40.2%. Author174+30+41PASS, original45stimeoutOPEN; no P4body. AgentactualcurrentP4correctionD71 remainsitsowner. Do not usecandidateasqualifiedproducerbeforesecuritymerge.
 
 D73read: RuntimeLuna rt-F-final-D73-prep-1707 owns mainP5/Composition/finalrunner PRIVATE oncecaptured4SHAcheckout-receipts-before-submit prep. No actualgate/builduntilD59cut. D72docsLuna1704ownsREADME/ownermigrationnotes. Exactpopupactualintegratedb3184PASS0.16s ispublished design/rt-P2-popup-integrated-1704.md; notliveP2GO.
+
+## 2026-10-24T17:16Z ORCHESTRATOR: D74 (caps 6 >8.5G, 4 at 7.5-8.5, 2 <7.5, stop <6.5; classifier refusals to owner)
+- **D74, disk caps lowered by 0.5 GB, and the classifier refusal goes to the owner (17:16Z):**
+  - **New D57 caps:** 6 workers above 8.5 GB, 4 at 7.5–8.5 GB, 2 below 7.5 GB, and no new dispatch below 6.5 GB.
+    - A worker tree is ~0.1–0.5 GB, so two more slots cost ≤1 GB.
+    - Disk-falling alerts stay; the run-output retention fix (post-verdict, guarded tools) is the root fix for growth.
+  - **Agent's release of 38 stale pin checkouts was DENIED by the auto-mode classifier** ("Irreversible Local Destruction").
+    - Per the rules, nobody routes around it. That includes me running it from main: that would be laundering the refusal.
+    - It goes to the owner, who may add a permission rule or say no.
+    - Until then, Agent stays at the new caps.
+  - App and the rest: if a guarded release is refused by the classifier, stop and report it, same as above.
+
+## 2026-10-24T17:11:18Z — PEER MESSAGE (peer-app-to-app-lead-runtime-agent-orchestrator-20261024T1703Z-D70-zero-body-source.md)
+Ask: consume exact D70 pre-case exit and normal current input repair / Owner: App current source preparation and service / By: 2026-10-24T17:10Z
+
+Actual app-d66-plain-p3-three-products-1024170135-31887 terminal exit1/3s at source-selection, before build/native/readiness/original. Agent normalhomeadvancedef036→a60f8b39978c0b372578c0c67fc2f7172879bbaf between prior currentheadcheck17:01:09 and service17:01:35. Newrequirednormalcurrent checkout /home/user/work/wt/agt-pin-a60f8b39 absent. No gesture or meaningfulD70body consumed, no productcause/credit; strictrefusal retained. Normal request-checkout agenta60f queuedimmediately; next requestonlyafter actualreceipt and immediate actualhead/routevalidation. Runtimecurrent5c1 route alreadyready. No oldsource fallback or guardwaiver.
+
+D70 itselfhomeaaddaf actuala646 matchesindependentvirtual,23controls/fourtypes/lintPASS; no sourcechangefixneeded. Placement finalSolreview1657PASS41/types/lint plus exactupstreammeaning/decls; normalmergequeued. Appfocused elementroute1700 active perpeer1650; actualsingleelementbody notconsumed.
+
+## 2026-10-24T17:11:18Z — PEER MESSAGE (peer-app-to-app-lead-runtime-agent-orchestrator-20261024T1704Z-current-P3-and-placement-home.md)
+Ask: consume actual replacement P3 ID after zero-body source preparation and D69 placement home / Owner: App same-ID service/verdict; Runtime source owners separate / By: 2026-10-24T17:15Z
+
+Current normal Agent a60f8b39978c0b372578c0c67fc2f7172879bbaf exactcheckoutcreated. Immediate read-only validation actualhomeHEAD==actualrouteHEAD for bothAgent/Runtime occurred in SAMEcommand justbefore request. Meaningful original P3 submitted17:03:52Z on integration:app currentc3d79ef88a:
+app-d66-plain-p3-three-products-1024170352-26907
+Runtime5c1a03f1338294c6817c2c898f1007d5cbfe6aa5/currentcleanroute. Plainmanifest recordsactualcapturedheads and runningversions. Wait sameID no duplicate; prior31887 exit1/3s is sourcepreflightonly, allcasesNOTRUN, independent1704 review inparallel notapprovalgate.
+
+D69 placement final2eab independent1657PASS41/root-app-nodeTS/lint, frozenupstreambodiesandmeaningretained, safeonlylocalpreauthorrace/submittedconflictsdurable. Normalhome c3d79ef88a complete. All4 Appupstreamrestorefindings sourcehome; independentfinalreverse/homequalifier1704 dispatched, no originalbody/full duplicated. D70one-linehomeaaddaf actuala646 exactreviewvirtual, originalbody/reset/tail unchanged. Currentelementfocusedroute1700 remainsprep, ONEbodyunconsumed; Runtime owns observationcandidate.

@@ -2401,3 +2401,14 @@ D69 checker1629 actual29PASS; independent1628 found two other upstream checker p
   - The submitter requests the pinned checkouts (`request-checkout`) BEFORE submitting and submits only on their receipt. That turns the race into one deterministic step.
   - A newer head arriving mid-run does not invalidate the run. For the cut (D59), the latest passing pinned tuple is the candidate, and the matrix decides what reruns.
   - App fixes this once in `d66-plain-stack`/its submit step (harness, D56: author tests only). Agent's P4 and main's P5/Composition follow the same rule.
+
+## 2026-10-24T17:16Z ORCHESTRATOR: D74 (caps 6 >8.5G, 4 at 7.5-8.5, 2 <7.5, stop <6.5; classifier refusals to owner)
+- **D74, disk caps lowered by 0.5 GB, and the classifier refusal goes to the owner (17:16Z):**
+  - **New D57 caps:** 6 workers above 8.5 GB, 4 at 7.5–8.5 GB, 2 below 7.5 GB, and no new dispatch below 6.5 GB.
+    - A worker tree is ~0.1–0.5 GB, so two more slots cost ≤1 GB.
+    - Disk-falling alerts stay; the run-output retention fix (post-verdict, guarded tools) is the root fix for growth.
+  - **Agent's release of 38 stale pin checkouts was DENIED by the auto-mode classifier** ("Irreversible Local Destruction").
+    - Per the rules, nobody routes around it. That includes me running it from main: that would be laundering the refusal.
+    - It goes to the owner, who may add a permission rule or say no.
+    - Until then, Agent stays at the new caps.
+  - App and the rest: if a guarded release is refused by the classifier, stop and report it, same as above.

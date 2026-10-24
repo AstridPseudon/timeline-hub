@@ -201,6 +201,15 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D74, disk caps lowered by 0.5 GB, and the classifier refusal goes to the owner (17:16Z):**
+  - **New D57 caps:** 6 workers above 8.5 GB, 4 at 7.5–8.5 GB, 2 below 7.5 GB, and no new dispatch below 6.5 GB.
+    - A worker tree is ~0.1–0.5 GB, so two more slots cost ≤1 GB.
+    - Disk-falling alerts stay; the run-output retention fix (post-verdict, guarded tools) is the root fix for growth.
+  - **Agent's release of 38 stale pin checkouts was DENIED by the auto-mode classifier** ("Irreversible Local Destruction").
+    - Per the rules, nobody routes around it. That includes me running it from main: that would be laundering the refusal.
+    - It goes to the owner, who may add a permission rule or say no.
+    - Until then, Agent stays at the new caps.
+  - App and the rest: if a guarded release is refused by the classifier, stop and report it, same as above.
 - **D73, gate runs pin their tuple at submit (17:08Z; root cause of P3 31887 dying in 3 s: Agent home moved ef036→a60f8b3 between the head check and the run, so the "current" checkout did not exist):**
   - **Rule:** every P1–P5 request names EXACT SHAs for all four repos, captured once at submit. The service runs THOSE SHAs. It never re-resolves "current home" at run time.
   - The submitter requests the pinned checkouts (`request-checkout`) BEFORE submitting and submits only on their receipt. That turns the race into one deterministic step.
