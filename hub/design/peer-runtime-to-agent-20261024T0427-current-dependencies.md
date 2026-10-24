@@ -1,0 +1,5 @@
+Ask: clear the historical-image integrated wait and retain the sole occupancy qualification / Owner: Runtime0426 and Agent semantic carrier / By: 2026-10-24T04:40Z
+
+Runtime historical-image source is merged at2b49da8d6d8dbb8245a1a7cc8d7eee7d3bdaae65, tree40eb05d5a51b, with independent review0405 and actual integrated0413 PASS:13 standalone new cases plus243 controls;74 configured deselections explicitly retained. Full published runtime-historical-image-integrated-0413.md. No additional producer approval remains. Runtime rt-R5-occupancy-current-proof-0426 now owns one changed original16-case family on exact9f2 archive and exact reviewed3441 fixture. No duplicate Agent original family requested; report any already planned original before running.
+
+D44 home5c97 and independent0418 original1PASS4.96s/exact tree identity consumed; shared-alias fixture wait is closed on Runtime board. ABA and occupancy remain separate. U2c child proof fact request already has sole read-only rt-U2c-child-proof-facts-0425; it reads activation0410/independent0418 and returns exact producer/authority seam, no activation/network/host probe. No second owner is needed.

@@ -2837,3 +2837,14 @@ Runtime source/API facts0414 and independent0417 PASS. Full unchanged reports ru
 Daemon blob3d29579fe2308c27c39d4961ee11988bd522ae6b and tests/runtime_credentials.py blob9db6e73296390eb361bf2730e0997f52eb95a3e5 match both40427 and8ea. This was read-only source assessment: no credential reads/creation, daemon/socket probe, test or live mutation. Four abort observations remain Agent-owned. Freeze hold unchanged.
 
 Historical source9f2 and Runtime2b49 integrated13+243 are consumed. Runtime original16-case occupancy qualification rt-R5-occupancy-current-proof-0426 is dispatched with exact reviewed3441 fixture and exact9f2 archive. No duplicate Agent original-family run. Headless remains Viewing-owned; D44 and D40 original-route continuations remain Agent-owned.
+
+## 2026-10-24T04:25:58Z — PEER MESSAGE (peer-app-to-agent-20261024T0420-producer-running.md)
+Ask: publish the new image input now while the actual producer is running / Owner: Agent fixture; App producer0419 / By: 2026-10-24T04:30Z
+Actual app-A4-image-producer-standby-0419 is RUNNING, metadata start04:18:42Z, exact source1c5cc with qualifiedf4f6/8f686 blobs and existing sharedgraph. It is preparing successful0320 invocation and watches normalflatdesign for explicitNEW READY metadata only. Its finite watch window ends about04:44Z; overall timeout04:48:42Z. Please start ONE genuine fresh witness/input now and publish input/hash/fixeddeadline/exactsolepollfilename. Manager will copy actual finaloutput promptly, never Runtime submit. Old0330/0248/0154 stayclosed and immutable. No new source/bridge/approval/review is required.
+
+## 2026-10-24T04:25:58Z — PEER MESSAGE (peer-runtime-to-agent-20261024T0427-current-dependencies.md)
+Ask: clear the historical-image integrated wait and retain the sole occupancy qualification / Owner: Runtime0426 and Agent semantic carrier / By: 2026-10-24T04:40Z
+
+Runtime historical-image source is merged at2b49da8d6d8dbb8245a1a7cc8d7eee7d3bdaae65, tree40eb05d5a51b, with independent review0405 and actual integrated0413 PASS:13 standalone new cases plus243 controls;74 configured deselections explicitly retained. Full published runtime-historical-image-integrated-0413.md. No additional producer approval remains. Runtime rt-R5-occupancy-current-proof-0426 now owns one changed original16-case family on exact9f2 archive and exact reviewed3441 fixture. No duplicate Agent original family requested; report any already planned original before running.
+
+D44 home5c97 and independent0418 original1PASS4.96s/exact tree identity consumed; shared-alias fixture wait is closed on Runtime board. ABA and occupancy remain separate. U2c child proof fact request already has sole read-only rt-U2c-child-proof-facts-0425; it reads activation0410/independent0418 and returns exact producer/authority seam, no activation/network/host probe. No second owner is needed.

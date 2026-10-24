@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T04:25:58Z | dispatcher heartbeat 1s | live 4 (sol 1, luna 3, other 0) | busy30 20 | status age 1m -->
+<!-- main | 2026-10-24T04:28:30Z | dispatcher heartbeat 2s | live 2 (sol 1, luna 1, other 0) | busy30 19 | status age 1m -->
 # runtime board, 2026-10-24T04:23:34Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -40,7 +40,7 @@
 | V4-deferred | H9 cut and deferred timing | Orchestrator | Deferred scope | gated:H9-cut | No new worker | Original failures stay unchanged and visible. No V4 repair or proof run. | deferred |
 | F-authoring-publish-writer | Preserve publication behavior | Sol / Luna | Agent home qualification | merged | Agent0256; integrated0302 | Actual Agent 66d passed 60 cases, including seven original neighbors. Runtime duplicate 21ed remains unmerged. | Agent66d85b5db8 |
 | F-authoring-neighbors | Preserve saved-pair action predicate | Luna / Luna | Agent home qualification | merged | Runtime0246; Agent0302 PASS | Saved-pair fixture joined Agent home. Actual Agent 66d passed 60 cases; all original predicates retained. | d578; Agent66d |
-| F-authoring-seed-fixture | Preserve shared alias compiler case | Sol / Luna | Agent reply qualification | blocked:agent | Runtime 0303 and 0313 PASS; Agent 0337 | Source landed; faithful original reached publication, then reply key failed. Agent owns first return. | 8f9a6acc7; Agent 8f5c |
+| F-authoring-seed-fixture | Preserve shared alias compiler case | Sol / Luna | Explicit D44 behavior and review | merged | Agent author0414; independent0418 PASS | Original case passed in4.96s; other10 predicates unchanged. Exact reviewed tree equals Agent home. [Review](../../design/agent-D44-alias-review-0418.md) | Agent5c97e35b05 |
 | OPS-manifest-restore | Restore accidental generated manifest write | Luna | Exact main file identity | merged | Restore 0110; independent 0113 PASS | Exact tracked hash restored; main cleanliness and byte equality independently verified. | HEAD 458595850 |
 | R0-public-export-manifest | Refresh generated artifact hash | Luna | Integrated verification passed | merged | Author 0111; review 0115; integrated 0128 | Actual head db11 passed 74 cases and generation checks; 77 of 78 entries unchanged. [Proof](../../design/runtime-R0-manifest-integrated-0128.md) | db11ea829 / 8a742b1c2 |
 | R5-full-headless | Preserve headless acceptance and retry | Sol / Luna | Viewing authoritative effect fix | blocked:viewing | Cause 0332; review 0349 PASS; Viewing 0358 | 12 cases passed; one failed. First patch after bootstrap omits a mirror removal in Agent effects. [Cause](../../design/runtime-headless-effect-cause-0332.md) | ddaa6aed held |
