@@ -30,4 +30,3 @@ export function coversFrame(clip: ResolvedTimelineClip, track: TrackDefinition |
   };
   return full(clip.width, outW) && full(clip.height, outH);
 }
-
