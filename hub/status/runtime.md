@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T06:38:29Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 1m -->
-# runtime board, 2026-10-24T06:37:10Z
+<!-- main | 2026-10-24T06:41:02Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 16 | status age 1m -->
+# runtime board, 2026-10-24T06:39:49Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -68,8 +68,8 @@
 | R0-D39-generation-dry | Rehearse client generation for freeze | Luna / Luna | Final freeze source and adoption | gated:freeze | Author 0540; review 0545 PASS | Normal generation reproduced all outputs. 147 client and 16 response cases passed; zero new diagnostics. [Review](../../design/runtime-R0-D39-generation-review-0545.md) | fe637f6c5 held |
 | F-D09-remainder | Map three retained managed-scene originals | Luna / Luna | Independent mapping passed | merged | Author 0557; review 0601 PASS | Exact retained three-case PASS on Runtime 8ea; current 1d9 import probe is separate. [Review](../../design/runtime-D09-review-0601.md) | Agent 2007 unchanged |
 | F-G5-restructure-remainder | Qualify seven restructure originals | Luna / Luna | Independent result review passed | merged | Author 0557; review 0602 PASS | Seven exact originals passed in 54.26 seconds on Agent 2007 and Runtime 1d9dd. [Review](../../design/runtime-restructure-review-0602.md) | Agent 2007 unchanged |
-| F-normal-publish-remainder | Qualify eight publication originals | Luna / Luna | Agent renderer-free identity caller fix | blocked:agent | Author 0557; review 0601 FAIL | Seven passed; one strict no_renderer failure before submit. Exact existing raw-projection seam returned. [Review](../../design/runtime-normal-publish-review-0601.md) | Agent 2007 unchanged |
-| F-renderless-store | Open sessions without renderer imports | Sol / Luna | Agent home merge and qualification | merging | Author0619; review0626 PASS | Independent 21 passed; zero new diagnostics. Opaque callable limit retained. [Review](../../design/runtime-renderless-store-review-0626.md) | e149f8993 |
+| F-normal-publish-remainder | Qualify eight publication originals | Luna | Reviewed renderer-free source merged | doing | Original0557; home0640 | Seven retained passes; one original now ready on Agent home1f15. Source blobs verified before one qualification. | Agent1f15 / Runtime1d9 |
+| F-renderless-store | Open sessions without renderer imports | Sol / Luna | Integrated original proof | doing | Author0619; review0626; proof0640 | Agent home merged reviewed source. One original closure case qualifies the integrated caller; no duplicate 21-control run. | Agent1f15 / e149 |
 | F-SDK-three-originals | Qualify three retained SDK originals | Luna | Agent assigned exact selectors | doing | rt-F-SDK-three-originals-0638 | Existing exact receipts first; read-only scope. No changes to the Viewing-owned ABA file. | Agent 0b425 base |
 | F-helper-originals | Qualify fourteen retained helper rows | Luna | Missing authenticated word binding | blocked:agent | Author0622; review0627 scoped PASS | Thirteen passed; one remains open. Exact missing word binding returned to Agent. [Review](../../design/runtime-helper-review-0627.md) | Agent bb50 unchanged |
 | F-R2-root-originals | Qualify nine retained root cases | Luna | Independent exact result review passed | merged | Author0622; review0625 PASS | Nine originals passed; source only. Pre/post capture limit disclosed. [Review](../../design/runtime-R2-root-review-0625.md) | Agent bb50 unchanged |
@@ -90,9 +90,9 @@ D34: Main has 8.5 GiB free at the latest check. The orchestrator orders no furth
 
 Later: D46 closes U2c; no new relay or provider custody backend. Its upstream commit arrives at the freeze. Agent owns support-probe timeout investigation 0522; no Runtime author is requested. Disk and D47 memo work stay paused. CLI five retained units and the final v2 production save path passed independent Sol0601 review. Agent owns exact original count mapping; no source change is justified. The H32 U1c recheck and D39 generation dry run are also dispatched.
 
-Blockers: Agent — normal-publication original waits for Runtime source0619 review and Agent home merge.
 
-Next ready: None waiting. SDK three-original qualification0638 is queued. Farm owns reviewed setup and genuine preflight from peer0635. Agent owns renderer-free home merge and missing child install metadata. One helper word binding remains open.
+
+Next ready: None waiting. SDK three-original qualification0638 and integrated publication0640 are queued. Farm owns genuine setup and preflight. Child install metadata and helper word binding remain Agent-owned.
 Later: Viewing peer0624 reports its partial ABA repair and remaining native-stage address mismatch. Viewing owns source and review; no Runtime author or body is requested.
 Blockers: Farm — corrected full-suite host setup and genuine parent plus sanitized child import preflight remain unverified; reviewed packet0635 is published.
 Blockers: Agent — child dependency route needs the finite failed install log and actual existing-child custody metadata; no unchanged build retry.

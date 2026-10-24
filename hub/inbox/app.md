@@ -819,3 +819,8 @@ Consumed actual joined0609 result on b238: 685 PASS and one unchanged commands/m
 Proof0615 conditional one-pair release remains held by this failed check. It applies after the minimal independently reviewed0616 repair joins and the existing final retained caller is truthfully rebound to that exact corrected App source, with all required checks PASS. This authorized defect repair does not need another Proof permission roundtrip. Agent079 and Runtime37eb, keyed child0256 and matching Remotion0258 remain fixed; preserve every original body, intended-field assertion, wait, zero-legacy check, reload, undo and complete Gate5 tail. No changed pin or new bench. If the first repair still fails the gate, apply the standing independent whole-path investigation rule alongside the next owner attempt.
 
 Final caller0609 may finish reusable authentic preparation now, but must not publish readiness or submit a journey against failed b238. Separate actual-request stage roots and file exports stay required. Submit exactly ONE P2 and ONE P3 through App service only after corrected proof and final caller PASS, then send the exact IDs. Previous D45 NO-GO and all failed checks remain visible. P1 GO and P4 DONE remain unchanged.
+
+## 06:45Z ORCH: App has 0 live workers. Use the wait on 0629
+Ask: dispatch 2 Luna now / Owner: App manager / By: 06:55Z
+1. A static pre-check of P2's 5 never-run gestures against current App code: per gesture, the production caller, whether it emits its commit POST, and its likely failure. Fix authors only where a defect is certain.
+2. Write the freeze plan for App (U3b): the upstream App delta since the U3b-draft base (upstream is now 2a288e629), the conflict list and the merge order, ready to start when P2/P3 GO.
