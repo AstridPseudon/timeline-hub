@@ -385,15 +385,30 @@ def test_d69_upstream_native_window_layer_is_materialized_once_with_pin_hold_and
     segment = RenderSegment(window=request.window, renderer=_renderer_resolution(candidate.id), input_hashes={}, layer=LayerRef(z=z, tracks=('scene',)))
     service = RenderService()
     adapted, hashes = service._segment_request(request, candidate=candidate, segment=segment, index=0, workspace=tmp_path)
-    assert adapted.window is None
+    # design/agent-review-extent-current.md approves retaining the absolute
+    # native window while materializing only the selected layer.
+    assert adapted.window is request.window
     materialized = json.loads(Path(adapted.timeline_path).read_text())
     assert [track['id'] for track in materialized['tracks']] == ['scene']
     assert len(materialized['clips']) == 1  # Audio/overlay belong to other tracks.
     scene = materialized['clips'][0]
     assert scene['app']['liveScene'] == package
-    assert (scene['at'], scene['from'], scene['to'], scene['speed'], scene['hold']) == (0, 63, 65, 2, 2)
+    assert (scene['at'], scene['from'], scene['to'], scene['speed'], scene['hold']) == (2, 55, 75, 2, 20)
     assert materialized['metadata']['astrid_layer'] == {'z': z, 'alpha': z > 0}
     assert hashes['materialized_timeline'] == hashlib.sha256(Path(adapted.timeline_path).read_bytes()).hexdigest()
-    assert threejs._window_timeline(materialized, adapted) is materialized
+    projected = threejs._window_timeline(materialized, adapted)
+    assert projected is not materialized
+    projected_scene = projected['clips'][0]
+    assert projected_scene['id'] == 'scene_180_210'
+    assert (projected_scene['at'], projected_scene['from'], projected_scene['to'], projected_scene['speed'], projected_scene['hold']) == (0, 63, 65, 2, 2)
+    assert projected['metadata'] == {
+        'astrid_layer': {'z': z, 'alpha': z > 0},
+        'source_window_start_seconds': 6, 'source_window_end_seconds': 7, 'duration_seconds': 1,
+    }
+    assert projected_scene['at'] + projected_scene['hold'] / projected_scene['speed'] == 1
+    for frame in range(request.window.duration_frames):
+        source_time = projected_scene['from'] + (frame / 30 - projected_scene['at']) * projected_scene['speed']
+        assert source_time == pytest.approx(55 + (6 + frame / 30 - 2) * 2)
+        assert 63 <= source_time < 65
     assert threejs._support_reasons(materialized) == []
-    assert json.loads(path.read_text())['clips'][0]['from'] == 55
+    assert json.loads(path.read_text()) == config
