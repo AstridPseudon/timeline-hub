@@ -4,6 +4,8 @@ import { ApiError } from '@/integrations/runtime/generated.ts';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import type { CanonicalDocument, CommitRequest } from '@/integrations/runtime/generated.ts';
 import type { TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
+import { createTimelineLocalSaveHandoff } from '../hooks/timelineLocalSaveHandoff.ts';
+import { createDefaultTimelineConfig } from '../lib/defaults.ts';
 import { createCommitOutbox, toOutboxJson, type OutboxRecord } from './commitOutbox.ts';
 import { createLocalSaveSession } from './localSaveSession.ts';
 
@@ -67,14 +69,22 @@ function environment() {
   const pair = documentPair();
   const initial: TimelineCommandBasis = { head: h0, canonicalDocument: pair.document };
   const factory = createFakeIndexedDB();
-  const outboxes = createCommitOutbox({ indexedDB: factory, exclusiveLock: async (_key, work) => work() });
+  const locks = new Set<string>();
+  const outboxes = createCommitOutbox({ indexedDB: factory, exclusiveLock: async (key, work) => {
+    if (locks.has(key)) throw new Error('Outbox is already claimed');
+    locks.add(key);
+    try { return await work(); }
+    finally { locks.delete(key); }
+  } });
   const send = vi.fn<(request: CommitRequest, key: string) => Promise<TimelineCommitResult>>();
+  const adopt = vi.fn();
+  const changed = vi.fn();
   const prepareDisplay = vi.fn(async (basis: TimelineCommandBasis, draft?: ReturnType<typeof toOutboxJson>) => ({
-    document: draft ?? toOutboxJson(basis.canonicalDocument), adopt: vi.fn(),
+    document: draft ?? toOutboxJson(basis.canonicalDocument), adopt,
   }));
   const mount = (basis = initial) => createLocalSaveSession({ scope, initial: basis, document: toOutboxJson(basis.canonicalDocument), outboxes, send,
-    loadLatest: async () => initial, prepareDisplay, changed: () => {} });
-  return { pair, initial, factory, outboxes, send, prepareDisplay, mount };
+    loadLatest: async () => initial, prepareDisplay, changed });
+  return { pair, initial, factory, outboxes, send, prepareDisplay, adopt, changed, mount };
 }
 
 describe('local save recovery basis refusals', () => {
@@ -104,6 +114,7 @@ describe('local save recovery basis refusals', () => {
       const original = { pending: structuredClone(saved.pending),
         accepted: structuredClone(saved.accepted) };
       const projectionCount = env.prepareDisplay.mock.calls.length;
+      const adoptionCount = env.adopt.mock.calls.length;
       const sendCount = env.send.mock.calls.length;
       expect(sendCount).toBe(2);
       const originalPayload = saved.intents[0].payload as Record<string, unknown>;
@@ -126,18 +137,41 @@ describe('local save recovery basis refusals', () => {
       const [corrupted] = await env.outboxes.list(scope);
       const refreshed = acceptedResult(before, { revisionId: 'r2', publicationId: 'p2' });
       const reopened = await env.mount({ head: refreshed.accepted, canonicalDocument: refreshed.canonicalDocument });
-      await expect(reopened.recover(corrupted.ownerId)).rejects.toThrow('verified original display basis');
-      expect(reopened.getState()).toMatchObject({ status: 'recovery', recoverableOwners: [corrupted.ownerId] });
+      const message = 'Local saves require a verified original display basis for recovery';
+      const refusal = { status: 'error', recoverableOwners: [corrupted.ownerId], error: { message } };
+      await expect(reopened.recover(corrupted.ownerId)).rejects.toThrow(message);
+      expect(reopened.getState()).toEqual(refusal);
+      expect(env.changed).toHaveBeenLastCalledWith(refusal);
       expect(reopened.getDocument()).toEqual(refreshed.canonicalDocument);
       expect(env.prepareDisplay).toHaveBeenCalledTimes(projectionCount);
       expect(env.send).toHaveBeenCalledTimes(sendCount);
       expect(() => reopened.append({ before: afterB, after: afterB, label: 'C', commands: [{
         schema_version: 1, op: 'doc.patch', version: '1', select: null, args: { changes: [] },
-      }] })).toThrow('Local save session is closed or awaiting recovery');
+      }] })).toThrow(message);
       expect(() => reopened.appendDocument({ before: afterB, after: afterB, roots, label: 'C',
         step: { id: 'c-step', label: 'C', intent: 'C', tags: [] } }))
-        .toThrow('Local save session is closed or awaiting recovery');
-      await expect(reopened.flush()).rejects.toThrow('Local save session is closed or awaiting recovery');
+        .toThrow(message);
+      // Recovery is the current API's explicit retry while no owner is claimed.
+      await expect(reopened.recover(corrupted.ownerId)).rejects.toThrow(message);
+      await expect(reopened.flush()).rejects.toThrow(message);
+      // Undo availability belongs to the production handoff, not session state.
+      const handoff = createTimelineLocalSaveHandoff({ initial: { head: refreshed.accepted,
+        canonicalDocument: refreshed.canonicalDocument, history: {
+          head: { revision_id: 'r2', publication_id: 'p2' }, next_cursor: null,
+          items: [{ revision_id: 'r2', publication_id: 'p2', previous: null, intent: 'recorded',
+            records: { schema_version: 1, commands: [], undo_of: [], restored_from: null },
+            receipt: refreshed.receipt, provider_version: null, compiler_version: null, publisher: scope.actorId }],
+        } }, source: { config: createDefaultTimelineConfig(), registry: { assets: {} }, head: {
+          projectId: scope.projectId, timelineId: scope.timelineId, headRevisionId: 'r2', headPublicationId: 'p2',
+        } }, session: reopened, adopted: () => { throw new Error('Refused recovery cannot adopt'); } });
+      expect(handoff.remoteHistoryAvailable()).toBe(false);
+      expect(handoff.canUndo()).toBe(false);
+      await expect(handoff.undo()).rejects.toThrow('durable timeline history is not settled');
+      expect(reopened.getState()).toEqual(refusal);
+      expect(reopened.getDocument()).toEqual(refreshed.canonicalDocument);
+      expect(env.prepareDisplay).toHaveBeenCalledTimes(projectionCount);
+      expect(env.adopt).toHaveBeenCalledTimes(adoptionCount);
+      expect(env.send).toHaveBeenCalledTimes(sendCount);
       const [retained] = await env.outboxes.list(scope);
       expect(retained.intents).toEqual(corrupted.intents);
       expect(JSON.stringify(retained.intents)).toBe(JSON.stringify(corrupted.intents));
@@ -145,6 +179,26 @@ describe('local save recovery basis refusals', () => {
       expect(retained.accepted).toEqual(original.accepted);
       expect(JSON.stringify(retained.pending)).toBe(JSON.stringify(original.pending));
       expect(JSON.stringify(retained.accepted)).toBe(JSON.stringify(original.accepted));
+      // Repair only the authoritative stored basis through the same storage path.
+      await editOwner(env.factory, (record) => {
+        (record.intents[0].payload as Record<string, unknown>).displayBasis = structuredClone(originalBasis);
+      });
+      env.send.mockRejectedValueOnce(new ApiError(409, 'conflict', 'busy', '', { status: 'refused', reason: 'head_busy' }));
+      const recovering = reopened.recover(corrupted.ownerId);
+      await expect(reopened.recover(corrupted.ownerId)).rejects.toThrow('already claimed');
+      await recovering;
+      expect(reopened.getState().status).toBe('retry');
+      expect(env.send.mock.lastCall).toEqual(env.send.mock.calls[1]);
+      await expect(reopened.recover(corrupted.ownerId)).rejects.toThrow('Choose an explicitly listed local save owner');
+      const competing = await env.mount();
+      await expect(competing.recover(corrupted.ownerId)).rejects.toThrow('already claimed');
+      expect(env.send).toHaveBeenCalledTimes(sendCount + 1);
+      await competing.dispose();
+      env.send.mockResolvedValueOnce(acceptedResult(afterB));
+      await reopened.flush();
+      expect(env.send.mock.lastCall).toEqual(env.send.mock.calls[1]);
+      expect(reopened.getState().status).toBe('saved');
+      expect(handoff.canUndo()).toBe(true);
       await reopened.dispose();
     });
 

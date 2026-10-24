@@ -81,6 +81,7 @@ export async function createLocalSaveSession(options: Options) {
   let generation = 0;
   let adoptedAcceptance: string | undefined;
   let replaying = false;
+  let recoveryError: unknown;
   let writeError: unknown;
   let state: LocalSaveState = { status: 'saved', recoverableOwners: [] };
 
@@ -91,6 +92,7 @@ export async function createLocalSaveSession(options: Options) {
     options.changed(clone(state));
   }
   function assertOpen() {
+    if (!closed && recoveryError) throw recoveryError;
     if (closed || !box) throw new Error('Local save session is closed or awaiting recovery');
   }
   function checkBasis(value: TimelineCommandBasis) {
@@ -241,6 +243,7 @@ export async function createLocalSaveSession(options: Options) {
         const prepared = await options.prepareDisplay(clone(displayBasis), clone(document));
         if (!closed) prepared.adopt();
       }
+      recoveryError = undefined;
       publish(record.intents.length ? 'dirty' : 'saved');
       ready();
       await new Promise<void>((resolve) => { release = resolve; if (closed) resolve(); });
@@ -248,7 +251,14 @@ export async function createLocalSaveSession(options: Options) {
     lifetime = (ownerId ? storage.recover(options.scope, ownerId, (claimed) => hold(claimed, ownerId))
       : storage.create(options.scope, hold)).catch((error) => { fail(error); });
     try { await mounted; }
-    catch (error) { box = undefined; lifetime = undefined; throw error; }
+    catch (error) {
+      await lifetime;
+      box = undefined;
+      lifetime = undefined;
+      recoveryError = error;
+      publish('error', { message: errorMessage(error) });
+      throw error;
+    }
   }
 
   const owners = (await storage.list(options.scope)).filter((owner) => owner.intents.length || owner.pending);
