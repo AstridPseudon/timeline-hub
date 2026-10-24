@@ -1,0 +1,19 @@
+{
+  "packet": "OPS-child-dependency-reuse",
+  "base_runtime": "1d9ddba546f8fb1300f55ff62607ed492719cbaa",
+  "lock_sha256": "236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778",
+  "live_baseline": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv": "c887a1bef4831f2ca5a43372ee28430000b2f20b9d290bffb237f27ffc404ff2",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv": "3b771253b465a6ba06b57ab16d6049273114dc75f491ce81d0132fedb3c8aa33",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py": "6d9368207947aa316e1ed6486c5fa7ef843a84f50163114bb958011b538712a8"
+  },
+  "candidate_sha256": {
+    "candidate/bench_store.py": "6d9368207947aa316e1ed6486c5fa7ef843a84f50163114bb958011b538712a8",
+    "candidate/make-child-venv.baseline": "c887a1bef4831f2ca5a43372ee28430000b2f20b9d290bffb237f27ffc404ff2",
+    "candidate/make-child-venv": "5f80d10d3bc2f8f926f95050779662082b9de554c621b813b7d3f171bb6ab8f0",
+    "candidate/request-child-venv": "3b771253b465a6ba06b57ab16d6049273114dc75f491ce81d0132fedb3c8aa33",
+    "candidate/verify_dependency_seed.py": "b5ea582695d8296e66b39e997f320f346813d1c1f0a9269cfd18652d945078ca",
+    "tests/test_dependency_reuse.py": "861e30a82e73e4265441049f5adc5d5820edf67da3c1feec750ab47ab0662921",
+    "README.md": "8366616167c76f4382b751b8eb97bfd7a2ab55db69bbd139f094bbb9f4df368c"
+  }
+}
