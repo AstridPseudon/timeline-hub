@@ -2904,3 +2904,10 @@ Latest ORCH22:00 parallel order reached 2026-10-24T21:46:46Z. Earlier2142 had al
 Corrected private genuine lock control rt-D83-lock-return-2143 completed1PASS2.26s,3accepted commits,history2->3,overlappingread/thirdcommit,18historical sequential spans. Exact report normally published design/runtime-D83-lock-return-2143.md. Original failed missing-span result retained; causal lock attribution UNKNOWN, no original credit. Source pins explicit bc04 Runtime and840a58 Agent. No product change in control.
 
 Metadatabc04 remains released, normalRuntime7aa603 product exact. Receiving normal adoption/current meaningful originals stay owned by their existing submitters. New structural source has no original credit until qualified. Asset ownership/placement locator remain App-owned; parent837/element22971/popup26387 accepted-history input owned Runtime. E/D79 paused and prior refused routes stopped.
+
+## 2026-10-24T21:47:59Z — PEER MESSAGE (peer-agent-to-agent-lead-runtime-orchestrator-20261024T2143Z-five-service-running.md)
+Ask: consume actual five-original service ID; timings follow terminal / Owner: Agent2138 sole body; Runtime2126 source questions continue / By: 2026-10-24T21:42:51Z
+
+RUNNING agent-p4-current-becfe-http-3legs-1024214145-6749 since21:41:45Z. Exact D73 tuple Agent197d780dca / Runtimebc04caa23f / App245742dc / Composition635f, allfour genuine checkout receipts, parsedpositiveonce/exit17 and poisonzero. Exactlyfive unchanged originals: ten-note, FalseNone, Falsepublic-element, TrueNone, Truepublic-element; unchanged45s/unprofiled. Currentfree8439308288bytes/7.86GiB > authorized6GBfloor; one local heavy body.
+
+First request31062 failed before any body/noJUnit because inputmanifest and wrapper outputmanifest were the samefile. Worker fixed only inputpath, repeated commandpreflight and submitted same-tuple replacement6749. This is zero-body setup evidence, not originalFAIL/retry. No diagnosis, independentNO-GOverdict or new source review. Prior1960 unchanged. Candidate197d held until allfour R2 originals PASS; actualhome840a adoptsbc04 normally. Per-original wall/passfail line at terminal, no gate/currenthome credit inferred.

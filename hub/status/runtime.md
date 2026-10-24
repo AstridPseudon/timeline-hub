@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T21:47:59Z | dispatcher heartbeat 8s | live 2 (sol 2, luna 0, other 0) | busy30 13 | status age 1m -->
-# runtime board, 2026-10-24T21:46:46Z
+<!-- main | 2026-10-24T21:51:09Z | dispatcher heartbeat 0s | live 3 (sol 3, luna 0, other 0) | busy30 14 | status age 0m -->
+# runtime board, 2026-10-24T21:50:56Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -185,6 +185,8 @@
 
 | D84-lock-placement | Move fresh verification outside locks | HARD Sol | Explicit parallel D84a order | doing | rt-D84-lock-placement-sol-2147 | Resumes preserved2142 branch. Lock placement only; memo scope read-only. Same-head races must remain refused. | Base7aa603 |
 
+| D84-False-stacks | Capture actual False case at30s and44s | HARD Sol | Explicit ORCH22:05 | doing | rt-D84-False-stacks-sol-2151 | One unchanged local False original, private owned faulthandler. Read-only; timing proximity alone proves no cause. | Agent197d /Runtimebc04 |
+
 Runtime producer: Normal7aa603d13762b499af2279e4c1340b31b6eda5a2, tree daa9efc4a158e9bc4f6fe2186dd28ffd00800405. All product bytes equal security2122-PASS bc04/1fa23066f. Canonical15/schema867f unchanged. RELEASED21:29; new schema and lock work do not gate existing receiving-lane adoption or meaningful originals.
 
 core open: Two Runtime original boundaries: P4 ten-note45s and full native-seed/element outcome. Agent retains five historical home scopes; all remain open. Source and reduced-control results do not close originals. Final Runtime core suite owed.
@@ -207,11 +209,13 @@ Later: E1/E3 and Agent E2 designs retained; further E/D79 paused untilZIP. D47me
 Admission: D56Farm/schema access stopped. Original403/accessrefusals and historical denied cleanup/process/retirement targets untouched. D67D13envgap unchanged; AppdirtyU3guardrefusals stopped.
 Disk:8622317568available bytes at last read,8.03GiB,cap4. Scan found no eligible ended clean nonKEEP Runtime tree; three old dirty trees untouched. Guarded sweep3 removed0; compact packed0scratch/0testdirs and gzipped7logs. No prior refused target retried;15GB target not reached.
 
-live2 / cap4; ready-undispatched0. Solschema2141 dispatched from current7aa603; Lunalock2143 dispatched from retained2135 branch. E/D79 paused.
-Pass2026-10-24T21:43:00Z:Consumed cost2126 no-gain return, lock2135 failed sequential setup and legacyreview2135 PASS/normal apply. Published exact reports and existing-ledger entry, dispatched both ready continuations, sent separate peers to Agent/App/orchestrator to clear stale metadata release waits. Inbox consumed through569662bytes. No original rerun or denied route retried.
+live3 / cap4; ready-undispatched0. Solschema2141 dispatched from current7aa603; Lunalock2143 dispatched from retained2135 branch. E/D79 paused.
+Pass2026-10-24T21:43:00Z:Consumed cost2126 no-gain return, lock2135 failed sequential setup and legacyreview2135 PASS/normal apply. Published exact reports and existing-ledger entry, dispatched both ready continuations, sent separate peers to Agent/App/orchestrator to clear stale metadata release waits. Inbox consumed through570505bytes. No original rerun or denied route retried.
 
 Pass 2026-10-24T21:42:20Z: New D84 consumed immediately. Stopped micro-gain author2141 and dispatched sole HARD Sol2142 structural owner, outside-lock verification/CAS first, narrow prefix memo only if insufficient. Parent837 finite input attached owned row; App asset/placement remain App-owned per D84. No decision escalation needed: explicit owner instruction covers the structural scope.
 
 Pass 2026-10-24T21:44:47Z: D84a received and applied immediately: stopped2142 through normal route, confirmed finalized/no product WIP and branch7aa603, then resumed as2145 with request-scoped memo FIRST and cross-request reuse excluded. Asset no-commit attribution corrected; App normal245742 adoptionbc04 clears stale receiving wait.
 
 Pass 2026-10-24T21:46:46Z: Later ORCH22:00 parallel order consumed.2142 had already stopped before that order; no product WIP lost. Resumed preserved2142 branch as HARD Sol2147 for lock placement only, in parallel with2145 request-scoped dedup. Luna2143 actual1PASS/18historical spans published. Both Sol tasks dispatched; no ready task waiting.
+
+Pass 2026-10-24T21:50:56Z: ORCH22:05 requires actual30s/44s snapshots ofONEFalse original. Dispatched read-only HARD Sol2151 on exactAgent197d candidate; source owners2145/2147 remain disjoint and uninterrupted. Requested observation, not assumption that near-limit timing proves wait. No repeated fullbatch or Appbody.
