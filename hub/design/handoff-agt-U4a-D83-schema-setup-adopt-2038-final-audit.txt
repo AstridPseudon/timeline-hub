@@ -1,0 +1,22 @@
+2026-10-24T20:39:39Z
+--- lock before/after hashes ---
+before sha256 3242f75cf8d44a50cf0970ffcd93daf660ebcbc2b21c33c36b013ff84714fc38  -
+before git-object 168baef0236039a0b43600540a7069a5561a7405
+after sha256  21c27ddd8ec6e10b3ed4b5af6f786837b8459439b6efc1ba6ec659492739703f  runtime.lock.json
+after git-object 05dbc24a0554bf35e3d20c7f4a4315f9da691865
+--- reviewed product/test blobs ---
+runtime_protocol/timeline_commit_validation.py
+reviewed-fbba e896fcc8f44822ba6e8a7a6566b35657b0678283
+cleanup-e745 e896fcc8f44822ba6e8a7a6566b35657b0678283
+actual-4351  e896fcc8f44822ba6e8a7a6566b35657b0678283
+tests/test_timeline_schema_resolution.py
+reviewed-fbba 68674055692137706e5531b765196b6303b09df3
+cleanup-e745 68674055692137706e5531b765196b6303b09df3
+actual-4351  68674055692137706e5531b765196b6303b09df3
+--- exact source delta over cleanup home ---
+M	tests/helpers/p2_commit_phase_capture.py
+M	tests/test_p2_commit_phase_capture.py
+--- Agent final diff ---
+ runtime.lock.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+M	runtime.lock.json
