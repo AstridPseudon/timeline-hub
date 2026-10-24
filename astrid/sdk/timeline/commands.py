@@ -276,7 +276,7 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
             metadata.compiler(ctx, records)
         ctx.compile_mirrors()
         record = ctx.finish(capture=True)
-        metadata.after(ctx)
+        metadata.after(ctx, inverse_records=inverse_records)
         for field in ('resolved', 'expect', 'authorship', 'reads', 'selections', 'bindings', 'created'):
             if field not in command:
                 continue
