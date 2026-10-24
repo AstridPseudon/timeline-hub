@@ -2485,3 +2485,24 @@ Ask: submit ONE meaningful current D78 now through sole App shipping1952 route; 
 Runtime read-only Luna2000 COMPLETE. ActualRuntime44917 helper aa68327d unchanged; constructor supportedinterval confirmed. ActualApp1952 is normal860e9755c876ce510aabc5af0511ffe1886626f6; p2-element passes ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS=2, ordinaryp2=20, p1/p3 unset. Normalenv forwarding/sitecustomize/parser/default/positivity/CLI-startpath confirmed; original30sSDK/120sApp/5sUI unchanged. Exact report design/runtime-D78-short-window-2000.md plus genuine Runtime12PASS2.72sXML runtime-D78-short-window-2000.xml and workerreport; privatecompile/default2s/nonpositivecontrolsPASS, App22D66checksPASS. NoRuntimeproduct/source/test changes or livebody from2000, no competingApppatch or additionalreviewgate.
 
 Bounded limitation: cap1 is GLOBAL to the captureinstance. A slow ultimatelysuccessful2sseed may consume the onlydump beforethelatergenuineelementrequest; do not claim elementcapture if dumpedframe belongsseed. Actual allthreadstack stillprivate0600 and canceledonreturn/stop/restart; keepactualdumpdisposition and source/time/correlation limits. Qualify exactlywhichpendingrequest is captured and return safe file/line/frame/category; no newframework/capexpansion/endpoint/retrywithoutmeaningfulfinding. Nativecapture input is fullyready. D74a critical6GB ONEATATIME, actualD73fourcheckoutreceipts and preflightthenONEoriginalelement. P314240 isterminal, so no priorrequestwait is owed. All13100/22847/fiveD80 evidencepreserved.
+
+## 2026-10-24T20:20Z ORCHESTRATOR: D83 SPEED-UP; act on it this pass. Runtime item 1 is the top priority of the whole delivery.
+- **D83, the speed-up (20:20Z; owner asked to speed up significantly; Opus second opinion, verified against the boards):** **most of the remaining red is ONE Runtime bug.**
+  - **The evidence:**
+    - All 5 D80 single-gesture runs AND the D78 live run died at the same native-seed `transport_timeout`, before any gesture.
+    - Inside that seed, provider ordinal 1 took 1.7 s, but ordinal 2 only entered the store at 35 s and authorization at 45 s: that is waiting, not compute.
+    - The P4 ten-note step, Agent's PARAM and restart-timeout cases fail at the same ~45 s mark.
+    - Treat them all as one accepted-history-cost or lock-wait defect until proven otherwise.
+  1. **Runtime, TOP priority above everything (two HARD Sol, disjoint questions):**
+     - (a) Read the live stack from run 14383 (4206 B, hash eb2e), then build a SECONDS-LONG LOCAL repro loop: a local daemon, N history entries, the seed commit sequence, timing accept/store/auth, and a `py-spy dump` each iteration. Find what ordinal 2 waits ~33 s on.
+     - (b) The accepted-history read/verify cost path, from P4 profile 14690.
+     - No more 5–8 min service runs to diagnose this. One security review of the fix (it touches history authorization). Then ONE batched gate run.
+  2. **P3: list ALL remaining failures in one run.** A throwaway DIAGNOSTIC copy of the spec (never the gate file) using `expect.soft`, continuing on failure, on a local stack, prints every remaining mismatch in about 8 min. Then ONE batched correction, ONE review, ONE gate run. No more one-assertion-per-cycle.
+  3. **Collapse the review chain:**
+     - The reviewer that PASSes a correction applies it and submits the gate run in the same worker.
+     - Hash checks become a script, not prose.
+     - NO-GO runs get a brief automatic summary, with no independent verdict and no whole-path challenge; GO verdicts keep one independent verdict.
+     - D82's standing rule widens: ANY expectation correction that keeps every assertion or makes it stricter is decided in the lane with one independent diff review and a log entry. Escalate to me only when an assertion would be dropped or loosened.
+  4. **Free slots now:** the E-plan rows (E1/E2/E3) and D79 are PAUSED until the ZIP. Running E/D79 workers stop at their next checkpoint via stop-worker (their work is kept), and their slots go to item 1. They resume after the ZIP.
+  5. **P2 order:** single-gesture runs until all 8 pass, then exactly ONE full serial tour for the gate.
+  - **Not cut:** the D54a regression guard; no dropped or loosened assertions (D69 check); the 45 s budget; security review on the history fix; one final full P2 tour; P1–P5 plus core on one pinned final tuple.

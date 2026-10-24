@@ -201,6 +201,25 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D83, the speed-up (20:20Z; owner asked to speed up significantly; Opus second opinion, verified against the boards):** **most of the remaining red is ONE Runtime bug.**
+  - **The evidence:**
+    - All 5 D80 single-gesture runs AND the D78 live run died at the same native-seed `transport_timeout`, before any gesture.
+    - Inside that seed, provider ordinal 1 took 1.7 s, but ordinal 2 only entered the store at 35 s and authorization at 45 s: that is waiting, not compute.
+    - The P4 ten-note step, Agent's PARAM and restart-timeout cases fail at the same ~45 s mark.
+    - Treat them all as one accepted-history-cost or lock-wait defect until proven otherwise.
+  1. **Runtime, TOP priority above everything (two HARD Sol, disjoint questions):**
+     - (a) Read the live stack from run 14383 (4206 B, hash eb2e), then build a SECONDS-LONG LOCAL repro loop: a local daemon, N history entries, the seed commit sequence, timing accept/store/auth, and a `py-spy dump` each iteration. Find what ordinal 2 waits ~33 s on.
+     - (b) The accepted-history read/verify cost path, from P4 profile 14690.
+     - No more 5–8 min service runs to diagnose this. One security review of the fix (it touches history authorization). Then ONE batched gate run.
+  2. **P3: list ALL remaining failures in one run.** A throwaway DIAGNOSTIC copy of the spec (never the gate file) using `expect.soft`, continuing on failure, on a local stack, prints every remaining mismatch in about 8 min. Then ONE batched correction, ONE review, ONE gate run. No more one-assertion-per-cycle.
+  3. **Collapse the review chain:**
+     - The reviewer that PASSes a correction applies it and submits the gate run in the same worker.
+     - Hash checks become a script, not prose.
+     - NO-GO runs get a brief automatic summary, with no independent verdict and no whole-path challenge; GO verdicts keep one independent verdict.
+     - D82's standing rule widens: ANY expectation correction that keeps every assertion or makes it stricter is decided in the lane with one independent diff review and a log entry. Escalate to me only when an assertion would be dropped or loosened.
+  4. **Free slots now:** the E-plan rows (E1/E2/E3) and D79 are PAUSED until the ZIP. Running E/D79 workers stop at their next checkpoint via stop-worker (their work is kept), and their slots go to item 1. They resume after the ZIP.
+  5. **P2 order:** single-gesture runs until all 8 pass, then exactly ONE full serial tour for the gate.
+  - **Not cut:** the D54a regression guard; no dropped or loosened assertions (D69 check); the 45 s budget; security review on the history fix; one final full P2 tour; P1–P5 plus core on one pinned final tuple.
 - **D82, P3 recorded-command expectation (20:08Z), deciding escalation app-20261024T1954Z-P3-recorded-command-envelope:** APPROVED, conditional on independent review 1954 PASS.
   - **Why:** the test compared the raw SUBMITTED command to the provider's authoritative RECORDED command. The provider adds seven authenticated recorder fields, by design (C0 §§1,4,7).
   - **The correction asserts BOTH, exactly:** six submitted keys, and thirteen recorded keys with deep equality of the complete command, including derived authorship, expect/reads, and the empty bindings, intent, resolved and selections. That is stricter than before.

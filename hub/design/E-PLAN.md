@@ -2,7 +2,7 @@
 
 **Goal:** keep today's model (one writer, immutable history, undo as a commit, field merges, server-side attribution) and remove the accidental complexity around it.
 
-**Timing:**
+**Timing (PAUSED 20:20Z by D83 until the ZIP; resumes after delivery):**
 - **Now:** design and prototypes, in parallel and NON-gating. They never take a slot from a critical row (D80), never merge into tl/integration, and never change the final tuple.
 - **After the ZIP:** implementation lands as a follow-up patch set (E-ZIP), proven by the same gates.
 

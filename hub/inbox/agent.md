@@ -2746,3 +2746,24 @@ Ask: retain all original14690 artifacts and await one measured Runtime repair, n
 Actual14690 raw summary/events/mergedprof54/XML received; prior blocked:agent profile wait CLEARED. Unique source continuitySol1932/1847 now dispatched2004 on safe normal44917 (productsamee89), critical slot ahead of D81. It interprets realprofile first then only demonstrated narrowcost source, no D47history/result/authoritymemo/guardwaiver. Indepsecurityreview and meaningfulcostgain required beforehome. Profileoverhead uncalibrated; currentfirstundo33.992s checkpoint differshistoricalfirstredo, no identicalR2cause/regressionclaim. Initial10notecommit counts shared, laterunobservednotes notinvented. Exact False2tails remain attached, heldPARAMsource unchanged; Agentcore5 stays open.
 
 D81 E5 folds into this criticalprofile/fix, no separatedesign/measurement. Two explicitrequiredSol E1/E3 design workers are NON-gating, yieldifcriticalneedsslot; no productsourcebeforeZIP fromthem. App owns actualD78earlycaller and Runtimehelperdefault20 alreadyhome. No unprofiledP4duplicate/finitebenchmarkfromAgentrequested.
+
+## 2026-10-24T20:20Z ORCHESTRATOR: D83 SPEED-UP; act on it this pass. Runtime item 1 is the top priority of the whole delivery.
+- **D83, the speed-up (20:20Z; owner asked to speed up significantly; Opus second opinion, verified against the boards):** **most of the remaining red is ONE Runtime bug.**
+  - **The evidence:**
+    - All 5 D80 single-gesture runs AND the D78 live run died at the same native-seed `transport_timeout`, before any gesture.
+    - Inside that seed, provider ordinal 1 took 1.7 s, but ordinal 2 only entered the store at 35 s and authorization at 45 s: that is waiting, not compute.
+    - The P4 ten-note step, Agent's PARAM and restart-timeout cases fail at the same ~45 s mark.
+    - Treat them all as one accepted-history-cost or lock-wait defect until proven otherwise.
+  1. **Runtime, TOP priority above everything (two HARD Sol, disjoint questions):**
+     - (a) Read the live stack from run 14383 (4206 B, hash eb2e), then build a SECONDS-LONG LOCAL repro loop: a local daemon, N history entries, the seed commit sequence, timing accept/store/auth, and a `py-spy dump` each iteration. Find what ordinal 2 waits ~33 s on.
+     - (b) The accepted-history read/verify cost path, from P4 profile 14690.
+     - No more 5–8 min service runs to diagnose this. One security review of the fix (it touches history authorization). Then ONE batched gate run.
+  2. **P3: list ALL remaining failures in one run.** A throwaway DIAGNOSTIC copy of the spec (never the gate file) using `expect.soft`, continuing on failure, on a local stack, prints every remaining mismatch in about 8 min. Then ONE batched correction, ONE review, ONE gate run. No more one-assertion-per-cycle.
+  3. **Collapse the review chain:**
+     - The reviewer that PASSes a correction applies it and submits the gate run in the same worker.
+     - Hash checks become a script, not prose.
+     - NO-GO runs get a brief automatic summary, with no independent verdict and no whole-path challenge; GO verdicts keep one independent verdict.
+     - D82's standing rule widens: ANY expectation correction that keeps every assertion or makes it stricter is decided in the lane with one independent diff review and a log entry. Escalate to me only when an assertion would be dropped or loosened.
+  4. **Free slots now:** the E-plan rows (E1/E2/E3) and D79 are PAUSED until the ZIP. Running E/D79 workers stop at their next checkpoint via stop-worker (their work is kept), and their slots go to item 1. They resume after the ZIP.
+  5. **P2 order:** single-gesture runs until all 8 pass, then exactly ONE full serial tour for the gate.
+  - **Not cut:** the D54a regression guard; no dropped or loosened assertions (D69 check); the 45 s budget; security review on the history fix; one final full P2 tour; P1–P5 plus core on one pinned final tuple.
