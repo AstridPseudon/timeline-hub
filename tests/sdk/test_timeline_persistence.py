@@ -47,7 +47,7 @@ class Refused(Exception):
 # ---------------------------------------------------------------- the worker (runs in a child process)
 
 class _FakeTimelines:
-    """Reads the head from a file the test controls; the head is whatever the test last 'published'."""
+    """Unit adapter for the file-backed head; it is not Runtime public authority."""
 
     def __init__(self, head_file: str):
         self.head_file = Path(head_file)
@@ -60,13 +60,49 @@ class _FakeTimelines:
         bundle = head["bundle"]
         return SimpleNamespace(ok=True, error="", data={
             "native_inspection": {"project_id": bundle["project_id"], "timeline_id": bundle["timeline_id"]},
-            "summary": {"head_revision_id": head["revision_id"]}})
+            "summary": {"head_revision_id": head["revision_id"],
+                        "head_publication_id": head["publication_id"]}})
 
-    def open_bundle(self, project, timeline, revision_id=None):
+    def history(self, project, timeline, *, cursor=None, limit=50):
+        """Expose the current public head/history pair used by TimelineSession.open()."""
+        if cursor is not None or limit < 1:
+            return SimpleNamespace(ok=False, error="unsupported history page", data=None)
         head = self._head()
+        pin = {key: head[key] for key in ("revision_id", "publication_id")}
+        return SimpleNamespace(ok=True, error="", data={
+            "head": pin,
+            "items": [{
+                "publication_id": pin["publication_id"],
+                "revision_id": pin["revision_id"],
+                "previous": None,
+                "receipt": {"receipt_id": pin["publication_id"]},
+                "intent": "bootstrap",
+                "records": None,
+                "provider_version": None,
+                "compiler_version": None,
+                "publisher": None,
+            }],
+            "next_cursor": None,
+        })
+
+    def open_bundle(self, project, timeline, revision_id=None, publication_id=None):
+        head = self._head()
+        if publication_id is not None and revision_id is None:
+            return SimpleNamespace(ok=False, error="publication requires its revision", data=None)
         if revision_id and revision_id != head["revision_id"]:
             return SimpleNamespace(ok=False, error=f"no revision {revision_id}", data=None)
-        return SimpleNamespace(ok=True, error="", data={"bundle": head["bundle"]})
+        if publication_id and publication_id != head["publication_id"]:
+            return SimpleNamespace(ok=False, error=f"no publication {publication_id}", data=None)
+        bundle = copy.deepcopy(head["bundle"])
+        if publication_id is not None:
+            bundle.setdefault("base_parent", {})["publication_id"] = publication_id
+        return SimpleNamespace(ok=True, error="", data={
+            "bundle": bundle,
+            "project_id": bundle["project_id"],
+            "timeline_id": bundle["timeline_id"],
+            "revision_id": head["revision_id"],
+            "publication_id": head["publication_id"],
+        })
 
 
 def worker_main() -> None:
@@ -236,7 +272,8 @@ def world(tmp_path, monkeypatch):
     root.mkdir()
     monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(root))  # the parent computes draft paths from the same root
     head = tmp_path / "head.json"
-    head.write_text(json.dumps({"revision_id": "rev-0", "bundle": timeline()}), encoding="utf-8")
+    head.write_text(json.dumps({"revision_id": "rev-0", "publication_id": "pub-0",
+                                "bundle": timeline()}), encoding="utf-8")
     w = SimpleNamespace(tmp=tmp_path, root=root, head=head, writers=[])
     w.writer = lambda name: Writer(w, name)
     w.working_copy = lambda: draft_path(
@@ -368,7 +405,9 @@ def genuine_runtime(world, tmp_path):
     )
     assert opened.ok, opened.error
     current_bundle = opened.data["bundle"]
-    world.head.write_text(json.dumps({"revision_id": head["revision_id"], "bundle": current_bundle}), encoding="utf-8")
+    world.head.write_text(json.dumps({"revision_id": head["revision_id"],
+                                     "publication_id": head["publication_id"],
+                                     "bundle": current_bundle}), encoding="utf-8")
 
     def publish_candidate(candidate):
         from astrid.sdk.timeline.sync import CommitConflict
@@ -421,6 +460,7 @@ def genuine_runtime(world, tmp_path):
         assert latest.ok, latest.error
         world.moved_head_revision = _revision
         world.head.write_text(json.dumps({"revision_id": _revision,
+                                          "publication_id": result.as_dict()["receipt"]["receipt_id"],
                                           "bundle": latest.data["bundle"]}), encoding="utf-8")
 
     world.publish_candidate = publish_candidate
@@ -479,7 +519,8 @@ def _move_head(head: Path, rev: str, edit) -> None:
     """Someone else published: the head is now ``rev``, the fixture timeline with ``edit`` applied."""
     doc = timeline()
     edit(doc)
-    head.write_text(json.dumps({"revision_id": rev, "bundle": doc}), encoding="utf-8")
+    head.write_text(json.dumps({"revision_id": rev, "publication_id": f"pub-{rev}",
+                                "bundle": doc}), encoding="utf-8")
 
 
 def _read_state(w) -> dict:
