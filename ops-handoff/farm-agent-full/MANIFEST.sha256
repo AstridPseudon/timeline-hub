@@ -1,12 +1,14 @@
-ccfefdb105b74d843197b58a566188dde34f9b9b9600c378ff203e74a84f8fd4  ops-handoff/farm-agent-full/README.md
+5aca1f83170555011817ea95a4f046aa8c25e5350b0735b9b9f657d786d3e4c0  ops-handoff/farm-agent-full/FARM-CODEX-BRIEF.md
+5a9821e41fdbecddc17412b7eab27dbbf9a0bb6bc4aa2fa1aff50ee909e1548e  ops-handoff/farm-agent-full/README.md
+574cb72a87ead3bd9d7808915d0dd625e69b94c84225256a675444ae984f9089  ops-handoff/farm-agent-full/agent-remotion.env.b64
 92cd658638f4fa898e600c5bf3403173dac87936d1a366ce3a3b83adbcf15182  ops-handoff/farm-agent-full/init-bench-store.py
 22229e37a0392ac12033876c832eb1251c2abdfeebbb4ff75b8f912606a97f6d  ops-handoff/farm-agent-full/registration-row.txt
-f95bd8b56e9343c7499c28a7bbea2baf5a6177da44cb2dd8ff84f3ed5744ac22  ops-handoff/farm-agent-full/test_farm_agent_full.py
-574cb72a87ead3bd9d7808915d0dd625e69b94c84225256a675444ae984f9089  ops-handoff/farm-agent-full/agent-remotion.env.b64
 880541922b0a7615134d7eccaf178322ef47b2311716ea2f15b1995f647cb544  ops-handoff/farm-agent-full/remotion-env-nodes.row.b64
+aa480e04e7ef3bac12072760bcd5857f23af5a82b9674c6f6a76ffd3c7d85846  ops-handoff/farm-agent-full/runtime.lock.selected.json
+3b640f87c2b8e125b3258060bf493962c62d38733b8d19791bf8e784cb057b05  ops-handoff/farm-agent-full/selected-inputs.json
+c376361d9c992d7ee66fc0c9217e4b305045c55325126714af4ad1118db4af50  ops-handoff/farm-agent-full/test_farm_agent_full.py
+a0a2476c479704d7c440502bb585b39dca65e29aba76eb5a451e59b13b5fd160  ops-handoff/farm-agent-full/test_normal_setup.py
 
-# Decoded approved attachment hashes (the row hash is excluding its final LF).
-# remotion-env-nodes.row: 709 bytes with LF; 708 bytes without LF:
-# ffdb0b13c65f106d7b818208343feb3f438dfc943f4af57c5f612ddcf73dc036
-# agent-remotion.env: 523 bytes:
-# e53a69a465e05976dcf7a781f420b1c7def64a13691f7a5f387f6a0609a6da02
+# Decoded approved attachments, unchanged from authentic 1835 source.
+# row: 709 bytes with LF; SHA without LF ffdb0b13c65f106d7b818208343feb3f438dfc943f4af57c5f612ddcf73dc036
+# env: 523 bytes; SHA e53a69a465e05976dcf7a781f420b1c7def64a13691f7a5f387f6a0609a6da02

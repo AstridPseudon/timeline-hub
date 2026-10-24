@@ -181,5 +181,5 @@ def test_full_farm_row_extends_the_current_full_command_without_repinning() -> N
     runtime = "/home/user/work/wt/rt-pin-45c3a7f4"
     assert f"ASTRID_RUNTIME_CHECKOUT={runtime}" in candidate
     assert f'PYTHONPATH="$PWD:{runtime}"' in candidate
-    lock = json.loads((Path("/home/user/work/agent") / "runtime.lock.json").read_text(encoding="utf-8"))
+    lock = json.loads((PACKET / "runtime.lock.selected.json").read_text(encoding="utf-8"))
     assert lock["source_commit"] == "45c3a7f476e1c5f74fafc15956a58b9871eee21f"

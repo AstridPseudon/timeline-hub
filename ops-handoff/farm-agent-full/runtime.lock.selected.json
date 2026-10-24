@@ -1,0 +1,68 @@
+{
+  "files": {
+    "astrid/core/timeline/schema/timeline-config.schema.json": {
+      "from": "contract/schemas/timeline-config.schema.json",
+      "sha256": "sha256:4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd"
+    },
+    "astrid_runtime_client/__init__.py": {
+      "from": "packages/python/astrid_runtime_client/__init__.py",
+      "sha256": "sha256:d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2"
+    },
+    "astrid_runtime_client/contract_metadata.py": {
+      "from": "packages/python/astrid_runtime_client/contract_metadata.py",
+      "sha256": "sha256:a79b2e12de96ec8f2c4bf7b6811ccb3538baf18ca839172f7a3d7bf525029aae"
+    },
+    "astrid_runtime_client/generated.py": {
+      "from": "packages/python/astrid_runtime_client/generated.py",
+      "sha256": "sha256:9b5686c388347108898956c3475b16960e2434d64adcefcc71a26fc269cdd904"
+    },
+    "astrid_runtime_client/timeline_commit_types.py": {
+      "from": "packages/python/astrid_runtime_client/timeline_commit_types.py",
+      "sha256": "sha256:88c67d9eb650b445b8ad04c9011c1f44f1ec5e9f72a4a733050515de7ec0b616"
+    },
+    "tests/fixtures/runtime-responses/events_page_1_200.json": {
+      "from": "conformance/responses/events_page_1_200.json",
+      "sha256": "sha256:6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d"
+    },
+    "tests/fixtures/runtime-responses/events_page_2_200.json": {
+      "from": "conformance/responses/events_page_2_200.json",
+      "sha256": "sha256:d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2"
+    },
+    "tests/fixtures/runtime-responses/invalid_cursor_400.json": {
+      "from": "conformance/responses/invalid_cursor_400.json",
+      "sha256": "sha256:16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff"
+    },
+    "tests/fixtures/runtime-responses/managed_outputs_200.json": {
+      "from": "conformance/responses/managed_outputs_200.json",
+      "sha256": "sha256:6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d"
+    },
+    "tests/fixtures/runtime-responses/not_found_404.json": {
+      "from": "conformance/responses/not_found_404.json",
+      "sha256": "sha256:4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6"
+    },
+    "tests/fixtures/runtime-responses/publish_conflict_409.json": {
+      "from": "conformance/responses/publish_conflict_409.json",
+      "sha256": "sha256:19d664d035691202da03b22b858456c49983e253c7485a6347baa1cf350eea57"
+    },
+    "tests/fixtures/runtime-responses/task_admission_201.json": {
+      "from": "conformance/responses/task_admission_201.json",
+      "sha256": "sha256:108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c"
+    },
+    "tests/fixtures/runtime-responses/task_read_200.json": {
+      "from": "conformance/responses/task_read_200.json",
+      "sha256": "sha256:cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829"
+    },
+    "tests/fixtures/runtime-responses/validation_error_422.json": {
+      "from": "conformance/responses/validation_error_422.json",
+      "sha256": "sha256:2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a"
+    },
+    "tests/fixtures/visual-boundary-v1.json": {
+      "from": "conformance/fixtures/visual-boundary-v1.json",
+      "sha256": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55"
+    }
+  },
+  "manifest": "contract/artifacts.json",
+  "producer": "astrid-runtime",
+  "producer_version": "sha256:100eb485f69dea58e9fe06ba4919617a597f1822016fa0cbab63297f2dcb4f61",
+  "source_commit": "45c3a7f476e1c5f74fafc15956a58b9871eee21f"
+}
