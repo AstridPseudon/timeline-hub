@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T12:04:42Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 2m -->
-# runtime board, 2026-10-24T12:02:23Z
+<!-- main | 2026-10-24T12:07:43Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 0m -->
+# runtime board, 2026-10-24T12:07:25Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -74,8 +74,9 @@
 | F-helper-originals | Qualify fourteen retained helper rows | Luna | Settled D23 child-word scope | gated:D23 | Author 0622; review 0627; Agent 0640 | Thirteen passed. Remaining child-word case is D23 deferred, unchanged and open; no fixture binding or timing backend invented. | Agent bb50 unchanged |
 | F-R2-root-originals | Qualify nine retained root cases | Luna | Independent exact result review passed | merged | Author0622; review0625 PASS | Nine originals passed; source only. Pre/post capture limit disclosed. [Review](../../design/runtime-R2-root-review-0625.md) | Agent bb50 unchanged |
 | R2r-shared-inverse-auth | Verify shared inverse source identities | Sol / Luna | Integrated source proof passed | merged | Author 0647; review 0701; integrated 0711 | Actual460c passed177 plus six shared/source-copy controls on exact Agent d33fe archive. No original ABA or HTTP credit. | 460c2d397 / 35764ce10 |
-| F-D52-shot-set | Preserve 17 live shot-set cases | Luna | Actual Agent home proof | doing | Author1139; independent1143 PASS | Normal home mergeaff339 received. Review17 assigned and61 file PASS; integrated proof still required. | 3b8dc8a345 / aff3391061 |
+| F-D52-shot-set | Preserve 17 live shot-set cases | Luna | Actual Agent home proof | doing | Author1139; independent1143 PASS | Normal homeaff339 received; Agent integrated1156 active. Independent17 assigned and61 file PASS retained. | 3b8dc8a345 / aff3391061 |
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
+| F-D52-core-five | Qualify five current inverse and fork cases | Luna | Agent assignment1200 | doing | rt-F-D52-core-five-1207 | Caller and relevant source change first; four exclusive test files, every original body unchanged. | Base Agentd411 |
 | FREEZE | Coordinate final tuple and proofs | Runtime manager | D48 and D49 | doing | Runtime 0727; Agent checkpoint 9758; App owners | Runtime and Agent upstream/D39 are home. Agent repairs active; App branch full19570 failed and sources are owned. App home adoption waits P2/P3 GO. | Runtime becfe6db8 |
 | OPS-child-observability | Retain bounded maker failure evidence | Luna | Independent installed proof passed | merged | Review 0730; installed 0735; live 0739 PASS | All four live, publication and committed copies match reviewed bytes. Real child and bootstrap remain unqualified. | 33fc06bbd installed |
 | OPS-wheel-acquisition | Verify normal original-wheel acquisition | Luna | Independent source review passed | merged | Author 0743; review 0747 PASS; Agent 0733 | Standard hash-locked pip operation qualified from source. Input must survive maker snapshot; no actual wheels or child credit. | Source facts only |
@@ -121,10 +122,10 @@ Provider completion: Runtime 0915 and independent 0923 retain original cause, ho
 
 Blockers: Owner admission — exact schema HTTP 403 and automatic access refusal remain stopped under the existing hold. No schema or child request is released. [Evidence](../../design/runtime-schema-acquisition-status-0955.md).
 Blockers: App and Proof — corrected P2 caller installation1151 and P3 caller review1154 precede released journeys. Header P2/P3 GO precedes App upstream and D39 home adoption.
-Next ready: Agent qualifies actual homeaff339 shot-set. Occurrence19 receipt accepted. App installer1151 precedes one meaningful P2; P3 caller1154 and full follow-ups are owned.
+Next ready: Core-five author1207 dispatched; independent review follows completion. Agent shot-set integrated1156 active. App P2 installation and P3 caller remain owned.
 
 Later: D47 memo and proof-pin work remain held until after delivery; nine state attacks stay open. D34 broader cleanup resumes below 8.5 GB or after delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 is cut; D14/D23 remain deferred and unchanged. D52 supersedes D37: owner lanes may remove caller-proven dormant scope with its exclusive tests, ledger entry and independent review. Live tests stay strict.
 
 Disk: 9031442432 bytes free. Sweep3 removed zero directories; compaction packed zero and compressed two old logs. All four new finished worker trees were automatically recycled after clean finalization. Previously refused or dirty historical targets were not retried. D34 broader cleanup remains gated; main stays above its8GB heavy-run floor.
 
-Pass 2026-10-24T12:02:23Z: Normal remote receipt MERGEDaff3391061 clears shot-set home/lead-fetch wait. Agent actual-home proof remains next; no duplicate body requested. Agent independently accepts occurrence19 direct integration7e258 proof. Both source/review handoffs and flat finite custody are complete. App installer and P3 caller remain owned; existing schema/child admission hold stays in force.
+Pass 2026-10-24T12:07:25Z: New Agent1200 exact five-node failover discovered on normalhub and dispatched immediately as Luna1207. Four exclusive fixture files; currentcaller/relevantpostfullsource first, no product edit. Agent confirms shot-set homeaff339 and integrated1156 active; occurrence19 complete. Recycled four finished new Runtime trees through supported route, all were already absent. Header/owner boards rechecked; Farm stale source blocker cleared. Admission hold remains.
