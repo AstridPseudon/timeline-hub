@@ -1,0 +1,165 @@
+{
+  "schema": "timeline.agent.d52.full9758.package-manifest.v1",
+  "task": "agt-F-D52-package-return-1132",
+  "package": {
+    "classification": "agent-F-D52-classification.json",
+    "csv": "agent-F-D52-classification.csv",
+    "manifest_self_sha256": "omitted intentionally"
+  },
+  "source": {
+    "base": {
+      "commit": "c2b1f7e5a31e3ab24309532bddfc892ae64ba374",
+      "tree": "1a5cd15370cac2e769801e09f1869fc427978f12"
+    },
+    "observed_full": {
+      "commit": "ba55ac1e9e70156f03f7e31cc1b1ef040bb75b84",
+      "tree": "c13d368666e710bb911ff448b86251b516867c03"
+    },
+    "runtime_observed": {
+      "commit": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+      "tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89"
+    },
+    "full_log_sha256": "2dc9007b4aa2c2c3ac4b594ba0f920286dddfc6bc2267870a747849c1c54c7e7",
+    "prior_census_terminal_csv_sha256": "4678ca294e776a5d471c0b60d6281def724d7bb05e20458b0a043c60a0fcafce",
+    "prior_census_json_sha256": "a22e87f2d13a4e317acdac1b64106a0eb37e6879de36d4a7f29ff36d80ec26ff",
+    "prior_tracebacks_sha256": "6d10d2f622eb4386f7400937e71e54baf7bac7cc70403aa019f777ef214fadcd"
+  },
+  "artifacts": {
+    "agent-F-D52-classification.json": {
+      "bytes": 422050,
+      "sha256": "01ed4dbcfffb5a07206136e6b6f714b9a79919da0747a1af2719a390e5ae3a09"
+    },
+    "agent-F-D52-classification.csv": {
+      "bytes": 268582,
+      "sha256": "f41c5f37b06f18bbc55438e84d33bd21dcfa99d551ae11d0b5f53fe6b50b2e79"
+    }
+  },
+  "counts": {
+    "total_bad_nodes": 276,
+    "status": {
+      "failed": 231,
+      "error": 45
+    },
+    "category": {
+      "ours-live": 230,
+      "dead-scope": 0,
+      "deferred": 1,
+      "env": 45,
+      "pre-existing": 0
+    },
+    "traceback": {
+      "retained": 119,
+      "summary_only": 157
+    },
+    "corrected_noncore_membership": 171,
+    "family": {
+      "sourceversion_mismatch": 5,
+      "missinginput/environment": 43,
+      "UNKNOWN": 35,
+      "Agent R2 inverse/provider core": 60,
+      "fixture/input": 88,
+      "environment/profile setup": 45
+    },
+    "owner": {
+      "Agent generated/rendering source artifacts": 2,
+      "Agent execution/bootstrap environment": 36,
+      "Unresolved from retained traceback": 35,
+      "Agent R2/provider": 60,
+      "Agent rendering result transport": 6,
+      "Agent timeline authenticated materialization fixture": 17,
+      "Agent timeline occurrence/media fixture seam": 49,
+      "Agent D13 native preflight seam": 1,
+      "Agent timeline provider fixture seam": 21,
+      "Agent SDK timeline (D23)": 1,
+      "Agent capability census/ledger source": 3,
+      "Agent/Farm profile setup": 45
+    },
+    "family_by_category": {
+      "ours-live": {
+        "sourceversion_mismatch": 5,
+        "missinginput/environment": 43,
+        "UNKNOWN": 35,
+        "Agent R2 inverse/provider core": 60,
+        "fixture/input": 87
+      },
+      "dead-scope": {},
+      "deferred": {
+        "fixture/input": 1
+      },
+      "env": {
+        "environment/profile setup": 45
+      },
+      "pre-existing": {}
+    },
+    "owner_by_category": {
+      "ours-live": {
+        "Agent generated/rendering source artifacts": 2,
+        "Agent execution/bootstrap environment": 36,
+        "Unresolved from retained traceback": 35,
+        "Agent R2/provider": 60,
+        "Agent rendering result transport": 6,
+        "Agent timeline authenticated materialization fixture": 17,
+        "Agent timeline occurrence/media fixture seam": 49,
+        "Agent D13 native preflight seam": 1,
+        "Agent timeline provider fixture seam": 21,
+        "Agent capability census/ledger source": 3
+      },
+      "dead-scope": {},
+      "deferred": {
+        "Agent SDK timeline (D23)": 1
+      },
+      "env": {
+        "Agent/Farm profile setup": 45
+      },
+      "pre-existing": {}
+    },
+    "sum_checks": {
+      "status": 276,
+      "category": 276,
+      "category_disjoint": true,
+      "membership_unique": true,
+      "dead_scope_removal_assignments": 0,
+      "pre_existing_assignments": 0
+    }
+  },
+  "csv_parity": {
+    "json_records": 276,
+    "csv_data_rows": 276,
+    "csv_header_fields": 18,
+    "required_fields": [
+      "node_id",
+      "status",
+      "category",
+      "family",
+      "owner",
+      "classification_proof",
+      "missing_fact"
+    ],
+    "membership_unique": true,
+    "membership_matches_json": true,
+    "status_matches_json": true,
+    "category_matches_json": true,
+    "family_matches_json": true,
+    "owner_matches_json": true,
+    "proof_matches_json": true,
+    "missing_fact_matches_json": true
+  },
+  "qualification": {
+    "dead_scope_qualified_rows": 0,
+    "deletion_proven": false,
+    "zero_dead_code_census": false,
+    "summary_only_total": 157,
+    "summary_only_without_causal_proof": 135,
+    "summary_only_setup_qualified": 9,
+    "summary_only_deferred_qualified": 1,
+    "summary_only_current_exact_r2_qualified": 12,
+    "summary_only_required_first_action": "Establish the current production caller, exact test input, and missing cause before prescribing a repair, deletion, or product-defect conclusion.",
+    "routing_labels_provisional": true,
+    "historic_267_census_preserved": true,
+    "new_closure_credit": 0,
+    "existing_setup_env_qualified": 45,
+    "exact_d23_mapping_qualified": 1,
+    "independent_review": "next"
+  },
+  "evidence_only": true
+}
