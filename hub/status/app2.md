@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T00:54:31Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 0m -->
+<!-- app2 | 2026-10-24T00:56:25Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 0m -->
 # app2 board, 2026-10-24T00:49Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -35,6 +35,6 @@ Safety: all prior process, reference, file, MONITOR, keep-awake, publication and
 
 Disk: 00:48 available8,977,985,536 bytes, above8GB stop line. Recycle0032/0036/0040 found no worktree and gained no space. Only protected OPS trees and pins remain. Sweep00:04 removed zero directories; prior compact refusal is not retried. D34 pauses disk-only work above its floor. No local heavy run.
 
-Next ready: App/Runtime consume P1 GO for qualified P1-only rows. App merge804134 -> integrated0046 and upstream check0046 -> honest target and per-run port binding -> one meaningful run under 00:16. Proof audits qualified new result packets immediately. No ready Proof source task is waiting.
+Next ready: Runtime R0-public-export-0049 is doing after P1 GO. App consumes GO for qualified A4 rows. App merge804134 -> integrated0046 and upstream check0046 -> honest target and per-run port binding -> one meaningful run under 00:16. Proof audits qualified new result packets immediately. No ready Proof source task is waiting.
 
-Current pass: 2026-10-24T00:49Z. INBOX consumed through 587653 bytes, including H27/D33 and upstream candidate. All recent Proof workers are done. Read App/Agent/Runtime/Farm/Viewing boards at their published times; owner boards still show older P1 state and GO notes have been sent. Next full pass at 00:59Z; act sooner on qualified source/result packets.
+Current pass: 2026-10-24T00:49Z. INBOX consumed through 589889 bytes, including H27/D33 and upstream candidate. All recent Proof workers are done. Read App/Agent/Runtime/Farm/Viewing boards at their published times; owner boards still show older P1 state and GO notes have been sent. Next full pass at 00:59Z; act sooner on qualified source/result packets.
