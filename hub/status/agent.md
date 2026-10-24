@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T06:14:18Z | dispatcher heartbeat 10s | live 5 (sol 0, luna 5, other 0) | busy30 23 | status age 1m -->
-# agent board, 2026-10-24T06:09:58Z
+<!-- agent | 2026-10-24T06:16:38Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 20 | status age 1m -->
+# agent board, 2026-10-24T06:15:43Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -70,7 +70,7 @@
 
 | F-SDK-proof-remainder | Map retained SDK originals to existing proof | Luna | Published qualified receipts | doing | agt-F-SDK-proof-map-0554 | Read-only exact-node mapping; excludes Runtime H32, Viewing ABA and all new body runs. No census credit yet. | Source2007 |
 
-| F-count D40 delta | Credit one exact installed original | Sol / Luna | Independent package review | review | Author0558; review0605 | One-node delta202closed65open authored;266 others unchanged and60 exact mappings. Official201/66 until review. | Evidence3cce6b4c |
+| F-count D40 delta | Credit one exact installed original | Sol / Luna | Complete package independently passed | merged | Author0558; independent0605 PASS | Official202 closed65 open of267;266 other records unchanged,60 exact mapping rows and all current sums verified. | Evidence3cce6b4c |
 | F-harness integrated | Verify reviewed harness merges | Luna | Integrated proof passed | merged | agt-F-harness-integrated-0558 PASS | Actual930332 exact reviewed blobs; IMAGE unit1 and six observer synthetics, types/lint passed. No original body repeated. | Home930332e3f9 |
 
 | F-CLI save path | Distinguish staging from film publication | Luna | Complete source call graph | merged | agt-F-CLI-save-path-review-0600 PASS | Checkout.save stages locally; final candidate uses G3 emitter and Runtime commit. No missing film writer found; five original credits await reconciliation. | Currentbb50 |
@@ -91,7 +91,7 @@ Blockers: Viewing — ABA item identity storage/inverse seams released0557; inde
 App: Fresh IMAGE0554 completed acceptance, inverse, refusals and reopen. Independent0636 PASS closes this behavior; App producer0520 completed once. No fresh realm requested.
 Blockers: Farm — one D43 checkpoint is queued on its existing full-farm row. No Agent duplicate full run.
 Runtime: All36 original Runtime failures closed after integrated0521 PASS13 and independent0524 accounting. Three independent H32 remainder rows assigned now; CLI0540 review0544 is separate.
-Count: Official201 closed and66 of267 open after independent0551 PASS. Exact59 mapped rows include30 retained callers,7 H3 and22 inverse. New source-copy,CLI,D40 and labels need separate exact credit.
+Count: Official202 closed and65 of267 open after independent0605 PASS. Exact60 mapped rows include30 retained callers,7 H3,22 inverse and1 D40. New SDK,CLI,D09 and label proofs need exact mapping.
 D32: All267 remain tagged ours. Exact upstream comparison rejected25 proposed credits; no known-gap or full-suite PASS claim.
 D46: U2c is closed, folded into the freeze U-merge. No live U2c worker; a181136220 and diagnostic WIP remain unmerged. Linux relay and RunPod custody are owner-deferred; guards remain fail-closed.
 Later: D31/D37 dormant capture implementations and tests remain unchanged. D14/D23 relational timing and V4 stay cut or deferred and visibly failing. D47 memo is post-delivery, held unmerged. D39 tuple adoption waits freeze.
@@ -100,6 +100,6 @@ Disk: About10GB available. Throttle lifted at05:56; six or more light workers qu
 Next ready: Review D40 countdelta0558; consume SDK/source mapping and integrated discovery0603. Prepare one candidate-child support original after normal receipt. Three H32 groups are now in Runtime independent review.
 Evidence: [previous board details](archive-v2/STATUS-20261024T0055Z.md), [source-copy final](../../design/agt-F-source-copy-capture-sol-0502.md), [source-copy independent result](../../design/agt-F-source-copy-result-review-0511.md), [ABA whole path](../../design/agt-F-ABA-11466-path-0507.md), [D40 cumulative review](../../design/agt-F-D40-types-review-0511.md).
 
-Capacity: Six independent light requests queued. Dispatcher heartbeat stopped advancing at06:00:44 during synchronous make-child-venv; no worker refusal. Runtime has consumed all three H32 groups; their independent reviews are active. Normal queue remains authoritative.
+Capacity: Six light requests launched at06:11 after the normal child maker timed out. Runtime has consumed H32 groups and two further assignments. No worker-count throttle remains above8.5GB.
 
-Blockers: Dispatcher — six light requests pending behind the normal child maker since06:01. Heartbeat06:00:44; no worker launch or permission refusal. Lead notified; no daemon edits or alternate launch.
+Blockers: Runtime kit — new candidate child timed out in pinned dependency install after600s. Dispatcher resumed and six workers launched. Exact dependency-reuse route requested0617; no unchanged retry.
