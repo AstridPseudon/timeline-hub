@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T18:56:53Z | dispatcher heartbeat 14s | live 1 (sol 1, luna 0, other 0) | busy30 11 | status age 0m -->
-# runtime board, 2026-10-24T18:56:46Z
+<!-- main | 2026-10-24T19:00:06Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 1m -->
+# runtime board, 2026-10-24T18:59:01Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -78,7 +78,7 @@
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
 | F-D52-core-five | Map five named actual home outcomes | Luna | Authentic XML and map verified | merged | Receipt 1418 PASS | All five named cases PASS on actual47b/becfe. Current four fork failures are distinct. [Receipt](../../design/rt-F-D52-core-five-receipt-1418.md) | Agent 47b |
 | U1-D69-test-audit | Preserve upstream test predicates | Luna | Seven restorations before cut | merged | rt-U1-D69-test-audit-1603 | Missing16:9 mapped,7 restore. Changed129:75 clear,54 cited. Two skip markers cited;12 dynamic scopes explicit. [Audit](../../design/rt-U1-D69-test-audit-1603.md) | Source facts only |
-| R-P4-history-cost | Reduce fresh finite JSON walk cost | HARD Sol / Luna | Core/security review | review | rt-P4-finite-walk-security-1855 | Three pairs4.58%wall/3.34%CPU gain; counts unchanged. Final11+12 PASS; initial authored test failure disclosed. Original45s open. | Author1847 pending review |
+| R-P4-history-cost | Preserve finite walk snapshot behavior | Luna / Sol | First security return | doing | rt-P4-finite-walk-return-1900 | Security1855 FAIL concurrent sibling mutation drift despite172+12PASS. First return preserves old eager snapshot; source held. | 6c86d24bf held |
 | R-P2-popup-422 | Project genuine fork-created shot roots | Luna | App current P2 proof | merged | Security1658; integrated1704 PASS | Actualb318:4 PASS0.16s, exact reviewedsource; forgedowner/sibling/source refused. App original stillpending. [Proof](../../design/rt-P2-popup-integrated-1704.md) | b318a8ec4 /88b9cf6 |
 | R-P2-popup-observation | Attribute popup physical observation refusal | Luna | Source finding complete | merged | rt-P2-popup-observation-1638 | Runtime created-child projection lacks fork-created shot roots.2Runtime+8Agent comparators PASS; source cause only. | Source unchanged |
 | R-P2-element-docpatch-hang | Capture live isolated element hang | HARD Sol / App service | D80 live fallback now | blocked:app | App unique live owner asked1855 | Exact replay lacks originalstate/Origin; no body ran. Lead clears live route now; unchanged focused case+stacks requested. Deadline19:50Z. | Source22847 retained |
@@ -156,7 +156,7 @@ Venues: App P1/P2/P3, Agent P4, main P5/Composition. D73 capture four exact SHAs
 D65 delivery: Runtime merge, Agent merge, authentic App manifest command with generated digest equality, then App merge. Installed v2 docs/D67 exact13env7keys retained; private84Python+TS final candidate remains gated by cut. D68 fresh-main apply checks remain required.
 
 Blockers: App D78 live venue — lead says proceedNOW. Peer1855 asks one unchanged focused element on normal pinned/preflighted App service with owned stacks; historical missing state no longer gates live fallback.
-Blockers: Runtime P4 cost — finite-walk author1847 measured4.58%wall/3.34%CPU gain with identical counts; independent1855 active. Original45s and two retained restart timeouts remain open; D47 memo held.
+Blockers: Runtime P4 cost — security1855 found concurrent mutation behavior drift. First return1900 preserves eager snapshot semantics and must retain measured gain. All45s original tails remain open; D47 memo held.
 Blockers: Runtime popup — D80 unique crossrepo Sol1850 defines shared owner semantics. Security1847 is input, one final coherent security review follows. Actual22847 remains failed.
 Blockers: Final cut — all lanes core0/regressions0 plus current P2/P3 and D69 completion required. No final proof/build before cut.
 Next ready: consume critical returns and D79 installer; no replacement D79 under D80. D78 App focused live element with supervised stacks requestedNOW; no historical-state wait, deadline19:50Z.
@@ -164,7 +164,7 @@ Later: D79 corpus missing complete authentic accepted record/history/context; Ag
 Admission: D56 Farm/schema-access stopped. Exact403 and auto access refusal remain stopped; no alternate acquisition/child/overlay route. Historical denied cleanup/process/retirement targets remain stopped. D67 D13 stays unchanged env gap.
 Disk: About8GB/cap4. Finished current trees recycled automatically; only three prior dirty refused v1 trees remain eligible by age and are not retried. Sweep3 removed0; compact packed0, compressed1 old log and0 test outputs. About8GB free. No alternate deletion.
 
-live 2 / cap 4; ready-undispatched 0 critical. Crossrepo HARD Sol1850 and cost security Luna1855 active. Popup review1847 PASS12+9+2; rangefour PASS. D78 App live fallback requested; D79 installed/publication complete. D80 holds corpus.
+live 2 / cap 4; ready-undispatched 0 critical. Crossrepo HARD Sol1850 and cost first-return Luna1900 active. Popup review1847 PASS12+9+2; rangefour PASS. D78 App live fallback requested; D79 installed/publication complete. D80 holds corpus.
 
 Pass 2026-10-24T18:44:06Z: Consumed all four1830-era returns. Popup first return author12+9PASS -> security1847. Range actual-home receipt1847 dispatched. P4 Luna1827 no retained optimization -> unique HARD Sol1847. D78 exactstate/origin unavailable -> finite App1850 input ask and truthful blocked row. D79 kit source6PASS -> normal route installer1847; App handoff follows. No original/gate duplicate or denied route retry.
 
@@ -177,3 +177,5 @@ Pass 2026-10-24T18:52:28Z: CostSol1847 completed finite walk optimization, exact
 Pass 2026-10-24T18:54:42Z: Lead host check confirms226ALIVE and normal test-run publication7e857 exact; clears kit publication blocker. D78 live fallback explicitly releasedNOW -> App1855 exact unique original focused route/normal pins/preflight/stacks ask. No additional original-state dependency for live route.
 
 Pass 2026-10-24T18:56:46Z: Batched delayed Agent peers consumed. Actual home1844 five original18.44s closes additional opposite-selection-order neighbor with four variants. D76/D77 normal receipts831df clear both remote merge waits; D77 actual36 controls PASS/final render owed. Distinct Agent1850 read-only profile becomes row; D79 input inventory missing complete records becomes later hold, no new worker.
+
+Pass 2026-10-24T18:59:01Z: Security1855 FAIL on synchronized in-place mutation semantics -> firstreturn Luna1900 on retained6c86 branch, no contractexception or merge. Complete172+12PASS/counts/timings do not waive finding; reviewer temporary evidence missing, actualtranscript retained/disclosed. App1849 kitwait clears using exact live/hub/committed7e857 receipt; focusedlive request owner/ID asked1900.
