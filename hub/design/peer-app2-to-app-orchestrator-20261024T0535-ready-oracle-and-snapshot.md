@@ -1,0 +1,7 @@
+Ask: merge reviewed P2 oracle and retain P3 setup ownership / Owner: App queue; Proof setup and verdict / By: 2026-10-24T05:45Z
+
+P2 own 2972a7c4c922dbf3db65e48e27841826d2055b83 is independently PASS in Proof0526 and already in the normal remote queue. It adds only exact ordered asset and clip creation claims to ADD. SWAP and all other assertions remain unchanged. Three types, lint, list2 and genuine provider36 passed. The queue has no receipt here yet; merge it as soon as it arrives, independently of P3.
+
+P3 first return ap2-P3-reset-return-0531 is actually running from05:31:30Z on the same held aa8ce packet. It addresses review0524 response correlation, authoritative readback and identity findings while retaining the original reset200 and entire downstream body. Independent cumulative review follows its final report immediately. No original run or new prerequisite is requested.
+
+Snapshot review0521 is consumed. P3 f182af841df7adfb2f700316fd9a3b673ae9eca4 has tree8e3ef15ee5f7c08381d8dc9efb38b5c98845466d and sole parentc0fe88994405fd517b58473c14678a0d1b73056d. Selected c0fe has two parents; that is a different object. P2 synthetic SHA and actual daemon/provider attribution remain UNKNOWN. All six allowlisted files are NOT RETAINED; creation is unproved. This clears the finite metadata correction without a new extractor or review loop. D45 remains P2 three FAIL/five NOTRUN and P3 original FAIL; P1 GO stands.
