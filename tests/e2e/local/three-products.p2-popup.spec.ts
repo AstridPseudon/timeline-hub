@@ -810,7 +810,7 @@ async function runPopupCase(
 
 test('P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit', async ({ page, harness, popup }) => {
   await runPopupCase(page, harness, popup, async (dialog, file) => {
-    await dialog.locator(`.clip-action[data-clip-id="${TARGET_CLIP_ID}"]`).click();
+    await dialog.locator(`.clip-action[data-clip-id="${popup.sharedOccurrenceId}:${TARGET_CLIP_ID}"]`).click();
     await dialog.getByRole('button', { name: 'Add media', exact: true }).click();
     await dialog.getByLabel('Choose media for shot timeline').setInputFiles({ name: file.name, mimeType: file.type, buffer: file.buffer });
   }, 'occurrence.add-media');
@@ -818,7 +818,7 @@ test('P2 popup mounted ADD on selected child uses shared occurrence fork and A2 
 
 test('P2 popup mounted SWAP on selected child uses authenticated old/new media selections', async ({ page, harness, popup }) => {
   await runPopupCase(page, harness, popup, async (dialog, file) => {
-    await dialog.locator(`.clip-action[data-clip-id="${TARGET_CLIP_ID}"]`).click();
+    await dialog.locator(`.clip-action[data-clip-id="${popup.sharedOccurrenceId}:${TARGET_CLIP_ID}"]`).click();
     await dialog.getByRole('button', { name: 'Swap selected clip', exact: true }).click();
     await dialog.getByLabel('Choose media for shot timeline').setInputFiles({ name: file.name, mimeType: file.type, buffer: file.buffer });
   }, 'occurrence.swap-media');
