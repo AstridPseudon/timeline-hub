@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T23:45:50Z | dispatcher heartbeat 12s | live 5 (sol 0, luna 5, other 0) | busy30 28 | status age 1m -->
+<!-- agent | 2026-10-24T23:48:41Z | dispatcher heartbeat 13s | live 4 (sol 0, luna 4, other 0) | busy30 29 | status age 2m -->
 # agent board, 2026-10-24T23:44:17Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -175,7 +175,7 @@ D69/D72: Exact 47 restored membership and 178 audit retained; named family proof
 Admission: Historical safety, access and cleanup refusals remain stopped. No denied pin release, fabricated installed tuple, child, Farm or schema route. E2 and D79 paused until after ZIP.
 Disk: 7681904640 bytes at23:43, source cap6 above6.5GB. Sweep3 removed0; compact packed0 and gzipped10 logs. No eligible ended non-KEEP tree. ONE affected-node batch on MAIN; refused pins untouched.
 Rehearsal categories: PRE-EXISTING16 / KNOWN GAP37 / ENV73 / NEW-OURS core424 / NEW-OURS non-core0 / REGRESSION0 =550.18ENV cases nowPASS.97live retired fixtures remaincore; D77render ENV stillCUT-BLOCKING.
-Families: LOCAL nativebatch24 return2342;sheet11 return2344;next11 review2344;current-sheet17 author2344;mainCLI8 review2344;batch prep2342. MAIN M1/inverse/word74? Exact named authors own66 IDs; CLI8 now returned. Extra media20/auto14 await slots.
+Families: LOCAL nativebatch24 return2342;sheet11 return2344;next11 review2344;current-sheet17 author2344;mainCLI8 review2344;batch prep2342. MAIN M1/inverse/word named authors own66 IDs; CLI8 now returned. Extra media20/auto14 await slots.
 Blockers: Runtime P4 source — second security2319 FAIL on7627; Sol2330 owns provider-return correction and Luna2330 whole path. Released source732; no original repeat or adoption until qualified release.
 Blockers: Runtime main capacity — four named D86 authors acknowledged; source return CLI8 now in Agent protected review. Extra media20 and auto14 wait main source slots behind two Runtime critical owners.
 Blockers: Final cut — final P1–P5/core tuple and genuine installed render remain D59 gated.424live core outcomes require repairs/qualification, no core0.
