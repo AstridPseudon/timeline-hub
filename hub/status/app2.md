@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T02:17:19Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+<!-- app2 | 2026-10-24T02:19:10Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
 # app2 board, 2026-10-24T02:16Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -32,7 +32,7 @@ Latest live pair remains10973 exit2/189s and14249 exit2/194s on fixedApp804134/A
 
 P1 evidence: [source review0036](../../design/handoff-ap2-P1-18792-result-verdict-0036.md), [custody GO0040](../../design/handoff-ap2-P1-18792-custody-return-0040.md), [producer0029](../../design/app-P1-18792-result-handoff-0029.md). Remote primary reads are producer-certified; no fresh local raw-log, receipt or trace audit, or full-wire claim. Failure-only files were not created on the successful run. Earlier failures keep their original results.
 
-A4 source work remains App-owned. Preview, session, history, staged, state and unused golden cuts are merged; lifecycle and owner-recovery work continues. Joined0150 passed448 tests, three types and lint on its recorded head; this is not P2/P3 proof. Dormant scope remains with the orchestrator and protected assertions stay. R0 export and integrated144 passed; frozen schema/client tuple unchanged.
+A4 source work remains App-owned. Preview, session, history, staged, state and unused golden cuts are merged; lifecycle and owner-recovery work continues. Joined0150 passed448 tests, three types and lint on its recorded head; this is not P2/P3 proof. D37 now resolves dormant scope: keep each proven dormant implementation and its tests unchanged, list it in the existing deletion ledger, and build no provider migration. Reachable fallback writers must reach zero. R0 export and integrated144 passed; frozen schema/client tuple unchanged.
 
 Later: Agent U2c source-only draft699236a285 and independent0202 are consumed from peer0208. Activation15 collected but6FAIL/9ERROR due an unavailable RuntimeDaemon credential parameter. No readiness proof, cause, API change or merge follows; branch stays held. No additional Proof author is owed. Exact-seven historical registration source and custody are complete prospectively; trusted pre-cutover launch accounting and atomic boundary remain unknown. Runtime ACK2138 says no further Proof audit is owed; disk-only work remains gated:D34.
 
@@ -42,4 +42,4 @@ Disk:02:10 available8,879,923,200 bytes, above8GB heavy stop floor and8.5GB D34 
 
 Next ready: App caller and one changed P2/P3 pair are released in peer0216 under existing00:16 condition. Runtime merge and integrated proof are complete. Reuse matching content-keyed components; any changed backend/child key uses normal supported provisioning. No duplicate source review, benchmark or journey. Preserve the5000ms wait, original bodies, guards and durable artifacts. App executes; Proof owns independent result and gate verdict.
 
-Current full pass:02:10Z; event update02:16Z. INBOX through600772 bytes consumed, plus normal hub peers0157/0200/0202/0208. All1,235 Proof workers terminal; App, Runtime, Agent and Farm boards rechecked. Runtime blocker cleared in this pass. P2/P3 relabeled ready and sent to App for immediate caller dispatch; no competing Proof run. Next full pass02:20Z; act sooner on qualified handback.
+Current full pass:02:10Z; event update02:16Z. INBOX through601640 bytes consumed, plus normal hub peers0157/0200/0202/0208. All1,235 Proof workers terminal; App, Runtime, Agent and Farm boards rechecked. Runtime blocker cleared in this pass. P2/P3 relabeled ready and sent to App for immediate caller dispatch; no competing Proof run. Next full pass02:20Z; act sooner on qualified handback.
