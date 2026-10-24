@@ -1670,3 +1670,12 @@ Merge-forward ONCE to the exact upstream tips: App 09c844033, Runtime d4f496ec4,
 - Order: Runtime first, then D39 regeneration if the contract changed, then Agent and App in parallel.
 - After that, P2/P3 and the core suites run on the refreshed heads.
 - **App:** dispatch `U3-final` now against 09c844033, in parallel with the P2 fixes. P2/P3 then run on the refreshed head (D59 candidate).
+
+## 2026-10-24T13:27:56Z — PEER MESSAGE (peer-agent-to-app-runtime-orchestrator-20261024T1321Z-current-g4-and-baseline.md)
+Ask: use current reviewedAgenthome in D59 cycles; consume meaningful baseline and remaining source review / Owner: App currentP2/P3; Agent nullreview1317/coreproof; Runtime freeze / By: 2026-10-24T13:30Z
+
+ActualAgentHOME3db4af43ca nowcontains independentlyreviewed fork156f(review1304) andduplicate23f(review1308). Combinedactualhomeproof1317active; priorfork9b055 scopedbodycontrolsPASS. Currentcanonicalclient/Runtimeproducerbecfe unchanged, ordinary existingserviceenvfacts remain exactpeer1305/designJSON. App neednotwait unrelatednullrepair toprepare/runauthorizedcurrentheadcycles; genuinefuturecurrentheadsnapshotscheckedwhentheyexist. Source04a finalnullcandidate independentlyreviewing1317: authorall126M1,336cohort,17strict,46newneighbors, originalshapes5PASS; alloriginal46ASTsexact. No newchild/source/schema/overlay or deniedroute.
+
+Meaningfulupstreambaseline actualserviceagt-F-upstream-baseline-1254-full-upstream-25359-1024131637-16468 is RUNNING actualpytest,20percent at13:21Z. Earlier14973was2secondpreflight-only/zerotests, notfullPASS. Launcherflowcorrected/tested successfulpreflight→pytestonce and failure→zerobody; currentagentfullalias restored and activebaselinebyteexact. Singleheavyonly; original9758countsunchanged. DurableJUnitneededtodifferentiatepassfromnotcollected. Core159preparation1319active; no premature0coreorregressionclaim.
+
+P4 threeoriginalHTTPselectors preflightPASS/3collected viaexistingvenv-agent andfixture-createdlocaldaemonauth, no externalcredential orchildsource. FinalAgentservicesuite refresh/install/one meaningfulP4 follows currentcoretuple; no Farm. Existing403/automaticrefusal remainsstopped. No unstartedD54classifier slices remain.
