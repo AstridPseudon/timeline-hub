@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T15:42:02Z | dispatcher heartbeat 15s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 5m -->
-# agent board, 2026-10-24T15:36:50Z
+<!-- agent | 2026-10-24T15:44:51Z | dispatcher heartbeat 0s | live 3 (sol 0, luna 3, other 0) | busy30 14 | status age 2m -->
+# agent board, 2026-10-24T15:42:29Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -77,7 +77,7 @@
 | Runtime five receipts | Publish actual home XML and map | Luna / Manager | Existing authentic1330 files | merged | Original home1330; handoff1409 | Two authentic files copied byte-exact to normal design publication, with full hashes. Runtime can qualify named membership without rerun. | Evidence only |
 
 | R2 proposal inverse | Emit complete inverse stage bindings | Luna | Actual integrated proof | merged | Author1421; review1426; home1435 | Actual68e82 PASS13 plus static checks. Original TMP XML gone; raw transcript XML retained. Custody worker1440 preserves existing bytes. | 68e82c0c2c |
-| P4 D60 home binding | Bind actual refreshed service source | Luna | Pending D61 source and heavy slot | gated:source | Bind1415 prepared | Candidate317c binds5492/e68 and collected3; central row untouched. Normal guarded installation refreshes once final D61 source/client qualified. | Candidate317cc0c403 |
+| P4 D60 home binding | Bind actual refreshed service source | Luna | Pending D61 source and heavy slot | doing | Combined harness1542 | Source dependency cleared; refresh existing P4 and core rows on actual5777/8b32. Preserve original3 and existing environment. No body before sole-heavy1540 clears. | Candidate317c superseded |
 
 | F D60 comparison | Compare exact276 against upstream924 | Luna | Terminal service1621 XML | merged | Terminal1452 PASS evidence | All276 exact:75 match,66 upstream FAIL9 PASS;201 absent UNKNOWN. Nine contrasts are eight current PASS and one D23. No current regression proved. | Agent924; Runtime launch becfe |
 
@@ -97,24 +97,24 @@
 
 | F D63 final rollup | Fold corrected exact276 categories | Luna | Existing evidence only | merged | agt-F-D63-final-rollup-1517 | Exact276:199 NEW-OURS,77 counterparts.7 pre-existing causes qualified;59 cause-open. Published rollup predates actual181 PASS; board overlays it. | Evidence only |
 
-| F core service candidate | Prepare existing-service core invocation | Luna | Final producer body held | doing | agt-F-core-service-prepare-1525 | Use1443 exact broad inventory and working full service shape. Candidate only; preflight and stub controls, no bodies or registry install. | Currentd27b / e68 |
+| F core service candidate | Prepare existing-service core invocation | Luna | Final producer body held | doing | WIP1525; first return1542 | Original worker hit output limit; WIP retained. First return repairs malformed literal hashes and binds actual5777/8b32; core+P4 candidate/install only. | Current5777 /8b32 |
 
 | F D63 different causes | Resolve four retained cause exceptions | Luna | Existing evidence only | merged | agt-F-D63-different-causes-1528 | Allfour non-core cause-open; no proven current defect or regression. Existing bounded cause scopes preserved; no body repeated. | Evidence only |
 
-| F D66 reverse diff | Map missing upstream tests | Luna | Existing authentic924 XML | doing | agt-F-D66-reverse-diff-1527 | One reverse inventory: renamed with exact mapping, cited D52 deletion, or smallest restore. No bodies, full or child; counts pending. | Currentd27b /924 |
+| F D66 reverse diff | Map missing upstream tests | Luna | Existing authentic924 XML | doing | Author1527; return1539 | First362 included208 still-present changed functions. Return corrects selector-existence counting;137 cited deletions and real missing scope under check. | Currentd27b /924 |
 
-| U4a D62 preparation | Adopt normal generated ABI field | Luna | Runtime security then home merge | review | Author1529; review1533 | Candidate0eda is four normal generated/lock files;15 mappings exact, author37 PASS. Independent1533 retains actual XML; producer security/home holds merge. | Candidate0eda0abf |
+| U4a D62 preparation | Adopt normal generated ABI field | Luna | Runtime security then home merge | merged | Author1529; review1533 PASS; rebind1536 | Actual5777 binds qualified Runtime8b32,15 mappings exact. Independent37 PASS/39 default-lane deselections; rebind31 PASS. Six-original home proof1540 active. | Home57779274a0 |
 
-Integration: Agent3769a98d06 includes U2 final924, normal e68 vendor adoption and independently reviewed legacy inverse plus environment key fix. Proposal inverse actual-home13 passed. D61 consumer9460a443 normal merged3769 after Runtime8b32 source/security PASS. All three reviewed donor blobs retained; normal D39 actual-home rebind1536 and source review1533 precede the six-original proof. No generated code or lock edited by manager.
+Integration: Agent57779274a0 includes U2 final924, normal e68 vendor adoption and independently reviewed legacy inverse plus environment key fix. Proposal inverse actual-home13 passed. D61 consumer9460a443 normal merged3769 after Runtime8b32 source/security PASS. All three reviewed donor blobs retained; normal D39 actual-home rebind1536 and source review1533 PASS merged5777. Six-original actual-home1540 active. No generated code or lock edited by manager.
 core open: 6 tracked: four D61 fork checkpoint failures and two forward-provider originals outside276. D67 makes D13 an ENV known gap, unchanged and visibly failing. Env79; two D23 originals remain deferred. Final tuple proof pending.
 regressions: 0 currently open at named qualified scope; order181 proven regression repaired and actual d27b PASS16. Nine other upstream-PASS contrasts retain current PASS but need final cut confirmation. Exact276 now163 PASS111 open2 deferred; no final zero-regression closure claim.
 D60 baseline: Upstream924 full1621 terminal FAIL:12396 passed91 failed14 errors16 skips566 subtests. Corrected D63 comparison:77 counterparts (66 FAIL11 PASS),199 NEW-OURS. Missing selectors follow core rule; paired tracebacks retain exact limits. External Runtimebecfe launch later e68 is disclosed.
 Gates: P1/P2/P3 App; P4 Agent; P5 and Composition main. App U3b/D39 already merged under D56. P4 candidate317c collected3; final source binding and body follow qualified D61 source/client and sole heavy slot. No old pin, Farm or child work.
 Admission: Existing schema/source403 and automatic refusal remain stopped. D56 drops Farm venue access work. No alternate source, child, overlay, acquisition or reconstruction requested.
 Disk: About9.4GB free; cap6. Sweep3 removed0, compact packed0 and compressed4 old logs. No eligible finished clean tree; prior refused targets untouched. Target15GB is opportunistic, heavy stop floor8GB.
-Blockers: Agent — Runtime dependency cleared: actual8b32 treee02 qualified412 PASS/security1511. Normal vendor1536 and independent mapping1533 finish, then immediate six-original home proof.
+Blockers: Agent — Runtime and vendor dependencies cleared; actual5777/8b32 six-original proof1540 is active and owns sole heavy slot. Keep six core-open until terminal result.
 
 Blockers: Agent — D67 clears D13 blocker as ENV known gap; no owner action. D66 reverse diff1527 active; counts pending.
-Next ready: Merge normal D39 actual-home rebind1536 after mapping1533, then run actual-home six originals immediately. Complete reverse diff1527 and final P4/core preparation in parallel.
-live 4 / cap 6; ready-undispatched 0. Luna1525 service,1527 reverse diff,1533 vendor review,1536 actual-home rebind. Runtime qualified8b32; consumer3769 merged.
-Inbox consumed through Runtime1516, D66 and D67 relays. Producer still unqualified; consumer home remains held. Last pass 2026-10-24T15:20:04Z.
+Next ready: Consume actual-home six1540, finish D66 corrected missing scope1539, complete core/P4 registry1542. One heavy slot occupied by1540; P4/core follow promptly after meaningful source/result readiness.
+live 3 / cap 6; ready-undispatched 0. Luna1540 sole heavy proof,1539 reverse correction,1542 core/P4 harness return. Disk9.5GB. No live Sol.
+Inbox consumed through Runtime1531 merged handback and15:40 ruling. Adoption/consumer already home5777 and six-proof1540 active before nudge. Last pass 2026-10-24T15:20:04Z.
