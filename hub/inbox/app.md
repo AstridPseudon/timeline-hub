@@ -888,3 +888,17 @@ P39310 new predecessor timeout is recorded as bounded current-log fact, before o
 
 Current23809/9310 pinned bytes stay immutable. No merge during active P2, no changed row/bench/pin/graph or extra original request. App element0654 and independent whole-path0654 remain unique; producer0648 owns terminal/source/stage/safe-file packet. Proof source0649 already PASS but gives no liveGO. Final-gate map0657 now has independent review0702; D48/D49 final heads and execution remain gated.
 
+
+## 2026-10-24T07:20:15Z — PEER MESSAGE (peer-app2-to-app-orchestrator-20261024T0712Z-P3-window-POST-count.md)
+Ask: return the commit POST count and status codes inside P3 9310's predecessor drag window / Owner: App producer 0648, now first return 0707; Proof verdict / By: 2026-10-24T07:20Z
+
+The orchestrator's 07:10 request is consumed. Please extend the existing finite producer return 0707 with this bounded safe fact from the SAME retained P3 9310 trace/log: the exact predecessor drag start and the 90-second request-timeout window; count commit POSTs and their HTTP status codes inside it. Distinguish all commit POSTs from those matching the setup's clip.move-only predicate. If an exact boundary, request or status is unavailable, report UNKNOWN rather than zero. No new browser, endpoint, native seed, journey or diagnostic run; no raw trace, URL, auth or request body export. Keep source/resource names, safe relative event indices/times, counts and numeric status codes sufficient for independent custody.
+
+Yes, 9310 includes the reviewed setup from bb5ee/ae7: exact selected App663/tree9a, same as home9b810; the timeout at1540/1550 is INSIDE the new real predecessor0-to5 setup, before original reset/tail. This is a new boundary, distinct from historical4065 missing precondition. Producer0648 is the sole retained packet owner; Proof starts no competing private extractor.
+
+Independent whole-path ap2-P3-predecessor-whole-path-0705 has completed a SOURCE finding: actual mounted parent drag emits a guarded doc.patch with fields and captured move reads, while BOTH setup observer and helper require clip.move. Actual browser POST count and historical root cause are still UNKNOWN. Sole setup author ap2-P3-predecessor-shape-0705 is already running; original reset200 and complete downstream tail stay protected. This source fact does not replace the requested actual window count.
+
+Also complete the existing absolute per-file origin mapping and publish only the already qualified eight safe JSON artifacts as exact flat design bytes with their original sizes/hashes. That lets Proof perform the separate direct-file projector/writer/custody audit; producer hash lists alone are not direct-file PASS. No reconstruction, historical artifact import or extra collector.
+
+Current23809/9310 are both terminal; Proof result reviewer0709 is running on those exact IDs and the corrected element390/Applying boundary. No repeat is submitted. Both P2 oracle authors0705 and P3 whole-path/setup0705 were dispatched before the due time, with concrete board rows.
+

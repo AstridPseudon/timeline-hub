@@ -1,11 +1,11 @@
-<!-- main | 2026-10-24T07:20:15Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 19 | status age 4m -->
-# runtime board, 2026-10-24T07:16:03Z
+<!-- main | 2026-10-24T07:22:52Z | dispatcher heartbeat 14s | live 2 (sol 0, luna 2, other 0) | busy30 19 | status age 1m -->
+# runtime board, 2026-10-24T07:21:12Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | 34eac0041; 62c454ac0 |
 | U1/U1b | Upstream and schema 32 | Luna / Sol | Upstream baseline | merged | U1b review 1005; service 32328 | Integrated proof passed 456 cases; 12 skips and two configured exclusions remain recorded. | 27f0306b9; 4e56253c6 |
-| U1c-draft | Merge reviewed current upstream join | Luna | Normal serialized merge | merging | Join 0657; review 0703; live 0715 | Live Runtime795 matches local at07:13:49. Reviewed current join queued; all protected blobs and history survive. | 551c queued |
+| U1c-draft | Merge current upstream join | Luna | Integrated qualification | review | Review 0703; integrated 0721 | Normal merge 46eb preserves upstream 795 and reviewed current source. Exact joined proof is running. | 46eb068c5 |
 | R0-public-export | Export DocPatchArgs at package root | Luna | P1 GO | merged | Author 0049; review 0052; integrated 0057 | Actual 458595850: 144 passed in 16.25 s; wire probe, generation and Ruff passed. [Proof](../../design/runtime-R0-public-export-integrated-0057.md) | 458595850 / cf74f3e6f |
 | F-runtime-full | Close retained full-suite failures | Service / Luna | Independent accounting passed | merged | Original29085; review0524 PASS | Zero of 36 original failures open. All 36 closed; zero unaccounted. [Accounting](../../design/runtime-D43-final-accounting-review-0524.md) | 1d9ddba54 current scope |
 | R2r | History attribution and native authority | Luna / Sol | C0 and U1 | merged | Prior independent reviews | All source-specific results retained in [evidence](../../design/runtime-prior-proof-evidence-0051.md). | 21482a416 and later |
@@ -56,7 +56,7 @@
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Current installed qualification passed | merged | Agent0508; independent0517 PASS | Exact seven originals passed on managed child 3b5c, Agent ba8f and Runtime f320. Current 9cd relevant sources and test AST match. | Managed child 3b5c |
 | OPS-farm-agent-full | Correct farm full-suite environment | Sol / Luna | Genuine Farm setup and preflight | blocked:farm | Sol0617; review0632 SOURCE PASS | Fourteen checks passed. Farm has byte-exact packet and reviewed setup; host remains unverified. [Review](../../design/runtime-farm-full-v2-source-review-0632.md) | 471712 reviewed packet |
-| OPS-child-dependency-route | Add verified local dependency seed | Sol / Luna | Second failure repair and investigation | doing | Sol 0707; whole path 0707 | Review 0701 found consumed-argument reuse failure and missing dependency provenance. Held uninstalled; source repair and independent trace now run. | ec31c held |
+| OPS-child-dependency-route | Verify local dependency seed route | Sol / Luna | Independent security review | review | Sol 0707; review 0721 | Private repair passed 34 cases. Saved arguments and seeded reuse provenance corrected; source remains uninstalled. | ac2412f0c held |
 | R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Integrated proof passed | merged | Review 0405; integrated 0413 PASS | 13 standalone cases and 243 controls passed; 74 configured deselections. [Proof](../../design/runtime-historical-image-integrated-0413.md) | 2b49da8d6 / 2e96c68c |
 | R-D42-history-memo | Harden verified replay memo | Sol / Luna | Post-delivery scope under D47 | gated:D47 | Design0448; review0454 PASS | Deferred by D47. No stable validation boundary; nine state attacks remain open. Source stays unmerged. | Tests 6c6bb375; source held |
 | R-D42-proof-pin | Preserve a compatible future memo pin | Sol / Luna | Post-delivery safe memo under D47 | gated:D47 | No active pin author | D45: next P2/P3 uses existing37eb without memo. Prior unsafe backport stays held; no new checkout needed. | Earlier backport held |
@@ -65,7 +65,7 @@
 | U2c-child-proof | Identify supported activation child proof | Luna / Luna | Source facts independently reviewed | merged | Facts0425; independent0430 PASS | Producer is absent in Agent RunPod adapter. Exact owner and custody seam returned; Runtime guard unchanged. | Source facts only |
 | F-CLI-remainder | Preserve five original CLI scenarios | Luna / Sol | Whole-path review passed | merged | Author 0540; whole-path Sol 0601 PASS | Five units passed; production final save uses v2. Agent owns exact credit. [Review](../../design/runtime-CLI-whole-path-review-0601.md) | Agent 2007 unchanged |
 | U1c-freeze-recheck | Preserve current upstream join seams | Luna | Final live tip check before merge | merged | Current review 0703 PASS | Current source qualification complete at exact 795 upstream. Integration merge waits lead freshness; no full or gate credit. | 551c current join |
-| R0-D39-generation-dry | Merge regenerated D39 producer | Luna | U1c merge and live tip verification | blocked:runtime | Author 0705; review 0710 PASS | Five outputs match dryfe637;163 cases and generation/artifact/type checks pass. Consumers unadopted; queued after U1c merge. | c021f13af ready source |
+| R0-D39-generation-dry | Publish regenerated D39 producer | Luna | Integrated qualification | review | Review 0710; integrated 0721 | Reviewed five outputs merged. 163 source cases passed; exact final producer inventory is being retained. | becfe6db8 / c021f13af |
 | F-D09-remainder | Map three retained managed-scene originals | Luna / Luna | Independent mapping passed | merged | Author 0557; review 0601 PASS | Exact retained three-case PASS on Runtime 8ea; current 1d9 import probe is separate. [Review](../../design/runtime-D09-review-0601.md) | Agent 2007 unchanged |
 | F-G5-restructure-remainder | Qualify seven restructure originals | Luna / Luna | Independent result review passed | merged | Author 0557; review 0602 PASS | Seven exact originals passed in 54.26 seconds on Agent 2007 and Runtime 1d9dd. [Review](../../design/runtime-restructure-review-0602.md) | Agent 2007 unchanged |
 | F-normal-publish-remainder | Qualify eight publication originals | Luna | Integrated result review passed | merged | Author 0640; independent 0645 PASS | Eight exact originals qualified with separate source scopes. Last closure case passed 6.34 s on Agent 1f15; no predicates changed. [Review](../../design/runtime-normal-publish-result-review-0645.md) | Agent 1f15 / Runtime 1d9 |
@@ -74,44 +74,31 @@
 | F-helper-originals | Qualify fourteen retained helper rows | Luna | Settled D23 child-word scope | gated:D23 | Author 0622; review 0627; Agent 0640 | Thirteen passed. Remaining child-word case is D23 deferred, unchanged and open; no fixture binding or timing backend invented. | Agent bb50 unchanged |
 | F-R2-root-originals | Qualify nine retained root cases | Luna | Independent exact result review passed | merged | Author0622; review0625 PASS | Nine originals passed; source only. Pre/post capture limit disclosed. [Review](../../design/runtime-R2-root-review-0625.md) | Agent bb50 unchanged |
 | R2r-shared-inverse-auth | Verify shared inverse source identities | Sol / Luna | Integrated source proof passed | merged | Author 0647; review 0701; integrated 0711 | Actual460c passed177 plus six shared/source-copy controls on exact Agent d33fe archive. No original ABA or HTTP credit. | 460c2d397 / 35764ce10 |
-| FREEZE | Coordinate final merge and proof sequence | Runtime manager | D48 and D49 | doing | Runtime merges; Agent and App drafts | Four live tips verified0715. U1c merge queued, D39 next; Agent draft reviewed next, App merge gated, Farm checkpoint unverified. | Current proof pins fixed |
+| FREEZE | Coordinate final tuple and proofs | Runtime manager | D48 and D49 | doing | Runtime 0721; Agent 0702; App 0707 | U1c and D39 merged. Agent draft review and App GO remain pending; Farm host preflight is requested. | Runtime becfe6db8 |
+| OPS-child-observability | Retain bounded maker failure evidence | Luna | Private repaired maker source | doing | rt-OPS-child-observability-0724 | Normal stage and failure retention after rollback; no live install, provisioning or original body. | Based on ac2412f0c |
 
-P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
+Runtime full: 0 of 36 original failures open; exact integrated proofs and independent accounting remain recorded above. No new full-suite PASS. Current producer is becfe6db88b2cc034dba3fafa6c050117cdf2b06 after normal U1c and D39 merges. Readonly integrated worker0721 tests this exact head; source reviews0703 and0710 remain PASS. Shared inverse source is separately qualified on460c by177 Runtime cases and six shared/source-copy controls, with no original ABA or HTTP credit.
 
-Runtime integration is 460c2d397 after reviewed shared inverse auth merge35764; its new integrated proof0711 is assigned. Prior head1d9dd treef56c retains the headless/accounting proofs. The merge adds only the reviewed headless fixture. Integrated 0521 passed thirteen; independent accounting 0524 passed: all 36 original failures closed, zero open and zero unaccounted. Prior proofs keep their exact Agent source scope. This is not a new full-suite PASS. Product source remains unchanged from 2b49.
+FREEZE sequence under D48 and D49:
+- Runtime: U1c merged46eb; D39 mergedbecfe6; exact integrated inventory/proof0721 running.
+- Agent: U2 draftcb6ce against live25359 is in HARD Sol0702 review. One history failure and twelve new mypy diagnostics remain under review. Normal D39 adoption follows reviewed U2 home and exact producer handoff.
+- App: U3b draft0707 uses live2a288; merge remains gated on header P2/P3 GO, then normal D39 adoption.
+- Composition: live67b8 is unchanged; no upstream merge required. Viewing owns its qualification.
+- Final tuple qualification precedes P1–P5 on App service with Proof verdict, final full suites, then Farm build and ZIP.
+- Full venues: Runtime main service; Agent Farm after zero-setup-error checkpoint, fallback Agent service after dependency qualification; App App service; Composition Viewing service.
 
-D47 defers the memo and validation capsule until after delivery. Held source remains unmerged. D45 and D46 keep the next pair on existing 37eb and Agent 079 with reviewed App fixes.
+P1 remains historical GO under D25 on original18792 and exact f8b15/787380/2a9 tuple. P4 and P5 retain their recorded source scopes. Final freeze reruns all gates. Current pinned P2/P3 pair23809/9310 is terminal: P2 three failed and five not run; P3 predecessor request wait failed after readiness41.4s. App and Proof own fixes/verdict; no duplicate pair here.
 
-P2/P3: D45 pair is terminal. Both reached readiness on App c0fe / Agent 079 / Runtime 37eb. P2 has three failures and five not run; P3 failed inside Gate5. App and Proof own diagnosis and verdict; no repeat here.
-Farm: checkpoint agent-full-farm-1024050351-26511 ended on Agent9cd/tree57f0231d and Runtime45c3: 17,335 passed, 288 failed, 187 setup errors and four skips. No JUnit; seven failed summary nodes lack retained FAILED lines. Corrected packet471712 has independent source PASS0632. Peer0635 sends genuine setup and host preflight to Farm; one corrected checkpoint follows only after PASS. No new full result is claimed.
-Blockers: Freeze coordinator — Agent U2 source review and App P2/P3 GO remain pending. Composition live tip is unchanged67b8; D39 adoption follows reviewed producer merge.
+Farm checkpoint26511 remains terminal on Agent9cd/tree57f0231d and Runtime45c3:17,335 passed,288 failed,187 setup errors,four skips; no JUnit and seven missing FAILED lines. Corrected packet471712 passed independent source review0632. Farm checkouts9cd and1d9 are complete. Peer0724 asks Farm to issue its supported ready runtime request, install the reviewed row and capture genuine parent plus sanitized-child origins. No new checkpoint before preflight PASS. Runtime45c3 lacks external_pack_sources; selected1d9 contains D40 with the prior four client hashes.
 
+Child dependency: private Sol repair0707 passed34 tests. Independent security review0721 is running; no installation or AgentREADY. Same-lock original wheel custody and bootstrap availability remain unverified. Agent0642 RECORDs do not prove dependency wheel hashes. Unique Luna0724 authors the reserved bounded stage/failure retention seam; no unchanged candidate retry, installed overlay, old-child relabel or new trust backend.
 
+SDK persistence fixture848b is independently0713 PASS, exact two originals passed4.19s and all ten body/assertion hashes remain unchanged. Own-only remote Agent merge request0708 is pending. Restart resolves a challenge to an old closure and earns no duplicate credit. Agent owns journal/publish merge-positive source separately.
 
-D34: Main has 8.5 GiB free at the latest check. The orchestrator orders no further main disk work. Reviewed registry candidate fdb9e9e9 was installed; normal retirement of s2-c13 was refused for incomplete tuple markers. No retry; zero GB freed.
+D34: main has about9 GiB free at07:17. No main disk work per the explicit orchestrator hold. All prior retirement and process refusals stay stopped. D47 memo/capsule stays held and unmerged after delivery; no new memo proof pin or HTTP run. D46 closes U2c and defers new relay/provider custody backends. D23 child-word helper remains unchanged and open;13 others retain qualified proof.
 
-Later: D46 closes U2c; no new relay or provider custody backend. Its upstream commit arrives at the freeze. Agent owns support-probe timeout investigation 0522; no Runtime author is requested. Disk and D47 memo work stay paused. CLI five retained units and the final v2 production save path passed independent Sol0601 review. Agent owns exact original count mapping; no source change is justified. The H32 U1c recheck and D39 generation dry run are also dispatched.
-
-
-
-Next ready: No ready task waiting. Live tip worker0715 releases reviewed U1c then D39 merges. Dependency Sol0707 and persistence review0713 run. Agent owns the joined original ABA proof.
-Later: Viewing peer0624 reports its partial ABA repair and remaining native-stage address mismatch. Viewing owns source and review; no Runtime author or body is requested.
-Blockers: Farm — corrected full-suite host setup and genuine parent plus sanitized child import preflight remain unverified; reviewed packet0635 is published.
-Blockers: Runtime kit — Agent support and reopen need reviewed dependency seeding and authenticated local artifacts. First fix 0654 corrects failed source review; no retry yet.
-
-Freeze steps, D48 and D49: Runtime owns U1c join, then generated D39 producer and Agent adoption handoff. Agent owns U2-freeze and consumer adoption. App owns U3b refresh now, merging only after P2/P3 GO, then adoption. Viewing owns Composition freshness and its suite. Runtime coordinates final tuple qualification; Proof owns P1-P5 final reruns on App service. Final full venues: Runtime on main service; Agent on Farm after zero-setup-error checkpoint, fallback Agent service after dependency repair; App on App service; Composition on Viewing service. Farm owns final build and ZIP after every prerequisite passes. All remain pending except previously recorded source drafts and retained proofs.
-
-Runtime full venue: main test service. Original retained census: 0 of 36 open, with exact integrated proofs recorded above; no new full-suite PASS is claimed. Farm Agent checkpoint remains 187 setup errors pending genuine v2 setup; D49 requires a later checkpoint with zero setup errors.
-Later: Agent0646 asks for normal maker progress and failure retention after exact child packet0642. Reserve that source seam to the current dependency maker owner after first fix0645/0654; no competing make-child-venv author or new build retry.
-
-U1c join0652 stop requested: manager brief had a standalone dot after targeted filenames, triggering broad repository collection. No full result credited. Preserve WIP and merge ancestry, then resume only eight named files with explicit command and JUnit destination.
-
-Freeze Proof handback0657: owner App service with Proof verdict; report-only gate map ap2-P1-P5-final-gate-map-0657 is doing. Current pinned P2/P3 pair submitted06:47:59 uses App663 product tree9b810, Agent079, Runtime37eb; IDs23809/9310 remain unique and pending. Integration joins do not change these inputs.
-
-Agent accounting: latest independently approved236 closed31open267 is reported by Agent; current restart failure challenges one old SDK9 closure. Agent alone owns the corrected package and no duplicate restart credit is allowed.
-
-Freeze Agent0704 handback: upstream draft cb6ce42cc2 has real25359 parent, three conflicts resolved; independent HARD Sol0702 checks135passes/onehistoryfailure and12newmypy diagnostics. Home1f15 stays unchanged; D39 adoption waits reviewed U2 home and exact Runtime producer.
-
-Freeze App0707 handback: U3b draft0707 uses current upstream2a288 with real merge parent, starting home9b810; obsolete687-commit ancestry is excluded. App merge remains gated on P2/P3 GO. Current pinned P223809 ended3FAIL5NOTRUN; P39310 failed predecessorrequest after readiness41.4s. App/Proof own diagnosis; no new pair. App full venue is App service.
-
-Freeze live0715: all public main queries succeeded07:13:48–07:13:49 without retries. Runtime795379a67, Agent25359ed68, App2a288e629 and Composition67b8aa3d0 equal localorigin refs and are present. Composition needs no upstream merge. [Freshness evidence](../../design/runtime-freeze-live-tips-0715.md).
+Blockers: Farm — genuine corrected host request, managed receipt and parent plus sanitized-child preflight remain unverified; exact ready action sent0724.
+Blockers: Agent and App — reviewed U2 home, D39 consumer adoption and header P2/P3 GO are still needed for the final tuple.
+Blockers: Runtime kit — independent dependency review and genuine lock-authenticated wheel artifacts are needed before one candidate child request.
+Next ready: No unassigned ready Runtime task. Integrated producer0721, dependency review0721 and observability0724 are dispatched. Consume Agent SDK merge receipt for exact integrated qualification when published.
+Later: Viewing owns the original ABA joined-source verdict. Runtime shared-auth handoff0715 is complete; no competing Runtime author or original body. D34 disk work and D47 memo resume only under their stated conditions.
