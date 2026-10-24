@@ -345,6 +345,7 @@ def test_remote_create_empty_generates_ulid_when_no_id_given(runtime_create_case
     timeline_key = result.data["timeline_id"]
     assert is_ulid(timeline_key)
     assert runtime_create_case.calls[0][1] == ("render-smoke", timeline_key)
+    assert runtime_create_case.calls[1][0] == "list_timeline_commits"
     assert runtime_create_case.calls[-1][0] == "commit_timeline"
     assert result.data["canonical_document"]["parent_revision"]["payload"]["config"]["tracks"] == []
 
