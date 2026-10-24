@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T16:16:35Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 1m -->
-# runtime board, 2026-10-24T16:15:33Z
+<!-- main | 2026-10-24T16:19:41Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 2m -->
+# runtime board, 2026-10-24T16:17:28Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -78,8 +78,9 @@
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
 | F-D52-core-five | Map five named actual home outcomes | Luna | Authentic XML and map verified | merged | Receipt 1418 PASS | All five named cases PASS on actual47b/becfe. Current four fork failures are distinct. [Receipt](../../design/rt-F-D52-core-five-receipt-1418.md) | Agent 47b |
 | U1-D69-test-audit | Preserve upstream test predicates | Luna | Seven restorations before cut | merged | rt-U1-D69-test-audit-1603 | Missing16:9 mapped,7 restore. Changed129:75 clear,54 cited. Two skip markers cited;12 dynamic scopes explicit. [Audit](../../design/rt-U1-D69-test-audit-1603.md) | Source facts only |
-| U1-D69-restore-guard | Restore two skip guard originals | Luna | Exact upstream bodies | doing | rt-U1-D69-restore-guard-1613 | Two missing upstream test functions. Bodies and every old predicate preserved; source cause returned if red. | Pending |
-| U1-D69-restore-registry | Restore five registry originals | Luna | Exact upstream bodies | doing | rt-U1-D69-restore-registry-1613 | Five missing upstream test functions. Bodies and every old predicate preserved; no skip policy change authorized. | Pending |
+| U1-D69-restore-guard | Restore two skip guard originals | Luna | Policy correction then review | review | Restore1613; policy1616 | Exact upstream bodies restored;15PASS2FAIL exposes omitted no_ci and false-condition policy. No test expectation changed. | Branch held |
+| U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Exact restored failures | doing | rt-U1-D69-skip-policy-1616 | Own tests/lanes.py only. Restore no_ci and false-condition refusal while retaining stricter current xfail/node/hash guards. | Pending |
+| U1-D69-restore-registry | Restore five registry originals | Luna | Policy1616 then joined review | review | rt-U1-D69-restore-registry-1613 | Five exact bodies restored; fourPASS and one no_ci failure, full11PASS1FAIL. Same omitted policy is owned1616; old7 bodies exact. | Branch held |
 | U1d-final | Join final owner upstream | Luna | Integrated qualification complete | merged | Integrated 1401; reviews 1346/1351 | Actual e68:448 passed,9 declared skips,2 existing xfails; raw exit1 retained. [Proof](../../design/rt-U1d-integrated-1401.md) | e68cf2316 |
 | U1d-visual-source | Preserve upstream visual source | Luna | Source review passed | merged | Author 1331; review 1333 | Reviewed source is in actual e68. Integrated visual qualification running with the targeted union. | 9db3 / e68 |
 | U1d-visual-tests | Keep both live FPS families | Luna | Independent protected proof passed | merged | Restore 1338; review 1351 | Both restored tests and all incoming cases retained. Exact candidate 60e passed 95 with raw exit 0. | 60e / e68 |
@@ -91,7 +92,7 @@
 | R-D62-integrated-proof | Prepare exact central HTTP proof | Luna | D66 removes separate stage | gated:D66-superseded | Prep1512; corrected1517 | No separate D62 integrated stage. Author plus security and Agent actual-home six originals suffice; cut covers remaining proof. | Evidence only |
 | R-D62-http-route | Add durable central proof output | Luna | D66 removes separate stage | merged | rt-R-D62-http-route-1524 | Installed one isolated row, outside bytes and historical XML exact. No body run; unused under D66. | Installed config only |
 | R-D62-joined-producer | Join mode, forward auth and wire | Luna | Independent security PASS | merged | Join1503; security1511 PASS | Actual8b32 tree equals reviewed e02f exactly; paired source412PASS. Agent owns six actual-home originals. [Review](../../design/rt-R-D62-security-review-1511.md) | 8b32cacea / e02f |
-| R-inverse-timeline-root | Authenticate inverse timeline root | HARD Sol / Luna | Exact source security review | review | Author1557; security1606 | Author28 focused,333 strict and one unchanged original PASS. Exact760269 review1606 active; no new home source yet. | 760269 held |
+| R-inverse-timeline-root | Authenticate inverse timeline root | HARD Sol / Luna | Independent security PASS | merging | Author1557; security1606 | Exact760269 PASS:28 focused,333 strict,171 ABI controls; static0new. Normal merge requested immediately; Agent home original follows. | 760269 queued |
 | R-recorder-abi-authority | Persist accepted recorder mode | Sol / Luna | D62 source security PASS | merged | Author1450; security1511 | Actual8b32 security412PASS; actual Agent5777 four fork originals and54 strict controls PASS. Final cut proof remains pending. | 8b32cacea / 8825 |
 | R-forward-created-authority | Authenticate forward allocation claims | Sol / Luna | D62 source security PASS | merged | Author1450; security1511 | Actual8b32 security412PASS; actual Agent5777 structural original PASS. Retained restore original now reaches separate timeline-root inverse defect. | 8b32cacea / 9433 |
 | R0-D61-history-wire | Generate optional history ABI field | Luna | Joined source security PASS | merged | Wire1454; security1511 | Actual8b32 canonical15 exact6e8; schema867f. Agent5777 and App95cf now normally adopted; no regeneration remains. | 8b32cacea / 6e8 |
@@ -187,3 +188,7 @@ Pass 2026-10-24T16:11:07Z: Sol1557 completed760269; author28focused+333strict+on
 Pass 2026-10-24T16:11:51Z: finalcore newinverse guard file is a real source addition. Luna1612 assigned coherent private84file+TS/D68candidate join immediately, no actualsource or registry writes. Security1606 and audit1603 continue undercap4.
 
 Pass 2026-10-24T16:13:35Z: D69audit1603 completed missing16=>9mapped/7restore, changed129=>75clear/54cited. Disjoint Luna1613 guard2 and registry5 restorations dispatched immediately undercap4. Exactupstream protectedbodies retained; redsourcecause returns finiteowner, no assertionweakening. Security1606 and finalcandidate1612 alsoactive.
+
+Pass 2026-10-24T16:17:04Z: guard restoration1613 exactupstream bodies gives15PASS2FAIL. Missing upstream skip-policy behavior confirmed: no_ci absent, falsehostcondition not enforced. Luna1616 policyowner dispatched immediately on restoredbranch, tests/lanes.py only; stricter ours preserved. Cumulative protected/source review follows meaningfulcorrection.
+
+Pass 2026-10-24T16:17:28Z: inverse security1606 FINALPASS exact760269:28focused333strict171ABI plusstaticPASS. request-merge1557 queued immediately. Registryrestore1613 reports11PASS1FAIL, same no_ci source defect already uniquelyowned1616. Allseven testbodies restoredexactly; joined protectedreview follows sourcefix, no redtest merge.
