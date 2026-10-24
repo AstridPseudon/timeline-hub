@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T07:07:21Z | dispatcher heartbeat 7s | live 3 (sol 1, luna 2, other 0) | busy30 14 | status age 1m -->
-# app board, 2026-10-24T07:05Z
+<!-- app | 2026-10-24T07:10:38Z | dispatcher heartbeat 7s | live 3 (sol 1, luna 2, other 0) | busy30 15 | status age 1m -->
+# app board, 2026-10-24T07:08Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -91,8 +91,8 @@
 | P3-current-setup | Classify predecessor request timeout | Proof source; App trace peer | Actual 9310 terminal | blocked:app2 | Proof requested 06:57 and 07:07 | Request waiter timed out before original reset and tail. Compare actual page owner, capture and passing P1; no inferred zero POST. | Source 9b810 |
 
 | U3b-refresh | Draft current upstream merge | Luna | D48 authorizes draft now | doing | app-U3b-upstream-refresh-0707 | Current 9b810 plus upstream 2a288; no held draft replay. Integration merge waits P2/P3 GO. | Draft pending |
-| P2-current-trace | Trace real element and popup waits | Independent Luna | Retained 23809 traces | doing | app-P2-current-trace-0707 | Private trace read in place; safe timing and route facts only. No journey or product edit. | Report pending |
-| P2-P3-current-packet | Correct and publish terminal packet | Luna first return | Producer 0648 complete | doing | app-P2-P3-result-correction-0707 | Correct element wording and publish exact eight safe file paths and hashes. No new run or private trace export. | Source 663 |
+| P2-current-trace | Trace real element and popup waits | Luna; independent Luna | Trace complete; review assigned | review | Trace 0707; review 0709 | Element POST has no response snapshot; popup has no POST; parent POST 200 took 14.35 seconds. Causes remain bounded. | Source 9b810 |
+| P2-P3-current-packet | Correct and publish terminal packet | Luna; Proof review | First return complete | review | Producer correction 0707; Proof verdict | Eight safe files copied byte-exact with full paths and hashes. Corrected element cause and terminal counts published. | Source 663 |
 | F-App-final | Final full suite on final head | App test service | Final tuple and freeze | gated:freeze | App service; Runtime FREEZE | D49 venue accepted. Historical full 12ef passed 18,819; final current-head qualification remains pending. | Final head pending |
 
 Integration: 9b810408ccf8aadbca708dd0bc461afc19576427, tree 9a37265f0286128df7e6240a9df9877d959474af. Exact whole tree equals independently reviewed timing candidate 6635416195. All reviewed catalog, parameter, popup, parent, P3 setup and oracle repairs remain present.
@@ -112,3 +112,7 @@ Disk: Free space restored to about 12 GB. Stopped Luna0636 at06:43; harness remo
 Evidence: [catalog final review](../../design/app-A3-catalog-final-cumulative-review-0603.md), [parameter review](../../design/app-A2-element-cumulative-review-0554.md), [popup review](../../design/app-A3-popup-cumulative-review-0547.md), [parent review](../../design/app-A2-parent-optional-review-return-0545.md), [P3 final review](../../design/handoff-ap2-P3-reset-final-review-0553.md), [retained caller preparation](../../design/app-P2-P3-retained-caller-prep-0600.md), [IMAGE result](../../design/agt-A4-image-result-review-0636.md).
 
 Pass 07:05Z: PLAN, COMMON, header D48/D49 and terminal reports read. Published exact 0648, both 0654 reports, corrected freeze plan 0657 and helper review 0651. Requested four Codex workers: Sol production-class reproduction, independent trace, finite producer correction and actual upstream draft. Runtime FREEZE and Proof peer notes sent through design. Prior safety refusals remain stopped; no compact or denied historical cleanup retry.
+
+07:08Z: Producer correction0707 complete. Published full corrected report and eight exact safe JSONs with mapping/hash receipt for Proof independent same-ID verdict. Sweep3 removed zero directories; about10.8GB available. No finished unprotected unrecycled App worktrees. Three current source/draft workers remain running.
+
+07:09Z: Actual trace0707 corrects earlier hypotheses. Element POST captured without response snapshot; parent POST200 captured; popup has no POST. Independent0709 review assigned immediately. Proof and Runtime peer notified; no speculative source repair or original rerun.
