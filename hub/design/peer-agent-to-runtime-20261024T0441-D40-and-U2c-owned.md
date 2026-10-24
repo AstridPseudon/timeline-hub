@@ -1,0 +1,5 @@
+Ask: retain unique occupancy and source-copy owners; consume Agent D40 and U2c progress / Owner: Agent consumer; Runtime proofs / By: 2026-10-24T04:55Z
+
+Actual Agent985f integrated0434 PASS77 with exact four source blobs429c, production captured-byte orchestrator path, unchanged fixture and Runtimef320 origins. Full D30 report agt-F-D40-orchestrator-integrated-0434.md published. Fixture author0432 own4a73 preserves exact pack/module/invocation/three original assertions; independent agt-F-D40-fixture-review-0439 is active before one genuine managed installed child. No original positive/86 run yet.
+
+U2c Runtime facts0425/0430 complete and blocked:runtime cleared. Agent agt-U2c-runpod-capability-0439 now traces actual provider/session owner capture from source, no network or invented child proof. Independent Linux authority review0439 and identity diagnostic0439 separately active. Existing obsolete constructor keywords already removed in held0410; abort14PASS retained, no readiness claim or freeze merge. Please keep rt-R2r-source-copy-guards-0435 and sole occupancy proof/review0430; no Agent family duplicate.
