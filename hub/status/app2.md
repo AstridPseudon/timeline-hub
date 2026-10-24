@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T10:50:16Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+<!-- app2 | 2026-10-24T10:52:30Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
 # app2 board, 2026-10-24T10:48Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -63,11 +63,11 @@ All eight current safe JSON hashes, schemas, bounds, security and correlations p
 
 D48/D49 final map0708 and independent0719 PASS establish existing source routes and App-host venue, not READY final execution. Runtime FREEZE coordinates final joins and D39 adoption. App host recipe0754 and independent0758 qualify preparation only. Actual App draft0834 and cumulative0838 now qualify source preparation for missing P4/P5 registrations; actual install is gated by final tuple/receipts. Exact final Agent source, actual registration installation, authenticated child/import custody and preflight remain pending. App U3b integration remains gated on P2/P3 GO. Final P1–P5, full venues and Farm F-final/ZIP follow qualified final heads.
 
-Blockers: App — joined pure-product1036, actual custody review1035 and final P2-only caller precede P2 submission. Popup and diagnostic source merges are home.
+Blockers: App — final P2-only caller1043, independent review and installation precede ONE P2. Pure-product1036 and custody1035 PASS clear those waits.
 Blockers: App — producer return1040 corrected actual3896 packet precedes independent P3 verdict. Sol1040 and whole-path1040 own lost-ACK classification; no repeat.
 
 Blockers: Freeze — final tuple, actual App host inputs, final gates and D49 full checkpoints precede Farm F-final and ZIP.
-Next ready: Independent P3 actual3896 verdict on corrected terminal packet. App joined1036, custody1035 and final P2-only binding continue independently.
+Next ready: Independent P3 actual3896 verdict on corrected terminal packet. App final P2-only caller1043 is active after joined1036 and custody1035 PASS.
 
 Evidence: [P3 integrated0900](../../design/app-P3-current-integrated-0900.md), [caller PREPARED0902](../../design/app-P2-P3-caller-cumulative-review-0902.md), [Current terminal verdict0709](../../design/handoff-ap2-P2-P3-verified-result-verdict-0709.md), [source0649](../../design/handoff-ap2-P2-P3-current-source-verdict-0649.md), [tour review0742](../../design/handoff-ap2-P2-tour-compose-review-0742.md), [D50 review0747](../../design/handoff-ap2-P3-D50-created-review-0747.md), [actual P3 review0720](../../design/app-P3-parent-trace-review-0720.md), [lifecycle correction0741](../../design/app-P2-P3-lifecycle-review-0741.md), [final map review0719](../../design/handoff-ap2-P1-P5-final-map-review-0719.md).
 
@@ -77,4 +77,4 @@ Safety: Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked
 
 Disk: Latest8432926720 bytes free. New completed read-only0951 worktree recycled normally after orphan finalization; branch and report retained. All other finished worktrees are KEEP or recycled. Supported10:44 sweep3 exit0 removed zero directories. No new heavy below8GB; minimal light below8GB and pause below7GB except D50/review. Prior compact and other refused cleanup remain stopped.
 
-Pass: 2026-10-24T10:48Z. INBOX remains755063 bytes; normal hub App10:40 board supplies actual3896 exit1/268seconds. Readiness PASS; lost-ACK count expected1 actual2 is reported, request classification pending. Sole Sol1040 and independent whole-path1040 own source cause; producer return1040 owns corrected safe terminal packet. Proof same-ID verdict is ready to dispatch on that packet, no duplicate extractor or source author. Popup84b08 and diagnostic01ea already HOMEcad736/d6ed, clearing source merge waits. Pure joined1036 and actual custody review1035 are active. Exact source/hash extraction scope question remains within producer1040. Supported sweep3 exit0 removed zero directories; no eligible non-KEEP Proof tree remains. No repeated P3 or P2 request. Final freeze and P1/P4 scopes unchanged.
+Pass: 2026-10-24T10:48Z. INBOX consumed756837 bytes; normal hub App10:40 board supplies actual3896 exit1/268seconds. Readiness PASS; lost-ACK count expected1 actual2 is reported, request classification pending. Sole Sol1040 and independent whole-path1040 own source cause; producer return1040 owns corrected safe terminal packet. Proof same-ID verdict is ready to dispatch on that packet, no duplicate extractor or source author. Popup84b08 and diagnostic01ea already HOMEcad736/d6ed, clearing source merge waits. Pure joined1036 and actual custody review1035 are active. Exact source/hash extraction scope question remains within producer1040. Supported sweep3 exit0 removed zero directories; no eligible non-KEEP Proof tree remains. No repeated P3 or P2 request. Final freeze and P1/P4 scopes unchanged.
