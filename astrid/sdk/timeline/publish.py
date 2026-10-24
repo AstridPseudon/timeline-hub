@@ -369,6 +369,9 @@ class _PublishMixin:
                 publication_id=local["base_parent"].get("publication_id", state["base"]["publication_id"]),
                 client=client,
             )
+            if any(original["base_parent"][field] != state["base"][field]
+                   for field in ("revision_id", "publication_id")):
+                raise TimelineEditError("original revision/publication pair changed")
             local["base_parent"] = {**original["base_parent"], **local["base_parent"]}
             local["source_mapping"] = {**original["source_mapping"], **local["source_mapping"]}
             if (local["base_parent"] != base["base_parent"]
