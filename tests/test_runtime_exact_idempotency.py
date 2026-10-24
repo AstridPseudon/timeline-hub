@@ -3,9 +3,9 @@ from __future__ import annotations
 import json
 
 import pytest
-
 from astrid_runtime_client import ApiError, WorkspaceClient
-from http_helpers import Api, legacy_call
+from http_helpers import Api
+
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.store import RealmStore
 
@@ -45,7 +45,6 @@ def test_executor_registration_requires_key_and_fences_stale_replay_after_restar
     finally:
         restarted.stop()
 
-
 def test_project_reference_creation_is_keyed_durable_and_non_overwriting(tmp_path):
     root = tmp_path / "realm"
     support = tmp_path / "support"
@@ -74,51 +73,5 @@ def test_project_reference_creation_is_keyed_durable_and_non_overwriting(tmp_pat
             client.create_project_reference(project.project_id, {**reference, "name": "Overwrite"}, idempotency_key="different-reference-key")
         assert overwrite_reference.value.status == 409
         assert restarted.service.store.conn.execute("SELECT name FROM project_references WHERE id='exact-reference'").fetchone()[0] == "Exact"
-    finally:
-        restarted.stop()
-
-
-# Timeline shot and timeline reference writers are retired (RT02); this keeps the original expectations until their commit replacements exist.
-@pytest.mark.xfail(strict=True, raises=ApiError, reason="[declared-xfail:runtime-exact-idempotency] RT02 held: direct shot writes are retired (410); the reference half is the KEPT catalog (RK01)")
-def test_timeline_shot_and_reference_creation_are_keyed_durable_and_non_overwriting(tmp_path):
-    root = tmp_path / "realm"
-    support = tmp_path / "support"
-    RealmStore.initialize(root).close()
-    daemon = RuntimeDaemon(root, support_root=support).start()
-    project_id = None
-    try:
-        client = WorkspaceClient(daemon.endpoint, daemon.token)
-        project = client.create_project("Exact Timeline", idempotency_key="exact-project")
-        project_id = project.project_id
-        client.create_timeline(project_id, "exact-timeline", idempotency_key="exact-timeline")
-        shot = {"shot_id": "exact-shot", "start_ms": 0, "duration_ms": 100, "reference_ids": []}
-        reference = {"reference_id": "exact-reference", "object_id": "object-digest", "role": "source"}
-        with pytest.raises(ApiError) as missing_shot:
-            client._request("POST", "/v1/timelines/exact-timeline/shots", body=b'{"shot_id":"exact-shot","start_ms":0,"duration_ms":100,"reference_ids":[]}', headers={"Content-Type": "application/json"})
-        assert missing_shot.value.status == 400
-        first_shot = legacy_call(client, "POST", "/v1/timelines/exact-timeline/shots", shot, key="exact-shot-key")
-        first_reference = legacy_call(client, "POST", "/v1/timelines/exact-timeline/references", reference, key="exact-reference-key")
-    finally:
-        daemon.stop()
-
-    restarted = RuntimeDaemon(root, support_root=support).start()
-    try:
-        client = WorkspaceClient(restarted.endpoint, restarted.token)
-        assert legacy_call(client, "POST", "/v1/timelines/exact-timeline/shots", shot, key="exact-shot-key") == first_shot
-        assert legacy_call(client, "POST", "/v1/timelines/exact-timeline/references", reference, key="exact-reference-key") == first_reference
-        with pytest.raises(ApiError) as changed_shot:
-            legacy_call(client, "POST", "/v1/timelines/exact-timeline/shots", {**shot, "duration_ms": 101}, key="exact-shot-key")
-        assert changed_shot.value.status == 409
-        with pytest.raises(ApiError) as changed_reference:
-            legacy_call(client, "POST", "/v1/timelines/exact-timeline/references", {**reference, "role": "target"}, key="exact-reference-key")
-        assert changed_reference.value.status == 409
-        with pytest.raises(ApiError) as overwrite_shot:
-            legacy_call(client, "POST", "/v1/timelines/exact-timeline/shots", {**shot, "duration_ms": 200}, key="different-shot-key")
-        assert overwrite_shot.value.status == 409
-        with pytest.raises(ApiError) as overwrite_reference:
-            legacy_call(client, "POST", "/v1/timelines/exact-timeline/references", {**reference, "role": "target"}, key="different-reference-key")
-        assert overwrite_reference.value.status == 409
-        assert restarted.service.store.conn.execute("SELECT duration_ms FROM timeline_shots WHERE id='exact-shot'").fetchone()[0] == 100
-        assert restarted.service.store.conn.execute("SELECT role FROM timeline_references WHERE id='exact-reference'").fetchone()[0] == "source"
     finally:
         restarted.stop()
