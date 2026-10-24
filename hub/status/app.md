@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T15:22:52Z | dispatcher heartbeat 4s | live 2 (sol 1, luna 1, other 0) | busy30 11 | status age 1m -->
+<!-- app | 2026-10-24T15:26:14Z | dispatcher heartbeat 9s | live 2 (sol 1, luna 1, other 0) | busy30 10 | status age 1m -->
 # app board, 2026-10-24T15:21Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -39,7 +39,7 @@
 | F-caller-join | Join caller and working environment | Luna; HARD Sol return | Actual service launch repair | blocked:app | Author 1419; review 1424; Sol 1437 | Isolated preparation passed. Actual runs exposed undeclared initial environment inputs; prior install-readiness claim is superseded by that limit. | 3d86494f48 |
 | F-install | Install only current P2 and P3 callers | Luna | Custody 1424 PASS | merged | Installer 1429 PASS | Only two rows changed under existing mutex and full hash compare-and-swap. Manager readback matches; 247 outsider rows unchanged. | Reviewed 3d86494f48 |
 | D64-service-entry | Prove exact launch on real service | Luna | Author52966 ready; D64 | doing | Entry1518 | Installs exact authored callers and prepares real-service first-case clean-abort dry plus missing-input poison. Review1505 off critical path. | Base52966bd651 |
-| F-launch | Authenticate actual service invocation | Sol author; Luna optional replay | D64 author tests plus dry | review | Author1437; replay1505 | 108launch/37adapter/22caller and actual empty-service positives PASS. D64 removes separate harness review gate; real-service dry remains. | 52966bd651 |
+| F-launch | Authenticate actual service invocation | Sol author; Luna replay | D64 real service dry | review | Author1437; replay1505 PASS | Frozen 52966 PASS; Agent changed to d27 after positives. Entry1518 refreshes before install; actual service dry remains required. | 52966bd651 |
 | P2-current-verdict | Judge same-ID preflight failure | Luna | Producer 1435 terminal | merged | Verdict 1438 NO-GO | Exact 12541: exit 2 in 1 second; 0 PASS, 0 product FAIL, 8 NOTRUN. Source matches; actual backend and snapshot full identity unknown. | Current be98 |
 | P3-current-verdict | Judge same-ID preflight failure | Luna | Producer 1435 terminal | merged | Verdict 1438 NO-GO | Exact 1689: exit 2 in 1 second; 0 PASS, 0 product FAIL, Gate5 NOTRUN. All original stages unrun; source matches pure target. | Current be98 |
 | F-node-current | Verify prior Node regressions | Luna | Refreshed home tree | merged | Node1345 PASS36; ENV2 | 33 verifier,marker guard and both release nodes pass. Two extension SSH setup failures remain explicit. | d24ed69dcd |
@@ -57,7 +57,7 @@
 
 Integration: be98aac54e275282467d85f79d3beb4665416039, tree 2839c7e7841d1c0897fd8e7c12f0c848d94e3979. Normal tool adoption 94d89 is merged; only runtime.lock.json differs from qualified d24ed. All 14 mapped artifacts are unchanged and match actual Runtime e68. U3-final includes exact upstream 09c844 and retains all mapped live tests. Source qualification 1409 passes 67 mounted controls on actual Agent 47b / Runtime e68.
 
-live 3 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T15:19:43Z | dispatcher heartbeat 11s | live 3 (sol 1, luna 2, other 0) | busy30 11 | status age 1m --> D64 entry1518 dispatched immediately; P1Sol1514 plus independentLuna1514 proceed off critical path. SoleSol exception: two failed Luna P1 consumed-path custody reviews. No duplicate launch author or original.
+live 2 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T15:22:52Z | dispatcher heartbeat 4s | live 2 (sol 1, luna 1, other 0) | busy30 11 | status age 1m --> D64 entry1518 dispatched immediately; P1Sol1514 plus independentLuna1514 proceed off critical path. SoleSol exception: two failed Luna P1 consumed-path custody reviews. No duplicate launch author or original.
 
 core open:9 final App gate cases unqualified:8P2 and1P3. Installer/schema compatibility failure is non-core release scope but cannot be a known gap without allowed category proof; author1507 fixes it.
 
@@ -74,7 +74,7 @@ Delivery: D52 proven dormant parent,track,transcript and executor scope is remov
 
 Safety: Prior denied cleanup,compact,graph,publication and source-access routes remain stopped. Managers write only boards,briefs and qualified shared reports. Workers own all product,test,generated,pin and Git changes. No upstream push.
 
-Disk: about 11 GB free. Finished pure1409 worktree recycled; branch and reports retained, normal test service recreates it as needed. Earlier approved sweep removed zero directories. Prior refused compact and dirty historical cleanup paths stay stopped. Heavy stop line 8 GB.
+Disk: about 11 GB free. Finished pure1409 worktree recycled; branch and reports retained, normal test service recreates it as needed. Current sweep3 at15:22 removed zero directories. Prior refused compact and dirty historical cleanup paths stay stopped. Heavy stop line 8 GB.
 
 Evidence: [all eight core](../../design/app-P2-core-classification-1222.md), [App11933 verdict](../../design/app-P2-11933-verdict-1222.md), [actual16138 terminal](../../design/app-F-16138-terminal-1227.md), [current source owners](../../design/peer-app-to-runtime-orchestrator-app2-20261024T1240-full-terminal-and-source-owners.md), [existing inputs](../../design/peer-app-to-agent-runtime-orchestrator-20261024T1244-existing-final-service-inputs.md), [current source proof](../../design/app-P2-P3-e68-current-pure-target-1409.md), [caller review finding](../../design/app-F-joined-current-custody-review-1358.md).
 
