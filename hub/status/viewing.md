@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-24T05:47:10Z | dispatcher heartbeat 12s | live 2 (sol 1, luna 1, other 0) | busy30 5 | status age 1m -->
+<!-- viewing | 2026-10-24T05:48:42Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 1m -->
 # viewing board, 2026-10-24T05:42:47Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -32,7 +32,7 @@
 | F-authoring-ABA | Repair ambiguous observation boundary | Sol author; Luna review | Original 11466 failed | doing | vw-F-authoring-ABA-ambiguous-sol-0544 | Restart saved WIP 8f8ab376. Agent released native media seam. Original stays failed; offline cause and strict controls required before review. | Base 9cd3dbe865 |
 | F-headless-root-mirror | Preserve complete canonical mirror effects | Sol author; Luna review | Integrated source proof complete | merged | Independent 0443; Agent integrated 0500 | Actual 9cd passed 71 controls. Runtime 0521 passed all 13 headless cases on 1d9dd with the 67 original predicates retained. | eca4de47d; home d730dba4e0 |
 | F-retired-callers | Qualify retained native, CLI and Scene scenarios | Luna author and review | Integrated joined proof complete | merged | Independent 0444; Agent integrated 0500 | Actual 9cd passed 53 controls with all original predicates retained. Exact scope 30 originals; three track-label rows stay separate. | 0712aadf6; home 9cd3dbe865 |
-| F-track-label mapping | Map three retained label scenarios | Luna author and review | Existing CLI proof and current source | review | Mapping 0544; independent 0547 | Author mapped Unicode, empty and clear cases with retained predicates. Read only independent review reuses exact existing receipts. | Base 9cd3dbe865 |
+| F-track-label mapping | Map three retained label scenarios | Luna author and review | Exact source comparison | merged | Mapping 0544; independent 0547 | Exact three mappings passed independent review. Existing CLI receipt retained; Agent owns census credit. No new execution claimed. | Base 9cd3dbe865 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six original cases passed in 41.48 seconds on child c886 and Runtime 8ea. Source classification independently passed. | no product change |
 
 | OPS-hub-publication | Confirm supported board publication | Existing hub daemon | Published current board and peer | merged | Existing hub daemon | Board body and author handoff match local bytes; hub HEAD equals origin/main. Failed manual action remains stopped. | Hub ea55792fc |
@@ -49,6 +49,6 @@ Evidence: [original verdict](../../design/viewing-F-authoring-ABA-original-revie
 Blockers: Viewing owns original 11466 failure. Sol 0544 resumes saved WIP with the released native media seam; actual failing private path remains absent.
 Later: Image inverse peer0455 failed before forwarding source 0df7. Independent Agent path0454 confirms the same repaired forwarding gap. Agent owns any next image witness; no new Viewing body or source author. Cut V4 and deferred timing remain unchanged; earlier permission refusals stay stopped.
 
-Next ready: Complete source 0544 and mapping 0544, then independent Luna review. No original rerun before reviewed source. Runtime owns headless qualification.
+Next ready: Finish ABA source 0544, independently review its source finding, and obtain the reserved seam owner handoff. No original rerun before reviewed repair.
 
 Restart 05:41Z killed both workers. ABA WIP 8f8ab376 was preserved; Sol 0544 resumes it. Luna 0544 resumes the read only label mapping. Dispatch 0543 used a relative brief path and was refused before launch; corrected requests use absolute paths.
