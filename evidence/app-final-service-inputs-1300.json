@@ -1,0 +1,206 @@
+{
+  "schema": "timeline.agent.final-service-inputs.v1",
+  "task": "agt-App-final-service-inputs-1300",
+  "scope": {
+    "mode": "read-only existing-facts handback",
+    "source_execution": false,
+    "product_execution": false,
+    "imports_or_probes": false,
+    "network_or_daemon": false,
+    "install_or_acquisition": false,
+    "old_child_relabelled": false,
+    "old_farm_child_requirement_invented": false,
+    "unknowns_are_explicit": true
+  },
+  "current_tuple": {
+    "agent": {
+      "path": "/home/user/work/agent",
+      "branch": "tl/integration",
+      "sha": "cba425b61958f380f25b7bdea83d23c92f627761",
+      "tree": "d19ce2e55ce9f29e18a504fb9c97178764272bbe",
+      "status_observation": "clean"
+    },
+    "runtime": {
+      "path": "/home/user/work/runtime",
+      "branch": "tl/integration",
+      "sha": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+      "tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89",
+      "status_observation": "clean"
+    },
+    "composition": {
+      "path": "/home/user/work/composition",
+      "branch": "tl/integration",
+      "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "status_observation": "not_used_for_current_service_credit"
+    }
+  },
+  "runtime_source_and_canonical_client": {
+    "runtime_source": {
+      "sha": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+      "tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89",
+      "source_root": "/home/user/work/runtime",
+      "artifact_manifest": "contract/artifacts.json",
+      "artifact_manifest_version": "sha256:65085756a96619a74de401b90d6e1b4ff0590d5090e4d4d411c50de476f345b8"
+    },
+    "agent_lock": {
+      "path": "/home/user/work/agent/runtime.lock.json",
+      "sha256": "5030ef40874ee0ccb1a4b60b5a5fbc3ed771e8499d44bee5fdfce76f8a0ce5a1",
+      "producer": "astrid-runtime",
+      "source_commit": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+      "mapping_count": 15,
+      "mapping_receipt": "agt-F-native-census-home-1242: vendor_lock.py check, 15/15 mappings exact"
+    },
+    "canonical_client_mapping": [
+      {"target": "astrid/core/timeline/schema/timeline-config.schema.json", "source": "contract/schemas/timeline-config.schema.json", "sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd"},
+      {"target": "astrid_runtime_client/__init__.py", "source": "packages/python/astrid_runtime_client/__init__.py", "sha256": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2"},
+      {"target": "astrid_runtime_client/contract_metadata.py", "source": "packages/python/astrid_runtime_client/contract_metadata.py", "sha256": "51e8ce94a7149f6b3160a6e5e66bafe17c7f94cfd3beb6733bbf8abd63125ab6"},
+      {"target": "astrid_runtime_client/generated.py", "source": "packages/python/astrid_runtime_client/generated.py", "sha256": "e3f51c05342088bc34a562e17997cbf8ff8065c3df795da1cb6cd374216b51b7"},
+      {"target": "astrid_runtime_client/timeline_commit_types.py", "source": "packages/python/astrid_runtime_client/timeline_commit_types.py", "sha256": "88c67d9eb650b445b8ad04c9011c1f44f1ec5e9f72a4a733050515de7ec0b616"},
+      {"target": "tests/fixtures/runtime-responses/events_page_1_200.json", "source": "conformance/responses/events_page_1_200.json", "sha256": "6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d"},
+      {"target": "tests/fixtures/runtime-responses/events_page_2_200.json", "source": "conformance/responses/events_page_2_200.json", "sha256": "d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2"},
+      {"target": "tests/fixtures/runtime-responses/invalid_cursor_400.json", "source": "conformance/responses/invalid_cursor_400.json", "sha256": "16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff"},
+      {"target": "tests/fixtures/runtime-responses/managed_outputs_200.json", "source": "conformance/responses/managed_outputs_200.json", "sha256": "6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d"},
+      {"target": "tests/fixtures/runtime-responses/not_found_404.json", "source": "conformance/responses/not_found_404.json", "sha256": "4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6"},
+      {"target": "tests/fixtures/runtime-responses/publish_conflict_409.json", "source": "conformance/responses/commit_conflict_409.json", "sha256": "e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08"},
+      {"target": "tests/fixtures/runtime-responses/task_admission_201.json", "source": "conformance/responses/task_admission_201.json", "sha256": "108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c"},
+      {"target": "tests/fixtures/runtime-responses/task_read_200.json", "source": "conformance/responses/task_read_200.json", "sha256": "cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829"},
+      {"target": "tests/fixtures/runtime-responses/validation_error_422.json", "source": "conformance/responses/validation_error_422.json", "sha256": "2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a"},
+      {"target": "tests/fixtures/visual-boundary-v1.json", "source": "conformance/fixtures/visual-boundary-v1.json", "sha256": "1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55"}
+    ],
+    "current_agent_client_bytes": {
+      "astrid_runtime_client/__init__.py": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
+      "astrid_runtime_client/contract_metadata.py": "51e8ce94a7149f6b3160a6e5e66bafe17c7f94cfd3beb6733bbf8abd63125ab6",
+      "astrid_runtime_client/generated.py": "e3f51c05342088bc34a562e17997cbf8ff8065c3df795da1cb6cd374216b51b7",
+      "astrid_runtime_client/timeline_commit_types.py": "88c67d9eb650b445b8ad04c9011c1f44f1ec5e9f72a4a733050515de7ec0b616"
+    }
+  },
+  "working_service_source_mode": {
+    "interpreter": "/home/user/work/venv-agent/bin/python",
+    "schema_pythonpath": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+    "mode": "source-mode working service; not installed-child/bootstrap readiness",
+    "existing_origin_facts": [
+      {"module": "astrid", "path": "/home/user/work/agent/astrid/__init__.py", "sha256": "f5fc47afc0bd81507fecbb41a6d7405f14596bf09400c287bf1e4624fed578"},
+      {"module": "astrid_runtime_client", "path": "/home/user/work/agent/astrid_runtime_client/__init__.py", "sha256": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2"},
+      {"module": "astrid.core.timeline.banodoco_schema", "path": "/home/user/work/agent/astrid/core/timeline/banodoco_schema.py", "sha256": "572845f1102cefd2c8c9cae1f889393e3ba1b7b2b8d681f3f1f0bd96c63321ce"},
+      {"module": "runtime_protocol", "path": "/home/user/work/runtime/runtime_protocol/__init__.py", "sha256": "4e4064e1d9b80c6637576490150f44f3c710fabc520af1e640abf2493dcbb0d2"},
+      {"module": "runtime_protocol.platform", "path": "/home/user/work/runtime/runtime_protocol/platform.py", "sha256": "a1025d466641217b2ff67538801f6a354593e21e5b93b44146e0aab8c04bc185"},
+      {"module": "runtime_protocol.external_pack_sources", "path": "/home/user/work/runtime/runtime_protocol/external_pack_sources.py", "sha256": "8931d2ae530ff1d6eccbb28dadec4349641fd4e1c19f231dba2616b93be2234e"},
+      {"module": "banodoco_timeline_schema", "path": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py", "sha256": null, "status": "declared in existing service preflight; byte receipt not retained here"}
+    ],
+    "historical_scope_note": "The retained module-origin receipt in evidence/agt-R1-full-tamper-sol-1105/origins.json is historical R1/full9758 scope and must not be relabelled as a live current-service import receipt. Current paths/hashes above are source-tree facts only."
+  },
+  "remotion_profile_and_registry": {
+    "qualified_profile": {
+      "path": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110",
+      "composition_version": "0.0.14",
+      "composition_archive_sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+      "package_lock_sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+      "profile_manifest_sha256": "ed4616c674ffea71e6849f615f385ffa312914c7ca39cf0172e0da1e6df9750e",
+      "registry_state_sha256": "d609b44b37d724358a33405e9d8539008fd1ac30bc2f0d9746575c3fbadaac96",
+      "node": "v20.19.4",
+      "npm": "10.8.2",
+      "profile_manifest_entries": 23108,
+      "installed_regular_files": 21501,
+      "node_modules_symlink": false,
+      "receipt_scope": "qualified D09/profile evidence; not a service9758 body result"
+    },
+    "registry_row": {
+      "status": "prepared_candidate_only",
+      "path": "tests/suites.conf.candidate",
+      "row": "agent full",
+      "occurrences": 1,
+      "pre_registry_sha256": "31cfddf295b376036c62e08d935373a78fdc37f153f1445f4a69f08437c56133",
+      "candidate_row_sha256": "0bdf88d2a61f89a6fb51ec7bf2fe1cca21268462e23b7e8cb5d430f4e248dd81",
+      "expected_post_registry_sha256": "18deaf1e759fdb97b578ace0138139ae69940c21ae4b4bc9483c6c49e2c9e07c",
+      "live_registry_mutated": false,
+      "full_body_run_on_this_row": false
+    },
+    "historical_service_profile": {
+      "path": "/home/user/work/runtimes/agent-remotion-composition14-255b6856",
+      "composition_archive_sha256": "21fde4d2a5d62a83f97a85d4b8d9f9d3f707a6489c07eb421c6331eccf893e6e",
+      "service9758_used": true,
+      "must_not_be_relabelled_as_819acf": true
+    }
+  },
+  "service9758_historical_receipt": {
+    "test_id": "agent-full-1024095047-9758",
+    "source_scope": {
+      "agent_sha": "ba55ac1e9e70156f03f7e31cc1b1ef040bb75b84",
+      "agent_tree": "c13d368666e710bb911ff448b86251b516867c03",
+      "runtime_sha": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+      "runtime_tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89",
+      "source_scope_is_historical": true
+    },
+    "service_files": {
+      "request": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-full-1024095047-9758/request", "sha256": "51e61e50d1e9f2bb87681b035eb2273e5cb5a37aa489ad653f2619d6470ce8de", "bytes": 97},
+      "snapshot": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-full-1024095047-9758/snap", "sha256": "a054fe6726f2f9a9d428b35c2aa6c21b340d449ea3b8233c0cfbdc41244ddd6f", "bytes": 114},
+      "log": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-full-1024095047-9758/log.txt", "sha256": "2dc9007b4aa2c2c3ac4b594ba0f920286dddfc6bc2267870a747849c1c54c7e7", "bytes": 3502533},
+      "external": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-full-1024095047-9758/ext", "sha256": "4c17952b36d5f9931f5c735811e160bca7bcb4890b1d5a34058a05b820c7dd62", "bytes": 157}
+    },
+    "result": {
+      "status": "fail",
+      "exit_code": 1,
+      "failed": 231,
+      "passed": 17673,
+      "errors": 45,
+      "skipped": 4,
+      "warnings": 85,
+      "subtests_passed": 566,
+      "duration_seconds": 3506.75,
+      "terminal_bad_total": 276
+    },
+    "profile_observation": "The retained service used stale composition14 input; 45 setup errors include recursive symlinks and 21fde versus qualified 819acf artifact mismatch. No 819acf full result is claimed.",
+    "current_tuple_not_run_identity": true
+  },
+  "actual_home12_receipt": {
+    "report": "agt-F-native-census-home-1242",
+    "source_scope": {"agent_sha": "cba425b61958f380f25b7bdea83d23c92f627761", "agent_tree": "d19ce2e55ce9f29e18a504fb9c97178764272bbe", "runtime_sha": "becfe6db88b2cc034dba3fafa6c050117cdf2b06", "runtime_tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89"},
+    "result": "12 passed in 60.20s; 0 failures/errors/skips",
+    "junit_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-native-census-home-1242/evidence/twelve.xml",
+    "scope_limit": "targeted native/census proof only; not full/gate/ABA/child proof"
+  },
+  "received_kit_receipts": {
+    "received1113": {"status": "PASS", "source_commit": "ab6d49bfb15f971788283f65f303a86dc0b53de2", "source_tree": "a494ab2f", "archive_sha256": "443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548", "proof_lock_sha256": "236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778"},
+    "result_review1116": {
+      "status": "PASS",
+      "files": {
+        "verify_dependency_seed.py": "c2163184ed51e893c6d194930c061474de08bfe707907a2f43abb5332b62397d",
+        "bench_store.py": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495",
+        "request-child-venv": "bddaee9c457fd3cb8fa55e452abbf9886512a08697d593ca5983e43dfa955e94",
+        "make-child-venv": "ff8dbf0ecb615a665e346b36d9d179526a58127d09749748990ea0fa885cf8f8"
+      },
+      "scope_limit": "kit/source receipt only; no child READY or installed-child credit"
+    }
+  },
+  "graph_and_installed_child": {
+    "qualified_remotion_graph": "EXISTING profile/lock/archive receipt above",
+    "current_installed_child_receipt": "UNKNOWN",
+    "current_child_ready": "UNKNOWN",
+    "old_child_0c2": "historical and not current; no credit",
+    "admission": "HELD by existing owner disposition; no new child/request/realm"
+  },
+  "production_caller_and_contract": {
+    "agent_source_caller": {
+      "seam": "TimelineSession._flush -> sync.py:529-551 -> generated client commit route with Idempotency-Key",
+      "receipt": "agt-R2-restore-whole-path-1221",
+      "source_scope": "current Agent integration source; source-level caller fact, not mounted App journey proof"
+    },
+    "known_unmet_seam": "The mounted App production caller/final live service row is not proven by these Agent receipts; no exact App final bound SHA or live READY row is invented. Agent source caller seam is known.",
+    "request_fields": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps(id,label,intent,tags,command_ordinals,patch,reads)", "merge(fields|atomic)", "reads", "dry_run", "source", "rationale", "group_id", "HTTP Idempotency-Key"],
+    "reply_fields": {
+      "accepted_or_merged": ["canonical closure", "IDs", "digests", "commands", "id_map", "records", "steps", "dependencies", "effects", "bindings", "history", "durable receipt"],
+      "dry_run": ["would_status", "null receipt"],
+      "conflict": ["reason", "head"],
+      "invalid": ["code", "path", "hint", "suggested_command"]
+    },
+    "contract_source": "design/commit-v2.md §§1-5; v2 field preservation is a requirement/checklist, not a claim that this readonly handback executed it"
+  },
+  "validation": {
+    "json_schema_parse": "PASS: python3 -m json.tool evidence/app-final-service-inputs-1300.json",
+    "mapping_count_and_hash_parity": "PASS: 15 entries; runtime.lock.json source/hash parity and four current client hashes",
+    "diff_check": "PASS: git diff --check",
+    "product_tests": "not applicable and not run",
+    "lint_or_mypy": "not applicable and not run"
+  }
+}
