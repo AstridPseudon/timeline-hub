@@ -19,7 +19,7 @@ from astrid.sdk.contracts import DomainResult, ErrorObject
 from astrid.sdk.documents import Documents
 from astrid.sdk.exceptions import ServiceError
 from astrid.sdk.remote import RemoteMedia
-from astrid.sdk.timeline._command_state import equal
+from astrid.sdk.timeline._command_state import ABSENT, equal, present
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.sync import CommitConflict, TimelineSession, _connection
 from astrid.sdk.workspace_client import WorkspaceClientError
@@ -130,6 +130,35 @@ def _clip(bundle, clip_id):
     return copy.deepcopy(matches[0])
 
 
+def _orphan_cleanup(bundle, clip_id, element):
+    before = _clip(bundle, clip_id)
+    old_ref = before.get('elementRef') or before.get('element_ref')
+    if not isinstance(old_ref, dict) or equal(old_ref, element):
+        return [], []
+    parent = bundle['parent']
+    config = parent.get('config')
+    app = config.get('app') if isinstance(config, dict) else None
+    entries = app.get('elements') if isinstance(app, dict) else None
+    if not isinstance(entries, dict) or old_ref.get('id') not in entries:
+        return [], []
+    clips = parent['clips']
+    if any(clip['id'] != clip_id and equal(
+            clip.get('elementRef') or clip.get('element_ref'), old_ref) for clip in clips):
+        return [], []
+    # The scan is a dependency, not authority to prune any other source entry.
+    ids = [clip['id'] for clip in clips]
+    reads = [{'kind': 'collection', 'ref': 'parent', 'path': ['clips'],
+              'members': sorted(ids), 'order': ids}]
+    reads.extend({'kind': 'field', 'ref': 'parent', 'path': ['clips', 'id:' + clip['id'], field],
+                  'state': present(clip[field]) if field in clip else ABSENT.copy()}
+                 for clip in clips for field in ('elementRef', 'element_ref'))
+    change = {'op': 'remove', 'ref': 'parent',
+              'path': ['config', 'app', 'elements', old_ref['id']],
+              'before': present(entries[old_ref['id']])}
+    return [{'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+             'args': {'changes': [change]}}], reads
+
+
 def _result(session, data, receipt, before, clip_id, expected_head, key):
     clip = _clip({'parent': data['canonical_document']['parent_revision']['payload']}, clip_id)
     return DomainResult.success({
@@ -145,9 +174,8 @@ def _result(session, data, receipt, before, clip_id, expected_head, key):
 def _step(calls):
     """Describe one semantic element edit for the v2 commit envelope.
 
-    Native commands carry their authoritative effects; Runtime fills the step
-    patch from those effects.  Keeping this as a semantic step avoids a second
-    document-diff/emitter implementation in the element helper.
+    Runtime fills native effects; the explicit orphan removal remains part of
+    the same guarded edit and its inverse.
     """
     return [{
         'id': 'element-update',
@@ -155,7 +183,8 @@ def _step(calls):
         'intent': 'Update the selected element',
         'tags': ['element'],
         'command_ordinals': list(range(len(calls))),
-        'patch': [],
+        'patch': [copy.deepcopy(change) for call in calls if call['op'] == 'doc.patch'
+                  for change in call['args']['changes']],
     }]
 
 
@@ -219,8 +248,12 @@ def update_parent_element(owner: Any, project: str, timeline: str, *, realm: str
                     if not opened.ok:
                         return opened
                     before = _clip(opened.data['bundle'], clip_id)
-                    if not (_matches(data['commands'], calls) or _matches(data['commands'], _calls(
-                            clip_id, element, duration, params, clear_params, before=before))):
+                    cleanup, _ = _orphan_cleanup(opened.data['bundle'], clip_id, element)
+                    alternatives = [calls, _calls(
+                        clip_id, element, duration, params, clear_params, before=before)]
+                    if not any(_matches(data['commands'], candidate)
+                               or _matches(data['commands'], candidate + cleanup)
+                               for candidate in alternatives):
                         raise ValueError('Acknowledged request identity has different original intent')
                     return _result(session, data, receipt, before,
                                    clip_id, expected_head, key)
@@ -237,6 +270,7 @@ def update_parent_element(owner: Any, project: str, timeline: str, *, realm: str
             return opened
         before = _clip(opened.data['bundle'], clip_id)
         fresh_calls = _calls(clip_id, element, duration, params, clear_params, before=before)
+        cleanup, cleanup_reads = _orphan_cleanup(opened.data['bundle'], clip_id, element)
 
         def capture(state):
             if state['base']['revision_id'] != expected_head:
@@ -284,7 +318,7 @@ def update_parent_element(owner: Any, project: str, timeline: str, *, realm: str
                 client.media.read_bytes(descriptor['object_id'])).decode('ascii')}
             inputs = [({'pin': pin, 'document': document}, {descriptor['object_id']: snapshot})]
             return execute(opened.data['bundle'], _calls(
-                clip_id, element, duration, params, clear_params, pin),
+                clip_id, element, duration, params, clear_params, pin) + cleanup,
                 schema_inputs=inputs, realm_id=realm).commands
 
         # A persisted flight is immutable: recognize its old batch shape and
@@ -295,7 +329,8 @@ def update_parent_element(owner: Any, project: str, timeline: str, *, realm: str
             state = session._state()
 
         def matches(pending):
-            return _matches(pending, calls) or _matches(pending, fresh_calls)
+            return any(_matches(pending, candidate) or _matches(pending, candidate + cleanup)
+                       for candidate in (calls, fresh_calls))
 
         if state['pending'] or state['flight'] is not None:
             session._stage(capture, matches)
@@ -307,6 +342,7 @@ def update_parent_element(owner: Any, project: str, timeline: str, *, realm: str
                 label='Update element',
                 steps=_step(captured),
                 merge='fields',
+                reads=cleanup_reads if cleanup else None,
                 idempotency_key=key,
                 expected_state=state,
                 base=state['base'],
