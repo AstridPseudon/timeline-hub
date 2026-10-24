@@ -195,10 +195,11 @@ def _candidate(service, commits, project, timeline, *, occupied_name="Intruder")
     return _body(service, project, timeline, [free, occupied], "intruder", steps=steps)
 
 
-def _patch_shot_body(service, commits, project, timeline, *, name, key):
+def _patch_shot_body(service, commits, project, timeline, *, name, key, retained=False):
     shot = next(row for row in _document(commits, project, timeline, service)["shot_revisions"]
                 if row["shot_id"] == "shot-1")
-    change = {"op": "set", "ref": "shot:shot-1", "path": ["name"],
+    ref = "shot-revision:" + shot["revision_id"] if retained else "shot:shot-1"
+    change = {"op": "set", "ref": ref, "path": ["name"],
               "before": {"state": "present", "value": shot["payload"]["name"]}, "value": name}
     command = {"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
                "args": {"changes": [change]}}
@@ -272,12 +273,36 @@ def test_exact_f1_over_http(tmp_path, occupancy_provider):
     try:
         commits = _commits(daemon.service)
         body = _candidate(daemon.service, commits, project, "target")
+        owner_project = _conn(daemon.service).execute(
+            "SELECT project_id FROM timelines WHERE id='owner'"
+        ).fetchone()[0]
+        target_head = _head(daemon.service, project, "target")
+        owner_head = _head(daemon.service, owner_project, "owner")
+        before = tuple(_conn(daemon.service).iterdump())
+        before_receipts = tuple(_conn(daemon.service).execute(
+            "SELECT * FROM command_idempotency WHERE command_kind='timeline.commit' ORDER BY rowid"
+        ))
         assert daemon.endpoint is not None
         client = WorkspaceClient(daemon.endpoint, daemon.token)
         with _validation_no_writes(daemon.service), pytest.raises(ApiError) as error:
             client.commit_timeline(project, "target", body, idempotency_key="intruder")
-        assert error.value.status == 409
-        assert error.value.details["reason"] == "destination_occupied"
+        assert (error.value.status, error.value.code, error.value.message, error.value.details) == (
+            409, "conflict", "destination_occupied",
+            {"status": "refused", "reason": "destination_occupied",
+             "base": None, "current": None, "conflicts": []},
+        )
+        assert _head(daemon.service, project, "target") == target_head
+        assert _head(daemon.service, owner_project, "owner") == owner_head
+        assert _conn(daemon.service).execute(
+            "SELECT name FROM project_shots WHERE id='shot-1'"
+        ).fetchone()[0] == "KEEP OWNER NAME"
+        assert _conn(daemon.service).execute(
+            "SELECT COUNT(*) FROM shot_items WHERE id='keep-owner-item'"
+        ).fetchone()[0] == 1
+        assert tuple(_conn(daemon.service).execute(
+            "SELECT * FROM command_idempotency WHERE command_kind='timeline.commit' ORDER BY rowid"
+        )) == before_receipts
+        assert tuple(_conn(daemon.service).iterdump()) == before
     finally:
         daemon.stop()
 
@@ -310,19 +335,30 @@ def test_legacy_occupied_destination_without_shot_head_is_not_adopted(
         _conn(service).execute("DELETE FROM shot_revision_heads WHERE shot_id='shot-1'")
         body = _patch_shot_body(
             service, commits, project, "main",
-            name="Existing head" if existing else "New head", key="missing-head",
+            name="Existing head" if existing else "New head", key="missing-head", retained=existing,
         )
+        submitted_ref = body["commands"][0]["args"]["changes"][0]["ref"]
+        assert submitted_ref == "shot:shot-1" if not existing else submitted_ref.startswith("shot-revision:")
         assert body["commands"][0]["args"]["changes"][0]["value"] == (
             "Existing head" if existing else "New head"
         )
         before = tuple(_conn(service).iterdump())
         head = _head(service, project, "main")
+        before_receipts = tuple(_conn(service).execute(
+            "SELECT * FROM command_idempotency WHERE command_kind='timeline.commit' ORDER BY rowid"
+        ))
         with _validation_no_writes(service), pytest.raises(RuntimeErrorBase) as error:
             service.commit_timeline(project, "main", body, idempotency_key="missing-head",
                                     publisher="occupancy-test", invocation_path=route_path(project, "main"),
                                     authorize=lambda: None)
         _assert_legacy_guard(error)
         assert _head(service, project, "main") == head
+        assert _conn(service).execute(
+            "SELECT revision_id FROM shot_revision_heads WHERE shot_id='shot-1'"
+        ).fetchone() is None
+        assert tuple(_conn(service).execute(
+            "SELECT * FROM command_idempotency WHERE command_kind='timeline.commit' ORDER BY rowid"
+        )) == before_receipts
         assert tuple(_conn(service).iterdump()) == before
     finally:
         service.close()
