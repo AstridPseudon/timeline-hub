@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T16:04:17Z | dispatcher heartbeat 8s | live 3 (sol 1, luna 2, other 0) | busy30 9 | status age 0m -->
-# runtime board, 2026-10-24T16:03:29Z
+<!-- main | 2026-10-24T16:07:17Z | dispatcher heartbeat 7s | live 3 (sol 1, luna 2, other 0) | busy30 8 | status age 0m -->
+# runtime board, 2026-10-24T16:07:05Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -138,11 +138,11 @@ Venues: P1/P2/P3 on App service with unchanged originals and App verdicts; P4 on
 D65 delivery: owner merges Runtime, then Agent, runs authentic App update-manifest with generated digest equality, then merges App. Command1539 and App tool home daa6 received; Runtime docs1546 installed after actual source/renderer checks, including normal vendor rebind precondition. D67 exact13env/7key appendix1533 stays installed. All final outcomes PENDING.
 
 Blockers: Runtime / Agent — actual six1540 is5PASS1FAIL. Sol1557 owns inverse stage-input cause; Agent1546 independently traces whole path. Separate empty-create original is Agent G4-owned.
-Blockers: App — plain launch green; sole P1 control13564 active on current sources. P2/P3 parallel immediately on green. Historical12541/1689 remain preflight-only FAIL.
-Blockers: App manifest — actual App95cf and Agent5777 adopt8b32; once-only pin1545 authored, new updater fixture1548 corrects stale4118. Strict schema regression stays visible.
+Blockers: App — P1 actual13564 FAIL before split POST. Sol1600 plus independent wholepath1600 own cause; P2/P3 parallel only after changed P1 green. No duplicate original.
+Blockers: App manifest — App6d74 includes strict installer fix; integrated1553 verifies closure. Runtime source-only auth successor will need truthful normal provenance rebind after merge, no new schema generation.
 
 Blockers: Final delivery — cut needs every active lane0core/0regressions and current P2/P3PASS, then required final proofs/build/ZIP.
-Next ready: complete D65 docs1546 and D68 isolated packaging1546; consume normal Agent/App adoptions and Agent actual-home six outcomes. No unassigned local ready row.
+Next ready: finish Sol1557 and dispatch prepared security1606 immediately; finish D68 finalcaller1601 and D69 audit1603. D65 docs and normal D62 adoptions complete; no local ready row unassigned.
 
 Later: D47 memo and proof pins remain post-delivery; nine state attacks open. V4 cut; D14/D23 deferred unchanged. D34 broader cleanup remains held. D62 submit completeness is an explicit known gap in the Runtime behavior-change ledger.
 
@@ -150,7 +150,7 @@ Admission: D56 stops Farm and schema-access work. Exact403 and automatic access 
 
 Disk: about8.6GB, above main8GB heavy floor. Newly finished1543,1533,1511 already absent. Sweep3 freed0; compact packed0 and compressed7 old logs. No old refused target retry or forced removal.
 
-live 1 / cap 4; ready-undispatched 0. Copied dispatcher header15:55:31Z reports0 Sol/1 Luna. D68 review1554 active; source Sol1557 queued immediately on new original failure. All ready assigned.
+live 3 / cap 4; ready-undispatched 0. Copied dispatcher header16:04:17Z reports1 Sol/2 Luna. Sol1557, D68 caller1601 and D69 audit1603 active. Review1606 brief ready for author commit.
 
 Pass 2026-10-24T15:34:02Z: PLAN/common/header D62–D67 and peer boards consumed. SecurityPASS412 -> normal merge8b32 completed and exact producer handed to Agent/App immediately. Separate D62 proof removed perD66. D67 docs installer1533 active; D65 missing command assigned App. No final proof or delivery claim.
 
@@ -173,3 +173,5 @@ Pass 2026-10-24T15:58:56Z: independent Agent wholepath1546 confirms Runtime imag
 Pass 2026-10-24T16:01:15Z: D68 exactfda independent1554PASS; real final caller wiring remains unproved, Luna1601 assigned immediately. No realbuild/install until cut. ORCH15:59 new row R-inverse-timeline-root is existing Sol1557 continuation, now exact rowID; no duplicate author.
 
 Pass 2026-10-24T16:03:29Z: new D69 instruction consumed beforecut; one Luna1603 dispatched immediately for Runtime reverse diff and weakening audit. App/Agent own theirrows. No duplicatebody or productauthor; Sol1557 and D68caller1601 remainactive undercap4.
+
+Pass 2026-10-24T16:07:05Z: author1557 stillactive, existing333strictPASS and oneoriginalGREEN observed only; security1606 brief prepared, dispatch waits exactcompletedcommit. App P1 actual13564 terminalNO-GO before splitPOST; AppSol1600 owns meaningfulfix. Peers warned authonly source movement will need normalprovenance rebind after actualmerge, no wiregeneration.
