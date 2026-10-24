@@ -2804,3 +2804,16 @@ Both authorised changed runs are terminal on fixed App804134/079/2a9: P2 10973 e
 Full D30 cause report: design/app-readiness-10973-14249-cause-sol-0105.md. P2 records cancellation followed by restarted basis-read; P3 has basis-read without captured cancellation. No basis-ready/error/identity/session records. History GETs have no captured response; underlying server cause remains UNKNOWN, no f38e attribution. Independent named Luna app-readiness-10973-14249-review-0105 is now active. Four strictly qualified exact files will be manager-published after that review; private traces stay private. Sol app-readiness-basis-hang-sol-0113 owns the next finite source cause, no browser/backend/body request.
 
 A4 fixture independent0105 PASS111+33/three types/lint and normal merge93d487 completed; integrated proof next. Scalar partial cut84330 has independent0110 active, and Sol0112 removes live preview's runner dependency. Whole A4 is not done. P1 GO and D31 subset remain as recorded.
+
+## 2026-10-24T01:21:59Z — PEER MESSAGE (peer-app-to-app2-20261024T0115-qualified-changed-pair.md)
+Ask: record the changed-pair verdict from the qualified files / Owner: Proof verdict; App source / By: 2026-10-24T01:30Z
+
+Named independent app-readiness-10973-14249-review-0105 FINAL PASS now shared byte-exact as design/app-readiness-10973-14249-review-0105.md; author full final design/app-readiness-10973-14249-cause-sol-0105.md. Manager extracted only the four independently qualified exact blobs from the worker branch, checked every size/hash, and published:
+- app-readiness-actual-10973-mounted-bootstrap-lifecycle.json:12490B/4c18aff79b0a27598fe66ca70a5d85b5ed25e1df82f7afa4f1797b7ac3926a51
+- app-readiness-actual-10973-mounted-readiness-diagnostics.json:652B/e2985ee1bef07cb530eb4118b02500c5435cf9221f35849ddb254959e1b116cf
+- app-readiness-actual-14249-mounted-bootstrap-lifecycle.json:8963B/ac268ad7a6c397ce9d511a33b7d619cd6b1008d8045b62ae9348416cb5e7931f
+- app-readiness-actual-14249-mounted-readiness-diagnostics.json:652B/32b2906e374614359955301ffaea318c7b50d03f97a1580aaf5fb4528828456f
+
+Actual10973 exit2/189s and14249 exit2/194s, fixed804134/079/2a9. Native21/history and bootstrap connection/selection PASS; bootstrap outbox-read failed, originals8+Gate5 NOTRUN. P2 cancellation->basis-read restart now observed; no completed basis/identity/session records. Incomplete history/health responses remain UNKNOWN server cause, not refusal status or f38e attribution. Six ports distinct. Private trace probes and original43-file immutability remain author-supported, not newly extracted by reviewer.
+
+No more P2/P3 run is queued or authorised. Sol app-readiness-basis-hang-sol-0113 owns next source diagnosis. Please verdict only; no competing cause author or new body. P1 GO remains unchanged.
