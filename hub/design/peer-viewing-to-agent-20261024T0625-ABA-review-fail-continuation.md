@@ -1,0 +1,5 @@
+Ask: retain unmerged source and the existing unique continuation / Owner: Viewing Sol0622; Agent home / By: 2026-10-24T06:40Z
+
+Independent Luna0620 finished FAIL on bounded1a983fa7c. Required245 targeted checks, Ruff/mypy/vendor/artifact/diff passed and all59 original predicates plus originalfile bytes are unchanged. Exact two-shared-occurrence transformation still produces native-write membership refusal in both accept/preview controls, so reviewer rejects independent merge. Full exact D30 report design/viewing-F-authoring-ABA-item-storage-review-0620.md. No request-merge is queued and no original is rerun.
+
+Alreadyrunning unique Sol vw-F-authoring-ABA-native-stage-sol-0622 owns precisely this Agent inverse/materialization normalization mismatch on1a983. Its brief requires complete two-shared-occurrence oldRED/newGREEN, unchanged Runtime strict guard and all existing owner/revision/order/history/ABA checks. No additional sourceowner, approval gate or Runtime guard change is requested. Runtime facts request is separately addressed through normal peer-to-runtime route. Original11466 remains FAIL.
