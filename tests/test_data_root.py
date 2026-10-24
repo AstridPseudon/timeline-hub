@@ -1,8 +1,10 @@
+import json
 from pathlib import Path
 
 import pytest
 
 from astrid_runtime import RuntimePaths
+from astrid_runtime import paths as paths_module
 from astrid_runtime.cli import parser
 
 
@@ -29,8 +31,61 @@ def test_lifecycle_commands_accept_data_root(tmp_path):
 
 def test_environment_data_root_and_explicit_precedence_are_isolated(tmp_path, monkeypatch):
     configured = tmp_path / "configured"
+    home = tmp_path / "home"
+    record = home / ".local" / "share" / "astrid-install.json"
+    record.parent.mkdir(parents=True)
+    record.write_text(json.dumps({"owner": "haus.astrid.runtime", "data_root": str(tmp_path / "installed")}))
     monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(configured))
-    assert RuntimePaths.current().app_support == configured
+    assert RuntimePaths.current(home).app_support == configured
     assert RuntimePaths.current(data_root=tmp_path / "explicit").app_support == tmp_path / "explicit"
     assert RuntimePaths.sandbox(tmp_path / "sandbox").app_support != configured
     assert not configured.exists()
+
+
+def test_install_record_data_root_is_used_without_environment_override(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    record = home / ".local" / "share" / "astrid-install.json"
+    record.parent.mkdir(parents=True)
+    configured = tmp_path / "installed-data"
+    record.write_text(json.dumps({"owner": "haus.astrid.runtime", "data_root": str(configured)}))
+    monkeypatch.delenv("ASTRID_RUNTIME_DATA_ROOT", raising=False)
+
+    assert RuntimePaths.current(home).app_support == configured
+
+
+def test_corrupt_install_record_falls_through_to_default(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    record = home / ".local" / "share" / "astrid-install.json"
+    record.parent.mkdir(parents=True)
+    record.write_text("{")
+    monkeypatch.delenv("ASTRID_RUNTIME_DATA_ROOT", raising=False)
+
+    assert RuntimePaths.current(home).app_support == paths_module.platform.data_root(home)
+
+
+def test_default_data_root_is_used_without_environment_or_install_record(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    monkeypatch.delenv("ASTRID_RUNTIME_DATA_ROOT", raising=False)
+
+    assert RuntimePaths.current(home).app_support == paths_module.platform.data_root(home)
+
+
+@pytest.mark.parametrize(
+    ("system", "expected_suffix"),
+    [
+        ("linux", Path(".local/share/astrid-install.json")),
+        ("darwin", Path(".local/share/astrid-install.json")),
+        ("win32", Path("astrid-install.json")),
+    ],
+)
+def test_install_record_path_matches_installer_per_os(tmp_path, monkeypatch, system, expected_suffix):
+    home = tmp_path / "home"
+    monkeypatch.setattr(paths_module.platform.sys, "platform", system)
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "local-app-data"))
+
+    expected = (
+        tmp_path / "local-app-data" / expected_suffix
+        if system == "win32"
+        else home / expected_suffix
+    )
+    assert paths_module._install_record_path(home) == expected
