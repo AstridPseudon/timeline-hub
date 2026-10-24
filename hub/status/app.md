@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T08:32:55Z | dispatcher heartbeat 1s | live 2 (sol 0, luna 2, other 0) | busy30 16 | status age 0m -->
+<!-- app | 2026-10-24T08:36:00Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 16 | status age 1m -->
 # app board, 2026-10-24T08:32Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -33,7 +33,7 @@
 | U3b-home | Merge reviewed freeze draft | Manager merge queue | Header P2/P3 GO | gated:freeze | Final draft review 0738 | Upstream 2a288 included. Refresh live upstream at actual merge; do not merge before header condition. | Draft branch only |
 | U4p-D39 | Adopt final generated tuple | Luna | U3b home and exact producer | gated:freeze | Dispatch after U3b | Producer becfe6 inventory ready. Normal generated-client tooling; no manual type/pin edit or old consumer compatibility claim. | Producer becfe6 |
 | F-final-host-prep | Prepare final App host commands | Luna; independent review | Cumulative 0758 PASS with limits | merged | Return 0754; review 0758 | Corrected tool, locks and maker argv qualified. P4/P5 rows missing; final Agent/App and receipts are explicit inputs. No final tuple claimed. | Report only |
-| F-P4-P5-registrations | Draft missing final host rows | Luna; independent review | Draft0828 complete | review | Author0828; independent0831 | Exact3 P4 plus14/24 P5 counts. Review challenges source origins and actual draft guard/argv proof; no final tuple. | Draft only |
+| F-P4-P5-registrations | Draft missing final host rows | Luna; independent review | First review0831 FAIL | doing | First return0834 | Correct source overlay and prove actual draft guard/argv refusals. Counts3+14+24 valid; final tuple remains missing. | Draft only |
 | F-App-final | Full suite on final App head | App test service | Final tuple and freeze | gated:freeze | App service; Runtime FREEZE | D49 venue accepted. Historical 12ef full passed 18,819; current final qualification is still required. | Final head pending |
 
 | A3-popup-inputs | Compare actual asset and planner inputs | Luna; independent Luna | Independent0814 PASS | merged | Author0748; review0814 | Valid type, size, timing, track and selection; async prepared asset absent. Fullcaller witness remains RED, cause not yet attributed. | Report only |
