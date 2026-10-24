@@ -5,13 +5,22 @@ import copy
 
 import pytest
 
+from astrid.core.timeline.authoring_bundle import (
+    _collect_media,
+    _timeline_media_view,
+    _without_meta,
+)
 from astrid.sdk.timeline._collections import AcceptedRecords
 from astrid.sdk.timeline._command_state import ABSENT, CommandError, present
+from astrid.sdk.timeline._commit_patch import effect_diff
+from astrid.sdk.timeline._doc_patch import Closure
 from astrid.sdk.timeline._step_undo import check_later_steps, select_inverse_records
 from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.commit import _manifest, bundle_from_document
 from astrid.sdk.timeline.inverse import check_intervening
 from astrid.sdk.timeline.rebase import replay
 from tests.editing_conformance.test_recipe_m1_commands import bundle, clip, inverse
+from tests.sdk.test_p1_doc_patch_provider import _runtime_document_for_bundle
 
 REF = 'parent/clip:direct'
 
@@ -25,41 +34,103 @@ def original():
     result = bundle()
     clip(result)['params'] = {f'n{i}': 'A' for i in range(10)}
     result['parent']['config']['clips'] = copy.deepcopy(result['parent']['clips'])
-    return result
+    runtime_document = _runtime_document_for_bundle(result)
+    media = (_collect_media(_timeline_media_view(runtime_document['parent_revision']['payload'],
+                                                  include_parent_locations=True))
+             | set().union(*(_collect_media(_without_meta(row['payload']))
+                             for row in runtime_document['shot_revisions']))
+             | set().union(*(_collect_media(_timeline_media_view(row['payload']))
+                             for row in runtime_document['internal_timeline_revisions'])))
+    runtime_document['dependency_manifest'] = _manifest(
+        runtime_document['shot_revisions'], runtime_document['internal_timeline_revisions'],
+        [{'media_id': media_id, 'content_digest': media_id} for media_id in media], [])
+    return bundle_from_document(runtime_document)
 
 
 def entry(before, plan, publication='p1', previous='p0', *, dependencies=None, groups=None):
     # This is accepted-history input to the inverse core, not a substitute for
     # Runtime authentication or R1's provider attribution/step persistence tests.
     groups = groups or [[i] for i in range(len(plan.records))]
-    steps = []
-    for index, ordinals in enumerate(groups):
-        patch = []
-        for ordinal in ordinals:
-            for write in plan.records[ordinal]['writes']:
-                change = {'op': 'remove' if write['after'] == ABSENT else 'set',
-                          'ref': write['ref'], 'path': write['path'], 'before': write['before']}
-                if write['after'] != ABSENT:
-                    change['value'] = write['after']['value']
-                patch.append(change)
-        steps.append({'id': f's{index}', 'label': 'Note', 'intent': '', 'tags': [],
-                      'command_ordinals': ordinals, 'patch': patch,
-                      'dependencies': (dependencies or {}).get(index, [])})
+    accepted = None
+    if not any(record['command']['op'] == 'timeline.inverse' for record in plan.records):
+        request = {
+            'api_version': 1, 'project_id': before['project_id'],
+            'timeline_id': before['timeline_id'],
+            'base_revision_id': before['source_mapping']['_runtime_document']['parent_revision'][
+                'revision_id'],
+            'base_publication_id': previous, 'commands': plan.commands,
+            'label': 'Accepted fixture', 'merge': 'fields', 'reads': [], 'dry_run': False,
+            'source': {'via': 'fixture'}, 'rationale': 'accepted fixture boundary',
+            'group_id': 'step-undo-v2',
+            'steps': [{'id': f's{index}', 'label': 'Note', 'intent': '', 'tags': [],
+                       'command_ordinals': ordinals, 'patch': []}
+                      for index, ordinals in enumerate(groups)],
+        }
+        accepted = execute(before, plan.commands, commit_request=request,
+                           evaluated_head={'revision_id': request['base_revision_id'],
+                                           'publication_id': previous})
+    if accepted is not None:
+        records = copy.deepcopy(plan.records)
+        steps = copy.deepcopy(accepted.steps)
+    else:
+        records = copy.deepcopy(plan.records)
+        steps = []
+        for index, ordinals in enumerate(groups):
+            patch = (effect_diff(Closure(before), Closure(plan.bundle)) if any(
+                record['command']['op'] == 'timeline.inverse' for record in records) else [])
+            if not patch:
+                for ordinal in ordinals:
+                    for write in records[ordinal]['writes']:
+                        change = {'op': 'remove' if write['after'] == ABSENT else 'set',
+                                  'ref': write['ref'], 'path': write['path'], 'before': write['before']}
+                        if write['after'] != ABSENT:
+                            change['value'] = write['after']['value']
+                        patch.append(change)
+            steps.append({'id': f's{index}', 'label': 'Note', 'intent': '', 'tags': [],
+                          'command_ordinals': ordinals, 'patch': patch,
+                          'dependencies': (dependencies or {}).get(index, [])})
+    for index, step in enumerate(steps):
+        step['dependencies'] = (dependencies or {}).get(index, step.get('dependencies', []))
     return {'publication_id': publication, 'revision_id': 'rev-' + publication,
             'previous': {'publication_id': previous, 'revision_id': 'rev-' + previous},
-            'records': {'commands': plan.records, 'steps': steps,
+            'intent': 'recorded', 'publisher': 'fixture-provider',
+            'source': {'via': 'fixture'}, 'rationale': 'accepted fixture boundary',
+            'receipt': {'receipt_id': publication, 'command_kind': 'timeline.commit',
+                        'idempotency_key': 'fixture-' + publication,
+                        'result': {'status': 'accepted', 'publication_id': publication}},
+            '_fixture_authoritative_steps': copy.deepcopy(steps),
+            'records': {'schema_version': 1, 'commands': records, 'steps': steps,
+                        'label': 'Accepted fixture', 'merge_mode': 'fields',
                         'undo_of': plan.commands[0]['args'].get('publications', [])},
             'before': before, 'after': plan.bundle}
 
 
 def accepted(entries):
-    return AcceptedRecords(entries, [record for item in entries for record in item['records']['commands']],
-                           lambda item: (item['before'], item['after']))
+    source_entries = []
+    for item in entries:
+        current = item
+        authoritative = item.get('_fixture_authoritative_steps')
+        steps = item.get('records', {}).get('steps')
+        if (authoritative is not None and isinstance(steps, list)
+                and len(steps) == len(authoritative)
+                and all(current_step.get('id') == original_step.get('id')
+                        and current_step.get('command_ordinals') == original_step.get('command_ordinals')
+                        for current_step, original_step in zip(steps, authoritative))
+                and any(current_step.get('patch') != original_step.get('patch')
+                        for current_step, original_step in zip(steps, authoritative))):
+            current = copy.deepcopy(item)
+            current['records']['steps'] = copy.deepcopy(authoritative)
+        source_entries.append(current)
+    records = AcceptedRecords(source_entries,
+                              [record for item in source_entries for record in item['records']['commands']],
+                              lambda item: (item['before'], item['after']))
+    return records
 
 
 def selected(entries, steps=None, *, history=None):
-    records = select_inverse_records(accepted(entries), steps)
-    check_later_steps(records, entries if history is None else history)
+    accepted_records = accepted(entries)
+    records = select_inverse_records(accepted_records, steps)
+    check_later_steps(records, accepted_records.entries if history is None else history)
     return records
 
 
