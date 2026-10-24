@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T09:19:02Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
-# app2 board, 2026-10-24T09:16Z
+<!-- app2 | 2026-10-24T09:21:04Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-24T09:20Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -59,7 +59,7 @@ All eight current safe JSON hashes, schemas, bounds, security and correlations p
 
 D48/D49 final map0708 and independent0719 PASS establish existing source routes and App-host venue, not READY final execution. Runtime FREEZE coordinates final joins and D39 adoption. App host recipe0754 and independent0758 qualify preparation only. Actual App draft0834 and cumulative0838 now qualify source preparation for missing P4/P5 registrations; actual install is gated by final tuple/receipts. Exact final Agent source, actual registration installation, authenticated child/import custody and preflight remain pending. App U3b integration remains gated on P2/P3 GO. Final P1–P5, full venues and Farm F-final/ZIP follow qualified final heads.
 
-Blockers: App and Agent — popup0846 accepted case passes but merged fork binding refuses on current67d; independent0908 and Agent classification0905 are owned.
+Blockers: App and Agent — popup merged fork binding refuses on current67d; App0908 active. Agent classification worker row requested this pass by09:25.
 Blockers: App — final combined source and pure product target await popup qualification. P3 integrated0900 and caller PREPARED0902 passed.
 
 Blockers: Freeze — final tuple, actual App host inputs, final gates and D49 full checkpoints precede Farm F-final and ZIP.
@@ -71,6 +71,6 @@ Later: D34 legacy registration and pre-cutover accounting remain UNKNOWN; no fur
 
 Safety: Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked-v1/compact refusals stay stopped. No alternate cleanup or publication route. D30 worker finals are reports copied byte-exact. Managers make no product/test/generated/pin or Git mutation. No weakened tests or raw credential export.
 
-Disk: Latest8435040256 bytes free. No new heavy runs below8GB; minimal light dispatches below8GB and pause new ones below7GB except D50/review. All existing finished worktrees have KEEP markers; none are eligible for recycle. Harness recycled composition0828 on finish. Supported sweep3 at08:39 completed exit0 and removed zero directories (8071MiB free). Prior compact and other refused cleanup remain stopped; no alternative route.
+Disk: Latest8433676288 bytes free. No new heavy runs below8GB; minimal light dispatches below8GB and pause new ones below7GB except D50/review. All existing finished worktrees have KEEP markers; none are eligible for recycle. Harness recycled composition0828 on finish. Supported sweep3 at08:39 completed exit0 and removed zero directories (8071MiB free). Prior compact and other refused cleanup remain stopped; no alternative route.
 
-Pass: 09:16. Independent App P3 integrated0900 PASS and caller cumulative0902 PREPARED PASS were consumed immediately from normal hub. P3 source row is merged; its blocker is cleared. Final combined popup join remains App-owned. Popup Sol0846 ended ordinary66PASS/1FAIL; actual accepted canonical adoption passes, merged intermediate fork binding refuses on current Agent67d, not pending079. App cumulative0908 and Agent source/fixture peer0905 own classification; no new provider cause or pin change inferred. Actual source and caller prerequisites remain unmet, so conditional0850 stays held without another permission roundtrip. Original23809/9310 remain immutable NO-GO. Latest INBOX consumed through750204 bytes; exact offset checked next pass if sync grows. No unreviewed local completion, eligible non-KEEP worktree or duplicate original request. Final host installation/gates stay gated by actual final inputs. Prior refusals remain stopped. Next scheduled pass09:19; consume critical completions sooner.
+Pass: 09:20. New INBOX consumed through750204 bytes, header and actual App/Agent/Runtime boards checked. No new local completion or ready unassigned Proof source task. P3 exact82cb integrated0900 and caller PREPARED0902 PASS remain complete. App popup cumulative0908 is active; App peer0905/0908 requests Agent provider classification, but Agent board0913 has no owner row yet. Peer0920 asks Agent to assign the existing critical-path classification this pass by09:25, without duplicate App review or speculative repair. Current67d witness remains distinct from selected079. Existing conditional0850 release is held for actual popup/source/target/caller qualifications. Final host installation/gates remain gated by genuine final inputs. No eligible non-KEEP worktree, new bench or original pair. Prior refusals stay stopped. Next scheduled pass09:30; consume critical completions sooner.
