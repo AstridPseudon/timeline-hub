@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T02:05:40Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+<!-- app2 | 2026-10-24T02:07:42Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
 # app2 board, 2026-10-24T02:03Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -7,7 +7,7 @@
 | P1-corpus | Real-document roundtrip and merge | Luna | Complete | merged | Corpus 1348 | 49 passed; 15 fixtures and 11 inputs. Direct provider scope; mounted chain has separate GO. | e6 / 9729 |
 | P1-seed | Full native atomic bootstrap | Sol; Luna review | Complete | merged | Common 0618; seed 2d7; Runtime a00e | All 21 native assertions and history passed in run 18792. Runtime 2a9 integrated proof: 67 passed. | App 12ef; Runtime 2a9 |
 | P1-diagnostics | Safe files and source guard codes | Sol/Luna | Source reviewed and merged | merged | Reviews 1945 and 2118; App WorkerInfo 2238 | Real emitter, serialized listener and failure file passed; cap 32 retains critical events. Failure-only files were not created on successful 18792. | b221 / 6ecc / def457 / f890 |
-| readiness-after-bootstrap | Verified basis read does not finish | App Sol; Luna review; Proof verdict | Runtime source review and merge | blocked:runtime | Runtime Sol0155; independent Luna0212 | Author: 145 passed; same locked read authenticates once. Native history about two seconds. Source review pending; historical cause unknown. | Runtime candidate on 28bb; App 804134 |
+| readiness-after-bootstrap | Verified basis read does not finish | App Sol; Luna review; Proof verdict | Runtime evidence correction and review | blocked:runtime | Runtime Sol0155; independent Luna0212 FAIL | Review: 145 passed and guards passed. Three trailing-whitespace lines in diagnostic capture fail diff check; source correction and review pending. | Candidate 516e181b1; App 804134 |
 | readiness-client-link | Compare P1 and native seed history | App Sol; Luna review | Complete retained comparison | merged | App Sol0121; independent Luna0128 | Both fresh targets have two entries. Native seed has 21 commands and child closure. Browser request counts unknown; deadline cause unproved. | Report only |
 | P2 | Original eight gestures on App service | App service; Proof verdict | Named meaningful readiness fix | blocked:runtime | Run 10973; Proof audit0126 PASS | Exit 2, 189s. Native/history and bootstrap connection/selection passed; outbox wait failed. All eight originals NOT RUN. | App 804134d747 / tree 8437e476 |
 | P2-custody | Actual 18800 lifecycle file | Proof Luna | Complete finite audit | merged | ap2-P2-18800-direct-custody-0032 | PASS: 10,665 bytes, six real records, schema/security/roundtrip/writer and Node 12+7. Cancellation at 679ms; trigger and history completion unknown. | Report only |
@@ -21,7 +21,7 @@
 
 P1 RESULT GO. BOARD-HEADER records it at the 00:43 status line; D35 is satisfied. App and Agent received the required merge asks at 00:48, due 01:45Z. G5 is done. P1 case 2 passed; P2/P3 remain open.
 
-Blockers: Runtime owes independent cost-fix review 0212, source merge and integrated proof before the changed P2/P3 run.
+Blockers: Runtime owes the diagnostic whitespace correction, independent PASS, source merge and integrated proof before the changed P2/P3 run.
 Blockers: Farm F-final waits for deletions, upstream freeze and remaining gates. Agent owns full-suite classification and repairs under D32.
 
 A4: Preview, session, history, staged and state migrations merged. Lifecycle and unused goldens continue. Joined proof0150 passed448 tests, three types and lint; this is not P2/P3 proof. Dormant assertion scope remains with the orchestrator; protected tests stay.
@@ -44,3 +44,5 @@ Next ready: Consume Runtime auth-cost Sol0155 and its independent source review.
 Client comparison: Orchestrator0155 ask is satisfied by existing App Sol0121 and independent0128 PASS, reported in peer0200. Both seeds have two history entries; native21 means 21 commands in one commit. Six-second cost is consistent with the five-second wait, but historical causality and browser request counts remain unknown. No duplicate Proof author. Agent ask0133 is satisfied by retaining the changed-pair reports. U2c source-only draft0133 is active under the failed-run condition; exact upstream object is pending host fetch. No cause or merge claim. Final freeze gates remain after source work and upstream freeze.
 
 Current full pass: 2026-10-24T02:03Z. INBOX through 600772 bytes consumed. All 1,235 Proof workers are terminal. App, Runtime, Agent and Farm boards rechecked; no dependency has merged to release P2/P3. New normal hub source0155 and peers0157/0200 consumed. Runtime author reports 145 tests passed, parent native direct/door 5.715/5.944 seconds, candidate 1.885/2.010 seconds, three authentications reduced to one. Independent Luna0212 owns source qualification; no duplicate Proof source review or journey. App comparison ask is complete and has a row. All remaining worktrees have KEEP, so no eligible supported recycle. Free 8,894,115,840 bytes at 02:01Z; above heavy stop floor and D34 resume threshold. Prior compact refusal is not retried. Next full pass 02:10Z; act sooner on qualified handback.
+
+02:06 update: New independent Runtime0212 is FAIL only for three whitespace lines in diagnostics/readiness-auth/parent-regression.txt; exact 145 tests, structural parent RED/candidate GREEN, static identities and guards pass. Source is not merged. Existing Runtime owner must preserve raw-capture provenance while correcting the own diff and obtaining PASS. Peer0202 is satisfied by the existing readiness row and consumed source; stale probe metadata was corrected in Proof at 02:03. No new Proof worker or journey.
