@@ -554,6 +554,8 @@ def test_real_runtime_import_and_parent_publication_roundtrip(tmp_path):
     from runtime_protocol import service as service_module
     from runtime_protocol import store as store_module
 
+    from tests.helpers.trusted_seed import seed_trusted_parent
+
     root = tmp_path / "isolated-realm"
     store_module.RealmStore.initialize(root).close()
     service = service_module.RuntimeService(root)
@@ -600,7 +602,7 @@ def test_real_runtime_import_and_parent_publication_roundtrip(tmp_path):
         publication = json.loads(
             json.dumps(publication).replace(OLD, old).replace(AUDIO, old_audio)
         )
-        service.publish_parent_composition(project_id, "main", publication, idempotency_key="seed")
+        seed_trusted_parent(service, publication, idempotency_key="seed")
         work = open_authoring_bundle(
             service.get_project_parent_composition_revision(project_id, "main", "parent-1"),
             shot_revisions=[
@@ -697,11 +699,12 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     from tests.helpers.runtime import use_runtime
     from tests.helpers.trusted_seed import seed_trusted_parent
 
-    monkeypatch.setenv('ASTRID_RUNTIME_CHECKOUT', '/home/user/work/runtime')
-    runtime = use_runtime(commit='a0dca16975dfe8f5e762703b99d9791a16cf7fd7')
-    sys.path.insert(0, str(runtime / 'tests'))
+    monkeypatch.setenv('ASTRID_RUNTIME_CHECKOUT', '/home/user/work/wt/rt-pin-8ea0766f')
+    use_runtime()
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.store import RealmStore
+    source_runtime = use_runtime(commit='a0dca16975dfe8f5e762703b99d9791a16cf7fd7')
+    sys.path.insert(0, str(source_runtime / 'tests'))
     from timeline_commit_film_fixture import build_film_fixture, read_object_from_realm
 
     source_root = tmp_path / 'source'
@@ -872,7 +875,7 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     service.close()
 
     daemon = real_runtime(
-        realm, commit='a0dca16975dfe8f5e762703b99d9791a16cf7fd7',
+        realm,
         authoring_profile='astrid',
     )
 
@@ -1039,7 +1042,6 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     # restart; the M1 real-HTTP proof uses this convention as well.
     restarted = real_runtime(
         realm, port=restart_port,
-        commit='a0dca16975dfe8f5e762703b99d9791a16cf7fd7',
         authoring_profile='astrid',
     )
     client2 = open_client(restarted)
