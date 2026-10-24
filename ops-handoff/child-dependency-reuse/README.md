@@ -62,6 +62,65 @@ It contains only the validated `status`, stage, return code, elapsed seconds, ex
 The supported normal artifact input remains the existing opt-in contract: set `CHILD_VENV_DEPENDENCY_WHEELHOUSE` to an independently authenticated absolute physical wheelhouse containing the exact compatible `requirements/proof.lock` artifacts, then invoke `request-child-venv` with the existing source carrier. This packet does not acquire, probe or qualify that wheelhouse.
 
 
-## Component join seam
+## Source-only Farm distribution join
 
-Farm component0946 owns `candidate/verify_farm_distribution_inputs.py`, `tests/test_farm_distribution_inputs.py` and its standalone interface. This packet does not author or wire schema support. The exact component API is `validate_farm_distribution_inputs(*, schema_source: Path, wheelhouse: Path, additional_wheels: Sequence[WheelInput] = ()) -> dict`; it returns `schema_source`, `wheel_inputs` and `component_identity`. The future maker hook belongs beside `bootstrap_key()` before Store identity selection/`store.ensure`, with final and reuse checks at `verify(path)` and the staging inventory boundary. A later reviewed join must validate Farm inputs before installation, keep test2 separate from bootstrap3, include any newly authenticated component identity in the Store key, retain its original inputs, and pass only authenticated file ownership into the existing final/root verifier. Adding a distribution to a wheel dictionary or a namespace to an exemption is not a supported join. The current production caller remains the normal requester → maker → Store creation/final/reuse path; no component0946 readiness is claimed here.
+This candidate wires the exact reviewed Farm component from commit
+`234eeb443130f33491fb84bfb1330bc095848adc`, tree
+`5535627985e8b2af53ab84f78c71b985f41b8916`. The source worker was Codex HARD
+Sol1012. Review wording saying “authored by Claude” describes Git/harness
+metadata, not the source-worker identity. Only the component and its tests were
+imported; no old maker, Store, helper or branch ancestry was imported.
+
+The normal requester accepts the existing arguments and an additional private
+`--farm-schema-source ABSOLUTE_PHYSICAL_GIT_CHECKOUT` carrier. Alternatively set
+`CHILD_VENV_FARM_SCHEMA_SOURCE` in the requester environment; the requester
+serializes the checked path explicitly into the normal queue. Farm also requires
+the existing original67 dependency wheelhouse. `--farm-distributions` (or base
+suite `OPS-farm-agent-full`) requires the carrier and fails closed when absent.
+A supplied path is never a source grant: the maker must authenticate the exact
+selected Agent commit `242f9c4306bf3b501222cb041a9eb246ef47bc85`, tree, blobs,
+package, version, declaration, modes and real UID/GID through the reviewed
+component. The genuine original source remains unavailable and HELD. Its stopped
+acquisition route is not reopened by this candidate.
+
+Before Store construction, key selection or any installer, the maker calls
+`validate_farm_distribution_inputs` through its pinned helper and exact pinned
+component. The fixed five-wheel packet comes only from the existing authenticated
+input0932 archive. The Store identity additionally binds `farm_authority` to the
+full component receipt, alongside the unchanged `bootstrap_authority`. Legacy
+keys and children are never relabeled with Farm authority.
+
+The existing snapshot boundary retains `.source-inputs/schema.tar` as an exact
+Git archive of the selected schema subtree, verifies its files/modes against the
+component's authenticated commit/tree/blob receipt, and materializes its source
+beside Agent and Runtime. The original Git checkout is required on every check;
+no copied-source Git backend, claimed digest, installed RECORD, fixture or
+ArtAgents identity supplies authority. `.farm-receipt.json` retains the full
+receipt; `.farm-test-wheelhouse` retains only xdist 3.8.0 and execnet 2.1.2 with
+an exact hash lock. Bootstrap3, test2 and original67 remain separate. Neither
+proof.lock nor the original wheel packet changes.
+
+Staging before relocation, final verification, explicit reuse, and normal reuse
+without repeated input arguments reauthenticate the retained receipt, original
+Git source/archive, test2 roles/bytes, bootstrap authority and Store key. Retained
+Farm inputs use the reviewed component's physical descriptor custody checks;
+receipt bytes are compared with freshly authenticated original inputs. The
+existing committed-source verifier supplies schema ownership only for exact
+archived bytes, validated bytecode, finite installer metadata and declared
+scripts. The existing original-wheel verifier supplies test2 ownership. Every
+installed distribution and the entire physical root still reconcile; no
+namespace, RECORD, bin or pycache exemption is added. Existing import rows are
+retained and schema provenance is added. There is no duplicate astrid_runtime.
+
+Fixtures exercise pure wiring/refusal and synthetic ownership seams, including
+real reviewed wheel bytes; they do not prove an actual schema build or Farm
+child. The source checkout, maker, OS and Git remain trusted, and the same-UID
+limits of the existing model remain. This candidate needs independent cumulative
+security review before any guarded normal install. Real schema and Farm child
+remain NOT QUALIFIED. No live installation is authorized by this packet.
+
+The historical `make-child-venv.baseline` and its guard remain byte-exact. The
+separate `installed_baseline` in the manifest records the currently installed,
+reviewed ab6d49bfb source, following install1023; it does not replace the original
+baseline guard. Consequently that unchanged guard reports historical/live drift
+against the installed maker. Candidate hashes describe source only.

@@ -19,6 +19,7 @@ import stat
 import subprocess
 import sys
 import tarfile
+import tempfile
 import types
 import venv
 import zipfile
@@ -367,6 +368,164 @@ def retained_bootstrap(root: Path, interpreter: Path) -> dict[str, bytes]:
     return artifacts
 
 
+# The component is imported only from the reviewed maker kit, never its inputs.
+FARM_COMPONENT_SHA256 = "c2163184ed51e893c6d194930c061474de08bfe707907a2f43abb5332b62397d"
+
+
+def farm_component():
+    path = Path(__file__).with_name("verify_farm_distribution_inputs.py")
+    data = captured_bytes(path)
+    if path != path.resolve() or hashlib.sha256(data).hexdigest() != FARM_COMPONENT_SHA256:
+        fail("untrusted Farm distribution component")
+    module = types.ModuleType("farm_distribution_inputs")
+    module.__file__ = str(path)
+    sys.modules[module.__name__] = module
+    # Execute these authenticated source bytes; a timestamp-matching pyc is
+    # neither the reviewed component nor an additional source authority.
+    exec(compile(data, str(path), "exec"), module.__dict__)  # noqa: S102
+    return module
+
+
+def farm_inputs(schema_source: Path, archive_path: Path) -> dict:
+    component = farm_component()
+    data = captured_bytes(archive_path)
+    if hashlib.sha256(data).hexdigest() != BOOTSTRAP_ARCHIVE_SHA256:
+        fail("Farm requires genuine reviewed original five-wheel archive")
+    # This private, temporary extraction is never an installed-source authority.
+    with tempfile.TemporaryDirectory(prefix="farm-inputs-") as temporary:
+        wheelhouse = Path(temporary)
+        with tarfile.open(fileobj=io.BytesIO(data)) as archive:
+            for item in component.APPROVED_WHEELS:
+                member = archive.getmember("timeline-bootstrap-wheel-input-0932/wheelhouse/" + item.filename)
+                if not member.isfile() or member.size != item.size:
+                    fail("Farm original wheel archive member mismatch")
+                stream = archive.extractfile(member)
+                if stream is None:
+                    fail("Farm original wheel is missing")
+                (wheelhouse / item.filename).write_bytes(stream.read())
+        return component.validate_farm_distribution_inputs(schema_source=schema_source, wheelhouse=wheelhouse)
+
+
+def schema_archive(receipt: dict) -> bytes:
+    schema = receipt["schema_source"]
+    source = schema["custody"]["root"]
+    env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
+    env.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull, GIT_OPTIONAL_LOCKS="0")
+    data = subprocess.check_output(
+        ["git", "--no-replace-objects", "-C", source, "archive", "--format=tar",
+         schema["commit"] + ":" + schema["subdirectory"]], env=env)
+    prefix = schema["subdirectory"] + "/"
+    expected = {item["path"][len(prefix):]: item for item in schema["files"] if item["path"].startswith(prefix)}
+    seen = set()
+    with tarfile.open(fileobj=io.BytesIO(data)) as archive:
+        for entry in archive:
+            pure = PurePosixPath(entry.name)
+            if pure.is_absolute() or ".." in pure.parts or str(pure) != entry.name or entry.name in seen:
+                fail("unsafe schema Git archive path")
+            seen.add(entry.name)
+            if entry.isdir():
+                if not any(name.startswith(entry.name + "/") for name in expected):
+                    fail("unowned schema Git archive directory")
+                continue
+            item = expected.get(entry.name)
+            if not entry.isfile() or item is None:
+                fail("unowned schema Git archive file")
+            stream = archive.extractfile(entry)
+            if stream is None:
+                fail("missing schema Git archive content")
+            content = stream.read()
+            if (len(content) != item["size"] or hashlib.sha256(content).hexdigest() != item["sha256"]
+                    or entry.mode != int(item["mode"], 8) & 0o777):
+                fail("schema Git archive differs from authenticated selected blobs")
+    if set(expected) != {name for name in seen if name in expected}:
+        fail("incomplete schema Git archive")
+    return data
+
+
+def farm_test_inputs(receipt: dict, archive_path: Path) -> tuple[bytes, dict[str, bytes]]:
+    artifacts = {}
+    lock = []
+    with tarfile.open(fileobj=io.BytesIO(captured_bytes(archive_path))) as archive:
+        for item in receipt["wheel_inputs"]["distributions"]:
+            if item["role"] == "test2":
+                stream = archive.extractfile("timeline-bootstrap-wheel-input-0932/wheelhouse/" + item["filename"])
+                if stream is None:
+                    fail("missing Farm original test wheel")
+                artifacts[item["filename"]] = stream.read()
+                lock.append(f'{item["name"]}=={item["version"]} --hash=sha256:{item["sha256"]}\n')
+    return "".join(lock).encode(), artifacts
+
+
+def prepare_farm(root: Path, source: Path, authority: str) -> None:
+    receipt = farm_inputs(source, root / ".bootstrap-input.tgz")
+    if receipt["component_identity"] != authority:
+        fail("Farm inputs changed before staging")
+    data = schema_archive(receipt)
+    snapshot = next(root.glob(".child-venv-source-*")) / "schema"
+    snapshot.mkdir(mode=0o700)
+    # Only the authenticated archive file set is materialized, never .git or a
+    # new object backend. The original selected Git checkout remains required.
+    with tarfile.open(fileobj=io.BytesIO(data)) as archive:
+        for entry in archive:
+            target = snapshot / entry.name
+            if entry.isdir():
+                target.mkdir(parents=True, exist_ok=True)
+            else:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                stream = archive.extractfile(entry)
+                if stream is None:
+                    fail("missing schema Git archive content")
+                target.write_bytes(stream.read())
+                target.chmod(entry.mode & 0o777)
+    carrier = root / ".source-inputs/schema.tar"
+    carrier.write_bytes(data)
+    carrier.chmod(0o400)
+    lock, artifacts = farm_test_inputs(receipt, root / ".bootstrap-input.tgz")
+    write_snapshot(root / ".farm-test-wheelhouse", lock, artifacts)
+    path = root / ".farm-receipt.json"
+    path.write_bytes(json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode())
+    path.chmod(0o400)
+    retained_farm(root, authority)
+
+
+def retained_farm(root: Path, authority: str | None = None) -> tuple[dict, dict[str, bytes], set[str]]:
+    custody = farm_component()._SourceCustody(root)
+    with custody:
+        return _retained_farm(root, authority, custody)
+
+
+def _retained_farm(root: Path, authority: str | None, custody) -> tuple[dict, dict[str, bytes], set[str]]:
+    custody.directory(root)
+    marker = root / ".farm-receipt.json"
+    child_file(root, marker)
+    if marker.stat().st_size > 4 * 1024 * 1024:
+        fail("oversized Farm receipt")
+    raw = custody.read(marker, "100644")
+    custody.read(root / ".bootstrap-input.tgz", "100644")
+    claimed = json.loads(raw)
+    source = Path(claimed["schema_source"]["custody"]["root"])
+    receipt = farm_inputs(source, root / ".bootstrap-input.tgz")
+    if (raw != json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
+            or (authority is not None and receipt["component_identity"] != authority)):
+        fail("retained Farm receipt/source authority mismatch")
+    carrier = root / ".source-inputs/schema.tar"
+    child_file(root, carrier)
+    if custody.read(carrier, "100644") != schema_archive(receipt):
+        fail("retained schema archive differs from original selected source")
+    lock, artifacts = farm_test_inputs(receipt, root / ".bootstrap-input.tgz")
+    seed = root / ".farm-test-wheelhouse"
+    if seed.is_symlink() or seed != seed.resolve() or {path.name for path in seed.iterdir()} != {"requirements.txt", *artifacts}:
+        fail("retained Farm test2 inventory mismatch")
+    for name, content in {"requirements.txt": lock, **artifacts}.items():
+        child_file(root, seed / name)
+        if custody.read(seed / name, "100644") != content:
+            fail("retained Farm test2 differs from original wheel role/bytes")
+    owned = {marker.name, carrier.relative_to(root).as_posix()}
+    owned.update(".farm-test-wheelhouse/" + name for name in {"requirements.txt", *artifacts})
+    custody.finish()
+    return receipt, artifacts, owned
+
+
 def store_metadata(root: Path, interpreter: Path) -> set[str]:
     marker = root / ".bench-owner.json"
     if not marker.exists() and not marker.is_symlink():
@@ -380,9 +539,17 @@ def store_metadata(root: Path, interpreter: Path) -> set[str]:
     if set(value) != {"owner", "component", "key", "identity"} or value["component"] != "child" or value["owner"] != owner["id"] or owner["root"] != str(store):
         fail("retained Store ownership metadata mismatch")
     identity = value["identity"]
-    if set(identity) != {"agent_sha", "backend_sha", "client_tuple", "bootstrap_authority"} or identity["bootstrap_authority"] != bootstrap_identity(interpreter):
+    if set(identity) not in ({"agent_sha", "backend_sha", "client_tuple", "bootstrap_authority"},
+                             {"agent_sha", "backend_sha", "client_tuple", "bootstrap_authority", "farm_authority"}) or identity["bootstrap_authority"] != bootstrap_identity(interpreter):
         fail("Store child lacks genuine bootstrap authority")
     parts = ["child", identity["agent_sha"], identity["backend_sha"], identity["client_tuple"], identity["bootstrap_authority"]]
+    if "farm_authority" in identity:
+        if not isinstance(identity["farm_authority"], str) or not re.fullmatch("[0-9a-f]{64}", identity["farm_authority"]):
+            fail("Store child lacks genuine Farm authority")
+        receipt, _, _ = retained_farm(root, identity["farm_authority"])
+        parts.append(receipt["component_identity"])
+    elif (root / ".farm-receipt.json").exists() or (root / ".farm-receipt.json").is_symlink():
+        fail("Farm child lacks authenticated Store identity")
     key = hashlib.sha256(json.dumps(parts, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     if value["key"] != key or root.name != (("child-" if root.parent.name == "entries" else "") + key):
         fail("retained Store key differs from bootstrap/source identity")
@@ -422,7 +589,20 @@ def installed_integrity(
     # Only the maker's committed-source verifier can supply local ownership.
     # This is deliberately not an on-disk/CLI allowlist or a package exemption.
     local_inventory = local_inventory or {}
-    if set(local_inventory) - {"astrid", "astrid-runtime", "__root__"}:
+    allowed_local = {"astrid", "astrid-runtime", "__root__"}
+    if (root / ".farm-receipt.json").exists() or (root / ".farm-receipt.json").is_symlink():
+        if not bootstrap:
+            fail("Farm requires authenticated complete-root bootstrap")
+        receipt, farm_wheels, farm_owned = retained_farm(root)
+        if artifacts.keys() & farm_wheels.keys():
+            fail("Farm test2 overlaps dependency/bootstrap role")
+        artifacts = {**artifacts, **farm_wheels}
+        local_inventory = dict(local_inventory)
+        local_inventory["__root__"] = set(local_inventory.get("__root__", set())) | farm_owned
+        if receipt["schema_source"]["package"] not in local_inventory:
+            fail("Farm schema requires authenticated committed-source inventory")
+        allowed_local.add(receipt["schema_source"]["package"])
+    if set(local_inventory) - allowed_local:
         fail("unsupported local distribution ownership")
     # __root__ is supplied only by the authenticated committed-source verifier,
     # after validating each maker/Store/source file. It is never read from disk.
@@ -688,6 +868,15 @@ def install_snapshot(wheelhouse: Path, requirements: bytes, flags: list[str], *,
 def main(*, local_inventory: dict[str, set[str]] | None = None) -> int:
     interpreter: Path | None = None
     args = sys.argv[1:]
+    if args and args[0] == "--farm-inputs":
+        print(json.dumps(farm_inputs(Path(args[1]), Path(args[2])), sort_keys=True, separators=(",", ":")))
+        return 0
+    if args and args[0] == "--verify-farm":
+        retained_farm(Path(args[1]), args[2])
+        return 0
+    if args and args[0] == "--prepare-farm":
+        prepare_farm(Path(args[1]), Path(args[2]), args[3])
+        return 0
     if args and args[0] == "--bootstrap-identity":
         print(bootstrap_identity(Path(args[1])))
         return 0
@@ -837,6 +1026,8 @@ def main(*, local_inventory: dict[str, set[str]] | None = None) -> int:
         installed_integrity(installed, artifacts, interpreter=interpreter, local_inventory=local_inventory,
                             bootstrap=bootstrap_root is not None)
     if install_flags is not None:
+        if wheelhouse.name == ".farm-test-wheelhouse":
+            retained_farm(wheelhouse.parent)
         install_snapshot(wheelhouse, requirements_bytes, install_flags, python=install_python)
     if snapshot is not None:
         write_snapshot(snapshot, requirements_bytes, artifacts)

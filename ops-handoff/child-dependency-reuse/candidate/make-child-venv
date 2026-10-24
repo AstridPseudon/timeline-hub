@@ -21,8 +21,11 @@ PIP_NETWORK_TIMEOUT_SECONDS=${CHILD_VENV_PIP_NETWORK_TIMEOUT_SECONDS:-30}
 PIP_RETRIES=${CHILD_VENV_PIP_RETRIES:-2}
 REQUIREMENTS_PATH=${CHILD_VENV_REQUIREMENTS_PATH:-requirements/proof.lock}
 EXPECTED_PROOF_LOCK_SHA256=236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778
-VERIFIER_SHA256=02513492e4bb013cc615588a19a58d274494f3dcaa3806bfc7e17eaae57c7d68
+VERIFIER_SHA256=116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2
 DEPENDENCY_SEED=
+FARM_SCHEMA_SOURCE=
+FARM_REQUIRED=0
+FARM_AUTHORITY=
 BOOTSTRAP_ARCHIVE=$O/artifacts/bootstrap-wheel-input-0932-443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548.tgz
 SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
 
@@ -55,6 +58,13 @@ while [ "$#" -gt 0 ]; do
       [ "$#" -ge 4 ] || { echo 'REFUSED: source carrier requires Agent checkout, Runtime checkout and Runtime SHA' >&2; exit 2; }
       A=$2; R=$3; RUNTIME_SHA=$4; shift 4
       ;;
+    --farm-distributions)
+      FARM_REQUIRED=1; shift
+      ;;
+    --farm-schema-source)
+      [ "$#" -ge 2 ] || { echo 'REFUSED: Farm schema source path is missing' >&2; exit 2; }
+      FARM_SCHEMA_SOURCE=$2; FARM_REQUIRED=1; shift 2
+      ;;
     --dependency-wheelhouse)
       [ "$#" -ge 2 ] || { echo 'REFUSED: dependency wheelhouse path is missing' >&2; exit 2; }
       DEPENDENCY_SEED=$2; shift 2
@@ -65,6 +75,13 @@ while [ "$#" -gt 0 ]; do
       ;;
   esac
 done
+[ -z "$FARM_SCHEMA_SOURCE" ] || FARM_REQUIRED=1
+[ "$BS" != OPS-farm-agent-full ] || FARM_REQUIRED=1
+if [ "$FARM_REQUIRED" = 1 ]; then
+  [[ "$FARM_SCHEMA_SOURCE" =~ ^/[A-Za-z0-9._/-]+$ ]] || { echo 'REFUSED: missing authentic selected Farm schema Git source' >&2; exit 2; }
+  [ -d "$FARM_SCHEMA_SOURCE" ] && [ "$FARM_SCHEMA_SOURCE" = "$(readlink -e -- "$FARM_SCHEMA_SOURCE" 2>/dev/null)" ] || { echo 'REFUSED: Farm schema source must be an existing physical directory' >&2; exit 2; }
+  [ -n "$DEPENDENCY_SEED" ] || { echo 'REFUSED: Farm requires original67 dependency wheelhouse and complete-root bootstrap' >&2; exit 2; }
+fi
 case "$A:$R" in /*:/*) ;; *) echo 'REFUSED: source checkouts must be absolute' >&2; exit 2;; esac
 [[ "$A" =~ ^/[A-Za-z0-9._/-]+$ && "$R" =~ ^/[A-Za-z0-9._/-]+$ ]] || { echo 'REFUSED: source checkout path contains unsafe characters' >&2; exit 2; }
 [ "$A" = "$(readlink -e -- "$A" 2>/dev/null)" ] || { echo 'REFUSED: Agent checkout path is missing or symlinked' >&2; exit 2; }
@@ -192,16 +209,15 @@ done)
 
 STORE_HELPER=$O/bin/bench_store.py
 [ -f "$STORE_HELPER" ] && [ ! -L "$STORE_HELPER" ] || { echo 'REFUSED: bench store helper unavailable' >&2; exit 2; }
-export STORE_CONTEXT="$(declare -p O A R W PYTHON TIMEOUT_BIN PIP_TIMEOUT_SECONDS LOCAL_TIMEOUT_SECONDS FREEZE_TIMEOUT_SECONDS BUILD_TIMEOUT_SECONDS KILL_AFTER_SECONDS PIP_NETWORK_TIMEOUT_SECONDS PIP_RETRIES REQUIREMENTS_PATH N S BS RT RUNTIME_SHA CLIENT_IDENTITY LOCK_SHA VERIFIER_SHA256 BOOTSTRAP_ARCHIVE DEPENDENCY_SEED SCRIPT_DIR; declare -f failure run_stage progress source_state)"
-python3 -I - "$0" "$STORE_HELPER" "$W/bench-store" "$O/tests" "$N" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$A" "$R" "$W" "$PYTHON" "$BS" "$RT" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$DEPENDENCY_SEED" "$VERIFIER_SHA256" "$EXPECTED_PROOF_LOCK_SHA256" <<'STORE_PY'
+export STORE_CONTEXT="$(declare -p FARM_SCHEMA_SOURCE FARM_REQUIRED FARM_AUTHORITY O A R W PYTHON TIMEOUT_BIN PIP_TIMEOUT_SECONDS LOCAL_TIMEOUT_SECONDS FREEZE_TIMEOUT_SECONDS BUILD_TIMEOUT_SECONDS KILL_AFTER_SECONDS PIP_NETWORK_TIMEOUT_SECONDS PIP_RETRIES REQUIREMENTS_PATH N S BS RT RUNTIME_SHA CLIENT_IDENTITY LOCK_SHA VERIFIER_SHA256 BOOTSTRAP_ARCHIVE DEPENDENCY_SEED SCRIPT_DIR; declare -f failure run_stage progress source_state)"
+python3 -I - "$0" "$STORE_HELPER" "$W/bench-store" "$O/tests" "$N" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$A" "$R" "$W" "$PYTHON" "$BS" "$RT" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$DEPENDENCY_SEED" "$VERIFIER_SHA256" "$EXPECTED_PROOF_LOCK_SHA256" "$FARM_SCHEMA_SOURCE" "$FARM_REQUIRED" "$BOOTSTRAP_ARCHIVE" <<'STORE_PY'
 import hashlib, importlib.util, json, os, pathlib, re, shlex, stat, subprocess, sys
-script, helper, root, tests, name, agent, backend, client, checkout, runtime_checkout, work, python, base_suite, remotion, requirements, lock, dependency_seed, verifier_sha, approved_lock = sys.argv[1:]
+script, helper, root, tests, name, agent, backend, client, checkout, runtime_checkout, work, python, base_suite, remotion, requirements, lock, dependency_seed, verifier_sha, approved_lock, farm_source, farm_required, bootstrap_archive = sys.argv[1:]
 sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location('bench_store', helper)
 module = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = module
 spec.loader.exec_module(module)
-store = module.Store(root, tests)
 source = pathlib.Path(script).read_text()
 body = source.split('# STORE_BUILD_BEGIN\n', 1)[1].split('# STORE_BUILD_END', 1)[0]
 verifier = source.split('# STORE_VERIFY_BEGIN\n', 1)[1].split('# STORE_VERIFY_END', 1)[0]
@@ -251,15 +267,49 @@ def bootstrap_key():
     if not re.fullmatch('[0-9a-f]{64}', value):
         raise RuntimeError('missing trusted host Python/venv bootstrap source identity')
     return value
-# New seeded children have a distinct key. Old incomplete entries are never
-# adopted. Without a new input, find a previously bound entry before legacy reuse.
+def seed_module():
+    bootstrap_key()  # authenticate the helper before importing any of it
+    spec = importlib.util.spec_from_file_location('dependency_seed', seed_helper)
+    seed = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(seed)
+    return seed
+
+# The Farm gate precedes Store construction, key selection and all installers.
 import shutil
-if dependency_seed:
+farm_receipt = None
+if farm_required == '1':
+    seed = seed_module()
+    farm_receipt = seed.farm_inputs(pathlib.Path(farm_source), pathlib.Path(bootstrap_archive))
+    identity['bootstrap_authority'] = bootstrap_key()
+    identity['farm_authority'] = farm_receipt['component_identity']
+    context += '\n' + 'FARM_AUTHORITY=' + shlex.quote(identity['farm_authority']) + '\n'
+elif dependency_seed:
     identity['bootstrap_authority'] = bootstrap_key()
 elif seed_helper.is_file() and any(pathlib.Path(root, 'entries').glob('child-*/.bootstrap-authority')):
     bound = {**identity, 'bootstrap_authority': bootstrap_key()}
     if (pathlib.Path(root) / 'entries' / ('child-' + module.key_for('child', bound))).exists():
         identity = bound
+# A normal reuse without repeated source/input arguments can find only an
+# already bound Farm entry. A receipt path/digest alone never grants authority.
+if farm_required != '1':
+    candidates = []
+    for marker in pathlib.Path(root, 'entries').glob('child-*/.farm-receipt.json'):
+        owner = json.loads(module.read(marker.parent / '.bench-owner.json'))
+        claimed = owner.get('identity', {})
+        if (set(claimed) == {'agent_sha', 'backend_sha', 'client_tuple', 'bootstrap_authority', 'farm_authority'}
+                and all(claimed.get(key) == value for key, value in identity.items())):
+            seed = seed_module()
+            receipt, _, _ = seed.retained_farm(marker.parent, claimed.get('farm_authority'))
+            bound = {**identity, 'bootstrap_authority': bootstrap_key(),
+                     'farm_authority': receipt['component_identity']}
+            if marker.parent.name != 'child-' + module.key_for('child', bound):
+                raise RuntimeError('retained Farm Store key mismatch')
+            candidates.append(bound)
+    if len(candidates) > 1:
+        raise RuntimeError('ambiguous authenticated Farm reuse')
+    if candidates:
+        identity = candidates[0]
+store = module.Store(root, tests)
 def build(stage, final):
     build.failure_evidence = None
     build.failure_recorded = False
@@ -323,9 +373,15 @@ def verify(path):
     retained = pathlib.Path(path)
     if retained.is_symlink() or not retained.is_dir() or not os.access(retained / 'bin/python', os.X_OK):
         raise RuntimeError('invalid retained child root/interpreter')
+    farm_args = []
+    if 'farm_authority' in identity:
+        receipt, _, _ = seed_module().retained_farm(retained, identity['farm_authority'])
+        farm_args = ['--farm-source', receipt['schema_source']['custody']['root']]
+    elif (retained / '.farm-receipt.json').exists() or (retained / '.farm-receipt.json').is_symlink():
+        raise RuntimeError('Farm child requires authenticated Store authority')
     local_inventory = json.loads(subprocess.check_output(
         ['python3', '-I', '-', str(path), client, checkout, agent,
-         runtime_checkout, backend, work, python], input=verifier, text=True))
+         runtime_checkout, backend, work, python, *farm_args], input=verifier, text=True))
     for marker, expected in (('.astrid-source-commit', agent), ('.astrid-runtime-source-commit', backend), ('.astrid-runtime-client-identity', client)):
         if (retained / marker).read_text().rstrip('\n') != expected:
             raise RuntimeError('retained child source/client marker mismatch: ' + marker)
@@ -450,6 +506,12 @@ if [ -n "$DEPENDENCY_SEED" ]; then
   run_stage build-input-directory "$LOCAL_TIMEOUT_SECONDS" mkdir "$BUILD_INPUT"
   run_stage build-agent-input "$LOCAL_TIMEOUT_SECONDS" git -C "$A" archive --format=tar --output="$BUILD_INPUT/agent.tar" "$S"
   run_stage build-runtime-input "$LOCAL_TIMEOUT_SECONDS" git -C "$R" archive --format=tar --output="$BUILD_INPUT/runtime.tar" "$RUNTIME_SHA"
+  if [ "$FARM_REQUIRED" = 1 ]; then
+    run_stage retain-farm-inputs "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" --prepare-farm "$T" "$FARM_SCHEMA_SOURCE" "$FARM_AUTHORITY"
+    run_stage install-farm-test2 "$PIP_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" --install-python "$P" "$T/.farm-test-wheelhouse" "$T/.farm-test-wheelhouse/requirements.txt" --install "${PIP_ARGS[@]}"
+    run_stage verify-farm-before-schema "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" --verify-farm "$T" "$FARM_AUTHORITY"
+    run_stage install-farm-schema "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$BUILD_INPUT/schema.tar"
+  fi
   run_stage install-agent "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$BUILD_INPUT/agent.tar"
   run_stage install-runtime "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$BUILD_INPUT/runtime.tar"
 else
@@ -460,8 +522,10 @@ printf '%s\n' "$S" > "$T/.astrid-source-commit"
 printf '%s\n' "$RUNTIME_SHA" > "$T/.astrid-runtime-source-commit"
 printf '%s\n' "$CLIENT_IDENTITY" > "$T/.astrid-runtime-client-identity"
 
-PROVENANCE_SCRIPT='import importlib.util, pathlib
+PROVENANCE_SCRIPT='import importlib.util, pathlib, sys
 names = ("astrid", "astrid_runtime", "runtime_protocol", "astrid_runtime_client")
+if (pathlib.Path(sys.prefix) / ".farm-receipt.json").is_file():
+    names += ("banodoco_timeline_schema",)
 for name in names:
     spec = importlib.util.find_spec(name)
     assert spec is not None and spec.origin, name
@@ -484,6 +548,8 @@ run_stage markers "$LOCAL_TIMEOUT_SECONDS" bash -c \
 DIST_METADATA_SCRIPT='import hashlib, importlib.metadata as metadata, json, pathlib, sys, tomllib
 from urllib.parse import unquote, urlparse
 roots = {"astrid": pathlib.Path(sys.argv[1]).resolve(), "astrid-runtime": pathlib.Path(sys.argv[2]).resolve()}
+if (roots["astrid"].parent / "schema").is_dir():
+    roots["banodoco-timeline-schema"] = roots["astrid"].parent / "schema"
 for name, root in roots.items():
     project = tomllib.loads((root / "pyproject.toml").read_text())["project"]
     dist = metadata.distribution(name)
@@ -521,6 +587,8 @@ from urllib.parse import unquote, urlparse
 report = pathlib.Path(sys.argv[1])
 child = pathlib.Path(sys.argv[2]).resolve()
 roots = {"astrid": pathlib.Path(sys.argv[3]).resolve(), "astrid-runtime": pathlib.Path(sys.argv[4]).resolve()}
+if (roots["astrid"].parent / "schema").is_dir():
+    roots["banodoco-timeline-schema"] = roots["astrid"].parent / "schema"
 expected = {"astrid": sys.argv[5], "astrid-runtime": sys.argv[6]}
 lines = report.read_text().splitlines()
 def fail(message):
@@ -545,7 +613,10 @@ for line in lines[start:]:
     if "=" in line:
         name, origin = line.split("=", 1)
         origins[name] = pathlib.Path(origin).resolve()
-for name in ("astrid", "astrid_runtime", "runtime_protocol", "astrid_runtime_client"):
+imports = ("astrid", "astrid_runtime", "runtime_protocol", "astrid_runtime_client")
+if "banodoco-timeline-schema" in roots:
+    imports += ("banodoco_timeline_schema",)
+for name in imports:
     origin = origins.get(name)
     if origin is None or child not in origin.parents or "site-packages" not in origin.parts:
         fail(f"isolated import origin {name}")
@@ -599,14 +670,20 @@ run_stage freeze-identity "$LOCAL_TIMEOUT_SECONDS" bash -c \
 # Venv launchers contain the partial path. Fix them before the atomic publish;
 # no complete destination exists until all validation above has passed.
 if [ -n "$DEPENDENCY_SEED" ]; then
-  run_stage verify-staging-inventory "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I - "$MAKER_SOURCE" "$T" "$CLIENT_IDENTITY" "$A" "$S" "$R" "$RUNTIME_SHA" "$W" "$PYTHON" "$SEED_SNAPSHOT" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$VERIFIER_SHA256" <<'STAGING_INVENTORY'
+  run_stage verify-staging-inventory "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I - "$MAKER_SOURCE" "$T" "$CLIENT_IDENTITY" "$A" "$S" "$R" "$RUNTIME_SHA" "$W" "$PYTHON" "$SEED_SNAPSHOT" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$VERIFIER_SHA256" "$FARM_AUTHORITY" <<'STAGING_INVENTORY'
 import contextlib, hashlib, importlib.util, io, json, pathlib, sys
-maker, root, client, agent, sha, runtime, runtime_sha, work, python, seed, lock_path, lock_sha, helper_sha = sys.argv[1:]
+maker, root, client, agent, sha, runtime, runtime_sha, work, python, seed, lock_path, lock_sha, helper_sha, farm_authority = sys.argv[1:]
 helper = pathlib.Path(maker).parent / 'verify_dependency_seed.py'
 if helper != helper.resolve() or not helper.is_file() or hashlib.sha256(helper.read_bytes()).hexdigest() != helper_sha:
     raise SystemExit('untrusted dependency seed verifier')
 source = pathlib.Path(maker).read_text().split('# STORE_VERIFY_BEGIN\n', 1)[1].split('# STORE_VERIFY_END', 1)[0]
 sys.argv = ['verifier', root, client, agent, sha, runtime, runtime_sha, work, python, '--staging']
+spec = importlib.util.spec_from_file_location('dependency_seed', helper)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+if farm_authority:
+    receipt, _, _ = module.retained_farm(pathlib.Path(root), farm_authority)
+    sys.argv[-1:-1] = ['--farm-source', receipt['schema_source']['custody']['root']]
 output = io.StringIO()
 with contextlib.redirect_stdout(output):
     exec(compile(source, maker, 'exec'), {})
@@ -700,6 +777,7 @@ def fail(message):
     raise SystemExit(message)
 
 staging = sys.argv[-1] == '--staging'
+farm_source = sys.argv[sys.argv.index('--farm-source') + 1] if '--farm-source' in sys.argv else None
 
 def readonly(root):
     if root != root.resolve() or root.is_symlink() or not root.is_dir():
@@ -730,6 +808,8 @@ if not site.is_relative_to(root):
     fail('site-packages escapes child')
 expected_client = dict(item.removeprefix('packages/python/').split('=', 1) for item in sys.argv[2].splitlines())
 checkouts = {'astrid': (sys.argv[3], sys.argv[4]), 'astrid-runtime': (sys.argv[5], sys.argv[6])}
+if farm_source is not None:
+    checkouts['banodoco-timeline-schema'] = (farm_source, '242f9c4306bf3b501222cb041a9eb246ef47bc85:packages/timeline-schema/python')
 work = pathlib.Path(sys.argv[7]).resolve()
 origins = {}
 for line in (root / '.astrid-import-origins').read_text().splitlines():
@@ -737,14 +817,17 @@ for line in (root / '.astrid-import-origins').read_text().splitlines():
     if name in origins:
         fail('duplicate import origin')
     origins[name] = pathlib.Path(origin).resolve()
-for name in ('astrid', 'astrid_runtime', 'runtime_protocol', 'astrid_runtime_client'):
+imports = ('astrid', 'astrid_runtime', 'runtime_protocol', 'astrid_runtime_client')
+if farm_source is not None:
+    imports += ('banodoco_timeline_schema',)
+for name in imports:
     spec = importlib.machinery.PathFinder.find_spec(name, [str(site)])
     if spec is None or not spec.origin:
         fail(f'missing import origin: {name}')
     origin = pathlib.Path(spec.origin).resolve()
     if not origin.is_relative_to(site) or origins.get(name) != origin:
         fail(f'import origin mismatch: {name}')
-if set(origins) != {'astrid', 'astrid_runtime', 'runtime_protocol', 'astrid_runtime_client'}:
+if set(origins) != set(imports):
     fail('incomplete import provenance')
 
 def committed_files(checkout, commit):
@@ -787,11 +870,13 @@ for name, (checkout, commit) in checkouts.items():
     carrier = pathlib.Path(unquote(parsed.path))
     if carrier.is_symlink() or carrier != carrier.resolve() or not carrier.is_relative_to(root):
         fail('source carrier escapes retained child root')
-    snapshot_name = 'agent' if name == 'astrid' else 'runtime'
+    snapshot_name = {'astrid': 'agent', 'astrid-runtime': 'runtime', 'banodoco-timeline-schema': 'schema'}[name]
     snapshots = list(root.glob('.child-venv-source-*'))
     if len(snapshots) != 1:
         fail('ambiguous retained source snapshot')
     source = snapshots[0] / snapshot_name
+    if name == 'banodoco-timeline-schema' and 'archive_info' not in direct:
+        fail('schema requires retained authenticated original Git archive')
     if 'archive_info' in direct:
         expected_carrier = root / '.source-inputs' / (snapshot_name + '.tar')
         original = subprocess.check_output(['git', '-C', checkout, 'archive', '--format=tar', commit])
@@ -839,7 +924,8 @@ for name, (checkout, commit) in checkouts.items():
             if encoded != 'sha256=' + digest or int(size) != len(content):
                 fail(f'{name} RECORD bytes mismatch: {rel}')
         package = pure.parts[0]
-        prefixes = ('astrid', 'astrid_runtime_client') if name == 'astrid' else ('astrid_runtime', 'runtime_protocol')
+        prefixes = {'astrid': ('astrid', 'astrid_runtime_client'), 'astrid-runtime': ('astrid_runtime', 'runtime_protocol'),
+                    'banodoco-timeline-schema': ('banodoco_timeline_schema',)}[name]
         if package in prefixes and not rel.endswith('.pyc'):
             if rel not in files or files[rel] != content:
                 fail(f'installed source bytes mismatch: {name}/{rel}')
@@ -897,7 +983,7 @@ if sources['astrid'].parent != sources['astrid-runtime'].parent:
     fail('source snapshots have different custody roots')
 agent_rows = rows_by_name['astrid']
 runtime_rows = rows_by_name['astrid-runtime']
-if set(agent_rows) & set(runtime_rows):
+if sum(len(rows) for rows in rows_by_name.values()) != len(set().union(*(set(rows) for rows in rows_by_name.values()))):
     fail('overlapping distribution RECORD ownership')
 client_rows = {p for p in agent_rows if p.startswith('astrid_runtime_client/') and not p.endswith('.pyc')}
 if client_rows != set(expected_client) or any(p.startswith('astrid_runtime_client/') for p in runtime_rows):
@@ -934,7 +1020,7 @@ root_inventory.add('.astrid-import-origins')
 # Maker metadata has a closed grammar and exact provenance. Its bytes never
 # grant ownership to another path or distribution.
 metadata_lines = []
-for name in ('astrid', 'astrid-runtime'):
+for name in checkouts:
     dist = next(d for d in md.distributions(path=[str(site)])
                 if re.sub(r'[-_.]+', '-', d.metadata.get('Name', '')).lower() == name)
     url = source_urls[name]
