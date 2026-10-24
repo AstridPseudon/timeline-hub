@@ -11,6 +11,7 @@ import hashlib
 import json
 import re
 import threading
+from collections import deque
 from contextlib import contextmanager
 from functools import wraps
 
@@ -175,7 +176,7 @@ class TimelineCommitStore:
     def verification_scope(self):
         """Start an independent evaluation, including when another is nested."""
         previous = getattr(self._verification, "current", None)
-        current = {"verified": set(), "active": set()}
+        current = {"verified": set(), "active": set(), "traversal": None}
         self._verification.current = current
         try:
             yield
@@ -229,15 +230,78 @@ class TimelineCommitStore:
 
     @_evaluation
     def _verify_accepted(self, row, edge, *, allow_archived=False):
-        active = self._verification.current["active"]
+        from .timeline_commit import CommitRejected
+
+        current = self._verification.current
+        active = current["active"]
         identity = (edge["project_id"], edge["timeline_id"], edge["publication_id"])
         if identity in active:
             raise ProtocolError("accepted commit history contains a cycle")
-        active.add(identity)
+        traversal = current["traversal"]
+        if traversal is not None:
+            traversal["dependencies"][traversal["current"]].add(identity)
+            existing = traversal["nodes"].get(identity)
+            if existing is not None:
+                if dict(row) != dict(existing[0]) or dict(edge) != dict(existing[1]):
+                    raise ProtocolError("accepted commit history changed during verification")
+            else:
+                traversal["nodes"][identity] = (row, edge, allow_archived)
+                traversal["dependencies"][identity] = set()
+                traversal["pending"].append(identity)
+            return
+        # Build one dependency graph for this lookup, not for the request. No
+        # internal history entry escapes until every node's live predicates and
+        # replay proof pass. Later lookups rebuild it, even in the same scope.
+        traversal = {"nodes": {identity: (row, edge, allow_archived)},
+                     "dependencies": {identity: set()}, "pending": deque([identity]),
+                     "replays": {}, "current": identity}
+        current["traversal"] = traversal
         try:
-            return self._verify_accepted_record(row, edge, allow_archived=allow_archived)
+            while traversal["pending"]:
+                node = traversal["pending"].popleft()
+                traversal["current"] = node
+                ledger, history, archived = traversal["nodes"][node]
+                live_ledger = self.conn.execute("SELECT * FROM command_idempotency WHERE txn_id=?", (node[2],)).fetchone()
+                live_history = self.conn.execute("SELECT * FROM timeline_commit_history WHERE publication_id=?", (node[2],)).fetchone()
+                if (live_ledger is None or live_history is None
+                        or dict(live_ledger) != dict(ledger) or dict(live_history) != dict(history)):
+                    raise ProtocolError("accepted commit history changed during verification")
+                active.add(node)
+                try:
+                    self._verify_accepted_record(ledger, history, allow_archived=archived)
+                finally:
+                    active.remove(node)
+            # Authenticate dependencies before their consumers; reject indirect
+            # cycles as well as the direct recursion caught by active above.
+            remaining = {node: len(deps) for node, deps in traversal["dependencies"].items()}
+            consumers = {node: [] for node in remaining}
+            for node, deps in traversal["dependencies"].items():
+                for dependency in deps:
+                    consumers[dependency].append(node)
+            ready = deque(node for node, count in remaining.items() if not count)
+            ordered = []
+            while ready:
+                node = ready.popleft()
+                ordered.append(node)
+                for consumer in consumers[node]:
+                    remaining[consumer] -= 1
+                    if not remaining[consumer]:
+                        ready.append(consumer)
+            if len(ordered) != len(remaining):
+                raise ProtocolError("accepted commit history contains a cycle")
+            proofs = set()
+            for node in ordered:
+                replay = traversal["replays"].get(node)
+                if replay is not None:
+                    key, arguments = replay
+                    if key not in current["verified"]:
+                        self._verify_accepted_replay(*arguments)
+                        proofs.add(key)
+            current["verified"].update(proofs)
+        except (KeyError, TypeError, ValueError, IndexError, ValidationError, CommitRejected) as exc:
+            raise ProtocolError("accepted commit record is corrupt") from exc
         finally:
-            active.remove(identity)
+            current["traversal"] = None
 
     def _verify_accepted_record(self, row, edge, *, allow_archived=False):
         from .timeline_commit import CommitRejected
@@ -357,7 +421,12 @@ class TimelineCommitStore:
                "source": source, "base": original, "continuations": {key: sorted(value) for key, value in continuations.items()}, "history": history,
                "events": [dict(event) for event in events], "realm": list(realm) if realm else None}))
         verified = self._verification.current["verified"]
-        if key not in verified:
+        traversal = self._verification.current["traversal"]
+        arguments = (row, edge, data, metadata, replay_request, prepared,
+                     original, source, continuations, history)
+        if traversal is not None:
+            traversal["replays"][traversal["current"]] = (key, arguments)
+        elif key not in verified:
             self._verify_accepted_replay(row, edge, data, metadata, replay_request, prepared,
                                          original, source, continuations, history)
             verified.add(key)
@@ -914,8 +983,11 @@ class TimelineCommitStore:
             self._verify_parent_rows(document)
 
     def _binding_continuations(self, project, timeline, base_publication, expected, *, allow_archived=False):
-        continuations, cursor = {}, expected
-        while cursor["publication_id"] != base_publication:
+        continuations, cursor, seen = {}, expected, set()
+        while cursor is not None and cursor["publication_id"] != base_publication:
+            if cursor["publication_id"] in seen:
+                reject("history_unavailable", "history ancestry contains a cycle")
+            seen.add(cursor["publication_id"])
             entry = self.history_entry(project, timeline, cursor["publication_id"], allow_archived=allow_archived)
             if entry["records"]:
                 for record in entry["records"]["commands"]:
@@ -923,8 +995,8 @@ class TimelineCommitStore:
                         if binding.get("key") == "commit.materialization":
                             continuations.setdefault(binding["physical_ref"], set()).add(binding["successor"])
             cursor = entry["previous"]
-            if cursor is None:
-                reject("history_unavailable", "base is outside evaluated head ancestry")
+        if cursor is None:
+            reject("history_unavailable", "base is outside evaluated head ancestry")
         return continuations
 
     def _inverse_stage_history(self, project, timeline, records, *, allow_archived=False):
