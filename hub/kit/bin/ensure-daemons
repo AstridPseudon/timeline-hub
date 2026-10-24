@@ -45,6 +45,7 @@ for d in $O/workers/*/; do
   w=$(basename $d); wt=$(sed -n 's/^worktree=//p' $d/meta)
   [ -n "$wt" ] || continue
   ps -eo args | grep -F -- "$wt" | grep -qv grep && continue          # a live process still uses the worktree
+  ps -eo args | grep -E -- "bin/dispatch $w( |$)" | grep -qv grep && continue   # 03:58Z LOOPS #48: its dispatch wrapper is still finishing (commit, ended marker): not dead
   [ $(( $(date +%s) - $(stat -c %Y $d/running) )) -lt 300 ] && continue  # just launched; give it time
   if [ -f $d/DONE ] || [ -f $d/BLOCKED ]; then   # worker finished (wrote DONE/BLOCKED) but its wrapper died before writing exit/ended (00:57Z app): finalize, not a death
     $O/bin/stop-worker $w "finished; wrapper ended before its exit marker (ensure-daemons)" >/dev/null 2>&1; fin="$fin $w"; continue; fi
