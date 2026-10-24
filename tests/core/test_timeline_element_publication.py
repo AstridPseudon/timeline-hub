@@ -351,7 +351,6 @@ def test_same_selected_hold_retains_raw_target_and_selection_guards(monkeypatch,
 # at that seam, with canonical_document carrying the committed closure.
 def test_d69_upstream_sameclip_exacthead_publication_preserves_closure_and_user_params(monkeypatch, configured):
     owner,bundle,ref=setup_owner(monkeypatch, configured)
-    bundle['parent']['config']['app']['elements']={}
     result=update_parent_element(owner,'project','timeline',realm='realm',clip_id='effect',element=ref,expected_head='head',duration=6,params={'chaos':.8})
     assert result.ok, result.error
     body=owner.commit.call_args.args[2]
