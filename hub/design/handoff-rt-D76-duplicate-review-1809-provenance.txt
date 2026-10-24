@@ -1,0 +1,26 @@
+review_head=
+6277434244fd30f6ac3259bd7339b17f7e4f745f
+review_parent=
+7b9e21889e2142c6b288723ff0d9eafec9c5db27
+integration_parent=
+7b9e21889e2142c6b288723ff0d9eafec9c5db27
+author_commit=
+6277434244fd30f6ac3259bd7339b17f7e4f745f
+tree=
+45768e6ff926e721759336f4ba761703ec1ef8e1
+status=
+## tl/rt-D76-duplicate-review-1809
+changed_files=
+M	tests/sdk/test_timeline_restructure.py
+numstat=
+7	18	tests/sdk/test_timeline_restructure.py
+runtime_path=
+/home/user/work/runtime
+runtime_head=
+327da207ed30880fe2ae0cd0b116722bb2c6f7a6
+agent_python=
+/usr/bin/python3.13
+schema_source=
+6b1a1f9d9d34f83f166cb145ece41677e9335b364bcda12102c919c0b69ce6ea  astrid/sdk/timeline_duplicate.py
+c51409007bde2241682c86da37254524b6b5d201b3e335ba3e81b1c1d75f900f  astrid/sdk/timeline/native_timeline_duplicate.py
+f2546e63ff50a325d2d095bffd3691d3fce1b50c0831ce3d211587008ce544cd  astrid/sdk/timeline/commit.py

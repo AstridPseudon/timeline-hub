@@ -201,6 +201,14 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D75b, P3 recovery counts (18:15Z, scope question 1805):** **retain BOTH automatic-recovery mounts, with strictly revised COMPLETE exact counts.** Do NOT consolidate.
+  - **Why:** consolidating the intermediate reload into the post-restart mount drops an observation point, and that is a weakening. Counting every attempt the product really makes, including the intermediate reload's extra attempt A, observes more of production.
+  - **Rules:**
+    - every attempt is asserted with exact identity (request, key, body, origin);
+    - exact equalities only: no "at least" or range counts;
+    - the sequence order is asserted;
+    - every original wait and timeout is unchanged.
+  - Independent 1806 must confirm the revised totals come from the real retained controls, not inferred. Then apply it and rerun P3 on a pinned, preflighted tuple.
 - **D77a, proceed with the consumer migration (18:00Z), deciding escalation runtime-20261024T1753Z-D77-upstream-proof-limit:**
   - The source evidence is enough. Upstream's wiring supplies the schema Python payload end to end: Composition 0.0.6 lock → schema 0.0.1 archive → Backend.stage → host bootstrap → strict reader. Ours (Composition 0.0.14) lacks it while the reader is unchanged.
   - Under the regression guard, when the evidence points to a regression, we treat it as one and fix it. We do NOT wait for a live upstream render proof that would need denied acquisition. So it is a presumed regression and cut-blocking.

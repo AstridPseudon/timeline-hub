@@ -1,0 +1,5 @@
+ERROR: usage: __main__.py [options] [file_or_dir] [file_or_dir] [...]
+__main__.py: error: unrecognized arguments: --timeout45
+  inifile: /home/user/work/wt/rt-D76-duplicate-review-1809/pyproject.toml
+  rootdir: /home/user/work/wt/rt-D76-duplicate-review-1809
+

@@ -1,0 +1,20 @@
+def test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chapter_r4_original(saved_source):
+    """A chapter film is read flat; duplicating must copy its stored form (a shot per chapter), not the one flat
+    shot, or the copy is stored as a single shot and every chapter reads back with the same shot id."""
+    from astrid.sdk import timeline_duplicate as td
+    from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.timeline.native_timeline_duplicate import physical_content
+
+    stored = published(split(flat_film()))
+    assert len(stored["placements"]) == 3
+    client, project, document, _ = saved_source(stored)
+    src = Checkout(flatten(bundle_from_document(document('t'))))
+    assert len(src.bundle["shots"]) == 1 and STRUCTURE_KEY in src.bundle
+    out = td._duplicate(client, project, "t", slug="dup", name=None, revision_id=None)
+    doc = physical_content(bundle_from_document(document('dup')))
+    shot_ids = [r["shot_id"] for r in doc["placements"]]
+    assert out["shots"] == 3 and len(set(shot_ids)) == 3 and set(shot_ids) == set(doc["shots"])
+    assert all(s.startswith("dup-") for s in shot_ids)
+    assert [doc["shots"][s]["payload"]["name"] for s in shot_ids] == ["01 ONE", "02 TWO", "03 THREE"]
+    assert len({r["occurrence_id"] for r in doc["placements"]}) == 3
+

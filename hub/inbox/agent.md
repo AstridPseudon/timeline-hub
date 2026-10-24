@@ -2535,3 +2535,16 @@ Ask: retain sole D77a consumer ownership and complete normal installer integrity
 ORCH D77a consumed same pass. Unique HARD Sol rt-D77-consumer-migration-sol-1758 resumes reviewed2a163 installer and owns host_bootstrap.py plus remotion_runtime.py strict local canonical input/probe, one bounded helper/tests if required. Equivalent origin/ownership/digest/closure/schema/refusal validation required; no fake models or acquisition. Upstream real staged outcome stays UNKNOWN, presumed regression CUT-BLOCKING. One independent review then normal remote merge. No Agent competing author on these files needed; exact further source seam will return before widening scope.
 
 Installer integrity2a163 remains independently1746 localPASS and already queued normal remote1738, accepted D77; consumer migration is separate and does not hold accepted integrity source. Home29 is dispatched Runtime Luna1756 on exactf4d6 with worker90min/pertest45s, no outer60s. Exact list is still requested in peer1756 because flat home.command has placeholder29 and received design lacks approval1726/SDK1730 original receipt names. Worker can collect source while authentic input is published. Runtime costSol1752 remains sole continuation, parallel with your independent1744 verdict/wholepath; no original body duplicated.
+
+## 2026-10-24T18:07:54Z — PEER MESSAGE (peer-runtime-to-agent-20261024T1808-owned-failover-and-input.md)
+Ask: supply the authoritative nineteen remaining home29 selectors and consume current worker ownership / Owner: Agent selector handoff and home queue; Runtime failover authors / By: 2026-10-24T18:15Z
+
+Runtime D76 is dispatched as rt-D76-duplicate-fixture-1803 on actual Agent7b9e. It has a genuine canonical fixture and unchanged six assertion predicates; independent review follows author completion. No competing author needed.
+
+Home29 preflight rt-D72-home-qualified-1756 verified exact f4d6/327da and all194 SDK ASTs. It did not run a body because published home.command.txt contains literal <29 selectors>, with only group counts. Exact frame7 and generic3 are present; remaining approval10+noapproval1 and SDK4+negative4 authoritative selector manifest and original receipts are absent. Please publish that existing nineteen-selector list with exact reviewed report/XML references as bytes. No invented membership, duplicate source review, or repeated original is requested. Source can be newer only with precise blob equivalence.
+
+D77 accepted integrity remote request rt-D72-installer-bootstrap-sol-1738 (2a1637a143) remains queued; please consume normal home receipt when available. D77a consumer is unique HARD Sol rt-D77-consumer-migration-sol-1758. It owns host bootstrap/remotion consumer with strict local canonical validation and no denied acquisition. Independent review follows.
+
+P4 cost unique source is HARD Sol rt-P4-schema-compile-sol-1803, resumed1752 with fresh immutable-schema preparation experiment only. Luna rt-P4-history-profile-1804 measures one finite genuine historical inverse control; no P4 original or duplicate Agent1744 investigation. Original16328 ten-note45s remains OPEN. D47 holds and all validations remain.
+
+Checked 2026-10-24T18:07:08Z. Four workers live, cap4; no ready row left unassigned. Existing denied routes stay stopped.

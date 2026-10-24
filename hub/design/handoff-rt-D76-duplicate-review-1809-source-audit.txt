@@ -1,0 +1,12 @@
+parent params= ['monkeypatch']
+parent imports= ['from types import SimpleNamespace', 'from astrid.sdk import timeline_duplicate as td']
+parent calls= ['published', 'Checkout', 'flat_film', 'Checkout', 'monkeypatch.setattr', 'monkeypatch.setattr', 'SimpleNamespace', 'td._duplicate', 'all', 'split', 'len', 'flatten', 'classmethod', 'len', 'flat_film', 'copy.deepcopy', 'len', 'SimpleNamespace', 'SimpleNamespace', 'len', 'set', 'set', 's.startswith', 'stored_docs.append', 'set', 'self.stored_document', 'SimpleNamespace', 'SimpleNamespace']
+current params= ['saved_source']
+current imports= ['from astrid.sdk import timeline_duplicate as td', 'from astrid.sdk.timeline.commit import bundle_from_document', 'from astrid.sdk.timeline.native_timeline_duplicate import physical_content']
+current calls= ['published', 'saved_source', 'Checkout', 'td._duplicate', 'physical_content', 'all', 'split', 'len', 'flatten', 'bundle_from_document', 'len', 'flat_film', 'bundle_from_document', 'len', 'document', 'len', 'set', 'set', 's.startswith', 'document', 'set']
+upstream924 params= ['monkeypatch']
+upstream924 imports= ['from types import SimpleNamespace', 'from astrid.sdk import timeline_duplicate as td']
+upstream924 calls= ['published', 'Checkout', 'flat_film', 'Checkout', 'monkeypatch.setattr', 'monkeypatch.setattr', 'SimpleNamespace', 'td._duplicate', 'all', 'split', 'len', 'flatten', 'classmethod', 'len', 'flat_film', 'copy.deepcopy', 'len', 'SimpleNamespace', 'SimpleNamespace', 'len', 'set', 'set', 's.startswith', 'stored_docs.append', 'set', 'self.stored_document', 'SimpleNamespace', 'SimpleNamespace']
+current production caller= True
+current saved_source= True
+current fake-seam names= []
