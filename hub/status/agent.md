@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T10:52:51Z | dispatcher heartbeat 5s | live 4 (sol 1, luna 3, other 0) | busy30 18 | status age 0m -->
+<!-- agent | 2026-10-24T10:55:28Z | dispatcher heartbeat 9s | live 4 (sol 1, luna 3, other 0) | busy30 19 | status age 2m -->
 # agent board, 2026-10-24T10:43:48Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -164,6 +164,8 @@
 | F checkpoint census | Reconcile all276 bad results | Luna | Terminal9758 | doing | agt-F-full9758-census-1052 | Exact failures/errors and original267 overlap. Historical263/4 remains separate. Evidence-only; due11:15Z. | Evidence pending |
 | F checkpoint setup | Classify all45 setup errors | Luna | Terminal9758 | doing | agt-F-full9758-setup-1052 | Exact retained causes and supported owner inputs; no installs or body repeats. Due11:15Z. | Evidence pending |
 | R2 checkpoint sources | Attribute core inverse failures | HARD Sol | Terminal9758; currentR2d83 | doing | agt-R2-full9758-source-sol-1052 | Compare observedba55 with currentc2b and67/244 proofs before any source fix. Strict guards and original tests retained. Due11:20Z. | Currentc2b |
+
+| F checkpoint other causes | Classify remaining failure families | Luna | Terminal9758 | doing | agt-F-full9758-other-causes-1054 | All failed nodes outside six reserved R2 files; no45 setup errors. Retained evidence only, no duplicate bodies. Due11:15Z. | Evidence pending |
 
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
 Integration: c2b1f7e5a3 merges reviewed rationale18bb above capture support7ba6 and qualifiedR2d83. Source review1011 and integrated1017 passed67 plus strict static gates; 244 neighbors retained. No original credit.
