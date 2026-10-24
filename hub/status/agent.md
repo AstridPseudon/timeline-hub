@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T09:11:54Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 0m -->
-# agent board, 2026-10-24T09:11:16Z
+<!-- agent | 2026-10-24T09:14:19Z | dispatcher heartbeat 8s | live 2 (sol 0, luna 2, other 0) | busy30 14 | status age 1m -->
+# agent board, 2026-10-24T09:13:16Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -136,8 +136,8 @@
 | U2 duck acceptance | Qualify the original managed music workflow | Luna | Exact G4 installed child | blocked:runtime | Home 0832; result review 0840 | Product source has 20 passes. Original 17 assertions unchanged; managed body remains held. | 0ff3d103fb |
 
 | U2 duck staged row | Prepare exact managed source guards | Luna | Genuine child/profile/Store receipt | blocked:runtime | Author0856; review0857 PASS | Snapshot,parent,tree,source and Runtime guards qualified. Row explicitly HOLD until genuine installed inputs bind. | Staged evidence only |
-| F ABA lost-ack path | Trace new transport boundary | Sol / Luna | Runtime next source owner | blocked:runtime | Agent0855; Viewing source0906 | Six offline transport controls17PASS; no Agent production change. Runtime execution.py101 replay boundary handed to owner. | Controls review0906 |
-| F Farm giant regression | Attribute315 lines and verify smallest repair | Luna / Luna | Complete causal delta | review | Source0904 PASS; cause return0909 | Current repair independently qualifies. First history summary accounts284 of315 lines; finite31-line remainder is being resolved. Due09:20. | Existing8c5ae21/a8f4 |
+| F ABA lost-ack path | Preserve exact undo flight on transport errors | Sol / Luna | Integrated targeted proof | merging | Viewing0859; independent0906 PASS17 | Own-only80-line test commit queued. Distinct timeout and connection loss,30-second budget and immutable replay retained; no original repair claim. | f966c9ea6a |
+| F Farm giant regression | Attribute315 lines and verify smallest repair | Luna / Luna | Final causal delta review | review | Source0904 PASS; cause0909; review0914 | Missing31 lines are inherited before D40;284 D40 plus31 equals315. Exact delta check active; current repair already qualifies. | Existing8c5ae21/a8f4 |
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
 Integration: Actual67d5f19716 contains exact reviewed two runners; integrated0856 PASS static and all15 mappings. Source0ff3 independently20PASS; earlier0c2 joined123 retains its scope. Original20732 failed lost-ack code.
 Count: Owner-requested working figure263 closed /5 open while Farm giant challenge is checked. Original267-node census remains263/4,123 mappings,e13d65ba; no artifact was changed. One additional Farm row is held open pending exact prior-repair equivalence review.
