@@ -398,14 +398,44 @@ function assertReads(reads: CommitRead[]): void {
   }
 }
 
+function authoritativePublicationId(post: CommitPost, result: CommitAcceptedMutation): string {
+  expect(result.receipt.idempotency_key).toBe(post.key);
+  expect(result.receipt.receipt_id).toEqual(expect.stringMatching(/^txn-\S+$/));
+  expect(result.receipt.receipt_id).not.toBe(post.key);
+  return result.receipt.receipt_id;
+}
+
+function assertAuthoritativeHistoryPublication(entry: HistoryEntry, result: CommitAcceptedMutation): void {
+  expect(entry.publication_id).toBe(result.receipt.receipt_id);
+}
+
+function assertAuthoritativeHead(head: HeadPin, result: CommitAcceptedMutation): void {
+  expect(head).toEqual({
+    revision_id: result.data.accepted_revision_id,
+    publication_id: result.receipt.receipt_id,
+  });
+}
+
+function assertInverseTargetsPublication(inverse: CommitPost, publicationId: string): void {
+  expect(inverse.body.commands).toEqual([{
+    schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
+    args: { publications: [publicationId] },
+  }]);
+}
+
+function assertUndoHistoryPublication(entry: HistoryEntry, publicationId: string): void {
+  expect(entry.records?.undo_of).toEqual([publicationId]);
+}
+
 function accepted(post: CommitPost, before: HeadPin): CommitAcceptedMutation {
   expect(post.response.status(), JSON.stringify(post.json)).toBe(200);
   const result = post.json as CommitAcceptedMutation;
   expect(Object.keys(object(result, 'commit envelope')).sort()).toEqual(['data', 'receipt']);
-  expect(result.receipt).toMatchObject({ receipt_id: post.key, idempotency_key: post.key,
+  expect(result.receipt).toMatchObject({ receipt_id: expect.stringMatching(/^txn-\S+$/), idempotency_key: post.key,
     command_kind: 'timeline.commit', project_id: post.body.project_id,
     request_hash: expect.any(String), project_seq: [expect.any(Number), expect.any(Number)],
     event_ids: expect.any(Array), created_at: expect.any(String), result: result.data });
+  expect(result.receipt.receipt_id).not.toBe(post.key);
   expect(result.data).toMatchObject({ status: 'accepted', base_revision_id: before.revision_id,
     base_publication_id: before.publication_id, previous_revision_id: before.revision_id,
     previous_publication_id: before.publication_id, accepted_revision_id: expect.any(String), rebased_onto: null,
@@ -611,9 +641,12 @@ function assertHistory(
   before: CanonicalDocument, after: CanonicalDocument, inputs: CanonicalDocument[], seed: PopupSeed, undoOf: string[],
 ): void {
   const data = result.data;
-  expect(entry).toMatchObject({ publication_id: post.key, revision_id: data.accepted_revision_id,
+  authoritativePublicationId(post, result);
+  assertAuthoritativeHistoryPublication(entry, result);
+  expect(entry.receipt).toEqual(result.receipt);
+  expect(entry).toMatchObject({ revision_id: data.accepted_revision_id,
     previous: { revision_id: data.previous_revision_id, publication_id: data.previous_publication_id },
-    receipt: result.receipt, intent: 'recorded', provider_version: data.provider_version,
+    intent: 'recorded', provider_version: data.provider_version,
     compiler_version: data.compiler_version, merge: post.body.merge, merge_mode: data.merge_mode,
     publisher: data.publisher, source: post.body.source, label: post.body.label, steps: data.steps,
     records: { schema_version: 1, label: data.label, merge_mode: data.merge_mode,
@@ -737,12 +770,13 @@ async function assertReloadUndo(
   page: Page, harness: DirectHarness, seed: PopupSeed, wire: PopupWire, before: HistoryPage,
   original: CanonicalDocument, post: CommitPost, result: CommitAcceptedMutation, expected: CanonicalDocument,
 ): Promise<void> {
+  const publicationId = authoritativePublicationId(post, result);
   const committed = await history(harness, seed);
   expect(committed.items.filter((candidate) => !before.items.some((known) => known.publication_id === candidate.publication_id))
-    .map((entry) => entry.publication_id)).toEqual([post.key]);
-  const entry = committed.items.find((candidate) => candidate.publication_id === post.key)!;
+    .map((entry) => entry.publication_id)).toEqual([publicationId]);
+  const entry = committed.items.find((candidate) => candidate.publication_id === publicationId)!;
   assertHistory(entry, post, result, original, expected, [original, expectedPopupDocument(original, seed, post, true)], seed, []);
-  expect(committed.head).toEqual(pinOf(result));
+  assertAuthoritativeHead(committed.head, result);
   assertOnlyCommits(wire, [post]);
   expect(await canonicalAt(harness, seed, committed.head.revision_id)).toEqual(expected);
   await page.reload();
@@ -774,18 +808,19 @@ async function assertReloadUndo(
     await page.getByRole('button', { name: 'Undo', exact: true }).click();
   });
   assertFullRequest(inverse, pinOf(result), seed, harness);
-  expect(inverse.body.commands).toEqual([{ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [post.key] } }]);
+  assertInverseTargetsPublication(inverse, publicationId);
   const inverseResult = accepted(inverse, pinOf(result));
   expect(inverseResult.data.canonical_document).toEqual(original);
   const finalHistory = await history(harness, seed);
-  const inverseEntry = finalHistory.items.find((candidate) => candidate.publication_id === inverse.key)!;
-  assertHistory(inverseEntry, inverse, inverseResult, expected, original, [expected], seed, [post.key]);
+  const inverseEntry = finalHistory.items.find((candidate) => candidate.publication_id === inverseResult.receipt.receipt_id)!;
+  assertHistory(inverseEntry, inverse, inverseResult, expected, original, [expected], seed, [publicationId]);
+  assertUndoHistoryPublication(inverseEntry, publicationId);
   const queries = [...new Map(entry.records!.commands.flatMap((record) => record.selections)
     .map((selection) => [`${selection.key}:${selection.owner}`, expectedSelection(expected, selection.key, selection.owner)])).values()];
   const byQuery = (a: AgentSelection, b: AgentSelection) => `${a.key}:${a.owner}`.localeCompare(`${b.key}:${b.owner}`);
   expect([...inverseEntry.records!.commands[0].selections].sort(byQuery)).toEqual(queries.sort(byQuery));
-  expect(finalHistory.items.find((candidate) => candidate.publication_id === post.key)).toEqual(entry);
-  expect(finalHistory.head).toEqual(pinOf(inverseResult));
+  expect(finalHistory.items.find((candidate) => candidate.publication_id === publicationId)).toEqual(entry);
+  assertAuthoritativeHead(finalHistory.head, inverseResult);
   expect(await canonicalAt(harness, seed, finalHistory.head.revision_id)).toEqual(original);
   expect(finalHistory.items.filter((candidate) => !before.items.some((known) => known.publication_id === candidate.publication_id))).toHaveLength(2);
   assertOnlyCommits(wire, [post, inverse]);
