@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T11:28:54Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 33 | status age 3m -->
-# agent board, 2026-10-24T11:25:31Z
+<!-- agent | 2026-10-24T11:31:31Z | dispatcher heartbeat 13s | live 3 (sol 0, luna 3, other 0) | busy30 36 | status age 0m -->
+# agent board, 2026-10-24T11:31:10Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -223,3 +223,11 @@ Pass 11:18Z: D51/D52 consumed. Freeze stays on current snapshot; no upstream cha
 Pass 11:24Z: Step8056 independentlyPASS35 -> normalmerge b4c1 -> actual-head1124 qualification. Native-order Sol0eab enters independent1122; three unrelated public cached-input tests get precise fixture1122. Captured nested668b enters independent1124 after46PASS and unchangedoriginal. M1 firstreturn1122 uses review-proven production materialization, no newops. Corrected171 evidence independently1118PASS; D52all276 classifier remains unique. Actual profile installed18de, independentinstalled1124 active. No body/full or child admission released.
 
 Pass 11:26Z: Actual home b4c1 passes35stepundo controls, exact reviewedblob and unchanged23bodies; integratedXMLtemporary scope disclosed. Actualinstalledprofilereview1124 PASS verifies registry18de/row0bdf/outside172/UTCbackup. Redoreviewer1118 violatedread-onlyscope and changedhelper afteractual2PASS4FAIL; no PASS accepted, no donor merge. Exactcorrection saved; current-onlyporter1126 must runactualsix then independentreview. No full retry or child requested.
+
+| F D52 package | Qualify all 276 category records | Luna | Initial classifier complete | doing | Initial 1118; packaging return 1132 | Provisional 230 ours-live, 45 env, 1 D23 deferred, 0 qualified dead-scope/pre-existing. Missing caller proof remains explicit; CSV and independent review next. | Evidence only |
+| F D52 shot-set | Preserve 17 live shot-set scenarios | Runtime Luna | Current caller and faithful fixture | blocked:runtime | Runtime failover assignment 1132 | One exact test file; source and fixture classification first, all original predicates strict. Peer1132 names exclusive scope; no code deletion inferred. | No code yet |
+| F D52 occurrence-delete | Preserve 19 live delete scenarios | Runtime Luna | Current caller and faithful fixture | blocked:runtime | Runtime failover assignment 1132 | Two exact test files; reload, inverse, redo, order and metadata retained. Peer1132 requests unique author/review; no product authority waiver. | No code yet |
+| F open commit fixture | Preserve 19 public session scenarios | Luna | Faithful current provider collaborators | doing | agt-F-open-commit-fixtures-1132 | Two setup/helper files only; valid source pairs and accepted records required. No fake writer or guessed materialization. | Current integration |
+| F M2 media fixtures | Preserve 17 placement and pool scenarios | Luna | Authentic materialization path | doing | agt-F-M2-media-fixtures-1132 | Five disjoint fixture files. Caller and precise cause first; intact provider records and original ASTs preserved. No product/schema changes. | Current integration |
+
+Pass 11:32Z: D52 initial all276 categories provisional230ours-live/45env/1D23/zeroqualifieddead orpreexisting; no deletioncensusclaim. Packaging1132 and independentnext. Runtimeofferedfailover receives exclusive17shotset and19occurrencedelete asks. Local19opensession and17M2fixture groups dispatchednow. Source668b independentlyPASS46+11 -> normalhomequeue; nativeorder0eab independentlyPASS147+8 -> home6606. No newfull,childorupstreamchase.
