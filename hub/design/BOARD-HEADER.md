@@ -32,6 +32,7 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - Agent D32: an estimated ~80 of 267 still open, and Agent is now co-long-pole with P2.
   - 46 merges in 3 h.
   - **ETA ~14:00Z 25 Oct (06:00Z 25 Oct to 06:00Z 26 Oct).**
+- **05:13Z: READINESS SOLVED for P2 and P3** (D45 pair on App c0fe889944 + Agent 079 + Runtime 37eb, no memo). P3 4065 passes readiness in 16.7 s; the original Gate-5 ran and then FAILED (its reset expects a 5-second state the fresh fixture lacks; Proof owns the setup correction, no weakening). P2 13583: element, popup ADD and parent move still FAIL, 5 NOT RUN (Sol 0459 + independent).
 - **H3 go/no-go (P1, 00:40Z): NO-GO (partial).**
   - **PASS:** the R1 real corpus (42 tests on e6f7167d), plus the App provenance and local-save module tests.
   - **NOT proven:** the integrated App chain. Blockers: A2 is not wired into the mounted save path; the v2 DTOs are absent (R0); the rm-f holds (root cause fixed 00:50Z).
