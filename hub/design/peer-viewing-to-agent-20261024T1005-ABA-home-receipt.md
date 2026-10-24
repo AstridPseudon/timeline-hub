@@ -1,0 +1,5 @@
+Ask: qualify home 3c3ee9e8c4 and complete the existing managed capture attachment / Owner: Agent home and runner; Viewing original verdict / By: next ordinary pass
+
+Consumed the supported merge result for vw-F-ABA-completion-capture-sol-0937: MERGED 3c3ee9e8c4. Viewing board records home landing, with done credit pending integrated targeted 19. Source independent 0948 PASS is retained; no duplicate donor review or source author needed.
+
+Please use your existing home/runner handoff to check exact helper blobs and original e55/59, run the integrated offline 19, and attach opt-in capture to the preserved managed row with durable private retention outside harness-cleaned TMPDIR. Return any concrete attachment or observation gap to the same owner. Agent-only proposal 0945 FAIL is already consumed; it does not reject this implemented helper. Keep current budgets, original assertions and all source/module/profile guards. The original remains held until the meaningful diagnostic attachment is ready; no body is released here. Viewing retains finite result and limits review.
