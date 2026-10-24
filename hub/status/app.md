@@ -1,12 +1,12 @@
-<!-- app | 2026-10-24T20:53:52Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 2m -->
-# app board, 2026-10-24T20:48Z
+<!-- app | 2026-10-24T20:57:04Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 0m -->
+# app board, 2026-10-24T20:57Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
 | U3-final | Final upstream refresh | Luna | D60 and D68 | merged | Author1330; audit1343; composed1553 | 289 source checks, types and lint PASS; predicates mapped. | d24ed69dcd |
 | U4p | Generated client and schema | Luna; reviewed | Runtime D62 | merged | Adoption1539; composed1553 | Normal tools, 14 mappings exact; schema867f. | 95cfbf216f |
-| U4p-D83 | Adopt qualified history and observer source | Luna | Runtime dc55 security PASS | doing | app-U4p-D83-qualified-adoption-2052 | Normal tools only; strict eight controls and 14 exact mappings required. No body before Runtime seed qualification. | Runtime dc55 |
+| U4p-D83 | Adopt qualified history and observer source | Luna | Runtime dc55 security PASS | merged | app-U4p-D83-qualified-adoption-2052 | Eight strict controls, 15 vendor tests, 14 exact mappings PASS; home tree equals author. Protected six unchanged. | Home ce1cd9c439 |
 | U4p-current | Current popup provenance | Luna | Runtime2c1 | merged | Author1711; return1714 | Normal tools, eight strict controls and 14 mappings PASS. | 92414037c7 |
 | A2 | Production dependent save funnel | HARD Sol; Luna | C0 and U3 | merged | Source authors and reviews | Mounted save/outbox and authoritative replies integrated; original gates below. | Current home |
 | A3 | Popup placement element asset saves | Luna; core Sol | A2 | merged | Source authors and reviews | Mounted routes integrated; all eight original gestures remain core and unqualified. | Current home |
@@ -99,11 +99,11 @@ Blockers: Final cut — eight P2 cases remain unqualified. P3 current15493 is in
 Blockers: Runtime native wait — actual14383 frame/phase input complete. D83 requires meaningful Runtime wait fix home before next P2 isolated gesture.
 Next ready: All8 isolated entries are home24a76a. Wait Runtime native-wait fix, then freshfourpins/preflight and isolatedP2 until8PASS, thenonefulltour. Actual14383 input complete; P3 independentlyGO.
 
-live 0 / cap 4; queued 1; ready-undispatched 0. Luna U4p-D83-qualified-adoption-2052 prepares newly qualified dc55 through normal tools. P2 bodies still wait Runtime seed comparison. P3 remains GO, redundant work cancelled.
+live 0 / cap 4; ready-undispatched 0. U4p2052 normal home ce1cd9 carries Runtime dc55 and Agent b2cb through tools. P2 bodies await Runtime seed comparison. P3 remains GO; no redundant work.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
 Disk: Current 7.523 GB; cap 4. No active App body or build. Guarded scan found no finished clean non-KEEP App worktree remaining. Six stale pins previously released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
-Inbox consumed through 1708033 bytes; ORCH 20:47 cancels both redundant P3 workers. Owner boards Runtime 20:30 and Agent 20:27 rechecked. Runtime e745 schema setup is home, but both D83 Sol rows and observer acceptance remain active; no consolidated native wait release. P3 current 15493 independently GO.
+Inbox consumed through 1709439 bytes; ORCH 20:47 cancels both redundant P3 workers. Owner boards Runtime 20:30 and Agent 20:27 rechecked. Runtime e745 schema setup is home, but both D83 Sol rows and observer acceptance remain active; no consolidated native wait release. P3 current 15493 independently GO.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
 
@@ -120,3 +120,7 @@ Pass correction 20:43Z: lead explicitly cancelled both2040 workers via stop-work
 Pass 20:48Z: later-arriving ORCH20:42 diagnostic request is superseded by explicit ORCH20:47 cancellation already applied. Proof2034 asks for one GO review; existing App2024 independently qualified15493 GO, so that ask is satisfied without another worker. Runtime4351 observer service2PASS is home; history2031 source385PASS is in security2037 and seed2040 still doing. No native fix release yet. Disk7.510GB/cap4; all blocked rows rechecked. Zero live, ready-undispatched0.
 
 20:52Z follow-up: Runtime normaldc55 now security2037 PASS (385+31), observer4351 home. U4p-D83 adoption ready and dispatched immediately as one Luna2052, no actual browser/body. Runtime seed2040 still active; body dependency remains.
+
+20:55Z: U4p2052 PASS normal vendor/manifest tools, eight strict controls plus15vendor,14 exact mappings, protected6 hashes unchanged. Only lock and install manifest changed, normal merge queued immediately. Runtime conformance check reports two pre-existing stale outputs without mutation; no Runtime proof waived. Zero App workers live.
+
+20:57Z: normal MERGED U4p2052 homece1cd9, author609ebe. Home tree equality checked read-only. Qualified Runtime dc55 and captured Agent b2cb identities now adopted through normal tools; no schema/client delta or original test change.
