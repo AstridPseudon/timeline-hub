@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import json
 import os
+import re
 import shlex
 import stat
 import subprocess
@@ -232,7 +233,7 @@ from pathlib import Path
 class Store:
     def __init__(self, root, tests):
         self.root, self.tests = Path(root), Path(tests)
-    def ensure(self, component, identity, registration, build, verify, seal=None):
+    def ensure(self, component, identity, registration, build, verify, seal=None, failure_name=None):
         context = os.environ['STORE_CONTEXT']
         assert 'DEPENDENCY_SEED=' in context
         assert 'CLIENT_IDENTITY=' in context and 'RUNTIME_SHA=' in context
@@ -371,7 +372,9 @@ def write_record(site: Path, metadata: str, files: dict[str, bytes]) -> None:
         writer.writerow([metadata + "/RECORD", "", ""])
 
 
-def retained_fixture(tmp_path: Path, *, managed: bool, provenance: str = "valid"):
+def retained_fixture(
+    tmp_path: Path, *, managed: bool, provenance: str = "valid", make_existing: bool = True
+):
     """Tiny installed/source fixture; no pip, venv or production Store mutation."""
     import shutil
 
@@ -464,9 +467,9 @@ def retained_fixture(tmp_path: Path, *, managed: bool, provenance: str = "valid"
         for item in [path, *path.rglob("*")]:
             item.chmod(item.stat().st_mode & ~0o222)
 
-    if store is not None:
+    if store is not None and make_existing:
         store.ensure("child", identity, {"name": "fixture", "env": "", "suite": "", "requires": []}, build, lambda path: None, seal=seal)
-    else:
+    elif store is None:
         final.mkdir()
         build(final, final)
         seal(final)
@@ -532,6 +535,91 @@ def test_real_maker_keeps_unseeded_store_compatibility(tmp_path: Path) -> None:
     retain_caller_evidence("unseeded-store-reuse", result)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "reused child venv path=" in result.stdout
+
+
+def test_real_maker_failure_evidence_survives_store_rollback(tmp_path: Path) -> None:
+    env, args, _ = retained_fixture(tmp_path, managed=True, provenance="missing", make_existing=False)
+    failing_python = tmp_path / "failing-python"
+    failing_python.write_text(
+        """#!/usr/bin/env bash
+set -u
+case " $* " in
+  *" -m venv --help "*) exit 0;;
+  *" -m venv --copies "*) T="${@: -1}"; mkdir -p "$T/bin"; cp "$0" "$T/bin/python"; chmod +x "$T/bin/python"; exit 0;;
+  *" -m pip install "*) printf '%s\\n' 'ERROR https://user:secret@example.invalid/simple?token=do-not-retain' 'Authorization: Bearer do-not-retain' >&2; exit 23;;
+  *) exit 0;;
+esac
+"""
+    )
+    failing_python.chmod(0o755)
+    env["CHILD_VENV_PYTHON"] = str(failing_python)
+    result = subprocess.run([str(MAKER), *args], env=env, text=True, capture_output=True, check=False)
+    retain_caller_evidence("stage-failure-rollback", result)
+    assert result.returncode == 2
+    assert "secret@example.invalid" not in result.stderr
+    assert "do-not-retain" not in result.stderr
+
+    failure_dir = Path(env["CHILD_VENV_ORCH_ROOT"]) / "tests/provision-failures"
+    record = failure_dir / (args[0] + ".txt")
+    assert record.is_file() and not record.is_symlink()
+    assert stat.S_IMODE(failure_dir.stat().st_mode) == 0o700
+    assert stat.S_IMODE(record.stat().st_mode) == 0o600
+    evidence = record.read_text()
+    assert evidence.startswith(
+        "status=failed\n"
+        "stage=bootstrap-pip\n"
+        "rc=23\n"
+    )
+    assert re.search(r"^elapsed_seconds=[0-9]+$", evidence, re.MULTILINE)
+    assert f"agent_sha={args[1]}\n" in evidence
+    assert f"runtime_sha={args[5]}\n" in evidence
+    assert "requirements_path=requirements/proof.lock\n" in evidence
+    assert f"lock_sha256={hashlib.sha256((Path(args[3]) / 'requirements/proof.lock').read_bytes()).hexdigest()}\n" in evidence
+    assert evidence.endswith("diagnostic=stage-command-failed\n")
+    assert "secret@example.invalid" not in evidence
+    assert "do-not-retain" not in evidence
+    store_root = Path(env["CHILD_VENV_WORK_ROOT"]) / "bench-store"
+    assert json.loads((store_root / "index.json").read_text())["entries"] == {}
+    assert not (store_root / "pending.json").exists()
+    assert list((store_root / "staging").iterdir()) == []
+
+
+@pytest.mark.parametrize("case", ["oversize", "path", "symlink", "mode", "raw"])
+def test_store_failure_evidence_rejects_unsafe_records(tmp_path: Path, case: str) -> None:
+    env, _, _ = retained_fixture(tmp_path, managed=True, provenance="missing", make_existing=False)
+    store_module = load_helper("failure_store", CANDIDATE / "bench_store.py")
+    store = store_module.Store(
+        Path(env["CHILD_VENV_WORK_ROOT"]) / "bench-store",
+        Path(env["CHILD_VENV_ORCH_ROOT"]) / "tests",
+    )
+    valid = (
+        "status=failed\nstage=bootstrap-pip\nrc=23\nelapsed_seconds=0\n"
+        + "agent_sha=" + "a" * 40 + "\nruntime_sha=" + "b" * 40
+        + "\nrequirements_path=requirements/proof.lock\nlock_sha256=" + "c" * 64
+        + "\ndiagnostic=stage-command-failed\n"
+    )
+    if case == "oversize":
+        with pytest.raises(store_module.Refused, match="failure evidence size"):
+            store._record_failure("safe-name", "x" * (store.FAILURE_LIMIT + 1))
+    elif case == "path":
+        with pytest.raises(store_module.Refused, match="registration name required"):
+            store._record_failure("../escape", valid)
+    elif case == "symlink":
+        folder = store.tests / "provision-failures"
+        outside = tmp_path / "outside"
+        outside.mkdir()
+        folder.symlink_to(outside, target_is_directory=True)
+        with pytest.raises(store_module.Refused, match="unsafe failure directory"):
+            store._record_failure("safe-name", valid)
+    elif case == "mode":
+        folder = store.tests / "provision-failures"
+        folder.mkdir(mode=0o700)
+        folder.chmod(0o755)
+        with pytest.raises(store_module.Refused, match="unsafe failure directory"):
+            store._record_failure("safe-name", valid)
+    else:
+        with pytest.raises(store_module.Refused, match="failure evidence schema"):
+            store._record_failure("safe-name", "environment=TOKEN=do-not-retain\n")
 
 
 @pytest.mark.parametrize("changed", ["agent", "runtime", "client"])

@@ -8,12 +8,12 @@
     "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py": "6d9368207947aa316e1ed6486c5fa7ef843a84f50163114bb958011b538712a8"
   },
   "candidate_sha256": {
-    "candidate/bench_store.py": "6d9368207947aa316e1ed6486c5fa7ef843a84f50163114bb958011b538712a8",
+    "candidate/bench_store.py": "ba31adcf5dfbad179dfe08b048c48052cee2083026ec62790659c8cdbbc903bd",
     "candidate/make-child-venv.baseline": "c887a1bef4831f2ca5a43372ee28430000b2f20b9d290bffb237f27ffc404ff2",
-    "candidate/make-child-venv": "34f32c687007611c0eb9e7e5cac84d36bf26356caca0d2a11d445a41059a31d2",
+    "candidate/make-child-venv": "6b3e34f9d8abecb7dd0a62f448e8863a76271d273815e1ec82e6c25f94665dbd",
     "candidate/request-child-venv": "08f1b00a716456ba328ff42ee96f3df60d0dfa5470b36eeafb5d299b3df22fde",
     "candidate/verify_dependency_seed.py": "8f95cdaee258b87dde8e859e99fb955e9cde91dfeec9e7191f4837a5ced6714f",
-    "tests/test_dependency_reuse.py": "2ffd7850586184c444b7d6ee5cb72c1caaac4c234bf761ccb2ba64eac29c1b75",
-    "README.md": "ef1dfef1fc449479b17d419116ccb13040f61ba452232c316235661724d1faa6"
+    "tests/test_dependency_reuse.py": "e582b9dfd17460a9a047afa92d865159e01d40b0fa8f91b5f269dccc2b83f2cb",
+    "README.md": "09feab2bef22de6d06dc5733e362509476586d7d86c30114ea096453f4a893a3"
   }
 }

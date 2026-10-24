@@ -38,3 +38,15 @@ verify_dependency_seed.py
 Configure the private environment input only after the wheelhouse itself has been independently authenticated. The deployed helper is accepted only when it is the nonsymlink file with the manifest-pinned bytes; a helper found in the wheelhouse is never used. Do not claim a seed is authenticated from an existing child `RECORD`; retained original wheel bytes and their lock hashes are required. This packet makes no AgentREADY or actual-cache qualification claim; an independently authenticated same-lock wheelhouse is still required.
 
 The existing exact Store child identity remains `(agent_sha, backend_sha, client_tuple)`, with its lease, ownership, path and transaction guards. This packet does not alter those guards or registration semantics.
+
+## Bounded failure observability
+
+The normal maker now carries a finite failure marker from its existing `build(stage, final)` boundary before Store rollback removes the staging directory. Stage subprocess output is discarded at that boundary; it is never copied into a receipt. The retained record is written only after a successful rollback at:
+
+```text
+$CHILD_VENV_ORCH_ROOT/tests/provision-failures/<child-name>.txt
+```
+
+It contains only the validated `status`, stage, return code, elapsed seconds, exact Agent/Runtime identities, the committed lock path and digest, and the fixed diagnostic `stage-command-failed`. The record and its directory are physical, owner-owned, finite-size, private-mode files. Unsafe, oversized, malformed, symlinked or path-escaping records refuse. A failed build still returns refusal, leaves no Store entry or pending journal, and does not change the successful source/provenance path.
+
+The supported normal artifact input remains the existing opt-in contract: set `CHILD_VENV_DEPENDENCY_WHEELHOUSE` to an independently authenticated absolute physical wheelhouse containing the exact compatible `requirements/proof.lock` artifacts, then invoke `request-child-venv` with the existing source carrier. This packet does not acquire, probe or qualify that wheelhouse.

@@ -97,12 +97,14 @@ fi
 failure() {
   rc=$1
   stage=$2
+  elapsed_seconds=$((SECONDS - STAGE_STARTED))
   if [ -d "$T" ]; then
-    printf 'status=failed\nstage=%s\nrc=%s\nagent_sha=%s\nruntime_sha=%s\npartial=%s\nsource=%s\n' \
-      "$stage" "$rc" "$S" "${RUNTIME_SHA:-unknown}" "$T" "$SRC" > "$T/.provision-failure"
+    printf 'status=failed\nstage=%s\nrc=%s\nelapsed_seconds=%s\nagent_sha=%s\nruntime_sha=%s\nrequirements_path=%s\nlock_sha256=%s\ndiagnostic=stage-command-failed\n' \
+      "$stage" "$rc" "$elapsed_seconds" "$S" "${RUNTIME_SHA:-unknown}" "$REQUIREMENTS_PATH" "$LOCK_SHA" > "$T/.provision-failure"
+    chmod 600 "$T/.provision-failure"
   fi
-  printf '%s child-venv FAILED stage=%s rc=%s name=%s agent=%s runtime=%s partial=%s source=%s\n' \
-    "$(date -u +%FT%TZ)" "$stage" "$rc" "$N" "$S" "${RUNTIME_SHA:-unknown}" "$T" "$SRC" >&2
+  printf '%s child-venv FAILED stage=%s rc=%s name=%s agent=%s runtime=%s elapsed_seconds=%s\n' \
+    "$(date -u +%FT%TZ)" "$stage" "$rc" "$N" "$S" "${RUNTIME_SHA:-unknown}" "$elapsed_seconds" >&2
   exit "$rc"
 }
 
@@ -111,10 +113,13 @@ run_stage() {
   budget=$2
   shift 2
   CURRENT_STAGE=$stage
+  STAGE_STARTED=$SECONDS
   progress "stage=$stage start budget=${budget}s"
   # Do not use foreground mode: it deliberately leaves descendants outside the
   # timeout's process-group termination and can wedge the inline dispatcher.
-  CHILD_VENV_STAGE=$stage "$TIMEOUT_BIN" --kill-after="$KILL_AFTER_SECONDS" "$budget" "$@"
+  # Stage output can contain credentials or index URLs.  The permanent
+  # failure marker records only the allowlisted fields above.
+  CHILD_VENV_STAGE=$stage "$TIMEOUT_BIN" --kill-after="$KILL_AFTER_SECONDS" "$budget" "$@" >/dev/null 2>&1
   rc=$?
   if [ "$rc" -ne 0 ]; then
     failure "$rc" "$stage"
@@ -188,7 +193,7 @@ STORE_HELPER=$O/bin/bench_store.py
 [ -f "$STORE_HELPER" ] && [ ! -L "$STORE_HELPER" ] || { echo 'REFUSED: bench store helper unavailable' >&2; exit 2; }
 export STORE_CONTEXT="$(declare -p O A R W PYTHON TIMEOUT_BIN PIP_TIMEOUT_SECONDS LOCAL_TIMEOUT_SECONDS FREEZE_TIMEOUT_SECONDS BUILD_TIMEOUT_SECONDS KILL_AFTER_SECONDS PIP_NETWORK_TIMEOUT_SECONDS PIP_RETRIES REQUIREMENTS_PATH N S BS RT RUNTIME_SHA CLIENT_IDENTITY LOCK_SHA DEPENDENCY_SEED SCRIPT_DIR; declare -f failure run_stage progress source_state)"
 python3 -I - "$0" "$STORE_HELPER" "$W/bench-store" "$O/tests" "$N" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$A" "$R" "$W" "$PYTHON" "$BS" "$RT" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$DEPENDENCY_SEED" <<'STORE_PY'
-import hashlib, importlib.util, os, pathlib, shlex, subprocess, sys
+import hashlib, importlib.util, os, pathlib, re, shlex, stat, subprocess, sys
 script, helper, root, tests, name, agent, backend, client, checkout, runtime_checkout, work, python, base_suite, remotion, requirements, lock, dependency_seed = sys.argv[1:]
 sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location('bench_store', helper)
@@ -235,10 +240,61 @@ def success_receipt(entry, report):
 identity = {'agent_sha': agent, 'backend_sha': backend,
             'client_tuple': dict(line.split('=', 1) for line in client.splitlines())}
 def build(stage, final):
+    build.failure_evidence = None
+    build.failure_recorded = False
     setup = 'T=$1; D=$2; RUN_ID=store; SRC=$T/.child-venv-source-$N; REPORT_DIR=$T; REPORT_TMP=$T/.provision-report; F=$REPORT_TMP; mkdir -p "$SRC"\n'
-    subprocess.run(['timeout', '--kill-after=30', os.environ.get('CHILD_VENV_BUILD_TIMEOUT_SECONDS', '3600'),
-                    'bash', '-u', '-o', 'pipefail', '-c', context + '\n' + setup + body,
-                    'store-child', str(stage), str(final)], check=True)
+    try:
+        subprocess.run(['timeout', '--kill-after=30', os.environ.get('CHILD_VENV_BUILD_TIMEOUT_SECONDS', '3600'),
+                        'bash', '-u', '-o', 'pipefail', '-c', context + '\n' + setup + body,
+                        'store-child', str(stage), str(final)], check=True)
+    except subprocess.CalledProcessError:
+        marker = stage / '.provision-failure'
+        fd = os.open(marker, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        try:
+            info = os.fstat(fd)
+            if not (stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid()
+                    and info.st_nlink == 1 and info.st_size <= 8192
+                    and not info.st_mode & 0o077):
+                raise RuntimeError('unsafe child failure marker')
+            raw = os.read(fd, 8193)
+        finally:
+            os.close(fd)
+        if len(raw) > 8192:
+            raise RuntimeError('child failure marker exceeds size limit')
+        try:
+            lines = raw.decode('utf-8').splitlines()
+        except UnicodeDecodeError as error:
+            raise RuntimeError('child failure marker is not UTF-8') from error
+        allowed = {
+            'status', 'stage', 'rc', 'elapsed_seconds', 'agent_sha', 'runtime_sha',
+            'requirements_path', 'lock_sha256', 'diagnostic',
+        }
+        values = {}
+        for line in lines:
+            key, separator, value = line.partition('=')
+            if not separator or key in values or key not in allowed:
+                raise RuntimeError('child failure marker schema')
+            values[key] = value
+        if set(values) != allowed or values['status'] != 'failed':
+            raise RuntimeError('child failure marker fields')
+        if not re.fullmatch('[a-z0-9-]{1,64}', values['stage']):
+            raise RuntimeError('child failure marker stage')
+        if not re.fullmatch('[0-9]{1,5}', values['rc']):
+            raise RuntimeError('child failure marker return code')
+        if not re.fullmatch('[0-9]{1,6}', values['elapsed_seconds']):
+            raise RuntimeError('child failure marker timing')
+        if not re.fullmatch('[0-9a-f]{40}', values['agent_sha']):
+            raise RuntimeError('child failure marker Agent identity')
+        if not re.fullmatch('[0-9a-f]{40}', values['runtime_sha']):
+            raise RuntimeError('child failure marker Runtime identity')
+        if values['requirements_path'] != requirements or not re.fullmatch('[0-9a-f]{64}', values['lock_sha256']):
+            raise RuntimeError('child failure marker lock identity')
+        if values['diagnostic'] != 'stage-command-failed':
+            raise RuntimeError('child failure marker diagnostic')
+        build.failure_evidence = '\n'.join(f'{key}={values[key]}' for key in (
+            'status', 'stage', 'rc', 'elapsed_seconds', 'agent_sha', 'runtime_sha',
+            'requirements_path', 'lock_sha256', 'diagnostic')) + '\n'
+        raise
 def seal(path):
     subprocess.run(['timeout', '--kill-after=30', os.environ.get('CHILD_VENV_LOCAL_TIMEOUT_SECONDS', '600'),
                     'chmod', '-R', 'a-w', str(path)], check=True)
@@ -289,10 +345,16 @@ def registration(path, final, reused):
     return {'name': name, 'env': '', 'suite': suite, 'requires': [], 'require_names': requires,
             'report': data.decode('utf-8')}
 try:
-    entry = store.ensure('child', identity, registration, build, verify, seal=seal)
+    entry = store.ensure('child', identity, registration, build, verify, seal=seal,
+                         failure_name=name)
     receipt = success_receipt(entry, verified_reports[entry['path']])
 except Exception as error:
-    print('REFUSED: bench store: ' + str(error), file=sys.stderr)
+    if getattr(build, 'failure_recorded', False):
+        print('REFUSED: bench store: child build failed; bounded evidence retained', file=sys.stderr)
+    elif getattr(build, 'failure_evidence', None) is not None:
+        print('REFUSED: bench store: child build failed; bounded evidence refused', file=sys.stderr)
+    else:
+        print('REFUSED: bench store: ' + str(error), file=sys.stderr)
     sys.exit(2)
 print(receipt)
 STORE_PY
