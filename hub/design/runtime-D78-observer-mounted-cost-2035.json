@@ -1,0 +1,140 @@
+{
+  "requests": [
+    {
+      "mode": "off",
+      "elapsed_ms": 21.102,
+      "counts": {}
+    },
+    {
+      "mode": "parent",
+      "elapsed_ms": 69.967,
+      "counts": {
+        "call": 11232,
+        "lookup": 11230,
+        "line": 174,
+        "jsonschema_lookup": 3788,
+        "return": 20
+      }
+    },
+    {
+      "mode": "fixed",
+      "elapsed_ms": 29.128,
+      "counts": {
+        "call": 11232,
+        "lookup": 18,
+        "return": 20
+      }
+    },
+    {
+      "mode": "fixed",
+      "elapsed_ms": 42.52,
+      "counts": {
+        "call": 11232,
+        "lookup": 18,
+        "return": 20
+      }
+    },
+    {
+      "mode": "parent",
+      "elapsed_ms": 68.563,
+      "counts": {
+        "call": 11232,
+        "lookup": 11230,
+        "line": 174,
+        "jsonschema_lookup": 3788,
+        "return": 20
+      }
+    },
+    {
+      "mode": "off",
+      "elapsed_ms": 11.509,
+      "counts": {}
+    }
+  ],
+  "phases": {
+    "parent": {
+      "handler_entry": [
+        1,
+        "observed",
+        true
+      ],
+      "authorization": [
+        11,
+        "observed",
+        true
+      ],
+      "coordinator_admission": [
+        1,
+        "observed",
+        true
+      ],
+      "coordinator_lock": [
+        1,
+        "observed",
+        true
+      ],
+      "provider": [
+        1,
+        "observed",
+        true
+      ],
+      "accept": [
+        1,
+        "observed",
+        true
+      ],
+      "receipt": [
+        1,
+        "observed",
+        true
+      ],
+      "http_response": [
+        2,
+        "observed",
+        true
+      ]
+    },
+    "fixed": {
+      "handler_entry": [
+        1,
+        "observed",
+        true
+      ],
+      "authorization": [
+        11,
+        "observed",
+        true
+      ],
+      "coordinator_admission": [
+        1,
+        "observed",
+        true
+      ],
+      "coordinator_lock": [
+        1,
+        "observed",
+        true
+      ],
+      "provider": [
+        1,
+        "observed",
+        true
+      ],
+      "accept": [
+        1,
+        "observed",
+        true
+      ],
+      "receipt": [
+        1,
+        "observed",
+        true
+      ],
+      "http_response": [
+        2,
+        "observed",
+        true
+      ]
+    }
+  }
+}

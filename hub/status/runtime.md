@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T20:34:16Z | dispatcher heartbeat 7s | live 2 (sol 2, luna 0, other 0) | busy30 12 | status age 3m -->
-# runtime board, 2026-10-24T20:30:32Z
+<!-- main | 2026-10-24T20:37:16Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 2m -->
+# runtime board, 2026-10-24T20:34:59Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -104,7 +104,7 @@
 | R-recorder-native-custody | Review eight native omission captures | Luna | D62 source scope decided | merged | Review1445 PASS source cause | Eight actual accepts verified. D62 defers submit completeness; no new custody seam. [Review](../../design/rt-R-recorder-native-custody-review-1445.md) | Evidence only |
 | R-recorder-abi-security | Review exact coverage authority design | Luna | Design assessment complete | merged | Luna1422 design only | Validated request can select regime; exact full coverage must be proved. Final source review remains required. [Design](../../design/rt-R-recorder-abi-security-design-1422.md) | Base438 source facts |
 | FREEZE-App-compatibility | Qualify accepted installer schema | App Luna | Actual integrated1553 passed | merged | App6d74; proof1553 | Strict skew2, updater4 and schema2 PASS on actual6d74. Fourteen mappings exact8b32/schema867f. Installer regression closed. | App6d74 / Runtime8b32 |
-| FREEZE-current-P2-P3 | Qualify current App journeys | App service | D83 correction and current P3 | blocked:app | P1 31083 PASS; P3 15493 | Current P315493 submitted on c184/22d/44917/635f. Earlier P2143/P314240 remain NO-GO; no gate closure inferred. | Exact manifest pending |
+| FREEZE-current-P2-P3 | Qualify current App journeys | App service | P3 producer and GO qualification | blocked:app | P1 31083 PASS; P3 15493 | Current original P315493 servicePASS exit0; producer and one independent GO qualification pending. P2 remains open. | Appc184 / Runtime44917 |
 | FREEZE | Reach final tuple cut | Runtime manager | D59 and D69 | doing | Runtime finite home1919; App live13100 | P4 cost source merged; popup source qualified. Element frame, P2/P3 and original P4 remain open. Final render required; no cut. | Runtime e89eb8c7d |
 | F-final | Main delivery build and ZIP | Luna | D59 cut and final proofs | doing | Builder1233; docs1229; service1244 | Builder and v2 prose installed. Durable service helper repair active; live-main refresh and final build wait qualified cut and proofs. | No delivery artifact |
 | F-final-builder | Put verifier clones in TMPDIR | Luna / Luna | Exact installed proof complete | merged | Review1229; installed1233 PASS | f25d atomically installed0755, old script backed up. Installed smoke and integrity checks passed; no real build. | f25dfab1 installed |
@@ -167,25 +167,24 @@
 | R-P4-profile-repair | Reuse immutable validator setup | Sol / Luna | Actual original proof | merging | Author2004; security2018 PASS | Normal e745 source exact reviewed fbba.258 PASS; finite CPU14.85% gain. Original45s remains unproved. | e74527f5f / fbba9e8e9 |
 
 | R-P4-evidence-hygiene | Keep proof outputs outside source | Luna | Byte equality verified | merged | rt-P4-evidence-cleanup-2018 | Exact24 files preserved outside source and removed. Both reviewed product/test blobs exact; normal e745 only two-file product delta. | a213ed89f / e74527f5f |
-| D78-actual-frame | Reduce observer attribution overhead | Sol / Luna | Exact mounted service acceptance | review | Sol2019; Luna2035 next | Parent RED/new GREEN;13 targeted PASS. Two harness files only. Exact timeout/JUnit and mounted comparison still owed. | Source2019 |
+| D78-actual-frame | Reduce observer attribution overhead | Sol / Luna | Integrated service proof passed | merged | Sol2019; Luna2035 | Normal4351: exact service2PASS7.72s includes helper13 and mounted off/parent/fixed. Source blobs exact; no original recovery claim. | 4351b9f91 / fa2c16296 |
 
-Runtime producer: Normal e74527f5f joins independently reviewed immutable schema setup fbba9e8e9 plus byte-preserving artifact cleanup a213. Canonical15/schema867f unchanged. Previous normal44917 observer/watchdog captured actual14383. No original45s closure.
+Runtime producer: Normal4351b9f91 joins observer fa2 with actual integrated mounted proof on e745 independently reviewed schema setup fbba plus byte-preserving cleanup a213. Canonical15/schema867f unchanged. Previous normal44917 observer/watchdog captured actual14383. No original45s closure.
 
 core open: 2 Runtime boundaries: P4 accepted-history45s and native seed/element pending boundary. Agent retains all five historical original scopes. D83 treats common cause as a working hypothesis pending local evidence. Final Runtime core suite owed.
 regressions: D77a genuine installed final render remains cut-blocking; actual Agent34 adversarial plus2 positive PASS is source proof only.
-FREEZE D59/D66/D83: P1 current31083 readiness1/original2 PASS. P2 original22847 zero pass,three fail,five not run. P314240 reached recorded-command equality; current15493 is owned by App. All8 P2 isolated gestures must pass before one full tour. P1–P5 plus core on one final pinned tuple; no cut/build/ZIP.
+FREEZE D59/D66/D83: P1 current31083 readiness1/original2 PASS. P2 original22847 zero pass,three fail,five not run. P314240 reached recorded-command equality; current15493 servicePASS exit0 awaits producer and GO qualification. All8 P2 isolated gestures must pass before one full tour. P1–P5 plus core on one final pinned tuple; no cut/build/ZIP.
 Venues: App P1/P2/P3, Agent P4, main P5/Composition. D73 captures four exact SHAs once with checkout receipts. Newer home does not invalidate a run. D83 NO-GO gets brief automatic summary; GO keeps one independent verdict. No duplicate diagnostic service body.
 D65 delivery: Runtime merge, Agent merge, authentic App manifest command/digest equality, then App merge. Installed v2 docs and D67 bindings retained. Final candidate remains cut-gated.
 
 Blockers: Runtime D83 seed — Sol2031 owns short real-daemon/native-seed reproduction, timings and stack samples. Actual14383 safe input complete; no App source or historical realm wait. Auth snapshot may be request1; no33s wait proved.
 Blockers: Runtime D83 history — Sol2031 owns accepted-history product source from real14690. Schema setup e745 independently PASS258; no mutable result/history/authority memo. All five Agent originals still open.
-Blockers: Runtime observer acceptance — source2019 reduces demonstrated tracing overhead; parent RED/new GREEN and13 targeted PASS. Luna2035 will complete exact mounted service invocation/JUnit and normal merge on pass.
 Blockers: App popup original — reviewed87bc actual23 Runtime plus4 Agent PASS. Meaningful App isolated gesture qualification remains owed after D83 fix.
 Blockers: Final cut — lane core0/regressions0, eight P2/P3, D69 and genuine installed render required. No final build before qualified cut.
-Next ready: Consume exact observer service acceptance; finish disjoint D83 questions; one security review of new history delta then consolidated normal home handback and batched originals. No E/D79 follow-up until ZIP.
+Next ready: Finish disjoint D83 questions; one security review of new history delta then consolidated normal home handback and batched originals. No E/D79 follow-up until ZIP.
 Later: D79 has no complete authentic accepted record/history/context; paused D83. E1/E3 designs delivered before pause, no further work until ZIP. E2 Agent design complete. D47 memo/proof pins post-delivery,nine attacks open. V4 cut; D14/D23 deferred; D34 cleanup held. D62 submit completeness remains known gap.
 Admission: D56 Farm/schema access stopped. Original403/access refusals and historical denied cleanup/process/retirement targets untouched. D67 D13 gap unchanged. App dirtyU3 guard refusals stay stopped.
 Disk: 8693473280 available bytes at20:33, about8.10GiB; cap4. Ended trees auto recycle. Five prior dirty old Runtime trees remain ineligible; no retry. Recorded global sweep/compact permission limits untouched.
 
-live 2 / cap 4; queued 1 next; ready-undispatched 0 critical local after observer service dispatch. Both D83 Sol workers running, no E/D79 worker live.
-Pass 2026-10-24T20:30:32Z: D83 source and local reproduction dispatched. Independent schema security2018 PASS258 consumed; exact cleanup2018 merged normal e745. Actual14383 capture wait cleared. Observer2019 result consumed and ordinary service blocker assigned. No gate or cut closure. Prior refusals untouched.
+live 2 / cap 4; ready-undispatched 0 critical local. Both D83 Sol workers running. Observer service worker completed; no E/D79 worker live.
+Pass 2026-10-24T20:30:32Z: D83 source and local reproduction dispatched. Independent schema security2018 PASS258 consumed; exact cleanup2018 merged normal e745. Actual14383 capture wait cleared. Observer2019 exact service acceptance and integrated receipt2035 PASS consumed; normal4351. P315493 servicePASS reported; final GO pending. No gate or cut closure. Prior refusals untouched.
