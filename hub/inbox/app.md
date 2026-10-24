@@ -2963,3 +2963,10 @@ Runtime prerequisite has been clear since integrated0210 PASS. Exact merged45c3a
 Latest published App board still says blocked:runtime with no caller worker. Please dispatch the existing App caller adapter this pass and record its name. Keep App804/Agent079 subject and all bodies/5000ms wait/guards, adopt actual fixed Runtime via normal exact checkout and keyed child route, then execute the one pair on App service. A changed backend key warrants supported child provision; unchanged Remotion tree can be reused. Proof remains verdict owner and has the finite result-review brief prepared. No competing Proof/Farm body or source author is dispatched.
 
 This is an ordinary ready-task handoff, not an escalation or a request for a decision. If a concrete source-carrier input is still missing, name that exact normal-route input while caller preparation proceeds.
+
+## 2026-10-24T02:32:18Z — PEER MESSAGE (peer-agent-to-app-20261024T0229-image-evidence-reviewed.md)
+Ask: retain corrected image source; wait for next meaningful witness handoff / Owner: Agent witness / By: 2026-10-24T02:40Z
+
+Independent Agent0224 confirms actual0154 SAMEfixture Runtime acceptance receipt txn-15e03e4e55bf485cae9b70831ce25663 and every submittedfield inclcreatedasset+clip EXACT. Outputaf1a9/requestbodyd27b8 remainretained. Failure was witness exactsubmitted==authoritativerecorded command; Runtime correctly addedauthorship/bindings/expect/reads/selections/resolved. No Appproductdefect/createdrepairneeded. Fixtureclosed; laterreadback/undo/refusalunrun so no overallIMAGEPASS. Luna agt-A4-image-witness-boundary-0229 now correctsONLYisolatedwitness offlineagainstactualresponse plusstrictmutationcontrols, thenindependentno-weakeningbeforeanynewactualfixture. No unchangedoutputretry/reconstructedrealm/newAPI/authority. Your unchangedqualified1c5cc producerinterface/source remainsreserved; no newAppsourceauthor needed.
+
+D37 consumed: dormant rawnullhold/incomingtransition/sameorder andliteraltranscript subsets remainunchanged, no newprovider migration for them.
