@@ -8,6 +8,7 @@ const harness = vi.hoisted(() => ({
   editorContext: null as unknown,
   selectedClipIds: ['source-clip'],
   execute: vi.fn(),
+  captureForTurn: vi.fn(),
   invalidateQueries: vi.fn(),
 }));
 
@@ -54,7 +55,7 @@ function renderPanel(catalog: readonly unknown[], selectedClipIds = ['source-cli
     timelineId: 'main',
     timelineSummary: { configVersion: 7, trackCount: 2, clipCount: 1, assetCount: 1, duration: 2 },
     elementContext: { catalog },
-    elementOperationAdapter: { execute: harness.execute },
+    elementOperationAdapter: { execute: harness.execute, captureForTurn: harness.captureForTurn },
   };
   render(
     <ElementsLibraryPanel
@@ -68,6 +69,7 @@ function renderPanel(catalog: readonly unknown[], selectedClipIds = ['source-cli
 describe('ElementsLibraryPanel owner-pinned operations', () => {
   beforeEach(() => {
     harness.execute.mockReset().mockResolvedValue({ config_version: 8 });
+    harness.captureForTurn.mockReset().mockReturnValue({ execute: harness.execute });
     harness.invalidateQueries.mockReset();
   });
 
@@ -85,6 +87,7 @@ describe('ElementsLibraryPanel owner-pinned operations', () => {
         packId: 'local',
       },
     })));
+    expect(harness.captureForTurn).toHaveBeenCalledOnce();
   });
 
   it('persists the owning pack on an applied transition reference', async () => {
@@ -101,5 +104,6 @@ describe('ElementsLibraryPanel owner-pinned operations', () => {
         packId: 'rendering',
       },
     })));
+    expect(harness.captureForTurn).toHaveBeenCalledOnce();
   });
 });

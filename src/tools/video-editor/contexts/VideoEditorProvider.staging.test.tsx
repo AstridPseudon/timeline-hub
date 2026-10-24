@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, render, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -10,6 +10,7 @@ import { systemResetSelectionForProjectChange } from '@/shared/state/selectionSt
 import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider';
 import { RUNTIME_SCHEMA_DIGEST } from '@/integrations/runtime/contract-metadata';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture';
+import type { CommitRequest } from '@/integrations/runtime/generated';
 import { ApiError } from '@/integrations/runtime/generated';
 import { createCommitOutbox } from '../commands/commitOutbox';
 import type { MediaSelection } from '@/integrations/runtime/timeline-commit-types';
@@ -20,6 +21,7 @@ import { buildTimelineData } from '../lib/timeline-data';
 import { MEDIA_COMMAND_DESCRIPTORS, PLACE_PREPARED_MEDIA_COMMAND_DESCRIPTOR } from '../commands/media';
 import { useTimelineChromeContext, useTimelineEditorData, useTimelineEditorOps } from '../hooks/timelineStore';
 import { VideoEditorProvider } from './VideoEditorProvider';
+import { ElementsLibraryPanel } from '../components/ElementsLibraryPanel';
 import { ADD_GENERATION_QUERY_PARAM, readPendingAdds, writePendingAdds } from '@/domains/media-lightbox/hooks/addToVideoEditorConstants';
 
 vi.mock('../hooks/useEffects.ts', () => ({ useEffects: () => ({ data: [] }) }));
@@ -227,7 +229,7 @@ describe('mounted provider staged generation persistence', () => {
 });
 
 
-async function mountElement(outcome: 'accepted' | 'merged' | 'conflict' | 'invalid' = 'accepted') {
+async function mountElement(outcome: 'accepted' | 'merged' | 'conflict' | 'invalid' = 'accepted', exactCatalog = false) {
   const config = { ...createDefaultTimelineConfig(), output: { fps: 30, resolution: null, file: null },
     clips: [{ id: 'parent', track: 'V1', at: 0, hold: 2, opaque: { keep: null } },
       { id: 'sibling', track: 'V1', at: 3, hold: 2 }], opaque: { absent: null } } as unknown as TimelineConfig;
@@ -245,7 +247,7 @@ async function mountElement(outcome: 'accepted' | 'merged' | 'conflict' | 'inval
   let ops!: ReturnType<typeof useTimelineEditorOps>;
   function Consumer() {
     editor = useTimelineEditorData(); chrome = useTimelineChromeContext(); chat = useAgentChatBridge(); ops = useTimelineEditorOps();
-    return null;
+    return <ElementsLibraryPanel open onOpenChange={vi.fn()} onOpenCreationPrompt={vi.fn()} />;
   }
   const commit = vi.fn<NonNullable<DataProvider['commitTimeline']>>(async (request, key) => {
     if (outcome === 'conflict' || outcome === 'invalid') throw new ApiError(outcome === 'conflict' ? 409 : 422,
@@ -278,25 +280,134 @@ async function mountElement(outcome: 'accepted' | 'merged' | 'conflict' | 'inval
     basis = { head: { revisionId: 'r1', publicationId: 'p1' }, canonicalDocument: document };
     return { response, accepted: basis.head, canonicalDocument: document, graph: {}, receipt: response.receipt };
   });
-  const provider: DataProvider = { loadTimeline: vi.fn(async () => ({ config, configVersion: 1, head: initialData.head })),
-    loadAssetRegistry: vi.fn(async () => registry), resolveAssetUrl: async file => file, saveTimeline: vi.fn(), saveTimelineAtHead: vi.fn(),
-    loadTimelineCommandBasis: vi.fn(async () => structuredClone(basis)), getRecoverableIdentity: async () => ({ realmId: 'realm', actorId: 'actor' }), commitTimeline: commit };
+  const wire: Array<{ method: string; path: string; headers: Record<string, string>; request: CommitRequest }> = [];
+  const runtime = new RuntimeDataProvider({ projectId, baseUrl: 'http://runtime.test', token: 'fixture-token',
+    transport: async (method, path, headers, body) => {
+      const json = (value: unknown) => ({ status: 200, headers: {}, body: new TextEncoder().encode(JSON.stringify(value)) });
+      if (path === '/v1/health') return json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST,
+        runtime_epoch: 1, runtime_session_id: 'session', runtime_instance_id: 'instance-staging' });
+      if (path === '/v1/handshake') return json({ protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST,
+        session_id: 'session', actor_id: 'actor', realm_id: 'realm', scopes: ['handshake', 'projects:read', 'projects:write', 'objects:read', 'objects:write', 'tasks:read', 'tasks:write'],
+        capabilities: ['execution_binding.targeted.v1'] });
+      if (path === '/v1/realm') return json({ realm_id: 'realm', display_name: 'Staging fixture', version: 1, created_at: '2026-10-24T00:00:00Z' });
+      if (method === 'POST' && path === `/v1/projects/${projectId}/timelines/${timelineId}/commit`) {
+        const request = JSON.parse(new TextDecoder().decode(body as Uint8Array)) as CommitRequest;
+        wire.push({ method, path, headers, request });
+        const response = acceptedCommit({ revision_id: 'r1', publication_id: 'p1' },
+          { revision_id: request.base_revision_id, publication_id: request.base_publication_id }, { projectId, timelineId, commands: request.commands, children: true });
+        // The external Runtime reply is fixture data; no client-side patch executor stands in for transport.
+        const document = structuredClone(base);
+        const overlay = { id: 'element-am-burst-0', at: 0, track: 'V1', clipType: 'am-burst', hold: 2,
+          elementRef: { id: entry.id, kind: entry.kind, packId: entry.packId, revision: entry.revision } };
+        document.parent_revision.payload.config.clips.push(overlay);
+        document.parent_revision.payload.clips = structuredClone(document.parent_revision.payload.config.clips);
+        const outboxes = createCommitOutbox({ indexedDB, exclusiveLock: async (_key, work) => work() });
+        const [stored] = await outboxes.list({ realmId: 'realm', actorId: 'actor', projectId, timelineId });
+        expect(stored.intents).toHaveLength(1);
+        expect(stored.pending?.request).toEqual({ method, path, body: new TextDecoder().decode(body as Uint8Array), key: headers['Idempotency-Key'] });
+        document.parent_revision.revision_id = 'r1';
+        document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
+        Object.assign(response.data, { canonical_document: document, document_digest: fixtureDigest(document),
+          merge_mode: request.merge, steps: request.steps, label: request.label, source: request.source });
+        response.receipt.idempotency_key = headers['Idempotency-Key'];
+        response.receipt.result = response.data;
+        basis = { head: { revisionId: 'r1', publicationId: 'p1' }, canonicalDocument: document };
+        return json(response);
+      }
+      throw new Error(`Unexpected catalog transport: ${method} ${path}`);
+    },
+  });
+  const provider: DataProvider = { loadTimeline: vi.fn(async () => ({ config: initialData.config, configVersion: 1, head: initialData.head })),
+    loadAssetRegistry: vi.fn(async () => initialData.registry), resolveAssetUrl: async file => file, saveTimeline: vi.fn(), saveTimelineAtHead: vi.fn(),
+    loadTimelineCommandBasis: vi.fn(async () => structuredClone(basis)), getRecoverableIdentity: async () => ({ realmId: 'realm', actorId: 'actor' }), commitTimeline: exactCatalog ? runtime.commitTimeline.bind(runtime) : commit };
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   const view = render(<MemoryRouter><QueryClientProvider client={client}><AgentChatProvider>
-    <VideoEditorProvider dataProvider={provider} projectId={projectId} projectSlug="element-project" timelineId={timelineId} userId={null} initialTimelineData={initialData}>
+    <VideoEditorProvider dataProvider={provider} projectId={projectId} projectSlug="element-project" timelineId={timelineId} userId={null}>
       <Consumer />
     </VideoEditorProvider>
   </AgentChatProvider></QueryClientProvider></MemoryRouter>);
   await waitFor(() => expect(chat.editorContext?.elementOperationAdapter).toBeDefined());
-  const entry = chat.editorContext!.elementContext!.catalog.find(item => item.id === 'text-card' && item.packId === 'rendering')!;
+  await waitFor(() => expect(chat.editorContext?.timelineSummary).toMatchObject({ configVersion: 1 }));
+  const entry = chat.editorContext!.elementContext!.catalog.find(item => exactCatalog
+    ? item.id === 'am-burst' && item.kind === 'effect' && item.packId === 'astrid_motion'
+    : item.id === 'text-card' && item.packId === 'rendering')!;
   expect(entry.admitted).toBe(true);
-  return { view, provider, commit, base, getBasis: () => basis, getEditor: () => editor, getChrome: () => chrome,
-    getOps: () => ops, capture: () => chat.editorContext!.elementOperationAdapter!.captureForTurn(),
+  return { view, provider, commit, wire, entry, base, getBasis: () => basis, getEditor: () => editor, getChrome: () => chrome,
+    getOps: () => ops, getTimelineSummary: () => chat.editorContext?.timelineSummary,
+    capture: () => chat.editorContext!.elementOperationAdapter!.captureForTurn(),
     operation: { name: 'timeline.apply_element', project: 'element-project', timeline: timelineId, expected_version: 1, clip_id: 'parent', placement: 'clip',
       element: { id: entry.id, kind: entry.kind, packId: entry.packId, revision: entry.revision }, params: { color: 'red' } } };
 }
 
 describe('registered parent element outbox handoff', () => {
+  it('captures and applies the catalog element through the mounted panel and v2 outbox', async () => {
+    const mounted = await mountElement();
+    try {
+      await act(async () => { mounted.getOps().selectClip('parent'); });
+      await waitFor(() => expect(mounted.getTimelineSummary()).toMatchObject({ configVersion: 1 }));
+      await waitFor(() => expect(screen.getAllByRole('button', { name: 'Apply' }).length).toBeGreaterThan(0));
+      const applyButton = screen.getAllByRole('button', { name: 'Apply' }).find(button => button.parentElement?.textContent?.includes(mounted.operation.element.revision));
+      expect(applyButton).toBeDefined();
+      await act(async () => { fireEvent.click(applyButton!); });
+      await waitFor(() => expect(mounted.commit).toHaveBeenCalledOnce());
+      const [request, key] = mounted.commit.mock.calls[0];
+      expect(request).toMatchObject({ api_version: 1, project_id: projectId, timeline_id: timelineId,
+        base_revision_id: 'r0', base_publication_id: 'p0', label: 'Edit timeline', merge: 'atomic', dry_run: false,
+        source: { via: 'app' }, commands: [{ op: 'doc.patch', args: { changes: expect.any(Array) } }],
+        reads: expect.arrayContaining([{ kind: 'collection', ref: 'parent', path: ['config', 'clips'], members: expect.any(Array), order: expect.any(Array) }]),
+        steps: [{ id: expect.any(String), label: 'Edit timeline', intent: 'timeline.apply_element', tags: [], command_ordinals: [0], patch: expect.any(Array), reads: expect.any(Array) }] });
+      expect(request.commands[0].args.changes).toEqual(request.steps![0].patch);
+      expect(key).toEqual(expect.any(String));
+    } finally { mounted.view.unmount(); }
+  });
+
+  it('applies the original am-burst catalog tile through persisted A2 and production commit transport', async () => {
+    const mounted = await mountElement('accepted', true);
+    try {
+      await act(async () => { mounted.getOps().selectClip('parent'); });
+      fireEvent.change(screen.getByPlaceholderText('Search elements'), { target: { value: 'am-burst' } });
+      expect(screen.getByText('AM Burst', { exact: true })).toBeDefined();
+      fireEvent.click(screen.getByRole('button', { name: 'Apply', exact: true }));
+      await waitFor(() => expect(screen.getByRole('status').textContent).toContain('applied'));
+      expect(mounted.wire).toHaveLength(1);
+      expect(mounted.commit).not.toHaveBeenCalled();
+      const { request, headers, method, path } = mounted.wire[0];
+      expect(method).toBe('POST');
+      expect(path).toBe(`/v1/projects/${projectId}/timelines/${timelineId}/commit`);
+      expect(headers['Idempotency-Key']).toEqual(expect.any(String));
+      expect(request).toMatchObject({ api_version: 1, project_id: projectId, timeline_id: timelineId,
+        base_revision_id: 'r0', base_publication_id: 'p0', label: 'Edit timeline', merge: 'atomic', dry_run: false,
+        source: { via: 'app' }, commands: [{ op: 'doc.patch', args: { changes: expect.any(Array) } }],
+        steps: [{ id: expect.any(String), label: 'Edit timeline', intent: 'timeline.apply_element', tags: [], command_ordinals: [0], patch: expect.any(Array), reads: expect.any(Array) }],
+        reads: expect.arrayContaining([{ kind: 'collection', ref: 'parent', path: ['config', 'clips'], members: ['parent', 'sibling'], order: ['parent', 'sibling'] }]) });
+      const overlay = { id: 'element-am-burst-0', at: 0, track: 'V1', clipType: 'am-burst', hold: 2,
+        elementRef: { id: 'am-burst', kind: 'effect', packId: 'astrid_motion', revision: mounted.entry.revision } };
+      const changes = request.commands[0].args.changes;
+      expect(changes).toEqual([{ op: 'list.insert', ref: 'parent', path: ['clips'], id: overlay.id,
+        before: { state: 'absent' }, value: overlay, order_before: ['parent', 'sibling'], after_id: 'sibling' }]);
+      expect(request.steps![0].patch).toEqual(changes);
+      expect(request.steps![0].reads).toEqual(request.reads);
+      const document = mounted.getBasis().canonicalDocument;
+      const expected = structuredClone(mounted.base);
+      expected.parent_revision.payload.config.clips.push(overlay);
+      expected.parent_revision.payload.clips = structuredClone(expected.parent_revision.payload.config.clips);
+      expected.parent_revision.revision_id = 'r1';
+      expected.parent_revision.content_digest = fixtureDigest(expected.parent_revision.payload);
+      // Compare the entire raw closure: unknown fields, null/absence, sibling, child and pins.
+      expect(document).toEqual(expected);
+      expect(document.parent_revision.payload.registry).toHaveProperty('opaque.keep', null);
+      expect(document.parent_revision.payload.config.output).toEqual({ fps: 30, resolution: null, file: null });
+      expect(mounted.getEditor().dataRef.current?.head).toMatchObject({ headRevisionId: 'r1', headPublicationId: 'p1' });
+      expect(mounted.getEditor().dataRef.current?.config.clips).toContainEqual(overlay);
+      const outboxes = createCommitOutbox({ indexedDB, exclusiveLock: async (_key, work) => work() });
+      const [stored] = await outboxes.list({ realmId: 'realm', actorId: 'actor', projectId, timelineId });
+      expect(stored.intents).toHaveLength(0);
+      expect(stored.accepted?.head).toEqual({ revisionId: 'r1', publicationId: 'p1' });
+      expect(mounted.provider.saveTimeline).not.toHaveBeenCalled();
+      expect(mounted.provider.saveTimelineAtHead).not.toHaveBeenCalled();
+    } finally { mounted.view.unmount(); }
+  });
+
   it.each(['accepted', 'merged', 'conflict', 'invalid'] as const)('saves a child-bearing parent with a retained original basis: %s', async outcome => {
     const mounted = await mountElement(outcome);
     try {
@@ -332,6 +443,7 @@ describe('registered parent element outbox handoff', () => {
         expect(document.internal_timeline_revisions).toEqual(mounted.base.internal_timeline_revisions);
         expect(document.parent_revision.payload.occurrences).toEqual(mounted.base.parent_revision.payload.occurrences);
         expect(document.parent_revision.payload.registry).toEqual(mounted.base.parent_revision.payload.registry);
+        expect(document.parent_revision.payload.registry).toHaveProperty('opaque.keep', null);
         expect(document.parent_revision.payload.config.output).toEqual({ fps: 30, resolution: null, file: null });
         expect(document.parent_revision.payload.config.clips[0].opaque).toEqual({ keep: null });
         expect(document.parent_revision.payload.config.clips[0]).not.toHaveProperty('asset');
