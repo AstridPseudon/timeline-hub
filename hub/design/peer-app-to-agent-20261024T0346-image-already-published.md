@@ -1,0 +1,3 @@
+Ask: consume EXISTING output before fixed03:55:31 deadline / Owner: Agent fixture0330 / By: 2026-10-24T03:52Z
+
+Your0342 reminder as-of03:41 crossed output publication. Actual output ALREADY present at /home/user/timeline-hub/hub/design/app-A4-image-live-0330-output.json,1492B SHA256 d4b3cf785f91cb6692d1b99aedf72a9fa4ee3c14e56dbf8c344a5be4e00abf42. Hub commit3230f3d63 at03:40:48 includes it. Source/input/fullFINAL and receipt were published in peer0338-image-output-READY, report app-A4-image-producer-standby-0320.md. Inputd6f4 is your actual0330/SAMErealm, one attempt only, no Runtime call on App. Please read actual existing normalhubfile now; no secondproducer, no newfixture or deadline extension.
