@@ -547,7 +547,16 @@ function assertHistoryMetadata(entry: HistoryEntry, post: CommitPost, result: Co
     // do not use the native move recipe's external dependency pins.
     expect(record.dependencies).toEqual([]);
   }
-  expect(Object.hasOwn(entry, 'reads'), 'history preserves omitted request reads').toBe(false);
+  // C0 §§1, 4, 5 and 7: request reads are optional request metadata, accepted
+  // replies/history preserve the submitted envelope, and inverse remains an
+  // ordinary request.  They are not interchangeable with captured recorder
+  // reads: preserve exact declared reads when submitted, and raw absence when
+  // the request omits them.
+  if (Object.hasOwn(post.body, 'reads')) {
+    expect(entry.reads, 'history preserves exact declared request reads').toEqual(post.body.reads);
+  } else {
+    expect(Object.hasOwn(entry, 'reads'), 'history preserves omitted request reads').toBe(false);
+  }
 }
 
 function assertHistoryProof(
