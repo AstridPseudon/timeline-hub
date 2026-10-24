@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T02:01:12Z | dispatcher heartbeat 5s | live 3 (sol 0, luna 3, other 0) | busy30 20 | status age 4m -->
-# app board, 2026-10-24T01:56Z
+<!-- app | 2026-10-24T02:04:14Z | dispatcher heartbeat 6s | live 3 (sol 0, luna 3, other 0) | busy30 18 | status age 2m -->
+# app board, 2026-10-24T02:01Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -28,13 +28,16 @@
 | U3b-draft | Final upstream composition | Sol; Luna review | P2/P3 and final freeze | gated:freeze | app-U3b-current-join-2053 | Reviewed branch stays isolated. Refresh live upstream refs at freeze; do not merge during pinned proof. | Branch only |
 | F-App-full | Full suite before retirement | Test service; Luna review | Resolved for historical head | merged | app-F-D19-current-full-1230 | 18,819 tests passed on exact 12ef. A final qualification follows actual retirement and freeze. | 12ef320545 |
 
-| A4-lifecycle-tests | Move close and recovery protocol cases | Luna | Author 0139 PASS | review | app-A4-lifecycle-review-0154 | 105 tests, three types and lint passed. Five declarations, six executed cases and 35 assertions preserved; independent review runs. | 59654edbb8 branch |
+| A4-lifecycle-tests | Move close and recovery protocol cases | Luna | Review 0154 FAIL | doing | app-A4-lifecycle-return-0202 | First return replaces a no-op lock witness with a genuine held exclusive claim. Other mappings, 105 tests, types and lint pass. | 59654edbb8 held |
 | A4-unused-goldens | Delete two unused parity scripts | Luna | Review 0150 PASS | merged | app-A4-unused-goldens-0140 | Independent zero-consumer census, fixture integrity and three types passed. Source merged; next joined check covers integrated types. | ae91c2ee0f / 4b7786fb88 |
 | A2-A4-joined-proof | Qualify staged, image and history join | Luna | Three reviewed merges | merged | app-A2-A4-current-integrated-0150 | Exact 1c5cc47bf6 passed 448 tests across 16 files, three types and lint. No Runtime or browser acceptance claimed. | 1c5cc47bf6 |
 
-| A4-media-wrappers | Retire unused media executor wrappers | Luna | Review 0152 FAIL | doing | app-A4-media-wrappers-return-0158 | 108 tests, types and lint pass. First return synchronizes retired export registry; no runtime source changes. | 9c9c180ffe held |
+| A4-media-wrappers | Retire unused media executor wrappers | Luna | Metadata return 0158 PASS | review | app-A4-media-wrappers-final-review-0200 | Exact registry correction passes governance, exports and three types. Final cumulative review runs; source 108 PASS retained. | 9c9c180ffe / d8f9be57aa |
 
-| A4-owner-recovery-tests | Move explicit owner recovery cases | Luna | Lifecycle branch in review | doing | app-A4-owner-recovery-tests-0156 | Two bounded cases move to current durable session with exact unknown ACK, dependent order and lock assertions. | Base 59654edbb8 |
+| A4-owner-recovery-tests | Move explicit owner recovery cases | Luna | Author 0156 PASS | review | app-A4-owner-recovery-review-0202 | Two cases migrated; 105 tests, three types and lint passed. Independent review challenges exact retry, dependent order and live locks. | Branch pending |
+
+| A4-public-executor | Remove executor value exports | Luna | Reviewed wrapper branch | doing | app-A4-public-executor-exports-0203 | Remove only uncalled executor exports and matching inventory. Test-only runner and all behavior tests remain until migration. | Base d8f9be57aa |
+| readiness-client-confirmation | Compare history cardinality and wait | Sol; Luna review | Existing 0121 and 0128 PASS | merged | App Sol 0121; Luna 0128 | Both histories have two entries; full child closure and seed command count differ. Browser request count unknown. Reply 0200 published. | Report only |
 
 Blockers: U3b awaits P2/P3 and the final freeze.
 Blockers: Orchestrator owes bounded dormant track and raw-birth scope; escalation app-20261024T0116-A4-dormant-assertion-scope.md.
