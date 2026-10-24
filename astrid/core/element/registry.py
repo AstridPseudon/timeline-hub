@@ -17,6 +17,7 @@ from astrid.core.pack import (
     pack_element_kind_descriptors,
     validate_element_pack_id,
 )
+from astrid.core.pack import loader as pack_loader
 from astrid.core.pack.alias_resolver import (
     AliasResolver,
     _register_pack_aliases,
@@ -198,12 +199,22 @@ def _load_default_registry_data(
     registry mutation never leaks into the shared cache.
     """
     project_root = Path(project_root_key)
+    scans: dict[Path, tuple[PackDefinition, ...]] = {}
+
+    def scan_once(pack_root: str | Path | None = None) -> tuple[PackDefinition, ...]:
+        key = (pack_loader.packs_root() if pack_root is None else Path(pack_root)).resolve()
+        if key not in scans:
+            scans[key] = discover_packs() if pack_root is None else discover_packs(pack_root)
+        return scans[key]
+
+    # Source and project-local provenance can use the same admitted tree.
+    # Reuse it only within this corpus load, never across invalidations.
     pack_defs = tuple(
         discovered.pack
         for discovered in discover_pack_metadata(
             project_root=project_root,
             extra_pack_roots=tuple(Path(key) for key in extra_pack_roots_key),
-            discover_packs_fn=discover_packs,
+            discover_packs_fn=scan_once,
         )
     )
     element_kind_registry = _element_kind_registry_for_packs(pack_defs)
