@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T23:39:36Z | dispatcher heartbeat 13s | live 2 (sol 1, luna 1, other 0) | busy30 9 | status age 1m -->
+<!-- main | 2026-10-24T23:42:47Z | dispatcher heartbeat 8s | live 2 (sol 1, luna 1, other 0) | busy30 9 | status age 2m -->
 # runtime board, 2026-10-24T23:37:24Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -208,9 +208,9 @@
 
 | D86-Agent-families | Host disjoint Agent family authors | Luna | Named list received and dispatched | doing | Four agt-D86-main workers2333 | All74 assigned nodes: M1 10,shared inverse10,native word46,CLI8. Source/AST/statics only; one later main affected-node batch. | Agent5d4ae93 base |
 
-| D86-M1-outbox | Migrate ten outbox setup cases | Luna | Agent reserved one test file | doing | agt-D86-main-M1-2333 | Source-only; all ten original predicates and parameters retained. No body; Agent protected review then normal remote merge. | Agent5d4ae93 |
-| D86-shared-inverse | Migrate ten shared inverse cases | Luna | Agent reserved one test file | doing | agt-D86-main-shared-inverse-2333 | Source-only; no synthetic accepted history or retired publisher. One later affected-node batch. | Agent5d4ae93 |
-| D86-native-word | Migrate46 native word setup cases | Luna | Agent reserved two test files | doing | agt-D86-main-native-word-2333 | Source-only; word references and inverse/ABA assertions retained. No per-family pytest/body. | Agent5d4ae93 |
+| D86-M1-outbox | Migrate ten outbox setup cases | Luna / Agent review | Protected fixture-history mapping | review | agt-D86-main-M1-2333 | Source/statics PASS; bootstrap/recorded history assertions changed and need strict independent mapping. No body/core credit. | baaa9fd3f |
+| D86-shared-inverse | Migrate ten shared inverse cases | Luna / Agent review | Agent protected review then merge | review | agt-D86-main-shared-inverse-2333 | Source/statics/AST PASS; genuine native provider and shared shot identity retained. Remote request; no behavioral credit. | d49ebd104 |
+| D86-native-word | Migrate46 native word setup cases | Luna first return | Existing fixture ownership expanded | doing | agt-D86-main-native-word-return-2341 | Initial source finding: audio fixture uses retired publisher. Added unique native_word_anchor_fixture.py to allowed scope; product read-only. | Same5d4 source |
 | D86-CLI-document | Migrate eight document CLI cases | Luna / Agent review | Agent protected review then merge | review | agt-D86-main-CLI-document-2333 | Source-only compile/Ruff/mypy/AST PASS;12 bodies exact. Remote request carries8 selectors; no body or core credit. | Remote author branch |
 
 | D86-main-batch-prep | Prepare existing main affected-node route | Luna | D86 main qualification assignment | doing | rt-D86-main-batch-prep-2337 | Source and parsed stub only; exact74-node manifest, existing service and D73 receipt/input guards. No body or live install. | Future tuple pending |
@@ -232,5 +232,5 @@ Delivery: Runtime merge, Agent merge, authentic App manifest command with schema
 Later: E1/E3, AgentE2 and D79 paused until ZIP. D42 cross-request memo held; V4 cut, D14/D23 deferred; unsafe D34 cleanup held. D56 Farm/schema access stopped. All historical safety/access/cleanup/process refusals remain stopped.
 Disk: 7521595392 available bytes at23:31; sourcecap6 underD85, service tiers retained. Sweep3 removed0; compact packed0 and gzipped10old logs. No ended clean nonKEEP Runtime tree eligible; no refused-target retry.
 
-live 5 / cap 6 source; ready-undispatched 0. Runtime Sol2330, THREE Agent D86 source families2333 and main-batch prep2337. CLI8 source returned; Agent protected review requested. Wholepath2330 complete; exact late-callback finding retained. No per-family bodies. ABI20 remote merge pending. Heavy cap2 with one body below7.5GB; rehearsal noncritical held below8.5GB.
-Current pass 2026-10-24T23:38:04Z: CLI8 author source/statics/AST complete, exact12 bodies retained. Requested normal remote Agent branch with ONE protected review before merge; main later8-node batch stays pending. Runtime source and other3 family authors continue; wholepath evidence complete. Inbox through620746 bytes; all original budgets and refused routes unchanged.
+live 3 / cap 6 source; ready-undispatched 0. Runtime Sol2330, native-word firstreturn2341 and main-batch prep2337; M1 and inverse/CLI source returned for remote review. Wholepath2330 complete; exact late-callback finding retained. No per-family bodies. ABI20 remote merge pending. Heavy cap2 with one body below7.5GB; rehearsal noncritical held below8.5GB.
+Current pass 2026-10-24T23:40:48Z: All3 completed D86 families source-only returned through remoteAgent requests with ONEprotectedreview required. M1 history fixture assertions explicitly flagged for independent no-weakening map. Nativeword firstreturn2341 active on expanded uniquefixture scope; product readonly. RuntimeSol2330 requiredsuite active; mainbatchprep2337 active. Current source3/cap6, authoritative4 families all owned; no duplicate body. Inbox through622838 bytes.
