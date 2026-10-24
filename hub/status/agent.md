@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T05:28:18Z | dispatcher heartbeat 3s | live 2 (sol 1, luna 1, other 0) | busy30 24 | status age 1m -->
+<!-- agent | 2026-10-24T05:30:31Z | dispatcher heartbeat 14s | live 4 (sol 1, luna 3, other 0) | busy30 25 | status age 0m -->
 # agent board, 2026-10-24T05:17:27Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -66,7 +66,7 @@
 P1: GO recorded. Original18792 passed both cases; independent0036/0040 passed. P4 and P5 done. G5 merged under H24. App and Proof own P2/P3 failures and next actions.
 Integration: 2007cf7aaf joins reviewed D40 test support119850 plus014db above9cd3. Headless and ABA forwarding stack and sheet assertions remain integrated with0500 PASS71+5+53. No pending Viewing source merge.
 Blockers: Agent — ABA11466 undo ambiguity, complete IMAGE witness and support timeout remain open. D40 original passed with incomplete logger custody under recovery; no full retry.
-Blockers: Viewing — consume ABA11466 whole-path0507 and own next bounded source or capture step. Three track-label mappings remain separate.
+Blockers: Viewing — unique ABA0513 source followup is active with path0507 facts. Track-label mapping0518 is active; both remain separately owned.
 Blockers: App — reserve an actual fresh unchanged image producer before Agent creates its next fixture. Old0441 is closed; successor forwarding source is now qualified.
 Blockers: Farm — one D43 checkpoint is queued on its existing full-farm row. No Agent duplicate full run.
 Runtime: Independent0505 classifies the headless allocation-order mismatch as a fixture oracle error. Runtime0509 owns one exact expected-list correction and the original13-case qualification; no Agent product patch.
@@ -76,5 +76,5 @@ D46: U2c is closed, folded into the freeze U-merge. No live U2c worker; a1811362
 Later: D31/D37 dormant capture implementations and tests remain unchanged. D14/D23 relational timing and V4 stay cut or deferred and visibly failing. D47 memo is post-delivery, held unmerged. D39 tuple adoption waits freeze.
 Safety: Earlier Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
 Disk: About9.9 GB available. All current work is light; Farm owns full checkpoint. No eligible finished non-KEEP tree beyond the previously refused dirtyG2; untouched. No new disk audit aboveD34 floor.
-Next ready: Consume D40 result0526, currentH3 countdelta0524 and supportpath0522. Map existing22inverse receipts with light evidence0526; no duplicate bodies. IMAGE waits actual producer readiness.
+Next ready: Review22 current inverse PASS3.55s, repair count metadata only, finish persistent D40 observer and profile-policy review. IMAGE next realm follows one actual App producer watch.
 Evidence: [previous board details](archive-v2/STATUS-20261024T0055Z.md), [source-copy final](../../design/agt-F-source-copy-capture-sol-0502.md), [source-copy independent result](../../design/agt-F-source-copy-result-review-0511.md), [ABA whole path](../../design/agt-F-ABA-11466-path-0507.md), [D40 cumulative review](../../design/agt-F-D40-types-review-0511.md).
