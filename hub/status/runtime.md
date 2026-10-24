@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T14:03:37Z | dispatcher heartbeat 9s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 2m -->
+<!-- main | 2026-10-24T14:06:39Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 2m -->
 # runtime board, 2026-10-24T14:00:37Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -83,7 +83,8 @@
 | U1d-visual-review | Review source and protected union | Luna | Final joined source | merged | Review 1333; final 1351 | Initial omitted tests failure resolved. Final 95 passed; pre-merge local and incoming predicates mapped. | Read only |
 | U1d-tests-join | Join v2 fixture and FPS cases | Luna | Normal home receipt | merged | Join 1346; protected 1351 | Only 18 added lines above true f69. Current Runtime home tree equals reviewed 60e candidate. | 60e / e68 |
 | U1d-core-review | Review core and upstream union | Luna | True two-parent merge | merged | Review 1346 PASS | Core authority and daemon union passed. No new normalized Ruff/Pyright diagnostics; existing 2 strict xfail policy exits disclosed. | f69ad5813 |
-| U1d-producer-handback | Return fixture and producer inventory | Luna | Actual e68 home | doing | rt-U1d-handoff-1401 | Canonical bytes unchanged. Exact fixture and manifest hashes plus consumer source binding facts pending. | e68cf2316 |
+| U1d-producer-handback | Return fixture and producer inventory | Luna | Actual e68 home | merged | rt-U1d-handoff-1401 PASS | Wire and 15 clients exact; manifest adds genuine visual fixture. [Handback](../../design/rt-U1d-handoff-1401.md) | e68cf2316 |
+| U1d-consumer-rebind | Rebind producer identity in consumers | Agent / App Luna | Normal vendor tools | blocked:agent-app | Peer producer rebind 1404 | Client bytes unchanged; source commit and producer manifest need current owner receipts. | Runtime e68 |
 | FREEZE | Reach final tuple cut | Runtime manager | D59 cut | doing | Lane owners; main benches1244 | Runtime0core/0regressions; Agent51core at refresh1254; App9gate cases,36regression repairs home awaiting proof. Cut requires all lanes0/0 plus current P2/P3 PASS. | Runtime becfe6db8 |
 | F-final | Main delivery build and ZIP | Luna | D59 cut and final proofs | doing | Builder1233; docs1229; service1244 | Builder and v2 prose installed. Durable service helper repair active; live-main refresh and final build wait qualified cut and proofs. | No delivery artifact |
 | F-final-builder | Put verifier clones in TMPDIR | Luna / Luna | Exact installed proof complete | merged | Review1229; installed1233 PASS | f25d atomically installed0755, old script backed up. Installed smoke and integrity checks passed; no real build. | f25dfab1 installed |
@@ -136,7 +137,7 @@ Historical pinned proof (D56 retires further pinned runs): P1 remains historical
 Provider completion: Runtime 0915 and independent 0923 retain original cause, hook firing, durable acceptance and request correlation UNKNOWN. Nine controls passed; temporary JUnit loss remains disclosed. Original 20732/11466 remain failed and all 59 predicates unchanged. Viewing capture source 30cf passed independent 19; Agent owns home and runner wiring. No new Runtime source or original body is requested. [Source review](../../design/runtime-provider-completion-review-0923.md).
 
 KIT CHANGE: delivery-build f25dfab1 installed and qualified. Final service3309e33 independent1310 SOURCE PASS; actual lock,15 mappings and candidate guards qualified. Install waits D59 tuple.
-Blockers: Runtime — D60 home e68 is merged; actual integrated targeted qualification 1400 and exact producer handback 1401 are active. No D39 regeneration required.
+Blockers: Runtime — D60 home e68 is merged; actual integrated targeted qualification 1400 and exact producer handback 1401 are active. No D39 regeneration required. Agent and App own normal source/manifest lock rebind, requested 14:04Z.
 Blockers: Final delivery — D59 cut requires every active lane0core/0regressions plus current P2/P3 PASS, then required final proofs and D51 live-main refresh.
 Blockers: App — existing Agent service-input handback1305 is complete. Actual App-host current caller/bench qualification remains App-owned; installed-child identity stays UNKNOWN, no new provision inferred.
 Blockers: Agent — core open 5 remains owner scope. Runtime five-outcome mapping needs existing actual-home1330 XML and map published; peer sent this pass.
@@ -148,6 +149,8 @@ Disk: About8.5GB free, above main8GB heavy floor. Five old v1 trees refused recy
 
 Pass 2026-10-24T14:00:37Z: D60 actual home e68 consumed. Core review1346 and protected1351 PASS. Dispatched Luna integrated1400 and producer handback1400. App d24ed home and regression0 consumed. Five outcome mapping blocked only on authentic Agent XML/map; peer sent. No cut or final gate PASS.
 
-live pending dispatcher / cap 4; ready-undispatched 0. Two Luna workers queued; dispatcher count refresh follows.
+live 2 / cap 4; ready-undispatched 0. Dispatcher header 14:03:37Z: live 2 (Sol 0, Luna 2). Producer handback has since finished; integrated worker remains active.
 
 Sol exception: No Sol worker dispatched this pass.
+
+Disk cleanup 14:03Z: zero eligible finished clean Runtime worktrees; sweep removed 0, compaction packed 0 and compressed 0 logs. About 8.7 GB free; cap 4. Refused historical targets untouched.
