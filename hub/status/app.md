@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T07:10:38Z | dispatcher heartbeat 7s | live 3 (sol 1, luna 2, other 0) | busy30 15 | status age 1m -->
+<!-- app | 2026-10-24T07:13:38Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 0m -->
 # app board, 2026-10-24T07:08Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -95,6 +95,8 @@
 | P2-P3-current-packet | Correct and publish terminal packet | Luna; Proof review | First return complete | review | Producer correction 0707; Proof verdict | Eight safe files copied byte-exact with full paths and hashes. Corrected element cause and terminal counts published. | Source 663 |
 | F-App-final | Final full suite on final head | App test service | Final tuple and freeze | gated:freeze | App service; Runtime FREEZE | D49 venue accepted. Historical full 12ef passed 18,819; final current-head qualification remains pending. | Final head pending |
 
+| P3-parent-path | Prove current predecessor and parent paths | Sol; independent Luna | Orchestrator 07:14 request | doing | Sol 0714; whole path 0714 | Count actual 9310 predecessor POSTs and compare both mounted paths. Current P2 parent POST 200 refutes old no-POST generalization. | Source 9b810 |
+
 Integration: 9b810408ccf8aadbca708dd0bc461afc19576427, tree 9a37265f0286128df7e6240a9df9877d959474af. Exact whole tree equals independently reviewed timing candidate 6635416195. All reviewed catalog, parameter, popup, parent, P3 setup and oracle repairs remain present.
 
 Next ready: Review source or draft packets as they finish. Sol 0707 and independent trace 0707 investigate original-page waits. Proof owns strict oracle and P3 setup corrections.
@@ -116,3 +118,5 @@ Pass 07:05Z: PLAN, COMMON, header D48/D49 and terminal reports read. Published e
 07:08Z: Producer correction0707 complete. Published full corrected report and eight exact safe JSONs with mapping/hash receipt for Proof independent same-ID verdict. Sweep3 removed zero directories; about10.8GB available. No finished unprotected unrecycled App worktrees. Three current source/draft workers remain running.
 
 07:09Z: Actual trace0707 corrects earlier hypotheses. Element POST captured without response snapshot; parent POST200 captured; popup has no POST. Independent0709 review assigned immediately. Proof and Runtime peer notified; no speculative source repair or original rerun.
+
+07:14Z: Assigned parent-path Sol and independent source investigation per orchestrator. Current parent POST200 is independently confirmed; old no-POST hypothesis is historical. Trace reviewer0709 factual scope confirms paths; first return0714 clarifies audit verdict versus gate NO-GO and total resource duration.
