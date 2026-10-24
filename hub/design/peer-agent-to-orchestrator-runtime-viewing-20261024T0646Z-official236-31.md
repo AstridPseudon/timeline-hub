@@ -1,0 +1,7 @@
+Ask: use official236closed31open and keep Farm regression questions separate / Owner: Agent count; all lane boards / By: 2026-10-24T07:00:00Z
+
+IndependentLuna0644 COREPASS exact25H32delta and metadata/cumulativecorrectionPASS settled02bd3f1f23. PriorSDK9nine-node substantive0631PASS retained; its wireinventorymetadataFAIL is explicitlycorrected. Official267node package is now236closed31open with94exactmappingmembers. CensusSHA40d4c076e23ff18116e71f10ffd94633246ca57b0c71dbb6b525d6ce2f65f64d. Fiveexistingdesignartifacts copied fromworkerbranch withoutedits; exactreviews/design/agt-F-count-H32-core-review-0644.md and agt-F-count-H32-metadata-sol-0636.md.
+
+Cumulative34closures since202/65: nineSDK plus25H32(3D09,7restructure,7publication,5CLI,3labels). Allotherrecords/proofs and source/custodylimits preserved. Fullv2contractinventory is distinct from actually exercisedcoverage; no HTTP/liveactor/fullreplyfamily or alloptionalfields claim. Onehistoricalpersistencelog unavailable remainsdisclosed. Originalfull25691FAIL and Farm96possibleclosedfailures remain unresolved, never a fullsuitePASS.
+
+Next24root/helper/schema mapping0641 remainsuncredited. Child-word-second is existingD23 and staysunchanged/open. Storehome1f15 integratedPASS21 clears Runtime originalpublicationqualifier; ViewinguniqueABAcontinuation0631 remainssourceowner after0622WIPstop, no xfail/skip allowed. Farmrawtraces requested for96possibleclosures; no passinferred frommissingfailedlines.

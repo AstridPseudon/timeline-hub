@@ -1,7 +1,7 @@
 {
   "schema": "timeline.d32.current-node-reconciliation.delta-mapping.v1",
   "base_artifact": "evidence/agent-D32-current-node-reconciliation-H30-corrected.json",
-  "base_artifact_sha256": "3cce6b4c4e36e4fe7e65f99d9943706d2c84b2e84026e456d4d5ff7a68fb56fb",
+  "base_artifact_sha256": "40d4c076e23ff18116e71f10ffd94633246ca57b0c71dbb6b525d6ce2f65f64d",
   "base_artifact_sha256_meaning": "SHA-256 of the current corrected census file named by base_artifact; package linkage, not a historical source or proof hash.",
   "actual_home": {
     "head": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
@@ -50,7 +50,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_custom_pack_param_refuses_without_client_inputs",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_same_semantics_original_pins_exact_commands_reload_inverse[False-cli]",
@@ -68,7 +69,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_same_semantics_original_pins_exact_commands_reload_inverse[False-cli]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_same_semantics_original_pins_exact_commands_reload_inverse[False-python]",
@@ -86,7 +88,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_same_semantics_original_pins_exact_commands_reload_inverse[False-python]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_same_semantics_original_pins_exact_commands_reload_inverse[False-sheet-cli]",
@@ -104,7 +107,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_same_semantics_original_pins_exact_commands_reload_inverse[False-sheet-cli]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_same_semantics_original_pins_exact_commands_reload_inverse[False-sheet-python]",
@@ -122,7 +126,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_same_semantics_original_pins_exact_commands_reload_inverse[False-sheet-python]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_same_semantics_original_pins_exact_commands_reload_inverse[True-cli]",
@@ -140,7 +145,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_same_semantics_original_pins_exact_commands_reload_inverse[True-cli]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_same_semantics_original_pins_exact_commands_reload_inverse[True-python]",
@@ -158,7 +164,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_same_semantics_original_pins_exact_commands_reload_inverse[True-python]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_same_semantics_original_pins_exact_commands_reload_inverse[True-sheet-cli]",
@@ -176,7 +183,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_same_semantics_original_pins_exact_commands_reload_inverse[True-sheet-cli]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_same_semantics_original_pins_exact_commands_reload_inverse[True-sheet-python]",
@@ -194,7 +202,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_same_semantics_original_pins_exact_commands_reload_inverse[True-sheet-python]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_unchanged_text_cannot_hide_an_existing_inflight_sheet",
@@ -212,7 +221,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_unchanged_text_cannot_hide_an_existing_inflight_sheet",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[asset-\"\"]",
@@ -230,7 +240,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_unsupported_cells_refuse_whole_batch_before_queue[asset-\"\"]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[asset-null]",
@@ -248,7 +259,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_unsupported_cells_refuse_whole_batch_before_queue[asset-null]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[hold-\"\"]",
@@ -266,7 +278,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_unsupported_cells_refuse_whole_batch_before_queue[hold-\"\"]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[hold-\"clear\"]",
@@ -284,7 +297,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_unsupported_cells_refuse_whole_batch_before_queue[hold-\"clear\"]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[hold-None]",
@@ -302,7 +316,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_unsupported_cells_refuse_whole_batch_before_queue[hold-None]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[hold-null]",
@@ -320,7 +335,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_unsupported_cells_refuse_whole_batch_before_queue[hold-null]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[opaque-2]",
@@ -338,7 +354,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_unsupported_cells_refuse_whole_batch_before_queue[opaque-2]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[text-None]",
@@ -356,7 +373,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_unsupported_cells_refuse_whole_batch_before_queue[text-None]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[text-\\u0192(mark)]",
@@ -374,7 +392,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_unsupported_cells_refuse_whole_batch_before_queue[text-\\u0192(mark)]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[text-null]",
@@ -392,7 +411,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_unsupported_cells_refuse_whole_batch_before_queue[text-null]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[text-{\"a\":1}]",
@@ -410,7 +430,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_unsupported_cells_refuse_whole_batch_before_queue[text-{\"a\":1}]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[transition-\"\"]",
@@ -428,7 +449,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_unsupported_cells_refuse_whole_batch_before_queue[transition-\"\"]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[transition-null]",
@@ -446,7 +468,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_unsupported_cells_refuse_whole_batch_before_queue[transition-null]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_native_sheet_current.py::test_unsupported_cells_refuse_whole_batch_before_queue[x-1 ~ignored]",
@@ -464,7 +487,8 @@
       "current_source_file_sha256": "626f20d2bb8a203d8479dd6e2372ec46f5da8d12c1ec29c5179c124e47eaab3e",
       "scenario_mapping": "test_unsupported_cells_refuse_whole_batch_before_queue[x-1 ~ignored]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/packs/timeline/test_cli_native.py::test_cli_matches_full_app_portable_golden",
@@ -482,7 +506,8 @@
       "current_source_file_sha256": "29d820f1623ec3b93978928a0bfbccd78cdbadc290e39c04b42ce3fee0bfcd2c",
       "scenario_mapping": "test_cli_matches_full_app_portable_golden",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/packs/timeline/test_cli_native.py::test_cli_native_preview_and_lost_ack_retry",
@@ -500,7 +525,8 @@
       "current_source_file_sha256": "29d820f1623ec3b93978928a0bfbccd78cdbadc290e39c04b42ce3fee0bfcd2c",
       "scenario_mapping": "test_cli_native_preview_and_lost_ack_retry",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/packs/timeline/test_cli_native.py::test_cli_native_track_selector_is_parent_scoped",
@@ -518,7 +544,8 @@
       "current_source_file_sha256": "29d820f1623ec3b93978928a0bfbccd78cdbadc290e39c04b42ce3fee0bfcd2c",
       "scenario_mapping": "test_cli_native_track_selector_is_parent_scoped",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/packs/timeline/test_cli_native.py::test_help_exposes_native_entry_and_explicit_legacy_working_copy",
@@ -536,7 +563,8 @@
       "current_source_file_sha256": "29d820f1623ec3b93978928a0bfbccd78cdbadc290e39c04b42ce3fee0bfcd2c",
       "scenario_mapping": "test_help_exposes_native_entry_and_explicit_legacy_working_copy",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/sdk/test_scene_dispatch_contract.py::test_scene_request_and_sdk_admission_keep_certified_source[False]",
@@ -554,7 +582,8 @@
       "current_source_file_sha256": "1edef125c95ebbaa6d2bd7f6ba570e00ee57e71ccd709af919b5f58c06f9e05c",
       "scenario_mapping": "test_scene_request_and_sdk_admission_keep_certified_source[False]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/sdk/test_scene_dispatch_contract.py::test_scene_request_and_sdk_admission_keep_certified_source[True]",
@@ -572,7 +601,8 @@
       "current_source_file_sha256": "1edef125c95ebbaa6d2bd7f6ba570e00ee57e71ccd709af919b5f58c06f9e05c",
       "scenario_mapping": "test_scene_request_and_sdk_admission_keep_certified_source[True]",
       "proof_ref": "integrated_0500",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
@@ -590,7 +620,8 @@
       "current_source_file_sha256": "242ce54e59367aae0af8ac51b70d286f9fae7b8b29a5ab3b78920eeba91dd815",
       "scenario_mapping": "checkout_drift",
       "proof_ref": "h3_current_0508",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]",
@@ -608,7 +639,8 @@
       "current_source_file_sha256": "242ce54e59367aae0af8ac51b70d286f9fae7b8b29a5ab3b78920eeba91dd815",
       "scenario_mapping": "content_drift",
       "proof_ref": "h3_current_0508",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]",
@@ -626,7 +658,8 @@
       "current_source_file_sha256": "242ce54e59367aae0af8ac51b70d286f9fae7b8b29a5ab3b78920eeba91dd815",
       "scenario_mapping": "missing_content",
       "proof_ref": "h3_current_0508",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]",
@@ -644,7 +677,8 @@
       "current_source_file_sha256": "242ce54e59367aae0af8ac51b70d286f9fae7b8b29a5ab3b78920eeba91dd815",
       "scenario_mapping": "missing_revision",
       "proof_ref": "h3_current_0508",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]",
@@ -662,7 +696,8 @@
       "current_source_file_sha256": "242ce54e59367aae0af8ac51b70d286f9fae7b8b29a5ab3b78920eeba91dd815",
       "scenario_mapping": "profile_hash_drift",
       "proof_ref": "h3_current_0508",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]",
@@ -680,7 +715,8 @@
       "current_source_file_sha256": "242ce54e59367aae0af8ac51b70d286f9fae7b8b29a5ab3b78920eeba91dd815",
       "scenario_mapping": "revision_drift",
       "proof_ref": "h3_current_0508",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]",
@@ -698,7 +734,8 @@
       "current_source_file_sha256": "242ce54e59367aae0af8ac51b70d286f9fae7b8b29a5ab3b78920eeba91dd815",
       "scenario_mapping": "success",
       "proof_ref": "h3_current_0508",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-digest]",
@@ -716,7 +753,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "add-digest",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-document-pin]",
@@ -734,7 +772,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "add-document-pin",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-extra-pin]",
@@ -752,7 +791,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "add-extra-pin",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-foreign]",
@@ -770,7 +810,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "add-foreign",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-missing]",
@@ -788,7 +829,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "add-missing",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-payload]",
@@ -806,7 +848,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "add-payload",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-revision]",
@@ -824,7 +867,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "add-revision",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[add-writes]",
@@ -842,7 +886,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "add-writes",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-digest]",
@@ -860,7 +905,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "swap-digest",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-document-pin]",
@@ -878,7 +924,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "swap-document-pin",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-extra-pin]",
@@ -896,7 +943,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "swap-extra-pin",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-foreign]",
@@ -914,7 +962,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "swap-foreign",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-missing]",
@@ -932,7 +981,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "swap-missing",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-payload]",
@@ -950,7 +1000,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "swap-payload",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-revision]",
@@ -968,7 +1019,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "swap-revision",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_corrupt_media_boundary_refuses[swap-writes]",
@@ -986,7 +1038,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "swap-writes",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-dependent]",
@@ -1004,7 +1057,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "add-dependent",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-disjoint]",
@@ -1022,7 +1076,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "add-disjoint",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-missing]",
@@ -1040,7 +1095,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "add-missing",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-dependent]",
@@ -1058,7 +1114,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "swap-dependent",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-disjoint]",
@@ -1076,7 +1133,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "swap-disjoint",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-missing]",
@@ -1094,7 +1152,8 @@
       "current_source_file_sha256": "f416287f2c066b0bc50cdd7c1c9886290c1ab90a2ce885e808584fdd80b45a5d",
       "scenario_mapping": "swap-missing",
       "proof_ref": "inverse22_current_0537",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
       "exact_original_node_id": "tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack",
@@ -1112,7 +1171,654 @@
       "current_source_file_sha256": "3d8538d03b59eeb0f5cf0b397f639af0dfa3f5cbb5ce3b102001c427d6eb48ef",
       "scenario_mapping": "Exact retained 2007 admitted-pack original; 3 unchanged assertions; AST with locations per 0520/0551 identity scheme",
       "proof_ref": "d40_observed_0551",
-      "credit": "confirmed_closed"
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[False]",
+      "current_node_id": "tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[saved-ref]",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies",
+      "current_function": "test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies",
+      "function_renamed": "no",
+      "current_function_line": "",
+      "original_body_ast_sha256": "",
+      "current_body_ast_sha256": "",
+      "original_source_ref": "f9c305c8e",
+      "original_source_file_sha256": "",
+      "current_source_file_sha256": "",
+      "scenario_mapping": "Exact saved/candidate capture source, identity, digest, dependencies, registry and host round-trip predicates retained; False maps to saved-ref, True maps to candidate-ref. Retained body AST SHA-256 prefix 4a4eb8697b651431; full identity/source/authorization findings: sdk9_mapping and 0052 log lines 2362-2377, 3065-3066; 0037 report; independent 0603 and corrected 0619.",
+      "proof_ref": "sdk9_capture_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[True]",
+      "current_node_id": "tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[candidate-ref]",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies",
+      "current_function": "test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies",
+      "function_renamed": "no",
+      "current_function_line": "",
+      "original_body_ast_sha256": "",
+      "current_body_ast_sha256": "",
+      "original_source_ref": "f9c305c8e",
+      "original_source_file_sha256": "",
+      "current_source_file_sha256": "",
+      "scenario_mapping": "Exact saved/candidate capture source, identity, digest, dependencies, registry and host round-trip predicates retained; False maps to saved-ref, True maps to candidate-ref. Retained body AST SHA-256 prefix 4a4eb8697b651431; full identity/source/authorization findings: sdk9_mapping and 0052 log lines 2362-2377, 3065-3066; 0037 report; independent 0603 and corrected 0619.",
+      "proof_ref": "sdk9_capture_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[False]",
+      "current_node_id": "tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[False]",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_contiguous_helpers_keep_sequential_steps",
+      "current_function": "test_contiguous_helpers_keep_sequential_steps",
+      "function_renamed": "no",
+      "current_function_line": "",
+      "original_body_ast_sha256": "",
+      "current_body_ast_sha256": "",
+      "original_source_ref": "184dc20a70",
+      "original_source_file_sha256": "",
+      "current_source_file_sha256": "",
+      "scenario_mapping": "Original contiguous helper steps and sequential reads retained; False accepted, True merged with corrected replay carrier. Retained body AST SHA-256 prefix b95ad315a4730e74; full identity/source/authorization findings: sdk9_mapping and 0224 log lines 9870-9873, 10267-10270, 10295-10311; independent 0603 and corrected 0619.",
+      "proof_ref": "sdk9_helper_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[True]",
+      "current_node_id": "tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[True]",
+      "phase": "call",
+      "lane": "Runtime",
+      "original_function": "test_contiguous_helpers_keep_sequential_steps",
+      "current_function": "test_contiguous_helpers_keep_sequential_steps",
+      "function_renamed": "no",
+      "current_function_line": "",
+      "original_body_ast_sha256": "",
+      "current_body_ast_sha256": "",
+      "original_source_ref": "184dc20a70",
+      "original_source_file_sha256": "",
+      "current_source_file_sha256": "",
+      "scenario_mapping": "Original contiguous helper steps and sequential reads retained; False accepted, True merged with corrected replay carrier. Retained body AST SHA-256 prefix b95ad315a4730e74; full identity/source/authorization findings: sdk9_mapping and 0224 log lines 9870-9873, 10267-10270, 10295-10311; independent 0603 and corrected 0619.",
+      "proof_ref": "sdk9_helper_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_persistence.py::test_a_discard_in_one_process_leaves_the_next_process_with_no_working_copy",
+      "current_node_id": "tests/sdk/test_timeline_persistence.py::test_a_discard_in_one_process_leaves_the_next_process_with_no_working_copy",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_a_discard_in_one_process_leaves_the_next_process_with_no_working_copy",
+      "current_function": "test_a_discard_in_one_process_leaves_the_next_process_with_no_working_copy",
+      "function_renamed": "no",
+      "current_function_line": "",
+      "original_body_ast_sha256": "",
+      "current_body_ast_sha256": "",
+      "original_source_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+      "original_source_file_sha256": "",
+      "current_source_file_sha256": "",
+      "scenario_mapping": "Original restart/crash/truncated-temp/discard storage predicates and same-clip restart refusal retained; no merge-positive credit. Retained body AST SHA-256 prefix f3eec60445da68e7; full identity/source/authorization findings: sdk9_mapping and 0008 retained module result (log lines 17520-17697); 0037 retained original/restored-source 9-pass/1-fail result; independent 0603 and corrected 0619.",
+      "proof_ref": "sdk9_persistence_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_persistence.py::test_a_truncated_temp_file_is_never_read_as_the_working_copy",
+      "current_node_id": "tests/sdk/test_timeline_persistence.py::test_a_truncated_temp_file_is_never_read_as_the_working_copy",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_a_truncated_temp_file_is_never_read_as_the_working_copy",
+      "current_function": "test_a_truncated_temp_file_is_never_read_as_the_working_copy",
+      "function_renamed": "no",
+      "current_function_line": "",
+      "original_body_ast_sha256": "",
+      "current_body_ast_sha256": "",
+      "original_source_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+      "original_source_file_sha256": "",
+      "current_source_file_sha256": "",
+      "scenario_mapping": "Original restart/crash/truncated-temp/discard storage predicates and same-clip restart refusal retained; no merge-positive credit. Retained body AST SHA-256 prefix 3b25db40170a1ff9; full identity/source/authorization findings: sdk9_mapping and 0008 retained module result (log lines 17520-17697); 0037 retained original/restored-source 9-pass/1-fail result; independent 0603 and corrected 0619.",
+      "proof_ref": "sdk9_persistence_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_persistence.py::test_a_writer_that_dies_holding_the_lock_does_not_block_the_next_writer",
+      "current_node_id": "tests/sdk/test_timeline_persistence.py::test_a_writer_that_dies_holding_the_lock_does_not_block_the_next_writer",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_a_writer_that_dies_holding_the_lock_does_not_block_the_next_writer",
+      "current_function": "test_a_writer_that_dies_holding_the_lock_does_not_block_the_next_writer",
+      "function_renamed": "no",
+      "current_function_line": "",
+      "original_body_ast_sha256": "",
+      "current_body_ast_sha256": "",
+      "original_source_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+      "original_source_file_sha256": "",
+      "current_source_file_sha256": "",
+      "scenario_mapping": "Original restart/crash/truncated-temp/discard storage predicates and same-clip restart refusal retained; no merge-positive credit. Retained body AST SHA-256 prefix 5995854e8a84fb13; full identity/source/authorization findings: sdk9_mapping and 0008 retained module result (log lines 17520-17697); 0037 retained original/restored-source 9-pass/1-fail result; independent 0603 and corrected 0619.",
+      "proof_ref": "sdk9_persistence_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_refuses_a_clip_both_sides_changed",
+      "current_node_id": "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_refuses_a_clip_both_sides_changed",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_publish_after_a_restart_refuses_a_clip_both_sides_changed",
+      "current_function": "test_publish_after_a_restart_refuses_a_clip_both_sides_changed",
+      "function_renamed": "no",
+      "current_function_line": "",
+      "original_body_ast_sha256": "",
+      "current_body_ast_sha256": "",
+      "original_source_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+      "original_source_file_sha256": "",
+      "current_source_file_sha256": "",
+      "scenario_mapping": "Original restart/crash/truncated-temp/discard storage predicates and same-clip restart refusal retained; no merge-positive credit. Retained body AST SHA-256 prefix 9cb7a13485b8b257; full identity/source/authorization findings: sdk9_mapping and 0008 retained module result (log lines 17520-17697); 0037 retained original/restored-source 9-pass/1-fail result; independent 0603 and corrected 0619.",
+      "proof_ref": "sdk9_persistence_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "current_node_id": "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "current_function": "test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "function_renamed": "no",
+      "current_function_line": "",
+      "original_body_ast_sha256": "",
+      "current_body_ast_sha256": "",
+      "original_source_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+      "original_source_file_sha256": "",
+      "current_source_file_sha256": "",
+      "scenario_mapping": "Original restart/crash/truncated-temp/discard storage predicates and same-clip restart refusal retained; no merge-positive credit. Retained body AST SHA-256 prefix 6b1885acf3b9fea9; full identity/source/authorization findings: sdk9_mapping and 0008 retained module result (log lines 17520-17697); 0037 retained original/restored-source 9-pass/1-fail result; independent 0603 and corrected 0619.",
+      "proof_ref": "sdk9_persistence_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/integrations/test_d09_managed_scene_only.py::test_public_checkout_check_uses_retained_managed_scene_result",
+      "current_node_id": "tests/integrations/test_d09_managed_scene_only.py::test_public_checkout_check_uses_retained_managed_scene_result",
+      "phase": "setup",
+      "lane": "Agent",
+      "original_function": "test_public_checkout_check_uses_retained_managed_scene_result",
+      "current_function": "test_public_checkout_check_uses_retained_managed_scene_result",
+      "function_renamed": "no",
+      "current_function_line": "374",
+      "original_body_ast_sha256": "b318a97d3e07fedb25bc00097133cb3349ec94efb1d923de656e3e42ebc5cc33",
+      "current_body_ast_sha256": "b318a97d3e07fedb25bc00097133cb3349ec94efb1d923de656e3e42ebc5cc33",
+      "original_source_ref": "ce1d1cca8",
+      "original_source_file_sha256": "6098692c7edcbf8d918c436f8c5303f787a005f08d264618e73c5c72a8374efa",
+      "current_source_file_sha256": "03d79f9ea17c6c3c899aa1268a3b9ee4f8bd21681063a2f5be018d86eb887417",
+      "scenario_mapping": "Original body and predicates retained; Retained source-profile behavior used Runtime 8ea0766f5e9fb23cea26c7398770a8aaac06b258. Runtime 1d9ddba was import-probed only; no current-1d9 execution, HTTP/C0 or installed-profile claim.",
+      "proof_ref": "h32_d09_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/integrations/test_d09_managed_scene_only.py::test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle[candidate]",
+      "current_node_id": "tests/integrations/test_d09_managed_scene_only.py::test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle[candidate]",
+      "phase": "setup",
+      "lane": "Agent",
+      "original_function": "test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle",
+      "current_function": "test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle",
+      "function_renamed": "no",
+      "current_function_line": "330",
+      "original_body_ast_sha256": "28d25be5d32b39face01c098c7263967eccdb420c72de3315e476bc124eb0769",
+      "current_body_ast_sha256": "28d25be5d32b39face01c098c7263967eccdb420c72de3315e476bc124eb0769",
+      "original_source_ref": "ce1d1cca8",
+      "original_source_file_sha256": "6098692c7edcbf8d918c436f8c5303f787a005f08d264618e73c5c72a8374efa",
+      "current_source_file_sha256": "03d79f9ea17c6c3c899aa1268a3b9ee4f8bd21681063a2f5be018d86eb887417",
+      "scenario_mapping": "Original body and predicates retained; Retained source-profile behavior used Runtime 8ea0766f5e9fb23cea26c7398770a8aaac06b258. Runtime 1d9ddba was import-probed only; no current-1d9 execution, HTTP/C0 or installed-profile claim.",
+      "proof_ref": "h32_d09_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/integrations/test_d09_managed_scene_only.py::test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle[saved]",
+      "current_node_id": "tests/integrations/test_d09_managed_scene_only.py::test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle[saved]",
+      "phase": "setup",
+      "lane": "Agent",
+      "original_function": "test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle",
+      "current_function": "test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle",
+      "function_renamed": "no",
+      "current_function_line": "330",
+      "original_body_ast_sha256": "28d25be5d32b39face01c098c7263967eccdb420c72de3315e476bc124eb0769",
+      "current_body_ast_sha256": "28d25be5d32b39face01c098c7263967eccdb420c72de3315e476bc124eb0769",
+      "original_source_ref": "ce1d1cca8",
+      "original_source_file_sha256": "6098692c7edcbf8d918c436f8c5303f787a005f08d264618e73c5c72a8374efa",
+      "current_source_file_sha256": "03d79f9ea17c6c3c899aa1268a3b9ee4f8bd21681063a2f5be018d86eb887417",
+      "scenario_mapping": "Original body and predicates retained; Retained source-profile behavior used Runtime 8ea0766f5e9fb23cea26c7398770a8aaac06b258. Runtime 1d9ddba was import-probed only; no current-1d9 execution, HTTP/C0 or installed-profile claim.",
+      "proof_ref": "h32_d09_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_restructure.py::test_cli_restructure_commits_the_complete_equivalent_bundle_and_followups",
+      "current_node_id": "tests/sdk/test_timeline_restructure.py::test_cli_restructure_commits_the_complete_equivalent_bundle_and_followups",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_cli_restructure_commits_the_complete_equivalent_bundle_and_followups",
+      "current_function": "test_cli_restructure_commits_the_complete_equivalent_bundle_and_followups",
+      "function_renamed": "no",
+      "current_function_line": "493",
+      "original_body_ast_sha256": "03ac86b1dc5f86327c97e8048e5b1e586e9ab315d0ff1f08eb41e003387bbe40",
+      "current_body_ast_sha256": "03ac86b1dc5f86327c97e8048e5b1e586e9ab315d0ff1f08eb41e003387bbe40",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "8a3a22dafcd3e84d9f79f680bed0176ad15edad21a30b416ca074ff549b9a8f4",
+      "current_source_file_sha256": "ff1ddcd55ffde37cb20aab2026b9e0136e52308e65cc4ffc636e0a644e07f071",
+      "scenario_mapping": "Original body and predicates retained; Seven original source-mode outcomes only. Production caller and request/reply surfaces traced statically; no installed HTTP, full-suite, browser, live-socket or whole-G5/P1 qualification.",
+      "proof_ref": "h32_restructure_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_restructure.py::test_restructure_reconciles_narration_without_republishing_the_cut",
+      "current_node_id": "tests/sdk/test_timeline_restructure.py::test_restructure_reconciles_narration_without_republishing_the_cut",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_restructure_reconciles_narration_without_republishing_the_cut",
+      "current_function": "test_restructure_reconciles_narration_without_republishing_the_cut",
+      "function_renamed": "no",
+      "current_function_line": "555",
+      "original_body_ast_sha256": "22fd21820e1eaae7ea95c041488e8b23eff3569bc2531b93c6f951fa0dd7a8ef",
+      "current_body_ast_sha256": "22fd21820e1eaae7ea95c041488e8b23eff3569bc2531b93c6f951fa0dd7a8ef",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "8a3a22dafcd3e84d9f79f680bed0176ad15edad21a30b416ca074ff549b9a8f4",
+      "current_source_file_sha256": "ff1ddcd55ffde37cb20aab2026b9e0136e52308e65cc4ffc636e0a644e07f071",
+      "scenario_mapping": "Original body and predicates retained; Seven original source-mode outcomes only. Production caller and request/reply surfaces traced statically; no installed HTTP, full-suite, browser, live-socket or whole-G5/P1 qualification.",
+      "proof_ref": "h32_restructure_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_restructure.py::test_restructure_retries_narration_before_a_flight_exists",
+      "current_node_id": "tests/sdk/test_timeline_restructure.py::test_restructure_retries_narration_before_a_flight_exists",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_restructure_retries_narration_before_a_flight_exists",
+      "current_function": "test_restructure_retries_narration_before_a_flight_exists",
+      "function_renamed": "no",
+      "current_function_line": "664",
+      "original_body_ast_sha256": "ffe41402ccceb5468be56645777dd339a0179b7c7bfdd2decf38bc8542906345",
+      "current_body_ast_sha256": "ffe41402ccceb5468be56645777dd339a0179b7c7bfdd2decf38bc8542906345",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "8a3a22dafcd3e84d9f79f680bed0176ad15edad21a30b416ca074ff549b9a8f4",
+      "current_source_file_sha256": "ff1ddcd55ffde37cb20aab2026b9e0136e52308e65cc4ffc636e0a644e07f071",
+      "scenario_mapping": "Original body and predicates retained; Seven original source-mode outcomes only. Production caller and request/reply surfaces traced statically; no installed HTTP, full-suite, browser, live-socket or whole-G5/P1 qualification.",
+      "proof_ref": "h32_restructure_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_restructure.py::test_restructure_retries_the_original_commit_after_lost_ack",
+      "current_node_id": "tests/sdk/test_timeline_restructure.py::test_restructure_retries_the_original_commit_after_lost_ack",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_restructure_retries_the_original_commit_after_lost_ack",
+      "current_function": "test_restructure_retries_the_original_commit_after_lost_ack",
+      "function_renamed": "no",
+      "current_function_line": "529",
+      "original_body_ast_sha256": "78e17296f60db831dd6ce0d39bfad5dd6a505dbdb54b30736e0fcc87a5f66257",
+      "current_body_ast_sha256": "78e17296f60db831dd6ce0d39bfad5dd6a505dbdb54b30736e0fcc87a5f66257",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "8a3a22dafcd3e84d9f79f680bed0176ad15edad21a30b416ca074ff549b9a8f4",
+      "current_source_file_sha256": "ff1ddcd55ffde37cb20aab2026b9e0136e52308e65cc4ffc636e0a644e07f071",
+      "scenario_mapping": "Original body and predicates retained; Seven original source-mode outcomes only. Production caller and request/reply surfaces traced statically; no installed HTTP, full-suite, browser, live-socket or whole-G5/P1 qualification.",
+      "proof_ref": "h32_restructure_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_restructure.py::test_restructure_reuses_an_existing_chapter_root",
+      "current_node_id": "tests/sdk/test_timeline_restructure.py::test_restructure_reuses_an_existing_chapter_root",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_restructure_reuses_an_existing_chapter_root",
+      "current_function": "test_restructure_reuses_an_existing_chapter_root",
+      "function_renamed": "no",
+      "current_function_line": "646",
+      "original_body_ast_sha256": "dc1906ea22e57d9b0d14d75c4f8e1331d26fd6aba69fbc0c5e873744b4f33a12",
+      "current_body_ast_sha256": "dc1906ea22e57d9b0d14d75c4f8e1331d26fd6aba69fbc0c5e873744b4f33a12",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "8a3a22dafcd3e84d9f79f680bed0176ad15edad21a30b416ca074ff549b9a8f4",
+      "current_source_file_sha256": "ff1ddcd55ffde37cb20aab2026b9e0136e52308e65cc4ffc636e0a644e07f071",
+      "scenario_mapping": "Original body and predicates retained; Seven original source-mode outcomes only. Production caller and request/reply surfaces traced statically; no installed HTTP, full-suite, browser, live-socket or whole-G5/P1 qualification.",
+      "proof_ref": "h32_restructure_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_restructure.py::test_three_way_merge_works_on_the_stored_form",
+      "current_node_id": "tests/sdk/test_timeline_restructure.py::test_three_way_merge_works_on_the_stored_form",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_three_way_merge_works_on_the_stored_form",
+      "current_function": "test_three_way_merge_works_on_the_stored_form",
+      "function_renamed": "no",
+      "current_function_line": "244",
+      "original_body_ast_sha256": "5054c3c17cedaa133de5f1cba93cd4111ccd6c43b94c56faab64ce8c0a89beca",
+      "current_body_ast_sha256": "5054c3c17cedaa133de5f1cba93cd4111ccd6c43b94c56faab64ce8c0a89beca",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "8a3a22dafcd3e84d9f79f680bed0176ad15edad21a30b416ca074ff549b9a8f4",
+      "current_source_file_sha256": "ff1ddcd55ffde37cb20aab2026b9e0136e52308e65cc4ffc636e0a644e07f071",
+      "scenario_mapping": "Original body and predicates retained; Seven original source-mode outcomes only. Production caller and request/reply surfaces traced statically; no installed HTTP, full-suite, browser, live-socket or whole-G5/P1 qualification.",
+      "proof_ref": "h32_restructure_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_restructure_guarded_runtime.py::test_fixture_restructure_caller_refuses_mismatched_original_closure_without_writes[historical]",
+      "current_node_id": "tests/sdk/test_timeline_restructure_guarded_runtime.py::test_fixture_restructure_caller_refuses_mismatched_original_closure_without_writes[historical]",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_fixture_restructure_caller_refuses_mismatched_original_closure_without_writes",
+      "current_function": "test_fixture_restructure_caller_refuses_mismatched_original_closure_without_writes",
+      "function_renamed": "no",
+      "current_function_line": "172",
+      "original_body_ast_sha256": "66467b2fef7e5141b0297fed4029c90ef64654f9288e5c32f9386c7ea160508c",
+      "current_body_ast_sha256": "66467b2fef7e5141b0297fed4029c90ef64654f9288e5c32f9386c7ea160508c",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "d7dc8942c49b4c464535280b8849520adfba4b67d4dc0560a5b68203abf7983b",
+      "current_source_file_sha256": "d7dc8942c49b4c464535280b8849520adfba4b67d4dc0560a5b68203abf7983b",
+      "scenario_mapping": "Original body and predicates retained; Seven original source-mode outcomes only. Production caller and request/reply surfaces traced statically; no installed HTTP, full-suite, browser, live-socket or whole-G5/P1 qualification.",
+      "proof_ref": "h32_restructure_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_normal_publish.py::test_nudge_disjoint_clips_merge_onto_peer_head",
+      "current_node_id": "tests/sdk/test_timeline_normal_publish.py::test_nudge_disjoint_clips_merge_onto_peer_head",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_nudge_disjoint_clips_merge_onto_peer_head",
+      "current_function": "test_nudge_disjoint_clips_merge_onto_peer_head",
+      "function_renamed": "no",
+      "current_function_line": "170",
+      "original_body_ast_sha256": "2b09e18d189e11440060978f28bd5ae8c5faa27061ba9a167c87e64981a963e8",
+      "current_body_ast_sha256": "2b09e18d189e11440060978f28bd5ae8c5faa27061ba9a167c87e64981a963e8",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "df643aef3c7e125de45b2b759de3402fc38f82e1ba4439a16e1612ade10a938c",
+      "current_source_file_sha256": "df643aef3c7e125de45b2b759de3402fc38f82e1ba4439a16e1612ade10a938c",
+      "scenario_mapping": "Original body and predicates retained; Seven exact original PASS outcomes only, not a PASS for the assigned eight-case qualification. Complete-closure/followups no_renderer original remains OPEN: failure precedes Runtime submission. No HTTP, installed or complete-reply qualification.",
+      "proof_ref": "h32_normal_publication_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_changed_key_payload_and_force_never_write",
+      "current_node_id": "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_changed_key_payload_and_force_never_write",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_ordinary_publish_changed_key_payload_and_force_never_write",
+      "current_function": "test_ordinary_publish_changed_key_payload_and_force_never_write",
+      "function_renamed": "no",
+      "current_function_line": "155",
+      "original_body_ast_sha256": "54e8b533c8ad923d6ebc92b20782556bb1362482c55dfde7a32c67f5128fe4ad",
+      "current_body_ast_sha256": "54e8b533c8ad923d6ebc92b20782556bb1362482c55dfde7a32c67f5128fe4ad",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "df643aef3c7e125de45b2b759de3402fc38f82e1ba4439a16e1612ade10a938c",
+      "current_source_file_sha256": "df643aef3c7e125de45b2b759de3402fc38f82e1ba4439a16e1612ade10a938c",
+      "scenario_mapping": "Original body and predicates retained; Seven exact original PASS outcomes only, not a PASS for the assigned eight-case qualification. Complete-closure/followups no_renderer original remains OPEN: failure precedes Runtime submission. No HTTP, installed or complete-reply qualification.",
+      "proof_ref": "h32_normal_publication_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_exact_retry_and_narration_resume[1]",
+      "current_node_id": "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_exact_retry_and_narration_resume[1]",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_ordinary_publish_exact_retry_and_narration_resume",
+      "current_function": "test_ordinary_publish_exact_retry_and_narration_resume",
+      "function_renamed": "no",
+      "current_function_line": "60",
+      "original_body_ast_sha256": "e119404ee69482d9cb6d2e552d5ff06a4b3a64b6ca226757a1442a26ff26d77a",
+      "current_body_ast_sha256": "e119404ee69482d9cb6d2e552d5ff06a4b3a64b6ca226757a1442a26ff26d77a",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "df643aef3c7e125de45b2b759de3402fc38f82e1ba4439a16e1612ade10a938c",
+      "current_source_file_sha256": "df643aef3c7e125de45b2b759de3402fc38f82e1ba4439a16e1612ade10a938c",
+      "scenario_mapping": "Original body and predicates retained; Seven exact original PASS outcomes only, not a PASS for the assigned eight-case qualification. Complete-closure/followups no_renderer original remains OPEN: failure precedes Runtime submission. No HTTP, installed or complete-reply qualification.",
+      "proof_ref": "h32_normal_publication_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_exact_retry_and_narration_resume[2]",
+      "current_node_id": "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_exact_retry_and_narration_resume[2]",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_ordinary_publish_exact_retry_and_narration_resume",
+      "current_function": "test_ordinary_publish_exact_retry_and_narration_resume",
+      "function_renamed": "no",
+      "current_function_line": "60",
+      "original_body_ast_sha256": "e119404ee69482d9cb6d2e552d5ff06a4b3a64b6ca226757a1442a26ff26d77a",
+      "current_body_ast_sha256": "e119404ee69482d9cb6d2e552d5ff06a4b3a64b6ca226757a1442a26ff26d77a",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "df643aef3c7e125de45b2b759de3402fc38f82e1ba4439a16e1612ade10a938c",
+      "current_source_file_sha256": "df643aef3c7e125de45b2b759de3402fc38f82e1ba4439a16e1612ade10a938c",
+      "scenario_mapping": "Original body and predicates retained; Seven exact original PASS outcomes only, not a PASS for the assigned eight-case qualification. Complete-closure/followups no_renderer original remains OPEN: failure precedes Runtime submission. No HTTP, installed or complete-reply qualification.",
+      "proof_ref": "h32_normal_publication_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_recovers_narration_before_flight",
+      "current_node_id": "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_recovers_narration_before_flight",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_ordinary_publish_recovers_narration_before_flight",
+      "current_function": "test_ordinary_publish_recovers_narration_before_flight",
+      "function_renamed": "no",
+      "current_function_line": "139",
+      "original_body_ast_sha256": "de141355769d3250bc10a023e50c2325ad3769ccb86105f37d3952878ab0502f",
+      "current_body_ast_sha256": "de141355769d3250bc10a023e50c2325ad3769ccb86105f37d3952878ab0502f",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "df643aef3c7e125de45b2b759de3402fc38f82e1ba4439a16e1612ade10a938c",
+      "current_source_file_sha256": "df643aef3c7e125de45b2b759de3402fc38f82e1ba4439a16e1612ade10a938c",
+      "scenario_mapping": "Original body and predicates retained; Seven exact original PASS outcomes only, not a PASS for the assigned eight-case qualification. Complete-closure/followups no_renderer original remains OPEN: failure precedes Runtime submission. No HTTP, installed or complete-reply qualification.",
+      "proof_ref": "h32_normal_publication_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_publish_connection.py::test_a_publish_with_a_client_writes_through_that_client",
+      "current_node_id": "tests/sdk/test_timeline_publish_connection.py::test_a_publish_with_a_client_writes_through_that_client",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_a_publish_with_a_client_writes_through_that_client",
+      "current_function": "test_a_publish_with_a_client_writes_through_that_client",
+      "function_renamed": "no",
+      "current_function_line": "46",
+      "original_body_ast_sha256": "6d15c5472c599655a73c399179f5129d3925ec56db0885d6728f1d25ccdb7d2c",
+      "current_body_ast_sha256": "6d15c5472c599655a73c399179f5129d3925ec56db0885d6728f1d25ccdb7d2c",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "fcad1e8704933088fb80e1b5b0f0c70a9dee82ffcd1b41f35b8bbf3b31b5edc8",
+      "current_source_file_sha256": "fcad1e8704933088fb80e1b5b0f0c70a9dee82ffcd1b41f35b8bbf3b31b5edc8",
+      "scenario_mapping": "Original body and predicates retained; Seven exact original PASS outcomes only, not a PASS for the assigned eight-case qualification. Complete-closure/followups no_renderer original remains OPEN: failure precedes Runtime submission. No HTTP, installed or complete-reply qualification.",
+      "proof_ref": "h32_normal_publication_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_publish_connection.py::test_a_publish_with_no_client_writes_through_the_connection_it_opens",
+      "current_node_id": "tests/sdk/test_timeline_publish_connection.py::test_a_publish_with_no_client_writes_through_the_connection_it_opens",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_a_publish_with_no_client_writes_through_the_connection_it_opens",
+      "current_function": "test_a_publish_with_no_client_writes_through_the_connection_it_opens",
+      "function_renamed": "no",
+      "current_function_line": "24",
+      "original_body_ast_sha256": "bdf6973bb3d0e94027a651d56bdf418ef1fa9e9141d14a0e5796728c302577a6",
+      "current_body_ast_sha256": "bdf6973bb3d0e94027a651d56bdf418ef1fa9e9141d14a0e5796728c302577a6",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "fcad1e8704933088fb80e1b5b0f0c70a9dee82ffcd1b41f35b8bbf3b31b5edc8",
+      "current_source_file_sha256": "fcad1e8704933088fb80e1b5b0f0c70a9dee82ffcd1b41f35b8bbf3b31b5edc8",
+      "scenario_mapping": "Original body and predicates retained; Seven exact original PASS outcomes only, not a PASS for the assigned eight-case qualification. Complete-closure/followups no_renderer original remains OPEN: failure precedes Runtime submission. No HTTP, installed or complete-reply qualification.",
+      "proof_ref": "h32_normal_publication_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/packs/timeline/test_cli_assets.py::test_edit_replace_asset_and_swap_asset_forward_to_the_sdk",
+      "current_node_id": "tests/packs/timeline/test_cli_assets.py::test_edit_replace_asset_and_swap_asset_forward_to_the_sdk",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_edit_replace_asset_and_swap_asset_forward_to_the_sdk",
+      "current_function": "test_edit_replace_asset_and_swap_asset_forward_to_the_sdk",
+      "function_renamed": "no",
+      "current_function_line": "26",
+      "original_body_ast_sha256": "0c36611bd10ebb5032dae2ddc84987b2c1d437982ffb5c521d8ee9711c980de0",
+      "current_body_ast_sha256": "3285af67f9ae11cbbe78431457306105bfd69746967e443779ac2cb7c73819f7",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "deb336a4e5e265b516d93c3cafe89bc3cc6460ccf95f0ff137be6037ca69cb1a",
+      "current_source_file_sha256": "38f52667ad49bbdbcc80640deaea3718126c82a25f24afe228b00abcd420c7fb",
+      "scenario_mapping": "FakeCheckout adds path=draft.json; exact replace/swap arguments, order and replacement output preserved.",
+      "proof_ref": "h32_cli_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/packs/timeline/test_cli_edit_flags.py::test_edit_nudge_frames_set_and_close_gap",
+      "current_node_id": "tests/packs/timeline/test_cli_edit_flags.py::test_edit_nudge_frames_set_and_close_gap",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_edit_nudge_frames_set_and_close_gap",
+      "current_function": "test_edit_nudge_frames_set_and_close_gap",
+      "function_renamed": "no",
+      "current_function_line": "145",
+      "original_body_ast_sha256": "66f0169a5112bd095e40d8ebb5c07db05261b54c8cf6afae9b6c0e29ec3d70ca",
+      "current_body_ast_sha256": "402682aa2c646c72ae1bf2f7010b8c53ec1ad35ea61f3720cb99fe3aae83d258",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "fb13d5c9ee4095e936f87e467ee3d1f22c5d0f8bacf2990a0a5c7bd432d28a47",
+      "current_source_file_sha256": "e1b6c59ab05c73523b774b87b96d84250da09aa6076bcfd7bc6755bb846bbfc4",
+      "scenario_mapping": "Local nudge frames, canvas conversion, reload, close-gap predicates preserved; old next-line guidance translated to complete JSON candidate guidance.",
+      "proof_ref": "h32_cli_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/packs/timeline/test_cli_edit_flags.py::test_voice_line_swap_reflows_and_reports",
+      "current_node_id": "tests/packs/timeline/test_cli_edit_flags.py::test_voice_line_swap_reflows_and_reports",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_voice_line_swap_reflows_and_reports",
+      "current_function": "test_voice_line_swap_reflows_and_reports",
+      "function_renamed": "no",
+      "current_function_line": "178",
+      "original_body_ast_sha256": "dfab2563b264100f4fbe060955d49d2f81ab08dfc1e53627b23c6f77f441f1cd",
+      "current_body_ast_sha256": "a5b748263761d3e9730ab43547b09751b3179c1584a08a31c71d4dd89baf486e",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "fb13d5c9ee4095e936f87e467ee3d1f22c5d0f8bacf2990a0a5c7bd432d28a47",
+      "current_source_file_sha256": "e1b6c59ab05c73523b774b87b96d84250da09aa6076bcfd7bc6755bb846bbfc4",
+      "scenario_mapping": "Local words/reflow/reload predicates preserved; old check guidance translated to complete JSON candidate export guidance.",
+      "proof_ref": "h32_cli_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/packs/timeline/test_cli_voice_bindings.py::test_repeated_gap_flags_and_script_gap_override_preserve_sdk_rules",
+      "current_node_id": "tests/packs/timeline/test_cli_voice_bindings.py::test_repeated_gap_flags_and_script_gap_override_preserve_sdk_rules",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_repeated_gap_flags_and_script_gap_override_preserve_sdk_rules",
+      "current_function": "test_repeated_gap_flags_and_script_gap_override_preserve_sdk_rules",
+      "function_renamed": "no",
+      "current_function_line": "108",
+      "original_body_ast_sha256": "7dd4885995439a12104e34c372d20e5161be1b7834fbfc59bcac03431a8f4764",
+      "current_body_ast_sha256": "7dd4885995439a12104e34c372d20e5161be1b7834fbfc59bcac03431a8f4764",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "88d282086e79a22d92a6b581bad86798d07b503f71623e6825d4433d7d4e2e94",
+      "current_source_file_sha256": "fe7a81183602e0f3e008307d189c88b046fd74390e50c1d54e1d827a292e38e4",
+      "scenario_mapping": "Function AST unchanged; helper FakeCheckout adds path=draft.json; script-before-gap ordering and 0.2/0.4 gaps preserved.",
+      "proof_ref": "h32_cli_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/packs/timeline/test_cli_voice_bindings.py::test_replace_insert_and_from_script_forward_existing_sdk_arguments",
+      "current_node_id": "tests/packs/timeline/test_cli_voice_bindings.py::test_replace_insert_and_from_script_forward_existing_sdk_arguments",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_replace_insert_and_from_script_forward_existing_sdk_arguments",
+      "current_function": "test_replace_insert_and_from_script_forward_existing_sdk_arguments",
+      "function_renamed": "no",
+      "current_function_line": "71",
+      "original_body_ast_sha256": "8012198963010b3028535149b27e8e08bbd47ce398c3bfa302cce30135a92e4d",
+      "current_body_ast_sha256": "8012198963010b3028535149b27e8e08bbd47ce398c3bfa302cce30135a92e4d",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "88d282086e79a22d92a6b581bad86798d07b503f71623e6825d4433d7d4e2e94",
+      "current_source_file_sha256": "fe7a81183602e0f3e008307d189c88b046fd74390e50c1d54e1d827a292e38e4",
+      "scenario_mapping": "Function AST unchanged; helper FakeCheckout adds path=draft.json; exact replace/insert/script SDK arguments preserved.",
+      "proof_ref": "h32_cli_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/packs/timeline/test_cli_native.py::test_track_label_dispatch_matches_native_capture[args0-\\u753b\\u9762 \\U0001f3ac]",
+      "current_node_id": "tests/packs/timeline/test_cli_native.py::test_track_label_apply_matches_native_capture[args0-\\u753b\\u9762 \\U0001f3ac]",
+      "phase": "call",
+      "lane": "Viewing",
+      "original_function": "test_track_label_dispatch_matches_native_capture",
+      "current_function": "test_track_label_apply_matches_native_capture",
+      "function_renamed": "yes",
+      "current_function_line": "21",
+      "original_body_ast_sha256": "c77378178e7722efb4fb35f69a55ad6c90d06c106817c38009e3399c4a90b661",
+      "current_body_ast_sha256": "4e3ea5a45270bc85636e6c0caf0d621ed2aab0221610c056e4fa46486811956f",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "94f395884528cd252146d5ea2d5025cffb9633b760ae154f1943dfedc3b717c1",
+      "current_source_file_sha256": "29d820f1623ec3b93978928a0bfbccd78cdbadc290e39c04b42ce3fee0bfcd2c",
+      "scenario_mapping": "dispatch -> connected sheet/apply; source.via cli -> sheet. Same Unicode/empty/clear tuple, golden capture parent/track:picture, pub1 and final label/absence predicates; clear seeds an existing label. Migrated connected sheet/apply scenarios only; source.via=sheet, not retired CLI dispatch. Unicode, empty, clear/remove, golden, pub1 and final state are preserved. Receipt covers the entire byte-identical 11-case module; no aggregate 71+5+53 inference, HTTP/C0 or every history/undo/attribution-field claim.",
+      "proof_ref": "h32_track_labels_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/packs/timeline/test_cli_native.py::test_track_label_dispatch_matches_native_capture[args1-]",
+      "current_node_id": "tests/packs/timeline/test_cli_native.py::test_track_label_apply_matches_native_capture[args1-]",
+      "phase": "call",
+      "lane": "Viewing",
+      "original_function": "test_track_label_dispatch_matches_native_capture",
+      "current_function": "test_track_label_apply_matches_native_capture",
+      "function_renamed": "yes",
+      "current_function_line": "21",
+      "original_body_ast_sha256": "c77378178e7722efb4fb35f69a55ad6c90d06c106817c38009e3399c4a90b661",
+      "current_body_ast_sha256": "4e3ea5a45270bc85636e6c0caf0d621ed2aab0221610c056e4fa46486811956f",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "94f395884528cd252146d5ea2d5025cffb9633b760ae154f1943dfedc3b717c1",
+      "current_source_file_sha256": "29d820f1623ec3b93978928a0bfbccd78cdbadc290e39c04b42ce3fee0bfcd2c",
+      "scenario_mapping": "dispatch -> connected sheet/apply; source.via cli -> sheet. Same Unicode/empty/clear tuple, golden capture parent/track:picture, pub1 and final label/absence predicates; clear seeds an existing label. Migrated connected sheet/apply scenarios only; source.via=sheet, not retired CLI dispatch. Unicode, empty, clear/remove, golden, pub1 and final state are preserved. Receipt covers the entire byte-identical 11-case module; no aggregate 71+5+53 inference, HTTP/C0 or every history/undo/attribution-field claim.",
+      "proof_ref": "h32_track_labels_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/packs/timeline/test_cli_native.py::test_track_label_dispatch_matches_native_capture[args2-None]",
+      "current_node_id": "tests/packs/timeline/test_cli_native.py::test_track_label_apply_matches_native_capture[args2-None]",
+      "phase": "call",
+      "lane": "Viewing",
+      "original_function": "test_track_label_dispatch_matches_native_capture",
+      "current_function": "test_track_label_apply_matches_native_capture",
+      "function_renamed": "yes",
+      "current_function_line": "21",
+      "original_body_ast_sha256": "c77378178e7722efb4fb35f69a55ad6c90d06c106817c38009e3399c4a90b661",
+      "current_body_ast_sha256": "4e3ea5a45270bc85636e6c0caf0d621ed2aab0221610c056e4fa46486811956f",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "94f395884528cd252146d5ea2d5025cffb9633b760ae154f1943dfedc3b717c1",
+      "current_source_file_sha256": "29d820f1623ec3b93978928a0bfbccd78cdbadc290e39c04b42ce3fee0bfcd2c",
+      "scenario_mapping": "dispatch -> connected sheet/apply; source.via cli -> sheet. Same Unicode/empty/clear tuple, golden capture parent/track:picture, pub1 and final label/absence predicates; clear seeds an existing label. Migrated connected sheet/apply scenarios only; source.via=sheet, not retired CLI dispatch. Unicode, empty, clear/remove, golden, pub1 and final state are preserved. Receipt covers the entire byte-identical 11-case module; no aggregate 71+5+53 inference, HTTP/C0 or every history/undo/attribution-field claim.",
+      "proof_ref": "h32_track_labels_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     }
   ],
   "non_credit_dispositions": [
@@ -1214,5 +1920,338 @@
     "identity_scheme": "Retained 0520/0551 scheme: function and assertion ast.dump(include_attributes=True); source slice without final LF. Original here is the retained admitted-pack test at source 2007, with all three assertions unchanged.",
     "evidence_directory": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D40-observed-qualified-0551/evidence/stage-b",
     "credit_limit": "Only this exact external-pack original call node earns one closure. No second generic_host original, whole86/full/gate, current-whole-HEAD installed, future, or v2 production caller/wire-contract acceptance credit. No rerun performed for this package."
+  },
+  "sdk9_mapping": {
+    "exact_count": 9,
+    "phase": "call",
+    "source_review_refs": [
+      "sdk9_source_map_0554",
+      "sdk9_independent_0603",
+      "sdk9_corrected_0619"
+    ],
+    "members": [
+      {
+        "exact_original_node_id": "tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[False]",
+        "current_node_id": "tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[saved-ref]",
+        "phase": "call",
+        "owner_at_base": "Agent",
+        "proof_ref": "sdk9_capture_retained",
+        "retained_body_ast_sha256_prefix": "4a4eb8697b651431",
+        "comparison_source_ref": "f9c305c8e",
+        "source_findings_ref": "sdk9_independent_0603",
+        "source_findings_location": "0603 log lines 7455-7500 (relevant caller equality), 7521-7550 (test-body equality); corrected 0619 controls membership.",
+        "authorization_scope": "SDK capture admission of exact certified saved/candidate source and dependency closure; real Runtime publication, validation, claim, CAS retrieval and GenericPackHost materialization. No SDK pre-Runtime snapshot write. Only two original positives credited."
+      },
+      {
+        "exact_original_node_id": "tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[True]",
+        "current_node_id": "tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[candidate-ref]",
+        "phase": "call",
+        "owner_at_base": "Agent",
+        "proof_ref": "sdk9_capture_retained",
+        "retained_body_ast_sha256_prefix": "4a4eb8697b651431",
+        "comparison_source_ref": "f9c305c8e",
+        "source_findings_ref": "sdk9_independent_0603",
+        "source_findings_location": "0603 log lines 7455-7500 (relevant caller equality), 7521-7550 (test-body equality); corrected 0619 controls membership.",
+        "authorization_scope": "SDK capture admission of exact certified saved/candidate source and dependency closure; real Runtime publication, validation, claim, CAS retrieval and GenericPackHost materialization. No SDK pre-Runtime snapshot write. Only two original positives credited."
+      },
+      {
+        "exact_original_node_id": "tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[False]",
+        "current_node_id": "tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[False]",
+        "phase": "call",
+        "owner_at_base": "Agent",
+        "proof_ref": "sdk9_helper_retained",
+        "retained_body_ast_sha256_prefix": "b95ad315a4730e74",
+        "comparison_source_ref": "184dc20a70",
+        "source_findings_ref": "sdk9_independent_0603",
+        "source_findings_location": "0603 log lines 7455-7500 (relevant caller equality), 7521-7550 (test-body equality); corrected 0619 controls membership.",
+        "authorization_scope": "Exact sequential nudge helper request/captures checked by both unchanged pinned Runtime validators; replay map 14 -> 5, all other carrier fields retained. Real accepted/merged outcome; source/function/module-origin invariants unchanged. No broader helper/root/undo credit."
+      },
+      {
+        "exact_original_node_id": "tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[True]",
+        "current_node_id": "tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[True]",
+        "phase": "call",
+        "owner_at_base": "Runtime",
+        "proof_ref": "sdk9_helper_retained",
+        "retained_body_ast_sha256_prefix": "b95ad315a4730e74",
+        "comparison_source_ref": "184dc20a70",
+        "source_findings_ref": "sdk9_independent_0603",
+        "source_findings_location": "0603 log lines 7455-7500 (relevant caller equality), 7521-7550 (test-body equality); corrected 0619 controls membership.",
+        "authorization_scope": "Exact sequential nudge helper request/captures checked by both unchanged pinned Runtime validators; replay map 14 -> 5, all other carrier fields retained. Real accepted/merged outcome; source/function/module-origin invariants unchanged. No broader helper/root/undo credit."
+      },
+      {
+        "exact_original_node_id": "tests/sdk/test_timeline_persistence.py::test_a_discard_in_one_process_leaves_the_next_process_with_no_working_copy",
+        "current_node_id": "tests/sdk/test_timeline_persistence.py::test_a_discard_in_one_process_leaves_the_next_process_with_no_working_copy",
+        "phase": "call",
+        "owner_at_base": "Agent",
+        "proof_ref": "sdk9_persistence_retained",
+        "retained_body_ast_sha256_prefix": "f3eec60445da68e7",
+        "comparison_source_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+        "source_findings_ref": "sdk9_independent_0603",
+        "source_findings_location": "0603 log lines 7455-7500 (relevant caller equality), 7521-7550 (test-body equality); corrected 0619 controls membership.",
+        "authorization_scope": "Four storage lifecycle originals use the faithful file-backed fixture (history DTO, exact revision/publication pins, open_bundle validation); same-clip restart refusal uses genuine Runtime with exact base/history and no-write checks. No disjoint merge success or installed/full qualification."
+      },
+      {
+        "exact_original_node_id": "tests/sdk/test_timeline_persistence.py::test_a_truncated_temp_file_is_never_read_as_the_working_copy",
+        "current_node_id": "tests/sdk/test_timeline_persistence.py::test_a_truncated_temp_file_is_never_read_as_the_working_copy",
+        "phase": "call",
+        "owner_at_base": "Agent",
+        "proof_ref": "sdk9_persistence_retained",
+        "retained_body_ast_sha256_prefix": "3b25db40170a1ff9",
+        "comparison_source_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+        "source_findings_ref": "sdk9_independent_0603",
+        "source_findings_location": "0603 log lines 7455-7500 (relevant caller equality), 7521-7550 (test-body equality); corrected 0619 controls membership.",
+        "authorization_scope": "Four storage lifecycle originals use the faithful file-backed fixture (history DTO, exact revision/publication pins, open_bundle validation); same-clip restart refusal uses genuine Runtime with exact base/history and no-write checks. No disjoint merge success or installed/full qualification."
+      },
+      {
+        "exact_original_node_id": "tests/sdk/test_timeline_persistence.py::test_a_writer_that_dies_holding_the_lock_does_not_block_the_next_writer",
+        "current_node_id": "tests/sdk/test_timeline_persistence.py::test_a_writer_that_dies_holding_the_lock_does_not_block_the_next_writer",
+        "phase": "call",
+        "owner_at_base": "Agent",
+        "proof_ref": "sdk9_persistence_retained",
+        "retained_body_ast_sha256_prefix": "5995854e8a84fb13",
+        "comparison_source_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+        "source_findings_ref": "sdk9_independent_0603",
+        "source_findings_location": "0603 log lines 7455-7500 (relevant caller equality), 7521-7550 (test-body equality); corrected 0619 controls membership.",
+        "authorization_scope": "Four storage lifecycle originals use the faithful file-backed fixture (history DTO, exact revision/publication pins, open_bundle validation); same-clip restart refusal uses genuine Runtime with exact base/history and no-write checks. No disjoint merge success or installed/full qualification."
+      },
+      {
+        "exact_original_node_id": "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_refuses_a_clip_both_sides_changed",
+        "current_node_id": "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_refuses_a_clip_both_sides_changed",
+        "phase": "call",
+        "owner_at_base": "Agent",
+        "proof_ref": "sdk9_persistence_retained",
+        "retained_body_ast_sha256_prefix": "9cb7a13485b8b257",
+        "comparison_source_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+        "source_findings_ref": "sdk9_independent_0603",
+        "source_findings_location": "0603 log lines 7455-7500 (relevant caller equality), 7521-7550 (test-body equality); corrected 0619 controls membership.",
+        "authorization_scope": "Four storage lifecycle originals use the faithful file-backed fixture (history DTO, exact revision/publication pins, open_bundle validation); same-clip restart refusal uses genuine Runtime with exact base/history and no-write checks. No disjoint merge success or installed/full qualification."
+      },
+      {
+        "exact_original_node_id": "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+        "current_node_id": "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+        "phase": "call",
+        "owner_at_base": "Agent",
+        "proof_ref": "sdk9_persistence_retained",
+        "retained_body_ast_sha256_prefix": "6b1885acf3b9fea9",
+        "comparison_source_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+        "source_findings_ref": "sdk9_independent_0603",
+        "source_findings_location": "0603 log lines 7455-7500 (relevant caller equality), 7521-7550 (test-body equality); corrected 0619 controls membership.",
+        "authorization_scope": "Four storage lifecycle originals use the faithful file-backed fixture (history DTO, exact revision/publication pins, open_bundle validation); same-clip restart refusal uses genuine Runtime with exact base/history and no-write checks. No disjoint merge success or installed/full qualification."
+      }
+    ],
+    "identity_scheme": "No new AST/source audit performed. Retained 0603 body comparison uses SHA-256(ast.dump(ast.Module(body=function.body, type_ignores=[]), include_attributes=False)); its log emits only the first 16 hex digits, recorded explicitly as prefixes. Empty full-hash/file-hash/line columns in these nine CSV/JSON rows mean not re-derived; they do not assert unavailable 64-digit digests. Exact original/current selector and faithful fixture/source findings remain in hashed 0554/0603/0619 reports/logs.",
+    "production_caller_review": {
+      "authority": "Retained 0554/0603/0619 source findings only; review0631 passed the nine-node substantive delta but failed incomplete wire inventory. Metadata0636 separates requirements from exercise; no new source/execution or blanket acceptance.",
+      "caller": "Checkout.publish -> publish._commit_document -> sync._flush/submit -> Runtime commit; helper journal/capture paths and capture invocation/GenericPackHost findings retained in 0603.",
+      "CONTRACTINVENTORY": "agent-D32-current-node-reconciliation-H30-corrected.json#/CONTRACTINVENTORY",
+      "PROOF_FIELD_COVERAGE": "agent-D32-current-node-reconciliation-H30-corrected.json#/PROOF_FIELD_COVERAGE",
+      "limit": "Complete request/reply shapes are contract expectations. Retained SDK9 outcomes establish only the projections indexed by proof; no optional rationale/group_id, fields|atomic breadth, HTTP, every reply or live actor custody is inferred."
+    },
+    "credit_limit": "Exactly nine active SDK original call nodes close in this delta: capture 2, contiguous helpers 2, persistence 5. Other 258 node records, prior proof records and 60 mapping rows remain unchanged. The 24 unqualified SDK selectors and two schema inventory cases stay open; schema fix is owned separately by 0605. No aggregate, future CLI/labels/D09/restructure/schema/root/helper-neighbor/Farm/source-copy credit; no full267, current installed-head or blanket v2 acceptance claim."
+  },
+  "h32_mapping": {
+    "base_commit": "4421f421551b898e09276be824626877cb8fe007",
+    "historical_base_census_sha256": "6422ec5cd2f310a118b8d9e88f6ac3fe3cbb55d916655c7921e933c91235d07c",
+    "exact_count": 25,
+    "breakdown": {
+      "d09": 3,
+      "restructure": 7,
+      "normal_publication": 7,
+      "cli": 5,
+      "track_labels": 3
+    },
+    "exact_original_node_ids": [
+      "tests/integrations/test_d09_managed_scene_only.py::test_public_checkout_check_uses_retained_managed_scene_result",
+      "tests/integrations/test_d09_managed_scene_only.py::test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle[candidate]",
+      "tests/integrations/test_d09_managed_scene_only.py::test_saved_and_frozen_candidate_scene_only_use_real_managed_bundle[saved]",
+      "tests/sdk/test_timeline_restructure.py::test_cli_restructure_commits_the_complete_equivalent_bundle_and_followups",
+      "tests/sdk/test_timeline_restructure.py::test_restructure_reconciles_narration_without_republishing_the_cut",
+      "tests/sdk/test_timeline_restructure.py::test_restructure_retries_narration_before_a_flight_exists",
+      "tests/sdk/test_timeline_restructure.py::test_restructure_retries_the_original_commit_after_lost_ack",
+      "tests/sdk/test_timeline_restructure.py::test_restructure_reuses_an_existing_chapter_root",
+      "tests/sdk/test_timeline_restructure.py::test_three_way_merge_works_on_the_stored_form",
+      "tests/sdk/test_timeline_restructure_guarded_runtime.py::test_fixture_restructure_caller_refuses_mismatched_original_closure_without_writes[historical]",
+      "tests/sdk/test_timeline_normal_publish.py::test_nudge_disjoint_clips_merge_onto_peer_head",
+      "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_changed_key_payload_and_force_never_write",
+      "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_exact_retry_and_narration_resume[1]",
+      "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_exact_retry_and_narration_resume[2]",
+      "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_recovers_narration_before_flight",
+      "tests/sdk/test_timeline_publish_connection.py::test_a_publish_with_a_client_writes_through_that_client",
+      "tests/sdk/test_timeline_publish_connection.py::test_a_publish_with_no_client_writes_through_the_connection_it_opens",
+      "tests/packs/timeline/test_cli_assets.py::test_edit_replace_asset_and_swap_asset_forward_to_the_sdk",
+      "tests/packs/timeline/test_cli_edit_flags.py::test_edit_nudge_frames_set_and_close_gap",
+      "tests/packs/timeline/test_cli_edit_flags.py::test_voice_line_swap_reflows_and_reports",
+      "tests/packs/timeline/test_cli_voice_bindings.py::test_repeated_gap_flags_and_script_gap_override_preserve_sdk_rules",
+      "tests/packs/timeline/test_cli_voice_bindings.py::test_replace_insert_and_from_script_forward_existing_sdk_arguments",
+      "tests/packs/timeline/test_cli_native.py::test_track_label_dispatch_matches_native_capture[args0-\\u753b\\u9762 \\U0001f3ac]",
+      "tests/packs/timeline/test_cli_native.py::test_track_label_dispatch_matches_native_capture[args1-]",
+      "tests/packs/timeline/test_cli_native.py::test_track_label_dispatch_matches_native_capture[args2-None]"
+    ],
+    "identity_scheme": "Full SHA-256: file bytes and ast.dump(FunctionDef, include_attributes=False), UTF-8, including decorators/name. Intentional CLI/label migrations therefore have unequal AST hashes; scenario_mapping records them. Not the prior SDK9 hash-prefix scheme.",
+    "source_custody": {
+      "current_agent_source": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+      "count_base": "4421f421551b898e09276be824626877cb8fe007",
+      "astrid_tree_source": "7ebdb8673b44c989ef4b447c162927277e5efe80",
+      "astrid_tree_base": "7ebdb8673b44c989ef4b447c162927277e5efe80",
+      "all_astrid_bytes_equal": true,
+      "all_target_test_files_equal_to_2007": true,
+      "label_test_file_equal_from_9cd_to_base": true,
+      "method": "git diff --name-only of astrid from 2007 and 9cd to count base; each target test byte-compared to git show 2007. Read-only; no imports/execution."
+    },
+    "retained_sources": [
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D09-review-0601.md",
+        "sha256": "242e2972e0b805cebf3ce77237556a385a4aa690dffa20ed67c7691876be5cb5"
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-F-D09-invocation-return-2255.md",
+        "sha256": "2ae26aa5db3fb22ed61756533f83ffddc275ab104dadb2254d0ea056cf5783d9"
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-restructure-review-0602.md",
+        "sha256": "8a69e2dede5d102bc70c4d227d3c9964de70ab18419ecf78e3c5ed80facbf519"
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-F-G5-restructure-remainder-0557.md",
+        "sha256": "a43e3729a987817e093c62898a09aaa87e0b675057ff72b42a17713ef8944c71"
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-normal-publish-review-0601.md",
+        "sha256": "2ce0be032e0486b40997f7d0a8245f927e7f697433e1587818bc8a1561c26855"
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-F-normal-publish-remainder-0557.md",
+        "sha256": "af13021eb70f877900b962d99a9e66dafb8eeadf8e50c14c0beefa90315a1ca1"
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-CLI-whole-path-review-0601.md",
+        "sha256": "12d69ef9c834b3e148bd5c0e08431dce59290c212d744aa03c1f3810440accad"
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-CLI-remainder-0540.md",
+        "sha256": "8dadd7f82f542acd95b547f23d4cfe1a89dde91068dc0c541e9802ce5bf51754"
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-CLI-remainder-review-0544.md",
+        "sha256": "c52068035d991b25e5c0c5f0c0a0a0f4421c1295375efdaa8e7586864662e3fb"
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-CLI-source-review-0548.md",
+        "sha256": "73b8138ca04e9da0d0aac1939e907354cd2f59b8ee53f2396e67983bf16d4fe8"
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-F-track-label-review-0547.md",
+        "sha256": "f6bb055f6234d0ccd36defb67a1a771151618fb96c42e703fa10ee2caa86dc8b"
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/viewing-F-retired-callers-cli-0404.md",
+        "sha256": "8dae51e5863f75426a832d61af5289de867f875ecf9e9c1cbc18bfee6c7f1999"
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-label-credit-map-0622/report.md",
+        "sha256": "abd8e89006d89a8b82dcfb218b7f4cb5db5d28bf60813a22a41c6d6dba465ea1"
+      },
+      {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-H32-credit-map-0626.md",
+        "sha256": "1dcd30fea05c732039141441c5a82cfe6739560c2d97f93393d778f1172fb54b"
+      }
+    ],
+    "production_callers": {
+      "d09": "Checkout.open -> Checkout.check -> _managed_scene_spans -> managed rendering.timeline_visualize Scene invocation",
+      "restructure": "cli_working._cmd_restructure -> Checkout.publish(restructure=True) -> _commit_restructure -> TimelineSession.submit -> canonical commitTimeline route",
+      "normal_publication": "_PublishMixin._commit_document -> TimelineSession.submit/flush -> RemoteTimelines.commit -> WorkspaceClient.commit_timeline",
+      "cli": "_cmd_edit -> _edit_checkout/Checkout.load -> Checkout.save (local staging) -> printed timeline_document.main or mounted commit --file -> emitter -> TimelineSession._flush -> WorkspaceClient.commit_timeline -> Runtime coordinator/store",
+      "track_labels": "_cmd_apply -> commit_edit(sheet=True) -> NativeSheet.apply -> TimelineSession.commit_many -> generated commit_timeline -> Runtime preview/accept"
+    },
+    "limits": {
+      "d09": "Retained source-profile behavior used Runtime 8ea0766f5e9fb23cea26c7398770a8aaac06b258. Runtime 1d9ddba was import-probed only; no current-1d9 execution, HTTP/C0 or installed-profile claim.",
+      "restructure": "Seven original source-mode outcomes only. Production caller and request/reply surfaces traced statically; no installed HTTP, full-suite, browser, live-socket or whole-G5/P1 qualification.",
+      "normal_publication": "Seven exact original PASS outcomes only, not a PASS for the assigned eight-case qualification. Complete-closure/followups no_renderer original remains OPEN: failure precedes Runtime submission. No HTTP, installed or complete-reply qualification.",
+      "cli": "Five unit/staging originals only: three mock SDK collaborators and two --file local cases. Source review 0601 traces the final production publication funnel and withdraws the earlier missing-producer inference, but does not turn these units into HTTP/C0 or every-reply proof. Pre-base fixture path and two candidate-guidance assertions are explicitly mapped, not byte-identical originals.",
+      "track_labels": "Migrated connected sheet/apply scenarios only; source.via=sheet, not retired CLI dispatch. Unicode, empty, clear/remove, golden, pub1 and final state are preserved. Receipt covers the entire byte-identical 11-case module; no aggregate 71+5+53 inference, HTTP/C0 or every history/undo/attribution-field claim."
+    },
+    "raw_custody_limit": "Primary runtime/viewing worker raw JUnit/log directories are absent locally; exact retained author receipts and independent reviews are the read/hash sources. No primary raw JUnit digest is fabricated.",
+    "sdk9_gate": "SDK9 independent0631: overall metadata FAIL; exact nine-node substantive delta, preservation, counts, mapping, scope and full-suite honesty PASS. The missing contract inventory is corrected in metadata0636; combined SDK9+H32 package review remains pending. No independent approval of this correction is asserted.",
+    "historical_counts": [
+      {
+        "closed": 172,
+        "open": 95
+      },
+      {
+        "closed": 179,
+        "open": 88
+      },
+      {
+        "closed": 201,
+        "open": 66
+      },
+      {
+        "closed": 202,
+        "open": 65
+      },
+      {
+        "closed": 211,
+        "open": 56
+      }
+    ],
+    "non_credit_dispositions_context": "Existing non_credit_dispositions and prior mapping sections are preserved historical decisions. The old three-label exclusion applied to the prior 30-row mapping, superseded only for these three exact rows by H32; old D40 candidate exclusion remains distinct from observed 0551 credit.",
+    "farm_limit": "UNRESOLVED: Farm26511 source/head mismatch and 96 possible closed-node failures; no retrospective Farm credit or broad full PASS.",
+    "remaining_exact_original_node_ids": [
+      "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons",
+      "tests/sdk/test_timeline_clip_scalar_provider.py::test_provider_unchanged_publication_and_aba_refuse_old_inverse[False-occurrence:f2-occurrence/clip:f2-agent-clear-clip-asset]",
+      "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
+      "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-False-child]",
+      "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-True-child]",
+      "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-False-child]",
+      "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-True-child]",
+      "tests/sdk/test_timeline_commit_provider_scalar.py::test_occurrence_inverse_reuses_original_images_and_preserves_later_sibling_pins",
+      "tests/sdk/test_timeline_composed_schema.py::test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden",
+      "tests/sdk/test_timeline_current_union_schema.py::test_closed_union_operation_inventory_is_exactly_the_supported_cohort",
+      "tests/sdk/test_timeline_helper_capture.py::test_conflicts_and_uncaptured_edits_never_write[same]",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[collection]",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[same]",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[word-source]",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[+1s]",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[None]",
+      "tests/sdk/test_timeline_helper_capture.py::test_genuine_anchor_capture_has_exact_source_scope_and_base_pair",
+      "tests/sdk/test_timeline_helper_capture.py::test_helper_lost_ack_retries_exact_request",
+      "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[after]",
+      "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[commands]",
+      "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[hash]",
+      "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[reads]",
+      "tests/sdk/test_timeline_helper_capture.py::test_nudge_restart_merges_peer_other_clip",
+      "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_preserves_complete_closure_and_followups",
+      "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-0]",
+      "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-1]",
+      "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head",
+      "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param",
+      "tests/test_generic_host.py::test_structure_pack_members_survive_harvest_cleanup_and_reopen",
+      "tests/timeline/test_authoring_media.py::test_document_publish_forwards_new_stale_head_to_runtime"
+    ],
+    "production_contract_scope": {
+      "requirement": "Acceptance includes the production caller uses it; retained static traces remain in production_callers, and finite outcomes retain their existing limits.",
+      "CONTRACTINVENTORY": "agent-D32-current-node-reconciliation-H30-corrected.json#/CONTRACTINVENTORY",
+      "PROOF_FIELD_COVERAGE": "agent-D32-current-node-reconciliation-H30-corrected.json#/PROOF_FIELD_COVERAGE",
+      "evidence_limit": "Inventory is specification, not observed request/reply shape. Restructure omits optional rationale/group_id. D09, local/mock CLI, labels and seven normal-publication PASS selectors do not prove all fields/branches, HTTP or live actor custody. No schema/client/API/executor/M5 change."
+    }
+  },
+  "CONTRACTINVENTORY": "agent-D32-current-node-reconciliation-H30-corrected.json#/CONTRACTINVENTORY",
+  "PROOF_FIELD_COVERAGE": "agent-D32-current-node-reconciliation-H30-corrected.json#/PROOF_FIELD_COVERAGE",
+  "metadata0636": {
+    "scope": "Metadata-only correction of SDK9review0631; cumulative 236 closed / 31 open / 267 total and 94 mapping members unchanged.",
+    "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-count-SDK9-review-0631/report.md",
+    "review_sha256": "61be89c19ca8a2e4e539d3862954b79ec2a73727ccd274908764392cd1bd0b89",
+    "disposition": "SDK9 independent0631: overall metadata FAIL; exact nine-node substantive delta, preservation, counts, mapping, scope and full-suite honesty PASS. The missing contract inventory is corrected in metadata0636; combined SDK9+H32 package review remains pending. No independent approval of this correction is asserted.",
+    "fix": "Explicit complete request/reply CONTRACTINVENTORY, separate conservative coverage for all 38 prior proof records; no new behavior proof, nodes, receipts or pass credit.",
+    "preservation": "All node/proof records unchanged; original fields of all 94 CSV/JSON mapping members unchanged. Only contract_inventory_ref metadata link is added to mapping rows.",
+    "pending": "Independent combined SDK9+25H32 review of this cumulative package.",
+    "unavailable_retained_metadata": [
+      {
+        "proof_ref": "sdk9_persistence_retained",
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-persistence-fixture-0008/log.txt",
+        "limit": "Historical stored log hash is preserved in the unchanged proof record, but this log is absent locally and was not rehashed. Durable 0008/0037 reports and corrected independent source/receipt findings remain the available basis."
+      }
+    ]
   }
 }
