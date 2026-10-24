@@ -1,11 +1,11 @@
-<!-- main | 2026-10-24T07:01:44Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 17 | status age 0m -->
-# runtime board, 2026-10-24T07:01:28Z
+<!-- main | 2026-10-24T07:04:22Z | dispatcher heartbeat 5s | live 4 (sol 0, luna 4, other 0) | busy30 17 | status age 0m -->
+# runtime board, 2026-10-24T07:03:52Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | 34eac0041; 62c454ac0 |
 | U1/U1b | Upstream and schema 32 | Luna / Sol | Upstream baseline | merged | U1b review 1005; service 32328 | Integrated proof passed 456 cases; 12 skips and two configured exclusions remain recorded. | 27f0306b9; 4e56253c6 |
-| U1c-draft | Join reviewed upstream at freeze | Luna | D48 opens integration merge | doing | Reviews 0056 and 0544; join resume 0657 | Draft 40427 is reviewed. Current join preserves readiness, D39, R0 and all current authority fixes; live-tip check requested from lead. | 40427 / current 1d9 |
+| U1c-draft | Join reviewed upstream at freeze | Luna | D48 opens integration merge | review | Reviews 0056 and 0544; join 0657; review 0703 | Current join 551c preserves all protected blobs. Targeted 244 passed; two socket cases rerun under --net in independent review 0703. | 40427 / current 1d9 |
 | R0-public-export | Export DocPatchArgs at package root | Luna | P1 GO | merged | Author 0049; review 0052; integrated 0057 | Actual 458595850: 144 passed in 16.25 s; wire probe, generation and Ruff passed. [Proof](../../design/runtime-R0-public-export-integrated-0057.md) | 458595850 / cf74f3e6f |
 | F-runtime-full | Close retained full-suite failures | Service / Luna | Independent accounting passed | merged | Original29085; review0524 PASS | Zero of 36 original failures open. All 36 closed; zero unaccounted. [Accounting](../../design/runtime-D43-final-accounting-review-0524.md) | 1d9ddba54 current scope |
 | R2r | History attribution and native authority | Luna / Sol | C0 and U1 | merged | Prior independent reviews | All source-specific results retained in [evidence](../../design/runtime-prior-proof-evidence-0051.md). | 21482a416 and later |
@@ -64,8 +64,8 @@
 | R2r-source-copy-guards | Classify two retained source-copy guards | Agent Sol / Luna | Independent result review passed | merged | Agent0502; review0511 PASS | Exact two originals passed in 20.90 seconds on Agent 9cd and Runtime 2b49. All 54 guards retained. Capture and HTTP limits stay explicit. | Source unchanged |
 | U2c-child-proof | Identify supported activation child proof | Luna / Luna | Source facts independently reviewed | merged | Facts0425; independent0430 PASS | Producer is absent in Agent RunPod adapter. Exact owner and custody seam returned; Runtime guard unchanged. | Source facts only |
 | F-CLI-remainder | Preserve five original CLI scenarios | Luna / Sol | Whole-path review passed | merged | Author 0540; whole-path Sol 0601 PASS | Five units passed; production final save uses v2. Agent owns exact credit. [Review](../../design/runtime-CLI-whole-path-review-0601.md) | Agent 2007 unchanged |
-| U1c-freeze-recheck | Preserve current upstream join seams | Luna | D48 integration join | doing | Review 0544 PASS; join resume 0657 | Exact reviewed 795 handoff is ready; join worker preserves history and five protected D39/R0 paths. | Draft 40427 |
-| R0-D39-generation-dry | Regenerate clients after upstream join | Luna | U1c current merge | blocked:runtime | Dry 0540; review 0545 PASS | Dry run reproduced all outputs; 147 client and 16 response cases passed. Current generation follows U1c join without adoption yet. | fe637 dry only |
+| U1c-freeze-recheck | Preserve current upstream join seams | Luna | D48 integration join | review | Review 0544 PASS; join 0657; review 0703 | Current join 551c preserves all protected blobs. Targeted 244 passed; two socket cases rerun under --net in independent review 0703. | Draft 40427 |
+| R0-D39-generation-dry | Generate D39 producer on current upstream | Luna | U1c merge before producer merge | doing | Dry review 0545; current author 0705 | Generation starts on join 551c during U1c review. Current checks and independent review follow; no consumer adoption yet. | Base 551c / dry fe637 |
 | F-D09-remainder | Map three retained managed-scene originals | Luna / Luna | Independent mapping passed | merged | Author 0557; review 0601 PASS | Exact retained three-case PASS on Runtime 8ea; current 1d9 import probe is separate. [Review](../../design/runtime-D09-review-0601.md) | Agent 2007 unchanged |
 | F-G5-restructure-remainder | Qualify seven restructure originals | Luna / Luna | Independent result review passed | merged | Author 0557; review 0602 PASS | Seven exact originals passed in 54.26 seconds on Agent 2007 and Runtime 1d9dd. [Review](../../design/runtime-restructure-review-0602.md) | Agent 2007 unchanged |
 | F-normal-publish-remainder | Qualify eight publication originals | Luna | Integrated result review passed | merged | Author 0640; independent 0645 PASS | Eight exact originals qualified with separate source scopes. Last closure case passed 6.34 s on Agent 1f15; no predicates changed. [Review](../../design/runtime-normal-publish-result-review-0645.md) | Agent 1f15 / Runtime 1d9 |
@@ -74,7 +74,7 @@
 | F-helper-originals | Qualify fourteen retained helper rows | Luna | Settled D23 child-word scope | gated:D23 | Author 0622; review 0627; Agent 0640 | Thirteen passed. Remaining child-word case is D23 deferred, unchanged and open; no fixture binding or timing backend invented. | Agent bb50 unchanged |
 | F-R2-root-originals | Qualify nine retained root cases | Luna | Independent exact result review passed | merged | Author0622; review0625 PASS | Nine originals passed; source only. Pre/post capture limit disclosed. [Review](../../design/runtime-R2-root-review-0625.md) | Agent bb50 unchanged |
 | R2r-shared-inverse-auth | Verify shared inverse source identities | Sol / Luna | Independent security review | review | Author 0647; review 0701 | New controls 177 pass; four shared positives pass. Frozen diagnostics still have six failures requiring independent classification. | 35764ce10 held |
-| FREEZE | Coordinate final merge and proof sequence | Runtime manager | D48 and D49 | doing | Runtime join 0652; peer lane owners | Runtime join resumes targeted proof; D39 next. Agent and App drafts requested; Composition check requested. Final tuple, gates, full suites and ZIP wait. | Exact proof pins unchanged |
+| FREEZE | Coordinate final merge and proof sequence | Runtime manager | D48 and D49 | doing | Runtime join 0652; peer lane owners | Runtime join review 0703; D39 next. Agent and App drafts requested; Composition check requested. Proof map 0657 prepares final gates; final tuple, full suites and ZIP wait. | Exact proof pins unchanged |
 
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
@@ -94,7 +94,7 @@ Later: D46 closes U2c; no new relay or provider custody backend. Its upstream co
 
 
 
-Next ready: No ready task waiting. Runtime join 0652, shared inverse Sol 0647, dependency first fix 0654 and SDK result review 0654 are assigned. D39 generation follows the join.
+Next ready: No ready task waiting. Current upstream review 0703 and two security reviews 0701 are assigned. D39 generation follows U1c merge. Agent owns persistence fixture handback.
 Later: Viewing peer0624 reports its partial ABA repair and remaining native-stage address mismatch. Viewing owns source and review; no Runtime author or body is requested.
 Blockers: Farm — corrected full-suite host setup and genuine parent plus sanitized child import preflight remain unverified; reviewed packet0635 is published.
 Blockers: Runtime kit — Agent support and reopen need reviewed dependency seeding and authenticated local artifacts. First fix 0654 corrects failed source review; no retry yet.
@@ -105,3 +105,5 @@ Runtime full venue: main test service. Original retained census: 0 of 36 open, w
 Later: Agent0646 asks for normal maker progress and failure retention after exact child packet0642. Reserve that source seam to the current dependency maker owner after first fix0645/0654; no competing make-child-venv author or new build retry.
 
 U1c join0652 stop requested: manager brief had a standalone dot after targeted filenames, triggering broad repository collection. No full result credited. Preserve WIP and merge ancestry, then resume only eight named files with explicit command and JUnit destination.
+
+Freeze Proof handback0657: owner App service with Proof verdict; report-only gate map ap2-P1-P5-final-gate-map-0657 is doing. Current pinned P2/P3 pair submitted06:47:59 uses App663 product tree9b810, Agent079, Runtime37eb; IDs23809/9310 remain unique and pending. Integration joins do not change these inputs.
