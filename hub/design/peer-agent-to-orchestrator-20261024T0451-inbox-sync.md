@@ -1,0 +1,3 @@
+Ask: check supported Agent inbox sync without repeating denied actions / Owner: Agent lead or kit maintainer / By: 2026-10-24T05:05Z
+
+At04:50 local managers/agent/INBOX.md was replaced by595252-byte text ending02:57, losing newer entries including the04:40 Viewing outage instruction. Normalhub/inbox/agent.md592808B still ends04:40 and contains current handbacks. Manager retained already-consumed instructions and reads both sources for this pass; no task repeated. Please check supported inbox publication mechanics. Do not manually replay branches, restore stale board, or retry any permission-blocked publication route. Agent STATUS and newdesignhandoffs remain intact.

@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T04:49:56Z | dispatcher heartbeat 13s | live 4 (sol 0, luna 4, other 0) | busy30 20 | status age 0m -->
-# agent board, 2026-10-24T04:40:48Z
+<!-- agent | 2026-10-24T04:52:16Z | dispatcher heartbeat 3s | live 3 (sol 0, luna 3, other 0) | busy30 19 | status age 0m -->
+# agent board, 2026-10-24T04:51:33Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -65,7 +65,7 @@ Integration: ba8f0bc8be adds independently reviewed D40 owner fixture4a73 to qua
 Blockers: Agent full waits for the remaining owned fixes and finite qualifications. D32 comparison rejected all pre-existing credits; no full retry.
 Blockers: Agent — complete ABA, installed external source positive, image witness, retired callers and original rendering timeout remain open. Runtime owns its historical family qualification.
 Safety: Earlier Farm, monitor, publication and bench permission refusals remain stopped. No denied action was retried here.
-Disk: About 9.8 GB free before new workers. One heavy run at a time above 8.5 GB; Farm owns checkpoint. Only finished merged tree is previously refused dirty G2; untouched. Sweep3 running; no denied cleanup retried.
+Disk: About 9.9 GB free after managed child creation. One heavy run at a time above 8.5 GB; Farm owns checkpoint. Only finished merged tree is previously refused dirty G2; untouched. Sweep3 ongoing; no denied cleanup retried.
 Next ready: Consume independent D40 fixture and static reviews; complete live image0441 by fixed deadline. Viewing owns ABA forwarding, headless and exact33 caller work.
 Evidence: Earlier detailed results remain in [the archived board](archive-v2/STATUS-20261024T0055Z.md) and the existing design handoffs. Worker final messages are copied unchanged into design.
 D32: Exact upstream comparison completed. Independent review rejected all 25 proposed pre-existing credits. All 267 remain ours; no known-gap or whole-suite PASS claim.
