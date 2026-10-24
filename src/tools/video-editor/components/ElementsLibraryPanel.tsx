@@ -67,8 +67,9 @@ export function ElementsLibraryPanel({
     setBusyId(element.id);
     setMessage(null);
     try {
+      const capturedAdapter = adapter.captureForTurn();
       const result = element.kind === 'transition'
-        ? await adapter.execute({
+        ? await capturedAdapter.execute({
             name: 'timeline.apply_transition',
             project,
             timeline,
@@ -82,7 +83,7 @@ export function ElementsLibraryPanel({
               ...(element.packId ? { packId: element.packId } : {}),
             },
           })
-        : await adapter.execute({
+        : await capturedAdapter.execute({
             name: 'timeline.apply_element',
             project,
             timeline,
