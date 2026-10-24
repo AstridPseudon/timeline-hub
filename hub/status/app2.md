@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T06:02:36Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 1m -->
-# app2 board, 2026-10-24T06:01Z
+<!-- app2 | 2026-10-24T06:04:38Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 0m -->
+# app2 board, 2026-10-24T06:04Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -9,7 +9,7 @@
 | P4 | CLI,Python,sheet,ten notes and rerun | Sol; Luna; service | Recorded tuple | merged | 17739;28012;11615 | DONE. Ten notes as one commit,per-step undo and redo,restart,show/history and200-409-200 conflict rerun passed. | Agent543d andf6cda; Runtimea5d |
 | readiness-after-bootstrap | Qualify mounted readiness | App source; Proof review | D45 leaves passed | merged | App0446; Proof0508 and0513 | Both actual readiness leaves passed. P3 test16.7 seconds; process35.9 seconds. Memo is deferred. | Appc0fe; Agent079; Runtime37eb |
 | P2 | Eight original gestures | App service; Proof verdict | App real caller repairs | blocked:app | App13583; Proof0508 and0513 | NO-GO. Exit1/405s; zero passed,three failed,five not run. Native21/history and mounted readiness passed. | Appc0fe; Agent079; Runtime37eb |
-| P2-element | Catalog capture and parameter basis | App Luna and Sol | Cumulative independent reviews | review | Catalog review0549; params review0554 | Catalog30 and parameter284 plus9 mounted tests passed for authors. Reviews challenge original tile and real owner authority. No live credit. | Branches only |
+| P2-element | Exact motion catalog and parameter basis | App Sol; independent Luna | Catalog0549 FAIL; params0554 PASS | doing | Catalog Sol and whole path0557; params0536 | Catalog must use original am-burst and preserve opaque registry field. Parameter284 plus9 mounted tests passed review; merge queued. | Catalog held; params merging |
 | P2-parent | Preserve pointer move data and basis | App Sol; Luna review | Reviews0536 and0545 PASS; home receipt | merged | Author0525; reviews0536 and0545 | Faithful witness three PASS;273 plus161 tests,three types and lint passed. Optional annotation forwarding qualified. Integrated join pending. | 5e242c64e3 to7551bb2146 |
 | P2-popup-track | Preserve valid raw popup ADD track | App Luna; Luna review | Cumulative0547 PASS; home receipt | merged | Return0532; review0547 | Real mounted occupiedV2 path passed180 tests on Node20 and22,three types and lint. Disabled and stale inputs refused. Join pending. | 79cd94f7e0 |
 | P2-created-oracle | Exact ADD creation claims | Luna; independent Luna | Review0526 and App receipt | merged | Author0521; review0526 | Exact ordered asset and clip claims. Three types,lint,list and provider36 passed. Home tree equals reviewed tree; source only. | 2972a7c4c922 to5f43d9e86a |
@@ -33,7 +33,7 @@ P2 RESULT NO-GO. Actual app-readiness-D45-final-caller-sol-0446-full-e2e-three-p
 
 P3 RESULT NO-GO. Actual app-readiness-D45-final-caller-sol-0446-ap2-P3-gate5-h6-0348-1024045333-4065: exit1/277s,original Gate5 zero PASS,one FAIL. First reset assumes5-to0 against fresh clip0/reference15 and emitted noPOST; exact internal return is inferred. Native21/history and readiness passed. Orchestrator05:45 requires the exact serial predecessor mounted UI0-to5 and its POST200, with the original reset200 and every downstream assertion byte-identical. No moved state may be seeded or fabricated.
 
-Blockers: App must complete catalog and parameter reviews,then qualify the joined source and caller stage retention for P2/P3.
+Blockers: App must repair the exact motion catalog path,merge reviewed parameters,then qualify joined source and caller stage retention.
 Blockers: App normal home queue must merge independently reviewed Gate5 setup bb5ee.
 Blockers: Farm F-final waits for P2/P3,remaining Agent D32 fixes and the final upstream freeze.
 Next ready: Sol setup0543 is complete. Independent final review0553 PASS is complete; normal remote own-only merge bb5ee is queued; no new original run or memo prerequisite.
@@ -54,4 +54,4 @@ Safety: Prior process,reference,file,MONITOR,keep-awake,publication,graph,locked
 
 Disk:06:00 available8697212928 bytes. At05:42 supported sweep3 exited0,removed zero directories,free8167MiB. Broken-pipe listing noise was not a permission refusal. All retained finished worktrees have KEEP; completed0531/0537/0539 worktrees were already absent on normal recycle checks. All Proof workers are finished; no new local heavy run or disk-only worker. No compact retry,new local heavy run or disk-only worker.
 
-Pass:06:00. All1251 Proof workers checked; none running or stalled. Final0553 PASS is copied byte-exact,only ownbb5ee verified,and normal App merge request queued. No home receipt yet. Four peer boards/header reread. Parent7551 and popup79cd independent source merges clear their old waits; catalog0549 and parameter0554 reviews remain active. Stage-retention0542 has a real same-root versus separate-root control; App next caller owns adoption,no historical D45 loss attribution. INBOX consumed through671593 bytes. Every ask is represented above or under Later; no ready Proof task is waiting. All retained worktrees have KEEP,no eligible recycle and no denied cleanup retry. Next full pass06:10; consume home receipt or new peer work immediately.
+Pass:06:00. All1251 Proof workers checked; none running or stalled. Final0553 PASS is copied byte-exact,only ownbb5ee verified,and normal App merge request queued. No home receipt yet. Four peer boards/header reread. Parent7551 and popup79cd independent source merges clear their old waits; catalog0549 failed exact journey fixture fidelity; unique AppSol0557 and whole-path0557 are dispatched. Parameter0554 passed and its normal merge is queued. Stage-retention0542 has a real same-root versus separate-root control; App next caller owns adoption,no historical D45 loss attribution. INBOX consumed through671593 bytes. Every ask is represented above or under Later; no ready Proof task is waiting. All retained worktrees have KEEP,no eligible recycle and no denied cleanup retry. Next full pass06:10; consume home receipt or new peer work immediately.
