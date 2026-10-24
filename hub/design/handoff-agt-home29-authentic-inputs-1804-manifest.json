@@ -1,0 +1,62 @@
+[
+  {
+    "source": "workers/agt-F-D72-approval-security-1726/report.md",
+    "published": "design/handoff-agt-F-D72-approval-security-1726-report.md",
+    "bytes": 1462,
+    "sha256": "478b08d0567b2a45ae70fac64a40078424979f33ca243c84425307c174fe5c59"
+  },
+  {
+    "source": "workers/agt-F-D72-approval-security-1726/durableORCHevidence/targeted.xml",
+    "published": "design/handoff-agt-F-D72-approval-security-1726-targeted.xml",
+    "bytes": 1969,
+    "sha256": "afb3dc99fa9a7ae28ede67d4496daade8fe89dfaf03cbe412f8bd7902543f943"
+  },
+  {
+    "source": "workers/agt-F-D72-approval-security-1726/durableORCHevidence/no_approval.xml",
+    "published": "design/handoff-agt-F-D72-approval-security-1726-no_approval.xml",
+    "bytes": 382,
+    "sha256": "fee0035533ede8b6f5183ee3c8c542dbadc2bbc36240af8dc9e52bccf77ddc52"
+  },
+  {
+    "source": "workers/agt-F-D72-sdk-review-1730/report.md",
+    "published": "design/handoff-agt-F-D72-sdk-review-1730-report.md",
+    "bytes": 2030,
+    "sha256": "759afc1f68f0233e77f8300502fb04ce919926ac4c539988f4801ad49b5c85a6"
+  },
+  {
+    "source": "workers/agt-F-D72-sdk-review-1730/evidence/targeted.xml",
+    "published": "design/handoff-agt-F-D72-sdk-review-1730-targeted.xml",
+    "bytes": 12164,
+    "sha256": "c66fbecf7bd7a5196dc84690d755b9ea4e29479924f82585020beae7f0c2d872"
+  },
+  {
+    "source": "workers/agt-F-D72-sdk-review-1730/evidence/merge-conflict-control.xml",
+    "published": "design/handoff-agt-F-D72-sdk-review-1730-merge-conflict-control.xml",
+    "bytes": 514,
+    "sha256": "ad3e401f8b9d17ac6d85f503b357b869c27ae865b60b1b158b4bbe851823e1e0"
+  },
+  {
+    "source": "workers/agt-F-D72-sdk-review-1730/evidence/restart-disjoint-control.xml",
+    "published": "design/handoff-agt-F-D72-sdk-review-1730-restart-disjoint-control.xml",
+    "bytes": 494,
+    "sha256": "4b5261508a4cc8d0519e5151b0971aec8b8de10d6e80f3a2cadb5b71d8764470"
+  },
+  {
+    "source": "workers/agt-F-D72-sdk-review-1730/evidence/negative.xml",
+    "published": "design/handoff-agt-F-D72-sdk-review-1730-negative.xml",
+    "bytes": 820,
+    "sha256": "8f3c20cc95e8773c322fb6fed46ff56c7f3ad841ef87a5774a9537cfcf5e0508"
+  },
+  {
+    "source": "workers/agt-R2-element-ranges-cause-1800/report.md",
+    "published": "design/handoff-agt-R2-element-ranges-cause-1800-report.md",
+    "bytes": 2284,
+    "sha256": "5013d5a987f06b834a8c99377e1c697a7b9d699e463c6029fba510a0b2ceac50"
+  },
+  {
+    "source": "workers/agt-F-D72-home-1740/log.txt",
+    "published": "design/handoff-agt-D72-home-1740-original-transcript.txt",
+    "bytes": 1613203,
+    "sha256": "9b3fcdf67d90d45ee0820baa122f51d4c579dc07ae4521bb733f30d35b42d906"
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "source": "workers/agt-F-D72-home-1740/log.txt",
+  "source_sha256": "9b3fcdf67d90d45ee0820baa122f51d4c579dc07ae4521bb733f30d35b42d906",
+  "line_start": 5349,
+  "line_end": 5379,
+  "raw_command_sha256": "bd205b7749676f071250276a67c5aa7e1409bd131b8ffaec79635d34361f6769",
+  "derived_nodeids_sha256": "ca66901ac3e06c5a86b98df514b8b12de4586a2f333bdd5c18b7f8e505285fdd",
+  "count": 29,
+  "limit": "No original selector file was emitted. Exact node strings extracted from genuine executed command transcript; no outcomes reconstructed."
+}

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="10" time="29.408" timestamp="2026-10-24T17:31:42.570066+00:00" hostname="vm"><testcase classname="tests.sdk.test_timeline_checkout" name="test_three_way_merges_disjoint_edits_and_refuses_overlapping_ones" time="0.153" /><testcase classname="tests.sdk.test_timeline_persistence" name="test_publish_after_a_restart_merges_other_clips_onto_the_moved_head" time="4.619"><failure message="test_timeline_persistence.Refused: not published: someone published (candidate.timing: missing exact word binding for ('occ-A', 'A', 'a-rocket').on)">self = &lt;astrid.sdk.timeline.sync.TimelineSession object at 0x7fc2a34ad2b0&gt;
+
+    def _flush(self, *, idempotency_key=None, dry_run=False, via="python", prepare=None):
+        with self.outbox.locked():
+            state = self._state()
+            if prepare is not None:
+                prepare(state)
+            flight = state["flight"]
+            if _flight_kind(flight) == "assembly-admission":
+                raise TimelineEditError("retry the original assembly admission before flushing commands")
+            if flight is None:
+                if not state["pending"]:
+                    raise TimelineEditError("no pending timeline commands")
+                body = {"api_version": 1, "project_id": self.project_id, "timeline_id": self.timeline_id,
+                        "base_revision_id": state["base"]["revision_id"],
+                        "base_publication_id": state["base"]["publication_id"],
+                        "commands": copy.deepcopy(state["pending"]), "source": {"via": via}, "dry_run": dry_run}
+                if 'rationale' in state:
+                    body['rationale'] = state['rationale']
+                body.update(copy.deepcopy(state.get("commit_options", {})))
+                key = idempotency_key if idempotency_key is not None else f"timeline-edit-{uuid.uuid4().hex}"
+                if key == state.get("preview_key"):
+                    raise TimelineEditError("use a fresh key after a preview")
+                flight = {"path": self.path, "body": request_bytes(body).decode(), "key": key,
+                          "count": len(state["pending"]), "fence": uuid.uuid4().hex}
+                state["flight"] = flight
+                self.outbox.write(state)
+            body = self._flight_body(state, flight, idempotency_key, dry_run)
+            if "fence" not in flight:  # Preserve requests persisted before fencing was added.
+                flight["fence"] = uuid.uuid4().hex
+                self.outbox.write(state)
+            flight = copy.deepcopy(flight)
+        try:
+&gt;           result = _response(self.client.timelines.commit(
+                self.project_id, self.timeline_id, body, idempotency_key=flight["key"],
+            ))
+
+astrid/sdk/timeline/sync.py:549: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+result = DomainResult(ok=False, data=None, error=ErrorObject(code='conflict', message="candidate.timing: missing exact word bin...tion_id': 'txn-72182c99f841478e991417b63ba67176'}, 'conflicts': []}), receipt=None, idempotency_key='persistence-test')
+
+    def _response(result):
+        if not result.ok:
+            error = result.error
+&gt;           raise WorkspaceClientError(0, error.code, error.message, dict(error.details))
+E           astrid.sdk.workspace_client.WorkspaceClientError: candidate.timing: missing exact word binding for ('occ-A', 'A', 'a-rocket').on
+
+astrid/sdk/timeline/sync.py:54: WorkspaceClientError
+
+The above exception was the direct cause of the following exception:
+
+candidate = {'bundle': {'base_parent': {'content_digest': 'sha256:46768762801b98888ea8ab1aab615b37d5458c186298d04fecf2eac14c5dbed7...b580/pytest-of-root/pytest-1/test_publish_after_a_restart_m0/data/drafts/d0fb445c4c5c4a21a28e8934788b7148/t/main.json'}
+
+    def publish_candidate(candidate):
+        from astrid.sdk.timeline.sync import CommitConflict
+    
+        bundle = candidate["bundle"]
+        saved_path = candidate.get("path")
+        checkout = Checkout.load(saved_path) if saved_path else Checkout(bundle)
+        assert checkout.bundle == bundle
+        try:
+&gt;           result = checkout.publish("persistence test", client=client, idempotency_key="persistence-test")
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/sdk/test_timeline_persistence.py:420: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/sdk/timeline/publish.py:145: in publish
+    receipt = self._commit_document(stored, message, idempotency_key=idempotency_key, client=client)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/publish.py:335: in _commit_document
+    result = session.submit(commands, label=message or "Timeline edit",
+astrid/sdk/timeline/sync.py:516: in submit
+    return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, prepare=prepare)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;astrid.sdk.timeline.sync.TimelineSession object at 0x7fc2a34ad2b0&gt;
+
+    def _flush(self, *, idempotency_key=None, dry_run=False, via="python", prepare=None):
+        with self.outbox.locked():
+            state = self._state()
+            if prepare is not None:
+                prepare(state)
+            flight = state["flight"]
+            if _flight_kind(flight) == "assembly-admission":
+                raise TimelineEditError("retry the original assembly admission before flushing commands")
+            if flight is None:
+                if not state["pending"]:
+                    raise TimelineEditError("no pending timeline commands")
+                body = {"api_version": 1, "project_id": self.project_id, "timeline_id": self.timeline_id,
+                        "base_revision_id": state["base"]["revision_id"],
+                        "base_publication_id": state["base"]["publication_id"],
+                        "commands": copy.deepcopy(state["pending"]), "source": {"via": via}, "dry_run": dry_run}
+                if 'rationale' in state:
+                    body['rationale'] = state['rationale']
+                body.update(copy.deepcopy(state.get("commit_options", {})))
+                key = idempotency_key if idempotency_key is not None else f"timeline-edit-{uuid.uuid4().hex}"
+                if key == state.get("preview_key"):
+                    raise TimelineEditError("use a fresh key after a preview")
+                flight = {"path": self.path, "body": request_bytes(body).decode(), "key": key,
+                          "count": len(state["pending"]), "fence": uuid.uuid4().hex}
+                state["flight"] = flight
+                self.outbox.write(state)
+            body = self._flight_body(state, flight, idempotency_key, dry_run)
+            if "fence" not in flight:  # Preserve requests persisted before fencing was added.
+                flight["fence"] = uuid.uuid4().hex
+                self.outbox.write(state)
+            flight = copy.deepcopy(flight)
+        try:
+            result = _response(self.client.timelines.commit(
+                self.project_id, self.timeline_id, body, idempotency_key=flight["key"],
+            ))
+        except Exception as exc:
+            details = getattr(exc, "details", {})
+            if isinstance(details, dict) and details.get("status") in {"conflict", "refused", "invalid"}:
+                failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
+                with self.outbox.locked():
+                    state = self._state()
+                    if state["flight"] == flight:
+                        self._flight_body(state, flight, idempotency_key, dry_run)
+                        state["conflict"] = failure
+                        self.outbox.write(state)
+&gt;               raise CommitConflict(failure) from exc
+E               astrid.sdk.timeline.sync.CommitConflict: candidate.timing: missing exact word binding for ('occ-A', 'A', 'a-rocket').on
+
+astrid/sdk/timeline/sync.py:562: CommitConflict
+
+The above exception was the direct cause of the following exception:
+
+world = namespace(tmp=PosixPath('/tmp/w-394126b580/pytest-of-root/pytest-1/test_publish_after_a_restart_m0'), root=PosixPath('...publish_candidate=&lt;function genuine_runtime.&lt;locals&gt;.publish_candidate at 0x7fc2a1ffa340&gt;, moved_head_revision='rev-1')
+genuine_runtime = namespace(service=&lt;runtime_protocol.service.RuntimeService object at 0x7fc2a2d97b60&gt;, client=namespace(_remote=namespa...ot-revision-44236592a03335a6d1d90a9af97ac8c93b2b8ddb7122397593d55416d5b2dd6b', 'shot_id': 'B'}], 'timeline_id': 't'}}})
+
+    def test_publish_after_a_restart_merges_other_clips_onto_the_moved_head(world, genuine_runtime):
+        with world.writer("A") as a:
+            a.do("draft")
+            a.do("nudge", clip="a-rocket", seconds=0.5)
+            a.do("save")
+        world.move_head("rev-1", lambda b: _clip(b, "b-type")["params"].__setitem__("text", "LIVE!"))
+    
+        with world.writer("B") as b:
+            b.do("draft")
+            assert b.do("state")["base"] == "rev-0"  # the working copy still remembers the base it started from
+&gt;           published = b.do("publish")
+                        ^^^^^^^^^^^^^^^
+
+tests/sdk/test_timeline_persistence.py:721: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/sdk/test_timeline_persistence.py:240: in do
+    return publisher(reply["result"])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+candidate = {'bundle': {'base_parent': {'content_digest': 'sha256:46768762801b98888ea8ab1aab615b37d5458c186298d04fecf2eac14c5dbed7...b580/pytest-of-root/pytest-1/test_publish_after_a_restart_m0/data/drafts/d0fb445c4c5c4a21a28e8934788b7148/t/main.json'}
+
+    def publish_candidate(candidate):
+        from astrid.sdk.timeline.sync import CommitConflict
+    
+        bundle = candidate["bundle"]
+        saved_path = candidate.get("path")
+        checkout = Checkout.load(saved_path) if saved_path else Checkout(bundle)
+        assert checkout.bundle == bundle
+        try:
+            result = checkout.publish("persistence test", client=client, idempotency_key="persistence-test")
+        except CommitConflict as exc:
+&gt;           raise Refused(f"not published: someone published ({exc})") from exc
+E           test_timeline_persistence.Refused: not published: someone published (candidate.timing: missing exact word binding for ('occ-A', 'A', 'a-rocket').on)
+
+tests/sdk/test_timeline_persistence.py:422: Refused</failure></testcase><testcase classname="tests.sdk.test_timeline_publish_connection" name="test_a_publish_with_no_client_writes_through_the_connection_it_opens" time="7.263" /><testcase classname="tests.sdk.test_timeline_publish_connection" name="test_a_publish_with_a_client_writes_through_that_client" time="5.419" /><testcase classname="tests.sdk.test_intent_app_astrid" name="test_three_way_legacy_head_is_not_a_conflict_and_keeps_intent" time="0.013" /><testcase classname="tests.sdk.test_intent_app_astrid" name="test_merge_keeps_a_film_namespace_key_outside_the_known_list_in_the_namespace" time="0.016" /><testcase classname="tests.sdk.test_runtime_response_conformance" name="test_commit_conflict_409_maps_to_conflict_and_keeps_its_details" time="0.003" /><testcase classname="tests.sdk.test_timeline_restructure" name="test_three_way_merge_works_on_the_stored_form" time="9.989" /><testcase classname="tests.sdk.test_timeline_store_fixes" name="test_publish_merge_keeps_candidate_parent_config_changes_next_to_head_changes" time="0.026" /><testcase classname="tests.sdk.test_timeline_store_fixes" name="test_publish_merge_flags_a_parent_config_key_changed_differently_and_force_wins" time="0.034" /></testsuite></testsuites>
