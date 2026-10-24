@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T14:15:55Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 0m -->
-# app board, 2026-10-24T14:14Z
+<!-- app | 2026-10-24T14:19:14Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 0m -->
+# app board, 2026-10-24T14:19Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -35,7 +35,7 @@
 | F-caller-path | Challenge remaining caller architecture | Independent Luna | Repeated custody review failure | merged | app-F-caller-whole-path-1307 | Three actual guard gaps confirmed; production mounted path structurally PASS. Guidance with Sol1307. | Report only |
 | F-inputs | Qualify existing working service recipe | Luna; custody review | Actual source and custody PASS | merged | Recipe1304; review1309 | Normal venv origins/current client/artifacts/Remotion/graph PASS; no child, overlay or live daemon claim. | ed81088ed8 |
 | F-service-binding | Qualify exact environment adapter | Luna; custody review | Review1330 PASS | review | Binding1323; review1330 | Module-only PASS36 attacks, real imports and consumed interpreters. Joined current-fact refresh remains. | d387ab1ec6 |
-| F-caller-join | Join caller and working environment | Luna | Agent normal adoption 1408 | doing | app-F-current-adoption-caller-1413 | App lock is home. Refresh worker authenticates current source and pure target; dry preflight must pass before custody review. | Base d606c72b55 |
+| F-caller-join | Join caller and working environment | Luna | Agent normal adoption 1408 | blocked:agent | Caller 1413; Agent review 1410 | Source phase passes; full preparation still refuses old Agent lock. Positive baseline and custody review remain required. No installation. | Caller 1413 branch |
 | F-node-current | Verify prior Node regressions | Luna | Refreshed home tree | merged | Node1345 PASS36; ENV2 | 33 verifier,marker guard and both release nodes pass. Two extension SSH setup failures remain explicit. | d24ed69dcd |
 | F-visual-seam | Qualify shared upstream seam fixture | Luna | Final Runtime fixture identity | merged | Fixture1356 PASS; exact e68 blob | All10 cases pass on App d24. Actual Runtime e68 fixture equals qualified f69 blob; no copies or source edits. | App d24; Runtime e68 |
 | F-App-full | Corrected App checkpoint terminal | App service; Luna producer | Same actual16138 | merged | Terminal producer1227 | FAIL exit1/1665s. Vitest19251PASS;Node257PASS38FAIL26SKIP. Final full GO remains open. | 5a9ff97cf0 |
@@ -49,13 +49,13 @@
 
 Integration: be98aac54e275282467d85f79d3beb4665416039, tree 2839c7e7841d1c0897fd8e7c12f0c848d94e3979. Normal tool adoption 94d89 is merged; only runtime.lock.json differs from qualified d24ed. All 14 mapped artifacts are unchanged and match actual Runtime e68. U3-final includes exact upstream 09c844 and retains all mapped live tests. Source qualification 1409 passes 67 mounted controls on actual Agent 47b / Runtime e68.
 
-live 1 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T14:12:37Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 7m --> Caller 1413 is active; Agent adoption 1408 owns the remaining consumer dependency. No independent ready task waits.
+live 0 / cap 6; ready-undispatched 0. Latest dispatcher header still reports the just-finished worker: <!-- app | 2026-10-24T14:12:37Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 7m --> Refresh 1413 finished; complete caller qualification waits only for Agent's reviewed normal adoption 1410. No independent ready work waits.
 
 core open:9 final App gate cases unqualified,8 P2 and1 P3. D55b accepts all eight P2 as core. Historical16138 Vitest had0 failures; final core full and final P1–P5 remain required.
 
 regressions:0 open among historical App Node38 after exact refreshed-tree proof1345:36 repaired and passing,2 SSH environment failures. Final integrated full remains required; no new upstream regression is inferred.
 
-Blockers: Agent — normal U4a adoption 1408 must put the actual e68 producer identity into its lock. App adoption is home and current pure proof 1409 passes. Caller 1413 prepares remaining controls now.
+Blockers: Agent — normal U4a adoption 1408 must put the actual e68 producer identity into its lock. App adoption is home and current pure proof 1409 passes. Caller 1413 prepared the source seam but full environment preparation still correctly refuses the old Agent lock.
 Blockers: Owner admission — historical 403 and automatic access refusal remain stopped. No alternate schema, child, overlay or receipt route.
 Next ready: Complete caller 1413 dry preflight on genuine current locks, independent custody review, worker-only atomic installation and current P2/P3. Keep the existing source and wire guards strict.
 
@@ -69,4 +69,4 @@ Disk: about 12 GB free. Finished clean non-KEEP App scan found zero further cand
 
 Evidence: [all eight core](../../design/app-P2-core-classification-1222.md), [App11933 verdict](../../design/app-P2-11933-verdict-1222.md), [actual16138 terminal](../../design/app-F-16138-terminal-1227.md), [current source owners](../../design/peer-app-to-runtime-orchestrator-app2-20261024T1240-full-terminal-and-source-owners.md), [existing inputs](../../design/peer-app-to-agent-runtime-orchestrator-20261024T1244-existing-final-service-inputs.md), [current source proof](../../design/app-P2-P3-e68-current-pure-target-1409.md), [caller review finding](../../design/app-F-joined-current-custody-review-1358.md).
 
-Inbox consumed 1530938 bytes through Runtime 1404 producer rebind; its adoption and fixture requests are complete in U4p-D60 and F-visual-seam. Runtime backend/source identity still refreshes independently of unchanged client bytes. Proof open rows were adopted; its only in-flight whole path1215 is complete and reused. No duplicate audit or original requested. Later: final integrated App full and P1–P5, then Runtime final build/ZIP. D60 owner pushes complete: true U3-final merge and normal e68 App adoption are home. P2/P3 use the refreshed head. D47 memo and D46 remote custody remain deferred.
+Inbox consumed 1532915 bytes through Runtime 1407 integrated qualification. Producer rebind and fixture requests are complete in U4p-D60 and F-visual-seam. Runtime backend/source identity still refreshes independently of unchanged client bytes. Proof open rows were adopted; its only in-flight whole path1215 is complete and reused. No duplicate audit or original requested. Later: final integrated App full and P1–P5, then Runtime final build/ZIP. D60 owner pushes complete: true U3-final merge and normal e68 App adoption are home. P2/P3 use the refreshed head. D47 memo and D46 remote custody remain deferred.
