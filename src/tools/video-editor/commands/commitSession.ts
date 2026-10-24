@@ -20,7 +20,7 @@ import { AuthoredState, assertFiniteJson, copy, equal, freezeJson } from './clip
 import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
 import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
 import type { ClipParamsArgs } from './clipParamsCapture.ts';
-import type { ClipParamsCapturePort } from './clipParamsGesture.ts';
+import type { JsonObject } from './types.ts';
 import { selectedParamsCommand } from './clipParamsCapture.ts';
 import { readRetainedParamInputs } from '@/integrations/runtime/retainedParamInputs.ts';
 import { captureOccurrenceDuplicate, executeOccurrenceDuplicate, finishOccurrenceDuplicate } from './occurrenceDuplicateCapture.ts';
@@ -50,6 +50,20 @@ import { captureParentClipAddMedia } from './parentClipAddCapture.ts';
 import { captureParentClipSwapMedia, finishParentClipSwapMedia } from './parentClipSwapCapture.ts';
 import { captureOccurrenceAddMedia, finishOccurrenceAddMedia } from './occurrenceMediaCapture.ts';
 import type { TimelineData } from '../lib/timeline-data.ts';
+
+interface ClipParamsCapturePort {
+  resolveAuthority?(input: { select: string; rawClip: Record<string, unknown> | null | undefined }): DocumentPin;
+  capture(input: { clipId: string; current: TimelineData }): JsonObject;
+  prefetch?(basis: JsonObject, pin: DocumentPin): Promise<{
+    basis: JsonObject;
+    schema_source: DocumentPin;
+    schema_inputs: [VerifiedDocument, Record<string, VerifiedDocumentObject>][];
+    realm_id: string;
+  }>;
+  invalidatePrefetch?(): void;
+  finish(basis: JsonObject, args: ClipParamsArgs): { command: EditCommand; previewParams: Record<string, JSON> | null };
+  submit(input: { command: EditCommand; preview: TimelinePatch | null }): void;
+}
 
 type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
 export type ParentClipAddMediaCaptureBasis = {

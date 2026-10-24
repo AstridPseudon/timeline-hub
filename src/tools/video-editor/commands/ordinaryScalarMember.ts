@@ -1,9 +1,4 @@
 import type { EditCommand, JSON } from '@/integrations/runtime/timeline-commit-types.ts';
-import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
-import {
-  captureGenericPatch,
-  executeGenericPatch,
-} from './genericPatchCapture.ts';
 import {
   AuthoredState,
   ClipMoveError,
@@ -360,19 +355,7 @@ export function executeOrdinaryScalarMember(
 ): OrdinaryScalarResult {
   assertFiniteJson(bundle);
   assertFiniteJson(command);
-  const args = scalarArgs(command);
-  let normalized: OrdinaryScalarResult;
-  if (args.clear?.length) {
-    normalized = executeClear(bundle, command);
-  } else {
-    const executed = executeGenericPatch(bundle, [command]);
-    if (executed.records.length !== 1) throw new ClipMoveError('scalar member did not produce one record');
-    normalized = {
-      command: executed.records[0].command,
-      bundle: executed.bundle,
-      record: executed.records[0],
-    };
-  }
+  const normalized = executeClear(bundle, command);
   verifyCapturedFields(bundle, command, normalized.command);
   normalized.record.ordinal = ordinal;
   normalized.record.derived_writes.forEach((write) => { write.cause = ordinal; });
@@ -390,12 +373,6 @@ export function captureOrdinaryScalarMember(
   scalarArgs({ schema_version: 1, op: 'clip.set', version: '1', select: member.select,
     args: { values, clear }, intent: {} });
   assertFiniteJson(bundle);
-  if (!clear.length) {
-    const patch: TimelinePatch = { version: 1, operations: [{
-      op: 'clip.update', target: member.select, payload: { hold: values.hold },
-    }] };
-    return freezeJson(captureGenericPatch(bundle, patch, () => member.select).commands[0]);
-  }
   const command: EditCommand = { schema_version: 1, op: 'clip.set', version: '1', select: member.select,
     args: { values, clear }, intent: {} };
   return freezeJson(executeOrdinaryScalarMember(copy(bundle), command).command);
