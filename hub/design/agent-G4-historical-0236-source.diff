@@ -1,0 +1,15 @@
+diff --git a/astrid/sdk/timeline/native_occurrence_shared.py b/astrid/sdk/timeline/native_occurrence_shared.py
+index c7ae0ad66e..0fafba3fda 100644
+--- a/astrid/sdk/timeline/native_occurrence_shared.py
++++ b/astrid/sdk/timeline/native_occurrence_shared.py
+@@ -200,7 +200,9 @@ def prepare_shared_inverse(ctx, records):
+     load_boundary = records.load_boundary
+     sources = {binding['ref'] for record in records for binding in record['bindings']
+                if binding['key'] == 'shared.source'}
+-    if not sources:
++    foreign = any(record['command']['op'] == 'occurrence.place-shared'
++                  and 'source_ref' in record['command']['args'] for record in records)
++    if not sources and not foreign:
+         return
+     for source in sorted(sources):
+         ctx.bind('shared.source', source)

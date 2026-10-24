@@ -1,0 +1,11 @@
+original source-stage native partition: VALID (1 native write, 3 effects)
+exact captured full authentication: inverse stage native writes do not cover its authenticated effect image
+append exact shot/internal aggregate retirement: inverse stage native ranges are missing, reordered, or overlapping
+observe all three exact canonical sites: inverse stage native ranges are missing, reordered, or overlapping
+unmodified isolated physical/effect binding checks: VALID
+retirement owner negative []: provider binding owners differ from its physical edges
+retirement owner negative ['occurrence:one/shot']: provider binding owners differ from its physical edges
+retirement owner negative ['occurrence:shared-copy/shot', 'occurrence:extra/shot']: provider binding owners differ from its physical edges
+source stage negative missing-history: inverse stage history includes non-source publications
+source stage negative forged-publication: inverse stage source publication is not authenticated
+source stage negative wrong-receipt: inverse stage source publication is not authenticated

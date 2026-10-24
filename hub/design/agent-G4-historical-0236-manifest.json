@@ -1,0 +1,57 @@
+[
+  {
+    "file": "agent-G4-historical-0236-historical-final-auth-0.json",
+    "bytes": 62190,
+    "sha256": "215e628f070c4d8da14c3896672231ac777baeeeaac36004685561721c583aac"
+  },
+  {
+    "file": "agent-G4-historical-0236-historical-inverse-auth-0.json",
+    "bytes": 62190,
+    "sha256": "b6b61c8de6e91958674ebbbff55b7d0bf37a6976744083ffd12637ff29577ccd"
+  },
+  {
+    "file": "agent-G4-historical-0236-owner-parent-auth-0.json",
+    "bytes": 59062,
+    "sha256": "93a7a6da690fe4a255f5748ff2db13624d6dc0246fce677a0a1e9260e1be384a"
+  },
+  {
+    "file": "agent-G4-historical-0236-owner-parent-auth-1.json",
+    "bytes": 64657,
+    "sha256": "4e6f1be5a7e5a9dfbf78777d89717f86a4eff7da6d14b9e64e3e94972f53c97e"
+  },
+  {
+    "file": "agent-G4-historical-0236-source-identities.txt",
+    "bytes": 881,
+    "sha256": "55240ad55bbd9c99a23a97ff6f8d5d7909eb113ad325f39089a173a01b3016f1"
+  },
+  {
+    "file": "agent-G4-historical-0236-auth-probes.log",
+    "bytes": 1075,
+    "sha256": "997d347b146bf0accc0bd88374d2f400fb1bd8beda003cf9fa4f2d2354e82586"
+  },
+  {
+    "file": "agent-G4-historical-0236-source.diff",
+    "bytes": 814,
+    "sha256": "6e089b6b23262e7567c693be009fce9ef7d77c61f35eba0ee5865229314ce528"
+  },
+  {
+    "file": "agent-G4-historical-0236-capture_final.py",
+    "bytes": 1332,
+    "sha256": "d1e52cd5074944d3fa7dc85907ee0065f55848d76ae48ea04a339bc2c6a2f6ca"
+  },
+  {
+    "file": "agent-G4-historical-0236-capture_inverse.py",
+    "bytes": 1331,
+    "sha256": "be3a6f7e65284a02d1c76f92bbbb1067f038872ea538620618b4fa3c9f2f337f"
+  },
+  {
+    "file": "agent-G4-historical-0236-capture_parent_owners.py",
+    "bytes": 1701,
+    "sha256": "99c13e408d3c3be45b5203d976ad33dcda70691a603f429c49c2b4260905e0c6"
+  },
+  {
+    "file": "agent-G4-historical-0236-probe_auth.py",
+    "bytes": 3589,
+    "sha256": "6a66bd03d3ebe09ebdd26ab89f0307e1ca651000c856017a5fa61164e2a1846c"
+  }
+]
