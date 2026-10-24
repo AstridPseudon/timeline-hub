@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T10:18:20Z | dispatcher heartbeat 7s | live 7 (sol 1, luna 6, other 0) | busy30 13 | status age 3m -->
-# app board, 2026-10-24T10:05Z
+<!-- app | 2026-10-24T10:21:37Z | dispatcher heartbeat 4s | live 9 (sol 1, luna 8, other 0) | busy30 17 | status age 0m -->
+# app board, 2026-10-24T10:20Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -19,8 +19,8 @@
 | P3 | Original Gate5 journey | App service; Proof verdict | Final source and caller proof | blocked:app | Actual9310; setupHOME82cb | Exit 1 in 307 seconds. Readiness passed 41.4 seconds; one accepted predecessor POST missed by clip.move predicate. Original tail unrun. | Selected 663; HOME 9b810 |
 | P2-P3-next-caller | Bind prepared caller after product join | Luna; independent Luna | Cumulative0902 PASS; final source pending | blocked:app | Return0853; cumulative0902 | PREPARED only. Actual decoded source and forged-target controls pass;248 rows preserved. Final pure proof target and source hashes remain inputs. No rows installed. | 1d92503b4c |
 | P2-P3-D41-caller | Prepare source-required Agent backport inputs | Sol; independent Luna | Final0950 source | review | Sol0950; cumulative1013 | Author51 controls pass; prior design-file exploit refused. PREPARED only. Normal finalization requested; P2-only final binding follows. | Two artifact files |
-| P2-element-diagnostic | Retain Apply transport and UI stages | Luna; independent Luna | Review1005 FAIL | doing | First return1009 | Review found fast-request race, unrelated-request capture and attach-error reporting. Original four specs remain exact82cb. | Worker source only |
-| P3-solo | Qualify P3-only current caller | Luna; independent Luna | Proof0951 PASS and release0954 | doing | First return1011 | Actual7c preserves249 other rows. Fix circular pre-request receipt, argv evidence and reply inventory. Review1005 read stale base for one finding. | 7c9b519e5b |
+| P2-element-diagnostic | Retain Apply transport and UI stages | Luna; independent Luna | Review1005 FAIL | doing | Return1009; cumulative1018 | Author11 controls, types, lint and list23 PASS. Actual fast-request/correlation/attachment cumulative review active; originals exact82cb. | 0f932a1841 |
+| P3-solo | Qualify P3-only current caller | Luna; independent Luna | Proof0951 PASS and release0954 | doing | Return1011; registry refresh1018 | Circular receipt removed; real guards pass. One old Agent suite retired; refresh preserves all current248 other lines. No source edit. | 86a032eac1 |
 | U3b-D39-early | Stack current fixes and D39 on branch | Sol; Luna review | H36 branch checkpoint | doing | Author0955; Sol return1005 queued | HOME20 paths exact;756 pass,11 git-init EPERM. D39 old fixture mapping needs repair; final merge commit pending. No home merge. | Draft branch only |
 | P2-P3-current-packet | Publish same-ID terminal evidence | Luna; Proof review | Actual retained files | merged | Producer return 0707; Proof 0717 | Eight safe files published byte-exact with origin paths and hashes. Actual daemon and P2 synthetic snapshot identity remain unknown. | Source 663 |
 | P2-P3-lifecycle-custody | Verify retained lifecycle bytes | Luna; independent Luna | Independent 0741 PASS | merged | Producer 0733; review 0741 | Originals, copies and attachments are 224 bytes with LF. Exact selected writer matches. Prior 225/no-LF claim contradicted. | Same immutable files |
@@ -44,18 +44,18 @@
 | A3-popup-inputs | Compare actual asset and planner inputs | Luna; independent Luna | Independent0814 PASS | merged | Author0748; review0814 | Valid type, size, timing, track and selection; async prepared asset absent. Fullcaller witness remains RED, cause not yet attributed. | Report only |
 
 | A3-popup-diagnostic | Retain safe refusal stage | Luna; independent review | Integrated0826 PASS | merged | Reviews0816/0818; integrated0826 | HOME182c passes46 plus7 semantic and22 controls, three types and lint. Safe diagnostics only; placement repair separate. | 209723 /182c |
-| A3-popup-full-caller | Qualify complete authoritative popup reply | Sol; independent Luna | Agent333b checkout and review0955 | doing | Pin qualification1011 | Run unchanged67 mounted/provider/media tests against coherent333b and37eb. Old66/67 failure retained; no live credit. | 5bafd247e8 held |
+| A3-popup-full-caller | Qualify complete authoritative popup reply | Sol; independent Luna | Agent333b checkout and review0955 | doing | Author1011 PASS; review1018 | All67 mounted/provider/media tests pass on333b and37eb; types/lint pass. Independent cumulative review precedes merge. No live credit. | 5bafd247e8 held |
 | A3-popup-authority-path | Investigate full reply boundary | Independent Luna | Investigation0846 complete | merged | app-A3-popup-authority-path-0846 | Real mounted path reaches generated POST. Prior synthetic reply is incomplete; source-derived provider recipe published for sole Sol0846. No live claim. | Report only |
 | A3-popup-rebase | Repair confirmed provider fork continuation | Agent Sol; Luna review | Independent0955 PASS | merged | Agent0943; review0955 | Exact333b has18 new and detached accepted/merged PASS. Protected3418 blobs unchanged;16 existing inverse failures retained. App qualification1011 active. | 333b44b1a1 |
-| P2-new-child | Qualify new D41 child custody | Normal maker; Luna caller | Exact333b and37eb checkouts | doing | venv-agent-child-app-popup-333b-37eb-1016 | Supported maker queued without suite registration; old0256 stays P3-only. Reuse verified Remotion0258 separately. | Agent333b; Runtime37eb |
+| P2-new-child | Qualify new D41 child custody | Normal maker; Luna caller | Actual maker receipt | merged | Child1016; caller1020 | Maker and provision PASS on actual333b and37eb; key188546b7. No suite registration changed. Remotion0258 remains separately verified. | Agent333b; Runtime37eb |
 | P2-tour-oracles | Strict transition and parent helpers | Proof Luna; independent review | Integrated 0800 PASS | merged | Proof 0737/0742; App proof 0800 | Exact reviewed paths on HOME28b0 passed 17 joined controls, three types, lint/list. Original gesture outcomes remain open. | 0a22d85455 / 59cb263629 |
 
 | P2-element-handler | Check retained completion attribution | Luna; independent Luna | Independent0814 PASS | merged | Author0808; review0814 | Actual30-file inventory has no matching handler or receipt link. One POST remains unresolved; outcome UNKNOWN. No new collection. | Report only |
 
 Integration: HOME82cb5c0005df7abe0fcb8673f7be192a6c9e9183 unchanged. P3 integrated0900 PASS20 controls, types, lint/list; P2 integrated0826 remains PASS46 plus7 semantic and22 Node controls. Popup d99 remains held. Independent0928 FAIL verifies direct production rebase path and assigns provider continuation; mounted test rerun did not finish. Author66 of67 is not independent mounted proof. Sol0935 owns deterministic fixture execution; Agent0922 independently classifies provider source. Caller0902 remains PREPARED only.
 
-Blockers: App — Agent source dependency is cleared by independent0955 PASS on333b. Exact checkout is present; mounted popup qualification1011 and actual new child custody remain P2 inputs.
-Blockers: App — finalization of exited0955 workers is with the lead; diagnostic review1005 and P3 caller review1005 are queued. CallerSol0950 remains active.
+Blockers: App — popup cumulative1018 and diagnostic cumulative1018 precede source merge and pure joined proof. New child1016 PASSED; P2-only actual custody1020 is active.
+Blockers: App — P3 caller registry refresh1018 precedes independent cumulative review and single-row installation. No source or popup dependency remains for P3.
 Blockers: Freeze — home U3b waits header P2/P3 GO. Early branch D39 tooling returnSol1005 precedes independent review and App-service full checkpoint.
 Next ready: Diagnostic review1005, P3 caller review1005 and D39 tool returnSol1005 queued. P3-only authority is released by Proof0954; dispatch exactly once after genuine caller checks. P2 remains held.
 
@@ -82,3 +82,5 @@ Pass10:09Z: independent diagnostic1005 FAIL published byte-exact. Sole Luna firs
 Pass10:13Z: INBOX consumed1436752 bytes. Lead finalized0955 workers:7c9 caller,c4a diagnostic,a721 true early merge. NewSol1005 received sanctioned conflict-free82cb merge-forward and normal Runtime sync/browser vendor now succeed. Agent333b/0955 source PASS clears Agent blocker, normal exact checkout ready; App mounted qualification1011 active. P3 first-return1011 repairs real circular admission, preserving actual249 outsiders. D41 source0950 cumulative1013 is queued after normal finalization request. No original request.
 
 10:16Z: supported new keyed child requested on actual333b/37eb with no suite registration, preserving current caller outsider counts. Existing Remotion0258 remains independently verified and reused by unchanged remotion tree. No bench copies, old receipt relabel, new P3 or source pin file edit.
+
+Pass10:20Z: INBOX consumed1439009 bytes. Recycled all three finished0955 trees after exact normal commits; retained branches and reports. Child1016 actual PASS, mounted67 PASS, D41 cumulative1013 PASS. Every ready follow-up has a worker. P3 current registry change is exactly one old Agent2147 row removed; zero remaining byte changes. No stale row restoration or original request.
