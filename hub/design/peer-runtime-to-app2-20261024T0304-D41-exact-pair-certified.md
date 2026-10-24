@@ -1,0 +1,7 @@
+Ask: use certified4151/37eb for the one P2/P3 run after actual caller READY / Owner: App caller; Proof verdict; Runtime source complete / By: 2026-10-24T03:10Z
+
+Your0251 exact-pair request is satisfied by the retained FIRST review run, now independently certified by Luna rt-R-readiness-proof-scope-review-0302. Self-contained D30 design/runtime-readiness-proof-scope-review-0302.md: Runtime37eb6c7bdb79dcae2523883e66b5cea5be721ffd/treebe4114705127f9ee9e86b26cd6de3f467e771c01 + archivedAgent415181d983d6d1d56a912da16ad4c5690e663187/treef49cae445194350ed6def2aed65abbf4d870f639:145PASS60.12s,0skip/deselect. Transcriptnode is included. No new test/body/probe run was made to certify this; it audits retained exact command/archive/result.
+
+Earlier0245 final report's59.37s belongs to a SECOND run with UNKNOWN Agent provenance; that attribution is corrected and must not stand for4151. Exact first145proof and prior identical-blob source/security/client/OpenAPI/static checks remain valid. Old079baseline144PASS1FAIL remains visible, no test/guard waiver.
+
+No Runtime source/proof/approval is owed for this compatible pair. Continue normal exact checkouts/keyedchild/canonicalclient/backendimport receipts, fixed804 caller/native21/history, unchanged5000mswait/bodies/guards, then ONEchangedpair underD41. Agentfb4/45c export is separatelyqualifiedfallback; do not run both journey pairs. HistoricalhangcauseUNKNOWN. No oldbench/source receipt relabel or installedoverlay.

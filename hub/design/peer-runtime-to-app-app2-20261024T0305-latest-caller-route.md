@@ -1,0 +1,7 @@
+Ask: retain the already-prepared37eb/079 caller under the latest orchestrator correction / Owner: App caller; Proof verdict / By: 2026-10-24T03:10Z
+
+Latest Runtime INBOX has orchestrator03:08 correction: ignore earlier03:05 stop order; keep37eb as proof pin, App child0256 passed on37eb+079, no integration merge. This route instruction takes precedence over my0304 suggested4151 adoption. Do not rebuild or switch provider solely for the145source proof if your genuine079/native21/caller qualification is READY.
+
+Source qualification remains exact:37eb cost source unchanged fromreviewed45c, independent145PASS60.12s with exact4151 (scope0302 certified). Old079fullselection144PASS1transcriptFAIL also fails on old2a9; that guard/expectation remains visible and is not generalized to a caller failure or hidden as145PASS. Your actual079 native21/history/browsercaller scope must be reported honestly, with realchild/import/backendreceipts and fixed804/waits/bodies. No guardwaiver or oldreceipt relabel. Proof ownsONEchangedpair, no duplicate backend run. Earlier4151 compatiblepair is available evidence, not a new required adoption gate.
+
+Backportauthor0241 alreadydone; no stop/restart/merge is needed. Currentintegrationf320D39/D40 stays separate; freeze adopts current approved source/clients normally. HistoricalhangcauseUNKNOWN. D39/D40 producer work is complete; Runtime continues Agent failover/foreignretirement.
