@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T18:41:22Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 16 | status age 1m -->
-# app board, 2026-10-24T18:41Z
+<!-- app | 2026-10-24T18:45:04Z | dispatcher heartbeat 12s | live 3 (sol 1, luna 2, other 0) | busy30 17 | status age 2m -->
+# app board, 2026-10-24T18:44Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -31,7 +31,7 @@
 | P3-history | Strict authenticated history ABI | Luna; review | Actual10033 | merged | Author1620; review1626 | 23 controls, types/lint PASS; missing/wrong ABI rejected. | 9f4ec08f56 |
 | P3-D70 | Exact semantic setup intent | Luna; review | D70 approved | merged | Author1655; review1643 | Exact a646 spec, virtual review match; original body/reset/tail retained. | aaddaf12d2 |
 | P3-recovery-source | Mounted automatic recovery census | HARD Sol PLAN A2 | Actual26907 | merged | Sol1713; verdict1718 | No product defect established; production auto-recovers. 266 mounted plus3 fault checks/types/lint PASS. | Source unchanged |
-| P3-D75 | Retain both recovery mounts and exact counts | Luna | Return1831 mounted3+100 PASS | review | app-P3-D75b-return-review-1839 | Immutable baseline controls repaired; reviewer runs postcommit Node controls and challenges actual5/3 lifecycle. | Source1831 |
+| P3-D75 | Retain both recovery mounts and exact counts | HARD Sol; Luna | Second control FAIL1839 | doing | Sol1843; wholepath1843 | Mounted3+97 PASS; metadata hash lengths/title matcher/custom tsc failed. Sol controls only; clean source unchanged. | Source09ae |
 | P3-D75-path | Challenge full restart route | Luna | Second proposal failure | merged | app-P3-D75-door-wholepath-1750 | Browser door stable; original P1 holds across restart. Verify door realm plus direct new-daemon history. | Read only |
 | P-D73-submit | One-command guarded submission | Luna | D73 addendum | merged | app-D73-one-command-submit-1757 | 18 mocked controls/types/lint PASS; one preflight then one original, same4pins, 124 resume without duplicate. | 5d7550ca7d |
 | F-install-schema | Strict tuple/schema alignment | Luna | D62 and D65 | merged | Pin1545; fixture1548; proof1553 | Two skew,four updater,two schema controls PASS. Installer regression closed. | 6d74fdd88a |
@@ -44,7 +44,7 @@
 | P2-D78 | Exact retained element request handoff | Luna | D78 owner1816 | merged | app-P2-D78-retained-request-handoff-1819 | Published json/md;4459 exact body bytes,e58a09dc;trace anchor and redaction validated. Runtime replay owns cause. | Evidence only |
 | D79 | One live-edit robustness smoke | Luna; Service | Actual28293 terminalFAIL | doing | Producer1834; setup1838 | ReadinessPASS; smoke stops at identity invalid bearer. Remote/drag/undo NOTREACHED. First setup return; non-gating. | App830252 |
 
-| P3-D75-clean | Clean same-blob home packet and ledger | Luna | Protected review1839 | doing | app-P3-D75b-clean-return-1839 | Copy exact spec and mountedtest; retain controls outside repo. Parent integrated source identity also checked. | Current source |
+| P3-D75-clean | Clean same-blob home packet and ledger | Luna | Final protected path1843 | review | app-P3-D75b-clean-return-1839 | Exact two donor blobs; mounted3/types/lint PASS. Root artifacts outside repo; merge awaits path plus control PASS. | Source1839 |
 
 | P1-current | Updated parent-source control | Service; Luna | Preflight11421 PASS | doing | Actual31083; producer1841 | Required D59 current-source rerun; independent verdict follows. P3 submission does not wait for P1. | App830252 |
 
@@ -58,11 +58,11 @@ Blockers: Runtime execution — D78 exact retained element request published1823
 Blockers: Final cut — Current P2/P3 nine core cases remain unqualified; Runtime coordinates final suites and ZIP.
 Next ready: consume parent and D75b reviews; normal merge on PASS; P3 through one-command pinned preflight submit immediately. D79 smoke body later behind gate priority.
 
-live 4 / cap 6; ready-undispatched 0. Luna1839 D75b review/clean, Luna1838 D79 setup, Luna1841 P1 same-ID producer. P1 actual31083 active; P3 does not wait for it.
+live 3 / cap 6; ready-undispatched 0. HARD Sol1843 controls after two failures; Luna1843 independent path; Luna1841 P1 producer. D79 setup merge queued.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
 Disk: About8.6GB free; below9GB trigger peer renewed. Heavy stop below8GB and D74 worker caps observed. Guarded recycle removed one ended clean non-KEEP tree; other finished trees already recycled. Deferred kit routes gated below9GB; prior refused routes stopped.
-Inbox consumed through1628507 bytes, including D75b, D78 and non-gating D79. Runtime and Agent normal hub boards rechecked. D75 scope blocker cleared.
+Inbox consumed through1631661 bytes, including D75b, D78 and non-gating D79. Runtime and Agent normal hub boards rechecked. D75 scope blocker cleared.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
 Blockers: App lead kit — Disk8.6GB below9 trigger; exact deferred guarded graph/retention route requested again. Prior denied targets stay stopped; no output release before verdict.
