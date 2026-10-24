@@ -217,6 +217,7 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
      - (c) undo after the remote arrival does not resurrect pre-remote state (the remoteCommit history drop).
 
      A failure is a real product finding: report it, and it goes through D54a like anything else.
+     - **Added 19:50Z:** (d) an Agent edit and a user edit on DISJOINT targets both land (`merged`); (e) on the SAME field the Agent gets 409 value_conflict, re-reads and reruns (at most 3), and never silently overwrites; a stale front-end save keeps its draft.
   2. **Runtime: conformance replay corpus.** Take the REAL accepted commit records already retained from today's passing P1/P4/Agent home runs (no new runs), and add one test per side that replays them:
      - Agent: the recorder/reservation checks accept every record;
      - Runtime: auth/validate accepts every record and re-derives the same recorder_abi;
