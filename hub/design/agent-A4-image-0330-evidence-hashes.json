@@ -1,0 +1,30 @@
+{
+  "agent-A4-image-0330-failure-disposition.json": {
+    "bytes": 8458,
+    "sha256": "5c1dc13fccfbeb0cb0fca3c3848505302878185ff430528e0a779c1eafc15ea3"
+  },
+  "agent-A4-image-0330-accepted-response.json": {
+    "bytes": 32711,
+    "sha256": "36f640b827187a30eaae52e7729d9dcb3d5c94ef963c2940aaf9451d7dfcb2c6"
+  },
+  "agent-A4-image-0330-accepted-exact-retry.json": {
+    "bytes": 32711,
+    "sha256": "36f640b827187a30eaae52e7729d9dcb3d5c94ef963c2940aaf9451d7dfcb2c6"
+  },
+  "agent-A4-image-0330-actual-request.json": {
+    "bytes": 1327,
+    "sha256": "9b9f15377474a3e07998b6fefb06fa4df568cdf9545b22dfc3dcbb05417052c4"
+  },
+  "agent-A4-image-0330-prepared-actual.json": {
+    "bytes": 49994,
+    "sha256": "785067bf3e0535debe44fddc5af56e4490b4232f6c5d7dc80a74f8a7f54fe83d"
+  },
+  "agent-A4-image-0330-history-actual.json": {
+    "bytes": 24662,
+    "sha256": "78174e1213732dc4479158847d5d5990d9f14b98e61d9eaeee71228e4398c8c8"
+  },
+  "agent-A4-image-0330-app-request-verification.json": {
+    "bytes": 638,
+    "sha256": "b77b29cbb1df80c65c7591199fa5e6c2f33c269a61cb902fadd7bd57f1b43ab0"
+  }
+}
