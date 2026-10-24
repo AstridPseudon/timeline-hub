@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T09:56:35Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
-# viewing board, 2026-10-24T09:55:01Z
+<!-- viewing | 2026-10-24T09:58:10Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
+# viewing board, 2026-10-24T09:57:06Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna | H0 | merged | Inventory and acceptance reviews | Four copies and drift checks independently passed. No product change. | 6c4d934; 7a95a40 |
@@ -63,6 +63,8 @@ Original ABA service 11466 failed at undo before lost ACK, retaining all 59 asse
 09:52Z: Author0937 completed19 offline checks plus Ruff/mypy/diff. The completed orphan had exit0 but no harness commit; normal request-stop finalized it as own30cf without manual git writes. Independent Luna0948 dispatched immediately on that exact commit. Initial finalizer hypothesis did not reproduce; peer0951 records UNKNOWN operational cause and successful supported recovery. Original and production files remain unchanged.
 
 09:55Z: Independent Luna0948 PASS19/Ruff/mypy/diff consumed. Own30cf remote home request queued. Agent0938 recovery is complete: request-bound original provider result is absent. Peer0955 consolidates existing Agent0945 proposal review with the implemented opt-in helper and requires durable sink retention before one meaningful diagnostic body; no body released now.
+
+09:57Z: Both completed workers finalized through supported request-stop, with PASS reports and exact30cf retained. Finished clean worktrees were recycled through bin/recycle; free disk is above15GB. Home merge and integrated proof remain pending. No original body or second capture author was dispatched.
 
 D49 venue: Viewing test service. Checkpoint composition-full-1024074900-23379 passed 86 with zero skips on actual compiled source. Installed shared App package 0.0.13 versus tracked 0.0.14 was disclosed by independent readiness review; source checkpoint does not qualify that consumer graph. Final full runs after Runtime coordinates the final tuple and gate reruns. No graph mutation or duplicate full is requested.
 
