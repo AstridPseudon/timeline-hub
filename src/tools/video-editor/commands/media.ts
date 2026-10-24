@@ -503,6 +503,21 @@ const removeClipFromWorkingData = (current: TimelineData, clipIds: readonly stri
   };
 };
 
+const stripDerivedAssetEntry = (base: TimelineData, clip: TimelineClip): TimelineClip => {
+  if (!Object.prototype.hasOwnProperty.call(clip, 'assetEntry') || !clip.asset) {
+    return clip;
+  }
+
+  const resolvedClip = base.resolvedConfig.clips.find((candidate) => candidate.id === clip.id);
+  const assetEntry = (clip as TimelineClip & { assetEntry?: unknown }).assetEntry;
+  if (resolvedClip?.assetEntry !== assetEntry || base.resolvedConfig.registry[clip.asset] !== assetEntry) {
+    return clip;
+  }
+
+  const { assetEntry: _assetEntry, ...authoredClip } = clip as TimelineClip & { assetEntry?: unknown };
+  return authoredClip;
+};
+
 const buildPreparedReplacementEdit = (
   current: TimelineData,
   payload: PlacePreparedMediaCommand['payload'],
@@ -582,7 +597,8 @@ const materializePreparedData = ({
   // The editor preview uses seconds; raw command capture keeps the original
   // source and validates its codecs separately. Normalize only a matching alias
   // before rowsToConfig restores raw fields (including on rippled peers).
-  const editorClips = base.config.clips.map((clip) => {
+  const editorClips = base.config.clips.map((rawClip) => {
+    const clip = stripDerivedAssetEntry(base, rawClip);
     if (!Object.prototype.hasOwnProperty.call(clip, 'at_ms')) return clip;
     const { at_ms: atMs, ...editorClip } = clip as typeof clip & { at_ms: unknown };
     if (typeof atMs !== 'number' || !Number.isFinite(atMs) || clip.at !== atMs / 1000) {
