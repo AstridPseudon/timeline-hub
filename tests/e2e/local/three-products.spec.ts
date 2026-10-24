@@ -1543,9 +1543,31 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
     return body?.base_revision_id === preconditionBase.head.revision_id
       && body?.base_publication_id === preconditionBase.head.publication_id
       && body?.commands?.length === 1
-      && body.commands[0]?.op === 'clip.move'
-      && body.commands[0]?.select === `parent/clip:${seed3.appClipId}`
-      && body.commands[0]?.args?.on === 5;
+      && body.commands[0]?.schema_version === 1
+      && body.commands[0]?.op === 'doc.patch'
+      && body.commands[0]?.version === '1'
+      && body.commands[0]?.select === null
+      && Array.isArray(body.commands[0]?.created)
+      && body.commands[0].created.length === 0
+      && body.commands[0]?.args?.changes?.length === 1
+      && body.commands[0].args.changes[0]?.op === 'set'
+      && body.commands[0].args.changes[0]?.ref === 'parent'
+      && body.commands[0].args.changes[0]?.path?.join('/') === `clips/id:${seed3.appClipId}/at`
+      && body.commands[0].args.changes[0]?.before?.state === 'present'
+      && body.commands[0].args.changes[0]?.before?.value === 0
+      && body.commands[0].args.changes[0]?.value === 5
+      && body.label === 'Edit timeline'
+      && body.merge === 'fields'
+      && body.dry_run === false
+      && body.source?.via === 'app'
+      && Array.isArray(body.reads) && body.reads.length > 0
+      && body.steps?.length === 1
+      && body.steps[0]?.label === 'Edit timeline'
+      && body.steps[0]?.intent === `Move ${seed3.appClipId} on V1`
+      && body.steps[0]?.command_ordinals?.length === 1
+      && body.steps[0].command_ordinals[0] === 0
+      && JSON.stringify(body.steps[0]?.patch) === JSON.stringify(body.commands[0].args.changes)
+      && JSON.stringify(body.steps[0]?.reads) === JSON.stringify(body.reads);
   }, CEILING);
   const preconditionResponse = page.waitForResponse(async (response) => response.request() === await preconditionRequest, CEILING);
   await dragTimelineClip(page, seed3.appClipId, seed3.transitionClipId, 0, 5, THREE_PRODUCTS_REFERENCE_AT);
@@ -1567,7 +1589,8 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
     requestIdempotencyKey: setupRequest.headers()['idempotency-key'], responseStatus: setupResponse.status(), responseBody: setupBody,
     expectedBase: { revisionId: preconditionBase.head.revision_id, publicationId: preconditionBase.head.publication_id },
     expectedScope: { projectId: harness.seed.projectId, timelineId: seed3.timelineId },
-    clipId: seed3.appClipId, expectedPosition: 5, settledOutboxes: await commandOutboxes(page, seed3.timelineId),
+    clipId: seed3.appClipId, expectedTrackId: 'V1', expectedPreviousPosition: 0, expectedPosition: 5,
+    settledOutboxes: await commandOutboxes(page, seed3.timelineId),
     authoritativeHead, authoritativeRevision,
   });
   const resetResponse = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);

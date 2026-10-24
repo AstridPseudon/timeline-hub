@@ -11,27 +11,48 @@ import { assertGate5ResetPrecondition } from './gate5-reset-precondition.ts';
 // Offline control only: these request/response/outbox objects are mocked and do not prove a browser or Runtime journey.
 const base = { revisionId: 'revision-before', publicationId: 'publication-before' };
 const scope = { projectId: 'project-f2', timelineId: 'timeline-f2' };
+const clipId = 'f2-app-clip';
+const trackId = 'V1';
+const changes = [{ op: 'set', ref: 'parent', path: ['clips', `id:${clipId}`, 'at'], before: { state: 'present', value: 0 }, value: 5 }];
+const reads = [
+  ...[['id', clipId], ['track', trackId], ['at', 0], ['clipType', 'media'], ['hold', undefined], ['from', 0], ['to', 3], ['speed', 1], ['asset', 'f2-app']]
+    .map(([key, value]) => ({ kind: 'field', ref: 'parent', path: ['config', 'clips', `id:${clipId}`, key], state: value === undefined ? { state: 'absent' } : { state: 'present', value } })),
+  { kind: 'field', ref: 'parent', path: ['config', 'output', 'fps'], state: { state: 'present', value: 30 } },
+  { kind: 'field', ref: 'parent', path: ['config', 'registry', 'assets', 'f2-app'], state: { state: 'present', value: { file: 'f2-app.png', type: 'image/png' } } },
+  { kind: 'field', ref: 'parent', path: ['config', 'tracks', `id:${trackId}`, 'kind'], state: { state: 'present', value: 'visual' } },
+  { kind: 'field', ref: 'parent', path: ['config', 'pinnedShotGroups'], state: { state: 'absent' } },
+  { kind: 'collection', ref: 'parent', path: ['config', 'clips'], members: ['f2-app-clip', 'f2-transition-clip'], order: ['f2-app-clip', 'f2-transition-clip'] },
+  ...[['track', trackId], ['id', 'f2-transition-clip'], ['at', 15], ['track', trackId], ['clipType', 'media'], ['hold', undefined], ['from', 0], ['to', 3], ['speed', 1], ['asset', 'f2-video']]
+    .map(([key, value]) => ({ kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:f2-transition-clip', key], state: value === undefined ? { state: 'absent' } : { state: 'present', value } })),
+  { kind: 'field', ref: 'parent', path: ['config', 'registry', 'assets', 'f2-video'], state: { state: 'present', value: { file: 'f2-video.mp4', type: 'video/mp4' } } },
+];
+const command = { schema_version: 1, op: 'doc.patch', version: '1', select: null, created: [], args: { changes } };
 const request = {
   api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
   base_revision_id: base.revisionId,
   base_publication_id: base.publicationId,
-  commands: [{ op: 'clip.move', select: 'parent/clip:f2-app-clip', args: { on: 5 } }],
+  commands: [command], label: 'Edit timeline', steps: [{ id: 'setup-step', label: 'Edit timeline', intent: `Move ${clipId} on ${trackId}`, tags: [], command_ordinals: [0], patch: changes, reads }],
+  merge: 'fields', reads, dry_run: false, source: { via: 'app' },
 };
+const responseCommand = { ...command, intent: {}, resolved: [], expect: {}, authorship: {}, reads: [], selections: {}, bindings: {}, created: [] };
 const data = {
   status: 'accepted', base_revision_id: base.revisionId, base_publication_id: base.publicationId,
   previous_revision_id: base.revisionId, previous_publication_id: base.publicationId,
-  accepted_revision_id: 'revision-after', commands: request.commands,
-  canonical_document: { project_id: scope.projectId, timeline_id: scope.timelineId,
-    parent_revision: { revision_id: 'revision-after', payload: { clips: [{ id: 'f2-app-clip', at: 5 }] } } },
+  accepted_revision_id: 'revision-after', rebased_onto: null, commands: [responseCommand], document_digest: 'sha256:document', id_map: {},
+  provider_version: 'provider-v2', compiler_version: 'compiler-v2', publisher: 'publisher-v2', merge_mode: 'fields', label: request.label, source: request.source,
+  steps: [{ ...request.steps[0], patch: [{ ...changes[0], path: ['config', ...changes[0].path] }], dependencies: [] }],
+  canonical_document: { schema_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
+    parent_revision: { revision_id: 'revision-after', content_digest: 'sha256:parent', payload: { config: { clips: [{ id: clipId, at: 5 }], tracks: [{ id: trackId, kind: 'visual' }], output: { fps: 30 } }, clips: [{ id: clipId, at: 5 }] } },
+    shot_revisions: [], internal_timeline_revisions: [], dependency_manifest: { shots: [], internal_timelines: [], media: [], documents: [] } },
 };
-const response = { data, receipt: { receipt_id: 'publication-after', command_kind: 'timeline.commit', idempotency_key: 'setup-key', project_id: scope.projectId, result: data } };
+const response = { data, receipt: { receipt_id: 'publication-after', command_kind: 'timeline.commit', idempotency_key: 'setup-key', request_hash: 'hash', project_id: scope.projectId, project_seq: [1, 1], event_ids: ['event-1'], result: data } };
 const settled = [{ pending: null, intents: [] }];
 const authoritativeHead = { revision_id: 'revision-after', publication_id: 'publication-after' };
-const authoritativeRevision = { project_id: scope.projectId, timeline_id: scope.timelineId, revision_id: 'revision-after', payload: { clips: [{ id: 'f2-app-clip', at: 5 }] } };
+const authoritativeRevision = { project_id: scope.projectId, timeline_id: scope.timelineId, revision_id: 'revision-after', payload: { config: { clips: [{ id: clipId, at: 5 }] }, clips: [{ id: clipId, at: 5 }] } };
 const valid = {
   request, requestIdentity: request, responseRequest: request, requestIdempotencyKey: 'setup-key',
   responseStatus: 200, responseBody: response, expectedBase: base, expectedScope: scope,
-  clipId: 'f2-app-clip', expectedPosition: 5, settledOutboxes: settled, authoritativeHead, authoritativeRevision,
+  clipId, expectedTrackId: trackId, expectedPreviousPosition: 0, expectedPosition: 5, settledOutboxes: settled, authoritativeHead, authoritativeRevision,
 };
 
 const responseFor = (nextData) => ({ ...response, data: nextData, receipt: { ...response.receipt, result: nextData } });
@@ -41,10 +62,14 @@ test('Gate5 requires the real 0→5 response before the original reset', () => {
 });
 
 test('the isolated 0-start cannot satisfy a 5→0 reset precondition without a setup mutation', () => {
-  const oldStartData = { ...data, canonical_document: { parent_revision: { revision_id: 'revision-after', payload: { clips: [{ id: 'f2-app-clip', at: 0 }] } } } };
+  const oldStartData = { ...data, canonical_document: { ...data.canonical_document,
+    parent_revision: { ...data.canonical_document.parent_revision,
+      payload: { ...data.canonical_document.parent_revision.payload,
+        config: { ...data.canonical_document.parent_revision.payload.config, clips: [{ id: clipId, at: 0 }] },
+        clips: [{ id: clipId, at: 0 }] } } } };
   assert.throws(() => assertGate5ResetPrecondition({
     ...valid, responseStatus: 200, responseBody: { data: oldStartData, receipt: { receipt_id: 'publication-old', result: oldStartData } },
-    request: { ...request, commands: [{ ...request.commands[0], args: { on: 0 } }] },
+    request: { ...request, commands: [{ ...command, args: { changes: [{ ...changes[0], value: 0 }] } }] },
   }), /requested position mismatch/);
 });
 
@@ -53,8 +78,11 @@ test('Gate5 fails closed for non-200, missing response, invalid receipt, and mis
   assert.throws(() => assertGate5ResetPrecondition({ ...valid, responseStatus: undefined, responseBody: undefined }), /response status/);
   assert.throws(() => assertGate5ResetPrecondition({ ...valid, expectedPosition: 4 }), /requested position mismatch/);
   assert.throws(() => assertGate5ResetPrecondition({ ...valid, responseBody: { ...response, receipt: { ...response.receipt, result: {} } } }), /receipt does not match/);
-  const mismatchedData = { ...data, canonical_document: { project_id: scope.projectId, timeline_id: scope.timelineId,
-    parent_revision: { revision_id: 'revision-after', payload: { clips: [{ id: 'f2-app-clip', at: 4 }] } } } };
+  const mismatchedData = { ...data, canonical_document: { ...data.canonical_document, project_id: scope.projectId, timeline_id: scope.timelineId,
+    parent_revision: { ...data.canonical_document.parent_revision, revision_id: 'revision-after',
+      payload: { ...data.canonical_document.parent_revision.payload,
+        config: { ...data.canonical_document.parent_revision.payload.config, clips: [{ id: clipId, at: 4 }] },
+        clips: [{ id: clipId, at: 4 }] } } } };
   assert.throws(() => assertGate5ResetPrecondition({
     ...valid, responseBody: responseFor(mismatchedData),
   }), /canonical position mismatch/);
@@ -69,13 +97,14 @@ test('Gate5 rejects unrelated responses and wrong scope, head, base, previous, k
   const wrongPrevious = { ...data, previous_revision_id: 'other' };
   assert.throws(() => assertGate5ResetPrecondition({ ...valid, responseBody: responseFor(wrongPrevious) }), /previous head/);
   assert.throws(() => assertGate5ResetPrecondition({ ...valid, requestIdempotencyKey: 'other-key' }), /idempotency/);
-  const wrongCommand = { ...request, commands: [{ ...request.commands[0], op: 'track.create' }] };
-  assert.throws(() => assertGate5ResetPrecondition({ ...valid, request: wrongCommand, requestIdentity: wrongCommand, responseRequest: wrongCommand }), /not a clip move/);
+  const wrongCommand = { ...request, commands: [{ ...command, op: 'track.create' }] };
+  assert.throws(() => assertGate5ResetPrecondition({ ...valid, request: wrongCommand, requestIdentity: wrongCommand, responseRequest: wrongCommand }), /mounted document patch/);
 });
 
 test('Gate5 rejects an authoritative readback with the wrong scope or position', () => {
   assert.throws(() => assertGate5ResetPrecondition({ ...valid, authoritativeRevision: { ...authoritativeRevision, timeline_id: 'other-timeline' } }), /authoritative revision scope/);
-  assert.throws(() => assertGate5ResetPrecondition({ ...valid, authoritativeRevision: { ...authoritativeRevision, payload: { clips: [{ id: 'f2-app-clip', at: 4 }] } } }), /authoritative position/);
+  assert.throws(() => assertGate5ResetPrecondition({ ...valid, authoritativeRevision: { ...authoritativeRevision, payload: { ...authoritativeRevision.payload,
+    config: { clips: [{ id: clipId, at: 4 }] }, clips: [{ id: clipId, at: 4 }] } } }), /authoritative position/);
 });
 
 test('Gate5 refuses queued and pending records from the real outbox until acknowledgement settles them', async () => {
@@ -117,7 +146,7 @@ test('Gate5 refuses successful HTTP replies with non-accepted outcomes or mismat
   for (const mismatch of [
     { base_revision_id: 'other-revision' }, { base_publication_id: 'other-publication' },
     { previous_revision_id: 'other-revision' }, { previous_publication_id: 'other-publication' },
-    { commands: [{ ...request.commands[0], args: { on: 0 } }] },
+    { commands: [{ ...command, args: { changes: [{ ...changes[0], value: 0 }] } }] },
   ]) {
     assert.throws(() => assertGate5ResetPrecondition({ ...valid, responseBody: responseFor({ ...data, ...mismatch }) }), /response (base|previous head|command) mismatch/);
   }
@@ -144,7 +173,8 @@ test('Gate5 refuses wrong canonical scope, accepted revision, or clip even with 
     assert.throws(() => assertGate5ResetPrecondition({ ...valid, responseBody: responseFor({ ...data, canonical_document }) }), /canonical scope mismatch/);
   }
   assert.throws(() => assertGate5ResetPrecondition({ ...valid, responseBody: responseFor({ ...data, accepted_revision_id: 'other-revision' }) }), /canonical revision mismatch/);
-  const canonical_document = { ...data.canonical_document, parent_revision: { revision_id: 'revision-after', payload: { clips: [{ id: 'other-clip', at: 5 }] } } };
+  const canonical_document = { ...data.canonical_document, parent_revision: { ...data.canonical_document.parent_revision,
+    payload: { ...data.canonical_document.parent_revision.payload, config: { ...data.canonical_document.parent_revision.payload.config, clips: [{ id: 'other-clip', at: 5 }] }, clips: [{ id: 'other-clip', at: 5 }] } } };
   assert.throws(() => assertGate5ResetPrecondition({ ...valid, responseBody: responseFor({ ...data, canonical_document }) }), /canonical clip is missing/);
 });
 
@@ -152,10 +182,24 @@ test('Gate5 refuses setup requests with the wrong timeline, publication, or targ
   for (const [mismatch, error] of [
     [{ timeline_id: 'other-timeline' }, /timeline scope mismatch/],
     [{ base_publication_id: 'other-publication' }, /base publication mismatch/],
-    [{ commands: [{ ...request.commands[0], select: 'parent/clip:other-clip' }] }, /clip mismatch/],
+    [{ commands: [{ ...command, args: { changes: [{ ...changes[0], path: ['clips', 'id:other-clip', 'at'] }] } }] }, /clip mismatch/],
   ]) {
     assert.throws(() => assertGate5ResetPrecondition({ ...valid, request: { ...request, ...mismatch } }), error);
   }
+});
+
+test('Gate5 refuses an authentic-looking setup with wrong before/value, readset, or claims', () => {
+  assert.throws(() => assertGate5ResetPrecondition({ ...valid, request: {
+    ...request, commands: [{ ...command, args: { changes: [{ ...changes[0], before: { state: 'present', value: 1 } }] } }],
+  } }), /previous position/);
+  assert.throws(() => assertGate5ResetPrecondition({ ...valid, request: {
+    ...request, commands: [{ ...command, args: { changes: [{ ...changes[0], value: 4 }] } }],
+  } }), /requested position/);
+  assert.throws(() => assertGate5ResetPrecondition({ ...valid, request: { ...request,
+    reads: [{ ...reads[0], path: ['config', 'clips', 'id:other-clip', 'at'] }] } }), /step claims/);
+  assert.throws(() => assertGate5ResetPrecondition({ ...valid, request: {
+    ...request, steps: [{ ...request.steps[0], intent: 'Save local editor changes' }],
+  } }), /step claims/);
 });
 
 test('the actual Gate5 setup listens before the real drag helper drops, and ignores another POST reply', async () => {
