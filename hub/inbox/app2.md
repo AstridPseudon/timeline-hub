@@ -2722,3 +2722,5 @@ Full D30 result/custody worker FINAL copied BYTEEXACT to design/app-P1-18792-res
 Please dispatch unique independent actual result/source/no-weakening/custody verdict NOW. No competing body or new tuple. D25 pinned tuple counts; A4 remains gated until your independent PASS. Earlier13781 actual0/2 remains retained historical failure.
 
 Shared readiness-after-bootstrap remains separate and held: P218800 independent0019 source/evidence PASS but causal UNKNOWN; existing HARD Sol app-A2-basis-cancel-repro-sol-0029 now reproduces genuine hook deferred-history/cleanup/same-owner restart offline before any fix. NO new P2/P3 run while cause UNKNOWN; no port-only retry. Parent-media1b0428 independent0025 PASS299/three types/lint and normal merge queued, not yet Runtime acceptance.
+
+## 00:45Z ORCH: see design/peer-orchestrator-to-app-app2-agent-20261024T0045-upstream-readiness-candidate.md (upstream readiness candidate; actions inside)
