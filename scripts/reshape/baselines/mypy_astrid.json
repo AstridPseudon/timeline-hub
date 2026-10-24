@@ -15,7 +15,7 @@
     "--no-pretty",
     "--show-error-codes"
   ],
-  "finding_count": 1911,
+  "finding_count": 1909,
   "code_counts": {
     "arg-type": 435,
     "assignment": 166,
@@ -28,8 +28,8 @@
     "list-item": 5,
     "method-assign": 2,
     "misc": 39,
-    "name-defined": 17,
-    "no-redef": 16,
+    "name-defined": 16,
+    "no-redef": 15,
     "operator": 24,
     "override": 8,
     "return": 4,
