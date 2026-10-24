@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -16,13 +17,51 @@ from astrid.sdk.timeline._command_state import ABSENT, CommandError, State, pres
 from astrid.sdk.timeline._shot_commands import capture_shot_set
 from astrid.sdk.timeline.commands import execute, operations
 from astrid.sdk.timeline.rebase import replay
-from tests.editing_conformance.test_recipe_m1_commands import bundle, inverse, later
+from tests.editing_conformance.test_recipe_m1_commands import bundle as _base_bundle
+from tests.editing_conformance.test_recipe_m1_commands import inverse, later
+from tests.timeline.test_authoring_bundle import _closure, _digest, _runtime_document
 
-FIXTURES = Path(__file__).parent / 'fixtures'
+_SOURCE_FIXTURES = Path(__file__).parent / 'fixtures'
+FIXTURES = _SOURCE_FIXTURES
 REF = 'occurrence:occ-1/shot'
 OTHER = 'occurrence:occ-2/shot'
 UNSUPPORTED = ('steerableMotionSettings', 'phaseConfig', 'pairConfigs', 'shotImageIds', 'loras',
                'structureVideo', 'modelSettingsByModel')
+
+
+def bundle(*, shared=True, app='missing', fps=30):
+    """Open the recipe with the authenticated Runtime closure used by inverse."""
+    parent, shots, internals = _closure(shared=shared)
+    parent['payload']['config']['output'] = {'fps': fps}
+    for index, row in enumerate(parent['payload']['occurrences']):
+        row['placement']['start_ms'] = 10000 + index * 10000
+        row['duration_ms'] = 10000
+        row['source_offset'], row['speed'] = 0, 1
+    if app != 'missing':
+        internals[0]['payload']['clips'][0]['app'] = copy.deepcopy(app)
+        parent['payload']['clips'][0]['app'] = copy.deepcopy(app)
+        parent['payload']['config']['clips'][0]['app'] = copy.deepcopy(app)
+    for image in [parent, *shots, *internals]:
+        image['content_digest'] = _digest(image['payload'])
+
+    result = _base_bundle(shared=shared, app=app, fps=fps)
+    result['source_mapping']['_runtime_document'] = _runtime_document(parent, shots, internals)
+    return result
+
+
+def _migrate_portable_fixture():
+    """Add the authenticated source document without rewriting the checked-in fixture."""
+    root = Path(tempfile.mkdtemp(prefix='astrid-shot-set-fixture-'))
+    fixture = json.loads((_SOURCE_FIXTURES / 'recipe_m2_shot_set.json').read_text())
+    runtime_document = bundle()['source_mapping']['_runtime_document']
+    for key in ('bundle', 'after_bundle', 'head_bundle', 'rebased_bundle'):
+        fixture[key]['source_mapping']['_runtime_document'] = copy.deepcopy(runtime_document)
+    (root / 'recipe_m2_shot_set.json').write_text(
+        json.dumps(fixture, sort_keys=True, separators=(',', ':')))
+    return root
+
+
+FIXTURES = _migrate_portable_fixture()
 
 
 def payload(source, ref=REF):
