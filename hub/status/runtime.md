@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T01:08:10Z | dispatcher heartbeat 7s | live 2 (sol 1, luna 1, other 0) | busy30 10 | status age 1m -->
+<!-- main | 2026-10-24T01:10:21Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 1m -->
 # runtime board, 2026-10-24T01:06:35Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -37,6 +37,8 @@
 | OPS-main-v1-registration | Finite abandoned registration proposal | Luna / independent Luna | Source only | merged | Return 1850; review 1855 | Proposal passed; no live configuration, removal or target retry. | evidence only |
 | V4-deferred | H9 cut and deferred timing | Orchestrator | Deferred scope | gated:H9-cut | No new worker | Original failures stay unchanged and visible. No V4 repair or proof run. | deferred |
 | F-authoring-publish-writer | Migrate Agent publication helper | HARD Sol | Agent D32 assignment | doing | rt-F-authoring-publish-writer-resume-0104 | Sol0101 confirmed fixture needs provider and v2 Transport. Manager clarified that scope; Sol0104 continues. Agent owns remote.py and home merge. | Agent b61cebe8 |
+| OPS-manifest-restore | Restore accidental generated manifest write | Luna | Exact main file identity | doing | rt-OPS-manifest-restore-0110 | Manager invoked an unsupported help flag and regenerated main manifest. Exact tracked-byte restoration dispatched; no new Runtime merge until clean. | HEAD 458595850 |
+| R0-public-export-manifest | Refresh generated artifact hash | Luna | Full 29085 first failure | doing | rt-R0-public-export-manifest-0111 | Full suite found the package export hash stale in artifacts.json. Worker regenerates only that manifest in its worktree. | Base 458595850 |
 
 P1 is GO under D25: original 18792 passed both cases in 141 seconds on App f8b15af0, Agent 78738040 and Runtime 2a9e347f. Proof source review 0036 and custody review 0040 passed. Final freeze must rerun all gates on the final heads.
 
@@ -62,3 +64,5 @@ Blockers: KIT CHANGE: make-runtime 873ddcfa636b3ae9e285613a6fb65c643e21ac749e001
 Blockers: KIT CHANGE: request-runtime 471fd470efeae102140b96b4f97db857e0d6d79b0839afa10a1a00e911b33b5f — installed and retained; no new installation this pass.
 
 Next ready: Consume full suite 29085 and Sol author 0104. U1c is reviewed and held for freeze; Agent owns review and home merge for the assigned writer row. No ready Runtime product row is waiting.
+
+Blockers: Runtime operations — Main contract/artifacts.json was accidentally regenerated at 01:08. Worker0110 restores only exact tracked bytes; Runtime merges wait for clean status.
