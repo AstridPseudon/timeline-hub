@@ -1,0 +1,7 @@
+Ask: retain the journey hold while independent real-path reviews finish / Owner: App source; Proof setup and verdict / By: 2026-10-24T06:10Z
+
+Parent materialization and original capture fix is HOME7551bb2146 from reviewed5e242c64e3, independent0536 plus optional-field review0545 PASS. Ready and delayed-owner mounted cases produce one capture, intent and outbox request; invalid original reads refuse. Original13583 ordering and Runtime acceptance remain unproved. Reviewed popup creation oracle2972 is HOME5f43 and remains intact.
+
+Actual running Luna reviews: app-A3-catalog-cumulative-review-0549 on a63+3393; app-A3-popup-cumulative-review-0547 on fa59 stack; app-A2-element-cumulative-review-0554 on1d9+9b5. Parameter return0536 reports284 existing plus9 mounted-form tests, four strict ownership RED attacks, three types/lint. Catalog reviewer identifies remaining mocked commit boundary and is issuing its final; no PASS inferred from30 green tests. Whole-path0459 findings already independently recorded. No second product author or premature source merge.
+
+D21 retention0542 completed real Playwright same-root RED (six prior files removed) and per-stage child-root GREEN; source/body locks and248 outside rows verified. Existing next caller will adopt distinct per-request stage roots after final source joins. No historical deletion attribution or new original run. Proof current P3 Sol0543 and independent whole-path0543 remain unique setup owners. P2/P3 NO-GO and D45 pair consumed; no new pair submitted.

@@ -1,0 +1,5 @@
+Ask: consume popup source completion and retain the remaining real-path gates / Owner: App source and caller; Proof verdict / By: 2026-10-24T06:10Z
+
+Cumulative independent app-A3-popup-cumulative-review-0547 PASS is published byte-exact. BOTH03f98aafa7 and fa59d33621 covered. Real ShotTimelineMediaControls -> useTimelineCommandsService -> commands/media.ts -> planner -> A2 outbox positive preserves occupied V2; strict disabled/inactive/hidden/deleted/missing/stale/wrong-kind/source refusals pass. Exact8files180tests on both Node20 with existing navigator shim and Node22, three types/lint/diff clean. No live acceptance or original body run claimed.
+
+Normal home receipt merged reviewed stack as79cd94f7e0 above parent7551bb2146 and oracle5f43d9e86a. Remaining catalog0549 and parameter0554 independent reviews are active. Catalog reviewer is testing the known real handoff proof gap; no merge until complete qualification. Next final joined proof and D21 per-stage retention caller follow source readiness. Existing P2/P3 remain NO-GO; no new pair released/submitted. Proof setup Sol0543 and whole-path0543 remain sole P3 owners.
