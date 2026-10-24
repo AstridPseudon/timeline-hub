@@ -293,7 +293,10 @@ class Installer:
                 except (Exception, KeyboardInterrupt) as recovery:
                     raise RuntimeError(f"Update failed ({failure}); recovery also failed ({recovery}).") from failure
             elif candidate is not None:
-                self.backend.stop(candidate, self.data)
+                try:
+                    self.backend.stop(candidate, self.data)
+                except (Exception, KeyboardInterrupt) as cleanup:
+                    failure.add_note(f"Stopping the failed installation also failed: {cleanup!r}")
             raise
         if backup:
             self.say(f"A backup of your workspace is kept at {backup['root']}.")
