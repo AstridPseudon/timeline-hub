@@ -968,10 +968,20 @@ def world(tmp_path, monkeypatch):
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.store import RealmStore
 
-    spec = importlib.util.spec_from_file_location("f05_d18_generated_client", source / "packages/python/astrid_runtime_client/generated.py")
-    generated = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = generated
-    spec.loader.exec_module(generated)
+    runtime_client_root = source / "packages/python/astrid_runtime_client"
+    runtime_client_name = "f05_d18_runtime_client"
+    spec = importlib.util.spec_from_file_location(
+        runtime_client_name,
+        runtime_client_root / "__init__.py",
+        submodule_search_locations=[str(runtime_client_root)],
+    )
+    runtime_client = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = runtime_client
+    spec.loader.exec_module(runtime_client)
+    generated = sys.modules[f"{runtime_client_name}.generated"]
+    timeline_commit_types = sys.modules[f"{runtime_client_name}.timeline_commit_types"]
+    assert Path(generated.__file__).resolve() == (runtime_client_root / "generated.py").resolve()
+    assert Path(timeline_commit_types.__file__).resolve() == (runtime_client_root / "timeline_commit_types.py").resolve()
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
     service = RuntimeService(root)
@@ -1058,7 +1068,9 @@ def world(tmp_path, monkeypatch):
         for bridge in state.bridges:
             bridge.revoke()
         state.service.close()
-        sys.modules.pop(spec.name, None)
+        for name in tuple(sys.modules):
+            if name == runtime_client_name or name.startswith(f"{runtime_client_name}."):
+                sys.modules.pop(name, None)
 
 
 def setup(world, *, form="python", derived=False, code=None, flags=(), targeted=False, input_ports=None, argv_override=None, delegating=True, root_object_ids=(), child_file_output=False, network_policy=None, prelude="", module_prelude="", parent_outputs=None, parent_inputs=None, parent_command_fields=None, parent_input_values=None, child_limits=None, child_code_override=None, parent_execution_inputs=None):
