@@ -119,14 +119,19 @@ def authoring_commit_request(candidate: Mapping[str, Any], writer: Any) -> dict[
         inputs = [row for row in inputs if row != {'pin': pin}]
         if value not in inputs:
             inputs.append(value)
+    steps = [{'id': 'authoring', 'label': 'Publish authoring candidate', 'intent': '', 'tags': [],
+        'command_ordinals': list(range(len(commands))),
+        'patch': [copy.deepcopy(change) for call in commands if call['op'] == 'doc.patch'
+                  for change in call['args']['changes']]}]
     if inputs:
-        commands.insert(0, {'schema_version': 1, 'op': 'media.admit', 'version': '1',
-                            'select': None, 'args': {'inputs': inputs}})
+        # Runtime captures all inputs before execution. Record consumption at
+        # the final boundary, where these pins are in the resulting closure.
+        steps.append({'id': 'media', 'label': 'Capture authoring media', 'intent': '', 'tags': [],
+                      'command_ordinals': [len(commands)], 'patch': []})
+        commands.append({'schema_version': 1, 'op': 'media.admit', 'version': '1',
+                         'select': None, 'args': {'inputs': inputs}})
     return {'api_version': 1, 'project_id': candidate['project_id'], 'timeline_id': candidate['timeline_id'],
         'base_revision_id': base['base_parent']['revision_id'],
         'base_publication_id': base['base_parent']['publication_id'], 'commands': commands,
-        'label': 'Publish authoring candidate', 'steps': [{'id': 'authoring', 'label': 'Publish authoring candidate',
-            'intent': '', 'tags': [], 'command_ordinals': list(range(len(commands))),
-            'patch': [copy.deepcopy(change) for call in commands if call['op'] == 'doc.patch'
-                      for change in call['args']['changes']]}], 'merge': 'atomic', 'source': {'via': 'python'},
+        'label': 'Publish authoring candidate', 'steps': steps, 'merge': 'atomic', 'source': {'via': 'python'},
         'rationale': 'Publish authoring candidate ' + compilation.candidate_digest}

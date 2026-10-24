@@ -1519,18 +1519,34 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
                     self.owner = owner
                     self.result = None
 
-                def publish_parent_composition(self, project_id, timeline_id, publication, *, idempotency_key):
+                def list_timeline_commits(self, *args, **kwargs):
+                    return self.owner._client.list_timeline_commits(*args, **kwargs)
+
+                def get_project_parent_composition_revision(self, *args):
+                    return self.owner._client.get_project_parent_composition_revision(*args)
+
+                def get_project_shot_revision(self, *args):
+                    return self.owner._client.get_project_shot_revision(*args)
+
+                def get_project_timeline_revision(self, *args):
+                    return self.owner._client.get_project_timeline_revision(*args)
+
+                def get_project_media_selection(self, *args):
+                    return self.owner._client.get_project_media_selection(*args)
+
+                def commit_timeline(self, project_id, timeline_id, body, *, idempotency_key):
                     self.result = self.owner._typed(
-                        "publish_parent_composition",
+                        "commit_timeline",
                         project_id,
                         timeline_id,
-                        publication,
+                        body,
                         key=idempotency_key,
                         idempotency_key=idempotency_key,
                     )
                     if not self.result.ok:
-                        raise RuntimeError(self.result.error.message if self.result.error else "parent-composition publication failed")
-                    return self.result.data
+                        raise RuntimeError(self.result.error.message if self.result.error else "authoring commit failed")
+                    return {"data": self.result.data,
+                            "receipt": self.result.receipt.as_dict() if self.result.receipt is not None else None}
 
             writer = _Writer(self)
             published = publish_authoring_candidate(candidate, writer, idempotency_key=key)
