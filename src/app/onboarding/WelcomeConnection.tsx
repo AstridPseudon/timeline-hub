@@ -6,7 +6,7 @@ import type { WindowMode } from '@/shared/components/RuntimeConnection/copy.ts';
 
 export default function WelcomeConnection({ windowMode }: { windowMode: WindowMode }) {
   return <RuntimeConnectionProvider><RuntimeConnectionGate
-    panel={(connection, exit) => <RuntimeConnectionPanel connection={connection} exit={exit} firstRun windowMode={windowMode} />}>
+    panel={(connection, exit) => <RuntimeConnectionPanel connection={connection} exit={exit} windowMode={windowMode} />}>
     <StarterProjectHandoff onContinueWithoutProject={() => window.location.assign(completeWelcome())} onReady={selection => window.location.assign(completeWelcome(selection))} />
   </RuntimeConnectionGate></RuntimeConnectionProvider>;
 }

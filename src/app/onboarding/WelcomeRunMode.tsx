@@ -80,7 +80,7 @@ export function WelcomeRunMode({ onContinue, windowMode, setWindowMode, runMode,
                   <SegmentedControlItem value="browser-tab">Browser tab</SegmentedControlItem>
                 </SegmentedControl>
               </div>}
-              {runMode === 'hosted' && browser === 'safari' && !standalone && <p className="px-3.5 pb-3.5 pl-[43px] text-[13px] text-muted-foreground">For an app window, choose File → Add to Dock in Safari.</p>}
+              {runMode === 'hosted' && browser === 'safari' && !standalone && <p className="px-3.5 pb-3.5 pl-[43px] text-left text-[13px] text-muted-foreground">For an app window, choose File → Add to Dock in Safari.</p>}
             </div>
             <div className={`rounded-xl border transition-colors ${runMode === 'local' ? 'border-primary/70 bg-primary/[0.06]' : 'border-border hover:border-foreground/25 hover:bg-muted/40'}`}>
               <label htmlFor="welcome-run-local" onClick={() => setRunMode('local')} className="flex cursor-pointer items-start gap-3 p-3.5">

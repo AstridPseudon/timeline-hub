@@ -3,6 +3,7 @@ import type {
   BeforeInstallPromptEvent,
   InstallPromptSignals,
   NavigatorWithExtensions,
+  WindowWithInstallPrompt,
 } from './types';
 
 const checkIsStandalone = (): boolean => {
@@ -79,6 +80,9 @@ function ensureInstallListeners() {
   observedWindow = window;
   window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   window.addEventListener('appinstalled', handleAppInstalled);
+  // Chrome fires the event once, near page load, before any screen that offers the install has mounted.
+  const early = (window as WindowWithInstallPrompt).__astridInstallPrompt;
+  if (early) handleBeforeInstallPrompt(early);
 }
 
 function startPromptTimeout() {

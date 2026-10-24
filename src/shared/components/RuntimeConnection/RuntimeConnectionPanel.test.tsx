@@ -55,15 +55,13 @@ const ALL_SCREENS: ReadonlyArray<[string, () => RuntimeConnectionValue]> = [
 ];
 
 describe('RuntimeConnectionPanel', () => {
-  it('explains first-run local work in the existing connection card without duplicate controls', () => {
-    const connect = vi.fn();
-    render(<RuntimeConnectionPanel firstRun connection={connectionFor({ status: 'connecting' }, { awaitingConnect: true, connect })} />);
-    expect(screen.getAllByRole('heading')).toHaveLength(1);
-    expect(screen.getByRole('heading', { name: 'Connect to Astrid on this computer' })).toBeInTheDocument();
-    expect(screen.getByText('Chrome will ask to reach your computer. Choose Allow.')).toBeInTheDocument();
-    expect(screen.getAllByRole('button')).toHaveLength(2);
-    fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
-    expect(connect).toHaveBeenCalledOnce();
+  it('a fresh browser after the welcome tour: the set-up card promises no browser prompt, because nothing will ask yet', () => {
+    // Permission `prompt` and never connected: the welcome's connection step lands here, with no Connect to press.
+    panel(connectionFor({ status: 'set_up' }, { awaitingConnect: true }));
+    expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'set_up');
+    expect(screen.getByRole('heading', { name: 'Connect Astrid on this computer' })).toBeInTheDocument();
+    expect(shownText()).not.toMatch(/will ask|Choose Allow/);
+    expect(screen.queryByRole('button', { name: 'Connect' })).not.toBeInTheDocument();
   });
 
   it.each(ALL_SCREENS)('%s: speaks of Astrid and never names a Runtime, workspace, port or command', (_name, connection) => {

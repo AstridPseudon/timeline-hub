@@ -49,7 +49,8 @@ describe('run-mode choice', () => {
   it('Safari shows the Add to Dock hint and continues in the browser tab', () => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Macintosh) Version/17.0 Safari/605.1.15');
     mount();
-    expect(screen.getByText('For an app window, choose File → Add to Dock in Safari.')).toBeInTheDocument();
+    // Under the option's left-aligned text, not centred like the card's heading.
+    expect(screen.getByText('For an app window, choose File → Add to Dock in Safari.')).toHaveClass('text-left');
     expect(screen.queryByRole('radiogroup', { name: 'Open in' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Continue in this tab' }));
     expect(localStorage.getItem('astrid:welcome-v1')).toBe('connection');

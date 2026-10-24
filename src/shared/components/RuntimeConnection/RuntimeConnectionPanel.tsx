@@ -16,7 +16,6 @@ import { RUNTIME_CONNECTION_COPY as COPY, withBrowser, type WindowMode } from '.
 export interface RuntimeConnectionPanelProps {
   /** The gate's value: the screen to show (on the way out, the last one shown). */
   readonly connection: RuntimeConnectionValue;
-  readonly firstRun?: boolean;
   readonly windowMode?: WindowMode;
   /** Set once Astrid has connected after this panel asked for something: it shows so, then leaves (see the gate). */
   readonly exit?: RuntimeConnectionPanelExit | null;
@@ -219,7 +218,7 @@ function PhoneCard() {
 }
 
 /** The browser's local-network prompt has not been asked: nothing was sent, and Connect is what asks. */
-function PermissionCard({ connection, firstRun = false }: { connection: RuntimeConnectionValue; firstRun?: boolean }) {
+function PermissionCard({ connection }: { connection: RuntimeConnectionValue }) {
   const { permission } = COPY;
   if (connection.isChecking) {
     // The browser's prompt is open: nothing to press, only where to look.
@@ -234,8 +233,8 @@ function PermissionCard({ connection, firstRun = false }: { connection: RuntimeC
   }
   return (
     <Card
-      title={firstRun ? COPY.firstRun.title : withBrowser(permission.title)}
-      sentence={withBrowser(firstRun ? COPY.firstRun.sentence : permission.sentence)}
+      title={withBrowser(permission.title)}
+      sentence={withBrowser(permission.sentence)}
       action={<div className="space-y-2"><Button type="button" className="h-11 w-full rounded-xl" onClick={() => connection.connect()}>{permission.connect}</Button><CardDisclosure label={permission.allowTitle}>{permission.allowDetails}</CardDisclosure></div>}
     />
   );
@@ -264,9 +263,10 @@ function BlockedCard() {
  * Nothing answers and this browser has never connected. That is also what a set-up computer looks like from a new
  * browser or a private window, so the screen uses the same idempotent install line.
  */
-function SetUpCard({ firstRun = false, windowMode }: { firstRun?: boolean; windowMode?: WindowMode }) {
+function SetUpCard({ windowMode }: { windowMode?: WindowMode }) {
   const { setUp } = COPY;
-  return <Card title={firstRun ? COPY.firstRun.title : setUp.title} sentence={withBrowser(firstRun ? COPY.firstRun.sentence : setUp.sentence)} action={<CopyInstallCommand mode="install" windowMode={windowMode} />} status={COPY.waiting} />;
+  // Nothing has asked the browser yet, so this card never says it will: the permission card does, once Connect is next.
+  return <Card title={setUp.title} sentence={setUp.sentence} action={<CopyInstallCommand mode="install" windowMode={windowMode} />} status={COPY.waiting} />;
 }
 
 /** Nothing answers on a return visit, or the gateway answered but Astrid is not ready: a person does the same for each. */
@@ -286,14 +286,14 @@ function awaitingConnect({ awaitingConnect: awaiting, state, isChecking }: Runti
 }
 
 /** The screen for a connection: its name (the journey and Layout tests read it) and its card. */
-function screenFor(connection: RuntimeConnectionValue, phone: boolean, firstRun: boolean, windowMode?: WindowMode): { name: string; card: ReactNode } | null {
+function screenFor(connection: RuntimeConnectionValue, phone: boolean, windowMode?: WindowMode): { name: string; card: ReactNode } | null {
   const { state } = connection;
   if (phone) return { name: 'phone', card: <PhoneCard /> };
   if (awaitingConnect(connection)) {
-    return { name: connection.isChecking ? 'pending' : 'permission', card: <PermissionCard connection={connection} firstRun={firstRun} /> };
+    return { name: connection.isChecking ? 'pending' : 'permission', card: <PermissionCard connection={connection} /> };
   }
   switch (state.status) {
-    case 'set_up': return { name: 'set_up', card: <SetUpCard firstRun={firstRun} windowMode={windowMode} /> };
+    case 'set_up': return { name: 'set_up', card: <SetUpCard windowMode={windowMode} /> };
     case 'not_running': return { name: 'not_running', card: <NotRunningCard windowMode={windowMode} /> };
     case 'blocked': return { name: 'blocked', card: <BlockedCard /> };
     case 'update_needed': return { name: 'update_needed', card: <UpdateNeededCard windowMode={windowMode} /> };
@@ -305,13 +305,13 @@ function screenFor(connection: RuntimeConnectionValue, phone: boolean, firstRun:
  * The connection panel for the hosted build, one screen per thing a person can do, over the empty editor.
  * Renders nothing once connected unless it is on its way out (`exit`). Every word comes from `copy.ts`.
  */
-export function RuntimeConnectionPanel({ connection, exit = null, firstRun = false, windowMode }: RuntimeConnectionPanelProps) {
+export function RuntimeConnectionPanel({ connection, exit = null, windowMode }: RuntimeConnectionPanelProps) {
   // The landing page's install dialog asks the same question, so the two always agree on who is on a phone.
   const phone = useMemo(isMobileDevice, []);
   const { state } = connection;
   if (state.status === 'connected') return null;
   if (state.status === 'connecting' && !awaitingConnect(connection)) return <ConnectingPanel phone={phone} exit={exit} />;
-  const screen = screenFor(connection, phone, firstRun, windowMode);
+  const screen = screenFor(connection, phone, windowMode);
   if (!screen) return null;
   return <GateLayer dataState={screen.name} exit={exit}>{screen.card}</GateLayer>;
 }

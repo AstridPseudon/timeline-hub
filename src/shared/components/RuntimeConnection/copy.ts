@@ -111,7 +111,6 @@ interface Message {
 }
 
 export interface RuntimeConnectionCopy {
-  readonly firstRun: { readonly title: string; readonly sentence: string };
   readonly commands: typeof ASTRID_COMMANDS;
   /** Accessible name for the panel region. */
   readonly panelLabel: string;
@@ -171,10 +170,6 @@ export interface RuntimeConnectionCopy {
 }
 
 export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
-  firstRun: {
-    title: 'Connect to Astrid on this computer',
-    sentence: '{browser} will ask to reach your computer. Choose Allow.',
-  },
   commands: ASTRID_COMMANDS,
 
   panelLabel: 'Connect to Astrid',

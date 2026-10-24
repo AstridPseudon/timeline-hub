@@ -1,4 +1,7 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { act, renderHook } from '@testing-library/react';
+import { JSDOM } from 'jsdom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   __resetInstallPromptSignalsForTests,
@@ -161,5 +164,33 @@ describe('platform install signals', () => {
     expect(second.result.current.deferredPrompt).toBe(promptB);
     expect(second.result.current.consumeDeferredPrompt(promptA)).toBe(false);
     expect(second.result.current.consumeDeferredPrompt(promptB)).toBe(true);
+  });
+
+  it('keeps the offer Chrome makes at page load for a choice screen that mounts after the tour', async () => {
+    // index.html's capture runs before the app bundle: Chrome fires the event once, ~200 ms into the load.
+    const indexHtml = fs.readFileSync(path.resolve(__dirname, '../../../../index.html'), 'utf8');
+    const capture = [...indexHtml.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(([, source]) => source)
+      .find((source) => source.includes('beforeinstallprompt'));
+    if (!capture) throw new Error('index.html has no early install-offer capture');
+    const page = new JSDOM('', { url: 'https://astrid.haus/tools/video-editor', runScripts: 'outside-only' }).window;
+    page.eval(capture);
+    const offer = Object.assign(new page.Event('beforeinstallprompt', { cancelable: true }), {
+      prompt: vi.fn().mockResolvedValue(undefined),
+      userChoice: Promise.resolve({ outcome: 'accepted' as const }),
+    });
+    page.dispatchEvent(offer);
+    expect(offer.defaultPrevented).toBe(true);
+    expect((page as unknown as { __astridInstallPrompt?: Event }).__astridInstallPrompt).toBe(offer);
+
+    // Later, in a document whose listener was never attached, the first screen to ask adopts it.
+    vi.resetModules();
+    (window as unknown as { __astridInstallPrompt?: Event }).__astridInstallPrompt = offer;
+    try {
+      const fresh = await import('./signals');
+      const { result } = renderHook(() => fresh.useInstallPromptSignals());
+      expect(result.current.deferredPrompt).toBe(offer);
+    } finally {
+      delete (window as unknown as { __astridInstallPrompt?: Event }).__astridInstallPrompt;
+    }
   });
 });

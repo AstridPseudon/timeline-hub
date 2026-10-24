@@ -9,7 +9,11 @@
 
     <!-- Web App Manifest for PWA -->
     <link rel="manifest" href="/manifest.json" />
-    
+    <!-- Chrome offers the install once, as the page loads; the run-mode choice asks after the tour. Keep the offer for signals.ts. -->
+    <script>
+      window.addEventListener('beforeinstallprompt', function (event) { event.preventDefault(); window.__astridInstallPrompt = event; });
+    </script>
+
     <!-- PWA Meta Tags -->
     <!-- The page paper; the public pages and the app then keep it in step with their own background. -->
     <meta name="theme-color" content="#f7f4ed" />
