@@ -262,6 +262,8 @@ BOOTSTRAP_LOCK = "".join(
 
 
 def bootstrap_artifacts(archive_path: Path) -> dict[str, bytes]:
+    if not archive_path.is_file() or archive_path.is_symlink():
+        fail("missing genuine bootstrap input0932 archive " + str(archive_path) + " SHA256 " + BOOTSTRAP_ARCHIVE_SHA256)
     data = captured_bytes(archive_path)
     if hashlib.sha256(data).hexdigest() != BOOTSTRAP_ARCHIVE_SHA256:
         fail("missing genuine bootstrap input0932 archive SHA256 " + BOOTSTRAP_ARCHIVE_SHA256)
@@ -303,7 +305,7 @@ def trusted_venv_sources() -> dict[str, bytes]:
 
 def bootstrap_identity(interpreter: Path) -> str:
     sources = trusted_venv_sources()
-    identity = {"archive": BOOTSTRAP_ARCHIVE_SHA256,
+    identity = {"inventory": "whole-child-root-v1", "archive": BOOTSTRAP_ARCHIVE_SHA256,
                 "lock": hashlib.sha256(BOOTSTRAP_LOCK).hexdigest(),
                 "wheels": BOOTSTRAP_WHEELS,
                 "python": str(interpreter.resolve()),
@@ -316,9 +318,10 @@ def bootstrap_identity(interpreter: Path) -> str:
 def venv_files(root: Path) -> dict[str, bytes]:
     # Render from trusted host templates; never derive authority from child bytes.
     sources = trusted_venv_sources()
+    base_executable = Path(sys._base_executable)  # type: ignore[attr-defined]
     context = types.SimpleNamespace(env_dir=str(root), env_name=root.name,
                                     prompt="child", bin_name="bin",
-                                    env_exe=str(root / "bin" / Path(sys._base_executable).name))
+                                    env_exe=str(root / "bin" / base_executable.name))
     builder = venv.EnvBuilder(prompt="child")
     result = {}
     for source, content in sources.items():
@@ -329,7 +332,7 @@ def venv_files(root: Path) -> dict[str, bytes]:
         result["bin/" + path.name] = builder.replace_variables(content.decode(), context).encode()
     # A deterministic, non-executable configuration established before pip runs.
     result["pyvenv.cfg"] = (
-        f"home = {Path(sys._base_executable).parent}\n"
+        f"home = {base_executable.parent}\n"
         "include-system-site-packages = false\n"
         f"version = {'.'.join(map(str, sys.version_info[:3]))}\n"
         "prompt = 'child'\n"
@@ -349,17 +352,43 @@ def verify_venv_files(root: Path) -> set[str]:
 
 def retained_bootstrap(root: Path, interpreter: Path) -> dict[str, bytes]:
     authority = bootstrap_identity(interpreter)
+    child_file(root, root / ".bootstrap-authority")
+    child_file(root, root / ".bootstrap-input.tgz")
     if captured_bytes(root / ".bootstrap-authority") != (authority + "\n").encode():
         fail("retained bootstrap source/interpreter authority mismatch")
     artifacts = bootstrap_artifacts(root / ".bootstrap-input.tgz")
     seed = root / ".bootstrap-wheelhouse"
-    if seed != seed.resolve() or set(p.name for p in seed.iterdir()) != {"requirements.txt", *artifacts}:
+    if seed != seed.resolve() or {p.name for p in seed.iterdir()} != {"requirements.txt", *artifacts}:
         fail("retained bootstrap snapshot inventory mismatch")
     for name, data in {"requirements.txt": BOOTSTRAP_LOCK, **artifacts}.items():
         child_file(root, seed / name)
         if captured_bytes(seed / name) != data:
             fail("retained bootstrap snapshot differs from original input: " + name)
     return artifacts
+
+
+def store_metadata(root: Path, interpreter: Path) -> set[str]:
+    marker = root / ".bench-owner.json"
+    if not marker.exists() and not marker.is_symlink():
+        return set()
+    child_file(root, marker)
+    store = root.parent.parent
+    if root.parent.name not in {"staging", "entries"} or store != store.resolve():
+        fail("Store metadata is outside normal child custody")
+    owner = json.loads(captured_bytes(store / "owner.json"))
+    value = json.loads(captured_bytes(marker))
+    if set(value) != {"owner", "component", "key", "identity"} or value["component"] != "child" or value["owner"] != owner["id"] or owner["root"] != str(store):
+        fail("retained Store ownership metadata mismatch")
+    identity = value["identity"]
+    if set(identity) != {"agent_sha", "backend_sha", "client_tuple", "bootstrap_authority"} or identity["bootstrap_authority"] != bootstrap_identity(interpreter):
+        fail("Store child lacks genuine bootstrap authority")
+    parts = ["child", identity["agent_sha"], identity["backend_sha"], identity["client_tuple"], identity["bootstrap_authority"]]
+    key = hashlib.sha256(json.dumps(parts, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    if value["key"] != key or root.name != (("child-" if root.parent.name == "entries" else "") + key):
+        fail("retained Store key differs from bootstrap/source identity")
+    if captured_bytes(marker) != json.dumps(value, sort_keys=True, separators=(",", ":")).encode():
+        fail("noncanonical retained Store metadata")
+    return {marker.name}
 
 
 def installed_integrity(
@@ -374,7 +403,8 @@ def installed_integrity(
     if not root.is_absolute() or root != root.resolve() or root.stat().st_uid != os.getuid():
         fail("installed child root is not physical or owned")
     sites = list((root / "lib").glob("python*/site-packages"))
-    if len(sites) != 1 or root.is_symlink() or sites[0].is_symlink():
+    if (len(sites) != 1 or root.is_symlink() or sites[0].is_symlink()
+            or sites[0] != root / "lib" / f"python{sys.version_info.major}.{sys.version_info.minor}" / "site-packages"):
         fail("installed child layout is missing or ambiguous")
     site = sites[0]
     if site != site.resolve() or not site.is_relative_to(root):
@@ -392,9 +422,20 @@ def installed_integrity(
     # Only the maker's committed-source verifier can supply local ownership.
     # This is deliberately not an on-disk/CLI allowlist or a package exemption.
     local_inventory = local_inventory or {}
-    if set(local_inventory) - {"astrid", "astrid-runtime"}:
+    if set(local_inventory) - {"astrid", "astrid-runtime", "__root__"}:
         fail("unsupported local distribution ownership")
+    # __root__ is supplied only by the authenticated committed-source verifier,
+    # after validating each maker/Store/source file. It is never read from disk.
+    root_owned = local_inventory.pop("__root__", set())
     owned: set[str] = verify_venv_files(root) if bootstrap else set()
+    for rel in root_owned:
+        child_file(root, root / rel)
+        owned.add(rel)
+    if bootstrap:
+        owned.update(store_metadata(root, interpreter or Path(sys.executable)))
+        retained_bootstrap(root, interpreter or Path(sys.executable))
+        owned.update({".bootstrap-authority", ".bootstrap-input.tgz"})
+        owned.update(".bootstrap-wheelhouse/" + name for name in {"requirements.txt", *BOOTSTRAP_WHEELS})
     expected_distributions: set[object] = set()
     for dist in distributions:
         name = canonicalize_name(dist.metadata.get("Name", ""))
@@ -580,8 +621,12 @@ def installed_integrity(
     aliases = {"python", "python3"}
     if re.fullmatch(r"python3\.[0-9]+", maker.name):
         aliases.add(maker.name)
+    if bootstrap:
+        aliases.add(f"python{sys.version_info.major}.{sys.version_info.minor}")
     for alias in aliases:
         path = root / "bin" / alias
+        if bootstrap and not path.exists():
+            fail("missing bootstrap interpreter: bin/" + alias)
         if path.exists() or path.is_symlink():
             child_file(root, path)
             if captured_bytes(path) != maker_bytes:
@@ -592,21 +637,22 @@ def installed_integrity(
             owned.add(physical)
     if "bin/python" not in owned:
         fail("missing bootstrap interpreter: bin/python")
-    for directory in (site, root / "bin"):
-        allowed_dirs = {directory}
-        for rel in owned:
-            path = root / rel
-            if path.is_relative_to(directory):
-                allowed_dirs.update(path.parents)
-        for path in directory.rglob("*"):
-            info = path.lstat()
-            if stat.S_ISDIR(info.st_mode):
-                if info.st_uid != os.getuid() or path not in allowed_dirs:
-                    fail(f"unowned installed directory: {path.relative_to(root)}")
-                continue
-            child_file(root, path)
-            if str(path.relative_to(root)) not in owned:
-                fail(f"unowned installed file: {path.relative_to(root)}")
+    # Only ancestors of authenticated files and the exact empty venv include
+    # layout are structural directories. No namespace grants file ownership.
+    allowed_dirs = {root, root / "lib", site.parent, site, root / "include", root / "include" / f"python{sys.version_info.major}.{sys.version_info.minor}"}
+    for rel in owned:
+        allowed_dirs.update((root / rel).parents)
+    for path in root.rglob("*"):
+        info = path.lstat()
+        if info.st_uid == os.getuid() and stat.S_ISLNK(info.st_mode) and path == root / "lib64" and path.readlink() == Path("lib") and (root / "lib") == (root / "lib").resolve():
+            continue
+        if stat.S_ISDIR(info.st_mode):
+            if info.st_uid != os.getuid() or path not in allowed_dirs:
+                fail(f"unowned installed directory: {path.relative_to(root)}")
+            continue
+        child_file(root, path)
+        if str(path.relative_to(root)) not in owned:
+            fail(f"unowned installed file: {path.relative_to(root)}")
 
 
 def install_snapshot(wheelhouse: Path, requirements: bytes, flags: list[str], *, python: str | None = None) -> None:
@@ -620,7 +666,17 @@ def install_snapshot(wheelhouse: Path, requirements: bytes, flags: list[str], *,
             stream.flush()
         fcntl.fcntl(lock_fd, fcntl.F_ADD_SEALS,
                     fcntl.F_SEAL_WRITE | fcntl.F_SEAL_GROW | fcntl.F_SEAL_SHRINK | fcntl.F_SEAL_SEAL)
-        subprocess.run([python or sys.executable, "-m", "pip", "install", *flags,
+        command = [python or sys.executable, "-I", "-m", "pip"]
+        bootstrap_flags = []
+        if wheelhouse.name == ".bootstrap-wheelhouse":
+            pip_name = next(name for name in BOOTSTRAP_WHEELS if name.startswith("pip-"))
+            if captured_bytes(wheelhouse / "requirements.txt") != BOOTSTRAP_LOCK or hashlib.sha256(captured_bytes(wheelhouse / pip_name)).hexdigest() != BOOTSTRAP_WHEELS[pip_name]:
+                fail("bootstrap installer differs from original pip wheel")
+            bootstrap_flags = ["--ignore-installed"]
+            command = [python or sys.executable, "-I", "-c",
+                       "import runpy,sys; sys.path.insert(0,sys.argv.pop(1)); runpy.run_module('pip',run_name='__main__')",
+                       f"/proc/self/fd/{directory_fd}/{pip_name}"]
+        subprocess.run([*command, "install", *bootstrap_flags, *flags,
                         "--no-index", "--find-links", f"/proc/self/fd/{directory_fd}",
                         "--require-hashes", "--no-deps", "-r", f"/proc/self/fd/{lock_fd}"],
                        pass_fds=(lock_fd, directory_fd), check=True)
@@ -630,6 +686,7 @@ def install_snapshot(wheelhouse: Path, requirements: bytes, flags: list[str], *,
 
 
 def main(*, local_inventory: dict[str, set[str]] | None = None) -> int:
+    interpreter: Path | None = None
     args = sys.argv[1:]
     if args and args[0] == "--bootstrap-identity":
         print(bootstrap_identity(Path(args[1])))
@@ -652,6 +709,7 @@ def main(*, local_inventory: dict[str, set[str]] | None = None) -> int:
             child_file(root, root / "bin" / alias)
             if captured_bytes(root / "bin" / alias) != captured_bytes(interpreter.resolve()):
                 fail("child interpreter differs from maker interpreter")
+        installed_integrity(root, {}, interpreter=interpreter, bootstrap=True)
         return 0
     bootstrap_root = None
     if "--bootstrap-root" in args:
@@ -766,6 +824,16 @@ def main(*, local_inventory: dict[str, set[str]] | None = None) -> int:
             if artifacts.keys() & bootstrap_wheels.keys():
                 fail("dependency seed overlaps bootstrap wheels")
             artifacts.update(bootstrap_wheels)
+        local_inventory = dict(local_inventory or {})
+        root_owned = set(local_inventory.get("__root__", set()))
+        root_owned.update(str((wheelhouse / name).relative_to(installed)) for name in {"requirements.txt", *(path.name for path, _ in matched.values())})
+        req = installed / ".provision-requirements.txt"
+        if req.exists():
+            child_file(installed, req)
+            if captured_bytes(req) != requirements_bytes:
+                fail("retained provision requirements differ from committed lock")
+            root_owned.add(req.name)
+        local_inventory["__root__"] = root_owned
         installed_integrity(installed, artifacts, interpreter=interpreter, local_inventory=local_inventory,
                             bootstrap=bootstrap_root is not None)
     if install_flags is not None:

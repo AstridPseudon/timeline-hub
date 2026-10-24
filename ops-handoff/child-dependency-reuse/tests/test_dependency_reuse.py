@@ -21,6 +21,15 @@ VERIFY = CANDIDATE / "verify_dependency_seed.py"
 BOOTSTRAP_ARCHIVE = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/bootstrap-wheel-input-0932-443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548.tgz")
 
 
+@pytest.fixture(autouse=True)
+def restore_private_fixture_directories(tmp_path: Path):
+    """Let pytest remove sealed private fixtures after their assertions finish."""
+    yield
+    for path in [tmp_path, *tmp_path.rglob("*")]:
+        if not path.is_symlink() and path.is_dir():
+            path.chmod(path.stat().st_mode | stat.S_IWUSR | stat.S_IXUSR)
+
+
 def wheel(
     directory: Path,
     filename: str,
@@ -781,7 +790,8 @@ def test_installed_console_script_record_path_controls_remain_strict(
 
 
 def retained_fixture(
-    tmp_path: Path, *, managed: bool, provenance: str = "valid", make_existing: bool = True
+    tmp_path: Path, *, managed: bool, provenance: str = "valid", make_existing: bool = True,
+    source_archive: bool = False,
 ):
     """Tiny installed/source fixture; no pip, venv or production Store mutation."""
     import shutil
@@ -821,8 +831,19 @@ def retained_fixture(
     store = store_module.Store.initialize(work / "bench-store", orch / "tests") if managed else None
     final = (work / "bench-store/entries" / ("child-" + store_module.key_for("child", identity))) if managed else work / name
 
+    archive_inputs = {}
+    if source_archive:
+        archive_inputs = {name: subprocess.check_output(["git", "-C", str(checkout), "archive", "--format=tar", commit])
+                          for name, checkout, commit in (("agent", agent, agent_sha), ("runtime", runtime, runtime_sha))}
+
     def build(stage, destination):
         source = destination / ".child-venv-source-fixture"
+        source_urls = {name: (source / name).as_uri() for name in ("agent", "runtime")}
+        if source_archive:
+            (stage / ".source-inputs").mkdir()
+            for name, content in archive_inputs.items():
+                (stage / ".source-inputs" / (name + ".tar")).write_bytes(content)
+                source_urls[name] = (destination / ".source-inputs" / (name + ".tar")).as_uri()
         site = stage / "lib/python3.13/site-packages"
         site.mkdir(parents=True)
         for directory, files in (("agent", agent_files), ("runtime", runtime_files)):
@@ -835,7 +856,12 @@ def retained_fixture(
             metadata = owner + "-1.0.dist-info"
             files = {module + "/__init__.py": client if module == "astrid_runtime_client" else b"" for module in modules}
             files[metadata + "/METADATA"] = f"Name: {owner.replace('_', '-')}\nVersion: 1.0\n".encode()
-            files[metadata + "/direct_url.json"] = json.dumps({"url": (source / snapshot).as_uri(), "dir_info": {}}).encode()
+            direct = {"url": source_urls[snapshot]}
+            if source_archive:
+                direct["archive_info"] = {"hashes": {"sha256": hashlib.sha256(archive_inputs[snapshot]).hexdigest()}}
+            else:
+                direct["dir_info"] = {}
+            files[metadata + "/direct_url.json"] = json.dumps(direct).encode()
             write_record(site, metadata, files)
         with zipfile.ZipFile(artifact) as archive:
             dependency_files = {entry.filename: archive.read(entry) for entry in archive.infolist()}
@@ -864,6 +890,9 @@ def retained_fixture(
         shutil.copyfile(maker_python, stage / "bin/python")
         (stage / "bin/python").chmod(0o755)
         if provenance != "missing" and managed:
+            for alias in ("python3", "python3.13"):
+                shutil.copyfile(maker_python, stage / "bin" / alias)
+                (stage / "bin" / alias).chmod(0o755)
             # Genuine original wheels and trusted host templates, materialized
             # without installing or executing any package in this private fixture.
             bootstrap.write_snapshot(stage / ".bootstrap-wheelhouse", bootstrap.BOOTSTRAP_LOCK,
@@ -879,9 +908,26 @@ def retained_fixture(
                    ".astrid-distribution-metadata": ""}
         for marker, value in markers.items():
             (stage / marker).write_text(value + ("\n" if value else ""))
-        report = (f"status=passed\nagent_sha={agent_sha}\nruntime_sha={runtime_sha}\nrequirements_path=requirements/proof.lock\nrequirements_lock_sha256={hashlib.sha256(lock_bytes).hexdigest()}\n"
+        metadata_lines = []
+        for owner, snapshot in (("astrid", "agent"), ("astrid-runtime", "runtime")):
+            metadata_lines.extend((f"{owner}_name={owner}", f"{owner}_version=1.0",
+                                   f"{owner}_direct_url={source_urls[snapshot]}",
+                                   f"{owner}_provenance={'archive' if source_archive else 'directory'}"))
+        markers[".astrid-distribution-metadata"] = "\n".join(metadata_lines) + "\n"
+        (stage / ".astrid-distribution-metadata").write_text(markers[".astrid-distribution-metadata"])
+        freeze_urls = {name: url + ("#sha256=" + hashlib.sha256(archive_inputs[name]).hexdigest() if source_archive else "")
+                       for name, url in source_urls.items()}
+        freeze = [("astrid", f"astrid @ {freeze_urls['agent']}"),
+                  ("astrid-runtime", f"astrid-runtime @ {freeze_urls['runtime']}"),
+                  ("seedpkg", "seedpkg==1.0.0")]
+        if provenance != "missing" and managed:
+            freeze.extend((name.split('-')[0], name.split('-')[0] + "==" + name.split('-')[1])
+                          for name in bootstrap.BOOTSTRAP_WHEELS)
+        report = (f"status=passed\nagent_sha={agent_sha}\nruntime_sha={runtime_sha}\n"
                   f"runtime_client_identity_sha256={hashlib.sha256(markers['.astrid-runtime-client-identity'].encode()).hexdigest()}\n"
-                  f"installed_import_origins:\n{markers['.astrid-import-origins']}\ninstalled_distribution_metadata:\npip_freeze:\n")
+                  f"requirements_path=requirements/proof.lock\nrequirements_lock_sha256={hashlib.sha256(lock_bytes).hexdigest()}\n"
+                  f"installed_import_origins:\n{markers['.astrid-import-origins']}\ninstalled_distribution_metadata:\n{markers['.astrid-distribution-metadata']}pip_freeze:\n"
+                  + "".join(line + "\n" for _, line in sorted(freeze)))
         (stage / ".provision-report").write_text(report)
 
     def seal(path):
@@ -1190,19 +1236,22 @@ def run_source_ownership_verifier(env: dict[str, str], args: list[str]) -> subpr
 
 
 def test_committed_local_ownership_composes_with_wheel_inventory(tmp_path: Path) -> None:
-    env, args, wheelhouse = retained_fixture(tmp_path, managed=False)
+    env, args, _ = retained_fixture(tmp_path, managed=False)
     result = run_source_ownership_verifier(env, args)
     assert result.returncode == 0, result.stderr
     helper = load_helper("local_ownership_inventory", VERIFY)
     # Earlier fixtures replace the shared metadata discovery function.
     site = Path(env["CHILD_VENV_WORK_ROOT"]) / args[0] / "lib/python3.13/site-packages"
     helper.md.distributions = lambda path: [helper.md.PathDistribution(p) for p in site.glob("*.dist-info")]
-    artifact = next(wheelhouse.glob("*.whl"))
-    helper.installed_integrity(
-        Path(env["CHILD_VENV_WORK_ROOT"]) / args[0], {artifact.name: artifact.read_bytes()},
-        interpreter=Path(env["CHILD_VENV_PYTHON"]),
-        local_inventory={k: set(v) for k, v in json.loads(result.stdout).items()},
-    )
+    old_args = sys.argv
+    try:
+        sys.argv = [str(VERIFY), str(site.parents[2] / ".dependency-wheelhouse"), "-",
+                    "--committed-lock", args[3], args[1], "requirements/proof.lock",
+                    hashlib.sha256((Path(args[3]) / "requirements/proof.lock").read_bytes()).hexdigest(),
+                    "--maker-python", env["CHILD_VENV_PYTHON"], "--installed", str(site.parents[2])]
+        assert helper.main(local_inventory={k: set(v) for k, v in json.loads(result.stdout).items()}) == 0
+    finally:
+        sys.argv = old_args
 
 
 @pytest.mark.parametrize("mutation", ["foreign-package", "foreign-launcher", "metadata", "installer"])
@@ -1236,8 +1285,8 @@ def test_source_record_cannot_launder_inventory_additions(tmp_path: Path, mutati
 
 def materialize_bootstrap(helper, stage: Path, destination: Path) -> dict[str, bytes]:
     """Materialize original wheel bytes plus canonical pip wrappers, no installs."""
-    import io
     import configparser
+    import io
 
     artifacts = helper.bootstrap_artifacts(BOOTSTRAP_ARCHIVE)
     site = stage / "lib/python3.13/site-packages"
@@ -1265,3 +1314,183 @@ def materialize_bootstrap(helper, stage: Path, destination: Path) -> dict[str, b
                 f"    sys.exit({function}())\n").encode()
         write_record(site, metadata, files)
     return artifacts
+
+
+@pytest.mark.parametrize("rel", [
+    "lib/python3.13/foreign-runtime-file.py", "foreign-runtime-file.py",
+    "include/foreign.h", ".hidden/foreign-executable", "lib/python9.99/foreign.py",
+])
+def test_whole_root_inventory_is_faithful_oldred_newgreen(tmp_path: Path, rel: str) -> None:
+    helper, root, data = installed_dependency_fixture(tmp_path)
+    target = root / rel
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("arbitrary payload\n")
+    target.chmod(0o755)
+    old_path = tmp_path / "old-whole-root.py"
+    old_path.write_bytes(subprocess.check_output([
+        "git", "show", "83353b588c122b05a1325687db4e7e2e6be973ae:ops-handoff/child-dependency-reuse/candidate/verify_dependency_seed.py",
+    ]))
+    old = load_helper("before_whole_root", old_path)
+    old.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
+    with pytest.raises(SystemExit, match="unowned installed"):
+        helper.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
+
+
+@pytest.mark.parametrize("mutation", ["empty-sibling", "outside-link", "lib64-escape", "lib64-file"])
+def test_whole_root_structural_allowances_are_narrow(tmp_path: Path, mutation: str) -> None:
+    helper, root, data = installed_dependency_fixture(tmp_path)
+    if mutation == "empty-sibling":
+        (root / "lib/foreign").mkdir()
+    elif mutation == "outside-link":
+        (root / "foreign").symlink_to(tmp_path)
+    elif mutation == "lib64-escape":
+        (root / "lib64").symlink_to(tmp_path)
+    else:
+        (root / "lib64").write_text("payload")
+    with pytest.raises(SystemExit, match="unowned installed|symlinked or foreign|escapes child"):
+        helper.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
+
+
+def bootstrap_fixture(tmp_path: Path, monkeypatch):
+    helper = load_helper("genuine_bootstrap", VERIFY)
+    root = tmp_path / "child with spaces"
+    (root / "bin").mkdir(parents=True)
+    (root / "lib/python3.13/site-packages").mkdir(parents=True)
+    for alias in ("python", "python3", "python3.13"):
+        (root / "bin" / alias).write_bytes(Path(sys.executable).resolve().read_bytes())
+    for rel, data in helper.venv_files(root).items():
+        (root / rel).write_bytes(data)
+    monkeypatch.setattr(helper.md, "distributions", lambda path: [helper.md.PathDistribution(p) for p in Path(path[0]).glob("*.dist-info")])
+    monkeypatch.setattr(sys, "argv", [str(VERIFY), "--prepare-bootstrap", str(BOOTSTRAP_ARCHIVE), str(root), sys.executable])
+    assert helper.main() == 0
+    artifacts = materialize_bootstrap(helper, root, root)
+    helper.installed_integrity(root, artifacts, interpreter=Path(sys.executable), bootstrap=True)
+    return helper, root, artifacts
+
+
+def test_genuine_bootstrap_inputs_and_host_activation_are_usable(tmp_path: Path, monkeypatch) -> None:
+    helper, root, artifacts = bootstrap_fixture(tmp_path, monkeypatch)
+    assert len(artifacts) == 3
+    assert not any(name.startswith(("execnet-", "pytest_xdist-")) for name in artifacts)
+    assert helper.retained_bootstrap(root, Path(sys.executable)) == artifacts
+    assert "child with spaces" in (root / "bin/activate").read_text()
+    observed = []
+
+    def installer(args, *, pass_fds, check):
+        assert check and "runpy.run_module" in args[3]
+        assert "--ignore-installed" in args
+        assert "--require-hashes" in args and "--no-index" in args
+        assert Path(args[4]).read_bytes() == artifacts[next(n for n in artifacts if n.startswith("pip-"))]
+        observed.append(args)
+
+    monkeypatch.setattr(helper.subprocess, "run", installer)
+    helper.install_snapshot(root / ".bootstrap-wheelhouse", helper.BOOTSTRAP_LOCK, [], python=str(root / "bin/python"))
+    assert len(observed) == 1
+
+
+@pytest.mark.parametrize("rel", [
+    "bin/activate", "bin/activate.csh", "bin/Activate.ps1", "pyvenv.cfg",
+    "bin/python", ".bootstrap-authority", ".bootstrap-input.tgz",
+    ".bootstrap-wheelhouse/requirements.txt",
+    ".bootstrap-wheelhouse/pip-26.2.1-py3-none-any.whl",
+    ".bootstrap-wheelhouse/foreign-file", "lib/python3.13/foreign.py",
+])
+def test_genuine_bootstrap_rejects_retained_input_and_activation_corruption(tmp_path: Path, monkeypatch, rel: str) -> None:
+    helper, root, artifacts = bootstrap_fixture(tmp_path, monkeypatch)
+    target = root / rel
+    target.parent.chmod(0o755)
+    if target.exists():
+        target.chmod(0o644)
+    target.write_bytes(b"arbitrary replacement\n")
+    with pytest.raises(SystemExit):
+        helper.installed_integrity(root, artifacts, interpreter=Path(sys.executable), bootstrap=True)
+
+
+@pytest.mark.parametrize("mutation", ["source-extra", "source-empty-dir", "metadata", "report", "marker"])
+def test_retained_source_and_maker_metadata_are_closed(tmp_path: Path, mutation: str) -> None:
+    env, args, _ = retained_fixture(tmp_path, managed=False, provenance="missing")
+    root = Path(env["CHILD_VENV_WORK_ROOT"]) / args[0]
+    target = {
+        "source-extra": ".child-venv-source-fixture/agent/foreign.py",
+        "source-empty-dir": ".child-venv-source-fixture/runtime/foreign",
+        "metadata": ".astrid-distribution-metadata",
+        "report": ".provision-report",
+        "marker": ".astrid-source-commit",
+    }[mutation]
+    path = root / target
+    path.parent.chmod(0o755)
+    if mutation == "source-empty-dir":
+        path.mkdir()
+    else:
+        if path.exists():
+            path.chmod(0o644)
+        with path.open("a") as output:
+            output.write("arbitrary payload\n")
+    for item in [root, *root.rglob("*")]:
+        item.chmod(item.stat().st_mode & ~0o222)
+    result = run_source_ownership_verifier(env, args)
+    assert result.returncode != 0
+    assert "unowned retained source" in result.stderr or "differs from" in result.stderr
+
+
+def test_trusted_venv_source_identity_is_rechecked(tmp_path: Path, monkeypatch) -> None:
+    helper, root, artifacts = bootstrap_fixture(tmp_path, monkeypatch)
+    original = helper.trusted_venv_sources()
+    source = next(name for name in original if name.endswith("/activate"))
+    changed = {**original, source: original[source] + b"\n# changed host source\n"}
+    monkeypatch.setattr(helper, "trusted_venv_sources", lambda: changed)
+    with pytest.raises(SystemExit, match="trusted host source|source/interpreter authority"):
+        helper.installed_integrity(root, artifacts, interpreter=Path(sys.executable), bootstrap=True)
+
+
+def test_genuine_activation_support_is_faithful_oldred_newgreen(tmp_path: Path, monkeypatch) -> None:
+    helper, root, data = installed_dependency_fixture(tmp_path)
+    artifacts = {"seedpkg-1.0.0-py3-none-any.whl": data}
+    for alias in ("python3", "python3.13"):
+        (root / "bin" / alias).write_bytes(Path(sys.executable).resolve().read_bytes())
+    for rel, content in helper.venv_files(root).items():
+        (root / rel).write_bytes(content)
+    helper.write_snapshot(root / ".bootstrap-wheelhouse", helper.BOOTSTRAP_LOCK,
+                          helper.bootstrap_artifacts(BOOTSTRAP_ARCHIVE))
+    (root / ".bootstrap-input.tgz").write_bytes(BOOTSTRAP_ARCHIVE.read_bytes())
+    (root / ".bootstrap-authority").write_text(helper.bootstrap_identity(Path(sys.executable)) + "\n")
+    old_path = tmp_path / "before-bootstrap-authority.py"
+    old_path.write_bytes(subprocess.check_output([
+        "git", "show", "1d3b123ee65a2f0204f9232ade0a0ef9ce3a4694:ops-handoff/child-dependency-reuse/candidate/verify_dependency_seed.py",
+    ]))
+    old = load_helper("before_bootstrap_authority", old_path)
+    with pytest.raises(SystemExit, match="unowned installed file: bin/"):
+        old.installed_integrity(root, artifacts, interpreter=Path(sys.executable))
+    helper.installed_integrity(root, artifacts, interpreter=Path(sys.executable), bootstrap=True)
+
+
+@pytest.mark.parametrize("mutation", ["valid", "archive", "archive-extra", "store-metadata"])
+def test_normal_maker_reverifies_genuine_source_archive_custody(tmp_path: Path, mutation: str) -> None:
+    env, args, _ = retained_fixture(tmp_path, managed=True, source_archive=True)
+    root, = (Path(env["CHILD_VENV_WORK_ROOT"]) / "bench-store/entries").iterdir()
+    if mutation != "valid":
+        target = root / ({"archive": ".source-inputs/agent.tar", "archive-extra": ".source-inputs/foreign.tar",
+                          "store-metadata": ".bench-owner.json"}[mutation])
+        target.parent.chmod(0o755)
+        if target.exists():
+            target.chmod(0o644)
+        target.write_bytes(b"arbitrary replacement\n")
+        for item in [root, *root.rglob("*")]:
+            item.chmod(item.stat().st_mode & ~0o222)
+    maker = private_maker(tmp_path, args)
+    result = subprocess.run([str(maker), *args], env=env, text=True, capture_output=True, check=False)
+    if mutation == "valid":
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "reused child venv path=" in result.stdout
+    else:
+        assert result.returncode != 0
+        assert "status=passed" not in result.stdout
+
+
+@pytest.mark.parametrize("alias", ["python3", "python3.13"])
+def test_bootstrap_reuse_requires_complete_interpreter_aliases(tmp_path: Path, monkeypatch, alias: str) -> None:
+    helper, root, artifacts = bootstrap_fixture(tmp_path, monkeypatch)
+    # Relocation of the fixture alias simulates a missing original venv file.
+    (root / "bin" / alias).rename(tmp_path / alias)
+    with pytest.raises(SystemExit, match="missing bootstrap interpreter"):
+        helper.installed_integrity(root, artifacts, interpreter=Path(sys.executable), bootstrap=True)
