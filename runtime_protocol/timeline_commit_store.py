@@ -189,7 +189,7 @@ class _HistoryReadCursor:
 
 
 class _HistoryReadInputs:
-    """Exact consumed SQL results and CAS bytes for one graph assembly only."""
+    """Exact consumed SQL results and CAS bytes for one authoritative read."""
     def __init__(self, connection, cas_root):
         self.connection, self.cas_root = connection, cas_root
         self.rows, self.objects = {}, {}
@@ -224,7 +224,7 @@ class TimelineCommitStore:
     def verification_scope(self):
         """Start an independent evaluation, including when another is nested."""
         previous = getattr(self._verification, "current", None)
-        current = {"verified": set(), "active": set(), "traversal": None}
+        current = {"verified": set(), "active": set(), "traversal": None, "inputs": None}
         self._verification.current = current
         try:
             yield
@@ -233,22 +233,43 @@ class TimelineCommitStore:
             current["active"].clear()
             self._verification.current = previous
 
+    @contextmanager
+    def history_read_scope(self):
+        """Keep graph inputs live through the provider's final dependent reads."""
+        current = getattr(self._verification, "current", None)
+        if current is None:
+            with self.verification_scope(), self.history_read_scope():
+                yield
+            return
+        previous = current["inputs"]
+        inputs = previous if previous is not None else _HistoryReadInputs(self.store.conn, self.store.cas_root)
+        current["inputs"] = inputs
+        try:
+            yield
+            inputs.check()
+        finally:
+            current["inputs"] = previous
+
     @property
-    def conn(self):
+    def _history_inputs(self):
         current = getattr(self._verification, "current", None)
         traversal = current["traversal"] if current else None
         if traversal is not None:
             return traversal["inputs"]
-        return self.store.conn
+        return current["inputs"] if current else None
+
+    @property
+    def conn(self):
+        inputs = self._history_inputs
+        return inputs if inputs is not None else self.store.conn
 
     def _read_history_object(self, object_id):
         from .cas import ContentAddressedStore
 
         data = ContentAddressedStore(self.store.cas_root).read(object_id)
-        current = getattr(self._verification, "current", None)
-        traversal = current["traversal"] if current else None
-        if traversal is not None:
-            objects = traversal["inputs"].objects
+        inputs = self._history_inputs
+        if inputs is not None:
+            objects = inputs.objects
             value = (len(data), hashlib.sha256(data).digest())
             if object_id in objects and objects[object_id] != value:
                 raise ProtocolError("accepted commit object changed during verification")
@@ -321,7 +342,8 @@ class TimelineCommitStore:
         traversal = {"nodes": {identity: (row, edge, allow_archived)},
                      "dependencies": {identity: set()}, "pending": deque([identity]),
                      "replays": {}, "current": identity,
-                     "inputs": _HistoryReadInputs(self.store.conn, self.store.cas_root)}
+                     "inputs": current["inputs"] if current["inputs"] is not None else
+                               _HistoryReadInputs(self.store.conn, self.store.cas_root)}
         current["traversal"] = traversal
         try:
             while traversal["pending"]:
@@ -626,13 +648,12 @@ class TimelineCommitStore:
                 catalog = verify_catalog_tail(self.conn, project_id, timeline_id, events, ledger[0], ledger[1],
                                               legacy=entry["intent"] == "legacy_unknown")
                 if catalog:
-                    from .cas import ContentAddressedStore
                     document = self.revision_closure(project_id, timeline_id, row["revision_id"])
                     if entry["intent"] == "recorded" and document != entry["receipt"]["result"]["canonical_document"]:
                         reject("history_unavailable", "canonical film differs from accepted publication")
                     for shot in document["shot_revisions"]:
                         _shot_projection(self.conn, project_id, shot["shot_id"])
-                        _text_bindings(self.conn, project_id, shot, ContentAddressedStore(self.store.cas_root).read)
+                        _text_bindings(self.conn, project_id, shot, self._read_history_object)
             except ConflictError as exc:
                 from .timeline_commit import CommitRejected
                 raise CommitRejected({"http_status": 409, "code": "conflict",

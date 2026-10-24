@@ -8,6 +8,7 @@ import pytest
 import test_timeline_commit_input_integration as inputs
 import test_timeline_commit_integration as real
 
+import runtime_protocol.timeline_commit_inputs as input_store
 from runtime_protocol.errors import RuntimeErrorBase
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.timeline_commit_port import RequestCommitPort
@@ -205,7 +206,7 @@ def test_reopened_runtime_rechecks_ancestors_before_exact_retry(editing, monkeyp
         runtime.close()
 
 
-@pytest.mark.parametrize("boundary", ["collection", "replay"])
+@pytest.mark.parametrize("boundary", ["collection", "replay", "pins"])
 @pytest.mark.parametrize("mutation", [
     "metadata", "parent", "event", "file", "abi", "ledger", "records",
     "source", "closure", "owner", "realm", "sequence", "pin", "queued-cycle", "deleted-row",
@@ -224,10 +225,9 @@ def test_provider_refuses_inputs_changed_after_ancestor_check(editing, monkeypat
     original = getattr(commits, "_verify_accepted_record" if boundary == "collection" else "_verify_accepted_replay")
     mutated, refused = [], []
 
-    def after_ancestor(row, history, *args, **kwargs):
-        result = original(row, history, *args, **kwargs)
-        if history["publication_id"] != seed or mutated:
-            return result
+    def mutate():
+        if mutated:
+            return
         if mutation in {"metadata", "abi", "records"}:
             column = "records_json" if mutation == "records" else "metadata_json"
             value = json.loads(edge[column])
@@ -269,6 +269,18 @@ def test_provider_refuses_inputs_changed_after_ancestor_check(editing, monkeypat
         else:
             conn.execute("DELETE FROM command_idempotency WHERE txn_id=?", (seed,))
         mutated.append(seed)
+
+    def after_ancestor(row, history, *args, **kwargs):
+        result = original(row, history, *args, **kwargs)
+        if history["publication_id"] == seed:
+            mutate()
+        return result
+
+    pin_read = input_store.reachable_document_input_pins
+
+    def after_pins(*args, **kwargs):
+        result = pin_read(*args, **kwargs)
+        mutate()
         return result
 
     class ReadComplete(RuntimeErrorBase):
@@ -276,12 +288,16 @@ def test_provider_refuses_inputs_changed_after_ancestor_check(editing, monkeypat
 
     def read_only(self, context, port):
         assert isinstance(port, RequestCommitPort)
-        monkeypatch.setattr(commits, "_verify_accepted_record" if boundary == "collection" else "_verify_accepted_replay",
-                            after_ancestor)
+        if boundary == "pins":
+            monkeypatch.setattr(input_store, "reachable_document_input_pins", after_pins)
+        else:
+            monkeypatch.setattr(commits, "_verify_accepted_record" if boundary == "collection" else "_verify_accepted_replay",
+                                after_ancestor)
         with pytest.raises(RuntimeErrorBase):
             port.history_entry(target)
         assert mutated == [seed]
         assert commits._verification.current["traversal"] is None
+        assert commits._verification.current["inputs"] is None
         assert not commits._verification.current["active"]
         refused.append(True)
         raise ReadComplete("history refused")
@@ -292,7 +308,7 @@ def test_provider_refuses_inputs_changed_after_ancestor_check(editing, monkeypat
     assert refused == [True]
 
 
-@pytest.mark.parametrize("boundary", ["collection", "replay"])
+@pytest.mark.parametrize("boundary", ["collection", "replay", "pins"])
 @pytest.mark.parametrize("mutation", ["content", "binding", "link"])
 def test_provider_refuses_retained_inputs_changed_after_check(retained, monkeypatch, boundary, mutation):
     case = retained
@@ -306,7 +322,10 @@ def test_provider_refuses_retained_inputs_changed_after_check(retained, monkeypa
     request.update(base_revision_id=moved["data"]["accepted_revision_id"], base_publication_id=target)
     commits, _ = case.service._timeline_commits()
     method = "_verify_accepted_record" if boundary == "collection" else "_verify_accepted_replay"
-    original = getattr(commits, method)
+    owner = input_store if boundary == "pins" else commits
+    if boundary == "pins":
+        method = "reachable_document_input_pins"
+    original = getattr(owner, method)
     mutated, refused = [], []
 
     def after_check(*args, **kwargs):
@@ -330,7 +349,7 @@ def test_provider_refuses_retained_inputs_changed_after_check(retained, monkeypa
         pass
 
     def read_only(self, context, port):
-        monkeypatch.setattr(commits, method, after_check)
+        monkeypatch.setattr(owner, method, after_check)
         with pytest.raises(RuntimeErrorBase):
             port.history_entry(target)
         assert mutated == [True]
@@ -341,3 +360,84 @@ def test_provider_refuses_retained_inputs_changed_after_check(retained, monkeypa
     with pytest.raises(ReadComplete):
         inputs.commit(case.service, case.film, request, "changed-retained-input")
     assert refused == [True]
+
+
+@pytest.mark.parametrize("boundary", ["history", "closure", "head"])
+def test_provider_refuses_mutation_after_dependent_history_reads(editing, monkeypatch, boundary):
+    import runtime_protocol.timeline_catalog as catalog
+
+    accepted = inverse_chain(editing, 2)
+    commits, _ = editing.service._timeline_commits()
+    seed = accepted[0]["receipt"]["receipt_id"]
+    through = {"publication_id": accepted[-1]["receipt"]["receipt_id"],
+               "revision_id": accepted[-1]["data"]["accepted_revision_id"]}
+    owner = catalog if boundary == "head" else commits
+    method = {"history": "_history_page", "closure": "revision_closure", "head": "verify_catalog_tail"}[boundary]
+    original = getattr(owner, method)
+    mutated = []
+
+    def after_read(*args, **kwargs):
+        result = original(*args, **kwargs)
+        if commits._verification.current["traversal"] is None and not mutated:
+            editing.service.store.conn.execute(
+                "UPDATE timeline_commit_history SET metadata_json='{}' WHERE publication_id=?", (seed,))
+            mutated.append(seed)
+        return result
+
+    class ReadComplete(RuntimeErrorBase):
+        pass
+
+    def read_only(self, context, port):
+        monkeypatch.setattr(owner, method, after_read)
+        with pytest.raises(RuntimeErrorBase):
+            if boundary == "history":
+                port.history(through)
+            elif boundary == "closure":
+                port.revision_closure(through["revision_id"])
+            else:
+                port.head()
+        assert mutated == [seed]
+        assert commits._verification.current["inputs"] is None
+        raise ReadComplete("dependent history read refused")
+
+    monkeypatch.setattr(type(editing.service._timeline_commit_provider), "commit", read_only)
+    with pytest.raises(ReadComplete):
+        editing.commit(editing.body([real.inverse(through["publication_id"])]), "late-dependent-read")
+
+
+def test_provider_read_freshness_isolated_after_refusal_and_between_requests(editing, monkeypatch):
+    accepted = inverse_chain(editing, 2)
+    commits, _ = editing.service._timeline_commits()
+    target = accepted[-1]["receipt"]["receipt_id"]
+    seed = accepted[0]["receipt"]["receipt_id"]
+    conn = editing.service.store.conn
+    metadata = conn.execute("SELECT metadata_json FROM timeline_commit_history WHERE publication_id=?", (seed,)).fetchone()[0]
+    original = input_store.reachable_document_input_pins
+    scopes = []
+
+    class ReadComplete(RuntimeErrorBase):
+        pass
+
+    def read_only(self, context, port):
+        def after_pins(*args, **kwargs):
+            result = original(*args, **kwargs)
+            scopes.append(commits._verification.current["inputs"])
+            conn.execute("UPDATE timeline_commit_history SET metadata_json='{}' WHERE publication_id=?", (seed,))
+            return result
+
+        with monkeypatch.context() as attack:
+            attack.setattr(input_store, "reachable_document_input_pins", after_pins)
+            with pytest.raises(RuntimeErrorBase):
+                port.history_entry(target)
+        assert commits._verification.current["inputs"] is None
+        conn.execute("UPDATE timeline_commit_history SET metadata_json=? WHERE publication_id=?", (metadata, seed))
+        assert port.history_entry(target)["receipt"] == accepted[-1]["receipt"]
+        assert commits._verification.current["inputs"] is None
+        raise ReadComplete("fresh read after refusal")
+
+    monkeypatch.setattr(type(editing.service._timeline_commit_provider), "commit", read_only)
+    for ordinal in range(2):
+        with pytest.raises(ReadComplete):
+            editing.commit(editing.body([real.inverse(target)]), f"isolated-fresh-read-{ordinal}")
+        assert getattr(commits._verification, "current", None) is None
+    assert len(scopes) == 2 and scopes[0] is not scopes[1]
