@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from runtime_protocol.errors import RetiredRouteError
+from runtime_protocol.errors import RetiredRouteError, RuntimeErrorBase
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_baseline import verify_baseline
@@ -294,12 +294,19 @@ def test_cas_correct_republish_after_reading_the_head_is_accepted(service):
     media_id = ingested["data"]["object_id"]
     assert media_id == "sha256:" + hashlib.sha256(media).hexdigest()
     assert runtime.cas.read(media_id.removeprefix("sha256:")) == media
-    # Only the positive fixture substitutes Runtime's genuine CAS identity.
+    # Current commit probes substitute Runtime's genuine CAS identity.
     # Historical shells and legacy requests keep the original literal "x".
     expected = copy.deepcopy(AUTHORED)
     assert expected["registry"]["assets"]["a"]["object_id"] == "x"
     expected["registry"]["assets"]["a"]["object_id"] = media_id
+    # Match the standard Agent document_fixture's authored visual track.
+    assert "tracks" not in expected["config"]
+    assert "track" not in expected["clips"][0]
+    expected["config"]["tracks"] = [{"id": "picture", "kind": "visual"}]
+    expected["clips"][0]["track"] = "picture"
     original = copy.deepcopy(expected)
+    assert original["config"].pop("tracks") == [{"id": "picture", "kind": "visual"}]
+    assert original["clips"][0].pop("track") == "picture"
     original["registry"]["assets"]["a"]["object_id"] = "x"
     assert json.dumps(original) == json.dumps(AUTHORED)
     first = runtime.create_timeline(project, "main", idempotency_key="repair-cas")
@@ -370,6 +377,42 @@ def test_cas_correct_republish_after_reading_the_head_is_accepted(service):
         assert provider.calls == 0
     finally:
         reloaded.close()
+
+
+def test_original_trackless_authored_payload_with_verified_media_is_invalid_untouched(service):
+    runtime, project = service
+    media = subprocess.run(
+        ["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "color=c=blue:s=16x16:r=10",
+         "-t", "3", "-an", "-c:v", "libx264", "-pix_fmt", "yuv420p",
+         "-movflags", "+frag_keyframe+empty_moov", "-f", "mp4", "pipe:1"],
+        check=True, stdout=subprocess.PIPE,
+    ).stdout
+    ingested = runtime.ingest(project, media, media_type="video/mp4", idempotency_key="authored-media")
+    media_id = ingested["data"]["object_id"]
+    assert media_id == "sha256:" + hashlib.sha256(media).hexdigest()
+    assert runtime.cas.read(media_id.removeprefix("sha256:")) == media
+    trackless = copy.deepcopy(AUTHORED)
+    trackless["registry"]["assets"]["a"]["object_id"] = media_id
+    original = copy.deepcopy(trackless)
+    original["registry"]["assets"]["a"]["object_id"] = "x"
+    assert json.dumps(original) == json.dumps(AUTHORED)
+    runtime.create_timeline(project, "main", idempotency_key="repair-trackless")
+    head = runtime.get_project_timeline(project, "main")
+    history = runtime.list_timeline_commits(project, "main", authorize=lambda: None)
+    before = _dump(runtime)
+    for calls in (1, 2):
+        with pytest.raises(RuntimeErrorBase, match="must reference an existing track") as error:
+            _commit(runtime, project, "trackless", base=head, replacement=trackless)
+        assert error.value.status == 422
+        assert error.value.code == "validation_error"
+        assert isinstance(error.value.details, dict)
+        assert error.value.details["status"] == "invalid"
+        assert error.value.details["reason"] == "invalid_document"
+        assert "clips['edited'].track" in str(error.value)
+        assert _dump(runtime)[:2] == before[:2]
+        assert runtime.__dict__["test_provider"].calls == before[2] + calls
+        assert runtime.get_project_timeline(project, "main") == head
+        assert runtime.list_timeline_commits(project, "main", authorize=lambda: None) == history
 
 
 def test_fresh_creation_is_unchanged(service):
