@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T16:06:42Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 0m -->
+<!-- app | 2026-10-24T16:09:53Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 1m -->
 # app board, 2026-10-24T15:59Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -40,9 +40,11 @@
 
 | P1-fix-review | Review exact current contract fix | Luna | Author4349PASS | review | app-P1-current-contract-review-1605 | Challenge failclosed admission and authoritative mounted reply; originals unchanged. | 4349ad6ec1 |
 
+| U3-D69 | Audit missing and weakened upstream tests | Luna | D69 current3881 | doing | app-U3-D69-reverse-test-audit-1608 | Reverse diff and assertion audit; actual decisions or restoration needs. Does not block gates. | Current integration |
+
 Integration: App6d74fdd88abe2aacb5c605a443e473aaab99ad64, tree da2043257a6bce08b2ca37a98c49e53e530026a7. Includes frozen upstream3881,D62normalclient,D65manifest/schema and D66plainlauncher. Current qualified tuple Agent57779274/Runtime8b32/schema867f. Normal14consumer mappings exact. All6 original spec hashes unchanged.
 
-live 1 / cap 6; ready-undispatched 0. Dispatcher authorSol1600 finished; independentLuna1605queued immediately. Wholepath and verdict1600complete; latest shared lead header remains stale.
+live 2 / cap 6; ready-undispatched 0. Dispatcher Luna1605review running; D69Luna1608 queued immediately on newinstruction. Sol1600 and two independent1600workers finished.
 
 core open:11 current App original cases unqualified:2P1 failures,8P2 and1P3 notrun on the plain current stack. All8P2 remain CORE. Historical P1GO stays scoped to its recorded tuple.
 regressions:1 current compatibility regression: normal D62 adoption generated867f but full-v2 admission list kept35c2/4118,blocking all saves. Sol1600 fixes it. Installer regression CLOSED by integrated2+4+2PASS.
@@ -60,5 +62,5 @@ Disk: About11GB free; sweep3 in progress; eligible finished clean nonKEEP worktr
 
 Evidence: [current composed qualification](../../design/app-F-current-join-proof-1553.md), [current P1 manifest](../../tests/app-D66-plain-stack-sol-1528-d66-plain-p1-three-products-1024154715-13564/d66/manifest.json), [current P1 JUnit](../../tests/app-D66-plain-stack-sol-1528-d66-plain-p1-three-products-1024154715-13564/d66/p1.xml), [all8core](../../design/app-P2-core-classification-1222.md), [current source proof](../../design/app-P2-P3-e68-current-pure-target-1409.md).
 
-Inbox consumed through1553643bytes including Runtime1551D65installed. Runtime/Agent boards checked: normalD62consumer homes complete; Agent owns remaining inverse/create_empty core2. Runtime core0 source; final cut remains open. No cross-lane source/adoption wait remains.
+Inbox consumed through1554978bytes including D69reverseaudit16:05 and Runtime1551D65installed. Runtime/Agent boards checked: normalD62consumer homes complete; Agent owns remaining inverse/create_empty core2. Runtime core0 source; final cut remains open. No cross-lane source/adoption wait remains.
 Next ready: consume Sol1600 fix and independent1600 facts; review core source if changed,merge,and run one changedP1 on currentintegration. When green,submitP2/P3parallel immediately,then independent verdicts.
