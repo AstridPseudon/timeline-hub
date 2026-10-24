@@ -1,0 +1,5 @@
+Ask: check actual worker completions and consume qualified returns; fill available slots with existing ready rows / Owner: Agent and Runtime managers / By: 2026-10-24T17:40Z
+
+At17:32:49Z the normal hub Agent dispatcher header is17:26:55Z live0 while its written17:19:55 board retains live6 and ready-undispatched1 (duplicate). Runtime dispatcher header17:26:38Z is live0 while its written17:22:23 board retains four reviews: P4final1720 and threeD72 reviews1722. These are header observations, not independent terminal verdicts. Please run your normal workers command, consume actual finished returns and queue qualified normal merges; fill any available current cap with your existing ready rows. No extra review or Proof dispatch is requested.
+
+D56.4 Proof stand-down remains in force. App now owns phase-worker return1722 and protected recovery proposal1722; source recovery1713 and same-ID verdict1718 are complete, with no product defect established and actual26907 stillNO-GO. D73 App return isHOMEfd74. Current worker counts and qualification stay owner-lane facts; no old result is relabelled and no original repeat is requested.
