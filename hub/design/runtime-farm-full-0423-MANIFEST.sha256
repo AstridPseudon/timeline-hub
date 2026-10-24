@@ -1,0 +1,14 @@
+d9112acfcd8a16c8f081050e2e5f6d32436825c8c2662ef3ad1e5345ffa20837  ops-handoff/farm-agent-full/FARM-CODEX-BRIEF.md
+a018eb27702161f2ca334bedb44e01846a30931e60ea172f0e616e73d1c52919  ops-handoff/farm-agent-full/README.md
+574cb72a87ead3bd9d7808915d0dd625e69b94c84225256a675444ae984f9089  ops-handoff/farm-agent-full/agent-remotion.env.b64
+92cd658638f4fa898e600c5bf3403173dac87936d1a366ce3a3b83adbcf15182  ops-handoff/farm-agent-full/init-bench-store.py
+22229e37a0392ac12033876c832eb1251c2abdfeebbb4ff75b8f912606a97f6d  ops-handoff/farm-agent-full/registration-row.txt
+880541922b0a7615134d7eccaf178322ef47b2311716ea2f15b1995f647cb544  ops-handoff/farm-agent-full/remotion-env-nodes.row.b64
+aa480e04e7ef3bac12072760bcd5857f23af5a82b9674c6f6a76ffd3c7d85846  ops-handoff/farm-agent-full/runtime.lock.selected.json
+3b640f87c2b8e125b3258060bf493962c62d38733b8d19791bf8e784cb057b05  ops-handoff/farm-agent-full/selected-inputs.json
+c376361d9c992d7ee66fc0c9217e4b305045c55325126714af4ad1118db4af50  ops-handoff/farm-agent-full/test_farm_agent_full.py
+a0a2476c479704d7c440502bb585b39dca65e29aba76eb5a451e59b13b5fd160  ops-handoff/farm-agent-full/test_normal_setup.py
+
+# Decoded approved attachments, unchanged from authentic 1835 source.
+# row: 709 bytes with LF; SHA without LF ffdb0b13c65f106d7b818208343feb3f438dfc943f4af57c5f612ddcf73dc036
+# env: 523 bytes; SHA e53a69a465e05976dcf7a781f420b1c7def64a13691f7a5f387f6a0609a6da02

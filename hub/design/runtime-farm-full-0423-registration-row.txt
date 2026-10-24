@@ -1,0 +1,1 @@
+agent full-farm env ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-45c3a7f4 PYTHONPATH="$PWD:/home/user/work/wt/rt-pin-45c3a7f4" /home/user/work/venv-agent/bin/python -m pytest -q -n 3
