@@ -460,6 +460,7 @@ def configure_apply_options(subparser):
     subparser.add_argument("--dry-run", action="store_true", help="Preview the sheet commit without publishing.")
     _add_idempotency_key(subparser)
     _add_json_flag(subparser, default=False)
+    subparser.set_defaults(native=False)
 
 
 def history_steps(value):
