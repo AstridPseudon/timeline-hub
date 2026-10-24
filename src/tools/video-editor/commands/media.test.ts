@@ -588,6 +588,59 @@ describe('prepared media command', () => {
     }
   });
 
+  it('strips only the resolved assetEntry projection before validating authored clips', async () => {
+    const current = await buildTimelineData({
+      ...createDefaultTimelineConfig(),
+      tracks: [{ id: 'V1', kind: 'visual' as const, label: 'V1' }],
+      clips: [{
+        id: 'anchor', at: 1, track: 'V1', clipType: 'media' as const,
+        from: 0, to: 2, speed: 1, asset: 'asset-source', hold: null,
+        transition: null, params: { opaque: { keep: [null, false, {}] } },
+      }],
+    }, { assets: { 'asset-source': { file: 'source.mp4', type: 'video/mp4' } } });
+    const projectedClip = {
+      ...current.config.clips[0],
+      assetEntry: current.resolvedConfig.registry['asset-source'],
+    } as typeof current.config.clips[number] & { assetEntry: unknown };
+    const projected = {
+      ...current,
+      config: { ...current.config, clips: [projectedClip] },
+    };
+    const command = {
+      type: 'place-prepared-media' as const,
+      payload: {
+        asset: {
+          assetKey: 'asset-copy', mediaType: 'image' as const, durationSeconds: 1,
+          entry: { file: 'copy.png', type: 'image/png' }, source: 'registered' as const,
+        },
+        at: 0,
+        afterClipId: 'anchor',
+      },
+    };
+
+    const result = applyPreparedMediaCommand(projected, command);
+    expect(result).not.toBeNull();
+    expect(result?.nextData.config.clips.find((clip) => clip.id === 'anchor')).toEqual({
+      ...current.config.clips[0],
+      at: 1,
+      from: 0,
+      to: 2,
+      speed: 1,
+      hold: null,
+      transition: null,
+      params: { opaque: { keep: [null, false, {}] } },
+    });
+
+    const forged = {
+      ...projected,
+      config: {
+        ...projected.config,
+        clips: [{ ...projectedClip, assetEntry: { forged: true } }],
+      },
+    };
+    expect(applyPreparedMediaCommand(forged, command)).toBeNull();
+  });
+
   it('normalizes an ambiguous raw anchor before prepared placement and keeps the edit executable', async () => {
     const anchor = { id: 'anchor', at: 0, track: 'V1', clipType: 'hold' as const, hold: 1, asset: 'asset-source' };
     const current = await buildTimelineData(
