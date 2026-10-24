@@ -1,0 +1,115 @@
+98:                        ctx.write(owner + '/shot', ['payload', 'assets', str(index), 'source', key], replacement)
+107:                    ctx.write(owner + '/shot', ['payload', 'audio_bindings', str(index), key], new_object_id)
+
+codex
+The required neighboring checks pass: 125 tests in the first command and 113 media tests. New controls cover State storage, corrupt mappings, wrong owners and revisions, colon IDs, aggregate/leaf folding, sequential observations, order guards, and equal-value intervening writes. The original media test file and all 59 ABA assertions are unchanged. I’m finishing the final checks and preserving a reproducer for the separate Runtime mismatch.
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import os
+from pathlib import Path
+source = Path('tests/editing_conformance/test_authoring_item_observation_boundary.py').read_text()
+source = source.replace(\"    parent['payload']['occurrences'] = parent['payload']['occurrences'][:1]\\n\", '')
+path = Path(os.environ['TMPDIR']) / 'test_materialized_item_boundary.py'
+path.write_text(source)
+print(path)
+PY
+PYTHONPATH=\""'$PWD:/home/user/work/runtime" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -oaddopts= -p no:cacheprovider --timeout=45 --tb=short "$TMPDIR/test_materialized_item_boundary.py" -k test_same_alias_inverse_observations_validate' in /home/user/work/wt/vw-F-authoring-ABA-item-storage-sol-0605
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/native_occurrence_media_commands.py tests/editing_conformance/test_authoring_item_observation_boundary.py' in /home/user/work/wt/vw-F-authoring-ABA-item-storage-sol-0605
+ succeeded in 0ms:
+All checks passed!
+
+exec
+/bin/bash -lc 'PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m mypy --cache-dir "$TMPDIR/mypy" --follow-imports=silent astrid/sdk/timeline/_command_state.py astrid/sdk/timeline/inverse.py astrid/sdk/timeline/native_occurrence_media_commands.py tests/editing_conformance/test_authoring_item_observation_boundary.py' in /home/user/work/wt/vw-F-authoring-ABA-item-storage-sol-0605
+exec
+/bin/bash -lc 'PYTHONPATH="$PWD:/home/user/work/runtime" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -oaddopts= -p no:cacheprovider --timeout=45 --tb=short tests/editing_conformance/test_authoring_landing_projection.py tests/editing_conformance/test_headless_root_mirror_effects.py tests/editing_conformance/test_authoring_undo_projection.py tests/editing_conformance/test_private_sequential_capture.py tests/editing_conformance/test_provider_step_undo_v2.py tests/editing_conformance/test_authoring_item_observation_boundary.py' in /home/user/work/wt/vw-F-authoring-ABA-item-storage-sol-0605
+exec
+/bin/bash -lc 'PYTHONPATH="$PWD:/home/user/work/runtime" PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -oaddopts= -p no:cacheprovider --timeout=45 tests/editing_conformance/test_recipe_occurrence_media.py tests/editing_conformance/test_occurrence_media_manifest_inverse.py' in /home/user/work/wt/vw-F-authoring-ABA-item-storage-sol-0605
+ exited 1 in 2390ms:
+/tmp/w-c0df8aefae/test_materialized_item_boundary.py
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_____________ test_same_alias_inverse_observations_validate[False] _____________
+/tmp/w-c0df8aefae/test_materialized_item_boundary.py:69: in finish
+    validate_sequential_capture(port.context['request'], prepared, captures[-1], source, source,
+../../runtime/runtime_protocol/timeline_commit_auth.py:2149: in validate_sequential_capture
+    validate(request, original_prepared, base, base, {}, history,
+../../runtime/runtime_protocol/timeline_commit_auth.py:2460: in validate
+    effect_boundaries = _inverse_stage_boundaries(boundary, output, step, records, accepted, original, history)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../runtime/runtime_protocol/timeline_commit_auth.py:1172: in _inverse_stage_boundaries
+    stages = _inverse_stage_ranges(step, records, history)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../runtime/runtime_protocol/timeline_commit_auth.py:1160: in _inverse_stage_ranges
+    require(native_sites == source_stage["native_sites"] or native_sites == effect_sites,
+../../runtime/runtime_protocol/timeline_commit_auth.py:21: in require
+    reject("invalid_records", message, status=422)
+../../runtime/runtime_protocol/timeline_commit_store.py:29: in reject
+    raise CommitRejected({"http_status": status, "code": "conflict" if status == 409 else "validation_error",
+E   tests.sdk.test_timeline_commit_provider.CommitRejected: inverse stage native write membership differs from its authenticated stage
+
+During handling of the above exception, another exception occurred:
+/tmp/w-c0df8aefae/test_materialized_item_boundary.py:80: in test_same_alias_inverse_observations_validate
+    result = submit(realm, undo(created['receipt']['receipt_id']), reads=[], dry_run=dry_run)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/editing_conformance/test_doc_patch_v2.py:50: in submit
+    return create_runtime_commit_service().commit(context, DetachedPort(realm, context))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/commit.py:1217: in commit
+    return port.accept(prepared)
+           ^^^^^^^^^^^^^^^^^^^^^
+/tmp/w-c0df8aefae/test_materialized_item_boundary.py:74: in finish
+    assert error.failure['message'] == 'provider observation has an ambiguous item path'
+E   AssertionError: assert 'inverse stag...ticated stage' == 'provider obs...ous item path'
+E     
+E     - provider observation has an ambiguous item path
+E     + inverse stage native write membership differs from its authenticated stage
+_____________ test_same_alias_inverse_observations_validate[True] ______________
+/tmp/w-c0df8aefae/test_materialized_item_boundary.py:69: in finish
+    validate_sequential_capture(port.context['request'], prepared, captures[-1], source, source,
+../../runtime/runtime_protocol/timeline_commit_auth.py:2149: in validate_sequential_capture
+    validate(request, original_prepared, base, base, {}, history,
+../../runtime/runtime_protocol/timeline_commit_auth.py:2460: in validate
+    effect_boundaries = _inverse_stage_boundaries(boundary, output, step, records, accepted, original, history)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../runtime/runtime_protocol/timeline_commit_auth.py:1172: in _inverse_stage_boundaries
+    stages = _inverse_stage_ranges(step, records, history)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../runtime/runtime_protocol/timeline_commit_auth.py:1160: in _inverse_stage_ranges
+    require(native_sites == source_stage["native_sites"] or native_sites == effect_sites,
+../../runtime/runtime_protocol/timeline_commit_auth.py:21: in require
+    reject("invalid_records", message, status=422)
+../../runtime/runtime_protocol/timeline_commit_store.py:29: in reject
+    raise CommitRejected({"http_status": status, "code": "conflict" if status == 409 else "validation_error",
+E   tests.sdk.test_timeline_commit_provider.CommitRejected: inverse stage native write membership differs from its authenticated stage
+
+During handling of the above exception, another exception occurred:
+/tmp/w-c0df8aefae/test_materialized_item_boundary.py:80: in test_same_alias_inverse_observations_validate
+    result = submit(realm, undo(created['receipt']['receipt_id']), reads=[], dry_run=dry_run)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/editing_conformance/test_doc_patch_v2.py:50: in submit
+    return create_runtime_commit_service().commit(context, DetachedPort(realm, context))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/commit.py:1216: in commit
+    return port.preview(prepared)
+           ^^^^^^^^^^^^^^^^^^^^^^
+/tmp/w-c0df8aefae/test_materialized_item_boundary.py:74: in finish
+    assert error.failure['message'] == 'provider observation has an ambiguous item path'
+E   AssertionError: assert 'inverse stag...ticated stage' == 'provider obs...ous item path'
+E     
+E     - provider observation has an ambiguous item path
+E     + inverse stage native write membership differs from its authenticated stage
+=============================== warnings summary ===============================
+tests/timeline/test_authoring_bundle.py:1232
+  /home/user/work/wt/vw-F-authoring-ABA-item-storage-sol-0605/tests/timeline/test_authoring_bundle.py:1232: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration  # a real Runtime from a second checkout
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED ../../../../../tmp/w-c0df8aefae/test_materialized_item_boundary.py::test_same_alias_inverse_observations_validate[False]
+FAILED ../../../../../tmp/w-c0df8aefae/test_materialized_item_boundary.py::test_same_alias_inverse_observations_validate[True]
+2 failed, 52 deselected, 1 warning in 2.17s
+
+ succeeded in 1630ms:
+Success: no issues found in 4 source files
