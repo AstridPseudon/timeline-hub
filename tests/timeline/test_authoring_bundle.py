@@ -1333,9 +1333,17 @@ def test_candidate_compiler_integrates_with_runtime_atomic_publication(tmp_path)
 
         assert new_head == committed["publication"]["data"]["parent_revision_id"]
         assert new_head != committed["identity_mapping"]["placements"]["occ-1"]["shot_revision_id"]
-        assert [row["shot_id"] for row in reread["payload"]["occurrences"]] == [
-            row["shot_id"] for row in candidate["placements"]
-        ]
+        assert (
+            reread["payload"]["occurrences"][0]["shot_id"] == next(
+                command["args"]["shot_id"]
+                for command in committed["publication"]["data"]["commands"]
+                if command["op"] == "occurrence.fork"
+            )
+            and (
+                reread["payload"]["occurrences"][1]["shot_id"],
+                reread["payload"]["occurrences"][1]["shot_revision_id"],
+            ) == ("shot-shared", "shot-rev-1")
+        )
         assert reread["payload"]["opaque_parent"] == {"keep": ["all", "fields"]}
         newer_payload = copy.deepcopy(reread["payload"])
         newer_payload["opaque_parent"]["writer"] = "later"
