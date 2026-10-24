@@ -1,1 +1,1 @@
-LEAD 2026-10-24T05:31Z | up | P1 GO stands | P2 run 13583 fails (0 pass, 3 fail, 5 not run); P3 run 4065 passes seed, history, readiness then fails first commit wait | App owns causes | disk 8.3G
+LEAD 2026-10-24T07:05Z | up | P1 GO stands | P3 run 9310 fails in Gate-5 (90s request wait); P2 run 23809 element case fails, rest running | App says 4 P2 test-helper mismatches are ours: fixes ordered, no new runs | disk 8.2G
