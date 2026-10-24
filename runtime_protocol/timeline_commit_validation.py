@@ -6,7 +6,7 @@ import copy
 import hashlib
 import json
 import math
-from functools import cache
+from functools import cache, lru_cache
 from importlib.resources import files
 
 from .errors import ValidationError
@@ -78,9 +78,35 @@ def _validator(definition: str):
     bundle, registry = _schema_resources()
     if definition not in bundle["resources"][bundle["root"]]["$defs"]:
         raise ValidationError("unknown commit schema definition")
-    return Draft202012Validator(
+    validator = Draft202012Validator(
         {"$ref": bundle["root"] + "#/$defs/" + definition}, registry=registry
     )
+    return validator.evolve(_resolver=_reuse_schema_resolution(getattr(validator, "_resolver")))
+
+
+def _reuse_schema_resolution(resolver):
+    # Cache only schema lookups, keyed by the identity of the complete resolver
+    # state (including registry, base URI and dynamic scope), never by a value.
+    @lru_cache(maxsize=256)
+    def lookup(state, ref):
+        resolved = state.resolver.lookup(ref)
+        return type(resolved)(resolved.contents, Resolver(resolved.resolver))
+
+    class Resolver:
+        def __init__(self, resolver):
+            self.resolver = resolver
+
+        def lookup(self, ref):
+            return lookup(self, ref)
+
+        def in_subresource(self, resource):
+            child = self.resolver.in_subresource(resource)
+            return self if child is self.resolver else Resolver(child)
+
+        def dynamic_scope(self):
+            return self.resolver.dynamic_scope()
+
+    return Resolver(resolver)
 
 
 def validate_commit_value(value, definition: str) -> None:
