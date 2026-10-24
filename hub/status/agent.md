@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T06:11:38Z | dispatcher heartbeat 19s | live 5 (sol 0, luna 5, other 0) | busy30 22 | status age 1m -->
+<!-- agent | 2026-10-24T06:14:18Z | dispatcher heartbeat 10s | live 5 (sol 0, luna 5, other 0) | busy30 23 | status age 1m -->
 # agent board, 2026-10-24T06:09:58Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -78,6 +78,11 @@
 | F-schema originals | Preserve provider operation census | Luna | Existing media admission provider | doing | Evidence0600; author0605 | Source544d added media.admit; two test inventories lack its closed mapping. Fixture-only first fix; frozen30 wire branches unchanged. | Sourcebb50 |
 | F-SDK proof review | Review nine mapped original candidates | Luna | SDK map0554 complete | review | agt-F-SDK-map-review-0603 | Eleven candidates found; schema owns two. Nine remaining candidates get independent exact source/receipt review. | Currentbb50 |
 | F-discovery child | Prepare faithful changed-source support run | Luna | Normal managed child receipt | doing | agt-F-discovery-child-bind-0603 | Candidatebb50/f320 requested normally. Harness only; no body until independent review and integrated source proof. | Sourcebb50 |
+
+| F-renderless-store | Open commit baseline without renderer | Runtime Sol | Independent source cause0601 | ready | failover-ok; assigned Runtime0612 | One original fails at resolve_ids display enrichment before writes. Existing raw projection is available; preserve guards and original assertions. | Sourcebb50 |
+
+| F-R2-root-originals | Qualify nine retained root and inverse originals | Runtime Luna | Existing source and exact receipts | ready | failover-ok; assigned Runtime0615 | Nine exact selectors; read existing proof first, then one necessary qualification. Viewing retains all item identity source changes. | Sourcebb50 |
+| F-helper-originals | Qualify fourteen retained helper originals | Runtime Luna | Existing source and exact receipts | ready | failover-ok; assigned Runtime0615 | Fourteen exact selectors; exclude passed contiguous pair. Known string-cut failure needs changed source or classification. No deferred timing repair. | Sourcebb50 |
 
 P1: GO recorded. Original18792 passed both cases; independent0036/0040 passed. P4 and P5 done. G5 merged under H24. App and Proof own P2/P3 failures and next actions.
 Integration: bb50a43c91 adds independently reviewed discovery151325 above930332 IMAGE and D40 harnesses. Timeline product sources remain equal2007. Integrated discovery0603 queued. Headless and ABA forwarding stack and sheet assertions remain integrated with0500 PASS71+5+53. No pending Viewing source merge.
