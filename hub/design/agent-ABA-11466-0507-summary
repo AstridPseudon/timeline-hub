@@ -1,0 +1,64 @@
+test agent-authoring-current8ea-nodes-1024050427-11466: fail exit=1 in 31s — authoring-current8ea-nodes on integration:agent (agent tree 57f0231da0d7904ecd8778169973d6384e0ae141)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/home/user/work/wt/rt-pin-8ea0766f" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin:/bin ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-8ea0766f ASTRID_RUNTIME_SOURCE_ROOT=/home/user/work/wt/rt-pin-8ea0766f ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-v3-819acf-1110 ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-v3-819acf-1110/node_modules ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 -m integration tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba
+counts: 1 failed in 29.28s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-authoring-current8ea-nodes-1024050427-11466/log.txt ---
+tests/timeline/test_authoring_media.py:1088: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/sdk/timeline/sync.py:455: in undo
+    return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via, prepare=prepare)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <astrid.sdk.timeline.sync.TimelineSession object at 0x7f7fe00e74d0>
+
+    def _flush(self, *, idempotency_key=None, dry_run=False, via="python", prepare=None):
+        with self.outbox.locked():
+            state = self._state()
+            if prepare is not None:
+                prepare(state)
+            flight = state["flight"]
+            if _flight_kind(flight) == "assembly-admission":
+                raise TimelineEditError("retry the original assembly admission before flushing commands")
+            if flight is None:
+                if not state["pending"]:
+                    raise TimelineEditError("no pending timeline commands")
+                body = {"api_version": 1, "project_id": self.project_id, "timeline_id": self.timeline_id,
+                        "base_revision_id": state["base"]["revision_id"],
+                        "base_publication_id": state["base"]["publication_id"],
+                        "commands": copy.deepcopy(state["pending"]), "source": {"via": via}, "dry_run": dry_run}
+                if 'rationale' in state:
+                    body['rationale'] = state['rationale']
+                body.update(copy.deepcopy(state.get("commit_options", {})))
+                key = idempotency_key if idempotency_key is not None else f"timeline-edit-{uuid.uuid4().hex}"
+                if key == state.get("preview_key"):
+                    raise TimelineEditError("use a fresh key after a preview")
+                flight = {"path": self.path, "body": request_bytes(body).decode(), "key": key,
+                          "count": len(state["pending"]), "fence": uuid.uuid4().hex}
+                state["flight"] = flight
+                self.outbox.write(state)
+            body = self._flight_body(state, flight, idempotency_key, dry_run)
+            if "fence" not in flight:  # Preserve requests persisted before fencing was added.
+                flight["fence"] = uuid.uuid4().hex
+                self.outbox.write(state)
+            flight = copy.deepcopy(flight)
+        try:
+            result = _response(self.client.timelines.commit(
+                self.project_id, self.timeline_id, body, idempotency_key=flight["key"],
+            ))
+        except Exception as exc:
+            details = getattr(exc, "details", {})
+            if isinstance(details, dict) and details.get("status") in {"conflict", "refused", "invalid"}:
+                failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
+                with self.outbox.locked():
+                    state = self._state()
+                    if state["flight"] == flight:
+                        self._flight_body(state, flight, idempotency_key, dry_run)
+                        state["conflict"] = failure
+                        self.outbox.write(state)
+>               raise CommitConflict(failure) from exc
+E               astrid.sdk.timeline.sync.CommitConflict: provider observation has an ambiguous item path
+
+astrid/sdk/timeline/sync.py:562: CommitConflict
+=========================== short test summary info ============================
+FAILED tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba
+1 failed in 29.28s
